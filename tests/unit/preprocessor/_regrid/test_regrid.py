@@ -110,9 +110,12 @@ class Test(tests.Test):
         self.assertEqual(
             set(HORIZONTAL_SCHEMES.keys()), set(self.regrid_schemes))
 
+    @mock.patch('esmvalcore.preprocessor._regrid.da.ma.set_fill_value',
+                autospec=True)
     @mock.patch('esmvalcore.preprocessor._regrid.da.ma.masked_equal',
                 autospec=True)
-    def test_regrid__horizontal_schemes(self, mock_masked_equal):
+    def test_regrid__horizontal_schemes(self, mock_masked_equal,
+                                        mock_set_fill_value):
         mock_masked_equal.side_effect = lambda x, _: x
         for scheme in self.regrid_schemes:
             result = regrid(self.src_cube, self.tgt_grid, scheme)
@@ -121,11 +124,15 @@ class Test(tests.Test):
             # For 'unstructured_nearest', cube.data.astype() and
             # da.ma.masked_equal() are called
             if scheme == 'unstructured_nearest':
+                mock_set_fill_value.assert_called_once()
                 self.regridded_cube_data.astype.assert_called_once()
                 mock_masked_equal.assert_called_once_with(
                     self.regridded_cube_data, GLOBAL_FILL_VALUE)
                 self.assertEqual(result.data, self.regridded_cube_data)
             else:
+                mock_set_fill_value.assert_not_called()
+                self.regridded_cube_data.astype.assert_not_called()
+                mock_masked_equal.assert_not_called()
                 self.assertEqual(result.data, mock.sentinel.data)
             self._check(self.tgt_grid, scheme)
 

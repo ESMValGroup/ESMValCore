@@ -475,6 +475,14 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     if not _horizontal_grid_is_close(cube, target_grid):
         original_dtype = cube.core_data().dtype
 
+        # For 'unstructured_nearest', make sure that consistent fill value is
+        # used since the data is not masked after regridding (see
+        # https://github.com/SciTools/iris/issues/4463)
+        # Note: da.ma.set_fill_value() works with any kind of input data
+        # (masked and unmasked, numpy and dask)
+        if scheme == 'unstructured_nearest':
+            da.ma.set_fill_value(cube.core_data(), GLOBAL_FILL_VALUE)
+
         # Perform the horizontal regridding
         if _attempt_irregular_regridding(cube, scheme):
             cube = esmpy_regrid(cube, target_grid, scheme)
@@ -482,7 +490,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
 
         # Preserve dtype and use masked arrays for 'unstructured_nearest'
-        # scheme
+        # scheme (see https://github.com/SciTools/iris/issues/4463)
         if scheme == 'unstructured_nearest':
             try:
                 cube.data = cube.core_data().astype(original_dtype,
