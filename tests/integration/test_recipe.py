@@ -1253,11 +1253,21 @@ def test_multi_model_filename(tmp_path, patched_datafinder, config_user):
 
     recipe = get_recipe(tmp_path, content, config_user)
     task = recipe.tasks.pop()
+    ordered_products = set()
     for product in task.products:
         filename = (
           product.settings['multi_model_statistics']
           ['output_products']['mean'].filename)
         assert '1999-2006' in filename
+        if product.attributes['dataset'] == 'EC-EARTH':
+            ordered_products.add(product)
+        elif product.attributes['dataset'] == 'CanESM2':
+            other_product = product
+
+    # just to improve the coverage
+    ordered_products.add(other_product)
+    attributes = esmvalcore._recipe._get_statistic_attributes(ordered_products)
+    assert attributes['timerange'] == '2000/2006'
 
 
 def test_derive(tmp_path, patched_datafinder, config_user):
