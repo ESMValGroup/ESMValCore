@@ -1246,7 +1246,7 @@ def test_multi_model_filename(tmp_path, patched_datafinder, config_user):
                 ensemble: r1i1p1
                 additional_datasets:
                   - {dataset: CanESM2, start_year: 2000, end_year: 2006}
-                  - {dataset: EC-EARTH,  timerange: '2001/P2Y'}
+                  - {dataset: EC-EARTH,  timerange: '1999/P2Y'}
                   - {dataset: MPI-ESM-LR, timerange: '1999/2005'}
             scripts: null
         """)
@@ -1267,7 +1267,7 @@ def test_multi_model_filename(tmp_path, patched_datafinder, config_user):
     # just to improve the coverage
     ordered_products.add(other_product)
     attributes = esmvalcore._recipe._get_statistic_attributes(ordered_products)
-    assert attributes['timerange'] == '2000/2006'
+    assert attributes['timerange'] == '1999/2006'
 
 
 def test_derive(tmp_path, patched_datafinder, config_user):
