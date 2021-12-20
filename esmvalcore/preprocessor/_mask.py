@@ -17,7 +17,7 @@ import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
 from iris.util import rolling_window
 
-from esmvalcore import ESMValCoreDeprecationWarning
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 logger = logging.getLogger(__name__)
 
