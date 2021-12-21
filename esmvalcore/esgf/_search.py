@@ -5,7 +5,12 @@ from functools import lru_cache
 
 import pyesgf.search
 
-from .._data_finder import get_start_end_year
+from .._data_finder import (
+    _truncate_dates,
+    _get_timerange_from_years,
+    _parse_period,
+    get_start_end_date,
+)
 from ._download import ESGFFile
 from ._logon import get_connection
 from .facets import DATASET_MAP, FACETS
@@ -97,18 +102,22 @@ def esgf_search_files(facets):
     return files
 
 
-def select_by_time(files, start_year, end_year):
-    """Select files containing data between start_year and end_year."""
+def select_by_time(files, timerange):
+    """Select files containing data between a timerange."""
     selection = []
+    start_date, end_date = _parse_period(timerange)
+
     for file in files:
         try:
-            start, end = get_start_end_year(file.name)
+            start, end = get_start_end_date(file.name)
         except ValueError:
             # If start and end year cannot be read from the filename
             # just select everything.
             selection.append(file)
         else:
-            if start <= end_year and end >= start_year:
+            start_date, start = _truncate_dates(start_date, start)
+            end_date, end = _truncate_dates(end_date, end)
+            if start <= end_date and end >= start_date:
                 selection.append(file)
 
     return selection
@@ -232,11 +241,11 @@ def cached_search(**facets):
     """
     esgf_facets = get_esgf_facets(facets)
     files = esgf_search_files(esgf_facets)
-
+    _get_timerange_from_years(facets)
     filter_timerange = (facets.get('frequency', '') != 'fx'
-                        and 'start_year' in facets and 'end_year' in facets)
+                        and 'timerange' in facets)
     if filter_timerange:
-        files = select_by_time(files, facets['start_year'], facets['end_year'])
+        files = select_by_time(files, facets['timerange'])
         logger.debug("Selected files:\n%s", '\n'.join(str(f) for f in files))
 
     return files

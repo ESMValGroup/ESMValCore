@@ -49,10 +49,12 @@ requirements:
     - fiona
     - fire
     - humanfriendly
+    - isodate
     - jinja2
     - mpich<3.4  # prevent external build
     - myproxyclient  # required by esgf-pyclient
     - nc-time-axis
+    - nested-lookup
     - netCDF4
     - numpy
     - prov

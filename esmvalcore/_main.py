@@ -120,11 +120,8 @@ def process_recipe(recipe_file, config_user):
     # parse recipe
     recipe = read_recipe_file(recipe_file, config_user)
     logger.debug("Recipe summary:\n%s", recipe)
-
     # run
     recipe.run()
-    recipe.write_html_summary()
-
     # End time timing
     timestamp2 = datetime.datetime.utcnow()
     logger.info(

@@ -9,6 +9,7 @@ from pathlib import Path
 from pprint import pformat
 
 import yaml
+from nested_lookup import get_all_keys, nested_delete, nested_lookup
 from netCDF4 import Dataset
 
 from . import __version__
@@ -22,8 +23,13 @@ from ._config import (
     get_project_config,
 )
 from ._data_finder import (
+    _find_input_files,
+    _get_timerange_from_years,
+    _parse_period,
+    _truncate_dates,
     get_input_filelist,
     get_output_file,
+    get_start_end_date,
     get_statistic_output_file,
 )
 from ._provenance import TrackedFile, get_recipe_provenance
@@ -283,12 +289,8 @@ def _get_default_settings(variable, config_user, derive=False):
     settings['fix_data'] = dict(fix)
 
     # Configure time extraction
-    if 'start_year' in variable and 'end_year' in variable \
-            and variable['frequency'] != 'fx':
-        settings['clip_start_end_year'] = {
-            'start_year': variable['start_year'],
-            'end_year': variable['end_year'],
-        }
+    if 'timerange' in variable and variable['frequency'] != 'fx':
+        settings['clip_timerange'] = {'timerange': variable['timerange']}
 
     if derive:
         settings['derive'] = {
@@ -566,6 +568,14 @@ def _read_attributes(filename):
 
 def _get_input_files(variable, config_user):
     """Get the input files for a single dataset (locally and via download)."""
+    if variable['frequency'] != 'fx':
+        start_year, end_year = _parse_period(variable['timerange'])
+
+        start_year = int(str(start_year[0:4]))
+        end_year = int(str(end_year[0:4]))
+
+        variable['start_year'] = start_year
+        variable['end_year'] = end_year
     (input_files, dirnames,
      filenames) = get_input_filelist(variable=variable,
                                      rootpath=config_user['rootpath'],
@@ -647,14 +657,22 @@ def _get_statistic_attributes(products):
         if all(p.attributes.get(key, object()) == value for p in products):
             attributes[key] = value
 
-    # Ensure start_year and end_year attributes are available
+    # Ensure timerange attribute is available
     for product in products:
-        start = product.attributes['start_year']
-        if 'start_year' not in attributes or start < attributes['start_year']:
-            attributes['start_year'] = start
-        end = product.attributes['end_year']
-        if 'end_year' not in attributes or end > attributes['end_year']:
-            attributes['end_year'] = end
+        timerange = product.attributes['timerange']
+        start, end = _parse_period(timerange)
+        if 'timerange' not in attributes:
+            attributes['timerange'] = f'{start}/{end}'
+        else:
+            start_date, end_date = _parse_period(attributes['timerange'])
+            start_date, start = _truncate_dates(start_date, start)
+            end_date, end = _truncate_dates(end_date, end)
+            if start < start_date:
+                start_date = start
+            if end > end_date:
+                end_date = end
+
+            attributes['timerange'] = f'{start_date}/{end_date}'
 
     return attributes
 
@@ -720,6 +738,52 @@ def _update_extract_shape(settings, config_user):
         check.extract_shape(settings['extract_shape'])
 
 
+def _format_years(timerange):
+    """Format years that are not given in a 4-digit format."""
+    dates = timerange.split('/')
+    timerange = []
+    for date in dates:
+        if date != '*' and not date.startswith('P') and len(date) < 4:
+            date = date.zfill(4)
+        timerange.append(date)
+
+    return '/'.join(timerange)
+
+
+def _update_timerange(variable, config_user):
+    """Update wildcards in timerange with found datetime values.
+
+    If the timerange is given as a year, it ensures it's formatted as a
+    4-digit value (YYYY).
+    """
+    if 'timerange' not in variable:
+        return
+
+    timerange = variable.get('timerange')
+    check.valid_time_selection(timerange)
+
+    timerange = _format_years(timerange)
+    check.valid_time_selection(timerange)
+
+    if '*' in timerange:
+        (files, _, _) = _find_input_files(variable, config_user['rootpath'],
+                                          config_user['drs'])
+        intervals = [get_start_end_date(name) for name in files]
+
+        min_date = min(interval[0] for interval in intervals)
+        max_date = max(interval[1] for interval in intervals)
+
+        if timerange == '*':
+            timerange = f'{min_date}/{max_date}'
+        if '*' in timerange.split('/')[0]:
+            timerange = timerange.replace('*', min_date)
+        if '*' in timerange.split('/')[1]:
+            timerange = timerange.replace('*', max_date)
+        check.valid_time_selection(timerange)
+
+    variable.update({'timerange': timerange})
+
+
 def _match_products(products, variables):
     """Match a list of input products to output product attributes."""
     grouped_products = {}
@@ -771,6 +835,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     """
     products = set()
     for variable in variables:
+        _update_timerange(variable, config_user)
         variable['filename'] = get_output_file(variable,
                                                config_user['preproc_dir'])
 
@@ -837,6 +902,7 @@ def _update_preproc_functions(settings, config_user, variable, variables,
     _update_fx_settings(settings=settings,
                         variable=variable,
                         config_user=config_user)
+    _update_timerange(variable, config_user)
     try:
         _update_target_grid(
             variable=variable,
@@ -1040,6 +1106,7 @@ class Recipe:
         self._cfg['write_ncl_interface'] = self._need_ncl(
             raw_recipe['diagnostics'])
         self._raw_recipe = raw_recipe
+        self._updated_recipe = {}
         self._filename = os.path.basename(recipe_file)
         self._preprocessors = raw_recipe.get('preprocessors', {})
         if 'default' not in self._preprocessors:
@@ -1213,9 +1280,12 @@ class Recipe:
             'diagnostic',
         }
         if 'fx' not in raw_variable.get('mip', ''):
-            required_keys.update({'start_year', 'end_year'})
+            required_keys.update({'timerange'})
+        else:
+            variable.pop('timerange', None)
         for variable in variables:
             _add_extra_facets(variable, self._cfg['extra_facets_dir'])
+            _get_timerange_from_years(variable)
             if 'institute' not in variable:
                 institute = get_institutes(variable)
                 if institute:
@@ -1236,6 +1306,7 @@ class Recipe:
                 variable['project'] = 'obs4MIPs'
         variables = self._expand_tag(variables, 'ensemble')
         variables = self._expand_tag(variables, 'sub_experiment')
+
         return variables
 
     def _initialize_preprocessor_output(self, diagnostic_name, raw_variables,
@@ -1431,6 +1502,51 @@ class Recipe:
                         ancestors.extend(tasks[a] for a in ancestor_ids)
                     tasks[task_id].ancestors = ancestors
 
+    def _fill_wildcards(self, variable_group, preprocessor_output):
+        """Fill wildcards in the `timerange` .
+
+        The new values will be datetime values that have been found for
+        the first and/or last available points.
+        """
+        # To be generalised for other tags
+        datasets = self._raw_recipe.get('datasets')
+        diagnostics = self._raw_recipe.get('diagnostics')
+        additional_datasets = []
+        if diagnostics:
+            additional_datasets = nested_lookup('additional_datasets',
+                                                diagnostics)
+
+        raw_dataset_tags = nested_lookup('timerange', datasets)
+        raw_diagnostic_tags = nested_lookup('timerange', diagnostics)
+
+        wildcard = False
+        for raw_timerange in raw_dataset_tags + raw_diagnostic_tags:
+            if '*' in raw_timerange:
+                wildcard = True
+                break
+
+        if wildcard:
+            if not self._updated_recipe:
+                self._updated_recipe = deepcopy(self._raw_recipe)
+                nested_delete(self._updated_recipe, 'datasets', in_place=True)
+                nested_delete(self._updated_recipe,
+                              'additional_datasets',
+                              in_place=True)
+            updated_datasets = []
+            dataset_keys = set(
+                get_all_keys(datasets) + get_all_keys(additional_datasets) +
+                ['timerange'])
+            for data in preprocessor_output[variable_group]:
+                diagnostic = data['diagnostic']
+                updated_datasets.append(
+                    {key: data[key]
+                     for key in dataset_keys if key in data})
+            self._updated_recipe['diagnostics'][diagnostic]['variables'][
+                variable_group].pop('timerange', None)
+            self._updated_recipe['diagnostics'][diagnostic]['variables'][
+                variable_group].update(
+                    {'additional_datasets': updated_datasets})
+
     def _create_preprocessor_tasks(self, diagnostic_name, diagnostic):
         """Create preprocessor tasks."""
         tasks = []
@@ -1470,6 +1586,8 @@ class Recipe:
                 except RecipeError as ex:
                     failed_tasks.append(ex)
                 else:
+                    self._fill_wildcards(variable_group,
+                                         diagnostic['preprocessor_output'])
                     tasks.append(task)
 
         return tasks, failed_tasks
@@ -1557,6 +1675,7 @@ class Recipe:
 
     def run(self):
         """Run all tasks in the recipe."""
+        self.write_filled_recipe()
         if not self.tasks:
             raise RecipeError('No tasks to run!')
 
@@ -1565,6 +1684,7 @@ class Recipe:
             esgf.download(self._download_files, self._cfg['download_dir'])
 
         self.tasks.run(max_parallel_tasks=self._cfg['max_parallel_tasks'])
+        self.write_html_summary()
 
     def get_output(self) -> dict:
         """Return the paths to the output plots and data.
@@ -1585,6 +1705,16 @@ class Recipe:
             output['task_output'][task.name] = task.get_product_attributes()
 
         return output
+
+    def write_filled_recipe(self):
+        """Write copy of recipe with filled wildcards."""
+        if self._updated_recipe:
+            run_dir = self._cfg['run_dir']
+            filename = self._filename.split('.')
+            filename[0] = filename[0] + '_filled'
+            new_filename = '.'.join(filename)
+            with open(os.path.join(run_dir, new_filename), 'w') as file:
+                yaml.safe_dump(self._updated_recipe, file, sort_keys=False)
 
     def write_html_summary(self):
         """Write summary html file to the output dir."""
