@@ -334,7 +334,7 @@ def test_add_fxvar_keys_extra_facets():
 def test_multi_model_filename():
     """Test timerange in multi-model filename is correct."""
     cube = iris.cube.Cube(np.array([1]))
-    products = {
+    products = [
         PreprocessorFile(cube, 'A', {'timerange': '1990/1991'}),
         PreprocessorFile(cube, 'B', {'timerange': '1989/1990'}),
         PreprocessorFile(cube, 'C', {'timerange': '1991/1992'}),
