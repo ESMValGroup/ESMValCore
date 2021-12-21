@@ -1,3 +1,5 @@
+import iris
+import numpy as np
 import pyesgf.search.results
 import pytest
 
@@ -5,6 +7,7 @@ import esmvalcore.experimental.recipe_output
 from esmvalcore import _recipe
 from esmvalcore.esgf._download import ESGFFile
 from esmvalcore.exceptions import RecipeError
+from tests import PreprocessorFile
 
 
 class TestRecipe:
@@ -326,3 +329,39 @@ def test_add_fxvar_keys_extra_facets():
         'raw_name': 'cell_area',
     }
     assert fx_var == expected_fx_var
+
+
+def test_multi_model_filename():
+    """Test timerange in multi-model filename is correct."""
+    cube = iris.cube.Cube(np.array([1]))
+    products = {
+        PreprocessorFile(cube, 'A', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'B', {'timerange': '1989/1990'}),
+        PreprocessorFile(cube, 'C', {'timerange': '1991/1992'}),
+        PreprocessorFile(cube, 'D', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'E', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'F', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'G', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'H', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'I', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'J', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'K', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'L', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'M', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'N', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'O', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'P', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'Q', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'R', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'S', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'T', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'U', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'V', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'W', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'X', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'Y', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'Z', {'timerange': '1990/1991'}),
+    }
+    attributes = _recipe._get_statistic_attributes(products)
+    assert 'timerange' in attributes
+    assert attributes['timerange'] == '1989/1992'

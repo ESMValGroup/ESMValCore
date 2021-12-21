@@ -1,28 +1,13 @@
 """Unit tests for :mod:`esmvalcore.preprocessor._bias`."""
 
-from unittest import mock
-
 import iris
 import iris.cube
 import numpy as np
 import pytest
 from cf_units import Unit
 
-from esmvalcore.preprocessor import PreprocessorFile as PreprocessorFileBase
 from esmvalcore.preprocessor._bias import bias
-
-
-class PreprocessorFile(mock.Mock):
-    """Mocked PreprocessorFile."""
-
-    def __init__(self, cubes, filename, attributes, **kwargs):
-        """Initialize with cubes."""
-        super().__init__(spec=PreprocessorFileBase, **kwargs)
-        self.cubes = cubes
-        self.filename = filename
-        self.attributes = attributes
-        self.mock_ancestors = set()
-        self.wasderivedfrom = mock.Mock(side_effect=self.mock_ancestors.add)
+from tests import PreprocessorFile
 
 
 def assert_array_equal(array_1, array_2):
