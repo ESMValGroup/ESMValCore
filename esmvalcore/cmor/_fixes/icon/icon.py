@@ -8,7 +8,7 @@ import dask.array as da
 import iris
 import numpy as np
 
-from esmvalcore.iris_helpers import var_name_constraint
+from esmvalcore.iris_helpers import date2num, var_name_constraint
 
 from ..fix import Fix
 from ..shared import add_scalar_height_coord, add_scalar_typesi_coord
@@ -160,7 +160,7 @@ class AllVars(Fix):
 
         new_datetimes = [datetime.strptime(str(dt), '%Y%m%d.%f') for dt in
                          t_coord.points]
-        new_dt_points = new_t_unit.date2num(np.array(new_datetimes))
+        new_dt_points = date2num(np.array(new_datetimes), new_t_unit)
 
         t_coord.points = new_dt_points
         t_coord.units = new_t_unit

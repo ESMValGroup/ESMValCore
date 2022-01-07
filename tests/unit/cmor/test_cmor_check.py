@@ -6,6 +6,7 @@ from copy import deepcopy
 import iris
 import iris.coord_categorisation
 import iris.coords
+import iris.cube
 import iris.util
 import numpy as np
 from cf_units import Unit

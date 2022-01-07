@@ -8,6 +8,7 @@ import pytest
 import esmvalcore._recipe_checks as check
 import esmvalcore.esgf
 from esmvalcore.exceptions import RecipeError
+from esmvalcore.preprocessor import PreprocessorFile
 
 ERR_ALL = 'Looked for files matching%s'
 ERR_D = ('Looked for files in %s, but did not find any file pattern to match '
@@ -19,9 +20,10 @@ VAR = {
     'filename': 'a/c.nc',
     'frequency': 'mon',
     'short_name': 'tas',
-    'start_year': 2020,
-    'end_year': 2025,
+    'timerange': '2020/2025',
     'alias': 'alias',
+    'start_year': 2020,
+    'end_year': 2025
 }
 FX_VAR = {
     'filename': 'a/b.nc',
@@ -93,9 +95,10 @@ def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
     var_no_filename = {
         'frequency': 'mon',
         'short_name': 'tas',
-        'start_year': 2020,
-        'end_year': 2025,
+        'timerange': '2020/2025',
         'alias': 'alias',
+        'start_year': 2020,
+        'end_year': 2025
     }
     error_first = ('No input files found for variable %s', var_no_filename)
     error_last = ("Set 'log_level' to 'debug' to get more information", )
@@ -113,13 +116,66 @@ def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
     assert var == VAR
 
 
+GOOD_TIMERANGES = [
+    '*',
+    '1990/1992',
+    '19900101/19920101',
+    '19900101T12H00M00S/19920101T12H00M00',
+    '1990/*',
+    '*/1992',
+    '1990/P2Y',
+    '19900101/P2Y2M1D',
+    '19900101TH00M00S/P2Y2M1DT12H00M00S',
+    'P2Y/1992',
+    'P2Y2M1D/19920101',
+    'P2Y2M1D/19920101T12H00M00S',
+    'P2Y/*',
+    'P2Y2M1D/*',
+    'P2Y21DT12H00M00S/*',
+    '*/P2Y',
+    '*/P2Y2M1D',
+    '*/P2Y21DT12H00M00S',
+    '1/301',
+    '1/*',
+    '*/301'
+]
+
+
+@pytest.mark.parametrize('timerange', GOOD_TIMERANGES)
+def test_valid_time_selection(timerange):
+    """Check that good definitions do not raise anything."""
+    check.valid_time_selection(timerange)
+
+
+BAD_TIMERANGES = [
+    ('randomnonsense',
+     'Invalid value encountered for `timerange`. Valid values must be '
+     "separated by `/`. Got ['randomnonsense'] instead."),
+    ('199035345/19923463164526',
+     'Invalid value encountered for `timerange`. Valid value must follow '
+     "ISO 8601 standard for dates and duration periods, or be set to '*' "
+     "to load available years. Got ['199035345', '19923463164526'] instead."),
+    ('P11Y/P42Y', 'Invalid value encountered for `timerange`. Cannot set both '
+     'the beginning and the end as duration periods.'),
+]
+
+
+@pytest.mark.parametrize('timerange,message', BAD_TIMERANGES)
+def test_valid_time_selection_rehections(timerange, message):
+    """Check that bad definitions raise RecipeError."""
+    with pytest.raises(check.RecipeError) as rec_err:
+        check.valid_time_selection(timerange)
+    assert str(rec_err.value) == message
+
+
 def test_data_availability_nonexistent(tmp_path):
     var = {
         'dataset': 'ABC',
         'short_name': 'tas',
         'frequency': 'mon',
+        'timerange': '1990/1992',
         'start_year': 1990,
-        'end_year': 1992,
+        'end_year': 1992
     }
     result = pyesgf.search.results.FileResult(
         json={
@@ -133,3 +189,74 @@ def test_data_availability_nonexistent(tmp_path):
     dest_folder = tmp_path
     input_files = [esmvalcore.esgf.ESGFFile([result]).local_file(dest_folder)]
     check.data_availability(input_files, var, dirnames=[], filenames=[])
+
+
+def test_reference_for_bias_preproc_empty():
+    """Test ``reference_for_bias_preproc``."""
+    products = {
+        PreprocessorFile({'filename': 10}, {}),
+        PreprocessorFile({'filename': 20}, {}),
+        PreprocessorFile({'filename': 30}, {'trend': {}}),
+    }
+    check.reference_for_bias_preproc(products)
+
+
+def test_reference_for_bias_preproc_one_ref():
+    """Test ``reference_for_bias_preproc`` with one reference."""
+    products = {
+        PreprocessorFile({'filename': 90}, {}),
+        PreprocessorFile({'filename': 10}, {'bias': {}}),
+        PreprocessorFile({'filename': 20}, {'bias': {}}),
+        PreprocessorFile({'filename': 30, 'reference_for_bias': True},
+                         {'bias': {}})
+    }
+    check.reference_for_bias_preproc(products)
+
+
+def test_reference_for_bias_preproc_no_ref():
+    """Test ``reference_for_bias_preproc`` with no reference."""
+    products = {
+        PreprocessorFile({'filename': 90}, {}),
+        PreprocessorFile({'filename': 10}, {'bias': {}}),
+        PreprocessorFile({'filename': 20}, {'bias': {}}),
+        PreprocessorFile({'filename': 30}, {'bias': {}})
+    }
+    with pytest.raises(RecipeError) as rec_err:
+        check.reference_for_bias_preproc(products)
+
+    # Note: checking the message directly does not work due to the unknown
+    # (machine-dependent) ordering of products in the set
+    assert ("Expected exactly 1 dataset with 'reference_for_bias: true' in "
+            "products\n[") in str(rec_err.value)
+    assert '10' in str(rec_err.value)
+    assert '20' in str(rec_err.value)
+    assert '30' in str(rec_err.value)
+    assert '90' not in str(rec_err.value)
+    assert ("],\nfound 0. Please also ensure that the reference dataset is "
+            "not excluded with the 'exclude' option") in str(rec_err.value)
+
+
+def test_reference_for_bias_preproc_two_refs():
+    """Test ``reference_for_bias_preproc`` with two references."""
+    products = {
+        PreprocessorFile({'filename': 90}, {}),
+        PreprocessorFile({'filename': 10}, {'bias': {}}),
+        PreprocessorFile({'filename': 20, 'reference_for_bias': True},
+                         {'bias': {}}),
+        PreprocessorFile({'filename': 30, 'reference_for_bias': True},
+                         {'bias': {}})
+    }
+    with pytest.raises(RecipeError) as rec_err:
+        check.reference_for_bias_preproc(products)
+
+    # Note: checking the message directly does not work due to the unknown
+    # (machine-dependent) ordering of products in the set
+    assert ("Expected exactly 1 dataset with 'reference_for_bias: true' in "
+            "products\n[") in str(rec_err.value)
+    assert '10' in str(rec_err.value)
+    assert '20' in str(rec_err.value)
+    assert '30' in str(rec_err.value)
+    assert '90' not in str(rec_err.value)
+    assert "],\nfound 2:\n[" in str(rec_err.value)
+    assert ("].\nPlease also ensure that the reference dataset is "
+            "not excluded with the 'exclude' option") in str(rec_err.value)

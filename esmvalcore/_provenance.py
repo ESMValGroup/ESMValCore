@@ -138,6 +138,10 @@ class TrackedFile:
         """Return summary string."""
         return "{}: {}".format(self.__class__.__name__, self.filename)
 
+    def __repr__(self):
+        """Return representation string (e.g., used by ``pformat``)."""
+        return f"{self.__class__.__name__}: {self.filename}"
+
     def copy_provenance(self):
         """Create a copy with identical provenance information."""
         if self.provenance is None:
