@@ -1056,8 +1056,8 @@ See also :func:`esmvalcore.preprocessor.monthly_statistics`.
 ``seasonal_statistics``
 -----------------------
 
-This function produces statistics for each season (default: "(DJF, MAM, JJA,
-SON)" or custom seasons e.g. "(JJAS, ONDJFMAM)" ) in the dataset. Note that
+This function produces statistics for each season (default: ``[DJF, MAM, JJA,
+SON]`` or custom seasons e.g. ``[JJAS, ONDJFMAM]``) in the dataset. Note that
 this function will not check for missing time points. For instance, if you are
 looking at the DJF field, but your datasets starts on January 1st, the first
 DJF field will only contain data from January and February.
@@ -1070,9 +1070,9 @@ Parameters:
       'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
     * seasons: seasons to build statistics.
-      Default is '(DJF, MAM, JJA, SON)'
+      Default is '[DJF, MAM, JJA, SON]'
 
-See also :func:`esmvalcore.preprocessor.seasonal_mean`.
+See also :func:`esmvalcore.preprocessor.seasonal_statistics`.
 
 .. _annual_statistics:
 
@@ -1118,7 +1118,7 @@ Parameters:
       'mon', 'daily', 'day'. Default is 'full'
 
     * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
-      Default is '(DJF, MAM, JJA, SON)'
+      Default is '[DJF, MAM, JJA, SON]'
 
 Examples:
     * Monthly climatology:
@@ -1240,7 +1240,7 @@ Parameters:
       parameters from extract_time_. Default is null
     * standardize: if true calculate standardized anomalies (default: false)
     * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
-      Default is '(DJF, MAM, JJA, SON)'
+      Default is '[DJF, MAM, JJA, SON]'
 Examples:
     * Anomalies from the full period climatology:
 
