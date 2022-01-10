@@ -24,6 +24,7 @@ CMIP6:
     default: '/'
     BADC: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
     DKRZ: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
+    ESGF: '{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
     ETHZ: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/{grid}/'
     SYNDA: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
@@ -35,78 +36,16 @@ CMIP5:
   input_dir:
     default: '/'
     BADC: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}/{short_name}'
+    BSC: '{type}/{project}/{exp}/{dataset.lower}'
     CP4CDS: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{short_name}/latest/'
     DKRZ: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}/{short_name}'
     ETHZ: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
-    SMHI: '{dataset}/{ensemble}/{exp}/{frequency}'
+    ESGF: '{project.lower}/{product}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}'
     RCAST: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
-    BSC: '{type}/{project}/{exp}/{dataset.lower}'
+    SMHI: '{dataset}/{ensemble}/{exp}/{frequency}'
     SYNDA: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}'
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc'
   output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
-  institutes:
-    'ACCESS1-0': ['CSIRO-BOM']
-    'ACCESS1-3': ['CSIRO-BOM']
-    'bcc-csm1-1': ['BCC']
-    'bcc-csm1-1-m': ['BCC']
-    'BNU-ESM': ['BNU']
-    'CanAM4': ['CCCma']
-    'CanCM4': ['CCCma']
-    'CanESM2': ['CCCma']
-    'CCSM4': ['NCAR']
-    'CESM1-BGC': ['NSF-DOE-NCAR']
-    'CESM1-CAM5': ['NSF-DOE-NCAR']
-    'CESM1-CAM5-1-FV2': ['NSF-DOE-NCAR']
-    'CESM1-FASTCHEM': ['NSF-DOE-NCAR']
-    'CESM1-WACCM': ['NSF-DOE-NCAR']
-    'CFSv2-2011': ['COLA-CFS', 'NOAA-NCEP']
-    'CMCC-CESM': ['CMCC']
-    'CMCC-CM': ['CMCC']
-    'CMCC-CMS': ['CMCC']
-    'CNRM-CM5': ['CNRM-CERFACS']
-    'CNRM-CM5-2': ['CNRM-CERFACS']
-    'CSIRO-Mk3-6-0': ['CSIRO-QCCCE']
-    'CSIRO-Mk3L-1-2': ['CSIRO-QCCCE']
-    'EC-EARTH': ['ICHEC']
-    'FGOALS-g2': ['LASG-CESS']
-    'FGOALS-gl': ['LASG-IAP']
-    'FGOALS-s2': ['LASG-IAP']
-    'FIO-ESM': ['FIO']
-    'fio-esm': ['FIO']
-    'GEOS-5': ['NASA-GMAO']
-    'GFDL-CM2p1': ['NOAA-GFDL']
-    'GFDL-CM3': ['NOAA-GFDL']
-    'GFDL-ESM2G': ['NOAA-GFDL']
-    'GFDL-ESM2M': ['NOAA-GFDL']
-    'GFDL-HIRAM-C180': ['NOAA-GFDL']
-    'GFDL-HIRAM-C360': ['NOAA-GFDL']
-    'GISS-E2-H': ['NASA-GISS']
-    'GISS-E2-H-CC': ['NASA-GISS']
-    'GISS-E2-R': ['NASA-GISS']
-    'GISS-E2-R-CC': ['NASA-GISS']
-    'HadCM3': ['MOHC']
-    'HadGEM2-A': ['MOHC']
-    'HadGEM2-AO': ['NIMR-KMA']
-    'HadGEM2-CC': ['MOHC']
-    'HadGEM2-ES': ['INPE', 'MOHC']
-    'inmcm4': ['INM']
-    'IPSL-CM5A-LR': ['IPSL']
-    'IPSL-CM5A-MR': ['IPSL']
-    'IPSL-CM5B-LR': ['IPSL']
-    'MIROC-ESM': ['MIROC']
-    'MIROC-ESM-CHEM': ['MIROC']
-    'MIROC4h': ['MIROC']
-    'MIROC5': ['MIROC']
-    'MPI-ESM-LR': ['MPI-M']
-    'MPI-ESM-MR': ['MPI-M']
-    'MPI-ESM-P': ['MPI-M']
-    'MRI-AGCM3-2H': ['MRI']
-    'MRI-AGCM3-2S': ['MRI']
-    'MRI-CGCM3': ['MRI']
-    'MRI-ESM1': ['MRI']
-    'NICAM-09': ['NICAM']
-    'NorESM1-M': ['NCC']
-    'NorESM1-ME': ['NCC']
 
 CMIP3:
   cmor_strict: true
@@ -114,58 +53,11 @@ CMIP3:
     default: '/'
     BADC: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{short_name}/{ensemble}/{latestversion}'
     DKRZ: '{exp}/{modeling_realm}/{frequency}/{short_name}/{dataset}/{ensemble}'
+    ESGF: '{project.lower}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{latestversion}'
     IPSL: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{version}/{short_name}'
   input_file: '{short_name}_*.nc'
   output_file: '{project}_{institute}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
   cmor_type: 'CMIP3'
-  institutes:
-    'bccr_bcm2_0': ['BCCR']
-    'cccma_cgcm3_1': ['CCCMA']
-    'cccma_cgcm3_1_t63': ['CCCMA']
-    'cnrm_cm3': ['CNRM']
-    'csiro_mk3_0': ['CSIRO']
-    'csiro_mk3_5': ['CSIRO']
-    'gfdl_cm2_0': ['GFDL']
-    'gfdl_cm2_1': ['GFDL']
-    'ingv_echam4': ['INGV']
-    'inmcm3_0': ['INM']
-    'ipsl_cm4': ['IPSL']
-    'iap_fgoals1_0_g': ['LASG']
-    'miub_echo_g': ['MIUB-KMA']
-    'mpi_echam5': ['MPIM']
-    'mri_cgcm2_3_2a': ['MRI']
-    'giss_aom': ['NASA']
-    'giss_model_e_h': ['NASA']
-    'giss_model_e_r': ['NASA']
-    'ncar_ccsm3_0': ['NCAR']
-    'ncar_pcm1': ['NCAR']
-    'miroc3_2_hires': ['NIES']
-    'miroc3_2_medres': ['NIES']
-    'ukmo_hadcm3': ['UKMO']
-    'ukmo_hadgem1': ['UKMO']
-    'BCM2': ['BCCR']
-    'CGCM3-1-T47': ['CCCMA']
-    'CGCM3-1-T63': ['CCCMA']
-    'BCC-CM1': ['CMA']
-    'CM3': ['CNRM', 'INM']
-    'MK3': ['CSIRO']
-    'MK3-5': ['CSIRO']
-    'CM2': ['GFDL']
-    'CM2-1': ['GFDL']
-    'ECHAM4': ['INGV']
-    'CM4': ['IPSL']
-    'FGOALS-G1-0': ['LASG']
-    'ECHO-G': ['MIUB-KMA']
-    'ECHAM5': ['MPIM']
-    'GISS-AOM': ['NASA']
-    'GISS-EH': ['NASA']
-    'GISS-ER': ['NASA']
-    'CCSM3': ['NCAR']
-    'PCM': ['NCAR']
-    'MIROC3-2-HI': ['NIES']
-    'MIROC3-2-MED': ['NIES']
-    'HADCM3': ['UKMO']
-    'HADGEM1': ['UKMO']
 
 OBS:
   cmor_strict: false
@@ -201,14 +93,17 @@ native6:
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
 
-obs4mips:
+obs4MIPs:
   cmor_strict: false
   input_dir:
     default: 'Tier{tier}/{dataset}'
+    ESGF: '{project}/{dataset}/{latestversion}'
     RCAST: '/'
     IPSL: '{realm}/{short_name}/{freq}/{grid}/{institute}/{dataset}/{latest_version}'
-  input_file: '{short_name}_{dataset}_{level}_{version}_*.nc'
-  output_file: '{project}_{dataset}_{level}_{version}_{short_name}'
+  input_file:
+    default: '{short_name}_{dataset}_{level}_{version}_*.nc'
+    ESGF: '{short_name}_{dataset}*.nc'
+  output_file: '{project}_{dataset}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_path: 'obs4mips'
   cmor_default_table_prefix: 'obs4MIPs_'
@@ -235,6 +130,7 @@ CORDEX:
     default: '/'
     spec: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{mip}/{short_name}'
     BADC: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{mip}/{short_name}/{latestversion}'
+    ESGF: '{project.lower}/output/{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{frequency}/{short_name}/{latestversion}'
   input_file: '{short_name}_{domain}_{driver}_{exp}_{ensemble}_{dataset}_{rcm_version}_{mip}*.nc'
   output_file: '{short_name}_{dataset}_{exp}_{ensemble}_{rcm_version}_{mip}'
   cmor_type: 'CMIP5'
@@ -243,7 +139,7 @@ CORDEX:
 IPSLCM:
   cmor_strict: false
   input_dir:
-    default: '{root}/{account}/{model}/{status}/{exp}/{simulation}/{dir}/{freq}'
+    default: '{root}/{account}/{model}/{status}/{exp}/{simulation}/{dir}/{out}/{freq}'
   input_file:
     default:
       - '{simulation}_*_{ipsl_varname}.nc'
@@ -251,4 +147,3 @@ IPSLCM:
   output_file: '{dataset}_{account}_{model}_{status}_{exp}_{simulation}_{freq}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
-

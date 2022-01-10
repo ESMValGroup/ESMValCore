@@ -757,7 +757,11 @@ and create the new release from the release branch (i.e. not from ``main``).
 
 The package is automatically uploaded to the
 `ESMValGroup conda channel <https://anaconda.org/esmvalgroup/esmvalcore>`__
-by a GitHub action.
+by a GitHub action (note that this is an obsolete procedure for the main package upload,
+since the main package is now uploaded to
+`conda-forge conda channel <https://anaconda.org/conda-forge>`__ via
+the upload to PyPi, but we still upload to the esmvalgroup channel as a backup option;
+also the upload to esmvalcore gives us a chance to verify it immediately after upload).
 If this has failed for some reason, build and upload the package manually by
 following the instructions below.
 
@@ -778,7 +782,7 @@ Follow these steps to create a new conda package:
    conda package
 -  If the build was successful, upload the package to the esmvalgroup
    conda channel, e.g.
-   ``anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvalcore-2.3.0-py_0.tar.bz2``.
+   ``anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvalcore-2.3.1-py_0.tar.bz2``.
 
 8. Create and upload the PyPI package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -801,7 +805,7 @@ Follow these steps to create a new Python package:
 -  Build the package:
    ``python3 -m pep517.build --source --binary --out-dir dist/ .``
    This command should generate two files in the ``dist`` directory, e.g.
-   ``ESMValCore-2.3.0-py3-none-any.whl`` and ``ESMValCore-2.3.0.tar.gz``.
+   ``ESMValCore-2.3.1-py3-none-any.whl`` and ``ESMValCore-2.3.1.tar.gz``.
 -  Upload the package:
    ``python3 -m twine upload dist/*``
    You will be prompted for an API token if you have not set this up

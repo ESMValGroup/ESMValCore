@@ -1,6 +1,7 @@
 """Functions dealing with config-user.yml / config-developer.yml."""
 import collections.abc
 import datetime
+import fnmatch
 import logging
 import os
 import sys
@@ -11,6 +12,7 @@ from pathlib import Path
 import yaml
 
 from esmvalcore.cmor.table import CMOR_TABLES, read_cmor_tables
+from esmvalcore.exceptions import RecipeError
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +56,32 @@ def _load_extra_facets(project, extra_facets_dir):
 def get_extra_facets(project, dataset, mip, short_name, extra_facets_dir):
     """Read configuration files with additional variable information."""
     project_details = _load_extra_facets(project, extra_facets_dir)
-    return project_details.get(dataset, {}).get(mip, {}).get(short_name, {})
+
+    def pattern_filter(patterns, name):
+        """Get the subset of the list `patterns` that `name` matches.
+
+        Parameters
+        ----------
+        patterns : :obj:`list` of :obj:`str`
+            A list of strings that may contain shell-style wildcards.
+        name : str
+            A string describing the dataset, mip, or short_name.
+
+        Returns
+        -------
+        :obj:`list` of :obj:`str`
+            The subset of patterns that `name` matches.
+        """
+        return [pat for pat in patterns if fnmatch.fnmatchcase(name, pat)]
+
+    extra_facets = {}
+    for dataset_ in pattern_filter(project_details, dataset):
+        for mip_ in pattern_filter(project_details[dataset_], mip):
+            for var in pattern_filter(project_details[dataset_], short_name):
+                facets = project_details[dataset_][mip_][var]
+                extra_facets.update(facets)
+
+    return extra_facets
 
 
 def read_config_user_file(config_file, folder_name, options=None):
@@ -69,51 +96,29 @@ def read_config_user_file(config_file, folder_name, options=None):
     with open(config_file, 'r') as file:
         cfg = yaml.safe_load(file)
 
-    # DEPRECATED: remove in v2.4
-    for setting in ('write_plots', 'write_netcdf'):
-        if setting in cfg:
-            msg = (
-                f"Using '{setting}' in {config_file} is deprecated and will "
-                "be removed in ESMValCore version 2.4. For diagnostics "
-                "that support this setting, it should be set in the "
-                "diagnostic script section of the recipe instead. "
-                f"Remove the setting from {config_file} to get rid of this "
-                "warning message.")
-            print(f"Warning: {msg}")
-            warnings.warn(DeprecationWarning(msg))
-
     if options is None:
         options = dict()
     for key, value in options.items():
         cfg[key] = value
-        # DEPRECATED: remove in v2.4
-        if key in ('write_plots', 'write_netcdf'):
-            msg = (
-                f"Setting '{key}' from the command line is deprecated and "
-                "will be removed in ESMValCore version 2.4. For diagnostics "
-                "that support this setting, it should be set in the "
-                "diagnostic script section of the recipe instead.")
-            print(f"Warning: {msg}")
-            warnings.warn(DeprecationWarning(msg))
 
     # set defaults
     defaults = {
-        'compress_netcdf': False,
-        'exit_on_warning': False,
-        'output_file_type': 'png',
-        'output_dir': 'esmvaltool_output',
         'auxiliary_data_dir': 'auxiliary_data',
-        'extra_facets_dir': tuple(),
-        'save_intermediary_cubes': False,
-        'remove_preproc_dir': True,
-        'max_parallel_tasks': None,
-        'run_diagnostic': True,
-        'profile_diagnostic': False,
+        'compress_netcdf': False,
         'config_developer_file': None,
         'drs': {},
-        # DEPRECATED: remove default settings below in v2.4
-        'write_plots': True,
-        'write_netcdf': True,
+        'download_dir': '~/climate_data',
+        'exit_on_warning': False,
+        'extra_facets_dir': tuple(),
+        'max_parallel_tasks': None,
+        'offline': True,
+        'output_file_type': 'png',
+        'output_dir': 'esmvaltool_output',
+        'profile_diagnostic': False,
+        'remove_preproc_dir': True,
+        'resume_from': [],
+        'run_diagnostic': True,
+        'save_intermediary_cubes': False,
     }
 
     for key in defaults:
@@ -124,6 +129,7 @@ def read_config_user_file(config_file, folder_name, options=None):
             cfg[key] = defaults[key]
 
     cfg['output_dir'] = _normalize_path(cfg['output_dir'])
+    cfg['download_dir'] = _normalize_path(cfg['download_dir'])
     cfg['auxiliary_data_dir'] = _normalize_path(cfg['auxiliary_data_dir'])
 
     if isinstance(cfg['extra_facets_dir'], str):
@@ -135,6 +141,14 @@ def read_config_user_file(config_file, folder_name, options=None):
     cfg['config_developer_file'] = _normalize_path(
         cfg['config_developer_file'])
     cfg['config_file'] = config_file
+
+    for section in ['rootpath', 'drs']:
+        if 'obs4mips' in cfg[section]:
+            logger.warning(
+                "Correcting capitalization, project 'obs4mips'"
+                " should be written as 'obs4MIPs' in %s in %s", section,
+                config_file)
+            cfg[section]['obs4MIPs'] = cfg[section].pop('obs4mips')
 
     for key in cfg['rootpath']:
         root = cfg['rootpath'][key]
@@ -156,6 +170,16 @@ def read_config_user_file(config_file, folder_name, options=None):
 
     # Read developer configuration file
     load_config_developer(cfg['config_developer_file'])
+
+    # Validate configuration using the experimental module to avoid a crash
+    # after running the recipe because the html output writer uses this.
+    # In the long run, we need to replace this module with the Session from
+    # the experimental module.
+    with warnings.catch_warnings():
+        # ignore experimental API warning
+        warnings.simplefilter("ignore")
+        from esmvalcore.experimental.config._config_object import Session
+    Session.from_config_user(cfg)
 
     return cfg
 
@@ -188,6 +212,12 @@ def read_config_developer_file(cfg_file=None):
     with open(cfg_file, 'r') as file:
         cfg = yaml.safe_load(file)
 
+    if 'obs4mips' in cfg:
+        logger.warning(
+            "Correcting capitalization, project 'obs4mips'"
+            " should be written as 'obs4MIPs' in %s", cfg_file)
+        cfg['obs4MIPs'] = cfg.pop('obs4mips')
+
     return cfg
 
 
@@ -201,22 +231,19 @@ def load_config_developer(cfg_file=None):
 
 def get_project_config(project):
     """Get developer-configuration for project."""
-    logger.debug("Retrieving %s configuration", project)
     if project in CFG:
         return CFG[project]
-    raise ValueError(f"Project '{project}' not in config-developer.yml")
+    raise RecipeError(f"Project '{project}' not in config-developer.yml")
 
 
 def get_institutes(variable):
-    """Return the institutes given the dataset name in CMIP5 and CMIP6."""
+    """Return the institutes given the dataset name in CMIP6."""
     dataset = variable['dataset']
     project = variable['project']
-    logger.debug("Retrieving institutes for dataset %s", dataset)
     try:
         return CMOR_TABLES[project].institutes[dataset]
     except (KeyError, AttributeError):
-        pass
-    return CFG.get(project, {}).get('institutes', {}).get(dataset, [])
+        return []
 
 
 def get_activity(variable):
@@ -224,7 +251,6 @@ def get_activity(variable):
     project = variable['project']
     try:
         exp = variable['exp']
-        logger.debug("Retrieving activity_id for experiment %s", exp)
         if isinstance(exp, list):
             return [CMOR_TABLES[project].activities[value][0] for value in exp]
         return CMOR_TABLES[project].activities[exp][0]

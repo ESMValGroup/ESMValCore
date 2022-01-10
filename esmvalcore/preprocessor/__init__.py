@@ -22,7 +22,6 @@ from ._area import (
 from ._cycles import amplitude
 from ._derive import derive
 from ._detrend import detrend
-from ._download import download
 from ._io import (
     _get_debug_filename,
     cleanup,
@@ -77,7 +76,6 @@ from ._weighting import weighting_landsea_fraction
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'download',
     # File reformatting/CMORization
     'fix_file',
     # Load cubes from file
@@ -134,7 +132,6 @@ __all__ = [
     # 'average_zone': average_zone,
     # 'cross_section': cross_section,
     'detrend',
-    'multi_model_statistics',
     # Grid-point operations
     'extract_named_regions',
     'depth_integration',
@@ -158,7 +155,10 @@ __all__ = [
     'timeseries_filter',
     'linear_trend',
     'linear_trend_stderr',
+    # Convert units
     'convert_units',
+    # Multi model statistics
+    'multi_model_statistics',
     # Remove fx_variables from cube
     'remove_fx_variables',
     # Save to file
@@ -182,6 +182,9 @@ TIME_PREPROCESSORS = [
 ]
 
 DEFAULT_ORDER = tuple(__all__)
+"""
+By default, preprocessor functions are applied in this order.
+"""
 
 # The order of initial and final steps cannot be configured
 INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('add_fx_variables') + 1]
@@ -231,7 +234,8 @@ def check_preprocessor_settings(settings):
                 "function {}".format(missing_args, step))
         # Final sanity check in case the above fails to catch a mistake
         try:
-            inspect.getcallargs(function, None, **settings[step])
+            signature = inspect.Signature.from_callable(function)
+            signature.bind(None, **settings[step])
         except TypeError:
             logger.error(
                 "Wrong preprocessor function arguments in "
@@ -249,7 +253,7 @@ def _check_multi_model_settings(products):
             settings = product.settings.get(step)
             if settings is None:
                 continue
-            elif reference is None:
+            if reference is None:
                 reference = product
             elif reference.settings[step] != settings:
                 raise ValueError(
@@ -324,6 +328,7 @@ def get_step_blocks(steps, order):
 
 class PreprocessorFile(TrackedFile):
     """Preprocessor output file."""
+
     def __init__(self, attributes, settings, ancestors=None):
         super(PreprocessorFile, self).__init__(attributes['filename'],
                                                attributes, ancestors)
@@ -378,16 +383,17 @@ class PreprocessorFile(TrackedFile):
 
     def save(self):
         """Save cubes to disk."""
-        if self._cubes is not None:
-            self.files = preprocess(self._cubes, 'save',
-                                    **self.settings['save'])
-            self.files = preprocess(self.files, 'cleanup',
-                                    **self.settings.get('cleanup', {}))
+        self.files = preprocess(self._cubes, 'save',
+                                **self.settings['save'])
+        self.files = preprocess(self.files, 'cleanup',
+                                **self.settings.get('cleanup', {}))
 
     def close(self):
         """Close the file."""
-        self.save()
-        self._cubes = None
+        if self._cubes is not None:
+            self.save()
+            self._cubes = None
+            self.save_provenance()
 
     @property
     def is_closed(self):
@@ -429,6 +435,7 @@ def _apply_multimodel(products, step, debug):
 
 class PreprocessingTask(BaseTask):
     """Task for running the preprocessor."""
+
     def __init__(
         self,
         products,

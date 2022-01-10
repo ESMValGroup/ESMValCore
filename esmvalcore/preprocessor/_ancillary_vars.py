@@ -33,8 +33,11 @@ def _load_fx(var_cube, fx_info, check_level):
     if not _is_fx_broadcastable(fx_cube, var_cube):
         return None
 
-    fx_cube = cmor_check_metadata(fx_cube, cmor_table=project, mip=mip,
-                                  short_name=short_name, frequency=freq,
+    fx_cube = cmor_check_metadata(fx_cube,
+                                  cmor_table=project,
+                                  mip=mip,
+                                  short_name=short_name,
+                                  frequency=freq,
                                   check_level=check_level)
 
     fx_cube = fix_data(fx_cube, check_level=check_level, **fx_info)
@@ -53,16 +56,16 @@ def _is_fx_broadcastable(fx_cube, cube):
     try:
         da.broadcast_to(fx_cube.core_data(), cube.shape)
     except ValueError as exc:
-        logger.debug("Dimensions of %s and %s cubes do not match. "
-                     "Discarding use of fx_variable: %s",
-                     cube.var_name, fx_cube.var_name, exc)
+        logger.debug(
+            "Dimensions of %s and %s cubes do not match. "
+            "Discarding use of fx_variable: %s", cube.var_name,
+            fx_cube.var_name, exc)
         return False
     return True
 
 
 def add_cell_measure(cube, fx_cube, measure):
-    """Broadcast fx_cube and add it as a cell_measure in the cube containing
-    the data.
+    """Add fx cube as a cell_measure in the cube containing the data.
 
     Parameters
     ----------
@@ -86,28 +89,20 @@ def add_cell_measure(cube, fx_cube, measure):
     if measure not in ['area', 'volume']:
         raise ValueError(f"measure name must be 'area' or 'volume', "
                          f"got {measure} instead")
-    try:
-        fx_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
-    except ValueError:
-        logger.debug("Dimensions of %s and %s cubes do not match. "
-                     "Cannot broadcast cubes.",
-                     cube.var_name, fx_cube.var_name)
-        return
-    measure = iris.coords.CellMeasure(
-        fx_data,
-        standard_name=fx_cube.standard_name,
-        units=fx_cube.units,
-        measure=measure,
-        var_name=fx_cube.var_name,
-        attributes=fx_cube.attributes)
-    cube.add_cell_measure(measure, range(0, measure.ndim))
+    measure = iris.coords.CellMeasure(fx_cube.core_data(),
+                                      standard_name=fx_cube.standard_name,
+                                      units=fx_cube.units,
+                                      measure=measure,
+                                      var_name=fx_cube.var_name,
+                                      attributes=fx_cube.attributes)
+    start_dim = cube.ndim - len(measure.shape)
+    cube.add_cell_measure(measure, range(start_dim, cube.ndim))
     logger.debug('Added %s as cell measure in cube of %s.', fx_cube.var_name,
                  cube.var_name)
 
 
 def add_ancillary_variable(cube, fx_cube):
-    """Broadcast fx_cube and add it as an ancillary_variable in the cube
-    containing the data.
+    """Add fx cube as an ancillary_variable in the cube containing the data.
 
     Parameters
     ----------
@@ -121,20 +116,14 @@ def add_ancillary_variable(cube, fx_cube):
     iris.cube.Cube
         Cube with added ancillary variables
     """
-    try:
-        fx_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
-    except ValueError:
-        logger.debug("Dimensions of %s and %s cubes do not match. "
-                     "Cannot broadcast cubes.",
-                     cube.var_name, fx_cube.var_name)
-        return
     ancillary_var = iris.coords.AncillaryVariable(
-        fx_data,
+        fx_cube.core_data(),
         standard_name=fx_cube.standard_name,
         units=fx_cube.units,
         var_name=fx_cube.var_name,
         attributes=fx_cube.attributes)
-    cube.add_ancillary_variable(ancillary_var, range(0, ancillary_var.ndim))
+    start_dim = cube.ndim - len(ancillary_var.shape)
+    cube.add_ancillary_variable(ancillary_var, range(start_dim, cube.ndim))
     logger.debug('Added %s as ancillary variable in cube of %s.',
                  fx_cube.var_name, cube.var_name)
 
