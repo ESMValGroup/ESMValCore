@@ -1,6 +1,6 @@
 """Module for checking iris cubes against their CMOR definitions."""
-import datetime
 import logging
+from datetime import datetime
 from enum import IntEnum
 
 import cf_units
@@ -9,6 +9,8 @@ import iris.coords
 import iris.exceptions
 import iris.util
 import numpy as np
+
+from esmvalcore.iris_helpers import date2num
 
 from .table import CMOR_TABLES
 
@@ -38,20 +40,20 @@ def _get_time_bounds(time, freq):
         year = time.cell(step).point.year
         if freq in ['mon', 'mo']:
             next_month, next_year = _get_next_month(month, year)
-            min_bound = time.units.date2num(
-                datetime.datetime(year, month, 1, 0, 0))
-            max_bound = time.units.date2num(
-                datetime.datetime(next_year, next_month, 1, 0, 0))
+            min_bound = date2num(datetime(year, month, 1, 0, 0),
+                                 time.units, time.dtype)
+            max_bound = date2num(datetime(next_year, next_month, 1, 0, 0),
+                                 time.units, time.dtype)
         elif freq == 'yr':
-            min_bound = time.units.date2num(datetime.datetime(
-                year, 1, 1, 0, 0))
-            max_bound = time.units.date2num(
-                datetime.datetime(year + 1, 1, 1, 0, 0))
+            min_bound = date2num(datetime(year, 1, 1, 0, 0),
+                                 time.units, time.dtype)
+            max_bound = date2num(datetime(year + 1, 1, 1, 0, 0),
+                                 time.units, time.dtype)
         elif freq == 'dec':
-            min_bound = time.units.date2num(datetime.datetime(
-                year, 1, 1, 0, 0))
-            max_bound = time.units.date2num(
-                datetime.datetime(year + 10, 1, 1, 0, 0))
+            min_bound = date2num(datetime(year, 1, 1, 0, 0),
+                                 time.units, time.dtype)
+            max_bound = date2num(datetime(year + 10, 1, 1, 0, 0),
+                                 time.units, time.dtype)
         else:
             delta = {
                 'day': 12 / 24,
@@ -738,7 +740,12 @@ class CMORCheck():
                                          valid_max)
 
         if l_fix_coord_value:
-            if coord.ndim == 1:
+            # cube.intersection only works for cells with 0 or 2 bounds
+            # Note: nbounds==0 means there are no bounds given, nbounds==2
+            # implies a regular grid with bounds in the grid direction,
+            # nbounds>2 implies an irregular grid with bounds given as vertices
+            # of the cell polygon.
+            if coord.ndim == 1 and coord.nbounds in (0, 2):
                 lon_extent = iris.coords.CoordExtent(coord, 0.0, 360., True,
                                                      False)
                 self._cube = self._cube.intersection(lon_extent)
@@ -783,6 +790,11 @@ class CMORCheck():
     def _check_requested_values(self, coord, coord_info, var_name):
         """Check requested values."""
         if coord_info.requested:
+            if coord.points.ndim != 1:
+                self.report_warning(
+                    "Cannot check requested values of {}D coordinate {} since "
+                    "it is not 1D", coord.points.ndim, var_name)
+                return
             try:
                 cmor_points = np.array(coord_info.requested, dtype=float)
             except ValueError:

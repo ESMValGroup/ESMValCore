@@ -56,7 +56,7 @@ CMIP3:
     ESGF: '{project.lower}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{latestversion}'
     IPSL: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{version}/{short_name}'
   input_file: '{short_name}_*.nc'
-  output_file: '{project}_{institute}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
+  output_file: '{project}_{institute}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
   cmor_type: 'CMIP3'
 
 OBS:
@@ -145,5 +145,15 @@ IPSLCM:
       - '{simulation}_*_{ipsl_varname}.nc'
       - '{simulation}_*_{group}.nc'
   output_file: '{dataset}_{account}_{model}_{status}_{exp}_{simulation}_{freq}_{short_name}'
+  cmor_type: 'CMIP6'
+  cmor_default_table_prefix: 'CMIP6_'
+
+ICON:
+  cmor_strict: false
+  input_dir:
+    default: '{version}_{component}_{exp}_{grid}_{ensemble}'
+  input_file:
+    default: '{version}_{component}_{exp}_{grid}_{ensemble}_{var_type}*.nc'
+  output_file: '{dataset}_{version}_{component}_{grid}_{mip}_{exp}_{ensemble}_{short_name}_{var_type}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'

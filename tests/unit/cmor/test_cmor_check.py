@@ -6,6 +6,7 @@ from copy import deepcopy
 import iris
 import iris.coord_categorisation
 import iris.coords
+import iris.cube
 import iris.util
 import numpy as np
 from cf_units import Unit
@@ -278,36 +279,27 @@ class TestCMORCheck(unittest.TestCase):
 
     def test_rank_unstructured_grid(self):
         """Check succeeds even if two required coordinates share dimensions."""
-        self.cube = self.cube.extract(
-            iris.Constraint(latitude=self.cube.coord('latitude').points[0]))
-        lat_points = self.cube.coord('longitude').points
-        lat_points = lat_points / 3.0 - 50.
-        self.cube.remove_coord('latitude')
-        iris.util.demote_dim_coord_to_aux_coord(self.cube, 'longitude')
-        lat_points = np.concatenate(
-            (
-                self.cube.coord('longitude').points[0:10] / 4,
-                self.cube.coord('longitude').points[0:10] / 4
-            ),
-            axis=0
-        )
-        lat_bounds = np.concatenate(
-            (
-                self.cube.coord('longitude').bounds[0:10] / 4,
-                self.cube.coord('longitude').bounds[0:10] / 4
-            ),
-            axis=0
-        )
-        new_lat = iris.coords.AuxCoord(
-            points=lat_points,
-            bounds=lat_bounds,
-            var_name='lat',
-            standard_name='latitude',
-            long_name='Latitude',
-            units='degrees_north',
-        )
-        self.cube.add_aux_coord(new_lat, 1)
+        self.cube = self._get_unstructed_grid_cube()
         self._check_cube()
+
+    def test_unstructured_grid_automatic_fixes(self):
+        """Check succeeds even if two required coordinates share dimensions."""
+        self.cube = self._get_unstructed_grid_cube(correct_lon=False,
+                                                   n_bounds=3)
+
+        lon_coord = self.cube.coord('longitude')
+        np.testing.assert_allclose(lon_coord.points.min(), -180.0)
+        np.testing.assert_allclose(lon_coord.points.max(), 162.0)
+        np.testing.assert_allclose(lon_coord.bounds.min(), -180.0)
+        np.testing.assert_allclose(lon_coord.bounds.max(), 171.0)
+
+        self._check_cube(automatic_fixes=True)
+
+        lon_coord = self.cube.coord('longitude')
+        np.testing.assert_allclose(lon_coord.points.min(), 0.0)
+        np.testing.assert_allclose(lon_coord.points.max(), 342.0)
+        np.testing.assert_allclose(lon_coord.bounds.min(), 0.0)
+        np.testing.assert_allclose(lon_coord.bounds.max(), 351.0)
 
     def test_bad_generic_level(self):
         """Test check fails in metadata if generic level coord
@@ -673,6 +665,23 @@ class TestCMORCheck(unittest.TestCase):
         self.var_info.coordinates['region'] = region_coord
         self.cube = self.get_cube(self.var_info)
         self._check_cube()
+
+    def test_requested_non_1d(self):
+        """Warning if requested values in non-1d cannot be checked."""
+        coord = self.cube.coord('air_pressure')
+        values = np.linspace(0, 40, len(coord.points))
+        values = np.broadcast_to(values, (20, 20))
+        bounds = np.moveaxis(np.stack((values - 0.01, values + 0.01)), 0, -1)
+        new_plev_coord = iris.coords.AuxCoord(
+            values, bounds=bounds, var_name=coord.var_name,
+            standard_name=coord.standard_name, long_name=coord.long_name,
+            units=coord.units)
+        self.cube.remove_coord('air_pressure')
+        self.cube.add_aux_coord(new_plev_coord, (2, 3))
+        checker = CMORCheck(self.cube, self.var_info)
+        checker.check_metadata()
+        self.assertFalse(checker.has_debug_messages())
+        self.assertTrue(checker.has_warnings())
 
     def test_non_increasing(self):
         """Fail in metadata if increasing coordinate is decreasing."""
@@ -1133,6 +1142,71 @@ class TestCMORCheck(unittest.TestCase):
         for coord in scalar_coords:
             cube.add_aux_coord(coord)
 
+        return cube
+
+    def _get_unstructed_grid_cube(self, correct_lon=True, n_bounds=2):
+        """Get cube with unstructured grid."""
+        assert n_bounds in (2, 3), "Only 2 or 3 bounds per cell supported"
+
+        cube = self.get_cube(self.var_info)
+        cube = cube.extract(
+            iris.Constraint(latitude=cube.coord('latitude').points[0]))
+        lat_points = cube.coord('longitude').points
+        lat_points = lat_points / 3.0 - 50.
+        cube.remove_coord('latitude')
+        iris.util.demote_dim_coord_to_aux_coord(cube, 'longitude')
+        lat_points = np.concatenate(
+            (
+                cube.coord('longitude').points[0:10] / 4,
+                cube.coord('longitude').points[0:10] / 4
+            ),
+            axis=0
+        )
+        lat_bounds = np.concatenate(
+            (
+                cube.coord('longitude').bounds[0:10] / 4,
+                cube.coord('longitude').bounds[0:10] / 4
+            ),
+            axis=0
+        )
+        new_lat = iris.coords.AuxCoord(
+            points=lat_points,
+            bounds=lat_bounds,
+            var_name='lat',
+            standard_name='latitude',
+            long_name='Latitude',
+            units='degrees_north',
+        )
+        cube.add_aux_coord(new_lat, 1)
+
+        # Add additional bound if desired
+        if n_bounds == 3:
+            for coord_name in ('latitude', 'longitude'):
+                coord = cube.coord(coord_name)
+                new_bounds = np.stack((
+                    coord.bounds[:, 0],
+                    0.5 * (coord.bounds[:, 0] + coord.bounds[:, 1]),
+                    coord.bounds[:, 1],
+                ))
+                coord.bounds = np.swapaxes(new_bounds, 0, 1)
+
+        # Convert longitude to [-180, 180] to check automatic fixes if desired
+        if correct_lon:
+            return cube
+        new_lon = iris.coords.AuxCoord(
+            points=cube.coord('longitude').points,
+            bounds=cube.coord('longitude').bounds,
+            var_name='lon',
+            standard_name='longitude',
+            long_name='Longitude',
+            units='degrees_east',
+        )
+        new_lon.points = np.where(new_lon.points < 180.0, new_lon.points,
+                                  new_lon.points - 360.0)
+        new_lon.bounds = np.where(new_lon.bounds < 180.0, new_lon.bounds,
+                                  new_lon.bounds - 360.0)
+        cube.remove_coord('longitude')
+        cube.add_aux_coord(new_lon, 1)
         return cube
 
     def _setup_generic_level_var(self):
