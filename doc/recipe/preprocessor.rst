@@ -195,11 +195,11 @@ Preprocessor                                                   Default fx variab
 :ref:`weighting_landsea_fraction<land/sea fraction weighting>` ``sftlf``, ``sftof``
 ============================================================== =====================
 
-If no ``fx_variables`` are specified for these preprocessors, the fx variables
-in the second column are used. If given, the ``fx_variables`` argument
-specifies the fx variables that the user wishes to input to the corresponding
-preprocessor function. The user may specify these by simply adding the names of
-the variables, e.g.,
+If the option ``fx_variables`` is not explicitly specified for these
+preprocessors, the default fx variables in the second column are automatically
+used. If given, the ``fx_variables`` argument specifies the fx variables that
+the user wishes to input to the corresponding preprocessor function. The user
+may specify these by simply adding the names of the variables, e.g.,
 
 .. code-block:: yaml
 
@@ -246,6 +246,13 @@ available tables of the specified project.
    in CMIP6's ``fx``, ``IyrAnt`` and ``IyrGre``, and ``LImon`` tables). If (for
    a given dataset) fx files are found in more than one table, ``mip`` needs to
    be specified, otherwise an error is raised.
+
+.. note::
+   To explicitly **not** use any fx variables in a preprocessor, use
+   ``fx_variables: null``.  While some of the preprocessors mentioned above do
+   work without fx variables (e.g., ``area_statistics`` or ``mask_landsea``
+   with datasets that have regular latitude/longitude grids), using this option
+   is **not** recommended.
 
 Internally, the required ``fx_variables`` are automatically loaded by the
 preprocessor step ``add_fx_variables`` which also checks them against CMOR
