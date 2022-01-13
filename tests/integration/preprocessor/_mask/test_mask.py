@@ -7,13 +7,18 @@ module.
 """
 
 import iris
+import iris.fileformats
 import numpy as np
 import pytest
 
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.preprocessor import (PreprocessorFile, mask_fillvalues,
-                                     mask_landsea, mask_landseaice,
-                                     add_fx_variables)
+from esmvalcore.preprocessor import (
+    PreprocessorFile,
+    add_fx_variables,
+    mask_fillvalues,
+    mask_landsea,
+    mask_landseaice,
+)
 from tests import assert_array_equal
 
 

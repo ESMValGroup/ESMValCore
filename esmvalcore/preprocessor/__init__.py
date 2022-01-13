@@ -49,7 +49,7 @@ from ._time import (
     annual_statistics,
     anomalies,
     climate_statistics,
-    clip_start_end_year,
+    clip_timerange,
     daily_statistics,
     decadal_statistics,
     extract_month,
@@ -89,7 +89,7 @@ __all__ = [
     'concatenate',
     'cmor_check_metadata',
     # Extract years given by dataset keys (start_year and end_year)
-    'clip_start_end_year',
+    'clip_timerange',
     # Data reformatting/CMORization
     'fix_data',
     'cmor_check_data',
@@ -170,7 +170,7 @@ __all__ = [
 ]
 
 TIME_PREPROCESSORS = [
-    'clip_start_end_year',
+    'clip_timerange',
     'extract_time',
     'extract_season',
     'extract_month',
@@ -281,18 +281,53 @@ def _get_multi_model_settings(products, step):
     return settings, exclude
 
 
-def _run_preproc_function(function, items, kwargs):
+def _run_preproc_function(function, items, kwargs, input_files=None):
     """Run preprocessor function."""
-    msg = "{}({}, {})".format(function.__name__, items, kwargs)
-    logger.debug("Running %s", msg)
+    kwargs_str = ",\n".join(
+        [f"{k} = {pformat(v)}" for (k, v) in kwargs.items()])
+    if input_files is None:
+        file_msg = ""
+    else:
+        file_msg = (f"\nloaded from original input file(s)\n"
+                    f"{pformat(input_files)}")
+    logger.debug(
+        "Running preprocessor function '%s' on the data\n%s%s\nwith function "
+        "argument(s)\n%s", function.__name__, pformat(items), file_msg,
+        kwargs_str)
     try:
         return function(items, **kwargs)
     except Exception:
-        logger.error("Failed to run %s", msg)
+        # To avoid very long error messages, we truncate the arguments and
+        # input files here at a given threshold
+        n_shown_args = 4
+        if input_files is not None and len(input_files) > n_shown_args:
+            n_not_shown_files = len(input_files) - n_shown_args
+            file_msg = (f"\nloaded from original input file(s)\n"
+                        f"{pformat(input_files[:n_shown_args])}\n(and "
+                        f"{n_not_shown_files:d} further file(s) not shown "
+                        f"here; refer to the debug log for a full list)")
+
+        # Make sure that the arguments are indexable
+        if isinstance(items, (PreprocessorFile, Cube, str)):
+            items = [items]
+        if isinstance(items, set):
+            items = list(items)
+
+        if len(items) <= n_shown_args:
+            data_msg = pformat(items)
+        else:
+            n_not_shown_args = len(items) - n_shown_args
+            data_msg = (f"{pformat(items[:n_shown_args])}\n(and "
+                        f"{n_not_shown_args:d} further argument(s) not shown "
+                        f"here; refer to the debug log for a full list)")
+        logger.error(
+            "Failed to run preprocessor function '%s' on the data\n%s%s\nwith "
+            "function argument(s)\n%s", function.__name__, data_msg, file_msg,
+            kwargs_str)
         raise
 
 
-def preprocess(items, step, **settings):
+def preprocess(items, step, input_files=None, **settings):
     """Run preprocessor."""
     logger.debug("Running preprocessor step %s", step)
     function = globals()[step]
@@ -300,10 +335,12 @@ def preprocess(items, step, **settings):
 
     result = []
     if itype.endswith('s'):
-        result.append(_run_preproc_function(function, items, settings))
+        result.append(_run_preproc_function(function, items, settings,
+                                            input_files=input_files))
     else:
         for item in items:
-            result.append(_run_preproc_function(function, item, settings))
+            result.append(_run_preproc_function(function, item, settings,
+                                                input_files=input_files))
 
     items = []
     for item in result:
@@ -342,10 +379,20 @@ class PreprocessorFile(TrackedFile):
             self.settings['save'] = {}
         self.settings['save']['filename'] = self.filename
 
-        self.files = [a.filename for a in ancestors or ()]
+        # self._input_files always contains the original input files;
+        # self.files may change in the preprocessing chain (e.g., by the step
+        # fix_file)
+        self._input_files = [a.filename for a in ancestors or ()]
+        self.files = copy.deepcopy(self._input_files)
 
         self._cubes = None
         self._prepared = False
+
+    def _input_files_for_log(self):
+        """Do not log input files twice in output log."""
+        if self.files == self._input_files:
+            return None
+        return self._input_files
 
     def check(self):
         """Check preprocessor settings."""
@@ -357,7 +404,9 @@ class PreprocessorFile(TrackedFile):
             raise ValueError(
                 "PreprocessorFile {} has no settings for step {}".format(
                     self, step))
-        self.cubes = preprocess(self.cubes, step, **self.settings[step])
+        self.cubes = preprocess(self.cubes, step,
+                                input_files=self._input_files,
+                                **self.settings[step])
         if debug:
             logger.debug("Result %s", self.cubes)
             filename = _get_debug_filename(self.filename, step)
@@ -368,8 +417,10 @@ class PreprocessorFile(TrackedFile):
         if not self._prepared:
             for step in DEFAULT_ORDER[:DEFAULT_ORDER.index('load')]:
                 if step in self.settings:
-                    self.files = preprocess(self.files, step,
-                                            **self.settings[step])
+                    self.files = preprocess(
+                        self.files, step,
+                        input_files=self._input_files_for_log(),
+                        **self.settings[step])
             self._prepared = True
 
     @property
@@ -378,6 +429,7 @@ class PreprocessorFile(TrackedFile):
         if self.is_closed:
             self.prepare()
             self._cubes = preprocess(self.files, 'load',
+                                     input_files=self._input_files_for_log(),
                                      **self.settings.get('load', {}))
         return self._cubes
 
@@ -388,8 +440,10 @@ class PreprocessorFile(TrackedFile):
     def save(self):
         """Save cubes to disk."""
         self.files = preprocess(self._cubes, 'save',
+                                input_files=self._input_files,
                                 **self.settings['save'])
         self.files = preprocess(self.files, 'cleanup',
+                                input_files=self._input_files,
                                 **self.settings.get('cleanup', {}))
 
     def close(self):

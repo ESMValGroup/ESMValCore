@@ -10,6 +10,7 @@ from numpy import ma
 
 import tests
 from esmvalcore.preprocessor import regrid
+from esmvalcore.preprocessor._io import GLOBAL_FILL_VALUE
 from tests.unit.preprocessor._regrid import _make_cube
 
 
@@ -210,6 +211,10 @@ class Test(tests.Test):
         assert self.unstructured_grid_cube.dtype == np.float32
         assert result.dtype == np.float32
 
+        # Make sure that output is a masked array with correct fill value
+        # (= GLOBAL_FILL_VALUE)
+        np.testing.assert_allclose(result.data.fill_value, GLOBAL_FILL_VALUE)
+
     def test_regrid__unstructured_nearest_int(self):
         """Test unstructured_nearest regridding with cube of ints."""
         self.unstructured_grid_cube.data = np.full((3, 2, 2), 1, dtype=int)
@@ -220,6 +225,11 @@ class Test(tests.Test):
         np.testing.assert_array_equal(result.data, expected)
 
         # Make sure that dtype is not preserved (since conversion from float to
-        # float would be necessary)
+        # int would be necessary)
         assert np.issubdtype(self.unstructured_grid_cube.dtype, np.integer)
         assert result.dtype == np.float64
+
+        # Make sure that output is a masked array with correct fill value
+        # (= maximum int)
+        np.testing.assert_allclose(result.data.fill_value,
+                                   float(np.iinfo(int).max))
