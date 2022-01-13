@@ -310,6 +310,8 @@ def _find_input_dirs(variable, rootpath, drs):
                         variable[key] = var_from_dir.get(key, '*')
             else:
                 dirname = _resolve_latestversion(dirname)
+            if dirname is None:
+                continue
             matches = glob.glob(dirname)
             matches = [match for match in matches if os.path.isdir(match)]
             if matches:
