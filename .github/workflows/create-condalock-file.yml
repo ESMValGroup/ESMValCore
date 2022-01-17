@@ -9,16 +9,17 @@ on:
     - cron: '0 4 */10 * *'
 
 jobs:
-  create-lock-file:
-    name: Create conda lock file for latest Python
+  create-verify-lock-file:
+    name: Create and verify conda lock file for latest Python
     runs-on: 'ubuntu-latest'
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
           auto-update-conda: true
-          python-version: "3.9"
+          python-version: "3.10"
           miniconda-version: "latest"
+          activate-environment: esmvaltool-fromlock
           channels: conda-forge
       - name: Show conda config
         shell: bash -l {0}
@@ -27,7 +28,7 @@ jobs:
           conda list
           conda config --show-sources
           conda config --show
-      - name: Python info
+      - name: Gather Python info
         shell: bash -l {0}
         run: |
           which python
@@ -38,39 +39,20 @@ jobs:
       - name: Create conda lock file for linux-64
         shell: bash -l {0}
         run: conda-lock lock --platform linux-64 -f environment.yml --mamba
-  verify-linux:
-    name: verify / Linux / python-${{ matrix.python-version }}
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.7", "3.8", "3.9"]
-    runs-on: 'ubuntu-latest'
-    needs: create-lock-file
-    steps:
-      - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: esmvaltool-fromlock
-          python-version: ${{ matrix.python-version }}
-          miniconda-version: "latest"
-          channels: conda-forge
-      - shell: bash -l {0}
-        run: conda --version
-      - shell: bash -l {0}
-        run: which python
-      - shell: bash -l {0}
-        run: python -V
-      # currently mamba env is detached from conda env created at setup-miniconda step
-      #- shell: bash -l {0}
-      #  run: conda install -y -c conda-forge mamba
-      - shell: bash -l {0}
+      - name: Creating environment from lock file
+        shell: bash -l {0}
         run: conda create --name esmvaltool-fromlock --file conda-linux-64.lock
-      - shell: bash -l {0}
+      - name: Installing pip
+        shell: bash -l {0}
         run: conda install pip
-      - shell: bash -l {0}
-        run: which python
-      - shell: bash -l {0}
+      - name: Gather pip info
+        shell: bash -l {0}
         run: pip --version
+      - name: Gather Python info again
+        shell: bash -l {0}
+        run: |
+          which python
+          python --version
       - shell: bash -l {0}
         run: pip install -e .[develop]
       - shell: bash -l {0}
@@ -83,13 +65,37 @@ jobs:
         run: pytest -n 0 -m "sequential"
   createPullRequest:
     # see https://github.com/marketplace/actions/create-pull-request
-    name: Create Automated PR
+    name: Create Automated PR if conda lock file has changed
     strategy:
       fail-fast: false
     runs-on: ubuntu-latest
-    needs: verify-linux  # run this only if verification succeeded
+    needs: create-verify-lock-file  # run this only if creation+verification succeeded
     steps:
       - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: "3.10"
+          miniconda-version: "latest"
+          channels: conda-forge
+      - name: Show conda config
+        shell: bash -l {0}
+        run: |
+          conda info
+          conda list
+          conda config --show-sources
+          conda config --show
+      - name: Gather Python info
+        shell: bash -l {0}
+        run: |
+          which python
+          python --version
+      - name: Install conda-lock
+        shell: bash -l {0}
+        run: conda install -y conda-lock
+      - name: Create conda lock file for linux-64
+        shell: bash -l {0}
+        run: conda-lock lock --platform linux-64 -f environment.yml --mamba
       - uses: peter-evans/create-pull-request@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
