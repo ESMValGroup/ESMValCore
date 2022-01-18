@@ -23,6 +23,7 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Trend`
 * :ref:`Detrend`
 * :ref:`Unit conversion`
+* :ref:`Bias`
 * :ref:`Other`
 
 See :ref:`preprocessor_functions` for implementation details and the exact default order.
@@ -194,11 +195,11 @@ Preprocessor                                                   Default fx variab
 :ref:`weighting_landsea_fraction<land/sea fraction weighting>` ``sftlf``, ``sftof``
 ============================================================== =====================
 
-If no ``fx_variables`` are specified for these preprocessors, the fx variables
-in the second column are used. If given, the ``fx_variables`` argument
-specifies the fx variables that the user wishes to input to the corresponding
-preprocessor function. The user may specify these by simply adding the names of
-the variables, e.g.,
+If the option ``fx_variables`` is not explicitly specified for these
+preprocessors, the default fx variables in the second column are automatically
+used. If given, the ``fx_variables`` argument specifies the fx variables that
+the user wishes to input to the corresponding preprocessor function. The user
+may specify these by simply adding the names of the variables, e.g.,
 
 .. code-block:: yaml
 
@@ -245,6 +246,13 @@ available tables of the specified project.
    in CMIP6's ``fx``, ``IyrAnt`` and ``IyrGre``, and ``LImon`` tables). If (for
    a given dataset) fx files are found in more than one table, ``mip`` needs to
    be specified, otherwise an error is raised.
+
+.. note::
+   To explicitly **not** use any fx variables in a preprocessor, use
+   ``fx_variables: null``.  While some of the preprocessors mentioned above do
+   work without fx variables (e.g., ``area_statistics`` or ``mask_landsea``
+   with datasets that have regular latitude/longitude grids), using this option
+   is **not** recommended.
 
 Internally, the required ``fx_variables`` are automatically loaded by the
 preprocessor step ``add_fx_variables`` which also checks them against CMOR
@@ -1055,8 +1063,8 @@ See also :func:`esmvalcore.preprocessor.monthly_statistics`.
 ``seasonal_statistics``
 -----------------------
 
-This function produces statistics for each season (default: "(DJF, MAM, JJA,
-SON)" or custom seasons e.g. "(JJAS, ONDJFMAM)" ) in the dataset. Note that
+This function produces statistics for each season (default: ``[DJF, MAM, JJA,
+SON]`` or custom seasons e.g. ``[JJAS, ONDJFMAM]``) in the dataset. Note that
 this function will not check for missing time points. For instance, if you are
 looking at the DJF field, but your datasets starts on January 1st, the first
 DJF field will only contain data from January and February.
@@ -1069,9 +1077,9 @@ Parameters:
       'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
     * seasons: seasons to build statistics.
-      Default is '(DJF, MAM, JJA, SON)'
+      Default is '[DJF, MAM, JJA, SON]'
 
-See also :func:`esmvalcore.preprocessor.seasonal_mean`.
+See also :func:`esmvalcore.preprocessor.seasonal_statistics`.
 
 .. _annual_statistics:
 
@@ -1117,7 +1125,7 @@ Parameters:
       'mon', 'daily', 'day'. Default is 'full'
 
     * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
-      Default is '(DJF, MAM, JJA, SON)'
+      Default is '[DJF, MAM, JJA, SON]'
 
 Examples:
     * Monthly climatology:
@@ -1239,7 +1247,7 @@ Parameters:
       parameters from extract_time_. Default is null
     * standardize: if true calculate standardized anomalies (default: false)
     * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
-      Default is '(DJF, MAM, JJA, SON)'
+      Default is '[DJF, MAM, JJA, SON]'
 Examples:
     * Anomalies from the full period climatology:
 
@@ -1712,6 +1720,77 @@ will guarantee homogeneous input for the diagnostics.
    amount based unit is not supported at the moment.
 
 See also :func:`esmvalcore.preprocessor.convert_units`.
+
+
+.. _bias:
+
+Bias
+====
+
+The bias module contains the following preprocessor functions:
+
+* ``bias``: Calculate absolute or relative biases with respect to a reference
+  dataset
+
+``bias``
+--------
+
+This function calculates biases with respect to a given reference dataset. For
+this, exactly one input dataset needs to be declared as ``reference_for_bias:
+true`` in the recipe, e.g.,
+
+.. code-block:: yaml
+
+  datasets:
+    - {dataset: CanESM5, project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: CESM2,   project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: MIROC6,  project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: ERA-Interim, project: OBS6, tier: 3, type: reanaly, version: 1,
+       reference_for_bias: true}
+
+In the example above, ERA-Interim is used as reference dataset for the bias
+calculation. For this preprocessor, all input datasets need to have identical
+dimensional coordinates. This can for example be ensured with the preprocessors
+:func:`esmvalcore.preprocessor.regrid` and/or
+:func:`esmvalcore.preprocessor.regrid_time`.
+
+The ``bias`` preprocessor supports 4 optional arguments:
+
+   * ``bias_type`` (:obj:`str`, default: ``'absolute'``): Bias type that is
+     calculated. Can be ``'absolute'`` (i.e., calculate bias for dataset
+     :math:`X` and reference :math:`R` as :math:`X - R`) or ``relative`` (i.e,
+     calculate bias as :math:`\frac{X - R}{R}`).
+   * ``denominator_mask_threshold`` (:obj:`float`, default: ``1e-3``):
+     Threshold to mask values close to zero in the denominator (i.e., the
+     reference dataset) during the calculation of relative biases. All values
+     in the reference dataset with absolute value less than the given threshold
+     are masked out. This setting is ignored when ``bias_type`` is set to
+     ``'absolute'``. Please note that for some variables with very small
+     absolute values (e.g., carbon cycle fluxes, which are usually :math:`<
+     10^{-6}` kg m :math:`^{-2}` s :math:`^{-1}`) it is absolutely essential to
+     change the default value in order to get reasonable results.
+   * ``keep_reference_dataset`` (:obj:`bool`, default: ``False``): If
+     ``True``, keep the reference dataset in the output. If ``False``, drop the
+     reference dataset.
+   * ``exclude`` (:obj:`list` of :obj:`str`): Exclude specific datasets from
+     this preprocessor. Note that this option is only available in the recipe,
+     not when using :func:`esmvalcore.preprocessor.bias` directly (e.g., in
+     another python script). If the reference dataset has been excluded, an
+     error is raised.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_bias:
+        bias:
+          bias_type: relative
+          denominator_mask_threshold: 1e-8
+          keep_reference_dataset: true
+          exclude: [CanESM2]
+
+See also :func:`esmvalcore.preprocessor.bias`.
 
 
 .. _Memory use:

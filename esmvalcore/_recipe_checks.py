@@ -4,8 +4,10 @@ import logging
 import os
 import re
 import subprocess
+from pprint import pformat
 from shutil import which
 
+import isodate
 import yamale
 
 from ._data_finder import get_start_end_year
@@ -155,8 +157,9 @@ def data_availability(input_files, var, dirnames, filenames, log=True):
     if var['frequency'] == 'fx':
         # check time availability only for non-fx variables
         return
-
-    required_years = set(range(var['start_year'], var['end_year'] + 1))
+    start_year = var['start_year']
+    end_year = var['end_year']
+    required_years = set(range(start_year, end_year + 1, 1))
     available_years = set()
 
     for filename in input_files:
@@ -227,3 +230,87 @@ def valid_multimodel_statistic(statistic):
             "Invalid value encountered for `statistic` in preprocessor "
             f"`multi_model_statistics`. Valid values are {valid_names} "
             f"or patterns matching {valid_patterns}. Got '{statistic}.'")
+
+
+def _check_delimiter(timerange):
+    if len(timerange) != 2:
+        raise RecipeError("Invalid value encountered for `timerange`. "
+                          "Valid values must be separated by `/`. "
+                          f"Got {timerange} instead.")
+
+
+def _check_duration_periods(timerange):
+    try:
+        isodate.parse_duration(timerange[0])
+    except ValueError:
+        pass
+    else:
+        try:
+            isodate.parse_duration(timerange[1])
+        except ValueError:
+            pass
+        else:
+            raise RecipeError("Invalid value encountered for `timerange`. "
+                              "Cannot set both the beginning and the end "
+                              "as duration periods.")
+
+
+def _check_format_years(date):
+    if date != '*' and not date.startswith('P'):
+        if len(date) < 4:
+            date = date.zfill(4)
+    return date
+
+
+def _check_timerange_values(date, timerange):
+    try:
+        isodate.parse_date(date)
+    except ValueError:
+        try:
+            isodate.parse_duration(date)
+        except ValueError as exc:
+            if date != '*':
+                raise RecipeError("Invalid value encountered for `timerange`. "
+                                  "Valid value must follow ISO 8601 standard "
+                                  "for dates and duration periods, or be "
+                                  "set to '*' to load available years. "
+                                  f"Got {timerange} instead.") from exc
+
+
+def valid_time_selection(timerange):
+    """Check that `timerange` tag is well defined."""
+    if timerange != '*':
+        timerange = timerange.split('/')
+        _check_delimiter(timerange)
+        _check_duration_periods(timerange)
+        for date in timerange:
+            date = _check_format_years(date)
+            _check_timerange_values(date, timerange)
+
+
+def reference_for_bias_preproc(products):
+    """Check that exactly one reference dataset for bias preproc is given."""
+    step = 'bias'
+    products = {p for p in products if step in p.settings}
+    if not products:
+        return
+
+    # Check that exactly one dataset contains the facet ``reference_for_bias:
+    # true``
+    reference_products = []
+    for product in products:
+        if product.attributes.get('reference_for_bias', False):
+            reference_products.append(product)
+    if len(reference_products) != 1:
+        products_str = [p.filename for p in products]
+        if not reference_products:
+            ref_products_str = ". "
+        else:
+            ref_products_str = [p.filename for p in reference_products]
+            ref_products_str = f":\n{pformat(ref_products_str)}.\n"
+        raise RecipeError(
+            f"Expected exactly 1 dataset with 'reference_for_bias: true' in "
+            f"products\n{pformat(products_str)},\nfound "
+            f"{len(reference_products):d}{ref_products_str}Please also "
+            f"ensure that the reference dataset is not excluded with the "
+            f"'exclude' option")

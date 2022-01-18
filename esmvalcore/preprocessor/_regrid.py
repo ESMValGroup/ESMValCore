@@ -18,7 +18,7 @@ from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.fix import fix_file, fix_metadata
 from ..cmor.table import CMOR_TABLES
 from ._ancillary_vars import add_ancillary_variable, add_cell_measure
-from ._io import concatenate_callback, load
+from ._io import GLOBAL_FILL_VALUE, concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
 
@@ -475,13 +475,26 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     if not _horizontal_grid_is_close(cube, target_grid):
         original_dtype = cube.core_data().dtype
 
+        # For 'unstructured_nearest', make sure that consistent fill value is
+        # used since the data is not masked after regridding (see
+        # https://github.com/SciTools/iris/issues/4463)
+        # Note: da.ma.set_fill_value() works with any kind of input data
+        # (masked and unmasked, numpy and dask)
+        if scheme == 'unstructured_nearest':
+            if np.issubdtype(cube.dtype, np.integer):
+                fill_value = np.iinfo(cube.dtype).max
+            else:
+                fill_value = GLOBAL_FILL_VALUE
+            da.ma.set_fill_value(cube.core_data(), fill_value)
+
         # Perform the horizontal regridding
         if _attempt_irregular_regridding(cube, scheme):
             cube = esmpy_regrid(cube, target_grid, scheme)
         else:
             cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
 
-        # Preserve dtype for 'unstructured_nearest' scheme
+        # Preserve dtype and use masked arrays for 'unstructured_nearest'
+        # scheme (see https://github.com/SciTools/iris/issues/4463)
         if scheme == 'unstructured_nearest':
             try:
                 cube.data = cube.core_data().astype(original_dtype,
@@ -491,6 +504,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
                     "dtype of data changed during regridding from '%s' to "
                     "'%s': %s", original_dtype, cube.core_data().dtype,
                     str(exc))
+            cube.data = da.ma.masked_equal(cube.core_data(), fill_value)
 
     return cube
 

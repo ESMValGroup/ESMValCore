@@ -1,3 +1,5 @@
+import iris
+import numpy as np
 import pyesgf.search.results
 import pytest
 
@@ -5,6 +7,7 @@ import esmvalcore.experimental.recipe_output
 from esmvalcore import _recipe
 from esmvalcore.esgf._download import ESGFFile
 from esmvalcore.exceptions import RecipeError
+from tests import PreprocessorFile
 
 
 class TestRecipe:
@@ -257,8 +260,7 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
         'exp': 'historical',
         'ensemble': 'r1i1p1f1',
         'grid': 'gr',
-        'start_year': 1850,
-        'end_year': 1851,
+        'timerange': '1850/1851',
         'alias': 'CMIP6_EC-Eeath3_tas',
     }
 
@@ -298,3 +300,45 @@ def test_write_html_summary(mocker, caplog):
 
     assert f"Could not write HTML report: {message}" in caplog.text
     mock_recipe.get_output.assert_called_once()
+
+
+def test_add_fxvar_keys_extra_facets():
+    """Test correct addition of extra facets to fx variables."""
+    fx_info = {'short_name': 'areacella', 'mip': 'fx'}
+    variable = {'project': 'ICON', 'dataset': 'ICON'}
+    extra_facets_dir = tuple()
+    fx_var = _recipe._add_fxvar_keys(fx_info, variable, extra_facets_dir)
+    expected_fx_var = {
+        # Already given by fx_info and variable
+        'short_name': 'areacella',
+        'mip': 'fx',
+        'project': 'ICON',
+        'dataset': 'ICON',
+        # Added by _add_fxvar_keys
+        'variable_group': 'areacella',
+        # Added by _add_cmor_info
+        'original_short_name': 'areacella',
+        'standard_name': 'cell_area',
+        'long_name': 'Grid-Cell Area for Atmospheric Grid Variables',
+        'units': 'm2',
+        'modeling_realm': ['atmos', 'land'],
+        'frequency': 'fx',
+        # Added by _add_extra_facets
+        'latitude': 'grid_latitude',
+        'longitude': 'grid_longitude',
+        'raw_name': 'cell_area',
+    }
+    assert fx_var == expected_fx_var
+
+
+def test_multi_model_filename():
+    """Test timerange in multi-model filename is correct."""
+    cube = iris.cube.Cube(np.array([1]))
+    products = [
+        PreprocessorFile(cube, 'A', {'timerange': '1990/1991'}),
+        PreprocessorFile(cube, 'B', {'timerange': '1989/1990'}),
+        PreprocessorFile(cube, 'C', {'timerange': '1991/1992'}),
+    ]
+    attributes = _recipe._get_statistic_attributes(products)
+    assert 'timerange' in attributes
+    assert attributes['timerange'] == '1989/1992'
