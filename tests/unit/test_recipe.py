@@ -1,3 +1,5 @@
+from unittest import mock
+
 import iris
 import numpy as np
 import pyesgf.search.results
@@ -353,14 +355,20 @@ def test_multi_model_filename():
     assert attributes['timerange'] == '1989/1992'
 
 
+SCRIPTS_CFG = {
+    'output_dir': mock.sentinel.output_dir,
+    'script': mock.sentinel.script,
+    'settings': mock.sentinel.settings,
+}
 DIAGNOSTICS = {
-    'd1': {'scripts': {'s1': {'ancestors': []}}},
-    'd2': {'scripts': {'s1': {'ancestors': ['d1/pr', 'd1/s1']}}},
-    'd3': {'scripts': {'s1': {'ancestors': ['d2/s1']}}},
+    'd1': {'scripts': {'s1': {'ancestors': [], **SCRIPTS_CFG}}},
+    'd2': {'scripts': {'s1': {'ancestors': ['d1/pr', 'd1/s1'],
+                              **SCRIPTS_CFG}}},
+    'd3': {'scripts': {'s1': {'ancestors': ['d2/s1'], **SCRIPTS_CFG}}},
     'd4': {'scripts': {
-        's1': {'ancestors': 'd1/pr d1/tas'},
-        's2': {'ancestors': ['d4/pr', 'd4/tas']},
-        's3': {'ancestors': ['d3/s1']},
+        's1': {'ancestors': 'd1/pr d1/tas', **SCRIPTS_CFG},
+        's2': {'ancestors': ['d4/pr', 'd4/tas'], **SCRIPTS_CFG},
+        's3': {'ancestors': ['d3/s1'], **SCRIPTS_CFG},
     }},
 }
 TEST_GET_TASKS_TO_RUN = [
@@ -389,8 +397,46 @@ def test_get_tasks_to_run(diags_to_run, tasknames_to_run):
     cfg = {}
     if diags_to_run is not None:
         cfg = {'diagnostics': diags_to_run}
+
     recipe = MockRecipe(cfg, DIAGNOSTICS)
     tasks_to_run = recipe._get_tasks_to_run()
-    print(diags_to_run)
-    print(tasks_to_run)
+
     assert tasks_to_run == tasknames_to_run
+
+
+TEST_CREATE_DIAGNOSTIC_TASKS = [
+    ([], ['s1', 's2', 's3'], True),
+    ({'d4/*'}, ['s1', 's2', 's3'], True),
+    ({'d4/s1'}, ['s1'], True),
+    ({'d4/s1', 'd3/*'}, ['s1'], True),
+    ({'d4/s1', 'd4/s2'}, ['s1', 's2'], True),
+    ({'d3/*'}, [], False),
+]
+
+
+@pytest.mark.parametrize('tasks_to_run,tasks_run,any_diag_run',
+                         TEST_CREATE_DIAGNOSTIC_TASKS)
+@mock.patch('esmvalcore._recipe.DiagnosticTask', autospec=True)
+def test_create_diagnostic_tasks(mock_diag_task, tasks_to_run, tasks_run,
+                                 any_diag_run):
+    """Test ``Recipe._create_diagnostic_tasks``."""
+    cfg = {'run_diagnostic': True}
+    diag_name = 'd4'
+    diag_cfg = DIAGNOSTICS['d4']
+    n_tasks = len(tasks_run)
+
+    recipe = MockRecipe(cfg, DIAGNOSTICS)
+    (tasks, any_diag_script_is_run) = recipe._create_diagnostic_tasks(
+        diag_name, diag_cfg, tasks_to_run)
+
+    assert len(tasks) == n_tasks
+    assert any_diag_script_is_run == any_diag_run
+    assert mock_diag_task.call_count == n_tasks
+    for task_name in tasks_run:
+        expected_call = mock.call(
+            script=mock.sentinel.script,
+            output_dir=mock.sentinel.output_dir,
+            settings=mock.sentinel.settings,
+            name=f'{diag_name}{_recipe.TASKSEP}{task_name}',
+        )
+        assert expected_call in mock_diag_task.mock_calls
