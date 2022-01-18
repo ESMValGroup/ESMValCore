@@ -21,6 +21,7 @@ on:
   push:
     branches:
     - main
+    - add_py310_GActions
   # run the test only if the PR is to main
   # turn it on if required
   # pull_request:
@@ -34,7 +35,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
       # fail-fast set to False allows all other tests
       # in the worflow to run regardless of any fail
       fail-fast: false
@@ -71,7 +72,7 @@ jobs:
     runs-on: "macos-latest"
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
