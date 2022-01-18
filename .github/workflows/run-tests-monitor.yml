@@ -41,7 +41,7 @@ jobs:
       - shell: bash -l {0}
         run: pytest -n 2 -m "not installation and not sequential" 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - shell: bash -l {0}
-        run: python tests/parse_pymon.py 
+        run: python tests/parse_pymon.py
       - shell: bash -l {0}
         run: pytest -n 0 -m "sequential"
       - shell: bash -l {0}
@@ -78,7 +78,7 @@ jobs:
       - shell: bash -l {0}
         run: pip install pytest-monitor
       - shell: bash -l {0}
-        run: pip install -e .[develop] --use-feature=2020-resolver 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/install.txt
+        run: pip install -e .[develop] 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/install.txt
       - shell: bash -l {0}
         run: pytest -n 2 -m "not installation and not sequential" 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - shell: bash -l {0}
