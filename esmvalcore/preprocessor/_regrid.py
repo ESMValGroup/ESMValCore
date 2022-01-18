@@ -3,6 +3,7 @@
 import logging
 import os
 import re
+import warnings
 from copy import deepcopy
 from decimal import Decimal
 from typing import Dict
@@ -13,6 +14,8 @@ import stratify
 from dask import array as da
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
+
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.fix import fix_file, fix_metadata
@@ -63,9 +66,12 @@ HORIZONTAL_SCHEMES = {
 }
 
 # Supported vertical interpolation schemes.
-VERTICAL_SCHEMES = ('linear', 'nearest',
-                    'linear_horizontal_extrapolate_vertical',
-                    'nearest_horizontal_extrapolate_vertical')
+VERTICAL_SCHEMES = (
+    'linear',
+    'nearest',
+    'linear_extrapolate',
+    'nearest_extrapolate',
+)
 
 
 def parse_cell_spec(spec):
@@ -705,27 +711,44 @@ def parse_vertical_scheme(scheme):
         The vertical interpolation scheme to use. Choose from
         'linear',
         'nearest',
-        'nearest_horizontal_extrapolate_vertical',
-        'linear_horizontal_extrapolate_vertical'.
+        'linear_extrapolate',
+        'nearest_extrapolate'.
 
     Returns
     -------
     (str, str)
         A tuple containing the interpolation and extrapolation scheme.
     """
+    # Issue warning when deprecated schemes are used
+    deprecated_schemes = {
+        'linear_horizontal_extrapolate_vertical': 'linear_extrapolate',
+        'nearest_horizontal_extrapolate_vertical': 'nearest_extrapolate',
+    }
+    if scheme in deprecated_schemes:
+        new_scheme = deprecated_schemes[scheme]
+        deprecation_msg = (
+            f"The vertical regridding scheme ``{scheme}`` has been deprecated "
+            f"in ESMValCore version 2.5 and is scheduled for removal in "
+            f"version 2.7. It has been replaced with the scheme "
+            f"``{new_scheme}``.")
+        warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+        scheme = new_scheme
+
+    # Check if valid scheme is given
     if scheme not in VERTICAL_SCHEMES:
-        emsg = 'Unknown vertical interpolation scheme, got {!r}. '
-        emsg += 'Possible schemes: {!r}'
-        raise ValueError(emsg.format(scheme, VERTICAL_SCHEMES))
+        raise ValueError(
+            f"Unknown vertical interpolation scheme, got '{scheme}', possible "
+            f"schemes are {VERTICAL_SCHEMES}")
 
     # This allows us to put level 0. to load the ocean surface.
     extrap_scheme = 'nan'
-    if scheme == 'nearest_horizontal_extrapolate_vertical':
-        scheme = 'nearest'
+
+    if scheme == 'linear_extrapolate':
+        scheme = 'linear'
         extrap_scheme = 'nearest'
 
-    if scheme == 'linear_horizontal_extrapolate_vertical':
-        scheme = 'linear'
+    if scheme == 'nearest_extrapolate':
+        scheme = 'nearest'
         extrap_scheme = 'nearest'
 
     return scheme, extrap_scheme
@@ -753,8 +776,8 @@ def extract_levels(cube,
         The vertical interpolation scheme to use. Choose from
         'linear',
         'nearest',
-        'nearest_horizontal_extrapolate_vertical',
-        'linear_horizontal_extrapolate_vertical'.
+        'linear_extrapolate',
+        'nearest_extrapolate'.
     coordinate :  optional str
         The coordinate to interpolate. If specified, pressure levels
         (if present) can be converted to height levels and vice versa using

@@ -334,7 +334,7 @@ extract the levels and vertically regrid onto the vertical levels of
           levels: ERA-Interim
           # This also works, but allows specifying the pressure coordinate name
           # levels: {dataset: ERA-Interim, coordinate: air_pressure}
-          scheme: linear_horizontal_extrapolate_vertical
+          scheme: linear_extrapolate
 
 By default, vertical interpolation is performed in the dimension coordinate of
 the z axis. If you want to explicitly declare the z axis coordinate to use
@@ -348,7 +348,7 @@ the name of the desired coordinate:
       preproc_select_levels_from_dataset:
         extract_levels:
           levels: ERA-Interim
-          scheme: linear_horizontal_extrapolate_vertical
+          scheme: linear_extrapolate
           coordinate: air_pressure
 
 If ``coordinate`` is specified, pressure levels (if present) can be converted
