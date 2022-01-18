@@ -553,20 +553,40 @@ To keep the tool user friendly, try to avoid making changes that are not
 backward compatible, i.e. changes that require users to change their existing
 recipes, diagnostics, configuration files, or scripts.
 
-If you really must change the public interfaces of the tool, always discuss this
-with the `@ESMValGroup/esmvaltool-coreteam`_.
-Try to deprecate the feature first by issuing a :py:class:`DeprecationWarning`
-using the :py:mod:`warnings` module and schedule it for removal three
-`minor versions <https://semver.org/>`__ from the latest released version.
-For example, when you deprecate a feature in a pull request that will be
-included in version 2.3, that feature could be removed in version 2.5.
+If you really must change the public interfaces of the tool, always discuss
+this with the `@ESMValGroup/esmvaltool-coreteam`_.  Try to deprecate the
+feature first by issuing a
+:class:`esmvalcore.exceptions.ESMValCoreDeprecationWarning` using the
+:py:mod:`warnings` module and schedule it for removal two `minor versions
+<https://semver.org/>`__ from the upcoming release.  For example, when you
+deprecate a feature in a pull request that will be included in version 2.5,
+that feature could be removed in version 2.7:
+
+.. code-block:: python
+
+   import warnings
+
+   from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+
+   # Other code
+
+   def func(x, deprecated_option=None):
+       """Deprecate deprecated_option."""
+       if deprecated_option is not None:
+           deprecation_msg = (
+               "The option ``deprecated_option`` has been deprecated in "
+               "ESMValCore version 2.5 and is scheduled for removal in "
+               "version 2.7. Add additional text (e.g., description of "
+               "alternatives) here.")
+           warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+
+       # Other code
+
 Mention the version in which the feature will be removed in the deprecation
-message.
-Label the pull request with the
-`deprecated feature <https://github.com/ESMValGroup/ESMValCore/labels/deprecated%20feature>`__
-label.
-When deprecating a feature, please follow up by actually removing the feature
-in due course.
+message. Label the pull request with the `deprecated feature
+<https://github.com/ESMValGroup/ESMValCore/labels/deprecated%20feature>`__
+label. When deprecating a feature, please follow up by actually removing the
+feature in due course.
 
 If you must make backward incompatible changes, you need to update the available
 recipes in ESMValTool and link the ESMValTool pull request(s) in the ESMValCore
