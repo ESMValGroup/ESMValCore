@@ -16,3 +16,7 @@ class RecipeError(Exception):
 
 class InputFilesNotFound(RecipeError):
     """Files that are required to run the recipe have not been found."""
+
+
+class ESMValCoreDeprecationWarning(UserWarning):
+    """Custom deprecation warning."""

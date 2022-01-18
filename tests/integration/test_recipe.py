@@ -2116,6 +2116,99 @@ def test_landmask(tmp_path, patched_datafinder, config_user):
             assert len(fx_variables) == 2
 
 
+def test_empty_fxvar_none(tmp_path, patched_datafinder, config_user):
+    """Test that no fx variables are added if explicitly specified."""
+    content = dedent("""
+        preprocessors:
+          landmask:
+            mask_landsea:
+              mask_out: sea
+              fx_variables: null
+        diagnostics:
+          diagnostic_name:
+            variables:
+              gpp:
+                preprocessor: landmask
+                project: CMIP5
+                mip: Lmon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check that no custom fx variables are present
+    task = recipe.tasks.pop()
+    product = task.products.pop()
+    assert product.settings['add_fx_variables']['fx_variables'] == {}
+
+
+def test_empty_fxvar_list(tmp_path, patched_datafinder, config_user):
+    """Test that no fx variables are added if explicitly specified."""
+    content = dedent("""
+        preprocessors:
+          landmask:
+            mask_landsea:
+              mask_out: sea
+              fx_variables: []
+        diagnostics:
+          diagnostic_name:
+            variables:
+              gpp:
+                preprocessor: landmask
+                project: CMIP5
+                mip: Lmon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check that no custom fx variables are present
+    task = recipe.tasks.pop()
+    product = task.products.pop()
+    assert product.settings['add_fx_variables']['fx_variables'] == {}
+
+
+def test_empty_fxvar_dict(tmp_path, patched_datafinder, config_user):
+    """Test that no fx variables are added if explicitly specified."""
+    content = dedent("""
+        preprocessors:
+          landmask:
+            mask_landsea:
+              mask_out: sea
+              fx_variables: {}
+        diagnostics:
+          diagnostic_name:
+            variables:
+              gpp:
+                preprocessor: landmask
+                project: CMIP5
+                mip: Lmon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check that no custom fx variables are present
+    task = recipe.tasks.pop()
+    product = task.products.pop()
+    assert product.settings['add_fx_variables']['fx_variables'] == {}
+
+
 def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
     content = dedent("""
         preprocessors:
