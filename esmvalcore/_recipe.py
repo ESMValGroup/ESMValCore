@@ -1520,6 +1520,10 @@ class Recipe:
     def _update_with_ancestors(self, tasknames_to_run):
         """Add ancestors for all selected tasks."""
         num_filters = len(tasknames_to_run)
+
+        # Iterate over all tasks and add all ancestors to tasknames_to_run of
+        # those tasks that match one of the patterns given by tasknames_to_run
+        # to
         for diagnostic_name, diagnostic in self.diagnostics.items():
             for script_name, script_cfg in diagnostic['scripts'].items():
                 task_name = diagnostic_name + TASKSEP + script_name
@@ -1531,6 +1535,16 @@ class Recipe:
                         for ancestor in ancestors:
                             tasknames_to_run.add(ancestor)
                         break
+
+        # If new ancestors have been added (num_filters !=
+        # len(tasknames_to_run)) -> return True. This causes another call of
+        # this function in the while() loop of _get_tasks_to_run to ensure that
+        # nested ancestors are found.
+
+        # If no new ancestors have been found (num_filters ==
+        # len(tasknames_to_run)) -> return False. This terminates the search
+        # for ancestors.
+
         return num_filters != len(tasknames_to_run)
 
     def _create_diagnostic_tasks(self, diagnostic_name, diagnostic,

@@ -10,6 +10,15 @@ from esmvalcore.exceptions import RecipeError
 from tests import PreprocessorFile
 
 
+class MockRecipe(_recipe.Recipe):
+    """Mocked Recipe class with simple constructor."""
+
+    def __init__(self, cfg, diagnostics):
+        """Simple constructor used for testing."""
+        self._cfg = cfg
+        self.diagnostics = diagnostics
+
+
 class TestRecipe:
 
     def test_expand_ensemble(self):
@@ -342,3 +351,46 @@ def test_multi_model_filename():
     attributes = _recipe._get_statistic_attributes(products)
     assert 'timerange' in attributes
     assert attributes['timerange'] == '1989/1992'
+
+
+DIAGNOSTICS = {
+    'd1': {'scripts': {'s1': {'ancestors': []}}},
+    'd2': {'scripts': {'s1': {'ancestors': ['d1/pr', 'd1/s1']}}},
+    'd3': {'scripts': {'s1': {'ancestors': ['d2/s1']}}},
+    'd4': {'scripts': {
+        's1': {'ancestors': 'd1/pr d1/tas'},
+        's2': {'ancestors': ['d4/pr', 'd4/tas']},
+        's3': {'ancestors': ['d3/s1']},
+    }},
+}
+TEST_GET_TASKS_TO_RUN = [
+    (None, []),
+    ({'wrong_task/*'}, {'wrong_task/*'}),
+    ({'d1/*'}, {'d1/*'}),
+    ({'d2/*'}, {'d2/*', 'd1/pr', 'd1/s1'}),
+    ({'d3/*'}, {'d3/*', 'd2/s1', 'd1/pr', 'd1/s1'}),
+    ({'d4/*'}, {'d4/*', 'd1/pr', 'd1/tas', 'd4/pr', 'd4/tas', 'd3/s1',
+                'd2/s1', 'd1/s1'}),
+    ({'wrong_task/*', 'd1/*'}, {'wrong_task/*', 'd1/*'}),
+    ({'d1/ta'}, {'d1/ta'}),
+    ({'d4/s2'}, {'d4/s2', 'd4/pr', 'd4/tas'}),
+    ({'d2/s1', 'd3/ta', 'd1/s1'}, {'d2/s1', 'd1/pr', 'd1/s1', 'd3/ta'}),
+    ({'d4/s1', 'd4/s2'}, {'d4/s1', 'd1/pr', 'd1/tas', 'd4/s2', 'd4/pr',
+                          'd4/tas'}),
+    ({'d4/s3', 'd3/ta'}, {'d4/s3', 'd3/s1', 'd2/s1', 'd1/pr', 'd1/s1',
+                          'd3/ta'}),
+]
+
+
+@pytest.mark.parametrize('diags_to_run,tasknames_to_run',
+                         TEST_GET_TASKS_TO_RUN)
+def test_get_tasks_to_run(diags_to_run, tasknames_to_run):
+    """Test ``Recipe._get_tasks_to_run``."""
+    cfg = {}
+    if diags_to_run is not None:
+        cfg = {'diagnostics': diags_to_run}
+    recipe = MockRecipe(cfg, DIAGNOSTICS)
+    tasks_to_run = recipe._get_tasks_to_run()
+    print(diags_to_run)
+    print(tasks_to_run)
+    assert tasks_to_run == tasknames_to_run
