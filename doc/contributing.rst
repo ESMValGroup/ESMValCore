@@ -554,11 +554,11 @@ backward compatible, i.e. changes that require users to change their existing
 recipes, diagnostics, configuration files, or scripts.
 
 If you really must change the public interfaces of the tool, always discuss
-this with the `@ESMValGroup/esmvaltool-coreteam`_.  Try to deprecate the
-feature first by issuing a
+this with the `@ESMValGroup/esmvaltool-coreteam`_. Try to deprecate the
+feature first by issuing an
 :class:`~esmvalcore.exceptions.ESMValCoreDeprecationWarning` using the
 :mod:`warnings` module and schedule it for removal two `minor versions
-<https://semver.org/>`__ from the upcoming release.  For example, when you
+<https://semver.org/>`__ from the upcoming release. For example, when you
 deprecate a feature in a pull request that will be included in version 2.5,
 that feature could be removed in version 2.7:
 
