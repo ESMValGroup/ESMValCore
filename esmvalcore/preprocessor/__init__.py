@@ -483,10 +483,11 @@ class PreprocessorFile(TrackedFile):
 
         identifier = []
         for key in keys:
-            attribute = self.attributes[key]
-            if isinstance(attribute, (list, tuple)):
-                attribute = '-'.join(attribute)
-            identifier.append(attribute)
+            attribute = self.attributes.get(key)
+            if attribute:
+                if isinstance(attribute, (list, tuple)):
+                    attribute = '-'.join(attribute)
+                identifier.append(attribute)
 
         return '_'.join(identifier)
 

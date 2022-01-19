@@ -737,7 +737,7 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
     settings = list(products)[0].settings[step]
 
     if step == 'ensemble_statistics':
-        grouping = ['project', 'dataset', 'exp']
+        grouping = ['project', 'dataset', 'exp', 'sub_experiment']
     else:
         grouping = settings.get('groupby', None)
 

@@ -471,7 +471,7 @@ def ensemble_statistics(products, statistics,
     --------
     multicube_statistics_iris : core statistics function.
     """
-    ensemble_grouping = ('project', 'dataset', 'exp')
+    ensemble_grouping = ('project', 'dataset', 'exp', 'sub_experiment')
     return multi_model_statistics(
         products=products,
         span='overlap',
