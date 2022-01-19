@@ -299,6 +299,15 @@ def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
 
     result_cube.data = np.ma.array(result_cube.data)
     result_cube.remove_coord(CONCAT_DIM)
+    if result_cube.cell_methods:
+        cell_method = result_cube.cell_methods[0]
+        result_cube.cell_methods = None
+        updated_method = iris.coords.CellMethod(
+            method=cell_method.method,
+            coords=cell_method.coord_names,
+            intervals=cell_method.intervals,
+            comments=f'input_cubes: {len(cubes)}')
+        result_cube.add_cell_method(updated_method)
     return result_cube
 
 
@@ -325,7 +334,6 @@ def _multicube_statistics(cubes, statistics, span):
         result_cube = _compute_eager(aligned_cubes,
                                      operator=operator,
                                      **kwargs)
-
         statistics_cubes[statistic] = result_cube
 
     return statistics_cubes
