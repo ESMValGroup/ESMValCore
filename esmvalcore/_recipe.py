@@ -1551,7 +1551,6 @@ class Recipe:
                                  tasknames_to_run):
         """Create diagnostic tasks."""
         tasks = []
-        any_diag_script_is_run = False
 
         if self._cfg.get('run_diagnostic', True):
             for script_name, script_cfg in diagnostic['scripts'].items():
@@ -1566,7 +1565,6 @@ class Recipe:
                         logger.info("Skipping task %s due to filter",
                                     task_name)
                         continue
-                any_diag_script_is_run = True
 
                 logger.info("Creating diagnostic task %s", task_name)
                 task = DiagnosticTask(
@@ -1577,7 +1575,7 @@ class Recipe:
                 )
                 tasks.append(task)
 
-        return tasks, any_diag_script_is_run
+        return tasks
 
     def _fill_wildcards(self, variable_group, preprocessor_output):
         """Fill wildcards in the `timerange` .
@@ -1697,8 +1695,10 @@ class Recipe:
             logger.info("Creating tasks for diagnostic %s", diagnostic_name)
 
             # Create diagnostic tasks
-            new_tasks, any_diag_script_is_run = self._create_diagnostic_tasks(
-                diagnostic_name, diagnostic, tasknames_to_run)
+            new_tasks = self._create_diagnostic_tasks(diagnostic_name,
+                                                      diagnostic,
+                                                      tasknames_to_run)
+            any_diag_script_is_run = bool(new_tasks)
             for task in new_tasks:
                 task.priority = priority
                 tasks.add(task)

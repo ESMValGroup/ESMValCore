@@ -373,6 +373,7 @@ DIAGNOSTICS = {
 }
 TEST_GET_TASKS_TO_RUN = [
     (None, []),
+    ({''}, {''}),
     ({'wrong_task/*'}, {'wrong_task/*'}),
     ({'d1/*'}, {'d1/*'}),
     ({'d2/*'}, {'d2/*', 'd1/pr', 'd1/s1'}),
@@ -405,20 +406,20 @@ def test_get_tasks_to_run(diags_to_run, tasknames_to_run):
 
 
 TEST_CREATE_DIAGNOSTIC_TASKS = [
-    ([], ['s1', 's2', 's3'], True),
-    ({'d4/*'}, ['s1', 's2', 's3'], True),
-    ({'d4/s1'}, ['s1'], True),
-    ({'d4/s1', 'd3/*'}, ['s1'], True),
-    ({'d4/s1', 'd4/s2'}, ['s1', 's2'], True),
-    ({'d3/*'}, [], False),
+    (set(), ['s1', 's2', 's3']),
+    ({'d4/*'}, ['s1', 's2', 's3']),
+    ({'d4/s1'}, ['s1']),
+    ({'d4/s1', 'd3/*'}, ['s1']),
+    ({'d4/s1', 'd4/s2'}, ['s1', 's2']),
+    ({''}, []),
+    ({'d3/*'}, []),
 ]
 
 
-@pytest.mark.parametrize('tasks_to_run,tasks_run,any_diag_run',
+@pytest.mark.parametrize('tasks_to_run,tasks_run',
                          TEST_CREATE_DIAGNOSTIC_TASKS)
 @mock.patch('esmvalcore._recipe.DiagnosticTask', autospec=True)
-def test_create_diagnostic_tasks(mock_diag_task, tasks_to_run, tasks_run,
-                                 any_diag_run):
+def test_create_diagnostic_tasks(mock_diag_task, tasks_to_run, tasks_run):
     """Test ``Recipe._create_diagnostic_tasks``."""
     cfg = {'run_diagnostic': True}
     diag_name = 'd4'
@@ -426,11 +427,9 @@ def test_create_diagnostic_tasks(mock_diag_task, tasks_to_run, tasks_run,
     n_tasks = len(tasks_run)
 
     recipe = MockRecipe(cfg, DIAGNOSTICS)
-    (tasks, any_diag_script_is_run) = recipe._create_diagnostic_tasks(
-        diag_name, diag_cfg, tasks_to_run)
+    tasks = recipe._create_diagnostic_tasks(diag_name, diag_cfg, tasks_to_run)
 
     assert len(tasks) == n_tasks
-    assert any_diag_script_is_run == any_diag_run
     assert mock_diag_task.call_count == n_tasks
     for task_name in tasks_run:
         expected_call = mock.call(
