@@ -61,7 +61,7 @@ REQUIREMENTS = {
     # Test dependencies
     # Execute 'python setup.py test' to run tests
     'test': [
-        'flake8<4',
+        'flake8<4',  # https://github.com/ESMValGroup/ESMValCore/issues/1405
         'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
         'pytest-cov>=2.10.1',
         'pytest-env',
