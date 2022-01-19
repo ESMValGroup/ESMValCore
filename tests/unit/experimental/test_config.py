@@ -1,3 +1,4 @@
+from collections.abc import MutableMapping
 from pathlib import Path
 
 import numpy as np
@@ -224,7 +225,7 @@ def test_config_class():
     assert isinstance(cfg['output_dir'], Path)
     assert isinstance(cfg['auxiliary_data_dir'], Path)
 
-    from esmvalcore._config import CFG as CFG_DEV
+    from esmvalcore._config._config import CFG as CFG_DEV
     assert CFG_DEV
 
 
@@ -236,9 +237,17 @@ def test_config_update():
         config.update(fail_dict)
 
 
+def test_set_bad_item():
+    config = Config({'output_dir': 'config'})
+    with pytest.raises(InvalidConfigParameter) as err_exc:
+        config['bad_item'] = 47
+
+    assert str(err_exc.value) == '`bad_item` is not a valid config parameter.'
+
+
 def test_config_init():
     config = Config()
-    assert isinstance(config, dict)
+    assert isinstance(config, MutableMapping)
 
 
 def test_session():
@@ -248,4 +257,4 @@ def test_session():
     assert session == config
 
     session['output_dir'] = 'session'
-    session != config
+    assert session != config

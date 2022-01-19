@@ -6,17 +6,17 @@ modeling_realm:    atmos
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
-standard_name:     
+standard_name:     surface_net_downward_longwave_flux
 units:             W m-2
 cell_methods:      time: mean
 cell_measures:     area: areacella
 long_name:         Surface Net downward Longwave Radiation
-comment:           at the top of the atmosphere (to be compared with satellite measurements)
+comment:           difference between downward and upward thermal radiation at the surface of the Earth
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
 dimensions:        longitude latitude time
 type:              real
-positive:          up
+positive:          down
 !----------------------------------
 !

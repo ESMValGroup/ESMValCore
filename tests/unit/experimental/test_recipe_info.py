@@ -1,48 +1,93 @@
-import pytest
+import textwrap
+from pathlib import Path
 
-from esmvalcore.experimental import get_recipe
-from esmvalcore.experimental.recipe_info import Contributor, Project, Reference
+import esmvalcore
+from esmvalcore._config import TAGS
+from esmvalcore._config._diagnostics import Diagnostics
+from esmvalcore.experimental.recipe_info import (
+    Contributor,
+    Project,
+    RecipeInfo,
+    Reference,
+)
 
-pytest.importorskip(
-    'esmvaltool',
-    reason='The behaviour of these tests depends on what ``DIAGNOSTICS_PATH``'
-    'points to. This is defined by a forward-reference to ESMValTool, which'
-    'is not installed in the CI, but likely to be available in a developer'
-    'or user installation.')
+DIAGNOSTICS = Diagnostics(Path(__file__).parent)
 
 
 def test_contributor():
     """Coverage test for Contributor."""
-    contributor = Contributor.from_tag('righi_mattia')
+    TAGS.set_tag_value(section='authors',
+                       tag='doe_john',
+                       value={
+                           'name': 'Doe, John',
+                           'institute': 'Testing',
+                           'orcid': 'https://orcid.org/0000-0000-0000-0000',
+                       })
 
-    assert contributor.name == 'Mattia Righi'
-    assert contributor.institute == 'DLR, Germany'
-    assert contributor.orcid.startswith('https://orcid.org/')
+    contributor = Contributor.from_tag('doe_john')
+
+    assert contributor.name == 'John Doe'
+    assert contributor.institute == 'Testing'
+    assert contributor.orcid == 'https://orcid.org/0000-0000-0000-0000'
     assert isinstance(repr(contributor), str)
     assert isinstance(str(contributor), str)
 
 
-def test_reference():
+def test_contributor_from_dict():
+    """Test Contributor init from dict."""
+    name = 'John Doe'
+    institute = 'Testing'
+    orcid = 'https://orcid.org/0000-0000-0000-0000'
+    attributes = {'name': name, 'institute': institute, 'orcid': orcid}
+    author = Contributor.from_dict(attributes=attributes)
+    assert author.name == name
+    assert author.institute == institute
+    assert author.orcid == orcid
+
+
+def test_reference(monkeypatch):
     """Coverage test for Reference."""
-    reference = Reference.from_tag('acknow_project')
+    monkeypatch.setattr(esmvalcore.experimental.recipe_metadata, 'DIAGNOSTICS',
+                        DIAGNOSTICS)
+
+    reference = Reference.from_tag('doe2021')
 
     assert isinstance(repr(reference), str)
     assert isinstance(str(reference), str)
     assert isinstance(reference.render('markdown'), str)
 
+    assert str(reference) == 'J. Doe. Test free or fail hard. 2021. doi:0.'
+
 
 def test_project():
     """Coverage test for Project."""
-    project = Project.from_tag('esmval')
+    TAGS.set_tag_value('projects', 'test_project', 'Test Project')
+
+    project = Project.from_tag('test_project')
 
     assert isinstance(repr(project), str)
     assert isinstance(str(project), str)
+    assert project.project == 'Test Project'
 
 
-def test_recipe_info():
-    """Coverage test for RecipeInfo."""
-    recipe = get_recipe('examples/recipe_python')
+def test_recipe_info_str():
+    """Test `RecipeInfo.__str__`."""
+    data = {
+        'documentation': {
+            'title': 'Test recipe',
+            'description': 'This is a very empty test recipe.'
+        }
+    }
 
-    assert isinstance(repr(recipe), str)
-    assert isinstance(str(recipe), str)
-    assert isinstance(recipe.to_markdown(), str)
+    recipe = RecipeInfo(data, filename='/path/to/recipe_test.yml')
+
+    text = textwrap.dedent("""
+        ## Test recipe
+
+        This is a very empty test recipe.
+
+        ### Authors
+
+        ### Maintainers
+        """).lstrip()
+    assert str(recipe) == text

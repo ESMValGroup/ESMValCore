@@ -60,23 +60,22 @@ def _listify_validator(scalar_validator,
                        allow_stringlist=False,
                        *,
                        n_items=None,
-                       docstring=None):
+                       docstring=None,
+                       return_type=list):
     """Apply the validator to a list."""
     def func(inp):
         if isinstance(inp, str):
             try:
-                inp = [
+                inp = return_type(
                     scalar_validator(val.strip()) for val in inp.split(',')
-                    if val.strip()
-                ]
+                    if val.strip())
             except Exception:
                 if allow_stringlist:
                     # Sometimes, a list of colors might be a single string
                     # of single-letter colornames. So give that a shot.
-                    inp = [
+                    inp = return_type(
                         scalar_validator(val.strip()) for val in inp
-                        if val.strip()
-                    ]
+                        if val.strip())
                 else:
                     raise
         # Allow any ordered sequence type -- generators, np.ndarray, pd.Series
@@ -87,10 +86,9 @@ def _listify_validator(scalar_validator,
             # behavior of filtering out any empty strings (behavior was
             # from the original validate_stringlist()), while allowing
             # any non-string/text scalar values such as numbers and arrays.
-            inp = [
+            inp = return_type(
                 scalar_validator(val) for val in inp
-                if not isinstance(val, str) or val
-            ]
+                if not isinstance(val, str) or val)
         else:
             raise ValidationError(
                 f"Expected str or other non-set iterable, but got {inp}")
@@ -166,6 +164,10 @@ validate_path_or_none = _make_type_validator(validate_path, allow_none=True)
 validate_pathlist = _listify_validator(validate_path,
                                        docstring='Return a list of paths.')
 
+validate_pathtuple = _listify_validator(validate_path,
+                                        docstring='Return a tuple of paths.',
+                                        return_type=tuple)
+
 validate_int_positive = _chain_validator(validate_int, validate_positive)
 validate_int_positive_or_none = _make_type_validator(validate_int_positive,
                                                      allow_none=True)
@@ -174,7 +176,10 @@ validate_int_positive_or_none = _make_type_validator(validate_int_positive,
 def validate_oldstyle_rootpath(value):
     """Validate `rootpath` mapping."""
     mapping = validate_dict(value)
-    return mapping
+    new_mapping = {}
+    for key, paths in mapping.items():
+        new_mapping[key] = validate_pathlist(paths)
+    return new_mapping
 
 
 def validate_oldstyle_drs(value):
@@ -247,17 +252,13 @@ def deprecate(func, variable, version: str = None):
 
 
 _validators = {
-    # deprecate in 2.2.0
-    'write_plots': deprecate(validate_bool, 'write_plots', '2.2.0'),
-    'write_netcdf': deprecate(validate_bool, 'write_netcdf', '2.2.0'),
-    'output_file_type': deprecate(validate_string, 'output_file_type',
-                                  '2.2.0'),
-
     # From user config
     'log_level': validate_string,
     'exit_on_warning': validate_bool,
     'output_dir': validate_path,
+    'download_dir': validate_path,
     'auxiliary_data_dir': validate_path,
+    'extra_facets_dir': validate_pathtuple,
     'compress_netcdf': validate_bool,
     'save_intermediary_cubes': validate_bool,
     'remove_preproc_dir': validate_bool,
@@ -265,12 +266,14 @@ _validators = {
     'config_developer_file': validate_config_developer,
     'profile_diagnostic': validate_bool,
     'run_diagnostic': validate_bool,
+    'output_file_type': validate_string,
 
     # From CLI
+    "resume_from": validate_pathlist,
     "skip-nonexistent": validate_bool,
     "diagnostics": validate_diagnostics,
     "check_level": validate_check_level,
-    "synda_download": validate_bool,
+    "offline": validate_bool,
     'max_years': validate_int_positive_or_none,
     'max_datasets': validate_int_positive_or_none,
 

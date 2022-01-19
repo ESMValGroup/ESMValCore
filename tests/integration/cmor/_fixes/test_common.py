@@ -1,159 +1,17 @@
 """Test for common fixes used for multiple datasets."""
-import os
-
 import iris
 import numpy as np
 import pytest
-from netCDF4 import Dataset
+from cf_units import Unit
 
-from esmvalcore.cmor._fixes.common import (ClFixHybridHeightCoord,
-                                           ClFixHybridPressureCoord)
+from esmvalcore.cmor._fixes.common import (
+    ClFixHybridHeightCoord,
+    ClFixHybridPressureCoord,
+    OceanFixGrid,
+    SiconcFixScalarCoord,
+)
 from esmvalcore.cmor.table import get_var_info
 from esmvalcore.iris_helpers import var_name_constraint
-
-
-def create_hybrid_pressure_file_without_ap(dataset, short_name):
-    """Create dataset without vertical auxiliary coordinate ``ap``."""
-    dataset.createDimension('time', size=1)
-    dataset.createDimension('lev', size=2)
-    dataset.createDimension('lat', size=3)
-    dataset.createDimension('lon', size=4)
-    dataset.createDimension('bnds', size=2)
-
-    # Dimensional variables
-    dataset.createVariable('time', np.float64, dimensions=('time',))
-    dataset.createVariable('lev', np.float64, dimensions=('lev',))
-    dataset.createVariable('lev_bnds', np.float64, dimensions=('lev', 'bnds'))
-    dataset.createVariable('lat', np.float64, dimensions=('lat',))
-    dataset.createVariable('lon', np.float64, dimensions=('lon',))
-    dataset.variables['time'][:] = [0.0]
-    dataset.variables['time'].standard_name = 'time'
-    dataset.variables['time'].units = 'days since 6543-2-1'
-    dataset.variables['lev'][:] = [1.0, 2.0]
-    dataset.variables['lev'].bounds = 'lev_bnds'
-    dataset.variables['lev'].standard_name = (
-        'atmosphere_hybrid_sigma_pressure_coordinate')
-    dataset.variables['lev'].units = '1'
-    dataset.variables['lev_bnds'][:] = [[0.5, 1.5], [1.5, 3.0]]
-    dataset.variables['lev_bnds'].standard_name = (
-        'atmosphere_hybrid_sigma_pressure_coordinate')
-    dataset.variables['lev_bnds'].units = '1'
-    dataset.variables['lat'][:] = [-30.0, 0.0, 30.0]
-    dataset.variables['lat'].standard_name = 'latitude'
-    dataset.variables['lat'].units = 'degrees_north'
-    dataset.variables['lon'][:] = [30.0, 60.0, 90.0, 120.0]
-    dataset.variables['lon'].standard_name = 'longitude'
-    dataset.variables['lon'].units = 'degrees_east'
-
-    # Coordinates for derivation of pressure coordinate
-    dataset.createVariable('b', np.float64, dimensions=('lev',))
-    dataset.createVariable('b_bnds', np.float64, dimensions=('lev', 'bnds'))
-    dataset.createVariable('ps', np.float64,
-                           dimensions=('time', 'lat', 'lon'))
-    dataset.variables['b'][:] = [0.0, 1.0]
-    dataset.variables['b_bnds'][:] = [[-1.0, 0.5], [0.5, 2.0]]
-    dataset.variables['ps'][:] = np.arange(1 * 3 * 4).reshape(1, 3, 4)
-    dataset.variables['ps'].standard_name = 'surface_air_pressure'
-    dataset.variables['ps'].units = 'Pa'
-    dataset.variables['ps'].additional_attribute = 'xyz'
-
-    # Variable
-    dataset.createVariable(short_name, np.float32,
-                           dimensions=('time', 'lev', 'lat', 'lon'))
-    dataset.variables[short_name][:] = np.full((1, 2, 3, 4), 0.0,
-                                               dtype=np.float32)
-    dataset.variables[short_name].standard_name = (
-        'cloud_area_fraction_in_atmosphere_layer')
-    dataset.variables[short_name].units = '%'
-
-
-def create_hybrid_pressure_file_with_a(dataset, short_name):
-    """Create netcdf file with issues in hybrid pressure coordinate."""
-    create_hybrid_pressure_file_without_ap(dataset, short_name)
-    dataset.createVariable('a', np.float64, dimensions=('lev',))
-    dataset.createVariable('a_bnds', np.float64, dimensions=('lev', 'bnds'))
-    dataset.createVariable('p0', np.float64, dimensions=())
-    dataset.variables['a'][:] = [1.0, 2.0]
-    dataset.variables['a_bnds'][:] = [[0.0, 1.5], [1.5, 3.0]]
-    dataset.variables['p0'][:] = 1.0
-    dataset.variables['p0'].units = 'Pa'
-    dataset.variables['lev'].formula_terms = 'p0: p0 a: a b: b ps: ps'
-    dataset.variables['lev_bnds'].formula_terms = (
-        'p0: p0 a: a_bnds b: b_bnds ps: ps')
-
-
-def create_hybrid_pressure_file_with_ap(dataset, short_name):
-    """Create netcdf file with issues in hybrid pressure coordinate."""
-    create_hybrid_pressure_file_without_ap(dataset, short_name)
-    dataset.createVariable('ap', np.float64, dimensions=('lev',))
-    dataset.createVariable('ap_bnds', np.float64, dimensions=('lev', 'bnds'))
-    dataset.variables['ap'][:] = [1.0, 2.0]
-    dataset.variables['ap_bnds'][:] = [[0.0, 1.5], [1.5, 3.0]]
-    dataset.variables['ap'].units = 'Pa'
-    dataset.variables['lev'].formula_terms = 'ap: ap b: b ps: ps'
-    dataset.variables['lev_bnds'].formula_terms = (
-        'ap: ap_bnds b: b_bnds ps: ps')
-
-
-@pytest.fixture
-def cl_file_with_a(tmp_path):
-    """Create netcdf file for ``cl`` with ``a`` coordinate."""
-    nc_path = os.path.join(tmp_path, 'cl_a.nc')
-    dataset = Dataset(nc_path, mode='w')
-    create_hybrid_pressure_file_with_a(dataset, 'cl')
-    dataset.close()
-    return nc_path
-
-
-@pytest.fixture
-def cl_file_with_ap(tmp_path):
-    """Create netcdf file for ``cl`` with ``ap`` coordinate."""
-    nc_path = os.path.join(tmp_path, 'cl_ap.nc')
-    dataset = Dataset(nc_path, mode='w')
-    create_hybrid_pressure_file_with_ap(dataset, 'cl')
-    dataset.close()
-    return nc_path
-
-
-@pytest.fixture
-def cli_file_with_a(tmp_path):
-    """Create netcdf file for ``cli`` with ``a`` coordinate."""
-    nc_path = os.path.join(tmp_path, 'cli_a.nc')
-    dataset = Dataset(nc_path, mode='w')
-    create_hybrid_pressure_file_with_a(dataset, 'cli')
-    dataset.close()
-    return nc_path
-
-
-@pytest.fixture
-def cli_file_with_ap(tmp_path):
-    """Create netcdf file for ``cli`` with ``ap`` coordinate."""
-    nc_path = os.path.join(tmp_path, 'cli_ap.nc')
-    dataset = Dataset(nc_path, mode='w')
-    create_hybrid_pressure_file_with_ap(dataset, 'cli')
-    dataset.close()
-    return nc_path
-
-
-@pytest.fixture
-def clw_file_with_a(tmp_path):
-    """Create netcdf file for ``clw`` with ``a`` coordinate."""
-    nc_path = os.path.join(tmp_path, 'clw_a.nc')
-    dataset = Dataset(nc_path, mode='w')
-    create_hybrid_pressure_file_with_a(dataset, 'clw')
-    dataset.close()
-    return nc_path
-
-
-@pytest.fixture
-def clw_file_with_ap(tmp_path):
-    """Create netcdf file for ``clw`` with ``ap`` coordinate."""
-    nc_path = os.path.join(tmp_path, 'clw_ap.nc')
-    dataset = Dataset(nc_path, mode='w')
-    create_hybrid_pressure_file_with_ap(dataset, 'clw')
-    dataset.close()
-    return nc_path
-
 
 AIR_PRESSURE_POINTS = np.array([[[[1.0, 1.0, 1.0, 1.0],
                                   [1.0, 1.0, 1.0, 1.0],
@@ -189,7 +47,7 @@ AIR_PRESSURE_BOUNDS = np.array([[[[[0.0, 1.5],
 
 def hybrid_pressure_coord_fix_metadata(nc_path, short_name, fix):
     """Test ``fix_metadata`` of file with hybrid pressure coord."""
-    cubes = iris.load(nc_path)
+    cubes = iris.load(str(nc_path))
 
     # Raw cubes
     assert len(cubes) == 4
@@ -199,20 +57,20 @@ def hybrid_pressure_coord_fix_metadata(nc_path, short_name, fix):
     assert 'b_bnds' in var_names
 
     # Raw cube
-    cube = cubes.extract_strict(var_name_constraint(short_name))
+    cube = cubes.extract_cube(var_name_constraint(short_name))
     air_pressure_coord = cube.coord('air_pressure')
     assert air_pressure_coord.points is not None
     assert air_pressure_coord.bounds is None
     np.testing.assert_allclose(air_pressure_coord.points, AIR_PRESSURE_POINTS)
 
     # Raw ps cube
-    ps_cube = cubes.extract_strict('surface_air_pressure')
+    ps_cube = cubes.extract_cube('surface_air_pressure')
     assert ps_cube.attributes == {'additional_attribute': 'xyz'}
 
     # Apply fix
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
-    fixed_cube = fixed_cubes.extract_strict(var_name_constraint(short_name))
+    fixed_cube = fixed_cubes.extract_cube(var_name_constraint(short_name))
     fixed_air_pressure_coord = fixed_cube.coord('air_pressure')
     assert fixed_air_pressure_coord.points is not None
     assert fixed_air_pressure_coord.bounds is not None
@@ -226,106 +84,24 @@ def hybrid_pressure_coord_fix_metadata(nc_path, short_name, fix):
     return var_names
 
 
-def test_cl_hybrid_pressure_coord_fix_metadata_with_a(cl_file_with_a):
+@pytest.mark.sequential
+def test_cl_hybrid_pressure_coord_fix_metadata_with_a(test_data_path):
     """Test ``fix_metadata`` for ``cl``."""
     vardef = get_var_info('CMIP6', 'Amon', 'cl')
+    nc_path = test_data_path / 'common_cl_a.nc'
     var_names = hybrid_pressure_coord_fix_metadata(
-        cl_file_with_a, 'cl', ClFixHybridPressureCoord(vardef))
+        nc_path, 'cl', ClFixHybridPressureCoord(vardef))
     assert 'a_bnds' in var_names
 
 
-def test_cl_hybrid_pressure_coord_fix_metadata_with_ap(cl_file_with_ap):
+@pytest.mark.sequential
+def test_cl_hybrid_pressure_coord_fix_metadata_with_ap(test_data_path):
     """Test ``fix_metadata`` for ``cl``."""
     vardef = get_var_info('CMIP6', 'Amon', 'cl')
+    nc_path = test_data_path / 'common_cl_ap.nc'
     var_names = hybrid_pressure_coord_fix_metadata(
-        cl_file_with_ap, 'cl', ClFixHybridPressureCoord(vardef))
+        nc_path, 'cl', ClFixHybridPressureCoord(vardef))
     assert 'ap_bnds' in var_names
-
-
-def create_hybrid_height_file(dataset, short_name):
-    """Create dataset with hybrid height coordinate."""
-    dataset.createDimension('time', size=1)
-    dataset.createDimension('lev', size=2)
-    dataset.createDimension('lat', size=1)
-    dataset.createDimension('lon', size=2)
-    dataset.createDimension('bnds', size=2)
-
-    # Dimensional variables
-    dataset.createVariable('time', np.float64, dimensions=('time',))
-    dataset.createVariable('lev', np.float64, dimensions=('lev',))
-    dataset.createVariable('lev_bnds', np.float64, dimensions=('lev', 'bnds'))
-    dataset.createVariable('lat', np.float64, dimensions=('lat',))
-    dataset.createVariable('lon', np.float64, dimensions=('lon',))
-    dataset.variables['time'][:] = [0.0]
-    dataset.variables['time'].standard_name = 'time'
-    dataset.variables['time'].units = 'days since 6543-2-1'
-    dataset.variables['lev'][:] = [1.0, 2.0]
-    dataset.variables['lev'].bounds = 'lev_bnds'
-    dataset.variables['lev'].standard_name = (
-        'atmosphere_hybrid_height_coordinate')
-    dataset.variables['lev'].units = 'm'
-    dataset.variables['lev'].formula_terms = 'a: lev b: b orog: orog'
-    dataset.variables['lev_bnds'][:] = [[0.5, 1.5], [1.5, 3.0]]
-    dataset.variables['lev_bnds'].standard_name = (
-        'atmosphere_hybrid_height_coordinate')
-    dataset.variables['lev_bnds'].units = '1'
-    dataset.variables['lev_bnds'].formula_terms = (
-        'a: lev_bnds b: b_bnds orog: orog')
-    dataset.variables['lat'][:] = [0.0]
-    dataset.variables['lat'].standard_name = 'latitude'
-    dataset.variables['lat'].units = 'degrees_north'
-    dataset.variables['lon'][:] = [30.0, 60.0]
-    dataset.variables['lon'].standard_name = 'longitude'
-    dataset.variables['lon'].units = 'degrees_east'
-
-    # Coordinates for derivation of height coordinate
-    dataset.createVariable('b', np.float64, dimensions=('lev',))
-    dataset.createVariable('b_bnds', np.float64, dimensions=('lev', 'bnds'))
-    dataset.createVariable('orog', np.float64, dimensions=('lat', 'lon'))
-    dataset.variables['b'][:] = [0.0, 1.0]
-    dataset.variables['b_bnds'][:] = [[-1.0, 0.5], [0.5, 2.0]]
-    dataset.variables['orog'][:] = [[0.0, 1.0]]
-    dataset.variables['orog'].standard_name = 'surface_altitude'
-    dataset.variables['orog'].units = 'm'
-
-    # Variable
-    dataset.createVariable(short_name, np.float32,
-                           dimensions=('time', 'lev', 'lat', 'lon'))
-    dataset.variables[short_name][:] = np.full((1, 2, 1, 2), 0.0,
-                                               dtype=np.float32)
-    dataset.variables[short_name].standard_name = (
-        'cloud_area_fraction_in_atmosphere_layer')
-    dataset.variables[short_name].units = '%'
-
-
-@pytest.fixture
-def cl_file_with_height(tmp_path):
-    """Create netcdf file for ``cl`` with hybrid height coordinate."""
-    nc_path = os.path.join(tmp_path, 'cl_hybrid_height.nc')
-    dataset = Dataset(nc_path, mode='w')
-    create_hybrid_height_file(dataset, 'cl')
-    dataset.close()
-    return nc_path
-
-
-@pytest.fixture
-def cli_file_with_height(tmp_path):
-    """Create netcdf file for ``cli`` with hybrid height coordinate."""
-    nc_path = os.path.join(tmp_path, 'cli_hybrid_height.nc')
-    dataset = Dataset(nc_path, mode='w')
-    create_hybrid_height_file(dataset, 'cli')
-    dataset.close()
-    return nc_path
-
-
-@pytest.fixture
-def clw_file_with_height(tmp_path):
-    """Create netcdf file for ``clw`` with hybrid height coordinate."""
-    nc_path = os.path.join(tmp_path, 'clw_hybrid_height.nc')
-    dataset = Dataset(nc_path, mode='w')
-    create_hybrid_height_file(dataset, 'clw')
-    dataset.close()
-    return nc_path
 
 
 HEIGHT_POINTS = np.array([[[1.0, 1.0]],
@@ -348,7 +124,7 @@ PRESSURE_BOUNDS = np.array([[[[101318.99243691, 101306.9780559],
 
 def hybrid_height_coord_fix_metadata(nc_path, short_name, fix):
     """Test ``fix_metadata`` of file with hybrid height coord."""
-    cubes = iris.load(nc_path)
+    cubes = iris.load(str(nc_path))
 
     # Raw cubes
     assert len(cubes) == 3
@@ -358,7 +134,7 @@ def hybrid_height_coord_fix_metadata(nc_path, short_name, fix):
     assert 'b_bnds' in var_names
 
     # Raw cube
-    cube = cubes.extract_strict(var_name_constraint(short_name))
+    cube = cubes.extract_cube(var_name_constraint(short_name))
     height_coord = cube.coord('altitude')
     assert height_coord.points is not None
     assert height_coord.bounds is not None
@@ -370,7 +146,7 @@ def hybrid_height_coord_fix_metadata(nc_path, short_name, fix):
     # Apply fix
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
-    fixed_cube = fixed_cubes.extract_strict(var_name_constraint(short_name))
+    fixed_cube = fixed_cubes.extract_cube(var_name_constraint(short_name))
     fixed_height_coord = fixed_cube.coord('altitude')
     assert fixed_height_coord.points is not None
     assert fixed_height_coord.bounds is not None
@@ -386,8 +162,259 @@ def hybrid_height_coord_fix_metadata(nc_path, short_name, fix):
     assert air_pressure_coord.units == 'Pa'
 
 
-def test_cl_hybrid_height_coord_fix_metadata(cl_file_with_height):
+@pytest.mark.sequential
+def test_cl_hybrid_height_coord_fix_metadata(test_data_path):
     """Test ``fix_metadata`` for ``cl``."""
     vardef = get_var_info('CMIP6', 'Amon', 'cl')
-    hybrid_height_coord_fix_metadata(cl_file_with_height, 'cl',
+    nc_path = test_data_path / 'common_cl_hybrid_height.nc'
+    hybrid_height_coord_fix_metadata(nc_path, 'cl',
                                      ClFixHybridHeightCoord(vardef))
+
+
+@pytest.fixture
+def siconc_cubes():
+    """Sample cube."""
+    time_coord = iris.coords.DimCoord([0.0], standard_name='time',
+                                      var_name='time',
+                                      units='days since 6543-2-1')
+    lat_coord = iris.coords.DimCoord([-30.0], standard_name='latitude',
+                                     var_name='lat', units='degrees_north')
+    lon_coord = iris.coords.DimCoord([30.0], standard_name='longitude',
+                                     var_name='lon', units='degrees_east')
+    coords_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]
+    cube = iris.cube.Cube([[[22.0]]], standard_name='sea_ice_area_fraction',
+                          var_name='siconc', units='%',
+                          dim_coords_and_dims=coords_specs)
+    return iris.cube.CubeList([cube])
+
+
+def test_siconc_fix_metadata(siconc_cubes):
+    """Test ``fix_metadata`` for ``siconc``."""
+    assert len(siconc_cubes) == 1
+    siconc_cube = siconc_cubes[0]
+    assert siconc_cube.var_name == "siconc"
+
+    # Extract siconc cube
+    siconc_cube = siconc_cubes.extract_cube('sea_ice_area_fraction')
+    assert not siconc_cube.coords('typesi')
+
+    # Apply fix
+    vardef = get_var_info('CMIP6', 'SImon', 'siconc')
+    fix = SiconcFixScalarCoord(vardef)
+    fixed_cubes = fix.fix_metadata(siconc_cubes)
+    assert len(fixed_cubes) == 1
+    fixed_siconc_cube = fixed_cubes.extract_cube(
+        'sea_ice_area_fraction')
+    fixed_typesi_coord = fixed_siconc_cube.coord('area_type')
+    assert fixed_typesi_coord.points is not None
+    assert fixed_typesi_coord.bounds is None
+    np.testing.assert_equal(fixed_typesi_coord.points,
+                            ['sea_ice'])
+    np.testing.assert_equal(fixed_typesi_coord.units,
+                            Unit('No unit'))
+
+
+def get_tos_cubes(wrong_ij_names=False, ij_bounds=False):
+    """Cubes containing tos variable."""
+    if wrong_ij_names:
+        j_var_name = 'lat'
+        j_long_name = 'latitude'
+        i_var_name = 'lon'
+        i_long_name = 'longitude'
+    else:
+        j_var_name = 'j'
+        j_long_name = 'cell index along second dimension'
+        i_var_name = 'i'
+        i_long_name = 'cell index along first dimension'
+    if ij_bounds:
+        j_bounds = [[10.0, 30.0], [30.0, 50.0]]
+        i_bounds = [[5.0, 15.0], [15.0, 25.0], [25.0, 35.0]]
+    else:
+        j_bounds = None
+        i_bounds = None
+    j_coord = iris.coords.DimCoord(
+        [20.0, 40.0],
+        bounds=j_bounds,
+        var_name=j_var_name,
+        long_name=j_long_name,
+    )
+    i_coord = iris.coords.DimCoord(
+        [10.0, 20.0, 30.0],
+        bounds=i_bounds,
+        var_name=i_var_name,
+        long_name=i_long_name,
+    )
+    lat_coord = iris.coords.AuxCoord(
+        [[-40.0, -20.0, 0.0], [-20.0, 0.0, 20.0]],
+        var_name='lat',
+        standard_name='latitude',
+        units='degrees_north',
+    )
+    lon_coord = iris.coords.AuxCoord(
+        [[100.0, 140.0, 180.0], [80.0, 100.0, 120.0]],
+        var_name='lon',
+        standard_name='longitude',
+        units='degrees_east',
+    )
+    time_coord = iris.coords.DimCoord(
+        1.0,
+        bounds=[0.0, 2.0],
+        var_name='time',
+        standard_name='time',
+        long_name='time',
+        units='days since 1950-01-01',
+    )
+
+    # Create tos variable cube
+    cube = iris.cube.Cube(
+        np.full((1, 2, 3), 300.0),
+        var_name='tos',
+        long_name='sea_surface_temperature',
+        units='K',
+        dim_coords_and_dims=[(time_coord, 0), (j_coord, 1), (i_coord, 2)],
+        aux_coords_and_dims=[(lat_coord, (1, 2)), (lon_coord, (1, 2))],
+    )
+
+    # Create empty (dummy) cube
+    empty_cube = iris.cube.Cube(0.0)
+    return iris.cube.CubeList([cube, empty_cube])
+
+
+@pytest.fixture
+def tos_cubes_wrong_ij_names():
+    """Cubes with wrong ij names."""
+    return get_tos_cubes(wrong_ij_names=True, ij_bounds=True)
+
+
+def test_ocean_fix_grid_wrong_ij_names(tos_cubes_wrong_ij_names):
+    """Test ``fix_metadata`` with cubes with wrong ij names."""
+    cube_in = tos_cubes_wrong_ij_names.extract_cube('sea_surface_temperature')
+    assert len(cube_in.coords('latitude')) == 2
+    assert len(cube_in.coords('longitude')) == 2
+    assert cube_in.coord('latitude', dimensions=1).bounds is not None
+    assert cube_in.coord('longitude', dimensions=2).bounds is not None
+    assert cube_in.coord('latitude', dimensions=(1, 2)).bounds is None
+    assert cube_in.coord('longitude', dimensions=(1, 2)).bounds is None
+
+    # Apply fix
+    vardef = get_var_info('CMIP6', 'Omon', 'tos')
+    fix = OceanFixGrid(vardef)
+    fixed_cubes = fix.fix_metadata(tos_cubes_wrong_ij_names)
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes.extract_cube('sea_surface_temperature')
+    assert fixed_cube is cube_in
+
+    # Check ij names
+    i_coord = fixed_cube.coord('cell index along first dimension')
+    j_coord = fixed_cube.coord('cell index along second dimension')
+    assert i_coord.var_name == 'i'
+    assert i_coord.standard_name is None
+    assert i_coord.long_name == 'cell index along first dimension'
+    assert i_coord.units == '1'
+    assert i_coord.circular is False
+    assert j_coord.var_name == 'j'
+    assert j_coord.standard_name is None
+    assert j_coord.long_name == 'cell index along second dimension'
+    assert j_coord.units == '1'
+
+    # Check ij points and bounds
+    np.testing.assert_allclose(i_coord.points, [0, 1, 2])
+    np.testing.assert_allclose(i_coord.bounds,
+                               [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]])
+    np.testing.assert_allclose(j_coord.points, [0, 1])
+    np.testing.assert_allclose(j_coord.bounds, [[-0.5, 0.5], [0.5, 1.5]])
+
+    # Check bounds of latitude and longitude
+    assert len(fixed_cube.coords('latitude')) == 1
+    assert len(fixed_cube.coords('longitude')) == 1
+    assert fixed_cube.coord('latitude').bounds is not None
+    assert fixed_cube.coord('longitude').bounds is not None
+    latitude_bounds = np.array(
+        [[[-43.48076211, -34.01923789, -22.00961894, -31.47114317],
+          [-34.01923789, -10.0, 2.00961894, -22.00961894],
+          [-10.0, -0.53847577, 11.47114317, 2.00961894]],
+         [[-31.47114317, -22.00961894, -10.0, -19.46152423],
+          [-22.00961894, 2.00961894, 14.01923789, -10.0],
+          [2.00961894, 11.47114317, 23.48076211, 14.01923789]]]
+    )
+    np.testing.assert_allclose(fixed_cube.coord('latitude').bounds,
+                               latitude_bounds)
+    longitude_bounds = np.array([[[140.625, 99.375, 99.375, 140.625],
+                                  [99.375, 140.625, 140.625, 99.375],
+                                  [140.625, 99.375, 99.375, 140.625]],
+                                 [[140.625, 99.375, 99.375, 140.625],
+                                  [99.375, 140.625, 140.625, 99.375],
+                                  [140.625, 99.375, 99.375, 140.625]]])
+    np.testing.assert_allclose(fixed_cube.coord('longitude').bounds,
+                               longitude_bounds)
+
+
+@pytest.fixture
+def tos_cubes_no_ij_bounds():
+    """Cubes with no ij bounds."""
+    return get_tos_cubes(wrong_ij_names=False, ij_bounds=False)
+
+
+def test_ocean_fix_grid_no_ij_bounds(tos_cubes_no_ij_bounds):
+    """Test ``fix_metadata`` with cubes with no ij bounds."""
+    cube_in = tos_cubes_no_ij_bounds.extract_cube('sea_surface_temperature')
+    assert len(cube_in.coords('latitude')) == 1
+    assert len(cube_in.coords('longitude')) == 1
+    assert cube_in.coord('latitude').bounds is None
+    assert cube_in.coord('longitude').bounds is None
+    assert cube_in.coord('cell index along first dimension').var_name == 'i'
+    assert cube_in.coord('cell index along second dimension').var_name == 'j'
+    assert cube_in.coord('cell index along first dimension').bounds is None
+    assert cube_in.coord('cell index along second dimension').bounds is None
+
+    # Apply fix
+    vardef = get_var_info('CMIP6', 'Omon', 'tos')
+    fix = OceanFixGrid(vardef)
+    fixed_cubes = fix.fix_metadata(tos_cubes_no_ij_bounds)
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes.extract_cube('sea_surface_temperature')
+    assert fixed_cube is cube_in
+
+    # Check ij names
+    i_coord = fixed_cube.coord('cell index along first dimension')
+    j_coord = fixed_cube.coord('cell index along second dimension')
+    assert i_coord.var_name == 'i'
+    assert i_coord.standard_name is None
+    assert i_coord.long_name == 'cell index along first dimension'
+    assert i_coord.units == '1'
+    assert i_coord.circular is False
+    assert j_coord.var_name == 'j'
+    assert j_coord.standard_name is None
+    assert j_coord.long_name == 'cell index along second dimension'
+    assert j_coord.units == '1'
+
+    # Check ij points and bounds
+    np.testing.assert_allclose(i_coord.points, [0, 1, 2])
+    np.testing.assert_allclose(i_coord.bounds,
+                               [[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]])
+    np.testing.assert_allclose(j_coord.points, [0, 1])
+    np.testing.assert_allclose(j_coord.bounds, [[-0.5, 0.5], [0.5, 1.5]])
+
+    # Check bounds of latitude and longitude
+    assert len(fixed_cube.coords('latitude')) == 1
+    assert len(fixed_cube.coords('longitude')) == 1
+    assert fixed_cube.coord('latitude').bounds is not None
+    assert fixed_cube.coord('longitude').bounds is not None
+    latitude_bounds = np.array(
+        [[[-43.48076211, -34.01923789, -22.00961894, -31.47114317],
+          [-34.01923789, -10.0, 2.00961894, -22.00961894],
+          [-10.0, -0.53847577, 11.47114317, 2.00961894]],
+         [[-31.47114317, -22.00961894, -10.0, -19.46152423],
+          [-22.00961894, 2.00961894, 14.01923789, -10.0],
+          [2.00961894, 11.47114317, 23.48076211, 14.01923789]]]
+    )
+    np.testing.assert_allclose(fixed_cube.coord('latitude').bounds,
+                               latitude_bounds)
+    longitude_bounds = np.array([[[140.625, 99.375, 99.375, 140.625],
+                                  [99.375, 140.625, 140.625, 99.375],
+                                  [140.625, 99.375, 99.375, 140.625]],
+                                 [[140.625, 99.375, 99.375, 140.625],
+                                  [99.375, 140.625, 140.625, 99.375],
+                                  [140.625, 99.375, 99.375, 140.625]]])
+    np.testing.assert_allclose(fixed_cube.coord('longitude').bounds,
+                               longitude_bounds)

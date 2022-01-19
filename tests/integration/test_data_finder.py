@@ -7,13 +7,18 @@ import pytest
 import yaml
 
 import esmvalcore._config
-from esmvalcore._data_finder import get_input_filelist, get_output_file
+from esmvalcore._data_finder import (
+    _find_input_files,
+    get_input_filelist,
+    get_output_file,
+)
 from esmvalcore.cmor.table import read_cmor_tables
 
 # Initialize with standard config developer file
-esmvalcore._config.CFG = esmvalcore._config.read_config_developer_file()
+CFG_DEVELOPER = esmvalcore._config.read_config_developer_file()
+esmvalcore._config._config.CFG = CFG_DEVELOPER
 # Initialize CMOR tables
-read_cmor_tables(esmvalcore._config.CFG)
+read_cmor_tables(CFG_DEVELOPER)
 
 # Load test configuration
 with open(os.path.join(os.path.dirname(__file__), 'data_finder.yml')) as file:
@@ -86,17 +91,24 @@ def test_get_input_filelist(root, cfg):
     # Find files
     rootpath = {cfg['variable']['project']: [root]}
     drs = {cfg['variable']['project']: cfg['drs']}
-    (input_filelist, dirnames,
-     filenames) = get_input_filelist(cfg['variable'], rootpath, drs)
-
-    # Test result
-    ref_files = [os.path.join(root, file) for file in cfg['found_files']]
-    if cfg['dirs'] is None:
-        ref_dirs = []
+    timerange = cfg['variable'].get('timerange')
+    if timerange and '*' in timerange:
+        (files, _, _) = _find_input_files(cfg['variable'], rootpath, drs)
+        ref_files = [
+            os.path.join(root, file) for file in cfg['found_files']]
+        # Test result
+        assert sorted(files) == sorted(ref_files)
     else:
-        ref_dirs = [os.path.join(root, dir) for dir in cfg['dirs']]
-    ref_patterns = cfg['file_patterns']
+        (input_filelist, dirnames,
+         filenames) = get_input_filelist(cfg['variable'], rootpath, drs)
+        # Test result
+        ref_files = [os.path.join(root, file) for file in cfg['found_files']]
+        if cfg['dirs'] is None:
+            ref_dirs = []
+        else:
+            ref_dirs = [os.path.join(root, dir) for dir in cfg['dirs']]
+        ref_patterns = cfg['file_patterns']
 
-    assert sorted(input_filelist) == sorted(ref_files)
-    assert sorted(dirnames) == sorted(ref_dirs)
-    assert sorted(filenames) == sorted(ref_patterns)
+        assert sorted(input_filelist) == sorted(ref_files)
+        assert sorted(dirnames) == sorted(ref_dirs)
+        assert sorted(filenames) == sorted(ref_patterns)

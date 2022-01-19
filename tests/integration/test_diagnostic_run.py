@@ -8,6 +8,7 @@ from textwrap import dedent
 import pytest
 import yaml
 
+from esmvalcore._config import TAGS
 from esmvalcore._main import run
 
 
@@ -147,6 +148,7 @@ def test_diagnostic_run(tmp_path, script_file, script):
     # Create recipe
     recipe = dedent("""
         documentation:
+          title: Recipe without data
           description: Recipe with no data.
           authors: [andela_bouwe]
 
@@ -158,6 +160,9 @@ def test_diagnostic_run(tmp_path, script_file, script):
                 setting_name: {}
         """.format(script_file, result_file))
     recipe_file.write_text(str(recipe))
+
+    # ensure that tags are cleared
+    TAGS.clear()
 
     config_user_file = write_config_user_file(tmp_path)
     with arguments(

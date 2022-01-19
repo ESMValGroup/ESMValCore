@@ -3,13 +3,13 @@
 Configuration
 =============
 
-This section describes the config submodule of the API.
+This section describes the :py:class:`~esmvalcore.experimental.config` submodule of the API (:py:mod:`esmvalcore.experimental`).
 
 Config
 ******
 
-Configuration of ESMValCore/Tool is done via the ``Config`` object.
-The global configuration can be imported from the ``esmvalcore.experimental`` module as ``CFG``:
+Configuration of ESMValCore/Tool is done via the :py:class:`~esmvalcore.experimental.config.Config` object.
+The global configuration can be imported from the :py:mod:`esmvalcore.experimental` module as :py:data:`~esmvalcore.experimental.CFG`:
 
 .. code-block:: python
 
@@ -30,13 +30,11 @@ The global configuration can be imported from the ``esmvalcore.experimental`` mo
             'rootpath': {'CMIP5': '~/default_inputpath',
                          'CMIP6': '~/default_inputpath',
                          'default': '~/default_inputpath'},
-            'save_intermediary_cubes': False,
-            'write_netcdf': True,
-            'write_plots': True})
+            'save_intermediary_cubes': False)
 
-The parameters for the user configuration file are listed `here <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html#user-configuration-file>`__.
+The parameters for the user configuration file are listed :ref:`here <user configuration file>`.
 
-``CFG`` is essentially a python dictionary with a few extra functions, similar to ``matplotlib.rcParams``.
+:py:data:`~esmvalcore.experimental.CFG` is essentially a python dictionary with a few extra functions, similar to :py:mod:`matplotlib.rcParams`.
 This means that values can be updated like this:
 
 .. code-block:: python
@@ -45,27 +43,27 @@ This means that values can be updated like this:
     >>> CFG['output_dir']
     PosixPath('/home/user/esmvaltool_output')
 
-Notice that ``CFG`` automatically converts the path to an instance of ``pathlib.Path`` and expands the home directory.
+Notice that :py:data:`~esmvalcore.experimental.CFG` automatically converts the path to an instance of ``pathlib.Path`` and expands the home directory.
 All values entered into the config are validated to prevent mistakes, for example, it will warn you if you make a typo in the key:
 
 .. code-block:: python
 
-    >>> CFG['otoptu_dri'] = '~/esmvaltool_output'
-    InvalidConfigParameter: `otoptu_dri` is not a valid config parameter.
+    >>> CFG['output_directory'] = '~/esmvaltool_output'
+    InvalidConfigParameter: `output_directory` is not a valid config parameter.
 
 Or, if the value entered cannot be converted to the expected type:
 
 .. code-block:: python
 
-    >>> CFG['max_years'] = '🐜'
-    InvalidConfigParameter: Key `max_years`: Could not convert '🐜' to int
+    >>> CFG['max_parallel_tasks'] = '🐜'
+    InvalidConfigParameter: Key `max_parallel_tasks`: Could not convert '🐜' to int
 
-``Config`` is also flexible, so it tries to correct the type of your input if possible:
+:py:class:`~esmvalcore.experimental.config.Config` is also flexible, so it tries to correct the type of your input if possible:
 
 .. code-block:: python
 
-    >>> CFG['max_years'] = '123'  # str
-    >>> type(CFG['max_years'])
+    >>> CFG['max_parallel_tasks'] = '8'  # str
+    >>> type(CFG['max_parallel_tasks'])
     int
 
 By default, the config is loaded from the default location (``/home/user/.esmvaltool/config-user.yml``).
@@ -87,16 +85,16 @@ Session
 *******
 
 Recipes and diagnostics will be run in their own directories.
-This behaviour can be controlled via the ``Session`` object.
-A ``Session`` can be initiated from the global ``Config``.
+This behaviour can be controlled via the :py:data:`~esmvalcore.experimental.config.Session` object.
+A :py:data:`~esmvalcore.experimental.config.Session` can be initiated from the global :py:class:`~esmvalcore.experimental.config.Config`.
 
 .. code-block:: python
 
     >>> session = CFG.start_session(name='my_session')
 
-A ``Session`` is very similar to the config.
-It is also a dictionary, and copies all the keys from the ``Config``.
-At this moment, ``session`` is essentially a copy of ``CFG``:
+A :py:data:`~esmvalcore.experimental.config.Session` is very similar to the config.
+It is also a dictionary, and copies all the keys from the :py:class:`~esmvalcore.experimental.config.Config`.
+At this moment, ``session`` is essentially a copy of :py:data:`~esmvalcore.experimental.CFG`:
 
 .. code-block:: python
 
@@ -106,7 +104,7 @@ At this moment, ``session`` is essentially a copy of ``CFG``:
     >>> print(session == CFG)  # False
     False
 
-A ``Session`` also knows about the directories where the data will stored.
+A :py:data:`~esmvalcore.experimental.config.Session` also knows about the directories where the data will stored.
 The session name is used to prefix the directories.
 
 .. code-block:: python
@@ -122,20 +120,12 @@ The session name is used to prefix the directories.
     >>> session.plot_dir
     /home/user/my_output_dir/my_session_20201203_155821/plots
 
-Unlike the global configuration, of which only one can exist, multiple sessions can be initiated from the ``Config``.
+Unlike the global configuration, of which only one can exist, multiple sessions can be initiated from :py:class:`~esmvalcore.experimental.config.Config`.
 
 
 API reference
 *************
 
-.. autoclass:: esmvalcore.experimental.config.CFG
-    :no-inherited-members:
-    :no-show-inheritance:
-
-.. autoclass:: esmvalcore.experimental.config.Config
-    :no-inherited-members:
-    :no-show-inheritance:
-
-.. autoclass:: esmvalcore.experimental.config.Session
+.. automodule:: esmvalcore.experimental.config
     :no-inherited-members:
     :no-show-inheritance:

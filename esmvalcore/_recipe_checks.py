@@ -4,19 +4,18 @@ import logging
 import os
 import re
 import subprocess
+from pprint import pformat
 from shutil import which
 
+import isodate
 import yamale
 
 from ._data_finder import get_start_end_year
-from ._task import get_flattened_tasks
+from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
+from .preprocessor._multimodel import STATISTIC_MAPPING
 
 logger = logging.getLogger(__name__)
-
-
-class RecipeError(Exception):
-    """Recipe contains an error."""
 
 
 def ncl_version():
@@ -48,11 +47,13 @@ def recipe_with_schema(filename):
     logger.debug("Checking recipe against schema %s", schema_file)
     recipe = yamale.make_data(filename)
     schema = yamale.make_schema(schema_file)
-    yamale.validate(schema, recipe)
+    yamale.validate(schema, recipe, strict=False)
 
 
 def diagnostics(diags):
     """Check diagnostics in recipe."""
+    if diags is None:
+        raise RecipeError('The given recipe does not have any diagnostic.')
     for name, diagnostic in diags.items():
         if 'scripts' not in diagnostic:
             raise RecipeError(
@@ -93,7 +94,7 @@ def variable(var, required_keys):
                 missing, var.get('short_name'), var.get('diagnostic')))
 
 
-def data_availability(input_files, var, dirnames, filenames):
+def _log_data_availability_errors(input_files, var, dirnames, filenames):
     """Check if the required input data is available."""
     var = dict(var)
     if not input_files:
@@ -116,13 +117,49 @@ def data_availability(input_files, var, dirnames, filenames):
                 "Looked for files matching %s, but did not find any existing "
                 "input directory", filenames)
         logger.error("Set 'log_level' to 'debug' to get more information")
-        raise RecipeError("Missing data")
 
-    # check time avail only for non-fx variables
+
+def _group_years(years):
+    """Group an iterable of years into easy to read text.
+
+    Example
+    -------
+    [1990, 1991, 1992, 1993, 2000] -> "1990-1993, 2000"
+    """
+    years = sorted(years)
+    year = years[0]
+    previous_year = year
+    starts = [year]
+    ends = []
+    for year in years[1:]:
+        if year != previous_year + 1:
+            starts.append(year)
+            ends.append(previous_year)
+        previous_year = year
+    ends.append(year)
+
+    ranges = []
+    for start, end in zip(starts, ends):
+        ranges.append(f"{start}" if start == end else f"{start}-{end}")
+
+    return ", ".join(ranges)
+
+
+def data_availability(input_files, var, dirnames, filenames, log=True):
+    """Check if input_files cover the required years."""
+    if log:
+        _log_data_availability_errors(input_files, var, dirnames, filenames)
+
+    if not input_files:
+        raise InputFilesNotFound(
+            f"Missing data for {var['alias']}: {var['short_name']}")
+
     if var['frequency'] == 'fx':
+        # check time availability only for non-fx variables
         return
-
-    required_years = set(range(var['start_year'], var['end_year'] + 1))
+    start_year = var['start_year']
+    end_year = var['end_year']
+    required_years = set(range(start_year, end_year + 1, 1))
     available_years = set()
 
     for filename in input_files:
@@ -131,16 +168,18 @@ def data_availability(input_files, var, dirnames, filenames):
 
     missing_years = required_years - available_years
     if missing_years:
-        raise RecipeError(
-            "No input data available for years {} in files {}".format(
-                ", ".join(str(year) for year in missing_years), input_files))
+        missing_txt = _group_years(missing_years)
+
+        raise InputFilesNotFound(
+            "No input data available for years {} in files:\n{}".format(
+                missing_txt, "\n".join(str(f) for f in input_files)))
 
 
 def tasks_valid(tasks):
     """Check that tasks are consistent."""
     filenames = set()
     msg = "Duplicate preprocessor filename {}, please file a bug report."
-    for task in get_flattened_tasks(tasks):
+    for task in tasks.flatten():
         if isinstance(task, PreprocessingTask):
             for product in task.products:
                 if product.filename in filenames:
@@ -264,3 +303,85 @@ def ensemble_statistics(settings):
     statistics = settings.get('statistics', None)
     if statistics:
         _verify_ensemble_statistics(statistics)
+def _check_delimiter(timerange):
+    if len(timerange) != 2:
+        raise RecipeError("Invalid value encountered for `timerange`. "
+                          "Valid values must be separated by `/`. "
+                          f"Got {timerange} instead.")
+
+
+def _check_duration_periods(timerange):
+    try:
+        isodate.parse_duration(timerange[0])
+    except ValueError:
+        pass
+    else:
+        try:
+            isodate.parse_duration(timerange[1])
+        except ValueError:
+            pass
+        else:
+            raise RecipeError("Invalid value encountered for `timerange`. "
+                              "Cannot set both the beginning and the end "
+                              "as duration periods.")
+
+
+def _check_format_years(date):
+    if date != '*' and not date.startswith('P'):
+        if len(date) < 4:
+            date = date.zfill(4)
+    return date
+
+
+def _check_timerange_values(date, timerange):
+    try:
+        isodate.parse_date(date)
+    except ValueError:
+        try:
+            isodate.parse_duration(date)
+        except ValueError as exc:
+            if date != '*':
+                raise RecipeError("Invalid value encountered for `timerange`. "
+                                  "Valid value must follow ISO 8601 standard "
+                                  "for dates and duration periods, or be "
+                                  "set to '*' to load available years. "
+                                  f"Got {timerange} instead.") from exc
+
+
+def valid_time_selection(timerange):
+    """Check that `timerange` tag is well defined."""
+    if timerange != '*':
+        timerange = timerange.split('/')
+        _check_delimiter(timerange)
+        _check_duration_periods(timerange)
+        for date in timerange:
+            date = _check_format_years(date)
+            _check_timerange_values(date, timerange)
+
+
+def reference_for_bias_preproc(products):
+    """Check that exactly one reference dataset for bias preproc is given."""
+    step = 'bias'
+    products = {p for p in products if step in p.settings}
+    if not products:
+        return
+
+    # Check that exactly one dataset contains the facet ``reference_for_bias:
+    # true``
+    reference_products = []
+    for product in products:
+        if product.attributes.get('reference_for_bias', False):
+            reference_products.append(product)
+    if len(reference_products) != 1:
+        products_str = [p.filename for p in products]
+        if not reference_products:
+            ref_products_str = ". "
+        else:
+            ref_products_str = [p.filename for p in reference_products]
+            ref_products_str = f":\n{pformat(ref_products_str)}.\n"
+        raise RecipeError(
+            f"Expected exactly 1 dataset with 'reference_for_bias: true' in "
+            f"products\n{pformat(products_str)},\nfound "
+            f"{len(reference_products):d}{ref_products_str}Please also "
+            f"ensure that the reference dataset is not excluded with the "
+            f"'exclude' option")

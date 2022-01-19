@@ -1,5 +1,7 @@
 """Tests for shared functions for fixes."""
 import iris
+import iris.coords
+import iris.cube
 import numpy as np
 import pytest
 from cf_units import Unit
@@ -12,9 +14,10 @@ from esmvalcore.cmor._fixes.shared import (
     add_scalar_height_coord,
     add_scalar_typeland_coord,
     add_scalar_typesea_coord,
-    add_sigma_factory,
+    add_scalar_typesi_coord,
     cube_to_aux_coord,
     fix_bounds,
+    fix_ocean_depth_coord,
     get_altitude_to_pressure_func,
     get_bounds_cube,
     get_pressure_to_altitude_func,
@@ -23,6 +26,7 @@ from esmvalcore.cmor._fixes.shared import (
 from esmvalcore.iris_helpers import var_name_constraint
 
 
+@pytest.mark.sequential
 def test_altitude_to_pressure_func():
     """Test altitude to pressure function."""
     func = get_altitude_to_pressure_func()
@@ -37,6 +41,7 @@ def test_altitude_to_pressure_func():
                                [101325.0, 100129.0])
 
 
+@pytest.mark.sequential
 def test_pressure_to_altitude_func():
     """Test pressure to altitude function."""
     func = get_pressure_to_altitude_func()
@@ -65,6 +70,7 @@ TEST_ADD_AUX_COORDS_FROM_CUBES = [
 ]
 
 
+@pytest.mark.sequential
 @pytest.mark.parametrize('coord_dict,output', TEST_ADD_AUX_COORDS_FROM_CUBES)
 def test_add_aux_coords_from_cubes(coord_dict, output):
     """Test extraction of auxiliary coordinates from cubes."""
@@ -130,6 +136,7 @@ TEST_ADD_PLEV_FROM_ALTITUDE = [
 ]
 
 
+@pytest.mark.sequential
 @pytest.mark.parametrize('cube,output', TEST_ADD_PLEV_FROM_ALTITUDE)
 def test_add_plev_from_altitude(cube, output):
     """Test adding of pressure level coordinate."""
@@ -167,6 +174,7 @@ TEST_ADD_ALTITUDE_FROM_PLEV = [
 ]
 
 
+@pytest.mark.sequential
 @pytest.mark.parametrize('cube,output', TEST_ADD_ALTITUDE_FROM_PLEV)
 def test_add_altitude_from_plev(cube, output):
     """Test adding of altitude coordinate."""
@@ -211,6 +219,7 @@ TEST_ADD_SCALAR_COORD = [
 ]
 
 
+@pytest.mark.sequential
 @pytest.mark.parametrize('cube_in,depth', TEST_ADD_SCALAR_COORD)
 def test_add_scalar_depth_coord(cube_in, depth):
     """Test adding of scalar depth coordinate."""
@@ -238,6 +247,7 @@ def test_add_scalar_depth_coord(cube_in, depth):
     assert coord == depth_coord
 
 
+@pytest.mark.sequential
 @pytest.mark.parametrize('cube_in,height', TEST_ADD_SCALAR_COORD)
 def test_add_scalar_height_coord(cube_in, height):
     """Test adding of scalar height coordinate."""
@@ -265,6 +275,7 @@ def test_add_scalar_height_coord(cube_in, height):
     assert coord == height_coord
 
 
+@pytest.mark.sequential
 @pytest.mark.parametrize('cube_in,typeland', TEST_ADD_SCALAR_COORD)
 def test_add_scalar_typeland_coord(cube_in, typeland):
     """Test adding of scalar typeland coordinate."""
@@ -291,6 +302,7 @@ def test_add_scalar_typeland_coord(cube_in, typeland):
     assert coord == typeland_coord
 
 
+@pytest.mark.sequential
 @pytest.mark.parametrize('cube_in,typesea', TEST_ADD_SCALAR_COORD)
 def test_add_scalar_typesea_coord(cube_in, typesea):
     """Test adding of scalar typesea coordinate."""
@@ -317,42 +329,34 @@ def test_add_scalar_typesea_coord(cube_in, typesea):
     assert coord == typesea_coord
 
 
-PS_COORD = iris.coords.AuxCoord([[[101000.0]]], var_name='ps', units='Pa')
-PTOP_COORD = iris.coords.AuxCoord(1000.0, var_name='ptop', units='Pa')
-LEV_COORD = iris.coords.AuxCoord([0.5], bounds=[[0.2, 0.8]], var_name='lev',
-                                 units='1',
-                                 standard_name='atmosphere_sigma_coordinate')
-P_COORD_HYBRID = iris.coords.AuxCoord([[[[51000.0]]]],
-                                      bounds=[[[[[21000.0, 81000.0]]]]],
-                                      standard_name='air_pressure', units='Pa')
-CUBE_HYBRID = iris.cube.Cube([[[[1.0]]]], var_name='x',
-                             aux_coords_and_dims=[(PS_COORD, (0, 2, 3)),
-                                                  (PTOP_COORD, ()),
-                                                  (LEV_COORD, 1)])
+@pytest.mark.sequential
+@pytest.mark.parametrize('cube_in,typesi', TEST_ADD_SCALAR_COORD)
+def test_add_scalar_typesi_coord(cube_in, typesi):
+    """Test adding of scalar typesi coordinate."""
+    cube_in = cube_in.copy()
+    if typesi is None:
+        typesi = 'sea_ice'
+    typesi_coord = iris.coords.AuxCoord(typesi,
+                                        var_name='type',
+                                        standard_name='area_type',
+                                        long_name='Sea Ice area type',
+                                        units=Unit('no unit'))
+    with pytest.raises(iris.exceptions.CoordinateNotFoundError):
+        cube_in.coord('area_type')
+    if typesi == 'sea_ice':
+        cube_out = add_scalar_typesi_coord(cube_in)
+    else:
+        cube_out = add_scalar_typesi_coord(cube_in, typesi)
+    assert cube_out is cube_in
+    coord = cube_in.coord('area_type')
+    assert coord == typesi_coord
+    cube_out_2 = add_scalar_typesi_coord(cube_out)
+    assert cube_out_2 is cube_out
+    coord = cube_in.coord('area_type')
+    assert coord == typesi_coord
 
 
-TEST_ADD_SIGMA_FACTORY = [
-    (CUBE_HYBRID.copy(), P_COORD_HYBRID.copy()),
-    (iris.cube.Cube(0.0), None),
-]
-
-
-@pytest.mark.parametrize('cube,output', TEST_ADD_SIGMA_FACTORY)
-def test_add_sigma_factory(cube, output):
-    """Test adding of factory for ``atmosphere_sigma_coordinate``."""
-    if output is None:
-        with pytest.raises(ValueError) as err:
-            add_sigma_factory(cube)
-        msg = ("Cannot add 'air_pressure' coordinate, "
-               "'atmosphere_sigma_coordinate' coordinate not available")
-        assert str(err.value) == msg
-        return
-    assert not cube.coords('air_pressure')
-    add_sigma_factory(cube)
-    air_pressure_coord = cube.coord('air_pressure')
-    assert air_pressure_coord == output
-
-
+@pytest.mark.sequential
 def test_cube_to_aux_coord():
     """Test converting cube to auxiliary coordinate."""
     cube = iris.cube.Cube(
@@ -380,6 +384,7 @@ TEST_GET_BOUNDS_CUBE = [
 ]
 
 
+@pytest.mark.sequential
 @pytest.mark.parametrize('coord_name,output', TEST_GET_BOUNDS_CUBE)
 def test_get_bounds_cube(coord_name, output):
     """Test retrieving of bounds cube from list of cubes."""
@@ -417,6 +422,7 @@ TEST_FIX_BOUNDS = [
 ]
 
 
+@pytest.mark.sequential
 @pytest.mark.parametrize('var_names,output', TEST_FIX_BOUNDS)
 def test_fix_bounds(var_names, output):
     """Test retrieving of bounds cube from list of cubes."""
@@ -455,6 +461,7 @@ TEST_ROUND = [
 ]
 
 
+@pytest.mark.sequential
 @pytest.mark.parametrize('cubes_in,decimals,out', TEST_ROUND)
 def test_round_coordinate(cubes_in, decimals, out):
     """Test rounding of coordinates."""
@@ -469,6 +476,7 @@ def test_round_coordinate(cubes_in, decimals, out):
             assert coords[0] == out[idx]
 
 
+@pytest.mark.sequential
 def test_round_coordinates_single_coord():
     """Test rounding of specified coordinate."""
     coords, bounds = [10.0001], [[9.0001, 11.0001]]
@@ -485,3 +493,18 @@ def test_round_coordinates_single_coord():
     assert cubes[0].coord('longitude') is out[0].coord('longitude')
     np.testing.assert_allclose(out[0].coord('latitude').points, [10])
     np.testing.assert_allclose(out[0].coord('latitude').bounds, [[9, 11]])
+
+
+def test_fix_ocean_depth_coord():
+    """Test `fix_ocean_depth_coord`."""
+    z_coord = iris.coords.DimCoord(0.0, var_name='alt',
+                                   attributes={'positive': 'up'})
+    cube = iris.cube.Cube([0.0], var_name='x',
+                          dim_coords_and_dims=[(z_coord, 0)])
+    fix_ocean_depth_coord(cube)
+    depth_coord = cube.coord('depth')
+    assert depth_coord.standard_name == 'depth'
+    assert depth_coord.var_name == 'lev'
+    assert depth_coord.units == 'm'
+    assert depth_coord.long_name == 'ocean depth coordinate'
+    assert depth_coord.attributes == {'positive': 'down'}

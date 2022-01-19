@@ -10,6 +10,7 @@ from .._provenance import TrackedFile
 from .._task import BaseTask
 from ..cmor.check import cmor_check_data, cmor_check_metadata
 from ..cmor.fix import fix_data, fix_file, fix_metadata
+from ._ancillary_vars import add_fx_variables, remove_fx_variables
 from ._area import (
     area_statistics,
     extract_named_regions,
@@ -18,10 +19,10 @@ from ._area import (
     meridional_statistics,
     zonal_statistics,
 )
+from ._bias import bias
 from ._cycles import amplitude
 from ._derive import derive
 from ._detrend import detrend
-from ._download import download
 from ._io import (
     _get_debug_filename,
     cleanup,
@@ -38,16 +39,17 @@ from ._mask import (
     mask_inside_range,
     mask_landsea,
     mask_landseaice,
+    mask_multimodel,
     mask_outside_range,
 )
-from ._multimodel import multi_model_statistics
+from ._multimodel import multi_model_statistics, ensemble_statistics
 from ._other import clip
 from ._regrid import extract_levels, extract_point, regrid
 from ._time import (
     annual_statistics,
     anomalies,
     climate_statistics,
-    clip_start_end_year,
+    clip_timerange,
     daily_statistics,
     decadal_statistics,
     extract_month,
@@ -75,7 +77,6 @@ from ._weighting import weighting_landsea_fraction
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'download',
     # File reformatting/CMORization
     'fix_file',
     # Load cubes from file
@@ -88,20 +89,18 @@ __all__ = [
     'concatenate',
     'cmor_check_metadata',
     # Extract years given by dataset keys (start_year and end_year)
-    'clip_start_end_year',
-    # Time extraction
+    'clip_timerange',
+    # Data reformatting/CMORization
+    'fix_data',
+    'cmor_check_data',
+    # Load fx_variables in cube
+    'add_fx_variables',
+    # Time extraction (as defined in the preprocessor section)
     'extract_time',
     'extract_season',
     'extract_month',
     'resample_hours',
     'resample_time',
-    # Data reformatting/CMORization
-    'fix_data',
-    'cmor_check_data',
-    # Time extraction (as defined in the preprocessor section)
-    'extract_time',
-    'extract_season',
-    'extract_month',
     # Level extraction
     'extract_levels',
     # Weighting
@@ -114,12 +113,12 @@ __all__ = [
     'mask_landseaice',
     # Ensemble statistics
     'ensemble_statistics',
-    'multicube_statistics_iris',
     # Regridding
     'regrid',
     # Point interpolation
     'extract_point',
     # Masking missing values
+    'mask_multimodel',
     'mask_fillvalues',
     'mask_above_threshold',
     'mask_below_threshold',
@@ -136,9 +135,6 @@ __all__ = [
     # 'average_zone': average_zone,
     # 'cross_section': cross_section,
     'detrend',
-    # Multi-model statistics
-    'multi_model_statistics',
-    'multicube_statistics',
     # Grid-point operations
     'extract_named_regions',
     'depth_integration',
@@ -162,14 +158,21 @@ __all__ = [
     'timeseries_filter',
     'linear_trend',
     'linear_trend_stderr',
+    # Convert units
     'convert_units',
+    # Multi model statistics
+    'multi_model_statistics',
+    # Bias calculation
+    'bias',
+    # Remove fx_variables from cube
+    'remove_fx_variables',
     # Save to file
     'save',
     'cleanup',
 ]
 
 TIME_PREPROCESSORS = [
-    'clip_start_end_year',
+    'clip_timerange',
     'extract_time',
     'extract_season',
     'extract_month',
@@ -184,13 +187,20 @@ TIME_PREPROCESSORS = [
 ]
 
 DEFAULT_ORDER = tuple(__all__)
+"""
+By default, preprocessor functions are applied in this order.
+"""
 
 # The order of initial and final steps cannot be configured
-INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('cmor_check_data') + 1]
-FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('save'):]
+INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('add_fx_variables') + 1]
+FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('remove_fx_variables'):]
 
 MULTI_MODEL_FUNCTIONS = {
-    'multi_model_statistics', 'mask_fillvalues', 'ensemble_statistics'
+    'bias',
+    'ensemble_statistics',
+    'multi_model_statistics',
+    'mask_multimodel',
+    'mask_fillvalues',
 }
 
 
@@ -212,13 +222,14 @@ def check_preprocessor_settings(settings):
         function = function = globals()[step]
         argspec = inspect.getfullargspec(function)
         args = argspec.args[1:]
-        # Check for invalid arguments
-        invalid_args = set(settings[step]) - set(args)
-        if invalid_args:
-            raise ValueError(
-                "Invalid argument(s): {} encountered for preprocessor "
-                "function {}. \nValid arguments are: [{}]".format(
-                    ', '.join(invalid_args), step, ', '.join(args)))
+        if not (argspec.varargs or argspec.varkw):
+            # Check for invalid arguments
+            invalid_args = set(settings[step]) - set(args)
+            if invalid_args:
+                raise ValueError(
+                    "Invalid argument(s): {} encountered for preprocessor "
+                    "function {}. \nValid arguments are: [{}]".format(
+                        ', '.join(invalid_args), step, ', '.join(args)))
 
         # Check for missing arguments
         defaults = argspec.defaults
@@ -230,7 +241,8 @@ def check_preprocessor_settings(settings):
                 "function {}".format(missing_args, step))
         # Final sanity check in case the above fails to catch a mistake
         try:
-            inspect.getcallargs(function, None, **settings[step])
+            signature = inspect.Signature.from_callable(function)
+            signature.bind(None, **settings[step])
         except TypeError:
             logger.error(
                 "Wrong preprocessor function arguments in "
@@ -248,7 +260,7 @@ def _check_multi_model_settings(products):
             settings = product.settings.get(step)
             if settings is None:
                 continue
-            elif reference is None:
+            if reference is None:
                 reference = product
             elif reference.settings[step] != settings:
                 raise ValueError(
@@ -272,18 +284,53 @@ def _get_multi_model_settings(products, step):
     return settings, exclude
 
 
-def _run_preproc_function(function, items, kwargs):
+def _run_preproc_function(function, items, kwargs, input_files=None):
     """Run preprocessor function."""
-    msg = "{}({}, {})".format(function.__name__, items, kwargs)
-    logger.debug("Running %s", msg)
+    kwargs_str = ",\n".join(
+        [f"{k} = {pformat(v)}" for (k, v) in kwargs.items()])
+    if input_files is None:
+        file_msg = ""
+    else:
+        file_msg = (f"\nloaded from original input file(s)\n"
+                    f"{pformat(input_files)}")
+    logger.debug(
+        "Running preprocessor function '%s' on the data\n%s%s\nwith function "
+        "argument(s)\n%s", function.__name__, pformat(items), file_msg,
+        kwargs_str)
     try:
         return function(items, **kwargs)
     except Exception:
-        logger.error("Failed to run %s", msg)
+        # To avoid very long error messages, we truncate the arguments and
+        # input files here at a given threshold
+        n_shown_args = 4
+        if input_files is not None and len(input_files) > n_shown_args:
+            n_not_shown_files = len(input_files) - n_shown_args
+            file_msg = (f"\nloaded from original input file(s)\n"
+                        f"{pformat(input_files[:n_shown_args])}\n(and "
+                        f"{n_not_shown_files:d} further file(s) not shown "
+                        f"here; refer to the debug log for a full list)")
+
+        # Make sure that the arguments are indexable
+        if isinstance(items, (PreprocessorFile, Cube, str)):
+            items = [items]
+        if isinstance(items, set):
+            items = list(items)
+
+        if len(items) <= n_shown_args:
+            data_msg = pformat(items)
+        else:
+            n_not_shown_args = len(items) - n_shown_args
+            data_msg = (f"{pformat(items[:n_shown_args])}\n(and "
+                        f"{n_not_shown_args:d} further argument(s) not shown "
+                        f"here; refer to the debug log for a full list)")
+        logger.error(
+            "Failed to run preprocessor function '%s' on the data\n%s%s\nwith "
+            "function argument(s)\n%s", function.__name__, data_msg, file_msg,
+            kwargs_str)
         raise
 
 
-def preprocess(items, step, **settings):
+def preprocess(items, step, input_files=None, **settings):
     """Run preprocessor."""
     logger.debug("Running preprocessor step %s", step)
     function = globals()[step]
@@ -291,10 +338,12 @@ def preprocess(items, step, **settings):
 
     result = []
     if itype.endswith('s'):
-        result.append(_run_preproc_function(function, items, settings))
+        result.append(_run_preproc_function(function, items, settings,
+                                            input_files=input_files))
     else:
         for item in items:
-            result.append(_run_preproc_function(function, item, settings))
+            result.append(_run_preproc_function(function, item, settings,
+                                                input_files=input_files))
 
     items = []
     for item in result:
@@ -323,6 +372,7 @@ def get_step_blocks(steps, order):
 
 class PreprocessorFile(TrackedFile):
     """Preprocessor output file."""
+
     def __init__(self, attributes, settings, ancestors=None):
         super().__init__(attributes['filename'], attributes, ancestors)
 
@@ -331,10 +381,20 @@ class PreprocessorFile(TrackedFile):
             self.settings['save'] = {}
         self.settings['save']['filename'] = self.filename
 
-        self.files = [a.filename for a in ancestors or ()]
+        # self._input_files always contains the original input files;
+        # self.files may change in the preprocessing chain (e.g., by the step
+        # fix_file)
+        self._input_files = [a.filename for a in ancestors or ()]
+        self.files = copy.deepcopy(self._input_files)
 
         self._cubes = None
         self._prepared = False
+
+    def _input_files_for_log(self):
+        """Do not log input files twice in output log."""
+        if self.files == self._input_files:
+            return None
+        return self._input_files
 
     def check(self):
         """Check preprocessor settings."""
@@ -346,7 +406,9 @@ class PreprocessorFile(TrackedFile):
             raise ValueError(
                 "PreprocessorFile {} has no settings for step {}".format(
                     self, step))
-        self.cubes = preprocess(self.cubes, step, **self.settings[step])
+        self.cubes = preprocess(self.cubes, step,
+                                input_files=self._input_files,
+                                **self.settings[step])
         if debug:
             logger.debug("Result %s", self.cubes)
             filename = _get_debug_filename(self.filename, step)
@@ -357,8 +419,10 @@ class PreprocessorFile(TrackedFile):
         if not self._prepared:
             for step in DEFAULT_ORDER[:DEFAULT_ORDER.index('load')]:
                 if step in self.settings:
-                    self.files = preprocess(self.files, step,
-                                            **self.settings[step])
+                    self.files = preprocess(
+                        self.files, step,
+                        input_files=self._input_files_for_log(),
+                        **self.settings[step])
             self._prepared = True
 
     @property
@@ -367,6 +431,7 @@ class PreprocessorFile(TrackedFile):
         if self.is_closed:
             self.prepare()
             self._cubes = preprocess(self.files, 'load',
+                                     input_files=self._input_files_for_log(),
                                      **self.settings.get('load', {}))
         return self._cubes
 
@@ -376,16 +441,19 @@ class PreprocessorFile(TrackedFile):
 
     def save(self):
         """Save cubes to disk."""
-        if self._cubes is not None:
-            self.files = preprocess(self._cubes, 'save',
-                                    **self.settings['save'])
-            self.files = preprocess(self.files, 'cleanup',
-                                    **self.settings.get('cleanup', {}))
+        self.files = preprocess(self._cubes, 'save',
+                                input_files=self._input_files,
+                                **self.settings['save'])
+        self.files = preprocess(self.files, 'cleanup',
+                                input_files=self._input_files,
+                                **self.settings.get('cleanup', {}))
 
     def close(self):
         """Close the file."""
-        self.save()
-        self._cubes = None
+        if self._cubes is not None:
+            self.save()
+            self._cubes = None
+            self.save_provenance()
 
     @property
     def is_closed(self):
@@ -448,6 +516,7 @@ def _apply_multimodel(products, step, debug):
 
 class PreprocessingTask(BaseTask):
     """Task for running the preprocessor."""
+
     def __init__(
         self,
         products,
@@ -543,10 +612,11 @@ class PreprocessingTask(BaseTask):
         ]
         products = '\n\n'.join('\n'.join([str(p), pformat(p.settings)])
                                for p in self.products)
-        txt = "{}:\norder: {}\n{}\n{}".format(
+        txt = "{}: {}\norder: {}\n{}\n{}".format(
             self.__class__.__name__,
+            self.name,
             order,
             products,
-            super().str(),
+            self.print_ancestors(),
         )
         return txt

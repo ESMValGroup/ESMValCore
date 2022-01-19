@@ -1,7 +1,9 @@
 """Importable config object."""
 
+import os
 from datetime import datetime
 from pathlib import Path
+from typing import Union
 
 import yaml
 
@@ -28,7 +30,9 @@ class Config(ValidatedConfig):
     )
 
     @classmethod
-    def _load_user_config(cls, filename: str, raise_exception: bool = True):
+    def _load_user_config(cls,
+                          filename: Union[os.PathLike, str],
+                          raise_exception: bool = True):
         """Load user configuration from the given file.
 
         The config is cleared and updated in-place.
@@ -56,20 +60,25 @@ class Config(ValidatedConfig):
 
         new.update(CFG_DEFAULT)
         new.update(mapping)
+        new.check_missing()
 
         return new
 
     @classmethod
-    def _load_default_config(cls, filename: str):
+    def _load_default_config(cls, filename: Union[os.PathLike, str]):
         """Load the default configuration."""
         new = cls()
 
         mapping = _read_config_file(filename)
+        # Add defaults that are not available in esmvalcore/config-user.yml
+        mapping['extra_facets_dir'] = tuple()
+        mapping['resume_from'] = []
+
         new.update(mapping)
 
         return new
 
-    def load_from_file(self, filename):
+    def load_from_file(self, filename: Union[os.PathLike, str]):
         """Load user configuration from the given file."""
         path = Path(filename).expanduser()
         if not path.exists():
@@ -120,8 +129,16 @@ class Session(ValidatedConfig):
 
     _validate = _validators
 
+    relative_preproc_dir = Path('preproc')
+    relative_work_dir = Path('work')
+    relative_plot_dir = Path('plots')
+    relative_run_dir = Path('run')
+    relative_main_log = Path('run', 'main_log.txt')
+    relative_main_log_debug = Path('run', 'main_log_debug.txt')
+
     def __init__(self, config: dict, name: str = 'session'):
         super().__init__(config)
+        self.session_name: Union[str, None] = None
         self.set_session_name(name)
 
     def set_session_name(self, name: str = 'session'):
@@ -141,27 +158,73 @@ class Session(ValidatedConfig):
     @property
     def preproc_dir(self):
         """Return preproc directory."""
-        return self.session_dir / 'preproc'
+        return self.session_dir / self.relative_preproc_dir
 
     @property
     def work_dir(self):
         """Return work directory."""
-        return self.session_dir / 'work'
+        return self.session_dir / self.relative_work_dir
 
     @property
     def plot_dir(self):
         """Return plot directory."""
-        return self.session_dir / 'plots'
+        return self.session_dir / self.relative_plot_dir
 
     @property
     def run_dir(self):
         """Return run directory."""
-        return self.session_dir / 'run'
+        return self.session_dir / self.relative_run_dir
 
     @property
     def config_dir(self):
         """Return user config directory."""
         return USER_CONFIG_DIR
+
+    @property
+    def main_log(self):
+        """Return main log file."""
+        return self.session_dir / self.relative_main_log
+
+    @property
+    def main_log_debug(self):
+        """Return main log debug file."""
+        return self.session_dir / self.relative_main_log_debug
+
+    def to_config_user(self) -> dict:
+        """Turn the `Session` object into a recipe-compatible dict.
+
+        This dict is compatible with the `config-user` argument in
+        :obj:`esmvalcore._recipe.Recipe`.
+        """
+        dct = self.copy()
+        dct['run_dir'] = self.run_dir
+        dct['work_dir'] = self.work_dir
+        dct['preproc_dir'] = self.preproc_dir
+        dct['plot_dir'] = self.plot_dir
+        dct['output_dir'] = self.session_dir
+        return dct
+
+    @classmethod
+    def from_config_user(cls, config_user: dict) -> 'Session':
+        """Convert `config-user` dict to API-compatible `Session` object.
+
+        For example, `_recipe.Recipe._cfg`.
+        """
+        dct = config_user.copy()
+        dct.pop('run_dir')
+        dct.pop('work_dir')
+        dct.pop('preproc_dir')
+        dct.pop('plot_dir')
+
+        session = cls(dct)
+
+        output_dir = Path(dct['output_dir']).parent
+        session_name = Path(dct['output_dir']).name
+
+        session['output_dir'] = output_dir
+        session.session_name = session_name
+
+        return session
 
 
 def _read_config_file(config_file):

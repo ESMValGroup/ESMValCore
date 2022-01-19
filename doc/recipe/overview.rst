@@ -12,10 +12,10 @@ Broadly, recipes contain a general section summarizing the provenance and
 functionality of the diagnostics, the datasets which need to be run, the
 preprocessors that need to be applied, and the diagnostics which need to be run
 over the preprocessed data. This information is provided to ESMValTool in four
-main recipe sections: Documentation_, Datasets_, Preprocessors_ and
-Diagnostics_, respectively.
+main recipe sections: :ref:`Documentation <recipe_documentation>`, Datasets_,
+Preprocessors_, and Diagnostics_, respectively.
 
-.. _Documentation:
+.. _recipe_documentation:
 
 Recipe section: ``documentation``
 =================================
@@ -24,6 +24,9 @@ The documentation section includes:
 
 - The recipe's author's user name (``authors``, matching the definitions in the
   :ref:`config-ref`)
+- The recipe's maintainer's user name (``maintainer``, matching the definitions in the
+  :ref:`config-ref`)
+- The title of the recipe (``title``)
 - A description of the recipe (``description``, written in MarkDown format)
 - A list of scientific references (``references``, matching the definitions in
   the :ref:`config-ref`)
@@ -36,6 +39,7 @@ the following:
 .. code-block:: yaml
 
     documentation:
+      title: Atlantic Meridional Overturning Circulation (AMOC) and the drake passage current
       description: |
         Recipe to produce time series figures of the derived variable, the
         Atlantic meridional overturning circulation (AMOC).
@@ -57,8 +61,10 @@ the following:
 .. note::
 
    Note that all authors, projects, and references mentioned in the description
-   section of the recipe need to be included in the ``config-references.yml``
-   file. The author name uses the format: ``surname_name``. For instance, John
+   section of the recipe need to be included in the (locally installed copy of the) file
+   `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/config-references.yml>`_,
+   see :ref:`config-ref`.
+   The author name uses the format: ``surname_name``. For instance, John
    Doe would be: ``doe_john``. This information can be omitted by new users
    whose name is not yet included in ``config-references.yml``.
 
@@ -73,15 +79,22 @@ data specifications:
 - dataset name (key ``dataset``, value e.g. ``MPI-ESM-LR`` or ``UKESM1-0-LL``)
 - project (key ``project``, value ``CMIP5`` or ``CMIP6`` for CMIP data,
   ``OBS`` for observational data, ``ana4mips`` for ana4mips data,
-  ``obs4mips`` for obs4mips data, ``EMAC`` for EMAC data)
+  ``obs4MIPs`` for obs4MIPs data, ``EMAC`` for EMAC data)
 - experiment (key ``exp``, value e.g. ``historical``, ``amip``, ``piControl``,
   ``RCP8.5``)
 - mip (for CMIP data, key ``mip``, value e.g. ``Amon``, ``Omon``, ``LImon``)
 - ensemble member (key ``ensemble``, value e.g. ``r1i1p1``, ``r1i1p1f1``)
-- time range (e.g. key-value ``start_year: 1982``, ``end_year: 1990``. Please
-  note that `yaml`_ interprets numbers with a leading ``0`` as octal numbers,
+- sub-experiment id (key `sub_experiment`, value e.g. `s2000`, `s(2000:2002)`,
+  for DCPP data only)
+- time range (e.g. key-value ``start_year: 1982``, ``end_year: 1990``.
+  Please note that `yaml`_ interprets numbers with a leading ``0`` as octal numbers,
   so we recommend to avoid them. For example, use ``128`` to specify the year
   128 instead of ``0128``.)
+  Alternatively, the time range can be specified in `ISO 8601 format <https://en.wikipedia.org/wiki/ISO_8601>`_, for both dates
+  and periods. Or as a wildcard to work with all available data, set the starting
+  point at the first available year, and set the ending point at the last available
+  year. The starting point and end point must be separated with '/'.
+  (e.g key-value ``timerange: '1982/1990'``)
 - model grid (native grid ``grid: gn`` or regridded grid ``grid: gr``, for
   CMIP6 data only).
 
@@ -92,7 +105,11 @@ For example, a datasets section could be:
     datasets:
       - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: r1i1p1, start_year: 2001, end_year: 2004}
       - {dataset: UKESM1-0-LL, project: CMIP6, exp: historical, ensemble: r1i1p1f2, start_year: 2001, end_year: 2004, grid: gn}
+      - {dataset: ACCESS-CM2, project: CMIP6, exp: historical, ensemble: r1i1p1f2, timerange: 'P5Y/*', grid: gn}
       - {dataset: EC-EARTH3, alias: custom_alias, project: CMIP6, exp: historical, ensemble: r1i1p1f1, start_year: 2001, end_year: 2004, grid: gn}
+      - {dataset: CMCC-CM2-SR5, project: CMIP6, exp: historical, ensemble: r1i1p1f1, timerange: '2001/P10Y', grid: gn}
+      - {dataset: HadGEM3-GC31-MM, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s2000, grid: gn, start_year: 2000, end_year, 2002}
+      - {dataset: BCC-CSM2-MR, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s2000, grid: gn, timerange: '*'}
 
 It is possible to define the experiment as a list to concatenate two experiments.
 Here it is an example concatenating the `historical` experiment with `rcp85`
@@ -131,6 +148,32 @@ for the ensemble members r1i1p1 to r5i1p1 and from r1i2p1 to r5i1p1 you can use:
 Please, bear in mind that this syntax can only be used in the ensemble tag.
 Also, note that the combination of multiple experiments and ensembles, like
 exp: [historical, rcp85], ensemble: [r1i1p1, "r(2:3)i1p1"] is not supported and will raise an error.
+
+The same simplified syntax can be used to add multiple sub-experiment ids:
+
+.. code-block:: yaml
+
+    datasets:
+      - {dataset: MIROC6, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s(2000:2002), grid: gn, start_year: 2003, end_year: 2004}
+
+When using the ``timerange`` tag to specify the start and end points, possible values can be as follows:
+
+  - A start and end point specified with a resolution up to seconds (YYYYMMDDThhmmss)
+    * ``timerange: '1980/1982'``. Spans from 01/01/1980 to 31/12/1980.
+    * ``timerange: '198002/198205'``. Spans from 01/02/1980 to 31/05/1982.
+    * ``timerange: '19800302/19820403'``. Spans from 02/03/1980 to 03/04/1982.
+    * ``timerange: '19800504T100000/19800504T110000'``. Spans from 04/05/1980 at 10h to 11h.
+
+  - A start point or end point, and a relative period with a resolution up to second (P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+    * ``timerange: '1980/P5Y'``. Starting from 01/01/1980, spans 5 years.
+    * ``timerange: 'P2Y5M/198202``. Ending at 28/02/1982, spans 2 years and 5 months.
+  - A wildcard to load all available years, the first available start point or the last available end point.
+    * ``timerange: '*'``. Finds all available years.
+    * ``timerange: '*/1982``. Finds first available point, spans to 31/12/1982.
+    * ``timerange: '*/P6Y``. Finds first available point, spans 6 years from it.
+    * ``timerange: '198003/*``. Starting from 01/03/1980, spans until the last available point.
+    * ``timerange: 'P5M/*``. Finds last available point, spans 5 months backwards from it.
+
 
 Note that this section is not required, as datasets can also be provided in the
 Diagnostics_ section.
@@ -196,6 +239,10 @@ section will include:
 - the diagnostic script(s) to be run;
 - a description of the diagnostic and lists of themes and realms that it applies to;
 - an optional ``additional_datasets`` section.
+- an optional ``title`` and ``description``, used to generate the title and description
+  of the ``index.html`` output file.
+
+.. _tasks:
 
 The diagnostics section defines tasks
 -------------------------------------
@@ -216,7 +263,8 @@ A (simplified) example diagnostics section could look like
 
   diagnostics:
     diagnostic_name:
-      description: Air temperature tutorial diagnostic.
+      title: Air temperature tutorial diagnostic
+      description: A longer description can be added here.
       themes:
         - phys
       realms:
@@ -249,6 +297,8 @@ using relative paths. If this happens, use an absolute path instead.
 Note that the script should either have the extension for a supported language,
 i.e. ``.py``, ``.R``, ``.ncl``, or ``.jl`` for Python, R, NCL, and Julia diagnostics
 respectively, or be executable if it is written in any other language.
+
+.. _ancestor-tasks:
 
 Ancestor tasks
 --------------
@@ -328,7 +378,7 @@ concentration changed from ``sic`` to ``siconc``). ESMValCore is aware of some
 of them and can do the automatic translation when needed. It will even do the
 translation in the preprocessed file so the diagnostic does not have to deal
 with this complexity, setting the short name in all files to match the one used
-by the recipe. For example, if ``sic`` is requested, ESMValTool will
+by the recipe. For example, if ``sic`` is requested, ESMValCore will
 find ``sic`` or ``siconc`` depending on the project, but all preprocessed files
 while use ``sic`` as their short_name. If the recipe requested ``siconc``, the
 preprocessed files will be identical except that they will use the short_name
@@ -356,7 +406,8 @@ map script, ``ocean/diagnostic_maps.py``.
   diagnostics:
 
     diag_map:
-      description: Global Ocean Surface regridded temperature map
+      title: Global Ocean Surface regridded temperature map
+      description: Add a longer description here.
       variables:
         tos: # Temperature at the ocean surface
           preprocessor: prep_map
@@ -429,6 +480,7 @@ the absolute path to the diagnostic:
   diagnostics:
 
     myFirstDiag:
+      title: Let's do some science!
       description: John Doe wrote a funny diagnostic
       variables:
         tos: # Temperature at the ocean surface

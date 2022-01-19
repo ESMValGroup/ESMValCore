@@ -1,8 +1,7 @@
-"""
-CMOR information reader for ESMValTool.
+"""CMOR information reader for ESMValTool.
 
-Read variable information from CMOR 2 and CMOR 3 tables and make it easily
-available for the other components of ESMValTool
+Read variable information from CMOR 2 and CMOR 3 tables and make it
+easily available for the other components of ESMValTool
 """
 import copy
 import errno
@@ -10,15 +9,16 @@ import glob
 import json
 import logging
 import os
-from functools import total_ordering
 from collections import Counter
+from functools import total_ordering
 from pathlib import Path
+from typing import Dict, Type
 
 import yaml
 
 logger = logging.getLogger(__name__)
 
-CMOR_TABLES = {}
+CMOR_TABLES: Dict[str, Type['InfoBase']] = {}
 """dict of str, obj: CMOR info objects."""
 
 
@@ -44,10 +44,9 @@ def read_cmor_tables(cfg_developer=None):
     ----------
     cfg_developer : dict of str
         Parsed config-developer file
-
     """
     if cfg_developer is None:
-        cfg_file = Path(__file__).parent.parent / 'config-developer.yml'
+        cfg_file = Path(__file__).parents[1] / 'config-developer.yml'
         with cfg_file.open() as file:
             cfg_developer = yaml.safe_load(file)
 
@@ -61,8 +60,8 @@ def read_cmor_tables(cfg_developer=None):
     CMOR_TABLES['custom'] = custom
     install_dir = os.path.dirname(os.path.realpath(__file__))
     for table in cfg_developer:
-        CMOR_TABLES[table] = _read_table(
-            cfg_developer, table, install_dir, custom, alt_names)
+        CMOR_TABLES[table] = _read_table(cfg_developer, table, install_dir,
+                                         custom, alt_names)
 
 
 def _read_table(cfg_developer, table, install_dir, custom, alt_names):
@@ -83,12 +82,10 @@ def _read_table(cfg_developer, table, install_dir, custom, alt_names):
         )
 
     if cmor_type == 'CMIP5':
-        return CMIP5Info(
-            table_path,
-            default=custom,
-            strict=cmor_strict,
-            alt_names=alt_names
-        )
+        return CMIP5Info(table_path,
+                         default=custom,
+                         strict=cmor_strict,
+                         alt_names=alt_names)
 
     if cmor_type == 'CMIP6':
         return CMIP6Info(
@@ -102,8 +99,7 @@ def _read_table(cfg_developer, table, install_dir, custom, alt_names):
 
 
 class InfoBase():
-    """
-    Base class for all table info classes.
+    """Base class for all table info classes.
 
     This uses CMOR 3 json format
 
@@ -118,9 +114,7 @@ class InfoBase():
     strict: bool
         If False, will look for a variable in other tables if it can not be
         found in the requested one
-
     """
-
     def __init__(self, default, alt_names, strict):
         if alt_names is None:
             alt_names = ""
@@ -130,12 +124,11 @@ class InfoBase():
         self.tables = {}
 
     def get_table(self, table):
-        """
-        Search and return the table info.
+        """Search and return the table info.
 
         Parameters
         ----------
-        table: basestring
+        table: str
             Table name
 
         Returns
@@ -143,19 +136,17 @@ class InfoBase():
         TableInfo
             Return the TableInfo object for the requested table if
             found, returns None if not
-
         """
         return self.tables.get(table)
 
     def get_variable(self, table_name, short_name, derived=False):
-        """
-        Search and return the variable info.
+        """Search and return the variable info.
 
         Parameters
         ----------
-        table_name: basestring
+        table_name: str
             Table name
-        short_name: basestring
+        short_name: str
             Variable's short name
         derived: bool, optional
             Variable is derived. Info retrieval for derived variables always
@@ -167,7 +158,6 @@ class InfoBase():
         VariableInfo
             Return the VariableInfo object for the requested variable if
             found, returns None if not
-
         """
         alt_names_list = self._get_alt_names_list(short_name)
 
@@ -181,8 +171,8 @@ class InfoBase():
 
         var_info = self._look_in_all_tables(alt_names_list)
         if not var_info:
-            var_info = self._look_in_default(
-                derived, alt_names_list, table_name)
+            var_info = self._look_in_default(derived, alt_names_list,
+                                             table_name)
         if var_info:
             var_info = var_info.copy()
             var_info = self._update_frequency_from_mip(table_name, var_info)
@@ -211,9 +201,10 @@ class InfoBase():
         alt_names_list = [short_name]
         for alt_names in self.alt_names:
             if short_name in alt_names:
-                alt_names_list.extend(
-                    [alt_name for alt_name in alt_names
-                     if alt_name not in alt_names_list])
+                alt_names_list.extend([
+                    alt_name for alt_name in alt_names
+                    if alt_name not in alt_names_list
+                ])
         return alt_names_list
 
     def _update_frequency_from_mip(self, table_name, var_info):
@@ -230,14 +221,13 @@ class InfoBase():
 
 
 class CMIP6Info(InfoBase):
-    """
-    Class to read CMIP6-like data request.
+    """Class to read CMIP6-like data request.
 
     This uses CMOR 3 json format
 
     Parameters
     ----------
-    cmor_tables_path: basestring
+    cmor_tables_path: str
         Path to the folder containing the Tables folder with the json files
 
     default: object
@@ -246,9 +236,7 @@ class CMIP6Info(InfoBase):
     strict: bool
         If False, will look for a variable in other tables if it can not be
         found in the requested one
-
     """
-
     def __init__(self,
                  cmor_tables_path,
                  default=None,
@@ -375,12 +363,11 @@ class CMIP6Info(InfoBase):
                     pass
 
     def get_table(self, table):
-        """
-        Search and return the table info.
+        """Search and return the table info.
 
         Parameters
         ----------
-        table: basestring
+        table: str
             Table name
 
         Returns
@@ -388,7 +375,6 @@ class CMIP6Info(InfoBase):
         TableInfo
             Return the TableInfo object for the requested table if
             found, returns None if not
-
         """
         try:
             return self.tables[table]
@@ -407,7 +393,6 @@ class CMIP6Info(InfoBase):
 @total_ordering
 class TableInfo(dict):
     """Container class for storing a CMOR table."""
-
     def __init__(self, *args, **kwargs):
         """Create a new TableInfo object for storing VariableInfo objects."""
         super(TableInfo, self).__init__(*args, **kwargs)
@@ -429,18 +414,15 @@ class TableInfo(dict):
 
 
 class JsonInfo(object):
-    """
-    Base class for the info classes.
+    """Base class for the info classes.
 
     Provides common utility methods to read json variables
     """
-
     def __init__(self):
         self._json_data = {}
 
     def _read_json_variable(self, parameter, default=''):
-        """
-        Read a json parameter in json_data.
+        """Read a json parameter in json_data.
 
         Parameters
         ----------
@@ -451,15 +433,13 @@ class JsonInfo(object):
         -------
         str
             Option's value or empty string if parameter is not present
-
         """
         if parameter not in self._json_data:
             return default
         return str(self._json_data[parameter])
 
     def _read_json_list_variable(self, parameter):
-        """
-        Read a json list parameter in json_data.
+        """Read a json list parameter in json_data.
 
         Parameters
         ----------
@@ -470,7 +450,6 @@ class JsonInfo(object):
         -------
         str
             Option's value or empty list if parameter is not present
-
         """
         if parameter not in self._json_data:
             return []
@@ -479,16 +458,13 @@ class JsonInfo(object):
 
 class VariableInfo(JsonInfo):
     """Class to read and store variable information."""
-
     def __init__(self, table_type, short_name):
-        """
-        Class to read and store variable information.
+        """Class to read and store variable information.
 
         Parameters
         ----------
         short_name: str
             variable's short name
-
         """
         super(VariableInfo, self).__init__()
         self.table_type = table_type
@@ -523,8 +499,7 @@ class VariableInfo(JsonInfo):
         self._json_data = None
 
     def copy(self):
-        """
-        Return a shallow copy of VariableInfo.
+        """Return a shallow copy of VariableInfo.
 
         Returns
         -------
@@ -534,8 +509,7 @@ class VariableInfo(JsonInfo):
         return copy.copy(self)
 
     def read_json(self, json_data, default_freq):
-        """
-        Read variable information from json.
+        """Read variable information from json.
 
         Non-present options will be set to empty
 
@@ -547,7 +521,6 @@ class VariableInfo(JsonInfo):
 
         default_freq: str
             Default frequency to use if it is not defined at variable level
-
         """
         self._json_data = json_data
 
@@ -566,16 +539,13 @@ class VariableInfo(JsonInfo):
 
 class CoordinateInfo(JsonInfo):
     """Class to read and store coordinate information."""
-
     def __init__(self, name):
-        """
-        Class to read and store coordinate information.
+        """Class to read and store coordinate information.
 
         Parameters
         ----------
         name: str
             coordinate's name
-
         """
         super(CoordinateInfo, self).__init__()
         self.name = name
@@ -614,8 +584,7 @@ class CoordinateInfo(JsonInfo):
         """Generic level name"""
 
     def read_json(self, json_data):
-        """
-        Read coordinate information from json.
+        """Read coordinate information from json.
 
         Non-present options will be set to empty
 
@@ -624,7 +593,6 @@ class CoordinateInfo(JsonInfo):
         json_data: dict
             dictionary created by the json reader containing
             coordinate information
-
         """
         self._json_data = json_data
 
@@ -644,12 +612,11 @@ class CoordinateInfo(JsonInfo):
 
 
 class CMIP5Info(InfoBase):
-    """
-    Class to read CMIP5-like data request.
+    """Class to read CMIP5-like data request.
 
     Parameters
     ----------
-    cmor_tables_path: basestring
+    cmor_tables_path: str
        Path to the folder containing the Tables folder with the json files
 
     default: object
@@ -658,10 +625,11 @@ class CMIP5Info(InfoBase):
     strict: bool
         If False, will look for a variable in other tables if it can not be
         found in the requested one
-
     """
-
-    def __init__(self, cmor_tables_path, default=None, alt_names=None,
+    def __init__(self,
+                 cmor_tables_path,
+                 default=None,
+                 alt_names=None,
                  strict=True):
         super().__init__(default, alt_names, strict)
         cmor_tables_path = self._get_cmor_path(cmor_tables_path)
@@ -785,12 +753,11 @@ class CMIP5Info(InfoBase):
         return var
 
     def get_table(self, table):
-        """
-        Search and return the table info.
+        """Search and return the table info.
 
         Parameters
         ----------
-        table: basestring
+        table: str
             Table name
 
         Returns
@@ -798,18 +765,16 @@ class CMIP5Info(InfoBase):
         TableInfo
             Return the TableInfo object for the requested table if
             found, returns None if not
-
         """
         return self.tables.get(table)
 
 
 class CMIP3Info(CMIP5Info):
-    """
-    Class to read CMIP3-like data request.
+    """Class to read CMIP3-like data request.
 
     Parameters
     ----------
-    cmor_tables_path: basestring
+    cmor_tables_path: str
        Path to the folder containing the Tables folder with the json files
 
     default: object
@@ -818,9 +783,7 @@ class CMIP3Info(CMIP5Info):
     strict: bool
         If False, will look for a variable in other tables if it can not be
         found in the requested one
-
     """
-
     def _read_table_file(self, table_file, table=None):
         for dim in ('zlevel', ):
             coord = CoordinateInfo(dim)
@@ -844,17 +807,14 @@ class CMIP3Info(CMIP5Info):
 
 
 class CustomInfo(CMIP5Info):
-    """
-    Class to read custom var info for ESMVal.
+    """Class to read custom var info for ESMVal.
 
     Parameters
     ----------
-    cmor_tables_path: basestring or None
+    cmor_tables_path: str or None
         Full path to the table or name for the table if it is present in
         ESMValTool repository
-
     """
-
     def __init__(self, cmor_tables_path=None):
         cwd = os.path.dirname(os.path.realpath(__file__))
         self._cmor_folder = os.path.join(cwd, 'tables', 'custom')
@@ -884,14 +844,13 @@ class CustomInfo(CMIP5Info):
                 raise
 
     def get_variable(self, table, short_name, derived=False):
-        """
-        Search and return the variable info.
+        """Search and return the variable info.
 
         Parameters
         ----------
-        table: basestring
+        table: str
             Table name
-        short_name: basestring
+        short_name: str
             Variable's short name
         derived: bool, optional
             Variable is derived. Info retrieval for derived variables always
@@ -903,7 +862,6 @@ class CustomInfo(CMIP5Info):
         VariableInfo
             Return the VariableInfo object for the requested variable if
             found, returns None if not
-
         """
         return self.tables['custom'].get(short_name, None)
 

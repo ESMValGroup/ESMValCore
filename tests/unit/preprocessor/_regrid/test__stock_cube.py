@@ -13,7 +13,7 @@ import numpy as np
 import tests
 from esmvalcore.preprocessor._regrid import (_LAT_MAX, _LAT_MIN, _LAT_RANGE,
                                              _LON_MAX, _LON_MIN, _LON_RANGE)
-from esmvalcore.preprocessor._regrid import _stock_cube as stock_cube
+from esmvalcore.preprocessor._regrid import _global_stock_cube
 
 
 class Test(tests.Test):
@@ -39,15 +39,19 @@ class Test(tests.Test):
         # Check the latitude coordinate creation.
         [args], kwargs = call_lats
         self.assert_array_equal(args, expected_lat_points)
-        expected_lat_kwargs = dict(
-            standard_name='latitude', units='degrees_north', var_name='lat')
+        expected_lat_kwargs = dict(standard_name='latitude',
+                                   units='degrees_north',
+                                   var_name='lat',
+                                   circular=False)
         self.assertEqual(kwargs, expected_lat_kwargs)
 
         # Check the longitude coordinate creation.
         [args], kwargs = call_lons
         self.assert_array_equal(args, expected_lon_points)
-        expected_lon_kwargs = dict(
-            standard_name='longitude', units='degrees_east', var_name='lon')
+        expected_lon_kwargs = dict(standard_name='longitude',
+                                   units='degrees_east',
+                                   var_name='lon',
+                                   circular=False)
         self.assertEqual(kwargs, expected_lon_kwargs)
 
         # Check that the coordinate guess_bounds method has been called.
@@ -76,34 +80,36 @@ class Test(tests.Test):
     def test_invalid_cell_spec__alpha(self):
         emsg = 'Invalid MxN cell specification'
         with self.assertRaisesRegex(ValueError, emsg):
-            stock_cube('Ax1')
+            _global_stock_cube('Ax1')
 
     def test_invalid_cell_spec__separator(self):
         emsg = 'Invalid MxN cell specification'
         with self.assertRaisesRegex(ValueError, emsg):
-            stock_cube('1y1')
+            _global_stock_cube('1y1')
 
     def test_invalid_cell_spec__longitude(self):
         emsg = 'Invalid longitude delta in MxN cell specification'
         with self.assertRaisesRegex(ValueError, emsg):
-            stock_cube('1.3x1')
+            _global_stock_cube('1.3x1')
 
     def test_invalid_cell_spec__latitude(self):
         emsg = 'Invalid latitude delta in MxN cell specification'
         with self.assertRaisesRegex(ValueError, emsg):
-            stock_cube('1x2.3')
+            _global_stock_cube('1x2.3')
 
     def test_specs(self):
         specs = ['0.5x0.5', '1x1', '2.5x2.5', '5x5', '10x10']
         for spec in specs:
-            result = stock_cube(spec)
+            result = _global_stock_cube(spec)
             self.assertEqual(result, self.Cube)
             self._check(*list(map(float, spec.split('x'))))
 
     def test_specs_no_offset(self):
         specs = ['0.5x0.5', '1x1', '2.5x2.5', '5x5', '10x10']
         for spec in specs:
-            result = stock_cube(spec, lat_offset=False, lon_offset=False)
+            result = _global_stock_cube(spec,
+                                        lat_offset=False,
+                                        lon_offset=False)
             self.assertEqual(result, self.Cube)
             self._check(
                 *list(map(float, spec.split('x'))),

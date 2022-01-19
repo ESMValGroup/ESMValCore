@@ -1,200 +1,44 @@
-"""Recipe metadata."""
-
+"""Handles recipe metadata (under 'documentation' section)."""
+import os
 import textwrap
 from pathlib import Path
+from typing import Optional, Tuple, Union
 
-import pybtex
 import yaml
-from pybtex.database.input import bibtex
 
-from esmvalcore._citation import REFERENCES_PATH
-from esmvalcore._config import TAGS
-
-
-class RenderError(BaseException):
-    """Error during rendering of object."""
-
-
-class Contributor:
-    """Contains contributor (author or maintainer) information."""
-
-    def __init__(self, name: str, institute: str, orcid: str = None):
-        self.name = name
-        self.institute = institute
-        self.orcid = orcid
-
-    def __repr__(self) -> str:
-        """Return canonical string representation."""
-        return (f'{self.__class__.__name__}({self.name!r},'
-                f' institute={self.institute!r}, orcid={self.orcid!r})')
-
-    def __str__(self) -> str:
-        """Return string representation."""
-        string = f'{self.name} ({self.institute}'
-        if self.orcid:
-            string += f'; {self.orcid}'
-        string += ')'
-        return string
-
-    def _repr_markdown_(self):
-        """Represent using markdown renderer in a notebook environment."""
-        return str(self)
-
-    @classmethod
-    def from_tag(cls, tag: str):
-        """Return an instance of Contributor from a tag (``TAGS``).
-
-        Contributors are defined by author tags in ``config-
-        references.yml``.
-        """
-        mapping = TAGS['authors'][tag]
-
-        name = ' '.join(reversed(mapping['name'].split(', ')))
-        institute = mapping.get('institute', 'No affiliation')
-        orcid = mapping['orcid']
-
-        return cls(name=name, institute=institute, orcid=orcid)
-
-
-class Project:
-    """Contains project information."""
-
-    def __init__(self, project: str):
-        self.project = project
-
-    def __repr__(self) -> str:
-        """Return canonical string representation."""
-        return f'{self.__class__.__name__}({self.project!r})'
-
-    def __str__(self) -> str:
-        """Return string representation."""
-        string = f'{self.project}'
-        return string
-
-    @classmethod
-    def from_tag(cls, tag: str):
-        """Return an instance of Project from a tag (``TAGS``).
-
-        The project tags are defined in ``config-references.yml``.
-        """
-        project = TAGS['projects'][tag]
-        return cls(project=project)
-
-
-class Reference:
-    """Contains reference information."""
-
-    def __init__(self, filename):
-        parser = bibtex.Parser(strict=False)
-        bib_data = parser.parse_file(filename)
-
-        if len(bib_data.entries) > 1:
-            raise NotImplementedError(
-                f'{self.__class__.__name__} cannot handle bibtex files '
-                'with more than 1 entry.')
-
-        self._bib_data = bib_data
-        self._key, self._entry = list(bib_data.entries.items())[0]
-        self._filename = filename
-
-    @classmethod
-    def from_tag(cls, tag: str):
-        """Return an instance of Reference from a bibtex tag.
-
-        The bibtex tags resolved as
-        ``esmvaltool/references/{tag}.bibtex``.
-        """
-        filename = Path(REFERENCES_PATH, f'{tag}.bibtex')
-        return cls(filename)
-
-    def __repr__(self):
-        """Return canonical string representation."""
-        return f'{self.__class__.__name__}({self._key!r})'
-
-    def __str__(self):
-        """Return string representation."""
-        return self.render(renderer='plaintext')
-
-    def _repr_markdown_(self):
-        """Represent using markdown renderer in a notebook environment."""
-        return self.render(renderer='markdown')
-
-    def render(self, renderer: str = 'plaintext') -> str:
-        """Render the reference.
-
-        Parameters
-        ----------
-        renderer : str
-            Choose the renderer for the string representation.
-            Must be one of: 'plaintext', 'markdown', 'html', 'latex'
-
-        Returns
-        -------
-        str
-            Rendered reference
-        """
-        style = 'plain'  # alpha, plain, unsrt, unsrtalpha
-        backend = pybtex.plugin.find_plugin('pybtex.backends', renderer)()
-        style = pybtex.plugin.find_plugin('pybtex.style.formatting', style)()
-
-        try:
-            formatter = style.format_entry(self._key, self._entry)
-            rendered = formatter.text.render(backend)
-        except Exception as err:
-            raise RenderError(
-                f'Could not render {self._key!r}: {err}') from None
-
-        return rendered
+from .recipe_metadata import Contributor, Project, Reference
+from .templates import get_template
 
 
 class RecipeInfo():
-    """Contains Recipe metadata.
+    """API wrapper for the esmvalcore Recipe object.
+
+    This class can be used to inspect and run the recipe.
 
     Parameters
     ----------
-    path : pathlike
-        Path to the recipe.
+    filename : pathlike
+        Name of recipe file
     """
 
-    def __init__(self, path: str):
-        self.path = Path(path)
-        if not self.path.exists():
-            raise FileNotFoundError(f'Cannot find recipe: `{path}`.')
-
-        self._data = None
-        self._authors = None
-        self._maintainers = None
-        self._projects = None
-        self._references = None
-        self._description = None
+    def __init__(self, data, filename: Union[os.PathLike, str]):
+        self.filename = Path(filename).name
+        self.data = data
+        self._authors: Optional[Tuple[Contributor, ...]] = None
+        self._maintainers: Optional[Tuple[Contributor, ...]] = None
+        self._projects: Optional[Tuple[Project, ...]] = None
+        self._references: Optional[Tuple[Reference, ...]] = None
+        self._title: Optional[str] = None
+        self._description: Optional[str] = None
 
     def __repr__(self) -> str:
         """Return canonical string representation."""
         return f'{self.__class__.__name__}({self.name!r})'
 
-    def _repr_markdown_(self) -> str:
-        """Represent using markdown renderer in a notebook environment."""
-        return self.render('markdown')
-
     def __str__(self) -> str:
         """Return string representation."""
-        return self.render('plaintext')
-
-    def to_markdown(self) -> str:
-        """Return markdown formatted string."""
-        return self.render('markdown')
-
-    def render(self, renderer: str = 'plaintext') -> str:
-        """Return formatted string.
-
-        Parameters
-        ----------
-        renderer : str
-            Choose the renderer for the string representation.
-            Must be one of 'plaintext', 'markdown'
-        """
         bullet = '\n - '
-        string = f'## {self.name}'
+        string = f'## {self.title}'
 
         string += '\n\n'
         string += f'{self.description}'
@@ -215,23 +59,33 @@ class RecipeInfo():
         if self.references:
             string += '\n\n### References'
             for reference in self.references:
-                string += bullet + reference.render(renderer)
+                string += bullet + reference.render('plaintext')
 
         string += '\n'
 
         return string
 
-    @property
-    def data(self) -> dict:
-        """Return dictionary representation of the recipe."""
-        if self._data is None:
-            self._data = yaml.safe_load(open(self.path, 'r'))
-        return self._data
+    def _repr_html_(self) -> str:
+        """Represent using html renderer in a notebook environment."""
+        return self.render()
+
+    @classmethod
+    def from_yaml(cls, path: str):
+        """Return instance of 'RecipeInfo' from a recipe in yaml format."""
+        data = yaml.safe_load(open(path, 'r'))
+        return cls(data, filename=path)
 
     @property
     def name(self) -> str:
         """Name of the recipe."""
-        return self.path.stem.replace('_', ' ').capitalize()
+        return Path(self.filename).stem.replace('_', ' ').capitalize()
+
+    @property
+    def title(self) -> str:
+        """Title of the recipe."""
+        if self._title is None:
+            self._title = self.data['documentation']['title']
+        return self._title
 
     @property
     def description(self) -> str:
@@ -245,7 +99,7 @@ class RecipeInfo():
     def authors(self) -> tuple:
         """List of recipe authors."""
         if self._authors is None:
-            tags = self.data['documentation']['authors']
+            tags = self.data['documentation'].get('authors', ())
             self._authors = tuple(Contributor.from_tag(tag) for tag in tags)
         return self._authors
 
@@ -253,7 +107,7 @@ class RecipeInfo():
     def maintainers(self) -> tuple:
         """List of recipe maintainers."""
         if self._maintainers is None:
-            tags = self.data['documentation']['maintainer']
+            tags = self.data['documentation'].get('maintainer', ())
             self._maintainers = tuple(
                 Contributor.from_tag(tag) for tag in tags)
         return self._maintainers
@@ -273,3 +127,34 @@ class RecipeInfo():
             tags = self.data['documentation'].get('references', [])
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
+
+    def render(self, template=None):
+        """Render output as html.
+
+        template : :obj:`Template`
+            An instance of :py:class:`jinja2.Template` can be passed to
+            customize the output.
+        """
+        if not template:
+            template = get_template(self.__class__.__name__ + '.j2')
+        rendered = template.render(info=self)
+
+        return rendered
+
+    def resolve(self) -> None:
+        """Force resolve of all tags in recipe.
+
+        Raises
+        ------
+        LookupError
+            Raised when some tags in the recipe cannot be resolved
+        """
+        try:
+            # calling these attributes forces the tags to be resolved.
+            _ = self.authors
+            _ = self.maintainers
+            _ = self.projects
+            _ = self.references
+        except BaseException as error:
+            message = f"Some tags in the recipe could not be resolved: {error}"
+            raise LookupError(message) from error

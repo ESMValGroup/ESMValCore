@@ -1,9 +1,11 @@
 """Tests for the fixes of FGOALS-f3-L."""
+
 import iris
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.cmip6.fgoals_f3_l import AllVars
+from esmvalcore.cmor._fixes.cmip6.fgoals_f3_l import AllVars, Tos
+from esmvalcore.cmor._fixes.common import OceanFixGrid
 from esmvalcore.cmor.fix import Fix
 
 
@@ -49,3 +51,8 @@ def test_allvars_fix_metadata(cubes):
     for cube in out_cubes:
         time = cube.coord('time')
         assert all(time.bounds[1:, 0] == time.bounds[:-1, 1])
+
+
+def test_tos_fix():
+    """Test fix for ``tos``."""
+    assert Tos is OceanFixGrid
