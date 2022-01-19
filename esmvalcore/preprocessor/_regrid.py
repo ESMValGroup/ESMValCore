@@ -334,6 +334,11 @@ def extract_location(cube, location, scheme):
     -------
     Returns a cube with the extracted point, and with adjusted
     latitude and longitude coordinates.
+
+    Raises
+    ------
+    ValueError:
+        If given location can not be found by the geolocator.
     """
     geolocator = Nominatim(user_agent='esmvalcore')
     location = geolocator.geocode(location)
@@ -373,6 +378,10 @@ def extract_point(cube, latitude, longitude, scheme):
     Returns a cube with the extracted point(s), and with adjusted
     latitude and longitude coordinates (see above).
 
+    Raises
+    ------
+    ValueError:
+        If the interpolation scheme is None or unrecognized.
 
     Examples
     --------
