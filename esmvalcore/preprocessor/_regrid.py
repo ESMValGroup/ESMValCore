@@ -343,7 +343,7 @@ def extract_location(cube, location, scheme):
     geolocator = Nominatim(user_agent='esmvalcore')
     location = geolocator.geocode(location)
     if not location:
-        raise ValueError(f'Town {location} can not be found.')
+        raise ValueError(f'Requested location {location} can not be found.')
     logger.info("Extracting data for %s (%s ºN, %s ºW)", location,
                 location.latitude, location.longitude)
     return extract_point(cube, location.latitude, location.longitude, scheme)
