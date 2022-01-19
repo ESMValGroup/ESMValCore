@@ -729,8 +729,8 @@ def parse_vertical_scheme(scheme):
         deprecation_msg = (
             f"The vertical regridding scheme ``{scheme}`` has been deprecated "
             f"in ESMValCore version 2.5 and is scheduled for removal in "
-            f"version 2.7. It has been renamed to ``{new_scheme}`` without "
-            f"any change in functionality.")
+            f"version 2.7. It has been renamed to the identical scheme "
+            f"``{new_scheme}`` without any change in functionality.")
         warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
         scheme = new_scheme
 

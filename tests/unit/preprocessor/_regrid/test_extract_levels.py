@@ -68,8 +68,9 @@ class Test(tests.Test):
         }
         for scheme in deprecated_references:
             warn_msg = (
-                "has been deprecated in ESMValCore version 2.5 and is "
-                "scheduled for removal in version 2.7. It has been renamed to")
+                "`` has been deprecated in ESMValCore version 2.5 and is "
+                "scheduled for removal in version 2.7. It has been renamed to "
+                "the identical scheme ``")
             with pytest.warns(ESMValCoreDeprecationWarning, match=warn_msg):
                 interp, extrap = parse_vertical_scheme(scheme)
             assert interp, extrap == deprecated_references[scheme]
