@@ -6,11 +6,13 @@ import contextlib
 import copy
 import functools
 import os
+import shutil
 import sys
 from textwrap import dedent
 from unittest.mock import patch
 
 import pytest
+import yaml
 from fire.core import FireExit
 
 from esmvalcore._main import Config, ESMValTool, Recipes, run
@@ -77,16 +79,24 @@ def test_empty_run(tmp_path):
     """)
     recipe_file.write_text(content)
     Config.get_config_user(path=tmp_path)
+    log_dir = f'{tmp_path}/esmvaltool_output'
+    config_file = f"{tmp_path}/config-user.yml"
+    with open(config_file, 'r+') as file:
+        config = yaml.safe_load(file)
+        config['output_dir'] = log_dir
+        yaml.safe_dump(config, file, sort_keys=False)
     with pytest.raises(RecipeError) as exc:
         ESMValTool().run(
             recipe_file, config_file=f"{tmp_path}/config-user.yml")
     assert str(exc.value) == 'The given recipe does not have any diagnostic.'
-    log_dir = './esmvaltool_output'
     log_file = os.path.join(log_dir,
                             os.listdir(log_dir)[0], 'run', 'main_log.txt')
-    os.system("rm -r esmvaltool_output")
+    filled_recipe = os.path.exists(
+        log_dir + '/' + os.listdir(log_dir)[0] + '/run/recipe_filled.yml')
+    shutil.rmtree(log_dir)
 
     assert log_file
+    assert not filled_recipe
 
 
 @patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))

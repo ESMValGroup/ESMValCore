@@ -71,9 +71,10 @@ class Test(tests.Test):
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_cell_measure_mean(self):
+        """Test for area average of a 2D field.
+
+        The area measure is pre-loaded in the cube
         """
-        Test for area average of a 2D field.
-        The area measure is pre-loaded in the cube"""
         cube = guess_bounds(self.grid, ['longitude', 'latitude'])
         grid_areas = iris.analysis.cartography.area_weights(cube)
         measure = iris.coords.CellMeasure(
@@ -143,10 +144,8 @@ class Test(tests.Test):
         self.assert_array_equal(result.data, expected)
 
     def test_extract_region_mean(self):
-        """
-        Test for extracting a region and performing
-        the area mean of a 2D field.
-        """
+        """Test for extracting a region and performing the area mean of a 2D
+        field."""
         cube = guess_bounds(self.grid, ['longitude', 'latitude'])
         grid_areas = iris.analysis.cartography.area_weights(cube)
         measure = iris.coords.CellMeasure(
@@ -707,6 +706,41 @@ def test_extract_shape_natural_earth(make_testcube, ne_ocean_shapefile):
         crop=False,
     )
     np.testing.assert_array_equal(result.data.data, expected)
+
+
+def test_extract_shape_fx(make_testcube, ne_ocean_shapefile):
+    """Test for extracting a shape from NE file."""
+    expected = np.ones((5, 5))
+    preproc_path = Path(esmvalcore.preprocessor.__file__).parent
+    shp_file = preproc_path / "ne_masks" / "ne_50m_ocean.shp"
+    cube = make_testcube
+    measure = iris.coords.CellMeasure(cube.data,
+                                      standard_name='cell_area',
+                                      var_name='areacello',
+                                      units='m2',
+                                      measure='area')
+    ancillary_var = iris.coords.AncillaryVariable(
+        cube.data,
+        standard_name='land_ice_area_fraction',
+        var_name='sftgif',
+        units='%')
+    cube.add_cell_measure(measure, (0, 1))
+    cube.add_ancillary_variable(ancillary_var, (0, 1))
+    result = extract_shape(
+        cube,
+        shp_file,
+        crop=False,
+    )
+    np.testing.assert_array_equal(result.data.data, expected)
+
+    assert result.cell_measures()
+    result_measure = result.cell_measure('cell_area').data
+    np.testing.assert_array_equal(measure.data, result_measure)
+
+    assert result.ancillary_variables()
+    result_ancillary_var = result.ancillary_variable(
+        'land_ice_area_fraction').data
+    np.testing.assert_array_equal(ancillary_var.data, result_ancillary_var)
 
 
 def test_extract_shape_ne_check_nans(ne_ocean_shapefile):

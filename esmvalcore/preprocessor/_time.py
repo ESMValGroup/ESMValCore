@@ -14,10 +14,12 @@ import iris.coord_categorisation
 import iris.cube
 import iris.exceptions
 import iris.util
+import isodate
 import numpy as np
 from iris.time import PartialDateTime
 
-from esmvalcore.cmor.check import _get_time_bounds
+from esmvalcore.cmor.check import _get_next_month, _get_time_bounds
+from esmvalcore.iris_helpers import date2num
 
 from ._shared import get_iris_analysis_operation, operator_accept_weights
 
@@ -108,17 +110,121 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
     return cube_slice
 
 
-def clip_start_end_year(cube, start_year, end_year):
-    """Extract time range given by the dataset keys.
+def _parse_start_date(date):
+    """Parse start of the input `timerange` tag given in ISO 8601 format.
+
+    Returns a datetime.datetime object.
+    """
+    if date.startswith('P'):
+        start_date = isodate.parse_duration(date)
+    else:
+        try:
+            start_date = isodate.parse_datetime(date)
+        except isodate.isoerror.ISO8601Error:
+            start_date = isodate.parse_date(date)
+            start_date = datetime.datetime.combine(
+                start_date, datetime.time.min)
+    return start_date
+
+
+def _parse_end_date(date):
+    """Parse end of the input `timerange` given in ISO 8601 format.
+
+    Returns a datetime.datetime object.
+    """
+    if date.startswith('P'):
+        end_date = isodate.parse_duration(date)
+    else:
+        if len(date) == 4:
+            end_date = datetime.datetime(int(date) + 1, 1, 1, 0, 0, 0)
+        elif len(date) == 6:
+            month, year = _get_next_month(int(date[4:]), int(date[0:4]))
+            end_date = datetime.datetime(year, month, 1, 0, 0, 0)
+        else:
+            try:
+                end_date = isodate.parse_datetime(date)
+            except isodate.ISO8601Error:
+                end_date = isodate.parse_date(date)
+                end_date = datetime.datetime.combine(end_date,
+                                                     datetime.time.min)
+            end_date += datetime.timedelta(seconds=1)
+    return end_date
+
+
+def _duration_to_date(duration, reference, sign):
+    """Add or subtract a duration period to a reference datetime."""
+    date = reference + sign * duration
+    return date
+
+
+def _extract_datetime(cube, start_datetime, end_datetime):
+    """Extract a time range from a cube.
+
+    Given a time range passed in as a datetime.datetime object, it
+    returns a time-extracted cube with data only within the specified
+    time range with a resolution up to seconds..
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        input cube.
+    start_datetime: datetime.datetime
+        start datetime
+    end_datetime: datetime.datetime
+        end datetime
+
+    Returns
+    -------
+    iris.cube.Cube
+        Sliced cube.
+
+    Raises
+    ------
+    ValueError
+        if time ranges are outside the cube time limits
+    """
+    time_coord = cube.coord('time')
+    time_units = time_coord.units
+    if time_units.calendar == '360_day':
+        if start_datetime.day > 30:
+            start_datetime = start_datetime.replace(day=30)
+        if end_datetime.day > 30:
+            end_datetime = end_datetime.replace(day=30)
+
+    t_1 = PartialDateTime(year=int(start_datetime.year),
+                          month=int(start_datetime.month),
+                          day=int(start_datetime.day),
+                          hour=int(start_datetime.hour),
+                          minute=int(start_datetime.minute),
+                          second=int(start_datetime.second))
+
+    t_2 = PartialDateTime(year=int(end_datetime.year),
+                          month=int(end_datetime.month),
+                          day=int(end_datetime.day),
+                          hour=int(end_datetime.hour),
+                          minute=int(end_datetime.minute),
+                          second=int(end_datetime.second))
+
+    constraint = iris.Constraint(time=lambda t: t_1 <= t.point < t_2)
+    cube_slice = cube.extract(constraint)
+    if cube_slice is None:
+        raise ValueError(
+            f"Time slice {start_datetime.strftime('%Y-%m-%d')} "
+            f"to {end_datetime.strftime('%Y-%m-%d')} is outside "
+            f"cube time bounds {time_coord.cell(0)} to {time_coord.cell(-1)}.")
+
+    return cube_slice
+
+
+def clip_timerange(cube, timerange):
+    """Extract time range with a resolution up to seconds.
 
     Parameters
     ----------
     cube : iris.cube.Cube
         Input cube.
-    start_year : int
-        Start year.
-    end_year : int
-        End year.
+    timerange : str
+        Time range in ISO 8601 format.
 
     Returns
     -------
@@ -130,7 +236,25 @@ def clip_start_end_year(cube, start_year, end_year):
     ValueError
         Time ranges are outside the cube's time limits.
     """
-    return extract_time(cube, start_year, 1, 1, end_year + 1, 1, 1)
+    start_date = timerange.split('/')[0]
+    start_date = _parse_start_date(start_date)
+
+    end_date = timerange.split('/')[1]
+    end_date = _parse_end_date(end_date)
+
+    if isinstance(start_date, isodate.duration.Duration):
+        start_date = _duration_to_date(start_date, end_date, sign=-1)
+    elif isinstance(start_date, datetime.timedelta):
+        start_date = _duration_to_date(start_date, end_date, sign=-1)
+        start_date -= datetime.timedelta(seconds=1)
+
+    if isinstance(end_date, isodate.duration.Duration):
+        end_date = _duration_to_date(end_date, start_date, sign=1)
+    elif isinstance(end_date, datetime.timedelta):
+        end_date = _duration_to_date(end_date, start_date, sign=1)
+        end_date += datetime.timedelta(seconds=1)
+
+    return _extract_datetime(cube, start_date, end_date)
 
 
 def extract_season(cube, season):
@@ -779,18 +903,19 @@ def regrid_time(cube, frequency):
         ]
     elif frequency == '3hr':
         time_cells = [
-            datetime.datetime(t.year, t.month, t.day, t.hour - t.hour % 3, 0,
-                              0) for t in time_c
+            datetime.datetime(
+                t.year, t.month, t.day, t.hour - t.hour % 3, 0, 0)
+            for t in time_c
         ]
     elif frequency == '6hr':
         time_cells = [
-            datetime.datetime(t.year, t.month, t.day, t.hour - t.hour % 6, 0,
-                              0) for t in time_c
+            datetime.datetime(
+                t.year, t.month, t.day, t.hour - t.hour % 6, 0, 0)
+            for t in time_c
         ]
 
-    cube.coord('time').points = [
-        cube.coord('time').units.date2num(cl) for cl in time_cells
-    ]
+    coord = cube.coord('time')
+    cube.coord('time').points = date2num(time_cells, coord.units, coord.dtype)
 
     # uniformize bounds
     cube.coord('time').bounds = None

@@ -12,6 +12,7 @@ dependencies:
   - fiona
   - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
   - iris>=3.1.0
+  - pandas
   - pip!=21.3
   - python>=3.7
   - python-stratify

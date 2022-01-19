@@ -11,6 +11,7 @@ from cf_units import Unit
 from iris.cube import Cube
 
 import esmvalcore.preprocessor._multimodel as mm
+from esmvalcore.iris_helpers import date2num
 from esmvalcore.preprocessor import multi_model_statistics
 from esmvalcore.preprocessor._ancillary_vars import add_ancillary_variable
 
@@ -48,7 +49,7 @@ def timecoord(frequency,
         dates = [datetime(1850, 7, i, 0, 0, 0) for i in time_points]
 
     unit = Unit(offset, calendar=calendar)
-    points = unit.date2num(dates)
+    points = date2num(dates, unit)
     return iris.coords.DimCoord(points, standard_name='time', units=unit)
 
 
@@ -86,7 +87,7 @@ def generate_cube_from_dates(
     else:
         len_data = len(dates)
         unit = Unit(offset, calendar=calendar)
-        time = iris.coords.DimCoord(unit.date2num(dates),
+        time = iris.coords.DimCoord(date2num(dates, unit),
                                     standard_name='time',
                                     units=unit)
 
@@ -586,18 +587,16 @@ def test_daily_inconsistent_calendars():
     inside original bounds is filled with nearest neighbour Missing data
     outside original bounds is masked.
     """
-    start = cftime.date2num(datetime(1852, 1, 1),
-                            "days since 1850-01-01",
-                            calendar="standard")
+    ref_standard = Unit("days since 1850-01-01", calendar="standard")
+    ref_noleap = Unit("days since 1850-01-01", calendar="noleap")
+    start = date2num(datetime(1852, 1, 1), ref_standard)
 
     # 1852 is a leap year, and include 1 extra day at the end
     leapdates = cftime.num2date(start + np.arange(367),
-                                "days since 1850-01-01",
-                                calendar="standard")
+                                ref_standard.name, ref_standard.calendar)
 
     noleapdates = cftime.num2date(start + np.arange(365),
-                                  "days since 1850-01-01",
-                                  calendar="noleap")
+                                  ref_noleap.name, ref_noleap.calendar)
 
     leapcube = generate_cube_from_dates(
         leapdates,
