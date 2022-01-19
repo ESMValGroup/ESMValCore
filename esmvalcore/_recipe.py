@@ -1492,7 +1492,8 @@ class Recipe:
         for diagnostic_name, diagnostic in self.diagnostics.items():
             for script_name, script_cfg in diagnostic['scripts'].items():
                 task_id = diagnostic_name + TASKSEP + script_name
-                if isinstance(tasks[task_id], DiagnosticTask):
+                if task_id in tasks and isinstance(tasks[task_id],
+                                                   DiagnosticTask):
                     logger.debug("Linking tasks for diagnostic %s script %s",
                                  diagnostic_name, script_name)
                     ancestors = []
@@ -1506,6 +1507,75 @@ class Recipe:
                                      ancestor_ids)
                         ancestors.extend(tasks[a] for a in ancestor_ids)
                     tasks[task_id].ancestors = ancestors
+
+    def _get_tasks_to_run(self):
+        """Get tasks filtered and add ancestors if needed."""
+        tasknames_to_run = self._cfg.get('diagnostics', [])
+        if tasknames_to_run:
+            tasknames_to_run = set(tasknames_to_run)
+            while self._update_with_ancestors(tasknames_to_run):
+                pass
+        return tasknames_to_run
+
+    def _update_with_ancestors(self, tasknames_to_run):
+        """Add ancestors for all selected tasks."""
+        num_filters = len(tasknames_to_run)
+
+        # Iterate over all tasks and add all ancestors to tasknames_to_run of
+        # those tasks that match one of the patterns given by tasknames_to_run
+        # to
+        for diagnostic_name, diagnostic in self.diagnostics.items():
+            for script_name, script_cfg in diagnostic['scripts'].items():
+                task_name = diagnostic_name + TASKSEP + script_name
+                for pattern in tasknames_to_run:
+                    if fnmatch.fnmatch(task_name, pattern):
+                        ancestors = script_cfg.get('ancestors', [])
+                        if isinstance(ancestors, str):
+                            ancestors = ancestors.split()
+                        for ancestor in ancestors:
+                            tasknames_to_run.add(ancestor)
+                        break
+
+        # If new ancestors have been added (num_filters !=
+        # len(tasknames_to_run)) -> return True. This causes another call of
+        # this function in the while() loop of _get_tasks_to_run to ensure that
+        # nested ancestors are found.
+
+        # If no new ancestors have been found (num_filters ==
+        # len(tasknames_to_run)) -> return False. This terminates the search
+        # for ancestors.
+
+        return num_filters != len(tasknames_to_run)
+
+    def _create_diagnostic_tasks(self, diagnostic_name, diagnostic,
+                                 tasknames_to_run):
+        """Create diagnostic tasks."""
+        tasks = []
+
+        if self._cfg.get('run_diagnostic', True):
+            for script_name, script_cfg in diagnostic['scripts'].items():
+                task_name = diagnostic_name + TASKSEP + script_name
+
+                # Skip diagnostic tasks if desired by the user
+                if tasknames_to_run:
+                    for pattern in tasknames_to_run:
+                        if fnmatch.fnmatch(task_name, pattern):
+                            break
+                    else:
+                        logger.info("Skipping task %s due to filter",
+                                    task_name)
+                        continue
+
+                logger.info("Creating diagnostic task %s", task_name)
+                task = DiagnosticTask(
+                    script=script_cfg['script'],
+                    output_dir=script_cfg['output_dir'],
+                    settings=script_cfg['settings'],
+                    name=task_name,
+                )
+                tasks.append(task)
+
+        return tasks
 
     def _fill_wildcards(self, variable_group, preprocessor_output):
         """Fill wildcards in the `timerange` .
@@ -1552,12 +1622,26 @@ class Recipe:
                 variable_group].update(
                     {'additional_datasets': updated_datasets})
 
-    def _create_preprocessor_tasks(self, diagnostic_name, diagnostic):
+    def _create_preprocessor_tasks(self, diagnostic_name, diagnostic,
+                                   tasknames_to_run, any_diag_script_is_run):
         """Create preprocessor tasks."""
         tasks = []
         failed_tasks = []
         for variable_group in diagnostic['preprocessor_output']:
             task_name = diagnostic_name + TASKSEP + variable_group
+
+            # Skip preprocessor if not a single diagnostic script is run and
+            # the preprocessing task is not explicitly requested by the user
+            if tasknames_to_run:
+                if not any_diag_script_is_run:
+                    for pattern in tasknames_to_run:
+                        if fnmatch.fnmatch(task_name, pattern):
+                            break
+                    else:
+                        logger.info("Skipping task %s due to filter",
+                                    task_name)
+                        continue
+
             # Resume previous runs if requested, else create a new task
             for resume_dir in self._cfg['resume_from']:
                 prev_preproc_dir = Path(
@@ -1602,35 +1686,34 @@ class Recipe:
         logger.info("Creating tasks from recipe")
         tasks = TaskSet()
 
+        tasknames_to_run = self._get_tasks_to_run()
+
         priority = 0
         failed_tasks = []
+
         for diagnostic_name, diagnostic in self.diagnostics.items():
             logger.info("Creating tasks for diagnostic %s", diagnostic_name)
 
+            # Create diagnostic tasks
+            new_tasks = self._create_diagnostic_tasks(diagnostic_name,
+                                                      diagnostic,
+                                                      tasknames_to_run)
+            any_diag_script_is_run = bool(new_tasks)
+            for task in new_tasks:
+                task.priority = priority
+                tasks.add(task)
+                priority += 1
+
             # Create preprocessor tasks
             new_tasks, failed = self._create_preprocessor_tasks(
-                diagnostic_name, diagnostic)
+                diagnostic_name, diagnostic, tasknames_to_run,
+                any_diag_script_is_run)
             failed_tasks.extend(failed)
             for task in new_tasks:
                 for task0 in task.flatten():
                     task0.priority = priority
                 tasks.add(task)
                 priority += 1
-
-            # Create diagnostic tasks
-            if self._cfg.get('run_diagnostic', True):
-                for script_name, script_cfg in diagnostic['scripts'].items():
-                    task_name = diagnostic_name + TASKSEP + script_name
-                    logger.info("Creating diagnostic task %s", task_name)
-                    task = DiagnosticTask(
-                        script=script_cfg['script'],
-                        output_dir=script_cfg['output_dir'],
-                        settings=script_cfg['settings'],
-                        name=task_name,
-                    )
-                    task.priority = priority
-                    tasks.add(task)
-                    priority += 1
 
         if failed_tasks:
             recipe_error = RecipeError('Could not create all tasks')
@@ -1648,18 +1731,6 @@ class Recipe:
     def initialize_tasks(self):
         """Define tasks in recipe."""
         tasks = self._create_tasks()
-
-        # Select only requested tasks
-        tasknames_to_run = self._cfg.get('diagnostics')
-
-        if tasknames_to_run:
-            tasks = tasks.flatten()
-            names = {t.name for t in tasks}
-            selection = set()
-            for pattern in tasknames_to_run:
-                selection |= set(fnmatch.filter(names, pattern))
-            tasks = TaskSet(t for t in tasks if t.name in selection)
-
         tasks = tasks.flatten()
         logger.info("These tasks will be executed: %s",
                     ', '.join(t.name for t in tasks))
