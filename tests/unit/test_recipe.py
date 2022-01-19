@@ -339,6 +339,6 @@ def test_multi_model_filename():
         PreprocessorFile(cube, 'B', {'timerange': '1989/1990'}),
         PreprocessorFile(cube, 'C', {'timerange': '1991/1992'}),
     ]
-    attributes = _recipe._get_statistic_attributes(products)
+    attributes = _recipe._get_common_attributes(products)
     assert 'timerange' in attributes
     assert attributes['timerange'] == '1989/1992'
