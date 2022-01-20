@@ -316,8 +316,10 @@ def extract_location(cube, location, scheme):
     The function just retrieves the coordinates of the location and then calls
     the ``extract_point`` preprocessor.
 
-    It can be use to locate cities and villages, but also mountains or other
+    It can be used to locate cities and villages, but also mountains or other
     geographical locations.
+
+    NOTE: the geolocator needs a working internet connection.
 
     Parameters
     ----------
