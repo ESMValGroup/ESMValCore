@@ -11,6 +11,7 @@ import iris
 import numpy as np
 import stratify
 from dask import array as da
+from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
 
@@ -306,6 +307,66 @@ def _attempt_irregular_regridding(cube, scheme):
     return False
 
 
+def extract_location(cube, location, scheme):
+    """Extract a point using a location name, with interpolation.
+
+    Extracts a single location point from a cube, according
+    to the interpolation scheme ``scheme``.
+
+    The function just retrieves the coordinates of the location and then calls
+    the ``extract_point`` preprocessor.
+
+    It can be used to locate cities and villages, but also mountains or other
+    geographical locations.
+
+    Note
+    ----
+    The geolocator needs a working internet connection.
+
+    Parameters
+    ----------
+    cube : cube
+        The source cube to extract a point from.
+
+    location : str
+        The reference location. Examples: 'mount everest',
+        'romania','new york, usa'
+
+    scheme : str
+        The interpolation scheme. 'linear' or 'nearest'. No default.
+
+    Returns
+    -------
+    Returns a cube with the extracted point, and with adjusted
+    latitude and longitude coordinates.
+
+    Raises
+    ------
+    ValueError:
+        If location is not supplied as a preprocessor parameter.
+    ValueError:
+        If scheme is not supplied as a preprocessor parameter.
+    ValueError:
+        If given location cannot be found by the geolocator.
+    """
+    if location is None:
+        raise ValueError("Location needs to be specified."
+                         " Examples: 'mount everest', 'romania',"
+                         " 'new york, usa'")
+    if scheme is None:
+        raise ValueError("Interpolation scheme needs to be specified."
+                         " Use either 'linear' or 'nearest'.")
+    geolocator = Nominatim(user_agent='esmvalcore')
+    geolocation = geolocator.geocode(location)
+    if geolocation is None:
+        raise ValueError(f'Requested location {location} can not be found.')
+    logger.info("Extracting data for %s (%s °N, %s °E)", geolocation,
+                geolocation.latitude, geolocation.longitude)
+
+    return extract_point(cube, geolocation.latitude,
+                         geolocation.longitude, scheme)
+
+
 def extract_point(cube, latitude, longitude, scheme):
     """Extract a point, with interpolation.
 
@@ -335,6 +396,10 @@ def extract_point(cube, latitude, longitude, scheme):
     Returns a cube with the extracted point(s), and with adjusted
     latitude and longitude coordinates (see above).
 
+    Raises
+    ------
+    ValueError:
+        If the interpolation scheme is None or unrecognized.
 
     Examples
     --------

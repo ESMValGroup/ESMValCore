@@ -38,6 +38,7 @@ REQUIREMENTS = {
         'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
         'fiona',
         'fire',
+        'geopy',
         'humanfriendly',
         "importlib_resources;python_version<'3.9'",
         'isodate',
