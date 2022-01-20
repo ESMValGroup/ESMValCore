@@ -1,6 +1,7 @@
 """Integration tests for :func:`esmvalcore.preprocessor.extract_location."""
 
 import iris
+import iris.fileformats
 import numpy as np
 from iris.coords import CellMethod, DimCoord
 
@@ -107,3 +108,17 @@ class Test(tests.Test):
             extract_location(self.cube,
                              scheme='nearest',
                              location='Minas Tirith,Gondor')
+
+    def test_no_location_parameter(self):
+        """Test if no location supplied."""
+        with self.assertRaises(ValueError):
+            extract_location(self.cube,
+                             scheme='nearest',
+                             location=None)
+
+    def test_no_scheme_parameter(self):
+        """Test if no scheme supplied."""
+        with self.assertRaises(ValueError):
+            extract_location(self.cube,
+                             scheme=None,
+                             location='Calvitero,Candelario')
