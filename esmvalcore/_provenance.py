@@ -136,8 +136,7 @@ class TrackedFile:
 
     def __str__(self):
         """Return summary string."""
-        name = Path(self._filename).name
-        return f'{self.__class__.__name__}({repr(name)})'
+        return "{}: {}".format(self.__class__.__name__, self.filename)
 
     def __repr__(self):
         """Return representation string (e.g., used by ``pformat``)."""
