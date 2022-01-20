@@ -311,7 +311,7 @@ def extract_location(cube, location, scheme):
     """Extract a point using a location name, with interpolation.
 
     Extracts a single location point from a cube, according
-    to the interpolation scheme `scheme`.
+    to the interpolation scheme ``scheme``.
 
     The function just retrieves the coordinates of the location and then calls
     the `extract_point` preprocessor.
