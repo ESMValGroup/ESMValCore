@@ -343,7 +343,7 @@ def extract_location(cube, location, scheme):
     ValueError:
         If scheme is not supplied as a preprocessor parameter.
     ValueError:
-        If given location can not be found by the geolocator.
+        If given location cannot be found by the geolocator.
     """
     if location is None:
         raise ValueError("Location needs to be specified."
