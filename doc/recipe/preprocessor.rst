@@ -1490,7 +1490,7 @@ but also mountains or other geographical locations.
 Parameters
   * ``cube``: the input dataset cube to extract a point from.
   * ``location``: the reference location. Examples: 'mount everest',
-    'romania','new york, usa'. Raises ValuError if none supplied.
+    'romania', 'new york, usa'. Raises ValueError if none supplied.
   * ``scheme`` : interpolation scheme. ``'linear'`` or ``'nearest'``.
     There is no default, raises ValuError if none supplied.
 
