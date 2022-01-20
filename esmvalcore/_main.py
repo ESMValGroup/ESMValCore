@@ -380,7 +380,7 @@ class ESMValTool():
         with warnings.catch_warnings():
             # ignore experimental API warning
             warnings.simplefilter("ignore")
-            from .experimental.config._config_object import Config
+            from .experimental.config._config_object import ExpConfig
         explicit_optional_kwargs = {
             'config_file': config_file,
             'resume_from': resume_from,
@@ -395,7 +395,7 @@ class ESMValTool():
         for (key, val) in explicit_optional_kwargs.items():
             if val is not None:
                 all_optional_kwargs[key] = val
-        Config(all_optional_kwargs)
+        ExpConfig(all_optional_kwargs)
 
         recipe = self._get_recipe(recipe)
         cfg = read_config_user_file(config_file, recipe.stem, kwargs)
