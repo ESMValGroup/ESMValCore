@@ -1487,6 +1487,9 @@ location and then calls the :func:`esmvalcore.preprocessor.extract_point`
 preprocessor. It can be used to locate cities and villages,
 but also mountains or other geographical locations.
 
+Note that this function's geolocator application needs a
+working internet connection.
+
 Parameters
   * ``cube``: the input dataset cube to extract a point from.
   * ``location``: the reference location. Examples: 'mount everest',
