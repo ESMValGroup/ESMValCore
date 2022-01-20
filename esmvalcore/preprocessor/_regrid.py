@@ -325,7 +325,8 @@ def extract_location(cube, location, scheme):
         The source cube to extract a point from.
 
     location : str
-        The reference location.
+        The reference location. Examples: 'mount everest',
+        'romania','new york, usa'
 
     scheme : str
         The interpolation scheme. 'linear' or 'nearest'. No default.
@@ -338,14 +339,26 @@ def extract_location(cube, location, scheme):
     Raises
     ------
     ValueError:
+        If location is not supplied as a preprocessor parameter.
+    ValueError:
+        If scheme is not supplied as a preprocessor parameter.
+    ValueError:
         If given location can not be found by the geolocator.
     """
+    if location is None:
+        raise ValueError("Location needs to be specified."
+                         " Examples: 'mount everest', 'romania',"
+                         " 'new york, usa'")
+    if scheme is None:
+        raise ValueError("Interpolation scheme needs to be specified."
+                         " Use either 'linear' or 'nearest'.")
     geolocator = Nominatim(user_agent='esmvalcore')
     location = geolocator.geocode(location)
     if not location:
         raise ValueError(f'Requested location {location} can not be found.')
     logger.debug("Extracting data for %s (%s ºN, %s ºW)", location,
-                location.latitude, location.longitude)
+                 location.latitude, location.longitude)
+
     return extract_point(cube, location.latitude, location.longitude, scheme)
 
 
