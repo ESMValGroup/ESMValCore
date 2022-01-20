@@ -319,7 +319,9 @@ def extract_location(cube, location, scheme):
     It can be used to locate cities and villages, but also mountains or other
     geographical locations.
 
-    NOTE: the geolocator needs a working internet connection.
+    Note
+    ----
+    The geolocator needs a working internet connection.
 
     Parameters
     ----------
