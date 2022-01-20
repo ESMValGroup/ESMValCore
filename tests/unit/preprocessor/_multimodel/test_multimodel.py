@@ -1,6 +1,4 @@
 """Unit test for :func:`esmvalcore.preprocessor._multimodel`."""
-import unittest
-"""Unit test for :func:`esmvalcore.preprocessor._multimodel`"""
 
 from datetime import datetime
 
@@ -524,7 +522,7 @@ class PreprocessorFile:
 
     def wasderivedfrom(self, product):
         pass
-    
+
     def group(self, keys: list) -> str:
         """Generate group keyword.
 
@@ -558,12 +556,12 @@ def test_return_products():
     products = set([input1, input2])
 
     output = PreprocessorFile()
-    output_products = {'mean': output}
+    output_products = {'': {'mean': output}}
 
     kwargs = {
         'statistics': ['mean'],
         'span': 'full',
-        'output_products': output_products
+        'output_products': output_products['']
     }
 
     result1 = mm._multiproduct_statistics(products,
@@ -577,6 +575,7 @@ def test_return_products():
     assert result1 == set([input1, input2, output])
     assert result2 == set([output])
 
+    kwargs['output_products'] = output_products
     result3 = mm.multi_model_statistics(products, **kwargs)
     result4 = mm.multi_model_statistics(products,
                                         keep_input_datasets=False,
