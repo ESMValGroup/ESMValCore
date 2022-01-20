@@ -94,45 +94,45 @@ VAR_A_REF_B = {'dataset': 'A', 'reference_dataset': 'B'}
 TEST_ALLOW_SKIPPING = [
     ([], VAR_A, {}, False),
     ([], VAR_A, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     ([], VAR_A, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, True),
     ([], VAR_A_REF_A, {}, False),
     ([], VAR_A_REF_A, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     ([], VAR_A_REF_A, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, False),
     ([], VAR_A_REF_B, {}, False),
     ([], VAR_A_REF_B, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     ([], VAR_A_REF_B, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, True),
     (['A'], VAR_A, {}, False),
     (['A'], VAR_A, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     (['A'], VAR_A, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, False),
     (['A'], VAR_A_REF_A, {}, False),
     (['A'], VAR_A_REF_A, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     (['A'], VAR_A_REF_A, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, False),
     (['A'], VAR_A_REF_B, {}, False),
     (['A'], VAR_A_REF_B, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     (['A'], VAR_A_REF_B, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, False),
 ]
 
