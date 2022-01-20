@@ -1498,7 +1498,9 @@ Parameters
   * ``location``: the reference location. Examples: 'mount everest',
     'romania', 'new york, usa'. Raises ValueError if none supplied.
   * ``scheme`` : interpolation scheme. ``'linear'`` or ``'nearest'``.
-    There is no default, raises ValuError if none supplied.
+    There is no default, raises ValueError if none supplied.
+
+See also :func:`esmvalcore.preprocessor.extract_location`.
 
 
 ``zonal_statistics``
