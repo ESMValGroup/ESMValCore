@@ -380,7 +380,7 @@ class ESMValTool():
         with warnings.catch_warnings():
             # ignore experimental API warning
             warnings.simplefilter("ignore")
-            from .experimental.config._config_object import ExpConfig
+            from .experimental.config._config_object import Config as ExpConfig
         explicit_optional_kwargs = {
             'config_file': config_file,
             'resume_from': resume_from,
