@@ -3,8 +3,8 @@ import fnmatch
 import logging
 import os
 import re
-from collections import defaultdict
 import warnings
+from collections import defaultdict
 from copy import deepcopy
 from pathlib import Path
 from pprint import pformat
@@ -737,8 +737,10 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
     settings = list(products)[0].settings[step]
 
     if step == 'ensemble_statistics':
+        check.ensemble_statistics(settings)
         grouping = ['project', 'dataset', 'exp', 'sub_experiment']
     else:
+        check.multimodel_statistics(settings)
         grouping = settings.get('groupby', None)
 
     downstream_settings = _get_downstream_settings(step, order, products)
@@ -773,9 +775,10 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
 def update_ancestors(ancestors, step, downstream_settings):
     """Retroactively add settings to ancestor products."""
     for product in ancestors:
-        settings = product.settings[step]
-        for key, value in downstream_settings.items():
-            settings[key] = value
+        if step in product.settings:
+            settings = product.settings[step]
+            for key, value in downstream_settings.items():
+                settings[key] = value
 
 
 def _update_extract_shape(settings, config_user):
@@ -903,7 +906,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         grouped_ancestors = _match_products(ancestor_products, variables)
     else:
         grouped_ancestors = {}
-    
+
     missing_vars = set()
     for variable in variables:
         settings = _get_default_settings(
@@ -942,7 +945,6 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
 
         products.add(product)
 
-
     if missing_vars:
         separator = "\n- "
         raise InputFilesNotFound(
@@ -954,7 +956,6 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     ensemble_step = 'ensemble_statistics'
     multi_model_step = 'multi_model_statistics'
     if ensemble_step in profile:
-        check.ensemble_statistics(settings[ensemble_step])
 
         ensemble_products, ensemble_settings = _update_multiproduct(
             products, order, preproc_dir, ensemble_step)
@@ -969,7 +970,6 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         ensemble_products = products
 
     if multi_model_step in profile:
-        check.multimodel_statistics(settings[multi_model_step])
 
         multimodel_products, multimodel_settings = _update_multiproduct(
             ensemble_products, order, preproc_dir, multi_model_step)
