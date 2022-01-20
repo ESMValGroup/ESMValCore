@@ -1474,6 +1474,8 @@ Parameters:
     be an array of floating point values.
   * ``scheme``: interpolation scheme: either ``'linear'`` or
     ``'nearest'``. There is no default.
+    
+See also :func:`esmvalcore.preprocessor.extract_point`.
 
 
 ``extract_location``
