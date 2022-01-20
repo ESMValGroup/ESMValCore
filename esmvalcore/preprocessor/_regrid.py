@@ -359,7 +359,8 @@ def extract_location(cube, location, scheme):
     logger.debug("Extracting data for %s (%s °N, %s °E)", geolocation,
                  geolocation.latitude, geolocation.longitude)
 
-    return extract_point(cube, geolocation.latitude, geolocation.longitude, scheme)
+    return extract_point(cube, geolocation.latitude,
+                         geolocation.longitude, scheme)
 
 
 def extract_point(cube, latitude, longitude, scheme):
