@@ -354,7 +354,7 @@ def extract_location(cube, location, scheme):
                          " Use either 'linear' or 'nearest'.")
     geolocator = Nominatim(user_agent='esmvalcore')
     location = geolocator.geocode(location)
-    if not location:
+    if location is None:
         raise ValueError(f'Requested location {location} can not be found.')
     logger.debug("Extracting data for %s (%s ºN, %s ºW)", location,
                  location.latitude, location.longitude)
