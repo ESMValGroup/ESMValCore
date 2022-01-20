@@ -356,7 +356,7 @@ def extract_location(cube, location, scheme):
     geolocation = geolocator.geocode(location)
     if geolocation is None:
         raise ValueError(f'Requested location {location} can not be found.')
-    logger.debug("Extracting data for %s (%s ºN, %s ºW)", geolocation,
+    logger.debug("Extracting data for %s (%s °N, %s °E)", geolocation,
                  geolocation.latitude, geolocation.longitude)
 
     return extract_point(cube, geolocation.latitude, geolocation.longitude, scheme)
