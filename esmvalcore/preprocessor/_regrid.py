@@ -353,13 +353,13 @@ def extract_location(cube, location, scheme):
         raise ValueError("Interpolation scheme needs to be specified."
                          " Use either 'linear' or 'nearest'.")
     geolocator = Nominatim(user_agent='esmvalcore')
-    location = geolocator.geocode(location)
-    if location is None:
+    geolocation = geolocator.geocode(location)
+    if geolocation is None:
         raise ValueError(f'Requested location {location} can not be found.')
-    logger.debug("Extracting data for %s (%s ºN, %s ºW)", location,
-                 location.latitude, location.longitude)
+    logger.debug("Extracting data for %s (%s ºN, %s ºW)", geolocation,
+                 geolocation.latitude, geolocation.longitude)
 
-    return extract_point(cube, location.latitude, location.longitude, scheme)
+    return extract_point(cube, geolocation.latitude, geolocation.longitude, scheme)
 
 
 def extract_point(cube, latitude, longitude, scheme):
