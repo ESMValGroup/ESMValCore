@@ -3,15 +3,10 @@
 This module contains functions to compute statistics across multiple cubes or
 products.
 
-Ensemble statistics uses iris built in functions and support lazy evaluation.
-Multi-model statistics uses custom functions that operate directly on numpy
-arrays.
-
 Wrapper functions separate esmvalcore internals, operating on products, from
 generalized functions that operate on iris cubes. These wrappers support
 grouped execution by passing a groupby keyword.
 """
-import copy
 import logging
 import re
 import warnings
@@ -21,17 +16,12 @@ from functools import reduce
 import cf_units
 import iris
 import numpy as np
-import scipy
-
-from ._other import _group_products
-
-logger = logging.getLogger(__name__)
-
-
 from iris.util import equalise_attributes
 
 from esmvalcore.iris_helpers import date2num
 from esmvalcore.preprocessor import remove_fx_variables
+
+from ._other import _group_products
 
 logger = logging.getLogger(__name__)
 
@@ -416,6 +406,8 @@ def multi_model_statistics(products,
         For internal use only. A dict with statistics names as keys and
         preprocessorfiles as values. If products are passed as input, the
         statistics cubes will be assigned to these output products.
+    groupby:  str
+        Group products by a given tag or attribute.
     keep_input_datasets: bool
         If True, the output will include the input datasets.
         If False, only the computed statistics will be returned.
@@ -441,15 +433,16 @@ def multi_model_statistics(products,
     if all(type(p).__name__ == 'PreprocessorFile' for p in products):
         # Avoid circular input: https://stackoverflow.com/q/16964467
         statistics_products = set()
-        for identifier, products in _group_products(products, by=groupby):
+        for identifier, input_prods in _group_products(products, by=groupby):
             sub_output_products = output_products[identifier]
 
             # Compute statistics on a single group
             group_statistics = _multiproduct_statistics(
-                products=products,
+                products=input_prods,
                 statistics=statistics,
                 output_products=sub_output_products,
-                span=span
+                span=span,
+                keep_input_datasets=keep_input_datasets
             )
 
             statistics_products |= group_statistics
@@ -459,6 +452,7 @@ def multi_model_statistics(products,
         "Input type for multi_model_statistics not understood. Expected "
         "iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
         "got {}".format(products))
+
 
 def ensemble_statistics(products, statistics,
                         output_products, keep_input_datasets=True):

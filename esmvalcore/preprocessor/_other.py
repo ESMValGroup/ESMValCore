@@ -38,7 +38,7 @@ def clip(cube, minimum=None, maximum=None):
     return cube
 
 
-def _groupby(iterable, keyfunc: callable) -> dict:
+def _groupby(iterable, keyfunc):
     """Group iterable by key function.
 
     The items are grouped by the value that is returned by the `keyfunc`

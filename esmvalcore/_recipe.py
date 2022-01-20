@@ -732,7 +732,7 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
     """
     products = {p for p in input_products if step in p.settings}
     if not products:
-        return input_products, dict()
+        return input_products, {}
 
     settings = list(products)[0].settings[step]
 
