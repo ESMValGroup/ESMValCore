@@ -13,7 +13,6 @@ import yamale
 from ._data_finder import get_start_end_year
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
-from .preprocessor._multimodel import STATISTIC_MAPPING
 
 logger = logging.getLogger(__name__)
 
@@ -254,18 +253,26 @@ def _verify_groupby(groupby):
             f"`groupby` must be defined as a list. Got {groupby}.")
 
 
+def _verify_keep_input_datasets(keep_input_datasets):
+    if not isinstance(keep_input_datasets, bool):
+        raise RecipeError(
+            "Invalid value encountered for `keep_input_datasets`."
+            f"Must be defined as a boolean. Got {keep_input_datasets}."
+        )
+
+
 def _verify_arguments(given, expected):
     """Raise error if arguments cannot be verified."""
     for key in given:
         if key not in expected:
             raise RecipeError(
                 f"Unexpected keyword argument encountered: {key}. Valid "
-                "keywords are: {valid_keys}.")
+                "keywords are: {expected}.")
 
 
 def multimodel_statistics(settings):
     """Check that the multi-model settings are valid."""
-    valid_keys = ['span', 'groupby', 'statistics']
+    valid_keys = ['span', 'groupby', 'statistics', 'keep_input_datasets']
     _verify_arguments(settings.keys(), valid_keys)
 
     span = settings.get('span', None)  # optional, default: overlap
@@ -279,6 +286,9 @@ def multimodel_statistics(settings):
     statistics = settings.get('statistics', None)  # required
     if statistics:
         _verify_multimodel_statistics(statistics)
+
+    keep_input_datasets = settings.get('keep_input_datasets', True)
+    _verify_keep_input_datasets(keep_input_datasets)
 
 
 def _verify_ensemble_statistics(statistics):
@@ -297,12 +307,17 @@ def _verify_ensemble_statistics(statistics):
 
 def ensemble_statistics(settings):
     """Check that the ensemble settings are valid."""
-    valid_keys = ['statistics']
+    valid_keys = ['statistics', 'keep_input_datasets']
     _verify_arguments(settings.keys(), valid_keys)
 
     statistics = settings.get('statistics', None)
     if statistics:
         _verify_ensemble_statistics(statistics)
+
+    keep_input_datasets = settings.get('keep_input_datasets', True)
+    _verify_keep_input_datasets(keep_input_datasets)
+
+
 def _check_delimiter(timerange):
     if len(timerange) != 2:
         raise RecipeError("Invalid value encountered for `timerange`. "
