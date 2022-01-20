@@ -1,5 +1,4 @@
 """Data finder module for the ESMValTool."""
-import copy
 import glob
 import logging
 import os
