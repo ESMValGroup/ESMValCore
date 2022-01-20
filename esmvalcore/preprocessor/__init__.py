@@ -111,8 +111,6 @@ __all__ = [
     'mask_glaciated',
     # Mask landseaice, sftgif only
     'mask_landseaice',
-    # Ensemble statistics
-    'ensemble_statistics',
     # Regridding
     'regrid',
     # Point interpolation
@@ -160,6 +158,8 @@ __all__ = [
     'linear_trend_stderr',
     # Convert units
     'convert_units',
+    # Ensemble statistics
+    'ensemble_statistics',
     # Multi model statistics
     'multi_model_statistics',
     # Bias calculation
