@@ -824,7 +824,7 @@ def _match_products(products, variables):
 def _allow_skipping(ancestors, variable, config_user):
     """Allow skipping of datasets."""
     allow_skipping = all([
-        config_user.get('skip-nonexistent'),
+        config_user.get('skip_nonexistent'),
         not ancestors,
         variable['dataset'] != variable.get('reference_dataset'),
     ])
