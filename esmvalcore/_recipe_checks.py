@@ -230,7 +230,7 @@ def _verify_multimodel_statistics(statistics):
             raise RecipeError(
                 "Invalid value encountered for `statistic` in preprocessor "
                 f"`multi_model_statistics`. Valid values are {valid_names} "
-                f"or patterns matching {valid_patterns}. Got '{statistic}.'")
+                f"or patterns matching {valid_patterns}. Got '{statistic}'.")
 
 
 def _verify_span_value(span):
@@ -249,8 +249,9 @@ def _verify_groupby(groupby):
         return
     if not isinstance(groupby, list):
         raise RecipeError(
-            "Invalid value encountered for `groupby` in preprocessor. "
-            f"`groupby` must be defined as a list. Got {groupby}.")
+            "Invalid value encountered for `groupby` in preprocessor "
+            "`multi_model_statistics`.`groupby` must be defined as a "
+            f"list. Got {groupby}.")
 
 
 def _verify_keep_input_datasets(keep_input_datasets):
@@ -267,7 +268,7 @@ def _verify_arguments(given, expected):
         if key not in expected:
             raise RecipeError(
                 f"Unexpected keyword argument encountered: {key}. Valid "
-                "keywords are: {expected}.")
+                f"keywords are: {expected}.")
 
 
 def multimodel_statistics(settings):
