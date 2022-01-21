@@ -537,10 +537,11 @@ class PreprocessorFile:
 
         identifier = []
         for key in keys:
-            attribute = self.attributes[key]
-            if isinstance(attribute, (list, tuple)):
-                attribute = '-'.join(attribute)
-            identifier.append(attribute)
+            attribute = self.attributes.get(key)
+            if attribute:
+                if isinstance(attribute, (list, tuple)):
+                    attribute = '-'.join(attribute)
+                identifier.append(attribute)
 
         return '_'.join(identifier)
 
@@ -583,6 +584,51 @@ def test_return_products():
 
     assert result3 == result1
     assert result4 == result2
+
+
+def test_ensemble_products():
+    cube1 = generate_cube_from_dates('monthly', fill_val=1)
+    cube2 = generate_cube_from_dates('monthly', fill_val=9)
+
+    attributes1 = {
+        'project': 'project', 'dataset': 'dataset',
+        'exp': 'exp', 'ensemble': '1'}
+    input1 = PreprocessorFile(cube1, attributes=attributes1)
+
+    attributes2 = {
+        'project': 'project', 'dataset': 'dataset',
+        'exp': 'exp', 'ensemble': '2'}
+    input2 = PreprocessorFile(cube2, attributes=attributes2)
+
+    attributes3 = {
+        'project': 'project', 'dataset': 'dataset2',
+        'exp': 'exp', 'ensemble': '1'}
+    input3 = PreprocessorFile(cube1, attributes=attributes3)
+
+    attributes4 = {
+        'project': 'project', 'dataset': 'dataset2',
+        'exp': 'exp', 'ensemble': '2'}
+
+    input4 = PreprocessorFile(cube1, attributes=attributes4)
+    products = set([input1, input2, input3, input4])
+
+    output1 = PreprocessorFile()
+    output2 = PreprocessorFile()
+    output_products = {
+        'project_dataset_exp': {'mean': output1},
+        'project_dataset2_exp': {'mean': output2}}
+
+    kwargs = {
+        'statistics': ['mean'],
+        'output_products': output_products,
+    }
+
+    result1 = mm.ensemble_statistics(products, **kwargs)
+    assert len(result1) == 6
+
+    result2 = mm.ensemble_statistics(
+        products, keep_input_datasets=False, **kwargs)
+    assert len(result2) == 2
 
 
 def test_ignore_tas_scalar_height_coord():
