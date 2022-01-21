@@ -2,7 +2,6 @@
 import copy
 import logging
 import os
-from pathlib import Path
 
 from netCDF4 import Dataset
 from PIL import Image
