@@ -278,7 +278,7 @@ def test_invalid_multi_model_settings():
     assert str(rec_err.value) == (
         "Unexpected keyword argument encountered: wrong_parametre. "
         "Valid keywords are: "
-        "['span', 'groupby', 'statistics', 'keep_input_datasets'] .")
+        "['span', 'groupby', 'statistics', 'keep_input_datasets'].")
 
 
 def test_invalid_multi_model_statistics():
