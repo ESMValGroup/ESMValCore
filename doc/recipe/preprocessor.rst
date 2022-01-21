@@ -377,7 +377,7 @@ The meaning of 'very close' can be changed by providing the parameters:
 Schemes for vertical interpolation and extrapolation
 ----------------------------------------------------
 
-The vertical interpolation current supports the following schemes:
+The vertical interpolation currently supports the following schemes:
 
 * ``linear``: Linear interpolation without extrapolation, i.e., extrapolation
   points will be masked even if the source data is not a masked array.
@@ -392,12 +392,12 @@ The vertical interpolation current supports the following schemes:
   nearest source point.
 
 .. note::
-   Previous versions of ESMValCore (<2.5) supported the schemes
+   Previous versions of ESMValCore (<2.5.0) supported the schemes
    ``linear_horizontal_extrapolate_vertical`` and
    ``nearest_horizontal_extrapolate_vertical``. These schemes have been renamed
    to ``linear_extrapolate`` and ``nearest_extrapolate``, respectively, in
-   version 2.5 and are identical to the new schemes. Support for the old
-   schemes will be removed in version 2.7.
+   version 2.5.0 and are identical to the new schemes. Support for the old
+   names will be removed in version 2.7.0.
 
 * See also :func:`esmvalcore.preprocessor.extract_levels`.
 * See also :func:`esmvalcore.preprocessor.get_cmor_levels`.
