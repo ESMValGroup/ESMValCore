@@ -6,15 +6,17 @@ from unittest import mock
 
 import iris
 import numpy as np
+import pytest
 from numpy import ma
 
 import tests
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.preprocessor._regrid import (
     _MDI,
     VERTICAL_SCHEMES,
+    _preserve_fx_vars,
     extract_levels,
     parse_vertical_scheme,
-    _preserve_fx_vars,
 )
 from tests.unit.preprocessor._regrid import _make_cube, _make_vcoord
 
@@ -33,8 +35,7 @@ class Test(tests.Test):
             'esmvalcore.preprocessor._regrid._create_cube',
             return_value=self.created_cube)
         self.schemes = [
-            'linear', 'nearest', 'linear_horizontal_extrapolate_vertical',
-            'nearest_horizontal_extrapolate_vertical'
+            'linear', 'nearest', 'linear_extrapolate', 'nearest_extrapolate',
         ]
         descriptor, self.filename = tempfile.mkstemp('.nc')
         os.close(descriptor)
@@ -53,12 +54,26 @@ class Test(tests.Test):
         reference = {
             'linear': ('linear', 'nan'),
             'nearest': ('nearest', 'nan'),
-            'linear_horizontal_extrapolate_vertical': ('linear', 'nearest'),
-            'nearest_horizontal_extrapolate_vertical': ('nearest', 'nearest'),
+            'linear_extrapolate': ('linear', 'nearest'),
+            'nearest_extrapolate': ('nearest', 'nearest'),
         }
         for scheme in self.schemes:
             interpolation, extrapolation = parse_vertical_scheme(scheme)
             assert interpolation, extrapolation == reference[scheme]
+
+        # Deprecated schemes (remove in v2.7)
+        deprecated_references = {
+            'linear_horizontal_extrapolate_vertical': ('linear', 'nearest'),
+            'nearest_horizontal_extrapolate_vertical': ('nearest', 'nearest'),
+        }
+        for scheme in deprecated_references:
+            warn_msg = (
+                "`` has been deprecated in ESMValCore version 2.5.0 and is "
+                "scheduled for removal in version 2.7.0. It has been renamed "
+                "to the identical scheme ``")
+            with pytest.warns(ESMValCoreDeprecationWarning, match=warn_msg):
+                interp, extrap = parse_vertical_scheme(scheme)
+            assert interp, extrap == deprecated_references[scheme]
 
     def test_nop__levels_match(self):
         vcoord = _make_vcoord(self.z, dtype=self.dtype)
