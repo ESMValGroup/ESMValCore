@@ -219,7 +219,7 @@ def extract_shape(settings):
                 "{}".format(', '.join(f"'{k}'".lower() for k in valid[key])))
 
 
-def _verify_multimodel_statistics(statistics):
+def _verify_statistics(statistics, step):
     """Raise error if multi-model statistics cannot be verified."""
     valid_names = ["mean", "median", "std", "min", "max"]
     valid_patterns = [r"^(p\d{1,2})(\.\d*)?$"]
@@ -229,7 +229,7 @@ def _verify_multimodel_statistics(statistics):
                 or re.match(r'|'.join(valid_patterns), statistic)):
             raise RecipeError(
                 "Invalid value encountered for `statistic` in preprocessor "
-                f"`multi_model_statistics`. Valid values are {valid_names} "
+                f"{step}. Valid values are {valid_names} "
                 f"or patterns matching {valid_patterns}. Got '{statistic}'.")
 
 
@@ -245,8 +245,6 @@ def _verify_span_value(span):
 
 def _verify_groupby(groupby):
     """Raise error if groupby arguments cannot be verified."""
-    if not groupby:
-        return
     if not isinstance(groupby, list):
         raise RecipeError(
             "Invalid value encountered for `groupby` in preprocessor "
@@ -286,24 +284,10 @@ def multimodel_statistics(settings):
 
     statistics = settings.get('statistics', None)  # required
     if statistics:
-        _verify_multimodel_statistics(statistics)
+        _verify_statistics(statistics, 'multi_model_statistics')
 
     keep_input_datasets = settings.get('keep_input_datasets', True)
     _verify_keep_input_datasets(keep_input_datasets)
-
-
-def _verify_ensemble_statistics(statistics):
-    """Raise error if ensemble statistics cannot be verified."""
-    valid_names = ('count', 'gmean', 'hmean', 'max', 'mean', 'median', 'min',
-                   'peak', 'percentile', 'proportion', 'rms', 'std_dev', 'sum',
-                   'variance', 'wpercentile')
-
-    for statistic in statistics:
-        if not statistic.lower() in valid_names:
-            raise RecipeError(
-                "Invalid value encountered for `statistic` in preprocessor "
-                f"`multi_model_statistics`. Valid values are {valid_names}."
-                f"Got '{statistic}.'")
 
 
 def ensemble_statistics(settings):
@@ -313,7 +297,7 @@ def ensemble_statistics(settings):
 
     statistics = settings.get('statistics', None)
     if statistics:
-        _verify_ensemble_statistics(statistics)
+        _verify_statistics(statistics, 'ensemble_statistics')
 
     keep_input_datasets = settings.get('keep_input_datasets', True)
     _verify_keep_input_datasets(keep_input_datasets)
