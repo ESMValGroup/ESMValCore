@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import iris
 import numpy as np
 import pyesgf.search.results
@@ -342,3 +344,22 @@ def test_multi_model_filename():
     attributes = _recipe._get_common_attributes(products)
     assert 'timerange' in attributes
     assert attributes['timerange'] == '1989/1992'
+
+
+def test_update_multiproduct_no_product():
+    cube = iris.cube.Cube(np.array([1]))
+    products = [
+        PreprocessorFile(cube, 'A', attributes=None, settings={'step': {}})]
+    order = ('load', 'save')
+    preproc_dir = '/preproc_dir'
+    step = 'multi_model_statistics'
+    output, settings = _recipe._update_multiproduct(
+        products, order, preproc_dir, step)
+    assert output == products
+    assert settings == {}
+
+
+def test_match_products_no_product():
+    variables = [{'var_name': 'var'}]
+    grouped_products = _recipe._match_products(None, variables)
+    assert grouped_products == defaultdict(list)
