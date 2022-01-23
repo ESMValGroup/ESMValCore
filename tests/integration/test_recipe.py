@@ -1894,12 +1894,16 @@ def test_ensemble_statistics(tmp_path, patched_datafinder, config_user):
     recipe = get_recipe(tmp_path, content, config_user)
     variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
     datasets = set([var['dataset'] for var in variable])
+    task = next(iter(recipe.tasks))
 
-    products = next(iter(recipe.tasks)).products
+    products = task.products
     product_out = _test_output_product_consistency(products, preprocessor,
                                                    statistics)
 
     assert len(product_out) == len(datasets) * len(statistics)
+
+    task._initialize_product_provenance()
+    assert next(iter(products)).provenance is not None
 
 
 def test_multi_model_statistics(tmp_path, patched_datafinder, config_user):
@@ -1937,12 +1941,16 @@ def test_multi_model_statistics(tmp_path, patched_datafinder, config_user):
 
     recipe = get_recipe(tmp_path, content, config_user)
     variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
+    task = next(iter(recipe.tasks))
 
-    products = next(iter(recipe.tasks)).products
+    products = task.products
     product_out = _test_output_product_consistency(products, preprocessor,
                                                    statistics)
 
     assert len(product_out) == len(statistics)
+
+    task._initialize_product_provenance()
+    assert next(iter(products)).provenance is not None
 
 
 def test_groupby_combined_statistics(tmp_path, patched_datafinder,
