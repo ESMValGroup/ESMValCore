@@ -560,7 +560,7 @@ feature first by issuing an
 :mod:`warnings` module and schedule it for removal two `minor versions
 <https://semver.org/>`__ from the upcoming release. For example, when you
 deprecate a feature in a pull request that will be included in version 2.5,
-that feature could be removed in version 2.7:
+that feature should be removed in version 2.7:
 
 .. code-block:: python
 
