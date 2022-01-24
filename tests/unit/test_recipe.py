@@ -1,4 +1,5 @@
 from collections import defaultdict
+from unittest import mock
 
 import iris
 import numpy as np
@@ -10,6 +11,15 @@ from esmvalcore import _recipe
 from esmvalcore.esgf._download import ESGFFile
 from esmvalcore.exceptions import RecipeError
 from tests import PreprocessorFile
+
+
+class MockRecipe(_recipe.Recipe):
+    """Mocked Recipe class with simple constructor."""
+
+    def __init__(self, cfg, diagnostics):
+        """Simple constructor used for testing."""
+        self._cfg = cfg
+        self.diagnostics = diagnostics
 
 
 class TestRecipe:
@@ -85,45 +95,45 @@ VAR_A_REF_B = {'dataset': 'A', 'reference_dataset': 'B'}
 TEST_ALLOW_SKIPPING = [
     ([], VAR_A, {}, False),
     ([], VAR_A, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     ([], VAR_A, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, True),
     ([], VAR_A_REF_A, {}, False),
     ([], VAR_A_REF_A, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     ([], VAR_A_REF_A, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, False),
     ([], VAR_A_REF_B, {}, False),
     ([], VAR_A_REF_B, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     ([], VAR_A_REF_B, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, True),
     (['A'], VAR_A, {}, False),
     (['A'], VAR_A, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     (['A'], VAR_A, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, False),
     (['A'], VAR_A_REF_A, {}, False),
     (['A'], VAR_A_REF_A, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     (['A'], VAR_A_REF_A, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, False),
     (['A'], VAR_A_REF_B, {}, False),
     (['A'], VAR_A_REF_B, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     (['A'], VAR_A_REF_B, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, False),
 ]
 
@@ -160,7 +170,7 @@ def test_resume_preprocessor_tasks(mocker, tmp_path):
 
     # Create tasks
     tasks, failed = _recipe.Recipe._create_preprocessor_tasks(
-        recipe, diagnostic_name, diagnostic)
+        recipe, diagnostic_name, diagnostic, [], True)
 
     assert tasks == [resume_task]
     assert not failed
@@ -363,3 +373,89 @@ def test_match_products_no_product():
     variables = [{'var_name': 'var'}]
     grouped_products = _recipe._match_products(None, variables)
     assert grouped_products == defaultdict(list)
+
+
+SCRIPTS_CFG = {
+    'output_dir': mock.sentinel.output_dir,
+    'script': mock.sentinel.script,
+    'settings': mock.sentinel.settings,
+}
+DIAGNOSTICS = {
+    'd1': {'scripts': {'s1': {'ancestors': [], **SCRIPTS_CFG}}},
+    'd2': {'scripts': {'s1': {'ancestors': ['d1/pr', 'd1/s1'],
+                              **SCRIPTS_CFG}}},
+    'd3': {'scripts': {'s1': {'ancestors': ['d2/s1'], **SCRIPTS_CFG}}},
+    'd4': {'scripts': {
+        's1': {'ancestors': 'd1/pr d1/tas', **SCRIPTS_CFG},
+        's2': {'ancestors': ['d4/pr', 'd4/tas'], **SCRIPTS_CFG},
+        's3': {'ancestors': ['d3/s1'], **SCRIPTS_CFG},
+    }},
+}
+TEST_GET_TASKS_TO_RUN = [
+    (None, []),
+    ({''}, {''}),
+    ({'wrong_task/*'}, {'wrong_task/*'}),
+    ({'d1/*'}, {'d1/*'}),
+    ({'d2/*'}, {'d2/*', 'd1/pr', 'd1/s1'}),
+    ({'d3/*'}, {'d3/*', 'd2/s1', 'd1/pr', 'd1/s1'}),
+    ({'d4/*'}, {'d4/*', 'd1/pr', 'd1/tas', 'd4/pr', 'd4/tas', 'd3/s1',
+                'd2/s1', 'd1/s1'}),
+    ({'wrong_task/*', 'd1/*'}, {'wrong_task/*', 'd1/*'}),
+    ({'d1/ta'}, {'d1/ta'}),
+    ({'d4/s2'}, {'d4/s2', 'd4/pr', 'd4/tas'}),
+    ({'d2/s1', 'd3/ta', 'd1/s1'}, {'d2/s1', 'd1/pr', 'd1/s1', 'd3/ta'}),
+    ({'d4/s1', 'd4/s2'}, {'d4/s1', 'd1/pr', 'd1/tas', 'd4/s2', 'd4/pr',
+                          'd4/tas'}),
+    ({'d4/s3', 'd3/ta'}, {'d4/s3', 'd3/s1', 'd2/s1', 'd1/pr', 'd1/s1',
+                          'd3/ta'}),
+]
+
+
+@pytest.mark.parametrize('diags_to_run,tasknames_to_run',
+                         TEST_GET_TASKS_TO_RUN)
+def test_get_tasks_to_run(diags_to_run, tasknames_to_run):
+    """Test ``Recipe._get_tasks_to_run``."""
+    cfg = {}
+    if diags_to_run is not None:
+        cfg = {'diagnostics': diags_to_run}
+
+    recipe = MockRecipe(cfg, DIAGNOSTICS)
+    tasks_to_run = recipe._get_tasks_to_run()
+
+    assert tasks_to_run == tasknames_to_run
+
+
+TEST_CREATE_DIAGNOSTIC_TASKS = [
+    (set(), ['s1', 's2', 's3']),
+    ({'d4/*'}, ['s1', 's2', 's3']),
+    ({'d4/s1'}, ['s1']),
+    ({'d4/s1', 'd3/*'}, ['s1']),
+    ({'d4/s1', 'd4/s2'}, ['s1', 's2']),
+    ({''}, []),
+    ({'d3/*'}, []),
+]
+
+
+@pytest.mark.parametrize('tasks_to_run,tasks_run',
+                         TEST_CREATE_DIAGNOSTIC_TASKS)
+@mock.patch('esmvalcore._recipe.DiagnosticTask', autospec=True)
+def test_create_diagnostic_tasks(mock_diag_task, tasks_to_run, tasks_run):
+    """Test ``Recipe._create_diagnostic_tasks``."""
+    cfg = {'run_diagnostic': True}
+    diag_name = 'd4'
+    diag_cfg = DIAGNOSTICS['d4']
+    n_tasks = len(tasks_run)
+
+    recipe = MockRecipe(cfg, DIAGNOSTICS)
+    tasks = recipe._create_diagnostic_tasks(diag_name, diag_cfg, tasks_to_run)
+
+    assert len(tasks) == n_tasks
+    assert mock_diag_task.call_count == n_tasks
+    for task_name in tasks_run:
+        expected_call = mock.call(
+            script=mock.sentinel.script,
+            output_dir=mock.sentinel.output_dir,
+            settings=mock.sentinel.settings,
+            name=f'{diag_name}{_recipe.TASKSEP}{task_name}',
+        )
+        assert expected_call in mock_diag_task.mock_calls

@@ -106,6 +106,7 @@ def config_user(tmp_path):
     cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
     cfg['offline'] = True
     cfg['check_level'] = CheckLevels.DEFAULT
+    cfg['diagnostics'] = set()
     return cfg
 
 
@@ -3589,3 +3590,78 @@ def test_get_derive_input_variables(patched_datafinder, config_user):
         }],
     }
     assert derive_input == expected_derive_input
+
+
+TEST_DIAG_SELECTION = [
+    (None, {'d1/tas', 'd1/s1', 'd2/s1', 'd3/s1', 'd3/s2', 'd4/s1'}),
+    ({''}, set()),
+    ({'wrong_diag/*'}, set()),
+    ({'d1/*'}, {'d1/tas', 'd1/s1'}),
+    ({'d2/*'}, {'d1/tas', 'd1/s1', 'd2/s1'}),
+    ({'d3/*'}, {'d1/tas', 'd1/s1', 'd2/s1', 'd3/s1', 'd3/s2'}),
+    ({'d4/*'}, {'d1/tas', 'd1/s1', 'd2/s1', 'd3/s2', 'd4/s1'}),
+    ({'wrong_diag/*', 'd1/*'}, {'d1/tas', 'd1/s1'}),
+    ({'d1/tas'}, {'d1/tas'}),
+    ({'d1/tas', 'd2/*'}, {'d1/tas', 'd1/s1', 'd2/s1'}),
+    ({'d1/tas', 'd3/s1'}, {'d1/tas', 'd3/s1', 'd1/s1'}),
+    ({'d4/*', 'd3/s1'}, {'d1/tas', 'd1/s1', 'd2/s1', 'd3/s1', 'd3/s2',
+                         'd4/s1'}),
+]
+
+
+@pytest.mark.parametrize('diags_to_run,tasks_run', TEST_DIAG_SELECTION)
+def test_diag_selection(tmp_path, patched_datafinder, config_user,
+                        diags_to_run, tasks_run):
+    """Test selection of individual diagnostics via --diagnostics option."""
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+    script = tmp_path / 'diagnostic.py'
+    script.write_text('')
+
+    if diags_to_run is not None:
+        config_user['diagnostics'] = diags_to_run
+
+    content = dedent("""
+        diagnostics:
+
+          d1:
+            variables:
+              tas:
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2000
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - dataset: CanESM5
+            scripts:
+              s1:
+                script: {script}
+
+          d2:
+            scripts:
+              s1:
+                script: {script}
+                ancestors: [d1/*]
+
+          d3:
+            scripts:
+              s1:
+                script: {script}
+                ancestors: [d1/s1]
+              s2:
+                script: {script}
+                ancestors: [d2/*]
+
+          d4:
+            scripts:
+              s1:
+                script: {script}
+                ancestors: [d3/s2]
+        """).format(script=script)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    task_names = {task.name for task in recipe.tasks.flatten()}
+
+    assert tasks_run == task_names

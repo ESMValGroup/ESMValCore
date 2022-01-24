@@ -335,7 +335,7 @@ extract the levels and vertically regrid onto the vertical levels of
           levels: ERA-Interim
           # This also works, but allows specifying the pressure coordinate name
           # levels: {dataset: ERA-Interim, coordinate: air_pressure}
-          scheme: linear_horizontal_extrapolate_vertical
+          scheme: linear_extrapolate
 
 By default, vertical interpolation is performed in the dimension coordinate of
 the z axis. If you want to explicitly declare the z axis coordinate to use
@@ -349,7 +349,7 @@ the name of the desired coordinate:
       preproc_select_levels_from_dataset:
         extract_levels:
           levels: ERA-Interim
-          scheme: linear_horizontal_extrapolate_vertical
+          scheme: linear_extrapolate
           coordinate: air_pressure
 
 If ``coordinate`` is specified, pressure levels (if present) can be converted
@@ -375,29 +375,39 @@ The meaning of 'very close' can be changed by providing the parameters:
     By default, `atol` will be set to 10^-7 times the mean value of
     of the available levels.
 
+Schemes for vertical interpolation and extrapolation
+----------------------------------------------------
+
+The vertical interpolation currently supports the following schemes:
+
+* ``linear``: Linear interpolation without extrapolation, i.e., extrapolation
+  points will be masked even if the source data is not a masked array.
+* ``linear_extrapolate``: Linear interpolation with **nearest-neighbour**
+  extrapolation, i.e., extrapolation points will take their value from the
+  nearest source point.
+* ``nearest``: Nearest-neighbour interpolation without extrapolation, i.e.,
+  extrapolation points will be masked even if the source data is not a masked
+  array.
+* ``nearest_extrapolate``: Nearest-neighbour interpolation with nearest-neighbour
+  extrapolation, i.e., extrapolation points will take their value from the
+  nearest source point.
+
+.. note::
+   Previous versions of ESMValCore (<2.5.0) supported the schemes
+   ``linear_horizontal_extrapolate_vertical`` and
+   ``nearest_horizontal_extrapolate_vertical``. These schemes have been renamed
+   to ``linear_extrapolate`` and ``nearest_extrapolate``, respectively, in
+   version 2.5.0 and are identical to the new schemes. Support for the old
+   names will be removed in version 2.7.0.
 
 * See also :func:`esmvalcore.preprocessor.extract_levels`.
 * See also :func:`esmvalcore.preprocessor.get_cmor_levels`.
 
 .. note::
 
-   For both vertical and horizontal regridding one can control the
-   extrapolation mode when defining the interpolation scheme. Controlling the
-   extrapolation mode allows us to avoid situations where extrapolating values
-   makes little physical sense (e.g. extrapolating beyond the last data point).
-   The extrapolation mode is controlled by the `extrapolation_mode`
-   keyword. For the available interpolation schemes available in Iris, the
-   extrapolation_mode keyword must be one of:
-
-        * ``extrapolate``: the extrapolation points will be calculated by
-	  extending the gradient of the closest two points;
-        * ``error``: a ``ValueError`` exception will be raised, notifying an
-	  attempt to extrapolate;
-        * ``nan``: the extrapolation points will be be set to NaN;
-        * ``mask``: the extrapolation points will always be masked, even if the
-	  source data is not a ``MaskedArray``; or
-        * ``nanmask``: if the source data is a MaskedArray the extrapolation
-	  points will be masked, otherwise they will be set to NaN.
+   Controlling the extrapolation mode allows us to avoid situations where
+   extrapolating values makes little physical sense (e.g. extrapolating beyond
+   the last data point).
 
 
 .. _weighting:
@@ -819,35 +829,32 @@ Regridding (interpolation, extrapolation) schemes
 
 The schemes used for the interpolation and extrapolation operations needed by
 the horizontal regridding functionality directly map to their corresponding
-implementations in Iris:
+implementations in :mod:`iris`:
 
-* ``linear``: ``Linear(extrapolation_mode='mask')``, see :obj:`iris.analysis.Linear`.
-* ``linear_extrapolate``: ``Linear(extrapolation_mode='extrapolate')``, see :obj:`iris.analysis.Linear`.
-* ``nearest``: ``Nearest(extrapolation_mode='mask')``, see :obj:`iris.analysis.Nearest`.
-* ``area_weighted``: ``AreaWeighted()``, see :obj:`iris.analysis.AreaWeighted`.
-* ``unstructured_nearest``: ``UnstructuredNearest()``, see :obj:`iris.analysis.UnstructuredNearest`.
+* ``linear``: Linear interpolation without extrapolation, i.e., extrapolation
+  points will be masked even if the source data is not a masked array (uses
+  ``Linear(extrapolation_mode='mask')``, see :obj:`iris.analysis.Linear`).
+* ``linear_extrapolate``: Linear interpolation with extrapolation, i.e.,
+  extrapolation points will be calculated by extending the gradient of the
+  closest two points (uses ``Linear(extrapolation_mode='extrapolate')``, see
+  :obj:`iris.analysis.Linear`).
+* ``nearest``: Nearest-neighbour interpolation without extrapolation, i.e.,
+  extrapolation points will be masked even if the source data is not a masked
+  array (uses ``Nearest(extrapolation_mode='mask')``, see
+  :obj:`iris.analysis.Nearest`).
+* ``area_weighted``: Area-weighted regridding (uses ``AreaWeighted()``, see
+  :obj:`iris.analysis.AreaWeighted`).
+* ``unstructured_nearest``: Nearest-neighbour interpolation for unstructured
+  grids (uses ``UnstructuredNearest()``, see
+  :obj:`iris.analysis.UnstructuredNearest`).
 
 See also :func:`esmvalcore.preprocessor.regrid`
 
 .. note::
 
-   For both vertical and horizontal regridding one can control the
-   extrapolation mode when defining the interpolation scheme. Controlling the
-   extrapolation mode allows us to avoid situations where extrapolating values
-   makes little physical sense (e.g. extrapolating beyond the last data
-   point). The extrapolation mode is controlled by the `extrapolation_mode`
-   keyword. For the available interpolation schemes available in Iris, the
-   extrapolation_mode keyword must be one of:
-
-        * ``extrapolate`` – the extrapolation points will be calculated by
-	  extending the gradient of the closest two points;
-        * ``error`` – a ``ValueError`` exception will be raised, notifying an
-	  attempt to extrapolate;
-        * ``nan`` – the extrapolation points will be be set to NaN;
-        * ``mask`` – the extrapolation points will always be masked, even if
-	  the source data is not a ``MaskedArray``; or
-        * ``nanmask`` – if the source data is a MaskedArray the extrapolation
-	  points will be masked, otherwise they will be set to NaN.
+   Controlling the extrapolation mode allows us to avoid situations where
+   extrapolating values makes little physical sense (e.g. extrapolating beyond
+   the last data point).
 
 .. note::
 
@@ -1396,6 +1403,7 @@ The area manipulation module contains the following preprocessor functions:
   coordinate.
 * extract_shape_: Extract a region defined by a shapefile.
 * extract_point_: Extract a single point (with interpolation)
+* extract_location_: Extract a single point by its location (with interpolation)
 * zonal_statistics_: Compute zonal statistics.
 * meridional_statistics_: Compute meridional statistics.
 * area_statistics_: Compute area statistics.
@@ -1520,6 +1528,33 @@ Parameters:
     be an array of floating point values.
   * ``scheme``: interpolation scheme: either ``'linear'`` or
     ``'nearest'``. There is no default.
+
+See also :func:`esmvalcore.preprocessor.extract_point`.
+
+
+``extract_location``
+--------------------
+
+Extract a single point using a location name, with interpolation
+(either linear or nearest). This preprocessor extracts a single
+location point from a cube, according to the given interpolation
+scheme ``scheme``. The function retrieves the coordinates of the
+location and then calls the :func:`esmvalcore.preprocessor.extract_point`
+preprocessor. It can be used to locate cities and villages,
+but also mountains or other geographical locations.
+
+.. note::
+   Note that this function's geolocator application needs a
+   working internet connection.
+
+Parameters
+  * ``cube``: the input dataset cube to extract a point from.
+  * ``location``: the reference location. Examples: 'mount everest',
+    'romania', 'new york, usa'. Raises ValueError if none supplied.
+  * ``scheme`` : interpolation scheme. ``'linear'`` or ``'nearest'``.
+    There is no default, raises ValueError if none supplied.
+
+See also :func:`esmvalcore.preprocessor.extract_location`.
 
 
 ``zonal_statistics``
