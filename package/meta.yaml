@@ -48,6 +48,7 @@ requirements:
     - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
     - fiona
     - fire
+    - geopy
     - humanfriendly
     - isodate
     - jinja2
@@ -72,6 +73,7 @@ test:
     - tests
     - setup.cfg
   requires:
+    - flake8<4  # https://github.com/ESMValGroup/ESMValCore/issues/1405
     - pytest>=3.9,!=6.0.0rc1,!=6.0.0
     - pytest-cov
     - pytest-env

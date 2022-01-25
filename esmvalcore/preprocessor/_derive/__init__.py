@@ -95,7 +95,7 @@ def derive(cubes, short_name, long_name, units, standard_name=None):
         cube = DerivedVariable().calculate(cubes)
     except Exception as exc:
         msg = (f"Derivation of variable '{short_name}' failed. If you used "
-               f"the option '--skip-nonexistent' for running your recipe, "
+               f"the option '--skip_nonexistent' for running your recipe, "
                f"this might be caused by missing input data for derivation")
         raise ValueError(msg) from exc
 
