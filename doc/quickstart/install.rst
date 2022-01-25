@@ -212,5 +212,51 @@ yourself if you are just running diagnostics:
 .. note::
     If you would like to use pre-installed versions on HPC clusters (currently CEDA-JASMIN and DKRZ-MISTRAL),
     please have a look at
-    :ref:`the ESMValTool instructions too <esmvaltool:install_on_hpc>`.
+    :ref:`these instructions <esmvaltool:install_on_hpc>`.
 
+
+Installation from the conda lock file
+-------------------------------------
+
+A fast conda environment creation is possible using the provided conda lock files. This is a secure alternative
+to the installation from source, whenever the conda environment can not be created for some reason. A conda lock file
+is an explicit environment file that contains pointers to dependency packages as they are hosted on the Anaconda cloud;
+these have frozen version numbers, build hashes, and channel names, parameters established at the time
+of the conda lock file creation, so may be obsolete after a while,
+but they allow for a robust environment creation while they're still up-to-date.
+We regenerate these lock files every 10 days, so to minimize the risk of dependencies becoming obsolete.
+Conda environment creation from a lock file is done just like with any other environment file:
+
+.. code-block:: bash
+
+   conda create --name esmvaltool --file conda-linux-64.lock
+
+
+.. note::
+   `pip` and `conda` are NOT installed, so you will have to install them in the new environment: use conda-forge as channel): ``conda install -c conda-forge pip`` at the very minimum so we can install `esmvalcore` afterwards.
+
+
+Creating a conda lock file
+--------------------------
+
+We provide a conda lock file for Linux-based operating systems, but if you prefer to
+build a conda lock file yourself, install the `conda-lock` package first:
+
+.. code-block:: bash
+
+   conda install -c conda-forge conda-lock
+
+then run
+
+.. code-block:: bash
+
+   conda-lock lock --platform linux-64 -f environment.yml --mamba
+
+(mamba activated for speed) to create a conda lock file for Linux platforms,
+or run
+
+.. code-block:: bash
+
+   conda-lock lock --platform osx-64 -f environment.yml --mamba
+
+to create a lock file for OSX platforms. Note however, that using conda lock files on OSX is still problematic!
