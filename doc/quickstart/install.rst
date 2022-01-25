@@ -196,7 +196,6 @@ To install from source for development, follow these instructions.
 -  Test that your installation was successful by running
    ``esmvaltool -h``.
 
-
 Pre-installed versions on HPC clusters
 --------------------------------------
 
