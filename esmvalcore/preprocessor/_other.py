@@ -64,10 +64,10 @@ def _groupby(iterable, keyfunc):
     return grouped
 
 
-def _group_products(products, by):
+def _group_products(products, by_key):
     """Group products by the given list of attributes."""
     def grouper(product):
-        return product.group(by)
+        return product.group(by_key)
 
     grouped = _groupby(products, keyfunc=grouper)
     return grouped.items()

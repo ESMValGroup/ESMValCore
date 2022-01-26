@@ -433,7 +433,7 @@ def multi_model_statistics(products,
     if all(type(p).__name__ == 'PreprocessorFile' for p in products):
         # Avoid circular input: https://stackoverflow.com/q/16964467
         statistics_products = set()
-        for identifier, input_prods in _group_products(products, by=groupby):
+        for identifier, input_prods in _group_products(products, by_key=groupby):
             sub_output_products = output_products[identifier]
 
             # Compute statistics on a single group
