@@ -754,18 +754,13 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
         common_attributes = _get_common_attributes(products)
 
         for statistic in settings.get('statistics'):
-
             common_attributes[step] = _get_tag(step, identifier, statistic)
-
             filename = get_multiproduct_filename(common_attributes,
                                                  preproc_dir)
             common_attributes['filename'] = filename
-
             statistic_product = PreprocessorFile(common_attributes,
                                                  downstream_settings)
-
             output_products.add(statistic_product)
-
             relevant_settings['output_products'][identifier][
                 statistic] = statistic_product
 
@@ -956,7 +951,6 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     ensemble_step = 'ensemble_statistics'
     multi_model_step = 'multi_model_statistics'
     if ensemble_step in profile:
-
         ensemble_products, ensemble_settings = _update_multiproduct(
             products, order, preproc_dir, ensemble_step)
 
@@ -970,7 +964,6 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         ensemble_products = products
 
     if multi_model_step in profile:
-
         multimodel_products, multimodel_settings = _update_multiproduct(
             ensemble_products, order, preproc_dir, multi_model_step)
 
