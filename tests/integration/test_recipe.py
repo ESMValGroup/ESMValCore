@@ -1845,12 +1845,13 @@ def _test_output_product_consistency(products, preprocessor, statistics):
     product_out = defaultdict(list)
 
     for i, product in enumerate(products):
-        settings = product.settings[preprocessor]
-        output_products = settings['output_products']
+        settings = product.settings.get(preprocessor)
+        if settings:
+            output_products = settings['output_products']
 
-        for identifier, statistic_out in output_products.items():
-            for statistic, preproc_file in statistic_out.items():
-                product_out[identifier, statistic].append(preproc_file)
+            for identifier, statistic_out in output_products.items():
+                for statistic, preproc_file in statistic_out.items():
+                    product_out[identifier, statistic].append(preproc_file)
 
     # Make sure that output products are consistent
     for (identifier, statistic), value in product_out.items():
@@ -1950,6 +1951,62 @@ def test_multi_model_statistics(tmp_path, patched_datafinder, config_user):
 
     assert len(product_out) == len(statistics)
 
+    task._initialize_product_provenance()
+    assert next(iter(products)).provenance is not None
+
+
+def test_multi_model_statistics_exclude(tmp_path,
+                                        patched_datafinder,
+                                        config_user):
+    statistics = ['mean', 'max']
+    diagnostic = 'diagnostic_name'
+    variable = 'pr'
+    preprocessor = 'multi_model_statistics'
+
+    content = dedent(f"""
+        preprocessors:
+          default: &default
+            custom_order: true
+            area_statistics:
+              operator: mean
+            {preprocessor}:
+              span: overlap
+              statistics: {statistics}
+              groupby: ['project']
+              exclude: ['TEST']
+
+        diagnostics:
+          {diagnostic}:
+            variables:
+              {variable}:
+                project: CMIP5
+                mip: Amon
+                start_year: 2000
+                end_year: 2002
+                preprocessor: default
+                additional_datasets:
+                  - {{dataset: CanESM2, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1"}}
+                  - {{dataset: CCSM4, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1"}}
+                  - {{dataset: TEST, project: OBS, type: reanaly, version: 1,
+                     tier: 1}}
+            scripts: null
+    """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
+    task = next(iter(recipe.tasks))
+
+    products = task.products
+    product_out = _test_output_product_consistency(products, preprocessor,
+                                                   statistics)
+
+    assert len(product_out) == len(statistics)
+    assert 'OBS' not in product_out
+    for id, prods in product_out:
+        assert id != 'OBS'
+        assert id == 'CMIP5'
     task._initialize_product_provenance()
     assert next(iter(products)).provenance is not None
 
