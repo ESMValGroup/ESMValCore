@@ -109,9 +109,14 @@ def get_preferred_hosts():
     for entry in speeds.values():
         entry[SPEED] = compute_speed(entry[SIZE], entry[DURATION])
 
-    # Hosts from which no data has been downloaded yet get median speed
-    median_speed = median(speeds[h][SPEED] for h in speeds
-                          if speeds[h][SPEED] != 0)
+    # Hosts from which no data has been downloaded yet get median speed; if no
+    # host with non-zero entries is found assign a value of 0.0
+    speeds_list = [speeds[h][SPEED] for h in speeds if
+                   speeds[h][SPEED] != 0.0]
+    if not speeds_list:
+        median_speed = 0.0
+    else:
+        median_speed = median(speeds_list)
     for host in speeds:
         if speeds[host][SIZE] == 0:
             speeds[host][SPEED] = median_speed
