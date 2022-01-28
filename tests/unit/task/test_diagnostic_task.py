@@ -40,7 +40,7 @@ def test_initialize_env(ext, tmp_path, monkeypatch):
     if ext in ('.jl', '.py'):
         env['MPLBACKEND'] = 'Agg'
     if ext == '.jl':
-        julia_path = f"{esmvaltool_path / 'install' / 'Julia':}"
+        julia_path = f"{esmvaltool_path / 'install' / 'Julia'}"
 
         # check for new type of JULIA_LOAD_PATH
         # and prepend new path arguments @:@$CONDA_ENV:@stdlib
