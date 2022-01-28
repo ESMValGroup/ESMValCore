@@ -1,4 +1,3 @@
-import os
 import stat
 from pathlib import Path
 
@@ -39,20 +38,17 @@ def test_initialize_env(ext, tmp_path, monkeypatch):
     env = {}
     if ext in ('.jl', '.py'):
         env['MPLBACKEND'] = 'Agg'
-    if ext == '.jl':
-        julia_path = f"{esmvaltool_path / 'install' / 'Julia'}"
-
-        # check for new type of JULIA_LOAD_PATH
-        # and prepend new path arguments @:@$CONDA_ENV:@stdlib
-        # see https://github.com/ESMValGroup/ESMValCore/issues/1443
-        julia_project = os.environ.get('JULIA_PROJECT')
-        if julia_project is not None:
-            extras = ':@:' + julia_project + ':@stdlib'
-            julia_path = julia_path + extras
-
-        env['JULIA_LOAD_PATH'] = julia_path
     if ext in ('.ncl', '.R'):
         env['diag_scripts'] = str(diagnostics_path)
+    if ext == '.jl':
+        task.env = dict(task.env)
+        env['JULIA_LOAD_PATH'] = f"{esmvaltool_path / 'install' / 'Julia'}"
+
+        # check for new type of JULIA_LOAD_PATH
+        # and cut away new path arguments @:@$CONDA_ENV:@stdlib
+        # see https://github.com/ESMValGroup/ESMValCore/issues/1443
+        task.env['JULIA_LOAD_PATH'] = \
+            task.env['JULIA_LOAD_PATH'].split(":")[0]
 
     assert task.env == env
 
