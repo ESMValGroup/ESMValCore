@@ -1,3 +1,4 @@
+import os
 import stat
 from pathlib import Path
 
@@ -39,7 +40,11 @@ def test_initialize_env(ext, tmp_path, monkeypatch):
     if ext in ('.jl', '.py'):
         env['MPLBACKEND'] = 'Agg'
     if ext == '.jl':
-        env['JULIA_LOAD_PATH'] = f"{esmvaltool_path / 'install' / 'Julia'}:"
+        # prepend new path arguments @:@$CONDA_ENV:@stdlib
+        julia_project = os.environ.get('JULIA_PROJECT')
+        extras = ':@:' + julia_project + ':@stdlib'
+        root_path = f"{esmvaltool_path / 'install' / 'Julia':}"
+        env['JULIA_LOAD_PATH'] = root_path + extras
     if ext in ('.ncl', '.R'):
         env['diag_scripts'] = str(diagnostics_path)
 
