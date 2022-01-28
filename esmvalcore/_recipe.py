@@ -737,10 +737,10 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
     settings = list(products)[0].settings[step]
 
     if step == 'ensemble_statistics':
-        check.ensemble_statistics(settings)
+        check.ensemble_statistics_preproc(settings)
         grouping = ['project', 'dataset', 'exp', 'sub_experiment']
     else:
-        check.multimodel_statistics(settings)
+        check.multimodel_statistics_preproc(settings)
         grouping = settings.get('groupby', None)
 
     downstream_settings = _get_downstream_settings(step, order, products)

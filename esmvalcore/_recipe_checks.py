@@ -269,7 +269,7 @@ def _verify_arguments(given, expected):
                 f"keywords are: {expected}.")
 
 
-def multimodel_statistics(settings):
+def multimodel_statistics_preproc(settings):
     """Check that the multi-model settings are valid."""
     valid_keys = ['span', 'groupby', 'statistics', 'keep_input_datasets']
     _verify_arguments(settings.keys(), valid_keys)
@@ -290,7 +290,7 @@ def multimodel_statistics(settings):
     _verify_keep_input_datasets(keep_input_datasets)
 
 
-def ensemble_statistics(settings):
+def ensemble_statistics_preproc(settings):
     """Check that the ensemble settings are valid."""
     valid_keys = ['statistics', 'keep_input_datasets']
     _verify_arguments(settings.keys(), valid_keys)
