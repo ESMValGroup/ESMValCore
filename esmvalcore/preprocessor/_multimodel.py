@@ -94,7 +94,7 @@ def _unify_time_coordinates(cubes):
     1st of July for yearly data (consistent with `regrid_time`), so that there
     are no mismatches in the time arrays.
 
-    If cubes have different time units, it will use reset the calendar to a
+    If cubes have different time units, it will reset the calendar to a
     default gregorian calendar with unit "days since 1850-01-01".
 
     Might not work for (sub)daily data, because different calendars may have
