@@ -38,8 +38,6 @@ def test_initialize_env(ext, tmp_path, monkeypatch):
     env = {}
     if ext in ('.jl', '.py'):
         env['MPLBACKEND'] = 'Agg'
-    if ext in ('.ncl', '.R'):
-        env['diag_scripts'] = str(diagnostics_path)
     if ext == '.jl':
         task.env = dict(task.env)
         env['JULIA_LOAD_PATH'] = f"{esmvaltool_path / 'install' / 'Julia'}"
@@ -49,6 +47,8 @@ def test_initialize_env(ext, tmp_path, monkeypatch):
         # see https://github.com/ESMValGroup/ESMValCore/issues/1443
         task.env['JULIA_LOAD_PATH'] = \
             task.env['JULIA_LOAD_PATH'].split(":")[0]
+    if ext in ('.ncl', '.R'):
+        env['diag_scripts'] = str(diagnostics_path)
 
     assert task.env == env
 
