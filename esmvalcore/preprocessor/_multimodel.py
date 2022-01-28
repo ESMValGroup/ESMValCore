@@ -464,7 +464,7 @@ def ensemble_statistics(products, statistics,
 
     See Also
     --------
-    multicube_statistics_iris : core statistics function.
+    multicube_model_statistics : core statistics function.
     """
     ensemble_grouping = ('project', 'dataset', 'exp', 'sub_experiment')
     return multi_model_statistics(
