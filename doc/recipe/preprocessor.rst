@@ -870,7 +870,7 @@ See also :func:`esmvalcore.preprocessor.regrid`
 Ensemble statistics
 ===================
 For certain use cases it may be desirable to compute ensemble statistics. For
-example to prevent models with many ensemble member getting excessive weight in
+example to prevent models with many ensemble members getting excessive weight in
 the multi-model statistics functions.
 
 Theoretically, ensemble statistics are a special case (grouped) multi-model
@@ -940,7 +940,7 @@ days in a year may vary between calendars, (sub-)daily data are not supported.
           exclude: [NCEP]
 
 Multi-model statistics now also supports a ``groupby`` argument. You can group by
-any dataset key (``project``, ``experiment``, etc.) or a combination of keys. You can
+any dataset key (``project``, ``experiment``, etc.) or a combination of keys in a list. You can
 also add an arbitrary 'tag' to a dataset definition and then groupby that tag. When
 using this preprocessor in conjunction with `ensemble statistics`_ preprocessor, you
 can groupby ``ensemble_statistics`` as well. For example:

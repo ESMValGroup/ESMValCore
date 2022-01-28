@@ -91,10 +91,10 @@ def _unify_time_coordinates(cubes):
 
     This function extracts the date information from the cube and reconstructs
     the time coordinate, resetting the actual dates to the 15th of the month or
-    1st of july for yearly data (consistent with `regrid_time`), so that there
+    1st of July for yearly data (consistent with `regrid_time`), so that there
     are no mismatches in the time arrays.
 
-    If cubes have different time units, it will use reset the calendar to a
+    If cubes have different time units, it will reset the calendar to a
     default gregorian calendar with unit "days since 1850-01-01".
 
     Might not work for (sub)daily data, because different calendars may have
