@@ -40,11 +40,17 @@ def test_initialize_env(ext, tmp_path, monkeypatch):
     if ext in ('.jl', '.py'):
         env['MPLBACKEND'] = 'Agg'
     if ext == '.jl':
-        # prepend new path arguments @:@$CONDA_ENV:@stdlib
+        julia_path = f"{esmvaltool_path / 'install' / 'Julia':}"
+
+        # check for new type of JULIA_LOAD_PATH
+        # and prepend new path arguments @:@$CONDA_ENV:@stdlib
+        # see https://github.com/ESMValGroup/ESMValCore/issues/1443
         julia_project = os.environ.get('JULIA_PROJECT')
-        extras = ':@:' + julia_project + ':@stdlib'
-        root_path = f"{esmvaltool_path / 'install' / 'Julia':}"
-        env['JULIA_LOAD_PATH'] = root_path + extras
+        if julia_project is not None:
+            extras = ':@:' + julia_project + ':@stdlib'
+            julia_path = julia_path + extras
+
+        env['JULIA_LOAD_PATH'] = julia_path
     if ext in ('.ncl', '.R'):
         env['diag_scripts'] = str(diagnostics_path)
 
