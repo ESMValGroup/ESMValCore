@@ -406,8 +406,9 @@ def multi_model_statistics(products,
         For internal use only. A dict with statistics names as keys and
         preprocessorfiles as values. If products are passed as input, the
         statistics cubes will be assigned to these output products.
-    groupby:  str
-        Group products by a given tag or attribute.
+    groupby:  tuple
+        Group products by a given tag or attribute, e.g.
+        ('project', 'dataset', 'tag1').
     keep_input_datasets: bool
         If True, the output will include the input datasets.
         If False, only the computed statistics will be returned.
