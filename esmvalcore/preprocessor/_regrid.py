@@ -1,5 +1,6 @@
 """Horizontal and vertical regridding module."""
 
+import importlib
 import logging
 import os
 import re
@@ -302,7 +303,7 @@ def _regional_stock_cube(spec: dict):
 
 def _attempt_irregular_regridding(cube, scheme):
     """Check if irregular regridding with ESMF should be used."""
-    if scheme in ESMF_REGRID_METHODS:
+    if isinstance(scheme, str) and scheme in ESMF_REGRID_METHODS:
         try:
             lat_dim = cube.coord('latitude').ndim
             lon_dim = cube.coord('longitude').ndim
@@ -503,7 +504,14 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     --------
     extract_levels : Perform vertical regridding.
     """
-    if HORIZONTAL_SCHEMES.get(scheme.lower()) is None:
+    if isinstance(scheme, dict):
+        module_name, scheme_name = scheme.pop("scheme").rsplit(".", 1)
+        scheme_module = importlib.import_module(module_name)
+        raw_scheme = getattr(scheme_module, scheme_name)
+        loaded_scheme = raw_scheme(**scheme)
+    else:
+        loaded_scheme = HORIZONTAL_SCHEMES.get(scheme.lower())
+    if loaded_scheme is None:
         emsg = 'Unknown regridding scheme, got {!r}.'
         raise ValueError(emsg.format(scheme))
 
@@ -562,7 +570,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         if _attempt_irregular_regridding(cube, scheme):
             cube = esmpy_regrid(cube, target_grid, scheme)
         else:
-            cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
+            cube = cube.regrid(target_grid, loaded_scheme)
 
         # Preserve dtype and use masked arrays for 'unstructured_nearest'
         # scheme (see https://github.com/SciTools/iris/issues/4463)
