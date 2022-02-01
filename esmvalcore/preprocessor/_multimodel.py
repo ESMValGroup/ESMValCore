@@ -462,9 +462,25 @@ def ensemble_statistics(products, statistics,
     The products are grouped and the cubes are extracted from
     the products. Resulting cubes are assigned to `output_products`.
 
+    Parameters
+    ----------
+    products: list
+        Cubes (or products) over which the statistics will be computed.
+    statistics: list
+        Statistical metrics to be computed, e.g. [``mean``, ``max``]. Choose
+        from the operators listed in the iris.analysis package. Percentiles can
+        be specified like ``pXX.YY``.
+    output_products: dict
+        For internal use only. A dict with statistics names as keys and
+        preprocessorfiles as values. If products are passed as input, the
+        statistics cubes will be assigned to these output products.
+    keep_input_datasets: bool
+        If True, the output will include the input datasets.
+        If False, only the computed statistics will be returned.
+
     See Also
     --------
-    multicube_model_statistics : core statistics function.
+    multi_model_statistics : core statistics function.
     """
     ensemble_grouping = ('project', 'dataset', 'exp', 'sub_experiment')
     return multi_model_statistics(
