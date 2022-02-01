@@ -964,6 +964,29 @@ can groupby ``ensemble_statistics`` as well. For example:
 This will first compute ensemble mean and median, and then compute the multi-model
 min and max separately for the ensemble means and medians.
 
+When grouping by a `tag` not defined in all datasets, the datasets missing the tag will
+be grouped together. In the example below, datasets `UKESM` and `ERA5` would belong to the same
+group. 
+
+.. code-block:: yaml
+
+    datasets:
+      - {dataset: CanESM2, exp: historical, ensemble: "r(1:2)i1p1", tag: 'group1'}
+      - {dataset: CanESM5, exp: historical, ensemble: "r(1:2)i1p1", tag: 'group2'}
+      - {dataset: CCSM4, exp: historical, ensemble: "r(1:2)i1p1", tag: 'group2'}
+      - {dataset: UKESM, exp: historical, ensemble: "r(1:2)i1p1"}
+      - {dataset: ERA5}
+
+    preprocessors:
+      example_preprocessor:
+        ensemble_statistics:
+          statistics: [median, mean]
+        multi_model_statistics:
+          span: overlap
+          statistics: [min, max]
+          groupby: [tag]
+
+Note that those datasets can be excluded if listed in the `exclude` option.
 
 see also :func:`esmvalcore.preprocessor.multiproduct_statistics`.
 
