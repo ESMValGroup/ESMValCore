@@ -1,4 +1,5 @@
 import copy
+import logging
 import stat
 from pathlib import Path
 
@@ -199,6 +200,7 @@ def test_collect_provenance(mocker, diagnostic_task):
 
 def assert_warned(log, msgs):
     """Check that messages have been logged."""
+    log.set_level(logging.INFO)
     assert len(log.records) == len(msgs)
     for msg, record in zip(msgs, log.records):
         for snippet in msg:
