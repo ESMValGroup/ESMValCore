@@ -3,7 +3,6 @@ on:
   push:
     branches:
     - main
-    - fix_new_julia_load_path
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
