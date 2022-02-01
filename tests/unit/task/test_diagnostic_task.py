@@ -200,8 +200,8 @@ def test_collect_provenance(mocker, diagnostic_task):
 
 def assert_warned(log, msgs):
     """Check that messages have been logged."""
-    log.set_level(logging.INFO)
-    assert len(log.records) == len(msgs)
+    with log.at_level(logging.INFO):
+        assert len(log.records) == len(msgs)
     for msg, record in zip(msgs, log.records):
         for snippet in msg:
             assert snippet in record.message
