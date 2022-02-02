@@ -5,17 +5,16 @@
 # Note for users:
 # --------------
 # Site-specific entries for different HPC centers are given at the bottom of
-# this file. Comment out/replace as needed.
+# this file. Comment out/replace as needed. This default version of the file
+# can be used in combination with the command line argument ``offline=False``.
 #
 ###############################################################################
 #
 # Note for developers:
 # -------------------
-# Three (almost) identical copies of this file
-# (``ESMValTool/config-user-example.yml``,
-# ``ESMValCore/esmvalcore/config-user.yml`` and
-# ``ESMValCore/doc/quickstart/configure.rst``) exist. If you change one of it,
-# make sure to apply the changes to the others.
+# Two identical copies of this file (``ESMValTool/config-user-example.yml`` and
+# ``ESMValCore/esmvalcore/config-user.yml``) exist. If you change one of it,
+# make sure to apply the changes to the other.
 #
 ###############################################################################
 ---
@@ -40,10 +39,10 @@ max_parallel_tasks: null
 
 # Disable the automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX,
 # and obs4MIPs data from ESGF by default. This is useful if you are working
-# on a computer without an internet connection.
+# on a computer without an internet connection. [true]/false
 offline: true
 
-# Log level of the console
+# Log level of the console debug/[info]/warning/error
 log_level: info
 
 # Exit on warning (only for NCL diagnostic scripts)? true/[false]
@@ -52,7 +51,7 @@ exit_on_warning: false
 # Plot file format? [png]/pdf/ps/eps/epsi
 output_file_type: png
 
-# Remove the preproc dir if all fine
+# Remove the preproc dir if all fine [true]/false
 remove_preproc_dir: true
 
 # Use netCDF compression true/[false]
@@ -65,35 +64,50 @@ save_intermediary_cubes: false
 # See config-developer.yml for an example. Set to None to use the default
 config_developer_file: null
 
-# Get profiling information for diagnostics
+# Get profiling information for diagnostics [false]/true
 # Only available for Python diagnostics
 profile_diagnostic: false
 
 # Rootpaths to the data from different projects (lists are also possible)
-# these are generic entries to better allow you to enter your own
-# For site-specific entries, see below
+# This default setting will work if automatic downloads are enabled via
+# "offline=False"
+# For site-specific entries and more examples, see below
 # Comment out these when using a site-specific path
 rootpath:
-  CMIP3: [~/cmip3_inputpath1, ~/cmip3_inputpath2]
-  CMIP5: [~/cmip5_inputpath1, ~/cmip5_inputpath2]
-  CMIP6: [~/cmip6_inputpath1, ~/cmip6_inputpath2]
-  OBS: ~/obs_inputpath
-  OBS6: ~/obs6_inputpath
-  obs4MIPs: ~/obs4mips_inputpath
-  ana4mips: ~/ana4mips_inputpath
-  native6: ~/native6_inputpath
-  RAWOBS: ~/rawobs_inputpath
-  default: ~/default_inputpath
+  default: ~/climate_data
 
 # Directory structure for input data: [default]/ESGF/BADC/DKRZ/ETHZ/etc
+# This default setting will work if automatic downloads are enabled via
+# "offline=False"
 # See config-developer.yml for definitions.
-# comment out/replace as per needed
+# Comment out/replace as per needed
 drs:
-  CMIP3: default
-  CMIP5: default
-  CMIP6: default
-  CORDEX: default
-  obs4MIPs: default
+  CMIP3: ESGF
+  CMIP5: ESGF
+  CMIP6: ESGF
+  CORDEX: ESGF
+  obs4MIPs: ESGF
+
+# Example rootpaths and directory structure that showcases the different
+# projects and also the use of lists
+# For site-specific entries, see below
+#rootpath:
+#  CMIP3: [~/cmip3_inputpath1, ~/cmip3_inputpath2]
+#  CMIP5: [~/cmip5_inputpath1, ~/cmip5_inputpath2]
+#  CMIP6: [~/cmip6_inputpath1, ~/cmip6_inputpath2]
+#  OBS: ~/obs_inputpath
+#  OBS6: ~/obs6_inputpath
+#  obs4MIPs: ~/obs4mips_inputpath
+#  ana4mips: ~/ana4mips_inputpath
+#  native6: ~/native6_inputpath
+#  RAWOBS: ~/rawobs_inputpath
+#  default: ~/default_inputpath
+#drs:
+#  CMIP3: default
+#  CMIP5: default
+#  CMIP6: default
+#  CORDEX: default
+#  obs4MIPs: default
 
 # Directory tree created by automatically downloading from ESGF
 # Uncomment the lines below to locate data that has been automatically
