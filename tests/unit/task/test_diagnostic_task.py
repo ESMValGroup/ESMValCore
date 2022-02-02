@@ -1,5 +1,4 @@
 import copy
-import logging
 import stat
 from pathlib import Path
 
@@ -9,11 +8,6 @@ import yaml
 import esmvalcore._task
 from esmvalcore._config._diagnostics import TagsManager
 from esmvalcore._task import DiagnosticError
-
-
-# set the logger to output in INFO
-# needed when running tests with e.g. --db[database] options
-logging.getLogger(__name__).setLevel(logging.INFO)
 
 
 @pytest.mark.parametrize("ext", ['.jl', '.py', '.ncl', '.R'])
@@ -141,6 +135,7 @@ def diagnostic_task(mocker, tmp_path):
         'run_dir': str(tmp_path / 'run_dir'),
         'profile_diagnostic': False,
         'some_diagnostic_setting': True,
+        'log_level': 'info'
     }
 
     task = esmvalcore._task.DiagnosticTask('test.py',
@@ -228,8 +223,6 @@ def test_collect_provenance_no_ancestors(caplog, diagnostic_task):
     write_mock_provenance(diagnostic_task, record)
 
     diagnostic_task._collect_provenance()
-
-    caplog.set_level(logging.INFO)
 
     assert_warned(caplog, [
         ["No ancestor files specified", "test.png"],
