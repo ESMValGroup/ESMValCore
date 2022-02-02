@@ -450,10 +450,10 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
 
     Note that the target grid can be a cube (:py:class:`~iris.cube.Cube`),
     path to a cube (``str``), a grid spec (``str``) in the form
-    of `MxN`, or a ``dict`` specifying the target grid.
+    of `MxN`, a ``dict`` specifying the target grid, or a ``dict`` specifying a
+    reference dataset.
 
-    For the latter, the ``target_grid`` should be a ``dict`` with the
-    following keys:
+    To specify a target grid with a ``dict``, the following keys are necessary:
 
     - ``start_longitude``: longitude at the center of the first grid cell.
     - ``end_longitude``: longitude at the center of the last grid cell.
@@ -462,6 +462,26 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     - ``start_latitude``: latitude at the center of the first grid cell.
     - ``end_latitude``: longitude at the center of the last grid cell.
     - ``step_latitude``: constant latitude distance between grid cell centers.
+
+    To specify a reference dataset with a ``dict``, the following keys are
+    necessary:
+
+    - ``filename``: path to the file that contains the reference grid.
+    - ``project``: project of the reference dataset.
+    - ``dataset``: name of the reference dataset.
+    - ``short_name``: name of the variable in the reference dataset.
+    - ``mip``: name of the MIP table used.
+    - ``frequency``: temporal frequency of the reference dataset.
+    - ``fix_dir``: path to the directory where the new file is ssaved in case
+      fixes are necessary.
+
+    Note
+    ----
+    If ``levels`` is a ``dict`` and it does not contain the key ``filename``,
+    it is automatically assumed that you specified the target grid with
+    ``start_longitude``, ``end_longitude``, etc. If a valid reference dataset
+    is specified, fixes are applied to the reference dataset prior to loading
+    the data.
 
     Parameters
     ----------
@@ -475,9 +495,9 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         of the form ``MxN``, which specifies the extent of the cell, longitude
         by latitude (degrees) for a global, regular target grid.
 
-        Alternatively, a dictionary with a regional target grid may
-        be specified (see above).
-
+        Alternatively, a dictionary with a regional target grid may or a
+        dictionary describing the reference dataset may be provided (see
+        above).
     scheme : str
         The regridding scheme to perform, choose from
         ``linear``,
@@ -498,6 +518,13 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     -------
     :py:class:`~iris.cube.Cube`
         Regridded cube.
+
+    Raises
+    ------
+    KeyError
+        If ``target_grid`` is a :obj:`dict` describing a reference dataset
+        (i.e., it contains a ``filename``) and at least one of the other
+        necessary keys is missing.
 
     See Also
     --------
@@ -526,8 +553,13 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             ycoord.coord_system = src_cs
 
     elif isinstance(target_grid, dict):
-        # Generate a target grid from the provided specification,
-        target_grid = _regional_stock_cube(target_grid)
+        # Use reference dataset to extract grid
+        if 'filename' in target_grid:
+            target_grid = _get_reference_target_grid(target_grid)
+
+        # Generate a target grid from the provided specification
+        else:
+            target_grid = _regional_stock_cube(target_grid)
 
     if not isinstance(target_grid, iris.cube.Cube):
         raise ValueError('Expecting a cube, got {}.'.format(target_grid))
@@ -831,12 +863,21 @@ def extract_levels(cube,
     ----------
     cube : iris.cube.Cube
         The source cube to be vertically interpolated.
-    levels : ArrayLike
+    levels : ArrayLike or dict
         One or more target levels for the vertical interpolation. Assumed
         to be in the same S.I. units of the source cube vertical dimension
         coordinate. If the requested levels are sufficiently close to the
         levels of the cube, cube slicing will take place instead of
-        interpolation.
+        interpolation. If a :obj:`dict` is given, a reference dataset is used
+        to infer the target levels. The :obj:`dict` needs to include the
+        following keys: ``filename`` (path to the file that contains the
+        reference levels), ``project`` (project of the reference dataset),
+        ``dataset`` (name of the reference dataset), ``short_name`` (name of
+        the variable in the reference dataset), ``mip`` (name of the MIP table
+        used), ``frequency`` (temporal frequency of the reference dataset), and
+        ``fix_dir`` (path to the directory where the new file is ssaved in case
+        fixes are necessary). Fixes are applied to the reference dataset prior
+        to loading it.
     scheme : str
         The vertical interpolation scheme to use. Choose from
         'linear',
@@ -866,12 +907,21 @@ def extract_levels(cube,
     iris.cube.Cube
         A cube with the requested vertical levels.
 
+    Raises
+    ------
+    KeyError
+        If ``levels`` is a :obj:`dict` and at least one of the necessary keys
+        is missing.
 
     See Also
     --------
     regrid : Perform horizontal regridding.
     """
     interpolation, extrapolation = parse_vertical_scheme(scheme)
+
+    # If a reference dataset is specified, load it and extract the levels
+    if isinstance(levels, dict):
+        levels = _get_reference_levels(levels)
 
     # Ensure we have a non-scalar array of levels.
     levels = np.array(levels, ndmin=1)
@@ -969,37 +1019,34 @@ def get_cmor_levels(cmor_table, coordinate):
             coordinate, cmor_table))
 
 
-def get_reference_levels(filename, project, dataset, short_name, mip,
-                         frequency, fix_dir):
-    """Get level definition from a reference dataset.
+def _get_reference_levels(levels_dict):
+    """Get level definition from a reference dataset."""
+    # Check that all necessary keys are present
+    necessary_keys = [
+        'filename',
+        'project',
+        'dataset',
+        'short_name',
+        'mip',
+        'frequency',
+        'fix_dir',
+    ]
+    for key in necessary_keys:
+        if key not in levels_dict:
+            raise KeyError(
+                f"Necessary key '{key}' is missing in levels dict. If "
+                f"target levels are specified with a dict describing a "
+                f"reference dataset, the following keys are necessary: "
+                f"{necessary_keys}. Got {levels_dict}")
+    filename = levels_dict['filename']
+    project = levels_dict['project']
+    dataset = levels_dict['dataset']
+    short_name = levels_dict['short_name']
+    mip = levels_dict['mip']
+    frequency = levels_dict['frequency']
+    fix_dir = levels_dict['fix_dir']
 
-    Parameters
-    ----------
-    filename: str
-        Path to the reference file
-    project : str
-        Name of the project
-    dataset : str
-        Name of the dataset
-    short_name : str
-        Name of the variable
-    mip : str
-        Name of the mip table
-    frequency : str
-        Time frequency
-    fix_dir : str
-        Output directory for fixed data
-
-    Returns
-    -------
-    list[float]
-
-    Raises
-    ------
-    ValueError:
-        If the dataset is not defined, the coordinate does not specify any
-        levels or the string is badly formatted.
-    """
+    # Load dataset, apply fixes and extract target levels
     filename = fix_file(
         file=filename,
         short_name=short_name,
@@ -1023,3 +1070,51 @@ def get_reference_levels(filename, project, dataset, short_name, mip,
     except iris.exceptions.CoordinateNotFoundError:
         raise ValueError('z-coord not available in {}'.format(filename))
     return coord.points.tolist()
+
+
+def _get_reference_target_grid(grid_dict):
+    """Get target grid for horizontal regridding from a reference dataset."""
+    # Check that all necessary keys are present
+    necessary_keys = [
+        'filename',
+        'project',
+        'dataset',
+        'short_name',
+        'mip',
+        'frequency',
+        'fix_dir',
+    ]
+    for key in necessary_keys:
+        if key not in grid_dict:
+            raise KeyError(
+                f"Necessary key '{key}' is missing in target_grid dict. If "
+                f"target grid is specified with a dict describing a reference "
+                f"dataset, the following keys are necessary: "
+                f"{necessary_keys}. Got {grid_dict}")
+    filename = grid_dict['filename']
+    project = grid_dict['project']
+    dataset = grid_dict['dataset']
+    short_name = grid_dict['short_name']
+    mip = grid_dict['mip']
+    frequency = grid_dict['frequency']
+    fix_dir = grid_dict['fix_dir']
+
+    # Load dataset, apply fixes and extract target grid as cube
+    filename = fix_file(
+        file=filename,
+        short_name=short_name,
+        project=project,
+        dataset=dataset,
+        mip=mip,
+        output_dir=fix_dir,
+    )
+    cubes = load(filename, callback=concatenate_callback)
+    cubes = fix_metadata(
+        cubes=cubes,
+        short_name=short_name,
+        project=project,
+        dataset=dataset,
+        mip=mip,
+        frequency=frequency,
+    )
+    return cubes[0]

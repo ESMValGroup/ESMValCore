@@ -50,7 +50,6 @@ from .preprocessor._io import DATASET_KEYS, concatenate_callback
 from .preprocessor._regrid import (
     _spec_to_latlonvals,
     get_cmor_levels,
-    get_reference_levels,
     parse_cell_spec,
 )
 
@@ -150,9 +149,15 @@ def _update_target_levels(variable, variables, settings, config_user):
     if not isinstance(levels, dict):
         return
 
+    # If a CMOR table and a coordinate are specified, extract the target levels
+    # from the CMOR tables
     if 'cmor_table' in levels and 'coordinate' in levels:
         settings['extract_levels']['levels'] = get_cmor_levels(
             levels['cmor_table'], levels['coordinate'])
+
+    # If a reference dataset is specified, add information to the levels dict
+    # (this is handled in the preprocessor itself). If the current dataset is
+    # the reference dataset, remove this preprocessing step.
     elif 'dataset' in levels:
         dataset = levels['dataset']
         if variable['dataset'] == dataset:
@@ -161,15 +166,15 @@ def _update_target_levels(variable, variables, settings, config_user):
             variable_data = _get_dataset_info(dataset, variables)
             filename = _dataset_to_file(variable_data, config_user)
             fix_dir = f"{os.path.splitext(variable_data['filename'])[0]}_fixed"
-            settings['extract_levels']['levels'] = get_reference_levels(
-                filename=filename,
-                project=variable_data['project'],
-                dataset=dataset,
-                short_name=variable_data['short_name'],
-                mip=variable_data['mip'],
-                frequency=variable_data['frequency'],
-                fix_dir=fix_dir,
-            )
+            settings['extract_levels']['levels'].update({
+                'filename': filename,
+                'project': variable_data['project'],
+                'dataset': dataset,
+                'short_name': variable_data['short_name'],
+                'mip': variable_data['mip'],
+                'frequency': variable_data['frequency'],
+                'fix_dir': fix_dir,
+            })
 
 
 def _update_target_grid(variable, variables, settings, config_user):
@@ -180,11 +185,26 @@ def _update_target_grid(variable, variables, settings, config_user):
 
     grid = _special_name_to_dataset(variable, grid)
 
+    # If a reference dataset is specified, add information to the target_grid
+    # dict (this is handled in the preprocessor itself). If the current dataset
+    # is the reference dataset, remove this preprocessing step.
     if variable['dataset'] == grid:
         del settings['regrid']
     elif any(grid == v['dataset'] for v in variables):
-        settings['regrid']['target_grid'] = _dataset_to_file(
-            _get_dataset_info(grid, variables), config_user)
+        variable_data = _get_dataset_info(grid, variables)
+        filename = _dataset_to_file(variable_data, config_user)
+        fix_dir = f"{os.path.splitext(variable_data['filename'])[0]}_fixed"
+        settings['regrid']['target_grid'] = {
+            'filename': filename,
+            'project': variable_data['project'],
+            'dataset': grid,
+            'short_name': variable_data['short_name'],
+            'mip': variable_data['mip'],
+            'frequency': variable_data['frequency'],
+            'fix_dir': fix_dir,
+        }
+
+    # target_grid is either a MxN grid spec or a grid spec described by a dict
     else:
         # Check that MxN grid spec is correct
         target_grid = settings['regrid']['target_grid']
