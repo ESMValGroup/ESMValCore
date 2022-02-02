@@ -229,6 +229,8 @@ def test_collect_provenance_no_ancestors(caplog, diagnostic_task):
 
     diagnostic_task._collect_provenance()
 
+    caplog.set_level(logging.INFO)
+
     assert_warned(caplog, [
         ["No ancestor files specified", "test.png"],
         ["Valid ancestor files"],
