@@ -120,11 +120,8 @@ def process_recipe(recipe_file, config_user):
     # parse recipe
     recipe = read_recipe_file(recipe_file, config_user)
     logger.debug("Recipe summary:\n%s", recipe)
-
     # run
     recipe.run()
-    recipe.write_html_summary()
-
     # End time timing
     timestamp2 = datetime.datetime.utcnow()
     logger.info(
@@ -371,11 +368,34 @@ class ESMValTool():
             strict (fail if there are any warnings).
         """
         import os
+        import warnings
 
         from ._config import configure_logging, read_config_user_file
         from ._recipe import TASKSEP
         from .cmor.check import CheckLevels
         from .esgf._logon import logon
+
+        # Check validity of optional command line arguments with experimental
+        # API
+        with warnings.catch_warnings():
+            # ignore experimental API warning
+            warnings.simplefilter("ignore")
+            from .experimental.config._config_object import Config as ExpConfig
+        explicit_optional_kwargs = {
+            'config_file': config_file,
+            'resume_from': resume_from,
+            'max_datasets': max_datasets,
+            'max_years': max_years,
+            'skip_nonexistent': skip_nonexistent,
+            'offline': offline,
+            'diagnostics': diagnostics,
+            'check_level': check_level,
+        }
+        all_optional_kwargs = dict(kwargs)
+        for (key, val) in explicit_optional_kwargs.items():
+            if val is not None:
+                all_optional_kwargs[key] = val
+        ExpConfig(all_optional_kwargs)
 
         recipe = self._get_recipe(recipe)
         cfg = read_config_user_file(config_file, recipe.stem, kwargs)
@@ -393,7 +413,7 @@ class ESMValTool():
         self._log_header(cfg['config_file'], log_files)
 
         cfg['resume_from'] = parse_resume(resume_from, recipe)
-        cfg['skip-nonexistent'] = skip_nonexistent
+        cfg['skip_nonexistent'] = skip_nonexistent
         if isinstance(diagnostics, str):
             diagnostics = diagnostics.split(' ')
         cfg['diagnostics'] = {

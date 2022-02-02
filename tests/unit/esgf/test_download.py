@@ -126,6 +126,33 @@ def test_get_preferred_hosts(monkeypatch, tmp_path, age_in_hours):
     assert preferred_hosts == expected
 
 
+def test_get_preferred_hosts_only_zeros(monkeypatch, tmp_path):
+    """Test ``get_preferred_hosts`` when speed is zero for all entries."""
+    hosts_file = tmp_path / 'esgf-hosts.yml'
+    content = textwrap.dedent("""
+    aims3.llnl.gov:
+      duration (s): 0
+      error: false
+      size (bytes): 0
+      speed (MB/s): 0
+    esg.lasg.ac.cn:
+      duration (s): 0.0
+      error: false
+      size (bytes): 0.0
+      speed (MB/s): 0.0
+    """).lstrip()
+    hosts_file.write_text(content)
+    monkeypatch.setattr(_download, 'HOSTS_FILE', hosts_file)
+
+    preferred_hosts = _download.get_preferred_hosts()
+
+    # The following assert is safe since "the built-in sorted() function is
+    # guaranteed to be stable"
+    # (https://docs.python.org/3/library/functions.html)
+    expected = ['aims3.llnl.gov', 'esg.lasg.ac.cn']
+    assert preferred_hosts == expected
+
+
 def test_sort_hosts(mocker):
     """Test that hosts are sorted according to priority by sort_hosts."""
     urls = [

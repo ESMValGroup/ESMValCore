@@ -3,6 +3,7 @@
 import logging
 import os
 import re
+import warnings
 from copy import deepcopy
 from decimal import Decimal
 from typing import Dict
@@ -11,14 +12,17 @@ import iris
 import numpy as np
 import stratify
 from dask import array as da
+from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
+
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.fix import fix_file, fix_metadata
 from ..cmor.table import CMOR_TABLES
 from ._ancillary_vars import add_ancillary_variable, add_cell_measure
-from ._io import concatenate_callback, load
+from ._io import GLOBAL_FILL_VALUE, concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
 
@@ -63,9 +67,12 @@ HORIZONTAL_SCHEMES = {
 }
 
 # Supported vertical interpolation schemes.
-VERTICAL_SCHEMES = ('linear', 'nearest',
-                    'linear_horizontal_extrapolate_vertical',
-                    'nearest_horizontal_extrapolate_vertical')
+VERTICAL_SCHEMES = (
+    'linear',
+    'nearest',
+    'linear_extrapolate',
+    'nearest_extrapolate',
+)
 
 
 def parse_cell_spec(spec):
@@ -306,6 +313,66 @@ def _attempt_irregular_regridding(cube, scheme):
     return False
 
 
+def extract_location(cube, location, scheme):
+    """Extract a point using a location name, with interpolation.
+
+    Extracts a single location point from a cube, according
+    to the interpolation scheme ``scheme``.
+
+    The function just retrieves the coordinates of the location and then calls
+    the ``extract_point`` preprocessor.
+
+    It can be used to locate cities and villages, but also mountains or other
+    geographical locations.
+
+    Note
+    ----
+    The geolocator needs a working internet connection.
+
+    Parameters
+    ----------
+    cube : cube
+        The source cube to extract a point from.
+
+    location : str
+        The reference location. Examples: 'mount everest',
+        'romania','new york, usa'
+
+    scheme : str
+        The interpolation scheme. 'linear' or 'nearest'. No default.
+
+    Returns
+    -------
+    Returns a cube with the extracted point, and with adjusted
+    latitude and longitude coordinates.
+
+    Raises
+    ------
+    ValueError:
+        If location is not supplied as a preprocessor parameter.
+    ValueError:
+        If scheme is not supplied as a preprocessor parameter.
+    ValueError:
+        If given location cannot be found by the geolocator.
+    """
+    if location is None:
+        raise ValueError("Location needs to be specified."
+                         " Examples: 'mount everest', 'romania',"
+                         " 'new york, usa'")
+    if scheme is None:
+        raise ValueError("Interpolation scheme needs to be specified."
+                         " Use either 'linear' or 'nearest'.")
+    geolocator = Nominatim(user_agent='esmvalcore')
+    geolocation = geolocator.geocode(location)
+    if geolocation is None:
+        raise ValueError(f'Requested location {location} can not be found.')
+    logger.info("Extracting data for %s (%s °N, %s °E)", geolocation,
+                geolocation.latitude, geolocation.longitude)
+
+    return extract_point(cube, geolocation.latitude,
+                         geolocation.longitude, scheme)
+
+
 def extract_point(cube, latitude, longitude, scheme):
     """Extract a point, with interpolation.
 
@@ -335,6 +402,10 @@ def extract_point(cube, latitude, longitude, scheme):
     Returns a cube with the extracted point(s), and with adjusted
     latitude and longitude coordinates (see above).
 
+    Raises
+    ------
+    ValueError:
+        If the interpolation scheme is None or unrecognized.
 
     Examples
     --------
@@ -475,13 +546,26 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     if not _horizontal_grid_is_close(cube, target_grid):
         original_dtype = cube.core_data().dtype
 
+        # For 'unstructured_nearest', make sure that consistent fill value is
+        # used since the data is not masked after regridding (see
+        # https://github.com/SciTools/iris/issues/4463)
+        # Note: da.ma.set_fill_value() works with any kind of input data
+        # (masked and unmasked, numpy and dask)
+        if scheme == 'unstructured_nearest':
+            if np.issubdtype(cube.dtype, np.integer):
+                fill_value = np.iinfo(cube.dtype).max
+            else:
+                fill_value = GLOBAL_FILL_VALUE
+            da.ma.set_fill_value(cube.core_data(), fill_value)
+
         # Perform the horizontal regridding
         if _attempt_irregular_regridding(cube, scheme):
             cube = esmpy_regrid(cube, target_grid, scheme)
         else:
             cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
 
-        # Preserve dtype for 'unstructured_nearest' scheme
+        # Preserve dtype and use masked arrays for 'unstructured_nearest'
+        # scheme (see https://github.com/SciTools/iris/issues/4463)
         if scheme == 'unstructured_nearest':
             try:
                 cube.data = cube.core_data().astype(original_dtype,
@@ -491,6 +575,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
                     "dtype of data changed during regridding from '%s' to "
                     "'%s': %s", original_dtype, cube.core_data().dtype,
                     str(exc))
+            cube.data = da.ma.masked_equal(cube.core_data(), fill_value)
 
     return cube
 
@@ -691,27 +776,44 @@ def parse_vertical_scheme(scheme):
         The vertical interpolation scheme to use. Choose from
         'linear',
         'nearest',
-        'nearest_horizontal_extrapolate_vertical',
-        'linear_horizontal_extrapolate_vertical'.
+        'linear_extrapolate',
+        'nearest_extrapolate'.
 
     Returns
     -------
     (str, str)
         A tuple containing the interpolation and extrapolation scheme.
     """
+    # Issue warning when deprecated schemes are used
+    deprecated_schemes = {
+        'linear_horizontal_extrapolate_vertical': 'linear_extrapolate',
+        'nearest_horizontal_extrapolate_vertical': 'nearest_extrapolate',
+    }
+    if scheme in deprecated_schemes:
+        new_scheme = deprecated_schemes[scheme]
+        deprecation_msg = (
+            f"The vertical regridding scheme ``{scheme}`` has been deprecated "
+            f"in ESMValCore version 2.5.0 and is scheduled for removal in "
+            f"version 2.7.0. It has been renamed to the identical scheme "
+            f"``{new_scheme}`` without any change in functionality.")
+        warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+        scheme = new_scheme
+
+    # Check if valid scheme is given
     if scheme not in VERTICAL_SCHEMES:
-        emsg = 'Unknown vertical interpolation scheme, got {!r}. '
-        emsg += 'Possible schemes: {!r}'
-        raise ValueError(emsg.format(scheme, VERTICAL_SCHEMES))
+        raise ValueError(
+            f"Unknown vertical interpolation scheme, got '{scheme}', possible "
+            f"schemes are {VERTICAL_SCHEMES}")
 
     # This allows us to put level 0. to load the ocean surface.
     extrap_scheme = 'nan'
-    if scheme == 'nearest_horizontal_extrapolate_vertical':
-        scheme = 'nearest'
+
+    if scheme == 'linear_extrapolate':
+        scheme = 'linear'
         extrap_scheme = 'nearest'
 
-    if scheme == 'linear_horizontal_extrapolate_vertical':
-        scheme = 'linear'
+    if scheme == 'nearest_extrapolate':
+        scheme = 'nearest'
         extrap_scheme = 'nearest'
 
     return scheme, extrap_scheme
@@ -739,8 +841,8 @@ def extract_levels(cube,
         The vertical interpolation scheme to use. Choose from
         'linear',
         'nearest',
-        'nearest_horizontal_extrapolate_vertical',
-        'linear_horizontal_extrapolate_vertical'.
+        'linear_extrapolate',
+        'nearest_extrapolate'.
     coordinate :  optional str
         The coordinate to interpolate. If specified, pressure levels
         (if present) can be converted to height levels and vice versa using
