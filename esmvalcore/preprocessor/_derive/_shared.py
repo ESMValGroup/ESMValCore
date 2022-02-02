@@ -97,13 +97,14 @@ def column_average(cube, hus_cube, zg_cube, ps_cube):
              p_layer_widths.data / (mw_air * g_4d_array))
 
     # Number of gas molecules per layer
-    cube = cube * n_dry
+    cube.data = cube.core_data() * n_dry.core_data()
 
     # Column-average
-    x_cube = (
-        cube.collapsed('air_pressure', iris.analysis.SUM) /
-        n_dry.collapsed('air_pressure', iris.analysis.SUM))
-    return x_cube
+    cube = cube.collapsed('air_pressure', iris.analysis.SUM)
+    cube.data = (
+        cube.core_data() /
+        n_dry.collapsed('air_pressure', iris.analysis.SUM).core_data())
+    return cube
 
 
 def pressure_level_widths(cube, ps_cube, top_limit=0.0):

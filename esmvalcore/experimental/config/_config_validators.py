@@ -252,14 +252,11 @@ def deprecate(func, variable, version: str = None):
 
 
 _validators = {
-    # deprecate in 2.2.0
-    'write_plots': deprecate(validate_bool, 'write_plots', '2.4.0'),
-    'write_netcdf': deprecate(validate_bool, 'write_netcdf', '2.4.0'),
-
     # From user config
     'log_level': validate_string,
     'exit_on_warning': validate_bool,
     'output_dir': validate_path,
+    'download_dir': validate_path,
     'auxiliary_data_dir': validate_path,
     'extra_facets_dir': validate_pathtuple,
     'compress_netcdf': validate_bool,
@@ -272,10 +269,11 @@ _validators = {
     'output_file_type': validate_string,
 
     # From CLI
-    "skip-nonexistent": validate_bool,
+    "resume_from": validate_pathlist,
+    "skip_nonexistent": validate_bool,
     "diagnostics": validate_diagnostics,
     "check_level": validate_check_level,
-    "synda_download": validate_bool,
+    "offline": validate_bool,
     'max_years': validate_int_positive_or_none,
     'max_datasets': validate_int_positive_or_none,
 

@@ -11,8 +11,9 @@ from cf_units import Unit
 from iris.cube import Cube
 
 import esmvalcore.preprocessor._multimodel as mm
-from esmvalcore.preprocessor._ancillary_vars import add_ancillary_variable
+from esmvalcore.iris_helpers import date2num
 from esmvalcore.preprocessor import multi_model_statistics
+from esmvalcore.preprocessor._ancillary_vars import add_ancillary_variable
 
 SPAN_OPTIONS = ('overlap', 'full')
 
@@ -48,7 +49,7 @@ def timecoord(frequency,
         dates = [datetime(1850, 7, i, 0, 0, 0) for i in time_points]
 
     unit = Unit(offset, calendar=calendar)
-    points = unit.date2num(dates)
+    points = date2num(dates, unit)
     return iris.coords.DimCoord(points, standard_name='time', units=unit)
 
 
@@ -86,7 +87,7 @@ def generate_cube_from_dates(
     else:
         len_data = len(dates)
         unit = Unit(offset, calendar=calendar)
-        time = iris.coords.DimCoord(unit.date2num(dates),
+        time = iris.coords.DimCoord(date2num(dates, unit),
                                     standard_name='time',
                                     units=unit)
 
@@ -131,7 +132,7 @@ VALIDATION_DATA_SUCCESS = (
     ('full', 'median', (5, 5, 3)),
     ('full', 'p50', (5, 5, 3)),
     ('full', 'p99.5', (8.96, 8.96, 4.98)),
-    ('full', 'peak', ([9], [9], [5])),
+    ('full', 'peak', (9, 9, 5)),
     ('overlap', 'mean', (5, 5)),
     ('overlap', 'std_dev', (5.656854249492381, 4)),
     ('overlap', 'std', (5.656854249492381, 4)),
@@ -140,11 +141,29 @@ VALIDATION_DATA_SUCCESS = (
     ('overlap', 'median', (5, 5)),
     ('overlap', 'p50', (5, 5)),
     ('overlap', 'p99.5', (8.96, 8.96)),
-    ('overlap', 'peak', ([9], [9])),
+    ('overlap', 'peak', (9, 9)),
     # test multiple statistics
     ('overlap', ('min', 'max'), ((1, 1), (9, 9))),
     ('full', ('min', 'max'), ((1, 1, 1), (9, 9, 5))),
 )
+
+
+@pytest.mark.parametrize(
+    'length,slices',
+    [
+        (1, [slice(0, 1)]),
+        (25000, [slice(0, 8334),
+                 slice(8334, 16668),
+                 slice(16668, 25000)]),
+    ],
+)
+def test_compute_slices(length, slices):
+    """Test cube `_compute_slices`."""
+    cubes = [
+        Cube(da.empty([length, 50, 100], dtype=np.float32)) for _ in range(5)
+    ]
+    result = list(mm._compute_slices(cubes))
+    assert result == slices
 
 
 @pytest.mark.parametrize('frequency', FREQUENCY_OPTIONS)
@@ -494,6 +513,7 @@ def test_unify_time_coordinates():
 
 class PreprocessorFile:
     """Mockup to test output of multimodel."""
+
     def __init__(self, cube=None):
         if cube:
             self.cubes = [cube]
@@ -552,9 +572,8 @@ def test_ignore_tas_scalar_height_coord():
         cube.add_aux_coord(
             iris.coords.AuxCoord([height], var_name="height", units="m"))
 
-    result = mm.multi_model_statistics([tas_2m, tas_2m.copy(), tas_1p5m],
-                                       statistics=['mean'],
-                                       span='full')
+    result = mm.multi_model_statistics(
+        [tas_2m, tas_2m.copy(), tas_1p5m], statistics=['mean'], span='full')
 
     # iris automatically averages the value of the scalar coordinate.
     assert len(result['mean'].coords("height")) == 1
@@ -568,18 +587,16 @@ def test_daily_inconsistent_calendars():
     inside original bounds is filled with nearest neighbour Missing data
     outside original bounds is masked.
     """
-    start = cftime.date2num(datetime(1852, 1, 1),
-                            "days since 1850-01-01",
-                            calendar="standard")
+    ref_standard = Unit("days since 1850-01-01", calendar="standard")
+    ref_noleap = Unit("days since 1850-01-01", calendar="noleap")
+    start = date2num(datetime(1852, 1, 1), ref_standard)
 
     # 1852 is a leap year, and include 1 extra day at the end
     leapdates = cftime.num2date(start + np.arange(367),
-                                "days since 1850-01-01",
-                                calendar="standard")
+                                ref_standard.name, ref_standard.calendar)
 
     noleapdates = cftime.num2date(start + np.arange(365),
-                                  "days since 1850-01-01",
-                                  calendar="noleap")
+                                  ref_noleap.name, ref_noleap.calendar)
 
     leapcube = generate_cube_from_dates(
         leapdates,

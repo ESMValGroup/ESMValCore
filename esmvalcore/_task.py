@@ -215,6 +215,7 @@ def write_ncl_settings(settings, filename, mode='wt'):
 
 class BaseTask:
     """Base class for defining task classes."""
+
     def __init__(self, ancestors=None, name='', products=None):
         """Initialize task."""
         self.ancestors = [] if ancestors is None else ancestors
@@ -279,12 +280,51 @@ class BaseTask:
         return f"{self.__class__.__name__}({repr(self.name)})"
 
 
+class ResumeTask(BaseTask):
+    """Task for re-using preprocessor output files from a previous run."""
+
+    def __init__(self, prev_preproc_dir, preproc_dir, name):
+        """Create a resume task."""
+        # Set the path to the file resulting from running this task
+        self._metadata_file = preproc_dir / 'metadata.yml'
+
+        # Reconstruct output
+        prev_metadata_file = prev_preproc_dir / 'metadata.yml'
+        with prev_metadata_file.open('rb') as file:
+            prev_metadata = yaml.safe_load(file)
+
+        products = set()
+        for prov_filename, attributes in prev_metadata.items():
+            # Update the filename in case the output directory was moved
+            # since the original run
+            filename = str(prev_preproc_dir / Path(prov_filename).name)
+            attributes['filename'] = filename
+            product = TrackedFile(filename,
+                                  attributes,
+                                  prov_filename=prov_filename)
+            products.add(product)
+
+        super().__init__(ancestors=None, name=name, products=products)
+
+    def _run(self, _):
+        """Return the result of a previous run."""
+        metadata = self.get_product_attributes()
+
+        # Write metadata to file
+        self._metadata_file.parent.mkdir(parents=True)
+        with self._metadata_file.open('w') as file:
+            yaml.safe_dump(metadata, file)
+
+        return [str(self._metadata_file)]
+
+
 class DiagnosticError(Exception):
     """Error in diagnostic."""
 
 
 class DiagnosticTask(BaseTask):
     """Task for running a diagnostic."""
+
     def __init__(self, script, settings, output_dir, ancestors=None, name=''):
         """Create a diagnostic task."""
         super().__init__(ancestors=ancestors, name=name)
@@ -393,13 +433,6 @@ class DiagnosticTask(BaseTask):
                 settings['diag_script_info'][key] = value
             else:
                 settings[key] = value
-
-        # Still add deprecated keys to config_user_info to avoid
-        # crashing the diagnostic script that need this.
-        # DEPRECATED: remove in v2.4
-        for key in ('write_plots', 'write_netcdf'):
-            if key in self.settings:
-                settings['config_user_info'][key] = self.settings[key]
 
         write_ncl_settings(settings, filename)
 
@@ -623,8 +656,8 @@ class DiagnosticTask(BaseTask):
 
             product = TrackedFile(filename, attributes, ancestors)
             product.initialize_provenance(self.activity)
-            product.save_provenance()
             _write_citation_files(product.filename, product.provenance)
+            product.save_provenance()
             self.products.add(product)
 
         if not valid:
@@ -739,14 +772,7 @@ class TaskSet(set):
 
 def _copy_results(task, future):
     """Update task with the results from the remote process."""
-    task.output_files, updated_products = future.get()
-    for updated in updated_products:
-        for original in task.products:
-            if original.filename == updated.filename:
-                updated.copy_provenance(target=original)
-                break
-        else:
-            task.products.add(updated)
+    task.output_files, task.products = future.get()
 
 
 def _run_task(task):

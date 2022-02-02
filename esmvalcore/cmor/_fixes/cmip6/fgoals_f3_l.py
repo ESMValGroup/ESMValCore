@@ -3,7 +3,12 @@ import cftime
 import dask.array as da
 import numpy as np
 
+from esmvalcore.iris_helpers import date2num
+
+from ..common import OceanFixGrid
 from ..fix import Fix
+
+Tos = OceanFixGrid
 
 
 class AllVars(Fix):
@@ -36,8 +41,8 @@ class AllVars(Fix):
                                               1, 1) if c.month < 12 else
                         cftime.DatetimeNoLeap(c.year + 1, 1, 1) for c in times
                     ]
-                    time.bounds = time.units.date2num(
-                        np.stack([starts, ends], -1))
+                    time.bounds = date2num(np.stack([starts, ends], -1),
+                                           time.units)
         return cubes
 
 

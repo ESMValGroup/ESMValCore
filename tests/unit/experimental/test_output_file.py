@@ -20,5 +20,4 @@ def test_output_file_locations():
 
     assert file.citation_file.name.endswith('_citation.bibtex')
     assert file.data_citation_file.name.endswith('_data_citation_info.txt')
-    assert file.provenance_svg_file.name.endswith('_provenance.svg')
     assert file.provenance_xml_file.name.endswith('_provenance.xml')

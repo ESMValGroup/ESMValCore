@@ -10,6 +10,8 @@ import cf_units
 import iris
 import numpy as np
 from iris.util import equalise_attributes
+
+from esmvalcore.iris_helpers import date2num
 from esmvalcore.preprocessor import remove_fx_variables
 
 logger = logging.getLogger(__name__)
@@ -125,7 +127,7 @@ def _unify_time_coordinates(cubes):
                 "support sub-daily data.")
 
         # Update the cubes' time coordinate (both point values and the units!)
-        cube.coord('time').points = t_unit.date2num(dates)
+        cube.coord('time').points = date2num(dates, t_unit, coord.dtype)
         cube.coord('time').units = t_unit
         cube.coord('time').bounds = None
         cube.coord('time').guess_bounds()
@@ -221,14 +223,31 @@ def _combine(cubes):
     return merged_cube
 
 
+def _compute_slices(cubes):
+    """Create cube slices resulting in a combined cube of about 1 GB."""
+    gigabyte = 2**30
+    total_bytes = cubes[0].data.nbytes * len(cubes)
+    n_slices = int(np.ceil(total_bytes / gigabyte))
+
+    n_timesteps = cubes[0].shape[0]
+    slice_len = int(np.ceil(n_timesteps / n_slices))
+
+    for i in range(n_slices):
+        start = i * slice_len
+        end = (i + 1) * slice_len
+        if end > n_timesteps:
+            end = n_timesteps
+        yield slice(start, end)
+
+
 def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
                    **kwargs):
     """Compute statistics one slice at a time."""
     _ = [cube.data for cube in cubes]  # make sure the cubes' data are realized
 
     result_slices = []
-    for i in range(cubes[0].shape[0]):
-        single_model_slices = [cube[i] for cube in cubes]
+    for chunk in _compute_slices(cubes):
+        single_model_slices = [cube[chunk] for cube in cubes]
         combined_slice = _combine(single_model_slices)
         with warnings.catch_warnings():
             warnings.filterwarnings(
@@ -250,7 +269,7 @@ def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
         result_slices.append(collapsed_slice)
 
     try:
-        result_cube = iris.cube.CubeList(result_slices).merge_cube()
+        result_cube = iris.cube.CubeList(result_slices).concatenate_cube()
     except Exception as excinfo:
         raise ValueError(
             "Multi-model statistics failed to concatenate results into a"

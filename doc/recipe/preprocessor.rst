@@ -23,6 +23,7 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Trend`
 * :ref:`Detrend`
 * :ref:`Unit conversion`
+* :ref:`Bias`
 * :ref:`Other`
 
 See :ref:`preprocessor_functions` for implementation details and the exact default order.
@@ -150,6 +151,7 @@ following:
     - Incorrect units, if they can be converted to the correct ones.
     - Direction of coordinates.
     - Automatic clipping of longitude to 0 - 360 interval.
+    - Minute differences between the required and actual vertical coordinate values
 
 
 Dataset specific fixes
@@ -193,11 +195,11 @@ Preprocessor                                                   Default fx variab
 :ref:`weighting_landsea_fraction<land/sea fraction weighting>` ``sftlf``, ``sftof``
 ============================================================== =====================
 
-If no ``fx_variables`` are specified for these preprocessors, the fx variables
-in the second column are used. If given, the ``fx_variables`` argument
-specifies the fx variables that the user wishes to input to the corresponding
-preprocessor function. The user may specify these by simply adding the names of
-the variables, e.g.,
+If the option ``fx_variables`` is not explicitly specified for these
+preprocessors, the default fx variables in the second column are automatically
+used. If given, the ``fx_variables`` argument specifies the fx variables that
+the user wishes to input to the corresponding preprocessor function. The user
+may specify these by simply adding the names of the variables, e.g.,
 
 .. code-block:: yaml
 
@@ -244,6 +246,13 @@ available tables of the specified project.
    in CMIP6's ``fx``, ``IyrAnt`` and ``IyrGre``, and ``LImon`` tables). If (for
    a given dataset) fx files are found in more than one table, ``mip`` needs to
    be specified, otherwise an error is raised.
+
+.. note::
+   To explicitly **not** use any fx variables in a preprocessor, use
+   ``fx_variables: null``.  While some of the preprocessors mentioned above do
+   work without fx variables (e.g., ``area_statistics`` or ``mask_landsea``
+   with datasets that have regular latitude/longitude grids), using this option
+   is **not** recommended.
 
 Internally, the required ``fx_variables`` are automatically loaded by the
 preprocessor step ``add_fx_variables`` which also checks them against CMOR
@@ -325,7 +334,7 @@ extract the levels and vertically regrid onto the vertical levels of
           levels: ERA-Interim
           # This also works, but allows specifying the pressure coordinate name
           # levels: {dataset: ERA-Interim, coordinate: air_pressure}
-          scheme: linear_horizontal_extrapolate_vertical
+          scheme: linear_extrapolate
 
 By default, vertical interpolation is performed in the dimension coordinate of
 the z axis. If you want to explicitly declare the z axis coordinate to use
@@ -339,7 +348,7 @@ the name of the desired coordinate:
       preproc_select_levels_from_dataset:
         extract_levels:
           levels: ERA-Interim
-          scheme: linear_horizontal_extrapolate_vertical
+          scheme: linear_extrapolate
           coordinate: air_pressure
 
 If ``coordinate`` is specified, pressure levels (if present) can be converted
@@ -349,28 +358,55 @@ to height levels and vice versa using the US standard atmosphere. E.g.
 ``coordinate = air_pressure`` will convert existing height levels
 (altitude) to pressure levels (air_pressure).
 
+If the requested levels are very close to the values in the input data,
+the function will just select the available levels instead of interpolating.
+The meaning of 'very close' can be changed by providing the parameters:
+
+* ``rtol``
+    Relative tolerance for comparing the levels in the input data to the requested
+    levels. If the levels are sufficiently close, the requested levels
+    will be assigned to the vertical coordinate and no interpolation will take place.
+    The default value is 10^-7.
+* ``atol``
+    Absolute tolerance for comparing the levels in the input data to the requested
+    levels. If the levels are sufficiently close, the requested levels
+    will be assigned to the vertical coordinate and no interpolation will take place.
+    By default, `atol` will be set to 10^-7 times the mean value of
+    of the available levels.
+
+Schemes for vertical interpolation and extrapolation
+----------------------------------------------------
+
+The vertical interpolation currently supports the following schemes:
+
+* ``linear``: Linear interpolation without extrapolation, i.e., extrapolation
+  points will be masked even if the source data is not a masked array.
+* ``linear_extrapolate``: Linear interpolation with **nearest-neighbour**
+  extrapolation, i.e., extrapolation points will take their value from the
+  nearest source point.
+* ``nearest``: Nearest-neighbour interpolation without extrapolation, i.e.,
+  extrapolation points will be masked even if the source data is not a masked
+  array.
+* ``nearest_extrapolate``: Nearest-neighbour interpolation with nearest-neighbour
+  extrapolation, i.e., extrapolation points will take their value from the
+  nearest source point.
+
+.. note::
+   Previous versions of ESMValCore (<2.5.0) supported the schemes
+   ``linear_horizontal_extrapolate_vertical`` and
+   ``nearest_horizontal_extrapolate_vertical``. These schemes have been renamed
+   to ``linear_extrapolate`` and ``nearest_extrapolate``, respectively, in
+   version 2.5.0 and are identical to the new schemes. Support for the old
+   names will be removed in version 2.7.0.
+
 * See also :func:`esmvalcore.preprocessor.extract_levels`.
 * See also :func:`esmvalcore.preprocessor.get_cmor_levels`.
 
 .. note::
 
-   For both vertical and horizontal regridding one can control the
-   extrapolation mode when defining the interpolation scheme. Controlling the
-   extrapolation mode allows us to avoid situations where extrapolating values
-   makes little physical sense (e.g. extrapolating beyond the last data point).
-   The extrapolation mode is controlled by the `extrapolation_mode`
-   keyword. For the available interpolation schemes available in Iris, the
-   extrapolation_mode keyword must be one of:
-
-        * ``extrapolate``: the extrapolation points will be calculated by
-	  extending the gradient of the closest two points;
-        * ``error``: a ``ValueError`` exception will be raised, notifying an
-	  attempt to extrapolate;
-        * ``nan``: the extrapolation points will be be set to NaN;
-        * ``mask``: the extrapolation points will always be masked, even if the
-	  source data is not a ``MaskedArray``; or
-        * ``nanmask``: if the source data is a MaskedArray the extrapolation
-	  points will be masked, otherwise they will be set to NaN.
+   Controlling the extrapolation mode allows us to avoid situations where
+   extrapolating values makes little physical sense (e.g. extrapolating beyond
+   the last data point).
 
 
 .. _weighting:
@@ -694,7 +730,7 @@ Regridding on a reference dataset grid
 --------------------------------------
 
 The example below shows how to regrid on the reference dataset
-``ERA-Interim`` (observational data, but just as well CMIP, obs4mips,
+``ERA-Interim`` (observational data, but just as well CMIP, obs4MIPs,
 or ana4mips datasets can be used); in this case the `scheme` is
 `linear`.
 
@@ -792,35 +828,32 @@ Regridding (interpolation, extrapolation) schemes
 
 The schemes used for the interpolation and extrapolation operations needed by
 the horizontal regridding functionality directly map to their corresponding
-implementations in Iris:
+implementations in :mod:`iris`:
 
-* ``linear``: ``Linear(extrapolation_mode='mask')``, see :obj:`iris.analysis.Linear`.
-* ``linear_extrapolate``: ``Linear(extrapolation_mode='extrapolate')``, see :obj:`iris.analysis.Linear`.
-* ``nearest``: ``Nearest(extrapolation_mode='mask')``, see :obj:`iris.analysis.Nearest`.
-* ``area_weighted``: ``AreaWeighted()``, see :obj:`iris.analysis.AreaWeighted`.
-* ``unstructured_nearest``: ``UnstructuredNearest()``, see :obj:`iris.analysis.UnstructuredNearest`.
+* ``linear``: Linear interpolation without extrapolation, i.e., extrapolation
+  points will be masked even if the source data is not a masked array (uses
+  ``Linear(extrapolation_mode='mask')``, see :obj:`iris.analysis.Linear`).
+* ``linear_extrapolate``: Linear interpolation with extrapolation, i.e.,
+  extrapolation points will be calculated by extending the gradient of the
+  closest two points (uses ``Linear(extrapolation_mode='extrapolate')``, see
+  :obj:`iris.analysis.Linear`).
+* ``nearest``: Nearest-neighbour interpolation without extrapolation, i.e.,
+  extrapolation points will be masked even if the source data is not a masked
+  array (uses ``Nearest(extrapolation_mode='mask')``, see
+  :obj:`iris.analysis.Nearest`).
+* ``area_weighted``: Area-weighted regridding (uses ``AreaWeighted()``, see
+  :obj:`iris.analysis.AreaWeighted`).
+* ``unstructured_nearest``: Nearest-neighbour interpolation for unstructured
+  grids (uses ``UnstructuredNearest()``, see
+  :obj:`iris.analysis.UnstructuredNearest`).
 
 See also :func:`esmvalcore.preprocessor.regrid`
 
 .. note::
 
-   For both vertical and horizontal regridding one can control the
-   extrapolation mode when defining the interpolation scheme. Controlling the
-   extrapolation mode allows us to avoid situations where extrapolating values
-   makes little physical sense (e.g. extrapolating beyond the last data
-   point). The extrapolation mode is controlled by the `extrapolation_mode`
-   keyword. For the available interpolation schemes available in Iris, the
-   extrapolation_mode keyword must be one of:
-
-        * ``extrapolate`` – the extrapolation points will be calculated by
-	  extending the gradient of the closest two points;
-        * ``error`` – a ``ValueError`` exception will be raised, notifying an
-	  attempt to extrapolate;
-        * ``nan`` – the extrapolation points will be be set to NaN;
-        * ``mask`` – the extrapolation points will always be masked, even if
-	  the source data is not a ``MaskedArray``; or
-        * ``nanmask`` – if the source data is a MaskedArray the extrapolation
-	  points will be masked, otherwise they will be set to NaN.
+   Controlling the extrapolation mode allows us to avoid situations where
+   extrapolating values makes little physical sense (e.g. extrapolating beyond
+   the last data point).
 
 .. note::
 
@@ -1037,8 +1070,8 @@ See also :func:`esmvalcore.preprocessor.monthly_statistics`.
 ``seasonal_statistics``
 -----------------------
 
-This function produces statistics for each season (default: "(DJF, MAM, JJA,
-SON)" or custom seasons e.g. "(JJAS, ONDJFMAM)" ) in the dataset. Note that
+This function produces statistics for each season (default: ``[DJF, MAM, JJA,
+SON]`` or custom seasons e.g. ``[JJAS, ONDJFMAM]``) in the dataset. Note that
 this function will not check for missing time points. For instance, if you are
 looking at the DJF field, but your datasets starts on January 1st, the first
 DJF field will only contain data from January and February.
@@ -1051,9 +1084,9 @@ Parameters:
       'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
     * seasons: seasons to build statistics.
-      Default is '(DJF, MAM, JJA, SON)'
+      Default is '[DJF, MAM, JJA, SON]'
 
-See also :func:`esmvalcore.preprocessor.seasonal_mean`.
+See also :func:`esmvalcore.preprocessor.seasonal_statistics`.
 
 .. _annual_statistics:
 
@@ -1099,7 +1132,7 @@ Parameters:
       'mon', 'daily', 'day'. Default is 'full'
 
     * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
-      Default is '(DJF, MAM, JJA, SON)'
+      Default is '[DJF, MAM, JJA, SON]'
 
 Examples:
     * Monthly climatology:
@@ -1221,7 +1254,7 @@ Parameters:
       parameters from extract_time_. Default is null
     * standardize: if true calculate standardized anomalies (default: false)
     * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
-      Default is '(DJF, MAM, JJA, SON)'
+      Default is '[DJF, MAM, JJA, SON]'
 Examples:
     * Anomalies from the full period climatology:
 
@@ -1323,6 +1356,7 @@ The area manipulation module contains the following preprocessor functions:
   coordinate.
 * extract_shape_: Extract a region defined by a shapefile.
 * extract_point_: Extract a single point (with interpolation)
+* extract_location_: Extract a single point by its location (with interpolation)
 * zonal_statistics_: Compute zonal statistics.
 * meridional_statistics_: Compute meridional statistics.
 * area_statistics_: Compute area statistics.
@@ -1447,6 +1481,33 @@ Parameters:
     be an array of floating point values.
   * ``scheme``: interpolation scheme: either ``'linear'`` or
     ``'nearest'``. There is no default.
+    
+See also :func:`esmvalcore.preprocessor.extract_point`.
+
+
+``extract_location``
+--------------------
+
+Extract a single point using a location name, with interpolation
+(either linear or nearest). This preprocessor extracts a single
+location point from a cube, according to the given interpolation
+scheme ``scheme``. The function retrieves the coordinates of the
+location and then calls the :func:`esmvalcore.preprocessor.extract_point`
+preprocessor. It can be used to locate cities and villages,
+but also mountains or other geographical locations.
+
+.. note::
+   Note that this function's geolocator application needs a
+   working internet connection.
+
+Parameters
+  * ``cube``: the input dataset cube to extract a point from.
+  * ``location``: the reference location. Examples: 'mount everest',
+    'romania', 'new york, usa'. Raises ValueError if none supplied.
+  * ``scheme`` : interpolation scheme. ``'linear'`` or ``'nearest'``.
+    There is no default, raises ValueError if none supplied.
+
+See also :func:`esmvalcore.preprocessor.extract_location`.
 
 
 ``zonal_statistics``
@@ -1694,6 +1755,77 @@ will guarantee homogeneous input for the diagnostics.
    amount based unit is not supported at the moment.
 
 See also :func:`esmvalcore.preprocessor.convert_units`.
+
+
+.. _bias:
+
+Bias
+====
+
+The bias module contains the following preprocessor functions:
+
+* ``bias``: Calculate absolute or relative biases with respect to a reference
+  dataset
+
+``bias``
+--------
+
+This function calculates biases with respect to a given reference dataset. For
+this, exactly one input dataset needs to be declared as ``reference_for_bias:
+true`` in the recipe, e.g.,
+
+.. code-block:: yaml
+
+  datasets:
+    - {dataset: CanESM5, project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: CESM2,   project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: MIROC6,  project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: ERA-Interim, project: OBS6, tier: 3, type: reanaly, version: 1,
+       reference_for_bias: true}
+
+In the example above, ERA-Interim is used as reference dataset for the bias
+calculation. For this preprocessor, all input datasets need to have identical
+dimensional coordinates. This can for example be ensured with the preprocessors
+:func:`esmvalcore.preprocessor.regrid` and/or
+:func:`esmvalcore.preprocessor.regrid_time`.
+
+The ``bias`` preprocessor supports 4 optional arguments:
+
+   * ``bias_type`` (:obj:`str`, default: ``'absolute'``): Bias type that is
+     calculated. Can be ``'absolute'`` (i.e., calculate bias for dataset
+     :math:`X` and reference :math:`R` as :math:`X - R`) or ``relative`` (i.e,
+     calculate bias as :math:`\frac{X - R}{R}`).
+   * ``denominator_mask_threshold`` (:obj:`float`, default: ``1e-3``):
+     Threshold to mask values close to zero in the denominator (i.e., the
+     reference dataset) during the calculation of relative biases. All values
+     in the reference dataset with absolute value less than the given threshold
+     are masked out. This setting is ignored when ``bias_type`` is set to
+     ``'absolute'``. Please note that for some variables with very small
+     absolute values (e.g., carbon cycle fluxes, which are usually :math:`<
+     10^{-6}` kg m :math:`^{-2}` s :math:`^{-1}`) it is absolutely essential to
+     change the default value in order to get reasonable results.
+   * ``keep_reference_dataset`` (:obj:`bool`, default: ``False``): If
+     ``True``, keep the reference dataset in the output. If ``False``, drop the
+     reference dataset.
+   * ``exclude`` (:obj:`list` of :obj:`str`): Exclude specific datasets from
+     this preprocessor. Note that this option is only available in the recipe,
+     not when using :func:`esmvalcore.preprocessor.bias` directly (e.g., in
+     another python script). If the reference dataset has been excluded, an
+     error is raised.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_bias:
+        bias:
+          bias_type: relative
+          denominator_mask_threshold: 1e-8
+          keep_reference_dataset: true
+          exclude: [CanESM2]
+
+See also :func:`esmvalcore.preprocessor.bias`.
 
 
 .. _Memory use:
