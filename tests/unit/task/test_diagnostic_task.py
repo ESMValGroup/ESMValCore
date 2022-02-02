@@ -134,8 +134,7 @@ def diagnostic_task(mocker, tmp_path):
     settings = {
         'run_dir': str(tmp_path / 'run_dir'),
         'profile_diagnostic': False,
-        'some_diagnostic_setting': True,
-        'log_level': 'info'
+        'some_diagnostic_setting': True
     }
 
     task = esmvalcore._task.DiagnosticTask('test.py',
