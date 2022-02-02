@@ -11,6 +11,11 @@ from esmvalcore._config._diagnostics import TagsManager
 from esmvalcore._task import DiagnosticError
 
 
+# set the logger to output in INFO
+# needed when running tests with e.g. --db[database] options
+logging.getLogger(__name__).setLevel(logging.INFO)
+
+
 @pytest.mark.parametrize("ext", ['.jl', '.py', '.ncl', '.R'])
 def test_initialize_env(ext, tmp_path, monkeypatch):
     """Test that the environmental variables are set correctly."""
@@ -200,8 +205,7 @@ def test_collect_provenance(mocker, diagnostic_task):
 
 def assert_warned(log, msgs):
     """Check that messages have been logged."""
-    with log.at_level(logging.INFO):
-        assert len(log.records) == len(msgs)
+    assert len(log.records) == len(msgs)
     for msg, record in zip(msgs, log.records):
         for snippet in msg:
             assert snippet in record.message
