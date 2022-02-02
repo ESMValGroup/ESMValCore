@@ -878,7 +878,8 @@ def test_simple_cordex_recipe(tmp_path, patched_datafinder, config_user):
     variable = recipe.diagnostics['test']['preprocessor_output']['tas'][0]
     filename = variable.pop('filename').split('/')[-1]
     assert (filename ==
-            'tas_MOHC-HadGEM3-RA_evaluation_r1i1p1_v1_mon_1991-1993.nc')
+            'CORDEX_MOHC-HadGEM3-RA_v1_ECMWF-ERAINT_AFR-44_mon_evaluation_'
+            'r1i1p1_tas_1991-1993.nc')
     reference = {
         'alias': 'MOHC-HadGEM3-RA',
         'dataset': 'MOHC-HadGEM3-RA',
