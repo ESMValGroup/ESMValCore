@@ -1019,9 +1019,8 @@ def get_cmor_levels(cmor_table, coordinate):
             coordinate, cmor_table))
 
 
-def _get_reference_levels(levels_dict):
-    """Get level definition from a reference dataset."""
-    # Check that all necessary keys are present
+def _get_fixed_cube(dataset_dict):
+    """Get fixed cube that can be used as reference for regridding."""
     necessary_keys = [
         'filename',
         'project',
@@ -1032,19 +1031,20 @@ def _get_reference_levels(levels_dict):
         'fix_dir',
     ]
     for key in necessary_keys:
-        if key not in levels_dict:
+        if key not in dataset_dict:
             raise KeyError(
-                f"Necessary key '{key}' is missing in levels dict. If "
-                f"target levels are specified with a dict describing a "
-                f"reference dataset, the following keys are necessary: "
-                f"{necessary_keys}. Got {levels_dict}")
-    filename = levels_dict['filename']
-    project = levels_dict['project']
-    dataset = levels_dict['dataset']
-    short_name = levels_dict['short_name']
-    mip = levels_dict['mip']
-    frequency = levels_dict['frequency']
-    fix_dir = levels_dict['fix_dir']
+                f"Necessary key '{key}' is missing in description of "
+                f"reference dataset. If the regridding target grid/levels is "
+                f"specified with a dict describing a reference dataset, the "
+                f"following keys are necessary: {necessary_keys}. Got "
+                f"{dataset_dict}")
+    filename = dataset_dict['filename']
+    project = dataset_dict['project']
+    dataset = dataset_dict['dataset']
+    short_name = dataset_dict['short_name']
+    mip = dataset_dict['mip']
+    frequency = dataset_dict['frequency']
+    fix_dir = dataset_dict['fix_dir']
 
     # Load dataset, apply fixes and extract target levels
     filename = fix_file(
@@ -1064,57 +1064,20 @@ def _get_reference_levels(levels_dict):
         mip=mip,
         frequency=frequency,
     )
-    cube = cubes[0]
+    return cubes[0]
+
+
+def _get_reference_levels(levels_dict):
+    """Get level definition from a reference dataset."""
+    cube = _get_fixed_cube(levels_dict)
     try:
         coord = cube.coord(axis='Z')
     except iris.exceptions.CoordinateNotFoundError:
-        raise ValueError('z-coord not available in {}'.format(filename))
+        raise ValueError(
+            f"z-coord not available in {levels_dict['filename']}")
     return coord.points.tolist()
 
 
 def _get_reference_target_grid(grid_dict):
     """Get target grid for horizontal regridding from a reference dataset."""
-    # Check that all necessary keys are present
-    necessary_keys = [
-        'filename',
-        'project',
-        'dataset',
-        'short_name',
-        'mip',
-        'frequency',
-        'fix_dir',
-    ]
-    for key in necessary_keys:
-        if key not in grid_dict:
-            raise KeyError(
-                f"Necessary key '{key}' is missing in target_grid dict. If "
-                f"target grid is specified with a dict describing a reference "
-                f"dataset, the following keys are necessary: "
-                f"{necessary_keys}. Got {grid_dict}")
-    filename = grid_dict['filename']
-    project = grid_dict['project']
-    dataset = grid_dict['dataset']
-    short_name = grid_dict['short_name']
-    mip = grid_dict['mip']
-    frequency = grid_dict['frequency']
-    fix_dir = grid_dict['fix_dir']
-
-    # Load dataset, apply fixes and extract target grid as cube
-    filename = fix_file(
-        file=filename,
-        short_name=short_name,
-        project=project,
-        dataset=dataset,
-        mip=mip,
-        output_dir=fix_dir,
-    )
-    cubes = load(filename, callback=concatenate_callback)
-    cubes = fix_metadata(
-        cubes=cubes,
-        short_name=short_name,
-        project=project,
-        dataset=dataset,
-        mip=mip,
-        frequency=frequency,
-    )
-    return cubes[0]
+    return _get_fixed_cube(grid_dict)
