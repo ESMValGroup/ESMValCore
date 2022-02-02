@@ -11,9 +11,11 @@
 #
 # Note for developers:
 # -------------------
-# Two identical copies of this file (``ESMValTool/config-user-example.yml`` and
-# ``ESMValCore/esmvalcore/config-user.yml``) exist. If you change one of it,
-# make sure to apply the changes to the other.
+# Three (almost) identical copies of this file
+# (``ESMValTool/config-user-example.yml``,
+# ``ESMValCore/esmvalcore/config-user.yml`` and
+# ``ESMValCore/doc/quickstart/configure.rst``) exist. If you change one of it,
+# make sure to apply the changes to the others.
 #
 ###############################################################################
 ---

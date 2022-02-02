@@ -46,85 +46,80 @@ with explanations in a commented line above each option:
 
 .. code-block:: yaml
 
-  # Destination directory where all output will be written
-  # including log files and performance stats
-  output_dir: ./esmvaltool_output
+   # Directory where results are stored
+   output_dir: ~/esmvaltool_output
 
-  # Directory for storing downloaded climate data
-  download_dir: ~/climate_data
+   # Directory for storing downloaded climate data
+   download_dir: ~/climate_data
 
-  # Disable the automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX,
-  # and obs4MIPs data from ESGF [true]/false.
-  offline: true
+   # Auxiliary data directory (used for some additional datasets)
+   auxiliary_data_dir: ~/auxiliary_data
 
-  # Auxiliary data directory, used by some recipes to look for additional datasets
-  auxiliary_data_dir: ~/auxiliary_data
+   # Run at most this many tasks in parallel [null]/1/2/3/4/..
+   # Set to null to use the number of available CPUs.
+   # If you run out of memory, try setting max_parallel_tasks to 1 and check the
+   # amount of memory you need for that by inspecting the file
+   # run/resource_usage.txt in the output directory. Using the number there you
+   # can increase the number of parallel tasks again to a reasonable number for
+   # the amount of memory available in your system.
+   max_parallel_tasks: null
 
-  # Rootpaths to the data from different projects (lists are also possible)
-  # these are generic entries to better allow you to enter your own
-  # For site-specific entries, see the default config-user.yml file
-  # that can be installed with the command `esmvaltool config get_config_user`.
-  # For each project, this can be either a single path or a list of paths.
-  # Comment out these when using a site-specific path
-  rootpath:
-    default: ~/climate_data
+   # Disable the automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX,
+   # and obs4MIPs data from ESGF by default. This is useful if you are working
+   # on a computer without an internet connection.
+   offline: true
 
-  # Directory structure for input data: [default]/ESGF/BADC/DKRZ/ETHZ/etc
-  # See config-developer.yml for definitions.
-  # comment out/replace as per needed
-  drs:
-    CMIP3: ESGF
-    CMIP5: ESGF
-    CMIP6: ESGF
-    CORDEX: ESGF
-    obs4MIPs: ESGF
+   # Log level of the console
+   log_level: info
 
-  # Run at most this many tasks in parallel [null]/1/2/3/4/..
-  # Set to null to use the number of available CPUs.
-  # If you run out of memory, try setting max_parallel_tasks to 1 and check the
-  # amount of memory you need for that by inspecting the file
-  # run/resource_usage.txt in the output directory. Using the number there you
-  # can increase the number of parallel tasks again to a reasonable number for
-  # the amount of memory available in your system.
-  max_parallel_tasks: null
+   # Exit on warning (only for NCL diagnostic scripts)? true/[false]
+   exit_on_warning: false
 
-  # Set the console log level debug, [info], warning, error
-  # for much more information printed to screen set log_level: debug
-  log_level: info
+   # Plot file format? [png]/pdf/ps/eps/epsi
+   output_file_type: png
 
-  # Exit on warning (only for NCL diagnostic scripts)? true/[false]
-  exit_on_warning: false
+   # Remove the preproc dir if all fine
+   remove_preproc_dir: true
 
-  # Plot file format? [png]/pdf/ps/eps/epsi
-  output_file_type: png
+   # Use netCDF compression true/[false]
+   compress_netcdf: false
 
-  # Remove the ``preproc`` dir if the run was successful
-  # By default this option is set to "true", so all preprocessor output files
-  # will be removed after a successful run. Set to "false" if you need those files.
-  remove_preproc_dir: true
+   # Save intermediary cubes in the preprocessor true/[false]
+   save_intermediary_cubes: false
 
-  # Use netCDF compression true/[false]
-  compress_netcdf: false
+   # Path to custom config-developer file, to customise project configurations.
+   # See config-developer.yml for an example. Set to None to use the default
+   config_developer_file: null
 
-  # Save intermediary cubes in the preprocessor true/[false]
-  # set to true will save the output cube from each preprocessing step
-  # these files are numbered according to the preprocessing order
-  save_intermediary_cubes: false
+   # Get profiling information for diagnostics
+   # Only available for Python diagnostics
+   profile_diagnostic: false
 
-  # Use a profiling tool for the diagnostic run [false]/true
-  # A profiler tells you which functions in your code take most time to run.
-  # For this purpose we use vprof, see below for notes
-  # Only available for Python diagnostics
-  profile_diagnostic: false
+   # Rootpaths to the data from different projects (lists are also possible)
+   # these are generic entries to better allow you to enter your own
+   # For site-specific entries, see below
+   # Comment out these when using a site-specific path
+   rootpath:
+     CMIP3: [~/cmip3_inputpath1, ~/cmip3_inputpath2]
+     CMIP5: [~/cmip5_inputpath1, ~/cmip5_inputpath2]
+     CMIP6: [~/cmip6_inputpath1, ~/cmip6_inputpath2]
+     OBS: ~/obs_inputpath
+     OBS6: ~/obs6_inputpath
+     obs4MIPs: ~/obs4mips_inputpath
+     ana4mips: ~/ana4mips_inputpath
+     native6: ~/native6_inputpath
+     RAWOBS: ~/rawobs_inputpath
+     default: ~/default_inputpath
 
-  # Path to custom config-developer file, to customise project configurations.
-  # See config-developer.yml for an example. Set to "null" to use the default
-  config_developer_file: null
-
-.. code-block:: yaml
-
-  # Auxiliary data directory (used for some additional datasets)
-  auxiliary_data_dir: ~/auxiliary_data
+   # Directory structure for input data: [default]/ESGF/BADC/DKRZ/ETHZ/etc
+   # See config-developer.yml for definitions.
+   # comment out/replace as per needed
+   drs:
+     CMIP3: default
+     CMIP5: default
+     CMIP6: default
+     CORDEX: default
+     obs4MIPs: default
 
 The ``offline`` setting can be used to disable or enable automatic downloads from ESGF.
 If ``offline`` is set to ``false``, the tool will automatically download
