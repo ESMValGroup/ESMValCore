@@ -51,7 +51,7 @@ omitted in the file.
 
   # Destination directory where all output will be written
   # Includes log files and performance stats.
-  output_dir: ./esmvaltool_output
+  output_dir: ~/esmvaltool_output
 
   # Directory for storing downloaded climate data
   download_dir: ~/climate_data
