@@ -459,8 +459,10 @@ def ensemble_statistics(products, statistics,
                         output_products, keep_input_datasets=True):
     """Entry point for ensemble statistics.
 
-    The products are grouped and the cubes are extracted from
-    the products. Resulting cubes are assigned to `output_products`.
+    An ensemble grouping is performed on the input products.
+    The statistics are then computed calling
+    the :func:`esmvalcore.preprocessor.multi_model_statistics` module,
+    taking the grouped products as an input.
 
     Parameters
     ----------
@@ -478,9 +480,15 @@ def ensemble_statistics(products, statistics,
         If True, the output will include the input datasets.
         If False, only the computed statistics will be returned.
 
+    Returns
+    -------
+    set
+        A set of output_products with the resulting ensemble statistics.
+
     See Also
     --------
-    multi_model_statistics : core statistics function.
+    :func:`esmvalcore.preprocessor.multi_model_statistics` for
+    the full description of the core statistics function.
     """
     ensemble_grouping = ('project', 'dataset', 'exp', 'sub_experiment')
     return multi_model_statistics(
