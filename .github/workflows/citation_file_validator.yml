@@ -1,7 +1,12 @@
+# workflow that performs a validity check of CITATION.cff file
+# author: Abel Siqueira, GH: @abelsiqueira
+
 name: cffconvert
 
 on:
   push:
+    branches:
+      - cffbots-cffconvert
     paths:
       - CITATION.cff
   schedule:
