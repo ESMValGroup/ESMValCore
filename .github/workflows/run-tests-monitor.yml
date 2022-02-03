@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - move_pymon_up
+      - move_pymon_up_2
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
