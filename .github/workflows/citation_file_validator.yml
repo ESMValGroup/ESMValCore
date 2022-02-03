@@ -5,8 +5,6 @@ name: CFF File Validator
 
 on:
   push:
-    branches:
-      - cffbots-cffconvert
     paths:
       - CITATION.cff
   schedule:
