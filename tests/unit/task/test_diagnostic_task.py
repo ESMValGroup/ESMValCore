@@ -1,4 +1,5 @@
 import copy
+import logging
 import stat
 from pathlib import Path
 
@@ -228,6 +229,8 @@ def test_collect_no_provenance(caplog, diagnostic_task):
 
 def test_collect_provenance_no_ancestors(caplog, diagnostic_task):
 
+    caplog.set_level(logging.INFO)
+
     record = {
         "test.png": {
             "caption": "Some figure",
@@ -245,6 +248,8 @@ def test_collect_provenance_no_ancestors(caplog, diagnostic_task):
 
 
 def test_collect_provenance_invalid_ancestors(caplog, diagnostic_task):
+
+    caplog.set_level(logging.INFO)
 
     record = {
         "test.png": {
@@ -264,6 +269,8 @@ def test_collect_provenance_invalid_ancestors(caplog, diagnostic_task):
 
 
 def test_collect_provenance_ancestor_hint(mocker, caplog, diagnostic_task):
+
+    caplog.set_level(logging.INFO)
 
     record = {
         "test.png": {
