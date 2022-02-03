@@ -224,13 +224,17 @@ is an explicit environment file that contains pointers to dependency packages as
 these have frozen version numbers, build hashes, and channel names, parameters established at the time
 of the conda lock file creation, so may be obsolete after a while,
 but they allow for a robust environment creation while they're still up-to-date.
-We regenerate these lock files every 10 days, so to minimize the risk of dependencies becoming obsolete.
-Conda environment creation from a lock file is done just like with any other environment file:
+We regenerate these lock files every 10 days through automatic Pull Requests
+ (or more frequently, since the automatic generator runs on merges on the main branch too),
+so to minimize the risk of dependencies becoming obsolete. Conda environment creation from
+a lock file is done just like with any other environment file:
 
 .. code-block:: bash
 
    conda create --name esmvaltool --file conda-linux-64.lock
 
+The latest, most up-to-date file can always be downloaded directly from the source code
+repository, a direct download link can be found `here <https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/conda-linux-64.lock>`__.
 
 .. note::
    `pip` and `conda` are NOT installed, so you will have to install them in the new environment: use conda-forge as channel): ``conda install -c conda-forge pip`` at the very minimum so we can install `esmvalcore` afterwards.
