@@ -141,11 +141,11 @@ def test_load_default_config(monkeypatch):
         'config_file': str(default_cfg_file),
         'download_dir': str(Path.home() / 'climate_data'),
         'drs': {
-            'CMIP3': 'ESGF',
-            'CMIP5': 'ESGF',
-            'CMIP6': 'ESGF',
-            'CORDEX': 'ESGF',
-            'obs4MIPs': 'ESGF'
+            'CMIP3': 'default',
+            'CMIP5': 'default',
+            'CMIP6': 'default',
+            'CORDEX': 'default',
+            'obs4MIPs': 'default'
         },
         'exit_on_warning': False,
         'extra_facets_dir': tuple(),
@@ -154,10 +154,22 @@ def test_load_default_config(monkeypatch):
         'offline': True,
         'output_file_type': 'png',
         'profile_diagnostic': False,
-        'remove_preproc_dir': False,
+        'remove_preproc_dir': True,
         'resume_from': [],
         'rootpath': {
-            'default': [str(Path.home() / 'climate_data')]
+            'CMIP3': [str(Path.home() / 'cmip3_inputpath1'),
+                      str(Path.home() / 'cmip3_inputpath2')],
+            'CMIP5': [str(Path.home() / 'cmip5_inputpath1'),
+                      str(Path.home() / 'cmip5_inputpath2')],
+            'CMIP6': [str(Path.home() / 'cmip6_inputpath1'),
+                      str(Path.home() / 'cmip6_inputpath2')],
+            'OBS': [str(Path.home() / 'obs_inputpath')],
+            'OBS6': [str(Path.home() / 'obs6_inputpath')],
+            'obs4MIPs': [str(Path.home() / 'obs4mips_inputpath')],
+            'ana4mips': [str(Path.home() / 'ana4mips_inputpath')],
+            'native6': [str(Path.home() / 'native6_inputpath')],
+            'RAWOBS': [str(Path.home() / 'rawobs_inputpath')],
+            'default': [str(Path.home() / 'default_inputpath')]
         },
         'run_diagnostic': True,
         'save_intermediary_cubes': False,
@@ -180,7 +192,7 @@ def test_load_default_config(monkeypatch):
 
     # Check output directories
     assert cfg['output_dir'].startswith(
-        str(Path.cwd() / 'esmvaltool_output' / 'recipe_example'))
+        str(Path.home() / 'esmvaltool_output' / 'recipe_example'))
     for path in ('preproc', 'work', 'run'):
         assert cfg[path + '_dir'] == str(Path(cfg['output_dir'], path))
     assert cfg['plot_dir'] == str(Path(cfg['output_dir'], 'plots'))
