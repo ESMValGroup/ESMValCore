@@ -15,7 +15,7 @@ def test_write_ncl_settings(tmp_path):
     """Test minimally write_ncl_settings()."""
     settings = {
         'run_dir': str(tmp_path / 'run_dir'),
-        'profile_diagnostic': False,
+        'diag_script_info': {'profile_diagnostic': False},
         'var_name': 'tas',
     }
     file_name = tmp_path / "settings"
