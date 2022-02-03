@@ -67,19 +67,19 @@ omitted in the file.
   auxiliary_data_dir: ~/auxiliary_data
 
   # Rootpaths to the data from different projects
-  # This default setting will work if files have been downloaded by the esmvaltool via
-  # ``offline=False``. Lists are also possible. For site-specific entries,
-  # see the default ``config-user.yml`` file that can be installed with the
-  # command ``esmvaltool config get_config_user``. For each project, this can
-  # be either a single path or a list of paths. Comment out these when using a
-  # site-specific path.
+  # This default setting will work if files have been downloaded by the
+  # ESMValTool via ``offline=False``. Lists are also possible. For
+  # site-specific entries, see the default ``config-user.yml`` file that can be
+  # installed with the command ``esmvaltool config get_config_user``. For each
+  # project, this can be either a single path or a list of paths. Comment out
+  # these when using a site-specific path.
   rootpath:
     default: ~/climate_data
 
   # Directory structure for input data --- [default]/ESGF/BADC/DKRZ/ETHZ/etc.
-  # This default setting will work if files have been downloaded by the esmvaltool via
-  # ``offline=False``. See ``config-developer.yml`` for definitions. Comment
-  # out/replace as per needed.
+  # This default setting will work if files have been downloaded by the
+  # ESMValTool via ``offline=False``. See ``config-developer.yml`` for
+  # definitions. Comment out/replace as per needed.
   drs:
     CMIP3: ESGF
     CMIP5: ESGF
