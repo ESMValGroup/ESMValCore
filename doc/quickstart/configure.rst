@@ -77,7 +77,7 @@ omitted in the file.
     default: ~/climate_data
 
   # Directory structure for input data --- [default]/ESGF/BADC/DKRZ/ETHZ/etc.
-  # This default setting will work if automatic downloads are enabled via
+  # This default setting will work if files have been downloaded by the esmvaltool via
   # ``offline=False``. See ``config-developer.yml`` for definitions. Comment
   # out/replace as per needed.
   drs:
