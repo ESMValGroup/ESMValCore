@@ -42,7 +42,10 @@ If the option ``--path`` is omitted, the file will be created in
 ``${HOME}/.esmvaltool``
 
 The following shows the default settings from the ``config-user.yml`` file
-with explanations in a commented line above each option:
+with explanations in a commented line above each option. If only certain values
+are allowed for an option, these are listed after ``---``. The option in square
+brackets is the default value, i.e., the one that is used if this option is
+omitted in the file.
 
 .. code-block:: yaml
 
@@ -104,7 +107,7 @@ with explanations in a commented line above each option:
   # Plot file format --- [png]/pdf/ps/eps/epsi
   output_file_type: png
 
-  # Remove the ``preproc`` directory if then run was successful --- [true]/false
+  # Remove the ``preproc`` directory if the run was successful --- [true]/false
   # By default this option is set to ``true``, so all preprocessor output files
   # will be removed after a successful run. Set to ``false`` if you need those files.
   remove_preproc_dir: true
