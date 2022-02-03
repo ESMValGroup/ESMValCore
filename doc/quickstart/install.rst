@@ -225,7 +225,7 @@ these have frozen version numbers, build hashes, and channel names, parameters e
 of the conda lock file creation, so may be obsolete after a while,
 but they allow for a robust environment creation while they're still up-to-date.
 We regenerate these lock files every 10 days through automatic Pull Requests
- (or more frequently, since the automatic generator runs on merges on the main branch too),
+(or more frequently, since the automatic generator runs on merges on the main branch too),
 so to minimize the risk of dependencies becoming obsolete. Conda environment creation from
 a lock file is done just like with any other environment file:
 
