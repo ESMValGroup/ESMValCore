@@ -472,7 +472,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     - ``short_name``: name of the variable in the reference dataset.
     - ``mip``: name of the MIP table used.
     - ``frequency``: temporal frequency of the reference dataset.
-    - ``fix_dir``: path to the directory where the new file is ssaved in case
+    - ``fix_dir``: path to the directory where the new file is saved in case
       fixes are necessary.
 
     Note
