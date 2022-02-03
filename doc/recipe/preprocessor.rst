@@ -966,7 +966,7 @@ min and max separately for the ensemble means and medians.
 
 When grouping by a `tag` not defined in all datasets, the datasets missing the tag will
 be grouped together. In the example below, datasets `UKESM` and `ERA5` would belong to the same
-group. 
+group ``group``, a different group than ``group2`` that the other datasets are grouped in.
 
 .. code-block:: yaml
 
