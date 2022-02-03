@@ -67,7 +67,7 @@ omitted in the file.
   auxiliary_data_dir: ~/auxiliary_data
 
   # Rootpaths to the data from different projects
-  # This default setting will work if automatic downloads are enabled via
+  # This default setting will work if files have been downloaded by the esmvaltool via
   # ``offline=False``. Lists are also possible. For site-specific entries,
   # see the default ``config-user.yml`` file that can be installed with the
   # command ``esmvaltool config get_config_user``. For each project, this can
