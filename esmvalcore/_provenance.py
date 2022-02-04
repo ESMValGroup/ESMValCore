@@ -265,7 +265,9 @@ class TrackedFile:
             namespaces=self.provenance.namespaces,
         )
         self._include_provenance()
-        self.provenance.serialize(self.provenance_file, format='xml')
+        with open(self.provenance_file, 'wb') as file:
+            # Create file with correct permissions before saving.
+            self.provenance.serialize(file, format='xml')
         self.activity = None
         self.entity = None
         self.provenance = None
