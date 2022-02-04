@@ -896,6 +896,9 @@ This preprocessor function exposes the iris analysis package, and works with all
 that can be executed without additional arguments (e.g. percentiles are not
 supported because it requires additional keywords: percentile.).
 
+Note that `ensemble_statistics` will not return the single model and ensemble files,
+only the requested ensemble statistics results.
+
 
 See also :func:`esmvalcore.preprocessor.ensemble_statistics`.
 
