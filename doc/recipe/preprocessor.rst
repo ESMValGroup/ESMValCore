@@ -964,7 +964,6 @@ parameter ``keep_input_datasets`` to ``false`` (default value is ``true``).
           span: overlap
           statistics: [mean, median]
           exclude: [NCEP]
-            multi_model_save_input:
       multi_model_without_saving_input:
         multi_model_statistics:
           span: overlap
