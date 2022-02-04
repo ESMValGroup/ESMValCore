@@ -899,6 +899,28 @@ supported because it requires additional keywords: percentile.).
 Note that ``ensemble_statistics`` will not return the single model and ensemble files,
 only the requested ensemble statistics results.
 
+In case of wanting to save both individual ensemble members as well as the statistic results,
+the preprocessor chains could be defined as:
+
+.. code-block:: yaml
+  preprocessors:
+    everything_else: &everything_else
+      area_statistics: ...
+      regrid_time: ...
+    multimodel:
+      <<: *everything_else
+      ensemble_statistics:
+
+  variables:
+    tas_datasets:
+      short_name: tas
+      preprocessor: everything_else
+      ...
+    tas_multimodel:
+      short_name: tas
+      preprocessor: multimodel
+      ...
+
 
 See also :func:`esmvalcore.preprocessor.ensemble_statistics`.
 
@@ -934,10 +956,6 @@ The preprocessor saves both the input single model files as well as the multi-mo
 results. In case you do not want to keep the single model files, set the
 parameter ``keep_input_datasets`` to ``false`` (default value is ``true``).
 
-Input datasets may have different time coordinates. The multi-model statistics
-preprocessor sets a common time coordinate on all datasets. As the number of
-days in a year may vary between calendars, (sub-)daily data are not supported.
-
 .. code-block:: yaml
 
     preprocessors:
@@ -953,6 +971,10 @@ days in a year may vary between calendars, (sub-)daily data are not supported.
           statistics: [mean, median]
           exclude: [NCEP]
           keep_input_datasets: false
+
+Input datasets may have different time coordinates. The multi-model statistics
+preprocessor sets a common time coordinate on all datasets. As the number of
+days in a year may vary between calendars, (sub-)daily data are not supported.
 
 Multi-model statistics also supports a ``groupby`` argument. You can group by
 any dataset key (``project``, ``experiment``, etc.) or a combination of keys in a list. You can
@@ -979,27 +1001,6 @@ can group by ``ensemble_statistics`` as well. For example:
 This will first compute ensemble mean and median, and then compute the multi-model
 min and max separately for the ensemble means and medians. Note that this combination
 will not save the individual ensemble members, only the ensemble and multimodel statistics results.
-In case of wanting to save both individual ensemble members as well as the statistic results,
-the preprocessor chains could be defined as:
-
-.. code-block:: yaml
-  preprocessors:
-    everything_else: &everything_else
-      area_statistics: ...
-      regrid_time: ...
-    multimodel:
-      <<: *everything_else
-      ensemble_statistics:
-
-variables:
-    tas_datasets:
-      short_name: tas
-      preprocessor: everything_else
-      ...
-    tas_multimodel:
-      short_name: tas
-      preprocessor: multimodel
-      ...
 
 When grouping by a tag not defined in all datasets, the datasets missing the tag will
 be grouped together. In the example below, datasets `UKESM` and `ERA5` would belong to the same
