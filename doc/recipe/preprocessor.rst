@@ -946,7 +946,6 @@ days in a year may vary between calendars, (sub-)daily data are not supported.
           span: overlap
           statistics: [mean, median]
           exclude: [NCEP]
-            multi_model_save_input:
       multi_model_without_saving_input:
         multi_model_statistics:
           span: overlap
