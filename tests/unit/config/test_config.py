@@ -154,7 +154,7 @@ def test_load_default_config(monkeypatch):
         'offline': True,
         'output_file_type': 'png',
         'profile_diagnostic': False,
-        'remove_preproc_dir': False,
+        'remove_preproc_dir': True,
         'resume_from': [],
         'rootpath': {
             'default': [str(Path.home() / 'climate_data')]
@@ -180,7 +180,7 @@ def test_load_default_config(monkeypatch):
 
     # Check output directories
     assert cfg['output_dir'].startswith(
-        str(Path.cwd() / 'esmvaltool_output' / 'recipe_example'))
+        str(Path.home() / 'esmvaltool_output' / 'recipe_example'))
     for path in ('preproc', 'work', 'run'):
         assert cfg[path + '_dir'] == str(Path(cfg['output_dir'], path))
     assert cfg['plot_dir'] == str(Path(cfg['output_dir'], 'plots'))

@@ -42,36 +42,44 @@ If the option ``--path`` is omitted, the file will be created in
 ``${HOME}/.esmvaltool``
 
 The following shows the default settings from the ``config-user.yml`` file
-with explanations in a commented line above each option:
+with explanations in a commented line above each option. If only certain values
+are allowed for an option, these are listed after ``---``. The option in square
+brackets is the default value, i.e., the one that is used if this option is
+omitted in the file.
 
 .. code-block:: yaml
 
   # Destination directory where all output will be written
-  # including log files and performance stats
-  output_dir: ./esmvaltool_output
+  # Includes log files and performance stats.
+  output_dir: ~/esmvaltool_output
 
   # Directory for storing downloaded climate data
   download_dir: ~/climate_data
 
+  # Disable automatic downloads --- [true]/false
   # Disable the automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX,
-  # and obs4MIPs data from ESGF [true]/false.
+  # and obs4MIPs data from ESGF by default. This is useful if you are working
+  # on a computer without an internet connection.
   offline: true
 
-  # Auxiliary data directory, used by some recipes to look for additional datasets
+  # Auxiliary data directory
+  # Used by some recipes to look for additional datasets.
   auxiliary_data_dir: ~/auxiliary_data
 
-  # Rootpaths to the data from different projects (lists are also possible)
-  # these are generic entries to better allow you to enter your own
-  # For site-specific entries, see the default config-user.yml file
-  # that can be installed with the command `esmvaltool config get_config_user`.
-  # For each project, this can be either a single path or a list of paths.
-  # Comment out these when using a site-specific path
+  # Rootpaths to the data from different projects
+  # This default setting will work if files have been downloaded by the
+  # ESMValTool via ``offline=False``. Lists are also possible. For
+  # site-specific entries, see the default ``config-user.yml`` file that can be
+  # installed with the command ``esmvaltool config get_config_user``. For each
+  # project, this can be either a single path or a list of paths. Comment out
+  # these when using a site-specific path.
   rootpath:
     default: ~/climate_data
 
-  # Directory structure for input data: [default]/ESGF/BADC/DKRZ/ETHZ/etc
-  # See config-developer.yml for definitions.
-  # comment out/replace as per needed
+  # Directory structure for input data --- [default]/ESGF/BADC/DKRZ/ETHZ/etc.
+  # This default setting will work if files have been downloaded by the
+  # ESMValTool via ``offline=False``. See ``config-developer.yml`` for
+  # definitions. Comment out/replace as per needed.
   drs:
     CMIP3: ESGF
     CMIP5: ESGF
@@ -79,52 +87,49 @@ with explanations in a commented line above each option:
     CORDEX: ESGF
     obs4MIPs: ESGF
 
-  # Run at most this many tasks in parallel [null]/1/2/3/4/..
-  # Set to null to use the number of available CPUs.
-  # If you run out of memory, try setting max_parallel_tasks to 1 and check the
-  # amount of memory you need for that by inspecting the file
-  # run/resource_usage.txt in the output directory. Using the number there you
-  # can increase the number of parallel tasks again to a reasonable number for
-  # the amount of memory available in your system.
+  # Run at most this many tasks in parallel --- [null]/1/2/3/4/...
+  # Set to ``null`` to use the number of available CPUs. If you run out of
+  # memory, try setting max_parallel_tasks to ``1`` and check the amount of
+  # memory you need for that by inspecting the file ``run/resource_usage.txt`` in
+  # the output directory. Using the number there you can increase the number of
+  # parallel tasks again to a reasonable number for the amount of memory
+  # available in your system.
   max_parallel_tasks: null
 
-  # Set the console log level debug, [info], warning, error
-  # for much more information printed to screen set log_level: debug
+  # Log level of the console --- debug/[info]/warning/error
+  # For much more information printed to screen set log_level to ``debug``.
   log_level: info
 
-  # Exit on warning (only for NCL diagnostic scripts)? true/[false]
+  # Exit on warning --- true/[false]
+  # Only used in NCL diagnostic scripts.
   exit_on_warning: false
 
-  # Plot file format? [png]/pdf/ps/eps/epsi
+  # Plot file format --- [png]/pdf/ps/eps/epsi
   output_file_type: png
 
-  # Remove the ``preproc`` dir if the run was successful
-  # By default this option is set to "true", so all preprocessor output files
-  # will be removed after a successful run. Set to "false" if you need those files.
+  # Remove the ``preproc`` directory if the run was successful --- [true]/false
+  # By default this option is set to ``true``, so all preprocessor output files
+  # will be removed after a successful run. Set to ``false`` if you need those files.
   remove_preproc_dir: true
 
-  # Use netCDF compression true/[false]
+  # Use netCDF compression --- true/[false]
   compress_netcdf: false
 
-  # Save intermediary cubes in the preprocessor true/[false]
-  # set to true will save the output cube from each preprocessing step
-  # these files are numbered according to the preprocessing order
+  # Save intermediary cubes in the preprocessor --- true/[false]
+  # Setting this to ``true`` will save the output cube from each preprocessing
+  # step. These files are numbered according to the preprocessing order.
   save_intermediary_cubes: false
 
-  # Use a profiling tool for the diagnostic run [false]/true
+  # Use a profiling tool for the diagnostic run --- [false]/true
   # A profiler tells you which functions in your code take most time to run.
-  # For this purpose we use vprof, see below for notes
-  # Only available for Python diagnostics
+  # For this purpose we use ``vprof``, see below for notes. Only available for
+  # Python diagnostics.
   profile_diagnostic: false
 
-  # Path to custom config-developer file, to customise project configurations.
-  # See config-developer.yml for an example. Set to "null" to use the default
+  # Path to custom ``config-developer.yml`` file
+  # This can be used to customise project configurations. See
+  # ``config-developer.yml`` for an example. Set to ``null`` to use the default.
   config_developer_file: null
-
-.. code-block:: yaml
-
-  # Auxiliary data directory (used for some additional datasets)
-  auxiliary_data_dir: ~/auxiliary_data
 
 The ``offline`` setting can be used to disable or enable automatic downloads from ESGF.
 If ``offline`` is set to ``false``, the tool will automatically download
