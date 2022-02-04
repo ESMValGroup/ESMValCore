@@ -14,7 +14,7 @@ long_name:         ISCCP Cloud Area Fraction
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
-dimensions:        longitude latitude plevs tau time
+dimensions:        longitude latitude plev7 tau time
 out_name:          clisccp
 type:              real
 !----------------------------------
