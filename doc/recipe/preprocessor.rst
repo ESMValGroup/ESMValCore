@@ -903,23 +903,23 @@ In case of wanting to save both individual ensemble members as well as the stati
 the preprocessor chains could be defined as:
 
 .. code-block:: yaml
-   preprocessors:
-     everything_else: &everything_else
-       area_statistics: ...
-       regrid_time: ...
-     multimodel:
-       <<: *everything_else
-       ensemble_statistics:
+    preprocessors:
+      everything_else: &everything_else
+        area_statistics: ...
+        regrid_time: ...
+      multimodel:
+        <<: *everything_else
+        ensemble_statistics:
 
-   variables:
-     tas_datasets:
-       short_name: tas
-       preprocessor: everything_else
-       ...
-     tas_multimodel:
-       short_name: tas
-       preprocessor: multimodel
-       ...
+    variables:
+      tas_datasets:
+        short_name: tas
+        preprocessor: everything_else
+        ...
+      tas_multimodel:
+        short_name: tas
+        preprocessor: multimodel
+        ...
 
 
 See also :func:`esmvalcore.preprocessor.ensemble_statistics`.
