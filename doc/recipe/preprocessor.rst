@@ -890,12 +890,11 @@ The preprocessor takes a list of statistics as input:
           statistics: [mean, median]
 
 This preprocessor function exposes the iris analysis package, and works with all
-(capitalized) statistics from the `iris' analysis package
-<https://scitools.org.uk/iris/docs/latest/iris/iris/analysis.html#iris-analysis>`_
+(capitalized) statistics from the :mod:`iris.analysis` package
 that can be executed without additional arguments (e.g. percentiles are not
 supported because it requires additional keywords: percentile.).
 
-see also :func:`esmvalcore.preprocessor.multiproduct_statistics_iris`.
+See also :func:`esmvalcore.preprocessor.ensemble_statistics`.
 
 .. _multi-model statistics:
 
@@ -941,9 +940,9 @@ days in a year may vary between calendars, (sub-)daily data are not supported.
 
 Multi-model statistics now also supports a ``groupby`` argument. You can group by
 any dataset key (``project``, ``experiment``, etc.) or a combination of keys in a list. You can
-also add an arbitrary 'tag' to a dataset definition and then groupby that tag. When
+also add an arbitrary tag to a dataset definition and then group by that tag. When
 using this preprocessor in conjunction with `ensemble statistics`_ preprocessor, you
-can groupby ``ensemble_statistics`` as well. For example:
+can group by ``ensemble_statistics`` as well. For example:
 
 .. code-block:: yaml
 
@@ -964,7 +963,7 @@ can groupby ``ensemble_statistics`` as well. For example:
 This will first compute ensemble mean and median, and then compute the multi-model
 min and max separately for the ensemble means and medians.
 
-When grouping by a `tag` not defined in all datasets, the datasets missing the tag will
+When grouping by a tag not defined in all datasets, the datasets missing the tag will
 be grouped together. In the example below, datasets `UKESM` and `ERA5` would belong to the same
 group ``group``, a different group than ``group2`` that the other datasets are grouped in.
 
@@ -986,9 +985,9 @@ group ``group``, a different group than ``group2`` that the other datasets are g
           statistics: [min, max]
           groupby: [tag]
 
-Note that those datasets can be excluded if listed in the `exclude` option.
+Note that those datasets can be excluded if listed in the ``exclude`` option.
 
-see also :func:`esmvalcore.preprocessor.multiproduct_statistics`.
+See also :func:`esmvalcore.preprocessor.multi_model_statistics`.
 
 .. note::
 
