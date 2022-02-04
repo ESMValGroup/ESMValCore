@@ -903,6 +903,7 @@ In case of wanting to save both individual ensemble members as well as the stati
 the preprocessor chains could be defined as:
 
 .. code-block:: yaml
+
     preprocessors:
       everything_else: &everything_else
         area_statistics: ...
