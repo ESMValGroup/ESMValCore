@@ -215,6 +215,8 @@ yourself if you are just running diagnostics:
     :ref:`these instructions <esmvaltool:install_on_hpc>`.
 
 
+.. _condalock-installation-creation:
+
 Installation from the conda lock file
 -------------------------------------
 
