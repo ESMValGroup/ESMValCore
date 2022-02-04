@@ -896,7 +896,7 @@ This preprocessor function exposes the iris analysis package, and works with all
 that can be executed without additional arguments (e.g. percentiles are not
 supported because it requires additional keywords: percentile.).
 
-Note that `ensemble_statistics` will not return the single model and ensemble files,
+Note that ``ensemble_statistics`` will not return the single model and ensemble files,
 only the requested ensemble statistics results.
 
 
@@ -931,8 +931,8 @@ of the combined models (``span: full``). The preprocessor sets a common time
 coordinate on all datasets. As the number of days in a year may vary between
 calendars, (sub-)daily data with different calendars are not supported.
 The preprocessor saves both the input single model files as well as the multi-model
-results. In case of not wanting to keep the single model files, set
-parameter `keep_input_datasets` to `false` (default value is `true`).
+results. In case you do not want to keep the single model files, set the
+parameter ``keep_input_datasets`` to ``false`` (default value is ``true``).
 
 Input datasets may have different time coordinates. The multi-model statistics
 preprocessor sets a common time coordinate on all datasets. As the number of
@@ -954,7 +954,7 @@ days in a year may vary between calendars, (sub-)daily data are not supported.
           exclude: [NCEP]
           keep_input_datasets: false
 
-Multi-model statistics now also supports a ``groupby`` argument. You can group by
+Multi-model statistics also supports a ``groupby`` argument. You can group by
 any dataset key (``project``, ``experiment``, etc.) or a combination of keys in a list. You can
 also add an arbitrary tag to a dataset definition and then group by that tag. When
 using this preprocessor in conjunction with `ensemble statistics`_ preprocessor, you
@@ -1003,7 +1003,7 @@ variables:
 
 When grouping by a tag not defined in all datasets, the datasets missing the tag will
 be grouped together. In the example below, datasets `UKESM` and `ERA5` would belong to the same
-group, while the other datasets would belong to either `group1` or `group2`
+group, while the other datasets would belong to either ``group1`` or ``group2``
 
 .. code-block:: yaml
 
