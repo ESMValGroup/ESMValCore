@@ -292,15 +292,16 @@ def multimodel_statistics_preproc(settings):
 
 def ensemble_statistics_preproc(settings):
     """Check that the ensemble settings are valid."""
-    valid_keys = ['statistics', 'keep_input_datasets']
+    valid_keys = ['statistics', 'span']
     _verify_arguments(settings.keys(), valid_keys)
+
+    span = settings.get('span', 'overlap')  # optional, default: overlap
+    if span:
+        _verify_span_value(span)
 
     statistics = settings.get('statistics', None)
     if statistics:
         _verify_statistics(statistics, 'ensemble_statistics')
-
-    keep_input_datasets = settings.get('keep_input_datasets', True)
-    _verify_keep_input_datasets(keep_input_datasets)
 
 
 def _check_delimiter(timerange):

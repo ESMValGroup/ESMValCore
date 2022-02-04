@@ -456,7 +456,7 @@ def multi_model_statistics(products,
 
 
 def ensemble_statistics(products, statistics,
-                        output_products, keep_input_datasets=True):
+                        output_products, span='overlap'):
     """Entry point for ensemble statistics.
 
     An ensemble grouping is performed on the input products.
@@ -493,9 +493,9 @@ def ensemble_statistics(products, statistics,
     ensemble_grouping = ('project', 'dataset', 'exp', 'sub_experiment')
     return multi_model_statistics(
         products=products,
-        span='overlap',
+        span=span,
         statistics=statistics,
         output_products=output_products,
         groupby=ensemble_grouping,
-        keep_input_datasets=keep_input_datasets
+        keep_input_datasets=False
     )

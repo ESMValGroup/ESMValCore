@@ -2031,6 +2031,7 @@ def test_groupby_combined_statistics(tmp_path, patched_datafinder,
             area_statistics:
               operator: mean
             {ens_preprocessor}:
+              span: 'overlap'
               statistics: {ens_statistics}
             {mm_preprocessor}:
               span: overlap

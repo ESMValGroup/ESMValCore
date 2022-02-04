@@ -623,12 +623,9 @@ def test_ensemble_products():
         'output_products': output_products,
     }
 
-    result1 = mm.ensemble_statistics(products, **kwargs)
-    assert len(result1) == 6
-
-    result2 = mm.ensemble_statistics(
-        products, keep_input_datasets=False, **kwargs)
-    assert len(result2) == 2
+    result = mm.ensemble_statistics(
+        products, **kwargs)
+    assert len(result) == 2
 
 
 def test_ignore_tas_scalar_height_coord():
