@@ -260,3 +260,74 @@ def test_reference_for_bias_preproc_two_refs():
     assert "],\nfound 2:\n[" in str(rec_err.value)
     assert ("].\nPlease also ensure that the reference dataset is "
             "not excluded with the 'exclude' option") in str(rec_err.value)
+
+
+INVALID_MM_SETTINGS = {
+        'wrong_parametre': 'wrong',
+        'statistics': ['wrong'],
+        'span': 'wrong',
+        'groupby': 'wrong',
+        'keep_input_datasets': 'wrong'
+    }
+
+
+def test_invalid_multi_model_settings():
+    valid_keys = ['span', 'groupby', 'statistics', 'keep_input_datasets']
+    with pytest.raises(RecipeError) as rec_err:
+        check._verify_arguments(INVALID_MM_SETTINGS, valid_keys)
+    assert str(rec_err.value) == (
+        "Unexpected keyword argument encountered: wrong_parametre. "
+        "Valid keywords are: "
+        "['span', 'groupby', 'statistics', 'keep_input_datasets'].")
+
+
+def test_invalid_multi_model_statistics():
+    with pytest.raises(RecipeError) as rec_err:
+        check._verify_statistics(
+            INVALID_MM_SETTINGS['statistics'], 'multi_model_statistics')
+    assert str(rec_err.value) == (
+        "Invalid value encountered for `statistic` in preprocessor "
+        "multi_model_statistics. Valid values are "
+        "['mean', 'median', 'std', 'min', 'max'] "
+        "or patterns matching ['^(p\\\\d{1,2})(\\\\.\\\\d*)?$']. "
+        "Got 'wrong'.")
+
+
+def test_invalid_multi_model_span():
+    with pytest.raises(RecipeError) as rec_err:
+        check._verify_span_value(INVALID_MM_SETTINGS['span'])
+    assert str(rec_err.value) == (
+        "Invalid value encountered for `span` in preprocessor "
+        "`multi_model_statistics`. Valid values are ('overlap', 'full')."
+        "Got wrong."
+    )
+
+
+def test_invalid_multi_model_groupy():
+    with pytest.raises(RecipeError) as rec_err:
+        check._verify_groupby(INVALID_MM_SETTINGS['groupby'])
+    assert str(rec_err.value) == (
+        'Invalid value encountered for `groupby` in preprocessor '
+        '`multi_model_statistics`.`groupby` must be defined '
+        'as a list. Got wrong.'
+    )
+
+
+def test_invalid_multi_model_keep_input():
+    with pytest.raises(RecipeError) as rec_err:
+        check._verify_keep_input_datasets(
+            INVALID_MM_SETTINGS['keep_input_datasets'])
+    assert str(rec_err.value) == (
+        'Invalid value encountered for `keep_input_datasets`.'
+        'Must be defined as a boolean. Got wrong.')
+
+
+def test_invalid_ensemble_statistics():
+    with pytest.raises(RecipeError) as rec_err:
+        check._verify_statistics(['wrong'], 'ensemble_statistics')
+    assert str(rec_err.value) == (
+        "Invalid value encountered for `statistic` in preprocessor "
+        "ensemble_statistics. Valid values are "
+        "['mean', 'median', 'std', 'min', 'max'] "
+        "or patterns matching ['^(p\\\\d{1,2})(\\\\.\\\\d*)?$']. "
+        "Got 'wrong'.")

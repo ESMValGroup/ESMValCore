@@ -1,5 +1,12 @@
-"""Functions to compute multi-cube statistics."""
+"""Statistics across cubes.
 
+This module contains functions to compute statistics across multiple cubes or
+products.
+
+Wrapper functions separate esmvalcore internals, operating on products, from
+generalized functions that operate on iris cubes. These wrappers support
+grouped execution by passing a groupby keyword.
+"""
 import logging
 import re
 import warnings
@@ -13,6 +20,8 @@ from iris.util import equalise_attributes
 
 from esmvalcore.iris_helpers import date2num
 from esmvalcore.preprocessor import remove_fx_variables
+
+from ._other import _group_products
 
 logger = logging.getLogger(__name__)
 
@@ -80,13 +89,13 @@ def _get_consistent_time_unit(cubes):
 def _unify_time_coordinates(cubes):
     """Make sure all cubes' share the same time coordinate.
 
-    This function extracts the date information from the cube and
-    reconstructs the time coordinate, resetting the actual dates to the
-    15th of the month or 1st of july for yearly data (consistent with
-    `regrid_time`), so that there are no mismatches in the time arrays.
+    This function extracts the date information from the cube and reconstructs
+    the time coordinate, resetting the actual dates to the 15th of the month or
+    1st of July for yearly data (consistent with `regrid_time`), so that there
+    are no mismatches in the time arrays.
 
-    If cubes have different time units, it will use reset the calendar to
-    a default gregorian calendar with unit "days since 1850-01-01".
+    If cubes have different time units, it will reset the calendar to a
+    default gregorian calendar with unit "days since 1850-01-01".
 
     Might not work for (sub)daily data, because different calendars may have
     different number of days in the year.
@@ -280,6 +289,15 @@ def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
 
     result_cube.data = np.ma.array(result_cube.data)
     result_cube.remove_coord(CONCAT_DIM)
+    if result_cube.cell_methods:
+        cell_method = result_cube.cell_methods[0]
+        result_cube.cell_methods = None
+        updated_method = iris.coords.CellMethod(
+            method=cell_method.method,
+            coords=cell_method.coord_names,
+            intervals=cell_method.intervals,
+            comments=f'input_cubes: {len(cubes)}')
+        result_cube.add_cell_method(updated_method)
     return result_cube
 
 
@@ -306,7 +324,6 @@ def _multicube_statistics(cubes, statistics, span):
         result_cube = _compute_eager(aligned_cubes,
                                      operator=operator,
                                      **kwargs)
-
         statistics_cubes[statistic] = result_cube
 
     return statistics_cubes
@@ -347,6 +364,7 @@ def multi_model_statistics(products,
                            span,
                            statistics,
                            output_products=None,
+                           groupby=None,
                            keep_input_datasets=True):
     """Compute multi-model statistics.
 
@@ -376,18 +394,21 @@ def multi_model_statistics(products,
     ----------
     products: list
         Cubes (or products) over which the statistics will be computed.
-    statistics: list
-        Statistical metrics to be computed, e.g. [``mean``, ``max``]. Choose
-        from the operators listed in the iris.analysis package. Percentiles can
-        be specified like ``pXX.YY``.
     span: str
         Overlap or full; if overlap, statitstics are computed on common time-
         span; if full, statistics are computed on full time spans, ignoring
         missing data.
+    statistics: list
+        Statistical metrics to be computed, e.g. [``mean``, ``max``]. Choose
+        from the operators listed in the iris.analysis package. Percentiles can
+        be specified like ``pXX.YY``.
     output_products: dict
         For internal use only. A dict with statistics names as keys and
         preprocessorfiles as values. If products are passed as input, the
         statistics cubes will be assigned to these output products.
+    groupby:  tuple
+        Group products by a given tag or attribute, e.g.
+        ('project', 'dataset', 'tag1').
     keep_input_datasets: bool
         If True, the output will include the input datasets.
         If False, only the computed statistics will be returned.
@@ -412,14 +433,70 @@ def multi_model_statistics(products,
         )
     if all(type(p).__name__ == 'PreprocessorFile' for p in products):
         # Avoid circular input: https://stackoverflow.com/q/16964467
-        return _multiproduct_statistics(
-            products=products,
-            statistics=statistics,
-            output_products=output_products,
-            span=span,
-            keep_input_datasets=keep_input_datasets,
-        )
+        statistics_products = set()
+        for group, input_prods in _group_products(products, by_key=groupby):
+            sub_output_products = output_products[group]
+
+            # Compute statistics on a single group
+            group_statistics = _multiproduct_statistics(
+                products=input_prods,
+                statistics=statistics,
+                output_products=sub_output_products,
+                span=span,
+                keep_input_datasets=keep_input_datasets
+            )
+
+            statistics_products |= group_statistics
+
+        return statistics_products
     raise ValueError(
         "Input type for multi_model_statistics not understood. Expected "
         "iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
         "got {}".format(products))
+
+
+def ensemble_statistics(products, statistics,
+                        output_products, span='overlap'):
+    """Entry point for ensemble statistics.
+
+    An ensemble grouping is performed on the input products.
+    The statistics are then computed calling
+    the :func:`esmvalcore.preprocessor.multi_model_statistics` module,
+    taking the grouped products as an input.
+
+    Parameters
+    ----------
+    products: list
+        Cubes (or products) over which the statistics will be computed.
+    statistics: list
+        Statistical metrics to be computed, e.g. [``mean``, ``max``]. Choose
+        from the operators listed in the iris.analysis package. Percentiles can
+        be specified like ``pXX.YY``.
+    output_products: dict
+        For internal use only. A dict with statistics names as keys and
+        preprocessorfiles as values. If products are passed as input, the
+        statistics cubes will be assigned to these output products.
+    span: str (default: 'overlap')
+        Overlap or full; if overlap, statitstics are computed on common time-
+        span; if full, statistics are computed on full time spans, ignoring
+        missing data.
+
+    Returns
+    -------
+    set
+        A set of output_products with the resulting ensemble statistics.
+
+    See Also
+    --------
+    :func:`esmvalcore.preprocessor.multi_model_statistics` for
+    the full description of the core statistics function.
+    """
+    ensemble_grouping = ('project', 'dataset', 'exp', 'sub_experiment')
+    return multi_model_statistics(
+        products=products,
+        span=span,
+        statistics=statistics,
+        output_products=output_products,
+        groupby=ensemble_grouping,
+        keep_input_datasets=False
+    )

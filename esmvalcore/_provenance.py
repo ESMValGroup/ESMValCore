@@ -26,8 +26,8 @@ def get_esmvaltool_provenance():
     namespace = 'software'
     create_namespace(provenance, namespace)
     attributes = {}  # TODO: add dependencies with versions here
-    activity = provenance.activity(
-        namespace + ':esmvaltool==' + __version__, other_attributes=attributes)
+    activity = provenance.activity(namespace + ':esmvaltool==' + __version__,
+                                   other_attributes=attributes)
 
     return activity
 
@@ -71,8 +71,7 @@ def get_recipe_provenance(documentation, filename):
     entity = provenance.entity(
         'recipe:{}'.format(filename), {
             'attribute:description': documentation.get('description', ''),
-            'attribute:references': str(
-                documentation.get('references', [])),
+            'attribute:references': str(documentation.get('references', [])),
         })
 
     attribute_to_authors(entity, documentation.get('authors', []))

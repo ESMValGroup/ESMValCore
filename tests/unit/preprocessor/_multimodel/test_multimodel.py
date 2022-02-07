@@ -1,4 +1,4 @@
-"""Unit test for :func:`esmvalcore.preprocessor._multimodel`"""
+"""Unit test for :func:`esmvalcore.preprocessor._multimodel`."""
 
 from datetime import datetime
 
@@ -514,12 +514,36 @@ def test_unify_time_coordinates():
 class PreprocessorFile:
     """Mockup to test output of multimodel."""
 
-    def __init__(self, cube=None):
+    def __init__(self, cube=None, attributes=None):
         if cube:
             self.cubes = [cube]
+        if attributes:
+            self.attributes = attributes
 
     def wasderivedfrom(self, product):
         pass
+
+    def group(self, keys: list) -> str:
+        """Generate group keyword.
+
+        Returns a string that identifies a group. Concatenates a list of
+        values from .attributes
+        """
+        if not keys:
+            return ''
+
+        if isinstance(keys, str):
+            keys = [keys]
+
+        identifier = []
+        for key in keys:
+            attribute = self.attributes.get(key)
+            if attribute:
+                if isinstance(attribute, (list, tuple)):
+                    attribute = '-'.join(attribute)
+                identifier.append(attribute)
+
+        return '_'.join(identifier)
 
 
 def test_return_products():
@@ -533,12 +557,12 @@ def test_return_products():
     products = set([input1, input2])
 
     output = PreprocessorFile()
-    output_products = {'mean': output}
+    output_products = {'': {'mean': output}}
 
     kwargs = {
         'statistics': ['mean'],
         'span': 'full',
-        'output_products': output_products
+        'output_products': output_products['']
     }
 
     result1 = mm._multiproduct_statistics(products,
@@ -552,6 +576,7 @@ def test_return_products():
     assert result1 == set([input1, input2, output])
     assert result2 == set([output])
 
+    kwargs['output_products'] = output_products
     result3 = mm.multi_model_statistics(products, **kwargs)
     result4 = mm.multi_model_statistics(products,
                                         keep_input_datasets=False,
@@ -559,6 +584,48 @@ def test_return_products():
 
     assert result3 == result1
     assert result4 == result2
+
+
+def test_ensemble_products():
+    cube1 = generate_cube_from_dates('monthly', fill_val=1)
+    cube2 = generate_cube_from_dates('monthly', fill_val=9)
+
+    attributes1 = {
+        'project': 'project', 'dataset': 'dataset',
+        'exp': 'exp', 'ensemble': '1'}
+    input1 = PreprocessorFile(cube1, attributes=attributes1)
+
+    attributes2 = {
+        'project': 'project', 'dataset': 'dataset',
+        'exp': 'exp', 'ensemble': '2'}
+    input2 = PreprocessorFile(cube2, attributes=attributes2)
+
+    attributes3 = {
+        'project': 'project', 'dataset': 'dataset2',
+        'exp': 'exp', 'ensemble': '1'}
+    input3 = PreprocessorFile(cube1, attributes=attributes3)
+
+    attributes4 = {
+        'project': 'project', 'dataset': 'dataset2',
+        'exp': 'exp', 'ensemble': '2'}
+
+    input4 = PreprocessorFile(cube1, attributes=attributes4)
+    products = set([input1, input2, input3, input4])
+
+    output1 = PreprocessorFile()
+    output2 = PreprocessorFile()
+    output_products = {
+        'project_dataset_exp': {'mean': output1},
+        'project_dataset2_exp': {'mean': output2}}
+
+    kwargs = {
+        'statistics': ['mean'],
+        'output_products': output_products,
+    }
+
+    result = mm.ensemble_statistics(
+        products, **kwargs)
+    assert len(result) == 2
 
 
 def test_ignore_tas_scalar_height_coord():

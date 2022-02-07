@@ -79,5 +79,6 @@ class PreprocessorFile(mock.Mock):
         self.cubes = cubes
         self.filename = filename
         self.attributes = attributes
+        self.settings = {}
         self.mock_ancestors = set()
         self.wasderivedfrom = mock.Mock(side_effect=self.mock_ancestors.add)
