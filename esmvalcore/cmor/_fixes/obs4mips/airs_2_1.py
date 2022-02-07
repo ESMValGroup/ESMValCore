@@ -1,7 +1,5 @@
 """Fixes for obs4MIPs dataset AIRS-2-1."""
-import iris
-from cf_units import Unit
-from iris.cube import CubeList
+from iris.exceptions import CoordinateNotFoundError
 
 from ..fix import Fix
 
@@ -13,23 +11,25 @@ class AllVars(Fix):
         """
         Fix metadata.
 
-        Change unit of coordinate plev from hPa to Pa
+        Change unit of coordinate plev from hPa to Pa.
 
         Parameters
         ----------
-        cube: iris.cube.CubeList
+        cubes: iris.cube.CubeList
+            Input cubes.
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.CubeList
+            Fixed cubes.
 
         """
         for cube in cubes:
             try:
                 plev = cube.coord('air_pressure')
-            except iris.exceptions.CoordinateNotFoundError:
+            except CoordinateNotFoundError:
                 continue
             else:
                 if plev.points[0] > 10000.0:
-                    plev.units = Unit('Pa')
+                    plev.units = 'Pa'
         return cubes
