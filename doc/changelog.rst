@@ -74,7 +74,7 @@ Automatic testing
 -  Implementing conda lock (`#1164 <https://github.com/ESMValGroup/ESMValCore/pull/1164>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Relocate `pytest-monitor` outputted database `.pymon` so `.pymon-journal` file should not be looked for by `pytest` (`#1441 <https://github.com/ESMValGroup/ESMValCore/pull/1441>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Switch to Mambaforge in Github Actions tests (`#1438 <https://github.com/ESMValGroup/ESMValCore/pull/1438>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
--  [Condalock] Update Linux condalock file (`#1437 <https://github.com/ESMValGroup/ESMValCore/pull/1437>`__, `#1445 <https://github.com/ESMValGroup/ESMValCore/pull/1445>`__, `#1447 <https://github.com/ESMValGroup/ESMValCore/pull/1447>`__, `#1451 <https://github.com/ESMValGroup/ESMValCore/pull/1451>`__, `#1458 <https://github.com/ESMValGroup/ESMValCore/pull/1458>`__, `#1461 <https://github.com/ESMValGroup/ESMValCore/pull/1461>`__, `#1463 <https://github.com/ESMValGroup/ESMValCore/pull/1463>`__, `#1464 <https://github.com/ESMValGroup/ESMValCore/pull/1464>`__, `#1465 <https://github.com/ESMValGroup/ESMValCore/pull/1465>`__, `#1466 <https://github.com/ESMValGroup/ESMValCore/pull/1466>`__) github-actions[bot]
+-  Update Linux condalock file (various pull requests) github-actions[bot]
 
 Improvements
 ~~~~~~~~~~~~
