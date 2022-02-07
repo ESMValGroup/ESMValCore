@@ -394,14 +394,14 @@ def multi_model_statistics(products,
     ----------
     products: list
         Cubes (or products) over which the statistics will be computed.
-    statistics: list
-        Statistical metrics to be computed, e.g. [``mean``, ``max``]. Choose
-        from the operators listed in the iris.analysis package. Percentiles can
-        be specified like ``pXX.YY``.
     span: str
         Overlap or full; if overlap, statitstics are computed on common time-
         span; if full, statistics are computed on full time spans, ignoring
         missing data.
+    statistics: list
+        Statistical metrics to be computed, e.g. [``mean``, ``max``]. Choose
+        from the operators listed in the iris.analysis package. Percentiles can
+        be specified like ``pXX.YY``.
     output_products: dict
         For internal use only. A dict with statistics names as keys and
         preprocessorfiles as values. If products are passed as input, the
@@ -476,9 +476,10 @@ def ensemble_statistics(products, statistics,
         For internal use only. A dict with statistics names as keys and
         preprocessorfiles as values. If products are passed as input, the
         statistics cubes will be assigned to these output products.
-    keep_input_datasets: bool
-        If True, the output will include the input datasets.
-        If False, only the computed statistics will be returned.
+    span: str (default: 'overlap')
+        Overlap or full; if overlap, statitstics are computed on common time-
+        span; if full, statistics are computed on full time spans, ignoring
+        missing data.
 
     Returns
     -------
