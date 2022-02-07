@@ -282,15 +282,11 @@ def test_invalid_multi_model_settings():
 
 
 def test_invalid_multi_model_statistics():
-    with pytest.raises(RecipeError) as rec_err:
+    msg = (r"Invalid value encountered for `statistic` in preprocessor "
+           r"multi_model_statistics. Valid values are .* Got 'wrong'.")
+    with pytest.raises(RecipeError, match=msg):
         check._verify_statistics(
             INVALID_MM_SETTINGS['statistics'], 'multi_model_statistics')
-    assert str(rec_err.value) == (
-        "Invalid value encountered for `statistic` in preprocessor "
-        "multi_model_statistics. Valid values are "
-        "['mean', 'median', 'std', 'min', 'max'] "
-        "or patterns matching ['^(p\\\\d{1,2})(\\\\.\\\\d*)?$']. "
-        "Got 'wrong'.")
 
 
 def test_invalid_multi_model_span():
@@ -323,11 +319,7 @@ def test_invalid_multi_model_keep_input():
 
 
 def test_invalid_ensemble_statistics():
-    with pytest.raises(RecipeError) as rec_err:
+    msg = (r"Invalid value encountered for `statistic` in preprocessor "
+           r"ensemble_statistics. Valid values are .* Got 'wrong'.")
+    with pytest.raises(RecipeError, match=msg):
         check._verify_statistics(['wrong'], 'ensemble_statistics')
-    assert str(rec_err.value) == (
-        "Invalid value encountered for `statistic` in preprocessor "
-        "ensemble_statistics. Valid values are "
-        "['mean', 'median', 'std', 'min', 'max'] "
-        "or patterns matching ['^(p\\\\d{1,2})(\\\\.\\\\d*)?$']. "
-        "Got 'wrong'.")
