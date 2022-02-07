@@ -1,6 +1,89 @@
 Changelog
 =========
 
+.. _changelog-v2-5-0:
+
+v2.5.0
+------
+
+Highlights
+~~~~~~~~~~
+
+-  The new preprocessor :func:`~esmvalcore.preprocessor.extract_location` can extract arbitrary locations on the Earth using the `geopy <https://pypi.org/project/geopy/>`__ package that connects to OpenStreetMap. For details, see :ref:`Extract location <extract_location>`.
+-  Time ranges can now be extracted using the `ISO 8601 format <https://en.wikipedia.org/wiki/ISO_8601>`_. In addition, wildcards are allowed, which makes the time selection much more flexible. For details, see :ref:`Recipe section: Datasets <Datasets>`.
+-  The new preprocessor :func:`~esmvalcore.preprocessor.ensemble_statistics` can calculate arbitrary statitics over all ensemble members of a simulation. In addition, the preprocessor :func:`~esmvalcore.preprocessor.multi_model_statistics` now accepts the keyword ``groupy``, which allows the calculation of multi-model statistics over arbitrary multi-model ensembles. For details, see :ref:`Ensemble statistics <ensemble statistics>` and :ref:`Multi-model statistics <multi-model statistics>`.
+
+This release includes
+
+Backwards incompatible changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Update Cordex section in  `config-developer.yml` (`#1303 <https://github.com/ESMValGroup/ESMValCore/pull/1303>`__) `francesco-cmcc <https://github.com/francesco-cmcc>`__. This changes the naming convention of ESMValCore's output files from CORDEX dataset. This only affects recipes that use CORDEX data. Most likely, no changes in diagnostics are necessary; however, if code relies on the specific naming convention of files, it might need to be adapted.
+
+Bug fixes
+~~~~~~~~~
+
+-  Fix `extract_shape` when fx vars are present (`#1403 <https://github.com/ESMValGroup/ESMValCore/pull/1403>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Added support of `extra_facets` to fx variables added by the preprocessor (`#1399 <https://github.com/ESMValGroup/ESMValCore/pull/1399>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Augmented input for derived variables with extra_facets (`#1412 <https://github.com/ESMValGroup/ESMValCore/pull/1412>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Correctly use masked arrays after `unstructured_nearest` regridding (`#1414 <https://github.com/ESMValGroup/ESMValCore/pull/1414>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fixing the broken derivation script for XCH4 (and XCO2) (`#1428 <https://github.com/ESMValGroup/ESMValCore/pull/1428>`__) `Birgit Hassler <https://github.com/hb326>`__
+-  Ignore `.pymon-journal` file in test discovery (`#1436 <https://github.com/ESMValGroup/ESMValCore/pull/1436>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Fixed bug that caused automatic download to fail in rare cases (`#1442 <https://github.com/ESMValGroup/ESMValCore/pull/1442>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Add new `JULIA_LOAD_PATH` to diagnostic task test (`#1444 <https://github.com/ESMValGroup/ESMValCore/pull/1444>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Fix provenance file permissions (`#1468 <https://github.com/ESMValGroup/ESMValCore/pull/1468>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Deprecations
+~~~~~~~~~~~~
+
+-  Renamed vertical regridding schemes (`#1429 <https://github.com/ESMValGroup/ESMValCore/pull/1429>`__) `Manuel Schlund <https://github.com/schlunma>`__. Old regridding schemes are supported until v2.7.0. For details, see :ref:`Vertical interpolation schemes <Vertical interpolation schemes>`.
+
+Documentation
+~~~~~~~~~~~~~
+
+-  Remove duplicate entries in changelog (`#1391 <https://github.com/ESMValGroup/ESMValCore/pull/1391>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
+-  Documentation on how to use HPC central installations (`#1409 <https://github.com/ESMValGroup/ESMValCore/pull/1409>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Correct brackets in preprocessor documentation for list of seasons (`#1420 <https://github.com/ESMValGroup/ESMValCore/pull/1420>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Add Python=3.10 to package info, update Circle CI auto install and documentation for Python=3.10 (`#1432 <https://github.com/ESMValGroup/ESMValCore/pull/1432>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Reverted unintentional change in `.zenodo.json` (`#1452 <https://github.com/ESMValGroup/ESMValCore/pull/1452>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Synchronized config-user.yml with version from ESMValTool (`#1453 <https://github.com/ESMValGroup/ESMValCore/pull/1453>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Solved issues in configuration files (`#1457 <https://github.com/ESMValGroup/ESMValCore/pull/1457>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Add direct link to download conda lock file in the install documentation (`#1462 <https://github.com/ESMValGroup/ESMValCore/pull/1462>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  CITATION.cff fix and automatic validation of citation metadata (`#1467 <https://github.com/ESMValGroup/ESMValCore/pull/1467>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Updated documentation on how to deprecate features (`#1426 <https://github.com/ESMValGroup/ESMValCore/pull/1426>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Added reference hook to conda lock in documentation install section (`#1473 <https://github.com/ESMValGroup/ESMValCore/pull/1473>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+
+Preprocessor
+~~~~~~~~~~~~
+
+-  Added bias preprocessor (`#1406 <https://github.com/ESMValGroup/ESMValCore/pull/1406>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Improve error messages when a preprocessor is failing (`#1408 <https://github.com/ESMValGroup/ESMValCore/pull/1408>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Added option to explicitly not use fx variables in preprocessors (`#1416 <https://github.com/ESMValGroup/ESMValCore/pull/1416>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Add `extract_location` preprocessor to extract town, city, mountains etc - anything specifiable by a location (`#1251 <https://github.com/ESMValGroup/ESMValCore/pull/1251>`__) `Javier Vegas-Regidor <https://github.com/jvegreg>`__
+-  Add ensemble statistics preprocessor and 'groupby' option for multimodel (`#673 <https://github.com/ESMValGroup/ESMValCore/pull/673>`__) `sloosvel <https://github.com/sloosvel>`__
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+-  Add `pandas` as dependency :panda_face:  (`#1402 <https://github.com/ESMValGroup/ESMValCore/pull/1402>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Fixed tests for python 3.7 (`#1410 <https://github.com/ESMValGroup/ESMValCore/pull/1410>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Remove accessing `.xml()` cube method from test (`#1419 <https://github.com/ESMValGroup/ESMValCore/pull/1419>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Remove flag to use pip 2020 solver from Github Action pip install command on OSX (`#1357 <https://github.com/ESMValGroup/ESMValCore/pull/1357>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Add Python=3.10 to Github Actions and switch to Python=3.10 for the Github Action that builds the PyPi package (`#1430 <https://github.com/ESMValGroup/ESMValCore/pull/1430>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Pin `flake8<4` to keep getting relevant error traces when tests fail with FLAKE8 issues (`#1434 <https://github.com/ESMValGroup/ESMValCore/pull/1434>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Implementing conda lock (`#1164 <https://github.com/ESMValGroup/ESMValCore/pull/1164>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Relocate `pytest-monitor` outputted database `.pymon` so `.pymon-journal` file should not be looked for by `pytest` (`#1441 <https://github.com/ESMValGroup/ESMValCore/pull/1441>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Switch to Mambaforge in Github Actions tests (`#1438 <https://github.com/ESMValGroup/ESMValCore/pull/1438>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  [Condalock] Update Linux condalock file (`#1437 <https://github.com/ESMValGroup/ESMValCore/pull/1437>`__, `#1445 <https://github.com/ESMValGroup/ESMValCore/pull/1445>`__, `#1447 <https://github.com/ESMValGroup/ESMValCore/pull/1447>`__, `#1451 <https://github.com/ESMValGroup/ESMValCore/pull/1451>`__, `#1458 <https://github.com/ESMValGroup/ESMValCore/pull/1458>`__, `#1461 <https://github.com/ESMValGroup/ESMValCore/pull/1461>`__, `#1463 <https://github.com/ESMValGroup/ESMValCore/pull/1463>`__, `#1464 <https://github.com/ESMValGroup/ESMValCore/pull/1464>`__, `#1465 <https://github.com/ESMValGroup/ESMValCore/pull/1465>`__, `#1466 <https://github.com/ESMValGroup/ESMValCore/pull/1466>`__) github-actions[bot]
+
+Improvements
+~~~~~~~~~~~~
+
+-  Allow to load all files, first X years or last X years in an experiment (`#1133 <https://github.com/ESMValGroup/ESMValCore/pull/1133>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Filter tasks earlier (`#1264 <https://github.com/ESMValGroup/ESMValCore/pull/1264>`__) `Javier Vegas-Regidor <https://github.com/jvegreg>`__
+-  Added earlier validation for command line arguments (`#1435 <https://github.com/ESMValGroup/ESMValCore/pull/1435>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+
 .. _changelog-v2-4-0:
 
 v2.4.0
