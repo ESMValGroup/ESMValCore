@@ -1,7 +1,7 @@
-"""Fixes for obs4mips dataset AIRS-2-1."""
+"""Fixes for obs4MIPs dataset AIRS-2-1."""
 import iris
-from iris.cube import CubeList
 from cf_units import Unit
+from iris.cube import CubeList
 
 from ..fix import Fix
 
@@ -30,5 +30,6 @@ class AllVars(Fix):
             except iris.exceptions.CoordinateNotFoundError:
                 continue
             else:
-                plev.units = Unit('Pa')
+                if plev.points[0] > 10000.0:
+                    plev.units = Unit('Pa')
         return cubes
