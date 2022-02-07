@@ -8,8 +8,8 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.cube import Cube
 from iris.coords import AuxCoord
+from iris.cube import Cube
 
 import esmvalcore.preprocessor._multimodel as mm
 from esmvalcore.iris_helpers import date2num
