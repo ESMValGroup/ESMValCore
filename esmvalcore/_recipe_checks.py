@@ -13,6 +13,7 @@ import yamale
 from ._data_finder import get_start_end_year
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
+from .preprocessor._multimodel import STATISTIC_MAPPING
 
 logger = logging.getLogger(__name__)
 
@@ -221,7 +222,7 @@ def extract_shape(settings):
 
 def _verify_statistics(statistics, step):
     """Raise error if multi-model statistics cannot be verified."""
-    valid_names = ["mean", "median", "std", "min", "max"]
+    valid_names = ['std'] + list(STATISTIC_MAPPING.keys())
     valid_patterns = [r"^(p\d{1,2})(\.\d*)?$"]
 
     for statistic in statistics:

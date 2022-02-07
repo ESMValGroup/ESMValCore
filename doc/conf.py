@@ -425,7 +425,7 @@ intersphinx_mapping = {
     'numpy': ('https://numpy.org/doc/stable/', None),
     'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/latest/', None),
     'python': ('https://docs.python.org/3/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'scipy': ('https://scipy.github.io/devdocs/', None),
 }
 
 # -- Custom Document processing ----------------------------------------------
