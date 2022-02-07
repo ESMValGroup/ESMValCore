@@ -216,7 +216,7 @@ def _combine(cubes):
             coord.long_name = None
             coord.attributes = None
 
-        for auxcoord in cube.aux_coords:
+        for auxcoord in cube.coords(dimensions=()):
             if (auxcoord.var_name == 'p0' or auxcoord.var_name == 'ptop'):
                 cube.remove_coord(auxcoord)
 
