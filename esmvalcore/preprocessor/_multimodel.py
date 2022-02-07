@@ -216,9 +216,11 @@ def _combine(cubes):
             coord.long_name = None
             coord.attributes = None
 
-        for auxcoord in cube.coords(dimensions=()):
-            if (auxcoord.var_name == 'p0' or auxcoord.var_name == 'ptop'):
-                cube.remove_coord(auxcoord)
+        # Remove specific scalar coordinates which are not expected to be equal
+        scalar_coords_to_remove = ['p0', 'ptop']
+        for scalar_coord in cube.coords(dimensions=()):
+            if scalar_coord.var_name in scalar_coords_to_remove:
+                cube.remove_coord(scalar_coord)
 
     cubes = iris.cube.CubeList(cubes)
 
