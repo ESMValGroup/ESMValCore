@@ -190,14 +190,7 @@ def write_ncl_settings(settings, filename, mode='wt'):
         raise ValueError("Unable to map {} to an NCL type".format(type(value)))
 
     lines = []
-
-    # ignore some settings for NCL diagnostic
-    ignore_settings = ['profile_diagnostic', ]
-    for sett in ignore_settings:
-        settings_copy = dict(settings)
-        settings_copy['diag_script_info'].pop(sett, None)
-
-    for var_name, value in sorted(settings_copy.items()):
+    for var_name, value in sorted(settings.items()):
         if isinstance(value, (list, tuple)):
             # Create an NCL list that can span multiple files
             lines.append('if (.not. isdefined("{var_name}")) then\n'
@@ -411,14 +404,8 @@ class DiagnosticTask(BaseTask):
         run_dir = Path(self.settings['run_dir'])
         run_dir.mkdir(parents=True, exist_ok=True)
 
-        # ignore some settings for diagnostic
-        ignore_settings = ['profile_diagnostic', ]
-        for sett in ignore_settings:
-            settings_copy = dict(self.settings)
-            settings_copy.pop(sett, None)
-
         filename = run_dir / 'settings.yml'
-        filename.write_text(yaml.safe_dump(settings_copy))
+        filename.write_text(yaml.safe_dump(self.settings))
 
         # If running an NCL script:
         if Path(self.script).suffix.lower() == '.ncl':
