@@ -73,12 +73,17 @@ class Test(unittest.TestCase):
 class PreprocessorFile(mock.Mock):
     """Mocked PreprocessorFile."""
 
-    def __init__(self, cubes, filename, attributes, **kwargs):
+    def __init__(self, cubes, filename, attributes, settings=None, **kwargs):
         """Initialize with cubes."""
         super().__init__(spec=PreprocessorFileBase, **kwargs)
         self.cubes = cubes
         self.filename = filename
         self.attributes = attributes
-        self.settings = {}
+        if settings is None:
+            self.settings = {}
+        else:
+            self.settings = settings
         self.mock_ancestors = set()
         self.wasderivedfrom = mock.Mock(side_effect=self.mock_ancestors.add)
+
+    group = PreprocessorFileBase.group

@@ -754,11 +754,16 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
         common_attributes = _get_common_attributes(products)
 
         for statistic in settings.get('statistics'):
-            common_attributes[step] = _get_tag(step, identifier, statistic)
-            filename = get_multiproduct_filename(common_attributes,
+            statistic_attributes = dict(common_attributes)
+            statistic_attributes[step] = _get_tag(step, identifier, statistic)
+            statistic_attributes.setdefault('alias',
+                                            statistic_attributes[step])
+            statistic_attributes.setdefault('dataset',
+                                            statistic_attributes[step])
+            filename = get_multiproduct_filename(statistic_attributes,
                                                  preproc_dir)
-            common_attributes['filename'] = filename
-            statistic_product = PreprocessorFile(common_attributes,
+            statistic_attributes['filename'] = filename
+            statistic_product = PreprocessorFile(statistic_attributes,
                                                  downstream_settings)
             output_products.add(statistic_product)
             relevant_settings['output_products'][identifier][
