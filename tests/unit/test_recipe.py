@@ -434,16 +434,16 @@ def test_update_multiproduct_ensemble_statistics():
     cube = iris.cube.Cube(np.array([1]))
     products = [
         PreprocessorFile(cube, 'A',
-                         attributes={'dataset': 'a', **common_attributes},
+                         attributes=common_attributes,
                          settings=settings),
         PreprocessorFile(cube, 'B',
-                         attributes={'dataset': 'b', **common_attributes},
+                         attributes=common_attributes,
                          settings=settings),
         PreprocessorFile(cube, 'C',
-                         attributes={'dataset': 'c', **common_attributes},
+                         attributes=common_attributes,
                          settings=settings),
         PreprocessorFile(cube, 'D',
-                         attributes={'dataset': 'd', **common_attributes},
+                         attributes=common_attributes,
                          settings=settings),
     ]
     order = ('load', 'ensemble_statistics', 'save')
