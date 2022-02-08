@@ -34,7 +34,7 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
             pip install .[test]
-            pytest -n 2 -m "not installation and not sequential"
+            pytest -n 2 -m "not sequential"
             pytest -n 0 -m "sequential" --cov-append
       - save_cache:
           key: test-{{ .Branch }}
@@ -43,6 +43,8 @@ jobs:
             - ".pytest_cache"
       - store_test_results:
           path: test-reports/
+      - store_artifacts:
+          path: /tmp/pytest-of-root/pytest-0/
       - store_artifacts:
           path: test-reports/
       - run:
@@ -103,6 +105,8 @@ jobs:
           path: /logs
       - store_artifacts:
           path: test-reports/
+      - store_artifacts:
+          path: /tmp/pytest-of-root/pytest-0/
       - store_test_results:
           path: test-reports/
 
@@ -168,6 +172,8 @@ jobs:
           no_output_timeout: 30m
       - store_artifacts:
           path: /logs
+      - store_artifacts:
+          path: /tmp/pytest-of-root/pytest-0/
 
   test_installation_from_conda:
     # Test conda package installation
