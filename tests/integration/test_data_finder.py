@@ -8,8 +8,8 @@ import yaml
 
 import esmvalcore._config
 from esmvalcore._data_finder import (
-    dir_to_var,
     _find_input_files,
+    dir_to_var,
     get_input_filelist,
     get_output_file,
 )
