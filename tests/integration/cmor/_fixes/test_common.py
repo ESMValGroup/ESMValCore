@@ -156,9 +156,9 @@ def hybrid_height_coord_fix_metadata(nc_path, short_name, fix):
     air_pressure_coord = cube.coord('air_pressure')
     np.testing.assert_allclose(air_pressure_coord.points, PRESSURE_POINTS)
     np.testing.assert_allclose(air_pressure_coord.bounds, PRESSURE_BOUNDS)
-    assert air_pressure_coord.var_name == 'plev'
+    assert air_pressure_coord.var_name is None
     assert air_pressure_coord.standard_name == 'air_pressure'
-    assert air_pressure_coord.long_name == 'pressure'
+    assert air_pressure_coord.long_name is None
     assert air_pressure_coord.units == 'Pa'
 
 
