@@ -195,7 +195,8 @@ def write_ncl_settings(settings, filename, mode='wt'):
     ignore_settings = ['profile_diagnostic', ]
     for sett in ignore_settings:
         settings_copy = dict(settings)
-        settings_copy['diag_script_info'].pop(sett, None)
+        if 'diag_script_info' in settings_copy:
+            settings_copy['diag_script_info'].pop(sett, None)
 
     for var_name, value in sorted(settings_copy.items()):
         if isinstance(value, (list, tuple)):
