@@ -72,6 +72,7 @@ autodoc_mock_imports = [
     'cartopy',
     'cf_units',
     'psutil',
+    'nested_lookup'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -423,7 +424,7 @@ intersphinx_mapping = {
     'numpy': ('https://numpy.org/doc/stable/', None),
     'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/latest/', None),
     'python': ('https://docs.python.org/3/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'scipy': ('https://scipy.github.io/devdocs/', None),
 }
 
 # -- Custom Document processing ----------------------------------------------

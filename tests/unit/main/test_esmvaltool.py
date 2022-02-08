@@ -42,7 +42,7 @@ def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
         'diagnostics': set(),
         'offline': offline,
         'resume_from': [],
-        'skip-nonexistent': False,
+        'skip_nonexistent': False,
 
     })
 

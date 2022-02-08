@@ -1,10 +1,10 @@
-"""
-Provides testing capabilities for :mod:`esmvaltool` package.
-
-"""
+"""Provides testing capabilities for :mod:`esmvaltool` package."""
 import unittest
+from unittest import mock
 
 import numpy as np
+
+from esmvalcore.preprocessor import PreprocessorFile as PreprocessorFileBase
 
 
 def assert_array_equal(a, b):
@@ -15,10 +15,7 @@ def assert_array_equal(a, b):
 
 
 class Test(unittest.TestCase):
-    """
-    Provides esmvaltool specific testing functionality.
-
-    """
+    """Provides esmvaltool specific testing functionality."""
     def _remove_testcase_patches(self):
         """
         Helper method to remove per-testcase patches installed by
@@ -33,8 +30,7 @@ class Test(unittest.TestCase):
         self.testcase_patches.clear()
 
     def patch(self, *args, **kwargs):
-        """
-        Install a patch to be removed automatically after the current test.
+        """Install a patch to be removed automatically after the current test.
 
         The patch is created with :func:`unittest.mock.patch`.
 
@@ -49,7 +45,6 @@ class Test(unittest.TestCase):
         -------
             The substitute mock instance returned by
             :func:`unittest.patch.start`.
-
         """
         # Make the new patch and start it.
         patch = unittest.mock.patch(*args, **kwargs)
@@ -73,3 +68,17 @@ class Test(unittest.TestCase):
 
     def assert_array_equal(self, a, b):
         assert_array_equal(a, b)
+
+
+class PreprocessorFile(mock.Mock):
+    """Mocked PreprocessorFile."""
+
+    def __init__(self, cubes, filename, attributes, **kwargs):
+        """Initialize with cubes."""
+        super().__init__(spec=PreprocessorFileBase, **kwargs)
+        self.cubes = cubes
+        self.filename = filename
+        self.attributes = attributes
+        self.settings = {}
+        self.mock_ancestors = set()
+        self.wasderivedfrom = mock.Mock(side_effect=self.mock_ancestors.add)

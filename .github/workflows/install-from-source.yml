@@ -8,9 +8,6 @@
 #    in one single call; declaring the shell variable makes the action run each
 #    command separately (better for debugging);
 #  - can try multiple shells eg pwsh or cmd /C CALL {0} (but overkill for now!);
-# FIXME OSX/Python3.8: 3.8.5 available on OSX only from July 20, 2020
-# TODO: read the cron tasking documentation:
-# https://www.netiq.com/documentation/cloud-manager-2-5/ncm-reference/data/bexyssf.html
 
 name: Install from Source
 
@@ -35,7 +32,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:
@@ -45,20 +42,24 @@ jobs:
           activate-environment: esmvalcore
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
-          miniconda-version: "latest"
-          channels: conda-forge
+          miniforge-version: "latest"
+          miniforge-variant: Mambaforge
+          use-mamba: true
       - shell: bash -l {0}
         run: mkdir -p source_install_linux_artifacts_python_${{ matrix.python-version }}
-      - shell: bash -l {0}
-        run: conda --version 2>&1 | tee source_install_linux_artifacts_python_${{ matrix.python-version }}/conda_version.txt
-      - shell: bash -l {0}
-        run: python -V 2>&1 | tee source_install_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
-      - shell: bash -l {0}
+      - name: Record versions
+        shell: bash -l {0}
+        run: |
+          mamba --version 2>&1 | tee source_install_linux_artifacts_python_${{ matrix.python-version }}/conda_version.txt
+          python -V 2>&1 | tee source_install_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
+      - name: Install
+        shell: bash -l {0}
         run: pip install -e .[develop] 2>&1 | tee source_install_linux_artifacts_python_${{ matrix.python-version }}/install.txt
-      - shell: bash -l {0}
-        run: esmvaltool --help
-      - shell: bash -l {0}
-        run: esmvaltool version 2>&1 | tee source_install_linux_artifacts_python_${{ matrix.python-version }}/version.txt
+      - name: Verify installation
+        shell: bash -l {0}
+        run: |
+          esmvaltool --help
+          esmvaltool version 2>&1 | tee source_install_linux_artifacts_python_${{ matrix.python-version }}/version.txt
       - name: Upload artifacts
         if: ${{ always() }}  # upload artifacts even if fail
         uses: actions/upload-artifact@v2
@@ -70,7 +71,7 @@ jobs:
     runs-on: "macos-latest"
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
@@ -80,20 +81,24 @@ jobs:
           activate-environment: esmvalcore
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
-          miniconda-version: "latest"
-          channels: conda-forge
+          miniforge-version: "latest"
+          miniforge-variant: Mambaforge
+          use-mamba: true
       - shell: bash -l {0}
         run: mkdir -p source_install_osx_artifacts_python_${{ matrix.python-version }}
-      - shell: bash -l {0}
-        run: conda --version 2>&1 | tee source_install_osx_artifacts_python_${{ matrix.python-version }}/conda_version.txt
-      - shell: bash -l {0}
-        run: python -V 2>&1 | tee source_install_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
-      - shell: bash -l {0}
+      - name: Record versions
+        shell: bash -l {0}
+        run: |
+          mamba --version 2>&1 | tee source_install_osx_artifacts_python_${{ matrix.python-version }}/conda_version.txt
+          python -V 2>&1 | tee source_install_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
+      - name: Install
+        shell: bash -l {0}
         run: pip install -e .[develop] 2>&1 | tee source_install_osx_artifacts_python_${{ matrix.python-version }}/install.txt
-      - shell: bash -l {0}
-        run: esmvaltool --help
-      - shell: bash -l {0}
-        run: esmvaltool version 2>&1 | tee source_install_osx_artifacts_python_${{ matrix.python-version }}/version.txt
+      - name: Verify installation
+        shell: bash -l {0}
+        run: |
+          esmvaltool --help
+          esmvaltool version 2>&1 | tee source_install_osx_artifacts_python_${{ matrix.python-version }}/version.txt
       - name: Upload artifacts
         if: ${{ always() }}  # upload artifacts even if fail
         uses: actions/upload-artifact@v2

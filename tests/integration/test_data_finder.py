@@ -9,6 +9,7 @@ import yaml
 import esmvalcore._config
 from esmvalcore._data_finder import (
     dir_to_var,
+    _find_input_files,
     get_input_filelist,
     get_output_file,
 )
@@ -91,20 +92,27 @@ def test_get_input_filelist(root, cfg):
     # Find files
     rootpath = {cfg['variable']['project']: [root]}
     drs = {cfg['variable']['project']: cfg['drs']}
-    (input_filelist, dirnames,
-     filenames) = get_input_filelist(cfg['variable'], rootpath, drs)
-
-    # Test result
-    ref_files = [os.path.join(root, file) for file in cfg['found_files']]
-    if cfg['dirs'] is None:
-        ref_dirs = []
+    timerange = cfg['variable'].get('timerange')
+    if timerange and '*' in timerange:
+        (files, _, _) = _find_input_files(cfg['variable'], rootpath, drs)
+        ref_files = [
+            os.path.join(root, file) for file in cfg['found_files']]
+        # Test result
+        assert sorted(files) == sorted(ref_files)
     else:
-        ref_dirs = [os.path.join(root, dir) for dir in cfg['dirs']]
-    ref_patterns = cfg['file_patterns']
+        (input_filelist, dirnames,
+         filenames) = get_input_filelist(cfg['variable'], rootpath, drs)
+        # Test result
+        ref_files = [os.path.join(root, file) for file in cfg['found_files']]
+        if cfg['dirs'] is None:
+            ref_dirs = []
+        else:
+            ref_dirs = [os.path.join(root, dir) for dir in cfg['dirs']]
+        ref_patterns = cfg['file_patterns']
 
-    assert sorted(input_filelist) == sorted(ref_files)
-    assert sorted(dirnames) == sorted(ref_dirs)
-    assert sorted(filenames) == sorted(ref_patterns)
+        assert sorted(input_filelist) == sorted(ref_files)
+        assert sorted(dirnames) == sorted(ref_dirs)
+        assert sorted(filenames) == sorted(ref_patterns)
 
 
 @pytest.mark.parametrize('cfg', CONFIG['dir_to_var'])
