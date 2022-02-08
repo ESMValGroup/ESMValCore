@@ -9,7 +9,8 @@ from cf_units import Unit
 from iris.cube import Cube
 from numpy.testing import assert_array_equal
 
-from esmvalcore.preprocessor._other import clip
+from esmvalcore.preprocessor import PreprocessorFile
+from esmvalcore.preprocessor._other import _group_products, clip
 
 
 class TestOther(unittest.TestCase):
@@ -41,6 +42,27 @@ class TestOther(unittest.TestCase):
         # Maximum lower than minimum
         with self.assertRaises(ValueError):
             clip(cube, 10, 8)
+
+
+def test_group_products_string_list():
+    products = [
+        PreprocessorFile(
+            attributes={
+                'project': 'A',
+                'dataset': 'B',
+                'filename': 'A_B.nc'},
+            settings={}),
+        PreprocessorFile(
+            attributes={
+                'project': 'A',
+                'dataset': 'C',
+                'filename': 'A_C.nc'},
+            settings={})
+    ]
+    grouped_by_string = _group_products(products, 'project')
+    grouped_by_list = _group_products(products, ['project'])
+
+    assert grouped_by_list == grouped_by_string
 
 
 if __name__ == '__main__':

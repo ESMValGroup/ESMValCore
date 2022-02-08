@@ -1,5 +1,4 @@
 """Data finder module for the ESMValTool."""
-import copy
 import glob
 import logging
 import os
@@ -484,17 +483,33 @@ def get_output_file(variable, preproc_dir):
     return outfile
 
 
-def get_statistic_output_file(variable, preproc_dir):
-    """Get multi model statistic filename depending on settings."""
-    updated_var = copy.deepcopy(variable)
-    updated_var['timerange'] = updated_var['timerange'].replace('/', '-')
-    template = os.path.join(
-        preproc_dir,
-        '{diagnostic}',
-        '{variable_group}',
-        '{dataset}_{mip}_{short_name}_{timerange}.nc',
-    )
+def get_multiproduct_filename(attributes, preproc_dir):
+    """Get ensemble/multi-model filename depending on settings."""
+    relevant_keys = [
+        'project', 'dataset', 'exp', 'ensemble_statistics',
+        'multi_model_statistics', 'mip', 'short_name'
+    ]
 
-    outfile = template.format(**updated_var)
+    filename_segments = []
+    for key in relevant_keys:
+        if key in attributes:
+            attribute = attributes[key]
+            if isinstance(attribute, (list, tuple)):
+                attribute = '-'.join(attribute)
+            filename_segments.extend(attribute.split('_'))
+
+    # Remove duplicate segments:
+    filename_segments = list(dict.fromkeys(filename_segments))
+
+    # Add period and extension
+    filename_segments.append(
+        f"{attributes['timerange'].replace('/', '-')}.nc")
+
+    outfile = os.path.join(
+        preproc_dir,
+        attributes['diagnostic'],
+        attributes['variable_group'],
+        '_'.join(filename_segments),
+    )
 
     return outfile
