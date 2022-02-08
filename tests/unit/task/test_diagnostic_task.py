@@ -25,6 +25,18 @@ def test_write_ncl_settings(tmp_path):
         assert 'var_name = "tas"\n' in lines
         assert 'if (isvar("profile_diagnostic")) then\n' not in lines
 
+    settings = {
+        'run_dir': str(tmp_path / 'run_dir'),
+        'profile_diagnostic': True,
+        'var_name': 'tas',
+    }
+    file_name = tmp_path / "settings"
+    write_ncl_settings(settings, file_name)
+    with open(file_name, 'r') as file:
+        lines = file.readlines()
+        assert 'var_name = "tas"\n' in lines
+        assert 'profile_diagnostic' not in lines
+
 
 @pytest.mark.parametrize("ext", ['.jl', '.py', '.ncl', '.R'])
 def test_initialize_env(ext, tmp_path, monkeypatch):
