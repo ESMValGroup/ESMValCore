@@ -174,7 +174,7 @@ def get_start_end_year(filename):
         for cube in cubes:
             logger.debug(cube)
             try:
-                time = cube.coord("time")
+                time = cube.coord('time')
             except iris.exceptions.CoordinateNotFoundError:
                 continue
             start_year = time.cell(0).point.year
@@ -182,8 +182,8 @@ def get_start_end_year(filename):
             break
 
     if start_year is None or end_year is None:
-        raise ValueError(f"File {filename} dates do not match a recognized"
-                         "pattern and time can not be read from the file")
+        raise ValueError(f'File {filename} dates do not match a recognized'
+                         f'pattern and time can not be read from the file')
 
     return int(start_year), int(end_year)
 
@@ -278,7 +278,7 @@ def select_files(filenames, timerange):
 def _replace_tags(paths, variable):
     """Replace tags in the config-developer's file with actual values."""
     if isinstance(paths, str):
-        paths = set((paths.strip('/'),))
+        paths = set((paths.strip('/'), ))
     else:
         paths = set(path.strip('/') for path in paths)
     tlist = set()
@@ -287,10 +287,9 @@ def _replace_tags(paths, variable):
     if 'sub_experiment' in variable:
         new_paths = []
         for path in paths:
-            new_paths.extend((
-                re.sub(r'(\b{ensemble}\b)', r'{sub_experiment}-\1', path),
-                re.sub(r'({ensemble})', r'{sub_experiment}-\1', path)
-            ))
+            new_paths.extend(
+                (re.sub(r'(\b{ensemble}\b)', r'{sub_experiment}-\1', path),
+                 re.sub(r'({ensemble})', r'{sub_experiment}-\1', path)))
             tlist.add('sub_experiment')
         paths = new_paths
 
@@ -480,7 +479,7 @@ def _find_input_dirs(variable, rootpath, drs):
 
 def _get_filenames_glob(variable, drs):
     """Return patterns that can be used to look for input files."""
-    path_template = _select_drs("input_file", drs, variable["project"])
+    path_template = _select_drs('input_file', drs, variable['project'])
     filenames_glob = _replace_tags(path_template, variable)
     return filenames_glob
 
