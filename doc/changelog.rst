@@ -34,6 +34,7 @@ Bug fixes
 -  Fix provenance file permissions (`#1468 <https://github.com/ESMValGroup/ESMValCore/pull/1468>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Fixed usage of `statistics=std_dev` option in multi-model statistics preprocessors (`#1478 <https://github.com/ESMValGroup/ESMValCore/pull/1478>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Removed scalar coordinates `p0` and `ptop` prior to merge in `multi_model_statistics` (`#1471 <https://github.com/ESMValGroup/ESMValCore/pull/1471>`__) `Axel Lauer <https://github.com/axel-lauer>`__
+-  Added `dataset` and `alias` attributes to `multi_model_statistics` output (`#1483 <https://github.com/ESMValGroup/ESMValCore/pull/1483>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
 Deprecations
 ~~~~~~~~~~~~
