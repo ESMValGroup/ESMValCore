@@ -59,13 +59,13 @@ def check(result_file):
 SCRIPTS = {
     'diagnostic.py':
     dedent("""
-        import os
+        import yaml
+        import shutil
 
-        def main():
-            os.system('cp settings.yml ../../../../../result.yml')
+        with open("settings.yml", 'r') as file:
+            settings = yaml.safe_load(file)
 
-        if __name__ == '__main__':
-            main()
+        shutil.copy("settings.yml", settings["setting_name"])
         """),
     'diagnostic.ncl':
     dedent("""
