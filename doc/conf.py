@@ -66,13 +66,14 @@ autodoc_default_options = {
 }
 
 autodoc_mock_imports = [
-    'iris',
-    'stratify',
-    'ESMF',
     'cartopy',
     'cf_units',
+    'ESMF',
+    'geopy',
+    'iris',
+    'nested_lookup',
     'psutil',
-    'nested_lookup'
+    'stratify',
 ]
 
 # Add any paths that contain templates here, relative to this directory.

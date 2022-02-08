@@ -375,6 +375,8 @@ The meaning of 'very close' can be changed by providing the parameters:
     By default, `atol` will be set to 10^-7 times the mean value of
     of the available levels.
 
+.. _Vertical interpolation schemes:
+
 Schemes for vertical interpolation and extrapolation
 ----------------------------------------------------
 
@@ -1590,6 +1592,8 @@ Parameters:
 
 See also :func:`esmvalcore.preprocessor.extract_point`.
 
+
+.. _extract_location:
 
 ``extract_location``
 --------------------
