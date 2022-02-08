@@ -84,12 +84,18 @@ Automatic testing
 -  Switch to Mambaforge in Github Actions tests (`#1438 <https://github.com/ESMValGroup/ESMValCore/pull/1438>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Update Linux condalock file (various pull requests) github-actions[bot]
 
+Installation
+~~~~~~~~~~~~
+
+-  Move `nested-lookup` dependency to `environment.yml` to be installed from conda-forge instead of PyPi (`#1481 <https://github.com/ESMValGroup/ESMValCore/pull/1481>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+
 Improvements
 ~~~~~~~~~~~~
 
 -  Allow to load all files, first X years or last X years in an experiment (`#1133 <https://github.com/ESMValGroup/ESMValCore/pull/1133>`__) `sloosvel <https://github.com/sloosvel>`__
 -  Filter tasks earlier (`#1264 <https://github.com/ESMValGroup/ESMValCore/pull/1264>`__) `Javier Vegas-Regidor <https://github.com/jvegreg>`__
 -  Added earlier validation for command line arguments (`#1435 <https://github.com/ESMValGroup/ESMValCore/pull/1435>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Remove `profile_diagnostic` from diagnostic settings and increase test coverage of `_task.py` (`#1404 <https://github.com/ESMValGroup/ESMValCore/pull/1404>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 
 
 .. _changelog-v2-4-0:
