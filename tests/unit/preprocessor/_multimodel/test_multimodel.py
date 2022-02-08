@@ -8,6 +8,7 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris.coords import AuxCoord
 from iris.cube import Cube
 
 import esmvalcore.preprocessor._multimodel as mm
@@ -369,6 +370,25 @@ def test_combine_inconsistent_var_names_fail():
 
     with pytest.raises(iris.exceptions.MergeError):
         _ = mm._combine(cubes)
+
+
+@pytest.mark.parametrize('scalar_coord', ['p0', 'ptop'])
+def test_combine_with_scalar_coords_to_remove(scalar_coord):
+    """Test _combine with scalar coordinates that should be removed."""
+    num_cubes = 5
+    cubes = []
+
+    for num in range(num_cubes):
+        cube = generate_cube_from_dates('monthly')
+        cubes.append(cube)
+
+    scalar_coord_0 = AuxCoord(0.0, var_name=scalar_coord)
+    scalar_coord_1 = AuxCoord(1.0, var_name=scalar_coord)
+    cubes[0].add_aux_coord(scalar_coord_0, ())
+    cubes[1].add_aux_coord(scalar_coord_1, ())
+
+    merged_cube = mm._combine(cubes)
+    assert merged_cube.shape == (5, 3)
 
 
 @pytest.mark.parametrize('span', SPAN_OPTIONS)

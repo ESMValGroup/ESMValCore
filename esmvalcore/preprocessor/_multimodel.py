@@ -225,6 +225,12 @@ def _combine(cubes):
             coord.long_name = None
             coord.attributes = None
 
+        # Remove specific scalar coordinates which are not expected to be equal
+        scalar_coords_to_remove = ['p0', 'ptop']
+        for scalar_coord in cube.coords(dimensions=()):
+            if scalar_coord.var_name in scalar_coords_to_remove:
+                cube.remove_coord(scalar_coord)
+
     cubes = iris.cube.CubeList(cubes)
 
     merged_cube = cubes.merge_cube()
