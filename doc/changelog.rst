@@ -33,6 +33,7 @@ Bug fixes
 -  Add new `JULIA_LOAD_PATH` to diagnostic task test (`#1444 <https://github.com/ESMValGroup/ESMValCore/pull/1444>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Fix provenance file permissions (`#1468 <https://github.com/ESMValGroup/ESMValCore/pull/1468>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Fixed usage of `statistics=std_dev` option in multi-model statistics preprocessors (`#1478 <https://github.com/ESMValGroup/ESMValCore/pull/1478>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Removed scalar coordinates `p0` and `ptop` prior to merge in `multi_model_statistics` (`#1471 <https://github.com/ESMValGroup/ESMValCore/pull/1471>`__) `Axel Lauer <https://github.com/axel-lauer>`__
 
 Deprecations
 ~~~~~~~~~~~~
@@ -54,6 +55,11 @@ Documentation
 -  Updated documentation on how to deprecate features (`#1426 <https://github.com/ESMValGroup/ESMValCore/pull/1426>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Added reference hook to conda lock in documentation install section (`#1473 <https://github.com/ESMValGroup/ESMValCore/pull/1473>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Increased ESMValCore version to 2.5.0rc1 (`#1477 <https://github.com/ESMValGroup/ESMValCore/pull/1477>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+Fixes for datasets
+~~~~~~~~~~~~~~~~~~
+
+-  Added fix for AIRS v2.1 (obs4mips) (`#1472 <https://github.com/ESMValGroup/ESMValCore/pull/1472>`__) `Axel Lauer <https://github.com/axel-lauer>`__
 
 Preprocessor
 ~~~~~~~~~~~~
