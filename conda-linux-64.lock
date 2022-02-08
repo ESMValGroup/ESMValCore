@@ -85,7 +85,7 @@ https://conda.anaconda.org/conda-forge/linux-64/xerces-c-3.2.3-h8ce2273_4.tar.bz
 https://conda.anaconda.org/conda-forge/linux-64/xorg-libsm-1.2.3-hd9c2040_1000.tar.bz2#9e856f78d5c80d5a78f61e72d1d473a3
 https://conda.anaconda.org/conda-forge/linux-64/zlib-1.2.11-h36c2ea0_1013.tar.bz2#cf7190238072a41e9579e4476a6a60b8
 https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.2-ha95c52a_0.tar.bz2#5222b231b1ef49a7f60d40b363469b70
-https://conda.anaconda.org/conda-forge/linux-64/boost-cpp-1.74.0-h359cf19_5.tar.bz2#5778a2e0609975fac9b24ed637180d28
+https://conda.anaconda.org/conda-forge/linux-64/boost-cpp-1.74.0-h6cacc03_7.tar.bz2#b7c1f8b1937c8572d7dce988a9df1a64
 https://conda.anaconda.org/conda-forge/linux-64/brotli-bin-1.0.9-h7f98852_6.tar.bz2#9e94bf16f14c78a36561d5019f490d22
 https://conda.anaconda.org/conda-forge/linux-64/gcc-9.4.0-h192d537_4.tar.bz2#faed216b99e622e5b7eeded66b9e3de3
 https://conda.anaconda.org/conda-forge/linux-64/gcc_linux-64-9.4.0-h391b98a_4.tar.bz2#63f497ed4daef2058f93dc01d7954d74
@@ -150,10 +150,10 @@ https://conda.anaconda.org/conda-forge/linux-64/hdf5-1.12.1-mpi_mpich_ha8a74db_3
 https://conda.anaconda.org/conda-forge/linux-64/kiwisolver-1.3.2-py310h91b1402_1.tar.bz2#ff17724e01eba0ea1b145eba7479fe52
 https://conda.anaconda.org/conda-forge/linux-64/markupsafe-2.0.1-py310h6acc77f_1.tar.bz2#bda6023ee64f722ad1d639fef9f497f9
 https://conda.anaconda.org/conda-forge/linux-64/mpi4py-3.1.3-py310h853ac07_0.tar.bz2#3b7746d69e3fbccbc9dfc74e043f9e69
-https://conda.anaconda.org/conda-forge/linux-64/numpy-1.22.1-py310h454958d_0.tar.bz2#190384713da8e060989eddc8550671a3
+https://conda.anaconda.org/conda-forge/linux-64/numpy-1.22.2-py310h454958d_0.tar.bz2#0045ac0249229a12df7f6aa7588513d0
 https://conda.anaconda.org/conda-forge/noarch/packaging-21.3-pyhd8ed1ab_0.tar.bz2#71f1ab2de48613876becddd496371c85
 https://conda.anaconda.org/conda-forge/noarch/partd-1.2.0-pyhd8ed1ab_0.tar.bz2#0c32f563d7f22e3a34c95cad8cc95651
-https://conda.anaconda.org/conda-forge/linux-64/pillow-9.0.0-py310h2f95282_0.tar.bz2#80bf078145c4a358077a7891cd2d9dff
+https://conda.anaconda.org/conda-forge/linux-64/pillow-9.0.1-py310h2f95282_0.tar.bz2#9a579714dbbc6ef146927e8ff5b28972
 https://conda.anaconda.org/conda-forge/linux-64/postgresql-14.1-hce44dc1_1.tar.bz2#49aa0b45d2abbd41502e5a73376f57ab
 https://conda.anaconda.org/conda-forge/linux-64/proj-8.2.1-h277dcde_0.tar.bz2#f2ceb1be6565c35e2db0ac948754751d
 https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.8.2-pyhd8ed1ab_0.tar.bz2#dd999d1cc9f79e67dbb855c8924c7984
@@ -179,7 +179,7 @@ https://conda.anaconda.org/conda-forge/noarch/pip-22.0.3-pyhd8ed1ab_0.tar.bz2#45
 https://conda.anaconda.org/conda-forge/linux-64/poppler-21.11.0-ha39eefc_0.tar.bz2#e8fa8792970ec9278e9ae7e4d0ff2841
 https://conda.anaconda.org/conda-forge/linux-64/pyproj-3.3.0-py310h9e0d750_1.tar.bz2#8505bfe1a312460e904bcebf082dbd3f
 https://conda.anaconda.org/conda-forge/linux-64/python-stratify-0.2.post0-py310h96516ba_1.tar.bz2#1a4f907575eceb4c7b2b667c28dd2a5c
-https://conda.anaconda.org/conda-forge/linux-64/scipy-1.7.3-py310hea5193d_0.tar.bz2#9cbdb267370260306b57a63449f05ecf
+https://conda.anaconda.org/conda-forge/linux-64/scipy-1.8.0-py310hea5193d_0.tar.bz2#7ddca9e5318955ddce85593547ff16b3
 https://conda.anaconda.org/conda-forge/linux-64/shapely-1.8.0-py310h1b8dd88_5.tar.bz2#a4182f61789bb387a933bee988bf9458
 https://conda.anaconda.org/conda-forge/linux-64/tiledb-2.6.2-hf3d3071_1.tar.bz2#a047c44b60dd862f25f179c8b6a2c8fa
 https://conda.anaconda.org/conda-forge/linux-64/cf-units-3.0.1-py310h96516ba_2.tar.bz2#595f4a5a69f91cd0f72e75417c2eeedb
