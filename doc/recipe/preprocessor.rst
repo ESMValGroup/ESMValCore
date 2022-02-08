@@ -15,6 +15,7 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Land/Sea/Ice masking`
 * :ref:`Horizontal regridding`
 * :ref:`Masking of missing values`
+* :ref:`Ensemble statistics`
 * :ref:`Multi-model statistics`
 * :ref:`Time operations`
 * :ref:`Area operations`
@@ -864,6 +865,65 @@ See also :func:`esmvalcore.preprocessor.regrid`
    for resolutions of ``< 0.5`` degrees the regridding becomes very slow and
    will use a lot of memory.
 
+.. _ensemble statistics:
+
+Ensemble statistics
+===================
+For certain use cases it may be desirable to compute ensemble statistics. For
+example to prevent models with many ensemble members getting excessive weight in
+the multi-model statistics functions.
+
+Theoretically, ensemble statistics are a special case (grouped) multi-model
+statistics. This grouping is performed taking into account the dataset tags
+`project`, `dataset`, `experiment`, and (if present) `sub_experiment`.
+However, they should typically be computed earlier in the workflow.
+Moreover, because multiple ensemble members of the same model are typically more
+consistent/homogeneous than datasets from different models, the implementation
+is more straigtforward and can benefit from lazy evaluation and more efficient
+computation.
+
+The preprocessor takes a list of statistics as input:
+
+.. code-block:: yaml
+
+    preprocessors:
+      example_preprocessor:
+        ensemble_statistics:
+          statistics: [mean, median]
+
+This preprocessor function exposes the iris analysis package, and works with all
+(capitalized) statistics from the :mod:`iris.analysis` package
+that can be executed without additional arguments (e.g. percentiles are not
+supported because it requires additional keywords: percentile.).
+
+Note that ``ensemble_statistics`` will not return the single model and ensemble files,
+only the requested ensemble statistics results.
+
+In case of wanting to save both individual ensemble members as well as the statistic results,
+the preprocessor chains could be defined as:
+
+.. code-block:: yaml
+
+    preprocessors:
+      everything_else: &everything_else
+        area_statistics: ...
+        regrid_time: ...
+      multimodel:
+        <<: *everything_else
+        ensemble_statistics:
+
+    variables:
+      tas_datasets:
+        short_name: tas
+        preprocessor: everything_else
+        ...
+      tas_multimodel:
+        short_name: tas
+        preprocessor: multimodel
+        ...
+
+
+See also :func:`esmvalcore.preprocessor.ensemble_statistics`.
 
 .. _multi-model statistics:
 
@@ -876,7 +936,7 @@ observational data, these biases have a significantly lower statistical impact
 when using a multi-model ensemble. ESMValTool has the capability of computing a
 number of multi-model statistical measures: using the preprocessor module
 ``multi_model_statistics`` will enable the user to ask for either a multi-model
-``mean``, ``median``, ``max``, ``min``, ``std``, and / or ``pXX.YY`` with a set
+``mean``, ``median``, ``max``, ``min``, ``std_dev``, and / or ``pXX.YY`` with a set
 of argument parameters passed to ``multi_model_statistics``. Percentiles can be
 specified like ``p1.5`` or ``p95``. The decimal point will be replaced by a dash
 in the output file.
@@ -893,32 +953,78 @@ across overlapping times only (``span: overlap``) or across the full time span
 of the combined models (``span: full``). The preprocessor sets a common time
 coordinate on all datasets. As the number of days in a year may vary between
 calendars, (sub-)daily data with different calendars are not supported.
+The preprocessor saves both the input single model files as well as the multi-model
+results. In case you do not want to keep the single model files, set the
+parameter ``keep_input_datasets`` to ``false`` (default value is ``true``).
+
+.. code-block:: yaml
+
+    preprocessors:
+      multi_model_save_input:
+        multi_model_statistics:
+          span: overlap
+          statistics: [mean, median]
+          exclude: [NCEP]
+      multi_model_without_saving_input:
+        multi_model_statistics:
+          span: overlap
+          statistics: [mean, median]
+          exclude: [NCEP]
+          keep_input_datasets: false
 
 Input datasets may have different time coordinates. The multi-model statistics
 preprocessor sets a common time coordinate on all datasets. As the number of
 days in a year may vary between calendars, (sub-)daily data are not supported.
 
+Multi-model statistics also supports a ``groupby`` argument. You can group by
+any dataset key (``project``, ``experiment``, etc.) or a combination of keys in a list. You can
+also add an arbitrary tag to a dataset definition and then group by that tag. When
+using this preprocessor in conjunction with `ensemble statistics`_ preprocessor, you
+can group by ``ensemble_statistics`` as well. For example:
+
 .. code-block:: yaml
 
+    datasets:
+      - {dataset: CanESM2, exp: historical, ensemble: "r(1:2)i1p1"}
+      - {dataset: CCSM4, exp: historical, ensemble: "r(1:2)i1p1"}
+
     preprocessors:
-      multi_model_preprocessor:
+      example_preprocessor:
+        ensemble_statistics:
+          statistics: [median, mean]
         multi_model_statistics:
           span: overlap
-          statistics: [mean, median]
+          statistics: [min, max]
+          groupby: [ensemble_statistics]
           exclude: [NCEP]
 
-see also :func:`esmvalcore.preprocessor.multi_model_statistics`.
+This will first compute ensemble mean and median, and then compute the multi-model
+min and max separately for the ensemble means and medians. Note that this combination
+will not save the individual ensemble members, only the ensemble and multimodel statistics results.
 
-When calling the module inside diagnostic scripts, the input must be given
-as a list of cubes. The output will be saved in a dictionary where each
-entry contains the resulting cube with the requested statistic operations.
+When grouping by a tag not defined in all datasets, the datasets missing the tag will
+be grouped together. In the example below, datasets `UKESM` and `ERA5` would belong to the same
+group, while the other datasets would belong to either ``group1`` or ``group2``
 
-.. code-block::
+.. code-block:: yaml
 
-    from esmvalcore.preprocessor import multi_model_statistics
-    statistics = multi_model_statistics([cube1,...,cubeN], 'overlap', ['mean', 'median'])
-    mean_cube = statistics['mean']
-    median_cube = statistics['median']
+    datasets:
+      - {dataset: CanESM2, exp: historical, ensemble: "r(1:2)i1p1", tag: 'group1'}
+      - {dataset: CanESM5, exp: historical, ensemble: "r(1:2)i1p1", tag: 'group2'}
+      - {dataset: CCSM4, exp: historical, ensemble: "r(1:2)i1p1", tag: 'group2'}
+      - {dataset: UKESM, exp: historical, ensemble: "r(1:2)i1p1"}
+      - {dataset: ERA5}
+
+    preprocessors:
+      example_preprocessor:
+        multi_model_statistics:
+          span: overlap
+          statistics: [min, max]
+          groupby: [tag]
+
+Note that those datasets can be excluded if listed in the ``exclude`` option.
+
+See also :func:`esmvalcore.preprocessor.multi_model_statistics`.
 
 .. note::
 
@@ -1481,7 +1587,7 @@ Parameters:
     be an array of floating point values.
   * ``scheme``: interpolation scheme: either ``'linear'`` or
     ``'nearest'``. There is no default.
-    
+
 See also :func:`esmvalcore.preprocessor.extract_point`.
 
 

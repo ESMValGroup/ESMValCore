@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 from copy import deepcopy
 from pathlib import Path
 from pprint import pformat
@@ -238,7 +239,6 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
 
 @pytest.fixture
 def patched_tas_derivation(monkeypatch):
-
     def get_required(short_name, _):
         if short_name != 'tas':
             assert False
@@ -1840,6 +1840,242 @@ def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
     assert str(exc.value) == INITIALIZATION_ERROR_MSG
     assert 'extract_shape' in exc.value.failed_tasks[0].message
     assert invalid_arg in exc.value.failed_tasks[0].message
+
+
+def _test_output_product_consistency(products, preprocessor, statistics):
+    product_out = defaultdict(list)
+
+    for i, product in enumerate(products):
+        settings = product.settings.get(preprocessor)
+        if settings:
+            output_products = settings['output_products']
+
+            for identifier, statistic_out in output_products.items():
+                for statistic, preproc_file in statistic_out.items():
+                    product_out[identifier, statistic].append(preproc_file)
+
+    # Make sure that output products are consistent
+    for (identifier, statistic), value in product_out.items():
+        assert statistic in statistics
+        assert len(set(value)) == 1, 'Output products are not equal'
+
+    return product_out
+
+
+def test_ensemble_statistics(tmp_path, patched_datafinder, config_user):
+    statistics = ['mean', 'max']
+    diagnostic = 'diagnostic_name'
+    variable = 'pr'
+    preprocessor = 'ensemble_statistics'
+
+    content = dedent(f"""
+         preprocessors:
+           default: &default
+             custom_order: true
+             area_statistics:
+               operator: mean
+             {preprocessor}:
+               statistics: {statistics}
+
+         diagnostics:
+           {diagnostic}:
+             variables:
+               {variable}:
+                 project: CMIP5
+                 mip: Amon
+                 start_year: 2000
+                 end_year: 2002
+                 preprocessor: default
+                 additional_datasets:
+                   - {{dataset: CanESM2, exp: [historical, rcp45],
+                     ensemble: "r(1:2)i1p1"}}
+                   - {{dataset: CCSM4, exp: [historical, rcp45],
+                     ensemble: "r(1:2)i1p1"}}
+             scripts: null
+    """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
+    datasets = set([var['dataset'] for var in variable])
+    task = next(iter(recipe.tasks))
+
+    products = task.products
+    product_out = _test_output_product_consistency(products, preprocessor,
+                                                   statistics)
+
+    assert len(product_out) == len(datasets) * len(statistics)
+
+    task._initialize_product_provenance()
+    assert next(iter(products)).provenance is not None
+
+
+def test_multi_model_statistics(tmp_path, patched_datafinder, config_user):
+    statistics = ['mean', 'max']
+    diagnostic = 'diagnostic_name'
+    variable = 'pr'
+    preprocessor = 'multi_model_statistics'
+
+    content = dedent(f"""
+        preprocessors:
+          default: &default
+            custom_order: true
+            area_statistics:
+              operator: mean
+            {preprocessor}:
+              span: overlap
+              statistics: {statistics}
+
+        diagnostics:
+          {diagnostic}:
+            variables:
+              {variable}:
+                project: CMIP5
+                mip: Amon
+                start_year: 2000
+                end_year: 2002
+                preprocessor: default
+                additional_datasets:
+                  - {{dataset: CanESM2, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1"}}
+                  - {{dataset: CCSM4, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1"}}
+            scripts: null
+    """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
+    task = next(iter(recipe.tasks))
+
+    products = task.products
+    product_out = _test_output_product_consistency(products, preprocessor,
+                                                   statistics)
+
+    assert len(product_out) == len(statistics)
+
+    task._initialize_product_provenance()
+    assert next(iter(products)).provenance is not None
+
+
+def test_multi_model_statistics_exclude(tmp_path,
+                                        patched_datafinder,
+                                        config_user):
+    statistics = ['mean', 'max']
+    diagnostic = 'diagnostic_name'
+    variable = 'pr'
+    preprocessor = 'multi_model_statistics'
+
+    content = dedent(f"""
+        preprocessors:
+          default: &default
+            custom_order: true
+            area_statistics:
+              operator: mean
+            {preprocessor}:
+              span: overlap
+              statistics: {statistics}
+              groupby: ['project']
+              exclude: ['TEST']
+
+        diagnostics:
+          {diagnostic}:
+            variables:
+              {variable}:
+                project: CMIP5
+                mip: Amon
+                start_year: 2000
+                end_year: 2002
+                preprocessor: default
+                additional_datasets:
+                  - {{dataset: CanESM2, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1"}}
+                  - {{dataset: CCSM4, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1"}}
+                  - {{dataset: TEST, project: OBS, type: reanaly, version: 1,
+                     tier: 1}}
+            scripts: null
+    """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
+    task = next(iter(recipe.tasks))
+
+    products = task.products
+    product_out = _test_output_product_consistency(products, preprocessor,
+                                                   statistics)
+
+    assert len(product_out) == len(statistics)
+    assert 'OBS' not in product_out
+    for id, prods in product_out:
+        assert id != 'OBS'
+        assert id == 'CMIP5'
+    task._initialize_product_provenance()
+    assert next(iter(products)).provenance is not None
+
+
+def test_groupby_combined_statistics(tmp_path, patched_datafinder,
+                                     config_user):
+    diagnostic = 'diagnostic_name'
+    variable = 'pr'
+
+    mm_statistics = ['mean', 'max']
+    mm_preprocessor = 'multi_model_statistics'
+    ens_statistics = ['mean', 'median']
+    ens_preprocessor = 'ensemble_statistics'
+
+    groupby = [ens_preprocessor, 'tag']
+
+    content = dedent(f"""
+        preprocessors:
+          default: &default
+            custom_order: true
+            area_statistics:
+              operator: mean
+            {ens_preprocessor}:
+              span: 'overlap'
+              statistics: {ens_statistics}
+            {mm_preprocessor}:
+              span: overlap
+              groupby: {groupby}
+              statistics: {mm_statistics}
+
+        diagnostics:
+          {diagnostic}:
+            variables:
+              {variable}:
+                project: CMIP5
+                mip: Amon
+                start_year: 2000
+                end_year: 2002
+                preprocessor: default
+                additional_datasets:
+                  - {{dataset: CanESM2, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1", tag: group1}}
+                  - {{dataset: CCSM4, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1", tag: group2}}
+            scripts: null
+    """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
+    datasets = set([var['dataset'] for var in variable])
+
+    products = next(iter(recipe.tasks)).products
+
+    ens_products = _test_output_product_consistency(
+        products,
+        ens_preprocessor,
+        ens_statistics,
+    )
+
+    mm_products = _test_output_product_consistency(
+        products,
+        mm_preprocessor,
+        mm_statistics,
+    )
+
+    assert len(ens_products) == len(datasets) * len(ens_statistics)
+    assert len(
+        mm_products) == len(mm_statistics) * len(ens_statistics) * len(groupby)
 
 
 def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):

@@ -220,16 +220,89 @@ def extract_shape(settings):
                 "{}".format(', '.join(f"'{k}'".lower() for k in valid[key])))
 
 
-def valid_multimodel_statistic(statistic):
-    """Check that `statistic` is a valid argument for multimodel stats."""
+def _verify_statistics(statistics, step):
+    """Raise error if multi-model statistics cannot be verified."""
     valid_names = ['std'] + list(STATISTIC_MAPPING.keys())
     valid_patterns = [r"^(p\d{1,2})(\.\d*)?$"]
-    if not (statistic in valid_names
-            or re.match(r'|'.join(valid_patterns), statistic)):
+
+    for statistic in statistics:
+        if not (statistic in valid_names
+                or re.match(r'|'.join(valid_patterns), statistic)):
+            raise RecipeError(
+                "Invalid value encountered for `statistic` in preprocessor "
+                f"{step}. Valid values are {valid_names} "
+                f"or patterns matching {valid_patterns}. Got '{statistic}'.")
+
+
+def _verify_span_value(span):
+    """Raise error if span argument cannot be verified."""
+    valid_names = ('overlap', 'full')
+    if span not in valid_names:
         raise RecipeError(
-            "Invalid value encountered for `statistic` in preprocessor "
-            f"`multi_model_statistics`. Valid values are {valid_names} "
-            f"or patterns matching {valid_patterns}. Got '{statistic}.'")
+            "Invalid value encountered for `span` in preprocessor "
+            f"`multi_model_statistics`. Valid values are {valid_names}."
+            f"Got {span}.")
+
+
+def _verify_groupby(groupby):
+    """Raise error if groupby arguments cannot be verified."""
+    if not isinstance(groupby, list):
+        raise RecipeError(
+            "Invalid value encountered for `groupby` in preprocessor "
+            "`multi_model_statistics`.`groupby` must be defined as a "
+            f"list. Got {groupby}.")
+
+
+def _verify_keep_input_datasets(keep_input_datasets):
+    if not isinstance(keep_input_datasets, bool):
+        raise RecipeError(
+            "Invalid value encountered for `keep_input_datasets`."
+            f"Must be defined as a boolean. Got {keep_input_datasets}."
+        )
+
+
+def _verify_arguments(given, expected):
+    """Raise error if arguments cannot be verified."""
+    for key in given:
+        if key not in expected:
+            raise RecipeError(
+                f"Unexpected keyword argument encountered: {key}. Valid "
+                f"keywords are: {expected}.")
+
+
+def multimodel_statistics_preproc(settings):
+    """Check that the multi-model settings are valid."""
+    valid_keys = ['span', 'groupby', 'statistics', 'keep_input_datasets']
+    _verify_arguments(settings.keys(), valid_keys)
+
+    span = settings.get('span', None)  # optional, default: overlap
+    if span:
+        _verify_span_value(span)
+
+    groupby = settings.get('groupby', None)  # optional, default: None
+    if groupby:
+        _verify_groupby(groupby)
+
+    statistics = settings.get('statistics', None)  # required
+    if statistics:
+        _verify_statistics(statistics, 'multi_model_statistics')
+
+    keep_input_datasets = settings.get('keep_input_datasets', True)
+    _verify_keep_input_datasets(keep_input_datasets)
+
+
+def ensemble_statistics_preproc(settings):
+    """Check that the ensemble settings are valid."""
+    valid_keys = ['statistics', 'span']
+    _verify_arguments(settings.keys(), valid_keys)
+
+    span = settings.get('span', 'overlap')  # optional, default: overlap
+    if span:
+        _verify_span_value(span)
+
+    statistics = settings.get('statistics', None)
+    if statistics:
+        _verify_statistics(statistics, 'ensemble_statistics')
 
 
 def _check_delimiter(timerange):

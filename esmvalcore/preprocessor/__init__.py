@@ -42,7 +42,7 @@ from ._mask import (
     mask_multimodel,
     mask_outside_range,
 )
-from ._multimodel import multi_model_statistics
+from ._multimodel import ensemble_statistics, multi_model_statistics
 from ._other import clip
 from ._regrid import extract_levels, extract_location, extract_point, regrid
 from ._time import (
@@ -159,6 +159,8 @@ __all__ = [
     'linear_trend_stderr',
     # Convert units
     'convert_units',
+    # Ensemble statistics
+    'ensemble_statistics',
     # Multi model statistics
     'multi_model_statistics',
     # Bias calculation
@@ -196,6 +198,7 @@ FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('remove_fx_variables'):]
 
 MULTI_MODEL_FUNCTIONS = {
     'bias',
+    'ensemble_statistics',
     'multi_model_statistics',
     'mask_multimodel',
     'mask_fillvalues',
@@ -372,8 +375,7 @@ class PreprocessorFile(TrackedFile):
     """Preprocessor output file."""
 
     def __init__(self, attributes, settings, ancestors=None):
-        super(PreprocessorFile, self).__init__(attributes['filename'],
-                                               attributes, ancestors)
+        super().__init__(attributes['filename'], attributes, ancestors)
 
         self.settings = copy.deepcopy(settings)
         if 'save' not in self.settings:
@@ -461,12 +463,34 @@ class PreprocessorFile(TrackedFile):
 
     def _initialize_entity(self):
         """Initialize the entity representing the file."""
-        super(PreprocessorFile, self)._initialize_entity()
+        super()._initialize_entity()
         settings = {
             'preprocessor:' + k: str(v)
             for k, v in self.settings.items()
         }
         self.entity.add_attributes(settings)
+
+    def group(self, keys: list) -> str:
+        """Generate group keyword.
+
+        Returns a string that identifies a group. Concatenates a list of
+        values from .attributes
+        """
+        if not keys:
+            return ''
+
+        if isinstance(keys, str):
+            keys = [keys]
+
+        identifier = []
+        for key in keys:
+            attribute = self.attributes.get(key)
+            if attribute:
+                if isinstance(attribute, (list, tuple)):
+                    attribute = '-'.join(attribute)
+                identifier.append(attribute)
+
+        return '_'.join(identifier)
 
 
 # TODO: use a custom ProductSet that raises an exception if you try to
@@ -513,17 +537,44 @@ class PreprocessingTask(BaseTask):
 
     def _initialize_product_provenance(self):
         """Initialize product provenance."""
-        for product in self.products:
-            product.initialize_provenance(self.activity)
+        self._initialize_products(self.products)
+        self._initialize_multimodel_provenance()
+        self._initialize_ensemble_provenance()
 
-        # Hacky way to initialize the multi model products as well.
-        step = 'multi_model_statistics'
-        input_products = [p for p in self.products if step in p.settings]
+    def _initialize_multiproduct_provenance(self, step):
+        input_products = self._get_input_products(step)
         if input_products:
-            statistic_products = input_products[0].settings[step].get(
-                'output_products', {}).values()
-            for product in statistic_products:
-                product.initialize_provenance(self.activity)
+            statistic_products = set()
+
+            for input_product in input_products:
+                step_settings = input_product.settings[step]
+                output_products = step_settings.get('output_products', {})
+
+                for product in output_products.values():
+                    statistic_products.update(product.values())
+
+            self._initialize_products(statistic_products)
+
+    def _initialize_multimodel_provenance(self):
+        """Initialize provenance for multi-model statistics."""
+        step = 'multi_model_statistics'
+        self._initialize_multiproduct_provenance(step)
+
+    def _initialize_ensemble_provenance(self):
+        """Initialize provenance for ensemble statistics."""
+        step = 'ensemble_statistics'
+        self._initialize_multiproduct_provenance(step)
+
+    def _get_input_products(self, step):
+        """Get input products."""
+        return [
+            product for product in self.products if step in product.settings
+        ]
+
+    def _initialize_products(self, products):
+        """Initialize products."""
+        for product in products:
+            product.initialize_provenance(self.activity)
 
     def _run(self, _):
         """Run the preprocessor."""
