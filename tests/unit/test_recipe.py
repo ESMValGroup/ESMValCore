@@ -356,6 +356,127 @@ def test_multi_model_filename():
     assert attributes['timerange'] == '1989/1992'
 
 
+def test_update_multiproduct_multi_model_statistics():
+    """Test ``_update_multiproduct``."""
+    settings = {'multi_model_statistics': {'statistics': ['mean', 'std_dev']}}
+    common_attributes = {
+        'project': 'CMIP6',
+        'timerange': '2000/2000',
+        'diagnostic': 'd',
+        'variable_group': 'var',
+    }
+    cube = iris.cube.Cube(np.array([1]))
+    products = [
+        PreprocessorFile(cube, 'A',
+                         attributes={'dataset': 'a', **common_attributes},
+                         settings=settings),
+        PreprocessorFile(cube, 'B',
+                         attributes={'dataset': 'b', **common_attributes},
+                         settings=settings),
+        PreprocessorFile(cube, 'C',
+                         attributes={'dataset': 'c', **common_attributes},
+                         settings=settings),
+        PreprocessorFile(cube, 'D',
+                         attributes={'dataset': 'd', **common_attributes},
+                         settings=settings),
+    ]
+    order = ('load', 'multi_model_statistics', 'save')
+    preproc_dir = '/preproc'
+    step = 'multi_model_statistics'
+    output, settings = _recipe._update_multiproduct(
+        products, order, preproc_dir, step)
+
+    assert len(output) == 2
+
+    filenames = [p.filename for p in output]
+    assert '/preproc/d/var/CMIP6_MultiModelMean_2000-2000.nc' in filenames
+    assert '/preproc/d/var/CMIP6_MultiModelStd_Dev_2000-2000.nc' in filenames
+
+    for product in output:
+        for attr in common_attributes:
+            assert attr in product.attributes
+            assert product.attributes[attr] == common_attributes[attr]
+            assert 'alias' in product.attributes
+            assert 'dataset' in product.attributes
+            assert 'multi_model_statistics' in product.attributes
+        if 'MultiModelStd_Dev' in product.filename:
+            assert product.attributes['alias'] == 'MultiModelStd_Dev'
+            assert product.attributes['dataset'] == 'MultiModelStd_Dev'
+            assert (product.attributes['multi_model_statistics'] ==
+                    'MultiModelStd_Dev')
+        elif 'MultiModelMean' in product.filename:
+            assert product.attributes['alias'] == 'MultiModelMean'
+            assert product.attributes['dataset'] == 'MultiModelMean'
+            assert (product.attributes['multi_model_statistics'] ==
+                    'MultiModelMean')
+
+    assert len(settings) == 1
+    output_products = settings['output_products']
+    assert len(output_products) == 1
+    stats = output_products['']
+    assert len(stats) == 2
+    assert 'mean' in stats
+    assert 'std_dev' in stats
+    assert 'MultiModelMean' in stats['mean'].filename
+    assert 'MultiModelStd_Dev' in stats['std_dev'].filename
+
+
+def test_update_multiproduct_ensemble_statistics():
+    """Test ``_update_multiproduct``."""
+    settings = {'ensemble_statistics': {'statistics': ['median']}}
+    common_attributes = {
+        'dataset': 'CanESM2',
+        'project': 'CMIP6',
+        'timerange': '2000/2000',
+        'diagnostic': 'd',
+        'variable_group': 'var',
+    }
+    cube = iris.cube.Cube(np.array([1]))
+    products = [
+        PreprocessorFile(cube, 'A',
+                         attributes=common_attributes,
+                         settings=settings),
+        PreprocessorFile(cube, 'B',
+                         attributes=common_attributes,
+                         settings=settings),
+        PreprocessorFile(cube, 'C',
+                         attributes=common_attributes,
+                         settings=settings),
+        PreprocessorFile(cube, 'D',
+                         attributes=common_attributes,
+                         settings=settings),
+    ]
+    order = ('load', 'ensemble_statistics', 'save')
+    preproc_dir = '/preproc'
+    step = 'ensemble_statistics'
+    output, settings = _recipe._update_multiproduct(
+        products, order, preproc_dir, step)
+
+    assert len(output) == 1
+    product = list(output)[0]
+    assert (product.filename ==
+            '/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc')
+
+    for attr in common_attributes:
+        assert attr in product.attributes
+        assert product.attributes[attr] == common_attributes[attr]
+        assert 'alias' in product.attributes
+        assert product.attributes['alias'] == 'EnsembleMedian'
+        assert 'dataset' in product.attributes
+        assert product.attributes['dataset'] == 'CanESM2'
+        assert 'ensemble_statistics' in product.attributes
+        assert product.attributes['ensemble_statistics'] == 'EnsembleMedian'
+
+    assert len(settings) == 1
+    output_products = settings['output_products']
+    assert len(output_products) == 1
+    stats = output_products['CMIP6_CanESM2']
+    assert len(stats) == 1
+    assert 'median' in stats
+    assert (stats['median'].filename ==
+            '/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc')
+
+
 def test_update_multiproduct_no_product():
     cube = iris.cube.Cube(np.array([1]))
     products = [
