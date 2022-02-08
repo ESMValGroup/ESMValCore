@@ -195,7 +195,7 @@ def write_ncl_settings(settings, filename, mode='wt'):
     ignore_settings = ['profile_diagnostic', ]
     for sett in ignore_settings:
         settings_copy = dict(settings)
-        if not 'diag_script_info' in settings_copy:
+        if 'diag_script_info' not in settings_copy:
             settings.pop(sett, None)
         else:
             settings_copy['diag_script_info'].pop(sett, None)
