@@ -13,6 +13,7 @@ dependencies:
   - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
   - geopy
   - iris>=3.1.0
+  - nested-lookup
   - pandas
   - pip!=21.3
   - python>=3.7
