@@ -76,26 +76,26 @@ Recipe section: ``datasets``
 The ``datasets`` section includes dictionaries that, via key-value pairs, define standardized
 data specifications:
 
-- dataset name (key ``dataset``, value e.g. ``MPI-ESM-LR`` or ``UKESM1-0-LL``)
+- dataset name (key ``dataset``, value e.g. ``MPI-ESM-LR`` or ``UKESM1-0-LL``).
 - project (key ``project``, value ``CMIP5`` or ``CMIP6`` for CMIP data,
   ``OBS`` for observational data, ``ana4mips`` for ana4mips data,
-  ``obs4MIPs`` for obs4MIPs data, ``EMAC`` for EMAC data)
+  ``obs4MIPs`` for obs4MIPs data, ``ICON`` for ICON data).
 - experiment (key ``exp``, value e.g. ``historical``, ``amip``, ``piControl``,
-  ``RCP8.5``)
-- mip (for CMIP data, key ``mip``, value e.g. ``Amon``, ``Omon``, ``LImon``)
-- ensemble member (key ``ensemble``, value e.g. ``r1i1p1``, ``r1i1p1f1``)
-- sub-experiment id (key `sub_experiment`, value e.g. `s2000`, `s(2000:2002)`,
-  for DCPP data only)
-- time range (e.g. key-value ``start_year: 1982``, ``end_year: 1990``.
-  Please note that `yaml`_ interprets numbers with a leading ``0`` as octal numbers,
-  so we recommend to avoid them. For example, use ``128`` to specify the year
-  128 instead of ``0128``.)
+  ``rcp85``).
+- mip (for CMIP data, key ``mip``, value e.g. ``Amon``, ``Omon``, ``LImon``).
+- ensemble member (key ``ensemble``, value e.g. ``r1i1p1``, ``r1i1p1f1``).
+- sub-experiment id (key ``sub_experiment``, value e.g. ``s2000``,
+  ``s(2000:2002)``, for DCPP data only).
+- time range (e.g. key-value ``start_year: 1982``, ``end_year: 1990``).
+  Please note that `yaml`_ interprets numbers with a leading ``0`` as octal
+  numbers, so we recommend to avoid them. For example, use ``128`` to specify
+  the year 128 instead of ``0128``.
   Alternatively, the time range can be specified in `ISO 8601 format
   <https://en.wikipedia.org/wiki/ISO_8601>`_, for both dates and periods.
   In addition, wildcards (``'*'``) are accepted, which allow the selection of
   the first available year for each individual dataset (when used as a starting
   point) or the last available year (when used as an ending point).
-  The starting point and end point must be separated with ``/`` (e.g.,
+  The starting point and end point must be separated with ``/`` (e.g. key-value
   ``timerange: '1982/1990'``).
   More examples are given :ref:`here <timerange_examples>`.
 - model grid (native grid ``grid: gn`` or regridded grid ``grid: gr``, for
