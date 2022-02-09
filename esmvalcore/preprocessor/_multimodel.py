@@ -15,6 +15,7 @@ from functools import reduce
 
 import cf_units
 import iris
+import iris.coord_categorisation
 import numpy as np
 from iris.util import equalise_attributes
 
@@ -164,13 +165,33 @@ def _map_to_new_time(cube, time_points):
     sample_points = [('time', time_points)]
     scheme = iris.analysis.Nearest(extrapolation_mode='mask')
 
+    # Make sure that all integer time coordinates ('year', 'month',
+    # 'day_of_year', etc.) are converted to floats, otherwise the
+    # nearest-neighbor interpolation will fail with a "cannot convert float NaN
+    # to integer". In addition, remove their bounds (this would be done by iris
+    # anyway).
+    int_time_coords = []
+    for coord in cube.coords(dimensions=cube.coord_dims('time'),
+                             dim_coords=False):
+        if np.issubdtype(coord.points.dtype, np.integer):
+            int_time_coords.append(coord.name())
+            coord.points = coord.points.astype(float)
+            coord.bounds = None
+
+    # Do the actual interpolation
     try:
         new_cube = cube.interpolate(sample_points, scheme)
     except Exception as excinfo:
         raise ValueError(
-            "Tried to align cubes in multi-model statistics, but failed for"
-            f" cube {cube} and time points {time_points}. Encountered the "
-            f"following exception: {excinfo}")
+            f"Tried to align cubes in multi-model statistics, but failed for "
+            f"cube {cube}\n and time points {time_points}") from excinfo
+
+    # Change the dtype of int_time_coords to their original values
+    for coord_name in int_time_coords:
+        coord = new_cube.coord(coord_name,
+                               dimensions=new_cube.coord_dims('time'),
+                               dim_coords=False)
+        coord.points = coord.points.astype(int)
 
     return new_cube
 

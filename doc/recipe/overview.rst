@@ -90,11 +90,18 @@ data specifications:
   Please note that `yaml`_ interprets numbers with a leading ``0`` as octal numbers,
   so we recommend to avoid them. For example, use ``128`` to specify the year
   128 instead of ``0128``.)
-  Alternatively, the time range can be specified in `ISO 8601 format <https://en.wikipedia.org/wiki/ISO_8601>`_, for both dates
-  and periods. Or as a wildcard to work with all available data, set the starting
-  point at the first available year, and set the ending point at the last available
-  year. The starting point and end point must be separated with '/'.
-  (e.g key-value ``timerange: '1982/1990'``)
+  Alternatively, the time range can be specified in `ISO 8601 format
+  <https://en.wikipedia.org/wiki/ISO_8601>`_, for both dates and periods.
+  The starting point and end point must be separated with ``/`` (e.g.,
+  ``timerange: '1982/1990'`` will select the data from the years 1982 to 1990,
+  ``timerange: '1910/P2Y'`` will select 2 years of data starting in 1910, or
+  ``P1Y2M/19201231T235959`` will select 1 year and 2 months of data ending on
+  31 December 1920 23:59:59).
+  In addition, wildcards (``'*'``) are accepted, which allow the selection of
+  the first available year for each individual dataset (when used as a starting
+  point) or the last available year (when used as an ending point).
+  For example, use ``timerange: '*/P2Y'`` to select the first 2 years of all
+  datasets or ``timerange: 'P5Y/*'`` to select the last 5 years.
 - model grid (native grid ``grid: gn`` or regridded grid ``grid: gr``, for
   CMIP6 data only).
 
@@ -104,6 +111,7 @@ For example, a datasets section could be:
 
     datasets:
       - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: r1i1p1, start_year: 2001, end_year: 2004}
+      - {dataset: CanESM5, project: CMIP6, exp: historical, ensemble: r1i1p1f2, timerange: '18900504T100000/189006204T110000'}
       - {dataset: UKESM1-0-LL, project: CMIP6, exp: historical, ensemble: r1i1p1f2, start_year: 2001, end_year: 2004, grid: gn}
       - {dataset: ACCESS-CM2, project: CMIP6, exp: historical, ensemble: r1i1p1f2, timerange: 'P5Y/*', grid: gn}
       - {dataset: EC-EARTH3, alias: custom_alias, project: CMIP6, exp: historical, ensemble: r1i1p1f1, start_year: 2001, end_year: 2004, grid: gn}
