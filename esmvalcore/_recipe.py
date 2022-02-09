@@ -656,7 +656,7 @@ def _apply_preprocessor_profile(settings, profile_settings):
             settings[step].update(args)
 
 
-def _get_common_attributes(products):
+def _get_common_attributes(products, settings):
     """Get common attributes for the output products."""
     attributes = {}
     some_product = next(iter(products))
@@ -664,7 +664,11 @@ def _get_common_attributes(products):
         if all(p.attributes.get(key, object()) == value for p in products):
             attributes[key] = value
 
-    # Ensure timerange attribute is available
+    # Ensure that attribute timerange is always available. This depends on the
+    # "span" setting: if "span=overlap", the intersection of all periods is
+    # used; if "span=full", the union is used. The default value for "span" is
+    # "overlap".
+    span = settings.get('span', 'overlap')
     for product in products:
         timerange = product.attributes['timerange']
         start, end = _parse_period(timerange)
@@ -674,12 +678,26 @@ def _get_common_attributes(products):
             start_date, end_date = _parse_period(attributes['timerange'])
             start_date, start = _truncate_dates(start_date, start)
             end_date, end = _truncate_dates(end_date, end)
-            if start < start_date:
-                start_date = start
-            if end > end_date:
-                end_date = end
+
+            # If "span=overlap", always use the latest start_date and the
+            # earliest end_date
+            if span == 'overlap':
+                start_date = max([start, start_date])
+                end_date = min([end, end_date])
+
+            # If "span=full", always use the earliest start_date and the latest
+            # end_date. Note: span can only take the values "overlap" or "full"
+            # (this is checked earlier).
+            else:
+                start_date = min([start, start_date])
+                end_date = max([end, end_date])
 
             attributes['timerange'] = f'{start_date}/{end_date}'
+
+    # Ensure that attributes start_year and end_year are always available
+    start_year, end_year = _parse_period(attributes['timerange'])
+    attributes['start_year'] = int(str(start_year[0:4]))
+    attributes['end_year'] = int(str(end_year[0:4]))
 
     return attributes
 
@@ -751,9 +769,9 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
 
     output_products = set()
     for identifier, products in _group_products(products, by_key=grouping):
-        common_attributes = _get_common_attributes(products)
+        common_attributes = _get_common_attributes(products, settings)
 
-        for statistic in settings.get('statistics'):
+        for statistic in settings.get('statistics', []):
             statistic_attributes = dict(common_attributes)
             statistic_attributes[step] = _get_tag(step, identifier, statistic)
             statistic_attributes.setdefault('alias',

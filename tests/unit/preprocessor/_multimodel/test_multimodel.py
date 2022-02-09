@@ -5,6 +5,7 @@ from datetime import datetime
 import cftime
 import dask.array as da
 import iris
+import iris.coord_categorisation
 import numpy as np
 import pytest
 from cf_units import Unit
@@ -47,7 +48,7 @@ def timecoord(frequency,
     elif frequency == 'monthly':
         dates = [datetime(1850, i, 15, 0, 0, 0) for i in time_points]
     elif frequency == 'yearly':
-        dates = [datetime(1850, 7, i, 0, 0, 0) for i in time_points]
+        dates = [datetime(1850 + i - 1, 7, 1, 0, 0, 0) for i in time_points]
 
     unit = Unit(offset, calendar=calendar)
     points = date2num(dates, unit)
@@ -757,3 +758,27 @@ def test_no_warn_model_dim_non_contiguous(recwarn):
            "Metadata may not be fully descriptive for 'multi-model'.")
     for warning in recwarn:
         assert str(warning.message) != msg
+
+
+def test_map_to_new_time_int_coords():
+    """Test ``_map_to_new_time`` with integer time coords."""
+    cube = generate_cube_from_dates('yearly')
+    iris.coord_categorisation.add_year(cube, 'time')
+    decade_coord = AuxCoord([1850, 1850, 1850], bounds=[[1845, 1855]] * 3,
+                            long_name='decade')
+    cube.add_aux_coord(decade_coord, 0)
+    target_points = [200.0, 500.0, 1000.0]
+
+    out_cube = mm._map_to_new_time(cube, target_points)
+
+    assert_array_allclose(out_cube.data,
+                          np.ma.masked_invalid([1.0, 1.0, np.nan]))
+    assert_array_allclose(out_cube.coord('time').points, target_points)
+    assert_array_allclose(out_cube.coord('year').points,
+                          np.ma.masked_invalid([1850, 1851, np.nan]))
+    assert_array_allclose(out_cube.coord('decade').points,
+                          np.ma.masked_invalid([1850, 1850, np.nan]))
+    assert out_cube.coord('year').bounds is None
+    assert out_cube.coord('decade').bounds is None
+    assert np.issubdtype(out_cube.coord('year').dtype, np.integer)
+    assert np.issubdtype(out_cube.coord('decade').dtype, np.integer)
