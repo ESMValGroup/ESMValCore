@@ -92,16 +92,12 @@ data specifications:
   128 instead of ``0128``.)
   Alternatively, the time range can be specified in `ISO 8601 format
   <https://en.wikipedia.org/wiki/ISO_8601>`_, for both dates and periods.
-  The starting point and end point must be separated with ``/`` (e.g.,
-  ``timerange: '1982/1990'`` will select the data from the years 1982 to 1990,
-  ``timerange: '1910/P2Y'`` will select 2 years of data starting in 1910, or
-  ``P1Y2M/19201231T235959`` will select 1 year and 2 months of data ending on
-  31 December 1920 23:59:59).
   In addition, wildcards (``'*'``) are accepted, which allow the selection of
   the first available year for each individual dataset (when used as a starting
   point) or the last available year (when used as an ending point).
-  For example, use ``timerange: '*/P2Y'`` to select the first 2 years of all
-  datasets or ``timerange: 'P5Y/*'`` to select the last 5 years.
+  The starting point and end point must be separated with ``/`` (e.g.,
+  ``timerange: '1982/1990'``).
+  More examples are given :ref:`here <timerange_examples>`.
 - model grid (native grid ``grid: gn`` or regridded grid ``grid: gr``, for
   CMIP6 data only).
 
@@ -111,7 +107,6 @@ For example, a datasets section could be:
 
     datasets:
       - {dataset: CanESM2, project: CMIP5, exp: historical, ensemble: r1i1p1, start_year: 2001, end_year: 2004}
-      - {dataset: CanESM5, project: CMIP6, exp: historical, ensemble: r1i1p1f2, timerange: '18900504T100000/189006204T110000'}
       - {dataset: UKESM1-0-LL, project: CMIP6, exp: historical, ensemble: r1i1p1f2, start_year: 2001, end_year: 2004, grid: gn}
       - {dataset: ACCESS-CM2, project: CMIP6, exp: historical, ensemble: r1i1p1f2, timerange: 'P5Y/*', grid: gn}
       - {dataset: EC-EARTH3, alias: custom_alias, project: CMIP6, exp: historical, ensemble: r1i1p1f1, start_year: 2001, end_year: 2004, grid: gn}
@@ -164,6 +159,8 @@ The same simplified syntax can be used to add multiple sub-experiment ids:
     datasets:
       - {dataset: MIROC6, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s(2000:2002), grid: gn, start_year: 2003, end_year: 2004}
 
+.. _timerange_examples:
+
 When using the ``timerange`` tag to specify the start and end points, possible values can be as follows:
 
   - A start and end point specified with a resolution up to seconds (YYYYMMDDThhmmss)
@@ -175,6 +172,7 @@ When using the ``timerange`` tag to specify the start and end points, possible v
   - A start point or end point, and a relative period with a resolution up to second (P[n]Y[n]M[n]DT[n]H[n]M[n]S).
     * ``timerange: '1980/P5Y'``. Starting from 01/01/1980, spans 5 years.
     * ``timerange: 'P2Y5M/198202``. Ending at 28/02/1982, spans 2 years and 5 months.
+
   - A wildcard to load all available years, the first available start point or the last available end point.
     * ``timerange: '*'``. Finds all available years.
     * ``timerange: '*/1982``. Finds first available point, spans to 31/12/1982.
