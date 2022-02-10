@@ -173,6 +173,11 @@
             "name": "Soares Siqueira, Abel",
             "orcid": "0000-0003-4451-281X"
         }
+        {
+            "affiliation": "DLR, Germany",
+            "name": "Kazeroni, Rémi",
+            "orcid": "0000-0001-7205-9528"
+        }
     ],
     "description": "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.",
     "license": {
