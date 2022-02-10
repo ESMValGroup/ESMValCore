@@ -162,6 +162,11 @@
             "affiliation": "MetOffice, UK",
             "name": "Crocker, Thomas",
             "orcid": "0000-0001-7761-5546"
+        },
+        {
+            "affiliation": "Netherlands eScience Center",
+            "name": "Vreede, Barbara",
+            "orcid": "0000-0002-5023-4601"
         }
     ],
     "description": "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.",
