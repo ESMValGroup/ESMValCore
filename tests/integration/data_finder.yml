@@ -451,7 +451,7 @@ get_input_filelist:
       diagnostic: test_diag
       preprocessor: test_preproc
       # Next are extra facets, which must be provided explicitly here
-      ispl_varname: t2m
+      ipsl_varname: t2m
       group: histmth
       dir: ATM
     available_files:
