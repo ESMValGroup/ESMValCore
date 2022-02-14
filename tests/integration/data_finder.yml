@@ -446,8 +446,7 @@ get_input_filelist:
       simulation: simulation
       out: Output
       freq: MO
-      start_year: 1850
-      end_year: 1851
+      timerange: '1850/1851'
       diagnostic: test_diag
       preprocessor: test_preproc
       # Next are extra facets, which must be provided explicitly here
