@@ -1,18 +1,9 @@
-"""Fixes for cesm2-waccm-fv2."""
+"""Fixes for IPSL-CM5A2-INCA model."""
 from iris.cube import CubeList
-"""Fixes for CESM2-WACCM-FV2 model."""
-from .cesm2 import Tas as BaseTas
-from .cesm2 import Fgco2 as BaseFgco2
-from .cesm2_waccm import Cl as BaseCl
-from .cesm2_waccm import Cli as BaseCli
-from .cesm2_waccm import Clw as BaseClw
-from ..common import SiconcFixScalarCoord
 
 from ..fix import Fix
 from ..shared import fix_ocean_depth_coord
 
-import numpy as np
-import cf_units
 
 class AllVars(Fix):
     """Fixes for thetao."""
@@ -39,6 +30,30 @@ class AllVars(Fix):
         return CubeList([cube])
 
 
+class Clcalipso(Fix):
+    """Fixes for ``clcalipso``."""
+
+    def fix_metadata(self, cubes):
+        """Fix ``alt40`` coordinate.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        cube = self.get_cube_from_list(cubes)
+        alt_40_coord = cube.coord('height')
+        alt_40_coord.long_name = 'altitude'
+        alt_40_coord.standard_name = 'altitude'
+        alt_40_coord.var_name = 'alt40'
+        return CubeList([cube])
+
+
 class Omon(Fix):
     """Fixes for ocean variables."""
 
@@ -57,21 +72,7 @@ class Omon(Fix):
         """
         for cube in cubes:
             if cube.coords(axis='Z'):
-                z_coord = cube.coord(axis='Z')
-                if str(z_coord.units).lower() in ['cm', 'centimeters'] and np.max(z_coord.points)>10000.:
-                    z_coord.units = cf_units.Unit('m')
-                    z_coord.points = z_coord.points /100.
-                if str(z_coord.units).lower() in ['cm', 'centimeters'] and np.max(z_coord.points)<10000.:
-                    z_coord.units = cf_units.Unit('m')
-#                    z_coord.points = z_coord.points /100.
-
+         #       z_coord = cube.coord(axis='Z')
+         #       if z_coord.var_name == 'olevel':
                 fix_ocean_depth_coord(cube)
         return cubes
-
-Fgco2 = BaseFgco2
-
-
-Siconc = SiconcFixScalarCoord
-
-
-Tas = BaseTas
