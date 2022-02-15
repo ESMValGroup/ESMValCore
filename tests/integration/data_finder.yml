@@ -428,6 +428,56 @@ get_input_filelist:
       - Tier3/ERA-Interim/OBS6_ERA-Interim_reanaly_42_Amon_tas_197901-199912.nc
       - Tier3/ERA-Interim/OBS6_ERA-Interim_reanaly_42_Amon_tas_200001-201012.nc
 
+  - drs: default
+    variable: &ipsl_variable
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: IPSL-CM6
+      root: thredds/tgcc/store
+      exp: historical
+      project: IPSLCM
+      cmor_table: CMIP6
+      frequency: mon
+      mip: Amon
+      account: p86caub
+      model: IPSLCM6
+      status: PROD
+      simulation: simulation
+      out: Output
+      freq: MO
+      timerange: '1850/1851'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+      # Next are extra facets, which must be provided explicitly here
+      ipsl_varname: t2m
+      group: histmth
+      dir: ATM
+    available_files:
+      - thredds/tgcc/store/p86caub/IPSLCM6/PROD/historical/simulation/ATM/Output/MO/simulation_18500101_18591231_1M_histmth.nc
+    dirs:
+      - thredds/tgcc/store/p86caub/IPSLCM6/PROD/historical/simulation/ATM/Output/MO
+    file_patterns:
+      - simulation_*_t2m.nc
+      - simulation_*_histmth.nc
+    found_files: 
+      - thredds/tgcc/store/p86caub/IPSLCM6/PROD/historical/simulation/ATM/Output/MO/simulation_18500101_18591231_1M_histmth.nc
+    
+  - drs: default
+    variable:
+      <<: *ipsl_variable
+      out: Analyse
+      freq: TS_MO
+    available_files:
+      - thredds/tgcc/store/p86caub/IPSLCM6/PROD/historical/simulation/ATM/Analyse/TS_MO/simulation_18500101_20141231_1M_t2m.nc
+    dirs:
+      - thredds/tgcc/store/p86caub/IPSLCM6/PROD/historical/simulation/ATM/Analyse/TS_MO
+    file_patterns:
+      - simulation_*_t2m.nc
+      - simulation_*_histmth.nc
+    found_files: 
+      - thredds/tgcc/store/p86caub/IPSLCM6/PROD/historical/simulation/ATM/Analyse/TS_MO/simulation_18500101_20141231_1M_t2m.nc
+      
   # Test fx files
 
   - drs: default
