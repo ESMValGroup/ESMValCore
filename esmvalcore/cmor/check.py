@@ -232,8 +232,8 @@ class CMORCheck():
         """
         if self.has_errors():
             msg = '\n'.join([
-                f'There were errors in variable {self._cube.var_name}:'
-                '\n '.join(self._errors),
+                f'There were errors in variable {self._cube.var_name}:',
+                ' ' + '\n '.join(self._errors),
                 'in cube:',
                 f'{self._cube}',
                 'loaded from file ' +
@@ -252,7 +252,7 @@ class CMORCheck():
         if self.has_warnings():
             msg = '\n'.join([
                 f'There were warnings in variable {self._cube.var_name}:',
-                '\n '.join(self._warnings),
+                ' ' + '\n '.join(self._warnings),
                 'loaded from file ' +
                 self._cube.attributes.get('source_file', ''),
             ])
@@ -268,9 +268,9 @@ class CMORCheck():
         """
         if self.has_debug_messages():
             msg = '\n'.join([
-                'There were metadata changes in variable' +
-                self._cube.var_name,
-                '\n '.join(self._debug_messages),
+                f'There were metadata changes in variable '
+                f'{self._cube.var_name}:',
+                ' ' + '\n '.join(self._debug_messages),
                 'loaded from file ' +
                 self._cube.attributes.get('source_file', ''),
             ])
