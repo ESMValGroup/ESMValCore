@@ -272,7 +272,8 @@ def _compute_slices(cubes):
         start = i * slice_len
         end = (i + 1) * slice_len
         if end > n_timesteps:
-            end = n_timesteps
+            yield slice(start, n_timesteps)
+            return
         yield slice(start, end)
 
 

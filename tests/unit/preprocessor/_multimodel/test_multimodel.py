@@ -1,6 +1,7 @@
 """Unit test for :func:`esmvalcore.preprocessor._multimodel`."""
 
 from datetime import datetime
+from unittest import mock
 
 import cftime
 import dask.array as da
@@ -166,6 +167,33 @@ def test_compute_slices(length, slices):
     ]
     result = list(mm._compute_slices(cubes))
     assert result == slices
+
+
+def test_compute_slices_early_termination():
+    """Test that ``_compute_slices`` terminates when reaching end index."""
+    # The following settings will result in a cube length of 71, 10 slices and
+    # a slice length of 8. Thus, without early termination, the last slice
+    # would be slice(72, 71), which would result in an exception.
+    cube_data = mock.Mock(nbytes=1.1 * 2**30)  # roughly 1.1 GB
+    cube = mock.Mock(spec=Cube, data=cube_data, shape=(71,))
+    cubes = [cube] * 9
+
+    slices = list(mm._compute_slices(cubes))
+
+    # Early termination lead to 9 (instead of 10) slices
+    assert len(slices) == 9
+    expected_slices = [
+        slice(0, 8, None),
+        slice(8, 16, None),
+        slice(16, 24, None),
+        slice(24, 32, None),
+        slice(32, 40, None),
+        slice(40, 48, None),
+        slice(48, 56, None),
+        slice(56, 64, None),
+        slice(64, 71, None),
+    ]
+    assert slices == expected_slices
 
 
 @pytest.mark.parametrize('frequency', FREQUENCY_OPTIONS)
