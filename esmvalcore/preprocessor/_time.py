@@ -157,6 +157,21 @@ def _duration_to_date(duration, reference, sign):
     return date
 
 
+def _restore_time_coord_position(cube, original_time_index):
+    """Restore original ordering of coordinates."""
+    # Coordinates before time
+    new_order = list(np.arange(original_time_index) + 1)
+
+    # Time coordinate
+    new_order.append(0)
+
+    # Coordinates after time
+    new_order = new_order + list(range(original_time_index + 1, cube.ndim))
+
+    # Transpose cube in-place
+    cube.transpose(new_order)
+
+
 def _extract_datetime(cube, start_datetime, end_datetime):
     """Extract a time range from a cube.
 
@@ -215,9 +230,14 @@ def _extract_datetime(cube, start_datetime, end_datetime):
 
     # If only a single point in time is extracted, the new time coordinate of
     # cube_slice is a scalar coordinate. Convert this back to a regular
-    # dimensional coordinate with length 1.
+    # dimensional coordinate with length 1. Note that iris.util.new_axis always
+    # puts the new axis at index 0, so we need to reorder the coordinates in
+    # case the original time coordinate was not at index 0.
     if cube_slice.ndim < cube.ndim:
         cube_slice = iris.util.new_axis(cube_slice, 'time')
+        original_time_index = cube.coord_dims(time_coord)[0]
+        if original_time_index != 0:
+            _restore_time_coord_position(cube_slice, original_time_index)
 
     return cube_slice
 
