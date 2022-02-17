@@ -335,6 +335,15 @@ class TestClipTimerange(tests.Test):
         assert cube.shape == sliced_cube.shape
         assert sliced_cube.coord('time', dim_coords=True)
 
+        # Repeat test without bounds
+        cube.coord('time').bounds = None
+        sliced_cube = clip_timerange(cube, '1950/1950')
+
+        assert_array_equal(sliced_cube.coord('time').points, [150.0])
+        assert sliced_cube.coord('time').bounds is None
+        assert cube.shape == sliced_cube.shape
+        assert sliced_cube.coord('time', dim_coords=True)
+
     def test_clip_timerange_single_year_2d(self):
         """Test that single year stays dimensional coordinate."""
         cube = self._create_cube([[0.0, 1.0]], [150.0], [[0.0, 365.0]],
@@ -346,6 +355,15 @@ class TestClipTimerange(tests.Test):
 
         assert_array_equal(sliced_cube.coord('time').points, [150.0])
         assert_array_equal(sliced_cube.coord('time').bounds, [[0.0, 365.0]])
+        assert cube.shape == sliced_cube.shape
+        assert sliced_cube.coord('time', dim_coords=True)
+
+        # Repeat test without bounds
+        cube.coord('time').bounds = None
+        sliced_cube = clip_timerange(cube, '1950/1950')
+
+        assert_array_equal(sliced_cube.coord('time').points, [150.0])
+        assert sliced_cube.coord('time').bounds is None
         assert cube.shape == sliced_cube.shape
         assert sliced_cube.coord('time', dim_coords=True)
 
