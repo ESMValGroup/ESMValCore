@@ -213,6 +213,12 @@ def _extract_datetime(cube, start_datetime, end_datetime):
             f"to {end_datetime.strftime('%Y-%m-%d')} is outside "
             f"cube time bounds {time_coord.cell(0)} to {time_coord.cell(-1)}.")
 
+    # If only a single point in time is extracted, the new time coordinate of
+    # cube_slice is a scalar coordinate. Convert this back to a regular
+    # dimensional coordinate with length 1.
+    if cube_slice.ndim < cube.ndim:
+        cube_slice = iris.util.new_axis(cube_slice, 'time')
+
     return cube_slice
 
 

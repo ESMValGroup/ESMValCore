@@ -325,6 +325,30 @@ class TestClipTimerange(tests.Test):
         assert_array_equal(
                 sliced_cube.coord('time').points, expected_time)
 
+    def test_clip_timerange_single_year_1d(self):
+        """Test that single year stays dimensional coordinate."""
+        cube = self._create_cube([0.0], [150.0], [[0.0, 365.0]], 'standard')
+        sliced_cube = clip_timerange(cube, '1950/1950')
+
+        assert_array_equal(sliced_cube.coord('time').points, [150.0])
+        assert_array_equal(sliced_cube.coord('time').bounds, [[0.0, 365.0]])
+        assert cube.shape == sliced_cube.shape
+        assert sliced_cube.coord('time', dim_coords=True)
+
+    def test_clip_timerange_single_year_2d(self):
+        """Test that single year stays dimensional coordinate."""
+        cube = self._create_cube([[0.0, 1.0]], [150.0], [[0.0, 365.0]],
+                                 'standard')
+        lat_coord = iris.coords.DimCoord([10.0, 20.0],
+                                         standard_name='latitude')
+        cube.add_dim_coord(lat_coord, 1)
+        sliced_cube = clip_timerange(cube, '1950/1950')
+
+        assert_array_equal(sliced_cube.coord('time').points, [150.0])
+        assert_array_equal(sliced_cube.coord('time').bounds, [[0.0, 365.0]])
+        assert cube.shape == sliced_cube.shape
+        assert sliced_cube.coord('time', dim_coords=True)
+
 
 class TestExtractSeason(tests.Test):
     """Tests for extract_season."""
