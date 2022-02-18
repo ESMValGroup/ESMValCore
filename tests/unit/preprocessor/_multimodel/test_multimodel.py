@@ -126,6 +126,33 @@ def get_cubes_for_validation_test(frequency, lazy=False):
     return [cube1, cube2, cube3]
 
 
+def get_cube_for_equal_coords_test(num_cubes):
+    """Setup cubes with equal auxiliary coordinates."""
+    cubes = []
+
+    for num in range(num_cubes):
+        cube = generate_cube_from_dates('monthly')
+        cubes.append(cube)
+
+    # Create cubes that have one equal coordinate ('year') and one non-equal
+    # coordinate ('x')
+    year_coord = AuxCoord([1, 2, 3], var_name='year', long_name='year',
+                          units='1', attributes={'test': 1})
+    x_coord = AuxCoord([1, 2, 3], var_name='x', long_name='x', units='s',
+                       attributes={'test': 2})
+    for (idx, cube) in enumerate(cubes):
+        new_x_coord = x_coord.copy()
+        new_x_coord.long_name = f'x_{idx}'
+        cube.add_aux_coord(year_coord.copy(), 0)
+        cube.add_aux_coord(new_x_coord, 0)
+        assert cube.coord('year').metadata is not year_coord.metadata
+        assert cube.coord('year').metadata == year_coord.metadata
+        assert cube.coord(f'x_{idx}').metadata is not x_coord.metadata
+        assert cube.coord(f'x_{idx}').metadata != x_coord.metadata
+
+    return cubes
+
+
 VALIDATION_DATA_SUCCESS = (
     ('full', 'mean', (5, 5, 3)),
     ('full', 'std_dev', (5.656854249492381, 4, 2.8284271247461903)),
@@ -418,6 +445,37 @@ def test_combine_with_scalar_coords_to_remove(scalar_coord):
 
     merged_cube = mm._combine(cubes)
     assert merged_cube.shape == (5, 3)
+
+
+def test_combine_preserve_equal_coordinates():
+    """Test ``_combine`` with equal input coordinates."""
+    cubes = get_cube_for_equal_coords_test(5)
+    merged_cube = mm._combine(cubes)
+
+    # The equal coordinate ('year') was not changed; the non-equal one ('x')
+    # does not have a long_name and attributes anymore
+    assert merged_cube.coord('year').var_name == 'year'
+    assert merged_cube.coord('year').standard_name is None
+    assert merged_cube.coord('year').long_name == 'year'
+    assert merged_cube.coord('year').attributes == {'test': 1}
+    assert merged_cube.coord('x').var_name == 'x'
+    assert merged_cube.coord('x').standard_name is None
+    assert merged_cube.coord('x').long_name is None
+    assert merged_cube.coord('x').attributes == {}
+
+
+def test_equalise_coordinates_no_cubes():
+    """Test that _equalise_coordinates doesn't fail with empty cubes."""
+    mm._equalise_coordinates([])
+
+
+def test_equalise_coordinates_one_cube():
+    """Test that _equalise_coordinates doesn't fail with a single cubes."""
+    cube = generate_cube_from_dates('monthly')
+    new_cube = cube.copy()
+    mm._equalise_coordinates([new_cube])
+    assert new_cube is not cube
+    assert new_cube == cube
 
 
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
@@ -810,3 +868,26 @@ def test_map_to_new_time_int_coords():
     assert out_cube.coord('decade').bounds is None
     assert np.issubdtype(out_cube.coord('year').dtype, np.integer)
     assert np.issubdtype(out_cube.coord('decade').dtype, np.integer)
+
+
+def test_preserve_equal_coordinates():
+    """Test ``multi_model_statistics`` with equal input coordinates."""
+    cubes = get_cube_for_equal_coords_test(5)
+    stat_cubes = multi_model_statistics(cubes, span='overlap',
+                                        statistics=['sum'])
+
+    assert len(stat_cubes) == 1
+    assert 'sum' in stat_cubes
+    stat_cube = stat_cubes['sum']
+    assert_array_allclose(stat_cube.data, np.ma.array([5.0, 5.0, 5.0]))
+
+    # The equal coordinate ('year') was not changed; the non-equal one ('x')
+    # does not have a long_name and attributes anymore
+    assert stat_cube.coord('year').var_name == 'year'
+    assert stat_cube.coord('year').standard_name is None
+    assert stat_cube.coord('year').long_name == 'year'
+    assert stat_cube.coord('year').attributes == {'test': 1}
+    assert stat_cube.coord('x').var_name == 'x'
+    assert stat_cube.coord('x').standard_name is None
+    assert stat_cube.coord('x').long_name is None
+    assert stat_cube.coord('x').attributes == {}
