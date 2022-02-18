@@ -223,34 +223,70 @@ def _align(cubes, span):
     return new_cubes
 
 
+def _equalise_cell_methods(cubes):
+    """Equalise coordinates in cubes (in-place)."""
+    # Simply remove all cell methods
+    for cube in cubes:
+        cube.cell_methods = None
+
+
+def _equalise_coordinates(cubes):
+    """Equalise coordinates in cubes (in-place)."""
+    if not cubes:
+        return
+
+    # If metadata of a coordinate metadata is equal for all cubes, do not
+    # modify it; else remove long_name and attributes.
+    equal_coords_metadata = []
+    for coord in cubes[0].coords():
+        for other_cube in cubes[1:]:
+            other_cube_has_equal_coord = [
+                coord.metadata == other_coord.metadata for other_coord in
+                other_cube.coords(coord.name())
+            ]
+            if not any(other_cube_has_equal_coord):
+                break
+        else:
+            equal_coords_metadata.append(coord.metadata)
+
+    # Modify coordinates accordingly
+    for cube in cubes:
+        for coord in cube.coords():
+            if coord.metadata not in equal_coords_metadata:
+                coord.long_name = None
+                coord.attributes = None
+
+        # Additionally remove specific scalar coordinates which are not
+        # expected to be equal in the input cubes
+        scalar_coords_to_remove = ['p0', 'ptop']
+        for scalar_coord in cube.coords(dimensions=()):
+            if scalar_coord.var_name in scalar_coords_to_remove:
+                cube.remove_coord(scalar_coord)
+
+
+def _equalise_fx_variables(cubes):
+    """Equalise fx variables in cubes (in-place)."""
+    # Simple remove all fx variables
+    for cube in cubes:
+        remove_fx_variables(cube)
+
+
 def _combine(cubes):
     """Merge iris cubes into a single big cube with new dimension.
 
     This assumes that all input cubes have the same shape.
     """
-    equalise_attributes(cubes)  # in-place
+    # Equalise some metadata that can cause merge to fail (in-place)
+    # https://scitools-iris.readthedocs.io/en/stable/userguide/
+    #    merge_and_concat.html#common-issues-with-merge-and-concatenate
+    equalise_attributes(cubes)
+    _equalise_cell_methods(cubes)
+    _equalise_coordinates(cubes)
+    _equalise_fx_variables(cubes)
 
     for i, cube in enumerate(cubes):
         concat_dim = iris.coords.AuxCoord(i, var_name=CONCAT_DIM)
-
         cube.add_aux_coord(concat_dim)
-
-        # Clear some metadata that can cause merge to fail
-        # https://scitools-iris.readthedocs.io/en/stable/userguide/
-        #    merge_and_concat.html#common-issues-with-merge-and-concatenate
-
-        remove_fx_variables(cube)
-        cube.cell_methods = None
-
-        for coord in cube.coords():
-            coord.long_name = None
-            coord.attributes = None
-
-        # Remove specific scalar coordinates which are not expected to be equal
-        scalar_coords_to_remove = ['p0', 'ptop']
-        for scalar_coord in cube.coords(dimensions=()):
-            if scalar_coord.var_name in scalar_coords_to_remove:
-                cube.remove_coord(scalar_coord)
 
     cubes = iris.cube.CubeList(cubes)
 
