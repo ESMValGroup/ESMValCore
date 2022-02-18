@@ -224,7 +224,7 @@ def _align(cubes, span):
 
 
 def _equalise_cell_methods(cubes):
-    """Equalise coordinates in cubes (in-place)."""
+    """Equalise cell methods in cubes (in-place)."""
     # Simply remove all cell methods
     for cube in cubes:
         cube.cell_methods = None
