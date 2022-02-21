@@ -36,6 +36,10 @@ Bug fixes
 -  Removed scalar coordinates `p0` and `ptop` prior to merge in `multi_model_statistics` (`#1471 <https://github.com/ESMValGroup/ESMValCore/pull/1471>`__) `Axel Lauer <https://github.com/axel-lauer>`__
 -  Added `dataset` and `alias` attributes to `multi_model_statistics` output (`#1483 <https://github.com/ESMValGroup/ESMValCore/pull/1483>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Fixed issues with multi-model-statistics timeranges (`#1486 <https://github.com/ESMValGroup/ESMValCore/pull/1486>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fixed output messages for CMOR logging (`#1494 <https://github.com/ESMValGroup/ESMValCore/pull/1494>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fixed `clip_timerange` if only a single time point is extracted (`#1497 <https://github.com/ESMValGroup/ESMValCore/pull/1497>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fixed chunking in `multi_model_statistics` (`#1500 <https://github.com/ESMValGroup/ESMValCore/pull/1500>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fixed renaming of auxiliary coordinates in `multi_model_statistics` if coordinates are equal (`#1502 <https://github.com/ESMValGroup/ESMValCore/pull/1502>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
 Deprecations
 ~~~~~~~~~~~~
@@ -58,6 +62,9 @@ Documentation
 -  Added reference hook to conda lock in documentation install section (`#1473 <https://github.com/ESMValGroup/ESMValCore/pull/1473>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Increased ESMValCore version to 2.5.0rc1 (`#1477 <https://github.com/ESMValGroup/ESMValCore/pull/1477>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Added changelog for v2.5.0 release (`#1476 <https://github.com/ESMValGroup/ESMValCore/pull/1476>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Increased ESMValCore version to 2.5.0rc2 (`#1487 <https://github.com/ESMValGroup/ESMValCore/pull/1487>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Added some authors to citation and zenodo files (`#1488 <https://github.com/ESMValGroup/ESMValCore/pull/1488>`__) `SarahAlidoost <https://github.com/SarahAlidoost>`__
+-  Restored `scipy` intersphinx mapping (`#1491 <https://github.com/ESMValGroup/ESMValCore/pull/1491>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
 Fixes for datasets
 ~~~~~~~~~~~~~~~~~~
@@ -85,6 +92,8 @@ Automatic testing
 -  Implementing conda lock (`#1164 <https://github.com/ESMValGroup/ESMValCore/pull/1164>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Relocate `pytest-monitor` outputted database `.pymon` so `.pymon-journal` file should not be looked for by `pytest` (`#1441 <https://github.com/ESMValGroup/ESMValCore/pull/1441>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Switch to Mambaforge in Github Actions tests (`#1438 <https://github.com/ESMValGroup/ESMValCore/pull/1438>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Turn off conda lock file creation on any push on `main` branch from Github Action test (`#1489 <https://github.com/ESMValGroup/ESMValCore/pull/1489>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Add DRS path test for IPSLCM files (`#1490 <https://github.com/ESMValGroup/ESMValCore/pull/1490>`__) `Stéphane Sénési <https://github.com/senesis>`__
 -  Update Linux condalock file (various pull requests) github-actions[bot]
 
 Installation
