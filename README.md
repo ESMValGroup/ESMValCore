@@ -1,4 +1,9 @@
 # ESMValCore package
+This is a copy of the ESMValCore repository taken to preserve the version of code used to produce work from the EUCP WP5 "Lines of Evidence" work package. 
+
+See https://github.com/eucp-project/Lines-of-evidence-catalog for further information.
+
+The version of ESMValCore used is https://github.com/eucp-project/ESMValCore/releases/tag/v2.4.0-EUCP_WP5
 
 [![Documentation Status](https://readthedocs.org/projects/esmvaltool/badge/?version=latest)](https://esmvaltool.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3387139.svg)](https://doi.org/10.5281/zenodo.3387139)
