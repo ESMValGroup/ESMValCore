@@ -2,11 +2,12 @@
 import collections
 import os
 import re
+from typing import List
 
 # For entries in the following list, two appearances (but not more) are
 # allowed. This can be useful if a pull request needs to appear in multiple
 # sections.
-ALLOWED_EXCEPTIONS = []
+ALLOWED_EXCEPTIONS: List[str] = []
 
 
 def test_duplications_in_changelog():
