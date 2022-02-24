@@ -20,7 +20,8 @@ on:
   # turn it on only if needed
   push:
     branches:
-    - main
+      - main
+      - add_iris_test_module
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
