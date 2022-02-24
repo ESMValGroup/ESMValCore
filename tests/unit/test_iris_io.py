@@ -12,7 +12,7 @@ def create_fully_lazy_cube():
     # fully lazy coord points
     aux_coord = AuxCoord(da.arange(10), var_name='year')
     cube = Cube(
-        np.arange(10),
+        da.arange(10),
         var_name='x',
         dim_coords_and_dims=[(dim_coord, 0)],
         aux_coords_and_dims=[(aux_coord, 0)],
