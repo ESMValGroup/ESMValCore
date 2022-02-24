@@ -1,3 +1,4 @@
+"""Test various issues we discovered with iris over time."""
 import dask.array as da
 import iris
 import numpy as np
