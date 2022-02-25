@@ -36,7 +36,7 @@ requirements:
   run:
     # esmvaltool
     - python>=3.7
-    - iris>=3.1.0
+    - iris>=3.1.0,!=3.2.0.post0,!=3.2.0
     - python-stratify
     - scipy>=1.6
     # Normally installed via pip:
