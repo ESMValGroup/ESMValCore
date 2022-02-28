@@ -68,7 +68,7 @@ and the dataset:
 
   .. code-block:: yaml
 
-    - {dataset: ERA-Interim, project: OBS, type: reanaly, version: 1, start_year: 2014, end_year: 2015, tier: 3}
+    - {dataset: ERA-Interim, project: OBS6, type: reanaly, version: 1, start_year: 2014, end_year: 2015, tier: 3}
 
 in ``recipe.yml`` in ``datasets`` or ``additional_datasets``, the rules set in
 CMOR-DRS_ are used again and the file will be automatically found:
@@ -217,7 +217,7 @@ Explaining ``config-user/rootpath:``
   from projects that do not have their own rootpath set.
 
 * ``RAWOBS``: this is the `root` path(s) to where the raw observational data
-  files are stored; this is used by ``cmorize_obs``.
+  files are stored; this is used by ``esmvaltool data format``.
 
 Dataset definitions in ``recipe``
 ---------------------------------
