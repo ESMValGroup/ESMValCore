@@ -86,9 +86,7 @@ def esgf_search_files(facets):
 
     results = context.search(
         batch_size=500,
-        # enable ignore_facet_check once the following issue has been fixed:
-        # https://github.com/ESGF/esgf-pyclient/issues/75
-        # ignore_facet_check=True,
+        ignore_facet_check=True,
     )
 
     files = ESGFFile._from_results(results, facets)
