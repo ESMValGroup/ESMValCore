@@ -51,7 +51,7 @@ def test_iris_save_with_lazy_coordinate(tmp_path):
     save_path = tmp_path / 'test_iris_v32.nc'
     iris.save(cube, save_path)
     print("Attempted to load ", save_path)
-    loaded_cube = iris.load_cube(str(save_path))
+    loaded_cube = iris.load_cube(save_path.as_posix())
     assert loaded_cube
 
 
@@ -66,5 +66,5 @@ def test_iris_save_with_regular_coordinate(tmp_path):
     save_path = tmp_path / 'test_iris_v32.nc'
     iris.save(cube, save_path)
     print("Attempted to load ", save_path)
-    loaded_cube = iris.load_cube(str(save_path))
+    loaded_cube = iris.load_cube(save_path.as_posix())
     assert loaded_cube
