@@ -27,6 +27,8 @@ on:
   #  branches:
   #  - main
   issue_comment:
+    branches:
+      - trigger_GA_from_comment
     types:
       - created
   schedule:
