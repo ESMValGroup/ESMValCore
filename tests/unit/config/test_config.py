@@ -111,7 +111,9 @@ def test_get_extra_facets_cmip5():
     }
     extra_facets = get_extra_facets(**variable, extra_facets_dir=tuple())
 
-    assert extra_facets == {'institute': ['CSIRO-BOM'], 'product': 'output1'}
+    assert extra_facets == {
+        'institute': ['CSIRO-BOM'], 'product': ['output1', 'output2']
+        }
 
 
 def test_get_project_config(mocker):
