@@ -129,8 +129,8 @@ def dates_to_timerange(start_date, end_date):
 
     Note
     ----
-    This function ensures that dates in years format follow the pattern YYYY (i.e.,
-    that they have at least 4 digits). Other formats, such as  wildcards
+    This function ensures that dates in years format follow the pattern YYYY
+    (i.e., that they have at least 4 digits). Other formats, such as  wildcards
     (``'*'``) and relative time ranges (e.g., ``'P6Y'``) are used unchanged.
 
     Parameters

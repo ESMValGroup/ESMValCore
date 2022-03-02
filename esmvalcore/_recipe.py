@@ -813,18 +813,6 @@ def _update_extract_shape(settings, config_user):
         check.extract_shape(settings['extract_shape'])
 
 
-def _format_years(timerange):
-    """Format years that are not given in a 4-digit format."""
-    dates = timerange.split('/')
-    timerange = []
-    for date in dates:
-        if date != '*' and not date.startswith('P') and len(date) < 4:
-            date = date.zfill(4)
-        timerange.append(date)
-
-    return '/'.join(timerange)
-
-
 def _update_timerange(variable, config_user):
     """Update wildcards in timerange with found datetime values.
 
@@ -835,9 +823,6 @@ def _update_timerange(variable, config_user):
         return
 
     timerange = variable.get('timerange')
-    check.valid_time_selection(timerange)
-
-    timerange = _format_years(timerange)
     check.valid_time_selection(timerange)
 
     if '*' in timerange:
@@ -870,9 +855,11 @@ def _update_timerange(variable, config_user):
             timerange = timerange.replace('*', min_date)
         if '*' in timerange.split('/')[1]:
             timerange = timerange.replace('*', max_date)
-        (start_date, end_date) = timerange.split('/')
-        timerange = dates_to_timerange(start_date, end_date)
-        check.valid_time_selection(timerange)
+
+    # Make sure that years are in format YYYY
+    (start_date, end_date) = timerange.split('/')
+    timerange = dates_to_timerange(start_date, end_date)
+    check.valid_time_selection(timerange)
 
     variable['timerange'] = timerange
 
