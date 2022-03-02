@@ -37,7 +37,7 @@ on:
 jobs:
   linux:
     runs-on: "ubuntu-latest"
-    if: ${{ github.event.issue.pull_request && github.event.comment.body == 'run GA tests' }}
+    if: ${{ github.event.issue.pull_request && github.event.comment.body == 'runGAtests' }}
     strategy:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
