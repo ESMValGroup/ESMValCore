@@ -279,9 +279,9 @@ def _truncate_dates(date, file_date):
 
     Warning
     -------
-    This function assumes that the years in ``date`` and ``file_data`` have the
+    This function assumes that the years in ``date`` and ``file_date`` have the
     same number of digits. If this is not the case, pad the dates with leading
-    zeros (e.g., use ``data='0100'`` and ``file_date='199901'`` for a correct
+    zeros (e.g., use ``date='0100'`` and ``file_date='199901'`` for a correct
     comparison).
 
     """
