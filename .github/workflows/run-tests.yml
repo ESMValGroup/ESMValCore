@@ -27,6 +27,8 @@ on:
   #  branches:
   #  - main
   issue_comment:
+    branches:
+      - trigger_GA_from_comment
     types:
       - created
   schedule:
@@ -35,7 +37,7 @@ on:
 jobs:
   linux:
     runs-on: "ubuntu-latest"
-    if: ${{ github.event.issue.pull_request && github.event.comment.body == 'runGAtests' }}
+    if: ${{ github.event.issue.pull_request && github.event.comment.body == 'run GA tests' }}
     strategy:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
