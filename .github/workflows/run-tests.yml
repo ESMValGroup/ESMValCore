@@ -27,8 +27,6 @@ on:
   #  branches:
   #  - main
   issue_comment:
-    branches:
-      - trigger_GA_from_comment
     types:
       - created
   schedule:
@@ -37,7 +35,6 @@ on:
 jobs:
   linux:
     runs-on: "ubuntu-latest"
-    if: ${{ github.event.issue.pull_request && github.event.comment.body == 'runGAtests' }}
     strategy:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10"]
@@ -45,6 +42,16 @@ jobs:
     name: Linux Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
+      - uses: khan/pull-request-comment-trigger@master
+        id: check
+        with:
+          trigger: '@runGAtests'
+          reaction: rocket
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+      - shell: bash -l {0}
+        run: 'echo "GA Tests - found them!"'
+        if: steps.check.outputs.triggered == 'true'
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: esmvalcore
