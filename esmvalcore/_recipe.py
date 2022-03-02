@@ -28,6 +28,7 @@ from ._data_finder import (
     _get_timerange_from_years,
     _parse_period,
     _truncate_dates,
+    dates_to_timerange,
     get_input_filelist,
     get_multiproduct_filename,
     get_output_file,
@@ -673,7 +674,7 @@ def _get_common_attributes(products, settings):
         timerange = product.attributes['timerange']
         start, end = _parse_period(timerange)
         if 'timerange' not in attributes:
-            attributes['timerange'] = f'{start}/{end}'
+            attributes['timerange'] = dates_to_timerange(start, end)
         else:
             start_date, end_date = _parse_period(attributes['timerange'])
             start_date, start = _truncate_dates(start_date, start)
@@ -692,7 +693,7 @@ def _get_common_attributes(products, settings):
                 start_date = min([start, start_date])
                 end_date = max([end, end_date])
 
-            attributes['timerange'] = f'{start_date}/{end_date}'
+            attributes['timerange'] = dates_to_timerange(start_date, end_date)
 
     # Ensure that attributes start_year and end_year are always available
     start_year, end_year = _parse_period(attributes['timerange'])
@@ -853,9 +854,11 @@ def _update_timerange(variable, config_user):
             timerange = timerange.replace('*', min_date)
         if '*' in timerange.split('/')[1]:
             timerange = timerange.replace('*', max_date)
+        (start_date, end_date) = timerange.split('/')
+        timerange = dates_to_timerange(start_date, end_date)
         check.valid_time_selection(timerange)
 
-    variable.update({'timerange': timerange})
+    variable['timerange'] = timerange
 
 
 def _match_products(products, variables):
