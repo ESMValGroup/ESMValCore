@@ -124,16 +124,50 @@ def get_start_end_date(filename):
     return start_date, end_date
 
 
+def dates_to_timerange(start_date, end_date):
+    """Convert ``start_date`` and ``end_date`` to ``timerange``.
+
+    Note
+    ----
+    This function ensures that dates in years format follow the pattern YYYY
+    (i.e., that they have at least 4 digits). Other formats, such as  wildcards
+    (``'*'``) and relative time ranges (e.g., ``'P6Y'``) are used unchanged.
+
+    Parameters
+    ----------
+    start_date: int or str
+        Start date.
+    end_date: int or str
+        End date.
+
+    Returns
+    -------
+    str
+        ``timerange`` in the form ``'start_date/end_date'``.
+
+    """
+    start_date = str(start_date)
+    end_date = str(end_date)
+
+    # Pad years with 0s if not wildcard or relative time range
+    if start_date != '*' and not start_date.startswith('P'):
+        start_date = start_date.zfill(4)
+    if end_date != '*' and not end_date.startswith('P'):
+        end_date = end_date.zfill(4)
+
+    return f'{start_date}/{end_date}'
+
+
 def _get_timerange_from_years(variable):
     """Build `timerange` tag from tags `start_year` and `end_year`."""
     start_year = variable.get('start_year')
     end_year = variable.get('end_year')
     if start_year and end_year:
-        variable['timerange'] = f'{start_year}/{end_year}'
+        variable['timerange'] = dates_to_timerange(start_year, end_year)
     elif start_year:
-        variable['timerange'] = f'{start_year}/{start_year}'
+        variable['timerange'] = dates_to_timerange(start_year, start_year)
     elif end_year:
-        variable['timerange'] = f'{end_year}/{end_year}'
+        variable['timerange'] = dates_to_timerange(end_year, end_year)
     variable.pop('start_year', None)
     variable.pop('end_year', None)
 
@@ -237,9 +271,19 @@ def _parse_period(timerange):
 
 
 def _truncate_dates(date, file_date):
-    """Truncate dates of different lengths.
+    """Truncate dates of different lengths and convert to integers.
 
-    This allows to compare the dates chronologically.
+    This allows to compare the dates chronologically. For example, this allows
+    comparisons between the formats 'YYYY' and 'YYYYMM', and 'YYYYMM' and
+    'YYYYMMDD'.
+
+    Warning
+    -------
+    This function assumes that the years in ``date`` and ``file_date`` have the
+    same number of digits. If this is not the case, pad the dates with leading
+    zeros (e.g., use ``date='0100'`` and ``file_date='199901'`` for a correct
+    comparison).
+
     """
     date = re.sub("[^0-9]", '', date)
     file_date = re.sub("[^0-9]", '', file_date)
@@ -248,7 +292,7 @@ def _truncate_dates(date, file_date):
     elif len(date) > len(file_date):
         date = date[0:len(file_date)]
 
-    return date, file_date
+    return int(date), int(file_date)
 
 
 def select_files(filenames, timerange):
@@ -261,9 +305,9 @@ def select_files(filenames, timerange):
     the time resolution of the file.
     """
     selection = []
-    start_date, end_date = _parse_period(timerange)
 
     for filename in filenames:
+        start_date, end_date = _parse_period(timerange)
         start, end = get_start_end_date(filename)
 
         start_date, start = _truncate_dates(start_date, start)

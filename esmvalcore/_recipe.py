@@ -28,6 +28,7 @@ from ._data_finder import (
     _get_timerange_from_years,
     _parse_period,
     _truncate_dates,
+    dates_to_timerange,
     get_input_filelist,
     get_multiproduct_filename,
     get_output_file,
@@ -673,7 +674,7 @@ def _get_common_attributes(products, settings):
         timerange = product.attributes['timerange']
         start, end = _parse_period(timerange)
         if 'timerange' not in attributes:
-            attributes['timerange'] = f'{start}/{end}'
+            attributes['timerange'] = dates_to_timerange(start, end)
         else:
             start_date, end_date = _parse_period(attributes['timerange'])
             start_date, start = _truncate_dates(start_date, start)
@@ -692,7 +693,7 @@ def _get_common_attributes(products, settings):
                 start_date = min([start, start_date])
                 end_date = max([end, end_date])
 
-            attributes['timerange'] = f'{start_date}/{end_date}'
+            attributes['timerange'] = dates_to_timerange(start_date, end_date)
 
     # Ensure that attributes start_year and end_year are always available
     start_year, end_year = _parse_period(attributes['timerange'])
@@ -812,18 +813,6 @@ def _update_extract_shape(settings, config_user):
         check.extract_shape(settings['extract_shape'])
 
 
-def _format_years(timerange):
-    """Format years that are not given in a 4-digit format."""
-    dates = timerange.split('/')
-    timerange = []
-    for date in dates:
-        if date != '*' and not date.startswith('P') and len(date) < 4:
-            date = date.zfill(4)
-        timerange.append(date)
-
-    return '/'.join(timerange)
-
-
 def _update_timerange(variable, config_user):
     """Update wildcards in timerange with found datetime values.
 
@@ -836,12 +825,25 @@ def _update_timerange(variable, config_user):
     timerange = variable.get('timerange')
     check.valid_time_selection(timerange)
 
-    timerange = _format_years(timerange)
-    check.valid_time_selection(timerange)
-
     if '*' in timerange:
         (files, _, _) = _find_input_files(variable, config_user['rootpath'],
                                           config_user['drs'])
+        if not files:
+            if not config_user.get('offline', True):
+                msg = (
+                    " Please note that automatic download is not supported "
+                    "with indeterminate time ranges at the moment. Please use "
+                    "a concrete time range (i.e., no wildcards '*') in your "
+                    "recipe or run ESMValTool with --offline=True."
+                )
+            else:
+                msg = ""
+            raise InputFilesNotFound(
+                f"Missing data for {variable['alias']}: "
+                f"{variable['short_name']}. Cannot determine indeterminate "
+                f"time range '{timerange}'.{msg}"
+            )
+
         intervals = [get_start_end_date(name) for name in files]
 
         min_date = min(interval[0] for interval in intervals)
@@ -853,9 +855,13 @@ def _update_timerange(variable, config_user):
             timerange = timerange.replace('*', min_date)
         if '*' in timerange.split('/')[1]:
             timerange = timerange.replace('*', max_date)
-        check.valid_time_selection(timerange)
 
-    variable.update({'timerange': timerange})
+    # Make sure that years are in format YYYY
+    (start_date, end_date) = timerange.split('/')
+    timerange = dates_to_timerange(start_date, end_date)
+    check.valid_time_selection(timerange)
+
+    variable['timerange'] = timerange
 
 
 def _match_products(products, variables):
