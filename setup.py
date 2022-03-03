@@ -30,6 +30,7 @@ REQUIREMENTS = {
     # Installation dependencies
     # Use with pip install . to install from source
     'install': [
+        'cartopy',
         'cf-units>=3.0.0',
         'dask[array]',
         'esgf-pyclient>=0.3.1',
@@ -46,6 +47,7 @@ REQUIREMENTS = {
         'netCDF4',
         'numpy',
         'pandas',
+        'pillow',
         'prov',
         'psutil',
         'pybtex',
