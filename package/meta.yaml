@@ -40,8 +40,9 @@ requirements:
     - python-stratify
     - scipy>=1.6
     # Normally installed via pip:
-    - cftime
+    - cartopy
     - cf-units>=3.0.0
+    - cftime
     - cython  # required by cf-units but not automatically installed
     - esgf-pyclient
     - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
@@ -56,6 +57,8 @@ requirements:
     - nested-lookup
     - netCDF4
     - numpy
+    - pandas
+    - pillow
     - prov
     - psutil
     - pybtex
