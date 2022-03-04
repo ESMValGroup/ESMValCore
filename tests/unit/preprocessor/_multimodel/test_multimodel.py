@@ -196,12 +196,12 @@ def test_compute_slices(length, slices):
     assert result == slices
 
 
-def test_compute_slices_early_termination():
-    """Test that ``_compute_slices`` terminates when reaching end index."""
+def test_compute_slices_exceed_end_index():
+    """Test that ``_compute_slices`` terminates when exceeding end index."""
     # The following settings will result in a cube length of 71, 10 slices and
     # a slice length of 8. Thus, without early termination, the last slice
     # would be slice(72, 71), which would result in an exception.
-    cube_data = mock.Mock(nbytes=1.1 * 2**30)  # roughly 1.1 GB
+    cube_data = mock.Mock(nbytes=1.1 * 2**30)  # roughly 1.1 GiB
     cube = mock.Mock(spec=Cube, data=cube_data, shape=(71,))
     cubes = [cube] * 9
 
@@ -219,6 +219,36 @@ def test_compute_slices_early_termination():
         slice(48, 56, None),
         slice(56, 64, None),
         slice(64, 71, None),
+    ]
+    assert slices == expected_slices
+
+
+def test_compute_slices_equals_end_index():
+    """Test that ``_compute_slices`` terminates when reaching end index."""
+    # The following settings will result in a cube length of 36, 13 slices and
+    # a slice length of 3. Thus, without early termination, the last slice
+    # would be slice(36, 39), which would result in an exception.
+    cube_data = mock.Mock(nbytes=1.05 * 2**30)  # roughly 1.05 GiB
+    cube = mock.Mock(spec=Cube, data=cube_data, shape=(36,))
+    cubes = [cube] * 12
+
+    slices = list(mm._compute_slices(cubes))
+
+    # Early termination lead to 12 (instead of 13) slices
+    assert len(slices) == 12
+    expected_slices = [
+        slice(0, 3, None),
+        slice(3, 6, None),
+        slice(6, 9, None),
+        slice(9, 12, None),
+        slice(12, 15, None),
+        slice(15, 18, None),
+        slice(18, 21, None),
+        slice(21, 24, None),
+        slice(24, 27, None),
+        slice(27, 30, None),
+        slice(30, 33, None),
+        slice(33, 36, None),
     ]
     assert slices == expected_slices
 

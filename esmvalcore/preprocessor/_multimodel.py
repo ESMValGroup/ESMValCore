@@ -296,10 +296,10 @@ def _combine(cubes):
 
 
 def _compute_slices(cubes):
-    """Create cube slices resulting in a combined cube of about 1 GB."""
-    gigabyte = 2**30
+    """Create cube slices resulting in a combined cube of about 1 GiB."""
+    gibibyte = 2**30
     total_bytes = cubes[0].data.nbytes * len(cubes)
-    n_slices = int(np.ceil(total_bytes / gigabyte))
+    n_slices = int(np.ceil(total_bytes / gibibyte))
 
     n_timesteps = cubes[0].shape[0]
     slice_len = int(np.ceil(n_timesteps / n_slices))
@@ -307,7 +307,7 @@ def _compute_slices(cubes):
     for i in range(n_slices):
         start = i * slice_len
         end = (i + 1) * slice_len
-        if end > n_timesteps:
+        if end >= n_timesteps:
             yield slice(start, n_timesteps)
             return
         yield slice(start, end)
