@@ -155,6 +155,19 @@ class Test(tests.Test):
 
         _CACHE.clear()
 
+    def test_regrid_generic_missing_reference(self):
+        emsg = "No reference specified for generic regridding."
+        with self.assertRaisesRegex(ValueError, emsg):
+            regrid(self.src_cube, '1x1', {})
+
+    def test_regrid_generic_invalid_reference(self):
+        emsg = "Could not import specified generic regridding module."
+        with self.assertRaisesRegex(ValueError, emsg):
+            regrid(self.src_cube, '1x1', {"reference": "this.does:not.exist"})
+
+    def test_regrid_generic_regridding(self):
+        regrid(self.src_cube, '1x1', {"reference": "iris.analysis:Linear"})
+
 
 def _make_coord(start: float, stop: float, step: int, *, name: str):
     """Helper function for creating a coord."""

@@ -554,7 +554,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         except ImportError as import_err:
             raise ValueError(
                 "Could not import specified generic regridding module. "
-                "Please double check spelling and if the required module is "
+                "Please double check spelling and that the required module is "
                 "installed.") from import_err
         if separator:
             for attr in scheme_name.split('.'):
