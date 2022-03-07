@@ -458,7 +458,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
 
     - ``start_longitude``: longitude at the center of the first grid cell.
     - ``end_longitude``: longitude at the center of the last grid cell.
-    - ``step_longitude``: constant longitude distance between grid cell
+    - ``step_longitude``: constant longitude distance between grid cell \
         centers.
     - ``start_latitude``: latitude at the center of the first grid cell.
     - ``end_latitude``: longitude at the center of the last grid cell.
@@ -479,13 +479,12 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         Alternatively, a dictionary with a regional target grid may
         be specified (see above).
 
-    scheme : str
-        The regridding scheme to perform, choose from
-        ``linear``,
-        ``linear_extrapolate``,
-        ``nearest``,
-        ``area_weighted``,
+    scheme : str or dict
+        The regridding scheme to perform. If both source and target grid are
+        structured (regular or irregular), can be one of the built-in schemes
+        ``linear``, ``linear_extrapolate``, ``nearest``, ``area_weighted``,
         ``unstructured_nearest``.
+        Alternatively, a `dict` that specifies generic regridding (see below).
     lat_offset : bool
         Offset the grid centers of the latitude coordinate w.r.t. the
         pole by half a grid step. This argument is ignored if ``target_grid``
@@ -503,21 +502,60 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     See Also
     --------
     extract_levels : Perform vertical regridding.
+
+    Notes
+    -----
+    This preprocessor allows for the use of arbitrary Iris regridding schemes,
+    that is anything that can be passed as a scheme to
+    :meth:`iris.cube.Cube.regrid` is possible. This enables the use of further
+    parameters for existing schemes, as well as the use of more advanced
+    schemes for example for unstructured meshes.
+    To use this functionality, a dictionary must be passed for the scheme with
+    a mandatory entry of `reference` in the form specified for the object
+    reference of the `entry point data model <https://packaging.python.org/en/
+    latest/specifications/entry-points/#data-model>`_,
+    i.e. `importable.module:object.attr`. This is used as a factory for the
+    scheme. Any further entries in the dictionary are passed as keyword
+    arguments to the factory.
+
+    For example, to use the familiar :class:`iris.analysis.Linear` regridding
+    scheme with a custom extrapolation mode, use
+
+    .. code-block:: yaml
+
+        my_preprocessor:
+          regrid:
+            target: 1x1
+            scheme:
+              reference: iris.analysis:Linear
+              extrapolation_mode: nanmask
+
+    To use the area weighted regridder available in
+    :class:`esmf_regrid.schemes.ESMFAreaWeighted`, make sure that
+    `iris-esmf-regrid` is installed and use
+
+    .. code-block:: yaml
+
+        my_preprocessor:
+          regrid:
+            target: 1x1
+            scheme:
+              reference: esmf_regrid.schemes:ESMFAreaWeighted
     """
     if isinstance(scheme, dict):
         try:
             object_ref = scheme.pop("reference")
-        except KeyError as e:
+        except KeyError as key_err:
             raise ValueError(
-                "No reference specified for generic regridding.") from e
+                "No reference specified for generic regridding.") from key_err
         module_name, separator, scheme_name = object_ref.partition(":")
         try:
             obj = importlib.import_module(module_name)
-        except ImportError as e:
+        except ImportError as import_err:
             raise ValueError(
                 "Could not import specified generic regridding module. "
                 "Please double check spelling and if the required module is "
-                "installed.") from e
+                "installed.") from import_err
         if separator:
             for attr in scheme_name.split('.'):
                 obj = getattr(obj, attr)
