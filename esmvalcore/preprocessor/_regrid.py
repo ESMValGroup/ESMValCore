@@ -505,10 +505,23 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     extract_levels : Perform vertical regridding.
     """
     if isinstance(scheme, dict):
-        module_name, scheme_name = scheme.pop("scheme").rsplit(".", 1)
-        scheme_module = importlib.import_module(module_name)
-        raw_scheme = getattr(scheme_module, scheme_name)
-        loaded_scheme = raw_scheme(**scheme)
+        try:
+            object_ref = scheme.pop("reference")
+        except KeyError as e:
+            raise ValueError(
+                "No reference specified for generic regridding.") from e
+        module_name, separator, scheme_name = object_ref.partition(":")
+        try:
+            obj = importlib.import_module(module_name)
+        except ImportError as e:
+            raise ValueError(
+                "Could not import specified generic regridding module. "
+                "Please double check spelling and if the required module is "
+                "installed.") from e
+        if separator:
+            for attr in scheme_name.split('.'):
+                obj = getattr(obj, attr)
+        loaded_scheme = obj(**scheme)
     else:
         loaded_scheme = HORIZONTAL_SCHEMES.get(scheme.lower())
     if loaded_scheme is None:
