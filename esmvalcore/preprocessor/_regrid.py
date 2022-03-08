@@ -531,8 +531,8 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
               extrapolation_mode: nanmask
 
     To use the area weighted regridder available in
-    :class:`esmf_regrid.schemes.ESMFAreaWeighted`, make sure that
-    `iris-esmf-regrid` is installed and use
+    :class:`esmf_regrid.ESMFAreaWeighted`, make sure that `iris-esmf-regrid` is
+    installed and use
 
     .. code-block:: yaml
 
@@ -540,7 +540,11 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
           regrid:
             target: 1x1
             scheme:
-              reference: esmf_regrid.schemes:ESMFAreaWeighted
+              reference: esmf_regrid:ESMFAreaWeighted
+
+    .. note::
+
+        Note that :doc:`iris-esmf-regrid:index` is still experimental.
     """
     if isinstance(scheme, dict):
         try:
