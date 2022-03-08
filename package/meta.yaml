@@ -50,6 +50,7 @@ requirements:
     - fire
     - geopy
     - humanfriendly
+    - iris-esmf-regrid
     - isodate
     - jinja2
     - mpich<3.4  # prevent external build
