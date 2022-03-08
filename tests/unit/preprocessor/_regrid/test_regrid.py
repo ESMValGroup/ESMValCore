@@ -168,6 +168,10 @@ class Test(tests.Test):
     def test_regrid_generic_regridding(self):
         regrid(self.src_cube, '1x1', {"reference": "iris.analysis:Linear"})
 
+    def test_regrid_generic_third_party(self):
+        regrid(self.src_cube, '1x1',
+               {"reference": "esmf_regrid:ESMFAreaWeighted"})
+
 
 def _make_coord(start: float, stop: float, step: int, *, name: str):
     """Helper function for creating a coord."""
