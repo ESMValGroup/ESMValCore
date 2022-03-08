@@ -511,10 +511,10 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     parameters for existing schemes, as well as the use of more advanced
     schemes for example for unstructured meshes.
     To use this functionality, a dictionary must be passed for the scheme with
-    a mandatory entry of `reference` in the form specified for the object
+    a mandatory entry of ``reference`` in the form specified for the object
     reference of the `entry point data model <https://packaging.python.org/en/
     latest/specifications/entry-points/#data-model>`_,
-    i.e. `importable.module:object.attr`. This is used as a factory for the
+    i.e. ``importable.module:object.attr``. This is used as a factory for the
     scheme. Any further entries in the dictionary are passed as keyword
     arguments to the factory.
 
@@ -531,7 +531,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
               extrapolation_mode: nanmask
 
     To use the area weighted regridder available in
-    :class:`esmf_regrid.ESMFAreaWeighted`, make sure that `iris-esmf-regrid` is
+    :class:`esmf_regrid.ESMFAreaWeighted`, make sure that ``iris-esmf-regrid`` is
     installed and use
 
     .. code-block:: yaml
