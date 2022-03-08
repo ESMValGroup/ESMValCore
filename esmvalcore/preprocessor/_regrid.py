@@ -505,8 +505,8 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
 
     Notes
     -----
-    This preprocessor allows for the use of arbitrary Iris regridding schemes,
-    that is anything that can be passed as a scheme to
+    This preprocessor allows for the use of arbitrary :doc:`Iris <iris:index>`
+    regridding schemes, that is anything that can be passed as a scheme to
     :meth:`iris.cube.Cube.regrid` is possible. This enables the use of further
     parameters for existing schemes, as well as the use of more advanced
     schemes for example for unstructured meshes.
@@ -531,8 +531,8 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
               extrapolation_mode: nanmask
 
     To use the area weighted regridder available in
-    :class:`esmf_regrid.ESMFAreaWeighted`, make sure that ``iris-esmf-regrid`` is
-    installed and use
+    :class:`esmf_regrid.ESMFAreaWeighted`, make sure that ``iris-esmf-regrid``
+    is installed and use
 
     .. code-block:: yaml
 
