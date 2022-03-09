@@ -829,7 +829,7 @@ The arguments are defined below:
 Regridding (interpolation, extrapolation) schemes
 -------------------------------------------------
 
-ESMValTool has a number of built-in schemes, which are presented in
+ESMValTool has a number of built-in regridding schemes, which are presented in
 :ref:`built-in regridding schemes`. Additionally, it is also possible to use
 third party regridding schemes designed for use with :doc:`Iris
 <iris:index>`. This is explained in :ref:`generic regridding schemes`.
