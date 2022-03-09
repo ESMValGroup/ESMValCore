@@ -168,9 +168,16 @@ class Test(tests.Test):
     def test_regrid_generic_regridding(self):
         regrid(self.src_cube, '1x1', {"reference": "iris.analysis:Linear"})
 
+    third_party_regridder = mock.Mock()
+
     def test_regrid_generic_third_party(self):
         regrid(self.src_cube, '1x1',
-               {"reference": "esmf_regrid:ESMFAreaWeighted"})
+               {"reference":
+                "tests.unit.preprocessor._regrid.test_regrid:"
+                "Test.third_party_regridder",
+                "method": "good",
+                })
+        self.third_party_regridder.assert_called_once_with(method="good")
 
 
 def _make_coord(start: float, stop: float, step: int, *, name: str):
