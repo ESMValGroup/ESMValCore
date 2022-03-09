@@ -41,6 +41,7 @@ Bug fixes
 -  Fixed chunking in `multi_model_statistics` (`#1500 <https://github.com/ESMValGroup/ESMValCore/pull/1500>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Fixed renaming of auxiliary coordinates in `multi_model_statistics` if coordinates are equal (`#1502 <https://github.com/ESMValGroup/ESMValCore/pull/1502>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Fixed timerange selection for automatic downloads (`#1517 <https://github.com/ESMValGroup/ESMValCore/pull/1517>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fixed chunking in `multi_model_statistics` (`#1524 <https://github.com/ESMValGroup/ESMValCore/pull/1524>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
 Deprecations
 ~~~~~~~~~~~~
@@ -70,6 +71,8 @@ Documentation
 -  Fix download instructions for the MSWEP dataset (`#1506 <https://github.com/ESMValGroup/ESMValCore/pull/1506>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
 -  Documentation updated for the new cmorizer framework (`#1417 <https://github.com/ESMValGroup/ESMValCore/pull/1417>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
 -  Added tests for duplicates in changelog and removed duplicates (`#1508 <https://github.com/ESMValGroup/ESMValCore/pull/1508>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Increased ESMValCore version to 2.5.0rc4 (`#1519 <https://github.com/ESMValGroup/ESMValCore/pull/1519>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Add Github Actions Test badge in README (`#1526 <https://github.com/ESMValGroup/ESMValCore/pull/1526>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 
 Fixes for datasets
 ~~~~~~~~~~~~~~~~~~
@@ -84,6 +87,7 @@ Preprocessor
 -  Added option to explicitly not use fx variables in preprocessors (`#1416 <https://github.com/ESMValGroup/ESMValCore/pull/1416>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Add `extract_location` preprocessor to extract town, city, mountains etc - anything specifiable by a location (`#1251 <https://github.com/ESMValGroup/ESMValCore/pull/1251>`__) `Javier Vegas-Regidor <https://github.com/jvegreg>`__
 -  Add ensemble statistics preprocessor and 'groupby' option for multimodel (`#673 <https://github.com/ESMValGroup/ESMValCore/pull/673>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Generic regridding preprocessor (`#1448 <https://github.com/ESMValGroup/ESMValCore/pull/1448>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
 
 Automatic testing
 ~~~~~~~~~~~~~~~~~
@@ -100,6 +104,7 @@ Automatic testing
 -  Turn off conda lock file creation on any push on `main` branch from Github Action test (`#1489 <https://github.com/ESMValGroup/ESMValCore/pull/1489>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Add DRS path test for IPSLCM files (`#1490 <https://github.com/ESMValGroup/ESMValCore/pull/1490>`__) `Stéphane Sénési <https://github.com/senesis>`__
 -  Add a test module that runs tests of `iris` I/O everytime we notice serious bugs there (`#1510 <https://github.com/ESMValGroup/ESMValCore/pull/1510>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  [Github Actions] Trigger Github Actions tests (`run-tests.yml` workflow) from a comment in a PR (`#1520 <https://github.com/ESMValGroup/ESMValCore/pull/1520>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Update Linux condalock file (various pull requests) github-actions[bot]
 
 Installation
@@ -107,6 +112,8 @@ Installation
 
 -  Move `nested-lookup` dependency to `environment.yml` to be installed from conda-forge instead of PyPi (`#1481 <https://github.com/ESMValGroup/ESMValCore/pull/1481>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Pinned `iris` (`#1511 <https://github.com/ESMValGroup/ESMValCore/pull/1511>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Updated dependencies (`#1521 <https://github.com/ESMValGroup/ESMValCore/pull/1521>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Pinned iris<3.2.0 (`#1525 <https://github.com/ESMValGroup/ESMValCore/pull/1525>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
 Improvements
 ~~~~~~~~~~~~
