@@ -931,7 +931,7 @@ example of its usage in an ESMValTool preprocessor is:
         regrid:
           target_grid: 2.5x2.5
           scheme:
-            reference: esmf_regrid:ESMFAreaWeighted
+            reference: esmf_regrid.schemes:ESMFAreaWeighted
             mdtol: 0.7
 
 .. TODO: Remove the following warning once things have settled a bit.
