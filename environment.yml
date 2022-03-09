@@ -8,6 +8,7 @@ dependencies:
   - cf-units>=3.0.0
   - cftime
   - compilers
+  - curl<7.82
   # 1.8.18/py39, they seem weary to build manylinux wheels
   # and pypi ver built with older gdal
   - fiona
