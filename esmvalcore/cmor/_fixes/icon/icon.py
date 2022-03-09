@@ -1,6 +1,7 @@
 """On-the-fly CMORizer for ICON."""
 
 import logging
+import warnings
 from datetime import datetime
 from pathlib import Path
 from shutil import copyfileobj
@@ -51,7 +52,7 @@ class AllVars(Fix):
             age = now - mtime
             if age < CACHE_VALIDITY:
                 logger.debug("Using cached ICON grid file '%s'", grid_path)
-                self._horizontal_grids[grid_name] = iris.load(str(grid_path))
+                self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
                 return self._horizontal_grids[grid_name]
             logger.debug("Existing cached ICON grid file '%s' is outdated",
                          grid_path)
@@ -59,14 +60,14 @@ class AllVars(Fix):
         # Download file if necessary
         logger.debug("Attempting to download ICON grid file from '%s' to '%s'",
                      grid_url, grid_path)
-        with requests.get(grid_url, stream=True) as response:
+        with requests.get(grid_url, stream=True, timeout=TIMEOUT) as response:
             response.raise_for_status()
             with open(grid_path, 'wb') as file:
                 copyfileobj(response.raw, file)
-        logger.debug("Successfully downloaded ICON grid file from '%s' to "
-                     "'%s'", grid_url, grid_path)
+        logger.info("Successfully downloaded ICON grid file from '%s' to '%s'",
+                    grid_url, grid_path)
 
-        self._horizontal_grids[grid_name] = iris.load(str(grid_path))
+        self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
         return self._horizontal_grids[grid_name]
 
     def fix_metadata(self, cubes):
@@ -152,7 +153,7 @@ class AllVars(Fix):
         horizontal_grid = self.get_horizontal_grid(grid_file_url)
 
         # Use 'cell_area' as dummy cube to extract coordinates
-        # Note: it might be necessary to extract this once more coord_names are
+        # Note: it might be necessary to expand this when more coord_names are
         # supported
         grid_cube = horizontal_grid.extract_cube(
             var_name_constraint('cell_area'))
@@ -297,6 +298,14 @@ class AllVars(Fix):
         t_coord.standard_name = 'time'
         t_coord.long_name = 'time'
 
+        # Add bounds if possible (not possible if cube only contains single
+        # time point)
+        if not t_coord.has_bounds():
+            try:
+                t_coord.guess_bounds()
+            except ValueError:
+                pass
+
         if 'invalid_units' not in t_coord.attributes:
             return
 
@@ -321,6 +330,19 @@ class AllVars(Fix):
 
         t_coord.points = new_dt_points
         t_coord.units = new_t_unit
+
+    @staticmethod
+    def _load_cubes(path):
+        """Load cubes and ignore certain warnings."""
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                message="Ignoring netCDF variable .* invalid units .*",
+                category=UserWarning,
+                module='iris',
+            )
+            cubes = iris.load(str(path))
+        return cubes
 
 
 class Siconca(Fix):
