@@ -45,7 +45,7 @@ It is the responsibility of the author to make sure the pull request is ready to
 - [ ] [🛠][1] Changes are [backward compatible](https://docs.esmvaltool.org/projects/ESMValCore/en/latest/contributing.html#backward-compatibility)
 - [ ] [🛠][1] Any changed [dependencies have been added or removed](https://docs.esmvaltool.org/projects/ESMValCore/en/latest/contributing.html#dependencies) correctly
 - [ ] [🛠][1] The [list of authors](https://docs.esmvaltool.org/projects/ESMValCore/en/latest/contributing.html#list-of-authors) is up to date
-- [ ] [🛠][1] All [checks below this pull request](https://docs.esmvaltool.org/projects/ESMValCore/en/latest/contributing.html#pull-request-checks) were successful 
+- [ ] [🛠][1] All [checks below this pull request](https://docs.esmvaltool.org/projects/ESMValCore/en/latest/contributing.html#pull-request-checks) were successful
 
 ***
 
