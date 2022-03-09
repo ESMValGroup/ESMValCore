@@ -2,11 +2,15 @@
 
 import logging
 from datetime import datetime
+from pathlib import Path
+from shutil import copyfileobj
+from urllib.parse import urlparse
 
 import cf_units
 import dask.array as da
 import iris
 import numpy as np
+import requests
 
 from esmvalcore.iris_helpers import date2num, var_name_constraint
 
@@ -16,25 +20,113 @@ from ..shared import add_scalar_height_coord, add_scalar_typesi_coord
 logger = logging.getLogger(__name__)
 
 
+CACHE_DIR = Path.home() / '.esmvaltool' / 'cache'
+CACHE_VALIDITY = 7 * 24 * 60 * 60  # [s]; = 1 week
+TIMEOUT = 5 * 60  # [s]; = 5 min
+GRID_FILE_ATTR = 'grid_file_uri'
+
+
 class AllVars(Fix):
     """Fixes for all variables."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize fix."""
+        super().__init__(*args, **kwargs)
+        self._horizontal_grids = {}
+
+    def get_horizontal_grid(self, grid_url):
+        """Get horizontal grid."""
+        # If already loaded, return the horizontal grid (cube)
+        grid_name = str(grid_url)
+        if grid_name in self._horizontal_grids:
+            return self._horizontal_grids[grid_name]
+
+        # Check if grid file has recently been downloaded and load it if
+        # possible
+        parsed_url = urlparse(grid_url)
+        grid_path = CACHE_DIR / Path(parsed_url.path).name
+        if grid_path.exists():
+            mtime = grid_path.stat().st_mtime
+            now = datetime.now().timestamp()
+            age = now - mtime
+            if age < CACHE_VALIDITY:
+                logger.debug("Using cached ICON grid file '%s'", grid_path)
+                self._horizontal_grids[grid_name] = iris.load(str(grid_path))
+                return self._horizontal_grids[grid_name]
+            logger.debug("Existing cached ICON grid file '%s' is outdated",
+                         grid_path)
+
+        # Download file if necessary
+        logger.debug("Attempting to download ICON grid file from '%s' to '%s'",
+                     grid_url, grid_path)
+        with requests.get(grid_url, stream=True) as response:
+            response.raise_for_status()
+            with open(grid_path, 'wb') as file:
+                copyfileobj(response.raw, file)
+        logger.debug("Successfully downloaded ICON grid file from '%s' to "
+                     "'%s'", grid_url, grid_path)
+
+        self._horizontal_grids[grid_name] = iris.load(str(grid_path))
+        return self._horizontal_grids[grid_name]
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
         raw_name = self.extra_facets.get('raw_name', self.vardef.short_name)
+        if not cubes.extract(var_name_constraint(raw_name)):
+            raise ValueError(
+                f"Variable '{raw_name}' used to extract "
+                f"'{self.vardef.short_name}' is not available in input file")
         cube = cubes.extract_cube(var_name_constraint(raw_name))
 
-        # Fix dimensional coordinates
-        if cube.coords("time"):
+        # Fix time
+        if cube.coords('time'):
             self._fix_time(cube)
-        if cube.coords("height"):
-            plev_points_cube = cubes.extract_cube(var_name_constraint('pfull'))
-            plev_bounds_cube = cubes.extract_cube(var_name_constraint('phalf'))
-            cube = self._fix_height(cube, plev_points_cube, plev_bounds_cube)
-        lat_name = self.extra_facets.get('latitude', 'latitude')
-        lon_name = self.extra_facets.get('longitude', 'longitude')
-        if cube.coords(lat_name) and cube.coords(lon_name):
-            self._fix_lat_lon(cube, lat_name, lon_name)
+
+        # Fix height
+        if cube.coords('height'):
+            # In case a scalar height is required, remove it here (it will be
+            # added later). This step is designed to fix non-scalar height
+            # coordinates.
+            # Note: iris.util.squeeze is not used here since it might
+            # accidentally squeeze other dimensions
+            if (cube.coord('height').shape[0] == 1 and (
+                    'height2m' in self.vardef.dimensions or
+                    'height10m' in self.vardef.dimensions)):
+                slices = [slice(None)] * cube.ndim
+                slices[cube.coord_dims('height')[0]] = 0
+                cube = cube[tuple(slices)]
+                cube.remove_coord('height')
+            else:
+                cube = self._fix_height(cube, cubes)
+
+        # Fix latitude
+        lat_idx = None
+        if 'latitude' in self.vardef.dimensions:
+            lat_name = self.extra_facets.get('latitude', 'latitude')
+            if not cube.coords(lat_name):
+                self._add_coord_from_grid_file(cube, 'grid_latitude', lat_name)
+            self._fix_lat(cube, lat_name)
+            lat_idx = cube.coord_dims('latitude')
+
+        # Fix longitude
+        lon_idx = None
+        if 'longitude' in self.vardef.dimensions:
+            lon_name = self.extra_facets.get('longitude', 'longitude')
+            if not cube.coords(lon_name):
+                self._add_coord_from_grid_file(cube, 'grid_longitude',
+                                               lon_name)
+            self._fix_lon(cube, lon_name)
+            lon_idx = cube.coord_dims('longitude')
+
+        # Fix cell index for unstructured grid if necessary
+        fix_cell_index = all([
+            lat_idx is not None,
+            lon_idx is not None,
+            lat_idx == lon_idx,
+            len(lat_idx) == 1,
+        ])
+        if fix_cell_index:
+            self._fix_unstructured_cell_index(cube, lat_idx)
 
         # Fix scalar coordinates
         self._fix_scalar_coords(cube)
@@ -44,13 +136,55 @@ class AllVars(Fix):
 
         return iris.cube.CubeList([cube])
 
+    def _add_coord_from_grid_file(self, cube, coord_name, target_coord_name):
+        """Add latitude or longitude coordinate from grid file to cube."""
+        allowed_coord_names = ('grid_latitude', 'grid_longitude')
+        if coord_name not in allowed_coord_names:
+            raise ValueError(
+                f"coord_name must be one of {allowed_coord_names}, got "
+                f"'{coord_name}'")
+        if GRID_FILE_ATTR not in cube.attributes:
+            raise ValueError(
+                f"Cube does not contain coordinate '{coord_name}' nor the "
+                f"attribute '{GRID_FILE_ATTR}' necessary to download the ICON "
+                f"horizontal grid file:\n{cube}")
+        grid_file_url = cube.attributes[GRID_FILE_ATTR]
+        horizontal_grid = self.get_horizontal_grid(grid_file_url)
+
+        # Use 'cell_area' as dummy cube to extract coordinates
+        # Note: it might be necessary to extract this once more coord_names are
+        # supported
+        grid_cube = horizontal_grid.extract_cube(
+            var_name_constraint('cell_area'))
+        coord = grid_cube.coord(coord_name)
+
+        # Find index of horizontal coordinate (try 'ncells' and unnamed
+        # dimension)
+        if cube.coords('ncells'):
+            coord_dims = cube.coord_dims('ncells')
+        else:
+            n_unnamed_dimensions = cube.ndim - len(cube.dim_coords)
+            if n_unnamed_dimensions != 1:
+                raise ValueError(
+                    f"Cannot determine coordinate dimension for coordinate "
+                    f"'{coord_name}', cube does not contain coordinate "
+                    f"'ncells' nor a single unnamed dimension:\n{cube}")
+            coord_dims = ()
+            for idx in range(cube.ndim):
+                if not cube.coords(dimensions=idx, dim_coords=True):
+                    coord_dims = (idx,)
+                    break
+
+        coord.standard_name = target_coord_name
+        cube.add_aux_coord(coord, coord_dims)
+
     def _fix_scalar_coords(self, cube):
         """Fix scalar coordinates."""
-        if "height2m" in self.vardef.dimensions:
+        if 'height2m' in self.vardef.dimensions:
             add_scalar_height_coord(cube, 2.0)
-        if "height10m" in self.vardef.dimensions:
+        if 'height10m' in self.vardef.dimensions:
             add_scalar_height_coord(cube, 10.0)
-        if "typesi" in self.vardef.dimensions:
+        if 'typesi' in self.vardef.dimensions:
             add_scalar_typesi_coord(cube, 'sea_ice')
 
     def _fix_var_metadata(self, cube):
@@ -65,98 +199,121 @@ class AllVars(Fix):
             cube.convert_units(self.vardef.units)
 
     @staticmethod
-    def _fix_height(cube, plev_points_cube, plev_bounds_cube):
+    def _fix_height(cube, cubes):
         """Fix height coordinate of cube."""
-        air_pressure_points = plev_points_cube.core_data()
+        if cubes.extract(var_name_constraint('pfull')):
+            plev_points_cube = cubes.extract_cube(
+                var_name_constraint('pfull'))
+            air_pressure_points = plev_points_cube.core_data()
 
-        # Get bounds from half levels and reshape array
-        air_pressure_bounds = plev_bounds_cube.core_data()
-        air_pressure_bounds = da.stack(
-            (air_pressure_bounds[:, :-1], air_pressure_bounds[:, 1:]), axis=-1)
+            # Get bounds from half levels and reshape array
+            if cubes.extract(var_name_constraint('phalf')):
+                plev_bounds_cube = cubes.extract_cube(
+                    var_name_constraint('phalf'))
+                air_pressure_bounds = plev_bounds_cube.core_data()
+                air_pressure_bounds = da.stack(
+                    (air_pressure_bounds[:, :-1], air_pressure_bounds[:, 1:]),
+                    axis=-1)
+            else:
+                air_pressure_bounds = None
 
-        # Setup air pressure coordinate with correct metadata and add to cube
-        air_pressure_coord = iris.coords.AuxCoord(
-            air_pressure_points,
-            bounds=air_pressure_bounds,
-            var_name='plev',
-            standard_name='air_pressure',
-            long_name='pressure',
-            units=plev_points_cube.units,
-            attributes={'positive': 'down'},
-        )
-        cube.add_aux_coord(air_pressure_coord, np.arange(cube.ndim))
+            # Setup air pressure coordinate with correct metadata and add to
+            # cube
+            air_pressure_coord = iris.coords.AuxCoord(
+                air_pressure_points,
+                bounds=air_pressure_bounds,
+                var_name='plev',
+                standard_name='air_pressure',
+                long_name='pressure',
+                units=plev_points_cube.units,
+                attributes={'positive': 'down'},
+            )
+            cube.add_aux_coord(air_pressure_coord, np.arange(cube.ndim))
 
         # Reverse entire cube along height axis so that index 0 is surface
         # level
         cube = iris.util.reverse(cube, 'height')
 
-        # Fix metadata of generalized height coordinate
+        # Fix metadata
         z_coord = cube.coord('height')
-        z_coord.var_name = 'model_level'
-        z_coord.standard_name = None
-        z_coord.long_name = 'model level number'
-        z_coord.units = 'no unit'
-        z_coord.attributes['positive'] = 'up'
-        z_coord.points = np.arange(len(z_coord.points))
-        z_coord.bounds = None
+        if z_coord.units.is_convertible('m'):
+            z_metadata = {
+                'var_name': 'height',
+                'standard_name': 'height',
+                'long_name': 'height',
+                'attributes': {'positive': 'up'},
+            }
+            z_coord.convert_units('m')
+        else:
+            z_metadata = {
+                'var_name': 'model_level',
+                'standard_name': None,
+                'long_name': 'model level number',
+                'units': 'no unit',
+                'attributes': {'positive': 'up'},
+                'points': np.arange(len(z_coord.points)),
+                'bounds': None,
+            }
+        for (attr, val) in z_metadata.items():
+            setattr(z_coord, attr, val)
 
         return cube
 
     @staticmethod
-    def _fix_lat_lon(cube, lat_name, lon_name):
-        """Fix latitude and longitude coordinates of cube."""
+    def _fix_lat(cube, lat_name):
+        """Fix latitude coordinate of cube."""
         lat = cube.coord(lat_name)
-        lon = cube.coord(lon_name)
-
-        # Fix metadata
-        lat.var_name = "lat"
-        lon.var_name = "lon"
-        lat.standard_name = "latitude"
-        lon.standard_name = "longitude"
-        lat.long_name = "latitude"
-        lon.long_name = "longitude"
+        lat.var_name = 'lat'
+        lat.standard_name = 'latitude'
+        lat.long_name = 'latitude'
         lat.convert_units('degrees_north')
+
+    @staticmethod
+    def _fix_lon(cube, lon_name):
+        """Fix longitude coordinate of cube."""
+        lon = cube.coord(lon_name)
+        lon.var_name = 'lon'
+        lon.standard_name = 'longitude'
+        lon.long_name = 'longitude'
         lon.convert_units('degrees_east')
 
-        # If grid is not unstructured, no further changes are necessary
-        if cube.coord_dims(lat) != cube.coord_dims(lon):
-            return
-        horizontal_coord_dims = cube.coord_dims(lat)
-        if len(horizontal_coord_dims) != 1:
-            return
-
-        # Add dimension name for cell index used to store the unstructured grid
+    @staticmethod
+    def _fix_unstructured_cell_index(cube, horizontal_idx):
+        """Fix unstructured cell index coordinate."""
         index_coord = iris.coords.DimCoord(
-            np.arange(cube.shape[horizontal_coord_dims[0]]),
-            var_name="i",
-            long_name=("first spatial index for variables stored on an "
-                       "unstructured grid"),
-            units="1",
+            np.arange(cube.shape[horizontal_idx[0]]),
+            var_name='i',
+            long_name=('first spatial index for variables stored on an '
+                       'unstructured grid'),
+            units='1',
         )
-        cube.add_dim_coord(index_coord, horizontal_coord_dims)
+        cube.add_dim_coord(index_coord, horizontal_idx)
 
     @staticmethod
     def _fix_time(cube):
         """Fix time coordinate of cube."""
-        t_coord = cube.coord("time")
+        t_coord = cube.coord('time')
         t_coord.var_name = 'time'
         t_coord.standard_name = 'time'
         t_coord.long_name = 'time'
 
-        # Convert invalid time units of the form "day as %Y%m%d.%f" to CF
-        # format (e.g., "days since 1850-01-01")
+        if 'invalid_units' not in t_coord.attributes:
+            return
+
+        # If necessary, convert invalid time units of the form "day as
+        # %Y%m%d.%f" to CF format (e.g., "days since 1850-01-01")
         # Notes:
         # - It might be necessary to expand this to other time formats in the
         #   raw file.
         # - This has not been tested with sub-daily data
         time_format = 'day as %Y%m%d.%f'
-        t_unit = t_coord.attributes.pop("invalid_units")
+        t_unit = t_coord.attributes.pop('invalid_units')
         if t_unit != time_format:
             raise ValueError(
                 f"Expected time units '{time_format}' in input file, got "
                 f"'{t_unit}'")
         new_t_unit = cf_units.Unit('days since 1850-01-01',
-                                   calendar="proleptic_gregorian")
+                                   calendar='proleptic_gregorian')
 
         new_datetimes = [datetime.strptime(str(dt), '%Y%m%d.%f') for dt in
                          t_coord.points]
