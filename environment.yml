@@ -8,10 +8,10 @@ dependencies:
   - cf-units>=3.0.0
   - cftime
   - compilers
-  - curl<7.82
   # 1.8.18/py39, they seem weary to build manylinux wheels
   # and pypi ver built with older gdal
   - fiona
+  - fontconfig=2.13.96=h10f422b_0
   - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
   - geopy
   - iris>=3.1.0,<3.2.0
