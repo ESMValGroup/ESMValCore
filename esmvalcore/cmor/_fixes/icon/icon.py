@@ -345,8 +345,8 @@ class AllVars(Fix):
         return cubes
 
 
-class Siconca(Fix):
-    """Fixes for ``siconca``."""
+class Siconc(Fix):
+    """Fixes for ``siconc``."""
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
@@ -357,3 +357,6 @@ class Siconca(Fix):
         cube = cubes.extract_cube(var_name_constraint('sic'))
         cube.units = '1'
         return cubes
+
+
+Siconca = Siconc

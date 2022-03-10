@@ -22,6 +22,8 @@ ICON:
       longitude: grid_longitude
       raw_name: cell_area
   SIday:
+    siconc: {raw_name: sic}
     siconca: {raw_name: sic}
   SImon:
+    siconc: {raw_name: sic}
     siconca: {raw_name: sic}
