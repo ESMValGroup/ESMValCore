@@ -33,7 +33,7 @@ Overview
 ========
 
 ..
-   ESMValTool is a modular ``Python 3.7+`` software package possessing capabilities
+   ESMValTool is a modular ``Python 3.8+`` software package possessing capabilities
    of executing a large number of diagnostic routines that can be written in a
    number of programming languages (Python, NCL, R, Julia). The modular nature
    benefits the users and developers in different key areas: a new feature
@@ -829,6 +829,16 @@ The arguments are defined below:
 Regridding (interpolation, extrapolation) schemes
 -------------------------------------------------
 
+ESMValTool has a number of built-in regridding schemes, which are presented in
+:ref:`built-in regridding schemes`. Additionally, it is also possible to use
+third party regridding schemes designed for use with :doc:`Iris
+<iris:index>`. This is explained in :ref:`generic regridding schemes`.
+
+.. _built-in regridding schemes:
+
+Built-in regridding schemes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The schemes used for the interpolation and extrapolation operations needed by
 the horizontal regridding functionality directly map to their corresponding
 implementations in :mod:`iris`:
@@ -866,6 +876,68 @@ See also :func:`esmvalcore.preprocessor.regrid`
    degrees should not produce any memory-related issues, but be advised that
    for resolutions of ``< 0.5`` degrees the regridding becomes very slow and
    will use a lot of memory.
+
+.. _generic regridding schemes:
+
+Generic regridding schemes
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:ref:`Iris' regridding <iris:interpolation_and_regridding>` is based around the
+flexible use of so-called regridding schemes. These are classes that know how
+to transform a source cube with a given grid into the grid defined by a given
+target cube. Iris itself provides a number of useful schemes, but they are
+largely limited to work with simple, regular grids. Other schemes can be
+provided independently. This is interesting when special regridding-needs arise
+or when more involved grids and meshes need to be considered. Furthermore, it
+may be desirable to have finer control over the parameters of the scheme than
+is afforded by the built-in schemes described above.
+
+To facilitate this, the :func:`~esmvalcore.preprocessor.regrid` preprocessor
+allows the use of any scheme designed for Iris. The scheme must be installed
+and importable. To use this feature, the ``scheme`` key passed to the
+preprocessor must be a dictionary instead of a simple string that contains all
+necessary information. That includes a ``reference`` to the desired scheme
+itself, as well as any arguments that should be passed through to the
+scheme. For example, the following shows the use of the built-in scheme
+:class:`iris.analysis.AreaWeighted` with a custom threshold for missing data
+tolerance.
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 2.5x2.5
+          scheme:
+            reference: iris.analysis:AreaWeighted
+            mdtol: 0.7
+
+The value of the ``reference`` key has two parts that are separated by a
+``:`` with no surrounding spaces. The first part is an importable Python
+module, the second refers to the scheme, i.e. some callable that will be called
+with the remaining entries of the ``scheme`` dictionary passed as keyword
+arguments.
+
+One package that aims to capitalize on the :ref:`support for unstructured
+meshes introduced in Iris 3.2 <iris:ugrid>` is
+:doc:`iris-esmf-regrid:index`. It aims to provide lazy regridding for
+structured regular and irregular grids, as well as unstructured meshes. An
+example of its usage in an ESMValTool preprocessor is:
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 2.5x2.5
+          scheme:
+            reference: esmf_regrid.schemes:ESMFAreaWeighted
+            mdtol: 0.7
+
+.. TODO: Remove the following warning once things have settled a bit.
+.. warning::
+   Just as the mesh support in Iris itself, this new regridding package is
+   still considered experimental.
 
 .. _ensemble statistics:
 
