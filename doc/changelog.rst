@@ -75,6 +75,7 @@ Documentation
 -  Increased ESMValCore version to 2.5.0rc4 (`#1519 <https://github.com/ESMValGroup/ESMValCore/pull/1519>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Add Github Actions Test badge in README (`#1526 <https://github.com/ESMValGroup/ESMValCore/pull/1526>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Increased ESMValCore version to 2.5.0rc5 (`#1529 <https://github.com/ESMValGroup/ESMValCore/pull/1529>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Increased ESMValCore version to 2.5.0rc6 (`#1532 <https://github.com/ESMValGroup/ESMValCore/pull/1532>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
 Fixes for datasets
 ~~~~~~~~~~~~~~~~~~
