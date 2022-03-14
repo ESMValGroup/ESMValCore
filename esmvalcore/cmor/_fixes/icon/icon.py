@@ -10,10 +10,17 @@ from urllib.parse import urlparse
 import cf_units
 import dask.array as da
 import iris
+import iris.coords
+import iris.cube
+import iris.util
 import numpy as np
 import requests
 
-from esmvalcore.iris_helpers import date2num, var_name_constraint
+from esmvalcore.iris_helpers import (
+    add_leading_dim_to_cube,
+    date2num,
+    var_name_constraint,
+)
 
 from ..fix import Fix
 from ..shared import add_scalar_height_coord, add_scalar_typesi_coord
@@ -35,41 +42,6 @@ class AllVars(Fix):
         super().__init__(*args, **kwargs)
         self._horizontal_grids = {}
 
-    def get_horizontal_grid(self, grid_url):
-        """Get horizontal grid."""
-        # If already loaded, return the horizontal grid (cube)
-        grid_name = str(grid_url)
-        if grid_name in self._horizontal_grids:
-            return self._horizontal_grids[grid_name]
-
-        # Check if grid file has recently been downloaded and load it if
-        # possible
-        parsed_url = urlparse(grid_url)
-        grid_path = CACHE_DIR / Path(parsed_url.path).name
-        if grid_path.exists():
-            mtime = grid_path.stat().st_mtime
-            now = datetime.now().timestamp()
-            age = now - mtime
-            if age < CACHE_VALIDITY:
-                logger.debug("Using cached ICON grid file '%s'", grid_path)
-                self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
-                return self._horizontal_grids[grid_name]
-            logger.debug("Existing cached ICON grid file '%s' is outdated",
-                         grid_path)
-
-        # Download file if necessary
-        logger.debug("Attempting to download ICON grid file from '%s' to '%s'",
-                     grid_url, grid_path)
-        with requests.get(grid_url, stream=True, timeout=TIMEOUT) as response:
-            response.raise_for_status()
-            with open(grid_path, 'wb') as file:
-                copyfileobj(response.raw, file)
-        logger.info("Successfully downloaded ICON grid file from '%s' to '%s'",
-                    grid_url, grid_path)
-
-        self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
-        return self._horizontal_grids[grid_name]
-
     def fix_metadata(self, cubes):
         """Fix metadata."""
         raw_name = self.extra_facets.get('raw_name', self.vardef.short_name)
@@ -80,13 +52,14 @@ class AllVars(Fix):
         cube = cubes.extract_cube(var_name_constraint(raw_name))
 
         # Fix time
-        if cube.coords('time'):
-            self._fix_time(cube)
+        if 'time' in self.vardef.dimensions:
+            cube = self._fix_time(cube, cubes)
 
-        # Fix height
+        # Fix height (note: cannot use "if 'height' in self.vardef.dimensions"
+        # here since the name of the z-coord varies from variable to variable
         if cube.coords('height'):
             # In case a scalar height is required, remove it here (it will be
-            # added later). This step is designed to fix non-scalar height
+            # added later). This step here is designed to fix non-scalar height
             # coordinates.
             # Note: iris.util.squeeze is not used here since it might
             # accidentally squeeze other dimensions
@@ -137,6 +110,41 @@ class AllVars(Fix):
 
         return iris.cube.CubeList([cube])
 
+    def get_horizontal_grid(self, grid_url):
+        """Get horizontal grid."""
+        # If already loaded, return the horizontal grid (cube)
+        grid_name = str(grid_url)
+        if grid_name in self._horizontal_grids:
+            return self._horizontal_grids[grid_name]
+
+        # Check if grid file has recently been downloaded and load it if
+        # possible
+        parsed_url = urlparse(grid_url)
+        grid_path = CACHE_DIR / Path(parsed_url.path).name
+        if grid_path.exists():
+            mtime = grid_path.stat().st_mtime
+            now = datetime.now().timestamp()
+            age = now - mtime
+            if age < CACHE_VALIDITY:
+                logger.debug("Using cached ICON grid file '%s'", grid_path)
+                self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
+                return self._horizontal_grids[grid_name]
+            logger.debug("Existing cached ICON grid file '%s' is outdated",
+                         grid_path)
+
+        # Download file if necessary
+        logger.debug("Attempting to download ICON grid file from '%s' to '%s'",
+                     grid_url, grid_path)
+        with requests.get(grid_url, stream=True, timeout=TIMEOUT) as response:
+            response.raise_for_status()
+            with open(grid_path, 'wb') as file:
+                copyfileobj(response.raw, file)
+        logger.info("Successfully downloaded ICON grid file from '%s' to '%s'",
+                    grid_url, grid_path)
+
+        self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
+        return self._horizontal_grids[grid_name]
+
     def _add_coord_from_grid_file(self, cube, coord_name, target_coord_name):
         """Add latitude or longitude coordinate from grid file to cube."""
         allowed_coord_names = ('grid_latitude', 'grid_longitude')
@@ -179,6 +187,20 @@ class AllVars(Fix):
         coord.standard_name = target_coord_name
         cube.add_aux_coord(coord, coord_dims)
 
+    def _add_time(self, cube, cubes):
+        """Add time coordinate from other cube in cubes."""
+        # Try to find time cube from other cubes and it to target cube
+        for other_cube in cubes:
+            if not other_cube.coords('time'):
+                continue
+            time_coord = other_cube.coord('time')
+            cube = add_leading_dim_to_cube(cube, time_coord)
+            return cube
+        raise ValueError(
+            f"Cannot add required coordinate 'time' to variable "
+            f"'{self.vardef.short_name}', cube and other cubes in file do not "
+            f"contain it")
+
     def _fix_scalar_coords(self, cube):
         """Fix scalar coordinates."""
         if 'height2m' in self.vardef.dimensions:
@@ -187,6 +209,53 @@ class AllVars(Fix):
             add_scalar_height_coord(cube, 10.0)
         if 'typesi' in self.vardef.dimensions:
             add_scalar_typesi_coord(cube, 'sea_ice')
+
+    def _fix_time(self, cube, cubes):
+        """Fix time coordinate of cube."""
+        # Add time coordinate if not already present
+        if not cube.coords('time'):
+            cube = self._add_time(cube, cubes)
+
+        # Fix metadata
+        time_coord = cube.coord('time')
+        time_coord.var_name = 'time'
+        time_coord.standard_name = 'time'
+        time_coord.long_name = 'time'
+
+        # Add bounds if possible (not possible if cube only contains single
+        # time point)
+        if not time_coord.has_bounds():
+            try:
+                time_coord.guess_bounds()
+            except ValueError:
+                pass
+
+        if 'invalid_units' not in time_coord.attributes:
+            return cube
+
+        # If necessary, convert invalid time units of the form "day as
+        # %Y%m%d.%f" to CF format (e.g., "days since 1850-01-01")
+        # Notes:
+        # - It might be necessary to expand this to other time formats in the
+        #   raw file.
+        # - This has not been tested with sub-daily data
+        time_format = 'day as %Y%m%d.%f'
+        t_unit = time_coord.attributes.pop('invalid_units')
+        if t_unit != time_format:
+            raise ValueError(
+                f"Expected time units '{time_format}' in input file, got "
+                f"'{t_unit}'")
+        new_t_unit = cf_units.Unit('days since 1850-01-01',
+                                   calendar='proleptic_gregorian')
+
+        new_datetimes = [datetime.strptime(str(dt), '%Y%m%d.%f') for dt in
+                         time_coord.points]
+        new_dt_points = date2num(np.array(new_datetimes), new_t_unit)
+
+        time_coord.points = new_dt_points
+        time_coord.units = new_t_unit
+
+        return cube
 
     def _fix_var_metadata(self, cube):
         """Fix metadata of variable."""
@@ -289,47 +358,6 @@ class AllVars(Fix):
             units='1',
         )
         cube.add_dim_coord(index_coord, horizontal_idx)
-
-    @staticmethod
-    def _fix_time(cube):
-        """Fix time coordinate of cube."""
-        t_coord = cube.coord('time')
-        t_coord.var_name = 'time'
-        t_coord.standard_name = 'time'
-        t_coord.long_name = 'time'
-
-        # Add bounds if possible (not possible if cube only contains single
-        # time point)
-        if not t_coord.has_bounds():
-            try:
-                t_coord.guess_bounds()
-            except ValueError:
-                pass
-
-        if 'invalid_units' not in t_coord.attributes:
-            return
-
-        # If necessary, convert invalid time units of the form "day as
-        # %Y%m%d.%f" to CF format (e.g., "days since 1850-01-01")
-        # Notes:
-        # - It might be necessary to expand this to other time formats in the
-        #   raw file.
-        # - This has not been tested with sub-daily data
-        time_format = 'day as %Y%m%d.%f'
-        t_unit = t_coord.attributes.pop('invalid_units')
-        if t_unit != time_format:
-            raise ValueError(
-                f"Expected time units '{time_format}' in input file, got "
-                f"'{t_unit}'")
-        new_t_unit = cf_units.Unit('days since 1850-01-01',
-                                   calendar='proleptic_gregorian')
-
-        new_datetimes = [datetime.strptime(str(dt), '%Y%m%d.%f') for dt in
-                         t_coord.points]
-        new_dt_points = date2num(np.array(new_datetimes), new_t_unit)
-
-        t_coord.points = new_dt_points
-        t_coord.units = new_t_unit
 
     @staticmethod
     def _load_cubes(path):

@@ -34,6 +34,9 @@ def cubes_grid(test_data_path):
 @pytest.fixture
 def cubes_regular_grid():
     """Cube with regular grid."""
+    time_coord = iris.coords.DimCoord([0], var_name='time',
+                                      standard_name='time',
+                                      units='days since 1850-01-01')
     lat_coord = iris.coords.DimCoord([0.0, 1.0], var_name='lat',
                                      standard_name='latitude',
                                      long_name='latitude',
@@ -42,14 +45,20 @@ def cubes_regular_grid():
                                      standard_name='longitude',
                                      long_name='longitude',
                                      units='degrees_east')
-    cube = iris.cube.Cube([[0.0, 1.0], [2.0, 3.0]], var_name='tas', units='K',
-                          dim_coords_and_dims=[(lat_coord, 0), (lon_coord, 1)])
+    cube = iris.cube.Cube([[[0.0, 1.0], [2.0, 3.0]]], var_name='tas',
+                          units='K',
+                          dim_coords_and_dims=[(time_coord, 0),
+                                               (lat_coord, 1),
+                                               (lon_coord, 2)])
     return iris.cube.CubeList([cube])
 
 
 @pytest.fixture
 def cubes_2d_lat_lon_grid():
     """Cube with 2D latitude and longitude."""
+    time_coord = iris.coords.DimCoord([0], var_name='time',
+                                      standard_name='time',
+                                      units='days since 1850-01-01')
     lat_coord = iris.coords.AuxCoord([[0.0, 0.0], [1.0, 1.0]], var_name='lat',
                                      standard_name='latitude',
                                      long_name='latitude',
@@ -58,9 +67,11 @@ def cubes_2d_lat_lon_grid():
                                      standard_name='longitude',
                                      long_name='longitude',
                                      units='degrees_east')
-    cube = iris.cube.Cube([[0.0, 1.0], [2.0, 3.0]], var_name='tas', units='K',
-                          aux_coords_and_dims=[(lat_coord, (0, 1)),
-                                               (lon_coord, (0, 1))])
+    cube = iris.cube.Cube([[[0.0, 1.0], [2.0, 3.0]]], var_name='tas',
+                          units='K',
+                          dim_coords_and_dims=[(time_coord, 0)],
+                          aux_coords_and_dims=[(lat_coord, (1, 2)),
+                                               (lon_coord, (1, 2))])
     return iris.cube.CubeList([cube])
 
 
@@ -383,8 +394,9 @@ def test_regular_grid_fix(cubes_regular_grid):
     assert cube.long_name == 'Near-Surface Air Temperature'
     assert cube.units == 'K'
 
-    assert cube.coords('latitude', dim_coords=True, dimensions=0)
-    assert cube.coords('longitude', dim_coords=True, dimensions=1)
+    assert cube.coords('time', dim_coords=True, dimensions=0)
+    assert cube.coords('latitude', dim_coords=True, dimensions=1)
+    assert cube.coords('longitude', dim_coords=True, dimensions=2)
     assert cube.coords('height', dim_coords=False, dimensions=())
 
 
@@ -400,8 +412,9 @@ def test_2d_lat_lon_grid_fix(cubes_2d_lat_lon_grid):
     assert cube.long_name == 'Near-Surface Air Temperature'
     assert cube.units == 'K'
 
-    assert cube.coords('latitude', dim_coords=False, dimensions=(0, 1))
-    assert cube.coords('longitude', dim_coords=False, dimensions=(0, 1))
+    assert cube.coords('time', dim_coords=True, dimensions=0)
+    assert cube.coords('latitude', dim_coords=False, dimensions=(1, 2))
+    assert cube.coords('longitude', dim_coords=False, dimensions=(1, 2))
     assert cube.coords('height', dim_coords=False, dimensions=())
 
 
