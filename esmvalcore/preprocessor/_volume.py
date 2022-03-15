@@ -4,7 +4,6 @@ Allows for selecting data subsets using certain volume bounds; selecting
 depth or height regions; constructing volumetric averages;
 """
 import logging
-from copy import deepcopy
 
 import dask.array as da
 import iris
@@ -52,90 +51,6 @@ def extract_volume(cube, z_min, z_max):
     return cube.extract(z_constraint)
 
 
-def _create_cube_time(src_cube, data, times):
-    """Generate a new cube with the volume averaged data.
-
-    The resultant cube is seeded with `src_cube` metadata and coordinates,
-    excluding any source coordinates that span the associated vertical
-    dimension. The `times` of interpolation are used along with the
-    associated source cube time coordinate metadata to add a new
-    time coordinate to the resultant cube.
-
-    Based on the _create_cube method from _regrid.py.
-
-    Parameters
-    ----------
-    src_cube : cube
-        The source cube that was vertically interpolated.
-    data : array
-        The payload resulting from interpolating the source cube
-        over the specified times.
-    times : array
-        The array of times.
-
-    Returns
-    -------
-    cube
-    .. note::
-        If there is only one level of interpolation, the resultant cube
-        will be collapsed over the associated vertical dimension, and a
-        scalar vertical coordinate will be added.
-    """
-    # Get the source cube vertical coordinate and associated dimension.
-    src_times = src_cube.coord('time')
-    t_dim, = src_cube.coord_dims(src_times)
-
-    if data.shape[t_dim] != len(times):
-        emsg = ('Mismatch between data and times for data dimension {!r}, '
-                'got data shape {!r} with times shape {!r}.')
-        raise ValueError(emsg.format(t_dim, data.shape, times.shape))
-
-    # Construct the resultant cube with the interpolated data
-    # and the source cube metadata.
-    kwargs = deepcopy(src_cube.metadata)._asdict()
-    result = iris.cube.Cube(data, **kwargs)
-
-    # Add the appropriate coordinates to the cube, excluding
-    # any coordinates that span the z-dimension of interpolation.
-    for coord in src_cube.dim_coords:
-        [dim] = src_cube.coord_dims(coord)
-        if dim != t_dim:
-            result.add_dim_coord(coord.copy(), dim)
-
-    for coord in src_cube.aux_coords:
-        dims = src_cube.coord_dims(coord)
-        if t_dim not in dims:
-            result.add_aux_coord(coord.copy(), dims)
-
-    for coord in src_cube.derived_coords:
-        dims = src_cube.coord_dims(coord)
-        if t_dim not in dims:
-            result.add_aux_coord(coord.copy(), dims)
-
-    # Construct the new vertical coordinate for the interpolated
-    # z-dimension, using the associated source coordinate metadata.
-    metadata = src_times.metadata
-
-    kwargs = {
-        'standard_name': metadata.standard_name,
-        'long_name': metadata.long_name,
-        'var_name': metadata.var_name,
-        'units': metadata.units,
-        'attributes': metadata.attributes,
-        'coord_system': metadata.coord_system,
-        'climatological': metadata.climatological,
-    }
-
-    try:
-        coord = iris.coords.DimCoord(times, **kwargs)
-        result.add_dim_coord(coord, t_dim)
-    except ValueError:
-        coord = iris.coords.AuxCoord(times, **kwargs)
-        result.add_aux_coord(coord, t_dim)
-
-    return result
-
-
 def calculate_volume(cube):
     """Calculate volume from a cube.
 
@@ -162,7 +77,7 @@ def calculate_volume(cube):
 
     # ####
     # Calculate grid volume:
-    area = iris.analysis.cartography.area_weights(cube)
+    area = da.array(iris.analysis.cartography.area_weights(cube))
     if thickness.ndim == 1 and z_dim == 1:
         grid_volume = area * thickness[None, :, None, None]
     if thickness.ndim == 4 and z_dim == 1:
@@ -198,9 +113,8 @@ def volume_statistics(cube, operator):
     # TODO: Test sigma coordinates.
     # TODO: Add other operations.
 
-    # ####
-    # Load z coordinate field and figure out which dim is which.
-    t_dim = cube.coord_dims('time')[0]
+    if operator != 'mean':
+        raise ValueError(f'Volume operator {operator} not recognised')
 
     try:
         grid_volume = cube.cell_measure('ocean_volume').core_data()
@@ -214,65 +128,23 @@ def volume_statistics(cube, operator):
 
     if cube.data.shape != grid_volume.shape:
         raise ValueError('Cube shape ({}) doesn`t match grid volume shape '
-                         '({})'.format(cube.data.shape, grid_volume.shape))
+                         f'({cube.shape, grid_volume.shape})')
 
-    # #####
-    # Calculate global volume weighted average
-    result = []
-    # #####
-    # iterate over time and z-coordinate dimensions.
-    for time_itr in range(cube.shape[t_dim]):
-        # ####
-        # create empty output arrays
-        column = []
-        depth_volume = []
 
-        # ####
-        # iterate over time and z-coordinate dimensions.
-        for z_itr in range(cube.shape[1]):
-            # ####
-            # Calculate weighted mean for this time and layer
-            if operator == 'mean':
-                total = cube[time_itr, z_itr].collapsed(
-                    [cube.coord(axis='z'), 'longitude', 'latitude'],
-                    iris.analysis.MEAN,
-                    weights=grid_volume[time_itr, z_itr]).data
-            else:
-                raise ValueError('Volume operator ({}) not '
-                                 'recognised.'.format(operator))
-            column.append(total)
+    yx_dims = cube.coord_dims(cube.coord(axis='Y'))
+    if len(yx_dims) == 1:
+        yx_dims += cube.coord_dims(cube.coord(axis='X'))
+    column = cube.collapsed(
+        [cube.coord(axis='Y'), cube.coord(axis='X')],
+        iris.analysis.MEAN,
+        weights=grid_volume)
+    layer_volume = da.sum(grid_volume, axis=yx_dims)
+    result = column.collapsed(
+        cube.coord(axis='Z'),
+        iris.analysis.MEAN,
+        weights=layer_volume)
 
-            try:
-                layer_vol = np.ma.masked_where(cube[time_itr, z_itr].data.mask,
-                                               grid_volume[time_itr,
-                                                           z_itr]).sum()
-
-            except AttributeError:
-                # ####
-                # No mask in the cube data.
-                layer_vol = grid_volume.sum()
-            depth_volume.append(layer_vol)
-        # ####
-        # Calculate weighted mean over the water volumn
-        column = np.ma.array(column)
-        depth_volume = np.ma.array(depth_volume)
-        result.append(np.ma.average(column, weights=depth_volume))
-
-    # ####
-    # Send time series and dummy cube to cube creating tool.
-    times = np.array(cube.coord('time').points.astype(float))
-    result = np.ma.array(result)
-
-    # #####
-    # Create a small dummy output array for the output cube
-    if operator == 'mean':
-        src_cube = cube[:2, :2].collapsed(
-            [cube.coord(axis='z'), 'longitude', 'latitude'],
-            iris.analysis.MEAN,
-            weights=grid_volume[:2, :2],
-        )
-
-    return _create_cube_time(src_cube, result, times)
+    return result
 
 
 def depth_integration(cube):
