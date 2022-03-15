@@ -3,7 +3,7 @@
 # run conda-lock lock --platform linux-64 -f environment.yml --mamba
 # (mamba activated for speed). Change platform for osx-64 or win-64.
 # Env creation then happens as per normal use with
-# mamba create --name esmvaltool-fromlock --file conda-linux64.lock
+# mamba create --name esmvaltool-fromlock --file conda-linux-64.lock
 # note that pip and conda are NOT installed.
 
 name: Conda-lock Install
@@ -44,7 +44,7 @@ jobs:
       - shell: bash -l {0}
         run: python -V 2>&1 | tee source_install_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
       - shell: bash -l {0}
-        run: conda create --name esmvaltool-fromlock --file conda-linux64.lock
+        run: conda create --name esmvaltool-fromlock --file conda-linux-64.lock
       - shell: bash -l {0}
         run: conda install pip
       - shell: bash -l {0}
