@@ -130,7 +130,6 @@ def volume_statistics(cube, operator):
         raise ValueError('Cube shape ({}) doesn`t match grid volume shape '
                          f'({cube.shape, grid_volume.shape})')
 
-
     yx_dims = cube.coord_dims(cube.coord(axis='Y'))
     if len(yx_dims) == 1:
         yx_dims += cube.coord_dims(cube.coord(axis='X'))
