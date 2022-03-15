@@ -40,10 +40,10 @@ jobs:
         run: conda install -y conda-lock
       - name: Create conda lock file for linux-64
         shell: bash -l {0}
-        run: conda-lock lock --platform linux-64 -f environment.yml --mamba
+        run: conda-lock lock --lockfile conda-linux64.lock --platform linux-64 -f environment.yml --mamba
       - name: Creating environment from lock file
         shell: bash -l {0}
-        run: conda create --name esmvaltool-fromlock --file conda-linux-64.lock
+        run: conda create --name esmvaltool-fromlock --file conda-linux64.lock
       - name: Installing pip
         shell: bash -l {0}
         run: conda install pip
