@@ -233,10 +233,10 @@ a lock file is done just like with any other environment file:
 
 .. code-block:: bash
 
-   conda create --name esmvaltool --file conda-linux-64.lock
+   conda create --name esmvaltool --file conda-linux64.lock
 
 The latest, most up-to-date file can always be downloaded directly from the source code
-repository, a direct download link can be found `here <https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/conda-linux-64.lock>`__.
+repository, a direct download link can be found `here <https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/conda-linux64.lock>`__.
 
 .. note::
    `pip` and `conda` are NOT installed, so you will have to install them in the new environment: use conda-forge as channel): ``conda install -c conda-forge pip`` at the very minimum so we can install `esmvalcore` afterwards.
