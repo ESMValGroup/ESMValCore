@@ -8,35 +8,31 @@ dependencies:
   - cf-units>=3.0.0
   - cftime
   - compilers
-  # 1.8.18/py39, they seem weary to build manylinux wheels
-  # and pypi ver built with older gdal
-  - fiona
-  - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
-  - geopy
-  - iris>=3.1.0,<3.2.0
-  - nested-lookup
-  - pandas
-  - pillow
-  - pip!=21.3
-  - python>=3.8
-  - python-stratify
-  - scipy>=1.6
-  # migrated from setup.py minus duplicates
   - dask[array]
   - esgf-pyclient>=0.3.1
+  - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
   - fire
+  - fiona
+  - geopy
   - humanfriendly
   - importlib_resources
+  - iris>=3.1.0,<3.2.0
   - isodate
   - jinja2
   - nc-time-axis
   - netCDF4
+  - nested-lookup
   - numpy
+  - pandas
+  - pillow
+  - pip!=21.3
   - prov
   - psutil
   - pybtex
   - pyyaml
-  - requests
-  - shapely[vectorized]
+  - python>=3.8
   - python-stratify
+  - requests
+  - scipy>=1.6
+  - shapely[vectorized]
   - yamale
