@@ -29,36 +29,8 @@ REQUIREMENTS = {
     ],
     # Installation dependencies
     # Use with pip install . to install from source
-    'install': [
-        #'cartopy',
-        #'cf-units>=3.0.0',
-        #'dask[array]',
-        #'esgf-pyclient>=0.3.1',
-        #'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
-        #'fiona',
-        #'fire',
-        #'geopy',
-        #'humanfriendly',
-        #"importlib_resources;python_version<'3.9'",
-        #'isodate',
-        #'jinja2',
-        #'nc-time-axis',  # needed by iris.plot
-        #'nested-lookup',
-        #'netCDF4',
-        #'numpy',
-        #'pandas',
-        #'pillow',
-        #'prov',
-        #'psutil',
-        #'pybtex',
-        #'pyyaml',
-        #'requests',
-        #'scipy>=1.6',
-        #'scitools-iris>=3.1.0,<3.2.0',
-        #'shapely[vectorized]',
-        #'stratify',
-        #'yamale',
-    ],
+    # if not available from conda-forge in environment.yml
+    'install': [],
     # Test dependencies
     # Execute 'python setup.py test' to run tests
     'test': [
