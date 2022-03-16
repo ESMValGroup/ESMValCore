@@ -193,6 +193,16 @@ EMAC:
     MP_SS_tot:  # derived from MP_SS_ks_ave, MP_SS_as_ave, MP_SS_cs_ave
       channel: tracer_pdef_gp
 
+  # 3D variables
+  Amon:
+    ta:  # defined on plev19
+      raw_name: tm1_p19_ave
+      channel: Amon
+  Eday:
+    ta:  # defined on plev19
+      raw_name: tm1_p19_ave
+      channel: Amon
+
 
 # Elements missing from original mapping table
 # Note: mixed channels are not supported yet
