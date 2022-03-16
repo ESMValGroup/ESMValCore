@@ -21,3 +21,22 @@ dependencies:
   - python>=3.8
   - python-stratify
   - scipy>=1.6
+  # migrated from setup.py minus duplicates
+  - dask[array]
+  - esgf-pyclient>=0.3.1
+  - fire
+  - humanfriendly
+  - importlib_resources
+  - isodate
+  - jinja2
+  - nc-time-axis
+  - netCDF4
+  - numpy
+  - prov
+  - psutil
+  - pybtex
+  - pyyaml
+  - requests
+  - shapely[vectorized]
+  - python-stratify
+  - yamale
