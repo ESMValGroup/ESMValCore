@@ -119,11 +119,13 @@ ana4mips:
   # TODO: add cmor_path and table and set cmor_strict to true
 
 EMAC:
+  cmor_strict: false
   input_dir:
-    default: '{dataset}'
-  input_file: ''
-  output_file: '{dataset}_{ensemble}_{short_name}'
-  cmor_type: 'CMIP5'
+    default: '{exp}/{channel}'
+  input_file:
+    default: '{exp}*{channel}.nc'
+  output_file: '{dataset}_{exp}_{channel}_{mip}_{short_name}'
+  cmor_type: 'CMIP6'
 
 CORDEX:
   input_dir:

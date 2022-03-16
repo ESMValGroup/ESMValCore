@@ -1,0 +1,203 @@
+# Extra facets for native EMAC model output
+
+# All extra facets for EMAC are optional but might be necessary for some
+# variables. Note that if the facet ``channel`` is not given here it has to be
+# specified in the recipe. A complete list of supported keys is given in the
+# documentation (see ESMValCore/doc/develop/fixing_data.rst).
+---
+
+EMAC:
+  '*':
+    awhea:  # non-CMOR variable
+      raw_name: awhea_ave
+      channel: Omon
+    cod_sw_b01:  # non-CMOR variable
+      raw_name: tau_cld_sw_B01_ave
+      channel: Amon
+    clivi:
+      raw_name: xivi_ave
+      channel: Amon
+    clt:
+      raw_name: aclcov_ave
+      channel: Amon
+    clwvi:
+      raw_name: xlvi_ave
+      channel: Amon
+    co2mass:
+      raw_name: MP_CO2_ave
+      channel: tracer_pdef_gp
+    evspsbl:
+      raw_name: evap_ave
+      channel: Amon
+    hfls:
+      raw_name: ahfl_ave
+      channel: Amon
+    hfss:
+      raw_name: ahfs_ave
+      channel: Amon
+    lnox:  # non-CMOR variable; derived from NOxcg_ave, NOxic_ave
+      channel: lnox_PaR_T_gp
+    od550aer:
+      raw_name: aot_opt_TOT_550_total_ave
+      channel: Amon
+    pr:  # derived from aprl_ave, aprc_ave, aprs_ave
+      channel: Amon
+    prc:
+      raw_name: aprc_ave
+      channel: Amon
+    prl:  # non-CMOR variable
+      raw_name: aprl_ave
+      channel: Amon
+    prsn:
+      raw_name: aprs_ave
+      channel: Amon
+    prw:
+      raw_name: qvi_ave
+      channel: Amon
+    rlds:  # derived from flxtbot_ave, tradsu_ave
+      channel: Amon
+    rlus:
+      raw_name: tradsu_ave
+      channel: Amon
+    rlut:
+      raw_name: flxttop_ave
+      channel: Amon
+    rlutcs:
+      raw_name: flxtftop_ave
+      channel: Amon
+    rsds:  # derived from flxsbot_ave, sradsu_ave
+      channel: Amon
+    rsdt:  # derived from flxstop_ave, srad0u_ave
+      channel: Amon
+    rsus:
+      raw_name: sradsu_ave
+      channel: Amon
+    rsut:
+      raw_name: srad0u_ave
+      channel: Amon
+    rsutcs:
+      raw_name: flxusftop_ave
+      channel: Amon
+    rtmt:  # derived from flxttop_ave, flxstop_ave
+      channel: Amon
+    siconca:
+      raw_name: seaice_ave
+      channel: Amon
+    sithick:
+      raw_name: siced_ave
+      channel: Amon
+    tas:
+      raw_name: temp2_ave
+      channel: Amon
+    tos:
+      raw_name: tsw
+      channel: g3b
+    ts:
+      raw_name: tsurf_ave
+      channel: Amon
+    toz:
+      channel: Amon
+
+    # Forcings (non-CMOR variables)
+    ANTHNT_AER_TC_s:  # derived from ANTHNT_AER_BC, ANTHNT_AER_OC
+      channel: import_grid
+    ANTHNT_CO_s:
+      raw_name: ANTHNT_CO
+      channel: import_grid
+    ANTHNT_NO_s:
+      raw_name: ANTHNT_NO
+      channel: import_grid
+    ANTHNT_SO2_s:
+      raw_name: ANTHNT_SO2
+      channel: import_grid
+    BB_AER_TC_s:  # derived from BB_AER_BC, BB_AER_OC
+      channel: import_grid
+    BB_CO_s:
+      raw_name: BB_CO
+      channel: import_grid
+    BB_NO_s:
+      raw_name: BB_NO
+      channel: import_grid
+    BB_SO2_s:
+      raw_name: BB_SO2
+      channel: import_grid
+    ROAD_AER_BC:
+      channel: import_grid
+    ROAD_NO:
+      channel: import_grid
+    SHIP_AER_BC_s:
+      raw_name: SHIP_AER_BC
+      channel: import_grid
+    SHIP_NO_s:
+      raw_name: SHIP_NO
+      channel: import_grid
+    SHIP_SO2_s:
+      raw_name: SHIP_SO2
+      channel: import_grid
+    TN_GHG_CH4:
+      channel: import_grid
+    TN_GHG_CO2:
+      channel: import_grid
+    TN_GHG_N2O:
+      channel: import_grid
+
+    # Tracers (non-CMOR variables)
+    MP_BC_tot:  # derived from MP_BC_ks_ave, MP_BC_as_ave, MP_BC_cs_ave, MP_BC_ki_ave
+      channel: tracer_pdef_gp
+    MP_CFCl3:
+      raw_name: MP_CFCl3_ave
+      channel: tracer_pdef_gp
+    MP_ClOX:
+      raw_name: MP_ClOX_ave
+      channel: tracer_pdef_gp
+    MP_CH4:
+      raw_name: MP_CH4_ave
+      channel: tracer_pdef_gp
+    MP_CO:
+      raw_name: MP_CO_ave
+      channel: tracer_pdef_gp
+    MP_CO2:
+      raw_name: MP_CO2_ave
+      channel: tracer_pdef_gp
+    MP_DU_tot:  # derived from MP_DU_as_ave, MP_DU_cs_ave, MP_DU_ai_ave, MP_DU_ci_ave
+      channel: tracer_pdef_gp
+    MP_N2O:
+      raw_name: MP_N2O_ave
+      channel: tracer_pdef_gp
+    MP_NH3:
+      raw_name: MP_NH3_ave
+      channel: tracer_pdef_gp
+    MP_NO:
+      raw_name: MP_NO_ave
+      channel: tracer_pdef_gp
+    MP_NO2:
+      raw_name: MP_NO2_ave
+      channel: tracer_pdef_gp
+    MP_NOX:
+      raw_name: MP_NOX_ave
+      channel: tracer_pdef_gp
+    MP_O3:
+      raw_name: MP_O3_ave
+      channel: tracer_pdef_gp
+    MP_OH:
+      raw_name: MP_OH_ave
+      channel: tracer_pdef_gp
+    MP_S:
+      raw_name: MP_S_ave
+      channel: tracer_pdef_gp
+    MP_SO2:
+      raw_name: MP_SO2_ave
+      channel: tracer_pdef_gp
+    MP_SO4mm_tot:  # derived from MP_SO4mm_ns_ave, MP_SO4mm_ks_ave, MP_SO4mm_as_ave, MP_SO4mm_cs_ave
+      channel: tracer_pdef_gp
+    MP_SS_tot:  # derived from MP_SS_ks_ave, MP_SS_as_ave, MP_SS_cs_ave
+      channel: tracer_pdef_gp
+
+
+# Elements missing from original mapping table
+# Note: mixed channels are not supported yet
+# - AIRC_NO_s: {airc_NO: import_grid, geopot_ave: Amon}  -> mixed channels
+# - VOLC_SO2_s: {VOLC_SO2_SO2: import_grid, geopot_ave: Amon} -> mixed channels
+
+# TODO:
+# - derivation of toz: [DU] -> [m]
