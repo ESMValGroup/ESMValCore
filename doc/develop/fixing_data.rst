@@ -396,8 +396,8 @@ Please note the duplication of the name ``ICON`` in ``project`` and
 CMORizing functionalities.
 
 Similar to any other fix, the ICON fix allows the use of :ref:`extra
-facets<extra_facets>`. By default, the file :download:`icon-mapping.yml
-</../esmvalcore/_config/extra_facets/icon-mapping.yml>` is used for that
+facets<extra_facets>`. By default, the file :download:`icon-mappings.yml
+</../esmvalcore/_config/extra_facets/icon-mappings.yml>` is used for that
 purpose. For some variables, extra facets are necessary; otherwise ESMValTool
 cannot read them properly. Supported keys for extra facets are:
 
