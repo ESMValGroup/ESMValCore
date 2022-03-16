@@ -126,6 +126,11 @@ EMAC:
     default: '{exp}*{channel}.nc'
   output_file: '{dataset}_{exp}_{channel}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
+  ignore_warnings:
+    load:
+      - {message: 'Missing CF-netCDF formula term variable .*, referenced by netCDF variable .*', module: iris}
+      - {message: 'Ignored formula of unrecognised type: .*', module: iris}
+      # - {message: 'WARNING: _FillValue not used since it\ncannot be safely cast to variable data type', module: iris}
 
 CORDEX:
   input_dir:

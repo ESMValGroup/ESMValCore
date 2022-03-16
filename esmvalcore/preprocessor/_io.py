@@ -110,22 +110,25 @@ def _delete_attributes(iris_object, atts):
             del iris_object.attributes[att]
 
 
-def load(file, callback=None):
+def load(file, callback=None, ignore_warnings=None):
     """Load iris cubes from files."""
     logger.debug("Loading:\n%s", file)
+    if ignore_warnings is None:
+        ignore_warnings = []
+    ignore_warnings.append({
+        'message': "Missing CF-netCDF measure variable .*",
+        'category': UserWarning,
+        'module': 'iris',
+    })
+    ignore_warnings.append({
+        'message': "Ignoring netCDF variable '.*' invalid units '.*'",
+        'category': UserWarning,
+        'module': 'iris',
+    })
     with catch_warnings():
-        filterwarnings(
-            'ignore',
-            message="Missing CF-netCDF measure variable .*",
-            category=UserWarning,
-            module='iris',
-        )
-        filterwarnings(
-            'ignore',
-            message="Ignoring netCDF variable '.*' invalid units '.*'",
-            category=UserWarning,
-            module='iris',
-        )
+        for warning_kwargs in ignore_warnings:
+            warning_kwargs.setdefault('action', 'ignore')
+            filterwarnings(**warning_kwargs)
         raw_cubes = iris.load_raw(file, callback=callback)
     logger.debug("Done with loading %s", file)
     if not raw_cubes:
