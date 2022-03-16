@@ -30,7 +30,7 @@ REQUIREMENTS = {
     # Installation dependencies
     # Use with pip install . to install from source
     # if not available from conda-forge in environment.yml
-    'install': [],
+    # 'install': [],
     # Test dependencies
     # Execute 'python setup.py test' to run tests
     'test': [
@@ -89,9 +89,9 @@ class CustomCommand(Command):
     """Custom Command class."""
     def install_deps_temp(self):
         """Try to temporarily install packages needed to run the command."""
-        if self.distribution.install_requires:
-            self.distribution.fetch_build_eggs(
-                self.distribution.install_requires)
+        #  if self.distribution.install_requires:
+        #      self.distribution.fetch_build_eggs(
+        #         self.distribution.install_requires)
         if self.distribution.tests_require:
             self.distribution.fetch_build_eggs(self.distribution.tests_require)
 
@@ -194,7 +194,7 @@ setup(
     # Include all version controlled files
     include_package_data=True,
     setup_requires=REQUIREMENTS['setup'],
-    install_requires=REQUIREMENTS['install'],
+    # install_requires=REQUIREMENTS['install'],
     tests_require=REQUIREMENTS['test'],
     extras_require={
         'develop': REQUIREMENTS['develop'] + REQUIREMENTS['test'],
