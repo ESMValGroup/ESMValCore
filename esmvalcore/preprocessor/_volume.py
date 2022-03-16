@@ -137,11 +137,14 @@ def volume_statistics(cube, operator):
         [cube.coord(axis='Y'), cube.coord(axis='X')],
         iris.analysis.MEAN,
         weights=grid_volume)
-    layer_volume = da.sum(grid_volume, axis=yx_dims)
+    masked_volume = da.ma.masked_where(
+        da.ma.getmaskarray(cube.lazy_data),
+        grid_volume)
+    depth_volume = da.sum(masked_volume, axis=yx_dims)
     result = column.collapsed(
         cube.coord(axis='Z'),
         iris.analysis.MEAN,
-        weights=layer_volume)
+        weights=depth_volume)
 
     return result
 
