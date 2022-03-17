@@ -19,7 +19,6 @@ on:
   push:
     branches:
     - main
-    - all_conda_forge
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
