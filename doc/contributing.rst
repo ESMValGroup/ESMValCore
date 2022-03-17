@@ -629,8 +629,8 @@ When adding or removing dependencies, please consider applying the changes in
 the following files:
 
 - ``environment.yml``
-  contains development dependencies that cannot be installed from
-  `PyPI <https://pypi.org/>`_
+  contains all the development dependencies; these are all from
+  `conda-forge <https://conda-forge.org/>`_
 - ``docs/requirements.txt``
   contains Python dependencies needed to build the documentation that can be
   installed from PyPI
@@ -641,7 +641,8 @@ the following files:
   (We do not use conda to build the documentation because this is too time
   consuming.)
 - ``setup.py``
-  contains all Python dependencies, regardless of their installation source
+  contains Python dependencies related to testing, that installed from
+  `PyPi <https://pypi.org/>`_
 - ``package/meta.yaml``
   contains dependencies for the conda package; all Python and compiled
   dependencies that can be installed from conda should be listed here
