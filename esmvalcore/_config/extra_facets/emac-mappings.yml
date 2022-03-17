@@ -11,21 +11,20 @@ EMAC:
     awhea:  # non-CMOR variable
       raw_name: awhea_ave
       channel: Omon
-    cod_sw_b01:  # non-CMOR variable
-      raw_name: tau_cld_sw_B01_ave
-      channel: Amon
     clivi:
       raw_name: xivi_ave
       channel: Amon
     clt:
       raw_name: aclcov_ave
       channel: Amon
-    clwvi:
-      raw_name: xlvi_ave
+    clwvi:  # derived from xlvi_ave, xivi_ave
       channel: Amon
     co2mass:
       raw_name: MP_CO2_ave
       channel: tracer_pdef_gp
+    cod_sw_b01:  # non-CMOR variable
+      raw_name: tau_cld_sw_B01_ave
+      channel: Amon
     evspsbl:
       raw_name: evap_ave
       channel: Amon
@@ -79,6 +78,9 @@ EMAC:
       raw_name: flxusftop_ave
       channel: Amon
     rtmt:  # derived from flxttop_ave, flxstop_ave
+      channel: Amon
+    siconc:
+      raw_name: seaice_ave
       channel: Amon
     siconca:
       raw_name: seaice_ave

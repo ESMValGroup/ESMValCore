@@ -16,7 +16,7 @@ comment:           sum of cloud-to-ground (GC) and intra-cloud (IC); given in kg
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
-dimensions:        longitude latitude time
+dimensions:        time
 out_name:          lnox
 type:              real
 !----------------------------------

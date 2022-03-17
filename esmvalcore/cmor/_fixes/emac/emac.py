@@ -1,11 +1,22 @@
-"""On-the-fly CMORizer for EMAC."""
+"""On-the-fly CMORizer for EMAC.
+
+Note
+----
+For many variables, derivations from multiple variables (i.e., an output
+variable is calculated from multiple other variables) are necessary. These are
+implemented in ``fix_metadata``, not in ``fix_data``, here. The reason for this
+is that ``fix_metadata`` takes all cubes (and thus all input variables of the
+input file) as argument while ``fix_data`` only takes one cube (the output
+variable) as single argument.
+
+"""
 
 import logging
 
 import dask.array as da
-import iris
-import iris.cube
 import iris.util
+from iris import NameConstraint
+from iris.cube import CubeList
 
 from ..fix import Fix
 from ..shared import add_scalar_height_coord, add_scalar_typesi_coord
@@ -21,12 +32,19 @@ class EmacFix(Fix):
         if var_name is None:
             var_name = self.extra_facets.get('raw_name',
                                              self.vardef.short_name)
-            if not cubes.extract(iris.NameConstraint(var_name=var_name)):
+            if not cubes.extract(NameConstraint(var_name=var_name)):
                 raise ValueError(
                     f"Variable '{var_name}' used to extract "
                     f"'{self.vardef.short_name}' is not available in input "
                     f"file")
-        return cubes.extract_cube(iris.NameConstraint(var_name=var_name))
+        return cubes.extract_cube(NameConstraint(var_name=var_name))
+
+    @staticmethod
+    def sum_over_z_coord(cube):
+        """Perform sum over Z-coordinate."""
+        z_coord = cube.coord(axis='Z')
+        cube = cube.collapsed(z_coord, iris.analysis.SUM)
+        return cube
 
 
 class AllVars(EmacFix):
@@ -72,7 +90,7 @@ class AllVars(EmacFix):
         # Fix metadata of variable
         self._fix_var_metadata(cube)
 
-        return iris.cube.CubeList([cube])
+        return CubeList([cube])
 
     @staticmethod
     def _fix_lat(cube, lat_name):
@@ -123,7 +141,7 @@ class AllVars(EmacFix):
             return
         raise ValueError(
             f"Cannot find requested pressure level coordinate for variable "
-            f"'{self.vardef.short_name}', searched for Z coordinates with "
+            f"'{self.vardef.short_name}', searched for Z-coordinates with "
             f"units that are convertible to Pa")
 
     def _fix_scalar_coords(self, cube):
@@ -163,18 +181,232 @@ class AllVars(EmacFix):
             cube.convert_units(self.vardef.units)
 
 
+class Clwvi(EmacFix):
+    """Fixes for ``clwvi``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = (
+            cubes.extract_strict(NameConstraint(var_name='xlvi_ave')) +
+            cubes.extract_strict(NameConstraint(var_name='xivi_ave'))
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
+class Cod_sw_b01(EmacFix):  # noqa: N801
+    """Fixes for ``cod_sw_b01``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = self.get_cube(cubes)
+        cube.units = '1'
+        return CubeList([cube])
+
+    def fix_data(self, cube):
+        """Fix data."""
+        return self.sum_over_z_coord(cube)
+
+
+class Evspsbl(EmacFix):
+    """Fixes for ``evspsbl``."""
+
+    def fix_data(self, cube):
+        """Fix data."""
+        cube.data = -cube.core_data()
+        return cube
+
+
+class Lnox(EmacFix):
+    """Fixes for ``lnox``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        noxcg_cube = cubes.extract_strict(NameConstraint(var_name='NOxcg_ave'))
+        noxic_cube = cubes.extract_strict(NameConstraint(var_name='NOxic_ave'))
+
+        # Fix units
+        noxcg_cube.units = 'kg'
+        noxic_cube.units = 'kg'
+        noxcg_cube = noxcg_cube.collapsed(['longitude', 'latitude'],
+                                          iris.analysis.SUM)
+        noxic_cube = noxic_cube.collapsed(['longitude', 'latitude'],
+                                          iris.analysis.SUM)
+
+        # Calculate lnox
+        timestep = float(noxcg_cube.attributes['GCM_timestep'])
+        cube = (noxcg_cube + noxic_cube) / timestep * 365.0 * 24.0 * 3600.0
+
+        return CubeList([cube])
+
+
+class MP_BC_tot(EmacFix):  # noqa: N801
+    """Fixes for ``MP_BC_tot``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = (
+            cubes.extract_strict(NameConstraint(var_name='MP_BC_ki_ave')) +
+            cubes.extract_strict(NameConstraint(var_name='MP_BC_ks_ave')) +
+            cubes.extract_strict(NameConstraint(var_name='MP_BC_as_ave')) +
+            cubes.extract_strict(NameConstraint(var_name='MP_BC_cs_ave'))
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
+class MP_DU_tot(EmacFix):  # noqa: N801
+    """Fixes for ``MP_DU_tot``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = (
+            cubes.extract_strict(NameConstraint(var_name='MP_DU_ai_ave')) +
+            cubes.extract_strict(NameConstraint(var_name='MP_DU_as_ave')) +
+            cubes.extract_strict(NameConstraint(var_name='MP_DU_ci_ave')) +
+            cubes.extract_strict(NameConstraint(var_name='MP_DU_cs_ave'))
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
+class MP_SO4mm_tot(EmacFix):  # noqa: N801
+    """Fixes for ``MP_SO4mm_tot``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = (
+            cubes.extract_strict(NameConstraint(var_name='MP_SO4mm_ns_ave')) +
+            cubes.extract_strict(NameConstraint(var_name='MP_SO4mm_ks_ave')) +
+            cubes.extract_strict(NameConstraint(var_name='MP_SO4mm_as_ave')) +
+            cubes.extract_strict(NameConstraint(var_name='MP_SO4mm_cs_ave'))
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
+class MP_SS_tot(EmacFix):  # noqa: N801
+    """Fixes for ``MP_SS_tot``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = (
+            cubes.extract_strict(NameConstraint(var_name='MP_SS_ks_ave')) +
+            cubes.extract_strict(NameConstraint(var_name='MP_SS_as_ave')) +
+            cubes.extract_strict(NameConstraint(var_name='MP_SS_cs_ave'))
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
+Od550aer = Cod_sw_b01
+
+
+class Pr(EmacFix):
+    """Fixes for ``pr``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = (
+            cubes.extract_strict(NameConstraint(var_name='aprl_ave')) +
+            cubes.extract_strict(NameConstraint(var_name='aprc_ave')) +
+            cubes.extract_strict(NameConstraint(var_name='aprs_ave'))
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
+class Rlds(EmacFix):
+    """Fixes for ``rlds``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = (
+            cubes.extract_strict(NameConstraint(var_name='flxtbot_ave')) -
+            cubes.extract_strict(NameConstraint(var_name='tradsu_ave'))
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
+Rlus = Evspsbl
+
+
+Rlut = Evspsbl
+
+
+class Rsds(EmacFix):
+    """Fixes for ``rsds``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = (
+            cubes.extract_strict(NameConstraint(var_name='flxsbot_ave')) -
+            cubes.extract_strict(NameConstraint(var_name='sradsu_ave'))
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
+class Rsdt(EmacFix):
+    """Fixes for ``rsdt``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = (
+            cubes.extract_strict(NameConstraint(var_name='flxstop_ave')) -
+            cubes.extract_strict(NameConstraint(var_name='srad0u_ave'))
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
+Rsus = Evspsbl
+
+
+Rsut = Evspsbl
+
+
+class Rtmt(EmacFix):
+    """Fixes for ``rtmt``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = (
+            cubes.extract_strict(NameConstraint(var_name='flxttop_ave')) +
+            cubes.extract_strict(NameConstraint(var_name='flxstop_ave'))
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
 class Siconc(EmacFix):
     """Fixes for ``siconc``."""
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
-        # Note: This fix is called before the AllVars() fix. The wrong var_name
-        # and units (which need to be %) are fixed in a later step in
-        # AllVars(). This fix here is necessary to fix the "unknown" units that
-        # cannot be converted to % in AllVars().
         cube = self.get_cube(cubes)
         cube.units = '1'
-        return cubes
+        return CubeList([cube])
 
 
 Siconca = Siconc
+
+
+class Sithick(EmacFix):
+    """Fixes for ``sithick``."""
+
+    def fix_data(self, cube):
+        """Fix data."""
+        cube.data = da.ma.masked_equal(cube.core_data(), 0.0)
+        return cube
+
+
+class Tosga(EmacFix):
+    """Fixes for ``tosga``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = self.get_cube(cubes)
+        cube.units = 'celsius'
+        return CubeList([cube])
