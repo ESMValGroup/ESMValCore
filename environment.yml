@@ -2,13 +2,13 @@
 name: esmvaltool
 channels:
   - conda-forge
+  - nodefaults
 
 dependencies:
   - cartopy
   - cf-units>=3.0.0
   - cftime
   - compilers
-  - cryptography  # see https://github.com/ESGF/esgf-pyclient/issues/83
   - dask[array]
   - esgf-pyclient>=0.3.1
   - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
