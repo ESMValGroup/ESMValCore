@@ -1017,6 +1017,12 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     for product in products | multimodel_products | ensemble_products:
         product.check()
 
+        # Ensure that attributes start_year and end_year are always available
+        # for all products
+        start_year, end_year = _parse_period(product.attributes['timerange'])
+        product.attributes['start_year'] = int(str(start_year[0:4]))
+        product.attributes['end_year'] = int(str(end_year[0:4]))
+
     return products
 
 
@@ -1198,13 +1204,6 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
                 name=derive_name,
             )
             derive_tasks.append(task)
-
-        # Ensure that attributes start_year and end_year are always available
-        # in derived variables
-        for variable in variables:
-            start_year, end_year = _parse_period(variable['timerange'])
-            variable['start_year'] = int(str(start_year[0:4]))
-            variable['end_year'] = int(str(end_year[0:4]))
 
     # Create (final) preprocessor task
     task = _get_single_preprocessor_task(
