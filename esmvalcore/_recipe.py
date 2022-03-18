@@ -1199,6 +1199,13 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
             )
             derive_tasks.append(task)
 
+        # Ensure that attributes start_year and end_year are always available
+        # in derived variables
+        for variable in variables:
+            start_year, end_year = _parse_period(variable['timerange'])
+            variable['start_year'] = int(str(start_year[0:4]))
+            variable['end_year'] = int(str(end_year[0:4]))
+
     # Create (final) preprocessor task
     task = _get_single_preprocessor_task(
         variables,
