@@ -31,6 +31,8 @@ EMAC:
     hfls:
       raw_name: ahfl_ave
       channel: Amon
+    hfns:  # ESMValCore-derivation
+      channel: Amon
     hfss:
       raw_name: ahfs_ave
       channel: Amon
@@ -38,7 +40,7 @@ EMAC:
       channel: lnox_PaR_T_gp
     od550aer:
       raw_name: aot_opt_TOT_550_total_ave
-      channel: Amon
+      channel: AERmon
     pr:  # derived from aprl_ave, aprc_ave, aprs_ave
       channel: Amon
     prc:
@@ -55,6 +57,8 @@ EMAC:
       channel: Amon
     rlds:  # derived from flxtbot_ave, tradsu_ave
       channel: Amon
+    rlns:  # ESMValCore-derivation
+      channel: Amon
     rlus:
       raw_name: tradsu_ave
       channel: Amon
@@ -67,6 +71,10 @@ EMAC:
     rsds:  # derived from flxsbot_ave, sradsu_ave
       channel: Amon
     rsdt:  # derived from flxstop_ave, srad0u_ave
+      channel: Amon
+    rsns:  # ESMValCore-derivation
+      channel: Amon
+    rsnt:  # ESMValCore-derivation
       channel: Amon
     rsus:
       raw_name: sradsu_ave
@@ -94,10 +102,10 @@ EMAC:
     tos:
       raw_name: tsw
       channel: g3b
+    toz:
+      channel: column
     ts:
       raw_name: tsurf_ave
-      channel: Amon
-    toz:
       channel: Amon
 
     # Forcings (non-CMOR variables)
