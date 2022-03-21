@@ -3,11 +3,16 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris import NameConstraint
+from iris.coords import AuxCoord, DimCoord
+from iris.cube import Cube, CubeList
 
 from esmvalcore._config import get_extra_facets
 from esmvalcore.cmor._fixes.icon.icon import AllVars, Siconca
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
+
+# Note: test_data_path is defined in tests/integration/cmor/_fixes/conftest.py
 
 
 @pytest.fixture
@@ -34,45 +39,36 @@ def cubes_grid(test_data_path):
 @pytest.fixture
 def cubes_regular_grid():
     """Cube with regular grid."""
-    time_coord = iris.coords.DimCoord([0], var_name='time',
-                                      standard_name='time',
-                                      units='days since 1850-01-01')
-    lat_coord = iris.coords.DimCoord([0.0, 1.0], var_name='lat',
-                                     standard_name='latitude',
-                                     long_name='latitude',
-                                     units='degrees_north')
-    lon_coord = iris.coords.DimCoord([-1.0, 1.0], var_name='lon',
-                                     standard_name='longitude',
-                                     long_name='longitude',
-                                     units='degrees_east')
-    cube = iris.cube.Cube([[[0.0, 1.0], [2.0, 3.0]]], var_name='tas',
-                          units='K',
-                          dim_coords_and_dims=[(time_coord, 0),
-                                               (lat_coord, 1),
-                                               (lon_coord, 2)])
-    return iris.cube.CubeList([cube])
+    time_coord = DimCoord([0], var_name='time', standard_name='time',
+                          units='days since 1850-01-01')
+    lat_coord = DimCoord([0.0, 1.0], var_name='lat', standard_name='latitude',
+                         long_name='latitude', units='degrees_north')
+    lon_coord = DimCoord([-1.0, 1.0], var_name='lon',
+                         standard_name='longitude', long_name='longitude',
+                         units='degrees_east')
+    cube = Cube([[[0.0, 1.0], [2.0, 3.0]]], var_name='tas', units='K',
+                dim_coords_and_dims=[(time_coord, 0),
+                                     (lat_coord, 1),
+                                     (lon_coord, 2)])
+    return CubeList([cube])
 
 
 @pytest.fixture
 def cubes_2d_lat_lon_grid():
     """Cube with 2D latitude and longitude."""
-    time_coord = iris.coords.DimCoord([0], var_name='time',
-                                      standard_name='time',
-                                      units='days since 1850-01-01')
-    lat_coord = iris.coords.AuxCoord([[0.0, 0.0], [1.0, 1.0]], var_name='lat',
-                                     standard_name='latitude',
-                                     long_name='latitude',
-                                     units='degrees_north')
-    lon_coord = iris.coords.AuxCoord([[0.0, 1.0], [0.0, 1.0]], var_name='lon',
-                                     standard_name='longitude',
-                                     long_name='longitude',
-                                     units='degrees_east')
-    cube = iris.cube.Cube([[[0.0, 1.0], [2.0, 3.0]]], var_name='tas',
-                          units='K',
-                          dim_coords_and_dims=[(time_coord, 0)],
-                          aux_coords_and_dims=[(lat_coord, (1, 2)),
-                                               (lon_coord, (1, 2))])
-    return iris.cube.CubeList([cube])
+    time_coord = DimCoord([0], var_name='time', standard_name='time',
+                          units='days since 1850-01-01')
+    lat_coord = AuxCoord([[0.0, 0.0], [1.0, 1.0]], var_name='lat',
+                         standard_name='latitude', long_name='latitude',
+                         units='degrees_north')
+    lon_coord = AuxCoord([[0.0, 1.0], [0.0, 1.0]], var_name='lon',
+                         standard_name='longitude', long_name='longitude',
+                         units='degrees_east')
+    cube = Cube([[[0.0, 1.0], [2.0, 3.0]]], var_name='tas', units='K',
+                dim_coords_and_dims=[(time_coord, 0)],
+                aux_coords_and_dims=[(lat_coord, (1, 2)),
+                                     (lon_coord, (1, 2))])
+    return CubeList([cube])
 
 
 def get_allvars_fix(mip, short_name):
@@ -81,6 +77,28 @@ def get_allvars_fix(mip, short_name):
     extra_facets = get_extra_facets('ICON', 'ICON', mip, short_name, ())
     fix = AllVars(vardef, extra_facets=extra_facets)
     return fix
+
+
+def check_ta_metadata(cubes):
+    """Check ta metadata."""
+    assert len(cubes) == 1
+    cube = cubes[0]
+    assert cube.var_name == 'ta'
+    assert cube.standard_name == 'air_temperature'
+    assert cube.long_name == 'Air Temperature'
+    assert cube.units == 'K'
+    return cube
+
+
+def check_tas_metadata(cubes):
+    """Check tas metadata."""
+    assert len(cubes) == 1
+    cube = cubes[0]
+    assert cube.var_name == 'tas'
+    assert cube.standard_name == 'air_temperature'
+    assert cube.long_name == 'Near-Surface Air Temperature'
+    assert cube.units == 'K'
+    return cube
 
 
 def check_time(cube):
@@ -92,12 +110,12 @@ def check_time(cube):
     assert time.long_name == 'time'
     assert time.units == Unit('days since 1850-01-01',
                               calendar='proleptic_gregorian')
-    np.testing.assert_allclose(time.points, [54786.])
+    np.testing.assert_allclose(time.points, [54786.0])
     assert time.bounds is None
     assert time.attributes == {}
 
 
-def check_height(cube):
+def check_height(cube, plev_has_bounds=True):
     """Check height coordinate of cube."""
     assert cube.coords('model level number', dim_coords=True)
     height = cube.coord('model level number', dim_coords=True)
@@ -115,9 +133,26 @@ def check_height(cube):
     assert plev.standard_name == 'air_pressure'
     assert plev.long_name == 'pressure'
     assert plev.units == 'Pa'
-    assert plev.bounds is not None
     assert plev.attributes == {'positive': 'down'}
     assert cube.coord_dims('air_pressure') == (0, 1, 2)
+
+    if plev_has_bounds:
+        assert plev.bounds is not None
+    else:
+        assert plev.bounds is None
+
+
+def check_heightxm(cube, height_value):
+    """Check scalar heightxm coordinate of cube."""
+    assert cube.coords('height')
+    height = cube.coord('height')
+    assert height.var_name == 'height'
+    assert height.standard_name == 'height'
+    assert height.long_name == 'height'
+    assert height.units == 'm'
+    assert height.attributes == {'positive': 'up'}
+    np.testing.assert_allclose(height.points, [height_value])
+    assert height.bounds is None
 
 
 def check_lat_lon(cube):
@@ -299,15 +334,24 @@ def test_ta_fix(cubes_3d):
     fix = get_allvars_fix('Amon', 'ta')
     fixed_cubes = fix.fix_metadata(cubes_3d)
 
-    assert len(fixed_cubes) == 1
-    cube = fixed_cubes[0]
-    assert cube.var_name == 'ta'
-    assert cube.standard_name == 'air_temperature'
-    assert cube.long_name == 'Air Temperature'
-    assert cube.units == 'K'
-
+    cube = check_ta_metadata(fixed_cubes)
     check_time(cube)
     check_height(cube)
+    check_lat_lon(cube)
+
+
+def test_ta_fix_no_plev_bounds(cubes_3d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'ta')
+    cubes = CubeList([
+        cubes_3d.extract_cube(NameConstraint(var_name='ta')),
+        cubes_3d.extract_cube(NameConstraint(var_name='pfull')),
+    ])
+    fixed_cubes = fix.fix_metadata(cubes)
+
+    cube = check_ta_metadata(fixed_cubes)
+    check_time(cube)
+    check_height(cube, plev_has_bounds=False)
     check_lat_lon(cube)
 
 
@@ -325,24 +369,43 @@ def test_tas_fix(cubes_2d):
     fix = get_allvars_fix('Amon', 'tas')
     fixed_cubes = fix.fix_metadata(cubes_2d)
 
-    assert len(fixed_cubes) == 1
-    cube = fixed_cubes[0]
-    assert cube.var_name == 'tas'
-    assert cube.standard_name == 'air_temperature'
-    assert cube.long_name == 'Near-Surface Air Temperature'
-    assert cube.units == 'K'
-
+    cube = check_tas_metadata(fixed_cubes)
     check_time(cube)
     check_lat_lon(cube)
-    assert cube.coords('height')
-    height = cube.coord('height')
-    assert height.var_name == 'height'
-    assert height.standard_name == 'height'
-    assert height.long_name == 'height'
-    assert height.units == 'm'
-    assert height.attributes == {'positive': 'up'}
-    np.testing.assert_allclose(height.points, [2.0])
-    assert height.bounds is None
+    check_heightxm(cube, 2.0)
+
+
+def test_tas_scalar_height2m_already_present(cubes_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'tas')
+
+    # Scalar height (with wrong metadata) already present
+    height_coord = AuxCoord(2.0, var_name='h', standard_name='height')
+    cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
+    cube.add_aux_coord(height_coord, ())
+    fixed_cubes = fix.fix_metadata(cubes_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    check_heightxm(cube, 2.0)
+
+
+def test_tas_dim_height2m_already_present(cubes_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'tas')
+
+    # Dimensional coordinate height (with wrong metadata) already present
+    height_coord = AuxCoord(2.0, var_name='h', standard_name='height')
+    cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
+    cube.add_aux_coord(height_coord, ())
+    cube = iris.util.new_axis(cube, scalar_coord='height')
+    cube.transpose((1, 0, 2))
+    cubes = CubeList([cube])
+    fixed_cubes = fix.fix_metadata(cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    check_heightxm(cube, 2.0)
 
 
 # Test uas (for height10m coordinate)
@@ -379,6 +442,39 @@ def test_uas_fix(cubes_2d):
     assert height.bounds is None
 
 
+def test_uas_scalar_height10m_already_present(cubes_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'uas')
+
+    # Scalar height (with wrong metadata) already present
+    height_coord = AuxCoord(10.0, var_name='h', standard_name='height')
+    cube = cubes_2d.extract_cube(NameConstraint(var_name='uas'))
+    cube.add_aux_coord(height_coord, ())
+    fixed_cubes = fix.fix_metadata(cubes_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    check_heightxm(cube, 10.0)
+
+
+def test_uas_dim_height10m_already_present(cubes_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'uas')
+
+    # Dimensional coordinate height (with wrong metadata) already present
+    height_coord = AuxCoord(10.0, var_name='h', standard_name='height')
+    cube = cubes_2d.extract_cube(NameConstraint(var_name='uas'))
+    cube.add_aux_coord(height_coord, ())
+    cube = iris.util.new_axis(cube, scalar_coord='height')
+    cube.transpose((1, 0, 2))
+    cubes = CubeList([cube])
+    fixed_cubes = fix.fix_metadata(cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    check_heightxm(cube, 10.0)
+
+
 # Test fix with regular grid and 2D latitudes and longitude
 
 
@@ -387,13 +483,7 @@ def test_regular_grid_fix(cubes_regular_grid):
     fix = get_allvars_fix('Amon', 'tas')
     fixed_cubes = fix.fix_metadata(cubes_regular_grid)
 
-    assert len(fixed_cubes) == 1
-    cube = fixed_cubes[0]
-    assert cube.var_name == 'tas'
-    assert cube.standard_name == 'air_temperature'
-    assert cube.long_name == 'Near-Surface Air Temperature'
-    assert cube.units == 'K'
-
+    cube = check_tas_metadata(fixed_cubes)
     assert cube.coords('time', dim_coords=True, dimensions=0)
     assert cube.coords('latitude', dim_coords=True, dimensions=1)
     assert cube.coords('longitude', dim_coords=True, dimensions=2)
@@ -405,13 +495,7 @@ def test_2d_lat_lon_grid_fix(cubes_2d_lat_lon_grid):
     fix = get_allvars_fix('Amon', 'tas')
     fixed_cubes = fix.fix_metadata(cubes_2d_lat_lon_grid)
 
-    assert len(fixed_cubes) == 1
-    cube = fixed_cubes[0]
-    assert cube.var_name == 'tas'
-    assert cube.standard_name == 'air_temperature'
-    assert cube.long_name == 'Near-Surface Air Temperature'
-    assert cube.units == 'K'
-
+    cube = check_tas_metadata(fixed_cubes)
     assert cube.coords('time', dim_coords=True, dimensions=0)
     assert cube.coords('latitude', dim_coords=False, dimensions=(1, 2))
     assert cube.coords('longitude', dim_coords=False, dimensions=(1, 2))
@@ -428,6 +512,7 @@ def test_empty_standard_name_fix(cubes_2d):
     # handle this gracefully and here we test it with an artificial, but
     # realistic case.
     vardef = get_var_info('ICON', 'Amon', 'tas')
+    original_standard_name = vardef.standard_name
     vardef.standard_name = ''
     extra_facets = get_extra_facets('ICON', 'ICON', 'Amon', 'tas', ())
     fix = AllVars(vardef, extra_facets=extra_facets)
@@ -440,6 +525,148 @@ def test_empty_standard_name_fix(cubes_2d):
     assert cube.long_name == 'Near-Surface Air Temperature'
     assert cube.units == 'K'
 
+    # Restore original standard_name of tas
+    vardef.standard_name = original_standard_name
+
+
+# Test automatic addition of missing coordinates
+
+
+def test_add_time(cubes_2d):
+    """Test fix."""
+    # Remove time from tas cube to test automatic addition
+    tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
+    uas_cube = cubes_2d.extract_cube(NameConstraint(var_name='uas'))
+    tas_cube = tas_cube[0]
+    tas_cube.remove_coord('time')
+    cubes = CubeList([tas_cube, uas_cube])
+
+    fix = get_allvars_fix('Amon', 'tas')
+    fixed_cubes = fix.fix_metadata(cubes)
+
+    cube = check_tas_metadata(fixed_cubes)
+    assert cube.shape == (1, 8)
+    check_time(cube)
+
+
+def test_add_time_fails():
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'ta')
+    cube = Cube(1, var_name='ta', units='K')
+    cubes = CubeList([
+        cube,
+        Cube(1, var_name='tas', units='K'),
+    ])
+    msg = "Cannot add required coordinate 'time' to variable 'ta'"
+    with pytest.raises(ValueError, match=msg):
+        fix._add_time(cube, cubes)
+
+
+# Test with single-dimension cubes
+
+
+def test_only_time():
+    """Test fix."""
+    # We know that ta has dimensions time, plev19, latitude, longitude, but the
+    # ICON CMORizer is designed to check for the presence of each dimension
+    # individually. To test this, remove all but one dimension of ta to create
+    # an artificial, but realistic test case.
+    vardef = get_var_info('ICON', 'Amon', 'ta')
+    original_dimensions = vardef.dimensions
+    vardef.dimensions = ['time']
+    extra_facets = get_extra_facets('ICON', 'ICON', 'Amon', 'ta', ())
+    fix = AllVars(vardef, extra_facets=extra_facets)
+
+    # Create cube that does not contain time to test automatic addition of time
+    # dimension from other cube in file
+    time_coord = DimCoord([0.0, 1.0], var_name='time', standard_name='time',
+                          long_name='time', units='days since 1850-01-01')
+    cubes = CubeList([
+        Cube([1, 1], var_name='ta', units='K',
+             dim_coords_and_dims=[(time_coord, 0)]),
+    ])
+    fixed_cubes = fix.fix_metadata(cubes)
+
+    # Check cube metadata
+    cube = check_ta_metadata(fixed_cubes)
+
+    # Check cube data
+    assert cube.shape == (2,)
+    np.testing.assert_equal(cube.data, [1, 1])
+
+    # Check time metadata
+    assert cube.coords('time')
+    new_time_coord = cube.coord('time')
+    assert new_time_coord.var_name == 'time'
+    assert new_time_coord.standard_name == 'time'
+    assert new_time_coord.long_name == 'time'
+    assert new_time_coord.units == 'days since 1850-01-01'
+
+    # Check time data
+    np.testing.assert_allclose(new_time_coord.points, [0.0, 1.0])
+    np.testing.assert_allclose(new_time_coord.bounds,
+                               [[-0.5, 0.5], [0.5, 1.5]])
+
+    # Restore original dimensions of ta
+    vardef.dimensions = original_dimensions
+
+
+def test_only_height():
+    """Test fix."""
+    # We know that ta has dimensions time, plev19, latitude, longitude, but the
+    # ICON CMORizer is designed to check for the presence of each dimension
+    # individually. To test this, remove all but one dimension of ta to create
+    # an artificial, but realistic test case.
+    vardef = get_var_info('ICON', 'Amon', 'ta')
+    original_dimensions = vardef.dimensions
+    vardef.dimensions = ['plev19']
+    extra_facets = get_extra_facets('ICON', 'ICON', 'Amon', 'ta', ())
+    fix = AllVars(vardef, extra_facets=extra_facets)
+
+    # Create cube that does not contain time to test automatic addition of time
+    # dimension from other cube in file
+    height_coord = DimCoord([1000.0, 100.0], var_name='height',
+                            standard_name='height', units='cm')
+    cubes = CubeList([
+        Cube([1, 1], var_name='ta', units='K',
+             dim_coords_and_dims=[(height_coord, 0)]),
+    ])
+    fixed_cubes = fix.fix_metadata(cubes)
+
+    # Check cube metadata
+    cube = check_ta_metadata(fixed_cubes)
+
+    # Check cube data
+    assert cube.shape == (2,)
+    np.testing.assert_equal(cube.data, [1, 1])
+
+    # Check height metadata
+    assert cube.coords('height')
+    new_height_coord = cube.coord('height')
+    assert new_height_coord.var_name == 'height'
+    assert new_height_coord.standard_name == 'height'
+    assert new_height_coord.long_name == 'height'
+    assert new_height_coord.units == 'm'
+    assert new_height_coord.attributes == {'positive': 'up'}
+
+    # Check height data
+    np.testing.assert_allclose(new_height_coord.points, [1.0, 10.0])
+    assert new_height_coord.bounds is None
+
+    # Restore original dimensions of ta
+    vardef.dimensions = original_dimensions
+
+
+# Test variable not available in file
+
+
+def test_var_not_available(cubes_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'pr')
+    msg = "Variable 'pr' used to extract 'pr' is not available in input file"
+    with pytest.raises(ValueError, match=msg):
+        fix.fix_metadata(cubes_2d)
+
 
 # Test fix with invalid time units
 
@@ -449,5 +676,6 @@ def test_invalid_time_units(cubes_2d):
     fix = get_allvars_fix('Amon', 'tas')
     for cube in cubes_2d:
         cube.coord('time').attributes['invalid_units'] = 'month as %Y%m%d.%f'
-    with pytest.raises(ValueError):
+    msg = "Expected time units"
+    with pytest.raises(ValueError, match=msg):
         fix.fix_metadata(cubes_2d)
