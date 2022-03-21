@@ -1017,6 +1017,14 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     for product in products | multimodel_products | ensemble_products:
         product.check()
 
+        # Ensure that attributes start_year and end_year are always available
+        # for all products if a timerange is specified
+        if 'timerange' in product.attributes:
+            start_year, end_year = _parse_period(
+                product.attributes['timerange'])
+            product.attributes['start_year'] = int(str(start_year[0:4]))
+            product.attributes['end_year'] = int(str(end_year[0:4]))
+
     return products
 
 
