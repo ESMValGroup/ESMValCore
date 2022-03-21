@@ -1540,6 +1540,41 @@ def test_derive_with_optional_var_nodata(tmp_path, patched_failing_datafinder,
         assert ancestor_product.filename in all_product_files
 
 
+def test_derive_contains_start_end_year(tmp_path, patched_datafinder,
+                                        config_user):
+
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              toz:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                timerange: '2000/2005'
+                derive: true
+                force_derivation: true
+                additional_datasets:
+                  - {dataset: GFDL-CM3,  ensemble: r1i1p1}
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+
+    # Check that start_year and end_year are present in attributes
+    assert len(task.products) == 1
+    product = task.products.pop()
+    assert 'derive' in product.settings
+    assert product.attributes['short_name'] == 'toz'
+    assert product.attributes['timerange'] == '2000/2005'
+    assert product.attributes['start_year'] == 2000
+    assert product.attributes['end_year'] == 2005
+
+
 def create_test_image(basename, cfg):
     """Get a valid path for saving a diagnostic plot."""
     image = Path(cfg['plot_dir']) / (basename + '.' + cfg['output_file_type'])
