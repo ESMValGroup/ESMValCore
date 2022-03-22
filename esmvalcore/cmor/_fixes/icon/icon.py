@@ -311,6 +311,7 @@ class AllVars(Fix):
     @staticmethod
     def _fix_height(cube, cubes):
         """Fix height coordinate of cube."""
+        # Add air_pressure coordinate if possible
         if cubes.extract(NameConstraint(var_name='pfull')):
             plev_points_cube = cubes.extract_cube(
                 NameConstraint(var_name='pfull'))
