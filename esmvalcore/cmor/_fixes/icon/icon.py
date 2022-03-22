@@ -53,10 +53,11 @@ class AllVars(Fix):
             cube = self._fix_time(cube, cubes)
 
         # Fix height (note: cannot use "if 'height' in self.vardef.dimensions"
-        # here since the name of the z-coord varies from variable to variable
+        # here since the name of the z-coord varies from variable to variable)
         if cube.coords('height'):
-            # In case a scalar height is required, remove it here. The step
-            # _fix_height() is designed to fix non-scalar height coordinates.
+            # In case a scalar height is required, remove it here (it is added
+            # at a later stage). The step _fix_height() is designed to fix
+            # non-scalar height coordinates.
             if (cube.coord('height').shape[0] == 1 and (
                     'height2m' in self.vardef.dimensions or
                     'height10m' in self.vardef.dimensions)):
