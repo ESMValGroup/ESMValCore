@@ -455,6 +455,7 @@ def test_tas_scalar_height2m_already_present(cubes_2d):
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
+    assert cube.shape == (1, 8)
     check_heightxm(cube, 2.0)
 
 
@@ -473,6 +474,7 @@ def test_tas_dim_height2m_already_present(cubes_2d):
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
+    assert cube.shape == (1, 8)
     check_heightxm(cube, 2.0)
 
 
@@ -522,6 +524,7 @@ def test_uas_scalar_height10m_already_present(cubes_2d):
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
+    assert cube.shape == (1, 8)
     check_heightxm(cube, 10.0)
 
 
@@ -540,6 +543,7 @@ def test_uas_dim_height10m_already_present(cubes_2d):
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
+    assert cube.shape == (1, 8)
     check_heightxm(cube, 10.0)
 
 
