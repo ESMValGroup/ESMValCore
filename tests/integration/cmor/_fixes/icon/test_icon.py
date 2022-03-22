@@ -646,11 +646,14 @@ def test_add_latitude(cubes_2d, tmp_path):
     icon.CACHE_DIR = tmp_path
 
     fix = get_allvars_fix('Amon', 'tas')
+    assert len(fix._horizontal_grids) == 0
     fixed_cubes = fix.fix_metadata(cubes)
 
     cube = check_tas_metadata(fixed_cubes)
     assert cube.shape == (1, 8)
     check_lat_lon(cube)
+    assert len(fix._horizontal_grids) == 1
+    assert 'icon_grid.nc' in fix._horizontal_grids
 
     # Restore cache location
     icon.CACHE_DIR = original_cache_dir
@@ -672,11 +675,14 @@ def test_add_longitude(cubes_2d, tmp_path):
     icon.CACHE_DIR = tmp_path
 
     fix = get_allvars_fix('Amon', 'tas')
+    assert len(fix._horizontal_grids) == 0
     fixed_cubes = fix.fix_metadata(cubes)
 
     cube = check_tas_metadata(fixed_cubes)
     assert cube.shape == (1, 8)
     check_lat_lon(cube)
+    assert len(fix._horizontal_grids) == 1
+    assert 'icon_grid.nc' in fix._horizontal_grids
 
     # Restore cache location
     icon.CACHE_DIR = original_cache_dir
@@ -699,11 +705,14 @@ def test_add_latitude_longitude(cubes_2d, tmp_path):
     icon.CACHE_DIR = tmp_path
 
     fix = get_allvars_fix('Amon', 'tas')
+    assert len(fix._horizontal_grids) == 0
     fixed_cubes = fix.fix_metadata(cubes)
 
     cube = check_tas_metadata(fixed_cubes)
     assert cube.shape == (1, 8)
     check_lat_lon(cube)
+    assert len(fix._horizontal_grids) == 1
+    assert 'icon_grid.nc' in fix._horizontal_grids
 
     # Restore cache location
     icon.CACHE_DIR = original_cache_dir
@@ -785,6 +794,74 @@ def test_add_coord_from_grid_file_fail():
     with pytest.raises(ValueError, match=msg):
         fix._add_coord_from_grid_file(mock.sentinel.cube, 'invalid_coord_name',
                                       'invalid_target_name')
+
+
+@mock.patch('esmvalcore.cmor._fixes.icon.icon.requests', autospec=True)
+def test_get_horizontal_grid_cached_in_dict(mock_requests):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'tas')
+    fix._horizontal_grids['cached_grid_url.nc'] = mock.sentinel.grid
+
+    grid = fix.get_horizontal_grid('cached_grid_url.nc')
+    assert grid == mock.sentinel.grid
+    assert mock_requests.mock_calls == []
+
+
+@mock.patch('esmvalcore.cmor._fixes.icon.icon.requests', autospec=True)
+def test_get_horizontal_grid_cached_in_file(mock_requests, tmp_path):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'tas')
+    assert len(fix._horizontal_grids) == 0
+    grid_url = 'https://temporary.url/this/is/the/grid_file.nc'
+
+    # Save temporary grid file
+    cube = Cube(0, var_name='grid')
+    iris.save(cube, str(tmp_path / 'grid_file.nc'))
+
+    # Temporary overwrite default cache location for downloads
+    original_cache_dir = icon.CACHE_DIR
+    icon.CACHE_DIR = tmp_path
+
+    grid = fix.get_horizontal_grid(grid_url)
+    assert isinstance(grid, CubeList)
+    assert len(grid) == 1
+    assert grid[0].var_name == 'grid'
+    assert len(fix._horizontal_grids) == 1
+    assert 'grid_file.nc' in fix._horizontal_grids
+    assert mock_requests.mock_calls == []
+
+    # Restore cache location
+    icon.CACHE_DIR = original_cache_dir
+
+
+def test_get_horizontal_grid_cache_file_too_old(tmp_path):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'tas')
+    assert len(fix._horizontal_grids) == 0
+    grid_url = ('https://github.com/ESMValGroup/ESMValCore/raw/main/tests/'
+                'integration/cmor/_fixes/test_data/icon_grid.nc')
+
+    # Save temporary grid file
+    cube = Cube(0, var_name='grid')
+    iris.save(cube, str(tmp_path / 'icon_grid.nc'))
+
+    # Temporary overwrite default cache location for downloads and cache
+    # validity duration
+    original_cache_dir = icon.CACHE_DIR
+    original_cache_validity = icon.CACHE_VALIDITY
+    icon.CACHE_DIR = tmp_path
+    icon.CACHE_VALIDITY = -1
+
+    grid = fix.get_horizontal_grid(grid_url)
+    assert isinstance(grid, CubeList)
+    assert len(grid) == 1
+    assert grid[0].var_name == 'cell_area'
+    assert len(fix._horizontal_grids) == 1
+    assert 'icon_grid.nc' in fix._horizontal_grids
+
+    # Restore cache location
+    icon.CACHE_DIR = original_cache_dir
+    icon.CACHE_VALIDITY = original_cache_validity
 
 
 # Test with single-dimension cubes

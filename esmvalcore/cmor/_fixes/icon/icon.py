@@ -99,14 +99,14 @@ class AllVars(Fix):
     def get_horizontal_grid(self, grid_url):
         """Get horizontal grid."""
         # If already loaded, return the horizontal grid (cube)
-        grid_name = str(grid_url)
+        parsed_url = urlparse(grid_url)
+        grid_name = Path(parsed_url.path).name
         if grid_name in self._horizontal_grids:
             return self._horizontal_grids[grid_name]
 
         # Check if grid file has recently been downloaded and load it if
         # possible
-        parsed_url = urlparse(grid_url)
-        grid_path = CACHE_DIR / Path(parsed_url.path).name
+        grid_path = CACHE_DIR / grid_name
         if grid_path.exists():
             mtime = grid_path.stat().st_mtime
             now = datetime.now().timestamp()
