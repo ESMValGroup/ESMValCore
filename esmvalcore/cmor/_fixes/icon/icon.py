@@ -140,9 +140,9 @@ class AllVars(Fix):
                 f"'{coord_name}'")
         if GRID_FILE_ATTR not in cube.attributes:
             raise ValueError(
-                f"Cube does not contain coordinate '{coord_name}' nor the "
-                f"attribute '{GRID_FILE_ATTR}' necessary to download the ICON "
-                f"horizontal grid file:\n{cube}")
+                f"Cube does not contain coordinate '{target_coord_name}' nor "
+                f"the attribute '{GRID_FILE_ATTR}' necessary to download the "
+                f"ICON horizontal grid file:\n{cube}")
         grid_file_url = cube.attributes[GRID_FILE_ATTR]
         horizontal_grid = self.get_horizontal_grid(grid_file_url)
 
@@ -153,24 +153,21 @@ class AllVars(Fix):
             NameConstraint(var_name='cell_area'))
         coord = grid_cube.coord(coord_name)
 
-        # Find index of horizontal coordinate (try 'ncells' and unnamed
-        # dimension)
-        if cube.coords('ncells'):
-            coord_dims = cube.coord_dims('ncells')
-        else:
-            n_unnamed_dimensions = cube.ndim - len(cube.dim_coords)
-            if n_unnamed_dimensions != 1:
-                raise ValueError(
-                    f"Cannot determine coordinate dimension for coordinate "
-                    f"'{coord_name}', cube does not contain coordinate "
-                    f"'ncells' nor a single unnamed dimension:\n{cube}")
-            coord_dims = ()
-            for idx in range(cube.ndim):
-                if not cube.coords(dimensions=idx, dim_coords=True):
-                    coord_dims = (idx,)
-                    break
+        # Find index of horizontal coordinate (= single unnamed dimension)
+        n_unnamed_dimensions = cube.ndim - len(cube.dim_coords)
+        if n_unnamed_dimensions != 1:
+            raise ValueError(
+                f"Cannot determine coordinate dimension for coordinate "
+                f"'{target_coord_name}', cube does not contain a single "
+                f"unnamed dimension:\n{cube}")
+        coord_dims = ()
+        for idx in range(cube.ndim):
+            if not cube.coords(dimensions=idx, dim_coords=True):
+                coord_dims = (idx,)
+                break
 
-        coord.standard_name = target_coord_name
+        coord.standard_name = None
+        coord.long_name = target_coord_name
         cube.add_aux_coord(coord, coord_dims)
 
     def _add_time(self, cube, cubes):
@@ -374,6 +371,9 @@ class AllVars(Fix):
     @staticmethod
     def _fix_unstructured_cell_index(cube, horizontal_idx):
         """Fix unstructured cell index coordinate."""
+        if cube.coords(dimensions=horizontal_idx, dim_coords=True):
+            cube.remove_coord(cube.coord(dimensions=horizontal_idx,
+                                         dim_coords=True))
         index_coord = DimCoord(
             np.arange(cube.shape[horizontal_idx[0]]),
             var_name='i',
