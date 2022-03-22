@@ -29,30 +29,41 @@ def add_leading_dim_to_cube(cube, dim_coord):
     """
     new_shape = (dim_coord.shape[0], *cube.shape)
 
+    # Cache ancillary variables and cell measures (iris.util.new_axis drops
+    # those) and determine corresponding dimensions in new cube
+    ancillary_variables = []
+    for ancillary_variable in cube.ancillary_variables():
+        new_dims = tuple(
+            d + 1 for d in cube.ancillary_variable_dims(ancillary_variable)
+        )
+        ancillary_variables.append((ancillary_variable, new_dims))
+    cell_measures = []
+    for cell_measure in cube.cell_measures():
+        new_dims = tuple(d + 1 for d in cube.cell_measure_dims(cell_measure))
+        cell_measures.append((cell_measure, new_dims))
+
     # Transform cube from shape (x, ..., z) to (1, x, ..., z)
     cube = iris.util.new_axis(cube)
 
     # Create new cube with shape (w, x, ..., z) where w is length of dim_coord
+    # and already add ancillary variables and cell measures
     new_data = da.broadcast_to(cube.core_data(), new_shape)
-    new_cube = iris.cube.Cube(new_data)
+    new_cube = iris.cube.Cube(
+        new_data,
+        ancillary_variables_and_dims=ancillary_variables,
+        cell_measures_and_dims=cell_measures,
+    )
 
     # Add metadata
+    # Note: using cube.coord_dims() for determining the positions for the
+    # coordinates of the new cube is correct here since cube has the shape (1,
+    # x, ..., z) at this stage
     new_cube.metadata = cube.metadata
     new_cube.add_dim_coord(dim_coord, 0)
     for coord in cube.coords(dim_coords=True):
         new_cube.add_dim_coord(coord, cube.coord_dims(coord))
     for coord in cube.coords(dim_coords=False):
         new_cube.add_aux_coord(coord, cube.coord_dims(coord))
-    for cell_measure in cube.cell_measures():
-        new_cube.add_cell_measure(
-            cell_measure,
-            cube.cell_measure_dims(cell_measure),
-        )
-    for ancillary_variable in cube.ancillary_variables():
-        new_cube.add_ancillary_variable(
-            ancillary_variable,
-            cube.ancillary_variable_dims(ancillary_variable),
-        )
 
     return new_cube
 
