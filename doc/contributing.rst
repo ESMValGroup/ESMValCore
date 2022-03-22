@@ -738,7 +738,7 @@ to run their favourite recipe using this branch.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The version number is stored in ``esmvalcore/_version.py``, ``CITATION.cff``.
-Make sure to update all files.
+Make sure to update both files.
 Also update the release date in ``CITATION.cff``.
 See https://semver.org for more information on choosing a version number.
 Make a pull request and get it merged into ``main`` and cherry pick it into
@@ -807,7 +807,7 @@ Follow these steps to create a new Python package:
 You can read more about this in
 `Packaging Python Projects <https://packaging.python.org/tutorials/packaging-projects/>`__.
 
-8. Create and upload the Conda package
+8. Create the Conda package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``esmvalcore`` package is published on the `conda-forge conda channel
