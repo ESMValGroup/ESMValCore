@@ -114,7 +114,7 @@ def volume_statistics(cube, operator):
     # TODO: Add other operations.
 
     if operator != 'mean':
-        raise ValueError(f'Volume operator {operator} not recognised')
+        raise ValueError(f'Volume operator {operator} not recognised.')
 
     try:
         grid_volume = cube.cell_measure('ocean_volume').core_data()

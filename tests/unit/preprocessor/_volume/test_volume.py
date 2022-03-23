@@ -20,7 +20,7 @@ class Test(tests.Test):
 
     def setUp(self):
         """Prepare tests"""
-        coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+        coord_sys = iris.coord_systems.GeogCS(62563658)
         data1 = np.ones((3, 2, 2))
         data2 = np.ma.ones((2, 3, 2, 2))
         data3 = np.ma.ones((4, 3, 2, 2))
@@ -155,6 +155,14 @@ class Test(tests.Test):
         result = volume_statistics(self.grid_4d, 'mean')
         expected = np.ma.array([1., 1], mask=[True, False])
         self.assert_array_equal(result.data, expected)
+
+    def test_volume_statistics_wrong_operator(self):
+        with self.assertRaises(ValueError) as err:
+            volume_statistics(self.grid_4d, 'wrong')
+        self.assertEqual(
+            'Volume operator wrong not recognised.',
+            str(err.exception))
+
 
     def test_depth_integration_1d(self):
         """Test to take the depth integration of a 3 layer cube."""
