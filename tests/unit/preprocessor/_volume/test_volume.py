@@ -163,7 +163,6 @@ class Test(tests.Test):
             'Volume operator wrong not recognised.',
             str(err.exception))
 
-
     def test_depth_integration_1d(self):
         """Test to take the depth integration of a 3 layer cube."""
         result = depth_integration(self.grid_3d[:, 0, 0])
