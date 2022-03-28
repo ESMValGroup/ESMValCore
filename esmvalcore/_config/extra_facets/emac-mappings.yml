@@ -218,6 +218,3 @@ EMAC:
 # Note: mixed channels are not supported yet
 # - AIRC_NO_s: {airc_NO: import_grid, geopot_ave: Amon}  -> mixed channels
 # - VOLC_SO2_s: {VOLC_SO2_SO2: import_grid, geopot_ave: Amon} -> mixed channels
-
-# TODO:
-# - derivation of toz: [DU] -> [m]
