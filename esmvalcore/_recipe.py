@@ -826,23 +826,15 @@ def _update_timerange(variable, config_user):
     check.valid_time_selection(timerange)
 
     if '*' in timerange:
-        (files, _, _) = _find_input_files(variable, config_user['rootpath'],
-                                          config_user['drs'])
-        if not files:
-            if not config_user.get('offline', True):
-                msg = (
-                    " Please note that automatic download is not supported "
-                    "with indeterminate time ranges at the moment. Please use "
-                    "a concrete time range (i.e., no wildcards '*') in your "
-                    "recipe or run ESMValTool with --offline=True."
-                )
-            else:
-                msg = ""
-            raise InputFilesNotFound(
-                f"Missing data for {variable['alias']}: "
-                f"{variable['short_name']}. Cannot determine indeterminate "
-                f"time range '{timerange}'.{msg}"
-            )
+        if config_user.get('offline', True):
+            (files, _, _) = _find_input_files(
+                variable,
+                config_user['rootpath'],
+                config_user['drs'])
+        else:
+            facets = deepcopy(variable)
+            facets.pop('timerange', None)
+            files = [file.name for file in esgf.find_files(**facets)]
 
         intervals = [get_start_end_date(name) for name in files]
 
