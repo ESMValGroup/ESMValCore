@@ -1538,7 +1538,7 @@ def test_derive_contains_start_end_year(tmp_path, patched_datafinder,
 
 
 def test_derive_timerange_wildcard(tmp_path, patched_datafinder,
-                                        config_user):
+                                   config_user):
 
     content = dedent("""
         diagnostics:
@@ -1567,8 +1567,8 @@ def test_derive_timerange_wildcard(tmp_path, patched_datafinder,
     product = task.products.pop()
     assert 'derive' in product.settings
     assert product.attributes['short_name'] == 'toz'
-    assert product.attributes['timerange'] == '1999/2019'
-    assert product.attributes['start_year'] == 1999
+    assert product.attributes['timerange'] == '1990/2019'
+    assert product.attributes['start_year'] == 1990
     assert product.attributes['end_year'] == 2019
 
 
