@@ -22,7 +22,7 @@ from esmvalcore._recipe import (
 )
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore.exceptions import RecipeError
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
 
