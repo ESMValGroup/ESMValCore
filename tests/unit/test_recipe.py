@@ -295,13 +295,12 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
     }
     assert input_files == expected[local_availability]
 
+
 @pytest.mark.parametrize('timerange', ['*', '185001/*', '*/185112'])
 def test_search_esgf_timerange(mocker, tmp_path, timerange):
 
-    rootpath = tmp_path / 'local'
     download_dir = tmp_path / 'download_dir'
     esgf_files = create_esgf_search_results()
-
 
     mocker.patch.object(_recipe,
                         'get_input_filelist',
