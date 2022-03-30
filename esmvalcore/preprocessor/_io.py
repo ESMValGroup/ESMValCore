@@ -111,7 +111,30 @@ def _delete_attributes(iris_object, atts):
 
 
 def load(file, callback=None, ignore_warnings=None):
-    """Load iris cubes from files."""
+    """Load iris cubes from files.
+
+    Parameters
+    ----------
+    file: str
+        File to be loaded.
+    callback: callable or None, optional (default: None)
+        Callback function passed to :func:`iris.load_raw`.
+    ignore_warnings: list of dict or None, optional (default: None)
+        Keyword arguments passed to :func:`warnings.filterwarnings` used to
+        ignore warnings issued by :func:`iris.load_raw`. Each list element
+        corresponds to one call to :func:`warnings.filterwarnings`.
+
+    Returns
+    -------
+    iris.cube.CubeList
+        Loaded cubes.
+
+    Raises
+    ------
+    ValueError
+        Cubes are empty.
+
+    """
     logger.debug("Loading:\n%s", file)
     if ignore_warnings is None:
         ignore_warnings = []
@@ -132,7 +155,7 @@ def load(file, callback=None, ignore_warnings=None):
         raw_cubes = iris.load_raw(file, callback=callback)
     logger.debug("Done with loading %s", file)
     if not raw_cubes:
-        raise Exception('Can not load cubes from {0}'.format(file))
+        raise ValueError(f'Can not load cubes from {file}')
     for cube in raw_cubes:
         cube.attributes['source_file'] = file
     return raw_cubes
