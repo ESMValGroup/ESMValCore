@@ -1537,6 +1537,41 @@ def test_derive_contains_start_end_year(tmp_path, patched_datafinder,
     assert product.attributes['end_year'] == 2005
 
 
+def test_derive_timerange_wildcard(tmp_path, patched_datafinder,
+                                        config_user):
+
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              toz:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                timerange: '*'
+                derive: true
+                force_derivation: true
+                additional_datasets:
+                  - {dataset: GFDL-CM3,  ensemble: r1i1p1}
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+
+    # Check that start_year and end_year are present in attributes
+    assert len(task.products) == 1
+    product = task.products.pop()
+    assert 'derive' in product.settings
+    assert product.attributes['short_name'] == 'toz'
+    assert product.attributes['timerange'] == '1999/2019'
+    assert product.attributes['start_year'] == 1999
+    assert product.attributes['end_year'] == 2019
+
+
 def create_test_image(basename, cfg):
     """Get a valid path for saving a diagnostic plot."""
     image = Path(cfg['plot_dir']) / (basename + '.' + cfg['output_file_type'])

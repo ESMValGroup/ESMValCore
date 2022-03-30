@@ -1145,10 +1145,12 @@ def _get_derive_input_variables(variables, config_user):
             # Process input data needed to derive variable
             required_vars = get_required(variable['short_name'],
                                          variable['project'])
+            timeranges = set()
             for var in required_vars:
                 _augment(var, variable)
                 _add_cmor_info(var, override=True)
                 _add_extra_facets(var, config_user['extra_facets_dir'])
+                _update_timerange(var, config_user)
                 files = _get_input_files(var, config_user)[0]
                 if var.get('optional') and not files:
                     logger.info(
@@ -1156,6 +1158,13 @@ def _get_derive_input_variables(variables, config_user):
                         "'optional'", var)
                 else:
                     append(group_prefix, var)
+                    timeranges.add(var['timerange'])
+            if len(timeranges) > 1:
+                logger.error(
+                    "Differing timeranges with values %s "
+                    "found for required variables %s. "
+                    "Set `timerange` to a common value.",
+                    timeranges, required_vars)
 
     # An empty derive_input (due to all variables marked as 'optional' is
     # handled at a later step
