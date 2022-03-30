@@ -295,6 +295,48 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
     }
     assert input_files == expected[local_availability]
 
+@pytest.mark.parametrize('timerange', ['*', '185001/*', '*/185112'])
+def test_search_esgf_timerange(mocker, tmp_path, timerange):
+
+    rootpath = tmp_path / 'local'
+    download_dir = tmp_path / 'download_dir'
+    esgf_files = create_esgf_search_results()
+
+
+    mocker.patch.object(_recipe,
+                        'get_input_filelist',
+                        autospec=True,
+                        return_value=([], [], []))
+    mocker.patch.object(
+        _recipe.esgf,
+        'find_files',
+        autospec=True,
+        return_value=esgf_files,
+    )
+
+    variable = {
+        'project': 'CMIP6',
+        'mip': 'Amon',
+        'frequency': 'mon',
+        'short_name': 'tas',
+        'dataset': 'EC.-Earth3',
+        'exp': 'historical',
+        'ensemble': 'r1i1p1f1',
+        'grid': 'gr',
+        'timerange': timerange,
+        'alias': 'CMIP6_EC-Eeath3_tas',
+    }
+
+    config_user = {
+        'rootpath': None,
+        'drs': None,
+        'offline': False,
+        'download_dir': download_dir
+    }
+    _recipe._update_timerange(variable, config_user)
+
+    assert variable['timerange'] == '185001/185112'
+
 
 def test_write_html_summary(mocker, caplog):
     """Test `Recipe.write_html_summary` failing and logging a message."""
