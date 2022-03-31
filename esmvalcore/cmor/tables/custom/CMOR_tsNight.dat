@@ -6,11 +6,11 @@ modeling_realm:    atmos
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
-standard_name:     land surface temperature
+standard_name:     surface_temperature
 units:             K
 cell_methods:      time: mean
 cell_measures:     
-long_name:         land surface temperature
+long_name:         surface temperature nighttime
 comment:
 !----------------------------------
 ! Additional variable information:
