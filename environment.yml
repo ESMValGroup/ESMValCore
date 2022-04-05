@@ -13,7 +13,7 @@ dependencies:
   - fiona
   - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
   - geopy
-  - iris>=3.1.0,<3.2.0
+  - iris>=3.2.1
   - nested-lookup
   - pandas
   - pillow
