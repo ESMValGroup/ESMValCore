@@ -525,7 +525,8 @@ The result of the tests ran by CircleCI can be seen on the
 `CircleCI project page <https://app.circleci.com/pipelines/github/ESMValGroup/ESMValCore?branch=main>`__
 and the result of the tests ran by GitHub Actions can be viewed on the
 `Actions tab <https://github.com/ESMValGroup/ESMValCore/actions>`__
-of the repository.
+of the repository (to learn more about the Github-hosted runners, please have a look
+the `documentation <https://docs.github.com/en/actions/using-github-hosted-runners>`__).
 
 When opening a pull request, if you wish to run the Github Actions `Test <https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml>`__ test,
 you can activate it via a simple comment containing the @runGAtests tag
@@ -533,6 +534,11 @@ you can activate it via a simple comment containing the @runGAtests tag
 bot that will start the test automatically). This is useful
 to check if a certain feature that you included in the Pull Request, and can be tested
 for via the test suite, works across the supported Python versions, and both on Linux and OSX.
+The test is currently deactivated, so before triggering the test via comment, make sure you activate
+the test in the main `Actions page <https://github.com/ESMValGroup/ESMValCore/actions>`__ 
+(click on Test via PR Comment and activate it); also and be sure to deactivate it afterwards
+(the Github API still needs a bit more development, and currently it triggers
+the test for **each comment** irrespective of PR, that's why this needs to be activated/decativated).
 
 The configuration of the tests run by CircleCI can be found in the directory
 `.circleci <https://github.com/ESMValGroup/ESMValCore/blob/main/.circleci>`__,
@@ -808,7 +814,7 @@ You can read more about this in
 `Packaging Python Projects <https://packaging.python.org/tutorials/packaging-projects/>`__.
 
 8. Create the Conda package
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``esmvalcore`` package is published on the `conda-forge conda channel
 <https://anaconda.org/conda-forge>`__.
