@@ -30,23 +30,31 @@ REQUIREMENTS = {
     # Installation dependencies
     # Use with pip install . to install from source
     'install': [
+        'cartopy',
         'cf-units>=3.0.0',
         'dask[array]',
+        'esgf-pyclient>=0.3.1',
         'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
         'fiona',
         'fire',
+        'geopy',
+        'humanfriendly',
         "importlib_resources;python_version<'3.9'",
+        'isodate',
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
+        'nested-lookup',
         'netCDF4',
         'numpy',
+        'pandas',
+        'pillow',
         'prov',
         'psutil',
         'pybtex',
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        'scitools-iris>=3.0.2',
+        'scitools-iris>=3.2.1',
         'shapely[vectorized]',
         'stratify',
         'yamale',
@@ -54,6 +62,7 @@ REQUIREMENTS = {
     # Test dependencies
     # Execute 'python setup.py test' to run tests
     'test': [
+        'flake8<4',  # https://github.com/ESMValGroup/ESMValCore/issues/1405
         'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
         'pytest-cov>=2.10.1',
         'pytest-env',
@@ -200,9 +209,9 @@ setup(
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Atmospheric Science',
         'Topic :: Scientific/Engineering :: GIS',

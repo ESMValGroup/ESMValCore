@@ -24,7 +24,7 @@ CMIP data
 ---------
 CMIP data is widely available via the Earth System Grid Federation
 (`ESGF <https://esgf.llnl.gov/>`_) and is accessible to users either
-via download from the ESGF portal or through the ESGF data nodes hosted
+via automatic download by ``esmvaltool`` or through the ESGF data nodes hosted
 by large computing facilities (like CEDA-Jasmin, DKRZ, etc). This data
 adheres to, among other standards, the DRS and Controlled Vocabulary
 standard for naming files and structured paths; the `DRS
@@ -68,7 +68,7 @@ and the dataset:
 
   .. code-block:: yaml
 
-    - {dataset: ERA-Interim, project: OBS, type: reanaly, version: 1, start_year: 2014, end_year: 2015, tier: 3}
+    - {dataset: ERA-Interim, project: OBS6, type: reanaly, version: 1, start_year: 2014, end_year: 2015, tier: 3}
 
 in ``recipe.yml`` in ``datasets`` or ``additional_datasets``, the rules set in
 CMOR-DRS_ are used again and the file will be automatically found:
@@ -89,16 +89,26 @@ Data retrieval
 Data retrieval in ESMValTool has two main aspects from the user's point of
 view:
 
-* data can be found by the tool, subject to availability on disk;
+* data can be found by the tool, subject to availability on disk or `ESGF <https://esgf.llnl.gov/>`_;
 * it is the user's responsibility to set the correct data retrieval parameters;
 
 The first point is self-explanatory: if the user runs the tool on a machine
 that has access to a data repository or multiple data repositories, then
 ESMValTool will look for and find the available data requested by the user.
+If the files are not found locally, the tool can search the ESGF_ and download
+the missing files, provided that they are available.
 
 The second point underlines the fact that the user has full control over what
 type and the amount of data is needed for the analyses. Setting the data
 retrieval parameters is explained below.
+
+Enabling automatic downloads from the ESGF
+------------------------------------------
+To enable automatic downloads from ESGF, set ``offline: false`` in
+the :ref:`user configuration file` or provide the command line argument
+``--offline=False`` when running the recipe.
+The files will be stored in the ``download_dir`` set in
+the :ref:`user configuration file`.
 
 Setting the correct root paths
 ------------------------------
@@ -203,13 +213,11 @@ Explaining ``config-user/rootpath:``
 
     OBS: /gws/nopw/j04/esmeval/obsdata-v2
 
-* ``default``: this is the `root` path(s) to where files are stored without any
-  DRS-like directory structure; in a nutshell, this is a single directory that
-  should contain all the files needed by the run, without any sub-directory
-  structure.
+* ``default``: this is the `root` path(s) where the tool will look for data
+  from projects that do not have their own rootpath set.
 
 * ``RAWOBS``: this is the `root` path(s) to where the raw observational data
-  files are stored; this is used by ``cmorize_obs``.
+  files are stored; this is used by ``esmvaltool data format``.
 
 Dataset definitions in ``recipe``
 ---------------------------------
@@ -322,8 +330,9 @@ Use of extra facets in the datafinder
 Extra facets are a mechanism to provide additional information for certain kinds
 of data. The general approach is described in :ref:`extra_facets`. Here, we
 describe how they can be used to locate data files within the datafinder
-framework. This is useful to build paths for directory structures and file names
-that follow a different system than the established DRS for, e.g. CMIP.
+framework.
+This is useful to build paths for directory structures and file names
+that require more information than what is provided in the recipe.
 A common application is the location of variables in multi-variable files as
 often found in climate models' native output formats.
 

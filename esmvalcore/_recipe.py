@@ -4,14 +4,18 @@ import logging
 import os
 import re
 import warnings
+from collections import defaultdict
 from copy import deepcopy
+from pathlib import Path
 from pprint import pformat
 
 import yaml
+from nested_lookup import get_all_keys, nested_delete, nested_lookup
 from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
+from . import esgf
 from ._config import (
     TAGS,
     get_activity,
@@ -20,15 +24,21 @@ from ._config import (
     get_project_config,
 )
 from ._data_finder import (
+    _find_input_files,
+    _get_timerange_from_years,
+    _parse_period,
+    _truncate_dates,
+    dates_to_timerange,
     get_input_filelist,
+    get_multiproduct_filename,
     get_output_file,
-    get_statistic_output_file,
+    get_start_end_date,
 )
 from ._provenance import TrackedFile, get_recipe_provenance
-from ._recipe_checks import RecipeError
-from ._task import DiagnosticTask, TaskSet
+from ._task import DiagnosticTask, ResumeTask, TaskSet
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
+from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import (
     DEFAULT_ORDER,
     FINAL_STEPS,
@@ -38,8 +48,8 @@ from .preprocessor import (
     PreprocessorFile,
 )
 from .preprocessor._derive import get_required
-from .preprocessor._download import synda_search
 from .preprocessor._io import DATASET_KEYS, concatenate_callback
+from .preprocessor._other import _group_products
 from .preprocessor._regrid import (
     _spec_to_latlonvals,
     get_cmor_levels,
@@ -50,6 +60,9 @@ from .preprocessor._regrid import (
 logger = logging.getLogger(__name__)
 
 TASKSEP = os.sep
+
+DOWNLOAD_FILES = set()
+"""Use a global variable to keep track of files that need to be downloaded."""
 
 
 def read_recipe_file(filename, config_user, initialize_tasks=True):
@@ -66,7 +79,6 @@ def read_recipe_file(filename, config_user, initialize_tasks=True):
 
 def _add_cmor_info(variable, override=False):
     """Add information from CMOR tables to variable."""
-    logger.debug("If not present: adding keys from CMOR table to %s", variable)
     # Copy the following keys from CMOR table
     cmor_keys = [
         'standard_name', 'long_name', 'units', 'modeling_realm', 'frequency'
@@ -100,6 +112,7 @@ def _add_cmor_info(variable, override=False):
 
 
 def _add_extra_facets(variable, extra_facets_dir):
+    """Add extra_facets to variable."""
     extra_facets = get_extra_facets(variable["project"], variable["dataset"],
                                     variable["mip"], variable["short_name"],
                                     extra_facets_dir)
@@ -219,6 +232,7 @@ def _dataset_to_file(variable, config_user):
         for required_var in required_vars:
             _augment(required_var, variable)
             _add_cmor_info(required_var, override=True)
+            _add_extra_facets(required_var, config_user['extra_facets_dir'])
             (files, dirnames,
              filenames) = _get_input_files(required_var, config_user)
             if files:
@@ -258,14 +272,6 @@ def _get_default_settings(variable, config_user, derive=False):
     """Get default preprocessor settings."""
     settings = {}
 
-    # Set up downloading using synda if requested.
-    if config_user.get('synda_download'):
-        # TODO: make this respect drs or download to preproc dir?
-        download_folder = os.path.join(config_user['preproc_dir'], 'downloads')
-        settings['download'] = {
-            'dest_folder': download_folder,
-        }
-
     # Configure loading
     settings['load'] = {
         'callback': concatenate_callback,
@@ -286,12 +292,8 @@ def _get_default_settings(variable, config_user, derive=False):
     settings['fix_data'] = dict(fix)
 
     # Configure time extraction
-    if 'start_year' in variable and 'end_year' in variable \
-            and variable['frequency'] != 'fx':
-        settings['clip_start_end_year'] = {
-            'start_year': variable['start_year'],
-            'end_year': variable['end_year'],
-        }
+    if 'timerange' in variable and variable['frequency'] != 'fx':
+        settings['clip_timerange'] = {'timerange': variable['timerange']}
 
     if derive:
         settings['derive'] = {
@@ -333,7 +335,7 @@ def _get_default_settings(variable, config_user, derive=False):
     return settings
 
 
-def _add_fxvar_keys(fx_info, variable):
+def _add_fxvar_keys(fx_info, variable, extra_facets_dir):
     """Add keys specific to fx variable to use get_input_filelist."""
     fx_variable = deepcopy(variable)
     fx_variable.update(fx_info)
@@ -345,6 +347,9 @@ def _add_fxvar_keys(fx_info, variable):
 
     # add missing cmor info
     _add_cmor_info(fx_variable, override=True)
+
+    # add extra_facets
+    _add_extra_facets(fx_variable, extra_facets_dir)
 
     return fx_variable
 
@@ -368,13 +373,14 @@ def _search_fx_mip(tables, variable, fx_info, config_user):
     fx_files_for_mips = {}
     for mip in mips_with_fx_var:
         fx_info['mip'] = mip
-        fx_info = _add_fxvar_keys(fx_info, variable)
+        fx_info = _add_fxvar_keys(fx_info, variable,
+                                  config_user['extra_facets_dir'])
         logger.debug("For fx variable '%s', found table '%s'",
                      fx_info['short_name'], mip)
         fx_files = _get_input_files(fx_info, config_user)[0]
         if fx_files:
-            logger.debug("Found fx variables '%s':\n%s",
-                         fx_info['short_name'], pformat(fx_files))
+            logger.debug("Found fx variables '%s':\n%s", fx_info['short_name'],
+                         pformat(fx_files))
             fx_files_for_mips[mip] = fx_files
 
     # Dict contains more than one element -> ambiguity
@@ -394,7 +400,8 @@ def _search_fx_mip(tables, variable, fx_info, config_user):
     else:
         mip = list(fx_files_for_mips)[0]
         fx_info['mip'] = mip
-        fx_info = _add_fxvar_keys(fx_info, variable)
+        fx_info = _add_fxvar_keys(fx_info, variable,
+                                  config_user['extra_facets_dir'])
         fx_files = fx_files_for_mips[mip]
 
     return fx_info, fx_files
@@ -429,13 +436,15 @@ def _get_fx_files(variable, fx_info, config_user):
             raise RecipeError(
                 f"fx variable '{fx_info['short_name']}' not available in CMOR "
                 f"table '{mip}' for '{var_project}'")
-        fx_info = _add_fxvar_keys(fx_info, variable)
+        fx_info = _add_fxvar_keys(fx_info, variable,
+                                  config_user['extra_facets_dir'])
         fx_files = _get_input_files(fx_info, config_user)[0]
 
     # Flag a warning if no files are found
     if not fx_files:
-        logger.warning("Missing data for fx variable '%s'",
-                       fx_info['short_name'])
+        logger.warning("Missing data for fx variable '%s' of dataset %s",
+                       fx_info['short_name'],
+                       fx_info['alias'].replace('_', ' '))
 
     # If frequency = fx, only allow a single file
     if fx_files:
@@ -478,12 +487,10 @@ def _update_fx_files(step_name, settings, variable, config_user, fx_vars):
         fx_files, fx_info = _get_fx_files(variable, fx_info, config_user)
         if fx_files:
             fx_info['filename'] = fx_files
-            settings['add_fx_variables']['fx_variables'].update({
-                fx_var: fx_info
-            })
-            logger.info(
-                'Using fx files for variable %s during step %s: %s',
-                variable['short_name'], step_name, pformat(fx_files))
+            settings['add_fx_variables']['fx_variables'].update(
+                {fx_var: fx_info})
+            logger.debug('Using fx files for variable %s during step %s: %s',
+                         variable['short_name'], step_name, pformat(fx_files))
 
 
 def _fx_list_to_dict(fx_vars):
@@ -503,17 +510,15 @@ def _fx_list_to_dict(fx_vars):
 
 def _update_fx_settings(settings, variable, config_user):
     """Update fx settings depending on the needed method."""
-    # get fx variables either from user defined attribute or fixed
-    def _get_fx_vars_from_attribute(step_settings, step_name):
-        user_fx_vars = step_settings.get('fx_variables')
-        if isinstance(user_fx_vars, list):
-            user_fx_vars = _fx_list_to_dict(user_fx_vars)
-            step_settings['fx_variables'] = user_fx_vars
-        if not user_fx_vars:
+    # Add default values to the option 'fx_variables' if it is not explicitly
+    # specified and transform fx variables to dicts
+    def _update_fx_vars_in_settings(step_settings, step_name):
+        """Update fx_variables option in the settings."""
+        # Add default values for fx_variables
+        if 'fx_variables' not in step_settings:
             default_fx = {
                 'area_statistics': {
                     'areacella': None,
-                    'areacello': None,
                 },
                 'mask_landsea': {
                     'sftlf': None,
@@ -528,11 +533,18 @@ def _update_fx_settings(settings, variable, config_user):
                     'sftlf': None,
                 },
             }
-            if variable['project'] != 'obs4mips':
-                default_fx['mask_landsea'].update({'sftof': None})
-                default_fx['weighting_landsea_fraction'].update(
-                    {'sftof': None})
+            if variable['project'] != 'obs4MIPs':
+                default_fx['area_statistics']['areacello'] = None
+                default_fx['mask_landsea']['sftof'] = None
+                default_fx['weighting_landsea_fraction']['sftof'] = None
             step_settings['fx_variables'] = default_fx[step_name]
+
+        # Transform fx variables to dicts
+        user_fx_vars = step_settings['fx_variables']
+        if user_fx_vars is None:
+            step_settings['fx_variables'] = {}
+        elif isinstance(user_fx_vars, list):
+            step_settings['fx_variables'] = _fx_list_to_dict(user_fx_vars)
 
     fx_steps = [
         'mask_landsea', 'mask_landseaice', 'weighting_landsea_fraction',
@@ -540,7 +552,7 @@ def _update_fx_settings(settings, variable, config_user):
     ]
     for step_name in settings:
         if step_name in fx_steps:
-            _get_fx_vars_from_attribute(settings[step_name], step_name)
+            _update_fx_vars_in_settings(settings[step_name], step_name)
             _update_fx_files(step_name, settings, variable, config_user,
                              settings[step_name]['fx_variables'])
             # Remove unused attribute in 'fx_steps' preprocessors.
@@ -564,17 +576,42 @@ def _read_attributes(filename):
 
 def _get_input_files(variable, config_user):
     """Get the input files for a single dataset (locally and via download)."""
+    if variable['frequency'] != 'fx':
+        start_year, end_year = _parse_period(variable['timerange'])
+
+        start_year = int(str(start_year[0:4]))
+        end_year = int(str(end_year[0:4]))
+
+        variable['start_year'] = start_year
+        variable['end_year'] = end_year
     (input_files, dirnames,
      filenames) = get_input_filelist(variable=variable,
                                      rootpath=config_user['rootpath'],
                                      drs=config_user['drs'])
 
-    # Set up downloading using synda if requested.
-    # Do not download if files are already available locally.
-    if config_user.get('synda_download') and not input_files:
-        input_files = synda_search(variable)
-        dirnames = None
-        filenames = None
+    # Set up downloading from ESGF if requested.
+    if (not config_user['offline']
+            and variable['project'] in esgf.facets.FACETS):
+        try:
+            check.data_availability(
+                input_files,
+                variable,
+                dirnames,
+                filenames,
+                log=False,
+            )
+        except RecipeError:
+            # Only look on ESGF if files are not available locally.
+            local_files = set(Path(f).name for f in input_files)
+            search_result = esgf.find_files(**variable)
+            for file in search_result:
+                local_copy = file.local_file(config_user['download_dir'])
+                if local_copy.name not in local_files:
+                    if not local_copy.exists():
+                        DOWNLOAD_FILES.add(file)
+                    input_files.append(str(local_copy))
+
+            dirnames.append('ESGF:')
 
     return (input_files, dirnames, filenames)
 
@@ -584,10 +621,17 @@ def _get_ancestors(variable, config_user):
     (input_files, dirnames,
      filenames) = _get_input_files(variable, config_user)
 
-    logger.info("Using input files for variable %s of dataset %s:\n%s",
-                variable['short_name'], variable['dataset'],
-                '\n'.join(input_files))
+    logger.debug(
+        "Using input files for variable %s of dataset %s:\n%s",
+        variable['short_name'],
+        variable['alias'].replace('_', ' '),
+        '\n'.join(
+            f'{f} (will be downloaded)' if not os.path.exists(f) else str(f)
+            for f in input_files),
+    )
     check.data_availability(input_files, variable, dirnames, filenames)
+    logger.info("Found input files for %s",
+                variable['alias'].replace('_', ' '))
 
     # Set up provenance tracking
     for i, filename in enumerate(input_files):
@@ -613,28 +657,54 @@ def _apply_preprocessor_profile(settings, profile_settings):
             settings[step].update(args)
 
 
-def _get_statistic_attributes(products):
-    """Get attributes for the statistic output products."""
+def _get_common_attributes(products, settings):
+    """Get common attributes for the output products."""
     attributes = {}
     some_product = next(iter(products))
     for key, value in some_product.attributes.items():
         if all(p.attributes.get(key, object()) == value for p in products):
             attributes[key] = value
 
-    # Ensure start_year and end_year attributes are available
+    # Ensure that attribute timerange is always available. This depends on the
+    # "span" setting: if "span=overlap", the intersection of all periods is
+    # used; if "span=full", the union is used. The default value for "span" is
+    # "overlap".
+    span = settings.get('span', 'overlap')
     for product in products:
-        start = product.attributes['start_year']
-        if 'start_year' not in attributes or start < attributes['start_year']:
-            attributes['start_year'] = start
-        end = product.attributes['end_year']
-        if 'end_year' not in attributes or end > attributes['end_year']:
-            attributes['end_year'] = end
+        timerange = product.attributes['timerange']
+        start, end = _parse_period(timerange)
+        if 'timerange' not in attributes:
+            attributes['timerange'] = dates_to_timerange(start, end)
+        else:
+            start_date, end_date = _parse_period(attributes['timerange'])
+            start_date, start = _truncate_dates(start_date, start)
+            end_date, end = _truncate_dates(end_date, end)
+
+            # If "span=overlap", always use the latest start_date and the
+            # earliest end_date
+            if span == 'overlap':
+                start_date = max([start, start_date])
+                end_date = min([end, end_date])
+
+            # If "span=full", always use the earliest start_date and the latest
+            # end_date. Note: span can only take the values "overlap" or "full"
+            # (this is checked earlier).
+            else:
+                start_date = min([start, start_date])
+                end_date = max([end, end_date])
+
+            attributes['timerange'] = dates_to_timerange(start_date, end_date)
+
+    # Ensure that attributes start_year and end_year are always available
+    start_year, end_year = _parse_period(attributes['timerange'])
+    attributes['start_year'] = int(str(start_year[0:4]))
+    attributes['end_year'] = int(str(end_year[0:4]))
 
     return attributes
 
 
-def _get_remaining_common_settings(step, order, products):
-    """Get preprocessor settings that are shared between products."""
+def _get_downstream_settings(step, order, products):
+    """Get downstream preprocessor settings shared between products."""
     settings = {}
     remaining_steps = order[order.index(step) + 1:]
     some_product = next(iter(products))
@@ -654,31 +724,80 @@ def _update_multi_dataset_settings(variable, settings):
         _exclude_dataset(settings, variable, step)
 
 
-def _update_statistic_settings(products, order, preproc_dir):
-    """Define statistic output products."""
-    # TODO: move this to multi model statistics function?
-    # But how to check, with a dry-run option?
-    step = 'multi_model_statistics'
+def _get_tag(step, identifier, statistic):
+    # Avoid . in filename for percentiles
+    statistic = statistic.replace('.', '-')
 
-    products = {p for p in products if step in p.settings}
+    if step == 'ensemble_statistics':
+        tag = 'Ensemble' + statistic.title()
+    elif identifier == '':
+        tag = 'MultiModel' + statistic.title()
+    else:
+        tag = identifier + statistic.title()
+
+    return tag
+
+
+def _update_multiproduct(input_products, order, preproc_dir, step):
+    """Return new products that are aggregated over multiple datasets.
+
+    These new products will replace the original products at runtime.
+    Therefore, they need to have all the settings for the remaining steps.
+
+    The functions in _multimodel.py take output_products as function arguments.
+    These are the output_products created here. But since those functions are
+    called from the input products, the products that are created here need to
+    be added to their ancestors products' settings ().
+    """
+    products = {p for p in input_products if step in p.settings}
     if not products:
-        return
+        return input_products, {}
 
-    some_product = next(iter(products))
-    for statistic in some_product.settings[step]['statistics']:
-        check.valid_multimodel_statistic(statistic)
-        attributes = _get_statistic_attributes(products)
-        attributes['dataset'] = attributes['alias'] = 'MultiModel{}'.format(
-            statistic.title().replace('.', '-'))
-        attributes['filename'] = get_statistic_output_file(
-            attributes, preproc_dir)
-        common_settings = _get_remaining_common_settings(step, order, products)
-        statistic_product = PreprocessorFile(attributes, common_settings)
-        for product in products:
+    settings = list(products)[0].settings[step]
+
+    if step == 'ensemble_statistics':
+        check.ensemble_statistics_preproc(settings)
+        grouping = ['project', 'dataset', 'exp', 'sub_experiment']
+    else:
+        check.multimodel_statistics_preproc(settings)
+        grouping = settings.get('groupby', None)
+
+    downstream_settings = _get_downstream_settings(step, order, products)
+
+    relevant_settings = {
+        'output_products': defaultdict(dict)
+    }  # pass to ancestors
+
+    output_products = set()
+    for identifier, products in _group_products(products, by_key=grouping):
+        common_attributes = _get_common_attributes(products, settings)
+
+        for statistic in settings.get('statistics', []):
+            statistic_attributes = dict(common_attributes)
+            statistic_attributes[step] = _get_tag(step, identifier, statistic)
+            statistic_attributes.setdefault('alias',
+                                            statistic_attributes[step])
+            statistic_attributes.setdefault('dataset',
+                                            statistic_attributes[step])
+            filename = get_multiproduct_filename(statistic_attributes,
+                                                 preproc_dir)
+            statistic_attributes['filename'] = filename
+            statistic_product = PreprocessorFile(statistic_attributes,
+                                                 downstream_settings)
+            output_products.add(statistic_product)
+            relevant_settings['output_products'][identifier][
+                statistic] = statistic_product
+
+    return output_products, relevant_settings
+
+
+def update_ancestors(ancestors, step, downstream_settings):
+    """Retroactively add settings to ancestor products."""
+    for product in ancestors:
+        if step in product.settings:
             settings = product.settings[step]
-            if 'output_products' not in settings:
-                settings['output_products'] = {}
-            settings['output_products'][statistic] = statistic_product
+            for key, value in downstream_settings.items():
+                settings[key] = value
 
 
 def _update_extract_shape(settings, config_user):
@@ -694,33 +813,89 @@ def _update_extract_shape(settings, config_user):
         check.extract_shape(settings['extract_shape'])
 
 
+def _update_timerange(variable, config_user):
+    """Update wildcards in timerange with found datetime values.
+
+    If the timerange is given as a year, it ensures it's formatted as a
+    4-digit value (YYYY).
+    """
+    if 'timerange' not in variable:
+        return
+
+    timerange = variable.get('timerange')
+    check.valid_time_selection(timerange)
+
+    if '*' in timerange:
+        (files, _, _) = _find_input_files(variable, config_user['rootpath'],
+                                          config_user['drs'])
+        if not files:
+            if not config_user.get('offline', True):
+                msg = (
+                    " Please note that automatic download is not supported "
+                    "with indeterminate time ranges at the moment. Please use "
+                    "a concrete time range (i.e., no wildcards '*') in your "
+                    "recipe or run ESMValTool with --offline=True."
+                )
+            else:
+                msg = ""
+            raise InputFilesNotFound(
+                f"Missing data for {variable['alias']}: "
+                f"{variable['short_name']}. Cannot determine indeterminate "
+                f"time range '{timerange}'.{msg}"
+            )
+
+        intervals = [get_start_end_date(name) for name in files]
+
+        min_date = min(interval[0] for interval in intervals)
+        max_date = max(interval[1] for interval in intervals)
+
+        if timerange == '*':
+            timerange = f'{min_date}/{max_date}'
+        if '*' in timerange.split('/')[0]:
+            timerange = timerange.replace('*', min_date)
+        if '*' in timerange.split('/')[1]:
+            timerange = timerange.replace('*', max_date)
+
+    # Make sure that years are in format YYYY
+    (start_date, end_date) = timerange.split('/')
+    timerange = dates_to_timerange(start_date, end_date)
+    check.valid_time_selection(timerange)
+
+    variable['timerange'] = timerange
+
+
 def _match_products(products, variables):
     """Match a list of input products to output product attributes."""
-    grouped_products = {}
+    grouped_products = defaultdict(list)
+
+    if not products:
+        return grouped_products
 
     def get_matching(attributes):
         """Find the output filename which matches input attributes best."""
-        score = 0
+        best_score = 0
         filenames = []
         for variable in variables:
             filename = variable['filename']
-            tmp = sum(v == variable.get(k) for k, v in attributes.items())
-            if tmp > score:
-                score = tmp
+            score = sum(v == variable.get(k) for k, v in attributes.items())
+
+            if score > best_score:
+                best_score = score
                 filenames = [filename]
-            elif tmp == score:
+            elif score == best_score:
                 filenames.append(filename)
+
         if not filenames:
             logger.warning(
                 "Unable to find matching output file for input file %s",
                 filename)
+
         return filenames
 
     # Group input files by output file
     for product in products:
-        for filename in get_matching(product.attributes):
-            if filename not in grouped_products:
-                grouped_products[filename] = []
+        matching_filenames = get_matching(product.attributes)
+        for filename in matching_filenames:
             grouped_products[filename].append(product)
 
     return grouped_products
@@ -729,7 +904,7 @@ def _match_products(products, variables):
 def _allow_skipping(ancestors, variable, config_user):
     """Allow skipping of datasets."""
     allow_skipping = all([
-        config_user.get('skip-nonexistent'),
+        config_user.get('skip_nonexistent'),
         not ancestors,
         variable['dataset'] != variable.get('reference_dataset'),
     ])
@@ -744,7 +919,10 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     sets the correct ancestry.
     """
     products = set()
+    preproc_dir = config_user['preproc_dir']
+
     for variable in variables:
+        _update_timerange(variable, config_user)
         variable['filename'] = get_output_file(variable,
                                                config_user['preproc_dir'])
 
@@ -752,6 +930,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         grouped_ancestors = _match_products(ancestor_products, variables)
     else:
         grouped_ancestors = {}
+
     missing_vars = set()
     for variable in variables:
         settings = _get_default_settings(
@@ -787,17 +966,64 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
             settings=settings,
             ancestors=ancestors,
         )
+
         products.add(product)
 
     if missing_vars:
         separator = "\n- "
-        raise RecipeError(f'Missing data for preprocessor {name}:{separator}'
-                          f'{separator.join(sorted(missing_vars))}')
+        raise InputFilesNotFound(
+            f'Missing data for preprocessor {name}:{separator}'
+            f'{separator.join(sorted(missing_vars))}')
 
-    _update_statistic_settings(products, order, config_user['preproc_dir'])
+    check.reference_for_bias_preproc(products)
 
-    for product in products:
+    ensemble_step = 'ensemble_statistics'
+    multi_model_step = 'multi_model_statistics'
+    if ensemble_step in profile:
+        ensemble_products, ensemble_settings = _update_multiproduct(
+            products, order, preproc_dir, ensemble_step)
+
+        # check for ensemble_settings to bypass tests
+        update_ancestors(
+            ancestors=products,
+            step=ensemble_step,
+            downstream_settings=ensemble_settings,
+        )
+    else:
+        ensemble_products = products
+
+    if multi_model_step in profile:
+        multimodel_products, multimodel_settings = _update_multiproduct(
+            ensemble_products, order, preproc_dir, multi_model_step)
+
+        # check for multi_model_settings to bypass tests
+        update_ancestors(
+            ancestors=products,
+            step=multi_model_step,
+            downstream_settings=multimodel_settings,
+        )
+
+        if ensemble_step in profile:
+            # Update multi-product settings (workaround for lack of better
+            # ancestry tracking)
+            update_ancestors(
+                ancestors=ensemble_products,
+                step=multi_model_step,
+                downstream_settings=multimodel_settings,
+            )
+    else:
+        multimodel_products = set()
+
+    for product in products | multimodel_products | ensemble_products:
         product.check()
+
+        # Ensure that attributes start_year and end_year are always available
+        # for all products if a timerange is specified
+        if 'timerange' in product.attributes:
+            start_year, end_year = _parse_period(
+                product.attributes['timerange'])
+            product.attributes['start_year'] = int(str(start_year[0:4]))
+            product.attributes['end_year'] = int(str(end_year[0:4]))
 
     return products
 
@@ -809,6 +1035,7 @@ def _update_preproc_functions(settings, config_user, variable, variables,
     _update_fx_settings(settings=settings,
                         variable=variable,
                         config_user=config_user)
+    _update_timerange(variable, config_user)
     try:
         _update_target_grid(
             variable=variable,
@@ -858,8 +1085,9 @@ def _get_single_preprocessor_task(variables,
         write_ncl_interface=config_user['write_ncl_interface'],
     )
 
-    logger.info("PreprocessingTask %s created. It will create the files:\n%s",
-                task.name, '\n'.join(p.filename for p in task.products))
+    logger.info("PreprocessingTask %s created.", task.name)
+    logger.debug("PreprocessingTask %s will create the files:\n%s", task.name,
+                 '\n'.join(p.filename for p in task.products))
 
     return task
 
@@ -928,6 +1156,7 @@ def _get_derive_input_variables(variables, config_user):
             for var in required_vars:
                 _augment(var, variable)
                 _add_cmor_info(var, override=True)
+                _add_extra_facets(var, config_user['extra_facets_dir'])
                 files = _get_input_files(var, config_user)[0]
                 if var.get('optional') and not files:
                     logger.info(
@@ -996,16 +1225,21 @@ class Recipe:
     info_keys = ('project', 'activity', 'dataset', 'exp', 'ensemble',
                  'version')
     """List of keys to be used to compose the alias, ordered by priority."""
+
     def __init__(self,
                  raw_recipe,
                  config_user,
                  initialize_tasks=True,
                  recipe_file=None):
         """Parse a recipe file into an object."""
+        # Clear the global variable containing the set of files to download
+        DOWNLOAD_FILES.clear()
+        self._download_files = set()
         self._cfg = deepcopy(config_user)
         self._cfg['write_ncl_interface'] = self._need_ncl(
             raw_recipe['diagnostics'])
         self._raw_recipe = raw_recipe
+        self._updated_recipe = {}
         self._filename = os.path.basename(recipe_file)
         self._preprocessors = raw_recipe.get('preprocessors', {})
         if 'default' not in self._preprocessors:
@@ -1016,11 +1250,39 @@ class Recipe:
             raw_recipe.get('documentation', {}))
         try:
             self.tasks = self.initialize_tasks() if initialize_tasks else None
-        except RecipeError as ex:
-            logger.error(ex.message)
-            for task in ex.failed_tasks:
-                logger.error(task.message)
+        except RecipeError as exc:
+            self._log_recipe_errors(exc)
             raise
+
+    def _log_recipe_errors(self, exc):
+        """Log a message with recipe errors."""
+        logger.error(exc.message)
+        for task in exc.failed_tasks:
+            logger.error(task.message)
+
+        if self._cfg['offline'] and any(
+                isinstance(err, InputFilesNotFound)
+                for err in exc.failed_tasks):
+            logger.error(
+                "Not all input files required to run the recipe could be"
+                " found.")
+            logger.error(
+                "If the files are available locally, please check"
+                " your `rootpath` and `drs` settings in your user "
+                "configuration file %s", self._cfg['config_file'])
+            logger.error(
+                "To automatically download the required files to "
+                "`download_dir: %s`, set `offline: false` in %s or run the "
+                "recipe with the extra command line argument --offline=False",
+                self._cfg['download_dir'],
+                self._cfg['config_file'],
+            )
+            logger.info(
+                "Note that automatic download is only available for files"
+                " that are hosted on the ESGF, i.e. for projects: %s, and %s",
+                ', '.join(list(esgf.facets.FACETS)[:-1]),
+                list(esgf.facets.FACETS)[-1],
+            )
 
     @staticmethod
     def _need_ncl(raw_diagnostics):
@@ -1084,10 +1346,10 @@ class Recipe:
 
     @staticmethod
     def _expand_tag(variables, input_tag):
-        """Expand tags such as ensemble members or stardates to multiple
-        datasets.
+        """Expand tags such as ensemble members or startdates.
 
         Expansion only supports ensembles defined as strings, not lists.
+        Returns the expanded datasets.
         """
         expanded = []
         regex = re.compile(r'\(\d+:\d+\)')
@@ -1151,9 +1413,12 @@ class Recipe:
             'diagnostic',
         }
         if 'fx' not in raw_variable.get('mip', ''):
-            required_keys.update({'start_year', 'end_year'})
+            required_keys.update({'timerange'})
+        else:
+            variable.pop('timerange', None)
         for variable in variables:
             _add_extra_facets(variable, self._cfg['extra_facets_dir'])
+            _get_timerange_from_years(variable)
             if 'institute' not in variable:
                 institute = get_institutes(variable)
                 if institute:
@@ -1168,8 +1433,13 @@ class Recipe:
                 check.variable(variable, subexperiment_keys)
             else:
                 check.variable(variable, required_keys)
+            if variable['project'] == 'obs4mips':
+                logger.warning("Correcting capitalization, project 'obs4mips'"
+                               " should be written as 'obs4MIPs'")
+                variable['project'] = 'obs4MIPs'
         variables = self._expand_tag(variables, 'ensemble')
         variables = self._expand_tag(variables, 'sub_experiment')
+
         return variables
 
     def _initialize_preprocessor_output(self, diagnostic_name, raw_variables,
@@ -1350,7 +1620,8 @@ class Recipe:
         for diagnostic_name, diagnostic in self.diagnostics.items():
             for script_name, script_cfg in diagnostic['scripts'].items():
                 task_id = diagnostic_name + TASKSEP + script_name
-                if isinstance(tasks[task_id], DiagnosticTask):
+                if task_id in tasks and isinstance(tasks[task_id],
+                                                   DiagnosticTask):
                     logger.debug("Linking tasks for diagnostic %s script %s",
                                  diagnostic_name, script_name)
                     ancestors = []
@@ -1365,22 +1636,161 @@ class Recipe:
                         ancestors.extend(tasks[a] for a in ancestor_ids)
                     tasks[task_id].ancestors = ancestors
 
-    def initialize_tasks(self):
-        """Define tasks in recipe."""
-        logger.info("Creating tasks from recipe")
-        tasks = TaskSet()
+    def _get_tasks_to_run(self):
+        """Get tasks filtered and add ancestors if needed."""
+        tasknames_to_run = self._cfg.get('diagnostics', [])
+        if tasknames_to_run:
+            tasknames_to_run = set(tasknames_to_run)
+            while self._update_with_ancestors(tasknames_to_run):
+                pass
+        return tasknames_to_run
 
-        run_diagnostic = self._cfg.get('run_diagnostic', True)
-        tasknames_to_run = self._cfg.get('diagnostics')
+    def _update_with_ancestors(self, tasknames_to_run):
+        """Add ancestors for all selected tasks."""
+        num_filters = len(tasknames_to_run)
 
-        priority = 0
-        failed_tasks = []
+        # Iterate over all tasks and add all ancestors to tasknames_to_run of
+        # those tasks that match one of the patterns given by tasknames_to_run
+        # to
         for diagnostic_name, diagnostic in self.diagnostics.items():
-            logger.info("Creating tasks for diagnostic %s", diagnostic_name)
+            for script_name, script_cfg in diagnostic['scripts'].items():
+                task_name = diagnostic_name + TASKSEP + script_name
+                for pattern in tasknames_to_run:
+                    if fnmatch.fnmatch(task_name, pattern):
+                        ancestors = script_cfg.get('ancestors', [])
+                        if isinstance(ancestors, str):
+                            ancestors = ancestors.split()
+                        for ancestor in ancestors:
+                            tasknames_to_run.add(ancestor)
+                        break
 
-            # Create preprocessor tasks
-            for variable_group in diagnostic['preprocessor_output']:
-                task_name = diagnostic_name + TASKSEP + variable_group
+        # If new ancestors have been added (num_filters !=
+        # len(tasknames_to_run)) -> return True. This causes another call of
+        # this function in the while() loop of _get_tasks_to_run to ensure that
+        # nested ancestors are found.
+
+        # If no new ancestors have been found (num_filters ==
+        # len(tasknames_to_run)) -> return False. This terminates the search
+        # for ancestors.
+
+        return num_filters != len(tasknames_to_run)
+
+    def _create_diagnostic_tasks(self, diagnostic_name, diagnostic,
+                                 tasknames_to_run):
+        """Create diagnostic tasks."""
+        tasks = []
+
+        if self._cfg.get('run_diagnostic', True):
+            for script_name, script_cfg in diagnostic['scripts'].items():
+                task_name = diagnostic_name + TASKSEP + script_name
+
+                # Skip diagnostic tasks if desired by the user
+                if tasknames_to_run:
+                    for pattern in tasknames_to_run:
+                        if fnmatch.fnmatch(task_name, pattern):
+                            break
+                    else:
+                        logger.info("Skipping task %s due to filter",
+                                    task_name)
+                        continue
+
+                logger.info("Creating diagnostic task %s", task_name)
+                task = DiagnosticTask(
+                    script=script_cfg['script'],
+                    output_dir=script_cfg['output_dir'],
+                    settings=script_cfg['settings'],
+                    name=task_name,
+                )
+                tasks.append(task)
+
+        return tasks
+
+    def _fill_wildcards(self, variable_group, preprocessor_output):
+        """Fill wildcards in the `timerange` .
+
+        The new values will be datetime values that have been found for
+        the first and/or last available points.
+        """
+        # To be generalised for other tags
+        datasets = self._raw_recipe.get('datasets')
+        diagnostics = self._raw_recipe.get('diagnostics')
+        additional_datasets = []
+        if diagnostics:
+            additional_datasets = nested_lookup('additional_datasets',
+                                                diagnostics)
+
+        raw_dataset_tags = nested_lookup('timerange', datasets)
+        raw_diagnostic_tags = nested_lookup('timerange', diagnostics)
+
+        wildcard = False
+        for raw_timerange in raw_dataset_tags + raw_diagnostic_tags:
+            if '*' in raw_timerange:
+                wildcard = True
+                break
+
+        if wildcard:
+            if not self._updated_recipe:
+                self._updated_recipe = deepcopy(self._raw_recipe)
+                nested_delete(self._updated_recipe, 'datasets', in_place=True)
+                nested_delete(self._updated_recipe,
+                              'additional_datasets',
+                              in_place=True)
+            updated_datasets = []
+            dataset_keys = set(
+                get_all_keys(datasets) + get_all_keys(additional_datasets) +
+                ['timerange'])
+            for data in preprocessor_output[variable_group]:
+                diagnostic = data['diagnostic']
+                updated_datasets.append(
+                    {key: data[key]
+                     for key in dataset_keys if key in data})
+            self._updated_recipe['diagnostics'][diagnostic]['variables'][
+                variable_group].pop('timerange', None)
+            self._updated_recipe['diagnostics'][diagnostic]['variables'][
+                variable_group].update(
+                    {'additional_datasets': updated_datasets})
+
+    def _create_preprocessor_tasks(self, diagnostic_name, diagnostic,
+                                   tasknames_to_run, any_diag_script_is_run):
+        """Create preprocessor tasks."""
+        tasks = []
+        failed_tasks = []
+        for variable_group in diagnostic['preprocessor_output']:
+            task_name = diagnostic_name + TASKSEP + variable_group
+
+            # Skip preprocessor if not a single diagnostic script is run and
+            # the preprocessing task is not explicitly requested by the user
+            if tasknames_to_run:
+                if not any_diag_script_is_run:
+                    for pattern in tasknames_to_run:
+                        if fnmatch.fnmatch(task_name, pattern):
+                            break
+                    else:
+                        logger.info("Skipping task %s due to filter",
+                                    task_name)
+                        continue
+
+            # Resume previous runs if requested, else create a new task
+            for resume_dir in self._cfg['resume_from']:
+                prev_preproc_dir = Path(
+                    resume_dir,
+                    'preproc',
+                    diagnostic_name,
+                    variable_group,
+                )
+                if prev_preproc_dir.exists():
+                    logger.info("Re-using preprocessed files from %s for %s",
+                                prev_preproc_dir, task_name)
+                    preproc_dir = Path(
+                        self._cfg['preproc_dir'],
+                        'preproc',
+                        diagnostic_name,
+                        variable_group,
+                    )
+                    task = ResumeTask(prev_preproc_dir, preproc_dir, task_name)
+                    tasks.append(task)
+                    break
+            else:
                 logger.info("Creating preprocessor task %s", task_name)
                 try:
                     task = _get_preprocessor_task(
@@ -1393,45 +1803,62 @@ class Recipe:
                 except RecipeError as ex:
                     failed_tasks.append(ex)
                 else:
-                    for task0 in task.flatten():
-                        task0.priority = priority
-                    tasks.add(task)
-                    priority += 1
+                    self._fill_wildcards(variable_group,
+                                         diagnostic['preprocessor_output'])
+                    tasks.append(task)
+
+        return tasks, failed_tasks
+
+    def _create_tasks(self):
+        """Create tasks from the recipe."""
+        logger.info("Creating tasks from recipe")
+        tasks = TaskSet()
+
+        tasknames_to_run = self._get_tasks_to_run()
+
+        priority = 0
+        failed_tasks = []
+
+        for diagnostic_name, diagnostic in self.diagnostics.items():
+            logger.info("Creating tasks for diagnostic %s", diagnostic_name)
 
             # Create diagnostic tasks
-            for script_name, script_cfg in diagnostic['scripts'].items():
-                task_name = diagnostic_name + TASKSEP + script_name
-                logger.info("Creating diagnostic task %s", task_name)
-                task = DiagnosticTask(
-                    script=script_cfg['script'],
-                    output_dir=script_cfg['output_dir'],
-                    settings=script_cfg['settings'],
-                    name=task_name,
-                )
+            new_tasks = self._create_diagnostic_tasks(diagnostic_name,
+                                                      diagnostic,
+                                                      tasknames_to_run)
+            any_diag_script_is_run = bool(new_tasks)
+            for task in new_tasks:
                 task.priority = priority
                 tasks.add(task)
                 priority += 1
+
+            # Create preprocessor tasks
+            new_tasks, failed = self._create_preprocessor_tasks(
+                diagnostic_name, diagnostic, tasknames_to_run,
+                any_diag_script_is_run)
+            failed_tasks.extend(failed)
+            for task in new_tasks:
+                for task0 in task.flatten():
+                    task0.priority = priority
+                tasks.add(task)
+                priority += 1
+
         if failed_tasks:
             recipe_error = RecipeError('Could not create all tasks')
             recipe_error.failed_tasks.extend(failed_tasks)
             raise recipe_error
+
         check.tasks_valid(tasks)
 
         # Resolve diagnostic ancestors
-        self._resolve_diagnostic_ancestors(tasks)
+        if self._cfg.get('run_diagnostic', True):
+            self._resolve_diagnostic_ancestors(tasks)
 
-        # Select only requested tasks
-        tasks = tasks.flatten()
-        if not run_diagnostic:
-            tasks = TaskSet(t for t in tasks
-                            if isinstance(t, PreprocessingTask))
-        if tasknames_to_run:
-            names = {t.name for t in tasks}
-            selection = set()
-            for pattern in tasknames_to_run:
-                selection |= set(fnmatch.filter(names, pattern))
-            tasks = TaskSet(t for t in tasks if t.name in selection)
+        return tasks
 
+    def initialize_tasks(self):
+        """Define tasks in recipe."""
+        tasks = self._create_tasks()
         tasks = tasks.flatten()
         logger.info("These tasks will be executed: %s",
                     ', '.join(t.name for t in tasks))
@@ -1440,7 +1867,8 @@ class Recipe:
         for task in tasks:
             task.initialize_provenance(self.entity)
 
-        # TODO: check that no loops are created (will throw RecursionError)
+        # Store the set of files to download before running
+        self._download_files = set(DOWNLOAD_FILES)
 
         # Return smallest possible set of tasks
         return tasks.get_independent()
@@ -1451,10 +1879,16 @@ class Recipe:
 
     def run(self):
         """Run all tasks in the recipe."""
+        self.write_filled_recipe()
         if not self.tasks:
             raise RecipeError('No tasks to run!')
 
+        # Download required data
+        if not self._cfg['offline']:
+            esgf.download(self._download_files, self._cfg['download_dir'])
+
         self.tasks.run(max_parallel_tasks=self._cfg['max_parallel_tasks'])
+        self.write_html_summary()
 
     def get_output(self) -> dict:
         """Return the paths to the output plots and data.
@@ -1476,6 +1910,16 @@ class Recipe:
 
         return output
 
+    def write_filled_recipe(self):
+        """Write copy of recipe with filled wildcards."""
+        if self._updated_recipe:
+            run_dir = self._cfg['run_dir']
+            filename = self._filename.split('.')
+            filename[0] = filename[0] + '_filled'
+            new_filename = '.'.join(filename)
+            with open(os.path.join(run_dir, new_filename), 'w') as file:
+                yaml.safe_dump(self._updated_recipe, file, sort_keys=False)
+
     def write_html_summary(self):
         """Write summary html file to the output dir."""
         with warnings.catch_warnings():
@@ -1489,6 +1933,6 @@ class Recipe:
                 output = RecipeOutput.from_core_recipe_output(output)
             except LookupError as error:
                 # See https://github.com/ESMValGroup/ESMValCore/issues/28
-                logging.debug("Could not write HTML report. %s", error)
+                logger.warning("Could not write HTML report: %s", error)
             else:
                 output.write_html()

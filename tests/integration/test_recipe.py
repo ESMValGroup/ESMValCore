@@ -1,20 +1,28 @@
 import os
+from collections import defaultdict
+from copy import deepcopy
 from pathlib import Path
 from pprint import pformat
 from textwrap import dedent
-from unittest.mock import create_autospec
+from unittest.mock import create_autospec, patch, sentinel
 
 import iris
 import pytest
 import yaml
+from nested_lookup import get_occurrence_of_value, nested_update
 from PIL import Image
 
 import esmvalcore
 from esmvalcore._config import TAGS
-from esmvalcore._recipe import TASKSEP, read_recipe_file
-from esmvalcore._recipe_checks import RecipeError
+from esmvalcore._recipe import (
+    TASKSEP,
+    _dataset_to_file,
+    _get_derive_input_variables,
+    read_recipe_file,
+)
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
 
@@ -52,7 +60,6 @@ TAGS_FOR_TESTING = {
 MANDATORY_DATASET_KEYS = (
     'dataset',
     'diagnostic',
-    'end_year',
     'filename',
     'frequency',
     'institute',
@@ -63,7 +70,7 @@ MANDATORY_DATASET_KEYS = (
     'project',
     'short_name',
     'standard_name',
-    'start_year',
+    'timerange',
     'units',
 )
 
@@ -81,7 +88,7 @@ DEFAULT_PREPROCESSOR_STEPS = (
     'cmor_check_data',
     'cmor_check_metadata',
     'concatenate',
-    'clip_start_end_year',
+    'clip_timerange',
     'fix_data',
     'fix_file',
     'fix_metadata',
@@ -97,8 +104,9 @@ INITIALIZATION_ERROR_MSG = 'Could not create all tasks'
 def config_user(tmp_path):
     filename = write_config_user_file(tmp_path)
     cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
-    cfg['synda_download'] = False
+    cfg['offline'] = True
     cfg['check_level'] = CheckLevels.DEFAULT
+    cfg['diagnostics'] = set()
     return cfg
 
 
@@ -128,7 +136,6 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
             'alias': 'CanESM2',
             'dataset': 'CanESM2',
             'diagnostic': 'diagnostic_name',
-            'end_year': 2005,
             'ensemble': 'r1i1p1',
             'exp': 'historical',
             'filename': fix_dir.replace('_fixed', '.nc'),
@@ -140,11 +147,12 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
             'original_short_name': 'chl',
             'output_dir': fix_dir,
             'preprocessor': preprocessor,
+            'product': ['output1', 'output2'],
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'chl',
             'standard_name': standard_name,
-            'start_year': 2000,
+            'timerange': '2000/2005',
             'units': 'kg m-3',
             'variable_group': 'chl',
         },
@@ -153,7 +161,6 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
             'alias': 'CanESM2',
             'dataset': 'CanESM2',
             'diagnostic': 'diagnostic_name',
-            'end_year': 2005,
             'ensemble': 'r1i1p1',
             'exp': 'historical',
             'filename': fix_dir.replace('_fixed', '.nc'),
@@ -164,11 +171,12 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
             'modeling_realm': ['ocnBgchem'],
             'original_short_name': 'chl',
             'preprocessor': preprocessor,
+            'product': ['output1', 'output2'],
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'chl',
             'standard_name': standard_name,
-            'start_year': 2000,
+            'timerange': '2000/2005',
             'units': 'kg m-3',
             'variable_group': 'chl',
         },
@@ -177,7 +185,6 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
             'alias': 'CanESM2',
             'dataset': 'CanESM2',
             'diagnostic': 'diagnostic_name',
-            'end_year': 2005,
             'ensemble': 'r1i1p1',
             'exp': 'historical',
             'filename': fix_dir.replace('_fixed', '.nc'),
@@ -188,17 +195,17 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
             'modeling_realm': ['ocnBgchem'],
             'original_short_name': 'chl',
             'preprocessor': preprocessor,
+            'product': ['output1', 'output2'],
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'chl',
             'standard_name': standard_name,
-            'start_year': 2000,
+            'timerange': '2000/2005',
             'units': 'kg m-3',
             'variable_group': 'chl',
         },
-        'clip_start_end_year': {
-            'start_year': 2000,
-            'end_year': 2005,
+        'clip_timerange': {
+            'timerange': '2000/2005',
         },
         'cmor_check_metadata': {
             'check_level': CheckLevels.DEFAULT,
@@ -230,85 +237,8 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
     return defaults
 
 
-def _get_filenames(root_path, filenames, tracking_id):
-    filename = filenames[0]
-    filename = str(root_path / 'input' / filename)
-    filenames = []
-    if filename.endswith('[_.]*nc'):
-        # Restore when we support filenames with no dates
-        # filenames.append(filename.replace('[_.]*nc', '.nc'))
-        filename = filename.replace('[_.]*nc', '_*.nc')
-    if filename.endswith('*.nc'):
-        filename = filename[:-len('*.nc')] + '_'
-        intervals = [
-            '1990_1999',
-            '2000_2009',
-            '2010_2019',
-        ]
-        for interval in intervals:
-            filenames.append(filename + interval + '.nc')
-    else:
-        filenames.append(filename)
-
-    for filename in filenames:
-        create_test_file(filename, next(tracking_id))
-    return filenames
-
-
-@pytest.fixture
-def patched_datafinder(tmp_path, monkeypatch):
-
-    def tracking_ids(i=0):
-        while True:
-            yield i
-            i += 1
-
-    tracking_id = tracking_ids()
-
-    def find_files(_, filenames):
-        # Any occurrence of [something] in filename should have
-        # been replaced before this function is called.
-        for filename in filenames:
-            assert '{' not in filename
-        return _get_filenames(tmp_path, filenames, tracking_id)
-
-    monkeypatch.setattr(esmvalcore._data_finder, 'find_files', find_files)
-
-
-@pytest.fixture
-def patched_failing_datafinder(tmp_path, monkeypatch):
-
-    def tracking_ids(i=0):
-        while True:
-            yield i
-            i += 1
-
-    tracking_id = tracking_ids()
-
-    def find_files(_, filenames):
-        # Any occurrence of [something] in filename should have
-        # been replaced before this function is called.
-        for filename in filenames:
-            assert '{' not in filename
-
-        # Fail for specified fx variables
-        for filename in filenames:
-            if 'fx_' in filename:
-                return []
-            if 'sftlf' in filename:
-                return []
-            if 'IyrAnt_' in filename:
-                return []
-            if 'IyrGre_' in filename:
-                return []
-        return _get_filenames(tmp_path, filenames, tracking_id)
-
-    monkeypatch.setattr(esmvalcore._data_finder, 'find_files', find_files)
-
-
 @pytest.fixture
 def patched_tas_derivation(monkeypatch):
-
     def get_required(short_name, _):
         if short_name != 'tas':
             assert False
@@ -329,6 +259,7 @@ def patched_tas_derivation(monkeypatch):
 
 DEFAULT_DOCUMENTATION = dedent("""
     documentation:
+      title: Test recipe
       description: This is a test recipe.
       authors:
         - andela_bouwe
@@ -467,6 +398,54 @@ def test_simple_recipe(tmp_path, patched_datafinder, config_user):
         for key in MANDATORY_SCRIPT_SETTINGS_KEYS:
             assert key in task.settings and task.settings[key]
         assert task.settings['custom_setting'] == 1
+    # Filled recipe is not created as there are no wildcards.
+    assert recipe._updated_recipe == {}
+
+
+def test_simple_recipe_fill(tmp_path, patched_datafinder, config_user):
+    script = tmp_path / 'diagnostic.py'
+    script.write_text('')
+    content = dedent("""
+        datasets:
+          - dataset: bcc-csm1-1
+
+        preprocessors:
+          preprocessor_name:
+            extract_levels:
+              levels: 85000
+              scheme: nearest
+
+        diagnostics:
+          diagnostic_name:
+            additional_datasets:
+              - dataset: GFDL-ESM2G
+            variables:
+              ta:
+                preprocessor: preprocessor_name
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                timerange: '*'
+                additional_datasets:
+                  - dataset: MPI-ESM-LR
+                    timerange: '*/P2Y'
+            scripts:
+              script_name:
+                script: {}
+                custom_setting: 1
+        """.format(script))
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    preprocessor_output = recipe.diagnostics['diagnostic_name'][
+        'preprocessor_output']
+    recipe._fill_wildcards('ta', preprocessor_output)
+    assert recipe._updated_recipe
+    assert get_occurrence_of_value(recipe._updated_recipe, value='*') == 0
+    assert get_occurrence_of_value(recipe._updated_recipe,
+                                   value='1990/2019') == 2
+    assert get_occurrence_of_value(recipe._updated_recipe,
+                                   value='1990/P2Y') == 1
 
 
 def test_fx_preproc_error(tmp_path, patched_datafinder, config_user):
@@ -627,6 +606,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'original_short_name': 'sftlf',
             'output_dir': fix_dir,
             'preprocessor': 'default',
+            'product': ['output1', 'output2'],
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'sftlf',
@@ -649,6 +629,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'modeling_realm': ['atmos'],
             'original_short_name': 'sftlf',
             'preprocessor': 'default',
+            'product': ['output1', 'output2'],
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'sftlf',
@@ -671,6 +652,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'modeling_realm': ['atmos'],
             'original_short_name': 'sftlf',
             'preprocessor': 'default',
+            'product': ['output1', 'output2'],
             'project': 'CMIP5',
             'recipe_dataset_index': 0,
             'short_name': 'sftlf',
@@ -762,7 +744,6 @@ def test_cmip3_variable_autocomplete(tmp_path, patched_datafinder,
     reference = {
         'dataset': 'bccr_bcm2_0',
         'diagnostic': 'test',
-        'end_year': 2001,
         'ensemble': 'r1i1p1',
         'exp': 'historical',
         'frequency': 'mon',
@@ -774,7 +755,7 @@ def test_cmip3_variable_autocomplete(tmp_path, patched_datafinder,
         'project': 'CMIP3',
         'short_name': 'zg',
         'standard_name': 'geopotential_height',
-        'start_year': 2000,
+        'timerange': '2000/2001',
         'units': 'm',
     }
     for key in reference:
@@ -806,7 +787,6 @@ def test_cmip5_variable_autocomplete(tmp_path, patched_datafinder,
     reference = {
         'dataset': 'CanESM2',
         'diagnostic': 'test',
-        'end_year': 2001,
         'ensemble': 'r1i1p1',
         'exp': 'historical',
         'frequency': '3hr',
@@ -818,7 +798,7 @@ def test_cmip5_variable_autocomplete(tmp_path, patched_datafinder,
         'project': 'CMIP5',
         'short_name': 'pr',
         'standard_name': 'precipitation_flux',
-        'start_year': 2000,
+        'timerange': '2000/2001',
         'units': 'kg m-2 s-1',
     }
     for key in reference:
@@ -852,7 +832,6 @@ def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
         'activity': 'CMIP',
         'dataset': 'HadGEM3-GC31-LL',
         'diagnostic': 'test',
-        'end_year': 2001,
         'ensemble': 'r2i1p1f1',
         'exp': 'historical',
         'frequency': '3hr',
@@ -865,7 +844,7 @@ def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
         'project': 'CMIP6',
         'short_name': 'pr',
         'standard_name': 'precipitation_flux',
-        'start_year': 2000,
+        'timerange': '2000/2001',
         'units': 'kg m-2 s-1',
     }
     for key in reference:
@@ -899,7 +878,8 @@ def test_simple_cordex_recipe(tmp_path, patched_datafinder, config_user):
     variable = recipe.diagnostics['test']['preprocessor_output']['tas'][0]
     filename = variable.pop('filename').split('/')[-1]
     assert (filename ==
-            'tas_MOHC-HadGEM3-RA_evaluation_r1i1p1_v1_mon_1991-1993.nc')
+            'CORDEX_MOHC-HadGEM3-RA_v1_ECMWF-ERAINT_AFR-44_mon_evaluation_'
+            'r1i1p1_tas_1991-1993.nc')
     reference = {
         'alias': 'MOHC-HadGEM3-RA',
         'dataset': 'MOHC-HadGEM3-RA',
@@ -923,6 +903,7 @@ def test_simple_cordex_recipe(tmp_path, patched_datafinder, config_user):
         'original_short_name': 'tas',
         'standard_name': 'air_temperature',
         'start_year': 1991,
+        'timerange': '1991/1993',
         'units': 'K',
         'variable_group': 'tas',
     }
@@ -930,6 +911,169 @@ def test_simple_cordex_recipe(tmp_path, patched_datafinder, config_user):
     assert set(variable) == set(reference)
     for key in reference:
         assert variable[key] == reference[key]
+
+
+TEST_ISO_TIMERANGE = [
+    ('*', '1990-2019'),
+    ('1990/1992', '1990-1992'),
+    ('19900101/19920101', '19900101-19920101'),
+    ('19900101T12H00M00S/19920101T12H00M00',
+     '19900101T12H00M00S-19920101T12H00M00'),
+    ('1990/*', '1990-2019'),
+    ('*/1992', '1990-1992'),
+    ('1990/P2Y', '1990-P2Y'),
+    ('19900101/P2Y2M1D', '19900101-P2Y2M1D'),
+    ('19900101TH00M00S/P2Y2M1DT12H00M00S',
+     '19900101TH00M00S-P2Y2M1DT12H00M00S'),
+    ('P2Y/1992', 'P2Y-1992'),
+    ('P1Y2M1D/19920101', 'P1Y2M1D-19920101'),
+    ('P1Y2M1D/19920101T12H00M00S', 'P1Y2M1D-19920101T12H00M00S'),
+    ('P2Y/*', 'P2Y-2019'),
+    ('P2Y2M1D/*', 'P2Y2M1D-2019'),
+    ('P2Y21DT12H00M00S/*', 'P2Y21DT12H00M00S-2019'),
+    ('*/P2Y', '1990-P2Y'),
+    ('*/P2Y2M1D', '1990-P2Y2M1D'),
+    ('*/P2Y21DT12H00M00S', '1990-P2Y21DT12H00M00S'),
+]
+
+
+@pytest.mark.parametrize('input_time,output_time', TEST_ISO_TIMERANGE)
+def test_recipe_iso_timerange(tmp_path, patched_datafinder, config_user,
+                              input_time, output_time):
+    """Test recipe with timerange tag."""
+    content = dedent("""
+        diagnostics:
+          test:
+            additional_datasets:
+              - dataset: HadGEM3-GC31-LL
+                project: CMIP6
+                exp: historical
+                ensemble: r2i1p1f1
+                grid: gn
+                timerange:
+            variables:
+              pr:
+                mip: 3hr
+              areacella:
+                mip: fx
+            scripts: null
+        """)
+
+    recipe = yaml.safe_load(content)
+    (recipe['diagnostics']['test']['additional_datasets'][0]['timerange']
+     ) = input_time
+    content = yaml.safe_dump(recipe)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
+    filename = variable.pop('filename').split('/')[-1]
+    assert (filename == 'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
+            f'pr_gn_{output_time}.nc')
+    fx_variable = (
+        recipe.diagnostics['test']['preprocessor_output']['areacella'][0])
+    fx_filename = fx_variable.pop('filename').split('/')[-1]
+    assert (fx_filename ==
+            'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella_gn.nc')
+
+
+@pytest.mark.parametrize('input_time,output_time', TEST_ISO_TIMERANGE)
+def test_recipe_iso_timerange_as_dataset(tmp_path, patched_datafinder,
+                                         config_user, input_time, output_time):
+    """Test recipe with timerange tag in the datasets section."""
+    content = dedent("""
+        datasets:
+          - dataset: HadGEM3-GC31-LL
+            project: CMIP6
+            exp: historical
+            ensemble: r2i1p1f1
+            grid: gn
+            timerange:
+        diagnostics:
+          test:
+            variables:
+              pr:
+                mip: 3hr
+              areacella:
+                mip: fx
+            scripts: null
+        """)
+
+    recipe = yaml.safe_load(content)
+    (recipe['datasets'][0]['timerange']) = input_time
+    content = yaml.safe_dump(recipe)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
+    filename = variable.pop('filename').split('/')[-1]
+    assert (filename == 'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
+            f'pr_gn_{output_time}.nc')
+    fx_variable = (
+        recipe.diagnostics['test']['preprocessor_output']['areacella'][0])
+    fx_filename = fx_variable.pop('filename').split('/')[-1]
+    assert (fx_filename ==
+            'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella_gn.nc')
+
+
+TEST_YEAR_FORMAT = [
+  ('1/301', '0001/0301'),
+  ('10/P2Y', '0010/P2Y'),
+  ('P2Y/10', 'P2Y/0010'),
+]
+
+
+@pytest.mark.parametrize('input_time,output_time', TEST_YEAR_FORMAT)
+def test_update_timerange_year_format(config_user, input_time, output_time):
+    variable = {
+        'project': 'CMIP6',
+        'mip': 'Amon',
+        'short_name': 'tas',
+        'original_short_name': 'tas',
+        'dataset': 'HadGEM3-GC31-LL',
+        'exp': 'historical',
+        'ensemble': 'r2i1p1f1',
+        'grid': 'gr',
+        'timerange': input_time
+    }
+    esmvalcore._recipe._update_timerange(variable, config_user)
+    assert variable['timerange'] == output_time
+
+
+def test_update_timerange_no_files_online(config_user):
+    variable = {
+        'alias': 'CMIP6',
+        'project': 'CMIP6',
+        'mip': 'Amon',
+        'short_name': 'tas',
+        'original_short_name': 'tas',
+        'dataset': 'HadGEM3-GC31-LL',
+        'exp': 'historical',
+        'ensemble': 'r2i1p1f1',
+        'grid': 'gr',
+        'timerange': '*/2000',
+    }
+    msg = "Missing data for CMIP6: tas. Cannot determine indeterminate time "
+    with pytest.raises(InputFilesNotFound, match=msg):
+        esmvalcore._recipe._update_timerange(variable, config_user)
+
+
+def test_update_timerange_no_files_offline(config_user):
+    variable = {
+        'alias': 'CMIP6',
+        'project': 'CMIP6',
+        'mip': 'Amon',
+        'short_name': 'tas',
+        'original_short_name': 'tas',
+        'dataset': 'HadGEM3-GC31-LL',
+        'exp': 'historical',
+        'ensemble': 'r2i1p1f1',
+        'grid': 'gr',
+        'timerange': '*/2000',
+    }
+    config_user = dict(config_user)
+    config_user['offline'] = False
+    msg = "Please note that automatic download is not supported"
+    with pytest.raises(InputFilesNotFound, match=msg):
+        esmvalcore._recipe._update_timerange(variable, config_user)
 
 
 def test_reference_dataset(tmp_path, patched_datafinder, config_user,
@@ -1041,11 +1185,11 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
     content = dedent("""
         preprocessors:
           default: &default
-            area_statistics:
-              operator: mean
             multi_model_statistics:
               span: overlap
               statistics: [mean ]
+            area_statistics:
+              operator: mean
           custom:
             custom_order: true
             <<: *default
@@ -1093,10 +1237,10 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
 
     for task in recipe.tasks:
         if task.name == 'diagnostic_name/chl_default':
-            assert task.order.index('area_statistics') > task.order.index(
+            assert task.order.index('area_statistics') < task.order.index(
                 'multi_model_statistics')
         elif task.name == 'diagnostic_name/chl_custom':
-            assert task.order.index('area_statistics') < task.order.index(
+            assert task.order.index('area_statistics') > task.order.index(
                 'multi_model_statistics')
         elif task.name == 'diagnostic_name/chl_empty_custom':
             assert len(task.products) == 1
@@ -1116,9 +1260,8 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
                 'end_month': 6,
                 'end_day': 28,
             }
-            assert product.settings['clip_start_end_year'] == {
-                'start_year': 2000,
-                'end_year': 2005,
+            assert product.settings['clip_timerange'] == {
+                'timerange': '2000/2005',
             }
         else:
             assert False, f"invalid task {task.name}"
@@ -1397,6 +1540,41 @@ def test_derive_with_optional_var_nodata(tmp_path, patched_failing_datafinder,
         assert ancestor_product.filename in all_product_files
 
 
+def test_derive_contains_start_end_year(tmp_path, patched_datafinder,
+                                        config_user):
+
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              toz:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                timerange: '2000/2005'
+                derive: true
+                force_derivation: true
+                additional_datasets:
+                  - {dataset: GFDL-CM3,  ensemble: r1i1p1}
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+
+    # Check that start_year and end_year are present in attributes
+    assert len(task.products) == 1
+    product = task.products.pop()
+    assert 'derive' in product.settings
+    assert product.attributes['short_name'] == 'toz'
+    assert product.attributes['timerange'] == '2000/2005'
+    assert product.attributes['start_year'] == 2000
+    assert product.attributes['end_year'] == 2005
+
+
 def create_test_image(basename, cfg):
     """Get a valid path for saving a diagnostic plot."""
     image = Path(cfg['plot_dir']) / (basename + '.' + cfg['output_file_type'])
@@ -1485,6 +1663,7 @@ def test_diagnostic_task_provenance(
     # Check resulting products
     assert len(diagnostic_task.products) == 2
     for product in diagnostic_task.products:
+        product.restore_provenance()
         check_provenance(product)
         assert product.attributes['caption'] == record['caption']
         assert product.entity.get_attribute(
@@ -1736,6 +1915,242 @@ def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
     assert invalid_arg in exc.value.failed_tasks[0].message
 
 
+def _test_output_product_consistency(products, preprocessor, statistics):
+    product_out = defaultdict(list)
+
+    for i, product in enumerate(products):
+        settings = product.settings.get(preprocessor)
+        if settings:
+            output_products = settings['output_products']
+
+            for identifier, statistic_out in output_products.items():
+                for statistic, preproc_file in statistic_out.items():
+                    product_out[identifier, statistic].append(preproc_file)
+
+    # Make sure that output products are consistent
+    for (identifier, statistic), value in product_out.items():
+        assert statistic in statistics
+        assert len(set(value)) == 1, 'Output products are not equal'
+
+    return product_out
+
+
+def test_ensemble_statistics(tmp_path, patched_datafinder, config_user):
+    statistics = ['mean', 'max']
+    diagnostic = 'diagnostic_name'
+    variable = 'pr'
+    preprocessor = 'ensemble_statistics'
+
+    content = dedent(f"""
+         preprocessors:
+           default: &default
+             custom_order: true
+             area_statistics:
+               operator: mean
+             {preprocessor}:
+               statistics: {statistics}
+
+         diagnostics:
+           {diagnostic}:
+             variables:
+               {variable}:
+                 project: CMIP5
+                 mip: Amon
+                 start_year: 2000
+                 end_year: 2002
+                 preprocessor: default
+                 additional_datasets:
+                   - {{dataset: CanESM2, exp: [historical, rcp45],
+                     ensemble: "r(1:2)i1p1"}}
+                   - {{dataset: CCSM4, exp: [historical, rcp45],
+                     ensemble: "r(1:2)i1p1"}}
+             scripts: null
+    """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
+    datasets = set([var['dataset'] for var in variable])
+    task = next(iter(recipe.tasks))
+
+    products = task.products
+    product_out = _test_output_product_consistency(products, preprocessor,
+                                                   statistics)
+
+    assert len(product_out) == len(datasets) * len(statistics)
+
+    task._initialize_product_provenance()
+    assert next(iter(products)).provenance is not None
+
+
+def test_multi_model_statistics(tmp_path, patched_datafinder, config_user):
+    statistics = ['mean', 'max']
+    diagnostic = 'diagnostic_name'
+    variable = 'pr'
+    preprocessor = 'multi_model_statistics'
+
+    content = dedent(f"""
+        preprocessors:
+          default: &default
+            custom_order: true
+            area_statistics:
+              operator: mean
+            {preprocessor}:
+              span: overlap
+              statistics: {statistics}
+
+        diagnostics:
+          {diagnostic}:
+            variables:
+              {variable}:
+                project: CMIP5
+                mip: Amon
+                start_year: 2000
+                end_year: 2002
+                preprocessor: default
+                additional_datasets:
+                  - {{dataset: CanESM2, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1"}}
+                  - {{dataset: CCSM4, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1"}}
+            scripts: null
+    """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
+    task = next(iter(recipe.tasks))
+
+    products = task.products
+    product_out = _test_output_product_consistency(products, preprocessor,
+                                                   statistics)
+
+    assert len(product_out) == len(statistics)
+
+    task._initialize_product_provenance()
+    assert next(iter(products)).provenance is not None
+
+
+def test_multi_model_statistics_exclude(tmp_path,
+                                        patched_datafinder,
+                                        config_user):
+    statistics = ['mean', 'max']
+    diagnostic = 'diagnostic_name'
+    variable = 'pr'
+    preprocessor = 'multi_model_statistics'
+
+    content = dedent(f"""
+        preprocessors:
+          default: &default
+            custom_order: true
+            area_statistics:
+              operator: mean
+            {preprocessor}:
+              span: overlap
+              statistics: {statistics}
+              groupby: ['project']
+              exclude: ['TEST']
+
+        diagnostics:
+          {diagnostic}:
+            variables:
+              {variable}:
+                project: CMIP5
+                mip: Amon
+                start_year: 2000
+                end_year: 2002
+                preprocessor: default
+                additional_datasets:
+                  - {{dataset: CanESM2, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1"}}
+                  - {{dataset: CCSM4, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1"}}
+                  - {{dataset: TEST, project: OBS, type: reanaly, version: 1,
+                     tier: 1}}
+            scripts: null
+    """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
+    task = next(iter(recipe.tasks))
+
+    products = task.products
+    product_out = _test_output_product_consistency(products, preprocessor,
+                                                   statistics)
+
+    assert len(product_out) == len(statistics)
+    assert 'OBS' not in product_out
+    for id, prods in product_out:
+        assert id != 'OBS'
+        assert id == 'CMIP5'
+    task._initialize_product_provenance()
+    assert next(iter(products)).provenance is not None
+
+
+def test_groupby_combined_statistics(tmp_path, patched_datafinder,
+                                     config_user):
+    diagnostic = 'diagnostic_name'
+    variable = 'pr'
+
+    mm_statistics = ['mean', 'max']
+    mm_preprocessor = 'multi_model_statistics'
+    ens_statistics = ['mean', 'median']
+    ens_preprocessor = 'ensemble_statistics'
+
+    groupby = [ens_preprocessor, 'tag']
+
+    content = dedent(f"""
+        preprocessors:
+          default: &default
+            custom_order: true
+            area_statistics:
+              operator: mean
+            {ens_preprocessor}:
+              span: 'overlap'
+              statistics: {ens_statistics}
+            {mm_preprocessor}:
+              span: overlap
+              groupby: {groupby}
+              statistics: {mm_statistics}
+
+        diagnostics:
+          {diagnostic}:
+            variables:
+              {variable}:
+                project: CMIP5
+                mip: Amon
+                start_year: 2000
+                end_year: 2002
+                preprocessor: default
+                additional_datasets:
+                  - {{dataset: CanESM2, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1", tag: group1}}
+                  - {{dataset: CCSM4, exp: [historical, rcp45],
+                    ensemble: "r(1:2)i1p1", tag: group2}}
+            scripts: null
+    """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
+    datasets = set([var['dataset'] for var in variable])
+
+    products = next(iter(recipe.tasks)).products
+
+    ens_products = _test_output_product_consistency(
+        products,
+        ens_preprocessor,
+        ens_statistics,
+    )
+
+    mm_products = _test_output_product_consistency(
+        products,
+        mm_preprocessor,
+        mm_statistics,
+    )
+
+    assert len(ens_products) == len(datasets) * len(ens_statistics)
+    assert len(
+        mm_products) == len(mm_statistics) * len(ens_statistics) * len(groupby)
+
+
 def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
@@ -1758,7 +2173,7 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
                 ensemble: r1i1p1
                 additional_datasets:
                   - {dataset: CanESM2}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -1778,7 +2193,7 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
         assert settings['area_type'] == 'land'
         fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
-        if product.attributes['project'] == 'obs4mips':
+        if product.attributes['project'] == 'obs4MIPs':
             assert len(fx_variables) == 1
             assert fx_variables.get('sftlf')
         else:
@@ -1809,7 +2224,7 @@ def test_weighting_landsea_fraction_no_fx(tmp_path, patched_failing_datafinder,
                 ensemble: r1i1p1
                 additional_datasets:
                   - {dataset: CanESM2}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -1857,7 +2272,7 @@ def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
                 additional_datasets:
                   - {dataset: CanESM2}
                   - {dataset: GFDL-CM3}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -1916,6 +2331,55 @@ def test_weighting_landsea_fraction_exclude_fail(tmp_path, patched_datafinder,
         'diagnostic_name')
 
 
+def test_area_statistics(tmp_path, patched_datafinder, config_user):
+    content = dedent("""
+        preprocessors:
+          area_statistics:
+            area_statistics:
+              operator: mean
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              gpp:
+                preprocessor: area_statistics
+                project: CMIP5
+                mip: Lmon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
+                     tier: 1}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert task.name == 'diagnostic_name' + TASKSEP + 'gpp'
+
+    # Check area_statistics
+    assert len(task.products) == 2
+    for product in task.products:
+        assert 'area_statistics' in product.settings
+        settings = product.settings['area_statistics']
+        assert len(settings) == 1
+        assert settings['operator'] == 'mean'
+        fx_variables = product.settings['add_fx_variables']['fx_variables']
+        assert isinstance(fx_variables, dict)
+        if product.attributes['project'] == 'obs4MIPs':
+            assert len(fx_variables) == 1
+            assert fx_variables.get('areacella')
+        else:
+            assert len(fx_variables) == 2
+            assert fx_variables.get('areacella')
+            assert fx_variables.get('areacello')
+
+
 def test_landmask(tmp_path, patched_datafinder, config_user):
     content = dedent("""
         preprocessors:
@@ -1936,7 +2400,7 @@ def test_landmask(tmp_path, patched_datafinder, config_user):
                 ensemble: r1i1p1
                 additional_datasets:
                   - {dataset: CanESM2}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -1957,10 +2421,103 @@ def test_landmask(tmp_path, patched_datafinder, config_user):
         fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
         fx_variables = fx_variables.values()
-        if product.attributes['project'] == 'obs4mips':
+        if product.attributes['project'] == 'obs4MIPs':
             assert len(fx_variables) == 1
         else:
             assert len(fx_variables) == 2
+
+
+def test_empty_fxvar_none(tmp_path, patched_datafinder, config_user):
+    """Test that no fx variables are added if explicitly specified."""
+    content = dedent("""
+        preprocessors:
+          landmask:
+            mask_landsea:
+              mask_out: sea
+              fx_variables: null
+        diagnostics:
+          diagnostic_name:
+            variables:
+              gpp:
+                preprocessor: landmask
+                project: CMIP5
+                mip: Lmon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check that no custom fx variables are present
+    task = recipe.tasks.pop()
+    product = task.products.pop()
+    assert product.settings['add_fx_variables']['fx_variables'] == {}
+
+
+def test_empty_fxvar_list(tmp_path, patched_datafinder, config_user):
+    """Test that no fx variables are added if explicitly specified."""
+    content = dedent("""
+        preprocessors:
+          landmask:
+            mask_landsea:
+              mask_out: sea
+              fx_variables: []
+        diagnostics:
+          diagnostic_name:
+            variables:
+              gpp:
+                preprocessor: landmask
+                project: CMIP5
+                mip: Lmon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check that no custom fx variables are present
+    task = recipe.tasks.pop()
+    product = task.products.pop()
+    assert product.settings['add_fx_variables']['fx_variables'] == {}
+
+
+def test_empty_fxvar_dict(tmp_path, patched_datafinder, config_user):
+    """Test that no fx variables are added if explicitly specified."""
+    content = dedent("""
+        preprocessors:
+          landmask:
+            mask_landsea:
+              mask_out: sea
+              fx_variables: {}
+        diagnostics:
+          diagnostic_name:
+            variables:
+              gpp:
+                preprocessor: landmask
+                project: CMIP5
+                mip: Lmon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check that no custom fx variables are present
+    task = recipe.tasks.pop()
+    product = task.products.pop()
+    assert product.settings['add_fx_variables']['fx_variables'] == {}
 
 
 def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
@@ -2128,7 +2685,7 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
                   - {dataset: CanESM2}
                   - {dataset: CanESM5, project: CMIP6, grid: gn,
                      ensemble: r1i1p1f1}
-                  - {dataset: TEST, project: obs4mips, level: 1, version: 1,
+                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
             scripts: null
         """)
@@ -2899,3 +3456,344 @@ def test_multimodel_mask(tmp_path, patched_datafinder, config_user):
     for product in task.products:
         assert 'mask_multimodel' in product.settings
         assert product.settings['mask_multimodel'] == {}
+
+
+def test_obs4mips_case_correct(tmp_path, patched_datafinder, config_user):
+    """Test that obs4mips is corrected to obs4MIPs."""
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: TEST, project: obs4mips,
+                     version: 1, tier: 1, level: 1}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, config_user)
+    variable = recipe.diagnostics['diagnostic_name']['preprocessor_output'][
+        'tas'][0]
+    assert variable['project'] == 'obs4MIPs'
+
+
+def test_write_filled_recipe(tmp_path, patched_datafinder, config_user):
+
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                timerange: '*'
+                additional_datasets:
+                  - {dataset: BNU-ESM}
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    run_dir = config_user['run_dir']
+    if not os.path.exists(run_dir):
+        os.makedirs(run_dir)
+
+    recipe._updated_recipe = deepcopy(recipe._raw_recipe)
+    nested_update(recipe._updated_recipe, 'timerange',
+                  '1990/2019', in_place=True)
+    esmvalcore._recipe.Recipe.write_filled_recipe(recipe)
+    assert os.path.isfile(os.path.join(run_dir, 'recipe_test_filled.yml'))
+
+
+def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
+
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              areacella:
+                project: CMIP5
+                mip: fx
+                exp: historical
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: BNU-ESM}
+            scripts: null
+        """)
+    config_user['download_dir'] = tmp_path / 'download_dir'
+    config_user['offline'] = False
+
+    mocker.patch.object(esmvalcore._recipe.esgf,
+                        'download',
+                        create_autospec=True)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    recipe.tasks.run = mocker.Mock()
+    recipe.write_filled_recipe = mocker.Mock()
+    recipe.run()
+
+    esmvalcore._recipe.esgf.download.assert_called_once_with(
+        set(), config_user['download_dir'])
+    recipe.tasks.run.assert_called_once_with(
+        max_parallel_tasks=config_user['max_parallel_tasks'])
+    recipe.write_filled_recipe.assert_called_once()
+
+
+@patch('esmvalcore._recipe.check.data_availability', autospec=True)
+def test_dataset_to_file_regular_var(mock_data_availability,
+                                     patched_datafinder, config_user):
+    """Test ``_dataset_to_file`` with regular variable."""
+    variable = {
+        'component': 'atm',
+        'dataset': 'ICON',
+        'end_year': 2000,
+        'ensemble': 'r1v1i1p1l1f1',
+        'exp': 'amip',
+        'frequency': 'mon',
+        'grid': 'R2B5',
+        'mip': 'Amon',
+        'original_short_name': 'tas',
+        'project': 'ICON',
+        'short_name': 'tas',
+        'start_year': 1990,
+        'timerange': '1990/2000',
+        'var_type': 'atm_2d_ml',
+        'version': 1,
+    }
+    filename = _dataset_to_file(variable, config_user)
+    path = Path(filename)
+    assert path.name == '1_atm_amip_R2B5_r1v1i1p1l1f1_atm_2d_ml_1990_1999.nc'
+    mock_data_availability.assert_called_once()
+
+
+@patch('esmvalcore._recipe.check.data_availability', autospec=True)
+@patch('esmvalcore._recipe._get_input_files', autospec=True)
+def test_dataset_to_file_derived_var(mock_get_input_files,
+                                     mock_data_availability, config_user):
+    """Test ``_dataset_to_file`` with derived variable."""
+    mock_get_input_files.side_effect = [
+        ([], [], []),
+        ([sentinel.out_file], [sentinel.dirname], [sentinel.filename]),
+    ]
+    variable = {
+        'component': 'atm',
+        'dataset': 'ICON',
+        'derive': True,
+        'end_year': 2000,
+        'ensemble': 'r1v1i1p1l1f1',
+        'exp': 'amip',
+        'force_derivation': True,
+        'frequency': 'mon',
+        'grid': 'R2B5',
+        'mip': 'Amon',
+        'original_short_name': 'lwp',
+        'project': 'ICON',
+        'short_name': 'lwp',
+        'start_year': 1990,
+        'timerange': '1990/2000',
+        'var_type': 'atm_2d_ml',
+        'version': 1,
+    }
+    filename = _dataset_to_file(variable, config_user)
+    assert filename == sentinel.out_file
+    assert mock_get_input_files.call_count == 2
+
+    expect_required_var = {
+        # Added by get_required
+        'short_name': 'clwvi',
+        # Already present in variable
+        'component': 'atm',
+        'dataset': 'ICON',
+        'derive': True,
+        'end_year': 2000,
+        'ensemble': 'r1v1i1p1l1f1',
+        'exp': 'amip',
+        'force_derivation': True,
+        'frequency': 'mon',
+        'grid': 'R2B5',
+        'mip': 'Amon',
+        'project': 'ICON',
+        'start_year': 1990,
+        'timerange': '1990/2000',
+        'var_type': 'atm_2d_ml',
+        'version': 1,
+        # Added by _add_cmor_info
+        'long_name': 'Condensed Water Path',
+        'modeling_realm': ['atmos'],
+        'original_short_name': 'clwvi',
+        'standard_name': 'atmosphere_mass_content_of_cloud_condensed_water',
+        'units': 'kg m-2',
+        # Added by _add_extra_facets
+        'raw_name': 'cllvi',
+    }
+    mock_get_input_files.assert_called_with(expect_required_var, config_user)
+    mock_data_availability.assert_called_once()
+
+
+def test_get_derive_input_variables(patched_datafinder, config_user):
+    """Test ``_get_derive_input_variables``."""
+    variables = [{
+        'component': 'atm',
+        'dataset': 'ICON',
+        'derive': True,
+        'end_year': 2000,
+        'ensemble': 'r1v1i1p1l1f1',
+        'exp': 'amip',
+        'force_derivation': True,
+        'frequency': 'mon',
+        'grid': 'R2B5',
+        'mip': 'Amon',
+        'original_short_name': 'lwp',
+        'project': 'ICON',
+        'short_name': 'lwp',
+        'start_year': 1990,
+        'timerange': '1990/2000',
+        'var_type': 'atm_2d_ml',
+        'version': 1,
+        'variable_group': 'lwp_group',
+    }]
+    derive_input = _get_derive_input_variables(variables, config_user)
+
+    expected_derive_input = {
+        'lwp_group_derive_input_clwvi': [{
+            # Added by get_required
+            'short_name': 'clwvi',
+            # Already present in variables
+            'component': 'atm',
+            'dataset': 'ICON',
+            'derive': True,
+            'end_year': 2000,
+            'ensemble': 'r1v1i1p1l1f1',
+            'exp': 'amip',
+            'force_derivation': True,
+            'frequency': 'mon',
+            'grid': 'R2B5',
+            'mip': 'Amon',
+            'project': 'ICON',
+            'start_year': 1990,
+            'timerange': '1990/2000',
+            'var_type': 'atm_2d_ml',
+            'version': 1,
+            # Added by _add_cmor_info
+            'standard_name':
+            'atmosphere_mass_content_of_cloud_condensed_water',
+            'long_name': 'Condensed Water Path',
+            'modeling_realm': ['atmos'],
+            'original_short_name': 'clwvi',
+            'units': 'kg m-2',
+            # Added by _add_extra_facets
+            'raw_name': 'cllvi',
+            # Added by append
+            'variable_group': 'lwp_group_derive_input_clwvi',
+        }], 'lwp_group_derive_input_clivi': [{
+            # Added by get_required
+            'short_name': 'clivi',
+            # Already present in variables
+            'component': 'atm',
+            'dataset': 'ICON',
+            'derive': True,
+            'end_year': 2000,
+            'ensemble': 'r1v1i1p1l1f1',
+            'exp': 'amip',
+            'force_derivation': True,
+            'frequency': 'mon',
+            'grid': 'R2B5',
+            'mip': 'Amon',
+            'project': 'ICON',
+            'start_year': 1990,
+            'timerange': '1990/2000',
+            'var_type': 'atm_2d_ml',
+            'version': 1,
+            # Added by _add_cmor_info
+            'standard_name': 'atmosphere_mass_content_of_cloud_ice',
+            'long_name': 'Ice Water Path',
+            'modeling_realm': ['atmos'],
+            'original_short_name': 'clivi',
+            'units': 'kg m-2',
+            # Added by append
+            'variable_group': 'lwp_group_derive_input_clivi',
+        }],
+    }
+    assert derive_input == expected_derive_input
+
+
+TEST_DIAG_SELECTION = [
+    (None, {'d1/tas', 'd1/s1', 'd2/s1', 'd3/s1', 'd3/s2', 'd4/s1'}),
+    ({''}, set()),
+    ({'wrong_diag/*'}, set()),
+    ({'d1/*'}, {'d1/tas', 'd1/s1'}),
+    ({'d2/*'}, {'d1/tas', 'd1/s1', 'd2/s1'}),
+    ({'d3/*'}, {'d1/tas', 'd1/s1', 'd2/s1', 'd3/s1', 'd3/s2'}),
+    ({'d4/*'}, {'d1/tas', 'd1/s1', 'd2/s1', 'd3/s2', 'd4/s1'}),
+    ({'wrong_diag/*', 'd1/*'}, {'d1/tas', 'd1/s1'}),
+    ({'d1/tas'}, {'d1/tas'}),
+    ({'d1/tas', 'd2/*'}, {'d1/tas', 'd1/s1', 'd2/s1'}),
+    ({'d1/tas', 'd3/s1'}, {'d1/tas', 'd3/s1', 'd1/s1'}),
+    ({'d4/*', 'd3/s1'}, {'d1/tas', 'd1/s1', 'd2/s1', 'd3/s1', 'd3/s2',
+                         'd4/s1'}),
+]
+
+
+@pytest.mark.parametrize('diags_to_run,tasks_run', TEST_DIAG_SELECTION)
+def test_diag_selection(tmp_path, patched_datafinder, config_user,
+                        diags_to_run, tasks_run):
+    """Test selection of individual diagnostics via --diagnostics option."""
+    TAGS.set_tag_values(TAGS_FOR_TESTING)
+    script = tmp_path / 'diagnostic.py'
+    script.write_text('')
+
+    if diags_to_run is not None:
+        config_user['diagnostics'] = diags_to_run
+
+    content = dedent("""
+        diagnostics:
+
+          d1:
+            variables:
+              tas:
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2000
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - dataset: CanESM5
+            scripts:
+              s1:
+                script: {script}
+
+          d2:
+            scripts:
+              s1:
+                script: {script}
+                ancestors: [d1/*]
+
+          d3:
+            scripts:
+              s1:
+                script: {script}
+                ancestors: [d1/s1]
+              s2:
+                script: {script}
+                ancestors: [d2/*]
+
+          d4:
+            scripts:
+              s1:
+                script: {script}
+                ancestors: [d3/s2]
+        """).format(script=script)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+    task_names = {task.name for task in recipe.tasks.flatten()}
+
+    assert tasks_run == task_names

@@ -1,34 +1,28 @@
-name: Monitor Tests
+name: Test via PR Comment
 on:
-  push:
-    branches:
-    - main
-    - monitor_tests
-  # run the test only if the PR is to main
-  # turn it on if required
-  #pull_request:
-  #  branches:
-  #  - main
-  schedule:
-    - cron: '0 0 * * *'  # nightly
+  issue_comment:
+    types:
+      - created
 
 jobs:
   linux:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.8", "3.9", "3.10"]
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
+    if: ${{ github.event.issue.pull_request && github.event.comment.body == '@runGAtests' }}
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
-          activate-environment: esmvaltool
+          activate-environment: esmvalcore
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
-          miniconda-version: "latest"
-          channels: conda-forge
+          miniforge-version: "latest"
+          miniforge-variant: Mambaforge
+          use-mamba: true
       - shell: bash -l {0}
         run: mkdir -p test_linux_artifacts_python_${{ matrix.python-version }}
       - shell: bash -l {0}
@@ -36,17 +30,11 @@ jobs:
       - shell: bash -l {0}
         run: python -V 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
       - shell: bash -l {0}
-        run: pip install pytest-monitor
-      - shell: bash -l {0}
         run: pip install -e .[develop] 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/install.txt
       - shell: bash -l {0}
         run: pytest -n 2 -m "not installation and not sequential" 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - shell: bash -l {0}
-        run: python tests/parse_pymon.py 
-      - shell: bash -l {0}
         run: pytest -n 0 -m "sequential"
-      - shell: bash -l {0}
-        run: python tests/parse_pymon.py
       - name: Upload artifacts
         if: ${{ always() }}  # upload artifacts even if fail
         uses: actions/upload-artifact@v2
@@ -58,18 +46,20 @@ jobs:
     runs-on: "macos-latest"
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.8", "3.9", "3.10"]
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
+    if: ${{ github.event.issue.pull_request && github.event.comment.body == '@runGAtests' }}
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
-          activate-environment: esmvaltool
+          activate-environment: esmvalcore
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
-          miniconda-version: "latest"
-          channels: conda-forge
+          miniforge-version: "latest"
+          miniforge-variant: Mambaforge
+          use-mamba: true
       - shell: bash -l {0}
         run: mkdir -p test_osx_artifacts_python_${{ matrix.python-version }}
       - shell: bash -l {0}
@@ -77,17 +67,11 @@ jobs:
       - shell: bash -l {0}
         run: python -V 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
       - shell: bash -l {0}
-        run: pip install pytest-monitor
-      - shell: bash -l {0}
-        run: pip install -e .[develop] --use-feature=2020-resolver 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/install.txt
+        run: pip install -e .[develop] 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/install.txt
       - shell: bash -l {0}
         run: pytest -n 2 -m "not installation and not sequential" 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - shell: bash -l {0}
-        run: python tests/parse_pymon.py
-      - shell: bash -l {0}
         run: pytest -n 0 -m "sequential"
-      - shell: bash -l {0}
-        run: python tests/parse_pymon.py
       - name: Upload artifacts
         if: ${{ always() }}  # upload artifacts even if fail
         uses: actions/upload-artifact@v2

@@ -1,7 +1,12 @@
 autodocsumm
 dask[array]
+esgf-pyclient
+docutils <0.17
 fiona
+geopy
+humanfriendly
 importlib_resources
+isodate
 jinja2
 netCDF4
 numpy

@@ -5,6 +5,8 @@ import cf_units
 import numpy as np
 from cf_units import Unit
 
+from esmvalcore.iris_helpers import date2num
+
 from ..fix import Fix
 
 
@@ -30,7 +32,7 @@ def fix_time_month(cube):
 
     t_unit = cf_units.Unit("days since 1850-01-01", calendar="standard")
 
-    cube.coord('time').points = t_unit.date2num(dates)
+    cube.coord('time').points = date2num(dates, t_unit)
     cube.coord('time').units = t_unit
 
 

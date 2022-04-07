@@ -1,7 +1,6 @@
 """Shared functions for fixes."""
 import logging
 import os
-import warnings
 from functools import lru_cache
 
 import dask.array as da
@@ -13,182 +12,6 @@ from scipy.interpolate import interp1d
 from esmvalcore.iris_helpers import var_name_constraint
 
 logger = logging.getLogger(__name__)
-
-
-class AtmosphereSigmaFactory(iris.aux_factory.AuxCoordFactory):
-    """Defines an atmosphere sigma coordinate factory."""
-
-    def __init__(self, pressure_at_top=None, sigma=None,
-                 surface_air_pressure=None):
-        """Create class instance.
-
-        Creates and atmosphere sigma coordinate factory with the formula:
-
-        p(n, k, j, i) = pressure_at_top + sigma(k) *
-                        (surface_air_pressure(n, j, i) - pressure_at_top)
-
-        """
-        self._metadata_manager = iris.common.metadata_manager_factory(
-            iris.common.CoordMetadata)
-        super().__init__()
-        self._check_dependencies(pressure_at_top, sigma, surface_air_pressure)
-        self.units = pressure_at_top.units
-        self.pressure_at_top = pressure_at_top
-        self.sigma = sigma
-        self.surface_air_pressure = surface_air_pressure
-        self.standard_name = 'air_pressure'
-        self.attributes = {}
-
-    @staticmethod
-    def _check_dependencies(pressure_at_top, sigma, surface_air_pressure):
-        """Check for sufficient coordinates."""
-        if any([
-                pressure_at_top is None,
-                sigma is None,
-                surface_air_pressure is None,
-        ]):
-            raise ValueError(
-                "Unable to construct atmosphere sigma coordinate factory due "
-                "to insufficient source coordinates")
-
-        # Check dimensions
-        if pressure_at_top.shape not in ((), (1, )):
-            raise ValueError(
-                f"Expected scalar 'pressure_at_top' coordinate, got shape "
-                f"{pressure_at_top.shape}")
-
-        # Check bounds
-        if sigma.nbounds not in (0, 2):
-            raise ValueError(
-                f"Invalid 'sigma' coordinate: must have either 0 or 2 bounds, "
-                f"got {sigma.nbounds:d}")
-        for coord in (pressure_at_top, surface_air_pressure):
-            if coord.nbounds:
-                msg = (f"Coordinate '{coord.name()}' has bounds. These will "
-                       "be disregarded")
-                warnings.warn(msg, UserWarning, stacklevel=2)
-
-        # Check units
-        if sigma.units.is_unknown():
-            sigma.units = Unit('1')
-        if not sigma.units.is_dimensionless():
-            raise ValueError(
-                f"Invalid units: 'sigma' must be dimensionless, got "
-                f"'{sigma.units}'")
-        if pressure_at_top.units != surface_air_pressure.units:
-            raise ValueError(
-                f"Incompatible units: 'pressure_at_top' and "
-                f"'surface_air_pressure' must have the same units, got "
-                f"'{pressure_at_top.units}' and "
-                f"'{surface_air_pressure.units}'")
-        if not pressure_at_top.units.is_convertible('Pa'):
-            raise ValueError(
-                "Invalid units: 'pressure_at_top' and 'surface_air_pressure' "
-                "must have units of pressure")
-
-    @property
-    def dependencies(self):
-        """Return dependencies."""
-        dependencies = {
-            'pressure_at_top': self.pressure_at_top,
-            'sigma': self.sigma,
-            'surface_air_pressure': self.surface_air_pressure,
-        }
-        return dependencies
-
-    @staticmethod
-    def _derive(pressure_at_top, sigma, surface_air_pressure):
-        """Derive coordinate."""
-        return pressure_at_top + sigma * (surface_air_pressure -
-                                          pressure_at_top)
-
-    def make_coord(self, coord_dims_func):
-        """Make new :class:`iris.coords.AuxCoord`."""
-        # Which dimensions are relevant?
-        derived_dims = self.derived_dims(coord_dims_func)
-        dependency_dims = self._dependency_dims(coord_dims_func)
-
-        # Build the points array
-        nd_points_by_key = self._remap(dependency_dims, derived_dims)
-        points = self._derive(nd_points_by_key['pressure_at_top'],
-                              nd_points_by_key['sigma'],
-                              nd_points_by_key['surface_air_pressure'])
-
-        # Bounds
-        bounds = None
-        if self.sigma.nbounds:
-            nd_values_by_key = self._remap_with_bounds(dependency_dims,
-                                                       derived_dims)
-            pressure_at_top = nd_values_by_key['pressure_at_top']
-            sigma = nd_values_by_key['sigma']
-            surface_air_pressure = nd_values_by_key['surface_air_pressure']
-            ok_bound_shapes = [(), (1,), (2,)]
-            if sigma.shape[-1:] not in ok_bound_shapes:
-                raise ValueError("Invalid sigma coordinate bounds")
-            if pressure_at_top.shape[-1:] not in [(), (1,)]:
-                warnings.warn(
-                    "Pressure at top coordinate has bounds. These are being "
-                    "disregarded")
-                pressure_at_top_pts = nd_points_by_key['pressure_at_top']
-                bds_shape = list(pressure_at_top_pts.shape) + [1]
-                pressure_at_top = pressure_at_top_pts.reshape(bds_shape)
-            if surface_air_pressure.shape[-1:] not in [(), (1,)]:
-                warnings.warn(
-                    "Surface pressure coordinate has bounds. These are being "
-                    "disregarded")
-                surface_air_pressure_pts = nd_points_by_key[
-                    'surface_air_pressure']
-                bds_shape = list(surface_air_pressure_pts.shape) + [1]
-                surface_air_pressure = surface_air_pressure_pts.reshape(
-                    bds_shape)
-            bounds = self._derive(pressure_at_top, sigma, surface_air_pressure)
-
-        # Create coordinate
-        return iris.coords.AuxCoord(
-            points, standard_name=self.standard_name, long_name=self.long_name,
-            var_name=self.var_name, units=self.units, bounds=bounds,
-            attributes=self.attributes, coord_system=self.coord_system)
-
-    def update(self, old_coord, new_coord=None):
-        """Notify the factory of the removal/replacement of a coordinate."""
-        new_dependencies = self.dependencies
-        for (name, coord) in self.dependencies.items():
-            if old_coord is coord:
-                new_dependencies[name] = new_coord
-                try:
-                    self._check_dependencies(**new_dependencies)
-                except ValueError as exc:
-                    raise ValueError(f"Failed to update dependencies: {exc}")
-                else:
-                    setattr(self, name, new_coord)
-                break
-
-
-def add_sigma_factory(cube):
-    """Add factory for ``atmosphere_sigma_coordinate``.
-
-    Parameters
-    ----------
-    cube : iris.cube.Cube
-        Input cube.
-
-    Raises
-    ------
-    ValueError
-        ``cube`` does not contain coordinate ``atmosphere_sigma_coordinate``.
-
-    """
-    if cube.coords('atmosphere_sigma_coordinate'):
-        aux_factory = AtmosphereSigmaFactory(
-            pressure_at_top=cube.coord(var_name='ptop'),
-            sigma=cube.coord(var_name='lev'),
-            surface_air_pressure=cube.coord(var_name='ps'),
-        )
-        cube.add_aux_factory(aux_factory)
-        return
-    raise ValueError(
-        "Cannot add 'air_pressure' coordinate, 'atmosphere_sigma_coordinate' "
-        "coordinate not available")
 
 
 def add_aux_coords_from_cubes(cube, cubes, coord_dict):
@@ -211,7 +34,6 @@ def add_aux_coords_from_cubes(cube, cubes, coord_dict):
     ValueError
         ``cubes`` do not contain a desired coordinate or multiple copies of
         it.
-
     """
     for (coord_name, coord_dims) in coord_dict.items():
         coord_cube = cubes.extract(var_name_constraint(coord_name))
@@ -237,7 +59,6 @@ def add_plev_from_altitude(cube):
     ------
     ValueError
         ``cube`` does not contain coordinate ``altitude``.
-
     """
     if cube.coords('altitude'):
         height_coord = cube.coord('altitude')
@@ -251,9 +72,7 @@ def add_plev_from_altitude(cube):
             pressure_bounds = altitude_to_pressure(height_coord.core_bounds())
         pressure_coord = iris.coords.AuxCoord(pressure_points,
                                               bounds=pressure_bounds,
-                                              var_name='plev',
                                               standard_name='air_pressure',
-                                              long_name='pressure',
                                               units='Pa')
         cube.add_aux_coord(pressure_coord, cube.coord_dims(height_coord))
         return
@@ -274,7 +93,6 @@ def add_altitude_from_plev(cube):
     ------
     ValueError
         ``cube`` does not contain coordinate ``air_pressure``.
-
     """
     if cube.coords('air_pressure'):
         plev_coord = cube.coord('air_pressure')
@@ -288,9 +106,7 @@ def add_altitude_from_plev(cube):
             altitude_bounds = pressure_to_altitude(plev_coord.core_bounds())
         altitude_coord = iris.coords.AuxCoord(altitude_points,
                                               bounds=altitude_bounds,
-                                              var_name='alt',
                                               standard_name='altitude',
-                                              long_name='altitude',
                                               units='m')
         cube.add_aux_coord(altitude_coord, cube.coord_dims(plev_coord))
         return
@@ -387,7 +203,7 @@ def cube_to_aux_coord(cube):
     )
 
 
-@lru_cache()
+@lru_cache(maxsize=None)
 def get_altitude_to_pressure_func():
     """Get function converting altitude [m] to air pressure [Pa].
 
@@ -395,7 +211,6 @@ def get_altitude_to_pressure_func():
     -------
     callable
         Function that converts altitude to air pressure.
-
     """
     base_dir = os.path.dirname(os.path.abspath(__file__))
     source_file = os.path.join(base_dir, 'us_standard_atmosphere.csv')
@@ -429,7 +244,6 @@ def get_bounds_cube(cubes, coord_var_name):
     ValueError
         ``cubes`` do not contain the desired coordinate bounds or multiple
         copies of them.
-
     """
     for bounds in ('bnds', 'bounds'):
         bound_var = f'{coord_var_name}_{bounds}'
@@ -444,7 +258,7 @@ def get_bounds_cube(cubes, coord_var_name):
         f"cubes\n{cubes}")
 
 
-@lru_cache()
+@lru_cache(maxsize=None)
 def get_pressure_to_altitude_func():
     """Get function converting air pressure [Pa] to altitude [m].
 
@@ -452,7 +266,6 @@ def get_pressure_to_altitude_func():
     -------
     callable
         Function that converts air pressure to altitude.
-
     """
     base_dir = os.path.dirname(os.path.abspath(__file__))
     source_file = os.path.join(base_dir, 'us_standard_atmosphere.csv')
@@ -483,7 +296,6 @@ def fix_bounds(cube, cubes, coord_var_names):
     ValueError
         ``cubes`` do not contain a desired coordinate bounds or multiple copies
         of them.
-
     """
     for coord_var_name in coord_var_names:
         coord = cube.coord(var_name=coord_var_name)
@@ -519,7 +331,6 @@ def round_coordinates(cubes, decimals=5, coord_names=None):
     -------
     iris.cube.CubeList or list of iris.cube.Cube
         The modified input ``cubes``.
-
     """
     for cube in cubes:
         if not coord_names:
@@ -541,7 +352,6 @@ def fix_ocean_depth_coord(cube):
     ----------
     cube : iris.cube.Cube
         Input cube.
-
     """
     depth_coord = cube.coord(axis='Z')
     depth_coord.standard_name = 'depth'
