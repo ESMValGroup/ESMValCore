@@ -2,4 +2,4 @@
 '*':
   '*':
     '*':
-      product: output1
+      product: ['output1', 'output2']

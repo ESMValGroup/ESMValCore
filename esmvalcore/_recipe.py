@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import warnings
+from collections import defaultdict
 from copy import deepcopy
 from pathlib import Path
 from pprint import pformat
@@ -27,10 +28,11 @@ from ._data_finder import (
     _get_timerange_from_years,
     _parse_period,
     _truncate_dates,
+    dates_to_timerange,
     get_input_filelist,
+    get_multiproduct_filename,
     get_output_file,
     get_start_end_date,
-    get_statistic_output_file,
 )
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._task import DiagnosticTask, ResumeTask, TaskSet
@@ -47,6 +49,7 @@ from .preprocessor import (
 )
 from .preprocessor._derive import get_required
 from .preprocessor._io import DATASET_KEYS, concatenate_callback
+from .preprocessor._other import _group_products
 from .preprocessor._regrid import (
     _spec_to_latlonvals,
     get_cmor_levels,
@@ -674,36 +677,54 @@ def _apply_preprocessor_profile(settings, profile_settings):
             settings[step].update(args)
 
 
-def _get_statistic_attributes(products):
-    """Get attributes for the statistic output products."""
+def _get_common_attributes(products, settings):
+    """Get common attributes for the output products."""
     attributes = {}
     some_product = next(iter(products))
     for key, value in some_product.attributes.items():
         if all(p.attributes.get(key, object()) == value for p in products):
             attributes[key] = value
 
-    # Ensure timerange attribute is available
+    # Ensure that attribute timerange is always available. This depends on the
+    # "span" setting: if "span=overlap", the intersection of all periods is
+    # used; if "span=full", the union is used. The default value for "span" is
+    # "overlap".
+    span = settings.get('span', 'overlap')
     for product in products:
         timerange = product.attributes['timerange']
         start, end = _parse_period(timerange)
         if 'timerange' not in attributes:
-            attributes['timerange'] = f'{start}/{end}'
+            attributes['timerange'] = dates_to_timerange(start, end)
         else:
             start_date, end_date = _parse_period(attributes['timerange'])
             start_date, start = _truncate_dates(start_date, start)
             end_date, end = _truncate_dates(end_date, end)
-            if start < start_date:
-                start_date = start
-            if end > end_date:
-                end_date = end
 
-            attributes['timerange'] = f'{start_date}/{end_date}'
+            # If "span=overlap", always use the latest start_date and the
+            # earliest end_date
+            if span == 'overlap':
+                start_date = max([start, start_date])
+                end_date = min([end, end_date])
+
+            # If "span=full", always use the earliest start_date and the latest
+            # end_date. Note: span can only take the values "overlap" or "full"
+            # (this is checked earlier).
+            else:
+                start_date = min([start, start_date])
+                end_date = max([end, end_date])
+
+            attributes['timerange'] = dates_to_timerange(start_date, end_date)
+
+    # Ensure that attributes start_year and end_year are always available
+    start_year, end_year = _parse_period(attributes['timerange'])
+    attributes['start_year'] = int(str(start_year[0:4]))
+    attributes['end_year'] = int(str(end_year[0:4]))
 
     return attributes
 
 
-def _get_remaining_common_settings(step, order, products):
-    """Get preprocessor settings that are shared between products."""
+def _get_downstream_settings(step, order, products):
+    """Get downstream preprocessor settings shared between products."""
     settings = {}
     remaining_steps = order[order.index(step) + 1:]
     some_product = next(iter(products))
@@ -723,31 +744,80 @@ def _update_multi_dataset_settings(variable, settings):
         _exclude_dataset(settings, variable, step)
 
 
-def _update_statistic_settings(products, order, preproc_dir):
-    """Define statistic output products."""
-    # TODO: move this to multi model statistics function?
-    # But how to check, with a dry-run option?
-    step = 'multi_model_statistics'
+def _get_tag(step, identifier, statistic):
+    # Avoid . in filename for percentiles
+    statistic = statistic.replace('.', '-')
 
-    products = {p for p in products if step in p.settings}
+    if step == 'ensemble_statistics':
+        tag = 'Ensemble' + statistic.title()
+    elif identifier == '':
+        tag = 'MultiModel' + statistic.title()
+    else:
+        tag = identifier + statistic.title()
+
+    return tag
+
+
+def _update_multiproduct(input_products, order, preproc_dir, step):
+    """Return new products that are aggregated over multiple datasets.
+
+    These new products will replace the original products at runtime.
+    Therefore, they need to have all the settings for the remaining steps.
+
+    The functions in _multimodel.py take output_products as function arguments.
+    These are the output_products created here. But since those functions are
+    called from the input products, the products that are created here need to
+    be added to their ancestors products' settings ().
+    """
+    products = {p for p in input_products if step in p.settings}
     if not products:
-        return
+        return input_products, {}
 
-    some_product = next(iter(products))
-    for statistic in some_product.settings[step]['statistics']:
-        check.valid_multimodel_statistic(statistic)
-        attributes = _get_statistic_attributes(products)
-        attributes['dataset'] = attributes['alias'] = 'MultiModel{}'.format(
-            statistic.title().replace('.', '-'))
-        attributes['filename'] = get_statistic_output_file(
-            attributes, preproc_dir)
-        common_settings = _get_remaining_common_settings(step, order, products)
-        statistic_product = PreprocessorFile(attributes, common_settings)
-        for product in products:
+    settings = list(products)[0].settings[step]
+
+    if step == 'ensemble_statistics':
+        check.ensemble_statistics_preproc(settings)
+        grouping = ['project', 'dataset', 'exp', 'sub_experiment']
+    else:
+        check.multimodel_statistics_preproc(settings)
+        grouping = settings.get('groupby', None)
+
+    downstream_settings = _get_downstream_settings(step, order, products)
+
+    relevant_settings = {
+        'output_products': defaultdict(dict)
+    }  # pass to ancestors
+
+    output_products = set()
+    for identifier, products in _group_products(products, by_key=grouping):
+        common_attributes = _get_common_attributes(products, settings)
+
+        for statistic in settings.get('statistics', []):
+            statistic_attributes = dict(common_attributes)
+            statistic_attributes[step] = _get_tag(step, identifier, statistic)
+            statistic_attributes.setdefault('alias',
+                                            statistic_attributes[step])
+            statistic_attributes.setdefault('dataset',
+                                            statistic_attributes[step])
+            filename = get_multiproduct_filename(statistic_attributes,
+                                                 preproc_dir)
+            statistic_attributes['filename'] = filename
+            statistic_product = PreprocessorFile(statistic_attributes,
+                                                 downstream_settings)
+            output_products.add(statistic_product)
+            relevant_settings['output_products'][identifier][
+                statistic] = statistic_product
+
+    return output_products, relevant_settings
+
+
+def update_ancestors(ancestors, step, downstream_settings):
+    """Retroactively add settings to ancestor products."""
+    for product in ancestors:
+        if step in product.settings:
             settings = product.settings[step]
-            if 'output_products' not in settings:
-                settings['output_products'] = {}
-            settings['output_products'][statistic] = statistic_product
+            for key, value in downstream_settings.items():
+                settings[key] = value
 
 
 def _update_extract_shape(settings, config_user):
@@ -763,18 +833,6 @@ def _update_extract_shape(settings, config_user):
         check.extract_shape(settings['extract_shape'])
 
 
-def _format_years(timerange):
-    """Format years that are not given in a 4-digit format."""
-    dates = timerange.split('/')
-    timerange = []
-    for date in dates:
-        if date != '*' and not date.startswith('P') and len(date) < 4:
-            date = date.zfill(4)
-        timerange.append(date)
-
-    return '/'.join(timerange)
-
-
 def _update_timerange(variable, config_user):
     """Update wildcards in timerange with found datetime values.
 
@@ -787,12 +845,25 @@ def _update_timerange(variable, config_user):
     timerange = variable.get('timerange')
     check.valid_time_selection(timerange)
 
-    timerange = _format_years(timerange)
-    check.valid_time_selection(timerange)
-
     if '*' in timerange:
         (files, _, _) = _find_input_files(variable, config_user['rootpath'],
                                           config_user['drs'])
+        if not files:
+            if not config_user.get('offline', True):
+                msg = (
+                    " Please note that automatic download is not supported "
+                    "with indeterminate time ranges at the moment. Please use "
+                    "a concrete time range (i.e., no wildcards '*') in your "
+                    "recipe or run ESMValTool with --offline=True."
+                )
+            else:
+                msg = ""
+            raise InputFilesNotFound(
+                f"Missing data for {variable['alias']}: "
+                f"{variable['short_name']}. Cannot determine indeterminate "
+                f"time range '{timerange}'.{msg}"
+            )
+
         intervals = [get_start_end_date(name) for name in files]
 
         min_date = min(interval[0] for interval in intervals)
@@ -804,38 +875,47 @@ def _update_timerange(variable, config_user):
             timerange = timerange.replace('*', min_date)
         if '*' in timerange.split('/')[1]:
             timerange = timerange.replace('*', max_date)
-        check.valid_time_selection(timerange)
 
-    variable.update({'timerange': timerange})
+    # Make sure that years are in format YYYY
+    (start_date, end_date) = timerange.split('/')
+    timerange = dates_to_timerange(start_date, end_date)
+    check.valid_time_selection(timerange)
+
+    variable['timerange'] = timerange
 
 
 def _match_products(products, variables):
     """Match a list of input products to output product attributes."""
-    grouped_products = {}
+    grouped_products = defaultdict(list)
+
+    if not products:
+        return grouped_products
 
     def get_matching(attributes):
         """Find the output filename which matches input attributes best."""
-        score = 0
+        best_score = 0
         filenames = []
         for variable in variables:
             filename = variable['filename']
-            tmp = sum(v == variable.get(k) for k, v in attributes.items())
-            if tmp > score:
-                score = tmp
+            score = sum(v == variable.get(k) for k, v in attributes.items())
+
+            if score > best_score:
+                best_score = score
                 filenames = [filename]
-            elif tmp == score:
+            elif score == best_score:
                 filenames.append(filename)
+
         if not filenames:
             logger.warning(
                 "Unable to find matching output file for input file %s",
                 filename)
+
         return filenames
 
     # Group input files by output file
     for product in products:
-        for filename in get_matching(product.attributes):
-            if filename not in grouped_products:
-                grouped_products[filename] = []
+        matching_filenames = get_matching(product.attributes)
+        for filename in matching_filenames:
             grouped_products[filename].append(product)
 
     return grouped_products
@@ -859,6 +939,8 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     sets the correct ancestry.
     """
     products = set()
+    preproc_dir = config_user['preproc_dir']
+
     for variable in variables:
         _update_timerange(variable, config_user)
         variable['filename'] = get_output_file(variable,
@@ -868,6 +950,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
         grouped_ancestors = _match_products(ancestor_products, variables)
     else:
         grouped_ancestors = {}
+
     missing_vars = set()
     for variable in variables:
         settings = _get_default_settings(
@@ -903,6 +986,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
             settings=settings,
             ancestors=ancestors,
         )
+
         products.add(product)
 
     if missing_vars:
@@ -911,11 +995,55 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
             f'Missing data for preprocessor {name}:{separator}'
             f'{separator.join(sorted(missing_vars))}')
 
-    _update_statistic_settings(products, order, config_user['preproc_dir'])
     check.reference_for_bias_preproc(products)
 
-    for product in products:
+    ensemble_step = 'ensemble_statistics'
+    multi_model_step = 'multi_model_statistics'
+    if ensemble_step in profile:
+        ensemble_products, ensemble_settings = _update_multiproduct(
+            products, order, preproc_dir, ensemble_step)
+
+        # check for ensemble_settings to bypass tests
+        update_ancestors(
+            ancestors=products,
+            step=ensemble_step,
+            downstream_settings=ensemble_settings,
+        )
+    else:
+        ensemble_products = products
+
+    if multi_model_step in profile:
+        multimodel_products, multimodel_settings = _update_multiproduct(
+            ensemble_products, order, preproc_dir, multi_model_step)
+
+        # check for multi_model_settings to bypass tests
+        update_ancestors(
+            ancestors=products,
+            step=multi_model_step,
+            downstream_settings=multimodel_settings,
+        )
+
+        if ensemble_step in profile:
+            # Update multi-product settings (workaround for lack of better
+            # ancestry tracking)
+            update_ancestors(
+                ancestors=ensemble_products,
+                step=multi_model_step,
+                downstream_settings=multimodel_settings,
+            )
+    else:
+        multimodel_products = set()
+
+    for product in products | multimodel_products | ensemble_products:
         product.check()
+
+        # Ensure that attributes start_year and end_year are always available
+        # for all products if a timerange is specified
+        if 'timerange' in product.attributes:
+            start_year, end_year = _parse_period(
+                product.attributes['timerange'])
+            product.attributes['start_year'] = int(str(start_year[0:4]))
+            product.attributes['end_year'] = int(str(end_year[0:4]))
 
     return products
 

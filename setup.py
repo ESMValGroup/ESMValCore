@@ -30,11 +30,10 @@ REQUIREMENTS = {
     # Installation dependencies
     # Use with pip install . to install from source
     'install': [
+        'cartopy',
         'cf-units>=3.0.0',
         'dask[array]',
-        'esgf-pyclient',
-        # pin requests_cache: https://github.com/ESGF/esgf-pyclient/issues/71
-        'requests_cache<0.6',
+        'esgf-pyclient>=0.3.1',
         'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
         'fiona',
         'fire',
@@ -48,13 +47,14 @@ REQUIREMENTS = {
         'netCDF4',
         'numpy',
         'pandas',
+        'pillow',
         'prov',
         'psutil',
         'pybtex',
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        'scitools-iris>=3.1.0',
+        'scitools-iris>=3.2.1',
         'shapely[vectorized]',
         'stratify',
         'yamale',
@@ -209,7 +209,6 @@ setup(
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',

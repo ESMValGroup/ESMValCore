@@ -111,7 +111,9 @@ def test_get_extra_facets_cmip5():
     }
     extra_facets = get_extra_facets(**variable, extra_facets_dir=tuple())
 
-    assert extra_facets == {'institute': ['CSIRO-BOM'], 'product': 'output1'}
+    assert extra_facets == {
+        'institute': ['CSIRO-BOM'], 'product': ['output1', 'output2']
+        }
 
 
 def test_get_project_config(mocker):
@@ -141,11 +143,11 @@ def test_load_default_config(monkeypatch):
         'config_file': str(default_cfg_file),
         'download_dir': str(Path.home() / 'climate_data'),
         'drs': {
-            'CMIP3': 'default',
-            'CMIP5': 'default',
-            'CMIP6': 'default',
-            'CORDEX': 'default',
-            'obs4MIPs': 'default'
+            'CMIP3': 'ESGF',
+            'CMIP5': 'ESGF',
+            'CMIP6': 'ESGF',
+            'CORDEX': 'ESGF',
+            'obs4MIPs': 'ESGF'
         },
         'exit_on_warning': False,
         'extra_facets_dir': tuple(),
@@ -157,19 +159,7 @@ def test_load_default_config(monkeypatch):
         'remove_preproc_dir': True,
         'resume_from': [],
         'rootpath': {
-            'CMIP3': [str(Path.home() / 'cmip3_inputpath1'),
-                      str(Path.home() / 'cmip3_inputpath2')],
-            'CMIP5': [str(Path.home() / 'cmip5_inputpath1'),
-                      str(Path.home() / 'cmip5_inputpath2')],
-            'CMIP6': [str(Path.home() / 'cmip6_inputpath1'),
-                      str(Path.home() / 'cmip6_inputpath2')],
-            'OBS': [str(Path.home() / 'obs_inputpath')],
-            'OBS6': [str(Path.home() / 'obs6_inputpath')],
-            'obs4MIPs': [str(Path.home() / 'obs4mips_inputpath')],
-            'ana4mips': [str(Path.home() / 'ana4mips_inputpath')],
-            'native6': [str(Path.home() / 'native6_inputpath')],
-            'RAWOBS': [str(Path.home() / 'rawobs_inputpath')],
-            'default': [str(Path.home() / 'default_inputpath')]
+            'default': [str(Path.home() / 'climate_data')]
         },
         'run_diagnostic': True,
         'save_intermediary_cubes': False,

@@ -117,10 +117,8 @@ def get_mock_connection(facets, results):
     class MockFileSearchContext:
         def search(self, **kwargs):
             assert kwargs['batch_size'] == 500
-            # enable ignore_facet_check once the following issue has been
-            # fixed: https://github.com/ESGF/esgf-pyclient/issues/75
-            # assert kwargs['ignore_facet_check']
-            assert len(kwargs) == 1
+            assert kwargs['ignore_facet_check']
+            assert len(kwargs) == 2
             return results
 
     class MockConnection:

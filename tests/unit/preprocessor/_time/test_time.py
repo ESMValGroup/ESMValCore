@@ -325,6 +325,119 @@ class TestClipTimerange(tests.Test):
         assert_array_equal(
                 sliced_cube.coord('time').points, expected_time)
 
+    def test_clip_timerange_single_year_1d(self):
+        """Test that single year stays dimensional coordinate."""
+        cube = self._create_cube([0.0], [150.0], [[0.0, 365.0]], 'standard')
+        sliced_cube = clip_timerange(cube, '1950/1950')
+
+        assert sliced_cube.coord('time').units == Unit(
+            'days since 1950-01-01', calendar='standard')
+        assert_array_equal(sliced_cube.coord('time').points, [150.0])
+        assert_array_equal(sliced_cube.coord('time').bounds, [[0.0, 365.0]])
+        assert cube.shape == sliced_cube.shape
+        assert sliced_cube.coord('time', dim_coords=True)
+
+        # Repeat test without bounds
+        cube.coord('time').bounds = None
+        sliced_cube = clip_timerange(cube, '1950/1950')
+
+        assert sliced_cube.coord('time').units == Unit(
+            'days since 1950-01-01', calendar='standard')
+        assert_array_equal(sliced_cube.coord('time').points, [150.0])
+        assert sliced_cube.coord('time').bounds is None
+        assert cube.shape == sliced_cube.shape
+        assert sliced_cube.coord('time', dim_coords=True)
+
+    def test_clip_timerange_single_year_2d(self):
+        """Test that single year stays dimensional coordinate."""
+        cube = self._create_cube([[0.0, 1.0]], [150.0], [[0.0, 365.0]],
+                                 'standard')
+        lat_coord = iris.coords.DimCoord([10.0, 20.0],
+                                         standard_name='latitude')
+        cube.add_dim_coord(lat_coord, 1)
+        sliced_cube = clip_timerange(cube, '1950/1950')
+
+        assert sliced_cube.coord('time').units == Unit(
+            'days since 1950-01-01', calendar='standard')
+        assert_array_equal(sliced_cube.coord('time').points, [150.0])
+        assert_array_equal(sliced_cube.coord('time').bounds, [[0.0, 365.0]])
+        assert cube.shape == sliced_cube.shape
+        assert sliced_cube.coord('time', dim_coords=True)
+
+        # Repeat test without bounds
+        cube.coord('time').bounds = None
+        sliced_cube = clip_timerange(cube, '1950/1950')
+
+        assert sliced_cube.coord('time').units == Unit(
+            'days since 1950-01-01', calendar='standard')
+        assert_array_equal(sliced_cube.coord('time').points, [150.0])
+        assert sliced_cube.coord('time').bounds is None
+        assert cube.shape == sliced_cube.shape
+        assert sliced_cube.coord('time', dim_coords=True)
+
+    def test_clip_timerange_single_year_4d(self):
+        """Test time is not scalar even when time is not first coordinate."""
+        cube = self._create_cube([[[[0.0, 1.0]]]], [150.0], [[0.0, 365.0]],
+                                 'standard')
+        plev_coord = iris.coords.DimCoord([1013.0],
+                                          standard_name='air_pressure')
+        lat_coord = iris.coords.DimCoord([10.0], standard_name='latitude')
+        lon_coord = iris.coords.DimCoord([0.0, 1.0], standard_name='longitude')
+        cube.add_dim_coord(plev_coord, 1)
+        cube.add_dim_coord(lat_coord, 2)
+        cube.add_dim_coord(lon_coord, 3)
+
+        # Order: plev, time, lat, lon
+        cube_1 = cube.copy()
+        cube_1.transpose([1, 0, 2, 3])
+        assert cube_1.shape == (1, 1, 1, 2)
+        sliced_cube = clip_timerange(cube_1, '1950/1950')
+
+        assert sliced_cube is not cube_1
+        assert sliced_cube.coord('time').units == Unit(
+            'days since 1950-01-01', calendar='standard')
+        assert_array_equal(sliced_cube.coord('time').points, [150.0])
+        assert_array_equal(sliced_cube.coord('time').bounds, [[0.0, 365.0]])
+        assert cube_1.shape == sliced_cube.shape
+        assert sliced_cube.coord('time', dim_coords=True)
+        for coord_name in [c.name() for c in cube_1.coords()]:
+            assert (sliced_cube.coord_dims(coord_name) ==
+                    cube_1.coord_dims(coord_name))
+
+        # Order: lat, lon, time, plev
+        cube_2 = cube.copy()
+        cube_2.transpose([2, 3, 0, 1])
+        assert cube_2.shape == (1, 2, 1, 1)
+        sliced_cube = clip_timerange(cube_2, '1950/1950')
+
+        assert sliced_cube is not cube_2
+        assert sliced_cube.coord('time').units == Unit(
+            'days since 1950-01-01', calendar='standard')
+        assert_array_equal(sliced_cube.coord('time').points, [150.0])
+        assert_array_equal(sliced_cube.coord('time').bounds, [[0.0, 365.0]])
+        assert cube_2.shape == sliced_cube.shape
+        assert sliced_cube.coord('time', dim_coords=True)
+        for coord_name in [c.name() for c in cube_2.coords()]:
+            assert (sliced_cube.coord_dims(coord_name) ==
+                    cube_2.coord_dims(coord_name))
+
+        # Order: lon, lat, plev, time
+        cube_3 = cube.copy()
+        cube_3.transpose([3, 2, 1, 0])
+        assert cube_3.shape == (2, 1, 1, 1)
+        sliced_cube = clip_timerange(cube_3, '1950/1950')
+
+        assert sliced_cube is not cube_3
+        assert sliced_cube.coord('time').units == Unit(
+            'days since 1950-01-01', calendar='standard')
+        assert_array_equal(sliced_cube.coord('time').points, [150.0])
+        assert_array_equal(sliced_cube.coord('time').bounds, [[0.0, 365.0]])
+        assert cube_3.shape == sliced_cube.shape
+        assert sliced_cube.coord('time', dim_coords=True)
+        for coord_name in [c.name() for c in cube_3.coords()]:
+            assert (sliced_cube.coord_dims(coord_name) ==
+                    cube_3.coord_dims(coord_name))
+
 
 class TestExtractSeason(tests.Test):
     """Tests for extract_season."""

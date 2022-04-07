@@ -15,6 +15,7 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Land/Sea/Ice masking`
 * :ref:`Horizontal regridding`
 * :ref:`Masking of missing values`
+* :ref:`Ensemble statistics`
 * :ref:`Multi-model statistics`
 * :ref:`Time operations`
 * :ref:`Area operations`
@@ -32,7 +33,7 @@ Overview
 ========
 
 ..
-   ESMValTool is a modular ``Python 3.7+`` software package possessing capabilities
+   ESMValTool is a modular ``Python 3.8+`` software package possessing capabilities
    of executing a large number of diagnostic routines that can be written in a
    number of programming languages (Python, NCL, R, Julia). The modular nature
    benefits the users and developers in different key areas: a new feature
@@ -373,6 +374,8 @@ The meaning of 'very close' can be changed by providing the parameters:
     will be assigned to the vertical coordinate and no interpolation will take place.
     By default, `atol` will be set to 10^-7 times the mean value of
     of the available levels.
+
+.. _Vertical interpolation schemes:
 
 Schemes for vertical interpolation and extrapolation
 ----------------------------------------------------
@@ -826,6 +829,16 @@ The arguments are defined below:
 Regridding (interpolation, extrapolation) schemes
 -------------------------------------------------
 
+ESMValTool has a number of built-in regridding schemes, which are presented in
+:ref:`built-in regridding schemes`. Additionally, it is also possible to use
+third party regridding schemes designed for use with :doc:`Iris
+<iris:index>`. This is explained in :ref:`generic regridding schemes`.
+
+.. _built-in regridding schemes:
+
+Built-in regridding schemes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The schemes used for the interpolation and extrapolation operations needed by
 the horizontal regridding functionality directly map to their corresponding
 implementations in :mod:`iris`:
@@ -864,6 +877,127 @@ See also :func:`esmvalcore.preprocessor.regrid`
    for resolutions of ``< 0.5`` degrees the regridding becomes very slow and
    will use a lot of memory.
 
+.. _generic regridding schemes:
+
+Generic regridding schemes
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:ref:`Iris' regridding <iris:interpolation_and_regridding>` is based around the
+flexible use of so-called regridding schemes. These are classes that know how
+to transform a source cube with a given grid into the grid defined by a given
+target cube. Iris itself provides a number of useful schemes, but they are
+largely limited to work with simple, regular grids. Other schemes can be
+provided independently. This is interesting when special regridding-needs arise
+or when more involved grids and meshes need to be considered. Furthermore, it
+may be desirable to have finer control over the parameters of the scheme than
+is afforded by the built-in schemes described above.
+
+To facilitate this, the :func:`~esmvalcore.preprocessor.regrid` preprocessor
+allows the use of any scheme designed for Iris. The scheme must be installed
+and importable. To use this feature, the ``scheme`` key passed to the
+preprocessor must be a dictionary instead of a simple string that contains all
+necessary information. That includes a ``reference`` to the desired scheme
+itself, as well as any arguments that should be passed through to the
+scheme. For example, the following shows the use of the built-in scheme
+:class:`iris.analysis.AreaWeighted` with a custom threshold for missing data
+tolerance.
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 2.5x2.5
+          scheme:
+            reference: iris.analysis:AreaWeighted
+            mdtol: 0.7
+
+The value of the ``reference`` key has two parts that are separated by a
+``:`` with no surrounding spaces. The first part is an importable Python
+module, the second refers to the scheme, i.e. some callable that will be called
+with the remaining entries of the ``scheme`` dictionary passed as keyword
+arguments.
+
+One package that aims to capitalize on the :ref:`support for unstructured
+meshes introduced in Iris 3.2 <iris:ugrid>` is
+:doc:`iris-esmf-regrid:index`. It aims to provide lazy regridding for
+structured regular and irregular grids, as well as unstructured meshes. An
+example of its usage in an ESMValTool preprocessor is:
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 2.5x2.5
+          scheme:
+            reference: esmf_regrid.schemes:ESMFAreaWeighted
+            mdtol: 0.7
+
+.. TODO: Remove the following warning once things have settled a bit.
+.. warning::
+   Just as the mesh support in Iris itself, this new regridding package is
+   still considered experimental.
+
+.. _ensemble statistics:
+
+Ensemble statistics
+===================
+For certain use cases it may be desirable to compute ensemble statistics. For
+example to prevent models with many ensemble members getting excessive weight in
+the multi-model statistics functions.
+
+Theoretically, ensemble statistics are a special case (grouped) multi-model
+statistics. This grouping is performed taking into account the dataset tags
+`project`, `dataset`, `experiment`, and (if present) `sub_experiment`.
+However, they should typically be computed earlier in the workflow.
+Moreover, because multiple ensemble members of the same model are typically more
+consistent/homogeneous than datasets from different models, the implementation
+is more straigtforward and can benefit from lazy evaluation and more efficient
+computation.
+
+The preprocessor takes a list of statistics as input:
+
+.. code-block:: yaml
+
+    preprocessors:
+      example_preprocessor:
+        ensemble_statistics:
+          statistics: [mean, median]
+
+This preprocessor function exposes the iris analysis package, and works with all
+(capitalized) statistics from the :mod:`iris.analysis` package
+that can be executed without additional arguments (e.g. percentiles are not
+supported because it requires additional keywords: percentile.).
+
+Note that ``ensemble_statistics`` will not return the single model and ensemble files,
+only the requested ensemble statistics results.
+
+In case of wanting to save both individual ensemble members as well as the statistic results,
+the preprocessor chains could be defined as:
+
+.. code-block:: yaml
+
+    preprocessors:
+      everything_else: &everything_else
+        area_statistics: ...
+        regrid_time: ...
+      multimodel:
+        <<: *everything_else
+        ensemble_statistics:
+
+    variables:
+      tas_datasets:
+        short_name: tas
+        preprocessor: everything_else
+        ...
+      tas_multimodel:
+        short_name: tas
+        preprocessor: multimodel
+        ...
+
+
+See also :func:`esmvalcore.preprocessor.ensemble_statistics`.
 
 .. _multi-model statistics:
 
@@ -876,7 +1010,7 @@ observational data, these biases have a significantly lower statistical impact
 when using a multi-model ensemble. ESMValTool has the capability of computing a
 number of multi-model statistical measures: using the preprocessor module
 ``multi_model_statistics`` will enable the user to ask for either a multi-model
-``mean``, ``median``, ``max``, ``min``, ``std``, and / or ``pXX.YY`` with a set
+``mean``, ``median``, ``max``, ``min``, ``std_dev``, and / or ``pXX.YY`` with a set
 of argument parameters passed to ``multi_model_statistics``. Percentiles can be
 specified like ``p1.5`` or ``p95``. The decimal point will be replaced by a dash
 in the output file.
@@ -893,32 +1027,78 @@ across overlapping times only (``span: overlap``) or across the full time span
 of the combined models (``span: full``). The preprocessor sets a common time
 coordinate on all datasets. As the number of days in a year may vary between
 calendars, (sub-)daily data with different calendars are not supported.
+The preprocessor saves both the input single model files as well as the multi-model
+results. In case you do not want to keep the single model files, set the
+parameter ``keep_input_datasets`` to ``false`` (default value is ``true``).
+
+.. code-block:: yaml
+
+    preprocessors:
+      multi_model_save_input:
+        multi_model_statistics:
+          span: overlap
+          statistics: [mean, median]
+          exclude: [NCEP]
+      multi_model_without_saving_input:
+        multi_model_statistics:
+          span: overlap
+          statistics: [mean, median]
+          exclude: [NCEP]
+          keep_input_datasets: false
 
 Input datasets may have different time coordinates. The multi-model statistics
 preprocessor sets a common time coordinate on all datasets. As the number of
 days in a year may vary between calendars, (sub-)daily data are not supported.
 
+Multi-model statistics also supports a ``groupby`` argument. You can group by
+any dataset key (``project``, ``experiment``, etc.) or a combination of keys in a list. You can
+also add an arbitrary tag to a dataset definition and then group by that tag. When
+using this preprocessor in conjunction with `ensemble statistics`_ preprocessor, you
+can group by ``ensemble_statistics`` as well. For example:
+
 .. code-block:: yaml
 
+    datasets:
+      - {dataset: CanESM2, exp: historical, ensemble: "r(1:2)i1p1"}
+      - {dataset: CCSM4, exp: historical, ensemble: "r(1:2)i1p1"}
+
     preprocessors:
-      multi_model_preprocessor:
+      example_preprocessor:
+        ensemble_statistics:
+          statistics: [median, mean]
         multi_model_statistics:
           span: overlap
-          statistics: [mean, median]
+          statistics: [min, max]
+          groupby: [ensemble_statistics]
           exclude: [NCEP]
 
-see also :func:`esmvalcore.preprocessor.multi_model_statistics`.
+This will first compute ensemble mean and median, and then compute the multi-model
+min and max separately for the ensemble means and medians. Note that this combination
+will not save the individual ensemble members, only the ensemble and multimodel statistics results.
 
-When calling the module inside diagnostic scripts, the input must be given
-as a list of cubes. The output will be saved in a dictionary where each
-entry contains the resulting cube with the requested statistic operations.
+When grouping by a tag not defined in all datasets, the datasets missing the tag will
+be grouped together. In the example below, datasets `UKESM` and `ERA5` would belong to the same
+group, while the other datasets would belong to either ``group1`` or ``group2``
 
-.. code-block::
+.. code-block:: yaml
 
-    from esmvalcore.preprocessor import multi_model_statistics
-    statistics = multi_model_statistics([cube1,...,cubeN], 'overlap', ['mean', 'median'])
-    mean_cube = statistics['mean']
-    median_cube = statistics['median']
+    datasets:
+      - {dataset: CanESM2, exp: historical, ensemble: "r(1:2)i1p1", tag: 'group1'}
+      - {dataset: CanESM5, exp: historical, ensemble: "r(1:2)i1p1", tag: 'group2'}
+      - {dataset: CCSM4, exp: historical, ensemble: "r(1:2)i1p1", tag: 'group2'}
+      - {dataset: UKESM, exp: historical, ensemble: "r(1:2)i1p1"}
+      - {dataset: ERA5}
+
+    preprocessors:
+      example_preprocessor:
+        multi_model_statistics:
+          span: overlap
+          statistics: [min, max]
+          groupby: [tag]
+
+Note that those datasets can be excluded if listed in the ``exclude`` option.
+
+See also :func:`esmvalcore.preprocessor.multi_model_statistics`.
 
 .. note::
 
@@ -1481,9 +1661,11 @@ Parameters:
     be an array of floating point values.
   * ``scheme``: interpolation scheme: either ``'linear'`` or
     ``'nearest'``. There is no default.
-    
+
 See also :func:`esmvalcore.preprocessor.extract_point`.
 
+
+.. _extract_location:
 
 ``extract_location``
 --------------------

@@ -6,9 +6,9 @@ from functools import lru_cache
 import pyesgf.search
 
 from .._data_finder import (
-    _truncate_dates,
     _get_timerange_from_years,
     _parse_period,
+    _truncate_dates,
     get_start_end_date,
 )
 from ._download import ESGFFile
@@ -86,9 +86,7 @@ def esgf_search_files(facets):
 
     results = context.search(
         batch_size=500,
-        # enable ignore_facet_check once the following issue has been fixed:
-        # https://github.com/ESGF/esgf-pyclient/issues/75
-        # ignore_facet_check=True,
+        ignore_facet_check=True,
     )
 
     files = ESGFFile._from_results(results, facets)
@@ -105,9 +103,9 @@ def esgf_search_files(facets):
 def select_by_time(files, timerange):
     """Select files containing data between a timerange."""
     selection = []
-    start_date, end_date = _parse_period(timerange)
 
     for file in files:
+        start_date, end_date = _parse_period(timerange)
         try:
             start, end = get_start_end_date(file.name)
         except ValueError:
