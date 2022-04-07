@@ -5,7 +5,7 @@ import iris
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip5.miroc5 import Cl, Hur, Sftof, Tas
+from esmvalcore.cmor._fixes.cmip5.miroc5 import Cl, Hur, Pr, Sftof, Tas
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor.fix import Fix
 
@@ -27,12 +27,28 @@ def test_get_hur_fix():
     assert fix == [Hur(None)]
 
 
+def test_get_pr_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP5', 'MIROC5', 'Amon', 'pr')
+    assert fix == [Pr(None)]
+
+
 @unittest.mock.patch(
     'esmvalcore.cmor._fixes.cmip5.miroc5.Tas.fix_metadata',
     autospec=True)
 def test_hur_fix_metadata(mock_base_fix_metadata):
     """Test ``fix_metadata`` for ``hur``."""
     fix = Hur(None)
+    fix.fix_metadata('cubes')
+    mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
+
+
+@unittest.mock.patch(
+    'esmvalcore.cmor._fixes.cmip5.miroc5.Tas.fix_metadata',
+    autospec=True)
+def test_pr_fix_metadata(mock_base_fix_metadata):
+    """Test ``fix_metadata`` for ``pr``."""
+    fix = Pr(None)
     fix.fix_metadata('cubes')
     mock_base_fix_metadata.assert_called_once_with(fix, 'cubes')
 

@@ -1,0 +1,249 @@
+---
+'ACCESS1-0':
+  '*':
+    '*':
+      institute: ['CSIRO-BOM']
+'ACCESS1-3':
+  '*':
+    '*':
+      institute: ['CSIRO-BOM']
+'bcc-csm1-1':
+  '*':
+    '*':
+      institute: ['BCC']
+'bcc-csm1-1-m':
+  '*':
+    '*':
+      institute: ['BCC']
+'BNU-ESM':
+  '*':
+    '*':
+      institute: ['BNU']
+'CanAM4':
+  '*':
+    '*':
+      institute: ['CCCma']
+'CanCM4':
+  '*':
+    '*':
+      institute: ['CCCma']
+'CanESM2':
+  '*':
+    '*':
+      institute: ['CCCma']
+'CCSM4':
+  '*':
+    '*':
+      institute: ['NCAR']
+'CESM1-BGC':
+  '*':
+    '*':
+      institute: ['NSF-DOE-NCAR']
+'CESM1-CAM5':
+  '*':
+    '*':
+      institute: ['NSF-DOE-NCAR']
+'CESM1-CAM5-1-FV2':
+  '*':
+    '*':
+      institute: ['NSF-DOE-NCAR']
+'CESM1-FASTCHEM':
+  '*':
+    '*':
+      institute: ['NSF-DOE-NCAR']
+'CESM1-WACCM':
+  '*':
+    '*':
+      institute: ['NSF-DOE-NCAR']
+'CFSv2-2011':
+  '*':
+    '*':
+      institute: ['COLA-CFS', 'NOAA-NCEP']
+'CMCC-CESM':
+  '*':
+    '*':
+      institute: ['CMCC']
+'CMCC-CM':
+  '*':
+    '*':
+      institute: ['CMCC']
+'CMCC-CMS':
+  '*':
+    '*':
+      institute: ['CMCC']
+'CNRM-CM5':
+  '*':
+    '*':
+      institute: ['CNRM-CERFACS']
+'CNRM-CM5-2':
+  '*':
+    '*':
+      institute: ['CNRM-CERFACS']
+'CSIRO-Mk3-6-0':
+  '*':
+    '*':
+      institute: ['CSIRO-QCCCE']
+'CSIRO-Mk3L-1-2':
+  '*':
+    '*':
+      institute: ['CSIRO-QCCCE']
+'EC-EARTH':
+  '*':
+    '*':
+      institute: ['ICHEC']
+'FGOALS-g2':
+  '*':
+    '*':
+      institute: ['LASG-CESS']
+'FGOALS-gl':
+  '*':
+    '*':
+      institute: ['LASG-IAP']
+'FGOALS-s2':
+  '*':
+    '*':
+      institute: ['LASG-IAP']
+'FIO-ESM':
+  '*':
+    '*':
+      institute: ['FIO']
+'fio-esm':
+  '*':
+    '*':
+      institute: ['FIO']
+'GEOS-5':
+  '*':
+    '*':
+      institute: ['NASA-GMAO']
+'GFDL-CM2p1':
+  '*':
+    '*':
+      institute: ['NOAA-GFDL']
+'GFDL-CM3':
+  '*':
+    '*':
+      institute: ['NOAA-GFDL']
+'GFDL-ESM2G':
+  '*':
+    '*':
+      institute: ['NOAA-GFDL']
+'GFDL-ESM2M':
+  '*':
+    '*':
+      institute: ['NOAA-GFDL']
+'GFDL-HIRAM-C180':
+  '*':
+    '*':
+      institute: ['NOAA-GFDL']
+'GFDL-HIRAM-C360':
+  '*':
+    '*':
+      institute: ['NOAA-GFDL']
+'GISS-E2-H':
+  '*':
+    '*':
+      institute: ['NASA-GISS']
+'GISS-E2-H-CC':
+  '*':
+    '*':
+      institute: ['NASA-GISS']
+'GISS-E2-R':
+  '*':
+    '*':
+      institute: ['NASA-GISS']
+'GISS-E2-R-CC':
+  '*':
+    '*':
+      institute: ['NASA-GISS']
+'HadCM3':
+  '*':
+    '*':
+      institute: ['MOHC']
+'HadGEM2-A':
+  '*':
+    '*':
+      institute: ['MOHC']
+'HadGEM2-AO':
+  '*':
+    '*':
+      institute: ['NIMR-KMA']
+'HadGEM2-CC':
+  '*':
+    '*':
+      institute: ['MOHC']
+'HadGEM2-ES':
+  '*':
+    '*':
+      institute: ['INPE', 'MOHC']
+'inmcm4':
+  '*':
+    '*':
+      institute: ['INM']
+'IPSL-CM5A-LR':
+  '*':
+    '*':
+      institute: ['IPSL']
+'IPSL-CM5A-MR':
+  '*':
+    '*':
+      institute: ['IPSL']
+'IPSL-CM5B-LR':
+  '*':
+    '*':
+      institute: ['IPSL']
+'MIROC-ESM':
+  '*':
+    '*':
+      institute: ['MIROC']
+'MIROC-ESM-CHEM':
+  '*':
+    '*':
+      institute: ['MIROC']
+'MIROC4h':
+  '*':
+    '*':
+      institute: ['MIROC']
+'MIROC5':
+  '*':
+    '*':
+      institute: ['MIROC']
+'MPI-ESM-LR':
+  '*':
+    '*':
+      institute: ['MPI-M']
+'MPI-ESM-MR':
+  '*':
+    '*':
+      institute: ['MPI-M']
+'MPI-ESM-P':
+  '*':
+    '*':
+      institute: ['MPI-M']
+'MRI-AGCM3-2H':
+  '*':
+    '*':
+      institute: ['MRI']
+'MRI-AGCM3-2S':
+  '*':
+    '*':
+      institute: ['MRI']
+'MRI-CGCM3':
+  '*':
+    '*':
+      institute: ['MRI']
+'MRI-ESM1':
+  '*':
+    '*':
+      institute: ['MRI']
+'NICAM-09':
+  '*':
+    '*':
+      institute: ['NICAM']
+'NorESM1-M':
+  '*':
+    '*':
+      institute: ['NCC']
+'NorESM1-ME':
+  '*':
+    '*':
+      institute: ['NCC']

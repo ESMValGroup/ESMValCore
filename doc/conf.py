@@ -66,12 +66,14 @@ autodoc_default_options = {
 }
 
 autodoc_mock_imports = [
-    'iris',
-    'stratify',
-    'ESMF',
     'cartopy',
     'cf_units',
+    'ESMF',
+    'geopy',
+    'iris',
+    'nested_lookup',
     'psutil',
+    'stratify',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -111,7 +113,7 @@ release = __version__
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = []
+exclude_patterns: list = []
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -160,7 +162,7 @@ html_short_title = "ESMValTool {0}".format(release)
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = 'figures/ESMValTool-logo.png'
+html_logo = 'figures/ESMValTool-logo-2.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -170,7 +172,7 @@ html_logo = 'figures/ESMValTool-logo.png'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
+html_static_path: list = []
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -252,7 +254,7 @@ latex_elements = {
      \fi}
      \begin{titlepage}
      \begin{center}
-     \includegraphics[width=\textwidth]{figures/ESMValTool-logo.pdf}\par
+     \includegraphics[width=\textwidth]{figures/ESMValTool-logo-2.pdf}\par
      \vspace{2cm}
      {\Huge \bf \sffamily User's and Developer's Guide \par}
      \vspace{1cm}
@@ -418,11 +420,14 @@ intersphinx_mapping = {
     (f'https://docs.esmvaltool.org/projects/esmvalcore/en/{rtd_version}/',
      None),
     'esmvaltool': (f'https://docs.esmvaltool.org/en/{rtd_version}/', None),
-    'iris': ('https://scitools.org.uk/iris/docs/latest/', None),
+    'iris': ('https://scitools-iris.readthedocs.io/en/latest/', None),
+    'iris-esmf-regrid': ('https://iris-esmf-regrid.readthedocs.io/en/latest',
+                         None),
     'matplotlib': ('https://matplotlib.org/', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
+    'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/latest/', None),
     'python': ('https://docs.python.org/3/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
 }
 
 # -- Custom Document processing ----------------------------------------------

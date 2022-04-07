@@ -20,7 +20,6 @@ def _create_sample_cube():
 
 class TestLoad(unittest.TestCase):
     """Tests for :func:`esmvalcore.preprocessor.load`."""
-
     def setUp(self):
         """Start tests."""
         self.temp_files = []
@@ -52,7 +51,7 @@ class TestLoad(unittest.TestCase):
 
     def test_callback_remove_attributes(self):
         """Test callback remove unwanted attributes."""
-        attributes = ('history', 'creation_date', 'tracking_id')
+        attributes = ('history', 'creation_date', 'tracking_id', 'comment')
         for _ in range(2):
             cube = _create_sample_cube()
             for attr in attributes:
@@ -67,6 +66,26 @@ class TestLoad(unittest.TestCase):
                 (cube.coord('latitude').points == np.array([1, 2])).all())
             for attr in attributes:
                 self.assertTrue(attr not in cube.attributes)
+
+    def test_callback_remove_attributes_from_coords(self):
+        """Test callback remove unwanted attributes from coords."""
+        attributes = ('history', )
+        for _ in range(2):
+            cube = _create_sample_cube()
+            for coord in cube.coords():
+                for attr in attributes:
+                    coord.attributes[attr] = attr
+            self._save_cube(cube)
+        for temp_file in self.temp_files:
+            cubes = load(temp_file, callback=concatenate_callback)
+            cube = cubes[0]
+            self.assertEqual(1, len(cubes))
+            self.assertTrue((cube.data == np.array([1, 2])).all())
+            self.assertTrue(
+                (cube.coord('latitude').points == np.array([1, 2])).all())
+            for coord in cube.coords():
+                for attr in attributes:
+                    self.assertTrue(attr not in cube.attributes)
 
     def test_callback_fix_lat_units(self):
         """Test callback for fixing units."""

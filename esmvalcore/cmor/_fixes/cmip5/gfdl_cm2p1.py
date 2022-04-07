@@ -1,10 +1,16 @@
 """Fixes for GFDL CM2p1 model."""
 from copy import deepcopy
-import numpy as np
-import cftime
 
-from ..fix import Fix
+import cftime
+import numpy as np
+
+from esmvalcore.iris_helpers import date2num
+
 from ..cmip5.gfdl_esm2g import AllVars as BaseAllVars
+from ..fix import Fix
+from .cesm1_cam5 import Cl as BaseCl
+
+Cl = BaseCl
 
 
 class AllVars(BaseAllVars):
@@ -12,11 +18,10 @@ class AllVars(BaseAllVars):
 
 
 class Areacello(Fix):
-    """Fixes for areacello"""
+    """Fixes for areacello."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix metadata.
+        """Fix metadata.
 
         Fixes wrong units.
 
@@ -27,7 +32,6 @@ class Areacello(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube = self.get_cube_from_list(cubes)
         cube.units = 'm2'
@@ -38,8 +42,7 @@ class Sftof(Fix):
     """Fixes for sftof."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -50,7 +53,6 @@ class Sftof(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 100
@@ -59,11 +61,10 @@ class Sftof(Fix):
 
 
 class Sit(Fix):
-    """Fixes for sit"""
+    """Fixes for sit."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix metadata.
+        """Fix metadata.
 
         Fixes bad bounds
 
@@ -74,7 +75,6 @@ class Sit(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube = self.get_cube_from_list(cubes)
         time = cube.coord('time')
@@ -90,7 +90,7 @@ class Sit(Fix):
                 else cftime.DatetimeJulian(c.year + 1, 1, 1)
                 for c in times
             ]
-            time.bounds = time.units.date2num(np.stack([starts, ends], -1))
+            time.bounds = date2num(np.stack([starts, ends], -1), time.units)
         return cubes
 
     def _fix_required(self, time):
@@ -101,11 +101,10 @@ class Sit(Fix):
 
 
 class Tos(Fix):
-    """Fixes for tos"""
+    """Fixes for tos."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -116,7 +115,6 @@ class Tos(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = deepcopy(cube.metadata)
         cube += 273.15
@@ -124,8 +122,7 @@ class Tos(Fix):
         return cube
 
     def fix_metadata(self, cubes):
-        """
-        Fix metadata.
+        """Fix metadata.
 
         Fixes wrong standard_name.
 
@@ -136,7 +133,6 @@ class Tos(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube = self.get_cube_from_list(cubes)
         cube.standard_name = 'sea_surface_temperature'

@@ -8,6 +8,7 @@ from textwrap import dedent
 import pytest
 import yaml
 
+from esmvalcore._config import TAGS
 from esmvalcore._main import run
 
 
@@ -23,6 +24,7 @@ def write_config_user_file(dirname):
             'CMIP5': 'BADC',
         },
         'log_level': 'debug',
+        'profile_diagnostic': False,
     }
     config_file.write_text(yaml.safe_dump(cfg, encoding=None))
     return str(config_file)
@@ -40,8 +42,6 @@ def check(result_file):
     """Check the results."""
     result = yaml.safe_load(result_file.read_text())
 
-    print(result)
-
     required_keys = {
         'input_files',
         'log_level',
@@ -51,23 +51,22 @@ def check(result_file):
     }
     missing = required_keys - set(result)
     assert not missing
+    unwanted_keys = ['profile_diagnostic', ]
+    for unwanted_key in unwanted_keys:
+        assert unwanted_key not in result
 
 
 SCRIPTS = {
-    # TODO: make independent from ESMValTool installation
-    #     'diagnostic.py':
-    #     dedent("""
-    #         import yaml
-    #         from esmvaltool.diag_scripts.shared import run_diagnostic
-    #
-    #         def main(cfg):
-    #             with open(cfg['setting_name'], 'w') as file:
-    #                 yaml.safe_dump(cfg, file)
-    #
-    #         if __name__ == '__main__':
-    #             with run_diagnostic() as config:
-    #                 main(config)
-    #         """),
+    'diagnostic.py':
+    dedent("""
+        import yaml
+        import shutil
+
+        with open("settings.yml", 'r') as file:
+            settings = yaml.safe_load(file)
+
+        shutil.copy("settings.yml", settings["setting_name"])
+        """),
     'diagnostic.ncl':
     dedent("""
         begin
@@ -133,7 +132,7 @@ def interpreter_not_installed(script):
                               run=False,
                               reason="Interpreter not available"),
         ],
-    ) for script_file, script in SCRIPTS.items()
+    ) for script_file, script in SCRIPTS.items() if script_file != 'null'
 ])
 def test_diagnostic_run(tmp_path, script_file, script):
 
@@ -147,6 +146,7 @@ def test_diagnostic_run(tmp_path, script_file, script):
     # Create recipe
     recipe = dedent("""
         documentation:
+          title: Recipe without data
           description: Recipe with no data.
           authors: [andela_bouwe]
 
@@ -158,6 +158,9 @@ def test_diagnostic_run(tmp_path, script_file, script):
                 setting_name: {}
         """.format(script_file, result_file))
     recipe_file.write_text(str(recipe))
+
+    # ensure that tags are cleared
+    TAGS.clear()
 
     config_user_file = write_config_user_file(tmp_path)
     with arguments(

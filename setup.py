@@ -30,33 +30,53 @@ REQUIREMENTS = {
     # Installation dependencies
     # Use with pip install . to install from source
     'install': [
-        'cf-units',
+        'cartopy',
+        'cf-units>=3.0.0',
         'dask[array]',
+        'esgf-pyclient>=0.3.1',
+        'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
         'fiona',
         'fire',
+        'geopy',
+        'humanfriendly',
+        "importlib_resources;python_version<'3.9'",
+        'isodate',
+        'jinja2',
         'nc-time-axis',  # needed by iris.plot
+        'nested-lookup',
         'netCDF4',
         'numpy',
-        'prov[dot]',
+        'pandas',
+        'pillow',
+        'prov',
         'psutil',
+        'pybtex',
         'pyyaml',
         'requests',
-        'scitools-iris>=2.2',
+        'scipy>=1.6',
+        'scitools-iris>=3.2.1',
         'shapely[vectorized]',
         'stratify',
-        'yamale==2.*',
+        'yamale',
     ],
     # Test dependencies
     # Execute 'python setup.py test' to run tests
     'test': [
+        'flake8<4',  # https://github.com/ESMValGroup/ESMValCore/issues/1405
         'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
         'pytest-cov>=2.10.1',
         'pytest-env',
         'pytest-flake8>=1.0.6',
         'pytest-html!=2.1.0',
         'pytest-metadata>=1.5.1',
+        'pytest-mypy',
         'pytest-mock',
         'pytest-xdist',
+        'ESMValTool_sample_data==0.0.3',
+        # MyPy library stubs
+        'types-requests',
+        'types-pkg_resources',
+        'types-PyYAML',
     ],
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
@@ -66,7 +86,7 @@ REQUIREMENTS = {
         'docformatter',
         'isort',
         'pre-commit',
-        'prospector[with_pyroma]!=1.1.6.3,!=1.1.6.4',
+        'prospector[with_pyroma,with_mypy]!=1.1.6.3,!=1.1.6.4',
         'sphinx>2',
         'sphinx_rtd_theme',
         'vprof',
@@ -107,7 +127,7 @@ class CustomCommand(Command):
 class RunLinter(CustomCommand):
     """Class to run a linter and generate reports."""
 
-    user_options = []
+    user_options: list = []
 
     def initialize_options(self):
         """Do nothing."""
@@ -189,9 +209,9 @@ setup(
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Atmospheric Science',
         'Topic :: Scientific/Engineering :: GIS',

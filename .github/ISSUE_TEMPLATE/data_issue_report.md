@@ -15,7 +15,7 @@ in the long run; fixes for CMIP5 by the model developers are no longer possible)
 
 - Data file has been changed by you in any way (if you answer yes the issue will be void and closed, we are not
 supporting custom-made datasets that present problems, it is your resposability to fix those problems):
-- Project (CMIP5/CMIP6/OBS/obs4mips/etc):
+- Project (CMIP5/CMIP6/OBS/obs4MIPs/etc):
 - Full dataset description (fill out as many as you know, please):
   - dataset:
   - experiment:

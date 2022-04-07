@@ -1,11 +1,19 @@
 autodocsumm
 dask[array]
+esgf-pyclient
+docutils <0.17
 fiona
+geopy
+humanfriendly
+importlib_resources
+isodate
+jinja2
 netCDF4
 numpy
 pandas
 pillow
-prov[dot]
+prov
+pybtex
 pyyaml
 scipy
 shapely[vectorized]

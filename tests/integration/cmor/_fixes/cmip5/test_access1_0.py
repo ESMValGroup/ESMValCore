@@ -3,13 +3,14 @@ import unittest
 from datetime import datetime
 
 import pytest
-from cf_units import Unit, date2num, num2date
+from cf_units import Unit, num2date
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.cmip5.access1_0 import AllVars, Cl
 from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor.table import get_var_info
+from esmvalcore.iris_helpers import date2num
 
 
 class TestAllVars(unittest.TestCase):
@@ -22,14 +23,12 @@ class TestAllVars(unittest.TestCase):
             datetime(300, 1, 16, 12),  # e.g. piControl
             datetime(1850, 1, 16, 12)  # e.g. historical
         ]
-        esgf_time_units = {
-            'unit': 'days since 0001-01-01',
-            'calendar': 'proleptic_gregorian'
-        }
-        time_points = date2num(reference_dates, **esgf_time_units)
+        esgf_time_units = Unit('days since 0001-01-01',
+                               calendar='proleptic_gregorian')
+        time_points = date2num(reference_dates, esgf_time_units)
         self.cube.add_dim_coord(
-            DimCoord(time_points, 'time', 'time', 'time',
-                     Unit(**esgf_time_units)), data_dim=0)
+            DimCoord(time_points, 'time', 'time', 'time', esgf_time_units),
+            data_dim=0)
         self.fix = AllVars(None)
 
     def test_get(self):
@@ -44,8 +43,10 @@ class TestAllVars(unittest.TestCase):
         time = cube.coord('time')
         dates = num2date(time.points, time.units.name, time.units.calendar)
         self.assertEqual(time.units.calendar, 'gregorian')
-        self.assertEqual(dates[0].strftime('%Y%m%d%H%M'), '030001161200')
-        self.assertEqual(dates[1].strftime('%Y%m%d%H%M'), '185001161200')
+        u = Unit('days since 300-01-01 12:00:00', calendar='gregorian')
+        self.assertEqual(dates[0], u.num2date(15))
+        u = Unit('days since 1850-01-01 12:00:00', calendar='gregorian')
+        self.assertEqual(dates[1], u.num2date(15))
 
     def test_fix_metadata_if_not_time(self):
         """Test calendar fix do not fail if no time coord present."""
@@ -91,10 +92,10 @@ def test_cl_fix_metadata(mock_base_fix_metadata, cl_cubes):
     fixed_cubes = fix.fix_metadata(cl_cubes)
     mock_base_fix_metadata.assert_called_once_with(fix, cl_cubes)
     assert len(fixed_cubes) == 2
-    cl_cube = fixed_cubes.extract_strict(
+    cl_cube = fixed_cubes.extract_cube(
         'cloud_area_fraction_in_atmosphere_layer')
     b_coord_cl = cl_cube.coord('vertical coordinate formula term: b(k)')
     assert not b_coord_cl.attributes
-    x_cube = fixed_cubes.extract_strict('x')
+    x_cube = fixed_cubes.extract_cube('x')
     b_coord_x = x_cube.coord('vertical coordinate formula term: b(k)')
     assert b_coord_x.attributes == {'a': 1, 'b': '2'}
