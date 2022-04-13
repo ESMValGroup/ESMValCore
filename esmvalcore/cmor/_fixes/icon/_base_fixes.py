@@ -29,64 +29,6 @@ class IconFix(Fix):
         super().__init__(*args, **kwargs)
         self._horizontal_grids = {}
 
-    def add_coord_from_grid_file(self, cube, coord_name,
-                                 target_coord_long_name):
-        """Add coordinate from grid file to cube.
-
-        Note
-        ----
-        Assumes that the input cube has a single unnamed dimension, which will
-        be used as dimension for the new coordinate.
-
-        Parameters
-        ----------
-        cube: iris.cube.Cube
-            ICON data to which the coordinate from the grid file is added.
-        coord_name: str
-            Name of the coordinate in the grid file. Must be one of
-            ``'grid_latitude'``, ``'grid_longitude'``.
-        target_coord_long_name: str
-            Long name that is assigned to the newly added coordinate.
-
-        Raises
-        ------
-        ValueError
-            Invalid ``coord_name`` is given; input cube does not contain a
-            single unnamed dimension that can be used to add the new
-            coordinate.
-
-        """
-        allowed_coord_names = ('grid_latitude', 'grid_longitude')
-        if coord_name not in allowed_coord_names:
-            raise ValueError(
-                f"coord_name must be one of {allowed_coord_names}, got "
-                f"'{coord_name}'")
-        horizontal_grid = self.get_horizontal_grid(cube)
-
-        # Use 'cell_area' as dummy cube to extract coordinates
-        # Note: it might be necessary to expand this when more coord_names are
-        # supported
-        grid_cube = horizontal_grid.extract_cube(
-            NameConstraint(var_name='cell_area'))
-        coord = grid_cube.coord(coord_name)
-
-        # Find index of horizontal coordinate (= single unnamed dimension)
-        n_unnamed_dimensions = cube.ndim - len(cube.dim_coords)
-        if n_unnamed_dimensions != 1:
-            raise ValueError(
-                f"Cannot determine coordinate dimension for coordinate "
-                f"'{target_coord_long_name}', cube does not contain a single "
-                f"unnamed dimension:\n{cube}")
-        coord_dims = ()
-        for idx in range(cube.ndim):
-            if not cube.coords(dimensions=idx, dim_coords=True):
-                coord_dims = (idx,)
-                break
-
-        coord.standard_name = None
-        coord.long_name = target_coord_long_name
-        cube.add_aux_coord(coord, coord_dims)
-
     def get_cube(self, cubes, var_name=None):
         """Extract single cube.
 
@@ -132,7 +74,9 @@ class IconFix(Fix):
         ----------
         cube: iris.cube.Cube
             Cube for which the ICON horizontal grid is retrieved. This cube
-            needs the global attribute given by ``self.GRID_FILE_ATTR``.
+            needs to have a global attribute that specifies the download
+            location of the ICON horizontal grid file (see
+            ``self.GRID_FILE_ATTR``).
 
         Returns
         -------
@@ -142,8 +86,9 @@ class IconFix(Fix):
         Raises
         ------
         ValueError
-            Input cube does not contain the necessary attribute to download the
-            ICON horizontal grid file (see ``self.GRID_FILE_ATTR``)
+            Input cube does not contain the necessary attribute that specifies
+            the download location of the ICON horizontal grid file (see
+            ``self.GRID_FILE_ATTR``).
 
         """
         if self.GRID_FILE_ATTR not in cube.attributes:

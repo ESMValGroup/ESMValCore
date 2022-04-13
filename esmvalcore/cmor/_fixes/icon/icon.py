@@ -76,6 +76,64 @@ class AllVars(IconFix):
 
         return CubeList([cube])
 
+    def _add_coord_from_grid_file(self, cube, coord_name,
+                                  target_coord_long_name):
+        """Add coordinate from grid file to cube.
+
+        Note
+        ----
+        Assumes that the input cube has a single unnamed dimension, which will
+        be used as dimension for the new coordinate.
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+            ICON data to which the coordinate from the grid file is added.
+        coord_name: str
+            Name of the coordinate in the grid file. Must be one of
+            ``'grid_latitude'``, ``'grid_longitude'``.
+        target_coord_long_name: str
+            Long name that is assigned to the newly added coordinate.
+
+        Raises
+        ------
+        ValueError
+            Invalid ``coord_name`` is given; input cube does not contain a
+            single unnamed dimension that can be used to add the new
+            coordinate.
+
+        """
+        allowed_coord_names = ('grid_latitude', 'grid_longitude')
+        if coord_name not in allowed_coord_names:
+            raise ValueError(
+                f"coord_name must be one of {allowed_coord_names}, got "
+                f"'{coord_name}'")
+        horizontal_grid = self.get_horizontal_grid(cube)
+
+        # Use 'cell_area' as dummy cube to extract coordinates
+        # Note: it might be necessary to expand this when more coord_names are
+        # supported
+        grid_cube = horizontal_grid.extract_cube(
+            NameConstraint(var_name='cell_area'))
+        coord = grid_cube.coord(coord_name)
+
+        # Find index of horizontal coordinate (= single unnamed dimension)
+        n_unnamed_dimensions = cube.ndim - len(cube.dim_coords)
+        if n_unnamed_dimensions != 1:
+            raise ValueError(
+                f"Cannot determine coordinate dimension for coordinate "
+                f"'{target_coord_long_name}', cube does not contain a single "
+                f"unnamed dimension:\n{cube}")
+        coord_dims = ()
+        for idx in range(cube.ndim):
+            if not cube.coords(dimensions=idx, dim_coords=True):
+                coord_dims = (idx,)
+                break
+
+        coord.standard_name = None
+        coord.long_name = target_coord_long_name
+        cube.add_aux_coord(coord, coord_dims)
+
     def _add_time(self, cube, cubes):
         """Add time coordinate from other cube in cubes."""
         # Try to find time cube from other cubes and it to target cube
@@ -97,7 +155,7 @@ class AllVars(IconFix):
         # Add latitude coordinate if not already present
         if not cube.coords(lat_name):
             try:
-                self.add_coord_from_grid_file(cube, 'grid_latitude', lat_name)
+                self._add_coord_from_grid_file(cube, 'grid_latitude', lat_name)
             except Exception as exc:
                 msg = "Failed to add missing latitude coordinate to cube"
                 raise ValueError(msg) from exc
@@ -118,7 +176,8 @@ class AllVars(IconFix):
         # Add longitude coordinate if not already present
         if not cube.coords(lon_name):
             try:
-                self.add_coord_from_grid_file(cube, 'grid_longitude', lon_name)
+                self._add_coord_from_grid_file(
+                    cube, 'grid_longitude', lon_name)
             except Exception as exc:
                 msg = "Failed to add missing longitude coordinate to cube"
                 raise ValueError(msg) from exc

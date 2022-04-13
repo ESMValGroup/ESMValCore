@@ -774,8 +774,8 @@ def test_add_coord_from_grid_file_fail_invalid_coord():
 
     msg = r"coord_name must be one of .* got 'invalid_coord_name'"
     with pytest.raises(ValueError, match=msg):
-        fix.add_coord_from_grid_file(mock.sentinel.cube, 'invalid_coord_name',
-                                     'invalid_target_name')
+        fix._add_coord_from_grid_file(mock.sentinel.cube, 'invalid_coord_name',
+                                      'invalid_target_name')
 
 
 def test_add_coord_from_grid_file_fail_no_url():
@@ -785,7 +785,7 @@ def test_add_coord_from_grid_file_fail_no_url():
     msg = ("Cube does not contain the attribute 'grid_file_uri' necessary to "
            "download the ICON horizontal grid file")
     with pytest.raises(ValueError, match=msg):
-        fix.add_coord_from_grid_file(Cube(0), 'grid_latitude', 'latitude')
+        fix._add_coord_from_grid_file(Cube(0), 'grid_latitude', 'latitude')
 
 
 def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_2d, tmp_path):
@@ -808,7 +808,7 @@ def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_2d, tmp_path):
     msg = ("Cannot determine coordinate dimension for coordinate 'latitude', "
            "cube does not contain a single unnamed dimension")
     with pytest.raises(ValueError, match=msg):
-        fix.add_coord_from_grid_file(tas_cube, 'grid_latitude', 'latitude')
+        fix._add_coord_from_grid_file(tas_cube, 'grid_latitude', 'latitude')
 
     # Restore cache location
     fix.CACHE_DIR = original_cache_dir
@@ -833,7 +833,7 @@ def test_add_coord_from_grid_fail_two_unnamed_dims(cubes_2d, tmp_path):
     msg = ("Cannot determine coordinate dimension for coordinate 'latitude', "
            "cube does not contain a single unnamed dimension")
     with pytest.raises(ValueError, match=msg):
-        fix.add_coord_from_grid_file(tas_cube, 'grid_latitude', 'latitude')
+        fix._add_coord_from_grid_file(tas_cube, 'grid_latitude', 'latitude')
 
     # Restore cache location
     fix.CACHE_DIR = original_cache_dir
