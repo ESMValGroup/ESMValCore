@@ -6,24 +6,58 @@ Running
 The ESMValCore package provides the ``esmvaltool`` command line tool, which can
 be used to run a :doc:`recipe <../recipe/index>`.
 
-To run a recipe, call ``esmvaltool run`` with the desired recipe:
+To list the available commands, run
 
 .. code:: bash
 
-	esmvaltool run recipe_python.yml
+    esmvaltool --help
+
+It is also possible to get help on specific commands, e.g.
+
+.. code:: bash
+
+    esmvaltool run --help
+
+will display the help message with all options for the ``run`` command.
+
+To run a recipe, call ``esmvaltool run`` with the path to the desired recipe:
+
+.. code:: bash
+
+	esmvaltool run recipe_example.yml
+
+The ``esmvaltool run recipe_example.yml`` command will first look if
+``recipe_example.yml`` is the path to an existing file.
+If this is the case, it will run that recipe.
+If you have :ref:`ESMValTool installed <esmvaltool:install>`, it will look if
+the name matches one of the recipes in your ESMValTool installation directory,
+in the subdirectory
+`recipes <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/recipes/>`__
+and run that.
+
+.. note::
+
+  There is no ``recipe_example.yml`` shipped with either ESMValCore or ESMValTool.
+  If you would like to try out the command above, replace ``recipe_example.yml``
+  with the path to an existing recipe, e.g.
+  `examples/recipe_python.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/recipes/examples/recipe_python.yml>`_
+  if you have the ESMValTool package installed.
+
+To work with installed recipes, the ESMValTool package provides the
+``esmvaltool recipes`` command, see :ref:`esmvaltool:recipes_command`.
 
 If the configuration file is not in the default location
 ``~/.esmvaltool/config-user.yml``, you can pass its path explicitly:
 
 .. code:: bash
 
-	esmvaltool run --config_file /path/to/config-user.yml recipe_python.yml
+	esmvaltool run --config_file /path/to/config-user.yml recipe_example.yml
 
 It is also possible to explicitly change values from the config file using flags:
 
 .. code:: bash
 
-	esmvaltool run --argument_name argument_value recipe_python.yml
+	esmvaltool run --argument_name argument_value recipe_example.yml
 
 To automatically download the files required to run a recipe from ESGF, set
 ``offline`` to ``false`` in the :ref:`user configuration file`
@@ -31,7 +65,7 @@ or run the tool with the command
 
 .. code:: bash
 
-    esmvaltool run --offline=False recipe_python.yml
+    esmvaltool run --offline=False recipe_example.yml
 
 This feature is available for projects that are hosted on the ESGF, i.e.
 CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
@@ -40,7 +74,7 @@ To control the strictness of the CMOR checker, use the flag ``--check_level``:
 
 .. code:: bash
 
-	esmvaltool run --check_level=relaxed recipe_python.yml
+	esmvaltool run --check_level=relaxed recipe_example.yml
 
 Possible values are:
 
@@ -54,13 +88,13 @@ use
 
 .. code:: bash
 
-    esmvaltool run recipe_python.yml --resume_from ~/esmvaltool_output/recipe_python_20210930_123907
+    esmvaltool run recipe_example.yml --resume_from ~/esmvaltool_output/recipe_python_20210930_123907
 
 Multiple directories can be specified for re-use, make sure to quote them:
 
 .. code:: bash
 
-    esmvaltool run recipe_python.yml --resume_from "~/esmvaltool_output/recipe_python_20210930_101007 ~/esmvaltool_output/recipe_python_20210930_123907"
+    esmvaltool run recipe_example.yml --resume_from "~/esmvaltool_output/recipe_python_20210930_101007 ~/esmvaltool_output/recipe_python_20210930_123907"
 
 The first preprocessor directory containing the required data will be used.
 
@@ -74,7 +108,7 @@ To run only the preprocessor tasks from a recipe, use
 
 .. code:: bash
 
-    esmvaltool run recipe_python.yml --remove_preproc_dir=False --run_diagnostic=False
+    esmvaltool run recipe_example.yml --remove_preproc_dir=False --run_diagnostic=False
 
 .. note::
 
@@ -88,7 +122,7 @@ To run a reduced version of the recipe, usually for testing purpose you can use
 
 .. code:: bash
 
-	esmvaltool run --max_datasets=NDATASETS --max_years=NYEARS recipe_python.yml
+	esmvaltool run --max_datasets=NDATASETS --max_years=NYEARS recipe_example.yml
 
 In this case, the recipe will limit the number of datasets per variable to
 NDATASETS and the total amount of years loaded to NYEARS. They can also be used
@@ -100,7 +134,7 @@ To run a recipe, even if some datasets are not available, use
 
 .. code:: bash
 
-    esmvaltool run --skip_nonexistent=True recipe_python.yml
+    esmvaltool run --skip_nonexistent=True recipe_example.yml
 
 It is also possible to select only specific diagnostics to be run. To tun only
 one, just specify its name. To provide more than one diagnostic to filter use
@@ -109,17 +143,7 @@ attention to the quotes.
 
 .. code:: bash
 
-    esmvaltool run --diagnostics=diagnostic1 recipe_python.yml
-
-
-
-To get help on additional commands, please use
-
-.. code:: bash
-
-	esmvaltool --help
-
-
+    esmvaltool run --diagnostics=diagnostic1 recipe_example.yml
 
 .. note::
 

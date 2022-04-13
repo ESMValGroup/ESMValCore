@@ -129,7 +129,7 @@ jobs:
             dpkg -l > /logs/versions.txt
             pip freeze > /logs/requirements.txt
             # Test building documentation
-            MPLBACKEND=Agg python setup.py build_sphinx --warning-is-error
+            MPLBACKEND=Agg sphinx-build -W doc doc/build
       - save_cache:
           key: documentation-{{ .Branch }}
           paths:
