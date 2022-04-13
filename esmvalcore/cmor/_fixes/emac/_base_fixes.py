@@ -19,11 +19,11 @@ class EmacFix(Fix):
         if var_name is None:
             var_name = self.extra_facets.get('raw_name',
                                              self.vardef.short_name)
-            if not cubes.extract(NameConstraint(var_name=var_name)):
-                raise ValueError(
-                    f"Variable '{var_name}' used to extract "
-                    f"'{self.vardef.short_name}' is not available in input "
-                    f"file")
+        if not cubes.extract(NameConstraint(var_name=var_name)):
+            raise ValueError(
+                f"Variable '{var_name}' used to extract "
+                f"'{self.vardef.short_name}' is not available in input "
+                f"file")
         return cubes.extract_cube(NameConstraint(var_name=var_name))
 
 

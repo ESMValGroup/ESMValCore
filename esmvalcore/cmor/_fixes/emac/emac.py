@@ -63,13 +63,11 @@ class AllVars(EmacFix):
 
         # Fix latitude
         if 'latitude' in self.vardef.dimensions:
-            lat_name = self.extra_facets.get('latitude', 'latitude')
-            self._fix_lat(cube, lat_name)
+            self._fix_lat(cube)
 
         # Fix longitude
         if 'longitude' in self.vardef.dimensions:
-            lon_name = self.extra_facets.get('longitude', 'longitude')
-            self._fix_lon(cube, lon_name)
+            self._fix_lon(cube)
 
         # Fix scalar coordinates
         self._fix_scalar_coords(cube)
@@ -80,9 +78,9 @@ class AllVars(EmacFix):
         return CubeList([cube])
 
     @staticmethod
-    def _fix_lat(cube, lat_name):
+    def _fix_lat(cube):
         """Fix latitude coordinate of cube."""
-        lat = cube.coord(lat_name)
+        lat = cube.coord('latitude')
         lat.var_name = 'lat'
         lat.standard_name = 'latitude'
         lat.long_name = 'latitude'
@@ -97,9 +95,9 @@ class AllVars(EmacFix):
                 pass
 
     @staticmethod
-    def _fix_lon(cube, lon_name):
+    def _fix_lon(cube):
         """Fix longitude coordinate of cube."""
-        lon = cube.coord(lon_name)
+        lon = cube.coord('longitude')
         lon.var_name = 'lon'
         lon.standard_name = 'longitude'
         lon.long_name = 'longitude'
@@ -123,8 +121,9 @@ class AllVars(EmacFix):
                 continue
             coord.var_name = 'plev'
             coord.standard_name = 'air_pressure'
-            coord.lon_name = 'pressure'
+            coord.long_name = 'pressure'
             coord.convert_units('Pa')
+            coord.attributes['positive'] = 'down'
             return
         raise ValueError(
             f"Cannot find requested pressure level coordinate for variable "
