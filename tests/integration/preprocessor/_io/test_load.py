@@ -101,6 +101,14 @@ class TestLoad(unittest.TestCase):
                                                                     2])).all())
         self.assertEqual(cube.coord('latitude').units, 'degrees_north')
 
+    @unittest.mock.patch('iris.load_raw', autospec=True)
+    def test_fail_empty_cubes(self, mock_load_raw):
+        """Test that ValueError is raised when cubes are empty."""
+        mock_load_raw.return_value = CubeList([])
+        msg = "Can not load cubes from myfilename"
+        with self.assertRaises(ValueError, msg=msg):
+            load('myfilename')
+
     @staticmethod
     def load_with_warning(*_, **__):
         """Mock load with a warning."""
