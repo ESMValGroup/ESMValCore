@@ -1,43 +1,27 @@
 """On-the-fly CMORizer for ICON."""
 
 import logging
-import warnings
 from datetime import datetime
-from pathlib import Path
-from shutil import copyfileobj
-from urllib.parse import urlparse
 
 import cf_units
 import dask.array as da
 import iris
 import iris.util
 import numpy as np
-import requests
 from iris import NameConstraint
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import CubeList
 
 from esmvalcore.iris_helpers import add_leading_dim_to_cube, date2num
 
-from ..fix import Fix
 from ..shared import add_scalar_height_coord, add_scalar_typesi_coord
+from ._base_fixes import IconFix
 
 logger = logging.getLogger(__name__)
 
 
-CACHE_DIR = Path.home() / '.esmvaltool' / 'cache'
-CACHE_VALIDITY = 7 * 24 * 60 * 60  # [s]; = 1 week
-TIMEOUT = 5 * 60  # [s]; = 5 min
-GRID_FILE_ATTR = 'grid_file_uri'
-
-
-class AllVars(Fix):
+class AllVars(IconFix):
     """Fixes for all variables."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialize fix."""
-        super().__init__(*args, **kwargs)
-        self._horizontal_grids = {}
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
@@ -97,80 +81,6 @@ class AllVars(Fix):
 
         return CubeList([cube])
 
-    def get_horizontal_grid(self, grid_url):
-        """Get horizontal grid."""
-        # If already loaded, return the horizontal grid (cube)
-        parsed_url = urlparse(grid_url)
-        grid_name = Path(parsed_url.path).name
-        if grid_name in self._horizontal_grids:
-            return self._horizontal_grids[grid_name]
-
-        # Check if grid file has recently been downloaded and load it if
-        # possible
-        grid_path = CACHE_DIR / grid_name
-        if grid_path.exists():
-            mtime = grid_path.stat().st_mtime
-            now = datetime.now().timestamp()
-            age = now - mtime
-            if age < CACHE_VALIDITY:
-                logger.debug("Using cached ICON grid file '%s'", grid_path)
-                self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
-                return self._horizontal_grids[grid_name]
-            logger.debug("Existing cached ICON grid file '%s' is outdated",
-                         grid_path)
-
-        # Download file if necessary
-        logger.debug("Attempting to download ICON grid file from '%s' to '%s'",
-                     grid_url, grid_path)
-        with requests.get(grid_url, stream=True, timeout=TIMEOUT) as response:
-            response.raise_for_status()
-            with open(grid_path, 'wb') as file:
-                copyfileobj(response.raw, file)
-        logger.info("Successfully downloaded ICON grid file from '%s' to '%s'",
-                    grid_url, grid_path)
-
-        self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
-        return self._horizontal_grids[grid_name]
-
-    def _add_coord_from_grid_file(self, cube, coord_name, target_coord_name):
-        """Add latitude or longitude coordinate from grid file to cube."""
-        allowed_coord_names = ('grid_latitude', 'grid_longitude')
-        if coord_name not in allowed_coord_names:
-            raise ValueError(
-                f"coord_name must be one of {allowed_coord_names}, got "
-                f"'{coord_name}'")
-        if GRID_FILE_ATTR not in cube.attributes:
-            raise ValueError(
-                f"Cube does not contain coordinate '{target_coord_name}' nor "
-                f"the attribute '{GRID_FILE_ATTR}' necessary to download the "
-                f"ICON horizontal grid file:\n{cube}")
-        grid_file_url = cube.attributes[GRID_FILE_ATTR]
-        horizontal_grid = self.get_horizontal_grid(grid_file_url)
-
-        # Use 'cell_area' as dummy cube to extract coordinates
-        # Note: it might be necessary to expand this when more coord_names are
-        # supported
-        grid_cube = horizontal_grid.extract_cube(
-            NameConstraint(var_name='cell_area'))
-        coord = grid_cube.coord(coord_name)
-
-        # Find index of horizontal coordinate (= single unnamed dimension)
-        n_unnamed_dimensions = cube.ndim - len(cube.dim_coords)
-        if n_unnamed_dimensions != 1:
-            raise ValueError(
-                f"Cannot determine coordinate dimension for coordinate "
-                f"'{target_coord_name}', cube does not contain a single "
-                f"unnamed dimension:\n{cube}")
-        coord_dims = ()
-        for idx in range(cube.ndim):
-            if not cube.coords(dimensions=idx, dim_coords=True):
-                coord_dims = (idx,)
-                break
-
-        coord.standard_name = None
-        coord.long_name = target_coord_name
-        cube.add_aux_coord(coord, coord_dims)
-
     def _add_time(self, cube, cubes):
         """Add time coordinate from other cube in cubes."""
         # Try to find time cube from other cubes and it to target cube
@@ -191,7 +101,11 @@ class AllVars(Fix):
 
         # Add latitude coordinate if not already present
         if not cube.coords(lat_name):
-            self._add_coord_from_grid_file(cube, 'grid_latitude', lat_name)
+            try:
+                self.add_coord_from_grid_file(cube, 'grid_latitude', lat_name)
+            except Exception as exc:
+                msg = "Failed to add missing latitude coordinate to cube"
+                raise ValueError(msg) from exc
 
         # Fix metadata
         lat = cube.coord(lat_name)
@@ -208,7 +122,11 @@ class AllVars(Fix):
 
         # Add longitude coordinate if not already present
         if not cube.coords(lon_name):
-            self._add_coord_from_grid_file(cube, 'grid_longitude', lon_name)
+            try:
+                self.add_coord_from_grid_file(cube, 'grid_longitude', lon_name)
+            except Exception as exc:
+                msg = "Failed to add missing longitude coordinate to cube"
+                raise ValueError(msg) from exc
 
         # Fix metadata
         lon = cube.coord(lon_name)
@@ -385,21 +303,8 @@ class AllVars(Fix):
         )
         cube.add_dim_coord(index_coord, horizontal_idx)
 
-    @staticmethod
-    def _load_cubes(path):
-        """Load cubes and ignore certain warnings."""
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore',
-                message="Ignoring netCDF variable .* invalid units .*",
-                category=UserWarning,
-                module='iris',
-            )
-            cubes = iris.load(str(path))
-        return cubes
 
-
-class Siconc(Fix):
+class Siconc(IconFix):
     """Fixes for ``siconc``."""
 
     def fix_metadata(self, cubes):

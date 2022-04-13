@@ -6,24 +6,11 @@
 ---
 
 ICON:
-  Amon:
-    clwvi: {raw_name: cllvi}
-  CF3hr:
-    clwvi: {raw_name: cllvi}
-  CFday:
-    clwvi: {raw_name: cllvi}
-  CFsubhr:
-    clwvi: {raw_name: cllvi}
-  E3hr:
-    clwvi: {raw_name: cllvi}
-  fx:
+  '*':
     areacella:
       latitude: grid_latitude
       longitude: grid_longitude
       raw_name: cell_area
-  SIday:
-    siconc: {raw_name: sic}
-    siconca: {raw_name: sic}
-  SImon:
+    clwvi: {raw_name: cllvi}
     siconc: {raw_name: sic}
     siconca: {raw_name: sic}

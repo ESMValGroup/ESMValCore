@@ -10,8 +10,7 @@ from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore._config import get_extra_facets
-from esmvalcore.cmor._fixes.icon import icon
-from esmvalcore.cmor._fixes.icon.icon import AllVars, Siconca
+from esmvalcore.cmor._fixes.icon.icon import AllVars, Siconc, Siconca
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -321,14 +320,14 @@ def test_clwvi_fix(cubes_2d):
 def test_get_siconc_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'SImon', 'siconc')
-    assert fix == [Siconca(None), AllVars(None)]
+    assert fix == [Siconc(None), AllVars(None)]
 
 
 def test_siconc_fix(cubes_2d):
     """Test fix."""
     vardef = get_var_info('ICON', 'SImon', 'siconc')
     extra_facets = get_extra_facets('ICON', 'ICON', 'SImon', 'siconc', ())
-    siconc_fix = Siconca(vardef, extra_facets=extra_facets)
+    siconc_fix = Siconc(vardef, extra_facets=extra_facets)
     allvars_fix = get_allvars_fix('SImon', 'siconc')
 
     fixed_cubes = siconc_fix.fix_metadata(cubes_2d)
@@ -644,12 +643,12 @@ def test_add_latitude(cubes_2d, tmp_path):
         'integration/cmor/_fixes/test_data/icon_grid.nc'
     )
     cubes = CubeList([tas_cube])
+    fix = get_allvars_fix('Amon', 'tas')
 
     # Temporary overwrite default cache location for downloads
-    original_cache_dir = icon.CACHE_DIR
-    icon.CACHE_DIR = tmp_path
+    original_cache_dir = fix.CACHE_DIR
+    fix.CACHE_DIR = tmp_path
 
-    fix = get_allvars_fix('Amon', 'tas')
     assert len(fix._horizontal_grids) == 0
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -660,7 +659,7 @@ def test_add_latitude(cubes_2d, tmp_path):
     assert 'icon_grid.nc' in fix._horizontal_grids
 
     # Restore cache location
-    icon.CACHE_DIR = original_cache_dir
+    fix.CACHE_DIR = original_cache_dir
 
 
 def test_add_longitude(cubes_2d, tmp_path):
@@ -673,12 +672,12 @@ def test_add_longitude(cubes_2d, tmp_path):
         'integration/cmor/_fixes/test_data/icon_grid.nc'
     )
     cubes = CubeList([tas_cube])
+    fix = get_allvars_fix('Amon', 'tas')
 
     # Temporary overwrite default cache location for downloads
-    original_cache_dir = icon.CACHE_DIR
-    icon.CACHE_DIR = tmp_path
+    original_cache_dir = fix.CACHE_DIR
+    fix.CACHE_DIR = tmp_path
 
-    fix = get_allvars_fix('Amon', 'tas')
     assert len(fix._horizontal_grids) == 0
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -689,7 +688,7 @@ def test_add_longitude(cubes_2d, tmp_path):
     assert 'icon_grid.nc' in fix._horizontal_grids
 
     # Restore cache location
-    icon.CACHE_DIR = original_cache_dir
+    fix.CACHE_DIR = original_cache_dir
 
 
 def test_add_latitude_longitude(cubes_2d, tmp_path):
@@ -703,12 +702,12 @@ def test_add_latitude_longitude(cubes_2d, tmp_path):
         'integration/cmor/_fixes/test_data/icon_grid.nc'
     )
     cubes = CubeList([tas_cube])
+    fix = get_allvars_fix('Amon', 'tas')
 
     # Temporary overwrite default cache location for downloads
-    original_cache_dir = icon.CACHE_DIR
-    icon.CACHE_DIR = tmp_path
+    original_cache_dir = fix.CACHE_DIR
+    fix.CACHE_DIR = tmp_path
 
-    fix = get_allvars_fix('Amon', 'tas')
     assert len(fix._horizontal_grids) == 0
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -719,25 +718,56 @@ def test_add_latitude_longitude(cubes_2d, tmp_path):
     assert 'icon_grid.nc' in fix._horizontal_grids
 
     # Restore cache location
-    icon.CACHE_DIR = original_cache_dir
+    fix.CACHE_DIR = original_cache_dir
 
 
-def test_add_latitude_fail_no_url(cubes_2d):
+def test_add_latitude_fail(cubes_2d):
     """Test fix."""
     # Remove latitude from tas cube to test automatic addition
     tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
     tas_cube.remove_coord('latitude')
     cubes = CubeList([tas_cube])
-
     fix = get_allvars_fix('Amon', 'tas')
-    msg = ("Cube does not contain coordinate 'latitude' nor the attribute "
-           "'grid_file_uri' necessary to download the ICON horizontal grid "
-           "file")
+
+    msg = "Failed to add missing latitude coordinate to cube"
     with pytest.raises(ValueError, match=msg):
         fix.fix_metadata(cubes)
 
 
-def test_add_latitude_fail_no_unnamed_dim(cubes_2d, tmp_path):
+def test_add_longitude_fail(cubes_2d):
+    """Test fix."""
+    # Remove longitude from tas cube to test automatic addition
+    tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
+    tas_cube.remove_coord('longitude')
+    cubes = CubeList([tas_cube])
+    fix = get_allvars_fix('Amon', 'tas')
+
+    msg = "Failed to add missing longitude coordinate to cube"
+    with pytest.raises(ValueError, match=msg):
+        fix.fix_metadata(cubes)
+
+
+def test_add_coord_from_grid_file_fail_invalid_coord():
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'tas')
+
+    msg = r"coord_name must be one of .* got 'invalid_coord_name'"
+    with pytest.raises(ValueError, match=msg):
+        fix.add_coord_from_grid_file(mock.sentinel.cube, 'invalid_coord_name',
+                                     'invalid_target_name')
+
+
+def test_add_coord_from_grid_file_fail_no_url():
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'tas')
+
+    msg = ("Cube does not contain the attribute 'grid_file_uri' necessary to "
+           "download the ICON horizontal grid file")
+    with pytest.raises(ValueError, match=msg):
+        fix.add_coord_from_grid_file(Cube(0), 'grid_latitude', 'latitude')
+
+
+def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_2d, tmp_path):
     """Test fix."""
     # Remove latitude from tas cube to test automatic addition
     tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
@@ -748,25 +778,24 @@ def test_add_latitude_fail_no_unnamed_dim(cubes_2d, tmp_path):
     )
     index_coord = DimCoord(np.arange(8), var_name='ncells')
     tas_cube.add_dim_coord(index_coord, 1)
-    cubes = CubeList([tas_cube])
+    fix = get_allvars_fix('Amon', 'tas')
 
     # Temporary overwrite default cache location for downloads
-    original_cache_dir = icon.CACHE_DIR
-    icon.CACHE_DIR = tmp_path
+    original_cache_dir = fix.CACHE_DIR
+    fix.CACHE_DIR = tmp_path
 
-    fix = get_allvars_fix('Amon', 'tas')
     msg = ("Cannot determine coordinate dimension for coordinate 'latitude', "
            "cube does not contain a single unnamed dimension")
     with pytest.raises(ValueError, match=msg):
-        fix.fix_metadata(cubes)
+        fix.add_coord_from_grid_file(tas_cube, 'grid_latitude', 'latitude')
 
     # Restore cache location
-    icon.CACHE_DIR = original_cache_dir
+    fix.CACHE_DIR = original_cache_dir
 
 
-def test_add_latitude_fail_2_unnamed_dim(cubes_2d, tmp_path):
+def test_add_coord_from_grid_fail_two_unnamed_dims(cubes_2d, tmp_path):
     """Test fix."""
-    # Remove time latitude from tas cube to test automatic addition
+    # Remove latitude from tas cube to test automatic addition
     tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
     tas_cube.remove_coord('latitude')
     tas_cube.attributes['grid_file_uri'] = (
@@ -774,33 +803,22 @@ def test_add_latitude_fail_2_unnamed_dim(cubes_2d, tmp_path):
         'integration/cmor/_fixes/test_data/icon_grid.nc'
     )
     tas_cube = iris.util.new_axis(tas_cube)
-    cubes = CubeList([tas_cube])
+    fix = get_allvars_fix('Amon', 'tas')
 
     # Temporary overwrite default cache location for downloads
-    original_cache_dir = icon.CACHE_DIR
-    icon.CACHE_DIR = tmp_path
+    original_cache_dir = fix.CACHE_DIR
+    fix.CACHE_DIR = tmp_path
 
-    fix = get_allvars_fix('Amon', 'tas')
     msg = ("Cannot determine coordinate dimension for coordinate 'latitude', "
            "cube does not contain a single unnamed dimension")
     with pytest.raises(ValueError, match=msg):
-        fix.fix_metadata(cubes)
+        fix.add_coord_from_grid_file(tas_cube, 'grid_latitude', 'latitude')
 
     # Restore cache location
-    icon.CACHE_DIR = original_cache_dir
+    fix.CACHE_DIR = original_cache_dir
 
 
-def test_add_coord_from_grid_file_fail():
-    """Test fix."""
-    fix = get_allvars_fix('Amon', 'tas')
-
-    msg = r"coord_name must be one of .* got 'invalid_coord_name'"
-    with pytest.raises(ValueError, match=msg):
-        fix._add_coord_from_grid_file(mock.sentinel.cube, 'invalid_coord_name',
-                                      'invalid_target_name')
-
-
-@mock.patch('esmvalcore.cmor._fixes.icon.icon.requests', autospec=True)
+@mock.patch('esmvalcore.cmor._fixes.icon._base_fixes.requests', autospec=True)
 def test_get_horizontal_grid_cached_in_dict(mock_requests):
     """Test fix."""
     fix = get_allvars_fix('Amon', 'tas')
@@ -811,7 +829,7 @@ def test_get_horizontal_grid_cached_in_dict(mock_requests):
     assert mock_requests.mock_calls == []
 
 
-@mock.patch('esmvalcore.cmor._fixes.icon.icon.requests', autospec=True)
+@mock.patch('esmvalcore.cmor._fixes.icon._base_fixes.requests', autospec=True)
 def test_get_horizontal_grid_cached_in_file(mock_requests, tmp_path):
     """Test fix."""
     fix = get_allvars_fix('Amon', 'tas')
@@ -823,8 +841,8 @@ def test_get_horizontal_grid_cached_in_file(mock_requests, tmp_path):
     iris.save(cube, str(tmp_path / 'grid_file.nc'))
 
     # Temporary overwrite default cache location for downloads
-    original_cache_dir = icon.CACHE_DIR
-    icon.CACHE_DIR = tmp_path
+    original_cache_dir = fix.CACHE_DIR
+    fix.CACHE_DIR = tmp_path
 
     grid = fix.get_horizontal_grid(grid_url)
     assert isinstance(grid, CubeList)
@@ -835,7 +853,7 @@ def test_get_horizontal_grid_cached_in_file(mock_requests, tmp_path):
     assert mock_requests.mock_calls == []
 
     # Restore cache location
-    icon.CACHE_DIR = original_cache_dir
+    fix.CACHE_DIR = original_cache_dir
 
 
 def test_get_horizontal_grid_cache_file_too_old(tmp_path):
@@ -851,10 +869,10 @@ def test_get_horizontal_grid_cache_file_too_old(tmp_path):
 
     # Temporary overwrite default cache location for downloads and cache
     # validity duration
-    original_cache_dir = icon.CACHE_DIR
-    original_cache_validity = icon.CACHE_VALIDITY
-    icon.CACHE_DIR = tmp_path
-    icon.CACHE_VALIDITY = -1
+    original_cache_dir = fix.CACHE_DIR
+    original_cache_validity = fix.CACHE_VALIDITY
+    fix.CACHE_DIR = tmp_path
+    fix.CACHE_VALIDITY = -1
 
     grid = fix.get_horizontal_grid(grid_url)
     assert isinstance(grid, CubeList)
@@ -864,8 +882,8 @@ def test_get_horizontal_grid_cache_file_too_old(tmp_path):
     assert 'icon_grid.nc' in fix._horizontal_grids
 
     # Restore cache location
-    icon.CACHE_DIR = original_cache_dir
-    icon.CACHE_VALIDITY = original_cache_validity
+    fix.CACHE_DIR = original_cache_dir
+    fix.CACHE_VALIDITY = original_cache_validity
 
 
 # Test with single-dimension cubes
