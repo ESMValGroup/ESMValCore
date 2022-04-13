@@ -94,6 +94,38 @@ class IconFix(Fix):
         coord.long_name = target_coord_long_name
         cube.add_aux_coord(coord, coord_dims)
 
+    def get_cube(self, cubes, var_name=None):
+        """Extract single cube.
+
+        Parameters
+        ----------
+        cubes: iris.cube.CubeList
+            Input cubes.
+        var_name: str, optional
+            If given, use this var_name to extract the desired cube. If not
+            given, use the raw_name given in extra_facets (if possible) or the
+            short_name of the variable to extract the desired cube.
+
+        Returns
+        -------
+        iris.cube.Cube
+            Desired cube.
+
+        Raises
+        ------
+        ValueError
+            Desired variable is not available in the input cubes.
+
+        """
+        if var_name is None:
+            var_name = self.extra_facets.get('raw_name',
+                                             self.vardef.short_name)
+        if not cubes.extract(NameConstraint(var_name=var_name)):
+            raise ValueError(
+                f"Variable '{var_name}' used to extract "
+                f"'{self.vardef.short_name}' is not available in input file")
+        return cubes.extract_cube(NameConstraint(var_name=var_name))
+
     def get_horizontal_grid(self, grid_url):
         """Get ICON horizontal grid.
 

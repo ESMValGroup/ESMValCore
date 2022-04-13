@@ -1070,12 +1070,20 @@ def test_only_longitude():
 # Test variable not available in file
 
 
-def test_var_not_available(cubes_2d):
+def test_var_not_available_pr(cubes_2d):
     """Test fix."""
     fix = get_allvars_fix('Amon', 'pr')
     msg = "Variable 'pr' used to extract 'pr' is not available in input file"
     with pytest.raises(ValueError, match=msg):
         fix.fix_metadata(cubes_2d)
+
+
+def test_var_not_available_ps(cubes_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'ps')
+    msg = "Variable 'x' used to extract 'ps' is not available in input file"
+    with pytest.raises(ValueError, match=msg):
+        fix.get_cube(cubes_2d, var_name='x')
 
 
 # Test fix with invalid time units

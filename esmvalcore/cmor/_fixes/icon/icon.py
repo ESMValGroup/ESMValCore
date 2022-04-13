@@ -25,12 +25,7 @@ class AllVars(IconFix):
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
-        raw_name = self.extra_facets.get('raw_name', self.vardef.short_name)
-        if not cubes.extract(NameConstraint(var_name=raw_name)):
-            raise ValueError(
-                f"Variable '{raw_name}' used to extract "
-                f"'{self.vardef.short_name}' is not available in input file")
-        cube = cubes.extract_cube(NameConstraint(var_name=raw_name))
+        cube = self.get_cube(cubes)
 
         # Fix time
         if 'time' in self.vardef.dimensions:
@@ -313,7 +308,7 @@ class Siconc(IconFix):
         # and units (which need to be %) are fixed in a later step in
         # AllVars(). This fix here is necessary to fix the "unknown" units that
         # cannot be converted to % in AllVars().
-        cube = cubes.extract_cube(NameConstraint(var_name='sic'))
+        cube = self.get_cube(cubes)
         cube.units = '1'
         return cubes
 
