@@ -359,13 +359,13 @@ repository was cloned and run
 
 ::
 
-   python setup.py build_sphinx
+   sphinx-build doc doc/build
 
 or
 
 ::
 
-   python setup.py build_sphinx -Ea
+   sphinx-build -Ea doc doc/build
 
 to build it from scratch.
 
@@ -375,7 +375,7 @@ CircleCI_ will build the documentation with the command:
 
 .. code-block:: bash
 
-   python setup.py build_sphinx --warning-is-error
+   sphinx-build -W doc doc/build
 
 This will catch mistakes that can be detected automatically.
 
@@ -535,7 +535,7 @@ bot that will start the test automatically). This is useful
 to check if a certain feature that you included in the Pull Request, and can be tested
 for via the test suite, works across the supported Python versions, and both on Linux and OSX.
 The test is currently deactivated, so before triggering the test via comment, make sure you activate
-the test in the main `Actions page <https://github.com/ESMValGroup/ESMValCore/actions>`__ 
+the test in the main `Actions page <https://github.com/ESMValGroup/ESMValCore/actions>`__
 (click on Test via PR Comment and activate it); also and be sure to deactivate it afterwards
 (the Github API still needs a bit more development, and currently it triggers
 the test for **each comment** irrespective of PR, that's why this needs to be activated/decativated).
