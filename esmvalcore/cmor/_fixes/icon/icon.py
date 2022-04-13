@@ -303,11 +303,16 @@ class Siconc(IconFix):
     """Fixes for ``siconc``."""
 
     def fix_metadata(self, cubes):
-        """Fix metadata."""
-        # Note: This fix is called before the AllVars() fix. The wrong var_name
-        # and units (which need to be %) are fixed in a later step in
-        # AllVars(). This fix here is necessary to fix the "unknown" units that
-        # cannot be converted to % in AllVars().
+        """Fix metadata.
+
+        Note
+        ----
+        This fix is called before the AllVars() fix. The wrong var_name and
+        units (which need to be %) are fixed in a later step in AllVars(). This
+        fix here is necessary to fix the "unknown" units that cannot be
+        converted to % in AllVars().
+
+        """
         cube = self.get_cube(cubes)
         cube.units = '1'
         return cubes

@@ -263,8 +263,8 @@ def check_typesi(cube):
     assert typesi.bounds is None
 
 
-# Test areacella (for extra_facets, and grid_latitude and grid_longitude
-# coordinates)
+# Test areacella and areacello (for extra_facets, and grid_latitude and
+# grid_longitude coordinates)
 
 
 def test_get_areacella_fix():
@@ -283,6 +283,27 @@ def test_areacella_fix(cubes_grid):
     assert cube.var_name == 'areacella'
     assert cube.standard_name == 'cell_area'
     assert cube.long_name == 'Grid-Cell Area for Atmospheric Grid Variables'
+    assert cube.units == 'm2'
+
+    check_lat_lon(cube)
+
+
+def test_get_areacello_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('ICON', 'ICON', 'Ofx', 'areacello')
+    assert fix == [AllVars(None)]
+
+
+def test_areacello_fix(cubes_grid):
+    """Test fix."""
+    fix = get_allvars_fix('Ofx', 'areacello')
+    fixed_cubes = fix.fix_metadata(cubes_grid)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'areacello'
+    assert cube.standard_name == 'cell_area'
+    assert cube.long_name == 'Grid-Cell Area for Ocean Variables'
     assert cube.units == 'm2'
 
     check_lat_lon(cube)
@@ -821,10 +842,11 @@ def test_add_coord_from_grid_fail_two_unnamed_dims(cubes_2d, tmp_path):
 @mock.patch('esmvalcore.cmor._fixes.icon._base_fixes.requests', autospec=True)
 def test_get_horizontal_grid_cached_in_dict(mock_requests):
     """Test fix."""
+    cube = Cube(0, attributes={'grid_file_uri': 'cached_grid_url.nc'})
     fix = get_allvars_fix('Amon', 'tas')
     fix._horizontal_grids['cached_grid_url.nc'] = mock.sentinel.grid
 
-    grid = fix.get_horizontal_grid('cached_grid_url.nc')
+    grid = fix.get_horizontal_grid(cube)
     assert grid == mock.sentinel.grid
     assert mock_requests.mock_calls == []
 
@@ -832,19 +854,20 @@ def test_get_horizontal_grid_cached_in_dict(mock_requests):
 @mock.patch('esmvalcore.cmor._fixes.icon._base_fixes.requests', autospec=True)
 def test_get_horizontal_grid_cached_in_file(mock_requests, tmp_path):
     """Test fix."""
+    cube = Cube(0, attributes={
+        'grid_file_uri': 'https://temporary.url/this/is/the/grid_file.nc'})
     fix = get_allvars_fix('Amon', 'tas')
     assert len(fix._horizontal_grids) == 0
-    grid_url = 'https://temporary.url/this/is/the/grid_file.nc'
 
     # Save temporary grid file
-    cube = Cube(0, var_name='grid')
-    iris.save(cube, str(tmp_path / 'grid_file.nc'))
+    grid_cube = Cube(0, var_name='grid')
+    iris.save(grid_cube, str(tmp_path / 'grid_file.nc'))
 
     # Temporary overwrite default cache location for downloads
     original_cache_dir = fix.CACHE_DIR
     fix.CACHE_DIR = tmp_path
 
-    grid = fix.get_horizontal_grid(grid_url)
+    grid = fix.get_horizontal_grid(cube)
     assert isinstance(grid, CubeList)
     assert len(grid) == 1
     assert grid[0].var_name == 'grid'
@@ -858,14 +881,16 @@ def test_get_horizontal_grid_cached_in_file(mock_requests, tmp_path):
 
 def test_get_horizontal_grid_cache_file_too_old(tmp_path):
     """Test fix."""
+    cube = Cube(0, attributes={
+        'grid_file_uri': 'https://github.com/ESMValGroup/ESMValCore/raw/main/'
+                         'tests/integration/cmor/_fixes/test_data/'
+                         'icon_grid.nc'})
     fix = get_allvars_fix('Amon', 'tas')
     assert len(fix._horizontal_grids) == 0
-    grid_url = ('https://github.com/ESMValGroup/ESMValCore/raw/main/tests/'
-                'integration/cmor/_fixes/test_data/icon_grid.nc')
 
     # Save temporary grid file
-    cube = Cube(0, var_name='grid')
-    iris.save(cube, str(tmp_path / 'icon_grid.nc'))
+    grid_cube = Cube(0, var_name='grid')
+    iris.save(grid_cube, str(tmp_path / 'icon_grid.nc'))
 
     # Temporary overwrite default cache location for downloads and cache
     # validity duration
@@ -874,7 +899,7 @@ def test_get_horizontal_grid_cache_file_too_old(tmp_path):
     fix.CACHE_DIR = tmp_path
     fix.CACHE_VALIDITY = -1
 
-    grid = fix.get_horizontal_grid(grid_url)
+    grid = fix.get_horizontal_grid(cube)
     assert isinstance(grid, CubeList)
     assert len(grid) == 1
     assert grid[0].var_name == 'cell_area'

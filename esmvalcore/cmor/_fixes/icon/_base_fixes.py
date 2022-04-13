@@ -51,10 +51,9 @@ class IconFix(Fix):
         Raises
         ------
         ValueError
-            Invalid ``coord_name`` is given; Input cube does not contain the
-            necessary attribute to download the ICON grid file (see
-            ``self.GRID_FILE_ATTR``); Input cube does not contain a single
-            unnamed dimension that can be used to add the new coordinate.
+            Invalid ``coord_name`` is given; input cube does not contain a
+            single unnamed dimension that can be used to add the new
+            coordinate.
 
         """
         allowed_coord_names = ('grid_latitude', 'grid_longitude')
@@ -62,13 +61,7 @@ class IconFix(Fix):
             raise ValueError(
                 f"coord_name must be one of {allowed_coord_names}, got "
                 f"'{coord_name}'")
-        if self.GRID_FILE_ATTR not in cube.attributes:
-            raise ValueError(
-                f"Cube does not contain the attribute '{self.GRID_FILE_ATTR}' "
-                f"necessary to download the ICON horizontal grid file:\n"
-                f"{cube}")
-        grid_file_url = cube.attributes[self.GRID_FILE_ATTR]
-        horizontal_grid = self.get_horizontal_grid(grid_file_url)
+        horizontal_grid = self.get_horizontal_grid(cube)
 
         # Use 'cell_area' as dummy cube to extract coordinates
         # Note: it might be necessary to expand this when more coord_names are
@@ -126,8 +119,8 @@ class IconFix(Fix):
                 f"'{self.vardef.short_name}' is not available in input file")
         return cubes.extract_cube(NameConstraint(var_name=var_name))
 
-    def get_horizontal_grid(self, grid_url):
-        """Get ICON horizontal grid.
+    def get_horizontal_grid(self, cube):
+        """Get ICON horizontal grid from global attribute of cube.
 
         Note
         ----
@@ -137,15 +130,29 @@ class IconFix(Fix):
 
         Parameters
         ----------
-        grid_url: str
-            URL specifying the location of the ICON horizontal grid file.
+        cube: iris.cube.Cube
+            Cube for which the ICON horizontal grid is retrieved. This cube
+            needs the global attribute given by ``self.GRID_FILE_ATTR``.
 
         Returns
         -------
         iris.cube.CubeList
             ICON horizontal grid.
 
+        Raises
+        ------
+        ValueError
+            Input cube does not contain the necessary attribute to download the
+            ICON horizontal grid file (see ``self.GRID_FILE_ATTR``)
+
         """
+        if self.GRID_FILE_ATTR not in cube.attributes:
+            raise ValueError(
+                f"Cube does not contain the attribute '{self.GRID_FILE_ATTR}' "
+                f"necessary to download the ICON horizontal grid file:\n"
+                f"{cube}")
+        grid_url = cube.attributes[self.GRID_FILE_ATTR]
+
         # If already loaded, return the horizontal grid (cube)
         parsed_url = urlparse(grid_url)
         grid_name = Path(parsed_url.path).name

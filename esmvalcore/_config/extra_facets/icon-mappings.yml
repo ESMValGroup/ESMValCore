@@ -11,6 +11,10 @@ ICON:
       latitude: grid_latitude
       longitude: grid_longitude
       raw_name: cell_area
+    areacello:
+      latitude: grid_latitude
+      longitude: grid_longitude
+      raw_name: cell_area
     clwvi: {raw_name: cllvi}
     siconc: {raw_name: sic}
     siconca: {raw_name: sic}
