@@ -158,7 +158,7 @@ def add_scalar_lambda550nm_coord(cube):
         units='nm',
     )
     try:
-        cube.coord('wavelength')
+        cube.coord('radiation_wavelength')
     except iris.exceptions.CoordinateNotFoundError:
         cube.add_aux_coord(lambda550nm_coord, ())
     return cube
