@@ -537,18 +537,18 @@ To allow ESMValTool to locate the data files, use the following steps:
         native6:
           ...
           input_dir:
-             default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
-             MY_DATA_ORG: '{dataset}/{exp}/{simulation}/{version}/{type}'
+            default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
+            MY_DATA_ORG: '{dataset}/{exp}/{simulation}/{version}/{type}'
           input_file:
             default: '*.nc'
             MY_DATA_ORG: '{simulation}_*.nc'
           ...
 
-     To find your native data (e.g., called ``MYDATA``), that is located in
-     ``{rootpath}/MYDATA/amip/run1/42-0/atm/run1_1979.nc`` (``{rootpath}`` is
-     ESMValTool's ``rootpath`` for the project ``native6`` defined in your
-     :ref:`user configuration file`), use the following dataset entry in your
-     recipe
+     To find your native data (e.g., called ``MYDATA``) that is for example
+     located in ``{rootpath}/MYDATA/amip/run1/42-0/atm/run1_1979.nc``
+     (``{rootpath}`` is ESMValTool's ``rootpath`` for the project ``native6``
+     defined in your :ref:`user configuration file`), use the following dataset
+     entry in your recipe
 
      .. code-block:: yaml
 
@@ -571,15 +571,15 @@ To allow ESMValTool to locate the data files, use the following steps:
 
      .. code-block:: yaml
 
-       ICON:
-         ...
-         input_dir:
-           default: '{version}_{component}_{exp}_{grid}_{ensemble}'
-         input_file:
-           default: '{version}_{component}_{exp}_{grid}_{ensemble}_{var_type}*.nc'
-         ...
+        ICON:
+          ...
+          input_dir:
+            default: '{version}_{component}_{exp}_{grid}_{ensemble}'
+          input_file:
+            default: '{version}_{component}_{exp}_{grid}_{ensemble}_{var_type}*.nc'
+          ...
 
-     To find your ICON data that is located in
+     To find your ICON data that is for example located in
      ``{rootpath}/42-0_atm_amip_R2B5_r1i1/42-0_atm_amip_R2B5_r1i1_2d_1979.nc``
      (``{rootpath}`` is ESMValTool ``rootpath`` for the project ``ICON``
      defined in your :ref:`user configuration file`), use the following dataset
@@ -606,12 +606,12 @@ and the ``ICON`` fix is located `here
 
 If necessary, provide a so-called ``extra facets file`` which allows to cope
 e.g. with variable naming issues for finding files or additional information
-that is mnecessary for the fixes.
+that is required for the fixes.
 See :ref:`extra_facets` and :download:`this example of such a file for IPSL-CM6
 <../../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`.
 
 An overview of all supported native datasets is given :ref:`here
-<fixing_native_data>`.
+<fixing_native_datasets>`.
 
 
 .. _config-ref:
