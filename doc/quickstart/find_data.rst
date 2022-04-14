@@ -48,12 +48,13 @@ From the ESMValTool user perspective the number of data input parameters is
 optimized to allow for ease of use. We detail this procedure in the next
 section.
 
-Native model data
------------------
-Support for native model data that is not formatted according to a CMIP data
-request is implemented via the :ref:`ESMValCore fix procedure
-<configure_native_models>` and has been implemented for some models :ref:`as
-described here <fixing_native_models>`.
+Datasets in native format
+-------------------------
+Support for native data that is not formatted according to a CMIP data request
+has been implemented for some datasets :ref:`as described here
+<fixing_native_datasets>`.
+A detailed description on how to add support for further native datasets is
+given :ref:`here <how_to_fix_native_datasets>`.
 
 Observational data
 ------------------
