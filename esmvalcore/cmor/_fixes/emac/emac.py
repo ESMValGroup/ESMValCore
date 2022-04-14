@@ -199,9 +199,6 @@ class Clwvi(EmacFix):
         return CubeList([cube])
 
 
-Cod_sw_b01 = SetUnitsTo1SumOverZ  # noqa: N801
-
-
 Evspsbl = NegateData
 
 

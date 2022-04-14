@@ -22,9 +22,6 @@ EMAC:
     co2mass:
       raw_name: MP_CO2_ave
       channel: tracer_pdef_gp
-    cod_sw_b01:  # non-CMOR variable
-      raw_name: tau_cld_sw_B01_ave
-      channel: Amon
     evspsbl:
       raw_name: evap_ave
       channel: Amon
@@ -216,5 +213,8 @@ EMAC:
 
 # Elements missing from original mapping table
 # Note: mixed channels are not supported yet
-# - AIRC_NO_s: {airc_NO: import_grid, geopot_ave: Amon}  -> mixed channels
-# - VOLC_SO2_s: {VOLC_SO2_SO2: import_grid, geopot_ave: Amon} -> mixed channels
+# AIRC_NO_s: {airc_NO: import_grid, geopot_ave: Amon}  -> mixed channels
+# VOLC_SO2_s: {VOLC_SO2_SO2: import_grid, geopot_ave: Amon} -> mixed channels
+# cod_sw_b01: -> no test data available
+#   raw_name: tau_cld_sw_B01_ave
+#   channel: Amon

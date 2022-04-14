@@ -10,7 +10,7 @@ from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore._config import get_extra_facets
-from esmvalcore.cmor._fixes.emac.emac import AllVars, Clt
+from esmvalcore.cmor._fixes.emac.emac import AllVars, Clt, Clwvi, Evspsbl
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -100,7 +100,7 @@ def check_siconc_metadata(cubes, var_name, long_name):
     return cube
 
 
-def check_time(cube):
+def check_time(cube, n_points=1):
     """Check time coordinate of cube."""
     assert cube.coords('time', dim_coords=True)
     time = cube.coord('time', dim_coords=True)
@@ -109,8 +109,17 @@ def check_time(cube):
     assert time.long_name == 'time'
     assert time.units == Unit('day since 1849-01-01 00:00:00',
                               calendar='gregorian')
-    np.testing.assert_allclose(time.points, [55181.9930555556])
-    assert time.bounds is None
+    if n_points == 1:
+        np.testing.assert_allclose(time.points, [55181.9930555556])
+        assert time.bounds is None
+    elif n_points == 2:
+        np.testing.assert_allclose(time.points, [55151.25, 55151.666667])
+        np.testing.assert_allclose(
+            time.bounds,
+            [[55151.04166667, 55151.45833333], [55151.45833333, 55151.875]],
+        )
+    else:
+        assert False, "Invalid n_points"
     assert time.attributes == {}
 
 
@@ -418,6 +427,12 @@ def test_awhea_fix(cubes_omon_2d):
     check_lat(cube)
     check_lon(cube)
 
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[-203.94414, -16.695345, 74.117096, 104.992195]],
+        rtol=1e-6,
+    )
+
 
 def test_get_clivi_fix():
     """Test getting of fix."""
@@ -440,6 +455,12 @@ def test_clivi_fix(cubes_amon_2d):
     check_time(cube)
     check_lat(cube)
     check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[0.01435195, 0.006420649, 0.0007885683, 0.01154814]],
+        rtol=1e-6,
+    )
 
 
 def test_get_clt_fix():
@@ -469,9 +490,109 @@ def test_clt_fix(cubes_amon_2d):
     check_lat(cube)
     check_lon(cube)
 
-    assert np.min(cube.data) > 0.0
-    assert np.max(cube.data) > 1.0
-    assert np.max(cube.data) <= 100.0
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[86.79899, 58.01009, 34.01953, 85.48493]],
+        rtol=1e-6,
+    )
+
+
+def test_get_clwvi_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'clwvi')
+    assert fix == [Clwvi(None), AllVars(None)]
+
+
+def test_clwvi_fix(cubes_amon_2d):
+    """Test fix."""
+    vardef = get_var_info('EMAC', 'Amon', 'clwvi')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'clwvi', ())
+    fix = Clwvi(vardef, extra_facets=extra_facets)
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    fix = get_allvars_fix('Amon', 'clwvi')
+    fixed_cubes = fix.fix_metadata(fixed_cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'clwvi'
+    assert cube.standard_name == ('atmosphere_mass_content_of_cloud_'
+                                  'condensed_water')
+    assert cube.long_name == 'Condensed Water Path'
+    assert cube.units == 'kg m-2'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[0.20945302, 0.01015517, 0.01444221, 0.10618545]],
+        rtol=1e-6,
+    )
+
+
+def test_get_co2mass_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'co2mass')
+    assert fix == [AllVars(None)]
+
+
+def test_co2mass_fix(cubes_tracer_pdef_gp):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'co2mass')
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'co2mass'
+    assert cube.standard_name == 'atmosphere_mass_of_carbon_dioxide'
+    assert cube.long_name == 'Total Atmospheric Mass of CO2'
+    assert cube.units == 'kg'
+
+    check_time(cube, n_points=2)
+
+    np.testing.assert_allclose(
+        cube.data,
+        [2.855254e+15, 2.85538e+15],
+        rtol=1e-6,
+    )
+
+
+def test_get_evspsbl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'evspsbl')
+    assert fix == [Evspsbl(None), AllVars(None)]
+
+
+def test_evspsbl_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'evspsbl')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+
+    vardef = get_var_info('EMAC', 'Amon', 'evspsbl')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'evspsbl', ())
+    fix = Evspsbl(vardef, extra_facets=extra_facets)
+    cube = fix.fix_data(cube)
+
+    assert cube.var_name == 'evspsbl'
+    assert cube.standard_name == 'water_evapotranspiration_flux'
+    assert cube.long_name == ('Evaporation Including Sublimation and '
+                              'Transpiration')
+    assert cube.units == 'kg m-2 s-1'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[3.636807e-05, 3.438968e-07, 6.235108e-05, 1.165336e-05]],
+        rtol=1e-6,
+    )
 
 
 # Test areacella and areacello (for extra_facets, and grid_latitude and
