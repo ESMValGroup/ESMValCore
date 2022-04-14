@@ -10,7 +10,7 @@ from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore._config import get_extra_facets
-from esmvalcore.cmor._fixes.emac.emac import AllVars
+from esmvalcore.cmor._fixes.emac.emac import AllVars, Clt
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -417,6 +417,61 @@ def test_awhea_fix(cubes_omon_2d):
     check_time(cube)
     check_lat(cube)
     check_lon(cube)
+
+
+def test_get_clivi_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'clivi')
+    assert fix == [AllVars(None)]
+
+
+def test_clivi_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'clivi')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'clivi'
+    assert cube.standard_name == 'atmosphere_mass_content_of_cloud_ice'
+    assert cube.long_name == 'Ice Water Path'
+    assert cube.units == 'kg m-2'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+
+def test_get_clt_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'clt')
+    assert fix == [Clt(None), AllVars(None)]
+
+
+def test_clt_fix(cubes_amon_2d):
+    """Test fix."""
+    vardef = get_var_info('EMAC', 'Amon', 'clt')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'clt', ())
+    fix = Clt(vardef, extra_facets=extra_facets)
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    fix = get_allvars_fix('Amon', 'clt')
+    fixed_cubes = fix.fix_metadata(fixed_cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'clt'
+    assert cube.standard_name == 'cloud_area_fraction'
+    assert cube.long_name == 'Total Cloud Cover Percentage'
+    assert cube.units == '%'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    assert np.min(cube.data) > 0.0
+    assert np.max(cube.data) > 1.0
+    assert np.max(cube.data) <= 100.0
 
 
 # Test areacella and areacello (for extra_facets, and grid_latitude and

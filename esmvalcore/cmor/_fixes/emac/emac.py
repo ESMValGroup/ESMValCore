@@ -183,6 +183,9 @@ class AllVars(EmacFix):
             cube.convert_units(self.vardef.units)
 
 
+Clt = SetUnitsTo1
+
+
 class Clwvi(EmacFix):
     """Fixes for ``clwvi``."""
 
@@ -197,9 +200,6 @@ class Clwvi(EmacFix):
 
 
 Cod_sw_b01 = SetUnitsTo1SumOverZ  # noqa: N801
-
-
-Clt = SetUnitsTo1
 
 
 Evspsbl = NegateData
