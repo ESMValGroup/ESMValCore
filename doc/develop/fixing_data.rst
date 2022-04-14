@@ -329,11 +329,16 @@ strictness to the highest:
   be sure that future users will not be distracted by inoffensive warnings.
 
 
+.. _fixing_native_datasets:
+
 Natively supported non-CMIP datasets
 ====================================
 
-Some fixed datasets and native models formats are supported through
-the ``native6`` project or through a dedicated project.
+Some fixed datasets and native models formats are supported through the
+``native6`` project or through a dedicated project.
+A detailed description on this is given :ref:`here <configure_native_models>`.
+
+.. _fixing_native_obs:
 
 Observational Datasets
 ----------------------
@@ -344,11 +349,15 @@ Replace the items in curly braces by the values used in the variable/dataset
 definition in the :ref:`recipe <recipe_overview>`.
 Below is a list of datasets currently supported.
 
+.. _fixing_native_era5:
+
 ERA5
 ~~~~
 
 - Supported variables: ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``)
 - Tier: 3
+
+.. _fixing_native_mswep:
 
 MSWEP
 ~~~~~
@@ -364,7 +373,7 @@ For example for monthly data, place the files in the ``/Tier3/MSWEP/latestversio
 
 For more info: http://www.gloh2o.org/
 
-Data for the version ``V220`` can be downloaded from: https://hydrology.princeton.edu/data/hylkeb/MSWEP_V220/ 
+Data for the version ``V220`` can be downloaded from: https://hydrology.princeton.edu/data/hylkeb/MSWEP_V220/.
 
 .. _fixing_native_models:
 
@@ -372,7 +381,11 @@ Native models
 -------------
 
 The following models are natively supported through the procedure described
-above (:ref:`fix_structure`) and at :ref:`configure_native_models`:
+above (:ref:`fix_structure`) and at :ref:`configure_native_models`.
+In contrast to the native observational datasets, they use dedicated projects
+instead of the project ``native6``.
+
+.. _fixing_icon:
 
 ICON
 ~~~~
@@ -408,6 +421,8 @@ Key           Description
 ``longitude`` Standard name of the longitude coordinate in the raw input file
 ``raw_name``  Variable name of the variables in the raw input file
 ============= ===============================================================
+
+.. _fixing_ipsl-cm6:
 
 IPSL-CM6
 ~~~~~~~~
