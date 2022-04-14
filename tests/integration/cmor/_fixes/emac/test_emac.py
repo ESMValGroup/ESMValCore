@@ -1,12 +1,12 @@
 """Tests for the EMAC on-the-fly CMORizer."""
-from unittest import mock
+# from unittest import mock
 
 import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris import NameConstraint
-from iris.coords import AuxCoord, DimCoord
+# from iris import NameConstraint
+from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore._config import get_extra_facets
@@ -18,9 +18,44 @@ from esmvalcore.cmor.table import get_var_info
 
 
 @pytest.fixture
-def cubes_2d(test_data_path):
-    """2D sample cubes."""
-    nc_path = test_data_path / 'emac_2d.nc'
+def cubes_aermon(test_data_path):
+    """AERmon sample cubes."""
+    nc_path = test_data_path / 'emac_aermon.nc'
+    return iris.load(str(nc_path))
+
+
+@pytest.fixture
+def cubes_amon_2d(test_data_path):
+    """Amon 2D sample cubes."""
+    nc_path = test_data_path / 'emac_amon_2d.nc'
+    return iris.load(str(nc_path))
+
+
+@pytest.fixture
+def cubes_amon_3d(test_data_path):
+    """Amon 3D sample cubes."""
+    nc_path = test_data_path / 'emac_amon_3d.nc'
+    return iris.load(str(nc_path))
+
+
+@pytest.fixture
+def cubes_column(test_data_path):
+    """column sample cubes."""
+    nc_path = test_data_path / 'emac_column.nc'
+    return iris.load(str(nc_path))
+
+
+@pytest.fixture
+def cubes_omon_2d(test_data_path):
+    """Omon 2D sample cubes."""
+    nc_path = test_data_path / 'emac_omon_2d.nc'
+    return iris.load(str(nc_path))
+
+
+@pytest.fixture
+def cubes_tracer_pdef_gp(test_data_path):
+    """tracer_pdef_gp sample cubes."""
+    nc_path = test_data_path / 'emac_tracer_pdef_gp.nc'
     return iris.load(str(nc_path))
 
 
@@ -72,9 +107,9 @@ def check_time(cube):
     assert time.var_name == 'time'
     assert time.standard_name == 'time'
     assert time.long_name == 'time'
-    assert time.units == Unit('days since 1850-01-01',
-                              calendar='proleptic_gregorian')
-    np.testing.assert_allclose(time.points, [54786.0])
+    assert time.units == Unit('day since 1849-01-01 00:00:00',
+                              calendar='gregorian')
+    np.testing.assert_allclose(time.points, [55181.9930555556])
     assert time.bounds is None
     assert time.attributes == {}
 
@@ -121,85 +156,45 @@ def check_heightxm(cube, height_value):
 
 def check_lat(cube):
     """Check latitude coordinate of cube."""
-    assert cube.coords('latitude', dim_coords=False)
-    lat = cube.coord('latitude', dim_coords=False)
+    assert cube.coords('latitude', dim_coords=True)
+    lat = cube.coord('latitude', dim_coords=True)
     assert lat.var_name == 'lat'
     assert lat.standard_name == 'latitude'
     assert lat.long_name == 'latitude'
     assert lat.units == 'degrees_north'
     np.testing.assert_allclose(
         lat.points,
-        [-45.0, -45.0, -45.0, -45.0, 45.0, 45.0, 45.0, 45.0],
-        rtol=1e-5
+        [59.4444082891668, 19.8757191474409, -19.8757191474409,
+         -59.4444082891668],
     )
     np.testing.assert_allclose(
         lat.bounds,
-        [
-            [-90.0, 0.0, 0.0],
-            [-90.0, 0.0, 0.0],
-            [-90.0, 0.0, 0.0],
-            [-90.0, 0.0, 0.0],
-            [0.0, 0.0, 90.0],
-            [0.0, 0.0, 90.0],
-            [0.0, 0.0, 90.0],
-            [0.0, 0.0, 90.0],
-        ],
-        rtol=1e-5
+        [[79.22875286, 39.66006372],
+         [39.66006372, 0.0],
+         [0.0, -39.66006372],
+         [-39.66006372, -79.22875286]],
     )
-    return lat
+    assert lat.attributes == {}
 
 
 def check_lon(cube):
     """Check longitude coordinate of cube."""
-    assert cube.coords('longitude', dim_coords=False)
-    lon = cube.coord('longitude', dim_coords=False)
+    assert cube.coords('longitude', dim_coords=True)
+    lon = cube.coord('longitude', dim_coords=True)
     assert lon.var_name == 'lon'
     assert lon.standard_name == 'longitude'
     assert lon.long_name == 'longitude'
     assert lon.units == 'degrees_east'
     np.testing.assert_allclose(
         lon.points,
-        [-135.0, -45.0, 45.0, 135.0, -135.0, -45.0, 45.0, 135.0],
-        rtol=1e-5
+        [0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0],
     )
     np.testing.assert_allclose(
         lon.bounds,
-        [
-            [-135.0, -90.0, -180.0],
-            [-45.0, 0.0, -90.0],
-            [45.0, 90.0, 0.0],
-            [135.0, 180.0, 90.0],
-            [-180.0, -90.0, -135.0],
-            [-90.0, 0.0, -45.0],
-            [0.0, 90.0, 45.0],
-            [90.0, 180.0, 135.0],
-        ],
-        rtol=1e-5
+        [[-22.5, 22.5], [22.5, 67.5], [67.5, 112.5], [112.5, 157.5],
+         [157.5, 202.5], [202.5, 247.5], [247.5, 292.5], [292.5, 337.5]],
     )
-    return lon
-
-
-def check_lat_lon(cube):
-    """Check latitude, longitude and spatial index coordinates of cube."""
-    lat = check_lat(cube)
-    lon = check_lon(cube)
-
-    # Check spatial index coordinate
-    assert cube.coords('first spatial index for variables stored on an '
-                       'unstructured grid', dim_coords=True)
-    i_coord = cube.coord('first spatial index for variables stored on an '
-                         'unstructured grid', dim_coords=True)
-    assert i_coord.var_name == 'i'
-    assert i_coord.standard_name is None
-    assert i_coord.long_name == ('first spatial index for variables stored on '
-                                 'an unstructured grid')
-    assert i_coord.units == '1'
-    np.testing.assert_allclose(i_coord.points, [0, 1, 2, 3, 4, 5, 6, 7])
-    assert i_coord.bounds is None
-
-    assert len(cube.coord_dims(lat)) == 1
-    assert cube.coord_dims(lat) == cube.coord_dims(lon)
-    assert cube.coord_dims(lat) == cube.coord_dims(i_coord)
+    assert lon.attributes == {}
 
 
 def check_typesi(cube):
@@ -397,6 +392,33 @@ def test_only_longitude():
     vardef.dimensions = original_dimensions
 
 
+# Test each 2D variable in extra_facets/emac-mappings.yml
+
+
+def test_get_awhea_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Omon', 'awhea')
+    assert fix == [AllVars(None)]
+
+
+def test_awhea_fix(cubes_omon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Omon', 'awhea')
+    fixed_cubes = fix.fix_metadata(cubes_omon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'awhea'
+    assert cube.standard_name is None
+    assert cube.long_name == ('Global Mean Net Surface Heat Flux Over Open '
+                              'Water')
+    assert cube.units == 'W m-2'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+
 # Test areacella and areacello (for extra_facets, and grid_latitude and
 # grid_longitude coordinates)
 
@@ -516,8 +538,8 @@ def test_only_longitude():
 #     fixed_cubes = siconca_fix.fix_metadata(cubes_2d)
 #     fixed_cubes = allvars_fix.fix_metadata(fixed_cubes)
 
-#     cube = check_siconc_metadata(fixed_cubes, 'siconca',
-#                                  'Sea-Ice Area Percentage (Atmospheric Grid)')
+#     cube = check_siconc_metadata(
+#       fixed_cubes, 'siconca', 'Sea-Ice Area Percentage (Atmospheric Grid)')
 #     check_time(cube)
 #     check_lat_lon(cube)
 #     check_typesi(cube)
@@ -706,7 +728,8 @@ def test_only_longitude():
 
 # def test_empty_standard_name_fix(cubes_2d):
 #     """Test fix."""
-#     # We know that tas has a standard name, but this being native model output
+#     # We know that tas has a standard name, but this being native model
+#     # output
 #     # there may be variables with no standard name. The code is designed to
 #     # handle this gracefully and here we test it with an artificial, but
 #     # realistic case.
