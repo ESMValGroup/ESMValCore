@@ -386,9 +386,9 @@ Data for the version ``V220`` can be downloaded from: https://hydrology.princeto
 Supported native models
 -----------------------
 
-The following models are natively supported by ESMValCore.  In contrast to the
-native observational datasets listed above, they use dedicated projects instead
-of the project ``native6``.
+The following models are natively supported by ESMValCore.
+In contrast to the native observational datasets listed above, they use
+dedicated projects instead of the project ``native6``.
 
 .. _fixing_icon:
 
