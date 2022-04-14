@@ -517,9 +517,9 @@ Configuring native models and observation data sets
 ----------------------------------------------------
 
 ESMValCore can be configured for handling native model output formats and
-specific observation data sets without preliminary reformatting.  You can
-choose to host this new data source either under a dedicated project or under
-project ``native6``.
+specific observation data sets without preliminary reformatting.
+You can choose to host this new data source either under a dedicated project or
+under project ``native6``.
 
 To allow ESMValTool to locate the data files, use the following steps:
 
@@ -597,17 +597,17 @@ To allow ESMValTool to locate the data files, use the following steps:
      the model.
 
 To ensure that the native dataset has the correct metadata and data (i.e., that
-it is CMOR-compliant), use :ref:`dataset fixes <fixing_data>`.  This is where
-the actual CMORization takes place.  For example, a ``native6`` dataset fix for
-ERA5 is located `here
+it is CMOR-compliant), use :ref:`dataset fixes <fixing_data>`.
+This is where the actual CMORization takes place.
+For example, a ``native6`` dataset fix for ERA5 is located `here
 <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/_fixes/native6/era5.py>`__,
 and the ``ICON`` fix is located `here
 <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/_fixes/icon/icon.py>`__.
 
 If necessary, provide a so-called ``extra facets file`` which allows to cope
 e.g. with variable naming issues for finding files or additional information
-that is mnecessary for the fixes. See :ref:`extra_facets` and :download:`this
-example of such a file for IPSL-CM6
+that is mnecessary for the fixes.
+See :ref:`extra_facets` and :download:`this example of such a file for IPSL-CM6
 <../../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`.
 
 An overview of all supported native datasets is given :ref:`here
