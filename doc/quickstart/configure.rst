@@ -513,13 +513,13 @@ related to CMOR table settings available:
 
 .. _configure_native_models:
 
-Configuring native models and observation datasets
---------------------------------------------------
+Configuring datasets in native format
+-------------------------------------
 
 ESMValCore can be configured for handling native model output formats and
 specific observation datasets without preliminary reformatting.
 These datasets can be either hosted under the ``native6`` project (mostly
-native observational datase) or under a dedicated project, e.g., ``ICON``
+native observational datasets) or under a dedicated project, e.g., ``ICON``
 (mostly native models).
 
 Example:

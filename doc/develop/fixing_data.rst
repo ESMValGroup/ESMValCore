@@ -22,7 +22,7 @@ files and must go through some other data load function.
 
 The ESMValCore can apply on the fly fixes to such datasets when
 issues can be fixed automatically. This is implemented for a set
-of `Natively supported non-CMIP datasets`_. The following provides
+of :ref:`fixing_native_datasets`. The following provides
 details on how to design such fixes.
 
 .. note::
@@ -331,8 +331,8 @@ strictness to the highest:
 
 .. _fixing_native_datasets:
 
-Natively supported non-CMOR datasets
-====================================
+Natively supported datasets
+===========================
 
 Some datasets are supported in their native format through the ``native6``
 project (mostly native observational datasets) or through a dedicated project,
