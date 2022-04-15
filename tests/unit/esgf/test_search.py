@@ -192,8 +192,8 @@ def test_esgf_search_files(mocker):
     }
     file_results = [file_aims0, file_aims1, file_dkrz]
     conn = get_mock_connection(facets, file_results)
-    mocker.patch.object(_search,
-                        'get_connection',
+    mocker.patch.object(_search.pyesgf.search,
+                        'SearchConnection',
                         autspec=True,
                         return_value=conn)
 

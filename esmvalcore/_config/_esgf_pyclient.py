@@ -135,8 +135,18 @@ def load_esgf_pyclient_config():
         # Arguments to
         # https://esgf-pyclient.readthedocs.io/en/latest/api.html#pyesgf.search.connection.SearchConnection
         'search_connection': {
+            # List of available index nodes: https://esgf.llnl.gov/nodes.html
             # Be careful about the url, not all search urls have CMIP3 data?
-            'url': 'http://esgf-node.llnl.gov/esg-search',
+            'urls': [
+                'https://esgf-index1.ceda.ac.uk/esg-search',
+                'https://esgf-node.llnl.gov/esg-search',
+                'https://esgf-data.dkrz.de/esg-search',
+                'https://esgf-node.ipsl.upmc.fr/esg-search',
+                'https://esg-dn1.nsc.liu.se/esg-search',
+                'https://esgf.nci.org.au/esg-search',
+                'https://esgf.nccs.nasa.gov/esg-search',
+                'https://esgdata.gfdl.noaa.gov/esg-search',
+            ],
             'distrib': True,
             'timeout': 120,
             'cache': '~/.esmvaltool/cache/pyesgf-search-results',
@@ -151,6 +161,9 @@ def load_esgf_pyclient_config():
     for section in ['logon', 'search_connection']:
         cfg[section].update(file_cfg.get(section, {}))
 
+    if 'url' in cfg['search_connection']:
+        url = cfg['search_connection'].pop('url')
+        cfg['search_connection']['urls'] = [url]
     if 'cache' in cfg['search_connection']:
         cache_file = _normalize_path(cfg['search_connection']['cache'])
         cfg['search_connection']['cache'] = cache_file
