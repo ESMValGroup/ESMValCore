@@ -13,8 +13,16 @@ DEFAULT_CONFIG: dict = {
         'bootstrap': True,
     },
     'search_connection': {
-        'url':
-        'http://esgf-node.llnl.gov/esg-search',
+        'urls': [
+            'https://esgf-index1.ceda.ac.uk/esg-search',
+            'https://esgf-node.llnl.gov/esg-search',
+            'https://esgf-data.dkrz.de/esg-search',
+            'https://esgf-node.ipsl.upmc.fr/esg-search',
+            'https://esg-dn1.nsc.liu.se/esg-search',
+            'https://esgf.nci.org.au/esg-search',
+            'https://esgf.nccs.nasa.gov/esg-search',
+            'https://esgdata.gfdl.noaa.gov/esg-search',
+        ],
         'distrib':
         True,
         'timeout':
@@ -22,7 +30,7 @@ DEFAULT_CONFIG: dict = {
         'cache':
         str(Path.home() / '.esmvaltool' / 'cache' / 'pyesgf-search-results'),
         'expire_after':
-        86400
+        86400,
     },
 }
 
@@ -35,6 +43,7 @@ CREDENTIALS = {
 
 class MockKeyring:
     """Mock keyring module."""
+
     def __init__(self):
         self.items = defaultdict(dict)
 
