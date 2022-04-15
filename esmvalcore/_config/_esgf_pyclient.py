@@ -120,6 +120,13 @@ def read_config_file():
             "file %s not present.", CONFIG_FILE)
         cfg = {}
 
+    # For backwards compatibility: prior to v2.6 the configuration file
+    # contained a single URL instead of a list of URLs.
+    if 'search_connection' in cfg:
+        if 'url' in cfg['search_connection']:
+            url = cfg['search_connection'].pop('url')
+            cfg['search_connection']['urls'] = [url]
+
     return cfg
 
 
@@ -161,9 +168,6 @@ def load_esgf_pyclient_config():
     for section in ['logon', 'search_connection']:
         cfg[section].update(file_cfg.get(section, {}))
 
-    if 'url' in cfg['search_connection']:
-        url = cfg['search_connection'].pop('url')
-        cfg['search_connection']['urls'] = [url]
     if 'cache' in cfg['search_connection']:
         cache_file = _normalize_path(cfg['search_connection']['cache'])
         cfg['search_connection']['cache'] = cache_file
