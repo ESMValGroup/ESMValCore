@@ -1,7 +1,9 @@
 """Test 1esmvalcore.esgf._search`."""
 import copy
+import textwrap
 
 import pytest
+import requests.exceptions
 from pyesgf.search.context import FileSearchContext
 from pyesgf.search.results import FileResult
 
@@ -112,16 +114,21 @@ def test_get_esgf_facets(our_facets, esgf_facets):
     assert facets == esgf_facets
 
 
-def get_mock_connection(facets, results):
+def get_mock_connection(facets, results, raises=None):
     """Create a mock pyesgf.search.SearchConnection instance."""
+
     class MockFileSearchContext:
+
         def search(self, **kwargs):
             assert kwargs['batch_size'] == 500
             assert kwargs['ignore_facet_check']
             assert len(kwargs) == 2
+            if raises:
+                raise raises
             return results
 
     class MockConnection:
+
         def new_context(self, *args, **kwargs):
             assert len(args) == 1
             assert args[0] == FileSearchContext
@@ -219,6 +226,35 @@ def test_esgf_search_files(mocker):
     urls = sorted(file1.urls)
     assert len(urls) == 1
     assert urls[0] == aims_url1
+
+
+def test_esgf_search_fails(mocker):
+    cfg = {
+        'search_connection': {
+            'urls': [
+                'https://test_1.com',
+                'https://test_2.com',
+            ]
+        },
+    }
+    mocker.patch.object(_search, "get_esgf_config", return_value=cfg)
+    conn = get_mock_connection(
+        facets={},
+        results=[],
+        raises=requests.exceptions.ReadTimeout("Timeout error message"),
+    )
+    mocker.patch.object(_search.pyesgf.search,
+                        'SearchConnection',
+                        autspec=True,
+                        return_value=conn)
+    with pytest.raises(FileNotFoundError) as excinfo:
+        _search.esgf_search_files(facets={})
+    error_message = textwrap.dedent("""
+    Failed to search ESGF, unable to connect:
+    - Timeout error message
+    - Timeout error message
+    """).strip()
+    assert str(excinfo.value) == error_message
 
 
 def test_select_by_time():

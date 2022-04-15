@@ -104,8 +104,8 @@ def _search_index_nodes(facets):
         except requests.exceptions.ReadTimeout as error:
             errors.append(error)
 
-    raise FileNotFoundError("Failed to search ESGF, unable to connect:\n"
-                            "\n - ".join(str(error) for error in errors))
+    raise FileNotFoundError("Failed to search ESGF, unable to connect:\n" +
+                            "\n".join(f"- {e}" for e in errors))
 
 
 def esgf_search_files(facets):
