@@ -337,13 +337,6 @@ be provided in the section ``search_connection``, for example:
 .. code-block:: yaml
 
     search_connection:
-      url: "http://esgf-index1.ceda.ac.uk/esg-search"
-
-to choose the CEDA index node or
-
-.. code-block:: yaml
-
-    search_connection:
       expire_after: 2592000  # the number of seconds in a month
 
 to keep cached search results for a month.
@@ -352,11 +345,27 @@ The default settings are:
 
 .. code-block:: yaml
 
-    url: 'http://esgf-node.llnl.gov/esg-search'
+    urls:
+      - 'https://esgf-index1.ceda.ac.uk/esg-search'
+      - 'https://esgf-node.llnl.gov/esg-search'
+      - 'https://esgf-data.dkrz.de/esg-search'
+      - 'https://esgf-node.ipsl.upmc.fr/esg-search'
+      - 'https://esg-dn1.nsc.liu.se/esg-search'
+      - 'https://esgf.nci.org.au/esg-search'
+      - 'https://esgf.nccs.nasa.gov/esg-search'
+      - 'https://esgdata.gfdl.noaa.gov/esg-search'
     distrib: true
     timeout: 120  # seconds
     cache: '~/.esmvaltool/cache/pyesgf-search-results'
     expire_after: 86400  # cache expires after 1 day
+
+Note that by default the tool will try the
+`ESGF index nodes <https://esgf.llnl.gov/nodes.html>`_
+in the order provided in the configuration file and use the first one that is
+online.
+Some ESGF index nodes may return search results faster than others, so you may
+be able to speed up the search for files by experimenting with placing different
+index nodes at the top of the list.
 
 If you experience errors while searching, it sometimes helps to delete the
 cached results.
