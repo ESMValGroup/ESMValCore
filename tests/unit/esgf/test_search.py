@@ -232,8 +232,8 @@ def test_esgf_search_fails(mocker):
     cfg = {
         'search_connection': {
             'urls': [
-                'https://test_1.com',
-                'https://test_2.com',
+                'https://esgf-index1.ceda.ac.uk/esg-search',
+                'https://esgf-node.llnl.gov/esg-search',
             ]
         },
     }

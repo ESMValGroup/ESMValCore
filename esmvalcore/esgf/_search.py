@@ -64,6 +64,10 @@ def select_latest_versions(files):
     return result
 
 
+FIRST_ONLINE_INDEX_NODE = None
+"""Remember the first index node that is online."""
+
+
 def _search_index_nodes(facets):
     """Search for files on ESGF.
 
@@ -86,6 +90,10 @@ def _search_index_nodes(facets):
     search_args = dict(cfg["search_connection"])
     urls = search_args.pop("urls")
 
+    global FIRST_ONLINE_INDEX_NODE
+    if FIRST_ONLINE_INDEX_NODE:
+        urls.insert(0, urls.pop(urls.index(FIRST_ONLINE_INDEX_NODE)))
+
     errors = []
     for url in urls:
         connection = pyesgf.search.SearchConnection(url=url, **search_args)
@@ -100,6 +108,7 @@ def _search_index_nodes(facets):
                 batch_size=500,
                 ignore_facet_check=True,
             )
+            FIRST_ONLINE_INDEX_NODE = url
             return results
         except requests.exceptions.ReadTimeout as error:
             errors.append(error)
