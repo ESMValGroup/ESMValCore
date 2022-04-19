@@ -337,7 +337,7 @@ Natively supported datasets
 Some datasets are supported in their native format through the ``native6``
 project (mostly native observational datasets) or through a dedicated project,
 e.g., ``ICON`` (mostly native models).
-A detailed description on how to inlcude new native datasets is given :ref:`at
+A detailed description of how to include new native datasets is given :ref:`at
 the end of this section <how_to_fix_native_datasets>`.
 
 .. _fixing_native_obs:
