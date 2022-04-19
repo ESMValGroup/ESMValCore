@@ -198,14 +198,13 @@ Key           Description
    cell area variables are required.
    Make sure that this file is not found when other variables are loaded.
 
-   For example, use a new ``var_type: horizontalgrid`` for this file.
-   Thus, a file called
+   For example, you could use a new ``var_type``, e.g., ``horizontalgrid`` for
+   this file.
+   Thus, an ICON grid file located in
    ``2.6.1_atm_amip_R2B5_r1v1i1p1l1f1/2.6.1_atm_amip_R2B5_r1v1i1p1l1f1_horizontalgrid.nc``
-   can be found using the recipe entry ``{project: ICON, dataset: ICON,
-   component: atm, version: 2.6.1, exp: amip, grid: R2B5, ensemble:
-   r1v1i1p1l1f1, mip: fx, short_name: areacella, var_type: horizontalgrid}``
-   (assuming the default naming conventions listed above).
-   Make sure that no other variable uses ``var_type: horizontalgrid``.
+   can be found using ``var_type: horizontalgrid`` in the recipe (assuming the
+   default naming conventions listed above).
+   Make sure that no other variable uses this ``var_type``.
 
 .. _read_ipsl-cm6:
 
