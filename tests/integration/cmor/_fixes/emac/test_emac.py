@@ -10,7 +10,13 @@ from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore._config import get_extra_facets
-from esmvalcore.cmor._fixes.emac.emac import AllVars, Clt, Clwvi, Evspsbl
+from esmvalcore.cmor._fixes.emac.emac import (
+    AllVars,
+    Clt,
+    Clwvi,
+    Evspsbl,
+    Od550aer,
+)
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -161,6 +167,18 @@ def check_heightxm(cube, height_value):
     assert height.attributes == {'positive': 'up'}
     np.testing.assert_allclose(height.points, [height_value])
     assert height.bounds is None
+
+
+def check_lambda550nm(cube):
+    """Check scalar lambda550nm coordinate of cube."""
+    assert cube.coords('radiation_wavelength')
+    typesi = cube.coord('radiation_wavelength')
+    assert typesi.var_name == 'wavelength'
+    assert typesi.standard_name == 'radiation_wavelength'
+    assert typesi.long_name == 'Radiation Wavelength 550 nanometers'
+    assert typesi.units == 'nm'
+    np.testing.assert_array_equal(typesi.points, [550.0])
+    assert typesi.bounds is None
 
 
 def check_lat(cube):
@@ -430,7 +448,7 @@ def test_awhea_fix(cubes_omon_2d):
     np.testing.assert_allclose(
         cube.data[:, :, 0],
         [[-203.94414, -16.695345, 74.117096, 104.992195]],
-        rtol=1e-6,
+        rtol=1e-5,
     )
 
 
@@ -459,7 +477,7 @@ def test_clivi_fix(cubes_amon_2d):
     np.testing.assert_allclose(
         cube.data[:, :, 0],
         [[0.01435195, 0.006420649, 0.0007885683, 0.01154814]],
-        rtol=1e-6,
+        rtol=1e-5,
     )
 
 
@@ -493,7 +511,7 @@ def test_clt_fix(cubes_amon_2d):
     np.testing.assert_allclose(
         cube.data[:, :, 0],
         [[86.79899, 58.01009, 34.01953, 85.48493]],
-        rtol=1e-6,
+        rtol=1e-5,
     )
 
 
@@ -528,7 +546,7 @@ def test_clwvi_fix(cubes_amon_2d):
     np.testing.assert_allclose(
         cube.data[:, :, 0],
         [[0.20945302, 0.01015517, 0.01444221, 0.10618545]],
-        rtol=1e-6,
+        rtol=1e-5,
     )
 
 
@@ -555,7 +573,7 @@ def test_co2mass_fix(cubes_tracer_pdef_gp):
     np.testing.assert_allclose(
         cube.data,
         [2.855254e+15, 2.85538e+15],
-        rtol=1e-6,
+        rtol=1e-5,
     )
 
 
@@ -591,7 +609,101 @@ def test_evspsbl_fix(cubes_amon_2d):
     np.testing.assert_allclose(
         cube.data[:, :, 0],
         [[3.636807e-05, 3.438968e-07, 6.235108e-05, 1.165336e-05]],
-        rtol=1e-6,
+        rtol=1e-5,
+    )
+
+
+def test_get_hfls_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'hfls')
+    assert fix == [AllVars(None)]
+
+
+def test_hfls_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'hfls')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'hfls'
+    assert cube.standard_name == 'surface_upward_latent_heat_flux'
+    assert cube.long_name == 'Surface Upward Latent Heat Flux'
+    assert cube.units == 'W m-2'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[-90.94926, -0.860017, -155.92758, -29.142715]],
+        rtol=1e-5,
+    )
+
+
+def test_get_hfss_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'hfss')
+    assert fix == [AllVars(None)]
+
+
+def test_hfss_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'hfss')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'hfss'
+    assert cube.standard_name == 'surface_upward_sensible_heat_flux'
+    assert cube.long_name == 'Surface Upward Sensible Heat Flux'
+    assert cube.units == 'W m-2'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[-65.92767, -32.841537, -18.461172, -6.50319]],
+        rtol=1e-5,
+    )
+
+
+def test_get_od550aer_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'od550aer')
+    assert fix == [Od550aer(None), AllVars(None)]
+
+
+def test_od550aer_fix(cubes_aermon):
+    """Test fix."""
+    vardef = get_var_info('EMAC', 'Amon', 'od550aer')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'od550aer', ())
+    fix = Od550aer(vardef, extra_facets=extra_facets)
+    fixed_cubes = fix.fix_metadata(cubes_aermon)
+
+    fix = get_allvars_fix('Amon', 'od550aer')
+    fixed_cubes = fix.fix_metadata(fixed_cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'od550aer'
+    assert cube.standard_name == ('atmosphere_optical_thickness_due_to_'
+                                  'ambient_aerosol_particles')
+    assert cube.long_name == 'Ambient Aerosol Optical Thickness at 550nm'
+    assert cube.units == '1'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+    check_lambda550nm(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[0.166031, 0.271185, 0.116384, 0.044266]],
+        rtol=1e-5,
     )
 
 

@@ -202,29 +202,6 @@ class Clwvi(EmacFix):
 Evspsbl = NegateData
 
 
-class Lnox(EmacFix):
-    """Fixes for ``lnox``."""
-
-    def fix_metadata(self, cubes):
-        """Fix metadata."""
-        noxcg_cube = cubes.extract_cube(NameConstraint(var_name='NOxcg_ave'))
-        noxic_cube = cubes.extract_cube(NameConstraint(var_name='NOxic_ave'))
-
-        # Fix units
-        noxcg_cube.units = 'kg'
-        noxic_cube.units = 'kg'
-        noxcg_cube = noxcg_cube.collapsed(['longitude', 'latitude'],
-                                          iris.analysis.SUM)
-        noxic_cube = noxic_cube.collapsed(['longitude', 'latitude'],
-                                          iris.analysis.SUM)
-
-        # Calculate lnox
-        timestep = float(noxcg_cube.attributes['GCM_timestep'])
-        cube = (noxcg_cube + noxic_cube) / timestep * 365.0 * 24.0 * 3600.0
-
-        return CubeList([cube])
-
-
 class MP_BC_tot(EmacFix):  # noqa: N801
     """Fixes for ``MP_BC_tot``."""
 
