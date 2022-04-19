@@ -149,11 +149,11 @@ ESMValTool is able to read native `ICON
 
 The default naming conventions for input directories and files for ICON are
 
-* input directories ``[version]_[component]_[exp]_[grid]_[ensemble]``
-* input files ``[version]_[component]_[exp]_[grid]_[ensemble]_[var_type]*.nc``
+* input directories: ``[version]_[component]_[exp]_[grid]_[ensemble]``
+* input files: ``[version]_[component]_[exp]_[grid]_[ensemble]_[var_type]*.nc``
 
-as configured in the :ref:`config-developer file <config-developer>` and using
-the default DRS (``drs: default`` in the :ref:`user configuration file`).
+as configured in the :ref:`config-developer file <config-developer>` (using the
+default DRS ``drs: default`` in the :ref:`user configuration file`).
 
 Thus, example dataset entries could look like this:
 
@@ -188,7 +188,7 @@ Key           Description
 ``raw_name``  Variable name of the variables in the raw input file
 ============= ===============================================================
 
-.. hint:
+.. hint::
 
    In order to read cell area files (``areacella`` and ``areacello``), one
    additional manual step is necessary:
