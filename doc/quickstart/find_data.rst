@@ -1,8 +1,8 @@
 .. _findingdata:
 
-************
+**********
 Input data
-************
+**********
 
 Overview
 ========
@@ -48,13 +48,6 @@ From the ESMValTool user perspective the number of data input parameters is
 optimized to allow for ease of use. We detail this procedure in the next
 section.
 
-Native model data
------------------
-Support for native model data that is not formatted according to a CMIP
-data request is quite easy using basic
-:ref:`ESMValCore fix procedure <fixing_data>` and has been implemented
-for some models :ref:`as described here <fixing_native_models>`
-
 Observational data
 ------------------
 Part of observational data is retrieved in the same manner as CMIP data, for example
@@ -81,6 +74,135 @@ Since observational data are organized in Tiers depending on their level of
 public availability, the ``default`` directory must be structured accordingly
 with sub-directories ``TierX`` (``Tier1``, ``Tier2`` or ``Tier3``), even when
 ``drs: default``.
+
+
+.. _read_native_datasets:
+
+Datasets in native format
+-------------------------
+
+Some datasets are supported in their native format (i.e., the data is not
+formatted according to a CMIP data request) through the ``native6`` project
+(mostly native reanalysis/observational datasets) or through a dedicated
+project, e.g., ``ICON`` (mostly native models).
+A detailed description of how to include new native datasets is given
+:ref:`here <add_new_fix_native_datasets>`.
+
+.. _read_native_obs:
+
+Supported native reanalysis/observational datasets
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following native reanalysis/observational datasets are supported under the
+``native6`` project.
+To use these datasets, put the files containing the data in the directory that
+you have configured for the ``native6`` project in your :ref:`user
+configuration file`, in a subdirectory called
+``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``.
+Replace the items in curly braces by the values used in the variable/dataset
+definition in the :ref:`recipe <recipe_overview>`.
+Below is a list of native reanalysis/observational datasets currently
+supported.
+
+.. _read_native_era5:
+
+ERA5
+^^^^
+
+- Supported variables: ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``)
+- Tier: 3
+
+.. _read_native_mswep:
+
+MSWEP
+^^^^^
+
+- Supported variables: ``pr``
+- Supported frequencies: ``mon``, ``day``, ``3hr``.
+- Tier: 3
+
+For example for monthly data, place the files in the ``/Tier3/MSWEP/latestversion/mon/pr`` subdirectory of your ``native6`` project location.
+
+.. note::
+  For monthly data (``V220``), the data must be postfixed with the date, i.e. rename ``global_monthly_050deg.nc`` to ``global_monthly_050deg_197901-201710.nc``
+
+For more info: http://www.gloh2o.org/
+
+Data for the version ``V220`` can be downloaded from: https://hydrology.princeton.edu/data/hylkeb/MSWEP_V220/.
+
+.. _read_native_models:
+
+Supported native models
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The following models are natively supported by ESMValCore.
+In contrast to the native observational datasets listed above, they use
+dedicated projects instead of the project ``native6``.
+
+.. _read_icon:
+
+ICON
+^^^^
+
+The ESMValTool is able to read native `ICON
+<https://code.mpimet.mpg.de/projects/iconpublic>`_ model output. Example
+dataset entries could look like this:
+
+.. code-block:: yaml
+
+  datasets:
+    - {project: ICON, dataset: ICON, component: atm, version: 2.6.1,
+       exp: amip, grid: R2B5, ensemble: r1v1i1p1l1f1, mip: Amon,
+       short_name: tas, var_type: atm_2d_ml, start_year: 2000, end_year: 2014}
+    - {project: ICON, dataset: ICON, component: atm, version: 2.6.1,
+       exp: amip, grid: R2B5, ensemble: r1v1i1p1l1f1, mip: Amon,
+       short_name: ta, var_type: atm_3d_ml, start_year: 2000, end_year: 2014}
+
+Please note the duplication of the name ``ICON`` in ``project`` and
+``dataset``, which is necessary to comply with ESMValTool's data finding and
+CMORizing functionalities.
+
+Similar to any other fix, the ICON fix allows the use of :ref:`extra
+facets<extra_facets>`. By default, the file :download:`icon-mapping.yml
+</../esmvalcore/_config/extra_facets/icon-mapping.yml>` is used for that
+purpose. For some variables, extra facets are necessary; otherwise ESMValTool
+cannot read them properly. Supported keys for extra facets are:
+
+============= ===============================================================
+Key           Description
+============= ===============================================================
+``latitude``  Standard name of the latitude coordinate in the raw input file
+``longitude`` Standard name of the longitude coordinate in the raw input file
+``raw_name``  Variable name of the variables in the raw input file
+============= ===============================================================
+
+.. _read_ipsl-cm6:
+
+IPSL-CM6
+^^^^^^^^
+
+Both output formats (i.e. the ``Output`` and the ``Analyse / Time series``
+formats) are supported, and should be configured in recipes as e.g.:
+
+.. code-block:: yaml
+
+  datasets:
+    - {simulation: CM61-LR-hist-03.1950, exp: piControl, out: Analyse, freq: TS_MO,
+       account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
+       root: /thredds/tgcc/store}
+    - {simulation: CM61-LR-hist-03.1950, exp: historical, out: Output, freq: MO,
+       account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
+       root: /thredds/tgcc/store}
+
+.. _ipslcm_extra_facets_example:
+
+The ``Output`` format is an example of a case where variables are grouped in
+multi-variable files, which name cannot be computed directly from datasets
+attributes alone but requires to use an extra_facets file, which principles are
+explained in :ref:`extra_facets`, and which content is :download:`available here
+</../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`. These multi-variable
+files must also undergo some data selection.
+
 
 .. _data-retrieval:
 
