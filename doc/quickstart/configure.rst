@@ -547,7 +547,7 @@ Example:
      cmor_default_table_prefix: 'CMIP6_'
 
 A detailed description on how to add support for further native datasets is
-given :ref:`here <how_to_fix_native_datasets>`.
+given :ref:`here <add_new_fix_native_datasets>`.
 
 
 .. _config-ref:
