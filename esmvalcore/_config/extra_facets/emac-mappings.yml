@@ -33,8 +33,6 @@ EMAC:
     hfss:
       raw_name: ahfs_ave
       channel: Amon
-    lnox:  # non-CMOR variable; derived from NOxcg_ave, NOxic_ave
-      channel: lnox_PaR_T_gp
     od550aer:
       raw_name: aot_opt_TOT_550_total_ave
       channel: AERmon
@@ -105,49 +103,6 @@ EMAC:
       raw_name: tsurf_ave
       channel: Amon
 
-    # Forcings (non-CMOR variables)
-    ANTHNT_AER_TC_s:  # derived from ANTHNT_AER_BC, ANTHNT_AER_OC
-      channel: import_grid
-    ANTHNT_CO_s:
-      raw_name: ANTHNT_CO
-      channel: import_grid
-    ANTHNT_NO_s:
-      raw_name: ANTHNT_NO
-      channel: import_grid
-    ANTHNT_SO2_s:
-      raw_name: ANTHNT_SO2
-      channel: import_grid
-    BB_AER_TC_s:  # derived from BB_AER_BC, BB_AER_OC
-      channel: import_grid
-    BB_CO_s:
-      raw_name: BB_CO
-      channel: import_grid
-    BB_NO_s:
-      raw_name: BB_NO
-      channel: import_grid
-    BB_SO2_s:
-      raw_name: BB_SO2
-      channel: import_grid
-    ROAD_AER_BC:
-      channel: import_grid
-    ROAD_NO:
-      channel: import_grid
-    SHIP_AER_BC_s:
-      raw_name: SHIP_AER_BC
-      channel: import_grid
-    SHIP_NO_s:
-      raw_name: SHIP_NO
-      channel: import_grid
-    SHIP_SO2_s:
-      raw_name: SHIP_SO2
-      channel: import_grid
-    TN_GHG_CH4:
-      channel: import_grid
-    TN_GHG_CO2:
-      channel: import_grid
-    TN_GHG_N2O:
-      channel: import_grid
-
     # Tracers (non-CMOR variables)
     MP_BC_tot:  # derived from MP_BC_ks_ave, MP_BC_as_ave, MP_BC_cs_ave, MP_BC_ki_ave
       channel: tracer_pdef_gp
@@ -212,9 +167,56 @@ EMAC:
 
 
 # Elements missing from original mapping table
-# Note: mixed channels are not supported yet
-# AIRC_NO_s: {airc_NO: import_grid, geopot_ave: Amon}  -> mixed channels
-# VOLC_SO2_s: {VOLC_SO2_SO2: import_grid, geopot_ave: Amon} -> mixed channels
-# cod_sw_b01: -> no test data available
+#
+# Mixed channels (not supported yet; this probably needs to be implemented as
+# derivation)
+# AIRC_NO_s: {airc_NO: import_grid, geopot_ave: Amon}
+# VOLC_SO2_s: {VOLC_SO2_SO2: import_grid, geopot_ave: Amon}
+#
+# No test data available
+# cod_sw_b01:
 #   raw_name: tau_cld_sw_B01_ave
 #   channel: Amon
+# lnox:  # non-CMOR variable; derived from NOxcg_ave, NOxic_ave
+#   channel: lnox_PaR_T_gp
+# ANTHNT_AER_TC_s:  # derived from ANTHNT_AER_BC, ANTHNT_AER_OC
+#   channel: import_grid
+# ANTHNT_CO_s:
+#   raw_name: ANTHNT_CO
+#   channel: import_grid
+# ANTHNT_NO_s:
+#   raw_name: ANTHNT_NO
+#   channel: import_grid
+# ANTHNT_SO2_s:
+#   raw_name: ANTHNT_SO2
+#   channel: import_grid
+# BB_AER_TC_s:  # derived from BB_AER_BC, BB_AER_OC
+#   channel: import_grid
+# BB_CO_s:
+#   raw_name: BB_CO
+#   channel: import_grid
+# BB_NO_s:
+#   raw_name: BB_NO
+#   channel: import_grid
+# BB_SO2_s:
+#   raw_name: BB_SO2
+#   channel: import_grid
+# ROAD_AER_BC:
+#   channel: import_grid
+# ROAD_NO:
+#   channel: import_grid
+# SHIP_AER_BC_s:
+#   raw_name: SHIP_AER_BC
+#   channel: import_grid
+# SHIP_NO_s:
+#   raw_name: SHIP_NO
+#   channel: import_grid
+# SHIP_SO2_s:
+#   raw_name: SHIP_SO2
+#   channel: import_grid
+# TN_GHG_CH4:
+#   channel: import_grid
+# TN_GHG_CO2:
+#   channel: import_grid
+# TN_GHG_N2O:
+#   channel: import_grid
