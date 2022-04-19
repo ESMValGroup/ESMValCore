@@ -465,8 +465,10 @@ under project ``native6``.
 
 To allow ESMValCore to locate the data files, use the following steps:
 
-   - If you want to use the ``native6`` project (recommended for native
-     observational datasets):
+   - If you want to use the ``native6`` project (recommended for datasets whose
+     input files can be easily moved to the usual ``native6`` directory
+     structure given by the ``rootpath`` in your :ref:`user configuration
+     file`; this is usually the case for native observational datasets):
 
      The entry ``native6`` of ``config-developer.yml`` should be complemented
      with sub-entries for ``input_dir`` and ``input_file`` that go under a new
@@ -506,7 +508,8 @@ To allow ESMValCore to locate the data files, use the following steps:
           native6: MY_DATA_ORG
 
    - If you want to use a dedicated project for your native dataset
-     (recommended for native models):
+     (recommended for datasets for which you cannot control the location of the
+     input files; this is usually the case for native model output):
 
      A new entry for the project needs to be added to ``config-developer.yml``.
      For example, for the ICON model, create a new project ``ICON``:
