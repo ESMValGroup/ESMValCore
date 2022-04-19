@@ -545,44 +545,41 @@ overwritten in ``config-developer.yml``).
 
 .. _configure_native_models:
 
-Configuring native models and observation data sets
-----------------------------------------------------
+Configuring datasets in native format
+-------------------------------------
 
-ESMValCore can be configured for handling native model output formats
-and specific
-observation data sets without preliminary reformatting. You can choose
-to host this new data source either under a dedicated project or under
-project ``native6``; when choosing the latter, such a configuration
-involves the following steps:
+ESMValCore can be configured for handling native model output formats and
+specific reanalysis/observation datasets without preliminary reformatting.
+These datasets can be either hosted under the ``native6`` project (mostly
+native reanalysis/observational datasets) or under a dedicated project, e.g.,
+``ICON`` (mostly native models).
 
-  - allowing for ESMValTool to locate the data files:
+Example:
 
-    - entry ``native6`` of ``config-developer.yml`` should be
-      complemented with sub-entries for ``input_dir`` and ``input_file``
-      that goes under a new key representing the
-      data organization (such as ``MY_DATA_ORG``), and these sub-entries can
-      use an arbitrary list of ``{placeholders}``. Example :
+.. code-block:: yaml
 
-      .. code-block:: yaml
+   native6:
+     cmor_strict: false
+     input_dir:
+       default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
+     input_file:
+       default: '*.nc'
+     output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
+     cmor_type: 'CMIP6'
+     cmor_default_table_prefix: 'CMIP6_'
 
-        native6:
-          ...
-          input_dir:
-             default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
-             MY_DATA_ORG: '{model}/{exp}/{simulation}/{version}/{type}'
-          input_file:
-            default: '*.nc'
-            MY_DATA_ORG: '{simulation}_*.nc'
-          ...
+   ICON:
+     cmor_strict: false
+     input_dir:
+       default: '{version}_{component}_{exp}_{grid}_{ensemble}'
+     input_file:
+       default: '{version}_{component}_{exp}_{grid}_{ensemble}_{var_type}*.nc'
+     output_file: '{dataset}_{version}_{component}_{grid}_{mip}_{exp}_{ensemble}_{short_name}_{var_type}'
+     cmor_type: 'CMIP6'
+     cmor_default_table_prefix: 'CMIP6_'
 
-    - if necessary, provide a so-called ``extra facets file`` which
-      allows to cope e.g. with variable naming issues for finding
-      files. See :ref:`extra_facets` and :download:`this example of
-      such a file for IPSL-CM6
-      <../../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`.
-
-  - ensuring that ESMValCore get the right metadata and data out of
-    your data files: this is described in :ref:`fixing_data`
+A detailed description on how to add support for further native datasets is
+given :ref:`here <add_new_fix_native_datasets>`.
 
 
 .. _config-ref:

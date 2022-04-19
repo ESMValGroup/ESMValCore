@@ -16,14 +16,18 @@ attribute ''units'' says 1e-9 but data are actually in 1e-6), missing or
 mislabeled coordinates (e.g. ''lev'' instead of ''plev'' or missing
 coordinate bounds like ''lat_bnds'') or problems with the actual data
 (e.g. cloud liquid water only instead of sum of liquid + ice as specified by the CMIP data request).
-
 As an extreme case, some data sources simply are not NetCDF
 files and must go through some other data load function.
+ESMValCore can apply on-the-fly fixes to such datasets when issues can be fixed
+automatically.
 
-The ESMValCore can apply on the fly fixes to such datasets when
-issues can be fixed automatically. This is implemented for a set
-of `Natively supported non-CMIP datasets`_. The following provides
-details on how to design such fixes.
+In addition, some datasets are supported in their native (i.e., non
+CMOR-compliant) format through fixes.
+This is implemented for a set of :ref:`read_native_datasets`.
+A detailed description of how to include new native datasets is given
+:ref:`below <add_new_fix_native_datasets>`.
+
+The following sections provide details on how to design such fixes.
 
 .. note::
 
@@ -329,110 +333,124 @@ strictness to the highest:
   be sure that future users will not be distracted by inoffensive warnings.
 
 
-Natively supported non-CMIP datasets
-====================================
+.. _add_new_fix_native_datasets:
 
-Some fixed datasets and native models formats are supported through
-the ``native6`` project or through a dedicated project.
+Add support for new native datasets
+===================================
 
-Observational Datasets
-----------------------
-Put the files containing the data in the directory that you have configured
-for the ``native6`` project in your :ref:`user configuration file`, in a
-subdirectory called ``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``.
-Replace the items in curly braces by the values used in the variable/dataset
-definition in the :ref:`recipe <recipe_overview>`.
-Below is a list of datasets currently supported.
+This section describes how to add support for additional native datasets.
+You can choose to host this new data source either under a dedicated project or
+under project ``native6``.
 
-ERA5
-~~~~
+.. _add_new_fix_native_datasets_locate_data:
 
-- Supported variables: ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``)
-- Tier: 3
+Locate data
+-----------
 
-MSWEP
-~~~~~
+To allow ESMValCore to locate the data files, use the following steps:
 
-- Supported variables: ``pr``
-- Supported frequencies: ``mon``, ``day``, ``3hr``.
-- Tier: 3
+   - If you want to use the ``native6`` project (recommended for datasets whose
+     input files can be easily moved to the usual ``native6`` directory
+     structure given by the ``rootpath`` in your :ref:`user configuration
+     file`; this is usually the case for native reanalysis/observational
+     datasets):
 
-For example for monthly data, place the files in the ``/Tier3/MSWEP/latestversion/mon/pr`` subdirectory of your ``native6`` project location.
+     The entry ``native6`` of ``config-developer.yml`` should be complemented
+     with sub-entries for ``input_dir`` and ``input_file`` that go under a new
+     key representing the data organization (such as ``MY_DATA_ORG``), and
+     these sub-entries can use an arbitrary list of ``{placeholders}``.
+     Example :
 
-.. note::
-  For monthly data (``V220``), the data must be postfixed with the date, i.e. rename ``global_monthly_050deg.nc`` to ``global_monthly_050deg_197901-201710.nc``
+     .. code-block:: yaml
 
-For more info: http://www.gloh2o.org/
+        native6:
+          ...
+          input_dir:
+            default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
+            MY_DATA_ORG: '{dataset}/{exp}/{simulation}/{version}/{type}'
+          input_file:
+            default: '*.nc'
+            MY_DATA_ORG: '{simulation}_*.nc'
+          ...
 
-Data for the version ``V220`` can be downloaded from: https://hydrology.princeton.edu/data/hylkeb/MSWEP_V220/ 
+     To find your native data (e.g., called ``MYDATA``) that is for example
+     located in ``{rootpath}/MYDATA/amip/run1/42-0/atm/run1_1979.nc``
+     (``{rootpath}`` is ESMValTool's ``rootpath`` for the project ``native6``
+     defined in your :ref:`user configuration file`), use the following dataset
+     entry in your recipe
 
-.. _fixing_native_models:
+     .. code-block:: yaml
 
-Native models
--------------
+        datasets:
+          - {project: native6, dataset: MYDATA, exp: amip, simulation: run1, version: 42-0, type: atm}
 
-The following models are natively supported through the procedure described
-above (:ref:`fix_structure`) and at :ref:`configure_native_models`:
+     and make sure to use the following DRS for the project ``native6`` in your
+     :ref:`user configuration file`:
 
-ICON
-~~~~
+     .. code-block:: yaml
 
-The ESMValTool is able to read native `ICON
-<https://code.mpimet.mpg.de/projects/iconpublic>`_ model output. Example
-dataset entries could look like this:
+        drs:
+          native6: MY_DATA_ORG
 
-.. code-block:: yaml
+   - If you want to use a dedicated project for your native dataset
+     (recommended for datasets for which you cannot control the location of the
+     input files; this is usually the case for native model output):
 
-  datasets:
-    - {project: ICON, dataset: ICON, component: atm, version: 2.6.1,
-       exp: amip, grid: R2B5, ensemble: r1v1i1p1l1f1, mip: Amon,
-       short_name: tas, var_type: atm_2d_ml, start_year: 2000, end_year: 2014}
-    - {project: ICON, dataset: ICON, component: atm, version: 2.6.1,
-       exp: amip, grid: R2B5, ensemble: r1v1i1p1l1f1, mip: Amon,
-       short_name: ta, var_type: atm_3d_ml, start_year: 2000, end_year: 2014}
+     A new entry for the project needs to be added to ``config-developer.yml``.
+     For example, for the ICON model, create a new project ``ICON``:
 
-Please note the duplication of the name ``ICON`` in ``project`` and
-``dataset``, which is necessary to comply with ESMValTool's data finding and
-CMORizing functionalities.
+     .. code-block:: yaml
 
-Similar to any other fix, the ICON fix allows the use of :ref:`extra
-facets<extra_facets>`. By default, the file :download:`icon-mapping.yml
-</../esmvalcore/_config/extra_facets/icon-mapping.yml>` is used for that
-purpose. For some variables, extra facets are necessary; otherwise ESMValTool
-cannot read them properly. Supported keys for extra facets are:
+        ICON:
+          ...
+          input_dir:
+            default: '{version}_{component}_{exp}_{grid}_{ensemble}'
+          input_file:
+            default: '{version}_{component}_{exp}_{grid}_{ensemble}_{var_type}*.nc'
+          ...
 
-============= ===============================================================
-Key           Description
-============= ===============================================================
-``latitude``  Standard name of the latitude coordinate in the raw input file
-``longitude`` Standard name of the longitude coordinate in the raw input file
-``raw_name``  Variable name of the variables in the raw input file
-============= ===============================================================
+     To find your ICON data that is for example located in
+     ``{rootpath}/42-0_atm_amip_R2B5_r1i1/42-0_atm_amip_R2B5_r1i1_2d_1979.nc``
+     (``{rootpath}`` is ESMValTool ``rootpath`` for the project ``ICON``
+     defined in your :ref:`user configuration file`), use the following dataset
+     entry in your recipe:
 
-IPSL-CM6
-~~~~~~~~
+     .. code-block:: yaml
 
-Both output formats (i.e. the ``Output`` and the ``Analyse / Time series``
-formats) are supported, and should be configured in recipes as e.g.:
+        datasets:
+          - {project: ICON, dataset: ICON, version: 42-0, component: atm, exp: amip, grid: R2B5, ensemble: r1i1, var_type: 2d}
 
-.. code-block:: yaml
+     Please note the duplication of the name ``ICON`` in ``project`` and
+     ``dataset``, which is necessary to comply with ESMValTool's data finding
+     and CMORizing functionalities.
+     For other native models, ``dataset`` could also refer to a subversion of
+     the model.
 
-  datasets:
-    - {simulation: CM61-LR-hist-03.1950, exp: piControl, out: Analyse, freq: TS_MO,
-       account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
-       root: /thredds/tgcc/store}
-    - {simulation: CM61-LR-hist-03.1950, exp: historical, out: Output, freq: MO,
-       account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
-       root: /thredds/tgcc/store}
+.. _add_new_fix_native_datasets_fix_data:
 
-.. _ipslcm_extra_facets_example:
+Fix native data
+---------------
 
-The ``Output`` format is an example of a case where variables are grouped in
-multi-variable files, which name cannot be computed directly from datasets
-attributes alone but requires to use an extra_facets file, which principles are
-explained in :ref:`extra_facets`, and which content is :download:`available here
-</../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`. These multi-variable
-files must also undergo some data selection.
+To ensure that the native dataset has the correct metadata and data (i.e., that
+it is CMOR-compliant), use :ref:`dataset fixes <fixing_data>`.
+This is where the actual CMORization takes place.
+For example, a ``native6`` dataset fix for ERA5 is located `here
+<https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/_fixes/native6/era5.py>`__,
+and the ``ICON`` fix is located `here
+<https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/_fixes/icon/icon.py>`__.
+
+.. _add_new_fix_native_datasets_extra_facets:
+
+Extra facets for native datasets
+--------------------------------
+
+If necessary, provide a so-called ``extra facets file`` which allows to cope
+e.g. with variable naming issues for finding files or additional information
+that is required for the fixes.
+See :ref:`extra_facets` and :ref:`extra-facets-fixes` for more details on this.
+An example of such a file for IPSL-CM6 is given :download:`here
+<../../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`.
+
 
 .. _extra-facets-fixes:
 
