@@ -83,25 +83,26 @@ Datasets in native format
 
 Some datasets are supported in their native format (i.e., the data is not
 formatted according to a CMIP data request) through the ``native6`` project
-(mostly native observational datasets) or through a dedicated project, e.g.,
-``ICON`` (mostly native models).
+(mostly native reanalysis/observational datasets) or through a dedicated
+project, e.g., ``ICON`` (mostly native models).
 A detailed description of how to include new native datasets is given
 :ref:`here <add_new_fix_native_datasets>`.
 
 .. _read_native_obs:
 
-Supported native observational datasets
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Supported native reanalysis/observational datasets
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The following native observational datasets are supported under the ``native6``
-project.
+The following native reanalysis/observational datasets are supported under the
+``native6`` project.
 To use these datasets, put the files containing the data in the directory that
 you have configured for the ``native6`` project in your :ref:`user
 configuration file`, in a subdirectory called
 ``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``.
 Replace the items in curly braces by the values used in the variable/dataset
 definition in the :ref:`recipe <recipe_overview>`.
-Below is a list of native observational datasets currently supported.
+Below is a list of native reanalysis/observational datasets currently
+supported.
 
 .. _read_native_era5:
 

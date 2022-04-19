@@ -352,7 +352,8 @@ To allow ESMValCore to locate the data files, use the following steps:
    - If you want to use the ``native6`` project (recommended for datasets whose
      input files can be easily moved to the usual ``native6`` directory
      structure given by the ``rootpath`` in your :ref:`user configuration
-     file`; this is usually the case for native observational datasets):
+     file`; this is usually the case for native reanalysis/observational
+     datasets):
 
      The entry ``native6`` of ``config-developer.yml`` should be complemented
      with sub-entries for ``input_dir`` and ``input_file`` that go under a new
