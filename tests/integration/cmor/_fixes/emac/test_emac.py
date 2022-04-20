@@ -17,6 +17,10 @@ from esmvalcore.cmor._fixes.emac.emac import (
     Evspsbl,
     Hfls,
     Hfss,
+    MP_BC_tot,
+    MP_DU_tot,
+    MP_SO4mm_tot,
+    MP_SS_tot,
     Od550aer,
     Pr,
     Rlds,
@@ -105,28 +109,7 @@ def check_ta_metadata(cubes):
     assert cube.standard_name == 'air_temperature'
     assert cube.long_name == 'Air Temperature'
     assert cube.units == 'K'
-    return cube
-
-
-def check_tas_metadata(cubes):
-    """Check tas metadata."""
-    assert len(cubes) == 1
-    cube = cubes[0]
-    assert cube.var_name == 'tas'
-    assert cube.standard_name == 'air_temperature'
-    assert cube.long_name == 'Near-Surface Air Temperature'
-    assert cube.units == 'K'
-    return cube
-
-
-def check_siconc_metadata(cubes, var_name, long_name):
-    """Check tas metadata."""
-    assert len(cubes) == 1
-    cube = cubes[0]
-    assert cube.var_name == var_name
-    assert cube.standard_name == 'sea_ice_area_fraction'
-    assert cube.long_name == long_name
-    assert cube.units == '%'
+    assert 'positive' not in cube.attributes
     return cube
 
 
@@ -153,56 +136,22 @@ def check_time(cube, n_points=1):
     assert time.attributes == {}
 
 
-def check_height(cube, plev_has_bounds=True):
-    """Check height coordinate of cube."""
-    assert cube.coords('model level number', dim_coords=True)
-    height = cube.coord('model level number', dim_coords=True)
-    assert height.var_name == 'model_level'
-    assert height.standard_name is None
-    assert height.long_name == 'model level number'
-    assert height.units == 'no unit'
-    np.testing.assert_array_equal(height.points, np.arange(47))
-    assert height.bounds is None
-    assert height.attributes == {'positive': 'up'}
-
-    assert cube.coords('air_pressure', dim_coords=False)
-    plev = cube.coord('air_pressure', dim_coords=False)
+def check_plev(cube):
+    """Check plev coordinate of cube."""
+    assert cube.coords('air_pressure', dim_coords=True)
+    plev = cube.coord('air_pressure', dim_coords=True)
     assert plev.var_name == 'plev'
     assert plev.standard_name == 'air_pressure'
     assert plev.long_name == 'pressure'
     assert plev.units == 'Pa'
-    assert plev.attributes == {'positive': 'down'}
-    assert cube.coord_dims('air_pressure') == (0, 1, 2)
-
-    if plev_has_bounds:
-        assert plev.bounds is not None
-    else:
-        assert plev.bounds is None
-
-
-def check_heightxm(cube, height_value):
-    """Check scalar heightxm coordinate of cube."""
-    assert cube.coords('height')
-    height = cube.coord('height')
-    assert height.var_name == 'height'
-    assert height.standard_name == 'height'
-    assert height.long_name == 'height'
-    assert height.units == 'm'
-    assert height.attributes == {'positive': 'up'}
-    np.testing.assert_allclose(height.points, [height_value])
-    assert height.bounds is None
-
-
-def check_lambda550nm(cube):
-    """Check scalar lambda550nm coordinate of cube."""
-    assert cube.coords('radiation_wavelength')
-    typesi = cube.coord('radiation_wavelength')
-    assert typesi.var_name == 'wavelength'
-    assert typesi.standard_name == 'radiation_wavelength'
-    assert typesi.long_name == 'Radiation Wavelength 550 nanometers'
-    assert typesi.units == 'nm'
-    np.testing.assert_array_equal(typesi.points, [550.0])
-    assert typesi.bounds is None
+    assert plev.attributes == {'positive': 'down', 'interpolation': 'linear'}
+    np.testing.assert_allclose(
+        plev.points,
+        [100000.0, 92500.0, 85000.0, 70000.0, 60000.0, 50000.0, 40000.0,
+         30000.0, 25000.0, 20000.0, 15000.0, 10000.0, 7000.0, 5000.0, 3000.0,
+         2000.0, 1000.0, 500.0, 100.0],
+    )
+    assert plev.bounds is None
 
 
 def check_lat(cube):
@@ -246,6 +195,31 @@ def check_lon(cube):
          [157.5, 202.5], [202.5, 247.5], [247.5, 292.5], [292.5, 337.5]],
     )
     assert lon.attributes == {}
+
+
+def check_heightxm(cube, height_value):
+    """Check scalar heightxm coordinate of cube."""
+    assert cube.coords('height')
+    height = cube.coord('height')
+    assert height.var_name == 'height'
+    assert height.standard_name == 'height'
+    assert height.long_name == 'height'
+    assert height.units == 'm'
+    assert height.attributes == {'positive': 'up'}
+    np.testing.assert_allclose(height.points, [height_value])
+    assert height.bounds is None
+
+
+def check_lambda550nm(cube):
+    """Check scalar lambda550nm coordinate of cube."""
+    assert cube.coords('radiation_wavelength')
+    typesi = cube.coord('radiation_wavelength')
+    assert typesi.var_name == 'wavelength'
+    assert typesi.standard_name == 'radiation_wavelength'
+    assert typesi.long_name == 'Radiation Wavelength 550 nanometers'
+    assert typesi.units == 'nm'
+    np.testing.assert_array_equal(typesi.points, [550.0])
+    assert typesi.bounds is None
 
 
 def check_typesi(cube):
@@ -1565,277 +1539,573 @@ def test_vas_fix(cubes_amon_2d):
     )
 
 
-# Test areacella and areacello (for extra_facets, and grid_latitude and
-# grid_longitude coordinates)
+# Test each tracer variable in extra_facets/emac-mappings.yml
 
 
-# def test_get_areacella_fix():
-#     """Test getting of fix."""
-#     fix = Fix.get_fixes('EMAC', 'EMAC', 'fx', 'areacella')
-#     assert fix == [AllVars(None)]
+def test_get_MP_BC_tot_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_BC_tot')
+    assert fix == [MP_BC_tot(None), AllVars(None)]
 
 
-# def test_areacella_fix(cubes_grid):
-#     """Test fix."""
-#     fix = get_allvars_fix('fx', 'areacella')
-#     fixed_cubes = fix.fix_metadata(cubes_grid)
+def test_MP_BC_tot_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    vardef = get_var_info('EMAC', 'TRAC10hr', 'MP_BC_tot')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'TRAC10hr', 'MP_BC_tot',
+                                    ())
+    fix = MP_BC_tot(vardef, extra_facets=extra_facets)
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
 
-#     assert len(fixed_cubes) == 1
-#     cube = fixed_cubes[0]
-#     assert cube.var_name == 'areacella'
-#     assert cube.standard_name == 'cell_area'
-#     assert cube.long_name == 'Grid-Cell Area for Atmospheric Grid Variables'
-#     assert cube.units == 'm2'
+    fix = get_allvars_fix('TRAC10hr', 'MP_BC_tot')
+    fixed_cubes = fix.fix_metadata(fixed_cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_BC_tot'
+    assert cube.standard_name is None
+    assert cube.long_name == ('total mass of black carbon (sum of all aerosol '
+                              'modes)')
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
 
-#     check_lat_lon(cube)
+    check_time(cube, n_points=2)
 
+    np.testing.assert_allclose(
+        cube.data,
+        [6.361834e+08, 6.371043e+08],
+        rtol=1e-5,
+    )
 
-# def test_get_areacello_fix():
-#     """Test getting of fix."""
-#     fix = Fix.get_fixes('EMAC', 'EMAC', 'Ofx', 'areacello')
-#     assert fix == [AllVars(None)]
+
+def test_get_MP_CFCl3_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_CFCl3')
+    assert fix == [AllVars(None)]
+
 
+def test_MP_CFCl3_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    fix = get_allvars_fix('TRAC10hr', 'MP_CFCl3')
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_CFCl3'
+    assert cube.standard_name is None
+    assert cube.long_name == 'total mass of CFCl3 (CFC-11)'
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
 
-# def test_areacello_fix(cubes_grid):
-#     """Test fix."""
-#     fix = get_allvars_fix('Ofx', 'areacello')
-#     fixed_cubes = fix.fix_metadata(cubes_grid)
+    check_time(cube, n_points=2)
 
-#     assert len(fixed_cubes) == 1
-#     cube = fixed_cubes[0]
-#     assert cube.var_name == 'areacello'
-#     assert cube.standard_name == 'cell_area'
-#     assert cube.long_name == 'Grid-Cell Area for Ocean Variables'
-#     assert cube.units == 'm2'
+    np.testing.assert_allclose(
+        cube.data,
+        [5.982788e+09, 5.982657e+09],
+        rtol=1e-5,
+    )
 
-#     check_lat_lon(cube)
+
+def test_get_MP_ClOX_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_ClOX')
+    assert fix == [AllVars(None)]
+
 
+def test_MP_ClOX_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    fix = get_allvars_fix('TRAC10hr', 'MP_ClOX')
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_ClOX'
+    assert cube.standard_name is None
+    assert cube.long_name == 'total mass of ClOX'
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
 
-# # Test clwvi (for extra_facets)
+    check_time(cube, n_points=2)
 
+    np.testing.assert_allclose(
+        cube.data,
+        [39589028.0, 39722044.0],
+        rtol=1e-5,
+    )
 
-# def test_get_clwvi_fix():
-#     """Test getting of fix."""
-#     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'clwvi')
-#     assert fix == [AllVars(None)]
-
-
-# def test_clwvi_fix(cubes_2d):
-#     """Test fix."""
-#     fix = get_allvars_fix('Amon', 'clwvi')
-#     fixed_cubes = fix.fix_metadata(cubes_2d)
-
-#     assert len(fixed_cubes) == 1
-#     cube = fixed_cubes[0]
-#     assert cube.var_name == 'clwvi'
-#     assert cube.standard_name == ('atmosphere_mass_content_of_cloud_'
-#                                   'condensed_water')
-#     assert cube.long_name == 'Condensed Water Path'
-#     assert cube.units == 'kg m-2'
-
-#     check_time(cube)
-#     check_lat_lon(cube)
-
-
-# # Test ta (for height and plev coordinate)
-
-
-# def test_get_ta_fix():
-#     """Test getting of fix."""
-#     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'ta')
-#     assert fix == [AllVars(None)]
-
-
-# def test_ta_fix(cubes_3d):
-#     """Test fix."""
-#     fix = get_allvars_fix('Amon', 'ta')
-#     fixed_cubes = fix.fix_metadata(cubes_3d)
-
-#     cube = check_ta_metadata(fixed_cubes)
-#     check_time(cube)
-#     check_height(cube)
-#     check_lat_lon(cube)
-
-
-# def test_ta_fix_no_plev_bounds(cubes_3d):
-#     """Test fix."""
-#     fix = get_allvars_fix('Amon', 'ta')
-#     cubes = CubeList([
-#         cubes_3d.extract_cube(NameConstraint(var_name='ta')),
-#         cubes_3d.extract_cube(NameConstraint(var_name='pfull')),
-#     ])
-#     fixed_cubes = fix.fix_metadata(cubes)
-
-#     cube = check_ta_metadata(fixed_cubes)
-#     check_time(cube)
-#     check_height(cube, plev_has_bounds=False)
-#     check_lat_lon(cube)
-
-
-# # Test tas (for height2m coordinate)
-
-
-# def test_get_tas_fix():
-#     """Test getting of fix."""
-#     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'tas')
-#     assert fix == [AllVars(None)]
-
-
-# def test_tas_fix(cubes_2d):
-#     """Test fix."""
-#     fix = get_allvars_fix('Amon', 'tas')
-#     fixed_cubes = fix.fix_metadata(cubes_2d)
-
-#     cube = check_tas_metadata(fixed_cubes)
-#     check_time(cube)
-#     check_lat_lon(cube)
-#     check_heightxm(cube, 2.0)
-
-
-# def test_tas_spatial_index_coord_already_present(cubes_2d):
-#     """Test fix."""
-#     fix = get_allvars_fix('Amon', 'tas')
-
-#     index_coord = DimCoord(np.arange(8), var_name='ncells')
-#     cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
-#     cube.add_dim_coord(index_coord, 1)
-#     fixed_cubes = fix.fix_metadata(cubes_2d)
-
-#     assert len(fixed_cubes) == 1
-#     cube = fixed_cubes[0]
-#     check_lat_lon(cube)
-
-
-# def test_tas_scalar_height2m_already_present(cubes_2d):
-#     """Test fix."""
-#     fix = get_allvars_fix('Amon', 'tas')
-
-#     # Scalar height (with wrong metadata) already present
-#     height_coord = AuxCoord(2.0, var_name='h', standard_name='height')
-#     cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
-#     cube.add_aux_coord(height_coord, ())
-#     fixed_cubes = fix.fix_metadata(cubes_2d)
-
-#     assert len(fixed_cubes) == 1
-#     cube = fixed_cubes[0]
-#     assert cube.shape == (1, 8)
-#     check_heightxm(cube, 2.0)
-
-
-# def test_tas_dim_height2m_already_present(cubes_2d):
-#     """Test fix."""
-#     fix = get_allvars_fix('Amon', 'tas')
-
-#     # Dimensional coordinate height (with wrong metadata) already present
-#     height_coord = AuxCoord(2.0, var_name='h', standard_name='height')
-#     cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
-#     cube.add_aux_coord(height_coord, ())
-#     cube = iris.util.new_axis(cube, scalar_coord='height')
-#     cube.transpose((1, 0, 2))
-#     cubes = CubeList([cube])
-#     fixed_cubes = fix.fix_metadata(cubes)
-
-#     assert len(fixed_cubes) == 1
-#     cube = fixed_cubes[0]
-#     assert cube.shape == (1, 8)
-#     check_heightxm(cube, 2.0)
-
-
-# # Test uas (for height10m coordinate)
-
-
-# def test_get_uas_fix():
-#     """Test getting of fix."""
-#     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'uas')
-#     assert fix == [AllVars(None)]
-
-
-# def test_uas_fix(cubes_2d):
-#     """Test fix."""
-#     fix = get_allvars_fix('Amon', 'uas')
-#     fixed_cubes = fix.fix_metadata(cubes_2d)
-
-#     assert len(fixed_cubes) == 1
-#     cube = fixed_cubes[0]
-#     assert cube.var_name == 'uas'
-#     assert cube.standard_name == 'eastward_wind'
-#     assert cube.long_name == 'Eastward Near-Surface Wind'
-#     assert cube.units == 'm s-1'
-
-#     check_time(cube)
-#     check_lat_lon(cube)
-#     assert cube.coords('height')
-#     height = cube.coord('height')
-#     assert height.var_name == 'height'
-#     assert height.standard_name == 'height'
-#     assert height.long_name == 'height'
-#     assert height.units == 'm'
-#     assert height.attributes == {'positive': 'up'}
-#     np.testing.assert_allclose(height.points, [10.0])
-#     assert height.bounds is None
-
-
-# def test_uas_scalar_height10m_already_present(cubes_2d):
-#     """Test fix."""
-#     fix = get_allvars_fix('Amon', 'uas')
-
-#     # Scalar height (with wrong metadata) already present
-#     height_coord = AuxCoord(10.0, var_name='h', standard_name='height')
-#     cube = cubes_2d.extract_cube(NameConstraint(var_name='uas'))
-#     cube.add_aux_coord(height_coord, ())
-#     fixed_cubes = fix.fix_metadata(cubes_2d)
-
-#     assert len(fixed_cubes) == 1
-#     cube = fixed_cubes[0]
-#     assert cube.shape == (1, 8)
-#     check_heightxm(cube, 10.0)
-
-
-# def test_uas_dim_height10m_already_present(cubes_2d):
-#     """Test fix."""
-#     fix = get_allvars_fix('Amon', 'uas')
-
-#     # Dimensional coordinate height (with wrong metadata) already present
-#     height_coord = AuxCoord(10.0, var_name='h', standard_name='height')
-#     cube = cubes_2d.extract_cube(NameConstraint(var_name='uas'))
-#     cube.add_aux_coord(height_coord, ())
-#     cube = iris.util.new_axis(cube, scalar_coord='height')
-#     cube.transpose((1, 0, 2))
-#     cubes = CubeList([cube])
-#     fixed_cubes = fix.fix_metadata(cubes)
-
-#     assert len(fixed_cubes) == 1
-#     cube = fixed_cubes[0]
-#     assert cube.shape == (1, 8)
-#     check_heightxm(cube, 10.0)
-
-
-# # Test fix with empty standard_name
-
-
-# def test_empty_standard_name_fix(cubes_2d):
-#     """Test fix."""
-#     # We know that tas has a standard name, but this being native model
-#     # output
-#     # there may be variables with no standard name. The code is designed to
-#     # handle this gracefully and here we test it with an artificial, but
-#     # realistic case.
-#     vardef = get_var_info('EMAC', 'Amon', 'tas')
-#     original_standard_name = vardef.standard_name
-#     vardef.standard_name = ''
-#     extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'tas', ())
-#     fix = AllVars(vardef, extra_facets=extra_facets)
-#     fixed_cubes = fix.fix_metadata(cubes_2d)
-
-#     assert len(fixed_cubes) == 1
-#     cube = fixed_cubes[0]
-#     assert cube.var_name == 'tas'
-#     assert cube.standard_name is None
-#     assert cube.long_name == 'Near-Surface Air Temperature'
-#     assert cube.units == 'K'
-
-#     # Restore original standard_name of tas
-#     vardef.standard_name = original_standard_name
+
+def test_get_MP_CH4_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_CH4')
+    assert fix == [AllVars(None)]
+
+
+def test_MP_CH4_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    fix = get_allvars_fix('TRAC10hr', 'MP_CH4')
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_CH4'
+    assert cube.standard_name is None
+    assert cube.long_name == 'total mass of CH4'
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube, n_points=2)
+
+    np.testing.assert_allclose(
+        cube.data,
+        [4.866472e+12, 4.866396e+12],
+        rtol=1e-5,
+    )
+
+
+def test_get_MP_CO_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_CO')
+    assert fix == [AllVars(None)]
+
+
+def test_MP_CO_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    fix = get_allvars_fix('TRAC10hr', 'MP_CO')
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_CO'
+    assert cube.standard_name is None
+    assert cube.long_name == 'total mass of CO'
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube, n_points=2)
+
+    np.testing.assert_allclose(
+        cube.data,
+        [3.399702e+11, 3.401483e+11],
+        rtol=1e-5,
+    )
+
+
+def test_get_MP_CO2_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_CO2')
+    assert fix == [AllVars(None)]
+
+
+def test_MP_CO2_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    fix = get_allvars_fix('TRAC10hr', 'MP_CO2')
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_CO2'
+    assert cube.standard_name is None
+    assert cube.long_name == 'total mass of CO2'
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube, n_points=2)
+
+    np.testing.assert_allclose(
+        cube.data,
+        [2.855254e+15, 2.855380e+15],
+        rtol=1e-5,
+    )
+
+
+def test_get_MP_DU_tot_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_DU_tot')
+    assert fix == [MP_DU_tot(None), AllVars(None)]
+
+
+def test_MP_DU_tot_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    vardef = get_var_info('EMAC', 'TRAC10hr', 'MP_DU_tot')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'TRAC10hr', 'MP_DU_tot',
+                                    ())
+    fix = MP_DU_tot(vardef, extra_facets=extra_facets)
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    fix = get_allvars_fix('TRAC10hr', 'MP_DU_tot')
+    fixed_cubes = fix.fix_metadata(fixed_cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_DU_tot'
+    assert cube.standard_name is None
+    assert cube.long_name == ('total mass of mineral dust (sum of all aerosol '
+                              'modes)')
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube, n_points=2)
+
+    np.testing.assert_allclose(
+        cube.data,
+        [1.797283e+10, 1.704390e+10],
+        rtol=1e-5,
+    )
+
+
+def test_get_MP_N2O_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_N2O')
+    assert fix == [AllVars(None)]
+
+
+def test_MP_N2O_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    fix = get_allvars_fix('TRAC10hr', 'MP_N2O')
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_N2O'
+    assert cube.standard_name is None
+    assert cube.long_name == 'total mass of N2O'
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube, n_points=2)
+
+    np.testing.assert_allclose(
+        cube.data,
+        [2.365061e+12, 2.365089e+12],
+        rtol=1e-5,
+    )
+
+
+def test_get_MP_NH3_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_NH3')
+    assert fix == [AllVars(None)]
+
+
+def test_MP_NH3_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    fix = get_allvars_fix('TRAC10hr', 'MP_NH3')
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_NH3'
+    assert cube.standard_name is None
+    assert cube.long_name == 'total mass of NH3'
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube, n_points=2)
+
+    np.testing.assert_allclose(
+        cube.data,
+        [1.931037e+08, 1.944860e+08],
+        rtol=1e-5,
+    )
+
+
+def test_get_MP_NO_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_NO')
+    assert fix == [AllVars(None)]
+
+
+def test_MP_NO_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    fix = get_allvars_fix('TRAC10hr', 'MP_NO')
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_NO'
+    assert cube.standard_name is None
+    assert cube.long_name == 'total mass of NO'
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube, n_points=2)
+
+    np.testing.assert_allclose(
+        cube.data,
+        [5.399146e+08, 5.543320e+08],
+        rtol=1e-5,
+    )
+
+
+def test_get_MP_NO2_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_NO2')
+    assert fix == [AllVars(None)]
+
+
+def test_MP_NO2_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    fix = get_allvars_fix('TRAC10hr', 'MP_NO2')
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_NO2'
+    assert cube.standard_name is None
+    assert cube.long_name == 'total mass of NO2'
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube, n_points=2)
+
+    np.testing.assert_allclose(
+        cube.data,
+        [1.734202e+09, 1.725541e+09],
+        rtol=1e-5,
+    )
+
+
+def test_get_MP_NOX_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_NOX')
+    assert fix == [AllVars(None)]
+
+
+def test_MP_NOX_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    fix = get_allvars_fix('TRAC10hr', 'MP_NOX')
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_NOX'
+    assert cube.standard_name is None
+    assert cube.long_name == 'total mass of NOX (NO+NO2)'
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube, n_points=2)
+
+    np.testing.assert_allclose(
+        cube.data,
+        [9.384478e+08, 9.342440e+08],
+        rtol=1e-5,
+    )
+
+
+def test_get_MP_O3_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_O3')
+    assert fix == [AllVars(None)]
+
+
+def test_MP_O3_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    fix = get_allvars_fix('TRAC10hr', 'MP_O3')
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_O3'
+    assert cube.standard_name is None
+    assert cube.long_name == 'total mass of O3'
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube, n_points=2)
+
+    np.testing.assert_allclose(
+        cube.data,
+        [3.339367e+12, 3.339434e+12],
+        rtol=1e-5,
+    )
+
+
+def test_get_MP_OH_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_OH')
+    assert fix == [AllVars(None)]
+
+
+def test_MP_OH_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    fix = get_allvars_fix('TRAC10hr', 'MP_OH')
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_OH'
+    assert cube.standard_name is None
+    assert cube.long_name == 'total mass of OH'
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube, n_points=2)
+
+    np.testing.assert_allclose(
+        cube.data,
+        [3816360.8, 3820260.8],
+        rtol=1e-5,
+    )
+
+
+def test_get_MP_S_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_S')
+    assert fix == [AllVars(None)]
+
+
+def test_MP_S_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    fix = get_allvars_fix('TRAC10hr', 'MP_S')
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_S'
+    assert cube.standard_name is None
+    assert cube.long_name == 'total mass of S'
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube, n_points=2)
+
+    np.testing.assert_allclose(
+        cube.data,
+        [0.0, 0.0],
+        rtol=1e-5,
+    )
+
+
+def test_get_MP_SO2_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_SO2')
+    assert fix == [AllVars(None)]
+
+
+def test_MP_SO2_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    fix = get_allvars_fix('TRAC10hr', 'MP_SO2')
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_SO2'
+    assert cube.standard_name is None
+    assert cube.long_name == 'total mass of SO2'
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube, n_points=2)
+
+    np.testing.assert_allclose(
+        cube.data,
+        [1.383063e+09, 1.390189e+09],
+        rtol=1e-5,
+    )
+
+
+def test_get_MP_SO4mm_tot_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_SO4mm_tot')
+    assert fix == [MP_SO4mm_tot(None), AllVars(None)]
+
+
+def test_MP_SO4mm_tot_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    vardef = get_var_info('EMAC', 'TRAC10hr', 'MP_SO4mm_tot')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'TRAC10hr', 'MP_SO4mm_tot',
+                                    ())
+    fix = MP_SO4mm_tot(vardef, extra_facets=extra_facets)
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    fix = get_allvars_fix('TRAC10hr', 'MP_SO4mm_tot')
+    fixed_cubes = fix.fix_metadata(fixed_cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_SO4mm_tot'
+    assert cube.standard_name is None
+    assert cube.long_name == ('total mass of aerosol sulfate (sum of all '
+                              'aerosol modes)')
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube, n_points=2)
+
+    np.testing.assert_allclose(
+        cube.data,
+        [1.350434e+09, 1.364699e+09],
+        rtol=1e-5,
+    )
+
+
+def test_get_MP_SS_tot_fix():  # noqa: N802
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_SS_tot')
+    assert fix == [MP_SS_tot(None), AllVars(None)]
+
+
+def test_MP_SS_tot_fix(cubes_tracer_pdef_gp):  # noqa: N802
+    """Test fix."""
+    vardef = get_var_info('EMAC', 'TRAC10hr', 'MP_SS_tot')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'TRAC10hr', 'MP_SS_tot',
+                                    ())
+    fix = MP_SS_tot(vardef, extra_facets=extra_facets)
+    fixed_cubes = fix.fix_metadata(cubes_tracer_pdef_gp)
+
+    fix = get_allvars_fix('TRAC10hr', 'MP_SS_tot')
+    fixed_cubes = fix.fix_metadata(fixed_cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'MP_SS_tot'
+    assert cube.standard_name is None
+    assert cube.long_name == ('total mass of sea salt (sum of all aerosol '
+                              'modes)')
+    assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube, n_points=2)
+
+    np.testing.assert_allclose(
+        cube.data,
+        [2.322862e+08, 2.340771e+08],
+        rtol=1e-5,
+    )
+
+
+# Test each 3D variable in extra_facets/emac-mappings.yml
+
+
+def test_get_ta_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'ta')
+    assert fix == [AllVars(None)]
+
+
+def test_ta_fix(cubes_amon_3d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'ta')
+    fixed_cubes = fix.fix_metadata(cubes_amon_3d)
+
+    cube = check_ta_metadata(fixed_cubes)
+
+    fixed_cube = fix.fix_data(cube)
+
+    check_time(fixed_cube)
+    check_plev(fixed_cube)
+    check_lat(fixed_cube)
+    check_lon(fixed_cube)
+
+    np.testing.assert_allclose(
+        fixed_cube.data[0, 1:5, 0, 0],
+        [2.702699e+02,  2.664087e+02,  2.584884e+02, 2.509335e+02],
+        rtol=1e-5,
+    )
+    np.testing.assert_equal(
+        fixed_cube.data.mask[0, :5, 0, 0],
+        [True, False, False, False, False],
+    )
 
 
 # # Test variable not available in file
