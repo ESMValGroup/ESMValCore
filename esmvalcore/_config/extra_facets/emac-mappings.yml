@@ -103,6 +103,15 @@ EMAC:
       raw_name: tsurf_ave
       channel: Amon
 
+    # TODO: CHECK IF THE CALCULATION IS CORRECT!!!
+    # -> it might be necessary to weight these fields with cos(lat)
+    uas:
+      raw_name: u10_ave
+      channel: Amon
+    vas:
+      raw_name: v10_ave
+      channel: Amon
+
     # Tracers (non-CMOR variables)
     MP_BC_tot:  # derived from MP_BC_ks_ave, MP_BC_as_ave, MP_BC_cs_ave, MP_BC_ki_ave
       channel: tracer_pdef_gp

@@ -15,7 +15,24 @@ from esmvalcore.cmor._fixes.emac.emac import (
     Clt,
     Clwvi,
     Evspsbl,
+    Hfls,
+    Hfss,
     Od550aer,
+    Pr,
+    Rlds,
+    Rlus,
+    Rlut,
+    Rlutcs,
+    Rsds,
+    Rsdt,
+    Rsus,
+    Rsut,
+    Rsutcs,
+    Rtmt,
+    Siconc,
+    Siconca,
+    Sithick,
+    Toz,
 )
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
@@ -48,6 +65,13 @@ def cubes_amon_3d(test_data_path):
 def cubes_column(test_data_path):
     """column sample cubes."""
     nc_path = test_data_path / 'emac_column.nc'
+    return iris.load(str(nc_path))
+
+
+@pytest.fixture
+def cubes_g3b(test_data_path):
+    """g3b sample cubes."""
+    nc_path = test_data_path / 'emac_g3b.nc'
     return iris.load(str(nc_path))
 
 
@@ -440,6 +464,7 @@ def test_awhea_fix(cubes_omon_2d):
     assert cube.long_name == ('Global Mean Net Surface Heat Flux Over Open '
                               'Water')
     assert cube.units == 'W m-2'
+    assert 'positive' not in cube.attributes
 
     check_time(cube)
     check_lat(cube)
@@ -469,6 +494,7 @@ def test_clivi_fix(cubes_amon_2d):
     assert cube.standard_name == 'atmosphere_mass_content_of_cloud_ice'
     assert cube.long_name == 'Ice Water Path'
     assert cube.units == 'kg m-2'
+    assert 'positive' not in cube.attributes
 
     check_time(cube)
     check_lat(cube)
@@ -503,6 +529,7 @@ def test_clt_fix(cubes_amon_2d):
     assert cube.standard_name == 'cloud_area_fraction'
     assert cube.long_name == 'Total Cloud Cover Percentage'
     assert cube.units == '%'
+    assert 'positive' not in cube.attributes
 
     check_time(cube)
     check_lat(cube)
@@ -538,6 +565,7 @@ def test_clwvi_fix(cubes_amon_2d):
                                   'condensed_water')
     assert cube.long_name == 'Condensed Water Path'
     assert cube.units == 'kg m-2'
+    assert 'positive' not in cube.attributes
 
     check_time(cube)
     check_lat(cube)
@@ -567,6 +595,7 @@ def test_co2mass_fix(cubes_tracer_pdef_gp):
     assert cube.standard_name == 'atmosphere_mass_of_carbon_dioxide'
     assert cube.long_name == 'Total Atmospheric Mass of CO2'
     assert cube.units == 'kg'
+    assert 'positive' not in cube.attributes
 
     check_time(cube, n_points=2)
 
@@ -601,6 +630,7 @@ def test_evspsbl_fix(cubes_amon_2d):
     assert cube.long_name == ('Evaporation Including Sublimation and '
                               'Transpiration')
     assert cube.units == 'kg m-2 s-1'
+    assert 'positive' not in cube.attributes
 
     check_time(cube)
     check_lat(cube)
@@ -616,7 +646,7 @@ def test_evspsbl_fix(cubes_amon_2d):
 def test_get_hfls_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'hfls')
-    assert fix == [AllVars(None)]
+    assert fix == [Hfls(None), AllVars(None)]
 
 
 def test_hfls_fix(cubes_amon_2d):
@@ -626,10 +656,17 @@ def test_hfls_fix(cubes_amon_2d):
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
+
+    vardef = get_var_info('EMAC', 'Amon', 'hfls')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'hfls', ())
+    fix = Hfls(vardef, extra_facets=extra_facets)
+    cube = fix.fix_data(cube)
+
     assert cube.var_name == 'hfls'
     assert cube.standard_name == 'surface_upward_latent_heat_flux'
     assert cube.long_name == 'Surface Upward Latent Heat Flux'
     assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'up'
 
     check_time(cube)
     check_lat(cube)
@@ -637,7 +674,7 @@ def test_hfls_fix(cubes_amon_2d):
 
     np.testing.assert_allclose(
         cube.data[:, :, 0],
-        [[-90.94926, -0.860017, -155.92758, -29.142715]],
+        [[90.94926, 0.860017, 155.92758, 29.142715]],
         rtol=1e-5,
     )
 
@@ -645,7 +682,7 @@ def test_hfls_fix(cubes_amon_2d):
 def test_get_hfss_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'hfss')
-    assert fix == [AllVars(None)]
+    assert fix == [Hfss(None), AllVars(None)]
 
 
 def test_hfss_fix(cubes_amon_2d):
@@ -655,10 +692,17 @@ def test_hfss_fix(cubes_amon_2d):
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
+
+    vardef = get_var_info('EMAC', 'Amon', 'hfss')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'hfss', ())
+    fix = Hfss(vardef, extra_facets=extra_facets)
+    cube = fix.fix_data(cube)
+
     assert cube.var_name == 'hfss'
     assert cube.standard_name == 'surface_upward_sensible_heat_flux'
     assert cube.long_name == 'Surface Upward Sensible Heat Flux'
     assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'up'
 
     check_time(cube)
     check_lat(cube)
@@ -666,7 +710,7 @@ def test_hfss_fix(cubes_amon_2d):
 
     np.testing.assert_allclose(
         cube.data[:, :, 0],
-        [[-65.92767, -32.841537, -18.461172, -6.50319]],
+        [[65.92767, 32.841537, 18.461172, 6.50319]],
         rtol=1e-5,
     )
 
@@ -694,6 +738,7 @@ def test_od550aer_fix(cubes_aermon):
                                   'ambient_aerosol_particles')
     assert cube.long_name == 'Ambient Aerosol Optical Thickness at 550nm'
     assert cube.units == '1'
+    assert 'positive' not in cube.attributes
 
     check_time(cube)
     check_lat(cube)
@@ -703,6 +748,819 @@ def test_od550aer_fix(cubes_aermon):
     np.testing.assert_allclose(
         cube.data[:, :, 0],
         [[0.166031, 0.271185, 0.116384, 0.044266]],
+        rtol=1e-5,
+    )
+
+
+def test_get_pr_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'pr')
+    assert fix == [Pr(None), AllVars(None)]
+
+
+def test_pr_fix(cubes_amon_2d):
+    """Test fix."""
+    vardef = get_var_info('EMAC', 'Amon', 'pr')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'pr', ())
+    fix = Pr(vardef, extra_facets=extra_facets)
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    fix = get_allvars_fix('Amon', 'pr')
+    fixed_cubes = fix.fix_metadata(fixed_cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'pr'
+    assert cube.standard_name == 'precipitation_flux'
+    assert cube.long_name == 'Precipitation'
+    assert cube.units == 'kg m-2 s-1'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[3.590828e-05, 5.637868e-07, 3.474401e-07, 1.853631e-05]],
+        rtol=1e-5,
+    )
+
+
+def test_get_prc_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'prc')
+    assert fix == [AllVars(None)]
+
+
+def test_prc_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'prc')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'prc'
+    assert cube.standard_name == 'convective_precipitation_flux'
+    assert cube.long_name == 'Convective Precipitation'
+    assert cube.units == 'kg m-2 s-1'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[1.177248e-05, 0.0, 0.0, 2.419762e-06]],
+        rtol=1e-5,
+    )
+
+
+def test_get_prl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'prl')
+    assert fix == [AllVars(None)]
+
+
+def test_prl_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'prl')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'prl'
+    assert cube.standard_name is None
+    assert cube.long_name == 'Large Scale Precipitation'
+    assert cube.units == 'kg m-2 s-1'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[2.091789e-05, 5.637868e-07, 3.474401e-07, 1.611654e-05]],
+        rtol=1e-5,
+    )
+
+
+def test_get_prsn_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'prsn')
+    assert fix == [AllVars(None)]
+
+
+def test_prsn_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'prsn')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'prsn'
+    assert cube.standard_name == 'snowfall_flux'
+    assert cube.long_name == 'Snowfall Flux'
+    assert cube.units == 'kg m-2 s-1'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[3.217916e-06, 5.760116e-30, 5.894975e-30, 6.625394e-30]],
+        rtol=1e-5,
+    )
+
+
+def test_get_prw_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'prw')
+    assert fix == [AllVars(None)]
+
+
+def test_prw_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'prw')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'prw'
+    assert cube.standard_name == 'atmosphere_mass_content_of_water_vapor'
+    assert cube.long_name == 'Water Vapor Path'
+    assert cube.units == 'kg m-2'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[9.398615, 10.207355, 22.597773, 11.342406]],
+        rtol=1e-5,
+    )
+
+
+def test_get_rlds_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rlds')
+    assert fix == [Rlds(None), AllVars(None)]
+
+
+def test_rlds_fix(cubes_amon_2d):
+    """Test fix."""
+    vardef = get_var_info('EMAC', 'Amon', 'rlds')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rlds', ())
+    fix = Rlds(vardef, extra_facets=extra_facets)
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    fix = get_allvars_fix('Amon', 'rlds')
+    fixed_cubes = fix.fix_metadata(fixed_cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'rlds'
+    assert cube.standard_name == 'surface_downwelling_longwave_flux_in_air'
+    assert cube.long_name == 'Surface Downwelling Longwave Radiation'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'down'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[297.55298, 310.508, 361.471, 302.51376]],
+        rtol=1e-5,
+    )
+
+
+def test_get_rlus_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rlus')
+    assert fix == [Rlus(None), AllVars(None)]
+
+
+def test_rlus_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'rlus')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+
+    vardef = get_var_info('EMAC', 'Amon', 'rlus')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rlus', ())
+    fix = Rlus(vardef, extra_facets=extra_facets)
+    cube = fix.fix_data(cube)
+
+    assert cube.var_name == 'rlus'
+    assert cube.standard_name == 'surface_upwelling_longwave_flux_in_air'
+    assert cube.long_name == 'Surface Upwelling Longwave Radiation'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'up'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[351.59143, 411.6364, 438.25314, 339.71625]],
+        rtol=1e-5,
+    )
+
+
+def test_get_rlut_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rlut')
+    assert fix == [Rlut(None), AllVars(None)]
+
+
+def test_rlut_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'rlut')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+
+    vardef = get_var_info('EMAC', 'Amon', 'rlut')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rlut', ())
+    fix = Rlut(vardef, extra_facets=extra_facets)
+    cube = fix.fix_data(cube)
+
+    assert cube.var_name == 'rlut'
+    assert cube.standard_name == 'toa_outgoing_longwave_flux'
+    assert cube.long_name == 'TOA Outgoing Longwave Radiation'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'up'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[181.34714, 240.24974, 282.01166, 203.07207]],
+        rtol=1e-5,
+    )
+
+
+def test_get_rlutcs_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rlutcs')
+    assert fix == [Rlutcs(None), AllVars(None)]
+
+
+def test_rlutcs_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'rlutcs')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+
+    vardef = get_var_info('EMAC', 'Amon', 'rlutcs')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rlutcs', ())
+    fix = Rlutcs(vardef, extra_facets=extra_facets)
+    cube = fix.fix_data(cube)
+
+    assert cube.var_name == 'rlutcs'
+    assert cube.standard_name == ('toa_outgoing_longwave_flux_assuming_clear_'
+                                  'sky')
+    assert cube.long_name == 'TOA Outgoing Clear-Sky Longwave Radiation'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'up'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[232.35957, 273.42227, 288.2262, 238.6909]],
+        rtol=1e-5,
+    )
+
+
+def test_get_rsds_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rsds')
+    assert fix == [Rsds(None), AllVars(None)]
+
+
+def test_rsds_fix(cubes_amon_2d):
+    """Test fix."""
+    vardef = get_var_info('EMAC', 'Amon', 'rsds')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rsds', ())
+    fix = Rsds(vardef, extra_facets=extra_facets)
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    fix = get_allvars_fix('Amon', 'rsds')
+    fixed_cubes = fix.fix_metadata(fixed_cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'rsds'
+    assert cube.standard_name == 'surface_downwelling_shortwave_flux_in_air'
+    assert cube.long_name == 'Surface Downwelling Shortwave Radiation'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'down'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[7.495961, 214.6077, 349.77203, 191.22644]],
+        rtol=1e-5,
+    )
+
+
+def test_get_rsdt_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rsdt')
+    assert fix == [Rsdt(None), AllVars(None)]
+
+
+def test_rsdt_fix(cubes_amon_2d):
+    """Test fix."""
+    vardef = get_var_info('EMAC', 'Amon', 'rsdt')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rsdt', ())
+    fix = Rsdt(vardef, extra_facets=extra_facets)
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    fix = get_allvars_fix('Amon', 'rsdt')
+    fixed_cubes = fix.fix_metadata(fixed_cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'rsdt'
+    assert cube.standard_name == 'toa_incoming_shortwave_flux'
+    assert cube.long_name == 'TOA Incident Shortwave Radiation'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'down'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[44.4018, 312.62286, 481.91992, 473.25092]],
+        rtol=1e-5,
+    )
+
+
+def test_get_rsus_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rsus')
+    assert fix == [Rsus(None), AllVars(None)]
+
+
+def test_rsus_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'rsus')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+
+    vardef = get_var_info('EMAC', 'Amon', 'rsus')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rsus', ())
+    fix = Rsus(vardef, extra_facets=extra_facets)
+    cube = fix.fix_data(cube)
+
+    assert cube.var_name == 'rsus'
+    assert cube.standard_name == 'surface_upwelling_shortwave_flux_in_air'
+    assert cube.long_name == 'Surface Upwelling Shortwave Radiation'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'up'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[0.524717, 82.92702, 24.484043, 13.38585]],
+        rtol=1e-5,
+    )
+
+
+def test_get_rsut_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rsut')
+    assert fix == [Rsut(None), AllVars(None)]
+
+
+def test_rsut_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'rsut')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+
+    vardef = get_var_info('EMAC', 'Amon', 'rsut')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rsut', ())
+    fix = Rsut(vardef, extra_facets=extra_facets)
+    cube = fix.fix_data(cube)
+
+    assert cube.var_name == 'rsut'
+    assert cube.standard_name == 'toa_outgoing_shortwave_flux'
+    assert cube.long_name == 'TOA Outgoing Shortwave Radiation'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'up'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[26.967886, 114.11882, 70.44302, 203.26039]],
+        rtol=1e-5,
+    )
+
+
+def test_get_rsutcs_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rsutcs')
+    assert fix == [Rsutcs(None), AllVars(None)]
+
+
+def test_rsutcs_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'rsutcs')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+
+    vardef = get_var_info('EMAC', 'Amon', 'rsutcs')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rsutcs', ())
+    fix = Rsutcs(vardef, extra_facets=extra_facets)
+    cube = fix.fix_data(cube)
+
+    assert cube.var_name == 'rsutcs'
+    assert cube.standard_name == ('toa_outgoing_shortwave_flux_assuming_clear_'
+                                  'sky')
+    assert cube.long_name == 'TOA Outgoing Clear-Sky Shortwave Radiation'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'up'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[11.787124, 101.68645, 50.588364, 53.933403]],
+        rtol=1e-5,
+    )
+
+
+def test_get_rtmt_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rtmt')
+    assert fix == [Rtmt(None), AllVars(None)]
+
+
+def test_rtmt_fix(cubes_amon_2d):
+    """Test fix."""
+    vardef = get_var_info('EMAC', 'Amon', 'rtmt')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rtmt', ())
+    fix = Rtmt(vardef, extra_facets=extra_facets)
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    fix = get_allvars_fix('Amon', 'rtmt')
+    fixed_cubes = fix.fix_metadata(fixed_cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'rtmt'
+    assert cube.standard_name == ('net_downward_radiative_flux_at_top_of_'
+                                  'atmosphere_model')
+    assert cube.long_name == 'Net Downward Radiative Flux at Top of Model'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'down'
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[-163.91322, -41.745697, 129.46524, 66.91847]],
+        rtol=1e-5,
+    )
+
+
+def test_get_siconc_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'SImon', 'siconc')
+    assert fix == [Siconc(None), AllVars(None)]
+
+
+def test_siconc_fix(cubes_amon_2d):
+    """Test fix."""
+    vardef = get_var_info('EMAC', 'SImon', 'siconc')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'SImon', 'siconc', ())
+    fix = Siconc(vardef, extra_facets=extra_facets)
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    fix = get_allvars_fix('SImon', 'siconc')
+    fixed_cubes = fix.fix_metadata(fixed_cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'siconc'
+    assert cube.standard_name == 'sea_ice_area_fraction'
+    assert cube.long_name == 'Sea-Ice Area Percentage (Ocean Grid)'
+    assert cube.units == '%'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+    check_typesi(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 1],
+        [[61.51324, 0.0, 0.0, 0.0]],
+        rtol=1e-5,
+    )
+
+
+def test_get_siconca_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'SImon', 'siconca')
+    assert fix == [Siconca(None), AllVars(None)]
+
+
+def test_siconca_fix(cubes_amon_2d):
+    """Test fix."""
+    vardef = get_var_info('EMAC', 'SImon', 'siconca')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'SImon', 'siconca', ())
+    fix = Siconca(vardef, extra_facets=extra_facets)
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    fix = get_allvars_fix('SImon', 'siconca')
+    fixed_cubes = fix.fix_metadata(fixed_cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'siconca'
+    assert cube.standard_name == 'sea_ice_area_fraction'
+    assert cube.long_name == 'Sea-Ice Area Percentage (Atmospheric Grid)'
+    assert cube.units == '%'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+    check_typesi(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 1],
+        [[61.51324, 0.0, 0.0, 0.0]],
+        rtol=1e-5,
+    )
+
+
+def test_get_sithick_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'SImon', 'sithick')
+    assert fix == [Sithick(None), AllVars(None)]
+
+
+def test_sithick_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('SImon', 'sithick')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+
+    vardef = get_var_info('EMAC', 'SImon', 'sithick')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'SImon', 'sithick', ())
+    fix = Sithick(vardef, extra_facets=extra_facets)
+    cube = fix.fix_data(cube)
+
+    assert cube.var_name == 'sithick'
+    assert cube.standard_name == 'sea_ice_thickness'
+    assert cube.long_name == 'Sea Ice Thickness'
+    assert cube.units == 'm'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(cube.data[0, 0, 1], 0.798652, rtol=1e-5,)
+    np.testing.assert_equal(
+        cube.data[:, :, 1].mask,
+        [[False, True, True, True]],
+    )
+
+
+def test_get_tas_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'tas')
+    assert fix == [AllVars(None)]
+
+
+def test_tas_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'tas')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'tas'
+    assert cube.standard_name == 'air_temperature'
+    assert cube.long_name == 'Near-Surface Air Temperature'
+    assert cube.units == 'K'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+    check_heightxm(cube, 2.0)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[277.4016, 291.2251, 295.6336, 277.8235]],
+        rtol=1e-5,
+    )
+
+
+def test_get_tos_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Omon', 'tos')
+    assert fix == [AllVars(None)]
+
+
+def test_tos_fix(cubes_g3b):
+    """Test fix."""
+    fix = get_allvars_fix('Omon', 'tos')
+    fixed_cubes = fix.fix_metadata(cubes_g3b)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'tos'
+    assert cube.standard_name == 'sea_surface_temperature'
+    assert cube.long_name == 'Sea Surface Temperature'
+    assert cube.units == 'degC'
+    assert 'positive' not in cube.attributes
+
+    print(cube.coord('time'))
+
+    check_time(cube, n_points=2)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[0, :, 0],
+        [7.828393, 10.133539, 23.036158, 4.997858],
+        rtol=1e-5,
+    )
+
+
+def test_get_toz_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'AERmon', 'toz')
+    assert fix == [Toz(None), AllVars(None)]
+
+
+def test_toz_fix(cubes_column):
+    """Test fix."""
+    vardef = get_var_info('EMAC', 'AERmon', 'toz')
+    extra_facets = get_extra_facets('EMAC', 'EMAC', 'AERmon', 'toz', ())
+    fix = Toz(vardef, extra_facets=extra_facets)
+    fixed_cubes = fix.fix_metadata(cubes_column)
+
+    fix = get_allvars_fix('AERmon', 'toz')
+    fixed_cubes = fix.fix_metadata(fixed_cubes)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'toz'
+    assert cube.standard_name == ('equivalent_thickness_at_stp_of_atmosphere_'
+                                  'ozone_content')
+    assert cube.long_name == 'Total Column Ozone'
+    assert cube.units == 'm'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube, n_points=2)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[0, :, 0],
+        [0.003108, 0.002928, 0.002921, 0.003366],
+        rtol=1e-3,
+    )
+
+
+def test_get_ts_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'ts')
+    assert fix == [AllVars(None)]
+
+
+def test_ts_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'ts')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'ts'
+    assert cube.standard_name == 'surface_temperature'
+    assert cube.long_name == 'Surface Temperature'
+    assert cube.units == 'K'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[280.65475, 291.80563, 296.55356, 278.24164]],
+        rtol=1e-5,
+    )
+
+
+def test_get_uas_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'uas')
+    assert fix == [AllVars(None)]
+
+
+def test_uas_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'uas')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'uas'
+    assert cube.standard_name == 'eastward_wind'
+    assert cube.long_name == 'Eastward Near-Surface Wind'
+    assert cube.units == 'm s-1'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+    check_heightxm(cube, 10.0)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[-2.114626, -2.809653, -6.59721, -1.586884]],
+        rtol=1e-5,
+    )
+
+
+def test_get_vas_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'vas')
+    assert fix == [AllVars(None)]
+
+
+def test_vas_fix(cubes_amon_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'vas')
+    fixed_cubes = fix.fix_metadata(cubes_amon_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'vas'
+    assert cube.standard_name == 'northward_wind'
+    assert cube.long_name == 'Northward Near-Surface Wind'
+    assert cube.units == 'm s-1'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube)
+    check_lat(cube)
+    check_lon(cube)
+    check_heightxm(cube, 10.0)
+
+    np.testing.assert_allclose(
+        cube.data[:, :, 0],
+        [[3.026835, -2.226409, 4.868941, 3.301589]],
         rtol=1e-5,
     )
 
@@ -777,65 +1635,6 @@ def test_od550aer_fix(cubes_aermon):
 
 #     check_time(cube)
 #     check_lat_lon(cube)
-
-
-# # Test siconc and siconca (for extra_facets, extra fix and typesi coordinate)
-
-
-# def test_get_siconc_fix():
-#     """Test getting of fix."""
-#     fix = Fix.get_fixes('EMAC', 'EMAC', 'SImon', 'siconc')
-#     assert fix == [Siconc(None), AllVars(None)]
-
-
-# def test_siconc_fix(cubes_2d):
-#     """Test fix."""
-#     vardef = get_var_info('EMAC', 'SImon', 'siconc')
-#     extra_facets = get_extra_facets('EMAC', 'EMAC', 'SImon', 'siconc', ())
-#     siconc_fix = Siconc(vardef, extra_facets=extra_facets)
-#     allvars_fix = get_allvars_fix('SImon', 'siconc')
-
-#     fixed_cubes = siconc_fix.fix_metadata(cubes_2d)
-#     fixed_cubes = allvars_fix.fix_metadata(fixed_cubes)
-
-#     cube = check_siconc_metadata(fixed_cubes, 'siconc',
-#                                  'Sea-Ice Area Percentage (Ocean Grid)')
-#     check_time(cube)
-#     check_lat_lon(cube)
-#     check_typesi(cube)
-
-#     np.testing.assert_allclose(
-#         cube.data,
-#         [[10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0]],
-#     )
-
-
-# def test_get_siconca_fix():
-#     """Test getting of fix."""
-#     fix = Fix.get_fixes('EMAC', 'EMAC', 'SImon', 'siconca')
-#     assert fix == [Siconca(None), AllVars(None)]
-
-
-# def test_siconca_fix(cubes_2d):
-#     """Test fix."""
-#     vardef = get_var_info('EMAC', 'SImon', 'siconca')
-#     extra_facets = get_extra_facets('EMAC', 'EMAC', 'SImon', 'siconca', ())
-#     siconca_fix = Siconca(vardef, extra_facets=extra_facets)
-#     allvars_fix = get_allvars_fix('SImon', 'siconca')
-
-#     fixed_cubes = siconca_fix.fix_metadata(cubes_2d)
-#     fixed_cubes = allvars_fix.fix_metadata(fixed_cubes)
-
-#     cube = check_siconc_metadata(
-#       fixed_cubes, 'siconca', 'Sea-Ice Area Percentage (Atmospheric Grid)')
-#     check_time(cube)
-#     check_lat_lon(cube)
-#     check_typesi(cube)
-
-#     np.testing.assert_allclose(
-#         cube.data,
-#         [[10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0]],
-#     )
 
 
 # # Test ta (for height and plev coordinate)

@@ -182,6 +182,10 @@ class AllVars(EmacFix):
         if cube.units != self.vardef.units:
             cube.convert_units(self.vardef.units)
 
+        # Fix attributes
+        if self.vardef.positive != '':
+            cube.attributes['positive'] = self.vardef.positive
+
 
 Clt = SetUnitsTo1
 
@@ -200,6 +204,12 @@ class Clwvi(EmacFix):
 
 
 Evspsbl = NegateData
+
+
+Hfls = NegateData
+
+
+Hfss = NegateData
 
 
 class MP_BC_tot(EmacFix):  # noqa: N801
@@ -297,6 +307,9 @@ Rlus = NegateData
 Rlut = NegateData
 
 
+Rlutcs = NegateData
+
+
 class Rsds(EmacFix):
     """Fixes for ``rsds``."""
 
@@ -329,6 +342,9 @@ Rsus = NegateData
 Rsut = NegateData
 
 
+Rsutcs = NegateData
+
+
 class Rtmt(EmacFix):
     """Fixes for ``rtmt``."""
 
@@ -357,21 +373,12 @@ class Sithick(EmacFix):
         return cube
 
 
-class Tosga(EmacFix):
-    """Fixes for ``tosga``."""
-
-    def fix_metadata(self, cubes):
-        """Fix metadata."""
-        cube = self.get_cube(cubes)
-        cube.units = 'celsius'
-        return CubeList([cube])
-
-
 class Toz(EmacFix):
     """Fixes for ``tosga``."""
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
+        # Convert DU to mm
         # Note: 1 mm = 100 DU
         cube = self.get_cube(cubes)
         cube.data = cube.core_data() / 100.0
