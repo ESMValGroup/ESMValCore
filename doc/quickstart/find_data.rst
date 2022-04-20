@@ -180,13 +180,19 @@ For some variables, extra facets are necessary; otherwise ESMValTool cannot
 read them properly.
 Supported keys for extra facets are:
 
-============= ===============================================================
-Key           Description
-============= ===============================================================
-``latitude``  Standard name of the latitude coordinate in the raw input file
-``longitude`` Standard name of the longitude coordinate in the raw input file
-``raw_name``  Variable name of the variables in the raw input file
-============= ===============================================================
+============= ============================= =================================
+Key           Description                   Default value if not specified
+============= ============================= =================================
+``latitude``  Standard name of the latitude ``latitude``
+              coordinate in the raw input
+              file
+``longitude`` Standard name of the          ``longitude``
+              longitude coordinate in the
+              raw input file
+``raw_name``  Variable name of the          CMOR variable name of the
+              variable in the raw input     corresponding variable
+              file
+============= ============================= =================================
 
 .. hint::
 
