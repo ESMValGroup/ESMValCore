@@ -145,11 +145,15 @@ def check_plev(cube):
     assert plev.long_name == 'pressure'
     assert plev.units == 'Pa'
     assert plev.attributes == {'positive': 'down', 'interpolation': 'linear'}
+
+    # Note: plev is reversed (index 0 should be surface, but is TOA at the
+    # moment), but this is fixed in the CMOR checks in a later step
+    # automatically
     np.testing.assert_allclose(
         plev.points,
-        [100000.0, 92500.0, 85000.0, 70000.0, 60000.0, 50000.0, 40000.0,
-         30000.0, 25000.0, 20000.0, 15000.0, 10000.0, 7000.0, 5000.0, 3000.0,
-         2000.0, 1000.0, 500.0, 100.0],
+        [100.0, 500.0, 1000.0, 2000.0, 3000.0, 5000.0, 7000.0, 10000.0,
+         15000.0, 20000.0, 25000.0, 30000.0, 40000.0, 50000.0, 60000.0,
+         70000.0, 85000.0, 92500.0, 100000.0],
     )
     assert plev.bounds is None
 
@@ -2098,13 +2102,13 @@ def test_ta_fix(cubes_amon_3d):
     check_lon(fixed_cube)
 
     np.testing.assert_allclose(
-        fixed_cube.data[0, 1:5, 0, 0],
-        [2.702699e+02,  2.664087e+02,  2.584884e+02, 2.509335e+02],
+        fixed_cube.data[0, -5:-1, 0, 0],
+        [250.93347, 258.48843, 266.4087, 270.26993],
         rtol=1e-5,
     )
     np.testing.assert_equal(
-        fixed_cube.data.mask[0, :5, 0, 0],
-        [True, False, False, False, False],
+        fixed_cube.data.mask[0, -5:, 0, 0],
+        [False, False, False, False, True],
     )
 
 

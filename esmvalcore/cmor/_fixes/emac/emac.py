@@ -58,7 +58,7 @@ class AllVars(EmacFix):
         # Fix pressure levels (considers plev19, plev39, etc.)
         for dim_name in self.vardef.dimensions:
             if 'plev' in dim_name:
-                cube = self._fix_plev(cube)
+                self._fix_plev(cube)
                 break
 
         # Fix latitude
@@ -115,22 +115,19 @@ class AllVars(EmacFix):
         """Fix pressure level coordinate of cube."""
         for coord in cube.coords():
             coord_type = iris.util.guess_coord_axis(coord)
+
             if coord_type != 'Z':
                 continue
             if not coord.units.is_convertible('Pa'):
                 continue
 
-            # Fix metadata
             coord.var_name = 'plev'
             coord.standard_name = 'air_pressure'
             coord.long_name = 'pressure'
             coord.convert_units('Pa')
             coord.attributes['positive'] = 'down'
 
-            # Reverse entire cube along height axis so that index 0 is surface
-            # level
-            cube = iris.util.reverse(cube, 'air_pressure')
-            return cube
+            return
 
         raise ValueError(
             f"Cannot find requested pressure level coordinate for variable "
