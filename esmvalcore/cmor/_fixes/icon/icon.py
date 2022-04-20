@@ -257,6 +257,8 @@ class AllVars(IconFix):
         cube.long_name = self.vardef.long_name
         if cube.units != self.vardef.units:
             cube.convert_units(self.vardef.units)
+        if self.vardef.positive != '':
+            cube.attributes['positive'] = self.vardef.positive
 
     @staticmethod
     def _cell_index_needs_fixing(lat_idx, lon_idx):

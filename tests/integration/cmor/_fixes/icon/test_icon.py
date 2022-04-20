@@ -89,6 +89,7 @@ def check_ta_metadata(cubes):
     assert cube.standard_name == 'air_temperature'
     assert cube.long_name == 'Air Temperature'
     assert cube.units == 'K'
+    assert 'positive' not in cube.attributes
     return cube
 
 
@@ -100,6 +101,7 @@ def check_tas_metadata(cubes):
     assert cube.standard_name == 'air_temperature'
     assert cube.long_name == 'Near-Surface Air Temperature'
     assert cube.units == 'K'
+    assert 'positive' not in cube.attributes
     return cube
 
 
@@ -111,6 +113,7 @@ def check_siconc_metadata(cubes, var_name, long_name):
     assert cube.standard_name == 'sea_ice_area_fraction'
     assert cube.long_name == long_name
     assert cube.units == '%'
+    assert 'positive' not in cube.attributes
     return cube
 
 
@@ -284,6 +287,7 @@ def test_areacella_fix(cubes_grid):
     assert cube.standard_name == 'cell_area'
     assert cube.long_name == 'Grid-Cell Area for Atmospheric Grid Variables'
     assert cube.units == 'm2'
+    assert 'positive' not in cube.attributes
 
     check_lat_lon(cube)
 
@@ -305,6 +309,7 @@ def test_areacello_fix(cubes_grid):
     assert cube.standard_name == 'cell_area'
     assert cube.long_name == 'Grid-Cell Area for Ocean Variables'
     assert cube.units == 'm2'
+    assert 'positive' not in cube.attributes
 
     check_lat_lon(cube)
 
@@ -330,6 +335,56 @@ def test_clwvi_fix(cubes_2d):
                                   'condensed_water')
     assert cube.long_name == 'Condensed Water Path'
     assert cube.units == 'kg m-2'
+    assert 'positive' not in cube.attributes
+
+    check_time(cube)
+    check_lat_lon(cube)
+
+
+# Test rsdt and rsut (for positive attribute)
+
+
+def test_get_rsdt_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'rsdt')
+    assert fix == [AllVars(None)]
+
+
+def test_rsdt_fix(cubes_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'rsdt')
+    fixed_cubes = fix.fix_metadata(cubes_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'rsdt'
+    assert cube.standard_name == 'toa_incoming_shortwave_flux'
+    assert cube.long_name == 'TOA Incident Shortwave Radiation'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'down'
+
+    check_time(cube)
+    check_lat_lon(cube)
+
+
+def test_get_rsut_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'rsut')
+    assert fix == [AllVars(None)]
+
+
+def test_rsut_fix(cubes_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'rsut')
+    fixed_cubes = fix.fix_metadata(cubes_2d)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'rsut'
+    assert cube.standard_name == 'toa_outgoing_shortwave_flux'
+    assert cube.long_name == 'TOA Outgoing Shortwave Radiation'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'up'
 
     check_time(cube)
     check_lat_lon(cube)
@@ -518,6 +573,7 @@ def test_uas_fix(cubes_2d):
     assert cube.standard_name == 'eastward_wind'
     assert cube.long_name == 'Eastward Near-Surface Wind'
     assert cube.units == 'm s-1'
+    assert 'positive' not in cube.attributes
 
     check_time(cube)
     check_lat_lon(cube)
@@ -616,6 +672,7 @@ def test_empty_standard_name_fix(cubes_2d):
     assert cube.standard_name is None
     assert cube.long_name == 'Near-Surface Air Temperature'
     assert cube.units == 'K'
+    assert 'positive' not in cube.attributes
 
     # Restore original standard_name of tas
     vardef.standard_name = original_standard_name
