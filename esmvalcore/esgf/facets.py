@@ -1,5 +1,8 @@
 """Module containing mappings from our names to ESGF names."""
-from esmvalcore.esgf._logon import get_connection
+
+import pyesgf.search
+
+from .._config._esgf_pyclient import get_esgf_config
 
 FACETS = {
     'CMIP3': {
@@ -73,7 +76,11 @@ def create_dataset_map():
 
     Run `python -m esmvalcore.esgf.facets` to print an up to date map.
     """
-    connection = get_connection()
+    cfg = get_esgf_config()
+    search_args = dict(cfg["search_connection"])
+    url = search_args.pop("urls")[0]
+    connection = pyesgf.search.SearchConnection(url=url, **search_args)
+
     dataset_map = {}
     indices = {
         'CMIP3': 2,
