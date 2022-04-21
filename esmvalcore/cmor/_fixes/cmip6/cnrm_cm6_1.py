@@ -3,7 +3,11 @@ import iris
 
 from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
-from ..shared import add_aux_coords_from_cubes, get_bounds_cube
+from ..shared import (
+    add_aux_coords_from_cubes,
+    get_bounds_cube,
+    fix_ocean_depth_coord
+)
 
 
 class Cl(ClFixHybridPressureCoord):
@@ -73,7 +77,30 @@ class Clcalipso(Fix):
         return iris.cube.CubeList([cube])
 
 
-Cli = Cl
+class Omon(Fix):
+    """Fixes for ocean variables."""
 
+    def fix_metadata(self, cubes):
+        """Fix ocean depth coordinate.
+
+        Parameters
+        ----------
+        cubes: iris CubeList
+            List of cubes to fix
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            if cube.coords(axis='Z'):
+                z_coord = cube.coord(axis='Z')
+                if z_coord.standard_name is None:
+                    fix_ocean_depth_coord(cube)
+        return cubes
+
+
+Cli = Cl
 
 Clw = Cl
