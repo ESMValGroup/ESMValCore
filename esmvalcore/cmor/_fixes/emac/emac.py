@@ -12,14 +12,18 @@ variable) as single argument.
 """
 
 import logging
+from shutil import copyfile
 
 import dask.array as da
 import iris.analysis
 import iris.util
 from iris import NameConstraint
+from iris.aux_factory import HybridPressureFactory
 from iris.cube import CubeList
+from netCDF4 import Dataset
 
 from ..shared import (
+    add_aux_coords_from_cubes,
     add_scalar_height_coord,
     add_scalar_lambda550nm_coord,
     add_scalar_typesi_coord,
@@ -36,6 +40,29 @@ INVALID_UNITS = {
 
 class AllVars(EmacFix):
     """Fixes for all variables."""
+
+    def fix_file(self, filepath, output_dir):
+        """Fix file.
+
+        Fixes hybrid pressure level coordinate.
+
+        Note
+        ----
+        This fix removes the ``formula_terms`` attribute of the hybrid pressure
+        level variables to make the corresponding coefficients appear correctly
+        in the class:`iris.cube.CubeList` object returned by :mod:`iris.load`.
+
+        """
+        if 'alevel' not in self.vardef.dimensions:
+            return filepath
+        new_path = self.get_fixed_filepath(output_dir, filepath)
+        copyfile(filepath, new_path)
+        with Dataset(new_path, mode='a') as dataset:
+            if 'formula_terms' in dataset.variables['lev'].ncattrs():
+                del dataset.variables['lev'].formula_terms
+            if 'formula_terms' in dataset.variables['ilev'].ncattrs():
+                del dataset.variables['ilev'].formula_terms
+        return new_path
 
     def fix_data(self, cube):
         """Fix data."""
@@ -55,11 +82,15 @@ class AllVars(EmacFix):
         if 'time' in self.vardef.dimensions:
             self._fix_time(cube)
 
-        # Fix pressure levels (considers plev19, plev39, etc.)
+        # Fix regular pressure levels (considers plev19, plev39, etc.)
         for dim_name in self.vardef.dimensions:
             if 'plev' in dim_name:
                 self._fix_plev(cube)
                 break
+
+        # Fix hybrid pressure levels
+        if 'alevel' in self.vardef.dimensions:
+            cube = self._fix_alevel(cube, cubes)
 
         # Fix latitude
         if 'latitude' in self.vardef.dimensions:
@@ -76,6 +107,134 @@ class AllVars(EmacFix):
         self._fix_var_metadata(cube)
 
         return CubeList([cube])
+
+    @staticmethod
+    def _fix_time(cube):
+        """Fix time coordinate of cube."""
+        time_coord = cube.coord('time')
+        time_coord.var_name = 'time'
+        time_coord.standard_name = 'time'
+        time_coord.long_name = 'time'
+
+        # Add bounds if possible (not possible if cube only contains single
+        # time point)
+        if not time_coord.has_bounds():
+            try:
+                time_coord.guess_bounds()
+            except ValueError:
+                pass
+
+    def _fix_plev(self, cube):
+        """Fix regular pressure level coordinate of cube."""
+        for coord in cube.coords():
+            coord_type = iris.util.guess_coord_axis(coord)
+
+            if coord_type != 'Z':
+                continue
+            if not coord.units.is_convertible('Pa'):
+                continue
+
+            coord.var_name = 'plev'
+            coord.standard_name = 'air_pressure'
+            coord.long_name = 'pressure'
+            coord.convert_units('Pa')
+            coord.attributes['positive'] = 'down'
+
+            return
+
+        raise ValueError(
+            f"Cannot find requested pressure level coordinate for variable "
+            f"'{self.vardef.short_name}', searched for Z-coordinates with "
+            f"units that are convertible to Pa")
+
+    @staticmethod
+    def _fix_alevel(cube, cubes):
+        """Fix hybrid pressure level coordinate of cube."""
+        # Add coefficients for hybrid pressure level coordinate
+        coords_to_add = {
+            'hyam': 1,
+            'hybm': 1,
+            'aps_ave': (0, 2, 3),
+        }
+        add_aux_coords_from_cubes(cube, cubes, coords_to_add)
+
+        # Reverse entire cube along Z-axis so that index 0 is surface level
+        # Note: This would automatically be fixed by the CMOR checker, but this
+        # fails to fix the bounds of ap and b
+        cube = iris.util.reverse(cube, cube.coord(var_name='lev'))
+
+        # Adapt metadata of coordinates
+        lev_coord = cube.coord(var_name='lev')
+        ap_coord = cube.coord(var_name='hyam')
+        b_coord = cube.coord(var_name='hybm')
+        ps_coord = cube.coord(var_name='aps_ave')
+
+        lev_coord.var_name = 'lev'
+        lev_coord.standard_name = 'atmosphere_hybrid_sigma_pressure_coordinate'
+        lev_coord.long_name = 'hybrid sigma pressure coordinate'
+        lev_coord.units = '1'
+        lev_coord.attributes['positive'] = 'down'
+
+        ap_coord.var_name = 'ap'
+        ap_coord.standard_name = None
+        ap_coord.long_name = 'vertical coordinate formula term: ap(k)'
+        ap_coord.attributes = {}
+
+        b_coord.var_name = 'b'
+        b_coord.standard_name = None
+        b_coord.long_name = 'vertical coordinate formula term: b(k)'
+        b_coord.attributes = {}
+
+        ps_coord.var_name = 'ps'
+        ps_coord.standard_name = 'surface_air_pressure'
+        ps_coord.long_name = 'Surface Air Pressure'
+        ps_coord.attributes = {}
+
+        # Add bounds for coefficients
+        # (make sure to reverse cubes beforehand so index 0 is surface level)
+        ap_bnds_cube = iris.util.reverse(
+            cubes.extract_cube(NameConstraint(var_name='hyai')),
+            0,
+        )
+        b_bnds_cube = iris.util.reverse(
+            cubes.extract_cube(NameConstraint(var_name='hybi')),
+            0,
+        )
+        ap_bounds = da.stack(
+            [ap_bnds_cube.core_data()[:-1], ap_bnds_cube.core_data()[1:]],
+            axis=-1,
+        )
+        b_bounds = da.stack(
+            [b_bnds_cube.core_data()[:-1], b_bnds_cube.core_data()[1:]],
+            axis=-1,
+        )
+        ap_coord.bounds = ap_bounds
+        b_coord.bounds = b_bounds
+
+        # Convert arrays to float64
+        for coord in (ap_coord, b_coord, ps_coord):
+            coord.points = coord.core_points().astype(
+                float, casting='same_kind')
+            if coord.bounds is not None:
+                coord.bounds = coord.core_bounds().astype(
+                    float, casting='same_kind')
+
+        # Fix values of lev coordinate
+        # NOte: lev = a + b with a = ap / p0 (p0 = 100000 Pa)
+        lev_coord.points = (ap_coord.core_points() / 100000.0 +
+                            b_coord.core_points())
+        lev_coord.bounds = (ap_coord.core_bounds() / 100000.0 +
+                            b_coord.core_bounds())
+
+        # Add HybridPressureFactory
+        pressure_coord_factory = HybridPressureFactory(
+            delta=ap_coord,
+            sigma=b_coord,
+            surface_air_pressure=ps_coord,
+        )
+        cube.add_aux_factory(pressure_coord_factory)
+
+        return cube
 
     @staticmethod
     def _fix_lat(cube):
@@ -111,29 +270,6 @@ class AllVars(EmacFix):
             except ValueError:
                 pass
 
-    def _fix_plev(self, cube):
-        """Fix pressure level coordinate of cube."""
-        for coord in cube.coords():
-            coord_type = iris.util.guess_coord_axis(coord)
-
-            if coord_type != 'Z':
-                continue
-            if not coord.units.is_convertible('Pa'):
-                continue
-
-            coord.var_name = 'plev'
-            coord.standard_name = 'air_pressure'
-            coord.long_name = 'pressure'
-            coord.convert_units('Pa')
-            coord.attributes['positive'] = 'down'
-
-            return
-
-        raise ValueError(
-            f"Cannot find requested pressure level coordinate for variable "
-            f"'{self.vardef.short_name}', searched for Z-coordinates with "
-            f"units that are convertible to Pa")
-
     def _fix_scalar_coords(self, cube):
         """Fix scalar coordinates."""
         if 'height2m' in self.vardef.dimensions:
@@ -144,22 +280,6 @@ class AllVars(EmacFix):
             add_scalar_lambda550nm_coord(cube)
         if 'typesi' in self.vardef.dimensions:
             add_scalar_typesi_coord(cube, 'sea_ice')
-
-    @staticmethod
-    def _fix_time(cube):
-        """Fix time coordinate of cube."""
-        time_coord = cube.coord('time')
-        time_coord.var_name = 'time'
-        time_coord.standard_name = 'time'
-        time_coord.long_name = 'time'
-
-        # Add bounds if possible (not possible if cube only contains single
-        # time point)
-        if not time_coord.has_bounds():
-            try:
-                time_coord.guess_bounds()
-            except ValueError:
-                pass
 
     def _fix_var_metadata(self, cube):
         """Fix metadata of variable."""

@@ -5,7 +5,7 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-# from iris import NameConstraint
+from iris import NameConstraint
 from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
@@ -144,7 +144,7 @@ def check_plev(cube):
     assert plev.standard_name == 'air_pressure'
     assert plev.long_name == 'pressure'
     assert plev.units == 'Pa'
-    assert plev.attributes == {'positive': 'down', 'interpolation': 'linear'}
+    assert plev.attributes['positive'] == 'down'
 
     # Note: plev is reversed (index 0 should be surface, but is TOA at the
     # moment), but this is fixed in the CMOR checks in a later step
@@ -156,6 +156,101 @@ def check_plev(cube):
          70000.0, 85000.0, 92500.0, 100000.0],
     )
     assert plev.bounds is None
+
+
+def check_alevel(cube):
+    """Check alevel coordinate of cube."""
+    # atmosphere_hybrid_sigma_pressure_coordinate
+    assert cube.coords('atmosphere_hybrid_sigma_pressure_coordinate',
+                       dim_coords=True)
+    lev = cube.coord('atmosphere_hybrid_sigma_pressure_coordinate',
+                     dim_coords=True)
+    assert lev.var_name == 'lev'
+    assert lev.standard_name == 'atmosphere_hybrid_sigma_pressure_coordinate'
+    assert lev.long_name == 'hybrid sigma pressure coordinate'
+    assert lev.units == '1'
+    assert lev.attributes['positive'] == 'down'
+    np.testing.assert_allclose(
+        lev.points[:4],
+        [9.96150017e-01, 9.82649982e-01, 9.58960303e-01, 9.27668441e-01],
+    )
+    np.testing.assert_allclose(
+        lev.bounds[:4],
+        [[1.00000000e+00, 9.92299974e-01],
+         [9.92299974e-01, 9.72999990e-01],
+         [9.72999990e-01, 9.44920615e-01],
+         [9.44920615e-01, 9.10416267e-01]],
+    )
+
+    # Coefficient ap
+    assert cube.coords('vertical coordinate formula term: ap(k)',
+                       dim_coords=False)
+    ap_coord = cube.coord('vertical coordinate formula term: ap(k)',
+                          dim_coords=False)
+    assert ap_coord.var_name == 'ap'
+    assert ap_coord.standard_name is None
+    assert ap_coord.long_name == 'vertical coordinate formula term: ap(k)'
+    assert ap_coord.units == 'Pa'
+    assert ap_coord.attributes == {}
+    np.testing.assert_allclose(
+        ap_coord.points[:4],
+        [0.0, 0.0, 36.03179932, 171.845047],
+    )
+    np.testing.assert_allclose(
+        ap_coord.bounds[:4],
+        [[0.0, 0.0],
+         [0.0, 0.0],
+         [0.0, 72.06359863],
+         [72.06359863, 271.62649536]],
+    )
+
+    # Coefficient b
+    assert cube.coords('vertical coordinate formula term: b(k)',
+                       dim_coords=False)
+    b_coord = cube.coord('vertical coordinate formula term: b(k)',
+                         dim_coords=False)
+    assert b_coord.var_name == 'b'
+    assert b_coord.standard_name is None
+    assert b_coord.long_name == 'vertical coordinate formula term: b(k)'
+    assert b_coord.units == '1'
+    assert b_coord.attributes == {}
+    np.testing.assert_allclose(
+        b_coord.points[:4],
+        [0.99615002, 0.98264998, 0.95859998, 0.92594999],
+    )
+    np.testing.assert_allclose(
+        b_coord.bounds[:4],
+        [[1.0, 0.99229997],
+         [0.99229997, 0.97299999],
+         [0.97299999, 0.94419998],
+         [0.94419998, 0.9077]],
+    )
+
+    # Coefficient ps
+    assert cube.coords('surface_air_pressure', dim_coords=False)
+    ps_coord = cube.coord('surface_air_pressure', dim_coords=False)
+    assert ps_coord.var_name == 'ps'
+    assert ps_coord.standard_name == 'surface_air_pressure'
+    assert ps_coord.long_name == 'Surface Air Pressure'
+    assert ps_coord.units == 'Pa'
+    assert ps_coord.attributes == {}
+    np.testing.assert_allclose(
+        ps_coord.points[:, :, 0],
+        [[100000.1875, 98240.7578125, 99601.09375, 96029.7109375]],
+    )
+    assert ps_coord.bounds is None
+
+    # air_pressure
+    assert cube.coords('air_pressure', dim_coords=False)
+    p_coord = cube.coord('air_pressure', dim_coords=False)
+    assert p_coord.var_name is None
+    assert p_coord.standard_name == 'air_pressure'
+    assert p_coord.long_name is None
+    assert p_coord.units == 'Pa'
+    assert p_coord.attributes == {}
+    assert p_coord.points[0, 0, 0, 0] > p_coord.points[0, -1, 0, 0]
+    assert p_coord.bounds[0, 0, 0, 0, 0] > p_coord.bounds[0, -1, 0, 0, 0]
+    assert p_coord.bounds[0, 0, 0, 0, 0] > p_coord.bounds[0, 0, 0, 0, 1]
 
 
 def check_lat(cube):
@@ -2078,16 +2173,16 @@ def test_MP_SS_tot_fix(cubes_tracer_pdef_gp):  # noqa: N802
     )
 
 
-# Test each 3D variable in extra_facets/emac-mappings.yml
+# Test each 3D variable with regular Z-coord in extra_facets/emac-mappings.yml
 
 
-def test_get_ta_fix():
+def test_get_ta_amon_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'ta')
     assert fix == [AllVars(None)]
 
 
-def test_ta_fix(cubes_amon_3d):
+def test_ta_amon_fix(cubes_amon_3d):
     """Test fix."""
     fix = get_allvars_fix('Amon', 'ta')
     fixed_cubes = fix.fix_metadata(cubes_amon_3d)
@@ -2109,6 +2204,46 @@ def test_ta_fix(cubes_amon_3d):
     np.testing.assert_equal(
         fixed_cube.data.mask[0, -5:, 0, 0],
         [False, False, False, False, True],
+    )
+
+
+# Test each 3D variable with hybrid Z-coord in extra_facets/emac-mappings.yml
+
+
+def test_get_ta_cfon_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'CFmon', 'ta')
+    assert fix == [AllVars(None)]
+
+
+def test_ta_cfmon_fix(test_data_path, tmp_path):
+    """Test fix."""
+    fix = get_allvars_fix('CFmon', 'ta')
+
+    filepath = test_data_path / 'emac_amon_3d.nc'
+    fixed_path = fix.fix_file(filepath, tmp_path)
+    cubes = iris.load(fixed_path)
+
+    assert cubes.extract(NameConstraint(var_name='hyam'))
+    assert cubes.extract(NameConstraint(var_name='hybm'))
+    assert cubes.extract(NameConstraint(var_name='hyai'))
+    assert cubes.extract(NameConstraint(var_name='hybi'))
+
+    fixed_cubes = fix.fix_metadata(cubes)
+
+    cube = check_ta_metadata(fixed_cubes)
+
+    fixed_cube = fix.fix_data(cube)
+
+    check_time(fixed_cube)
+    check_alevel(fixed_cube)
+    check_lat(fixed_cube)
+    check_lon(fixed_cube)
+
+    np.testing.assert_allclose(
+        fixed_cube.data[0, 0:5, 0, 0],
+        [272.32098, 271.45898, 270.3698, 269.20953, 267.84683],
+        rtol=1e-5,
     )
 
 

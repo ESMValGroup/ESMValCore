@@ -3,7 +3,7 @@
 # All extra facets for EMAC are optional but might be necessary for some
 # variables. Note that if the facet ``channel`` is not given here it has to be
 # specified in the recipe. A complete list of supported keys is given in the
-# documentation (see ESMValCore/doc/develop/fixing_data.rst).
+# documentation (see ESMValCore/doc/quickstart/find_data.rst).
 ---
 
 EMAC:
@@ -164,7 +164,7 @@ EMAC:
     MP_SS_tot:  # derived from MP_SS_ks_ave, MP_SS_as_ave, MP_SS_cs_ave
       channel: tracer_pdef_gp
 
-  # 3D variables
+  # 3D variables with regular Z-coords
   Amon:
     ta:  # defined on plev19
       raw_name: tm1_p19_ave
@@ -172,6 +172,28 @@ EMAC:
   Eday:
     ta:  # defined on plev19
       raw_name: tm1_p19_ave
+      channel: Amon
+
+  # 3D variables with hybrid Z-coords
+  6hrLev:
+    ta:
+      raw_name: tm1_ave
+      channel: Amon
+  CF3hr:
+    ta:
+      raw_name: tm1_ave
+      channel: Amon
+  CFday:
+    ta:
+      raw_name: tm1_ave
+      channel: Amon
+  CFmon:
+    ta:
+      raw_name: tm1_ave
+      channel: Amon
+  Esubhr:
+    ta:
+      raw_name: tm1_ave
       channel: Amon
 
 
