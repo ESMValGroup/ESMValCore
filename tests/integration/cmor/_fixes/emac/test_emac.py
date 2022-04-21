@@ -2197,20 +2197,20 @@ def test_ta_amon_fix(cubes_amon_3d):
     check_lon(fixed_cube)
 
     np.testing.assert_allclose(
-        fixed_cube.data[0, -5:-1, 0, 0],
-        [250.93347, 258.48843, 266.4087, 270.26993],
+        fixed_cube.data[0, -5:-2, 0, 0],
+        [2.512135e+02, 2.585062e+02, 2.662863e+02],
         rtol=1e-5,
     )
     np.testing.assert_equal(
         fixed_cube.data.mask[0, -5:, 0, 0],
-        [False, False, False, False, True],
+        [False, False, False, True, True],
     )
 
 
 # Test each 3D variable with hybrid Z-coord in extra_facets/emac-mappings.yml
 
 
-def test_get_ta_cfon_fix():
+def test_get_ta_cfmon_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'CFmon', 'ta')
     assert fix == [AllVars(None)]
