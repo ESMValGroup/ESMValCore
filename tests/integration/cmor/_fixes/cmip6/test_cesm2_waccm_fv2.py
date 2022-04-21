@@ -7,6 +7,7 @@ from esmvalcore.cmor._fixes.cmip6.cesm2_waccm_fv2 import (
     Cli,
     Clw,
     Fgco2,
+    Omon,
     Siconc,
     Tas,
 )
