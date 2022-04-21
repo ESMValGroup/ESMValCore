@@ -152,8 +152,18 @@ def check_height(cube, plev_has_bounds=True):
     assert plev.attributes == {'positive': 'down'}
     assert cube.coord_dims('air_pressure') == (0, 1, 2)
 
+    np.testing.assert_allclose(
+        plev.points[0, :4, 0],
+        [100566.234, 99652.07, 97995.77, 95686.08],
+    )
     if plev_has_bounds:
-        assert plev.bounds is not None
+        np.testing.assert_allclose(
+            plev.bounds[0, :4, 0],
+            [[100825.04, 100308.09],
+             [100308.09, 99000.336],
+             [99000.336, 97001.42],
+             [97001.42, 94388.59]],
+        )
     else:
         assert plev.bounds is None
 
