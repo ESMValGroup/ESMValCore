@@ -19,4 +19,4 @@ Siconc = OceanFixGrid
 Sos = OceanFixGrid
 
 
-uo = OceanFixGrid
+Uo = OceanFixGrid
