@@ -3,12 +3,12 @@ from ..fix import Fix
 from ..shared import fix_ocean_depth_coord
 
 
-
 class Omon(Fix):
     """Fixes for ocean variables."""
 
     def fix_metadata(self, cubes):
         """Fix ocean depth coordinate.
+
         Parameters
         ----------
         cubes: iris CubeList
