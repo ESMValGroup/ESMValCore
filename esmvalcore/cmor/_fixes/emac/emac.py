@@ -220,7 +220,7 @@ class AllVars(EmacFix):
                     float, casting='same_kind')
 
         # Fix values of lev coordinate
-        # NOte: lev = a + b with a = ap / p0 (p0 = 100000 Pa)
+        # Note: lev = a + b with a = ap / p0 (p0 = 100000 Pa)
         lev_coord.points = (ap_coord.core_points() / 100000.0 +
                             b_coord.core_points())
         lev_coord.bounds = (ap_coord.core_bounds() / 100000.0 +
