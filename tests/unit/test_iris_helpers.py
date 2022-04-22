@@ -1,5 +1,6 @@
 """Tests for :mod:`esmvalcore.iris_helpers`."""
 import datetime
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -12,7 +13,7 @@ from iris.coords import (
     DimCoord,
 )
 from iris.cube import Cube, CubeList
-from iris.exceptions import ConstraintMismatchError
+from iris.exceptions import ConstraintMismatchError, CoordinateMultiDimError
 
 from esmvalcore.iris_helpers import (
     add_leading_dim_to_cube,
@@ -112,6 +113,14 @@ def test_add_leading_dim_to_cube():
     assert new_cube.cell_measures(cell_area)
     assert new_cube.ancillary_variable_dims(land_mask) == (1,)
     assert new_cube.cell_measure_dims(cell_area) == (1,)
+
+
+def test_add_leading_dim_to_cube_non_1d():
+    """Test :func:`esmvalcore.iris_helpers.add_leading_dim_to_cube`."""
+    coord_2d = AuxCoord([[0, 1], [2, 3]], var_name='coord_2d')
+    msg = "Multi-dimensional coordinate not supported: 'coord_2d'"
+    with pytest.raises(CoordinateMultiDimError, match=msg):
+        add_leading_dim_to_cube(mock.sentinel.cube, coord_2d)
 
 
 @pytest.mark.parametrize("date, dtype, expected", [

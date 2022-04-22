@@ -4,6 +4,7 @@ import iris
 import iris.cube
 import iris.util
 import numpy as np
+from iris.exceptions import CoordinateMultiDimError
 
 
 def add_leading_dim_to_cube(cube, dim_coord):
@@ -19,14 +20,22 @@ def add_leading_dim_to_cube(cube, dim_coord):
         Input cube.
     dim_coord: iris.coords.DimCoord
         Dimensional coordinate that is used to describe the new leading
-        dimension.
+        dimension. Needs to be 1D.
 
     Returns
     -------
     iris.cube.Cube
         Transformed input cube with new leading dimension.
 
+    Raises
+    ------
+    CoordinateMultiDimError
+        ``dim_coord`` is not 1D.
+
     """
+    # Only 1D dim_coords are supported
+    if dim_coord.ndim > 1:
+        raise CoordinateMultiDimError(dim_coord)
     new_shape = (dim_coord.shape[0], *cube.shape)
 
     # Cache ancillary variables and cell measures (iris.util.new_axis drops
