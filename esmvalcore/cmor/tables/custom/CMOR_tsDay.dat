@@ -15,7 +15,7 @@ comment:
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
-dimensions:        time
+dimensions:        time latitude longitude
 type:              real
 valid_min:         
 valid_max:         
