@@ -107,8 +107,8 @@ def test_mock_search(variable, mocker):
             FileResult(json=j, context=None) for j in json.load(file)
         ]
     conn = get_mock_connection(facets, search_results)
-    mocker.patch.object(_search,
-                        'get_connection',
+    mocker.patch.object(_search.pyesgf.search,
+                        'SearchConnection',
                         autspec=True,
                         return_value=conn)
 

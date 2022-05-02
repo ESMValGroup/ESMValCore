@@ -3,7 +3,8 @@ import iris
 import numpy as np
 import pytest
 
-from esmvalcore.cmor._fixes.cmip6.gfdl_cm4 import Cl, Cli, Clw, Siconc
+from esmvalcore.cmor._fixes.cmip6.gfdl_cm4 import (Cl, Cli, Clw,
+                                                   Fgco2, Omon, Siconc)
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
@@ -91,6 +92,12 @@ def test_get_clw_fix():
 def test_clw_fix():
     """Test fix for ``clw``."""
     assert Clw is Cl
+
+
+def test_get_fgco2_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'GFDL-CM4', 'Omon', 'fgco2')
+    assert fix == [Fgco2(None), Omon(None)]
 
 
 def test_get_siconc_fix():

@@ -1905,7 +1905,11 @@ class Recipe:
         output['recipe_data'] = self._raw_recipe
         output['task_output'] = {}
 
-        for task in self.tasks:
+        for task in self.tasks.flatten():
+            if self._cfg['remove_preproc_dir'] and isinstance(
+                    task, PreprocessingTask):
+                # Skip preprocessing tasks that are deleted afterwards
+                continue
             output['task_output'][task.name] = task.get_product_attributes()
 
         return output

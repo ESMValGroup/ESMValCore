@@ -4,6 +4,8 @@ import iris
 from ..common import ClFixHybridPressureCoord, SiconcFixScalarCoord
 from ..fix import Fix
 from ..shared import add_aux_coords_from_cubes, add_scalar_height_coord
+from .gfdl_esm4 import Omon as BaseOmon
+from .gfdl_esm4 import Fgco2 as BaseFgco2
 
 
 class Cl(ClFixHybridPressureCoord):
@@ -108,3 +110,12 @@ class Vas(Fix):
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 10.0)
         return cubes
+
+
+Omon = BaseOmon
+
+
+Oyr = Omon
+
+
+Fgco2 = BaseFgco2

@@ -41,8 +41,8 @@ def test_create_dataset_map(monkeypatch, mocker):
     ]
     ctx.search.side_effect = [[r] for r in results]
     conn.new_context.return_value = ctx
-    mocker.patch.object(facets,
-                        'get_connection',
+    mocker.patch.object(facets.pyesgf.search,
+                        'SearchConnection',
                         autospec=True,
                         return_value=conn)
 
