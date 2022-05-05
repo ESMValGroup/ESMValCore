@@ -19,6 +19,7 @@ from ._area import (
     meridional_statistics,
     zonal_statistics,
 )
+from ._bias import bias
 from ._cycles import amplitude
 from ._derive import derive
 from ._detrend import detrend
@@ -41,14 +42,14 @@ from ._mask import (
     mask_multimodel,
     mask_outside_range,
 )
-from ._multimodel import multi_model_statistics
+from ._multimodel import ensemble_statistics, multi_model_statistics
 from ._other import clip
-from ._regrid import extract_levels, extract_point, regrid
+from ._regrid import extract_levels, extract_location, extract_point, regrid
 from ._time import (
     annual_statistics,
     anomalies,
     climate_statistics,
-    clip_start_end_year,
+    clip_timerange,
     daily_statistics,
     decadal_statistics,
     extract_month,
@@ -88,7 +89,7 @@ __all__ = [
     'concatenate',
     'cmor_check_metadata',
     # Extract years given by dataset keys (start_year and end_year)
-    'clip_start_end_year',
+    'clip_timerange',
     # Data reformatting/CMORization
     'fix_data',
     'cmor_check_data',
@@ -114,6 +115,7 @@ __all__ = [
     'regrid',
     # Point interpolation
     'extract_point',
+    'extract_location',
     # Masking missing values
     'mask_multimodel',
     'mask_fillvalues',
@@ -157,8 +159,12 @@ __all__ = [
     'linear_trend_stderr',
     # Convert units
     'convert_units',
+    # Ensemble statistics
+    'ensemble_statistics',
     # Multi model statistics
     'multi_model_statistics',
+    # Bias calculation
+    'bias',
     # Remove fx_variables from cube
     'remove_fx_variables',
     # Save to file
@@ -167,7 +173,7 @@ __all__ = [
 ]
 
 TIME_PREPROCESSORS = [
-    'clip_start_end_year',
+    'clip_timerange',
     'extract_time',
     'extract_season',
     'extract_month',
@@ -191,6 +197,8 @@ INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('add_fx_variables') + 1]
 FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('remove_fx_variables'):]
 
 MULTI_MODEL_FUNCTIONS = {
+    'bias',
+    'ensemble_statistics',
     'multi_model_statistics',
     'mask_multimodel',
     'mask_fillvalues',
@@ -277,18 +285,53 @@ def _get_multi_model_settings(products, step):
     return settings, exclude
 
 
-def _run_preproc_function(function, items, kwargs):
+def _run_preproc_function(function, items, kwargs, input_files=None):
     """Run preprocessor function."""
-    msg = "{}({}, {})".format(function.__name__, items, kwargs)
-    logger.debug("Running %s", msg)
+    kwargs_str = ",\n".join(
+        [f"{k} = {pformat(v)}" for (k, v) in kwargs.items()])
+    if input_files is None:
+        file_msg = ""
+    else:
+        file_msg = (f"\nloaded from original input file(s)\n"
+                    f"{pformat(input_files)}")
+    logger.debug(
+        "Running preprocessor function '%s' on the data\n%s%s\nwith function "
+        "argument(s)\n%s", function.__name__, pformat(items), file_msg,
+        kwargs_str)
     try:
         return function(items, **kwargs)
     except Exception:
-        logger.error("Failed to run %s", msg)
+        # To avoid very long error messages, we truncate the arguments and
+        # input files here at a given threshold
+        n_shown_args = 4
+        if input_files is not None and len(input_files) > n_shown_args:
+            n_not_shown_files = len(input_files) - n_shown_args
+            file_msg = (f"\nloaded from original input file(s)\n"
+                        f"{pformat(input_files[:n_shown_args])}\n(and "
+                        f"{n_not_shown_files:d} further file(s) not shown "
+                        f"here; refer to the debug log for a full list)")
+
+        # Make sure that the arguments are indexable
+        if isinstance(items, (PreprocessorFile, Cube, str)):
+            items = [items]
+        if isinstance(items, set):
+            items = list(items)
+
+        if len(items) <= n_shown_args:
+            data_msg = pformat(items)
+        else:
+            n_not_shown_args = len(items) - n_shown_args
+            data_msg = (f"{pformat(items[:n_shown_args])}\n(and "
+                        f"{n_not_shown_args:d} further argument(s) not shown "
+                        f"here; refer to the debug log for a full list)")
+        logger.error(
+            "Failed to run preprocessor function '%s' on the data\n%s%s\nwith "
+            "function argument(s)\n%s", function.__name__, data_msg, file_msg,
+            kwargs_str)
         raise
 
 
-def preprocess(items, step, **settings):
+def preprocess(items, step, input_files=None, **settings):
     """Run preprocessor."""
     logger.debug("Running preprocessor step %s", step)
     function = globals()[step]
@@ -296,10 +339,12 @@ def preprocess(items, step, **settings):
 
     result = []
     if itype.endswith('s'):
-        result.append(_run_preproc_function(function, items, settings))
+        result.append(_run_preproc_function(function, items, settings,
+                                            input_files=input_files))
     else:
         for item in items:
-            result.append(_run_preproc_function(function, item, settings))
+            result.append(_run_preproc_function(function, item, settings,
+                                                input_files=input_files))
 
     items = []
     for item in result:
@@ -330,18 +375,27 @@ class PreprocessorFile(TrackedFile):
     """Preprocessor output file."""
 
     def __init__(self, attributes, settings, ancestors=None):
-        super(PreprocessorFile, self).__init__(attributes['filename'],
-                                               attributes, ancestors)
+        super().__init__(attributes['filename'], attributes, ancestors)
 
         self.settings = copy.deepcopy(settings)
         if 'save' not in self.settings:
             self.settings['save'] = {}
         self.settings['save']['filename'] = self.filename
 
-        self.files = [a.filename for a in ancestors or ()]
+        # self._input_files always contains the original input files;
+        # self.files may change in the preprocessing chain (e.g., by the step
+        # fix_file)
+        self._input_files = [a.filename for a in ancestors or ()]
+        self.files = copy.deepcopy(self._input_files)
 
         self._cubes = None
         self._prepared = False
+
+    def _input_files_for_log(self):
+        """Do not log input files twice in output log."""
+        if self.files == self._input_files:
+            return None
+        return self._input_files
 
     def check(self):
         """Check preprocessor settings."""
@@ -353,7 +407,9 @@ class PreprocessorFile(TrackedFile):
             raise ValueError(
                 "PreprocessorFile {} has no settings for step {}".format(
                     self, step))
-        self.cubes = preprocess(self.cubes, step, **self.settings[step])
+        self.cubes = preprocess(self.cubes, step,
+                                input_files=self._input_files,
+                                **self.settings[step])
         if debug:
             logger.debug("Result %s", self.cubes)
             filename = _get_debug_filename(self.filename, step)
@@ -364,8 +420,10 @@ class PreprocessorFile(TrackedFile):
         if not self._prepared:
             for step in DEFAULT_ORDER[:DEFAULT_ORDER.index('load')]:
                 if step in self.settings:
-                    self.files = preprocess(self.files, step,
-                                            **self.settings[step])
+                    self.files = preprocess(
+                        self.files, step,
+                        input_files=self._input_files_for_log(),
+                        **self.settings[step])
             self._prepared = True
 
     @property
@@ -374,6 +432,7 @@ class PreprocessorFile(TrackedFile):
         if self.is_closed:
             self.prepare()
             self._cubes = preprocess(self.files, 'load',
+                                     input_files=self._input_files_for_log(),
                                      **self.settings.get('load', {}))
         return self._cubes
 
@@ -384,8 +443,10 @@ class PreprocessorFile(TrackedFile):
     def save(self):
         """Save cubes to disk."""
         self.files = preprocess(self._cubes, 'save',
+                                input_files=self._input_files,
                                 **self.settings['save'])
         self.files = preprocess(self.files, 'cleanup',
+                                input_files=self._input_files,
                                 **self.settings.get('cleanup', {}))
 
     def close(self):
@@ -402,12 +463,34 @@ class PreprocessorFile(TrackedFile):
 
     def _initialize_entity(self):
         """Initialize the entity representing the file."""
-        super(PreprocessorFile, self)._initialize_entity()
+        super()._initialize_entity()
         settings = {
             'preprocessor:' + k: str(v)
             for k, v in self.settings.items()
         }
         self.entity.add_attributes(settings)
+
+    def group(self, keys: list) -> str:
+        """Generate group keyword.
+
+        Returns a string that identifies a group. Concatenates a list of
+        values from .attributes
+        """
+        if not keys:
+            return ''
+
+        if isinstance(keys, str):
+            keys = [keys]
+
+        identifier = []
+        for key in keys:
+            attribute = self.attributes.get(key)
+            if attribute:
+                if isinstance(attribute, (list, tuple)):
+                    attribute = '-'.join(attribute)
+                identifier.append(attribute)
+
+        return '_'.join(identifier)
 
 
 # TODO: use a custom ProductSet that raises an exception if you try to
@@ -454,17 +537,44 @@ class PreprocessingTask(BaseTask):
 
     def _initialize_product_provenance(self):
         """Initialize product provenance."""
-        for product in self.products:
-            product.initialize_provenance(self.activity)
+        self._initialize_products(self.products)
+        self._initialize_multimodel_provenance()
+        self._initialize_ensemble_provenance()
 
-        # Hacky way to initialize the multi model products as well.
-        step = 'multi_model_statistics'
-        input_products = [p for p in self.products if step in p.settings]
+    def _initialize_multiproduct_provenance(self, step):
+        input_products = self._get_input_products(step)
         if input_products:
-            statistic_products = input_products[0].settings[step].get(
-                'output_products', {}).values()
-            for product in statistic_products:
-                product.initialize_provenance(self.activity)
+            statistic_products = set()
+
+            for input_product in input_products:
+                step_settings = input_product.settings[step]
+                output_products = step_settings.get('output_products', {})
+
+                for product in output_products.values():
+                    statistic_products.update(product.values())
+
+            self._initialize_products(statistic_products)
+
+    def _initialize_multimodel_provenance(self):
+        """Initialize provenance for multi-model statistics."""
+        step = 'multi_model_statistics'
+        self._initialize_multiproduct_provenance(step)
+
+    def _initialize_ensemble_provenance(self):
+        """Initialize provenance for ensemble statistics."""
+        step = 'ensemble_statistics'
+        self._initialize_multiproduct_provenance(step)
+
+    def _get_input_products(self, step):
+        """Get input products."""
+        return [
+            product for product in self.products if step in product.settings
+        ]
+
+    def _initialize_products(self, products):
+        """Initialize products."""
+        for product in products:
+            product.initialize_provenance(self.activity)
 
     def _run(self, _):
         """Run the preprocessor."""

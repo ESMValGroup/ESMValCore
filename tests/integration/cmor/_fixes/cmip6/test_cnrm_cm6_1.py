@@ -4,7 +4,8 @@ import iris
 import numpy as np
 import pytest
 
-from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cl, Clcalipso, Cli, Clw
+from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import (Cl, Clcalipso,
+                                                     Cli, Clw, Omon)
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -129,3 +130,9 @@ def test_get_clw_fix():
 def test_clw_fix():
     """Test fix for ``clw``."""
     assert Clw is Cl
+
+
+def test_get_thetao_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1', 'Omon', 'thetao')
+    assert fix == [Omon(None)]

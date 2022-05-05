@@ -1,8 +1,9 @@
+---
 name: Monitor Tests
 on:
   push:
     branches:
-    - main
+      - main
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
@@ -16,7 +17,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.8", "3.9", "3.10"]
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:
@@ -26,8 +27,9 @@ jobs:
           activate-environment: esmvalcore
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
-          miniconda-version: "latest"
-          channels: conda-forge
+          miniforge-version: "latest"
+          miniforge-variant: Mambaforge
+          use-mamba: true
       - shell: bash -l {0}
         run: mkdir -p test_linux_artifacts_python_${{ matrix.python-version }}
       - shell: bash -l {0}
@@ -39,9 +41,9 @@ jobs:
       - shell: bash -l {0}
         run: pip install -e .[develop] 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/install.txt
       - shell: bash -l {0}
-        run: pytest -n 2 -m "not installation and not sequential" 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/test_report.txt
+        run: pytest -n 2 -m "not installation and not sequential" --db ../.pymon 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - shell: bash -l {0}
-        run: python tests/parse_pymon.py 
+        run: python tests/parse_pymon.py
       - shell: bash -l {0}
         run: pytest -n 0 -m "sequential"
       - shell: bash -l {0}
@@ -57,7 +59,7 @@ jobs:
     runs-on: "macos-latest"
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.8", "3.9", "3.10"]
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
@@ -67,8 +69,9 @@ jobs:
           activate-environment: esmvalcore
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
-          miniconda-version: "latest"
-          channels: conda-forge
+          miniforge-version: "latest"
+          miniforge-variant: Mambaforge
+          use-mamba: true
       - shell: bash -l {0}
         run: mkdir -p test_osx_artifacts_python_${{ matrix.python-version }}
       - shell: bash -l {0}
@@ -78,9 +81,9 @@ jobs:
       - shell: bash -l {0}
         run: pip install pytest-monitor
       - shell: bash -l {0}
-        run: pip install -e .[develop] --use-feature=2020-resolver 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/install.txt
+        run: pip install -e .[develop] 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/install.txt
       - shell: bash -l {0}
-        run: pytest -n 2 -m "not installation and not sequential" 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/test_report.txt
+        run: pytest -n 2 -m "not installation and not sequential" --db ../.pymon 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - shell: bash -l {0}
         run: python tests/parse_pymon.py
       - shell: bash -l {0}

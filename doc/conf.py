@@ -66,12 +66,14 @@ autodoc_default_options = {
 }
 
 autodoc_mock_imports = [
-    'iris',
-    'stratify',
-    'ESMF',
     'cartopy',
     'cf_units',
+    'ESMF',
+    'geopy',
+    'iris',
+    'nested_lookup',
     'psutil',
+    'stratify',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -419,11 +421,13 @@ intersphinx_mapping = {
      None),
     'esmvaltool': (f'https://docs.esmvaltool.org/en/{rtd_version}/', None),
     'iris': ('https://scitools-iris.readthedocs.io/en/latest/', None),
+    'iris-esmf-regrid': ('https://iris-esmf-regrid.readthedocs.io/en/latest',
+                         None),
     'matplotlib': ('https://matplotlib.org/', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
     'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/latest/', None),
     'python': ('https://docs.python.org/3/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
 }
 
 # -- Custom Document processing ----------------------------------------------

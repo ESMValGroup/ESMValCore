@@ -270,7 +270,7 @@ _validators = {
 
     # From CLI
     "resume_from": validate_pathlist,
-    "skip-nonexistent": validate_bool,
+    "skip_nonexistent": validate_bool,
     "diagnostics": validate_diagnostics,
     "check_level": validate_check_level,
     "offline": validate_bool,

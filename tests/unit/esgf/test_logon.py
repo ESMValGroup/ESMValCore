@@ -79,19 +79,3 @@ def test_get_credentials(mocker, logged_on):
         assert creds == '/path/to/creds.pem'
     else:
         assert creds is None
-
-
-def test_get_connection(mocker):
-
-    url = 'http://esgf-node.llnl.gov/esg-search'
-    cfg = {'search_connection': {'url': url}}
-
-    mocker.patch.object(_logon,
-                        'get_esgf_config',
-                        autospec=True,
-                        return_value=cfg)
-
-    conn = _logon.get_connection()
-
-    assert isinstance(conn, pyesgf.search.SearchConnection)
-    assert conn.url == url

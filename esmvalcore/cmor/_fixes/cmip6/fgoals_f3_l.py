@@ -11,6 +11,9 @@ from ..fix import Fix
 Tos = OceanFixGrid
 
 
+Omon = OceanFixGrid
+
+
 class AllVars(Fix):
     """Fixes for all vars."""
     def fix_metadata(self, cubes):

@@ -111,7 +111,9 @@ def test_get_extra_facets_cmip5():
     }
     extra_facets = get_extra_facets(**variable, extra_facets_dir=tuple())
 
-    assert extra_facets == {'institute': ['CSIRO-BOM'], 'product': 'output1'}
+    assert extra_facets == {
+        'institute': ['CSIRO-BOM'], 'product': ['output1', 'output2']
+        }
 
 
 def test_get_project_config(mocker):
@@ -154,7 +156,7 @@ def test_load_default_config(monkeypatch):
         'offline': True,
         'output_file_type': 'png',
         'profile_diagnostic': False,
-        'remove_preproc_dir': False,
+        'remove_preproc_dir': True,
         'resume_from': [],
         'rootpath': {
             'default': [str(Path.home() / 'climate_data')]
@@ -180,7 +182,7 @@ def test_load_default_config(monkeypatch):
 
     # Check output directories
     assert cfg['output_dir'].startswith(
-        str(Path.cwd() / 'esmvaltool_output' / 'recipe_example'))
+        str(Path.home() / 'esmvaltool_output' / 'recipe_example'))
     for path in ('preproc', 'work', 'run'):
         assert cfg[path + '_dir'] == str(Path(cfg['output_dir'], path))
     assert cfg['plot_dir'] == str(Path(cfg['output_dir'], 'plots'))

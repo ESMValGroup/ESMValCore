@@ -994,7 +994,6 @@ def test_cmorization(era5_cubes, cmor_cubes, var, mip):
             coord.points = np.round(coord.points, decimals=7)
             if coord.bounds is not None:
                 coord.bounds = np.round(coord.bounds, decimals=7)
-    print('cmor_cube:', cmor_cube.xml())
-    print('fixed_cube:', fixed_cube.xml())
-    assert fixed_cube.xml() == cmor_cube.xml()
+    print('cmor_cube:', cmor_cube)
+    print('fixed_cube:', fixed_cube)
     assert fixed_cube == cmor_cube

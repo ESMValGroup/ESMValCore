@@ -43,10 +43,3 @@ def get_credentials():
     else:
         credentials = None
     return credentials
-
-
-def get_connection():
-    """Connect to ESGF."""
-    cfg = get_esgf_config()
-    connection = pyesgf.search.SearchConnection(**cfg["search_connection"])
-    return connection
