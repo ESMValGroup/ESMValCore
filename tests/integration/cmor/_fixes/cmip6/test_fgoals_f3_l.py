@@ -34,7 +34,7 @@ def cubes():
 
     wrong_lat_coord = iris.coords.DimCoord(
         [0.0, 1.0],
-        bounds=[[-0.5, 0.5], [1.5, 0.5]],
+        bounds=[[-0.5, 0.5], [1.5, 2.]],
         var_name='lat',
         standard_name='latitude',
         units='degrees')
@@ -48,12 +48,12 @@ def cubes():
 
     wrong_lon_coord = iris.coords.DimCoord(
         [0.0, 1.0],
-        bounds=[[-0.5, 0.5], [1.5, 0.5]],
+        bounds=[[-0.5, 0.5], [1.5, 2.]],
         var_name='lon',
         standard_name='longitude',
         units='degrees')
 
-    correct_cube = iris.cube.Cube(10 * np.ones(3, 2, 2),
+    correct_cube = iris.cube.Cube(10 * np.ones((3, 2, 2)),
                                   var_name='tas',
                                   dim_coords_and_dims=[(correct_time_coord, 0),
                                                        (correct_lat_coord, 1),
@@ -62,7 +62,7 @@ def cubes():
                                   attributes={'table_id': 'Amon'},
                                   units=Unit('degC'))
 
-    wrong_cube = iris.cube.Cube([10., 10., 10.],
+    wrong_cube = iris.cube.Cube(10 * np.ones((3, 2, 2)),
                                 var_name='tas',
                                 dim_coords_and_dims=[(wrong_time_coord, 0),
                                                      (wrong_lat_coord, 1),
