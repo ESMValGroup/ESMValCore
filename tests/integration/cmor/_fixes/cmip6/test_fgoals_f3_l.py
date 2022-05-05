@@ -50,7 +50,12 @@ def test_allvars_fix_metadata(cubes):
     assert cubes is out_cubes
     for cube in out_cubes:
         time = cube.coord('time')
+        lat = cube.coord('latitude')
+        lon = cube.coord('longitude')
         assert all(time.bounds[1:, 0] == time.bounds[:-1, 1])
+        assert all(lat.bounds[1:, 0] == lat.bounds[:-1, 1])
+        assert all(lon.bounds[1:, 0] == lon.bounds[:-1, 1])
+
 
 
 def test_tos_fix():
