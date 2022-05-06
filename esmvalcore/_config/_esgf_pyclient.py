@@ -120,6 +120,13 @@ def read_config_file():
             "file %s not present.", CONFIG_FILE)
         cfg = {}
 
+    # For backwards compatibility: prior to v2.6 the configuration file
+    # contained a single URL instead of a list of URLs.
+    if 'search_connection' in cfg:
+        if 'url' in cfg['search_connection']:
+            url = cfg['search_connection'].pop('url')
+            cfg['search_connection']['urls'] = [url]
+
     return cfg
 
 
@@ -135,8 +142,18 @@ def load_esgf_pyclient_config():
         # Arguments to
         # https://esgf-pyclient.readthedocs.io/en/latest/api.html#pyesgf.search.connection.SearchConnection
         'search_connection': {
+            # List of available index nodes: https://esgf.llnl.gov/nodes.html
             # Be careful about the url, not all search urls have CMIP3 data?
-            'url': 'http://esgf-node.llnl.gov/esg-search',
+            'urls': [
+                'https://esgf-index1.ceda.ac.uk/esg-search',
+                'https://esgf-node.llnl.gov/esg-search',
+                'https://esgf-data.dkrz.de/esg-search',
+                'https://esgf-node.ipsl.upmc.fr/esg-search',
+                'https://esg-dn1.nsc.liu.se/esg-search',
+                'https://esgf.nci.org.au/esg-search',
+                'https://esgf.nccs.nasa.gov/esg-search',
+                'https://esgdata.gfdl.noaa.gov/esg-search',
+            ],
             'distrib': True,
             'timeout': 120,
             'cache': '~/.esmvaltool/cache/pyesgf-search-results',

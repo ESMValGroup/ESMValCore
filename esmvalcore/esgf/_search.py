@@ -4,7 +4,9 @@ import logging
 from functools import lru_cache
 
 import pyesgf.search
+import requests.exceptions
 
+from .._config._esgf_pyclient import get_esgf_config
 from .._data_finder import (
     _get_timerange_from_years,
     _parse_period,
@@ -12,7 +14,6 @@ from .._data_finder import (
     get_start_end_date,
 )
 from ._download import ESGFFile
-from ._logon import get_connection
 from .facets import DATASET_MAP, FACETS
 
 logger = logging.getLogger(__name__)
@@ -63,6 +64,59 @@ def select_latest_versions(files):
     return result
 
 
+FIRST_ONLINE_INDEX_NODE = None
+"""Remember the first index node that is online."""
+
+
+def _search_index_nodes(facets):
+    """Search for files on ESGF.
+
+    Parameters
+    ----------
+    facets: :obj:`dict` of :obj:`str`
+        Facets to constrain the search.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the function was unable to connect to ESGF.
+
+    Returns
+    -------
+    pyesgf.search.results.ResultSet
+        A ResultSet containing :obj:`pyesgf.search.results.FileResult`s.
+    """
+    cfg = get_esgf_config()
+    search_args = dict(cfg["search_connection"])
+    urls = search_args.pop("urls")
+
+    global FIRST_ONLINE_INDEX_NODE
+    if FIRST_ONLINE_INDEX_NODE:
+        urls.insert(0, urls.pop(urls.index(FIRST_ONLINE_INDEX_NODE)))
+
+    errors = []
+    for url in urls:
+        connection = pyesgf.search.SearchConnection(url=url, **search_args)
+        context = connection.new_context(
+            pyesgf.search.context.FileSearchContext,
+            **facets,
+            latest=True,
+        )
+        logger.debug("Searching %s for datasets using facets=%s", url, facets)
+        try:
+            results = context.search(
+                batch_size=500,
+                ignore_facet_check=True,
+            )
+            FIRST_ONLINE_INDEX_NODE = url
+            return results
+        except requests.exceptions.ReadTimeout as error:
+            errors.append(error)
+
+    raise FileNotFoundError("Failed to search ESGF, unable to connect:\n" +
+                            "\n".join(f"- {e}" for e in errors))
+
+
 def esgf_search_files(facets):
     """Search for files on ESGF.
 
@@ -76,18 +130,7 @@ def esgf_search_files(facets):
     list of :py:class:`~ESGFFile`
         The found files.
     """
-    logger.debug("Searching for datasets on ESGF using facets=%s", facets)
-    connection = get_connection()
-    context = connection.new_context(
-        pyesgf.search.context.FileSearchContext,
-        **facets,
-        latest=True,
-    )
-
-    results = context.search(
-        batch_size=500,
-        ignore_facet_check=True,
-    )
+    results = _search_index_nodes(facets)
 
     files = ESGFFile._from_results(results, facets)
 

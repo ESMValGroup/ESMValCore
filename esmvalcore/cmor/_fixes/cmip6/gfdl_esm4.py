@@ -52,4 +52,7 @@ class Omon(Fix):
         return cubes
 
 
+Oyr = Omon
+
+
 Siconc = SiconcFixScalarCoord
