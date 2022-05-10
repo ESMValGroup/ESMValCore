@@ -1921,20 +1921,36 @@ See also :func:`esmvalcore.preprocessor.detrend`.
 Unit conversion
 ===============
 
-Converting units is also supported. This is particularly useful in
-cases where different datasets might have different units, for example
-when comparing CMIP5 and CMIP6 variables where the units have changed
-or in case of observational datasets that are delivered in different
-units.
-
+Converting units is also supported.
+This is particularly useful in cases where different datasets might have
+different units, for example when comparing CMIP5 and CMIP6 variables where the
+units have changed or in case of observational datasets that are delivered in
+different units.
 In these cases, having a unit conversion at the end of the processing
 will guarantee homogeneous input for the diagnostics.
 
-.. note::
-   Conversion is only supported between compatible units! In other
-   words, converting temperature units from ``degC`` to ``Kelvin`` works
-   fine, changing precipitation units from a rate based unit to an
-   amount based unit is not supported at the moment.
+Conversion is only supported between compatible units!
+In other words, converting temperature units from ``degC`` to ``Kelvin`` works
+fine, while changing units from ``kg`` to ``m`` will not work.
+
+However, there are some well-defined exceptions from this rule for specific
+variables (i.e., the ``short_name`` of the corresponding data needs to match
+the ones given in the table below or the pattern given in brackets needs to be
+present in the data's ``standard_name`` or ``long_name``):
+
+==================== ==================== ================= =================
+Variable             Expected             Expected source   Expected target
+                     ``short_name``       units             units
+                     (or pattern)
+==================== ==================== ================= =================
+Precipitation flux   ``pr``               ``kg m-2 s-1``    ``mm day-1``
+                     (``precipitation``)
+==================== ==================== ================= =================
+
+
+.. hint::
+   Source or target units convertible to the ones given in the table above are
+   also supported.
 
 See also :func:`esmvalcore.preprocessor.convert_units`.
 
