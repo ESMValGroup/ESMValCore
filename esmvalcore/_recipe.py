@@ -1169,7 +1169,7 @@ def _get_derive_input_variables(variables, config_user):
                 else:
                     append(group_prefix, var)
                     timeranges.add(var['timerange'])
-            _check_differing_timeranges(timeranges)
+            _check_differing_timeranges(timeranges, required_vars)
 
     # An empty derive_input (due to all variables marked as 'optional' is
     # handled at a later step
