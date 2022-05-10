@@ -91,7 +91,6 @@ def test_allvars_fix_metadata(cubes):
         assert all(lon.bounds[1:, 0] == lon.bounds[:-1, 1])
 
 
-
 def test_tos_fix():
     """Test fix for ``tos``."""
     assert Tos is OceanFixGrid
