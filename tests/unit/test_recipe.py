@@ -658,3 +658,30 @@ def test_create_diagnostic_tasks(mock_diag_task, tasks_to_run, tasks_run):
             name=f'{diag_name}{_recipe.TASKSEP}{task_name}',
         )
         assert expected_call in mock_diag_task.mock_calls
+
+
+def test_differing_timeranges(caplog):
+    timeranges = set()
+    timeranges.add('1950/1951')
+    timeranges.add('1950/1952')
+    required_variables = [
+        {
+            'short_name': 'rsdscs',
+            'timerange': '1950/1951'
+        },
+        {
+            'short_name': 'rsuscs',
+            'timerange': '1950/1952'
+        },
+    ]
+    _recipe._check_differing_timeranges(timeranges, required_variables)
+    print(caplog.text)
+    expected_log = (
+        "Differing timeranges with values {'1950/1952', '1950/1951'} "
+        "found for required variables "
+        "[{'short_name': 'rsdscs', 'timerange': '1950/1951'}, "
+        "{'short_name': 'rsuscs', 'timerange': '1950/1952'}]. "
+        "Set `timerange` to a common value."
+    )
+
+    assert expected_log in caplog.text

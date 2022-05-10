@@ -1122,6 +1122,16 @@ def _split_derive_profile(profile):
     return before, after
 
 
+def _check_differing_timeranges(timeranges, required_vars):
+    """Log error if required variables have differing timeranges."""
+    if len(timeranges) > 1:
+        logger.error(
+            "Differing timeranges with values %s "
+            "found for required variables %s. "
+            "Set `timerange` to a common value.",
+            timeranges, required_vars)
+
+
 def _get_derive_input_variables(variables, config_user):
     """Determine the input sets of `variables` needed for deriving."""
     derive_input = {}
@@ -1159,12 +1169,7 @@ def _get_derive_input_variables(variables, config_user):
                 else:
                     append(group_prefix, var)
                     timeranges.add(var['timerange'])
-            if len(timeranges) > 1:
-                logger.error(
-                    "Differing timeranges with values %s "
-                    "found for required variables %s. "
-                    "Set `timerange` to a common value.",
-                    timeranges, required_vars)
+            _check_differing_timeranges(timeranges)
 
     # An empty derive_input (due to all variables marked as 'optional' is
     # handled at a later step
