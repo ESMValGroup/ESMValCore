@@ -1934,19 +1934,15 @@ In other words, converting temperature units from ``degC`` to ``Kelvin`` works
 fine, while changing units from ``kg`` to ``m`` will not work.
 
 However, there are some well-defined exceptions from this rule for specific
-variables (i.e., the ``short_name`` of the corresponding data needs to match
-the ones given in the table below or the pattern given in brackets needs to be
-present in the data's ``standard_name`` or ``long_name``):
+variables (defined by their ``standard_name``).
+In these cases, the data's ``standard_name`` is also adapted so that it is
+consistent with the CF conventions.
 
-==================== ==================== ================= =================
-Variable             Expected             Expected source   Expected target
-                     ``short_name``       units             units
-                     (or pattern)
-==================== ==================== ================= =================
-Precipitation flux   ``pr``               ``kg m-2 s-1``    ``mm day-1``
-                     (``precipitation``)
-==================== ==================== ================= =================
-
+=========================== ========================== ====================== ======================
+Expected ``standard_name``  Output ``standard_name``   Expected source units  Expected source units
+=========================== ========================== ====================== ======================
+``precipitation_flux``      ``lwe_precipitation_rate`` ``kg m-2 s-1``         ``mm day-1``
+=========================== ========================== ====================== ======================
 
 .. hint::
    Source or target units convertible to the ones given in the table above are

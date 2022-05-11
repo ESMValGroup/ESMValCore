@@ -44,52 +44,43 @@ class Test(tests.Test):
         self.assertEqual(result.units, expected_units)
         self.assert_array_equal(result.data, expected_data)
 
-    def test_convert_special_pr_from_var_name(self):
-        """Test special conversion of pr."""
-        self.arr.var_name = 'pr'
+    def test_convert_precipitation_flux(self):
+        """Test special conversion of precipitation_flux."""
+        self.arr.standard_name = 'precipitation_flux'
         self.arr.units = 'kg m-2 s-1'
         result = convert_units(self.arr, 'mm day-1')
+        self.assertEqual(result.standard_name, 'lwe_precipitation_rate')
         self.assertEqual(result.units, 'mm day-1')
         np.testing.assert_allclose(
             result.data,
             [[0.0, 86400.0], [172800.0, 259200.0]],
         )
 
-    def test_convert_special_pr_from_standard_name(self):
+    def test_convert_precipitation_flux_convertible(self):
         """Test special conversion of pr."""
         self.arr.standard_name = 'precipitation_flux'
-        self.arr.units = 'g m-2 s-1'
-        result = convert_units(self.arr, 'mm day-1')
-        self.assertEqual(result.units, 'mm day-1')
-        np.testing.assert_allclose(
-            result.data,
-            [[0.0, 86.4], [172.8, 259.200]],
-        )
-
-    def test_convert_special_pr_from_long_name(self):
-        """Test special conversion of pr."""
-        self.arr.long_name = 'Convective Precipitation Flux'
         self.arr.units = 'g m-2 yr-1'
         result = convert_units(self.arr, 'm yr-1')
+        self.assertEqual(result.standard_name, 'lwe_precipitation_rate')
         self.assertEqual(result.units, 'm yr-1')
         np.testing.assert_allclose(
             result.data,
             [[0.0, 1.0e-6], [2.0e-6, 3.0e-6]],
         )
 
-    def test_convert_special_pr_fail_invalid_name(self):
+    def test_convert_precipitation_flux_fail_invalid_name(self):
         """Test special conversion of pr."""
         self.arr.units = 'kg m-2 s-1'
         self.assertRaises(ValueError, convert_units, self.arr, 'mm day-1')
 
-    def test_convert_special_pr_fail_invalid_source_units(self):
+    def test_convert_precipitation_flux_fail_invalid_source_units(self):
         """Test special conversion of pr."""
-        self.arr.var_name = 'pr'
+        self.arr.standard_name = 'precipitation_flux'
         self.assertRaises(ValueError, convert_units, self.arr, 'mm day-1')
 
     def test_convert_special_pr_fail_invalid_target_units(self):
         """Test special conversion of pr."""
-        self.arr.var_name = 'pr'
+        self.arr.standard_name = 'precipitation_flux'
         self.arr.units = 'kg m-2 s-1'
         self.assertRaises(ValueError, convert_units, self.arr, 'K')
 
