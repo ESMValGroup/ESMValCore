@@ -18,7 +18,7 @@ def get_cube(data, air_pressure_coord=True, depth_coord=False, **kwargs):
     plev_coord = iris.coords.DimCoord([90000.0, 80000.0],
                                       standard_name='air_pressure',
                                       var_name='plev', units='Pa')
-    depth_coord = iris.coords.DimCoord([100.0, 600.0, 7000.0],
+    dpth_coord = iris.coords.DimCoord([100.0, 600.0, 7000.0],
                                        standard_name='depth',
                                        var_name='lev', units='m')
     lat_coord = iris.coords.DimCoord([45.0], standard_name='latitude',
@@ -29,7 +29,7 @@ def get_cube(data, air_pressure_coord=True, depth_coord=False, **kwargs):
         coord_specs = [(time_coord, 0), (plev_coord, 1), (lat_coord, 2),
                        (lon_coord, 3)]
     elif depth_coord:
-        coord_specs = [(time_coord, 0), (depth_coord, 1), (lat_coord, 2),
+        coord_specs = [(time_coord, 0), (dpth_coord, 1), (lat_coord, 2),
                        (lon_coord, 3)]
     else:
         coord_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]
