@@ -13,7 +13,7 @@ class DerivedVariable(DerivedVariableBase):
         """Declare the variables needed for derivation."""
         if project == "CMIP5":
             required = [{'short_name': 'msftmyz', 'mip': 'Omon'}]
-        elif project == "CMIP5":
+        elif project == "CMIP6":
             required = [{'short_name': 'msftyz', 'mip': 'Omon'}]
 
         return required
@@ -32,15 +32,31 @@ class DerivedVariable(DerivedVariableBase):
         iris.cube.Cube
               Output AMOC cube.
         """
-        # 0. Load the msftmyz cube.
-        cube = cubes.extract_cube(
-            iris.Constraint(
-                name='ocean_meridional_overturning_mass_streamfunction'))
+        # 0. Load the msft(m)yz cube.
+        cmip5_std_name = 'ocean_meridional_overturning_mass_streamfunction'
+        cmip6_std_name = 'ocean_y_overturning_mass_streamfunction'
+        try:
+            cube = cubes.extract_cube(
+                iris.Constraint(
+                    name='ocean_meridional_overturning_mass_streamfunction'))
+        except iris.exceptions.ConstraintMismatchError:
+            cube = cubes.extract_cube(
+                iris.Constraint(
+                    name='ocean_y_overturning_mass_streamfunction'))
+        else:
+            raise ValueError(f"Amoc calculation: CMIP5: {cmip5_std_name}"
+                             f"or CMIP6: {cmip6_std_name} standard names"
+                             f"could not be found in {cube}.")
+        cube_orig = cube.copy()
 
         # 1: find the relevant region
         atlantic_region = 'atlantic_arctic_ocean'
         atl_constraint = iris.Constraint(region=atlantic_region)
         cube = cube.extract(constraint=atl_constraint)
+
+        if cube is None:
+            raise ValueError(f"Amoc calculation: {cube_orig} doesn't contain"
+                             f"Atlantic Region.")
 
         # 2: Remove the shallowest 500m to avoid wind driven mixed layer.
         depth_constraint = iris.Constraint(depth=lambda d: d >= 500.)
