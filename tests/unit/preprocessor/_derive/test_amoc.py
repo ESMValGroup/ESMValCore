@@ -20,11 +20,11 @@ def cubes():
                             standard_name=msftmyz_name)
     msftyz_cube = get_cube([[[[100.]], [[100.]], [[100.]]]],
                            air_pressure_coord=False,
-                           depth_coord=False,
+                           depth_coord=True,
                            standard_name=msftyz_name)
     rando_cube = get_cube([[[[100.]], [[100.]], [[100.]]]],
                           air_pressure_coord=False,
-                          depth_coord=False,
+                          depth_coord=True,
                           standard_name="air_temperature")
     msftmyz_cube.coord("latitude").points = np.array([26.0])
     msftyz_cube.coord("latitude").points = np.array([26.0])
