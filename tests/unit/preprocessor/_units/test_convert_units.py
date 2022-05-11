@@ -57,7 +57,7 @@ class Test(tests.Test):
         )
 
     def test_convert_precipitation_flux_convertible(self):
-        """Test special conversion of pr."""
+        """Test special conversion of precipitation_flux."""
         self.arr.standard_name = 'precipitation_flux'
         self.arr.units = 'g m-2 yr-1'
         result = convert_units(self.arr, 'm yr-1')
@@ -69,17 +69,17 @@ class Test(tests.Test):
         )
 
     def test_convert_precipitation_flux_fail_invalid_name(self):
-        """Test special conversion of pr."""
+        """Test special conversion of precipitation_flux."""
         self.arr.units = 'kg m-2 s-1'
         self.assertRaises(ValueError, convert_units, self.arr, 'mm day-1')
 
     def test_convert_precipitation_flux_fail_invalid_source_units(self):
-        """Test special conversion of pr."""
+        """Test special conversion of precipitation_flux."""
         self.arr.standard_name = 'precipitation_flux'
         self.assertRaises(ValueError, convert_units, self.arr, 'mm day-1')
 
     def test_convert_special_pr_fail_invalid_target_units(self):
-        """Test special conversion of pr."""
+        """Test special conversion of precipitation_flux."""
         self.arr.standard_name = 'precipitation_flux'
         self.arr.units = 'kg m-2 s-1'
         self.assertRaises(ValueError, convert_units, self.arr, 'K')
