@@ -89,4 +89,4 @@ class ValidatedConfig(MutableMapping):
 
     def clear(self):
         """Clear Config."""
-        self._mapping.clear(self)
+        self._mapping.clear()
