@@ -1530,6 +1530,7 @@ Area manipulation
 =================
 The area manipulation module contains the following preprocessor functions:
 
+* extract_: Extract a point in any coordinates with a given interpolation scheme.
 * extract_region_: Extract a region from a cube based on ``lat/lon``
   corners.
 * extract_named_regions_: Extract a specific region from in the region
@@ -1540,6 +1541,28 @@ The area manipulation module contains the following preprocessor functions:
 * zonal_statistics_: Compute zonal statistics.
 * meridional_statistics_: Compute meridional statistics.
 * area_statistics_: Compute area statistics.
+
+
+``extract``
+------------------
+
+This function extracts points in any given coordinate, following either a 
+``linear`` or a ``nearest`` interpolation scheme.
+The resulting point cube will match the respective coordinates to
+those of the input coordinates. If the input coordinate is a scalar,
+the dimension will be a scalar in the output cube.
+
+Examples:
+    * Extract a point in coordinate `grid_latitude`:
+
+        .. code-block:: yaml
+            extract:
+            definition:
+              grid_latitude: 26.
+            scheme: nearest
+
+
+See also :func:`esmvalcore.preprocessor.extract`.
 
 
 ``extract_region``
