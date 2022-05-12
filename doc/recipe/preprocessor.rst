@@ -1556,7 +1556,7 @@ Examples:
     * Extract a point in coordinate `grid_latitude`:
 
         .. code-block:: yaml
-            extract:
+          extract:
             definition:
               grid_latitude: 26.
             scheme: nearest

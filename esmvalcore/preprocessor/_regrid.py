@@ -1094,7 +1094,7 @@ def extract(cube, definition, scheme):
     Multiple points can also be extracted, by supplying an array of
     coordinates. The resulting point cube will match the respective
     coordinates to those of the input coordinates.
-    If the input coordinate is a scalar, the dimension will be a 
+    If the input coordinate is a scalar, the dimension will be a
     scalar in the output cube.
 
     Parameters
