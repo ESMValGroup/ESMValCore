@@ -1,3 +1,4 @@
+"""Define the ESMValCore version."""
 import warnings
 from importlib.metadata import PackageNotFoundError, version
 
