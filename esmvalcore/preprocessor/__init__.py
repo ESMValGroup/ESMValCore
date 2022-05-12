@@ -44,7 +44,7 @@ from ._mask import (
 )
 from ._multimodel import ensemble_statistics, multi_model_statistics
 from ._other import clip
-from ._regrid import extract_levels, extract_location, extract_point, regrid
+from ._regrid import extract, extract_levels, extract_location, extract_point, regrid
 from ._time import (
     annual_statistics,
     anomalies,
@@ -126,6 +126,7 @@ __all__ = [
     # Other
     'clip',
     # Region selection
+    'extract',
     'extract_region',
     'extract_shape',
     'extract_volume',
