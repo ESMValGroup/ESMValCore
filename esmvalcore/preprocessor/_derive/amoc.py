@@ -38,11 +38,15 @@ class DerivedVariable(DerivedVariableBase):
         try:
             cube = cubes.extract_cube(
                 iris.Constraint(
-                    name='ocean_meridional_overturning_mass_streamfunction'))
+                    name=cmip5_std_name))
+            meridional = True
+            lats = cube.coord('latitude').points
         except iris.exceptions.ConstraintMismatchError:
             cube = cubes.extract_cube(
                 iris.Constraint(
-                    name='ocean_y_overturning_mass_streamfunction'))
+                    name=cmip6_std_name))
+            meridional = False
+            lats = cube.coord('grid_latitude').points
         else:
             raise ValueError(f"Amoc calculation: CMIP5: {cmip5_std_name}"
                              f"or CMIP6: {cmip6_std_name} standard names"
@@ -64,9 +68,13 @@ class DerivedVariable(DerivedVariableBase):
 
         # 3: Find the latitude closest to 26N
         rapid_location = 26.5
-        lats = cube.coord('latitude').points
         rapid_index = np.argmin(np.abs(lats - rapid_location))
-        rapid_constraint = iris.Constraint(latitude=lats[rapid_index])
+
+        if not meridional:
+            rapid_constraint = iris.Constraint(grid_latitude=lats[rapid_index])
+        else:
+            rapid_constraint = iris.Constraint(latitude=lats[rapid_index])
+
         cube = cube.extract(constraint=rapid_constraint)
 
         # 4: find the maximum in the water column along the time axis.
@@ -74,4 +82,5 @@ class DerivedVariable(DerivedVariableBase):
             ['depth', 'region'],
             iris.analysis.MAX,
         )
+
         return cube
