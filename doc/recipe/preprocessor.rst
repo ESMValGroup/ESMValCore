@@ -1556,10 +1556,10 @@ Examples:
     * Extract a point in coordinate `grid_latitude`:
 
         .. code-block:: yaml
-          extract:
-            definition:
-              grid_latitude: 26.
-            scheme: nearest
+            extract:
+              definition:
+                grid_latitude: 26.
+              scheme: nearest
 
 
 See also :func:`esmvalcore.preprocessor.extract`.
