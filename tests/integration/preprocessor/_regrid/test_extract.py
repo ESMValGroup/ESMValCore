@@ -250,6 +250,12 @@ class Test(tests.Test):
 
         np.testing.assert_allclose(point.data, result)
 
+    def test_wrong_interpolation_scheme(self):
+        """Test wrong interpolation scheme raises error."""
+        self.assertRaises(
+            ValueError,
+            extract, self.cube,{'grid_latitude': 0.}, 'wrong')
+
 
 if __name__ == '__main__':
     unittest.main()
