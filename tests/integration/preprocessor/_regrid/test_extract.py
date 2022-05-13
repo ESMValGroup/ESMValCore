@@ -254,7 +254,7 @@ class Test(tests.Test):
         """Test wrong interpolation scheme raises error."""
         self.assertRaises(
             ValueError,
-            extract, self.cube,{'grid_latitude': 0.}, 'wrong')
+            extract, self.cube, {'grid_latitude': 0.}, 'wrong')
 
 
 if __name__ == '__main__':
