@@ -28,6 +28,7 @@ def cubes():
                           standard_name="air_temperature")
     msftmyz_cube.coord("latitude").points = np.array([26.0])
     msftyz_cube.coord("latitude").points = np.array([26.0])
+    msftyz_cube.coord("latitude").standard_name = "grid_latitude"
 
     return \
         iris.cube.CubeList([msftmyz_cube]), \
