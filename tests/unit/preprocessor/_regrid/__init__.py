@@ -39,7 +39,11 @@ def _make_vcoord(data, dtype=None):
     return zcoord
 
 
-def _make_cube(data, aux_coord=True, dim_coord=True, dtype=None, rotated=False):
+def _make_cube(data,
+               aux_coord=True,
+               dim_coord=True,
+               dtype=None,
+               rotated=False):
     """
     Create a 3d synthetic test cube.
 

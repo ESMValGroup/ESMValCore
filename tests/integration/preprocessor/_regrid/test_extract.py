@@ -77,7 +77,7 @@ class Test(tests.Test):
 
         point = extract(
             self.cube,
-            {'grid_latitude': 4, 'grid_longitude':4},
+            {'grid_latitude': 4, 'grid_longitude': 4},
             scheme='nearest')
         self.assertEqual(point.shape, (3,))
         np.testing.assert_allclose(point.data, [15, 31, 47])
@@ -109,7 +109,7 @@ class Test(tests.Test):
         point = extract(
             self.cube,
             {'grid_latitude': [1, 1.1, 1.5, 2, 4],
-            'grid_longitude': 2},
+             'grid_longitude': 2},
             scheme='linear')
         self.assertEqual(point.shape, (3, 5))
         # Longitude is not a dimension coordinate anymore.
@@ -122,7 +122,7 @@ class Test(tests.Test):
         point = extract(
             self.cube,
             {'grid_latitude': 4,
-            'grid_longitude': [1, 1.1, 1.5, 2, 4]},
+             'grid_longitude': [1, 1.1, 1.5, 2, 4]},
             scheme='linear')
         self.assertEqual(point.shape, (3, 5))
         self.assertEqual(['air_pressure', 'grid_longitude'], [
@@ -156,21 +156,21 @@ class Test(tests.Test):
         point = extract(
             self.cube,
             {'grid_latitude': [1, 1.1, 1.5, 1.501, 2, 4],
-            'grid_longitude': 2},
+             'grid_longitude': 2},
             scheme='nearest')
         self.assertEqual(point.shape, (3, 6))
-        self.assertEqual(['air_pressure', 'latitude'], [
+        self.assertEqual(['air_pressure', 'grid_latitude'], [
             coord.standard_name for coord in point.coords(dim_coords=True)])
         np.testing.assert_allclose(point.data, [[1, 1, 1, 5, 5, 13],
                                                 [17, 17, 17, 21, 21, 29],
                                                 [33, 33, 33, 37, 37, 45]])
         point = extract(
             self.cube,
-            {'grid_latitude': 4, 
-            'grid_longitude': [1, 1.1, 1.5, 1.501, 2, 4]},
+            {'grid_latitude': 4,
+             'grid_longitude': [1, 1.1, 1.5, 1.501, 2, 4]},
             scheme='nearest')
         self.assertEqual(point.shape, (3, 6))
-        self.assertEqual(['air_pressure', 'grid_ongitude'], [
+        self.assertEqual(['air_pressure', 'grid_longitude'], [
             coord.standard_name for coord in point.coords(dim_coords=True)])
         np.testing.assert_allclose(point.data, [[12, 12, 12, 13, 13, 15],
                                                 [28, 28, 28, 29, 29, 31],
@@ -178,7 +178,7 @@ class Test(tests.Test):
         point = extract(
             self.cube,
             {'grid_latitude': [0, 10],
-            'grid_longitude': 3},
+             'grid_longitude': 3},
             scheme='nearest')
         masked = np.ma.array(np.empty((3, 2), dtype=np.float64), mask=True)
         self.assertEqual(point.shape, (3, 2))
@@ -186,7 +186,7 @@ class Test(tests.Test):
         point = extract(
             self.cube,
             {'grid_latitude': 2,
-            'grid_longitude': [0, 10]},
+             'grid_longitude': [0, 10]},
             scheme='nearest')
         self.assertEqual(point.shape, (3, 2))
         self.assert_array_equal(point.data, masked)
@@ -197,7 +197,7 @@ class Test(tests.Test):
         point = extract(
             self.cube,
             {'grid_latitude': [0, 1.1, 1.5, 1.51, 4, 5],
-            'grid_longitude': [0, 1.1, 1.5, 1.51, 4, 5]}, scheme='linear')
+             'grid_longitude': [0, 1.1, 1.5, 1.51, 4, 5]}, scheme='linear')
         self.assertEqual(point.data.shape, (3, 6, 6))
 
         result = np.ma.array(np.empty((3, 6, 6), dtype=np.float64), mask=True)
@@ -227,7 +227,7 @@ class Test(tests.Test):
         point = extract(
             self.cube,
             {'grid_latitude': [0, 1.1, 1.5, 1.51, 4, 5],
-            'grid_longitude': [0, 1.1, 1.5, 1.51, 4, 5]},
+             'grid_longitude': [0, 1.1, 1.5, 1.51, 4, 5]},
             scheme='nearest')
         self.assertEqual(point.data.shape, (3, 6, 6))
 
