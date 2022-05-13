@@ -107,8 +107,7 @@ class Test(tests.Test):
         coords_spec = [(lats, 0), (lons, 1)]
         regular_grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(regular_grid, self.grid_for_linear, 'linear')
-        expected = np.array([[[1.5]], [[1.5]], [[1.]]])
-        self.assert_array_equal(result.data, expected)
+        iris.common.resolve.Resolve(grid_for_linear, result)
 
     def test_regrid__linear_do_not_preserve_dtype(self):
         self.cube.data = self.cube.data.astype(int)
