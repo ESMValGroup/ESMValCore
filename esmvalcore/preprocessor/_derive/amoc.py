@@ -47,10 +47,7 @@ class DerivedVariable(DerivedVariableBase):
                     name=cmip6_std_name))
             meridional = False
             lats = cube.coord('grid_latitude').points
-        else:
-            raise ValueError(f"Amoc calculation: CMIP5: {cmip5_std_name}"
-                             f"or CMIP6: {cmip6_std_name} standard names"
-                             f"could not be found in {cube}.")
+
         cube_orig = cube.copy()
 
         # 1: find the relevant region
@@ -60,7 +57,7 @@ class DerivedVariable(DerivedVariableBase):
 
         if cube is None:
             raise ValueError(f"Amoc calculation: {cube_orig} doesn't contain"
-                             f"Atlantic Region.")
+                             f" atlantic_arctic_ocean.")
 
         # 2: Remove the shallowest 500m to avoid wind driven mixed layer.
         depth_constraint = iris.Constraint(depth=lambda d: d >= 500.)
