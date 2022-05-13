@@ -78,10 +78,50 @@ class Test(tests.Test):
         self.arr.standard_name = 'precipitation_flux'
         self.assertRaises(ValueError, convert_units, self.arr, 'mm day-1')
 
-    def test_convert_special_pr_fail_invalid_target_units(self):
+    def test_convert_precipitation_flux_fail_invalid_target_units(self):
         """Test special conversion of precipitation_flux."""
         self.arr.standard_name = 'precipitation_flux'
         self.arr.units = 'kg m-2 s-1'
+        self.assertRaises(ValueError, convert_units, self.arr, 'K')
+
+    def test_convert_lwe_precipitation_rate(self):
+        """Test special conversion of lwe_precipitation_rate."""
+        self.arr.standard_name = 'lwe_precipitation_rate'
+        self.arr.units = 'mm s-1'
+        result = convert_units(self.arr, 'kg m-2 s-1')
+        self.assertEqual(result.standard_name, 'precipitation_flux')
+        self.assertEqual(result.units, 'kg m-2 s-1')
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 1.0], [2.0, 3.0]],
+        )
+
+    def test_convert_lwe_precipitation_rate_convertible(self):
+        """Test special conversion of lwe_precipitation_rate."""
+        self.arr.standard_name = 'lwe_precipitation_rate'
+        self.arr.units = 'm yr-1'
+        result = convert_units(self.arr, 'g m-2 yr-1')
+        self.assertEqual(result.standard_name, 'precipitation_flux')
+        self.assertEqual(result.units, 'g m-2 yr-1')
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 1.0e6], [2.0e6, 3.0e6]],
+        )
+
+    def test_convert_lwe_precipitation_rate_fail_invalid_name(self):
+        """Test special conversion of lwe_precipitation_rate."""
+        self.arr.units = 'mm s-1'
+        self.assertRaises(ValueError, convert_units, self.arr, 'kg m-2 s-1')
+
+    def test_convert_lwe_precipitation_rate_fail_invalid_source_units(self):
+        """Test special conversion of lwe_precipitation_rate."""
+        self.arr.standard_name = 'lwe_precipitation_rate'
+        self.assertRaises(ValueError, convert_units, self.arr, 'kg m-2 s-1')
+
+    def test_convert_lwe_precipitation_rate_fail_invalid_target_units(self):
+        """Test special conversion of lwe_precipitation_rate."""
+        self.arr.standard_name = 'lwe_precipitation_rate'
+        self.arr.units = 'mm s-1'
         self.assertRaises(ValueError, convert_units, self.arr, 'K')
 
 

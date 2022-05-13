@@ -1933,20 +1933,29 @@ Conversion is only supported between compatible units!
 In other words, converting temperature units from ``degC`` to ``Kelvin`` works
 fine, while changing units from ``kg`` to ``m`` will not work.
 
-However, there are some well-defined exceptions from this rule for specific
-variables (defined by their ``standard_name``).
-In these cases, the data's ``standard_name`` is also adapted so that it is
-consistent with the CF conventions.
+However, there are some well-defined exceptions from this rule in order to
+transform one quantity to another (physically related) quantity.
+These quantities are identified via their ``standard_name`` and their ``units``
+(units convertible to the ones defined are also supported).
+For example, this enables conversions between precipitation fluxes measured in
+``kg m-2 s-1`` and precipitation rates measured in ``mm day-1`` (and vice
+versa).
+Currently, the following special conversions are supported:
 
-=========================== ========================== ====================== ======================
-Expected ``standard_name``  Output ``standard_name``   Expected source units  Expected source units
-=========================== ========================== ====================== ======================
-``precipitation_flux``      ``lwe_precipitation_rate`` ``kg m-2 s-1``         ``mm day-1``
-=========================== ========================== ====================== ======================
+* ``precipitation_flux`` (``kg m-2 s-1``) --
+  ``lwe_precipitation_rate`` (``mm day-1``)
 
 .. hint::
-   Source or target units convertible to the ones given in the table above are
-   also supported.
+   Names in the list correspond to ``standard_names`` of the input data.
+   Conversions are allowed from each quantity to any other quantity given in a
+   bullet point.
+   The corresponding target quantity is inferred from the desired target units.
+   In addition, any other units convertible to the ones given are also
+   supported (e.g., instead of ``mm day-1``, ``m s-1`` is also supported).
+
+.. note::
+   For the transformation between the different precipitation variables, a
+   water density of ``1000 kg m-3`` is assumed.
 
 See also :func:`esmvalcore.preprocessor.convert_units`.
 
