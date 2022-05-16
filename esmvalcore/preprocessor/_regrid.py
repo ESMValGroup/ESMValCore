@@ -387,6 +387,11 @@ def extract_point(cube, latitude, longitude, scheme):
     scalar, the dimension will be missing in the output cube (that is,
     it will be a scalar).
 
+    If the point to be extracted has at least one of the coordinate point
+    values outside the interval of the cube's same coordinate values, then
+    no extrapolation will be performed, and the resulting extracted cube
+    will have fully masked data.
+
     Parameters
     ----------
     cube : cube
@@ -401,7 +406,9 @@ def extract_point(cube, latitude, longitude, scheme):
     Returns
     -------
     Returns a cube with the extracted point(s), and with adjusted
-    latitude and longitude coordinates (see above).
+    latitude and longitude coordinates (see above). If desired point
+    outside values for at least one coordinate, this cube will have fully
+    masked data.
 
     Raises
     ------
