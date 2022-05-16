@@ -1654,6 +1654,11 @@ match the respective latitude and longitude coordinate to those of the
 input coordinates. If the input coordinate is a scalar, the dimension
 will be missing in the output cube (that is, it will be a scalar).
 
+If the point to be extracted has at least one of the coordinate point
+values outside the interval of the cube's same coordinate values, then
+no extrapolation will be performed, and the resulting extracted cube
+will have fully masked data.
+
 Parameters:
   * ``cube``: the input dataset cube.
   * ``latitude``, ``longitude``: coordinates (as floating point
