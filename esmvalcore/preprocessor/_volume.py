@@ -10,6 +10,8 @@ import dask.array as da
 import iris
 import numpy as np
 
+from ._shared import get_iris_analysis_operation, operator_accept_weights
+
 logger = logging.getLogger(__name__)
 
 
@@ -275,7 +277,7 @@ def volume_statistics(cube, operator):
     return _create_cube_time(src_cube, result, times)
 
 
-def depth_integration(cube):
+def depth_integration(cube, operator='sum'):
     """Determine the total sum over the vertical component.
 
     Requires a 3D cube. The z-coordinate
@@ -294,21 +296,19 @@ def depth_integration(cube):
     """
     # ####
     depth = cube.coord(axis='z')
-    thickness = depth.bounds[..., 1] - depth.bounds[..., 0]
-
-    if depth.ndim == 1:
-        slices = [None for i in cube.shape]
+    operation = get_iris_analysis_operation(operator)
+    weights = None
+    if operator_accept_weights(operator):
+        thickness = np.abs(depth.bounds[..., 1] - depth.bounds[..., 0])
         coord_dim = cube.coord_dims(cube.coord(axis='z'))[0]
-        slices[coord_dim] = slice(None)
-        thickness = np.abs(thickness[tuple(slices)])
-
-    ones = np.ones_like(cube.data)
-
-    weights = thickness * ones
-
-    result = cube.collapsed(cube.coord(axis='z'),
-                            iris.analysis.SUM,
-                            weights=weights)
+        axes = list(range(cube.ndim))
+        axes.remove(coord_dim)
+        weights = np.expand_dims(thickness, axes)
+        result = cube.collapsed(cube.coord(axis='z'),
+                                iris.analysis.SUM,
+                                weights=weights)
+    else:
+        result = cube.collapsed(cube.coord(axis='z'), operation)
 
     result.rename('Depth_integrated_' + str(cube.name()))
     # result.units = Unit('m') * result.units # This doesn't work:
