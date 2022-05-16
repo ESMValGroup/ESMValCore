@@ -10,7 +10,7 @@ import iris
 import numpy as np
 
 import tests
-from esmvalcore.preprocessor import extract
+from esmvalcore.preprocessor import extract_coordinate_points
 from tests.unit.preprocessor._regrid import _make_cube
 
 

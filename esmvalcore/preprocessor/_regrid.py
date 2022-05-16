@@ -1088,7 +1088,7 @@ def get_reference_levels(filename, project, dataset, short_name, mip,
     return coord.points.tolist()
 
 
-def extract(cube, definition, scheme):
+def extract_coordinate_points(cube, definition, scheme):
     """Extract a point in any coordinates with a given interpolation scheme.
 
     Multiple points can also be extracted, by supplying an array of

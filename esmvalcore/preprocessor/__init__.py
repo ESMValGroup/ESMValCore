@@ -45,7 +45,7 @@ from ._mask import (
 from ._multimodel import ensemble_statistics, multi_model_statistics
 from ._other import clip
 from ._regrid import (
-    extract,
+    extract_coordinate_points,
     extract_levels,
     extract_location,
     extract_point,
@@ -119,6 +119,7 @@ __all__ = [
     # Regridding
     'regrid',
     # Point interpolation
+    'extract_coordinate_points',
     'extract_point',
     'extract_location',
     # Masking missing values
@@ -131,7 +132,6 @@ __all__ = [
     # Other
     'clip',
     # Region selection
-    'extract',
     'extract_region',
     'extract_shape',
     'extract_volume',
