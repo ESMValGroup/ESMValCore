@@ -1553,7 +1553,7 @@ those of the input coordinates. If the input coordinate is a scalar,
 the dimension will be a scalar in the output cube.
 
 Examples:
-    * Extract a point from coordinate `grid_latitude`with given coordinate value 26.0:
+    * Extract a point from coordinate `grid_latitude` with given coordinate value 26.0:
 
         .. code-block:: yaml
 
