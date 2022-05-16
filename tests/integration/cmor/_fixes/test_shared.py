@@ -1,5 +1,7 @@
 """Tests for shared functions for fixes."""
 import iris
+import iris.coords
+import iris.cube
 import numpy as np
 import pytest
 from cf_units import Unit
@@ -13,7 +15,6 @@ from esmvalcore.cmor._fixes.shared import (
     add_scalar_typeland_coord,
     add_scalar_typesea_coord,
     add_scalar_typesi_coord,
-    add_sigma_factory,
     cube_to_aux_coord,
     fix_bounds,
     fix_ocean_depth_coord,
@@ -105,20 +106,15 @@ def test_add_aux_coords_from_cubes(coord_dict, output):
 
 
 ALT_COORD = iris.coords.AuxCoord([0.0], bounds=[[-100.0, 500.0]],
-                                 var_name='alt', long_name='altitude',
                                  standard_name='altitude', units='m')
-ALT_COORD_NB = iris.coords.AuxCoord([0.0], var_name='alt',
-                                    long_name='altitude',
-                                    standard_name='altitude', units='m')
+ALT_COORD_NB = iris.coords.AuxCoord([0.0], standard_name='altitude', units='m')
 ALT_COORD_KM = iris.coords.AuxCoord([0.0], bounds=[[-0.1, 0.5]],
                                     var_name='alt', long_name='altitude',
                                     standard_name='altitude', units='km')
 P_COORD = iris.coords.AuxCoord([101325.0], bounds=[[102532.0, 95460.8]],
-                               var_name='plev', standard_name='air_pressure',
-                               long_name='pressure', units='Pa')
-P_COORD_NB = iris.coords.AuxCoord([101325.0], var_name='plev',
-                                  standard_name='air_pressure',
-                                  long_name='pressure', units='Pa')
+                               standard_name='air_pressure', units='Pa')
+P_COORD_NB = iris.coords.AuxCoord([101325.0], standard_name='air_pressure',
+                                  units='Pa')
 CUBE_ALT = iris.cube.Cube([1.0], var_name='x',
                           aux_coords_and_dims=[(ALT_COORD, 0)])
 CUBE_ALT_NB = iris.cube.Cube([1.0], var_name='x',
@@ -353,43 +349,6 @@ def test_add_scalar_typesi_coord(cube_in, typesi):
     assert cube_out_2 is cube_out
     coord = cube_in.coord('area_type')
     assert coord == typesi_coord
-
-
-PS_COORD = iris.coords.AuxCoord([[[101000.0]]], var_name='ps', units='Pa')
-PTOP_COORD = iris.coords.AuxCoord(1000.0, var_name='ptop', units='Pa')
-LEV_COORD = iris.coords.AuxCoord([0.5], bounds=[[0.2, 0.8]], var_name='lev',
-                                 units='1',
-                                 standard_name='atmosphere_sigma_coordinate')
-P_COORD_HYBRID = iris.coords.AuxCoord([[[[51000.0]]]],
-                                      bounds=[[[[[21000.0, 81000.0]]]]],
-                                      standard_name='air_pressure', units='Pa')
-CUBE_HYBRID = iris.cube.Cube([[[[1.0]]]], var_name='x',
-                             aux_coords_and_dims=[(PS_COORD, (0, 2, 3)),
-                                                  (PTOP_COORD, ()),
-                                                  (LEV_COORD, 1)])
-
-
-TEST_ADD_SIGMA_FACTORY = [
-    (CUBE_HYBRID.copy(), P_COORD_HYBRID.copy()),
-    (iris.cube.Cube(0.0), None),
-]
-
-
-@pytest.mark.sequential
-@pytest.mark.parametrize('cube,output', TEST_ADD_SIGMA_FACTORY)
-def test_add_sigma_factory(cube, output):
-    """Test adding of factory for ``atmosphere_sigma_coordinate``."""
-    if output is None:
-        with pytest.raises(ValueError) as err:
-            add_sigma_factory(cube)
-        msg = ("Cannot add 'air_pressure' coordinate, "
-               "'atmosphere_sigma_coordinate' coordinate not available")
-        assert str(err.value) == msg
-        return
-    assert not cube.coords('air_pressure')
-    add_sigma_factory(cube)
-    air_pressure_coord = cube.coord('air_pressure')
-    assert air_pressure_coord == output
 
 
 @pytest.mark.sequential

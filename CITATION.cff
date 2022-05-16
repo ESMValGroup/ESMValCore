@@ -166,14 +166,29 @@ authors:
     family-names: Crocker
     given-names: Thomas
     orcid: "https://orcid.org/0000-0001-7761-5546"
+  -
+    affiliation: "Netherlands eScience Center"
+    family-names: Vreede
+    given-names: Barbara
+    orcid: "https://orcid.org/0000-0002-5023-4601"
+  -
+    affiliation: "Netherlands eScience Center"
+    family-names: Soares Siqueira
+    given-names: Abel
+    orcid: "https://orcid.org/0000-0003-4451-281X"
+  -
+    affiliation: "DLR, Germany"
+    family-names: Kazeroni
+    given-names: Rémi
+    orcid: "https://orcid.org/0000-0001-7205-9528"
 
 
-cff-version: "1.0.3"
-date-released: 2021-7-23
+cff-version: 1.2.0
+date-released: 2022-03-14
 doi: "10.5281/zenodo.3387139"
 license: "Apache-2.0"
 message: "If you use this software, please cite it using these metadata."
 repository-code: "https://github.com/ESMValGroup/ESMValCore/"
 title: ESMValCore
-version: "v2.3.1"
+version: "v2.5.0"
 ...

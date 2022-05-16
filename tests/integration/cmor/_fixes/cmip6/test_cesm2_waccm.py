@@ -15,6 +15,7 @@ from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import (
     Cli,
     Clw,
     Fgco2,
+    Omon,
     Siconc,
     Tas,
 )
@@ -84,7 +85,7 @@ def test_clw_fix():
 def test_get_fgco2_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2-WACCM', 'Omon', 'fgco2')
-    assert fix == [Fgco2(None)]
+    assert fix == [Fgco2(None), Omon(None)]
 
 
 def test_fgco2_fix():

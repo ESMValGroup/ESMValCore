@@ -10,6 +10,7 @@ import pytest
 
 import tests
 from esmvalcore.preprocessor import regrid
+from esmvalcore.preprocessor._io import GLOBAL_FILL_VALUE
 from esmvalcore.preprocessor._regrid import (
     _CACHE,
     HORIZONTAL_SCHEMES,
@@ -52,14 +53,19 @@ class Test(tests.Test):
         self.coord = mock.sentinel.coord
         self.coords = mock.Mock(return_value=[self.coord])
         self.remove_coord = mock.Mock()
-        self.regridded_cube = mock.sentinel.regridded_cube
+        self.regridded_cube = mock.Mock()
+        self.regridded_cube.data = mock.sentinel.data
+        self.regridded_cube_data = mock.Mock()
+        self.regridded_cube.core_data.return_value = self.regridded_cube_data
         self.regrid = mock.Mock(return_value=self.regridded_cube)
         self.src_cube = mock.Mock(
             spec=iris.cube.Cube,
             coord_system=self.coord_system,
             coords=self.coords,
             remove_coord=self.remove_coord,
-            regrid=self.regrid)
+            regrid=self.regrid,
+            dtype=float,
+        )
         self.tgt_grid_coord = mock.Mock()
         self.tgt_grid = mock.Mock(
             spec=iris.cube.Cube, coord=self.tgt_grid_coord)
@@ -106,10 +112,30 @@ class Test(tests.Test):
         self.assertEqual(
             set(HORIZONTAL_SCHEMES.keys()), set(self.regrid_schemes))
 
-    def test_regrid__horizontal_schemes(self):
+    @mock.patch('esmvalcore.preprocessor._regrid.da.ma.set_fill_value',
+                autospec=True)
+    @mock.patch('esmvalcore.preprocessor._regrid.da.ma.masked_equal',
+                autospec=True)
+    def test_regrid__horizontal_schemes(self, mock_masked_equal,
+                                        mock_set_fill_value):
+        mock_masked_equal.side_effect = lambda x, _: x
         for scheme in self.regrid_schemes:
             result = regrid(self.src_cube, self.tgt_grid, scheme)
             self.assertEqual(result, self.regridded_cube)
+
+            # For 'unstructured_nearest', cube.data.astype() and
+            # da.ma.masked_equal() are called
+            if scheme == 'unstructured_nearest':
+                mock_set_fill_value.assert_called_once()
+                self.regridded_cube_data.astype.assert_called_once()
+                mock_masked_equal.assert_called_once_with(
+                    self.regridded_cube_data, GLOBAL_FILL_VALUE)
+                self.assertEqual(result.data, self.regridded_cube_data)
+            else:
+                mock_set_fill_value.assert_not_called()
+                self.regridded_cube_data.astype.assert_not_called()
+                mock_masked_equal.assert_not_called()
+                self.assertEqual(result.data, mock.sentinel.data)
             self._check(self.tgt_grid, scheme)
 
     def test_regrid__cell_specification(self):
@@ -123,10 +149,35 @@ class Test(tests.Test):
         for spec in specs:
             result = regrid(self.src_cube, spec, scheme)
             self.assertEqual(result, self.regridded_cube)
+            self.assertEqual(result.data, mock.sentinel.data)
             self._check(spec, scheme, spec=True)
         self.assertEqual(set(_CACHE.keys()), set(specs))
 
         _CACHE.clear()
+
+    def test_regrid_generic_missing_reference(self):
+        emsg = "No reference specified for generic regridding."
+        with self.assertRaisesRegex(ValueError, emsg):
+            regrid(self.src_cube, '1x1', {})
+
+    def test_regrid_generic_invalid_reference(self):
+        emsg = "Could not import specified generic regridding module."
+        with self.assertRaisesRegex(ValueError, emsg):
+            regrid(self.src_cube, '1x1', {"reference": "this.does:not.exist"})
+
+    def test_regrid_generic_regridding(self):
+        regrid(self.src_cube, '1x1', {"reference": "iris.analysis:Linear"})
+
+    third_party_regridder = mock.Mock()
+
+    def test_regrid_generic_third_party(self):
+        regrid(self.src_cube, '1x1',
+               {"reference":
+                "tests.unit.preprocessor._regrid.test_regrid:"
+                "Test.third_party_regridder",
+                "method": "good",
+                })
+        self.third_party_regridder.assert_called_once_with(method="good")
 
 
 def _make_coord(start: float, stop: float, step: int, *, name: str):

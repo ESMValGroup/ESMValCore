@@ -9,7 +9,7 @@ import iris
 import pytest
 
 from esmvalcore._config import TAGS
-from esmvalcore._recipe import RecipeError
+from esmvalcore.exceptions import RecipeError
 from esmvalcore.experimental import CFG, Recipe, get_recipe
 from esmvalcore.experimental.recipe_output import (
     DataFile,
@@ -22,6 +22,7 @@ esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 CFG.update(esmvaltool_sample_data.get_rootpaths())
 CFG['drs']['CMIP6'] = 'SYNDA'
 CFG['max_parallel_tasks'] = 1
+CFG['remove_preproc_dir'] = False
 
 AUTHOR_TAGS = {
     'authors': {

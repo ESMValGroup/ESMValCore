@@ -28,6 +28,7 @@ http://docs.esmvaltool.org. Have fun!
 """  # noqa: line-too-long pylint: disable=line-too-long
 # pylint: disable=import-outside-toplevel
 import logging
+from pathlib import Path
 
 import fire
 from pkg_resources import iter_entry_points
@@ -47,13 +48,32 @@ ______________________________________________________________________
 """ + __doc__
 
 
+def parse_resume(resume, recipe):
+    """Set `resume` to a correct value and sanity check."""
+    import os
+    if not resume:
+        return []
+    if isinstance(resume, str):
+        resume = resume.split(' ')
+    for i, resume_dir in enumerate(resume):
+        resume[i] = Path(os.path.expandvars(resume_dir)).expanduser()
+
+    # Sanity check resume directories:
+    current_recipe = recipe.read_text()
+    for resume_dir in resume:
+        resume_recipe = resume_dir / 'run' / recipe.name
+        if current_recipe != resume_recipe.read_text():
+            raise ValueError(f'Only identical recipes can be resumed, but '
+                             f'{resume_recipe} is different from {recipe}')
+    return resume
+
+
 def process_recipe(recipe_file, config_user):
     """Process recipe."""
     import datetime
     import os
     import shutil
 
-    from . import __version__
     from ._recipe import read_recipe_file
     if not os.path.isfile(recipe_file):
         import errno
@@ -64,8 +84,8 @@ def process_recipe(recipe_file, config_user):
     timestamp_format = "%Y-%m-%d %H:%M:%S"
 
     logger.info(
-        "Starting the Earth System Model Evaluation Tool v%s at time: %s UTC",
-        __version__, timestamp1.strftime(timestamp_format))
+        "Starting the Earth System Model Evaluation Tool at time: %s UTC",
+        timestamp1.strftime(timestamp_format))
 
     logger.info(70 * "-")
     logger.info("RECIPE   = %s", recipe_file)
@@ -100,16 +120,13 @@ def process_recipe(recipe_file, config_user):
     # parse recipe
     recipe = read_recipe_file(recipe_file, config_user)
     logger.debug("Recipe summary:\n%s", recipe)
-
     # run
     recipe.run()
-    recipe.write_html_summary()
-
     # End time timing
     timestamp2 = datetime.datetime.utcnow()
     logger.info(
-        "Ending the Earth System Model Evaluation Tool v%s at time: %s UTC",
-        __version__, timestamp2.strftime(timestamp_format))
+        "Ending the Earth System Model Evaluation Tool at time: %s UTC",
+        timestamp2.strftime(timestamp_format))
     logger.info("Time for running the recipe was: %s", timestamp2 - timestamp1)
 
 
@@ -226,7 +243,6 @@ class Recipes():
             Name of the recipe to get, including any subdirectories.
         """
         import shutil
-        from pathlib import Path
 
         from ._config import DIAGNOSTICS, configure_logging
         configure_logging(console_log_level='info')
@@ -304,9 +320,10 @@ class ESMValTool():
         for project, version in self._extra_packages.items():
             print(f'{project}: {version}')
 
-    @staticmethod
-    def run(recipe,
+    def run(self,
+            recipe,
             config_file=None,
+            resume_from=None,
             max_datasets=None,
             max_years=None,
             skip_nonexistent=False,
@@ -328,6 +345,9 @@ class ESMValTool():
         config_file: str, optional
             Configuration file to use. If not provided the file
             ${HOME}/.esmvaltool/config-user.yml will be used.
+        resume_from: list(str), optional
+            Resume one or more previous runs by using preprocessor output files
+            from these output directories.
         max_datasets: int, optional
             Maximum number of datasets to use.
         max_years: int, optional
@@ -348,27 +368,37 @@ class ESMValTool():
             strict (fail if there are any warnings).
         """
         import os
-        import shutil
+        import warnings
 
-        from ._config import (
-            DIAGNOSTICS,
-            configure_logging,
-            read_config_user_file,
-        )
+        from ._config import configure_logging, read_config_user_file
         from ._recipe import TASKSEP
         from .cmor.check import CheckLevels
         from .esgf._logon import logon
 
-        if not os.path.exists(recipe):
-            installed_recipe = str(DIAGNOSTICS.recipes / recipe)
-            if os.path.exists(installed_recipe):
-                recipe = installed_recipe
-        recipe = os.path.abspath(os.path.expandvars(
-            os.path.expanduser(recipe)))
+        # Check validity of optional command line arguments with experimental
+        # API
+        with warnings.catch_warnings():
+            # ignore experimental API warning
+            warnings.simplefilter("ignore")
+            from .experimental.config._config_object import Config as ExpConfig
+        explicit_optional_kwargs = {
+            'config_file': config_file,
+            'resume_from': resume_from,
+            'max_datasets': max_datasets,
+            'max_years': max_years,
+            'skip_nonexistent': skip_nonexistent,
+            'offline': offline,
+            'diagnostics': diagnostics,
+            'check_level': check_level,
+        }
+        all_optional_kwargs = dict(kwargs)
+        for (key, val) in explicit_optional_kwargs.items():
+            if val is not None:
+                all_optional_kwargs[key] = val
+        ExpConfig(all_optional_kwargs)
 
-        recipe_name = os.path.splitext(os.path.basename(recipe))[0]
-
-        cfg = read_config_user_file(config_file, recipe_name, kwargs)
+        recipe = self._get_recipe(recipe)
+        cfg = read_config_user_file(config_file, recipe.stem, kwargs)
 
         # Create run dir
         if os.path.exists(cfg['run_dir']):
@@ -380,12 +410,10 @@ class ESMValTool():
         log_files = configure_logging(output_dir=cfg['run_dir'],
                                       console_log_level=cfg['log_level'])
 
-        # log header
-        logger.info(HEADER)
-        logger.info("Using config file %s", cfg['config_file'])
-        logger.info("Writing program log files to:\n%s", "\n".join(log_files))
+        self._log_header(cfg['config_file'], log_files)
 
-        cfg['skip-nonexistent'] = skip_nonexistent
+        cfg['resume_from'] = parse_resume(resume_from, recipe)
+        cfg['skip_nonexistent'] = skip_nonexistent
         if isinstance(diagnostics, str):
             diagnostics = diagnostics.split(' ')
         cfg['diagnostics'] = {
@@ -414,19 +442,52 @@ class ESMValTool():
         with resource_usage_logger(pid=os.getpid(), filename=resource_log):
             process_recipe(recipe_file=recipe, config_user=cfg)
 
+        self._clean_preproc(cfg)
+        logger.info("Run was successful")
+
+    @staticmethod
+    def _clean_preproc(cfg):
+        import os
+        import shutil
+
         if os.path.exists(cfg["preproc_dir"]) and cfg["remove_preproc_dir"]:
             logger.info("Removing preproc containing preprocessed data")
             logger.info("If this data is further needed, then")
             logger.info("set remove_preproc_dir to false in config-user.yml")
             shutil.rmtree(cfg["preproc_dir"])
-        logger.info("Run was successful")
+
+    @staticmethod
+    def _get_recipe(recipe):
+        import os
+
+        from esmvalcore._config import DIAGNOSTICS
+        if not os.path.isfile(recipe):
+            installed_recipe = str(DIAGNOSTICS.recipes / recipe)
+            if os.path.isfile(installed_recipe):
+                recipe = installed_recipe
+        recipe = Path(os.path.expandvars(recipe)).expanduser().absolute()
+        return recipe
+
+    def _log_header(self, config_file, log_files):
+        from . import __version__
+        logger.info(HEADER)
+        logger.info('Package versions')
+        logger.info('----------------')
+        logger.info('ESMValCore: %s', __version__)
+        for project, version in self._extra_packages.items():
+            logger.info('%s: %s', project, version)
+        logger.info('----------------')
+        logger.info("Using config file %s", config_file)
+        logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 
 
 def run():
     """Run the `esmvaltool` program, logging any exceptions."""
     import sys
 
-    # Workaroud to avoid using more for the output
+    from .exceptions import RecipeError
+
+    # Workaround to avoid using more for the output
 
     def display(lines, out):
         text = "\n".join(lines) + "\n"
@@ -438,6 +499,11 @@ def run():
         fire.Fire(ESMValTool())
     except fire.core.FireExit:
         raise
+    except RecipeError as exc:
+        # Hide the stack trace for RecipeErrors
+        logger.error("%s", exc)
+        logger.debug("Stack trace for debugging:", exc_info=True)
+        sys.exit(1)
     except Exception:  # noqa
         if not logger.handlers:
             # Add a logging handler if main failed to do so.

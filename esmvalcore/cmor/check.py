@@ -1,6 +1,6 @@
 """Module for checking iris cubes against their CMOR definitions."""
-import datetime
 import logging
+from datetime import datetime
 from enum import IntEnum
 
 import cf_units
@@ -9,6 +9,8 @@ import iris.coords
 import iris.exceptions
 import iris.util
 import numpy as np
+
+from esmvalcore.iris_helpers import date2num
 
 from .table import CMOR_TABLES
 
@@ -38,20 +40,20 @@ def _get_time_bounds(time, freq):
         year = time.cell(step).point.year
         if freq in ['mon', 'mo']:
             next_month, next_year = _get_next_month(month, year)
-            min_bound = time.units.date2num(
-                datetime.datetime(year, month, 1, 0, 0))
-            max_bound = time.units.date2num(
-                datetime.datetime(next_year, next_month, 1, 0, 0))
+            min_bound = date2num(datetime(year, month, 1, 0, 0),
+                                 time.units, time.dtype)
+            max_bound = date2num(datetime(next_year, next_month, 1, 0, 0),
+                                 time.units, time.dtype)
         elif freq == 'yr':
-            min_bound = time.units.date2num(
-                datetime.datetime(year, 1, 1, 0, 0))
-            max_bound = time.units.date2num(
-                datetime.datetime(year + 1, 1, 1, 0, 0))
+            min_bound = date2num(datetime(year, 1, 1, 0, 0),
+                                 time.units, time.dtype)
+            max_bound = date2num(datetime(year + 1, 1, 1, 0, 0),
+                                 time.units, time.dtype)
         elif freq == 'dec':
-            min_bound = time.units.date2num(
-                datetime.datetime(year, 1, 1, 0, 0))
-            max_bound = time.units.date2num(
-                datetime.datetime(year + 10, 1, 1, 0, 0))
+            min_bound = date2num(datetime(year, 1, 1, 0, 0),
+                                 time.units, time.dtype)
+            max_bound = date2num(datetime(year + 10, 1, 1, 0, 0),
+                                 time.units, time.dtype)
         else:
             delta = {
                 'day': 12 / 24,
@@ -137,8 +139,8 @@ class CMORCheck():
             except iris.exceptions.CoordinateNotFoundError:
                 pass
             else:
-                if lat.ndim == 1 and (self._cube.coord_dims(lat) ==
-                                      self._cube.coord_dims(lon)):
+                if lat.ndim == 1 and (self._cube.coord_dims(lat)
+                                      == self._cube.coord_dims(lon)):
                     self._unstructured = True
         return self._unstructured
 
@@ -229,9 +231,14 @@ class CMORCheck():
             If any errors were reported before calling this method.
         """
         if self.has_errors():
-            msg = 'There were errors in variable {}:\n{}\n in cube:\n{}'
-            msg = msg.format(self._cube.var_name, '\n '.join(self._errors),
-                             self._cube)
+            msg = '\n'.join([
+                f'There were errors in variable {self._cube.var_name}:',
+                ' ' + '\n '.join(self._errors),
+                'in cube:',
+                f'{self._cube}',
+                'loaded from file ' +
+                self._cube.attributes.get('source_file', ''),
+            ])
             raise CMORCheckError(msg)
 
     def report_warnings(self):
@@ -243,8 +250,12 @@ class CMORCheck():
             Given logger
         """
         if self.has_warnings():
-            msg = 'There were warnings in variable {}:\n{}\n'.format(
-                self._cube.var_name, '\n '.join(self._warnings))
+            msg = '\n'.join([
+                f'There were warnings in variable {self._cube.var_name}:',
+                ' ' + '\n '.join(self._warnings),
+                'loaded from file ' +
+                self._cube.attributes.get('source_file', ''),
+            ])
             self._logger.warning(msg)
 
     def report_debug_messages(self):
@@ -256,8 +267,13 @@ class CMORCheck():
             Given logger.
         """
         if self.has_debug_messages():
-            msg = 'There were metadata changes in variable {}:\n{}\n'.format(
-                self._cube.var_name, '\n '.join(self._debug_messages))
+            msg = '\n'.join([
+                f'There were metadata changes in variable '
+                f'{self._cube.var_name}:',
+                ' ' + '\n '.join(self._debug_messages),
+                'loaded from file ' +
+                self._cube.attributes.get('source_file', ''),
+            ])
             self._logger.debug(msg)
 
     def _check_fill_value(self):
@@ -511,7 +527,6 @@ class CMORCheck():
         search for the correct coordinate version and then check against this.
         For ``cmor_strict=False`` project (like OBS) the check for requested
         values might be disabled.
-
         """
         table_type = self._cmor_var.table_type
         alternative_coord = None
@@ -653,8 +668,7 @@ class CMORCheck():
             self.report_debug_message(
                 f'Coordinate {coord.standard_name} appears to belong to '
                 'an unstructured grid. Skipping monotonicity and '
-                'direction tests.'
-            )
+                'direction tests.')
             return
 
         if not coord.is_monotonic():
@@ -726,7 +740,12 @@ class CMORCheck():
                                          valid_max)
 
         if l_fix_coord_value:
-            if coord.ndim == 1:
+            # cube.intersection only works for cells with 0 or 2 bounds
+            # Note: nbounds==0 means there are no bounds given, nbounds==2
+            # implies a regular grid with bounds in the grid direction,
+            # nbounds>2 implies an irregular grid with bounds given as vertices
+            # of the cell polygon.
+            if coord.ndim == 1 and coord.nbounds in (0, 2):
                 lon_extent = iris.coords.CoordExtent(coord, 0.0, 360., True,
                                                      False)
                 self._cube = self._cube.intersection(lon_extent)
@@ -771,13 +790,28 @@ class CMORCheck():
     def _check_requested_values(self, coord, coord_info, var_name):
         """Check requested values."""
         if coord_info.requested:
+            if coord.points.ndim != 1:
+                self.report_warning(
+                    "Cannot check requested values of {}D coordinate {} since "
+                    "it is not 1D", coord.points.ndim, var_name)
+                return
             try:
-                cmor_points = [float(val) for val in coord_info.requested]
+                cmor_points = np.array(coord_info.requested, dtype=float)
             except ValueError:
                 cmor_points = coord_info.requested
-            coord_points = list(coord.points)
+            else:
+                atol = 1e-7 * np.mean(cmor_points)
+                if (self.automatic_fixes
+                        and coord.points.shape == cmor_points.shape
+                        and np.allclose(
+                            coord.points,
+                            cmor_points,
+                            rtol=1e-7,
+                            atol=atol,
+                        )):
+                    coord.points = cmor_points
             for point in cmor_points:
-                if point not in coord_points:
+                if point not in coord.points:
                     self.report_warning(self._contain_msg, var_name,
                                         str(point), str(coord.units))
 

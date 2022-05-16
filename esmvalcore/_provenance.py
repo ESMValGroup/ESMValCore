@@ -6,7 +6,7 @@ import os
 from netCDF4 import Dataset
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
-from prov.model import ProvDocument
+from prov.model import ProvDerivation, ProvDocument
 
 from ._version import __version__
 
@@ -26,8 +26,8 @@ def get_esmvaltool_provenance():
     namespace = 'software'
     create_namespace(provenance, namespace)
     attributes = {}  # TODO: add dependencies with versions here
-    activity = provenance.activity(
-        namespace + ':esmvaltool==' + __version__, other_attributes=attributes)
+    activity = provenance.activity(namespace + ':esmvaltool==' + __version__,
+                                   other_attributes=attributes)
 
     return activity
 
@@ -71,8 +71,7 @@ def get_recipe_provenance(documentation, filename):
     entity = provenance.entity(
         'recipe:{}'.format(filename), {
             'attribute:description': documentation.get('description', ''),
-            'attribute:references': str(
-                documentation.get('references', [])),
+            'attribute:references': str(documentation.get('references', [])),
         })
 
     attribute_to_authors(entity, documentation.get('authors', []))
@@ -102,9 +101,31 @@ def get_task_provenance(task, recipe_entity):
 class TrackedFile:
     """File with provenance tracking."""
 
-    def __init__(self, filename, attributes, ancestors=None):
-        """Create an instance of a file with provenance tracking."""
+    def __init__(self,
+                 filename,
+                 attributes,
+                 ancestors=None,
+                 prov_filename=None):
+        """Create an instance of a file with provenance tracking.
+
+        Arguments
+        ---------
+        filename: str
+            Path to the file on disk.
+        attributes: dict
+            Dictionary with facets describing the file.
+        ancestors: :obj:`list` of :obj:`TrackedFile`
+            Ancestor files.
+        prov_filename: str
+            The path this file has in the provenance record. This can
+            differ from `filename` if the file was moved before resuming
+            processing.
+        """
         self._filename = filename
+        if prov_filename is None:
+            self.prov_filename = filename
+        else:
+            self.prov_filename = prov_filename
         self.attributes = copy.deepcopy(attributes)
 
         self.provenance = None
@@ -116,18 +137,15 @@ class TrackedFile:
         """Return summary string."""
         return "{}: {}".format(self.__class__.__name__, self.filename)
 
-    def copy_provenance(self, target=None):
+    def __repr__(self):
+        """Return representation string (e.g., used by ``pformat``)."""
+        return f"{self.__class__.__name__}: {self.filename}"
+
+    def copy_provenance(self):
         """Create a copy with identical provenance information."""
         if self.provenance is None:
             raise ValueError("Provenance of {} not initialized".format(self))
-        if target is None:
-            new = TrackedFile(self.filename, self.attributes)
-        else:
-            if target.filename != self.filename:
-                raise ValueError(
-                    "Attempt to copy provenance to incompatible file.")
-            new = target
-            new.attributes = copy.deepcopy(self.attributes)
+        new = TrackedFile(self.filename, self.attributes)
         new.provenance = copy.deepcopy(self.provenance)
         new.entity = new.provenance.get_record(self.entity.identifier)[0]
         new.activity = new.provenance.get_record(self.activity.identifier)[0]
@@ -137,6 +155,11 @@ class TrackedFile:
     def filename(self):
         """Filename."""
         return self._filename
+
+    @property
+    def provenance_file(self):
+        """Filename of provenance."""
+        return os.path.splitext(self.filename)[0] + '_provenance.xml'
 
     def initialize_provenance(self, activity):
         """Initialize the provenance document.
@@ -173,6 +196,7 @@ class TrackedFile:
         }
         self.entity = self.provenance.entity('file:' + self.filename,
                                              attributes)
+
         attribute_to_authors(self.entity, self.attributes.get('authors', []))
         attribute_to_projects(self.entity, self.attributes.get('projects', []))
 
@@ -180,7 +204,10 @@ class TrackedFile:
         """Register ancestor files for provenance tracking."""
         for ancestor in self._ancestors:
             if ancestor.provenance is None:
-                ancestor.initialize_provenance(activity)
+                if os.path.exists(ancestor.provenance_file):
+                    ancestor.restore_provenance()
+                else:
+                    ancestor.initialize_provenance(activity)
             self.provenance.update(ancestor.provenance)
             self.wasderivedfrom(ancestor)
 
@@ -238,5 +265,23 @@ class TrackedFile:
             namespaces=self.provenance.namespaces,
         )
         self._include_provenance()
-        filename = os.path.splitext(self.filename)[0] + '_provenance'
-        self.provenance.serialize(filename + '.xml', format='xml')
+        with open(self.provenance_file, 'wb') as file:
+            # Create file with correct permissions before saving.
+            self.provenance.serialize(file, format='xml')
+        self.activity = None
+        self.entity = None
+        self.provenance = None
+
+    def restore_provenance(self):
+        """Import provenance information from a previously saved file."""
+        self.provenance = ProvDocument.deserialize(self.provenance_file,
+                                                   format='xml')
+        entity_uri = f"{ESMVALTOOL_URI_PREFIX}file{self.prov_filename}"
+        self.entity = self.provenance.get_record(entity_uri)[0]
+        # Find the associated activity
+        for rec in self.provenance.records:
+            if isinstance(rec, ProvDerivation):
+                if rec.args[0] == self.entity.identifier:
+                    activity_id = rec.args[2]
+                    self.activity = self.provenance.get_record(activity_id)[0]
+                    break

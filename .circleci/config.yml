@@ -20,7 +20,7 @@ commands:
           fi
 
 jobs:
-  test:
+  run_tests:
     # Run tests
     working_directory: /test
     docker:
@@ -34,7 +34,7 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
             pip install .[test]
-            pytest -n 2 -m "not installation and not sequential"
+            pytest -n 2 -m "not sequential"
             pytest -n 0 -m "sequential" --cov-append
       - save_cache:
           key: test-{{ .Branch }}
@@ -43,6 +43,8 @@ jobs:
             - ".pytest_cache"
       - store_test_results:
           path: test-reports/
+      - store_artifacts:
+          path: /tmp/pytest-of-root/pytest-0/
       - store_artifacts:
           path: test-reports/
       - run:
@@ -57,7 +59,7 @@ jobs:
           project-token: $CODACY_PROJECT_TOKEN
           skip: true  # skip if project-token is not defined (i.e. on a fork)
 
-  install:
+  test_installation_from_source_test_mode:
     # Test installation
     working_directory: /install
     docker:
@@ -73,7 +75,7 @@ jobs:
             set -x
             mkdir /logs
             # Pin Python version for faster environment solve
-            echo "  - python=3.9" >> environment.yml
+            echo "  - python=3.10" >> environment.yml
             # Add additional requirements for running all tests
             echo "
               - r-base
@@ -103,10 +105,12 @@ jobs:
           path: /logs
       - store_artifacts:
           path: test-reports/
+      - store_artifacts:
+          path: /tmp/pytest-of-root/pytest-0/
       - store_test_results:
           path: test-reports/
 
-  documentation:
+  build_documentation:
     # Test building documentation
     working_directory: /doc
     docker:
@@ -125,7 +129,7 @@ jobs:
             dpkg -l > /logs/versions.txt
             pip freeze > /logs/requirements.txt
             # Test building documentation
-            MPLBACKEND=Agg python setup.py build_sphinx --warning-is-error
+            MPLBACKEND=Agg sphinx-build -W doc doc/build
       - save_cache:
           key: documentation-{{ .Branch }}
           paths:
@@ -133,7 +137,7 @@ jobs:
       - store_artifacts:
           path: /logs
 
-  develop:
+  test_installation_from_source_develop_mode:
     # Test development installation
     working_directory: /develop
     docker:
@@ -146,7 +150,7 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             mkdir /logs
             # Pin Python version for faster environment solve
-            echo "  - python=3.9" >> environment.yml
+            echo "  - python=3.10" >> environment.yml
             # Add additional requirements for running all tests
             echo "
               - r-base
@@ -168,34 +172,10 @@ jobs:
           no_output_timeout: 30m
       - store_artifacts:
           path: /logs
-
-  conda_build:
-    # Test conda build
-    working_directory: /esmvaltool
-    docker:
-      - image: continuumio/miniconda3
-    steps:
-      - checkout
-      - check_changes
-      - run:
-          command: |
-            . /opt/conda/etc/profile.d/conda.sh
-            set -x
-            # Install prerequisites
-            mkdir /logs
-            conda update -y conda > /logs/conda_base.txt 2>&1
-            conda create -y --name build -c conda-forge 'python=3.9' conda-build>=3.21 conda-verify ripgrep mamba boa >> /logs/conda_base.txt 2>&1
-            set +x; conda activate build; set -x
-            # Log versions
-            dpkg -l > /logs/versions.txt
-            conda env export -n build > /logs/build_environment.yml
-            # Build conda package
-            conda mambabuild package -c conda-forge > /logs/build_log.txt
-          no_output_timeout: 60m
       - store_artifacts:
-          path: /logs
+          path: /tmp/pytest-of-root/pytest-0/
 
-  conda_install:
+  test_installation_from_conda:
     # Test conda package installation
     working_directory: /esmvaltool
     docker:
@@ -209,7 +189,7 @@ jobs:
             mkdir /logs
             # conda update -y conda > /logs/conda.txt 2>&1
             # Create and activate conda environment
-            conda create -y --name esmvaltool -c conda-forge 'python=3.9'
+            conda create -y --name esmvaltool -c conda-forge 'python=3.10'
             set +x; conda activate esmvaltool; set -x
             # Install
             conda install -y esmvalcore -c conda-forge
@@ -221,11 +201,10 @@ jobs:
 workflows:
   commit:
     jobs:
-      - test
-      - install
-      - develop
-      - conda_build
-      - documentation
+      - run_tests
+      - test_installation_from_source_test_mode
+      - test_installation_from_source_develop_mode
+      - build_documentation
   nightly:
     triggers:
       - schedule:
@@ -235,9 +214,8 @@ workflows:
               only:
                 - main
     jobs:
-      - test
-      - install
-      - documentation
-      - develop
-      - conda_build
-      - conda_install
+      - run_tests
+      - test_installation_from_source_test_mode
+      - build_documentation
+      - test_installation_from_source_develop_mode
+      - test_installation_from_conda

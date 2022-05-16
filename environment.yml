@@ -4,12 +4,20 @@ channels:
   - conda-forge
 
 dependencies:
-  - cftime
+  - cartopy
   - cf-units>=3.0.0
+  - cftime
   - compilers
-  - fiona  # 1.8.18/py39, they seem weary to build manylinux wheels and pypi ver built with older gdal
+  # 1.8.18/py39, they seem weary to build manylinux wheels
+  # and pypi ver built with older gdal
+  - fiona
   - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
-  - iris>=3.0.2
-  - python>=3.7
+  - geopy
+  - iris>=3.2.1
+  - nested-lookup
+  - pandas
+  - pillow
+  - pip!=21.3
+  - python>=3.8
   - python-stratify
   - scipy>=1.6
