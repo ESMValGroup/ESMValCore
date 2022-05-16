@@ -1552,6 +1552,11 @@ The resulting point cube will match the respective coordinates to
 those of the input coordinates. If the input coordinate is a scalar,
 the dimension will be a scalar in the output cube.
 
+If the point to be extracted has at least one of the coordinate point
+values outside the interval of the cube's same coordinate values, then
+no extrapolation will be performed, and the resulting extracted cube
+will have fully masked data.
+
 Examples:
     * Extract a point from coordinate `grid_latitude` with given coordinate value 26.0:
 
