@@ -1544,7 +1544,7 @@ The area manipulation module contains the following preprocessor functions:
 
 
 ``extract_coordinate_points``
-------------------
+-----------------------------
 
 This function extracts points with given coordinates, following either a 
 ``linear`` or a ``nearest`` interpolation scheme.
