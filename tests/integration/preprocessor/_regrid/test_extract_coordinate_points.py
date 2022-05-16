@@ -24,7 +24,7 @@ class Test(tests.Test):
 
     def test_extract_point__single_linear(self):
         """Test linear interpolation when extracting a single point"""
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': 2.1, 'grid_longitude': 2.1},
             scheme='linear')
@@ -32,7 +32,7 @@ class Test(tests.Test):
         np.testing.assert_allclose(point.data, [5.5, 21.5, 37.5])
 
         # Exactly centred between grid points.
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': 2.5, 'grid_longitude': 2.5},
             scheme='linear')
@@ -40,7 +40,7 @@ class Test(tests.Test):
         np.testing.assert_allclose(point.data, [7.5, 23.5, 39.5])
 
         # On a (edge) grid point.
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': 4, 'grid_longitude': 4},
             scheme='linear')
@@ -50,7 +50,7 @@ class Test(tests.Test):
         # Test two points outside the valid area.
         # These should be masked, since we set up the interpolation
         # schemes that way.
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': -1, 'grid_longitude': -1},
             scheme='linear')
@@ -58,7 +58,7 @@ class Test(tests.Test):
         masked = np.ma.array([np.nan] * 3, mask=True)
         self.assert_array_equal(point.data, masked)
 
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': 30, 'grid_longitude': 30},
             scheme='linear')
@@ -68,14 +68,14 @@ class Test(tests.Test):
     def test_extract_point__single_nearest(self):
         """Test nearest match when extracting a single point"""
 
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': 2.1, 'grid_longitude': 2.1},
             scheme='nearest')
         self.assertEqual(point.shape, (3,))
         np.testing.assert_allclose(point.data, [5, 21, 37])
 
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': 4, 'grid_longitude': 4},
             scheme='nearest')
@@ -83,7 +83,7 @@ class Test(tests.Test):
         np.testing.assert_allclose(point.data, [15, 31, 47])
 
         # Test two points outside the valid area
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': -1, 'grid_longitude': -1},
             scheme='nearest')
@@ -91,7 +91,7 @@ class Test(tests.Test):
         masked = np.ma.array(np.empty(3, dtype=np.float64), mask=True)
         self.assert_array_equal(point.data, masked)
 
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': 30, 'grid_longitude': 30},
             scheme='nearest')
@@ -106,7 +106,7 @@ class Test(tests.Test):
         coords = self.cube.coords(dim_coords=True)
         print([coord.standard_name for coord in coords])
 
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': [1, 1.1, 1.5, 2, 4],
              'grid_longitude': 2},
@@ -119,7 +119,7 @@ class Test(tests.Test):
                                                 [17, 17.4, 19., 21., 29],
                                                 [33, 33.4, 35, 37, 45]])
 
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': 4,
              'grid_longitude': [1, 1.1, 1.5, 2, 4]},
@@ -134,7 +134,7 @@ class Test(tests.Test):
         # Test latitude and longitude points outside the grid.
         # These should all be masked.
         coords = self.cube.coords(dim_coords=True)
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': [0, 10], 'grid_longitude': 3},
             scheme='linear')
@@ -142,7 +142,7 @@ class Test(tests.Test):
         masked = np.ma.array(np.empty((3, 2), dtype=np.float64), mask=True)
         self.assert_array_equal(point.data, masked)
         coords = self.cube.coords(dim_coords=True)
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': 2, 'grid_longitude': [0, 10]},
             scheme='linear')
@@ -153,7 +153,7 @@ class Test(tests.Test):
     def test_extract_point__multiple_nearest(self):
         """Test nearest match for an array of one coordinate"""
 
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': [1, 1.1, 1.5, 1.501, 2, 4],
              'grid_longitude': 2},
@@ -164,7 +164,7 @@ class Test(tests.Test):
         np.testing.assert_allclose(point.data, [[1, 1, 1, 5, 5, 13],
                                                 [17, 17, 17, 21, 21, 29],
                                                 [33, 33, 33, 37, 37, 45]])
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': 4,
              'grid_longitude': [1, 1.1, 1.5, 1.501, 2, 4]},
@@ -175,7 +175,7 @@ class Test(tests.Test):
         np.testing.assert_allclose(point.data, [[12, 12, 12, 13, 13, 15],
                                                 [28, 28, 28, 29, 29, 31],
                                                 [44, 44, 44, 45, 45, 47]])
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': [0, 10],
              'grid_longitude': 3},
@@ -183,7 +183,7 @@ class Test(tests.Test):
         masked = np.ma.array(np.empty((3, 2), dtype=np.float64), mask=True)
         self.assertEqual(point.shape, (3, 2))
         self.assert_array_equal(point.data, masked)
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': 2,
              'grid_longitude': [0, 10]},
@@ -194,7 +194,7 @@ class Test(tests.Test):
     def test_extract_point__multiple_both_linear(self):
         """Test for both latitude and longitude arrays, with
         linear interpolation"""
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': [0, 1.1, 1.5, 1.51, 4, 5],
              'grid_longitude': [0, 1.1, 1.5, 1.51, 4, 5]}, scheme='linear')
@@ -224,7 +224,7 @@ class Test(tests.Test):
 
     def test_extract_point__multiple_both_nearest(self):
         """Test for both latitude and longitude arrays, with nearest match"""
-        point = extract(
+        point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': [0, 1.1, 1.5, 1.51, 4, 5],
              'grid_longitude': [0, 1.1, 1.5, 1.51, 4, 5]},
@@ -254,7 +254,7 @@ class Test(tests.Test):
         """Test wrong interpolation scheme raises error."""
         self.assertRaises(
             ValueError,
-            extract, self.cube, {'grid_latitude': 0.}, 'wrong')
+            extract_coordinate_points, self.cube, {'grid_latitude': 0.}, 'wrong')
 
 
 if __name__ == '__main__':
