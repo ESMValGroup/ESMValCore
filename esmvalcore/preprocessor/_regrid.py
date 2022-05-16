@@ -405,10 +405,11 @@ def extract_point(cube, latitude, longitude, scheme):
 
     Returns
     -------
-    Returns a cube with the extracted point(s), and with adjusted
-    latitude and longitude coordinates (see above). If desired point
-    outside values for at least one coordinate, this cube will have fully
-    masked data.
+    :py:class:`~iris.cube.Cube`
+        Returns a cube with the extracted point(s), and with adjusted
+        latitude and longitude coordinates (see above). If desired point
+        outside values for at least one coordinate, this cube will have fully
+        masked data.
 
     Raises
     ------
