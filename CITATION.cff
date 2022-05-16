@@ -181,7 +181,11 @@ authors:
     family-names: Kazeroni
     given-names: Rémi
     orcid: "https://orcid.org/0000-0001-7205-9528"
-
+  -
+    affiliation: "xxx"
+    family-names: Hohn
+    given-names: David
+    orcid: "https://orcid.org/xxx"
 
 cff-version: 1.2.0
 date-released: 2022-03-14
