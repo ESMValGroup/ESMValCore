@@ -1530,7 +1530,7 @@ Area manipulation
 =================
 The area manipulation module contains the following preprocessor functions:
 
-* extract_: Extract a point in any coordinates with a given interpolation scheme.
+* extract_: Extract a point with arbitrary coordinates given an interpolation scheme.
 * extract_region_: Extract a region from a cube based on ``lat/lon``
   corners.
 * extract_named_regions_: Extract a specific region from in the region
@@ -1546,14 +1546,14 @@ The area manipulation module contains the following preprocessor functions:
 ``extract``
 ------------------
 
-This function extracts points in any given coordinate, following either a 
+This function extracts points with given coordinates, following either a 
 ``linear`` or a ``nearest`` interpolation scheme.
 The resulting point cube will match the respective coordinates to
 those of the input coordinates. If the input coordinate is a scalar,
 the dimension will be a scalar in the output cube.
 
 Examples:
-    * Extract a point in coordinate `grid_latitude`:
+    * Extract a point from coordinate `grid_latitude`with given coordinate value 26.0:
 
         .. code-block:: yaml
 
