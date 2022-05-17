@@ -120,12 +120,14 @@ jobs:
       - run:
           command: |
             mkdir /logs
+            . /opt/conda/etc/profile.d/conda.sh
             # Install
             mamba env create
             conda activate esmvaltool
             pip install .[develop]
             # Log versions
             dpkg -l > /logs/versions.txt
+            conda env export > /logs/environment.yml
             pip freeze > /logs/requirements.txt
             # Test building documentation
             MPLBACKEND=Agg sphinx-build -W doc doc/build
