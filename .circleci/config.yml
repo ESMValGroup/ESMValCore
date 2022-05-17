@@ -124,7 +124,7 @@ jobs:
             # Install
             mamba env create
             conda activate esmvaltool
-            pip install .[develop]
+            pip install .[doc]
             # Log versions
             dpkg -l > /logs/versions.txt
             conda env export > /logs/environment.yml
