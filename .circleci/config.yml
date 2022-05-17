@@ -18,8 +18,16 @@ commands:
             echo Skipping installation tests
             circleci step halt
           fi
-  upload_test_results:
+  test_and_report:
     steps:
+      - run:
+          name: Run tests
+          command: |
+            . /opt/conda/etc/profile.d/conda.sh
+            conda activate esmvaltool
+            pytest -n 4 -m "not sequential" --junitxml=report-1.xml
+            pytest -n 0 -m "sequential" --cov-append --junitxml=report-2.xml
+            esmvaltool version
       - run:
           name: Merge test reports
           command: |
@@ -59,12 +67,7 @@ jobs:
             mkdir /logs
             conda activate esmvaltool
             pip install .[test] > /logs/install.txt 2>&1
-      - run:
-          name: Run tests
-          command: |
-            pytest -n 4 -m "not sequential" --junitxml=report-1.xml
-            pytest -n 0 -m "sequential" --cov-append --junitxml=report-2.xml
-      - upload_test_results
+      - test_and_report
       - save_cache:
           key: test-{{ .Branch }}
           paths:
@@ -115,14 +118,7 @@ jobs:
             dpkg -l > /logs/versions.txt
             conda env export > /logs/environment.yml
             pip freeze > /logs/requirements.txt
-      - run:
-          name: Run tests
-          command: |
-            # Test installation
-            pytest -n 4 -m "not sequential" --junitxml=report-1.xml
-            pytest -n 0 -m "sequential" --junitxml=report-2.xml
-            esmvaltool version
-      - upload_test_results
+      - test_and_report
       - save_cache:
           key: install-{{ .Branch }}
           paths:
@@ -185,13 +181,7 @@ jobs:
             dpkg -l > /logs/versions.txt
             conda env export > /logs/environment.yml
             pip freeze > /logs/requirements.txt
-      - run:
-          name: Run tests
-          command: |
-            esmvaltool version
-            pytest -n 4 -m "not sequential" --junitxml=report-2.xml
-            pytest -n 0 -m "sequential" --junitxml=report-2.xml
-      - upload_test_results
+      - test_and_report
 
   test_installation_from_conda:
     # Test conda package installation
