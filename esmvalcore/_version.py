@@ -1,11 +1,9 @@
 """Define the ESMValCore version."""
-import warnings
 from importlib.metadata import PackageNotFoundError, version
 
 try:
     __version__ = version("ESMValCore")
-except PackageNotFoundError:
-    # package is not installed
-    warnings.warn(
-        "No version information available, please install the package.")
-    __version__ = "unknown"
+except PackageNotFoundError as exc:
+    raise PackageNotFoundError(
+        "ESMValCore package not found, please run `pip install -e .` before "
+        "importing the package.") from exc
