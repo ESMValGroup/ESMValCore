@@ -65,16 +65,7 @@ autodoc_default_options = {
     'autosummary': True,
 }
 
-autodoc_mock_imports = [
-    'cartopy',
-    'cf_units',
-    'ESMF',
-    'geopy',
-    'iris',
-    'nested_lookup',
-    'psutil',
-    'stratify',
-]
+autodoc_mock_imports = []
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

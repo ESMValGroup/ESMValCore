@@ -114,26 +114,21 @@ jobs:
     # Test building documentation
     working_directory: /doc
     docker:
-      - image: continuumio/miniconda3
+      - image: condaforge/mambaforge
     steps:
       - checkout
-      - restore_cache:
-          key: documentation-{{ .Branch }}
       - run:
           command: |
             mkdir /logs
             # Install
-            pip install -r doc/requirements.txt > /logs/install.txt 2>&1
-            pip install sphinx sphinx_rtd_theme >> /logs/install.txt 2>&1
+            mamba env create
+            mamba activate esmvaltool
+            pip install .[develop]
             # Log versions
             dpkg -l > /logs/versions.txt
             pip freeze > /logs/requirements.txt
             # Test building documentation
             MPLBACKEND=Agg sphinx-build -W doc doc/build
-      - save_cache:
-          key: documentation-{{ .Branch }}
-          paths:
-            - ".eggs"
       - store_artifacts:
           path: /logs
 

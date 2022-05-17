@@ -637,15 +637,6 @@ the following files:
 - ``environment.yml``
   contains development dependencies that cannot be installed from
   `PyPI <https://pypi.org/>`_
-- ``docs/requirements.txt``
-  contains Python dependencies needed to build the documentation that can be
-  installed from PyPI
-- ``docs/conf.py``
-  contains a list of Python dependencies needed to build the documentation that
-  cannot be installed from PyPI and need to be mocked when building the
-  documentation.
-  (We do not use conda to build the documentation because this is too time
-  consuming.)
 - ``setup.py``
   contains all Python dependencies, regardless of their installation source
 
