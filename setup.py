@@ -31,7 +31,7 @@ REQUIREMENTS = {
     # Use with pip install . to install from source
     'install': [
         'cartopy',
-        'cf-units>=3.0.0',
+        'cf-units>=3.0.0,!=3.0.1.post0',
         'dask[array]',
         'esgf-pyclient>=0.3.1',
         'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
