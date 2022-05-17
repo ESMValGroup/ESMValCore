@@ -63,7 +63,7 @@ jobs:
     # Test installation
     working_directory: /install
     docker:
-      - image: continuumio/miniconda3
+      - image: condaforge/mambaforge
     steps:
       - checkout
       - check_changes
@@ -83,7 +83,7 @@ jobs:
               - ncl
             " >> environment.yml
             # Install
-            conda env create >> /logs/conda.txt 2>&1
+            mamba env create >> /logs/conda.txt 2>&1
             set +x; conda activate esmvaltool; set -x
             pip install .[test] > /logs/install.txt 2>&1
             # Log versions
@@ -138,7 +138,7 @@ jobs:
     # Test development installation
     working_directory: /develop
     docker:
-      - image: continuumio/miniconda3
+      - image: condaforge/mambaforge
     steps:
       - checkout
       - check_changes
@@ -155,7 +155,7 @@ jobs:
               - ncl
             " >> environment.yml
             # Install
-            conda env create >> /logs/conda.txt 2>&1
+            mamba env create >> /logs/conda.txt 2>&1
             conda activate esmvaltool
             pip install -e .[develop] > /logs/install.txt 2>&1
             # Log versions
@@ -176,7 +176,7 @@ jobs:
     # Test conda package installation
     working_directory: /esmvaltool
     docker:
-      - image: continuumio/miniconda3
+      - image: condaforge/mambaforge
     steps:
       - run:
           command: |
@@ -186,10 +186,10 @@ jobs:
             mkdir /logs
             # conda update -y conda > /logs/conda.txt 2>&1
             # Create and activate conda environment
-            conda create -y --name esmvaltool -c conda-forge 'python=3.10'
+            mamba create -y --name esmvaltool 'python=3.10'
             set +x; conda activate esmvaltool; set -x
             # Install
-            conda install -y esmvalcore -c conda-forge
+            mamba install -y esmvalcore
             # Log versions
             conda env export > /logs/environment.yml
             # Test installation
