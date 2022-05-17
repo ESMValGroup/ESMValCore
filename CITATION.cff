@@ -181,7 +181,11 @@ authors:
     family-names: Kazeroni
     given-names: Rémi
     orcid: "https://orcid.org/0000-0001-7205-9528"
-
+  -
+    affiliation: "GEOMAR, Germany"
+    family-names: Hohn
+    given-names: David
+    orcid: "https://orcid.org/0000-0002-5317-1247"
 
 cff-version: 1.2.0
 date-released: 2022-03-14
