@@ -1,7 +1,6 @@
 """Unit test for :func:`esmvalcore.preprocessor._volume`."""
 
 import unittest
-import pytest
 
 import iris
 import numpy as np
@@ -22,7 +21,7 @@ class Test(tests.Test):
 
     def setUp(self):
         """Prepare tests"""
-        coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+        coord_sys = iris.coord_systems.GeogCS(63700000.)
         data1 = np.ones((3, 2, 2))
         data2 = np.ma.ones((2, 3, 2, 2))
         data3 = np.ma.ones((4, 3, 2, 2))
@@ -82,7 +81,7 @@ class Test(tests.Test):
 
     def test_axis_statistics(self):
         """Test axis statistics in multiple operators. """
-        for operator in  ['mean', 'median', 'min', 'max', 'rms']:
+        for operator in ['mean', 'median', 'min', 'max', 'rms']:
             result = axis_statistics(self.grid_4d, 'z', operator)
             expected = np.ma.ones((2, 2, 2))
             self.assert_array_equal(result.data, expected)
@@ -95,6 +94,15 @@ class Test(tests.Test):
         result = axis_statistics(self.grid_4d, 'z', 'sum')
         expected = np.ma.ones((2, 2, 2)) * 250
         self.assert_array_equal(result.data, expected)
+    
+    def test_wrong_axis_statistics(self):
+        """"""
+        with self.assertRaises(ValueError) as err:
+            axis_statistics(self.grid_3d, 't', 'mean')
+        self.assertEqual(
+            f'Axis t not found in cube {self.grid_3d.summary(shorten=True)}',
+            str(err.exception))
+
 
     def test_extract_volume(self):
         """Test to extract the top two layers of a 3 layer depth column."""

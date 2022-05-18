@@ -5,6 +5,7 @@ depth or height regions; constructing volumetric averages;
 """
 import logging
 from copy import deepcopy
+from textwrap import shorten
 
 import dask.array as da
 import iris
@@ -297,7 +298,13 @@ def axis_statistics(cube, axis, operator):
     iris.cube.Cube
         collapsed cube.
     """
-    coord = cube.coord(axis=axis)
+    try:
+        coord = cube.coord(axis=axis)
+    except iris.exceptions.CoordinateNotFoundError:
+        raise ValueError(
+            'Axis {} not found in cube {}'.format(
+                axis,
+                cube.summary(shorten=True)))
     operation = get_iris_analysis_operation(operator)
     weights = None
     if operator_accept_weights(operator):
