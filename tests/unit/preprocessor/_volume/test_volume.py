@@ -94,6 +94,7 @@ class Test(tests.Test):
 
         result = axis_statistics(self.grid_4d, 'z', 'sum')
         expected = np.ma.ones((2, 2, 2)) * 250
+        self.assert_array_equal(result.data, expected)
 
     def test_extract_volume(self):
         """Test to extract the top two layers of a 3 layer depth column."""
