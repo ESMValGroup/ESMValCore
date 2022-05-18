@@ -299,11 +299,11 @@ def axis_statistics(cube, axis, operator):
     """
     try:
         coord = cube.coord(axis=axis)
-    except iris.exceptions.CoordinateNotFoundError:
+    except iris.exceptions.CoordinateNotFoundError as err:
         raise ValueError(
             'Axis {} not found in cube {}'.format(
                 axis,
-                cube.summary(shorten=True)))
+                cube.summary(shorten=True))) from err
     operation = get_iris_analysis_operation(operator)
     weights = None
     if operator_accept_weights(operator):
