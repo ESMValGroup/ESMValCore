@@ -96,7 +96,7 @@ class Test(tests.Test):
         self.assert_array_equal(result.data, expected)
     
     def test_wrong_axis_statistics(self):
-        """"""
+        """Test raises error when axis is not found in cube."""
         with self.assertRaises(ValueError) as err:
             axis_statistics(self.grid_3d, 't', 'mean')
         self.assertEqual(
