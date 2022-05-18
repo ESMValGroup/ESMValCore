@@ -304,8 +304,9 @@ def depth_integration(cube, operator='sum'):
         axes = list(range(cube.ndim))
         axes.remove(coord_dim)
         weights = np.expand_dims(thickness, axes)
+        weights = da.broadcast_to(weights, cube.shape)
         result = cube.collapsed(cube.coord(axis='z'),
-                                iris.analysis.SUM,
+                                operation,
                                 weights=weights)
     else:
         result = cube.collapsed(cube.coord(axis='z'), operation)
