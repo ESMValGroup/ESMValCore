@@ -277,7 +277,46 @@ def volume_statistics(cube, operator):
     return _create_cube_time(src_cube, result, times)
 
 
-def depth_integration(cube, operator='sum'):
+def axis_statistics(cube, axis, operator):
+    """Perform statistics along a given axis.
+    
+    Operates over an axis direction. If weights are required,
+    they are computed using the coordinate 
+
+    Arguments
+    ---------
+    cube: iris.cube.Cube
+        input cube.
+    axis: str
+        direction over where to apply the operator.
+    operator:
+        statistics to perform.
+
+    Returns
+    -------
+    iris.cube.Cube
+        collapsed cube.
+    """
+    coord = cube.coord(axis=axis)
+    operation = get_iris_analysis_operation(operator)
+    weights = None
+    if operator_accept_weights(operator):
+        coord_dim = cube.coord_dims(cube.coord(axis=axis))[0]
+        expand = list(range(cube.ndim))
+        expand.remove(coord_dim)
+        weights = np.abs(coord.bounds[..., 1] - coord.bounds[..., 0])
+        weights = np.expand_dims(weights, expand)
+        weights = da.broadcast_to(weights, cube.shape)
+        result = cube.collapsed(coord,
+                                operation,
+                                weights=weights)
+    else:
+        result = cube.collapsed(coord, operation)
+    
+    return result
+
+
+def depth_integration(cube):
     """Determine the total sum over the vertical component.
 
     Requires a 3D cube. The z-coordinate
@@ -295,22 +334,7 @@ def depth_integration(cube, operator='sum'):
         collapsed cube.
     """
     # ####
-    depth = cube.coord(axis='z')
-    operation = get_iris_analysis_operation(operator)
-    weights = None
-    if operator_accept_weights(operator):
-        thickness = np.abs(depth.bounds[..., 1] - depth.bounds[..., 0])
-        coord_dim = cube.coord_dims(cube.coord(axis='z'))[0]
-        axes = list(range(cube.ndim))
-        axes.remove(coord_dim)
-        weights = np.expand_dims(thickness, axes)
-        weights = da.broadcast_to(weights, cube.shape)
-        result = cube.collapsed(cube.coord(axis='z'),
-                                operation,
-                                weights=weights)
-    else:
-        result = cube.collapsed(cube.coord(axis='z'), operation)
-
+    result = axis_statistics(cube, axis='z', operator='sum')
     result.rename('Depth_integrated_' + str(cube.name()))
     # result.units = Unit('m') * result.units # This doesn't work:
     # TODO: Change units on cube to reflect 2D concentration (not 3D)
