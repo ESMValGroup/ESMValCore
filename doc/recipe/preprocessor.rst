@@ -1530,6 +1530,7 @@ Area manipulation
 =================
 The area manipulation module contains the following preprocessor functions:
 
+* extract_coordinate_points_: Extract a point with arbitrary coordinates given an interpolation scheme.
 * extract_region_: Extract a region from a cube based on ``lat/lon``
   corners.
 * extract_named_regions_: Extract a specific region from in the region
@@ -1540,6 +1541,33 @@ The area manipulation module contains the following preprocessor functions:
 * zonal_statistics_: Compute zonal statistics.
 * meridional_statistics_: Compute meridional statistics.
 * area_statistics_: Compute area statistics.
+
+
+``extract_coordinate_points``
+-----------------------------
+
+This function extracts points with given coordinates, following either a 
+``linear`` or a ``nearest`` interpolation scheme.
+The resulting point cube will match the respective coordinates to
+those of the input coordinates. If the input coordinate is a scalar,
+the dimension will be a scalar in the output cube.
+
+If the point to be extracted has at least one of the coordinate point
+values outside the interval of the cube's same coordinate values, then
+no extrapolation will be performed, and the resulting extracted cube
+will have fully masked data.
+
+Examples:
+    * Extract a point from coordinate `grid_latitude` with given coordinate value 26.0:
+
+        .. code-block:: yaml
+
+            extract_coordinate_points:
+              definition:
+                grid_latitude: 26.
+              scheme: nearest
+
+See also :func:`esmvalcore.preprocessor.extract_coordinate_points`.
 
 
 ``extract_region``
@@ -1653,6 +1681,11 @@ latitude and/or longitude coordinates. The resulting point cube will
 match the respective latitude and longitude coordinate to those of the
 input coordinates. If the input coordinate is a scalar, the dimension
 will be missing in the output cube (that is, it will be a scalar).
+
+If the point to be extracted has at least one of the coordinate point
+values outside the interval of the cube's same coordinate values, then
+no extrapolation will be performed, and the resulting extracted cube
+will have fully masked data.
 
 Parameters:
   * ``cube``: the input dataset cube.
