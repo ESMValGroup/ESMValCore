@@ -279,9 +279,9 @@ def volume_statistics(cube, operator):
 
 def axis_statistics(cube, axis, operator):
     """Perform statistics along a given axis.
-    
+
     Operates over an axis direction. If weights are required,
-    they are computed using the coordinate 
+    they are computed using the coordinate bounds.
 
     Arguments
     ---------
@@ -289,7 +289,7 @@ def axis_statistics(cube, axis, operator):
         input cube.
     axis: str
         direction over where to apply the operator.
-    operator:
+    operator: str
         statistics to perform.
 
     Returns
@@ -312,7 +312,7 @@ def axis_statistics(cube, axis, operator):
                                 weights=weights)
     else:
         result = cube.collapsed(coord, operation)
-    
+
     return result
 
 

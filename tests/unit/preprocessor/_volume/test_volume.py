@@ -1,13 +1,15 @@
 """Unit test for :func:`esmvalcore.preprocessor._volume`."""
 
 import unittest
+import pytest
 
 import iris
 import numpy as np
 from cf_units import Unit
 
 import tests
-from esmvalcore.preprocessor._volume import (volume_statistics,
+from esmvalcore.preprocessor._volume import (axis_statistics,
+                                             volume_statistics,
                                              depth_integration,
                                              extract_trajectory,
                                              extract_transect,
@@ -77,6 +79,21 @@ class Test(tests.Test):
         iris.util.guess_coord_axis(self.grid_3d.coord('zcoord'))
         iris.util.guess_coord_axis(self.grid_4d.coord('zcoord'))
         iris.util.guess_coord_axis(self.grid_4d_2.coord('zcoord'))
+
+    def test_axis_statistics(self):
+        """Test axis statistics in multiple operators. """
+        for operator in  ['mean', 'median', 'min', 'max', 'rms']:
+            result = axis_statistics(self.grid_4d, 'z', operator)
+            expected = np.ma.ones((2, 2, 2))
+            self.assert_array_equal(result.data, expected)
+
+        for operator in ['std_dev', 'variance']:
+            result = axis_statistics(self.grid_4d, 'z', operator)
+            expected = np.ma.zeros((2, 2, 2))
+            self.assert_array_equal(result.data, expected)
+
+        result = axis_statistics(self.grid_4d, 'z', 'sum')
+        expected = np.ma.ones((2, 2, 2)) * 250
 
     def test_extract_volume(self):
         """Test to extract the top two layers of a 3 layer depth column."""
