@@ -5,7 +5,6 @@ depth or height regions; constructing volumetric averages;
 """
 import logging
 from copy import deepcopy
-from textwrap import shorten
 
 import dask.array as da
 import iris

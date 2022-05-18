@@ -94,7 +94,7 @@ class Test(tests.Test):
         result = axis_statistics(self.grid_4d, 'z', 'sum')
         expected = np.ma.ones((2, 2, 2)) * 250
         self.assert_array_equal(result.data, expected)
-    
+
     def test_wrong_axis_statistics(self):
         """Test raises error when axis is not found in cube."""
         with self.assertRaises(ValueError) as err:
@@ -102,7 +102,6 @@ class Test(tests.Test):
         self.assertEqual(
             f'Axis t not found in cube {self.grid_3d.summary(shorten=True)}',
             str(err.exception))
-
 
     def test_extract_volume(self):
         """Test to extract the top two layers of a 3 layer depth column."""
