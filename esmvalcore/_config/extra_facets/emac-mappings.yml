@@ -1,10 +1,24 @@
 # Extra facets for native EMAC model output
 
 # All extra facets for EMAC are optional but might be necessary for some
-# variables. Note that if the facet ``channel`` is not given here it has to be
-# specified in the recipe. A complete list of supported keys is given in the
-# documentation (see ESMValCore/doc/quickstart/find_data.rst).
+# variables.
+
+# Notes:
+# - The facets ``channel`` and ``postproc_flag`` have to be specified in the
+#   recipe if they are not given here.
+# - If ``raw_name`` is omitted and no derivation in the EMAC fix is given, the
+#   CMOR short_name is used by default. To accept multiple raw names for a
+#   variable, ``raw_name`` can be given as a list. In this case, the
+#   prioritization is given by the order of the list; if possible, use the
+#   first entry, if this is not present, use the second, etc.
+
+# A complete list of supported keys is given in the documentation (see
+# ESMValCore/doc/quickstart/find_data.rst).
 ---
+'*':
+  '*':
+    '*':
+      postproc_flag: ''
 
 EMAC:
   '*':
