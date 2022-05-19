@@ -216,17 +216,17 @@ EMAC:
       raw_name: tm1_ave
       channel: Amon
     ua:
-      raw_name: um1_cav
+      raw_name: um1_ave
       channel: Amon
     va:
-      raw_name: vm1_cav
+      raw_name: vm1_ave
       channel: Amon
   AERmon:
     ua:
-      raw_name: um1_cav
+      raw_name: um1_ave
       channel: Amon
     va:
-      raw_name: vm1_cav
+      raw_name: vm1_ave
       channel: Amon
     zg:
       raw_name: geopot_ave
@@ -251,10 +251,10 @@ EMAC:
       raw_name: tm1_p19_ave
       channel: Amon
     ua:  # defined on plev19
-      raw_name: um1_p19_cav
+      raw_name: um1_p19_ave
       channel: Amon
     va:  # defined on plev19
-      raw_name: vm1_p19_cav
+      raw_name: vm1_p19_ave
       channel: Amon
     zg:  # defined on plev19
       raw_name: geopot_p19_ave
@@ -283,10 +283,10 @@ EMAC:
       raw_name: tm1_ave
       channel: Amon
     ua:
-      raw_name: um1_cav
+      raw_name: um1_ave
       channel: Amon
     va:
-      raw_name: vm1_cav
+      raw_name: vm1_ave
       channel: Amon
     zg:
       raw_name: geopot_ave
@@ -309,20 +309,20 @@ EMAC:
       raw_name: qm1_p19_ave
       channel: Amon
     ua:  # defined on plev8
-      raw_name: um1_p19_cav
+      raw_name: um1_p19_ave
       channel: Amon
     va:  # defined on plev8
-      raw_name: vm1_p19_cav
+      raw_name: vm1_p19_ave
       channel: Amon
     zg:  # defined on plev8
       raw_name: geopot_p19_ave
       channel: Amon
   E1hr:
     ua:  # defined on plev3
-      raw_name: um1_p19_cav
+      raw_name: um1_p19_ave
       channel: Amon
     va: # defined on plev3
-      raw_name: vm1_p19_cav
+      raw_name: vm1_p19_ave
       channel: Amon
   E3hrPt:
     hus:
@@ -336,10 +336,10 @@ EMAC:
       raw_name: qm1_p19_ave
       channel: Amon
     ua:  # defined on plev19
-      raw_name: um1_p19_cav
+      raw_name: um1_p19_ave
       channel: Amon
     va:  # defined on plev19
-      raw_name: vm1_p19_cav
+      raw_name: vm1_p19_ave
       channel: Amon
     zg:  # defined on plev19
       raw_name: geopot_p19_ave
@@ -349,10 +349,10 @@ EMAC:
       raw_name: tm1_ave
       channel: Amon
     ua:
-      raw_name: um1_cav
+      raw_name: um1_ave
       channel: Amon
     va:
-      raw_name: vm1_cav
+      raw_name: vm1_ave
       channel: Amon
 
 
