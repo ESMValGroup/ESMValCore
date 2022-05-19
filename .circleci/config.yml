@@ -54,37 +54,37 @@ commands:
     parameters:
       extra:
         type: string
-      steps:
-        - checkout
-        - check_changes
-        - restore_cache:
-            key: "install-<<parameters.extra>>-{{ .Branch }}"
-        - run:
-            name: Install dependencies
-            command: |
-              # Add additional requirements for running all tests
-              echo "
-                - r-base
-                - r-yaml
-                - ncl
-              " >> environment.yml
-              # Install
-              . /opt/conda/etc/profile.d/conda.sh
-              mkdir /logs
-              mamba env create >> /logs/conda.txt 2>&1
-              conda activate esmvaltool
-              pip install -e ".[<<parameters.extra>>]" > /logs/install.txt 2>&1
-              # Log versions
-              dpkg -l > /logs/versions.txt
-              conda env export > /logs/environment.yml
-              pip freeze > /logs/requirements.txt
-        - test_and_report
-        - save_cache:
-            key: "install-<<parameters.extra>>-{{ .Branch }}"
-            paths:
-              - "/opt/conda/pkgs"
-              - ".eggs"
-              - ".pytest_cache"
+    steps:
+      - checkout
+      - check_changes
+      - restore_cache:
+          key: "install-<<parameters.extra>>-{{ .Branch }}"
+      - run:
+          name: Install dependencies
+          command: |
+            # Add additional requirements for running all tests
+            echo "
+              - r-base
+              - r-yaml
+              - ncl
+            " >> environment.yml
+            # Install
+            . /opt/conda/etc/profile.d/conda.sh
+            mkdir /logs
+            mamba env create >> /logs/conda.txt 2>&1
+            conda activate esmvaltool
+            pip install -e ".[<<parameters.extra>>]" > /logs/install.txt 2>&1
+            # Log versions
+            dpkg -l > /logs/versions.txt
+            conda env export > /logs/environment.yml
+            pip freeze > /logs/requirements.txt
+      - test_and_report
+      - save_cache:
+          key: "install-<<parameters.extra>>-{{ .Branch }}"
+          paths:
+            - "/opt/conda/pkgs"
+            - ".eggs"
+            - ".pytest_cache"
 
 jobs:
   run_tests:
@@ -138,6 +138,30 @@ jobs:
     steps:
       - test_installation_from_source:
           extra: develop
+
+  test_installation_from_conda:
+    # Test conda package installation
+    working_directory: /esmvaltool
+    docker:
+      - image: condaforge/mambaforge
+    resource_class: small
+    steps:
+      - run:
+          command: |
+            . /opt/conda/etc/profile.d/conda.sh
+            set -x
+            # Install prerequisites
+            mkdir /logs
+            # conda update -y conda > /logs/conda.txt 2>&1
+            # Create and activate conda environment
+            mamba create -y --name esmvaltool 'python=3.10'
+            set +x; conda activate esmvaltool; set -x
+            # Install
+            mamba install -y esmvalcore
+            # Log versions
+            conda env export > /logs/environment.yml
+            # Test installation
+            esmvaltool version
 
   build_documentation:
     # Test building documentation
