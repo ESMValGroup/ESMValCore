@@ -132,7 +132,7 @@ jobs:
           skip: true  # skip if project-token is not defined (i.e. on a fork)
 
   test_installation_from_source_test_mode:
-    # Test installation
+    # Test installation from source
     docker:
       - image: condaforge/mambaforge
     resource_class: large
@@ -141,7 +141,7 @@ jobs:
           extra: test
 
   test_installation_from_source_develop_mode:
-    # Test installation
+    # Test development installation
     docker:
       - image: condaforge/mambaforge
     resource_class: large
