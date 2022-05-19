@@ -9,7 +9,7 @@ commands:
   check_changes:
     steps:
       - run:
-          name: Check changes
+          name: Check whether or not installation tests are needed
           command: |
             if (test "$CIRCLE_BRANCH" = main ||
               git --no-pager diff --name-only origin/main... |
@@ -54,6 +54,9 @@ commands:
     parameters:
       extra:
         type: string
+      flags:
+        type: string
+        default: ""
     steps:
       - checkout
       - check_changes
@@ -73,8 +76,12 @@ commands:
             mkdir /logs
             mamba env create >> /logs/conda.txt 2>&1
             conda activate esmvaltool
-            pip install -e ".[<<parameters.extra>>]" > /logs/install.txt 2>&1
-            # Log versions
+            pip install << parameters.flags >> ".[<<parameters.extra>>]"> /logs/install.txt 2>&1
+      - run:
+          name: Log versions
+          command: |
+            . /opt/conda/etc/profile.d/conda.sh
+            conda activate esmvaltool
             dpkg -l > /logs/versions.txt
             conda env export > /logs/environment.yml
             pip freeze > /logs/requirements.txt
@@ -83,7 +90,7 @@ commands:
           key: "install-<<parameters.extra>>-{{ .Branch }}"
           paths:
             - "/opt/conda/pkgs"
-            - ".eggs"
+            - "$HOME/.cache/pip"
             - ".pytest_cache"
 
 jobs:
@@ -107,7 +114,7 @@ jobs:
       - save_cache:
           key: test-{{ .Branch }}
           paths:
-            - ".eggs"
+            - "$HOME/.cache/pip"
             - ".pytest_cache"
       - run:
           # Install curl for codecov upload
@@ -138,6 +145,7 @@ jobs:
     steps:
       - test_installation_from_source:
           extra: develop
+          flags: "--editable"
 
   test_installation_from_conda:
     # Test conda package installation
