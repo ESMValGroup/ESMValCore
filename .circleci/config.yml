@@ -89,10 +89,10 @@ commands:
       - save_cache:
           key: "install-<<parameters.extra>>-{{ .Branch }}"
           paths:
-            - "/opt/conda/pkgs"
-            - "$HOME/.cache/pip"
-            - ".mypy_cache"
-            - ".pytest_cache"
+            - /opt/conda/pkgs
+            - $HOME/.cache/pip
+            - .mypy_cache
+            - .pytest_cache
 
 jobs:
   run_tests:
@@ -111,13 +111,14 @@ jobs:
             mkdir /logs
             conda activate esmvaltool
             pip install .[test] > /logs/install.txt 2>&1
+
       - test_and_report
       - save_cache:
           key: test-{{ .Branch }}
           paths:
-            - "$HOME/.cache/pip"
-            - ".mypy_cache"
-            - ".pytest_cache"
+            - $HOME/.cache/pip
+            - .mypy_cache
+            - .pytest_cache
       - run:
           # Install curl for codecov upload
           when: always
