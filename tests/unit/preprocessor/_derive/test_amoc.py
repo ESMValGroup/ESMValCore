@@ -43,7 +43,8 @@ def test_amoc_preamble(cubes):
     cmip5_required = derived_var.required("CMIP5")
     assert "msftmyz" == cmip5_required[0]["short_name"]
     cmip6_required = derived_var.required("CMIP6")
-    assert "msftyz" == cmip6_required[0]["short_name"]
+    assert "msftmz" == cmip6_required[0]["short_name"]
+    assert "msftyz" == cmip6_required[1]["short_name"]
 
     cmip5_cubes = cubes[0]
     cmip6_cubes = cubes[1]
