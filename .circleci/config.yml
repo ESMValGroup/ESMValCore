@@ -90,7 +90,7 @@ commands:
           key: "install-<<parameters.extra>>-{{ .Branch }}"
           paths:
             - /opt/conda/pkgs
-            - $HOME/.cache/pip
+            - /root/.cache/pip
             - .mypy_cache
             - .pytest_cache
 
@@ -116,7 +116,7 @@ jobs:
       - save_cache:
           key: test-{{ .Branch }}
           paths:
-            - $HOME/.cache/pip
+            - /root/.cache/pip
             - .mypy_cache
             - .pytest_cache
       - run:
