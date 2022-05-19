@@ -21,7 +21,15 @@
       postproc_flag: ''
 
 EMAC:
+
+  # 1D/2D dynamical/meteorological variables
   '*':
+    areacella:
+      raw_name: gboxarea
+      channel: grid_def
+    areacello:
+      raw_name: gboxarea
+      channel: grid_def
     awhea:  # non-CMOR variable
       raw_name: awhea_ave
       channel: Omon
@@ -47,6 +55,9 @@ EMAC:
     hfss:
       raw_name: ahfs_ave
       channel: Amon
+    hurs:
+      raw_name: rh_2m_ave
+      channel: Amon
     od550aer:
       raw_name: aot_opt_TOT_550_total_ave
       channel: AERmon
@@ -63,6 +74,12 @@ EMAC:
       channel: Amon
     prw:
       raw_name: qvi_ave
+      channel: Amon
+    ps:
+      raw_name: aps_ave
+      channel: Amon
+    psl:
+      raw_name: slp_ave
       channel: Amon
     rlds:  # derived from flxtbot_ave, tradsu_ave
       channel: Amon
@@ -96,6 +113,9 @@ EMAC:
       channel: Amon
     rtmt:  # derived from flxttop_ave, flxstop_ave
       channel: Amon
+    sfcWind:
+      raw_name: wind10_ave
+      channel: Amon
     siconc:
       raw_name: seaice_ave
       channel: Amon
@@ -107,6 +127,18 @@ EMAC:
       channel: Amon
     tas:
       raw_name: temp2_ave
+      channel: Amon
+    tasmax:
+      raw_name: temp2_max
+      channel: Amon
+    tasmin:
+      raw_name: temp2_min
+      channel: Amon
+    tauu:
+      raw_name: ustr_ave
+      channel: Amon
+    tauv:
+      raw_name: vstr_ave
       channel: Amon
     tos:
       raw_name: tsw
@@ -178,36 +210,149 @@ EMAC:
     MP_SS_tot:  # derived from MP_SS_ks_ave, MP_SS_as_ave, MP_SS_cs_ave
       channel: tracer_pdef_gp
 
-  # 3D variables with regular Z-coords
-  Amon:
-    ta:  # defined on plev19
-      raw_name: tm1_p19_ave
-      channel: Amon
-  Eday:
-    ta:  # defined on plev19
-      raw_name: tm1_p19_ave
-      channel: Amon
-
-  # 3D variables with hybrid Z-coords
+  # 3D dynamical/meteorological variables
   6hrLev:
     ta:
       raw_name: tm1_ave
+      channel: Amon
+    ua:
+      raw_name: um1_cav
+      channel: Amon
+    va:
+      raw_name: vm1_cav
+      channel: Amon
+  AERmon:
+    ua:
+      raw_name: um1_cav
+      channel: Amon
+    va:
+      raw_name: vm1_cav
+      channel: Amon
+    zg:
+      raw_name: geopot_ave
+      channel: Amon
+  Amon:
+    cl:
+      raw_name: aclcac_ave
+      channel: Amon
+    cli:
+      raw_name: xim1_ave
+      channel: Amon
+    clw:
+      raw_name: xlm1_ave
+      channel: Amon
+    hur:  # defined on plev19
+      raw_name: rhum_p19_ave
+      channel: Amon
+    hus:  # defined on plev19
+      raw_name: qm1_p19_ave
+      channel: Amon
+    ta:  # defined on plev19
+      raw_name: tm1_p19_ave
+      channel: Amon
+    ua:  # defined on plev19
+      raw_name: um1_p19_cav
+      channel: Amon
+    va:  # defined on plev19
+      raw_name: vm1_p19_cav
+      channel: Amon
+    zg:  # defined on plev19
+      raw_name: geopot_p19_ave
       channel: Amon
   CF3hr:
     ta:
       raw_name: tm1_ave
       channel: Amon
   CFday:
+    cl:
+      raw_name: aclcac_ave
+      channel: Amon
+    cli:
+      raw_name: xim1_ave
+      channel: Amon
+    clw:
+      raw_name: xlm1_ave
+      channel: Amon
+    hur:
+      raw_name: rhum_ave
+      channel: Amon
+    hus:
+      raw_name: qm1_ave
+      channel: Amon
     ta:
       raw_name: tm1_ave
       channel: Amon
+    ua:
+      raw_name: um1_cav
+      channel: Amon
+    va:
+      raw_name: vm1_cav
+      channel: Amon
+    zg:
+      raw_name: geopot_ave
+      channel: Amon
   CFmon:
+    hur:
+      raw_name: rhum_ave
+      channel: Amon
+    hus:
+      raw_name: qm1_ave
+      channel: Amon
     ta:
       raw_name: tm1_ave
+      channel: Amon
+  day:
+    hur:  # defined on plev8
+      raw_name: rhum_p19_ave
+      channel: Amon
+    hus:  # defined on plev8
+      raw_name: qm1_p19_ave
+      channel: Amon
+    ua:  # defined on plev8
+      raw_name: um1_p19_cav
+      channel: Amon
+    va:  # defined on plev8
+      raw_name: vm1_p19_cav
+      channel: Amon
+    zg:  # defined on plev8
+      raw_name: geopot_p19_ave
+      channel: Amon
+  E1hr:
+    ua:  # defined on plev3
+      raw_name: um1_p19_cav
+      channel: Amon
+    va: # defined on plev3
+      raw_name: vm1_p19_cav
+      channel: Amon
+  E3hrPt:
+    hus:
+      raw_name: qm1_ave
+      channel: Amon
+  Eday:
+    ta:  # defined on plev19
+      raw_name: tm1_p19_ave
+      channel: Amon
+    hus:  # defined on plev19
+      raw_name: qm1_p19_ave
+      channel: Amon
+    ua:  # defined on plev19
+      raw_name: um1_p19_cav
+      channel: Amon
+    va:  # defined on plev19
+      raw_name: vm1_p19_cav
+      channel: Amon
+    zg:  # defined on plev19
+      raw_name: geopot_p19_ave
       channel: Amon
   Esubhr:
     ta:
       raw_name: tm1_ave
+      channel: Amon
+    ua:
+      raw_name: um1_cav
+      channel: Amon
+    va:
+      raw_name: vm1_cav
       channel: Amon
 
 

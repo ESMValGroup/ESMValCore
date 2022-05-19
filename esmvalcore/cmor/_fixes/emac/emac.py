@@ -311,6 +311,9 @@ class AllVars(EmacFix):
             cube.attributes['positive'] = self.vardef.positive
 
 
+Cl = SetUnitsTo1
+
+
 Clt = SetUnitsTo1
 
 
@@ -334,6 +337,9 @@ Hfls = NegateData
 
 
 Hfss = NegateData
+
+
+Hurs = SetUnitsTo1
 
 
 Od550aer = SetUnitsTo1SumOverZ

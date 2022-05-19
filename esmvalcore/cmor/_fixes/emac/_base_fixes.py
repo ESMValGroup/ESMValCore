@@ -43,7 +43,7 @@ class SetUnitsTo1(EmacFix):
         """Fix metadata."""
         cube = self.get_cube(cubes)
         cube.units = '1'
-        return CubeList([cube])
+        return cubes
 
 
 class SetUnitsTo1SumOverZ(EmacFix):
@@ -54,7 +54,7 @@ class SetUnitsTo1SumOverZ(EmacFix):
         cube = self.get_cube(cubes)
         cube.units = '1'
         cube = self.sum_over_z_coord(cube)
-        return CubeList([cube])
+        return cubes
 
     @staticmethod
     def sum_over_z_coord(cube):
