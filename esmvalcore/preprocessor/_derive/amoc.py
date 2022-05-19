@@ -33,19 +33,19 @@ class DerivedVariable(DerivedVariableBase):
         iris.cube.Cube
               Output AMOC cube.
         """
-        # 0. Load the msft(m)yz cube.
-        cmip5_std_name = 'ocean_meridional_overturning_mass_streamfunction'
-        cmip6_std_name = 'ocean_y_overturning_mass_streamfunction'
+        # 0. Load the msft(m)(y)z cube.
         try:
+            # msftmyz and msfmz
             cube = cubes.extract_cube(
                 iris.Constraint(
-                    name=cmip5_std_name))
+                    name='ocean_meridional_overturning_mass_streamfunction'))
             meridional = True
             lats = cube.coord('latitude').points
         except iris.exceptions.ConstraintMismatchError:
+            # msftyz
             cube = cubes.extract_cube(
                 iris.Constraint(
-                    name=cmip6_std_name))
+                    name='ocean_y_overturning_mass_streamfunction'))
             meridional = False
             lats = cube.coord('grid_latitude').points
 
