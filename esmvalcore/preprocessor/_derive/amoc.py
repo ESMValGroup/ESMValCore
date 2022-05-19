@@ -14,7 +14,8 @@ class DerivedVariable(DerivedVariableBase):
         if project == "CMIP5":
             required = [{'short_name': 'msftmyz', 'mip': 'Omon'}]
         elif project == "CMIP6":
-            required = [{'short_name': 'msftyz', 'mip': 'Omon'}]
+            required = [{'short_name': 'msftmz', 'optional': True},
+                        {'short_name': 'msftyz', 'optional': True}]
 
         return required
 
