@@ -11,6 +11,7 @@ import iris.aux_factory
 import iris.exceptions
 import numpy as np
 import yaml
+from cf_units import suppress_errors
 
 from .._task import write_ncl_settings
 from ._time import extract_time
@@ -152,7 +153,11 @@ def load(file, callback=None, ignore_warnings=None):
         for warning_kwargs in ignore_warnings:
             warning_kwargs.setdefault('action', 'ignore')
             filterwarnings(**warning_kwargs)
-        raw_cubes = iris.load_raw(file, callback=callback)
+        # Suppress UDUNITS-2 error messages that cannot be ignored with
+        # warnings.filterwarnings
+        # (see https://github.com/SciTools/cf-units/issues/240)
+        with suppress_errors():
+            raw_cubes = iris.load_raw(file, callback=callback)
     logger.debug("Done with loading %s", file)
     if not raw_cubes:
         raise ValueError(f'Can not load cubes from {file}')
