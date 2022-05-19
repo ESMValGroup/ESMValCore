@@ -63,7 +63,7 @@ class DerivedVariable(DerivedVariableBase):
         depth_constraint = iris.Constraint(depth=lambda d: d >= 500.)
         cube = cube.extract(constraint=depth_constraint)
 
-        # 3: Find the latitude closest to 26.5N (location of RAPID measurements)
+        # 3: Find the latitude closest to 26.5N (location of RAPID measurement)
         rapid_location = 26.5
         rapid_index = np.argmin(np.abs(lats - rapid_location))
 
