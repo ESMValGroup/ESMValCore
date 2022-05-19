@@ -47,10 +47,16 @@ def test_amoc_preamble(cubes):
     assert "msftmz" == cmip6_required[0]["short_name"]
     assert "msftyz" == cmip6_required[1]["short_name"]
 
+    # if project s neither CMIP5 nor CMIP6
+    with pytest.raises(ValueError) as verr:
+        derived_var.required("CMIPX")
+        assert "Project CMIPX can not be used" in verr
+
     cmip5_cubes = cubes[0]
     cmip6_cubes = cubes[1]
     rando_cubes = cubes[2]
 
+    # other amoc-specific exceptions returned
     with pytest.raises(ValueError) as verr:
         derived_var.calculate(cmip5_cubes)
         assert "doesn't contain Atlantic Region" in verr
