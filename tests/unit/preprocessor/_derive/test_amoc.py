@@ -31,10 +31,11 @@ def cubes():
     msftyz_cube.coord("latitude").points = np.array([26.0])
     msftyz_cube.coord("latitude").standard_name = "grid_latitude"
 
-    return \
-        iris.cube.CubeList([msftmyz_cube]), \
-        iris.cube.CubeList([msftyz_cube]), \
-        iris.cube.CubeList([rando_cube])
+    return (
+        iris.cube.CubeList([msftmyz_cube]),
+        iris.cube.CubeList([msftyz_cube]),
+        iris.cube.CubeList([rando_cube]),
+    )
 
 
 def test_amoc_preamble(cubes):
