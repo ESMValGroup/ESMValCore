@@ -387,6 +387,11 @@ def extract_point(cube, latitude, longitude, scheme):
     scalar, the dimension will be missing in the output cube (that is,
     it will be a scalar).
 
+    If the point to be extracted has at least one of the coordinate point
+    values outside the interval of the cube's same coordinate values, then
+    no extrapolation will be performed, and the resulting extracted cube
+    will have fully masked data.
+
     Parameters
     ----------
     cube : cube
@@ -400,8 +405,11 @@ def extract_point(cube, latitude, longitude, scheme):
 
     Returns
     -------
-    Returns a cube with the extracted point(s), and with adjusted
-    latitude and longitude coordinates (see above).
+    :py:class:`~iris.cube.Cube`
+        Returns a cube with the extracted point(s), and with adjusted
+        latitude and longitude coordinates (see above). If desired point
+        outside values for at least one coordinate, this cube will have fully
+        masked data.
 
     Raises
     ------
@@ -1086,3 +1094,43 @@ def get_reference_levels(filename, project, dataset, short_name, mip,
     except iris.exceptions.CoordinateNotFoundError:
         raise ValueError('z-coord not available in {}'.format(filename))
     return coord.points.tolist()
+
+
+def extract_coordinate_points(cube, definition, scheme):
+    """Extract points from any coordinate with interpolation.
+
+    Multiple points can also be extracted, by supplying an array of
+    coordinates. The resulting point cube will match the respective
+    coordinates to those of the input coordinates.
+    If the input coordinate is a scalar, the dimension will be a
+    scalar in the output cube.
+
+    Parameters
+    ----------
+    cube : cube
+        The source cube to extract a point from.
+    defintion : dict(str, float or array of float)
+        The coordinate - values pairs to extract
+    scheme : str
+        The interpolation scheme. 'linear' or 'nearest'. No default.
+
+    Returns
+    -------
+    :py:class:`~iris.cube.Cube`
+        Returns a cube with the extracted point(s), and with adjusted
+        latitude and longitude coordinates (see above). If desired point
+        outside values for at least one coordinate, this cube will have fully
+        masked data.
+
+    Raises
+    ------
+    ValueError:
+        If the interpolation scheme is not provided or is not recognised.
+    """
+
+    msg = f"Unknown interpolation scheme, got {scheme!r}."
+    scheme = POINT_INTERPOLATION_SCHEMES.get(scheme.lower())
+    if not scheme:
+        raise ValueError(msg)
+    cube = cube.interpolate(definition.items(), scheme=scheme)
+    return cube
