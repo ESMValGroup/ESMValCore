@@ -52,8 +52,7 @@ class DerivedVariable(DerivedVariableBase):
         cube_orig = cube.copy()
 
         # 1: find the relevant region
-        atlantic_region = 'atlantic_arctic_ocean'
-        atl_constraint = iris.Constraint(region=atlantic_region)
+        atl_constraint = iris.Constraint(region='atlantic_arctic_ocean')
         cube = cube.extract(constraint=atl_constraint)
 
         if cube is None:
@@ -64,14 +63,14 @@ class DerivedVariable(DerivedVariableBase):
         depth_constraint = iris.Constraint(depth=lambda d: d >= 500.)
         cube = cube.extract(constraint=depth_constraint)
 
-        # 3: Find the latitude closest to 26N
+        # 3: Find the latitude closest to 26.5N (location of RAPID measurements)
         rapid_location = 26.5
         rapid_index = np.argmin(np.abs(lats - rapid_location))
 
-        if not meridional:
-            rapid_constraint = iris.Constraint(grid_latitude=lats[rapid_index])
-        else:
+        if meridional:
             rapid_constraint = iris.Constraint(latitude=lats[rapid_index])
+        else:
+            rapid_constraint = iris.Constraint(grid_latitude=lats[rapid_index])
 
         cube = cube.extract(constraint=rapid_constraint)
 
