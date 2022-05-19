@@ -91,6 +91,7 @@ commands:
           paths:
             - "/opt/conda/pkgs"
             - "$HOME/.cache/pip"
+            - ".mypy_cache"
             - ".pytest_cache"
 
 jobs:
@@ -115,6 +116,7 @@ jobs:
           key: test-{{ .Branch }}
           paths:
             - "$HOME/.cache/pip"
+            - ".mypy_cache"
             - ".pytest_cache"
       - run:
           # Install curl for codecov upload
