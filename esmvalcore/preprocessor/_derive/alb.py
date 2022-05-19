@@ -4,8 +4,7 @@ authors:
     - crez_ba
 
 """
-
-from esmvalcore.iris_helpers import var_name_constraint
+from iris import NameConstraint
 
 from ._baseclass import DerivedVariableBase
 
@@ -29,8 +28,8 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Compute surface albedo."""
-        rsdscs_cube = cubes.extract_cube(var_name_constraint('rsdscs'))
-        rsuscs_cube = cubes.extract_cube(var_name_constraint('rsuscs'))
+        rsdscs_cube = cubes.extract_cube(NameConstraint(var_name='rsdscs'))
+        rsuscs_cube = cubes.extract_cube(NameConstraint(var_name='rsuscs'))
 
         rsnscs_cube = rsuscs_cube / rsdscs_cube
 
