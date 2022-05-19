@@ -8,16 +8,18 @@ orbs:
 commands:
   check_changes:
     steps:
-      - run: |
-          if (test "$CIRCLE_BRANCH" = main ||
-            git --no-pager diff --name-only origin/main... |
-            grep -q -E -f .circleci/install_triggers)
-          then
-            echo Running installation tests
-          else
-            echo Skipping installation tests
-            circleci step halt
-          fi
+      - run:
+          name: Check changes
+          command: |
+            if (test "$CIRCLE_BRANCH" = main ||
+              git --no-pager diff --name-only origin/main... |
+              grep -q -E -f .circleci/install_triggers)
+            then
+              echo Running installation tests
+            else
+              echo Skipping installation tests
+              circleci step halt
+            fi
   test_and_report:
     steps:
       - run:
@@ -48,11 +50,45 @@ commands:
           command: tar -cvzf test-reports.tar.gz test-reports/
       - store_artifacts:
           path: test-reports.tar.gz
+  test_installation_from_source:
+    parameters:
+      extra:
+        type: string
+      steps:
+        - checkout
+        - check_changes
+        - restore_cache:
+            key: "install-<<parameters.extra>>-{{ .Branch }}"
+        - run:
+            name: Install dependencies
+            command: |
+              # Add additional requirements for running all tests
+              echo "
+                - r-base
+                - r-yaml
+                - ncl
+              " >> environment.yml
+              # Install
+              . /opt/conda/etc/profile.d/conda.sh
+              mkdir /logs
+              mamba env create >> /logs/conda.txt 2>&1
+              conda activate esmvaltool
+              pip install -e ".[<<parameters.extra>>]" > /logs/install.txt 2>&1
+              # Log versions
+              dpkg -l > /logs/versions.txt
+              conda env export > /logs/environment.yml
+              pip freeze > /logs/requirements.txt
+        - test_and_report
+        - save_cache:
+            key: "install-<<parameters.extra>>-{{ .Branch }}"
+            paths:
+              - "/opt/conda/pkgs"
+              - ".eggs"
+              - ".pytest_cache"
 
 jobs:
   run_tests:
     # Run tests
-    working_directory: /test
     docker:
       - image: esmvalgroup/esmvalcore:development
     resource_class: large
@@ -87,48 +123,24 @@ jobs:
 
   test_installation_from_source_test_mode:
     # Test installation
-    working_directory: /install
     docker:
       - image: condaforge/mambaforge
     resource_class: large
     steps:
-      - checkout
-      - check_changes
-      - restore_cache:
-          key: install-{{ .Branch }}
-      - run:
-          name: Install dependencies
-          command: |
-            . /opt/conda/etc/profile.d/conda.sh
-            set -x
-            mkdir /logs
-            # Pin Python version for faster environment solve
-            echo "  - python=3.10" >> environment.yml
-            # Add additional requirements for running all tests
-            echo "
-              - r-base
-              - r-yaml
-              - ncl
-            " >> environment.yml
-            # Install
-            mamba env create >> /logs/conda.txt 2>&1
-            set +x; conda activate esmvaltool; set -x
-            pip install .[test] > /logs/install.txt 2>&1
-            # Log versions
-            dpkg -l > /logs/versions.txt
-            conda env export > /logs/environment.yml
-            pip freeze > /logs/requirements.txt
-      - test_and_report
-      - save_cache:
-          key: install-{{ .Branch }}
-          paths:
-            - "/opt/conda/pkgs"
-            - ".eggs"
-            - ".pytest_cache"
+      - test_installation_from_source:
+          extra: test
+
+  test_installation_from_source_develop_mode:
+    # Test installation
+    docker:
+      - image: condaforge/mambaforge
+    resource_class: large
+    steps:
+      - test_installation_from_source:
+          extra: develop
 
   build_documentation:
     # Test building documentation
-    working_directory: /doc
     docker:
       - image: condaforge/mambaforge
     resource_class: small
@@ -150,62 +162,6 @@ jobs:
             MPLBACKEND=Agg sphinx-build -W doc doc/build
       - store_artifacts:
           path: /logs
-
-  test_installation_from_source_develop_mode:
-    # Test development installation
-    working_directory: /develop
-    docker:
-      - image: condaforge/mambaforge
-    resource_class: large
-    steps:
-      - checkout
-      - check_changes
-      - run:
-          name: Install dependencies
-          command: |
-            . /opt/conda/etc/profile.d/conda.sh
-            mkdir /logs
-            # Pin Python version for faster environment solve
-            echo "  - python=3.10" >> environment.yml
-            # Add additional requirements for running all tests
-            echo "
-              - r-base
-              - r-yaml
-              - ncl
-            " >> environment.yml
-            # Install
-            mamba env create >> /logs/conda.txt 2>&1
-            conda activate esmvaltool
-            pip install -e .[develop] > /logs/install.txt 2>&1
-            # Log versions
-            dpkg -l > /logs/versions.txt
-            conda env export > /logs/environment.yml
-            pip freeze > /logs/requirements.txt
-      - test_and_report
-
-  test_installation_from_conda:
-    # Test conda package installation
-    working_directory: /esmvaltool
-    docker:
-      - image: condaforge/mambaforge
-    resource_class: small
-    steps:
-      - run:
-          command: |
-            . /opt/conda/etc/profile.d/conda.sh
-            set -x
-            # Install prerequisites
-            mkdir /logs
-            # conda update -y conda > /logs/conda.txt 2>&1
-            # Create and activate conda environment
-            mamba create -y --name esmvaltool 'python=3.10'
-            set +x; conda activate esmvaltool; set -x
-            # Install
-            mamba install -y esmvalcore
-            # Log versions
-            conda env export > /logs/environment.yml
-            # Test installation
-            esmvaltool version
 
 workflows:
   commit:
