@@ -31,6 +31,7 @@ REQUIREMENTS = {
     # Use with pip install . to install from source
     'install': [
         'cartopy',
+        # see https://github.com/SciTools/cf-units/issues/218
         'cf-units>=3.0.0,!=3.0.1.post0',
         'dask[array]',
         'esgf-pyclient>=0.3.1',
@@ -61,7 +62,7 @@ REQUIREMENTS = {
     ],
     # Test dependencies
     'test': [
-        'flake8<4',  # https://github.com/ESMValGroup/ESMValCore/issues/1405
+        'flake8',
         'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
         'pytest-cov>=2.10.1',
         'pytest-env',
