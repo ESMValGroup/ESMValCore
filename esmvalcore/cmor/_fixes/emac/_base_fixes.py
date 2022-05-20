@@ -4,7 +4,7 @@ import logging
 
 import iris.analysis
 from iris import NameConstraint
-from iris.cube import CubeList
+from iris.exceptions import ConstraintMismatchError
 
 from ..fix import Fix
 
@@ -14,17 +14,35 @@ logger = logging.getLogger(__name__)
 class EmacFix(Fix):
     """Base class for all EMAC fixes."""
 
-    def get_cube(self, cubes, var_name=None):
+    def get_cube(self, cubes, var_names=None):
         """Extract single cube."""
-        if var_name is None:
-            var_name = self.extra_facets.get('raw_name',
-                                             self.vardef.short_name)
-        if not cubes.extract(NameConstraint(var_name=var_name)):
-            raise ValueError(
-                f"Variable '{var_name}' used to extract "
-                f"'{self.vardef.short_name}' is not available in input "
-                f"file")
-        return cubes.extract_cube(NameConstraint(var_name=var_name))
+        # If no var_names given, use the CMOR short_name
+        if var_names is None:
+            var_names = self.extra_facets.get('raw_name',
+                                              self.vardef.short_name)
+
+        # Convert var_names to list if only a single var_name is given
+        if isinstance(var_names, str):
+            var_names = [var_names]
+
+        # Try to extract the variable (prioritize variables as given by the
+        # list)
+        for var_name in var_names:
+            try:
+                return cubes.extract_cube(NameConstraint(var_name=var_name))
+            except ConstraintMismatchError:
+                pass
+
+        # If no cube could be extracted, raise an error
+        raise ValueError(
+            f"No variable of {var_names} necessary for the extraction/"
+            f"derivation the CMOR variable '{self.vardef.short_name}' is "
+            f"available in the input file. Hint: in case you tried to extract "
+            f"a 3D variable defined on pressure levels, it might be necessary "
+            f"to define the EMAC variable name in the recipe (e.g., "
+            f"'raw_name: tm1_p39_cav') if the default number of pressure "
+            f"levels is not available in the input file."
+        )
 
 
 class NegateData(EmacFix):
@@ -46,19 +64,11 @@ class SetUnitsTo1(EmacFix):
         return cubes
 
 
-class SetUnitsTo1SumOverZ(EmacFix):
+class SetUnitsTo1SumOverZ(SetUnitsTo1):
     """Base fix to set units to '1' and sum over Z-coordinate."""
 
-    def fix_metadata(self, cubes):
-        """Fix metadata."""
-        cube = self.get_cube(cubes)
-        cube.units = '1'
-        cube = self.sum_over_z_coord(cube)
-        return cubes
-
-    @staticmethod
-    def sum_over_z_coord(cube):
-        """Perform sum over Z-coordinate."""
+    def fix_data(self, cube):
+        """Fix data."""
         z_coord = cube.coord(axis='Z')
         cube = cube.collapsed(z_coord, iris.analysis.SUM)
         return cube

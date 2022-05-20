@@ -21,6 +21,7 @@ from iris import NameConstraint
 from iris.aux_factory import HybridPressureFactory
 from iris.cube import CubeList
 from netCDF4 import Dataset
+from scipy import constants
 
 from ..shared import (
     add_aux_coords_from_cubes,
@@ -63,16 +64,6 @@ class AllVars(EmacFix):
             if 'formula_terms' in dataset.variables['ilev'].ncattrs():
                 del dataset.variables['ilev'].formula_terms
         return new_path
-
-    def fix_data(self, cube):
-        """Fix data."""
-        # Fix mask by masking all values where the absolute value is greater
-        # than a given threshold (affects mostly 3D variables)
-        mask_threshold = 1e20
-        cube.data = da.ma.masked_outside(
-            cube.core_data(), -mask_threshold, mask_threshold,
-        )
-        return cube
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
@@ -323,8 +314,8 @@ class Clwvi(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            cubes.extract_cube(NameConstraint(var_name='xlvi_ave')) +
-            cubes.extract_cube(NameConstraint(var_name='xivi_ave'))
+            self.get_cube(cubes, var_names=['xlvi_cav', 'xlvi_ave']) +
+            self.get_cube(cubes, var_names=['xivi_cav', 'xivi_ave'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -351,9 +342,9 @@ class Pr(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            cubes.extract_cube(NameConstraint(var_name='aprl_ave')) +
-            cubes.extract_cube(NameConstraint(var_name='aprc_ave')) +
-            cubes.extract_cube(NameConstraint(var_name='aprs_ave'))
+            self.get_cube(cubes, var_names=['aprl_cav', 'aprl_ave']) +
+            self.get_cube(cubes, var_names=['aprc_cav', 'aprc_ave']) +
+            self.get_cube(cubes, var_names=['aprs_cav', 'aprs_ave'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -365,8 +356,8 @@ class Rlds(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            cubes.extract_cube(NameConstraint(var_name='flxtbot_ave')) -
-            cubes.extract_cube(NameConstraint(var_name='tradsu_ave'))
+            self.get_cube(cubes, var_names=['flxtbot_cav', 'flxtbot_ave']) -
+            self.get_cube(cubes, var_names=['tradsu_cav', 'tradsu_ave'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -387,8 +378,8 @@ class Rsds(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            cubes.extract_cube(NameConstraint(var_name='flxsbot_ave')) -
-            cubes.extract_cube(NameConstraint(var_name='sradsu_ave'))
+            self.get_cube(cubes, var_names=['flxsbot_cav', 'flxsbot_ave']) -
+            self.get_cube(cubes, var_names=['sradsu_cav', 'sradsu_ave'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -400,8 +391,8 @@ class Rsdt(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            cubes.extract_cube(NameConstraint(var_name='flxstop_ave')) -
-            cubes.extract_cube(NameConstraint(var_name='srad0u_ave'))
+            self.get_cube(cubes, var_names=['flxstop_cav', 'flxstop_ave']) -
+            self.get_cube(cubes, var_names=['srad0u_cav', 'srad0u_ave'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -422,8 +413,8 @@ class Rtmt(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            cubes.extract_cube(NameConstraint(var_name='flxttop_ave')) +
-            cubes.extract_cube(NameConstraint(var_name='flxstop_ave'))
+            self.get_cube(cubes, var_names=['flxttop_cav', 'flxttop_ave']) +
+            self.get_cube(cubes, var_names=['flxstop_cav', 'flxstop_ave'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -457,6 +448,26 @@ class Toz(EmacFix):
         return CubeList([cube])
 
 
+class Zg(EmacFix):
+    """Fixes for ``zg``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata.
+
+        Convert geopotential Phi given by EMAC to geopotential height Z using
+        Z = Phi / g0 (g0 is standard acceleration of gravity)
+
+        """
+        g0_value = constants.value('standard acceleration of gravity')
+        g0_units = constants.unit('standard acceleration of gravity')
+
+        cube = self.get_cube(cubes)
+        cube.data = cube.core_data() / g0_value
+        cube.units /= g0_units
+
+        return cubes
+
+
 # Tracers
 
 
@@ -466,10 +477,10 @@ class MP_BC_tot(EmacFix):  # noqa: N801
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            cubes.extract_cube(NameConstraint(var_name='MP_BC_ki_ave')) +
-            cubes.extract_cube(NameConstraint(var_name='MP_BC_ks_ave')) +
-            cubes.extract_cube(NameConstraint(var_name='MP_BC_as_ave')) +
-            cubes.extract_cube(NameConstraint(var_name='MP_BC_cs_ave'))
+            self.get_cube(cubes, var_names=['MP_BC_ki_cav', 'MP_BC_ki_ave']) +
+            self.get_cube(cubes, var_names=['MP_BC_ks_cav', 'MP_BC_ks_ave']) +
+            self.get_cube(cubes, var_names=['MP_BC_as_cav', 'MP_BC_as_ave']) +
+            self.get_cube(cubes, var_names=['MP_BC_cs_cav', 'MP_BC_cs_ave'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -481,10 +492,10 @@ class MP_DU_tot(EmacFix):  # noqa: N801
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            cubes.extract_cube(NameConstraint(var_name='MP_DU_ai_ave')) +
-            cubes.extract_cube(NameConstraint(var_name='MP_DU_as_ave')) +
-            cubes.extract_cube(NameConstraint(var_name='MP_DU_ci_ave')) +
-            cubes.extract_cube(NameConstraint(var_name='MP_DU_cs_ave'))
+            self.get_cube(cubes, var_names=['MP_DU_ai_cav', 'MP_DU_ai_ave']) +
+            self.get_cube(cubes, var_names=['MP_DU_as_cav', 'MP_DU_as_ave']) +
+            self.get_cube(cubes, var_names=['MP_DU_ci_cav', 'MP_DU_ci_ave']) +
+            self.get_cube(cubes, var_names=['MP_DU_cs_cav', 'MP_DU_cs_ave'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -496,10 +507,14 @@ class MP_SO4mm_tot(EmacFix):  # noqa: N801
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            cubes.extract_cube(NameConstraint(var_name='MP_SO4mm_ns_ave')) +
-            cubes.extract_cube(NameConstraint(var_name='MP_SO4mm_ks_ave')) +
-            cubes.extract_cube(NameConstraint(var_name='MP_SO4mm_as_ave')) +
-            cubes.extract_cube(NameConstraint(var_name='MP_SO4mm_cs_ave'))
+            self.get_cube(
+                cubes, var_names=['MP_SO4mm_ns_cav', 'MP_SO4mm_ns_ave']) +
+            self.get_cube(
+                cubes, var_names=['MP_SO4mm_ks_cav', 'MP_SO4mm_ks_ave']) +
+            self.get_cube(
+                cubes, var_names=['MP_SO4mm_as_cav', 'MP_SO4mm_as_ave']) +
+            self.get_cube(
+                cubes, var_names=['MP_SO4mm_cs_cav', 'MP_SO4mm_cs_ave'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -511,9 +526,9 @@ class MP_SS_tot(EmacFix):  # noqa: N801
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            cubes.extract_cube(NameConstraint(var_name='MP_SS_ks_ave')) +
-            cubes.extract_cube(NameConstraint(var_name='MP_SS_as_ave')) +
-            cubes.extract_cube(NameConstraint(var_name='MP_SS_cs_ave'))
+            self.get_cube(cubes, var_names=['MP_SS_ks_cav', 'MP_SS_ks_ave']) +
+            self.get_cube(cubes, var_names=['MP_SS_as_cav', 'MP_SS_as_ave']) +
+            self.get_cube(cubes, var_names=['MP_SS_cs_cav', 'MP_SS_cs_ave'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])

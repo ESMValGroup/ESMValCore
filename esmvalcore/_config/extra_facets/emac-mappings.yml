@@ -4,13 +4,24 @@
 # variables.
 
 # Notes:
+# - All facets can also be specified in the recipes. The values given here are
+#   only defaults.
 # - The facets ``channel`` and ``postproc_flag`` have to be specified in the
 #   recipe if they are not given here.
 # - If ``raw_name`` is omitted and no derivation in the EMAC fix is given, the
-#   CMOR short_name is used by default. To accept multiple raw names for a
-#   variable, ``raw_name`` can be given as a list. In this case, the
-#   prioritization is given by the order of the list; if possible, use the
-#   first entry, if this is not present, use the second, etc.
+#   CMOR short_name is used by default. To accept single and multiple raw names
+#   for a variable, ``raw_name`` can be given as str and list. In the latter
+#   case, the prioritization is given by the order of the list; if possible,
+#   use the first entry, if this is not present, use the second, etc. This is
+#   particularly useful for variables where regular averages ("*_ave") or
+#   conditional averages ("*_cav") exist. For 3D variables defined on pressure
+#   levels, only the pressure levels defined by the CMOR table (e.g., for
+#   Amon's ta: "tm1_p19_cav" and "tm1_p19_ave") are given. If other pressure
+#   levels are desired, e.g., "tm1_p39_cav", this has to be explicitly
+#   specified in the recipe using "raw_name: tm1_p39_cav" or "raw_name:
+#   [tm1_p19_cav, tm1_p39_cav]".
+# - Asterisks ("*") in the comments in list below refer to either "cav" or
+#   "ave". "cav" is prioritized.
 
 # A complete list of supported keys is given in the documentation (see
 # ESMValCore/doc/quickstart/find_data.rst).
@@ -24,109 +35,103 @@ EMAC:
 
   # 1D/2D dynamical/meteorological variables
   '*':
-    areacella:
-      raw_name: gboxarea
-      channel: grid_def
-    areacello:
-      raw_name: gboxarea
-      channel: grid_def
     awhea:  # non-CMOR variable
-      raw_name: awhea_ave
+      raw_name: [awhea_cav, awhea_ave]
       channel: Omon
     clivi:
-      raw_name: xivi_ave
+      raw_name: [xivi_cav, xivi_ave]
       channel: Amon
     clt:
-      raw_name: aclcov_ave
+      raw_name: [aclcov_cav, aclcov_ave]
       channel: Amon
-    clwvi:  # derived from xlvi_ave, xivi_ave
+    clwvi:  # derived from xlvi_*, xivi_*
       channel: Amon
     co2mass:
-      raw_name: MP_CO2_ave
+      raw_name: [MP_CO2_cav, MP_CO2_ave]
       channel: tracer_pdef_gp
     evspsbl:
-      raw_name: evap_ave
+      raw_name: [evap_cav, evap_ave]
       channel: Amon
     hfls:
-      raw_name: ahfl_ave
+      raw_name: [ahfl_cav, ahfl_ave]
       channel: Amon
     hfns:  # ESMValCore-derivation
       channel: Amon
     hfss:
-      raw_name: ahfs_ave
+      raw_name: [ahfs_cav, ahfs_ave]
       channel: Amon
     hurs:
-      raw_name: rh_2m_ave
+      raw_name: [rh_2m_cav, rh_2m_ave]
       channel: Amon
     od550aer:
-      raw_name: aot_opt_TOT_550_total_ave
+      raw_name: [aot_opt_TOT_550_total_cav, aot_opt_TOT_550_total_ave]
       channel: AERmon
-    pr:  # derived from aprl_ave, aprc_ave, aprs_ave
+    pr:  # derived from aprl_*, aprc_*, aprs_*
       channel: Amon
     prc:
-      raw_name: aprc_ave
+      raw_name: [aprc_cav, aprc_ave]
       channel: Amon
     prl:  # non-CMOR variable
-      raw_name: aprl_ave
+      raw_name: [aprl_cav, aprl_ave]
       channel: Amon
     prsn:
-      raw_name: aprs_ave
+      raw_name: [aprs_cav, aprs_ave]
       channel: Amon
     prw:
-      raw_name: qvi_ave
+      raw_name: [qvi_cav, qvi_ave]
       channel: Amon
     ps:
-      raw_name: aps_ave
+      raw_name: [aps_cav, aps_ave]
       channel: Amon
     psl:
-      raw_name: slp_ave
+      raw_name: [slp_cav, slp_ave]
       channel: Amon
-    rlds:  # derived from flxtbot_ave, tradsu_ave
+    rlds:  # derived from flxtbot_*, tradsu_*
       channel: Amon
     rlns:  # ESMValCore-derivation
       channel: Amon
     rlus:
-      raw_name: tradsu_ave
+      raw_name: [tradsu_cav, tradsu_ave]
       channel: Amon
     rlut:
-      raw_name: flxttop_ave
+      raw_name: [flxttop_cav, flxttop_ave]
       channel: Amon
     rlutcs:
-      raw_name: flxtftop_ave
+      raw_name: [flxtftop_cav, flxtftop_ave]
       channel: Amon
-    rsds:  # derived from flxsbot_ave, sradsu_ave
+    rsds:  # derived from flxsbot_*, sradsu_*
       channel: Amon
-    rsdt:  # derived from flxstop_ave, srad0u_ave
+    rsdt:  # derived from flxstop_*, srad0u_*
       channel: Amon
     rsns:  # ESMValCore-derivation
       channel: Amon
     rsnt:  # ESMValCore-derivation
       channel: Amon
     rsus:
-      raw_name: sradsu_ave
+      raw_name: [sradsu_cav, sradsu_ave]
       channel: Amon
     rsut:
-      raw_name: srad0u_ave
+      raw_name: [srad0u_cav, srad0u_ave]
       channel: Amon
     rsutcs:
-      raw_name: flxusftop_ave
+      raw_name: [flxusftop_cav, flxusftop_ave]
       channel: Amon
-    rtmt:  # derived from flxttop_ave, flxstop_ave
+    rtmt:  # derived from flxttop_*, flxstop_*
       channel: Amon
     sfcWind:
-      raw_name: wind10_ave
+      raw_name: [wind10_cav, wind10_ave]
       channel: Amon
     siconc:
-      raw_name: seaice_ave
+      raw_name: [seaice_cav, seaice_ave]
       channel: Amon
     siconca:
-      raw_name: seaice_ave
+      raw_name: [seaice_cav, seaice_ave]
       channel: Amon
     sithick:
-      raw_name: siced_ave
+      raw_name: [siced_cav, siced_ave]
       channel: Amon
     tas:
-      raw_name: temp2_ave
+      raw_name: [temp2_cav, temp2_ave]
       channel: Amon
     tasmax:
       raw_name: temp2_max
@@ -135,10 +140,10 @@ EMAC:
       raw_name: temp2_min
       channel: Amon
     tauu:
-      raw_name: ustr_ave
+      raw_name: [ustr_cav, ustr_ave]
       channel: Amon
     tauv:
-      raw_name: vstr_ave
+      raw_name: [vstr_cav, vstr_ave]
       channel: Amon
     tos:
       raw_name: tsw
@@ -146,267 +151,211 @@ EMAC:
     toz:
       channel: column
     ts:
-      raw_name: tsurf_ave
+      raw_name: [tsurf_cav, tsurf_ave]
       channel: Amon
 
     # TODO: CHECK IF THE CALCULATION IS CORRECT!!!
     # -> it might be necessary to weight these fields with cos(lat)
     uas:
-      raw_name: u10_ave
+      raw_name: [u10_cav, u10_ave]
       channel: Amon
     vas:
-      raw_name: v10_ave
+      raw_name: [v10_cav, v10_ave]
       channel: Amon
 
     # Tracers (non-CMOR variables)
-    MP_BC_tot:  # derived from MP_BC_ks_ave, MP_BC_as_ave, MP_BC_cs_ave, MP_BC_ki_ave
+    MP_BC_tot:  # derived from MP_BC_ks_*, MP_BC_as_*, MP_BC_cs_*, MP_BC_ki_*
       channel: tracer_pdef_gp
     MP_CFCl3:
-      raw_name: MP_CFCl3_ave
+      raw_name: [MP_CFCl3_cav, MP_CFCl3_ave]
       channel: tracer_pdef_gp
     MP_ClOX:
-      raw_name: MP_ClOX_ave
+      raw_name: [MP_ClOX_cav, MP_ClOX_ave]
       channel: tracer_pdef_gp
     MP_CH4:
-      raw_name: MP_CH4_ave
+      raw_name: [MP_CH4_cav, MP_CH4_ave]
       channel: tracer_pdef_gp
     MP_CO:
-      raw_name: MP_CO_ave
+      raw_name: [MP_CO_cav, MP_CO_ave]
       channel: tracer_pdef_gp
     MP_CO2:
-      raw_name: MP_CO2_ave
+      raw_name: [MP_CO2_cav, MP_CO2_ave]
       channel: tracer_pdef_gp
-    MP_DU_tot:  # derived from MP_DU_as_ave, MP_DU_cs_ave, MP_DU_ai_ave, MP_DU_ci_ave
+    MP_DU_tot:  # derived from MP_DU_as_*, MP_DU_cs_*, MP_DU_ai_*, MP_DU_ci_*
       channel: tracer_pdef_gp
     MP_N2O:
-      raw_name: MP_N2O_ave
+      raw_name: [MP_N2O_cav, MP_N2O_ave]
       channel: tracer_pdef_gp
     MP_NH3:
-      raw_name: MP_NH3_ave
+      raw_name: [MP_NH3_cav, MP_NH3_ave]
       channel: tracer_pdef_gp
     MP_NO:
-      raw_name: MP_NO_ave
+      raw_name: [MP_NO_cav, MP_NO_ave]
       channel: tracer_pdef_gp
     MP_NO2:
-      raw_name: MP_NO2_ave
+      raw_name: [MP_NO2_cav, MP_NO2_ave]
       channel: tracer_pdef_gp
     MP_NOX:
-      raw_name: MP_NOX_ave
+      raw_name: [MP_NOX_cav, MP_NOX_ave]
       channel: tracer_pdef_gp
     MP_O3:
-      raw_name: MP_O3_ave
+      raw_name: [MP_O3_cav, MP_O3_ave]
       channel: tracer_pdef_gp
     MP_OH:
-      raw_name: MP_OH_ave
+      raw_name: [MP_OH_cav, MP_OH_ave]
       channel: tracer_pdef_gp
     MP_S:
-      raw_name: MP_S_ave
+      raw_name: [MP_S_cav, MP_S_ave]
       channel: tracer_pdef_gp
     MP_SO2:
-      raw_name: MP_SO2_ave
+      raw_name: [MP_SO2_cav, MP_SO2_ave]
       channel: tracer_pdef_gp
-    MP_SO4mm_tot:  # derived from MP_SO4mm_ns_ave, MP_SO4mm_ks_ave, MP_SO4mm_as_ave, MP_SO4mm_cs_ave
+    MP_SO4mm_tot:  # derived from MP_SO4mm_ns_*, MP_SO4mm_ks_*, MP_SO4mm_as_*, MP_SO4mm_cs_*
       channel: tracer_pdef_gp
-    MP_SS_tot:  # derived from MP_SS_ks_ave, MP_SS_as_ave, MP_SS_cs_ave
+    MP_SS_tot:  # derived from MP_SS_ks_*, MP_SS_as_*, MP_SS_cs_*
       channel: tracer_pdef_gp
 
   # 3D dynamical/meteorological variables
   6hrLev:
     ta:
-      raw_name: tm1_ave
+      raw_name: [tm1_cav, tm1_ave]
       channel: Amon
     ua:
-      raw_name: um1_ave
+      raw_name: [um1_cav, um1_ave]
       channel: Amon
     va:
-      raw_name: vm1_ave
+      raw_name: [vm1_cav, vm1_ave]
       channel: Amon
   AERmon:
     ua:
-      raw_name: um1_ave
+      raw_name: [um1_cav, um1_ave]
       channel: Amon
     va:
-      raw_name: vm1_ave
+      raw_name: [vm1_cav, vm1_ave]
       channel: Amon
     zg:
-      raw_name: geopot_ave
+      raw_name: [geopot_cav, geopot_ave]
       channel: Amon
   Amon:
     cl:
-      raw_name: aclcac_ave
+      raw_name: [aclcac_cav, aclcac_ave]
       channel: Amon
     cli:
-      raw_name: xim1_ave
+      raw_name: [xim1_cav, xim1_ave]
       channel: Amon
     clw:
-      raw_name: xlm1_ave
+      raw_name: [xlm1_cav, xlm1_ave]
       channel: Amon
     hur:  # defined on plev19
-      raw_name: rhum_p19_ave
+      raw_name: [rhum_p19_cav, rhum_p19_ave]
       channel: Amon
     hus:  # defined on plev19
-      raw_name: qm1_p19_ave
+      raw_name: [qm1_p19_cav, qm1_p19_ave]
       channel: Amon
     ta:  # defined on plev19
-      raw_name: tm1_p19_ave
+      raw_name: [tm1_p19_cav, tm1_p19_ave]
       channel: Amon
     ua:  # defined on plev19
-      raw_name: um1_p19_ave
+      raw_name: [um1_p19_cav, um1_p19_ave]
       channel: Amon
     va:  # defined on plev19
-      raw_name: vm1_p19_ave
+      raw_name: [vm1_p19_cav, vm1_p19_ave]
       channel: Amon
     zg:  # defined on plev19
-      raw_name: geopot_p19_ave
+      raw_name: [geopot_p19_cav, geopot_p19_ave]
       channel: Amon
   CF3hr:
     ta:
-      raw_name: tm1_ave
+      raw_name: [tm1_cav, tm1_ave]
       channel: Amon
   CFday:
     cl:
-      raw_name: aclcac_ave
+      raw_name: [aclcac_cav, aclcac_ave]
       channel: Amon
     cli:
-      raw_name: xim1_ave
+      raw_name: [xim1_cav, xim1_ave]
       channel: Amon
     clw:
-      raw_name: xlm1_ave
+      raw_name: [xlm1_cav, xlm1_ave]
       channel: Amon
     hur:
-      raw_name: rhum_ave
+      raw_name: [rhum_cav, rhum_ave]
       channel: Amon
     hus:
-      raw_name: qm1_ave
+      raw_name: [qm1_cav, qm1_ave]
       channel: Amon
     ta:
-      raw_name: tm1_ave
+      raw_name: [tm1_cav, tm1_ave]
       channel: Amon
     ua:
-      raw_name: um1_ave
+      raw_name: [um1_cav, um1_ave]
       channel: Amon
     va:
-      raw_name: vm1_ave
+      raw_name: [vm1_cav, vm1_ave]
       channel: Amon
     zg:
-      raw_name: geopot_ave
+      raw_name: [geopot_cav, geopot_ave]
       channel: Amon
   CFmon:
     hur:
-      raw_name: rhum_ave
+      raw_name: [rhum_cav, rhum_ave]
       channel: Amon
     hus:
-      raw_name: qm1_ave
+      raw_name: [qm1_cav, qm1_ave]
       channel: Amon
     ta:
-      raw_name: tm1_ave
+      raw_name: [tm1_cav, tm1_ave]
       channel: Amon
   day:
     hur:  # defined on plev8
-      raw_name: rhum_p19_ave
+      raw_name: [rhum_p8_cav, rhum_p8_ave]
       channel: Amon
     hus:  # defined on plev8
-      raw_name: qm1_p19_ave
+      raw_name: [qm1_p8_cav, qm1_p8_ave]
       channel: Amon
     ua:  # defined on plev8
-      raw_name: um1_p19_ave
+      raw_name: [um1_p8_cav, um1_p8_ave]
       channel: Amon
     va:  # defined on plev8
-      raw_name: vm1_p19_ave
+      raw_name: [vm1_p8_cav, vm1_p8_ave]
       channel: Amon
     zg:  # defined on plev8
-      raw_name: geopot_p19_ave
+      raw_name: [geopot_p8_cav, geopot_p8_ave]
       channel: Amon
   E1hr:
     ua:  # defined on plev3
-      raw_name: um1_p19_ave
+      raw_name: [um1_p3_cav, um1_p3_ave]
       channel: Amon
     va: # defined on plev3
-      raw_name: vm1_p19_ave
+      raw_name: [vm1_p3_cav, vm1_p3_ave]
       channel: Amon
   E3hrPt:
     hus:
-      raw_name: qm1_ave
+      raw_name: [qm1_cav, qm1_ave]
       channel: Amon
   Eday:
     ta:  # defined on plev19
-      raw_name: tm1_p19_ave
+      raw_name: [tm1_p19_cav, tm1_p19_ave]
       channel: Amon
     hus:  # defined on plev19
-      raw_name: qm1_p19_ave
+      raw_name: [qm1_p19_cav, qm1_p19_ave]
       channel: Amon
     ua:  # defined on plev19
-      raw_name: um1_p19_ave
+      raw_name: [um1_p19_cav, um1_p19_ave]
       channel: Amon
     va:  # defined on plev19
-      raw_name: vm1_p19_ave
+      raw_name: [vm1_p19_cav, vm1_p19_ave]
       channel: Amon
     zg:  # defined on plev19
-      raw_name: geopot_p19_ave
+      raw_name: [geopot_p19_cav, geopot_p19_ave]
       channel: Amon
   Esubhr:
     ta:
-      raw_name: tm1_ave
+      raw_name: [tm1_cav, tm1_ave]
       channel: Amon
     ua:
-      raw_name: um1_ave
+      raw_name: [um1_cav, um1_ave]
       channel: Amon
     va:
-      raw_name: vm1_ave
+      raw_name: [vm1_cav, vm1_ave]
       channel: Amon
-
-
-# Elements missing from original mapping table
-#
-# Mixed channels (not supported yet; this probably needs to be implemented as
-# derivation)
-# AIRC_NO_s: {airc_NO: import_grid, geopot_ave: Amon}
-# VOLC_SO2_s: {VOLC_SO2_SO2: import_grid, geopot_ave: Amon}
-#
-# No test data available
-# cod_sw_b01:
-#   raw_name: tau_cld_sw_B01_ave
-#   channel: Amon
-# lnox:  # non-CMOR variable; derived from NOxcg_ave, NOxic_ave
-#   channel: lnox_PaR_T_gp
-# ANTHNT_AER_TC_s:  # derived from ANTHNT_AER_BC, ANTHNT_AER_OC
-#   channel: import_grid
-# ANTHNT_CO_s:
-#   raw_name: ANTHNT_CO
-#   channel: import_grid
-# ANTHNT_NO_s:
-#   raw_name: ANTHNT_NO
-#   channel: import_grid
-# ANTHNT_SO2_s:
-#   raw_name: ANTHNT_SO2
-#   channel: import_grid
-# BB_AER_TC_s:  # derived from BB_AER_BC, BB_AER_OC
-#   channel: import_grid
-# BB_CO_s:
-#   raw_name: BB_CO
-#   channel: import_grid
-# BB_NO_s:
-#   raw_name: BB_NO
-#   channel: import_grid
-# BB_SO2_s:
-#   raw_name: BB_SO2
-#   channel: import_grid
-# ROAD_AER_BC:
-#   channel: import_grid
-# ROAD_NO:
-#   channel: import_grid
-# SHIP_AER_BC_s:
-#   raw_name: SHIP_AER_BC
-#   channel: import_grid
-# SHIP_NO_s:
-#   raw_name: SHIP_NO
-#   channel: import_grid
-# SHIP_SO2_s:
-#   raw_name: SHIP_SO2
-#   channel: import_grid
-# TN_GHG_CH4:
-#   channel: import_grid
-# TN_GHG_CO2:
-#   channel: import_grid
-# TN_GHG_N2O:
-#   channel: import_grid
