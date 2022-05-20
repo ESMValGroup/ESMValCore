@@ -32,6 +32,12 @@ class AllVars(Fix):
         """
         for cube in cubes:
             if cube.attributes['table_id'] == 'Amon':
+                for coord in ['latitude', 'longitude']:
+                    cube_coord = cube.coord(coord)
+                    bounds = cube_coord.bounds
+                    if np.any(bounds[:-1, 1] != bounds[1:, 0]):
+                        cube_coord.bounds = None
+                        cube_coord.guess_bounds()
                 time = cube.coord('time')
                 if np.any(time.bounds[:-1, 1] != time.bounds[1:, 0]):
                     times = time.units.num2date(time.points)
