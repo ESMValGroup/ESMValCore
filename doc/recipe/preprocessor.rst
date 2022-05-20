@@ -1828,7 +1828,9 @@ output cube.
 
 Takes arguments:
   * axis: direction over which the statistics will be performed.
-  * operator: defines the operation to apply over the axis
+  * operator: defines the operation to apply over the axis. 
+    Available operator are 'mean', 'median', 'std_dev', 'sum', 'variance',
+    'min', 'max', 'rms'.
 
 See also :func:`esmvalcore.preprocessor.axis_statistics`.
 
