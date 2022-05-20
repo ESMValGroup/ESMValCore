@@ -286,11 +286,13 @@ def axis_statistics(cube, axis, operator):
     Arguments
     ---------
     cube: iris.cube.Cube
-        input cube.
+        Input cube.
     axis: str
-        direction over where to apply the operator.
+        Direction over where to apply the operator.
     operator: str
-        statistics to perform.
+        Statistics to perform. Available operators are:
+        'mean', 'median', 'std_dev', 'sum', 'variance',
+        'min', 'max', 'rms'.
 
     Returns
     -------
@@ -304,10 +306,15 @@ def axis_statistics(cube, axis, operator):
             'Axis {} not found in cube {}'.format(
                 axis,
                 cube.summary(shorten=True))) from err
+    coord_dims = cube.coord_dims(coord)
+    if len(coord_dims) > 1:
+        raise NotImplementedError(
+            'axis_statistics not implemented for '
+            'multidimensional coordinates.')
     operation = get_iris_analysis_operation(operator)
     weights = None
     if operator_accept_weights(operator):
-        coord_dim = cube.coord_dims(cube.coord(axis=axis))[0]
+        coord_dim = cube.coord_dims[0]
         expand = list(range(cube.ndim))
         expand.remove(coord_dim)
         weights = np.abs(coord.bounds[..., 1] - coord.bounds[..., 0])

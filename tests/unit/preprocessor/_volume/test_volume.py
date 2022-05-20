@@ -102,6 +102,45 @@ class Test(tests.Test):
         self.assertEqual(
             f'Axis t not found in cube {self.grid_3d.summary(shorten=True)}',
             str(err.exception))
+    
+    def test_multidimensional_axis_statistics(self):
+        i_coord = iris.coords.DimCoord(
+            [0, 1],
+            long_name='cell index along first dimension',
+            units='1',)
+
+        j_coord = iris.coords.DimCoord(
+            [0, 1],
+            long_name='cell index along second dimension',
+            units='1',)
+        
+        lat_coord = iris.coords.AuxCoord(
+            [[-40.0, -20.0], [-20.0, 0.0]],
+            var_name='lat',
+            standard_name='latitude',
+            units='degrees_north',)
+        
+        lon_coord = iris.coords.AuxCoord(
+            [[100.0, 140.0], [80.0, 100.0]],
+            var_name='lon',
+            standard_name='longitude',
+            units='degrees_east',
+            )
+        
+        cube = iris.cube.Cube(
+            np.ones((2,2)),
+            var_name='tos',
+            long_name='sea_surface_temperature',
+            units='K',
+            dim_coords_and_dims=[(j_coord, 0), (i_coord, 1)],
+            aux_coords_and_dims=[(lat_coord, (0, 1)), (lon_coord, (0, 1))],
+        )
+
+        with self.assertRaises(NotImplementedError) as err:
+            axis_statistics(cube, 'x', 'mean')
+        self.assertEqual(
+            f'axis_statistics not implemented for multidimensional coordinates.',
+            str(err.exception))
 
     def test_extract_volume(self):
         """Test to extract the top two layers of a 3 layer depth column."""
