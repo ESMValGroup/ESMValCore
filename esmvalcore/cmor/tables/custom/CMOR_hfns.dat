@@ -1,0 +1,21 @@
+SOURCE: CMIP6
+!============
+variable_entry:    hfns
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             W m-2
+cell_methods:      time: mean
+cell_measures:     area: areacella
+long_name:         Surface Net Heat Flux
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          hfns
+type:              real
+positive:          up
+!----------------------------------
