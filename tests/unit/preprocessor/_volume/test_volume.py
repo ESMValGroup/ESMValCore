@@ -140,7 +140,7 @@ class Test(tests.Test):
             axis_statistics(cube, 'x', 'mean')
         self.assertEqual(
             ('axis_statistics not implemented for '
-            'multidimensional coordinates.'),
+             'multidimensional coordinates.'),
             str(err.exception))
 
     def test_extract_volume(self):
