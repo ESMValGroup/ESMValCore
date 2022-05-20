@@ -5,6 +5,7 @@ import iris.cube
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris import NameConstraint
 
 from esmvalcore.cmor._fixes.shared import (
     add_altitude_from_plev,
@@ -23,7 +24,6 @@ from esmvalcore.cmor._fixes.shared import (
     get_pressure_to_altitude_func,
     round_coordinates,
 )
-from esmvalcore.iris_helpers import var_name_constraint
 
 
 @pytest.mark.sequential
@@ -92,7 +92,7 @@ def test_add_aux_coords_from_cubes(coord_dict, output):
                 assert cube.coord_dims(coord) == coord_dims
             points = np.full(coord.shape, 0.0)
             assert coord.points == points
-            assert not cubes.extract(var_name_constraint(coord_name))
+            assert not cubes.extract(NameConstraint(var_name=coord_name))
         assert len(cubes) == 5 - len(coord_dict)
         return
     with pytest.raises(ValueError) as err:
