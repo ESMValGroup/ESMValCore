@@ -314,7 +314,7 @@ def axis_statistics(cube, axis, operator):
     operation = get_iris_analysis_operation(operator)
     weights = None
     if operator_accept_weights(operator):
-        coord_dim = cube.coord_dims[0]
+        coord_dim = coord_dims[0]
         expand = list(range(cube.ndim))
         expand.remove(coord_dim)
         weights = np.abs(coord.bounds[..., 1] - coord.bounds[..., 0])
