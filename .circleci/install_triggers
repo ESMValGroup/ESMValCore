@@ -1,6 +1,5 @@
 ^\.circleci/
 ^environment\.yml$
-^[A-Za-z_]*meta\.yaml$
-^package/
+^pyproject.toml$
 ^setup\.py$
 ^setup\.cfg$
