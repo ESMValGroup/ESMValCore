@@ -29,7 +29,7 @@ from ..shared import (
     add_scalar_lambda550nm_coord,
     add_scalar_typesi_coord,
 )
-from ._base_fixes import EmacFix, NegateData, SetUnitsTo1, SetUnitsTo1SumOverZ
+from ._base_fixes import EmacFix, NegateData, SetUnitsTo1
 
 logger = logging.getLogger(__name__)
 
@@ -333,7 +333,16 @@ Hfss = NegateData
 Hurs = SetUnitsTo1
 
 
-Od550aer = SetUnitsTo1SumOverZ
+class Od550aer(SetUnitsTo1):
+    """Fixes for ``od550aer``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cubes = super().fix_metadata(cubes)
+        cube = self.get_cube(cubes)
+        z_coord = cube.coord(axis='Z')
+        cube = cube.collapsed(z_coord, iris.analysis.SUM)
+        return CubeList([cube])
 
 
 class Pr(EmacFix):

@@ -727,7 +727,7 @@ def test_sample_data_tas(test_data_path, tmp_path):
     fixed_path = fix.fix_file(filepath, tmp_path)
     assert fixed_path == filepath
 
-    cubes = iris.load(fixed_path)
+    cubes = iris.load(str(fixed_path))
     fixed_cubes = fix.fix_metadata(cubes)
 
     cube = check_tas_metadata(fixed_cubes)
@@ -758,7 +758,7 @@ def test_sample_data_ta_plev(test_data_path, tmp_path):
     fixed_path = fix.fix_file(filepath, tmp_path)
     assert fixed_path == filepath
 
-    cubes = iris.load(fixed_path)
+    cubes = iris.load(str(fixed_path))
     fixed_cubes = fix.fix_metadata(cubes)
 
     cube = check_ta_metadata(fixed_cubes)
@@ -786,7 +786,7 @@ def test_sample_data_ta_alevel(test_data_path, tmp_path):
     fixed_path = fix.fix_file(filepath, tmp_path)
     assert fixed_path != filepath
 
-    cubes = iris.load(fixed_path)
+    cubes = iris.load(str(fixed_path))
     assert cubes.extract(NameConstraint(var_name='hyam'))
     assert cubes.extract(NameConstraint(var_name='hybm'))
     assert cubes.extract(NameConstraint(var_name='hyai'))
@@ -1073,7 +1073,6 @@ def test_get_od550aer_fix():
 def test_od550aer_fix(cubes_3d):
     """Test fix."""
     cubes_3d[0].var_name = 'aot_opt_TOT_550_total_cav'
-    cubes_3d[0].units = '1'
     vardef = get_var_info('EMAC', 'Amon', 'od550aer')
     extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'od550aer', ())
     fix = Od550aer(vardef, extra_facets=extra_facets)
@@ -1084,9 +1083,6 @@ def test_od550aer_fix(cubes_3d):
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
-
-    cube = fix.fix_data(cube)
-
     assert cube.var_name == 'od550aer'
     assert cube.standard_name == ('atmosphere_optical_thickness_due_to_'
                                   'ambient_aerosol_particles')

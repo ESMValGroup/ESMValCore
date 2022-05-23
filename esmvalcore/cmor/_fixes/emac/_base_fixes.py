@@ -2,7 +2,6 @@
 
 import logging
 
-import iris.analysis
 from iris import NameConstraint
 from iris.exceptions import ConstraintMismatchError
 
@@ -62,13 +61,3 @@ class SetUnitsTo1(EmacFix):
         cube = self.get_cube(cubes)
         cube.units = '1'
         return cubes
-
-
-class SetUnitsTo1SumOverZ(SetUnitsTo1):
-    """Base fix to set units to '1' and sum over Z-coordinate."""
-
-    def fix_data(self, cube):
-        """Fix data."""
-        z_coord = cube.coord(axis='Z')
-        cube = cube.collapsed(z_coord, iris.analysis.SUM)
-        return cube
