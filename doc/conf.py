@@ -405,6 +405,8 @@ numfig = True
 
 # Configuration for intersphinx
 intersphinx_mapping = {
+    'cf_units': ('https://cf-units.readthedocs.io/en/latest/', None),
+    'cftime': ('https://unidata.github.io/cftime/', None),
     'esmvalcore':
     (f'https://docs.esmvaltool.org/projects/esmvalcore/en/{rtd_version}/',
      None),

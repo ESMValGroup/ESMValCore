@@ -28,6 +28,7 @@ REQUIREMENTS = {
     # Use with pip install . to install from source
     'install': [
         'cartopy',
+        # see https://github.com/SciTools/cf-units/issues/218
         'cf-units>=3.0.0,!=3.0.1.post0',
         'dask[array]',
         'esgf-pyclient>=0.3.1',
@@ -57,9 +58,8 @@ REQUIREMENTS = {
         'yamale',
     ],
     # Test dependencies
-    # Execute 'python setup.py test' to run tests
     'test': [
-        'flake8<4',  # https://github.com/ESMValGroup/ESMValCore/issues/1405
+        'flake8',
         'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
         'pytest-cov>=2.10.1',
         'pytest-env',
@@ -75,17 +75,20 @@ REQUIREMENTS = {
         'types-pkg_resources',
         'types-PyYAML',
     ],
+    # Documentation dependencies
+    'doc': [
+        'autodocsumm',
+        'sphinx>2',
+        'sphinx_rtd_theme',
+    ],
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
     'develop': [
-        'autodocsumm',
         'codespell',
         'docformatter',
         'isort',
         'pre-commit',
         'prospector[with_pyroma,with_mypy]!=1.1.6.3,!=1.1.6.4',
-        'sphinx>2',
-        'sphinx_rtd_theme',
         'vprof',
         'yamllint',
         'yapf',
@@ -95,6 +98,7 @@ REQUIREMENTS = {
 
 def discover_python_files(paths, ignore):
     """Discover Python files."""
+
     def _ignore(path):
         """Return True if `path` should be ignored, False otherwise."""
         return any(re.match(pattern, path) for pattern in ignore)
@@ -112,6 +116,7 @@ def discover_python_files(paths, ignore):
 
 class CustomCommand(Command):
     """Custom Command class."""
+
     def install_deps_temp(self):
         """Try to temporarily install packages needed to run the command."""
         if self.distribution.install_requires:
@@ -221,8 +226,12 @@ setup(
     install_requires=REQUIREMENTS['install'],
     tests_require=REQUIREMENTS['test'],
     extras_require={
-        'develop': REQUIREMENTS['develop'] + REQUIREMENTS['test'],
-        'test': REQUIREMENTS['test'],
+        'develop':
+        REQUIREMENTS['develop'] + REQUIREMENTS['test'] + REQUIREMENTS['doc'],
+        'test':
+        REQUIREMENTS['test'],
+        'doc':
+        REQUIREMENTS['doc'],
     },
     entry_points={
         'console_scripts': [
@@ -230,7 +239,6 @@ setup(
         ],
     },
     cmdclass={
-        #         'test': RunTests,
         'lint': RunLinter,
     },
     zip_safe=False,
