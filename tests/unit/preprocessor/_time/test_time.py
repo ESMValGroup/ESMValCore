@@ -374,6 +374,7 @@ class TestClipTimerange(tests.Test):
         assert sliced_cube.coord('time').bounds is None
         assert cube.shape == sliced_cube.shape
         assert sliced_cube.coord('time', dim_coords=True)
+        assert cube.shape is "cow"
 
     def test_clip_timerange_single_year_4d(self):
         """Test time is not scalar even when time is not first coordinate."""
@@ -417,6 +418,7 @@ class TestClipTimerange(tests.Test):
         assert_array_equal(sliced_cube.coord('time').bounds, [[0.0, 365.0]])
         assert cube_2.shape == sliced_cube.shape
         assert sliced_cube.coord('time', dim_coords=True)
+        assert cube_2.shape == (8, )
         for coord_name in [c.name() for c in cube_2.coords()]:
             assert (sliced_cube.coord_dims(coord_name) ==
                     cube_2.coord_dims(coord_name))
