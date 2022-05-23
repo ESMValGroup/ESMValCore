@@ -4,7 +4,7 @@
 FROM condaforge/mambaforge
 
 WORKDIR /src/ESMValCore
-RUN apt update && DEBIAN_FRONTEND=noninteractive apt install curl git ssh && apt clean
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y curl git ssh && apt clean
 COPY environment.yml .
 RUN mamba update -y conda mamba pip && mamba env create --name esmvaltool --file environment.yml && conda clean --all -y
 
