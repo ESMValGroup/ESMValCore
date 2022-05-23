@@ -153,9 +153,6 @@ EMAC:
     ts:
       raw_name: [tsurf_cav, tsurf_ave]
       channel: Amon
-
-    # TODO: CHECK IF THE CALCULATION IS CORRECT!!!
-    # -> it might be necessary to weight these fields with cos(lat)
     uas:
       raw_name: [u10_cav, u10_ave]
       channel: Amon
