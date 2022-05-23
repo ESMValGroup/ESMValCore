@@ -64,7 +64,7 @@ commands:
           name: Generate cache key
           command: date '+%Y-%V' | tee cache_key.txt
       - restore_cache:
-          key: "install-<<parameters.extra>>-{{ .Branch }}"
+          key: install-<< parameters.extra >>-{{ .Branch }}-{{ checksum "cache_key.txt" }}
       - run:
           name: Install dependencies
           command: |
@@ -109,7 +109,7 @@ jobs:
           name: Generate cache key
           command: date '+%Y-%V' | tee cache_key.txt
       - restore_cache:
-          key: test-{{ .Branch }}
+          key: test-{{ .Branch }}-{{ checksum "cache_key.txt" }}
       - run:
           name: Install dependencies
           command: |
