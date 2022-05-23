@@ -5,6 +5,7 @@ Allows for unit conversions.
 import logging
 
 import numpy as np
+import iris
 
 logger = logging.getLogger(__name__)
 
@@ -51,31 +52,20 @@ def flux_to_total(cube):
     ValueError
         If the units are not supported by the operator
     """
-    # We set units to days since ... so time_span will always be in days
-    time = cube.coord('time')
-    time_span = time.bounds[:, 1] - time.bounds[:, 0]
-
-    # Separate scalar factor from actual units. day-1 units are automatically
-    # converted to CONSTANT * s-1, so we must deal with this
-    units = cube.units.definition.split(' ')
-    if len(units) == 2:
-        factor = float(units[0])
-    else:
-        factor = 1.
-
-    # Separate unit components
-    units = units[-1].split('.')
-    if 's-1' in units:
-        factor *= 24. * 3600.
-        units.remove('s-1')
-    else:
+    if 's-1' not in cube.units.format():
         raise ValueError(
-            f'Units {cube.units} do not contains a supported flux definition')
-
-    time_span = time_span.astype(np.float32) * factor
-    dims = list(range(cube.ndim))
-    dims.remove(cube.coord_dims(time)[0])
-    time_span = np.expand_dims(time_span, dims)
-    cube = cube.copy(cube.core_data() * time_span)
-    cube.units = ' '.join(units)
-    return cube
+            f'Units {cube.units} do not contain a supported flux definition.'
+            )
+    coord_name = 'time'
+    coord = cube.coord(coord_name)
+    factor = iris.coords.AuxCoord(
+        np.diff(coord.bounds)[..., -1],
+        var_name=coord.var_name,
+        long_name=coord.long_name,
+        units=coord.units,
+    )
+    result = cube * factor
+    unit = result.units.format().split(' ')[-1]
+    result.convert_units(unit)
+    result.long_name = f"{cube.long_name} * {factor.long_name}"
+    return result

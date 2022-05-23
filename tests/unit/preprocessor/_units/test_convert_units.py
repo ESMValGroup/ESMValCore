@@ -51,17 +51,19 @@ class TestFluxToTotal(tests.Test):
         data = np.arange(4)
         time = iris.coords.DimCoord(
             np.arange(1, 8, 2),
+            var_name='time',
             standard_name='time',
             bounds=np.array([np.arange(0, 8, 2),
                              np.arange(2, 9, 2)]).T,
-            units='days since 1850-01-01')
-
+            units=cf_units.Unit('days since 1950-01-01',
+                                calendar='gregorian'))
         coords_spec = [
             (time, 0),
         ]
         self.cube = iris.cube.Cube(data,
                                    units='kg day-1',
                                    dim_coords_and_dims=coords_spec)
+
 
     def test_convert_incompatible_units(self):
         """Test conversion to incompatible units."""
