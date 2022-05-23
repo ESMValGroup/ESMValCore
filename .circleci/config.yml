@@ -60,6 +60,9 @@ commands:
     steps:
       - checkout
       - check_changes
+      - run:
+          name: Generate cache key
+          command: date '+%Y-%V' | tee cache_key.txt
       - restore_cache:
           key: "install-<<parameters.extra>>-{{ .Branch }}"
       - run:
@@ -87,7 +90,7 @@ commands:
             pip freeze > /logs/requirements.txt
       - test_and_report
       - save_cache:
-          key: "install-<<parameters.extra>>-{{ .Branch }}"
+          key: install-<< parameters.extra >>-{{ .Branch }}-{{ checksum "cache_key.txt" }}
           paths:
             - /opt/conda/pkgs
             - /root/.cache/pip
@@ -102,6 +105,9 @@ jobs:
     resource_class: large
     steps:
       - checkout
+      - run:
+          name: Generate cache key
+          command: date '+%Y-%V' | tee cache_key.txt
       - restore_cache:
           key: test-{{ .Branch }}
       - run:
@@ -111,10 +117,9 @@ jobs:
             mkdir /logs
             conda activate esmvaltool
             pip install .[test] > /logs/install.txt 2>&1
-
       - test_and_report
       - save_cache:
-          key: test-{{ .Branch }}
+          key: test-{{ .Branch }}-{{ checksum "cache_key.txt" }}
           paths:
             - /root/.cache/pip
             - .mypy_cache
