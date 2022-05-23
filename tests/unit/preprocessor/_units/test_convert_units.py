@@ -64,7 +64,6 @@ class TestFluxToTotal(tests.Test):
                                    units='kg day-1',
                                    dim_coords_and_dims=coords_spec)
 
-
     def test_convert_incompatible_units(self):
         """Test conversion to incompatible units."""
         self.cube.units = 'kg m-2'
