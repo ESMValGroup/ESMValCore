@@ -61,7 +61,7 @@ AIR_PRESSURE_BOUNDS = np.array([[[[[0.0, 1.5],
                                    [7.0, 25.0]]]]])
 
 
-# @pytest.mark.sequential
+@pytest.mark.sequential
 @pytest.mark.skipif(sys.version_info < (3, 7, 6),
                     reason="requires python3.7.6 or newer")
 @unittest.mock.patch(
@@ -70,10 +70,6 @@ AIR_PRESSURE_BOUNDS = np.array([[[[[0.0, 1.5],
 def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
     """Test ``fix_file`` for ``cl``."""
     nc_path = test_data_path / 'cesm2_cl.nc'
-    print("TEST DATA PATH CESM2", test_data_path)
-    for i, j, k in os.walk(test_data_path):
-        print(i, j, k)
-    print(x)
     cubes = iris.load(str(nc_path))
 
     # Raw cubes
