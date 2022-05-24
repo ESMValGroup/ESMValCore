@@ -20,6 +20,7 @@ from esmvalcore.iris_helpers import (
     date2num,
     var_name_constraint,
 )
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 
 @pytest.fixture
@@ -136,20 +137,30 @@ def test_date2num_scalar(date, dtype, expected, units):
 
 def test_var_name_constraint(cubes):
     """Test :func:`esmvalcore.iris_helpers.var_name_constraint`."""
-    out_cubes = cubes.extract(var_name_constraint('a'))
+    with pytest.warns(ESMValCoreDeprecationWarning):
+        out_cubes = cubes.extract(var_name_constraint('a'))
     assert out_cubes == CubeList([
         Cube(0.0, var_name='a', long_name='a'),
         Cube(0.0, var_name='a', long_name='b'),
     ])
-    out_cubes = cubes.extract(var_name_constraint('b'))
+
+    with pytest.warns(ESMValCoreDeprecationWarning):
+        out_cubes = cubes.extract(var_name_constraint('b'))
     assert out_cubes == CubeList([])
-    out_cubes = cubes.extract(var_name_constraint('c'))
+
+    with pytest.warns(ESMValCoreDeprecationWarning):
+        out_cubes = cubes.extract(var_name_constraint('c'))
     assert out_cubes == CubeList([
         Cube(0.0, var_name='c', long_name='d'),
     ])
+
     with pytest.raises(ConstraintMismatchError):
-        cubes.extract_cube(var_name_constraint('a'))
+        with pytest.warns(ESMValCoreDeprecationWarning):
+            cubes.extract_cube(var_name_constraint('a'))
     with pytest.raises(ConstraintMismatchError):
-        cubes.extract_cube(var_name_constraint('b'))
-    out_cube = cubes.extract_cube(var_name_constraint('c'))
+        with pytest.warns(ESMValCoreDeprecationWarning):
+            cubes.extract_cube(var_name_constraint('b'))
+
+    with pytest.warns(ESMValCoreDeprecationWarning):
+        out_cube = cubes.extract_cube(var_name_constraint('c'))
     assert out_cube == Cube(0.0, var_name='c', long_name='d')

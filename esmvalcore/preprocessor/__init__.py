@@ -44,7 +44,12 @@ from ._mask import (
 )
 from ._multimodel import ensemble_statistics, multi_model_statistics
 from ._other import clip
-from ._regrid import extract_levels, extract_location, extract_point, regrid
+from ._regrid import (
+    extract_coordinate_points,
+    extract_levels,
+    extract_location,
+    extract_point,
+    regrid)
 from ._time import (
     annual_statistics,
     anomalies,
@@ -114,6 +119,7 @@ __all__ = [
     # Regridding
     'regrid',
     # Point interpolation
+    'extract_coordinate_points',
     'extract_point',
     'extract_location',
     # Masking missing values
