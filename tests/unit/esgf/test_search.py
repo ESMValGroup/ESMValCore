@@ -1,8 +1,10 @@
 """Test 1esmvalcore.esgf._search`."""
 import copy
+import textwrap
 
+import pyesgf.search
 import pytest
-from pyesgf.search.context import FileSearchContext
+import requests.exceptions
 from pyesgf.search.results import FileResult
 
 from esmvalcore.esgf import ESGFFile, _search, find_files
@@ -112,24 +114,31 @@ def test_get_esgf_facets(our_facets, esgf_facets):
     assert facets == esgf_facets
 
 
-def get_mock_connection(facets, results):
-    """Create a mock pyesgf.search.SearchConnection instance."""
-    class MockFileSearchContext:
-        def search(self, **kwargs):
-            assert kwargs['batch_size'] == 500
-            assert kwargs['ignore_facet_check']
-            assert len(kwargs) == 2
-            return results
+def get_mock_connection(mocker, search_results):
+    """Create a mock pyesgf.search.SearchConnection class."""
+    cfg = {
+        'search_connection': {
+            'urls': [
+                'https://esgf-index1.ceda.ac.uk/esg-search',
+                'https://esgf-node.llnl.gov/esg-search',
+            ]
+        },
+    }
+    mocker.patch.object(_search, "get_esgf_config", return_value=cfg)
 
-    class MockConnection:
-        def new_context(self, *args, **kwargs):
-            assert len(args) == 1
-            assert args[0] == FileSearchContext
-            assert kwargs.pop('latest')
-            assert kwargs == facets
-            return MockFileSearchContext()
-
-    return MockConnection()
+    ctx = mocker.create_autospec(
+        pyesgf.search.context.FileSearchContext,
+        spec_set=True,
+        instance=True,
+    )
+    ctx.search.side_effect = search_results
+    conn_cls = mocker.patch.object(
+        _search.pyesgf.search,
+        'SearchConnection',
+        autospec=True,
+    )
+    conn_cls.return_value.new_context.return_value = ctx
+    return conn_cls, ctx
 
 
 def test_esgf_search_files(mocker):
@@ -191,13 +200,25 @@ def test_esgf_search_files(mocker):
         'variable': 'tas',
     }
     file_results = [file_aims0, file_aims1, file_dkrz]
-    conn = get_mock_connection(facets, file_results)
-    mocker.patch.object(_search,
-                        'get_connection',
-                        autspec=True,
-                        return_value=conn)
+
+    SearchConnection, context = get_mock_connection(  # noqa: N806
+        mocker, search_results=[file_results])
 
     files = _search.esgf_search_files(facets)
+
+    SearchConnection.assert_called_once_with(
+        url='https://esgf-index1.ceda.ac.uk/esg-search')
+    connection = SearchConnection.return_value
+    connection.new_context.assert_called_with(
+        pyesgf.search.context.FileSearchContext,
+        **facets,
+        latest=True,
+    )
+    context.search.assert_called_with(
+        batch_size=500,
+        ignore_facet_check=True,
+    )
+
     print(files)
     assert len(files) == 2
 
@@ -219,6 +240,43 @@ def test_esgf_search_files(mocker):
     urls = sorted(file1.urls)
     assert len(urls) == 1
     assert urls[0] == aims_url1
+
+
+def test_esgf_search_uses_second_index_node(mocker):
+    """Test that the second index node is used if the first is offline."""
+    mocker.patch.object(_search, 'FIRST_ONLINE_INDEX_NODE', None)
+    search_result = mocker.sentinel.search_result
+    search_results = [
+        requests.exceptions.ReadTimeout("Timeout error message"),
+        search_result,
+    ]
+    SearchConnection, context = get_mock_connection(  # noqa: N806
+        mocker, search_results)
+
+    result = _search._search_index_nodes(facets={})
+
+    second_index_node = 'https://esgf-node.llnl.gov/esg-search'
+    assert _search.FIRST_ONLINE_INDEX_NODE == second_index_node
+    assert result == search_result
+
+
+def test_esgf_search_fails(mocker):
+    """Test that FileNotFoundError is raised if all index nodes are offline."""
+    search_results = [
+        requests.exceptions.ReadTimeout("Timeout error message 1"),
+        requests.exceptions.ReadTimeout("Timeout error message 2"),
+    ]
+    SearchConnection, context = get_mock_connection(  # noqa: N806
+        mocker, search_results)
+
+    with pytest.raises(FileNotFoundError) as excinfo:
+        _search.esgf_search_files(facets={})
+    error_message = textwrap.dedent("""
+    Failed to search ESGF, unable to connect:
+    - Timeout error message 1
+    - Timeout error message 2
+    """).strip()
+    assert str(excinfo.value) == error_message
 
 
 def test_select_by_time():
