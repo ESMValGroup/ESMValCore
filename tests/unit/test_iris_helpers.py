@@ -15,12 +15,12 @@ from iris.coords import (
 from iris.cube import Cube, CubeList
 from iris.exceptions import ConstraintMismatchError, CoordinateMultiDimError
 
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import (
     add_leading_dim_to_cube,
     date2num,
     var_name_constraint,
 )
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 
 @pytest.fixture

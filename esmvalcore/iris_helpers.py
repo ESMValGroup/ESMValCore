@@ -1,14 +1,13 @@
 """Auxiliary functions for :mod:`iris`."""
+import warnings
+
 import dask.array as da
 import iris
 import iris.cube
 import iris.util
-from iris.exceptions import CoordinateMultiDimError
-
-import warnings
-
 import numpy as np
 from iris import NameConstraint
+from iris.exceptions import CoordinateMultiDimError
 
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
