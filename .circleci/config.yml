@@ -58,6 +58,11 @@ commands:
         type: string
         default: ""
     steps:
+      - run:
+          name: Install git+ssh
+          environment:
+            DEBIAN_FRONTEND: noninteractive  # needed to install tzdata
+          command: apt update && apt install -y git ssh
       - checkout
       - check_changes
       - run:
@@ -124,10 +129,6 @@ jobs:
             - /root/.cache/pip
             - .mypy_cache
             - .pytest_cache
-      - run:
-          # Install curl for codecov upload
-          when: always
-          command: apt update && apt install -y curl
       - codecov/upload:
           when: always
           file: 'test-reports/coverage.xml'
