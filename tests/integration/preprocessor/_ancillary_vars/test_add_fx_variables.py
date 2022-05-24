@@ -77,7 +77,7 @@ class Test:
         self.new_cube_data[:] = 200.
         self.new_cube_3D_data = np.empty((3, 3, 3))
         self.new_cube_3D_data[:] = 200.
-        crd_sys = iris.coord_systems.GeogCS(12345678)
+        crd_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
         self.lons = iris.coords.DimCoord([0, 1.5, 3],
                                          standard_name='longitude',
                                          bounds=[[0, 1], [1, 2], [2, 3]],
