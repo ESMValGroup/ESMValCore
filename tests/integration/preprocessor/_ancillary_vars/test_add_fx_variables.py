@@ -260,7 +260,8 @@ class Test:
                 'dataset': 'EC-Earth3',
                 'mip': 'Oyr',
                 'frequency': 'yr',
-                'filename': fx_file}
+                'filename': fx_file,
+                'timerange': '1950/1951'}
             }
         data = np.ones((12, 3, 3, 3))
         cube = iris.cube.Cube(
