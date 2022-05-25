@@ -31,7 +31,7 @@ def _load_fx(var_cube, fx_info, check_level):
 
     fx_cube = concatenate(fx_cubes)
 
-    if 'freq' != 'fx':
+    if freq != 'fx':
         fx_cube = clip_timerange(fx_cube, fx_info['timerange'])
 
     if not _is_fx_broadcastable(fx_cube, var_cube):
