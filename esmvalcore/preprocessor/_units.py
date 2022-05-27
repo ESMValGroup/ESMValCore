@@ -4,8 +4,8 @@ Allows for unit conversions.
 """
 import logging
 
-import numpy as np
 import iris
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ def convert_units(cube, units):
     return cube
 
 
-def flux_to_total(cube):
+def flux_to_total(cube, coordinate):
     """Convert flux to aggregated values.
 
     Flux should have units of X s-1 or any compatible unit.
@@ -52,12 +52,17 @@ def flux_to_total(cube):
     ValueError
         If the units are not supported by the operator
     """
-    if 's-1' not in cube.units.format():
+    try:
+        coord = cube.coord(coordinate)
+    except iris.exceptions.CoordinateNotFoundError as err:
         raise ValueError(
-            f'Units {cube.units} do not contain a supported flux definition.'
-            )
-    coord_name = 'time'
-    coord = cube.coord(coord_name)
+            "Requested coordinate %s not found in cube %s",
+            coordinate, cube.summary(shorten=True)) from err
+
+    if coord.ndim > 1:
+        raise NotImplementedError(
+            f'Multidimensional coordinate {coord} not supported.')
+
     factor = iris.coords.AuxCoord(
         np.diff(coord.bounds)[..., -1],
         var_name=coord.var_name,

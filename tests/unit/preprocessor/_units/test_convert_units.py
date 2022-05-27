@@ -64,15 +64,51 @@ class TestFluxToTotal(tests.Test):
                                    units='kg day-1',
                                    dim_coords_and_dims=coords_spec)
 
-    def test_convert_incompatible_units(self):
-        """Test conversion to incompatible units."""
-        self.cube.units = 'kg m-2'
-        self.assertRaises(ValueError, flux_to_total, self.cube)
+    def test_missing_coordinate(self):
+        """Test error is raised if missing coordinate."""
+        self.assertRaises(ValueError, flux_to_total, self.cube, 'longitude')
+
+    def test_multidim_coordinate(self):
+        """Test error is raised if coordinate is multidimensional."""
+        i_coord = iris.coords.DimCoord(
+            [0, 1],
+            long_name='cell index along first dimension',
+            units='1',)
+
+        j_coord = iris.coords.DimCoord(
+            [0, 1],
+            long_name='cell index along second dimension',
+            units='1',)
+
+        lat_coord = iris.coords.AuxCoord(
+            [[-40.0, -20.0], [-20.0, 0.0]],
+            var_name='lat',
+            standard_name='latitude',
+            units='degrees_north',)
+
+        lon_coord = iris.coords.AuxCoord(
+            [[100.0, 140.0], [80.0, 100.0]],
+            var_name='lon',
+            standard_name='longitude',
+            units='degrees_east',
+            )
+
+        cube = iris.cube.Cube(
+            np.ones((2, 2)),
+            var_name='tos',
+            long_name='sea_surface_temperature',
+            units='K',
+            dim_coords_and_dims=[(j_coord, 0), (i_coord, 1)],
+            aux_coords_and_dims=[(lat_coord, (0, 1)), (lon_coord, (0, 1))],
+        )
+        self.assertRaises(
+            NotImplementedError,
+            flux_to_total, cube, 'longitude')
 
     def test_flux_by_second(self):
         """Test conversion to compatible units."""
         self.cube.units = 'kg s-1'
-        result = flux_to_total(self.cube)
+        result = flux_to_total(self.cube, 'time')
         expected_data = np.array([0, 2, 4, 6]) * 24 * 3600
         expected_units = cf_units.Unit('kg')
         self.assertEqual(result.units, expected_units)
@@ -80,7 +116,7 @@ class TestFluxToTotal(tests.Test):
 
     def test_flux_by_day(self):
         """Test conversion to compatible units."""
-        result = flux_to_total(self.cube)
+        result = flux_to_total(self.cube, 'time')
         expected_data = np.array([0, 2, 4, 6])
         expected_units = cf_units.Unit('kg')
         self.assertEqual(result.units, expected_units)
@@ -89,7 +125,7 @@ class TestFluxToTotal(tests.Test):
     def test_flux_by_hour(self):
         """Test conversion to compatible units."""
         self.cube.units = 'kg hr-1'
-        result = flux_to_total(self.cube)
+        result = flux_to_total(self.cube, 'time')
         expected_data = np.array([0, 2, 4, 6]) * 24
         expected_units = cf_units.Unit('kg')
         self.assertEqual(result.units, expected_units)
