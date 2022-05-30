@@ -178,32 +178,33 @@ For some variables, extra facets are necessary; otherwise ESMValTool cannot
 read them properly.
 Supported keys for extra facets are:
 
-============================= ================================================== =================================
-Key                           Description                                        Default value if not specified
-============================= ================================================== =================================
-``channel``                   Channel in which the desired variable is stored    No default (needs to be specified
-                                                                                 in extra facets or recipe if
-                                                                                 default DRS is used)
-``postproc_flag``             Postprocessing flag of the   (e.g., ``-p-mm``)     ``''`` (empty string)
-``raw_name``                  Variable name of the variable in the raw input     CMOR variable name of the
-                              file. To support single and multiple raw names for corresponding variable.
-                              a variable, ``raw_name`` can be given as ``str``
-                              and ``list``. In the latter case, the
-                              prioritization is given by the order of the list;
-                              if possible, use the first entry, if this is not
-                              present, use the second, etc. This is
-                              particularly useful for variables where regular
-                              averages (``*_ave``) or conditional averages
-                              (``*_cav``) exist.  For 3D variables defined on
-                              pressure levels, only the pressure levels defined
-                              by the CMOR table (e.g., for `Amon`'s `ta`:
-                              ``tm1_p19_cav`` and ``tm1_p19_ave``) are given.
-                              If other pressure levels are desired, e.g.,
-                              ``tm1_p39_cav``, this has to be explicitly
-                              specified in the recipe using ``raw_name:
-                              tm1_p39_cav`` or ``raw_name: [tm1_p19_cav,
-                              tm1_p39_cav]``.
-============================= ================================================== =================================
+==================== ====================================== =================================
+Key                  Description                            Default value if not specified
+==================== ====================================== =================================
+``channel``          Channel in which the desired variable  No default (needs to be specified
+                     is stored                              in extra facets or recipe if
+                                                            default DRS is used)
+``postproc_flag``    Postprocessing flag of the data        ``''`` (empty string)
+``raw_name``         Variable name of the variable in the   CMOR variable name of the
+                     raw input file                         corresponding variable.
+==================== ====================================== =================================
+
+.. note::
+
+   ``raw_name`` can be given as ``str`` or ``list``.
+   The latter is used to support multiple different variables names in the
+   input file.
+   In this case, the prioritization is given by the order of the list; if
+   possible, use the first entry, if this is not present, use the second, etc.
+   This is particularly useful for files in which regular averages (``*_ave``)
+   or conditional averages (``*_cav``) exist.
+
+   For 3D variables defined on pressure levels, only the pressure levels
+   defined by the CMOR table (e.g., for `Amon`'s `ta`: ``tm1_p19_cav`` and
+   ``tm1_p19_ave``) are given in the default extra facets file.
+   If other pressure levels are desired, e.g., ``tm1_p39_cav``, this has to be
+   explicitly specified in the recipe using ``raw_name: tm1_p39_cav`` or
+   ``raw_name: [tm1_p19_cav, tm1_p39_cav]``.
 
 .. _read_icon:
 
