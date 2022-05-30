@@ -1546,7 +1546,7 @@ The area manipulation module contains the following preprocessor functions:
 ``extract_coordinate_points``
 -----------------------------
 
-This function extracts points with given coordinates, following either a 
+This function extracts points with given coordinates, following either a
 ``linear`` or a ``nearest`` interpolation scheme.
 The resulting point cube will match the respective coordinates to
 those of the input coordinates. If the input coordinate is a scalar,
@@ -1975,14 +1975,24 @@ will guarantee homogeneous input for the diagnostics.
 See also :func:`esmvalcore.preprocessor.convert_units`.
 
 
-``flux_to_total``
+``accumulate_coordinate``
 -----------------
 
-This function can be used to convert time fluxes to aggregated values
-automatically. It's only requirement is that the original units are in
-``X s-1`` or any other compatible unit.
+This function can be used to weight data using the bounds from a given coordinate.
+The resulting cube will then have units given by ``cube_units * coordinate_units``.
 
-See also :func:`esmvalcore.preprocessor.flux_to_total.`
+For instance, if a variable has units such as ``X s-1``, using ``accumulate_coordinate``
+on the time coordinate would result on a cube where the data would be multiplied
+by the time bounds and the resulting units for the variable would be converted to ``X``.
+In this case, weighting the data with the time coordinate would allow to cancel
+the time units in the variable.
+
+.. note::
+   The coordinate used to weight the data must be one-dimensional, as multidimensional
+   coordinates are not supported in this preprocessor.
+
+
+See also :func:`esmvalcore.preprocessor.accumulate_coordinate.`
 
 
 .. _bias:

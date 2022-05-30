@@ -7,7 +7,7 @@ import iris
 import numpy as np
 
 import tests
-from esmvalcore.preprocessor._units import convert_units, flux_to_total
+from esmvalcore.preprocessor._units import accumulate_coordinate, convert_units
 
 
 class TestConvertUnits(tests.Test):
@@ -66,7 +66,10 @@ class TestFluxToTotal(tests.Test):
 
     def test_missing_coordinate(self):
         """Test error is raised if missing coordinate."""
-        self.assertRaises(ValueError, flux_to_total, self.cube, 'longitude')
+        self.assertRaises(
+            ValueError,
+            accumulate_coordinate,
+            self.cube, 'longitude')
 
     def test_multidim_coordinate(self):
         """Test error is raised if coordinate is multidimensional."""
@@ -103,12 +106,12 @@ class TestFluxToTotal(tests.Test):
         )
         self.assertRaises(
             NotImplementedError,
-            flux_to_total, cube, 'longitude')
+            accumulate_coordinate, cube, 'longitude')
 
     def test_flux_by_second(self):
         """Test conversion to compatible units."""
         self.cube.units = 'kg s-1'
-        result = flux_to_total(self.cube, 'time')
+        result = accumulate_coordinate(self.cube, 'time')
         expected_data = np.array([0, 2, 4, 6]) * 24 * 3600
         expected_units = cf_units.Unit('kg')
         self.assertEqual(result.units, expected_units)
@@ -116,7 +119,7 @@ class TestFluxToTotal(tests.Test):
 
     def test_flux_by_day(self):
         """Test conversion to compatible units."""
-        result = flux_to_total(self.cube, 'time')
+        result = accumulate_coordinate(self.cube, 'time')
         expected_data = np.array([0, 2, 4, 6])
         expected_units = cf_units.Unit('kg')
         self.assertEqual(result.units, expected_units)
@@ -125,7 +128,7 @@ class TestFluxToTotal(tests.Test):
     def test_flux_by_hour(self):
         """Test conversion to compatible units."""
         self.cube.units = 'kg hr-1'
-        result = flux_to_total(self.cube, 'time')
+        result = accumulate_coordinate(self.cube, 'time')
         expected_data = np.array([0, 2, 4, 6]) * 24
         expected_units = cf_units.Unit('kg')
         self.assertEqual(result.units, expected_units)

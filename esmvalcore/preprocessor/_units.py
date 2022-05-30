@@ -32,15 +32,19 @@ def convert_units(cube, units):
     return cube
 
 
-def flux_to_total(cube, coordinate):
-    """Convert flux to aggregated values.
+def accumulate_coordinate(cube, coordinate):
+    """Weight data using the bounds from a given coordinate.
 
-    Flux should have units of X s-1 or any compatible unit.
+    The resulting cube will then have units given by
+    ``cube_units * coordinate_units``.
 
     Parameters
     ----------
     cube : iris.cube.Cube
         Data cube for the flux
+
+    coordinate: str
+        Name of the coordinate that will be used as weights.
 
     Returns
     -------
@@ -50,7 +54,10 @@ def flux_to_total(cube, coordinate):
     Raises
     ------
     ValueError
-        If the units are not supported by the operator
+        If the coordinate is not found in the cube.
+
+    NotImplementedError
+        If the coordinate is multidimensional.
     """
     try:
         coord = cube.coord(coordinate)

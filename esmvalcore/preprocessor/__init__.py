@@ -49,7 +49,8 @@ from ._regrid import (
     extract_levels,
     extract_location,
     extract_point,
-    regrid)
+    regrid,
+)
 from ._time import (
     annual_statistics,
     anomalies,
@@ -69,7 +70,7 @@ from ._time import (
     timeseries_filter,
 )
 from ._trend import linear_trend, linear_trend_stderr
-from ._units import convert_units, flux_to_total
+from ._units import accumulate_coordinate, convert_units
 from ._volume import (
     depth_integration,
     extract_trajectory,
@@ -150,7 +151,7 @@ __all__ = [
     'amplitude',
     'zonal_statistics',
     'meridional_statistics',
-    'flux_to_total',
+    'accumulate_coordinate',
     'hourly_statistics',
     'daily_statistics',
     'monthly_statistics',
