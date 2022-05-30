@@ -186,7 +186,7 @@ Key                  Description                            Default value if not
                                                             default DRS is used)
 ``postproc_flag``    Postprocessing flag of the data        ``''`` (empty string)
 ``raw_name``         Variable name of the variable in the   CMOR variable name of the
-                     raw input file                         corresponding variable.
+                     raw input file                         corresponding variable
 ==================== ====================================== =================================
 
 .. note::
