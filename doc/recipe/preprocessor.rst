@@ -1546,7 +1546,7 @@ The area manipulation module contains the following preprocessor functions:
 ``extract_coordinate_points``
 -----------------------------
 
-This function extracts points with given coordinates, following either a 
+This function extracts points with given coordinates, following either a
 ``linear`` or a ``nearest`` interpolation scheme.
 The resulting point cube will match the respective coordinates to
 those of the input coordinates. If the input coordinate is a scalar,
@@ -1824,13 +1824,19 @@ See also :func:`esmvalcore.preprocessor.volume_statistics`.
 ---------------------
 
 This function operates over a given axis, and removes it of the
-output cube. 
+output cube.
 
 Takes arguments:
   * axis: direction over which the statistics will be performed.
-  * operator: defines the operation to apply over the axis. 
+    Possible values for the axis are 'x', 'y', 'z', 't'.
+  * operator: defines the operation to apply over the axis.
     Available operator are 'mean', 'median', 'std_dev', 'sum', 'variance',
     'min', 'max', 'rms'.
+
+.. note::
+   The coordinate associated to the axis over which the operation will
+   be performed must be one-dimensional, as multidimensional coordinates
+   are not supported in this preprocessor.
 
 See also :func:`esmvalcore.preprocessor.axis_statistics`.
 

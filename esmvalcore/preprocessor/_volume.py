@@ -288,7 +288,8 @@ def axis_statistics(cube, axis, operator):
     cube: iris.cube.Cube
         Input cube.
     axis: str
-        Direction over where to apply the operator.
+        Direction over where to apply the operator. Possible values
+        are 'x', 'y', 'z', 't'.
     operator: str
         Statistics to perform. Available operators are:
         'mean', 'median', 'std_dev', 'sum', 'variance',
