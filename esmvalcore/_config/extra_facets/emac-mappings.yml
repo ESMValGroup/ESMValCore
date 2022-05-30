@@ -9,15 +9,15 @@
 # - The facets ``channel`` and ``postproc_flag`` have to be specified in the
 #   recipe if they are not given here.
 # - If ``raw_name`` is omitted and no derivation in the EMAC fix is given, the
-#   CMOR short_name is used by default. To accept single and multiple raw names
-#   for a variable, ``raw_name`` can be given as str and list. In the latter
-#   case, the prioritization is given by the order of the list; if possible,
-#   use the first entry, if this is not present, use the second, etc. This is
-#   particularly useful for variables where regular averages ("*_ave") or
-#   conditional averages ("*_cav") exist. For 3D variables defined on pressure
-#   levels, only the pressure levels defined by the CMOR table (e.g., for
-#   Amon's ta: "tm1_p19_cav" and "tm1_p19_ave") are given. If other pressure
-#   levels are desired, e.g., "tm1_p39_cav", this has to be explicitly
+#   CMOR short_name is used by default. To support single and multiple raw
+#   names for a variable, ``raw_name`` can be given as str and list. In the
+#   latter case, the prioritization is given by the order of the list; if
+#   possible, use the first entry, if this is not present, use the second, etc.
+#   This is particularly useful for variables where regular averages ("*_ave")
+#   or conditional averages ("*_cav") exist. For 3D variables defined on
+#   pressure levels, only the pressure levels defined by the CMOR table (e.g.,
+#   for Amon's ta: "tm1_p19_cav" and "tm1_p19_ave") are given. If other
+#   pressure levels are desired, e.g., "tm1_p39_cav", this has to be explicitly
 #   specified in the recipe using "raw_name: tm1_p39_cav" or "raw_name:
 #   [tm1_p19_cav, tm1_p39_cav]".
 # - Asterisks ("*") in the comments in list below refer to either "cav" or
