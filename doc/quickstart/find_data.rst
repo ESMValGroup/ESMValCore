@@ -145,7 +145,7 @@ EMAC
 ^^^^
 
 ESMValTool is able to read native `EMAC
-<https://www.dlr.de/pa/en/desktopdefault.aspx/tabid-8859/15306_read-37415/`_
+<https://www.dlr.de/pa/en/desktopdefault.aspx/tabid-8859/15306_read-37415/>`_
 model output.
 
 The default naming conventions for input directories and files for EMAC are
