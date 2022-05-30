@@ -1976,7 +1976,7 @@ See also :func:`esmvalcore.preprocessor.convert_units`.
 
 
 ``accumulate_coordinate``
------------------
+-------------------------
 
 This function can be used to weight data using the bounds from a given coordinate.
 The resulting cube will then have units given by ``cube_units * coordinate_units``.
