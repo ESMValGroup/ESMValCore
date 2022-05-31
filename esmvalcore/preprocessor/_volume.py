@@ -318,7 +318,8 @@ def axis_statistics(cube, axis, operator):
         coord_dim = coord_dims[0]
         expand = list(range(cube.ndim))
         expand.remove(coord_dim)
-        weights = np.abs(coord.bounds[..., 1] - coord.bounds[..., 0])
+        bounds = coord.core_bounds()
+        weights = np.abs(bounds[..., 1] - bounds[..., 0])
         weights = np.expand_dims(weights, expand)
         weights = da.broadcast_to(weights, cube.shape)
         result = cube.collapsed(coord,
