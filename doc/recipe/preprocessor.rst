@@ -1823,7 +1823,7 @@ See also :func:`esmvalcore.preprocessor.volume_statistics`.
 ``axis_statistics``
 ---------------------
 
-This function operates over a given axis, and removes it of the
+This function operates over a given axis, and removes it from the
 output cube.
 
 Takes arguments:
