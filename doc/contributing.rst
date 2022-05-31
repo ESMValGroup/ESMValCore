@@ -734,9 +734,10 @@ to run their favourite recipe using this branch.
 3. Increase the version number
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The version number is stored in ``esmvalcore/_version.py``, ``CITATION.cff``.
-Make sure to update both files.
-Also update the release date in ``CITATION.cff``.
+The version number is automatically generated from the information provided by
+git using [setuptools-scm](https://pypi.org/project/setuptools-scm/), but a
+static version number is stored in ``CITATION.cff``.
+Make sure to update the version number and release date in ``CITATION.cff``.
 See https://semver.org for more information on choosing a version number.
 Make a pull request and get it merged into ``main`` and cherry pick it into
 the release branch.
