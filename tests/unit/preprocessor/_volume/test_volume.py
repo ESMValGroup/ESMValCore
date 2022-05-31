@@ -172,6 +172,13 @@ class Test(tests.Test):
             mask=[False, False])
         self.assert_array_equal(result.data, expected)
 
+    def test_volume_statistics_wrong_operator(self):
+        with self.assertRaises(ValueError) as err:
+            volume_statistics(self.grid_4d, 'wrong')
+        self.assertEqual(
+            'Volume operator wrong not recognised.',
+            str(err.exception))
+
     def test_depth_integration_1d(self):
         """Test to take the depth integration of a 3 layer cube."""
         result = depth_integration(self.grid_3d[:, 0, 0])
