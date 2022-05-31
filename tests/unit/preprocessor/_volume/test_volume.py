@@ -153,6 +153,10 @@ class Test(tests.Test):
         self.assert_array_equal(result.data, expected)
 
     def test_volume_statistics_weights(self):
+        """Test to take the volume weighted average of a (2,3,2,2) cube.
+
+        The data and weights are not defined as arrays of ones.
+        """
         data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
         self.grid_4d.data = data
         measure = iris.coords.CellMeasure(
