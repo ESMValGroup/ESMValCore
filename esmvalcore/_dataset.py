@@ -26,6 +26,121 @@ from .preprocessor._time import clip_timerange
 logger = logging.getLogger(__name__)
 
 
+class Dataset:
+
+    def __init__(self, **facets):
+
+        self.facets = facets
+
+    def __eq__(self, other):
+        return isinstance(other,
+                          self.__class__) and self.facets == other.facets
+
+    def __repr__(self):
+        return repr(self.facets)
+
+    def augment_facets(self, config_user):
+        """Augment facets."""
+        _add_extra_facets(self.facets, config_user['extra_facets_dir'])
+        if 'institute' not in self.facets:
+            institute = get_institutes(self.facets)
+            if institute:
+                self.facets['institute'] = institute
+        if 'activity' not in self.facets:
+            activity = get_activity(self.facets)
+            if activity:
+                self.facets['activity'] = activity
+        _add_cmor_info(self.facets)
+        _get_timerange_from_years(self.facets)
+        _update_timerange(self, config_user)
+        self.facets['filename'] = get_output_file(self.facets,
+                                                  config_user['preproc_dir'])
+
+    def find_files(self, config_user, debug=False):
+        """Find files."""
+        facets = dict(self.facets)
+        if facets['frequency'] != 'fx':
+            start_year, end_year = _parse_period(facets['timerange'])
+
+            start_year = int(str(start_year[0:4]))
+            end_year = int(str(end_year[0:4]))
+
+            facets['start_year'] = start_year
+            facets['end_year'] = end_year
+        (input_files, dirnames,
+         filenames) = get_input_filelist(facets,
+                                         rootpath=config_user['rootpath'],
+                                         drs=config_user['drs'])
+
+        # Set up downloading from ESGF if requested.
+        if (not config_user['offline']
+                and facets['project'] in esgf.facets.FACETS):
+            try:
+                check.data_availability(
+                    input_files,
+                    facets,
+                    dirnames,
+                    filenames,
+                    log=False,
+                )
+            except RecipeError:
+                # Only look on ESGF if files are not available locally.
+                local_files = set(Path(f).name for f in input_files)
+                search_result = esgf.find_files(**facets)
+                for file in search_result:
+                    local_copy = file.local_file(config_user['download_dir'])
+                    if local_copy.name not in local_files:
+                        input_files.append(str(local_copy))
+
+                dirnames.append('ESGF:')
+
+        self.files = input_files
+        if debug:
+            return (input_files, dirnames, filenames)
+        return input_files
+
+    def load(self, check_level=CheckLevels.DEFAULT):
+        """Load dataset."""
+
+        cubes = []
+        for filename in self.files:
+            fix_dir = os.path.splitext(self.facets['filename'])[0] + '_fixed'
+            filename = fix_file(filename, output_dir=fix_dir, **self.facets)
+
+            file_cubes = load(filename, callback=concatenate_callback)
+            cubes.extend(file_cubes)
+
+        cubes = fix_metadata(cubes, check_level=check_level, **self.facets)
+
+        cube = concatenate(cubes)
+
+        cube = cmor_check_metadata(
+            cube,
+            cmor_table=self.facets['project'],
+            mip=self.facets['mip'],
+            short_name=self.facets['short_name'],
+            frequency=self.facets['frequency'],
+            check_level=check_level,
+        )
+
+        if 'timerange' in self.facets and self.facets['frequency'] != 'fx':
+            cube = clip_timerange(cube, self.facets['timerange'])
+
+        cube = fix_data(cube, check_level=check_level, **self.facets)
+
+        cube = cmor_check_data(
+            cube,
+            cmor_table=self.facets['project'],
+            mip=self.facets['mip'],
+            short_name=self.facets['short_name'],
+            frequency=self.facets['frequency'],
+            check_level=check_level,
+        )
+        # TODO: add fx variables with `add_fx_variables`
+
+        return cube
+
+
 def _augment(base, update):
     """Update dict base with values from dict update."""
     for key in update:
@@ -79,21 +194,20 @@ def _add_extra_facets(facets, extra_facets_dir):
     _augment(facets, extra_facets)
 
 
-def _update_timerange(facets, config_user):
+def _update_timerange(dataset: Dataset, config_user):
     """Update wildcards in timerange with found datetime values.
 
     If the timerange is given as a year, it ensures it's formatted as a
     4-digit value (YYYY).
     """
-    if 'timerange' not in facets:
+    if 'timerange' not in dataset.facets:
         return
 
-    timerange = facets.get('timerange')
+    timerange = dataset.facets.get('timerange')
     check.valid_time_selection(timerange)
 
     if '*' in timerange:
-        (files, _, _) = _find_input_files(facets, config_user['rootpath'],
-                                          config_user['drs'])
+        files = dataset.find_files(config_user)
         if not files:
             if not config_user.get('offline', True):
                 msg = (
@@ -104,8 +218,8 @@ def _update_timerange(facets, config_user):
             else:
                 msg = ""
             raise InputFilesNotFound(
-                f"Missing data for {facets['alias']}: "
-                f"{facets['short_name']}. Cannot determine indeterminate "
+                f"Missing data for {dataset.facets['alias']}: "
+                f"{dataset.facets['short_name']}. Cannot determine "
                 f"time range '{timerange}'.{msg}")
 
         intervals = [get_start_end_date(name) for name in files]
@@ -125,124 +239,7 @@ def _update_timerange(facets, config_user):
     timerange = dates_to_timerange(start_date, end_date)
     check.valid_time_selection(timerange)
 
-    facets['timerange'] = timerange
-
-
-class Dataset:
-
-    def __init__(self, **facets):
-
-        self.facets = facets
-
-    def __eq__(self, other):
-        return isinstance(other,
-                          self.__class__) and self.facets == other.facets
-
-    def __repr__(self):
-        return repr(self.facets)
-
-    def augment_facets(self, config_user):
-        """Augment facets."""
-        _add_extra_facets(self.facets, config_user['extra_facets_dir'])
-        if 'institute' not in self.facets:
-            institute = get_institutes(self.facets)
-            if institute:
-                self.facets['institute'] = institute
-        if 'activity' not in self.facets:
-            activity = get_activity(self.facets)
-            if activity:
-                self.facets['activity'] = activity
-        _add_cmor_info(self.facets)
-        _get_timerange_from_years(self.facets)
-        _update_timerange(self.facets, config_user)
-        self.facets['filename'] = get_output_file(self.facets,
-                                                  config_user['preproc_dir'])
-
-    def find_files(self, config_user, debug=False):
-        """Get the input files for a single dataset (locally and via download)."""
-        facets = dict(self.facets)
-        if facets['frequency'] != 'fx':
-            start_year, end_year = _parse_period(facets['timerange'])
-
-            start_year = int(str(start_year[0:4]))
-            end_year = int(str(end_year[0:4]))
-
-            facets['start_year'] = start_year
-            facets['end_year'] = end_year
-        (input_files, dirnames,
-         filenames) = get_input_filelist(facets,
-                                         rootpath=config_user['rootpath'],
-                                         drs=config_user['drs'])
-
-        # Set up downloading from ESGF if requested.
-        if (not config_user['offline']
-                and facets['project'] in esgf.facets.FACETS):
-            try:
-                check.data_availability(
-                    input_files,
-                    facets,
-                    dirnames,
-                    filenames,
-                    log=False,
-                )
-            except RecipeError:
-                # Only look on ESGF if files are not available locally.
-                local_files = set(Path(f).name for f in input_files)
-                search_result = esgf.find_files(**facets)
-                for file in search_result:
-                    local_copy = file.local_file(config_user['download_dir'])
-                    if local_copy.name not in local_files:
-                        input_files.append(str(local_copy))
-
-                dirnames.append('ESGF:')
-
-        self.files = input_files
-        if debug:
-            return (input_files, dirnames, filenames)
-        return input_files
-
-    def load(self, check_level=CheckLevels.DEFAULT):
-        """Load dataset.
-
-        """
-
-        cubes = []
-        for filename in self.files:
-            fix_dir = os.path.splitext(self.facets['filename'])[0] + '_fixed'
-            filename = fix_file(filename, output_dir=fix_dir, **self.facets)
-
-            file_cubes = load(filename, callback=concatenate_callback)
-            cubes.extend(file_cubes)
-
-        cubes = fix_metadata(cubes, check_level=check_level, **self.facets)
-
-        cube = concatenate(cubes)
-
-        cube = cmor_check_metadata(
-            cube,
-            cmor_table=self.facets['project'],
-            mip=self.facets['mip'],
-            short_name=self.facets['short_name'],
-            frequency=self.facets['frequency'],
-            check_level=check_level,
-        )
-
-        if 'timerange' in self.facets and self.facets['frequency'] != 'fx':
-            cube = clip_timerange(cube, self.facets['timerange'])
-
-        cube = fix_data(cube, check_level=check_level, **self.facets)
-
-        cube = cmor_check_data(
-            cube,
-            cmor_table=self.facets['project'],
-            mip=self.facets['mip'],
-            short_name=self.facets['short_name'],
-            frequency=self.facets['frequency'],
-            check_level=check_level,
-        )
-        # TODO: add fx variables with `add_fx_variables`
-
-        return cube
+    dataset.facets['timerange'] = timerange
 
 
 def _expand_tag(facets, input_tag):
