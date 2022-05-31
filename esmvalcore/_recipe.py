@@ -17,22 +17,21 @@ from . import _recipe_checks as check
 from . import esgf
 from ._config import TAGS, get_project_config
 from ._data_finder import (
-    _get_input_files,
     _parse_period,
     _truncate_dates,
     dates_to_timerange,
     get_multiproduct_filename,
 )
-from ._dataset import (
+from ._provenance import TrackedFile, get_recipe_provenance
+from ._task import DiagnosticTask, ResumeTask, TaskSet
+from .cmor.table import CMOR_TABLES
+from .dataset import (
     _add_cmor_info,
     _add_extra_facets,
     _augment,
     _update_timerange,
+    datasets_from_recipe,
 )
-from ._provenance import TrackedFile, get_recipe_provenance
-from ._task import DiagnosticTask, ResumeTask, TaskSet
-from .cmor.check import CheckLevels
-from .cmor.table import CMOR_TABLES
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import (
     DEFAULT_ORDER,
@@ -60,7 +59,7 @@ DOWNLOAD_FILES = set()
 """Use a global variable to keep track of files that need to be downloaded."""
 
 
-def read_recipe_file(filename, config_user, initialize_tasks=True):
+def read_recipe_file(filename: Path, config_user):
     """Read a recipe from file."""
     check.recipe_with_schema(filename)
     with open(filename, 'r') as file:
@@ -68,7 +67,6 @@ def read_recipe_file(filename, config_user, initialize_tasks=True):
 
     return Recipe(raw_recipe,
                   config_user,
-                  initialize_tasks,
                   recipe_file=filename)
 
 
@@ -219,7 +217,7 @@ def _get_default_settings(variable, config_user, derive=False):
     settings = {}
 
     settings['load'] = {
-        'check_level': config_user.get('check_level', CheckLevels.DEFAULT),
+        'check_level': config_user['check_level'],
     }
 
     if derive:
@@ -243,10 +241,6 @@ def _get_default_settings(variable, config_user, derive=False):
         settings['save']['alias'] = variable['short_name']
 
     # Configure fx settings
-    settings['add_fx_variables'] = {
-        'fx_variables': {},
-        'check_level': config_user.get('check_level', CheckLevels.DEFAULT)
-    }
     settings['remove_fx_variables'] = {}
 
     return settings
@@ -1047,8 +1041,7 @@ class Recipe:
     def __init__(self,
                  raw_recipe,
                  config_user,
-                 initialize_tasks=True,
-                 recipe_file=None):
+                 recipe_file: Path):
         """Parse a recipe file into an object."""
         # Clear the global variable containing the set of files to download
         DOWNLOAD_FILES.clear()
@@ -1062,12 +1055,13 @@ class Recipe:
         self._preprocessors = raw_recipe.get('preprocessors', {})
         if 'default' not in self._preprocessors:
             self._preprocessors['default'] = {}
+        self.datasets = datasets_from_recipe(raw_recipe)
         self.diagnostics = self._initialize_diagnostics(
             raw_recipe['diagnostics'], raw_recipe.get('datasets', []))
         self.entity = self._initialize_provenance(
             raw_recipe.get('documentation', {}))
         try:
-            self.tasks = self.initialize_tasks() if initialize_tasks else None
+            self.tasks = self.initialize_tasks()
         except RecipeError as exc:
             self._log_recipe_errors(exc)
             raise

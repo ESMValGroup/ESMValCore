@@ -11,6 +11,7 @@ from pathlib import Path
 
 import yaml
 
+from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.cmor.table import CMOR_TABLES, read_cmor_tables
 from esmvalcore.exceptions import RecipeError
 
@@ -105,6 +106,7 @@ def read_config_user_file(config_file, folder_name, options=None):
     # set defaults
     defaults = {
         'auxiliary_data_dir': '~/auxiliary_data',
+        'check_levels': CheckLevels.DEFAULT,
         'compress_netcdf': False,
         'config_developer_file': None,
         'drs': {},

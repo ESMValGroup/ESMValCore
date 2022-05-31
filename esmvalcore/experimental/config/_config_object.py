@@ -8,6 +8,7 @@ from typing import Union
 import yaml
 
 import esmvalcore
+from esmvalcore.cmor.check import CheckLevels
 
 from ._config_validators import _validators
 from ._validated_config import ValidatedConfig
@@ -73,6 +74,7 @@ class Config(ValidatedConfig):
         # Add defaults that are not available in esmvalcore/config-user.yml
         mapping['extra_facets_dir'] = tuple()
         mapping['resume_from'] = []
+        mapping['check_level'] = CheckLevels.DEFAULT
 
         new.update(mapping)
 

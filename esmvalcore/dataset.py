@@ -1,6 +1,5 @@
 import copy
 import logging
-import os.path
 import re
 from pathlib import Path
 
@@ -12,14 +11,12 @@ from ._data_finder import (
     _parse_period,
     dates_to_timerange,
     get_input_filelist,
+    get_output_file,
     get_start_end_date,
 )
-from ._recipe_checks import RecipeError
-from .cmor.check import CheckLevels, cmor_check_data, cmor_check_metadata
-from .cmor.fix import fix_data, fix_file, fix_metadata
 from .cmor.table import CMOR_TABLES
-from .exceptions import InputFilesNotFound
-from .preprocessor import add_fx_variables, clip_timerange, concatenate, load
+from .exceptions import InputFilesNotFound, RecipeError
+from .preprocessor import add_fx_variables, preprocess
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +29,9 @@ class Dataset:
         self.ancillaries = []
 
     def __eq__(self, other):
-        return isinstance(other,
-                          self.__class__) and self.facets == other.facets
+        return (isinstance(other, self.__class__)
+                and self.facets == other.facets
+                and self.ancillaries == other.ancillaries)
 
     def __repr__(self):
         return repr(self.facets)
@@ -111,49 +109,79 @@ class Dataset:
             return (input_files, dirnames, filenames)
         return input_files
 
-    def load(self, check_level=CheckLevels.DEFAULT):
+    def load(self, session):
         """Load dataset."""
-        cube = self._load(check_level)
-        fx_cubes = [dataset.load(check_level) for dataset in self.ancillaries]
+        check_level = session['check_level']
+        preproc_dir = session.preproc_dir
+        cube = self._load(preproc_dir, check_level)
+        fx_cubes = []
+        for ancillary_dataset in self.ancillaries:
+            if ancillary_dataset.files:
+                fx_cube = ancillary_dataset._load(preproc_dir, check_level)
+                fx_cubes.append(fx_cube)
         add_fx_variables(cube, fx_cubes)
-
-    def _load(self, check_level):
-        cubes = []
-        for filename in self.files:
-            fix_dir = os.path.splitext(self.facets['filename'])[0] + '_fixed'
-            filename = fix_file(filename, output_dir=fix_dir, **self.facets)
-
-            file_cubes = load(filename)
-            cubes.extend(file_cubes)
-
-        cubes = fix_metadata(cubes, check_level=check_level, **self.facets)
-
-        cube = concatenate(cubes)
-
-        cube = cmor_check_metadata(
-            cube,
-            cmor_table=self.facets['project'],
-            mip=self.facets['mip'],
-            short_name=self.facets['short_name'],
-            frequency=self.facets['frequency'],
-            check_level=check_level,
-        )
-
-        if 'timerange' in self.facets and self.facets['frequency'] != 'fx':
-            cube = clip_timerange(cube, self.facets['timerange'])
-
-        cube = fix_data(cube, check_level=check_level, **self.facets)
-
-        cube = cmor_check_data(
-            cube,
-            cmor_table=self.facets['project'],
-            mip=self.facets['mip'],
-            short_name=self.facets['short_name'],
-            frequency=self.facets['frequency'],
-            check_level=check_level,
-        )
-
         return cube
+
+    def _load(self, preproc_dir, check_level):
+        """Load self.files into an iris cube and return it."""
+        output_file = get_output_file(self.facets, preproc_dir)
+        settings = {
+            'fix_file': {
+                'output_dir': f"{output_file.with_suffix('')}_fixed",
+                **self.facets,
+            },
+            'load': {},
+            'fix_metadata': {
+                'check_level': check_level,
+                **self.facets,
+            },
+            'concatenate': {},
+            'fix_data': {
+                'check_level': check_level,
+                **self.facets,
+            },
+            'cmor_check_metadata': {
+                'check_level': check_level,
+                'cmor_table': self.facets['project'],
+                'mip': self.facets['mip'],
+                'frequency': self.facets['frequency'],
+                'short_name': self.facets['short_name'],
+            },
+            'cmor_check_data': {
+                'check_level': check_level,
+                'cmor_table': self.facets['project'],
+                'mip': self.facets['mip'],
+                'frequency': self.facets['frequency'],
+                'short_name': self.facets['short_name'],
+            },
+        }
+        if 'timerange' in self.facets and self.facets['frequency'] != 'fx':
+            settings['clip_timerange'] = {
+                'timerange': self.facets['timerange'],
+            }
+
+        result = self.files
+        for step, args in settings.items():
+            result = preprocess(result, step, input_files=self.files, **args)
+        cube = result[0]
+        return cube
+
+
+def _format_facets(facets):
+    """Format facets into a kind of human readable string."""
+    keys = (
+        'project',
+        'dataset',
+        'rcm_version',
+        'driver',
+        'domain',
+        'mip',
+        'exp',
+        'ensemble',
+        'grid',
+        'short_name',
+    )
+    return ", ".join(facets[k] for k in keys if k in facets)
 
 
 def _augment(base, update):
@@ -233,9 +261,8 @@ def _update_timerange(dataset: Dataset, session):
             else:
                 msg = ""
             raise InputFilesNotFound(
-                f"Missing data for {dataset.facets['alias']}: "
-                f"{dataset.facets['short_name']}. Cannot determine "
-                f"time range '{timerange}'.{msg}")
+                f"Missing data for: {_format_facets(dataset.facets)}"
+                f"Cannot determine time range '{timerange}'.{msg}")
 
         intervals = [get_start_end_date(name) for name in files]
 
@@ -318,7 +345,11 @@ def datasets_from_recipe(recipe):
                 facets['variable_group'] = variable_group
                 if 'short_name' not in facets:
                     facets['short_name'] = variable_group
-
+                if facets['project'] == 'obs4mips':
+                    logger.warning(
+                        "Correcting capitalization, project 'obs4mips' "
+                        "should be written as 'obs4MIPs'")
+                    facets['project'] = 'obs4MIPs'
                 for facets0 in _expand_tag(facets, 'ensemble'):
                     for facets1 in _expand_tag(facets0, 'sub_experiment'):
                         facets1['recipe_dataset_index'] = idx

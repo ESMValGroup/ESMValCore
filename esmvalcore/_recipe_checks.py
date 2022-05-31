@@ -11,6 +11,7 @@ import isodate
 import yamale
 
 from ._data_finder import get_start_end_year
+from .dataset import _format_facets
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from .preprocessor._multimodel import STATISTIC_MAPPING
@@ -152,7 +153,7 @@ def data_availability(input_files, var, dirnames, filenames, log=True):
 
     if not input_files:
         raise InputFilesNotFound(
-            f"Missing data for {var['alias']}: {var['short_name']}")
+            f"Missing data for: {_format_facets(var)}")
 
     if var['frequency'] == 'fx':
         # check time availability only for non-fx variables

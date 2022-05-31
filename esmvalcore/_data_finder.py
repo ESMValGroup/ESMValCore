@@ -144,7 +144,6 @@ def dates_to_timerange(start_date, end_date):
     -------
     str
         ``timerange`` in the form ``'start_date/end_date'``.
-
     """
     start_date = str(start_date)
     end_date = str(end_date)
@@ -283,7 +282,6 @@ def _truncate_dates(date, file_date):
     same number of digits. If this is not the case, pad the dates with leading
     zeros (e.g., use ``date='0100'`` and ``file_date='199901'`` for a correct
     comparison).
-
     """
     date = re.sub("[^0-9]", '', date)
     file_date = re.sub("[^0-9]", '', file_date)
@@ -504,7 +502,7 @@ def get_input_filelist(variable, rootpath, drs):
     return (files, dirnames, filenames)
 
 
-def get_output_file(variable, preproc_dir):
+def get_output_file(variable, preproc_dir) -> Path:
     """Return the full path to the output (preprocessed) file."""
     cfg = get_project_config(variable['project'])
 
@@ -513,18 +511,17 @@ def get_output_file(variable, preproc_dir):
         variable = dict(variable)
         variable['exp'] = '-'.join(variable['exp'])
 
-    outfile = os.path.join(
-        preproc_dir,
-        variable['diagnostic'],
-        variable['variable_group'],
-        _replace_tags(cfg['output_file'], variable)[0],
-    )
+    outfile = _replace_tags(cfg['output_file'], variable)[0]
     if variable['frequency'] != 'fx':
         timerange = variable['timerange'].replace('/', '-')
         outfile += f'_{timerange}'
-
     outfile += '.nc'
-    return outfile
+    return Path(
+        preproc_dir,
+        variable.get('diagnostic', ''),
+        variable.get('variable_group', ''),
+        outfile,
+    )
 
 
 def get_multiproduct_filename(attributes, preproc_dir):

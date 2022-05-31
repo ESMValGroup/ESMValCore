@@ -2,7 +2,7 @@ import textwrap
 
 import yaml
 
-from esmvalcore._dataset import (
+from esmvalcore.dataset import (
     Dataset,
     datasets_from_recipe,
     datasets_to_recipe,

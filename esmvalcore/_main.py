@@ -68,7 +68,7 @@ def parse_resume(resume, recipe):
     return resume
 
 
-def process_recipe(recipe_file, config_user):
+def process_recipe(recipe_file: Path, config_user):
     """Process recipe."""
     import datetime
     import os
