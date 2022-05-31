@@ -5,51 +5,7 @@ import logging
 import dask.array as da
 import iris
 
-from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
-from esmvalcore.cmor.fix import fix_data, fix_metadata
-from esmvalcore.preprocessor._io import concatenate, concatenate_callback, load
-
 logger = logging.getLogger(__name__)
-
-
-def _load_fx(var_cube, fx_info, check_level):
-    """Load and CMOR-check fx variables."""
-    fx_cubes = iris.cube.CubeList()
-
-    project = fx_info['project']
-    mip = fx_info['mip']
-    short_name = fx_info['short_name']
-    freq = fx_info['frequency']
-
-    for fx_file in fx_info['filename']:
-        loaded_cube = load(fx_file, callback=concatenate_callback)
-        loaded_cube = fix_metadata(loaded_cube,
-                                   check_level=check_level,
-                                   **fx_info)
-        fx_cubes.append(loaded_cube[0])
-
-    fx_cube = concatenate(fx_cubes)
-
-    if not _is_fx_broadcastable(fx_cube, var_cube):
-        return None
-
-    fx_cube = cmor_check_metadata(fx_cube,
-                                  cmor_table=project,
-                                  mip=mip,
-                                  short_name=short_name,
-                                  frequency=freq,
-                                  check_level=check_level)
-
-    fx_cube = fix_data(fx_cube, check_level=check_level, **fx_info)
-
-    fx_cube = cmor_check_data(fx_cube,
-                              cmor_table=project,
-                              mip=mip,
-                              short_name=fx_cube.var_name,
-                              frequency=freq,
-                              check_level=check_level)
-
-    return fx_cube
 
 
 def _is_fx_broadcastable(fx_cube, cube):
@@ -128,7 +84,7 @@ def add_ancillary_variable(cube, fx_cube):
                  fx_cube.var_name, cube.var_name)
 
 
-def add_fx_variables(cube, fx_variables, check_level):
+def add_fx_variables(cube, fx_variables):
     """Load requested fx files, check with CMOR standards and add the fx
     variables as cell measures or ancillary variables in the cube containing
     the data.
@@ -137,11 +93,8 @@ def add_fx_variables(cube, fx_variables, check_level):
     ----------
     cube: iris.cube.Cube
         Iris cube with input data.
-    fx_variables: dict
-        Dictionary with fx_variable information.
-    check_level: CheckLevels
-        Level of strictness of the checks.
-
+    fx_variables: :obj:`list` of :obj:`iris.cube.Cube`
+        Cube containing ancillary variables.
 
     Returns
     -------
@@ -151,21 +104,16 @@ def add_fx_variables(cube, fx_variables, check_level):
 
     if not fx_variables:
         return cube
-    for fx_info in fx_variables.values():
-        if not fx_info:
-            continue
-        if isinstance(fx_info['filename'], str):
-            fx_info['filename'] = [fx_info['filename']]
-        fx_cube = _load_fx(cube, fx_info, check_level)
 
-        if fx_cube is None:
-            continue
+    measure_name = {
+        'areacella': 'area',
+        'areacello': 'area',
+        'volcello': 'volume'
+    }
 
-        measure_name = {
-            'areacella': 'area',
-            'areacello': 'area',
-            'volcello': 'volume'
-        }
+    for fx_cube in fx_variables:
+        if not _is_fx_broadcastable(fx_cube, cube):
+            continue
 
         if fx_cube.var_name in measure_name:
             add_cell_measure(cube, fx_cube, measure_name[fx_cube.var_name])

@@ -12,7 +12,6 @@ from ._data_finder import (
     _parse_period,
     dates_to_timerange,
     get_input_filelist,
-    get_output_file,
     get_start_end_date,
 )
 from ._recipe_checks import RecipeError
@@ -20,8 +19,7 @@ from .cmor.check import CheckLevels, cmor_check_data, cmor_check_metadata
 from .cmor.fix import fix_data, fix_file, fix_metadata
 from .cmor.table import CMOR_TABLES
 from .exceptions import InputFilesNotFound
-from .preprocessor._io import concatenate, concatenate_callback, load
-from .preprocessor._time import clip_timerange
+from .preprocessor import add_fx_variables, clip_timerange, concatenate, load
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +28,8 @@ class Dataset:
 
     def __init__(self, **facets):
 
-        self.facets = facets
+        self.facets = copy.deepcopy(facets)
+        self.ancillaries = []
 
     def __eq__(self, other):
         return isinstance(other,
@@ -39,9 +38,18 @@ class Dataset:
     def __repr__(self):
         return repr(self.facets)
 
-    def augment_facets(self, config_user):
+    def add_ancillary(self, **facets):
+        _augment(facets, self.facets)
+        self.ancillaries.append(Dataset(**facets))
+
+    def augment_facets(self, session):
         """Augment facets."""
-        _add_extra_facets(self.facets, config_user['extra_facets_dir'])
+        self._augment_facets(session)
+        for ancillary in self.ancillaries:
+            ancillary._augment_facets(session)
+
+    def _augment_facets(self, session):
+        _add_extra_facets(self.facets, session['extra_facets_dir'])
         if 'institute' not in self.facets:
             institute = get_institutes(self.facets)
             if institute:
@@ -52,12 +60,15 @@ class Dataset:
                 self.facets['activity'] = activity
         _add_cmor_info(self.facets)
         _get_timerange_from_years(self.facets)
-        _update_timerange(self, config_user)
-        self.facets['filename'] = get_output_file(self.facets,
-                                                  config_user['preproc_dir'])
+        _update_timerange(self, session)
 
-    def find_files(self, config_user, debug=False):
+    def find_files(self, session, debug=False):
         """Find files."""
+        self._find_files(session, debug)
+        for ancillary in self.ancillaries:
+            ancillary._find_files(session, debug)
+
+    def _find_files(self, session, debug):
         facets = dict(self.facets)
         if facets['frequency'] != 'fx':
             start_year, end_year = _parse_period(facets['timerange'])
@@ -69,11 +80,11 @@ class Dataset:
             facets['end_year'] = end_year
         (input_files, dirnames,
          filenames) = get_input_filelist(facets,
-                                         rootpath=config_user['rootpath'],
-                                         drs=config_user['drs'])
+                                         rootpath=session['rootpath'],
+                                         drs=session['drs'])
 
         # Set up downloading from ESGF if requested.
-        if (not config_user['offline']
+        if (not session['offline']
                 and facets['project'] in esgf.facets.FACETS):
             try:
                 check.data_availability(
@@ -88,26 +99,31 @@ class Dataset:
                 local_files = set(Path(f).name for f in input_files)
                 search_result = esgf.find_files(**facets)
                 for file in search_result:
-                    local_copy = file.local_file(config_user['download_dir'])
+                    local_copy = file.local_file(session['download_dir'])
                     if local_copy.name not in local_files:
                         input_files.append(str(local_copy))
 
                 dirnames.append('ESGF:')
 
         self.files = input_files
+        # TODO: should this function return the files?
         if debug:
             return (input_files, dirnames, filenames)
         return input_files
 
     def load(self, check_level=CheckLevels.DEFAULT):
         """Load dataset."""
+        cube = self._load(check_level)
+        fx_cubes = [dataset.load(check_level) for dataset in self.ancillaries]
+        add_fx_variables(cube, fx_cubes)
 
+    def _load(self, check_level):
         cubes = []
         for filename in self.files:
             fix_dir = os.path.splitext(self.facets['filename'])[0] + '_fixed'
             filename = fix_file(filename, output_dir=fix_dir, **self.facets)
 
-            file_cubes = load(filename, callback=concatenate_callback)
+            file_cubes = load(filename)
             cubes.extend(file_cubes)
 
         cubes = fix_metadata(cubes, check_level=check_level, **self.facets)
@@ -136,7 +152,6 @@ class Dataset:
             frequency=self.facets['frequency'],
             check_level=check_level,
         )
-        # TODO: add fx variables with `add_fx_variables`
 
         return cube
 
@@ -194,7 +209,7 @@ def _add_extra_facets(facets, extra_facets_dir):
     _augment(facets, extra_facets)
 
 
-def _update_timerange(dataset: Dataset, config_user):
+def _update_timerange(dataset: Dataset, session):
     """Update wildcards in timerange with found datetime values.
 
     If the timerange is given as a year, it ensures it's formatted as a
@@ -207,9 +222,9 @@ def _update_timerange(dataset: Dataset, config_user):
     check.valid_time_selection(timerange)
 
     if '*' in timerange:
-        files = dataset.find_files(config_user)
+        files = dataset.find_files(session)
         if not files:
-            if not config_user.get('offline', True):
+            if not session.get('offline', True):
                 msg = (
                     " Please note that automatic download is not supported "
                     "with indeterminate time ranges at the moment. Please use "
@@ -308,8 +323,17 @@ def datasets_from_recipe(recipe):
                     for facets1 in _expand_tag(facets0, 'sub_experiment'):
                         facets1['recipe_dataset_index'] = idx
                         idx += 1
+                        ancillaries = facets1.pop('ancillary_variables', [])
                         dataset = Dataset(**facets1)
+                        for ancillary_facets in ancillaries:
+                            if isinstance(ancillary_facets, str):
+                                ancillary_facets = {
+                                    'short_name': ancillary_facets
+                                }
+                            dataset.add_ancillary(**ancillary_facets)
+
                         datasets.append(dataset)
+
     return datasets
 
 

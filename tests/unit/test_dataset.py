@@ -116,6 +116,50 @@ def test_expand_datasets_from_recipe():
     assert datasets_from_recipe(recipe) == datasets
 
 
+def test_ancillary_datasets_from_recipe():
+
+    recipe_txt = textwrap.dedent("""
+
+    datasets:
+      - {dataset: 'dataset1', ensemble: r1i1p1}
+
+    diagnostics:
+      diagnostic1:
+        variables:
+          tos:
+            ancillary_variables:
+              - short_name: sftof
+                ensemble: r0i0p0
+              - areacello
+    """)
+    recipe = yaml.safe_load(recipe_txt)
+
+    dataset = Dataset(
+        diagnostic='diagnostic1',
+        variable_group='tos',
+        short_name='tos',
+        dataset='dataset1',
+        ensemble='r1i1p1',
+        recipe_dataset_index=0,
+    )
+    dataset.ancillaries = [
+        Dataset(
+            diagnostic='diagnostic1',
+            short_name='sftof',
+            dataset='dataset1',
+            ensemble='r0i0p0',
+        ),
+        Dataset(
+            diagnostic='diagnostic1',
+            short_name='areacello',
+            dataset='dataset1',
+            ensemble='r1i1p1',
+        ),
+    ]
+
+    assert datasets_from_recipe(recipe) == [dataset]
+
+
 def test_datasets_to_recipe():
     datasets = [
         Dataset(
