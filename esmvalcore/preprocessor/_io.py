@@ -139,6 +139,12 @@ def load(file, callback=None, ignore_warnings=None):
     logger.debug("Loading:\n%s", file)
     if ignore_warnings is None:
         ignore_warnings = []
+
+    # Avoid duplication of ignored warnings when load() is called more often
+    # than once
+    ignore_warnings = list(ignore_warnings)
+
+    # Default warnings ignored for every dataset
     ignore_warnings.append({
         'message': "Missing CF-netCDF measure variable .*",
         'category': UserWarning,
@@ -149,6 +155,8 @@ def load(file, callback=None, ignore_warnings=None):
         'category': UserWarning,
         'module': 'iris',
     })
+
+    # Filter warnings
     with catch_warnings():
         for warning_kwargs in ignore_warnings:
             warning_kwargs.setdefault('action', 'ignore')
