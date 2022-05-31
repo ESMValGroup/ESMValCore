@@ -5,6 +5,7 @@ import iris.cube
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris import NameConstraint
 
 from esmvalcore.cmor._fixes.shared import (
     add_altitude_from_plev,
@@ -23,7 +24,6 @@ from esmvalcore.cmor._fixes.shared import (
     get_pressure_to_altitude_func,
     round_coordinates,
 )
-from esmvalcore.iris_helpers import var_name_constraint
 
 
 @pytest.mark.sequential
@@ -92,7 +92,7 @@ def test_add_aux_coords_from_cubes(coord_dict, output):
                 assert cube.coord_dims(coord) == coord_dims
             points = np.full(coord.shape, 0.0)
             assert coord.points == points
-            assert not cubes.extract(var_name_constraint(coord_name))
+            assert not cubes.extract(NameConstraint(var_name=coord_name))
         assert len(cubes) == 5 - len(coord_dict)
         return
     with pytest.raises(ValueError) as err:
@@ -106,20 +106,15 @@ def test_add_aux_coords_from_cubes(coord_dict, output):
 
 
 ALT_COORD = iris.coords.AuxCoord([0.0], bounds=[[-100.0, 500.0]],
-                                 var_name='alt', long_name='altitude',
                                  standard_name='altitude', units='m')
-ALT_COORD_NB = iris.coords.AuxCoord([0.0], var_name='alt',
-                                    long_name='altitude',
-                                    standard_name='altitude', units='m')
+ALT_COORD_NB = iris.coords.AuxCoord([0.0], standard_name='altitude', units='m')
 ALT_COORD_KM = iris.coords.AuxCoord([0.0], bounds=[[-0.1, 0.5]],
                                     var_name='alt', long_name='altitude',
                                     standard_name='altitude', units='km')
 P_COORD = iris.coords.AuxCoord([101325.0], bounds=[[102532.0, 95460.8]],
-                               var_name='plev', standard_name='air_pressure',
-                               long_name='pressure', units='Pa')
-P_COORD_NB = iris.coords.AuxCoord([101325.0], var_name='plev',
-                                  standard_name='air_pressure',
-                                  long_name='pressure', units='Pa')
+                               standard_name='air_pressure', units='Pa')
+P_COORD_NB = iris.coords.AuxCoord([101325.0], standard_name='air_pressure',
+                                  units='Pa')
 CUBE_ALT = iris.cube.Cube([1.0], var_name='x',
                           aux_coords_and_dims=[(ALT_COORD, 0)])
 CUBE_ALT_NB = iris.cube.Cube([1.0], var_name='x',

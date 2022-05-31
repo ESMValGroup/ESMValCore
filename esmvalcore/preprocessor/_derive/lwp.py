@@ -2,7 +2,7 @@
 
 import logging
 
-from esmvalcore.iris_helpers import var_name_constraint
+from iris import NameConstraint
 
 from ._baseclass import DerivedVariableBase
 
@@ -37,8 +37,8 @@ class DerivedVariable(DerivedVariableBase):
         """
         # CMIP5 and CMIP6 names are slightly different, so use
         # variable name instead to extract cubes
-        clwvi_cube = cubes.extract_cube(var_name_constraint('clwvi'))
-        clivi_cube = cubes.extract_cube(var_name_constraint('clivi'))
+        clwvi_cube = cubes.extract_cube(NameConstraint(var_name='clwvi'))
+        clivi_cube = cubes.extract_cube(NameConstraint(var_name='clivi'))
 
         # CMIP5 and CMIP6 have different global attributes that we use
         # to determine model name and project name:

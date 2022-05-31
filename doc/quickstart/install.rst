@@ -22,7 +22,7 @@ and install ESMValCore into it with a single command:
 
 .. code-block:: bash
 
-    conda create --name esmvalcore -c conda-forge esmvalcore 'python=3.9'
+    conda create --name esmvalcore -c conda-forge esmvalcore 'python=3.10'
 
 Don't forget to activate the newly created environment after the installation:
 
@@ -199,7 +199,70 @@ To install from source for development, follow these instructions.
 Pre-installed versions on HPC clusters
 --------------------------------------
 
+You will find the tool available on HPC clusters and there will be no need to install it
+yourself if you are just running diagnostics:
+
+ - CEDA-JASMIN: `esmvaltool` is available on the scientific compute nodes (`sciX.jasmin.ac.uk` where
+   `X = 1, 2, 3, 4, 5`) after login and module loading via `module load esmvaltool`; see the helper page at
+   `CEDA <https://help.jasmin.ac.uk/article/4955-community-software-esmvaltool>`__ ;
+ - DKRZ-Mistral: `esmvaltool` is available on login nodes (`mistral.dkrz.de`) and pre- and post-processing
+   nodes (`mistralpp.dkrz.de`) after login and module loading via `module load esmvaltool`; the command
+   `module help esmvaltool` provides some information about the module.
+
 .. note::
     If you would like to use pre-installed versions on HPC clusters (currently CEDA-JASMIN and DKRZ-MISTRAL),
     please have a look at
     :ref:`these instructions <esmvaltool:install_on_hpc>`.
+
+
+.. _condalock-installation-creation:
+
+Installation from the conda lock file
+-------------------------------------
+
+A fast conda environment creation is possible using the provided conda lock files. This is a secure alternative
+to the installation from source, whenever the conda environment can not be created for some reason. A conda lock file
+is an explicit environment file that contains pointers to dependency packages as they are hosted on the Anaconda cloud;
+these have frozen version numbers, build hashes, and channel names, parameters established at the time
+of the conda lock file creation, so may be obsolete after a while,
+but they allow for a robust environment creation while they're still up-to-date.
+We regenerate these lock files every 10 days through automatic Pull Requests
+(or more frequently, since the automatic generator runs on merges on the main branch too),
+so to minimize the risk of dependencies becoming obsolete. Conda environment creation from
+a lock file is done just like with any other environment file:
+
+.. code-block:: bash
+
+   conda create --name esmvaltool --file conda-linux-64.lock
+
+The latest, most up-to-date file can always be downloaded directly from the source code
+repository, a direct download link can be found `here <https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/conda-linux-64.lock>`__.
+
+.. note::
+   `pip` and `conda` are NOT installed, so you will have to install them in the new environment: use conda-forge as channel): ``conda install -c conda-forge pip`` at the very minimum so we can install `esmvalcore` afterwards.
+
+
+Creating a conda lock file
+--------------------------
+
+We provide a conda lock file for Linux-based operating systems, but if you prefer to
+build a conda lock file yourself, install the `conda-lock` package first:
+
+.. code-block:: bash
+
+   conda install -c conda-forge conda-lock
+
+then run
+
+.. code-block:: bash
+
+   conda-lock lock --platform linux-64 -f environment.yml --mamba
+
+(mamba activated for speed) to create a conda lock file for Linux platforms,
+or run
+
+.. code-block:: bash
+
+   conda-lock lock --platform osx-64 -f environment.yml --mamba
+
+to create a lock file for OSX platforms. Note however, that using conda lock files on OSX is still problematic!

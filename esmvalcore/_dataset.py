@@ -4,16 +4,24 @@ import os.path
 import re
 from pathlib import Path
 
-from . import esgf
 from . import _recipe_checks as check
+from . import esgf
 from ._config import get_activity, get_extra_facets, get_institutes
-from ._data_finder import get_input_filelist, get_output_file
+from ._data_finder import (
+    _get_timerange_from_years,
+    _parse_period,
+    dates_to_timerange,
+    get_input_filelist,
+    get_output_file,
+    get_start_end_date,
+)
 from ._recipe_checks import RecipeError
-from .cmor.check import cmor_check_data, cmor_check_metadata, CheckLevels
+from .cmor.check import CheckLevels, cmor_check_data, cmor_check_metadata
 from .cmor.fix import fix_data, fix_file, fix_metadata
 from .cmor.table import CMOR_TABLES
+from .exceptions import InputFilesNotFound
 from .preprocessor._io import concatenate, concatenate_callback, load
-from .preprocessor._time import clip_start_end_year
+from .preprocessor._time import clip_timerange
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +79,55 @@ def _add_extra_facets(facets, extra_facets_dir):
     _augment(facets, extra_facets)
 
 
+def _update_timerange(facets, config_user):
+    """Update wildcards in timerange with found datetime values.
+
+    If the timerange is given as a year, it ensures it's formatted as a
+    4-digit value (YYYY).
+    """
+    if 'timerange' not in facets:
+        return
+
+    timerange = facets.get('timerange')
+    check.valid_time_selection(timerange)
+
+    if '*' in timerange:
+        (files, _, _) = _find_input_files(facets, config_user['rootpath'],
+                                          config_user['drs'])
+        if not files:
+            if not config_user.get('offline', True):
+                msg = (
+                    " Please note that automatic download is not supported "
+                    "with indeterminate time ranges at the moment. Please use "
+                    "a concrete time range (i.e., no wildcards '*') in your "
+                    "recipe or run ESMValTool with --offline=True.")
+            else:
+                msg = ""
+            raise InputFilesNotFound(
+                f"Missing data for {facets['alias']}: "
+                f"{facets['short_name']}. Cannot determine indeterminate "
+                f"time range '{timerange}'.{msg}")
+
+        intervals = [get_start_end_date(name) for name in files]
+
+        min_date = min(interval[0] for interval in intervals)
+        max_date = max(interval[1] for interval in intervals)
+
+        if timerange == '*':
+            timerange = f'{min_date}/{max_date}'
+        if '*' in timerange.split('/')[0]:
+            timerange = timerange.replace('*', min_date)
+        if '*' in timerange.split('/')[1]:
+            timerange = timerange.replace('*', max_date)
+
+    # Make sure that years are in format YYYY
+    (start_date, end_date) = timerange.split('/')
+    timerange = dates_to_timerange(start_date, end_date)
+    check.valid_time_selection(timerange)
+
+    facets['timerange'] = timerange
+
+
 class Dataset:
 
     def __init__(self, **facets):
@@ -96,23 +153,34 @@ class Dataset:
             if activity:
                 self.facets['activity'] = activity
         _add_cmor_info(self.facets)
+        _get_timerange_from_years(self.facets)
+        _update_timerange(self.facets, config_user)
         self.facets['filename'] = get_output_file(self.facets,
                                                   config_user['preproc_dir'])
 
     def find_files(self, config_user, debug=False):
         """Get the input files for a single dataset (locally and via download)."""
+        facets = dict(self.facets)
+        if facets['frequency'] != 'fx':
+            start_year, end_year = _parse_period(facets['timerange'])
+
+            start_year = int(str(start_year[0:4]))
+            end_year = int(str(end_year[0:4]))
+
+            facets['start_year'] = start_year
+            facets['end_year'] = end_year
         (input_files, dirnames,
-         filenames) = get_input_filelist(variable=self.facets,
+         filenames) = get_input_filelist(facets,
                                          rootpath=config_user['rootpath'],
                                          drs=config_user['drs'])
 
         # Set up downloading from ESGF if requested.
         if (not config_user['offline']
-                and self.facets['project'] in esgf.facets.FACETS):
+                and facets['project'] in esgf.facets.FACETS):
             try:
                 check.data_availability(
                     input_files,
-                    self.facets,
+                    facets,
                     dirnames,
                     filenames,
                     log=False,
@@ -120,7 +188,7 @@ class Dataset:
             except RecipeError:
                 # Only look on ESGF if files are not available locally.
                 local_files = set(Path(f).name for f in input_files)
-                search_result = esgf.find_files(**self.facets)
+                search_result = esgf.find_files(**facets)
                 for file in search_result:
                     local_copy = file.local_file(config_user['download_dir'])
                     if local_copy.name not in local_files:
@@ -159,13 +227,8 @@ class Dataset:
             check_level=check_level,
         )
 
-        if ('start_year' in self.facets and 'end_year' in self.facets
-                and self.facets['frequency'] != 'fx'):
-            cube = clip_start_end_year(
-                cube,
-                self.facets['start_year'],
-                self.facets['end_year'],
-            )
+        if 'timerange' in self.facets and self.facets['frequency'] != 'fx':
+            cube = clip_timerange(cube, self.facets['timerange'])
 
         cube = fix_data(cube, check_level=check_level, **self.facets)
 
@@ -190,17 +253,17 @@ def _expand_tag(facets, input_tag):
     expanded = []
     regex = re.compile(r'\(\d+:\d+\)')
 
-    def expand_tag(variable, input_tag):
-        tag = variable.get(input_tag, "")
+    def expand_tag(facets_, input_tag):
+        tag = facets_.get(input_tag, "")
         match = regex.search(tag)
         if match:
             start, end = match.group(0)[1:-1].split(':')
             for i in range(int(start), int(end) + 1):
-                expand = copy.deepcopy(variable)
+                expand = copy.deepcopy(facets_)
                 expand[input_tag] = regex.sub(str(i), tag, 1)
                 expand_tag(expand, input_tag)
         else:
-            expanded.append(variable)
+            expanded.append(facets_)
 
     tag = facets.get(input_tag, "")
     if isinstance(tag, (list, tuple)):

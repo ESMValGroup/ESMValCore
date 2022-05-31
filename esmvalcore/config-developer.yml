@@ -56,7 +56,7 @@ CMIP3:
     ESGF: '{project.lower}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{latestversion}'
     IPSL: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{version}/{short_name}'
   input_file: '{short_name}_*.nc'
-  output_file: '{project}_{institute}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{start_year}-{end_year}'
+  output_file: '{project}_{institute}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
   cmor_type: 'CMIP3'
 
 OBS:
@@ -132,7 +132,7 @@ CORDEX:
     BADC: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{mip}/{short_name}/{latestversion}'
     ESGF: '{project.lower}/output/{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{frequency}/{short_name}/{latestversion}'
   input_file: '{short_name}_{domain}_{driver}_{exp}_{ensemble}_{dataset}_{rcm_version}_{mip}*.nc'
-  output_file: '{short_name}_{dataset}_{exp}_{ensemble}_{rcm_version}_{mip}'
+  output_file: '{project}_{dataset}_{rcm_version}_{driver}_{domain}_{mip}_{exp}_{ensemble}_{short_name}'
   cmor_type: 'CMIP5'
   cmor_path: 'cordex'
 

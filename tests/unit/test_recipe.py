@@ -1,3 +1,8 @@
+from collections import defaultdict
+from unittest import mock
+
+import iris
+import numpy as np
 import pyesgf.search.results
 import pytest
 
@@ -5,6 +10,16 @@ import esmvalcore.experimental.recipe_output
 from esmvalcore import _recipe
 from esmvalcore.esgf._download import ESGFFile
 from esmvalcore.exceptions import RecipeError
+from tests import PreprocessorFile
+
+
+class MockRecipe(_recipe.Recipe):
+    """Mocked Recipe class with simple constructor."""
+
+    def __init__(self, cfg, diagnostics):
+        """Simple constructor used for testing."""
+        self._cfg = cfg
+        self.diagnostics = diagnostics
 
 
 class TestRecipe:
@@ -80,45 +95,45 @@ VAR_A_REF_B = {'dataset': 'A', 'reference_dataset': 'B'}
 TEST_ALLOW_SKIPPING = [
     ([], VAR_A, {}, False),
     ([], VAR_A, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     ([], VAR_A, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, True),
     ([], VAR_A_REF_A, {}, False),
     ([], VAR_A_REF_A, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     ([], VAR_A_REF_A, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, False),
     ([], VAR_A_REF_B, {}, False),
     ([], VAR_A_REF_B, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     ([], VAR_A_REF_B, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, True),
     (['A'], VAR_A, {}, False),
     (['A'], VAR_A, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     (['A'], VAR_A, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, False),
     (['A'], VAR_A_REF_A, {}, False),
     (['A'], VAR_A_REF_A, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     (['A'], VAR_A_REF_A, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, False),
     (['A'], VAR_A_REF_B, {}, False),
     (['A'], VAR_A_REF_B, {
-        'skip-nonexistent': False
+        'skip_nonexistent': False
     }, False),
     (['A'], VAR_A_REF_B, {
-        'skip-nonexistent': True
+        'skip_nonexistent': True
     }, False),
 ]
 
@@ -155,7 +170,7 @@ def test_resume_preprocessor_tasks(mocker, tmp_path):
 
     # Create tasks
     tasks, failed = _recipe.Recipe._create_preprocessor_tasks(
-        recipe, diagnostic_name, diagnostic)
+        recipe, diagnostic_name, diagnostic, [], True)
 
     assert tasks == [resume_task]
     assert not failed
@@ -257,8 +272,7 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
         'exp': 'historical',
         'ensemble': 'r1i1p1f1',
         'grid': 'gr',
-        'start_year': 1850,
-        'end_year': 1851,
+        'timerange': '1850/1851',
         'alias': 'CMIP6_EC-Eeath3_tas',
     }
 
@@ -327,3 +341,279 @@ def test_add_fxvar_keys_extra_facets():
         'raw_name': 'cell_area',
     }
     assert fx_var == expected_fx_var
+
+
+def test_multi_model_filename_overlap():
+    """Test timerange in multi-model filename is correct."""
+    cube = iris.cube.Cube(np.array([1]))
+    products = [
+        PreprocessorFile(cube, 'A', {'timerange': '19900101/19911010'}),
+        PreprocessorFile(cube, 'B', {'timerange': '19891212/19910505'}),
+        PreprocessorFile(cube, 'C', {'timerange': '19910202/19921111'}),
+    ]
+    settings = {}  # the default setting for "span" is "overlap"
+    attributes = _recipe._get_common_attributes(products, settings)
+    assert 'timerange' in attributes
+    assert attributes['timerange'] == '19910202/19910505'
+    assert attributes['start_year'] == 1991
+    assert attributes['end_year'] == 1991
+
+
+def test_multi_model_filename_full():
+    """Test timerange in multi-model filename is correct."""
+    cube = iris.cube.Cube(np.array([1]))
+    products = [
+        PreprocessorFile(cube, 'A', {'timerange': '19900101/19911010'}),
+        PreprocessorFile(cube, 'B', {'timerange': '19891212/19910505'}),
+        PreprocessorFile(cube, 'C', {'timerange': '19910202/19921111'}),
+    ]
+    settings = {'span': 'full'}
+    attributes = _recipe._get_common_attributes(products, settings)
+    assert 'timerange' in attributes
+    assert attributes['timerange'] == '19891212/19921111'
+    assert attributes['start_year'] == 1989
+    assert attributes['end_year'] == 1992
+
+
+def test_update_multiproduct_multi_model_statistics():
+    """Test ``_update_multiproduct``."""
+    settings = {'multi_model_statistics': {'statistics': ['mean', 'std_dev']}}
+    common_attributes = {
+        'project': 'CMIP6',
+        'diagnostic': 'd',
+        'variable_group': 'var',
+    }
+    cube = iris.cube.Cube(np.array([1]))
+    products = [
+        PreprocessorFile(cube, 'A',
+                         attributes={'dataset': 'a',
+                                     'timerange': '2000/2005',
+                                     **common_attributes},
+                         settings=settings),
+        PreprocessorFile(cube, 'B',
+                         attributes={'dataset': 'b',
+                                     'timerange': '2001/2004',
+                                     **common_attributes},
+                         settings=settings),
+        PreprocessorFile(cube, 'C',
+                         attributes={'dataset': 'c',
+                                     'timerange': '1999/2004',
+                                     **common_attributes},
+                         settings=settings),
+        PreprocessorFile(cube, 'D',
+                         attributes={'dataset': 'd',
+                                     'timerange': '2002/2010',
+                                     **common_attributes},
+                         settings=settings),
+    ]
+    order = ('load', 'multi_model_statistics', 'save')
+    preproc_dir = '/preproc'
+    step = 'multi_model_statistics'
+    output, settings = _recipe._update_multiproduct(
+        products, order, preproc_dir, step)
+
+    assert len(output) == 2
+
+    filenames = [p.filename for p in output]
+    assert '/preproc/d/var/CMIP6_MultiModelMean_2002-2004.nc' in filenames
+    assert '/preproc/d/var/CMIP6_MultiModelStd_Dev_2002-2004.nc' in filenames
+
+    for product in output:
+        for attr in common_attributes:
+            assert attr in product.attributes
+            assert product.attributes[attr] == common_attributes[attr]
+            assert 'alias' in product.attributes
+            assert 'dataset' in product.attributes
+            assert 'multi_model_statistics' in product.attributes
+            assert 'timerange' in product.attributes
+            assert product.attributes['timerange'] == '2002/2004'
+            assert 'start_year' in product.attributes
+            assert product.attributes['start_year'] == 2002
+            assert 'end_year' in product.attributes
+            assert product.attributes['end_year'] == 2004
+        if 'MultiModelStd_Dev' in product.filename:
+            assert product.attributes['alias'] == 'MultiModelStd_Dev'
+            assert product.attributes['dataset'] == 'MultiModelStd_Dev'
+            assert (product.attributes['multi_model_statistics'] ==
+                    'MultiModelStd_Dev')
+        elif 'MultiModelMean' in product.filename:
+            assert product.attributes['alias'] == 'MultiModelMean'
+            assert product.attributes['dataset'] == 'MultiModelMean'
+            assert (product.attributes['multi_model_statistics'] ==
+                    'MultiModelMean')
+
+    assert len(settings) == 1
+    output_products = settings['output_products']
+    assert len(output_products) == 1
+    stats = output_products['']
+    assert len(stats) == 2
+    assert 'mean' in stats
+    assert 'std_dev' in stats
+    assert 'MultiModelMean' in stats['mean'].filename
+    assert 'MultiModelStd_Dev' in stats['std_dev'].filename
+
+
+def test_update_multiproduct_ensemble_statistics():
+    """Test ``_update_multiproduct``."""
+    settings = {'ensemble_statistics': {'statistics': ['median'],
+                                        'span': 'full'}}
+    common_attributes = {
+        'dataset': 'CanESM2',
+        'project': 'CMIP6',
+        'timerange': '2000/2000',
+        'diagnostic': 'd',
+        'variable_group': 'var',
+    }
+    cube = iris.cube.Cube(np.array([1]))
+    products = [
+        PreprocessorFile(cube, 'A',
+                         attributes=common_attributes,
+                         settings=settings),
+        PreprocessorFile(cube, 'B',
+                         attributes=common_attributes,
+                         settings=settings),
+        PreprocessorFile(cube, 'C',
+                         attributes=common_attributes,
+                         settings=settings),
+        PreprocessorFile(cube, 'D',
+                         attributes=common_attributes,
+                         settings=settings),
+    ]
+    order = ('load', 'ensemble_statistics', 'save')
+    preproc_dir = '/preproc'
+    step = 'ensemble_statistics'
+    output, settings = _recipe._update_multiproduct(
+        products, order, preproc_dir, step)
+
+    assert len(output) == 1
+    product = list(output)[0]
+    assert (product.filename ==
+            '/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc')
+
+    for attr in common_attributes:
+        assert attr in product.attributes
+        assert product.attributes[attr] == common_attributes[attr]
+        assert 'alias' in product.attributes
+        assert product.attributes['alias'] == 'EnsembleMedian'
+        assert 'dataset' in product.attributes
+        assert product.attributes['dataset'] == 'CanESM2'
+        assert 'ensemble_statistics' in product.attributes
+        assert product.attributes['ensemble_statistics'] == 'EnsembleMedian'
+        assert 'start_year' in product.attributes
+        assert product.attributes['start_year'] == 2000
+        assert 'end_year' in product.attributes
+        assert product.attributes['end_year'] == 2000
+
+    assert len(settings) == 1
+    output_products = settings['output_products']
+    assert len(output_products) == 1
+    stats = output_products['CMIP6_CanESM2']
+    assert len(stats) == 1
+    assert 'median' in stats
+    assert (stats['median'].filename ==
+            '/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc')
+
+
+def test_update_multiproduct_no_product():
+    cube = iris.cube.Cube(np.array([1]))
+    products = [
+        PreprocessorFile(cube, 'A', attributes=None, settings={'step': {}})]
+    order = ('load', 'save')
+    preproc_dir = '/preproc_dir'
+    step = 'multi_model_statistics'
+    output, settings = _recipe._update_multiproduct(
+        products, order, preproc_dir, step)
+    assert output == products
+    assert settings == {}
+
+
+def test_match_products_no_product():
+    variables = [{'var_name': 'var'}]
+    grouped_products = _recipe._match_products(None, variables)
+    assert grouped_products == defaultdict(list)
+
+
+SCRIPTS_CFG = {
+    'output_dir': mock.sentinel.output_dir,
+    'script': mock.sentinel.script,
+    'settings': mock.sentinel.settings,
+}
+DIAGNOSTICS = {
+    'd1': {'scripts': {'s1': {'ancestors': [], **SCRIPTS_CFG}}},
+    'd2': {'scripts': {'s1': {'ancestors': ['d1/pr', 'd1/s1'],
+                              **SCRIPTS_CFG}}},
+    'd3': {'scripts': {'s1': {'ancestors': ['d2/s1'], **SCRIPTS_CFG}}},
+    'd4': {'scripts': {
+        's1': {'ancestors': 'd1/pr d1/tas', **SCRIPTS_CFG},
+        's2': {'ancestors': ['d4/pr', 'd4/tas'], **SCRIPTS_CFG},
+        's3': {'ancestors': ['d3/s1'], **SCRIPTS_CFG},
+    }},
+}
+TEST_GET_TASKS_TO_RUN = [
+    (None, []),
+    ({''}, {''}),
+    ({'wrong_task/*'}, {'wrong_task/*'}),
+    ({'d1/*'}, {'d1/*'}),
+    ({'d2/*'}, {'d2/*', 'd1/pr', 'd1/s1'}),
+    ({'d3/*'}, {'d3/*', 'd2/s1', 'd1/pr', 'd1/s1'}),
+    ({'d4/*'}, {'d4/*', 'd1/pr', 'd1/tas', 'd4/pr', 'd4/tas', 'd3/s1',
+                'd2/s1', 'd1/s1'}),
+    ({'wrong_task/*', 'd1/*'}, {'wrong_task/*', 'd1/*'}),
+    ({'d1/ta'}, {'d1/ta'}),
+    ({'d4/s2'}, {'d4/s2', 'd4/pr', 'd4/tas'}),
+    ({'d2/s1', 'd3/ta', 'd1/s1'}, {'d2/s1', 'd1/pr', 'd1/s1', 'd3/ta'}),
+    ({'d4/s1', 'd4/s2'}, {'d4/s1', 'd1/pr', 'd1/tas', 'd4/s2', 'd4/pr',
+                          'd4/tas'}),
+    ({'d4/s3', 'd3/ta'}, {'d4/s3', 'd3/s1', 'd2/s1', 'd1/pr', 'd1/s1',
+                          'd3/ta'}),
+]
+
+
+@pytest.mark.parametrize('diags_to_run,tasknames_to_run',
+                         TEST_GET_TASKS_TO_RUN)
+def test_get_tasks_to_run(diags_to_run, tasknames_to_run):
+    """Test ``Recipe._get_tasks_to_run``."""
+    cfg = {}
+    if diags_to_run is not None:
+        cfg = {'diagnostics': diags_to_run}
+
+    recipe = MockRecipe(cfg, DIAGNOSTICS)
+    tasks_to_run = recipe._get_tasks_to_run()
+
+    assert tasks_to_run == tasknames_to_run
+
+
+TEST_CREATE_DIAGNOSTIC_TASKS = [
+    (set(), ['s1', 's2', 's3']),
+    ({'d4/*'}, ['s1', 's2', 's3']),
+    ({'d4/s1'}, ['s1']),
+    ({'d4/s1', 'd3/*'}, ['s1']),
+    ({'d4/s1', 'd4/s2'}, ['s1', 's2']),
+    ({''}, []),
+    ({'d3/*'}, []),
+]
+
+
+@pytest.mark.parametrize('tasks_to_run,tasks_run',
+                         TEST_CREATE_DIAGNOSTIC_TASKS)
+@mock.patch('esmvalcore._recipe.DiagnosticTask', autospec=True)
+def test_create_diagnostic_tasks(mock_diag_task, tasks_to_run, tasks_run):
+    """Test ``Recipe._create_diagnostic_tasks``."""
+    cfg = {'run_diagnostic': True}
+    diag_name = 'd4'
+    diag_cfg = DIAGNOSTICS['d4']
+    n_tasks = len(tasks_run)
+
+    recipe = MockRecipe(cfg, DIAGNOSTICS)
+    tasks = recipe._create_diagnostic_tasks(diag_name, diag_cfg, tasks_to_run)
+
+    assert len(tasks) == n_tasks
+    assert mock_diag_task.call_count == n_tasks
+    for task_name in tasks_run:
+        expected_call = mock.call(
+            script=mock.sentinel.script,
+            output_dir=mock.sentinel.output_dir,
+            settings=mock.sentinel.settings,
+            name=f'{diag_name}{_recipe.TASKSEP}{task_name}',
+        )
+        assert expected_call in mock_diag_task.mock_calls

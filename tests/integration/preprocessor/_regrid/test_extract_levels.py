@@ -113,7 +113,7 @@ class Test(tests.Test):
         assert self.cube.coords('air_pressure')
         assert not self.cube.coords('altitude')
         result = extract_levels(self.cube, [1, 2],
-                                'linear_horizontal_extrapolate_vertical',
+                                'linear_extrapolate',
                                 coordinate='altitude')
         assert not result.coords('air_pressure')
         assert result.coords('altitude')
@@ -129,7 +129,7 @@ class Test(tests.Test):
         assert not self.cube.coords('air_pressure')
         assert self.cube.coords('altitude')
         result = extract_levels(self.cube, [1, 2],
-                                'linear_horizontal_extrapolate_vertical',
+                                'linear_extrapolate',
                                 coordinate='air_pressure')
         assert result.coords('air_pressure')
         assert not result.coords('altitude')

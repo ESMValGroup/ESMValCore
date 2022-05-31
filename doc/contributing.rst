@@ -42,7 +42,7 @@ request <https://github.blog/2019-02-14-introducing-draft-pull-requests/>`__
 early, as this will cause :ref:`CircleCI to run the unit tests <tests>`,
 :ref:`Codacy to analyse your code <code_quality>`, and
 :ref:`readthedocs to build the documentation <documentation>`.
-It’s also easier to get help from other developers if your code is visible in a
+It's also easier to get help from other developers if your code is visible in a
 pull request.
 
 :ref:`Make small pull requests <easy_review>`, the ideal pull requests changes
@@ -349,7 +349,7 @@ Whenever you make a pull request or push new commits to an existing pull
 request, readthedocs will automatically build the documentation.
 The link to the documentation will be shown in the list of checks below your
 pull request.
-Click 'Details' behind the check ``docs/readthedocs.org:esmvaltool`` to preview
+Click 'Details' behind the check ``docs/readthedocs.org:esmvalcore`` to preview
 the documentation.
 If all checks were successful, you may need to click 'Show all checks' to see
 the individual checks.
@@ -359,13 +359,13 @@ repository was cloned and run
 
 ::
 
-   python setup.py build_sphinx
+   sphinx-build doc doc/build
 
 or
 
 ::
 
-   python setup.py build_sphinx -Ea
+   sphinx-build -Ea doc doc/build
 
 to build it from scratch.
 
@@ -375,7 +375,7 @@ CircleCI_ will build the documentation with the command:
 
 .. code-block:: bash
 
-   python setup.py build_sphinx --warning-is-error
+   sphinx-build -W doc doc/build
 
 This will catch mistakes that can be detected automatically.
 
@@ -525,7 +525,20 @@ The result of the tests ran by CircleCI can be seen on the
 `CircleCI project page <https://app.circleci.com/pipelines/github/ESMValGroup/ESMValCore?branch=main>`__
 and the result of the tests ran by GitHub Actions can be viewed on the
 `Actions tab <https://github.com/ESMValGroup/ESMValCore/actions>`__
-of the repository.
+of the repository (to learn more about the Github-hosted runners, please have a look
+the `documentation <https://docs.github.com/en/actions/using-github-hosted-runners>`__).
+
+When opening a pull request, if you wish to run the Github Actions `Test <https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml>`__ test,
+you can activate it via a simple comment containing the @runGAtests tag
+(e.g. "@runGAtests" or "@runGAtests please run" - in effect, tagging the runGAtests
+bot that will start the test automatically). This is useful
+to check if a certain feature that you included in the Pull Request, and can be tested
+for via the test suite, works across the supported Python versions, and both on Linux and OSX.
+The test is currently deactivated, so before triggering the test via comment, make sure you activate
+the test in the main `Actions page <https://github.com/ESMValGroup/ESMValCore/actions>`__
+(click on Test via PR Comment and activate it); also and be sure to deactivate it afterwards
+(the Github API still needs a bit more development, and currently it triggers
+the test for **each comment** irrespective of PR, that's why this needs to be activated/decativated).
 
 The configuration of the tests run by CircleCI can be found in the directory
 `.circleci <https://github.com/ESMValGroup/ESMValCore/blob/main/.circleci>`__,
@@ -553,20 +566,40 @@ To keep the tool user friendly, try to avoid making changes that are not
 backward compatible, i.e. changes that require users to change their existing
 recipes, diagnostics, configuration files, or scripts.
 
-If you really must change the public interfaces of the tool, always discuss this
-with the `@ESMValGroup/esmvaltool-coreteam`_.
-Try to deprecate the feature first by issuing a :py:class:`DeprecationWarning`
-using the :py:mod:`warnings` module and schedule it for removal three
-`minor versions <https://semver.org/>`__ from the latest released version.
-For example, when you deprecate a feature in a pull request that will be
-included in version 2.3, that feature could be removed in version 2.5.
+If you really must change the public interfaces of the tool, always discuss
+this with the `@ESMValGroup/esmvaltool-coreteam`_. Try to deprecate the
+feature first by issuing an
+:class:`~esmvalcore.exceptions.ESMValCoreDeprecationWarning` using the
+:mod:`warnings` module and schedule it for removal two `minor versions
+<https://semver.org/>`__ from the upcoming release. For example, when you
+deprecate a feature in a pull request that will be included in version 2.5,
+that feature should be removed in version 2.7:
+
+.. code-block:: python
+
+   import warnings
+
+   from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+
+   # Other code
+
+   def func(x, deprecated_option=None):
+       """Deprecate deprecated_option."""
+       if deprecated_option is not None:
+           deprecation_msg = (
+               "The option ``deprecated_option`` has been deprecated in "
+               "ESMValCore version 2.5 and is scheduled for removal in "
+               "version 2.7. Add additional text (e.g., description of "
+               "alternatives) here.")
+           warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+
+       # Other code
+
 Mention the version in which the feature will be removed in the deprecation
-message.
-Label the pull request with the
-`deprecated feature <https://github.com/ESMValGroup/ESMValCore/labels/deprecated%20feature>`__
-label.
-When deprecating a feature, please follow up by actually removing the feature
-in due course.
+message. Label the pull request with the `deprecated feature
+<https://github.com/ESMValGroup/ESMValCore/labels/deprecated%20feature>`__
+label. When deprecating a feature, please follow up by actually removing the
+feature in due course.
 
 If you must make backward incompatible changes, you need to update the available
 recipes in ESMValTool and link the ESMValTool pull request(s) in the ESMValCore
@@ -604,20 +637,8 @@ the following files:
 - ``environment.yml``
   contains development dependencies that cannot be installed from
   `PyPI <https://pypi.org/>`_
-- ``docs/requirements.txt``
-  contains Python dependencies needed to build the documentation that can be
-  installed from PyPI
-- ``docs/conf.py``
-  contains a list of Python dependencies needed to build the documentation that
-  cannot be installed from PyPI and need to be mocked when building the
-  documentation.
-  (We do not use conda to build the documentation because this is too time
-  consuming.)
 - ``setup.py``
   contains all Python dependencies, regardless of their installation source
-- ``package/meta.yaml``
-  contains dependencies for the conda package; all Python and compiled
-  dependencies that can be installed from conda should be listed here
 
 Note that packages may have a different name on
 `conda-forge <https://conda-forge.org/>`__ than on PyPI_.
@@ -713,9 +734,10 @@ to run their favourite recipe using this branch.
 3. Increase the version number
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The version number is stored in ``esmvalcore/_version.py``,
-``package/meta.yaml``, ``CITATION.cff``. Make sure to update all files.
-Also update the release date in ``CITATION.cff``.
+The version number is automatically generated from the information provided by
+git using [setuptools-scm](https://pypi.org/project/setuptools-scm/), but a
+static version number is stored in ``CITATION.cff``.
+Make sure to update the version number and release date in ``CITATION.cff``.
 See https://semver.org for more information on choosing a version number.
 Make a pull request and get it merged into ``main`` and cherry pick it into
 the release branch.
@@ -752,39 +774,7 @@ Then click the
 `releases tab <https://github.com/ESMValGroup/ESMValCore/releases>`__
 and create the new release from the release branch (i.e. not from ``main``).
 
-7. Create and upload the Conda package
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The package is automatically uploaded to the
-`ESMValGroup conda channel <https://anaconda.org/esmvalgroup/esmvalcore>`__
-by a GitHub action (note that this is an obsolete procedure for the main package upload,
-since the main package is now uploaded to
-`conda-forge conda channel <https://anaconda.org/conda-forge>`__ via
-the upload to PyPi, but we still upload to the esmvalgroup channel as a backup option;
-also the upload to esmvalcore gives us a chance to verify it immediately after upload).
-If this has failed for some reason, build and upload the package manually by
-following the instructions below.
-
-Follow these steps to create a new conda package:
-
--  Check out the tag corresponding to the release,
-   e.g. ``git checkout tags/v2.1.0``
--  Make sure your current working directory is clean by checking the output
-   of ``git status`` and by running ``git clean -xdf`` to remove any files
-   ignored by git.
--  Edit ``package/meta.yaml`` and uncomment the lines starting with ``git_rev`` and
-   ``git_url``, remove the line starting with ``path`` in the ``source``
-   section.
--  Activate the base environment ``conda activate base``
--  Install the required packages:
-   ``conda install -y conda-build conda-verify ripgrep anaconda-client``
--  Run ``conda build package -c conda-forge`` to build the
-   conda package
--  If the build was successful, upload the package to the esmvalgroup
-   conda channel, e.g.
-   ``anaconda upload --user esmvalgroup /path/to/conda/conda-bld/noarch/esmvalcore-2.3.1-py_0.tar.bz2``.
-
-8. Create and upload the PyPI package
+7. Create and upload the PyPI package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The package is automatically uploaded to the
@@ -814,6 +804,34 @@ Follow these steps to create a new Python package:
 
 You can read more about this in
 `Packaging Python Projects <https://packaging.python.org/tutorials/packaging-projects/>`__.
+
+8. Create the Conda package
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``esmvalcore`` package is published on the `conda-forge conda channel
+<https://anaconda.org/conda-forge>`__.
+This is done via a pull request on the `esmvalcore-feedstock repository
+<https://github.com/conda-forge/esmvalcore-feedstock>`__.
+
+For the final release, this pull request is automatically opened by a bot.
+An example pull request can be found `here
+<https://github.com/conda-forge/esmvalcore-feedstock/pull/11>`__.
+Follow the instructions by the bot to finalize the pull request.
+This step mostly contains updating dependencies that have been changed during
+the last release cycle.
+Once approved by the `feedstock maintainers
+<https://github.com/conda-forge/esmvalcore-feedstock/blob/main/README.md#feedstock-maintainers>`__
+they will merge the pull request, which will in turn publish the package on
+conda-forge some time later.
+Contact the feedstock maintainers if you want to become a maintainer yourself.
+
+To publish a release candidate, you have to open a pull request yourself.
+An example for this can be found `here
+<https://github.com/conda-forge/esmvalcore-feedstock/pull/35>`__.
+Make sure to use the `rc branch
+<https://github.com/conda-forge/esmvalcore-feedstock/tree/rc>`__ as the target
+branch for your pull request and follow all instructions given by the linter
+bot.
 
 
 .. _`@ESMValGroup/esmvaltool-coreteam`: https://github.com/orgs/ESMValGroup/teams/esmvaltool-coreteam

@@ -7,9 +7,8 @@ import dask.array as da
 import iris
 import pandas as pd
 from cf_units import Unit
+from iris import NameConstraint
 from scipy.interpolate import interp1d
-
-from esmvalcore.iris_helpers import var_name_constraint
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ def add_aux_coords_from_cubes(cube, cubes, coord_dict):
         it.
     """
     for (coord_name, coord_dims) in coord_dict.items():
-        coord_cube = cubes.extract(var_name_constraint(coord_name))
+        coord_cube = cubes.extract(NameConstraint(var_name=coord_name))
         if len(coord_cube) != 1:
             raise ValueError(
                 f"Expected exactly one coordinate cube '{coord_name}' in "
@@ -72,9 +71,7 @@ def add_plev_from_altitude(cube):
             pressure_bounds = altitude_to_pressure(height_coord.core_bounds())
         pressure_coord = iris.coords.AuxCoord(pressure_points,
                                               bounds=pressure_bounds,
-                                              var_name='plev',
                                               standard_name='air_pressure',
-                                              long_name='pressure',
                                               units='Pa')
         cube.add_aux_coord(pressure_coord, cube.coord_dims(height_coord))
         return
@@ -108,9 +105,7 @@ def add_altitude_from_plev(cube):
             altitude_bounds = pressure_to_altitude(plev_coord.core_bounds())
         altitude_coord = iris.coords.AuxCoord(altitude_points,
                                               bounds=altitude_bounds,
-                                              var_name='alt',
                                               standard_name='altitude',
-                                              long_name='altitude',
                                               units='m')
         cube.add_aux_coord(altitude_coord, cube.coord_dims(plev_coord))
         return
@@ -251,7 +246,7 @@ def get_bounds_cube(cubes, coord_var_name):
     """
     for bounds in ('bnds', 'bounds'):
         bound_var = f'{coord_var_name}_{bounds}'
-        cube = cubes.extract(var_name_constraint(bound_var))
+        cube = cubes.extract(NameConstraint(var_name=bound_var))
         if len(cube) == 1:
             return cube[0]
         if len(cube) > 1:

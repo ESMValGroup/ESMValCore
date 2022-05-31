@@ -104,7 +104,7 @@ def read_config_user_file(config_file, folder_name, options=None):
 
     # set defaults
     defaults = {
-        'auxiliary_data_dir': 'auxiliary_data',
+        'auxiliary_data_dir': '~/auxiliary_data',
         'compress_netcdf': False,
         'config_developer_file': None,
         'drs': {},
@@ -114,7 +114,7 @@ def read_config_user_file(config_file, folder_name, options=None):
         'max_parallel_tasks': None,
         'offline': True,
         'output_file_type': 'png',
-        'output_dir': 'esmvaltool_output',
+        'output_dir': '~/esmvaltool_output',
         'profile_diagnostic': False,
         'remove_preproc_dir': True,
         'resume_from': [],
