@@ -8,12 +8,12 @@ from cf_units import Unit
 
 import tests
 from esmvalcore.preprocessor._volume import (axis_statistics,
-                                             volume_statistics,
+                                             calculate_volume,
                                              depth_integration,
                                              extract_trajectory,
                                              extract_transect,
                                              extract_volume,
-                                             calculate_volume)
+                                             volume_statistics)
 
 
 class Test(tests.Test):
@@ -21,7 +21,7 @@ class Test(tests.Test):
 
     def setUp(self):
         """Prepare tests"""
-        coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+        coord_sys = iris.coord_systems.GeogCS(6371229.0)
         data1 = np.ones((3, 2, 2))
         data2 = np.ma.ones((2, 3, 2, 2))
         data3 = np.ma.ones((4, 3, 2, 2))
@@ -79,18 +79,60 @@ class Test(tests.Test):
         iris.util.guess_coord_axis(self.grid_4d.coord('zcoord'))
         iris.util.guess_coord_axis(self.grid_4d_2.coord('zcoord'))
 
-    def test_axis_statistics(self):
-        """Test axis statistics in multiple operators. """
-        for operator in ['mean', 'median', 'min', 'max', 'rms']:
-            result = axis_statistics(self.grid_4d, 'z', operator)
-            expected = np.ma.ones((2, 2, 2))
-            self.assert_array_equal(result.data, expected)
+    def test_axis_statistics_mean(self):
+        """Test axis statistics with operator mean."""
+        data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
+        self.grid_4d.data = data
+        result = axis_statistics(self.grid_4d, 'z', 'mean')
+        bounds = self.grid_4d.coord(axis='z').bounds
+        weights = (bounds[:, 1] - bounds[:, 0])
+        expected = np.average(data, axis=1, weights=weights)
+        self.assert_array_equal(result.data, expected)
 
-        for operator in ['std_dev', 'variance']:
-            result = axis_statistics(self.grid_4d, 'z', operator)
-            expected = np.ma.zeros((2, 2, 2))
-            self.assert_array_equal(result.data, expected)
+    def test_axis_statistics_median(self):
+        """Test axis statistics in with operator median."""
+        data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
+        self.grid_4d.data = data
+        result = axis_statistics(self.grid_4d, 'z', 'median')
+        expected = np.median(data, axis=1)
+        self.assert_array_equal(result.data, expected)
 
+    def test_axis_statistics_min(self):
+        """Test axis statistics with operator min."""
+        data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
+        self.grid_4d.data = data
+        result = axis_statistics(self.grid_4d, 'z', 'min')
+        expected = np.min(data, axis=1)
+        self.assert_array_equal(result.data, expected)
+
+    def test_axis_statistics_max(self):
+        """Test axis statistics with operator max."""
+        data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
+        self.grid_4d.data = data
+        result = axis_statistics(self.grid_4d, 'z', 'max')
+        expected = np.max(data, axis=1)
+        self.assert_array_equal(result.data, expected)
+
+    def test_axis_statistics_rms(self):
+        """Test axis statistics with operator rms."""
+        result = axis_statistics(self.grid_4d, 'z', 'rms')
+        expected = np.ma.ones((2, 2, 2))
+        self.assert_array_equal(result.data, expected)
+
+    def test_axis_statistics_std(self):
+        """Test axis statistics with operator std_dev."""
+        result = axis_statistics(self.grid_4d, 'z', 'std_dev')
+        expected = np.ma.zeros((2, 2, 2))
+        self.assert_array_equal(result.data, expected)
+
+    def test_axis_statistics_variance(self):
+        """Test axis statistics with operator variance."""
+        result = axis_statistics(self.grid_4d, 'z', 'variance')
+        expected = np.ma.zeros((2, 2, 2))
+        self.assert_array_equal(result.data, expected)
+
+    def test_axis_statistics_sum(self):
+        """Test axis statistics in multiple operators."""
         result = axis_statistics(self.grid_4d, 'z', 'sum')
         expected = np.ma.ones((2, 2, 2)) * 250
         self.assert_array_equal(result.data, expected)

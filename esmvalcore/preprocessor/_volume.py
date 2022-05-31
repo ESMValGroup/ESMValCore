@@ -347,7 +347,6 @@ def depth_integration(cube):
     iris.cube.Cube
         collapsed cube.
     """
-    # ####
     result = axis_statistics(cube, axis='z', operator='sum')
     result.rename('Depth_integrated_' + str(cube.name()))
     # result.units = Unit('m') * result.units # This doesn't work:
