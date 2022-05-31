@@ -1,6 +1,8 @@
 Changelog
 =========
 
+[TODO rebase and re-write, placeholder for now] Add ability to trace a file's ancestry and stitch (ref. https://doi.org/10.1002/gdj3.113)
+
 .. _changelog-v2-5-0:
 
 v2.5.0
@@ -9,7 +11,7 @@ v2.5.0
 Highlights
 ~~~~~~~~~~
 
--  The new preprocessor :func:`~esmvalcore.preprocessor.extract_location` can extract arbitrary locations on the Earth using the `geopy <https://pypi.org/project/geopy/>`__ package that connects to OpenStreetMap. For details, see :ref:`Extract location <extract_location>`.
+-  The new preprocessor :func:`~esmvalcore.preprocessor.extract_location` can extract arbitrary locations on the Earth using the `geopy <https://pypi.org/project/geohttps://doi.org/10.1002/gdj3.113py/>`__ package that connects to OpenStreetMap. For details, see :ref:`Extract location <extract_location>`.
 -  Time ranges can now be extracted using the `ISO 8601 format <https://en.wikipedia.org/wiki/ISO_8601>`_. In addition, wildcards are allowed, which makes the time selection much more flexible. For details, see :ref:`Recipe section: Datasets <Datasets>`.
 -  The new preprocessor :func:`~esmvalcore.preprocessor.ensemble_statistics` can calculate arbitrary statitics over all ensemble members of a simulation. In addition, the preprocessor :func:`~esmvalcore.preprocessor.multi_model_statistics` now accepts the keyword ``groupy``, which allows the calculation of multi-model statistics over arbitrary multi-model ensembles. For details, see :ref:`Ensemble statistics <ensemble statistics>` and :ref:`Multi-model statistics <multi-model statistics>`.
 
