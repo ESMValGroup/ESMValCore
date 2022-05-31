@@ -7,12 +7,12 @@ import numpy as np
 from cf_units import Unit
 
 import tests
-from esmvalcore.preprocessor._volume import (volume_statistics,
+from esmvalcore.preprocessor._volume import (calculate_volume,
                                              depth_integration,
                                              extract_trajectory,
                                              extract_transect,
                                              extract_volume,
-                                             calculate_volume)
+                                             volume_statistics)
 
 
 class Test(tests.Test):
@@ -109,6 +109,22 @@ class Test(tests.Test):
         expected = np.ma.array([1., 1.], mask=False)
         self.assert_array_equal(result.data, expected)
 
+    def test_volume_statistics_weights(self):
+        data = np.arange(1, 25).reshape(2, 3, 2, 2)
+        self.grid_4d.data = data
+        measure = iris.coords.CellMeasure(
+            data,
+            standard_name='ocean_volume',
+            units='m3',
+            measure='volume'
+        )
+        self.grid_4d.add_cell_measure(measure, range(0, measure.ndim))
+        result = volume_statistics(self.grid_4d, 'mean')
+        expected = np.ma.array(
+            [8.333333333333334, 19.144144144144143],
+            mask=[False, False])
+        self.assert_array_equal(result.data, expected)
+
     def test_volume_statistics_cell_measure(self):
         """
         Test to take the volume weighted average of a (2,3,2,2) cube.
@@ -156,12 +172,21 @@ class Test(tests.Test):
         expected = np.ma.array([1., 1], mask=[True, False])
         self.assert_array_equal(result.data, expected)
 
-    def test_volume_statistics_wrong_operator(self):
-        with self.assertRaises(ValueError) as err:
-            volume_statistics(self.grid_4d, 'wrong')
-        self.assertEqual(
-            'Volume operator wrong not recognised.',
-            str(err.exception))
+    def test_volume_statistics_weights(self):
+        data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
+        self.grid_4d.data = data
+        measure = iris.coords.CellMeasure(
+            data,
+            standard_name='ocean_volume',
+            units='m3',
+            measure='volume'
+        )
+        self.grid_4d.add_cell_measure(measure, range(0, measure.ndim))
+        result = volume_statistics(self.grid_4d, 'mean')
+        expected = np.ma.array(
+            [8.333333333333334, 19.144144144144143],
+            mask=[False, False])
+        self.assert_array_equal(result.data, expected)
 
     def test_depth_integration_1d(self):
         """Test to take the depth integration of a 3 layer cube."""
