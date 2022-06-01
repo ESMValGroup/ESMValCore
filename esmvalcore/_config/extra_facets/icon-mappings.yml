@@ -2,26 +2,19 @@
 
 # All extra facets for ICON are optional but might be necessary for some
 # variables. A complete list of supported keys is given in the documentation
-# (see ESMValCore/doc/develop/fixing_data.rst).
+# (see ESMValCore/doc/quickstart/find_data.rst).
 ---
 
 ICON:
-  Amon:
-    clwvi: {raw_name: cllvi}
-  CF3hr:
-    clwvi: {raw_name: cllvi}
-  CFday:
-    clwvi: {raw_name: cllvi}
-  CFsubhr:
-    clwvi: {raw_name: cllvi}
-  E3hr:
-    clwvi: {raw_name: cllvi}
-  fx:
+  '*':
     areacella:
       latitude: grid_latitude
       longitude: grid_longitude
       raw_name: cell_area
-  SIday:
-    siconca: {raw_name: sic}
-  SImon:
+    areacello:
+      latitude: grid_latitude
+      longitude: grid_longitude
+      raw_name: cell_area
+    clwvi: {raw_name: cllvi}
+    siconc: {raw_name: sic}
     siconca: {raw_name: sic}
