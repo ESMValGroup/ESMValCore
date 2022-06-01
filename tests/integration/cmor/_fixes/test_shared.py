@@ -13,6 +13,7 @@ from esmvalcore.cmor._fixes.shared import (
     add_plev_from_altitude,
     add_scalar_depth_coord,
     add_scalar_height_coord,
+    add_scalar_lambda550nm_coord,
     add_scalar_typeland_coord,
     add_scalar_typesea_coord,
     add_scalar_typesi_coord,
@@ -212,6 +213,7 @@ TEST_ADD_SCALAR_COORD = [
     (CUBE_2.copy(), None),
     (CUBE_2.copy(), 100.0),
 ]
+TEST_ADD_SCALAR_COORD_NO_VALS = [CUBE_1.copy(), CUBE_2.copy()]
 
 
 @pytest.mark.sequential
@@ -268,6 +270,30 @@ def test_add_scalar_height_coord(cube_in, height):
     assert cube_out_2 is cube_out
     coord = cube_in.coord('height')
     assert coord == height_coord
+
+
+@pytest.mark.sequential
+@pytest.mark.parametrize('cube_in', TEST_ADD_SCALAR_COORD_NO_VALS)
+def test_add_scalar_lambda550nm_coord(cube_in):
+    """Test adding of scalar lambda550nm coordinate."""
+    cube_in = cube_in.copy()
+    lambda550nm_coord = iris.coords.AuxCoord(
+        550.0,
+        var_name='wavelength',
+        standard_name='radiation_wavelength',
+        long_name='Radiation Wavelength 550 nanometers',
+        units='nm',
+    )
+    with pytest.raises(iris.exceptions.CoordinateNotFoundError):
+        cube_in.coord('radiation_wavelength')
+    cube_out = add_scalar_lambda550nm_coord(cube_in)
+    assert cube_out is cube_in
+    coord = cube_in.coord('radiation_wavelength')
+    assert coord == lambda550nm_coord
+    cube_out_2 = add_scalar_lambda550nm_coord(cube_out)
+    assert cube_out_2 is cube_out
+    coord = cube_in.coord('radiation_wavelength')
+    assert coord == lambda550nm_coord
 
 
 @pytest.mark.sequential

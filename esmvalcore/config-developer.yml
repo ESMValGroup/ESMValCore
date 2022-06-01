@@ -119,11 +119,19 @@ ana4mips:
   # TODO: add cmor_path and table and set cmor_strict to true
 
 EMAC:
+  cmor_strict: false
   input_dir:
-    default: '{dataset}'
-  input_file: ''
-  output_file: '{dataset}_{ensemble}_{short_name}'
-  cmor_type: 'CMIP5'
+    default: '{exp}/{channel}'
+  input_file:
+    default: '{exp}*{channel}{postproc_flag}.nc'
+  output_file: '{dataset}_{exp}_{channel}_{mip}_{short_name}'
+  cmor_type: 'CMIP6'
+  ignore_warnings:
+    load:
+      - {message: 'Ignored formula of unrecognised type: .*', module: iris}
+      - {message: 'Ignoring formula terms variable .* referenced by data variable .* via variable .*', module: iris}
+      - {message: 'Missing CF-netCDF formula term variable .*, referenced by netCDF variable .*', module: iris}
+      - {message: 'NetCDF variable .* contains unknown cell method .*', module: iris}
 
 CORDEX:
   input_dir:
