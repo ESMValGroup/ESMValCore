@@ -426,9 +426,7 @@ class CMORCheck():
                                 coordinate.out_name,
                             )
                             coord.var_name = coordinate.out_name
-                        elif (self._cmor_var.table_type in 'CMIP6' and
-                              coordinate.name == "basin" and
-                              coord.var_name == "sector"):
+                        elif coord.standard_name in ['region', 'area_type']:
                             self.report_debug_message(
                                 'Coordinate {0} has var name {1} '
                                 'instead of {2}. '
