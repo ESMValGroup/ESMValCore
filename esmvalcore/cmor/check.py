@@ -437,7 +437,6 @@ class CMORCheck():
                                 coord.var_name,
                                 coordinate.out_name,
                             )
-                            # coord.var_name = coordinate.out_name
                         else:
                             self.report_error(
                                 'Coordinate {0} has var name {1} '
