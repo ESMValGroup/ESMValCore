@@ -139,6 +139,73 @@ The following models are natively supported by ESMValCore.
 In contrast to the native observational datasets listed above, they use
 dedicated projects instead of the project ``native6``.
 
+.. _read_emac:
+
+EMAC
+^^^^
+
+ESMValTool is able to read native `EMAC
+<https://www.dlr.de/pa/en/desktopdefault.aspx/tabid-8859/15306_read-37415/>`_
+model output.
+
+The default naming conventions for input directories and files for EMAC are
+
+* input directories: ``[exp]/[channel]``
+* input files: ``[exp]*[channel][postproc_flag].nc``
+
+as configured in the :ref:`config-developer file <config-developer>` (using the
+default DRS ``drs: default`` in the :ref:`user configuration file`).
+
+Thus, example dataset entries could look like this:
+
+.. code-block:: yaml
+
+  datasets:
+    - {project: EMAC, dataset: EMAC, exp: historical, mip: Amon, short_name: tas, start_year: 2000, end_year: 2014}
+    - {project: EMAC, dataset: EMAC, exp: historical, mip: Omon, short_name: tos, postproc_flag: "-p-mm", start_year: 2000, end_year: 2014}
+    - {project: EMAC, dataset: EMAC, exp: historical, mip: Amon, short_name: ta, raw_name: tm1_p39_cav, start_year: 2000, end_year: 2014}
+
+Please note the duplication of the name ``EMAC`` in ``project`` and
+``dataset``, which is necessary to comply with ESMValTool's data finding and
+CMORizing functionalities.
+
+Similar to any other fix, the EMAC fix allows the use of :ref:`extra
+facets<extra_facets>`.
+By default, the file :download:`emac-mappings.yml
+</../esmvalcore/_config/extra_facets/emac-mappings.yml>` is used for that
+purpose.
+For some variables, extra facets are necessary; otherwise ESMValTool cannot
+read them properly.
+Supported keys for extra facets are:
+
+==================== ====================================== =================================
+Key                  Description                            Default value if not specified
+==================== ====================================== =================================
+``channel``          Channel in which the desired variable  No default (needs to be specified
+                     is stored                              in extra facets or recipe if
+                                                            default DRS is used)
+``postproc_flag``    Postprocessing flag of the data        ``''`` (empty string)
+``raw_name``         Variable name of the variable in the   CMOR variable name of the
+                     raw input file                         corresponding variable
+==================== ====================================== =================================
+
+.. note::
+
+   ``raw_name`` can be given as ``str`` or ``list``.
+   The latter is used to support multiple different variables names in the
+   input file.
+   In this case, the prioritization is given by the order of the list; if
+   possible, use the first entry, if this is not present, use the second, etc.
+   This is particularly useful for files in which regular averages (``*_ave``)
+   or conditional averages (``*_cav``) exist.
+
+   For 3D variables defined on pressure levels, only the pressure levels
+   defined by the CMOR table (e.g., for `Amon`'s `ta`: ``tm1_p19_cav`` and
+   ``tm1_p19_ave``) are given in the default extra facets file.
+   If other pressure levels are desired, e.g., ``tm1_p39_cav``, this has to be
+   explicitly specified in the recipe using ``raw_name: tm1_p39_cav`` or
+   ``raw_name: [tm1_p19_cav, tm1_p39_cav]``.
+
 .. _read_icon:
 
 ICON

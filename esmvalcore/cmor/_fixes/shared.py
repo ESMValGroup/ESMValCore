@@ -146,6 +146,23 @@ def add_scalar_height_coord(cube, height=2.0):
     return cube
 
 
+def add_scalar_lambda550nm_coord(cube):
+    """Add scalar coordinate 'lambda550nm'."""
+    logger.debug("Adding lambda550nm coordinate")
+    lambda550nm_coord = iris.coords.AuxCoord(
+        550.0,
+        var_name='wavelength',
+        standard_name='radiation_wavelength',
+        long_name='Radiation Wavelength 550 nanometers',
+        units='nm',
+    )
+    try:
+        cube.coord('radiation_wavelength')
+    except iris.exceptions.CoordinateNotFoundError:
+        cube.add_aux_coord(lambda550nm_coord, ())
+    return cube
+
+
 def add_scalar_typeland_coord(cube, value='default'):
     """Add scalar coordinate 'typeland' with value of `value`."""
     logger.debug("Adding typeland coordinate (%s)", value)

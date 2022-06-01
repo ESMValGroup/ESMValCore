@@ -724,6 +724,16 @@ def _update_multi_dataset_settings(variable, settings):
         _exclude_dataset(settings, variable, step)
 
 
+def _update_warning_settings(settings, project):
+    """Update project-specific warning settings."""
+    cfg = get_project_config(project)
+    if 'ignore_warnings' not in cfg:
+        return
+    for (step, ignored_warnings) in cfg['ignore_warnings'].items():
+        if step in settings:
+            settings[step]['ignore_warnings'] = ignored_warnings
+
+
 def _get_tag(step, identifier, statistic):
     # Avoid . in filename for percentiles
     statistic = statistic.replace('.', '-')
@@ -938,6 +948,7 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
             config_user,
             derive='derive' in profile,
         )
+        _update_warning_settings(settings, variable['project'])
         _apply_preprocessor_profile(settings, profile)
         _update_multi_dataset_settings(variable, settings)
         try:
