@@ -11,7 +11,6 @@ import isodate
 import yamale
 
 from ._data_finder import get_start_end_year
-from .dataset import _format_facets
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from .preprocessor._multimodel import STATISTIC_MAPPING
@@ -144,6 +143,23 @@ def _group_years(years):
         ranges.append(f"{start}" if start == end else f"{start}-{end}")
 
     return ", ".join(ranges)
+
+
+def _format_facets(facets):
+    """Format facets into a kind of human readable string."""
+    keys = (
+        'project',
+        'dataset',
+        'rcm_version',
+        'driver',
+        'domain',
+        'mip',
+        'exp',
+        'ensemble',
+        'grid',
+        'short_name',
+    )
+    return ", ".join(facets[k] for k in keys if k in facets)
 
 
 def data_availability(input_files, var, dirnames, filenames, log=True):

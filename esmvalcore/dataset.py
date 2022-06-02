@@ -3,7 +3,6 @@ import logging
 import re
 from pathlib import Path
 
-from . import _recipe_checks as check
 from . import esgf
 from ._config import get_activity, get_extra_facets, get_institutes
 from ._data_finder import (
@@ -14,6 +13,10 @@ from ._data_finder import (
     get_output_file,
     get_start_end_date,
 )
+from ._recipe_checks import _format_facets
+from ._recipe_checks import data_availability as check_data_availability
+from ._recipe_checks import valid_time_selection as check_valid_time_selection
+from ._recipe_checks import variable as check_variable
 from .cmor.table import CMOR_TABLES
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import add_fx_variables, preprocess
@@ -85,7 +88,7 @@ class Dataset:
         if (not session['offline']
                 and facets['project'] in esgf.facets.FACETS):
             try:
-                check.data_availability(
+                check_data_availability(
                     input_files,
                     facets,
                     dirnames,
@@ -167,23 +170,6 @@ class Dataset:
         return cube
 
 
-def _format_facets(facets):
-    """Format facets into a kind of human readable string."""
-    keys = (
-        'project',
-        'dataset',
-        'rcm_version',
-        'driver',
-        'domain',
-        'mip',
-        'exp',
-        'ensemble',
-        'grid',
-        'short_name',
-    )
-    return ", ".join(facets[k] for k in keys if k in facets)
-
-
 def _augment(base, update):
     """Update dict base with values from dict update."""
     for key in update:
@@ -226,7 +212,7 @@ def _add_cmor_info(facets, override=False):
                     facets)
 
     # Check that keys are available
-    check.variable(facets, required_keys=cmor_keys)
+    check_variable(facets, required_keys=cmor_keys)
 
 
 def _add_extra_facets(facets, extra_facets_dir):
@@ -247,7 +233,7 @@ def _update_timerange(dataset: Dataset, session):
         return
 
     timerange = dataset.facets.get('timerange')
-    check.valid_time_selection(timerange)
+    check_valid_time_selection(timerange)
 
     if '*' in timerange:
         files = dataset.find_files(session)
@@ -279,7 +265,7 @@ def _update_timerange(dataset: Dataset, session):
     # Make sure that years are in format YYYY
     (start_date, end_date) = timerange.split('/')
     timerange = dates_to_timerange(start_date, end_date)
-    check.valid_time_selection(timerange)
+    check_valid_time_selection(timerange)
 
     dataset.facets['timerange'] = timerange
 

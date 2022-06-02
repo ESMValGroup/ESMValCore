@@ -246,25 +246,6 @@ def _get_default_settings(variable, config_user, derive=False):
     return settings
 
 
-def _add_fxvar_keys(fx_info, variable, extra_facets_dir):
-    """Add keys specific to fx variable to use get_input_filelist."""
-    fx_variable = deepcopy(variable)
-    fx_variable.update(fx_info)
-    fx_variable['variable_group'] = fx_info['short_name']
-
-    # add special ensemble for CMIP5 only
-    if fx_variable['project'] == 'CMIP5':
-        fx_variable['ensemble'] = 'r0i0p0'
-
-    # add missing cmor info
-    _add_cmor_info(fx_variable, override=True)
-
-    # add extra_facets
-    _add_extra_facets(fx_variable, extra_facets_dir)
-
-    return fx_variable
-
-
 def _search_fx_mip(tables, variable, fx_info, config_user):
     """Search mip for fx variable."""
     # Get all mips that offer that specific fx variable
