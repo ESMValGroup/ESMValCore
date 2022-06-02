@@ -75,6 +75,7 @@ class Config(ValidatedConfig):
         mapping['extra_facets_dir'] = tuple()
         mapping['resume_from'] = []
         mapping['check_level'] = CheckLevels.DEFAULT
+        mapping['max_years'] = None
 
         new.update(mapping)
 

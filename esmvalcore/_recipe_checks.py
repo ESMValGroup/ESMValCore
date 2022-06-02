@@ -74,13 +74,18 @@ def diagnostics(diags):
                         script_name, name))
 
 
-def duplicate_datasets(datasets):
+def datasets(datasets, diagnostic: str, variable: str):
     """Check for duplicate datasets."""
+    if not datasets:
+        raise RecipeError(
+            "You have not specified any dataset or additional_dataset"
+            f" groups for variable {variable} in diagnostic {diagnostic}.")
     checked_datasets_ = []
     for dataset in datasets:
         if dataset in checked_datasets_:
             raise RecipeError(
-                "Duplicate dataset {} in datasets section".format(dataset))
+                f"Duplicate dataset {dataset} for variable {variable} in "
+                f"diagnostic {diagnostic}.")
         checked_datasets_.append(dataset)
 
 
@@ -90,8 +95,8 @@ def variable(var, required_keys):
     missing = required - set(var)
     if missing:
         raise RecipeError(
-            "Missing keys {} from variable {} in diagnostic {}".format(
-                missing, var.get('short_name'), var.get('diagnostic')))
+            "Missing keys {} in {} from variable {} in diagnostic {}".format(
+                missing, _format_facets(var), var.get('variable_group'), var.get('diagnostic')))
 
 
 def _log_data_availability_errors(input_files, var, dirnames, filenames):

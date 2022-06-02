@@ -114,6 +114,7 @@ def read_config_user_file(config_file, folder_name, options=None):
         'exit_on_warning': False,
         'extra_facets_dir': tuple(),
         'max_parallel_tasks': None,
+        'max_years': None,
         'offline': True,
         'output_file_type': 'png',
         'output_dir': '~/esmvaltool_output',

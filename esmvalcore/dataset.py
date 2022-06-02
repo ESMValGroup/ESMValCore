@@ -1,6 +1,7 @@
 import copy
 import logging
 import re
+from itertools import groupby
 from pathlib import Path
 
 from . import esgf
@@ -15,21 +16,52 @@ from ._data_finder import (
 )
 from ._recipe_checks import _format_facets
 from ._recipe_checks import data_availability as check_data_availability
+from ._recipe_checks import datasets as check_datasets
 from ._recipe_checks import valid_time_selection as check_valid_time_selection
 from ._recipe_checks import variable as check_variable
 from .cmor.table import CMOR_TABLES
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import add_fx_variables, preprocess
+from .preprocessor._io import DATASET_KEYS
 
 logger = logging.getLogger(__name__)
+
+_REQUIRED_KEYS = (
+    'short_name',
+    'mip',
+    'dataset',
+    'project',
+)
+
+_CMOR_KEYS = (
+    'standard_name',
+    'long_name',
+    'units',
+    'modeling_realm',
+    'frequency',
+)
 
 
 class Dataset:
 
     def __init__(self, **facets):
 
-        self.facets = copy.deepcopy(facets)
+        self.facets = {}
+        self._persist = set()
         self.ancillaries = []
+
+        for key, value in facets.items():
+            self.set_facet(key, copy.deepcopy(value), persist=True)
+
+    def copy(self, **facets):
+        persist = set(facets) | self._persist
+        _augment(facets, self.facets)
+        new = self.__class__()
+        for key, value in facets:
+            new.set_facet(key, copy.deepcopy(value), key in persist)
+        for ancillary in self.ancillaries:
+            new.add_ancillary(ancillary.copy(**facets))
+        return new
 
     def __eq__(self, other):
         return (isinstance(other, self.__class__)
@@ -37,11 +69,27 @@ class Dataset:
                 and self.ancillaries == other.ancillaries)
 
     def __repr__(self):
-        return repr(self.facets)
+
+        def facets2str(facets):
+            return ", ".join(f"{k}='{v}'" for k, v in sorted(facets.items()))
+
+        txt = f"{self.__class__.__name__}({facets2str(self.facets)})"
+        for anc in self.ancillaries:
+            txt += "\n" + f".add_ancillary({facets2str(anc.facets)})"
+        return txt
+
+    def set_facet(self, key, value, persist=True):
+        self.facets[key] = value
+        if persist:
+            self._persist.add(key)
 
     def add_ancillary(self, **facets):
+        persist = set(facets) | self._persist
         _augment(facets, self.facets)
-        self.ancillaries.append(Dataset(**facets))
+        ancillary = self.__class__()
+        for key, value in facets.items():
+            ancillary.set_facet(key, copy.deepcopy(value), key in persist)
+        self.ancillaries.append(ancillary)
 
     def augment_facets(self, session):
         """Augment facets."""
@@ -180,13 +228,6 @@ def _augment(base, update):
 def _add_cmor_info(facets, override=False):
     """Add information from CMOR tables to facets."""
     # Copy the following keys from CMOR table
-    cmor_keys = [
-        'standard_name',
-        'long_name',
-        'units',
-        'modeling_realm',
-        'frequency',
-    ]
     project = facets['project']
     mip = facets['mip']
     short_name = facets['short_name']
@@ -201,7 +242,7 @@ def _add_cmor_info(facets, override=False):
             f"Unable to load CMOR table (project) '{project}' for variable "
             f"'{short_name}' with mip '{mip}'")
     facets['original_short_name'] = table_entry.short_name
-    for key in cmor_keys:
+    for key in _CMOR_KEYS:
         if key not in facets or override:
             value = getattr(table_entry, key, None)
             if value is not None:
@@ -212,7 +253,7 @@ def _add_cmor_info(facets, override=False):
                     facets)
 
     # Check that keys are available
-    check_variable(facets, required_keys=cmor_keys)
+    check_variable(facets, required_keys=_CMOR_KEYS)
 
 
 def _add_extra_facets(facets, extra_facets_dir):
@@ -304,13 +345,141 @@ def _expand_tag(facets, input_tag):
     return expanded
 
 
-def datasets_from_recipe(recipe):
+ALIAS_INFO_KEYS = (
+    'project',
+    'activity',
+    'dataset',
+    'exp',
+    'ensemble',
+    'version',
+)
+"""List of keys to be used to compose the alias, ordered by priority."""
+
+
+def _set_aliases(datasets):
+    """Add a unique alias per diagnostic."""
+    for _, group in groupby(datasets, key=lambda ds: ds.facets['diagnostic']):
+        diag_datasets = [
+            list(h)
+            for _, h in groupby(group,
+                                key=lambda ds: ds.facets['variable_group'])
+        ]
+        _set_alias(diag_datasets)
+
+
+def _set_alias(variables):
+    """Add unique alias for datasets.
+
+    Generates a unique alias for each dataset that will be shared by all
+    variables. Tries to make it as small as possible to make it useful for
+    plot legends, filenames and such
+
+    It is composed using the keys in Recipe.info_keys that differ from
+    dataset to dataset. Once a diverging key is found, others are added
+    to the alias only if the previous ones where not enough to fully
+    identify the dataset.
+
+    If key values are not strings, they will be joint using '-' if they
+    are iterables or replaced by they string representation if they are not
+
+    Function will not modify alias if it is manually added to the recipe
+    but it will use the dataset info to compute the others
+
+    Examples
+    --------
+    - {project: CMIP5, model: EC-Earth, ensemble: r1i1p1}
+    - {project: CMIP6, model: EC-Earth, ensemble: r1i1p1f1}
+    will generate alias 'CMIP5' and 'CMIP6'
+
+    - {project: CMIP5, model: EC-Earth, experiment: historical}
+    - {project: CMIP5, model: MPI-ESM, experiment: piControl}
+    will generate alias 'EC-Earth,' and 'MPI-ESM'
+
+    - {project: CMIP5, model: EC-Earth, experiment: historical}
+    - {project: CMIP5, model: EC-Earth, experiment: piControl}
+    will generate alias 'historical' and 'piControl'
+
+    - {project: CMIP5, model: EC-Earth, experiment: historical}
+    - {project: CMIP6, model: EC-Earth, experiment: historical}
+    - {project: CMIP5, model: MPI-ESM, experiment: historical}
+    - {project: CMIP6, model: MPI-ESM experiment: historical}
+    will generate alias 'CMIP5_EC-EARTH', 'CMIP6_EC-EARTH', 'CMIP5_MPI-ESM'
+    and 'CMIP6_MPI-ESM'
+
+    - {project: CMIP5, model: EC-Earth, experiment: historical}
+    will generate alias 'EC-Earth'
+
+    Parameters
+    ----------
+    datasets : list
+        for each variable, a list of datasets
+    """
+    datasets_info = set()
+
+    def _key_str(obj):
+        if isinstance(obj, str):
+            return obj
+        try:
+            return '-'.join(obj)
+        except TypeError:
+            return str(obj)
+
+    for variable in variables:
+        for dataset in variable:
+            alias = tuple(
+                _key_str(dataset.facets.get(key, None))
+                for key in ALIAS_INFO_KEYS)
+            datasets_info.add(alias)
+            if 'alias' not in dataset.facets:
+                dataset.facets['alias'] = alias
+
+    alias = dict()
+    for info in datasets_info:
+        alias[info] = []
+
+    datasets_info = list(datasets_info)
+    _get_next_alias(alias, datasets_info, 0)
+
+    for info in datasets_info:
+        alias[info] = '_'.join(
+            [str(value) for value in alias[info] if value is not None])
+        if not alias[info]:
+            alias[info] = info[ALIAS_INFO_KEYS.index('dataset')]
+
+    for variable in variables:
+        for dataset in variable:
+            dataset.facets['alias'] = alias.get(dataset.facets['alias'],
+                                                dataset.facets['alias'])
+
+
+def _get_next_alias(alias, datasets_info, i):
+    if i >= len(ALIAS_INFO_KEYS):
+        return
+    key_values = set(info[i] for info in datasets_info)
+    if len(key_values) == 1:
+        for info in iter(datasets_info):
+            alias[info].append(None)
+    else:
+        for info in datasets_info:
+            alias[info].append(info[i])
+    for key in key_values:
+        _get_next_alias(
+            alias,
+            [info for info in datasets_info if info[i] == key],
+            i + 1,
+        )
+
+
+def datasets_from_recipe(recipe, session):
 
     datasets = []
 
     for diagnostic in recipe['diagnostics']:
         for variable_group in recipe['diagnostics'][diagnostic].get(
                 'variables', {}):
+            logger.debug(
+                "Populating list of datasets for variable %s in diagnostic %s",
+                variable_group, diagnostic)
             # Read variable from recipe
             recipe_variable = recipe['diagnostics'][diagnostic]['variables'][
                 variable_group]
@@ -321,35 +490,49 @@ def datasets_from_recipe(recipe):
                                recipe['diagnostics'][diagnostic].get(
                                    'additional_datasets', []) +
                                recipe_variable.get('additional_datasets', []))
+            check_datasets(recipe_datasets, diagnostic, variable_group)
 
             idx = 0
             for recipe_dataset in recipe_datasets:
+                _DATASET_KEYS.union(recipe_dataset)
                 facets = copy.deepcopy(recipe_variable)
                 facets.pop('additional_datasets', None)
                 facets.update(copy.deepcopy(recipe_dataset))
+                persist = set(facets)
                 facets['diagnostic'] = diagnostic
                 facets['variable_group'] = variable_group
                 if 'short_name' not in facets:
                     facets['short_name'] = variable_group
+                check_variable(facets, required_keys=_REQUIRED_KEYS)
+                preprocessor = str(facets.pop('preprocessor', 'default'))
                 if facets['project'] == 'obs4mips':
                     logger.warning(
                         "Correcting capitalization, project 'obs4mips' "
                         "should be written as 'obs4MIPs'")
                     facets['project'] = 'obs4MIPs'
+                if 'end_year' in facets and session['max_years']:
+                    facets['end_year'] = min(
+                        facets['end_year'],
+                        facets['start_year'] + session['max_years'] - 1)
                 for facets0 in _expand_tag(facets, 'ensemble'):
                     for facets1 in _expand_tag(facets0, 'sub_experiment'):
-                        facets1['recipe_dataset_index'] = idx
-                        idx += 1
                         ancillaries = facets1.pop('ancillary_variables', [])
-                        dataset = Dataset(**facets1)
+                        dataset = Dataset()
+                        for key in facets1:
+                            dataset.set_facet(key, facets1[key], key
+                                              in persist)
                         for ancillary_facets in ancillaries:
                             if isinstance(ancillary_facets, str):
                                 ancillary_facets = {
                                     'short_name': ancillary_facets
                                 }
                             dataset.add_ancillary(**ancillary_facets)
-
+                        dataset.facets['preprocessor'] = preprocessor
+                        dataset.facets['recipe_dataset_index'] = idx
                         datasets.append(dataset)
+                        idx += 1
+
+    _set_aliases(datasets)
 
     return datasets
 
@@ -358,16 +541,34 @@ def datasets_to_recipe(datasets):
 
     diagnostics = {}
 
+    format_keys = ('diagnostic', 'variable_group')
+
+    def filter_facets(dataset):
+        return {
+            k: v
+            for k, v in dataset.facets.items()
+            if k in dataset._persist and k not in format_keys
+        }
+
     for dataset in datasets:
-        facets = dict(dataset.facets)
-        facets.pop('recipe_dataset_index', None)
-        diagnostic = facets.pop('diagnostic')
+        for key in format_keys:
+            if key not in dataset.facets:
+                raise RecipeError(
+                    f"'{key}' facet missing from dataset {dataset},"
+                    "unable to convert to recipe.")
+        diagnostic = dataset.facets['diagnostic']
         if diagnostic not in diagnostics:
             diagnostics[diagnostic] = {'variables': {}}
         variables = diagnostics[diagnostic]['variables']
-        variable_group = facets.pop('variable_group')
+        variable_group = dataset.facets['variable_group']
         if variable_group not in variables:
             variables[variable_group] = {'additional_datasets': []}
+        facets = filter_facets(dataset)
+        if dataset.ancillaries:
+            facets['ancillary_variables'] = []
+        for ancillary in dataset.ancillaries:
+            ancillary_facets = filter_facets(ancillary)
+            facets['ancillary_variables'].append(ancillary_facets)
         variables[variable_group]['additional_datasets'].append(facets)
 
     # TODO: make recipe look nice

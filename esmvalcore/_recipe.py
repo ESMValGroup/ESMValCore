@@ -42,7 +42,6 @@ from .preprocessor import (
     PreprocessorFile,
 )
 from .preprocessor._derive import get_required
-from .preprocessor._io import DATASET_KEYS
 from .preprocessor._other import _group_products
 from .preprocessor._regrid import (
     _spec_to_latlonvals,
@@ -1109,13 +1108,9 @@ class Recipe:
         for name, raw_diagnostic in raw_diagnostics.items():
             diagnostic = {}
             diagnostic['name'] = name
-            additional_datasets = raw_diagnostic.get('additional_datasets', [])
-            datasets = (raw_datasets + additional_datasets)
             diagnostic['preprocessor_output'] = \
                 self._initialize_preprocessor_output(
-                    name,
-                    raw_diagnostic.get('variables', {}),
-                    datasets)
+                    name, raw_diagnostic.get('variables', {}))
             variable_names = tuple(raw_diagnostic.get('variables', {}))
             diagnostic['scripts'] = self._initialize_scripts(
                 name, raw_diagnostic.get('scripts'), variable_names)
@@ -1126,60 +1121,6 @@ class Recipe:
             diagnostics[name] = diagnostic
 
         return diagnostics
-
-    @staticmethod
-    def _initialize_datasets(raw_datasets):
-        """Define datasets used by variable."""
-        datasets = deepcopy(raw_datasets)
-
-        for dataset in datasets:
-            for key in dataset:
-                DATASET_KEYS.add(key)
-        return datasets
-
-    def _initialize_variables(self, raw_variable, raw_datasets):
-        """Define variables for all datasets."""
-        variables = []
-
-        raw_variable = deepcopy(raw_variable)
-        datasets = self._initialize_datasets(
-            raw_datasets + raw_variable.pop('additional_datasets', []))
-        if not datasets:
-            raise RecipeError("You have not specified any dataset "
-                              "or additional_dataset groups "
-                              f"for variable {raw_variable} Exiting.")
-        check.duplicate_datasets(datasets)
-
-        for index, dataset in enumerate(datasets):
-            variable = deepcopy(raw_variable)
-            variable.update(dataset)
-
-            variable['recipe_dataset_index'] = index
-            if 'end_year' in variable and self._cfg.get('max_years'):
-                variable['end_year'] = min(
-                    variable['end_year'],
-                    variable['start_year'] + self._cfg['max_years'] - 1)
-            variables.append(variable)
-
-        required_keys = {
-            'short_name',
-            'mip',
-            'dataset',
-            'project',
-            'preprocessor',
-            'diagnostic',
-        }
-        if 'fx' not in raw_variable.get('mip', ''):
-            required_keys.update({'timerange'})
-        else:
-            variable.pop('timerange', None)
-        for variable in variables:
-            check.variable(variable, required_keys)
-            if variable['project'] == 'obs4mips':
-                logger.warning("Correcting capitalization, project 'obs4mips'"
-                               " should be written as 'obs4MIPs'")
-                variable['project'] = 'obs4MIPs'
-        return variables
 
     def _initialize_preprocessor_output(self, diagnostic_name, raw_variables,
                                         raw_datasets):

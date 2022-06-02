@@ -38,13 +38,15 @@ def example_data(tmp_path):
 def test_load(example_data):
 
     session = CFG.start_session('test_session')
-    tas = Dataset(short_name='tas',
-                  mip='Amon',
-                  project='CMIP5',
-                  dataset='CanESM2',
-                  ensemble='r1i1p1',
-                  exp='historical',
-                  timerange='1850/185002')
+    tas = Dataset(
+        short_name='tas',
+        mip='Amon',
+        project='CMIP5',
+        dataset='CanESM2',
+        ensemble='r1i1p1',
+        exp='historical',
+        timerange='1850/185002',
+    )
     tas.add_ancillary(short_name='areacella', mip='fx', ensemble='r0i0p0')
 
     tas.augment_facets(session)
