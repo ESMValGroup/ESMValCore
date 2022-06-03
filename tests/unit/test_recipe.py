@@ -674,17 +674,20 @@ def test_differing_timeranges(caplog):
             'timerange': '1950/1952'
         },
     ]
-    _recipe._check_differing_timeranges(timeranges, required_variables)
-    print(caplog.text)
+    with pytest.raises(ValueError) as exc:
+        _recipe._check_differing_timeranges(
+            timeranges, required_variables)
     expected_log = (
-        "Differing timeranges with values {'1950/1952', '1950/1951'} "
+        f"Differing timeranges with values {timeranges} "
         "found for required variables "
         "[{'short_name': 'rsdscs', 'timerange': '1950/1951'}, "
         "{'short_name': 'rsuscs', 'timerange': '1950/1952'}]. "
         "Set `timerange` to a common value."
     )
 
-    assert expected_log in caplog.text
+    assert expected_log in str(exc.value)
+
+
 def test_update_warning_settings_nonaffected_project():
     """Test ``_update_warning_settings``."""
     settings = {'save': {'filename': 'out.nc'}, 'load': {'filename': 'in.nc'}}

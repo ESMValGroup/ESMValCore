@@ -1136,11 +1136,11 @@ def _split_derive_profile(profile):
 def _check_differing_timeranges(timeranges, required_vars):
     """Log error if required variables have differing timeranges."""
     if len(timeranges) > 1:
-        logger.error(
-            "Differing timeranges with values %s "
-            "found for required variables %s. "
+        raise ValueError(
+            f"Differing timeranges with values {timeranges} "
+            f"found for required variables {required_vars}. "
             "Set `timerange` to a common value.",
-            timeranges, required_vars)
+        )
 
 
 def _get_derive_input_variables(variables, config_user):
