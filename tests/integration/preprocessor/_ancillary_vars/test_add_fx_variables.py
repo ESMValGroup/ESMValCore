@@ -194,8 +194,9 @@ class Test:
         self.monthly_volume.standard_name = 'ocean_volume'
         self.monthly_volume.units = 'm3'
         cell_measure_file = str(tmp_path / 'volcello.nc')
-        iris.save(self.monthly_volume, fx_file)
-        fx_vars['volcello'].update({'filename': fx_file})
+        iris.save(self.monthly_volume, cell_measure_file)
+        cell_measures['volcello'].update(
+            {'filename': cell_measure_file})
         cube = iris.cube.Cube(np.ones((12, 3, 3, 3)),
                               dim_coords_and_dims=[
                                   (self.monthly_times, 0),
@@ -203,7 +204,7 @@ class Test:
                                   (self.lats, 2),
                                   (self.lons, 3)])
         cube = clip_timerange(cube, '195001/195003')
-        cube = add_fx_variables(cube, fx_vars, CheckLevels.IGNORE)
+        cube = add_fx_variables(cube, cell_measures, CheckLevels.IGNORE)
         cell_measure = cube.cell_measure(self.fx_volume.standard_name)
         assert cell_measure is not None
         assert cell_measure.shape == (3, 3, 3, 3)
