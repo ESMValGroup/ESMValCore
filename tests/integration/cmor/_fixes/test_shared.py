@@ -5,6 +5,7 @@ import iris.cube
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris import NameConstraint
 
 from esmvalcore.cmor._fixes.shared import (
     add_altitude_from_plev,
@@ -12,6 +13,7 @@ from esmvalcore.cmor._fixes.shared import (
     add_plev_from_altitude,
     add_scalar_depth_coord,
     add_scalar_height_coord,
+    add_scalar_lambda550nm_coord,
     add_scalar_typeland_coord,
     add_scalar_typesea_coord,
     add_scalar_typesi_coord,
@@ -23,7 +25,6 @@ from esmvalcore.cmor._fixes.shared import (
     get_pressure_to_altitude_func,
     round_coordinates,
 )
-from esmvalcore.iris_helpers import var_name_constraint
 
 
 @pytest.mark.sequential
@@ -92,7 +93,7 @@ def test_add_aux_coords_from_cubes(coord_dict, output):
                 assert cube.coord_dims(coord) == coord_dims
             points = np.full(coord.shape, 0.0)
             assert coord.points == points
-            assert not cubes.extract(var_name_constraint(coord_name))
+            assert not cubes.extract(NameConstraint(var_name=coord_name))
         assert len(cubes) == 5 - len(coord_dict)
         return
     with pytest.raises(ValueError) as err:
@@ -212,6 +213,7 @@ TEST_ADD_SCALAR_COORD = [
     (CUBE_2.copy(), None),
     (CUBE_2.copy(), 100.0),
 ]
+TEST_ADD_SCALAR_COORD_NO_VALS = [CUBE_1.copy(), CUBE_2.copy()]
 
 
 @pytest.mark.sequential
@@ -268,6 +270,30 @@ def test_add_scalar_height_coord(cube_in, height):
     assert cube_out_2 is cube_out
     coord = cube_in.coord('height')
     assert coord == height_coord
+
+
+@pytest.mark.sequential
+@pytest.mark.parametrize('cube_in', TEST_ADD_SCALAR_COORD_NO_VALS)
+def test_add_scalar_lambda550nm_coord(cube_in):
+    """Test adding of scalar lambda550nm coordinate."""
+    cube_in = cube_in.copy()
+    lambda550nm_coord = iris.coords.AuxCoord(
+        550.0,
+        var_name='wavelength',
+        standard_name='radiation_wavelength',
+        long_name='Radiation Wavelength 550 nanometers',
+        units='nm',
+    )
+    with pytest.raises(iris.exceptions.CoordinateNotFoundError):
+        cube_in.coord('radiation_wavelength')
+    cube_out = add_scalar_lambda550nm_coord(cube_in)
+    assert cube_out is cube_in
+    coord = cube_in.coord('radiation_wavelength')
+    assert coord == lambda550nm_coord
+    cube_out_2 = add_scalar_lambda550nm_coord(cube_out)
+    assert cube_out_2 is cube_out
+    coord = cube_in.coord('radiation_wavelength')
+    assert coord == lambda550nm_coord
 
 
 @pytest.mark.sequential

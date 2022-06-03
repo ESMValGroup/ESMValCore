@@ -685,3 +685,29 @@ def test_differing_timeranges(caplog):
     )
 
     assert expected_log in caplog.text
+def test_update_warning_settings_nonaffected_project():
+    """Test ``_update_warning_settings``."""
+    settings = {'save': {'filename': 'out.nc'}, 'load': {'filename': 'in.nc'}}
+    _recipe._update_warning_settings(settings, 'CMIP5')
+    assert settings == {
+        'save': {'filename': 'out.nc'},
+        'load': {'filename': 'in.nc'},
+    }
+
+
+def test_update_warning_settings_step_not_present():
+    """Test ``_update_warning_settings``."""
+    settings = {'save': {'filename': 'out.nc'}}
+    _recipe._update_warning_settings(settings, 'EMAC')
+    assert settings == {'save': {'filename': 'out.nc'}}
+
+
+def test_update_warning_settings_step_present():
+    """Test ``_update_warning_settings``."""
+    settings = {'save': {'filename': 'out.nc'}, 'load': {'filename': 'in.nc'}}
+    _recipe._update_warning_settings(settings, 'EMAC')
+    assert len(settings) == 2
+    assert settings['save'] == {'filename': 'out.nc'}
+    assert len(settings['load']) == 2
+    assert settings['load']['filename'] == 'in.nc'
+    assert 'ignore_warnings' in settings['load']

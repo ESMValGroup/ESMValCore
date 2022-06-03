@@ -42,7 +42,7 @@ request <https://github.blog/2019-02-14-introducing-draft-pull-requests/>`__
 early, as this will cause :ref:`CircleCI to run the unit tests <tests>`,
 :ref:`Codacy to analyse your code <code_quality>`, and
 :ref:`readthedocs to build the documentation <documentation>`.
-It’s also easier to get help from other developers if your code is visible in a
+It's also easier to get help from other developers if your code is visible in a
 pull request.
 
 :ref:`Make small pull requests <easy_review>`, the ideal pull requests changes
@@ -349,7 +349,7 @@ Whenever you make a pull request or push new commits to an existing pull
 request, readthedocs will automatically build the documentation.
 The link to the documentation will be shown in the list of checks below your
 pull request.
-Click 'Details' behind the check ``docs/readthedocs.org:esmvaltool`` to preview
+Click 'Details' behind the check ``docs/readthedocs.org:esmvalcore`` to preview
 the documentation.
 If all checks were successful, you may need to click 'Show all checks' to see
 the individual checks.
@@ -359,13 +359,13 @@ repository was cloned and run
 
 ::
 
-   python setup.py build_sphinx
+   sphinx-build doc doc/build
 
 or
 
 ::
 
-   python setup.py build_sphinx -Ea
+   sphinx-build -Ea doc doc/build
 
 to build it from scratch.
 
@@ -375,7 +375,7 @@ CircleCI_ will build the documentation with the command:
 
 .. code-block:: bash
 
-   python setup.py build_sphinx --warning-is-error
+   sphinx-build -W doc doc/build
 
 This will catch mistakes that can be detected automatically.
 
@@ -525,7 +525,8 @@ The result of the tests ran by CircleCI can be seen on the
 `CircleCI project page <https://app.circleci.com/pipelines/github/ESMValGroup/ESMValCore?branch=main>`__
 and the result of the tests ran by GitHub Actions can be viewed on the
 `Actions tab <https://github.com/ESMValGroup/ESMValCore/actions>`__
-of the repository.
+of the repository (to learn more about the Github-hosted runners, please have a look
+the `documentation <https://docs.github.com/en/actions/using-github-hosted-runners>`__).
 
 When opening a pull request, if you wish to run the Github Actions `Test <https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml>`__ test,
 you can activate it via a simple comment containing the @runGAtests tag
@@ -533,6 +534,11 @@ you can activate it via a simple comment containing the @runGAtests tag
 bot that will start the test automatically). This is useful
 to check if a certain feature that you included in the Pull Request, and can be tested
 for via the test suite, works across the supported Python versions, and both on Linux and OSX.
+The test is currently deactivated, so before triggering the test via comment, make sure you activate
+the test in the main `Actions page <https://github.com/ESMValGroup/ESMValCore/actions>`__
+(click on Test via PR Comment and activate it); also and be sure to deactivate it afterwards
+(the Github API still needs a bit more development, and currently it triggers
+the test for **each comment** irrespective of PR, that's why this needs to be activated/decativated).
 
 The configuration of the tests run by CircleCI can be found in the directory
 `.circleci <https://github.com/ESMValGroup/ESMValCore/blob/main/.circleci>`__,
@@ -631,15 +637,6 @@ the following files:
 - ``environment.yml``
   contains development dependencies that cannot be installed from
   `PyPI <https://pypi.org/>`_
-- ``docs/requirements.txt``
-  contains Python dependencies needed to build the documentation that can be
-  installed from PyPI
-- ``docs/conf.py``
-  contains a list of Python dependencies needed to build the documentation that
-  cannot be installed from PyPI and need to be mocked when building the
-  documentation.
-  (We do not use conda to build the documentation because this is too time
-  consuming.)
 - ``setup.py``
   contains all Python dependencies, regardless of their installation source
 
@@ -737,9 +734,10 @@ to run their favourite recipe using this branch.
 3. Increase the version number
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The version number is stored in ``esmvalcore/_version.py``, ``CITATION.cff``.
-Make sure to update both files.
-Also update the release date in ``CITATION.cff``.
+The version number is automatically generated from the information provided by
+git using [setuptools-scm](https://pypi.org/project/setuptools-scm/), but a
+static version number is stored in ``CITATION.cff``.
+Make sure to update the version number and release date in ``CITATION.cff``.
 See https://semver.org for more information on choosing a version number.
 Make a pull request and get it merged into ``main`` and cherry pick it into
 the release branch.

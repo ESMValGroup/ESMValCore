@@ -2,10 +2,9 @@
 
 import dask.array as da
 import iris
-from esmvalcore.iris_helpers import var_name_constraint
+from iris import NameConstraint
 
 from .._regrid import regrid
-
 from ._baseclass import DerivedVariableBase
 
 
@@ -25,11 +24,11 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Compute vegetation fraction from bare soil fraction."""
-        baresoilfrac_cube = cubes.extract_cube(var_name_constraint(
-            'baresoilFrac'))
-        residualfrac_cube = cubes.extract_cube(var_name_constraint(
-            'residualFrac'))
-        sftlf_cube = cubes.extract_cube(var_name_constraint('sftlf'))
+        baresoilfrac_cube = cubes.extract_cube(NameConstraint(
+            var_name='baresoilFrac'))
+        residualfrac_cube = cubes.extract_cube(NameConstraint(
+            var_name='residualFrac'))
+        sftlf_cube = cubes.extract_cube(NameConstraint(var_name='sftlf'))
 
         # Add time dimension to sftlf
         target_shape_sftlf = (baresoilfrac_cube.shape[0], *sftlf_cube.shape)

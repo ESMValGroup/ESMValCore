@@ -3,6 +3,7 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris import NameConstraint
 
 from esmvalcore.cmor._fixes.common import (
     ClFixHybridHeightCoord,
@@ -11,7 +12,6 @@ from esmvalcore.cmor._fixes.common import (
     SiconcFixScalarCoord,
 )
 from esmvalcore.cmor.table import get_var_info
-from esmvalcore.iris_helpers import var_name_constraint
 
 AIR_PRESSURE_POINTS = np.array([[[[1.0, 1.0, 1.0, 1.0],
                                   [1.0, 1.0, 1.0, 1.0],
@@ -57,7 +57,7 @@ def hybrid_pressure_coord_fix_metadata(nc_path, short_name, fix):
     assert 'b_bnds' in var_names
 
     # Raw cube
-    cube = cubes.extract_cube(var_name_constraint(short_name))
+    cube = cubes.extract_cube(NameConstraint(var_name=short_name))
     air_pressure_coord = cube.coord('air_pressure')
     assert air_pressure_coord.points is not None
     assert air_pressure_coord.bounds is None
@@ -70,7 +70,7 @@ def hybrid_pressure_coord_fix_metadata(nc_path, short_name, fix):
     # Apply fix
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
-    fixed_cube = fixed_cubes.extract_cube(var_name_constraint(short_name))
+    fixed_cube = fixed_cubes.extract_cube(NameConstraint(var_name=short_name))
     fixed_air_pressure_coord = fixed_cube.coord('air_pressure')
     assert fixed_air_pressure_coord.points is not None
     assert fixed_air_pressure_coord.bounds is not None
@@ -134,7 +134,7 @@ def hybrid_height_coord_fix_metadata(nc_path, short_name, fix):
     assert 'b_bnds' in var_names
 
     # Raw cube
-    cube = cubes.extract_cube(var_name_constraint(short_name))
+    cube = cubes.extract_cube(NameConstraint(var_name=short_name))
     height_coord = cube.coord('altitude')
     assert height_coord.points is not None
     assert height_coord.bounds is not None
@@ -146,7 +146,7 @@ def hybrid_height_coord_fix_metadata(nc_path, short_name, fix):
     # Apply fix
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
-    fixed_cube = fixed_cubes.extract_cube(var_name_constraint(short_name))
+    fixed_cube = fixed_cubes.extract_cube(NameConstraint(var_name=short_name))
     fixed_height_coord = fixed_cube.coord('altitude')
     assert fixed_height_coord.points is not None
     assert fixed_height_coord.bounds is not None
