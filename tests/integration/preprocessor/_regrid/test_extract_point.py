@@ -51,6 +51,12 @@ class Test(tests.Test):
         self.assertEqual(point.shape, (3,))
         self.assert_array_equal(point.data, masked)
 
+        point = extract_point(self.cube, 30, 30, scheme='nearest')
+        self.assertEqual(point.shape, (3,))
+        # do it the proletarian way, back to basics is good sometimes
+        assert np.ma.is_masked(point.data)
+        assert point.data.mask.all()
+
     def test_extract_point__single_nearest(self):
         """Test nearest match when extracting a single point"""
 

@@ -520,6 +520,38 @@ related to CMOR table settings available:
   to get the name of the file containing the ``mip`` table.
   Defaults to the value provided in ``cmor_type``.
 
+.. _filterwarnings_config-developer:
+
+Filter preprocessor warnings
+----------------------------
+
+It is possible to ignore specific warnings of the preprocessor for a given
+``project``.
+This is particularly useful for native models which do not follow the CMOR
+standard by default and consequently produce a lot of warnings when handled by
+Iris.
+This can be configured in the ``config-developer.yml`` file for some steps of
+the preprocessing chain.
+
+Currently supported preprocessor steps:
+
+* :func:`~esmvalcore.preprocessor.load`
+
+Here is an example on how to ignore specific warnings during the preprocessor
+step ``load`` for all datasets of project  ``EMAC`` (taken from the default
+``config-developer.yml`` file):
+
+.. code-block:: yaml
+
+   ignore_warnings:
+     load:
+       - {message: 'Missing CF-netCDF formula term variable .*, referenced by netCDF variable .*', module: iris}
+       - {message: 'Ignored formula of unrecognised type: .*', module: iris}
+
+The keyword arguments specified in the list items are directly passed to
+:func:`warnings.filterwarnings` in addition to ``action=ignore`` (may be
+overwritten in ``config-developer.yml``).
+
 .. _configure_native_models:
 
 Configuring datasets in native format

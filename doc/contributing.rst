@@ -42,7 +42,7 @@ request <https://github.blog/2019-02-14-introducing-draft-pull-requests/>`__
 early, as this will cause :ref:`CircleCI to run the unit tests <tests>`,
 :ref:`Codacy to analyse your code <code_quality>`, and
 :ref:`readthedocs to build the documentation <documentation>`.
-It’s also easier to get help from other developers if your code is visible in a
+It's also easier to get help from other developers if your code is visible in a
 pull request.
 
 :ref:`Make small pull requests <easy_review>`, the ideal pull requests changes
@@ -349,7 +349,7 @@ Whenever you make a pull request or push new commits to an existing pull
 request, readthedocs will automatically build the documentation.
 The link to the documentation will be shown in the list of checks below your
 pull request.
-Click 'Details' behind the check ``docs/readthedocs.org:esmvaltool`` to preview
+Click 'Details' behind the check ``docs/readthedocs.org:esmvalcore`` to preview
 the documentation.
 If all checks were successful, you may need to click 'Show all checks' to see
 the individual checks.
@@ -637,15 +637,6 @@ the following files:
 - ``environment.yml``
   contains development dependencies that cannot be installed from
   `PyPI <https://pypi.org/>`_
-- ``docs/requirements.txt``
-  contains Python dependencies needed to build the documentation that can be
-  installed from PyPI
-- ``docs/conf.py``
-  contains a list of Python dependencies needed to build the documentation that
-  cannot be installed from PyPI and need to be mocked when building the
-  documentation.
-  (We do not use conda to build the documentation because this is too time
-  consuming.)
 - ``setup.py``
   contains all Python dependencies, regardless of their installation source
 
@@ -743,9 +734,10 @@ to run their favourite recipe using this branch.
 3. Increase the version number
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The version number is stored in ``esmvalcore/_version.py``, ``CITATION.cff``.
-Make sure to update both files.
-Also update the release date in ``CITATION.cff``.
+The version number is automatically generated from the information provided by
+git using [setuptools-scm](https://pypi.org/project/setuptools-scm/), but a
+static version number is stored in ``CITATION.cff``.
+Make sure to update the version number and release date in ``CITATION.cff``.
 See https://semver.org for more information on choosing a version number.
 Make a pull request and get it merged into ``main`` and cherry pick it into
 the release branch.
