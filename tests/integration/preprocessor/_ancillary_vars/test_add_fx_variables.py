@@ -181,7 +181,7 @@ class Test:
 
     def test_clip_volume_timerange(self, tmp_path):
         """Test timerange is clipped in time dependent measures."""
-        fx_vars = {
+        cell_measures = {
             'volcello': {
                 'short_name': 'volcello',
                 'project': 'CMIP6',
@@ -193,7 +193,7 @@ class Test:
         self.monthly_volume.var_name = 'volcello'
         self.monthly_volume.standard_name = 'ocean_volume'
         self.monthly_volume.units = 'm3'
-        fx_file = str(tmp_path / 'volcello.nc')
+        cell_measure_file = str(tmp_path / 'volcello.nc')
         iris.save(self.monthly_volume, fx_file)
         fx_vars['volcello'].update({'filename': fx_file})
         cube = iris.cube.Cube(np.ones((12, 3, 3, 3)),
