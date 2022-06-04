@@ -836,15 +836,19 @@ def _update_timerange(variable, config_user):
     check.valid_time_selection(timerange)
 
     if '*' in timerange:
-        if config_user.get('offline', True):
-            (files, _, _) = _find_input_files(
-                variable,
-                config_user['rootpath'],
-                config_user['drs'])
-        else:
+        (files, _, _) = _find_input_files(
+            variable, config_user['rootpath'], config_user['drs'])
+        if not files and not config_user.get('offline', True):
             facets = deepcopy(variable)
             facets.pop('timerange', None)
             files = [file.name for file in esgf.find_files(**facets)]
+
+        if not files:
+            raise InputFilesNotFound(
+                f"Missing data for {variable['alias']}: "
+                f"{variable['short_name']}. Cannot determine indeterminate "
+                f"time range '{timerange}'."
+            )
 
         intervals = [get_start_end_date(name) for name in files]
 
@@ -1157,9 +1161,9 @@ def _get_derive_input_variables(variables, config_user):
 
     for variable in variables:
         group_prefix = variable['variable_group'] + '_derive_input_'
-        if not variable.get('force_derivation') and _get_input_files(
-                variable, config_user)[0]:
+        if not variable.get('force_derivation'):
             # No need to derive, just process normally up to derive step
+            _update_timerange(variable, config_user)
             var = deepcopy(variable)
             append(group_prefix, var)
         else:
@@ -1181,6 +1185,7 @@ def _get_derive_input_variables(variables, config_user):
                     append(group_prefix, var)
                     timeranges.add(var['timerange'])
             _check_differing_timeranges(timeranges, required_vars)
+            variable['timerange'] = " ".join(timeranges)
 
     # An empty derive_input (due to all variables marked as 'optional' is
     # handled at a later step

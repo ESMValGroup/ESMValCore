@@ -22,7 +22,7 @@ from esmvalcore._recipe import (
 )
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.exceptions import RecipeError
+from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
 
@@ -1036,6 +1036,44 @@ def test_update_timerange_year_format(config_user, input_time, output_time):
     }
     esmvalcore._recipe._update_timerange(variable, config_user)
     assert variable['timerange'] == output_time
+
+
+def test_update_timerange_no_files_online(config_user):
+    variable = {
+        'alias': 'CMIP6',
+        'project': 'CMIP6',
+        'mip': 'Amon',
+        'short_name': 'tas',
+        'original_short_name': 'tas',
+        'dataset': 'HadGEM3-GC31-LL',
+        'exp': 'historical',
+        'ensemble': 'r2i1p1f1',
+        'grid': 'gr',
+        'timerange': '*/2000',
+    }
+    msg = "Missing data for CMIP6: tas. Cannot determine indeterminate time "
+    with pytest.raises(InputFilesNotFound, match=msg):
+        esmvalcore._recipe._update_timerange(variable, config_user)
+
+
+def test_update_timerange_no_files_offline(config_user):
+    variable = {
+        'alias': 'CMIP6',
+        'project': 'CMIP6',
+        'mip': 'Amon',
+        'short_name': 'tas',
+        'original_short_name': 'tas',
+        'dataset': 'HadGEM3-GC31-LL',
+        'exp': 'historical',
+        'ensemble': 'r2i1p1f1',
+        'grid': 'gr',
+        'timerange': '*/2000',
+    }
+    config_user = dict(config_user)
+    config_user['offline'] = False
+    msg = "Missing data for CMIP6: tas. Cannot determine indeterminate time "
+    with pytest.raises(InputFilesNotFound, match=msg):
+        esmvalcore._recipe._update_timerange(variable, config_user)
 
 
 def test_reference_dataset(tmp_path, patched_datafinder, config_user,

@@ -303,7 +303,7 @@ def test_search_esgf_timerange(mocker, tmp_path, timerange):
     esgf_files = create_esgf_search_results()
 
     mocker.patch.object(_recipe,
-                        'get_input_filelist',
+                        '_find_input_files',
                         autospec=True,
                         return_value=([], [], []))
     mocker.patch.object(
@@ -324,6 +324,7 @@ def test_search_esgf_timerange(mocker, tmp_path, timerange):
         'grid': 'gr',
         'timerange': timerange,
         'alias': 'CMIP6_EC-Eeath3_tas',
+        'original_short_name': 'tas'
     }
 
     config_user = {
