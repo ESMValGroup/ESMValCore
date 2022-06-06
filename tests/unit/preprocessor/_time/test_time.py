@@ -496,6 +496,31 @@ class TestClimatology(tests.Test):
         expected = np.array([(5 / 3)**0.5], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
+    # @pytest.mark.parametrize("percentile,exp", )
+    def test_time_percentile(self):
+        """Test for time percentile of a 1D field."""
+
+        # For some reason I can't use pytest parametrize. If I'm being stupid,
+        # please help. Otherwise I'm happy to open an issue if one doesn't
+        # exist already
+        for percentile, exp in (
+            (10, [0.2]),
+            (50, [1]),
+            (90, [1.8]),
+        ):
+            data = np.array([0., 1., 2.], dtype=np.float32)
+            times = np.array([15., 45., 75.])
+            bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
+            cube = self._create_cube(data, times, bounds)
+
+            result = climate_statistics(cube, operator='percentile', percent=percentile)
+            expected = np.array(exp, dtype=np.float32)
+            assert_array_equal(result.data, expected)
+
+    # percentile uneven times (tests weighting)
+    # percentile seasons
+    # percentile seasons uneven times (tests weighting on non-full periods)
+
 
 class TestSeasonalStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.seasonal_statistics`."""
