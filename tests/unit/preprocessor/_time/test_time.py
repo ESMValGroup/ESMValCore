@@ -517,11 +517,77 @@ class TestClimatology(tests.Test):
             expected = np.array(exp, dtype=np.float32)
             assert_array_equal(result.data, expected)
 
-    # percentile uneven times (tests weighting)
-    # percentile seasons
-    # percentile seasons uneven times (tests weighting on non-full periods)
+    # @pytest.mark.parametrize("percentile,exp", )
+    def test_time_percentile_uneven(self):
+        """Test for time percentile of a 1D field with uneven times.
 
+        Gives same results as even times as percentile doesn't support weights."""
+        # TODO: create issue or PR for adding weighted percentile
 
+        # For some reason I can't use pytest parametrize. If I'm being stupid,
+        # please help. Otherwise I'm happy to open an issue if one doesn't
+        # exist already
+        for percentile, exp in (
+            (10, [0.2]),
+            (50, [1]),
+            (90, [1.8]),
+        ):
+            data = np.array([0., 1., 2.], dtype=np.float32)
+            times = np.array([15., 35., 75.])
+            bounds = np.array([[5., 25.], [25., 55.], [55., 75.]])
+            cube = self._create_cube(data, times, bounds)
+
+            result = climate_statistics(cube, operator='percentile', percent=percentile)
+            expected = np.array(exp, dtype=np.float32)
+            assert_array_equal(result.data, expected)
+
+    # @pytest.mark.parametrize("percentile,exp", )
+    def test_season_percentile(self):
+        """Test for seasonal percentile of a 1D field."""
+
+        # For some reason I can't use pytest parametrize. If I'm being stupid,
+        # please help. Otherwise I'm happy to open an issue if one doesn't
+        # exist already
+        for percentile, exp in (
+            (10, [0.1, 2.2, 5]),
+            (50, [0.5, 3, 5]),
+            (90, [0.9, 3.8, 5]),
+        ):
+            data = np.array([0., 1., 2., 3., 4., 5.], dtype=np.float32)
+            times = np.array([15, 45, 74, 105, 135, 166])
+            bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
+                               [151, 181]])
+            cube = self._create_cube(data, times, bounds)
+
+            result = climate_statistics(cube, operator='percentile', percent=percentile, period='season')
+            expected = np.array(exp, dtype=np.float32)
+            assert_array_equal(result.data, expected)
+
+    # @pytest.mark.parametrize("percentile,exp", )
+    def test_season_percentile_uneven(self):
+        """Test for seasonal percentile of a 1D field.
+
+        Gives same results as even times as percentile doesn't support weights."""
+
+        # For some reason I can't use pytest parametrize. If I'm being stupid,
+        # please help. Otherwise I'm happy to open an issue if one doesn't
+        # exist already
+        for percentile, exp in (
+            (10, [0.1, 2.2, 5]),
+            (50, [0.5, 3, 5]),
+            (90, [0.9, 3.8, 5]),
+        ):
+            data = np.array([0., 1., 2., 3., 4., 5.], dtype=np.float32)
+            times = np.array([10, 40, 70, 100, 135, 166])
+            bounds = np.array([[0, 21], [21, 59], [59, 80], [80, 120], [120, 151],
+                               [151, 181]])
+            cube = self._create_cube(data, times, bounds)
+
+            result = climate_statistics(cube, operator='percentile', percent=percentile, period='season')
+            expected = np.array(exp, dtype=np.float32)
+            assert_array_equal(result.data, expected)
+
+# TODO: PR with seasonal climatology but uneven times
 class TestSeasonalStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.seasonal_statistics`."""
 
