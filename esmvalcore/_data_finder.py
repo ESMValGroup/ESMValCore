@@ -443,7 +443,7 @@ def get_rootpath(rootpath, project):
 
 
 def _find_input_dirs(variable, rootpath, drs):
-    """Return a the full paths to input directories."""
+    """Return the full paths to input directories."""
     project = variable['project']
 
     root = get_rootpath(rootpath, project)
@@ -477,8 +477,35 @@ def _get_filenames_glob(variable, drs):
 def _find_input_files(variable, rootpath, drs):
     """Find available input files.
 
-    Return the files, the directory in which they are located in, and
-    the file name.
+    Parameters
+    ----------
+    variable : Dict[str: str]
+        [Need help here] Metadata (keys are metadata labels, values provide
+        value for the particular variable) that defines the variable (in the
+        ESMValTool sense i.e. piece of data which is being worked on) to
+        lookup. This will generally look something like
+        ``{"short_name": "tas", "original_short_name": "tas_custom", "exp": "historical"...}``
+
+    rootpath : Dict[str: list[str]]
+        Rootpaths in which to search for files. Keys are projects (e.g. CMIP6)
+        and values are lists of paths to try as the rootpath.
+
+    drs : Dict[str: str]
+        DRS to use when searching for files. Keys are projects (e.g. CMIP6) and
+        values are the drs to use (e.g. ESGF).
+
+    Returns
+    -------
+    list[str], list[str], list[str]
+        Files (full path), directories in which they were searched for and
+        filename globs used to look for files. Note that the returned lists are
+        likely all of different lengths (i.e. don't correspond to each other in
+        any particular way).
+
+    Raises
+    ------
+    KeyError
+        ``variable`` does not contain all of the following keys: ``"short_name"``, ``"original_short_name"``
     """
     short_name = variable['short_name']
     variable['short_name'] = variable['original_short_name']
