@@ -496,13 +496,10 @@ class TestClimatology(tests.Test):
         expected = np.array([(5 / 3)**0.5], dtype=np.float32)
         assert_array_equal(result.data, expected)
 
-    # @pytest.mark.parametrize("percentile,exp", )
     def test_time_percentile(self):
         """Test for time percentile of a 1D field."""
 
-        # For some reason I can't use pytest parametrize. If I'm being stupid,
-        # please help. Otherwise I'm happy to open an issue if one doesn't
-        # exist already
+        # Can't use parametrisation, see #1616
         for percentile, exp in (
             (10, [0.2]),
             (50, [1]),
@@ -517,16 +514,13 @@ class TestClimatology(tests.Test):
             expected = np.array(exp, dtype=np.float32)
             assert_array_equal(result.data, expected)
 
-    # @pytest.mark.parametrize("percentile,exp", )
     def test_time_percentile_uneven(self):
         """Test for time percentile of a 1D field with uneven times.
 
         Gives same results as even times as percentile doesn't support weights."""
         # TODO: create issue or PR for adding weighted percentile
 
-        # For some reason I can't use pytest parametrize. If I'm being stupid,
-        # please help. Otherwise I'm happy to open an issue if one doesn't
-        # exist already
+        # Can't use parametrisation, see #1616
         for percentile, exp in (
             (10, [0.2]),
             (50, [1]),
@@ -541,13 +535,10 @@ class TestClimatology(tests.Test):
             expected = np.array(exp, dtype=np.float32)
             assert_array_equal(result.data, expected)
 
-    # @pytest.mark.parametrize("percentile,exp", )
     def test_season_percentile(self):
         """Test for seasonal percentile of a 1D field."""
 
-        # For some reason I can't use pytest parametrize. If I'm being stupid,
-        # please help. Otherwise I'm happy to open an issue if one doesn't
-        # exist already
+        # Can't use parametrisation, see #1616
         for percentile, exp in (
             (10, [0.1, 2.2, 5]),
             (50, [0.5, 3, 5]),
@@ -563,19 +554,12 @@ class TestClimatology(tests.Test):
             expected = np.array(exp, dtype=np.float32)
             assert_array_equal(result.data, expected)
 
-    @pytest.mark.parametrize("percentile,exp", (
-            (10, [0.1, 2.2, 5]),
-            (50, [0.5, 3, 5]),
-            (90, [0.9, 3.8, 5]),
-        ))
-    def test_season_percentile_uneven(self, percentile, exp):
+    def test_season_percentile_uneven(self):
         """Test for seasonal percentile of a 1D field.
 
         Gives same results as even times as percentile doesn't support weights."""
 
-        # For some reason I can't use pytest parametrize. If I'm being stupid,
-        # please help. Otherwise I'm happy to open an issue if one doesn't
-        # exist already
+        # Can't use parametrisation, see #1616
         for percentile, exp in (
             (10, [0.1, 2.2, 5]),
             (50, [0.5, 3, 5]),
