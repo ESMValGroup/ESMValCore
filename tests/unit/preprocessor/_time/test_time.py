@@ -563,8 +563,12 @@ class TestClimatology(tests.Test):
             expected = np.array(exp, dtype=np.float32)
             assert_array_equal(result.data, expected)
 
-    # @pytest.mark.parametrize("percentile,exp", )
-    def test_season_percentile_uneven(self):
+    @pytest.mark.parametrize("percentile,exp", (
+            (10, [0.1, 2.2, 5]),
+            (50, [0.5, 3, 5]),
+            (90, [0.9, 3.8, 5]),
+        ))
+    def test_season_percentile_uneven(self, percentile, exp):
         """Test for seasonal percentile of a 1D field.
 
         Gives same results as even times as percentile doesn't support weights."""
@@ -587,7 +591,7 @@ class TestClimatology(tests.Test):
             expected = np.array(exp, dtype=np.float32)
             assert_array_equal(result.data, expected)
 
-# TODO: PR with seasonal climatology but uneven times
+
 class TestSeasonalStatistics(tests.Test):
     """Test :func:`esmvalcore.preprocessor._time.seasonal_statistics`."""
 
