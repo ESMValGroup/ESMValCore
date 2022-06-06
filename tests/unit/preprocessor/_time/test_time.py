@@ -498,7 +498,6 @@ class TestClimatology(tests.Test):
 
     def test_time_percentile(self):
         """Test for time percentile of a 1D field."""
-
         # Can't use parametrisation, see #1616
         for percentile, exp in (
             (10, [0.2]),
@@ -510,16 +509,18 @@ class TestClimatology(tests.Test):
             bounds = np.array([[0., 30.], [30., 60.], [60., 90.]])
             cube = self._create_cube(data, times, bounds)
 
-            result = climate_statistics(cube, operator='percentile', percent=percentile)
+            result = climate_statistics(cube,
+                                        operator='percentile',
+                                        percent=percentile)
             expected = np.array(exp, dtype=np.float32)
             assert_array_equal(result.data, expected)
 
     def test_time_percentile_uneven(self):
         """Test for time percentile of a 1D field with uneven times.
 
-        Gives same results as even times as percentile doesn't support weights.
-        Adding weighted percentiles is future job, see #1617."""
-
+        Gives same results as even times as percentile doesn't support
+        weights. Adding weighted percentiles is future job, see #1617.
+        """
         # Can't use parametrisation, see #1616
         for percentile, exp in (
             (10, [0.2]),
@@ -531,13 +532,14 @@ class TestClimatology(tests.Test):
             bounds = np.array([[5., 25.], [25., 55.], [55., 75.]])
             cube = self._create_cube(data, times, bounds)
 
-            result = climate_statistics(cube, operator='percentile', percent=percentile)
+            result = climate_statistics(cube,
+                                        operator='percentile',
+                                        percent=percentile)
             expected = np.array(exp, dtype=np.float32)
             assert_array_equal(result.data, expected)
 
     def test_season_percentile(self):
         """Test for seasonal percentile of a 1D field."""
-
         # Can't use parametrisation, see #1616
         for percentile, exp in (
             (10, [0.1, 2.2, 5]),
@@ -546,20 +548,25 @@ class TestClimatology(tests.Test):
         ):
             data = np.array([0., 1., 2., 3., 4., 5.], dtype=np.float32)
             times = np.array([15, 45, 74, 105, 135, 166])
-            bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120], [120, 151],
-                               [151, 181]])
+            bounds = np.array([[0, 31], [31, 59], [59, 90], [90, 120],
+                               [120, 151], [151, 181]])
             cube = self._create_cube(data, times, bounds)
 
-            result = climate_statistics(cube, operator='percentile', percent=percentile, period='season')
+            result = climate_statistics(
+                cube,
+                operator='percentile',
+                percent=percentile,
+                period='season',
+            )
             expected = np.array(exp, dtype=np.float32)
             assert_array_equal(result.data, expected)
 
     def test_season_percentile_uneven(self):
         """Test for seasonal percentile of a 1D field.
 
-        Gives same results as even times as percentile doesn't support weights.
-        Adding weighted percentiles is future job, see #1617."""
-
+        Gives same results as even times as percentile doesn't support
+        weights. Adding weighted percentiles is future job, see #1617.
+        """
         # Can't use parametrisation, see #1616
         for percentile, exp in (
             (10, [0.1, 2.2, 5]),
@@ -568,11 +575,16 @@ class TestClimatology(tests.Test):
         ):
             data = np.array([0., 1., 2., 3., 4., 5.], dtype=np.float32)
             times = np.array([10, 40, 70, 100, 135, 166])
-            bounds = np.array([[0, 21], [21, 59], [59, 80], [80, 120], [120, 151],
-                               [151, 181]])
+            bounds = np.array([[0, 21], [21, 59], [59, 80], [80, 120],
+                               [120, 151], [151, 181]])
             cube = self._create_cube(data, times, bounds)
 
-            result = climate_statistics(cube, operator='percentile', percent=percentile, period='season')
+            result = climate_statistics(
+                cube,
+                operator='percentile',
+                percent=percentile,
+                period='season',
+            )
             expected = np.array(exp, dtype=np.float32)
             assert_array_equal(result.data, expected)
 
