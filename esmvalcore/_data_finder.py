@@ -144,7 +144,6 @@ def dates_to_timerange(start_date, end_date):
     -------
     str
         ``timerange`` in the form ``'start_date/end_date'``.
-
     """
     start_date = str(start_date)
     end_date = str(end_date)
@@ -283,7 +282,6 @@ def _truncate_dates(date, file_date):
     same number of digits. If this is not the case, pad the dates with leading
     zeros (e.g., use ``date='0100'`` and ``file_date='199901'`` for a correct
     comparison).
-
     """
     date = re.sub("[^0-9]", '', date)
     file_date = re.sub("[^0-9]", '', file_date)
@@ -484,7 +482,7 @@ def _find_input_files(variable, rootpath, drs):
         value for the particular variable) that defines the variable (in the
         ESMValTool sense i.e. piece of data which is being worked on) to
         lookup. This will generally look something like
-        ``{"short_name": "tas", "original_short_name": "tas_custom", "exp": "historical"...}``
+        ``{"short_name": "tas", "original_short_name": "t", "exp": "1pctCO2"...}``
 
     rootpath : Dict[str: list[str]]
         Rootpaths in which to search for files. Keys are projects (e.g. CMIP6)
@@ -505,7 +503,8 @@ def _find_input_files(variable, rootpath, drs):
     Raises
     ------
     KeyError
-        ``variable`` does not contain all of the following keys: ``"short_name"``, ``"original_short_name"``
+        ``variable`` does not contain all of the following keys:
+        ``"short_name"``, ``"original_short_name"``
     """
     short_name = variable['short_name']
     variable['short_name'] = variable['original_short_name']
