@@ -530,7 +530,7 @@ def climate_statistics(cube,
     operator: str, optional
         Select operator to apply.
         Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
-        'max', 'rms'
+        'max', 'rms', 'percentile'
 
     period: str, optional
         Period to compute the statistic over.
@@ -539,6 +539,11 @@ def climate_statistics(cube,
 
     seasons: list or tuple of str, optional
         Seasons to use if needed. Defaults to ('DJF', 'MAM', 'JJA', 'SON')
+
+    **kwargs
+        Passed through to the operator call (e.g. use ``percent`` if the
+        ``operator`` is ``'percentile'``). Using ``kwargs`` which don't match
+        up with ``operator`` will likely cause things to fail.
 
     Returns
     -------
