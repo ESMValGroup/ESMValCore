@@ -517,8 +517,8 @@ class TestClimatology(tests.Test):
     def test_time_percentile_uneven(self):
         """Test for time percentile of a 1D field with uneven times.
 
-        Gives same results as even times as percentile doesn't support weights."""
-        # TODO: create issue or PR for adding weighted percentile
+        Gives same results as even times as percentile doesn't support weights.
+        Adding weighted percentiles is future job, see #1617."""
 
         # Can't use parametrisation, see #1616
         for percentile, exp in (
@@ -557,7 +557,8 @@ class TestClimatology(tests.Test):
     def test_season_percentile_uneven(self):
         """Test for seasonal percentile of a 1D field.
 
-        Gives same results as even times as percentile doesn't support weights."""
+        Gives same results as even times as percentile doesn't support weights.
+        Adding weighted percentiles is future job, see #1617."""
 
         # Can't use parametrisation, see #1616
         for percentile, exp in (
