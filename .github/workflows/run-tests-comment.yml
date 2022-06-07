@@ -15,8 +15,6 @@ jobs:
     if: ${{ github.event.issue.pull_request && github.event.comment.body == '@runGAtests' }}
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: esmvalcore
@@ -54,8 +52,6 @@ jobs:
     if: ${{ github.event.issue.pull_request && github.event.comment.body == '@runGAtests' }}
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: esmvalcore
