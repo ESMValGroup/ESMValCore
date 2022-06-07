@@ -836,22 +836,18 @@ def _update_timerange(variable, config_user):
     check.valid_time_selection(timerange)
 
     if '*' in timerange:
-        (files, _, _) = _find_input_files(variable, config_user['rootpath'],
-                                          config_user['drs'])
+        (files, _, _) = _find_input_files(
+            variable, config_user['rootpath'], config_user['drs'])
+        if not files and not config_user.get('offline', True):
+            facets = deepcopy(variable)
+            facets.pop('timerange', None)
+            files = [file.name for file in esgf.find_files(**facets)]
+
         if not files:
-            if not config_user.get('offline', True):
-                msg = (
-                    " Please note that automatic download is not supported "
-                    "with indeterminate time ranges at the moment. Please use "
-                    "a concrete time range (i.e., no wildcards '*') in your "
-                    "recipe or run ESMValTool with --offline=True."
-                )
-            else:
-                msg = ""
             raise InputFilesNotFound(
                 f"Missing data for {variable['alias']}: "
                 f"{variable['short_name']}. Cannot determine indeterminate "
-                f"time range '{timerange}'.{msg}"
+                f"time range '{timerange}'."
             )
 
         intervals = [get_start_end_date(name) for name in files]
@@ -1141,6 +1137,16 @@ def _split_derive_profile(profile):
     return before, after
 
 
+def _check_differing_timeranges(timeranges, required_vars):
+    """Log error if required variables have differing timeranges."""
+    if len(timeranges) > 1:
+        raise ValueError(
+            f"Differing timeranges with values {timeranges} "
+            f"found for required variables {required_vars}. "
+            "Set `timerange` to a common value.",
+        )
+
+
 def _get_derive_input_variables(variables, config_user):
     """Determine the input sets of `variables` needed for deriving."""
     derive_input = {}
@@ -1155,19 +1161,21 @@ def _get_derive_input_variables(variables, config_user):
 
     for variable in variables:
         group_prefix = variable['variable_group'] + '_derive_input_'
-        if not variable.get('force_derivation') and _get_input_files(
-                variable, config_user)[0]:
+        if not variable.get('force_derivation'):
             # No need to derive, just process normally up to derive step
+            _update_timerange(variable, config_user)
             var = deepcopy(variable)
             append(group_prefix, var)
         else:
             # Process input data needed to derive variable
             required_vars = get_required(variable['short_name'],
                                          variable['project'])
+            timeranges = set()
             for var in required_vars:
                 _augment(var, variable)
                 _add_cmor_info(var, override=True)
                 _add_extra_facets(var, config_user['extra_facets_dir'])
+                _update_timerange(var, config_user)
                 files = _get_input_files(var, config_user)[0]
                 if var.get('optional') and not files:
                     logger.info(
@@ -1175,6 +1183,9 @@ def _get_derive_input_variables(variables, config_user):
                         "'optional'", var)
                 else:
                     append(group_prefix, var)
+                    timeranges.add(var['timerange'])
+            _check_differing_timeranges(timeranges, required_vars)
+            variable['timerange'] = " ".join(timeranges)
 
     # An empty derive_input (due to all variables marked as 'optional' is
     # handled at a later step
