@@ -430,7 +430,8 @@ class CMORCheck():
                             self.report_debug_message(
                                 'Coordinate {0} has var name {1} '
                                 'instead of {2}. '
-                                "But that's considered OK and ignored.",
+                                "But that's considered OK and ignored. "
+                                'See also https://github.com/ESMValGroup/ESMValCore/discussions/1587',  # noqa: line-too-long
                                 coordinate.name,
                                 coord.var_name,
                                 coordinate.out_name,
