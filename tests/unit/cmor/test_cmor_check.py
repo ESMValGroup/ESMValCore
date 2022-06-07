@@ -952,6 +952,18 @@ class TestCMORCheck(unittest.TestCase):
         )
         self._check_debug_messages_on_metadata(automatic_fixes=True)
 
+    def test_bad_out_name_region_area_type(self):
+        """Debug message if region/area_type AuxCoord has bad var_name at
+        metadata."""
+        region_coord = CoordinateInfoMock('basin')
+        region_coord.standard_name = 'region'
+        self.var_info.coordinates['region'] = region_coord
+
+        self.cube = self.get_cube(self.var_info)
+        self.cube.coord("region").var_name = 'sector'
+
+        self._check_debug_messages_on_metadata()
+
     def test_bad_out_name_onedim_latitude(self):
         """Warning if onedimensional lat has bad var_name at metadata"""
         self.var_info.table_type = 'CMIP6'
