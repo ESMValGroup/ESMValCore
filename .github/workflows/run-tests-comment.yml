@@ -1,8 +1,5 @@
 name: Test via PR Comment
 on:
-  push:
-    branches:
-      - dev_update_run-tests
   issue_comment:
     types:
       - created

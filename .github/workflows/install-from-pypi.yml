@@ -21,7 +21,6 @@ on:
   push:
     branches:
     - main
-    - dev_update_run-tests
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
@@ -103,8 +102,8 @@ jobs:
         run: pip install esmvalcore 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/install.txt
       - name: Verify installation
         shell: bash -l {0}
-        run: |
-          esmvaltool --help
+        run: | 
+          esmvaltool --help 
           esmvaltool version 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/version.txt
       - name: Upload artifacts
         if: ${{ always() }}  # upload artifacts even if fail
