@@ -11,6 +11,7 @@ on:
   push:
     branches:
     - main
+    - dev_update_run-tests
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
