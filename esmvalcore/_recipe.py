@@ -1170,7 +1170,7 @@ def _get_derive_input_variables(variables, config_user):
                 "not allowed; explicitly use 'force_derivation: true' "
                 "or avoid the use of wildcards in timerange."
                 )
-        elif not variable.get('force_derivation') and _get_input_files(
+        if not variable.get('force_derivation') and _get_input_files(
            variable, config_user)[0]:
             # No need to derive, just process normally up to derive step
             var = deepcopy(variable)
