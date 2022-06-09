@@ -1,6 +1,8 @@
 Changelog
 =========
 
+[TODO rebase and re-write, placeholder for now] Add ability to trace a file's ancestry and stitch (ref. https://doi.org/10.1002/gdj3.113)
+
 .. _changelog-v2-5-0:
 
 v2.5.0
