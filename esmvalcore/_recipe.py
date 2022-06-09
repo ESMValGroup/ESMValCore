@@ -1161,9 +1161,18 @@ def _get_derive_input_variables(variables, config_user):
 
     for variable in variables:
         group_prefix = variable['variable_group'] + '_derive_input_'
-        if not variable.get('force_derivation'):
+        if not variable.get('force_derivation') and \
+           '*' in variable['timerange']:
+            raise RecipeError(
+                f"Error in derived variable: {variable['short_name']}: "
+                "Using 'force_derivation: false' (the default option) "
+                "in combination with wildcards ('*') in timerange is "
+                "not allowed; explicitly use 'force_derivation: true' "
+                "or avoid the use of wildcards in timerange."
+                )
+        if not variable.get('force_derivation') and _get_input_files(
+           variable, config_user)[0]:
             # No need to derive, just process normally up to derive step
-            _update_timerange(variable, config_user)
             var = deepcopy(variable)
             append(group_prefix, var)
         else:
