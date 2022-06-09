@@ -1164,9 +1164,11 @@ def _get_derive_input_variables(variables, config_user):
         if not variable.get('force_derivation') and \
            '*' in variable['timerange']:
             raise RecipeError(
-                f"Error in {variable['short_name']}: "
-                "Setting force_derivation to False and using wildcards "
-                "in time range is not allowed."
+                f"Error in derived variable: {variable['short_name']}: "
+                "Using 'force_derivation: false' (the default option) "
+                "in combination with wildcards ('*') in timerange is "
+                "not allowed; explicitly use 'force_derivation: true' "
+                "or avoid the use of wildcards in timerange."
                 )
         elif not variable.get('force_derivation') and _get_input_files(
            variable, config_user)[0]:

@@ -1610,6 +1610,37 @@ def test_derive_timerange_wildcard(tmp_path, patched_datafinder,
     assert product.attributes['end_year'] == 2019
 
 
+def test_derive_fail_timerange_wildcard(tmp_path, patched_datafinder,
+                                        config_user):
+
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              toz:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                timerange: '*'
+                derive: true
+                force_derivation: false
+                additional_datasets:
+                  - {dataset: GFDL-CM3,  ensemble: r1i1p1}
+            scripts: null
+        """)
+    msg = (
+      "Error in derived variable: toz: "
+      "Using 'force_derivation: false' (the default option) "
+      "in combination with wildcards ('*') in timerange is "
+      "not allowed; explicitly use 'force_derivation: true' "
+      "or avoid the use of wildcards in timerange")
+
+    with pytest.raises(RecipeError) as rec_err:
+        get_recipe(tmp_path, content, config_user)
+
+    assert msg in rec_err.value.failed_tasks[0].message
+
+
 def create_test_image(basename, cfg):
     """Get a valid path for saving a diagnostic plot."""
     image = Path(cfg['plot_dir']) / (basename + '.' + cfg['output_file_type'])
