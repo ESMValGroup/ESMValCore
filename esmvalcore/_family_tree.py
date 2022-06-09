@@ -1,4 +1,4 @@
-"""Module for navigating a file's ancestry in the ESMValTool."""
+"""Module for navigating a file's family tree in the ESMValTool."""
 from abc import ABCMeta, abstractmethod
 
 
