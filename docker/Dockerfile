@@ -4,7 +4,7 @@ FROM condaforge/mambaforge
 
 WORKDIR /src/ESMValCore
 COPY environment.yml .
-RUN mamba update -y conda mamba pip && mamba env create --name esmvaltool --file environment.yml && conda clean --all -y
+RUN mamba env create --name esmvaltool --file environment.yml && conda clean --all -y
 
 COPY . .
 RUN conda run --name esmvaltool pip install --no-cache .
