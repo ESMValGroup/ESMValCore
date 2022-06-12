@@ -632,7 +632,7 @@ class DiagnosticTask(BaseTask):
                 attrs[key] = self.settings[key]
 
         ancestor_products = {
-            p.filename: p
+            str(p.filename): p
             for a in self.ancestors for p in a.products
         }
 
@@ -680,7 +680,7 @@ class DiagnosticTask(BaseTask):
             logger.warning(
                 "Valid ancestor files for diagnostic script %s in task %s "
                 "are:\n%s", self.script, self.name,
-                '\n'.join(ancestor_products))
+                '\n'.join(str(filename) for filename in ancestor_products))
         logger.debug("Collecting provenance of task %s took %.1f seconds",
                      self.name,
                      time.time() - start)

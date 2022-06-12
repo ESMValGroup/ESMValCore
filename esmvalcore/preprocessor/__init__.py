@@ -2,8 +2,10 @@
 import copy
 import inspect
 import logging
+from pathlib import Path
 from pprint import pformat
 
+import iris
 from iris.cube import Cube
 
 from .._provenance import TrackedFile
@@ -49,7 +51,8 @@ from ._regrid import (
     extract_levels,
     extract_location,
     extract_point,
-    regrid)
+    regrid,
+)
 from ._time import (
     annual_statistics,
     anomalies,
@@ -193,6 +196,8 @@ TIME_PREPROCESSORS = [
     'regrid_time',
 ]
 
+# TODO: add deprecation warning about using load-like functions
+
 DEFAULT_ORDER = tuple(__all__)
 """
 By default, preprocessor functions are applied in this order.
@@ -318,7 +323,7 @@ def _run_preproc_function(function, items, kwargs, input_files=None):
                         f"here; refer to the debug log for a full list)")
 
         # Make sure that the arguments are indexable
-        if isinstance(items, (PreprocessorFile, Cube, str)):
+        if isinstance(items, (PreprocessorFile, Cube, str, Path)):
             items = [items]
         if isinstance(items, set):
             items = list(items)
@@ -354,7 +359,7 @@ def preprocess(items, step, input_files=None, **settings):
 
     items = []
     for item in result:
-        if isinstance(item, (PreprocessorFile, Cube, str)):
+        if isinstance(item, (PreprocessorFile, Cube, str, Path)):
             items.append(item)
         else:
             items.extend(item)
@@ -366,7 +371,7 @@ def get_step_blocks(steps, order):
     """Group steps into execution blocks."""
     blocks = []
     prev_step_type = None
-    for step in order[order.index('load') + 1:order.index('save')]:
+    for step in order[order.index('add_fx_variables') + 1:order.index('save')]:
         if step in steps:
             step_type = step in MULTI_MODEL_FUNCTIONS
             if step_type is not prev_step_type:
@@ -380,28 +385,32 @@ def get_step_blocks(steps, order):
 class PreprocessorFile(TrackedFile):
     """Preprocessor output file."""
 
-    def __init__(self, attributes, settings, ancestors=None):
-        super().__init__(attributes['filename'], attributes, ancestors)
+    def __init__(self, filename, attributes, settings, input_data):
+        if isinstance(input_data, list):
+            self._dataset = None
+            self._ancestors = input_data
+            self._input_files = [a.filename for a in self._ancestors]
+        else:
+            self._dataset = input_data
+            input_files = list(self._dataset.files)
+            for ancillary in self._dataset.ancillaries:
+                input_files.extend(ancillary.files)
+            self._ancestors = [TrackedFile(f) for f in input_files]
+            self._input_files = input_files
 
         self.settings = copy.deepcopy(settings)
         if 'save' not in self.settings:
             self.settings['save'] = {}
-        self.settings['save']['filename'] = self.filename
-
-        # self._input_files always contains the original input files;
-        # self.files may change in the preprocessing chain (e.g., by the step
-        # fix_file)
-        self._input_files = [a.filename for a in ancestors or ()]
-        self.files = copy.deepcopy(self._input_files)
+        self.settings['save']['filename'] = filename
 
         self._cubes = None
-        self._prepared = False
 
-    def _input_files_for_log(self):
-        """Do not log input files twice in output log."""
-        if self.files == self._input_files:
-            return None
-        return self._input_files
+        super().__init__(
+            filename=filename,
+            attributes=attributes,
+            ancestors=self._ancestors,
+        )
+        self.attributes['filename'] = self.filename
 
     def check(self):
         """Check preprocessor settings."""
@@ -421,54 +430,41 @@ class PreprocessorFile(TrackedFile):
             filename = _get_debug_filename(self.filename, step)
             save(self.cubes, filename)
 
-    def prepare(self):
-        """Apply preliminary file operations on product."""
-        if not self._prepared:
-            for step in DEFAULT_ORDER[:DEFAULT_ORDER.index('load')]:
-                if step in self.settings:
-                    self.files = preprocess(
-                        self.files, step,
-                        input_files=self._input_files_for_log(),
-                        **self.settings[step])
-            self._prepared = True
-
     @property
     def cubes(self):
         """Cubes."""
-        if self.is_closed:
-            self.prepare()
-            self._cubes = preprocess(self.files, 'load',
-                                     input_files=self._input_files_for_log(),
-                                     **self.settings.get('load', {}))
+        if self._cubes is None:
+            self.load()
         return self._cubes
 
     @cubes.setter
     def cubes(self, value):
         self._cubes = value
 
+    def load(self):
+        if self._dataset:
+            # Usual case
+            self._cubes = [self._dataset.load()]
+        else:
+            # Derived variable case
+            self._cubes = [iris.load_cube(f) for f in self._input_files]
+
     def save(self):
         """Save cubes to disk."""
-        self.files = preprocess(self._cubes, 'save',
-                                input_files=self._input_files,
-                                **self.settings['save'])
-        self.files = preprocess(self.files, 'cleanup',
-                                input_files=self._input_files,
-                                **self.settings.get('cleanup', {}))
-
-    def close(self):
-        """Close the file."""
         if self._cubes is not None:
-            self.save()
-            self._cubes = None
+            preprocess(self._cubes,
+                       'save',
+                       input_files=self._input_files,
+                       **self.settings['save'])
+            preprocess([],
+                       'cleanup',
+                       input_files=self._input_files,
+                       **self.settings.get('cleanup', {}))
             self.save_provenance()
-
-    @property
-    def is_closed(self):
-        """Check if the file is closed."""
-        return self._cubes is None
+            self._cubes = None
 
     def _initialize_entity(self):
-        """Initialize the entity representing the file."""
+        """Initialize the provenance entity representing the file."""
         super()._initialize_entity()
         settings = {
             'preprocessor:' + k: str(v)
@@ -497,10 +493,6 @@ class PreprocessorFile(TrackedFile):
                 identifier.append(attribute)
 
         return '_'.join(identifier)
-
-
-# TODO: use a custom ProductSet that raises an exception if you try to
-# add the same Product twice
 
 
 def _apply_multimodel(products, step, debug):
@@ -604,10 +596,10 @@ class PreprocessingTask(BaseTask):
                         if step in product.settings:
                             product.apply(step, self.debug)
                     if block == blocks[-1]:
-                        product.close()
+                        product.save()
 
         for product in self.products:
-            product.close()
+            product.save()
         metadata_files = write_metadata(self.products,
                                         self.write_ncl_interface)
         return metadata_files
@@ -618,8 +610,11 @@ class PreprocessingTask(BaseTask):
             step for step in self.order
             if any(step in product.settings for product in self.products)
         ]
-        products = '\n\n'.join('\n'.join([str(p), pformat(p.settings)])
-                               for p in self.products)
+        products = '\n\n'.join('\n'.join([
+            str(p),
+            'input files: ' + pformat(p._input_files),
+            'settings: ' + pformat(p.settings),
+        ]) for p in self.products)
         txt = "{}: {}\norder: {}\n{}\n{}".format(
             self.__class__.__name__,
             self.name,

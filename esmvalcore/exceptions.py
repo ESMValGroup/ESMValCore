@@ -1,7 +1,15 @@
 """Exceptions that may be raised by ESMValCore."""
 
 
-class RecipeError(Exception):
+class Error(Exception):
+    """Base class from which other exceptions are derived."""
+
+
+class CMORError(Error):
+    """An error occurred related to the CMOR module."""
+
+
+class RecipeError(Error):
     """Recipe contains an error."""
 
     def __init__(self, msg):

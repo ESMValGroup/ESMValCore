@@ -16,10 +16,48 @@ from typing import Dict, Type
 
 import yaml
 
+from esmvalcore.exceptions import CMORError
+
 logger = logging.getLogger(__name__)
 
 CMOR_TABLES: Dict[str, Type['InfoBase']] = {}
 """dict of str, obj: CMOR info objects."""
+
+_CMOR_KEYS = (
+    'standard_name',
+    'long_name',
+    'units',
+    'modeling_realm',
+    'frequency',
+)
+
+
+def _get_facets_from_cmor_table(facets, override=False):
+    """Add information from CMOR tables to facets."""
+    # Copy the following keys from CMOR table
+    project = facets['project']
+    mip = facets['mip']
+    short_name = facets['short_name']
+    derive = facets.get('derive', False)
+    table = CMOR_TABLES.get(project)
+    if table:
+        table_entry = table.get_variable(mip, short_name, derive)
+    else:
+        table_entry = None
+    if table_entry is None:
+        raise CMORError(
+            f"Unable to load CMOR table (project) '{project}' for variable "
+            f"'{short_name}' with mip '{mip}'")
+    facets['original_short_name'] = table_entry.short_name
+    for key in _CMOR_KEYS:
+        if key not in facets or override:
+            value = getattr(table_entry, key, None)
+            if value is not None:
+                facets[key] = value
+            else:
+                logger.debug(
+                    "Failed to add key %s to variable %s from CMOR table", key,
+                    facets)
 
 
 def get_var_info(project, mip, short_name):

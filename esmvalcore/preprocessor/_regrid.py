@@ -20,10 +20,9 @@ from iris.util import broadcast_to_shape
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
-from ..cmor.fix import fix_file, fix_metadata
 from ..cmor.table import CMOR_TABLES
 from ._ancillary_vars import add_ancillary_variable, add_cell_measure
-from ._io import GLOBAL_FILL_VALUE, concatenate_callback, load
+from ._io import GLOBAL_FILL_VALUE
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
 
@@ -454,6 +453,12 @@ def extract_point(cube, latitude, longitude, scheme):
     return cube
 
 
+def is_dataset(dataset):
+    """Test if something is an `esmvalcore.dataset.Dataset`"""
+    # Use this function to avoid circular imports
+    return hasattr(dataset, 'facets')
+
+
 def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     """Perform horizontal regridding.
 
@@ -578,7 +583,12 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         emsg = 'Unknown regridding scheme, got {!r}.'
         raise ValueError(emsg.format(scheme))
 
-    if isinstance(target_grid, str):
+    if is_dataset(target_grid):
+        target_grid = target_grid.copy()
+        target_grid.ancillaries.clear()
+        target_grid.files = [target_grid.files[0]]
+        target_grid = target_grid.load()
+    elif isinstance(target_grid, str):
         if os.path.isfile(target_grid):
             target_grid = iris.load_cube(target_grid)
         else:
@@ -1040,26 +1050,13 @@ def get_cmor_levels(cmor_table, coordinate):
             coordinate, cmor_table))
 
 
-def get_reference_levels(filename, project, dataset, short_name, mip,
-                         frequency, fix_dir):
+def get_reference_levels(dataset):
     """Get level definition from a reference dataset.
 
     Parameters
     ----------
-    filename: str
-        Path to the reference file
-    project : str
-        Name of the project
-    dataset : str
-        Name of the dataset
-    short_name : str
-        Name of the variable
-    mip : str
-        Name of the mip table
-    frequency : str
-        Time frequency
-    fix_dir : str
-        Output directory for fixed data
+    dataset: esmvalcore.dataset.Dataset
+        Dataset containing the reference files.
 
     Returns
     -------
@@ -1071,28 +1068,14 @@ def get_reference_levels(filename, project, dataset, short_name, mip,
         If the dataset is not defined, the coordinate does not specify any
         levels or the string is badly formatted.
     """
-    filename = fix_file(
-        file=filename,
-        short_name=short_name,
-        project=project,
-        dataset=dataset,
-        mip=mip,
-        output_dir=fix_dir,
-    )
-    cubes = load(filename, callback=concatenate_callback)
-    cubes = fix_metadata(
-        cubes=cubes,
-        short_name=short_name,
-        project=project,
-        dataset=dataset,
-        mip=mip,
-        frequency=frequency,
-    )
-    cube = cubes[0]
+    dataset = dataset.copy()
+    dataset.ancillaries.clear()
+    dataset.files = [dataset.files[0]]
+    cube = dataset.load()
     try:
         coord = cube.coord(axis='Z')
     except iris.exceptions.CoordinateNotFoundError:
-        raise ValueError('z-coord not available in {}'.format(filename))
+        raise ValueError(f'z-coord not available in {dataset.files}')
     return coord.points.tolist()
 
 
@@ -1109,7 +1092,7 @@ def extract_coordinate_points(cube, definition, scheme):
     ----------
     cube : cube
         The source cube to extract a point from.
-    defintion : dict(str, float or array of float)
+    definition : dict(str, float or array of float)
         The coordinate - values pairs to extract
     scheme : str
         The interpolation scheme. 'linear' or 'nearest'. No default.

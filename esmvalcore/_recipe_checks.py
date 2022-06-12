@@ -10,8 +10,8 @@ from shutil import which
 import isodate
 import yamale
 
-from ._data_finder import get_start_end_year
-from .exceptions import InputFilesNotFound, RecipeError
+from ._data_finder import _parse_period, get_start_end_year
+from .exceptions import CMORError, InputFilesNotFound, RecipeError
 from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from .preprocessor._multimodel import STATISTIC_MAPPING
 
@@ -96,14 +96,14 @@ def variable(var, required_keys):
     if missing:
         raise RecipeError(
             "Missing keys {} in {} from variable {} in diagnostic {}".format(
-                missing, _format_facets(var), var.get('variable_group'), var.get('diagnostic')))
+                missing, _format_facets(var), var.get('variable_group'),
+                var.get('diagnostic')))
 
 
 def _log_data_availability_errors(input_files, var, dirnames, filenames):
     """Check if the required input data is available."""
     var = dict(var)
     if not input_files:
-        var.pop('filename', None)
         logger.error("No input files found for variable %s", var)
         if dirnames and filenames:
             patterns = itertools.product(dirnames, filenames)
@@ -167,20 +167,21 @@ def _format_facets(facets):
     return ", ".join(facets[k] for k in keys if k in facets)
 
 
-def data_availability(input_files, var, dirnames, filenames, log=True):
+def data_availability(input_files, facets, dirnames, filenames, log=True):
     """Check if input_files cover the required years."""
     if log:
-        _log_data_availability_errors(input_files, var, dirnames, filenames)
+        _log_data_availability_errors(input_files, facets, dirnames, filenames)
 
     if not input_files:
-        raise InputFilesNotFound(
-            f"Missing data for: {_format_facets(var)}")
+        raise InputFilesNotFound(f"Missing data for: {_format_facets(facets)}")
 
-    if var['frequency'] == 'fx':
+    if facets['frequency'] == 'fx':
         # check time availability only for non-fx variables
         return
-    start_year = var['start_year']
-    end_year = var['end_year']
+
+    start_date, end_date = _parse_period(facets['timerange'])
+    start_year = int(start_date[0:4])
+    end_year = int(end_date[0:4])
     required_years = set(range(start_year, end_year + 1, 1))
     available_years = set()
 
@@ -195,6 +196,40 @@ def data_availability(input_files, var, dirnames, filenames, log=True):
         raise InputFilesNotFound(
             "No input data available for years {} in files:\n{}".format(
                 missing_txt, "\n".join(str(f) for f in input_files)))
+
+
+def ancillary_data_availability(dataset, required_ancillaries, required):
+    """Check if the required ancillary files are available."""
+    recipe_ancillaries = {a.facets['short_name'] for a in dataset.ancillaries}
+    missing_ancillaries = required_ancillaries - recipe_ancillaries
+    if missing_ancillaries:
+        logger.warning(
+            "Missing ancillary_variables definition: unable to add required "
+            "ancillary variables %s to dataset %s", missing_ancillaries,
+            dataset)
+
+    for ancillary_ds in dataset.ancillaries:
+        short_name = ancillary_ds.facets['short_name']
+        steps = sorted(s for s in required if short_name in required[s])
+        try:
+            ancillary_ds.augment_facets()
+        except CMORError:
+            logger.warning(
+                "Missing data (unable to find variable %s in CMOR table %s/%s)"
+                " for ancillary variable '%s' of dataset %s used "
+                "by preprocessor function(s) %s", short_name,
+                ancillary_ds.facets['project'], ancillary_ds.facets['mip'],
+                short_name, dataset, steps)
+            continue
+        if ancillary_ds.files:
+            logger.debug(
+                "Using ancillary files for dataset %s during preprocessor "
+                "function(s) %s: %s", dataset, steps,
+                pformat(ancillary_ds.files))
+        else:
+            logger.warning(
+                "Missing data for ancillary variable '%s' of dataset %s used "
+                "by preprocessor function(s) %s", short_name, dataset, steps)
 
 
 def tasks_valid(tasks):
@@ -279,8 +314,7 @@ def _verify_keep_input_datasets(keep_input_datasets):
     if not isinstance(keep_input_datasets, bool):
         raise RecipeError(
             "Invalid value encountered for `keep_input_datasets`."
-            f"Must be defined as a boolean. Got {keep_input_datasets}."
-        )
+            f"Must be defined as a boolean. Got {keep_input_datasets}.")
 
 
 def _verify_arguments(given, expected):

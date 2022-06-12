@@ -137,7 +137,6 @@ def remove_fx_variables(cube):
     iris.cube.Cube
         Cube without cell measures or ancillary variables.
     """
-
     if cube.cell_measures():
         for measure in cube.cell_measures():
             cube.remove_cell_measure(measure.standard_name)

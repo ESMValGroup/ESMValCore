@@ -3,7 +3,7 @@
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 import yaml
 
@@ -75,14 +75,19 @@ class Config(ValidatedConfig):
         mapping['extra_facets_dir'] = tuple()
         mapping['resume_from'] = []
         mapping['check_level'] = CheckLevels.DEFAULT
+        mapping['max_datasets'] = None
         mapping['max_years'] = None
+        mapping['run_diagnostic'] = True
 
         new.update(mapping)
 
         return new
 
-    def load_from_file(self, filename: Union[os.PathLike, str]):
+    def load_from_file(self,
+                       filename: Optional[Union[os.PathLike, str]] = None):
         """Load user configuration from the given file."""
+        if filename is None:
+            filename = USER_CONFIG
         path = Path(filename).expanduser()
         if not path.exists():
             try_path = USER_CONFIG_DIR / filename

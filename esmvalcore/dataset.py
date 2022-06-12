@@ -19,7 +19,7 @@ from ._recipe_checks import data_availability as check_data_availability
 from ._recipe_checks import datasets as check_datasets
 from ._recipe_checks import valid_time_selection as check_valid_time_selection
 from ._recipe_checks import variable as check_variable
-from .cmor.table import CMOR_TABLES
+from .cmor.table import _get_facets_from_cmor_table
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import add_fx_variables, preprocess
 from .preprocessor._io import DATASET_KEYS
@@ -33,22 +33,17 @@ _REQUIRED_KEYS = (
     'project',
 )
 
-_CMOR_KEYS = (
-    'standard_name',
-    'long_name',
-    'units',
-    'modeling_realm',
-    'frequency',
-)
-
 
 class Dataset:
 
     def __init__(self, **facets):
 
         self.facets = {}
-        self._persist = set()
         self.ancillaries = []
+
+        self._persist = set()
+        self._session = None
+        self._files = None
 
         for key, value in facets.items():
             self.set_facet(key, copy.deepcopy(value), persist=True)
@@ -57,14 +52,17 @@ class Dataset:
         persist = set(facets) | self._persist
         _augment(facets, self.facets)
         new = self.__class__()
-        for key, value in facets:
+        new.session = self.session
+        for key, value in facets.items():
             new.set_facet(key, copy.deepcopy(value), key in persist)
         for ancillary in self.ancillaries:
-            new.add_ancillary(ancillary.copy(**facets))
+            new_ancillary = ancillary.copy(**facets)
+            new.ancillaries.append(new_ancillary)
         return new
 
     def __eq__(self, other):
         return (isinstance(other, self.__class__)
+                and self.session == other.session
                 and self.facets == other.facets
                 and self.ancillaries == other.ancillaries)
 
@@ -78,21 +76,43 @@ class Dataset:
             txt += "\n" + f".add_ancillary({facets2str(anc.facets)})"
         return txt
 
+    def __getitem__(self, key):
+        return self.facets[key]
+
+    def __setitem__(self, key, value):
+        self.facets[key] = value
+
     def set_facet(self, key, value, persist=True):
         self.facets[key] = value
         if persist:
             self._persist.add(key)
 
+    @property
+    def session(self):
+        if self._session is None:
+            raise ValueError(
+                "Session not set, please create a session by using "
+                "`esmvalcore.experimental.CFG.start_session` and "
+                "and add it to this dataset.")
+        return self._session
+
+    @session.setter
+    def session(self, session):
+        self._session = session
+
     def add_ancillary(self, **facets):
         persist = set(facets) | self._persist
         _augment(facets, self.facets)
         ancillary = self.__class__()
+        ancillary.session = self.session
         for key, value in facets.items():
             ancillary.set_facet(key, copy.deepcopy(value), key in persist)
         self.ancillaries.append(ancillary)
 
-    def augment_facets(self, session):
-        """Augment facets."""
+    def augment_facets(self, session=None):
+        """Add extra facets."""
+        if session is None:
+            session = self.session
         self._augment_facets(session)
         for ancillary in self.ancillaries:
             ancillary._augment_facets(session)
@@ -107,17 +127,20 @@ class Dataset:
             activity = get_activity(self.facets)
             if activity:
                 self.facets['activity'] = activity
-        _add_cmor_info(self.facets)
+        _get_facets_from_cmor_table(self.facets)
         _get_timerange_from_years(self.facets)
         _update_timerange(self, session)
 
-    def find_files(self, session, debug=False):
+    def find_files(self, session=None):
         """Find files."""
-        self._find_files(session, debug)
+        if session is None:
+            session = self.session
+        self.augment_facets(session)
+        self._find_files(session)
         for ancillary in self.ancillaries:
-            ancillary._find_files(session, debug)
+            ancillary._find_files(session)
 
-    def _find_files(self, session, debug):
+    def _find_files(self, session):
         facets = dict(self.facets)
         if facets['frequency'] != 'fx':
             start_year, end_year = _parse_period(facets['timerange'])
@@ -137,13 +160,13 @@ class Dataset:
                 and facets['project'] in esgf.facets.FACETS):
             try:
                 check_data_availability(
-                    input_files,
-                    facets,
-                    dirnames,
-                    filenames,
+                    input_files=input_files,
+                    facets=facets,
+                    dirnames=dirnames,
+                    filenames=filenames,
                     log=False,
                 )
-            except RecipeError:
+            except InputFilesNotFound:
                 # Only look on ESGF if files are not available locally.
                 local_files = set(Path(f).name for f in input_files)
                 search_result = esgf.find_files(**facets)
@@ -155,13 +178,22 @@ class Dataset:
                 dirnames.append('ESGF:')
 
         self.files = input_files
-        # TODO: should this function return the files?
-        if debug:
-            return (input_files, dirnames, filenames)
-        return input_files
+        self._files_debug = (dirnames, filenames)
 
-    def load(self, session):
+    @property
+    def files(self):
+        if self._files is None:
+            self.find_files()
+        return self._files
+
+    @files.setter
+    def files(self, value):
+        self._files = value
+
+    def load(self, session=None):
         """Load dataset."""
+        if session is None:
+            session = self.session
         check_level = session['check_level']
         preproc_dir = session.preproc_dir
         cube = self._load(preproc_dir, check_level)
@@ -212,8 +244,8 @@ class Dataset:
             }
 
         result = self.files
-        for step, args in settings.items():
-            result = preprocess(result, step, input_files=self.files, **args)
+        for step, kwargs in settings.items():
+            result = preprocess(result, step, input_files=self.files, **kwargs)
         cube = result[0]
         return cube
 
@@ -223,37 +255,6 @@ def _augment(base, update):
     for key in update:
         if key not in base:
             base[key] = update[key]
-
-
-def _add_cmor_info(facets, override=False):
-    """Add information from CMOR tables to facets."""
-    # Copy the following keys from CMOR table
-    project = facets['project']
-    mip = facets['mip']
-    short_name = facets['short_name']
-    derive = facets.get('derive', False)
-    table = CMOR_TABLES.get(project)
-    if table:
-        table_entry = table.get_variable(mip, short_name, derive)
-    else:
-        table_entry = None
-    if table_entry is None:
-        raise RecipeError(
-            f"Unable to load CMOR table (project) '{project}' for variable "
-            f"'{short_name}' with mip '{mip}'")
-    facets['original_short_name'] = table_entry.short_name
-    for key in _CMOR_KEYS:
-        if key not in facets or override:
-            value = getattr(table_entry, key, None)
-            if value is not None:
-                facets[key] = value
-            else:
-                logger.debug(
-                    "Failed to add key %s to variable %s from CMOR table", key,
-                    facets)
-
-    # Check that keys are available
-    check_variable(facets, required_keys=_CMOR_KEYS)
 
 
 def _add_extra_facets(facets, extra_facets_dir):
@@ -277,8 +278,8 @@ def _update_timerange(dataset: Dataset, session):
     check_valid_time_selection(timerange)
 
     if '*' in timerange:
-        files = dataset.find_files(session)
-        if not files:
+        dataset.find_files(session)
+        if not dataset.files:
             if not session.get('offline', True):
                 msg = (
                     " Please note that automatic download is not supported "
@@ -291,7 +292,7 @@ def _update_timerange(dataset: Dataset, session):
                 f"Missing data for: {_format_facets(dataset.facets)}"
                 f"Cannot determine time range '{timerange}'.{msg}")
 
-        intervals = [get_start_end_date(name) for name in files]
+        intervals = [get_start_end_date(name) for name in dataset.files]
 
         min_date = min(interval[0] for interval in intervals)
         max_date = max(interval[1] for interval in intervals)
@@ -494,7 +495,7 @@ def datasets_from_recipe(recipe, session):
 
             idx = 0
             for recipe_dataset in recipe_datasets:
-                _DATASET_KEYS.union(recipe_dataset)
+                DATASET_KEYS.union(recipe_dataset)
                 facets = copy.deepcopy(recipe_variable)
                 facets.pop('additional_datasets', None)
                 facets.update(copy.deepcopy(recipe_dataset))
@@ -518,6 +519,7 @@ def datasets_from_recipe(recipe, session):
                     for facets1 in _expand_tag(facets0, 'sub_experiment'):
                         ancillaries = facets1.pop('ancillary_variables', [])
                         dataset = Dataset()
+                        dataset.session = session
                         for key in facets1:
                             dataset.set_facet(key, facets1[key], key
                                               in persist)

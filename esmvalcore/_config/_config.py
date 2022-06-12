@@ -106,7 +106,7 @@ def read_config_user_file(config_file, folder_name, options=None):
     # set defaults
     defaults = {
         'auxiliary_data_dir': '~/auxiliary_data',
-        'check_levels': CheckLevels.DEFAULT,
+        'check_level': CheckLevels.DEFAULT,
         'compress_netcdf': False,
         'config_developer_file': None,
         'drs': {},

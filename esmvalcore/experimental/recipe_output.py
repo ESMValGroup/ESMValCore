@@ -8,7 +8,6 @@ from typing import Optional, Tuple, Type
 
 import iris
 
-from .config import Session
 from .recipe_info import RecipeInfo
 from .recipe_metadata import Contributor, Reference
 from .templates import get_template
@@ -187,10 +186,9 @@ class RecipeOutput(Mapping):
         """
         task_output = recipe_output['task_output']
         recipe_data = recipe_output['recipe_data']
-        recipe_config = recipe_output['recipe_config']
+        session = recipe_output['session']
         recipe_filename = recipe_output['recipe_filename']
 
-        session = Session.from_config_user(recipe_config)
         info = RecipeInfo(recipe_data, filename=recipe_filename)
         info.resolve()
 

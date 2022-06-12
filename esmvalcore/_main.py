@@ -68,7 +68,7 @@ def parse_resume(resume, recipe):
     return resume
 
 
-def process_recipe(recipe_file: Path, config_user):
+def process_recipe(recipe_file: Path, session):
     """Process recipe."""
     import datetime
     import os
@@ -89,14 +89,14 @@ def process_recipe(recipe_file: Path, config_user):
 
     logger.info(70 * "-")
     logger.info("RECIPE   = %s", recipe_file)
-    logger.info("RUNDIR     = %s", config_user['run_dir'])
-    logger.info("WORKDIR    = %s", config_user["work_dir"])
-    logger.info("PREPROCDIR = %s", config_user["preproc_dir"])
-    logger.info("PLOTDIR    = %s", config_user["plot_dir"])
+    logger.info("RUNDIR     = %s", session.run_dir)
+    logger.info("WORKDIR    = %s", session.work_dir)
+    logger.info("PREPROCDIR = %s", session.preproc_dir)
+    logger.info("PLOTDIR    = %s", session.plot_dir)
     logger.info(70 * "-")
 
     from multiprocessing import cpu_count
-    n_processes = config_user['max_parallel_tasks'] or cpu_count()
+    n_processes = session['max_parallel_tasks'] or cpu_count()
     logger.info("Running tasks using at most %s processes", n_processes)
 
     logger.info(
@@ -105,7 +105,7 @@ def process_recipe(recipe_file: Path, config_user):
     logger.info("If you experience memory problems, try reducing "
                 "'max_parallel_tasks' in your user configuration file.")
 
-    if config_user['compress_netcdf']:
+    if session['compress_netcdf']:
         logger.warning(
             "You have enabled NetCDF compression. Accessing .nc files can be "
             "much slower than expected if your access pattern does not match "
@@ -115,10 +115,10 @@ def process_recipe(recipe_file: Path, config_user):
             "NetCDF compression.")
 
     # copy recipe to run_dir for future reference
-    shutil.copy2(recipe_file, config_user['run_dir'])
+    shutil.copy2(recipe_file, session.run_dir)
 
     # parse recipe
-    recipe = read_recipe_file(recipe_file, config_user)
+    recipe = read_recipe_file(recipe_file, session)
     logger.debug("Recipe summary:\n%s", recipe)
     # run
     recipe.run()
@@ -370,10 +370,11 @@ class ESMValTool():
         import os
         import warnings
 
-        from ._config import configure_logging, read_config_user_file
+        from ._config import configure_logging
         from ._recipe import TASKSEP
         from .cmor.check import CheckLevels
         from .esgf._logon import logon
+        from .experimental import CFG
 
         # Check validity of optional command line arguments with experimental
         # API
@@ -398,33 +399,35 @@ class ESMValTool():
         ExpConfig(all_optional_kwargs)
 
         recipe = self._get_recipe(recipe)
-        cfg = read_config_user_file(config_file, recipe.stem, kwargs)
+        CFG.load_from_file(config_file)
+        CFG.update(kwargs)
+        session = CFG.start_session(recipe.stem)
 
         # Create run dir
-        if os.path.exists(cfg['run_dir']):
-            print("ERROR: run_dir {} already exists, aborting to "
-                  "prevent data loss".format(cfg['output_dir']))
-        os.makedirs(cfg['run_dir'])
+        if os.path.exists(session.session_dir):
+            print(f"ERROR: run_dir {session.session_dir} already exists, "
+                  "aborting to prevent data loss")
+        session.run_dir.mkdir(parents=True)
 
         # configure logging
-        log_files = configure_logging(output_dir=cfg['run_dir'],
-                                      console_log_level=cfg['log_level'])
+        log_files = configure_logging(output_dir=session.run_dir,
+                                      console_log_level=session['log_level'])
 
-        self._log_header(cfg['config_file'], log_files)
+        self._log_header(session['config_file'], log_files)
 
-        cfg['resume_from'] = parse_resume(resume_from, recipe)
-        cfg['skip_nonexistent'] = skip_nonexistent
+        session['resume_from'] = parse_resume(resume_from, recipe)
+        session['skip_nonexistent'] = skip_nonexistent
         if isinstance(diagnostics, str):
             diagnostics = diagnostics.split(' ')
-        cfg['diagnostics'] = {
+        session['diagnostics'] = {
             pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
             for pattern in diagnostics or ()
         }
-        cfg['check_level'] = CheckLevels[check_level.upper()]
+        session['check_level'] = CheckLevels[check_level.upper()]
         if offline is not None:
             # Override config-user.yml from command line
-            cfg['offline'] = offline
-        if not cfg['offline']:
+            session['offline'] = offline
+        if not session['offline']:
             logon()
 
         def _check_limit(limit, value):
@@ -432,29 +435,30 @@ class ESMValTool():
                 raise ValueError("--{} should be larger than 0.".format(
                     limit.replace('_', '-')))
             if value:
-                cfg[limit] = value
+                session[limit] = value
 
         _check_limit('max_datasets', max_datasets)
         _check_limit('max_years', max_years)
 
-        resource_log = os.path.join(cfg['run_dir'], 'resource_usage.txt')
+        resource_log = session.run_dir / 'resource_usage.txt'
         from ._task import resource_usage_logger
         with resource_usage_logger(pid=os.getpid(), filename=resource_log):
-            process_recipe(recipe_file=recipe, config_user=cfg)
+            process_recipe(recipe_file=recipe, session=session)
 
-        self._clean_preproc(cfg)
+        self._clean_preproc(session)
         logger.info("Run was successful")
 
     @staticmethod
-    def _clean_preproc(cfg):
+    def _clean_preproc(session):
         import os
         import shutil
 
-        if os.path.exists(cfg["preproc_dir"]) and cfg["remove_preproc_dir"]:
+        if os.path.exists(
+                session.preproc_dir) and session["remove_preproc_dir"]:
             logger.info("Removing preproc containing preprocessed data")
             logger.info("If this data is further needed, then")
             logger.info("set remove_preproc_dir to false in config-user.yml")
-            shutil.rmtree(cfg["preproc_dir"])
+            shutil.rmtree(session.preproc_dir)
 
     @staticmethod
     def _get_recipe(recipe):
