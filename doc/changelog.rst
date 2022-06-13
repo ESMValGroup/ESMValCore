@@ -2,10 +2,10 @@ Changelog
 =========
 
 
-.. _changelog-v2-6-0rc1:
+.. _changelog-v2-6-0:
 
-v2.6.0rc1
----------
+v2.6.0
+------
 
 Highlights
 ~~~~~~~~~~
