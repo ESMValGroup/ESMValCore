@@ -173,7 +173,7 @@ class Dataset:
                 for file in search_result:
                     local_copy = file.local_file(session['download_dir'])
                     if local_copy.name not in local_files:
-                        input_files.append(str(local_copy))
+                        input_files.append(file)
 
                 dirnames.append('ESGF:')
 

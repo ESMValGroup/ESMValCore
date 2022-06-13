@@ -112,6 +112,7 @@ def _delete_attributes(iris_object, atts):
 
 def load(file):
     """Load iris cubes from files."""
+    file = str(file)
     logger.debug("Loading:\n%s", file)
     with catch_warnings():
         filterwarnings(
@@ -129,7 +130,7 @@ def load(file):
         raw_cubes = iris.load_raw(file, callback=concatenate_callback)
     logger.debug("Done with loading %s", file)
     if not raw_cubes:
-        raise Exception('Can not load cubes from {0}'.format(file))
+        raise Exception(f'Can not load cubes from {file}')
     for cube in raw_cubes:
         cube.attributes['source_file'] = file
     return raw_cubes

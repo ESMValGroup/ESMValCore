@@ -28,6 +28,7 @@ from ._provenance import get_recipe_provenance
 from ._task import DiagnosticTask, ResumeTask, TaskSet
 from .cmor.table import CMOR_TABLES, _get_facets_from_cmor_table
 from .dataset import datasets_from_recipe
+from .esgf import ESGFFile
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import (
     DEFAULT_ORDER,
@@ -269,6 +270,7 @@ def _guess_fx_mip(facets, dataset):
         logger.debug("For fx variable '%s', found table '%s'",
                      facets['short_name'], mip)
         fx_dataset = dataset.copy(**facets)
+        fx_dataset.ancillaries = []
         fx_dataset.set_facet('mip', mip)
         fx_files = fx_dataset.files
         if fx_files:
@@ -376,6 +378,13 @@ def _update_weighting_settings(settings, facets):
     _exclude_dataset(settings, facets, 'weighting_landsea_fraction')
 
 
+def _add_to_download_list(dataset):
+    for i, file in enumerate(dataset.files):
+        if isinstance(file, ESGFFile):
+            DOWNLOAD_FILES.add(file)
+            dataset.files[i] = file.local_file(dataset.session['download_dir'])
+
+
 def _check_input_files(dataset: Dataset):
     """Get the input files for a single dataset and setup provenance."""
     logger.debug(
@@ -392,6 +401,11 @@ def _check_input_files(dataset: Dataset):
         dirnames=[],  # TODO: fix debug info
         filenames=[],
     )
+
+    _add_to_download_list(dataset)
+    for ancillary_ds in dataset.ancillaries:
+        _add_to_download_list(ancillary_ds)
+
     logger.info("Found input files for %s",
                 dataset.facets['alias'].replace('_', ' '))
 
