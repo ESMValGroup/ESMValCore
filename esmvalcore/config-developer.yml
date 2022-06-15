@@ -26,6 +26,7 @@
 #   cmor_path: ~/my/own/custom_tables
 ###############################################################################
 ---
+
 CMIP6:
   cmor_strict: true
   input_dir:
