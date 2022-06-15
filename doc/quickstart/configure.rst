@@ -528,7 +528,8 @@ Custom CMOR tables
 
 As mentioned in the previous section, the CMOR tables of projects that use
 ``cmor_strict: false`` will be extended with custom CMOR tables.
-By default, these are loaded from `esmvalcore/cmor/tables/custom`_.
+By default, these are loaded from `esmvalcore/cmor/tables/custom
+<https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
 However, by using the special project ``custom`` in the
 ``config-developer.yml`` file with the option ``cmor_path```, a custom location
 for these custom CMOR tables can be specified:
@@ -573,7 +574,9 @@ Example for the file ``CMOR_asr.dat``:
 
 It is also possible to use a special coordinates file ``CMOR_coordinates.dat``.
 If this is not present in the custom directory, the one from the default
-directory (`esmvalcore/cmor/tables/custom/CMOR_coordinates.dat`_) is used.
+directory (`esmvalcore/cmor/tables/custom/CMOR_coordinates.dat
+<https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom/CMOR_coordinates.dat>`_)
+is used.
 
 
 .. _filterwarnings_config-developer:
