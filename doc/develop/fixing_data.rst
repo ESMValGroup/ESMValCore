@@ -346,6 +346,7 @@ under project ``native6``.
 
 Configuration
 -------------
+
 An example of a configuration in ``config-developer.yml`` for projects used for
 native datasets is given :ref:`here <configure_native_models>`.
 Make sure to use the option ``cmor_strict: false`` for these projects if you

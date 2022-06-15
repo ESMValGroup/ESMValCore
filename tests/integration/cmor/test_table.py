@@ -347,12 +347,45 @@ class TestCustomInfo(unittest.TestCase):
         """
         cls.variables_info = CustomInfo()
 
+    def test_custom_tables_default_location(self):
+        """Test constructor with default tables location."""
+        custom_info = CustomInfo()
+        expected_cmor_folder = os.path.join(
+            os.path.dirname(esmvalcore.cmor.__file__),
+            'tables',
+            'custom',
+        )
+        expected_coordinate_file = os.path.join(
+            os.path.dirname(esmvalcore.cmor.__file__),
+            'tables',
+            'custom',
+            'CMOR_coordinates.dat',
+        )
+        self.assertEqual(custom_info._cmor_folder, expected_cmor_folder)
+        self.assertEqual(custom_info._coordinates_file,
+                         expected_coordinate_file)
+
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
         cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
         cmor_tables_path = os.path.join(cmor_path, 'tables', 'cmip5')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
-        CustomInfo(cmor_tables_path)
+        custom_info = CustomInfo(cmor_tables_path)
+        self.assertEqual(custom_info._cmor_folder, cmor_tables_path)
+
+        expected_coordinate_file = os.path.join(
+            os.path.dirname(esmvalcore.cmor.__file__),
+            'tables',
+            'custom',
+            'CMOR_coordinates.dat',
+        )
+        self.assertEqual(custom_info._coordinates_file,
+                         expected_coordinate_file)
+
+    def test_custom_tables_invalid_location(self):
+        """Test constructor with invalid custom tables location."""
+        with self.assertRaises(ValueError):
+            CustomInfo('this_file_does_not_exist.dat')
 
     def test_get_variable_netcre(self):
         """Get tas variable."""
