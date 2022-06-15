@@ -1,6 +1,8 @@
 import copy
 import logging
+import pprint
 import re
+import textwrap
 from itertools import groupby
 from pathlib import Path
 
@@ -48,33 +50,64 @@ class Dataset:
         for key, value in facets.items():
             self.set_facet(key, copy.deepcopy(value), persist=True)
 
+    @property
+    def minimal_facets(self):
+        return {k: v for k, v in self.facets.items() if k in self._persist}
+
     def copy(self, **facets):
-        persist = set(facets) | self._persist
-        _augment(facets, self.facets)
         new = self.__class__()
-        new.session = self.session
+        new.session = self._session
         for key, value in facets.items():
-            new.set_facet(key, copy.deepcopy(value), key in persist)
+            new.set_facet(key, copy.deepcopy(value))
+        for key, value in self.facets.items():
+            if key not in new.facets:
+                new.set_facet(key, copy.deepcopy(value), key in self._persist)
         for ancillary in self.ancillaries:
-            new_ancillary = ancillary.copy(**facets)
+            skip = ('short_name', 'mip')
+            ancillary_facets = {k: facets[k] for k in facets if k not in skip}
+            new_ancillary = ancillary.copy(**ancillary_facets)
             new.ancillaries.append(new_ancillary)
         return new
 
     def __eq__(self, other):
+        try:
+            other_session = other.session
+        except ValueError:
+            other_session = None
         return (isinstance(other, self.__class__)
-                and self.session == other.session
+                and self._session == other_session
                 and self.facets == other.facets
                 and self.ancillaries == other.ancillaries)
 
     def __repr__(self):
 
-        def facets2str(facets):
-            return ", ".join(f"{k}='{v}'" for k, v in sorted(facets.items()))
+        first_keys = (
+            'diagnostic',
+            'variable_group',
+            'dataset',
+            'project',
+            'mip',
+            'short_name',
+        )
 
-        txt = f"{self.__class__.__name__}({facets2str(self.facets)})"
-        for anc in self.ancillaries:
-            txt += "\n" + f".add_ancillary({facets2str(anc.facets)})"
-        return txt
+        def facets2str(facets):
+
+            view = {k: facets[k] for k in first_keys if k in facets}
+            for key, value in sorted(facets.items()):
+                if key not in first_keys:
+                    view[key] = value
+
+            return pprint.pformat(view, sort_dicts=False)
+
+        txt = [
+            f"{self.__class__.__name__}:",
+            facets2str(self.facets),
+        ]
+        if self.ancillaries:
+            txt.append("ancillaries:")
+            txt.extend(textwrap.indent(facets2str(a.facets), "  ")
+                       for a in self.ancillaries)
+        return "\n".join(txt)
 
     def __getitem__(self, key):
         return self.facets[key]
@@ -101,12 +134,7 @@ class Dataset:
         self._session = session
 
     def add_ancillary(self, **facets):
-        persist = set(facets) | self._persist
-        _augment(facets, self.facets)
-        ancillary = self.__class__()
-        ancillary.session = self.session
-        for key, value in facets.items():
-            ancillary.set_facet(key, copy.deepcopy(value), key in persist)
+        ancillary = self.copy(**facets)
         self.ancillaries.append(ancillary)
 
     def augment_facets(self, session=None):
@@ -278,6 +306,9 @@ def _update_timerange(dataset: Dataset, session):
     check_valid_time_selection(timerange)
 
     if '*' in timerange:
+        dataset.facets.pop('timerange')
+        dataset.augment_facets(session)
+        dataset.facets['timerange'] = timerange
         dataset.find_files(session)
         if not dataset.files:
             if not session.get('offline', True):
@@ -309,7 +340,7 @@ def _update_timerange(dataset: Dataset, session):
     timerange = dates_to_timerange(start_date, end_date)
     check_valid_time_selection(timerange)
 
-    dataset.facets['timerange'] = timerange
+    dataset['timerange'] = timerange
 
 
 def _expand_tag(facets, input_tag):
@@ -543,34 +574,32 @@ def datasets_to_recipe(datasets):
 
     diagnostics = {}
 
-    format_keys = ('diagnostic', 'variable_group')
-
-    def filter_facets(dataset):
-        return {
-            k: v
-            for k, v in dataset.facets.items()
-            if k in dataset._persist and k not in format_keys
-        }
-
     for dataset in datasets:
-        for key in format_keys:
-            if key not in dataset.facets:
-                raise RecipeError(
-                    f"'{key}' facet missing from dataset {dataset},"
-                    "unable to convert to recipe.")
+        if 'diagnostic' not in dataset.facets:
+            raise RecipeError(
+                f"'diagnostic' facet missing from dataset {dataset},"
+                "unable to convert to recipe.")
         diagnostic = dataset.facets['diagnostic']
         if diagnostic not in diagnostics:
             diagnostics[diagnostic] = {'variables': {}}
         variables = diagnostics[diagnostic]['variables']
-        variable_group = dataset.facets['variable_group']
+        if 'variable_group' in dataset.facets:
+            variable_group = dataset.facets['variable_group']
+        else:
+            variable_group = dataset.facets['short_name']
         if variable_group not in variables:
             variables[variable_group] = {'additional_datasets': []}
-        facets = filter_facets(dataset)
+        facets = dataset.minimal_facets
+        if facets['short_name'] == variable_group:
+            facets.pop('short_name')
         if dataset.ancillaries:
             facets['ancillary_variables'] = []
         for ancillary in dataset.ancillaries:
-            ancillary_facets = filter_facets(ancillary)
-            facets['ancillary_variables'].append(ancillary_facets)
+            anc_facets = {}
+            for key, value in ancillary.minimal_facets.items():
+                if facets.get(key) != value:
+                    anc_facets[key] = value
+            facets['ancillary_variables'].append(anc_facets)
         variables[variable_group]['additional_datasets'].append(facets)
 
     # TODO: make recipe look nice
