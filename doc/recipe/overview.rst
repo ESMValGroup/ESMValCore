@@ -180,6 +180,22 @@ When using the ``timerange`` tag to specify the start and end points, possible v
     * ``timerange: '198003/*``. Starting from 01/03/1980, spans until the last available point.
     * ``timerange: 'P5M/*``. Finds last available point, spans 5 months backwards from it.
 
+.. note::
+
+   Please make sure to use a consistent number of digits for the start and end
+   point when using ``timerange``, e.g., instead of ``198005/2000``, use
+   ``198005/200012``.
+   Otherwise, it might happen that ESMValTool does not find your data even
+   though the corresponding years are available.
+   This also applies to wildcards:
+   Wildcards are usually resolved using the timerange in the file name.  If
+   this is given in the form ``YYYYMM``, then the other time point in
+   ``timerange`` needs to be in the same format, e.g., use ``*/200012`` instead
+   of ``*/2000`` in this case.
+   If you use wildcards and get an unexpected error about missing data, have a
+   look at the resolved ``timerange`` in the error message (``ERROR No input
+   files found for variable {'timerange': '197901/2000', ...}``) and make sure
+   that the number of digits in it is consistent.
 
 Note that this section is not required, as datasets can also be provided in the
 Diagnostics_ section.
