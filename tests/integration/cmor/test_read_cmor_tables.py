@@ -62,3 +62,6 @@ def test_read_custom_cmor_tables():
 
     cmip6_table = CMOR_TABLES['CMIP6']
     assert cmip6_table.default is custom_table
+
+    # Restore default tables
+    read_cmor_tables(read_config_developer_file())
