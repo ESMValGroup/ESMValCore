@@ -531,7 +531,7 @@ As mentioned in the previous section, the CMOR tables of projects that use
 By default, these are loaded from `esmvalcore/cmor/tables/custom
 <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
 However, by using the special project ``custom`` in the
-``config-developer.yml`` file with the option ``cmor_path```, a custom location
+``config-developer.yml`` file with the option ``cmor_path``, a custom location
 for these custom CMOR tables can be specified:
 
 .. code-block:: yaml
@@ -653,7 +653,10 @@ given :ref:`here <add_new_fix_native_datasets>`.
 
    When using data from native model output, it might be helpful to specify a
    custom location for the :ref:`custom_cmor_tables`.
-   This allows allows reading arbitrary variables from native model output.
+   This allows reading arbitrary variables from native model output.
+   Note that this requires the option ``cmor_strict: false`` in the
+   :ref:`project configuration <configure_native_models>` used for the native
+   model output.
 
 
 .. _config-ref:

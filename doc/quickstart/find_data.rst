@@ -92,7 +92,10 @@ A detailed description of how to include new native datasets is given
 
    When using data from native model output, it might be helpful to specify a
    custom location for the :ref:`custom_cmor_tables`.
-   This allows allows reading arbitrary variables from native model output.
+   This allows reading arbitrary variables from native model output.
+   Note that this requires the option ``cmor_strict: false`` in the
+   :ref:`project configuration <configure_native_models>` used for the native
+   model output.
 
 .. _read_native_obs:
 
