@@ -586,7 +586,7 @@ Filter preprocessor warnings
 
 It is possible to ignore specific warnings of the preprocessor for a given
 ``project``.
-This is particularly useful for native models which do not follow the CMOR
+This is particularly useful for native datasets which do not follow the CMOR
 standard by default and consequently produce a lot of warnings when handled by
 Iris.
 This can be configured in the ``config-developer.yml`` file for some steps of
@@ -651,9 +651,9 @@ given :ref:`here <add_new_fix_native_datasets>`.
 
 .. hint::
 
-   When using data from native model output, it might be helpful to specify a
-   custom location for the :ref:`custom_cmor_tables`.
-   This allows reading arbitrary variables from native model output.
+   When using native datasets, it might be helpful to specify a custom location
+   for the :ref:`custom_cmor_tables`.
+   This allows reading arbitrary variables from native datasets.
    Note that this requires the option ``cmor_strict: false`` in the
    :ref:`project configuration <configure_native_models>` used for the native
    model output.
