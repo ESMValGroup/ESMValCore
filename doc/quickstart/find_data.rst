@@ -88,6 +88,12 @@ project, e.g., ``ICON`` (mostly native models).
 A detailed description of how to include new native datasets is given
 :ref:`here <add_new_fix_native_datasets>`.
 
+.. hint::
+
+   When using data from native model output, it might be helpful to specify a
+   custom location for the :ref:`custom_cmor_tables`.
+   This allows allows reading arbitrary variables from native model output.
+
 .. _read_native_obs:
 
 Supported native reanalysis/observational datasets
