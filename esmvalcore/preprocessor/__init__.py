@@ -389,7 +389,7 @@ class PreprocessorFile(TrackedFile):
         if isinstance(input_data, list):
             self.dataset = None
             ancestors = input_data
-            self._input_files = [a.filename for a in self._ancestors]
+            self._input_files = [a.filename for a in ancestors]
         else:
             self.dataset = input_data
             input_files = list(self.dataset.files)

@@ -10,7 +10,7 @@ from pathlib import Path
 from pprint import pformat
 
 import yaml
-from nested_lookup import get_all_keys, nested_delete, nested_lookup
+from nested_lookup import nested_delete
 from netCDF4 import Dataset
 
 from . import __version__
@@ -934,7 +934,7 @@ class Recipe:
             raw_recipe['diagnostics'])
         self._raw_recipe = raw_recipe
         self._updated_recipe = {}
-        self._filename = os.path.basename(recipe_file)
+        self._filename = Path(recipe_file.name)
         self._preprocessors = raw_recipe.get('preprocessors', {})
         if 'default' not in self._preprocessors:
             self._preprocessors['default'] = {}
@@ -1337,16 +1337,21 @@ class Recipe:
         dataset_recipe = datasets_to_recipe(datasets)
 
         updated_recipe = deepcopy(self._raw_recipe)
+        doc = updated_recipe['documentation']
+        if 'description' in doc:
+            doc['description'] = doc['description'].strip()
         updated_recipe.pop('datasets', None)
         nested_delete(updated_recipe, 'additional_datasets', in_place=True)
 
         ds_key = 'additional_datasets'
         var_key = 'variables'
         for ds_name, diagnostic in dataset_recipe['diagnostics'].items():
-            updated_diagnostic = updated_recipe['diagnostic'][ds_name]
+            updated_diagnostic = updated_recipe['diagnostics'][ds_name]
             if ds_key in diagnostic:
                 updated_diagnostic[ds_key] = diagnostic[ds_key]
             for var_name, variable in diagnostic.get(var_key, {}).items():
+                if var_name not in updated_diagnostic:
+                    updated_diagnostic[var_name] = {}
                 updated_variable = updated_diagnostic[var_name]
                 if ds_key in variable:
                     updated_variable[ds_key] = variable[ds_key]

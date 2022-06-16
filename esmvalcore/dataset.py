@@ -10,7 +10,6 @@ from . import esgf
 from ._config import get_activity, get_extra_facets, get_institutes
 from ._data_finder import (
     _get_timerange_from_years,
-    _parse_period,
     dates_to_timerange,
     get_input_filelist,
     get_output_file,
@@ -34,6 +33,12 @@ _REQUIRED_KEYS = (
     'dataset',
     'project',
 )
+
+__all__ = [
+    'Dataset',
+    'datasets_from_recipe',
+    'datasets_to_recipe',
+]
 
 
 class Dataset:
@@ -179,6 +184,8 @@ class Dataset:
          filenames) = get_input_filelist(self.facets,
                                          rootpath=session['rootpath'],
                                          drs=session['drs'])
+        self.files = input_files
+        self._files_debug = (dirnames, filenames)
 
         # Set up downloading from ESGF if requested.
         if (not session['offline']
@@ -196,9 +203,6 @@ class Dataset:
 
                 dirnames.append('ESGF:')
 
-        self.files = input_files
-        self._files_debug = (dirnames, filenames)
-
     @property
     def files(self):
         if self._files is None:
@@ -214,9 +218,10 @@ class Dataset:
         datasets = [self]
         for key in 'ensemble', 'sub_experiment':
             if key in self.facets:
-                datasets = [ds.copy(**{key: value})
-                            for ds in datasets
-                            for value in ds._expand_range(key)]
+                datasets = [
+                    ds.copy(**{key: value}) for ds in datasets
+                    for value in ds._expand_range(key)
+                ]
         return datasets
 
     def _expand_range(self, input_tag):
@@ -253,8 +258,8 @@ class Dataset:
     def _update_timerange(self, session=None):
         """Update wildcards in timerange with found datetime values.
 
-        If the timerange is given as a year, it ensures it's formatted as a
-        4-digit value (YYYY).
+        If the timerange is given as a year, it ensures it's formatted
+        as a 4-digit value (YYYY).
         """
         if 'timerange' not in self.facets:
             return
@@ -263,9 +268,6 @@ class Dataset:
         check_valid_time_selection(timerange)
 
         if '*' in timerange:
-            self.facets.pop('timerange')
-            self.augment_facets(session)
-            self.facets['timerange'] = timerange
             self.find_files(session)
             if not self.files:
                 if not session.get('offline', True):
@@ -491,6 +493,31 @@ def _get_next_alias(alias, datasets_info, i):
         )
 
 
+def _merge_ancillary_dicts(var_facets, ds_facets):
+    """Update the elements of `var_facets` with those in `ds_facets`.
+
+    Both are lists of dicts containing facets
+    """
+    merged = {}
+    msg = ("'short_name' is required for ancillary_variables entries, "
+           "but missing in")
+    for facets in var_facets:
+        if 'short_name' not in facets:
+            raise RecipeError(f"{msg} {facets}")
+        else:
+            merged[facets['short_name']] = facets
+    for facets in ds_facets:
+        if 'short_name' not in facets:
+            raise RecipeError(f"{msg} {facets}")
+        else:
+            short_name = facets['short_name']
+            if short_name not in merged:
+                merged[short_name] = {}
+            merged[short_name].update(facets)
+
+    return list(merged.values())
+
+
 def datasets_from_recipe(recipe, session):
 
     datasets = []
@@ -520,12 +547,8 @@ def datasets_from_recipe(recipe, session):
                 facets = copy.deepcopy(recipe_variable)
                 facets.pop('additional_datasets', None)
                 for key, value in recipe_dataset.items():
-                    if key == 'ancillary_variables':
-                        if key not in facets:
-                            facets[key] = []
-                        for ancillary_facets in value:
-                            # TODO merge these two somehow
-                            facets[key]
+                    if key == 'ancillary_variables' and key in facets:
+                        _merge_ancillary_dicts(facets[key], value)
                     else:
                         facets[key] = value
 
@@ -534,6 +557,7 @@ def datasets_from_recipe(recipe, session):
                 facets['variable_group'] = variable_group
                 if 'short_name' not in facets:
                     facets['short_name'] = variable_group
+                    persist.add('short_name')
                 check_variable(facets, required_keys=_REQUIRED_KEYS)
                 preprocessor = str(facets.pop('preprocessor', 'default'))
                 if facets['project'] == 'obs4mips':
