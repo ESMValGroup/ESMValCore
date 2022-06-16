@@ -63,6 +63,7 @@ class Dataset:
             if key not in new.facets:
                 new.set_facet(key, copy.deepcopy(value), key in self._persist)
         for ancillary in self.ancillaries:
+            # The short_name and mip are probably different, so don't copy
             skip = ('short_name', 'mip')
             ancillary_facets = {k: facets[k] for k in facets if k not in skip}
             new_ancillary = ancillary.copy(**ancillary_facets)
@@ -105,8 +106,9 @@ class Dataset:
         ]
         if self.ancillaries:
             txt.append("ancillaries:")
-            txt.extend(textwrap.indent(facets2str(a.facets), "  ")
-                       for a in self.ancillaries)
+            txt.extend(
+                textwrap.indent(facets2str(a.facets), "  ")
+                for a in self.ancillaries)
         return "\n".join(txt)
 
     def __getitem__(self, key):
@@ -132,6 +134,8 @@ class Dataset:
     @session.setter
     def session(self, session):
         self._session = session
+        for ancillary in self.ancillaries:
+            ancillary.session = session
 
     def add_ancillary(self, **facets):
         ancillary = self.copy(**facets)
@@ -146,7 +150,8 @@ class Dataset:
             ancillary._augment_facets(session)
 
     def _augment_facets(self, session):
-        _add_extra_facets(self.facets, session['extra_facets_dir'])
+        extra_facets = get_extra_facets(self, session['extra_facets_dir'])
+        _augment(self.facets, extra_facets)
         if 'institute' not in self.facets:
             institute = get_institutes(self.facets)
             if institute:
@@ -157,7 +162,8 @@ class Dataset:
                 self.facets['activity'] = activity
         _get_facets_from_cmor_table(self.facets)
         _get_timerange_from_years(self.facets)
-        _update_timerange(self, session)
+        if self.facets.get('frequency') == 'fx':
+            self.facets.pop('timerange', None)
 
     def find_files(self, session=None):
         """Find files."""
@@ -169,35 +175,20 @@ class Dataset:
             ancillary._find_files(session)
 
     def _find_files(self, session):
-        facets = dict(self.facets)
-        if facets['frequency'] != 'fx':
-            start_year, end_year = _parse_period(facets['timerange'])
-
-            start_year = int(str(start_year[0:4]))
-            end_year = int(str(end_year[0:4]))
-
-            facets['start_year'] = start_year
-            facets['end_year'] = end_year
         (input_files, dirnames,
-         filenames) = get_input_filelist(facets,
+         filenames) = get_input_filelist(self.facets,
                                          rootpath=session['rootpath'],
                                          drs=session['drs'])
 
         # Set up downloading from ESGF if requested.
         if (not session['offline']
-                and facets['project'] in esgf.facets.FACETS):
+                and self.facets['project'] in esgf.facets.FACETS):
             try:
-                check_data_availability(
-                    input_files=input_files,
-                    facets=facets,
-                    dirnames=dirnames,
-                    filenames=filenames,
-                    log=False,
-                )
+                check_data_availability(self, log=False)
             except InputFilesNotFound:
                 # Only look on ESGF if files are not available locally.
                 local_files = set(Path(f).name for f in input_files)
-                search_result = esgf.find_files(**facets)
+                search_result = esgf.find_files(**self.facets)
                 for file in search_result:
                     local_copy = file.local_file(session['download_dir'])
                     if local_copy.name not in local_files:
@@ -217,6 +208,96 @@ class Dataset:
     @files.setter
     def files(self, value):
         self._files = value
+
+    def expand(self, session=None):
+        """Factory function that expands shorthands to generate datasets."""
+        datasets = [self]
+        for key in 'ensemble', 'sub_experiment':
+            if key in self.facets:
+                datasets = [ds.copy(**{key: value})
+                            for ds in datasets
+                            for value in ds._expand_range(key)]
+        return datasets
+
+    def _expand_range(self, input_tag):
+        """Expand ranges such as ensemble members or stardates.
+
+        Expansion only supports ensembles defined as strings, not lists.
+        """
+        expanded = []
+        regex = re.compile(r'\(\d+:\d+\)')
+
+        def expand_range(input_range):
+            match = regex.search(input_range)
+            if match:
+                start, end = match.group(0)[1:-1].split(':')
+                for i in range(int(start), int(end) + 1):
+                    range_ = regex.sub(str(i), input_range, 1)
+                    expand_range(range_)
+            else:
+                expanded.append(input_range)
+
+        tag = self.facets.get(input_tag, "")
+        if isinstance(tag, (list, tuple)):
+            for elem in tag:
+                if regex.search(elem):
+                    raise RecipeError(
+                        f"In {self}: {input_tag} expansion "
+                        f"cannot be combined with {input_tag} lists")
+            expanded.append(tag)
+        else:
+            expand_range(tag)
+
+        return expanded
+
+    def _update_timerange(self, session=None):
+        """Update wildcards in timerange with found datetime values.
+
+        If the timerange is given as a year, it ensures it's formatted as a
+        4-digit value (YYYY).
+        """
+        if 'timerange' not in self.facets:
+            return
+
+        timerange = self.facets.get('timerange')
+        check_valid_time_selection(timerange)
+
+        if '*' in timerange:
+            self.facets.pop('timerange')
+            self.augment_facets(session)
+            self.facets['timerange'] = timerange
+            self.find_files(session)
+            if not self.files:
+                if not session.get('offline', True):
+                    msg = (
+                        " Please note that automatic download is not supported "
+                        "with indeterminate time ranges at the moment. Please use "
+                        "a concrete time range (i.e., no wildcards '*') in your "
+                        "recipe or run ESMValTool with --offline=True.")
+                else:
+                    msg = ""
+                raise InputFilesNotFound(
+                    f"Missing data for: {_format_facets(self.facets)}"
+                    f"Cannot determine time range '{timerange}'.{msg}")
+
+            intervals = [get_start_end_date(name) for name in self.files]
+
+            min_date = min(interval[0] for interval in intervals)
+            max_date = max(interval[1] for interval in intervals)
+
+            if timerange == '*':
+                timerange = f'{min_date}/{max_date}'
+            if '*' in timerange.split('/')[0]:
+                timerange = timerange.replace('*', min_date)
+            if '*' in timerange.split('/')[1]:
+                timerange = timerange.replace('*', max_date)
+
+        # Make sure that years are in format YYYY
+        (start_date, end_date) = timerange.split('/')
+        timerange = dates_to_timerange(start_date, end_date)
+        check_valid_time_selection(timerange)
+
+        self['timerange'] = timerange
 
     def load(self, session=None):
         """Load dataset."""
@@ -283,98 +364,6 @@ def _augment(base, update):
     for key in update:
         if key not in base:
             base[key] = update[key]
-
-
-def _add_extra_facets(facets, extra_facets_dir):
-    """Add extra facets from configuration files."""
-    extra_facets = get_extra_facets(facets["project"], facets["dataset"],
-                                    facets["mip"], facets["short_name"],
-                                    extra_facets_dir)
-    _augment(facets, extra_facets)
-
-
-def _update_timerange(dataset: Dataset, session):
-    """Update wildcards in timerange with found datetime values.
-
-    If the timerange is given as a year, it ensures it's formatted as a
-    4-digit value (YYYY).
-    """
-    if 'timerange' not in dataset.facets:
-        return
-
-    timerange = dataset.facets.get('timerange')
-    check_valid_time_selection(timerange)
-
-    if '*' in timerange:
-        dataset.facets.pop('timerange')
-        dataset.augment_facets(session)
-        dataset.facets['timerange'] = timerange
-        dataset.find_files(session)
-        if not dataset.files:
-            if not session.get('offline', True):
-                msg = (
-                    " Please note that automatic download is not supported "
-                    "with indeterminate time ranges at the moment. Please use "
-                    "a concrete time range (i.e., no wildcards '*') in your "
-                    "recipe or run ESMValTool with --offline=True.")
-            else:
-                msg = ""
-            raise InputFilesNotFound(
-                f"Missing data for: {_format_facets(dataset.facets)}"
-                f"Cannot determine time range '{timerange}'.{msg}")
-
-        intervals = [get_start_end_date(name) for name in dataset.files]
-
-        min_date = min(interval[0] for interval in intervals)
-        max_date = max(interval[1] for interval in intervals)
-
-        if timerange == '*':
-            timerange = f'{min_date}/{max_date}'
-        if '*' in timerange.split('/')[0]:
-            timerange = timerange.replace('*', min_date)
-        if '*' in timerange.split('/')[1]:
-            timerange = timerange.replace('*', max_date)
-
-    # Make sure that years are in format YYYY
-    (start_date, end_date) = timerange.split('/')
-    timerange = dates_to_timerange(start_date, end_date)
-    check_valid_time_selection(timerange)
-
-    dataset['timerange'] = timerange
-
-
-def _expand_tag(facets, input_tag):
-    """Expand tags such as ensemble members or stardates to multiple datasets.
-
-    Expansion only supports ensembles defined as strings, not lists.
-    """
-    expanded = []
-    regex = re.compile(r'\(\d+:\d+\)')
-
-    def expand_tag(facets_, input_tag):
-        tag = facets_.get(input_tag, "")
-        match = regex.search(tag)
-        if match:
-            start, end = match.group(0)[1:-1].split(':')
-            for i in range(int(start), int(end) + 1):
-                expand = copy.deepcopy(facets_)
-                expand[input_tag] = regex.sub(str(i), tag, 1)
-                expand_tag(expand, input_tag)
-        else:
-            expanded.append(facets_)
-
-    tag = facets.get(input_tag, "")
-    if isinstance(tag, (list, tuple)):
-        for elem in tag:
-            if regex.search(elem):
-                raise RecipeError(
-                    f"In variable {facets}: {input_tag} expansion "
-                    f"cannot be combined with {input_tag} lists")
-        expanded.append(facets)
-    else:
-        expand_tag(facets, input_tag)
-
-    return expanded
 
 
 ALIAS_INFO_KEYS = (
@@ -527,9 +516,19 @@ def datasets_from_recipe(recipe, session):
             idx = 0
             for recipe_dataset in recipe_datasets:
                 DATASET_KEYS.union(recipe_dataset)
+                recipe_dataset = copy.deepcopy(recipe_dataset)
                 facets = copy.deepcopy(recipe_variable)
                 facets.pop('additional_datasets', None)
-                facets.update(copy.deepcopy(recipe_dataset))
+                for key, value in recipe_dataset.items():
+                    if key == 'ancillary_variables':
+                        if key not in facets:
+                            facets[key] = []
+                        for ancillary_facets in value:
+                            # TODO merge these two somehow
+                            facets[key]
+                    else:
+                        facets[key] = value
+
                 persist = set(facets)
                 facets['diagnostic'] = diagnostic
                 facets['variable_group'] = variable_group
@@ -546,24 +545,18 @@ def datasets_from_recipe(recipe, session):
                     facets['end_year'] = min(
                         facets['end_year'],
                         facets['start_year'] + session['max_years'] - 1)
-                for facets0 in _expand_tag(facets, 'ensemble'):
-                    for facets1 in _expand_tag(facets0, 'sub_experiment'):
-                        ancillaries = facets1.pop('ancillary_variables', [])
-                        dataset = Dataset()
-                        dataset.session = session
-                        for key in facets1:
-                            dataset.set_facet(key, facets1[key], key
-                                              in persist)
-                        for ancillary_facets in ancillaries:
-                            if isinstance(ancillary_facets, str):
-                                ancillary_facets = {
-                                    'short_name': ancillary_facets
-                                }
-                            dataset.add_ancillary(**ancillary_facets)
-                        dataset.facets['preprocessor'] = preprocessor
-                        dataset.facets['recipe_dataset_index'] = idx
-                        datasets.append(dataset)
-                        idx += 1
+                ancillaries = facets.pop('ancillary_variables', [])
+                dataset = Dataset()
+                dataset.session = session
+                for key, value in facets.items():
+                    dataset.set_facet(key, value, key in persist)
+                for ancillary_facets in ancillaries:
+                    dataset.add_ancillary(**ancillary_facets)
+                dataset.facets['preprocessor'] = preprocessor
+                for dataset in dataset.expand():
+                    dataset.facets['recipe_dataset_index'] = idx
+                    datasets.append(dataset)
+                    idx += 1
 
     _set_aliases(datasets)
 

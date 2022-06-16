@@ -1,3 +1,4 @@
+import pprint
 import textwrap
 
 import pytest
@@ -8,6 +9,7 @@ from esmvalcore.dataset import (
     datasets_from_recipe,
     datasets_to_recipe,
 )
+from esmvalcore.exceptions import RecipeError
 from esmvalcore.experimental import CFG
 
 
@@ -34,12 +36,45 @@ def test_repr_ancillary():
         """).strip()
 
 
-def test_datasets_from_recipe(session):
+def test_datsets_from_recipe(session):
+
+    recipe_txt = textwrap.dedent("""
+
+    diagnostics:
+      diagnostic1:
+        variables:
+          tas:
+            project: CMIP5
+            mip: Amon
+            additional_datasets:
+              - {dataset: dataset1}
+    """)
+    recipe = yaml.safe_load(recipe_txt)
+
+    dataset = Dataset(
+        diagnostic='diagnostic1',
+        variable_group='tas',
+        short_name='tas',
+        dataset='dataset1',
+        project='CMIP5',
+        mip='Amon',
+        preprocessor='default',
+        alias='dataset1',
+        recipe_dataset_index=0,
+    )
+    dataset.session = session
+
+    print(datasets_from_recipe(recipe, session))
+    print([dataset])
+    assert datasets_from_recipe(recipe, session) == [dataset]
+
+
+def test_datasets_from_complicated_recipe(session):
 
     recipe_txt = textwrap.dedent("""
 
     datasets:
-      - {dataset: 'dataset1', project: CMIP6,}
+      - {dataset: 'dataset1', project: CMIP6}
 
     diagnostics:
       diagnostic1:
@@ -174,6 +209,8 @@ def test_expand_datasets_from_recipe(session):
             recipe_dataset_index=1,
         ),
     ]
+    for dataset in datasets:
+        dataset.session = session
 
     assert datasets_from_recipe(recipe, session) == datasets
 
@@ -193,8 +230,7 @@ def test_ancillary_datasets_from_recipe(session):
             mip: Omon
             ancillary_variables:
               - short_name: sftof
-                ensemble: r0i0p0
-              - areacello
+                mip: fx
     """)
     recipe = yaml.safe_load(recipe_txt)
 
@@ -216,49 +252,40 @@ def test_ancillary_datasets_from_recipe(session):
             variable_group='tos',
             short_name='sftof',
             dataset='dataset1',
-            ensemble='r0i0p0',
-            project='CMIP5',
-            mip='Omon',
-        ),
-        Dataset(
-            diagnostic='diagnostic1',
-            variable_group='tos',
-            short_name='areacello',
-            dataset='dataset1',
             ensemble='r1i1p1',
             project='CMIP5',
-            mip='Omon',
+            mip='fx',
         ),
     ]
+    dataset.session = session
 
+    print(datasets_from_recipe(recipe, session))
+    print([dataset])
     assert datasets_from_recipe(recipe, session) == [dataset]
 
 
 def test_datasets_to_recipe():
     datasets = [
         Dataset(
-            diagnostic='diagnostic1',
-            variable_group='group1',
             short_name='ta',
             dataset='dataset1',
         ),
         Dataset(
-            diagnostic='diagnostic1',
-            variable_group='group1',
             short_name='ta',
             dataset='dataset2',
         ),
     ]
-
+    for dataset in datasets:
+        dataset.facets['diagnostic'] = 'diagnostic1'
     recipe_txt = textwrap.dedent("""
 
     diagnostics:
       diagnostic1:
         variables:
-          group1:
+          ta:
             additional_datasets:
-              - {dataset: 'dataset1', short_name: 'ta'}
-              - {dataset: 'dataset2', short_name: 'ta'}
+              - {dataset: 'dataset1'}
+              - {dataset: 'dataset2'}
 
     """)
     recipe = yaml.safe_load(recipe_txt)
@@ -269,11 +296,11 @@ def test_datasets_to_recipe():
 def test_ancillary_datasets_to_recipe():
 
     dataset = Dataset(
-        diagnostic='diagnostic1',
-        variable_group='group1',
         short_name='ta',
         dataset='dataset1',
     )
+    dataset['diagnostic'] = 'diagnostic1'
+    dataset['variable_group'] = 'group1'
     dataset.add_ancillary(short_name='areacella')
 
     recipe_txt = textwrap.dedent("""
@@ -286,10 +313,58 @@ def test_ancillary_datasets_to_recipe():
               - dataset: 'dataset1'
                 short_name: 'ta'
                 ancillary_variables:
-                  - dataset: dataset1
-                    short_name: areacella
+                  - short_name: areacella
 
     """)
     recipe = yaml.safe_load(recipe_txt)
-
     assert datasets_to_recipe([dataset]) == recipe
+
+
+def test_expand_ensemble():
+
+    dataset = Dataset(ensemble='r(1:2)i(2:3)p(3:4)')
+
+    expanded = dataset._expand_range('ensemble')
+
+    ensembles = [
+        'r1i2p3',
+        'r1i2p4',
+        'r1i3p3',
+        'r1i3p4',
+        'r2i2p3',
+        'r2i2p4',
+        'r2i3p3',
+        'r2i3p4',
+    ]
+    assert expanded == ensembles
+
+
+def test_expand_subexperiment():
+
+    dataset = Dataset(sub_experiment='s(1998:2005)')
+
+    expanded = dataset._expand_range('sub_experiment')
+
+    subexperiments = [
+        's1998',
+        's1999',
+        's2000',
+        's2001',
+        's2002',
+        's2003',
+        's2004',
+        's2005',
+    ]
+
+    assert expanded == subexperiments
+
+
+def test_expand_ensemble_nolist():
+
+    dataset = Dataset(
+        dataset='XYZ',
+        ensemble=['r1i1p1', 'r(1:2)i1p1'],
+    )
+
+    with pytest.raises(RecipeError):
+        dataset._expand_range('ensemble')

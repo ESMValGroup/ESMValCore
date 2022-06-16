@@ -489,13 +489,9 @@ def _find_input_files(variable, rootpath, drs):
 
 def get_input_filelist(variable, rootpath, drs):
     """Return the full path to input files."""
-    # change ensemble to fixed r0i0p0 for fx variables
-    # this is needed and is not a duplicate effort
-    if variable['project'] == 'CMIP5' and variable['frequency'] == 'fx':
-        variable['ensemble'] = 'r0i0p0'
     (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
     # do time gating only for non-fx variables
-    if variable['frequency'] != 'fx':
+    if 'timerange' in variable and variable['timerange'] != '*':
         files = select_files(
             files,
             variable['timerange'])

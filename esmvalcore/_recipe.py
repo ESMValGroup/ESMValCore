@@ -27,7 +27,7 @@ from ._data_finder import (
 from ._provenance import get_recipe_provenance
 from ._task import DiagnosticTask, ResumeTask, TaskSet
 from .cmor.table import CMOR_TABLES, _get_facets_from_cmor_table
-from .dataset import datasets_from_recipe
+from .dataset import datasets_from_recipe, datasets_to_recipe
 from .esgf import ESGFFile
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import (
@@ -165,12 +165,7 @@ def _representative_dataset(dataset):
             if required_ds.files:
                 dataset = required_ds
                 break
-    check.data_availability(
-        input_files=dataset.files,
-        facets=dataset.facets,
-        dirnames=[],  # TODO: fix debug info
-        filenames=[],
-    )
+    check.data_availability(dataset)
     return dataset
 
 
@@ -395,12 +390,7 @@ def _check_input_files(dataset: Dataset):
             f'{f} (will be downloaded)' if not os.path.exists(f) else str(f)
             for f in dataset.files),
     )
-    check.data_availability(
-        input_files=dataset.files,
-        facets=dataset.facets,
-        dirnames=[],  # TODO: fix debug info
-        filenames=[],
-    )
+    check.data_availability(dataset)
 
     _add_to_download_list(dataset)
     for ancillary_ds in dataset.ancillaries:
@@ -1173,51 +1163,6 @@ class Recipe:
 
         return tasks
 
-    def _fill_wildcards(self, variable_group, preprocessor_output):
-        """Fill wildcards in the `timerange` .
-
-        The new values will be datetime values that have been found for
-        the first and/or last available points.
-        """
-        # To be generalised for other tags
-        datasets = self._raw_recipe.get('datasets')
-        diagnostics = self._raw_recipe.get('diagnostics')
-        additional_datasets = []
-        if diagnostics:
-            additional_datasets = nested_lookup('additional_datasets',
-                                                diagnostics)
-
-        raw_dataset_tags = nested_lookup('timerange', datasets)
-        raw_diagnostic_tags = nested_lookup('timerange', diagnostics)
-
-        wildcard = False
-        for raw_timerange in raw_dataset_tags + raw_diagnostic_tags:
-            if '*' in raw_timerange:
-                wildcard = True
-                break
-
-        if wildcard:
-            if not self._updated_recipe:
-                self._updated_recipe = deepcopy(self._raw_recipe)
-                nested_delete(self._updated_recipe, 'datasets', in_place=True)
-                nested_delete(self._updated_recipe,
-                              'additional_datasets',
-                              in_place=True)
-            updated_datasets = []
-            dataset_keys = set(
-                get_all_keys(datasets) + get_all_keys(additional_datasets) +
-                ['timerange'])
-            for data in preprocessor_output[variable_group]:
-                diagnostic = data['diagnostic']
-                updated_datasets.append(
-                    {key: data[key]
-                     for key in dataset_keys if key in data})
-            self._updated_recipe['diagnostics'][diagnostic]['variables'][
-                variable_group].pop('timerange', None)
-            self._updated_recipe['diagnostics'][diagnostic]['variables'][
-                variable_group].update(
-                    {'additional_datasets': updated_datasets})
-
     def _create_preprocessor_tasks(self, diagnostic_name, diagnostic,
                                    tasknames_to_run, any_diag_script_is_run):
         """Create preprocessor tasks."""
@@ -1271,8 +1216,6 @@ class Recipe:
                 except RecipeError as ex:
                     failed_tasks.append(ex)
                 else:
-                    # self._fill_wildcards(variable_group,
-                    #                     diagnostic['preprocessor_output'])
                     tasks.append(task)
 
         return tasks, failed_tasks
@@ -1347,9 +1290,9 @@ class Recipe:
 
     def run(self):
         """Run all tasks in the recipe."""
-        self.write_filled_recipe()
         if not self.tasks:
             raise RecipeError('No tasks to run!')
+        self.write_filled_recipe()
 
         # Download required data
         if not self.session['offline']:
@@ -1384,13 +1327,33 @@ class Recipe:
 
     def write_filled_recipe(self):
         """Write copy of recipe with filled wildcards."""
-        if self._updated_recipe:
-            run_dir = self.session.run_dir
-            filename = self._filename.split('.')
-            filename[0] = filename[0] + '_filled'
-            new_filename = '.'.join(filename)
-            with open(os.path.join(run_dir, new_filename), 'w') as file:
-                yaml.safe_dump(self._updated_recipe, file, sort_keys=False)
+        datasets = []
+        for task in self.tasks.flatten():
+            for product in task.products:
+                if isinstance(product, PreprocessorFile):
+                    if product.dataset is not None:
+                        product.dataset._update_timerange()
+                        datasets.append(product.dataset)
+        dataset_recipe = datasets_to_recipe(datasets)
+
+        updated_recipe = deepcopy(self._raw_recipe)
+        updated_recipe.pop('datasets', None)
+        nested_delete(updated_recipe, 'additional_datasets', in_place=True)
+
+        ds_key = 'additional_datasets'
+        var_key = 'variables'
+        for ds_name, diagnostic in dataset_recipe['diagnostics'].items():
+            updated_diagnostic = updated_recipe['diagnostic'][ds_name]
+            if ds_key in diagnostic:
+                updated_diagnostic[ds_key] = diagnostic[ds_key]
+            for var_name, variable in diagnostic.get(var_key, {}).items():
+                updated_variable = updated_diagnostic[var_name]
+                if ds_key in variable:
+                    updated_variable[ds_key] = variable[ds_key]
+
+        filename = self.session.run_dir / f"{self._filename.stem}_filled.yml"
+        with filename.open('w', encoding='utf-8') as file:
+            yaml.safe_dump(updated_recipe, file, sort_keys=False)
 
     def write_html_summary(self):
         """Write summary html file to the output dir."""

@@ -167,8 +167,11 @@ def _format_facets(facets):
     return ", ".join(facets[k] for k in keys if k in facets)
 
 
-def data_availability(input_files, facets, dirnames, filenames, log=True):
+def data_availability(dataset, log=True):
     """Check if input_files cover the required years."""
+    input_files = dataset.files
+    facets = dataset.facets
+    dirnames, filenames = dataset._files_debug
     if log:
         _log_data_availability_errors(input_files, facets, dirnames, filenames)
 

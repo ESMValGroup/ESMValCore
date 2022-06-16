@@ -387,15 +387,15 @@ class PreprocessorFile(TrackedFile):
 
     def __init__(self, filename, attributes, settings, input_data):
         if isinstance(input_data, list):
-            self._dataset = None
-            self._ancestors = input_data
+            self.dataset = None
+            ancestors = input_data
             self._input_files = [a.filename for a in self._ancestors]
         else:
-            self._dataset = input_data
-            input_files = list(self._dataset.files)
-            for ancillary in self._dataset.ancillaries:
+            self.dataset = input_data
+            input_files = list(self.dataset.files)
+            for ancillary in self.dataset.ancillaries:
                 input_files.extend(ancillary.files)
-            self._ancestors = [TrackedFile(f) for f in input_files]
+            ancestors = [TrackedFile(f) for f in input_files]
             self._input_files = input_files
 
         self.settings = copy.deepcopy(settings)
@@ -408,7 +408,7 @@ class PreprocessorFile(TrackedFile):
         super().__init__(
             filename=filename,
             attributes=attributes,
-            ancestors=self._ancestors,
+            ancestors=ancestors,
         )
         self.attributes['filename'] = self.filename
 
@@ -442,9 +442,9 @@ class PreprocessorFile(TrackedFile):
         self._cubes = value
 
     def load(self):
-        if self._dataset:
+        if self.dataset:
             # Usual case
-            self._cubes = [self._dataset.load()]
+            self._cubes = [self.dataset.load()]
         else:
             # Derived variable case
             self._cubes = [iris.load_cube(f) for f in self._input_files]
