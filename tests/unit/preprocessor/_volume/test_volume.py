@@ -7,13 +7,15 @@ import numpy as np
 from cf_units import Unit
 
 import tests
-from esmvalcore.preprocessor._volume import (axis_statistics,
-                                             calculate_volume,
-                                             depth_integration,
-                                             extract_trajectory,
-                                             extract_transect,
-                                             extract_volume,
-                                             volume_statistics)
+from esmvalcore.preprocessor._volume import (
+    axis_statistics,
+    calculate_volume,
+    depth_integration,
+    extract_trajectory,
+    extract_transect,
+    extract_volume,
+    volume_statistics,
+)
 
 
 class Test(tests.Test):

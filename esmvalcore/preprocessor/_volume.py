@@ -313,7 +313,6 @@ def axis_statistics(cube, axis, operator):
             'axis_statistics not implemented for '
             'multidimensional coordinates.')
     operation = get_iris_analysis_operation(operator)
-    weights = None
     if operator_accept_weights(operator):
         weights = np.abs(
             coord.core_bounds()[..., 1] - coord.core_bounds()[..., 0]
