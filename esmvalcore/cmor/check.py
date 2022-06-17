@@ -393,6 +393,7 @@ class CMORCheck():
     def _check_dim_names(self):
         """Check dimension names."""
         cmor_var_coordinates = self._cmor_var.coordinates.copy()
+        link = 'https://github.com/ESMValGroup/ESMValCore/discussions/1587'
         for (key, coordinate) in cmor_var_coordinates.items():
             if coordinate.generic_level:
                 self._check_generic_level_dim_names(key, coordinate)
@@ -426,6 +427,17 @@ class CMORCheck():
                                 coordinate.out_name,
                             )
                             coord.var_name = coordinate.out_name
+                        elif coord.standard_name in ['region', 'area_type']:
+                            self.report_debug_message(
+                                'Coordinate {0} has var name {1} '
+                                'instead of {2}. '
+                                "But that's considered OK and ignored. "
+                                'See also {3}',
+                                coordinate.name,
+                                coord.var_name,
+                                coordinate.out_name,
+                                link
+                            )
                         else:
                             self.report_error(
                                 'Coordinate {0} has var name {1} '

@@ -296,6 +296,48 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
     assert input_files == expected[local_availability]
 
 
+@pytest.mark.parametrize('timerange', ['*', '185001/*', '*/185112'])
+def test_search_esgf_timerange(mocker, tmp_path, timerange):
+
+    download_dir = tmp_path / 'download_dir'
+    esgf_files = create_esgf_search_results()
+
+    mocker.patch.object(_recipe,
+                        '_find_input_files',
+                        autospec=True,
+                        return_value=([], [], []))
+    mocker.patch.object(
+        _recipe.esgf,
+        'find_files',
+        autospec=True,
+        return_value=esgf_files,
+    )
+
+    variable = {
+        'project': 'CMIP6',
+        'mip': 'Amon',
+        'frequency': 'mon',
+        'short_name': 'tas',
+        'dataset': 'EC.-Earth3',
+        'exp': 'historical',
+        'ensemble': 'r1i1p1f1',
+        'grid': 'gr',
+        'timerange': timerange,
+        'alias': 'CMIP6_EC-Eeath3_tas',
+        'original_short_name': 'tas'
+    }
+
+    config_user = {
+        'rootpath': None,
+        'drs': None,
+        'offline': False,
+        'download_dir': download_dir
+    }
+    _recipe._update_timerange(variable, config_user)
+
+    assert variable['timerange'] == '185001/185112'
+
+
 def test_write_html_summary(mocker, caplog):
     """Test `Recipe.write_html_summary` failing and logging a message."""
     message = "Failed to look up references."
@@ -617,3 +659,59 @@ def test_create_diagnostic_tasks(mock_diag_task, tasks_to_run, tasks_run):
             name=f'{diag_name}{_recipe.TASKSEP}{task_name}',
         )
         assert expected_call in mock_diag_task.mock_calls
+
+
+def test_differing_timeranges(caplog):
+    timeranges = set()
+    timeranges.add('1950/1951')
+    timeranges.add('1950/1952')
+    required_variables = [
+        {
+            'short_name': 'rsdscs',
+            'timerange': '1950/1951'
+        },
+        {
+            'short_name': 'rsuscs',
+            'timerange': '1950/1952'
+        },
+    ]
+    with pytest.raises(ValueError) as exc:
+        _recipe._check_differing_timeranges(
+            timeranges, required_variables)
+    expected_log = (
+        f"Differing timeranges with values {timeranges} "
+        "found for required variables "
+        "[{'short_name': 'rsdscs', 'timerange': '1950/1951'}, "
+        "{'short_name': 'rsuscs', 'timerange': '1950/1952'}]. "
+        "Set `timerange` to a common value."
+    )
+
+    assert expected_log in str(exc.value)
+
+
+def test_update_warning_settings_nonaffected_project():
+    """Test ``_update_warning_settings``."""
+    settings = {'save': {'filename': 'out.nc'}, 'load': {'filename': 'in.nc'}}
+    _recipe._update_warning_settings(settings, 'CMIP5')
+    assert settings == {
+        'save': {'filename': 'out.nc'},
+        'load': {'filename': 'in.nc'},
+    }
+
+
+def test_update_warning_settings_step_not_present():
+    """Test ``_update_warning_settings``."""
+    settings = {'save': {'filename': 'out.nc'}}
+    _recipe._update_warning_settings(settings, 'EMAC')
+    assert settings == {'save': {'filename': 'out.nc'}}
+
+
+def test_update_warning_settings_step_present():
+    """Test ``_update_warning_settings``."""
+    settings = {'save': {'filename': 'out.nc'}, 'load': {'filename': 'in.nc'}}
+    _recipe._update_warning_settings(settings, 'EMAC')
+    assert len(settings) == 2
+    assert settings['save'] == {'filename': 'out.nc'}
+    assert len(settings['load']) == 2
+    assert settings['load']['filename'] == 'in.nc'
+    assert 'ignore_warnings' in settings['load']

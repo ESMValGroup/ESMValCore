@@ -1,0 +1,19 @@
+SOURCE: CMIP6
+!============
+variable_entry:    MP_SS_tot
+!============
+modeling_realm:    atmos
+frequency:         10hr
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             kg
+long_name:         total mass of sea salt (sum of all aerosol modes)
+comment:           positive mass of SS_tot in kg
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time
+!----------------------------------
+!

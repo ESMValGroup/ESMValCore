@@ -1546,7 +1546,7 @@ The area manipulation module contains the following preprocessor functions:
 ``extract_coordinate_points``
 -----------------------------
 
-This function extracts points with given coordinates, following either a 
+This function extracts points with given coordinates, following either a
 ``linear`` or a ``nearest`` interpolation scheme.
 The resulting point cube will match the respective coordinates to
 those of the input coordinates. If the input coordinate is a scalar,
@@ -1954,6 +1954,9 @@ See also :func:`esmvalcore.preprocessor.detrend`.
 Unit conversion
 ===============
 
+``convert_units``
+-----------------
+
 Converting units is also supported. This is particularly useful in
 cases where different datasets might have different units, for example
 when comparing CMIP5 and CMIP6 variables where the units have changed
@@ -1970,6 +1973,26 @@ will guarantee homogeneous input for the diagnostics.
    amount based unit is not supported at the moment.
 
 See also :func:`esmvalcore.preprocessor.convert_units`.
+
+
+``accumulate_coordinate``
+-------------------------
+
+This function can be used to weight data using the bounds from a given coordinate.
+The resulting cube will then have units given by ``cube_units * coordinate_units``.
+
+For instance, if a variable has units such as ``X s-1``, using ``accumulate_coordinate``
+on the time coordinate would result on a cube where the data would be multiplied
+by the time bounds and the resulting units for the variable would be converted to ``X``.
+In this case, weighting the data with the time coordinate would allow to cancel
+the time units in the variable.
+
+.. note::
+   The coordinate used to weight the data must be one-dimensional, as multidimensional
+   coordinates are not supported in this preprocessor.
+
+
+See also :func:`esmvalcore.preprocessor.accumulate_coordinate.`
 
 
 .. _bias:
