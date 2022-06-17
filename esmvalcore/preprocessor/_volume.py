@@ -314,10 +314,13 @@ def axis_statistics(cube, axis, operator):
             'multidimensional coordinates.')
     operation = get_iris_analysis_operation(operator)
     if operator_accept_weights(operator):
-        weights = np.abs(
-            coord.core_bounds()[..., 1] - coord.core_bounds()[..., 0]
-        )
-        weights = iris.util.broadcast_to_shape(weights, cube.shape, coord_dims)
+        coord_dim = coord_dims[0]
+        expand = list(range(cube.ndim))
+        expand.remove(coord_dim)
+        bounds = coord.core_bounds()
+        weights = np.abs(bounds[..., 1] - bounds[..., 0])
+        weights = np.expand_dims(weights, expand)
+        weights = da.broadcast_to(weights, cube.shape)
         result = cube.collapsed(coord,
                                 operation,
                                 weights=weights)
