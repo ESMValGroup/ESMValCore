@@ -130,21 +130,13 @@ def volume_statistics(cube, operator):
         raise ValueError('Cube shape ({}) doesn`t match grid volume shape '
                          f'({cube.shape, grid_volume.shape})')
 
-    yx_dims = cube.coord_dims(cube.coord(axis='Y'))
-    if len(yx_dims) == 1:
-        yx_dims += cube.coord_dims(cube.coord(axis='X'))
-    column = cube.collapsed(
-        [cube.coord(axis='Y'), cube.coord(axis='X')],
-        iris.analysis.MEAN,
-        weights=grid_volume)
     masked_volume = da.ma.masked_where(
         da.ma.getmaskarray(cube.lazy_data()),
         grid_volume)
-    depth_volume = da.sum(masked_volume, axis=yx_dims)
-    result = column.collapsed(
-        cube.coord(axis='Z'),
+    result = cube.collapsed(
+        [cube.coord(axis='Z'), cube.coord(axis='Y'), cube.coord(axis='X')],
         iris.analysis.MEAN,
-        weights=depth_volume)
+        weights=masked_volume)
 
     return result
 
