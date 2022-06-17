@@ -315,13 +315,10 @@ def axis_statistics(cube, axis, operator):
     operation = get_iris_analysis_operation(operator)
     weights = None
     if operator_accept_weights(operator):
-        coord_dim = coord_dims[0]
-        expand = list(range(cube.ndim))
-        expand.remove(coord_dim)
-        bounds = coord.core_bounds()
-        weights = np.abs(bounds[..., 1] - bounds[..., 0])
-        weights = np.expand_dims(weights, expand)
-        weights = da.broadcast_to(weights, cube.shape)
+        weights = np.abs(
+            coord.core_bounds()[..., 1] - coord.core_bounds()[..., 0]
+        )
+        weights = iris.util.broadcast_to_shape(weights, cube.shape, coord_dims)
         result = cube.collapsed(coord,
                                 operation,
                                 weights=weights)
