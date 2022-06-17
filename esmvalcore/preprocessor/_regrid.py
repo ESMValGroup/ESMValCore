@@ -647,6 +647,11 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
                     "'%s': %s", original_dtype, cube.core_data().dtype,
                     str(exc))
             cube.data = da.ma.masked_equal(cube.core_data(), fill_value)
+    else:
+        # force target coordinates
+        for coord in ['latitude', 'longitude']:
+            cube.coord(coord).points = target_grid.coord(coord).points
+            cube.coord(coord).bounds = target_grid.coord(coord).bounds
 
     return cube
 

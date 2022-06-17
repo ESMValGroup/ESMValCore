@@ -1071,7 +1071,7 @@ def test_update_timerange_no_files_offline(config_user):
     }
     config_user = dict(config_user)
     config_user['offline'] = False
-    msg = "Please note that automatic download is not supported"
+    msg = "Missing data for CMIP6: tas. Cannot determine indeterminate time "
     with pytest.raises(InputFilesNotFound, match=msg):
         esmvalcore._recipe._update_timerange(variable, config_user)
 
@@ -1573,6 +1573,72 @@ def test_derive_contains_start_end_year(tmp_path, patched_datafinder,
     assert product.attributes['timerange'] == '2000/2005'
     assert product.attributes['start_year'] == 2000
     assert product.attributes['end_year'] == 2005
+
+
+def test_derive_timerange_wildcard(tmp_path, patched_datafinder,
+                                   config_user):
+
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              toz:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                timerange: '*'
+                derive: true
+                force_derivation: true
+                additional_datasets:
+                  - {dataset: GFDL-CM3,  ensemble: r1i1p1}
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, config_user)
+
+    # Check generated tasks
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+
+    # Check that start_year and end_year are present in attributes
+    assert len(task.products) == 1
+    product = task.products.pop()
+    assert 'derive' in product.settings
+    assert product.attributes['short_name'] == 'toz'
+    assert product.attributes['timerange'] == '1990/2019'
+    assert product.attributes['start_year'] == 1990
+    assert product.attributes['end_year'] == 2019
+
+
+def test_derive_fail_timerange_wildcard(tmp_path, patched_datafinder,
+                                        config_user):
+
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              toz:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                timerange: '*'
+                derive: true
+                force_derivation: false
+                additional_datasets:
+                  - {dataset: GFDL-CM3,  ensemble: r1i1p1}
+            scripts: null
+        """)
+    msg = (
+      "Error in derived variable: toz: "
+      "Using 'force_derivation: false' (the default option) "
+      "in combination with wildcards ('*') in timerange is "
+      "not allowed; explicitly use 'force_derivation: true' "
+      "or avoid the use of wildcards in timerange")
+
+    with pytest.raises(RecipeError) as rec_err:
+        get_recipe(tmp_path, content, config_user)
+
+    assert msg in rec_err.value.failed_tasks[0].message
 
 
 def create_test_image(basename, cfg):

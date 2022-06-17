@@ -1,0 +1,19 @@
+SOURCE: CMIP6
+!============
+variable_entry:    MP_NOX
+!============
+modeling_realm:    atmos
+frequency:         10hr
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             kg
+long_name:         total mass of NOX (NO+NO2)
+comment:           positive mass of NOX in kg
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time
+!----------------------------------
+!

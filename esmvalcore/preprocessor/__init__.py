@@ -49,7 +49,8 @@ from ._regrid import (
     extract_levels,
     extract_location,
     extract_point,
-    regrid)
+    regrid,
+)
 from ._time import (
     annual_statistics,
     anomalies,
@@ -69,7 +70,7 @@ from ._time import (
     timeseries_filter,
 )
 from ._trend import linear_trend, linear_trend_stderr
-from ._units import convert_units
+from ._units import accumulate_coordinate, convert_units
 from ._volume import (
     axis_statistics,
     depth_integration,
@@ -141,7 +142,6 @@ __all__ = [
     # 'average_zone': average_zone,
     # 'cross_section': cross_section,
     'detrend',
-    # Grid-point operations
     'extract_named_regions',
     'axis_statistics',
     'depth_integration',
@@ -153,6 +153,7 @@ __all__ = [
     'amplitude',
     'zonal_statistics',
     'meridional_statistics',
+    'accumulate_coordinate',
     'hourly_statistics',
     'daily_statistics',
     'monthly_statistics',

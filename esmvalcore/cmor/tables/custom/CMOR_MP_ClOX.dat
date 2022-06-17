@@ -1,0 +1,19 @@
+SOURCE: CMIP6
+!============
+variable_entry:    MP_ClOX
+!============
+modeling_realm:    atmos
+frequency:         10hr
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             kg
+long_name:         total mass of ClOX
+comment:           positive mass of ClOX
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time
+!----------------------------------
+!
