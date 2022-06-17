@@ -7,9 +7,8 @@ import dask.array as da
 import iris
 import pandas as pd
 from cf_units import Unit
+from iris import NameConstraint
 from scipy.interpolate import interp1d
-
-from esmvalcore.iris_helpers import var_name_constraint
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ def add_aux_coords_from_cubes(cube, cubes, coord_dict):
         it.
     """
     for (coord_name, coord_dims) in coord_dict.items():
-        coord_cube = cubes.extract(var_name_constraint(coord_name))
+        coord_cube = cubes.extract(NameConstraint(var_name=coord_name))
         if len(coord_cube) != 1:
             raise ValueError(
                 f"Expected exactly one coordinate cube '{coord_name}' in "
@@ -147,6 +146,23 @@ def add_scalar_height_coord(cube, height=2.0):
     return cube
 
 
+def add_scalar_lambda550nm_coord(cube):
+    """Add scalar coordinate 'lambda550nm'."""
+    logger.debug("Adding lambda550nm coordinate")
+    lambda550nm_coord = iris.coords.AuxCoord(
+        550.0,
+        var_name='wavelength',
+        standard_name='radiation_wavelength',
+        long_name='Radiation Wavelength 550 nanometers',
+        units='nm',
+    )
+    try:
+        cube.coord('radiation_wavelength')
+    except iris.exceptions.CoordinateNotFoundError:
+        cube.add_aux_coord(lambda550nm_coord, ())
+    return cube
+
+
 def add_scalar_typeland_coord(cube, value='default'):
     """Add scalar coordinate 'typeland' with value of `value`."""
     logger.debug("Adding typeland coordinate (%s)", value)
@@ -247,7 +263,7 @@ def get_bounds_cube(cubes, coord_var_name):
     """
     for bounds in ('bnds', 'bounds'):
         bound_var = f'{coord_var_name}_{bounds}'
-        cube = cubes.extract(var_name_constraint(bound_var))
+        cube = cubes.extract(NameConstraint(var_name=bound_var))
         if len(cube) == 1:
             return cube[0]
         if len(cube) > 1:

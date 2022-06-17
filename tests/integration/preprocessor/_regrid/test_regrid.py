@@ -92,6 +92,23 @@ class Test(tests.Test):
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
         self.assert_array_equal(result.data, expected)
 
+    def test_regrid__regular_coordinates(self):
+        data = np.ones((1, 1))
+        lons = iris.coords.DimCoord([1.50000000000001],
+                                    standard_name='longitude',
+                                    bounds=[[1, 2]],
+                                    units='degrees_east',
+                                    coord_system=self.cs)
+        lats = iris.coords.DimCoord([1.50000000000001],
+                                    standard_name='latitude',
+                                    bounds=[[1, 2]],
+                                    units='degrees_north',
+                                    coord_system=self.cs)
+        coords_spec = [(lats, 0), (lons, 1)]
+        regular_grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
+        result = regrid(regular_grid, self.grid_for_linear, 'linear')
+        iris.common.resolve.Resolve(result, self.grid_for_linear)
+
     def test_regrid__linear_do_not_preserve_dtype(self):
         self.cube.data = self.cube.data.astype(int)
         result = regrid(self.cube, self.grid_for_linear, 'linear')

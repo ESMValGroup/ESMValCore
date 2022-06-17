@@ -1,0 +1,19 @@
+SOURCE: CMIP6
+!============
+variable_entry:    MP_O3
+!============
+modeling_realm:    atmos
+frequency:         10hr
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             kg
+long_name:         total mass of O3
+comment:           positive mass of O3 in kg
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time
+!----------------------------------
+!

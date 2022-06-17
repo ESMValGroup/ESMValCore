@@ -337,13 +337,6 @@ be provided in the section ``search_connection``, for example:
 .. code-block:: yaml
 
     search_connection:
-      url: "http://esgf-index1.ceda.ac.uk/esg-search"
-
-to choose the CEDA index node or
-
-.. code-block:: yaml
-
-    search_connection:
       expire_after: 2592000  # the number of seconds in a month
 
 to keep cached search results for a month.
@@ -352,11 +345,27 @@ The default settings are:
 
 .. code-block:: yaml
 
-    url: 'http://esgf-node.llnl.gov/esg-search'
+    urls:
+      - 'https://esgf-index1.ceda.ac.uk/esg-search'
+      - 'https://esgf-node.llnl.gov/esg-search'
+      - 'https://esgf-data.dkrz.de/esg-search'
+      - 'https://esgf-node.ipsl.upmc.fr/esg-search'
+      - 'https://esg-dn1.nsc.liu.se/esg-search'
+      - 'https://esgf.nci.org.au/esg-search'
+      - 'https://esgf.nccs.nasa.gov/esg-search'
+      - 'https://esgdata.gfdl.noaa.gov/esg-search'
     distrib: true
     timeout: 120  # seconds
     cache: '~/.esmvaltool/cache/pyesgf-search-results'
     expire_after: 86400  # cache expires after 1 day
+
+Note that by default the tool will try the
+`ESGF index nodes <https://esgf.llnl.gov/nodes.html>`_
+in the order provided in the configuration file and use the first one that is
+online.
+Some ESGF index nodes may return search results faster than others, so you may
+be able to speed up the search for files by experimenting with placing different
+index nodes at the top of the list.
 
 If you experience errors while searching, it sometimes helps to delete the
 cached results.
@@ -511,46 +520,75 @@ related to CMOR table settings available:
   to get the name of the file containing the ``mip`` table.
   Defaults to the value provided in ``cmor_type``.
 
+.. _filterwarnings_config-developer:
+
+Filter preprocessor warnings
+----------------------------
+
+It is possible to ignore specific warnings of the preprocessor for a given
+``project``.
+This is particularly useful for native models which do not follow the CMOR
+standard by default and consequently produce a lot of warnings when handled by
+Iris.
+This can be configured in the ``config-developer.yml`` file for some steps of
+the preprocessing chain.
+
+Currently supported preprocessor steps:
+
+* :func:`~esmvalcore.preprocessor.load`
+
+Here is an example on how to ignore specific warnings during the preprocessor
+step ``load`` for all datasets of project  ``EMAC`` (taken from the default
+``config-developer.yml`` file):
+
+.. code-block:: yaml
+
+   ignore_warnings:
+     load:
+       - {message: 'Missing CF-netCDF formula term variable .*, referenced by netCDF variable .*', module: iris}
+       - {message: 'Ignored formula of unrecognised type: .*', module: iris}
+
+The keyword arguments specified in the list items are directly passed to
+:func:`warnings.filterwarnings` in addition to ``action=ignore`` (may be
+overwritten in ``config-developer.yml``).
+
 .. _configure_native_models:
 
-Configuring native models and observation data sets
-----------------------------------------------------
+Configuring datasets in native format
+-------------------------------------
 
-ESMValCore can be configured for handling native model output formats
-and specific
-observation data sets without preliminary reformatting. You can choose
-to host this new data source either under a dedicated project or under
-project ``native6``; when choosing the latter, such a configuration
-involves the following steps:
+ESMValCore can be configured for handling native model output formats and
+specific reanalysis/observation datasets without preliminary reformatting.
+These datasets can be either hosted under the ``native6`` project (mostly
+native reanalysis/observational datasets) or under a dedicated project, e.g.,
+``ICON`` (mostly native models).
 
-  - allowing for ESMValTool to locate the data files:
+Example:
 
-    - entry ``native6`` of ``config-developer.yml`` should be
-      complemented with sub-entries for ``input_dir`` and ``input_file``
-      that goes under a new key representing the
-      data organization (such as ``MY_DATA_ORG``), and these sub-entries can
-      use an arbitrary list of ``{placeholders}``. Example :
+.. code-block:: yaml
 
-      .. code-block:: yaml
+   native6:
+     cmor_strict: false
+     input_dir:
+       default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
+     input_file:
+       default: '*.nc'
+     output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
+     cmor_type: 'CMIP6'
+     cmor_default_table_prefix: 'CMIP6_'
 
-        native6:
-          ...
-          input_dir:
-             default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
-             MY_DATA_ORG: '{model}/{exp}/{simulation}/{version}/{type}'
-          input_file:
-            default: '*.nc'
-            MY_DATA_ORG: '{simulation}_*.nc'
-          ...
+   ICON:
+     cmor_strict: false
+     input_dir:
+       default: '{version}_{component}_{exp}_{grid}_{ensemble}'
+     input_file:
+       default: '{version}_{component}_{exp}_{grid}_{ensemble}_{var_type}*.nc'
+     output_file: '{dataset}_{version}_{component}_{grid}_{mip}_{exp}_{ensemble}_{short_name}_{var_type}'
+     cmor_type: 'CMIP6'
+     cmor_default_table_prefix: 'CMIP6_'
 
-    - if necessary, provide a so-called ``extra facets file`` which
-      allows to cope e.g. with variable naming issues for finding
-      files. See :ref:`extra_facets` and :download:`this example of
-      such a file for IPSL-CM6
-      <../../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`.
-
-  - ensuring that ESMValCore get the right metadata and data out of
-    your data files: this is described in :ref:`fixing_data`
+A detailed description on how to add support for further native datasets is
+given :ref:`here <add_new_fix_native_datasets>`.
 
 
 .. _config-ref:

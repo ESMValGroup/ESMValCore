@@ -44,7 +44,13 @@ from ._mask import (
 )
 from ._multimodel import ensemble_statistics, multi_model_statistics
 from ._other import clip
-from ._regrid import extract_levels, extract_location, extract_point, regrid
+from ._regrid import (
+    extract_coordinate_points,
+    extract_levels,
+    extract_location,
+    extract_point,
+    regrid,
+)
 from ._time import (
     annual_statistics,
     anomalies,
@@ -64,7 +70,7 @@ from ._time import (
     timeseries_filter,
 )
 from ._trend import linear_trend, linear_trend_stderr
-from ._units import convert_units
+from ._units import accumulate_coordinate, convert_units
 from ._volume import (
     depth_integration,
     extract_trajectory,
@@ -114,6 +120,7 @@ __all__ = [
     # Regridding
     'regrid',
     # Point interpolation
+    'extract_coordinate_points',
     'extract_point',
     'extract_location',
     # Masking missing values
@@ -134,7 +141,6 @@ __all__ = [
     # 'average_zone': average_zone,
     # 'cross_section': cross_section,
     'detrend',
-    # Grid-point operations
     'extract_named_regions',
     'depth_integration',
     'area_statistics',
@@ -145,6 +151,7 @@ __all__ = [
     'amplitude',
     'zonal_statistics',
     'meridional_statistics',
+    'accumulate_coordinate',
     'hourly_statistics',
     'daily_statistics',
     'monthly_statistics',

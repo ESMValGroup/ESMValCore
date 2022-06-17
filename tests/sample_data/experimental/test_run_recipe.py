@@ -22,6 +22,7 @@ esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 CFG.update(esmvaltool_sample_data.get_rootpaths())
 CFG['drs']['CMIP6'] = 'SYNDA'
 CFG['max_parallel_tasks'] = 1
+CFG['remove_preproc_dir'] = False
 
 AUTHOR_TAGS = {
     'authors': {

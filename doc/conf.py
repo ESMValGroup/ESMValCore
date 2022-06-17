@@ -65,17 +65,6 @@ autodoc_default_options = {
     'autosummary': True,
 }
 
-autodoc_mock_imports = [
-    'cartopy',
-    'cf_units',
-    'ESMF',
-    'geopy',
-    'iris',
-    'nested_lookup',
-    'psutil',
-    'stratify',
-]
-
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -416,6 +405,8 @@ numfig = True
 
 # Configuration for intersphinx
 intersphinx_mapping = {
+    'cf_units': ('https://cf-units.readthedocs.io/en/latest/', None),
+    'cftime': ('https://unidata.github.io/cftime/', None),
     'esmvalcore':
     (f'https://docs.esmvaltool.org/projects/esmvalcore/en/{rtd_version}/',
      None),

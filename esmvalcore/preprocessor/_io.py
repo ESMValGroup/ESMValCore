@@ -11,6 +11,7 @@ import iris.aux_factory
 import iris.exceptions
 import numpy as np
 import yaml
+from cf_units import suppress_errors
 
 from .._task import write_ncl_settings
 from ._time import extract_time
@@ -110,26 +111,64 @@ def _delete_attributes(iris_object, atts):
             del iris_object.attributes[att]
 
 
-def load(file, callback=None):
-    """Load iris cubes from files."""
+def load(file, callback=None, ignore_warnings=None):
+    """Load iris cubes from files.
+
+    Parameters
+    ----------
+    file: str
+        File to be loaded.
+    callback: callable or None, optional (default: None)
+        Callback function passed to :func:`iris.load_raw`.
+    ignore_warnings: list of dict or None, optional (default: None)
+        Keyword arguments passed to :func:`warnings.filterwarnings` used to
+        ignore warnings issued by :func:`iris.load_raw`. Each list element
+        corresponds to one call to :func:`warnings.filterwarnings`.
+
+    Returns
+    -------
+    iris.cube.CubeList
+        Loaded cubes.
+
+    Raises
+    ------
+    ValueError
+        Cubes are empty.
+
+    """
     logger.debug("Loading:\n%s", file)
+    if ignore_warnings is None:
+        ignore_warnings = []
+
+    # Avoid duplication of ignored warnings when load() is called more often
+    # than once
+    ignore_warnings = list(ignore_warnings)
+
+    # Default warnings ignored for every dataset
+    ignore_warnings.append({
+        'message': "Missing CF-netCDF measure variable .*",
+        'category': UserWarning,
+        'module': 'iris',
+    })
+    ignore_warnings.append({
+        'message': "Ignoring netCDF variable '.*' invalid units '.*'",
+        'category': UserWarning,
+        'module': 'iris',
+    })
+
+    # Filter warnings
     with catch_warnings():
-        filterwarnings(
-            'ignore',
-            message="Missing CF-netCDF measure variable .*",
-            category=UserWarning,
-            module='iris',
-        )
-        filterwarnings(
-            'ignore',
-            message="Ignoring netCDF variable '.*' invalid units '.*'",
-            category=UserWarning,
-            module='iris',
-        )
-        raw_cubes = iris.load_raw(file, callback=callback)
+        for warning_kwargs in ignore_warnings:
+            warning_kwargs.setdefault('action', 'ignore')
+            filterwarnings(**warning_kwargs)
+        # Suppress UDUNITS-2 error messages that cannot be ignored with
+        # warnings.filterwarnings
+        # (see https://github.com/SciTools/cf-units/issues/240)
+        with suppress_errors():
+            raw_cubes = iris.load_raw(file, callback=callback)
     logger.debug("Done with loading %s", file)
     if not raw_cubes:
-        raise Exception('Can not load cubes from {0}'.format(file))
+        raise ValueError(f'Can not load cubes from {file}')
     for cube in raw_cubes:
         cube.attributes['source_file'] = file
     return raw_cubes
