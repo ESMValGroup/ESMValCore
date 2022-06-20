@@ -1988,11 +1988,33 @@ units.
 In these cases, having a unit conversion at the end of the processing
 will guarantee homogeneous input for the diagnostics.
 
+Conversion is only supported between compatible units!
+In other words, converting temperature units from ``degC`` to ``Kelvin`` works
+fine, while changing units from ``kg`` to ``m`` will not work.
+
+However, there are some well-defined exceptions from this rule in order to
+transform one quantity to another (physically related) quantity.
+These quantities are identified via their ``standard_name`` and their ``units``
+(units convertible to the ones defined are also supported).
+For example, this enables conversions between precipitation fluxes measured in
+``kg m-2 s-1`` and precipitation rates measured in ``mm day-1`` (and vice
+versa).
+Currently, the following special conversions are supported:
+
+* ``precipitation_flux`` (``kg m-2 s-1``) --
+  ``lwe_precipitation_rate`` (``mm day-1``)
+
+.. hint::
+   Names in the list correspond to ``standard_names`` of the input data.
+   Conversions are allowed from each quantity to any other quantity given in a
+   bullet point.
+   The corresponding target quantity is inferred from the desired target units.
+   In addition, any other units convertible to the ones given are also
+   supported (e.g., instead of ``mm day-1``, ``m s-1`` is also supported).
+
 .. note::
-   Conversion is only supported between compatible units! In other
-   words, converting temperature units from ``degC`` to ``Kelvin`` works
-   fine, changing precipitation units from a rate based unit to an
-   amount based unit is not supported at the moment.
+   For the transformation between the different precipitation variables, a
+   water density of ``1000 kg m-3`` is assumed.
 
 See also :func:`esmvalcore.preprocessor.convert_units`.
 

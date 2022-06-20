@@ -264,7 +264,7 @@ def test_esgf_search_fails(mocker):
     """Test that FileNotFoundError is raised if all index nodes are offline."""
     search_results = [
         requests.exceptions.ReadTimeout("Timeout error message 1"),
-        requests.exceptions.ReadTimeout("Timeout error message 2"),
+        requests.exceptions.ConnectTimeout("Timeout error message 2"),
     ]
     SearchConnection, context = get_mock_connection(  # noqa: N806
         mocker, search_results)
