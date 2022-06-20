@@ -110,7 +110,7 @@ def _search_index_nodes(facets):
             )
             FIRST_ONLINE_INDEX_NODE = url
             return results
-        except requests.exceptions.ReadTimeout as error:
+        except requests.exceptions.Timeout as error:
             errors.append(error)
 
     raise FileNotFoundError("Failed to search ESGF, unable to connect:\n" +
