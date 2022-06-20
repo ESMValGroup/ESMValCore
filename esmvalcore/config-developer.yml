@@ -2,8 +2,8 @@
 # Developer's configuration file for the ESMValTool
 ###############################################################################
 # This file retains the project- and machine-dependent directory and file name
-# definitions of the input and output data
-# Each dictionary is structured as follows
+# definitions of the input and output data.
+# Each dictionary is structured as follows:
 #
 # PROJECT:
 #   input_dir:
@@ -14,7 +14,16 @@
 #   input_file:
 #   output_file:
 #
-# Only the default drs is mandatory, the others are optional
+# Only the default drs is mandatory, the others are optional.
+#
+# In addition, an entry for the custom tables can be given. For this, only the
+# option 'cmor_path' is considered, which specifies the directory from which
+# custom CMOR tables are loaded. 'cmor_path' can be a relative path (relative
+# to ESMValCore/esmvalcore/cmor/tables) or an absolute path. By default, uses
+# ESMValCore/esmvalcore/cmor/tables/custom.
+#
+# custom:
+#   cmor_path: ~/my/own/custom_tables
 ###############################################################################
 ---
 
