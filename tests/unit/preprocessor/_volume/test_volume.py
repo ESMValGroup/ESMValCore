@@ -8,6 +8,7 @@ from cf_units import Unit
 
 import tests
 from esmvalcore.preprocessor._volume import (
+    axis_statistics,
     calculate_volume,
     depth_integration,
     extract_trajectory,
@@ -79,6 +80,112 @@ class Test(tests.Test):
         iris.util.guess_coord_axis(self.grid_3d.coord('zcoord'))
         iris.util.guess_coord_axis(self.grid_4d.coord('zcoord'))
         iris.util.guess_coord_axis(self.grid_4d_2.coord('zcoord'))
+
+    def test_axis_statistics_mean(self):
+        """Test axis statistics with operator mean."""
+        data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
+        self.grid_4d.data = data
+        result = axis_statistics(self.grid_4d, 'z', 'mean')
+        bounds = self.grid_4d.coord(axis='z').bounds
+        weights = (bounds[:, 1] - bounds[:, 0])
+        expected = np.average(data, axis=1, weights=weights)
+        self.assert_array_equal(result.data, expected)
+
+    def test_axis_statistics_median(self):
+        """Test axis statistics in with operator median."""
+        data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
+        self.grid_4d.data = data
+        result = axis_statistics(self.grid_4d, 'z', 'median')
+        expected = np.median(data, axis=1)
+        self.assert_array_equal(result.data, expected)
+
+    def test_axis_statistics_min(self):
+        """Test axis statistics with operator min."""
+        data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
+        self.grid_4d.data = data
+        result = axis_statistics(self.grid_4d, 'z', 'min')
+        expected = np.min(data, axis=1)
+        self.assert_array_equal(result.data, expected)
+
+    def test_axis_statistics_max(self):
+        """Test axis statistics with operator max."""
+        data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
+        self.grid_4d.data = data
+        result = axis_statistics(self.grid_4d, 'z', 'max')
+        expected = np.max(data, axis=1)
+        self.assert_array_equal(result.data, expected)
+
+    def test_axis_statistics_rms(self):
+        """Test axis statistics with operator rms."""
+        result = axis_statistics(self.grid_4d, 'z', 'rms')
+        expected = np.ma.ones((2, 2, 2))
+        self.assert_array_equal(result.data, expected)
+
+    def test_axis_statistics_std(self):
+        """Test axis statistics with operator std_dev."""
+        result = axis_statistics(self.grid_4d, 'z', 'std_dev')
+        expected = np.ma.zeros((2, 2, 2))
+        self.assert_array_equal(result.data, expected)
+
+    def test_axis_statistics_variance(self):
+        """Test axis statistics with operator variance."""
+        result = axis_statistics(self.grid_4d, 'z', 'variance')
+        expected = np.ma.zeros((2, 2, 2))
+        self.assert_array_equal(result.data, expected)
+
+    def test_axis_statistics_sum(self):
+        """Test axis statistics in multiple operators."""
+        result = axis_statistics(self.grid_4d, 'z', 'sum')
+        expected = np.ma.ones((2, 2, 2)) * 250
+        self.assert_array_equal(result.data, expected)
+
+    def test_wrong_axis_statistics(self):
+        """Test raises error when axis is not found in cube."""
+        with self.assertRaises(ValueError) as err:
+            axis_statistics(self.grid_3d, 't', 'mean')
+        self.assertEqual(
+            f'Axis t not found in cube {self.grid_3d.summary(shorten=True)}',
+            str(err.exception))
+
+    def test_multidimensional_axis_statistics(self):
+        i_coord = iris.coords.DimCoord(
+            [0, 1],
+            long_name='cell index along first dimension',
+            units='1',)
+
+        j_coord = iris.coords.DimCoord(
+            [0, 1],
+            long_name='cell index along second dimension',
+            units='1',)
+
+        lat_coord = iris.coords.AuxCoord(
+            [[-40.0, -20.0], [-20.0, 0.0]],
+            var_name='lat',
+            standard_name='latitude',
+            units='degrees_north',)
+
+        lon_coord = iris.coords.AuxCoord(
+            [[100.0, 140.0], [80.0, 100.0]],
+            var_name='lon',
+            standard_name='longitude',
+            units='degrees_east',
+            )
+
+        cube = iris.cube.Cube(
+            np.ones((2, 2)),
+            var_name='tos',
+            long_name='sea_surface_temperature',
+            units='K',
+            dim_coords_and_dims=[(j_coord, 0), (i_coord, 1)],
+            aux_coords_and_dims=[(lat_coord, (0, 1)), (lon_coord, (0, 1))],
+        )
+
+        with self.assertRaises(NotImplementedError) as err:
+            axis_statistics(cube, 'x', 'mean')
+        self.assertEqual(
+            ('axis_statistics not implemented for '
+             'multidimensional coordinates.'),
+            str(err.exception))
 
     def test_extract_volume(self):
         """Test to extract the top two layers of a 3 layer depth column."""

@@ -1777,6 +1777,7 @@ Volume manipulation
 ===================
 The ``_volume.py`` module contains the following preprocessor functions:
 
+* ``axis_statistics``: Perform operations along a given axis.
 * ``extract_volume``: Extract a specific depth range from a cube.
 * ``volume_statistics``: Calculate the volume-weighted average.
 * ``depth_integration``: Integrate over the depth dimension.
@@ -1817,6 +1818,27 @@ input to the function. More details on this are given in :ref:`Fx variables as
 cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
+
+
+``axis_statistics``
+---------------------
+
+This function operates over a given axis, and removes it from the
+output cube.
+
+Takes arguments:
+  * axis: direction over which the statistics will be performed.
+    Possible values for the axis are 'x', 'y', 'z', 't'.
+  * operator: defines the operation to apply over the axis.
+    Available operator are 'mean', 'median', 'std_dev', 'sum', 'variance',
+    'min', 'max', 'rms'.
+
+.. note::
+   The coordinate associated to the axis over which the operation will
+   be performed must be one-dimensional, as multidimensional coordinates
+   are not supported in this preprocessor.
+
+See also :func:`esmvalcore.preprocessor.axis_statistics`.
 
 
 ``depth_integration``

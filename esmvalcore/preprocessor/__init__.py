@@ -72,6 +72,7 @@ from ._time import (
 from ._trend import linear_trend, linear_trend_stderr
 from ._units import accumulate_coordinate, convert_units
 from ._volume import (
+    axis_statistics,
     depth_integration,
     extract_trajectory,
     extract_transect,
@@ -142,6 +143,7 @@ __all__ = [
     # 'cross_section': cross_section,
     'detrend',
     'extract_named_regions',
+    'axis_statistics',
     'depth_integration',
     'area_statistics',
     'volume_statistics',

@@ -9,6 +9,8 @@ import dask.array as da
 import iris
 import numpy as np
 
+from ._shared import get_iris_analysis_operation, operator_accept_weights
+
 logger = logging.getLogger(__name__)
 
 
@@ -141,6 +143,59 @@ def volume_statistics(cube, operator):
     return result
 
 
+def axis_statistics(cube, axis, operator):
+    """Perform statistics along a given axis.
+
+    Operates over an axis direction. If weights are required,
+    they are computed using the coordinate bounds.
+
+    Arguments
+    ---------
+    cube: iris.cube.Cube
+        Input cube.
+    axis: str
+        Direction over where to apply the operator. Possible values
+        are 'x', 'y', 'z', 't'.
+    operator: str
+        Statistics to perform. Available operators are:
+        'mean', 'median', 'std_dev', 'sum', 'variance',
+        'min', 'max', 'rms'.
+
+    Returns
+    -------
+    iris.cube.Cube
+        collapsed cube.
+    """
+    try:
+        coord = cube.coord(axis=axis)
+    except iris.exceptions.CoordinateNotFoundError as err:
+        raise ValueError(
+            'Axis {} not found in cube {}'.format(
+                axis,
+                cube.summary(shorten=True))) from err
+    coord_dims = cube.coord_dims(coord)
+    if len(coord_dims) > 1:
+        raise NotImplementedError(
+            'axis_statistics not implemented for '
+            'multidimensional coordinates.')
+    operation = get_iris_analysis_operation(operator)
+    if operator_accept_weights(operator):
+        coord_dim = coord_dims[0]
+        expand = list(range(cube.ndim))
+        expand.remove(coord_dim)
+        bounds = coord.core_bounds()
+        weights = np.abs(bounds[..., 1] - bounds[..., 0])
+        weights = np.expand_dims(weights, expand)
+        weights = da.broadcast_to(weights, cube.shape)
+        result = cube.collapsed(coord,
+                                operation,
+                                weights=weights)
+    else:
+        result = cube.collapsed(coord, operation)
+
+    return result
+
+
 def depth_integration(cube):
     """Determine the total sum over the vertical component.
 
@@ -158,24 +213,7 @@ def depth_integration(cube):
     iris.cube.Cube
         collapsed cube.
     """
-    # ####
-    depth = cube.coord(axis='z')
-    thickness = depth.bounds[..., 1] - depth.bounds[..., 0]
-
-    if depth.ndim == 1:
-        slices = [None for i in cube.shape]
-        coord_dim = cube.coord_dims(cube.coord(axis='z'))[0]
-        slices[coord_dim] = slice(None)
-        thickness = np.abs(thickness[tuple(slices)])
-
-    ones = np.ones_like(cube.data)
-
-    weights = thickness * ones
-
-    result = cube.collapsed(cube.coord(axis='z'),
-                            iris.analysis.SUM,
-                            weights=weights)
-
+    result = axis_statistics(cube, axis='z', operator='sum')
     result.rename('Depth_integrated_' + str(cube.name()))
     # result.units = Unit('m') * result.units # This doesn't work:
     # TODO: Change units on cube to reflect 2D concentration (not 3D)
