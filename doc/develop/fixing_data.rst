@@ -342,6 +342,17 @@ This section describes how to add support for additional native datasets.
 You can choose to host this new data source either under a dedicated project or
 under project ``native6``.
 
+.. _add_new_fix_native_datasets_config:
+
+Configuration
+-------------
+
+An example of a configuration in ``config-developer.yml`` for projects used for
+native datasets is given :ref:`here <configure_native_models>`.
+Make sure to use the option ``cmor_strict: false`` for these projects if you
+want to make use of :ref:`custom_cmor_tables`.
+This allows reading arbitrary variables from native datasets.
+
 .. _add_new_fix_native_datasets_locate_data:
 
 Locate data
