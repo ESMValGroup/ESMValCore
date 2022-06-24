@@ -713,13 +713,21 @@ error.
 
 To make a new release of the package, follow these steps:
 
-1. Check the tests on GitHub Actions and CircleCI
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1. Check that all tests and builds work
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Check the ``nightly``
-`build on CircleCI <https://circleci.com/gh/ESMValGroup/ESMValCore/tree/main>`__
-and the
-`GitHub Actions run <https://github.com/ESMValGroup/ESMValCore/actions>`__.
+- Check that the ``nightly``
+  `test run on CircleCI <https://circleci.com/gh/ESMValGroup/ESMValCore/tree/main>`__
+  was successful.
+- Check that the
+  `GitHub Actions test runs <https://github.com/ESMValGroup/ESMValCore/actions>`__
+  were successful.
+- Check that the documentation builds successfully on
+  `readthedocs <https://readthedocs.org/projects/esmvalcore/builds/>`__.
+- Check that the
+  `Docker images <https://hub.docker.com/repository/docker/esmvalgroup/esmvalcore/builds>`__
+  are building successfully.
+
 All tests should pass before making a release (branch).
 
 2. Create a release branch
