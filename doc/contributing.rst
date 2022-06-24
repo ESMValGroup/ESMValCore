@@ -833,6 +833,64 @@ Make sure to use the `rc branch
 branch for your pull request and follow all instructions given by the linter
 bot.
 
+9. Check the Docker images
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are two main Docker container images available for ESMValCore on
+`Dockerhub <https://hub.docker.com/r/esmvalgroup/esmvalcore/tags>`_:
+
+- ``esmvalgroup/esmvalcore:stable``, built from `docker/Dockerfile <https://github.com/ESMValGroup/ESMValCore/blob/main/docker/Dockerfile>`_,
+  this is a tag that is always the same as the latest released version.
+  This image is only built by Dockerhub when a new release is created.
+- ``esmvalgroup/esmvalcore:development``, built from `docker/Dockerfile.dev <https://github.com/ESMValGroup/ESMValCore/blob/main/docker/Dockerfile.dev>`_,
+  this is a tag that always contains the latest conda environment for
+  ESMValCore, including any test dependencies.
+  It is used by CircleCI_ to run the unit tests.
+  This speeds up running the tests, as it avoids the need to build the conda
+  environment for every test run.
+  This image is built by Dockerhub every time there is a new commit to the
+  ``main`` branch on Github.
+
+In addition to the two images mentioned above, there is an image available
+for every release (e.g. ``esmvalgroup/esmvalcore:v2.5.0``).
+When working on the Docker images, always try to follow the
+`best practices <https://docs.docker.com/develop/develop-images/dockerfile_best-practices/>`__.
+
+After making the release, check that the Docker image for that release has been
+built correctly by
+
+1. checking that the version tag is available on `Dockerhub`_ and the ``stable``
+   tag has been updated,
+2. running some recipes with the ``stable`` tag Docker container, for example one
+   recipe for Python, NCL, R, and Julia,
+3. running a recipe with a Singularity container built from the ``stable`` tag.
+
+If there is a problem with the automatically built container image, you can fix
+the problem and build a new image locally.
+For example, to
+`build <https://docs.docker.com/engine/reference/commandline/build/>`__ and
+`upload <https://docs.docker.com/engine/reference/commandline/push/>`__
+the container image for v2.5.0 of the tool run:
+
+.. code-block:: bash
+
+   git checkout v2.5.0
+   git clean -x
+   docker build -t esmvalgroup/esmvalcore:v2.5.0 . -f docker/Dockerfile
+   docker push esmvalgroup/esmvalcore:v2.5.0
+
+(when making updates, you may want to add .post0, .post1, .. to the version
+number to avoid overwriting an older tag) and if it is the latest release
+that you are updating, also run
+
+.. code-block:: bash
+
+   docker tag esmvalgroup/esmvalcore:v2.5.0 esmvalgroup/esmvalcore:stable
+   docker push esmvalgroup/esmvalcore:stable
+
+Note that the ``docker push`` command will overwrite the existing tags on
+Dockerhub, but the previous container image will remain available as an
+untagged image.
 
 .. _`@ESMValGroup/esmvaltool-coreteam`: https://github.com/orgs/ESMValGroup/teams/esmvaltool-coreteam
 .. _`@ESMValGroup/esmvaltool-developmentteam`: https://github.com/orgs/ESMValGroup/teams/esmvaltool-developmentteam
