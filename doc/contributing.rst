@@ -708,8 +708,18 @@ Making a release
 
 The release manager makes the release, assisted by the release manager of the
 previous release, or if that person is not available, another previous release
-manager. Perform the steps listed below with two persons, to reduce the risk of
-error.
+manager.
+Perform the steps listed below with two persons, to reduce the risk of error.
+
+.. note::
+
+   The previous release manager ensures the current release manager has the
+   required administrative permissions to make the release.
+   Consider the following services:
+   `conda-forge <https://github.com/conda-forge/esmvalcore-feedstock>`__,
+   `DockerHub <https://hub.docker.com/orgs/esmvalgroup>`__,
+   `PyPI <https://pypi.org/project/ESMValCore/>`__, and
+   `readthedocs <https://readthedocs.org/dashboard/esmvalcore/users/>`__.
 
 To make a new release of the package, follow these steps:
 
