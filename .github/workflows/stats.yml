@@ -1,8 +1,13 @@
+# This action displays statstics gathered about PR reviews (so far)
+# uses the action from https://github.com/marketplace/actions/pull-request-stats
 name: Pull Request Stats
 
 on:
   pull_request:
     types: [opened]
+  push:
+    branches:
+      - test_pr_stats
 
 jobs:
   stats:
