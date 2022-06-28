@@ -3,11 +3,8 @@
 name: Pull Request Stats
 
 on:
-  # pull_request:
-  #   types: [opened]
-  push:
-    branches:
-      - test_pr_stats
+  pull_request:
+    types: [opened, ready_for_review, reopened, review_requested]
 
 jobs:
   stats:
