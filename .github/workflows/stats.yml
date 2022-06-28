@@ -3,8 +3,8 @@
 name: Pull Request Stats
 
 on:
-  pull_request:
-    types: [opened]
+  # pull_request:
+  #   types: [opened]
   push:
     branches:
       - test_pr_stats
