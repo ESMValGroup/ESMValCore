@@ -3,6 +3,7 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris import NameConstraint
 
 from esmvalcore.cmor._fixes.common import (
     ClFixHybridHeightCoord,
@@ -11,7 +12,6 @@ from esmvalcore.cmor._fixes.common import (
     SiconcFixScalarCoord,
 )
 from esmvalcore.cmor.table import get_var_info
-from esmvalcore.iris_helpers import var_name_constraint
 
 AIR_PRESSURE_POINTS = np.array([[[[1.0, 1.0, 1.0, 1.0],
                                   [1.0, 1.0, 1.0, 1.0],
@@ -57,7 +57,7 @@ def hybrid_pressure_coord_fix_metadata(nc_path, short_name, fix):
     assert 'b_bnds' in var_names
 
     # Raw cube
-    cube = cubes.extract_cube(var_name_constraint(short_name))
+    cube = cubes.extract_cube(NameConstraint(var_name=short_name))
     air_pressure_coord = cube.coord('air_pressure')
     assert air_pressure_coord.points is not None
     assert air_pressure_coord.bounds is None
@@ -70,7 +70,7 @@ def hybrid_pressure_coord_fix_metadata(nc_path, short_name, fix):
     # Apply fix
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
-    fixed_cube = fixed_cubes.extract_cube(var_name_constraint(short_name))
+    fixed_cube = fixed_cubes.extract_cube(NameConstraint(var_name=short_name))
     fixed_air_pressure_coord = fixed_cube.coord('air_pressure')
     assert fixed_air_pressure_coord.points is not None
     assert fixed_air_pressure_coord.bounds is not None
@@ -134,7 +134,7 @@ def hybrid_height_coord_fix_metadata(nc_path, short_name, fix):
     assert 'b_bnds' in var_names
 
     # Raw cube
-    cube = cubes.extract_cube(var_name_constraint(short_name))
+    cube = cubes.extract_cube(NameConstraint(var_name=short_name))
     height_coord = cube.coord('altitude')
     assert height_coord.points is not None
     assert height_coord.bounds is not None
@@ -146,7 +146,7 @@ def hybrid_height_coord_fix_metadata(nc_path, short_name, fix):
     # Apply fix
     fixed_cubes = fix.fix_metadata(cubes)
     assert len(fixed_cubes) == 1
-    fixed_cube = fixed_cubes.extract_cube(var_name_constraint(short_name))
+    fixed_cube = fixed_cubes.extract_cube(NameConstraint(var_name=short_name))
     fixed_height_coord = fixed_cube.coord('altitude')
     assert fixed_height_coord.points is not None
     assert fixed_height_coord.bounds is not None
@@ -156,9 +156,9 @@ def hybrid_height_coord_fix_metadata(nc_path, short_name, fix):
     air_pressure_coord = cube.coord('air_pressure')
     np.testing.assert_allclose(air_pressure_coord.points, PRESSURE_POINTS)
     np.testing.assert_allclose(air_pressure_coord.bounds, PRESSURE_BOUNDS)
-    assert air_pressure_coord.var_name == 'plev'
+    assert air_pressure_coord.var_name is None
     assert air_pressure_coord.standard_name == 'air_pressure'
-    assert air_pressure_coord.long_name == 'pressure'
+    assert air_pressure_coord.long_name is None
     assert air_pressure_coord.units == 'Pa'
 
 
@@ -329,12 +329,14 @@ def test_ocean_fix_grid_wrong_ij_names(tos_cubes_wrong_ij_names):
     assert len(fixed_cube.coords('longitude')) == 1
     assert fixed_cube.coord('latitude').bounds is not None
     assert fixed_cube.coord('longitude').bounds is not None
-    latitude_bounds = np.array([[[-40, -33.75, -23.75, -30.0],
-                                 [-33.75, -6.25, 3.75, -23.75],
-                                 [-6.25, -1.02418074021670e-14, 10.0, 3.75]],
-                                [[-30.0, -23.75, -13.75, -20.0],
-                                 [-23.75, 3.75, 13.75, -13.75],
-                                 [3.75, 10.0, 20.0, 13.75]]])
+    latitude_bounds = np.array(
+        [[[-43.48076211, -34.01923789, -22.00961894, -31.47114317],
+          [-34.01923789, -10.0, 2.00961894, -22.00961894],
+          [-10.0, -0.53847577, 11.47114317, 2.00961894]],
+         [[-31.47114317, -22.00961894, -10.0, -19.46152423],
+          [-22.00961894, 2.00961894, 14.01923789, -10.0],
+          [2.00961894, 11.47114317, 23.48076211, 14.01923789]]]
+    )
     np.testing.assert_allclose(fixed_cube.coord('latitude').bounds,
                                latitude_bounds)
     longitude_bounds = np.array([[[140.625, 99.375, 99.375, 140.625],
@@ -398,12 +400,14 @@ def test_ocean_fix_grid_no_ij_bounds(tos_cubes_no_ij_bounds):
     assert len(fixed_cube.coords('longitude')) == 1
     assert fixed_cube.coord('latitude').bounds is not None
     assert fixed_cube.coord('longitude').bounds is not None
-    latitude_bounds = np.array([[[-40, -33.75, -23.75, -30.0],
-                                 [-33.75, -6.25, 3.75, -23.75],
-                                 [-6.25, -1.02418074021670e-14, 10.0, 3.75]],
-                                [[-30.0, -23.75, -13.75, -20.0],
-                                 [-23.75, 3.75, 13.75, -13.75],
-                                 [3.75, 10.0, 20.0, 13.75]]])
+    latitude_bounds = np.array(
+        [[[-43.48076211, -34.01923789, -22.00961894, -31.47114317],
+          [-34.01923789, -10.0, 2.00961894, -22.00961894],
+          [-10.0, -0.53847577, 11.47114317, 2.00961894]],
+         [[-31.47114317, -22.00961894, -10.0, -19.46152423],
+          [-22.00961894, 2.00961894, 14.01923789, -10.0],
+          [2.00961894, 11.47114317, 23.48076211, 14.01923789]]]
+    )
     np.testing.assert_allclose(fixed_cube.coord('latitude').bounds,
                                latitude_bounds)
     longitude_bounds = np.array([[[140.625, 99.375, 99.375, 140.625],

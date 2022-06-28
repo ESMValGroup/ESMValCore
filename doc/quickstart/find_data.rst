@@ -1,8 +1,8 @@
 .. _findingdata:
 
-************
+**********
 Input data
-************
+**********
 
 Overview
 ========
@@ -24,7 +24,7 @@ CMIP data
 ---------
 CMIP data is widely available via the Earth System Grid Federation
 (`ESGF <https://esgf.llnl.gov/>`_) and is accessible to users either
-via download from the ESGF portal or through the ESGF data nodes hosted
+via automatic download by ``esmvaltool`` or through the ESGF data nodes hosted
 by large computing facilities (like CEDA-Jasmin, DKRZ, etc). This data
 adheres to, among other standards, the DRS and Controlled Vocabulary
 standard for naming files and structured paths; the `DRS
@@ -48,13 +48,6 @@ From the ESMValTool user perspective the number of data input parameters is
 optimized to allow for ease of use. We detail this procedure in the next
 section.
 
-Native model data
------------------
-Support for native model data that is not formatted according to a CMIP
-data request is quite easy using basic
-:ref:`ESMValCore fix procedure <fixing_data>` and has been implemented
-for some models :ref:`as described here <fixing_native_models>`
-
 Observational data
 ------------------
 Part of observational data is retrieved in the same manner as CMIP data, for example
@@ -68,7 +61,7 @@ and the dataset:
 
   .. code-block:: yaml
 
-    - {dataset: ERA-Interim, project: OBS, type: reanaly, version: 1, start_year: 2014, end_year: 2015, tier: 3}
+    - {dataset: ERA-Interim, project: OBS6, type: reanaly, version: 1, start_year: 2014, end_year: 2015, tier: 3}
 
 in ``recipe.yml`` in ``datasets`` or ``additional_datasets``, the rules set in
 CMOR-DRS_ are used again and the file will be automatically found:
@@ -82,6 +75,247 @@ public availability, the ``default`` directory must be structured accordingly
 with sub-directories ``TierX`` (``Tier1``, ``Tier2`` or ``Tier3``), even when
 ``drs: default``.
 
+
+.. _read_native_datasets:
+
+Datasets in native format
+-------------------------
+
+Some datasets are supported in their native format (i.e., the data is not
+formatted according to a CMIP data request) through the ``native6`` project
+(mostly native reanalysis/observational datasets) or through a dedicated
+project, e.g., ``ICON`` (mostly native models).
+A detailed description of how to include new native datasets is given
+:ref:`here <add_new_fix_native_datasets>`.
+
+.. hint::
+
+   When using native datasets, it might be helpful to specify a custom location
+   for the :ref:`custom_cmor_tables`.
+   This allows reading arbitrary variables from native datasets.
+   Note that this requires the option ``cmor_strict: false`` in the
+   :ref:`project configuration <configure_native_models>` used for the native
+   model output.
+
+.. _read_native_obs:
+
+Supported native reanalysis/observational datasets
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following native reanalysis/observational datasets are supported under the
+``native6`` project.
+To use these datasets, put the files containing the data in the directory that
+you have configured for the ``native6`` project in your :ref:`user
+configuration file`, in a subdirectory called
+``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``.
+Replace the items in curly braces by the values used in the variable/dataset
+definition in the :ref:`recipe <recipe_overview>`.
+Below is a list of native reanalysis/observational datasets currently
+supported.
+
+.. _read_native_era5:
+
+ERA5
+^^^^
+
+- Supported variables: ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``)
+- Tier: 3
+
+.. _read_native_mswep:
+
+MSWEP
+^^^^^
+
+- Supported variables: ``pr``
+- Supported frequencies: ``mon``, ``day``, ``3hr``.
+- Tier: 3
+
+For example for monthly data, place the files in the ``/Tier3/MSWEP/latestversion/mon/pr`` subdirectory of your ``native6`` project location.
+
+.. note::
+  For monthly data (``V220``), the data must be postfixed with the date, i.e. rename ``global_monthly_050deg.nc`` to ``global_monthly_050deg_197901-201710.nc``
+
+For more info: http://www.gloh2o.org/
+
+Data for the version ``V220`` can be downloaded from: https://hydrology.princeton.edu/data/hylkeb/MSWEP_V220/.
+
+.. _read_native_models:
+
+Supported native models
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The following models are natively supported by ESMValCore.
+In contrast to the native observational datasets listed above, they use
+dedicated projects instead of the project ``native6``.
+
+.. _read_emac:
+
+EMAC
+^^^^
+
+ESMValTool is able to read native `EMAC
+<https://www.dlr.de/pa/en/desktopdefault.aspx/tabid-8859/15306_read-37415/>`_
+model output.
+
+The default naming conventions for input directories and files for EMAC are
+
+* input directories: ``[exp]/[channel]``
+* input files: ``[exp]*[channel][postproc_flag].nc``
+
+as configured in the :ref:`config-developer file <config-developer>` (using the
+default DRS ``drs: default`` in the :ref:`user configuration file`).
+
+Thus, example dataset entries could look like this:
+
+.. code-block:: yaml
+
+  datasets:
+    - {project: EMAC, dataset: EMAC, exp: historical, mip: Amon, short_name: tas, start_year: 2000, end_year: 2014}
+    - {project: EMAC, dataset: EMAC, exp: historical, mip: Omon, short_name: tos, postproc_flag: "-p-mm", start_year: 2000, end_year: 2014}
+    - {project: EMAC, dataset: EMAC, exp: historical, mip: Amon, short_name: ta, raw_name: tm1_p39_cav, start_year: 2000, end_year: 2014}
+
+Please note the duplication of the name ``EMAC`` in ``project`` and
+``dataset``, which is necessary to comply with ESMValTool's data finding and
+CMORizing functionalities.
+
+Similar to any other fix, the EMAC fix allows the use of :ref:`extra
+facets<extra_facets>`.
+By default, the file :download:`emac-mappings.yml
+</../esmvalcore/_config/extra_facets/emac-mappings.yml>` is used for that
+purpose.
+For some variables, extra facets are necessary; otherwise ESMValTool cannot
+read them properly.
+Supported keys for extra facets are:
+
+==================== ====================================== =================================
+Key                  Description                            Default value if not specified
+==================== ====================================== =================================
+``channel``          Channel in which the desired variable  No default (needs to be specified
+                     is stored                              in extra facets or recipe if
+                                                            default DRS is used)
+``postproc_flag``    Postprocessing flag of the data        ``''`` (empty string)
+``raw_name``         Variable name of the variable in the   CMOR variable name of the
+                     raw input file                         corresponding variable
+==================== ====================================== =================================
+
+.. note::
+
+   ``raw_name`` can be given as ``str`` or ``list``.
+   The latter is used to support multiple different variables names in the
+   input file.
+   In this case, the prioritization is given by the order of the list; if
+   possible, use the first entry, if this is not present, use the second, etc.
+   This is particularly useful for files in which regular averages (``*_ave``)
+   or conditional averages (``*_cav``) exist.
+
+   For 3D variables defined on pressure levels, only the pressure levels
+   defined by the CMOR table (e.g., for `Amon`'s `ta`: ``tm1_p19_cav`` and
+   ``tm1_p19_ave``) are given in the default extra facets file.
+   If other pressure levels are desired, e.g., ``tm1_p39_cav``, this has to be
+   explicitly specified in the recipe using ``raw_name: tm1_p39_cav`` or
+   ``raw_name: [tm1_p19_cav, tm1_p39_cav]``.
+
+.. _read_icon:
+
+ICON
+^^^^
+
+ESMValTool is able to read native `ICON
+<https://code.mpimet.mpg.de/projects/iconpublic>`_ model output.
+
+The default naming conventions for input directories and files for ICON are
+
+* input directories: ``[version]_[component]_[exp]_[grid]_[ensemble]``
+* input files: ``[version]_[component]_[exp]_[grid]_[ensemble]_[var_type]*.nc``
+
+as configured in the :ref:`config-developer file <config-developer>` (using the
+default DRS ``drs: default`` in the :ref:`user configuration file`).
+
+Thus, example dataset entries could look like this:
+
+.. code-block:: yaml
+
+  datasets:
+    - {project: ICON, dataset: ICON, component: atm, version: 2.6.1,
+       exp: amip, grid: R2B5, ensemble: r1v1i1p1l1f1, mip: Amon,
+       short_name: tas, var_type: atm_2d_ml, start_year: 2000, end_year: 2014}
+    - {project: ICON, dataset: ICON, component: atm, version: 2.6.1,
+       exp: amip, grid: R2B5, ensemble: r1v1i1p1l1f1, mip: Amon,
+       short_name: ta, var_type: atm_3d_ml, start_year: 2000, end_year: 2014}
+
+Please note the duplication of the name ``ICON`` in ``project`` and
+``dataset``, which is necessary to comply with ESMValTool's data finding and
+CMORizing functionalities.
+
+Similar to any other fix, the ICON fix allows the use of :ref:`extra
+facets<extra_facets>`.
+By default, the file :download:`icon-mappings.yml
+</../esmvalcore/_config/extra_facets/icon-mappings.yml>` is used for that
+purpose.
+For some variables, extra facets are necessary; otherwise ESMValTool cannot
+read them properly.
+Supported keys for extra facets are:
+
+============= ============================= =================================
+Key           Description                   Default value if not specified
+============= ============================= =================================
+``latitude``  Standard name of the latitude ``latitude``
+              coordinate in the raw input
+              file
+``longitude`` Standard name of the          ``longitude``
+              longitude coordinate in the
+              raw input file
+``raw_name``  Variable name of the          CMOR variable name of the
+              variable in the raw input     corresponding variable
+              file
+============= ============================= =================================
+
+.. hint::
+
+   In order to read cell area files (``areacella`` and ``areacello``), one
+   additional manual step is necessary:
+   Copy the ICON grid file (you can find a download link in the global
+   attribute ``grid_file_uri`` of your ICON data) to your ICON input directory
+   and change its name in such a way that only the grid file is found when the
+   cell area variables are required.
+   Make sure that this file is not found when other variables are loaded.
+
+   For example, you could use a new ``var_type``, e.g., ``horizontalgrid`` for
+   this file.
+   Thus, an ICON grid file located in
+   ``2.6.1_atm_amip_R2B5_r1v1i1p1l1f1/2.6.1_atm_amip_R2B5_r1v1i1p1l1f1_horizontalgrid.nc``
+   can be found using ``var_type: horizontalgrid`` in the recipe (assuming the
+   default naming conventions listed above).
+   Make sure that no other variable uses this ``var_type``.
+
+.. _read_ipsl-cm6:
+
+IPSL-CM6
+^^^^^^^^
+
+Both output formats (i.e. the ``Output`` and the ``Analyse / Time series``
+formats) are supported, and should be configured in recipes as e.g.:
+
+.. code-block:: yaml
+
+  datasets:
+    - {simulation: CM61-LR-hist-03.1950, exp: piControl, out: Analyse, freq: TS_MO,
+       account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
+       root: /thredds/tgcc/store}
+    - {simulation: CM61-LR-hist-03.1950, exp: historical, out: Output, freq: MO,
+       account: p86caub,  status: PROD, dataset: IPSL-CM6, project: IPSLCM,
+       root: /thredds/tgcc/store}
+
+.. _ipslcm_extra_facets_example:
+
+The ``Output`` format is an example of a case where variables are grouped in
+multi-variable files, which name cannot be computed directly from datasets
+attributes alone but requires to use an extra_facets file, which principles are
+explained in :ref:`extra_facets`, and which content is :download:`available here
+</../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`. These multi-variable
+files must also undergo some data selection.
+
+
 .. _data-retrieval:
 
 Data retrieval
@@ -89,16 +323,26 @@ Data retrieval
 Data retrieval in ESMValTool has two main aspects from the user's point of
 view:
 
-* data can be found by the tool, subject to availability on disk;
+* data can be found by the tool, subject to availability on disk or `ESGF <https://esgf.llnl.gov/>`_;
 * it is the user's responsibility to set the correct data retrieval parameters;
 
 The first point is self-explanatory: if the user runs the tool on a machine
 that has access to a data repository or multiple data repositories, then
 ESMValTool will look for and find the available data requested by the user.
+If the files are not found locally, the tool can search the ESGF_ and download
+the missing files, provided that they are available.
 
 The second point underlines the fact that the user has full control over what
 type and the amount of data is needed for the analyses. Setting the data
 retrieval parameters is explained below.
+
+Enabling automatic downloads from the ESGF
+------------------------------------------
+To enable automatic downloads from ESGF, set ``offline: false`` in
+the :ref:`user configuration file` or provide the command line argument
+``--offline=False`` when running the recipe.
+The files will be stored in the ``download_dir`` set in
+the :ref:`user configuration file`.
 
 Setting the correct root paths
 ------------------------------
@@ -203,13 +447,11 @@ Explaining ``config-user/rootpath:``
 
     OBS: /gws/nopw/j04/esmeval/obsdata-v2
 
-* ``default``: this is the `root` path(s) to where files are stored without any
-  DRS-like directory structure; in a nutshell, this is a single directory that
-  should contain all the files needed by the run, without any sub-directory
-  structure.
+* ``default``: this is the `root` path(s) where the tool will look for data
+  from projects that do not have their own rootpath set.
 
 * ``RAWOBS``: this is the `root` path(s) to where the raw observational data
-  files are stored; this is used by ``cmorize_obs``.
+  files are stored; this is used by ``esmvaltool data format``.
 
 Dataset definitions in ``recipe``
 ---------------------------------
@@ -322,8 +564,9 @@ Use of extra facets in the datafinder
 Extra facets are a mechanism to provide additional information for certain kinds
 of data. The general approach is described in :ref:`extra_facets`. Here, we
 describe how they can be used to locate data files within the datafinder
-framework. This is useful to build paths for directory structures and file names
-that follow a different system than the established DRS for, e.g. CMIP.
+framework.
+This is useful to build paths for directory structures and file names
+that require more information than what is provided in the recipe.
 A common application is the location of variables in multi-variable files as
 often found in climate models' native output formats.
 

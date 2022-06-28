@@ -5,7 +5,7 @@ authors:
 
 """
 
-from esmvalcore.iris_helpers import var_name_constraint
+from iris import NameConstraint
 
 from ._baseclass import DerivedVariableBase
 
@@ -32,9 +32,9 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Compute Latent Heat Release from Precipitation."""
-        hfls_cube = cubes.extract_cube(var_name_constraint('hfls'))
-        pr_cube = cubes.extract_cube(var_name_constraint('pr'))
-        evspsbl_cube = cubes.extract_cube(var_name_constraint('evspsbl'))
+        hfls_cube = cubes.extract_cube(NameConstraint(var_name='hfls'))
+        pr_cube = cubes.extract_cube(NameConstraint(var_name='pr'))
+        evspsbl_cube = cubes.extract_cube(NameConstraint(var_name='evspsbl'))
 
         lvp_cube = hfls_cube * (pr_cube / evspsbl_cube)
 

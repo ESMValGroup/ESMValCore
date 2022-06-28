@@ -55,11 +55,22 @@ def read_cmor_tables(cfg_developer=None):
     with open(var_alt_names_file, 'r') as yfile:
         alt_names = yaml.safe_load(yfile)
 
-    custom = CustomInfo()
     CMOR_TABLES.clear()
+
+    # Try to infer location for custom tables from config-developer.yml file,
+    # if not possible, use default location
+    custom_path = None
+    if 'custom' in cfg_developer:
+        custom_path = cfg_developer['custom'].get('cmor_path')
+    if custom_path is not None:
+        custom_path = os.path.expandvars(os.path.expanduser(custom_path))
+    custom = CustomInfo(custom_path)
     CMOR_TABLES['custom'] = custom
+
     install_dir = os.path.dirname(os.path.realpath(__file__))
     for table in cfg_developer:
+        if table == 'custom':
+            continue
         CMOR_TABLES[table] = _read_table(cfg_developer, table, install_dir,
                                          custom, alt_names)
 
@@ -815,18 +826,40 @@ class CustomInfo(CMIP5Info):
         Full path to the table or name for the table if it is present in
         ESMValTool repository
     """
+
     def __init__(self, cmor_tables_path=None):
         cwd = os.path.dirname(os.path.realpath(__file__))
-        self._cmor_folder = os.path.join(cwd, 'tables', 'custom')
+        default_cmor_folder = os.path.join(cwd, 'tables', 'custom')
+
+        # Get custom location of CMOR tables if possible
+        if cmor_tables_path is None:
+            self._cmor_folder = default_cmor_folder
+        else:
+            self._cmor_folder = self._get_cmor_path(cmor_tables_path)
+        if not os.path.isdir(self._cmor_folder):
+            raise ValueError(f"Custom CMOR tables path {self._cmor_folder} is "
+                             f"not a directory")
+
         self.tables = {}
         self.var_to_freq = {}
         table = TableInfo()
         table.name = 'custom'
         self.tables[table.name] = table
-        self._coordinates_file = os.path.join(
+
+        # Try to read coordinates from custom location, use default location if
+        # not possible
+        coordinates_file = os.path.join(
             self._cmor_folder,
             'CMOR_coordinates.dat',
         )
+        if os.path.isfile(coordinates_file):
+            self._coordinates_file = coordinates_file
+        else:
+            self._coordinates_file = os.path.join(
+                default_cmor_folder,
+                'CMOR_coordinates.dat',
+            )
+
         self.coords = {}
         self._read_table_file(self._coordinates_file, self.tables['custom'])
         for dat_file in glob.glob(os.path.join(self._cmor_folder, '*.dat')):

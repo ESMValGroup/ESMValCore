@@ -1,0 +1,583 @@
+[
+    {
+        "id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195001-195012.nc|esgf1.dkrz.de",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "e27fb1414788529a714c27a7d11169136db9ece7247756ab26dcea70d1da53e3"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "data_node": "esgf1.dkrz.de",
+        "dataset_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620|esgf1.dkrz.de",
+        "dataset_id_template_": [
+            "cordex.%(product)s.%(domain)s.%(institute)s.%(driving_model)s.%(experiment)s.%(ensemble)s.%(rcm_name)s.%(rcm_version)s.%(time_frequency)s.%(variable)s"
+        ],
+        "domain": [
+            "EUR-11"
+        ],
+        "driving_model": [
+            "MOHC-HadGEM2-ES"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "historical"
+        ],
+        "experiment_family": [
+            "All",
+            "Historical"
+        ],
+        "index_node": "esgf-data.dkrz.de",
+        "instance_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195001-195012.nc",
+        "institute": [
+            "KNMI"
+        ],
+        "latest": true,
+        "master_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195001-195012.nc",
+        "metadata_format": "THREDDS",
+        "product": [
+            "output"
+        ],
+        "project": [
+            "CORDEX"
+        ],
+        "rcm_name": [
+            "RACMO22E"
+        ],
+        "rcm_version": [
+            "v2"
+        ],
+        "replica": false,
+        "size": 5982648,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2016-06-03T17:43:03Z",
+        "title": "tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195001-195012.nc",
+        "tracking_id": [
+            "dcd262b7-f51d-470b-a0de-b8ca5256adba"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf1.dkrz.de/thredds/fileServer/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195001-195012.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgf1.dkrz.de:2811//cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195001-195012.nc|application/gridftp|GridFTP",
+            "http://esgf1.dkrz.de/thredds/dodsC/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195001-195012.nc.html|application/opendap-html|OPENDAP",
+            "globus:47de200e-a4bb-11e5-99be-22000b96db58/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195001-195012.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1552000514181300224,
+        "_timestamp": "2016-11-25T19:43:49.424Z",
+        "score": 1.0
+    },
+    {
+        "id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195101-196012.nc|esgf1.dkrz.de",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "f14160b5411dc0c7716f80709f309e14948736187087a4c50ec33e0aadcacf53"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "data_node": "esgf1.dkrz.de",
+        "dataset_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620|esgf1.dkrz.de",
+        "dataset_id_template_": [
+            "cordex.%(product)s.%(domain)s.%(institute)s.%(driving_model)s.%(experiment)s.%(ensemble)s.%(rcm_name)s.%(rcm_version)s.%(time_frequency)s.%(variable)s"
+        ],
+        "domain": [
+            "EUR-11"
+        ],
+        "driving_model": [
+            "MOHC-HadGEM2-ES"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "historical"
+        ],
+        "experiment_family": [
+            "All",
+            "Historical"
+        ],
+        "index_node": "esgf-data.dkrz.de",
+        "instance_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195101-196012.nc",
+        "institute": [
+            "KNMI"
+        ],
+        "latest": true,
+        "master_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195101-196012.nc",
+        "metadata_format": "THREDDS",
+        "product": [
+            "output"
+        ],
+        "project": [
+            "CORDEX"
+        ],
+        "rcm_name": [
+            "RACMO22E"
+        ],
+        "rcm_version": [
+            "v2"
+        ],
+        "replica": false,
+        "size": 41765410,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2016-06-03T17:43:04Z",
+        "title": "tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195101-196012.nc",
+        "tracking_id": [
+            "92d76404-5151-4994-8b60-42a3beba4a5e"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf1.dkrz.de/thredds/fileServer/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195101-196012.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgf1.dkrz.de:2811//cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195101-196012.nc|application/gridftp|GridFTP",
+            "http://esgf1.dkrz.de/thredds/dodsC/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195101-196012.nc.html|application/opendap-html|OPENDAP",
+            "globus:47de200e-a4bb-11e5-99be-22000b96db58/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195101-196012.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1552000514025062400,
+        "_timestamp": "2016-11-25T19:43:49.275Z",
+        "score": 1.0
+    },
+    {
+        "id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_196101-197012.nc|esgf1.dkrz.de",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "d013d0d3501955b2985496febc186f8f55ef28fde3a413abc7a01aecc3907d7e"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "data_node": "esgf1.dkrz.de",
+        "dataset_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620|esgf1.dkrz.de",
+        "dataset_id_template_": [
+            "cordex.%(product)s.%(domain)s.%(institute)s.%(driving_model)s.%(experiment)s.%(ensemble)s.%(rcm_name)s.%(rcm_version)s.%(time_frequency)s.%(variable)s"
+        ],
+        "domain": [
+            "EUR-11"
+        ],
+        "driving_model": [
+            "MOHC-HadGEM2-ES"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "historical"
+        ],
+        "experiment_family": [
+            "All",
+            "Historical"
+        ],
+        "index_node": "esgf-data.dkrz.de",
+        "instance_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_196101-197012.nc",
+        "institute": [
+            "KNMI"
+        ],
+        "latest": true,
+        "master_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_196101-197012.nc",
+        "metadata_format": "THREDDS",
+        "product": [
+            "output"
+        ],
+        "project": [
+            "CORDEX"
+        ],
+        "rcm_name": [
+            "RACMO22E"
+        ],
+        "rcm_version": [
+            "v2"
+        ],
+        "replica": false,
+        "size": 41758225,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2016-06-03T17:43:05Z",
+        "title": "tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_196101-197012.nc",
+        "tracking_id": [
+            "bd843d4e-3681-42b8-9967-e6ea1de24fd3"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf1.dkrz.de/thredds/fileServer/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_196101-197012.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgf1.dkrz.de:2811//cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_196101-197012.nc|application/gridftp|GridFTP",
+            "http://esgf1.dkrz.de/thredds/dodsC/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_196101-197012.nc.html|application/opendap-html|OPENDAP",
+            "globus:47de200e-a4bb-11e5-99be-22000b96db58/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_196101-197012.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1552000513865678848,
+        "_timestamp": "2016-11-25T19:43:49.123Z",
+        "score": 1.0
+    },
+    {
+        "id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_197101-198012.nc|esgf1.dkrz.de",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "855c104e28f4dc66a5904846fe412a5489254fb40c8c89c39f6a6280c7d99db1"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "data_node": "esgf1.dkrz.de",
+        "dataset_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620|esgf1.dkrz.de",
+        "dataset_id_template_": [
+            "cordex.%(product)s.%(domain)s.%(institute)s.%(driving_model)s.%(experiment)s.%(ensemble)s.%(rcm_name)s.%(rcm_version)s.%(time_frequency)s.%(variable)s"
+        ],
+        "domain": [
+            "EUR-11"
+        ],
+        "driving_model": [
+            "MOHC-HadGEM2-ES"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "historical"
+        ],
+        "experiment_family": [
+            "All",
+            "Historical"
+        ],
+        "index_node": "esgf-data.dkrz.de",
+        "instance_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_197101-198012.nc",
+        "institute": [
+            "KNMI"
+        ],
+        "latest": true,
+        "master_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_197101-198012.nc",
+        "metadata_format": "THREDDS",
+        "product": [
+            "output"
+        ],
+        "project": [
+            "CORDEX"
+        ],
+        "rcm_name": [
+            "RACMO22E"
+        ],
+        "rcm_version": [
+            "v2"
+        ],
+        "replica": false,
+        "size": 41785063,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2016-06-03T17:43:06Z",
+        "title": "tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_197101-198012.nc",
+        "tracking_id": [
+            "f7b0c65d-12a6-4648-84fd-99fe9184ac12"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf1.dkrz.de/thredds/fileServer/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_197101-198012.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgf1.dkrz.de:2811//cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_197101-198012.nc|application/gridftp|GridFTP",
+            "http://esgf1.dkrz.de/thredds/dodsC/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_197101-198012.nc.html|application/opendap-html|OPENDAP",
+            "globus:47de200e-a4bb-11e5-99be-22000b96db58/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_197101-198012.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1552000513710489600,
+        "_timestamp": "2016-11-25T19:43:48.975Z",
+        "score": 1.0
+    },
+    {
+        "id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_198101-199012.nc|esgf1.dkrz.de",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "2e796620ba8f323fb497c104931bd0c8fe9099ea8dab16143bd6218115ba301a"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "data_node": "esgf1.dkrz.de",
+        "dataset_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620|esgf1.dkrz.de",
+        "dataset_id_template_": [
+            "cordex.%(product)s.%(domain)s.%(institute)s.%(driving_model)s.%(experiment)s.%(ensemble)s.%(rcm_name)s.%(rcm_version)s.%(time_frequency)s.%(variable)s"
+        ],
+        "domain": [
+            "EUR-11"
+        ],
+        "driving_model": [
+            "MOHC-HadGEM2-ES"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "historical"
+        ],
+        "experiment_family": [
+            "All",
+            "Historical"
+        ],
+        "index_node": "esgf-data.dkrz.de",
+        "instance_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_198101-199012.nc",
+        "institute": [
+            "KNMI"
+        ],
+        "latest": true,
+        "master_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_198101-199012.nc",
+        "metadata_format": "THREDDS",
+        "product": [
+            "output"
+        ],
+        "project": [
+            "CORDEX"
+        ],
+        "rcm_name": [
+            "RACMO22E"
+        ],
+        "rcm_version": [
+            "v2"
+        ],
+        "replica": false,
+        "size": 41759650,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2016-06-03T17:43:07Z",
+        "title": "tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_198101-199012.nc",
+        "tracking_id": [
+            "018400b7-18fd-49b2-955e-ce010d05119e"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf1.dkrz.de/thredds/fileServer/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_198101-199012.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgf1.dkrz.de:2811//cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_198101-199012.nc|application/gridftp|GridFTP",
+            "http://esgf1.dkrz.de/thredds/dodsC/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_198101-199012.nc.html|application/opendap-html|OPENDAP",
+            "globus:47de200e-a4bb-11e5-99be-22000b96db58/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_198101-199012.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1552000513561591808,
+        "_timestamp": "2016-11-25T19:43:48.833Z",
+        "score": 1.0
+    },
+    {
+        "id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_199101-200012.nc|esgf1.dkrz.de",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "f33acbc15fa0ed9e503f2e5115e8e29505ff0112bf4f547e7c71501c46f46c61"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "data_node": "esgf1.dkrz.de",
+        "dataset_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620|esgf1.dkrz.de",
+        "dataset_id_template_": [
+            "cordex.%(product)s.%(domain)s.%(institute)s.%(driving_model)s.%(experiment)s.%(ensemble)s.%(rcm_name)s.%(rcm_version)s.%(time_frequency)s.%(variable)s"
+        ],
+        "domain": [
+            "EUR-11"
+        ],
+        "driving_model": [
+            "MOHC-HadGEM2-ES"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "historical"
+        ],
+        "experiment_family": [
+            "All",
+            "Historical"
+        ],
+        "index_node": "esgf-data.dkrz.de",
+        "instance_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_199101-200012.nc",
+        "institute": [
+            "KNMI"
+        ],
+        "latest": true,
+        "master_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_199101-200012.nc",
+        "metadata_format": "THREDDS",
+        "product": [
+            "output"
+        ],
+        "project": [
+            "CORDEX"
+        ],
+        "rcm_name": [
+            "RACMO22E"
+        ],
+        "rcm_version": [
+            "v2"
+        ],
+        "replica": false,
+        "size": 41719752,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2016-06-03T17:43:08Z",
+        "title": "tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_199101-200012.nc",
+        "tracking_id": [
+            "52e3e187-9755-4b26-8e85-25d03b34a787"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf1.dkrz.de/thredds/fileServer/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_199101-200012.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgf1.dkrz.de:2811//cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_199101-200012.nc|application/gridftp|GridFTP",
+            "http://esgf1.dkrz.de/thredds/dodsC/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_199101-200012.nc.html|application/opendap-html|OPENDAP",
+            "globus:47de200e-a4bb-11e5-99be-22000b96db58/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_199101-200012.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1552000513410596864,
+        "_timestamp": "2016-11-25T19:43:48.689Z",
+        "score": 1.0
+    },
+    {
+        "id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_200101-200512.nc|esgf1.dkrz.de",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "ea37c3b892f6e29d789bb58db9c0ff466e1115a9100331b341f1d49b5dc17e8f"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "data_node": "esgf1.dkrz.de",
+        "dataset_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620|esgf1.dkrz.de",
+        "dataset_id_template_": [
+            "cordex.%(product)s.%(domain)s.%(institute)s.%(driving_model)s.%(experiment)s.%(ensemble)s.%(rcm_name)s.%(rcm_version)s.%(time_frequency)s.%(variable)s"
+        ],
+        "domain": [
+            "EUR-11"
+        ],
+        "driving_model": [
+            "MOHC-HadGEM2-ES"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "historical"
+        ],
+        "experiment_family": [
+            "All",
+            "Historical"
+        ],
+        "index_node": "esgf-data.dkrz.de",
+        "instance_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_200101-200512.nc",
+        "institute": [
+            "KNMI"
+        ],
+        "latest": true,
+        "master_id": "cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_200101-200512.nc",
+        "metadata_format": "THREDDS",
+        "product": [
+            "output"
+        ],
+        "project": [
+            "CORDEX"
+        ],
+        "rcm_name": [
+            "RACMO22E"
+        ],
+        "rcm_version": [
+            "v2"
+        ],
+        "replica": false,
+        "size": 21830768,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2016-06-03T17:43:09Z",
+        "title": "tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_200101-200512.nc",
+        "tracking_id": [
+            "98848b41-c340-41fe-b64a-41e7a01aec85"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf1.dkrz.de/thredds/fileServer/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_200101-200512.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgf1.dkrz.de:2811//cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_200101-200512.nc|application/gridftp|GridFTP",
+            "http://esgf1.dkrz.de/thredds/dodsC/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_200101-200512.nc.html|application/opendap-html|OPENDAP",
+            "globus:47de200e-a4bb-11e5-99be-22000b96db58/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_200101-200512.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1552000513251213312,
+        "_timestamp": "2016-11-25T19:43:48.537Z",
+        "score": 1.0
+    }
+]

@@ -19,7 +19,7 @@ class Test(tests.Test):
         """Prepare tests."""
         shape = (3, 4, 4)
         data = np.arange(np.prod(shape)).reshape(shape)
-        self.cube = _make_cube(data, dtype=np.float)
+        self.cube = _make_cube(data, dtype=np.float64)
         self.cs = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
 
     def test_extract_point__single_linear(self):
@@ -51,6 +51,12 @@ class Test(tests.Test):
         self.assertEqual(point.shape, (3,))
         self.assert_array_equal(point.data, masked)
 
+        point = extract_point(self.cube, 30, 30, scheme='nearest')
+        self.assertEqual(point.shape, (3,))
+        # do it the proletarian way, back to basics is good sometimes
+        assert np.ma.is_masked(point.data)
+        assert point.data.mask.all()
+
     def test_extract_point__single_nearest(self):
         """Test nearest match when extracting a single point"""
 
@@ -65,7 +71,7 @@ class Test(tests.Test):
         # Test two points outside the valid area
         point = extract_point(self.cube, -1, -1, scheme='nearest')
         self.assertEqual(point.shape, (3,))
-        masked = np.ma.array(np.empty(3, dtype=np.float), mask=True)
+        masked = np.ma.array(np.empty(3, dtype=np.float64), mask=True)
         self.assert_array_equal(point.data, masked)
 
         point = extract_point(self.cube, 30, 30, scheme='nearest')
@@ -105,7 +111,7 @@ class Test(tests.Test):
         point = extract_point(self.cube, [0, 10], 3,
                               scheme='linear')
         self.assertEqual(point.shape, (3, 2))
-        masked = np.ma.array(np.empty((3, 2), dtype=np.float), mask=True)
+        masked = np.ma.array(np.empty((3, 2), dtype=np.float64), mask=True)
         self.assert_array_equal(point.data, masked)
         coords = self.cube.coords(dim_coords=True)
         point = extract_point(self.cube, 2, [0, 10],
@@ -135,7 +141,7 @@ class Test(tests.Test):
                                                 [44, 44, 44, 45, 45, 47]])
         point = extract_point(self.cube, [0, 10], 3,
                               scheme='nearest')
-        masked = np.ma.array(np.empty((3, 2), dtype=np.float), mask=True)
+        masked = np.ma.array(np.empty((3, 2), dtype=np.float64), mask=True)
         self.assertEqual(point.shape, (3, 2))
         self.assert_array_equal(point.data, masked)
         point = extract_point(self.cube, 2, [0, 10],
@@ -150,7 +156,7 @@ class Test(tests.Test):
                               [0, 1.1, 1.5, 1.51, 4, 5], scheme='linear')
         self.assertEqual(point.data.shape, (3, 6, 6))
 
-        result = np.ma.array(np.empty((3, 6, 6), dtype=np.float), mask=True)
+        result = np.ma.array(np.empty((3, 6, 6), dtype=np.float64), mask=True)
         result[0, 1, 1:5] = [0.5, 0.9, 0.91, 3.4]
         result[0, 2, 1:5] = [2.1, 2.5, 2.51, 5.0]
         result[0, 3, 1:5] = [2.14, 2.54, 2.55, 5.04]
@@ -178,7 +184,7 @@ class Test(tests.Test):
                               [0, 1.1, 1.5, 1.51, 4, 5], scheme='nearest')
         self.assertEqual(point.data.shape, (3, 6, 6))
 
-        result = np.ma.array(np.empty((3, 6, 6), dtype=np.float), mask=True)
+        result = np.ma.array(np.empty((3, 6, 6), dtype=np.float64), mask=True)
         result[0, 1, 1:5] = [0.0, 0.0, 1.0, 3.0]
         result[0, 2, 1:5] = [0.0, 0.0, 1.0, 3.0]
         result[0, 3, 1:5] = [4.0, 4.0, 5.0, 7.0]

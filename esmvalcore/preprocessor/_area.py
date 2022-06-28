@@ -4,6 +4,7 @@ Allows for selecting data subsets using certain latitude and longitude
 bounds; selecting geographical regions; constructing area averages; etc.
 """
 import logging
+import warnings
 
 import fiona
 import iris
@@ -13,6 +14,11 @@ import shapely.ops
 from dask import array as da
 from iris.exceptions import CoordinateNotFoundError
 
+from ._ancillary_vars import (
+    add_ancillary_variable,
+    add_cell_measure,
+    remove_fx_variables,
+)
 from ._shared import (
     get_iris_analysis_operation,
     guess_bounds,
@@ -179,6 +185,23 @@ def meridional_statistics(cube, operator):
     raise ValueError(msg)
 
 
+def compute_area_weights(cube):
+    """Compute area weights."""
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.filterwarnings(
+            'always',
+            message="Using DEFAULT_SPHERICAL_EARTH_RADIUS.",
+            category=UserWarning,
+            module='iris.analysis.cartography',
+        )
+        weights = iris.analysis.cartography.area_weights(cube)
+        for warning in caught_warnings:
+            logger.debug(
+                "%s while computing area weights of the following cube:\n%s",
+                warning.message, cube)
+    return weights
+
+
 def area_statistics(cube, operator):
     """Apply a statistical operator in the horizontal direction.
 
@@ -229,15 +252,17 @@ def area_statistics(cube, operator):
     ValueError
         if input data cube has different shape than grid area weights
     """
+    original_dtype = cube.dtype
     grid_areas = None
     try:
         grid_areas = cube.cell_measure('cell_area').core_data()
     except iris.exceptions.CellMeasureNotFoundError:
-        logger.info(
+        logger.debug(
             'Cell measure "cell_area" not found in cube %s. '
-            'Check fx_file availability.', cube.summary(shorten=True)
-        )
-        logger.info('Attempting to calculate grid cell area...')
+            'Check fx_file availability.', cube.summary(shorten=True))
+        logger.debug('Attempting to calculate grid cell area...')
+    else:
+        grid_areas = da.broadcast_to(grid_areas, cube.shape)
 
     if grid_areas is None and cube.coord('latitude').points.ndim == 2:
         coord_names = [coord.standard_name for coord in cube.coords()]
@@ -248,8 +273,8 @@ def area_statistics(cube, operator):
             cube_tmp.coord('grid_latitude').rename('latitude')
             cube_tmp.remove_coord('longitude')
             cube_tmp.coord('grid_longitude').rename('longitude')
-            grid_areas = iris.analysis.cartography.area_weights(cube_tmp)
-            logger.info('Calculated grid area shape: %s', grid_areas.shape)
+            grid_areas = compute_area_weights(cube_tmp)
+            logger.debug('Calculated grid area shape: %s', grid_areas.shape)
         else:
             logger.error(
                 'fx_file needed to calculate grid cell area for irregular '
@@ -260,8 +285,8 @@ def area_statistics(cube, operator):
     coord_names = ['longitude', 'latitude']
     if grid_areas is None:
         cube = guess_bounds(cube, coord_names)
-        grid_areas = iris.analysis.cartography.area_weights(cube)
-        logger.info('Calculated grid area shape: %s', grid_areas.shape)
+        grid_areas = compute_area_weights(cube)
+        logger.debug('Calculated grid area shape: %s', grid_areas.shape)
 
     if cube.shape != grid_areas.shape:
         raise ValueError('Cube shape ({}) doesn`t match grid area shape '
@@ -273,10 +298,18 @@ def area_statistics(cube, operator):
     # See iris issue: https://github.com/SciTools/iris/issues/3208
 
     if operator_accept_weights(operator):
-        return cube.collapsed(coord_names, operation, weights=grid_areas)
+        result = cube.collapsed(coord_names, operation, weights=grid_areas)
+    else:
+        # Many IRIS analysis functions do not accept weights arguments.
+        result = cube.collapsed(coord_names, operation)
 
-    # Many IRIS analysis functions do not accept weights arguments.
-    return cube.collapsed(coord_names, operation)
+    new_dtype = result.dtype
+    if original_dtype != new_dtype:
+        logger.debug(
+            "area_statistics changed dtype from "
+            "%s to %s, changing back", original_dtype, new_dtype)
+        result.data = result.core_data().astype(original_dtype)
+    return result
 
 
 def extract_named_regions(cube, regions):
@@ -398,8 +431,12 @@ def _correct_coords_from_shapefile(cube, cmor_coords, pad_north_pole,
     return lon, lat
 
 
-def _get_masks_from_geometries(geometries, lon, lat, method='contains',
-                               decomposed=False, ids=None):
+def _get_masks_from_geometries(geometries,
+                               lon,
+                               lat,
+                               method='contains',
+                               decomposed=False,
+                               ids=None):
 
     if method not in {'contains', 'representative'}:
         raise ValueError(
@@ -623,9 +660,17 @@ def _mask_cube(cube, selections):
     cubelist = iris.cube.CubeList()
     for id_, select in selections.items():
         _cube = cube.copy()
+        remove_fx_variables(_cube)
         _cube.add_aux_coord(
             iris.coords.AuxCoord(id_, units='no_unit', long_name="shape_id"))
         select = da.broadcast_to(select, _cube.shape)
         _cube.data = da.ma.masked_where(~select, _cube.core_data())
         cubelist.append(_cube)
-    return fix_coordinate_ordering(cubelist.merge_cube())
+    result = fix_coordinate_ordering(cubelist.merge_cube())
+    if cube.cell_measures():
+        for measure in cube.cell_measures():
+            add_cell_measure(result, measure, measure.measure)
+    if cube.ancillary_variables():
+        for ancillary_variable in cube.ancillary_variables():
+            add_ancillary_variable(result, ancillary_variable)
+    return result

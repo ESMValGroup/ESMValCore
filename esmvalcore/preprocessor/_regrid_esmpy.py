@@ -144,6 +144,31 @@ def get_representant(cube, ref_to_slice):
     return cube[rep_ind]
 
 
+def regrid_mask_2d(src_data, regridding_arguments, mask_threshold):
+    """Regrid the mask from the source field to the destination grid."""
+    src_field = regridding_arguments['srcfield']
+    dst_field = regridding_arguments['dstfield']
+    regrid_method = regridding_arguments['regrid_method']
+    original_src_mask = np.ma.getmaskarray(src_data)
+    src_field.data[...] = ~original_src_mask.T
+    src_mask = src_field.grid.get_item(ESMF.GridItem.MASK,
+                                       ESMF.StaggerLoc.CENTER)
+    src_mask[...] = original_src_mask.T
+    center_mask = dst_field.grid.get_item(ESMF.GridItem.MASK,
+                                          ESMF.StaggerLoc.CENTER)
+    center_mask[...] = 0
+    mask_regridder = ESMF.Regrid(
+        src_mask_values=MASK_REGRIDDING_MASK_VALUE[regrid_method],
+        dst_mask_values=np.array([]),
+        **regridding_arguments)
+    regr_field = mask_regridder(src_field, dst_field)
+    dst_mask = regr_field.data[...].T < mask_threshold
+    center_mask[...] = dst_mask.T
+    if not dst_mask.any():
+        dst_mask = np.ma.nomask
+    return dst_mask
+
+
 def build_regridder_2d(src_rep, dst_rep, regrid_method, mask_threshold):
     """Build regridder for 2d regridding."""
     dst_field = cube_to_empty_field(dst_rep)
@@ -155,23 +180,8 @@ def build_regridder_2d(src_rep, dst_rep, regrid_method, mask_threshold):
         'unmapped_action': ESMF.UnmappedAction.IGNORE,
         'ignore_degenerate': True,
     }
-    if np.ma.is_masked(src_rep.data):
-        src_field.data[...] = ~src_rep.data.mask.T
-        src_mask = src_field.grid.get_item(ESMF.GridItem.MASK,
-                                           ESMF.StaggerLoc.CENTER)
-        src_mask[...] = src_rep.data.mask.T
-        center_mask = dst_field.grid.get_item(ESMF.GridItem.MASK,
-                                              ESMF.StaggerLoc.CENTER)
-        center_mask[...] = 0
-        mask_regridder = ESMF.Regrid(
-            src_mask_values=MASK_REGRIDDING_MASK_VALUE[regrid_method],
-            dst_mask_values=np.array([]),
-            **regridding_arguments)
-        regr_field = mask_regridder(src_field, dst_field)
-        dst_mask = regr_field.data[...].T < mask_threshold
-        center_mask[...] = dst_mask.T
-    else:
-        dst_mask = False
+    dst_mask = regrid_mask_2d(src_rep.data,
+                              regridding_arguments, mask_threshold)
     field_regridder = ESMF.Regrid(src_mask_values=np.array([1]),
                                   dst_mask_values=np.array([1]),
                                   **regridding_arguments)

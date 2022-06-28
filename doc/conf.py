@@ -65,15 +65,6 @@ autodoc_default_options = {
     'autosummary': True,
 }
 
-autodoc_mock_imports = [
-    'iris',
-    'stratify',
-    'ESMF',
-    'cartopy',
-    'cf_units',
-    'psutil',
-]
-
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -160,7 +151,7 @@ html_short_title = "ESMValTool {0}".format(release)
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = 'figures/ESMValTool-logo.png'
+html_logo = 'figures/ESMValTool-logo-2.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -252,7 +243,7 @@ latex_elements = {
      \fi}
      \begin{titlepage}
      \begin{center}
-     \includegraphics[width=\textwidth]{figures/ESMValTool-logo.pdf}\par
+     \includegraphics[width=\textwidth]{figures/ESMValTool-logo-2.pdf}\par
      \vspace{2cm}
      {\Huge \bf \sffamily User's and Developer's Guide \par}
      \vspace{1cm}
@@ -414,15 +405,20 @@ numfig = True
 
 # Configuration for intersphinx
 intersphinx_mapping = {
+    'cf_units': ('https://cf-units.readthedocs.io/en/latest/', None),
+    'cftime': ('https://unidata.github.io/cftime/', None),
     'esmvalcore':
     (f'https://docs.esmvaltool.org/projects/esmvalcore/en/{rtd_version}/',
      None),
     'esmvaltool': (f'https://docs.esmvaltool.org/en/{rtd_version}/', None),
     'iris': ('https://scitools-iris.readthedocs.io/en/latest/', None),
-    'matplotlib': ('https://matplotlib.org/', None),
+    'iris-esmf-regrid': ('https://iris-esmf-regrid.readthedocs.io/en/latest',
+                         None),
+    'matplotlib': ('https://matplotlib.org/stable/', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
+    'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/latest/', None),
     'python': ('https://docs.python.org/3/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
 }
 
 # -- Custom Document processing ----------------------------------------------

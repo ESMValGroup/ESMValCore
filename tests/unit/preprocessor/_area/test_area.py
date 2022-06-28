@@ -29,7 +29,7 @@ class Test(tests.Test):
         """Prepare tests."""
         self.coord_sys = iris.coord_systems.GeogCS(
             iris.fileformats.pp.EARTH_RADIUS)
-        data = np.ones((5, 5))
+        data = np.ones((5, 5), dtype=np.float32)
         lons = iris.coords.DimCoord(
             [i + .5 for i in range(5)],
             standard_name='longitude',
@@ -67,13 +67,14 @@ class Test(tests.Test):
     def test_area_statistics_mean(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'mean')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_cell_measure_mean(self):
+        """Test for area average of a 2D field.
+
+        The area measure is pre-loaded in the cube
         """
-        Test for area average of a 2D field.
-        The area measure is pre-loaded in the cube"""
         cube = guess_bounds(self.grid, ['longitude', 'latitude'])
         grid_areas = iris.analysis.cartography.area_weights(cube)
         measure = iris.coords.CellMeasure(
@@ -83,56 +84,56 @@ class Test(tests.Test):
             measure='area')
         self.grid.add_cell_measure(measure, range(0, measure.ndim))
         result = area_statistics(self.grid, 'mean')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_min(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'min')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_max(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'max')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_median(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'median')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_std_dev(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'std_dev')
-        expected = np.array([0.])
+        expected = np.array([0.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_sum(self):
         """Test for sum of a 2D field."""
         result = area_statistics(self.grid, 'sum')
         grid_areas = iris.analysis.cartography.area_weights(self.grid)
-        expected = np.sum(grid_areas)
+        expected = np.sum(grid_areas).astype(np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_variance(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'variance')
-        expected = np.array([0.])
+        expected = np.array([0.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_neg_lon(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.negative_grid, 'mean')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_area_statistics_rms(self):
         """Test for area rms of a 2D field."""
         result = area_statistics(self.grid, 'rms')
-        expected = np.array([1.])
+        expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
 
     def test_extract_region(self):
@@ -143,10 +144,8 @@ class Test(tests.Test):
         self.assert_array_equal(result.data, expected)
 
     def test_extract_region_mean(self):
-        """
-        Test for extracting a region and performing
-        the area mean of a 2D field.
-        """
+        """Test for extracting a region and performing the area mean of a 2D
+        field."""
         cube = guess_bounds(self.grid, ['longitude', 'latitude'])
         grid_areas = iris.analysis.cartography.area_weights(cube)
         measure = iris.coords.CellMeasure(
@@ -497,7 +496,7 @@ def test_area_statistics_rotated(case):
         cube_tmp.remove_coord('longitude')
         cube_tmp.coord('grid_longitude').rename('longitude')
         grid_areas = iris.analysis.cartography.area_weights(cube_tmp)
-        expected = np.sum(grid_areas)
+        expected = np.sum(grid_areas).astype(np.float32)
         np.testing.assert_array_equal(cube.data, expected)
 
 
@@ -707,6 +706,41 @@ def test_extract_shape_natural_earth(make_testcube, ne_ocean_shapefile):
         crop=False,
     )
     np.testing.assert_array_equal(result.data.data, expected)
+
+
+def test_extract_shape_fx(make_testcube, ne_ocean_shapefile):
+    """Test for extracting a shape from NE file."""
+    expected = np.ones((5, 5))
+    preproc_path = Path(esmvalcore.preprocessor.__file__).parent
+    shp_file = preproc_path / "ne_masks" / "ne_50m_ocean.shp"
+    cube = make_testcube
+    measure = iris.coords.CellMeasure(cube.data,
+                                      standard_name='cell_area',
+                                      var_name='areacello',
+                                      units='m2',
+                                      measure='area')
+    ancillary_var = iris.coords.AncillaryVariable(
+        cube.data,
+        standard_name='land_ice_area_fraction',
+        var_name='sftgif',
+        units='%')
+    cube.add_cell_measure(measure, (0, 1))
+    cube.add_ancillary_variable(ancillary_var, (0, 1))
+    result = extract_shape(
+        cube,
+        shp_file,
+        crop=False,
+    )
+    np.testing.assert_array_equal(result.data.data, expected)
+
+    assert result.cell_measures()
+    result_measure = result.cell_measure('cell_area').data
+    np.testing.assert_array_equal(measure.data, result_measure)
+
+    assert result.ancillary_variables()
+    result_ancillary_var = result.ancillary_variable(
+        'land_ice_area_fraction').data
+    np.testing.assert_array_equal(ancillary_var.data, result_ancillary_var)
 
 
 def test_extract_shape_ne_check_nans(ne_ocean_shapefile):

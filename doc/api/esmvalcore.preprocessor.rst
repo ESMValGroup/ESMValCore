@@ -3,6 +3,5 @@
 Preprocessor functions
 ======================
 
-By default, preprocessor functions are applied in the order in which they are listed here.
-
+.. autodata:: esmvalcore.preprocessor.DEFAULT_ORDER
 .. automodule:: esmvalcore.preprocessor

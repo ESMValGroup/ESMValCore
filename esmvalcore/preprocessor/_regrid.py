@@ -1,6 +1,9 @@
 """Horizontal and vertical regridding module."""
+import importlib
+import logging
 import os
 import re
+import warnings
 from copy import deepcopy
 from decimal import Decimal
 from typing import Dict
@@ -9,15 +12,21 @@ import iris
 import numpy as np
 import stratify
 from dask import array as da
+from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
+
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.fix import fix_file, fix_metadata
 from ..cmor.table import CMOR_TABLES
-from ._io import concatenate_callback, load
+from ._ancillary_vars import add_ancillary_variable, add_cell_measure
+from ._io import GLOBAL_FILL_VALUE, concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
+
+logger = logging.getLogger(__name__)
 
 # Regular expression to parse a "MxN" cell-specification.
 _CELL_SPEC = re.compile(
@@ -58,9 +67,12 @@ HORIZONTAL_SCHEMES = {
 }
 
 # Supported vertical interpolation schemes.
-VERTICAL_SCHEMES = ('linear', 'nearest',
-                    'linear_horizontal_extrapolate_vertical',
-                    'nearest_horizontal_extrapolate_vertical')
+VERTICAL_SCHEMES = (
+    'linear',
+    'nearest',
+    'linear_extrapolate',
+    'nearest_extrapolate',
+)
 
 
 def parse_cell_spec(spec):
@@ -253,7 +265,7 @@ def _spec_to_latlonvals(*, start_latitude: float, end_latitude: float,
     def get_points(start, stop, step):
         """Calculate grid points."""
         # use Decimal to avoid floating point errors
-        num = int((stop - start) // Decimal(str(step)))
+        num = int(Decimal(stop - start) // Decimal(str(step)))
         stop = start + num * step
         return np.linspace(start, stop, num + 1)
 
@@ -290,7 +302,7 @@ def _regional_stock_cube(spec: dict):
 
 def _attempt_irregular_regridding(cube, scheme):
     """Check if irregular regridding with ESMF should be used."""
-    if scheme in ESMF_REGRID_METHODS:
+    if isinstance(scheme, str) and scheme in ESMF_REGRID_METHODS:
         try:
             lat_dim = cube.coord('latitude').ndim
             lon_dim = cube.coord('longitude').ndim
@@ -299,6 +311,66 @@ def _attempt_irregular_regridding(cube, scheme):
         except iris.exceptions.CoordinateNotFoundError:
             pass
     return False
+
+
+def extract_location(cube, location, scheme):
+    """Extract a point using a location name, with interpolation.
+
+    Extracts a single location point from a cube, according
+    to the interpolation scheme ``scheme``.
+
+    The function just retrieves the coordinates of the location and then calls
+    the ``extract_point`` preprocessor.
+
+    It can be used to locate cities and villages, but also mountains or other
+    geographical locations.
+
+    Note
+    ----
+    The geolocator needs a working internet connection.
+
+    Parameters
+    ----------
+    cube : cube
+        The source cube to extract a point from.
+
+    location : str
+        The reference location. Examples: 'mount everest',
+        'romania','new york, usa'
+
+    scheme : str
+        The interpolation scheme. 'linear' or 'nearest'. No default.
+
+    Returns
+    -------
+    Returns a cube with the extracted point, and with adjusted
+    latitude and longitude coordinates.
+
+    Raises
+    ------
+    ValueError:
+        If location is not supplied as a preprocessor parameter.
+    ValueError:
+        If scheme is not supplied as a preprocessor parameter.
+    ValueError:
+        If given location cannot be found by the geolocator.
+    """
+    if location is None:
+        raise ValueError("Location needs to be specified."
+                         " Examples: 'mount everest', 'romania',"
+                         " 'new york, usa'")
+    if scheme is None:
+        raise ValueError("Interpolation scheme needs to be specified."
+                         " Use either 'linear' or 'nearest'.")
+    geolocator = Nominatim(user_agent='esmvalcore')
+    geolocation = geolocator.geocode(location)
+    if geolocation is None:
+        raise ValueError(f'Requested location {location} can not be found.')
+    logger.info("Extracting data for %s (%s °N, %s °E)", geolocation,
+                geolocation.latitude, geolocation.longitude)
+
+    return extract_point(cube, geolocation.latitude,
+                         geolocation.longitude, scheme)
 
 
 def extract_point(cube, latitude, longitude, scheme):
@@ -314,6 +386,11 @@ def extract_point(cube, latitude, longitude, scheme):
     scalar, the dimension will be missing in the output cube (that is,
     it will be a scalar).
 
+    If the point to be extracted has at least one of the coordinate point
+    values outside the interval of the cube's same coordinate values, then
+    no extrapolation will be performed, and the resulting extracted cube
+    will have fully masked data.
+
     Parameters
     ----------
     cube : cube
@@ -327,9 +404,16 @@ def extract_point(cube, latitude, longitude, scheme):
 
     Returns
     -------
-    Returns a cube with the extracted point(s), and with adjusted
-    latitude and longitude coordinates (see above).
+    :py:class:`~iris.cube.Cube`
+        Returns a cube with the extracted point(s), and with adjusted
+        latitude and longitude coordinates (see above). If desired point
+        outside values for at least one coordinate, this cube will have fully
+        masked data.
 
+    Raises
+    ------
+    ValueError:
+        If the interpolation scheme is None or unrecognized.
 
     Examples
     --------
@@ -381,7 +465,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
 
     - ``start_longitude``: longitude at the center of the first grid cell.
     - ``end_longitude``: longitude at the center of the last grid cell.
-    - ``step_longitude``: constant longitude distance between grid cell
+    - ``step_longitude``: constant longitude distance between grid cell \
         centers.
     - ``start_latitude``: latitude at the center of the first grid cell.
     - ``end_latitude``: longitude at the center of the last grid cell.
@@ -402,13 +486,12 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         Alternatively, a dictionary with a regional target grid may
         be specified (see above).
 
-    scheme : str
-        The regridding scheme to perform, choose from
-        ``linear``,
-        ``linear_extrapolate``,
-        ``nearest``,
-        ``area_weighted``,
+    scheme : str or dict
+        The regridding scheme to perform. If both source and target grid are
+        structured (regular or irregular), can be one of the built-in schemes
+        ``linear``, ``linear_extrapolate``, ``nearest``, ``area_weighted``,
         ``unstructured_nearest``.
+        Alternatively, a `dict` that specifies generic regridding (see below).
     lat_offset : bool
         Offset the grid centers of the latitude coordinate w.r.t. the
         pole by half a grid step. This argument is ignored if ``target_grid``
@@ -426,8 +509,71 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     See Also
     --------
     extract_levels : Perform vertical regridding.
+
+    Notes
+    -----
+    This preprocessor allows for the use of arbitrary :doc:`Iris <iris:index>`
+    regridding schemes, that is anything that can be passed as a scheme to
+    :meth:`iris.cube.Cube.regrid` is possible. This enables the use of further
+    parameters for existing schemes, as well as the use of more advanced
+    schemes for example for unstructured meshes.
+    To use this functionality, a dictionary must be passed for the scheme with
+    a mandatory entry of ``reference`` in the form specified for the object
+    reference of the `entry point data model <https://packaging.python.org/en/
+    latest/specifications/entry-points/#data-model>`_,
+    i.e. ``importable.module:object.attr``. This is used as a factory for the
+    scheme. Any further entries in the dictionary are passed as keyword
+    arguments to the factory.
+
+    For example, to use the familiar :class:`iris.analysis.Linear` regridding
+    scheme with a custom extrapolation mode, use
+
+    .. code-block:: yaml
+
+        my_preprocessor:
+          regrid:
+            target: 1x1
+            scheme:
+              reference: iris.analysis:Linear
+              extrapolation_mode: nanmask
+
+    To use the area weighted regridder available in
+    :class:`esmf_regrid.schemes.ESMFAreaWeighted`, make sure that
+    :doc:`iris-esmf-regrid:index` is installed and use
+
+    .. code-block:: yaml
+
+        my_preprocessor:
+          regrid:
+            target: 1x1
+            scheme:
+              reference: esmf_regrid.schemes:ESMFAreaWeighted
+
+    .. note::
+
+        Note that :doc:`iris-esmf-regrid:index` is still experimental.
     """
-    if HORIZONTAL_SCHEMES.get(scheme.lower()) is None:
+    if isinstance(scheme, dict):
+        try:
+            object_ref = scheme.pop("reference")
+        except KeyError as key_err:
+            raise ValueError(
+                "No reference specified for generic regridding.") from key_err
+        module_name, separator, scheme_name = object_ref.partition(":")
+        try:
+            obj = importlib.import_module(module_name)
+        except ImportError as import_err:
+            raise ValueError(
+                "Could not import specified generic regridding module. "
+                "Please double check spelling and that the required module is "
+                "installed.") from import_err
+        if separator:
+            for attr in scheme_name.split('.'):
+                obj = getattr(obj, attr)
+        loaded_scheme = obj(**scheme)
+    else:
+        loaded_scheme = HORIZONTAL_SCHEMES.get(scheme.lower())
+    if loaded_scheme is None:
         emsg = 'Unknown regridding scheme, got {!r}.'
         raise ValueError(emsg.format(scheme))
 
@@ -468,13 +614,45 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
 
     # Return non-regridded cube if horizontal grid is the same.
     if not _horizontal_grid_is_close(cube, target_grid):
+        original_dtype = cube.core_data().dtype
 
-        # Perform the horizontal regridding.
+        # For 'unstructured_nearest', make sure that consistent fill value is
+        # used since the data is not masked after regridding (see
+        # https://github.com/SciTools/iris/issues/4463)
+        # Note: da.ma.set_fill_value() works with any kind of input data
+        # (masked and unmasked, numpy and dask)
+        if scheme == 'unstructured_nearest':
+            if np.issubdtype(cube.dtype, np.integer):
+                fill_value = np.iinfo(cube.dtype).max
+            else:
+                fill_value = GLOBAL_FILL_VALUE
+            da.ma.set_fill_value(cube.core_data(), fill_value)
+
+        # Perform the horizontal regridding
         if _attempt_irregular_regridding(cube, scheme):
             cube = esmpy_regrid(cube, target_grid, scheme)
         else:
             cube = _rechunk(cube, target_grid)
             cube = cube.regrid(target_grid, HORIZONTAL_SCHEMES[scheme])
+            cube = cube.regrid(target_grid, loaded_scheme)
+
+        # Preserve dtype and use masked arrays for 'unstructured_nearest'
+        # scheme (see https://github.com/SciTools/iris/issues/4463)
+        if scheme == 'unstructured_nearest':
+            try:
+                cube.data = cube.core_data().astype(original_dtype,
+                                                    casting='same_kind')
+            except TypeError as exc:
+                logger.warning(
+                    "dtype of data changed during regridding from '%s' to "
+                    "'%s': %s", original_dtype, cube.core_data().dtype,
+                    str(exc))
+            cube.data = da.ma.masked_equal(cube.core_data(), fill_value)
+    else:
+        # force target coordinates
+        for coord in ['latitude', 'longitude']:
+            cube.coord(coord).points = target_grid.coord(coord).points
+            cube.coord(coord).bounds = target_grid.coord(coord).bounds
 
     return cube
 
@@ -668,23 +846,106 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
     return _create_cube(cube, new_data, src_levels, levels.astype(float))
 
 
-def extract_levels(cube, levels, scheme, coordinate=None):
+def _preserve_fx_vars(cube, result):
+    vertical_dim = set(cube.coord_dims(cube.coord(axis='z', dim_coords=True)))
+    if cube.cell_measures():
+        for measure in cube.cell_measures():
+            measure_dims = set(cube.cell_measure_dims(measure))
+            if vertical_dim.intersection(measure_dims):
+                logger.warning(
+                    'Discarding use of z-axis dependent cell measure %s '
+                    'in variable %s, as z-axis has been interpolated',
+                    measure.var_name, result.var_name)
+            else:
+                add_cell_measure(result, measure, measure.measure)
+    if cube.ancillary_variables():
+        for ancillary_var in cube.ancillary_variables():
+            ancillary_dims = set(cube.ancillary_variable_dims(ancillary_var))
+            if vertical_dim.intersection(ancillary_dims):
+                logger.warning(
+                    'Discarding use of z-axis dependent ancillary variable %s '
+                    'in variable %s, as z-axis has been interpolated',
+                    ancillary_var.var_name, result.var_name)
+            else:
+                add_ancillary_variable(result, ancillary_var)
+
+
+def parse_vertical_scheme(scheme):
+    """Parse the scheme provided for level extraction.
+
+    Parameters
+    ----------
+    scheme : str
+        The vertical interpolation scheme to use. Choose from
+        'linear',
+        'nearest',
+        'linear_extrapolate',
+        'nearest_extrapolate'.
+
+    Returns
+    -------
+    (str, str)
+        A tuple containing the interpolation and extrapolation scheme.
+    """
+    # Issue warning when deprecated schemes are used
+    deprecated_schemes = {
+        'linear_horizontal_extrapolate_vertical': 'linear_extrapolate',
+        'nearest_horizontal_extrapolate_vertical': 'nearest_extrapolate',
+    }
+    if scheme in deprecated_schemes:
+        new_scheme = deprecated_schemes[scheme]
+        deprecation_msg = (
+            f"The vertical regridding scheme ``{scheme}`` has been deprecated "
+            f"in ESMValCore version 2.5.0 and is scheduled for removal in "
+            f"version 2.7.0. It has been renamed to the identical scheme "
+            f"``{new_scheme}`` without any change in functionality.")
+        warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+        scheme = new_scheme
+
+    # Check if valid scheme is given
+    if scheme not in VERTICAL_SCHEMES:
+        raise ValueError(
+            f"Unknown vertical interpolation scheme, got '{scheme}', possible "
+            f"schemes are {VERTICAL_SCHEMES}")
+
+    # This allows us to put level 0. to load the ocean surface.
+    extrap_scheme = 'nan'
+
+    if scheme == 'linear_extrapolate':
+        scheme = 'linear'
+        extrap_scheme = 'nearest'
+
+    if scheme == 'nearest_extrapolate':
+        scheme = 'nearest'
+        extrap_scheme = 'nearest'
+
+    return scheme, extrap_scheme
+
+
+def extract_levels(cube,
+                   levels,
+                   scheme,
+                   coordinate=None,
+                   rtol=1e-7,
+                   atol=None):
     """Perform vertical interpolation.
 
     Parameters
     ----------
     cube : iris.cube.Cube
         The source cube to be vertically interpolated.
-    levels : array
+    levels : ArrayLike
         One or more target levels for the vertical interpolation. Assumed
         to be in the same S.I. units of the source cube vertical dimension
-        coordinate.
+        coordinate. If the requested levels are sufficiently close to the
+        levels of the cube, cube slicing will take place instead of
+        interpolation.
     scheme : str
         The vertical interpolation scheme to use. Choose from
         'linear',
         'nearest',
-        'nearest_horizontal_extrapolate_vertical',
-        'linear_horizontal_extrapolate_vertical'.
+        'linear_extrapolate',
+        'nearest_extrapolate'.
     coordinate :  optional str
         The coordinate to interpolate. If specified, pressure levels
         (if present) can be converted to height levels and vice versa using
@@ -692,29 +953,28 @@ def extract_levels(cube, levels, scheme, coordinate=None):
         existing pressure levels (air_pressure) to height levels (altitude);
         'coordinate = air_pressure' will convert existing height levels
         (altitude) to pressure levels (air_pressure).
+    rtol : float
+        Relative tolerance for comparing the levels in `cube` to the requested
+        levels. If the levels are sufficiently close, the requested levels
+        will be assigned to the cube and no interpolation will take place.
+    atol : float
+        Absolute tolerance for comparing the levels in `cube` to the requested
+        levels. If the levels are sufficiently close, the requested levels
+        will be assigned to the cube and no interpolation will take place.
+        By default, `atol` will be set to 10^-7 times the mean value of
+        the levels on the cube.
 
     Returns
     -------
     iris.cube.Cube
+        A cube with the requested vertical levels.
+
 
     See Also
     --------
     regrid : Perform horizontal regridding.
     """
-    if scheme not in VERTICAL_SCHEMES:
-        emsg = 'Unknown vertical interpolation scheme, got {!r}. '
-        emsg += 'Possible schemes: {!r}'
-        raise ValueError(emsg.format(scheme, VERTICAL_SCHEMES))
-
-    # This allows us to put level 0. to load the ocean surface.
-    extrap_scheme = 'nan'
-    if scheme == 'nearest_horizontal_extrapolate_vertical':
-        scheme = 'nearest'
-        extrap_scheme = 'nearest'
-
-    if scheme == 'linear_horizontal_extrapolate_vertical':
-        scheme = 'linear'
-        extrap_scheme = 'nearest'
+    interpolation, extrapolation = parse_vertical_scheme(scheme)
 
     # Ensure we have a non-scalar array of levels.
     levels = np.array(levels, ndmin=1)
@@ -735,11 +995,17 @@ def extract_levels(cube, levels, scheme, coordinate=None):
     else:
         src_levels = cube.coord(axis='z', dim_coords=True)
 
-    if (src_levels.shape == levels.shape
-            and np.allclose(src_levels.points, levels)):
+    if (src_levels.shape == levels.shape and np.allclose(
+            src_levels.points,
+            levels,
+            rtol=rtol,
+            atol=1e-7 * np.mean(src_levels.points) if atol is None else atol,
+    )):
         # Only perform vertical extraction/interpolation if the source
         # and target levels are not "similar" enough.
         result = cube
+        # Set the levels to the requested values
+        src_levels.points = levels
     elif len(src_levels.shape) == 1 and \
             set(levels).issubset(set(src_levels.points)):
         # If all target levels exist in the source cube, simply extract them.
@@ -753,8 +1019,14 @@ def extract_levels(cube, levels, scheme, coordinate=None):
             raise ValueError(emsg.format(list(levels), name))
     else:
         # As a last resort, perform vertical interpolation.
-        result = _vertical_interpolate(cube, src_levels, levels, scheme,
-                                       extrap_scheme)
+        result = _vertical_interpolate(
+            cube,
+            src_levels,
+            levels,
+            interpolation,
+            extrapolation,
+        )
+        _preserve_fx_vars(cube, result)
 
     return result
 
@@ -854,3 +1126,43 @@ def get_reference_levels(filename, project, dataset, short_name, mip,
     except iris.exceptions.CoordinateNotFoundError:
         raise ValueError('z-coord not available in {}'.format(filename))
     return coord.points.tolist()
+
+
+def extract_coordinate_points(cube, definition, scheme):
+    """Extract points from any coordinate with interpolation.
+
+    Multiple points can also be extracted, by supplying an array of
+    coordinates. The resulting point cube will match the respective
+    coordinates to those of the input coordinates.
+    If the input coordinate is a scalar, the dimension will be a
+    scalar in the output cube.
+
+    Parameters
+    ----------
+    cube : cube
+        The source cube to extract a point from.
+    definition : dict(str, float or array of float)
+        The coordinate - values pairs to extract
+    scheme : str
+        The interpolation scheme. 'linear' or 'nearest'. No default.
+
+    Returns
+    -------
+    :py:class:`~iris.cube.Cube`
+        Returns a cube with the extracted point(s), and with adjusted
+        latitude and longitude coordinates (see above). If desired point
+        outside values for at least one coordinate, this cube will have fully
+        masked data.
+
+    Raises
+    ------
+    ValueError:
+        If the interpolation scheme is not provided or is not recognised.
+    """
+
+    msg = f"Unknown interpolation scheme, got {scheme!r}."
+    scheme = POINT_INTERPOLATION_SCHEMES.get(scheme.lower())
+    if not scheme:
+        raise ValueError(msg)
+    cube = cube.interpolate(definition.items(), scheme=scheme)
+    return cube

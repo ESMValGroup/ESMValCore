@@ -1,22 +1,21 @@
-"""
-Volume and z coordinate operations on data cubes.
+"""Volume and z coordinate operations on data cubes.
 
-Allows for selecting data subsets using certain volume bounds;
-selecting depth or height regions; constructing volumetric averages;
+Allows for selecting data subsets using certain volume bounds; selecting
+depth or height regions; constructing volumetric averages;
 """
-from copy import deepcopy
-
 import logging
 
+import dask.array as da
 import iris
 import numpy as np
+
+from ._shared import get_iris_analysis_operation, operator_accept_weights
 
 logger = logging.getLogger(__name__)
 
 
 def extract_volume(cube, z_min, z_max):
-    """
-    Subset a cube based on a range of values in the z-coordinate.
+    """Subset a cube based on a range of values in the z-coordinate.
 
     Function that subsets a cube on a box (z_min, z_max)
     This function is a restriction of masked_cube_lonlat();
@@ -48,99 +47,14 @@ def extract_volume(cube, z_min, z_max):
 
     z_constraint = iris.Constraint(
         coord_values={
-            cube.coord(axis='Z'): lambda cell: zmin < cell.point < zmax})
+            cube.coord(axis='Z'): lambda cell: zmin < cell.point < zmax
+        })
 
     return cube.extract(z_constraint)
 
 
-def _create_cube_time(src_cube, data, times):
-    """
-    Generate a new cube with the volume averaged data.
-
-    The resultant cube is seeded with `src_cube` metadata and coordinates,
-    excluding any source coordinates that span the associated vertical
-    dimension. The `times` of interpolation are used along with the
-    associated source cube time coordinate metadata to add a new
-    time coordinate to the resultant cube.
-
-    Based on the _create_cube method from _regrid.py.
-
-    Parameters
-    ----------
-    src_cube : cube
-        The source cube that was vertically interpolated.
-    data : array
-        The payload resulting from interpolating the source cube
-        over the specified times.
-    times : array
-        The array of times.
-
-    Returns
-    -------
-    cube
-    .. note::
-        If there is only one level of interpolation, the resultant cube
-        will be collapsed over the associated vertical dimension, and a
-        scalar vertical coordinate will be added.
-    """
-    # Get the source cube vertical coordinate and associated dimension.
-    src_times = src_cube.coord('time')
-    t_dim, = src_cube.coord_dims(src_times)
-
-    if data.shape[t_dim] != len(times):
-        emsg = ('Mismatch between data and times for data dimension {!r}, '
-                'got data shape {!r} with times shape {!r}.')
-        raise ValueError(emsg.format(t_dim, data.shape, times.shape))
-
-    # Construct the resultant cube with the interpolated data
-    # and the source cube metadata.
-    kwargs = deepcopy(src_cube.metadata)._asdict()
-    result = iris.cube.Cube(data, **kwargs)
-
-    # Add the appropriate coordinates to the cube, excluding
-    # any coordinates that span the z-dimension of interpolation.
-    for coord in src_cube.dim_coords:
-        [dim] = src_cube.coord_dims(coord)
-        if dim != t_dim:
-            result.add_dim_coord(coord.copy(), dim)
-
-    for coord in src_cube.aux_coords:
-        dims = src_cube.coord_dims(coord)
-        if t_dim not in dims:
-            result.add_aux_coord(coord.copy(), dims)
-
-    for coord in src_cube.derived_coords:
-        dims = src_cube.coord_dims(coord)
-        if t_dim not in dims:
-            result.add_aux_coord(coord.copy(), dims)
-
-    # Construct the new vertical coordinate for the interpolated
-    # z-dimension, using the associated source coordinate metadata.
-    metadata = src_times.metadata
-
-    kwargs = {
-        'standard_name': metadata.standard_name,
-        'long_name': metadata.long_name,
-        'var_name': metadata.var_name,
-        'units': metadata.units,
-        'attributes': metadata.attributes,
-        'coord_system': metadata.coord_system,
-        'climatological': metadata.climatological,
-    }
-
-    try:
-        coord = iris.coords.DimCoord(times, **kwargs)
-        result.add_dim_coord(coord, t_dim)
-    except ValueError:
-        coord = iris.coords.AuxCoord(times, **kwargs)
-        result.add_aux_coord(coord, t_dim)
-
-    return result
-
-
 def calculate_volume(cube):
-    """
-    Calculate volume from a cube.
+    """Calculate volume from a cube.
 
     This function is used when the volume netcdf fx_variables can't be found.
 
@@ -165,7 +79,7 @@ def calculate_volume(cube):
 
     # ####
     # Calculate grid volume:
-    area = iris.analysis.cartography.area_weights(cube)
+    area = da.array(iris.analysis.cartography.area_weights(cube))
     if thickness.ndim == 1 and z_dim == 1:
         grid_volume = area * thickness[None, :, None, None]
     if thickness.ndim == 4 and z_dim == 1:
@@ -175,8 +89,7 @@ def calculate_volume(cube):
 
 
 def volume_statistics(cube, operator):
-    """
-    Apply a statistical operation over a volume.
+    """Apply a statistical operation over a volume.
 
     The volume average is weighted according to the cell volume. Cell volume
     is calculated from iris's cartography tool multiplied by the cell
@@ -202,86 +115,89 @@ def volume_statistics(cube, operator):
     # TODO: Test sigma coordinates.
     # TODO: Add other operations.
 
-    # ####
-    # Load z coordinate field and figure out which dim is which.
-    t_dim = cube.coord_dims('time')[0]
+    if operator != 'mean':
+        raise ValueError(f'Volume operator {operator} not recognised.')
 
     try:
         grid_volume = cube.cell_measure('ocean_volume').core_data()
     except iris.exceptions.CellMeasureNotFoundError:
-        logger.info(
-            'Cell measure "ocean_volume" not found in cube. '
-            'Check fx_file availability.'
-        )
-        logger.info('Attempting to calculate grid cell volume...')
+        logger.debug('Cell measure "ocean_volume" not found in cube. '
+                     'Check fx_file availability.')
+        logger.debug('Attempting to calculate grid cell volume...')
         grid_volume = calculate_volume(cube)
+    else:
+        grid_volume = da.broadcast_to(grid_volume, cube.shape)
 
     if cube.data.shape != grid_volume.shape:
         raise ValueError('Cube shape ({}) doesn`t match grid volume shape '
-                         '({})'.format(cube.data.shape, grid_volume.shape))
+                         f'({cube.shape, grid_volume.shape})')
 
-    # #####
-    # Calculate global volume weighted average
-    result = []
-    # #####
-    # iterate over time and z-coordinate dimensions.
-    for time_itr in range(cube.shape[t_dim]):
-        # ####
-        # create empty output arrays
-        column = []
-        depth_volume = []
+    masked_volume = da.ma.masked_where(
+        da.ma.getmaskarray(cube.lazy_data()),
+        grid_volume)
+    result = cube.collapsed(
+        [cube.coord(axis='Z'), cube.coord(axis='Y'), cube.coord(axis='X')],
+        iris.analysis.MEAN,
+        weights=masked_volume)
 
-        # ####
-        # iterate over time and z-coordinate dimensions.
-        for z_itr in range(cube.shape[1]):
-            # ####
-            # Calculate weighted mean for this time and layer
-            if operator == 'mean':
-                total = cube[time_itr, z_itr].collapsed(
-                    [cube.coord(axis='z'),
-                     'longitude', 'latitude'],
-                    iris.analysis.MEAN,
-                    weights=grid_volume[time_itr, z_itr]).data
-            else:
-                raise ValueError('Volume operator ({}) not '
-                                 'recognised.'.format(operator))
-            column.append(total)
+    return result
 
-            try:
-                layer_vol = np.ma.masked_where(
-                    cube[time_itr, z_itr].data.mask,
-                    grid_volume[time_itr, z_itr]).sum()
 
-            except AttributeError:
-                # ####
-                # No mask in the cube data.
-                layer_vol = grid_volume.sum()
-            depth_volume.append(layer_vol)
-        # ####
-        # Calculate weighted mean over the water volumn
-        column = np.ma.array(column)
-        depth_volume = np.ma.array(depth_volume)
-        result.append(np.ma.average(column, weights=depth_volume))
+def axis_statistics(cube, axis, operator):
+    """Perform statistics along a given axis.
 
-    # ####
-    # Send time series and dummy cube to cube creating tool.
-    times = np.array(cube.coord('time').points.astype(float))
-    result = np.ma.array(result)
+    Operates over an axis direction. If weights are required,
+    they are computed using the coordinate bounds.
 
-    # #####
-    # Create a small dummy output array for the output cube
-    if operator == 'mean':
-        src_cube = cube[:2, :2].collapsed([cube.coord(axis='z'),
-                                           'longitude', 'latitude'],
-                                          iris.analysis.MEAN,
-                                          weights=grid_volume[:2, :2], )
+    Arguments
+    ---------
+    cube: iris.cube.Cube
+        Input cube.
+    axis: str
+        Direction over where to apply the operator. Possible values
+        are 'x', 'y', 'z', 't'.
+    operator: str
+        Statistics to perform. Available operators are:
+        'mean', 'median', 'std_dev', 'sum', 'variance',
+        'min', 'max', 'rms'.
 
-    return _create_cube_time(src_cube, result, times)
+    Returns
+    -------
+    iris.cube.Cube
+        collapsed cube.
+    """
+    try:
+        coord = cube.coord(axis=axis)
+    except iris.exceptions.CoordinateNotFoundError as err:
+        raise ValueError(
+            'Axis {} not found in cube {}'.format(
+                axis,
+                cube.summary(shorten=True))) from err
+    coord_dims = cube.coord_dims(coord)
+    if len(coord_dims) > 1:
+        raise NotImplementedError(
+            'axis_statistics not implemented for '
+            'multidimensional coordinates.')
+    operation = get_iris_analysis_operation(operator)
+    if operator_accept_weights(operator):
+        coord_dim = coord_dims[0]
+        expand = list(range(cube.ndim))
+        expand.remove(coord_dim)
+        bounds = coord.core_bounds()
+        weights = np.abs(bounds[..., 1] - bounds[..., 0])
+        weights = np.expand_dims(weights, expand)
+        weights = da.broadcast_to(weights, cube.shape)
+        result = cube.collapsed(coord,
+                                operation,
+                                weights=weights)
+    else:
+        result = cube.collapsed(coord, operation)
+
+    return result
 
 
 def depth_integration(cube):
-    """
-    Determine the total sum over the vertical component.
+    """Determine the total sum over the vertical component.
 
     Requires a 3D cube. The z-coordinate
     integration is calculated by taking the sum in the z direction of the
@@ -297,23 +213,7 @@ def depth_integration(cube):
     iris.cube.Cube
         collapsed cube.
     """
-    # ####
-    depth = cube.coord(axis='z')
-    thickness = depth.bounds[..., 1] - depth.bounds[..., 0]
-
-    if depth.ndim == 1:
-        slices = [None for i in cube.shape]
-        coord_dim = cube.coord_dims(cube.coord(axis='z'))[0]
-        slices[coord_dim] = slice(None)
-        thickness = np.abs(thickness[tuple(slices)])
-
-    ones = np.ones_like(cube.data)
-
-    weights = thickness * ones
-
-    result = cube.collapsed(cube.coord(axis='z'), iris.analysis.SUM,
-                            weights=weights)
-
+    result = axis_statistics(cube, axis='z', operator='sum')
     result.rename('Depth_integrated_' + str(cube.name()))
     # result.units = Unit('m') * result.units # This doesn't work:
     # TODO: Change units on cube to reflect 2D concentration (not 3D)
@@ -322,8 +222,7 @@ def depth_integration(cube):
 
 
 def extract_transect(cube, latitude=None, longitude=None):
-    """
-    Extract data along a line of constant latitude or longitude.
+    """Extract data along a line of constant latitude or longitude.
 
     Both arguments, latitude and longitude, are treated identically.
     Either argument can be a single float, or a pair of floats, or can be
@@ -374,18 +273,16 @@ def extract_transect(cube, latitude=None, longitude=None):
 
     if lats.ndim == 2:
         raise ValueError(
-            'extract_transect: Not implemented for irregular arrays!'
-            + '\nTry regridding the data first.')
+            'extract_transect: Not implemented for irregular arrays!' +
+            '\nTry regridding the data first.')
 
     if isinstance(latitude, float) and isinstance(longitude, float):
         raise ValueError(
-            "extract_transect: Can't slice along lat and lon at the same time"
-        )
+            "extract_transect: Can't slice along lat and lon at the same time")
 
     if isinstance(latitude, list) and isinstance(longitude, list):
         raise ValueError(
-            "extract_transect: Can't reduce lat and lon at the same time"
-        )
+            "extract_transect: Can't reduce lat and lon at the same time")
 
     for dim_name, dim_cut, coord in zip(['latitude', 'longitude'],
                                         [latitude, longitude], [lats, lons]):
@@ -399,8 +296,10 @@ def extract_transect(cube, latitude=None, longitude=None):
         # Look for the second coordinate.
         if isinstance(dim_cut, list):
             coord_dim2 = cube.coord_dims(dim_name)[0]
-            second_coord_range = [coord.nearest_neighbour_index(dim_cut[0]),
-                                  coord.nearest_neighbour_index(dim_cut[1])]
+            second_coord_range = [
+                coord.nearest_neighbour_index(dim_cut[0]),
+                coord.nearest_neighbour_index(dim_cut[1])
+            ]
     # ####
     # Extracting the line of constant longitude/latitude
     slices = [slice(None) for i in cube.shape]
@@ -413,8 +312,7 @@ def extract_transect(cube, latitude=None, longitude=None):
 
 
 def extract_trajectory(cube, latitudes, longitudes, number_points=2):
-    """
-    Extract data along a trajectory.
+    """Extract data along a trajectory.
 
     latitudes and longitudes are the pairs of coordinates for two points.
     number_points is the number of points between the two points.
@@ -456,8 +354,7 @@ def extract_trajectory(cube, latitudes, longitudes, number_points=2):
 
     if len(latitudes) != len(longitudes):
         raise ValueError(
-            'Longitude & Latitude coordinates have different lengths'
-        )
+            'Longitude & Latitude coordinates have different lengths')
 
     if len(latitudes) == len(longitudes) == 2:
         minlat, maxlat = np.min(latitudes), np.max(latitudes)

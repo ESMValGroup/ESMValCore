@@ -1,0 +1,20 @@
+# Extra facets for native ICON model output
+
+# All extra facets for ICON are optional but might be necessary for some
+# variables. A complete list of supported keys is given in the documentation
+# (see ESMValCore/doc/quickstart/find_data.rst).
+---
+
+ICON:
+  '*':
+    areacella:
+      latitude: grid_latitude
+      longitude: grid_longitude
+      raw_name: cell_area
+    areacello:
+      latitude: grid_latitude
+      longitude: grid_longitude
+      raw_name: cell_area
+    clwvi: {raw_name: cllvi}
+    siconc: {raw_name: sic}
+    siconca: {raw_name: sic}

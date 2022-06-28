@@ -1,6 +1,7 @@
 """Unit tests for :mod:`esmvalcore.preprocessor._weighting`."""
 
 import iris
+import iris.fileformats
 import numpy as np
 import pytest
 from cf_units import Unit

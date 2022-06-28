@@ -1,3 +1,5 @@
+import copy
+import logging
 import stat
 from pathlib import Path
 
@@ -6,7 +8,34 @@ import yaml
 
 import esmvalcore._task
 from esmvalcore._config._diagnostics import TagsManager
-from esmvalcore._task import DiagnosticError
+from esmvalcore._task import DiagnosticError, write_ncl_settings
+
+
+def test_write_ncl_settings(tmp_path):
+    """Test minimally write_ncl_settings()."""
+    settings = {
+        'run_dir': str(tmp_path / 'run_dir'),
+        'diag_script_info': {'profile_diagnostic': False},
+        'var_name': 'tas',
+    }
+    file_name = tmp_path / "settings"
+    write_ncl_settings(settings, file_name)
+    with open(file_name, 'r') as file:
+        lines = file.readlines()
+        assert 'var_name = "tas"\n' in lines
+        assert 'if (isvar("profile_diagnostic")) then\n' not in lines
+
+    settings = {
+        'run_dir': str(tmp_path / 'run_dir'),
+        'profile_diagnostic': True,
+        'var_name': 'tas',
+    }
+    file_name = tmp_path / "settings"
+    write_ncl_settings(settings, file_name)
+    with open(file_name, 'r') as file:
+        lines = file.readlines()
+        assert 'var_name = "tas"\n' in lines
+        assert 'profile_diagnostic' not in lines
 
 
 @pytest.mark.parametrize("ext", ['.jl', '.py', '.ncl', '.R'])
@@ -36,14 +65,21 @@ def test_initialize_env(ext, tmp_path, monkeypatch):
 
     # Create correct environment
     env = {}
+    test_env = copy.deepcopy(task.env)
     if ext in ('.jl', '.py'):
         env['MPLBACKEND'] = 'Agg'
     if ext == '.jl':
-        env['JULIA_LOAD_PATH'] = f"{esmvaltool_path / 'install' / 'Julia'}:"
+        env['JULIA_LOAD_PATH'] = f"{esmvaltool_path / 'install' / 'Julia'}"
+
+        # check for new type of JULIA_LOAD_PATH
+        # and cut away new path arguments @:@$CONDA_ENV:@stdlib
+        # see https://github.com/ESMValGroup/ESMValCore/issues/1443
+        test_env['JULIA_LOAD_PATH'] = \
+            task.env['JULIA_LOAD_PATH'].split(":")[0]
     if ext in ('.ncl', '.R'):
         env['diag_scripts'] = str(diagnostics_path)
 
-    assert task.env == env
+    assert test_env == env
 
 
 CMD = {
@@ -205,6 +241,8 @@ def test_collect_no_provenance(caplog, diagnostic_task):
 
 def test_collect_provenance_no_ancestors(caplog, diagnostic_task):
 
+    caplog.set_level(logging.INFO)
+
     record = {
         "test.png": {
             "caption": "Some figure",
@@ -222,6 +260,8 @@ def test_collect_provenance_no_ancestors(caplog, diagnostic_task):
 
 
 def test_collect_provenance_invalid_ancestors(caplog, diagnostic_task):
+
+    caplog.set_level(logging.INFO)
 
     record = {
         "test.png": {
@@ -241,6 +281,8 @@ def test_collect_provenance_invalid_ancestors(caplog, diagnostic_task):
 
 
 def test_collect_provenance_ancestor_hint(mocker, caplog, diagnostic_task):
+
+    caplog.set_level(logging.INFO)
 
     record = {
         "test.png": {

@@ -15,6 +15,7 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Land/Sea/Ice masking`
 * :ref:`Horizontal regridding`
 * :ref:`Masking of missing values`
+* :ref:`Ensemble statistics`
 * :ref:`Multi-model statistics`
 * :ref:`Time operations`
 * :ref:`Area operations`
@@ -23,6 +24,7 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Trend`
 * :ref:`Detrend`
 * :ref:`Unit conversion`
+* :ref:`Bias`
 * :ref:`Other`
 
 See :ref:`preprocessor_functions` for implementation details and the exact default order.
@@ -31,7 +33,7 @@ Overview
 ========
 
 ..
-   ESMValTool is a modular ``Python 3.6+`` software package possessing capabilities
+   ESMValTool is a modular ``Python 3.8+`` software package possessing capabilities
    of executing a large number of diagnostic routines that can be written in a
    number of programming languages (Python, NCL, R, Julia). The modular nature
    benefits the users and developers in different key areas: a new feature
@@ -150,6 +152,7 @@ following:
     - Incorrect units, if they can be converted to the correct ones.
     - Direction of coordinates.
     - Automatic clipping of longitude to 0 - 360 interval.
+    - Minute differences between the required and actual vertical coordinate values
 
 
 Dataset specific fixes
@@ -180,22 +183,92 @@ To get an overview on data fixes and how to implement new ones, please go to
 
 Fx variables as cell measures or ancillary variables
 ====================================================
-The following preprocessor may require the use of ``fx_variables`` 
-to be able to perform the computations:
+The following preprocessors may require the use of ``fx_variables`` to be able
+to perform the computations:
 
-    - ``area_statistics``
-    - ``mask_landsea``
-    - ``mask_landseaice``
-    - ``volume_statistics``
-    - ``weighting_landsea_fraction``
+============================================================== =====================
+Preprocessor                                                   Default fx variables
+============================================================== =====================
+:ref:`area_statistics<area_statistics>`                        ``areacella``, ``areacello``
+:ref:`mask_landsea<land/sea/ice masking>`                      ``sftlf``, ``sftof``
+:ref:`mask_landseaice<ice masking>`                            ``sftgif``
+:ref:`volume_statistics<volume_statistics>`                    ``volcello``
+:ref:`weighting_landsea_fraction<land/sea fraction weighting>` ``sftlf``, ``sftof``
+============================================================== =====================
 
-The preprocessor step ``add_fx_variables`` loads the required ``fx_variables``,
-checks them against CMOR standards and adds them either as ``cell_measure``
-or ``ancillary_variable`` inside the cube data. This ensures that the
-defined preprocessor chain is applied to both ``variables`` and ``fx_variables``.
+If the option ``fx_variables`` is not explicitly specified for these
+preprocessors, the default fx variables in the second column are automatically
+used. If given, the ``fx_variables`` argument specifies the fx variables that
+the user wishes to input to the corresponding preprocessor function. The user
+may specify these by simply adding the names of the variables, e.g.,
+
+.. code-block:: yaml
+
+    fx_variables:
+      areacello:
+      volcello:
+
+or by additionally specifying further keys that are used to define the fx
+datasets, e.g.,
+
+.. code-block:: yaml
+
+    fx_variables:
+      areacello:
+        mip: Ofx
+        exp: piControl
+      volcello:
+        mip: Omon
+
+This might be useful to select fx files from a specific ``mip`` table or from a
+specific ``exp`` in case not all experiments provide the fx variable.
+
+Alternatively, the ``fx_variables`` argument can also be specified as a list:
+
+.. code-block:: yaml
+
+    fx_variables: ['areacello', 'volcello']
+
+or as a list of dictionaries:
+
+.. code-block:: yaml
+
+    fx_variables: [{'short_name': 'areacello', 'mip': 'Ofx', 'exp': 'piControl'}, {'short_name': 'volcello', 'mip': 'Omon'}]
+
+The recipe parser will automatically find the data files that are associated
+with these variables and pass them to the function for loading and processing.
+
+If ``mip`` is not given, ESMValTool will search for the fx variable in all
+available tables of the specified project.
+
+.. warning::
+   Some fx variables exist in more than one table (e.g., ``volcello`` exists in
+   CMIP6's ``Odec``, ``Ofx``, ``Omon``, and ``Oyr`` tables; ``sftgif`` exists
+   in CMIP6's ``fx``, ``IyrAnt`` and ``IyrGre``, and ``LImon`` tables). If (for
+   a given dataset) fx files are found in more than one table, ``mip`` needs to
+   be specified, otherwise an error is raised.
+
+.. note::
+   To explicitly **not** use any fx variables in a preprocessor, use
+   ``fx_variables: null``.  While some of the preprocessors mentioned above do
+   work without fx variables (e.g., ``area_statistics`` or ``mask_landsea``
+   with datasets that have regular latitude/longitude grids), using this option
+   is **not** recommended.
+
+Internally, the required ``fx_variables`` are automatically loaded by the
+preprocessor step ``add_fx_variables`` which also checks them against CMOR
+standards and adds them either as ``cell_measure`` (see `CF conventions on cell
+measures
+<https://cfconventions.org/cf-conventions/cf-conventions.html#cell-measures>`_
+and :class:`iris.coords.CellMeasure`) or ``ancillary_variable`` (see `CF
+conventions on ancillary variables
+<https://cfconventions.org/cf-conventions/cf-conventions.html#ancillary-data>`_
+and :class:`iris.coords.AncillaryVariable`) inside the cube data. This ensures
+that the defined preprocessor chain is applied to both ``variables`` and
+``fx_variables``.
 
 Note that when calling steps that require ``fx_variables`` inside diagnostic
-scripts, the variables are expected to contain the required ``cell_measures`` or 
+scripts, the variables are expected to contain the required ``cell_measures`` or
 ``ancillary_variables``. If missing, they can be added using the following functions:
 
 .. code-block::
@@ -209,7 +282,7 @@ scripts, the variables are expected to contain the required ``cell_measures`` or
     cube_with_ancillary_sftlf = add_ancillary_variable(cube, sftlf_cube)
 
     cube_with_ancillary_sftgif = add_ancillary_variable(cube, sftgif_cube)
-  
+
   Details on the arguments needed for each step can be found in the following sections.
 
 .. _Vertical interpolation:
@@ -262,7 +335,7 @@ extract the levels and vertically regrid onto the vertical levels of
           levels: ERA-Interim
           # This also works, but allows specifying the pressure coordinate name
           # levels: {dataset: ERA-Interim, coordinate: air_pressure}
-          scheme: linear_horizontal_extrapolate_vertical
+          scheme: linear_extrapolate
 
 By default, vertical interpolation is performed in the dimension coordinate of
 the z axis. If you want to explicitly declare the z axis coordinate to use
@@ -276,7 +349,7 @@ the name of the desired coordinate:
       preproc_select_levels_from_dataset:
         extract_levels:
           levels: ERA-Interim
-          scheme: linear_horizontal_extrapolate_vertical
+          scheme: linear_extrapolate
           coordinate: air_pressure
 
 If ``coordinate`` is specified, pressure levels (if present) can be converted
@@ -286,28 +359,57 @@ to height levels and vice versa using the US standard atmosphere. E.g.
 ``coordinate = air_pressure`` will convert existing height levels
 (altitude) to pressure levels (air_pressure).
 
+If the requested levels are very close to the values in the input data,
+the function will just select the available levels instead of interpolating.
+The meaning of 'very close' can be changed by providing the parameters:
+
+* ``rtol``
+    Relative tolerance for comparing the levels in the input data to the requested
+    levels. If the levels are sufficiently close, the requested levels
+    will be assigned to the vertical coordinate and no interpolation will take place.
+    The default value is 10^-7.
+* ``atol``
+    Absolute tolerance for comparing the levels in the input data to the requested
+    levels. If the levels are sufficiently close, the requested levels
+    will be assigned to the vertical coordinate and no interpolation will take place.
+    By default, `atol` will be set to 10^-7 times the mean value of
+    of the available levels.
+
+.. _Vertical interpolation schemes:
+
+Schemes for vertical interpolation and extrapolation
+----------------------------------------------------
+
+The vertical interpolation currently supports the following schemes:
+
+* ``linear``: Linear interpolation without extrapolation, i.e., extrapolation
+  points will be masked even if the source data is not a masked array.
+* ``linear_extrapolate``: Linear interpolation with **nearest-neighbour**
+  extrapolation, i.e., extrapolation points will take their value from the
+  nearest source point.
+* ``nearest``: Nearest-neighbour interpolation without extrapolation, i.e.,
+  extrapolation points will be masked even if the source data is not a masked
+  array.
+* ``nearest_extrapolate``: Nearest-neighbour interpolation with nearest-neighbour
+  extrapolation, i.e., extrapolation points will take their value from the
+  nearest source point.
+
+.. note::
+   Previous versions of ESMValCore (<2.5.0) supported the schemes
+   ``linear_horizontal_extrapolate_vertical`` and
+   ``nearest_horizontal_extrapolate_vertical``. These schemes have been renamed
+   to ``linear_extrapolate`` and ``nearest_extrapolate``, respectively, in
+   version 2.5.0 and are identical to the new schemes. Support for the old
+   names will be removed in version 2.7.0.
+
 * See also :func:`esmvalcore.preprocessor.extract_levels`.
 * See also :func:`esmvalcore.preprocessor.get_cmor_levels`.
 
 .. note::
 
-   For both vertical and horizontal regridding one can control the
-   extrapolation mode when defining the interpolation scheme. Controlling the
-   extrapolation mode allows us to avoid situations where extrapolating values
-   makes little physical sense (e.g. extrapolating beyond the last data point).
-   The extrapolation mode is controlled by the `extrapolation_mode`
-   keyword. For the available interpolation schemes available in Iris, the
-   extrapolation_mode keyword must be one of:
-
-        * ``extrapolate``: the extrapolation points will be calculated by
-	  extending the gradient of the closest two points;
-        * ``error``: a ``ValueError`` exception will be raised, notifying an
-	  attempt to extrapolate;
-        * ``nan``: the extrapolation points will be be set to NaN;
-        * ``mask``: the extrapolation points will always be masked, even if the
-	  source data is not a ``MaskedArray``; or
-        * ``nanmask``: if the source data is a MaskedArray the extrapolation
-	  points will be masked, otherwise they will be set to NaN.
+   Controlling the extrapolation mode allows us to avoid situations where
+   extrapolating values makes little physical sense (e.g. extrapolating beyond
+   the last data point).
 
 
 .. _weighting:
@@ -351,8 +453,8 @@ is for example useful for climate models which do not offer land/sea fraction
 files. This arguments also accepts the special dataset specifiers
 ``reference_dataset`` and ``alternative_dataset``.
 
-Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
-experiment is preferred for fx data retrieval:
+Optionally you can specify your own custom fx variable to be used in cases when
+e.g. a certain experiment is preferred for fx data retrieval:
 
 .. code-block:: yaml
 
@@ -361,7 +463,7 @@ experiment is preferred for fx data retrieval:
         weighting_landsea_fraction:
           area_type: land
           exclude: ['CanESM2', 'reference_dataset']
-          fx_variables: 
+          fx_variables:
             sftlf:
               exp: piControl
             sftof:
@@ -377,9 +479,12 @@ or alternatively:
           area_type: land
           exclude: ['CanESM2', 'reference_dataset']
           fx_variables: [
-            {'short_name': 'sftlf', 'exp': 'piControl'}, 
+            {'short_name': 'sftlf', 'exp': 'piControl'},
             {'short_name': 'sftof', 'exp': 'piControl'}
             ]
+
+More details on the argument ``fx_variables`` and its default values are given
+in :ref:`Fx variables as cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
@@ -426,11 +531,6 @@ To mask out a certain domain (e.g., sea) in the preprocessor,
 
 and requires only one argument: ``mask_out``: either ``land`` or ``sea``.
 
-The preprocessor automatically retrieves the corresponding mask (``fx: stfof``
-in this case) and applies it so that sea-covered grid cells are set to
-missing. Conversely, it retrieves the ``fx: sftlf`` mask when land needs to be
-masked out, respectively.
-
 Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
 experiment is preferred for fx data retrieval. Note that it is possible to specify as many tags
 for the fx variable as required:
@@ -442,8 +542,8 @@ for the fx variable as required:
       landmask:
         mask_landsea:
           mask_out: sea
-          fx_variables: 
-            sftlf: 
+          fx_variables:
+            sftlf:
               exp: piControl
             sftof:
               exp: piControl
@@ -458,9 +558,12 @@ or alternatively:
         mask_landsea:
           mask_out: sea
           fx_variables: [
-            {'short_name': 'sftlf', 'exp': 'piControl'}, 
+            {'short_name': 'sftlf', 'exp': 'piControl'},
             {'short_name': 'sftof', 'exp': 'piControl', 'ensemble': 'r2i1p1f1'}
             ]
+
+More details on the argument ``fx_variables`` and its default values are given
+in :ref:`Fx variables as cell measures or ancillary variables`.
 
 If the corresponding fx file is not found (which is
 the case for some models and almost all observational datasets), the
@@ -470,6 +573,8 @@ Natural Earth masks are much higher than any typical global model (10m for
 land and glaciated areas and 50m for ocean masks).
 
 See also :func:`esmvalcore.preprocessor.mask_landsea`.
+
+.. _ice masking:
 
 Ice masking
 -----------
@@ -487,11 +592,8 @@ losing generality. To mask ice out, ``mask_landseaice`` can be used:
 
 and requires only one argument: ``mask_out``: either ``landsea`` or ``ice``.
 
-As in the case of ``mask_landsea``, the preprocessor automatically retrieves
-the ``fx_variables: [sftgif]`` mask.
-
-Optionally you can specify your own custom fx variable to be used in cases when e.g. a certain
-experiment is preferred for fx data retrieval:
+Optionally you can specify your own custom fx variable to be used in cases when
+e.g. a certain experiment is preferred for fx data retrieval:
 
 
 .. code-block:: yaml
@@ -500,7 +602,7 @@ experiment is preferred for fx data retrieval:
       landseaicemask:
         mask_landseaice:
           mask_out: sea
-          fx_variables: 
+          fx_variables:
             sftgif:
               exp: piControl
 
@@ -513,6 +615,9 @@ or alternatively:
         mask_landseaice:
           mask_out: sea
           fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
+
+More details on the argument ``fx_variables`` and its default values are given
+in :ref:`Fx variables as cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
@@ -628,7 +733,7 @@ Regridding on a reference dataset grid
 --------------------------------------
 
 The example below shows how to regrid on the reference dataset
-``ERA-Interim`` (observational data, but just as well CMIP, obs4mips,
+``ERA-Interim`` (observational data, but just as well CMIP, obs4MIPs,
 or ana4mips datasets can be used); in this case the `scheme` is
 `linear`.
 
@@ -724,37 +829,44 @@ The arguments are defined below:
 Regridding (interpolation, extrapolation) schemes
 -------------------------------------------------
 
+ESMValTool has a number of built-in regridding schemes, which are presented in
+:ref:`built-in regridding schemes`. Additionally, it is also possible to use
+third party regridding schemes designed for use with :doc:`Iris
+<iris:index>`. This is explained in :ref:`generic regridding schemes`.
+
+.. _built-in regridding schemes:
+
+Built-in regridding schemes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The schemes used for the interpolation and extrapolation operations needed by
 the horizontal regridding functionality directly map to their corresponding
-implementations in Iris:
+implementations in :mod:`iris`:
 
-* ``linear``: ``Linear(extrapolation_mode='mask')``, see :obj:`iris.analysis.Linear`.
-* ``linear_extrapolate``: ``Linear(extrapolation_mode='extrapolate')``, see :obj:`iris.analysis.Linear`.
-* ``nearest``: ``Nearest(extrapolation_mode='mask')``, see :obj:`iris.analysis.Nearest`.
-* ``area_weighted``: ``AreaWeighted()``, see :obj:`iris.analysis.AreaWeighted`.
-* ``unstructured_nearest``: ``UnstructuredNearest()``, see :obj:`iris.analysis.UnstructuredNearest`.
+* ``linear``: Linear interpolation without extrapolation, i.e., extrapolation
+  points will be masked even if the source data is not a masked array (uses
+  ``Linear(extrapolation_mode='mask')``, see :obj:`iris.analysis.Linear`).
+* ``linear_extrapolate``: Linear interpolation with extrapolation, i.e.,
+  extrapolation points will be calculated by extending the gradient of the
+  closest two points (uses ``Linear(extrapolation_mode='extrapolate')``, see
+  :obj:`iris.analysis.Linear`).
+* ``nearest``: Nearest-neighbour interpolation without extrapolation, i.e.,
+  extrapolation points will be masked even if the source data is not a masked
+  array (uses ``Nearest(extrapolation_mode='mask')``, see
+  :obj:`iris.analysis.Nearest`).
+* ``area_weighted``: Area-weighted regridding (uses ``AreaWeighted()``, see
+  :obj:`iris.analysis.AreaWeighted`).
+* ``unstructured_nearest``: Nearest-neighbour interpolation for unstructured
+  grids (uses ``UnstructuredNearest()``, see
+  :obj:`iris.analysis.UnstructuredNearest`).
 
 See also :func:`esmvalcore.preprocessor.regrid`
 
 .. note::
 
-   For both vertical and horizontal regridding one can control the
-   extrapolation mode when defining the interpolation scheme. Controlling the
-   extrapolation mode allows us to avoid situations where extrapolating values
-   makes little physical sense (e.g. extrapolating beyond the last data
-   point). The extrapolation mode is controlled by the `extrapolation_mode`
-   keyword. For the available interpolation schemes available in Iris, the
-   extrapolation_mode keyword must be one of:
-
-        * ``extrapolate`` – the extrapolation points will be calculated by
-	  extending the gradient of the closest two points;
-        * ``error`` – a ``ValueError`` exception will be raised, notifying an
-	  attempt to extrapolate;
-        * ``nan`` – the extrapolation points will be be set to NaN;
-        * ``mask`` – the extrapolation points will always be masked, even if
-	  the source data is not a ``MaskedArray``; or
-        * ``nanmask`` – if the source data is a MaskedArray the extrapolation
-	  points will be masked, otherwise they will be set to NaN.
+   Controlling the extrapolation mode allows us to avoid situations where
+   extrapolating values makes little physical sense (e.g. extrapolating beyond
+   the last data point).
 
 .. note::
 
@@ -765,6 +877,127 @@ See also :func:`esmvalcore.preprocessor.regrid`
    for resolutions of ``< 0.5`` degrees the regridding becomes very slow and
    will use a lot of memory.
 
+.. _generic regridding schemes:
+
+Generic regridding schemes
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:ref:`Iris' regridding <iris:interpolation_and_regridding>` is based around the
+flexible use of so-called regridding schemes. These are classes that know how
+to transform a source cube with a given grid into the grid defined by a given
+target cube. Iris itself provides a number of useful schemes, but they are
+largely limited to work with simple, regular grids. Other schemes can be
+provided independently. This is interesting when special regridding-needs arise
+or when more involved grids and meshes need to be considered. Furthermore, it
+may be desirable to have finer control over the parameters of the scheme than
+is afforded by the built-in schemes described above.
+
+To facilitate this, the :func:`~esmvalcore.preprocessor.regrid` preprocessor
+allows the use of any scheme designed for Iris. The scheme must be installed
+and importable. To use this feature, the ``scheme`` key passed to the
+preprocessor must be a dictionary instead of a simple string that contains all
+necessary information. That includes a ``reference`` to the desired scheme
+itself, as well as any arguments that should be passed through to the
+scheme. For example, the following shows the use of the built-in scheme
+:class:`iris.analysis.AreaWeighted` with a custom threshold for missing data
+tolerance.
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 2.5x2.5
+          scheme:
+            reference: iris.analysis:AreaWeighted
+            mdtol: 0.7
+
+The value of the ``reference`` key has two parts that are separated by a
+``:`` with no surrounding spaces. The first part is an importable Python
+module, the second refers to the scheme, i.e. some callable that will be called
+with the remaining entries of the ``scheme`` dictionary passed as keyword
+arguments.
+
+One package that aims to capitalize on the :ref:`support for unstructured
+meshes introduced in Iris 3.2 <iris:ugrid>` is
+:doc:`iris-esmf-regrid:index`. It aims to provide lazy regridding for
+structured regular and irregular grids, as well as unstructured meshes. An
+example of its usage in an ESMValTool preprocessor is:
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 2.5x2.5
+          scheme:
+            reference: esmf_regrid.schemes:ESMFAreaWeighted
+            mdtol: 0.7
+
+.. TODO: Remove the following warning once things have settled a bit.
+.. warning::
+   Just as the mesh support in Iris itself, this new regridding package is
+   still considered experimental.
+
+.. _ensemble statistics:
+
+Ensemble statistics
+===================
+For certain use cases it may be desirable to compute ensemble statistics. For
+example to prevent models with many ensemble members getting excessive weight in
+the multi-model statistics functions.
+
+Theoretically, ensemble statistics are a special case (grouped) multi-model
+statistics. This grouping is performed taking into account the dataset tags
+`project`, `dataset`, `experiment`, and (if present) `sub_experiment`.
+However, they should typically be computed earlier in the workflow.
+Moreover, because multiple ensemble members of the same model are typically more
+consistent/homogeneous than datasets from different models, the implementation
+is more straigtforward and can benefit from lazy evaluation and more efficient
+computation.
+
+The preprocessor takes a list of statistics as input:
+
+.. code-block:: yaml
+
+    preprocessors:
+      example_preprocessor:
+        ensemble_statistics:
+          statistics: [mean, median]
+
+This preprocessor function exposes the iris analysis package, and works with all
+(capitalized) statistics from the :mod:`iris.analysis` package
+that can be executed without additional arguments (e.g. percentiles are not
+supported because it requires additional keywords: percentile.).
+
+Note that ``ensemble_statistics`` will not return the single model and ensemble files,
+only the requested ensemble statistics results.
+
+In case of wanting to save both individual ensemble members as well as the statistic results,
+the preprocessor chains could be defined as:
+
+.. code-block:: yaml
+
+    preprocessors:
+      everything_else: &everything_else
+        area_statistics: ...
+        regrid_time: ...
+      multimodel:
+        <<: *everything_else
+        ensemble_statistics:
+
+    variables:
+      tas_datasets:
+        short_name: tas
+        preprocessor: everything_else
+        ...
+      tas_multimodel:
+        short_name: tas
+        preprocessor: multimodel
+        ...
+
+
+See also :func:`esmvalcore.preprocessor.ensemble_statistics`.
 
 .. _multi-model statistics:
 
@@ -777,7 +1010,7 @@ observational data, these biases have a significantly lower statistical impact
 when using a multi-model ensemble. ESMValTool has the capability of computing a
 number of multi-model statistical measures: using the preprocessor module
 ``multi_model_statistics`` will enable the user to ask for either a multi-model
-``mean``, ``median``, ``max``, ``min``, ``std``, and / or ``pXX.YY`` with a set
+``mean``, ``median``, ``max``, ``min``, ``std_dev``, and / or ``pXX.YY`` with a set
 of argument parameters passed to ``multi_model_statistics``. Percentiles can be
 specified like ``p1.5`` or ``p95``. The decimal point will be replaced by a dash
 in the output file.
@@ -794,32 +1027,78 @@ across overlapping times only (``span: overlap``) or across the full time span
 of the combined models (``span: full``). The preprocessor sets a common time
 coordinate on all datasets. As the number of days in a year may vary between
 calendars, (sub-)daily data with different calendars are not supported.
+The preprocessor saves both the input single model files as well as the multi-model
+results. In case you do not want to keep the single model files, set the
+parameter ``keep_input_datasets`` to ``false`` (default value is ``true``).
+
+.. code-block:: yaml
+
+    preprocessors:
+      multi_model_save_input:
+        multi_model_statistics:
+          span: overlap
+          statistics: [mean, median]
+          exclude: [NCEP]
+      multi_model_without_saving_input:
+        multi_model_statistics:
+          span: overlap
+          statistics: [mean, median]
+          exclude: [NCEP]
+          keep_input_datasets: false
 
 Input datasets may have different time coordinates. The multi-model statistics
 preprocessor sets a common time coordinate on all datasets. As the number of
 days in a year may vary between calendars, (sub-)daily data are not supported.
 
+Multi-model statistics also supports a ``groupby`` argument. You can group by
+any dataset key (``project``, ``experiment``, etc.) or a combination of keys in a list. You can
+also add an arbitrary tag to a dataset definition and then group by that tag. When
+using this preprocessor in conjunction with `ensemble statistics`_ preprocessor, you
+can group by ``ensemble_statistics`` as well. For example:
+
 .. code-block:: yaml
 
+    datasets:
+      - {dataset: CanESM2, exp: historical, ensemble: "r(1:2)i1p1"}
+      - {dataset: CCSM4, exp: historical, ensemble: "r(1:2)i1p1"}
+
     preprocessors:
-      multi_model_preprocessor:
+      example_preprocessor:
+        ensemble_statistics:
+          statistics: [median, mean]
         multi_model_statistics:
           span: overlap
-          statistics: [mean, median]
+          statistics: [min, max]
+          groupby: [ensemble_statistics]
           exclude: [NCEP]
 
-see also :func:`esmvalcore.preprocessor.multi_model_statistics`.
+This will first compute ensemble mean and median, and then compute the multi-model
+min and max separately for the ensemble means and medians. Note that this combination
+will not save the individual ensemble members, only the ensemble and multimodel statistics results.
 
-When calling the module inside diagnostic scripts, the input must be given
-as a list of cubes. The output will be saved in a dictionary where each
-entry contains the resulting cube with the requested statistic operations.
+When grouping by a tag not defined in all datasets, the datasets missing the tag will
+be grouped together. In the example below, datasets `UKESM` and `ERA5` would belong to the same
+group, while the other datasets would belong to either ``group1`` or ``group2``
 
-.. code-block::
+.. code-block:: yaml
 
-    from esmvalcore.preprocessor import multi_model_statistics
-    statistics = multi_model_statistics([cube1,...,cubeN], 'overlap', ['mean', 'median'])
-    mean_cube = statistics['mean']
-    median_cube = statistics['median']
+    datasets:
+      - {dataset: CanESM2, exp: historical, ensemble: "r(1:2)i1p1", tag: 'group1'}
+      - {dataset: CanESM5, exp: historical, ensemble: "r(1:2)i1p1", tag: 'group2'}
+      - {dataset: CCSM4, exp: historical, ensemble: "r(1:2)i1p1", tag: 'group2'}
+      - {dataset: UKESM, exp: historical, ensemble: "r(1:2)i1p1"}
+      - {dataset: ERA5}
+
+    preprocessors:
+      example_preprocessor:
+        multi_model_statistics:
+          span: overlap
+          statistics: [min, max]
+          groupby: [tag]
+
+Note that those datasets can be excluded if listed in the ``exclude`` option.
+
+See also :func:`esmvalcore.preprocessor.multi_model_statistics`.
 
 .. note::
 
@@ -971,8 +1250,8 @@ See also :func:`esmvalcore.preprocessor.monthly_statistics`.
 ``seasonal_statistics``
 -----------------------
 
-This function produces statistics for each season (default: "(DJF, MAM, JJA,
-SON)" or custom seasons e.g. "(JJAS, ONDJFMAM)" ) in the dataset. Note that
+This function produces statistics for each season (default: ``[DJF, MAM, JJA,
+SON]`` or custom seasons e.g. ``[JJAS, ONDJFMAM]``) in the dataset. Note that
 this function will not check for missing time points. For instance, if you are
 looking at the DJF field, but your datasets starts on January 1st, the first
 DJF field will only contain data from January and February.
@@ -985,9 +1264,9 @@ Parameters:
       'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
     * seasons: seasons to build statistics.
-      Default is '(DJF, MAM, JJA, SON)'
+      Default is '[DJF, MAM, JJA, SON]'
 
-See also :func:`esmvalcore.preprocessor.seasonal_mean`.
+See also :func:`esmvalcore.preprocessor.seasonal_statistics`.
 
 .. _annual_statistics:
 
@@ -1021,7 +1300,7 @@ See also :func:`esmvalcore.preprocessor.decadal_statistics`.
 ----------------------
 
 This function produces statistics for the whole dataset. It can produce scalars
-(if the full period is chosen) or daily, monthly or seasonal statics.
+(if the full period is chosen) or daily, monthly or seasonal statistics.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean', 'median',
@@ -1033,7 +1312,7 @@ Parameters:
       'mon', 'daily', 'day'. Default is 'full'
 
     * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
-      Default is '(DJF, MAM, JJA, SON)'
+      Default is '[DJF, MAM, JJA, SON]'
 
 Examples:
     * Monthly climatology:
@@ -1155,7 +1434,7 @@ Parameters:
       parameters from extract_time_. Default is null
     * standardize: if true calculate standardized anomalies (default: false)
     * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
-      Default is '(DJF, MAM, JJA, SON)'
+      Default is '[DJF, MAM, JJA, SON]'
 Examples:
     * Anomalies from the full period climatology:
 
@@ -1251,15 +1530,44 @@ Area manipulation
 =================
 The area manipulation module contains the following preprocessor functions:
 
+* extract_coordinate_points_: Extract a point with arbitrary coordinates given an interpolation scheme.
 * extract_region_: Extract a region from a cube based on ``lat/lon``
   corners.
 * extract_named_regions_: Extract a specific region from in the region
   coordinate.
 * extract_shape_: Extract a region defined by a shapefile.
 * extract_point_: Extract a single point (with interpolation)
+* extract_location_: Extract a single point by its location (with interpolation)
 * zonal_statistics_: Compute zonal statistics.
 * meridional_statistics_: Compute meridional statistics.
 * area_statistics_: Compute area statistics.
+
+
+``extract_coordinate_points``
+-----------------------------
+
+This function extracts points with given coordinates, following either a
+``linear`` or a ``nearest`` interpolation scheme.
+The resulting point cube will match the respective coordinates to
+those of the input coordinates. If the input coordinate is a scalar,
+the dimension will be a scalar in the output cube.
+
+If the point to be extracted has at least one of the coordinate point
+values outside the interval of the cube's same coordinate values, then
+no extrapolation will be performed, and the resulting extracted cube
+will have fully masked data.
+
+Examples:
+    * Extract a point from coordinate `grid_latitude` with given coordinate value 26.0:
+
+        .. code-block:: yaml
+
+            extract_coordinate_points:
+              definition:
+                grid_latitude: 26.
+              scheme: nearest
+
+See also :func:`esmvalcore.preprocessor.extract_coordinate_points`.
 
 
 ``extract_region``
@@ -1374,6 +1682,11 @@ match the respective latitude and longitude coordinate to those of the
 input coordinates. If the input coordinate is a scalar, the dimension
 will be missing in the output cube (that is, it will be a scalar).
 
+If the point to be extracted has at least one of the coordinate point
+values outside the interval of the cube's same coordinate values, then
+no extrapolation will be performed, and the resulting extracted cube
+will have fully masked data.
+
 Parameters:
   * ``cube``: the input dataset cube.
   * ``latitude``, ``longitude``: coordinates (as floating point
@@ -1381,6 +1694,35 @@ Parameters:
     be an array of floating point values.
   * ``scheme``: interpolation scheme: either ``'linear'`` or
     ``'nearest'``. There is no default.
+
+See also :func:`esmvalcore.preprocessor.extract_point`.
+
+
+.. _extract_location:
+
+``extract_location``
+--------------------
+
+Extract a single point using a location name, with interpolation
+(either linear or nearest). This preprocessor extracts a single
+location point from a cube, according to the given interpolation
+scheme ``scheme``. The function retrieves the coordinates of the
+location and then calls the :func:`esmvalcore.preprocessor.extract_point`
+preprocessor. It can be used to locate cities and villages,
+but also mountains or other geographical locations.
+
+.. note::
+   Note that this function's geolocator application needs a
+   working internet connection.
+
+Parameters
+  * ``cube``: the input dataset cube to extract a point from.
+  * ``location``: the reference location. Examples: 'mount everest',
+    'romania', 'new york, usa'. Raises ValueError if none supplied.
+  * ``scheme`` : interpolation scheme. ``'linear'`` or ``'nearest'``.
+    There is no default, raises ValueError if none supplied.
+
+See also :func:`esmvalcore.preprocessor.extract_location`.
 
 
 ``zonal_statistics``
@@ -1406,6 +1748,8 @@ argument:
 See also :func:`esmvalcore.preprocessor.meridional_means`.
 
 
+.. _area_statistics:
+
 ``area_statistics``
 -------------------
 
@@ -1420,40 +1764,9 @@ Note that this function is applied over the entire dataset. If only a specific
 region, depth layer or time period is required, then those regions need to be
 removed using other preprocessor operations in advance.
 
-The ``fx_variables`` argument specifies the fx variables that the user wishes to input to the function;
-the user may specify it calling the variables e.g.
-
-.. code-block:: yaml
-
-    fx_variables: 
-      areacello:
-      volcello:
-
-or calling the variables and adding specific variable parameters (the key-value pair may be as specific
-as a CMOR variable can permit):
-
-.. code-block:: yaml
-
-    fx_variables: 
-      areacello:
-        mip: Omon
-      volcello:
-        mip: fx
-
-Alternatively, the ``fx_variables`` argument can also be specified as a list:
-
-.. code-block:: yaml
-
-    fx_variables: ['areacello', 'volcello']
-
-or as a list of dictionaries:
-
-.. code-block:: yaml
-
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello', 'mip': 'fx'}]
-
-The recipe parser will automatically find the data files that are associated with these
-variables and pass them to the function for loading and processing.
+The optional ``fx_variables`` argument specifies the fx variables that the user
+wishes to input to the function. More details on this are given in :ref:`Fx
+variables as cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
 
@@ -1464,6 +1777,7 @@ Volume manipulation
 ===================
 The ``_volume.py`` module contains the following preprocessor functions:
 
+* ``axis_statistics``: Perform operations along a given axis.
 * ``extract_volume``: Extract a specific depth range from a cube.
 * ``volume_statistics``: Calculate the volume-weighted average.
 * ``depth_integration``: Integrate over the depth dimension.
@@ -1486,6 +1800,8 @@ as the Iris cube. That is, if the cube has `z`-coordinate as negative, then
 See also :func:`esmvalcore.preprocessor.extract_volume`.
 
 
+.. _volume_statistics:
+
 ``volume_statistics``
 ---------------------
 
@@ -1496,44 +1812,33 @@ This function takes the argument: ``operator``, which defines the operation to
 apply over the volume.
 
 No depth coordinate is required as this is determined by Iris. This function
-works best when the ``fx_variables`` provide the cell volume.
-
-The ``fx_variables`` argument specifies the fx variables that the user wishes to input to the function;
-the user may specify it calling the variables e.g.
-
-.. code-block:: yaml
-
-    fx_variables: 
-      areacello:
-      volcello:
-
-or calling the variables and adding specific variable parameters (the key-value pair may be as specific
-as a CMOR variable can permit):
-
-.. code-block:: yaml
-
-    fx_variables: 
-      areacello:
-        mip: Omon
-      volcello:
-        mip: fx
-
-Alternatively, the ``fx_variables`` argument can also be specified as a list:
-
-.. code-block:: yaml
-
-    fx_variables: ['areacello', 'volcello']
-
-or as a list of dictionaries:
-
-.. code-block:: yaml
-
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Omon'}, {'short_name': 'volcello', 'mip': 'fx'}]
-
-The recipe parser will automatically find the data files that are associated with these
-variables and pass them to the function for loading and processing.
+works best when the ``fx_variables`` provide the cell volume. The optional
+``fx_variables`` argument specifies the fx variables that the user wishes to
+input to the function. More details on this are given in :ref:`Fx variables as
+cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
+
+
+``axis_statistics``
+---------------------
+
+This function operates over a given axis, and removes it from the
+output cube.
+
+Takes arguments:
+  * axis: direction over which the statistics will be performed.
+    Possible values for the axis are 'x', 'y', 'z', 't'.
+  * operator: defines the operation to apply over the axis.
+    Available operator are 'mean', 'median', 'std_dev', 'sum', 'variance',
+    'min', 'max', 'rms'.
+
+.. note::
+   The coordinate associated to the axis over which the operation will
+   be performed must be one-dimensional, as multidimensional coordinates
+   are not supported in this preprocessor.
+
+See also :func:`esmvalcore.preprocessor.axis_statistics`.
 
 
 ``depth_integration``
@@ -1671,6 +1976,9 @@ See also :func:`esmvalcore.preprocessor.detrend`.
 Unit conversion
 ===============
 
+``convert_units``
+-----------------
+
 Converting units is also supported. This is particularly useful in
 cases where different datasets might have different units, for example
 when comparing CMIP5 and CMIP6 variables where the units have changed
@@ -1680,13 +1988,126 @@ units.
 In these cases, having a unit conversion at the end of the processing
 will guarantee homogeneous input for the diagnostics.
 
+Conversion is only supported between compatible units!
+In other words, converting temperature units from ``degC`` to ``Kelvin`` works
+fine, while changing units from ``kg`` to ``m`` will not work.
+
+However, there are some well-defined exceptions from this rule in order to
+transform one quantity to another (physically related) quantity.
+These quantities are identified via their ``standard_name`` and their ``units``
+(units convertible to the ones defined are also supported).
+For example, this enables conversions between precipitation fluxes measured in
+``kg m-2 s-1`` and precipitation rates measured in ``mm day-1`` (and vice
+versa).
+Currently, the following special conversions are supported:
+
+* ``precipitation_flux`` (``kg m-2 s-1``) --
+  ``lwe_precipitation_rate`` (``mm day-1``)
+
+.. hint::
+   Names in the list correspond to ``standard_names`` of the input data.
+   Conversions are allowed from each quantity to any other quantity given in a
+   bullet point.
+   The corresponding target quantity is inferred from the desired target units.
+   In addition, any other units convertible to the ones given are also
+   supported (e.g., instead of ``mm day-1``, ``m s-1`` is also supported).
+
 .. note::
-   Conversion is only supported between compatible units! In other
-   words, converting temperature units from ``degC`` to ``Kelvin`` works
-   fine, changing precipitation units from a rate based unit to an
-   amount based unit is not supported at the moment.
+   For the transformation between the different precipitation variables, a
+   water density of ``1000 kg m-3`` is assumed.
 
 See also :func:`esmvalcore.preprocessor.convert_units`.
+
+
+``accumulate_coordinate``
+-------------------------
+
+This function can be used to weight data using the bounds from a given coordinate.
+The resulting cube will then have units given by ``cube_units * coordinate_units``.
+
+For instance, if a variable has units such as ``X s-1``, using ``accumulate_coordinate``
+on the time coordinate would result on a cube where the data would be multiplied
+by the time bounds and the resulting units for the variable would be converted to ``X``.
+In this case, weighting the data with the time coordinate would allow to cancel
+the time units in the variable.
+
+.. note::
+   The coordinate used to weight the data must be one-dimensional, as multidimensional
+   coordinates are not supported in this preprocessor.
+
+
+See also :func:`esmvalcore.preprocessor.accumulate_coordinate.`
+
+
+.. _bias:
+
+Bias
+====
+
+The bias module contains the following preprocessor functions:
+
+* ``bias``: Calculate absolute or relative biases with respect to a reference
+  dataset
+
+``bias``
+--------
+
+This function calculates biases with respect to a given reference dataset. For
+this, exactly one input dataset needs to be declared as ``reference_for_bias:
+true`` in the recipe, e.g.,
+
+.. code-block:: yaml
+
+  datasets:
+    - {dataset: CanESM5, project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: CESM2,   project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: MIROC6,  project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: ERA-Interim, project: OBS6, tier: 3, type: reanaly, version: 1,
+       reference_for_bias: true}
+
+In the example above, ERA-Interim is used as reference dataset for the bias
+calculation. For this preprocessor, all input datasets need to have identical
+dimensional coordinates. This can for example be ensured with the preprocessors
+:func:`esmvalcore.preprocessor.regrid` and/or
+:func:`esmvalcore.preprocessor.regrid_time`.
+
+The ``bias`` preprocessor supports 4 optional arguments:
+
+   * ``bias_type`` (:obj:`str`, default: ``'absolute'``): Bias type that is
+     calculated. Can be ``'absolute'`` (i.e., calculate bias for dataset
+     :math:`X` and reference :math:`R` as :math:`X - R`) or ``relative`` (i.e,
+     calculate bias as :math:`\frac{X - R}{R}`).
+   * ``denominator_mask_threshold`` (:obj:`float`, default: ``1e-3``):
+     Threshold to mask values close to zero in the denominator (i.e., the
+     reference dataset) during the calculation of relative biases. All values
+     in the reference dataset with absolute value less than the given threshold
+     are masked out. This setting is ignored when ``bias_type`` is set to
+     ``'absolute'``. Please note that for some variables with very small
+     absolute values (e.g., carbon cycle fluxes, which are usually :math:`<
+     10^{-6}` kg m :math:`^{-2}` s :math:`^{-1}`) it is absolutely essential to
+     change the default value in order to get reasonable results.
+   * ``keep_reference_dataset`` (:obj:`bool`, default: ``False``): If
+     ``True``, keep the reference dataset in the output. If ``False``, drop the
+     reference dataset.
+   * ``exclude`` (:obj:`list` of :obj:`str`): Exclude specific datasets from
+     this preprocessor. Note that this option is only available in the recipe,
+     not when using :func:`esmvalcore.preprocessor.bias` directly (e.g., in
+     another python script). If the reference dataset has been excluded, an
+     error is raised.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_bias:
+        bias:
+          bias_type: relative
+          denominator_mask_threshold: 1e-8
+          keep_reference_dataset: true
+          exclude: [CanESM2]
+
+See also :func:`esmvalcore.preprocessor.bias`.
 
 
 .. _Memory use:
