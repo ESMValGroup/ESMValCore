@@ -71,7 +71,6 @@ Improvements
 -  Try searching multiple ESGF index nodes (`#1561 <https://github.com/ESMValGroup/ESMValCore/pull/1561>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Add CMIP6 `amoc` derivation case and add a test (`#1577 <https://github.com/ESMValGroup/ESMValCore/pull/1577>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Added EMAC CMORizer (`#1554 <https://github.com/ESMValGroup/ESMValCore/pull/1554>`__) `Manuel Schlund <https://github.com/schlunma>`__
--  Add preprocessor `accumulate_coordinate` (`#1281 <https://github.com/ESMValGroup/ESMValCore/pull/1281>`__) `Javier Vegas-Regidor <https://github.com/jvegreg>`__
 -  Add tests and docs (`#1614 <https://github.com/ESMValGroup/ESMValCore/pull/1614>`__) `Zeb Nicholls <https://github.com/znicholls>`__
 -  Improve performance of `volume_statistics` (`#1545 <https://github.com/ESMValGroup/ESMValCore/pull/1545>`__) `sloosvel <https://github.com/sloosvel>`__
 
