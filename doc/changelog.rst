@@ -115,7 +115,6 @@ Variable Derivation
 
 -  Added derivation of `hfns` (`#1594 <https://github.com/ESMValGroup/ESMValCore/pull/1594>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
-
 .. _changelog-v2-5-0:
 
 v2.5.0
