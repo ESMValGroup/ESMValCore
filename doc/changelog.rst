@@ -69,7 +69,6 @@ Improvements
 
 -  Removed trailing whitespace in custom CMOR tables (`#1564 <https://github.com/ESMValGroup/ESMValCore/pull/1564>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Try searching multiple ESGF index nodes (`#1561 <https://github.com/ESMValGroup/ESMValCore/pull/1561>`__) `Bouwe Andela <https://github.com/bouweandela>`__
--  Add general `extract_coordinate_points` preprocessor (`#1581 <https://github.com/ESMValGroup/ESMValCore/pull/1581>`__) `sloosvel <https://github.com/sloosvel>`__
 -  Add CMIP6 `amoc` derivation case and add a test (`#1577 <https://github.com/ESMValGroup/ESMValCore/pull/1577>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Added EMAC CMORizer (`#1554 <https://github.com/ESMValGroup/ESMValCore/pull/1554>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Add preprocessor `accumulate_coordinate` (`#1281 <https://github.com/ESMValGroup/ESMValCore/pull/1281>`__) `Javier Vegas-Regidor <https://github.com/jvegreg>`__
@@ -94,6 +93,8 @@ Preprocessor
 ~~~~~~~~~~~~
 
 -  Allowed special case for unit conversion of precipitation (`kg m-2 s-1` <--> `mm day-1`) (`#1574 <https://github.com/ESMValGroup/ESMValCore/pull/1574>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Add general `extract_coordinate_points` preprocessor (`#1581 <https://github.com/ESMValGroup/ESMValCore/pull/1581>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Add preprocessor `accumulate_coordinate` (`#1281 <https://github.com/ESMValGroup/ESMValCore/pull/1281>`__) `Javier Vegas-Regidor <https://github.com/jvegreg>`__
 -  Add `axis_statistics` and improve `depth_integration` (`#1589 <https://github.com/ESMValGroup/ESMValCore/pull/1589>`__) `sloosvel <https://github.com/sloosvel>`__
 
 Release
