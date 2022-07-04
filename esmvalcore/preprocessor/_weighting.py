@@ -4,6 +4,8 @@ import logging
 
 import iris
 
+from ._ancillary_vars import register_ancillaries
+
 logger = logging.getLogger(__name__)
 
 
@@ -31,6 +33,10 @@ def _get_land_fraction(cube):
     return (land_fraction, errors)
 
 
+@register_ancillaries(
+    variables=['sftlf', 'sftof'],
+    required='require_at_least_one',
+)
 def weighting_landsea_fraction(cube, area_type):
     """Weight fields using land or sea fraction.
 
@@ -60,7 +66,6 @@ def weighting_landsea_fraction(cube, area_type):
         ``area_type`` is not ``'land'`` or ``'sea'``.
     ValueError
         Land/sea fraction variables ``sftlf`` or ``sftof`` not found.
-
     """
     if area_type not in ('land', 'sea'):
         raise TypeError(

@@ -17,6 +17,7 @@ from iris.exceptions import CoordinateNotFoundError
 from ._ancillary_vars import (
     add_ancillary_variable,
     add_cell_measure,
+    register_ancillaries,
     remove_fx_variables,
 )
 from ._shared import (
@@ -202,6 +203,10 @@ def compute_area_weights(cube):
     return weights
 
 
+@register_ancillaries(
+    variables=['areacella', 'areacello'],
+    required='prefer_at_least_one',
+)
 def area_statistics(cube, operator):
     """Apply a statistical operator in the horizontal direction.
 

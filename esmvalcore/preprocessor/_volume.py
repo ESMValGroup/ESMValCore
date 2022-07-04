@@ -10,6 +10,8 @@ import dask.array as da
 import iris
 import numpy as np
 
+from ._ancillary_vars import register_ancillaries
+
 logger = logging.getLogger(__name__)
 
 
@@ -171,6 +173,10 @@ def calculate_volume(cube):
     return grid_volume
 
 
+@register_ancillaries(
+    variables=['volcello'],
+    required='prefer_at_least_one',
+)
 def volume_statistics(cube, operator):
     """Apply a statistical operation over a volume.
 

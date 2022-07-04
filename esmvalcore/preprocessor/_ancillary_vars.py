@@ -7,6 +7,36 @@ import iris
 
 logger = logging.getLogger(__name__)
 
+PREPROCESSOR_ANCILLARIES = {}
+
+
+def register_ancillaries(variables, required):
+    """Register ancillary variables required for a preprocessor function.
+
+    Parameters
+    ----------
+    variables: :obj:`list` of :obj`str`
+        List of variable names.
+    required:
+        How strong the requirement is. Can be 'require_at_least_one' if at
+        least one variable must be available or 'prefer_at_least_one' if it is
+        preferred that at least one variable is available, but not strictly
+        necessary.
+    """
+    valid = ('require_at_least_one', 'prefer_at_least_one')
+    if required not in valid:
+        raise NotImplementedError(f"`required` should be one of {valid}")
+    ancillaries = {
+        'variables': variables,
+        'required': required,
+    }
+
+    def wrapper(func):
+        PREPROCESSOR_ANCILLARIES[func.__name__] = ancillaries
+        return func
+
+    return wrapper
+
 
 def _is_fx_broadcastable(fx_cube, cube):
     try:

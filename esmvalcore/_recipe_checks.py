@@ -11,8 +11,9 @@ import isodate
 import yamale
 
 from ._data_finder import _parse_period, get_start_end_year
-from .exceptions import CMORError, InputFilesNotFound, RecipeError
+from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
+from .preprocessor._ancillary_vars import PREPROCESSOR_ANCILLARIES
 from .preprocessor._multimodel import STATISTIC_MAPPING
 
 logger = logging.getLogger(__name__)
@@ -100,11 +101,12 @@ def variable(var, required_keys):
                 var.get('diagnostic')))
 
 
-def _log_data_availability_errors(input_files, var, dirnames, filenames):
+def _log_data_availability_errors(dataset):
     """Check if the required input data is available."""
-    var = dict(var)
+    input_files = dataset.files
+    dirnames, filenames = dataset._files_debug
     if not input_files:
-        logger.error("No input files found for variable %s", var)
+        logger.error("No input files found for %s", dataset)
         if dirnames and filenames:
             patterns = itertools.product(dirnames, filenames)
             patterns = [os.path.join(d, f) for (d, f) in patterns]
@@ -171,9 +173,9 @@ def data_availability(dataset, log=True):
     """Check if input_files cover the required years."""
     input_files = dataset.files
     facets = dataset.facets
-    dirnames, filenames = dataset._files_debug
+
     if log:
-        _log_data_availability_errors(input_files, facets, dirnames, filenames)
+        _log_data_availability_errors(dataset)
 
     if not input_files:
         raise InputFilesNotFound(f"Missing data for: {_format_facets(facets)}")
@@ -201,38 +203,62 @@ def data_availability(dataset, log=True):
                 missing_txt, "\n".join(str(f) for f in input_files)))
 
 
-def ancillary_data_availability(dataset, required_ancillaries, required):
+def ancillary_availability(dataset, settings):
     """Check if the required ancillary files are available."""
-    recipe_ancillaries = {a.facets['short_name'] for a in dataset.ancillaries}
-    missing_ancillaries = required_ancillaries - recipe_ancillaries
-    if missing_ancillaries:
-        logger.warning(
-            "Missing ancillary_variables definition: unable to add required "
-            "ancillary variables %s to dataset %s", missing_ancillaries,
-            dataset)
+    steps = [step for step in settings if step in PREPROCESSOR_ANCILLARIES]
+    ancillaries = {d.facets['short_name']: d for d in dataset.ancillaries}
 
-    for ancillary_ds in dataset.ancillaries:
-        short_name = ancillary_ds.facets['short_name']
-        steps = sorted(s for s in required if short_name in required[s])
-        try:
-            ancillary_ds.augment_facets()
-        except CMORError:
-            logger.warning(
-                "Missing data (unable to find variable %s in CMOR table %s/%s)"
-                " for ancillary variable '%s' of dataset %s used "
-                "by preprocessor function(s) %s", short_name,
-                ancillary_ds.facets['project'], ancillary_ds.facets['mip'],
-                short_name, dataset, steps)
-            continue
-        if ancillary_ds.files:
-            logger.debug(
-                "Using ancillary files for dataset %s during preprocessor "
-                "function(s) %s: %s", dataset, steps,
-                pformat(ancillary_ds.files))
+    # Check that the required ancillary variables are defined in the recipe
+    for step in steps:
+        ancs = PREPROCESSOR_ANCILLARIES[step]
+        for short_name in ancs['variables']:
+            if short_name in ancillaries:
+                break
         else:
-            logger.warning(
-                "Missing data for ancillary variable '%s' of dataset %s used "
-                "by preprocessor function(s) %s", short_name, dataset, steps)
+            if ancs['required'] == "require_at_least_one":
+                raise RecipeError(
+                    f"Preprocessor function {step} requires that at least "
+                    f"one ancillary variable of {ancs['variables']} is "
+                    f"defined in the recipe for {dataset}.")
+            if ancs['required'] == "prefer_at_least_one":
+                logger.warning(
+                    "Preprocessor function %s works best when at least "
+                    "one ancillary variable of %s is defined in the "
+                    "recipe for %s.",
+                    step,
+                    ancs['variables'],
+                    dataset,
+                )
+
+    # Check that the required ancillary data can be found
+    for step in steps:
+        ancs = PREPROCESSOR_ANCILLARIES[step]
+        found_files = False
+        for short_name in ancs['variables']:
+            if short_name in ancillaries:
+                ancillary_ds = ancillaries[short_name]
+                if ancillary_ds.files:
+                    found_files = True
+                    logger.debug(
+                        "Using ancillary files:\n%s\nfor preprocessor "
+                        "function %s with %s", pformat(ancillary_ds.files),
+                        step, dataset)
+                else:
+                    _log_data_availability_errors(dataset)
+        if not found_files:
+            if ancs['required'] == "require_at_least_one":
+                raise InputFilesNotFound(
+                    "Missing ancillary data for preprocessor function "
+                    f"{step}, which requires at least one of "
+                    f"{ancs['variables']} for {dataset}")
+            elif ancs['required'] == "prefer_at_least_one":
+                logger.warning(
+                    "Missing ancillary data for preprocessor function %s, "
+                    "which works best with at least one of %s for %s",
+                    step,
+                    ancs['variables'],
+                    dataset,
+                )
 
 
 def tasks_valid(tasks):

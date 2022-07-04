@@ -19,6 +19,8 @@ from iris.util import rolling_window
 
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
+from ._ancillary_vars import register_ancillaries
+
 logger = logging.getLogger(__name__)
 
 
@@ -62,6 +64,10 @@ def _apply_fx_mask(fx_mask, var_data):
     return var_data
 
 
+@register_ancillaries(
+    variables=['sftlf', 'sftof'],
+    required='prefer_at_least_one',
+)
 def mask_landsea(cube, mask_out, always_use_ne_mask=False):
     """Mask out either land mass or sea (oceans, seas and lakes).
 
@@ -166,6 +172,10 @@ def mask_landsea(cube, mask_out, always_use_ne_mask=False):
     return cube
 
 
+@register_ancillaries(
+    variables=['sftgif'],
+    required='require_at_least_one',
+)
 def mask_landseaice(cube, mask_out):
     """Mask out either landsea (combined) or ice.
 
