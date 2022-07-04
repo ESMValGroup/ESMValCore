@@ -25,7 +25,7 @@ The documentation section includes:
 - The recipe's author's user name (``authors``, matching the definitions in the
   :ref:`config-ref`)
 - The recipe's maintainer's user name (``maintainer``, matching the definitions in the
-  :ref:`config-ref`)
+  :ref:`config-ref`, or the single entry ``unmaintained``)
 - The title of the recipe (``title``)
 - A description of the recipe (``description``, written in MarkDown format)
 - A list of scientific references (``references``, matching the definitions in
@@ -61,9 +61,11 @@ the following:
 .. note::
 
    Note that all authors, projects, and references mentioned in the description
-   section of the recipe need to be included in the (locally installed copy of the) file
-   `esmvaltool/config-references.yml <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/config-references.yml>`_,
-   see :ref:`config-ref`.
+   section of the recipe need to be included in the (locally installed copy of
+   the) file `esmvaltool/config-references.yml
+   <https://github.com/ESMValGroup/ESMValTool/blob/main/esmvaltool/config-references.yml>`_,
+   see :ref:`config-ref` (with the exception of ``unmaintained`` for
+   ``maintainer``).
    The author name uses the format: ``surname_name``. For instance, John
    Doe would be: ``doe_john``. This information can be omitted by new users
    whose name is not yet included in ``config-references.yml``.
