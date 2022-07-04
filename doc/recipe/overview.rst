@@ -22,15 +22,15 @@ Recipe section: ``documentation``
 
 The documentation section includes:
 
-- The recipe's author's user name (``authors``, matching the definitions in the
+- The recipe's author's user name (``authors``; matching the definitions in the
   :ref:`config-ref`)
-- The recipe's maintainer's user name (``maintainer``, matching the definitions in the
+- The recipe's maintainer's user name (``maintainer``; matching the definitions in the
   :ref:`config-ref`, or the single entry ``unmaintained``)
 - The title of the recipe (``title``)
-- A description of the recipe (``description``, written in MarkDown format)
-- A list of scientific references (``references``, matching the definitions in
+- A description of the recipe (``description``; written in MarkDown format)
+- A list of scientific references (``references``; matching the definitions in
   the :ref:`config-ref`)
-- the project or projects associated with the recipe (``projects``, matching
+- the project or projects associated with the recipe (``projects``; matching
   the definitions in the :ref:`config-ref`)
 
 For example, the documentation section of ``recipes/recipe_ocean_amoc.yml`` is
