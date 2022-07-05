@@ -62,13 +62,13 @@ class Dataset:
     def copy(self, **facets):
         new = self.__class__()
         new.session = self._session
+        for key, value in self.facets.items():
+            new.set_facet(key, copy.deepcopy(value), key in self._persist)
         for key, value in facets.items():
             new.set_facet(key, copy.deepcopy(value))
-        for key, value in self.facets.items():
-            if key not in new.facets:
-                new.set_facet(key, copy.deepcopy(value), key in self._persist)
         for ancillary in self.ancillaries:
-            # The short_name and mip are probably different, so don't copy
+            # The short_name and mip of the ancillary variable are probably
+            # different from the main variable, so don't copy those facets.
             skip = ('short_name', 'mip')
             ancillary_facets = {k: facets[k] for k in facets if k not in skip}
             new_ancillary = ancillary.copy(**ancillary_facets)
@@ -144,6 +144,7 @@ class Dataset:
 
     def add_ancillary(self, **facets):
         ancillary = self.copy(**facets)
+        ancillary.ancillaries = []
         self.ancillaries.append(ancillary)
 
     def augment_facets(self, session=None):
@@ -566,10 +567,11 @@ def datasets_from_recipe(recipe, session):
                 dataset.session = session
                 for key, value in facets.items():
                     dataset.set_facet(key, value, key in persist)
-                for ancillary_facets in ancillaries:
-                    dataset.add_ancillary(**ancillary_facets)
-                dataset.facets['preprocessor'] = preprocessor
+                dataset.set_facet('preprocessor', preprocessor,
+                                  preprocessor != 'default')
                 for dataset in dataset.expand():
+                    for ancillary_facets in ancillaries:
+                        dataset.add_ancillary(**ancillary_facets)
                     dataset.facets['recipe_dataset_index'] = idx
                     datasets.append(dataset)
                     idx += 1

@@ -291,9 +291,9 @@ def _guess_fx_mip(facets, dataset):
     return mip
 
 
-def _get_legacy_ancillaries(dataset, settings, missing_variables):
+def _get_legacy_ancillary_facets(dataset, settings, missing_ancillaries):
     """Load the ancillary dataset facets from the preprocessor settings."""
-    # Read fx_variables from preprocessor settings
+    # Read facets from `fx_variables` key in preprocessor settings
     ancillaries = []
     for kwargs in settings.values():
         if 'fx_variables' in kwargs:
@@ -308,13 +308,15 @@ def _get_legacy_ancillaries(dataset, settings, missing_variables):
                 ancillaries.append(facets)
 
     # Add any remaining missing ancillary variables
-    for short_name in missing_variables:
+    for short_name in missing_ancillaries:
         if short_name not in {a['short_name'] for a in ancillaries}:
             facets = {'short_name': short_name}
             ancillaries.append(facets)
 
-    # Try to figure out the right mip if it is not specified
+    # Guess the ensemble and mip if they is not specified
     for facets in ancillaries:
+        if 'ensemble' not in facets and dataset.facets['project'] == 'CMIP5':
+            facets['ensemble'] = 'r0i0p0'
         if 'mip' not in facets:
             facets['mip'] = _guess_fx_mip(facets, dataset)
     return ancillaries
@@ -323,7 +325,7 @@ def _get_legacy_ancillaries(dataset, settings, missing_variables):
 def _add_legacy_ancillary_datasets(settings, dataset):
     """Update fx settings depending on the needed method."""
     recipe_ancillaries = {a.facets['short_name'] for a in dataset.ancillaries}
-    missing_variables = []
+    missing_ancillaries = []
     for step in settings:
         if step in PREPROCESSOR_ANCILLARIES:
             ancs = PREPROCESSOR_ANCILLARIES[step]
@@ -331,12 +333,15 @@ def _add_legacy_ancillary_datasets(settings, dataset):
                 if short_name in recipe_ancillaries:
                     break
             else:
-                missing_variables.extend(ancs['variables'])
+                missing_ancillaries.extend(ancs['variables'])
 
-    if missing_variables:
-        for facets in _get_legacy_ancillaries(dataset, settings,
-                                              missing_variables):
+    if missing_ancillaries:
+        for facets in _get_legacy_ancillary_facets(dataset, settings,
+                                                   missing_ancillaries):
             dataset.add_ancillary(**facets)
+        for ancillary_ds in dataset.ancillaries:
+            _get_facets_from_cmor_table(ancillary_ds.facets, override=True)
+
     for kwargs in settings.values():
         kwargs.pop('fx_variables', None)
 

@@ -180,8 +180,7 @@ def data_availability(dataset, log=True):
     if not input_files:
         raise InputFilesNotFound(f"Missing data for: {_format_facets(facets)}")
 
-    if facets['frequency'] == 'fx':
-        # check time availability only for non-fx variables
+    if facets['frequency'] == 'fx' or facets['timerange'] == '*':
         return
 
     start_date, end_date = _parse_period(facets['timerange'])
