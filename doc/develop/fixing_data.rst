@@ -110,7 +110,7 @@ Then we have to create the class for the fix deriving from
     from esmvalcore.cmor.fix import Fix
 
     class tas(Fix):
-         """Fixes for tas variable.""""
+         """Fixes for tas variable."""
 
 Next we must choose the method to use between the ones offered by the
 Fix class:
@@ -134,7 +134,7 @@ so we will implement the ``fix_metadata`` method:
     from esmvalcore.cmor.fix import Fix
 
     class tas(Fix):
-        """Fixes for tas variable.""""
+        """Fixes for tas variable."""
 
         def fix_metadata(self, cubes):
             """
@@ -142,7 +142,7 @@ so we will implement the ``fix_metadata`` method:
 
             Fix the name of the latitude coordinate, which is called altitude
             in the original file.
-            """"
+            """
             # Sometimes Iris will interpret the data as multiple cubes.
             # Good CMOR datasets will only show one but we support the
             # multiple cubes case to be able to fix the errors that are
@@ -196,7 +196,7 @@ derive from the one you just created:
     from esmvalcore.cmor.fix import Fix
 
     class tas(Fix):
-        """Fixes for tas variable.""""
+        """Fixes for tas variable."""
 
         def fix_metadata(self, cubes):
             """
@@ -204,7 +204,7 @@ derive from the one you just created:
 
             Fix the name of the latitude coordinate, which is called altitude
             in the original file.
-            """"
+            """
             # Sometimes Iris will interpret the data as multiple cubes.
             # Good CMOR datasets will only show one but we support the
             # multiple cubes case to be able to fix the errors that are
@@ -275,7 +275,7 @@ discarding some cubes in the fix metadata step. Just before that warning you
 should see the full list of cubes as read by Iris. If that list contains your
 missing coordinate you can create a fix for this model:
 
-.. code-block:: bash
+.. code-block:: python
 
     def fix_metadata(self, cubes):
         coord_cube = cubes.extract_strict('COORDINATE_NAME')
@@ -341,6 +341,17 @@ Add support for new native datasets
 This section describes how to add support for additional native datasets.
 You can choose to host this new data source either under a dedicated project or
 under project ``native6``.
+
+.. _add_new_fix_native_datasets_config:
+
+Configuration
+-------------
+
+An example of a configuration in ``config-developer.yml`` for projects used for
+native datasets is given :ref:`here <configure_native_models>`.
+Make sure to use the option ``cmor_strict: false`` for these projects if you
+want to make use of :ref:`custom_cmor_tables`.
+This allows reading arbitrary variables from native datasets.
 
 .. _add_new_fix_native_datasets_locate_data:
 

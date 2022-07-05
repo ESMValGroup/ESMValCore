@@ -270,17 +270,9 @@ class Dataset:
         if '*' in timerange:
             self.find_files(session)
             if not self.files:
-                if not session.get('offline', True):
-                    msg = (
-                        " Please note that automatic download is not supported "
-                        "with indeterminate time ranges at the moment. Please use "
-                        "a concrete time range (i.e., no wildcards '*') in your "
-                        "recipe or run ESMValTool with --offline=True.")
-                else:
-                    msg = ""
                 raise InputFilesNotFound(
                     f"Missing data for: {_format_facets(self.facets)}"
-                    f"Cannot determine time range '{timerange}'.{msg}")
+                    f"Cannot determine time range '{timerange}'.")
 
             intervals = [get_start_end_date(name) for name in self.files]
 

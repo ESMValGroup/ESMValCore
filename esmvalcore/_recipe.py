@@ -481,6 +481,16 @@ def _update_multi_dataset_settings(facets, settings):
         _exclude_dataset(settings, facets, step)
 
 
+def _update_warning_settings(settings, project):
+    """Update project-specific warning settings."""
+    cfg = get_project_config(project)
+    if 'ignore_warnings' not in cfg:
+        return
+    for (step, ignored_warnings) in cfg['ignore_warnings'].items():
+        if step in settings:
+            settings[step]['ignore_warnings'] = ignored_warnings
+
+
 def _get_tag(step, identifier, statistic):
     # Avoid . in filename for percentiles
     statistic = statistic.replace('.', '-')
@@ -638,6 +648,7 @@ def _get_preprocessor_products(datasets, profile, order, ancestor_products,
     missing_vars = set()
     for dataset in datasets:
         settings = _get_default_settings(dataset, derive='derive' in profile)
+        _update_warning_settings(settings, dataset.facets['project'])
         _apply_preprocessor_profile(settings, profile)
         _update_multi_dataset_settings(dataset.facets, settings)
         _update_preproc_functions(settings, dataset, datasets, missing_vars)
@@ -829,6 +840,16 @@ def _split_derive_profile(profile):
     return before, after
 
 
+def _check_differing_timeranges(timeranges, required_vars):
+    """Log error if required variables have differing timeranges."""
+    if len(timeranges) > 1:
+        raise ValueError(
+            f"Differing timeranges with values {timeranges} "
+            f"found for required variables {required_vars}. "
+            "Set `timerange` to a common value.",
+        )
+
+
 def _get_derive_input(datasets):
     """Determine the input sets of `variables` needed for deriving."""
     derive_input = {}
@@ -844,6 +865,15 @@ def _get_derive_input(datasets):
     for dataset in datasets:
         facets = dataset.facets
         group_prefix = facets['variable_group'] + '_derive_input_'
+        if not facets.get('force_derivation') and \
+           '*' in facets['timerange']:
+            raise RecipeError(
+                f"Error in derived variable: {facets['short_name']}: "
+                "Using 'force_derivation: false' (the default option) "
+                "in combination with wildcards ('*') in timerange is "
+                "not allowed; explicitly use 'force_derivation: true' "
+                "or avoid the use of wildcards in timerange."
+                )
         if not facets.get('force_derivation') and dataset.files:
             # No need to derive, just process normally up to derive step
             append(group_prefix, dataset)
@@ -851,6 +881,7 @@ def _get_derive_input(datasets):
             # Process input data needed to derive variable
             required_vars = get_required(facets['short_name'],
                                          facets['project'])
+            timeranges = set()
             for input_facets in required_vars:
                 input_dataset = dataset.copy(**input_facets)
                 if input_facets.get('optional') and not input_dataset.files:
@@ -859,6 +890,10 @@ def _get_derive_input(datasets):
                         "'optional'", input_dataset)
                 else:
                     append(group_prefix, input_dataset)
+                    input_dataset._update_timerange()
+                    timeranges.add(input_dataset.facets['timerange'])
+            _check_differing_timeranges(timeranges, required_vars)
+            facets['timerange'] = " ".join(timeranges)
 
     # An empty derive_input (due to all variables marked as 'optional' is
     # handled at a later step

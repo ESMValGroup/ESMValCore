@@ -510,15 +510,106 @@ related to CMOR table settings available:
 * ``cmor_type``: can be ``CMIP5`` if the CMOR table is in the same format as the
   CMIP5 table or ``CMIP6`` if the table is in the same format as the CMIP6 table.
 * ``cmor_strict``: if this is set to ``false``, the CMOR table will be
-  extended with variables from the ``esmvalcore/cmor/tables/custom`` directory
-  and it is possible to use variables with a ``mip`` which is different from
-  the MIP table in which they are defined.
+  extended with variables from the :ref:`custom_cmor_tables` (by default loaded
+  from the ``esmvalcore/cmor/tables/custom`` directory) and it is possible to
+  use variables with a ``mip`` which is different from the MIP table in which
+  they are defined.
 * ``cmor_path``: path to the CMOR table.
   Relative paths are with respect to `esmvalcore/cmor/tables`_.
   Defaults to the value provided in ``cmor_type`` written in lower case.
 * ``cmor_default_table_prefix``: Prefix that needs to be added to the ``mip``
   to get the name of the file containing the ``mip`` table.
   Defaults to the value provided in ``cmor_type``.
+
+.. _custom_cmor_tables:
+
+Custom CMOR tables
+------------------
+
+As mentioned in the previous section, the CMOR tables of projects that use
+``cmor_strict: false`` will be extended with custom CMOR tables.
+By default, these are loaded from `esmvalcore/cmor/tables/custom
+<https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
+However, by using the special project ``custom`` in the
+``config-developer.yml`` file with the option ``cmor_path``, a custom location
+for these custom CMOR tables can be specified:
+
+.. code-block:: yaml
+
+   custom:
+     cmor_path: ~/my/own/custom_tables
+
+This path can be given as relative path (relative to `esmvalcore/cmor/tables`_)
+or as absolute path.
+Other options given for this special table will be ignored.
+
+Custom tables in this directory need to follow the naming convention
+``CMOR_{short_name}.dat`` and need to be given in CMIP5 format.
+
+Example for the file ``CMOR_asr.dat``:
+
+.. code-block::
+
+   SOURCE: CMIP5
+   !============
+   variable_entry:    asr
+   !============
+   modeling_realm:    atmos
+   !----------------------------------
+   ! Variable attributes:
+   !----------------------------------
+   standard_name:
+   units:             W m-2
+   cell_methods:      time: mean
+   cell_measures:     area: areacella
+   long_name:         Absorbed shortwave radiation
+   !----------------------------------
+   ! Additional variable information:
+   !----------------------------------
+   dimensions:        longitude latitude time
+   type:              real
+   positive:          down
+   !----------------------------------
+   !
+
+It is also possible to use a special coordinates file ``CMOR_coordinates.dat``.
+If this is not present in the custom directory, the one from the default
+directory (`esmvalcore/cmor/tables/custom/CMOR_coordinates.dat
+<https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom/CMOR_coordinates.dat>`_)
+is used.
+
+
+.. _filterwarnings_config-developer:
+
+Filter preprocessor warnings
+----------------------------
+
+It is possible to ignore specific warnings of the preprocessor for a given
+``project``.
+This is particularly useful for native datasets which do not follow the CMOR
+standard by default and consequently produce a lot of warnings when handled by
+Iris.
+This can be configured in the ``config-developer.yml`` file for some steps of
+the preprocessing chain.
+
+Currently supported preprocessor steps:
+
+* :func:`~esmvalcore.preprocessor.load`
+
+Here is an example on how to ignore specific warnings during the preprocessor
+step ``load`` for all datasets of project  ``EMAC`` (taken from the default
+``config-developer.yml`` file):
+
+.. code-block:: yaml
+
+   ignore_warnings:
+     load:
+       - {message: 'Missing CF-netCDF formula term variable .*, referenced by netCDF variable .*', module: iris}
+       - {message: 'Ignored formula of unrecognised type: .*', module: iris}
+
+The keyword arguments specified in the list items are directly passed to
+:func:`warnings.filterwarnings` in addition to ``action=ignore`` (may be
+overwritten in ``config-developer.yml``).
 
 .. _configure_native_models:
 
@@ -557,6 +648,15 @@ Example:
 
 A detailed description on how to add support for further native datasets is
 given :ref:`here <add_new_fix_native_datasets>`.
+
+.. hint::
+
+   When using native datasets, it might be helpful to specify a custom location
+   for the :ref:`custom_cmor_tables`.
+   This allows reading arbitrary variables from native datasets.
+   Note that this requires the option ``cmor_strict: false`` in the
+   :ref:`project configuration <configure_native_models>` used for the native
+   model output.
 
 
 .. _config-ref:

@@ -26,6 +26,9 @@ def get_esgf_facets(variable):
     for our_name, esgf_name in FACETS[project].items():
         if our_name in variable:
             values = variable[our_name]
+            if values == '*':
+                # Wildcards can be specified on ESGF by omitting the facet
+                continue
 
             if isinstance(values, (tuple, list)):
                 values = list(values)
@@ -110,7 +113,7 @@ def _search_index_nodes(facets):
             )
             FIRST_ONLINE_INDEX_NODE = url
             return results
-        except requests.exceptions.ReadTimeout as error:
+        except requests.exceptions.Timeout as error:
             errors.append(error)
 
     raise FileNotFoundError("Failed to search ESGF, unable to connect:\n" +
@@ -145,6 +148,9 @@ def esgf_search_files(facets):
 
 def select_by_time(files, timerange):
     """Select files containing data between a timerange."""
+    if '*' in timerange:
+        return files
+
     selection = []
 
     for file in files:

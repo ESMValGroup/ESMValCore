@@ -1,0 +1,22 @@
+SOURCE: CMIP5
+!============
+variable_entry:    awhea
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             W m-2
+cell_methods:      time: mean
+cell_measures:     area: areacella
+long_name:         Global Mean Net Surface Heat Flux Over Open Water
+comment:           global mean net surface heat flux over open water
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          awhea
+type:              real
+!----------------------------------
+!

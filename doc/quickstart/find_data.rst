@@ -88,6 +88,15 @@ project, e.g., ``ICON`` (mostly native models).
 A detailed description of how to include new native datasets is given
 :ref:`here <add_new_fix_native_datasets>`.
 
+.. hint::
+
+   When using native datasets, it might be helpful to specify a custom location
+   for the :ref:`custom_cmor_tables`.
+   This allows reading arbitrary variables from native datasets.
+   Note that this requires the option ``cmor_strict: false`` in the
+   :ref:`project configuration <configure_native_models>` used for the native
+   model output.
+
 .. _read_native_obs:
 
 Supported native reanalysis/observational datasets
@@ -139,14 +148,90 @@ The following models are natively supported by ESMValCore.
 In contrast to the native observational datasets listed above, they use
 dedicated projects instead of the project ``native6``.
 
+.. _read_emac:
+
+EMAC
+^^^^
+
+ESMValTool is able to read native `EMAC
+<https://www.dlr.de/pa/en/desktopdefault.aspx/tabid-8859/15306_read-37415/>`_
+model output.
+
+The default naming conventions for input directories and files for EMAC are
+
+* input directories: ``[exp]/[channel]``
+* input files: ``[exp]*[channel][postproc_flag].nc``
+
+as configured in the :ref:`config-developer file <config-developer>` (using the
+default DRS ``drs: default`` in the :ref:`user configuration file`).
+
+Thus, example dataset entries could look like this:
+
+.. code-block:: yaml
+
+  datasets:
+    - {project: EMAC, dataset: EMAC, exp: historical, mip: Amon, short_name: tas, start_year: 2000, end_year: 2014}
+    - {project: EMAC, dataset: EMAC, exp: historical, mip: Omon, short_name: tos, postproc_flag: "-p-mm", start_year: 2000, end_year: 2014}
+    - {project: EMAC, dataset: EMAC, exp: historical, mip: Amon, short_name: ta, raw_name: tm1_p39_cav, start_year: 2000, end_year: 2014}
+
+Please note the duplication of the name ``EMAC`` in ``project`` and
+``dataset``, which is necessary to comply with ESMValTool's data finding and
+CMORizing functionalities.
+
+Similar to any other fix, the EMAC fix allows the use of :ref:`extra
+facets<extra_facets>`.
+By default, the file :download:`emac-mappings.yml
+</../esmvalcore/_config/extra_facets/emac-mappings.yml>` is used for that
+purpose.
+For some variables, extra facets are necessary; otherwise ESMValTool cannot
+read them properly.
+Supported keys for extra facets are:
+
+==================== ====================================== =================================
+Key                  Description                            Default value if not specified
+==================== ====================================== =================================
+``channel``          Channel in which the desired variable  No default (needs to be specified
+                     is stored                              in extra facets or recipe if
+                                                            default DRS is used)
+``postproc_flag``    Postprocessing flag of the data        ``''`` (empty string)
+``raw_name``         Variable name of the variable in the   CMOR variable name of the
+                     raw input file                         corresponding variable
+==================== ====================================== =================================
+
+.. note::
+
+   ``raw_name`` can be given as ``str`` or ``list``.
+   The latter is used to support multiple different variables names in the
+   input file.
+   In this case, the prioritization is given by the order of the list; if
+   possible, use the first entry, if this is not present, use the second, etc.
+   This is particularly useful for files in which regular averages (``*_ave``)
+   or conditional averages (``*_cav``) exist.
+
+   For 3D variables defined on pressure levels, only the pressure levels
+   defined by the CMOR table (e.g., for `Amon`'s `ta`: ``tm1_p19_cav`` and
+   ``tm1_p19_ave``) are given in the default extra facets file.
+   If other pressure levels are desired, e.g., ``tm1_p39_cav``, this has to be
+   explicitly specified in the recipe using ``raw_name: tm1_p39_cav`` or
+   ``raw_name: [tm1_p19_cav, tm1_p39_cav]``.
+
 .. _read_icon:
 
 ICON
 ^^^^
 
-The ESMValTool is able to read native `ICON
-<https://code.mpimet.mpg.de/projects/iconpublic>`_ model output. Example
-dataset entries could look like this:
+ESMValTool is able to read native `ICON
+<https://code.mpimet.mpg.de/projects/iconpublic>`_ model output.
+
+The default naming conventions for input directories and files for ICON are
+
+* input directories: ``[version]_[component]_[exp]_[grid]_[ensemble]``
+* input files: ``[version]_[component]_[exp]_[grid]_[ensemble]_[var_type]*.nc``
+
+as configured in the :ref:`config-developer file <config-developer>` (using the
+default DRS ``drs: default`` in the :ref:`user configuration file`).
+
+Thus, example dataset entries could look like this:
 
 .. code-block:: yaml
 
@@ -163,18 +248,45 @@ Please note the duplication of the name ``ICON`` in ``project`` and
 CMORizing functionalities.
 
 Similar to any other fix, the ICON fix allows the use of :ref:`extra
-facets<extra_facets>`. By default, the file :download:`icon-mapping.yml
-</../esmvalcore/_config/extra_facets/icon-mapping.yml>` is used for that
-purpose. For some variables, extra facets are necessary; otherwise ESMValTool
-cannot read them properly. Supported keys for extra facets are:
+facets<extra_facets>`.
+By default, the file :download:`icon-mappings.yml
+</../esmvalcore/_config/extra_facets/icon-mappings.yml>` is used for that
+purpose.
+For some variables, extra facets are necessary; otherwise ESMValTool cannot
+read them properly.
+Supported keys for extra facets are:
 
-============= ===============================================================
-Key           Description
-============= ===============================================================
-``latitude``  Standard name of the latitude coordinate in the raw input file
-``longitude`` Standard name of the longitude coordinate in the raw input file
-``raw_name``  Variable name of the variables in the raw input file
-============= ===============================================================
+============= ============================= =================================
+Key           Description                   Default value if not specified
+============= ============================= =================================
+``latitude``  Standard name of the latitude ``latitude``
+              coordinate in the raw input
+              file
+``longitude`` Standard name of the          ``longitude``
+              longitude coordinate in the
+              raw input file
+``raw_name``  Variable name of the          CMOR variable name of the
+              variable in the raw input     corresponding variable
+              file
+============= ============================= =================================
+
+.. hint::
+
+   In order to read cell area files (``areacella`` and ``areacello``), one
+   additional manual step is necessary:
+   Copy the ICON grid file (you can find a download link in the global
+   attribute ``grid_file_uri`` of your ICON data) to your ICON input directory
+   and change its name in such a way that only the grid file is found when the
+   cell area variables are required.
+   Make sure that this file is not found when other variables are loaded.
+
+   For example, you could use a new ``var_type``, e.g., ``horizontalgrid`` for
+   this file.
+   Thus, an ICON grid file located in
+   ``2.6.1_atm_amip_R2B5_r1v1i1p1l1f1/2.6.1_atm_amip_R2B5_r1v1i1p1l1f1_horizontalgrid.nc``
+   can be found using ``var_type: horizontalgrid`` in the recipe (assuming the
+   default naming conventions listed above).
+   Make sure that no other variable uses this ``var_type``.
 
 .. _read_ipsl-cm6:
 
