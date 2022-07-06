@@ -23,7 +23,7 @@ CALENDAR_PARAMS = (
         marks=pytest.mark.skip(
             reason='Cannot calculate statistics with single cube in list')),
     '365_day',
-    'gregorian',
+    'standard',
     pytest.param(
         'proleptic_gregorian',
         marks=pytest.mark.xfail(
