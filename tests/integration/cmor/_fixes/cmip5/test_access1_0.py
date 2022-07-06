@@ -13,7 +13,7 @@ from esmvalcore.cmor.table import get_var_info
 from esmvalcore.iris_helpers import date2num
 
 
-class TestAllVars(unittest.TestCase):
+class TestAllVars:
     """Test all vars fixes."""
 
     def setUp(self):
@@ -33,20 +33,19 @@ class TestAllVars(unittest.TestCase):
 
     def test_get(self):
         """Test getting of fix."""
-        self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'ACCESS1-0', 'Amon', 'tas'),
-            [AllVars(None)])
+        assert (Fix.get_fixes('CMIP5', 'ACCESS1-0', 'Amon', 'tas')
+                == [AllVars(None)])
 
     def test_fix_metadata(self):
         """Test fix for bad calendar."""
         cube = self.fix.fix_metadata([self.cube])[0]
         time = cube.coord('time')
         dates = num2date(time.points, time.units.name, time.units.calendar)
-        self.assertEqual(time.units.calendar, 'gregorian')
-        u = Unit('days since 300-01-01 12:00:00', calendar='gregorian')
-        self.assertEqual(dates[0], u.num2date(15))
-        u = Unit('days since 1850-01-01 12:00:00', calendar='gregorian')
-        self.assertEqual(dates[1], u.num2date(15))
+        assert time.units.calendar in ('standard', 'gregorian')
+        u = Unit('days since 300-01-01 12:00:00', calendar='standard')
+        assert dates[0] == u.num2date(15)
+        u = Unit('days since 1850-01-01 12:00:00', calendar='standard')
+        assert dates[1] == u.num2date(15)
 
     def test_fix_metadata_if_not_time(self):
         """Test calendar fix do not fail if no time coord present."""
