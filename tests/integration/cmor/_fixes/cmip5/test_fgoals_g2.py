@@ -1,6 +1,4 @@
 """Test FGOALS-g2 fixes."""
-import unittest
-
 from cf_units import Unit
 from iris.coords import DimCoord
 from iris.cube import Cube
@@ -9,7 +7,7 @@ from esmvalcore.cmor._fixes.cmip5.fgoals_g2 import AllVars
 from esmvalcore.cmor.fix import Fix
 
 
-class TestAll(unittest.TestCase):
+class TestAll:
     """Test fixes for all vars."""
 
     def setUp(self):
@@ -31,18 +29,16 @@ class TestAll(unittest.TestCase):
 
     def test_get(self):
         """Test fix get."""
-        self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'FGOALS-G2', 'Amon', 'tas'),
-            [AllVars(None)])
+        assert (Fix.get_fixes('CMIP5', 'FGOALS-G2', 'Amon', 'tas')
+                == [AllVars(None)])
 
     def test_fix_metadata(self):
         """Test calendar fix."""
         cube = self.fix.fix_metadata([self.cube])[0]
 
         time = cube.coord('time')
-        self.assertEqual(time.units.origin,
-                         'day since 1-01-01 00:00:00.000000')
-        self.assertEqual(time.units.calendar, 'gregorian')
+        assert time.units.origin == 'day since 1-01-01 00:00:00.000000'
+        assert time.units.calendar in ('standard', 'gregorian')
 
     def test_fix_metadata_dont_fail_if_not_longitude(self):
         """Test calendar fix."""
