@@ -15,6 +15,11 @@ Highlights
 
 This release includes
 
+Deprecations
+~~~~~~~~~~~~
+
+-  Deprecate the function `esmvalcore.var_name_constraint` (`#1592 <https://github.com/ESMValGroup/ESMValCore/pull/1592>`__) `Manuel Schlund <https://github.com/schlunma>`__. This function is scheduled for removal in v2.8.0. Please use :class:`iris.NameConstraint` with the keyword argument `var_name` instead: this is an exact replacement.
+
 Bug fixes
 ~~~~~~~~~
 
@@ -44,11 +49,6 @@ Community
 ~~~~~~~~~
 
 -  Add David Hohn to contributors' list (`#1586 <https://github.com/ESMValGroup/ESMValCore/pull/1586>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
-
-Deprecations
-~~~~~~~~~~~~
-
--  Deprecate the function `esmvalcore.var_name_constraint` (`#1592 <https://github.com/ESMValGroup/ESMValCore/pull/1592>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
 Documentation
 ~~~~~~~~~~~~~
