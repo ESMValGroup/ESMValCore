@@ -16,13 +16,15 @@ import esmvalcore
 from esmvalcore._config import TAGS
 from esmvalcore._recipe import (
     TASKSEP,
-    _dataset_to_file,
-    _get_derive_input_variables,
+    _get_derive_input,
+    _representative_dataset,
     read_recipe_file,
 )
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore.experimental import CFG
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
 
@@ -108,6 +110,13 @@ def config_user(tmp_path):
     cfg['check_level'] = CheckLevels.DEFAULT
     cfg['diagnostics'] = set()
     return cfg
+
+
+@pytest.fixture
+def session(tmp_path):
+    CFG['output_dir'] = tmp_path
+    session = CFG.start_session(tmp_path.stem)
+    return session
 
 
 def create_test_file(filename, tracking_id=None):
@@ -3614,26 +3623,28 @@ def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
 
 @patch('esmvalcore._recipe.check.data_availability', autospec=True)
 def test_dataset_to_file_regular_var(mock_data_availability,
-                                     patched_datafinder, config_user):
+                                     patched_datafinder, session):
     """Test ``_dataset_to_file`` with regular variable."""
-    variable = {
-        'component': 'atm',
-        'dataset': 'ICON',
-        'end_year': 2000,
-        'ensemble': 'r1v1i1p1l1f1',
-        'exp': 'amip',
-        'frequency': 'mon',
-        'grid': 'R2B5',
-        'mip': 'Amon',
-        'original_short_name': 'tas',
-        'project': 'ICON',
-        'short_name': 'tas',
-        'start_year': 1990,
-        'timerange': '1990/2000',
-        'var_type': 'atm_2d_ml',
-        'version': 1,
-    }
-    filename = _dataset_to_file(variable, config_user)
+    dataset = Dataset(
+        **{
+            'component': 'atm',
+            'dataset': 'ICON',
+            'end_year': 2000,
+            'ensemble': 'r1v1i1p1l1f1',
+            'exp': 'amip',
+            'frequency': 'mon',
+            'grid': 'R2B5',
+            'mip': 'Amon',
+            'original_short_name': 'tas',
+            'project': 'ICON',
+            'short_name': 'tas',
+            'start_year': 1990,
+            'timerange': '1990/2000',
+            'var_type': 'atm_2d_ml',
+            'version': 1,
+        })
+    dataset.session = session
+    filename = _representative_dataset(dataset).files[0]
     path = Path(filename)
     assert path.name == '1_atm_amip_R2B5_r1v1i1p1l1f1_atm_2d_ml_1990_1999.nc'
     mock_data_availability.assert_called_once()
@@ -3703,39 +3714,38 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
     mock_data_availability.assert_called_once()
 
 
-def test_get_derive_input_variables(patched_datafinder, config_user):
+def test_get_derive_input_variables(patched_datafinder, session):
     """Test ``_get_derive_input_variables``."""
-    variables = [{
-        'component': 'atm',
-        'dataset': 'ICON',
-        'derive': True,
-        'end_year': 2000,
-        'ensemble': 'r1v1i1p1l1f1',
-        'exp': 'amip',
-        'force_derivation': True,
-        'frequency': 'mon',
-        'grid': 'R2B5',
-        'mip': 'Amon',
-        'original_short_name': 'lwp',
-        'project': 'ICON',
-        'short_name': 'lwp',
-        'start_year': 1990,
-        'timerange': '1990/2000',
-        'var_type': 'atm_2d_ml',
-        'version': 1,
-        'variable_group': 'lwp_group',
-    }]
-    derive_input = _get_derive_input_variables(variables, config_user)
+    lwp = Dataset(
+        **{
+            'component': 'atm',
+            'dataset': 'ICON',
+            'derive': True,
+            'ensemble': 'r1v1i1p1l1f1',
+            'exp': 'amip',
+            'force_derivation': True,
+            'frequency': 'mon',
+            'grid': 'R2B5',
+            'mip': 'Amon',
+            'original_short_name': 'lwp',
+            'project': 'ICON',
+            'short_name': 'lwp',
+            'timerange': '1990/2000',
+            'var_type': 'atm_2d_ml',
+            'version': 1,
+            'variable_group': 'lwp_group',
+        })
+    lwp.session = session
+    derive_input = _get_derive_input([lwp])
 
-    expected_derive_input = {
-        'lwp_group_derive_input_clwvi': [{
+    clwvi = Dataset(
+        **{
             # Added by get_required
             'short_name': 'clwvi',
             # Already present in variables
             'component': 'atm',
             'dataset': 'ICON',
             'derive': True,
-            'end_year': 2000,
             'ensemble': 'r1v1i1p1l1f1',
             'exp': 'amip',
             'force_derivation': True,
@@ -3743,7 +3753,6 @@ def test_get_derive_input_variables(patched_datafinder, config_user):
             'grid': 'R2B5',
             'mip': 'Amon',
             'project': 'ICON',
-            'start_year': 1990,
             'timerange': '1990/2000',
             'var_type': 'atm_2d_ml',
             'version': 1,
@@ -3758,14 +3767,15 @@ def test_get_derive_input_variables(patched_datafinder, config_user):
             'raw_name': 'cllvi',
             # Added by append
             'variable_group': 'lwp_group_derive_input_clwvi',
-        }], 'lwp_group_derive_input_clivi': [{
+        })
+    clivi = Dataset(
+        **{
             # Added by get_required
             'short_name': 'clivi',
             # Already present in variables
             'component': 'atm',
             'dataset': 'ICON',
             'derive': True,
-            'end_year': 2000,
             'ensemble': 'r1v1i1p1l1f1',
             'exp': 'amip',
             'force_derivation': True,
@@ -3773,7 +3783,6 @@ def test_get_derive_input_variables(patched_datafinder, config_user):
             'grid': 'R2B5',
             'mip': 'Amon',
             'project': 'ICON',
-            'start_year': 1990,
             'timerange': '1990/2000',
             'var_type': 'atm_2d_ml',
             'version': 1,
@@ -3785,7 +3794,10 @@ def test_get_derive_input_variables(patched_datafinder, config_user):
             'units': 'kg m-2',
             # Added by append
             'variable_group': 'lwp_group_derive_input_clivi',
-        }],
+        })
+    expected_derive_input = {
+        'lwp_group_derive_input_clwvi': [clwvi],
+        'lwp_group_derive_input_clivi': [clivi],
     }
     assert derive_input == expected_derive_input
 

@@ -851,11 +851,10 @@ def _check_differing_timeranges(timeranges, required_vars):
         raise ValueError(
             f"Differing timeranges with values {timeranges} "
             f"found for required variables {required_vars}. "
-            "Set `timerange` to a common value.",
-        )
+            "Set `timerange` to a common value.")
 
 
-def _get_derive_input(datasets):
+def _get_derive_input(datasets: list[Dataset]):
     """Determine the input sets of `variables` needed for deriving."""
     derive_input = {}
 
@@ -889,6 +888,9 @@ def _get_derive_input(datasets):
             timeranges = set()
             for input_facets in required_vars:
                 input_dataset = dataset.copy(**input_facets)
+                input_dataset.augment_facets()
+                _get_facets_from_cmor_table(input_dataset.facets,
+                                            override=True)
                 if input_facets.get('optional') and not input_dataset.files:
                     logger.info(
                         "Skipping: no data found for %s which is marked as "
