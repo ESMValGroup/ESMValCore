@@ -1,5 +1,5 @@
 """List of config validators."""
-
+import os.path
 import warnings
 from collections.abc import Iterable
 from functools import lru_cache
@@ -123,7 +123,7 @@ def validate_path(value, allow_none=False):
     if (value is None) and allow_none:
         return value
     try:
-        path = Path(value).expanduser().absolute()
+        path = Path(os.path.expandvars(value)).expanduser().absolute()
     except TypeError as err:
         raise ValidationError(f"Expected a path, but got {value}") from err
     else:
@@ -191,7 +191,8 @@ def validate_oldstyle_drs(value):
 def validate_config_developer(value):
     """Validate and load config developer path."""
     path = validate_path_or_none(value)
-
+    if path is None:
+        path = Path(__file__).parents[2] / 'config-developer.yml'
     load_config_developer(path)
 
     return path

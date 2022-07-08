@@ -374,29 +374,10 @@ class ESMValTool():
         from ._recipe import TASKSEP
         from .cmor.check import CheckLevels
         from .esgf._logon import logon
-        from .experimental import CFG
-
-        # Check validity of optional command line arguments with experimental
-        # API
         with warnings.catch_warnings():
             # ignore experimental API warning
             warnings.simplefilter("ignore")
-            from .experimental.config._config_object import Config as ExpConfig
-        explicit_optional_kwargs = {
-            'config_file': config_file,
-            'resume_from': resume_from,
-            'max_datasets': max_datasets,
-            'max_years': max_years,
-            'skip_nonexistent': skip_nonexistent,
-            'offline': offline,
-            'diagnostics': diagnostics,
-            'check_level': check_level,
-        }
-        all_optional_kwargs = dict(kwargs)
-        for (key, val) in explicit_optional_kwargs.items():
-            if val is not None:
-                all_optional_kwargs[key] = val
-        ExpConfig(all_optional_kwargs)
+            from .experimental import CFG
 
         recipe = self._get_recipe(recipe)
         CFG.load_from_file(config_file)
