@@ -75,14 +75,16 @@ def get_var_info(project, mip, short_name):
     return CMOR_TABLES[project].get_variable(mip, short_name)
 
 
-def read_cmor_tables(cfg_file: Path):
+def read_cmor_tables(cfg_file: Path | None = None):
     """Read cmor tables required in the configuration.
 
     Parameters
     ----------
-    cfg_file: pathlib.Path
+    cfg_file:
         Path to config-developer.yml file.
     """
+    if cfg_file is None:
+        cfg_file = Path(__file__).parents[1] / 'config-developer.yml'
     mtime = cfg_file.stat().st_mtime
     cmor_tables = _read_cmor_tables(cfg_file, mtime)
     CMOR_TABLES.clear()
@@ -974,4 +976,4 @@ class CustomInfo(CMIP5Info):
 
 
 # Load the default tables on initializing the module.
-read_cmor_tables(Path(__file__).parents[1] / 'config-developer.yml')
+read_cmor_tables()
