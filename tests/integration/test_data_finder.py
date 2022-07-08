@@ -2,23 +2,18 @@
 import os
 import shutil
 import tempfile
+from pathlib import Path
 
 import pytest
 import yaml
 
-import esmvalcore._config
+# Load the default configuration:
+import esmvalcore.experimental  # noqa
 from esmvalcore._data_finder import (
     _find_input_files,
     get_input_filelist,
     get_output_file,
 )
-from esmvalcore.cmor.table import read_cmor_tables
-
-# Initialize with standard config developer file
-CFG_DEVELOPER = esmvalcore._config.read_config_developer_file()
-esmvalcore._config._config.CFG = CFG_DEVELOPER
-# Initialize CMOR tables
-read_cmor_tables(CFG_DEVELOPER)
 
 # Load test configuration
 with open(os.path.join(os.path.dirname(__file__), 'data_finder.yml')) as file:
@@ -69,7 +64,7 @@ def create_tree(path, filenames=None, symlinks=None):
 def test_get_output_file(cfg):
     """Test getting output name for preprocessed files."""
     output_file = get_output_file(cfg['variable'], cfg['preproc_dir'])
-    assert output_file == cfg['output_file']
+    assert output_file == Path(cfg['output_file'])
 
 
 @pytest.fixture
