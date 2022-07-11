@@ -62,8 +62,10 @@ Documentation
 -  Update CircleCI, readthedocs, and Docker configuration (`#1588 <https://github.com/ESMValGroup/ESMValCore/pull/1588>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Remove support for Mistral in `config-user.yml` (`#1620 <https://github.com/ESMValGroup/ESMValCore/pull/1620>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
 -  Add changelog for v2.6.0rc1 (`#1633 <https://github.com/ESMValGroup/ESMValCore/pull/1633>`__) `sloosvel <https://github.com/sloosvel>`__
--  Add documentation on building and uploading Docker images (`#1644 <https://github.com/ESMValGroup/ESMValCore/pull/1644>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Add a note on transferring permissions to the release manager (`#1645 <https://github.com/ESMValGroup/ESMValCore/pull/1645>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Add documentation on building and uploading Docker images (`#1644 <https://github.com/ESMValGroup/ESMValCore/pull/1644>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Update documentation on ESMValTool module at DKRZ (`#1647 <https://github.com/ESMValGroup/ESMValCore/pull/1647>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Expanded information on deprecations in changelog (`#1658 <https://github.com/ESMValGroup/ESMValCore/pull/1658>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
 Improvements
 ~~~~~~~~~~~~
@@ -87,6 +89,7 @@ Installation
 -  Removed `package/meta.yml` (`#1540 <https://github.com/ESMValGroup/ESMValCore/pull/1540>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Pinned iris>=3.2.1 (`#1552 <https://github.com/ESMValGroup/ESMValCore/pull/1552>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Use setuptools-scm to automatically generate the version number (`#1578 <https://github.com/ESMValGroup/ESMValCore/pull/1578>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Pin cf-units to lower than 3.1.0 to temporarily avoid changes within new version related to calendars (`#1659 <https://github.com/ESMValGroup/ESMValCore/pull/1659>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 
 Preprocessor
 ~~~~~~~~~~~~
@@ -100,6 +103,7 @@ Release
 ~~~~~~~
 
 -  Increase version number for ESMValCore v2.6.0rc1 (`#1632 <https://github.com/ESMValGroup/ESMValCore/pull/1632>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Update changelog and version for 2.6rc3 (`#1646 <https://github.com/ESMValGroup/ESMValCore/pull/1646>`__) `sloosvel <https://github.com/sloosvel>`__
 
 Automatic testing
 ~~~~~~~~~~~~~~~~~
@@ -109,6 +113,7 @@ Automatic testing
 -  Install git and ssh before checking out code on CircleCI (`#1601 <https://github.com/ESMValGroup/ESMValCore/pull/1601>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Fetch all history in Github Action tests (`#1622 <https://github.com/ESMValGroup/ESMValCore/pull/1622>`__) `sloosvel <https://github.com/sloosvel>`__
 -  Test Github Actions dashboard badge from meercode.io (`#1640 <https://github.com/ESMValGroup/ESMValCore/pull/1640>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Improve esmvalcore.esgf unit test (`#1650 <https://github.com/ESMValGroup/ESMValCore/pull/1650>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
 Variable Derivation
 ~~~~~~~~~~~~~~~~~~~
