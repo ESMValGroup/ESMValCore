@@ -61,7 +61,6 @@ Documentation
 -  Tweak `extract_point` preprocessor: explain what it returns if one point coord outside cube and add explicit test  (`#1584 <https://github.com/ESMValGroup/ESMValCore/pull/1584>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Update CircleCI, readthedocs, and Docker configuration (`#1588 <https://github.com/ESMValGroup/ESMValCore/pull/1588>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Remove support for Mistral in `config-user.yml` (`#1620 <https://github.com/ESMValGroup/ESMValCore/pull/1620>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
--  Add tests and docs (`#1614 <https://github.com/ESMValGroup/ESMValCore/pull/1614>`__) `Zeb Nicholls <https://github.com/znicholls>`__
 -  Add changelog for v2.6.0rc1 (`#1633 <https://github.com/ESMValGroup/ESMValCore/pull/1633>`__) `sloosvel <https://github.com/sloosvel>`__
 -  Add a note on transferring permissions to the release manager (`#1645 <https://github.com/ESMValGroup/ESMValCore/pull/1645>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Add documentation on building and uploading Docker images (`#1644 <https://github.com/ESMValGroup/ESMValCore/pull/1644>`__) `Bouwe Andela <https://github.com/bouweandela>`__
