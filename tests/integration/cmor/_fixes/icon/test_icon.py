@@ -14,7 +14,6 @@ from esmvalcore.cmor._fixes.icon.icon import AllVars, Siconc, Siconca
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
-
 # TODO: ADAPT ONCE THE FILE IS AVAILABLE ON GITHUB
 TEST_GRID_FILE_URI = (
     'https://seafile.zfn.uni-bremen.de/f/f66b000792434878bcbf/?dl=1'
@@ -198,6 +197,7 @@ def check_lat(cube):
     assert lat.standard_name == 'latitude'
     # assert lat.long_name == 'latitude'
     assert lat.units == 'degrees_north'
+    assert lat.attributes == {}
     np.testing.assert_allclose(
         lat.points,
         [-45.0, -45.0, -45.0, -45.0, 45.0, 45.0, 45.0, 45.0],
@@ -229,6 +229,7 @@ def check_lon(cube):
     assert lon.standard_name == 'longitude'
     # assert lon.long_name == 'longitude'
     assert lon.units == 'degrees_east'
+    assert lon.attributes == {}
     np.testing.assert_allclose(
         lon.points,
         [-135.0, -45.0, 45.0, 135.0, -135.0, -45.0, 45.0, 135.0],
@@ -252,11 +253,15 @@ def check_lon(cube):
 
 
 def check_lat_lon(cube):
-    """Check latitude, longitude and spatial index coordinates of cube."""
+    """Check latitude, longitude and mesh of cube."""
     lat = check_lat(cube)
     lon = check_lon(cube)
 
-    # Check spatial index coordinate
+    # Check that latitude and longitude are mesh coordinates
+    assert cube.coords('latitude', mesh_coords=True)
+    assert cube.coords('longitude', mesh_coords=True)
+
+    # Check dimensional coordinate describing the mesh
     assert cube.coords('first spatial index for variables stored on an '
                        'unstructured grid', dim_coords=True)
     i_coord = cube.coord('first spatial index for variables stored on an '
@@ -272,6 +277,130 @@ def check_lat_lon(cube):
     assert len(cube.coord_dims(lat)) == 1
     assert cube.coord_dims(lat) == cube.coord_dims(lon)
     assert cube.coord_dims(lat) == cube.coord_dims(i_coord)
+
+    # Check the mesh itself
+    mesh = cube.mesh
+    check_mesh(mesh)
+
+
+def check_mesh(mesh):
+    """Check the mesh."""
+    assert mesh is not None
+    assert mesh.var_name is None
+    assert mesh.standard_name is None
+    assert mesh.long_name is None
+    assert mesh.units == 'unknown'
+    assert mesh.attributes == {}
+    assert mesh.cf_role == 'mesh_topology'
+    assert mesh.topology_dimension == 2
+
+    # Check face coordinates
+    assert len(mesh.coords(include_faces=True)) == 2
+
+    mesh_face_lat = mesh.coord(include_faces=True, axis='y')
+    assert mesh_face_lat.var_name == 'lat'
+    assert mesh_face_lat.standard_name == 'latitude'
+    assert mesh_face_lat.long_name == 'latitude'
+    assert mesh_face_lat.units == 'degrees_north'
+    assert mesh_face_lat.attributes == {}
+    np.testing.assert_allclose(
+        mesh_face_lat.points,
+        [-45.0, -45.0, -45.0, -45.0, 45.0, 45.0, 45.0, 45.0],
+        rtol=1e-5
+    )
+    np.testing.assert_allclose(
+        mesh_face_lat.bounds,
+        [
+            [-90.0, 0.0, 0.0],
+            [-90.0, 0.0, 0.0],
+            [-90.0, 0.0, 0.0],
+            [-90.0, 0.0, 0.0],
+            [0.0, 0.0, 90.0],
+            [0.0, 0.0, 90.0],
+            [0.0, 0.0, 90.0],
+            [0.0, 0.0, 90.0],
+        ],
+        rtol=1e-5
+    )
+
+    mesh_face_lon = mesh.coord(include_faces=True, axis='x')
+    assert mesh_face_lon.var_name == 'lon'
+    assert mesh_face_lon.standard_name == 'longitude'
+    assert mesh_face_lon.long_name == 'longitude'
+    assert mesh_face_lon.units == 'degrees_east'
+    assert mesh_face_lon.attributes == {}
+    np.testing.assert_allclose(
+        mesh_face_lon.points,
+        [-135.0, -45.0, 45.0, 135.0, -135.0, -45.0, 45.0, 135.0],
+        rtol=1e-5
+    )
+    np.testing.assert_allclose(
+        mesh_face_lon.bounds,
+        [
+            [0.0, -90.0, -180.0],
+            [0.0, 0.0, -90.0],
+            [0.0, 90.0, 0.0],
+            [0.0, -180.0, 90.0],
+            [-180.0, -90.0, 0.0],
+            [-90.0, 0.0, 0.0],
+            [0.0, 90.0, 0.0],
+            [90.0, -180.0, 0.0],
+        ],
+        rtol=1e-5
+    )
+
+    # Check node coordinates
+    assert len(mesh.coords(include_nodes=True)) == 2
+
+    mesh_node_lat = mesh.coord(include_nodes=True, axis='y')
+    assert mesh_node_lat.var_name == 'nlat'
+    assert mesh_node_lat.standard_name == 'latitude'
+    assert mesh_node_lat.long_name == 'node latitude'
+    assert mesh_node_lat.units == 'degrees_north'
+    assert mesh_node_lat.attributes == {}
+    np.testing.assert_allclose(
+        mesh_node_lat.points,
+        [-90.0, 0.0, 0.0, 0.0, 0.0, 90.0],
+        rtol=1e-5
+    )
+    assert mesh_node_lat.bounds is None
+
+    mesh_node_lon = mesh.coord(include_nodes=True, axis='x')
+    assert mesh_node_lon.var_name == 'nlon'
+    assert mesh_node_lon.standard_name == 'longitude'
+    assert mesh_node_lon.long_name == 'node longitude'
+    assert mesh_node_lon.units == 'degrees_east'
+    assert mesh_node_lon.attributes == {}
+    np.testing.assert_allclose(
+        mesh_node_lon.points,
+        [0.0, -180.0, -90.0, 0.0, 90, 0.0],
+        rtol=1e-5
+    )
+    assert mesh_node_lon.bounds is None
+
+    # Check connectivity
+    assert len(mesh.connectivities()) == 1
+    conn = mesh.connectivity()
+    assert conn.var_name is None
+    assert conn.standard_name is None
+    assert conn.long_name is None
+    assert conn.units == 'unknown'
+    assert conn.attributes == {}
+    assert conn.cf_role == 'face_node_connectivity'
+    assert conn.start_index == 1
+    assert conn.location_axis == 0
+    assert conn.shape == (8, 3)
+    np.testing.assert_array_equal(
+        conn.indices,
+        [[1, 3, 2],
+         [1, 4, 3],
+         [1, 5, 4],
+         [1, 2, 5],
+         [2, 3, 6],
+         [3, 4, 6],
+         [4, 5, 6],
+         [5, 2, 6]],
+    )
 
 
 def check_typesi(cube):
@@ -1156,3 +1285,38 @@ def test_invalid_time_units(cubes_2d):
     msg = "Expected time units"
     with pytest.raises(ValueError, match=msg):
         fix.fix_metadata(cubes_2d)
+
+
+# Test mesh creation fails because bounds do not match vertices
+
+
+def test_get_mesh_fail_invalid_clat_bounds(cubes_2d):
+    """Test fix."""
+    # Slightly modify latitude bounds from tas cube to make mesh creation fail
+    tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
+    lat_bnds = tas_cube.coord('latitude').bounds.copy()
+    lat_bnds[0, 0] = 40.0
+    tas_cube.coord('latitude').bounds = lat_bnds
+    cubes = CubeList([tas_cube])
+    fix = get_allvars_fix('Amon', 'tas')
+
+    msg = ("Cannot create mesh from horizontal grid file: latitude bounds of "
+           "the face coordinate")
+    with pytest.raises(ValueError, match=msg):
+        fix.fix_metadata(cubes)
+
+
+def test_get_mesh_fail_invalid_clon_bounds(cubes_2d):
+    """Test fix."""
+    # Slightly modify longitude bounds from tas cube to make mesh creation fail
+    tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
+    lon_bnds = tas_cube.coord('longitude').bounds.copy()
+    lon_bnds[0, 1] = 40.0
+    tas_cube.coord('longitude').bounds = lon_bnds
+    cubes = CubeList([tas_cube])
+    fix = get_allvars_fix('Amon', 'tas')
+
+    msg = ("Cannot create mesh from horizontal grid file: longitude bounds "
+           "of the face coordinate")
+    with pytest.raises(ValueError, match=msg):
+        fix.fix_metadata(cubes)
