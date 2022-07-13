@@ -65,7 +65,7 @@ class AllVars(IconFix):
         else:
             lon_idx = None
 
-        # Fix unstructured mesh of unstructured grid is present
+        # Fix unstructured mesh of unstructured grid if present
         if self._is_unstructured_grid(lat_idx, lon_idx):
             self._fix_mesh(cube, lat_idx)
 
@@ -295,9 +295,8 @@ class AllVars(IconFix):
         (node_lat, node_lon) = self._get_node_coords(horizontal_grid)
 
         # The bounds given by the face coordinates slightly differ from the
-        # bounds determined by the connectivity.
-        # We arbitrarily assume here that the information given by the
-        # connectivity is correct
+        # bounds determined by the connectivity. We arbitrarily assume here
+        # that the information given by the connectivity is correct.
         conn_node_inds = vertex_of_cell.data - start_index
 
         # Latitude: there might be slight numerical differences (-> check that
