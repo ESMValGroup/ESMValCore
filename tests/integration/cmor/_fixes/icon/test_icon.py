@@ -279,6 +279,7 @@ def check_lat_lon(cube):
     assert cube.coord_dims(lat) == cube.coord_dims(i_coord)
 
     # Check the mesh itself
+    assert cube.location == 'face'
     mesh = cube.mesh
     check_mesh(mesh)
 
