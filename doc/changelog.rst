@@ -104,6 +104,8 @@ Release
 
 -  Increase version number for ESMValCore v2.6.0rc1 (`#1632 <https://github.com/ESMValGroup/ESMValCore/pull/1632>`__) `sloosvel <https://github.com/sloosvel>`__
 -  Update changelog and version for 2.6rc3 (`#1646 <https://github.com/ESMValGroup/ESMValCore/pull/1646>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Add changelog for rc4 (`#1662 <https://github.com/ESMValGroup/ESMValCore/pull/1662>`__) `sloosvel <https://github.com/sloosvel>`__
+
 
 Automatic testing
 ~~~~~~~~~~~~~~~~~
