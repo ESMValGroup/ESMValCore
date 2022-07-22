@@ -28,7 +28,6 @@ from esmvalcore.experimental import CFG
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
 
-from .test_diagnostic_run import write_config_user_file
 from .test_provenance import check_provenance
 
 TAGS_FOR_TESTING = {
@@ -100,16 +99,6 @@ DEFAULT_PREPROCESSOR_STEPS = (
 )
 
 INITIALIZATION_ERROR_MSG = 'Could not create all tasks'
-
-
-@pytest.fixture
-def config_user(tmp_path):
-    filename = write_config_user_file(tmp_path)
-    cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
-    cfg['offline'] = True
-    cfg['check_level'] = CheckLevels.DEFAULT
-    cfg['diagnostics'] = set()
-    return cfg
 
 
 @pytest.fixture
@@ -280,19 +269,19 @@ DEFAULT_DOCUMENTATION = dedent("""
     """)
 
 
-def get_recipe(tempdir, content, cfg):
+def get_recipe(tempdir, content, session):
     """Save and load recipe content."""
     recipe_file = tempdir / 'recipe_test.yml'
     # Add mandatory documentation section
     content = str(DEFAULT_DOCUMENTATION + content)
     recipe_file.write_text(content)
 
-    recipe = read_recipe_file(str(recipe_file), cfg)
+    recipe = read_recipe_file(recipe_file, session)
 
     return recipe
 
 
-def test_recipe_no_datasets(tmp_path, config_user):
+def test_recipe_no_datasets(tmp_path, session):
     content = dedent("""
         preprocessors:
           preprocessor_name:
@@ -321,11 +310,11 @@ def test_recipe_no_datasets(tmp_path, config_user):
                    " 'ta', 'short_name': 'ta', 'diagnostic': "
                    "'diagnostic_name'} Exiting.")
     with pytest.raises(RecipeError) as exc:
-        get_recipe(tmp_path, content, config_user)
+        get_recipe(tmp_path, content, session)
     assert str(exc.value) == exc_message
 
 
-def test_simple_recipe(tmp_path, patched_datafinder, config_user):
+def test_simple_recipe(tmp_path, patched_datafinder, session):
     script = tmp_path / 'diagnostic.py'
     script.write_text('')
     content = dedent("""
@@ -359,7 +348,7 @@ def test_simple_recipe(tmp_path, patched_datafinder, config_user):
                 custom_setting: 1
         """.format(script))
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     raw = yaml.safe_load(content)
     # Perform some sanity checks on recipe expansion/normalization
     print("Expanded recipe:")
@@ -411,7 +400,7 @@ def test_simple_recipe(tmp_path, patched_datafinder, config_user):
     assert recipe._updated_recipe == {}
 
 
-def test_simple_recipe_fill(tmp_path, patched_datafinder, config_user):
+def test_simple_recipe_fill(tmp_path, patched_datafinder, session):
     script = tmp_path / 'diagnostic.py'
     script.write_text('')
     content = dedent("""
@@ -445,7 +434,7 @@ def test_simple_recipe_fill(tmp_path, patched_datafinder, config_user):
                 custom_setting: 1
         """.format(script))
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     preprocessor_output = recipe.diagnostics['diagnostic_name'][
         'preprocessor_output']
     recipe._fill_wildcards('ta', preprocessor_output)
@@ -457,7 +446,7 @@ def test_simple_recipe_fill(tmp_path, patched_datafinder, config_user):
                                    value='1990/P2Y') == 1
 
 
-def test_fx_preproc_error(tmp_path, patched_datafinder, config_user):
+def test_fx_preproc_error(tmp_path, patched_datafinder, session):
     script = tmp_path / 'diagnostic.py'
     script.write_text('')
     content = dedent("""
@@ -487,12 +476,12 @@ def test_fx_preproc_error(tmp_path, patched_datafinder, config_user):
     msg = ("Time coordinate preprocessor step(s) ['extract_season'] not "
            "permitted on fx vars, please remove them from recipe")
     with pytest.raises(Exception) as rec_err_exp:
-        get_recipe(tmp_path, content, config_user)
+        get_recipe(tmp_path, content, session)
     assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
     assert str(rec_err_exp.value.failed_tasks[0].message) == msg
 
 
-def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
+def test_default_preprocessor(tmp_path, patched_datafinder, session):
 
     content = dedent("""
         diagnostics:
@@ -510,7 +499,7 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
             scripts: null
         """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
@@ -527,7 +516,7 @@ def test_default_preprocessor(tmp_path, patched_datafinder, config_user):
 
 
 def test_default_preprocessor_custom_order(tmp_path, patched_datafinder,
-                                           config_user):
+                                           session):
     """Test if default settings are used when ``custom_order`` is ``True``."""
 
     content = dedent("""
@@ -551,7 +540,7 @@ def test_default_preprocessor_custom_order(tmp_path, patched_datafinder,
             scripts: null
         """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
@@ -567,7 +556,7 @@ def test_default_preprocessor_custom_order(tmp_path, patched_datafinder,
     assert product.settings == defaults
 
 
-def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
+def test_default_fx_preprocessor(tmp_path, patched_datafinder, session):
 
     content = dedent("""
         diagnostics:
@@ -583,7 +572,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             scripts: null
         """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
@@ -699,7 +688,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
     assert product.settings == defaults
 
 
-def test_empty_variable(tmp_path, patched_datafinder, config_user):
+def test_empty_variable(tmp_path, patched_datafinder, session):
     """Test that it is possible to specify all information in the dataset."""
     content = dedent("""
         diagnostics:
@@ -717,7 +706,7 @@ def test_empty_variable(tmp_path, patched_datafinder, config_user):
             scripts: null
         """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
     assert len(task.products) == 1
@@ -726,8 +715,7 @@ def test_empty_variable(tmp_path, patched_datafinder, config_user):
     assert product.attributes['dataset'] == 'CanESM2'
 
 
-def test_cmip3_variable_autocomplete(tmp_path, patched_datafinder,
-                                     config_user):
+def test_cmip3_variable_autocomplete(tmp_path, patched_datafinder, session):
     """Test that required information is automatically added for CMIP5."""
     content = dedent("""
         diagnostics:
@@ -747,7 +735,7 @@ def test_cmip3_variable_autocomplete(tmp_path, patched_datafinder,
             scripts: null
         """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     variable = recipe.diagnostics['test']['preprocessor_output']['zg'][0]
 
     reference = {
@@ -771,8 +759,7 @@ def test_cmip3_variable_autocomplete(tmp_path, patched_datafinder,
         assert variable[key] == reference[key]
 
 
-def test_cmip5_variable_autocomplete(tmp_path, patched_datafinder,
-                                     config_user):
+def test_cmip5_variable_autocomplete(tmp_path, patched_datafinder, session):
     """Test that required information is automatically added for CMIP5."""
     content = dedent("""
         diagnostics:
@@ -790,7 +777,7 @@ def test_cmip5_variable_autocomplete(tmp_path, patched_datafinder,
             scripts: null
         """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
 
     reference = {
@@ -814,8 +801,7 @@ def test_cmip5_variable_autocomplete(tmp_path, patched_datafinder,
         assert variable[key] == reference[key]
 
 
-def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
-                                     config_user):
+def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder, session):
     """Test that required information is automatically added for CMIP6."""
     content = dedent("""
         diagnostics:
@@ -834,7 +820,7 @@ def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
             scripts: null
         """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
 
     reference = {
@@ -860,7 +846,7 @@ def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder,
         assert variable[key] == reference[key]
 
 
-def test_simple_cordex_recipe(tmp_path, patched_datafinder, config_user):
+def test_simple_cordex_recipe(tmp_path, patched_datafinder, session):
     """Test simple CORDEX recipe."""
     content = dedent("""
         diagnostics:
@@ -883,7 +869,7 @@ def test_simple_cordex_recipe(tmp_path, patched_datafinder, config_user):
             scripts: null
         """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     variable = recipe.diagnostics['test']['preprocessor_output']['tas'][0]
     filename = variable.pop('filename').split('/')[-1]
     assert (filename ==
@@ -947,7 +933,7 @@ TEST_ISO_TIMERANGE = [
 
 
 @pytest.mark.parametrize('input_time,output_time', TEST_ISO_TIMERANGE)
-def test_recipe_iso_timerange(tmp_path, patched_datafinder, config_user,
+def test_recipe_iso_timerange(tmp_path, patched_datafinder, session,
                               input_time, output_time):
     """Test recipe with timerange tag."""
     content = dedent("""
@@ -973,7 +959,7 @@ def test_recipe_iso_timerange(tmp_path, patched_datafinder, config_user,
      ) = input_time
     content = yaml.safe_dump(recipe)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
     filename = variable.pop('filename').split('/')[-1]
     assert (filename == 'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
@@ -986,8 +972,8 @@ def test_recipe_iso_timerange(tmp_path, patched_datafinder, config_user,
 
 
 @pytest.mark.parametrize('input_time,output_time', TEST_ISO_TIMERANGE)
-def test_recipe_iso_timerange_as_dataset(tmp_path, patched_datafinder,
-                                         config_user, input_time, output_time):
+def test_recipe_iso_timerange_as_dataset(tmp_path, patched_datafinder, session,
+                                         input_time, output_time):
     """Test recipe with timerange tag in the datasets section."""
     content = dedent("""
         datasets:
@@ -1011,7 +997,7 @@ def test_recipe_iso_timerange_as_dataset(tmp_path, patched_datafinder,
     (recipe['datasets'][0]['timerange']) = input_time
     content = yaml.safe_dump(recipe)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
     filename = variable.pop('filename').split('/')[-1]
     assert (filename == 'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
@@ -1085,8 +1071,7 @@ def test_update_timerange_no_files_offline(config_user):
         esmvalcore._recipe._update_timerange(variable, config_user)
 
 
-def test_reference_dataset(tmp_path, patched_datafinder, config_user,
-                           monkeypatch):
+def test_reference_dataset(tmp_path, patched_datafinder, session, monkeypatch):
 
     levels = [100]
     get_reference_levels = create_autospec(
@@ -1134,7 +1119,7 @@ def test_reference_dataset(tmp_path, patched_datafinder, config_user,
             scripts: null
         """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     assert len(recipe.tasks) == 2
 
@@ -1189,7 +1174,7 @@ def test_reference_dataset(tmp_path, patched_datafinder, config_user,
     ]
 
 
-def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
+def test_custom_preproc_order(tmp_path, patched_datafinder, session):
 
     content = dedent("""
         preprocessors:
@@ -1240,7 +1225,7 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
             scripts: null
         """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     assert len(recipe.tasks) == 4
 
@@ -1276,7 +1261,7 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, config_user):
             assert False, f"invalid task {task.name}"
 
 
-def test_derive(tmp_path, patched_datafinder, config_user):
+def test_derive(tmp_path, patched_datafinder, session):
 
     content = dedent("""
         diagnostics:
@@ -1295,7 +1280,7 @@ def test_derive(tmp_path, patched_datafinder, config_user):
             scripts: null
         """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -1325,7 +1310,7 @@ def test_derive(tmp_path, patched_datafinder, config_user):
     assert tro3_product.filename in product.files
 
 
-def test_derive_not_needed(tmp_path, patched_datafinder, config_user):
+def test_derive_not_needed(tmp_path, patched_datafinder, session):
 
     content = dedent("""
         diagnostics:
@@ -1344,7 +1329,7 @@ def test_derive_not_needed(tmp_path, patched_datafinder, config_user):
             scripts: null
         """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -1374,7 +1359,7 @@ def test_derive_not_needed(tmp_path, patched_datafinder, config_user):
         assert fix not in product.settings
 
 
-def test_derive_with_fx_ohc(tmp_path, patched_datafinder, config_user):
+def test_derive_with_fx_ohc(tmp_path, patched_datafinder, session):
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1395,7 +1380,7 @@ def test_derive_with_fx_ohc(tmp_path, patched_datafinder, config_user):
 
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -1429,7 +1414,7 @@ def test_derive_with_fx_ohc(tmp_path, patched_datafinder, config_user):
 
 
 def test_derive_with_fx_ohc_fail(tmp_path, patched_failing_datafinder,
-                                 config_user):
+                                 session):
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1451,11 +1436,11 @@ def test_derive_with_fx_ohc_fail(tmp_path, patched_failing_datafinder,
             scripts: null
         """)
     with pytest.raises(RecipeError):
-        get_recipe(tmp_path, content, config_user)
+        get_recipe(tmp_path, content, session)
 
 
 def test_derive_with_optional_var(tmp_path, patched_datafinder,
-                                  patched_tas_derivation, config_user):
+                                  patched_tas_derivation, session):
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1476,7 +1461,7 @@ def test_derive_with_optional_var(tmp_path, patched_datafinder,
 
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -1505,7 +1490,7 @@ def test_derive_with_optional_var(tmp_path, patched_datafinder,
 
 
 def test_derive_with_optional_var_nodata(tmp_path, patched_failing_datafinder,
-                                         patched_tas_derivation, config_user):
+                                         patched_tas_derivation, session):
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1526,7 +1511,7 @@ def test_derive_with_optional_var_nodata(tmp_path, patched_failing_datafinder,
 
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -1549,8 +1534,7 @@ def test_derive_with_optional_var_nodata(tmp_path, patched_failing_datafinder,
         assert ancestor_product.filename in all_product_files
 
 
-def test_derive_contains_start_end_year(tmp_path, patched_datafinder,
-                                        config_user):
+def test_derive_contains_start_end_year(tmp_path, patched_datafinder, session):
 
     content = dedent("""
         diagnostics:
@@ -1568,7 +1552,7 @@ def test_derive_contains_start_end_year(tmp_path, patched_datafinder,
             scripts: null
         """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -1584,8 +1568,7 @@ def test_derive_contains_start_end_year(tmp_path, patched_datafinder,
     assert product.attributes['end_year'] == 2005
 
 
-def test_derive_timerange_wildcard(tmp_path, patched_datafinder,
-                                   config_user):
+def test_derive_timerange_wildcard(tmp_path, patched_datafinder, session):
 
     content = dedent("""
         diagnostics:
@@ -1603,7 +1586,7 @@ def test_derive_timerange_wildcard(tmp_path, patched_datafinder,
             scripts: null
         """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -1619,8 +1602,7 @@ def test_derive_timerange_wildcard(tmp_path, patched_datafinder,
     assert product.attributes['end_year'] == 2019
 
 
-def test_derive_fail_timerange_wildcard(tmp_path, patched_datafinder,
-                                        config_user):
+def test_derive_fail_timerange_wildcard(tmp_path, patched_datafinder, session):
 
     content = dedent("""
         diagnostics:
@@ -1637,15 +1619,14 @@ def test_derive_fail_timerange_wildcard(tmp_path, patched_datafinder,
                   - {dataset: GFDL-CM3,  ensemble: r1i1p1}
             scripts: null
         """)
-    msg = (
-      "Error in derived variable: toz: "
-      "Using 'force_derivation: false' (the default option) "
-      "in combination with wildcards ('*') in timerange is "
-      "not allowed; explicitly use 'force_derivation: true' "
-      "or avoid the use of wildcards in timerange")
+    msg = ("Error in derived variable: toz: "
+           "Using 'force_derivation: false' (the default option) "
+           "in combination with wildcards ('*') in timerange is "
+           "not allowed; explicitly use 'force_derivation: true' "
+           "or avoid the use of wildcards in timerange")
 
     with pytest.raises(RecipeError) as rec_err:
-        get_recipe(tmp_path, content, config_user)
+        get_recipe(tmp_path, content, session)
 
     assert msg in rec_err.value.failed_tasks[0].message
 
@@ -1697,7 +1678,7 @@ def simulate_diagnostic_run(diagnostic_task):
 def test_diagnostic_task_provenance(
     tmp_path,
     patched_datafinder,
-    config_user,
+    session,
 ):
     script = tmp_path / 'diagnostic.py'
     script.write_text('')
@@ -1729,7 +1710,7 @@ def test_diagnostic_task_provenance(
                 ancestors: [script_name]
         """.format(script=script))
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     diagnostic_task = recipe.tasks.pop()
 
     simulate_diagnostic_run(next(iter(diagnostic_task.ancestors)))
@@ -1777,7 +1758,7 @@ def test_diagnostic_task_provenance(
     assert os.path.exists(prefix + '.xml')
 
 
-def test_alias_generation(tmp_path, patched_datafinder, config_user):
+def test_alias_generation(tmp_path, patched_datafinder, session):
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1806,7 +1787,7 @@ def test_alias_generation(tmp_path, patched_datafinder, config_user):
             scripts: null
         """)  # noqa:
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     assert len(recipe.diagnostics) == 1
     diag = recipe.diagnostics['diagnostic_name']
     var = diag['preprocessor_output']['ta']
@@ -1837,7 +1818,7 @@ def test_alias_generation(tmp_path, patched_datafinder, config_user):
                 assert dataset['alias'] == 'OBS_2'
 
 
-def test_concatenation(tmp_path, patched_datafinder, config_user):
+def test_concatenation(tmp_path, patched_datafinder, session):
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1861,7 +1842,7 @@ def test_concatenation(tmp_path, patched_datafinder, config_user):
             scripts: null
         """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     assert len(recipe.diagnostics) == 1
     diag = recipe.diagnostics['diagnostic_name']
     var = diag['preprocessor_output']['ta']
@@ -1872,7 +1853,7 @@ def test_concatenation(tmp_path, patched_datafinder, config_user):
             assert dataset['alias'] == 'historical-rcp85'
 
 
-def test_ensemble_expansion(tmp_path, patched_datafinder, config_user):
+def test_ensemble_expansion(tmp_path, patched_datafinder, session):
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1893,7 +1874,7 @@ def test_ensemble_expansion(tmp_path, patched_datafinder, config_user):
             scripts: null
         """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     assert len(recipe.diagnostics) == 1
     diag = recipe.diagnostics['diagnostic_name']
     var = diag['preprocessor_output']['ta']
@@ -1903,7 +1884,7 @@ def test_ensemble_expansion(tmp_path, patched_datafinder, config_user):
     assert var[2]['ensemble'] == 'r3i1p1'
 
 
-def test_extract_shape(tmp_path, patched_datafinder, config_user):
+def test_extract_shape(tmp_path, patched_datafinder, session):
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
     content = dedent("""
@@ -1928,11 +1909,11 @@ def test_extract_shape(tmp_path, patched_datafinder, config_user):
             scripts: null
         """)
     # Create shapefile
-    shapefile = config_user['auxiliary_data_dir'] / Path('test.shp')
+    shapefile = session['auxiliary_data_dir'] / Path('test.shp')
     shapefile.parent.mkdir(parents=True, exist_ok=True)
     shapefile.touch()
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
@@ -1943,12 +1924,12 @@ def test_extract_shape(tmp_path, patched_datafinder, config_user):
 
 @pytest.mark.parametrize('invalid_arg',
                          ['shapefile', 'method', 'crop', 'decomposed'])
-def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
+def test_extract_shape_raises(tmp_path, patched_datafinder, session,
                               invalid_arg):
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
     # Create shapefile
-    shapefile = config_user['auxiliary_data_dir'] / Path('test.shp')
+    shapefile = session['auxiliary_data_dir'] / Path('test.shp')
     shapefile.parent.mkdir(parents=True, exist_ok=True)
     shapefile.touch()
 
@@ -1983,7 +1964,7 @@ def test_extract_shape_raises(tmp_path, patched_datafinder, config_user,
     content = yaml.safe_dump(recipe)
 
     with pytest.raises(RecipeError) as exc:
-        get_recipe(tmp_path, content, config_user)
+        get_recipe(tmp_path, content, session)
 
     assert str(exc.value) == INITIALIZATION_ERROR_MSG
     assert 'extract_shape' in exc.value.failed_tasks[0].message
@@ -2010,7 +1991,7 @@ def _test_output_product_consistency(products, preprocessor, statistics):
     return product_out
 
 
-def test_ensemble_statistics(tmp_path, patched_datafinder, config_user):
+def test_ensemble_statistics(tmp_path, patched_datafinder, session):
     statistics = ['mean', 'max']
     diagnostic = 'diagnostic_name'
     variable = 'pr'
@@ -2042,7 +2023,7 @@ def test_ensemble_statistics(tmp_path, patched_datafinder, config_user):
              scripts: null
     """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
     datasets = set([var['dataset'] for var in variable])
     task = next(iter(recipe.tasks))
@@ -2057,7 +2038,7 @@ def test_ensemble_statistics(tmp_path, patched_datafinder, config_user):
     assert next(iter(products)).provenance is not None
 
 
-def test_multi_model_statistics(tmp_path, patched_datafinder, config_user):
+def test_multi_model_statistics(tmp_path, patched_datafinder, session):
     statistics = ['mean', 'max']
     diagnostic = 'diagnostic_name'
     variable = 'pr'
@@ -2090,7 +2071,7 @@ def test_multi_model_statistics(tmp_path, patched_datafinder, config_user):
             scripts: null
     """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
     task = next(iter(recipe.tasks))
 
@@ -2104,9 +2085,7 @@ def test_multi_model_statistics(tmp_path, patched_datafinder, config_user):
     assert next(iter(products)).provenance is not None
 
 
-def test_multi_model_statistics_exclude(tmp_path,
-                                        patched_datafinder,
-                                        config_user):
+def test_multi_model_statistics_exclude(tmp_path, patched_datafinder, session):
     statistics = ['mean', 'max']
     diagnostic = 'diagnostic_name'
     variable = 'pr'
@@ -2143,7 +2122,7 @@ def test_multi_model_statistics_exclude(tmp_path,
             scripts: null
     """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
     task = next(iter(recipe.tasks))
 
@@ -2160,8 +2139,7 @@ def test_multi_model_statistics_exclude(tmp_path,
     assert next(iter(products)).provenance is not None
 
 
-def test_groupby_combined_statistics(tmp_path, patched_datafinder,
-                                     config_user):
+def test_groupby_combined_statistics(tmp_path, patched_datafinder, session):
     diagnostic = 'diagnostic_name'
     variable = 'pr'
 
@@ -2203,7 +2181,7 @@ def test_groupby_combined_statistics(tmp_path, patched_datafinder,
             scripts: null
     """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
     datasets = set([var['dataset'] for var in variable])
 
@@ -2226,7 +2204,7 @@ def test_groupby_combined_statistics(tmp_path, patched_datafinder,
         mm_products) == len(mm_statistics) * len(ens_statistics) * len(groupby)
 
 
-def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
+def test_weighting_landsea_fraction(tmp_path, patched_datafinder, session):
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
     content = dedent("""
@@ -2252,7 +2230,7 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
                      tier: 1}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -2278,7 +2256,7 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, config_user):
 
 
 def test_weighting_landsea_fraction_no_fx(tmp_path, patched_failing_datafinder,
-                                          config_user):
+                                          session):
     content = dedent("""
         preprocessors:
           landfrac_weighting:
@@ -2303,7 +2281,7 @@ def test_weighting_landsea_fraction_no_fx(tmp_path, patched_failing_datafinder,
                      tier: 1}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -2324,7 +2302,7 @@ def test_weighting_landsea_fraction_no_fx(tmp_path, patched_failing_datafinder,
 
 
 def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
-                                            config_user):
+                                            session):
     content = dedent("""
         preprocessors:
           landfrac_weighting:
@@ -2351,7 +2329,7 @@ def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
                      tier: 1}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -2372,7 +2350,7 @@ def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
 
 
 def test_weighting_landsea_fraction_exclude_fail(tmp_path, patched_datafinder,
-                                                 config_user):
+                                                 session):
     content = dedent("""
         preprocessors:
           landfrac_weighting:
@@ -2398,7 +2376,7 @@ def test_weighting_landsea_fraction_exclude_fail(tmp_path, patched_datafinder,
             scripts: null
         """)
     with pytest.raises(RecipeError) as exc_info:
-        get_recipe(tmp_path, content, config_user)
+        get_recipe(tmp_path, content, session)
     assert str(exc_info.value) == INITIALIZATION_ERROR_MSG
     assert str(exc_info.value.failed_tasks[0].message) == (
         'Preprocessor landfrac_weighting uses alternative_dataset, but '
@@ -2406,7 +2384,7 @@ def test_weighting_landsea_fraction_exclude_fail(tmp_path, patched_datafinder,
         'diagnostic_name')
 
 
-def test_area_statistics(tmp_path, patched_datafinder, config_user):
+def test_area_statistics(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           area_statistics:
@@ -2430,7 +2408,7 @@ def test_area_statistics(tmp_path, patched_datafinder, config_user):
                      tier: 1}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -2455,7 +2433,7 @@ def test_area_statistics(tmp_path, patched_datafinder, config_user):
             assert fx_variables.get('areacello')
 
 
-def test_landmask(tmp_path, patched_datafinder, config_user):
+def test_landmask(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           landmask:
@@ -2479,7 +2457,7 @@ def test_landmask(tmp_path, patched_datafinder, config_user):
                      tier: 1}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -2502,7 +2480,7 @@ def test_landmask(tmp_path, patched_datafinder, config_user):
             assert len(fx_variables) == 2
 
 
-def test_empty_fxvar_none(tmp_path, patched_datafinder, config_user):
+def test_empty_fxvar_none(tmp_path, patched_datafinder, session):
     """Test that no fx variables are added if explicitly specified."""
     content = dedent("""
         preprocessors:
@@ -2525,7 +2503,7 @@ def test_empty_fxvar_none(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM2}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check that no custom fx variables are present
     task = recipe.tasks.pop()
@@ -2533,7 +2511,7 @@ def test_empty_fxvar_none(tmp_path, patched_datafinder, config_user):
     assert product.settings['add_fx_variables']['fx_variables'] == {}
 
 
-def test_empty_fxvar_list(tmp_path, patched_datafinder, config_user):
+def test_empty_fxvar_list(tmp_path, patched_datafinder, session):
     """Test that no fx variables are added if explicitly specified."""
     content = dedent("""
         preprocessors:
@@ -2556,7 +2534,7 @@ def test_empty_fxvar_list(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM2}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check that no custom fx variables are present
     task = recipe.tasks.pop()
@@ -2564,7 +2542,7 @@ def test_empty_fxvar_list(tmp_path, patched_datafinder, config_user):
     assert product.settings['add_fx_variables']['fx_variables'] == {}
 
 
-def test_empty_fxvar_dict(tmp_path, patched_datafinder, config_user):
+def test_empty_fxvar_dict(tmp_path, patched_datafinder, session):
     """Test that no fx variables are added if explicitly specified."""
     content = dedent("""
         preprocessors:
@@ -2587,7 +2565,7 @@ def test_empty_fxvar_dict(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM2}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check that no custom fx variables are present
     task = recipe.tasks.pop()
@@ -2595,7 +2573,7 @@ def test_empty_fxvar_dict(tmp_path, patched_datafinder, config_user):
     assert product.settings['add_fx_variables']['fx_variables'] == {}
 
 
-def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
+def test_user_defined_fxvar(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           landmask:
@@ -2632,7 +2610,7 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM2}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check custom fx variables
     task = recipe.tasks.pop()
@@ -2669,7 +2647,7 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
     assert '_piControl_' in fx_variables['areacello']['filename']
 
 
-def test_user_defined_fxlist(tmp_path, patched_datafinder, config_user):
+def test_user_defined_fxlist(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           landmask:
@@ -2700,7 +2678,7 @@ def test_user_defined_fxlist(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM2}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check custom fx variables
     task = recipe.tasks.pop()
@@ -2737,7 +2715,7 @@ def test_user_defined_fxlist(tmp_path, patched_datafinder, config_user):
     assert '_piControl_' in fx_variables['areacello']['filename']
 
 
-def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
+def test_landmask_no_fx(tmp_path, patched_failing_datafinder, session):
     content = dedent("""
         preprocessors:
           landmask:
@@ -2764,7 +2742,7 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
                      tier: 1}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -2785,7 +2763,7 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
         assert not any(fx_variables)
 
 
-def test_fx_vars_fixed_mip_cmip6(tmp_path, patched_datafinder, config_user):
+def test_fx_vars_fixed_mip_cmip6(tmp_path, patched_datafinder, session):
     """Test fx variables with given mips."""
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
@@ -2817,7 +2795,7 @@ def test_fx_vars_fixed_mip_cmip6(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM5}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -2841,7 +2819,7 @@ def test_fx_vars_fixed_mip_cmip6(tmp_path, patched_datafinder, config_user):
     assert '_Ofx_' in fx_variables['volcello']['filename']
 
 
-def test_fx_vars_invalid_mip_cmip6(tmp_path, patched_datafinder, config_user):
+def test_fx_vars_invalid_mip_cmip6(tmp_path, patched_datafinder, session):
     """Test fx variables with invalid mip."""
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
@@ -2873,13 +2851,13 @@ def test_fx_vars_invalid_mip_cmip6(tmp_path, patched_datafinder, config_user):
     msg = ("Requested mip table 'INVALID' for fx variable 'areacella' not "
            "available for project 'CMIP6'")
     with pytest.raises(RecipeError) as rec_err_exp:
-        get_recipe(tmp_path, content, config_user)
+        get_recipe(tmp_path, content, session)
     assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
     assert msg in rec_err_exp.value.failed_tasks[0].message
 
 
 def test_fx_vars_invalid_mip_for_var_cmip6(tmp_path, patched_datafinder,
-                                           config_user):
+                                           session):
     """Test fx variables with invalid mip for variable."""
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
@@ -2911,12 +2889,12 @@ def test_fx_vars_invalid_mip_for_var_cmip6(tmp_path, patched_datafinder,
     msg = ("fx variable 'areacella' not available in CMOR table 'Lmon' for "
            "'CMIP6'")
     with pytest.raises(RecipeError) as rec_err_exp:
-        get_recipe(tmp_path, content, config_user)
+        get_recipe(tmp_path, content, session)
     assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
     assert msg in rec_err_exp.value.failed_tasks[0].message
 
 
-def test_fx_vars_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
+def test_fx_vars_mip_search_cmip6(tmp_path, patched_datafinder, session):
     """Test mip tables search for different fx variables."""
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
@@ -2948,7 +2926,7 @@ def test_fx_vars_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM5}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -2980,7 +2958,7 @@ def test_fx_vars_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
     assert '_Ofx_' in fx_variables['sftof']['filename']
 
 
-def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
+def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, session):
     """Test mip tables search for list of different fx variables."""
     content = dedent("""
         preprocessors:
@@ -3011,7 +2989,7 @@ def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
                   - {dataset: CanESM5}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -3037,8 +3015,7 @@ def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
     assert '_Ofx_' in fx_variables['sftof']['filename']
 
 
-def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
-                                       config_user):
+def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder, session):
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
     content = dedent("""
@@ -3066,7 +3043,7 @@ def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
                   - {dataset: CanESM5}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -3087,8 +3064,7 @@ def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
     assert '_Ofx_' in fx_variables['volcello']['filename']
 
 
-def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
-                                        config_user):
+def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           preproc:
@@ -3115,7 +3091,7 @@ def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
                   - {dataset: CanESM5}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -3137,8 +3113,7 @@ def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
     assert '_Omon_' not in fx_variables['volcello']['filename'][0]
 
 
-def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder,
-                                       config_user):
+def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           preproc:
@@ -3171,7 +3146,7 @@ def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder,
                   - {dataset: CanESM5}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -3191,7 +3166,7 @@ def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder,
 
 
 def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
-                                        config_user):
+                                        session):
     content = dedent("""
         preprocessors:
           preproc:
@@ -3217,7 +3192,7 @@ def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
                   - {dataset: CanESM5}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -3239,7 +3214,7 @@ def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
 
 
 def test_fx_vars_volcello_in_oyr_cmip6(tmp_path, patched_failing_datafinder,
-                                       config_user):
+                                       session):
     content = dedent("""
         preprocessors:
           preproc:
@@ -3265,7 +3240,7 @@ def test_fx_vars_volcello_in_oyr_cmip6(tmp_path, patched_failing_datafinder,
                   - {dataset: CanESM5}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -3286,8 +3261,7 @@ def test_fx_vars_volcello_in_oyr_cmip6(tmp_path, patched_failing_datafinder,
     assert '_Oyr_' in fx_variables['volcello']['filename'][0]
 
 
-def test_fx_vars_volcello_in_fx_cmip5(tmp_path, patched_datafinder,
-                                      config_user):
+def test_fx_vars_volcello_in_fx_cmip5(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           preproc:
@@ -3311,7 +3285,7 @@ def test_fx_vars_volcello_in_fx_cmip5(tmp_path, patched_datafinder,
                   - {dataset: CanESM2}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -3332,7 +3306,7 @@ def test_fx_vars_volcello_in_fx_cmip5(tmp_path, patched_datafinder,
     assert '_Omon_' not in fx_variables['volcello']['filename']
 
 
-def test_wrong_project(tmp_path, patched_datafinder, config_user):
+def test_wrong_project(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           preproc:
@@ -3359,12 +3333,12 @@ def test_wrong_project(tmp_path, patched_datafinder, config_user):
     msg = ("Unable to load CMOR table (project) 'CMIP7' for variable 'tos' "
            "with mip 'Omon'")
     with pytest.raises(RecipeError) as wrong_proj:
-        get_recipe(tmp_path, content, config_user)
+        get_recipe(tmp_path, content, session)
     assert str(wrong_proj.value) == INITIALIZATION_ERROR_MSG
     assert str(wrong_proj.value.failed_tasks[0].message) == msg
 
 
-def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
+def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, session):
     """Test that error is raised for invalid fx variable."""
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
@@ -3396,12 +3370,12 @@ def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
     msg = ("Requested fx variable 'wrong_fx_variable' not available in any "
            "CMOR table")
     with pytest.raises(RecipeError) as rec_err_exp:
-        get_recipe(tmp_path, content, config_user)
+        get_recipe(tmp_path, content, session)
     assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
     assert msg in rec_err_exp.value.failed_tasks[0].message
 
 
-def test_ambiguous_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
+def test_ambiguous_fx_var_cmip6(tmp_path, patched_datafinder, session):
     """Test that error is raised for fx files available in multiple mips."""
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
@@ -3433,14 +3407,14 @@ def test_ambiguous_fx_var_cmip6(tmp_path, patched_datafinder, config_user):
            "'CMIP6' is available in more than one CMOR table for 'CMIP6': "
            "['Odec', 'Ofx', 'Omon', 'Oyr']")
     with pytest.raises(RecipeError) as rec_err_exp:
-        get_recipe(tmp_path, content, config_user)
+        get_recipe(tmp_path, content, session)
     assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
     assert msg in rec_err_exp.value.failed_tasks[0].message
 
 
 def test_unique_fx_var_in_multiple_mips_cmip6(tmp_path,
                                               patched_failing_datafinder,
-                                              config_user):
+                                              session):
     """Test that no error is raised for fx files available in one mip."""
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
@@ -3468,7 +3442,7 @@ def test_unique_fx_var_in_multiple_mips_cmip6(tmp_path,
                   - {dataset: CanESM5}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -3495,7 +3469,7 @@ def test_unique_fx_var_in_multiple_mips_cmip6(tmp_path,
     assert '_LImon_' in sftgif_files[0]
 
 
-def test_multimodel_mask(tmp_path, patched_datafinder, config_user):
+def test_multimodel_mask(tmp_path, patched_datafinder, session):
     """Test ``mask_multimodel``."""
     content = dedent("""
         preprocessors:
@@ -3519,7 +3493,7 @@ def test_multimodel_mask(tmp_path, patched_datafinder, config_user):
                   - {dataset: HadGEM2-ES}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     # Check generated tasks
     assert len(recipe.tasks) == 1
@@ -3533,7 +3507,7 @@ def test_multimodel_mask(tmp_path, patched_datafinder, config_user):
         assert product.settings['mask_multimodel'] == {}
 
 
-def test_obs4mips_case_correct(tmp_path, patched_datafinder, config_user):
+def test_obs4mips_case_correct(tmp_path, patched_datafinder, session):
     """Test that obs4mips is corrected to obs4MIPs."""
     content = dedent("""
         diagnostics:
@@ -3551,13 +3525,13 @@ def test_obs4mips_case_correct(tmp_path, patched_datafinder, config_user):
                      version: 1, tier: 1, level: 1}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     variable = recipe.diagnostics['diagnostic_name']['preprocessor_output'][
         'tas'][0]
     assert variable['project'] == 'obs4MIPs'
 
 
-def test_write_filled_recipe(tmp_path, patched_datafinder, config_user):
+def test_write_filled_recipe(tmp_path, patched_datafinder, session):
 
     content = dedent("""
         diagnostics:
@@ -3574,8 +3548,8 @@ def test_write_filled_recipe(tmp_path, patched_datafinder, config_user):
             scripts: null
         """)
 
-    recipe = get_recipe(tmp_path, content, config_user)
-    run_dir = config_user['run_dir']
+    recipe = get_recipe(tmp_path, content, session)
+    run_dir = session.run_dir
     if not os.path.exists(run_dir):
         os.makedirs(run_dir)
 
@@ -3586,7 +3560,7 @@ def test_write_filled_recipe(tmp_path, patched_datafinder, config_user):
     assert os.path.isfile(os.path.join(run_dir, 'recipe_test_filled.yml'))
 
 
-def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
+def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
 
     content = dedent("""
         diagnostics:
@@ -3601,23 +3575,23 @@ def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
                   - {dataset: BNU-ESM}
             scripts: null
         """)
-    config_user['download_dir'] = tmp_path / 'download_dir'
-    config_user['offline'] = False
+    session['download_dir'] = tmp_path / 'download_dir'
+    session['offline'] = False
 
     mocker.patch.object(esmvalcore._recipe.esgf,
                         'download',
                         create_autospec=True)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
 
     recipe.tasks.run = mocker.Mock()
     recipe.write_filled_recipe = mocker.Mock()
     recipe.run()
 
     esmvalcore._recipe.esgf.download.assert_called_once_with(
-        set(), config_user['download_dir'])
+        set(), session['download_dir'])
     recipe.tasks.run.assert_called_once_with(
-        max_parallel_tasks=config_user['max_parallel_tasks'])
+        max_parallel_tasks=session['max_parallel_tasks'])
     recipe.write_filled_recipe.assert_called_once()
 
 
@@ -3653,7 +3627,7 @@ def test_dataset_to_file_regular_var(mock_data_availability,
 @patch('esmvalcore._recipe.check.data_availability', autospec=True)
 @patch('esmvalcore._recipe._get_input_files', autospec=True)
 def test_dataset_to_file_derived_var(mock_get_input_files,
-                                     mock_data_availability, config_user):
+                                     mock_data_availability, session):
     """Test ``_dataset_to_file`` with derived variable."""
     mock_get_input_files.side_effect = [
         ([], [], []),
@@ -3678,7 +3652,7 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
         'var_type': 'atm_2d_ml',
         'version': 1,
     }
-    filename = _dataset_to_file(variable, config_user)
+    filename = _dataset_to_file(variable, session)
     assert filename == sentinel.out_file
     assert mock_get_input_files.call_count == 2
 
@@ -3710,7 +3684,7 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
         # Added by _add_extra_facets
         'raw_name': 'cllvi',
     }
-    mock_get_input_files.assert_called_with(expect_required_var, config_user)
+    mock_get_input_files.assert_called_with(expect_required_var, session)
     mock_data_availability.assert_called_once()
 
 
@@ -3820,15 +3794,15 @@ TEST_DIAG_SELECTION = [
 
 
 @pytest.mark.parametrize('diags_to_run,tasks_run', TEST_DIAG_SELECTION)
-def test_diag_selection(tmp_path, patched_datafinder, config_user,
-                        diags_to_run, tasks_run):
+def test_diag_selection(tmp_path, patched_datafinder, session, diags_to_run,
+                        tasks_run):
     """Test selection of individual diagnostics via --diagnostics option."""
     TAGS.set_tag_values(TAGS_FOR_TESTING)
     script = tmp_path / 'diagnostic.py'
     script.write_text('')
 
     if diags_to_run is not None:
-        config_user['diagnostics'] = diags_to_run
+        session['diagnostics'] = diags_to_run
 
     content = dedent("""
         diagnostics:
@@ -3871,7 +3845,7 @@ def test_diag_selection(tmp_path, patched_datafinder, config_user,
                 ancestors: [d3/s2]
         """).format(script=script)
 
-    recipe = get_recipe(tmp_path, content, config_user)
+    recipe = get_recipe(tmp_path, content, session)
     task_names = {task.name for task in recipe.tasks.flatten()}
 
     assert tasks_run == task_names
