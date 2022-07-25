@@ -1,0 +1,17 @@
+# Extra facets for native CESM model output
+
+# All extra facets for CESM are optional but might be necessary for some
+# variables.
+
+# Notes:
+# - ...
+
+# A complete list of supported keys is given in the documentation (see
+# ESMValCore/doc/quickstart/find_data.rst).
+---
+
+CESM2:
+
+  '*':
+    tas:
+      raw_name: TREFHT

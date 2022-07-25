@@ -174,3 +174,13 @@ ICON:
   output_file: '{dataset}_{version}_{component}_{grid}_{mip}_{exp}_{ensemble}_{short_name}_{var_type}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
+
+CESM:
+  cmor_strict: false
+  input_dir:
+    default: '{dataset}'
+  input_file:
+    default: '{simulation}.*.nc'
+  output_file: '{project}_{dataset}_{simulation}_{mip}_{short_name}'
+  cmor_type: 'CMIP6'
+  cmor_default_table_prefix: 'CMIP6_'
