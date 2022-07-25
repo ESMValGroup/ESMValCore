@@ -17,7 +17,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Python 3.10
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
         with:
           python-version: "3.10"
       - name: Install pep517
@@ -27,6 +27,7 @@ jobs:
           pep517
           --user
       - name: Build a binary wheel and a source tarball
+        id: build_tarball
         run: >-
           python -m
           pep517.build
@@ -34,14 +35,36 @@ jobs:
           --binary
           --out-dir dist/
           .
+        run: |
+          version=$(head -1  esmvalcore/_version.py | cut  -d "'" -f 2)
+          sha=$(shasum -a 256 dist/esmvalcore-${version}.tar.gz | awk '{print $1}')
+          echo "::set-output name=tarball-sha::${sha}"
+          echo "::set-output name=pypi-version::${version}"
       #- name: Publish distribution 📦 to Test PyPI
       #  uses: pypa/gh-action-pypi-publish@master
       #  with:
       #    password: ${{ secrets.test_pypi_password }}
       #    repository_url: https://test.pypi.org/legacy/
-      - name: Publish distribution 📦 to PyPI
+      - name: Publish distribution 📦 to PyP
         if: startsWith(github.ref, 'refs/tags')
         uses: pypa/gh-action-pypi-publish@release/v1
+        id: pypi_published
         with:
           user: __token__
           password: ${{ secrets.pypi_password }}
+      - name: Make PR on conda forge feedstock
+        if: startsWith(github.ref, 'refs/tags')
+        if: steps.pypi_published.outputs.exit_code == 0
+        uses: joezuntz/conda-forge-feedstock-pr-action@v1.0
+        with:
+          feedstock_name: esmvalcore
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ steps.build_tarball.outputs.pypi-version }}
+          hash: ${{ steps.build_tarball.outputs.tarball-sha }}
+          fork_owner: valeriupredoi
+          # Email address is used to list you as the author of the commit
+          email_address: your_user_name@your_org.org
+          # Default to main
+          # branch_name: main
+          # tell bot not to automerge after tests
+          automerge: false
