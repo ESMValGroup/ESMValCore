@@ -35,8 +35,9 @@ jobs:
           --binary
           --out-dir dist/
           .
+        # store version and SHA
         run: |
-          version=$(head -1  esmvalcore/_version.py | cut  -d "'" -f 2)
+          version=$(sed '3q;d'  ESMValCore.egg-info/PKG-INFO | cut  -d ":" -f 2)
           sha=$(shasum -a 256 dist/esmvalcore-${version}.tar.gz | awk '{print $1}')
           echo "::set-output name=tarball-sha::${sha}"
           echo "::set-output name=pypi-version::${version}"
@@ -63,7 +64,8 @@ jobs:
           hash: ${{ steps.build_tarball.outputs.tarball-sha }}
           fork_owner: valeriupredoi
           # Email address is used to list you as the author of the commit
-          email_address: your_user_name@your_org.org
+          # not convinced the email is needed at all
+          # email_address: your_user_name@your_org.org
           # Default to main
           # branch_name: main
           # tell bot not to automerge after tests
