@@ -31,9 +31,9 @@ jobs:
         run: |
           pwd
           ls -la
-      - name: Edit pr stats file
-        shell: bash -l {0}
-        run: echo "PR stats updated here" 2>&1 | tee pr-stats.md
+      #- name: Edit pr stats file
+      #  shell: bash -l {0}
+      #  run: echo "PR stats updated here" 2>&1 | tee pr-stats.md
       # Automated PR
       # see https://github.com/marketplace/actions/create-pull-request
       - name: "Create Automated PR to have PR stats in it"
