@@ -31,10 +31,10 @@ jobs:
         uses: peter-evans/create-pull-request@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: Opening empty PR
+          commit-message: Opening auto PR
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           signoff: false
-          branch: pr-stats
+          branch: test_pr_stats
           delete-branch: true
           title: '[PR-Stats] Update PR stats'
           body: |
