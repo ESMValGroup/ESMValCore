@@ -6,8 +6,7 @@ name: Pull Request Stats
 on:
   push:
     branches:
-      - test_pr_stats 
-      - pr-stats2
+      - test_pr_stats
   pull_request:
     types: [opened, ready_for_review, reopened, review_requested]
   schedule:
@@ -45,6 +44,7 @@ jobs:
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           signoff: false
           branch: pr-stats2
+          base: main
           delete-branch: true
           title: '[PR-Stats] Update PR stats'
           body: |
