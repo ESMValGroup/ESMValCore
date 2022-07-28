@@ -24,7 +24,9 @@ jobs:
           charts: true  # add some swanky chart
       - name: Determine location
         shell: bash -l {0}
-        run: pwd
+        run: |
+          pwd
+          ls -la
       - name: Edit pr stats file
         shell: bash -l {0}
         run: echo "PR stats updated here" 2>&1 | tee pr-stats.md
