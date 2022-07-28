@@ -31,7 +31,7 @@ jobs:
           commit-message: Opening empty PR
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           signoff: false
-          branch: test_pr_stats
+          branch: pr-stats
           delete-branch: true
           title: '[PR-Stats] Update PR stats'
           body: |
