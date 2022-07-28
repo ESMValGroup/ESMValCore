@@ -23,6 +23,9 @@ jobs:
           period: 180   # 180 days = 6 months
           charts: true  # add some swanky chart
       - name: Determine location
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
         shell: bash -l {0}
         run: |
           pwd
