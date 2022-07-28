@@ -43,7 +43,7 @@ jobs:
           commit-message: Opening auto PR
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           signoff: false
-          branch: pr-stats3
+          branch: test_pr_stats
           base: main
           delete-branch: true
           title: '[PR-Stats] Update PR stats'
