@@ -1,0 +1,49 @@
+# This action displays statstics gathered about PR reviews (so far)
+# uses the action from https://github.com/marketplace/actions/pull-request-stats
+# runs every 3 days by opening an auto PR then closing it
+name: Pull Request Stats
+
+on:
+  push:
+    branches:
+      - test_pr_stats 
+  pull_request:
+    types: [opened, ready_for_review, reopened, review_requested]
+  schedule:
+    - cron: '0 4 */3 * *'
+
+jobs:
+  stats:
+    name: "Display pull request statistics"
+    runs-on: 'ubuntu-latest'
+    steps:
+      - name: "Run pull request stats"
+        uses: flowwer-dev/pull-request-stats@master
+        with:
+          period: 180   # 180 days = 6 months
+          charts: true  # add some swanky chart
+      # Automated PR
+      # see https://github.com/marketplace/actions/create-pull-request
+      - name: "Create Automated PR to have PR stats in it"
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: Opening empty PR
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          branch: test_pr_stats
+          delete-branch: true
+          title: '[PR-Stats] Update PR stats'
+          body: |
+            Update PR statistics.
+            Automatic Pull Request.
+          labels: |
+            testing
+            pr-stats
+            automatedPR
+          assignees: valeriupredoi
+          reviewers: valeriupredoi
+          team-reviewers: |
+            owners
+            maintainers
+          draft: false
