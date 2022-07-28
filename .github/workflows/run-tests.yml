@@ -11,7 +11,7 @@
 # TODO: read the cron tasking documentation:
 # https://www.netiq.com/documentation/cloud-manager-2-5/ncm-reference/data/bexyssf.html
 
-name: Test
+name: Testy
 
 # runs on a push on main and at the end of every day
 on:
