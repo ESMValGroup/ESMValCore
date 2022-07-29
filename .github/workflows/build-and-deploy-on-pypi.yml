@@ -1,4 +1,4 @@
-name: PyPI Build and Deploy 🐍📦
+name: PyPI Build and Deploy 🐍📦and PR conda-feedstock
 
 on:
   release:
@@ -12,6 +12,7 @@ jobs:
   build-n-publish:
     name: Build and publish ESMValCore on PyPI
     runs-on: ubuntu-latest
+    id: build-publish
     steps:
       - uses: actions/checkout@v3
         with:
@@ -53,15 +54,25 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.pypi_password }}
+  auto-PR-conda-feedstock:
+    # this triggers an auto PR to update
+    # the package on conda-feedstock
+    # https://github.com/conda-forge/esmvalcore-feedstock
+    name: Trigger an auto PR on conda feedstock
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Make PR on conda forge feedstock
         if: startsWith(github.ref, 'refs/tags')
-        if: steps.pypi_published.outputs.exit_code == 0
+        needs: jobs.build-publish.steps.pypi_published
         uses: joezuntz/conda-forge-feedstock-pr-action@v1.0
         with:
           feedstock_name: esmvalcore
           token: ${{ secrets.GITHUB_TOKEN }}
-          version: ${{ steps.build_tarball.outputs.pypi-version }}
-          hash: ${{ steps.build_tarball.outputs.tarball-sha }}
+          version: ${{ jobs.build-publish.steps.build_tarball.outputs.pypi-version }}
+          hash: ${{ jobs.build-publish.steps.build_tarball.outputs.tarball-sha }}
           fork_owner: valeriupredoi
           # Email address is used to list you as the author of the commit
           # not convinced the email is needed at all
