@@ -1,4 +1,5 @@
 """List of config validators."""
+import logging
 import os.path
 import warnings
 from collections.abc import Iterable
@@ -9,6 +10,8 @@ from esmvalcore import __version__ as current_version
 from esmvalcore._config import load_config_developer
 from esmvalcore._recipe import TASKSEP
 from esmvalcore.cmor.check import CheckLevels
+
+logger = logging.getLogger(__name__)
 
 
 class ValidationError(ValueError):
@@ -178,6 +181,11 @@ def validate_oldstyle_rootpath(value):
     mapping = validate_dict(value)
     new_mapping = {}
     for key, paths in mapping.items():
+        if key == 'obs4mips':
+            logger.warning(
+                "Correcting capitalization, project 'obs4mips' should be "
+                "written as 'obs4MIPs' in 'rootpath' in config-user.yml")
+            key = 'obs4MIPs'
         new_mapping[key] = validate_pathlist(paths)
     return new_mapping
 
@@ -185,7 +193,15 @@ def validate_oldstyle_rootpath(value):
 def validate_oldstyle_drs(value):
     """Validate `drs` mapping."""
     mapping = validate_dict(value)
-    return mapping
+    new_mapping = {}
+    for key, drs in mapping.items():
+        if key == 'obs4mips':
+            logger.warning(
+                "Correcting capitalization, project 'obs4mips' should be "
+                "written as 'obs4MIPs' in 'drs' in config-user.yml")
+            key = 'obs4MIPs'
+        new_mapping[key] = validate_string(drs)
+    return new_mapping
 
 
 def validate_config_developer(value):

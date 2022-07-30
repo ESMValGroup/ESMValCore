@@ -388,6 +388,11 @@ class PreprocessorFile(TrackedFile):
     """Preprocessor output file."""
 
     def __init__(self, filename, attributes, settings, input_data):
+        # `input_data` is either:
+        # 1) a Dataset
+        # 2) a list of ancestor PreprocessorFile objects if the variable is
+        #    a) derived
+        #    b) created by a multimodel preprocessor function
         if isinstance(input_data, list):
             self.dataset = None
             ancestors = input_data
