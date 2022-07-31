@@ -124,7 +124,7 @@ def add_fx_variables(cube, fx_variables):
     cube: iris.cube.Cube
         Iris cube with input data.
     fx_variables: :obj:`list` of :obj:`iris.cube.Cube`
-        Cube containing ancillary variables.
+        Cubes containing ancillary variables.
 
     Returns
     -------

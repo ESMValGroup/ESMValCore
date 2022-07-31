@@ -145,7 +145,7 @@ def _py2ncl(value, var_name=''):
     txt = var_name + ' = ' if var_name else ''
     if value is None:
         txt += '_Missing'
-    elif isinstance(value, str):
+    elif isinstance(value, (str, Path)):
         txt += '"{}"'.format(value)
     elif isinstance(value, (list, tuple)):
         if not value:

@@ -1,4 +1,3 @@
-import pprint
 import textwrap
 
 import pytest

@@ -79,6 +79,7 @@ class Config(ValidatedConfig):
         mapping['max_datasets'] = None
         mapping['max_years'] = None
         mapping['run_diagnostic'] = True
+        mapping['skip_nonexistent'] = False
 
         new.update(mapping)
 

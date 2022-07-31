@@ -31,9 +31,17 @@ def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
         'config_file': tmp_path / '.esmvaltool' / 'config-user.yml',
         'log_level': 'info',
         'offline': cfg_offline,
-        'preproc_dir': str(output_dir / 'preproc_dir'),
-        'run_dir': str(output_dir / 'run_dir'),
     }
+    session = mocker.MagicMock()
+    session.__getitem__.side_effect = cfg.__getitem__
+    session.__setitem__.side_effect = cfg.__setitem__
+    session.session_dir = output_dir / 'recipe_test'
+    session.run_dir = session.session_dir / 'run_dir'
+    session.preproc_dir = session.session_dir / 'preproc_dir'
+    print(session.preproc_dir)
+
+    cfg_object = mocker.Mock()
+    cfg_object.start_session.return_value = session
 
     # Expected configuration after updating from command line.
     reference = dict(cfg)
@@ -43,15 +51,13 @@ def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
         'offline': offline,
         'resume_from': [],
         'skip_nonexistent': False,
-
     })
 
     # Patch every imported function
     mocker.patch.object(
         esmvalcore._config,
-        'read_config_user_file',
-        create_autospec=True,
-        return_value=cfg,
+        'CFG',
+        cfg_object,
     )
     mocker.patch.object(
         esmvalcore._config,
@@ -85,13 +91,10 @@ def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
     assert cfg == reference
 
     # Check that the correct functions have been called
-    esmvalcore._config.read_config_user_file.assert_called_once_with(
-        None,
-        recipe.stem,
-        {},
-    )
+    esmvalcore._config.CFG.load_from_file.assert_called_once_with(None)
+    esmvalcore._config.CFG.start_session.assert_called_once_with(recipe.stem)
     esmvalcore._config.configure_logging.assert_called_once_with(
-        output_dir=cfg['run_dir'],
+        output_dir=session.run_dir,
         console_log_level=cfg['log_level'],
     )
 
@@ -102,11 +105,11 @@ def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
 
     esmvalcore._task.resource_usage_logger.assert_called_once_with(
         pid=os.getpid(),
-        filename=os.path.join(cfg['run_dir'], 'resource_usage.txt'),
+        filename=session.run_dir / 'resource_usage.txt',
     )
     esmvalcore._main.process_recipe.assert_called_once_with(
         recipe_file=recipe,
-        config_user=cfg,
+        session=session,
     )
 
 

@@ -515,7 +515,7 @@ def datasets_from_recipe(recipe, session):
 
     datasets = []
 
-    for diagnostic in recipe['diagnostics']:
+    for diagnostic in recipe['diagnostics'] or []:
         for variable_group in recipe['diagnostics'][diagnostic].get(
                 'variables', {}):
             logger.debug(
