@@ -22,7 +22,7 @@ def preproc_file():
                 'levels': [95000]
             },
         },
-        input_data=dataset,
+        dataset=dataset,
     )
 
 

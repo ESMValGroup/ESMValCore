@@ -45,7 +45,7 @@ def assert_error_call_ok(mock_logger):
 
 
 KWARGS = {'test': 42, 'list': ['a', 'b']}
-PREPROC_FILE = PreprocessorFile('a', {}, {}, [])
+PREPROC_FILE = PreprocessorFile('a')
 TEST_ITEMS_SHORT = [
     # Scalars
     PREPROC_FILE,

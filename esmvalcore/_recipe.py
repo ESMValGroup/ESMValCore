@@ -556,8 +556,7 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
                 filename=filename,
                 attributes=statistic_attributes,
                 settings=downstream_settings,
-                input_data=[],  # Computed by the multi-dataset preproc func
-            )
+            )  # Note that ancestors is set when running the preprocessor func.
             output_products.add(statistic_product)
             relevant_settings['output_products'][identifier][
                 statistic] = statistic_product
@@ -660,10 +659,10 @@ def _get_preprocessor_products(datasets, profile, order, ancestor_products,
         ancestors = grouped_ancestors.get(filename)
         if ancestors:
             # Derived variable case
-            input_data = ancestors
+            dataset = None
         else:
             # Usual case
-            input_data = dataset
+            ancestors = None
             try:
                 _check_input_files(dataset)
             except RecipeError as ex:
@@ -676,7 +675,8 @@ def _get_preprocessor_products(datasets, profile, order, ancestor_products,
             filename=filename,
             attributes=dataset.facets,
             settings=settings,
-            input_data=input_data,
+            dataset=dataset,
+            ancestors=ancestors,
         )
 
         products.add(product)

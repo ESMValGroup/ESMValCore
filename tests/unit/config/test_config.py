@@ -183,6 +183,7 @@ def test_load_default_config(monkeypatch, default_config):
             'default': [Path.home() / 'climate_data']
         },
         'run_diagnostic': True,
+        'skip_nonexistent': False,
         'save_intermediary_cubes': False,
     }
 

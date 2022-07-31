@@ -387,25 +387,36 @@ def get_step_blocks(steps, order):
 class PreprocessorFile(TrackedFile):
     """Preprocessor output file."""
 
-    def __init__(self, filename, attributes, settings, input_data):
-        # `input_data` is either:
-        # 1) a Dataset
-        # 2) a list of ancestor PreprocessorFile objects if the variable is
-        #    a) derived
-        #    b) created by a multimodel preprocessor function
-        if isinstance(input_data, list):
-            self.dataset = None
-            ancestors = input_data
-            self._input_files = [a.filename for a in ancestors]
-        else:
-            self.dataset = input_data
-            input_files = list(self.dataset.files)
-            for ancillary in self.dataset.ancillaries:
+    def __init__(
+        self,
+        filename,
+        attributes=None,
+        settings=None,
+        dataset=None,
+        ancestors=None,
+    ):
+        if dataset is not None and ancestors is None:
+            # Load data using a Dataset
+            input_files = list(dataset.files)
+            for ancillary in dataset.ancillaries:
                 input_files.extend(ancillary.files)
             ancestors = [TrackedFile(f) for f in input_files]
-            self._input_files = input_files
+        elif dataset is None and ancestors is not None:
+            # Create a new output file from ancestor `PreprocessorFile`s.
+            # This happens for derived variables.
+            input_files = [a.filename for a in ancestors]
+        elif dataset is not None and ancestors is not None:
+            raise ValueError(
+                f"Unable to use both `dataset` {dataset} and `ancestors`"
+                f"{ancestors} as input data")
+        else:
+            # Multimodel preprocessor functions set ancestors at runtime
+            # instead of here.
+            input_files = []
 
-        self.settings = copy.deepcopy(settings)
+        self._input_files = input_files
+        self.dataset = dataset
+        self.settings = copy.deepcopy(settings) or {}
         if 'save' not in self.settings:
             self.settings['save'] = {}
         self.settings['save']['filename'] = filename

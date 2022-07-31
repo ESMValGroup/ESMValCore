@@ -9,7 +9,6 @@ from cf_units import Unit
 from iris.cube import Cube
 from numpy.testing import assert_array_equal
 
-from esmvalcore.dataset import Dataset
 from esmvalcore.preprocessor import PreprocessorFile
 from esmvalcore.preprocessor._other import _group_products, clip
 
@@ -46,23 +45,21 @@ class TestOther(unittest.TestCase):
 
 
 def test_group_products_string_list():
-    ds1 = Dataset(project='A', dataset='B')
-    ds1.files = []
-    ds2 = Dataset(project='A', dataset='C')
-    ds2.files = []
     products = [
         PreprocessorFile(
             filename='A_B.nc',
-            attributes=ds1.facets,
-            settings={},
-            input_data=ds1,
+            attributes={
+                'project': 'A',
+                'dataset': 'B',
+            },
         ),
         PreprocessorFile(
             filename='A_C.nc',
-            attributes=ds2.facets,
-            settings={},
-            input_data=ds2,
-        )
+            attributes={
+                'project': 'A',
+                'dataset': 'C',
+            }
+        ),
     ]
     grouped_by_string = _group_products(products, 'project')
     grouped_by_list = _group_products(products, ['project'])

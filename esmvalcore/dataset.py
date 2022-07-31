@@ -51,6 +51,7 @@ class Dataset:
         self._persist = set()
         self._session = None
         self._files = None
+        self._files_debug = (None, None)
 
         for key, value in facets.items():
             self.set_facet(key, copy.deepcopy(value), persist=True)

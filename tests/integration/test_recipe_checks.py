@@ -7,6 +7,7 @@ import pytest
 
 import esmvalcore._recipe_checks as check
 import esmvalcore.esgf
+from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.preprocessor import PreprocessorFile
 
@@ -17,7 +18,6 @@ ERR_F = ('Looked for files matching %s, but did not find any existing input '
          'directory')
 ERR_RANGE = 'No input data available for years {} in files:\n{}'
 VAR = {
-    'filename': 'a/c.nc',
     'frequency': 'mon',
     'short_name': 'tas',
     'timerange': '2020/2025',
@@ -26,7 +26,6 @@ VAR = {
     'end_year': 2025
 }
 FX_VAR = {
-    'filename': 'a/b.nc',
     'frequency': 'fx',
     'short_name': 'areacella',
 }
@@ -56,15 +55,16 @@ DATA_AVAILABILITY_DATA = [
 @mock.patch('esmvalcore._recipe_checks.logger', autospec=True)
 def test_data_availability_data(mock_logger, input_files, var, error):
     """Test check for data when data is present."""
-    saved_var = dict(var)
+    dataset = Dataset(**var)
+    dataset.files = input_files
     if error is None:
-        check.data_availability(input_files, var, None, None)
+        check.data_availability(dataset)
         mock_logger.error.assert_not_called()
     else:
         with pytest.raises(RecipeError) as rec_err:
-            check.data_availability(input_files, var, None, None)
+            check.data_availability(dataset)
         assert str(rec_err.value) == error
-    assert var == saved_var
+    assert dataset.facets == var
 
 
 DATA_AVAILABILITY_NO_DATA: List[Any] = [
@@ -91,8 +91,7 @@ DATA_AVAILABILITY_NO_DATA: List[Any] = [
 @mock.patch('esmvalcore._recipe_checks.logger', autospec=True)
 def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
     """Test check for data when no data is present."""
-    var = dict(VAR)
-    var_no_filename = {
+    facets = {
         'frequency': 'mon',
         'short_name': 'tas',
         'timerange': '2020/2025',
@@ -100,11 +99,14 @@ def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
         'start_year': 2020,
         'end_year': 2025
     }
-    error_first = ('No input files found for variable %s', var_no_filename)
+    dataset = Dataset(**facets)
+    dataset.files = []
+    dataset._files_debug = (dirnames, filenames)
+    error_first = ('No input files found for %s', dataset)
     error_last = ("Set 'log_level' to 'debug' to get more information", )
     with pytest.raises(RecipeError) as rec_err:
-        check.data_availability([], var, dirnames, filenames)
-    assert str(rec_err.value) == 'Missing data for alias: tas'
+        check.data_availability(dataset)
+    assert str(rec_err.value) == 'Missing data for: tas'
     if error is None:
         assert mock_logger.error.call_count == 2
         errors = [error_first, error_last]
@@ -113,7 +115,7 @@ def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
         errors = [error_first, error, error_last]
     calls = [mock.call(*e) for e in errors]
     assert mock_logger.error.call_args_list == calls
-    assert var == VAR
+    assert dataset.facets == facets
 
 
 GOOD_TIMERANGES = [
@@ -137,7 +139,7 @@ GOOD_TIMERANGES = [
     '*/P2Y21DT12H00M00S',
     '1/301',
     '1/*',
-    '*/301'
+    '*/301',
 ]
 
 
@@ -188,15 +190,24 @@ def test_data_availability_nonexistent(tmp_path):
     )
     dest_folder = tmp_path
     input_files = [esmvalcore.esgf.ESGFFile([result]).local_file(dest_folder)]
-    check.data_availability(input_files, var, dirnames=[], filenames=[])
+    dataset = Dataset(**var)
+    dataset.files = input_files
+    check.data_availability(dataset)
+
+
+def emtpy_dataset():
+    """Create an empty dataset for testing."""
+    dataset = Dataset()
+    dataset.files = []
+    return dataset
 
 
 def test_reference_for_bias_preproc_empty():
     """Test ``reference_for_bias_preproc``."""
     products = {
-        PreprocessorFile({'filename': 10}, {}),
-        PreprocessorFile({'filename': 20}, {}),
-        PreprocessorFile({'filename': 30}, {'trend': {}}),
+        PreprocessorFile(filename=10, dataset=emtpy_dataset()),
+        PreprocessorFile(filename=20, dataset=emtpy_dataset()),
+        PreprocessorFile(filename=30, dataset=emtpy_dataset()),
     }
     check.reference_for_bias_preproc(products)
 
@@ -204,11 +215,17 @@ def test_reference_for_bias_preproc_empty():
 def test_reference_for_bias_preproc_one_ref():
     """Test ``reference_for_bias_preproc`` with one reference."""
     products = {
-        PreprocessorFile({'filename': 90}, {}),
-        PreprocessorFile({'filename': 10}, {'bias': {}}),
-        PreprocessorFile({'filename': 20}, {'bias': {}}),
-        PreprocessorFile({'filename': 30, 'reference_for_bias': True},
-                         {'bias': {}})
+        PreprocessorFile(filename=90, dataset=emtpy_dataset()),
+        PreprocessorFile(filename=10,
+                         settings={'bias': {}},
+                         dataset=emtpy_dataset()),
+        PreprocessorFile(filename=20,
+                         settings={'bias': {}},
+                         dataset=emtpy_dataset()),
+        PreprocessorFile(filename=30,
+                         attributes={'reference_for_bias': True},
+                         settings={'bias': {}},
+                         dataset=emtpy_dataset()),
     }
     check.reference_for_bias_preproc(products)
 
@@ -216,10 +233,16 @@ def test_reference_for_bias_preproc_one_ref():
 def test_reference_for_bias_preproc_no_ref():
     """Test ``reference_for_bias_preproc`` with no reference."""
     products = {
-        PreprocessorFile({'filename': 90}, {}),
-        PreprocessorFile({'filename': 10}, {'bias': {}}),
-        PreprocessorFile({'filename': 20}, {'bias': {}}),
-        PreprocessorFile({'filename': 30}, {'bias': {}})
+        PreprocessorFile(filename=90, dataset=emtpy_dataset()),
+        PreprocessorFile(filename=10,
+                         settings={'bias': {}},
+                         dataset=emtpy_dataset()),
+        PreprocessorFile(filename=20,
+                         settings={'bias': {}},
+                         dataset=emtpy_dataset()),
+        PreprocessorFile(filename=30,
+                         settings={'bias': {}},
+                         dataset=emtpy_dataset())
     }
     with pytest.raises(RecipeError) as rec_err:
         check.reference_for_bias_preproc(products)
@@ -239,12 +262,18 @@ def test_reference_for_bias_preproc_no_ref():
 def test_reference_for_bias_preproc_two_refs():
     """Test ``reference_for_bias_preproc`` with two references."""
     products = {
-        PreprocessorFile({'filename': 90}, {}),
-        PreprocessorFile({'filename': 10}, {'bias': {}}),
-        PreprocessorFile({'filename': 20, 'reference_for_bias': True},
-                         {'bias': {}}),
-        PreprocessorFile({'filename': 30, 'reference_for_bias': True},
-                         {'bias': {}})
+        PreprocessorFile(filename=90, dataset=emtpy_dataset()),
+        PreprocessorFile(filename=10,
+                         settings={'bias': {}},
+                         dataset=emtpy_dataset()),
+        PreprocessorFile(filename=20,
+                         attributes={'reference_for_bias': True},
+                         settings={'bias': {}},
+                         dataset=emtpy_dataset()),
+        PreprocessorFile(filename=30,
+                         attributes={'reference_for_bias': True},
+                         settings={'bias': {}},
+                         dataset=emtpy_dataset())
     }
     with pytest.raises(RecipeError) as rec_err:
         check.reference_for_bias_preproc(products)
