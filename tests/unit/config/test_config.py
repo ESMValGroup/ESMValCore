@@ -158,6 +158,7 @@ def test_load_default_config(monkeypatch, default_config):
         'compress_netcdf': False,
         'config_developer_file': default_dev_file,
         'config_file': CONFIG_USER_FILE,
+        'diagnostics': None,
         'download_dir': Path.home() / 'climate_data',
         'drs': {
             'CMIP3': 'ESGF',

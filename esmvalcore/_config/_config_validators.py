@@ -7,8 +7,11 @@ from functools import lru_cache
 from pathlib import Path
 
 from esmvalcore import __version__ as current_version
-from esmvalcore._config import load_config_developer
-from esmvalcore._recipe import TASKSEP
+from esmvalcore._config._config import (
+    TASKSEP,
+    importlib_files,
+    load_config_developer,
+)
 from esmvalcore.cmor.check import CheckLevels
 
 logger = logging.getLogger(__name__)
@@ -208,7 +211,7 @@ def validate_config_developer(value):
     """Validate and load config developer path."""
     path = validate_path_or_none(value)
     if path is None:
-        path = Path(__file__).parents[2] / 'config-developer.yml'
+        path = importlib_files('esmvalcore') / 'config-developer.yml'
     load_config_developer(path)
 
     return path
@@ -229,8 +232,10 @@ def validate_check_level(value):
     return value
 
 
-def validate_diagnostics(diagnostics):
+def validate_diagnostics(diagnostics: Iterable[str] | str | None):
     """Validate diagnostic location."""
+    if diagnostics is None:
+        return None
     if isinstance(diagnostics, str):
         diagnostics = diagnostics.strip().split(' ')
     return {

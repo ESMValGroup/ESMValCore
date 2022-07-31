@@ -368,16 +368,10 @@ class ESMValTool():
             strict (fail if there are any warnings).
         """
         import os
-        import warnings
 
-        from ._config import configure_logging
-        from ._recipe import TASKSEP
+        from ._config import CFG, TASKSEP, configure_logging
         from .cmor.check import CheckLevels
         from .esgf._logon import logon
-        with warnings.catch_warnings():
-            # ignore experimental API warning
-            warnings.simplefilter("ignore")
-            from .experimental import CFG
 
         recipe = self._get_recipe(recipe)
         CFG.load_from_file(config_file)

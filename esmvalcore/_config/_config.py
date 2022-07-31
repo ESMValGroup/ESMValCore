@@ -2,6 +2,7 @@
 import collections.abc
 import fnmatch
 import logging
+import os
 import sys
 from functools import lru_cache
 from pathlib import Path
@@ -12,6 +13,8 @@ from esmvalcore.cmor.table import CMOR_TABLES, read_cmor_tables
 from esmvalcore.exceptions import RecipeError
 
 logger = logging.getLogger(__name__)
+
+TASKSEP = os.sep
 
 CFG = {}
 

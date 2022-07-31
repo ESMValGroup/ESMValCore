@@ -16,7 +16,7 @@ from netCDF4 import Dataset
 from . import __version__
 from . import _recipe_checks as check
 from . import esgf
-from ._config import TAGS, get_project_config
+from ._config import TAGS, TASKSEP, get_project_config
 from ._data_finder import (
     _parse_period,
     _truncate_dates,
@@ -50,7 +50,6 @@ from .preprocessor._regrid import (
 
 logger = logging.getLogger(__name__)
 
-TASKSEP = os.sep
 
 DOWNLOAD_FILES = set()
 """Use a global variable to keep track of files that need to be downloaded."""
