@@ -5,7 +5,6 @@ import logging
 from pathlib import Path
 from pprint import pformat
 
-import iris
 from iris.cube import Cube
 
 from .._provenance import TrackedFile
@@ -392,30 +391,24 @@ class PreprocessorFile(TrackedFile):
         filename,
         attributes=None,
         settings=None,
-        dataset=None,
-        ancestors=None,
+        datasets=None,
     ):
-        if dataset is not None and ancestors is None:
+        if datasets is not None:
             # Load data using a Dataset
-            input_files = list(dataset.files)
-            for ancillary in dataset.ancillaries:
-                input_files.extend(ancillary.files)
+            input_files = []
+            for dataset in datasets:
+                input_files.extend(dataset.files)
+                for ancillary in dataset.ancillaries:
+                    input_files.extend(ancillary.files)
             ancestors = [TrackedFile(f) for f in input_files]
-        elif dataset is None and ancestors is not None:
-            # Create a new output file from ancestor `PreprocessorFile`s.
-            # This happens for derived variables.
-            input_files = [a.filename for a in ancestors]
-        elif dataset is not None and ancestors is not None:
-            raise ValueError(
-                f"Unable to use both `dataset` {dataset} and `ancestors`"
-                f"{ancestors} as input data")
         else:
             # Multimodel preprocessor functions set ancestors at runtime
             # instead of here.
             input_files = []
+            ancestors = []
 
         self._input_files = input_files
-        self.dataset = dataset
+        self.datasets = datasets
         self.settings = copy.deepcopy(settings) or {}
         if 'save' not in self.settings:
             self.settings['save'] = {}
@@ -452,20 +445,12 @@ class PreprocessorFile(TrackedFile):
     def cubes(self):
         """Cubes."""
         if self._cubes is None:
-            self.load()
+            self._cubes = [ds.load() for ds in self.datasets]
         return self._cubes
 
     @cubes.setter
     def cubes(self, value):
         self._cubes = value
-
-    def load(self):
-        if self.dataset:
-            # Usual case
-            self._cubes = [self.dataset.load()]
-        else:
-            # Derived variable case
-            self._cubes = [iris.load_cube(f) for f in self._input_files]
 
     def save(self):
         """Save cubes to disk."""
@@ -538,7 +523,6 @@ class PreprocessingTask(BaseTask):
     def __init__(
         self,
         products,
-        ancestors=None,
         name='',
         order=DEFAULT_ORDER,
         debug=None,
@@ -546,7 +530,7 @@ class PreprocessingTask(BaseTask):
     ):
         """Initialize."""
         _check_multi_model_settings(products)
-        super().__init__(ancestors=ancestors, name=name, products=products)
+        super().__init__(name=name, products=products)
         self.order = list(order)
         self.debug = debug
         self.write_ncl_interface = write_ncl_interface

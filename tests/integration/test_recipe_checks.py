@@ -195,19 +195,12 @@ def test_data_availability_nonexistent(tmp_path):
     check.data_availability(dataset)
 
 
-def emtpy_dataset():
-    """Create an empty dataset for testing."""
-    dataset = Dataset()
-    dataset.files = []
-    return dataset
-
-
 def test_reference_for_bias_preproc_empty():
     """Test ``reference_for_bias_preproc``."""
     products = {
-        PreprocessorFile(filename=10, dataset=emtpy_dataset()),
-        PreprocessorFile(filename=20, dataset=emtpy_dataset()),
-        PreprocessorFile(filename=30, dataset=emtpy_dataset()),
+        PreprocessorFile(filename=10),
+        PreprocessorFile(filename=20),
+        PreprocessorFile(filename=30),
     }
     check.reference_for_bias_preproc(products)
 
@@ -215,17 +208,14 @@ def test_reference_for_bias_preproc_empty():
 def test_reference_for_bias_preproc_one_ref():
     """Test ``reference_for_bias_preproc`` with one reference."""
     products = {
-        PreprocessorFile(filename=90, dataset=emtpy_dataset()),
+        PreprocessorFile(filename=90),
         PreprocessorFile(filename=10,
-                         settings={'bias': {}},
-                         dataset=emtpy_dataset()),
+                         settings={'bias': {}}),
         PreprocessorFile(filename=20,
-                         settings={'bias': {}},
-                         dataset=emtpy_dataset()),
+                         settings={'bias': {}}),
         PreprocessorFile(filename=30,
-                         attributes={'reference_for_bias': True},
                          settings={'bias': {}},
-                         dataset=emtpy_dataset()),
+                         attributes={'reference_for_bias': True}),
     }
     check.reference_for_bias_preproc(products)
 
@@ -233,16 +223,13 @@ def test_reference_for_bias_preproc_one_ref():
 def test_reference_for_bias_preproc_no_ref():
     """Test ``reference_for_bias_preproc`` with no reference."""
     products = {
-        PreprocessorFile(filename=90, dataset=emtpy_dataset()),
+        PreprocessorFile(filename=90),
         PreprocessorFile(filename=10,
-                         settings={'bias': {}},
-                         dataset=emtpy_dataset()),
+                         settings={'bias': {}}),
         PreprocessorFile(filename=20,
-                         settings={'bias': {}},
-                         dataset=emtpy_dataset()),
+                         settings={'bias': {}}),
         PreprocessorFile(filename=30,
-                         settings={'bias': {}},
-                         dataset=emtpy_dataset())
+                         settings={'bias': {}})
     }
     with pytest.raises(RecipeError) as rec_err:
         check.reference_for_bias_preproc(products)
@@ -262,18 +249,14 @@ def test_reference_for_bias_preproc_no_ref():
 def test_reference_for_bias_preproc_two_refs():
     """Test ``reference_for_bias_preproc`` with two references."""
     products = {
-        PreprocessorFile(filename=90, dataset=emtpy_dataset()),
-        PreprocessorFile(filename=10,
-                         settings={'bias': {}},
-                         dataset=emtpy_dataset()),
+        PreprocessorFile(filename=90),
+        PreprocessorFile(filename=10, settings={'bias': {}}),
         PreprocessorFile(filename=20,
                          attributes={'reference_for_bias': True},
-                         settings={'bias': {}},
-                         dataset=emtpy_dataset()),
+                         settings={'bias': {}}),
         PreprocessorFile(filename=30,
                          attributes={'reference_for_bias': True},
-                         settings={'bias': {}},
-                         dataset=emtpy_dataset())
+                         settings={'bias': {}})
     }
     with pytest.raises(RecipeError) as rec_err:
         check.reference_for_bias_preproc(products)

@@ -156,17 +156,17 @@ def _format_facets(facets):
     """Format facets into a kind of human readable string."""
     keys = (
         'project',
+        'mip',
+        'short_name',
         'dataset',
         'rcm_version',
         'driver',
         'domain',
-        'mip',
         'exp',
         'ensemble',
         'grid',
-        'short_name',
     )
-    return ", ".join(facets[k] for k in keys if k in facets)
+    return ", ".join(str(facets[k]) for k in keys if k in facets)
 
 
 def data_availability(dataset, log=True):

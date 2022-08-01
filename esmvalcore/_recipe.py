@@ -384,13 +384,15 @@ def _add_to_download_list(dataset):
 
 def _check_input_files(dataset: Dataset):
     """Get the input files for a single dataset and setup provenance."""
+    local_files = [f.local_file(dataset.session['download_dir'])
+                   if isinstance(f, ESGFFile) else f for f in dataset.files]
     logger.debug(
         "Using input files for variable %s of dataset %s:\n%s",
         dataset.facets['short_name'],
         dataset.facets['alias'].replace('_', ' '),
         '\n'.join(
             f'{f} (will be downloaded)' if not os.path.exists(f) else str(f)
-            for f in dataset.files),
+            for f in local_files),
     )
     check.data_availability(dataset)
 
@@ -586,45 +588,6 @@ def _update_extract_shape(settings, session):
         check.extract_shape(settings['extract_shape'])
 
 
-def _match_products(products, datasets):
-    """Match a list of input products to output product attributes."""
-    grouped_products = defaultdict(list)
-
-    if not products:
-        return grouped_products
-
-    def get_matching(attributes):
-        """Find the output filename which matches input attributes best."""
-        best_score = 0
-        filenames = []
-        for dataset in datasets:
-            preproc_dir = dataset.session.preproc_dir
-            filename = get_output_file(dataset.facets, preproc_dir)
-            score = sum(v == dataset.facets.get(k)
-                        for k, v in attributes.items())
-
-            if score > best_score:
-                best_score = score
-                filenames = [filename]
-            elif score == best_score:
-                filenames.append(filename)
-
-        if not filenames:
-            logger.warning(
-                "Unable to find matching output file for input file %s",
-                filename)
-
-        return filenames
-
-    # Group input files by output file
-    for product in products:
-        matching_filenames = get_matching(product.attributes)
-        for filename in matching_filenames:
-            grouped_products[filename].append(product)
-
-    return grouped_products
-
-
 def _allow_skipping(dataset):
     """Allow skipping of datasets."""
     allow_skipping = all([
@@ -634,19 +597,13 @@ def _allow_skipping(dataset):
     return allow_skipping
 
 
-def _get_preprocessor_products(datasets, profile, order, ancestor_products,
-                               name):
+def _get_preprocessor_products(datasets, profile, order, name):
     """Get preprocessor product definitions for a set of datasets.
 
     It updates recipe settings as needed by various preprocessors and
     sets the correct ancestry.
     """
     products = set()
-
-    if ancestor_products:
-        grouped_ancestors = _match_products(ancestor_products, datasets)
-    else:
-        grouped_ancestors = {}
 
     missing_vars = set()
     for dataset in datasets:
@@ -656,15 +613,11 @@ def _get_preprocessor_products(datasets, profile, order, ancestor_products,
         _update_multi_dataset_settings(dataset.facets, settings)
         _update_preproc_functions(settings, dataset, datasets, missing_vars)
         filename = get_output_file(dataset.facets, dataset.session.preproc_dir)
-        ancestors = grouped_ancestors.get(filename)
-        if ancestors:
-            # Derived variable case
-            dataset = None
-        else:
-            # Usual case
-            ancestors = None
+        attributes = dataset.facets
+        input_datasets = _get_derive_input(dataset)
+        for input_dataset in input_datasets:
             try:
-                _check_input_files(dataset)
+                _check_input_files(input_dataset)
             except RecipeError as ex:
                 if _allow_skipping(dataset):
                     logger.info("Skipping: %s", ex.message)
@@ -673,10 +626,9 @@ def _get_preprocessor_products(datasets, profile, order, ancestor_products,
                 continue
         product = PreprocessorFile(
             filename=filename,
-            attributes=dataset.facets,
+            attributes=attributes,
             settings=settings,
-            dataset=dataset,
-            ancestors=ancestors,
+            datasets=input_datasets,
         )
 
         products.add(product)
@@ -767,21 +719,14 @@ def _update_preproc_functions(settings, dataset, datasets, missing_vars):
         check.check_for_temporal_preprocs(settings)
 
 
-def _get_single_preprocessor_task(datasets,
-                                  profile,
-                                  name,
-                                  ancestor_tasks=None):
+def _get_single_preprocessor_task(datasets, profile, name):
     """Create preprocessor tasks for a set of datasets."""
-    if ancestor_tasks is None:
-        ancestor_tasks = []
     order = _extract_preprocessor_order(profile)
-    ancestor_products = [p for task in ancestor_tasks for p in task.products]
 
     products = _get_preprocessor_products(
         datasets=datasets,
         profile=profile,
         order=order,
-        ancestor_products=ancestor_products,
         name=name,
     )
 
@@ -792,7 +737,6 @@ def _get_single_preprocessor_task(datasets,
     session = datasets[0].session
     task = PreprocessingTask(
         products=products,
-        ancestors=ancestor_tasks,
         name=name,
         order=order,
         debug=session['save_intermediary_cubes'],
@@ -815,35 +759,6 @@ def _extract_preprocessor_order(profile):
     return INITIAL_STEPS + order + FINAL_STEPS
 
 
-def _split_settings(settings, step, order=DEFAULT_ORDER):
-    """Split settings, using step as a separator."""
-    before = {}
-    for _step in order:
-        if _step == step:
-            break
-        if _step in settings:
-            before[_step] = settings[_step]
-    after = {
-        k: v
-        for k, v in settings.items() if not (k == step or k in before)
-    }
-    return before, after
-
-
-def _split_derive_profile(profile):
-    """Split the derive preprocessor profile."""
-    order = _extract_preprocessor_order(profile)
-    before, after = _split_settings(profile, 'derive', order)
-    after['derive'] = True
-    after['fix_file'] = False
-    after['fix_metadata'] = False
-    after['fix_data'] = False
-    if order != DEFAULT_ORDER:
-        before['custom_order'] = True
-        after['custom_order'] = True
-    return before, after
-
-
 def _check_differing_timeranges(timeranges, required_vars):
     """Log error if required variables have differing timeranges."""
     if len(timeranges) > 1:
@@ -853,57 +768,46 @@ def _check_differing_timeranges(timeranges, required_vars):
             "Set `timerange` to a common value.")
 
 
-def _get_derive_input(datasets: list[Dataset]):
-    """Determine the input sets of `variables` needed for deriving."""
-    derive_input = {}
+def _get_derive_input(dataset: Dataset):
+    """Determine the input datasets needed for deriving `dataset`."""
+    facets = dataset.facets
+    if not facets.get('force_derivation') and '*' in facets['timerange']:
+        raise RecipeError(
+            f"Error in derived variable: {facets['short_name']}: "
+            "Using 'force_derivation: false' (the default option) "
+            "in combination with wildcards ('*') in timerange is "
+            "not allowed; explicitly use 'force_derivation: true' "
+            "or avoid the use of wildcards in timerange."
+            )
+    if not facets.get('force_derivation') and dataset.files:
+        # No need to derive
+        return [dataset]
 
-    def append(group_prefix, dataset):
-        """Append variable `var` to a derive input group."""
-        group = group_prefix + dataset.facets['short_name']
-        dataset.facets['variable_group'] = group
-        if group not in derive_input:
-            derive_input[group] = []
-        derive_input[group].append(dataset)
-
-    for dataset in datasets:
-        facets = dataset.facets
-        group_prefix = facets['variable_group'] + '_derive_input_'
-        if not facets.get('force_derivation') and \
-           '*' in facets['timerange']:
-            raise RecipeError(
-                f"Error in derived variable: {facets['short_name']}: "
-                "Using 'force_derivation: false' (the default option) "
-                "in combination with wildcards ('*') in timerange is "
-                "not allowed; explicitly use 'force_derivation: true' "
-                "or avoid the use of wildcards in timerange."
-                )
-        if not facets.get('force_derivation') and dataset.files:
-            # No need to derive, just process normally up to derive step
-            append(group_prefix, dataset)
+    # Configure input datasets needed to derive variable
+    datasets = []
+    required_vars = get_required(facets['short_name'],
+                                 facets['project'])
+    for input_facets in required_vars:
+        input_dataset = dataset.copy(**input_facets)
+        input_dataset.augment_facets()
+        _get_facets_from_cmor_table(input_dataset.facets,
+                                    override=True)
+        if input_facets.get('optional') and not input_dataset.files:
+            logger.info(
+                "Skipping: no data found for %s which is marked as "
+                "'optional'", input_dataset)
         else:
-            # Process input data needed to derive variable
-            required_vars = get_required(facets['short_name'],
-                                         facets['project'])
-            timeranges = set()
-            for input_facets in required_vars:
-                input_dataset = dataset.copy(**input_facets)
-                input_dataset.augment_facets()
-                _get_facets_from_cmor_table(input_dataset.facets,
-                                            override=True)
-                if input_facets.get('optional') and not input_dataset.files:
-                    logger.info(
-                        "Skipping: no data found for %s which is marked as "
-                        "'optional'", input_dataset)
-                else:
-                    append(group_prefix, input_dataset)
-                    input_dataset._update_timerange()
-                    timeranges.add(input_dataset.facets['timerange'])
-            _check_differing_timeranges(timeranges, required_vars)
-            facets['timerange'] = " ".join(timeranges)
+            datasets.append(input_dataset)
 
-    # An empty derive_input (due to all variables marked as 'optional' is
-    # handled at a later step
-    return derive_input
+    # Set a the timerange based on available input data.
+    timeranges = set()
+    for input_dataset in datasets:
+        input_dataset._update_timerange()
+        timeranges.add(input_dataset.facets['timerange'])
+    _check_differing_timeranges(timeranges, required_vars)
+    dataset.facets['timerange'] = " ".join(timeranges)
+
+    return datasets
 
 
 def _get_preprocessor_task(datasets, profiles, task_name):
@@ -925,31 +829,10 @@ def _get_preprocessor_task(datasets, profiles, task_name):
         dataset.augment_facets()
     # TODO: Check facets here?
 
-    # Create preprocessor task(s)
-    derive_tasks = []
-    # set up tasks
-    if facets.get('derive'):
-        # Create tasks to prepare the input data for the derive step
-        derive_profile, profile = _split_derive_profile(profile)
-        derive_input = _get_derive_input(datasets)
-
-        for variable_group, variable_datasets in derive_input.items():
-            for dataset in variable_datasets:
-                _get_facets_from_cmor_table(dataset.facets, override=True)
-            derive_name = task_name.split(
-                TASKSEP)[0] + TASKSEP + variable_group
-            task = _get_single_preprocessor_task(
-                variable_datasets,
-                derive_profile,
-                name=derive_name,
-            )
-            derive_tasks.append(task)
-
-    # Create (final) preprocessor task
+    # Create preprocessor task
     task = _get_single_preprocessor_task(
         datasets,
         profile,
-        ancestor_tasks=derive_tasks,
         name=task_name,
     )
 
@@ -1331,7 +1214,7 @@ class Recipe:
         """Run all tasks in the recipe."""
         if not self.tasks:
             raise RecipeError('No tasks to run!')
-        self.write_filled_recipe()
+        # self.write_filled_recipe()
 
         # Download required data
         if not self.session['offline']:
@@ -1366,13 +1249,7 @@ class Recipe:
 
     def write_filled_recipe(self):
         """Write copy of recipe with filled wildcards."""
-        datasets = []
-        for task in self.tasks.flatten():
-            for product in task.products:
-                if isinstance(product, PreprocessorFile):
-                    if product.dataset is not None:
-                        product.dataset._update_timerange()
-                        datasets.append(product.dataset)
+        datasets = [ds for ds in self.datasets if ds.files]
         dataset_recipe = datasets_to_recipe(datasets)
 
         updated_recipe = deepcopy(self._raw_recipe)
