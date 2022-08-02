@@ -721,7 +721,14 @@ Perform the steps listed below with two persons, to reduce the risk of error.
    `PyPI <https://pypi.org/project/ESMValCore/>`__, and
    `readthedocs <https://readthedocs.org/dashboard/esmvalcore/users/>`__.
 
-To make a new release of the package, follow these steps:
+The release of ESMValCore is tied to the release of ESMValTool. 
+To start the procedure, ESMValCore gets released as a 
+release candidate to test the recipes in ESMValTool. If bugs are found
+during the testing phase of the release candidate, make as many release 
+candidates for ESMValCore as needed in order to fix them. 
+
+To make a new release of the package, be it a release candidate or the final release, 
+follow these steps:
 
 1. Check that all tests and builds work
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -745,9 +752,6 @@ All tests should pass before making a release (branch).
 Create a branch off the ``main`` branch and push it to GitHub.
 Ask someone with administrative permissions to set up branch protection rules
 for it so only you and the person helping you with the release can push to it.
-Announce the name of the branch in an issue and ask the members of the
-`ESMValTool development team <https://github.com/orgs/ESMValGroup/teams/esmvaltool-developmentteam>`__
-to run their favourite recipe using this branch.
 
 3. Increase the version number
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -771,26 +775,19 @@ Review the results, and if anything needs changing, change it on GitHub and
 re-run the script until the changelog looks acceptable.
 Copy the result to the file ``doc/changelog.rst``.
 Make a pull request and get it merged into ``main`` and cherry pick it into
-the release branch..
-
-5. Cherry pick bugfixes into the release branch
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If a bug is found and fixed (i.e. pull request merged into the
-``main`` branch) during the period of testing, use the command
-``git cherry-pick`` to include the commit for this bugfix into
 the release branch.
-When the testing period is over, make a pull request to update
-the release notes with the latest changes, get it merged into
-``main`` and cherry-pick it into the release branch.
 
-6. Make the release on GitHub
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+6. Make the (pre-)release on GitHub
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Do a final check that all tests on CircleCI and GitHub Actions completed
 successfully.
 Then click the
 `releases tab <https://github.com/ESMValGroup/ESMValCore/releases>`__
 and create the new release from the release branch (i.e. not from ``main``).
+
+Create a tag and tick the `This is a pre-release` box if working with a release candidate.
 
 7. Create and upload the PyPI package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
