@@ -778,7 +778,7 @@ Make a pull request and get it merged into ``main`` and cherry pick it into
 the release branch.
 
 
-6. Make the (pre-)release on GitHub
+5. Make the (pre-)release on GitHub
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Do a final check that all tests on CircleCI and GitHub Actions completed
@@ -789,7 +789,7 @@ and create the new release from the release branch (i.e. not from ``main``).
 
 Create a tag and tick the `This is a pre-release` box if working with a release candidate.
 
-7. Create and upload the PyPI package
+6. Create and upload the PyPI package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The package is automatically uploaded to the
@@ -820,13 +820,21 @@ Follow these steps to create a new Python package:
 You can read more about this in
 `Packaging Python Projects <https://packaging.python.org/tutorials/packaging-projects/>`__.
 
-8. Create the Conda package
+7. Create the Conda package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``esmvalcore`` package is published on the `conda-forge conda channel
 <https://anaconda.org/conda-forge>`__.
 This is done via a pull request on the `esmvalcore-feedstock repository
 <https://github.com/conda-forge/esmvalcore-feedstock>`__.
+
+To publish a release candidate, you have to open a pull request yourself.
+An example for this can be found `here
+<https://github.com/conda-forge/esmvalcore-feedstock/pull/35>`__.
+Make sure to use the `rc branch
+<https://github.com/conda-forge/esmvalcore-feedstock/tree/rc>`__ as the target
+branch for your pull request and follow all instructions given by the linter
+bot. The testing of ESMValTool will be performed with the published release candidate.
 
 For the final release, this pull request is automatically opened by a bot.
 An example pull request can be found `here
@@ -840,15 +848,8 @@ they will merge the pull request, which will in turn publish the package on
 conda-forge some time later.
 Contact the feedstock maintainers if you want to become a maintainer yourself.
 
-To publish a release candidate, you have to open a pull request yourself.
-An example for this can be found `here
-<https://github.com/conda-forge/esmvalcore-feedstock/pull/35>`__.
-Make sure to use the `rc branch
-<https://github.com/conda-forge/esmvalcore-feedstock/tree/rc>`__ as the target
-branch for your pull request and follow all instructions given by the linter
-bot.
 
-9. Check the Docker images
+8. Check the Docker images
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There are two main Docker container images available for ESMValCore on
