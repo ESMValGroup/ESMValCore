@@ -495,7 +495,7 @@ def test_get_cube_str_input():
         Cube(0.0),
         Cube(0.0, var_name='x'),
     ])
-    cube = fix.get_cube(cubes, var_names='x')
+    cube = fix.get_cube(cubes, var_name='x')
     assert cube.var_name == 'x'
 
 
@@ -507,7 +507,7 @@ def test_get_cube_list_input():
         Cube(0.0, var_name='x'),
         Cube(0.0, var_name='y'),
     ])
-    cube = fix.get_cube(cubes, var_names=['y', 'x'])
+    cube = fix.get_cube(cubes, var_name=['y', 'x'])
     assert cube.var_name == 'y'
 
 
@@ -529,7 +529,7 @@ def test_var_not_available_get_cube():
     msg = (r"No variable of \['x'\] necessary for the extraction/derivation "
            r"the CMOR variable 'ta' is available in the input file.")
     with pytest.raises(ValueError, match=msg):
-        fix.get_cube(cubes, var_names='x')
+        fix.get_cube(cubes, var_name='x')
 
 
 # Test with single-dimension cubes
