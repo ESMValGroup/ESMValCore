@@ -196,7 +196,7 @@ To install from source for development, follow these instructions.
 -  Test that your installation was successful by running
    ``esmvaltool -h``.
 
-Pre-installed versions on HPC clusters
+Pre-installed versions on HPC clusters / other servers
 --------------------------------------
 
 You will find the tool available on HPC clusters and there will be no need to install it
@@ -207,6 +207,9 @@ yourself if you are just running diagnostics:
    `CEDA <https://help.jasmin.ac.uk/article/4955-community-software-esmvaltool>`__ ;
  - DKRZ-Levante: `esmvaltool` is available on login nodes (`levante.dkrz.de`) after login and module loading
    via `module load esmvaltool`; the command `module help esmvaltool` provides some information about the module.
+ - Met Office: esmvaltool is available on the Linux estate after login and 
+   module loading via module load; see the ESMValTool Community of Practice 
+   SharePoint site for more details.
 
 .. note::
     If you would like to use pre-installed versions on HPC clusters (currently CEDA-JASMIN and DKRZ-MISTRAL),
