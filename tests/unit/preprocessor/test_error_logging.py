@@ -1,5 +1,6 @@
 """Unit tests for error logging of :mod:`esmvalcore.preprocessor`."""
 
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -45,7 +46,7 @@ def assert_error_call_ok(mock_logger):
 
 
 KWARGS = {'test': 42, 'list': ['a', 'b']}
-PREPROC_FILE = PreprocessorFile('a')
+PREPROC_FILE = PreprocessorFile(Path('a'))
 TEST_ITEMS_SHORT = [
     # Scalars
     PREPROC_FILE,

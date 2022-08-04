@@ -1,5 +1,6 @@
 """Unit tests for the variable_info module."""
 
+from pathlib import Path
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -25,7 +26,7 @@ class TestFixFile(TestCase):
                 project='project',
                 dataset='model',
                 mip='mip',
-                output_dir='output_dir',
+                output_dir=Path('output_dir'),
             )
             self.assertNotEqual(file_returned, self.filename)
             self.assertEqual(file_returned, 'new_filename')
@@ -40,7 +41,7 @@ class TestFixFile(TestCase):
                 project='project',
                 dataset='model',
                 mip='mip',
-                output_dir='output_dir',
+                output_dir=Path('output_dir'),
             )
             self.assertEqual(file_returned, self.filename)
 

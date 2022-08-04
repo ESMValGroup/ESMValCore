@@ -390,9 +390,9 @@ class PreprocessorFile(TrackedFile):
     def __init__(
         self,
         filename: Path,
-        attributes: dict[str, str] = None,
-        settings: dict[str, Any] = None,
-        datasets: list = None,
+        attributes: dict[str, str] | None = None,
+        settings: dict[str, Any] | None = None,
+        datasets: list | None = None,
     ):
         if datasets is not None:
             # Load data using a Dataset

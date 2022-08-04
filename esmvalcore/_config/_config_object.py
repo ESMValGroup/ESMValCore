@@ -3,6 +3,7 @@
 import os
 from datetime import datetime
 from pathlib import Path
+from types import MappingProxyType
 from typing import Optional, Union
 
 import yaml
@@ -221,5 +222,5 @@ USER_CONFIG_DIR = Path.home() / '.esmvaltool'
 USER_CONFIG = USER_CONFIG_DIR / 'config-user.yml'
 
 # initialize placeholders
-CFG_DEFAULT = Config._load_default_config(DEFAULT_CONFIG)
+CFG_DEFAULT = MappingProxyType(Config._load_default_config(DEFAULT_CONFIG))
 CFG = Config._load_user_config(USER_CONFIG, raise_exception=False)

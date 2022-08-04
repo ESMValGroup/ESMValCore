@@ -4,6 +4,7 @@ import logging
 import os
 import re
 from pathlib import Path
+from typing import Any
 
 import iris
 import isodate
@@ -498,7 +499,7 @@ def get_input_filelist(variable, rootpath, drs):
     return (files, dirnames, filenames)
 
 
-def get_output_file(variable, preproc_dir) -> Path:
+def get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
     """Return the full path to the output (preprocessed) file."""
     cfg = get_project_config(variable['project'])
 
@@ -520,7 +521,7 @@ def get_output_file(variable, preproc_dir) -> Path:
     )
 
 
-def get_multiproduct_filename(attributes, preproc_dir):
+def get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
     """Get ensemble/multi-model filename depending on settings."""
     relevant_keys = [
         'project', 'dataset', 'exp', 'ensemble_statistics',
@@ -542,7 +543,7 @@ def get_multiproduct_filename(attributes, preproc_dir):
     filename_segments.append(
         f"{attributes['timerange'].replace('/', '-')}.nc")
 
-    outfile = os.path.join(
+    outfile = Path(
         preproc_dir,
         attributes['diagnostic'],
         attributes['variable_group'],

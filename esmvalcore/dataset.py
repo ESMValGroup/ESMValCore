@@ -6,8 +6,10 @@ import textwrap
 from itertools import groupby
 from pathlib import Path
 
+from iris.cube import Cube
+
 from . import esgf
-from ._config import get_activity, get_extra_facets, get_institutes
+from ._config import get_activity, get_extra_facets, get_institutes, Session
 from ._data_finder import (
     _get_timerange_from_years,
     dates_to_timerange,
@@ -173,7 +175,7 @@ class Dataset:
         if self.facets.get('frequency') == 'fx':
             self.facets.pop('timerange', None)
 
-    def find_files(self, session=None):
+    def find_files(self, session: Session | None = None):
         """Find files."""
         if session is None:
             session = self.session
@@ -216,7 +218,7 @@ class Dataset:
     def files(self, value):
         self._files = value
 
-    def expand(self, session=None):
+    def expand(self) -> list['Dataset']:
         """Factory function that expands shorthands to generate datasets."""
         datasets = [self]
         for key in 'ensemble', 'sub_experiment':
@@ -258,7 +260,7 @@ class Dataset:
 
         return expanded
 
-    def _update_timerange(self, session=None):
+    def _update_timerange(self, session: Session | None = None):
         """Update wildcards in timerange with found datetime values.
 
         If the timerange is given as a year, it ensures it's formatted
@@ -298,7 +300,7 @@ class Dataset:
 
         self['timerange'] = timerange
 
-    def load(self, session=None):
+    def load(self, session: Session | None = None) -> Cube:
         """Load dataset."""
         if session is None:
             session = self.session
@@ -312,15 +314,15 @@ class Dataset:
                 fx_cubes.append(fx_cube)
         input_files = list(self.files)
         input_files.extend(anc.files for anc in self.ancillaries)
-        cube = preprocess(
-            cube,
+        cubes = preprocess(
+            [cube],
             'add_fx_variables',
             input_files=input_files,
             fx_variables=fx_cubes,
         )
-        return cube
+        return cubes[0]
 
-    def _load(self, preproc_dir, check_level):
+    def _load(self, preproc_dir: Path, check_level) -> Cube:
         """Load self.files into an iris cube and return it."""
         output_file = get_output_file(self.facets, preproc_dir)
 
@@ -361,6 +363,7 @@ class Dataset:
         result = self.files
         for step, kwargs in settings.items():
             result = preprocess(result, step, input_files=self.files, **kwargs)
+            print(result)
         cube = result[0]
         return cube
 
