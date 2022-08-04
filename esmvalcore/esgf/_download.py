@@ -256,7 +256,10 @@ class ESGFFile:
 
     def __eq__(self, other):
         """Compare `self` to `other`."""
-        return (self.dataset, self.name) == (other.dataset, other.name)
+        return (
+            isinstance(other, self.__class__)
+            and (self.dataset, self.name) == (other.dataset, other.name)
+        )
 
     def __lt__(self, other):
         """Compare `self` to `other`."""

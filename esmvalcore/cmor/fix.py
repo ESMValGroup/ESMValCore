@@ -6,6 +6,7 @@ variables to be sure that all known errors are fixed.
 """
 import logging
 from collections import defaultdict
+from pathlib import Path
 
 from iris.cube import CubeList
 
@@ -15,7 +16,7 @@ from .check import CheckLevels, _get_cmor_checker
 logger = logging.getLogger(__name__)
 
 
-def fix_file(file, short_name, project, dataset, mip, output_dir,
+def fix_file(file, short_name, project, dataset, mip, output_dir: Path,
              **extra_facets):
     """Fix files before ESMValTool can load them.
 
@@ -43,6 +44,8 @@ def fix_file(file, short_name, project, dataset, mip, output_dir,
     str:
         Path to the fixed file
     """
+    if not output_dir.exists():
+        output_dir.mkdir(parents=True, exist_ok=True)
     for fix in Fix.get_fixes(project=project,
                              dataset=dataset,
                              mip=mip,

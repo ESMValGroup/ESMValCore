@@ -4,6 +4,16 @@ import iris
 import pytest
 
 from esmvalcore import _data_finder
+from esmvalcore._config import CFG
+from esmvalcore._config._config_object import CFG_DEFAULT
+
+
+@pytest.fixture
+def session(tmp_path):
+    CFG.clear()
+    CFG.update(CFG_DEFAULT)
+    CFG['output_dir'] = tmp_path / 'esmvaltool_output'
+    return CFG.start_session('recipe_test')
 
 
 def create_test_file(filename, tracking_id=None):

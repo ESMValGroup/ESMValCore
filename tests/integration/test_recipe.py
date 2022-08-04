@@ -1,6 +1,5 @@
 import os
 from collections import defaultdict
-from copy import deepcopy
 from pathlib import Path
 from pprint import pformat
 from textwrap import dedent
@@ -9,24 +8,22 @@ from unittest.mock import create_autospec, patch, sentinel
 import iris
 import pytest
 import yaml
-from nested_lookup import get_occurrence_of_value, nested_update
+from nested_lookup import get_occurrence_of_value
 from PIL import Image
 
 import esmvalcore
 from esmvalcore._config import TAGS
+from esmvalcore._data_finder import get_output_file
 from esmvalcore._recipe import (
     TASKSEP,
-    _get_derive_input,
+    _get_input_datasets,
     _representative_dataset,
     read_recipe_file,
 )
 from esmvalcore._task import DiagnosticTask
-from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.dataset import Dataset
-from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-from esmvalcore.experimental import CFG
+from esmvalcore.exceptions import RecipeError
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
-from esmvalcore.preprocessor._io import concatenate_callback
 
 from .test_provenance import check_provenance
 
@@ -61,7 +58,6 @@ TAGS_FOR_TESTING = {
 MANDATORY_DATASET_KEYS = (
     'dataset',
     'diagnostic',
-    'filename',
     'frequency',
     'institute',
     'long_name',
@@ -84,28 +80,12 @@ MANDATORY_SCRIPT_SETTINGS_KEYS = (
 )
 
 DEFAULT_PREPROCESSOR_STEPS = (
-    'add_fx_variables',
     'cleanup',
-    'cmor_check_data',
-    'cmor_check_metadata',
-    'concatenate',
-    'clip_timerange',
-    'fix_data',
-    'fix_file',
-    'fix_metadata',
-    'load',
     'remove_fx_variables',
     'save',
 )
 
 INITIALIZATION_ERROR_MSG = 'Could not create all tasks'
-
-
-@pytest.fixture
-def session(tmp_path):
-    CFG['output_dir'] = tmp_path
-    session = CFG.start_session(tmp_path.stem)
-    return session
 
 
 def create_test_file(filename, tracking_id=None):
@@ -121,108 +101,9 @@ def create_test_file(filename, tracking_id=None):
     iris.save(cube, filename)
 
 
-def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
+def _get_default_settings_for_chl(fix_dir, save_filename):
     """Get default preprocessor settings for chl."""
-    standard_name = ('mass_concentration_of_phytoplankton_'
-                     'expressed_as_chlorophyll_in_sea_water')
     defaults = {
-        'load': {
-            'callback': concatenate_callback,
-        },
-        'concatenate': {},
-        'fix_file': {
-            'alias': 'CanESM2',
-            'dataset': 'CanESM2',
-            'diagnostic': 'diagnostic_name',
-            'ensemble': 'r1i1p1',
-            'exp': 'historical',
-            'filename': fix_dir.replace('_fixed', '.nc'),
-            'frequency': 'yr',
-            'institute': ['CCCma'],
-            'long_name': 'Total Chlorophyll Mass Concentration',
-            'mip': 'Oyr',
-            'modeling_realm': ['ocnBgchem'],
-            'original_short_name': 'chl',
-            'output_dir': fix_dir,
-            'preprocessor': preprocessor,
-            'product': ['output1', 'output2'],
-            'project': 'CMIP5',
-            'recipe_dataset_index': 0,
-            'short_name': 'chl',
-            'standard_name': standard_name,
-            'timerange': '2000/2005',
-            'units': 'kg m-3',
-            'variable_group': 'chl',
-        },
-        'fix_data': {
-            'check_level': CheckLevels.DEFAULT,
-            'alias': 'CanESM2',
-            'dataset': 'CanESM2',
-            'diagnostic': 'diagnostic_name',
-            'ensemble': 'r1i1p1',
-            'exp': 'historical',
-            'filename': fix_dir.replace('_fixed', '.nc'),
-            'frequency': 'yr',
-            'institute': ['CCCma'],
-            'long_name': 'Total Chlorophyll Mass Concentration',
-            'mip': 'Oyr',
-            'modeling_realm': ['ocnBgchem'],
-            'original_short_name': 'chl',
-            'preprocessor': preprocessor,
-            'product': ['output1', 'output2'],
-            'project': 'CMIP5',
-            'recipe_dataset_index': 0,
-            'short_name': 'chl',
-            'standard_name': standard_name,
-            'timerange': '2000/2005',
-            'units': 'kg m-3',
-            'variable_group': 'chl',
-        },
-        'fix_metadata': {
-            'check_level': CheckLevels.DEFAULT,
-            'alias': 'CanESM2',
-            'dataset': 'CanESM2',
-            'diagnostic': 'diagnostic_name',
-            'ensemble': 'r1i1p1',
-            'exp': 'historical',
-            'filename': fix_dir.replace('_fixed', '.nc'),
-            'frequency': 'yr',
-            'institute': ['CCCma'],
-            'long_name': 'Total Chlorophyll Mass Concentration',
-            'mip': 'Oyr',
-            'modeling_realm': ['ocnBgchem'],
-            'original_short_name': 'chl',
-            'preprocessor': preprocessor,
-            'product': ['output1', 'output2'],
-            'project': 'CMIP5',
-            'recipe_dataset_index': 0,
-            'short_name': 'chl',
-            'standard_name': standard_name,
-            'timerange': '2000/2005',
-            'units': 'kg m-3',
-            'variable_group': 'chl',
-        },
-        'clip_timerange': {
-            'timerange': '2000/2005',
-        },
-        'cmor_check_metadata': {
-            'check_level': CheckLevels.DEFAULT,
-            'cmor_table': 'CMIP5',
-            'mip': 'Oyr',
-            'short_name': 'chl',
-            'frequency': 'yr',
-        },
-        'cmor_check_data': {
-            'check_level': CheckLevels.DEFAULT,
-            'cmor_table': 'CMIP5',
-            'mip': 'Oyr',
-            'short_name': 'chl',
-            'frequency': 'yr',
-        },
-        'add_fx_variables': {
-            'fx_variables': {},
-            'check_level': CheckLevels.DEFAULT,
-        },
         'remove_fx_variables': {},
         'cleanup': {
             'remove': [fix_dir]
@@ -304,11 +185,7 @@ def test_recipe_no_datasets(tmp_path, session):
         """)
     exc_message = ("You have not specified any dataset "
                    "or additional_dataset groups for variable "
-                   "{'preprocessor': 'preprocessor_name', 'project': 'CMIP5',"
-                   " 'mip': 'Amon', 'exp': 'historical', 'ensemble': 'r1i1p1'"
-                   ", 'start_year': 1999, 'end_year': 2002, 'variable_group':"
-                   " 'ta', 'short_name': 'ta', 'diagnostic': "
-                   "'diagnostic_name'} Exiting.")
+                   "ta in diagnostic diagnostic_name.")
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == exc_message
@@ -338,8 +215,7 @@ def test_simple_recipe(tmp_path, patched_datafinder, session):
                 mip: Amon
                 exp: historical
                 ensemble: r1i1p1
-                start_year: 1999
-                end_year: 2002
+                timerange: 1999/2002
                 additional_datasets:
                   - dataset: MPI-ESM-LR
             scripts:
@@ -349,28 +225,14 @@ def test_simple_recipe(tmp_path, patched_datafinder, session):
         """.format(script))
 
     recipe = get_recipe(tmp_path, content, session)
-    raw = yaml.safe_load(content)
-    # Perform some sanity checks on recipe expansion/normalization
-    print("Expanded recipe:")
-    assert len(recipe.diagnostics) == len(raw['diagnostics'])
-    for diagnostic_name, diagnostic in recipe.diagnostics.items():
-        print(pformat(diagnostic))
-        source = raw['diagnostics'][diagnostic_name]
-
-        # Check that 'variables' have been read and updated
-        assert len(diagnostic['preprocessor_output']) == len(
-            source['variables'])
-        for variable_name, variables in diagnostic[
-                'preprocessor_output'].items():
-            assert len(variables) == 3
-            for variable in variables:
-                for key in MANDATORY_DATASET_KEYS:
-                    assert key in variable and variable[key]
-                assert variable_name == variable['short_name']
+    # Check that datasets have been read and updated
+    assert len(recipe.datasets) == 3
+    for dataset in recipe.datasets:
+        for key in MANDATORY_DATASET_KEYS:
+            assert key in dataset.facets and dataset.facets[key]
 
     # Check that the correct tasks have been created
-    variables = recipe.diagnostics['diagnostic_name']['preprocessor_output'][
-        'ta']
+    datasets = recipe.datasets
     tasks = {t for task in recipe.tasks for t in task.flatten()}
     preproc_tasks = {t for t in tasks if isinstance(t, PreprocessingTask)}
     diagnostic_tasks = {t for t in tasks if isinstance(t, DiagnosticTask)}
@@ -380,13 +242,18 @@ def test_simple_recipe(tmp_path, patched_datafinder, session):
         print("Task", task.name)
         assert task.order == list(DEFAULT_ORDER)
         for product in task.products:
-            variable = [
-                v for v in variables if v['filename'] == product.filename
+            dataset = [
+                d for d in datasets if get_output_file(
+                    d.facets, session.preproc_dir) == product.filename
             ][0]
-            assert product.attributes == variable
+            assert product.datasets == [dataset]
+            attributes = dict(dataset.facets)
+            attributes['start_year'] = 1999
+            attributes['end_year'] = 2002
+            assert product.attributes == attributes
             for step in DEFAULT_PREPROCESSOR_STEPS:
                 assert step in product.settings
-            assert len(product.files) == 2
+            assert len(dataset.files) == 2
 
     assert len(diagnostic_tasks) == 1
     for task in diagnostic_tasks:
@@ -400,7 +267,7 @@ def test_simple_recipe(tmp_path, patched_datafinder, session):
     assert recipe._updated_recipe == {}
 
 
-def test_simple_recipe_fill(tmp_path, patched_datafinder, session):
+def test_write_filled_recipe(tmp_path, patched_datafinder, session):
     script = tmp_path / 'diagnostic.py'
     script.write_text('')
     content = dedent("""
@@ -435,15 +302,20 @@ def test_simple_recipe_fill(tmp_path, patched_datafinder, session):
         """.format(script))
 
     recipe = get_recipe(tmp_path, content, session)
-    preprocessor_output = recipe.diagnostics['diagnostic_name'][
-        'preprocessor_output']
-    recipe._fill_wildcards('ta', preprocessor_output)
-    assert recipe._updated_recipe
-    assert get_occurrence_of_value(recipe._updated_recipe, value='*') == 0
-    assert get_occurrence_of_value(recipe._updated_recipe,
-                                   value='1990/2019') == 2
-    assert get_occurrence_of_value(recipe._updated_recipe,
-                                   value='1990/P2Y') == 1
+
+    session.run_dir.mkdir(parents=True)
+    esmvalcore._recipe.Recipe.write_filled_recipe(recipe)
+
+    recipe_file = session.run_dir / 'recipe_test_filled.yml'
+    assert recipe_file.is_file()
+
+    updated_recipe_object = read_recipe_file(recipe_file, session)
+    updated_recipe = updated_recipe_object._raw_recipe
+    print(pformat(updated_recipe))
+    assert get_occurrence_of_value(updated_recipe, value='*') == 0
+    assert get_occurrence_of_value(updated_recipe, value='1990/2019') == 2
+    assert get_occurrence_of_value(updated_recipe, value='1990/P2Y') == 1
+    assert len(updated_recipe_object.datasets) == 3
 
 
 def test_fx_preproc_error(tmp_path, patched_datafinder, session):
@@ -510,8 +382,7 @@ def test_default_preprocessor(tmp_path, patched_datafinder, session):
 
     fix_dir = os.path.join(
         preproc_dir, 'CMIP5_CanESM2_Oyr_historical_r1i1p1_chl_2000-2005_fixed')
-    defaults = _get_default_settings_for_chl(fix_dir, product.filename,
-                                             'default')
+    defaults = _get_default_settings_for_chl(fix_dir, product.filename)
     assert product.settings == defaults
 
 
@@ -551,8 +422,7 @@ def test_default_preprocessor_custom_order(tmp_path, patched_datafinder,
 
     fix_dir = os.path.join(
         preproc_dir, 'CMIP5_CanESM2_Oyr_historical_r1i1p1_chl_2000-2005_fixed')
-    defaults = _get_default_settings_for_chl(fix_dir, product.filename,
-                                             'default_custom_order')
+    defaults = _get_default_settings_for_chl(fix_dir, product.filename)
     assert product.settings == defaults
 
 
@@ -585,97 +455,6 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, session):
                            'CMIP5_CanESM2_fx_historical_r0i0p0_sftlf_fixed')
 
     defaults = {
-        'load': {
-            'callback': concatenate_callback,
-        },
-        'concatenate': {},
-        'fix_file': {
-            'alias': 'CanESM2',
-            'dataset': 'CanESM2',
-            'diagnostic': 'diagnostic_name',
-            'ensemble': 'r0i0p0',
-            'exp': 'historical',
-            'filename': fix_dir.replace('_fixed', '.nc'),
-            'frequency': 'fx',
-            'institute': ['CCCma'],
-            'long_name': 'Land Area Fraction',
-            'mip': 'fx',
-            'modeling_realm': ['atmos'],
-            'original_short_name': 'sftlf',
-            'output_dir': fix_dir,
-            'preprocessor': 'default',
-            'product': ['output1', 'output2'],
-            'project': 'CMIP5',
-            'recipe_dataset_index': 0,
-            'short_name': 'sftlf',
-            'standard_name': 'land_area_fraction',
-            'units': '%',
-            'variable_group': 'sftlf'
-        },
-        'fix_data': {
-            'check_level': CheckLevels.DEFAULT,
-            'alias': 'CanESM2',
-            'dataset': 'CanESM2',
-            'diagnostic': 'diagnostic_name',
-            'ensemble': 'r0i0p0',
-            'exp': 'historical',
-            'filename': fix_dir.replace('_fixed', '.nc'),
-            'frequency': 'fx',
-            'institute': ['CCCma'],
-            'long_name': 'Land Area Fraction',
-            'mip': 'fx',
-            'modeling_realm': ['atmos'],
-            'original_short_name': 'sftlf',
-            'preprocessor': 'default',
-            'product': ['output1', 'output2'],
-            'project': 'CMIP5',
-            'recipe_dataset_index': 0,
-            'short_name': 'sftlf',
-            'standard_name': 'land_area_fraction',
-            'units': '%',
-            'variable_group': 'sftlf'
-        },
-        'fix_metadata': {
-            'check_level': CheckLevels.DEFAULT,
-            'alias': 'CanESM2',
-            'dataset': 'CanESM2',
-            'diagnostic': 'diagnostic_name',
-            'ensemble': 'r0i0p0',
-            'exp': 'historical',
-            'filename': fix_dir.replace('_fixed', '.nc'),
-            'frequency': 'fx',
-            'institute': ['CCCma'],
-            'long_name': 'Land Area Fraction',
-            'mip': 'fx',
-            'modeling_realm': ['atmos'],
-            'original_short_name': 'sftlf',
-            'preprocessor': 'default',
-            'product': ['output1', 'output2'],
-            'project': 'CMIP5',
-            'recipe_dataset_index': 0,
-            'short_name': 'sftlf',
-            'standard_name': 'land_area_fraction',
-            'units': '%',
-            'variable_group': 'sftlf'
-        },
-        'cmor_check_metadata': {
-            'check_level': CheckLevels.DEFAULT,
-            'cmor_table': 'CMIP5',
-            'mip': 'fx',
-            'short_name': 'sftlf',
-            'frequency': 'fx',
-        },
-        'cmor_check_data': {
-            'check_level': CheckLevels.DEFAULT,
-            'cmor_table': 'CMIP5',
-            'mip': 'fx',
-            'short_name': 'sftlf',
-            'frequency': 'fx',
-        },
-        'add_fx_variables': {
-            'fx_variables': {},
-            'check_level': CheckLevels.DEFAULT,
-        },
         'remove_fx_variables': {},
         'cleanup': {
             'remove': [fix_dir]
@@ -715,199 +494,6 @@ def test_empty_variable(tmp_path, patched_datafinder, session):
     assert product.attributes['dataset'] == 'CanESM2'
 
 
-def test_cmip3_variable_autocomplete(tmp_path, patched_datafinder, session):
-    """Test that required information is automatically added for CMIP5."""
-    content = dedent("""
-        diagnostics:
-          test:
-            additional_datasets:
-              - dataset: bccr_bcm2_0
-                project: CMIP3
-                mip: A1
-                frequency: mon
-                exp: historical
-                start_year: 2000
-                end_year: 2001
-                ensemble: r1i1p1
-                modeling_realm: atmos
-            variables:
-              zg:
-            scripts: null
-        """)
-
-    recipe = get_recipe(tmp_path, content, session)
-    variable = recipe.diagnostics['test']['preprocessor_output']['zg'][0]
-
-    reference = {
-        'dataset': 'bccr_bcm2_0',
-        'diagnostic': 'test',
-        'ensemble': 'r1i1p1',
-        'exp': 'historical',
-        'frequency': 'mon',
-        'institute': ['BCCR'],
-        'long_name': 'Geopotential Height',
-        'mip': 'A1',
-        'modeling_realm': 'atmos',
-        'preprocessor': 'default',
-        'project': 'CMIP3',
-        'short_name': 'zg',
-        'standard_name': 'geopotential_height',
-        'timerange': '2000/2001',
-        'units': 'm',
-    }
-    for key in reference:
-        assert variable[key] == reference[key]
-
-
-def test_cmip5_variable_autocomplete(tmp_path, patched_datafinder, session):
-    """Test that required information is automatically added for CMIP5."""
-    content = dedent("""
-        diagnostics:
-          test:
-            additional_datasets:
-              - dataset: CanESM2
-                project: CMIP5
-                mip: 3hr
-                exp: historical
-                start_year: 2000
-                end_year: 2001
-                ensemble: r1i1p1
-            variables:
-              pr:
-            scripts: null
-        """)
-
-    recipe = get_recipe(tmp_path, content, session)
-    variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
-
-    reference = {
-        'dataset': 'CanESM2',
-        'diagnostic': 'test',
-        'ensemble': 'r1i1p1',
-        'exp': 'historical',
-        'frequency': '3hr',
-        'institute': ['CCCma'],
-        'long_name': 'Precipitation',
-        'mip': '3hr',
-        'modeling_realm': ['atmos'],
-        'preprocessor': 'default',
-        'project': 'CMIP5',
-        'short_name': 'pr',
-        'standard_name': 'precipitation_flux',
-        'timerange': '2000/2001',
-        'units': 'kg m-2 s-1',
-    }
-    for key in reference:
-        assert variable[key] == reference[key]
-
-
-def test_cmip6_variable_autocomplete(tmp_path, patched_datafinder, session):
-    """Test that required information is automatically added for CMIP6."""
-    content = dedent("""
-        diagnostics:
-          test:
-            additional_datasets:
-              - dataset: HadGEM3-GC31-LL
-                project: CMIP6
-                mip: 3hr
-                exp: historical
-                start_year: 2000
-                end_year: 2001
-                ensemble: r2i1p1f1
-                grid: gn
-            variables:
-              pr:
-            scripts: null
-        """)
-
-    recipe = get_recipe(tmp_path, content, session)
-    variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
-
-    reference = {
-        'activity': 'CMIP',
-        'dataset': 'HadGEM3-GC31-LL',
-        'diagnostic': 'test',
-        'ensemble': 'r2i1p1f1',
-        'exp': 'historical',
-        'frequency': '3hr',
-        'grid': 'gn',
-        'institute': ['MOHC', 'NERC'],
-        'long_name': 'Precipitation',
-        'mip': '3hr',
-        'modeling_realm': ['atmos'],
-        'preprocessor': 'default',
-        'project': 'CMIP6',
-        'short_name': 'pr',
-        'standard_name': 'precipitation_flux',
-        'timerange': '2000/2001',
-        'units': 'kg m-2 s-1',
-    }
-    for key in reference:
-        assert variable[key] == reference[key]
-
-
-def test_simple_cordex_recipe(tmp_path, patched_datafinder, session):
-    """Test simple CORDEX recipe."""
-    content = dedent("""
-        diagnostics:
-          test:
-            additional_datasets:
-              - dataset: MOHC-HadGEM3-RA
-                project: CORDEX
-                product: output
-                domain: AFR-44
-                institute: MOHC
-                driver: ECMWF-ERAINT
-                exp: evaluation
-                ensemble: r1i1p1
-                rcm_version: v1
-                start_year: 1991
-                end_year: 1993
-                mip: mon
-            variables:
-              tas:
-            scripts: null
-        """)
-
-    recipe = get_recipe(tmp_path, content, session)
-    variable = recipe.diagnostics['test']['preprocessor_output']['tas'][0]
-    filename = variable.pop('filename').split('/')[-1]
-    assert (filename ==
-            'CORDEX_MOHC-HadGEM3-RA_v1_ECMWF-ERAINT_AFR-44_mon_evaluation_'
-            'r1i1p1_tas_1991-1993.nc')
-    reference = {
-        'alias': 'MOHC-HadGEM3-RA',
-        'dataset': 'MOHC-HadGEM3-RA',
-        'diagnostic': 'test',
-        'domain': 'AFR-44',
-        'driver': 'ECMWF-ERAINT',
-        'end_year': 1993,
-        'ensemble': 'r1i1p1',
-        'exp': 'evaluation',
-        'frequency': 'mon',
-        'institute': 'MOHC',
-        'long_name': 'Near-Surface Air Temperature',
-        'mip': 'mon',
-        'modeling_realm': ['atmos'],
-        'preprocessor': 'default',
-        'product': 'output',
-        'project': 'CORDEX',
-        'recipe_dataset_index': 0,
-        'rcm_version': 'v1',
-        'short_name': 'tas',
-        'original_short_name': 'tas',
-        'standard_name': 'air_temperature',
-        'start_year': 1991,
-        'timerange': '1991/1993',
-        'units': 'K',
-        'variable_group': 'tas',
-    }
-
-    assert set(variable) == set(reference)
-    for key in reference:
-        assert variable[key] == reference[key]
-
-
 TEST_ISO_TIMERANGE = [
     ('*', '1990-2019'),
     ('1990/1992', '1990-1992'),
@@ -936,7 +522,7 @@ TEST_ISO_TIMERANGE = [
 def test_recipe_iso_timerange(tmp_path, patched_datafinder, session,
                               input_time, output_time):
     """Test recipe with timerange tag."""
-    content = dedent("""
+    content = dedent(f"""
         diagnostics:
           test:
             additional_datasets:
@@ -945,130 +531,73 @@ def test_recipe_iso_timerange(tmp_path, patched_datafinder, session,
                 exp: historical
                 ensemble: r2i1p1f1
                 grid: gn
-                timerange:
             variables:
               pr:
                 mip: 3hr
+                timerange: '{input_time}'
               areacella:
                 mip: fx
             scripts: null
         """)
 
-    recipe = yaml.safe_load(content)
-    (recipe['diagnostics']['test']['additional_datasets'][0]['timerange']
-     ) = input_time
-    content = yaml.safe_dump(recipe)
-
     recipe = get_recipe(tmp_path, content, session)
-    variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
-    filename = variable.pop('filename').split('/')[-1]
-    assert (filename == 'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
-            f'pr_gn_{output_time}.nc')
-    fx_variable = (
-        recipe.diagnostics['test']['preprocessor_output']['areacella'][0])
-    fx_filename = fx_variable.pop('filename').split('/')[-1]
-    assert (fx_filename ==
-            'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella_gn.nc')
+    assert len(recipe.tasks) == 2
+    pr_task = [t for t in recipe.tasks if t.name.endswith('pr')][0]
+    assert len(pr_task.products) == 1
+    pr_product = pr_task.products.pop()
+
+    filename = ('CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
+                f'pr_gn_{output_time}.nc')
+    assert pr_product.filename.name == filename
+
+    areacella_task = [t for t in recipe.tasks
+                      if t.name.endswith('areacella')][0]
+    assert len(areacella_task.products) == 1
+    areacella_product = areacella_task.products.pop()
+
+    filename = 'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella_gn.nc'
+    assert areacella_product.filename.name == filename
 
 
 @pytest.mark.parametrize('input_time,output_time', TEST_ISO_TIMERANGE)
 def test_recipe_iso_timerange_as_dataset(tmp_path, patched_datafinder, session,
                                          input_time, output_time):
     """Test recipe with timerange tag in the datasets section."""
-    content = dedent("""
+    content = dedent(f"""
         datasets:
           - dataset: HadGEM3-GC31-LL
             project: CMIP6
             exp: historical
             ensemble: r2i1p1f1
             grid: gn
-            timerange:
+            timerange: '{input_time}'
         diagnostics:
           test:
             variables:
               pr:
                 mip: 3hr
-              areacella:
-                mip: fx
+                ancillary_variables:
+                  - short_name: areacella
+                    mip: fx
             scripts: null
         """)
 
-    recipe = yaml.safe_load(content)
-    (recipe['datasets'][0]['timerange']) = input_time
-    content = yaml.safe_dump(recipe)
-
     recipe = get_recipe(tmp_path, content, session)
-    variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
-    filename = variable.pop('filename').split('/')[-1]
-    assert (filename == 'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
-            f'pr_gn_{output_time}.nc')
-    fx_variable = (
-        recipe.diagnostics['test']['preprocessor_output']['areacella'][0])
-    fx_filename = fx_variable.pop('filename').split('/')[-1]
-    assert (fx_filename ==
-            'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella_gn.nc')
 
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 1
+    product = task.products.pop()
+    filename = ('CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
+                f'pr_gn_{output_time}.nc')
+    assert product.filename.name == filename
 
-TEST_YEAR_FORMAT = [
-  ('1/301', '0001/0301'),
-  ('10/P2Y', '0010/P2Y'),
-  ('P2Y/10', 'P2Y/0010'),
-]
-
-
-@pytest.mark.parametrize('input_time,output_time', TEST_YEAR_FORMAT)
-def test_update_timerange_year_format(config_user, input_time, output_time):
-    variable = {
-        'project': 'CMIP6',
-        'mip': 'Amon',
-        'short_name': 'tas',
-        'original_short_name': 'tas',
-        'dataset': 'HadGEM3-GC31-LL',
-        'exp': 'historical',
-        'ensemble': 'r2i1p1f1',
-        'grid': 'gr',
-        'timerange': input_time
-    }
-    esmvalcore._recipe._update_timerange(variable, config_user)
-    assert variable['timerange'] == output_time
-
-
-def test_update_timerange_no_files_online(config_user):
-    variable = {
-        'alias': 'CMIP6',
-        'project': 'CMIP6',
-        'mip': 'Amon',
-        'short_name': 'tas',
-        'original_short_name': 'tas',
-        'dataset': 'HadGEM3-GC31-LL',
-        'exp': 'historical',
-        'ensemble': 'r2i1p1f1',
-        'grid': 'gr',
-        'timerange': '*/2000',
-    }
-    msg = "Missing data for CMIP6: tas. Cannot determine indeterminate time "
-    with pytest.raises(InputFilesNotFound, match=msg):
-        esmvalcore._recipe._update_timerange(variable, config_user)
-
-
-def test_update_timerange_no_files_offline(config_user):
-    variable = {
-        'alias': 'CMIP6',
-        'project': 'CMIP6',
-        'mip': 'Amon',
-        'short_name': 'tas',
-        'original_short_name': 'tas',
-        'dataset': 'HadGEM3-GC31-LL',
-        'exp': 'historical',
-        'ensemble': 'r2i1p1f1',
-        'grid': 'gr',
-        'timerange': '*/2000',
-    }
-    config_user = dict(config_user)
-    config_user['offline'] = False
-    msg = "Missing data for CMIP6: tas. Cannot determine indeterminate time "
-    with pytest.raises(InputFilesNotFound, match=msg):
-        esmvalcore._recipe._update_timerange(variable, config_user)
+    assert len(product.datasets) == 1
+    dataset = product.datasets[0]
+    assert len(dataset.ancillaries) == 1
+    ancillary_ds = dataset.ancillaries[0]
+    assert ancillary_ds.facets['short_name'] == 'areacella'
+    assert 'timerange' not in ancillary_ds.facets
 
 
 def test_reference_dataset(tmp_path, patched_datafinder, session, monkeypatch):
@@ -1132,19 +661,10 @@ def test_reference_dataset(tmp_path, patched_datafinder, session, monkeypatch):
     reference = next(p for p in task.products
                      if p.attributes['dataset'] == 'MPI-ESM-LR')
 
-    assert product.settings['regrid']['target_grid'] == reference.files[0]
+    assert product.settings['regrid']['target_grid'] == reference.datasets[0]
     assert product.settings['extract_levels']['levels'] == levels
 
-    fix_dir = os.path.splitext(reference.filename)[0] + '_fixed'
-    get_reference_levels.assert_called_once_with(
-        filename=reference.files[0],
-        project='CMIP5',
-        dataset='MPI-ESM-LR',
-        short_name='ta',
-        mip='Amon',
-        frequency='mon',
-        fix_dir=fix_dir,
-    )
+    get_reference_levels.assert_called_once_with(reference.datasets[0])
 
     assert 'regrid' not in reference.settings
     assert 'extract_levels' not in reference.settings
@@ -1253,9 +773,6 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, session):
                 'end_year': 2002,
                 'end_month': 6,
                 'end_day': 28,
-            }
-            assert product.settings['clip_timerange'] == {
-                'timerange': '2000/2005',
             }
         else:
             assert False, f"invalid task {task.name}"
@@ -3531,35 +3048,6 @@ def test_obs4mips_case_correct(tmp_path, patched_datafinder, session):
     assert variable['project'] == 'obs4MIPs'
 
 
-def test_write_filled_recipe(tmp_path, patched_datafinder, session):
-
-    content = dedent("""
-        diagnostics:
-          diagnostic_name:
-            variables:
-              tas:
-                project: CMIP5
-                mip: Amon
-                exp: historical
-                ensemble: r1i1p1
-                timerange: '*'
-                additional_datasets:
-                  - {dataset: BNU-ESM}
-            scripts: null
-        """)
-
-    recipe = get_recipe(tmp_path, content, session)
-    run_dir = session.run_dir
-    if not os.path.exists(run_dir):
-        os.makedirs(run_dir)
-
-    recipe._updated_recipe = deepcopy(recipe._raw_recipe)
-    nested_update(recipe._updated_recipe, 'timerange',
-                  '1990/2019', in_place=True)
-    esmvalcore._recipe.Recipe.write_filled_recipe(recipe)
-    assert os.path.isfile(os.path.join(run_dir, 'recipe_test_filled.yml'))
-
-
 def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
 
     content = dedent("""
@@ -3710,7 +3198,7 @@ def test_get_derive_input_variables(patched_datafinder, session):
             'variable_group': 'lwp_group',
         })
     lwp.session = session
-    derive_input = _get_derive_input([lwp])
+    derive_input = _get_input_datasets([lwp])
 
     clwvi = Dataset(
         **{

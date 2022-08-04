@@ -421,7 +421,6 @@ class PreprocessorFile(TrackedFile):
             attributes=attributes,
             ancestors=ancestors,
         )
-        self.attributes['filename'] = self.filename
 
     def check(self):
         """Check preprocessor settings."""

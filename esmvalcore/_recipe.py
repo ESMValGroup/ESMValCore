@@ -197,14 +197,14 @@ def _limit_datasets(datasets, profile):
     return limited
 
 
-def _get_default_settings(dataset, derive=False):
+def _get_default_settings(dataset):
     """Get default preprocessor settings."""
     session = dataset.session
     facets = dataset.facets
 
     settings = {}
 
-    if derive:
+    if facets.get('derive'):
         settings['derive'] = {
             'short_name': facets['short_name'],
             'standard_name': facets['standard_name'],
@@ -384,8 +384,11 @@ def _add_to_download_list(dataset):
 
 def _check_input_files(dataset: Dataset):
     """Get the input files for a single dataset and setup provenance."""
+    files = list(dataset.files)
+    for ancillary_ds in dataset.ancillaries:
+        files.extend(ancillary_ds.files)
     local_files = [f.local_file(dataset.session['download_dir'])
-                   if isinstance(f, ESGFFile) else f for f in dataset.files]
+                   if isinstance(f, ESGFFile) else f for f in files]
     logger.debug(
         "Using input files for variable %s of dataset %s:\n%s",
         dataset.facets['short_name'],
@@ -607,14 +610,12 @@ def _get_preprocessor_products(datasets, profile, order, name):
 
     missing_vars = set()
     for dataset in datasets:
-        settings = _get_default_settings(dataset, derive='derive' in profile)
+        settings = _get_default_settings(dataset)
         _update_warning_settings(settings, dataset.facets['project'])
         _apply_preprocessor_profile(settings, profile)
         _update_multi_dataset_settings(dataset.facets, settings)
         _update_preproc_functions(settings, dataset, datasets, missing_vars)
-        filename = get_output_file(dataset.facets, dataset.session.preproc_dir)
-        attributes = dataset.facets
-        input_datasets = _get_derive_input(dataset)
+        input_datasets = _get_input_datasets(dataset)
         for input_dataset in input_datasets:
             try:
                 _check_input_files(input_dataset)
@@ -624,9 +625,10 @@ def _get_preprocessor_products(datasets, profile, order, name):
                 else:
                     missing_vars.add(ex.message)
                 continue
+        filename = get_output_file(dataset.facets, dataset.session.preproc_dir)
         product = PreprocessorFile(
             filename=filename,
-            attributes=attributes,
+            attributes=dataset.facets,
             settings=settings,
             datasets=input_datasets,
         )
@@ -768,19 +770,13 @@ def _check_differing_timeranges(timeranges, required_vars):
             "Set `timerange` to a common value.")
 
 
-def _get_derive_input(dataset: Dataset):
+def _get_input_datasets(dataset: Dataset):
     """Determine the input datasets needed for deriving `dataset`."""
     facets = dataset.facets
-    if not facets.get('force_derivation') and '*' in facets['timerange']:
-        raise RecipeError(
-            f"Error in derived variable: {facets['short_name']}: "
-            "Using 'force_derivation: false' (the default option) "
-            "in combination with wildcards ('*') in timerange is "
-            "not allowed; explicitly use 'force_derivation: true' "
-            "or avoid the use of wildcards in timerange."
-            )
-    if not facets.get('force_derivation') and dataset.files:
-        # No need to derive
+    if not facets.get('derive') or (
+            not facets.get('force_derivation') and dataset.files):
+        # No derivation requested or needed
+        dataset._update_timerange()
         return [dataset]
 
     # Configure input datasets needed to derive variable
@@ -850,12 +846,11 @@ class Recipe:
         """Parse a recipe file into an object."""
         # Clear the global variable containing the set of files to download
         DOWNLOAD_FILES.clear()
-        self._download_files = set()
+        self._download_files: set[ESGFFile] = set()
         self.session = session
         self.session['write_ncl_interface'] = self._need_ncl(
             raw_recipe['diagnostics'])
         self._raw_recipe = raw_recipe
-        self._updated_recipe = {}
         self._filename = Path(recipe_file.name)
         self._preprocessors = raw_recipe.get('preprocessors', {})
         if 'default' not in self._preprocessors:
@@ -1119,8 +1114,7 @@ class Recipe:
                     logger.info("Re-using preprocessed files from %s for %s",
                                 prev_preproc_dir, task_name)
                     preproc_dir = Path(
-                        self.session['preproc_dir'],
-                        'preproc',
+                        self.session.preproc_dir,
                         diagnostic_name,
                         variable_group,
                     )
@@ -1252,29 +1246,33 @@ class Recipe:
         datasets = [ds for ds in self.datasets if ds.files]
         dataset_recipe = datasets_to_recipe(datasets)
 
-        updated_recipe = deepcopy(self._raw_recipe)
-        doc = updated_recipe['documentation']
+        recipe = deepcopy(self._raw_recipe)
+        # Remove dataset sections from recipe
+        recipe.pop('datasets', None)
+        nested_delete(recipe, 'additional_datasets', in_place=True)
+
+        # Format description nicer
+        doc = recipe['documentation']
         if 'description' in doc:
             doc['description'] = doc['description'].strip()
-        updated_recipe.pop('datasets', None)
-        nested_delete(updated_recipe, 'additional_datasets', in_place=True)
 
-        ds_key = 'additional_datasets'
-        var_key = 'variables'
-        for ds_name, diagnostic in dataset_recipe['diagnostics'].items():
-            updated_diagnostic = updated_recipe['diagnostics'][ds_name]
-            if ds_key in diagnostic:
-                updated_diagnostic[ds_key] = diagnostic[ds_key]
-            for var_name, variable in diagnostic.get(var_key, {}).items():
-                if var_name not in updated_diagnostic:
-                    updated_diagnostic[var_name] = {}
-                updated_variable = updated_diagnostic[var_name]
-                if ds_key in variable:
-                    updated_variable[ds_key] = variable[ds_key]
+        # Update datasets section
+        if 'datasets' in dataset_recipe:
+            recipe['datasets'] = dataset_recipe['datasets']
+
+        for diag, dataset_diagnostic in dataset_recipe['diagnostics'].items():
+            diagnostic = recipe['diagnostics'][diag]
+            # Update diagnostic level datasets
+            if 'additional_datasets' in dataset_diagnostic:
+                additional_datasets = dataset_diagnostic['additional_datasets']
+                diagnostic['additional_datasets'] = additional_datasets
+            # Update variable level datasets
+            if 'variables' in dataset_diagnostic:
+                diagnostic['variables'] = dataset_diagnostic['variables']
 
         filename = self.session.run_dir / f"{self._filename.stem}_filled.yml"
         with filename.open('w', encoding='utf-8') as file:
-            yaml.safe_dump(updated_recipe, file, sort_keys=False)
+            yaml.safe_dump(recipe, file, sort_keys=False)
 
     def write_html_summary(self):
         """Write summary html file to the output dir."""

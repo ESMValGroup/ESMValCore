@@ -491,7 +491,7 @@ def get_input_filelist(variable, rootpath, drs):
     """Return the full path to input files."""
     (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
     # do time gating only for non-fx variables
-    if 'timerange' in variable and variable['timerange'] != '*':
+    if 'timerange' in variable:
         files = select_files(
             files,
             variable['timerange'])

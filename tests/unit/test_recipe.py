@@ -1,4 +1,4 @@
-from collections import defaultdict
+from pathlib import Path
 from unittest import mock
 
 import iris
@@ -8,6 +8,7 @@ import pytest
 
 import esmvalcore.experimental.recipe_output
 from esmvalcore import _recipe
+from esmvalcore.dataset import Dataset
 from esmvalcore.esgf._download import ESGFFile
 from tests import PreprocessorFile
 
@@ -17,7 +18,7 @@ class MockRecipe(_recipe.Recipe):
 
     def __init__(self, cfg, diagnostics):
         """Simple constructor used for testing."""
-        self._cfg = cfg
+        self.session = cfg
         self.diagnostics = diagnostics
 
 
@@ -26,55 +27,33 @@ VAR_A_REF_A = {'dataset': 'A', 'reference_dataset': 'A'}
 VAR_A_REF_B = {'dataset': 'A', 'reference_dataset': 'B'}
 
 TEST_ALLOW_SKIPPING = [
-    ([], VAR_A, {}, False),
-    ([], VAR_A, {
+    (VAR_A, {
         'skip_nonexistent': False
     }, False),
-    ([], VAR_A, {
+    (VAR_A, {
         'skip_nonexistent': True
     }, True),
-    ([], VAR_A_REF_A, {}, False),
-    ([], VAR_A_REF_A, {
+    (VAR_A_REF_A, {
         'skip_nonexistent': False
     }, False),
-    ([], VAR_A_REF_A, {
+    (VAR_A_REF_A, {
         'skip_nonexistent': True
     }, False),
-    ([], VAR_A_REF_B, {}, False),
-    ([], VAR_A_REF_B, {
+    (VAR_A_REF_B, {
         'skip_nonexistent': False
     }, False),
-    ([], VAR_A_REF_B, {
+    (VAR_A_REF_B, {
         'skip_nonexistent': True
     }, True),
-    (['A'], VAR_A, {}, False),
-    (['A'], VAR_A, {
-        'skip_nonexistent': False
-    }, False),
-    (['A'], VAR_A, {
-        'skip_nonexistent': True
-    }, False),
-    (['A'], VAR_A_REF_A, {}, False),
-    (['A'], VAR_A_REF_A, {
-        'skip_nonexistent': False
-    }, False),
-    (['A'], VAR_A_REF_A, {
-        'skip_nonexistent': True
-    }, False),
-    (['A'], VAR_A_REF_B, {}, False),
-    (['A'], VAR_A_REF_B, {
-        'skip_nonexistent': False
-    }, False),
-    (['A'], VAR_A_REF_B, {
-        'skip_nonexistent': True
-    }, False),
 ]
 
 
-@pytest.mark.parametrize('ancestors,var,cfg,out', TEST_ALLOW_SKIPPING)
-def test_allow_skipping(ancestors, var, cfg, out):
+@pytest.mark.parametrize('var,cfg,out', TEST_ALLOW_SKIPPING)
+def test_allow_skipping(var, cfg, out):
     """Test ``_allow_skipping``."""
-    result = _recipe._allow_skipping(ancestors, var, cfg)
+    dataset = Dataset(**var)
+    dataset.session = cfg
+    result = _recipe._allow_skipping(dataset)
     assert result is out
 
 
@@ -93,13 +72,17 @@ def test_resume_preprocessor_tasks(mocker, tmp_path):
 
     # Create a mock recipe
     recipe = mocker.create_autospec(_recipe.Recipe, instance=True)
-    recipe._cfg = {
-        'resume_from': [str(prev_output)],
-        'preproc_dir': '/path/to/recipe_test_20210101_000000/preproc',
-    }
+
+    class Session(dict):
+        pass
+    session = Session(resume_from=[prev_output])
+    session.preproc_dir = Path('/path/to/recipe_test_20210101_000000/preproc')
+    recipe.session = session
 
     # Create a very simplified list of datasets
-    diagnostic = {'preprocessor_output': {'tas': [{'short_name': 'tas'}]}}
+    diagnostic = {
+        'datasets': [Dataset(short_name='tas', variable_group='tas')],
+    }
 
     # Create tasks
     tasks, failed = _recipe.Recipe._create_preprocessor_tasks(
@@ -162,39 +145,20 @@ def create_esgf_search_results():
 
 
 @pytest.mark.parametrize("local_availability", ['all', 'partial', 'none'])
-@pytest.mark.parametrize('already_downloaded', [True, False])
-def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
-
-    rootpath = tmp_path / 'local'
-    download_dir = tmp_path / 'download_dir'
+def test_check_input_files(monkeypatch, tmp_path, local_availability):
+    """Test _check_input_files: it does not raise and updates
+    DOWNLOAD_FILES."""
     esgf_files = create_esgf_search_results()
-
-    # ESGF files may have been downloaded previously, but not have
-    # been found if the download_dir is not configured as a rootpath
-    if already_downloaded:
-        for file in esgf_files:
-            local_path = file.local_file(download_dir)
-            local_path.parent.mkdir(parents=True, exist_ok=True)
-            local_path.touch()
+    download_dir = tmp_path / 'download_dir'
+    local_dir = Path('/local_dir')
 
     # Local files can cover the entire period, part of it, or nothing
     local_file_options = {
-        'all': [f.local_file(rootpath).as_posix() for f in esgf_files],
-        'partial': [esgf_files[1].local_file(rootpath).as_posix()],
+        'all': [f.local_file(local_dir).as_posix() for f in esgf_files],
+        'partial': [esgf_files[1].local_file(local_dir).as_posix()],
         'none': [],
     }
     local_files = local_file_options[local_availability]
-
-    mocker.patch.object(_recipe,
-                        'get_input_filelist',
-                        autospec=True,
-                        return_value=(list(local_files), [], []))
-    mocker.patch.object(
-        _recipe.esgf,
-        'find_files',
-        autospec=True,
-        return_value=esgf_files,
-    )
 
     variable = {
         'project': 'CMIP6',
@@ -208,67 +172,24 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
         'timerange': '1850/1851',
         'alias': 'CMIP6_EC-Eeath3_tas',
     }
-
-    config_user = {
-        'rootpath': None,
-        'drs': None,
-        'offline': False,
-        'download_dir': download_dir
-    }
-    input_files = _recipe._get_input_files(variable, config_user)[0]
-
-    download_files = [
-        f.local_file(download_dir).as_posix() for f in esgf_files
-    ]
-
-    expected = {
+    dataset = Dataset(**variable)
+    files = {
         'all': local_files,
-        'partial': local_files + download_files[:1],
-        'none': download_files,
+        'partial': local_files + esgf_files[:1],
+        'none': esgf_files,
     }
-    assert input_files == expected[local_availability]
+    dataset.session = {'download_dir': download_dir}
+    dataset.files = list(files[local_availability])
 
-
-@pytest.mark.parametrize('timerange', ['*', '185001/*', '*/185112'])
-def test_search_esgf_timerange(mocker, tmp_path, timerange):
-
-    download_dir = tmp_path / 'download_dir'
-    esgf_files = create_esgf_search_results()
-
-    mocker.patch.object(_recipe,
-                        '_find_input_files',
-                        autospec=True,
-                        return_value=([], [], []))
-    mocker.patch.object(
-        _recipe.esgf,
-        'find_files',
-        autospec=True,
-        return_value=esgf_files,
-    )
-
-    variable = {
-        'project': 'CMIP6',
-        'mip': 'Amon',
-        'frequency': 'mon',
-        'short_name': 'tas',
-        'dataset': 'EC.-Earth3',
-        'exp': 'historical',
-        'ensemble': 'r1i1p1f1',
-        'grid': 'gr',
-        'timerange': timerange,
-        'alias': 'CMIP6_EC-Eeath3_tas',
-        'original_short_name': 'tas'
+    monkeypatch.setattr(_recipe, 'DOWNLOAD_FILES', set())
+    _recipe._check_input_files(dataset)
+    print(esgf_files)
+    expected = {
+        'all': set(),
+        'partial': set(esgf_files[:1]),
+        'none': set(esgf_files),
     }
-
-    config_user = {
-        'rootpath': None,
-        'drs': None,
-        'offline': False,
-        'download_dir': download_dir
-    }
-    _recipe._update_timerange(variable, config_user)
-
-    assert variable['timerange'] == '185001/185112'
+    assert _recipe.DOWNLOAD_FILES == expected[local_availability]
 
 
 def test_write_html_summary(mocker, caplog):
@@ -287,35 +208,6 @@ def test_write_html_summary(mocker, caplog):
 
     assert f"Could not write HTML report: {message}" in caplog.text
     mock_recipe.get_output.assert_called_once()
-
-
-def test_add_fxvar_keys_extra_facets():
-    """Test correct addition of extra facets to fx variables."""
-    fx_info = {'short_name': 'areacella', 'mip': 'fx'}
-    variable = {'project': 'ICON', 'dataset': 'ICON'}
-    extra_facets_dir = tuple()
-    fx_var = _recipe._add_fxvar_keys(fx_info, variable, extra_facets_dir)
-    expected_fx_var = {
-        # Already given by fx_info and variable
-        'short_name': 'areacella',
-        'mip': 'fx',
-        'project': 'ICON',
-        'dataset': 'ICON',
-        # Added by _add_fxvar_keys
-        'variable_group': 'areacella',
-        # Added by _add_cmor_info
-        'original_short_name': 'areacella',
-        'standard_name': 'cell_area',
-        'long_name': 'Grid-Cell Area for Atmospheric Grid Variables',
-        'units': 'm2',
-        'modeling_realm': ['atmos', 'land'],
-        'frequency': 'fx',
-        # Added by _add_extra_facets
-        'latitude': 'grid_latitude',
-        'longitude': 'grid_longitude',
-        'raw_name': 'cell_area',
-    }
-    assert fx_var == expected_fx_var
 
 
 def test_multi_model_filename_overlap():
@@ -502,12 +394,6 @@ def test_update_multiproduct_no_product():
     assert settings == {}
 
 
-def test_match_products_no_product():
-    variables = [{'var_name': 'var'}]
-    grouped_products = _recipe._match_products(None, variables)
-    assert grouped_products == defaultdict(list)
-
-
 SCRIPTS_CFG = {
     'output_dir': mock.sentinel.output_dir,
     'script': mock.sentinel.script,
@@ -525,7 +411,7 @@ DIAGNOSTICS = {
     }},
 }
 TEST_GET_TASKS_TO_RUN = [
-    (None, []),
+    (None, None),
     ({''}, {''}),
     ({'wrong_task/*'}, {'wrong_task/*'}),
     ({'d1/*'}, {'d1/*'}),
@@ -548,9 +434,7 @@ TEST_GET_TASKS_TO_RUN = [
                          TEST_GET_TASKS_TO_RUN)
 def test_get_tasks_to_run(diags_to_run, tasknames_to_run):
     """Test ``Recipe._get_tasks_to_run``."""
-    cfg = {}
-    if diags_to_run is not None:
-        cfg = {'diagnostics': diags_to_run}
+    cfg = {'diagnostics': diags_to_run}
 
     recipe = MockRecipe(cfg, DIAGNOSTICS)
     tasks_to_run = recipe._get_tasks_to_run()

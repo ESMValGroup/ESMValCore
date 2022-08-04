@@ -21,8 +21,9 @@ from ._recipe_checks import datasets as check_datasets
 from ._recipe_checks import valid_time_selection as check_valid_time_selection
 from ._recipe_checks import variable as check_variable
 from .cmor.table import _get_facets_from_cmor_table
+from .esgf import ESGFFile
 from .exceptions import InputFilesNotFound, RecipeError
-from .preprocessor import add_fx_variables, preprocess
+from .preprocessor import preprocess
 from .preprocessor._io import DATASET_KEYS
 
 logger = logging.getLogger(__name__)
@@ -266,17 +267,19 @@ class Dataset:
         if 'timerange' not in self.facets:
             return
 
-        timerange = self.facets.get('timerange')
+        timerange = self.facets.pop('timerange')
         check_valid_time_selection(timerange)
 
         if '*' in timerange:
             self.find_files(session)
             if not self.files:
                 raise InputFilesNotFound(
-                    f"Missing data for: {_format_facets(self.facets)}"
-                    f"Cannot determine time range '{timerange}'.")
-
-            intervals = [get_start_end_date(name) for name in self.files]
+                    f"Missing data for: {_format_facets(self.facets)}. "
+                    f"Cannot determine timerange '{timerange}'.")
+            files = [
+                f.name if isinstance(f, ESGFFile) else f for f in self.files
+            ]
+            intervals = [get_start_end_date(name) for name in files]
 
             min_date = min(interval[0] for interval in intervals)
             max_date = max(interval[1] for interval in intervals)
@@ -307,46 +310,53 @@ class Dataset:
             if ancillary_dataset.files:
                 fx_cube = ancillary_dataset._load(preproc_dir, check_level)
                 fx_cubes.append(fx_cube)
-        add_fx_variables(cube, fx_cubes)
+        input_files = list(self.files)
+        input_files.extend(anc.files for anc in self.ancillaries)
+        cube = preprocess(
+            cube,
+            'add_fx_variables',
+            input_files=input_files,
+            fx_variables=fx_cubes,
+        )
         return cube
 
     def _load(self, preproc_dir, check_level):
         """Load self.files into an iris cube and return it."""
         output_file = get_output_file(self.facets, preproc_dir)
-        settings = {
-            'fix_file': {
-                'output_dir': f"{output_file.with_suffix('')}_fixed",
-                **self.facets,
-            },
-            'load': {},
-            'fix_metadata': {
-                'check_level': check_level,
-                **self.facets,
-            },
-            'concatenate': {},
-            'fix_data': {
-                'check_level': check_level,
-                **self.facets,
-            },
-            'cmor_check_metadata': {
-                'check_level': check_level,
-                'cmor_table': self.facets['project'],
-                'mip': self.facets['mip'],
-                'frequency': self.facets['frequency'],
-                'short_name': self.facets['short_name'],
-            },
-            'cmor_check_data': {
-                'check_level': check_level,
-                'cmor_table': self.facets['project'],
-                'mip': self.facets['mip'],
-                'frequency': self.facets['frequency'],
-                'short_name': self.facets['short_name'],
-            },
+
+        settings = {}
+        settings['fix_file'] = {
+            'output_dir': Path(f"{output_file.with_suffix('')}_fixed"),
+            **self.facets,
         }
-        if 'timerange' in self.facets and self.facets['frequency'] != 'fx':
+        settings['load'] = {}
+        settings['fix_metadata'] = {
+            'check_level': check_level,
+            **self.facets,
+        }
+        settings['concatenate'] = {}
+        settings['cmor_check_metadata'] = {
+            'check_level': check_level,
+            'cmor_table': self.facets['project'],
+            'mip': self.facets['mip'],
+            'frequency': self.facets['frequency'],
+            'short_name': self.facets['short_name'],
+        }
+        if 'timerange' in self.facets:
             settings['clip_timerange'] = {
                 'timerange': self.facets['timerange'],
             }
+        settings['fix_data'] = {
+            'check_level': check_level,
+            **self.facets,
+        }
+        settings['cmor_check_data'] = {
+            'check_level': check_level,
+            'cmor_table': self.facets['project'],
+            'mip': self.facets['mip'],
+            'frequency': self.facets['frequency'],
+            'short_name': self.facets['short_name'],
+        }
 
         result = self.files
         for step, kwargs in settings.items():
@@ -619,8 +629,6 @@ def datasets_to_recipe(datasets):
     # - deduplicate by moving datasets up from variable to diagnostic to recipe
     # - remove variable_group if the same as short_name
     # - remove automatically added facets
-
-    # TODO: integrate with existing recipe
 
     recipe = {'diagnostics': diagnostics}
     return recipe

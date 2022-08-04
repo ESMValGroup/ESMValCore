@@ -11,6 +11,7 @@ import isodate
 import yamale
 
 from ._data_finder import _parse_period, get_start_end_year
+from .esgf import ESGFFile
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from .preprocessor._ancillary_vars import PREPROCESSOR_ANCILLARIES
@@ -180,7 +181,7 @@ def data_availability(dataset, log=True):
     if not input_files:
         raise InputFilesNotFound(f"Missing data for: {_format_facets(facets)}")
 
-    if facets['frequency'] == 'fx' or facets['timerange'] == '*':
+    if 'timerange' not in facets:
         return
 
     start_date, end_date = _parse_period(facets['timerange'])
@@ -189,7 +190,8 @@ def data_availability(dataset, log=True):
     required_years = set(range(start_year, end_year + 1, 1))
     available_years = set()
 
-    for filename in input_files:
+    for file in input_files:
+        filename = file.name if isinstance(file, ESGFFile) else file
         start, end = get_start_end_year(filename)
         available_years.update(range(start, end + 1))
 

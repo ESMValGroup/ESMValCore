@@ -131,7 +131,7 @@ def add_fx_variables(cube, fx_variables):
     iris.cube.Cube
         Cube with added cell measures or ancillary variables.
     """
-
+    # note: backwards incompatible change to function signature
     if not fx_variables:
         return cube
 
