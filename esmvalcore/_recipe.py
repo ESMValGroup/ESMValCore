@@ -204,18 +204,11 @@ def _get_default_settings(dataset):
 
     settings = {}
 
-    if facets.get('derive'):
-        settings['derive'] = {
-            'short_name': facets['short_name'],
-            'standard_name': facets['standard_name'],
-            'long_name': facets['long_name'],
-            'units': facets['units'],
-        }
-
     # Clean up fixed files
     if not session['save_intermediary_cubes']:
         output_file = get_output_file(facets, session.preproc_dir)
         fix_dir = f"{output_file.with_suffix('')}_fixed"
+        # TODO: check that fixed files are also removed for derived vars
         settings['cleanup'] = {
             'remove': [fix_dir],
         }
@@ -776,6 +769,7 @@ def _get_input_datasets(dataset: Dataset):
     if not facets.get('derive') or (
             not facets.get('force_derivation') and dataset.files):
         # No derivation requested or needed
+        dataset.facets.pop('derive', None)
         dataset._update_timerange()
         return [dataset]
 
@@ -785,6 +779,7 @@ def _get_input_datasets(dataset: Dataset):
                                  facets['project'])
     for input_facets in required_vars:
         input_dataset = dataset.copy(**input_facets)
+        # idea: specify facets in list of dicts that is value of 'derive'?
         input_dataset.augment_facets()
         _get_facets_from_cmor_table(input_dataset.facets,
                                     override=True)
@@ -799,9 +794,11 @@ def _get_input_datasets(dataset: Dataset):
     timeranges = set()
     for input_dataset in datasets:
         input_dataset._update_timerange()
-        timeranges.add(input_dataset.facets['timerange'])
+        if 'timerange' in input_dataset.facets:
+            timeranges.add(input_dataset.facets['timerange'])
     _check_differing_timeranges(timeranges, required_vars)
-    dataset.facets['timerange'] = " ".join(timeranges)
+    if timeranges:
+        dataset.facets['timerange'] = " ".join(timeranges)
 
     return datasets
 

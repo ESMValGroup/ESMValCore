@@ -434,7 +434,7 @@ def get_rootpath(rootpath, project):
             if nonexistent and (key, nonexistent) not in ROOTPATH_WARNED:
                 logger.warning(
                     "'%s' rootpaths '%s' set in config-user.yml do not exist",
-                    key, ', '.join(nonexistent))
+                    key, ', '.join(str(p) for p in nonexistent))
                 ROOTPATH_WARNED.add((key, nonexistent))
             return rootpath[key]
     raise KeyError('default rootpath must be specified in config-user file')

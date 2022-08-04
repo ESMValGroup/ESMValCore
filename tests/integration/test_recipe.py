@@ -12,7 +12,7 @@ from nested_lookup import get_occurrence_of_value
 from PIL import Image
 
 import esmvalcore
-from esmvalcore._config import TAGS
+from esmvalcore._config import TAGS, Session
 from esmvalcore._data_finder import get_output_file
 from esmvalcore._recipe import (
     TASKSEP,
@@ -150,7 +150,7 @@ DEFAULT_DOCUMENTATION = dedent("""
     """)
 
 
-def get_recipe(tempdir, content, session):
+def get_recipe(tempdir: Path, content: str, session: Session):
     """Save and load recipe content."""
     recipe_file = tempdir / 'recipe_test.yml'
     # Add mandatory documentation section
@@ -263,8 +263,6 @@ def test_simple_recipe(tmp_path, patched_datafinder, session):
         for key in MANDATORY_SCRIPT_SETTINGS_KEYS:
             assert key in task.settings and task.settings[key]
         assert task.settings['custom_setting'] == 1
-    # Filled recipe is not created as there are no wildcards.
-    assert recipe._updated_recipe == {}
 
 
 def test_write_filled_recipe(tmp_path, patched_datafinder, session):
@@ -802,29 +800,17 @@ def test_derive(tmp_path, patched_datafinder, session):
     # Check generated tasks
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
-
     assert task.name == 'diagnostic_name' + TASKSEP + 'toz'
-    assert len(task.ancestors) == 2
-    assert 'diagnostic_name' + TASKSEP + 'toz_derive_input_ps' in [
-        t.name for t in task.ancestors
-    ]
-    assert 'diagnostic_name' + TASKSEP + 'toz_derive_input_tro3' in [
-        t.name for t in task.ancestors
-    ]
 
     # Check product content of tasks
     assert len(task.products) == 1
     product = task.products.pop()
     assert 'derive' in product.settings
     assert product.attributes['short_name'] == 'toz'
-    assert product.files
 
-    ps_product = next(p for a in task.ancestors for p in a.products
-                      if p.attributes['short_name'] == 'ps')
-    tro3_product = next(p for a in task.ancestors for p in a.products
-                        if p.attributes['short_name'] == 'tro3')
-    assert ps_product.filename in product.files
-    assert tro3_product.filename in product.files
+    assert len(product.datasets) == 2
+    input_variables = {d.facets['short_name'] for d in product.datasets}
+    assert input_variables == {'ps', 'tro3'}
 
 
 def test_derive_not_needed(tmp_path, patched_datafinder, session):
@@ -851,29 +837,18 @@ def test_derive_not_needed(tmp_path, patched_datafinder, session):
     # Check generated tasks
     assert len(recipe.tasks) == 1
     task = recipe.tasks.pop()
-
     assert task.name == 'diagnostic_name/toz'
-    assert len(task.ancestors) == 1
-    ancestor = [t for t in task.ancestors][0]
-    assert ancestor.name == 'diagnostic_name/toz_derive_input_toz'
 
     # Check product content of tasks
     assert len(task.products) == 1
     product = task.products.pop()
-    assert product.attributes['short_name'] == 'toz'
-    assert 'derive' in product.settings
+    assert 'derive' not in product.settings
 
-    assert len(ancestor.products) == 1
-    ancestor_product = ancestor.products.pop()
-    assert ancestor_product.filename in product.files
-    assert ancestor_product.attributes['short_name'] == 'toz'
-    assert 'derive' not in ancestor_product.settings
-
-    # Check that fixes are applied just once
-    fixes = ('fix_file', 'fix_metadata', 'fix_data')
-    for fix in fixes:
-        assert fix in ancestor_product.settings
-        assert fix not in product.settings
+    # Check dataset
+    assert len(product.datasets) == 1
+    dataset = product.datasets[0]
+    assert dataset.facets['short_name'] == 'toz'
+    assert dataset.files
 
 
 def test_derive_with_fx_ohc(tmp_path, patched_datafinder, session):
@@ -905,29 +880,23 @@ def test_derive_with_fx_ohc(tmp_path, patched_datafinder, session):
     assert task.name == 'diagnostic_name' + TASKSEP + 'ohc'
 
     # Check products
-    all_product_files = []
     assert len(task.products) == 3
     for product in task.products:
         assert 'derive' in product.settings
         assert product.attributes['short_name'] == 'ohc'
-        all_product_files.extend(product.files)
 
-    # Check ancestors
-    assert len(task.ancestors) == 2
-    assert task.ancestors[0].name == (
-        'diagnostic_name/ohc_derive_input_thetao')
-    assert task.ancestors[1].name == (
-        'diagnostic_name/ohc_derive_input_volcello')
-    for ancestor_product in task.ancestors[0].products:
-        assert ancestor_product.attributes['short_name'] == 'thetao'
-        assert ancestor_product.filename in all_product_files
-    for ancestor_product in task.ancestors[1].products:
-        assert ancestor_product.attributes['short_name'] == 'volcello'
-        if ancestor_product.attributes['project'] == 'CMIP6':
-            assert ancestor_product.attributes['mip'] == 'Ofx'
+        # Check datasets
+        assert len(product.datasets) == 2
+        thetao_ds = next(d for d in product.datasets
+                         if d.facets['short_name'] == 'thetao')
+        assert thetao_ds.facets['mip'] == 'Omon'
+        volcello_ds = next(d for d in product.datasets
+                           if d.facets['short_name'] == 'volcello')
+        if volcello_ds.facets['project'] == 'CMIP6':
+            mip = 'Ofx'
         else:
-            assert ancestor_product.attributes['mip'] == 'fx'
-        assert ancestor_product.filename in all_product_files
+            mip = 'fx'
+        assert volcello_ds.facets['mip'] == mip
 
 
 def test_derive_with_fx_ohc_fail(tmp_path, patched_failing_datafinder,
@@ -986,24 +955,19 @@ def test_derive_with_optional_var(tmp_path, patched_datafinder,
     assert task.name == 'diagnostic_name' + TASKSEP + 'tas'
 
     # Check products
-    all_product_files = []
     assert len(task.products) == 3
     for product in task.products:
         assert 'derive' in product.settings
         assert product.attributes['short_name'] == 'tas'
-        all_product_files.extend(product.files)
-
-    # Check ancestors
-    assert len(task.ancestors) == 2
-    assert task.ancestors[0].name == ('diagnostic_name/tas_derive_input_pr')
-    assert task.ancestors[1].name == (
-        'diagnostic_name/tas_derive_input_areacella')
-    for ancestor_product in task.ancestors[0].products:
-        assert ancestor_product.attributes['short_name'] == 'pr'
-        assert ancestor_product.filename in all_product_files
-    for ancestor_product in task.ancestors[1].products:
-        assert ancestor_product.attributes['short_name'] == 'areacella'
-        assert ancestor_product.filename in all_product_files
+        assert len(product.datasets) == 2
+        pr_ds = next(d for d in product.datasets
+                     if d.facets['short_name'] == 'pr')
+        assert pr_ds.facets['mip'] == 'Amon'
+        assert pr_ds.facets['timerange'] == '2000/2005'
+        areacella_ds = next(d for d in product.datasets
+                            if d.facets['short_name'] == 'areacella')
+        assert areacella_ds.facets['mip'] == 'fx'
+        assert 'timerange' not in areacella_ds.facets
 
 
 def test_derive_with_optional_var_nodata(tmp_path, patched_failing_datafinder,
@@ -1036,19 +1000,14 @@ def test_derive_with_optional_var_nodata(tmp_path, patched_failing_datafinder,
     assert task.name == 'diagnostic_name' + TASKSEP + 'tas'
 
     # Check products
-    all_product_files = []
     assert len(task.products) == 3
     for product in task.products:
         assert 'derive' in product.settings
         assert product.attributes['short_name'] == 'tas'
-        all_product_files.extend(product.files)
 
-    # Check ancestors
-    assert len(task.ancestors) == 1
-    assert task.ancestors[0].name == ('diagnostic_name/tas_derive_input_pr')
-    for ancestor_product in task.ancestors[0].products:
-        assert ancestor_product.attributes['short_name'] == 'pr'
-        assert ancestor_product.filename in all_product_files
+        # Check datasets
+        assert len(product.datasets) == 1
+        assert product.datasets[0].facets['short_name'] == 'pr'
 
 
 def test_derive_contains_start_end_year(tmp_path, patched_datafinder, session):

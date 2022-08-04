@@ -409,7 +409,16 @@ class PreprocessorFile(TrackedFile):
 
         self._input_files = input_files
         self.datasets = datasets
+
+        # Set some preprocessor settings (move all defaults here?)
         self.settings = copy.deepcopy(settings) or {}
+        if attributes.get('derive'):
+            self.settings['derive'] = {
+                'short_name': attributes['short_name'],
+                'standard_name': attributes['standard_name'],
+                'long_name': attributes['long_name'],
+                'units': attributes['units'],
+            }
         if 'save' not in self.settings:
             self.settings['save'] = {}
         self.settings['save']['filename'] = filename
