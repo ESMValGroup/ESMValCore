@@ -5,7 +5,7 @@ channels:
 
 dependencies:
   - cartopy
-  - cf-units>=3.0.0
+  - cf-units>=3.0.0,<3.1.0  # github.com/ESMValGroup/ESMValCore/issues/1655
   - cftime
   - compilers
   # 1.8.18/py39, they seem weary to build manylinux wheels

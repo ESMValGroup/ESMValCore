@@ -510,13 +510,9 @@ def _get_bounds(geometries, ids=None):
 
     subset = [geom for geom in geometries if _geometry_matches_ids(geom, ids)]
 
-    all_points = [
-        np.hstack(geom['geometry']['coordinates']) for geom in subset
-    ]
-    all_points = np.vstack(all_points)
-
-    lon_max, lat_max = all_points.max(axis=0)
-    lon_min, lat_min = all_points.min(axis=0)
+    all_bounds = np.vstack([fiona.bounds(geom) for geom in subset])
+    lon_max, lat_max = all_bounds[:, 2:].max(axis=0)
+    lon_min, lat_min = all_bounds[:, :2].min(axis=0)
 
     return lon_min, lat_min, lon_max, lat_max
 
