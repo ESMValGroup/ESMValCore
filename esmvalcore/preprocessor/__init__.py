@@ -4,6 +4,7 @@ import inspect
 import logging
 from pathlib import Path
 from pprint import pformat
+from typing import Any
 
 from iris.cube import Cube
 
@@ -388,10 +389,10 @@ class PreprocessorFile(TrackedFile):
 
     def __init__(
         self,
-        filename,
-        attributes=None,
-        settings=None,
-        datasets=None,
+        filename: Path,
+        attributes: dict[str, str] = None,
+        settings: dict[str, Any] = None,
+        datasets: list = None,
     ):
         if datasets is not None:
             # Load data using a Dataset
@@ -412,6 +413,8 @@ class PreprocessorFile(TrackedFile):
 
         # Set some preprocessor settings (move all defaults here?)
         self.settings = copy.deepcopy(settings) or {}
+        if attributes is None:
+            attributes = {}
         if attributes.get('derive'):
             self.settings['derive'] = {
                 'short_name': attributes['short_name'],
@@ -435,7 +438,7 @@ class PreprocessorFile(TrackedFile):
         """Check preprocessor settings."""
         check_preprocessor_settings(self.settings)
 
-    def apply(self, step, debug=False):
+    def apply(self, step: str, debug: bool = False):
         """Apply preprocessor step to product."""
         if step not in self.settings:
             raise ValueError(
