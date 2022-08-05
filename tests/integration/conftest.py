@@ -65,7 +65,7 @@ def patched_datafinder(tmp_path, monkeypatch):
     tracking_id = tracking_ids()
 
     def find_files(_, filenames):
-        # Any occurrence of [something] in filename should have
+        # Any occurrence of {something} in filename should have
         # been replaced before this function is called.
         for filename in filenames:
             assert '{' not in filename

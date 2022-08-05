@@ -127,7 +127,7 @@ class TrackedFile:
             self.prov_filename = filename
         else:
             self.prov_filename = prov_filename
-        self.attributes = copy.deepcopy(attributes) or {}
+        self.attributes = copy.deepcopy(attributes)
 
         self.provenance = None
         self.entity = None

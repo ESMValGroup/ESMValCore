@@ -408,8 +408,9 @@ class PreprocessorFile(TrackedFile):
             input_files = []
             ancestors = []
 
-        self._input_files = input_files
         self.datasets = datasets
+        self._cubes = None
+        self._input_files = input_files
 
         # Set some preprocessor settings (move all defaults here?)
         self.settings = copy.deepcopy(settings) or {}
@@ -426,7 +427,7 @@ class PreprocessorFile(TrackedFile):
             self.settings['save'] = {}
         self.settings['save']['filename'] = filename
 
-        self._cubes = None
+        attributes['filename'] = str(filename)
 
         super().__init__(
             filename=filename,

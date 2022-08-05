@@ -1123,6 +1123,14 @@ def get_diagnostic_filename(basename, cfg, extension='nc'):
     )
 
 
+def simulate_preprocessor_run(task):
+    """Simulate preprocessor run."""
+    task._initialize_product_provenance()
+    for product in task.products:
+        create_test_file(product.filename)
+        product.save_provenance()
+
+
 def simulate_diagnostic_run(diagnostic_task):
     """Simulate Python diagnostic run."""
     cfg = diagnostic_task.settings
@@ -1187,6 +1195,10 @@ def test_diagnostic_task_provenance(
         """.format(script=script))
 
     recipe = get_recipe(tmp_path, content, session)
+    preproc_task = next(t for t in recipe.tasks.flatten()
+                        if isinstance(t, PreprocessingTask))
+    simulate_preprocessor_run(preproc_task)
+
     diagnostic_task = recipe.tasks.pop()
 
     simulate_diagnostic_run(next(iter(diagnostic_task.ancestors)))

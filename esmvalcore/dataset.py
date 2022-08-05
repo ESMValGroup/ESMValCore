@@ -9,7 +9,7 @@ from pathlib import Path
 from iris.cube import Cube
 
 from . import esgf
-from ._config import get_activity, get_extra_facets, get_institutes, Session
+from ._config import Session, get_activity, get_extra_facets, get_institutes
 from ._data_finder import (
     _get_timerange_from_years,
     dates_to_timerange,
@@ -363,7 +363,6 @@ class Dataset:
         result = self.files
         for step, kwargs in settings.items():
             result = preprocess(result, step, input_files=self.files, **kwargs)
-            print(result)
         cube = result[0]
         return cube
 
