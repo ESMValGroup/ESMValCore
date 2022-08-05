@@ -16,7 +16,7 @@ from typing import Dict, Type
 
 import yaml
 
-from esmvalcore.exceptions import CMORError
+from esmvalcore.exceptions import RecipeError
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ def _get_facets_from_cmor_table(facets, override=False):
     else:
         table_entry = None
     if table_entry is None:
-        raise CMORError(
+        raise RecipeError(
             f"Unable to load CMOR table (project) '{project}' for variable "
             f"'{short_name}' with mip '{mip}'")
     facets['original_short_name'] = table_entry.short_name

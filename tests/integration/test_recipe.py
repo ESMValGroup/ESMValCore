@@ -248,6 +248,7 @@ def test_simple_recipe(tmp_path, patched_datafinder, session):
             ][0]
             assert product.datasets == [dataset]
             attributes = dict(dataset.facets)
+            attributes['filename'] = product.filename
             attributes['start_year'] = 1999
             attributes['end_year'] = 2002
             assert product.attributes == attributes
@@ -2027,7 +2028,8 @@ def test_empty_fxvar_list(tmp_path, patched_datafinder, session):
     # Check that no custom fx variables are present
     task = recipe.tasks.pop()
     product = task.products.pop()
-    assert product.settings['add_fx_variables']['fx_variables'] == {}
+    dataset = product.datasets[0]
+    assert dataset.ancillaries == []
 
 
 def test_empty_fxvar_dict(tmp_path, patched_datafinder, session):
@@ -2058,11 +2060,13 @@ def test_empty_fxvar_dict(tmp_path, patched_datafinder, session):
     # Check that no custom fx variables are present
     task = recipe.tasks.pop()
     product = task.products.pop()
-    assert product.settings['add_fx_variables']['fx_variables'] == {}
+    assert len(product.datasets) == 1
+    dataset = product.datasets[0]
+    assert dataset.ancillaries == []
 
 
-def test_user_defined_fxvar(tmp_path, patched_datafinder, session):
-    content = dedent("""
+@pytest.mark.parametrize('content', [
+    dedent("""
         preprocessors:
           landmask:
             mask_landsea:
@@ -2097,46 +2101,8 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, session):
                 additional_datasets:
                   - {dataset: CanESM2}
             scripts: null
-        """)
-    recipe = get_recipe(tmp_path, content, session)
-
-    # Check custom fx variables
-    task = recipe.tasks.pop()
-    product = task.products.pop()
-
-    # landsea
-    settings = product.settings['mask_landsea']
-    assert len(settings) == 1
-    assert settings['mask_out'] == 'sea'
-    fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 4
-    assert '_fx_' in fx_variables['sftlf']['filename']
-    assert '_piControl_' in fx_variables['sftlf']['filename']
-
-    # landseaice
-    settings = product.settings['mask_landseaice']
-    assert len(settings) == 1
-    assert settings['mask_out'] == 'sea'
-    assert '_fx_' in fx_variables['sftgif']['filename']
-    assert '_piControl_' in fx_variables['sftgif']['filename']
-
-    # volume statistics
-    settings = product.settings['volume_statistics']
-    assert len(settings) == 1
-    assert settings['operator'] == 'mean'
-    assert 'volcello' in fx_variables
-
-    # area statistics
-    settings = product.settings['area_statistics']
-    assert len(settings) == 1
-    assert settings['operator'] == 'mean'
-    assert '_fx_' in fx_variables['areacello']['filename']
-    assert '_piControl_' in fx_variables['areacello']['filename']
-
-
-def test_user_defined_fxlist(tmp_path, patched_datafinder, session):
-    content = dedent("""
+        """),
+    dedent("""
         preprocessors:
           landmask:
             mask_landsea:
@@ -2165,7 +2131,10 @@ def test_user_defined_fxlist(tmp_path, patched_datafinder, session):
                 additional_datasets:
                   - {dataset: CanESM2}
             scripts: null
-        """)
+        """),
+    ]
+)
+def test_user_defined_fxvar(tmp_path, patched_datafinder, session, content):
     recipe = get_recipe(tmp_path, content, session)
 
     # Check custom fx variables
@@ -2176,31 +2145,36 @@ def test_user_defined_fxlist(tmp_path, patched_datafinder, session):
     settings = product.settings['mask_landsea']
     assert len(settings) == 1
     assert settings['mask_out'] == 'sea'
-    fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 4
-    assert '_fx_' in fx_variables['sftlf']['filename']
-    assert '_piControl_' in fx_variables['sftlf']['filename']
+    assert len(product.datasets) == 1
+    dataset = product.datasets[0]
+    assert isinstance(dataset.ancillaries, list)
+    ancillaries = {ds.facets['short_name']: ds for ds in dataset.ancillaries}
+    assert len(list(ancillaries)) == 4
+    sftlf_ds = ancillaries['sftlf']
+    assert sftlf_ds.facets['mip'] == 'fx'
+    assert sftlf_ds.facets['experiment'] == 'piControl'
 
     # landseaice
     settings = product.settings['mask_landseaice']
     assert len(settings) == 1
     assert settings['mask_out'] == 'sea'
-    assert '_fx_' in fx_variables['sftlf']['filename']
-    assert '_piControl_' in fx_variables['sftlf']['filename']
+    sftgif_ds = ancillaries['sftgif']
+    assert sftgif_ds.facets['mip'] == 'fx'
+    assert sftgif_ds.facets['experiment'] == 'piControl'
 
     # volume statistics
     settings = product.settings['volume_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    assert 'volcello' in fx_variables
+    assert 'volcello' in ancillaries
 
     # area statistics
     settings = product.settings['area_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    assert '_fx_' in fx_variables['areacello']['filename']
-    assert '_piControl_' in fx_variables['areacello']['filename']
+    areacello_ds = ancillaries['areacello']
+    assert areacello_ds.facets['mip'] == 'fx'
+    assert areacello_ds.facets['experiment'] == 'piControl'
 
 
 def test_landmask_no_fx(tmp_path, patched_failing_datafinder, session):
@@ -2299,12 +2273,15 @@ def test_fx_vars_fixed_mip_cmip6(tmp_path, patched_datafinder, session):
     assert settings['operator'] == 'mean'
 
     # Check add_fx_variables
-    fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 2
-    assert '_fx_' in fx_variables['sftgif']['filename']
-    assert '_r2i1p1f1_' in fx_variables['volcello']['filename']
-    assert '_Ofx_' in fx_variables['volcello']['filename']
+    assert len(product.datasets) == 1
+    dataset = product.datasets[0]
+    ancillaries = {ds.facets['short_name']: ds for ds in dataset.ancillaries}
+    assert len(list(ancillaries)) == 2
+    sftgif_ds = ancillaries['sftgif']
+    assert sftgif_ds.facets['mip'] == 'fx'
+    volcello_ds = ancillaries['volcello']
+    assert volcello_ds.facets['ensemble'] == 'r2i1p1f1'
+    assert volcello_ds.facets['mip'] == 'Ofx'
 
 
 def test_fx_vars_invalid_mip_cmip6(tmp_path, patched_datafinder, session):

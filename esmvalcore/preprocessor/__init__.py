@@ -390,7 +390,7 @@ class PreprocessorFile(TrackedFile):
     def __init__(
         self,
         filename: Path,
-        attributes: dict[str, str] | None = None,
+        attributes: dict[str, Any] | None = None,
         settings: dict[str, Any] | None = None,
         datasets: list | None = None,
     ):
@@ -413,9 +413,12 @@ class PreprocessorFile(TrackedFile):
         self._input_files = input_files
 
         # Set some preprocessor settings (move all defaults here?)
-        self.settings = copy.deepcopy(settings) or {}
+        if settings is None:
+            settings = {}
+        self.settings = copy.deepcopy(settings)
         if attributes is None:
             attributes = {}
+        attributes = copy.deepcopy(attributes)
         if attributes.get('derive'):
             self.settings['derive'] = {
                 'short_name': attributes['short_name'],
@@ -427,7 +430,7 @@ class PreprocessorFile(TrackedFile):
             self.settings['save'] = {}
         self.settings['save']['filename'] = filename
 
-        attributes['filename'] = str(filename)
+        attributes['filename'] = filename
 
         super().__init__(
             filename=filename,

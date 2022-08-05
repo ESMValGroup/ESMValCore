@@ -35,10 +35,6 @@ class MissingConfigParameter(UserWarning):
     """Config parameter is missing."""
 
 
-class CMORError(Error):
-    """An error occurred related to the CMOR module."""
-
-
 class RecipeError(Error):
     """Recipe contains an error."""
 

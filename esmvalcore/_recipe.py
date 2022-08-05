@@ -291,8 +291,15 @@ def _get_legacy_ancillary_facets(dataset, settings, missing_ancillaries):
         if 'fx_variables' in kwargs:
             fx_variables = kwargs['fx_variables']
             if isinstance(fx_variables, list):
-                # Legacy legacy method of specifying ancillary variables
-                fx_variables = {short_name: {} for short_name in fx_variables}
+                fx_variables = {}
+                for fx_variable in fx_variables:
+                    if isinstance(fx_variable, str):
+                        # Legacy legacy method of specifying ancillary variable
+                        short_name = fx_variable
+                        fx_variables[short_name] = {}
+                    elif isinstance(fx_variable, dict):
+                        short_name = fx_variable['short_name']
+                        fx_variables[short_name] = fx_variable
             for short_name, facets in fx_variables.items():
                 if facets is None:
                     facets = {}
