@@ -12,7 +12,7 @@ def cubes():
     sic_name = 'sea_ice_area_fraction'
     time_coord = iris.coords.DimCoord([0., 1., 2.],
                                       standard_name='time')
-    sic_cube = iris.cube.Cube([[[15, 10], [10, 10]],
+    sic_cube = iris.cube.Cube([[[20, 10], [10, 10]],
                                   [[10, 10], [10, 10]],
                                   [[10, 10], [10, 10]]],
                                  units='%',
@@ -25,7 +25,7 @@ def cubes():
 def test_siextent_calculation(cubes):
     derived_var = siextent.DerivedVariable()
     out_cube = derived_var.calculate(cubes)
-    assert out_cube.units == cf_units.Unit('1')
+    assert out_cube.units == cf_units.Unit('m2')
     out_data = out_cube.data
     expected = np.ma.ones_like(cubes[0].data)
     expected.mask = True
