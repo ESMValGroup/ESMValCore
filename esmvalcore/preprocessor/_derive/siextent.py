@@ -23,11 +23,11 @@ class DerivedVariable(DerivedVariableBase):
         """
         Compute sea ice extent.
 
-        Returns an array of ones in every grid point where 
+        Returns an array of ones in every grid point where
         the sea ice area fraction has values > 15 .
 
-        Use in combination with the preprocessor 
-        `area_statistics(operator='sum')` to weigh by the area and 
+        Use in combination with the preprocessor
+        `area_statistics(operator='sum')` to weigh by the area and
         compute global or regional sea ice extent values.
 
         Arguments
