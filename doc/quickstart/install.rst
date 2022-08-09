@@ -212,7 +212,7 @@ yourself if you are just running diagnostics:
    SharePoint site for more details.
 
 .. note::
-    If you would like to use pre-installed versions on HPC clusters (currently CEDA-JASMIN and DKRZ-MISTRAL),
+    If you would like to use pre-installed versions on HPC clusters (currently CEDA-JASMIN and DKRZ-Levante),
     please have a look at
     :ref:`these instructions <esmvaltool:install_on_hpc>`.
 
