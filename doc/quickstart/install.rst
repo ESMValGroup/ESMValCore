@@ -197,7 +197,7 @@ To install from source for development, follow these instructions.
    ``esmvaltool -h``.
 
 Pre-installed versions on HPC clusters / other servers
---------------------------------------
+------------------------------------------------------
 
 You will find the tool available on HPC clusters and there will be no need to install it
 yourself if you are just running diagnostics:
