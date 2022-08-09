@@ -17,7 +17,7 @@ def cubes():
                                [[10, 10], [10, 10]]],
                               units='%',
                               standard_name=sic_name,
-                              var_name='siconc',
+                              var_name='sic',
                               dim_coords_and_dims=[(time_coord, 0)])
     return iris.cube.CubeList([sic_cube])
 
