@@ -451,7 +451,7 @@ and the ``ICON`` fix is located `here
 <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/_fixes/icon/icon.py>`__.
 
 ESMValTool also provides a base class ``NativeDatasetFix`` that provides
-convenient function useful for all native dataset fixes.
+convenient functions useful for all native dataset fixes.
 An example for its usage can be found `here
 <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/_fixes/icon/_base_fixes.py>`__.
 
