@@ -201,8 +201,8 @@ Pre-installed versions on HPC clusters / other servers
 
 
 If you would like to use pre-installed versions on HPC clusters (currently CEDA-JASMIN and DKRZ-Levante),
-and other servers (currently Met Office Linux estate), please have a look at
-    :ref:`these instructions <esmvaltool:install_on_hpc>`.
+and other servers (currently Met Office Linux estate), please have a look at 
+:ref:`these instructions <esmvaltool:install_on_hpc>`.
 
 
 .. _condalock-installation-creation:
