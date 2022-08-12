@@ -199,8 +199,6 @@ To install from source for development, follow these instructions.
 Pre-installed versions on HPC clusters / other servers
 ------------------------------------------------------
 
-You will find the tool available on some HPC clusters, so there is no need to install it
-yourself if you are just running recipes:
 
  - CEDA-JASMIN: `esmvaltool` is available on the scientific compute nodes (`sciX.jasmin.ac.uk` where
    `X = 1, 2, 3, 4, 5`) after login and module loading via `module load esmvaltool`; see the helper page at
