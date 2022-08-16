@@ -450,6 +450,11 @@ For example, a ``native6`` dataset fix for ERA5 is located `here
 and the ``ICON`` fix is located `here
 <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/_fixes/icon/icon.py>`__.
 
+ESMValTool also provides a base class ``NativeDatasetFix`` that provides
+convenient functions useful for all native dataset fixes.
+An example for its usage can be found `here
+<https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/_fixes/icon/_base_fixes.py>`__.
+
 .. _add_new_fix_native_datasets_extra_facets:
 
 Extra facets for native datasets
