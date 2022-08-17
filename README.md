@@ -10,7 +10,7 @@
 [![Anaconda-Server Badge](https://anaconda.org/esmvalgroup/esmvalcore/badges/installer/conda.svg)](https://conda.anaconda.org/esmvalgroup)
 [![Github Actions Test](https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml/badge.svg)](https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml)
 [![Github Actions Dashboard](https://api.meercode.io/badge/ESMValGroup/ESMValCore?type=ci-success-rate&branch=main&lastDay=14)](https://meercode.io)
-
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/ESMValGroup/ESMValCore/main.svg)](https://results.pre-commit.ci/latest/github/ESMValGroup/ESMValCore/main)
 
 ![esmvaltoollogo](https://github.com/ESMValGroup/ESMValCore/blob/main/doc/figures/ESMValTool-logo-2.png)
 
