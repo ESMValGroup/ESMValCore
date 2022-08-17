@@ -1,6 +1,7 @@
 """Common fix operations for native datasets."""
 
 import logging
+from typing import Dict
 
 from iris import NameConstraint
 
@@ -18,7 +19,7 @@ class NativeDatasetFix(Fix):
     """Common fix operations for native datasets."""
 
     # Dictionary to map invalid units in the data to valid entries
-    INVALID_UNITS: dict[str, str] = {}
+    INVALID_UNITS: Dict[str, str] = {}
 
     def fix_scalar_coords(self, cube):
         """Add missing scalar coordinate to cube (in-place).
