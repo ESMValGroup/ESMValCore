@@ -439,8 +439,10 @@ class TestCMORCheck(unittest.TestCase):
         self._check_fails_in_metadata(automatic_fixes=False)
 
     def test_check_missing_coord_strict_flag(self):
-        """Test check fails for missing coord other than lat and lon with
-        --cmor-check strict."""
+        """Test check fails for missing coord other than lat and lon with.
+
+        --cmor-check strict.
+        """
         self.var_info.coordinates.update(
             {'height2m': CoordinateInfoMock('height2m')}
         )
