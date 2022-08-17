@@ -4,8 +4,8 @@ import iris
 from ..common import ClFixHybridPressureCoord, SiconcFixScalarCoord
 from ..fix import Fix
 from ..shared import add_aux_coords_from_cubes, add_scalar_height_coord
-from .gfdl_esm4 import Omon as BaseOmon
 from .gfdl_esm4 import Fgco2 as BaseFgco2
+from .gfdl_esm4 import Omon as BaseOmon
 
 
 class Cl(ClFixHybridPressureCoord):
@@ -22,7 +22,6 @@ class Cl(ClFixHybridPressureCoord):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         coords_to_add = {
@@ -47,8 +46,7 @@ class Tas(Fix):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
-        """
-        Add height (2m) coordinate.
+        """Add height (2m) coordinate.
 
         Parameters
         ----------
@@ -58,7 +56,6 @@ class Tas(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         try:
@@ -72,8 +69,7 @@ class Uas(Fix):
     """Fixes for uas."""
 
     def fix_metadata(self, cubes):
-        """
-        Add height (10m) coordinate.
+        """Add height (10m) coordinate.
 
         Parameters
         ----------
@@ -83,7 +79,6 @@ class Uas(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 10.0)
@@ -94,8 +89,7 @@ class Vas(Fix):
     """Fixes for vas."""
 
     def fix_metadata(self, cubes):
-        """
-        Add height (10m) coordinate.
+        """Add height (10m) coordinate.
 
         Parameters
         ----------
@@ -105,7 +99,6 @@ class Vas(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 10.0)

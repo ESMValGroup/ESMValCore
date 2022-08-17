@@ -5,7 +5,6 @@ from cf_units import Unit
 from ..fix import Fix
 from .access1_0 import Cl as BaseCl
 
-
 Cl = BaseCl
 
 
@@ -25,7 +24,6 @@ class AllVars(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             try:

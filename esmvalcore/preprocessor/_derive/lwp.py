@@ -33,7 +33,6 @@ class DerivedVariable(DerivedVariableBase):
         ----
         Some datasets output the variable `clwvi` which only contains `lwp`. In
         these cases, the input `clwvi` cube is just returned.
-
         """
         # CMIP5 and CMIP6 names are slightly different, so use
         # variable name instead to extract cubes

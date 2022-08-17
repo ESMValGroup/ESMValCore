@@ -39,7 +39,6 @@ class DerivedVariable(DerivedVariableBase):
         ----
         The surface pressure is used as a lower integration bound. A fixed
         upper integration bound of 0 Pa is used.
-
         """
         tro3_cube = cubes.extract_cube(
             iris.Constraint(name='mole_fraction_of_ozone_in_air'))

@@ -1,5 +1,8 @@
-from esmvalcore.preprocessor import (DEFAULT_ORDER, MULTI_MODEL_FUNCTIONS,
-                                     _get_itype)
+from esmvalcore.preprocessor import (
+    DEFAULT_ORDER,
+    MULTI_MODEL_FUNCTIONS,
+    _get_itype,
+)
 
 
 def test_first_argument_name():

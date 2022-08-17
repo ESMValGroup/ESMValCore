@@ -17,7 +17,7 @@ class TestSftof(unittest.TestCase):
         self.fix = Sftof(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-CM3', 'fx', 'sftof'),
             [Sftof(None), AllVars(None)])
@@ -38,7 +38,7 @@ class TestAreacello(unittest.TestCase):
         self.fix = Areacello(self.vardef)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-CM3', 'Amon', 'areacello'),
             [Areacello(self.vardef), AllVars(self.vardef)])

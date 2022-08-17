@@ -2,7 +2,6 @@
 
 authors:
     - weig_ka
-
 """
 from iris import Constraint
 
@@ -30,11 +29,10 @@ class DerivedVariable(DerivedVariableBase):
 
     @staticmethod
     def calculate(cubes):
-        """
-        Compute variable `rlnst`.
+        """Compute variable `rlnst`.
 
-        Compute Net Atmospheric Longwave Cooling
-        to surface and outer space.
+        Compute Net Atmospheric Longwave Cooling to surface and outer
+        space.
         """
         rlds_cube = cubes.extract_cube(
             Constraint(name='surface_downwelling_longwave_flux_in_air'))

@@ -1,8 +1,7 @@
 """Derivation of variable `ohc`."""
 import iris
-from iris import Constraint
-
 from cf_units import Unit
+from iris import Constraint
 
 from ._baseclass import DerivedVariableBase
 
@@ -38,8 +37,7 @@ class DerivedVariable(DerivedVariableBase):
 
     @staticmethod
     def calculate(cubes):
-        """
-        Compute ocean heat content.
+        """Compute ocean heat content.
 
         Use c_p*rho_0= 4.09169e+6 J m-3 K-1
         (Kuhlbrodt et al., 2015, Clim. Dyn.)

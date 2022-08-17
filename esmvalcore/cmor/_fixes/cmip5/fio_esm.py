@@ -3,7 +3,6 @@
 from ..fix import Fix
 from .cesm1_cam5 import Cl as BaseCl
 
-
 Cl = BaseCl
 
 
@@ -11,8 +10,7 @@ class Co2(Fix):
     """Fixes for co2."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -23,7 +21,6 @@ class Co2(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 29. / 44. * 1.e6
@@ -35,8 +32,7 @@ class Ch4(Fix):
     """Fixes for ch4."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -47,7 +43,6 @@ class Ch4(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 29. / 16. * 1.e9

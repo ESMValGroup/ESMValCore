@@ -92,7 +92,8 @@ def get_cache_key(value):
     """Get a cache key that is hopefully unique enough for unpickling.
 
     If this doesn't avoid problems with unpickling the cached data,
-    manually clean the pytest cache with the command `pytest --cache-clear`.
+    manually clean the pytest cache with the command `pytest --cache-
+    clear`.
     """
     py_version = platform.python_version()
     return (f'{value}_iris-{iris.__version__}_'

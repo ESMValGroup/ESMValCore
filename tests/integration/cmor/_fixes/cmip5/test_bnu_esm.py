@@ -5,8 +5,14 @@ import numpy.ma as ma
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip5.bnu_esm import (Ch4, Cl, Co2, FgCo2,
-                                                  Od550Aer, SpCo2)
+from esmvalcore.cmor._fixes.cmip5.bnu_esm import (
+    Ch4,
+    Cl,
+    Co2,
+    FgCo2,
+    Od550Aer,
+    SpCo2,
+)
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
@@ -20,7 +26,7 @@ class TestCl(unittest.TestCase):
         self.fix = Cl(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         fix = Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'cl')
         assert fix == [Cl(None)]
 

@@ -1,9 +1,6 @@
-"""
-Test mask.
+"""Test mask.
 
-Integration tests for the :func:`esmvalcore.preprocessor._mask`
-module.
-
+Integration tests for the :func:`esmvalcore.preprocessor._mask` module.
 """
 
 import iris
@@ -279,7 +276,7 @@ class Test:
         assert_array_equal(result_1.data, data_1)
 
     def test_mask_fillvalues_zero_threshold(self, tmp_path):
-        """Test the fillvalues mask: func mask_fillvalues for 0-threshold"""
+        """Test the fillvalues mask: func mask_fillvalues for 0-threshold."""
         data_1 = self.mock_data
         data_2 = self.mock_data[0:3]
         data_1.mask = np.ones((4, 3, 3), bool)

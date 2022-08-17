@@ -3,8 +3,14 @@ import iris
 import numpy as np
 import pytest
 
-from esmvalcore.cmor._fixes.cmip6.gfdl_cm4 import (Cl, Cli, Clw,
-                                                   Fgco2, Omon, Siconc)
+from esmvalcore.cmor._fixes.cmip6.gfdl_cm4 import (
+    Cl,
+    Cli,
+    Clw,
+    Fgco2,
+    Omon,
+    Siconc,
+)
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info

@@ -1,8 +1,5 @@
-"""
-Unit tests for the :func:`esmvalcore.preprocessor.regrid._stock_cube`
-function.
-
-"""
+"""Unit tests for the :func:`esmvalcore.preprocessor.regrid._stock_cube`
+function."""
 
 import unittest
 from unittest import mock
@@ -11,9 +8,15 @@ import iris
 import numpy as np
 
 import tests
-from esmvalcore.preprocessor._regrid import (_LAT_MAX, _LAT_MIN, _LAT_RANGE,
-                                             _LON_MAX, _LON_MIN, _LON_RANGE)
-from esmvalcore.preprocessor._regrid import _global_stock_cube
+from esmvalcore.preprocessor._regrid import (
+    _LAT_MAX,
+    _LAT_MIN,
+    _LAT_RANGE,
+    _LON_MAX,
+    _LON_MIN,
+    _LON_RANGE,
+    _global_stock_cube,
+)
 
 
 class Test(tests.Test):

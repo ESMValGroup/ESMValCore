@@ -7,8 +7,13 @@ from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cl as BaseCl
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Clcalipso as BaseClcalipso
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cli as BaseCli
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Clw as BaseClw
-from esmvalcore.cmor._fixes.cmip6.cnrm_esm2_1 import (Cl, Clcalipso,
-                                                      Cli, Clw, Omon)
+from esmvalcore.cmor._fixes.cmip6.cnrm_esm2_1 import (
+    Cl,
+    Clcalipso,
+    Cli,
+    Clw,
+    Omon,
+)
 from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 

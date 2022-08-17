@@ -3,11 +3,7 @@ import iris
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.cmip6.kiost_esm import (
-    SfcWind,
-    Siconc,
-    Tas,
-)
+from esmvalcore.cmor._fixes.cmip6.kiost_esm import SfcWind, Siconc, Tas
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor.table import get_var_info

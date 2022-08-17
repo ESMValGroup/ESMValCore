@@ -8,7 +8,6 @@ implemented in ``fix_metadata``, not in ``fix_data``, here. The reason for this
 is that ``fix_metadata`` takes all cubes (and thus all input variables of the
 input file) as argument while ``fix_data`` only takes one cube (the output
 variable) as single argument.
-
 """
 
 import logging
@@ -47,7 +46,6 @@ class AllVars(EmacFix):
         This fix removes the ``formula_terms`` attribute of the hybrid pressure
         level variables to make the corresponding coefficients appear correctly
         in the class:`iris.cube.CubeList` object returned by :mod:`iris.load`.
-
         """
         if 'alevel' not in self.vardef.dimensions:
             return filepath
@@ -359,7 +357,6 @@ class Zg(EmacFix):
 
         Convert geopotential Phi given by EMAC to geopotential height Z using
         Z = Phi / g0 (g0 is standard acceleration of gravity)
-
         """
         g0_value = constants.value('standard acceleration of gravity')
         g0_units = constants.unit('standard acceleration of gravity')

@@ -144,7 +144,6 @@ def dates_to_timerange(start_date, end_date):
     -------
     str
         ``timerange`` in the form ``'start_date/end_date'``.
-
     """
     start_date = str(start_date)
     end_date = str(end_date)
@@ -283,7 +282,6 @@ def _truncate_dates(date, file_date):
     same number of digits. If this is not the case, pad the dates with leading
     zeros (e.g., use ``date='0100'`` and ``file_date='199901'`` for a correct
     comparison).
-
     """
     date = re.sub("[^0-9]", '', date)
     file_date = re.sub("[^0-9]", '', file_date)

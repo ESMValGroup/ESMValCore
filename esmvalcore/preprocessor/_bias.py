@@ -55,7 +55,6 @@ def bias(products, bias_type='absolute', denominator_mask_threshold=1e-3,
         Not exactly one input datasets contains the facet
         ``reference_for_bias: true``; ``bias_type`` is not one of
         ``'absolute'`` or ``'relative'``.
-
     """
     # Get reference product
     reference_product = []

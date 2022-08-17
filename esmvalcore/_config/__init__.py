@@ -1,9 +1,9 @@
 """ESMValTool configuration."""
 from ._config import (
     get_activity,
+    get_extra_facets,
     get_institutes,
     get_project_config,
-    get_extra_facets,
     load_config_developer,
     read_config_developer_file,
     read_config_user_file,

@@ -23,7 +23,8 @@ from esmvalcore.experimental.config._config_validators import (
     validate_string_or_none,
 )
 from esmvalcore.experimental.config._validated_config import (
-    InvalidConfigParameter, )
+    InvalidConfigParameter,
+)
 
 
 def generate_validator_testcases(valid):

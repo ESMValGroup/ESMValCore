@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 import esmvalcore.preprocessor._derive.toz as toz
+
 from .test_co2s import get_coord_spec, get_ps_cube
 
 

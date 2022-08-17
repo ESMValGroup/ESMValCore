@@ -1,8 +1,6 @@
-"""
-Integration tests for the :func:
-`esmvalcore.preprocessor.regrid.get_cmor_levels`
-function.
+"""Integration tests for the :func:
 
+`esmvalcore.preprocessor.regrid.get_cmor_levels` function.
 """
 
 import os
@@ -19,7 +17,7 @@ from esmvalcore.preprocessor import _regrid
 
 class TestGetFileLevels(unittest.TestCase):
     def setUp(self):
-        """Prepare the sample file for the test"""
+        """Prepare the sample file for the test."""
         self.cube = iris.cube.Cube(np.ones([2, 2, 2]), var_name='var')
         self.cube.add_dim_coord(
             iris.coords.DimCoord(np.arange(0, 2), var_name='coord'), 0)
@@ -32,7 +30,7 @@ class TestGetFileLevels(unittest.TestCase):
         iris.save(self.cube, self.path)
 
     def tearDown(self):
-        """Remove the sample file for the test"""
+        """Remove the sample file for the test."""
         os.remove(self.path)
 
     def test_get_coord(self):

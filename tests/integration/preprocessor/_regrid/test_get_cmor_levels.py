@@ -1,8 +1,6 @@
-"""
-Integration tests for the :func:
-`esmvalcore.preprocessor.regrid.get_cmor_levels`
-function.
+"""Integration tests for the :func:
 
+`esmvalcore.preprocessor.regrid.get_cmor_levels` function.
 """
 
 import unittest
@@ -15,7 +13,7 @@ from esmvalcore.preprocessor import _regrid
 class TestGetCmorLevels(unittest.TestCase):
     @staticmethod
     def setUpClass():
-        """Read cmor tables before testing"""
+        """Read cmor tables before testing."""
         read_cmor_tables(read_config_developer_file())
 
     def test_cmip6_alt40(self):

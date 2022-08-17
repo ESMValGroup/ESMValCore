@@ -10,8 +10,7 @@ class Cl(ClFixHybridPressureCoord):
     """Fixes for cl."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -23,7 +22,6 @@ class Cl(ClFixHybridPressureCoord):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 100
@@ -35,8 +33,7 @@ class FgCo2(Fix):
     """Fixes for fgco2."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix metadata.
+        """Fix metadata.
 
         Fixes cube units.
 
@@ -48,14 +45,12 @@ class FgCo2(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         self.get_cube_from_list(cubes).units = Unit('kg m-2 s-1')
         return cubes
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes cube units.
 
@@ -67,7 +62,6 @@ class FgCo2(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 12.0 / 44.0
@@ -79,8 +73,7 @@ class Ch4(Fix):
     """Fixes for ch4."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix metadata.
+        """Fix metadata.
 
         Fixes cube units.
 
@@ -92,14 +85,12 @@ class Ch4(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         self.get_cube_from_list(cubes).units = Unit('1e-9')
         return cubes
 
     def fix_data(self, cube):
-        """
-        Fix metadata.
+        """Fix metadata.
 
         Fixes cube units.
 
@@ -112,7 +103,6 @@ class Ch4(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 29.0 / 16.0 * 1.e9
@@ -124,8 +114,7 @@ class Co2(Fix):
     """Fixes for co2."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix metadata.
+        """Fix metadata.
 
         Fixes cube units.
 
@@ -137,14 +126,12 @@ class Co2(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         self.get_cube_from_list(cubes).units = Unit('1e-6')
         return cubes
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes cube units.
 
@@ -156,7 +143,6 @@ class Co2(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 29.0 / 44.0 * 1.e6
@@ -168,8 +154,7 @@ class SpCo2(Fix):
     """Fixes for spco2."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes cube units.
 
@@ -181,7 +166,6 @@ class SpCo2(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 1.e6
@@ -193,8 +177,7 @@ class Od550Aer(Fix):
     """Fixes for od550aer."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Masks invalid values.
 
@@ -206,7 +189,6 @@ class Od550Aer(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         data = da.ma.masked_equal(cube.core_data(), 1.e36)
         return cube.copy(data)

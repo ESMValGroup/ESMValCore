@@ -4,8 +4,12 @@ import unittest
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip5.gfdl_esm2m import (AllVars, Areacello, Co2,
-                                                     Sftof)
+from esmvalcore.cmor._fixes.cmip5.gfdl_esm2m import (
+    AllVars,
+    Areacello,
+    Co2,
+    Sftof,
+)
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -18,7 +22,7 @@ class TestSftof(unittest.TestCase):
         self.fix = Sftof(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-ESM2M', 'fx', 'sftof'),
             [Sftof(None), AllVars(None)])
@@ -38,7 +42,7 @@ class TestCo2(unittest.TestCase):
         self.fix = Co2(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-ESM2M', 'Amon', 'co2'),
             [Co2(None), AllVars(None)])
@@ -59,7 +63,7 @@ class TestAreacello(unittest.TestCase):
         self.fix = Areacello(self.vardef)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-ESM2M', 'fx', 'areacello'),
             [Areacello(self.vardef), AllVars(self.vardef)])

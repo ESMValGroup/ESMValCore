@@ -134,7 +134,6 @@ def load(file, callback=None, ignore_warnings=None):
     ------
     ValueError
         Cubes are empty.
-
     """
     logger.debug("Loading:\n%s", file)
     if ignore_warnings is None:

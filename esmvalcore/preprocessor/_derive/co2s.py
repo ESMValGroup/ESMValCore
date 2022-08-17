@@ -33,7 +33,6 @@ class DerivedVariable(DerivedVariableBase):
     air pressure (e.g. the 1000 hPa level for grid cells with high elevation).
     To obtain an unmasked ``co2s`` field, it is necessary to fill these masked
     values accordingly, i.e. with the lowest unmasked value for each grid cell.
-
     """
 
     @staticmethod

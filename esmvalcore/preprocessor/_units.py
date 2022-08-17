@@ -4,9 +4,9 @@ Allows for unit conversions.
 """
 import logging
 
-from cf_units import Unit
 import iris
 import numpy as np
+from cf_units import Unit
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +103,6 @@ def convert_units(cube, units):
     -------
     iris.cube.Cube
         converted cube.
-
     """
     try:
         cube.convert_units(units)

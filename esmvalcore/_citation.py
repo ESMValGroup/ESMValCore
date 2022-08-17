@@ -38,8 +38,7 @@ ESMVALTOOL_PAPER = (
 
 
 def _write_citation_files(filename, provenance):
-    """
-    Write citation information provided by the recorded provenance.
+    """Write citation information provided by the recorded provenance.
 
     Recipe and cmip6 data references are saved into one bibtex file.
     cmip6 data references are provided by CMIP6 data citation service.
@@ -133,9 +132,9 @@ def _save_citation_info_txt(product_name, info_urls, other_info):
 def _extract_tags(tags):
     """Extract tags.
 
-    Tags are recorded as a list of strings converted to a string in provenance.
-    For example, a single entry in the list `tags` could be the string
-    "['acknow_project', 'acknow_author']".
+    Tags are recorded as a list of strings converted to a string in
+    provenance. For example, a single entry in the list `tags` could be
+    the string "['acknow_project', 'acknow_author']".
     """
     pattern = re.compile(r'\w+')
     return set(pattern.findall(str(tags)))
