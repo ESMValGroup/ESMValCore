@@ -22,7 +22,6 @@ class AllVars(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             coord_names = [cor.standard_name for cor in cube.coords()]
@@ -68,7 +67,6 @@ class Siconc(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             latitude = cube.coord('latitude')

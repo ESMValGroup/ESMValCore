@@ -4,9 +4,8 @@ import math
 from unittest import mock
 
 import numpy as np
-
-from iris.cube import Cube, CubeList
 from iris.coords import AuxCoord
+from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor._derive.sispeed import DerivedVariable
 

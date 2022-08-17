@@ -7,9 +7,15 @@ import pytest
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip5.gfdl_esm2g import (AllVars, Areacello, Co2,
-                                                     FgCo2, Usi, Vsi,
-                                                     _get_and_remove)
+from esmvalcore.cmor._fixes.cmip5.gfdl_esm2g import (
+    AllVars,
+    Areacello,
+    Co2,
+    FgCo2,
+    Usi,
+    Vsi,
+    _get_and_remove,
+)
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -68,7 +74,7 @@ class TestCo2(unittest.TestCase):
         self.fix = Co2(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-ESM2G', 'Amon', 'co2'),
             [Co2(None), AllVars(None)])
@@ -89,7 +95,7 @@ class TestUsi(unittest.TestCase):
         self.fix = Usi(self.vardef)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-ESM2G', 'day', 'usi'),
             [Usi(self.vardef), AllVars(self.vardef)])
@@ -109,7 +115,7 @@ class TestVsi(unittest.TestCase):
         self.fix = Vsi(self.vardef)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-ESM2G', 'day', 'vsi'),
             [Vsi(self.vardef), AllVars(self.vardef)])
@@ -129,7 +135,7 @@ class TestAreacello(unittest.TestCase):
         self.fix = Areacello(self.vardef)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-ESM2G', 'fx', 'areacello'),
             [Areacello(self.vardef), AllVars(self.vardef)])

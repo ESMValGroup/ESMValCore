@@ -1,7 +1,4 @@
-"""
-Unit tests for the :mod:`esmvalcore.preprocessor.regrid` module.
-
-"""
+"""Unit tests for the :mod:`esmvalcore.preprocessor.regrid` module."""
 
 import iris
 import iris.fileformats
@@ -10,10 +7,7 @@ from iris.coords import AuxCoord, CellMethod, DimCoord
 
 
 def _make_vcoord(data, dtype=None):
-    """
-    Create a synthetic test vertical coordinate.
-
-    """
+    """Create a synthetic test vertical coordinate."""
     if dtype is None:
         dtype = np.dtype('int8')
 
@@ -44,10 +38,7 @@ def _make_cube(data,
                dim_coord=True,
                dtype=None,
                rotated=False):
-    """
-    Create a 3d synthetic test cube.
-
-    """
+    """Create a 3d synthetic test cube."""
     if dtype is None:
         dtype = np.dtype('int8')
 

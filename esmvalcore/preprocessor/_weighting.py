@@ -60,7 +60,6 @@ def weighting_landsea_fraction(cube, area_type):
         ``area_type`` is not ``'land'`` or ``'sea'``.
     ValueError
         Land/sea fraction variables ``sftlf`` or ``sftof`` not found.
-
     """
     if area_type not in ('land', 'sea'):
         raise TypeError(

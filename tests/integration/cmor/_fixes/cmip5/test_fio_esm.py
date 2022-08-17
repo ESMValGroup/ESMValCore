@@ -4,9 +4,9 @@ import unittest
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor._fixes.cmip5.fio_esm import Ch4, Cl, Co2
 from esmvalcore.cmor._fixes.cmip5.cesm1_cam5 import Cl as BaseCl
+from esmvalcore.cmor._fixes.cmip5.fio_esm import Ch4, Cl, Co2
+from esmvalcore.cmor.fix import Fix
 
 
 def test_get_cl_fix():
@@ -28,7 +28,7 @@ class TestCh4(unittest.TestCase):
         self.fix = Ch4(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'FIO-ESM', 'Amon', 'ch4'),
                              [Ch4(None)])
 
@@ -47,7 +47,7 @@ class TestCo2(unittest.TestCase):
         self.fix = Co2(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'FIO-ESM', 'Amon', 'co2'),
                              [Co2(None)])
 

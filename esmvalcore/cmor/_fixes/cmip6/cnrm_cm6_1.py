@@ -5,8 +5,8 @@ from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import (
     add_aux_coords_from_cubes,
+    fix_ocean_depth_coord,
     get_bounds_cube,
-    fix_ocean_depth_coord
 )
 
 
@@ -24,7 +24,6 @@ class Cl(ClFixHybridPressureCoord):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube = self.get_cube_from_list(cubes)
 
@@ -69,7 +68,6 @@ class Clcalipso(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         alt_40_coord = cube.coord('alt40')
@@ -91,7 +89,6 @@ class Omon(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             if cube.coords(axis='Z'):

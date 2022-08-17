@@ -18,7 +18,6 @@ class AllVars(Fix):
         -------
         iris.cube.CubeList
             Fixed cubes.
-
         """
         varnames_to_change = {
             'latitude': 'lat',

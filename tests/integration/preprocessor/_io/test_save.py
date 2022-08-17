@@ -51,14 +51,14 @@ class TestSave(unittest.TestCase):
         return cube, filename
 
     def test_save(self):
-        """Test save"""
+        """Test save."""
         cube, filename = self._create_sample_cube()
         path = save([cube], filename)
         loaded_cube = iris.load_cube(path)
         self._compare_cubes(cube, loaded_cube)
 
     def test_save_alias(self):
-        """Test save"""
+        """Test save."""
         cube, filename = self._create_sample_cube()
         path = save([cube], filename, alias='alias')
         loaded_cube = iris.load_cube(path)
@@ -66,7 +66,7 @@ class TestSave(unittest.TestCase):
         self.assertEqual(loaded_cube.var_name, 'alias')
 
     def test_save_zlib(self):
-        """Test save"""
+        """Test save."""
         cube, filename = self._create_sample_cube()
         path = save([cube], filename, compress=True)
         loaded_cube = iris.load_cube(path)
@@ -92,7 +92,7 @@ class TestSave(unittest.TestCase):
             save([cube])
 
     def test_save_optimized_map(self):
-        """Test save"""
+        """Test save."""
         cube, filename = self._create_sample_cube()
         path = save([cube], filename, optimize_access='map')
         loaded_cube = iris.load_cube(path)
@@ -100,7 +100,7 @@ class TestSave(unittest.TestCase):
         self._check_chunks(path, [2, 2, 1])
 
     def test_save_optimized_timeseries(self):
-        """Test save"""
+        """Test save."""
         cube, filename = self._create_sample_cube()
         path = save([cube], filename, optimize_access='timeseries')
         loaded_cube = iris.load_cube(path)
@@ -108,7 +108,7 @@ class TestSave(unittest.TestCase):
         self._check_chunks(path, [1, 1, 2])
 
     def test_save_optimized_lat(self):
-        """Test save"""
+        """Test save."""
         cube, filename = self._create_sample_cube()
         path = save([cube], filename, optimize_access='latitude')
         loaded_cube = iris.load_cube(path)
@@ -123,7 +123,7 @@ class TestSave(unittest.TestCase):
         self.assertListEqual(expected_chunks, chunking)
 
     def test_save_optimized_lon_time(self):
-        """Test save"""
+        """Test save."""
         cube, filename = self._create_sample_cube()
         path = save([cube], filename, optimize_access='longitude time')
         loaded_cube = iris.load_cube(path)

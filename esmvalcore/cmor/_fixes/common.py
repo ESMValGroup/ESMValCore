@@ -6,11 +6,7 @@ import numpy as np
 from scipy.ndimage import map_coordinates
 
 from .fix import Fix
-from .shared import (
-    add_plev_from_altitude,
-    add_scalar_typesi_coord,
-    fix_bounds,
-)
+from .shared import add_plev_from_altitude, add_scalar_typesi_coord, fix_bounds
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +25,6 @@ class ClFixHybridHeightCoord(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
 
@@ -68,7 +63,6 @@ class ClFixHybridPressureCoord(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
 
@@ -127,7 +121,6 @@ class OceanFixGrid(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         if cube.ndim != 3:
@@ -211,7 +204,6 @@ class SiconcFixScalarCoord(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_typesi_coord(cube)

@@ -29,7 +29,6 @@ class AllVars(Fix):
         extra_facets key `use_cdo`
 
         However, we take care of ESMValTool policy re. dependencies licence
-
         """
         if "_" + self.extra_facets.get("group",
                                        "non-sense") + ".nc" not in filepath:

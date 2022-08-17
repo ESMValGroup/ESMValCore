@@ -4,7 +4,6 @@ import iris
 from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 
-
 Cl = ClFixHybridPressureCoord
 
 
@@ -12,8 +11,7 @@ class Gpp(Fix):
     """Fixes for gpp."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -25,7 +23,6 @@ class Gpp(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= -1
@@ -37,8 +34,7 @@ class Lai(Fix):
     """Fixes for lai."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -50,7 +46,6 @@ class Lai(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 0.01
@@ -62,8 +57,7 @@ class Nbp(Fix):
     """Fixes for nbp."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix missing scalar dimension.
+        """Fix missing scalar dimension.
 
         Parameters
         ----------
@@ -73,7 +67,6 @@ class Nbp(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cubes[0].standard_name = (
             'surface_net_downward_mass_flux_of_carbon_dioxide_expressed_as_'
@@ -86,8 +79,7 @@ class BaresoilFrac(Fix):
     """Fixes for baresoilFrac."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix missing scalar dimension.
+        """Fix missing scalar dimension.
 
         Parameters
         ----------
@@ -97,7 +89,6 @@ class BaresoilFrac(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         typebare = iris.coords.AuxCoord(
             'bare_ground',

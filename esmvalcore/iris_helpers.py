@@ -36,7 +36,6 @@ def add_leading_dim_to_cube(cube, dim_coord):
     ------
     CoordinateMultiDimError
         ``dim_coord`` is not 1D.
-
     """
     # Only 1D dim_coords are supported
     if dim_coord.ndim > 1:

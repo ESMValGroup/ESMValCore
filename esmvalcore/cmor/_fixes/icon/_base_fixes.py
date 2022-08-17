@@ -56,7 +56,6 @@ class IconFix(NativeDatasetFix):
             Input cube does not contain the necessary attribute that specifies
             the download location of the ICON horizontal grid file (see
             ``self.GRID_FILE_ATTR``).
-
         """
         if self.GRID_FILE_ATTR not in cube.attributes:
             raise ValueError(

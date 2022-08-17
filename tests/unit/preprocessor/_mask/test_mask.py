@@ -2,17 +2,21 @@
 
 import unittest
 
-import numpy as np
-
 import iris
-import tests
+import numpy as np
 from cf_units import Unit
-from esmvalcore.preprocessor._mask import (_apply_fx_mask,
-                                           count_spells, _get_fx_mask,
-                                           mask_above_threshold,
-                                           mask_below_threshold,
-                                           mask_glaciated, mask_inside_range,
-                                           mask_outside_range)
+
+import tests
+from esmvalcore.preprocessor._mask import (
+    _apply_fx_mask,
+    _get_fx_mask,
+    count_spells,
+    mask_above_threshold,
+    mask_below_threshold,
+    mask_glaciated,
+    mask_inside_range,
+    mask_outside_range,
+)
 
 
 class Test(tests.Test):

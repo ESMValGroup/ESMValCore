@@ -18,7 +18,6 @@ def _get_all_derived_variables():
     dict
         All derived variables with `short_name` (keys) and the associated
         python classes (values).
-
     """
     derivers = {}
     for path in Path(__file__).parent.glob('[a-z]*.py'):
@@ -50,7 +49,6 @@ def get_required(short_name, project):
     -------
     list
         List of dictionaries (including at least the key `short_name`).
-
     """
     if short_name not in ALL_DERIVED_VARIABLES:
         raise NotImplementedError(
@@ -82,7 +80,6 @@ def derive(cubes, short_name, long_name, units, standard_name=None):
     -------
     iris.cube.Cube
         The new derived variable.
-
     """
     if short_name == cubes[0].var_name:
         return cubes[0]

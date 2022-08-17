@@ -4,8 +4,13 @@ import iris
 import numpy as np
 import pytest
 
-from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import (Cl, Clcalipso,
-                                                     Cli, Clw, Omon)
+from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import (
+    Cl,
+    Clcalipso,
+    Cli,
+    Clw,
+    Omon,
+)
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 

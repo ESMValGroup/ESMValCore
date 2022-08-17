@@ -1,7 +1,7 @@
 """Tests for the fixes of FGOALS-f3-L."""
 
-import numpy as np
 import iris
+import numpy as np
 import pytest
 from cf_units import Unit
 

@@ -32,7 +32,6 @@ class Tos(OceanFixGrid):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         cube.coord('latitude').points[

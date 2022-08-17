@@ -7,7 +7,6 @@ import numpy as np
 
 from ._mapping import get_empty_data, map_slices, ref_to_dims_index
 
-
 ESMF_MANAGER = ESMF.Manager(debug=False)
 
 ESMF_LON, ESMF_LAT = 0, 1
@@ -257,8 +256,7 @@ def get_grid_representant(cube, horizontal_only=False):
 
 
 def get_grid_representants(src, dst):
-    """
-    Construct cubes representing the source and destination grid.
+    """Construct cubes representing the source and destination grid.
 
     This method constructs two new cubes that representant the grids,
     i.e. the spatial dimensions of the given cubes.
@@ -310,8 +308,7 @@ def get_grid_representants(src, dst):
 
 
 def regrid(src, dst, method='linear'):
-    """
-    Regrid src_cube to the grid defined by dst_cube.
+    """Regrid src_cube to the grid defined by dst_cube.
 
     Regrid the data in src_cube onto the grid defined by dst_cube.
 

@@ -15,8 +15,7 @@ class Tro3(Fix):
     """Fixes for tro3."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -28,7 +27,6 @@ class Tro3(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 1000
@@ -40,8 +38,7 @@ class Co2(Fix):
     """Fixes for co2."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix metadata.
+        """Fix metadata.
 
         Fixes error in cube units
 
@@ -53,7 +50,6 @@ class Co2(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         self.get_cube_from_list(cubes).units = '1.0e-6'
         return cubes
@@ -63,8 +59,7 @@ class AllVars(Fix):
     """Common fixes to all vars."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix metadata.
+        """Fix metadata.
 
         Fixes error in air_pressure coordinate, sometimes called AR5PL35, and
         error in time coordinate.
@@ -77,7 +72,6 @@ class AllVars(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             # Fix air_pressure

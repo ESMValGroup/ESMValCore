@@ -6,9 +6,14 @@ import iris
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip5.gfdl_cm2p1 import (AllVars, Areacello, Cl,
-                                                     Sftof, Sit)
 from esmvalcore.cmor._fixes.cmip5.cesm1_cam5 import Cl as BaseCl
+from esmvalcore.cmor._fixes.cmip5.gfdl_cm2p1 import (
+    AllVars,
+    Areacello,
+    Cl,
+    Sftof,
+    Sit,
+)
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -34,7 +39,7 @@ class TestSftof(unittest.TestCase):
         self.fix = Sftof(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'fx', 'sftof'),
             [Sftof(None), AllVars(None)])
@@ -56,7 +61,7 @@ class TestAreacello(unittest.TestCase):
         self.fix = Areacello(self.vardef)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'Amon', 'areacello'),
             [Areacello(self.vardef), AllVars(self.vardef)])
@@ -98,7 +103,7 @@ class TestSit(unittest.TestCase):
         self.fix = Sit(self.var_info_mock)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'OImon', 'sit'),
             [Sit(self.var_info_mock), AllVars(None)])

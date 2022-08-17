@@ -100,7 +100,6 @@ class AllVars(IconFix):
             Invalid ``coord_name`` is given; input cube does not contain a
             single unnamed dimension that can be used to add the new
             coordinate.
-
         """
         allowed_coord_names = ('grid_latitude', 'grid_longitude')
         if coord_name not in allowed_coord_names:
@@ -324,7 +323,6 @@ class Siconc(IconFix):
         units (which need to be %) are fixed in a later step in AllVars(). This
         fix here is necessary to fix the "unknown" units that cannot be
         converted to % in AllVars().
-
         """
         cube = self.get_cube(cubes)
         cube.units = '1'

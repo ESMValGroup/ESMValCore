@@ -1,6 +1,6 @@
 """Tests for the fixes of CESM2-WACCM-FV2."""
-from esmvalcore.cmor._fixes.cmip6.cesm2 import Tas as BaseTas
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Fgco2 as BaseFgco2
+from esmvalcore.cmor._fixes.cmip6.cesm2 import Tas as BaseTas
 from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import Cl as BaseCl
 from esmvalcore.cmor._fixes.cmip6.cesm2_waccm_fv2 import (
     Cl,

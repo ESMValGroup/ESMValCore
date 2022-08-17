@@ -1,5 +1,4 @@
-"""
-Shared functions for preprocessor.
+"""Shared functions for preprocessor.
 
 Utility functions that can be used for multiple preprocessor steps
 """
@@ -22,8 +21,7 @@ def guess_bounds(cube, coords):
 
 
 def get_iris_analysis_operation(operator):
-    """
-    Determine the iris analysis operator from a string.
+    """Determine the iris analysis operator from a string.
 
     Map string to functional operator.
 
@@ -55,8 +53,7 @@ def get_iris_analysis_operation(operator):
 
 
 def operator_accept_weights(operator):
-    """
-    Get if operator support weights.
+    """Get if operator support weights.
 
     Parameters
     ----------
@@ -66,6 +63,5 @@ def operator_accept_weights(operator):
     Returns
     -------
         bool: True if operator support weights, False otherwise
-
     """
     return operator.lower() in ('mean', 'sum', 'rms')

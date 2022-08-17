@@ -20,7 +20,6 @@ class Cl(ClFixHybridHeightCoord):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             try:
@@ -98,7 +97,6 @@ class Hus(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube = self.get_cube_from_list(cubes)
         cube.coord('air_pressure').points = \
@@ -122,7 +120,6 @@ class Zg(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube = self.get_cube_from_list(cubes)
         cube.coord('air_pressure').points = \

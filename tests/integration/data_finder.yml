@@ -460,9 +460,9 @@ get_input_filelist:
     file_patterns:
       - simulation_*_t2m.nc
       - simulation_*_histmth.nc
-    found_files: 
+    found_files:
       - thredds/tgcc/store/p86caub/IPSLCM6/PROD/historical/simulation/ATM/Output/MO/simulation_18500101_18591231_1M_histmth.nc
-    
+
   - drs: default
     variable:
       <<: *ipsl_variable
@@ -475,9 +475,9 @@ get_input_filelist:
     file_patterns:
       - simulation_*_t2m.nc
       - simulation_*_histmth.nc
-    found_files: 
+    found_files:
       - thredds/tgcc/store/p86caub/IPSLCM6/PROD/historical/simulation/ATM/Analyse/TS_MO/simulation_18500101_20141231_1M_t2m.nc
-      
+
   # Test fx files
 
   - drs: default

@@ -61,7 +61,6 @@ def column_average(cube, hus_cube, zg_cube, ps_cube):
     -------
     iris.cube.Cube
         Column-averaged mole fraction of a gas.
-
     """
     # Convert units of data
     hus_cube.convert_units('1')
@@ -124,7 +123,6 @@ def pressure_level_widths(cube, ps_cube, top_limit=0.0):
     -------
     iris.cube.Cube
         Cube of same shape as ``cube`` containing pressure level widths.
-
     """
     pressure_array = _create_pressure_array(cube, ps_cube, top_limit)
 
@@ -139,10 +137,10 @@ def pressure_level_widths(cube, ps_cube, top_limit=0.0):
 def _create_pressure_array(cube, ps_cube, top_limit):
     """Create an array filled with the ``air_pressure`` coord values.
 
-    The array is created from ``cube`` with the same dimensions as ``cube``.
-    This array is then sandwiched with a 2D array containing the surface
-    pressure and a 2D array containing the top pressure limit.
-
+    The array is created from ``cube`` with the same dimensions as
+    ``cube``. This array is then sandwiched with a 2D array containing
+    the surface pressure and a 2D array containing the top pressure
+    limit.
     """
     # Create 4D array filled with pressure level values
     p_levels = cube.coord('air_pressure').points.astype(np.float32)
@@ -172,7 +170,6 @@ def _get_pressure_level_widths(array, air_pressure_axis=1):
 
     For a 1D array with pressure level columns, return a 1D array with
     pressure level widths.
-
     """
     array = np.copy(array)
     if np.any(np.diff(array, axis=air_pressure_axis) > 0.0):
