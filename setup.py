@@ -59,11 +59,9 @@ REQUIREMENTS = {
     ],
     # Test dependencies
     'test': [
-        'flake8<5.0',  # github.com/ESMValGroup/ESMValCore/issues/1696
         'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
         'pytest-cov>=2.10.1',
         'pytest-env',
-        'pytest-flake8>=1.0.6',
         'pytest-html!=2.1.0',
         'pytest-metadata>=1.5.1',
         'pytest-mypy',
