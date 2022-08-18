@@ -3,7 +3,7 @@ from collections import defaultdict
 from pathlib import Path
 from pprint import pformat
 from textwrap import dedent
-from unittest.mock import create_autospec, patch, sentinel
+from unittest.mock import create_autospec
 
 import iris
 import pytest
@@ -1045,9 +1045,11 @@ def test_derive_contains_start_end_year(tmp_path, patched_datafinder, session):
     assert product.attributes['end_year'] == 2005
 
 
-def test_derive_timerange_wildcard(tmp_path, patched_datafinder, session):
+@pytest.mark.parametrize('force_derivation', [True, False])
+def test_derive_timerange_wildcard(tmp_path, patched_datafinder, session,
+                                   force_derivation):
 
-    content = dedent("""
+    content = dedent(f"""
         diagnostics:
           diagnostic_name:
             variables:
@@ -1057,9 +1059,10 @@ def test_derive_timerange_wildcard(tmp_path, patched_datafinder, session):
                 exp: historical
                 timerange: '*'
                 derive: true
-                force_derivation: true
+                force_derivation: {force_derivation}
                 additional_datasets:
-                  - {dataset: GFDL-CM3,  ensemble: r1i1p1}
+                  - dataset: GFDL-CM3
+                    ensemble: r1i1p1
             scripts: null
         """)
 
@@ -1072,40 +1075,12 @@ def test_derive_timerange_wildcard(tmp_path, patched_datafinder, session):
     # Check that start_year and end_year are present in attributes
     assert len(task.products) == 1
     product = task.products.pop()
-    assert 'derive' in product.settings
+    if force_derivation:
+        assert 'derive' in product.settings
     assert product.attributes['short_name'] == 'toz'
     assert product.attributes['timerange'] == '1990/2019'
     assert product.attributes['start_year'] == 1990
     assert product.attributes['end_year'] == 2019
-
-
-def test_derive_fail_timerange_wildcard(tmp_path, patched_datafinder, session):
-
-    content = dedent("""
-        diagnostics:
-          diagnostic_name:
-            variables:
-              toz:
-                project: CMIP5
-                mip: Amon
-                exp: historical
-                timerange: '*'
-                derive: true
-                force_derivation: false
-                additional_datasets:
-                  - {dataset: GFDL-CM3,  ensemble: r1i1p1}
-            scripts: null
-        """)
-    msg = ("Error in derived variable: toz: "
-           "Using 'force_derivation: false' (the default option) "
-           "in combination with wildcards ('*') in timerange is "
-           "not allowed; explicitly use 'force_derivation: true' "
-           "or avoid the use of wildcards in timerange")
-
-    with pytest.raises(RecipeError) as rec_err:
-        get_recipe(tmp_path, content, session)
-
-    assert msg in rec_err.value.failed_tasks[0].message
 
 
 def create_test_image(basename, cfg):
@@ -1269,18 +1244,16 @@ def test_alias_generation(tmp_path, patched_datafinder, session):
                   - {dataset: EC-EARTH,  ensemble: r3i1p1, alias: my_alias}
                   - {project: OBS, dataset: ERA-Interim,  version: 1}
                   - {project: OBS, dataset: ERA-Interim,  version: 2}
-                  - {project: CMIP6, activity: CMP, dataset: GF3, ensemble: r1}
-                  - {project: CMIP6, activity: CMP, dataset: GF2, ensemble: r1}
-                  - {project: CMIP6, activity: HRMP, dataset: EC, ensemble: r1}
-                  - {project: CMIP6, activity: HRMP, dataset: HA, ensemble: r1}
+                  - {project: CMIP6, activity: CMP, dataset: GF3, ensemble: r1, institute: fake}
+                  - {project: CMIP6, activity: CMP, dataset: GF2, ensemble: r1, institute: fake}
+                  - {project: CMIP6, activity: HRMP, dataset: EC, ensemble: r1, institute: fake}
+                  - {project: CMIP6, activity: HRMP, dataset: HA, ensemble: r1, institute: fake}
             scripts: null
         """)  # noqa:
 
     recipe = get_recipe(tmp_path, content, session)
     assert len(recipe.diagnostics) == 1
-    diag = recipe.diagnostics['diagnostic_name']
-    var = diag['preprocessor_output']['ta']
-    for dataset in var:
+    for dataset in recipe.datasets:
         if dataset['project'] == 'CMIP5':
             if dataset['dataset'] == 'GFDL-CM3':
                 assert dataset['alias'] == 'CMIP5_GFDL-CM3'
@@ -1332,10 +1305,8 @@ def test_concatenation(tmp_path, patched_datafinder, session):
         """)
 
     recipe = get_recipe(tmp_path, content, session)
-    assert len(recipe.diagnostics) == 1
-    diag = recipe.diagnostics['diagnostic_name']
-    var = diag['preprocessor_output']['ta']
-    for dataset in var:
+    assert len(recipe.datasets) == 2
+    for dataset in recipe.datasets:
         if dataset['exp'] == 'historical':
             assert dataset['alias'] == 'historical'
         else:
@@ -1364,13 +1335,10 @@ def test_ensemble_expansion(tmp_path, patched_datafinder, session):
         """)
 
     recipe = get_recipe(tmp_path, content, session)
-    assert len(recipe.diagnostics) == 1
-    diag = recipe.diagnostics['diagnostic_name']
-    var = diag['preprocessor_output']['ta']
-    assert len(var) == 3
-    assert var[0]['ensemble'] == 'r1i1p1'
-    assert var[1]['ensemble'] == 'r2i1p1'
-    assert var[2]['ensemble'] == 'r3i1p1'
+    assert len(recipe.datasets) == 3
+    assert recipe.datasets[0]['ensemble'] == 'r1i1p1'
+    assert recipe.datasets[1]['ensemble'] == 'r2i1p1'
+    assert recipe.datasets[2]['ensemble'] == 'r3i1p1'
 
 
 def test_extract_shape(tmp_path, patched_datafinder, session):
@@ -1513,8 +1481,7 @@ def test_ensemble_statistics(tmp_path, patched_datafinder, session):
     """)
 
     recipe = get_recipe(tmp_path, content, session)
-    variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
-    datasets = set([var['dataset'] for var in variable])
+    datasets = set([ds['dataset'] for ds in recipe.datasets])
     task = next(iter(recipe.tasks))
 
     products = task.products
@@ -1561,7 +1528,6 @@ def test_multi_model_statistics(tmp_path, patched_datafinder, session):
     """)
 
     recipe = get_recipe(tmp_path, content, session)
-    variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
     task = next(iter(recipe.tasks))
 
     products = task.products
@@ -1612,7 +1578,6 @@ def test_multi_model_statistics_exclude(tmp_path, patched_datafinder, session):
     """)
 
     recipe = get_recipe(tmp_path, content, session)
-    variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
     task = next(iter(recipe.tasks))
 
     products = task.products
@@ -1671,8 +1636,7 @@ def test_groupby_combined_statistics(tmp_path, patched_datafinder, session):
     """)
 
     recipe = get_recipe(tmp_path, content, session)
-    variable = recipe.diagnostics[diagnostic]['preprocessor_output'][variable]
-    datasets = set([var['dataset'] for var in variable])
+    datasets = set([ds['dataset'] for ds in recipe.datasets])
 
     products = next(iter(recipe.tasks)).products
 
@@ -2991,9 +2955,8 @@ def test_obs4mips_case_correct(tmp_path, patched_datafinder, session):
             scripts: null
         """)
     recipe = get_recipe(tmp_path, content, session)
-    variable = recipe.diagnostics['diagnostic_name']['preprocessor_output'][
-        'tas'][0]
-    assert variable['project'] == 'obs4MIPs'
+    dataset = recipe.datasets[0]
+    assert dataset['project'] == 'obs4MIPs'
 
 
 def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
@@ -3022,6 +2985,7 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
 
     recipe.tasks.run = mocker.Mock()
     recipe.write_filled_recipe = mocker.Mock()
+    recipe.write_html_summary = mocker.Mock()
     recipe.run()
 
     esmvalcore._recipe.esgf.download.assert_called_once_with(
@@ -3029,12 +2993,11 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     recipe.tasks.run.assert_called_once_with(
         max_parallel_tasks=session['max_parallel_tasks'])
     recipe.write_filled_recipe.assert_called_once()
+    recipe.write_html_summary.assert_called_once()
 
 
-@patch('esmvalcore._recipe.check.data_availability', autospec=True)
-def test_dataset_to_file_regular_var(mock_data_availability,
-                                     patched_datafinder, session):
-    """Test ``_dataset_to_file`` with regular variable."""
+def test_representative_dataset_regular_var(patched_datafinder, session):
+    """Test ``_representative_dataset`` with regular variable."""
     dataset = Dataset(
         **{
             'component': 'atm',
@@ -3057,18 +3020,12 @@ def test_dataset_to_file_regular_var(mock_data_availability,
     filename = _representative_dataset(dataset).files[0]
     path = Path(filename)
     assert path.name == '1_atm_amip_R2B5_r1v1i1p1l1f1_atm_2d_ml_1990_1999.nc'
-    mock_data_availability.assert_called_once()
 
 
-@patch('esmvalcore._recipe.check.data_availability', autospec=True)
-@patch('esmvalcore._recipe._get_input_files', autospec=True)
-def test_dataset_to_file_derived_var(mock_get_input_files,
-                                     mock_data_availability, session):
-    """Test ``_dataset_to_file`` with derived variable."""
-    mock_get_input_files.side_effect = [
-        ([], [], []),
-        ([sentinel.out_file], [sentinel.dirname], [sentinel.filename]),
-    ]
+@pytest.mark.parametrize('force_derivation', [True, False])
+def test_representative_dataset_derived_var(patched_datafinder, session,
+                                            force_derivation):
+    """Test ``_representative_dataset`` with derived variable."""
     variable = {
         'component': 'atm',
         'dataset': 'ICON',
@@ -3076,7 +3033,7 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
         'end_year': 2000,
         'ensemble': 'r1v1i1p1l1f1',
         'exp': 'amip',
-        'force_derivation': True,
+        'force_derivation': force_derivation,
         'frequency': 'mon',
         'grid': 'R2B5',
         'mip': 'Amon',
@@ -3088,9 +3045,9 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
         'var_type': 'atm_2d_ml',
         'version': 1,
     }
-    filename = _dataset_to_file(variable, session)
-    assert filename == sentinel.out_file
-    assert mock_get_input_files.call_count == 2
+    dataset = Dataset(**variable)
+    dataset.session = session
+    representative_dataset = _representative_dataset(dataset)
 
     expect_required_var = {
         # Added by get_required
@@ -3099,19 +3056,18 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
         'component': 'atm',
         'dataset': 'ICON',
         'derive': True,
-        'end_year': 2000,
         'ensemble': 'r1v1i1p1l1f1',
         'exp': 'amip',
-        'force_derivation': True,
+        'force_derivation': force_derivation,
         'frequency': 'mon',
         'grid': 'R2B5',
         'mip': 'Amon',
         'project': 'ICON',
-        'start_year': 1990,
         'timerange': '1990/2000',
         'var_type': 'atm_2d_ml',
         'version': 1,
         # Added by _add_cmor_info
+        'activity': 'CMIP',
         'long_name': 'Condensed Water Path',
         'modeling_realm': ['atmos'],
         'original_short_name': 'clwvi',
@@ -3120,8 +3076,13 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
         # Added by _add_extra_facets
         'raw_name': 'cllvi',
     }
-    mock_get_input_files.assert_called_with(expect_required_var, session)
-    mock_data_availability.assert_called_once()
+    if force_derivation:
+        expected_dataset = Dataset(**expect_required_var)
+        expected_dataset.session = session
+    else:
+        expected_dataset = dataset
+
+    assert representative_dataset == expected_dataset
 
 
 def test_get_derive_input_variables(patched_datafinder, session):
@@ -3146,7 +3107,7 @@ def test_get_derive_input_variables(patched_datafinder, session):
             'variable_group': 'lwp_group',
         })
     lwp.session = session
-    derive_input = _get_input_datasets([lwp])
+    derive_input = _get_input_datasets(lwp)
 
     clwvi = Dataset(
         **{
@@ -3165,8 +3126,10 @@ def test_get_derive_input_variables(patched_datafinder, session):
             'project': 'ICON',
             'timerange': '1990/2000',
             'var_type': 'atm_2d_ml',
+            'variable_group': 'lwp_group',
             'version': 1,
             # Added by _add_cmor_info
+            'activity': 'CMIP',
             'standard_name':
             'atmosphere_mass_content_of_cloud_condensed_water',
             'long_name': 'Condensed Water Path',
@@ -3175,8 +3138,6 @@ def test_get_derive_input_variables(patched_datafinder, session):
             'units': 'kg m-2',
             # Added by _add_extra_facets
             'raw_name': 'cllvi',
-            # Added by append
-            'variable_group': 'lwp_group_derive_input_clwvi',
         })
     clivi = Dataset(
         **{
@@ -3195,21 +3156,19 @@ def test_get_derive_input_variables(patched_datafinder, session):
             'project': 'ICON',
             'timerange': '1990/2000',
             'var_type': 'atm_2d_ml',
+            'variable_group': 'lwp_group',
             'version': 1,
             # Added by _add_cmor_info
+            'activity': 'CMIP',
             'standard_name': 'atmosphere_mass_content_of_cloud_ice',
             'long_name': 'Ice Water Path',
             'modeling_realm': ['atmos'],
             'original_short_name': 'clivi',
             'units': 'kg m-2',
-            # Added by append
-            'variable_group': 'lwp_group_derive_input_clivi',
         })
-    expected_derive_input = {
-        'lwp_group_derive_input_clwvi': [clwvi],
-        'lwp_group_derive_input_clivi': [clivi],
-    }
-    assert derive_input == expected_derive_input
+    clwvi.session = session
+    clivi.session = session
+    assert derive_input == [clwvi, clivi]
 
 
 TEST_DIAG_SELECTION = [
@@ -3224,8 +3183,8 @@ TEST_DIAG_SELECTION = [
     ({'d1/tas'}, {'d1/tas'}),
     ({'d1/tas', 'd2/*'}, {'d1/tas', 'd1/s1', 'd2/s1'}),
     ({'d1/tas', 'd3/s1'}, {'d1/tas', 'd3/s1', 'd1/s1'}),
-    ({'d4/*', 'd3/s1'}, {'d1/tas', 'd1/s1', 'd2/s1', 'd3/s1', 'd3/s2',
-                         'd4/s1'}),
+    ({'d4/*',
+      'd3/s1'}, {'d1/tas', 'd1/s1', 'd2/s1', 'd3/s1', 'd3/s2', 'd4/s1'}),
 ]
 
 

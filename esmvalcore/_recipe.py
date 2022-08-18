@@ -155,18 +155,11 @@ def _select_dataset(dataset_name, datasets):
 
 
 def _representative_dataset(dataset):
-    """Find the first file belonging to dataset from variable info."""
-    if not dataset.files and dataset.facets.get('derive'):
-        required_vars = get_required(dataset.facets['short_name'],
-                                     dataset.facets['project'])
-        for required_var in required_vars:
-            required_ds = dataset.copy(**required_var)
-            _get_facets_from_cmor_table(required_ds.facets, override=True)
-            if required_ds.files:
-                dataset = required_ds
-                break
-    check.data_availability(dataset)
-    return dataset
+    """Find a representative dataset that has files available."""
+    datasets = _get_input_datasets(dataset)
+    representative_dataset = datasets[0]
+    check.data_availability(representative_dataset)
+    return representative_dataset
 
 
 def _limit_datasets(datasets, profile):
@@ -1212,7 +1205,7 @@ class Recipe:
         """Run all tasks in the recipe."""
         if not self.tasks:
             raise RecipeError('No tasks to run!')
-        # self.write_filled_recipe()
+        self.write_filled_recipe()
 
         # Download required data
         if not self.session['offline']:

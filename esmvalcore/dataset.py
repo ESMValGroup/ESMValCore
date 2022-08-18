@@ -17,7 +17,6 @@ from ._data_finder import (
     get_output_file,
     get_start_end_date,
 )
-from ._recipe_checks import _format_facets
 from ._recipe_checks import data_availability as check_data_availability
 from ._recipe_checks import datasets as check_datasets
 from ._recipe_checks import valid_time_selection as check_valid_time_selection
@@ -185,6 +184,7 @@ class Dataset:
             ancillary._find_files(session)
 
     def _find_files(self, session):
+        self._update_timerange(session)
         (input_files, dirnames,
          filenames) = get_input_filelist(self.facets,
                                          rootpath=session['rootpath'],
@@ -274,13 +274,11 @@ class Dataset:
 
         if '*' in timerange:
             self.find_files(session)
-            if not self.files:
-                raise InputFilesNotFound(
-                    f"Missing data for: {_format_facets(self.facets)}. "
-                    f"Cannot determine timerange '{timerange}'.")
+            check_data_availability(self)
             files = [
                 f.name if isinstance(f, ESGFFile) else f for f in self.files
             ]
+            self.files = None
             intervals = [get_start_end_date(name) for name in files]
 
             min_date = min(interval[0] for interval in intervals)
