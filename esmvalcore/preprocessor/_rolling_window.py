@@ -3,6 +3,7 @@
 import logging
 
 import iris
+import iris.exceptions
 
 from ._shared import get_iris_analysis_operation
 
@@ -40,7 +41,7 @@ def rolling_window_statistics(cube, coordinate, operator, window_length):
     try:
         cube.coord(coordinate)
     except iris.exceptions.CoordinateNotFoundError:
-        logger.error(f'Cube %s does not have {coordinate} coordinate', cube)
+        logger.error("Cube %s does not have %s coordinate", cube, coordinate)
         raise
 
     operation = get_iris_analysis_operation(operator)
