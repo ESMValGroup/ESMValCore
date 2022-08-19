@@ -47,6 +47,12 @@ class TestSave:
         loaded_cube = iris.load_cube(path)
         self._compare_cubes(cube, loaded_cube)
 
+    def test_save_create_parent_dir(self, cube, tmp_path):
+        filename = tmp_path / 'preproc' / 'something' / 'test.nc'
+        path = save([cube], filename)
+        loaded_cube = iris.load_cube(path)
+        self._compare_cubes(cube, loaded_cube)
+
     def test_save_alias(self, cube, filename):
         """Test save."""
         path = save([cube], filename, alias='alias')
