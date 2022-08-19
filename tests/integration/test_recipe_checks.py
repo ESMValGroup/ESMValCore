@@ -1,4 +1,5 @@
 """Integration tests for :mod:`esmvalcore._recipe_checks`."""
+from pathlib import Path
 from typing import Any, List
 from unittest import mock
 
@@ -56,7 +57,7 @@ DATA_AVAILABILITY_DATA = [
 def test_data_availability_data(mock_logger, input_files, var, error):
     """Test check for data when data is present."""
     dataset = Dataset(**var)
-    dataset.files = input_files
+    dataset.files = [Path(f) for f in input_files]
     if error is None:
         check.data_availability(dataset)
         mock_logger.error.assert_not_called()

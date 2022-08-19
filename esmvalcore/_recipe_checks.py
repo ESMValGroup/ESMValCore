@@ -11,7 +11,6 @@ import isodate
 import yamale
 
 from ._data_finder import _parse_period, get_start_end_year
-from .esgf import ESGFFile
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from .preprocessor._ancillary_vars import PREPROCESSOR_ANCILLARIES
@@ -191,8 +190,7 @@ def data_availability(dataset, log=True):
     available_years = set()
 
     for file in input_files:
-        filename = file.name if isinstance(file, ESGFFile) else file
-        start, end = get_start_end_year(filename)
+        start, end = get_start_end_year(file.name)
         available_years.update(range(start, end + 1))
 
     missing_years = required_years - available_years

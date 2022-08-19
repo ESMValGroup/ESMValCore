@@ -579,8 +579,8 @@ def test_find_files(mocker, local_availability):
 
     # Local files can cover the entire period, part of it, or nothing
     local_file_options = {
-        'all': [f.local_file(local_dir).as_posix() for f in esgf_files],
-        'partial': [esgf_files[1].local_file(local_dir).as_posix()],
+        'all': [f.local_file(local_dir) for f in esgf_files],
+        'partial': [esgf_files[1].local_file(local_dir)],
         'none': [],
     }
     local_files = local_file_options[local_availability]

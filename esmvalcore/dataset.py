@@ -22,7 +22,6 @@ from ._recipe_checks import datasets as check_datasets
 from ._recipe_checks import valid_time_selection as check_valid_time_selection
 from ._recipe_checks import variable as check_variable
 from .cmor.table import _get_facets_from_cmor_table
-from .esgf import ESGFFile
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import preprocess
 from .preprocessor._io import DATASET_KEYS
@@ -185,11 +184,11 @@ class Dataset:
 
     def _find_files(self, session):
         self._update_timerange(session)
-        (input_files, dirnames,
+        (files, dirnames,
          filenames) = get_input_filelist(self.facets,
                                          rootpath=session['rootpath'],
                                          drs=session['drs'])
-        self.files = input_files
+        self.files = [Path(f) for f in files]
         self._files_debug = (dirnames, filenames)
 
         # Set up downloading from ESGF if requested.
@@ -198,14 +197,13 @@ class Dataset:
             try:
                 check_data_availability(self, log=False)
             except InputFilesNotFound:
-                # Only look on ESGF if files are not available locally.
-                local_files = set(Path(f).name for f in input_files)
+                # Only use ESGF files that are not available locally.
+                local_files = set(f.name for f in self.files)
                 search_result = esgf.find_files(**self.facets)
                 for file in search_result:
                     local_copy = file.local_file(session['download_dir'])
                     if local_copy.name not in local_files:
-                        input_files.append(file)
-
+                        self.files.append(file)
                 dirnames.append('ESGF:')
 
     @property
@@ -275,11 +273,8 @@ class Dataset:
         if '*' in timerange:
             self.find_files(session)
             check_data_availability(self)
-            files = [
-                f.name if isinstance(f, ESGFFile) else f for f in self.files
-            ]
+            intervals = [get_start_end_date(f.name) for f in self.files]
             self.files = None
-            intervals = [get_start_end_date(name) for name in files]
 
             min_date = min(interval[0] for interval in intervals)
             max_date = max(interval[1] for interval in intervals)
