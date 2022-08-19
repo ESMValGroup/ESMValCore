@@ -238,14 +238,17 @@ def ancillary_availability(dataset, settings):
         for short_name in ancs['variables']:
             if short_name in ancillaries:
                 ancillary_ds = ancillaries[short_name]
-                if ancillary_ds.files:
+                try:
+                    data_availability(ancillary_ds, log=False)
+                except RecipeError:
+                    _log_data_availability_errors(dataset)
+                else:
                     found_files = True
                     logger.debug(
                         "Using ancillary files:\n%s\nfor preprocessor "
                         "function %s with %s", pformat(ancillary_ds.files),
                         step, dataset)
-                else:
-                    _log_data_availability_errors(dataset)
+
         if not found_files:
             if ancs['required'] == "require_at_least_one":
                 raise InputFilesNotFound(
