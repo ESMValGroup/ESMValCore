@@ -812,7 +812,6 @@ def _get_input_datasets(dataset: Dataset):
             not facets.get('force_derivation') and dataset.files):
         # No derivation requested or needed
         dataset.facets.pop('derive', None)
-        dataset._update_timerange()
         return [dataset]
 
     # Configure input datasets needed to derive variable
@@ -822,9 +821,9 @@ def _get_input_datasets(dataset: Dataset):
     for input_facets in required_vars:
         input_dataset = dataset.copy(**input_facets)
         # idea: specify facets in list of dicts that is value of 'derive'?
-        input_dataset.augment_facets()
         _get_facets_from_cmor_table(input_dataset.facets,
                                     override=True)
+        input_dataset.augment_facets()
         if input_facets.get('optional') and not input_dataset.files:
             logger.info(
                 "Skipping: no data found for %s which is marked as "
@@ -832,15 +831,12 @@ def _get_input_datasets(dataset: Dataset):
         else:
             datasets.append(input_dataset)
 
-    # Set a the timerange based on available input data.
+    # Check timeranges of available input data.
     timeranges = set()
     for input_dataset in datasets:
-        input_dataset._update_timerange()
         if 'timerange' in input_dataset.facets:
             timeranges.add(input_dataset.facets['timerange'])
     _check_differing_timeranges(timeranges, required_vars)
-    if timeranges:
-        dataset.facets['timerange'] = " ".join(timeranges)
 
     return datasets
 

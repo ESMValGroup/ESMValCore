@@ -172,6 +172,7 @@ class Dataset:
         _get_timerange_from_years(self.facets)
         if self.facets.get('frequency') == 'fx':
             self.facets.pop('timerange', None)
+        self._update_timerange(session)
 
     def find_files(self, session: Session | None = None):
         """Find files."""
@@ -183,7 +184,6 @@ class Dataset:
             ancillary._find_files(session)
 
     def _find_files(self, session):
-        self._update_timerange(session)
         (files, dirnames,
          filenames) = get_input_filelist(self.facets,
                                          rootpath=session['rootpath'],
