@@ -1697,15 +1697,15 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, session):
         settings = product.settings['weighting_landsea_fraction']
         assert len(settings) == 1
         assert settings['area_type'] == 'land'
-        fx_variables = product.settings['add_fx_variables']['fx_variables']
-        assert isinstance(fx_variables, dict)
-        if product.attributes['project'] == 'obs4MIPs':
-            assert len(fx_variables) == 1
-            assert fx_variables.get('sftlf')
+        assert len(product.datasets) == 1
+        dataset = product.datasets[0]
+        short_names = {ds.facets['short_name'] for ds in dataset.ancillaries}
+        if dataset.facets['project'] == 'obs4MIPs':
+            assert len(dataset.ancillaries) == 1
+            assert {'sftlf'} == short_names
         else:
-            assert len(fx_variables) == 2
-            assert fx_variables.get('sftlf')
-            assert fx_variables.get('sftof')
+            assert len(dataset.ancillaries) == 2
+            assert {'sftlf', 'sftof'} == short_names
 
 
 def test_weighting_landsea_fraction_no_fx(tmp_path, patched_failing_datafinder,
@@ -1734,24 +1734,9 @@ def test_weighting_landsea_fraction_no_fx(tmp_path, patched_failing_datafinder,
                      tier: 1}
             scripts: null
         """)
-    recipe = get_recipe(tmp_path, content, session)
 
-    # Check generated tasks
-    assert len(recipe.tasks) == 1
-    task = recipe.tasks.pop()
-    assert task.name == 'diagnostic_name' + TASKSEP + 'gpp'
-
-    # Check weighting
-    assert len(task.products) == 2
-    for product in task.products:
-        assert 'weighting_landsea_fraction' in product.settings
-        settings = product.settings['weighting_landsea_fraction']
-        assert len(settings) == 1
-        assert 'exclude' not in settings
-        assert settings['area_type'] == 'land'
-        fx_variables = product.settings['add_fx_variables']['fx_variables']
-        assert isinstance(fx_variables, dict)
-        assert len(fx_variables) == 0
+    with pytest.raises(RecipeError):
+        get_recipe(tmp_path, content, session)
 
 
 def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
@@ -1875,15 +1860,13 @@ def test_area_statistics(tmp_path, patched_datafinder, session):
         settings = product.settings['area_statistics']
         assert len(settings) == 1
         assert settings['operator'] == 'mean'
-        fx_variables = product.settings['add_fx_variables']['fx_variables']
-        assert isinstance(fx_variables, dict)
-        if product.attributes['project'] == 'obs4MIPs':
-            assert len(fx_variables) == 1
-            assert fx_variables.get('areacella')
+        assert len(product.datasets) == 1
+        dataset = product.datasets[0]
+        short_names = {ds.facets['short_name'] for ds in dataset.ancillaries}
+        if dataset.facets['project'] == 'obs4MIPs':
+            assert short_names == {'areacella'}
         else:
-            assert len(fx_variables) == 2
-            assert fx_variables.get('areacella')
-            assert fx_variables.get('areacello')
+            assert short_names == {'areacella', 'areacello'}
 
 
 def test_landmask(tmp_path, patched_datafinder, session):
@@ -1924,13 +1907,12 @@ def test_landmask(tmp_path, patched_datafinder, session):
         settings = product.settings['mask_landsea']
         assert len(settings) == 1
         assert settings['mask_out'] == 'sea'
-        fx_variables = product.settings['add_fx_variables']['fx_variables']
-        assert isinstance(fx_variables, dict)
-        fx_variables = fx_variables.values()
-        if product.attributes['project'] == 'obs4MIPs':
-            assert len(fx_variables) == 1
+        assert len(product.datasets) == 1
+        dataset = product.datasets[0]
+        if dataset.facets['project'] == 'obs4MIPs':
+            assert len(dataset.ancillaries) == 1
         else:
-            assert len(fx_variables) == 2
+            assert len(dataset.ancillaries) == 2
 
 
 def test_empty_fxvar_none(tmp_path, patched_datafinder, session):
@@ -1961,7 +1943,8 @@ def test_empty_fxvar_none(tmp_path, patched_datafinder, session):
     # Check that no custom fx variables are present
     task = recipe.tasks.pop()
     product = task.products.pop()
-    assert product.settings['add_fx_variables']['fx_variables'] == {}
+    dataset = product.datasets[0]
+    assert dataset.ancillaries == []
 
 
 def test_empty_fxvar_list(tmp_path, patched_datafinder, session):
@@ -2030,7 +2013,7 @@ def test_empty_fxvar_dict(tmp_path, patched_datafinder, session):
 
 
 @pytest.mark.parametrize('content', [
-    dedent("""
+    pytest.param(dedent("""
         preprocessors:
           landmask:
             mask_landsea:
@@ -2066,7 +2049,8 @@ def test_empty_fxvar_dict(tmp_path, patched_datafinder, session):
                   - {dataset: CanESM2}
             scripts: null
         """),
-    dedent("""
+                 id='fx_variables_as_dict_of_dicts'),
+    pytest.param(dedent("""
         preprocessors:
           landmask:
             mask_landsea:
@@ -2096,8 +2080,8 @@ def test_empty_fxvar_dict(tmp_path, patched_datafinder, session):
                   - {dataset: CanESM2}
             scripts: null
         """),
-    ]
-)
+                 id='fx_variables_as_list_of_dicts'),
+])
 def test_user_defined_fxvar(tmp_path, patched_datafinder, session, content):
     recipe = get_recipe(tmp_path, content, session)
 
@@ -2116,7 +2100,7 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, session, content):
     assert len(list(ancillaries)) == 4
     sftlf_ds = ancillaries['sftlf']
     assert sftlf_ds.facets['mip'] == 'fx'
-    assert sftlf_ds.facets['experiment'] == 'piControl'
+    assert sftlf_ds.facets['exp'] == 'piControl'
 
     # landseaice
     settings = product.settings['mask_landseaice']
@@ -2124,7 +2108,7 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, session, content):
     assert settings['mask_out'] == 'sea'
     sftgif_ds = ancillaries['sftgif']
     assert sftgif_ds.facets['mip'] == 'fx'
-    assert sftgif_ds.facets['experiment'] == 'piControl'
+    assert sftgif_ds.facets['exp'] == 'piControl'
 
     # volume statistics
     settings = product.settings['volume_statistics']
@@ -2138,7 +2122,7 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, session, content):
     assert settings['operator'] == 'mean'
     areacello_ds = ancillaries['areacello']
     assert areacello_ds.facets['mip'] == 'fx'
-    assert areacello_ds.facets['experiment'] == 'piControl'
+    assert areacello_ds.facets['exp'] == 'piControl'
 
 
 def test_landmask_no_fx(tmp_path, patched_failing_datafinder, session):
@@ -2183,10 +2167,9 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, session):
         assert len(settings) == 2
         assert settings['mask_out'] == 'sea'
         assert settings['always_use_ne_mask'] is False
-        fx_variables = product.settings['add_fx_variables']['fx_variables']
-        assert isinstance(fx_variables, dict)
-        fx_variables = fx_variables.values()
-        assert not any(fx_variables)
+        assert len(product.datasets) == 1
+        dataset = product.datasets[0]
+        assert dataset.ancillaries == []
 
 
 def test_fx_vars_fixed_mip_cmip6(tmp_path, patched_datafinder, session):
@@ -2277,8 +2260,8 @@ def test_fx_vars_invalid_mip_cmip6(tmp_path, patched_datafinder, session):
                   - {dataset: CanESM5}
             scripts: null
         """)
-    msg = ("Requested mip table 'INVALID' for fx variable 'areacella' not "
-           "available for project 'CMIP6'")
+    msg = ("Unable to load CMOR table (project) 'CMIP6' for variable "
+           "'areacella' with mip 'INVALID'")
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, session)
     assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
@@ -2315,8 +2298,8 @@ def test_fx_vars_invalid_mip_for_var_cmip6(tmp_path, patched_datafinder,
                   - {dataset: CanESM5}
             scripts: null
         """)
-    msg = ("fx variable 'areacella' not available in CMOR table 'Lmon' for "
-           "'CMIP6'")
+    msg = ("Unable to load CMOR table (project) 'CMIP6' for variable "
+           "'areacella' with mip 'Lmon'")
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, session)
     assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
@@ -2377,14 +2360,15 @@ def test_fx_vars_mip_search_cmip6(tmp_path, patched_datafinder, session):
     assert settings['mask_out'] == 'sea'
 
     # Check add_fx_variables
-    fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 5
-    assert '_fx_' in fx_variables['areacella']['filename']
-    assert '_Ofx_' in fx_variables['areacello']['filename']
-    assert '_Efx_' in fx_variables['clayfrac']['filename']
-    assert '_fx_' in fx_variables['sftlf']['filename']
-    assert '_Ofx_' in fx_variables['sftof']['filename']
+    assert len(product.datasets) == 1
+    dataset = product.datasets[0]
+    assert len(dataset.ancillaries) == 5
+    ancillaries = {ds.facets['short_name']: ds for ds in dataset.ancillaries}
+    assert ancillaries['areacella'].facets['mip'] == 'fx'
+    assert ancillaries['areacello'].facets['mip'] == 'Ofx'
+    assert ancillaries['clayfrac'].facets['mip'] == 'Efx'
+    assert ancillaries['sftlf'].facets['mip'] == 'fx'
+    assert ancillaries['sftof'].facets['mip'] == 'Ofx'
 
 
 def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, session):
@@ -2434,14 +2418,15 @@ def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, session):
     assert settings['operator'] == 'mean'
 
     # Check add_fx_variables
-    fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 5
-    assert '_fx_' in fx_variables['areacella']['filename']
-    assert '_Ofx_' in fx_variables['areacello']['filename']
-    assert '_Efx_' in fx_variables['clayfrac']['filename']
-    assert '_fx_' in fx_variables['sftlf']['filename']
-    assert '_Ofx_' in fx_variables['sftof']['filename']
+    assert len(product.datasets) == 1
+    dataset = product.datasets[0]
+    assert len(dataset.ancillaries) == 5
+    ancillaries = {ds.facets['short_name']: ds for ds in dataset.ancillaries}
+    assert ancillaries['areacella'].facets['mip'] == 'fx'
+    assert ancillaries['areacello'].facets['mip'] == 'Ofx'
+    assert ancillaries['clayfrac'].facets['mip'] == 'Efx'
+    assert ancillaries['sftlf'].facets['mip'] == 'fx'
+    assert ancillaries['sftof'].facets['mip'] == 'Ofx'
 
 
 def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder, session):
@@ -2486,11 +2471,11 @@ def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder, session):
     settings = product.settings['volume_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 1
-    assert '_Omon_' not in fx_variables['volcello']['filename']
-    assert '_Ofx_' in fx_variables['volcello']['filename']
+    assert len(product.datasets) == 1
+    dataset = product.datasets[0]
+    assert len(dataset.ancillaries) == 1
+    volcello_ds = dataset.ancillaries[0]
+    assert volcello_ds.facets['mip'] == 'Ofx'
 
 
 def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder, session):
@@ -2534,12 +2519,13 @@ def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder, session):
     settings = product.settings['volume_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 1
-    assert '_Oyr_' in fx_variables['volcello']['filename'][0]
-    assert '_piControl_' in fx_variables['volcello']['filename'][0]
-    assert '_Omon_' not in fx_variables['volcello']['filename'][0]
+    assert len(product.datasets) == 1
+    dataset = product.datasets[0]
+    assert len(dataset.ancillaries) == 1
+    volcello_ds = dataset.ancillaries[0]
+    assert volcello_ds.facets['short_name'] == 'volcello'
+    assert volcello_ds.facets['mip'] == 'Oyr'
+    assert volcello_ds.facets['exp'] == 'piControl'
 
 
 def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder, session):
@@ -2584,14 +2570,15 @@ def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder, session):
     assert len(task.ancestors) == 0
     assert len(task.products) == 1
     product = task.products.pop()
+    assert len(product.datasets) == 1
+    dataset = product.datasets[0]
     assert product.attributes['short_name'] == 'tos'
-    assert product.files
+    assert dataset.files
     assert 'area_statistics' in product.settings
     settings = product.settings['area_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert len(fx_variables) == 2
+    assert len(dataset.ancillaries) == 2
 
 
 def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
@@ -2635,11 +2622,11 @@ def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
     settings = product.settings['volume_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 1
-    assert '_Ofx_' not in fx_variables['volcello']['filename'][0]
-    assert '_Omon_' in fx_variables['volcello']['filename'][0]
+    assert len(product.datasets) == 1
+    dataset = product.datasets[0]
+    assert len(dataset.ancillaries) == 1
+    volcello_ds = dataset.ancillaries[0]
+    assert volcello_ds.facets['mip'] == 'Omon'
 
 
 def test_fx_vars_volcello_in_oyr_cmip6(tmp_path, patched_failing_datafinder,
@@ -2683,11 +2670,12 @@ def test_fx_vars_volcello_in_oyr_cmip6(tmp_path, patched_failing_datafinder,
     settings = product.settings['volume_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 1
-    assert '_Ofx_' not in fx_variables['volcello']['filename'][0]
-    assert '_Oyr_' in fx_variables['volcello']['filename'][0]
+    assert len(product.datasets) == 1
+    dataset = product.datasets[0]
+    assert len(dataset.ancillaries) == 1
+    volcello_ds = dataset.ancillaries[0]
+    assert volcello_ds.facets['short_name'] == 'volcello'
+    assert volcello_ds.facets['mip'] == 'Oyr'
 
 
 def test_fx_vars_volcello_in_fx_cmip5(tmp_path, patched_datafinder, session):
@@ -2728,11 +2716,12 @@ def test_fx_vars_volcello_in_fx_cmip5(tmp_path, patched_datafinder, session):
     settings = product.settings['volume_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 1
-    assert '_fx_' in fx_variables['volcello']['filename']
-    assert '_Omon_' not in fx_variables['volcello']['filename']
+    assert len(product.datasets) == 1
+    dataset = product.datasets[0]
+    assert len(dataset.ancillaries) == 1
+    volcello_ds = dataset.ancillaries[0]
+    assert volcello_ds.facets['short_name'] == 'volcello'
+    assert volcello_ds.facets['mip'] == 'fx'
 
 
 def test_wrong_project(tmp_path, patched_datafinder, session):
@@ -2833,7 +2822,7 @@ def test_ambiguous_fx_var_cmip6(tmp_path, patched_datafinder, session):
             scripts: null
         """)
     msg = ("Requested fx variable 'volcello' for dataset 'CanESM5' of project "
-           "'CMIP6' is available in more than one CMOR table for 'CMIP6': "
+           "'CMIP6' is available in more than one CMOR MIP table for 'CMIP6': "
            "['Odec', 'Ofx', 'Omon', 'Oyr']")
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, session)
@@ -2889,13 +2878,13 @@ def test_unique_fx_var_in_multiple_mips_cmip6(tmp_path,
     # Check add_fx_variables
     # Due to failing datafinder, only files in LImon are found even though
     # sftgif is available in the tables fx, IyrAnt, IyrGre and LImon
-    fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 1
-    sftgif_files = fx_variables['sftgif']['filename']
-    assert isinstance(sftgif_files, list)
-    assert len(sftgif_files) == 1
-    assert '_LImon_' in sftgif_files[0]
+    assert len(product.datasets) == 1
+    dataset = product.datasets[0]
+    assert len(dataset.ancillaries) == 1
+    sftgif_ds = dataset.ancillaries[0]
+    assert sftgif_ds.facets['short_name'] == 'sftgif'
+    assert sftgif_ds.facets['mip'] == 'LImon'
+    assert len(sftgif_ds.files) == 1
 
 
 def test_multimodel_mask(tmp_path, patched_datafinder, session):

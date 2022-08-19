@@ -50,7 +50,6 @@ from .preprocessor._regrid import (
 
 logger = logging.getLogger(__name__)
 
-
 DOWNLOAD_FILES = set()
 """Use a global variable to keep track of files that need to be downloaded."""
 
@@ -219,17 +218,10 @@ def _get_default_settings(dataset):
 
 def _guess_fx_mip(facets, dataset):
     """Search mip for fx variable."""
-    if 'project' in facets:
-        project = facets['project']
-    else:
-        project = dataset.facets['project']
+    project = facets.get('project', dataset.facets['project'])
     # check if project in config-developer
-    try:
-        get_project_config(project)
-    except ValueError:
-        raise RecipeError(f"Requested fx variable '{facets['short_name']}' "
-                          f"with parent variable '{dataset}' does not have "
-                          f"a '{project}' project in config-developer.")
+    get_project_config(project)
+
     tables = CMOR_TABLES[project].tables
 
     # Get all mips that offer that specific fx variable
@@ -278,32 +270,59 @@ def _guess_fx_mip(facets, dataset):
 
 def _get_legacy_ancillary_facets(dataset, settings, missing_ancillaries):
     """Load the ancillary dataset facets from the preprocessor settings."""
+    # Update `fx_variables` key in preprocessor settings with defaults
+    default_fx = {
+        'area_statistics': {
+            'areacella': None,
+        },
+        'mask_landsea': {
+            'sftlf': None,
+        },
+        'mask_landseaice': {
+            'sftgif': None,
+        },
+        'volume_statistics': {
+            'volcello': None,
+        },
+        'weighting_landsea_fraction': {
+            'sftlf': None,
+        },
+    }
+    if dataset.facets['project'] != 'obs4MIPs':
+        default_fx['area_statistics']['areacello'] = None
+        default_fx['mask_landsea']['sftof'] = None
+        default_fx['weighting_landsea_fraction']['sftof'] = None
+
+    for step in default_fx:
+        if step in settings and 'fx_variables' not in settings[step]:
+            settings[step]['fx_variables'] = default_fx[step]
+
     # Read facets from `fx_variables` key in preprocessor settings
     ancillaries = []
     for kwargs in settings.values():
         if 'fx_variables' in kwargs:
             fx_variables = kwargs['fx_variables']
+
+            if fx_variables is None:
+                continue
+
             if isinstance(fx_variables, list):
-                fx_variables = {}
+                result = {}
                 for fx_variable in fx_variables:
                     if isinstance(fx_variable, str):
                         # Legacy legacy method of specifying ancillary variable
                         short_name = fx_variable
-                        fx_variables[short_name] = {}
+                        result[short_name] = {}
                     elif isinstance(fx_variable, dict):
                         short_name = fx_variable['short_name']
-                        fx_variables[short_name] = fx_variable
+                        result[short_name] = fx_variable
+                fx_variables = result
+
             for short_name, facets in fx_variables.items():
                 if facets is None:
                     facets = {}
                 facets['short_name'] = short_name
                 ancillaries.append(facets)
-
-    # Add any remaining missing ancillary variables
-    for short_name in missing_ancillaries:
-        if short_name not in {a['short_name'] for a in ancillaries}:
-            facets = {'short_name': short_name}
-            ancillaries.append(facets)
 
     # Guess the ensemble and mip if they is not specified
     for facets in ancillaries:
@@ -327,12 +346,16 @@ def _add_legacy_ancillary_datasets(settings, dataset):
             else:
                 missing_ancillaries.extend(ancs['variables'])
 
-    if missing_ancillaries:
-        for facets in _get_legacy_ancillary_facets(dataset, settings,
-                                                   missing_ancillaries):
-            dataset.add_ancillary(**facets)
-        for ancillary_ds in dataset.ancillaries:
-            _get_facets_from_cmor_table(ancillary_ds.facets, override=True)
+    for facets in _get_legacy_ancillary_facets(dataset, settings,
+                                               missing_ancillaries):
+        dataset.add_ancillary(**facets)
+
+    available_ancillaries = []
+    for ancillary_ds in dataset.ancillaries:
+        _get_facets_from_cmor_table(ancillary_ds.facets, override=True)
+        if ancillary_ds.files:
+            available_ancillaries.append(ancillary_ds)
+    dataset.ancillaries = available_ancillaries
 
     for kwargs in settings.values():
         kwargs.pop('fx_variables', None)
