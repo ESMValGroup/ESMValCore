@@ -145,9 +145,8 @@ def create_esgf_search_results():
 
 
 @pytest.mark.parametrize("local_availability", ['all', 'partial', 'none'])
-def test_check_input_files(monkeypatch, tmp_path, local_availability):
-    """Test _check_input_files: it does not raise and updates
-    DOWNLOAD_FILES."""
+def test_schedule_for_download(monkeypatch, tmp_path, local_availability):
+    """Test that `_schedule_for_download` updates DOWNLOAD_FILES."""
     esgf_files = create_esgf_search_results()
     download_dir = tmp_path / 'download_dir'
     local_dir = Path('/local_dir')
@@ -182,7 +181,7 @@ def test_check_input_files(monkeypatch, tmp_path, local_availability):
     dataset.files = list(files[local_availability])
 
     monkeypatch.setattr(_recipe, 'DOWNLOAD_FILES', set())
-    _recipe._check_input_files(dataset)
+    _recipe._schedule_for_download([dataset])
     print(esgf_files)
     expected = {
         'all': set(),

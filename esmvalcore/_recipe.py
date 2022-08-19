@@ -8,6 +8,7 @@ from copy import deepcopy
 from itertools import groupby
 from pathlib import Path
 from pprint import pformat
+from typing import Any
 
 import yaml
 from nested_lookup import nested_delete
@@ -340,7 +341,7 @@ def _get_legacy_ancillary_facets(dataset, settings, missing_ancillaries):
     return ancillaries
 
 
-def _add_legacy_ancillary_datasets(settings, dataset):
+def _add_legacy_ancillary_datasets(dataset, settings):
     """Update fx settings depending on the needed method."""
     recipe_ancillaries = {a.facets['short_name'] for a in dataset.ancillaries}
     missing_ancillaries = []
@@ -368,17 +369,6 @@ def _add_legacy_ancillary_datasets(settings, dataset):
         kwargs.pop('fx_variables', None)
 
 
-def _add_ancillary_datasets(settings, dataset):
-    """Check that the required ancillary variables are available."""
-    # if dataset.session.feature_flags['use_legacy_ancillaries']:
-    _add_legacy_ancillary_datasets(settings, dataset)
-
-    check.ancillary_availability(
-        dataset=dataset,
-        settings=settings,
-    )
-
-
 def _exclude_dataset(settings, facets, step):
     """Exclude dataset from specific preprocessor step if requested."""
     exclude = {
@@ -399,35 +389,53 @@ def _update_weighting_settings(settings, facets):
 
 
 def _add_to_download_list(dataset):
+    """Add the files of `dataset` to `DOWNLOAD_FILES`."""
     for i, file in enumerate(dataset.files):
         if isinstance(file, ESGFFile):
             DOWNLOAD_FILES.add(file)
             dataset.files[i] = file.local_file(dataset.session['download_dir'])
 
 
-def _check_input_files(dataset: Dataset):
-    """Get the input files for a single dataset and setup provenance."""
-    files = list(dataset.files)
-    for ancillary_ds in dataset.ancillaries:
-        files.extend(ancillary_ds.files)
-    local_files = [f.local_file(dataset.session['download_dir'])
-                   if isinstance(f, ESGFFile) else f for f in files]
-    logger.debug(
-        "Using input files for variable %s of dataset %s:\n%s",
-        dataset.facets['short_name'],
-        dataset.facets['alias'].replace('_', ' '),
-        '\n'.join(
-            f'{f} (will be downloaded)' if not os.path.exists(f) else str(f)
-            for f in local_files),
-    )
-    check.data_availability(dataset)
+def _schedule_for_download(datasets):
+    """Schedule files for download and show the list of files in the log."""
+    for dataset in datasets:
+        _add_to_download_list(dataset)
+        for ancillary_ds in dataset.ancillaries:
+            _add_to_download_list(ancillary_ds)
 
-    _add_to_download_list(dataset)
-    for ancillary_ds in dataset.ancillaries:
-        _add_to_download_list(ancillary_ds)
+        files = list(dataset.files)
+        for ancillary_ds in dataset.ancillaries:
+            files.extend(ancillary_ds.files)
 
-    logger.info("Found input files for %s",
-                dataset.facets['alias'].replace('_', ' '))
+        logger.debug(
+            "Using input files for variable %s of dataset %s:\n%s",
+            dataset.facets['short_name'],
+            dataset.facets['alias'].replace('_', ' '),
+            '\n'.join(
+                f'{f} (will be downloaded)' if not f.exists() else str(f)
+                for f in files),
+        )
+
+
+def _check_input_files(input_datasets: list[Dataset],
+                       settings: dict[str, Any]):
+    """Check that the required input files are available."""
+    missing = set()
+
+    for input_dataset in input_datasets:
+        try:
+            check.data_availability(input_dataset)
+        except RecipeError as ex:
+            missing.add(ex.message)
+        try:
+            check.ancillary_availability(
+                dataset=input_dataset,
+                settings=settings,
+            )
+        except RecipeError as ex:
+            missing.add(ex.message)
+
+    return missing
 
 
 def _apply_preprocessor_profile(settings, profile_settings):
@@ -640,14 +648,19 @@ def _get_preprocessor_products(datasets, profile, order, name):
         _update_preproc_functions(settings, dataset, datasets, missing_vars)
         input_datasets = _get_input_datasets(dataset)
         for input_dataset in input_datasets:
-            try:
-                _check_input_files(input_dataset)
-            except RecipeError as ex:
-                if _allow_skipping(dataset):
-                    logger.info("Skipping: %s", ex.message)
-                else:
-                    missing_vars.add(ex.message)
-                continue
+            _add_legacy_ancillary_datasets(input_dataset, settings)
+        missing = _check_input_files(input_datasets, settings)
+        if missing:
+            if _allow_skipping(dataset):
+                logger.info("Skipping: %s", missing)
+            else:
+                missing_vars.update(missing)
+            continue
+
+        _schedule_for_download(input_datasets)
+        logger.info("Found input files for %s",
+                    dataset.facets['alias'].replace('_', ' '))
+
         filename = get_output_file(dataset.facets, dataset.session.preproc_dir)
         product = PreprocessorFile(
             filename=filename,
@@ -722,7 +735,6 @@ def _update_preproc_functions(settings, dataset, datasets, missing_vars):
     session = dataset.session
     _update_extract_shape(settings, session)
     _update_weighting_settings(settings, dataset.facets)
-    _add_ancillary_datasets(settings=settings, dataset=dataset)
     try:
         _update_target_levels(
             dataset=dataset,
