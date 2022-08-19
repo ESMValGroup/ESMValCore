@@ -30,7 +30,10 @@ def test_repr():
 
     ds = Dataset(short_name='tas', dataset='dataset1')
 
-    assert repr(ds) == "Dataset(dataset='dataset1', short_name='tas')"
+    assert repr(ds) == textwrap.dedent("""
+        Dataset:
+        {'dataset': 'dataset1', 'short_name': 'tas'}
+    """).strip()
 
 
 def test_repr_ancillary():
@@ -38,8 +41,10 @@ def test_repr_ancillary():
     ds.add_ancillary(short_name='areacella')
 
     assert repr(ds) == textwrap.dedent("""
-        Dataset(dataset='dataset1', short_name='tas')
-        .add_ancillary(dataset='dataset1', short_name='areacella')
+        Dataset:
+        {'dataset': 'dataset1', 'short_name': 'tas'}
+        ancillaries:
+          {'dataset': 'dataset1', 'short_name': 'areacella'}
         """).strip()
 
 
@@ -306,6 +311,8 @@ def test_datasets_from_complicated_recipe(session):
             recipe_dataset_index=0,
         ),
     ]
+    for dataset in datasets:
+        dataset.session = session
 
     assert datasets_from_recipe(recipe, session) == datasets
 
@@ -402,8 +409,6 @@ def test_ancillary_datasets_from_recipe(session):
     ]
     dataset.session = session
 
-    print(datasets_from_recipe(recipe, session))
-    print([dataset])
     assert datasets_from_recipe(recipe, session) == [dataset]
 
 
@@ -684,7 +689,7 @@ def test_update_timerange_no_files(session, offline):
         'timerange': '*/2000',
     }
     dataset = Dataset(**variable)
-    msg = r"Missing data for: .*\. Cannot determine timerange '\*/2000'\."
+    msg = r"Missing data for: CMIP6, Amon, tas, HadGEM3-GC31-LL.*"
     with pytest.raises(InputFilesNotFound, match=msg):
         dataset._update_timerange(session)
 

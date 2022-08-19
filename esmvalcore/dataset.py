@@ -583,6 +583,8 @@ def datasets_from_recipe(recipe, session):
                 for dataset in dataset.expand():
                     for ancillary_facets in ancillaries:
                         dataset.add_ancillary(**ancillary_facets)
+                    for ancillary_ds in dataset.ancillaries:
+                        ancillary_ds.facets.pop('preprocessor')
                     dataset.facets['recipe_dataset_index'] = idx
                     datasets.append(dataset)
                     idx += 1
