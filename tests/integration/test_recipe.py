@@ -425,6 +425,43 @@ def test_default_preprocessor_custom_order(tmp_path, patched_datafinder,
     assert product.settings == defaults
 
 
+def test_disable_preprocessor_function(tmp_path, patched_datafinder, session):
+    """Test if default settings are used when ``custom_order`` is ``True``."""
+
+    content = dedent("""
+        datasets:
+          - dataset: HadGEM3-GC31-LL
+            ensemble: r1i1p1f1
+            exp: historical
+            grid: gn
+
+        preprocessors:
+          keep_ancillaries:
+            remove_fx_variables: False
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                preprocessor: keep_ancillaries
+                project: CMIP6
+                mip: Amon
+                timerange: 2000/2005
+                ancillaries:
+                  - short_name: areacella
+                    mip: fx
+            scripts: null
+        """)
+
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.tasks) == 1
+    task = recipe.tasks.pop()
+    assert len(task.products) == 1
+    product = task.products.pop()
+    assert 'remove_fx_variables' not in product.settings
+
+
 def test_default_fx_preprocessor(tmp_path, patched_datafinder, session):
 
     content = dedent("""
