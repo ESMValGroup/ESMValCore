@@ -10,10 +10,11 @@ from esmvalcore._config._config_object import CFG_DEFAULT
 
 @pytest.fixture
 def session(tmp_path):
-    CFG.clear()
-    CFG.update(CFG_DEFAULT)
-    CFG['output_dir'] = tmp_path / 'esmvaltool_output'
-    return CFG.start_session('recipe_test')
+    session = CFG.start_session('recipe_test')
+    session.clear()
+    session.update(CFG_DEFAULT)
+    session['output_dir'] = tmp_path / 'esmvaltool_output'
+    return session
 
 
 def create_test_file(filename, tracking_id=None):
