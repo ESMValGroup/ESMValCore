@@ -2216,14 +2216,17 @@ def test_fx_vars_fixed_mip_cmip6(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           preproc:
-           area_statistics:
-             operator: mean
-             fx_variables:
-               sftgif:
-                 mip: fx
-               volcello:
-                 ensemble: r2i1p1f1
-                 mip: Ofx
+            volume_statistics:
+              operator: mean
+              fx_variables:
+                volcello:
+                  ensemble: r2i1p1f1
+                  mip: Ofx
+            mask_landseaice:
+              mask_out: ice
+              fx_variables:
+                sftgif:
+                  mip: fx
 
         diagnostics:
           diagnostic_name:
@@ -2250,9 +2253,9 @@ def test_fx_vars_fixed_mip_cmip6(tmp_path, patched_datafinder, session):
     assert len(task.products) == 1
     product = task.products.pop()
 
-    # Check area_statistics
-    assert 'area_statistics' in product.settings
-    settings = product.settings['area_statistics']
+    # Check volume_statistics
+    assert 'volume_statistics' in product.settings
+    settings = product.settings['volume_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
 
@@ -2355,7 +2358,6 @@ def test_fx_vars_mip_search_cmip6(tmp_path, patched_datafinder, session):
              fx_variables:
                areacella:
                areacello:
-               clayfrac:
            mask_landsea:
              mask_out: sea
 
@@ -2399,11 +2401,10 @@ def test_fx_vars_mip_search_cmip6(tmp_path, patched_datafinder, session):
     # Check add_fx_variables
     assert len(product.datasets) == 1
     dataset = product.datasets[0]
-    assert len(dataset.ancillaries) == 5
+    assert len(dataset.ancillaries) == 4
     ancillaries = {ds.facets['short_name']: ds for ds in dataset.ancillaries}
     assert ancillaries['areacella'].facets['mip'] == 'fx'
     assert ancillaries['areacello'].facets['mip'] == 'Ofx'
-    assert ancillaries['clayfrac'].facets['mip'] == 'Efx'
     assert ancillaries['sftlf'].facets['mip'] == 'fx'
     assert ancillaries['sftof'].facets['mip'] == 'Ofx'
 
@@ -2413,15 +2414,18 @@ def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           preproc:
-           area_statistics:
-             operator: mean
-             fx_variables: [
-               'areacella',
-               'areacello',
-               'clayfrac',
-               'sftlf',
-               'sftof',
-               ]
+            area_statistics:
+              operator: mean
+              fx_variables: [
+                'areacella',
+                'areacello',
+              ]
+            mask_landsea:
+              mask_out: sea
+              fx_variables: [
+                'sftlf',
+                'sftof',
+              ]
 
         diagnostics:
           diagnostic_name:
@@ -2457,11 +2461,10 @@ def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, session):
     # Check add_fx_variables
     assert len(product.datasets) == 1
     dataset = product.datasets[0]
-    assert len(dataset.ancillaries) == 5
+    assert len(dataset.ancillaries) == 4
     ancillaries = {ds.facets['short_name']: ds for ds in dataset.ancillaries}
     assert ancillaries['areacella'].facets['mip'] == 'fx'
     assert ancillaries['areacello'].facets['mip'] == 'Ofx'
-    assert ancillaries['clayfrac'].facets['mip'] == 'Efx'
     assert ancillaries['sftlf'].facets['mip'] == 'fx'
     assert ancillaries['sftof'].facets['mip'] == 'Ofx'
 
@@ -2822,8 +2825,8 @@ def test_invalid_fx_var_cmip6(tmp_path, patched_datafinder, session):
                   - {dataset: CanESM5}
             scripts: null
         """)
-    msg = ("Requested fx variable 'wrong_fx_variable' not available in any "
-           "CMOR table")
+    msg = ("Preprocessor function 'area_statistics' does not support "
+           "ancillary variable 'wrong_fx_variable'")
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, session)
     assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
@@ -2837,7 +2840,7 @@ def test_ambiguous_fx_var_cmip6(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           preproc:
-           area_statistics:
+           volume_statistics:
              operator: mean
              fx_variables:
                volcello:
@@ -2876,8 +2879,8 @@ def test_unique_fx_var_in_multiple_mips_cmip6(tmp_path,
     content = dedent("""
         preprocessors:
           preproc:
-           area_statistics:
-             operator: mean
+           mask_landseaice:
+             mask_out: ice
              fx_variables:
                sftgif:
 
@@ -2906,11 +2909,11 @@ def test_unique_fx_var_in_multiple_mips_cmip6(tmp_path,
     assert len(task.products) == 1
     product = task.products.pop()
 
-    # Check area_statistics
-    assert 'area_statistics' in product.settings
-    settings = product.settings['area_statistics']
+    # Check mask_landseaice
+    assert 'mask_landseaice' in product.settings
+    settings = product.settings['mask_landseaice']
     assert len(settings) == 1
-    assert settings['operator'] == 'mean'
+    assert settings['mask_out'] == 'ice'
 
     # Check add_fx_variables
     # Due to failing datafinder, only files in LImon are found even though

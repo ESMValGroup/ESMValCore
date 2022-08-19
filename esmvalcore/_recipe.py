@@ -299,7 +299,8 @@ def _get_legacy_ancillary_facets(dataset, settings, missing_ancillaries):
 
     # Read facets from `fx_variables` key in preprocessor settings
     ancillaries = []
-    for kwargs in settings.values():
+    for step, kwargs in settings.items():
+        allowed = PREPROCESSOR_ANCILLARIES.get(step, {}).get('variables', [])
         if 'fx_variables' in kwargs:
             fx_variables = kwargs['fx_variables']
 
@@ -319,6 +320,12 @@ def _get_legacy_ancillary_facets(dataset, settings, missing_ancillaries):
                 fx_variables = result
 
             for short_name, facets in fx_variables.items():
+                if short_name not in allowed:
+                    raise RecipeError(
+                        f"Preprocessor function '{step}' does not support "
+                        f"ancillary variable '{short_name}'")
+                if short_name not in missing_ancillaries:
+                    continue
                 if facets is None:
                     facets = {}
                 facets['short_name'] = short_name
