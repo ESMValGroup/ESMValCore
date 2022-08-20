@@ -367,6 +367,15 @@ def _augment(base, update):
             base[key] = update[key]
 
 
+def _path2facets(path: Path, drs: str) -> dict[str, str]:
+    """Extract facets from a path using a DRS like '{facet1}/{facet2}'."""
+    keys = re.findall("{(.*?)}", drs)
+    start, end = -len(keys)-1, -1
+    values = path.parts[start:end]
+    facets = {key: values[idx] for idx, key in enumerate(keys)}
+    return facets
+
+
 ALIAS_INFO_KEYS = (
     'project',
     'activity',

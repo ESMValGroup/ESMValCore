@@ -11,6 +11,7 @@ from esmvalcore._config._config_object import CFG_DEFAULT
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.dataset import (
     Dataset,
+    _path2facets,
     datasets_from_recipe,
     datasets_to_recipe,
 )
@@ -803,3 +804,18 @@ def test_load(mocker, session):
     assert args == load_args
 
     get_output_file.assert_called_with(dataset.facets, session.preproc_dir)
+
+
+def test_path2facets():
+    """Test `_path2facets1."""
+    filepath = Path("/climate_data/value1/value2/filename.nc")
+    drs = "{facet1}/{facet2}"
+
+    expected = {
+        'facet1': 'value1',
+        'facet2': 'value2',
+    }
+
+    result = _path2facets(filepath, drs)
+
+    assert result == expected
