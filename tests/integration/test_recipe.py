@@ -3617,13 +3617,10 @@ def test_dataset_to_file_regular_var(mock_data_availability,
                                      patched_datafinder, config_user):
     """Test ``_dataset_to_file`` with regular variable."""
     variable = {
-        'component': 'atm',
         'dataset': 'ICON',
         'end_year': 2000,
-        'ensemble': 'r1v1i1p1l1f1',
-        'exp': 'amip',
+        'exp': 'atm_amip-rad_R2B4_r1i1p1f1',
         'frequency': 'mon',
-        'grid': 'R2B5',
         'mip': 'Amon',
         'original_short_name': 'tas',
         'project': 'ICON',
@@ -3631,11 +3628,10 @@ def test_dataset_to_file_regular_var(mock_data_availability,
         'start_year': 1990,
         'timerange': '1990/2000',
         'var_type': 'atm_2d_ml',
-        'version': 1,
     }
     filename = _dataset_to_file(variable, config_user)
     path = Path(filename)
-    assert path.name == '1_atm_amip_R2B5_r1v1i1p1l1f1_atm_2d_ml_1990_1999.nc'
+    assert path.name == 'atm_amip-rad_R2B4_r1i1p1f1_atm_2d_ml_1990_1999.nc'
     mock_data_availability.assert_called_once()
 
 
@@ -3649,15 +3645,12 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
         ([sentinel.out_file], [sentinel.dirname], [sentinel.filename]),
     ]
     variable = {
-        'component': 'atm',
         'dataset': 'ICON',
         'derive': True,
         'end_year': 2000,
-        'ensemble': 'r1v1i1p1l1f1',
-        'exp': 'amip',
+        'exp': 'atm_amip-rad_R2B4_r1i1p1f1',
         'force_derivation': True,
         'frequency': 'mon',
-        'grid': 'R2B5',
         'mip': 'Amon',
         'original_short_name': 'lwp',
         'project': 'ICON',
@@ -3665,7 +3658,6 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
         'start_year': 1990,
         'timerange': '1990/2000',
         'var_type': 'atm_2d_ml',
-        'version': 1,
     }
     filename = _dataset_to_file(variable, config_user)
     assert filename == sentinel.out_file
@@ -3675,21 +3667,17 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
         # Added by get_required
         'short_name': 'clwvi',
         # Already present in variable
-        'component': 'atm',
         'dataset': 'ICON',
         'derive': True,
         'end_year': 2000,
-        'ensemble': 'r1v1i1p1l1f1',
-        'exp': 'amip',
+        'exp': 'atm_amip-rad_R2B4_r1i1p1f1',
         'force_derivation': True,
         'frequency': 'mon',
-        'grid': 'R2B5',
         'mip': 'Amon',
         'project': 'ICON',
         'start_year': 1990,
         'timerange': '1990/2000',
         'var_type': 'atm_2d_ml',
-        'version': 1,
         # Added by _add_cmor_info
         'long_name': 'Condensed Water Path',
         'modeling_realm': ['atmos'],
@@ -3706,15 +3694,12 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
 def test_get_derive_input_variables(patched_datafinder, config_user):
     """Test ``_get_derive_input_variables``."""
     variables = [{
-        'component': 'atm',
         'dataset': 'ICON',
         'derive': True,
         'end_year': 2000,
-        'ensemble': 'r1v1i1p1l1f1',
-        'exp': 'amip',
+        'exp': 'atm_amip-rad_R2B4_r1i1p1f1',
         'force_derivation': True,
         'frequency': 'mon',
-        'grid': 'R2B5',
         'mip': 'Amon',
         'original_short_name': 'lwp',
         'project': 'ICON',
@@ -3722,7 +3707,6 @@ def test_get_derive_input_variables(patched_datafinder, config_user):
         'start_year': 1990,
         'timerange': '1990/2000',
         'var_type': 'atm_2d_ml',
-        'version': 1,
         'variable_group': 'lwp_group',
     }]
     derive_input = _get_derive_input_variables(variables, config_user)
@@ -3732,21 +3716,17 @@ def test_get_derive_input_variables(patched_datafinder, config_user):
             # Added by get_required
             'short_name': 'clwvi',
             # Already present in variables
-            'component': 'atm',
             'dataset': 'ICON',
             'derive': True,
             'end_year': 2000,
-            'ensemble': 'r1v1i1p1l1f1',
-            'exp': 'amip',
+            'exp': 'atm_amip-rad_R2B4_r1i1p1f1',
             'force_derivation': True,
             'frequency': 'mon',
-            'grid': 'R2B5',
             'mip': 'Amon',
             'project': 'ICON',
             'start_year': 1990,
             'timerange': '1990/2000',
             'var_type': 'atm_2d_ml',
-            'version': 1,
             # Added by _add_cmor_info
             'standard_name':
             'atmosphere_mass_content_of_cloud_condensed_water',
@@ -3762,21 +3742,17 @@ def test_get_derive_input_variables(patched_datafinder, config_user):
             # Added by get_required
             'short_name': 'clivi',
             # Already present in variables
-            'component': 'atm',
             'dataset': 'ICON',
             'derive': True,
             'end_year': 2000,
-            'ensemble': 'r1v1i1p1l1f1',
-            'exp': 'amip',
+            'exp': 'atm_amip-rad_R2B4_r1i1p1f1',
             'force_derivation': True,
             'frequency': 'mon',
-            'grid': 'R2B5',
             'mip': 'Amon',
             'project': 'ICON',
             'start_year': 1990,
             'timerange': '1990/2000',
             'var_type': 'atm_2d_ml',
-            'version': 1,
             # Added by _add_cmor_info
             'standard_name': 'atmosphere_mass_content_of_cloud_ice',
             'long_name': 'Ice Water Path',
