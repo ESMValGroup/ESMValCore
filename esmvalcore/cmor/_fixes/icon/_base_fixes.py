@@ -111,3 +111,13 @@ class IconFix(NativeDatasetFix):
             )
             cubes = iris.load(str(path))
         return cubes
+
+
+class SetUnitsTo1(IconFix):
+    """Base fix to set units to '1'."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = self.get_cube(cubes)
+        cube.units = '1'
+        return cubes
