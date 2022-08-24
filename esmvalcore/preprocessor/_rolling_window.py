@@ -38,12 +38,6 @@ def rolling_window_statistics(cube, coordinate, operator, window_length):
     ValueError:
         Invalid ``'operator'`` given.
     """
-    try:
-        cube.coord(coordinate)
-    except iris.exceptions.CoordinateNotFoundError:
-        logger.error("Cube %s does not have %s coordinate", cube, coordinate)
-        raise
-
     operation = get_iris_analysis_operation(operator)
     # applying rolling wondow
     cube = cube.rolling_window(coordinate, operation, window_length)
