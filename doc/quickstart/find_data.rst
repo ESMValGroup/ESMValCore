@@ -241,8 +241,9 @@ Thus, example dataset entries could look like this:
   datasets:
     - {project: ICON, dataset: ICON, exp: icon-2.6.1_atm_amip_R2B5_r1i1p1f1,
        mip: Amon, short_name: tas, start_year: 2000, end_year: 2014}
-    - {project: ICON, dataset: ICON, exp: icon-2.6.1_atm_amip_R2B5_r1i1p1f1,
-       mip: Amon, short_name: ta, start_year: 2000, end_year: 2014}
+    - {project: ICON, dataset: ICON, exp: historical, mip: Amon,
+       short_name: ta, var_type: atm_dyn_3d_ml, start_year: 2000,
+       end_year: 2014}
 
 Please note the duplication of the name ``ICON`` in ``project`` and
 ``dataset``, which is necessary to comply with ESMValTool's data finding and
