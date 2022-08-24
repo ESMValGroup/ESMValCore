@@ -67,6 +67,13 @@ class TestRollingWindow(unittest.TestCase):
                                       operator='mean',
                                       window_length=3)
 
+    def test_rolling_window_operator(self):
+        with self.assertRaises(ValueError):
+            rolling_window_statistics(self.cube,
+                                      coordinate='time',
+                                      operator='percentile',
+                                      window_length=2)
+
 
 if __name__ == '__main__':
     unittest.main()
