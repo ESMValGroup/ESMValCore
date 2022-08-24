@@ -60,10 +60,9 @@ class TestRollingWindow(unittest.TestCase):
         assert cube_lat_mean.shape == (9, 15)
 
     def test_rolling_window_coord(self):
-        new_cube = self.cube.copy()
-        new_cube.remove_coord(new_cube.coord('latitude'))
+        self.cube.remove_coord('latitude')
         with self.assertRaises(iris.exceptions.CoordinateNotFoundError):
-            rolling_window_statistics(new_cube,
+            rolling_window_statistics(self.cube,
                                       coordinate='latitude',
                                       operator='mean',
                                       window_length=3)
