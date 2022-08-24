@@ -2,9 +2,6 @@
 
 import logging
 
-import iris
-import iris.exceptions
-
 from ._shared import get_iris_analysis_operation
 
 logger = logging.getLogger(__name__)
