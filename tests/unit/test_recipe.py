@@ -94,12 +94,20 @@ def test_resume_preprocessor_tasks(mocker, tmp_path):
 
 def create_esgf_search_results():
     """Prepare some fake ESGF search results."""
+    dataset_id = (
+        'CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.historical.r1i1p1f1'
+        '.Amon.tas.gr.v20200310|esgf-data1.llnl.gov'
+    )
+    dataset_id_template = (
+        '%(mip_era)s.%(activity_drs)s.%(institution_id)s.'
+        '%(source_id)s.%(experiment_id)s.%(member_id)s.%(table_id)s.'
+        '%(variable_id)s.%(grid_label)s'
+    )
     file0 = ESGFFile([
         pyesgf.search.results.FileResult(
             json={
-                'dataset_id':
-                'CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.historical.r1i1p1f1'
-                '.Amon.tas.gr.v20200310|esgf-data1.llnl.gov',
+                'dataset_id': dataset_id,
+                'dataset_id_template_': [dataset_id_template],
                 'project': ['CMIP6'],
                 'size':
                 4745571,
@@ -120,9 +128,8 @@ def create_esgf_search_results():
     file1 = ESGFFile([
         pyesgf.search.results.FileResult(
             {
-                'dataset_id':
-                'CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.historical.r1i1p1f1'
-                '.Amon.tas.gr.v20200310|esgf-data1.llnl.gov',
+                'dataset_id': dataset_id,
+                'dataset_id_template_': [dataset_id_template],
                 'project': ['CMIP6'],
                 'size':
                 4740192,

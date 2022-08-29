@@ -527,6 +527,11 @@ def create_esgf_search_results():
                 'dataset_id':
                 'CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.historical.r1i1p1f1'
                 '.Amon.tas.gr.v20200310|esgf-data1.llnl.gov',
+                'dataset_id_template_': [
+                    '%(mip_era)s.%(activity_drs)s.%(institution_id)s.' +
+                    '%(source_id)s.%(experiment_id)s.%(member_id)s.' +
+                    '%(table_id)s.%(variable_id)s.%(grid_label)s'
+                ],
                 'project': ['CMIP6'],
                 'size':
                 4745571,
@@ -550,6 +555,11 @@ def create_esgf_search_results():
                 'dataset_id':
                 'CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.historical.r1i1p1f1'
                 '.Amon.tas.gr.v20200310|esgf-data1.llnl.gov',
+                'dataset_id_template_': [
+                    '%(mip_era)s.%(activity_drs)s.%(institution_id)s.' +
+                    '%(source_id)s.%(experiment_id)s.%(member_id)s.' +
+                    '%(table_id)s.%(variable_id)s.%(grid_label)s'
+                ],
                 'project': ['CMIP6'],
                 'size':
                 4740192,
@@ -614,7 +624,8 @@ def test_find_files(mocker, local_availability):
         'offline': False,
         'download_dir': Path('/download_dir'),
         'rootpath': None,
-        'drs': None,
+        'drs': {},
+        'download_latest_datasets': True,
     }
     dataset._find_files(session)
     input_files = dataset.files
@@ -808,12 +819,13 @@ def test_load(mocker, session):
 
 def test_path2facets():
     """Test `_path2facets1."""
-    filepath = Path("/climate_data/value1/value2/filename.nc")
-    drs = "{facet1}/{facet2}"
+    filepath = Path("/climate_data/value1/value2/value3/filename.nc")
+    drs = "{facet1}/{facet2.lower}/{latestversion}"
 
     expected = {
         'facet1': 'value1',
         'facet2': 'value2',
+        'version': 'value3',
     }
 
     result = _path2facets(filepath, drs)

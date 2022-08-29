@@ -238,6 +238,15 @@ def test_real_search_many():
         print(found_datasets)
         print(datasets)
         assert found_datasets == datasets
+        print(result[0].facets)
+        for file in result:
+            for key, value in variable.items():
+                if key in ('start_year', 'end_year', 'timerange'):
+                    continue
+                if isinstance(value, list):
+                    assert file.facets.get(key) in value
+                else:
+                    assert file.facets.get(key) == value
 
 
 @pytest.mark.skip(reason="This will actually download the data")

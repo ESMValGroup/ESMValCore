@@ -182,7 +182,8 @@ def test_data_availability_nonexistent(tmp_path):
     }
     result = pyesgf.search.results.FileResult(
         json={
-            'dataset_id': 'ABC',
+            'dataset_id': 'CMIP6.ABC.v1|something.org',
+            'dataset_id_template_': ["%(mip_era)s.%(source_id)s"],
             'project': ['CMIP6'],
             'size': 10,
             'title': 'tas_1990-1992.nc',

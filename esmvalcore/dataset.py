@@ -12,6 +12,7 @@ from . import esgf
 from ._config import Session, get_activity, get_extra_facets, get_institutes
 from ._data_finder import (
     _get_timerange_from_years,
+    _select_drs,
     dates_to_timerange,
     get_input_filelist,
     get_output_file,
@@ -191,20 +192,50 @@ class Dataset:
         self.files = [Path(f) for f in files]
         self._files_debug = (dirnames, filenames)
 
+        project = self.facets['project']
+        drs = _select_drs('input_dir', session['drs'], project)
+        file_facets = {f: _path2facets(f, drs) for f in self.files}
+
         # Set up downloading from ESGF if requested.
-        if (not session['offline']
-                and self.facets['project'] in esgf.facets.FACETS):
-            try:
-                check_data_availability(self, log=False)
-            except InputFilesNotFound:
-                # Only use ESGF files that are not available locally.
-                local_files = set(f.name for f in self.files)
-                search_result = esgf.find_files(**self.facets)
-                for file in search_result:
-                    local_copy = file.local_file(session['download_dir'])
-                    if local_copy.name not in local_files:
-                        self.files.append(file)
-                dirnames.append('ESGF:')
+        search_esgf = False
+        if not session['offline'] and project in esgf.facets.FACETS:
+            if session['download_latest_datasets']:
+                search_esgf = True
+            else:
+                try:
+                    check_data_availability(self, log=False)
+                except InputFilesNotFound:
+                    search_esgf = True
+
+        if search_esgf:
+            dirnames.append('ESGF:')
+            local_files = {f.name: f for f in self.files}
+            search_result = esgf.find_files(**self.facets)
+            for file in search_result:
+                if file.name not in local_files:
+                    # Use ESGF files that are not available locally.
+                    self.files.append(file)
+                else:
+                    # Use ESGF files that are newer than the locally available
+                    # files.
+                    local_file = local_files[file.name]
+                    local_facets = file_facets[local_file]
+                    if 'version' in local_facets:
+                        if file.facets['version'] > local_facets['version']:
+                            idx = self.files.index(local_file)
+                            self.files[idx] = file
+
+        versions = set()
+        for file in self.files:
+            if isinstance(file, Path):
+                facets = file_facets[file]
+            else:
+                facets = file.facets
+            if 'version' in facets:
+                versions.add(facets['version'])
+        version = versions.pop() if len(versions) == 1 else sorted(versions)
+        if version:
+            self.set_facet('version', version)
 
     @property
     def files(self):
@@ -369,7 +400,12 @@ def _augment(base, update):
 
 def _path2facets(path: Path, drs: str) -> dict[str, str]:
     """Extract facets from a path using a DRS like '{facet1}/{facet2}'."""
-    keys = re.findall("{(.*?)}", drs)
+    keys = []
+    for key in re.findall(r"{(.*?)}", drs):
+        key = key.split('.')[0]
+        if key == 'latestversion':
+            key = 'version'
+        keys.append(key)
     start, end = -len(keys)-1, -1
     values = path.parts[start:end]
     facets = {key: values[idx] for idx, key in enumerate(keys)}

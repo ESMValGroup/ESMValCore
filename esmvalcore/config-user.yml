@@ -48,6 +48,9 @@ max_parallel_tasks: null
 # on a computer without an internet connection.
 offline: true
 
+# Search ESGF for the latest version of files
+download_latest_datasets: false
+
 # Log level of the console --- debug/[info]/warning/error
 # For much more information printed to screen set log_level to ``debug``.
 log_level: info

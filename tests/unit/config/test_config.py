@@ -160,6 +160,7 @@ def test_load_default_config(monkeypatch, default_config):
         'config_file': CONFIG_USER_FILE,
         'diagnostics': None,
         'download_dir': Path.home() / 'climate_data',
+        'download_latest_datasets': False,
         'drs': {
             'CMIP3': 'ESGF',
             'CMIP5': 'ESGF',
