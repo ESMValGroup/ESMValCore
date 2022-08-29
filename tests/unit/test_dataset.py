@@ -819,13 +819,12 @@ def test_load(mocker, session):
 
 def test_path2facets():
     """Test `_path2facets1."""
-    filepath = Path("/climate_data/value1/value2/value3/filename.nc")
-    drs = "{facet1}/{facet2.lower}/{latestversion}"
+    filepath = Path("/climate_data/value1/value2/filename.nc")
+    drs = "{facet1}/{facet2.lower}"
 
     expected = {
         'facet1': 'value1',
         'facet2': 'value2',
-        'version': 'value3',
     }
 
     result = _path2facets(filepath, drs)

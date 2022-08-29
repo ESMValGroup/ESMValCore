@@ -45,7 +45,7 @@ def get_esgf_facets(variable):
     return facets
 
 
-def select_latest_versions(files):
+def select_latest_versions(files, versions):
     """Select only the latest version of files."""
     result = []
 
@@ -55,14 +55,24 @@ def select_latest_versions(files):
         dataset = file.dataset.rsplit('.', 1)[0]
         return (dataset, file.name)
 
+    if isinstance(versions, str):
+        versions = (versions, )
+
     files = sorted(files, key=same_file)
-    for _, versions in itertools.groupby(files, key=same_file):
-        versions = sorted(versions, reverse=True)
-        latest_version = versions[0]
+    for _, group in itertools.groupby(files, key=same_file):
+        group = sorted(group, reverse=True)
+        if versions:
+            selection = [f for f in group if f.facets['version'] in versions]
+            if not selection:
+                raise FileNotFoundError(
+                    f"Requested versions {', '.join(versions)} of file not "
+                    f"found. Available files: {group}")
+            group = selection
+        latest_version = group[0]
         result.append(latest_version)
-        if len(versions) > 1:
+        if len(group) > 1:
             logger.debug("Only using the latest version %s, not %s",
-                         latest_version, versions[1:])
+                         latest_version, group[1:])
 
     return result
 
@@ -103,7 +113,6 @@ def _search_index_nodes(facets):
         context = connection.new_context(
             pyesgf.search.context.FileSearchContext,
             **facets,
-            latest=True,
         )
         logger.debug("Searching %s for datasets using facets=%s", url, facets)
         try:
@@ -136,8 +145,6 @@ def esgf_search_files(facets):
     results = _search_index_nodes(facets)
 
     files = ESGFFile._from_results(results, facets)
-
-    files = select_latest_versions(files)
 
     msg = 'none' if not files else '\n' + '\n'.join(str(f) for f in files)
     logger.debug("Found the following files matching facets %s: %s", facets,
@@ -288,6 +295,9 @@ def cached_search(**facets):
     """
     esgf_facets = get_esgf_facets(facets)
     files = esgf_search_files(esgf_facets)
+
+    files = select_latest_versions(files, facets.get('version'))
+
     _get_timerange_from_years(facets)
     filter_timerange = (facets.get('frequency', '') != 'fx'
                         and 'timerange' in facets)

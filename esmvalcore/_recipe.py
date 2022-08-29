@@ -858,7 +858,6 @@ def _get_preprocessor_task(datasets, profiles, task_name):
     # Add extra facets
     for dataset in datasets:
         dataset.augment_facets()
-    # TODO: Check facets here?
 
     # Create preprocessor task
     task = _get_single_preprocessor_task(

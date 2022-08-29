@@ -99,8 +99,13 @@ def load_config_developer(cfg_file):
             " should be written as 'obs4MIPs' in %s", cfg_file)
         cfg['obs4MIPs'] = cfg.pop('obs4mips')
 
-    for key, value in cfg.items():
-        CFG[key] = value
+    for project, settings in cfg.items():
+        for site, drs in settings['input_dir'].items():
+            # Since v2.7, 'version' can be used instead of 'latestversion'
+            drs = drs.replace('{latestversion}', '{version}')
+            settings['input_dir'][site] = drs
+        CFG[project] = settings
+
     read_cmor_tables(cfg_file)
 
 

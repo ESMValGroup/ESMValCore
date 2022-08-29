@@ -322,7 +322,7 @@ class Dataset:
         timerange = dates_to_timerange(start_date, end_date)
         check_valid_time_selection(timerange)
 
-        self['timerange'] = timerange
+        self.set_facet('timerange', timerange)
 
     def load(self, session: Session | None = None) -> Cube:
         """Load dataset."""
@@ -402,9 +402,7 @@ def _path2facets(path: Path, drs: str) -> dict[str, str]:
     """Extract facets from a path using a DRS like '{facet1}/{facet2}'."""
     keys = []
     for key in re.findall(r"{(.*?)}", drs):
-        key = key.split('.')[0]
-        if key == 'latestversion':
-            key = 'version'
+        key = key.split('.')[0]  # Remove trailing .lower and .upper
         keys.append(key)
     start, end = -len(keys)-1, -1
     values = path.parts[start:end]

@@ -221,7 +221,6 @@ def test_esgf_search_files(mocker):
     connection.new_context.assert_called_with(
         pyesgf.search.context.FileSearchContext,
         **facets,
-        latest=True,
     )
     context.search.assert_called_with(
         batch_size=500,

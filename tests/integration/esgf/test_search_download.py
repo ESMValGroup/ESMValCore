@@ -15,6 +15,7 @@ VARIABLES = [{
     'frequency': 'mon',
     'project': 'CMIP3',
     'short_name': 'tas',
+    'version': 'v1',
 }, {
     'dataset': 'inmcm4',
     'ensemble': 'r1i1p1',
@@ -22,6 +23,7 @@ VARIABLES = [{
     'mip': 'Amon',
     'project': 'CMIP5',
     'short_name': 'tas',
+    'version': 'v20130207',
 }, {
     'dataset': 'FIO-ESM',
     'ensemble': 'r1i1p1',
@@ -57,6 +59,7 @@ VARIABLES = [{
     'short_name': 'tas',
     'start_year': 2000,
     'end_year': 2001,
+    'version': 'v20200212',
 }, {
     'dataset': 'RACMO22E',
     'driver': 'MOHC-HadGEM2-ES',
@@ -68,11 +71,13 @@ VARIABLES = [{
     'short_name': 'tas',
     'start_year': 1950,
     'end_year': 1952,
+    'version': 'v20160620',
 }, {
     'dataset': 'CERES-EBAF',
     'frequency': 'mon',
     'project': 'obs4MIPs',
     'short_name': 'rsutcs',
+    'version': 'v20160610',
 }]
 
 
@@ -84,7 +89,6 @@ def get_mock_connection(facets, results):
 
     class MockConnection:
         def new_context(self, *args, **kwargs):
-            assert kwargs.pop('latest')
             assert kwargs == facets
             return MockFileSearchContext()
 
@@ -209,7 +213,7 @@ def test_real_search_many():
         ],
         [
             'cmip5.output1.ICHEC.EC-EARTH.historical.mon.atmos.Amon.r1i1p1'
-            '.v20121115',
+            '.v20131231',
         ],
         [
             'CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.historical.r1i1p1f1.Amon.tas.gn'

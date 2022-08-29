@@ -340,7 +340,8 @@ def _replace_tags(paths, variable):
         original_tag = tag
         tag, _, _ = _get_caps_options(tag)
 
-        if tag == 'latestversion':  # handled separately later
+        if tag == 'version' and 'version' not in variable:
+            # handled separately later
             continue
         if tag in variable:
             replacewith = variable[tag]
@@ -385,21 +386,26 @@ def _apply_caps(original, lower, upper):
 
 
 def _resolve_latestversion(dirname_template):
-    """Resolve the 'latestversion' tag.
+    """Resolve the 'version' tag.
 
     This implementation avoid globbing on centralized clusters with very
     large data root dirs (i.e. ESGF nodes like Jasmin/DKRZ).
     """
-    if '{latestversion}' not in dirname_template:
+    if '{version}' not in dirname_template:
         return dirname_template
 
     # Find latest version
-    part1, part2 = dirname_template.split('{latestversion}')
+    part1, part2 = dirname_template.split('{version}')
     part2 = part2.lstrip(os.sep)
     if os.path.exists(part1):
         versions = os.listdir(part1)
+        if 'latest' in versions:
+            # Some organizations create symlinks called 'latest' to the latest
+            # version. This makes it impossible to retrieve the data version
+            # from the path, so we ignore those symlinks.
+            versions.pop(versions.index('latest'))
         versions.sort(reverse=True)
-        for version in ['latest'] + versions:
+        for version in versions:
             dirname = os.path.join(part1, version, part2)
             if os.path.isdir(dirname):
                 return dirname
@@ -507,7 +513,6 @@ def get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
     if isinstance(variable.get('exp'), (list, tuple)):
         variable = dict(variable)
         variable['exp'] = '-'.join(variable['exp'])
-
     outfile = _replace_tags(cfg['output_file'], variable)[0]
     if variable['frequency'] != 'fx':
         timerange = variable['timerange'].replace('/', '-')
