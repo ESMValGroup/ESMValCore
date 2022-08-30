@@ -12,7 +12,6 @@ from typing import Any
 
 import yaml
 from nested_lookup import nested_delete
-from netCDF4 import Dataset
 
 from . import __version__
 from . import _recipe_checks as check
@@ -28,7 +27,7 @@ from ._data_finder import (
 from ._provenance import get_recipe_provenance
 from ._task import DiagnosticTask, ResumeTask, TaskSet
 from .cmor.table import CMOR_TABLES, _get_facets_from_cmor_table
-from .dataset import datasets_from_recipe, datasets_to_recipe
+from .dataset import Dataset, datasets_to_recipe
 from .esgf import ESGFFile
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import (
@@ -884,12 +883,12 @@ class Recipe:
         self.session = session
         self.session['write_ncl_interface'] = self._need_ncl(
             raw_recipe['diagnostics'])
+        self.datasets = Dataset.from_recipe(recipe_file, session)
         self._raw_recipe = raw_recipe
         self._filename = Path(recipe_file.name)
         self._preprocessors = raw_recipe.get('preprocessors', {})
         if 'default' not in self._preprocessors:
             self._preprocessors['default'] = {}
-        self.datasets = datasets_from_recipe(raw_recipe, session)
         self.diagnostics = self._initialize_diagnostics(
             raw_recipe['diagnostics'])
         self.entity = self._initialize_provenance(

@@ -19,6 +19,7 @@ import requests
 import yaml
 from humanfriendly import format_size, format_timespan
 
+from ..local import LocalFile
 from ._logon import get_credentials
 from .facets import DATASET_MAP, FACETS
 
@@ -338,11 +339,13 @@ class ESGFFile:
         Path
             The path where the file will be located after download.
         """
-        return Path(
+        file = LocalFile(
             dest_folder,
             *self.dataset.split('.'),
             self.name,
         ).absolute()
+        file.facets = self.facets
+        return file
 
     def download(self, dest_folder):
         """Download the file.

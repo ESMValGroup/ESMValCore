@@ -9,12 +9,7 @@ import esmvalcore.dataset
 from esmvalcore._config import CFG
 from esmvalcore._config._config_object import CFG_DEFAULT
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.dataset import (
-    Dataset,
-    _path2facets,
-    datasets_from_recipe,
-    datasets_to_recipe,
-)
+from esmvalcore.dataset import Dataset, datasets_to_recipe
 from esmvalcore.esgf import ESGFFile
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 
@@ -185,7 +180,7 @@ def test_augment_facets(session, facets, added_facets):
     assert dataset.facets == expected_facets
 
 
-def test_datsets_from_recipe(session):
+def test_datsets_from_recipe(session, tmp_path):
 
     recipe_txt = textwrap.dedent("""
 
@@ -198,7 +193,8 @@ def test_datsets_from_recipe(session):
             additional_datasets:
               - {dataset: dataset1}
     """)
-    recipe = yaml.safe_load(recipe_txt)
+    recipe = tmp_path / 'recipe_test.yml'
+    recipe.write_text(recipe_txt, encoding='utf-8')
 
     dataset = Dataset(
         diagnostic='diagnostic1',
@@ -213,12 +209,12 @@ def test_datsets_from_recipe(session):
     )
     dataset.session = session
 
-    print(datasets_from_recipe(recipe, session))
+    print(Dataset.from_recipe(recipe, session))
     print([dataset])
-    assert datasets_from_recipe(recipe, session) == [dataset]
+    assert Dataset.from_recipe(recipe, session) == [dataset]
 
 
-def test_datasets_from_complicated_recipe(session):
+def test_datasets_from_complicated_recipe(session, tmp_path):
 
     recipe_txt = textwrap.dedent("""
 
@@ -241,8 +237,8 @@ def test_datasets_from_complicated_recipe(session):
           tos:
             mip: Omon
     """)
-
-    recipe = yaml.safe_load(recipe_txt)
+    recipe = tmp_path / 'recipe_test.yml'
+    recipe.write_text(recipe_txt, encoding='utf-8')
 
     datasets = [
         Dataset(
@@ -315,10 +311,10 @@ def test_datasets_from_complicated_recipe(session):
     for dataset in datasets:
         dataset.session = session
 
-    assert datasets_from_recipe(recipe, session) == datasets
+    assert Dataset.from_recipe(recipe, session) == datasets
 
 
-def test_expand_datasets_from_recipe(session):
+def test_expand_datasets_from_recipe(session, tmp_path):
 
     recipe_txt = textwrap.dedent("""
 
@@ -332,7 +328,8 @@ def test_expand_datasets_from_recipe(session):
             mip: Amon
             project: CMIP6
     """)
-    recipe = yaml.safe_load(recipe_txt)
+    recipe = tmp_path / 'recipe_test.yml'
+    recipe.write_text(recipe_txt, encoding='utf-8')
 
     datasets = [
         Dataset(
@@ -363,10 +360,10 @@ def test_expand_datasets_from_recipe(session):
     for dataset in datasets:
         dataset.session = session
 
-    assert datasets_from_recipe(recipe, session) == datasets
+    assert Dataset.from_recipe(recipe, session) == datasets
 
 
-def test_ancillary_datasets_from_recipe(session):
+def test_ancillary_datasets_from_recipe(session, tmp_path):
 
     recipe_txt = textwrap.dedent("""
 
@@ -383,7 +380,8 @@ def test_ancillary_datasets_from_recipe(session):
               - short_name: sftof
                 mip: fx
     """)
-    recipe = yaml.safe_load(recipe_txt)
+    recipe = tmp_path / 'recipe_test.yml'
+    recipe.write_text(recipe_txt, encoding='utf-8')
 
     dataset = Dataset(
         diagnostic='diagnostic1',
@@ -410,7 +408,7 @@ def test_ancillary_datasets_from_recipe(session):
     ]
     dataset.session = session
 
-    assert datasets_from_recipe(recipe, session) == [dataset]
+    assert Dataset.from_recipe(recipe, session) == [dataset]
 
 
 def test_datasets_to_recipe():
@@ -596,10 +594,10 @@ def test_find_files(mocker, local_availability):
     }
     local_files = local_file_options[local_availability]
 
-    mocker.patch.object(esmvalcore.dataset,
-                        'get_input_filelist',
+    mocker.patch.object(esmvalcore.dataset.local,
+                        'find_files',
                         autospec=True,
-                        return_value=(list(local_files), [], []))
+                        return_value=(list(local_files), ([], [])),)
     mocker.patch.object(
         esmvalcore.dataset.esgf,
         'find_files',
@@ -815,18 +813,3 @@ def test_load(mocker, session):
     assert args == load_args
 
     get_output_file.assert_called_with(dataset.facets, session.preproc_dir)
-
-
-def test_path2facets():
-    """Test `_path2facets1."""
-    filepath = Path("/climate_data/value1/value2/filename.nc")
-    drs = "{facet1}/{facet2.lower}"
-
-    expected = {
-        'facet1': 'value1',
-        'facet2': 'value2',
-    }
-
-    result = _path2facets(filepath, drs)
-
-    assert result == expected
