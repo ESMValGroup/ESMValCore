@@ -18,6 +18,8 @@ from pathlib import Path, PosixPath
 from shutil import which
 from typing import Dict, Type
 
+import dask
+import dask.distributed
 import psutil
 import yaml
 
@@ -719,10 +721,26 @@ class TaskSet(set):
         max_parallel_tasks : int
             Number of processes to run. If `1`, run the tasks sequentially.
         """
-        if max_parallel_tasks == 1:
+        if max_parallel_tasks == -1:
+            self._run_dask()
+        elif max_parallel_tasks == 1:
             self._run_sequential()
         else:
             self._run_parallel(max_parallel_tasks)
+
+    def _run_dask(self) -> None:
+        cluster = dask.distributed.LocalCluster(processes=False)
+        print(cluster.dashboard_link)
+        dask.distributed.Client(cluster)
+        delayeds = []
+        for task in sorted(self.flatten(), key=lambda t: t.priority):
+            print(task.name, hasattr(task, 'delayeds'))
+            if hasattr(task, 'delayeds'):
+                print(f"Scheduling {task.name}")
+                task.run()
+                delayeds.extend(task.delayeds)
+        print(f"Running {delayeds}")
+        dask.compute(delayeds)
 
     def _run_sequential(self) -> None:
         """Run tasks sequentially."""

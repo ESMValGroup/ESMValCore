@@ -401,6 +401,7 @@ class PreprocessorFile(TrackedFile):
 
         self._cubes = None
         self._prepared = False
+        self.delayeds = []
 
     def _input_files_for_log(self):
         """Do not log input files twice in output log."""
@@ -453,9 +454,13 @@ class PreprocessorFile(TrackedFile):
 
     def save(self):
         """Save cubes to disk."""
-        self.files = preprocess(self._cubes, 'save',
-                                input_files=self._input_files,
-                                **self.settings['save'])
+        self.delayeds.clear()
+        filename, self.delayeds = save(
+            self._cubes,
+            **self.settings['save'],
+        )
+        self.files = [filename]
+        print('save called for', filename)
         self.files = preprocess(self.files, 'cleanup',
                                 input_files=self._input_files,
                                 **self.settings.get('cleanup', {}))
@@ -465,7 +470,7 @@ class PreprocessorFile(TrackedFile):
         if self._cubes is not None:
             self.save()
             self._cubes = None
-            self.save_provenance()
+            # self.save_provenance()
 
     @property
     def is_closed(self):
@@ -545,6 +550,7 @@ class PreprocessingTask(BaseTask):
         self.order = list(order)
         self.debug = debug
         self.write_ncl_interface = write_ncl_interface
+        self.delayeds = []
 
     def _initialize_product_provenance(self):
         """Initialize product provenance."""
@@ -589,6 +595,7 @@ class PreprocessingTask(BaseTask):
 
     def _run(self, _):
         """Run the preprocessor."""
+        self.delayeds.clear()
         self._initialize_product_provenance()
 
         steps = {
@@ -613,6 +620,7 @@ class PreprocessingTask(BaseTask):
 
         for product in self.products:
             product.close()
+            self.delayeds.extend(product.delayeds)
         metadata_files = write_metadata(self.products,
                                         self.write_ncl_interface)
         return metadata_files

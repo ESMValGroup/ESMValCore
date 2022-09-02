@@ -10,6 +10,7 @@ import iris
 import iris.aux_factory
 import iris.exceptions
 import numpy as np
+import xarray
 import yaml
 from cf_units import suppress_errors
 
@@ -134,7 +135,6 @@ def load(file, callback=None, ignore_warnings=None):
     ------
     ValueError
         Cubes are empty.
-
     """
     logger.debug("Loading:\n%s", file)
     if ignore_warnings is None:
@@ -332,9 +332,12 @@ def save(cubes,
             logger.debug('Changing var_name from %s to %s', cube.var_name,
                          alias)
             cube.var_name = alias
-    iris.save(cubes, **kwargs)
-
-    return filename
+    delayeds = []
+    for cube in cubes:
+        delayed = xarray.DataArray.from_iris(cube).to_netcdf(
+            filename, compute=False)
+        delayeds.append(delayed)
+    return filename, delayeds
 
 
 def _get_debug_filename(filename, step):
