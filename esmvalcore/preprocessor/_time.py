@@ -37,7 +37,7 @@ for _coord in (
     filterwarnings(
         'ignore',
         "Collapsing a non-contiguous coordinate. "
-        "Metadata may not be fully descriptive for '{0}'.".format(_coord),
+        f"Metadata may not be fully descriptive for '{_coord}'.",
         category=UserWarning,
         module='iris',
     )
@@ -188,14 +188,14 @@ def _extract_datetime(
             cube_slice = None
 
     if cube_slice is None:
-        def format(time: PartialDateTime) -> str:
+        def dt2str(time: PartialDateTime) -> str:
             txt = f"{time.year}-{time.month:02d}-{time.day:02d}"
             if any([time.hour, time.minute, time.second]):
                 txt += f" {time.hour:02d}:{time.minute:02d}:{time.second:02d}"
             return txt
         raise ValueError(
-            f"Time slice {format(start_datetime)} "
-            f"to {format(end_datetime)} is outside "
+            f"Time slice {dt2str(start_datetime)} "
+            f"to {dt2str(end_datetime)} is outside "
             f"cube time bounds {time_coord.cell(0)} to {time_coord.cell(-1)}.")
 
     return cube_slice
@@ -543,9 +543,9 @@ def seasonal_statistics(cube,
     iris.cube.Cube
         Seasonal statistic cube
     """
-    seasons = tuple([sea.upper() for sea in seasons])
+    seasons = tuple(sea.upper() for sea in seasons)
 
-    if any([len(sea) < 2 for sea in seasons]):
+    if any(len(sea) < 2 for sea in seasons):
         raise ValueError(
             f"Minimum of 2 month is required per Seasons: {seasons}.")
 
@@ -556,7 +556,7 @@ def seasonal_statistics(cube,
                                              seasons=seasons)
     else:
         old_seasons = list(set(cube.coord('clim_season').points))
-        if not all([osea in seasons for osea in old_seasons]):
+        if not all(osea in seasons for osea in old_seasons):
             raise ValueError(
                 f"Seasons {seasons} do not match prior season extraction "
                 f"{old_seasons}.")
@@ -1035,9 +1035,9 @@ def timeseries_filter(cube,
         if filter_type == 'lowpass':
             wgts = low_pass_weights(window, 1. / span)
     else:
-        raise NotImplementedError("Filter type {} not implemented, \
-            please choose one of {}".format(filter_type,
-                                            ", ".join(supported_filters)))
+        raise NotImplementedError(
+            f"Filter type {filter_type} not implemented, "
+            f"please choose one of {', '.join(supported_filters)}")
 
     # Apply filter
     aggregation_operator = get_iris_analysis_operation(filter_stats)
@@ -1149,9 +1149,9 @@ def resample_time(cube, month=None, day=None, hour=None):
     """
     time = cube.coord('time')
     dates = time.units.num2date(time.points)
-    datetime = PartialDateTime(month=month, day=day, hour=hour)
-    select = dates == datetime
+    requested = PartialDateTime(month=month, day=day, hour=hour)
+    select = dates == requested
     if not select.any():
         raise ValueError(
-            f"Time coordinate {dates} does not contain {datetime} for {cube}")
+            f"Time coordinate {dates} does not contain {requested} for {cube}")
     return cube.subset(time[select])
