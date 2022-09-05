@@ -78,13 +78,6 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
     ValueError
         if time ranges are outside the cube time limits
     """
-    time_coord = cube.coord('time')
-    time_units = time_coord.units
-    if time_units.calendar == '360_day':
-        if start_day > 30:
-            start_day = 30
-        if end_day > 30:
-            end_day = 30
     t_1 = PartialDateTime(year=int(start_year),
                           month=int(start_month),
                           day=int(start_day))
@@ -92,22 +85,7 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
                           month=int(end_month),
                           day=int(end_day))
 
-    constraint = iris.Constraint(time=lambda t: t_1 <= t.point < t_2)
-
-    cube_slice = cube.extract(constraint)
-    if cube_slice is None:
-        raise ValueError(
-            f"Time slice {start_year:0>4d}-{start_month:0>2d}-{start_day:0>2d}"
-            f" to {end_year:0>4d}-{end_month:0>2d}-{end_day:0>2d} is outside "
-            f"cube time bounds {time_coord.cell(0)} to {time_coord.cell(-1)}.")
-
-    # Issue when time dimension was removed when only one point as selected.
-    if cube_slice.ndim != cube.ndim:
-        if cube_slice.coord('time') == time_coord:
-            logger.debug('No change needed to time.')
-            return cube
-
-    return cube_slice
+    return _extract_datetime(cube, t_1, t_2)
 
 
 def _parse_start_date(date):
@@ -157,22 +135,11 @@ def _duration_to_date(duration, reference, sign):
     return date
 
 
-def _restore_time_coord_position(cube, original_time_index):
-    """Restore original ordering of coordinates."""
-    # Coordinates before time
-    new_order = list(np.arange(original_time_index) + 1)
-
-    # Time coordinate
-    new_order.append(0)
-
-    # Coordinates after time
-    new_order = new_order + list(range(original_time_index + 1, cube.ndim))
-
-    # Transpose cube in-place
-    cube.transpose(new_order)
-
-
-def _extract_datetime(cube, start_datetime, end_datetime):
+def _extract_datetime(
+    cube: iris.cube.Cube,
+    start_datetime: PartialDateTime,
+    end_datetime: PartialDateTime,
+) -> iris.cube.Cube:
     """Extract a time range from a cube.
 
     Given a time range passed in as a datetime.datetime object, it
@@ -183,9 +150,9 @@ def _extract_datetime(cube, start_datetime, end_datetime):
     ----------
     cube: iris.cube.Cube
         input cube.
-    start_datetime: datetime.datetime
+    start_datetime: PartialDateTime
         start datetime
-    end_datetime: datetime.datetime
+    end_datetime: PartialDateTime
         end datetime
 
     Returns
@@ -201,43 +168,35 @@ def _extract_datetime(cube, start_datetime, end_datetime):
     time_coord = cube.coord('time')
     time_units = time_coord.units
     if time_units.calendar == '360_day':
-        if start_datetime.day > 30:
-            start_datetime = start_datetime.replace(day=30)
-        if end_datetime.day > 30:
-            end_datetime = end_datetime.replace(day=30)
+        if isinstance(start_datetime.day, int) and start_datetime.day > 30:
+            start_datetime.day = 30
+        if isinstance(end_datetime.day, int) and end_datetime.day > 30:
+            end_datetime.day = 30
 
-    t_1 = PartialDateTime(year=int(start_datetime.year),
-                          month=int(start_datetime.month),
-                          day=int(start_datetime.day),
-                          hour=int(start_datetime.hour),
-                          minute=int(start_datetime.minute),
-                          second=int(start_datetime.second))
+    if not cube.coord_dims(time_coord):
+        constraint = iris.Constraint(
+            time=lambda t: start_datetime <= t.point < end_datetime)
+        cube_slice = cube.extract(constraint)
+    else:
+        # Convert all time points to dates at once, this is much faster
+        # than using a constraint.
+        dates = time_coord.units.num2date(time_coord.points)
+        select = (dates >= start_datetime) & (dates < end_datetime)
+        if select.any():
+            cube_slice = cube.subset(time_coord[select])
+        else:
+            cube_slice = None
 
-    t_2 = PartialDateTime(year=int(end_datetime.year),
-                          month=int(end_datetime.month),
-                          day=int(end_datetime.day),
-                          hour=int(end_datetime.hour),
-                          minute=int(end_datetime.minute),
-                          second=int(end_datetime.second))
-
-    constraint = iris.Constraint(time=lambda t: t_1 <= t.point < t_2)
-    cube_slice = cube.extract(constraint)
     if cube_slice is None:
+        def format(time: PartialDateTime) -> str:
+            txt = f"{time.year}-{time.month:02d}-{time.day:02d}"
+            if any([time.hour, time.minute, time.second]):
+                txt += f" {time.hour:02d}:{time.minute:02d}:{time.second:02d}"
+            return txt
         raise ValueError(
-            f"Time slice {start_datetime.strftime('%Y-%m-%d')} "
-            f"to {end_datetime.strftime('%Y-%m-%d')} is outside "
+            f"Time slice {format(start_datetime)} "
+            f"to {format(end_datetime)} is outside "
             f"cube time bounds {time_coord.cell(0)} to {time_coord.cell(-1)}.")
-
-    # If only a single point in time is extracted, the new time coordinate of
-    # cube_slice is a scalar coordinate. Convert this back to a regular
-    # dimensional coordinate with length 1. Note that iris.util.new_axis always
-    # puts the new axis at index 0, so we need to reorder the coordinates in
-    # case the original time coordinate was not at index 0.
-    if cube_slice.ndim < cube.ndim:
-        cube_slice = iris.util.new_axis(cube_slice, 'time')
-        original_time_index = cube.coord_dims(time_coord)[0]
-        if original_time_index != 0:
-            _restore_time_coord_position(cube_slice, original_time_index)
 
     return cube_slice
 
@@ -280,7 +239,25 @@ def clip_timerange(cube, timerange):
         end_date = _duration_to_date(end_date, start_date, sign=1)
         end_date += datetime.timedelta(seconds=1)
 
-    return _extract_datetime(cube, start_date, end_date)
+    t_1 = PartialDateTime(
+        year=start_date.year,
+        month=start_date.month,
+        day=start_date.day,
+        hour=start_date.hour,
+        minute=start_date.minute,
+        second=start_date.second,
+    )
+
+    t_2 = PartialDateTime(
+        year=end_date.year,
+        month=end_date.month,
+        day=end_date.day,
+        hour=end_date.hour,
+        minute=end_date.minute,
+        second=end_date.second,
+    )
+
+    return _extract_datetime(cube, t_1, t_2)
 
 
 def extract_season(cube, season):
@@ -911,7 +888,8 @@ def regrid_time(cube, frequency):
         cube with converted time axis and units.
     """
     # standardize time points
-    time_c = [cell.point for cell in cube.coord('time').cells()]
+    coord = cube.coord('time')
+    time_c = coord.units.num2date(coord.points)
     if frequency == 'yr':
         time_cells = [datetime.datetime(t.year, 7, 1, 0, 0, 0) for t in time_c]
     elif frequency == 'mon':
@@ -1119,9 +1097,16 @@ def resample_hours(cube, interval, offset=0):
     if cube_period.total_seconds() / 3600 >= interval:
         raise ValueError(f"Data period ({cube_period}) should be lower than "
                          f"the interval ({interval})")
-    hours = range(0 + offset, 24, interval)
-    select_hours = iris.Constraint(time=lambda cell: cell.point.hour in hours)
-    return cube.extract(select_hours)
+    hours = [PartialDateTime(hour=h) for h in range(0 + offset, 24, interval)]
+    dates = time.units.num2date(time.points)
+    select = np.zeros(len(dates), dtype=bool)
+    for hour in hours:
+        select |= dates == hour
+    if not select.any():
+        raise ValueError(
+            f"Time coordinate {dates} does not contain {hours} for {cube}")
+
+    return cube.subset(time[select])
 
 
 def resample_time(cube, month=None, day=None, hour=None):
@@ -1162,14 +1147,11 @@ def resample_time(cube, month=None, day=None, hour=None):
     iris.cube.Cube
         Cube with the new frequency.
     """
-    def compare(cell):
-        date = cell.point
-        if month is not None and month != date.month:
-            return False
-        if day is not None and day != date.day:
-            return False
-        if hour is not None and hour != date.hour:
-            return False
-        return True
-
-    return cube.extract(iris.Constraint(time=compare))
+    time = cube.coord('time')
+    dates = time.units.num2date(time.points)
+    datetime = PartialDateTime(month=month, day=day, hour=hour)
+    select = dates == datetime
+    if not select.any():
+        raise ValueError(
+            f"Time coordinate {dates} does not contain {datetime} for {cube}")
+    return cube.subset(time[select])

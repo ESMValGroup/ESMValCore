@@ -1991,9 +1991,18 @@ class TestResampleHours(tests.Test):
         with self.assertRaises(ValueError):
             resample_hours(cube, interval=12)
 
+    def test_resample_nodata(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 4, 1)
+        times = np.arange(0, 4, 1)
+        cube = self._create_cube(data, times)
+
+        with self.assertRaises(ValueError):
+            resample_hours(cube, offset=5, interval=6)
+
 
 class TestResampleTime(tests.Test):
-    """Test :func:`esmvalcore.preprocessor._time.resample_hours`."""
+    """Test :func:`esmvalcore.preprocessor._time.resample_time`."""
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -2036,6 +2045,15 @@ class TestResampleTime(tests.Test):
             44 * 24,
         ])
         assert_array_equal(result.data, expected)
+
+    def test_resample_fails(self):
+        """Test that selecting something that is not in the data fails."""
+        data = np.arange(0, 15 * 24, 24)
+        times = np.arange(0, 15 * 24, 24)
+        cube = self._create_cube(data, times)
+
+        with pytest.raises(ValueError):
+            resample_time(cube, day=16)
 
 
 if __name__ == '__main__':
