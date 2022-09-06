@@ -135,6 +135,22 @@ def _duration_to_date(duration, reference, sign):
     return date
 
 
+def _select_timeslice(
+    cube: iris.cube.Cube,
+    select: np.ndarray,
+) -> iris.cube.Cube | None:
+    """Slice a cube along its time axis."""
+    if select.any():
+        coord = cube.coord('time')
+        time_dim = cube.coord_dims(coord)[0]
+        slices = tuple(select if i == time_dim else slice(None)
+                       for i in range(cube.ndim))
+        cube_slice = cube[slices]
+    else:
+        cube_slice = None
+    return cube_slice
+
+
 def _extract_datetime(
     cube: iris.cube.Cube,
     start_datetime: PartialDateTime,
@@ -182,12 +198,10 @@ def _extract_datetime(
         # than using a constraint.
         dates = time_coord.units.num2date(time_coord.points)
         select = (dates >= start_datetime) & (dates < end_datetime)
-        if select.any():
-            cube_slice = cube.subset(time_coord[select])
-        else:
-            cube_slice = None
+        cube_slice = _select_timeslice(cube, select)
 
     if cube_slice is None:
+
         def dt2str(time: PartialDateTime) -> str:
             txt = f"{time.year}-{time.month:02d}-{time.day:02d}"
             if any([time.hour, time.minute, time.second]):
@@ -1103,11 +1117,12 @@ def resample_hours(cube, interval, offset=0):
     select = np.zeros(len(dates), dtype=bool)
     for hour in hours:
         select |= dates == hour
-    if not select.any():
+    cube = _select_timeslice(cube, select)
+    if cube is None:
         raise ValueError(
             f"Time coordinate {dates} does not contain {hours} for {cube}")
 
-    return cube.subset(time[select])
+    return cube
 
 
 def resample_time(cube, month=None, day=None, hour=None):
@@ -1152,7 +1167,8 @@ def resample_time(cube, month=None, day=None, hour=None):
     dates = time.units.num2date(time.points)
     requested = PartialDateTime(month=month, day=day, hour=hour)
     select = dates == requested
-    if not select.any():
+    cube = _select_timeslice(cube, select)
+    if cube is None:
         raise ValueError(
             f"Time coordinate {dates} does not contain {requested} for {cube}")
-    return cube.subset(time[select])
+    return cube
