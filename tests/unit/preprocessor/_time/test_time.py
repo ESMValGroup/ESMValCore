@@ -148,6 +148,7 @@ class TestTimeSlice(tests.Test):
 
     def test_extract_time_no_slice(self):
         """Test fail of extract_time."""
+        self.cube.coord('time').guess_bounds()
         with self.assertRaises(ValueError) as ctx:
             extract_time(self.cube, 2200, 1, 1, 2200, 12, 31)
         msg = ("Time slice 2200-01-01 to 2200-12-31 is outside"
@@ -201,6 +202,7 @@ class TestClipTimerange(tests.Test):
 
     def test_clip_timerange_no_slice(self):
         """Test fail of clip_timerange."""
+        self.cube.coord('time').guess_bounds()
         msg = ("Time slice 2200-01-01 01:00:00 to 2201-01-01 is outside"
                " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
         with self.assertRaises(ValueError) as ctx:
@@ -210,7 +212,6 @@ class TestClipTimerange(tests.Test):
     def test_clip_timerange_one_time(self):
         """Test clip_timerange with one time step."""
         cube = _create_sample_cube()
-        cube.coord('time').guess_bounds()
         cube = cube.collapsed('time', iris.analysis.MEAN)
         sliced = clip_timerange(cube, '1950/1952')
         assert_array_equal(np.array([360.]), sliced.coord('time').points)
@@ -877,7 +878,7 @@ class TestSeasonalStatistics(tests.Test):
         )
         msg = (
             "Seasons ('DJF', 'MAM', 'JJA', 'SON') do not match prior season "
-            "extraction ['JFMAMJ', 'JASOND']."
+            "extraction ['JASOND', 'JFMAMJ']."
         )
         with pytest.raises(ValueError, match=re.escape(msg)):
             seasonal_statistics(cube, 'mean')

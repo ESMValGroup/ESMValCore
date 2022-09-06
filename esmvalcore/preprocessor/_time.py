@@ -196,7 +196,8 @@ def _extract_datetime(
         raise ValueError(
             f"Time slice {dt2str(start_datetime)} "
             f"to {dt2str(end_datetime)} is outside "
-            f"cube time bounds {time_coord.cell(0)} to {time_coord.cell(-1)}.")
+            f"cube time bounds {time_coord.cell(0).point} to "
+            f"{time_coord.cell(-1).point}.")
 
     return cube_slice
 
@@ -555,7 +556,7 @@ def seasonal_statistics(cube,
                                              name='clim_season',
                                              seasons=seasons)
     else:
-        old_seasons = list(set(cube.coord('clim_season').points))
+        old_seasons = sorted(set(cube.coord('clim_season').points))
         if not all(osea in seasons for osea in old_seasons):
             raise ValueError(
                 f"Seasons {seasons} do not match prior season extraction "
