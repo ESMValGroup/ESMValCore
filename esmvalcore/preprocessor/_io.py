@@ -504,6 +504,8 @@ def _concatenate_overlapping_cubes(cubes):
             if c1_delta.data.shape == ():
                 c1_delta = iris.util.new_axis(c1_delta, scalar_coord="time")
             cubes = iris.cube.CubeList([c1_delta, cubes[1]])
+            logger.debug("Attempting concatenatenation of %s with %s",
+                         c1_delta, cubes[1])
             try:
                 cubes = [iris.cube.CubeList(cubes).concatenate_cube()]
             except iris.exceptions.ConcatenateError as ex:
