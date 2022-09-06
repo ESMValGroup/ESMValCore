@@ -1,6 +1,7 @@
 """Unit tests for the :func:`esmvalcore.preprocessor._time` module."""
 
 import copy
+import re
 import unittest
 from datetime import datetime
 from typing import List, Tuple
@@ -862,6 +863,24 @@ class TestSeasonalStatistics(tests.Test):
         self.assertEqual(result.cell_measure('ocean_volume').ndim, 2)
         self.assertEqual(
             result.ancillary_variable('land_ice_area_fraction').ndim, 2)
+
+    def test_season_not_available(self):
+        """Test that an exception is raised if a season is not available."""
+        data = np.arange(12)
+        times = np.arange(15, 360, 30)
+        cube = self._create_cube(data, times)
+        iris.coord_categorisation.add_season(
+            cube,
+            'time',
+            name='clim_season',
+            seasons=['JFMAMJ', 'JASOND'],
+        )
+        msg = (
+            "Seasons ('DJF', 'MAM', 'JJA', 'SON') do not match prior season "
+            "extraction ['JFMAMJ', 'JASOND']."
+        )
+        with pytest.raises(ValueError, match=re.escape(msg)):
+            seasonal_statistics(cube, 'mean')
 
 
 class TestMonthlyStatistics(tests.Test):
