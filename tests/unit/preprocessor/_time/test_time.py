@@ -200,12 +200,10 @@ class TestClipTimerange(tests.Test):
 
     def test_clip_timerange_no_slice(self):
         """Test fail of clip_timerange."""
-        with self.assertRaises(ValueError) as ctx:
-            clip_timerange(self.cube, '2200/2200')
-        msg = ("Time slice 2200-01-01 to 2201-01-01 is outside"
+        msg = ("Time slice 2200-01-01 01:00:00 to 2201-01-01 is outside"
                " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
         with self.assertRaises(ValueError) as ctx:
-            clip_timerange(self.cube, '2200/2200')
+            clip_timerange(self.cube, '22000101T010000/2200')
         assert ctx.exception.args == (msg, )
 
     def test_clip_timerange_one_time(self):
