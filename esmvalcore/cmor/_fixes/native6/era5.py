@@ -9,6 +9,7 @@ from esmvalcore.iris_helpers import date2num
 
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
+from ...table import CMOR_TABLES
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +72,7 @@ def divide_by_gravity(cube):
     cube.data = cube.core_data() / 9.80665
     return cube
 
-
+        
 class Clt(Fix):
     """Fixes for clt."""
     def fix_metadata(self, cubes):
@@ -83,6 +84,118 @@ class Clt(Fix):
         return cubes
 
 
+#class Lwp(Fix):
+ #   """Fixes for lwp."""
+  #  def fix_metadata(self, cubes):
+   #     for cube in cubes:
+    #        # Invalid input cube units (ignored on load) were '0-1'
+     #       cube.units = 'm'
+      #      multiply_with_density(cube)
+
+       # return cubes
+        
+class Cl(Fix):
+    """Fixes for cl."""
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            cube.units = '%'
+            cube.data = cube.core_data()*100.
+
+        return cubes        
+
+        
+
+class Clw(Fix):
+    """Fixes for clw."""
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            cube.units = 'kg kg-1'
+
+        return cubes
+        
+class Cli(Fix):
+    """Fixes for cli."""
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            cube.units = 'kg kg-1'
+            
+
+        return cubes
+        
+
+class Hus(Fix):
+    """Fixes for hus."""
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            cube.units = 'kg kg-1'
+            #cube.data = cube.core_data()*100.
+
+        return cubes
+        
+class Rlut(Fix):
+    """Fixes for rlut."""
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            metadata = cube.metadata
+            cube *= -1
+            cube.metadata = metadata
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            cube.units = 'W m-2'
+            cube.attributes['positive'] = 'up'
+        return cubes
+
+class Rlutcs(Fix):
+    """Fixes for rlutcs."""
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            metadata = cube.metadata
+            cube *= -1
+            cube.metadata = metadata
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            cube.units = 'W m-2'
+            cube.attributes['positive'] = 'up'
+
+        return cubes
+        
+class Rsut(Fix):
+    """Fixes for rsut."""
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            metadata = cube.metadata
+            cube *= -1
+            cube.metadata = metadata
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            cube.units = 'W m-2'
+            cube.attributes['positive'] = 'up'
+
+        return cubes
+        
+class Rsutcs(Fix):
+    """Fixes for rsutcs."""
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            metadata = cube.metadata
+            cube *= -1
+            cube.metadata = metadata
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            cube.units = 'W m-2'
+            cube.attributes['positive'] = 'up'
+
+        return cubes
+        
+                
 class Evspsbl(Fix):
     """Fixes for evspsbl."""
     def fix_metadata(self, cubes):
@@ -328,6 +441,10 @@ class AllVars(Fix):
 
         for coord_def in self.vardef.coordinates.values():
             axis = coord_def.axis
+            #ERA5 uses regular pressure level coordinate. In case the cmor variable requires a hybrid level coordinate, we replace this with a regular pressure level coordinate. (https://github.com/ESMValGroup/ESMValCore/issues/1029)
+            if axis == "" and coord_def.name == "alevel":
+                axis = "Z"
+                coord_def = CMOR_TABLES['CMIP6'].coords['plev19'] 
             coord = cube.coord(axis=axis)
             if axis == 'T':
                 coord.convert_units('days since 1850-1-1 00:00:00.0')
