@@ -84,15 +84,15 @@ class Clt(Fix):
         return cubes
 
 
-#class Lwp(Fix):
- #   """Fixes for lwp."""
-  #  def fix_metadata(self, cubes):
-   #     for cube in cubes:
-    #        # Invalid input cube units (ignored on load) were '0-1'
-     #       cube.units = 'm'
-      #      multiply_with_density(cube)
+class Lwp(Fix):
+    """Fixes for lwp."""
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            cube.units = 'm'
+            multiply_with_density(cube)
 
-       # return cubes
+        return cubes
         
 class Cl(Fix):
     """Fixes for cl."""
