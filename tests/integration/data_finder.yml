@@ -26,6 +26,77 @@ get_output_file:
     preproc_dir: /test
     output_file: /test/test_diag/test/CMIP5_HadGEM2-ES_Amon_historical-rcp85_r1i1p1_ta_1960-1980.nc
 
+  # EMAC
+
+  - variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: EMAC
+      project: EMAC
+      cmor_table: CMIP6
+      frequency: mon
+      mip: Amon
+      exp: amip
+      timerange: '1960/1980'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    preproc_dir: this/is/a/path
+    output_file: this/is/a/path/test_diag/test/EMAC_EMAC_amip_Amon_Amon_tas_1960-1980.nc
+
+  - variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: EMAC
+      project: EMAC
+      cmor_table: CMIP6
+      frequency: mon
+      mip: Amon
+      exp: piControl
+      channel: CH
+      postproc_flag: -p-mm
+      timerange: '199001/199002'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    preproc_dir: this/is/a/path
+    output_file: this/is/a/path/test_diag/test/EMAC_EMAC_piControl_CH_Amon_tas_199001-199002.nc
+
+  # ICON
+
+  - variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: ICON
+      project: ICON
+      cmor_table: CMIP6
+      frequency: mon
+      mip: Amon
+      exp: amip
+      timerange: '1960/1980'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    preproc_dir: this/is/a/path
+    output_file: this/is/a/path/test_diag/test/ICON_ICON_amip_atm_2d_ml_Amon_tas_1960-1980.nc
+
+  - variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: ICON
+      project: ICON
+      cmor_table: CMIP6
+      frequency: mon
+      mip: Amon
+      exp: amip
+      var_type: custom_var_type
+      timerange: '20000101/20000102'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    preproc_dir: this/is/a/path
+    output_file: this/is/a/path/test_diag/test/ICON_ICON_amip_custom_var_type_Amon_tas_20000101-20000102.nc
+
 
 get_input_filelist:
   - drs: default
@@ -460,9 +531,9 @@ get_input_filelist:
     file_patterns:
       - simulation_*_t2m.nc
       - simulation_*_histmth.nc
-    found_files: 
+    found_files:
       - thredds/tgcc/store/p86caub/IPSLCM6/PROD/historical/simulation/ATM/Output/MO/simulation_18500101_18591231_1M_histmth.nc
-    
+
   - drs: default
     variable:
       <<: *ipsl_variable
@@ -475,9 +546,9 @@ get_input_filelist:
     file_patterns:
       - simulation_*_t2m.nc
       - simulation_*_histmth.nc
-    found_files: 
+    found_files:
       - thredds/tgcc/store/p86caub/IPSLCM6/PROD/historical/simulation/ATM/Analyse/TS_MO/simulation_18500101_20141231_1M_t2m.nc
-      
+
   # Test fx files
 
   - drs: default
@@ -779,3 +850,141 @@ get_input_filelist:
     file_patterns:
       - OBS6_ERA-Interim_reanaly_42_Omon_deptho[_.]*nc
     found_files: []
+
+  # EMAC
+
+  - drs: default
+    variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: EMAC
+      project: EMAC
+      cmor_table: CMIP6
+      frequency: mon
+      mip: Amon
+      exp: amip
+      timerange: '200002/200003'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - amip/Amon/amip___________200001_Amon.nc
+      - amip/Amon/amip___________200002_Amon.nc
+      - amip/Amon/amip___________200003_Amon.nc
+      - amip/Amon/amip___________200001_Amon-p-mm.nc
+      - amip/Amon/amip___________200002_Amon-p-mm.nc
+      - amip/Amon/amip___________200003_Amon-p-mm.nc
+      - amip/rad/amip___________200001_rad.nc
+      - amip/rad/amip___________200002_rad.nc
+      - amip/rad/amip___________200003_rad.nc
+      - amip/rad/amip___________200001_rad-p-mm.nc
+      - amip/rad/amip___________200002_rad-p-mm.nc
+      - amip/rad/amip___________200003_rad-p-mm.nc
+    dirs:
+      - amip/Amon
+    file_patterns:
+      - amip*Amon.nc
+    found_files:
+      - amip/Amon/amip___________200002_Amon.nc
+      - amip/Amon/amip___________200003_Amon.nc
+
+  - drs: default
+    variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: EMAC
+      project: EMAC
+      cmor_table: CMIP6
+      frequency: mon
+      mip: Amon
+      exp: amip
+      channel: rad
+      postproc_flag: -p-mm
+      timerange: '200001/200002'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - amip/Amon/amip___________200001_Amon.nc
+      - amip/Amon/amip___________200002_Amon.nc
+      - amip/Amon/amip___________200003_Amon.nc
+      - amip/Amon/amip___________200001_Amon-p-mm.nc
+      - amip/Amon/amip___________200002_Amon-p-mm.nc
+      - amip/Amon/amip___________200003_Amon-p-mm.nc
+      - amip/rad/amip___________200001_rad.nc
+      - amip/rad/amip___________200002_rad.nc
+      - amip/rad/amip___________200003_rad.nc
+      - amip/rad/amip___________200001_rad-p-mm.nc
+      - amip/rad/amip___________200002_rad-p-mm.nc
+      - amip/rad/amip___________200003_rad-p-mm.nc
+    dirs:
+      - amip/rad
+    file_patterns:
+      - amip*rad-p-mm.nc
+    found_files:
+      - amip/rad/amip___________200001_rad-p-mm.nc
+      - amip/rad/amip___________200002_rad-p-mm.nc
+
+  # ICON
+
+  - drs: default
+    variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: ICON
+      project: ICON
+      cmor_table: CMIP6
+      frequency: mon
+      mip: Amon
+      exp: amip
+      timerange: '200002/200003'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - amip/amip_atm_2d_ml_20000101T000000Z.nc
+      - amip/amip_atm_2d_ml_20000201T000000Z.nc
+      - amip/amip_atm_2d_ml_20000301T000000Z.nc
+      - amip/outdata/amip_atm_2d_ml_20000401T000000Z.nc
+      - amip/outdata/amip_atm_2d_ml_20000501T000000Z.nc
+      - amip/outdata/amip_atm_2d_ml_20000601T000000Z.nc
+    dirs:
+      - amip
+      - amip/outdata
+    file_patterns:
+      - amip_atm_2d_ml*.nc
+    found_files:
+      - amip/amip_atm_2d_ml_20000201T000000Z.nc
+      - amip/amip_atm_2d_ml_20000301T000000Z.nc
+
+  - drs: default
+    variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: ICON
+      project: ICON
+      cmor_table: CMIP6
+      frequency: mon
+      mip: Amon
+      exp: amip
+      var_type: var
+      timerange: '200003/200005'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - amip/amip_var_20000101T000000Z.nc
+      - amip/amip_var_20000201T000000Z.nc
+      - amip/amip_var_20000301T000000Z.nc
+      - amip/outdata/amip_var_20000401T000000Z.nc
+      - amip/outdata/amip_var_20000501T000000Z.nc
+      - amip/outdata/amip_var_20000601T000000Z.nc
+    dirs:
+      - amip
+      - amip/outdata
+    file_patterns:
+      - amip_var*.nc
+    found_files:
+      - amip/amip_var_20000301T000000Z.nc
+      - amip/outdata/amip_var_20000401T000000Z.nc
+      - amip/outdata/amip_var_20000501T000000Z.nc
