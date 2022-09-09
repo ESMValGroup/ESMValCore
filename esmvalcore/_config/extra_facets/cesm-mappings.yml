@@ -13,5 +13,17 @@
 CESM2:
 
   '*':
+    # Optional facets
+    # It is necessary to define them here to allow multiple file/dir name
+    # conventions, see
+    # https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html
+    '*':
+      string: ''
+      tdir: ''
+      tperiod: ''
+
+    # Default facets for variables
     tas:
       raw_name: TREFHT
+      gcomp: atm
+      scomp: cam
