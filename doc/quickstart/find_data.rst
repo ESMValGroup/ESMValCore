@@ -156,6 +156,11 @@ CESM
 ESMValTool is able to read native `CESM <https://www.cesm.ucar.edu/>`__ model
 output.
 
+.. warning::
+
+   Currently, 3D variables (data that uses a vertical dimension) are not
+   supported, yet.
+
 The default naming conventions for input directories and files for CESM are
 
 * input directories: 3 different types supported:
@@ -196,8 +201,8 @@ facets<extra_facets>`.
 By default, the file :download:`cesm-mappings.yml
 </../esmvalcore/_config/extra_facets/cesm-mappings.yml>` is used for that
 purpose.
-For some variables, extra facets are necessary; otherwise ESMValTool cannot
-read them properly.
+Right now, this file only contains default facets for a single variable
+(`tas`); for other variables, these entries need to be defined in the recipe.
 Supported keys for extra facets are:
 
 ==================== ====================================== =================================
