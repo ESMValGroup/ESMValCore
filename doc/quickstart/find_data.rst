@@ -215,7 +215,7 @@ Key                  Description                            Default value if not
                      identify the history file type
                      (corresponds to ``$string`` or
                      ``$SSTRING.$TSTRING`` in the CESM file
-                     name conventions (see note above)
+                     name conventions; see note above)
 ``tdir``             Entry to distinguish time averages     ``''`` (empty string)
                      from time series from diagnostic plot
                      sets (only used for post-processed
