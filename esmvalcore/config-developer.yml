@@ -182,7 +182,7 @@ CESM:
   input_dir:
     default:
       - '/'  # run directory
-      - '{case}/{gcomp}/hist/'  # short-term archiving
+      - '{case}/{gcomp}/hist'  # short-term archiving
       - '{case}/{gcomp}/proc/{tdir}/{tperiod}'  # postprocessed data
   input_file:
     default: '{case}.{scomp}.{type}.{string}*nc'
