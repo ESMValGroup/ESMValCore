@@ -15,12 +15,13 @@ name: Test
 
 # runs on a push on main and at the end of every day
 on:
-  # triggering on push without branch name will run tests everytime
+  # triggering on push without branch name will run tests every time
   # there is a push on any branch
   # turn it on only if needed
   push:
     branches:
       - main
+      - disable-prospector-autodetect
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
@@ -57,6 +58,8 @@ jobs:
         run: python -V 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
       - shell: bash -l {0}
         run: pip install -e .[develop] 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/install.txt
+      - shell: bash -l {0}
+        run: conda list django
       - shell: bash -l {0}
         run: pytest -n 2 -m "not installation and not sequential" 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - shell: bash -l {0}
