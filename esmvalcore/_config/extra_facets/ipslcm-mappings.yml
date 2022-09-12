@@ -111,7 +111,7 @@ IPSL-CM6:
     #  ->  general variables
     precip: {ipsl_varname: precip, <<: *atmvars}
     slp: {ipsl_varname: slp, <<: *atmvars}
-    
+
     #  -> Turbulent fluxes
     taux: {ipsl_varname: taux, <<: *atmvars}
     tauy: {ipsl_varname: tauy, <<: *atmvars}
@@ -136,8 +136,8 @@ IPSL-CM6:
     SWdnSFC: {ipsl_varname: SWdnSFC, <<: *atmvars}
     LWdnSFcclr: {ipsl_varname: LWdnSFcclr, <<: *atmvars}
     SWdnSFcclr: {ipsl_varname: SWdnSFcclr, <<: *atmvars}
-    
-    
+
+
   # =================================================
   Lmon:
     # ===============================================
