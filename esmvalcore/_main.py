@@ -97,6 +97,7 @@ def process_recipe(recipe_file, config_user):
 
     from multiprocessing import cpu_count
     n_processes = config_user['max_parallel_tasks'] or cpu_count()
+    config_user['max_parallel_tasks'] = n_processes
     logger.info("Running tasks using at most %s processes", n_processes)
 
     logger.info(

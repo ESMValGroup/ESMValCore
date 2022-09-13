@@ -336,8 +336,12 @@ def save(cubes,
             cube.var_name = alias
 
     cube = cubes[0]
-    data_array = xarray.DataArray.from_iris(cube)
-    delayed = data_array.to_netcdf(filename, compute=False)
+    if kwargs.get('compute', True):
+        iris.save(cube, target=filename)
+        delayed = None
+    else:
+        data_array = xarray.DataArray.from_iris(cube)
+        delayed = data_array.to_netcdf(filename, compute=False)
     return filename, delayed
 
 
