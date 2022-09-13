@@ -401,7 +401,7 @@ class PreprocessorFile(TrackedFile):
 
         self._cubes = None
         self._prepared = False
-        self.delayeds = []
+        self.delayed = None
 
     def _input_files_for_log(self):
         """Do not log input files twice in output log."""
@@ -454,14 +454,13 @@ class PreprocessorFile(TrackedFile):
 
     def save(self):
         """Save cubes to disk."""
-        self.delayeds.clear()
-        filename, self.delayeds = save(
+        filename, self.delayed = save(
             self._cubes,
             **self.settings['save'],
         )
         self.files = [filename]
-        print('save called for', filename)
-        self.files = preprocess(self.files, 'cleanup',
+        self.files = preprocess(self.files,
+                                'cleanup',
                                 input_files=self._input_files,
                                 **self.settings.get('cleanup', {}))
 
@@ -470,7 +469,7 @@ class PreprocessorFile(TrackedFile):
         if self._cubes is not None:
             self.save()
             self._cubes = None
-            # self.save_provenance()
+            self.save_provenance()
 
     @property
     def is_closed(self):
@@ -550,7 +549,7 @@ class PreprocessingTask(BaseTask):
         self.order = list(order)
         self.debug = debug
         self.write_ncl_interface = write_ncl_interface
-        self.delayeds = []
+        self.delayeds = {}
 
     def _initialize_product_provenance(self):
         """Initialize product provenance."""
@@ -620,7 +619,7 @@ class PreprocessingTask(BaseTask):
 
         for product in self.products:
             product.close()
-            self.delayeds.extend(product.delayeds)
+            self.delayeds[product.filename] = product.delayed
         metadata_files = write_metadata(self.products,
                                         self.write_ncl_interface)
         return metadata_files

@@ -729,18 +729,24 @@ class TaskSet(set):
             self._run_parallel(max_parallel_tasks)
 
     def _run_dask(self) -> None:
-        cluster = dask.distributed.LocalCluster(processes=False)
-        print(cluster.dashboard_link)
-        dask.distributed.Client(cluster)
-        delayeds = []
-        for task in sorted(self.flatten(), key=lambda t: t.priority):
-            print(task.name, hasattr(task, 'delayeds'))
-            if hasattr(task, 'delayeds'):
-                print(f"Scheduling {task.name}")
-                task.run()
-                delayeds.extend(task.delayeds)
-        print(f"Running {delayeds}")
-        dask.compute(delayeds)
+        """Run tasks using dask."""
+        with dask.distributed.Client(processes=False) as client:
+            logger.info(f"Dask dashboard: {client.dashboard_link}")
+            futures = {}
+            for task in sorted(self.flatten(), key=lambda t: t.priority):
+                if hasattr(task, 'delayeds'):
+                    logger.info(f"Scheduling task {task.name}")
+                    task.run()
+                    logger.info(f"Computing task {task.name}")
+                    for filename, delayed in task.delayeds.items():
+                        future = client.compute(delayed,
+                                                priority=-task.priority)
+                        futures[future] = filename
+                else:
+                    logger.info(f"Skipping task {task.name}")
+            for future in dask.distributed.as_completed(futures):
+                filename = futures[future]
+                logger.info(f"Wrote {filename}")
 
     def _run_sequential(self) -> None:
         """Run tasks sequentially."""

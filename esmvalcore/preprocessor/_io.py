@@ -290,6 +290,8 @@ def save(cubes,
     """
     if not cubes:
         raise ValueError(f"Cannot save empty cubes '{cubes}'")
+    if len(cubes) > 1:
+        raise ValueError(f"`save` expects as single cube, got '{cubes}")
 
     # Rename some arguments
     kwargs['target'] = filename
@@ -332,12 +334,11 @@ def save(cubes,
             logger.debug('Changing var_name from %s to %s', cube.var_name,
                          alias)
             cube.var_name = alias
-    delayeds = []
-    for cube in cubes:
-        delayed = xarray.DataArray.from_iris(cube).to_netcdf(
-            filename, compute=False)
-        delayeds.append(delayed)
-    return filename, delayeds
+
+    cube = cubes[0]
+    data_array = xarray.DataArray.from_iris(cube)
+    delayed = data_array.to_netcdf(filename, compute=False)
+    return filename, delayed
 
 
 def _get_debug_filename(filename, step):
