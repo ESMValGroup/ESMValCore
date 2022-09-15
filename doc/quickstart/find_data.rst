@@ -158,8 +158,11 @@ output.
 
 .. warning::
 
-   Currently, 3D variables (data that uses a vertical dimension) are not
-   supported, yet.
+   The support for native CESM output is still experimental.
+   Currently, only one variable (`tas`) is fully supported. Other 2D variables
+   might be supported by specifying appropriate facets in the recipe or extra
+   facets files (see text below).
+   3D variables (data that uses a vertical dimension) are not supported, yet.
 
 The default naming conventions for input directories and files for CESM are
 
@@ -201,7 +204,7 @@ facets<extra_facets>`.
 By default, the file :download:`cesm-mappings.yml
 </../esmvalcore/_config/extra_facets/cesm-mappings.yml>` is used for that
 purpose.
-Right now, this file only contains default facets for a single variable
+Currently, this file only contains default facets for a single variable
 (`tas`); for other variables, these entries need to be defined in the recipe.
 Supported keys for extra facets are:
 

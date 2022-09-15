@@ -139,10 +139,10 @@ def test_only_time(monkeypatch):
     """Test fix."""
     fix = get_allvars_fix('Amon', 'tas')
 
-    # We know that tas has dimensions time, plev19, latitude, longitude, but
-    # the CESM2 CMORizer is designed to check for the presence of each
-    # dimension individually. To test this, remove all but one dimension of tas
-    # to create an artificial, but realistic test case.
+    # We know that tas has dimensions time, latitude, longitude, but the CESM2
+    # CMORizer is designed to check for the presence of each dimension
+    # individually. To test this, remove all but one dimension of tas to create
+    # an artificial, but realistic test case.
     monkeypatch.setattr(fix.vardef, 'dimensions', ['time'])
 
     # Create cube with only a single dimension
@@ -179,10 +179,10 @@ def test_only_latitude(monkeypatch):
     """Test fix."""
     fix = get_allvars_fix('Amon', 'tas')
 
-    # We know that tas has dimensions time, plev19, latitude, longitude, but
-    # the CESM2 CMORizer is designed to check for the presence of each
-    # dimension individually. To test this, remove all but one dimension of tas
-    # to create an artificial, but realistic test case.
+    # We know that tas has dimensions time, latitude, longitude, but the CESM2
+    # CMORizer is designed to check for the presence of each dimension
+    # individually. To test this, remove all but one dimension of tas to create
+    # an artificial, but realistic test case.
     monkeypatch.setattr(fix.vardef, 'dimensions', ['latitude'])
 
     # Create cube with only a single dimension
@@ -219,10 +219,10 @@ def test_only_longitude(monkeypatch):
     """Test fix."""
     fix = get_allvars_fix('Amon', 'tas')
 
-    # We know that tas has dimensions time, plev19, latitude, longitude, but
-    # the CESM2 CMORizer is designed to check for the presence of each
-    # dimension individually. To test this, remove all but one dimension of tas
-    # to create an artificial, but realistic test case.
+    # We know that tas has dimensions time, latitude, longitude, but the CESM2
+    # CMORizer is designed to check for the presence of each dimension
+    # individually. To test this, remove all but one dimension of tas to create
+    # an artificial, but realistic test case.
     monkeypatch.setattr(fix.vardef, 'dimensions', ['longitude'])
 
     # Create cube with only a single dimension

@@ -1,4 +1,19 @@
-"""On-the-fly CMORizer for CESM2."""
+"""On-the-fly CMORizer for CESM2.
+
+Warning
+-------
+The support for native CESM output is still experimental. Currently, only one
+variable (`tas`) is fully supported. Other 2D variables might be supported by
+specifying appropriate facets in the recipe or extra facets files (see
+doc/quickstart/find_data.rst for details). 3D variables are currently not
+supported.
+
+To add support for more variables, expand the extra facets file
+(esmvalcore/_config/extra_facets/cesm-mappings.yml) and/or add classes to this
+file for variables that need more complex fixes (see
+esmvalcore/cmor/_fixes/emac/emac.py for examples).
+
+"""
 
 import logging
 
@@ -22,6 +37,7 @@ class AllVars(NativeDatasetFix):
         cube = self.get_cube(cubes)
 
         # Fix time, latitude, and longitude coordinates
+        # Note: 3D variables are currently not supported
         self.fix_regular_time(cube)
         self.fix_regular_lat(cube)
         self.fix_regular_lon(cube)
