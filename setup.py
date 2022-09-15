@@ -42,7 +42,7 @@ REQUIREMENTS = {
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
         'nested-lookup',
-        'netCDF4',
+        'netCDF4<1.6.1',  # segfaults galore
         'numpy',
         'pandas',
         'pillow',
