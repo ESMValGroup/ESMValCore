@@ -40,10 +40,10 @@ class DerivedVariable(DerivedVariableBase):
 
         """
 
-        siconc = cubes.extract_cube(Constraint(name='sea_ice_area_fraction'))
-        ones = da.ones_like(siconc)
-        siextent_data = da.ma.masked_where(siconc.lazy_data() < 15., ones)
-        siextent = siconc.copy(siextent_data)
+        sic = cubes.extract_cube(Constraint(name='sea_ice_area_fraction'))
+        ones = da.ones_like(sic)
+        siextent_data = da.ma.masked_where(sic.lazy_data() < 15., ones)
+        siextent = sic.copy(siextent_data)
         siextent.units = 'm2'
 
         return siextent
