@@ -7,7 +7,7 @@ modeling_realm:    seaIce
 ! Variable attributes:
 !----------------------------------
 standard_name:
-units:             1
+units:             m2
 cell_methods:      area: mean where sea time: mean
 cell_measures:     area: areacello
 long_name:         Sea Ice Extent
