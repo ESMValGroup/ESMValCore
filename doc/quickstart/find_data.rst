@@ -177,6 +177,9 @@ Thus, example dataset entries could look like this:
 Please note the duplication of the name ``EMAC`` in ``project`` and
 ``dataset``, which is necessary to comply with ESMValTool's data finding and
 CMORizing functionalities.
+A variable-specific default for the facet ``channel`` is given in the extra
+facets (see next paragraph) for many variables, but this can be overwritten in
+the recipe.
 
 Similar to any other fix, the EMAC fix allows the use of :ref:`extra
 facets<extra_facets>`.
@@ -225,8 +228,8 @@ ESMValTool is able to read native `ICON
 
 The default naming conventions for input directories and files for ICON are
 
-* input directories: ``[version]_[component]_[exp]_[grid]_[ensemble]``
-* input files: ``[version]_[component]_[exp]_[grid]_[ensemble]_[var_type]*.nc``
+* input directories: ``[exp]`` or ``{exp}/outdata``
+* input files: ``[exp]_[var_type]*.nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
 default DRS ``drs: default`` in the :ref:`user configuration file`).
@@ -236,16 +239,18 @@ Thus, example dataset entries could look like this:
 .. code-block:: yaml
 
   datasets:
-    - {project: ICON, dataset: ICON, component: atm, version: 2.6.1,
-       exp: amip, grid: R2B5, ensemble: r1v1i1p1l1f1, mip: Amon,
-       short_name: tas, var_type: atm_2d_ml, start_year: 2000, end_year: 2014}
-    - {project: ICON, dataset: ICON, component: atm, version: 2.6.1,
-       exp: amip, grid: R2B5, ensemble: r1v1i1p1l1f1, mip: Amon,
-       short_name: ta, var_type: atm_3d_ml, start_year: 2000, end_year: 2014}
+    - {project: ICON, dataset: ICON, exp: icon-2.6.1_atm_amip_R2B5_r1i1p1f1,
+       mip: Amon, short_name: tas, start_year: 2000, end_year: 2014}
+    - {project: ICON, dataset: ICON, exp: historical, mip: Amon,
+       short_name: ta, var_type: atm_dyn_3d_ml, start_year: 2000,
+       end_year: 2014}
 
 Please note the duplication of the name ``ICON`` in ``project`` and
 ``dataset``, which is necessary to comply with ESMValTool's data finding and
 CMORizing functionalities.
+A variable-specific default for the facet ``var_type`` is given in the extra
+facets (see next paragraph) for many variables, but this can be overwritten in
+the recipe.
 
 Similar to any other fix, the ICON fix allows the use of :ref:`extra
 facets<extra_facets>`.
@@ -268,6 +273,9 @@ Key           Description                   Default value if not specified
 ``raw_name``  Variable name of the          CMOR variable name of the
               variable in the raw input     corresponding variable
               file
+``var_type``  Variable type of the          No default (needs to be specified
+              variable in the raw input     in extra facets or recipe if
+              file                          default DRS is used)
 ============= ============================= =================================
 
 .. hint::
@@ -283,7 +291,7 @@ Key           Description                   Default value if not specified
    For example, you could use a new ``var_type``, e.g., ``horizontalgrid`` for
    this file.
    Thus, an ICON grid file located in
-   ``2.6.1_atm_amip_R2B5_r1v1i1p1l1f1/2.6.1_atm_amip_R2B5_r1v1i1p1l1f1_horizontalgrid.nc``
+   ``2.6.1_atm_amip_R2B5_r1i1p1f1/2.6.1_atm_amip_R2B5_r1i1p1f1_horizontalgrid.nc``
    can be found using ``var_type: horizontalgrid`` in the recipe (assuming the
    default naming conventions listed above).
    Make sure that no other variable uses this ``var_type``.
