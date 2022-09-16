@@ -263,6 +263,10 @@ def _equalise_coordinates(cubes):
             if scalar_coord.var_name in scalar_coords_to_remove:
                 cube.remove_coord(scalar_coord)
 
+        cube.long_name = None
+        cube.standard_name = None
+
+
 
 def _equalise_fx_variables(cubes):
     """Equalise fx variables in cubes (in-place)."""
