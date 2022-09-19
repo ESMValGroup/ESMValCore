@@ -419,13 +419,6 @@ class PreprocessorFile(TrackedFile):
         if attributes is None:
             attributes = {}
         attributes = copy.deepcopy(attributes)
-        if attributes.get('derive'):
-            self.settings['derive'] = {
-                'short_name': attributes['short_name'],
-                'standard_name': attributes['standard_name'],
-                'long_name': attributes['long_name'],
-                'units': attributes['units'],
-            }
         if 'save' not in self.settings:
             self.settings['save'] = {}
         self.settings['save']['filename'] = filename

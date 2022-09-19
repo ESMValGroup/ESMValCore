@@ -1,3 +1,4 @@
+import textwrap
 from pathlib import Path
 from unittest import mock
 
@@ -5,12 +6,69 @@ import iris
 import numpy as np
 import pyesgf.search.results
 import pytest
+import yaml
 
 import esmvalcore.experimental.recipe_output
 from esmvalcore import _recipe
 from esmvalcore.dataset import Dataset
 from esmvalcore.esgf._download import ESGFFile
 from tests import PreprocessorFile
+
+
+def test_datasets_to_recipe():
+    datasets = [
+        Dataset(
+            short_name='ta',
+            dataset='dataset1',
+        ),
+        Dataset(
+            short_name='ta',
+            dataset='dataset2',
+        ),
+    ]
+    for dataset in datasets:
+        dataset.facets['diagnostic'] = 'diagnostic1'
+    recipe_txt = textwrap.dedent("""
+
+    diagnostics:
+      diagnostic1:
+        variables:
+          ta:
+            additional_datasets:
+              - {dataset: 'dataset1'}
+              - {dataset: 'dataset2'}
+
+    """)
+    recipe = yaml.safe_load(recipe_txt)
+
+    assert _recipe.datasets_to_recipe(datasets) == recipe
+
+
+def test_ancillary_datasets_to_recipe():
+
+    dataset = Dataset(
+        short_name='ta',
+        dataset='dataset1',
+    )
+    dataset['diagnostic'] = 'diagnostic1'
+    dataset['variable_group'] = 'group1'
+    dataset.add_ancillary(short_name='areacella')
+
+    recipe_txt = textwrap.dedent("""
+
+    diagnostics:
+      diagnostic1:
+        variables:
+          group1:
+            additional_datasets:
+              - dataset: 'dataset1'
+                short_name: 'ta'
+                ancillary_variables:
+                  - short_name: areacella
+
+    """)
+    recipe = yaml.safe_load(recipe_txt)
+    assert _recipe.datasets_to_recipe([dataset]) == recipe
 
 
 class MockRecipe(_recipe.Recipe):
@@ -484,34 +542,6 @@ def test_create_diagnostic_tasks(mock_diag_task, tasks_to_run, tasks_run):
             name=f'{diag_name}{_recipe.TASKSEP}{task_name}',
         )
         assert expected_call in mock_diag_task.mock_calls
-
-
-def test_differing_timeranges(caplog):
-    timeranges = set()
-    timeranges.add('1950/1951')
-    timeranges.add('1950/1952')
-    required_variables = [
-        {
-            'short_name': 'rsdscs',
-            'timerange': '1950/1951'
-        },
-        {
-            'short_name': 'rsuscs',
-            'timerange': '1950/1952'
-        },
-    ]
-    with pytest.raises(ValueError) as exc:
-        _recipe._check_differing_timeranges(
-            timeranges, required_variables)
-    expected_log = (
-        f"Differing timeranges with values {timeranges} "
-        "found for required variables "
-        "[{'short_name': 'rsdscs', 'timerange': '1950/1951'}, "
-        "{'short_name': 'rsuscs', 'timerange': '1950/1952'}]. "
-        "Set `timerange` to a common value."
-    )
-
-    assert expected_log in str(exc.value)
 
 
 def test_update_warning_settings_nonaffected_project():

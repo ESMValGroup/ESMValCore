@@ -165,6 +165,7 @@ def _format_facets(facets):
         'exp',
         'ensemble',
         'grid',
+        'version',
     )
     return ", ".join(str(facets[k]) for k in keys if k in facets)
 
@@ -446,6 +447,15 @@ def valid_time_selection(timerange):
         for date in timerange:
             date = _check_format_years(date)
             _check_timerange_values(date, timerange)
+
+
+def differing_timeranges(timeranges, required_vars):
+    """Log error if required variables have differing timeranges."""
+    if len(timeranges) > 1:
+        raise ValueError(
+            f"Differing timeranges with values {timeranges} "
+            f"found for required variables {required_vars}. "
+            "Set `timerange` to a common value.")
 
 
 def reference_for_bias_preproc(products):

@@ -3,13 +3,13 @@ from pathlib import Path
 
 import pyesgf
 import pytest
-import yaml
 
 import esmvalcore.dataset
+import esmvalcore.local
 from esmvalcore._config import CFG
 from esmvalcore._config._config_object import CFG_DEFAULT
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.dataset import Dataset, datasets_to_recipe
+from esmvalcore.dataset import Dataset
 from esmvalcore.esgf import ESGFFile
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 
@@ -76,8 +76,6 @@ def test_repr_ancillary():
                 'dataset': 'bccr_bcm2_0',
                 'frequency': 'mon',
                 'exp': 'historical',
-                'start_year': 2000,
-                'end_year': 2001,
                 'ensemble': 'r1i1p1',
                 'modeling_realm': 'atmos',
             },
@@ -89,8 +87,6 @@ def test_repr_ancillary():
                 'units': 'm',
                 # Added from extra facets YAML file
                 'institute': ['BCCR'],
-                # Updated time range
-                'timerange': '2000/2001',
             },
         ],
         [
@@ -172,15 +168,13 @@ def test_augment_facets(session, facets, added_facets):
     """Test correct addition of extra facets to an fx dataset."""
     expected_facets = dict(facets)
     expected_facets.update(added_facets)
-    for key in ('start_year', 'end_year'):
-        expected_facets.pop(key, None)
 
     dataset = Dataset(**facets)
     dataset._augment_facets(session)
     assert dataset.facets == expected_facets
 
 
-def test_datsets_from_recipe(session, tmp_path):
+def test_from_recipe(session, tmp_path):
 
     recipe_txt = textwrap.dedent("""
 
@@ -214,7 +208,7 @@ def test_datsets_from_recipe(session, tmp_path):
     assert Dataset.from_recipe(recipe, session) == [dataset]
 
 
-def test_datasets_from_complicated_recipe(session, tmp_path):
+def test_from_recipe_advanced(session, tmp_path):
 
     recipe_txt = textwrap.dedent("""
 
@@ -314,7 +308,7 @@ def test_datasets_from_complicated_recipe(session, tmp_path):
     assert Dataset.from_recipe(recipe, session) == datasets
 
 
-def test_expand_datasets_from_recipe(session, tmp_path):
+def test_from_recipe_with_ranges(session, tmp_path):
 
     recipe_txt = textwrap.dedent("""
 
@@ -363,7 +357,7 @@ def test_expand_datasets_from_recipe(session, tmp_path):
     assert Dataset.from_recipe(recipe, session) == datasets
 
 
-def test_ancillary_datasets_from_recipe(session, tmp_path):
+def test_from_recipe_with_ancillary(session, tmp_path):
 
     recipe_txt = textwrap.dedent("""
 
@@ -411,60 +405,275 @@ def test_ancillary_datasets_from_recipe(session, tmp_path):
     assert Dataset.from_recipe(recipe, session) == [dataset]
 
 
-def test_datasets_to_recipe():
-    datasets = [
-        Dataset(
-            short_name='ta',
-            dataset='dataset1',
-        ),
-        Dataset(
-            short_name='ta',
-            dataset='dataset2',
-        ),
-    ]
-    for dataset in datasets:
-        dataset.facets['diagnostic'] = 'diagnostic1'
-    recipe_txt = textwrap.dedent("""
-
-    diagnostics:
-      diagnostic1:
-        variables:
-          ta:
-            additional_datasets:
-              - {dataset: 'dataset1'}
-              - {dataset: 'dataset2'}
-
-    """)
-    recipe = yaml.safe_load(recipe_txt)
-
-    assert datasets_to_recipe(datasets) == recipe
+@pytest.mark.parametrize('pattern,result', (
+    ['a', False],
+    ['*', True],
+    [['*b', 'a'], True],
+))
+def test_isglob(pattern, result):
+    assert esmvalcore.dataset._isglob(pattern) == result
 
 
-def test_ancillary_datasets_to_recipe():
-
-    dataset = Dataset(
-        short_name='ta',
-        dataset='dataset1',
+def test_from_files(session):
+    rootpath = Path('/path/to/data')
+    file1 = esmvalcore.local.LocalFile(
+        rootpath,
+        'CMIP6',
+        'CMIP',
+        'CAS',
+        'FGOALS-g3',
+        'historical',
+        'r3i1p1f1',
+        'Amon',
+        'tas',
+        'gn',
+        'v20190827',
+        'tas_Amon_FGOALS-g3_historical_r3i1p1f1_gn_199001-199912.nc',
     )
-    dataset['diagnostic'] = 'diagnostic1'
-    dataset['variable_group'] = 'group1'
-    dataset.add_ancillary(short_name='areacella')
+    file1.facets = {
+        'activity': 'CMIP',
+        'institute': 'CAS',
+        'dataset': 'FGOALS-g3',
+        'exp': 'historical',
+        'mip': 'Amon',
+        'ensemble': 'r3i1p1f1',
+        'short_name': 'tas',
+        'grid': 'gn',
+        'version': 'v20190827',
+    }
+    file2 = esmvalcore.local.LocalFile(
+        rootpath,
+        'CMIP6',
+        'CMIP',
+        'CAS',
+        'FGOALS-g3',
+        'historical',
+        'r3i1p1f1',
+        'Amon',
+        'tas',
+        'gn',
+        'v20190827',
+        'tas_Amon_FGOALS-g3_historical_r3i1p1f1_gn_200001-200912.nc',
+    )
+    file2.facets = dict(file1.facets)
+    file3 = esmvalcore.local.LocalFile(
+        rootpath,
+        'CMIP6',
+        'CMIP',
+        'NCC',
+        'NorESM2-LM',
+        'historical',
+        'r1i1p1f1',
+        'Amon',
+        'tas',
+        'gn',
+        'v20190815',
+        'tas_Amon_NorESM2-LM_historical_r1i1p1f1_gn_200001-201412.nc',
+    )
+    file3.facets = {
+        'activity': 'CMIP',
+        'institute': 'NCC',
+        'dataset': 'NorESM2-LM',
+        'exp': 'historical',
+        'mip': 'Amon',
+        'ensemble': 'r1i1p1f1',
+        'short_name': 'tas',
+        'grid': 'gn',
+        'version': 'v20190815',
+    }
+    dataset = Dataset(
+        short_name='tas',
+        mip='Amon',
+        project='CMIP6',
+        dataset='*',
+    )
+    dataset.session = session
+    dataset.files = [file1, file2, file3]
+    datasets = dataset.from_files()
+    expected = [
+        Dataset(short_name='tas',
+                mip='Amon',
+                project='CMIP6',
+                dataset='FGOALS-g3'),
+        Dataset(short_name='tas',
+                mip='Amon',
+                project='CMIP6',
+                dataset='NorESM2-LM'),
+    ]
+    for expected_ds in expected:
+        expected_ds.session = session
 
+    assert all(ds.session == session for ds in datasets)
+    assert datasets == expected
+
+
+def test_from_files_with_ancillary(session):
+    rootpath = Path('/path/to/data')
+    file = esmvalcore.local.LocalFile(
+        rootpath,
+        'CMIP6',
+        'CMIP',
+        'CAS',
+        'FGOALS-g3',
+        'historical',
+        'r3i1p1f1',
+        'Amon',
+        'tas',
+        'gn',
+        'v20190827',
+        'tas_Amon_FGOALS-g3_historical_r3i1p1f1_gn_199001-199912.nc',
+    )
+    file.facets = {
+        'activity': 'CMIP',
+        'institute': 'CAS',
+        'dataset': 'FGOALS-g3',
+        'exp': 'historical',
+        'mip': 'Amon',
+        'ensemble': 'r3i1p1f1',
+        'short_name': 'tas',
+        'grid': 'gn',
+        'version': 'v20190827',
+    }
+    afile = esmvalcore.local.LocalFile(
+        rootpath,
+        'CMIP6',
+        'CMIP',
+        'CAS',
+        'FGOALS-g3',
+        'historical',
+        'r1i1p1f1',
+        'fx',
+        'tas',
+        'gn',
+        'v20210615',
+        'areacella_fx_FGOALS-g3_historical_r1i1p1f1_gn.nc',
+    )
+    afile.facets = {
+        'activity': 'CMIP',
+        'institute': 'CAS',
+        'dataset': 'FGOALS-g3',
+        'exp': 'historical',
+        'mip': 'fx',
+        'ensemble': 'r1i1p1f1',
+        'short_name': 'areacella',
+        'grid': 'gn',
+        'version': 'v20210615',
+    }
+    dataset = Dataset(
+        short_name='tas',
+        mip='Amon',
+        project='CMIP6',
+        dataset='FGOALS-g3',
+        ensemble='r3i1p1f1',
+    )
+    dataset.session = session
+    dataset.files = [file]
+    dataset.add_ancillary(short_name='areacella', mip='fx', ensemble='*')
+    dataset.ancillaries[0].files = [afile]
+
+    expected = Dataset(
+        short_name='tas',
+        mip='Amon',
+        project='CMIP6',
+        dataset='FGOALS-g3',
+        ensemble='r3i1p1f1',
+    )
+    expected.session = session
+    expected.add_ancillary(
+        short_name='areacella',
+        mip='fx',
+        ensemble='r1i1p1f1',
+    )
+
+    datasets = dataset.from_files()
+
+    assert all(ds.session == session for ds in datasets)
+    assert all(ads.session == session for ds in datasets
+               for ads in ds.ancillaries)
+    assert datasets == [expected]
+
+
+def test_from_recipe_with_glob(tmp_path, session, mocker):
     recipe_txt = textwrap.dedent("""
 
     diagnostics:
       diagnostic1:
         variables:
-          group1:
+          tas:
+            project: CMIP5
+            mip: Amon
             additional_datasets:
-              - dataset: 'dataset1'
-                short_name: 'ta'
-                ancillary_variables:
-                  - short_name: areacella
-
+              - {dataset: '*'}
     """)
-    recipe = yaml.safe_load(recipe_txt)
-    assert datasets_to_recipe([dataset]) == recipe
+    recipe = tmp_path / 'recipe_test.yml'
+    recipe.write_text(recipe_txt, encoding='utf-8')
+
+    session['drs']['CMIP5'] = 'ESGF'
+
+    filenames = [
+        "cmip5/output1/NIMR-KMA/HadGEM2-AO/historical/mon/atmos/Amon/r1i1p1/"
+        "v20130815/tas_Amon_HadGEM2-AO_historical_r1i1p1_186001-200512.nc",
+        "cmip5/output1/CSIRO-QCCCE/CSIRO-Mk3-6-0/rcp85/mon/atmos/Amon/r4i1p1/"
+        "v20120323/tas_Amon_CSIRO-Mk3-6-0_rcp85_r4i1p1_200601-210012.nc",
+    ]
+
+    mocker.patch.object(
+        esmvalcore.local,
+        'get_input_filelist',
+        autospec=True,
+        spec_set=True,
+        return_value=(filenames, [], []),
+    )
+
+    definitions = [
+        {
+            'diagnostic': 'diagnostic1',
+            'variable_group': 'tas',
+            'dataset': 'HadGEM2-AO',
+            'project': 'CMIP5',
+            'mip': 'Amon',
+            'short_name': 'tas',
+            'alias': 'HadGEM2-AO',
+            'frequency': 'mon',
+            'long_name': 'Near-Surface Air Temperature',
+            'modeling_realm': ['atmos'],
+            'original_short_name': 'tas',
+            'preprocessor': 'default',
+            'product': ['output1', 'output2'],
+            'recipe_dataset_index': 0,
+            'standard_name': 'air_temperature',
+            'units': 'K',
+        },
+        {
+            'diagnostic': 'diagnostic1',
+            'variable_group': 'tas',
+            'dataset': 'CSIRO-Mk3-6-0',
+            'project': 'CMIP5',
+            'mip': 'Amon',
+            'short_name': 'tas',
+            'alias': 'CSIRO-Mk3-6-0',
+            'frequency': 'mon',
+            'long_name': 'Near-Surface Air Temperature',
+            'modeling_realm': ['atmos'],
+            'original_short_name': 'tas',
+            'preprocessor': 'default',
+            'product': ['output1', 'output2'],
+            'recipe_dataset_index': 1,
+            'standard_name': 'air_temperature',
+            'units': 'K',
+        },
+    ]
+    expected = []
+    for facets in definitions:
+        dataset = Dataset(**facets)
+        dataset.session = session
+        expected.append(dataset)
+
+    datasets = Dataset.from_recipe(recipe, session)
+    print("Expected:", expected)
+    print("Got:", datasets)
+    assert all(ds.session == session for ds in datasets)
+    assert datasets == expected
 
 
 def test_expand_ensemble():
@@ -594,10 +803,12 @@ def test_find_files(mocker, local_availability):
     }
     local_files = local_file_options[local_availability]
 
-    mocker.patch.object(esmvalcore.dataset.local,
-                        'find_files',
-                        autospec=True,
-                        return_value=(list(local_files), ([], [])),)
+    mocker.patch.object(
+        esmvalcore.dataset.local,
+        'find_files',
+        autospec=True,
+        return_value=(list(local_files), ([], [])),
+    )
     mocker.patch.object(
         esmvalcore.dataset.esgf,
         'find_files',

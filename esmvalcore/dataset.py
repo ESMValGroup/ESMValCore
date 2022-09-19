@@ -1,163 +1,32 @@
+"""Classes and functions for defining, finding, and loading data."""
 import copy
 import logging
 import pprint
 import re
 import textwrap
-from itertools import groupby
+from fnmatch import fnmatchcase
+from numbers import Number
 from pathlib import Path
+from typing import Sequence, Union
 
-import yaml
 from iris.cube import Cube
 
 from . import esgf, local
 from ._config import Session, get_activity, get_extra_facets, get_institutes
 from ._data_finder import (
-    _get_timerange_from_years,
     dates_to_timerange,
     get_output_file,
     get_start_end_date,
 )
 from ._recipe_checks import data_availability as check_data_availability
-from ._recipe_checks import datasets as check_datasets
 from ._recipe_checks import valid_time_selection as check_valid_time_selection
-from ._recipe_checks import variable as check_variable
 from .cmor.table import _get_facets_from_cmor_table
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import preprocess
-from .preprocessor._io import DATASET_KEYS
 
 logger = logging.getLogger(__name__)
 
-_REQUIRED_KEYS = (
-    'short_name',
-    'mip',
-    'dataset',
-    'project',
-)
-
-_ALIAS_INFO_KEYS = (
-    'project',
-    'activity',
-    'dataset',
-    'exp',
-    'ensemble',
-    'version',
-)
-"""List of keys to be used to compose the alias, ordered by priority."""
-
-
-def _set_aliases(datasets):
-    """Add a unique alias per diagnostic."""
-    for _, group in groupby(datasets, key=lambda ds: ds.facets['diagnostic']):
-        diag_datasets = [
-            list(h)
-            for _, h in groupby(group,
-                                key=lambda ds: ds.facets['variable_group'])
-        ]
-        _set_alias(diag_datasets)
-
-
-def _set_alias(variables):
-    """Add unique alias for datasets.
-
-    Generates a unique alias for each dataset that will be shared by all
-    variables. Tries to make it as small as possible to make it useful for
-    plot legends, filenames and such
-
-    It is composed using the keys in Recipe.info_keys that differ from
-    dataset to dataset. Once a diverging key is found, others are added
-    to the alias only if the previous ones where not enough to fully
-    identify the dataset.
-
-    If key values are not strings, they will be joint using '-' if they
-    are iterables or replaced by they string representation if they are not
-
-    Function will not modify alias if it is manually added to the recipe
-    but it will use the dataset info to compute the others
-
-    Examples
-    --------
-    - {project: CMIP5, model: EC-Earth, ensemble: r1i1p1}
-    - {project: CMIP6, model: EC-Earth, ensemble: r1i1p1f1}
-    will generate alias 'CMIP5' and 'CMIP6'
-
-    - {project: CMIP5, model: EC-Earth, experiment: historical}
-    - {project: CMIP5, model: MPI-ESM, experiment: piControl}
-    will generate alias 'EC-Earth,' and 'MPI-ESM'
-
-    - {project: CMIP5, model: EC-Earth, experiment: historical}
-    - {project: CMIP5, model: EC-Earth, experiment: piControl}
-    will generate alias 'historical' and 'piControl'
-
-    - {project: CMIP5, model: EC-Earth, experiment: historical}
-    - {project: CMIP6, model: EC-Earth, experiment: historical}
-    - {project: CMIP5, model: MPI-ESM, experiment: historical}
-    - {project: CMIP6, model: MPI-ESM experiment: historical}
-    will generate alias 'CMIP5_EC-EARTH', 'CMIP6_EC-EARTH', 'CMIP5_MPI-ESM'
-    and 'CMIP6_MPI-ESM'
-
-    - {project: CMIP5, model: EC-Earth, experiment: historical}
-    will generate alias 'EC-Earth'
-
-    Parameters
-    ----------
-    datasets : list
-        for each variable, a list of datasets
-    """
-    datasets_info = set()
-
-    def _key_str(obj):
-        if isinstance(obj, str):
-            return obj
-        try:
-            return '-'.join(obj)
-        except TypeError:
-            return str(obj)
-
-    for variable in variables:
-        for dataset in variable:
-            alias = tuple(
-                _key_str(dataset.facets.get(key, None))
-                for key in _ALIAS_INFO_KEYS)
-            datasets_info.add(alias)
-            if 'alias' not in dataset.facets:
-                dataset.facets['alias'] = alias
-
-    alias = dict()
-    for info in datasets_info:
-        alias[info] = []
-
-    datasets_info = list(datasets_info)
-    _get_next_alias(alias, datasets_info, 0)
-
-    for info in datasets_info:
-        alias[info] = '_'.join(
-            [str(value) for value in alias[info] if value is not None])
-        if not alias[info]:
-            alias[info] = info[_ALIAS_INFO_KEYS.index('dataset')]
-
-    for variable in variables:
-        for dataset in variable:
-            dataset.facets['alias'] = alias.get(dataset.facets['alias'],
-                                                dataset.facets['alias'])
-
-
-def _get_next_alias(alias, datasets_info, i):
-    if i >= len(_ALIAS_INFO_KEYS):
-        return
-    key_values = set(info[i] for info in datasets_info)
-    if len(key_values) == 1:
-        for info in iter(datasets_info):
-            alias[info].append(None)
-    else:
-        for info in datasets_info:
-            alias[info].append(info[i])
-    for key in key_values:
-        _get_next_alias(
-            alias,
-            [info for info in datasets_info if info[i] == key],
-            i + 1,
-        )
+FacetValue = Union[str, Sequence[str], Number]
 
 
 def _augment(base, update):
@@ -167,29 +36,12 @@ def _augment(base, update):
             base[key] = update[key]
 
 
-def _merge_ancillary_dicts(var_facets, ds_facets):
-    """Update the elements of `var_facets` with those in `ds_facets`.
-
-    Both are lists of dicts containing facets
-    """
-    merged = {}
-    msg = ("'short_name' is required for ancillary_variables entries, "
-           "but missing in")
-    for facets in var_facets:
-        if 'short_name' not in facets:
-            raise RecipeError(f"{msg} {facets}")
-        else:
-            merged[facets['short_name']] = facets
-    for facets in ds_facets:
-        if 'short_name' not in facets:
-            raise RecipeError(f"{msg} {facets}")
-        else:
-            short_name = facets['short_name']
-            if short_name not in merged:
-                merged[short_name] = {}
-            merged[short_name].update(facets)
-
-    return list(merged.values())
+def _isglob(facet_value: str | Sequence[str]) -> bool:
+    if isinstance(facet_value, str):
+        return '*' in facet_value
+    if isinstance(facet_value, Sequence):
+        return any(isinstance(v, str) and '*' in v for v in facet_value)
+    return False
 
 
 class Dataset:
@@ -207,79 +59,96 @@ class Dataset:
         for key, value in facets.items():
             self.set_facet(key, copy.deepcopy(value), persist=True)
 
-    @classmethod
-    def from_recipe(cls, recipe: Path, session: Session):
+    @staticmethod
+    def from_recipe(recipe: Path, session: Session) -> list['Dataset']:
         """Factory function that creates `Dataset`s from a recipe."""
+        from ._recipe import datasets_from_recipe
+        return datasets_from_recipe(recipe, session)
+
+    def from_files(self) -> list['Dataset']:
+        """Create a list of datasets from the available files.
+
+        Requires that self.session is set.
+        """
+
+        def same(facets_a, facets_b):
+            """Define when two sets of facets are the same."""
+            return facets_a.issubset(facets_b) or facets_b.issubset(facets_a)
+
+        # Remove wildcard `timerange` facet, because data finding cannot
+        # handle it
+        timerange = self.facets.get('timerange')
+        glob_timerange = False
+        if _isglob(timerange):
+            glob_timerange = True
+            self.facets.pop('timerange')
+
+        # Remember ancillary specific globs
+        ancillary_globs = {
+            ds['short_name']: {
+                k: v
+                for k, v in ds.facets.items()
+                if _isglob(v) and not _isglob(self.facets.get(k, ''))
+            }
+            for ds in self.ancillaries
+        }
+
         datasets = []
+        if any(_isglob(v) for v in self.facets.values()):
+            available_facets: list[frozenset[tuple[str, FacetValue]]] = []
+            for file in self.files:
+                if 'version' not in self.facets:
+                    # Remove version facet if no specific version requested
+                    file.facets.pop('version', None)
 
-        loaded_recipe = yaml.safe_load(recipe.read_text(encoding='utf-8'))
-        diagnostics = loaded_recipe.get('diagnostics') or {}
-        for name, diagnostic in diagnostics.items():
-            for variable_group in diagnostic.get('variables', {}):
-                logger.debug(
-                    "Populating list of datasets for variable %s in "
-                    "diagnostic %s", variable_group, name)
-                # Read variable from recipe
-                recipe_variable = diagnostic['variables'][variable_group]
-                if recipe_variable is None:
-                    recipe_variable = {}
-                # Read datasets from recipe
-                recipe_datasets = (
-                    loaded_recipe.get('datasets', []) +
-                    diagnostic.get('additional_datasets', []) +
-                    recipe_variable.get('additional_datasets', []))
-                check_datasets(recipe_datasets, name, variable_group)
+                facetset = frozenset(file.facets.items())
 
-                idx = 0
-                for recipe_dataset in recipe_datasets:
-                    DATASET_KEYS.union(recipe_dataset)
-                    recipe_dataset = copy.deepcopy(recipe_dataset)
-                    facets = copy.deepcopy(recipe_variable)
-                    facets.pop('additional_datasets', None)
-                    for key, value in recipe_dataset.items():
-                        if key == 'ancillary_variables' and key in facets:
-                            _merge_ancillary_dicts(facets[key], value)
-                        else:
-                            facets[key] = value
+                # Filter out identical facetsets
+                for prev_facetset in available_facets:
+                    if same(facetset, prev_facetset):
+                        break
+                else:
+                    available_facets.append(facetset)
 
-                    persist = set(facets)
-                    facets['diagnostic'] = name
-                    facets['variable_group'] = variable_group
-                    if 'short_name' not in facets:
-                        facets['short_name'] = variable_group
-                        persist.add('short_name')
-                    check_variable(facets, required_keys=_REQUIRED_KEYS)
-                    preprocessor = str(facets.pop('preprocessor', 'default'))
-                    if facets['project'] == 'obs4mips':
-                        logger.warning(
-                            "Correcting capitalization, project 'obs4mips' "
-                            "should be written as 'obs4MIPs'")
-                        facets['project'] = 'obs4MIPs'
-                    if 'end_year' in facets and session['max_years']:
-                        facets['end_year'] = min(
-                            facets['end_year'],
-                            facets['start_year'] + session['max_years'] - 1)
-                    ancillaries = facets.pop('ancillary_variables', [])
-                    dataset = cls()
-                    dataset.session = session
-                    for key, value in facets.items():
-                        dataset.set_facet(key, value, key in persist)
-                    dataset.set_facet('preprocessor', preprocessor,
-                                      preprocessor != 'default')
-                    for dataset in dataset.from_ranges():
-                        for ancillary_facets in ancillaries:
-                            dataset.add_ancillary(**ancillary_facets)
-                        for ancillary_ds in dataset.ancillaries:
-                            ancillary_ds.facets.pop('preprocessor')
-                        dataset.facets['recipe_dataset_index'] = idx
-                        datasets.append(dataset)
-                        idx += 1
+            for facetset in sorted(available_facets):
+                updated_facets = {
+                    k: v
+                    for k, v in facetset
+                    if k in self.facets and isinstance(self.facets[k], str)
+                    and fnmatchcase(v, self.facets[k])
+                }
+                dataset = self.copy(**updated_facets)
+                # Restore globs in ancillary definition
+                # TODO: maybe this approach is wrong?
+                # check that only facets that were undefined in the
+                # ancillary get updated, defined ones should stay
+                for ancillary_ds in dataset.ancillaries:
+                    for key in ancillary_globs[ancillary_ds['short_name']]:
+                        ancillary_ds[key] = ancillary_globs[key]
+                datasets.append(dataset)
 
-        _set_aliases(datasets)
+        if not datasets:
+            # If the definition contains no wildcards or no files were found,
+            # return the original.
+            datasets.append(self)
+
+        if glob_timerange:
+            # Restore timerange and update
+            self.facets['timerange'] = timerange
+            for dataset in datasets:
+                dataset['timerange'] = timerange
+                dataset._update_timerange()
+            # TODO: filter out datasets outside requested timerange
+
+        for dataset in datasets:
+            ancillaries: list['Dataset'] = []
+            for ancillary_ds in dataset.ancillaries:
+                ancillaries.extend(ancillary_ds.from_files())
+            dataset.ancillaries = ancillaries
 
         return datasets
 
-    def copy(self, **facets):
+    def copy(self, **facets) -> 'Dataset':
         new = self.__class__()
         new.session = self._session
         for key, value in self.facets.items():
@@ -295,7 +164,7 @@ class Dataset:
             new.ancillaries.append(new_ancillary)
         return new
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         try:
             other_session = other.session
         except ValueError:
@@ -305,7 +174,7 @@ class Dataset:
                 and self.facets == other.facets
                 and self.ancillaries == other.ancillaries)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
 
         first_keys = (
             'diagnostic',
@@ -351,6 +220,18 @@ class Dataset:
     def minimal_facets(self):
         return {k: v for k, v in self.facets.items() if k in self._persist}
 
+    def set_version(self) -> None:
+        """Set the 'version' facet based on the available data."""
+        versions = set()
+        for file in self.files:
+            if 'version' in file.facets:
+                versions.add(file.facets['version'])
+        version = versions.pop() if len(versions) == 1 else sorted(versions)
+        if version:
+            self.set_facet('version', version)
+        for ancillary_ds in self.ancillaries:
+            ancillary_ds.set_version()
+
     @property
     def session(self):
         if self._session is None:
@@ -391,10 +272,8 @@ class Dataset:
             if activity:
                 self.facets['activity'] = activity
         _get_facets_from_cmor_table(self.facets)
-        _get_timerange_from_years(self.facets)
         if self.facets.get('frequency') == 'fx':
             self.facets.pop('timerange', None)
-        self._update_timerange(session)
 
     def find_files(self, session: Session | None = None):
         """Find files."""
@@ -440,14 +319,6 @@ class Dataset:
                                 'version']:
                             idx = self.files.index(local_file)
                             self.files[idx] = file
-
-        versions = set()
-        for file in self.files:
-            if 'version' in file.facets:
-                versions.add(file.facets['version'])
-        version = versions.pop() if len(versions) == 1 else sorted(versions)
-        if version:
-            self.set_facet('version', version)
 
     @property
     def files(self):
@@ -601,45 +472,3 @@ class Dataset:
         check_valid_time_selection(timerange)
 
         self.set_facet('timerange', timerange)
-
-
-def datasets_to_recipe(datasets):
-
-    diagnostics = {}
-
-    for dataset in datasets:
-        if 'diagnostic' not in dataset.facets:
-            raise RecipeError(
-                f"'diagnostic' facet missing from dataset {dataset},"
-                "unable to convert to recipe.")
-        diagnostic = dataset.facets['diagnostic']
-        if diagnostic not in diagnostics:
-            diagnostics[diagnostic] = {'variables': {}}
-        variables = diagnostics[diagnostic]['variables']
-        if 'variable_group' in dataset.facets:
-            variable_group = dataset.facets['variable_group']
-        else:
-            variable_group = dataset.facets['short_name']
-        if variable_group not in variables:
-            variables[variable_group] = {'additional_datasets': []}
-        facets = dataset.minimal_facets
-        if facets['short_name'] == variable_group:
-            facets.pop('short_name')
-        if dataset.ancillaries:
-            facets['ancillary_variables'] = []
-        for ancillary in dataset.ancillaries:
-            anc_facets = {}
-            for key, value in ancillary.minimal_facets.items():
-                if facets.get(key) != value:
-                    anc_facets[key] = value
-            facets['ancillary_variables'].append(anc_facets)
-        variables[variable_group]['additional_datasets'].append(facets)
-
-    # TODO: make recipe look nice
-    # - move identical facets from dataset to variable
-    # - deduplicate by moving datasets up from variable to diagnostic to recipe
-    # - remove variable_group if the same as short_name
-    # - remove automatically added facets
-
-    recipe = {'diagnostics': diagnostics}
-    return recipe

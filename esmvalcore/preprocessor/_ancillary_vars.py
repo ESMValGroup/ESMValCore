@@ -3,7 +3,8 @@
 import logging
 
 import dask.array as da
-import iris
+import iris.coords
+import iris.cube
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +153,7 @@ def add_fx_variables(cube, fx_variables):
     return cube
 
 
-def remove_fx_variables(cube):
+def remove_fx_variables(cube: iris.cube.Cube):
     """Remove fx variables present as cell measures or ancillary variables in
     the cube containing the data.
 
@@ -169,8 +170,8 @@ def remove_fx_variables(cube):
     """
     if cube.cell_measures():
         for measure in cube.cell_measures():
-            cube.remove_cell_measure(measure.standard_name)
+            cube.remove_cell_measure(measure)
     if cube.ancillary_variables():
         for variable in cube.ancillary_variables():
-            cube.remove_ancillary_variable(variable.standard_name)
+            cube.remove_ancillary_variable(variable)
     return cube

@@ -171,6 +171,34 @@ def test_valid_time_selection_rehections(timerange, message):
     assert str(rec_err.value) == message
 
 
+def test_differing_timeranges(caplog):
+    timeranges = set()
+    timeranges.add('1950/1951')
+    timeranges.add('1950/1952')
+    required_variables = [
+        {
+            'short_name': 'rsdscs',
+            'timerange': '1950/1951'
+        },
+        {
+            'short_name': 'rsuscs',
+            'timerange': '1950/1952'
+        },
+    ]
+    with pytest.raises(ValueError) as exc:
+        check.differing_timeranges(
+            timeranges, required_variables)
+    expected_log = (
+        f"Differing timeranges with values {timeranges} "
+        "found for required variables "
+        "[{'short_name': 'rsdscs', 'timerange': '1950/1951'}, "
+        "{'short_name': 'rsuscs', 'timerange': '1950/1952'}]. "
+        "Set `timerange` to a common value."
+    )
+
+    assert expected_log in str(exc.value)
+
+
 def test_data_availability_nonexistent(tmp_path):
     var = {
         'dataset': 'ABC',

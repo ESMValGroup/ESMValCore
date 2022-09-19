@@ -16,8 +16,9 @@ from nested_lookup import nested_delete
 from . import __version__
 from . import _recipe_checks as check
 from . import esgf
-from ._config import TAGS, TASKSEP, get_project_config
+from ._config import TAGS, TASKSEP, Session, get_project_config
 from ._data_finder import (
+    _get_timerange_from_years,
     _parse_period,
     _truncate_dates,
     dates_to_timerange,
@@ -27,7 +28,7 @@ from ._data_finder import (
 from ._provenance import get_recipe_provenance
 from ._task import DiagnosticTask, ResumeTask, TaskSet
 from .cmor.table import CMOR_TABLES, _get_facets_from_cmor_table
-from .dataset import Dataset, datasets_to_recipe
+from .dataset import Dataset, _isglob
 from .esgf import ESGFFile
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import (
@@ -40,6 +41,7 @@ from .preprocessor import (
 )
 from .preprocessor._ancillary_vars import PREPROCESSOR_ANCILLARIES
 from .preprocessor._derive import get_required
+from .preprocessor._io import DATASET_KEYS
 from .preprocessor._other import _group_products
 from .preprocessor._regrid import (
     _spec_to_latlonvals,
@@ -53,11 +55,28 @@ logger = logging.getLogger(__name__)
 DOWNLOAD_FILES = set()
 """Use a global variable to keep track of files that need to be downloaded."""
 
+_REQUIRED_KEYS = (
+    'short_name',
+    'mip',
+    'dataset',
+    'project',
+)
+
+_ALIAS_INFO_KEYS = (
+    'project',
+    'activity',
+    'dataset',
+    'exp',
+    'ensemble',
+    'version',
+)
+"""List of keys to be used to compose the alias, ordered by priority."""
+
 
 def read_recipe_file(filename: Path, session):
     """Read a recipe from file."""
     check.recipe_with_schema(filename)
-    with open(filename, 'r') as file:
+    with open(filename, 'r', encoding='utf-8') as file:
         raw_recipe = yaml.safe_load(file)
 
     return Recipe(raw_recipe, session, recipe_file=filename)
@@ -153,14 +172,6 @@ def _select_dataset(dataset_name, datasets):
         f"Unable to find matching file for dataset {dataset_name}")
 
 
-def _representative_dataset(dataset):
-    """Find a representative dataset that has files available."""
-    datasets = _get_input_datasets(dataset)
-    representative_dataset = datasets[0]
-    check.data_availability(representative_dataset)
-    return representative_dataset
-
-
 def _limit_datasets(datasets, profile):
     """Try to limit the number of datasets to max_datasets."""
     max_datasets = datasets[0].session['max_datasets']
@@ -189,12 +200,34 @@ def _limit_datasets(datasets, profile):
     return limited
 
 
+def _derive_needed(dataset: Dataset) -> bool:
+    """Check if dataset needs to be derived from other datasets."""
+    if not dataset.facets.get('derive'):
+        return False
+    if dataset.facets.get('force_derivation'):
+        return True
+    if _isglob(dataset.facets.get('timerange', '')):
+        # Our file finding routines are not able to handle globs.
+        dataset = dataset.copy()
+        dataset.facets.pop('timerange')
+
+    return not dataset.files
+
+
 def _get_default_settings(dataset):
     """Get default preprocessor settings."""
     session = dataset.session
     facets = dataset.facets
 
     settings = {}
+
+    if _derive_needed(dataset):
+        settings['derive'] = {
+            'short_name': facets['short_name'],
+            'standard_name': facets['standard_name'],
+            'long_name': facets['long_name'],
+            'units': facets['units'],
+        }
 
     # Clean up fixed files
     if not session['save_intermediary_cubes']:
@@ -621,7 +654,7 @@ def _update_extract_shape(settings, session):
         check.extract_shape(settings['extract_shape'])
 
 
-def _allow_skipping(dataset):
+def _allow_skipping(dataset: Dataset):
     """Allow skipping of datasets."""
     allow_skipping = all([
         dataset.session['skip_nonexistent'],
@@ -630,7 +663,66 @@ def _allow_skipping(dataset):
     return allow_skipping
 
 
-def _get_preprocessor_products(datasets, profile, order, name):
+def _get_input_datasets(dataset: 'Dataset') -> list['Dataset']:
+    """Determine the input datasets needed for deriving `dataset`."""
+    facets = dataset.facets
+    if not _derive_needed(dataset):
+        # No derivation requested or needed
+        return [dataset]
+
+    # Configure input datasets needed to derive variable
+    datasets = []
+    required_vars = get_required(facets['short_name'], facets['project'])
+    for input_facets in required_vars:
+        input_dataset = dataset.copy(**input_facets)
+        # idea: specify facets in list of dicts that is value of 'derive'?
+        _get_facets_from_cmor_table(input_dataset.facets, override=True)
+        input_dataset.augment_facets()
+        if input_facets.get('optional') and not input_dataset.files:
+            logger.info(
+                "Skipping: no data found for %s which is marked as "
+                "'optional'", input_dataset)
+        else:
+            datasets.append(input_dataset)
+
+    # Check timeranges of available input data.
+    timeranges = set()
+    for input_dataset in datasets:
+        if 'timerange' in input_dataset.facets:
+            timeranges.add(input_dataset.facets['timerange'])
+    check.differing_timeranges(timeranges, required_vars)
+
+    return datasets
+
+
+def _representative_dataset(dataset: 'Dataset') -> 'Dataset':
+    """Find a representative dataset that has files available."""
+    datasets = _get_input_datasets(dataset)
+    representative_dataset = datasets[0]
+    return representative_dataset
+
+
+def _set_version(dataset: Dataset, input_datasets: list[Dataset]):
+    """Set the 'version' facet based on derivation input datasets."""
+    versions = set()
+    for in_dataset in input_datasets:
+        in_dataset.set_version()
+        if version := dataset.facets.get('version'):
+            if isinstance(version, list):
+                versions.update(version)
+            else:
+                versions.add(version)
+    if versions:
+        version = versions.pop() if len(versions) == 1 else sorted(versions)
+        dataset.set_facet('version', version)
+
+
+def _get_preprocessor_products(
+        datasets: list[Dataset],
+        profile: dict[str, Any],
+        order: list[str],
+        name: str,
+) -> set[PreprocessorFile]:
     """Get preprocessor product definitions for a set of datasets.
 
     It updates recipe settings as needed by various preprocessors and
@@ -638,7 +730,12 @@ def _get_preprocessor_products(datasets, profile, order, name):
     """
     products = set()
 
-    missing_vars = set()
+    datasets = _limit_datasets(datasets, profile)
+
+    missing_vars: set[str] = set()
+    for dataset in datasets:
+        dataset.augment_facets()
+
     for dataset in datasets:
         settings = _get_default_settings(dataset)
         _update_warning_settings(settings, dataset.facets['project'])
@@ -655,10 +752,10 @@ def _get_preprocessor_products(datasets, profile, order, name):
             else:
                 missing_vars.update(missing)
             continue
-
+        _set_version(dataset, input_datasets)
         _schedule_for_download(input_datasets)
         logger.info("Found input files for %s",
-                    dataset.facets['alias'].replace('_', ' '))
+                    check._format_facets(dataset.facets))
 
         filename = get_output_file(dataset.facets, dataset.session.preproc_dir)
         product = PreprocessorFile(
@@ -755,37 +852,6 @@ def _update_preproc_functions(settings, dataset, datasets, missing_vars):
         check.check_for_temporal_preprocs(settings)
 
 
-def _get_single_preprocessor_task(datasets, profile, name):
-    """Create preprocessor tasks for a set of datasets."""
-    order = _extract_preprocessor_order(profile)
-
-    products = _get_preprocessor_products(
-        datasets=datasets,
-        profile=profile,
-        order=order,
-        name=name,
-    )
-
-    if not products:
-        raise RecipeError(
-            "Did not find any input data for task {}".format(name))
-
-    session = datasets[0].session
-    task = PreprocessingTask(
-        products=products,
-        name=name,
-        order=order,
-        debug=session['save_intermediary_cubes'],
-        write_ncl_interface=session['write_ncl_interface'],
-    )
-
-    logger.info("PreprocessingTask %s created.", task.name)
-    logger.debug("PreprocessingTask %s will create the files:\n%s", task.name,
-                 '\n'.join(str(p.filename) for p in task.products))
-
-    return task
-
-
 def _extract_preprocessor_order(profile):
     """Extract the order of the preprocessing steps from the profile."""
     custom_order = profile.pop('custom_order', False)
@@ -795,75 +861,43 @@ def _extract_preprocessor_order(profile):
     return INITIAL_STEPS + order + FINAL_STEPS
 
 
-def _check_differing_timeranges(timeranges, required_vars):
-    """Log error if required variables have differing timeranges."""
-    if len(timeranges) > 1:
-        raise ValueError(
-            f"Differing timeranges with values {timeranges} "
-            f"found for required variables {required_vars}. "
-            "Set `timerange` to a common value.")
-
-
-def _get_input_datasets(dataset: Dataset):
-    """Determine the input datasets needed for deriving `dataset`."""
-    facets = dataset.facets
-    if not facets.get('derive') or (
-            not facets.get('force_derivation') and dataset.files):
-        # No derivation requested or needed
-        dataset.facets.pop('derive', None)
-        return [dataset]
-
-    # Configure input datasets needed to derive variable
-    datasets = []
-    required_vars = get_required(facets['short_name'],
-                                 facets['project'])
-    for input_facets in required_vars:
-        input_dataset = dataset.copy(**input_facets)
-        # idea: specify facets in list of dicts that is value of 'derive'?
-        _get_facets_from_cmor_table(input_dataset.facets,
-                                    override=True)
-        input_dataset.augment_facets()
-        if input_facets.get('optional') and not input_dataset.files:
-            logger.info(
-                "Skipping: no data found for %s which is marked as "
-                "'optional'", input_dataset)
-        else:
-            datasets.append(input_dataset)
-
-    # Check timeranges of available input data.
-    timeranges = set()
-    for input_dataset in datasets:
-        if 'timerange' in input_dataset.facets:
-            timeranges.add(input_dataset.facets['timerange'])
-    _check_differing_timeranges(timeranges, required_vars)
-
-    return datasets
-
-
 def _get_preprocessor_task(datasets, profiles, task_name):
     """Create preprocessor task(s) for a set of datasets."""
     # First set up the preprocessor profile
     facets = datasets[0].facets
-    preproc_name = facets['preprocessor']
-    if preproc_name not in profiles:
+    session = datasets[0].session
+    if facets['preprocessor'] not in profiles:
         raise RecipeError(
-            "Unknown preprocessor {} in variable {} of diagnostic {}".format(
-                preproc_name, facets['variable_group'], facets['diagnostic']))
-    profile = deepcopy(profiles[facets['preprocessor']])
+            f"Unknown preprocessor {facets['preprocessor']} in variable "
+            f"{facets['variable_group']} of diagnostic {facets['diagnostic']}")
     logger.info("Creating preprocessor '%s' task for variable '%s'",
                 facets['preprocessor'], facets['variable_group'])
-    datasets = _limit_datasets(datasets, profile)
-
-    # Add extra facets
-    for dataset in datasets:
-        dataset.augment_facets()
+    profile = deepcopy(profiles[facets['preprocessor']])
+    order = _extract_preprocessor_order(profile)
 
     # Create preprocessor task
-    task = _get_single_preprocessor_task(
-        datasets,
-        profile,
+    products = _get_preprocessor_products(
+        datasets=datasets,
+        profile=profile,
+        order=order,
         name=task_name,
     )
+
+    if not products:
+        raise RecipeError(
+            f"Did not find any input data for task {task_name}")
+
+    task = PreprocessingTask(
+        products=products,
+        name=task_name,
+        order=order,
+        debug=session['save_intermediary_cubes'],
+        write_ncl_interface=session['write_ncl_interface'],
+    )
+
+    logger.info("PreprocessingTask %s created.", task.name)
+    logger.debug("PreprocessingTask %s will create the files:\n%s", task.name,
+                 '\n'.join(str(p.filename) for p in task.products))
 
     return task
 
@@ -1037,8 +1071,8 @@ class Recipe:
                         ancestor_ids = fnmatch.filter(tasks, id_glob)
                         if not ancestor_ids:
                             raise RecipeError(
-                                "Could not find any ancestors matching {}".
-                                format(id_glob))
+                                "Could not find any ancestors matching "
+                                f"'{id_glob}'.")
                         logger.debug("Pattern %s matches %s", id_glob,
                                      ancestor_ids)
                         ancestors.extend(tasks[a] for a in ancestor_ids)
@@ -1323,3 +1357,295 @@ class Recipe:
                 logger.warning("Could not write HTML report: %s", error)
             else:
                 output.write_html()
+
+
+def _set_aliases(datasets: list['Dataset']):
+    """Add a unique alias per diagnostic."""
+    for _, group in groupby(datasets, key=lambda ds: ds.facets['diagnostic']):
+        diag_datasets = [
+            list(h)
+            for _, h in groupby(group,
+                                key=lambda ds: ds.facets['variable_group'])
+        ]
+        _set_alias(diag_datasets)
+
+
+def _set_alias(variables):
+    """Add unique alias for datasets.
+
+    Generates a unique alias for each dataset that will be shared by all
+    variables. Tries to make it as small as possible to make it useful for
+    plot legends, filenames and such
+
+    It is composed using the keys in Recipe.info_keys that differ from
+    dataset to dataset. Once a diverging key is found, others are added
+    to the alias only if the previous ones where not enough to fully
+    identify the dataset.
+
+    If key values are not strings, they will be joint using '-' if they
+    are iterables or replaced by they string representation if they are not
+
+    Function will not modify alias if it is manually added to the recipe
+    but it will use the dataset info to compute the others
+
+    Examples
+    --------
+    - {project: CMIP5, model: EC-Earth, ensemble: r1i1p1}
+    - {project: CMIP6, model: EC-Earth, ensemble: r1i1p1f1}
+    will generate alias 'CMIP5' and 'CMIP6'
+
+    - {project: CMIP5, model: EC-Earth, experiment: historical}
+    - {project: CMIP5, model: MPI-ESM, experiment: piControl}
+    will generate alias 'EC-Earth,' and 'MPI-ESM'
+
+    - {project: CMIP5, model: EC-Earth, experiment: historical}
+    - {project: CMIP5, model: EC-Earth, experiment: piControl}
+    will generate alias 'historical' and 'piControl'
+
+    - {project: CMIP5, model: EC-Earth, experiment: historical}
+    - {project: CMIP6, model: EC-Earth, experiment: historical}
+    - {project: CMIP5, model: MPI-ESM, experiment: historical}
+    - {project: CMIP6, model: MPI-ESM experiment: historical}
+    will generate alias 'CMIP5_EC-EARTH', 'CMIP6_EC-EARTH', 'CMIP5_MPI-ESM'
+    and 'CMIP6_MPI-ESM'
+
+    - {project: CMIP5, model: EC-Earth, experiment: historical}
+    will generate alias 'EC-Earth'
+
+    Parameters
+    ----------
+    variables : list
+        for each recipe variable, a list of datasets
+    """
+    datasets_info = set()
+
+    def _key_str(obj):
+        if isinstance(obj, str):
+            return obj
+        try:
+            return '-'.join(obj)
+        except TypeError:
+            return str(obj)
+
+    for variable in variables:
+        for dataset in variable:
+            alias = tuple(
+                _key_str(dataset.facets.get(key, None))
+                for key in _ALIAS_INFO_KEYS)
+            datasets_info.add(alias)
+            if 'alias' not in dataset.facets:
+                dataset.facets['alias'] = alias
+
+    alias = {}
+    for info in datasets_info:
+        alias[info] = []
+
+    datasets_info = list(datasets_info)
+    _get_next_alias(alias, datasets_info, 0)
+
+    for info in datasets_info:
+        alias[info] = '_'.join(
+            [str(value) for value in alias[info] if value is not None])
+        if not alias[info]:
+            alias[info] = info[_ALIAS_INFO_KEYS.index('dataset')]
+
+    for variable in variables:
+        for dataset in variable:
+            dataset.facets['alias'] = alias.get(dataset.facets['alias'],
+                                                dataset.facets['alias'])
+
+
+def _get_next_alias(alias, datasets_info, i):
+    if i >= len(_ALIAS_INFO_KEYS):
+        return
+    key_values = set(info[i] for info in datasets_info)
+    if len(key_values) == 1:
+        for info in iter(datasets_info):
+            alias[info].append(None)
+    else:
+        for info in datasets_info:
+            alias[info].append(info[i])
+    for key in key_values:
+        _get_next_alias(
+            alias,
+            [info for info in datasets_info if info[i] == key],
+            i + 1,
+        )
+
+
+def _merge_ancillary_dicts(var_facets, ds_facets):
+    """Update the elements of `var_facets` with those in `ds_facets`.
+
+    Both are lists of dicts containing facets
+    """
+    merged = {}
+    msg = ("'short_name' is required for ancillary_variables entries, "
+           "but missing in")
+    for facets in var_facets:
+        if 'short_name' not in facets:
+            raise RecipeError(f"{msg} {facets}")
+        merged[facets['short_name']] = facets
+    for facets in ds_facets:
+        if 'short_name' not in facets:
+            raise RecipeError(f"{msg} {facets}")
+        short_name = facets['short_name']
+        if short_name not in merged:
+            merged[short_name] = {}
+        merged[short_name].update(facets)
+
+    return list(merged.values())
+
+
+def datasets_from_recipe(recipe: Path, session: Session) -> list[Dataset]:
+    datasets = []
+
+    loaded_recipe = yaml.safe_load(recipe.read_text(encoding='utf-8'))
+    diagnostics = loaded_recipe.get('diagnostics') or {}
+    for name, diagnostic in diagnostics.items():
+        for variable_group in diagnostic.get('variables', {}):
+            logger.debug(
+                "Populating list of datasets for variable %s in "
+                "diagnostic %s", variable_group, name)
+            # Read variable from recipe
+            recipe_variable = diagnostic['variables'][variable_group]
+            if recipe_variable is None:
+                recipe_variable = {}
+            # Read datasets from recipe
+            recipe_datasets = (
+                loaded_recipe.get('datasets', []) +
+                diagnostic.get('additional_datasets', []) +
+                recipe_variable.get('additional_datasets', []))
+            check.datasets(recipe_datasets, name, variable_group)
+
+            idx = 0
+            for recipe_dataset in recipe_datasets:
+                DATASET_KEYS.union(recipe_dataset)
+                recipe_dataset = deepcopy(recipe_dataset)
+                facets = deepcopy(recipe_variable)
+                facets.pop('additional_datasets', None)
+                for key, value in recipe_dataset.items():
+                    if key == 'ancillary_variables' and key in facets:
+                        _merge_ancillary_dicts(facets[key], value)
+                    else:
+                        facets[key] = value
+                # Legacy: support start_year and end_year instead of timerange
+                if 'end_year' in facets and session['max_years']:
+                    facets['end_year'] = min(
+                        facets['end_year'],
+                        facets['start_year'] + session['max_years'] - 1)
+                _get_timerange_from_years(facets)
+                # Legacy: support wrong capitalization of obs4MIPs
+                if facets['project'] == 'obs4mips':
+                    logger.warning(
+                        "Correcting capitalization, project 'obs4mips' "
+                        "should be written as 'obs4MIPs'")
+                    facets['project'] = 'obs4MIPs'
+
+                persist = set(facets)
+                facets['diagnostic'] = name
+                facets['variable_group'] = variable_group
+                if 'short_name' not in facets:
+                    facets['short_name'] = variable_group
+                    persist.add('short_name')
+                check.variable(facets, required_keys=_REQUIRED_KEYS)
+                preprocessor = str(facets.pop('preprocessor', 'default'))
+                ancillaries = facets.pop('ancillary_variables', [])
+                dataset = Dataset()
+                dataset.session = session
+                for key, value in facets.items():
+                    dataset.set_facet(key, value, key in persist)
+                dataset.set_facet('preprocessor', preprocessor,
+                                  preprocessor != 'default')
+                for dataset1 in dataset.from_ranges():
+                    for ancillary_facets in ancillaries:
+                        dataset1.add_ancillary(**ancillary_facets)
+                    for ancillary_ds in dataset1.ancillaries:
+                        ancillary_ds.facets.pop('preprocessor')
+                    for dataset2 in _from_representative_files(dataset1):
+                        dataset2.facets['recipe_dataset_index'] = idx
+                        datasets.append(dataset2)
+                        idx += 1
+
+    _set_aliases(datasets)
+
+    return datasets
+
+
+def _from_representative_files(dataset) -> list['Dataset']:
+    """Replace facet values of '*' based on available files."""
+    result: list[Dataset] = []
+    errors = []
+    repr_dataset = _representative_dataset(dataset)
+
+    for repr_ds in repr_dataset.from_files():
+        facets = {}
+        failed = {}
+        for key, value in dataset.facets.items():
+            if _isglob(value):
+                if key in repr_ds.facets and not _isglob(repr_ds[key]):
+                    facets[key] = repr_ds.facets[key]
+                else:
+                    failed[key] = value
+            else:
+                facets[key] = value
+        if failed:
+            errors.append(
+                "Unable to replace " +
+                ", ".join(f"{k}={v}" for k, v in failed.items()) +
+                f" by a value for dataset {dataset}. Does the path to "
+                + f"{repr_ds.files} contain the facet values?")
+        updated_ds = dataset.copy(**facets)
+        ancillaries = []
+        for anc_ds in repr_ds.ancillaries:
+            # Assume that ancillary variables are the same for derive input
+            # and the variable to derive.
+            ancillaries.extend(anc_ds.from_files())
+        updated_ds.ancillaries = ancillaries
+        result.append(updated_ds)
+
+    if errors:
+        raise RecipeError(errors)
+
+    return result
+
+
+def datasets_to_recipe(datasets):
+
+    diagnostics = {}
+
+    for dataset in datasets:
+        if 'diagnostic' not in dataset.facets:
+            raise RecipeError(
+                f"'diagnostic' facet missing from dataset {dataset},"
+                "unable to convert to recipe.")
+        diagnostic = dataset.facets['diagnostic']
+        if diagnostic not in diagnostics:
+            diagnostics[diagnostic] = {'variables': {}}
+        variables = diagnostics[diagnostic]['variables']
+        if 'variable_group' in dataset.facets:
+            variable_group = dataset.facets['variable_group']
+        else:
+            variable_group = dataset.facets['short_name']
+        if variable_group not in variables:
+            variables[variable_group] = {'additional_datasets': []}
+        facets = dataset.minimal_facets
+        if facets['short_name'] == variable_group:
+            facets.pop('short_name')
+        if dataset.ancillaries:
+            facets['ancillary_variables'] = []
+        for ancillary in dataset.ancillaries:
+            anc_facets = {}
+            for key, value in ancillary.minimal_facets.items():
+                if facets.get(key) != value:
+                    anc_facets[key] = value
+            facets['ancillary_variables'].append(anc_facets)
+        variables[variable_group]['additional_datasets'].append(facets)
+
+    # TODO: make recipe look nice
+    # - move identical facets from dataset to variable
+    # - deduplicate by moving datasets up from variable to diagnostic to recipe
+    # - remove variable_group if the same as short_name
+    # - remove automatically added facets
+
+    recipe = {'diagnostics': diagnostics}
+    return recipe
