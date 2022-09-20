@@ -28,7 +28,7 @@ from ._data_finder import (
 from ._provenance import get_recipe_provenance
 from ._task import DiagnosticTask, ResumeTask, TaskSet
 from .cmor.table import CMOR_TABLES, _get_facets_from_cmor_table
-from .dataset import Dataset, _isglob
+from .dataset import Dataset, Facets, _isglob
 from .esgf import ESGFFile
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import (
@@ -51,6 +51,8 @@ from .preprocessor._regrid import (
 )
 
 logger = logging.getLogger(__name__)
+
+PreprocessorSettings = dict[str, Any]
 
 DOWNLOAD_FILES = set()
 """Use a global variable to keep track of files that need to be downloaded."""
@@ -249,7 +251,7 @@ def _get_default_settings(dataset):
     return settings
 
 
-def _guess_fx_mip(facets, dataset):
+def _guess_fx_mip(facets: dict, dataset: Dataset):
     """Search mip for fx variable."""
     project = facets.get('project', dataset.facets['project'])
     # check if project in config-developer
@@ -278,6 +280,7 @@ def _guess_fx_mip(facets, dataset):
         fx_dataset = dataset.copy(**facets)
         fx_dataset.ancillaries = []
         fx_dataset.set_facet('mip', mip)
+        fx_dataset.facets.pop('timerange', None)
         fx_files = fx_dataset.files
         if fx_files:
             logger.debug("Found fx variables '%s':\n%s", facets['short_name'],
@@ -301,7 +304,10 @@ def _guess_fx_mip(facets, dataset):
     return mip
 
 
-def _get_legacy_ancillary_facets(dataset, settings, missing_ancillaries):
+def _get_legacy_ancillary_facets(
+    dataset: Dataset,
+    settings: PreprocessorSettings,
+) -> list[Facets]:
     """Load the ancillary dataset facets from the preprocessor settings."""
     # Update `fx_variables` key in preprocessor settings with defaults
     default_fx = {
@@ -357,8 +363,6 @@ def _get_legacy_ancillary_facets(dataset, settings, missing_ancillaries):
                     raise RecipeError(
                         f"Preprocessor function '{step}' does not support "
                         f"ancillary variable '{short_name}'")
-                if short_name not in missing_ancillaries:
-                    continue
                 if facets is None:
                     facets = {}
                 facets['short_name'] = short_name
@@ -373,30 +377,24 @@ def _get_legacy_ancillary_facets(dataset, settings, missing_ancillaries):
     return ancillaries
 
 
-def _add_legacy_ancillary_datasets(dataset, settings):
+def _add_legacy_ancillary_datasets(dataset: Dataset, settings):
     """Update fx settings depending on the needed method."""
-    recipe_ancillaries = {a.facets['short_name'] for a in dataset.ancillaries}
-    missing_ancillaries = []
-    for step in settings:
-        if step in PREPROCESSOR_ANCILLARIES:
-            ancs = PREPROCESSOR_ANCILLARIES[step]
-            for short_name in ancs['variables']:
-                if short_name in recipe_ancillaries:
-                    break
-            else:
-                missing_ancillaries.extend(ancs['variables'])
+    if dataset.ancillaries:
+        # Ancillaries have been defined using the new method.
+        return
 
-    for facets in _get_legacy_ancillary_facets(dataset, settings,
-                                               missing_ancillaries):
-        dataset.add_ancillary(**facets)
+    logger.info("Using legacy method of adding ancillary variables.")
 
-    available_ancillaries = []
-    for ancillary_ds in dataset.ancillaries:
+    legacy_ds = dataset.copy()
+    for facets in _get_legacy_ancillary_facets(dataset, settings):
+        legacy_ds.add_ancillary(**facets)
+
+    for ancillary_ds in legacy_ds.ancillaries:
         _get_facets_from_cmor_table(ancillary_ds.facets, override=True)
         if ancillary_ds.files:
-            available_ancillaries.append(ancillary_ds)
-    dataset.ancillaries = available_ancillaries
+            dataset.ancillaries.append(ancillary_ds)
 
+    # Remove preprocessor keyword argument `fx_variables`
     for kwargs in settings.values():
         kwargs.pop('fx_variables', None)
 
@@ -718,10 +716,10 @@ def _set_version(dataset: Dataset, input_datasets: list[Dataset]):
 
 
 def _get_preprocessor_products(
-        datasets: list[Dataset],
-        profile: dict[str, Any],
-        order: list[str],
-        name: str,
+    datasets: list[Dataset],
+    profile: dict[str, Any],
+    order: list[str],
+    name: str,
 ) -> set[PreprocessorFile]:
     """Get preprocessor product definitions for a set of datasets.
 
@@ -1571,40 +1569,77 @@ def datasets_from_recipe(recipe: Path, session: Session) -> list[Dataset]:
     return datasets
 
 
+def _clean_ancillaries(dataset: Dataset) -> None:
+    """Ignore duplicate and not expanded ancillary variables."""
+
+    def match(ancillary_ds: Dataset) -> int:
+        """Compute match of ancillary dataset with main dataset."""
+        score = 0
+        for key, value in dataset.facets.items():
+            if key in ancillary_ds.facets:
+                if ancillary_ds.facets[key] == value:
+                    score += 1
+        return score
+
+    ancillaries = []
+    for _, duplicates in groupby(dataset.ancillaries,
+                                 key=lambda ds: ds['short_name']):
+        duplicates = sorted(duplicates, key=match, reverse=True)
+        ancillary_ds = duplicates[0]
+        if len(duplicates) > 1:
+            logger.warning(
+                "For dataset %s: only using ancillary dataset %s, "
+                "ignoring duplicate ancillary datasets\n%s",
+                check._format_facets(dataset.facets),
+                check._format_facets(ancillary_ds.facets),
+                "\n".join(
+                    check._format_facets(ds.facets) for ds in duplicates[1:]),
+            )
+        if any(_isglob(v) for v in ancillary_ds.facets.values()):
+            logger.warning(
+                "For dataset %s: ignoring ancillary dataset %s, "
+                "unable to expand wildcards.",
+                check._format_facets(dataset.facets),
+                check._format_facets(ancillary_ds.facets),
+            )
+        else:
+            ancillaries.append(ancillary_ds)
+    dataset.ancillaries = ancillaries
+
+
 def _from_representative_files(dataset) -> list['Dataset']:
     """Replace facet values of '*' based on available files."""
+    logger.info("Expanding dataset globs in recipe, this may take a while..")
     result: list[Dataset] = []
     errors = []
     repr_dataset = _representative_dataset(dataset)
 
     for repr_ds in repr_dataset.from_files():
-        facets = {}
+        updated_facets = {}
         failed = {}
         for key, value in dataset.facets.items():
             if _isglob(value):
                 if key in repr_ds.facets and not _isglob(repr_ds[key]):
-                    facets[key] = repr_ds.facets[key]
+                    updated_facets[key] = repr_ds.facets[key]
                 else:
                     failed[key] = value
-            else:
-                facets[key] = value
+
         if failed:
-            errors.append(
-                "Unable to replace " +
-                ", ".join(f"{k}={v}" for k, v in failed.items()) +
-                f" by a value for dataset {dataset}. Does the path to "
-                + f"{repr_ds.files} contain the facet values?")
-        updated_ds = dataset.copy(**facets)
-        ancillaries = []
-        for anc_ds in repr_ds.ancillaries:
-            # Assume that ancillary variables are the same for derive input
-            # and the variable to derive.
-            ancillaries.extend(anc_ds.from_files())
-        updated_ds.ancillaries = ancillaries
-        result.append(updated_ds)
+            errors.append("Unable to replace " +
+                          ", ".join(f"{k}={v}" for k, v in failed.items()) +
+                          f" by a value for {dataset}. Do the paths to:\n" +
+                          "\n".join(str(f) for f in repr_ds.files) +
+                          "\ncontain the facet values?")
+
+        new_ds = dataset.copy()
+        new_ds.facets.update(updated_facets)
+        new_ds.ancillaries = [ds.copy() for ds in repr_ds.ancillaries]
+        _clean_ancillaries(new_ds)
+        logger.info("Found %s", new_ds)
+        result.append(new_ds)
 
     if errors:
-        raise RecipeError(errors)
+        raise RecipeError("\n".join(errors))
 
     return result
 

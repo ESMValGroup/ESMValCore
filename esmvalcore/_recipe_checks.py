@@ -162,6 +162,7 @@ def _format_facets(facets):
         'rcm_version',
         'driver',
         'domain',
+        'activity',
         'exp',
         'ensemble',
         'grid',
@@ -209,10 +210,12 @@ def ancillary_availability(dataset, settings):
     ancillaries = {d.facets['short_name']: d for d in dataset.ancillaries}
 
     # Check that the required ancillary variables are defined in the recipe
+    steps_ok = []
     for step in steps:
         ancs = PREPROCESSOR_ANCILLARIES[step]
         for short_name in ancs['variables']:
             if short_name in ancillaries:
+                steps_ok.append(step)
                 break
         else:
             if ancs['required'] == "require_at_least_one":
@@ -231,7 +234,7 @@ def ancillary_availability(dataset, settings):
                 )
 
     # Check that the required ancillary data can be found
-    for step in steps:
+    for step in steps_ok:
         ancs = PREPROCESSOR_ANCILLARIES[step]
         found_files = False
         for short_name in ancs['variables']:

@@ -408,7 +408,6 @@ def test_from_recipe_with_ancillary(session, tmp_path):
 @pytest.mark.parametrize('pattern,result', (
     ['a', False],
     ['*', True],
-    [['*b', 'a'], True],
 ))
 def test_isglob(pattern, result):
     assert esmvalcore.dataset._isglob(pattern) == result
@@ -590,6 +589,113 @@ def test_from_files_with_ancillary(session):
     assert all(ds.session == session for ds in datasets)
     assert all(ads.session == session for ds in datasets
                for ads in ds.ancillaries)
+    assert datasets == [expected]
+
+
+def test_from_files_with_double_wildcards(mocker, session):
+    """Test `from_files` with wildcards in dataset and ancillary."""
+    rootpath = Path('/path/to/data')
+    file = esmvalcore.local.LocalFile(
+        rootpath,
+        'CMIP6',
+        'CMIP',
+        'BCC',
+        'BCC-CSM2-MR',
+        'historical',
+        'r1i1p1f1',
+        'Amon',
+        'tas',
+        'gn',
+        'v20181126',
+        'tas_Amon_BCC-CSM2-MR_historical_r1i1p1f1_gn_185001-201412.nc',
+    )
+    file.facets = {
+        'activity': 'CMIP',
+        'dataset': 'BCC-CSM2-MR',
+        'exp': 'historical',
+        'ensemble': 'r1i1p1f1',
+        'grid': 'gn',
+        'institute': 'BCC',
+        'mip': 'Amon',
+        'project': 'CMIP6',
+        'short_name': 'tas',
+        'version': 'v20181126',
+    }
+    afile = esmvalcore.local.LocalFile(
+        rootpath,
+        'CMIP6',
+        'GMMIP',
+        'BCC',
+        'BCC-CSM2-MR',
+        'hist-resIPO',
+        'r1i1p1f1',
+        'fx',
+        'areacella',
+        'gn',
+        'v20190613',
+        'areacella_fx_BCC-CSM2-MR_hist-resIPO_r1i1p1f1_gn.nc',
+    )
+    afile.facets = {
+        'activity': 'GMMIP',
+        'dataset': 'BCC-CSM2-MR',
+        'ensemble': 'r1i1p1f1',
+        'exp': 'hist-resIPO',
+        'grid': 'gn',
+        'institute': 'BCC',
+        'mip': 'fx',
+        'project': 'CMIP6',
+        'short_name': 'areacella',
+        'version': 'v20190613',
+    }
+    dataset = Dataset(
+        activity='CMIP',
+        dataset='*',
+        ensemble='r1i1p1f1',
+        exp='historical',
+        grid='gn',
+        institute='*',
+        mip='Amon',
+        project='CMIP6',
+        short_name='tas',
+    )
+    dataset.session = session
+    dataset.add_ancillary(
+        short_name='areacella',
+        mip='fx',
+        activity='*',
+        exp='*',
+    )
+
+    mocker.patch.object(
+        Dataset,
+        'files',
+        new_callable=mocker.PropertyMock,
+        side_effect=[[file], [afile]],
+    )
+    datasets = dataset.from_files()
+
+    assert all(ds.session == session for ds in datasets)
+    assert all(ads.session == session for ds in datasets
+               for ads in ds.ancillaries)
+
+    expected = Dataset(
+        activity='CMIP',
+        dataset='BCC-CSM2-MR',
+        ensemble='r1i1p1f1',
+        exp='historical',
+        grid='gn',
+        institute='BCC',
+        mip='Amon',
+        project='CMIP6',
+        short_name='tas',
+    )
+    expected.session = session
+    expected.add_ancillary(
+        short_name='areacella',
+        mip='fx',
+        activity='GMMIP',
+        exp='hist-resIPO',
+    )
     assert datasets == [expected]
 
 

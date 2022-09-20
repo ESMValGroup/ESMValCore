@@ -7,7 +7,7 @@ import textwrap
 from fnmatch import fnmatchcase
 from numbers import Number
 from pathlib import Path
-from typing import Sequence, Union
+from typing import Optional, Sequence, Union
 
 from iris.cube import Cube
 
@@ -27,6 +27,7 @@ from .preprocessor import preprocess
 logger = logging.getLogger(__name__)
 
 FacetValue = Union[str, Sequence[str], Number]
+Facets = dict[str, FacetValue]
 
 
 def _augment(base, update):
@@ -36,11 +37,10 @@ def _augment(base, update):
             base[key] = update[key]
 
 
-def _isglob(facet_value: str | Sequence[str]) -> bool:
+def _isglob(facet_value: FacetValue) -> bool:
     if isinstance(facet_value, str):
+        # TODO: improve matching
         return '*' in facet_value
-    if isinstance(facet_value, Sequence):
-        return any(isinstance(v, str) and '*' in v for v in facet_value)
     return False
 
 
@@ -48,11 +48,11 @@ class Dataset:
 
     def __init__(self, **facets):
 
-        self.facets = {}
-        self.ancillaries = []
+        self.facets: dict[str, FacetValue] = {}
+        self.ancillaries: list['Dataset'] = []
 
-        self._persist = set()
-        self._session = None
+        self._persist: set[str] = set()
+        self._session: Optional[Session] = None
         self._files = None
         self._files_debug = (None, None)
 
@@ -75,33 +75,24 @@ class Dataset:
             """Define when two sets of facets are the same."""
             return facets_a.issubset(facets_b) or facets_b.issubset(facets_a)
 
-        # Remove wildcard `timerange` facet, because data finding cannot
-        # handle it
-        timerange = self.facets.get('timerange')
-        glob_timerange = False
+        dataset = self.copy()
+        dataset.ancillaries = []
+        timerange = dataset.facets.get('timerange')
         if _isglob(timerange):
-            glob_timerange = True
-            self.facets.pop('timerange')
+            # Remove wildcard `timerange` facet, because data finding cannot
+            # handle it
+            dataset.facets.pop('timerange')
 
-        # Remember ancillary specific globs
-        ancillary_globs = {
-            ds['short_name']: {
-                k: v
-                for k, v in ds.facets.items()
-                if _isglob(v) and not _isglob(self.facets.get(k, ''))
-            }
-            for ds in self.ancillaries
-        }
-
-        datasets = []
+        expanded = False
         if any(_isglob(v) for v in self.facets.values()):
             available_facets: list[frozenset[tuple[str, FacetValue]]] = []
-            for file in self.files:
+            for file in dataset.files:
+                facets = dict(file.facets)
                 if 'version' not in self.facets:
                     # Remove version facet if no specific version requested
-                    file.facets.pop('version', None)
+                    facets.pop('version', None)
 
-                facetset = frozenset(file.facets.items())
+                facetset = frozenset(facets.items())
 
                 # Filter out identical facetsets
                 for prev_facetset in available_facets:
@@ -114,39 +105,33 @@ class Dataset:
                 updated_facets = {
                     k: v
                     for k, v in facetset
-                    if k in self.facets and isinstance(self.facets[k], str)
+                    if k in self.facets and _isglob(self.facets[k])
                     and fnmatchcase(v, self.facets[k])
                 }
-                dataset = self.copy(**updated_facets)
-                # Restore globs in ancillary definition
-                # TODO: maybe this approach is wrong?
-                # check that only facets that were undefined in the
-                # ancillary get updated, defined ones should stay
-                for ancillary_ds in dataset.ancillaries:
-                    for key in ancillary_globs[ancillary_ds['short_name']]:
-                        ancillary_ds[key] = ancillary_globs[key]
-                datasets.append(dataset)
+                new_ds = self.copy()
+                new_ds.facets.update(updated_facets)
 
-        if not datasets:
+                if timerange is not None:
+                    new_ds['timerange'] = timerange
+                    new_ds._update_timerange()
+
+                ancillaries = []
+                for ancillary_ds in new_ds.ancillaries:
+                    afacets = ancillary_ds.facets
+                    for key, value in updated_facets.items():
+                        if (key in afacets and _isglob(afacets[key])):
+                            # Only overwrite ancillary facets that were globs.
+                            afacets[key] = value
+                    ancillaries.extend(ancillary_ds.from_files())
+                new_ds.ancillaries = ancillaries
+
+                expanded = True
+                yield new_ds
+
+        if not expanded:
             # If the definition contains no wildcards or no files were found,
-            # return the original.
-            datasets.append(self)
-
-        if glob_timerange:
-            # Restore timerange and update
-            self.facets['timerange'] = timerange
-            for dataset in datasets:
-                dataset['timerange'] = timerange
-                dataset._update_timerange()
-            # TODO: filter out datasets outside requested timerange
-
-        for dataset in datasets:
-            ancillaries: list['Dataset'] = []
-            for ancillary_ds in dataset.ancillaries:
-                ancillaries.extend(ancillary_ds.from_files())
-            dataset.ancillaries = ancillaries
-
-        return datasets
+            # yield the original.
+            yield self
 
     def copy(self, **facets) -> 'Dataset':
         new = self.__class__()
@@ -275,7 +260,7 @@ class Dataset:
         if self.facets.get('frequency') == 'fx':
             self.facets.pop('timerange', None)
 
-    def find_files(self, session: Session | None = None):
+    def find_files(self, session: Optional[Session] = None) -> None:
         """Find files."""
         if session is None:
             session = self.session
@@ -284,7 +269,7 @@ class Dataset:
         for ancillary in self.ancillaries:
             ancillary._find_files(session)
 
-    def _find_files(self, session):
+    def _find_files(self, session: Session) -> None:
         self.files, self._files_debug = local.find_files(session,
                                                          debug=True,
                                                          **self.facets)
@@ -321,7 +306,8 @@ class Dataset:
                             self.files[idx] = file
 
     @property
-    def files(self):
+    def files(self) -> list[Union[local.LocalFile, esgf.ESGFFile]]:
+        # TODO: Make cache more reliable? E.g. based on facets.
         if self._files is None:
             self.find_files()
         return self._files
@@ -330,7 +316,7 @@ class Dataset:
     def files(self, value):
         self._files = value
 
-    def load(self, session: Session | None = None) -> Cube:
+    def load(self, session: Optional[Session] = None) -> Cube:
         """Load dataset."""
         if session is None:
             session = self.session
@@ -338,8 +324,14 @@ class Dataset:
         preproc_dir = session.preproc_dir
         cube = self._load(preproc_dir, check_level)
         fx_cubes = []
+        ancillary_names = set()
         for ancillary_dataset in self.ancillaries:
+            short_name = ancillary_dataset['short_name']
+            if short_name in ancillary_names:
+                raise ValueError(
+                    f"{self} already has an ancillary variable {short_name}.")
             if ancillary_dataset.files:
+                ancillary_names.add(short_name)
                 fx_cube = ancillary_dataset._load(preproc_dir, check_level)
                 fx_cubes.append(fx_cube)
         input_files = list(self.files)
