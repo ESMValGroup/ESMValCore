@@ -1,16 +1,17 @@
 ---
-name: Monitor Tests
+name: Monitor Tests-NETCDF
 on:
   push:
     branches:
       - main
+      - unpin_netcdf
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
   #  branches:
   #  - main
   schedule:
-    - cron: '0 0 * * *'  # nightly
+    - cron: '0 */1 * * *'  # nightly
 
 jobs:
   linux:
