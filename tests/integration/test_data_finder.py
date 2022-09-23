@@ -25,6 +25,20 @@ with open(os.path.join(os.path.dirname(__file__), 'data_finder.yml')) as file:
     CONFIG = yaml.safe_load(file)
 
 
+def _augment_with_extra_facets(variable):
+    """Augment variable dict with extra facets."""
+    extra_facets = esmvalcore._config.get_extra_facets(
+        variable['project'],
+        variable['dataset'],
+        variable['mip'],
+        variable['short_name'],
+        (),
+    )
+    for (key, val) in extra_facets.items():
+        if key not in variable:
+            variable[key] = val
+
+
 def print_path(path):
     """Print path."""
     txt = path
@@ -68,6 +82,7 @@ def create_tree(path, filenames=None, symlinks=None):
 @pytest.mark.parametrize('cfg', CONFIG['get_output_file'])
 def test_get_output_file(cfg):
     """Test getting output name for preprocessed files."""
+    _augment_with_extra_facets(cfg['variable'])
     output_file = get_output_file(cfg['variable'], cfg['preproc_dir'])
     assert output_file == cfg['output_file']
 
@@ -87,6 +102,9 @@ def test_get_input_filelist(root, cfg):
     """Test retrieving input filelist."""
     create_tree(root, cfg.get('available_files'),
                 cfg.get('available_symlinks'))
+
+    # Augment variable dict with extra facets
+    _augment_with_extra_facets(cfg['variable'])
 
     # Find files
     rootpath = {cfg['variable']['project']: [root]}

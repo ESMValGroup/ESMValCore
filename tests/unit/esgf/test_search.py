@@ -119,12 +119,13 @@ def get_mock_connection(mocker, search_results):
     cfg = {
         'search_connection': {
             'urls': [
-                'https://esgf-index1.ceda.ac.uk/esg-search',
-                'https://esgf-node.llnl.gov/esg-search',
+                'https://esgf-index1.example.com/esg-search',
+                'https://esgf-index2.example.com/esg-search',
             ]
         },
     }
     mocker.patch.object(_search, "get_esgf_config", return_value=cfg)
+    mocker.patch.object(_search, 'FIRST_ONLINE_INDEX_NODE', None)
 
     ctx = mocker.create_autospec(
         pyesgf.search.context.FileSearchContext,
@@ -207,7 +208,7 @@ def test_esgf_search_files(mocker):
     files = _search.esgf_search_files(facets)
 
     SearchConnection.assert_called_once_with(
-        url='https://esgf-index1.ceda.ac.uk/esg-search')
+        url='https://esgf-index1.example.com/esg-search')
     connection = SearchConnection.return_value
     connection.new_context.assert_called_with(
         pyesgf.search.context.FileSearchContext,
@@ -244,7 +245,6 @@ def test_esgf_search_files(mocker):
 
 def test_esgf_search_uses_second_index_node(mocker):
     """Test that the second index node is used if the first is offline."""
-    mocker.patch.object(_search, 'FIRST_ONLINE_INDEX_NODE', None)
     search_result = mocker.sentinel.search_result
     search_results = [
         requests.exceptions.ReadTimeout("Timeout error message"),
@@ -255,7 +255,7 @@ def test_esgf_search_uses_second_index_node(mocker):
 
     result = _search._search_index_nodes(facets={})
 
-    second_index_node = 'https://esgf-node.llnl.gov/esg-search'
+    second_index_node = 'https://esgf-index2.example.com/esg-search'
     assert _search.FIRST_ONLINE_INDEX_NODE == second_index_node
     assert result == search_result
 
