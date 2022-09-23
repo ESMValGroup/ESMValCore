@@ -713,6 +713,9 @@ def _get_downstream_settings(step, order, products):
         if key in remaining_steps:
             if all(p.settings.get(key, object()) == value for p in products):
                 settings[key] = value
+    save = dict(some_product.settings.get('save', {}))
+    save.pop('filename', None)
+    settings['save'] = save
     return settings
 
 
