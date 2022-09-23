@@ -10,6 +10,8 @@ dependencies:
   - compilers
   # 1.8.18/py39, they seem weary to build manylinux wheels
   # and pypi ver built with older gdal
+  - dask
+  - distributed
   - fiona
   - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
   - geopy
