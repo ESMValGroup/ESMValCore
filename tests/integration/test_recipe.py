@@ -231,6 +231,7 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
         },
         'save': {
             'compress': False,
+            'compute': True,
             'filename': save_filename,
         }
     }
@@ -684,6 +685,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
         },
         'save': {
             'compress': False,
+            'compute': True,
             'filename': product.filename,
         }
     }

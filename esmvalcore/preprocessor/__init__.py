@@ -454,11 +454,13 @@ class PreprocessorFile(TrackedFile):
 
     def save(self):
         """Save cubes to disk."""
-        filename, self.delayed = save(
+        result = save(
             self._cubes,
             **self.settings['save'],
         )
-        self.files = [filename]
+        if not self.settings['save'].get('compute', True):
+            self.delayed = result
+        self.files = [self.settings['save']['filename']]
         self.files = preprocess(self.files,
                                 'cleanup',
                                 input_files=self._input_files,

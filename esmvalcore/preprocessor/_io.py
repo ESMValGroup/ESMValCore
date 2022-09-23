@@ -251,6 +251,7 @@ def save(cubes,
          filename,
          optimize_access='',
          compress=False,
+         compute=True,
          alias='',
          **kwargs):
     """Save iris cubes to file.
@@ -274,6 +275,10 @@ def save(cubes,
 
     compress: bool, optional
         Use NetCDF internal compression.
+
+    compute: bool, optional
+        If true save immediately, otherwise return a dask.delayed.Delayed
+        object that can be used for saving the data later.
 
     alias: str, optional
         Var name to use when saving instead of the one in the cube.
@@ -336,13 +341,20 @@ def save(cubes,
             cube.var_name = alias
 
     cube = cubes[0]
-    if kwargs.get('compute', True):
-        iris.save(cube, target=filename)
-        delayed = None
-    else:
-        data_array = xarray.DataArray.from_iris(cube)
-        delayed = data_array.to_netcdf(filename, compute=False)
-    return filename, delayed
+    if compute is True:
+        iris.save(cube, **kwargs)
+        return filename
+
+    data_array = xarray.DataArray.from_iris(cube)
+    kwargs.pop('target')
+    kwargs['_FillValue'] = kwargs.pop('fill_value')
+    encoding = {cube.var_name: kwargs}
+    delayed = data_array.to_netcdf(
+        filename,
+        encoding=encoding,
+        compute=False,
+    )
+    return delayed
 
 
 def _get_debug_filename(filename, step):
