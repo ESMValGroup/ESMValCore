@@ -1922,7 +1922,8 @@ class Recipe:
         if not self._cfg['offline']:
             esgf.download(self._download_files, self._cfg['download_dir'])
 
-        self.tasks.run(max_parallel_tasks=self._cfg['max_parallel_tasks'])
+        self.tasks.run(max_parallel_tasks=self._cfg['max_parallel_tasks'],
+                       client_kwargs=self._cfg['client_kwargs'])
         self.write_html_summary()
 
     def get_output(self) -> dict:

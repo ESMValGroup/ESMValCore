@@ -267,6 +267,7 @@ _validators = {
     'profile_diagnostic': validate_bool,
     'run_diagnostic': validate_bool,
     'output_file_type': validate_string,
+    'client_kwargs': validate_dict,
 
     # From CLI
     "resume_from": validate_pathlist,

@@ -713,24 +713,30 @@ class TaskSet(set):
                 independent_tasks.add(task)
         return independent_tasks
 
-    def run(self, max_parallel_tasks: int = None) -> None:
+    def run(
+        self, max_parallel_tasks: int = None, client_kwargs: dict = None
+    ) -> None:
         """Run tasks.
 
         Parameters
         ----------
         max_parallel_tasks : int
             Number of processes to run. If `1`, run the tasks sequentially.
+        client_kwargs: dict
+            Optional arguments for setting up the Dask cluster
         """
         if max_parallel_tasks == -1:
-            self._run_dask()
+            self._run_dask(client_kwargs)
         elif max_parallel_tasks == 1:
             self._run_sequential()
         else:
             self._run_parallel(max_parallel_tasks)
 
-    def _run_dask(self) -> None:
+    def _run_dask(self, client_kwargs: dict = None) -> None:
         """Run tasks using dask."""
-        with dask.distributed.Client(processes=False) as client:
+        _client_kwargs = {"processes": False}
+        _client_kwargs.update(client_kwargs)
+        with dask.distributed.Client(**_client_kwargs) as client:
             logger.info(f"Dask dashboard: {client.dashboard_link}")
             futures = {}
             for task in sorted(self.flatten(), key=lambda t: t.priority):
