@@ -735,7 +735,7 @@ class TaskSet(set):
     def _run_dask(self, client_kwargs: dict = None) -> None:
         """Run tasks using dask."""
         _client_kwargs = {"processes": False}
-        _client_kwargs.update(client_kwargs)
+        _client_kwargs.update(client_kwargs or {})
         with dask.distributed.Client(**_client_kwargs) as client:
             logger.info(f"Dask dashboard: {client.dashboard_link}")
             futures = {}
