@@ -415,27 +415,34 @@ To allow ESMValCore to locate the data files, use the following steps:
         ICON:
           ...
           input_dir:
-            default: '{version}_{component}_{exp}_{grid}_{ensemble}'
+            default:
+              - '{exp}'
+              - '{exp}/outdata'
           input_file:
-            default: '{version}_{component}_{exp}_{grid}_{ensemble}_{var_type}*.nc'
+            default: '{exp}_{var_type}*.nc'
           ...
 
-     To find your ICON data that is for example located in
-     ``{rootpath}/42-0_atm_amip_R2B5_r1i1/42-0_atm_amip_R2B5_r1i1_2d_1979.nc``
-     (``{rootpath}`` is ESMValTool ``rootpath`` for the project ``ICON``
-     defined in your :ref:`user configuration file`), use the following dataset
-     entry in your recipe:
+     To find your ICON data that is for example located in files like
+     ``{rootpath}/amip/amip_atm_2d_ml_20000101T000000Z.nc`` (``{rootpath}`` is
+     ESMValTool ``rootpath`` for the project ``ICON`` defined in your
+     :ref:`user configuration file`), use the following dataset entry in your
+     recipe:
 
      .. code-block:: yaml
 
         datasets:
-          - {project: ICON, dataset: ICON, version: 42-0, component: atm, exp: amip, grid: R2B5, ensemble: r1i1, var_type: 2d}
+          - {project: ICON, dataset: ICON, exp: amip}
 
      Please note the duplication of the name ``ICON`` in ``project`` and
      ``dataset``, which is necessary to comply with ESMValTool's data finding
      and CMORizing functionalities.
      For other native models, ``dataset`` could also refer to a subversion of
      the model.
+     Note that it is possible to predefine facets in an :ref:`extra facets file
+     <add_new_fix_native_datasets_extra_facets>`.
+     In this ICON example, the facet ``var_type`` is :download:`predefined
+     </../esmvalcore/_config/extra_facets/icon-mappings.yml>` for many
+     variables.
 
 .. _add_new_fix_native_datasets_fix_data:
 
