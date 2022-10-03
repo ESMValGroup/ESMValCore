@@ -23,6 +23,7 @@ def cubes():
 
 
 def test_siextent_calculation(cubes):
+    """Test function ``calculate``."""
     derived_var = siextent.DerivedVariable()
     out_cube = derived_var.calculate(cubes)
     assert out_cube.units == cf_units.Unit('m2')
@@ -32,3 +33,12 @@ def test_siextent_calculation(cubes):
     expected[0][0][0] = 1.
     np.testing.assert_array_equal(out_data.mask, expected.mask)
     np.testing.assert_array_equal(out_data[0][0][0], expected[0][0][0])
+
+
+def test_siextent_required():
+    """Test function ``required``."""
+    derived_var = siextent.DerivedVariable()
+    output = derived_var.required(None)
+    assert output == [
+        {'short_name': 'sic'}
+    ]

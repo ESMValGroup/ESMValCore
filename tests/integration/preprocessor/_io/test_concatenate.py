@@ -14,7 +14,6 @@ from iris.aux_factory import (
 )
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
-from iris.exceptions import ConcatenateError
 
 from esmvalcore.preprocessor import _io
 
@@ -375,8 +374,10 @@ class TestConcatenate(unittest.TestCase):
                      var_name='sample',
                      dim_coords_and_dims=((time_coord_2, 0), ))
         cubes_single_ovlp = [cube2, cube1]
-        with self.assertRaises(ConcatenateError):
-            _io.concatenate(cubes_single_ovlp)
+        cubess = _io.concatenate(cubes_single_ovlp)
+        # this tests the scalar to vector cube conversion too
+        time_points = cubess.coord("time").core_points()
+        np.testing.assert_array_equal(time_points, [1., 1.5, 5., 7.])
 
     def test_concatenate_no_time_coords(self):
         """Test a more generic case."""
