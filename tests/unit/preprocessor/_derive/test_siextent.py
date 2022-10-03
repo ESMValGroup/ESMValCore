@@ -58,6 +58,7 @@ def cubes():
                                   dim_coords_and_dims=[(time_coord, 0)])
     return iris.cube.CubeList([sic_cube, siconca_cube])
 
+
 def test_siextent_calculation_sic(cubes_sic):
     """Test function ``calculate`` when sic is available."""
     derived_var = siextent.DerivedVariable()
