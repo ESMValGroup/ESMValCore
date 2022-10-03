@@ -21,6 +21,7 @@ def cubes_sic():
                               dim_coords_and_dims=[(time_coord, 0)])
     return iris.cube.CubeList([sic_cube])
 
+
 @pytest.fixture
 def cubes_siconca():
     sic_name = 'sea_ice_area_fraction'
@@ -35,6 +36,27 @@ def cubes_siconca():
                               dim_coords_and_dims=[(time_coord, 0)])
     return iris.cube.CubeList([sic_cube])
 
+
+@pytest.fixture
+def cubes():
+    sic_name = 'sea_ice_area_fraction'
+    time_coord = iris.coords.DimCoord([0., 1., 2.],
+                                      standard_name='time')
+    sic_cube = iris.cube.Cube([[[20, 10], [10, 10]],
+                               [[10, 10], [10, 10]],
+                               [[10, 10], [10, 10]]],
+                              units='%',
+                              standard_name=sic_name,
+                              var_name='sic',
+                              dim_coords_and_dims=[(time_coord, 0)])
+    siconca_cube = iris.cube.Cube([[[20, 10], [10, 10]],
+                                   [[10, 10], [10, 10]],
+                                   [[10, 10], [10, 10]]],
+                                  units='%',
+                                  standard_name=sic_name,
+                                  var_name='siconca',
+                                  dim_coords_and_dims=[(time_coord, 0)])
+    return iris.cube.CubeList([sic_cube, siconca_cube])
 
 def test_siextent_calculation_sic(cubes_sic):
     """Test function ``calculate`` when sic is available."""
@@ -56,6 +78,19 @@ def test_siextent_calculation_siconca(cubes_siconca):
     assert out_cube.units == cf_units.Unit('m2')
     out_data = out_cube.data
     expected = np.ma.ones_like(cubes_siconca[0].data)
+    expected.mask = True
+    expected[0][0][0] = 1.
+    np.testing.assert_array_equal(out_data.mask, expected.mask)
+    np.testing.assert_array_equal(out_data[0][0][0], expected[0][0][0])
+
+
+def test_siextent_calculation(cubes):
+    """Test function ``calculate`` when sic and siconca are available."""
+    derived_var = siextent.DerivedVariable()
+    out_cube = derived_var.calculate(cubes)
+    assert out_cube.units == cf_units.Unit('m2')
+    out_data = out_cube.data
+    expected = np.ma.ones_like(cubes[0].data)
     expected.mask = True
     expected[0][0][0] = 1.
     np.testing.assert_array_equal(out_data.mask, expected.mask)
