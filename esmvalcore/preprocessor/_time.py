@@ -7,6 +7,7 @@ import copy
 import datetime
 import logging
 from warnings import filterwarnings
+from typing import Union
 
 import dask.array as da
 import iris
@@ -138,7 +139,7 @@ def _duration_to_date(duration, reference, sign):
 def _select_timeslice(
     cube: iris.cube.Cube,
     select: np.ndarray,
-) -> iris.cube.Cube | None:
+) -> Union[iris.cube.Cube, None]:
     """Slice a cube along its time axis."""
     if select.any():
         coord = cube.coord('time')
