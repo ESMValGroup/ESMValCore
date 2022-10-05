@@ -2,6 +2,61 @@ Changelog
 =========
 
 
+.. _changelog-v2-7-0-rc1:
+
+
+v2.7.0rc1
+---------
+Highlights
+~~~~~~~~~~
+
+Backwards incompatible changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO: add examples of how to deal with these changes
+
+-  Change default DRS for reading native ICON output (`#1705 <https://github.com/ESMValGroup/ESMValCore/pull/1705>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+Bug fixes
+~~~~~~~~~
+
+-  Add support for regions stored as MultiPolygon to extract_shape preprocessor (`#1670 <https://github.com/ESMValGroup/ESMValCore/pull/1670>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Fixed type annotations for Python 3.8 (`#1700 <https://github.com/ESMValGroup/ESMValCore/pull/1700>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Core `_io.concatenate()` may fail due to case when one of the cubes is scalar - this fixes that (`#1715 <https://github.com/ESMValGroup/ESMValCore/pull/1715>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+
+Documentation
+~~~~~~~~~~~~~
+
+-  Add Met Office Installation Method (`#1692 <https://github.com/ESMValGroup/ESMValCore/pull/1692>`__) `mo-tgeddes <https://github.com/mo-tgeddes>`__
+-  Add MO-paths to config file (`#1709 <https://github.com/ESMValGroup/ESMValCore/pull/1709>`__) `mo-tgeddes <https://github.com/mo-tgeddes>`__
+-  Update MO obs4MIPs paths in the user configuration file (`#1734 <https://github.com/ESMValGroup/ESMValCore/pull/1734>`__) `mo-tgeddes <https://github.com/mo-tgeddes>`__
+-  Update `Making a release` section of the documentation (`#1689 <https://github.com/ESMValGroup/ESMValCore/pull/1689>`__) `sloosvel <https://github.com/sloosvel>`__
+
+Improvements
+~~~~~~~~~~~~
+
+-  New preprocessor function 'rolling_window_statistics' (`#1702 <https://github.com/ESMValGroup/ESMValCore/pull/1702>`__) `Liza Malinina <https://github.com/malininae>`__
+-  Remove `pytest_flake8` plugin and use `flake8` instead (`#1722 <https://github.com/ESMValGroup/ESMValCore/pull/1722>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Added CESM2 CMORizer (`#1678 <https://github.com/ESMValGroup/ESMValCore/pull/1678>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Speed up functions that use time dimension (`#1713 <https://github.com/ESMValGroup/ESMValCore/pull/1713>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Fixes for datasets
+~~~~~~~~~~~~~~~~~~
+
+-  Refactored native model fixes by adding common base class `NativeDatasetFix` (`#1694 <https://github.com/ESMValGroup/ESMValCore/pull/1694>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+Installation
+~~~~~~~~~~~~
+
+-  Pin `netCDF4 != 1.6.1` since that seems to throw a flurry of Segmentation Faults (`#1724 <https://github.com/ESMValGroup/ESMValCore/pull/1724>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+-  Pin `flake8<5.0.0` since Circle CI tests are failing copiously (`#1698 <https://github.com/ESMValGroup/ESMValCore/pull/1698>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Added tests for input/output filenames for ICON and EMAC on-the-fly CMORizer (`#1718 <https://github.com/ESMValGroup/ESMValCore/pull/1718>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+
 .. _changelog-v2-6-0:
 
 v2.6.0
