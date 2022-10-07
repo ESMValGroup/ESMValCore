@@ -6,8 +6,8 @@ constructing seasonal and area averages.
 import copy
 import datetime
 import logging
-from warnings import filterwarnings
 from typing import Union
+from warnings import filterwarnings
 
 import dask.array as da
 import iris
@@ -143,10 +143,14 @@ def _select_timeslice(
     """Slice a cube along its time axis."""
     if select.any():
         coord = cube.coord('time')
-        time_dim = cube.coord_dims(coord)[0]
-        slices = tuple(select if i == time_dim else slice(None)
-                       for i in range(cube.ndim))
-        cube_slice = cube[slices]
+        time_dims = cube.coord_dims(coord)
+        if time_dims:
+            time_dim = time_dims[0]
+            slices = tuple(select if i == time_dim else slice(None)
+                           for i in range(cube.ndim))
+            cube_slice = cube[slices]
+        else:
+            cube_slice = cube
     else:
         cube_slice = None
     return cube_slice
