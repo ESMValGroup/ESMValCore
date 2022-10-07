@@ -28,7 +28,7 @@ from ._data_finder import (
 from ._provenance import get_recipe_provenance
 from ._task import DiagnosticTask, ResumeTask, TaskSet
 from .cmor.table import CMOR_TABLES, _get_facets_from_cmor_table
-from .dataset import Dataset, Facets, _isglob
+from .dataset import Dataset, _isglob
 from .esgf import ESGFFile
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import (
@@ -49,6 +49,7 @@ from .preprocessor._regrid import (
     get_reference_levels,
     parse_cell_spec,
 )
+from .types import Facets
 
 logger = logging.getLogger(__name__)
 
@@ -347,7 +348,7 @@ def _get_legacy_ancillary_facets(
                 continue
 
             if isinstance(fx_variables, list):
-                result = {}
+                result: dict[str, Facets] = {}
                 for fx_variable in fx_variables:
                     if isinstance(fx_variable, str):
                         # Legacy legacy method of specifying ancillary variable
@@ -1560,7 +1561,8 @@ def datasets_from_recipe(recipe: Path, session: Session) -> list[Dataset]:
                     for ancillary_ds in dataset1.ancillaries:
                         ancillary_ds.facets.pop('preprocessor')
                     for dataset2 in _from_representative_files(dataset1):
-                        dataset2.facets['recipe_dataset_index'] = idx
+                        dataset2.facets[
+                            'recipe_dataset_index'] = idx  # type: ignore
                         datasets.append(dataset2)
                         idx += 1
 
@@ -1584,16 +1586,16 @@ def _clean_ancillaries(dataset: Dataset) -> None:
     ancillaries = []
     for _, duplicates in groupby(dataset.ancillaries,
                                  key=lambda ds: ds['short_name']):
-        duplicates = sorted(duplicates, key=match, reverse=True)
-        ancillary_ds = duplicates[0]
-        if len(duplicates) > 1:
+        group = sorted(duplicates, key=match, reverse=True)
+        ancillary_ds = group[0]
+        if len(group) > 1:
             logger.warning(
                 "For dataset %s: only using ancillary dataset %s, "
                 "ignoring duplicate ancillary datasets\n%s",
                 check._format_facets(dataset.facets),
                 check._format_facets(ancillary_ds.facets),
                 "\n".join(
-                    check._format_facets(ds.facets) for ds in duplicates[1:]),
+                    check._format_facets(ds.facets) for ds in group[1:]),
             )
         if any(_isglob(v) for v in ancillary_ds.facets.values()):
             logger.warning(

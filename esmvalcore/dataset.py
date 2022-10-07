@@ -5,9 +5,8 @@ import pprint
 import re
 import textwrap
 from fnmatch import fnmatchcase
-from numbers import Number
 from pathlib import Path
-from typing import Optional, Sequence, Union
+from typing import Any, Iterator, Optional, Union
 
 from iris.cube import Cube
 
@@ -23,11 +22,11 @@ from ._recipe_checks import valid_time_selection as check_valid_time_selection
 from .cmor.table import _get_facets_from_cmor_table
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import preprocess
+from .types import Facets, FacetValue
 
 logger = logging.getLogger(__name__)
 
-FacetValue = Union[str, Sequence[str], Number]
-Facets = dict[str, FacetValue]
+File = Union[esgf.ESGFFile, local.LocalFile]
 
 
 def _augment(base, update):
@@ -37,23 +36,28 @@ def _augment(base, update):
             base[key] = update[key]
 
 
-def _isglob(facet_value: FacetValue) -> bool:
+def _isglob(facet_value: Union[FacetValue, None]) -> bool:
     if isinstance(facet_value, str):
         # TODO: improve matching
         return '*' in facet_value
     return False
 
 
+def _ismatch(facet_value: FacetValue, pattern: FacetValue) -> bool:
+    return (isinstance(pattern, str) and isinstance(facet_value, str)
+            and fnmatchcase(facet_value, pattern))
+
+
 class Dataset:
 
-    def __init__(self, **facets):
+    def __init__(self, **facets: FacetValue):
 
-        self.facets: dict[str, FacetValue] = {}
+        self.facets: Facets = {}
         self.ancillaries: list['Dataset'] = []
 
         self._persist: set[str] = set()
         self._session: Optional[Session] = None
-        self._files = None
+        self._files: Optional[list[File]] = None
         self._files_debug = (None, None)
 
         for key, value in facets.items():
@@ -65,7 +69,7 @@ class Dataset:
         from ._recipe import datasets_from_recipe
         return datasets_from_recipe(recipe, session)
 
-    def from_files(self) -> list['Dataset']:
+    def from_files(self) -> Iterator['Dataset']:
         """Create a list of datasets from the available files.
 
         Requires that self.session is set.
@@ -106,7 +110,7 @@ class Dataset:
                     k: v
                     for k, v in facetset
                     if k in self.facets and _isglob(self.facets[k])
-                    and fnmatchcase(v, self.facets[k])
+                    and _ismatch(v, self.facets[k])
                 }
                 new_ds = self.copy()
                 new_ds.facets.update(updated_facets)
@@ -115,7 +119,7 @@ class Dataset:
                     new_ds['timerange'] = timerange
                     new_ds._update_timerange()
 
-                ancillaries = []
+                ancillaries: list['Dataset'] = []
                 for ancillary_ds in new_ds.ancillaries:
                     afacets = ancillary_ds.facets
                     for key, value in updated_facets.items():
@@ -130,12 +134,16 @@ class Dataset:
 
         if not expanded:
             # If the definition contains no wildcards or no files were found,
-            # yield the original.
+            # yield the original (but do expand any ancillary globs).
+            ancillaries = []
+            for ancillary_ds in self.ancillaries:
+                ancillaries.extend(ancillary_ds.from_files())
+            self.ancillaries = ancillaries
             yield self
 
     def copy(self, **facets) -> 'Dataset':
         new = self.__class__()
-        new.session = self._session
+        new._session = self._session
         for key, value in self.facets.items():
             new.set_facet(key, copy.deepcopy(value), key in self._persist)
         for key, value in facets.items():
@@ -218,7 +226,7 @@ class Dataset:
             ancillary_ds.set_version()
 
     @property
-    def session(self):
+    def session(self) -> Session:
         if self._session is None:
             raise ValueError(
                 "Session not set, please create a session by using "
@@ -227,17 +235,17 @@ class Dataset:
         return self._session
 
     @session.setter
-    def session(self, session):
+    def session(self, session: Optional[Session]) -> None:
         self._session = session
         for ancillary in self.ancillaries:
-            ancillary.session = session
+            ancillary._session = session
 
-    def add_ancillary(self, **facets):
+    def add_ancillary(self, **facets) -> None:
         ancillary = self.copy(**facets)
         ancillary.ancillaries = []
         self.ancillaries.append(ancillary)
 
-    def augment_facets(self, session=None):
+    def augment_facets(self, session: Optional[Session] = None) -> None:
         """Add extra facets."""
         if session is None:
             session = self.session
@@ -270,9 +278,11 @@ class Dataset:
             ancillary._find_files(session)
 
     def _find_files(self, session: Session) -> None:
-        self.files, self._files_debug = local.find_files(session,
-                                                         debug=True,
-                                                         **self.facets)
+        self.files, self._files_debug = local.find_files(
+            session,
+            debug=True,
+            **self.facets,
+        )
 
         project = self.facets['project']
 
@@ -288,7 +298,6 @@ class Dataset:
                     search_esgf = True
 
         if search_esgf:
-            self._files_debug[0].append('ESGF:')
             local_files = {f.name: f for f in self.files}
             search_result = esgf.find_files(**self.facets)
             for file in search_result:
@@ -310,7 +319,7 @@ class Dataset:
         # TODO: Make cache more reliable? E.g. based on facets.
         if self._files is None:
             self.find_files()
-        return self._files
+        return self._files  # type: ignore
 
     @files.setter
     def files(self, value):
@@ -335,7 +344,8 @@ class Dataset:
                 fx_cube = ancillary_dataset._load(preproc_dir, check_level)
                 fx_cubes.append(fx_cube)
         input_files = list(self.files)
-        input_files.extend(anc.files for anc in self.ancillaries)
+        for anc in self.ancillaries:
+            input_files.extend(anc.files)
         cubes = preprocess(
             [cube],
             'add_fx_variables',
@@ -348,7 +358,7 @@ class Dataset:
         """Load self.files into an iris cube and return it."""
         output_file = get_output_file(self.facets, preproc_dir)
 
-        settings = {}
+        settings: dict[str, dict[str, Any]] = {}
         settings['fix_file'] = {
             'output_dir': Path(f"{output_file.with_suffix('')}_fixed"),
             **self.facets,
@@ -440,13 +450,15 @@ class Dataset:
             return
 
         timerange = self.facets.pop('timerange')
+        if not isinstance(timerange, str):
+            raise TypeError(f"timerange should be a string, got {timerange!r}")
         check_valid_time_selection(timerange)
 
         if '*' in timerange:
             self.find_files(session)
             check_data_availability(self)
             intervals = [get_start_end_date(f.name) for f in self.files]
-            self.files = None
+            self._files = None
 
             min_date = min(interval[0] for interval in intervals)
             max_date = max(interval[1] for interval in intervals)

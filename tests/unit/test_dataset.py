@@ -413,7 +413,7 @@ def test_isglob(pattern, result):
     assert esmvalcore.dataset._isglob(pattern) == result
 
 
-def test_from_files(session):
+def test_from_files(session, mocker):
     rootpath = Path('/path/to/data')
     file1 = esmvalcore.local.LocalFile(
         rootpath,
@@ -487,8 +487,13 @@ def test_from_files(session):
         dataset='*',
     )
     dataset.session = session
-    dataset.files = [file1, file2, file3]
-    datasets = dataset.from_files()
+    mocker.patch.object(
+        Dataset,
+        'files',
+        new_callable=mocker.PropertyMock,
+        side_effect=[[file1, file2, file3]],
+    )
+    datasets = list(dataset.from_files())
     expected = [
         Dataset(short_name='tas',
                 mip='Amon',
@@ -506,33 +511,8 @@ def test_from_files(session):
     assert datasets == expected
 
 
-def test_from_files_with_ancillary(session):
+def test_from_files_with_ancillary(session, mocker):
     rootpath = Path('/path/to/data')
-    file = esmvalcore.local.LocalFile(
-        rootpath,
-        'CMIP6',
-        'CMIP',
-        'CAS',
-        'FGOALS-g3',
-        'historical',
-        'r3i1p1f1',
-        'Amon',
-        'tas',
-        'gn',
-        'v20190827',
-        'tas_Amon_FGOALS-g3_historical_r3i1p1f1_gn_199001-199912.nc',
-    )
-    file.facets = {
-        'activity': 'CMIP',
-        'institute': 'CAS',
-        'dataset': 'FGOALS-g3',
-        'exp': 'historical',
-        'mip': 'Amon',
-        'ensemble': 'r3i1p1f1',
-        'short_name': 'tas',
-        'grid': 'gn',
-        'version': 'v20190827',
-    }
     afile = esmvalcore.local.LocalFile(
         rootpath,
         'CMIP6',
@@ -566,9 +546,13 @@ def test_from_files_with_ancillary(session):
         ensemble='r3i1p1f1',
     )
     dataset.session = session
-    dataset.files = [file]
     dataset.add_ancillary(short_name='areacella', mip='fx', ensemble='*')
-    dataset.ancillaries[0].files = [afile]
+    mocker.patch.object(
+        Dataset,
+        'files',
+        new_callable=mocker.PropertyMock,
+        side_effect=[[afile]],
+    )
 
     expected = Dataset(
         short_name='tas',
@@ -584,7 +568,7 @@ def test_from_files_with_ancillary(session):
         ensemble='r1i1p1f1',
     )
 
-    datasets = dataset.from_files()
+    datasets = list(dataset.from_files())
 
     assert all(ds.session == session for ds in datasets)
     assert all(ads.session == session for ds in datasets
@@ -672,7 +656,7 @@ def test_from_files_with_double_wildcards(mocker, session):
         new_callable=mocker.PropertyMock,
         side_effect=[[file], [afile]],
     )
-    datasets = dataset.from_files()
+    datasets = list(dataset.from_files())
 
     assert all(ds.session == session for ds in datasets)
     assert all(ads.session == session for ds in datasets
@@ -740,15 +724,8 @@ def test_from_recipe_with_glob(tmp_path, session, mocker):
             'mip': 'Amon',
             'short_name': 'tas',
             'alias': 'HadGEM2-AO',
-            'frequency': 'mon',
-            'long_name': 'Near-Surface Air Temperature',
-            'modeling_realm': ['atmos'],
-            'original_short_name': 'tas',
             'preprocessor': 'default',
-            'product': ['output1', 'output2'],
             'recipe_dataset_index': 0,
-            'standard_name': 'air_temperature',
-            'units': 'K',
         },
         {
             'diagnostic': 'diagnostic1',
@@ -758,15 +735,8 @@ def test_from_recipe_with_glob(tmp_path, session, mocker):
             'mip': 'Amon',
             'short_name': 'tas',
             'alias': 'CSIRO-Mk3-6-0',
-            'frequency': 'mon',
-            'long_name': 'Near-Surface Air Temperature',
-            'modeling_realm': ['atmos'],
-            'original_short_name': 'tas',
             'preprocessor': 'default',
-            'product': ['output1', 'output2'],
             'recipe_dataset_index': 1,
-            'standard_name': 'air_temperature',
-            'units': 'K',
         },
     ]
     expected = []

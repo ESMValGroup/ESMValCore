@@ -1,7 +1,9 @@
 import re
 from pathlib import Path
 
+from ._config import Session
 from ._data_finder import _select_drs, get_input_filelist
+from .types import FacetValue
 
 
 def _path2facets(path: Path, drs: str) -> dict[str, str]:
@@ -16,15 +18,18 @@ def _path2facets(path: Path, drs: str) -> dict[str, str]:
     return facets
 
 
-def find_files(session, *, project: str, debug: bool = False, **facets):
-
-    facets['project'] = project
+def find_files(
+    session: Session,
+    *,
+    debug: bool = False,
+    **facets: FacetValue,
+):
     (filenames, dirnames, fileglobs) = get_input_filelist(
         facets,
         rootpath=session['rootpath'],
         drs=session['drs'],
     )
-    drs = _select_drs('input_dir', session['drs'], project)
+    drs = _select_drs('input_dir', session['drs'], facets['project'])
     files = []
     for filename in filenames:
         file = LocalFile(filename)

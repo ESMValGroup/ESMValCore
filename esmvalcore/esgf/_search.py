@@ -117,7 +117,7 @@ def _search_index_nodes(facets):
         logger.debug("Searching %s for datasets using facets=%s", url, facets)
         try:
             results = context.search(
-                batch_size=5000,
+                batch_size=500,
                 ignore_facet_check=True,
             )
             FIRST_ONLINE_INDEX_NODE = url
