@@ -10,7 +10,6 @@ import pytest
 from numpy import ma
 
 import tests
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.preprocessor._regrid import (
     _MDI,
     VERTICAL_SCHEMES,
@@ -60,7 +59,6 @@ class Test(tests.Test):
         for scheme in self.schemes:
             interpolation, extrapolation = parse_vertical_scheme(scheme)
             assert interpolation, extrapolation == reference[scheme]
-
 
     def test_nop__levels_match(self):
         vcoord = _make_vcoord(self.z, dtype=self.dtype)
