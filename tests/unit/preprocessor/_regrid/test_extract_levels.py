@@ -6,7 +6,6 @@ from unittest import mock
 
 import iris
 import numpy as np
-import pytest
 from numpy import ma
 
 import tests
