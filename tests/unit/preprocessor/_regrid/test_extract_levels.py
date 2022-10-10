@@ -61,19 +61,6 @@ class Test(tests.Test):
             interpolation, extrapolation = parse_vertical_scheme(scheme)
             assert interpolation, extrapolation == reference[scheme]
 
-        # Deprecated schemes (remove in v2.7)
-        deprecated_references = {
-            'linear_horizontal_extrapolate_vertical': ('linear', 'nearest'),
-            'nearest_horizontal_extrapolate_vertical': ('nearest', 'nearest'),
-        }
-        for scheme in deprecated_references:
-            warn_msg = (
-                "`` has been deprecated in ESMValCore version 2.5.0 and is "
-                "scheduled for removal in version 2.7.0. It has been renamed "
-                "to the identical scheme ``")
-            with pytest.warns(ESMValCoreDeprecationWarning, match=warn_msg):
-                interp, extrap = parse_vertical_scheme(scheme)
-            assert interp, extrap == deprecated_references[scheme]
 
     def test_nop__levels_match(self):
         vcoord = _make_vcoord(self.z, dtype=self.dtype)
