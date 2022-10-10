@@ -17,8 +17,6 @@ from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
 
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
-
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.fix import fix_file, fix_metadata
 from ..cmor.table import CMOR_TABLES
