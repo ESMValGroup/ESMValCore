@@ -712,7 +712,7 @@ def test_from_recipe_with_glob(tmp_path, session, mocker):
         'get_input_filelist',
         autospec=True,
         spec_set=True,
-        return_value=(filenames, [], []),
+        return_value=(filenames, []),
     )
 
     definitions = [

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import iris
 import pytest
@@ -36,9 +37,10 @@ def create_test_file(filename, tracking_id=None):
     iris.save(cube, filename)
 
 
-def _get_filenames(root_path, filenames, tracking_id):
-    filename = filenames[0]
+def _get_filenames(root_path, filename, tracking_id):
+    filename = Path(filename).name
     filename = str(root_path / 'input' / filename)
+    print(filename)
     filenames = []
     if filename.endswith('[_.]*nc'):
         # Restore when we support filenames with no dates
@@ -71,14 +73,10 @@ def patched_datafinder(tmp_path, monkeypatch):
 
     tracking_id = tracking_ids()
 
-    def find_files(_, filenames):
-        # Any occurrence of {something} in filename should have
-        # been replaced before this function is called.
-        for filename in filenames:
-            assert '{' not in filename
-        return _get_filenames(tmp_path, filenames, tracking_id)
+    def glob(file_glob):
+        return _get_filenames(tmp_path, file_glob, tracking_id)
 
-    monkeypatch.setattr(_data_finder, 'find_files', find_files)
+    monkeypatch.setattr(_data_finder.glob, 'glob', glob)
 
 
 @pytest.fixture
@@ -91,22 +89,16 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
 
     tracking_id = tracking_ids()
 
-    def find_files(_, filenames):
-        # Any occurrence of [something] in filename should have
-        # been replaced before this function is called.
-        for filename in filenames:
-            assert '{' not in filename
-
+    def glob(filename):
         # Fail for specified fx variables
-        for filename in filenames:
-            if 'fx_' in filename:
-                return []
-            if 'sftlf' in filename:
-                return []
-            if 'IyrAnt_' in filename:
-                return []
-            if 'IyrGre_' in filename:
-                return []
-        return _get_filenames(tmp_path, filenames, tracking_id)
+        if 'fx_' in filename:
+            return []
+        if 'sftlf' in filename:
+            return []
+        if 'IyrAnt_' in filename:
+            return []
+        if 'IyrGre_' in filename:
+            return []
+        return _get_filenames(tmp_path, filename, tracking_id)
 
-    monkeypatch.setattr(_data_finder, 'find_files', find_files)
+    monkeypatch.setattr(_data_finder.glob, 'glob', glob)

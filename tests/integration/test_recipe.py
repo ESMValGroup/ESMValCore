@@ -1248,11 +1248,12 @@ def test_diagnostic_task_provenance(
             assert recipe_record[0].get_attribute('attribute:' +
                                                   key).pop() == value
 
-    # Test that provenance was saved to netcdf, xml and svg plot
+    # Test that provenance was saved to xml and info embedded in netcdf
     product = next(
         iter(p for p in diagnostic_task.products
              if p.filename.endswith('.nc')))
     cube = iris.load_cube(product.filename)
+    print(product.filename, cube.attributes)
     assert cube.attributes['software'].startswith("Created with ESMValTool v")
     assert cube.attributes['caption'] == record['caption']
     prefix = os.path.splitext(product.filename)[0] + '_provenance'

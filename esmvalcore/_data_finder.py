@@ -4,30 +4,16 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Union
 
 import iris
 import isodate
 
 from ._config import get_project_config
 from .exceptions import RecipeError
+from .types import Facets
 
 logger = logging.getLogger(__name__)
-
-
-def find_files(dirnames, filenames):
-    """Find files matching filenames in dirnames."""
-    logger.debug("Looking for files matching %s in %s", filenames, dirnames)
-
-    result = []
-    for dirname in dirnames:
-        for filename_pattern in filenames:
-            pat = os.path.join(dirname, filename_pattern)
-            files = glob.glob(pat)
-            files.sort()  # sorting makes it easier to see what was found
-            result.extend(files)
-
-    return result
 
 
 def _get_from_pattern(pattern, date_range_pattern, stem, group):
@@ -303,6 +289,10 @@ def select_files(filenames, timerange):
     Otherwise, the file selection occurs taking into account
     the time resolution of the file.
     """
+    if '*' in timerange:
+        # TODO: support * combined with a period
+        return filenames
+
     selection = []
 
     for filename in filenames:
@@ -318,38 +308,40 @@ def select_files(filenames, timerange):
     return selection
 
 
-def _replace_tags(paths, variable):
+def _replace_tags(
+    paths: Union[str, list[str]],
+    variable: Facets,
+) -> list[Path]:
     """Replace tags in the config-developer's file with actual values."""
     if isinstance(paths, str):
-        paths = set((paths.strip('/'), ))
+        pathset = set((paths.strip('/'), ))
     else:
-        paths = set(path.strip('/') for path in paths)
-    tlist = set()
-    for path in paths:
+        pathset = set(path.strip('/') for path in paths)
+    tlist: set[str] = set()
+    for path in pathset:
         tlist = tlist.union(re.findall(r'{([^}]*)}', path))
     if 'sub_experiment' in variable:
-        new_paths = []
-        for path in paths:
-            new_paths.extend(
+        new_paths: set[str] = set()
+        for path in pathset:
+            new_paths.update(
                 (re.sub(r'(\b{ensemble}\b)', r'{sub_experiment}-\1', path),
                  re.sub(r'({ensemble})', r'{sub_experiment}-\1', path)))
             tlist.add('sub_experiment')
-        paths = new_paths
+        pathset = new_paths
 
     for tag in tlist:
         original_tag = tag
         tag, _, _ = _get_caps_options(tag)
 
-        if tag == 'version' and 'version' not in variable:
-            # handled separately later
-            continue
         if tag in variable:
             replacewith = variable[tag]
+        elif tag == 'version':
+            replacewith = '*'
         else:
             raise RecipeError(f"Dataset key '{tag}' must be specified for "
                               f"{variable}, check your recipe entry")
-        paths = _replace_tag(paths, original_tag, replacewith)
-    return paths
+        pathset = _replace_tag(pathset, original_tag, replacewith)
+    return [Path(p) for p in pathset]
 
 
 def _replace_tag(paths, tag, replacewith):
@@ -383,34 +375,6 @@ def _apply_caps(original, lower, upper):
     if upper:
         return original.upper()
     return original
-
-
-def _resolve_latestversion(dirname_template):
-    """Resolve the 'version' tag.
-
-    This implementation avoid globbing on centralized clusters with very
-    large data root dirs (i.e. ESGF nodes like Jasmin/DKRZ).
-    """
-    if '{version}' not in dirname_template:
-        return dirname_template
-
-    # Find latest version
-    part1, part2 = dirname_template.split('{version}')
-    part2 = part2.lstrip(os.sep)
-    if os.path.exists(part1):
-        versions = os.listdir(part1)
-        if 'latest' in versions:
-            # Some organizations create symlinks called 'latest' to the latest
-            # version. This makes it impossible to retrieve the data version
-            # from the path, so we ignore those symlinks.
-            versions.pop(versions.index('latest'))
-        versions.sort(reverse=True)
-        for version in versions:
-            dirname = os.path.join(part1, version, part2)
-            if os.path.isdir(dirname):
-                return dirname
-
-    return None
 
 
 def _select_drs(input_type, drs, project):
@@ -447,62 +411,38 @@ def get_rootpath(rootpath, project):
     raise KeyError('default rootpath must be specified in config-user file')
 
 
-def _find_input_dirs(variable, rootpath, drs):
-    """Return a the full paths to input directories."""
+def _get_globs(variable, rootpath, drs):
+    """Compose the globs that will be used to look for files."""
     project = variable['project']
 
-    root = get_rootpath(rootpath, project)
-    path_template = _select_drs('input_dir', drs, project)
+    rootpaths = get_rootpath(rootpath, project)
 
-    dirnames = []
-    for dirname_template in _replace_tags(path_template, variable):
-        for base_path in root:
-            dirname = os.path.join(base_path, dirname_template)
-            dirname = _resolve_latestversion(dirname)
-            if dirname is None:
-                continue
-            matches = glob.glob(dirname)
-            matches = [match for match in matches if os.path.isdir(match)]
-            if matches:
-                for match in matches:
-                    dirnames.append(match)
-            else:
-                logger.debug("Skipping non-existent %s", dirname)
+    dirname_template = _select_drs('input_dir', drs, project)
+    dirname_globs = _replace_tags(dirname_template, variable)
 
-    return dirnames
+    filename_template = _select_drs('input_file', drs, project)
+    filename_globs = _replace_tags(filename_template, variable)
 
-
-def _get_filenames_glob(variable, drs):
-    """Return patterns that can be used to look for input files."""
-    path_template = _select_drs('input_file', drs, variable['project'])
-    filenames_glob = _replace_tags(path_template, variable)
-    return filenames_glob
-
-
-def _find_input_files(variable, rootpath, drs):
-    """Find available input files.
-
-    Return the files, the directory in which they are located in, and
-    the file name.
-    """
-    short_name = variable['short_name']
-    variable['short_name'] = variable['original_short_name']
-    input_dirs = _find_input_dirs(variable, rootpath, drs)
-    filenames_glob = _get_filenames_glob(variable, drs)
-    files = find_files(input_dirs, filenames_glob)
-    variable['short_name'] = short_name
-    return (files, input_dirs, filenames_glob)
+    globs = sorted(r / d / f for r in rootpaths for d in dirname_globs
+                   for f in filename_globs)
+    return globs
 
 
 def get_input_filelist(variable, rootpath, drs):
     """Return the full path to input files."""
-    (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
-    # do time gating only for non-fx variables
+    variable = dict(variable)
+    variable['short_name'] = variable['original_short_name']
+
+    globs = _get_globs(variable, rootpath, drs)
+    logger.debug("Looking for files matching %s", globs)
+
+    files = list(file for glob_ in globs for file in glob.glob(str(glob_)))
+    files.sort()  # sorting makes it easier to see what was found
+
     if 'timerange' in variable:
-        files = select_files(
-            files,
-            variable['timerange'])
-    return (files, dirnames, filenames)
+        files = select_files(files, variable['timerange'])
+
+    return files, globs
 
 
 def get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
@@ -514,10 +454,10 @@ def get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
         variable = dict(variable)
         variable['exp'] = '-'.join(variable['exp'])
     outfile = _replace_tags(cfg['output_file'], variable)[0]
-    if variable['frequency'] != 'fx':
+    if 'timerange' in variable:
         timerange = variable['timerange'].replace('/', '-')
-        outfile += f'_{timerange}'
-    outfile += '.nc'
+        outfile = Path(f'{outfile}_{timerange}')
+    outfile = outfile.with_suffix('.nc')
     return Path(
         preproc_dir,
         variable.get('diagnostic', ''),

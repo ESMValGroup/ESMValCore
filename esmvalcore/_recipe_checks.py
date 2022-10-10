@@ -1,5 +1,4 @@
 """Module with functions to check a recipe."""
-import itertools
 import logging
 import os
 import re
@@ -104,25 +103,15 @@ def variable(var, required_keys):
 def _log_data_availability_errors(dataset):
     """Check if the required input data is available."""
     input_files = dataset.files
-    dirnames, filenames = dataset._files_debug
+    patterns = dataset._files_debug
     if not input_files:
         logger.error("No input files found for %s", dataset)
-        if dirnames and filenames:
-            patterns = itertools.product(dirnames, filenames)
-            patterns = [os.path.join(d, f) for (d, f) in patterns]
+        if patterns:
             if len(patterns) == 1:
                 msg = f': {patterns[0]}'
             else:
                 msg = '\n{}'.format('\n'.join(patterns))
             logger.error("Looked for files matching%s", msg)
-        elif dirnames and not filenames:
-            logger.error(
-                "Looked for files in %s, but did not find any file pattern "
-                "to match against", dirnames)
-        elif filenames and not dirnames:
-            logger.error(
-                "Looked for files matching %s, but did not find any existing "
-                "input directory", filenames)
         logger.error("Set 'log_level' to 'debug' to get more information")
 
 
