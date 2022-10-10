@@ -110,7 +110,7 @@ def _log_data_availability_errors(dataset):
             if len(patterns) == 1:
                 msg = f': {patterns[0]}'
             else:
-                msg = '\n{}'.format('\n'.join(patterns))
+                msg = '\n{}'.format('\n'.join(str(p) for p in patterns))
             logger.error("Looked for files matching%s", msg)
         logger.error("Set 'log_level' to 'debug' to get more information")
 

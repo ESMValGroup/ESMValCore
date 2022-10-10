@@ -341,7 +341,7 @@ def _replace_tags(
             raise RecipeError(f"Dataset key '{tag}' must be specified for "
                               f"{variable}, check your recipe entry")
         pathset = _replace_tag(pathset, original_tag, replacewith)
-    return [Path(p) for p in pathset]
+    return list(pathset)
 
 
 def _replace_tag(paths, tag, replacewith):

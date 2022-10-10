@@ -240,8 +240,7 @@ def find_files(*, project, short_name, dataset, **facets):
     ...     ensemble='r1i1p1',
     ...     domain='EUR-11',
     ...     driver='MPI-M-MPI-ESM-LR',
-    ...     start_year=1990,
-    ...     end_year=2000,
+    ...     timerange='1990/2000',
     ... )  # doctest: +SKIP
     [ESGFFile:cordex/output/EUR-11/CLMcom-ETH/MPI-M-MPI-ESM-LR/historical/r1i1p1/COSMO-crCLIM-v1-1/v1/mon/tas/v20191219/tas_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-ETH-COSMO-crCLIM-v1-1_v1_mon_198101-199012.nc,
     ESGFFile:cordex/output/EUR-11/CLMcom-ETH/MPI-M-MPI-ESM-LR/historical/r1i1p1/COSMO-crCLIM-v1-1/v1/mon/tas/v20191219/tas_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-ETH-COSMO-crCLIM-v1-1_v1_mon_199101-200012.nc]

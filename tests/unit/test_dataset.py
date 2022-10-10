@@ -701,10 +701,10 @@ def test_from_recipe_with_glob(tmp_path, session, mocker):
     session['drs']['CMIP5'] = 'ESGF'
 
     filenames = [
-        "cmip5/output1/NIMR-KMA/HadGEM2-AO/historical/mon/atmos/Amon/r1i1p1/"
-        "v20130815/tas_Amon_HadGEM2-AO_historical_r1i1p1_186001-200512.nc",
         "cmip5/output1/CSIRO-QCCCE/CSIRO-Mk3-6-0/rcp85/mon/atmos/Amon/r4i1p1/"
         "v20120323/tas_Amon_CSIRO-Mk3-6-0_rcp85_r4i1p1_200601-210012.nc",
+        "cmip5/output1/NIMR-KMA/HadGEM2-AO/historical/mon/atmos/Amon/r1i1p1/"
+        "v20130815/tas_Amon_HadGEM2-AO_historical_r1i1p1_186001-200512.nc",
     ]
 
     mocker.patch.object(
@@ -719,22 +719,22 @@ def test_from_recipe_with_glob(tmp_path, session, mocker):
         {
             'diagnostic': 'diagnostic1',
             'variable_group': 'tas',
-            'dataset': 'HadGEM2-AO',
+            'dataset': 'CSIRO-Mk3-6-0',
             'project': 'CMIP5',
             'mip': 'Amon',
             'short_name': 'tas',
-            'alias': 'HadGEM2-AO',
+            'alias': 'CSIRO-Mk3-6-0',
             'preprocessor': 'default',
             'recipe_dataset_index': 0,
         },
         {
             'diagnostic': 'diagnostic1',
             'variable_group': 'tas',
-            'dataset': 'CSIRO-Mk3-6-0',
+            'dataset': 'HadGEM2-AO',
             'project': 'CMIP5',
             'mip': 'Amon',
             'short_name': 'tas',
-            'alias': 'CSIRO-Mk3-6-0',
+            'alias': 'HadGEM2-AO',
             'preprocessor': 'default',
             'recipe_dataset_index': 1,
         },

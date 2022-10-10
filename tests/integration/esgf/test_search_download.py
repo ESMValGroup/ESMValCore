@@ -38,8 +38,7 @@ VARIABLES = [{
     'mip': 'Amon',
     'project': 'CMIP5',
     'short_name': 'tas',
-    'start_year': 2080,
-    'end_year': 2100,
+    'timerange': '2080/2100',
 }, {
     'dataset': 'EC-EARTH',
     'ensemble': 'r1i1p1',
@@ -47,8 +46,7 @@ VARIABLES = [{
     'mip': 'Amon',
     'project': 'CMIP5',
     'short_name': 'tas',
-    'start_year': 1990,
-    'end_year': 1999,
+    'timerange': '1990/1999',
 }, {
     'dataset': 'AWI-ESM-1-1-LR',
     'ensemble': 'r1i1p1f1',
@@ -57,8 +55,7 @@ VARIABLES = [{
     'mip': 'Amon',
     'project': 'CMIP6',
     'short_name': 'tas',
-    'start_year': 2000,
-    'end_year': 2001,
+    'timerange': '2000/2001',
     'version': 'v20200212',
 }, {
     'dataset': 'RACMO22E',
@@ -69,8 +66,7 @@ VARIABLES = [{
     'frequency': 'mon',
     'project': 'CORDEX',
     'short_name': 'tas',
-    'start_year': 1950,
-    'end_year': 1952,
+    'timerange': '1950/1952',
     'version': 'v20160620',
 }, {
     'dataset': 'CERES-EBAF',
