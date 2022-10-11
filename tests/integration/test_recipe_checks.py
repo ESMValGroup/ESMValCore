@@ -1,4 +1,5 @@
 """Integration tests for :mod:`esmvalcore._recipe_checks`."""
+import os.path
 from pathlib import Path
 from typing import Any, List
 from unittest import mock
@@ -13,10 +14,6 @@ from esmvalcore.exceptions import RecipeError
 from esmvalcore.preprocessor import PreprocessorFile
 
 ERR_ALL = 'Looked for files matching%s'
-ERR_D = ('Looked for files in %s, but did not find any file pattern to match '
-         'against')
-ERR_F = ('Looked for files matching %s, but did not find any existing input '
-         'directory')
 ERR_RANGE = 'No input data available for years {} in files:\n{}'
 VAR = {
     'frequency': 'mon',
@@ -70,17 +67,8 @@ def test_data_availability_data(mock_logger, input_files, var, error):
 
 DATA_AVAILABILITY_NO_DATA: List[Any] = [
     ([], [], None),
-    ([], None, None),
-    (None, [], None),
-    (None, None, None),
-    (['dir1'], [], (ERR_D, ['dir1'])),
-    (['dir1', 'dir2'], [], (ERR_D, ['dir1', 'dir2'])),
-    (['dir1'], None, (ERR_D, ['dir1'])),
-    (['dir1', 'dir2'], None, (ERR_D, ['dir1', 'dir2'])),
-    ([], ['a*.nc'], (ERR_F, ['a*.nc'])),
-    ([], ['a*.nc', 'b*.nc'], (ERR_F, ['a*.nc', 'b*.nc'])),
-    (None, ['a*.nc'], (ERR_F, ['a*.nc'])),
-    (None, ['a*.nc', 'b*.nc'], (ERR_F, ['a*.nc', 'b*.nc'])),
+    ([''], ['a*.nc'], (ERR_ALL, ': a*.nc')),
+    ([''], ['a*.nc', 'b*.nc'], (ERR_ALL, '\na*.nc\nb*.nc')),
     (['1'], ['a'], (ERR_ALL, ': 1/a')),
     (['1'], ['a', 'b'], (ERR_ALL, '\n1/a\n1/b')),
     (['1', '2'], ['a'], (ERR_ALL, '\n1/a\n2/a')),
@@ -102,7 +90,9 @@ def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
     }
     dataset = Dataset(**facets)
     dataset.files = []
-    dataset._files_debug = (dirnames, filenames)
+    dataset._files_debug = [
+        os.path.join(d, f) for d in dirnames for f in filenames
+    ]
     error_first = ('No input files found for %s', dataset)
     error_last = ("Set 'log_level' to 'debug' to get more information", )
     with pytest.raises(RecipeError) as rec_err:

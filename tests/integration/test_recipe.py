@@ -1248,7 +1248,7 @@ def test_diagnostic_task_provenance(
             assert recipe_record[0].get_attribute('attribute:' +
                                                   key).pop() == value
 
-    # Test that provenance was saved to netcdf, xml and svg plot
+    # Test that provenance was saved to xml and info embedded in netcdf
     product = next(
         iter(p for p in diagnostic_task.products
              if p.filename.endswith('.nc')))

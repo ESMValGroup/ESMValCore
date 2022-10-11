@@ -1,3 +1,4 @@
+import itertools
 import re
 from pathlib import Path
 
@@ -18,13 +19,31 @@ def _path2facets(path: Path, drs: str) -> dict[str, str]:
     return facets
 
 
+def _select_latest_version(files: list['LocalFile']) -> list['LocalFile']:
+    """Select only the latest version of files."""
+
+    def filename(file):
+        return file.name
+
+    def version(file):
+        return file.facets.get('version', '')
+
+    result = []
+    for _, group in itertools.groupby(sorted(files, key=filename),
+                                      key=filename):
+        duplicates = sorted(group, key=version)
+        latest = duplicates[-1]
+        result.append(latest)
+    return result
+
+
 def find_files(
     session: Session,
     *,
     debug: bool = False,
     **facets: FacetValue,
 ):
-    (filenames, dirnames, fileglobs) = get_input_filelist(
+    filenames, globs = get_input_filelist(
         facets,
         rootpath=session['rootpath'],
         drs=session['drs'],
@@ -36,8 +55,11 @@ def find_files(
         file.facets = _path2facets(file, drs)
         files.append(file)
 
+    if 'version' not in facets:
+        files = _select_latest_version(files)
+
     if debug:
-        return files, (dirnames, fileglobs)
+        return files, globs
     return files
 
 

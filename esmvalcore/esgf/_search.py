@@ -7,12 +7,7 @@ import pyesgf.search
 import requests.exceptions
 
 from .._config._esgf_pyclient import get_esgf_config
-from .._data_finder import (
-    _get_timerange_from_years,
-    _parse_period,
-    _truncate_dates,
-    get_start_end_date,
-)
+from .._data_finder import _parse_period, _truncate_dates, get_start_end_date
 from ._download import ESGFFile
 from .facets import DATASET_MAP, FACETS
 
@@ -156,6 +151,7 @@ def esgf_search_files(facets):
 def select_by_time(files, timerange):
     """Select files containing data between a timerange."""
     if '*' in timerange:
+        # TODO: support * combined with a period
         return files
 
     selection = []
@@ -244,8 +240,7 @@ def find_files(*, project, short_name, dataset, **facets):
     ...     ensemble='r1i1p1',
     ...     domain='EUR-11',
     ...     driver='MPI-M-MPI-ESM-LR',
-    ...     start_year=1990,
-    ...     end_year=2000,
+    ...     timerange='1990/2000',
     ... )  # doctest: +SKIP
     [ESGFFile:cordex/output/EUR-11/CLMcom-ETH/MPI-M-MPI-ESM-LR/historical/r1i1p1/COSMO-crCLIM-v1-1/v1/mon/tas/v20191219/tas_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-ETH-COSMO-crCLIM-v1-1_v1_mon_198101-199012.nc,
     ESGFFile:cordex/output/EUR-11/CLMcom-ETH/MPI-M-MPI-ESM-LR/historical/r1i1p1/COSMO-crCLIM-v1-1/v1/mon/tas/v20191219/tas_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-ETH-COSMO-crCLIM-v1-1_v1_mon_199101-200012.nc]
@@ -298,10 +293,7 @@ def cached_search(**facets):
 
     files = select_latest_versions(files, facets.get('version'))
 
-    _get_timerange_from_years(facets)
-    filter_timerange = (facets.get('frequency', '') != 'fx'
-                        and 'timerange' in facets)
-    if filter_timerange:
+    if 'timerange' in facets:
         files = select_by_time(files, facets['timerange'])
         logger.debug("Selected files:\n%s", '\n'.join(str(f) for f in files))
 
