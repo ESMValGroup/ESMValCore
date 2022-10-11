@@ -60,11 +60,11 @@ def test_ancillary_datasets_to_recipe():
       diagnostic1:
         variables:
           group1:
+            short_name: 'ta'
+            ancillary_variables:
+              - short_name: areacella
             additional_datasets:
               - dataset: 'dataset1'
-                short_name: 'ta'
-                ancillary_variables:
-                  - short_name: areacella
 
     """)
     recipe = yaml.safe_load(recipe_txt)
@@ -570,3 +570,37 @@ def test_update_warning_settings_step_present():
     assert len(settings['load']) == 2
     assert settings['load']['filename'] == 'in.nc'
     assert 'ignore_warnings' in settings['load']
+
+
+def test_group_identical_facets():
+
+    variable = {
+        'short_name': 'tas',
+        'additional_datasets': [
+            {
+                'dataset': 'dataset1',
+                'ensemble': 'r1i1p1f1',
+            },
+            {
+                'dataset': 'dataset2',
+                'ensemble': 'r1i1p1f1',
+            },
+        ],
+    }
+
+    result = _recipe.group_identical_facets(variable)
+
+    expected = {
+        'short_name': 'tas',
+        'ensemble': 'r1i1p1f1',
+        'additional_datasets': [
+            {
+                'dataset': 'dataset1',
+            },
+            {
+                'dataset': 'dataset2',
+            },
+        ],
+    }
+
+    assert result == expected

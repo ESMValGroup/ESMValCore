@@ -1678,11 +1678,36 @@ def datasets_to_recipe(datasets):
             facets['ancillary_variables'].append(anc_facets)
         variables[variable_group]['additional_datasets'].append(facets)
 
+    # Move identical facets from dataset to variable
+    for diagnostic in diagnostics.values():
+        diagnostic['variables'] = {
+            variable_group: group_identical_facets(variable)
+            for variable_group, variable in diagnostic['variables'].items()
+        }
+
     # TODO: make recipe look nice
-    # - move identical facets from dataset to variable
     # - deduplicate by moving datasets up from variable to diagnostic to recipe
     # - remove variable_group if the same as short_name
     # - remove automatically added facets
 
     recipe = {'diagnostics': diagnostics}
     return recipe
+
+
+def group_identical_facets(variable):
+    # Move identical facets from dataset to variable
+    simplified = dict(variable)
+    dataset_facets = simplified.pop('additional_datasets')
+    variable_keys = [
+        k for k, v in dataset_facets[0].items()
+        if k != 'dataset'  # keep at least one key in every dataset
+        and all(k in d and d[k] == v for d in dataset_facets[1:])
+    ]
+    simplified.update(
+        {k: v
+         for k, v in dataset_facets[0].items() if k in variable_keys})
+    simplified['additional_datasets'] = [{
+        k: v
+        for k, v in d.items() if k not in variable_keys
+    } for d in dataset_facets]
+    return simplified
