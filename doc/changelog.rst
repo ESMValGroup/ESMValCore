@@ -10,8 +10,8 @@ v2.7.0
 Highlights
 ~~~~~~~~~~
 
--  We have a new preprocessor function called 'rolling_window_statistics' implemented by `Liza Malinina <https://github.com/malininae>`__
--  We have improved the support for native models, refactored native model fixes by adding common base class `NativeDatasetFix`, changed default DRS for reading native ICON output, and added tests for input/output filenames for ICON and EMAC on-the-fly CMORizer, all these features courtesy of `Manuel Schlund <https://github.com/schlunma>`__
+-  We have a new preprocessor function called `'rolling_window_statistics' <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe/preprocessor.html#rolling-window-statistics>`__ implemented by `Liza Malinina <https://github.com/malininae>`__
+-  We have improved the support for native models, refactored native model fixes by adding common base class `NativeDatasetFix`, changed default DRS for reading native ICON output, and added tests for input/output filenames for `ICON <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/find_data.html#icon>`__ and `EMAC <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/find_data.html#emac>`__ on-the-fly CMORizer, all these features courtesy of `Manuel Schlund <https://github.com/schlunma>`__
 -  Performance of preprocessor functions that use time dimensions has been sped up by **two orders of magnitude** thanks to contributions by `Bouwe Andela <https://github.com/bouweandela>`__
 
 This release includes:
