@@ -10,9 +10,11 @@ v2.7.0
 Highlights
 ~~~~~~~~~~
 
--  We have a new preprocessor function called 'rolling_window_statistics' (`#1702 <https://github.com/ESMValGroup/ESMValCore/pull/1702>`__) `Liza Malinina <https://github.com/malininae>`__
--  We have improved the support for native models, see `#1678 <https://github.com/ESMValGroup/ESMValCore/pull/1678>`__ by `Manuel Schlund <https://github.com/schlunma>`__, refactored native model fixes by adding common base class `NativeDatasetFix` (`#1694 <https://github.com/ESMValGroup/ESMValCore/pull/1694>`__) `Manuel Schlund <https://github.com/schlunma>`__, changed default DRS for reading native ICON output (`#1705 <https://github.com/ESMValGroup/ESMValCore/pull/1705>`__) `Manuel Schlund <https://github.com/schlunma>`__, and added tests for input/output filenames for ICON and EMAC on-the-fly CMORizer (`#1718 <https://github.com/ESMValGroup/ESMValCore/pull/1718>`__) `Manuel Schlund <https://github.com/schlunma>`__
--  Performance of preprocessor functions that use time dimensions has been sped up by **two orders of magnitude** (`#1713 <https://github.com/ESMValGroup/ESMValCore/pull/1713>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  We have a new preprocessor function called 'rolling_window_statistics' implemented by `Liza Malinina <https://github.com/malininae>`__
+-  We have improved the support for native models, refactored native model fixes by adding common base class `NativeDatasetFix`, changed default DRS for reading native ICON output, and added tests for input/output filenames for ICON and EMAC on-the-fly CMORizer, all these features courtesy of `Manuel Schlund <https://github.com/schlunma>`__
+-  Performance of preprocessor functions that use time dimensions has been sped up by **two orders of magnitude** thanks to contributions by `Bouwe Andela <https://github.com/bouweandela>`__
+
+This release includes:
 
 Backwards incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
