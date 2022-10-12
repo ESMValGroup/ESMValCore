@@ -2041,6 +2041,17 @@ class TestResampleTime(tests.Test):
         expected = np.arange(12, 48, 24)
         assert_array_equal(result.data, expected)
 
+    def test_scalar_cube(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 2, 1)
+        times = np.arange(0, 2, 1)
+        cube = self._create_cube(data, times)
+        cube = cube[0]
+
+        result = resample_time(cube, hour=0)
+        expected = np.zeros((1,))
+        assert_array_equal(result.data, expected)
+
     def test_resample_hourly_to_monthly(self):
         """Test average of a 1D field."""
         data = np.arange(0, 24 * 60, 3)
@@ -2069,6 +2080,16 @@ class TestResampleTime(tests.Test):
         data = np.arange(0, 15 * 24, 24)
         times = np.arange(0, 15 * 24, 24)
         cube = self._create_cube(data, times)
+
+        with pytest.raises(ValueError):
+            resample_time(cube, day=16)
+
+    def test_resample_fails_scalar(self):
+        """Test that selecting something that is not in the data fails."""
+        data = np.arange(0, 2 * 24, 24)
+        times = np.arange(0, 2 * 24, 24)
+        cube = self._create_cube(data, times)
+        cube = cube[0]
 
         with pytest.raises(ValueError):
             resample_time(cube, day=16)

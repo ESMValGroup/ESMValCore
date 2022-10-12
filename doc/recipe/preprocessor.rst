@@ -394,15 +394,6 @@ The vertical interpolation currently supports the following schemes:
 * ``nearest_extrapolate``: Nearest-neighbour interpolation with nearest-neighbour
   extrapolation, i.e., extrapolation points will take their value from the
   nearest source point.
-
-.. note::
-   Previous versions of ESMValCore (<2.5.0) supported the schemes
-   ``linear_horizontal_extrapolate_vertical`` and
-   ``nearest_horizontal_extrapolate_vertical``. These schemes have been renamed
-   to ``linear_extrapolate`` and ``nearest_extrapolate``, respectively, in
-   version 2.5.0 and are identical to the new schemes. Support for the old
-   names will be removed in version 2.7.0.
-
 * See also :func:`esmvalcore.preprocessor.extract_levels`.
 * See also :func:`esmvalcore.preprocessor.get_cmor_levels`.
 
