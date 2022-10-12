@@ -2,18 +2,20 @@ Changelog
 =========
 
 
-.. _changelog-v2-7-0-rc1:
+.. _changelog-v2-7-0:
 
 
-v2.7.0rc1
----------
+v2.7.0
+------
 Highlights
 ~~~~~~~~~~
 
+-  We have a new preprocessor function called 'rolling_window_statistics' (`#1702 <https://github.com/ESMValGroup/ESMValCore/pull/1702>`__) `Liza Malinina <https://github.com/malininae>`__
+-  We have improved the support for native models, see `#1678 <https://github.com/ESMValGroup/ESMValCore/pull/1678>`__ by `Manuel Schlund <https://github.com/schlunma>`__, refactored native model fixes by adding common base class `NativeDatasetFix` (`#1694 <https://github.com/ESMValGroup/ESMValCore/pull/1694>`__) `Manuel Schlund <https://github.com/schlunma>`__, changed default DRS for reading native ICON output (`#1705 <https://github.com/ESMValGroup/ESMValCore/pull/1705>`__) `Manuel Schlund <https://github.com/schlunma>`__, and added tests for input/output filenames for ICON and EMAC on-the-fly CMORizer (`#1718 <https://github.com/ESMValGroup/ESMValCore/pull/1718>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Performance of preprocessor functions that use time dimensions has been sped up by **two orders of magnitude** (`#1713 <https://github.com/ESMValGroup/ESMValCore/pull/1713>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
 Backwards incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-TODO: add examples of how to deal with these changes
 
 -  Change default DRS for reading native ICON output (`#1705 <https://github.com/ESMValGroup/ESMValCore/pull/1705>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
@@ -23,6 +25,13 @@ Bug fixes
 -  Add support for regions stored as MultiPolygon to extract_shape preprocessor (`#1670 <https://github.com/ESMValGroup/ESMValCore/pull/1670>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Fixed type annotations for Python 3.8 (`#1700 <https://github.com/ESMValGroup/ESMValCore/pull/1700>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Core `_io.concatenate()` may fail due to case when one of the cubes is scalar - this fixes that (`#1715 <https://github.com/ESMValGroup/ESMValCore/pull/1715>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Pick up esmvalcore badge instead of esmvaltool one in README (`#1749 <https://github.com/ESMValGroup/ESMValCore/pull/1749>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Restore support for scalar cubes to time selection preprocessor functions (`#1750 <https://github.com/ESMValGroup/ESMValCore/pull/1750>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Deprecations
+~~~~~~~~~~~~
+
+-  Remove deprecation warning for regrid schemes already deprecated for v2.7.0 (`#1753 <https://github.com/ESMValGroup/ESMValCore/pull/1753>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 
 Documentation
 ~~~~~~~~~~~~~
@@ -39,6 +48,7 @@ Improvements
 -  Remove `pytest_flake8` plugin and use `flake8` instead (`#1722 <https://github.com/ESMValGroup/ESMValCore/pull/1722>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Added CESM2 CMORizer (`#1678 <https://github.com/ESMValGroup/ESMValCore/pull/1678>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Speed up functions that use time dimension (`#1713 <https://github.com/ESMValGroup/ESMValCore/pull/1713>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Modernize and minimize pylint configuration (`#1726 <https://github.com/ESMValGroup/ESMValCore/pull/1726>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
 Fixes for datasets
 ~~~~~~~~~~~~~~~~~~
@@ -55,7 +65,7 @@ Automatic testing
 
 -  Pin `flake8<5.0.0` since Circle CI tests are failing copiously (`#1698 <https://github.com/ESMValGroup/ESMValCore/pull/1698>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Added tests for input/output filenames for ICON and EMAC on-the-fly CMORizer (`#1718 <https://github.com/ESMValGroup/ESMValCore/pull/1718>`__) `Manuel Schlund <https://github.com/schlunma>`__
-
+-  Fix failed tests for Python<3.10 resulting from typing (`#1748 <https://github.com/ESMValGroup/ESMValCore/pull/1748>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
 .. _changelog-v2-6-0:
 
