@@ -246,8 +246,7 @@ class Pr(EmacFix):
         """Fix metadata."""
         cube = (
             self.get_cube(cubes, var_name=['aprl_cav', 'aprl_ave']) +
-            self.get_cube(cubes, var_name=['aprc_cav', 'aprc_ave']) +
-            self.get_cube(cubes, var_name=['aprs_cav', 'aprs_ave'])
+            self.get_cube(cubes, var_name=['aprc_cav', 'aprc_ave'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
