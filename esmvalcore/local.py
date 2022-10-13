@@ -49,6 +49,9 @@ def find_files(
         drs=session['drs'],
     )
     drs = _select_drs('input_dir', session['drs'], facets['project'])
+    if isinstance(drs, list):
+        # Not sure how to handle a list of DRSs
+        drs = ''
     files = []
     for filename in filenames:
         file = LocalFile(filename)

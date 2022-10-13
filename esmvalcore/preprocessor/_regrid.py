@@ -4,7 +4,6 @@ import importlib
 import logging
 import os
 import re
-import warnings
 from copy import deepcopy
 from decimal import Decimal
 from typing import Dict
@@ -16,8 +15,6 @@ from dask import array as da
 from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
-
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.table import CMOR_TABLES
@@ -870,21 +867,6 @@ def parse_vertical_scheme(scheme):
     (str, str)
         A tuple containing the interpolation and extrapolation scheme.
     """
-    # Issue warning when deprecated schemes are used
-    deprecated_schemes = {
-        'linear_horizontal_extrapolate_vertical': 'linear_extrapolate',
-        'nearest_horizontal_extrapolate_vertical': 'nearest_extrapolate',
-    }
-    if scheme in deprecated_schemes:
-        new_scheme = deprecated_schemes[scheme]
-        deprecation_msg = (
-            f"The vertical regridding scheme ``{scheme}`` has been deprecated "
-            f"in ESMValCore version 2.5.0 and is scheduled for removal in "
-            f"version 2.7.0. It has been renamed to the identical scheme "
-            f"``{new_scheme}`` without any change in functionality.")
-        warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
-        scheme = new_scheme
-
     # Check if valid scheme is given
     if scheme not in VERTICAL_SCHEMES:
         raise ValueError(

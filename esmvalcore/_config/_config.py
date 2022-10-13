@@ -101,8 +101,11 @@ def load_config_developer(cfg_file):
 
     for project, settings in cfg.items():
         for site, drs in settings['input_dir'].items():
-            # Since v2.7, 'version' can be used instead of 'latestversion'
-            drs = drs.replace('{latestversion}', '{version}')
+            # Since v2.8, 'version' can be used instead of 'latestversion'
+            if isinstance(drs, list):
+                drs = [d.replace('{latestversion}', '{version}') for d in drs]
+            else:
+                drs = drs.replace('{latestversion}', '{version}')
             settings['input_dir'][site] = drs
         CFG[project] = settings
 

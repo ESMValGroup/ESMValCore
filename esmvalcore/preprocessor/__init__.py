@@ -53,6 +53,7 @@ from ._regrid import (
     extract_point,
     regrid,
 )
+from ._rolling_window import rolling_window_statistics
 from ._time import (
     annual_statistics,
     anomalies,
@@ -135,6 +136,7 @@ __all__ = [
     'mask_outside_range',
     # Other
     'clip',
+    'rolling_window_statistics',
     # Region selection
     'extract_region',
     'extract_shape',

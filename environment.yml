@@ -15,6 +15,7 @@ dependencies:
   - geopy
   - iris>=3.2.1
   - nested-lookup
+  - netcdf4!=1.6.1  # github.com/ESMValGroup/ESMValCore/issues/1723
   - pandas
   - pillow
   - pip!=21.3

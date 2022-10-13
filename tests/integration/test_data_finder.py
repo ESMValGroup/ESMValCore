@@ -62,7 +62,8 @@ def create_tree(path, filenames=None, symlinks=None):
 def test_get_output_file(cfg):
     """Test getting output name for preprocessed files."""
     output_file = get_output_file(cfg['variable'], cfg['preproc_dir'])
-    assert output_file == Path(cfg['output_file'])
+    expected = Path(cfg['output_file'])
+    assert output_file == expected
 
 
 @pytest.fixture
@@ -97,5 +98,5 @@ def test_find_files(root, cfg):
     ref_globs = [
         Path(root, d, f) for d in cfg['dirs'] for f in cfg['file_patterns']
     ]
-    assert [Path(f) for f in input_filelist] == sorted(ref_files)
-    assert [Path(g) for g in globs] == sorted(ref_globs)
+    assert sorted([Path(f) for f in input_filelist]) == sorted(ref_files)
+    assert sorted([Path(g) for g in globs]) == sorted(ref_globs)

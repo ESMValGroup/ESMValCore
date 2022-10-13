@@ -457,7 +457,7 @@ def get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
     if 'timerange' in variable:
         timerange = variable['timerange'].replace('/', '-')
         outfile = Path(f'{outfile}_{timerange}')
-    outfile = outfile.with_suffix('.nc')
+    outfile = Path(f"{outfile}.nc")
     return Path(
         preproc_dir,
         variable.get('diagnostic', ''),
