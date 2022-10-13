@@ -44,6 +44,7 @@ Documentation
 -  Update MO obs4MIPs paths in the user configuration file (`#1734 <https://github.com/ESMValGroup/ESMValCore/pull/1734>`__) `mo-tgeddes <https://github.com/mo-tgeddes>`__
 -  Update `Making a release` section of the documentation (`#1689 <https://github.com/ESMValGroup/ESMValCore/pull/1689>`__) `sloosvel <https://github.com/sloosvel>`__
 -  Added changelog for v2.7.0 (`#1746 <https://github.com/ESMValGroup/ESMValCore/pull/1746>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  update CITATION.cff file with 2.7.0 release info (`#1757 <https://github.com/ESMValGroup/ESMValCore/pull/1757>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 
 Improvements
 ~~~~~~~~~~~~
