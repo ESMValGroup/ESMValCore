@@ -65,7 +65,7 @@ EMAC:
     od550aer:
       raw_name: [aot_opt_TOT_550_total_cav, aot_opt_TOT_550_total_ave]
       channel: AERmon
-    pr:  # derived from aprl_*, aprc_*, aprs_*
+    pr:  # derived from aprl_*, aprc_*
       channel: Amon
     prc:
       raw_name: [aprc_cav, aprc_ave]
