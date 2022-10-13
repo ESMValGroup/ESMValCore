@@ -986,7 +986,7 @@ def test_update_timerange_no_files(session, offline):
         'timerange': '*/2000',
     }
     dataset = Dataset(**variable)
-    msg = r"Missing data for: CMIP6, Amon, tas, HadGEM3-GC31-LL.*"
+    msg = r"Missing data for Dataset: CMIP6, Amon, tas, HadGEM3-GC31-LL.*"
     with pytest.raises(InputFilesNotFound, match=msg):
         dataset._update_timerange(session)
 

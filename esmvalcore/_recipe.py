@@ -8,7 +8,7 @@ from copy import deepcopy
 from itertools import groupby
 from pathlib import Path
 from pprint import pformat
-from typing import Any
+from typing import Any, Iterable
 
 import yaml
 from nested_lookup import nested_delete
@@ -753,8 +753,7 @@ def _get_preprocessor_products(
             continue
         _set_version(dataset, input_datasets)
         _schedule_for_download(input_datasets)
-        logger.info("Found input files for %s",
-                    check._format_facets(dataset.facets))
+        logger.info("Found input files for %s", dataset.summary(shorten=True))
 
         filename = get_output_file(dataset.facets, dataset.session.preproc_dir)
         product = PreprocessorFile(
@@ -1592,24 +1591,24 @@ def _clean_ancillaries(dataset: Dataset) -> None:
             logger.warning(
                 "For dataset %s: only using ancillary dataset %s, "
                 "ignoring duplicate ancillary datasets\n%s",
-                check._format_facets(dataset.facets),
-                check._format_facets(ancillary_ds.facets),
+                dataset.summary(shorten=True),
+                ancillary_ds.summary(shorten=True),
                 "\n".join(
-                    check._format_facets(ds.facets) for ds in group[1:]),
+                    ds.summary(shorten=True) for ds in group[1:]),
             )
         if any(_isglob(v) for v in ancillary_ds.facets.values()):
             logger.warning(
                 "For dataset %s: ignoring ancillary dataset %s, "
                 "unable to expand wildcards.",
-                check._format_facets(dataset.facets),
-                check._format_facets(ancillary_ds.facets),
+                dataset.summary(shorten=True),
+                ancillary_ds.summary(shorten=True),
             )
         else:
             ancillaries.append(ancillary_ds)
     dataset.ancillaries = ancillaries
 
 
-def _from_representative_files(dataset) -> list['Dataset']:
+def _from_representative_files(dataset: Dataset) -> list[Dataset]:
     """Replace facet values of '*' based on available files."""
     logger.info("Expanding dataset globs in recipe, this may take a while..")
     result: list[Dataset] = []
@@ -1637,7 +1636,7 @@ def _from_representative_files(dataset) -> list['Dataset']:
         new_ds.facets.update(updated_facets)
         new_ds.ancillaries = [ds.copy() for ds in repr_ds.ancillaries]
         _clean_ancillaries(new_ds)
-        logger.info("Found %s", new_ds)
+        logger.debug("Using ancillary dataset %s", new_ds)
         result.append(new_ds)
 
     if errors:
@@ -1646,19 +1645,19 @@ def _from_representative_files(dataset) -> list['Dataset']:
     return result
 
 
-def datasets_to_recipe(datasets):
+def datasets_to_recipe(datasets: Iterable[Dataset]) -> dict[str, Any]:
 
-    diagnostics = {}
+    diagnostics: dict[str, dict[str, Any]] = {}
 
     for dataset in datasets:
         if 'diagnostic' not in dataset.facets:
             raise RecipeError(
                 f"'diagnostic' facet missing from dataset {dataset},"
                 "unable to convert to recipe.")
-        diagnostic = dataset.facets['diagnostic']
-        if diagnostic not in diagnostics:
-            diagnostics[diagnostic] = {'variables': {}}
-        variables = diagnostics[diagnostic]['variables']
+        diagnostic_name: str = dataset.facets['diagnostic']  # type: ignore
+        if diagnostic_name not in diagnostics:
+            diagnostics[diagnostic_name] = {'variables': {}}
+        variables = diagnostics[diagnostic_name]['variables']
         if 'variable_group' in dataset.facets:
             variable_group = dataset.facets['variable_group']
         else:
@@ -1694,20 +1693,20 @@ def datasets_to_recipe(datasets):
     return recipe
 
 
-def group_identical_facets(variable):
-    # Move identical facets from dataset to variable
-    simplified = dict(variable)
-    dataset_facets = simplified.pop('additional_datasets')
+def group_identical_facets(variable: dict[str, Any]) -> dict[str, Any]:
+    """Move identical facets from datasets to variable."""
+    result = dict(variable)
+    dataset_facets = result.pop('additional_datasets')
     variable_keys = [
         k for k, v in dataset_facets[0].items()
         if k != 'dataset'  # keep at least one key in every dataset
-        and all(k in d and d[k] == v for d in dataset_facets[1:])
+        and all((k, v) in d.items() for d in dataset_facets[1:])
     ]
-    simplified.update(
-        {k: v
-         for k, v in dataset_facets[0].items() if k in variable_keys})
-    simplified['additional_datasets'] = [{
+    result.update(
+        (k, v)
+        for k, v in dataset_facets[0].items() if k in variable_keys)
+    result['additional_datasets'] = [{
         k: v
         for k, v in d.items() if k not in variable_keys
     } for d in dataset_facets]
-    return simplified
+    return result

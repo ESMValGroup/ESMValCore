@@ -96,7 +96,7 @@ def variable(var, required_keys):
     if missing:
         raise RecipeError(
             "Missing keys {} in {} from variable {} in diagnostic {}".format(
-                missing, _format_facets(var), var.get('variable_group'),
+                missing, pformat(var), var.get('variable_group'),
                 var.get('diagnostic')))
 
 
@@ -141,25 +141,6 @@ def _group_years(years):
     return ", ".join(ranges)
 
 
-def _format_facets(facets):
-    """Format facets into a kind of human readable string."""
-    keys = (
-        'project',
-        'mip',
-        'short_name',
-        'dataset',
-        'rcm_version',
-        'driver',
-        'domain',
-        'activity',
-        'exp',
-        'ensemble',
-        'grid',
-        'version',
-    )
-    return ", ".join(str(facets[k]) for k in keys if k in facets)
-
-
 def data_availability(dataset, log=True):
     """Check if input_files cover the required years."""
     input_files = dataset.files
@@ -169,7 +150,7 @@ def data_availability(dataset, log=True):
         _log_data_availability_errors(dataset)
 
     if not input_files:
-        raise InputFilesNotFound(f"Missing data for: {_format_facets(facets)}")
+        raise InputFilesNotFound(f"Missing data for {dataset.summary(True)}")
 
     if 'timerange' not in facets:
         return

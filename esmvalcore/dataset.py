@@ -198,6 +198,30 @@ class Dataset:
                 for a in self.ancillaries)
         return "\n".join(txt)
 
+    def summary(self, shorten: bool = False) -> str:
+        """Summary of the dataset."""
+        if not shorten:
+            return repr(self)
+
+        keys = (
+            'project',
+            'mip',
+            'short_name',
+            'dataset',
+            'rcm_version',
+            'driver',
+            'domain',
+            'activity',
+            'exp',
+            'ensemble',
+            'grid',
+            'version',
+        )
+        return (
+            f"{self.__class__.__name__}: " +
+            ", ".join(str(self.facets[k]) for k in keys if k in self.facets)
+        )
+
     def __getitem__(self, key):
         return self.facets[key]
 

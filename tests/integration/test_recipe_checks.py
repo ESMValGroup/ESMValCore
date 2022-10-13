@@ -97,7 +97,7 @@ def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
     error_last = ("Set 'log_level' to 'debug' to get more information", )
     with pytest.raises(RecipeError) as rec_err:
         check.data_availability(dataset)
-    assert str(rec_err.value) == 'Missing data for: tas'
+    assert str(rec_err.value) == 'Missing data for Dataset: tas'
     if error is None:
         assert mock_logger.error.call_count == 2
         errors = [error_first, error_last]

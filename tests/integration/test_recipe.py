@@ -3027,24 +3027,24 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
 
 def test_representative_dataset_regular_var(patched_datafinder, session):
     """Test ``_representative_dataset`` with regular variable."""
-    dataset = Dataset(
-        **{
-            'component': 'atm',
-            'dataset': 'ICON',
-            'end_year': 2000,
-            'ensemble': 'r1v1i1p1l1f1',
-            'exp': 'amip',
-            'frequency': 'mon',
-            'grid': 'R2B5',
-            'mip': 'Amon',
-            'original_short_name': 'tas',
-            'project': 'ICON',
-            'short_name': 'tas',
-            'start_year': 1990,
-            'timerange': '1990/2000',
-            'var_type': 'atm_2d_ml',
-            'version': 1,
-        })
+    variable = {
+        'component': 'atm',
+        'dataset': 'ICON',
+        'end_year': 2000,
+        'ensemble': 'r1v1i1p1l1f1',
+        'exp': 'amip',
+        'frequency': 'mon',
+        'grid': 'R2B5',
+        'mip': 'Amon',
+        'original_short_name': 'tas',
+        'project': 'ICON',
+        'short_name': 'tas',
+        'start_year': 1990,
+        'timerange': '1990/2000',
+        'var_type': 'atm_2d_ml',
+        'version': 1,
+    }
+    dataset = Dataset(**variable)
     dataset.session = session
     filename = _representative_dataset(dataset).files[0]
     path = Path(filename)
@@ -3114,88 +3114,90 @@ def test_representative_dataset_derived_var(patched_datafinder, session,
 
 def test_get_derive_input_variables(patched_datafinder, session):
     """Test ``_get_derive_input_variables``."""
-    lwp = Dataset(
-        **{
-            'component': 'atm',
-            'dataset': 'ICON',
-            'derive': True,
-            'ensemble': 'r1v1i1p1l1f1',
-            'exp': 'amip',
-            'force_derivation': True,
-            'frequency': 'mon',
-            'grid': 'R2B5',
-            'mip': 'Amon',
-            'original_short_name': 'lwp',
-            'project': 'ICON',
-            'short_name': 'lwp',
-            'timerange': '1990/2000',
-            'var_type': 'atm_2d_ml',
-            'version': 1,
-            'variable_group': 'lwp_group',
-        })
+    lwp_facets = {
+        'component': 'atm',
+        'dataset': 'ICON',
+        'derive': True,
+        'ensemble': 'r1v1i1p1l1f1',
+        'exp': 'amip',
+        'force_derivation': True,
+        'frequency': 'mon',
+        'grid': 'R2B5',
+        'mip': 'Amon',
+        'original_short_name': 'lwp',
+        'project': 'ICON',
+        'short_name': 'lwp',
+        'timerange': '1990/2000',
+        'var_type': 'atm_2d_ml',
+        'version': 1,
+        'variable_group': 'lwp_group',
+    }
+    lwp = Dataset(**lwp_facets)
     lwp.session = session
-    derive_input = _get_input_datasets(lwp)
 
-    clwvi = Dataset(
-        **{
-            # Added by get_required
-            'short_name': 'clwvi',
-            # Already present in variables
-            'component': 'atm',
-            'dataset': 'ICON',
-            'derive': True,
-            'ensemble': 'r1v1i1p1l1f1',
-            'exp': 'amip',
-            'force_derivation': True,
-            'frequency': 'mon',
-            'grid': 'R2B5',
-            'mip': 'Amon',
-            'project': 'ICON',
-            'timerange': '1990/2000',
-            'var_type': 'atm_2d_ml',
-            'variable_group': 'lwp_group',
-            'version': 1,
-            # Added by _add_cmor_info
-            'activity': 'CMIP',
-            'standard_name':
-            'atmosphere_mass_content_of_cloud_condensed_water',
-            'long_name': 'Condensed Water Path',
-            'modeling_realm': ['atmos'],
-            'original_short_name': 'clwvi',
-            'units': 'kg m-2',
-            # Added by _add_extra_facets
-            'raw_name': 'cllvi',
-        })
-    clivi = Dataset(
-        **{
-            # Added by get_required
-            'short_name': 'clivi',
-            # Already present in variables
-            'component': 'atm',
-            'dataset': 'ICON',
-            'derive': True,
-            'ensemble': 'r1v1i1p1l1f1',
-            'exp': 'amip',
-            'force_derivation': True,
-            'frequency': 'mon',
-            'grid': 'R2B5',
-            'mip': 'Amon',
-            'project': 'ICON',
-            'timerange': '1990/2000',
-            'var_type': 'atm_2d_ml',
-            'variable_group': 'lwp_group',
-            'version': 1,
-            # Added by _add_cmor_info
-            'activity': 'CMIP',
-            'standard_name': 'atmosphere_mass_content_of_cloud_ice',
-            'long_name': 'Ice Water Path',
-            'modeling_realm': ['atmos'],
-            'original_short_name': 'clivi',
-            'units': 'kg m-2',
-        })
+    clwvi_facets = {
+        # Added by get_required
+        'short_name': 'clwvi',
+        # Already present in variables
+        'component': 'atm',
+        'dataset': 'ICON',
+        'derive': True,
+        'ensemble': 'r1v1i1p1l1f1',
+        'exp': 'amip',
+        'force_derivation': True,
+        'frequency': 'mon',
+        'grid': 'R2B5',
+        'mip': 'Amon',
+        'project': 'ICON',
+        'timerange': '1990/2000',
+        'var_type': 'atm_2d_ml',
+        'variable_group': 'lwp_group',
+        'version': 1,
+        # Added by _add_cmor_info
+        'activity': 'CMIP',
+        'standard_name':
+        'atmosphere_mass_content_of_cloud_condensed_water',
+        'long_name': 'Condensed Water Path',
+        'modeling_realm': ['atmos'],
+        'original_short_name': 'clwvi',
+        'units': 'kg m-2',
+        # Added by _add_extra_facets
+        'raw_name': 'cllvi',
+    }
+    clwvi = Dataset(**clwvi_facets)
     clwvi.session = session
+
+    clivi_facets = {
+        # Added by get_required
+        'short_name': 'clivi',
+        # Already present in variables
+        'component': 'atm',
+        'dataset': 'ICON',
+        'derive': True,
+        'ensemble': 'r1v1i1p1l1f1',
+        'exp': 'amip',
+        'force_derivation': True,
+        'frequency': 'mon',
+        'grid': 'R2B5',
+        'mip': 'Amon',
+        'project': 'ICON',
+        'timerange': '1990/2000',
+        'var_type': 'atm_2d_ml',
+        'variable_group': 'lwp_group',
+        'version': 1,
+        # Added by _add_cmor_info
+        'activity': 'CMIP',
+        'standard_name': 'atmosphere_mass_content_of_cloud_ice',
+        'long_name': 'Ice Water Path',
+        'modeling_realm': ['atmos'],
+        'original_short_name': 'clivi',
+        'units': 'kg m-2',
+    }
+    clivi = Dataset(**clivi_facets)
     clivi.session = session
-    assert derive_input == [clwvi, clivi]
+
+    lwp_derive_input = _get_input_datasets(lwp)
+    assert lwp_derive_input == [clwvi, clivi]
 
 
 TEST_DIAG_SELECTION = [
