@@ -254,6 +254,7 @@ def deprecate(func, variable, version: str = None):
 _validators = {
     # From user config
     'log_level': validate_string,
+    'dask': validate_dict,
     'exit_on_warning': validate_bool,
     'output_dir': validate_path,
     'download_dir': validate_path,
