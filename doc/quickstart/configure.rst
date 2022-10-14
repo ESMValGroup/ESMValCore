@@ -639,10 +639,12 @@ Example:
    ICON:
      cmor_strict: false
      input_dir:
-       default: '{version}_{component}_{exp}_{grid}_{ensemble}'
+       default:
+         - '{exp}'
+         - '{exp}/outdata'
      input_file:
-       default: '{version}_{component}_{exp}_{grid}_{ensemble}_{var_type}*.nc'
-     output_file: '{dataset}_{version}_{component}_{grid}_{mip}_{exp}_{ensemble}_{short_name}_{var_type}'
+       default: '{exp}_{var_type}*.nc'
+     output_file: '{project}_{dataset}_{exp}_{var_type}_{mip}_{short_name}'
      cmor_type: 'CMIP6'
      cmor_default_table_prefix: 'CMIP6_'
 

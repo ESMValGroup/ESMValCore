@@ -176,3 +176,16 @@ ICON:
   output_file: '{project}_{dataset}_{exp}_{var_type}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
+
+CESM:
+  cmor_strict: false
+  input_dir:
+    default:
+      - '/'  # run directory
+      - '{case}/{gcomp}/hist'  # short-term archiving
+      - '{case}/{gcomp}/proc/{tdir}/{tperiod}'  # postprocessed data
+  input_file:
+    default: '{case}.{scomp}.{type}.{string}*nc'
+  output_file: '{project}_{dataset}_{case}_{gcomp}_{scomp}_{type}_{mip}_{short_name}'
+  cmor_type: 'CMIP6'
+  cmor_default_table_prefix: 'CMIP6_'

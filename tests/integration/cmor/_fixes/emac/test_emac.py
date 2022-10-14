@@ -1105,10 +1105,8 @@ def test_pr_fix(cubes_2d):
     """Test fix."""
     cubes_2d[0].var_name = 'aprl_cav'
     cubes_2d[1].var_name = 'aprc_cav'
-    cubes_2d[2].var_name = 'aprs_cav'
     cubes_2d[0].units = 'kg m-2 s-1'
     cubes_2d[1].units = 'kg m-2 s-1'
-    cubes_2d[2].units = 'kg m-2 s-1'
     vardef = get_var_info('EMAC', 'Amon', 'pr')
     extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'pr', ())
     fix = Pr(vardef, extra_facets=extra_facets)
@@ -1125,7 +1123,7 @@ def test_pr_fix(cubes_2d):
     assert cube.units == 'kg m-2 s-1'
     assert 'positive' not in cube.attributes
 
-    np.testing.assert_allclose(cube.data, [[[3.0]]])
+    np.testing.assert_allclose(cube.data, [[[2.0]]])
 
 
 def test_get_prc_fix():
