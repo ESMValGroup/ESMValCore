@@ -402,10 +402,24 @@ class ESMValTool():
         cfg = read_config_user_file(config_file, recipe.stem, kwargs)
 
         # Create run dir
-        if os.path.exists(cfg['run_dir']):
-            print("ERROR: run_dir {} already exists, aborting to "
-                  "prevent data loss".format(cfg['output_dir']))
-        os.makedirs(cfg['run_dir'])
+        out_dir = Path(cfg['output_dir'])
+        if out_dir.exists():
+            # Add an extra suffix to avoid path collision with another process.
+            suffix = 1
+            new_out_dir = out_dir
+            while new_out_dir.exists():
+                new_out_dir = Path(f"{out_dir}-{suffix}")
+                suffix += 1
+                if suffix > 1000:
+                    print("ERROR: output_dir {} already exists, aborting to "
+                          "prevent data loss".format(cfg['output_dir']))
+                    break
+            # Update configuration with the new path.
+            cfg['output_dir'] = str(new_out_dir)
+            for dirname in ('run_dir', 'preproc_dir', 'work_dir', 'plot_dir'):
+                cfg[dirname] = str(out_dir / Path(cfg[dirname]).name)
+        os.makedirs(cfg['output_dir'])
+        os.mkdir(cfg['run_dir'])
 
         # configure logging
         log_files = configure_logging(output_dir=cfg['run_dir'],
