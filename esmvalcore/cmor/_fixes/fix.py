@@ -158,8 +158,13 @@ class Fix:
 
         fixes = []
         try:
-            fixes_module = importlib.import_module(
-                'esmvalcore.cmor._fixes.{0}.{1}'.format(project, dataset))
+            if project == 'cordex':
+                driver = extra_facets['driver'].replace('-', '_').lower()
+                fixes_module = importlib.import_module(
+                    f'esmvalcore.cmor._fixes.{project}.{driver}.{dataset}')
+            else:
+                fixes_module = importlib.import_module(
+                    'esmvalcore.cmor._fixes.{0}.{1}'.format(project, dataset))
 
             classes = inspect.getmembers(fixes_module, inspect.isclass)
             classes = dict((name.lower(), value) for name, value in classes)
