@@ -3603,14 +3603,16 @@ def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
 
     recipe = get_recipe(tmp_path, content, config_user)
 
+    os.makedirs(config_user['output_dir'])
     recipe.tasks.run = mocker.Mock()
     recipe.write_filled_recipe = mocker.Mock()
     recipe.run()
 
     esmvalcore._recipe.esgf.download.assert_called_once_with(
         set(), config_user['download_dir'])
-    recipe.tasks.run.assert_called_once_with(
-        max_parallel_tasks=config_user['max_parallel_tasks'])
+    cfg = dict(config_user)
+    cfg['write_ncl_interface'] = False
+    recipe.tasks.run.assert_called_once_with(cfg)
     recipe.write_filled_recipe.assert_called_once()
 
 

@@ -73,7 +73,10 @@ def test_run_tasks(monkeypatch, tmp_path, max_parallel_tasks, example_tasks,
     """Check that tasks are run correctly."""
     monkeypatch.setattr(esmvalcore._task, 'Pool',
                         multiprocessing.get_context(mpmethod).Pool)
-    example_tasks.run(max_parallel_tasks=max_parallel_tasks)
+    cfg = {
+        'max_parallel_tasks': max_parallel_tasks,
+    }
+    example_tasks.run(cfg)
 
     for task in example_tasks:
         print(task.name, task.output_files)

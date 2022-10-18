@@ -31,6 +31,7 @@ def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
         'config_file': tmp_path / '.esmvaltool' / 'config-user.yml',
         'log_level': 'info',
         'offline': cfg_offline,
+        'output_dir': str(output_dir),
         'preproc_dir': str(output_dir / 'preproc_dir'),
         'run_dir': str(output_dir / 'run_dir'),
     }
