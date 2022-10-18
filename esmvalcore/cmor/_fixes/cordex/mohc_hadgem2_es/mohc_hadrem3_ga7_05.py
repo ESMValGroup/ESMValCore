@@ -1,17 +1,14 @@
-
+"""Fixes for rcm MOHC-HadREM3-GA7-05 driven by MOHC-HadGEM2."""
 from esmvalcore.cmor.fix import Fix
 
-import numpy as np
 
 class Tas(Fix):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
         """
-        Add height (2m) coordinate.
-
-        Fix also done for prw.
-        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+        Fix time long_name.
+        Fix latitude and longitude var_name.
 
         Parameters
         ----------

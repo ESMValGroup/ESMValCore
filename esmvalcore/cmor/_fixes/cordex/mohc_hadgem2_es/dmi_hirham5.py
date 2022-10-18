@@ -1,15 +1,12 @@
-
+"""Fixes for rcm DMI-HIRHAM driven by MOHC-HadGEM2."""
 from esmvalcore.cmor.fix import Fix
 
 class Pr(Fix):
-    """Fixes for tas."""
+    """Fixes for pr."""
 
     def fix_metadata(self, cubes):
         """
-        Add height (2m) coordinate.
-
-        Fix also done for prw.
-        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+        Remove latitude and longitude attributes
 
         Parameters
         ----------
