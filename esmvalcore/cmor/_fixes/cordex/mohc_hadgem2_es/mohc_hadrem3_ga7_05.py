@@ -21,10 +21,11 @@ class Tas(Fix):
 
         """
         for cube in cubes:
-          cube.coord('latitude').var_name = 'lat'
-          cube.coord('longitude').var_name = 'lon'
-          cube.coord('time').long_name = 'time'
+            cube.coord('latitude').var_name = 'lat'
+            cube.coord('longitude').var_name = 'lon'
+            cube.coord('time').long_name = 'time'
 
         return cubes
+
 
 Pr = Tas

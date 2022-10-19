@@ -1,6 +1,7 @@
 """Fixes for rcm DMI-HIRHAM driven by MOHC-HadGEM2."""
 from esmvalcore.cmor.fix import Fix
 
+
 class Pr(Fix):
     """Fixes for pr."""
 
@@ -19,7 +20,7 @@ class Pr(Fix):
 
         """
         for cube in cubes:
-          cube.coord('latitude').attributes = {}
-          cube.coord('longitude').attributes = {}
+            cube.coord('latitude').attributes = {}
+            cube.coord('longitude').attributes = {}
 
         return cubes

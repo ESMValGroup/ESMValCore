@@ -4,6 +4,7 @@ from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
 
 import numpy as np
 
+
 class Tas(Fix):
     """Fixes for tas."""
 
@@ -28,6 +29,7 @@ class Tas(Fix):
             cube.coord('time').long_name = 'time'
 
         return cubes
+
 
 class Pr(Fix):
     """Fixes for pr."""
