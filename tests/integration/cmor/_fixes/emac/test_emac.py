@@ -495,7 +495,7 @@ def test_get_cube_str_input():
         Cube(0.0),
         Cube(0.0, var_name='x'),
     ])
-    cube = fix.get_cube(cubes, var_names='x')
+    cube = fix.get_cube(cubes, var_name='x')
     assert cube.var_name == 'x'
 
 
@@ -507,7 +507,7 @@ def test_get_cube_list_input():
         Cube(0.0, var_name='x'),
         Cube(0.0, var_name='y'),
     ])
-    cube = fix.get_cube(cubes, var_names=['y', 'x'])
+    cube = fix.get_cube(cubes, var_name=['y', 'x'])
     assert cube.var_name == 'y'
 
 
@@ -529,7 +529,7 @@ def test_var_not_available_get_cube():
     msg = (r"No variable of \['x'\] necessary for the extraction/derivation "
            r"the CMOR variable 'ta' is available in the input file.")
     with pytest.raises(ValueError, match=msg):
-        fix.get_cube(cubes, var_names='x')
+        fix.get_cube(cubes, var_name='x')
 
 
 # Test with single-dimension cubes
@@ -1105,10 +1105,8 @@ def test_pr_fix(cubes_2d):
     """Test fix."""
     cubes_2d[0].var_name = 'aprl_cav'
     cubes_2d[1].var_name = 'aprc_cav'
-    cubes_2d[2].var_name = 'aprs_cav'
     cubes_2d[0].units = 'kg m-2 s-1'
     cubes_2d[1].units = 'kg m-2 s-1'
-    cubes_2d[2].units = 'kg m-2 s-1'
     vardef = get_var_info('EMAC', 'Amon', 'pr')
     extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'pr', ())
     fix = Pr(vardef, extra_facets=extra_facets)
@@ -1125,7 +1123,7 @@ def test_pr_fix(cubes_2d):
     assert cube.units == 'kg m-2 s-1'
     assert 'positive' not in cube.attributes
 
-    np.testing.assert_allclose(cube.data, [[[3.0]]])
+    np.testing.assert_allclose(cube.data, [[[2.0]]])
 
 
 def test_get_prc_fix():
@@ -2736,73 +2734,15 @@ def test_fix_plev_no_plev_coord(cubes_3d):
         fix._fix_plev(cube)
 
 
-# Test fix bounds of coordinates with dimensions of size 1
+# Test fix invalid units (using INVALID_UNITS)
 
 
-def test_fix_bounds_time_size_1():
-    """Test fix."""
-    coord = DimCoord([0], standard_name='time',
-                     units='days since 1850-01-01')
-    cube = Cube([0], dim_coords_and_dims=[(coord, 0)])
-
-    fix = get_allvars_fix('Amon', 'tas')
-    fix._fix_time(cube)
-
-    time_coord = cube.coord('time')
-    assert time_coord is coord
-    assert time_coord.var_name == 'time'
-    assert time_coord.standard_name == 'time'
-    assert time_coord.long_name == 'time'
-    assert time_coord.units == 'days since 1850-01-01'
-    np.testing.assert_equal(time_coord.points, [0])
-    assert time_coord.bounds is None
-
-
-def test_fix_bounds_lat_size_1():
-    """Test fix."""
-    coord = DimCoord([3.14159265], standard_name='latitude', units='rad')
-    cube = Cube([0], dim_coords_and_dims=[(coord, 0)])
-
-    fix = get_allvars_fix('Amon', 'tas')
-    fix._fix_lat(cube)
-
-    lat_coord = cube.coord('latitude')
-    assert lat_coord is coord
-    assert lat_coord.var_name == 'lat'
-    assert lat_coord.standard_name == 'latitude'
-    assert lat_coord.long_name == 'latitude'
-    assert lat_coord.units == 'degrees_north'
-    np.testing.assert_allclose(lat_coord.points, [180.0])
-    assert lat_coord.bounds is None
-
-
-def test_fix_bounds_lon_size_1():
-    """Test fix."""
-    coord = DimCoord([3.14159265], standard_name='longitude', units='rad')
-    cube = Cube([0], dim_coords_and_dims=[(coord, 0)])
-
-    fix = get_allvars_fix('Amon', 'tas')
-    fix._fix_lon(cube)
-
-    lon_coord = cube.coord('longitude')
-    assert lon_coord is coord
-    assert lon_coord.var_name == 'lon'
-    assert lon_coord.standard_name == 'longitude'
-    assert lon_coord.long_name == 'longitude'
-    assert lon_coord.units == 'degrees_east'
-    np.testing.assert_allclose(lon_coord.points, [180.0])
-    assert lon_coord.bounds is None
-
-
-# Test fix invalid units
-
-
-def test_fix_invalid_units_predefined():
+def test_fix_invalid_units():
     """Test fix."""
     cube = Cube(1.0, attributes={'invalid_units': 'kg/m**2s'})
 
     fix = get_allvars_fix('Amon', 'pr')
-    fix._fix_var_metadata(cube)
+    fix.fix_var_metadata(cube)
 
     assert cube.var_name == 'pr'
     assert cube.standard_name == 'precipitation_flux'
@@ -2812,46 +2752,3 @@ def test_fix_invalid_units_predefined():
     assert 'positive' not in cube.attributes
 
     np.testing.assert_allclose(cube.data, 1.0)
-
-
-def test_fix_invalid_units_fix_exponent():
-    """Test fix."""
-    cube = Cube(1.0, attributes={'invalid_units': 'W/m**2'})
-
-    fix = get_allvars_fix('Amon', 'rlds')
-    fix._fix_var_metadata(cube)
-
-    assert cube.var_name == 'rlds'
-    assert cube.standard_name == 'surface_downwelling_longwave_flux_in_air'
-    assert cube.long_name == 'Surface Downwelling Longwave Radiation'
-    assert cube.units == 'W m-2'
-    assert cube.units.origin == 'W/m^2'
-    assert cube.attributes['positive'] == 'down'
-
-    np.testing.assert_allclose(cube.data, 1.0)
-
-
-def test_fix_invalid_units_convert():
-    """Test fix."""
-    cube = Cube(1.0, attributes={'invalid_units': 'kW/m**2'})
-
-    fix = get_allvars_fix('Amon', 'rlds')
-    fix._fix_var_metadata(cube)
-
-    assert cube.var_name == 'rlds'
-    assert cube.standard_name == 'surface_downwelling_longwave_flux_in_air'
-    assert cube.long_name == 'Surface Downwelling Longwave Radiation'
-    assert cube.units == 'W m-2'
-    assert cube.attributes['positive'] == 'down'
-
-    np.testing.assert_allclose(cube.data, 1000.0)
-
-
-def test_fix_invalid_units_fail():
-    """Test fix."""
-    cube = Cube(1.0, attributes={'invalid_units': 'invalid_units'})
-
-    fix = get_allvars_fix('Amon', 'rlds')
-    msg = "Failed to fix invalid units 'invalid_units' for variable 'rlds'"
-    with pytest.raises(ValueError, match=msg):
-        fix._fix_var_metadata(cube)

@@ -1,13 +1,10 @@
 # Extra facets for native EMAC model output
 
-# All extra facets for EMAC are optional but might be necessary for some
-# variables.
-
 # Notes:
 # - All facets can also be specified in the recipes. The values given here are
 #   only defaults.
 # - The facets ``channel`` and ``postproc_flag`` have to be specified in the
-#   recipe if they are not given here.
+#   recipe if they are not given here and default DRS is used.
 # - If ``raw_name`` is omitted and no derivation in the EMAC fix is given, the
 #   CMOR short_name is used by default. To support single and multiple raw
 #   names for a variable, ``raw_name`` can be given as str and list. In the
@@ -26,6 +23,8 @@
 # A complete list of supported keys is given in the documentation (see
 # ESMValCore/doc/quickstart/find_data.rst).
 ---
+
+# Optional facets for every variable
 '*':
   '*':
     '*':
@@ -66,7 +65,7 @@ EMAC:
     od550aer:
       raw_name: [aot_opt_TOT_550_total_cav, aot_opt_TOT_550_total_ave]
       channel: AERmon
-    pr:  # derived from aprl_*, aprc_*, aprs_*
+    pr:  # derived from aprl_*, aprc_*
       channel: Amon
     prc:
       raw_name: [aprc_cav, aprc_ave]

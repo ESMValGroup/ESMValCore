@@ -15,8 +15,7 @@ from iris.experimental.ugrid import Connectivity, Mesh
 
 from esmvalcore.iris_helpers import add_leading_dim_to_cube, date2num
 
-from ..shared import add_scalar_height_coord, add_scalar_typesi_coord
-from ._base_fixes import IconFix
+from ._base_fixes import IconFix, SetUnitsTo1
 
 logger = logging.getLogger(__name__)
 
@@ -70,10 +69,10 @@ class AllVars(IconFix):
             self._fix_mesh(cube, lat_idx)
 
         # Fix scalar coordinates
-        self._fix_scalar_coords(cube)
+        self.fix_scalar_coords(cube)
 
         # Fix metadata of variable
-        self._fix_var_metadata(cube)
+        self.fix_var_metadata(cube)
 
         return CubeList([cube])
 
@@ -154,6 +153,62 @@ class AllVars(IconFix):
             f"'{self.vardef.short_name}', cube and other cubes in file do not "
             f"contain it")
 
+    def _fix_height(self, cube, cubes):
+        """Fix height coordinate of cube."""
+        # Reverse entire cube along height axis so that index 0 is surface
+        # level
+        cube = iris.util.reverse(cube, 'height')
+
+        # Add air_pressure coordinate if possible
+        # (make sure to also reverse pressure cubes)
+        if cubes.extract(NameConstraint(var_name='pfull')):
+            plev_points_cube = iris.util.reverse(
+                cubes.extract_cube(NameConstraint(var_name='pfull')),
+                'height',
+            )
+            air_pressure_points = plev_points_cube.core_data()
+
+            # Get bounds from half levels and reshape array
+            if cubes.extract(NameConstraint(var_name='phalf')):
+                plev_bounds_cube = iris.util.reverse(
+                    cubes.extract_cube(NameConstraint(var_name='phalf')),
+                    'height',
+                )
+                air_pressure_bounds = plev_bounds_cube.core_data()
+                air_pressure_bounds = da.stack(
+                    (air_pressure_bounds[:, :-1], air_pressure_bounds[:, 1:]),
+                    axis=-1)
+            else:
+                air_pressure_bounds = None
+
+            # Setup air pressure coordinate with correct metadata and add to
+            # cube
+            air_pressure_coord = AuxCoord(
+                air_pressure_points,
+                bounds=air_pressure_bounds,
+                var_name='plev',
+                standard_name='air_pressure',
+                long_name='pressure',
+                units=plev_points_cube.units,
+                attributes={'positive': 'down'},
+            )
+            cube.add_aux_coord(air_pressure_coord, np.arange(cube.ndim))
+
+        # Fix metadata
+        z_coord = cube.coord('height')
+        if z_coord.units.is_convertible('m'):
+            self.fix_height_metadata(cube, z_coord)
+        else:
+            z_coord.var_name = 'model_level'
+            z_coord.standard_name = None
+            z_coord.long_name = 'model level number'
+            z_coord.units = 'no unit'
+            z_coord.attributes['positive'] = 'up'
+            z_coord.points = np.arange(len(z_coord.points))
+            z_coord.bounds = None
+
+        return cube
+
     def _fix_lat(self, cube):
         """Fix latitude coordinate of cube."""
         lat_name = self.extra_facets.get('latitude', 'latitude')
@@ -167,11 +222,7 @@ class AllVars(IconFix):
                 raise ValueError(msg) from exc
 
         # Fix metadata
-        lat = cube.coord(lat_name)
-        lat.var_name = 'lat'
-        lat.standard_name = 'latitude'
-        lat.long_name = 'latitude'
-        lat.convert_units('degrees_north')
+        lat = self.fix_lat_metadata(cube, lat_name)
 
         return cube.coord_dims(lat)
 
@@ -188,22 +239,9 @@ class AllVars(IconFix):
                 raise ValueError(msg) from exc
 
         # Fix metadata
-        lon = cube.coord(lon_name)
-        lon.var_name = 'lon'
-        lon.standard_name = 'longitude'
-        lon.long_name = 'longitude'
-        lon.convert_units('degrees_east')
+        lon = self.fix_lon_metadata(cube, lon_name)
 
         return cube.coord_dims(lon)
-
-    def _fix_scalar_coords(self, cube):
-        """Fix scalar coordinates."""
-        if 'height2m' in self.vardef.dimensions:
-            add_scalar_height_coord(cube, 2.0)
-        if 'height10m' in self.vardef.dimensions:
-            add_scalar_height_coord(cube, 10.0)
-        if 'typesi' in self.vardef.dimensions:
-            add_scalar_typesi_coord(cube, 'sea_ice')
 
     def _fix_time(self, cube, cubes):
         """Fix time coordinate of cube."""
@@ -211,20 +249,9 @@ class AllVars(IconFix):
         if not cube.coords('time'):
             cube = self._add_time(cube, cubes)
 
-        # Fix metadata
-        time_coord = cube.coord('time')
-        time_coord.var_name = 'time'
-        time_coord.standard_name = 'time'
-        time_coord.long_name = 'time'
-
-        # Add bounds if possible (not possible if cube only contains single
-        # time point)
-        if not time_coord.has_bounds():
-            try:
-                time_coord.guess_bounds()
-            except ValueError:
-                pass
-
+        # Fix metadata and add bounds
+        time_coord = self.fix_time_metadata(cube)
+        self.guess_coord_bounds(cube, time_coord)
         if 'invalid_units' not in time_coord.attributes:
             return cube
 
@@ -447,91 +474,11 @@ class AllVars(IconFix):
 
         return True
 
-    @staticmethod
-    def _fix_height(cube, cubes):
-        """Fix height coordinate of cube."""
-        # Reverse entire cube along height axis so that index 0 is surface
-        # level
-        cube = iris.util.reverse(cube, 'height')
 
-        # Add air_pressure coordinate if possible
-        # (make sure to also reverse pressure cubes)
-        if cubes.extract(NameConstraint(var_name='pfull')):
-            plev_points_cube = iris.util.reverse(
-                cubes.extract_cube(NameConstraint(var_name='pfull')),
-                'height',
-            )
-            air_pressure_points = plev_points_cube.core_data()
-
-            # Get bounds from half levels and reshape array
-            if cubes.extract(NameConstraint(var_name='phalf')):
-                plev_bounds_cube = iris.util.reverse(
-                    cubes.extract_cube(NameConstraint(var_name='phalf')),
-                    'height',
-                )
-                air_pressure_bounds = plev_bounds_cube.core_data()
-                air_pressure_bounds = da.stack(
-                    (air_pressure_bounds[:, :-1], air_pressure_bounds[:, 1:]),
-                    axis=-1)
-            else:
-                air_pressure_bounds = None
-
-            # Setup air pressure coordinate with correct metadata and add to
-            # cube
-            air_pressure_coord = AuxCoord(
-                air_pressure_points,
-                bounds=air_pressure_bounds,
-                var_name='plev',
-                standard_name='air_pressure',
-                long_name='pressure',
-                units=plev_points_cube.units,
-                attributes={'positive': 'down'},
-            )
-            cube.add_aux_coord(air_pressure_coord, np.arange(cube.ndim))
-
-        # Fix metadata
-        z_coord = cube.coord('height')
-        if z_coord.units.is_convertible('m'):
-            z_metadata = {
-                'var_name': 'height',
-                'standard_name': 'height',
-                'long_name': 'height',
-                'attributes': {'positive': 'up'},
-            }
-            z_coord.convert_units('m')
-        else:
-            z_metadata = {
-                'var_name': 'model_level',
-                'standard_name': None,
-                'long_name': 'model level number',
-                'units': 'no unit',
-                'attributes': {'positive': 'up'},
-                'points': np.arange(len(z_coord.points)),
-                'bounds': None,
-            }
-        for (attr, val) in z_metadata.items():
-            setattr(z_coord, attr, val)
-
-        return cube
+Hur = SetUnitsTo1
 
 
-class Siconc(IconFix):
-    """Fixes for ``siconc``."""
-
-    def fix_metadata(self, cubes):
-        """Fix metadata.
-
-        Note
-        ----
-        This fix is called before the AllVars() fix. The wrong var_name and
-        units (which need to be %) are fixed in a later step in AllVars(). This
-        fix here is necessary to fix the "unknown" units that cannot be
-        converted to % in AllVars().
-
-        """
-        cube = self.get_cube(cubes)
-        cube.units = '1'
-        return cubes
+Siconc = SetUnitsTo1
 
 
-Siconca = Siconc
+Siconca = SetUnitsTo1
