@@ -39,9 +39,6 @@ class AllVars(Fix):
                     if coord.bounds is not None:
                         coord.bounds = coord.core_bounds().astype(
                             np.float64, casting='same_kind')
-        
-        # Further issues appear, maybe because historical data lat/lon 
+        # Further issues appear, maybe because historical data lat/lon
         # does not have bounds whereas scenario data has them.
-                    
-
         return cubes

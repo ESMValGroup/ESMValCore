@@ -20,6 +20,6 @@ class Pr(Fix):
 
         """
         for cube in cubes:
-            cube.coord('time').long_name = 'time'            
+            cube.coord('time').long_name = 'time'
 
         return cubes
