@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/ESMValGroup/ESMValCore/branch/main/graph/badge.svg?token=wQnDzguwq6)](https://codecov.io/gh/ESMValGroup/ESMValCore)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/5d496dea9ef64ec68e448a6df5a65783)](https://www.codacy.com/gh/ESMValGroup/ESMValCore?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ESMValGroup/ESMValCore&amp;utm_campaign=Badge_Grade)
 [![Docker Build Status](https://img.shields.io/docker/cloud/build/esmvalgroup/esmvalcore)](https://hub.docker.com/r/esmvalgroup/esmvalcore/)
-[![Anaconda-Server Badge](https://anaconda.org/esmvalgroup/esmvalcore/badges/installer/conda.svg)](https://conda.anaconda.org/esmvalgroup)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/esmvalcore/badges/version.svg)](https://anaconda.org/conda-forge/esmvalcore)
 [![Github Actions Test](https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml/badge.svg)](https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml)
 [![Github Actions Dashboard](https://api.meercode.io/badge/ESMValGroup/ESMValCore?type=ci-success-rate&branch=main&lastDay=14)](https://meercode.io)
 
