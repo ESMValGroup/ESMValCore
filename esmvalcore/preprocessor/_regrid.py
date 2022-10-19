@@ -806,11 +806,7 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
                                     extrapolation=extrapolation)
 
     # Calculate the mask based on the any NaN values in the interpolated data.
-    mask = np.isnan(new_data)
-
-    if np.any(mask):
-        # Ensure that the data is masked appropriately.
-        new_data = np.ma.array(new_data, mask=mask, fill_value=_MDI)
+    new_data = da.ma.masked_equal(new_data, np.nan)
 
     # Construct the resulting cube with the interpolated data.
     return _create_cube(cube, new_data, src_levels, levels.astype(float))
@@ -1096,7 +1092,7 @@ def extract_coordinate_points(cube, definition, scheme):
     ----------
     cube : cube
         The source cube to extract a point from.
-    defintion : dict(str, float or array of float)
+    definition : dict(str, float or array of float)
         The coordinate - values pairs to extract
     scheme : str
         The interpolation scheme. 'linear' or 'nearest'. No default.
