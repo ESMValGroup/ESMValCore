@@ -26,3 +26,26 @@ class MOHCHadREM3GA705(Fix):
             cube.coord('time').long_name = 'time'
 
         return cubes
+
+
+class TimeLongName(Fix):
+    """Fixes for time coordinate."""
+
+    def fix_metadata(self, cubes):
+        """
+        Fix time long_name.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
+        for cube in cubes:
+            cube.coord('time').long_name = 'time'
+
+        return cubes

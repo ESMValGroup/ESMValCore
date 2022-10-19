@@ -1,5 +1,5 @@
 """Fixes for rcm GERICS-REMO2015 driven by MOHC-HadGEM2."""
-from ..ncc_noresm1_m.gerics_remo2015 import Pr as BaseFix
+from ..cordex_fixes import TimeLongName as BaseFix
 
 Pr = BaseFix
 

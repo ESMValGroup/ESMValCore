@@ -1,4 +1,4 @@
 """Fixes for rcm KNMI-RACMO22E driven by MPI-M-MPI-ESM-LR."""
-from ..ncc_noresm1_m.gerics_remo2015 import Pr as BaseFix
+from ..cordex_fixes import TimeLongName as BaseFix
 
 Pr = BaseFix
