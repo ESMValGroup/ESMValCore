@@ -1,4 +1,4 @@
-# height 2m a differents altures
+"""Fixes for rcm CNRM-ALADIN63 driven by CNRM-CERFACS-CNRM-CM5."""
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
 
@@ -9,10 +9,7 @@ class Tas(Fix):
 
     def fix_metadata(self, cubes):
         """
-        Add height (2m) coordinate.
-
-        Fix also done for prw.
-        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+        Add height (2m) coordinate and correct long_name for time.
 
         Parameters
         ----------
@@ -33,14 +30,11 @@ class Tas(Fix):
         return cubes
 
 class Pr(Fix):
-    """Fixes for tas."""
+    """Fixes for pr."""
 
     def fix_metadata(self, cubes):
         """
-        Add height (2m) coordinate.
-
-        Fix also done for prw.
-        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+        Correct long_name for time.
 
         Parameters
         ----------

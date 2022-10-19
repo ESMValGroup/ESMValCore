@@ -1077,6 +1077,8 @@ def _get_cmor_checker(table,
                 table, ', '.join(CMOR_TABLES)))
 
     cmor_table = CMOR_TABLES[table]
+    if table == 'CORDEX' and mip.endswith('hr'):
+        mip = mip.replace('hr', 'h')
     var_info = cmor_table.get_variable(mip, short_name)
     if var_info is None:
         var_info = CMOR_TABLES['custom'].get_variable(mip, short_name)

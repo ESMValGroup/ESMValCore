@@ -1,9 +1,7 @@
-# height 2m a differents altures
+"""Fixes for rcm CLMcom-CCLM4-8-17 driven by MIROC-MIROC5."""
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
 
 from cf_units import Unit
-import iris
 import numpy as np
 
 class AllVars(Fix):
@@ -11,10 +9,11 @@ class AllVars(Fix):
 
     def fix_metadata(self, cubes):
         """
-        Add height (2m) coordinate.
+        Set calendar to 'proleptic_gregorian' to avoid
+        concatenation issues between historical and
+        scenario runs.
 
-        Fix also done for prw.
-        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+        Fix dtype value of coordinates and coordinate bounds.
 
         Parameters
         ----------
@@ -39,7 +38,9 @@ class AllVars(Fix):
                     if coord.bounds is not None:
                         coord.bounds = coord.core_bounds().astype(
                             np.float64, casting='same_kind')
-        # further issues with dtype, may be due because historical data lat/lon does not have bounds whereas scenario data has them
+        
+        # Further issues appear, maybe because historical data lat/lon 
+        # does not have bounds whereas scenario data has them.
                     
 
         return cubes
