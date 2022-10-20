@@ -238,8 +238,9 @@ class AllVars(IconFix):
                 msg = "Failed to add missing longitude coordinate to cube"
                 raise ValueError(msg) from exc
 
-        # Fix metadata
+        # Fix metadata and convert to [0, 360]
         lon = self.fix_lon_metadata(cube, lon_name)
+        self._set_range_in_0_360(lon)
 
         return cube.coord_dims(lon)
 
@@ -370,6 +371,37 @@ class AllVars(IconFix):
         )
         return mesh
 
+    def _get_node_coords(self, horizontal_grid):
+        """Get node coordinates from horizontal grid.
+
+        Extract node coordinates from dummy variable 'dual_area' in horizontal
+        grid file (in ICON jargon called 'vertex latitude' and 'vertex
+        longitude'), remove their bounds (not accepted by UGRID), and adapt
+        metadata.
+
+        """
+        dual_area_cube = horizontal_grid.extract_cube(
+            NameConstraint(var_name='dual_area'))
+        node_lat = dual_area_cube.coord(var_name='vlat')
+        node_lon = dual_area_cube.coord(var_name='vlon')
+
+        # Fix metadata
+        node_lat.bounds = None
+        node_lon.bounds = None
+        node_lat.var_name = 'nlat'
+        node_lon.var_name = 'nlon'
+        node_lat.standard_name = 'latitude'
+        node_lon.standard_name = 'longitude'
+        node_lat.long_name = 'node latitude'
+        node_lon.long_name = 'node longitude'
+        node_lat.convert_units('degrees_north')
+        node_lon.convert_units('degrees_east')
+
+        # Convert longitude to [0, 360]
+        self._set_range_in_0_360(node_lon)
+
+        return (node_lat, node_lon)
+
     def _fix_mesh(self, cube, mesh_idx):
         """Fix mesh."""
         # Remove any already-present dimensional coordinate describing the mesh
@@ -425,34 +457,6 @@ class AllVars(IconFix):
         return np.int32(np.min(vertex_index.data))
 
     @staticmethod
-    def _get_node_coords(horizontal_grid):
-        """Get node coordinates from horizontal grid.
-
-        Extract node coordinates from dummy variable 'dual_area' in horizontal
-        grid file (in ICON jargon called 'vertex latitude' and 'vertex
-        longitude'), remove their bounds (not accepted by UGRID), and adapt
-        metadata.
-
-        """
-        dual_area_cube = horizontal_grid.extract_cube(
-            NameConstraint(var_name='dual_area'))
-        node_lat = dual_area_cube.coord(var_name='vlat')
-        node_lon = dual_area_cube.coord(var_name='vlon')
-
-        node_lat.bounds = None
-        node_lon.bounds = None
-        node_lat.var_name = 'nlat'
-        node_lon.var_name = 'nlon'
-        node_lat.standard_name = 'latitude'
-        node_lon.standard_name = 'longitude'
-        node_lat.long_name = 'node latitude'
-        node_lon.long_name = 'node longitude'
-        node_lat.convert_units('degrees_north')
-        node_lon.convert_units('degrees_east')
-
-        return (node_lat, node_lon)
-
-    @staticmethod
     def _is_unstructured_grid(lat_idx, lon_idx):
         """Check if data is defined on an unstructured grid."""
         # If either latitude or longitude are not present (i.e., the
@@ -473,6 +477,13 @@ class AllVars(IconFix):
             return False
 
         return True
+
+    @staticmethod
+    def _set_range_in_0_360(lon_coord):
+        """Convert longitude coordinate to [0, 360]."""
+        lon_coord.points = (lon_coord.points + 360.0) % 360.0
+        if lon_coord.bounds is not None:
+            lon_coord.bounds = (lon_coord.bounds + 360.0) % 360.0
 
 
 Hur = SetUnitsTo1
