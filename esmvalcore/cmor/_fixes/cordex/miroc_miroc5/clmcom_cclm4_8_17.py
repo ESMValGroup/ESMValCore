@@ -1,4 +1,5 @@
 """Fixes for rcm CLMcom-CCLM4-8-17 driven by MIROC-MIROC5."""
-from ..cordex_fixes import CLMcomCCLM4817 as BaseFix
+from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
+    CLMcomCCLM4817 as BaseFix)
 
 AllVars = BaseFix
