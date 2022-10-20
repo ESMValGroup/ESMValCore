@@ -1,5 +1,6 @@
 """Fixes for rcm MOHC-HadREM3-GA7-05 driven by CNRM-CERFACS-CNRM-CM5."""
-from ..cordex_fixes import MOHCHadREM3GA705 as BaseFix
+from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
+    MOHCHadREM3GA705 as BaseFix)
 
 Tas = BaseFix
 
