@@ -1080,7 +1080,7 @@ class TestCMORCheck(unittest.TestCase):
 
     def test_hr_mip_cordex(self):
         """Test hourly CORDEX tables are found."""
-        checker = _get_cmor_checker('CORDEX', '3h', 'tas', '3hr')
+        checker = _get_cmor_checker('CORDEX', '3hr', 'tas', '3hr')
         assert checker(self.cube)._cmor_var.short_name == 'tas'
         assert checker(self.cube)._cmor_var.frequency == '3hr'
 
