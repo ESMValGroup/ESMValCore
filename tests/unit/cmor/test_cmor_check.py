@@ -12,7 +12,7 @@ import numpy as np
 from cf_units import Unit
 
 from esmvalcore.cmor.check import (
-    CheckLevels, CMORCheck, 
+    CheckLevels, CMORCheck,
     CMORCheckError, _get_cmor_checker)
 
 
@@ -1077,7 +1077,7 @@ class TestCMORCheck(unittest.TestCase):
         self._check_cube(automatic_fixes=True)
         guessed_bounds = self.cube.coord('time').bounds
         assert guessed_bounds is None
-    
+
     def test_hr_mip_cordex(self):
         """Test hourly CORDEX tables are found."""
         checker = _get_cmor_checker('CORDEX', '3h', 'tas', '3hr')
