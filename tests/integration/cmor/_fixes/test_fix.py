@@ -41,7 +41,7 @@ class TestFix(unittest.TestCase):
                 'CNRM-ALADIN63',
                 'Amon',
                 'tas',
-                extra_facets={'driver':'CNRM-CERFACS-CNRM-CM5'}),
+                extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'}),
             [Tas(None)])
 
     def test_get_fixes_with_replace(self):
