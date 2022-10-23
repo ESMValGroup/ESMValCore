@@ -1,16 +1,16 @@
 """Fixes for rcm CNRM-ALADIN63 driven by CNRM-CERFACS-CNRM-CM5."""
-from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
-
 import numpy as np
+
+from esmvalcore.cmor._fixes.cordex.cordex_fixes import TimeLongName as BaseFix
+from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
+from esmvalcore.cmor.fix import Fix
 
 
 class Tas(Fix):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
-        """
-        Add height (2m) coordinate and correct long_name for time.
+        """Add height (2m) coordinate and correct long_name for time.
 
         Parameters
         ----------
@@ -20,7 +20,6 @@ class Tas(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             add_scalar_height_coord(cube)
@@ -31,24 +30,4 @@ class Tas(Fix):
         return cubes
 
 
-class Pr(Fix):
-    """Fixes for pr."""
-
-    def fix_metadata(self, cubes):
-        """
-        Correct long_name for time.
-
-        Parameters
-        ----------
-        cubes : iris.cube.CubeList
-            Input cubes.
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        for cube in cubes:
-            cube.coord('time').long_name = 'time'
-
-        return cubes
+Pr = BaseFix
