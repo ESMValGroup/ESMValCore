@@ -53,13 +53,12 @@ def cubes():
     return iris.cube.CubeList([correct_cube, wrong_cube])
 
 
-@pytest.mark.parametrize('short_name', ['pr', 'tas'])
-def test_get_dmi_hirham5_fix(short_name):
+def test_get_dmi_hirham5_fix():
     fix = Fix.get_fixes(
         'CORDEX',
         'DMI-HIRHAM5',
         'Amon',
-        short_name,
+        'pr',
         extra_facets={'driver': 'MOHC-HadGEM2-ES'})
     assert isinstance(fix[0], Fix)
 
