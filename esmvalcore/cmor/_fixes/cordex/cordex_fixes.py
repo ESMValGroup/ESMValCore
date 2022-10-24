@@ -56,7 +56,8 @@ class CLMcomCCLM4817(Fix):
     """Fixes for CLMcom-CCLM4-8-17."""
 
     def fix_metadata(self, cubes):
-        """
+        """ Fix calendars.
+
         Set calendar to 'proleptic_gregorian' to avoid
         concatenation issues between historical and
         scenario runs.
