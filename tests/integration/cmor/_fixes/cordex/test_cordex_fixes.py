@@ -21,11 +21,11 @@ def cubes():
                                             var_name='time',
                                             standard_name='time',
                                             long_name='wrong')
-    correct_lat_coord = iris.coords.DimCoord([0.0],
+    correct_lat_coord = iris.coords.DimCoord([0.0, 1.0],
                                              var_name='lat',
                                              standard_name='latitude',
                                              long_name='latitude')
-    wrong_lat_coord = iris.coords.DimCoord([0.0],
+    wrong_lat_coord = iris.coords.DimCoord([0.0, 1.0],
                                            var_name='latitudeCoord',
                                            standard_name='latitude',
                                            long_name='latitude')
@@ -38,7 +38,7 @@ def cubes():
                                            standard_name='longitude',
                                            long_name='longitude')
     correct_cube = iris.cube.Cube(
-        [[[10.0]]],
+        [[[10.0], [10.0]]],
         var_name='tas',
         dim_coords_and_dims=[
             (correct_time_coord, 0),
@@ -46,7 +46,7 @@ def cubes():
             (correct_lon_coord, 2)],
     )
     wrong_cube = iris.cube.Cube(
-        [[[10.0]]],
+        [[[10.0], [10.0]]],
         var_name='tas',
         dim_coords_and_dims=[
             (wrong_time_coord, 0),
@@ -84,6 +84,10 @@ def test_clmcomcclm4817_fix_metadata(cubes):
     for coord in cubes[1].coords():
         coord.points = coord.core_points().astype(
             '>f8', casting='same_kind')
+    lat = cubes[1].coord('latitude')
+    lat.guess_bounds()
+    lat.bounds = lat.core_bounds().astype(
+        '>f4', casting='same_kind')
 
     fix = CLMcomCCLM4817(None)
     out_cubes = fix.fix_metadata(cubes)
