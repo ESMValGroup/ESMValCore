@@ -9,9 +9,7 @@ class MOHCHadREM3GA705(Fix):
     """General fix for MOHC-HadREM3-GA7-05."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix time long_name.
-        Fix latitude and longitude var_name.
+        """Fix time long_name, and latitude and longitude var_name.
 
         Parameters
         ----------

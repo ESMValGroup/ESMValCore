@@ -6,8 +6,7 @@ class Pr(Fix):
     """Fixes for pr."""
 
     def fix_metadata(self, cubes):
-        """
-        Remove latitude and longitude attributes
+        """Remove latitude and longitude attributes.
 
         Parameters
         ----------
