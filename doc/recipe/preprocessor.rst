@@ -23,6 +23,7 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Cycles`
 * :ref:`Trend`
 * :ref:`Detrend`
+* :ref:`Rolling window statistics`
 * :ref:`Unit conversion`
 * :ref:`Bias`
 * :ref:`Other`
@@ -393,15 +394,6 @@ The vertical interpolation currently supports the following schemes:
 * ``nearest_extrapolate``: Nearest-neighbour interpolation with nearest-neighbour
   extrapolation, i.e., extrapolation points will take their value from the
   nearest source point.
-
-.. note::
-   Previous versions of ESMValCore (<2.5.0) supported the schemes
-   ``linear_horizontal_extrapolate_vertical`` and
-   ``nearest_horizontal_extrapolate_vertical``. These schemes have been renamed
-   to ``linear_extrapolate`` and ``nearest_extrapolate``, respectively, in
-   version 2.5.0 and are identical to the new schemes. Support for the old
-   names will be removed in version 2.7.0.
-
 * See also :func:`esmvalcore.preprocessor.extract_levels`.
 * See also :func:`esmvalcore.preprocessor.get_cmor_levels`.
 
@@ -1546,7 +1538,7 @@ The area manipulation module contains the following preprocessor functions:
 ``extract_coordinate_points``
 -----------------------------
 
-This function extracts points with given coordinates, following either a 
+This function extracts points with given coordinates, following either a
 ``linear`` or a ``nearest`` interpolation scheme.
 The resulting point cube will match the respective coordinates to
 those of the input coordinates. If the input coordinate is a scalar,
@@ -1777,6 +1769,7 @@ Volume manipulation
 ===================
 The ``_volume.py`` module contains the following preprocessor functions:
 
+* ``axis_statistics``: Perform operations along a given axis.
 * ``extract_volume``: Extract a specific depth range from a cube.
 * ``volume_statistics``: Calculate the volume-weighted average.
 * ``depth_integration``: Integrate over the depth dimension.
@@ -1817,6 +1810,27 @@ input to the function. More details on this are given in :ref:`Fx variables as
 cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
+
+
+``axis_statistics``
+---------------------
+
+This function operates over a given axis, and removes it from the
+output cube.
+
+Takes arguments:
+  * axis: direction over which the statistics will be performed.
+    Possible values for the axis are 'x', 'y', 'z', 't'.
+  * operator: defines the operation to apply over the axis.
+    Available operator are 'mean', 'median', 'std_dev', 'sum', 'variance',
+    'min', 'max', 'rms'.
+
+.. note::
+   The coordinate associated to the axis over which the operation will
+   be performed must be one-dimensional, as multidimensional coordinates
+   are not supported in this preprocessor.
+
+See also :func:`esmvalcore.preprocessor.axis_statistics`.
 
 
 ``depth_integration``
@@ -1948,11 +1962,44 @@ and subtract it from the data
 
 See also :func:`esmvalcore.preprocessor.detrend`.
 
+.. _rolling window statistics:
+
+Rolling window statistics
+=========================
+
+One can calculate rolling window statistics using the 
+preprocessor function ``rolling_window_statistics``. 
+This function takes three parameters:
+
+* ``coordinate``: coordinate over which the rolling-window statistics is 
+  calculated.
+
+* ``operator``: operation to apply. Accepted values are 'mean', 'median',
+  'std_dev', 'min', 'max' and 'sum'.
+
+* ``window_length``: size of the rolling window to use (number of points).
+
+This example applied on daily precipitation data calculates two-day rolling
+precipitation sum. 
+
+.. code-block:: yaml
+
+  preprocessors:
+    preproc_rolling_window: 
+      coordinate: time
+      operator: sum
+      window_length: 2
+
+See also :func:`esmvalcore.preprocessor.rolling_window_statistics`.
+
 
 .. _unit conversion:
 
 Unit conversion
 ===============
+
+``convert_units``
+-----------------
 
 Converting units is also supported. This is particularly useful in
 cases where different datasets might have different units, for example
@@ -1963,13 +2010,55 @@ units.
 In these cases, having a unit conversion at the end of the processing
 will guarantee homogeneous input for the diagnostics.
 
+Conversion is only supported between compatible units!
+In other words, converting temperature units from ``degC`` to ``Kelvin`` works
+fine, while changing units from ``kg`` to ``m`` will not work.
+
+However, there are some well-defined exceptions from this rule in order to
+transform one quantity to another (physically related) quantity.
+These quantities are identified via their ``standard_name`` and their ``units``
+(units convertible to the ones defined are also supported).
+For example, this enables conversions between precipitation fluxes measured in
+``kg m-2 s-1`` and precipitation rates measured in ``mm day-1`` (and vice
+versa).
+Currently, the following special conversions are supported:
+
+* ``precipitation_flux`` (``kg m-2 s-1``) --
+  ``lwe_precipitation_rate`` (``mm day-1``)
+
+.. hint::
+   Names in the list correspond to ``standard_names`` of the input data.
+   Conversions are allowed from each quantity to any other quantity given in a
+   bullet point.
+   The corresponding target quantity is inferred from the desired target units.
+   In addition, any other units convertible to the ones given are also
+   supported (e.g., instead of ``mm day-1``, ``m s-1`` is also supported).
+
 .. note::
-   Conversion is only supported between compatible units! In other
-   words, converting temperature units from ``degC`` to ``Kelvin`` works
-   fine, changing precipitation units from a rate based unit to an
-   amount based unit is not supported at the moment.
+   For the transformation between the different precipitation variables, a
+   water density of ``1000 kg m-3`` is assumed.
 
 See also :func:`esmvalcore.preprocessor.convert_units`.
+
+
+``accumulate_coordinate``
+-------------------------
+
+This function can be used to weight data using the bounds from a given coordinate.
+The resulting cube will then have units given by ``cube_units * coordinate_units``.
+
+For instance, if a variable has units such as ``X s-1``, using ``accumulate_coordinate``
+on the time coordinate would result on a cube where the data would be multiplied
+by the time bounds and the resulting units for the variable would be converted to ``X``.
+In this case, weighting the data with the time coordinate would allow to cancel
+the time units in the variable.
+
+.. note::
+   The coordinate used to weight the data must be one-dimensional, as multidimensional
+   coordinates are not supported in this preprocessor.
+
+
+See also :func:`esmvalcore.preprocessor.accumulate_coordinate.`
 
 
 .. _bias:

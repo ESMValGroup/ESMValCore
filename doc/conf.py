@@ -414,7 +414,7 @@ intersphinx_mapping = {
     'iris': ('https://scitools-iris.readthedocs.io/en/latest/', None),
     'iris-esmf-regrid': ('https://iris-esmf-regrid.readthedocs.io/en/latest',
                          None),
-    'matplotlib': ('https://matplotlib.org/', None),
+    'matplotlib': ('https://matplotlib.org/stable/', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
     'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/latest/', None),
     'python': ('https://docs.python.org/3/', None),

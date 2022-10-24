@@ -2,8 +2,8 @@
 # Developer's configuration file for the ESMValTool
 ###############################################################################
 # This file retains the project- and machine-dependent directory and file name
-# definitions of the input and output data
-# Each dictionary is structured as follows
+# definitions of the input and output data.
+# Each dictionary is structured as follows:
 #
 # PROJECT:
 #   input_dir:
@@ -14,7 +14,16 @@
 #   input_file:
 #   output_file:
 #
-# Only the default drs is mandatory, the others are optional
+# Only the default drs is mandatory, the others are optional.
+#
+# In addition, an entry for the custom tables can be given. For this, only the
+# option 'cmor_path' is considered, which specifies the directory from which
+# custom CMOR tables are loaded. 'cmor_path' can be a relative path (relative
+# to ESMValCore/esmvalcore/cmor/tables) or an absolute path. By default, uses
+# ESMValCore/esmvalcore/cmor/tables/custom.
+#
+# custom:
+#   cmor_path: ~/my/own/custom_tables
 ###############################################################################
 ---
 
@@ -119,11 +128,19 @@ ana4mips:
   # TODO: add cmor_path and table and set cmor_strict to true
 
 EMAC:
+  cmor_strict: false
   input_dir:
-    default: '{dataset}'
-  input_file: ''
-  output_file: '{dataset}_{ensemble}_{short_name}'
-  cmor_type: 'CMIP5'
+    default: '{exp}/{channel}'
+  input_file:
+    default: '{exp}*{channel}{postproc_flag}.nc'
+  output_file: '{project}_{dataset}_{exp}_{channel}_{mip}_{short_name}'
+  cmor_type: 'CMIP6'
+  ignore_warnings:
+    load:
+      - {message: 'Ignored formula of unrecognised type: .*', module: iris}
+      - {message: 'Ignoring formula terms variable .* referenced by data variable .* via variable .*', module: iris}
+      - {message: 'Missing CF-netCDF formula term variable .*, referenced by netCDF variable .*', module: iris}
+      - {message: 'NetCDF variable .* contains unknown cell method .*', module: iris}
 
 CORDEX:
   input_dir:
@@ -151,9 +168,24 @@ IPSLCM:
 ICON:
   cmor_strict: false
   input_dir:
-    default: '{version}_{component}_{exp}_{grid}_{ensemble}'
+    default:
+      - '{exp}'
+      - '{exp}/outdata'
   input_file:
-    default: '{version}_{component}_{exp}_{grid}_{ensemble}_{var_type}*.nc'
-  output_file: '{dataset}_{version}_{component}_{grid}_{mip}_{exp}_{ensemble}_{short_name}_{var_type}'
+    default: '{exp}_{var_type}*.nc'
+  output_file: '{project}_{dataset}_{exp}_{var_type}_{mip}_{short_name}'
+  cmor_type: 'CMIP6'
+  cmor_default_table_prefix: 'CMIP6_'
+
+CESM:
+  cmor_strict: false
+  input_dir:
+    default:
+      - '/'  # run directory
+      - '{case}/{gcomp}/hist'  # short-term archiving
+      - '{case}/{gcomp}/proc/{tdir}/{tperiod}'  # postprocessed data
+  input_file:
+    default: '{case}.{scomp}.{type}.{string}*nc'
+  output_file: '{project}_{dataset}_{case}_{gcomp}_{scomp}_{type}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'

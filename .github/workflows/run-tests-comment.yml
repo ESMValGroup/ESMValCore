@@ -14,7 +14,9 @@ jobs:
     name: Linux Python ${{ matrix.python-version }}
     if: ${{ github.event.issue.pull_request && github.event.comment.body == '@runGAtests' }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: esmvalcore
@@ -31,6 +33,8 @@ jobs:
         run: python -V 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
       - shell: bash -l {0}
         run: pip install -e .[develop] 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/install.txt
+      - shell: bash -l {0}
+        run: flake8
       - shell: bash -l {0}
         run: pytest -n 2 -m "not installation and not sequential" 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - shell: bash -l {0}
@@ -51,7 +55,9 @@ jobs:
     name: OSX Python ${{ matrix.python-version }}
     if: ${{ github.event.issue.pull_request && github.event.comment.body == '@runGAtests' }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: esmvalcore
@@ -68,6 +74,8 @@ jobs:
         run: python -V 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
       - shell: bash -l {0}
         run: pip install -e .[develop] 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/install.txt
+      - shell: bash -l {0}
+        run: flake8
       - shell: bash -l {0}
         run: pytest -n 2 -m "not installation and not sequential" 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - shell: bash -l {0}

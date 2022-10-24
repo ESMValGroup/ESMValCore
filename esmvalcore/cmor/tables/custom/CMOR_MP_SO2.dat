@@ -1,0 +1,19 @@
+SOURCE: CMIP6
+!============
+variable_entry:    MP_SO2
+!============
+modeling_realm:    atmos
+frequency:         10hr
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             kg
+long_name:         total mass of SO2
+comment:           positive mass of SO2 in kg
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time
+!----------------------------------
+!

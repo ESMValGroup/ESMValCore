@@ -8,6 +8,7 @@ import iris
 from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
 from esmvalcore.cmor.fix import fix_data, fix_metadata
 from esmvalcore.preprocessor._io import concatenate, concatenate_callback, load
+from esmvalcore.preprocessor._time import clip_timerange
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,9 @@ def _load_fx(var_cube, fx_info, check_level):
         fx_cubes.append(loaded_cube[0])
 
     fx_cube = concatenate(fx_cubes)
+
+    if freq != 'fx':
+        fx_cube = clip_timerange(fx_cube, fx_info['timerange'])
 
     if not _is_fx_broadcastable(fx_cube, var_cube):
         return None

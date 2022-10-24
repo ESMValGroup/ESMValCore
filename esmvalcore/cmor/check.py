@@ -35,9 +35,10 @@ def _get_next_month(month, year):
 
 def _get_time_bounds(time, freq):
     bounds = []
-    for step, point in enumerate(time.points):
-        month = time.cell(step).point.month
-        year = time.cell(step).point.year
+    dates = time.units.num2date(time.points)
+    for step, date in enumerate(dates):
+        month = date.month
+        year = date.year
         if freq in ['mon', 'mo']:
             next_month, next_year = _get_next_month(month, year)
             min_bound = date2num(datetime(year, month, 1, 0, 0),
@@ -61,6 +62,7 @@ def _get_time_bounds(time, freq):
                 '3hr': 1.5 / 24,
                 '1hr': 0.5 / 24,
             }
+            point = time.points[step]
             min_bound = point - delta[freq]
             max_bound = point + delta[freq]
         bounds.append([min_bound, max_bound])
@@ -393,6 +395,7 @@ class CMORCheck():
     def _check_dim_names(self):
         """Check dimension names."""
         cmor_var_coordinates = self._cmor_var.coordinates.copy()
+        link = 'https://github.com/ESMValGroup/ESMValCore/discussions/1587'
         for (key, coordinate) in cmor_var_coordinates.items():
             if coordinate.generic_level:
                 self._check_generic_level_dim_names(key, coordinate)
@@ -426,6 +429,17 @@ class CMORCheck():
                                 coordinate.out_name,
                             )
                             coord.var_name = coordinate.out_name
+                        elif coord.standard_name in ['region', 'area_type']:
+                            self.report_debug_message(
+                                'Coordinate {0} has var name {1} '
+                                'instead of {2}. '
+                                "But that's considered OK and ignored. "
+                                'See also {3}',
+                                coordinate.name,
+                                coord.var_name,
+                                coordinate.out_name,
+                                link
+                            )
                         else:
                             self.report_error(
                                 'Coordinate {0} has var name {1} '
@@ -873,9 +887,10 @@ class CMORCheck():
         if freq.lower().endswith('pt'):
             freq = freq[:-2]
         if freq in ['mon', 'mo']:
+            dates = coord.units.num2date(coord.points)
             for i in range(len(coord.points) - 1):
-                first = coord.cell(i).point
-                second = coord.cell(i + 1).point
+                first = dates[i]
+                second = dates[i + 1]
                 second_month = first.month + 1
                 second_year = first.year
                 if second_month == 13:
@@ -887,9 +902,10 @@ class CMORCheck():
                     self.report_error(msg, var_name, freq)
                     break
         elif freq == 'yr':
+            dates = coord.units.num2date(coord.points)
             for i in range(len(coord.points) - 1):
-                first = coord.cell(i).point
-                second = coord.cell(i + 1).point
+                first = dates[i]
+                second = dates[i + 1]
                 second_month = first.month + 1
                 if first.year + 1 != second.year:
                     msg = '{}: Frequency {} does not match input data'

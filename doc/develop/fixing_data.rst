@@ -110,7 +110,7 @@ Then we have to create the class for the fix deriving from
     from esmvalcore.cmor.fix import Fix
 
     class tas(Fix):
-         """Fixes for tas variable.""""
+         """Fixes for tas variable."""
 
 Next we must choose the method to use between the ones offered by the
 Fix class:
@@ -134,7 +134,7 @@ so we will implement the ``fix_metadata`` method:
     from esmvalcore.cmor.fix import Fix
 
     class tas(Fix):
-        """Fixes for tas variable.""""
+        """Fixes for tas variable."""
 
         def fix_metadata(self, cubes):
             """
@@ -142,7 +142,7 @@ so we will implement the ``fix_metadata`` method:
 
             Fix the name of the latitude coordinate, which is called altitude
             in the original file.
-            """"
+            """
             # Sometimes Iris will interpret the data as multiple cubes.
             # Good CMOR datasets will only show one but we support the
             # multiple cubes case to be able to fix the errors that are
@@ -196,7 +196,7 @@ derive from the one you just created:
     from esmvalcore.cmor.fix import Fix
 
     class tas(Fix):
-        """Fixes for tas variable.""""
+        """Fixes for tas variable."""
 
         def fix_metadata(self, cubes):
             """
@@ -204,7 +204,7 @@ derive from the one you just created:
 
             Fix the name of the latitude coordinate, which is called altitude
             in the original file.
-            """"
+            """
             # Sometimes Iris will interpret the data as multiple cubes.
             # Good CMOR datasets will only show one but we support the
             # multiple cubes case to be able to fix the errors that are
@@ -275,7 +275,7 @@ discarding some cubes in the fix metadata step. Just before that warning you
 should see the full list of cubes as read by Iris. If that list contains your
 missing coordinate you can create a fix for this model:
 
-.. code-block:: bash
+.. code-block:: python
 
     def fix_metadata(self, cubes):
         coord_cube = cubes.extract_strict('COORDINATE_NAME')
@@ -342,6 +342,17 @@ This section describes how to add support for additional native datasets.
 You can choose to host this new data source either under a dedicated project or
 under project ``native6``.
 
+.. _add_new_fix_native_datasets_config:
+
+Configuration
+-------------
+
+An example of a configuration in ``config-developer.yml`` for projects used for
+native datasets is given :ref:`here <configure_native_models>`.
+Make sure to use the option ``cmor_strict: false`` for these projects if you
+want to make use of :ref:`custom_cmor_tables`.
+This allows reading arbitrary variables from native datasets.
+
 .. _add_new_fix_native_datasets_locate_data:
 
 Locate data
@@ -404,27 +415,34 @@ To allow ESMValCore to locate the data files, use the following steps:
         ICON:
           ...
           input_dir:
-            default: '{version}_{component}_{exp}_{grid}_{ensemble}'
+            default:
+              - '{exp}'
+              - '{exp}/outdata'
           input_file:
-            default: '{version}_{component}_{exp}_{grid}_{ensemble}_{var_type}*.nc'
+            default: '{exp}_{var_type}*.nc'
           ...
 
-     To find your ICON data that is for example located in
-     ``{rootpath}/42-0_atm_amip_R2B5_r1i1/42-0_atm_amip_R2B5_r1i1_2d_1979.nc``
-     (``{rootpath}`` is ESMValTool ``rootpath`` for the project ``ICON``
-     defined in your :ref:`user configuration file`), use the following dataset
-     entry in your recipe:
+     To find your ICON data that is for example located in files like
+     ``{rootpath}/amip/amip_atm_2d_ml_20000101T000000Z.nc`` (``{rootpath}`` is
+     ESMValTool ``rootpath`` for the project ``ICON`` defined in your
+     :ref:`user configuration file`), use the following dataset entry in your
+     recipe:
 
      .. code-block:: yaml
 
         datasets:
-          - {project: ICON, dataset: ICON, version: 42-0, component: atm, exp: amip, grid: R2B5, ensemble: r1i1, var_type: 2d}
+          - {project: ICON, dataset: ICON, exp: amip}
 
      Please note the duplication of the name ``ICON`` in ``project`` and
      ``dataset``, which is necessary to comply with ESMValTool's data finding
      and CMORizing functionalities.
      For other native models, ``dataset`` could also refer to a subversion of
      the model.
+     Note that it is possible to predefine facets in an :ref:`extra facets file
+     <add_new_fix_native_datasets_extra_facets>`.
+     In this ICON example, the facet ``var_type`` is :download:`predefined
+     </../esmvalcore/_config/extra_facets/icon-mappings.yml>` for many
+     variables.
 
 .. _add_new_fix_native_datasets_fix_data:
 
@@ -438,6 +456,11 @@ For example, a ``native6`` dataset fix for ERA5 is located `here
 <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/_fixes/native6/era5.py>`__,
 and the ``ICON`` fix is located `here
 <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/_fixes/icon/icon.py>`__.
+
+ESMValTool also provides a base class ``NativeDatasetFix`` that provides
+convenient functions useful for all native dataset fixes.
+An example for its usage can be found `here
+<https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/cmor/_fixes/icon/_base_fixes.py>`__.
 
 .. _add_new_fix_native_datasets_extra_facets:
 

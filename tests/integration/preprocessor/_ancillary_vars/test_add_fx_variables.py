@@ -1,21 +1,23 @@
-"""
-Test add_fx_variables.
+"""Test add_fx_variables.
 
 Integration tests for the
 :func:`esmvalcore.preprocessor._ancillary_vars` module.
-
 """
 import logging
+
 import iris
 import numpy as np
 import pytest
 
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.preprocessor._ancillary_vars import (_is_fx_broadcastable,
-                                                     add_fx_variables,
-                                                     add_ancillary_variable,
-                                                     add_cell_measure,
-                                                     remove_fx_variables)
+from esmvalcore.preprocessor._ancillary_vars import (
+    _is_fx_broadcastable,
+    add_ancillary_variable,
+    add_cell_measure,
+    add_fx_variables,
+    remove_fx_variables,
+)
+from esmvalcore.preprocessor._time import clip_timerange
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +97,7 @@ class Test:
             [15.5, 45, 74.5, 105, 135.5, 166,
              196.5, 227.5, 258, 288.5, 319, 349.5],
             standard_name='time',
+            var_name='time',
             bounds=[[0, 31], [31, 59], [59, 90],
                     [90, 120], [120, 151], [151, 181],
                     [181, 212], [212, 243], [243, 273],
@@ -114,6 +117,13 @@ class Test:
                                             (self.lats, 1),
                                             (self.lons, 2)
                                             ])
+        self.monthly_volume = iris.cube.Cube(np.ones((12, 3, 3, 3)),
+                                             dim_coords_and_dims=[
+                                             (self.monthly_times, 0),
+                                             (self.depth, 1),
+                                             (self.lats, 2),
+                                             (self.lons, 3)
+                                             ])
 
     def test_add_cell_measure_area(self, tmp_path):
         """Test add area fx variables as cell measures."""
@@ -169,6 +179,36 @@ class Test:
         cube = add_fx_variables(cube, fx_vars, CheckLevels.IGNORE)
         assert cube.cell_measure(self.fx_volume.standard_name) is not None
 
+    def test_clip_volume_timerange(self, tmp_path):
+        """Test timerange is clipped in time dependent measures."""
+        cell_measures = {
+            'volcello': {
+                'short_name': 'volcello',
+                'project': 'CMIP6',
+                'dataset': 'EC-Earth3',
+                'mip': 'Omon',
+                'frequency': 'mon',
+                'timerange': '195001/195003'}
+            }
+        self.monthly_volume.var_name = 'volcello'
+        self.monthly_volume.standard_name = 'ocean_volume'
+        self.monthly_volume.units = 'm3'
+        cell_measure_file = str(tmp_path / 'volcello.nc')
+        iris.save(self.monthly_volume, cell_measure_file)
+        cell_measures['volcello'].update(
+            {'filename': cell_measure_file})
+        cube = iris.cube.Cube(np.ones((12, 3, 3, 3)),
+                              dim_coords_and_dims=[
+                                  (self.monthly_times, 0),
+                                  (self.depth, 1),
+                                  (self.lats, 2),
+                                  (self.lons, 3)])
+        cube = clip_timerange(cube, '195001/195003')
+        cube = add_fx_variables(cube, cell_measures, CheckLevels.IGNORE)
+        cell_measure = cube.cell_measure(self.fx_volume.standard_name)
+        assert cell_measure is not None
+        assert cell_measure.shape == (3, 3, 3, 3)
+
     def test_no_cell_measure(self):
         """Test no cell measure is added."""
         cube = iris.cube.Cube(self.new_cube_3D_data,
@@ -201,9 +241,7 @@ class Test:
         assert cube.ancillary_variable(self.fx_area.standard_name) is not None
 
     def test_wrong_shape(self, tmp_path):
-        """
-        Test fx_variable is not added if it's not broadcastable to cube.
-        """
+        """Test fx_variable is not added if it's not broadcastable to cube."""
         volume_data = np.ones((2, 3, 3, 3))
         volume_cube = iris.cube.Cube(
             volume_data,
@@ -223,7 +261,8 @@ class Test:
                 'dataset': 'EC-Earth3',
                 'mip': 'Oyr',
                 'frequency': 'yr',
-                'filename': fx_file}
+                'filename': fx_file,
+                'timerange': '1950/1951'}
             }
         data = np.ones((12, 3, 3, 3))
         cube = iris.cube.Cube(
