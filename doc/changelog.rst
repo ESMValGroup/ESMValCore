@@ -29,6 +29,7 @@ Bug fixes
 -  Core `_io.concatenate()` may fail due to case when one of the cubes is scalar - this fixes that (`#1715 <https://github.com/ESMValGroup/ESMValCore/pull/1715>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Pick up esmvalcore badge instead of esmvaltool one in README (`#1749 <https://github.com/ESMValGroup/ESMValCore/pull/1749>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Restore support for scalar cubes to time selection preprocessor functions (`#1750 <https://github.com/ESMValGroup/ESMValCore/pull/1750>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Fix calculation of precipitation flux in EMAC on-the-fly CMORizer (`#1755 <https://github.com/ESMValGroup/ESMValCore/pull/1755>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
 Deprecations
 ~~~~~~~~~~~~
@@ -42,6 +43,8 @@ Documentation
 -  Add MO-paths to config file (`#1709 <https://github.com/ESMValGroup/ESMValCore/pull/1709>`__) `mo-tgeddes <https://github.com/mo-tgeddes>`__
 -  Update MO obs4MIPs paths in the user configuration file (`#1734 <https://github.com/ESMValGroup/ESMValCore/pull/1734>`__) `mo-tgeddes <https://github.com/mo-tgeddes>`__
 -  Update `Making a release` section of the documentation (`#1689 <https://github.com/ESMValGroup/ESMValCore/pull/1689>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Added changelog for v2.7.0 (`#1746 <https://github.com/ESMValGroup/ESMValCore/pull/1746>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  update CITATION.cff file with 2.7.0 release info (`#1757 <https://github.com/ESMValGroup/ESMValCore/pull/1757>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 
 Improvements
 ~~~~~~~~~~~~
