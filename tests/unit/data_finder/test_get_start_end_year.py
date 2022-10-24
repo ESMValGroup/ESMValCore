@@ -4,7 +4,7 @@ import iris
 import pytest
 
 from esmvalcore._data_finder import (
-    _get_timerange_from_years,
+    _set_timerange_from_years,
     get_start_end_date,
     get_start_end_year,
 )
@@ -138,41 +138,41 @@ def test_fails_if_no_date_present():
         get_start_end_year('var_whatever')
 
 
-def test_get_timerange_from_years():
+def test_set_timerange_from_years():
     """Test a `timerange` tag with value `start_year/end_year` can be built
     from tags `start_year` and `end_year`."""
     variable = {
         'start_year': 2000,
         'end_year': 2002}
 
-    _get_timerange_from_years(variable)
+    _set_timerange_from_years(variable)
 
     assert 'start_year' not in variable
     assert 'end_year' not in variable
     assert variable['timerange'] == '2000/2002'
 
 
-def test_get_timerange_from_start_year():
+def test_set_timerange_from_start_year():
     """Test a `timerange` tag with value `start_year/start_year` can be built
     from tag `start_year` when an `end_year` is not given."""
     variable = {
         'start_year': 2000
     }
 
-    _get_timerange_from_years(variable)
+    _set_timerange_from_years(variable)
 
     assert 'start_year' not in variable
     assert variable['timerange'] == '2000/2000'
 
 
-def test_get_timerange_from_end_year():
+def test_set_timerange_from_end_year():
     """Test a `timerange` tag with value `end_year/end_year` can be built from
     tag `end_year` when a `start_year` is not given."""
     variable = {
         'end_year': 2002
     }
 
-    _get_timerange_from_years(variable)
+    _set_timerange_from_years(variable)
 
     assert 'end_year' not in variable
     assert variable['timerange'] == '2002/2002'

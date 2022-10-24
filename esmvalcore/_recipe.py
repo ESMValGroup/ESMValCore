@@ -18,8 +18,8 @@ from . import _recipe_checks as check
 from . import esgf
 from ._config import TAGS, TASKSEP, Session, get_project_config
 from ._data_finder import (
-    _get_timerange_from_years,
     _parse_period,
+    _set_timerange_from_years,
     _truncate_dates,
     dates_to_timerange,
     get_multiproduct_filename,
@@ -1532,7 +1532,7 @@ def datasets_from_recipe(recipe: Path, session: Session) -> list[Dataset]:
                     facets['end_year'] = min(
                         facets['end_year'],
                         facets['start_year'] + session['max_years'] - 1)
-                _get_timerange_from_years(facets)
+                _set_timerange_from_years(facets)
                 # Legacy: support wrong capitalization of obs4MIPs
                 if facets['project'] == 'obs4mips':
                     logger.warning(

@@ -19,6 +19,7 @@ import requests
 import yaml
 from humanfriendly import format_size, format_timespan
 
+from .._data_finder import get_timerange
 from ..local import LocalFile
 from ._logon import get_credentials
 from .facets import DATASET_MAP, FACETS
@@ -232,8 +233,7 @@ class ESGFFile:
 
         return files
 
-    @staticmethod
-    def _get_facets(results):
+    def _get_facets(self, results):
         """Read the facets from the `dataset_id`."""
         # This reads the facets from the dataset_id because the facets
         # provided by ESGF are unreliable.
@@ -282,7 +282,11 @@ class ESGFFile:
         # The dataset_id does not contain the short_name for all projects,
         # so get it from the filename if needed:
         if 'short_name' not in facets:
-            facets['short_name'] = results[0].json['title'].split('_')[0]
+            facets['short_name'] = self.name.split('_')[0]
+
+        timerange = get_timerange(self.name)
+        if timerange is not None:
+            facets['timerange'] = timerange
 
         return facets
 

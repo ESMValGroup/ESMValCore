@@ -12,11 +12,7 @@ from iris.cube import Cube
 
 from . import esgf, local
 from ._config import Session, get_activity, get_extra_facets, get_institutes
-from ._data_finder import (
-    dates_to_timerange,
-    get_output_file,
-    get_start_end_date,
-)
+from ._data_finder import _as_concrete_timerange, get_output_file
 from ._recipe_checks import data_availability as check_data_availability
 from ._recipe_checks import valid_time_selection as check_valid_time_selection
 from .cmor.table import _get_facets_from_cmor_table
@@ -441,38 +437,17 @@ class Dataset:
         return expanded
 
     def _update_timerange(self, session: Session | None = None):
-        """Update wildcards in timerange with found datetime values.
-
-        If the timerange is given as a year, it ensures it's formatted
-        as a 4-digit value (YYYY).
-        """
+        """Update wildcards in timerange with found datetime values."""
         if 'timerange' not in self.facets:
             return
 
-        timerange = self.facets.pop('timerange')
+        timerange = self.facets['timerange']
         if not isinstance(timerange, str):
             raise TypeError(f"timerange should be a string, got {timerange!r}")
         check_valid_time_selection(timerange)
 
         if '*' in timerange:
-            self.find_files(session)
-            check_data_availability(self)
-            intervals = [get_start_end_date(f.name) for f in self.files]
-            self._files = None
-
-            min_date = min(interval[0] for interval in intervals)
-            max_date = max(interval[1] for interval in intervals)
-
-            if timerange == '*':
-                timerange = f'{min_date}/{max_date}'
-            if '*' in timerange.split('/')[0]:
-                timerange = timerange.replace('*', min_date)
-            if '*' in timerange.split('/')[1]:
-                timerange = timerange.replace('*', max_date)
-
-        # Make sure that years are in format YYYY
-        (start_date, end_date) = timerange.split('/')
-        timerange = dates_to_timerange(start_date, end_date)
-        check_valid_time_selection(timerange)
+            timerange = _as_concrete_timerange(timerange, self.files)
+            check_valid_time_selection(timerange)
 
         self.set_facet('timerange', timerange)

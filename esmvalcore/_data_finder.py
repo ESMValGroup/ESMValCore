@@ -144,18 +144,25 @@ def dates_to_timerange(start_date, end_date):
     return f'{start_date}/{end_date}'
 
 
-def _get_timerange_from_years(variable):
+def get_timerange(filename):
+    """Get timerange from filename."""
+    try:
+        start_date, end_date = get_start_end_date(filename)
+    except ValueError:
+        return None
+    return dates_to_timerange(start_date, end_date)
+
+
+def _set_timerange_from_years(variable):
     """Build `timerange` tag from tags `start_year` and `end_year`."""
-    start_year = variable.get('start_year')
-    end_year = variable.get('end_year')
+    start_year = variable.pop('start_year', None)
+    end_year = variable.pop('end_year', None)
     if start_year and end_year:
         variable['timerange'] = dates_to_timerange(start_year, end_year)
     elif start_year:
         variable['timerange'] = dates_to_timerange(start_year, start_year)
     elif end_year:
         variable['timerange'] = dates_to_timerange(end_year, end_year)
-    variable.pop('start_year', None)
-    variable.pop('end_year', None)
 
 
 def get_start_end_year(filename):
@@ -208,7 +215,7 @@ def get_start_end_year(filename):
     return int(start_year), int(end_year)
 
 
-def _parse_period(timerange):
+def _parse_period(timerange: str):
     """Parse `timerange` values given as duration periods.
 
     Sum the duration periods to the `timerange` value given as a
@@ -280,7 +287,39 @@ def _truncate_dates(date, file_date):
     return int(date), int(file_date)
 
 
-def select_files(filenames, timerange):
+def _as_concrete_timerange(timerange: str, files) -> str:
+    """Replace * in timerange by concrete dates from file facets."""
+    if '*' not in timerange:
+        return timerange
+
+    starts = []
+    ends = []
+    for file in files:
+        if 'timerange' in file.facets:
+            start, end = _parse_period(file.facets['timerange'])
+            starts.append(start)
+            ends.append(end)
+    if not starts:
+        # Do not update if no time information is available.
+        return timerange
+
+    min_date = min(starts)
+    max_date = max(ends)
+    if timerange == '*':
+        start_date = min_date
+        end_date = max_date
+    else:
+        start_date, end_date = timerange.split('/')
+        if start_date == '*':
+            start_date = min_date
+        if end_date == '*':
+            end_date = max_date
+    timerange = dates_to_timerange(start_date, end_date)
+
+    return timerange
+
+
+def select_by_time(files, timerange):
     """Select files containing data between a given timerange.
 
     If the timerange is given as a period, the file selection
@@ -289,21 +328,23 @@ def select_files(filenames, timerange):
     Otherwise, the file selection occurs taking into account
     the time resolution of the file.
     """
+    timerange = _as_concrete_timerange(timerange, files)
     if '*' in timerange:
-        # TODO: support * combined with a period
-        return filenames
+        # If no time information is available, return all files.
+        return files
 
     selection = []
 
-    for filename in filenames:
-        start_date, end_date = _parse_period(timerange)
-        start, end = get_start_end_date(filename)
-
-        start_date, start = _truncate_dates(start_date, start)
-        end_date, end = _truncate_dates(end_date, end)
-
-        if start <= end_date and end >= start_date:
-            selection.append(filename)
+    for file in files:
+        if 'timerange' not in file.facets:
+            selection.append(file)
+        else:
+            start, end = _parse_period(file.facets['timerange'])
+            start_date, end_date = _parse_period(timerange)
+            start_date, start = _truncate_dates(start_date, start)
+            end_date, end = _truncate_dates(end_date, end)
+            if start <= end_date and end >= start_date:
+                selection.append(file)
 
     return selection
 
@@ -341,7 +382,7 @@ def _replace_tags(
             raise RecipeError(f"Dataset key '{tag}' must be specified for "
                               f"{variable}, check your recipe entry")
         pathset = _replace_tag(pathset, original_tag, replacewith)
-    return list(pathset)
+    return list(Path(p) for p in pathset)
 
 
 def _replace_tag(paths, tag, replacewith):
@@ -438,9 +479,6 @@ def get_input_filelist(variable, rootpath, drs):
 
     files = list(file for glob_ in globs for file in glob.glob(str(glob_)))
     files.sort()  # sorting makes it easier to see what was found
-
-    if 'timerange' in variable:
-        files = select_files(files, variable['timerange'])
 
     return files, globs
 

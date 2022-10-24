@@ -1,22 +1,56 @@
 import itertools
 import re
 from pathlib import Path
+from typing import Union
 
 from ._config import Session
-from ._data_finder import _select_drs, get_input_filelist
+from ._data_finder import (
+    _select_drs,
+    get_input_filelist,
+    get_timerange,
+    select_by_time,
+)
 from .types import FacetValue
 
 
-def _path2facets(path: Path, drs: str) -> dict[str, str]:
-    """Extract facets from a path using a DRS like '{facet1}/{facet2}'."""
-    keys = []
-    for key in re.findall(r"{(.*?)}", drs):
-        key = key.split('.')[0]  # Remove trailing .lower and .upper
-        keys.append(key)
-    start, end = -len(keys) - 1, -1
-    values = path.parts[start:end]
-    facets = {key: values[idx] for idx, key in enumerate(keys)}
-    return facets
+class LocalFile(type(Path())):  # type: ignore
+
+    @property
+    def facets(self) -> dict[str, str]:
+        if not hasattr(self, '_facets'):
+            self._facets: dict[str, str] = {}
+        return self._facets
+
+    @facets.setter
+    def facets(self, value: dict[str, str]):
+        self._facets = value
+
+    @classmethod
+    def _from_path(
+        cls,
+        path: Union[Path, str],
+        drs: str,
+        try_timerange: bool,
+    ) -> 'LocalFile':
+        """Create an instance from a path and populate its facets."""
+        file = cls(path)
+
+        # Get facet values from path using a DRS like '{facet1}/{facet2}'.
+        keys = []
+        for key in re.findall(r"{(.*?)}", drs):
+            key = key.split('.')[0]  # Remove trailing .lower and .upper
+            keys.append(key)
+        start, end = -len(keys) - 1, -1
+        values = file.parts[start:end]
+        file.facets = {key: values[idx] for idx, key in enumerate(keys)}
+
+        if try_timerange:
+            # Try to set the timerange facet.
+            timerange = get_timerange(file.name)
+            if timerange is not None:
+                file.facets['timerange'] = timerange
+
+        return file
 
 
 def _select_latest_version(files: list['LocalFile']) -> list['LocalFile']:
@@ -51,9 +85,11 @@ def find_files(
     drs = _select_drs('input_dir', session['drs'], facets['project'])
     files = []
     for filename in filenames:
-        file = LocalFile(filename)
-        file.facets = _path2facets(file, drs)
+        file = LocalFile._from_path(filename, drs, 'timerange' in facets)
         files.append(file)
+
+    if 'timerange' in facets:
+        files = select_by_time(files, facets['timerange'])
 
     if 'version' not in facets:
         files = _select_latest_version(files)
@@ -61,16 +97,3 @@ def find_files(
     if debug:
         return files, globs
     return files
-
-
-class LocalFile(type(Path())):  # type: ignore
-
-    @property
-    def facets(self) -> dict[str, str]:
-        if not hasattr(self, '_facets'):
-            self._facets: dict[str, str] = {}
-        return self._facets
-
-    @facets.setter
-    def facets(self, value: dict[str, str]):
-        self._facets = value

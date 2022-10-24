@@ -234,6 +234,7 @@ def test_init():
         'dataset': 'ABC',
         'project': 'CMIP6',
         'short_name': 'tas',
+        'timerange': '2000/2001',
         'version': 'v1',
     }
     txt = f"ESGFFile:CMIP6/ABC/v1/{filename} on hosts ['something.org']"

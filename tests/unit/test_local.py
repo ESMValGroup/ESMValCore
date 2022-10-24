@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from esmvalcore.local import _path2facets
+from esmvalcore.local import LocalFile
 
 
-def test_path2facets():
+def test_from_path():
     """Test `_path2facets1."""
     filepath = Path("/climate_data/value1/value2/filename.nc")
     drs = "{facet1}/{facet2.lower}"
@@ -13,6 +13,6 @@ def test_path2facets():
         'facet2': 'value2',
     }
 
-    result = _path2facets(filepath, drs)
+    file = LocalFile._from_path(filepath, drs, try_timerange=False)
 
-    assert result == expected
+    assert file.facets == expected

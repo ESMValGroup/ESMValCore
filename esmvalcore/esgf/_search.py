@@ -7,7 +7,7 @@ import pyesgf.search
 import requests.exceptions
 
 from .._config._esgf_pyclient import get_esgf_config
-from .._data_finder import _parse_period, _truncate_dates, get_start_end_date
+from .._data_finder import select_by_time
 from ._download import ESGFFile
 from .facets import DATASET_MAP, FACETS
 
@@ -146,31 +146,6 @@ def esgf_search_files(facets):
                  msg)
 
     return files
-
-
-def select_by_time(files, timerange):
-    """Select files containing data between a timerange."""
-    if '*' in timerange:
-        # TODO: support * combined with a period
-        return files
-
-    selection = []
-
-    for file in files:
-        start_date, end_date = _parse_period(timerange)
-        try:
-            start, end = get_start_end_date(file.name)
-        except ValueError:
-            # If start and end year cannot be read from the filename
-            # just select everything.
-            selection.append(file)
-        else:
-            start_date, start = _truncate_dates(start_date, start)
-            end_date, end = _truncate_dates(end_date, end)
-            if start <= end_date and end >= start_date:
-                selection.append(file)
-
-    return selection
 
 
 def find_files(*, project, short_name, dataset, **facets):

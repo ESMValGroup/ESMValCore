@@ -1,4 +1,6 @@
 """Tests for _replace_tags in _data_finder.py."""
+from pathlib import Path
+
 import pytest
 
 from esmvalcore._data_finder import _replace_tags
@@ -27,10 +29,14 @@ def test_replace_tags():
     output_file = _replace_tags(
         '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}', VARIABLE)
     assert path == [
-        'act/HMA/ACCURATE-MODEL/experiment/r1i1p1f1/Amon/tas/gr/{version}'
+        Path('act/HMA/ACCURATE-MODEL/experiment/r1i1p1f1/Amon/tas/gr/*')
     ]
-    assert input_file == ['tas_Amon_ACCURATE-MODEL_experiment_r1i1p1f1_gr*.nc']
-    assert output_file == ['CMIP6_ACCURATE-MODEL_Amon_experiment_r1i1p1f1_tas']
+    assert input_file == [
+        Path('tas_Amon_ACCURATE-MODEL_experiment_r1i1p1f1_gr*.nc')
+    ]
+    assert output_file == [
+        Path('CMIP6_ACCURATE-MODEL_Amon_experiment_r1i1p1f1_tas')
+    ]
 
 
 def test_replace_tags_missing_facet():
@@ -46,11 +52,11 @@ def test_replace_tags_missing_facet():
 def test_replace_tags_list_of_str():
     assert sorted(
         _replace_tags(('folder/subfolder/{short_name}', 'folder2/{short_name}',
-                       'subfolder/{short_name}'), VARIABLE)) == sorted([
-                           'folder2/tas',
-                           'folder/subfolder/tas',
-                           'subfolder/tas',
-                       ])
+                       'subfolder/{short_name}'), VARIABLE)) == [
+                           Path('folder/subfolder/tas'),
+                           Path('folder2/tas'),
+                           Path('subfolder/tas'),
+                       ]
 
 
 def test_replace_tags_with_subexperiment():
@@ -63,14 +69,14 @@ def test_replace_tags_with_subexperiment():
         '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc', variable)
     output_file = _replace_tags(
         '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}', variable)
-    assert sorted(path) == sorted([
-        'act/HMA/ACCURATE-MODEL/experiment/r1i1p1f1/Amon/tas/gr/{version}',
-        'act/HMA/ACCURATE-MODEL/experiment/199411-r1i1p1f1/Amon/tas/gr/'
-        '{version}'
-    ])
+    assert sorted(path) == [
+        Path('act/HMA/ACCURATE-MODEL/experiment/199411-r1i1p1f1/Amon/tas/'
+             'gr/*'),
+        Path('act/HMA/ACCURATE-MODEL/experiment/r1i1p1f1/Amon/tas/gr/*'),
+    ]
     assert input_file == [
-        'tas_Amon_ACCURATE-MODEL_experiment_199411-r1i1p1f1_gr*.nc'
+        Path('tas_Amon_ACCURATE-MODEL_experiment_199411-r1i1p1f1_gr*.nc')
     ]
     assert output_file == [
-        'CMIP6_ACCURATE-MODEL_Amon_experiment_199411-r1i1p1f1_tas'
+        Path('CMIP6_ACCURATE-MODEL_Amon_experiment_199411-r1i1p1f1_tas')
     ]
