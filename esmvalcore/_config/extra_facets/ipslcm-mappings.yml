@@ -6,12 +6,12 @@
 # ESMValTool to use key 'ipsl_varname' for building the filename,
 # while for format 'Output' it specifies to use key 'group'
 #
-# Specifying 'igcm_dir' here allows to avoid having to specifiy it in
+# Specifying 'igcm_dir' here allows to avoid having to specify it in
 # datasets definitions
 #
 # Key 'use_cdo' allows to choose whether CDO will be invoked for
 # selecting a variable in a multi-variable file. This generally allows
-# for smaller overal load time. But because CDO has a licence which is
+# for smaller overall load time. But because CDO has a licence which is
 # not compliant with ESMValtool licence policy, the default
 # configuration is to avoid using it. You may use customized settings
 # by installing a modified version of this file as
