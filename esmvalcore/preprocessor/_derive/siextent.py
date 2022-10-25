@@ -6,6 +6,7 @@ import iris
 from iris import Constraint
 
 from ._baseclass import DerivedVariableBase
+from esmvalcore.exceptions import RecipeError
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ class DerivedVariable(DerivedVariableBase):
             try:
                 sic = cubes.extract_cube(Constraint(name='siconca'))
             except iris.exceptions.ConstraintMismatchError:
-                logger.error(
+                raise RecipeError(
                     'Derivation of siextent failed due to missing variables '
                     'sic and siconca.')
 
