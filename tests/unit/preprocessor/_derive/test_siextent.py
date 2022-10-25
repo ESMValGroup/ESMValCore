@@ -98,6 +98,7 @@ def test_siextent_calculation(cubes):
     np.testing.assert_array_equal(out_data.mask, expected.mask)
     np.testing.assert_array_equal(out_data[0][0][0], expected[0][0][0])
 
+
 def test_siextent_no_data(cubes_sic):
     derived_var = siextent.DerivedVariable()
     cubes_sic[0].var_name = 'wrong'
@@ -105,6 +106,7 @@ def test_siextent_no_data(cubes_sic):
            'sic and siconca.')
     with pytest.raises(RecipeError, match=msg):
         derived_var.calculate(cubes_sic)
+
 
 def test_siextent_required():
     """Test function ``required``."""
