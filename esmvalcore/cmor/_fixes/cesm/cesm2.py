@@ -38,7 +38,7 @@ class AllVars(NativeDatasetFix):
 
         # Fix time, latitude, and longitude coordinates
         # Note: 3D variables are currently not supported
-        self.fix_regular_time(cube)
+        self._fix_time(cube)
         self.fix_regular_lat(cube)
         self.fix_regular_lon(cube)
 
@@ -49,3 +49,17 @@ class AllVars(NativeDatasetFix):
         self.fix_var_metadata(cube)
 
         return CubeList([cube])
+
+    def _fix_time(self, cube):
+        """Fix time coordinate of cube.
+
+        If possible, move time points to center of time period given by time
+        bounds (currently the points are located at the end of the interval).
+
+        """
+        if 'time' not in self.vardef.dimensions:
+            return
+        time_coord = cube.coord('time')
+        if time_coord.bounds is not None:
+            time_coord.points = time_coord.bounds.mean(axis=-1)
+        self.fix_regular_time(cube, coord=time_coord)

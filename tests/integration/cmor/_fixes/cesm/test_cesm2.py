@@ -71,7 +71,11 @@ def check_time(cube):
     assert time.long_name == 'time'
     assert time.units == Unit('days since 1979-01-01 00:00:00',
                               calendar='365_day')
-    assert time.shape == (12,)
+    np.testing.assert_allclose(
+        time.points,
+        [7649.5, 7680.5, 7710.0, 7739.5, 7770.0, 7800.5, 7831.0, 7861.5,
+         7892.5, 7923.0, 7953.5, 7984.0],
+    )
     assert time.bounds.shape == (12, 2)
     assert time.attributes == {}
 
