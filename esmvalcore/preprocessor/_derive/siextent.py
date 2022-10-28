@@ -5,8 +5,8 @@ import dask.array as da
 import iris
 from iris import Constraint
 
-from ._baseclass import DerivedVariableBase
 from esmvalcore.exceptions import RecipeError
+from ._baseclass import DerivedVariableBase
 
 logger = logging.getLogger(__name__)
 
@@ -52,10 +52,10 @@ class DerivedVariable(DerivedVariableBase):
         except iris.exceptions.ConstraintMismatchError:
             try:
                 sic = cubes.extract_cube(Constraint(name='siconca'))
-            except iris.exceptions.ConstraintMismatchError:
+            except iris.exceptions.ConstraintMismatchError as exc:
                 raise RecipeError(
                     'Derivation of siextent failed due to missing variables '
-                    'sic and siconca.')
+                    'sic and siconca.') from exc
 
         ones = da.ones_like(sic)
         siextent_data = da.ma.masked_where(sic.lazy_data() < 15., ones)
