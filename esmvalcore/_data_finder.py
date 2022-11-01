@@ -8,7 +8,7 @@ from pathlib import Path
 import iris
 import isodate
 
-from ._config import get_project_config
+from .config._config import get_project_config
 from .exceptions import RecipeError
 
 logger = logging.getLogger(__name__)

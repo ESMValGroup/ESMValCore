@@ -22,7 +22,7 @@ class Config(ValidatedConfig):
     """ESMValTool configuration object.
 
     Do not instantiate this class directly, but use
-    :obj:`esmvalcore.experimental.CFG` instead.
+    :obj:`esmvalcore.config.CFG` instead.
     """
 
     _validate = _validators

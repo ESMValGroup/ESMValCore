@@ -4,8 +4,8 @@ import iris
 import pytest
 
 from esmvalcore import _data_finder
-from esmvalcore._config import CFG, _config
-from esmvalcore._config._config_object import CFG_DEFAULT
+from esmvalcore.config import CFG, _config
+from esmvalcore.config._config_object import CFG_DEFAULT
 
 
 @pytest.fixture

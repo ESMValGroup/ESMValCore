@@ -7,12 +7,12 @@ from functools import lru_cache
 from pathlib import Path
 
 from esmvalcore import __version__ as current_version
-from esmvalcore._config._config import (
+from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.config._config import (
     TASKSEP,
     importlib_files,
     load_config_developer,
 )
-from esmvalcore.cmor.check import CheckLevels
 
 logger = logging.getLogger(__name__)
 

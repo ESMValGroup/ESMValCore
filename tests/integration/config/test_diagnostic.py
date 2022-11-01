@@ -1,7 +1,7 @@
 """Test Diagnostics and TagsManager."""
 import pytest
 
-from esmvalcore._config._diagnostics import Diagnostics, TagsManager
+from esmvalcore.config._diagnostics import Diagnostics, TagsManager
 
 
 def test_diagnostics_class():

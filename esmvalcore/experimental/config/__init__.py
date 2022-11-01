@@ -6,7 +6,7 @@
     By default this will loaded from the file ~/.esmvaltool/config-user.yml.
 """
 
-from esmvalcore._config import CFG, Config, Session
+from esmvalcore.config import CFG, Config, Session
 
 __all__ = [
     'CFG',

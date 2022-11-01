@@ -5,8 +5,8 @@ import numpy as np
 import pytest
 
 from esmvalcore import __version__ as current_version
-from esmvalcore._config import Config
-from esmvalcore._config._config_validators import (
+from esmvalcore.config import Config
+from esmvalcore.config._config_validators import (
     _listify_validator,
     deprecate,
     validate_bool,
@@ -224,7 +224,7 @@ def test_config_class():
     assert isinstance(cfg['output_dir'], Path)
     assert isinstance(cfg['auxiliary_data_dir'], Path)
 
-    from esmvalcore._config._config import CFG as CFG_DEV
+    from esmvalcore.config._config import CFG as CFG_DEV
     assert CFG_DEV
 
 
