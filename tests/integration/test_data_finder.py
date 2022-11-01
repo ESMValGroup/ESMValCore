@@ -12,13 +12,6 @@ from esmvalcore._data_finder import (
     get_input_filelist,
     get_output_file,
 )
-from esmvalcore.cmor.table import read_cmor_tables
-
-# Initialize with standard config developer file
-CFG_DEVELOPER = esmvalcore._config.read_config_developer_file()
-esmvalcore._config._config.CFG = CFG_DEVELOPER
-# Initialize CMOR tables
-read_cmor_tables(CFG_DEVELOPER)
 
 # Load test configuration
 with open(os.path.join(os.path.dirname(__file__), 'data_finder.yml')) as file:

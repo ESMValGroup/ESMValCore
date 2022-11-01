@@ -3,11 +3,13 @@
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Union
+from types import MappingProxyType
+from typing import Optional, Union
 
 import yaml
 
 import esmvalcore
+from esmvalcore.cmor.check import CheckLevels
 
 from ._config_validators import _validators
 from ._validated_config import ValidatedConfig
@@ -71,15 +73,25 @@ class Config(ValidatedConfig):
 
         mapping = _read_config_file(filename)
         # Add defaults that are not available in esmvalcore/config-user.yml
+        mapping['config_file'] = filename
+        mapping['diagnostics'] = None
         mapping['extra_facets_dir'] = tuple()
         mapping['resume_from'] = []
+        mapping['check_level'] = CheckLevels.DEFAULT
+        mapping['max_datasets'] = None
+        mapping['max_years'] = None
+        mapping['run_diagnostic'] = True
+        mapping['skip_nonexistent'] = False
 
         new.update(mapping)
 
         return new
 
-    def load_from_file(self, filename: Union[os.PathLike, str]):
+    def load_from_file(self,
+                       filename: Optional[Union[os.PathLike, str]] = None):
         """Load user configuration from the given file."""
+        if filename is None:
+            filename = USER_CONFIG
         path = Path(filename).expanduser()
         if not path.exists():
             try_path = USER_CONFIG_DIR / filename
@@ -246,5 +258,5 @@ USER_CONFIG_DIR = Path.home() / '.esmvaltool'
 USER_CONFIG = USER_CONFIG_DIR / 'config-user.yml'
 
 # initialize placeholders
-CFG_DEFAULT = Config._load_default_config(DEFAULT_CONFIG)
+CFG_DEFAULT = MappingProxyType(Config._load_default_config(DEFAULT_CONFIG))
 CFG = Config._load_user_config(USER_CONFIG, raise_exception=False)

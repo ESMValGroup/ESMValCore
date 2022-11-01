@@ -10,9 +10,9 @@ import json
 import logging
 import os
 from collections import Counter
-from functools import total_ordering
+from functools import lru_cache, total_ordering
 from pathlib import Path
-from typing import Dict, Type
+from typing import Dict, Optional, Type
 
 import yaml
 
@@ -37,25 +37,42 @@ def get_var_info(project, mip, short_name):
     return CMOR_TABLES[project].get_variable(mip, short_name)
 
 
-def read_cmor_tables(cfg_developer=None):
+def read_cmor_tables(cfg_file: Optional[Path] = None):
     """Read cmor tables required in the configuration.
 
     Parameters
     ----------
-    cfg_developer : dict of str
-        Parsed config-developer file
+    cfg_file:
+        Path to config-developer.yml file.
     """
-    if cfg_developer is None:
+    if cfg_file is None:
         cfg_file = Path(__file__).parents[1] / 'config-developer.yml'
-        with cfg_file.open() as file:
-            cfg_developer = yaml.safe_load(file)
+    mtime = cfg_file.stat().st_mtime
+    cmor_tables = _read_cmor_tables(cfg_file, mtime)
+    CMOR_TABLES.clear()
+    CMOR_TABLES.update(cmor_tables)
 
+
+@lru_cache
+def _read_cmor_tables(cfg_file: Path, mtime: float):
+    """Read cmor tables required in the configuration.
+
+    Parameters
+    ----------
+    cfg_file: pathlib.Path
+        Path to config-developer.yml file.
+    mtime: float
+        Modification time of config-developer.yml file. Only used to
+        make sure the file is read again when it is changed.
+    """
+    with cfg_file.open('r', encoding='utf-8') as file:
+        cfg_developer = yaml.safe_load(file)
     cwd = os.path.dirname(os.path.realpath(__file__))
     var_alt_names_file = os.path.join(cwd, 'variable_alt_names.yml')
     with open(var_alt_names_file, 'r') as yfile:
         alt_names = yaml.safe_load(yfile)
 
-    CMOR_TABLES.clear()
+    cmor_tables = {}
 
     # Try to infer location for custom tables from config-developer.yml file,
     # if not possible, use default location
@@ -65,14 +82,15 @@ def read_cmor_tables(cfg_developer=None):
     if custom_path is not None:
         custom_path = os.path.expandvars(os.path.expanduser(custom_path))
     custom = CustomInfo(custom_path)
-    CMOR_TABLES['custom'] = custom
+    cmor_tables['custom'] = custom
 
     install_dir = os.path.dirname(os.path.realpath(__file__))
     for table in cfg_developer:
         if table == 'custom':
             continue
-        CMOR_TABLES[table] = _read_table(cfg_developer, table, install_dir,
+        cmor_tables[table] = _read_table(cfg_developer, table, install_dir,
                                          custom, alt_names)
+    return cmor_tables
 
 
 def _read_table(cfg_developer, table, install_dir, custom, alt_names):
@@ -919,4 +937,5 @@ class CustomInfo(CMIP5Info):
                     return
 
 
+# Load the default tables on initializing the module.
 read_cmor_tables()

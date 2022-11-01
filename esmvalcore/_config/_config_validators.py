@@ -1,14 +1,20 @@
 """List of config validators."""
-
+import logging
+import os.path
 import warnings
 from collections.abc import Iterable
 from functools import lru_cache
 from pathlib import Path
 
 from esmvalcore import __version__ as current_version
-from esmvalcore._config import load_config_developer
-from esmvalcore._recipe import TASKSEP
+from esmvalcore._config._config import (
+    TASKSEP,
+    importlib_files,
+    load_config_developer,
+)
 from esmvalcore.cmor.check import CheckLevels
+
+logger = logging.getLogger(__name__)
 
 
 class ValidationError(ValueError):
@@ -123,7 +129,7 @@ def validate_path(value, allow_none=False):
     if (value is None) and allow_none:
         return value
     try:
-        path = Path(value).expanduser().absolute()
+        path = Path(os.path.expandvars(value)).expanduser().absolute()
     except TypeError as err:
         raise ValidationError(f"Expected a path, but got {value}") from err
     else:
@@ -178,6 +184,11 @@ def validate_oldstyle_rootpath(value):
     mapping = validate_dict(value)
     new_mapping = {}
     for key, paths in mapping.items():
+        if key == 'obs4mips':
+            logger.warning(
+                "Correcting capitalization, project 'obs4mips' should be "
+                "written as 'obs4MIPs' in 'rootpath' in config-user.yml")
+            key = 'obs4MIPs'
         new_mapping[key] = validate_pathlist(paths)
     return new_mapping
 
@@ -185,13 +196,22 @@ def validate_oldstyle_rootpath(value):
 def validate_oldstyle_drs(value):
     """Validate `drs` mapping."""
     mapping = validate_dict(value)
-    return mapping
+    new_mapping = {}
+    for key, drs in mapping.items():
+        if key == 'obs4mips':
+            logger.warning(
+                "Correcting capitalization, project 'obs4mips' should be "
+                "written as 'obs4MIPs' in 'drs' in config-user.yml")
+            key = 'obs4MIPs'
+        new_mapping[key] = validate_string(drs)
+    return new_mapping
 
 
 def validate_config_developer(value):
     """Validate and load config developer path."""
     path = validate_path_or_none(value)
-
+    if path is None:
+        path = importlib_files('esmvalcore') / 'config-developer.yml'
     load_config_developer(path)
 
     return path
@@ -212,8 +232,10 @@ def validate_check_level(value):
     return value
 
 
-def validate_diagnostics(diagnostics):
+def validate_diagnostics(diagnostics: Iterable[str] | str | None):
     """Validate diagnostic location."""
+    if diagnostics is None:
+        return None
     if isinstance(diagnostics, str):
         diagnostics = diagnostics.strip().split(' ')
     return {
@@ -267,13 +289,14 @@ _validators = {
     'profile_diagnostic': validate_bool,
     'run_diagnostic': validate_bool,
     'output_file_type': validate_string,
+    "offline": validate_bool,
+    "download_latest_datasets": validate_bool,
 
     # From CLI
     "resume_from": validate_pathlist,
     "skip_nonexistent": validate_bool,
     "diagnostics": validate_diagnostics,
     "check_level": validate_check_level,
-    "offline": validate_bool,
     'max_years': validate_int_positive_or_none,
     'max_datasets': validate_int_positive_or_none,
 

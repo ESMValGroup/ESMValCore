@@ -5,8 +5,8 @@ import numpy as np
 import pytest
 
 from esmvalcore import __version__ as current_version
-from esmvalcore.experimental.config._config_object import Config
-from esmvalcore.experimental.config._config_validators import (
+from esmvalcore._config import Config
+from esmvalcore._config._config_validators import (
     _listify_validator,
     deprecate,
     validate_bool,
@@ -22,8 +22,7 @@ from esmvalcore.experimental.config._config_validators import (
     validate_string,
     validate_string_or_none,
 )
-from esmvalcore.experimental.config._validated_config import (
-    InvalidConfigParameter, )
+from esmvalcore.exceptions import InvalidConfigParameter
 
 
 def generate_validator_testcases(valid):

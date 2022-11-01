@@ -28,7 +28,7 @@ DEFAULT_CONFIG: dict = {
         'timeout':
         120,
         'cache':
-        str(Path.home() / '.esmvaltool' / 'cache' / 'pyesgf-search-results'),
+        Path.home() / '.esmvaltool' / 'cache' / 'pyesgf-search-results',
         'expire_after':
         86400,
     },
