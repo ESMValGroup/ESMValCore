@@ -1,20 +1,18 @@
 """API for handing recipe output."""
 import base64
 import logging
-import os
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Optional, Tuple, Type
 
 import iris
 
+from ..config._config import TASKSEP
 from .recipe_info import RecipeInfo
 from .recipe_metadata import Contributor, Reference
 from .templates import get_template
 
 logger = logging.getLogger(__name__)
-
-TASKSEP = os.sep
 
 
 class TaskOutput:

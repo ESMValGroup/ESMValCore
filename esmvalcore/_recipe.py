@@ -16,7 +16,6 @@ from nested_lookup import nested_delete
 from . import __version__
 from . import _recipe_checks as check
 from . import esgf
-from ._config import TAGS, TASKSEP, Session, get_project_config
 from ._data_finder import (
     _get_timerange_from_years,
     _parse_period,
@@ -28,6 +27,9 @@ from ._data_finder import (
 from ._provenance import get_recipe_provenance
 from ._task import DiagnosticTask, ResumeTask, TaskSet
 from .cmor.table import CMOR_TABLES, _get_facets_from_cmor_table
+from .config import Session
+from .config._config import TASKSEP, get_project_config
+from .config._diagnostics import TAGS
 from .dataset import Dataset, _isglob
 from .esgf import ESGFFile
 from .exceptions import InputFilesNotFound, RecipeError

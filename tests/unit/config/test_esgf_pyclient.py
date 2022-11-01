@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from esmvalcore._config import _esgf_pyclient
+from esmvalcore.config import _esgf_pyclient
 
 DEFAULT_CONFIG: dict = {
     'logon': {

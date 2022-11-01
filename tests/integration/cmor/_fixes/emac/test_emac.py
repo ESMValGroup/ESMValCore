@@ -10,7 +10,6 @@ from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
 import esmvalcore.cmor._fixes.emac.emac
-from esmvalcore._config import get_extra_facets
 from esmvalcore.cmor._fixes.emac.emac import (
     AllVars,
     Cl,
@@ -44,6 +43,7 @@ from esmvalcore.cmor._fixes.emac.emac import (
 )
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
+from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
 
 

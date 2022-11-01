@@ -12,15 +12,16 @@ from nested_lookup import get_occurrence_of_value
 from PIL import Image
 
 import esmvalcore
-from esmvalcore._config import TAGS, Session
 from esmvalcore._data_finder import get_output_file
 from esmvalcore._recipe import (
-    TASKSEP,
     _get_input_datasets,
     _representative_dataset,
     read_recipe_file,
 )
 from esmvalcore._task import DiagnosticTask
+from esmvalcore.config import Session
+from esmvalcore.config._config import TASKSEP
+from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask

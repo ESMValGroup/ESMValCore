@@ -2,8 +2,8 @@ import itertools
 import re
 from pathlib import Path
 
-from ._config import Session
 from ._data_finder import _select_drs, get_input_filelist
+from .config import Session
 from .types import FacetValue
 
 

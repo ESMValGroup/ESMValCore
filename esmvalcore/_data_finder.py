@@ -9,7 +9,7 @@ from typing import Any, Union
 import iris
 import isodate
 
-from ._config import get_project_config
+from .config._config import get_project_config
 from .exceptions import RecipeError
 from .types import Facets
 

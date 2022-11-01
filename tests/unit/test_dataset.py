@@ -6,9 +6,9 @@ import pytest
 
 import esmvalcore.dataset
 import esmvalcore.local
-from esmvalcore._config import CFG
-from esmvalcore._config._config_object import CFG_DEFAULT
 from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.config import CFG
+from esmvalcore.config._config_object import CFG_DEFAULT
 from esmvalcore.dataset import Dataset
 from esmvalcore.esgf import ESGFFile
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError

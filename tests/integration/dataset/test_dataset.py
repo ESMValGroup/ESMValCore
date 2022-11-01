@@ -4,8 +4,8 @@ import iris.coords
 import iris.cube
 import pytest
 
+from esmvalcore.config import CFG
 from esmvalcore.dataset import Dataset
-from esmvalcore.experimental import CFG
 
 
 @pytest.fixture

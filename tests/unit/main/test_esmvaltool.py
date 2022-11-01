@@ -5,9 +5,9 @@ from unittest import mock
 
 import pytest
 
-import esmvalcore._config
 import esmvalcore._main
 import esmvalcore._task
+import esmvalcore.config
 import esmvalcore.esgf
 from esmvalcore import __version__
 from esmvalcore._main import HEADER, ESMValTool
@@ -55,17 +55,17 @@ def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
 
     # Patch every imported function
     mocker.patch.object(
-        esmvalcore._config,
+        esmvalcore.config,
         'CFG',
         cfg_object,
     )
     mocker.patch.object(
-        esmvalcore._config,
+        esmvalcore.config._logging,
         'configure_logging',
         create_autospec=True,
     )
     mocker.patch.object(
-        esmvalcore._config,
+        esmvalcore.config._diagnostics,
         'DIAGNOSTICS',
         create_autospec=True,
     )
@@ -91,9 +91,9 @@ def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
     assert cfg == reference
 
     # Check that the correct functions have been called
-    esmvalcore._config.CFG.load_from_file.assert_called_once_with(None)
-    esmvalcore._config.CFG.start_session.assert_called_once_with(recipe.stem)
-    esmvalcore._config.configure_logging.assert_called_once_with(
+    esmvalcore.config.CFG.load_from_file.assert_called_once_with(None)
+    esmvalcore.config.CFG.start_session.assert_called_once_with(recipe.stem)
+    esmvalcore.config._logging.configure_logging.assert_called_once_with(
         output_dir=session.run_dir,
         console_log_level=cfg['log_level'],
     )
@@ -151,7 +151,7 @@ def test_get_recipe(is_file):
 
 
 @mock.patch('os.path.isfile')
-@mock.patch('esmvalcore._config.DIAGNOSTICS')
+@mock.patch('esmvalcore.config._diagnostics.DIAGNOSTICS')
 def test_get_installed_recipe(diagnostics, is_file):
     def encountered(path):
         return path == '/install_folder/recipe.yaml'

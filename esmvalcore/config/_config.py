@@ -38,7 +38,7 @@ def _deep_update(dictionary, update):
 def _load_extra_facets(project, extra_facets_dir):
     config = {}
     config_paths = [
-        importlib_files("esmvalcore._config") / "extra_facets",
+        importlib_files("esmvalcore.config") / "extra_facets",
         Path.home() / ".esmvaltool" / "extra_facets",
     ]
     config_paths.extend([Path(p) for p in extra_facets_dir])

@@ -8,8 +8,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-# Load the default configuration:
-import esmvalcore.experimental  # noqa
 from esmvalcore._data_finder import get_output_file
 from esmvalcore.local import find_files
 

@@ -11,7 +11,6 @@ from typing import Any, Iterator, Optional, Union
 from iris.cube import Cube
 
 from . import esgf, local
-from ._config import Session, get_activity, get_extra_facets, get_institutes
 from ._data_finder import (
     dates_to_timerange,
     get_output_file,
@@ -20,6 +19,8 @@ from ._data_finder import (
 from ._recipe_checks import data_availability as check_data_availability
 from ._recipe_checks import valid_time_selection as check_valid_time_selection
 from .cmor.table import _get_facets_from_cmor_table
+from .config import Session
+from .config._config import get_activity, get_extra_facets, get_institutes
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import preprocess
 from .types import Facets, FacetValue
@@ -254,7 +255,7 @@ class Dataset:
         if self._session is None:
             raise ValueError(
                 "Session not set, please create a session by using "
-                "`esmvalcore.experimental.CFG.start_session` and "
+                "`esmvalcore.config.CFG.start_session` and "
                 "and add it to this dataset.")
         return self._session
 

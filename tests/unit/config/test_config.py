@@ -4,17 +4,16 @@ from pathlib import Path
 import pytest
 import yaml
 
-from esmvalcore._config import _config
-from esmvalcore._config._config import (
+from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.config import CFG, _config
+from esmvalcore.config._config import (
     _deep_update,
     _load_extra_facets,
     get_extra_facets,
     importlib_files,
 )
-from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.experimental import CFG
 
 TEST_DEEP_UPDATE = [
     ([{}], {}),

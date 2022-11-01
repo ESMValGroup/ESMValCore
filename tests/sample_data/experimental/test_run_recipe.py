@@ -8,8 +8,8 @@ from pathlib import Path
 import iris
 import pytest
 
-from esmvalcore._config import TAGS
-from esmvalcore._config._config_object import CFG_DEFAULT
+from esmvalcore.config._config_object import CFG_DEFAULT
+from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.experimental import CFG, Recipe, get_recipe
 from esmvalcore.experimental.recipe_output import (

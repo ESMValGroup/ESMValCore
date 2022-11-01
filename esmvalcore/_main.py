@@ -142,7 +142,7 @@ class Config():
         import os
         import shutil
 
-        from ._config import configure_logging
+        from .config._logging import configure_logging
         configure_logging(console_log_level='info')
         if not path:
             path = os.path.join(os.path.expanduser('~/.esmvaltool'), filename)
@@ -216,7 +216,8 @@ class Recipes():
         """
         import os
 
-        from ._config import DIAGNOSTICS, configure_logging
+        from .config._diagnostics import DIAGNOSTICS
+        from .config._logging import configure_logging
         configure_logging(console_log_level='info')
         recipes_folder = DIAGNOSTICS.recipes
         logger.info("Showing recipes installed in %s", recipes_folder)
@@ -244,7 +245,8 @@ class Recipes():
         """
         import shutil
 
-        from ._config import DIAGNOSTICS, configure_logging
+        from .config._diagnostics import DIAGNOSTICS
+        from .config._logging import configure_logging
         configure_logging(console_log_level='info')
         installed_recipe = DIAGNOSTICS.recipes / recipe
         if not installed_recipe.exists():
@@ -266,7 +268,8 @@ class Recipes():
         recipe: str
             Name of the recipe to get, including any subdirectories.
         """
-        from ._config import DIAGNOSTICS, configure_logging
+        from .config._diagnostics import DIAGNOSTICS
+        from .config._logging import configure_logging
         configure_logging(console_log_level='info')
         installed_recipe = DIAGNOSTICS.recipes / recipe
         if not installed_recipe.exists():
@@ -369,8 +372,10 @@ class ESMValTool():
         """
         import os
 
-        from ._config import CFG, TASKSEP, configure_logging
         from .cmor.check import CheckLevels
+        from .config import CFG
+        from .config._config import TASKSEP
+        from .config._logging import configure_logging
         from .esgf._logon import logon
 
         recipe = self._get_recipe(recipe)
@@ -439,7 +444,7 @@ class ESMValTool():
     def _get_recipe(recipe):
         import os
 
-        from esmvalcore._config import DIAGNOSTICS
+        from esmvalcore.config._diagnostics import DIAGNOSTICS
         if not os.path.isfile(recipe):
             installed_recipe = str(DIAGNOSTICS.recipes / recipe)
             if os.path.isfile(installed_recipe):
