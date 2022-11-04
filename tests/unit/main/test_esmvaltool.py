@@ -1,6 +1,6 @@
 import logging
 import os
-import pathlib
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -8,57 +8,83 @@ import pytest
 import esmvalcore._main
 import esmvalcore._task
 import esmvalcore.config
+import esmvalcore.config._logging
 import esmvalcore.esgf
 from esmvalcore import __version__
 from esmvalcore._main import HEADER, ESMValTool
-from esmvalcore.cmor.check import CheckLevels
 
 LOGGER = logging.getLogger(__name__)
 
 
-@pytest.mark.parametrize('cmd_offline', [None, True, False])
-@pytest.mark.parametrize('cfg_offline', [True, False])
-def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
-
-    output_dir = tmp_path / 'output_dir'
-    recipe = tmp_path / 'recipe_test.yml'
-    recipe.touch()
-    offline = cmd_offline is True or (cmd_offline is None
-                                      and cfg_offline is True)
-
-    # Minimal config-user.yml for ESMValTool run function.
-    cfg = {
-        'config_file': tmp_path / '.esmvaltool' / 'config-user.yml',
-        'log_level': 'info',
-        'offline': cfg_offline,
-    }
+@pytest.fixture
+def cfg(mocker, tmp_path):
+    """Mock `esmvalcore.config.CFG`."""
     session = mocker.MagicMock()
-    session.__getitem__.side_effect = cfg.__getitem__
-    session.__setitem__.side_effect = cfg.__setitem__
+
+    cfg_dict = {}
+    session.__getitem__.side_effect = cfg_dict.__getitem__
+    session.__setitem__.side_effect = cfg_dict.__setitem__
+
+    output_dir = tmp_path / 'esmvaltool_output'
     session.session_dir = output_dir / 'recipe_test'
     session.run_dir = session.session_dir / 'run_dir'
     session.preproc_dir = session.session_dir / 'preproc_dir'
-    print(session.preproc_dir)
 
-    cfg_object = mocker.Mock()
-    cfg_object.start_session.return_value = session
+    cfg = mocker.Mock()
+    cfg.start_session.return_value = session
 
-    # Expected configuration after updating from command line.
-    reference = dict(cfg)
-    reference.update({
-        'check_level': CheckLevels.DEFAULT,
-        'diagnostics': set(),
-        'offline': offline,
-        'resume_from': [],
-        'skip_nonexistent': False,
-    })
+    return cfg
 
-    # Patch every imported function
+
+@pytest.fixture
+def session(cfg):
+    return cfg.start_session.return_value
+
+
+@pytest.mark.parametrize('argument,value', [
+    ('max_datasets', 2),
+    ('max_years', 2),
+    ('skip_nonexistent', True),
+    ('offline', False),
+    ('diagnostics', 'diagnostic_name/group_name'),
+    ('check_level', 'strict'),
+])
+def test_run_command_line_config(mocker, cfg, argument, value):
+    """Check that the configuration is updated from the command line."""
     mocker.patch.object(
         esmvalcore.config,
         'CFG',
-        cfg_object,
+        cfg,
     )
+    session = cfg.start_session.return_value
+
+    program = ESMValTool()
+    recipe_file = '/path/to/recipe_test.yml'
+    config_file = '/path/to/config-user.yml'
+
+    mocker.patch.object(program, '_get_recipe', return_value=Path(recipe_file))
+    mocker.patch.object(program, '_run')
+
+    program.run(recipe_file, config_file, **{argument: value})
+
+    cfg.load_from_file.assert_called_with(config_file)
+    cfg.start_session.assert_called_once_with(Path(recipe_file).stem)
+    program._get_recipe.assert_called_with(recipe_file)
+    program._run.assert_called_with(program._get_recipe.return_value, session)
+
+    assert session[argument] == value
+
+
+@pytest.mark.parametrize('offline', [True, False])
+def test_run(mocker, session, offline):
+    session['offline'] = offline
+    session['log_level'] = 'default'
+    session['config_file'] = '/path/to/config-user.yml'
+    session['remove_preproc_dir'] = True
+
+    recipe = Path('/recipe_dir/recipe_test.yml')
+
+    # Patch every imported function
     mocker.patch.object(
         esmvalcore.config._logging,
         'configure_logging',
@@ -85,17 +111,12 @@ def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
         create_autospec=True,
     )
 
-    ESMValTool().run(str(recipe), offline=cmd_offline)
-
-    # Check that configuration has been updated from the command line
-    assert cfg == reference
+    ESMValTool()._run(recipe, session=session)
 
     # Check that the correct functions have been called
-    esmvalcore.config.CFG.load_from_file.assert_called_once_with(None)
-    esmvalcore.config.CFG.start_session.assert_called_once_with(recipe.stem)
     esmvalcore.config._logging.configure_logging.assert_called_once_with(
         output_dir=session.run_dir,
-        console_log_level=cfg['log_level'],
+        console_log_level=session['log_level'],
     )
 
     if offline:
@@ -111,6 +132,21 @@ def test_run(mocker, tmp_path, cmd_offline, cfg_offline):
         recipe_file=recipe,
         session=session,
     )
+
+
+def test_run_fail_session_dir_exists(session):
+    program = ESMValTool()
+    session.session_dir.mkdir(parents=True)
+    with pytest.raises(FileExistsError):
+        program._run(Path('/path/to/recipe_test.yml'), session)
+
+
+def test_clean_preproc_dir(session):
+    session.preproc_dir.mkdir(parents=True)
+    session['remove_preproc_dir'] = True
+    program = ESMValTool()
+    program._clean_preproc(session)
+    assert not session.preproc_dir.exists()
 
 
 @mock.patch('esmvalcore._main.iter_entry_points')
@@ -147,18 +183,18 @@ def test_get_recipe(is_file):
     """Test get recipe."""
     is_file.return_value = True
     recipe = ESMValTool()._get_recipe('/recipe.yaml')
-    assert recipe == pathlib.Path('/recipe.yaml')
+    assert recipe == Path('/recipe.yaml')
 
 
 @mock.patch('os.path.isfile')
 @mock.patch('esmvalcore.config._diagnostics.DIAGNOSTICS')
 def test_get_installed_recipe(diagnostics, is_file):
     def encountered(path):
-        return path == '/install_folder/recipe.yaml'
+        return Path(path) == Path('/install_folder/recipe.yaml')
     is_file.side_effect = encountered
-    diagnostics.recipes = pathlib.Path('/install_folder')
+    diagnostics.recipes = Path('/install_folder')
     recipe = ESMValTool()._get_recipe('recipe.yaml')
-    assert recipe == pathlib.Path('/install_folder/recipe.yaml')
+    assert recipe == Path('/install_folder/recipe.yaml')
 
 
 @mock.patch('os.path.isfile')
@@ -166,4 +202,4 @@ def test_get_recipe_not_found(is_file):
     """Test get recipe."""
     is_file.return_value = False
     recipe = ESMValTool()._get_recipe('/recipe.yaml')
-    assert recipe == pathlib.Path('/recipe.yaml')
+    assert recipe == Path('/recipe.yaml')

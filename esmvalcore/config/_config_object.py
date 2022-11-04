@@ -87,8 +87,10 @@ class Config(ValidatedConfig):
 
         return new
 
-    def load_from_file(self,
-                       filename: Optional[Union[os.PathLike, str]] = None):
+    def load_from_file(
+            self,
+            filename: Optional[Union[os.PathLike, str]] = None,
+    ) -> None:
         """Load user configuration from the given file."""
         if filename is None:
             filename = USER_CONFIG

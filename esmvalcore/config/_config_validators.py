@@ -179,7 +179,7 @@ validate_int_positive_or_none = _make_type_validator(validate_int_positive,
                                                      allow_none=True)
 
 
-def validate_oldstyle_rootpath(value):
+def validate_rootpath(value):
     """Validate `rootpath` mapping."""
     mapping = validate_dict(value)
     new_mapping = {}
@@ -193,7 +193,7 @@ def validate_oldstyle_rootpath(value):
     return new_mapping
 
 
-def validate_oldstyle_drs(value):
+def validate_drs(value):
     """Validate `drs` mapping."""
     mapping = validate_dict(value)
     new_mapping = {}
@@ -304,8 +304,8 @@ _validators = {
     'write_ncl_interface': validate_bool,
 
     # oldstyle
-    'rootpath': validate_oldstyle_rootpath,
-    'drs': validate_oldstyle_drs,
+    'rootpath': validate_rootpath,
+    'drs': validate_drs,
 
     # config location
     'config_file': validate_path,

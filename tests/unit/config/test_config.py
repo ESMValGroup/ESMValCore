@@ -222,6 +222,13 @@ def test_rootpath_obs4mips_case_correction(default_config):
     assert CFG['rootpath']['obs4MIPs'] == [Path('/path/to/data')]
 
 
+def test_drs_obs4mips_case_correction(default_config):
+    """Test that the name of the obs4MIPs project is correct in rootpath."""
+    CFG['drs'] = {'obs4mips': 'ESGF'}
+    assert 'obs4mips' not in CFG['drs']
+    assert CFG['drs']['obs4MIPs'] == 'ESGF'
+
+
 def test_project_obs4mips_case_correction(tmp_path, monkeypatch, mocker):
     monkeypatch.setattr(_config, 'CFG', {})
     mocker.patch.object(_config, 'read_cmor_tables', autospec=True)
