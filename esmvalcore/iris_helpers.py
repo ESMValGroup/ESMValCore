@@ -108,7 +108,10 @@ def date2num(date, unit, dtype=np.float64):
         return dtype(num)
 
 
-def equalize_cube_attributes(cubes: Sequence[Cube], delimiter='|') -> None:
+def equalize_cube_attributes(
+    cubes: Sequence[Cube],
+    delimiter: str = '|',
+) -> None:
     """Equalize attributes of all given cubes in-place.
 
     Note
@@ -140,7 +143,7 @@ def equalize_cube_attributes(cubes: Sequence[Cube], delimiter='|') -> None:
     # Step 2: if values are not equal, first convert them to strings (so that
     # set() can be used); then extract unique elements from this list, sort it,
     # and use the delimiter to join all elements to a single string
-    final_attributes: Dict[Any, List[Any]] = {}
+    final_attributes: Dict[Any, Any] = {}
     for (attr, vals) in attributes.items():
         if _contains_identical_values(vals):
             final_attributes[attr] = vals[0]
@@ -154,7 +157,7 @@ def equalize_cube_attributes(cubes: Sequence[Cube], delimiter='|') -> None:
 
 
 def _contains_identical_values(sequence: Sequence) -> bool:
-    """Check if an iterable contains identical values.
+    """Check if a sequence contains identical values.
 
     Note
     ----
