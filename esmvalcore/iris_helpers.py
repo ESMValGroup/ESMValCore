@@ -1,5 +1,6 @@
 """Auxiliary functions for :mod:`iris`."""
 import warnings
+from typing import Any, Dict, List, Sequence
 
 import dask.array as da
 import iris
@@ -7,6 +8,7 @@ import iris.cube
 import iris.util
 import numpy as np
 from iris import NameConstraint
+from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
@@ -62,7 +64,7 @@ def add_leading_dim_to_cube(cube, dim_coord):
     # Create new cube with shape (w, x, ..., z) where w is length of dim_coord
     # and already add ancillary variables and cell measures
     new_data = da.broadcast_to(cube.core_data(), new_shape)
-    new_cube = iris.cube.Cube(
+    new_cube = Cube(
         new_data,
         ancillary_variables_and_dims=ancillary_variables,
         cell_measures_and_dims=cell_measures,
@@ -104,6 +106,66 @@ def date2num(date, unit, dtype=np.float64):
         return num.astype(dtype)
     except AttributeError:
         return dtype(num)
+
+
+def equalize_cube_attributes(cubes: Sequence[Cube], delimiter='|') -> None:
+    """Equalize attributes of all given cubes in-place.
+
+    Note
+    ----
+    This function differs from :func:`iris.util.equalise_attributes` in this
+    respect that it does not delete attributes that are not identical but
+    rather concatenates them (sorted) using the given ``delimiter``. E.g., the
+    attributes ``exp: historical`` and ``exp: ssp585`` end up as ``exp:
+    historical|ssp585`` using the default ``delimiter``.
+
+    Parameters
+    ----------
+    cubes:
+        Input cubes whose attributes will be modified in-place.
+    delimiter:
+        Delimiter that is used to concatenate non-identical attributes.
+
+    """
+    if len(cubes) <= 1:
+        return
+
+    # Step 1: collect all attribute values in a list
+    attributes: Dict[Any, List[Any]] = {}
+    for cube in cubes:
+        for (attr, val) in cube.attributes.items():
+            attributes.setdefault(attr, [])
+            attributes[attr].append(val)
+
+    # Step 2: if values are not equal, first convert them to strings (so that
+    # set() can be used); then extract unique elements from this list, sort it,
+    # and use the delimiter to join all elements to a single string
+    final_attributes: Dict[Any, List[Any]] = {}
+    for (attr, vals) in attributes.items():
+        if _contains_identical_values(vals):
+            final_attributes[attr] = vals[0]
+        else:
+            vals = sorted(list({str(v) for v in vals}))
+            final_attributes[attr] = delimiter.join(vals)
+
+    # Step 3: modify the cubes in-place
+    for cube in cubes:
+        cube.attributes = final_attributes
+
+
+def _contains_identical_values(sequence: Sequence) -> bool:
+    """Check if an iterable contains identical values.
+
+    Note
+    ----
+    We use :func:`np.array_equal` here since it is very versatile and works
+    with all kinds of input types.
+
+    """
+    for (idx, val) in enumerate(sequence[:-1]):
+        if not np.array_equal(val, sequence[idx + 1]):
+            return False
+    return True
 
 
 def var_name_constraint(var_name):

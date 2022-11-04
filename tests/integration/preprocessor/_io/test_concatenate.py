@@ -426,6 +426,22 @@ class TestConcatenate(unittest.TestCase):
             concatenated.coord('time').points, np.array([1., 2., 5., 7.,
                                                          100.]))
 
+    def test_concatenate_differing_attributes(self):
+        """Test concatenation of cubes with different attributes."""
+        cubes = CubeList(self.raw_cubes)
+        for (idx, cube) in enumerate(cubes):
+            cube.attributes = {
+                'equal_attr': 1,
+                'different_attr': 3 - idx,
+            }
+        concatenated = _io.concatenate(cubes)
+        np.testing.assert_array_equal(
+            concatenated.coord('time').points, np.array([1, 2, 3, 4, 5, 6]))
+        self.assertEqual(
+            concatenated.attributes,
+            {'equal_attr': 1, 'different_attr': '1|2|3'},
+        )
+
     def test_fail_on_calendar_concatenate_with_overlap(self):
         """Test fail of concatenation with overlap."""
         time_coord = DimCoord([3., 7000.],
@@ -479,68 +495,3 @@ class TestConcatenate(unittest.TestCase):
         self.raw_cubes[1].units = 'K'
         with self.assertRaises(ValueError):
             _io.concatenate(self.raw_cubes)
-
-    def test_fix_attributes(self):
-        """Test fixing attributes for concatenation."""
-        identical_attrs = {
-            'int': 42,
-            'float': 3.1415,
-            'bool': True,
-            'str': 'Hello, world',
-            'list': [1, 1, 2, 3, 5, 8, 13],
-            'tuple': (1, 2, 3, 4, 5),
-            'dict': {
-                1: 'one',
-                2: 'two',
-                3: 'three'
-            },
-            'nparray': np.arange(42),
-        }
-        differing_attrs = [
-            {
-                'new_int': 0,
-                'new_str': 'hello',
-                'new_nparray': np.arange(3),
-                'mix': np.arange(2),
-            },
-            {
-                'new_int': 1,
-                'new_str': 'world',
-                'new_list': [1, 1, 2],
-                'new_tuple': (0, 1),
-                'new_dict': {
-                    0: 'zero',
-                },
-                'mix': {
-                    1: 'one',
-                },
-            },
-            {
-                'new_str': '!',
-                'new_list': [1, 1, 2, 3],
-                'new_tuple': (1, 2, 3),
-                'new_dict': {
-                    0: 'zeroo',
-                    1: 'one',
-                },
-                'new_nparray': np.arange(2),
-                'mix': False,
-            },
-        ]
-        resulting_attrs = {
-            'new_int': '0;1',
-            'new_str': 'hello;world;!',
-            'new_nparray': '[0 1 2];[0 1]',
-            'new_list': '[1, 1, 2];[1, 1, 2, 3]',
-            'new_tuple': '(0, 1);(1, 2, 3)',
-            'new_dict': "{0: 'zero'};{0: 'zeroo', 1: 'one'}",
-            'mix': "[0 1];{1: 'one'};False",
-        }
-        resulting_attrs.update(identical_attrs)
-
-        for idx in range(3):
-            self.raw_cubes[idx].attributes = identical_attrs
-            self.raw_cubes[idx].attributes.update(differing_attrs[idx])
-        _io._fix_cube_attributes(self.raw_cubes)  # noqa
-        for cube in self.raw_cubes:
-            self.assertEqual(cube.attributes, resulting_attrs)
