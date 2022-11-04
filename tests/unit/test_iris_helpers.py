@@ -21,7 +21,7 @@ from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import (
     add_leading_dim_to_cube,
     date2num,
-    equalize_cube_attributes,
+    merge_cube_attributes,
     var_name_constraint,
 )
 
@@ -187,8 +187,8 @@ CUBES = [make_cube_with_attrs(i) for i in range(3)]
 
 # Test all permutations of CUBES to test that results do not depend on order
 @pytest.mark.parametrize("cubes", list(permutations(CUBES)))
-def test_equalize_cube_attributes(cubes):
-    """Test `equalize_cube_attributes`."""
+def test_merge_cube_attributes(cubes):
+    """Test `merge_cube_attributes`."""
     expected_attributes = {
         'int': 42,
         'float': 3.1415,
@@ -202,38 +202,38 @@ def test_equalize_cube_attributes(cubes):
             3: 'three',
         },
         'nparray': np.arange(42),
-        'diff_int': '0|1|2',
-        'diff_str': 'a|b|c',
-        'diff_nparray': '[0 1]|[0]|[]',
-        'mix': '1|2|[0 1 2]',
-        'diff_list': '[0, 0]|[1, 1]|[2, 2]',
-        'diff_tuple': '(0, 0)|(1, 1)|(2, 2)',
-        'diff_dict': '{0: 0}|{0: 1}|{0: 2}',
+        'diff_int': '0 1 2',
+        'diff_str': 'a b c',
+        'diff_nparray': '[0 1] [0] []',
+        'mix': '1 2 [0 1 2]',
+        'diff_list': '[0, 0] [1, 1] [2, 2]',
+        'diff_tuple': '(0, 0) (1, 1) (2, 2)',
+        'diff_dict': '{0: 0} {0: 1} {0: 2}',
         '1000': 0,
         '1001': 1,
         '1002': 2,
-        '100': '0|2',
+        '100': '0 2',
         '101': 1,
         '0': 0,
         '1': 1,
     }
     cubes = deepcopy(cubes)
-    equalize_cube_attributes(cubes)
+    merge_cube_attributes(cubes)
     assert len(cubes) == 3
     for cube in cubes:
         assert_attribues_equal(cube.attributes, expected_attributes)
 
 
-def test_equalize_cube_attributes_0_cubes():
-    """Test `equalize_cube_attributes` with 0 cubes."""
-    equalize_cube_attributes([])
+def test_merge_cube_attributes_0_cubes():
+    """Test `merge_cube_attributes` with 0 cubes."""
+    merge_cube_attributes([])
 
 
-def test_equalize_cube_attributes_1_cube():
-    """Test `equalize_cube_attributes` with 1 cube."""
+def test_merge_cube_attributes_1_cube():
+    """Test `merge_cube_attributes` with 1 cube."""
     cubes = CubeList([deepcopy(CUBES[0])])
     expected_attributes = deepcopy(cubes[0].attributes)
-    equalize_cube_attributes(cubes)
+    merge_cube_attributes(cubes)
     assert len(cubes) == 1
     assert_attribues_equal(cubes[0].attributes, expected_attributes)
 

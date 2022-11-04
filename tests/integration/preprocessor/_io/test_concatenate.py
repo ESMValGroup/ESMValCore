@@ -439,7 +439,7 @@ class TestConcatenate(unittest.TestCase):
             concatenated.coord('time').points, np.array([1, 2, 3, 4, 5, 6]))
         self.assertEqual(
             concatenated.attributes,
-            {'equal_attr': 1, 'different_attr': '1|2|3'},
+            {'equal_attr': 1, 'different_attr': '1 2 3'},
         )
 
     def test_fail_on_calendar_concatenate_with_overlap(self):

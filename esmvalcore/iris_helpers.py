@@ -108,11 +108,16 @@ def date2num(date, unit, dtype=np.float64):
         return dtype(num)
 
 
-def equalize_cube_attributes(
+def merge_cube_attributes(
     cubes: Sequence[Cube],
-    delimiter: str = '|',
+    delimiter: str = ' ',
 ) -> None:
-    """Equalize attributes of all given cubes in-place.
+    """Merge attributes of all given cubes in-place.
+
+    After this operation, the attributes of all given cubes are equal. This is
+    useful for operations that combine cubes, such as
+    :meth:`iris.cube.CubeList.merge_cube` or
+    :meth:`iris.cube.CubeList.concatenate_cube`.
 
     Note
     ----
@@ -120,7 +125,7 @@ def equalize_cube_attributes(
     respect that it does not delete attributes that are not identical but
     rather concatenates them (sorted) using the given ``delimiter``. E.g., the
     attributes ``exp: historical`` and ``exp: ssp585`` end up as ``exp:
-    historical|ssp585`` using the default ``delimiter``.
+    historical ssp585`` using the default ``delimiter = ' '``.
 
     Parameters
     ----------

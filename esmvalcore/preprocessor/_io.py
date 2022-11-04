@@ -12,7 +12,7 @@ import iris.exceptions
 import yaml
 from cf_units import suppress_errors
 
-from esmvalcore.iris_helpers import equalize_cube_attributes
+from esmvalcore.iris_helpers import merge_cube_attributes
 
 from .._task import write_ncl_settings
 from ._time import extract_time
@@ -211,7 +211,7 @@ def concatenate(cubes):
     if len(cubes) == 1:
         return cubes[0]
 
-    equalize_cube_attributes(cubes)
+    merge_cube_attributes(cubes)
 
     if len(cubes) > 1:
         # order cubes by first time point
