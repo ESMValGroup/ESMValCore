@@ -5,6 +5,7 @@ import warnings
 from collections.abc import Iterable
 from functools import lru_cache
 from pathlib import Path
+from typing import Union
 
 from esmvalcore import __version__ as current_version
 from esmvalcore.cmor.check import CheckLevels
@@ -232,7 +233,7 @@ def validate_check_level(value):
     return value
 
 
-def validate_diagnostics(diagnostics: Iterable[str] | str | None):
+def validate_diagnostics(diagnostics: Union[Iterable[str], str, None]):
     """Validate diagnostic location."""
     if diagnostics is None:
         return None
