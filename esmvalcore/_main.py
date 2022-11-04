@@ -28,6 +28,7 @@ http://docs.esmvaltool.org. Have fun!
 """  # noqa: line-too-long pylint: disable=line-too-long
 # pylint: disable=import-outside-toplevel
 import logging
+import os
 from pathlib import Path
 
 import fire
@@ -50,7 +51,6 @@ ______________________________________________________________________
 
 def parse_resume(resume, recipe):
     """Set `resume` to a correct value and sanity check."""
-    import os
     if not resume:
         return []
     if isinstance(resume, str):
@@ -71,11 +71,10 @@ def parse_resume(resume, recipe):
 def process_recipe(recipe_file: Path, session):
     """Process recipe."""
     import datetime
-    import os
     import shutil
 
     from ._recipe import read_recipe_file
-    if not os.path.isfile(recipe_file):
+    if not recipe_file.is_file():
         import errno
         raise OSError(errno.ENOENT, "Specified recipe file does not exist",
                       recipe_file)
@@ -95,8 +94,7 @@ def process_recipe(recipe_file: Path, session):
     logger.info("PLOTDIR    = %s", session.plot_dir)
     logger.info(70 * "-")
 
-    from multiprocessing import cpu_count
-    n_processes = session['max_parallel_tasks'] or cpu_count()
+    n_processes = session['max_parallel_tasks'] or os.cpu_count()
     logger.info("Running tasks using at most %s processes", n_processes)
 
     logger.info(
@@ -140,7 +138,6 @@ class Config():
 
     @staticmethod
     def _copy_config_file(filename, overwrite, path):
-        import os
         import shutil
 
         from .config._logging import configure_logging
@@ -215,8 +212,6 @@ class Recipes():
 
         Show all installed recipes, grouped by folder.
         """
-        import os
-
         from .config._diagnostics import DIAGNOSTICS
         from .config._logging import configure_logging
         configure_logging(console_log_level='info')
@@ -280,8 +275,7 @@ class Recipes():
         msg = f'Recipe {recipe}'
         logger.info(msg)
         logger.info('=' * len(msg))
-        with open(installed_recipe) as recipe_file:
-            print(recipe_file.read())
+        print(installed_recipe.read_text(encoding='utf-8'))
 
 
 class ESMValTool():
@@ -300,8 +294,8 @@ class ESMValTool():
     """
 
     def __init__(self):
-        self.recipes = Recipes()
         self.config = Config()
+        self.recipes = Recipes()
         self._extra_packages = {}
         for entry_point in iter_entry_points('esmvaltool_commands'):
             self._extra_packages[entry_point.dist.project_name] = \
@@ -330,10 +324,10 @@ class ESMValTool():
             resume_from=None,
             max_datasets=None,
             max_years=None,
-            skip_nonexistent=False,
+            skip_nonexistent=None,
             offline=None,
             diagnostics=None,
-            check_level='default',
+            check_level=None,
             **kwargs):
         """Execute an ESMValTool recipe.
 
@@ -371,58 +365,51 @@ class ESMValTool():
             default (fail if there are any errors),
             strict (fail if there are any warnings).
         """
-        import os
-
-        from .cmor.check import CheckLevels
         from .config import CFG
-        from .config._config import TASKSEP
-        from .config._logging import configure_logging
-        from .esgf._logon import logon
 
         recipe = self._get_recipe(recipe)
-        CFG.load_from_file(config_file)
-        CFG.update(kwargs)
-        session = CFG.start_session(recipe.stem)
 
+        CFG.load_from_file(config_file)
+        session = CFG.start_session(recipe.stem)
+        if check_level is not None:
+            session['check_level'] = check_level
+        if diagnostics is not None:
+            session['diagnostics'] = diagnostics
+        if max_datasets is not None:
+            session['max_datasets'] = max_datasets
+        if max_years is not None:
+            session['max_years'] = max_years
+        if offline is not None:
+            session['offline'] = offline
+        if skip_nonexistent is not None:
+            session['skip_nonexistent'] = skip_nonexistent
+        session['resume_from'] = parse_resume(resume_from, recipe)
+        session.update(kwargs)
+
+        self._run(recipe, session)
+
+    def _run(self, recipe: Path, session) -> None:
+        """Run `recipe` using `session`."""
         # Create run dir
-        if os.path.exists(session.session_dir):
-            print(f"ERROR: run_dir {session.session_dir} already exists, "
-                  "aborting to prevent data loss")
-        session.run_dir.mkdir(parents=True)
+        if session.session_dir.exists():
+            print(f"ERROR: output directory {session.session_dir} already"
+                  " exists, aborting to prevent data loss")
+        session.session_dir.mkdir(parents=True)
+        session.run_dir.mkdir()
 
         # configure logging
+        from .config._logging import configure_logging
         log_files = configure_logging(output_dir=session.run_dir,
                                       console_log_level=session['log_level'])
-
         self._log_header(session['config_file'], log_files)
 
-        session['resume_from'] = parse_resume(resume_from, recipe)
-        session['skip_nonexistent'] = skip_nonexistent
-        if isinstance(diagnostics, str):
-            diagnostics = diagnostics.split(' ')
-        session['diagnostics'] = {
-            pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
-            for pattern in diagnostics or ()
-        }
-        session['check_level'] = CheckLevels[check_level.upper()]
-        if offline is not None:
-            # Override config-user.yml from command line
-            session['offline'] = offline
         if not session['offline']:
+            from .esgf._logon import logon
             logon()
 
-        def _check_limit(limit, value):
-            if value is not None and value < 1:
-                raise ValueError("--{} should be larger than 0.".format(
-                    limit.replace('_', '-')))
-            if value:
-                session[limit] = value
-
-        _check_limit('max_datasets', max_datasets)
-        _check_limit('max_years', max_years)
-
-        resource_log = session.run_dir / 'resource_usage.txt'
+        # configure resource logger and run program
         from ._task import resource_usage_logger
+        resource_log = session.run_dir / 'resource_usage.txt'
         with resource_usage_logger(pid=os.getpid(), filename=resource_log):
             process_recipe(recipe_file=recipe, session=session)
 
@@ -431,23 +418,19 @@ class ESMValTool():
 
     @staticmethod
     def _clean_preproc(session):
-        import os
         import shutil
 
-        if os.path.exists(
-                session.preproc_dir) and session["remove_preproc_dir"]:
+        if session["remove_preproc_dir"] and session.preproc_dir.exists():
             logger.info("Removing preproc containing preprocessed data")
             logger.info("If this data is further needed, then")
             logger.info("set remove_preproc_dir to false in config-user.yml")
             shutil.rmtree(session.preproc_dir)
 
     @staticmethod
-    def _get_recipe(recipe):
-        import os
-
+    def _get_recipe(recipe) -> Path:
         from esmvalcore.config._diagnostics import DIAGNOSTICS
         if not os.path.isfile(recipe):
-            installed_recipe = str(DIAGNOSTICS.recipes / recipe)
+            installed_recipe = DIAGNOSTICS.recipes / recipe
             if os.path.isfile(installed_recipe):
                 recipe = installed_recipe
         recipe = Path(os.path.expandvars(recipe)).expanduser().absolute()

@@ -72,7 +72,7 @@ def test_tags_manager_fails():
         tags.replace_tags_in_dict(dict_with_undefined_tags)
 
 
-def test_load_tags_from_non_existant_file():
+def test_load_tags_from_non_existent_file():
     """Test fallback if no diagnostics are installed."""
     tags = TagsManager.from_file('non-existent')
     assert isinstance(tags, TagsManager)

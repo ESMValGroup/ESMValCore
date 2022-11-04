@@ -18,7 +18,7 @@ def _suppressed_hook(error, message, traceback):
     """https://stackoverflow.com/a/27674608."""
     if issubclass(error, SuppressedError):
         # Print only the message and hide the traceback
-        print(f'{error.__name__}: {message}'.format(error.__name__, message))
+        print(f'{error.__name__}: {message}', file=sys.stderr)
     else:
         # Print full traceback
         sys.__excepthook__(error, message, traceback)
