@@ -751,20 +751,20 @@ class TaskSet(set):
         # Connect client and run computation
         with dask.distributed.Client(cluster, **client_args) as client:
             logger.info(f"Dask dashboard: {client.dashboard_link}")
-            futures = {}
             for task in sorted(self.flatten(), key=lambda t: t.priority):
                 if hasattr(task, 'delayeds'):
                     logger.info(f"Scheduling task {task.name}")
                     task.run()
                     logger.info(f"Computing task {task.name}")
-                    for filename, delayed in task.delayeds.items():
-                        future = client.compute(delayed,
-                                                priority=-task.priority)
-                        futures[future] = filename
+                    futures = client.compute(
+                        list(task.delayeds.values()),
+                        priority=-task.priority,
+                    )
+                    future_map = dict(zip(futures, task.delayeds.keys()))
                 else:
                     logger.info(f"Skipping task {task.name}")
             for future in dask.distributed.as_completed(futures):
-                filename = futures[future]
+                filename = future_map[future]
                 logger.info(f"Wrote {filename}")
 
     def _run_sequential(self) -> None:
