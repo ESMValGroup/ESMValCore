@@ -14,17 +14,13 @@ from esmvalcore.config._config import (
     importlib_files,
     load_config_developer,
 )
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 logger = logging.getLogger(__name__)
 
 
 class ValidationError(ValueError):
     """Custom validation error."""
-
-
-# Custom warning, because DeprecationWarning is hidden by default
-class ESMValToolDeprecationWarning(UserWarning):
-    """Configuration key has been deprecated."""
 
 
 # The code for this function was taken from matplotlib (v3.3) and modified
@@ -265,10 +261,10 @@ def deprecate(func, variable, version: str = None):
 
     if current_version >= version:
         warnings.warn(f"`{variable}` has been removed in {version}",
-                      ESMValToolDeprecationWarning)
+                      ESMValCoreDeprecationWarning)
     else:
         warnings.warn(f"`{variable}` will be removed in {version}.",
-                      ESMValToolDeprecationWarning,
+                      ESMValCoreDeprecationWarning,
                       stacklevel=2)
 
     return func

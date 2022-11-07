@@ -48,6 +48,10 @@ def read_cmor_tables(cfg_developer: Optional[Path] = None):
     ----------
     cfg_developer:
         Path to config-developer.yml file.
+
+        Prior to v2.8 `cfg_developer` was an :obj:`dict` with the contents
+        of config-developer.yml. This is deprecated and support will be
+        removed in v2.10.
     """
     if isinstance(cfg_developer, dict):
         warnings.warn(

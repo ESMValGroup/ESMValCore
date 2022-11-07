@@ -1,6 +1,7 @@
 """Importable config object."""
 
 import os
+import warnings
 from datetime import datetime
 from pathlib import Path
 from types import MappingProxyType
@@ -10,6 +11,7 @@ import yaml
 
 import esmvalcore
 from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 from ._config_validators import _validators
 from ._validated_config import ValidatedConfig
@@ -207,9 +209,17 @@ class Session(ValidatedConfig):
     def to_config_user(self) -> dict:
         """Turn the `Session` object into a recipe-compatible dict.
 
+        Deprecated since v2.8, scheduled for removal in v2.9.
+
         This dict is compatible with the `config-user` argument in
         :obj:`esmvalcore._recipe.Recipe`.
         """
+        warnings.warn(
+            "The `esmvalcore.[experimental.]config.Session.to_config_user` "
+            "method has been deprecated in ESMValCore version 2.8 and is "
+            "scheduled for removal in version 2.9.0. ",
+            ESMValCoreDeprecationWarning,
+        )
         dct = self.copy()
         dct['run_dir'] = self.run_dir
         dct['work_dir'] = self.work_dir
@@ -222,8 +232,16 @@ class Session(ValidatedConfig):
     def from_config_user(cls, config_user: dict) -> 'Session':
         """Convert `config-user` dict to API-compatible `Session` object.
 
+        Deprecated since v2.8, scheduled for removal in v2.9.
+
         For example, `_recipe.Recipe._cfg`.
         """
+        warnings.warn(
+            "The `esmvalcore.[experimental.]config.Session.from_config_user` "
+            "method has been deprecated in ESMValCore version 2.8 and is "
+            "scheduled for removal in version 2.9.0. ",
+            ESMValCoreDeprecationWarning,
+        )
         dct = config_user.copy()
         dct.pop('run_dir')
         dct.pop('work_dir')

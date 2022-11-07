@@ -7,6 +7,7 @@ from .exceptions import ESMValCoreDeprecationWarning
 __all__ = [
     'CFG',
     'configure_logging',
+    'read_config_user_file',
 ]
 
 warnings.warn(
