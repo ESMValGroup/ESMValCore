@@ -139,7 +139,7 @@ def merge_cube_attributes(
         return
 
     # Step 1: collect all attribute values in a list
-    attributes: Dict[Any, List[Any]] = {}
+    attributes: Dict[str, List[Any]] = {}
     for cube in cubes:
         for (attr, val) in cube.attributes.items():
             attributes.setdefault(attr, [])
@@ -148,7 +148,7 @@ def merge_cube_attributes(
     # Step 2: if values are not equal, first convert them to strings (so that
     # set() can be used); then extract unique elements from this list, sort it,
     # and use the delimiter to join all elements to a single string
-    final_attributes: Dict[Any, Any] = {}
+    final_attributes: Dict[str, Any] = {}
     for (attr, vals) in attributes.items():
         if _contains_identical_values(vals):
             final_attributes[attr] = vals[0]
