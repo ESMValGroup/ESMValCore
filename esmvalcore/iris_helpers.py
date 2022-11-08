@@ -153,7 +153,7 @@ def merge_cube_attributes(
         if _contains_identical_values(vals):
             final_attributes[attr] = vals[0]
         else:
-            vals = sorted(list({str(v) for v in vals}))
+            vals = sorted({str(v) for v in vals})
             final_attributes[attr] = delimiter.join(vals)
 
     # Step 3: modify the cubes in-place
