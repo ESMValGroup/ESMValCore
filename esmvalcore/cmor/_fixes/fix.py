@@ -1,13 +1,14 @@
 """Contains the base class for dataset fixes."""
 import importlib
-import os
 import inspect
+import os
 
 from ..table import CMOR_TABLES
 
 
 class Fix:
     """Base class for dataset fixes."""
+
     def __init__(self, vardef, extra_facets=None):
         """Initialize fix object.
 
@@ -91,7 +92,7 @@ class Fix:
         for cube in cubes:
             if cube.var_name == short_name:
                 return cube
-        raise Exception('Cube for variable "{}" not found'.format(short_name))
+        raise Exception(f'Cube for variable "{short_name}" not found')
 
     def fix_data(self, cube):
         """Apply fixes to the data of the cube.
@@ -111,9 +112,11 @@ class Fix:
         return cube
 
     def __eq__(self, other):
+        """Fix equality."""
         return isinstance(self, other.__class__)
 
     def __ne__(self, other):
+        """Fix inequality."""
         return not self.__eq__(other)
 
     @staticmethod
@@ -134,9 +137,13 @@ class Fix:
         Parameters
         ----------
         project: str
+            Project of the dataset.
         dataset: str
+            Name of the dataset.
         mip: str
+            Variable's MIP.
         short_name: str
+            Variable's short name.
         extra_facets: dict, optional
             Extra facets are mainly used for data outside of the big projects
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
@@ -144,7 +151,7 @@ class Fix:
         Returns
         -------
         list(Fix)
-            Fixes to apply for the given data
+            Fixes to apply for the given data.
         """
         cmor_table = CMOR_TABLES[project]
         vardef = cmor_table.get_variable(mip, short_name)
@@ -159,7 +166,8 @@ class Fix:
         fixes = []
         try:
             fixes_module = importlib.import_module(
-                'esmvalcore.cmor._fixes.{0}.{1}'.format(project, dataset))
+                f'esmvalcore.cmor._fixes.{project}.{dataset}'
+            )
 
             classes = inspect.getmembers(fixes_module, inspect.isclass)
             classes = dict((name.lower(), value) for name, value in classes)
@@ -178,13 +186,15 @@ class Fix:
 
         Parameters
         ----------
-        var_path: str
-            Original path
+        output_dir: str
+            Output directory.
+        filepath: str
+            Original path.
 
         Returns
         -------
         str
-            Path to the fixed file
+            Path to the fixed file.
         """
         if not os.path.isdir(output_dir):
             os.makedirs(output_dir)

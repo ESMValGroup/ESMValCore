@@ -53,12 +53,22 @@ class AllVars(NativeDatasetFix):
     def _fix_time(self, cube):
         """Fix time coordinate of cube.
 
-        If possible, move time points to center of time period given by time
-        bounds (currently the points are located at the end of the interval).
+        For monthly data that does not correspond to point measurements, move
+        time points to center of time period given by time bounds (currently
+        the points are located at the end of the interval).
 
         """
+        # Only modify time points if data contains a time dimension, is monthly
+        # data, and does not describe point measurements.
         if 'time' not in self.vardef.dimensions:
             return
+        if self.extra_facets['frequency'] != 'mon':
+            return
+        for cell_method in cube.cell_methods:
+            if 'point' in cell_method.method:
+                return
+
+        # Fix time coordinate
         time_coord = cube.coord('time')
         if time_coord.bounds is not None:
             time_coord.points = time_coord.bounds.mean(axis=-1)
