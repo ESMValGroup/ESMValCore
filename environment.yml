@@ -7,24 +7,34 @@ dependencies:
   - cartopy
   - cf-units>=3.0.0,<3.1.0  # github.com/ESMValGroup/ESMValCore/issues/1655
   - cftime
+  - dask
   - compilers
-  # 1.8.18/py39, they seem weary to build manylinux wheels
-  # and pypi ver built with older gdal
-  - fiona
+  - esgf-pyclient>=0.3.1
   - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
+  - fiona
+  - fire
   - geopy
   - humanfriendly
   - iris>=3.2.1
   - isodate
+  - jinja2
+  - nc-time-axis
   - nested-lookup
   - netcdf4!=1.6.1  # github.com/ESMValGroup/ESMValCore/issues/1723
+  - numpy
   - pandas
   - pillow
   - pip!=21.3
   - prov
+  - psutil
+  - pybtex
   - python>=3.8
   - python-stratify
+  - pyyaml
+  - requests
   - scipy>=1.6
+  - shapely
+  - yamale
   # Python packages needed for building docs
   - autodocsumm>=0.2.2
   - sphinx>=5
