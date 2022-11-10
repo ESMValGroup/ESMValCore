@@ -733,38 +733,44 @@ class TaskSet(set):
     def _run_dask(self, cfg) -> None:
         """Run tasks using dask."""
         # Configure dask
-        client_args = cfg.get('dask', {}).get('client', {})
-        cluster_args = cfg.get('dask', {}).get('cluster', {})
-        cluster_type = cluster_args.pop(
-            'type',
-            'dask.distributed.LocalCluster',
-        )
-        cluster_scale = cluster_args.pop('scale', 1)
+        client_args = cfg.get('dask', {}).get('client', {}).copy()
+        cluster_args = cfg.get('dask', {}).get('cluster', {}).copy()
 
-        # STart cluster
-        cluster_module_name, cluster_cls_name = cluster_type.rsplit('.', 1)
-        cluster_module = importlib.import_module(cluster_module_name)
-        cluster_cls = getattr(cluster_module, cluster_cls_name)
-        cluster = cluster_cls(**cluster_args)
-        cluster.scale(cluster_scale)
+        if 'address' in client_args:
+            if cluster_args:
+                logger.warning(
+                    "Not using 'dask: cluster' settings because a cluster "
+                    "'address' is already provided in 'dask: client'.")
+        else:
+            # Start cluster
+            cluster_type = cluster_args.pop(
+                'type',
+                'dask.distributed.LocalCluster',
+            )
+            cluster_module_name, cluster_cls_name = cluster_type.rsplit('.', 1)
+            cluster_module = importlib.import_module(cluster_module_name)
+            cluster_cls = getattr(cluster_module, cluster_cls_name)
+            cluster = cluster_cls(**cluster_args)
+            client_args['address'] = cluster
 
         # Connect client and run computation
-        with dask.distributed.Client(cluster, **client_args) as client:
+        with dask.distributed.Client(**client_args) as client:
             logger.info(f"Dask dashboard: {client.dashboard_link}")
+            futures_to_files: dict[dask.distributed.Future, Path] = {}
             for task in sorted(self.flatten(), key=lambda t: t.priority):
                 if hasattr(task, 'delayeds'):
                     logger.info(f"Scheduling task {task.name}")
                     task.run()
                     logger.info(f"Computing task {task.name}")
-                    futures = client.compute(
+                    task_futures = client.compute(
                         list(task.delayeds.values()),
                         priority=-task.priority,
                     )
-                    future_map = dict(zip(futures, task.delayeds.keys()))
+                    futures_to_files.update(zip(task_futures, task.delayeds))
                 else:
                     logger.info(f"Skipping task {task.name}")
-            for future in dask.distributed.as_completed(futures):
-                filename = future_map[future]
+            for future in dask.distributed.as_completed(futures_to_files):
+                filename = futures_to_files[future]
                 logger.info(f"Wrote {filename}")
 
     def _run_sequential(self) -> None:
