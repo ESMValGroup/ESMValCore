@@ -21,6 +21,7 @@ on:
   push:
     branches:
       - main
+      - suppress_eager_pip_readthedocs
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
