@@ -13,6 +13,7 @@ dependencies:
   - fiona
   - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
   - geopy
+  - humanfriendly
   - iris>=3.2.1
   - isodate
   - nested-lookup
@@ -20,6 +21,7 @@ dependencies:
   - pandas
   - pillow
   - pip!=21.3
+  - prov
   - python>=3.8
   - python-stratify
   - scipy>=1.6
