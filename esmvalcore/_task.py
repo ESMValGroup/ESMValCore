@@ -736,7 +736,7 @@ class TaskSet(set):
     def _run_parallel(self, max_parallel_tasks=None):
         """Run tasks in parallel."""
         scheduled = self.flatten()
-        running: Dict[Type[BaseTask], Type[ApplyResult]] = {}
+        running: Dict[BaseTask, ApplyResult] = {}
 
         n_tasks = n_scheduled = len(scheduled)
         n_running = 0
