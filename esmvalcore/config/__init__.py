@@ -4,7 +4,7 @@
 
     ESMValCore configuration.
 
-    By default this will loaded from the file
+    By default this will be loaded from the file
     ``~/.esmvaltool/config-user.yml``.
 """
 

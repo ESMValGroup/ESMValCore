@@ -92,8 +92,9 @@ def _read_cmor_tables(cfg_file: Path, mtime: float) -> dict[str, CMORTable]:
     cfg_file: pathlib.Path
         Path to config-developer.yml file.
     mtime: float
-        Modification time of config-developer.yml file. Only used to
-        make sure the file is read again when it is changed.
+        Modification time of config-developer.yml file. Only used by the
+        `lru_cache` decorator to make sure the file is read again when it
+        is changed.
     """
     with cfg_file.open('r', encoding='utf-8') as file:
         cfg_developer = yaml.safe_load(file)
