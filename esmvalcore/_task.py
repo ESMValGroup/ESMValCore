@@ -13,7 +13,6 @@ import threading
 import time
 from copy import deepcopy
 from multiprocessing import Pool
-from multiprocessing.pool import ApplyResult
 from pathlib import Path, PosixPath
 from shutil import which
 
