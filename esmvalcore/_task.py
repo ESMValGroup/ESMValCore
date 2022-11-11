@@ -16,7 +16,7 @@ from multiprocessing import Pool
 from multiprocessing.pool import ApplyResult
 from pathlib import Path, PosixPath
 from shutil import which
-from typing import Dict, Type
+from typing import Dict
 
 import psutil
 import yaml
