@@ -765,7 +765,7 @@ Location of the extra facets files
 Extra facets files can be placed in several different places. When we use them
 to support a particular use-case within the ESMValTool project, they will be
 provided in the sub-folder `extra_facets` inside the package
-`esmvalcore.config`. If they are used from the user side, they can be either
+:mod:`esmvalcore.config`. If they are used from the user side, they can be either
 placed in `~/.esmvaltool/extra_facets` or in any other directory of the users
 choosing. In that case this directory must be added to the `config-user.yml`
 file under the `extra_facets_dir` setting, which can take a single directory or

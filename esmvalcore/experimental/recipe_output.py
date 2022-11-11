@@ -1,6 +1,7 @@
 """API for handing recipe output."""
 import base64
 import logging
+import warnings
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Optional, Tuple, Type
@@ -188,7 +189,10 @@ class RecipeOutput(Mapping):
         recipe_config = recipe_output['recipe_config']
         recipe_filename = recipe_output['recipe_filename']
 
-        session = Session.from_config_user(recipe_config)
+        with warnings.catch_warnings():
+            # ignore deprecation warning
+            warnings.simplefilter("ignore")
+            session = Session.from_config_user(recipe_config)
         info = RecipeInfo(recipe_data, filename=recipe_filename)
         info.resolve()
 

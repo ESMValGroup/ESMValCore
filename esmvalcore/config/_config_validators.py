@@ -5,7 +5,7 @@ import warnings
 from collections.abc import Iterable
 from functools import lru_cache
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 from esmvalcore import __version__ as current_version
 from esmvalcore.cmor.check import CheckLevels
@@ -229,7 +229,9 @@ def validate_check_level(value):
     return value
 
 
-def validate_diagnostics(diagnostics: Union[Iterable[str], str, None]):
+def validate_diagnostics(
+    diagnostics: Union[Iterable[str], str, None],
+) -> Optional[set[str]]:
     """Validate diagnostic location."""
     if diagnostics is None:
         return None
@@ -287,7 +289,6 @@ _validators = {
     'run_diagnostic': validate_bool,
     'output_file_type': validate_string,
     "offline": validate_bool,
-    "download_latest_datasets": validate_bool,
 
     # From CLI
     "resume_from": validate_pathlist,

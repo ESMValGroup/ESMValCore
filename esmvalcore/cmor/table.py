@@ -14,7 +14,7 @@ import warnings
 from collections import Counter
 from functools import lru_cache, total_ordering
 from pathlib import Path
-from typing import Dict, Optional, Type
+from typing import Optional, Union
 
 import yaml
 
@@ -22,7 +22,9 @@ from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 logger = logging.getLogger(__name__)
 
-CMOR_TABLES: Dict[str, Type['InfoBase']] = {}
+CMORTable = Union['CMIP3Info', 'CMIP5Info', 'CMIP6Info', 'CustomInfo']
+
+CMOR_TABLES: dict[str, CMORTable] = {}
 """dict of str, obj: CMOR info objects."""
 
 
@@ -41,7 +43,7 @@ def get_var_info(project, mip, short_name):
     return CMOR_TABLES[project].get_variable(mip, short_name)
 
 
-def read_cmor_tables(cfg_developer: Optional[Path] = None):
+def read_cmor_tables(cfg_developer: Optional[Path] = None) -> None:
     """Read cmor tables required in the configuration.
 
     Parameters
@@ -49,15 +51,15 @@ def read_cmor_tables(cfg_developer: Optional[Path] = None):
     cfg_developer:
         Path to config-developer.yml file.
 
-        Prior to v2.8 `cfg_developer` was an :obj:`dict` with the contents
+        Prior to v2.8.0 `cfg_developer` was an :obj:`dict` with the contents
         of config-developer.yml. This is deprecated and support will be
-        removed in v2.10.
+        removed in v2.10.0.
     """
     if isinstance(cfg_developer, dict):
         warnings.warn(
             "Using the `read_cmor_tables` file with a dictionary as argument "
-            "has been deprecated in ESMValCore version 2.8 and is scheduled "
-            "for removal in version 2.10.0."
+            "has been deprecated in ESMValCore version 2.8.0 and is "
+            "scheduled for removal in version 2.10.0. "
             "Please use the path to the config-developer.yml file instead.",
             ESMValCoreDeprecationWarning,
         )
@@ -82,7 +84,7 @@ def read_cmor_tables(cfg_developer: Optional[Path] = None):
 
 
 @lru_cache
-def _read_cmor_tables(cfg_file: Path, mtime: float):
+def _read_cmor_tables(cfg_file: Path, mtime: float) -> dict[str, CMORTable]:
     """Read cmor tables required in the configuration.
 
     Parameters
@@ -100,7 +102,7 @@ def _read_cmor_tables(cfg_file: Path, mtime: float):
     with open(var_alt_names_file, 'r') as yfile:
         alt_names = yaml.safe_load(yfile)
 
-    cmor_tables = {}
+    cmor_tables: dict[str, CMORTable] = {}
 
     # Try to infer location for custom tables from config-developer.yml file,
     # if not possible, use default location

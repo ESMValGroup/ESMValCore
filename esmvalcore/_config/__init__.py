@@ -1,8 +1,8 @@
 import warnings
 
-from .config import CFG
-from .config._logging import configure_logging
-from .exceptions import ESMValCoreDeprecationWarning
+from ..config import CFG
+from ..config._logging import configure_logging
+from ..exceptions import ESMValCoreDeprecationWarning
 
 __all__ = [
     'CFG',
@@ -12,7 +12,7 @@ __all__ = [
 
 warnings.warn(
     "The private module `esmvalcore._config` has been deprecated in "
-    "ESMValCore version 2.8 and is scheduled for removal in version 2.9.0. "
+    "ESMValCore version 2.8.0 and is scheduled for removal in version 2.9.0. "
     "Please use the public module `esmvalcore.config` instead.",
     ESMValCoreDeprecationWarning,
 )

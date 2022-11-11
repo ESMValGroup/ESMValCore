@@ -1,7 +1,7 @@
 Configuration
 =============
 
-This section describes the :py:class:`~esmvalcore.config` submodule of the API (:py:mod:`esmvalcore`).
+This section describes the :py:class:`~esmvalcore.config` module.
 
 Config
 ******
@@ -32,7 +32,7 @@ The global configuration can be imported from the :py:mod:`esmvalcore.config` mo
 
 The parameters for the user configuration file are listed :ref:`here <user configuration file>`.
 
-:py:data:`~esmvalcore.config.CFG` is essentially a python dictionary with a few extra functions, similar to :py:mod:`matplotlib.rcParams`.
+:py:data:`~esmvalcore.config.CFG` is essentially a python dictionary with a few extra functions, similar to :py:data:`matplotlib.rcParams`.
 This means that values can be updated like this:
 
 .. code-block:: python

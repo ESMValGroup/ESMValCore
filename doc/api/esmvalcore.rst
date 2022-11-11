@@ -7,6 +7,7 @@ ESMValCore is mostly used as a commandline tool. However, it is also possibly to
 library. This section documents the public API of ESMValCore.
 
 .. toctree::
+   :maxdepth: 1
 
    esmvalcore.cmor
    esmvalcore.config
