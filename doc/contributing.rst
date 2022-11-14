@@ -641,7 +641,7 @@ the following files:
   contains all Python dependencies, regardless of their installation source
 
 Note that packages may have a different name on
-`conda-forge <https://conda-forge.org/>`__ than on PyPI_.
+`conda-forge <https://conda-forge.org/>`__ than on `PyPI <https://pypi.org/>`_.
 
 Several test jobs on CircleCI_ related to the installation of the tool will only
 run if you change the dependencies.
