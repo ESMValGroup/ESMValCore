@@ -638,8 +638,7 @@ the following files:
   contains all the development dependencies; these are all from
   `conda-forge <https://conda-forge.org/>`_
 - ``setup.py``
-  contains all Python dependencies, regardless of their installation source, installed from
-  `PyPi <https://pypi.org/>`_
+  contains all Python dependencies, regardless of their installation source
 
 Note that packages may have a different name on
 `conda-forge <https://conda-forge.org/>`__ than on PyPI_.
