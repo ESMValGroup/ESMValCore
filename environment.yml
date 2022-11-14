@@ -51,7 +51,7 @@ dependencies:
   - pytest-mypy
   - pytest-mock
   - pytest-xdist
-  - ESMValTool_sample_data==0.0.3
+  # Not on conda-forge - ESMValTool_sample_data==0.0.3
   # Still for testing, MyPy library stubs
   - types-requests
   - types-pkg_resources
