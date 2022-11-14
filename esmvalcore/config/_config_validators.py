@@ -245,7 +245,7 @@ def validate_diagnostics(
     }
 
 
-def deprecate(func, variable, version: str = None):
+def deprecate(func, variable, version: Optional[str] = None):
     """Wrap function to mark variables to be deprecated.
 
     This will give a warning if the function will be/has been deprecated.
