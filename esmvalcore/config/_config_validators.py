@@ -1,4 +1,6 @@
 """List of config validators."""
+from __future__ import annotations
+
 import logging
 import os.path
 import warnings
