@@ -7,9 +7,9 @@ from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
 import esmvalcore.cmor._fixes.cesm.cesm2
-from esmvalcore._config import get_extra_facets
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
+from esmvalcore.config._config import get_extra_facets
 
 # Note: test_data_path is defined in tests/integration/cmor/_fixes/conftest.py
 

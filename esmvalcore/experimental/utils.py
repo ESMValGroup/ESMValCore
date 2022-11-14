@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from typing import Pattern, Tuple, Union
 
-from esmvalcore._config import DIAGNOSTICS
+from esmvalcore.config._diagnostics import DIAGNOSTICS
 
 from .recipe import Recipe
 

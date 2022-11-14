@@ -20,8 +20,8 @@ import psutil
 import yaml
 
 from ._citation import _write_citation_files
-from ._config import DIAGNOSTICS, TAGS
 from ._provenance import TrackedFile, get_task_provenance
+from .config._diagnostics import DIAGNOSTICS, TAGS
 
 
 def path_representer(dumper, data):
@@ -143,7 +143,7 @@ def _py2ncl(value, var_name=''):
     txt = var_name + ' = ' if var_name else ''
     if value is None:
         txt += '_Missing'
-    elif isinstance(value, str):
+    elif isinstance(value, (str, Path)):
         txt += '"{}"'.format(value)
     elif isinstance(value, (list, tuple)):
         if not value:
@@ -630,7 +630,7 @@ class DiagnosticTask(BaseTask):
                 attrs[key] = self.settings[key]
 
         ancestor_products = {
-            p.filename: p
+            str(p.filename): p
             for a in self.ancestors for p in a.products
         }
 
