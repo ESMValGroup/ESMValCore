@@ -118,7 +118,7 @@ class RecipeOutput(Mapping):
         Dictionary with recipe output grouped by diagnostic.
     info : RecipeInfo
         The recipe used to create the output.
-    session : Session
+    session : esmvalcore.config.Session
         The session used to run the recipe.
     """
 
@@ -172,10 +172,7 @@ class RecipeOutput(Mapping):
         """Construct instance from `_recipe.Recipe` output.
 
         The core recipe format is not directly compatible with the API. This
-        constructor does the following:
-
-        1. Convert `config-user` dict to an instance of :obj:`Session`
-        2. Converts the raw recipe dict to :obj:`RecipeInfo`
+        constructor converts the raw recipe dict to :obj:`RecipeInfo`
 
         Parameters
         ----------

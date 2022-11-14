@@ -8,6 +8,7 @@ The experimental API module is available in the submodule ``esmvalcore.experimen
 The API is under development, so use at your own risk!
 
 .. toctree::
+   :maxdepth: 1
 
    esmvalcore.experimental.config
    esmvalcore.experimental.recipe

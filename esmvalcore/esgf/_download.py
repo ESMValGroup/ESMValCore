@@ -176,7 +176,7 @@ def sort_hosts(urls):
 class ESGFFile:
     """File on the ESGF.
 
-    This is the object returned by the function :func:`esmvalcore.esgf.search`.
+    This is the object returned by :func:`esmvalcore.esgf.find_files`.
 
     Attributes
     ----------

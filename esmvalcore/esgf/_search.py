@@ -190,7 +190,7 @@ def find_files(*, project, short_name, dataset, **facets):
 
     Examples
     --------
-    Examples of how to use the find_files function for all supported projects.
+    Examples of how to use this function for all supported projects.
 
     Search for a CMIP3 dataset:
 
