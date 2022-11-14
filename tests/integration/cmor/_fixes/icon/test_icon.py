@@ -9,10 +9,10 @@ from iris import NameConstraint
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
-from esmvalcore._config import get_extra_facets
 from esmvalcore.cmor._fixes.icon.icon import AllVars, Siconc, Siconca
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
+from esmvalcore.config._config import get_extra_facets
 
 # Note: test_data_path is defined in tests/integration/cmor/_fixes/conftest.py
 

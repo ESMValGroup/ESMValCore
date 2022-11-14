@@ -6,13 +6,13 @@ from functools import lru_cache
 import pyesgf.search
 import requests.exceptions
 
-from .._config._esgf_pyclient import get_esgf_config
 from .._data_finder import (
     _get_timerange_from_years,
     _parse_period,
     _truncate_dates,
     get_start_end_date,
 )
+from ..config._esgf_pyclient import get_esgf_config
 from ._download import ESGFFile
 from .facets import DATASET_MAP, FACETS
 
