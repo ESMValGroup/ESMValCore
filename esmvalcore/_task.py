@@ -13,10 +13,8 @@ import threading
 import time
 from copy import deepcopy
 from multiprocessing import Pool
-from multiprocessing.pool import ApplyResult
 from pathlib import Path, PosixPath
 from shutil import which
-from typing import Dict, Type
 
 import psutil
 import yaml
@@ -736,7 +734,7 @@ class TaskSet(set):
     def _run_parallel(self, max_parallel_tasks=None):
         """Run tasks in parallel."""
         scheduled = self.flatten()
-        running: Dict[Type[BaseTask], Type[ApplyResult]] = {}
+        running = {}
 
         n_tasks = n_scheduled = len(scheduled)
         n_running = 0
