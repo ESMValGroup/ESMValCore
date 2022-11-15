@@ -20,6 +20,7 @@ dependencies:
   - iris>=3.2.1
   - isodate
   - jinja2
+  - mypy>=0.990
   - nc-time-axis
   - nested-lookup
   - netcdf4!=1.6.1  # github.com/ESMValGroup/ESMValCore/issues/1723
