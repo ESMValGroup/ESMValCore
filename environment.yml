@@ -10,7 +10,7 @@ dependencies:
   - cftime
   - dask
   - compilers
-  - esgf-pyclient>=0.3.1
+  # conda-forge esgf-pyclient>=0.3.1 has issues for Python=3.8 and 3.9
   - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
   - fiona
   - fire
