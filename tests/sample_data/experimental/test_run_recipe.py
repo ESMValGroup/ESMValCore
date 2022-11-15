@@ -47,14 +47,13 @@ def test_run_recipe(task, recipe, tmp_path):
     """
     TAGS.set_tag_values(AUTHOR_TAGS)
 
-    CFG['output_dir'] = tmp_path
-
     assert isinstance(recipe, Recipe)
     assert isinstance(recipe._repr_html_(), str)
 
     session = CFG.start_session(recipe.path.stem)
     session.clear()
     session.update(CFG_DEFAULT)
+    session['output_dir'] = tmp_path / 'esmvaltool_output'
     session.update(esmvaltool_sample_data.get_rootpaths())
     session['drs'] = {'CMIP6': 'SYNDA'}
     session['max_parallel_tasks'] = 1
