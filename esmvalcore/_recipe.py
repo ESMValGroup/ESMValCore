@@ -16,13 +16,6 @@ from netCDF4 import Dataset
 from . import __version__
 from . import _recipe_checks as check
 from . import esgf
-from ._config import (
-    TAGS,
-    get_activity,
-    get_extra_facets,
-    get_institutes,
-    get_project_config,
-)
 from ._data_finder import (
     _find_input_files,
     _get_timerange_from_years,
@@ -38,6 +31,13 @@ from ._provenance import TrackedFile, get_recipe_provenance
 from ._task import DiagnosticTask, ResumeTask, TaskSet
 from .cmor.check import CheckLevels
 from .cmor.table import CMOR_TABLES
+from .config._config import (
+    get_activity,
+    get_extra_facets,
+    get_institutes,
+    get_project_config,
+)
+from .config._diagnostics import TAGS
 from .exceptions import InputFilesNotFound, RecipeError
 from .preprocessor import (
     DEFAULT_ORDER,

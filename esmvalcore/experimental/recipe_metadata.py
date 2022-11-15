@@ -1,9 +1,11 @@
 """API for recipe metadata."""
 
+from typing import Optional
+
 import pybtex
 from pybtex.database.input import bibtex
 
-from esmvalcore._config import DIAGNOSTICS, TAGS
+from esmvalcore.config._diagnostics import DIAGNOSTICS, TAGS
 
 
 class RenderError(BaseException):
@@ -23,7 +25,7 @@ class Contributor:
         ORCID url
     """
 
-    def __init__(self, name: str, institute: str, orcid: str = None):
+    def __init__(self, name: str, institute: str, orcid: Optional[str] = None):
         self.name = name
         self.institute = institute
         self.orcid = orcid

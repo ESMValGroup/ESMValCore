@@ -34,6 +34,8 @@ jobs:
       - shell: bash -l {0}
         run: pip install -e .[develop] 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/install.txt
       - shell: bash -l {0}
+        run: flake8
+      - shell: bash -l {0}
         run: pytest -n 2 -m "not installation and not sequential" 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - shell: bash -l {0}
         run: pytest -n 0 -m "sequential"
@@ -72,6 +74,8 @@ jobs:
         run: python -V 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
       - shell: bash -l {0}
         run: pip install -e .[develop] 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/install.txt
+      - shell: bash -l {0}
+        run: flake8
       - shell: bash -l {0}
         run: pytest -n 2 -m "not installation and not sequential" 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - shell: bash -l {0}

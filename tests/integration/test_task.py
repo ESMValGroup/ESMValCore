@@ -7,7 +7,6 @@ from multiprocessing.pool import ThreadPool
 import pytest
 
 import esmvalcore
-from esmvalcore._config import DIAGNOSTICS
 from esmvalcore._task import (
     BaseTask,
     DiagnosticError,
@@ -15,6 +14,7 @@ from esmvalcore._task import (
     TaskSet,
     _py2ncl,
 )
+from esmvalcore.config._diagnostics import DIAGNOSTICS
 
 
 class MockBaseTask(BaseTask):

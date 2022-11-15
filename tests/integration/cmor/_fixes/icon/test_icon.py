@@ -9,10 +9,10 @@ from iris import NameConstraint
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
-from esmvalcore._config import get_extra_facets
 from esmvalcore.cmor._fixes.icon.icon import AllVars, Siconc, Siconca
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
+from esmvalcore.config._config import get_extra_facets
 
 # Note: test_data_path is defined in tests/integration/cmor/_fixes/conftest.py
 
@@ -1168,14 +1168,6 @@ def test_var_not_available_pr(cubes_2d):
     msg = "Variable 'pr' used to extract 'pr' is not available in input file"
     with pytest.raises(ValueError, match=msg):
         fix.fix_metadata(cubes_2d)
-
-
-def test_var_not_available_ps(cubes_2d):
-    """Test fix."""
-    fix = get_allvars_fix('Amon', 'ps')
-    msg = "Variable 'x' used to extract 'ps' is not available in input file"
-    with pytest.raises(ValueError, match=msg):
-        fix.get_cube(cubes_2d, var_name='x')
 
 
 # Test fix with invalid time units

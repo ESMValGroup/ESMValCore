@@ -7,8 +7,8 @@ import pytest
 import yaml
 
 import esmvalcore._task
-from esmvalcore._config._diagnostics import TagsManager
 from esmvalcore._task import DiagnosticError, write_ncl_settings
+from esmvalcore.config._diagnostics import TagsManager
 
 
 def test_write_ncl_settings(tmp_path):
@@ -45,7 +45,7 @@ def test_initialize_env(ext, tmp_path, monkeypatch):
                         lambda self: None)
 
     esmvaltool_path = tmp_path / 'esmvaltool'
-    monkeypatch.setattr(esmvalcore._config.DIAGNOSTICS, 'path',
+    monkeypatch.setattr(esmvalcore.config._diagnostics.DIAGNOSTICS, 'path',
                         esmvaltool_path)
 
     diagnostics_path = esmvaltool_path / 'diag_scripts'

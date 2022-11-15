@@ -134,7 +134,6 @@ def load(file, callback=None, ignore_warnings=None):
     ------
     ValueError
         Cubes are empty.
-
     """
     logger.debug("Loading:\n%s", file)
     if ignore_warnings is None:
@@ -501,6 +500,9 @@ def _concatenate_overlapping_cubes(cubes):
                                     data_start_1.month, data_start_1.day,
                                     start_overlap.year, start_overlap.month,
                                     start_overlap.day)
+            # convert c1_delta scalar cube to vector cube, if needed
+            if c1_delta.data.shape == ():
+                c1_delta = iris.util.new_axis(c1_delta, scalar_coord="time")
             cubes = iris.cube.CubeList([c1_delta, cubes[1]])
             logger.debug("Attempting concatenatenation of %s with %s",
                          c1_delta, cubes[1])

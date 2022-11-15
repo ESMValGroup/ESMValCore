@@ -1,6 +1,7 @@
 """Unit tests for the :func:`esmvalcore.preprocessor._time` module."""
 
 import copy
+import re
 import unittest
 from datetime import datetime
 from typing import List, Tuple
@@ -147,6 +148,7 @@ class TestTimeSlice(tests.Test):
 
     def test_extract_time_no_slice(self):
         """Test fail of extract_time."""
+        self.cube.coord('time').guess_bounds()
         with self.assertRaises(ValueError) as ctx:
             extract_time(self.cube, 2200, 1, 1, 2200, 12, 31)
         msg = ("Time slice 2200-01-01 to 2200-12-31 is outside"
@@ -200,18 +202,16 @@ class TestClipTimerange(tests.Test):
 
     def test_clip_timerange_no_slice(self):
         """Test fail of clip_timerange."""
-        with self.assertRaises(ValueError) as ctx:
-            clip_timerange(self.cube, '2200/2200')
-        msg = ("Time slice 2200-01-01 to 2201-01-01 is outside"
+        self.cube.coord('time').guess_bounds()
+        msg = ("Time slice 2200-01-01 01:00:00 to 2201-01-01 is outside"
                " cube time bounds 1950-01-16 00:00:00 to 1951-12-07 00:00:00.")
         with self.assertRaises(ValueError) as ctx:
-            clip_timerange(self.cube, '2200/2200')
+            clip_timerange(self.cube, '22000101T010000/2200')
         assert ctx.exception.args == (msg, )
 
     def test_clip_timerange_one_time(self):
         """Test clip_timerange with one time step."""
         cube = _create_sample_cube()
-        cube.coord('time').guess_bounds()
         cube = cube.collapsed('time', iris.analysis.MEAN)
         sliced = clip_timerange(cube, '1950/1952')
         assert_array_equal(np.array([360.]), sliced.coord('time').points)
@@ -864,6 +864,24 @@ class TestSeasonalStatistics(tests.Test):
         self.assertEqual(result.cell_measure('ocean_volume').ndim, 2)
         self.assertEqual(
             result.ancillary_variable('land_ice_area_fraction').ndim, 2)
+
+    def test_season_not_available(self):
+        """Test that an exception is raised if a season is not available."""
+        data = np.arange(12)
+        times = np.arange(15, 360, 30)
+        cube = self._create_cube(data, times)
+        iris.coord_categorisation.add_season(
+            cube,
+            'time',
+            name='clim_season',
+            seasons=['JFMAMJ', 'JASOND'],
+        )
+        msg = (
+            "Seasons ('DJF', 'MAM', 'JJA', 'SON') do not match prior season "
+            "extraction ['JASOND', 'JFMAMJ']."
+        )
+        with pytest.raises(ValueError, match=re.escape(msg)):
+            seasonal_statistics(cube, 'mean')
 
 
 class TestMonthlyStatistics(tests.Test):
@@ -1991,9 +2009,18 @@ class TestResampleHours(tests.Test):
         with self.assertRaises(ValueError):
             resample_hours(cube, interval=12)
 
+    def test_resample_nodata(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 4, 1)
+        times = np.arange(0, 4, 1)
+        cube = self._create_cube(data, times)
+
+        with self.assertRaises(ValueError):
+            resample_hours(cube, offset=5, interval=6)
+
 
 class TestResampleTime(tests.Test):
-    """Test :func:`esmvalcore.preprocessor._time.resample_hours`."""
+    """Test :func:`esmvalcore.preprocessor._time.resample_time`."""
     @staticmethod
     def _create_cube(data, times):
         time = iris.coords.DimCoord(times,
@@ -2012,6 +2039,17 @@ class TestResampleTime(tests.Test):
 
         result = resample_time(cube, hour=12)
         expected = np.arange(12, 48, 24)
+        assert_array_equal(result.data, expected)
+
+    def test_scalar_cube(self):
+        """Test average of a 1D field."""
+        data = np.arange(0, 2, 1)
+        times = np.arange(0, 2, 1)
+        cube = self._create_cube(data, times)
+        cube = cube[0]
+
+        result = resample_time(cube, hour=0)
+        expected = np.zeros((1,))
         assert_array_equal(result.data, expected)
 
     def test_resample_hourly_to_monthly(self):
@@ -2036,6 +2074,25 @@ class TestResampleTime(tests.Test):
             44 * 24,
         ])
         assert_array_equal(result.data, expected)
+
+    def test_resample_fails(self):
+        """Test that selecting something that is not in the data fails."""
+        data = np.arange(0, 15 * 24, 24)
+        times = np.arange(0, 15 * 24, 24)
+        cube = self._create_cube(data, times)
+
+        with pytest.raises(ValueError):
+            resample_time(cube, day=16)
+
+    def test_resample_fails_scalar(self):
+        """Test that selecting something that is not in the data fails."""
+        data = np.arange(0, 2 * 24, 24)
+        times = np.arange(0, 2 * 24, 24)
+        cube = self._create_cube(data, times)
+        cube = cube[0]
+
+        with pytest.raises(ValueError):
+            resample_time(cube, day=16)
 
 
 if __name__ == '__main__':

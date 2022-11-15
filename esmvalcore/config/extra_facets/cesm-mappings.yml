@@ -1,0 +1,30 @@
+# Extra facets for native CESM model output
+
+# Notes:
+# - All facets can also be specified in the recipes. The values given here are
+#   only defaults.
+# - The facets ``gcomp``, ``scomp``, ``string``, ``tdir``, and ``tperiod`` have
+#   to be specified in the recipe if they are not given here and default DRS is
+#   used.
+
+# A complete list of supported keys is given in the documentation (see
+# ESMValCore/doc/quickstart/find_data.rst).
+---
+
+CESM2:
+
+  '*':
+    # Optional facets for every variable
+    # It is necessary to define them here to allow multiple file/dir name
+    # conventions, see
+    # https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html
+    '*':
+      string: ''
+      tdir: ''
+      tperiod: ''
+
+    # Default facets for variables
+    tas:
+      raw_name: TREFHT
+      gcomp: atm
+      scomp: cam

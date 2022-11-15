@@ -1,6 +1,6 @@
 import pytest
 
-from esmvalcore._config import DIAGNOSTICS, TAGS
+from esmvalcore.config._diagnostics import DIAGNOSTICS, TAGS
 from esmvalcore.experimental.recipe import Recipe
 from esmvalcore.experimental.utils import (
     RecipeList,

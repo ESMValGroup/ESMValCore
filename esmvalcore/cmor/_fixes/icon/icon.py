@@ -14,8 +14,7 @@ from iris.cube import CubeList
 
 from esmvalcore.iris_helpers import add_leading_dim_to_cube, date2num
 
-from ..shared import add_scalar_height_coord, add_scalar_typesi_coord
-from ._base_fixes import IconFix
+from ._base_fixes import IconFix, SetUnitsTo1
 
 logger = logging.getLogger(__name__)
 
@@ -69,10 +68,10 @@ class AllVars(IconFix):
             self._fix_unstructured_cell_index(cube, lat_idx)
 
         # Fix scalar coordinates
-        self._fix_scalar_coords(cube)
+        self.fix_scalar_coords(cube)
 
         # Fix metadata of variable
-        self._fix_var_metadata(cube)
+        self.fix_var_metadata(cube)
 
         return CubeList([cube])
 
@@ -148,142 +147,7 @@ class AllVars(IconFix):
             f"'{self.vardef.short_name}', cube and other cubes in file do not "
             f"contain it")
 
-    def _fix_lat(self, cube):
-        """Fix latitude coordinate of cube."""
-        lat_name = self.extra_facets.get('latitude', 'latitude')
-
-        # Add latitude coordinate if not already present
-        if not cube.coords(lat_name):
-            try:
-                self._add_coord_from_grid_file(cube, 'grid_latitude', lat_name)
-            except Exception as exc:
-                msg = "Failed to add missing latitude coordinate to cube"
-                raise ValueError(msg) from exc
-
-        # Fix metadata
-        lat = cube.coord(lat_name)
-        lat.var_name = 'lat'
-        lat.standard_name = 'latitude'
-        lat.long_name = 'latitude'
-        lat.convert_units('degrees_north')
-
-        return cube.coord_dims(lat)
-
-    def _fix_lon(self, cube):
-        """Fix longitude coordinate of cube."""
-        lon_name = self.extra_facets.get('longitude', 'longitude')
-
-        # Add longitude coordinate if not already present
-        if not cube.coords(lon_name):
-            try:
-                self._add_coord_from_grid_file(
-                    cube, 'grid_longitude', lon_name)
-            except Exception as exc:
-                msg = "Failed to add missing longitude coordinate to cube"
-                raise ValueError(msg) from exc
-
-        # Fix metadata
-        lon = cube.coord(lon_name)
-        lon.var_name = 'lon'
-        lon.standard_name = 'longitude'
-        lon.long_name = 'longitude'
-        lon.convert_units('degrees_east')
-
-        return cube.coord_dims(lon)
-
-    def _fix_scalar_coords(self, cube):
-        """Fix scalar coordinates."""
-        if 'height2m' in self.vardef.dimensions:
-            add_scalar_height_coord(cube, 2.0)
-        if 'height10m' in self.vardef.dimensions:
-            add_scalar_height_coord(cube, 10.0)
-        if 'typesi' in self.vardef.dimensions:
-            add_scalar_typesi_coord(cube, 'sea_ice')
-
-    def _fix_time(self, cube, cubes):
-        """Fix time coordinate of cube."""
-        # Add time coordinate if not already present
-        if not cube.coords('time'):
-            cube = self._add_time(cube, cubes)
-
-        # Fix metadata
-        time_coord = cube.coord('time')
-        time_coord.var_name = 'time'
-        time_coord.standard_name = 'time'
-        time_coord.long_name = 'time'
-
-        # Add bounds if possible (not possible if cube only contains single
-        # time point)
-        if not time_coord.has_bounds():
-            try:
-                time_coord.guess_bounds()
-            except ValueError:
-                pass
-
-        if 'invalid_units' not in time_coord.attributes:
-            return cube
-
-        # If necessary, convert invalid time units of the form "day as
-        # %Y%m%d.%f" to CF format (e.g., "days since 1850-01-01")
-        # Notes:
-        # - It might be necessary to expand this to other time formats in the
-        #   raw file.
-        # - This has not been tested with sub-daily data
-        time_format = 'day as %Y%m%d.%f'
-        t_unit = time_coord.attributes.pop('invalid_units')
-        if t_unit != time_format:
-            raise ValueError(
-                f"Expected time units '{time_format}' in input file, got "
-                f"'{t_unit}'")
-        new_t_unit = cf_units.Unit('days since 1850-01-01',
-                                   calendar='proleptic_gregorian')
-
-        new_datetimes = [datetime.strptime(str(dt), '%Y%m%d.%f') for dt in
-                         time_coord.points]
-        new_dt_points = date2num(np.array(new_datetimes), new_t_unit)
-
-        time_coord.points = new_dt_points
-        time_coord.units = new_t_unit
-
-        return cube
-
-    def _fix_var_metadata(self, cube):
-        """Fix metadata of variable."""
-        if self.vardef.standard_name == '':
-            cube.standard_name = None
-        else:
-            cube.standard_name = self.vardef.standard_name
-        cube.var_name = self.vardef.short_name
-        cube.long_name = self.vardef.long_name
-        if cube.units != self.vardef.units:
-            cube.convert_units(self.vardef.units)
-        if self.vardef.positive != '':
-            cube.attributes['positive'] = self.vardef.positive
-
-    @staticmethod
-    def _cell_index_needs_fixing(lat_idx, lon_idx):
-        """Check if cell index coordinate of unstructured grid needs fixing."""
-        # If either latitude or longitude are not present (i.e., the
-        # corresponding index is None), no fix is necessary
-        if lat_idx is None:
-            return False
-        if lon_idx is None:
-            return False
-
-        # If latitude and longitude do not share their dimensions, no fix is
-        # necessary
-        if lat_idx != lon_idx:
-            return False
-
-        # If latitude and longitude are multi-dimensional (i.e., curvilinear
-        # instead of unstructured grid is given), no fix is necessary
-        if len(lat_idx) != 1:
-            return False
-
-        return True
-
-    @staticmethod
-    def _fix_height(cube, cubes):
+    def _fix_height(self, cube, cubes):
         """Fix height coordinate of cube."""
         # Reverse entire cube along height axis so that index 0 is surface
         # level
@@ -327,27 +191,110 @@ class AllVars(IconFix):
         # Fix metadata
         z_coord = cube.coord('height')
         if z_coord.units.is_convertible('m'):
-            z_metadata = {
-                'var_name': 'height',
-                'standard_name': 'height',
-                'long_name': 'height',
-                'attributes': {'positive': 'up'},
-            }
-            z_coord.convert_units('m')
+            self.fix_height_metadata(cube, z_coord)
         else:
-            z_metadata = {
-                'var_name': 'model_level',
-                'standard_name': None,
-                'long_name': 'model level number',
-                'units': 'no unit',
-                'attributes': {'positive': 'up'},
-                'points': np.arange(len(z_coord.points)),
-                'bounds': None,
-            }
-        for (attr, val) in z_metadata.items():
-            setattr(z_coord, attr, val)
+            z_coord.var_name = 'model_level'
+            z_coord.standard_name = None
+            z_coord.long_name = 'model level number'
+            z_coord.units = 'no unit'
+            z_coord.attributes['positive'] = 'up'
+            z_coord.points = np.arange(len(z_coord.points))
+            z_coord.bounds = None
 
         return cube
+
+    def _fix_lat(self, cube):
+        """Fix latitude coordinate of cube."""
+        lat_name = self.extra_facets.get('latitude', 'latitude')
+
+        # Add latitude coordinate if not already present
+        if not cube.coords(lat_name):
+            try:
+                self._add_coord_from_grid_file(cube, 'grid_latitude', lat_name)
+            except Exception as exc:
+                msg = "Failed to add missing latitude coordinate to cube"
+                raise ValueError(msg) from exc
+
+        # Fix metadata
+        lat = self.fix_lat_metadata(cube, lat_name)
+
+        return cube.coord_dims(lat)
+
+    def _fix_lon(self, cube):
+        """Fix longitude coordinate of cube."""
+        lon_name = self.extra_facets.get('longitude', 'longitude')
+
+        # Add longitude coordinate if not already present
+        if not cube.coords(lon_name):
+            try:
+                self._add_coord_from_grid_file(
+                    cube, 'grid_longitude', lon_name)
+            except Exception as exc:
+                msg = "Failed to add missing longitude coordinate to cube"
+                raise ValueError(msg) from exc
+
+        # Fix metadata
+        lon = self.fix_lon_metadata(cube, lon_name)
+
+        return cube.coord_dims(lon)
+
+    def _fix_time(self, cube, cubes):
+        """Fix time coordinate of cube."""
+        # Add time coordinate if not already present
+        if not cube.coords('time'):
+            cube = self._add_time(cube, cubes)
+
+        # Fix metadata and add bounds
+        time_coord = self.fix_time_metadata(cube)
+        self.guess_coord_bounds(cube, time_coord)
+        if 'invalid_units' not in time_coord.attributes:
+            return cube
+
+        # If necessary, convert invalid time units of the form "day as
+        # %Y%m%d.%f" to CF format (e.g., "days since 1850-01-01")
+        # Notes:
+        # - It might be necessary to expand this to other time formats in the
+        #   raw file.
+        # - This has not been tested with sub-daily data
+        time_format = 'day as %Y%m%d.%f'
+        t_unit = time_coord.attributes.pop('invalid_units')
+        if t_unit != time_format:
+            raise ValueError(
+                f"Expected time units '{time_format}' in input file, got "
+                f"'{t_unit}'")
+        new_t_unit = cf_units.Unit('days since 1850-01-01',
+                                   calendar='proleptic_gregorian')
+
+        new_datetimes = [datetime.strptime(str(dt), '%Y%m%d.%f') for dt in
+                         time_coord.points]
+        new_dt_points = date2num(np.array(new_datetimes), new_t_unit)
+
+        time_coord.points = new_dt_points
+        time_coord.units = new_t_unit
+
+        return cube
+
+    @staticmethod
+    def _cell_index_needs_fixing(lat_idx, lon_idx):
+        """Check if cell index coordinate of unstructured grid needs fixing."""
+        # If either latitude or longitude are not present (i.e., the
+        # corresponding index is None), no fix is necessary
+        if lat_idx is None:
+            return False
+        if lon_idx is None:
+            return False
+
+        # If latitude and longitude do not share their dimensions, no fix is
+        # necessary
+        if lat_idx != lon_idx:
+            return False
+
+        # If latitude and longitude are multi-dimensional (i.e., curvilinear
+        # instead of unstructured grid is given), no fix is necessary
+        if len(lat_idx) != 1:
+            return False
+
+        return True
 
     @staticmethod
     def _fix_unstructured_cell_index(cube, horizontal_idx):
@@ -365,23 +312,10 @@ class AllVars(IconFix):
         cube.add_dim_coord(index_coord, horizontal_idx)
 
 
-class Siconc(IconFix):
-    """Fixes for ``siconc``."""
-
-    def fix_metadata(self, cubes):
-        """Fix metadata.
-
-        Note
-        ----
-        This fix is called before the AllVars() fix. The wrong var_name and
-        units (which need to be %) are fixed in a later step in AllVars(). This
-        fix here is necessary to fix the "unknown" units that cannot be
-        converted to % in AllVars().
-
-        """
-        cube = self.get_cube(cubes)
-        cube.units = '1'
-        return cubes
+Hur = SetUnitsTo1
 
 
-Siconca = Siconc
+Siconc = SetUnitsTo1
+
+
+Siconca = SetUnitsTo1

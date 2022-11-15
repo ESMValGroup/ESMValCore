@@ -1,0 +1,69 @@
+# Extra facets for native ICON model output
+
+# Notes:
+# - All facets can also be specified in the recipes. The values given here are
+#   only defaults.
+# - The facet ``var_type`` has to be specified in the recipe if it is not given
+#   here and default DRS is used.
+
+# A complete list of supported keys is given in the documentation (see
+# ESMValCore/doc/quickstart/find_data.rst).
+---
+
+ICON:
+
+  '*':
+    # Cell measures
+    areacella:
+      latitude: grid_latitude
+      longitude: grid_longitude
+      raw_name: cell_area
+    areacello:
+      latitude: grid_latitude
+      longitude: grid_longitude
+      raw_name: cell_area
+
+    # 2D dynamical/meteorological variables
+    clivi: {var_type: atm_2d_ml}
+    clt: {var_type: atm_2d_ml}
+    clwvi: {raw_name: cllvi, var_type: atm_2d_ml}
+    evspsbl: {var_type: atm_2d_ml}
+    hfls: {var_type: atm_2d_ml}
+    hfss: {var_type: atm_2d_ml}
+    pr: {var_type: atm_2d_ml}
+    prw: {var_type: atm_2d_ml}
+    ps: {var_type: atm_2d_ml}
+    psl: {var_type: atm_2d_ml}
+    rlds: {var_type: atm_2d_ml}
+    rldscs: {var_type: atm_2d_ml}
+    rlus: {var_type: atm_2d_ml}
+    rlut: {var_type: atm_2d_ml}
+    rlutcs: {var_type: atm_2d_ml}
+    rsds: {var_type: atm_2d_ml}
+    rsdscs: {var_type: atm_2d_ml}
+    rsdt: {var_type: atm_2d_ml}
+    rsus: {var_type: atm_2d_ml}
+    rsuscs: {var_type: atm_2d_ml}
+    rsut: {var_type: atm_2d_ml}
+    rsutcs: {var_type: atm_2d_ml}
+    siconc: {raw_name: sic, var_type: atm_2d_ml}
+    siconca: {raw_name: sic, var_type: atm_2d_ml}
+    tas: {var_type: atm_2d_ml}
+    tasmax: {var_type: atm_2d_ml}
+    tasmin: {var_type: atm_2d_ml}
+    tauu: {var_type: atm_2d_ml}
+    tauv: {var_type: atm_2d_ml}
+    ts: {var_type: atm_2d_ml}
+    uas: {var_type: atm_2d_ml}
+    vas: {var_type: atm_2d_ml}
+
+    # 3D dynamical/meteorological variables
+    cl: {var_type: atm_3d_ml}
+    cli: {var_type: atm_3d_ml}
+    clw: {var_type: atm_3d_ml}
+    hur: {var_type: atm_3d_ml}
+    hus: {var_type: atm_3d_ml}
+    ta: {var_type: atm_3d_ml}
+    ua: {var_type: atm_3d_ml}
+    va: {var_type: atm_3d_ml}
+    wap: {var_type: atm_3d_ml}

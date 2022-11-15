@@ -23,6 +23,7 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Cycles`
 * :ref:`Trend`
 * :ref:`Detrend`
+* :ref:`Rolling window statistics`
 * :ref:`Unit conversion`
 * :ref:`Bias`
 * :ref:`Other`
@@ -393,15 +394,6 @@ The vertical interpolation currently supports the following schemes:
 * ``nearest_extrapolate``: Nearest-neighbour interpolation with nearest-neighbour
   extrapolation, i.e., extrapolation points will take their value from the
   nearest source point.
-
-.. note::
-   Previous versions of ESMValCore (<2.5.0) supported the schemes
-   ``linear_horizontal_extrapolate_vertical`` and
-   ``nearest_horizontal_extrapolate_vertical``. These schemes have been renamed
-   to ``linear_extrapolate`` and ``nearest_extrapolate``, respectively, in
-   version 2.5.0 and are identical to the new schemes. Support for the old
-   names will be removed in version 2.7.0.
-
 * See also :func:`esmvalcore.preprocessor.extract_levels`.
 * See also :func:`esmvalcore.preprocessor.get_cmor_levels`.
 
@@ -1969,6 +1961,36 @@ If method is ``constant``, detrend will compute the mean along that dimension
 and subtract it from the data
 
 See also :func:`esmvalcore.preprocessor.detrend`.
+
+.. _rolling window statistics:
+
+Rolling window statistics
+=========================
+
+One can calculate rolling window statistics using the 
+preprocessor function ``rolling_window_statistics``. 
+This function takes three parameters:
+
+* ``coordinate``: coordinate over which the rolling-window statistics is 
+  calculated.
+
+* ``operator``: operation to apply. Accepted values are 'mean', 'median',
+  'std_dev', 'min', 'max' and 'sum'.
+
+* ``window_length``: size of the rolling window to use (number of points).
+
+This example applied on daily precipitation data calculates two-day rolling
+precipitation sum. 
+
+.. code-block:: yaml
+
+  preprocessors:
+    preproc_rolling_window: 
+      coordinate: time
+      operator: sum
+      window_length: 2
+
+See also :func:`esmvalcore.preprocessor.rolling_window_statistics`.
 
 
 .. _unit conversion:

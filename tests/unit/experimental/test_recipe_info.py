@@ -2,8 +2,7 @@ import textwrap
 from pathlib import Path
 
 import esmvalcore
-from esmvalcore._config import TAGS
-from esmvalcore._config._diagnostics import Diagnostics
+from esmvalcore.config._diagnostics import TAGS, Diagnostics
 from esmvalcore.experimental.recipe_info import (
     Contributor,
     Project,

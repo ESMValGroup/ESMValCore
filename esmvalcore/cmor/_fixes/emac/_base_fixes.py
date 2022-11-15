@@ -5,30 +5,32 @@ import logging
 from iris import NameConstraint
 from iris.exceptions import ConstraintMismatchError
 
-from ..fix import Fix
+from ..native_datasets import NativeDatasetFix
 
 logger = logging.getLogger(__name__)
 
 
-class EmacFix(Fix):
+class EmacFix(NativeDatasetFix):
     """Base class for all EMAC fixes."""
 
-    def get_cube(self, cubes, var_names=None):
+    def get_cube(self, cubes, var_name=None):
         """Extract single cube."""
-        # If no var_names given, use the CMOR short_name
-        if var_names is None:
-            var_names = self.extra_facets.get('raw_name',
-                                              self.vardef.short_name)
+        # If no var_name given, use the CMOR short_name
+        if var_name is None:
+            var_name = self.extra_facets.get('raw_name',
+                                             self.vardef.short_name)
 
-        # Convert var_names to list if only a single var_name is given
-        if isinstance(var_names, str):
-            var_names = [var_names]
+        # Convert to list if only a single var_name is given
+        if isinstance(var_name, str):
+            var_names = [var_name]
+        else:
+            var_names = var_name
 
         # Try to extract the variable (prioritize variables as given by the
         # list)
-        for var_name in var_names:
+        for v_name in var_names:
             try:
-                return cubes.extract_cube(NameConstraint(var_name=var_name))
+                return cubes.extract_cube(NameConstraint(var_name=v_name))
             except ConstraintMismatchError:
                 pass
 

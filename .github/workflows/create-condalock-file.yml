@@ -64,6 +64,8 @@ jobs:
       - shell: bash -l {0}
         run: esmvaltool version
       - shell: bash -l {0}
+        run: flake8
+      - shell: bash -l {0}
         run: pytest -n 2 -m "not installation and not sequential"
       - shell: bash -l {0}
         run: pytest -n 0 -m "sequential"

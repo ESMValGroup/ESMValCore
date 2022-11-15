@@ -721,7 +721,14 @@ Perform the steps listed below with two persons, to reduce the risk of error.
    `PyPI <https://pypi.org/project/ESMValCore/>`__, and
    `readthedocs <https://readthedocs.org/dashboard/esmvalcore/users/>`__.
 
-To make a new release of the package, follow these steps:
+The release of ESMValCore is tied to the release of ESMValTool. 
+To start the procedure, ESMValCore gets released as a 
+release candidate to test the recipes in ESMValTool. If bugs are found
+during the testing phase of the release candidate, make as many release 
+candidates for ESMValCore as needed in order to fix them. 
+
+To make a new release of the package, be it a release candidate or the final release, 
+follow these steps:
 
 1. Check that all tests and builds work
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -745,9 +752,6 @@ All tests should pass before making a release (branch).
 Create a branch off the ``main`` branch and push it to GitHub.
 Ask someone with administrative permissions to set up branch protection rules
 for it so only you and the person helping you with the release can push to it.
-Announce the name of the branch in an issue and ask the members of the
-`ESMValTool development team <https://github.com/orgs/ESMValGroup/teams/esmvaltool-developmentteam>`__
-to run their favourite recipe using this branch.
 
 3. Increase the version number
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -771,20 +775,11 @@ Review the results, and if anything needs changing, change it on GitHub and
 re-run the script until the changelog looks acceptable.
 Copy the result to the file ``doc/changelog.rst``.
 Make a pull request and get it merged into ``main`` and cherry pick it into
-the release branch..
-
-5. Cherry pick bugfixes into the release branch
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If a bug is found and fixed (i.e. pull request merged into the
-``main`` branch) during the period of testing, use the command
-``git cherry-pick`` to include the commit for this bugfix into
 the release branch.
-When the testing period is over, make a pull request to update
-the release notes with the latest changes, get it merged into
-``main`` and cherry-pick it into the release branch.
 
-6. Make the release on GitHub
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+5. Make the (pre-)release on GitHub
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Do a final check that all tests on CircleCI and GitHub Actions completed
 successfully.
@@ -792,7 +787,9 @@ Then click the
 `releases tab <https://github.com/ESMValGroup/ESMValCore/releases>`__
 and create the new release from the release branch (i.e. not from ``main``).
 
-7. Create and upload the PyPI package
+Create a tag and tick the `This is a pre-release` box if working with a release candidate.
+
+6. Create and upload the PyPI package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The package is automatically uploaded to the
@@ -823,13 +820,21 @@ Follow these steps to create a new Python package:
 You can read more about this in
 `Packaging Python Projects <https://packaging.python.org/tutorials/packaging-projects/>`__.
 
-8. Create the Conda package
+7. Create the Conda package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``esmvalcore`` package is published on the `conda-forge conda channel
 <https://anaconda.org/conda-forge>`__.
 This is done via a pull request on the `esmvalcore-feedstock repository
 <https://github.com/conda-forge/esmvalcore-feedstock>`__.
+
+To publish a release candidate, you have to open a pull request yourself.
+An example for this can be found `here
+<https://github.com/conda-forge/esmvalcore-feedstock/pull/35>`__.
+Make sure to use the `rc branch
+<https://github.com/conda-forge/esmvalcore-feedstock/tree/rc>`__ as the target
+branch for your pull request and follow all instructions given by the linter
+bot. The testing of ESMValTool will be performed with the published release candidate.
 
 For the final release, this pull request is automatically opened by a bot.
 An example pull request can be found `here
@@ -843,15 +848,8 @@ they will merge the pull request, which will in turn publish the package on
 conda-forge some time later.
 Contact the feedstock maintainers if you want to become a maintainer yourself.
 
-To publish a release candidate, you have to open a pull request yourself.
-An example for this can be found `here
-<https://github.com/conda-forge/esmvalcore-feedstock/pull/35>`__.
-Make sure to use the `rc branch
-<https://github.com/conda-forge/esmvalcore-feedstock/tree/rc>`__ as the target
-branch for your pull request and follow all instructions given by the linter
-bot.
 
-9. Check the Docker images
+8. Check the Docker images
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There are two main Docker container images available for ESMValCore on

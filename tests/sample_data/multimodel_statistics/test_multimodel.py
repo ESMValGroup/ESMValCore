@@ -4,6 +4,7 @@ import pickle
 import platform
 from itertools import groupby
 from pathlib import Path
+from typing import Optional
 
 import iris
 import numpy as np
@@ -69,7 +70,7 @@ def fix_metadata(cubes):
         cube.coord('air_pressure').bounds = None
 
 
-def preprocess_data(cubes, time_slice: dict = None):
+def preprocess_data(cubes, time_slice: Optional[dict] = None):
     """Regrid the data to the first cube and optional time-slicing."""
     # Increase TEST_REVISION anytime you make changes to this function.
     if time_slice:
@@ -92,7 +93,8 @@ def get_cache_key(value):
     """Get a cache key that is hopefully unique enough for unpickling.
 
     If this doesn't avoid problems with unpickling the cached data,
-    manually clean the pytest cache with the command `pytest --cache-clear`.
+    manually clean the pytest cache with the command `pytest --cache-
+    clear`.
     """
     py_version = platform.python_version()
     return (f'{value}_iris-{iris.__version__}_'

@@ -4,8 +4,9 @@ from pathlib import Path
 import pytest
 import yaml
 
-from esmvalcore._config import _config
-from esmvalcore._config._config import (
+from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.config import CFG, _config
+from esmvalcore.config._config import (
     _deep_update,
     _load_extra_facets,
     get_extra_facets,
@@ -129,19 +130,34 @@ def test_get_project_config(mocker):
         _config.get_project_config('non-existent-project')
 
 
-def test_load_default_config(monkeypatch):
+CONFIG_USER_FILE = importlib_files('esmvalcore') / 'config-user.yml'
+
+
+@pytest.fixture
+def default_config():
+    # Load default configuration
+    CFG.load_from_file(CONFIG_USER_FILE)
+    # Run test
+    yield
+    # Restore default configuration
+    CFG.load_from_file(CONFIG_USER_FILE)
+
+
+def test_load_default_config(monkeypatch, default_config):
     """Test that the default configuration can be loaded."""
     project_cfg = {}
     monkeypatch.setattr(_config, 'CFG', project_cfg)
-    default_cfg_file = importlib_files('esmvalcore') / 'config-user.yml'
-    cfg = _config.read_config_user_file(default_cfg_file, 'recipe_example')
+    default_dev_file = importlib_files('esmvalcore') / 'config-developer.yml'
+    cfg = CFG.start_session('recipe_example')
 
     default_cfg = {
-        'auxiliary_data_dir': str(Path.home() / 'auxiliary_data'),
+        'auxiliary_data_dir': Path.home() / 'auxiliary_data',
+        'check_level': CheckLevels.DEFAULT,
         'compress_netcdf': False,
-        'config_developer_file': None,
-        'config_file': str(default_cfg_file),
-        'download_dir': str(Path.home() / 'climate_data'),
+        'config_developer_file': default_dev_file,
+        'config_file': CONFIG_USER_FILE,
+        'diagnostics': None,
+        'download_dir': Path.home() / 'climate_data',
         'drs': {
             'CMIP3': 'ESGF',
             'CMIP5': 'ESGF',
@@ -152,75 +168,77 @@ def test_load_default_config(monkeypatch):
         'exit_on_warning': False,
         'extra_facets_dir': tuple(),
         'log_level': 'info',
+        'max_datasets': None,
         'max_parallel_tasks': None,
+        'max_years': None,
         'offline': True,
+        'output_dir': Path.home() / 'esmvaltool_output',
         'output_file_type': 'png',
         'profile_diagnostic': False,
         'remove_preproc_dir': True,
         'resume_from': [],
         'rootpath': {
-            'default': [str(Path.home() / 'climate_data')]
+            'default': [Path.home() / 'climate_data']
         },
         'run_diagnostic': True,
+        'skip_nonexistent': False,
         'save_intermediary_cubes': False,
     }
-    default_keys = set(
-        list(default_cfg) + [
-            'output_dir',
-            'plot_dir',
-            'preproc_dir',
-            'run_dir',
-            'work_dir',
-        ])
 
+    directory_attrs = {
+        'session_dir',
+        'plot_dir',
+        'preproc_dir',
+        'run_dir',
+        'work_dir',
+    }
     # Check that only allowed keys are in it
-    assert default_keys == set(cfg)
+    assert set(default_cfg) == set(cfg)
+
+    # Check that all required directories are available
+    assert all(hasattr(cfg, attr) for attr in directory_attrs)
 
     # Check default values
     for key in default_cfg:
         assert cfg[key] == default_cfg[key]
 
     # Check output directories
-    assert cfg['output_dir'].startswith(
+    assert str(cfg.session_dir).startswith(
         str(Path.home() / 'esmvaltool_output' / 'recipe_example'))
     for path in ('preproc', 'work', 'run'):
-        assert cfg[path + '_dir'] == str(Path(cfg['output_dir'], path))
-    assert cfg['plot_dir'] == str(Path(cfg['output_dir'], 'plots'))
+        assert getattr(cfg, path + '_dir') == cfg.session_dir / path
+    assert cfg.plot_dir == cfg.session_dir / 'plots'
 
     # Check that projects were configured
     assert project_cfg
 
 
-def test_rootpath_obs4mips_case_correction(tmp_path, monkeypatch, mocker):
+def test_rootpath_obs4mips_case_correction(default_config):
     """Test that the name of the obs4MIPs project is correct in rootpath."""
-    monkeypatch.setattr(_config, 'CFG', {})
-    mocker.patch.object(_config, 'read_cmor_tables', autospec=True)
-    cfg_file = tmp_path / 'config-user.yml'
-    cfg_user = {
-        'rootpath': {
-            'obs4mips': '/path/to/data',
-        },
-    }
-    with cfg_file.open('w') as file:
-        yaml.safe_dump(cfg_user, file)
+    CFG['rootpath'] = {'obs4mips': '/path/to/data'}
+    assert 'obs4mips' not in CFG['rootpath']
+    assert CFG['rootpath']['obs4MIPs'] == [Path('/path/to/data')]
 
-    cfg = _config.read_config_user_file(cfg_file, 'recipe_example')
 
-    assert 'obs4mips' not in cfg['rootpath']
-    assert cfg['rootpath']['obs4MIPs'] == ['/path/to/data']
+def test_drs_obs4mips_case_correction(default_config):
+    """Test that the name of the obs4MIPs project is correct in rootpath."""
+    CFG['drs'] = {'obs4mips': 'ESGF'}
+    assert 'obs4mips' not in CFG['drs']
+    assert CFG['drs']['obs4MIPs'] == 'ESGF'
 
 
 def test_project_obs4mips_case_correction(tmp_path, monkeypatch, mocker):
     monkeypatch.setattr(_config, 'CFG', {})
     mocker.patch.object(_config, 'read_cmor_tables', autospec=True)
     cfg_file = tmp_path / 'config-developer.yml'
+    project_cfg = {'input_dir': {'default': '/'}}
     cfg_dev = {
-        'obs4mips': {},
+        'obs4mips': project_cfg,
     }
     with cfg_file.open('w') as file:
         yaml.safe_dump(cfg_dev, file)
 
-    cfg = _config.read_config_developer_file(cfg_file)
+    _config.load_config_developer(cfg_file)
 
-    assert 'obs4mips' not in cfg
-    assert cfg['obs4MIPs'] == {}
+    assert 'obs4mips' not in _config.CFG
+    assert _config.CFG['obs4MIPs'] == project_cfg

@@ -8,8 +8,8 @@ from textwrap import dedent
 import pytest
 import yaml
 
-from esmvalcore._config import TAGS
 from esmvalcore._main import run
+from esmvalcore.config._diagnostics import TAGS
 
 
 def write_config_user_file(dirname):
