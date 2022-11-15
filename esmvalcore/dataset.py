@@ -50,7 +50,20 @@ def _ismatch(facet_value: FacetValue, pattern: FacetValue) -> bool:
 
 
 class Dataset:
+    """Define datasets, find the related files, and load them.
 
+    Parameters
+    ----------
+    **facets
+        Facets describing the dataset. See
+        :obj:`esmvalcore.esgf.facets.FACETS` for the mapping between
+        the facet names used by ESMValCore and those used on ESGF.
+
+    Attributes
+    ----------
+    ancillaries
+        List of ancillary :class:`Dataset` objects.
+    """
     def __init__(self, **facets: FacetValue):
 
         self.facets: Facets = {}
