@@ -111,15 +111,13 @@ def _delete_attributes(iris_object, atts):
             del iris_object.attributes[att]
 
 
-def load(file, callback=None, ignore_warnings=None):
+def load(file, ignore_warnings=None):
     """Load iris cubes from files.
 
     Parameters
     ----------
     file: str
         File to be loaded.
-    callback: callable or None, optional (default: None)
-        Callback function passed to :func:`iris.load_raw`.
     ignore_warnings: list of dict or None, optional (default: None)
         Keyword arguments passed to :func:`warnings.filterwarnings` used to
         ignore warnings issued by :func:`iris.load_raw`. Each list element
@@ -135,6 +133,7 @@ def load(file, callback=None, ignore_warnings=None):
     ValueError
         Cubes are empty.
     """
+    file = str(file)
     logger.debug("Loading:\n%s", file)
     if ignore_warnings is None:
         ignore_warnings = []
@@ -164,7 +163,7 @@ def load(file, callback=None, ignore_warnings=None):
         # warnings.filterwarnings
         # (see https://github.com/SciTools/cf-units/issues/240)
         with suppress_errors():
-            raw_cubes = iris.load_raw(file, callback=callback)
+            raw_cubes = iris.load_raw(file, callback=concatenate_callback)
     logger.debug("Done with loading %s", file)
     if not raw_cubes:
         raise ValueError(f'Can not load cubes from {file}')

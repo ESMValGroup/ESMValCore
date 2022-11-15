@@ -48,7 +48,7 @@ from .preprocessor import (
     PreprocessorFile,
 )
 from .preprocessor._derive import get_required
-from .preprocessor._io import DATASET_KEYS, concatenate_callback
+from .preprocessor._io import DATASET_KEYS
 from .preprocessor._other import _group_products
 from .preprocessor._regrid import (
     _spec_to_latlonvals,
@@ -273,9 +273,7 @@ def _get_default_settings(variable, config_user, derive=False):
     settings = {}
 
     # Configure loading
-    settings['load'] = {
-        'callback': concatenate_callback,
-    }
+    settings['load'] = {}
     # Configure concatenation
     settings['concatenate'] = {}
 
