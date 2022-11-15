@@ -5,6 +5,7 @@ import platform
 from itertools import groupby
 from pathlib import Path
 
+import cf_units
 import iris
 import numpy as np
 import pytest
@@ -23,7 +24,7 @@ CALENDAR_PARAMS = (
         marks=pytest.mark.skip(
             reason='Cannot calculate statistics with single cube in list')),
     '365_day',
-    'standard',
+    'standard' if cf_units.__version__ >= '3.1' else 'gregorian',
     pytest.param(
         'proleptic_gregorian',
         marks=pytest.mark.xfail(
