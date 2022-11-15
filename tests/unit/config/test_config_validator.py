@@ -1,12 +1,10 @@
-from collections.abc import MutableMapping
 from pathlib import Path
 
 import numpy as np
 import pytest
 
 from esmvalcore import __version__ as current_version
-from esmvalcore.experimental.config._config_object import Config
-from esmvalcore.experimental.config._config_validators import (
+from esmvalcore.config._config_validators import (
     _listify_validator,
     deprecate,
     validate_bool,
@@ -22,8 +20,6 @@ from esmvalcore.experimental.config._config_validators import (
     validate_string,
     validate_string_or_none,
 )
-from esmvalcore.experimental.config._validated_config import (
-    InvalidConfigParameter, )
 
 
 def generate_validator_testcases(valid):
@@ -199,62 +195,3 @@ def test_deprecate(version):
         f = deprecate(test_func, 'test_var', version)
 
     assert callable(f)
-
-
-def test_config_class():
-    config = {
-        'log_level': 'info',
-        'exit_on_warning': False,
-        'output_file_type': 'png',
-        'output_dir': './esmvaltool_output',
-        'auxiliary_data_dir': './auxiliary_data',
-        'save_intermediary_cubes': False,
-        'remove_preproc_dir': True,
-        'max_parallel_tasks': None,
-        'profile_diagnostic': False,
-        'rootpath': {
-            'CMIP6': '~/data/CMIP6'
-        },
-        'drs': {
-            'CMIP6': 'default'
-        },
-    }
-
-    cfg = Config(config)
-
-    assert isinstance(cfg['output_dir'], Path)
-    assert isinstance(cfg['auxiliary_data_dir'], Path)
-
-    from esmvalcore._config._config import CFG as CFG_DEV
-    assert CFG_DEV
-
-
-def test_config_update():
-    config = Config({'output_dir': 'directory'})
-    fail_dict = {'output_dir': 123}
-
-    with pytest.raises(InvalidConfigParameter):
-        config.update(fail_dict)
-
-
-def test_set_bad_item():
-    config = Config({'output_dir': 'config'})
-    with pytest.raises(InvalidConfigParameter) as err_exc:
-        config['bad_item'] = 47
-
-    assert str(err_exc.value) == '`bad_item` is not a valid config parameter.'
-
-
-def test_config_init():
-    config = Config()
-    assert isinstance(config, MutableMapping)
-
-
-def test_session():
-    config = Config({'output_dir': 'config'})
-
-    session = config.start_session('recipe_name')
-    assert session == config
-
-    session['output_dir'] = 'session'
-    assert session != config

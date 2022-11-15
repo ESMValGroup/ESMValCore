@@ -202,7 +202,7 @@ overwritten in the recipe.
 Similar to any other fix, the CESM fix allows the use of :ref:`extra
 facets<extra_facets>`.
 By default, the file :download:`cesm-mappings.yml
-</../esmvalcore/_config/extra_facets/cesm-mappings.yml>` is used for that
+</../esmvalcore/config/extra_facets/cesm-mappings.yml>` is used for that
 purpose.
 Currently, this file only contains default facets for a single variable
 (`tas`); for other variables, these entries need to be defined in the recipe.
@@ -269,7 +269,7 @@ the recipe.
 Similar to any other fix, the EMAC fix allows the use of :ref:`extra
 facets<extra_facets>`.
 By default, the file :download:`emac-mappings.yml
-</../esmvalcore/_config/extra_facets/emac-mappings.yml>` is used for that
+</../esmvalcore/config/extra_facets/emac-mappings.yml>` is used for that
 purpose.
 For some variables, extra facets are necessary; otherwise ESMValTool cannot
 read them properly.
@@ -340,7 +340,7 @@ the recipe.
 Similar to any other fix, the ICON fix allows the use of :ref:`extra
 facets<extra_facets>`.
 By default, the file :download:`icon-mappings.yml
-</../esmvalcore/_config/extra_facets/icon-mappings.yml>` is used for that
+</../esmvalcore/config/extra_facets/icon-mappings.yml>` is used for that
 purpose.
 For some variables, extra facets are necessary; otherwise ESMValTool cannot
 read them properly.
@@ -405,7 +405,7 @@ The ``Output`` format is an example of a case where variables are grouped in
 multi-variable files, which name cannot be computed directly from datasets
 attributes alone but requires to use an extra_facets file, which principles are
 explained in :ref:`extra_facets`, and which content is :download:`available here
-</../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`. These multi-variable
+</../esmvalcore/config/extra_facets/ipslcm-mappings.yml>`. These multi-variable
 files must also undergo some data selection.
 
 
