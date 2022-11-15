@@ -15,6 +15,7 @@ from copy import deepcopy
 from multiprocessing import Pool
 from pathlib import Path, PosixPath
 from shutil import which
+from typing import Optional
 
 import psutil
 import yaml
@@ -709,7 +710,7 @@ class TaskSet(set):
                 independent_tasks.add(task)
         return independent_tasks
 
-    def run(self, max_parallel_tasks: int = None) -> None:
+    def run(self, max_parallel_tasks: Optional[int] = None) -> None:
         """Run tasks.
 
         Parameters

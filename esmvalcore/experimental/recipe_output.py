@@ -255,7 +255,7 @@ class OutputFile():
 
     kind: Optional[str] = None
 
-    def __init__(self, path: str, attributes: dict = None):
+    def __init__(self, path: str, attributes: Optional[dict] = None):
         if not attributes:
             attributes = {}
 
@@ -291,7 +291,7 @@ class OutputFile():
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
 
-    def _get_derived_path(self, append: str, suffix: str = None):
+    def _get_derived_path(self, append: str, suffix: Optional[str] = None):
         """Return path of related files.
 
         Parameters
@@ -325,7 +325,12 @@ class OutputFile():
         return self._get_derived_path('_provenance', '.xml')
 
     @classmethod
-    def create(cls, path: str, attributes: dict = None) -> 'OutputFile':
+    def create(
+        cls,
+        path: str,
+        attributes:
+        Optional[dict] = None,
+    ) -> 'OutputFile':
         """Construct new instances of OutputFile.
 
         Chooses a derived class if suitable.
