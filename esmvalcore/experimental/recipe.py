@@ -100,7 +100,11 @@ class Recipe():
                             config_user=config_user,
                             recipe_file=self.path)
 
-    def run(self, task: str = None, session: Session = None):
+    def run(
+        self,
+        task: Optional[str] = None,
+        session: Optional[Session] = None,
+    ):
         """Run the recipe.
 
         This function loads the recipe into the ESMValCore recipe format
