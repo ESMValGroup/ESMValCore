@@ -11,9 +11,8 @@ build:
   tools:
     python: "mambaforge-4.10"
   jobs:
-    # --no-deps after github.com/conda-forge/esgf-pyclient-feedstock/issues/18
     post_create_environment:
-      - pip install .
+      - pip install . --no-deps
 
 # Declare the requirements required to build your docs
 conda:
