@@ -6,19 +6,12 @@ import tempfile
 import pytest
 import yaml
 
-import esmvalcore._config
+import esmvalcore.config
 from esmvalcore._data_finder import (
     _find_input_files,
     get_input_filelist,
     get_output_file,
 )
-from esmvalcore.cmor.table import read_cmor_tables
-
-# Initialize with standard config developer file
-CFG_DEVELOPER = esmvalcore._config.read_config_developer_file()
-esmvalcore._config._config.CFG = CFG_DEVELOPER
-# Initialize CMOR tables
-read_cmor_tables(CFG_DEVELOPER)
 
 # Load test configuration
 with open(os.path.join(os.path.dirname(__file__), 'data_finder.yml')) as file:
@@ -27,7 +20,7 @@ with open(os.path.join(os.path.dirname(__file__), 'data_finder.yml')) as file:
 
 def _augment_with_extra_facets(variable):
     """Augment variable dict with extra facets."""
-    extra_facets = esmvalcore._config.get_extra_facets(
+    extra_facets = esmvalcore.config._config.get_extra_facets(
         variable['project'],
         variable['dataset'],
         variable['mip'],
