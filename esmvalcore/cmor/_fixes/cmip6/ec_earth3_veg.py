@@ -23,6 +23,7 @@ class Siconca(Fix):
         cube.data = cube.core_data() * 100.
         return cube
 
+
 class Siconc(Fix):
     """Fixes for siconc variable."""
 
@@ -34,6 +35,7 @@ class Siconc(Fix):
                 time_coord.units = cf_units.Unit(time_coord.units.origin,
                                                      'proleptic_gregorian')
         return cubes
+
 
 class Tas(Fix):
     """Fixes for tas."""
