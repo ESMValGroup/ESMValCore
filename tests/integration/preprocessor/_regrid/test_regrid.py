@@ -14,7 +14,6 @@ from esmvalcore.preprocessor._io import GLOBAL_FILL_VALUE
 from tests.unit.preprocessor._regrid import _make_cube
 
 
-
 class Test(tests.Test):
     def setUp(self):
         """Prepare tests."""
@@ -92,13 +91,13 @@ class Test(tests.Test):
         result = regrid(self.cube, self.grid_for_linear, 'linear')
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
         self.assert_array_equal(result.data, expected)
-    
+
     def test_regrid__esmf_rectilinear(self):
         result = regrid(
             self.cube,
             self.grid_for_linear,
-            {'reference': 
-             'esmf_regrid.schemes:regrid_rectilinear_to_rectilinear',})
+            {'reference':
+                 'esmf_regrid.schemes:regrid_rectilinear_to_rectilinear'})
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=1)
 
@@ -239,7 +238,7 @@ class Test(tests.Test):
         coords_spec = [(lats, 0), (lons, 1)]
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(self.cube, grid, {'reference': 
-             'esmf_regrid.schemes:ESMFAreaWeighted'})
+            'esmf_regrid.schemes:ESMFAreaWeighted'})
         expected = np.array([1.499886, 5.499886, 9.499886])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
 

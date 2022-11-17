@@ -15,7 +15,7 @@ import stratify
 from dask import array as da
 from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
-from iris.util import broadcast_to_shape, squeeze
+from iris.util import broadcast_to_shape
 
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.fix import fix_file, fix_metadata
@@ -24,8 +24,6 @@ from ._ancillary_vars import add_ancillary_variable, add_cell_measure
 from ._io import GLOBAL_FILL_VALUE, concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
-
-from esmf_regrid.schemes import regrid_rectilinear_to_rectilinear
 
 logger = logging.getLogger(__name__)
 
@@ -454,7 +452,7 @@ def extract_point(cube, latitude, longitude, scheme):
     return cube
 
 
-def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True, mdtol=0):
+def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     """Perform horizontal regridding.
 
     Note that the target grid can be a cube (:py:class:`~iris.cube.Cube`),
@@ -599,7 +597,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True, mdtol=0)
 
     if not isinstance(target_grid, iris.cube.Cube):
         raise ValueError('Expecting a cube, got {}.'.format(target_grid))
-    
+
     if isinstance(scheme_args, list):
         if 'src_cube' in scheme_args:
             scheme['src_cube'] = cube
@@ -631,7 +629,6 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True, mdtol=0)
             else:
                 fill_value = GLOBAL_FILL_VALUE
             da.ma.set_fill_value(cube.core_data(), fill_value)
-        a = regrid_rectilinear_to_rectilinear(cube, target_grid)
         # Perform the horizontal regridding
         if _attempt_irregular_regridding(cube, scheme):
             cube = esmpy_regrid(cube, target_grid, scheme)
@@ -661,6 +658,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True, mdtol=0)
             cube.coord(coord).bounds = target_grid.coord(coord).bounds
 
     return cube
+
 
 def _horizontal_grid_is_close(cube1, cube2):
     """Check if two cubes have the same horizontal grid definition.
