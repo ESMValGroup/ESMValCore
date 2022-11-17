@@ -737,7 +737,7 @@ def mask_generalized(cube, mask_cube, mask_operation):
     # use case 1: mask mask_cube above a certain threshold
     # then get its mask and add it to the input cube's one (if any)
     if "above_threshold" in mask_operation:
-        if not "threshold" in mask_operation:
+        if "threshold" not in mask_operation:
             raise KeyError('A valid "threshold" parameter must be specified '
                            'for above_threshold mask_operation')
         threshold = mask_operation["threshold"]
@@ -747,4 +747,3 @@ def mask_generalized(cube, mask_cube, mask_operation):
     cube = _multimodel_mask_cubes(cubes, cube.shape)[0]
 
     return cube
-
