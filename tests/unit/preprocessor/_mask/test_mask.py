@@ -140,5 +140,6 @@ class Test(tests.Test):
         mask[0:2] = False
         self.assert_array_equal(result.data.mask, mask)
 
+
 if __name__ == '__main__':
     unittest.main()
