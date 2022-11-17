@@ -93,11 +93,14 @@ class Test(tests.Test):
         self.assert_array_equal(result.data, expected)
 
     def test_regrid__esmf_rectilinear(self):
+        scheme_name = 'esmf_regrid.schemes:regrid_rectilinear_to_rectilinear'
+        scheme = {
+            'reference': scheme_name
+        }
         result = regrid(
             self.cube,
             self.grid_for_linear,
-            {'reference':
-                 'esmf_regrid.schemes:regrid_rectilinear_to_rectilinear'})
+            scheme)
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=1)
 
@@ -237,8 +240,10 @@ class Test(tests.Test):
                                     coord_system=self.cs)
         coords_spec = [(lats, 0), (lons, 1)]
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
-        result = regrid(self.cube, grid, {'reference': 
-            'esmf_regrid.schemes:ESMFAreaWeighted'})
+        scheme = {
+            'reference': 'esmf_regrid.schemes:ESMFAreaWeighted'
+        }
+        result = regrid(self.cube, grid, scheme)
         expected = np.array([1.499886, 5.499886, 9.499886])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
 
