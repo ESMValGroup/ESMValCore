@@ -22,7 +22,7 @@ dependencies:
   - jinja2
   - nc-time-axis
   - nested-lookup
-  - netcdf4!=1.6.1  # github.com/ESMValGroup/ESMValCore/issues/1723
+  - netcdf4<1.6.1  # github.com/ESMValGroup/ESMValCore/issues/1723
   - numpy
   - pandas
   - pillow
