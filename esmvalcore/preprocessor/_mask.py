@@ -740,9 +740,10 @@ def mask_generalized(cube, mask_cube, mask_operation):
         if not "threshold" in mask_operation:
             raise KeyError('A valid "threshold" parameter must be specified '
                            'for above_threshold mask_operation')
+        threshold = mask_operation["threshold"]
         masked_above_th = mask_above_threshold(mask_cube, threshold)
 
-    cubes = iris.cube.CubeList([cube, nasked_above_th])
+    cubes = iris.cube.CubeList([cube, masked_above_th])
     cube = _multimodel_mask_cubes(cubes, cube.shape)[0]
 
     return cube
