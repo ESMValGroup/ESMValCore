@@ -1,6 +1,7 @@
 """Horizontal and vertical regridding module."""
 
 import importlib
+import inspect
 import logging
 import os
 import re
@@ -14,7 +15,7 @@ import stratify
 from dask import array as da
 from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
-from iris.util import broadcast_to_shape
+from iris.util import broadcast_to_shape, squeeze
 
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.fix import fix_file, fix_metadata
@@ -23,6 +24,8 @@ from ._ancillary_vars import add_ancillary_variable, add_cell_measure
 from ._io import GLOBAL_FILL_VALUE, concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
+
+from esmf_regrid.schemes import regrid_rectilinear_to_rectilinear
 
 logger = logging.getLogger(__name__)
 
@@ -451,7 +454,7 @@ def extract_point(cube, latitude, longitude, scheme):
     return cube
 
 
-def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
+def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True, mdtol=0):
     """Perform horizontal regridding.
 
     Note that the target grid can be a cube (:py:class:`~iris.cube.Cube`),
@@ -536,8 +539,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
               extrapolation_mode: nanmask
 
     To use the area weighted regridder available in
-    :class:`esmf_regrid.schemes.ESMFAreaWeighted`, make sure that
-    :doc:`iris-esmf-regrid:index` is installed and use
+    :class:`esmf_regrid.schemes.ESMFAreaWeighted` use
 
     .. code-block:: yaml
 
@@ -547,10 +549,8 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             scheme:
               reference: esmf_regrid.schemes:ESMFAreaWeighted
 
-    .. note::
-
-        Note that :doc:`iris-esmf-regrid:index` is still experimental.
     """
+    scheme_args = None
     if isinstance(scheme, dict):
         try:
             object_ref = scheme.pop("reference")
@@ -568,12 +568,12 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         if separator:
             for attr in scheme_name.split('.'):
                 obj = getattr(obj, attr)
-        loaded_scheme = obj(**scheme)
+        scheme_args = inspect.getfullargspec(obj).args
     else:
         loaded_scheme = HORIZONTAL_SCHEMES.get(scheme.lower())
-    if loaded_scheme is None:
-        emsg = 'Unknown regridding scheme, got {!r}.'
-        raise ValueError(emsg.format(scheme))
+        if loaded_scheme is None:
+            emsg = 'Unknown regridding scheme, got {!r}.'
+            raise ValueError(emsg.format(scheme))
 
     if isinstance(target_grid, str):
         if os.path.isfile(target_grid):
@@ -599,6 +599,12 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
 
     if not isinstance(target_grid, iris.cube.Cube):
         raise ValueError('Expecting a cube, got {}.'.format(target_grid))
+    
+    if isinstance(scheme_args, list):
+        if 'src_cube' in scheme_args:
+            scheme['src_cube'] = cube
+        if 'grid_cube' in scheme_args:
+            scheme['grid_cube'] = target_grid
 
     # Unstructured regridding requires x2 2d spatial coordinates,
     # so ensure to purge any 1d native spatial dimension coordinates
@@ -625,11 +631,15 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             else:
                 fill_value = GLOBAL_FILL_VALUE
             da.ma.set_fill_value(cube.core_data(), fill_value)
-
+        a = regrid_rectilinear_to_rectilinear(cube, target_grid)
         # Perform the horizontal regridding
         if _attempt_irregular_regridding(cube, scheme):
             cube = esmpy_regrid(cube, target_grid, scheme)
         else:
+            loaded_scheme = obj(**scheme)
+            if isinstance(loaded_scheme, iris.cube.Cube):
+                return loaded_scheme
+
             cube = cube.regrid(target_grid, loaded_scheme)
 
         # Preserve dtype and use masked arrays for 'unstructured_nearest'
@@ -651,7 +661,6 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             cube.coord(coord).bounds = target_grid.coord(coord).bounds
 
     return cube
-
 
 def _horizontal_grid_is_close(cube1, cube2):
     """Check if two cubes have the same horizontal grid definition.
