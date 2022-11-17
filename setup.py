@@ -70,14 +70,15 @@ REQUIREMENTS = {
         'pytest-xdist',
         'ESMValTool_sample_data==0.0.3',
         # MyPy library stubs
+        'mypy>=0.990',
         'types-requests',
         'types-pkg_resources',
         'types-PyYAML',
     ],
     # Documentation dependencies
     'doc': [
-        'autodocsumm',
-        'sphinx>2',
+        'autodocsumm>=0.2.2',
+        'sphinx>5',
         'sphinx_rtd_theme',
     ],
     # Development dependencies

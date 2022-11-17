@@ -97,6 +97,49 @@ get_output_file:
     preproc_dir: this/is/a/path
     output_file: this/is/a/path/test_diag/test/ICON_ICON_amip_custom_var_type_Amon_tas_20000101-20000102.nc
 
+  # CESM2
+
+  - variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: CESM2
+      project: CESM
+      cmor_table: CMIP6
+      frequency: mon
+      mip: Amon
+      exp: amip
+      case: f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1
+      type: h0
+      timerange: '2000/2002'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    preproc_dir: this/is/a/path
+    output_file: this/is/a/path/test_diag/test/CESM_CESM2_f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1_atm_cam_h0_Amon_tas_2000-2002.nc
+
+  - variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: CESM2
+      project: CESM
+      cmor_table: CMIP6
+      frequency: mon
+      mip: Amon
+      exp: amip
+      case: f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001
+      gcomp: gcomp
+      scomp: scomp
+      type: h1
+      tdir: tseries
+      tperiod: month_1
+      string: TREFHT
+      timerange: '2015/2025'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    preproc_dir: this/is/a/path
+    output_file: this/is/a/path/test_diag/test/CESM_CESM2_f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_gcomp_scomp_h1_Amon_tas_2015-2025.nc
+
 
 get_input_filelist:
   - drs: default
@@ -988,3 +1031,71 @@ get_input_filelist:
       - amip/amip_var_20000301T000000Z.nc
       - amip/outdata/amip_var_20000401T000000Z.nc
       - amip/outdata/amip_var_20000501T000000Z.nc
+
+  # CESM2
+
+  - drs: default
+    variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: CESM2
+      project: CESM
+      cmor_table: CMIP6
+      frequency: mon
+      mip: Amon
+      case: f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1
+      type: h0
+      timerange: '2000/2002'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.cam.h0.2000.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.cam.h0.2001.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/atm/hist/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.cam.h0.2002.nc
+    dirs:
+      - ''
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/atm/hist
+    file_patterns:
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.cam.h0.*nc
+    found_files:
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.cam.h0.2000.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.cam.h0.2001.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/atm/hist/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.cam.h0.2002.nc
+
+  - drs: default
+    variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: CESM2
+      project: CESM
+      cmor_table: CMIP6
+      frequency: mon
+      mip: Amon
+      case: f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1
+      gcomp: gcomp
+      scomp: scomp
+      type: h1
+      tdir: tseries
+      tperiod: month_1
+      string: TREFHT
+      timerange: '2015/2025'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.2000.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.2001.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/hist/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.2002.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/proc/tseries/month_1/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.TREFHT.201001-201912.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/proc/tseries/month_1/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.TREFHT.202001-202912.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/proc/tseries/month_1/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.TREFHT.203001-203912.nc
+    dirs:
+      - ''
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/hist
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/proc/tseries/month_1
+    file_patterns:
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.TREFHT*nc
+    found_files:
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/proc/tseries/month_1/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.TREFHT.201001-201912.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/proc/tseries/month_1/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.TREFHT.202001-202912.nc

@@ -8,7 +8,8 @@ from pathlib import Path
 import iris
 import pytest
 
-from esmvalcore._config import TAGS
+from esmvalcore.config._config_object import CFG_DEFAULT
+from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.experimental import CFG, Recipe, get_recipe
 from esmvalcore.experimental.recipe_output import (
@@ -19,10 +20,6 @@ from esmvalcore.experimental.recipe_output import (
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
-CFG.update(esmvaltool_sample_data.get_rootpaths())
-CFG['drs']['CMIP6'] = 'SYNDA'
-CFG['max_parallel_tasks'] = 1
-CFG['remove_preproc_dir'] = False
 
 AUTHOR_TAGS = {
     'authors': {
@@ -50,12 +47,17 @@ def test_run_recipe(task, recipe, tmp_path):
     """
     TAGS.set_tag_values(AUTHOR_TAGS)
 
-    CFG['output_dir'] = tmp_path
-
     assert isinstance(recipe, Recipe)
     assert isinstance(recipe._repr_html_(), str)
 
     session = CFG.start_session(recipe.path.stem)
+    session.clear()
+    session.update(CFG_DEFAULT)
+    session['output_dir'] = tmp_path / 'esmvaltool_output'
+    session.update(esmvaltool_sample_data.get_rootpaths())
+    session['drs'] = {'CMIP6': 'SYNDA'}
+    session['max_parallel_tasks'] = 1
+    session['remove_preproc_dir'] = False
 
     output = recipe.run(task=task, session=session)
 
