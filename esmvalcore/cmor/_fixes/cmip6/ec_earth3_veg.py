@@ -33,7 +33,7 @@ class Siconc(Fix):
             if cube.coords('time'):
                 time_coord = cube.coord('time')
                 time_coord.units = cf_units.Unit(time_coord.units.origin,
-                                                     'proleptic_gregorian')
+                                                 'proleptic_gregorian')
         return cubes
 
 
