@@ -253,24 +253,6 @@ def test_multimodel_no_vertical_dimension(timeseries_cubes_month):
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.xfail(
-    raises=iris.exceptions.MergeError,
-    reason='https://github.com/ESMValGroup/ESMValCore/issues/956')
-# @pytest.mark.xfail(
-#     raises=iris.exceptions.CoordinateNotFoundError,
-#     reason='https://github.com/ESMValGroup/ESMValCore/issues/891')
-def test_multimodel_no_horizontal_dimension(timeseries_cubes_month):
-    """Test statistic without horizontal dimension using monthly data."""
-    span = 'full'
-    cubes = timeseries_cubes_month
-    cubes = [cube[:, :, 0, 0] for cube in cubes]
-    # Coordinate not found error
-    # iris.exceptions.CoordinateNotFoundError:
-    # 'Expected to find exactly 1 depth coordinate, but found none.'
-    multimodel_test(cubes, span=span, statistic='mean')
-
-
-@pytest.mark.use_sample_data
 def test_multimodel_only_time_dimension(timeseries_cubes_month):
     """Test statistic without only the time dimension using monthly data."""
     cubes = timeseries_cubes_month
@@ -280,13 +262,27 @@ def test_multimodel_only_time_dimension(timeseries_cubes_month):
 
 
 @pytest.mark.use_sample_data
-@pytest.mark.xfail(
-    raises=ValueError,
-    reason='https://github.com/ESMValGroup/ESMValCore/issues/890')
 def test_multimodel_no_time_dimension(timeseries_cubes_month):
-    """Test statistic without time dimension using monthly data."""
+    """Test statistic without time dimension using monthly data.
+
+    Also remove air_pressure dimensions since this slightly differs across
+    cubes. See https://github.com/ESMValGroup/ESMValCore/issues/956.
+
+    """
     span = 'full'
     cubes = timeseries_cubes_month
-    cubes = [cube[0] for cube in cubes]
-    # ValueError: Cannot guess bounds for a coordinate of length 1.
-    multimodel_test(cubes, span=span, statistic='mean')
+    cubes = [cube[0, 0] for cube in cubes]
+
+    result = multimodel_test(cubes, span=span, statistic='mean')['mean']
+    assert result.shape == (3, 2)
+
+
+@pytest.mark.use_sample_data
+def test_multimodel_scalar_cubes(timeseries_cubes_month):
+    """Test statistic with scalar cubes."""
+    span = 'full'
+    cubes = timeseries_cubes_month
+    cubes = [cube[0, 0, 0, 0] for cube in cubes]
+
+    result = multimodel_test(cubes, span=span, statistic='mean')['mean']
+    assert result.shape == ()

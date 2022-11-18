@@ -17,6 +17,7 @@ import cf_units
 import iris
 import iris.coord_categorisation
 import numpy as np
+from iris.cube import Cube, CubeList
 from iris.util import equalise_attributes
 
 from esmvalcore.iris_helpers import date2num
@@ -139,8 +140,16 @@ def _unify_time_coordinates(cubes):
         # Update the cubes' time coordinate (both point values and the units!)
         cube.coord('time').points = date2num(dates, t_unit, coord.dtype)
         cube.coord('time').units = t_unit
-        cube.coord('time').bounds = None
+        _guess_time_bounds(cube)
+
+
+def _guess_time_bounds(cube):
+    """Guess time bounds if possible."""
+    cube.coord('time').bounds = None
+    try:
         cube.coord('time').guess_bounds()
+    except ValueError:  # Time has length 1 --> guessing bounds not possible
+        return
 
 
 def _time_coords_are_aligned(cubes):
@@ -197,14 +206,34 @@ def _map_to_new_time(cube, time_points):
 
 
 def _align(cubes, span):
-    """Expand or subset cubes so they share a common time span."""
-    _unify_time_coordinates(cubes)
+    """Expand or subset cubes so they share a common time span.
 
-    if _time_coords_are_aligned(cubes):
+    Note
+    ----
+    Cubes with no time dimension are ignored here. If some cubes have a time
+    dimension and some do not, this will raise an error at a later stage.
+
+    """
+    time_cubes = CubeList(
+        [cube for cube in cubes if cube.coords('time')]
+    )
+    no_time_cubes = CubeList(
+        [cube for cube in cubes if not cube.coords('time')]
+    )
+
+    # If no cubes with time dimension are given, we are done here
+    if not time_cubes:
         return cubes
 
-    all_time_arrays = [cube.coord('time').points for cube in cubes]
+    # Unify time coordinates for cubes with time dimension; if all of them are
+    # equal afterwards, we are also done
+    _unify_time_coordinates(time_cubes)
+    if _time_coords_are_aligned(time_cubes):
+        return no_time_cubes + time_cubes
 
+    # If time dimensions have different lengths, equalize them according to the
+    # 'span' option
+    all_time_arrays = [cube.coord('time').points for cube in time_cubes]
     if span == 'overlap':
         new_time_points = reduce(np.intersect1d, all_time_arrays)
     elif span == 'full':
@@ -212,15 +241,16 @@ def _align(cubes, span):
     else:
         raise ValueError(f"Invalid argument for span: {span!r}"
                          "Must be one of 'overlap', 'full'.")
+    new_time_cubes = [
+        _map_to_new_time(cube, new_time_points) for cube in time_cubes
+    ]
 
-    new_cubes = [_map_to_new_time(cube, new_time_points) for cube in cubes]
+    # Make sure time bounds exist and are consistent
+    for cube in new_time_cubes:
+        _guess_time_bounds(cube)
 
-    for cube in new_cubes:
-        # Make sure bounds exist and are consistent
-        cube.coord('time').bounds = None
-        cube.coord('time').guess_bounds()
-
-    return new_cubes
+    # Return all cubes
+    return no_time_cubes + new_time_cubes
 
 
 def _equalise_cell_methods(cubes):
@@ -288,7 +318,7 @@ def _combine(cubes):
         concat_dim = iris.coords.AuxCoord(i, var_name=CONCAT_DIM)
         cube.add_aux_coord(concat_dim)
 
-    cubes = iris.cube.CubeList(cubes)
+    cubes = CubeList(cubes)
 
     merged_cube = cubes.merge_cube()
 
@@ -296,19 +326,33 @@ def _combine(cubes):
 
 
 def _compute_slices(cubes):
-    """Create cube slices resulting in a combined cube of about 1 GiB."""
+    """Create cube slices along the first dimension of the cubes.
+
+    This results in a combined cube of about 1 GiB.
+
+    Note
+    ----
+    For scalar cubes, simply return ``None``.
+
+    """
+    # Scalar cubes
+    if cubes[0].shape == ():
+        yield None
+        return
+
+    # Non-scalar cubes
     gibibyte = 2**30
     total_bytes = cubes[0].data.nbytes * len(cubes)
     n_slices = int(np.ceil(total_bytes / gibibyte))
 
-    n_timesteps = cubes[0].shape[0]
-    slice_len = int(np.ceil(n_timesteps / n_slices))
+    len_dim_0 = cubes[0].shape[0]
+    slice_len = int(np.ceil(len_dim_0 / n_slices))
 
     for i in range(n_slices):
         start = i * slice_len
         end = (i + 1) * slice_len
-        if end >= n_timesteps:
-            yield slice(start, n_timesteps)
+        if end >= len_dim_0:
+            yield slice(start, len_dim_0)
             return
         yield slice(start, end)
 
@@ -320,7 +364,10 @@ def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
 
     result_slices = []
     for chunk in _compute_slices(cubes):
-        single_model_slices = [cube[chunk] for cube in cubes]
+        if chunk is None:
+            single_model_slices = cubes  # scalar cubes
+        else:
+            single_model_slices = [cube[chunk] for cube in cubes]
         combined_slice = _combine(single_model_slices)
         with warnings.catch_warnings():
             warnings.filterwarnings(
@@ -342,14 +389,14 @@ def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
         result_slices.append(collapsed_slice)
 
     try:
-        result_cube = iris.cube.CubeList(result_slices).concatenate_cube()
+        result_cube = CubeList(result_slices).concatenate_cube()
     except Exception as excinfo:
         raise ValueError(
-            "Multi-model statistics failed to concatenate results into a"
-            f" single array. This happened for operator {operator}"
-            f" with computed statistics {result_slices}."
-            "This can happen e.g. if the calculation results in inconsistent"
-            f" dtypes. Encountered the following exception: {excinfo}")
+            f"Multi-model statistics failed to concatenate results into a "
+            f"single array. This happened for operator {operator} "
+            f"with computed statistics {result_slices}. "
+            f"This can happen e.g. if the calculation results in inconsistent "
+            f"dtypes") from excinfo
 
     result_cube.data = np.ma.array(result_cube.data)
     result_cube.remove_coord(CONCAT_DIM)
@@ -439,9 +486,8 @@ def multi_model_statistics(products,
     workflow and provenance information, and this option should typically be
     ignored.
 
-    Apart from the time coordinate, cubes must have consistent shapes. There
-    are two options to combine time coordinates of different lengths, see the
-    ``span`` argument.
+    Cubes must have consistent shapes. There are two options to combine time
+    coordinates of different lengths, see the ``span`` argument.
 
     Uses the statistical operators in :py:mod:`iris.analysis`, including
     ``mean``, ``median``, ``min``, ``max``, and ``std``. Percentiles are also
@@ -461,7 +507,8 @@ def multi_model_statistics(products,
     span: str
         Overlap or full; if overlap, statitstics are computed on common time-
         span; if full, statistics are computed on full time spans, ignoring
-        missing data.
+        missing data. This option is ignored if input cubes do not have time
+        dimensions.
     statistics: list
         Statistical metrics to be computed, e.g. [``mean``, ``max``]. Choose
         from the operators listed in the iris.analysis package. Percentiles can
@@ -471,8 +518,8 @@ def multi_model_statistics(products,
         preprocessorfiles as values. If products are passed as input, the
         statistics cubes will be assigned to these output products.
     groupby:  tuple
-        Group products by a given tag or attribute, e.g.
-        ('project', 'dataset', 'tag1').
+        Group products by a given tag or attribute, e.g., ('project',
+        'dataset', 'tag1'). This is ignored if ``products`` is a list of cubes.
     keep_input_datasets: bool
         If True, the output will include the input datasets.
         If False, only the computed statistics will be returned.
@@ -489,7 +536,7 @@ def multi_model_statistics(products,
         If span is neither overlap nor full, or if input type is neither cubes
         nor products.
     """
-    if all(isinstance(p, iris.cube.Cube) for p in products):
+    if all(isinstance(p, Cube) for p in products):
         return _multicube_statistics(
             cubes=products,
             statistics=statistics,
@@ -514,9 +561,10 @@ def multi_model_statistics(products,
 
         return statistics_products
     raise ValueError(
-        "Input type for multi_model_statistics not understood. Expected "
-        "iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
-        "got {}".format(products))
+        f"Input type for multi_model_statistics not understood. Expected "
+        f"iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
+        f"got {products}"
+    )
 
 
 def ensemble_statistics(products, statistics,
