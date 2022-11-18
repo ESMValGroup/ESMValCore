@@ -603,6 +603,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             scheme['src_cube'] = cube
         if 'grid_cube' in scheme_args:
             scheme['grid_cube'] = target_grid
+        loaded_scheme = obj(**scheme)
 
     # Unstructured regridding requires x2 2d spatial coordinates,
     # so ensure to purge any 1d native spatial dimension coordinates
@@ -633,7 +634,6 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         if _attempt_irregular_regridding(cube, scheme):
             cube = esmpy_regrid(cube, target_grid, scheme)
         else:
-            loaded_scheme = obj(**scheme)
             if isinstance(loaded_scheme, iris.cube.Cube):
                 return loaded_scheme
 
