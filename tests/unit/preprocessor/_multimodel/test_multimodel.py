@@ -22,7 +22,7 @@ SPAN_OPTIONS = ('overlap', 'full')
 
 FREQUENCY_OPTIONS = ('daily', 'monthly', 'yearly')  # hourly
 
-CALENDAR_OPTIONS = ('360_day', '365_day', 'gregorian', 'proleptic_gregorian',
+CALENDAR_OPTIONS = ('360_day', '365_day', 'standard', 'proleptic_gregorian',
                     'julian')
 
 
@@ -80,7 +80,7 @@ def cubes_5d():
 
 
 def timecoord(frequency,
-              calendar='gregorian',
+              calendar='standard',
               offset='days since 1850-01-01',
               num=3):
     """Return a time coordinate with the given time points and calendar."""
@@ -102,7 +102,7 @@ def timecoord(frequency,
 
 def generate_cube_from_dates(
     dates,
-    calendar='gregorian',
+    calendar='standard',
     offset='days since 1850-01-01',
     fill_val=1,
     len_data=3,
@@ -392,19 +392,19 @@ def test_unsupported_statistics_fail(statistic, error):
 
 
 @pytest.mark.parametrize('calendar1, calendar2, expected', (
-    ('360_day', '360_day', '360_day'),
-    ('365_day', '365_day', '365_day'),
-    ('365_day', '360_day', 'gregorian'),
-    ('360_day', '365_day', 'gregorian'),
-    ('gregorian', '365_day', 'gregorian'),
-    ('proleptic_gregorian', 'julian', 'gregorian'),
-    ('julian', '365_day', 'gregorian'),
+    ('360_day', '360_day', ('360_day',)),
+    ('365_day', '365_day', ('365_day',)),
+    ('365_day', '360_day', ('standard', 'gregorian')),
+    ('360_day', '365_day', ('standard', 'gregorian')),
+    ('standard', '365_day', ('standard', 'gregorian')),
+    ('proleptic_gregorian', 'julian', ('standard', 'gregorian')),
+    ('julian', '365_day', ('standard', 'gregorian')),
 ))
 def test_get_consistent_time_unit(calendar1, calendar2, expected):
     """Test same calendar returned or default if calendars differ.
 
     Expected behaviour: If the calendars are the same, return that one.
-    If the calendars are not the same, return 'gregorian'.
+    If the calendars are not the same, return 'standard'.
     """
     cubes = (
         generate_cube_from_dates('monthly', calendar=calendar1),
@@ -412,7 +412,7 @@ def test_get_consistent_time_unit(calendar1, calendar2, expected):
     )
 
     result = mm._get_consistent_time_unit(cubes)
-    assert result.calendar == expected
+    assert result.calendar in expected
 
 
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
@@ -435,7 +435,7 @@ def test_align(span):
     calendars = set(cube.coord('time').units.calendar for cube in result_cubes)
 
     assert len(calendars) == 1
-    assert list(calendars)[0] == 'gregorian'
+    assert list(calendars)[0] in ('standard', 'gregorian')
 
     shapes = set(cube.shape for cube in result_cubes)
 
@@ -568,7 +568,7 @@ def test_edge_case_different_time_offsets(span):
 
     time_coord = result_cube.coord('time')
 
-    assert time_coord.units.calendar == 'gregorian'
+    assert time_coord.units.calendar in ('standard', 'gregorian')
     assert time_coord.units.origin == 'days since 1850-01-01'
 
     desired = np.array((14., 45., 73.))
@@ -680,7 +680,7 @@ def test_unify_time_coordinates():
                                      calendar='360_day',
                                      offset='days since 1850-01-01')
     cube2 = generate_cube_from_dates('monthly',
-                                     calendar='gregorian',
+                                     calendar='standard',
                                      offset='days since 1943-05-16')
 
     mm._unify_time_coordinates([cube1, cube2])
@@ -827,7 +827,7 @@ def test_ignore_tas_scalar_height_coord():
 def test_daily_inconsistent_calendars():
     """Determine behaviour for inconsistent calendars.
 
-    Deviating calendars should be converted to gregorian. Missing data
+    Deviating calendars should be converted to standard. Missing data
     inside original bounds is filled with nearest neighbour Missing data
     outside original bounds is masked.
     """
@@ -844,7 +844,7 @@ def test_daily_inconsistent_calendars():
 
     leapcube = generate_cube_from_dates(
         leapdates,
-        calendar='gregorian',
+        calendar='standard',
         offset='days since 1850-01-01',
         fill_val=1,
     )
@@ -861,7 +861,7 @@ def test_daily_inconsistent_calendars():
     # span=full
     aligned_cubes = mm._align(cubes, span='full')
     for cube in aligned_cubes:
-        assert cube.coord('time').units.calendar == "gregorian"
+        assert cube.coord('time').units.calendar in ("standard", "gregorian")
         assert cube.shape == (367, )
         assert cube[59].coord('time').points == 789  # 29 Feb 1852
     np.ma.is_masked(aligned_cubes[1][366].data)  # outside original range
@@ -874,7 +874,7 @@ def test_daily_inconsistent_calendars():
     # span=overlap
     aligned_cubes = mm._align(cubes, span='overlap')
     for cube in aligned_cubes:
-        assert cube.coord('time').units.calendar == "gregorian"
+        assert cube.coord('time').units.calendar in ("standard", "gregorian")
         assert cube.shape == (365, )
         assert cube[59].coord('time').points == 790  # 1 March 1852
 
