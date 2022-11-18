@@ -6,7 +6,7 @@ channels:
 
 dependencies:
   - cartopy
-  - cf-units>=3.0.0,<3.1.0  # github.com/ESMValGroup/ESMValCore/issues/1655
+  - cf-units
   - cftime
   - dask
   - compilers
