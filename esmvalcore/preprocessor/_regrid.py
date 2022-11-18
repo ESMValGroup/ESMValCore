@@ -1080,8 +1080,8 @@ def get_reference_levels(filename, project, dataset, short_name, mip,
     cube = cubes[0]
     try:
         coord = cube.coord(axis='Z')
-    except iris.exceptions.CoordinateNotFoundError as exc:
-        raise ValueError(f'z-coord not available in {filename}') from exc
+    except iris.exceptions.CoordinateNotFoundError:
+        raise ValueError('z-coord not available in {}'.format(filename))
     return coord.points.tolist()
 
 
