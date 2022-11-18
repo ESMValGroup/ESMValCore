@@ -926,10 +926,6 @@ example of its usage in an ESMValTool preprocessor is:
             reference: esmf_regrid.schemes:ESMFAreaWeighted
             mdtol: 0.7
 
-.. TODO: Remove the following warning once things have settled a bit.
-.. warning::
-   Just as the mesh support in Iris itself, this new regridding package is
-   still considered experimental.
 
 .. _ensemble statistics:
 
