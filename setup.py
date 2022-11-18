@@ -32,6 +32,7 @@ REQUIREMENTS = {
         'cf-units',
         'dask[array]',
         'esgf-pyclient>=0.3.1',
+        'esmf-regrid',
         'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
         'fiona',
         'fire',
@@ -39,7 +40,6 @@ REQUIREMENTS = {
         'humanfriendly',
         "importlib_resources;python_version<'3.9'",
         'isodate',
-        'iris-esmf-regrid',
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
         'nested-lookup',
