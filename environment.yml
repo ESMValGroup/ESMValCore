@@ -6,7 +6,7 @@ channels:
 
 dependencies:
   - cartopy
-  - cf-units>=3.0.0,<3.1.0  # github.com/ESMValGroup/ESMValCore/issues/1655
+  - cf-units
   - cftime
   - dask
   - compilers
@@ -23,7 +23,7 @@ dependencies:
   - jinja2
   - nc-time-axis
   - nested-lookup
-  - netcdf4!=1.6.1  # github.com/ESMValGroup/ESMValCore/issues/1723
+  - netcdf4<1.6.1  # github.com/ESMValGroup/ESMValCore/issues/1723
   - numpy
   - pandas
   - pillow
