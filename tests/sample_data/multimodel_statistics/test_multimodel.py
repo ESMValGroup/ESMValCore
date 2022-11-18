@@ -9,6 +9,7 @@ from typing import Optional
 import iris
 import numpy as np
 import pytest
+from iris.exceptions import MergeError
 
 from esmvalcore.preprocessor import extract_time
 from esmvalcore.preprocessor._multimodel import multi_model_statistics
@@ -28,7 +29,7 @@ CALENDAR_PARAMS = (
     pytest.param(
         'proleptic_gregorian',
         marks=pytest.mark.xfail(
-            raises=iris.exceptions.MergeError,
+            raises=MergeError,
             reason='https://github.com/ESMValGroup/ESMValCore/issues/956')),
     pytest.param(
         'julian',
@@ -214,7 +215,7 @@ def multimodel_regression_test(cubes, span, name):
 
 
 @pytest.mark.xfail(
-    raises=iris.exceptions.MergeError,
+    raises=MergeError,
     reason='https://github.com/ESMValGroup/ESMValCore/issues/956')
 @pytest.mark.use_sample_data
 @pytest.mark.parametrize('span', SPAN_PARAMS)
@@ -250,6 +251,19 @@ def test_multimodel_no_vertical_dimension(timeseries_cubes_month):
     cubes = timeseries_cubes_month
     cubes = [cube[:, 0] for cube in cubes]
     multimodel_test(cubes, span=span, statistic='mean')
+
+
+@pytest.mark.use_sample_data
+def test_multimodel_merge_error(timeseries_cubes_month):
+    """Test statistic with slightly different vertical coordinates.
+
+    See https://github.com/ESMValGroup/ESMValCore/issues/956.
+
+    """
+    span = 'full'
+    cubes = timeseries_cubes_month
+    with pytest.raises(MergeError):
+        multimodel_test(cubes, span=span, statistic='mean')
 
 
 @pytest.mark.use_sample_data
