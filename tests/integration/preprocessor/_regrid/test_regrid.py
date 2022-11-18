@@ -244,7 +244,7 @@ class Test(tests.Test):
             'reference': 'esmf_regrid.schemes:ESMFAreaWeighted'
         }
         result = regrid(self.cube, grid, scheme)
-        expected = np.array([1.499886, 5.499886, 9.499886])
+        expected = np.array([[[1.499886]], [[5.499886]], [[9.499886]]])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
 
     def test_regrid__unstructured_nearest_float(self):
