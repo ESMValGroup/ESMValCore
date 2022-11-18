@@ -17,6 +17,8 @@ import cf_units
 import iris
 import iris.coord_categorisation
 import numpy as np
+from iris.common.metadata import CoordMetadata
+from iris.coords import DimCoord
 from iris.util import equalise_attributes
 
 from esmvalcore.iris_helpers import date2num
@@ -230,13 +232,8 @@ def _equalise_cell_methods(cubes):
         cube.cell_methods = None
 
 
-def _equalise_coordinates(cubes):
-    """Equalise coordinates in cubes (in-place)."""
-    if not cubes:
-        return
-
-    # If metadata of a coordinate metadata is equal for all cubes, do not
-    # modify it; else remove long_name and attributes.
+def _get_equal_coords_metadata(cubes):
+    """Get metadata for exactly matching coordinates across cubes."""
     equal_coords_metadata = []
     for coord in cubes[0].coords():
         for other_cube in cubes[1:]:
@@ -248,13 +245,100 @@ def _equalise_coordinates(cubes):
                 break
         else:
             equal_coords_metadata.append(coord.metadata)
+    return equal_coords_metadata
 
-    # Modify coordinates accordingly
+
+def _get_equal_coord_names_metadata(cubes, equal_coords_metadata):
+    """Get metadata for coords with matching names and units across cubes.
+
+    Note
+    ----
+    Ignore coordinates whose names are not unique.
+
+    """
+    equal_names_metadata = {}
+    for coord in cubes[0].coords():
+        coord_name = coord.name()
+
+        # Ignore exactly matching coordinates
+        if coord.metadata in equal_coords_metadata:
+            continue
+
+        # Ignore coordinates that are not unique in original cube
+        if len(cubes[0].coords(coord_name)) > 1:
+            continue
+
+        # Check if coordinate names and units match across all cubes
+        for other_cube in cubes[1:]:
+
+            # Ignore names that do not exist in other cube/are not unique
+            if len(other_cube.coords(coord_name)) != 1:
+                break
+
+            # Ignore names where units do not match across cubes
+            if coord.units != other_cube.coord(coord_name).units:
+                break
+
+        # Coordinate name exists in all other cubes with identical units
+        # --> Filter out matching metadata
+        else:  # Coordinate name exists in all other cubes with identical units
+            std_names = list(
+                {c.coord(coord_name).standard_name for c in cubes}
+            )
+            long_names = list(
+                {c.coord(coord_name).long_name for c in cubes}
+            )
+            var_names = list(
+                {c.coord(coord_name).var_name for c in cubes}
+            )
+            equal_names_metadata[coord_name] = CoordMetadata(
+                standard_name=std_names[0] if len(std_names) == 1 else None,
+                long_name=long_names[0] if len(long_names) == 1 else None,
+                var_name=var_names[0] if len(var_names) == 1 else None,
+                units=coord.units,
+                attributes={},
+                coord_system=None,
+                climatological=None,
+            )
+
+        return equal_names_metadata
+
+
+def _equalise_coordinates(cubes):
+    """Equalise coordinates in cubes (in-place)."""
+    if not cubes:
+        return
+
+    # Filter out coordinates with exactly matching metadata across all cubes
+    # --> these will not be modified at all
+    equal_coords_metadata = _get_equal_coords_metadata(cubes)
+
+    # Filter out coordinates with matching names and units
+    # --> keep matching metadata of these coordinates
+    # Note: ignore duplicate coordinates
+    equal_names_metadata = _get_equal_coord_names_metadata(
+        cubes,
+        equal_coords_metadata
+    )
+
+    # Modify all coordinates of all cubes accordingly
     for cube in cubes:
         for coord in cube.coords():
-            if coord.metadata not in equal_coords_metadata:
-                coord.long_name = None
-                coord.attributes = None
+
+            # Exactly matching coordinates --> do not modify
+            if coord.metadata in equal_coords_metadata:
+                continue
+
+            # Matching names and units --> set common metadata
+            if coord.name() in equal_names_metadata:
+                coord.metadata = equal_names_metadata[coord.name()]
+                continue
+
+            # Remaining coordinates --> remove coordinate metadata
+            coord.long_name = None
+            coord.attributes = {}
+            if isinstance(coord, DimCoord):
+                coord.circular = None
 
         # Additionally remove specific scalar coordinates which are not
         # expected to be equal in the input cubes

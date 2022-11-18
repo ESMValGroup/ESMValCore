@@ -134,19 +134,27 @@ def get_cube_for_equal_coords_test(num_cubes):
         cube = generate_cube_from_dates('monthly')
         cubes.append(cube)
 
-    # Create cubes that have one equal coordinate ('year') and one non-equal
-    # coordinate ('x')
+    # Create cubes that have one exactly equal coordinate ('year'), one
+    # coordinate with matching names ('m') and one coordinate with non-matching
+    # names
     year_coord = AuxCoord([1, 2, 3], var_name='year', long_name='year',
                           units='1', attributes={'test': 1})
+    m_coord = AuxCoord([1, 2, 3], var_name='m', long_name='m', units='s',
+                       attributes={'test': 0})
     x_coord = AuxCoord([1, 2, 3], var_name='x', long_name='x', units='s',
                        attributes={'test': 2})
     for (idx, cube) in enumerate(cubes):
+        new_m_coord = m_coord.copy()
+        new_m_coord.var_name = f'm_{idx}'
         new_x_coord = x_coord.copy()
         new_x_coord.long_name = f'x_{idx}'
         cube.add_aux_coord(year_coord.copy(), 0)
+        cube.add_aux_coord(new_m_coord, 0)
         cube.add_aux_coord(new_x_coord, 0)
         assert cube.coord('year').metadata is not year_coord.metadata
         assert cube.coord('year').metadata == year_coord.metadata
+        assert cube.coord('m').metadata is not m_coord.metadata
+        assert cube.coord('m').metadata != m_coord.metadata
         assert cube.coord(f'x_{idx}').metadata is not x_coord.metadata
         assert cube.coord(f'x_{idx}').metadata != x_coord.metadata
 
@@ -482,11 +490,16 @@ def test_combine_preserve_equal_coordinates():
     cubes = get_cube_for_equal_coords_test(5)
     merged_cube = mm._combine(cubes)
 
-    # The equal coordinate ('year') was not changed; the non-equal one ('x')
-    # does not have a long_name and attributes anymore
+    # The equal coordinate ('year') was not changed; the var_name of the
+    # matchine name coordinate ('m') has been removed, and the non-equal one
+    # ('x') does not have a long_name and attributes anymore
     assert merged_cube.coord('year').var_name == 'year'
     assert merged_cube.coord('year').standard_name is None
     assert merged_cube.coord('year').long_name == 'year'
+    assert merged_cube.coord('m').var_name is None
+    assert merged_cube.coord('m').standard_name is None
+    assert merged_cube.coord('m').long_name == 'm'
+    assert merged_cube.coord('m').attributes == {}
     assert merged_cube.coord('year').attributes == {'test': 1}
     assert merged_cube.coord('x').var_name == 'x'
     assert merged_cube.coord('x').standard_name is None
@@ -911,12 +924,17 @@ def test_preserve_equal_coordinates():
     stat_cube = stat_cubes['sum']
     assert_array_allclose(stat_cube.data, np.ma.array([5.0, 5.0, 5.0]))
 
-    # The equal coordinate ('year') was not changed; the non-equal one ('x')
-    # does not have a long_name and attributes anymore
+    # The equal coordinate ('year') was not changed; the var_name of the
+    # matchine name coordinate ('m') has been removed, and the non-equal one
+    # ('x') does not have a long_name and attributes anymore
     assert stat_cube.coord('year').var_name == 'year'
     assert stat_cube.coord('year').standard_name is None
     assert stat_cube.coord('year').long_name == 'year'
     assert stat_cube.coord('year').attributes == {'test': 1}
+    assert stat_cube.coord('m').var_name is None
+    assert stat_cube.coord('m').standard_name is None
+    assert stat_cube.coord('m').long_name == 'm'
+    assert stat_cube.coord('m').attributes == {}
     assert stat_cube.coord('x').var_name == 'x'
     assert stat_cube.coord('x').standard_name is None
     assert stat_cube.coord('x').long_name is None
