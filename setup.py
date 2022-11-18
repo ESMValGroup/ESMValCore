@@ -39,6 +39,7 @@ REQUIREMENTS = {
         'humanfriendly',
         "importlib_resources;python_version<'3.9'",
         'isodate',
+        'iris-esmf-regrid',
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
         'nested-lookup',
