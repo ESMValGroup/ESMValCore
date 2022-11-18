@@ -486,8 +486,9 @@ def multi_model_statistics(products,
     workflow and provenance information, and this option should typically be
     ignored.
 
-    Cubes must have consistent shapes. There are two options to combine time
-    coordinates of different lengths, see the ``span`` argument.
+    Cubes must have consistent shapes apart from a potential time dimensions.
+    There are two options to combine time coordinates of different lengths, see
+    the ``span`` argument.
 
     Uses the statistical operators in :py:mod:`iris.analysis`, including
     ``mean``, ``median``, ``min``, ``max``, and ``std``. Percentiles are also

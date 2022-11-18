@@ -55,6 +55,30 @@ def cubes_with_arbitrary_dimensions():
     return cubes
 
 
+@pytest.fixture
+def cubes_5d():
+    """Create 5d cubes."""
+    a_coord = DimCoord([1], var_name='a')
+    b_coord = DimCoord([1], var_name='b')
+    c_coord = DimCoord([1], var_name='c')
+    d_coord = DimCoord([1], var_name='d')
+    e_coord = DimCoord([1], var_name='e')
+    coord_spec = [
+        (a_coord, 0),
+        (b_coord, 1),
+        (c_coord, 2),
+        (d_coord, 3),
+        (e_coord, 4),
+    ]
+
+    cubes = CubeList([
+        Cube(np.full((1, 1, 1, 1, 1), 1.0), dim_coords_and_dims=coord_spec),
+        Cube(np.full((1, 1, 1, 1, 1), 2.0), dim_coords_and_dims=coord_spec),
+    ])
+
+    return cubes
+
+
 def timecoord(frequency,
               calendar='gregorian',
               offset='days since 1850-01-01',
@@ -937,6 +961,23 @@ def test_preserve_equal_coordinates():
     assert stat_cube.coord('x').standard_name is None
     assert stat_cube.coord('x').long_name is None
     assert stat_cube.coord('x').attributes == {}
+
+
+def test_arbitrary_dims_5d(cubes_5d):
+    """Test ``multi_model_statistics`` with 5D cubes."""
+    stat_cubes = multi_model_statistics(
+        cubes_5d,
+        span='overlap',
+        statistics=['sum'],
+    )
+    assert len(stat_cubes) == 1
+    assert 'sum' in stat_cubes
+    stat_cube = stat_cubes['sum']
+    assert stat_cube.shape == (1, 1, 1, 1, 1)
+    assert_array_allclose(
+        stat_cube.data,
+        np.ma.array(np.full((1, 1, 1, 1, 1), 3.0)),
+    )
 
 
 def test_arbitrary_dims_2d(cubes_with_arbitrary_dimensions):
