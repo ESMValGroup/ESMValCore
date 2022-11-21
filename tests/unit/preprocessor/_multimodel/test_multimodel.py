@@ -502,8 +502,9 @@ def test_combine_non_equal_coordinates():
     cubes = get_cube_for_equal_coords_test(5)
     merged_cube = mm._combine(cubes)
 
-    # The var_name of the matchine name coordinate ('m') has been removed, and
-    # the non-equal one ('x') does not have a long_name and attributes anymore
+    # The var_name of the matching name coordinate ('m') has been removed, and
+    # the non-equal one ('x') does not have a long_name anymore
+    # Both coordinates lost their attributes
     assert merged_cube.coord('m').var_name is None
     assert merged_cube.coord('m').standard_name is None
     assert merged_cube.coord('m').long_name == 'm'

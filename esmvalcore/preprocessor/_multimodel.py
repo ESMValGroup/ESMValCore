@@ -309,8 +309,8 @@ def _equalise_coordinate_metadata(cubes):
     equal_coords_metadata = _get_equal_coords_metadata(cubes)
 
     # Filter out coordinates with matching names and units
-    # --> keep matching metadata of these coordinates
-    # Note: ignore duplicate coordinates
+    # --> keep matching names of these coordinates
+    # Note: ignores duplicate coordinates
     equal_names_metadata = _get_equal_coord_names_metadata(
         cubes,
         equal_coords_metadata
