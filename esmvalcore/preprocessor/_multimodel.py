@@ -486,7 +486,7 @@ def multi_model_statistics(products,
     workflow and provenance information, and this option should typically be
     ignored.
 
-    Cubes must have consistent shapes apart from a potential time dimensions.
+    Cubes must have consistent shapes apart from a potential time dimension.
     There are two options to combine time coordinates of different lengths, see
     the ``span`` argument.
 
