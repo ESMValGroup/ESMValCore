@@ -134,11 +134,12 @@ def test_run(mocker, session, offline):
     )
 
 
-def test_run_fail_session_dir_exists(session):
+def test_run_session_dir_exists(session):
     program = ESMValTool()
     session.session_dir.mkdir(parents=True)
-    with pytest.raises(FileExistsError):
-        program._run(Path('/path/to/recipe_test.yml'), session)
+    session_dir = session.session_dir
+    program._create_session_dir(session)
+    assert session.session_name == f"{session_dir.name}-1"
 
 
 def test_clean_preproc_dir(session):
