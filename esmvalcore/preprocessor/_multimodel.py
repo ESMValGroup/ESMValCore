@@ -280,8 +280,8 @@ def _get_equal_coord_names_metadata(cubes, equal_coords_metadata):
                 break
 
         # Coordinate name exists in all other cubes with identical units
-        # --> Filter out matching metadata
-        else:  # Coordinate name exists in all other cubes with identical units
+        # --> Get metadata that is identical across all cubes
+        else:
             std_names = list(
                 {c.coord(coord_name).standard_name for c in cubes}
             )
@@ -298,10 +298,10 @@ def _get_equal_coord_names_metadata(cubes, equal_coords_metadata):
                 units=coord.units,
                 attributes={},
                 coord_system=None,
-                climatological=None,
+                climatological=False,
             )
 
-        return equal_names_metadata
+    return equal_names_metadata
 
 
 def _equalise_coordinates(cubes):
