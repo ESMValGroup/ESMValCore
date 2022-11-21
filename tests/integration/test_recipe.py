@@ -13,7 +13,6 @@ from nested_lookup import get_occurrence_of_value, nested_update
 from PIL import Image
 
 import esmvalcore
-from esmvalcore._config import TAGS
 from esmvalcore._recipe import (
     TASKSEP,
     _dataset_to_file,
@@ -22,11 +21,11 @@ from esmvalcore._recipe import (
 )
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
 
-from .test_diagnostic_run import write_config_user_file
 from .test_provenance import check_provenance
 
 TAGS_FOR_TESTING = {
@@ -101,9 +100,8 @@ INITIALIZATION_ERROR_MSG = 'Could not create all tasks'
 
 
 @pytest.fixture
-def config_user(tmp_path):
-    filename = write_config_user_file(tmp_path)
-    cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
+def config_user(session):
+    cfg = session.to_config_user()
     cfg['offline'] = True
     cfg['check_level'] = CheckLevels.DEFAULT
     cfg['diagnostics'] = set()
@@ -3606,6 +3604,7 @@ def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
     os.makedirs(config_user['output_dir'])
     recipe.tasks.run = mocker.Mock()
     recipe.write_filled_recipe = mocker.Mock()
+    recipe.write_html_summary = mocker.Mock()
     recipe.run()
 
     esmvalcore._recipe.esgf.download.assert_called_once_with(
@@ -3614,6 +3613,7 @@ def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
     cfg['write_ncl_interface'] = False
     recipe.tasks.run.assert_called_once_with(cfg)
     recipe.write_filled_recipe.assert_called_once()
+    recipe.write_html_summary.assert_called_once()
 
 
 @patch('esmvalcore._recipe.check.data_availability', autospec=True)

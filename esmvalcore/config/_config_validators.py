@@ -1,23 +1,28 @@
 """List of config validators."""
+from __future__ import annotations
 
+import logging
+import os.path
 import warnings
 from collections.abc import Iterable
 from functools import lru_cache
 from pathlib import Path
+from typing import Optional, Union
 
 from esmvalcore import __version__ as current_version
-from esmvalcore._config import load_config_developer
-from esmvalcore._recipe import TASKSEP
 from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.config._config import (
+    TASKSEP,
+    importlib_files,
+    load_config_developer,
+)
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+
+logger = logging.getLogger(__name__)
 
 
 class ValidationError(ValueError):
     """Custom validation error."""
-
-
-# Custom warning, because DeprecationWarning is hidden by default
-class ESMValToolDeprecationWarning(UserWarning):
-    """Configuration key has been deprecated."""
 
 
 # The code for this function was taken from matplotlib (v3.3) and modified
@@ -123,7 +128,7 @@ def validate_path(value, allow_none=False):
     if (value is None) and allow_none:
         return value
     try:
-        path = Path(value).expanduser().absolute()
+        path = Path(os.path.expandvars(value)).expanduser().absolute()
     except TypeError as err:
         raise ValidationError(f"Expected a path, but got {value}") from err
     else:
@@ -173,25 +178,39 @@ validate_int_positive_or_none = _make_type_validator(validate_int_positive,
                                                      allow_none=True)
 
 
-def validate_oldstyle_rootpath(value):
+def validate_rootpath(value):
     """Validate `rootpath` mapping."""
     mapping = validate_dict(value)
     new_mapping = {}
     for key, paths in mapping.items():
+        if key == 'obs4mips':
+            logger.warning(
+                "Correcting capitalization, project 'obs4mips' should be "
+                "written as 'obs4MIPs' in 'rootpath' in config-user.yml")
+            key = 'obs4MIPs'
         new_mapping[key] = validate_pathlist(paths)
     return new_mapping
 
 
-def validate_oldstyle_drs(value):
+def validate_drs(value):
     """Validate `drs` mapping."""
     mapping = validate_dict(value)
-    return mapping
+    new_mapping = {}
+    for key, drs in mapping.items():
+        if key == 'obs4mips':
+            logger.warning(
+                "Correcting capitalization, project 'obs4mips' should be "
+                "written as 'obs4MIPs' in 'drs' in config-user.yml")
+            key = 'obs4MIPs'
+        new_mapping[key] = validate_string(drs)
+    return new_mapping
 
 
 def validate_config_developer(value):
     """Validate and load config developer path."""
     path = validate_path_or_none(value)
-
+    if path is None:
+        path = importlib_files('esmvalcore') / 'config-developer.yml'
     load_config_developer(path)
 
     return path
@@ -212,8 +231,12 @@ def validate_check_level(value):
     return value
 
 
-def validate_diagnostics(diagnostics):
+def validate_diagnostics(
+    diagnostics: Union[Iterable[str], str, None],
+) -> Optional[set[str]]:
     """Validate diagnostic location."""
+    if diagnostics is None:
+        return None
     if isinstance(diagnostics, str):
         diagnostics = diagnostics.strip().split(' ')
     return {
@@ -222,7 +245,7 @@ def validate_diagnostics(diagnostics):
     }
 
 
-def deprecate(func, variable, version: str = None):
+def deprecate(func, variable, version: Optional[str] = None):
     """Wrap function to mark variables to be deprecated.
 
     This will give a warning if the function will be/has been deprecated.
@@ -242,10 +265,10 @@ def deprecate(func, variable, version: str = None):
 
     if current_version >= version:
         warnings.warn(f"`{variable}` has been removed in {version}",
-                      ESMValToolDeprecationWarning)
+                      ESMValCoreDeprecationWarning)
     else:
         warnings.warn(f"`{variable}` will be removed in {version}.",
-                      ESMValToolDeprecationWarning,
+                      ESMValCoreDeprecationWarning,
                       stacklevel=2)
 
     return func
@@ -268,13 +291,13 @@ _validators = {
     'profile_diagnostic': validate_bool,
     'run_diagnostic': validate_bool,
     'output_file_type': validate_string,
+    "offline": validate_bool,
 
     # From CLI
     "resume_from": validate_pathlist,
     "skip_nonexistent": validate_bool,
     "diagnostics": validate_diagnostics,
     "check_level": validate_check_level,
-    "offline": validate_bool,
     'max_years': validate_int_positive_or_none,
     'max_datasets': validate_int_positive_or_none,
 
@@ -282,8 +305,8 @@ _validators = {
     'write_ncl_interface': validate_bool,
 
     # oldstyle
-    'rootpath': validate_oldstyle_rootpath,
-    'drs': validate_oldstyle_drs,
+    'rootpath': validate_rootpath,
+    'drs': validate_drs,
 
     # config location
     'config_file': validate_path,

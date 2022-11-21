@@ -6,13 +6,13 @@ from functools import lru_cache
 import pyesgf.search
 import requests.exceptions
 
-from .._config._esgf_pyclient import get_esgf_config
 from .._data_finder import (
     _get_timerange_from_years,
     _parse_period,
     _truncate_dates,
     get_start_end_date,
 )
+from ..config._esgf_pyclient import get_esgf_config
 from ._download import ESGFFile
 from .facets import DATASET_MAP, FACETS
 
@@ -181,11 +181,11 @@ def find_files(*, project, short_name, dataset, **facets):
 
     Examples
     --------
-    Examples of how to use the search function for all supported projects.
+    Examples of how to use this function for all supported projects.
 
     Search for a CMIP3 dataset:
 
-    >>> search(
+    >>> find_files(
     ...     project='CMIP3',
     ...     frequency='mon',
     ...     short_name='tas',
@@ -197,7 +197,7 @@ def find_files(*, project, short_name, dataset, **facets):
 
     Search for a CMIP5 dataset:
 
-    >>> search(
+    >>> find_files(
     ...     project='CMIP5',
     ...     mip='Amon',
     ...     short_name='tas',
@@ -209,7 +209,7 @@ def find_files(*, project, short_name, dataset, **facets):
 
     Search for a CMIP6 dataset:
 
-    >>> search(
+    >>> find_files(
     ...     project='CMIP6',
     ...     mip='Amon',
     ...     short_name='tas',
@@ -222,7 +222,7 @@ def find_files(*, project, short_name, dataset, **facets):
     Search for a CORDEX dataset and limit the search results to files
     containing data to the years in the range 1990-2000:
 
-    >>> search(
+    >>> find_files(
     ...     project='CORDEX',
     ...     frequency='mon',
     ...     dataset='COSMO-crCLIM-v1-1',
@@ -239,7 +239,7 @@ def find_files(*, project, short_name, dataset, **facets):
 
     Search for a obs4MIPs dataset:
 
-    >>> search(
+    >>> find_files(
     ...     project='obs4MIPs',
     ...     frequency='mon',
     ...     dataset='CERES-EBAF',

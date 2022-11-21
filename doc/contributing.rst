@@ -635,13 +635,13 @@ When adding or removing dependencies, please consider applying the changes in
 the following files:
 
 - ``environment.yml``
-  contains development dependencies that cannot be installed from
-  `PyPI <https://pypi.org/>`_
+  contains all the development dependencies; these are all from
+  `conda-forge <https://conda-forge.org/>`_
 - ``setup.py``
   contains all Python dependencies, regardless of their installation source
 
 Note that packages may have a different name on
-`conda-forge <https://conda-forge.org/>`__ than on PyPI_.
+`conda-forge <https://conda-forge.org/>`__ than on `PyPI <https://pypi.org/>`_.
 
 Several test jobs on CircleCI_ related to the installation of the tool will only
 run if you change the dependencies.

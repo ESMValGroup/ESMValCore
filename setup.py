@@ -28,8 +28,7 @@ REQUIREMENTS = {
     # Use with pip install . to install from source
     'install': [
         'cartopy',
-        # see https://github.com/SciTools/cf-units/issues/218
-        'cf-units>=3.0.0,<3.1.0,!=3.0.1.post0',  # ESMValCore/issues/1655
+        'cf-units',
         'dask[array,distributed]',
         'esgf-pyclient>=0.3.1',
         'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
@@ -42,7 +41,7 @@ REQUIREMENTS = {
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
         'nested-lookup',
-        'netCDF4!=1.6.1',  # github.com/ESMValGroup/ESMValCore/issues/1723
+        'netCDF4<1.6.1',  # github.com/ESMValGroup/ESMValCore/issues/1723
         'numpy',
         'pandas',
         'pillow',
@@ -71,14 +70,15 @@ REQUIREMENTS = {
         'pytest-xdist',
         'ESMValTool_sample_data==0.0.3',
         # MyPy library stubs
+        'mypy>=0.990',
         'types-requests',
         'types-pkg_resources',
         'types-PyYAML',
     ],
     # Documentation dependencies
     'doc': [
-        'autodocsumm',
-        'sphinx>2',
+        'autodocsumm>=0.2.2',
+        'sphinx>5',
         'sphinx_rtd_theme',
     ],
     # Development dependencies
