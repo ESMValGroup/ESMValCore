@@ -28,8 +28,7 @@ commands:
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
             flake8 -j 4
-            pytest -n 4 -m "not sequential" --junitxml=report-1.xml
-            pytest -n 0 -m "sequential" --cov-append --junitxml=report-2.xml
+            pytest -n 4 --junitxml=report-1.xml
             esmvaltool version
       - run:
           name: Merge test reports
