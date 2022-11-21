@@ -12,6 +12,7 @@ import esmvalcore.config._logging
 import esmvalcore.esgf
 from esmvalcore import __version__
 from esmvalcore._main import HEADER, ESMValTool
+from esmvalcore.exceptions import RecipeError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -140,6 +141,17 @@ def test_run_session_dir_exists(session):
     session_dir = session.session_dir
     program._create_session_dir(session)
     assert session.session_name == f"{session_dir.name}-1"
+
+
+def test_run_session_dir_exists_alternative_fails(mocker, session):
+    mocker.patch.object(
+        esmvalcore._main.Path,
+        'mkdir',
+        side_effect=FileExistsError,
+    )
+    program = ESMValTool()
+    with pytest.raises(RecipeError):
+        program._create_session_dir(session)
 
 
 def test_clean_preproc_dir(session):
