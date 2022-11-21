@@ -514,16 +514,16 @@ def test_combine_non_equal_coordinates():
     assert merged_cube.coord('x').attributes == {}
 
 
-def test_equalise_coordinates_no_cubes():
-    """Test that _equalise_coordinates doesn't fail with empty cubes."""
-    mm._equalise_coordinates([])
+def test_equalise_coordinate_metadata_no_cubes():
+    """Test _equalise_coordinate_metadata doesn't fail with empty cubes."""
+    mm._equalise_coordinate_metadata([])
 
 
-def test_equalise_coordinates_one_cube():
-    """Test that _equalise_coordinates doesn't fail with a single cubes."""
+def test_equalise_coordinate_metadata_one_cube():
+    """Test _equalise_coordinate_metadata doesn't fail with a single cubes."""
     cube = generate_cube_from_dates('monthly')
     new_cube = cube.copy()
-    mm._equalise_coordinates([new_cube])
+    mm._equalise_coordinate_metadata([new_cube])
     assert new_cube is not cube
     assert new_cube == cube
 
@@ -1002,8 +1002,6 @@ def test_preserve_equal_name_coordinates(equal_names):
             assert getattr(time_coord, name) is None
     assert time_coord.units == 'days since 1850-01-01'
     assert time_coord.attributes == {}
-    assert time_coord.coord_system is None
-    assert time_coord.climatological is False
 
 
 def test_ignore_equal_coordinates():
@@ -1041,8 +1039,8 @@ def test_ignore_duplicate_equal_name_coordinates(cube_idx):
         units='m',
     )
     for cube in cubes:
-        cube.add_aux_coord(d_coord_1, ())
-    cubes[cube_idx].add_aux_coord(d_coord_0, ())
+        cube.add_aux_coord(d_coord_0, ())
+    cubes[cube_idx].add_aux_coord(d_coord_1, ())
 
     equal_names_metadata = mm._get_equal_coord_names_metadata(cubes, [])
 
@@ -1062,7 +1060,7 @@ def test_ignore_non_existing_coordinates():
     equal_names_metadata = mm._get_equal_coord_names_metadata(cubes, [])
 
     # The equal_names_metadata dict should only contain the equal 'time'
-    # dimension, not the duplicate dimension
+    # dimension, not the coordinate that only exists for the first cube
     assert len(equal_names_metadata) == 1
     assert 'time' in equal_names_metadata
 

@@ -17,7 +17,6 @@ import cf_units
 import iris
 import iris.coord_categorisation
 import numpy as np
-from iris.common.metadata import CoordMetadata
 from iris.coords import DimCoord
 from iris.util import equalise_attributes
 
@@ -291,20 +290,16 @@ def _get_equal_coord_names_metadata(cubes, equal_coords_metadata):
             var_names = list(
                 {c.coord(coord_name).var_name for c in cubes}
             )
-            equal_names_metadata[coord_name] = CoordMetadata(
+            equal_names_metadata[coord_name] = dict(
                 standard_name=std_names[0] if len(std_names) == 1 else None,
                 long_name=long_names[0] if len(long_names) == 1 else None,
                 var_name=var_names[0] if len(var_names) == 1 else None,
-                units=coord.units,
-                attributes={},
-                coord_system=None,
-                climatological=False,
             )
 
     return equal_names_metadata
 
 
-def _equalise_coordinates(cubes):
+def _equalise_coordinate_metadata(cubes):
     """Equalise coordinates in cubes (in-place)."""
     if not cubes:
         return
@@ -329,16 +324,23 @@ def _equalise_coordinates(cubes):
             if coord.metadata in equal_coords_metadata:
                 continue
 
-            # Matching names and units --> set common metadata
-            if coord.name() in equal_names_metadata:
-                coord.metadata = equal_names_metadata[coord.name()]
-                continue
-
-            # Remaining coordinates --> remove coordinate metadata
-            coord.long_name = None
+            # Non-exactly matching coordinates --> first, delete attributes and
+            # circular property
             coord.attributes = {}
             if isinstance(coord, DimCoord):
-                coord.circular = None
+                coord.circular = False
+
+            # Matching names and units --> set common names
+            if coord.name() in equal_names_metadata:
+                equal_names = equal_names_metadata[coord.name()]
+                coord.standard_name = equal_names['standard_name']
+                coord.long_name = equal_names['long_name']
+                coord.var_name = equal_names['var_name']
+                continue
+
+            # Remaining coordinates --> remove long_name
+            # Note: remaining differences will raise an error at a later stage
+            coord.long_name = None
 
         # Additionally remove specific scalar coordinates which are not
         # expected to be equal in the input cubes
@@ -365,7 +367,7 @@ def _combine(cubes):
     #    merge_and_concat.html#common-issues-with-merge-and-concatenate
     equalise_attributes(cubes)
     _equalise_cell_methods(cubes)
-    _equalise_coordinates(cubes)
+    _equalise_coordinate_metadata(cubes)
     _equalise_fx_variables(cubes)
 
     for i, cube in enumerate(cubes):
