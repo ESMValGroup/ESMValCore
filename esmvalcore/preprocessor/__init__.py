@@ -4,6 +4,7 @@ import inspect
 import logging
 from pprint import pformat
 
+from dask.delayed import Delayed
 from iris.cube import Cube
 
 from .._provenance import TrackedFile
@@ -458,7 +459,7 @@ class PreprocessorFile(TrackedFile):
             self._cubes,
             **self.settings['save'],
         )
-        if not self.settings['save'].get('compute', True):
+        if isinstance(result, Delayed):
             self.delayed = result
         self.files = [self.settings['save']['filename']]
         self.files = preprocess(self.files,
@@ -621,7 +622,8 @@ class PreprocessingTask(BaseTask):
 
         for product in self.products:
             product.close()
-            self.delayeds[product.filename] = product.delayed
+            if product.delayed is not None:
+                self.delayeds[product.filename] = product.delayed
         metadata_files = write_metadata(self.products,
                                         self.write_ncl_interface)
         return metadata_files

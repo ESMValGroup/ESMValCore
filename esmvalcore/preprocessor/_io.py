@@ -10,7 +10,6 @@ import iris
 import iris.aux_factory
 import iris.exceptions
 import numpy as np
-import xarray
 import yaml
 from cf_units import suppress_errors
 
@@ -285,8 +284,8 @@ def save(cubes,
 
     Returns
     -------
-    str
-        filename
+    str or dask.delayed.Delayed
+        filename or delayed
 
     Raises
     ------
@@ -341,20 +340,17 @@ def save(cubes,
             cube.var_name = alias
 
     cube = cubes[0]
-    if compute is True:
-        iris.save(cube, **kwargs)
-        return filename
+    if not compute and not cube.has_lazy_data():
+        # What should happen if the data is not lazy and we're asked for a
+        # lazy save?
+        # https://github.com/SciTools/iris/pull/5031#issuecomment-1322166230
+        compute = True
 
-    data_array = xarray.DataArray.from_iris(cube)
-    kwargs.pop('target')
-    kwargs['_FillValue'] = kwargs.pop('fill_value')
-    encoding = {cube.var_name: kwargs}
-    delayed = data_array.to_netcdf(
-        filename,
-        encoding=encoding,
-        compute=False,
-    )
-    return delayed
+    result = iris.save(cube, compute=compute, **kwargs)
+    if compute:
+        logger.info("Wrote (immediate) %s", filename)
+        return filename
+    return result
 
 
 def _get_debug_filename(filename, step):

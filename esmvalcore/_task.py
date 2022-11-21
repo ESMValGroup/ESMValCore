@@ -769,7 +769,7 @@ class TaskSet(set):
                     logger.info(f"Skipping task {task.name}")
             for future in dask.distributed.as_completed(futures_to_files):
                 filename = futures_to_files[future]
-                logger.info(f"Wrote {filename}")
+                logger.info(f"Wrote (delayed) {filename}")
 
     def _run_sequential(self) -> None:
         """Run tasks sequentially."""
