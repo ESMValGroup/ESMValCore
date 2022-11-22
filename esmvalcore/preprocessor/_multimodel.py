@@ -150,6 +150,10 @@ def _guess_time_bounds(cube):
     try:
         cube.coord('time').guess_bounds()
     except ValueError:  # Time has length 1 --> guessing bounds not possible
+        logger.debug(
+            "Encountered scalar time coordinate in multi_model_statistics: "
+            "cannot determine its bounds"
+        )
         return
 
 
@@ -302,9 +306,12 @@ def _combine(cubes):
     try:
         merged_cube = cubes.merge_cube()
     except MergeError as exc:
+        # Note: str(exc) starts with "failed to merge into a single cube.\n"
+        # --> remove this here for clear error message
+        msg = "\n".join(str(exc).split('\n')[1:])
         raise ValueError(
-            "Multi-model statistics failed to merge input cubes into a single "
-            "array"
+            f"Multi-model statistics failed to merge input cubes into a "
+            f"single array:\n{cubes}\n{msg}"
         ) from exc
 
     return merged_cube
