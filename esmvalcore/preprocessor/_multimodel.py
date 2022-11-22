@@ -412,20 +412,19 @@ def _multicube_statistics(cubes, statistics, span):
     # Avoid modifying inputs
     copied_cubes = [cube.copy() for cube in cubes]
 
-    # If all cubes contain a time coordinate, align them. If only some of them
-    # contain a time coordinate, raise an exception. If no cube contains a time
-    # coordinate, do nothing.
+    # If all cubes contain a time coordinate, align them. If no cube contains a
+    # time coordinate, do nothing. Else, raise an exception
     time_coords = [cube.coords('time') for cube in cubes]
-    if any(time_coords) and not all(time_coords):
+    if all(time_coords):
+        aligned_cubes = _align_time_coord(copied_cubes, span=span)
+    elif not any(time_coords):
+        aligned_cubes = copied_cubes
+    else:
         raise ValueError(
             "Multi-model statistics failed to merge input cubes into a single "
             "array: some cubes have a 'time' dimension, some do not have a "
             "'time' dimension."
         )
-    if all(time_coords):
-        aligned_cubes = _align_time_coord(copied_cubes, span=span)
-    else:
-        aligned_cubes = copied_cubes
 
     # Calculate statistics
     statistics_cubes = {}
