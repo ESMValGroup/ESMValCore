@@ -25,17 +25,12 @@ commands:
       - run:
           name: Run tests
           command: |
+            mkdir -p test-reports
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
             flake8 -j 4
-            pytest -n 4 --junitxml=report-1.xml
+            pytest -n 4 --junitxml=test_reports/report.xml
             esmvaltool version
-      - run:
-          name: Merge test reports
-          command: |
-            pip install junitparser
-            mkdir -p test-reports
-            junitparser merge report-*.xml test-reports/report.xml
       - store_test_results:
           path: test-reports/
       - store_artifacts:
