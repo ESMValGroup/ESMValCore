@@ -387,13 +387,28 @@ class ESMValTool():
 
         self._run(recipe, session)
 
+    @staticmethod
+    def _create_session_dir(session):
+        """Create `session.session_dir` or an alternative if it exists."""
+        from .exceptions import RecipeError
+
+        session_dir = session.session_dir
+        for suffix in range(1, 1000):
+            try:
+                session_dir.mkdir(parents=True)
+            except FileExistsError:
+                session_dir = Path(f"{session.session_dir}-{suffix}")
+            else:
+                session.session_name = session_dir.name
+                return
+
+        raise RecipeError(
+            f"Output directory '{session.session_dir}' already exists and"
+            " unable to find alternative, aborting to prevent data loss.")
+
     def _run(self, recipe: Path, session) -> None:
         """Run `recipe` using `session`."""
-        # Create run dir
-        if session.session_dir.exists():
-            print(f"ERROR: output directory {session.session_dir} already"
-                  " exists, aborting to prevent data loss")
-        session.session_dir.mkdir(parents=True)
+        self._create_session_dir(session)
         session.run_dir.mkdir()
 
         # configure logging

@@ -21,19 +21,6 @@ from esmvalcore.experimental.recipe_output import (
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
 
-@pytest.fixture
-def session(tmp_path):
-    session = CFG.start_session('recipe_test')
-    session.clear()
-    session.update(CFG_DEFAULT)
-    session.update(esmvaltool_sample_data.get_rootpaths())
-    session['drs']['CMIP6'] = 'SYNDA'
-    session['output_dir'] = tmp_path / 'esmvaltool_output'
-    session['remove_preproc_dir'] = False
-    session['max_parallel_tasks'] = 1
-    return session
-
-
 AUTHOR_TAGS = {
     'authors': {
         'doe_john': {
@@ -53,7 +40,7 @@ def recipe():
 
 @pytest.mark.use_sample_data
 @pytest.mark.parametrize('task', (None, 'example/ta'))
-def test_run_recipe(session, recipe, task):
+def test_run_recipe(task, recipe, tmp_path):
     """Test running a basic recipe using sample data.
 
     Recipe contains no provenance and no diagnostics.
@@ -62,6 +49,15 @@ def test_run_recipe(session, recipe, task):
 
     assert isinstance(recipe, Recipe)
     assert isinstance(recipe._repr_html_(), str)
+
+    session = CFG.start_session(recipe.path.stem)
+    session.clear()
+    session.update(CFG_DEFAULT)
+    session['output_dir'] = tmp_path / 'esmvaltool_output'
+    session.update(esmvaltool_sample_data.get_rootpaths())
+    session['drs'] = {'CMIP6': 'SYNDA'}
+    session['max_parallel_tasks'] = 1
+    session['remove_preproc_dir'] = False
 
     output = recipe.run(task=task, session=session)
 
@@ -86,13 +82,17 @@ def test_run_recipe(session, recipe, task):
 
 
 @pytest.mark.use_sample_data
-def test_run_recipe_diagnostic_failing(recipe, session):
+def test_run_recipe_diagnostic_failing(recipe, tmp_path):
     """Test running a single diagnostic using sample data.
 
     Recipe contains no provenance and no diagnostics.
     """
     TAGS.set_tag_values(AUTHOR_TAGS)
 
+    CFG['output_dir'] = tmp_path
+
+    session = CFG.start_session(recipe.path.stem)
+
     with pytest.raises(RecipeError):
         task = 'example/non-existant'
-        recipe.run(task, session)
+        _ = recipe.run(task, session)

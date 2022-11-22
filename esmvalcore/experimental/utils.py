@@ -3,7 +3,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Pattern, Tuple, Union
+from typing import Optional, Pattern, Tuple, Union
 
 from esmvalcore.config._diagnostics import DIAGNOSTICS
 
@@ -41,7 +41,7 @@ class RecipeList(list):
         return matches
 
 
-def get_all_recipes(subdir: str = None) -> list:
+def get_all_recipes(subdir: Optional[str] = None) -> list:
     """Return a list of all available recipes.
 
     Parameters
