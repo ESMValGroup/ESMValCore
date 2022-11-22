@@ -29,7 +29,7 @@ commands:
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
             flake8 -j 4
-            pytest -n 4 --junitxml=test_reports/report.xml
+            pytest -n 4 --junitxml=test-reports/report.xml
             esmvaltool version
       - store_test_results:
           path: test-reports/
