@@ -54,15 +54,17 @@ class Dataset:
 
     Parameters
     ----------
-    **facets
+    **facets : Facets
         Facets describing the dataset. See
         :obj:`esmvalcore.esgf.facets.FACETS` for the mapping between
         the facet names used by ESMValCore and those used on ESGF.
 
     Attributes
     ----------
-    ancillaries
-        List of ancillary :class:`Dataset` objects.
+    ancillaries : `list` of :class:`Dataset`
+        List of ancillary datasets.
+    facets : Facets
+        Dictionary with facets describing the dataset.
     """
     def __init__(self, **facets: FacetValue):
 
@@ -79,7 +81,13 @@ class Dataset:
 
     @staticmethod
     def from_recipe(recipe: Path, session: Session) -> list['Dataset']:
-        """Factory function that creates `Dataset`s from a recipe."""
+        """Factory function that creates datasets from a recipe.
+
+        Returns
+        -------
+        list of :obj:`Dataset`
+            A list of datasets.
+        """
         from ._recipe import datasets_from_recipe
         return datasets_from_recipe(recipe, session)
 
@@ -87,6 +95,11 @@ class Dataset:
         """Create a list of datasets from the available files.
 
         Requires that self.session is set.
+
+        Yields
+        ------
+        Dataset
+            Datasets representing the available files.
         """
 
         def same(facets_a, facets_b):
@@ -156,6 +169,20 @@ class Dataset:
             yield self
 
     def copy(self, **facets) -> 'Dataset':
+        """Create a copy.
+
+        Parameters
+        ----------
+        **facets
+            Update these facets in the copy. Note that for ancillary datasets
+            attached to the dataset, the 'short_name' and 'mip' facets will
+            not be updated with these values.
+
+        Returns
+        -------
+        Dataset
+            A copy of the dataset.
+        """
         new = self.__class__()
         new._session = self._session
         for key, value in self.facets.items():
@@ -213,7 +240,18 @@ class Dataset:
         return "\n".join(txt)
 
     def summary(self, shorten: bool = False) -> str:
-        """Summary of the dataset."""
+        """Summarize the content of dataset.
+
+        Parameters
+        ----------
+        shorten : bool
+            Shorten the summary.
+
+        Returns
+        -------
+        str
+            A summary describing the dataset.
+        """
         if not shorten:
             return repr(self)
 
@@ -243,12 +281,25 @@ class Dataset:
         self.facets[key] = value
 
     def set_facet(self, key, value, persist=True):
+        """Set facet.
+
+        Parameters
+        ----------
+        key : str
+            The name of the facet.
+        value : FacetValue
+            The value of the facet.
+        persist : bool
+            When writing a dataset to a recipe, only persistent facets
+            will get written.
+        """
         self.facets[key] = value
         if persist:
             self._persist.add(key)
 
     @property
     def minimal_facets(self):
+        """A dictionary with the persistent facets."""
         return {k: v for k, v in self.facets.items() if k in self._persist}
 
     def set_version(self) -> None:
@@ -265,6 +316,7 @@ class Dataset:
 
     @property
     def session(self) -> Session:
+        """A :obj:`esmvalcore.config.Session` associated with the dataset."""
         if self._session is None:
             raise ValueError(
                 "Session not set, please create a session by using "
@@ -278,13 +330,29 @@ class Dataset:
         for ancillary in self.ancillaries:
             ancillary._session = session
 
-    def add_ancillary(self, **facets) -> None:
+    def add_ancillary(self, **facets: FacetValue) -> None:
+        """Add an ancillary dataset.
+
+        Parameters
+        ----------
+        **facets : Facets
+            Facets describing the ancillary variable.
+        """
         ancillary = self.copy(**facets)
         ancillary.ancillaries = []
         self.ancillaries.append(ancillary)
 
     def augment_facets(self, session: Optional[Session] = None) -> None:
-        """Add extra facets."""
+        """Add extra facets.
+
+        This function will update the dataset with additional facets
+        from various sources.
+
+        Parameters
+        ----------
+        session : Session
+            The session containing the required configuration.
+        """
         if session is None:
             session = self.session
         self._augment_facets(session)
@@ -307,7 +375,16 @@ class Dataset:
             self.facets.pop('timerange', None)
 
     def find_files(self, session: Optional[Session] = None) -> None:
-        """Find files."""
+        """Find files.
+
+        Look for files and populate the :obj:`Dataset.files` property
+        of the dataset and its ancillary datasets.
+
+        Parameters
+        ----------
+        session : Session
+            The session containing the required configuration.
+        """
         if session is None:
             session = self.session
         self.augment_facets(session)
@@ -354,6 +431,7 @@ class Dataset:
 
     @property
     def files(self) -> list[Union[local.LocalFile, esgf.ESGFFile]]:
+        """A list of files associated with this dataset."""
         # TODO: Make cache more reliable? E.g. based on facets.
         if self._files is None:
             self.find_files()
@@ -364,7 +442,18 @@ class Dataset:
         self._files = value
 
     def load(self, session: Optional[Session] = None) -> Cube:
-        """Load dataset."""
+        """Load dataset.
+
+        Parameters
+        ----------
+        session : Session
+            The session containing the required configuration.
+
+        Returns
+        -------
+        Cube
+            An :mod:`iris` cube with the data corresponding the the dataset.
+        """
         if session is None:
             session = self.session
         check_level = session['check_level']
@@ -437,7 +526,20 @@ class Dataset:
         return cube
 
     def from_ranges(self) -> list['Dataset']:
-        """Factory function that expands shorthands to generate datasets."""
+        """Factory function that expands shorthands to generate datasets.
+
+        This expands the 'ensemble' and 'sub_experiment' facets in the
+        dataset definition if they are ranges.
+
+        For example 'ensemble: r(1:3)i1p1f1' will be expanded to
+        three datasets, with 'ensemble' values 'r1i1p1f1', 'r2i1p1f1',
+        'r3i1p1f1'.
+
+        Returns
+        -------
+        list of :obj:`Dataset`
+            A list of datasets.
+        """
         datasets = [self]
         for key in 'ensemble', 'sub_experiment':
             if key in self.facets:
