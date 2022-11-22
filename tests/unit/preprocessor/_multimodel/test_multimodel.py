@@ -430,7 +430,7 @@ def test_align(span):
                                         len_data=3)
         cubes.append(cube)
 
-    result_cubes = mm._align(cubes, span)
+    result_cubes = mm._align_time_coord(cubes, span)
 
     calendars = set(cube.coord('time').units.calendar for cube in result_cubes)
 
@@ -479,8 +479,12 @@ def test_combine_different_shape_fail():
         cube = generate_cube_from_dates('monthly', '360_day', len_data=num)
         cubes.append(cube)
 
-    with pytest.raises(iris.exceptions.MergeError):
-        _ = mm._combine(cubes)
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
+    with pytest.raises(ValueError, match=msg):
+        mm._combine(cubes)
 
 
 def test_combine_inconsistent_var_names_fail():
@@ -494,8 +498,12 @@ def test_combine_inconsistent_var_names_fail():
                                         var_name=f'test_var_{num}')
         cubes.append(cube)
 
-    with pytest.raises(iris.exceptions.MergeError):
-        _ = mm._combine(cubes)
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
+    with pytest.raises(ValueError, match=msg):
+        mm._combine(cubes)
 
 
 @pytest.mark.parametrize('scalar_coord', ['p0', 'ptop'])
@@ -859,7 +867,7 @@ def test_daily_inconsistent_calendars():
     cubes = [leapcube, noleapcube]
 
     # span=full
-    aligned_cubes = mm._align(cubes, span='full')
+    aligned_cubes = mm._align_time_coord(cubes, span='full')
     for cube in aligned_cubes:
         assert cube.coord('time').units.calendar in ("standard", "gregorian")
         assert cube.shape == (367, )
@@ -872,7 +880,7 @@ def test_daily_inconsistent_calendars():
     assert result_cube[366].data == 1  # outside original range
 
     # span=overlap
-    aligned_cubes = mm._align(cubes, span='overlap')
+    aligned_cubes = mm._align_time_coord(cubes, span='overlap')
     for cube in aligned_cubes:
         assert cube.coord('time').units.calendar in ("standard", "gregorian")
         assert cube.shape == (365, )
