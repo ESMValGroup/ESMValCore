@@ -1,4 +1,5 @@
 """Fixes for ERA5."""
+
 import datetime
 import logging
 
@@ -10,6 +11,9 @@ from esmvalcore.iris_helpers import date2num
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
 from ...table import CMOR_TABLES
+
+from iris import NameConstraint
+from iris.exceptions import ConstraintMismatchError
 
 logger = logging.getLogger(__name__)
 
@@ -84,16 +88,6 @@ class Clt(Fix):
         return cubes
 
 
-#class Lwp(Fix):
- #   """Fixes for lwp."""
-  #  def fix_metadata(self, cubes):
-   #     for cube in cubes:
-    #        # Invalid input cube units (ignored on load) were '0-1'
-     #       cube.units = 'm'
-      #      multiply_with_density(cube)
-
-       # return cubes
-        
 class Cl(Fix):
     """Fixes for cl."""
     def fix_metadata(self, cubes):
@@ -104,7 +98,6 @@ class Cl(Fix):
 
         return cubes        
 
-        
 
 class Clw(Fix):
     """Fixes for clw."""
@@ -114,6 +107,7 @@ class Clw(Fix):
             cube.units = 'kg kg-1'
 
         return cubes
+
         
 class Cli(Fix):
     """Fixes for cli."""
@@ -121,81 +115,10 @@ class Cli(Fix):
         for cube in cubes:
             # Invalid input cube units (ignored on load) were '0-1'
             cube.units = 'kg kg-1'
-            
 
         return cubes
         
 
-class Hus(Fix):
-    """Fixes for hus."""
-    def fix_metadata(self, cubes):
-        for cube in cubes:
-            # Invalid input cube units (ignored on load) were '0-1'
-            cube.units = 'kg kg-1'
-            #cube.data = cube.core_data()*100.
-
-        return cubes
-        
-class Rlut(Fix):
-    """Fixes for rlut."""
-    def fix_metadata(self, cubes):
-        for cube in cubes:
-            # Invalid input cube units (ignored on load) were '0-1'
-            metadata = cube.metadata
-            cube *= -1
-            cube.metadata = metadata
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
-            cube.units = 'W m-2'
-            cube.attributes['positive'] = 'up'
-        return cubes
-
-class Rlutcs(Fix):
-    """Fixes for rlutcs."""
-    def fix_metadata(self, cubes):
-        for cube in cubes:
-            # Invalid input cube units (ignored on load) were '0-1'
-            metadata = cube.metadata
-            cube *= -1
-            cube.metadata = metadata
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
-            cube.units = 'W m-2'
-            cube.attributes['positive'] = 'up'
-
-        return cubes
-        
-class Rsut(Fix):
-    """Fixes for rsut."""
-    def fix_metadata(self, cubes):
-        for cube in cubes:
-            # Invalid input cube units (ignored on load) were '0-1'
-            metadata = cube.metadata
-            cube *= -1
-            cube.metadata = metadata
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
-            cube.units = 'W m-2'
-            cube.attributes['positive'] = 'up'
-
-        return cubes
-        
-class Rsutcs(Fix):
-    """Fixes for rsutcs."""
-    def fix_metadata(self, cubes):
-        for cube in cubes:
-            # Invalid input cube units (ignored on load) were '0-1'
-            metadata = cube.metadata
-            cube *= -1
-            cube.metadata = metadata
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
-            cube.units = 'W m-2'
-            cube.attributes['positive'] = 'up'
-
-        return cubes
-        
-                
 class Evspsbl(Fix):
     """Fixes for evspsbl."""
     def fix_metadata(self, cubes):
@@ -222,6 +145,28 @@ class Evspsblpot(Fix):
             multiply_with_density(cube)
 
         return cubes
+
+
+class Hus(Fix):
+    """Fixes for hus."""
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            cube.units = 'kg kg-1'
+            #cube.data = cube.core_data()*100.
+
+        return cubes
+
+
+#class Lwp(Fix):
+#    """Fixes for lwp."""
+#    def fix_metadata(self, cubes):
+#        for cube in cubes:
+#            # Invalid input cube units (ignored on load) were '0-1'
+#            cube.units = 'm'
+#            multiply_with_density(cube)
+#
+#        return cubes
 
 
 class Mrro(Fix):
@@ -309,6 +254,17 @@ class Rlns(Fix):
         return cubes
 
 
+class Rls(Fix):
+    """Fixes for Rls."""
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            fix_hourly_time_coordinate(cube)
+            cube.attributes['positive'] = 'down'
+
+        return cubes
+
+
 class Rlus(Fix):
     """Fixes for Rlus."""
 
@@ -322,19 +278,51 @@ class Rlus(Fix):
         return cubes
 
 
-class Rls(Fix):
-    """Fixes for Rls."""
+class Rlut(Fix):
+    """Fixes for rlut."""
     def fix_metadata(self, cubes):
-        """Fix metadata."""
         for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            metadata = cube.metadata
+            cube *= -1
+            cube.metadata = metadata
             fix_hourly_time_coordinate(cube)
-            cube.attributes['positive'] = 'down'
+            fix_accumulated_units(cube)
+            cube.units = 'W m-2'
+            cube.attributes['positive'] = 'up'
+        return cubes
+
+
+class Rlutcs(Fix):
+    """Fixes for rlutcs."""
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            metadata = cube.metadata
+            cube *= -1
+            cube.metadata = metadata
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            cube.units = 'W m-2'
+            cube.attributes['positive'] = 'up'
 
         return cubes
 
 
 class Rsds(Fix):
     """Fixes for Rsds."""
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            cube.attributes['positive'] = 'down'
+
+        return cubes
+
+
+class Rsdt(Fix):
+    """Fixes for Rsdt."""
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -358,6 +346,42 @@ class Rsns(Fix):
         return cubes
 
 
+class Rsnut(Fix):
+    """Fixes for Rsnut (TOA net upward solar radiation)."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            fix_hourly_time_coordinate(cube)
+            cube.attributes['positive'] = 'up'
+
+        return cubes
+
+
+class Rsnutcs(Fix):
+    """Fixes for Rsnutcs (TOA net upward solar radiation clear-sky)."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            fix_hourly_time_coordinate(cube)
+            cube.attributes['positive'] = 'up'
+
+        return cubes
+
+
+class Rss(Fix):
+    """Fixes for Rss."""
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            cube.attributes['positive'] = 'down'
+
+        return cubes
+
+
 class Rsus(Fix):
     """Fixes for Rsus."""
 
@@ -371,25 +395,11 @@ class Rsus(Fix):
         return cubes
 
 
-class Rsdt(Fix):
-    """Fixes for Rsdt."""
+class Rtmt(Fix):
+    """Fixes for rtmt."""
     def fix_metadata(self, cubes):
-        """Fix metadata."""
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
-            cube.attributes['positive'] = 'down'
-
-        return cubes
-
-
-class Rss(Fix):
-    """Fixes for Rss."""
-    def fix_metadata(self, cubes):
-        """Fix metadata."""
-        for cube in cubes:
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
             cube.attributes['positive'] = 'down'
 
         return cubes
@@ -441,7 +451,11 @@ class AllVars(Fix):
 
         for coord_def in self.vardef.coordinates.values():
             axis = coord_def.axis
-            #ERA5 uses regular pressure level coordinate. In case the cmor variable requires a hybrid level coordinate, we replace this with a regular pressure level coordinate. (https://github.com/ESMValGroup/ESMValCore/issues/1029)
+            # ERA5 data are downloaded on pressure levels (37 levels). In case
+            # the CMOR variable is defined with a generic level coordinate
+            # (alevel), this coordinate is replaced with a pressure level
+            # coordinate (see also
+            # https://github.com/ESMValGroup/ESMValCore/issues/1029).
             if axis == "" and coord_def.name == "alevel":
                 axis = "Z"
                 coord_def = CMOR_TABLES['CMIP6'].coords['plev19'] 
