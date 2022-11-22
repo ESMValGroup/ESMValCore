@@ -18,6 +18,7 @@ import iris
 import iris.coord_categorisation
 import numpy as np
 from iris.cube import Cube, CubeList
+from iris.exceptions import MergeError
 from iris.util import equalise_attributes
 
 from esmvalcore.iris_helpers import date2num
@@ -205,35 +206,15 @@ def _map_to_new_time(cube, time_points):
     return new_cube
 
 
-def _align(cubes, span):
-    """Expand or subset cubes so they share a common time span.
+def _align_time_coord(cubes, span):
+    """Expand or subset cubes so they share a common time span."""
+    _unify_time_coordinates(cubes)
 
-    Note
-    ----
-    Cubes with no time dimension are ignored here. If some cubes have a time
-    dimension and some do not, this will raise an error at a later stage.
-
-    """
-    time_cubes = CubeList(
-        [cube for cube in cubes if cube.coords('time')]
-    )
-    no_time_cubes = CubeList(
-        [cube for cube in cubes if not cube.coords('time')]
-    )
-
-    # If no cubes with time dimension are given, we are done here
-    if not time_cubes:
+    if _time_coords_are_aligned(cubes):
         return cubes
 
-    # Unify time coordinates for cubes with time dimension; if all of them are
-    # equal afterwards, we are also done
-    _unify_time_coordinates(time_cubes)
-    if _time_coords_are_aligned(time_cubes):
-        return no_time_cubes + time_cubes
+    all_time_arrays = [cube.coord('time').points for cube in cubes]
 
-    # If time dimensions have different lengths, equalize them according to the
-    # 'span' option
-    all_time_arrays = [cube.coord('time').points for cube in time_cubes]
     if span == 'overlap':
         new_time_points = reduce(np.intersect1d, all_time_arrays)
     elif span == 'full':
@@ -241,16 +222,14 @@ def _align(cubes, span):
     else:
         raise ValueError(f"Invalid argument for span: {span!r}"
                          "Must be one of 'overlap', 'full'.")
-    new_time_cubes = [
-        _map_to_new_time(cube, new_time_points) for cube in time_cubes
-    ]
 
-    # Make sure time bounds exist and are consistent
-    for cube in new_time_cubes:
+    new_cubes = [_map_to_new_time(cube, new_time_points) for cube in cubes]
+
+    for cube in new_cubes:
+        # Make sure bounds exist and are consistent
         _guess_time_bounds(cube)
 
-    # Return all cubes
-    return no_time_cubes + new_time_cubes
+    return new_cubes
 
 
 def _equalise_cell_methods(cubes):
@@ -320,7 +299,13 @@ def _combine(cubes):
 
     cubes = CubeList(cubes)
 
-    merged_cube = cubes.merge_cube()
+    try:
+        merged_cube = cubes.merge_cube()
+    except MergeError as exc:
+        raise ValueError(
+            "Multi-model statistics failed to merge input cubes into a single "
+            "array"
+        ) from exc
 
     return merged_cube
 
@@ -424,9 +409,25 @@ def _multicube_statistics(cubes, statistics, span):
         raise ValueError('Cannot perform multicube statistics '
                          'for a single cube.')
 
-    copied_cubes = [cube.copy() for cube in cubes]  # avoid modifying inputs
-    aligned_cubes = _align(copied_cubes, span=span)
+    # Avoid modifying inputs
+    copied_cubes = [cube.copy() for cube in cubes]
 
+    # If all cubes contain a time coordinate, align them. If only some of them
+    # contain a time coordinate, raise an exception. If no cube contains a time
+    # coordinate, do nothing.
+    time_coords = [cube.coords('time') for cube in cubes]
+    if any(time_coords) and not all(time_coords):
+        raise ValueError(
+            "Multi-model statistics failed to merge input cubes into a single "
+            "array: some cubes have a 'time' dimension, some do not have a "
+            "'time' dimension."
+        )
+    if all(time_coords):
+        aligned_cubes = _align_time_coord(copied_cubes, span=span)
+    else:
+        aligned_cubes = copied_cubes
+
+    # Calculate statistics
     statistics_cubes = {}
     for statistic in statistics:
         logger.debug('Multicube statistics: computing: %s', statistic)
