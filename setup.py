@@ -42,7 +42,7 @@ REQUIREMENTS = {
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
         'nested-lookup',
-        'netCDF4<1.6.1',  # github.com/ESMValGroup/ESMValCore/issues/1723
+        'netCDF4',
         'numpy',
         'pandas',
         'pillow',
