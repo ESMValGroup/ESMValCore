@@ -295,7 +295,11 @@ def test_multimodel_merge_error(timeseries_cubes_month):
     """
     span = 'full'
     cubes = timeseries_cubes_month
-    with pytest.raises(ValueError):
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
+    with pytest.raises(ValueError, match=msg):
         multimodel_test(cubes, span=span, statistic='mean')
 
 
