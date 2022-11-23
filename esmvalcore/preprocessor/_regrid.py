@@ -568,7 +568,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     elif isinstance(target_grid, dict):
         # Generate a target grid from the provided specification,
         target_grid = _regional_stock_cube(target_grid)
-    
+
     if not isinstance(target_grid, iris.cube.Cube):
         raise ValueError(f'Expecting a cube, got {target_grid}.')
 
@@ -629,13 +629,13 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             else:
                 fill_value = GLOBAL_FILL_VALUE
             da.ma.set_fill_value(cube.core_data(), fill_value)
-        
+
         # Perform the horizontal regridding
         if _attempt_irregular_regridding(cube, scheme):
             cube = esmpy_regrid(cube, target_grid, scheme)
         elif isinstance(loaded_scheme, iris.cube.Cube):
-            # Return regridded cube in cases in which the 
-            # scheme is a function f(src_cube, grid_cube) -> Cube.
+            # Return regridded cube in cases in which the
+            # scheme is a function f(src_cube, grid_cube) -> Cube
             return loaded_scheme
         else:
             cube = cube.regrid(target_grid, loaded_scheme)
