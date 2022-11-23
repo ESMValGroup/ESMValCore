@@ -892,7 +892,7 @@ necessary information. That includes a ``reference`` to the desired scheme
 itself, as well as any arguments that should be passed through to the
 scheme. For example, the following shows the use of the built-in scheme
 :class:`iris.analysis.AreaWeighted` with a custom threshold for missing data
-tolerance. 
+tolerance.
 
 .. code-block:: yaml
 
@@ -929,7 +929,7 @@ example of its usage in an ESMValTool preprocessor is:
 Additionally, the use of generic schemes that take source and target grid cubes as 
 arguments is also supported. The `regrid` module will automatically pass 
 the cubes as inputs of the scheme. An example of this usage is
-the `regrid_rectilinear_to_rectilinear` scheme available in `iris-esmf-regrid`:
+the :func:`~esmf_regrid.schemes.regrid_rectilinear_to_rectilinear` scheme available in :doc:`iris-esmf-regrid:index`:
 
 .. code-block:: yaml
 
