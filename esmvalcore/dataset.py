@@ -1,4 +1,6 @@
 """Classes and functions for defining, finding, and loading data."""
+from __future__ import annotations
+
 import copy
 import logging
 import pprint
@@ -54,17 +56,17 @@ class Dataset:
 
     Parameters
     ----------
-    **facets : Facets
+    **facets
         Facets describing the dataset. See
         :obj:`esmvalcore.esgf.facets.FACETS` for the mapping between
         the facet names used by ESMValCore and those used on ESGF.
 
     Attributes
     ----------
-    ancillaries : `list` of :class:`Dataset`
+    ancillaries
         List of ancillary datasets.
-    facets : Facets
-        Dictionary with facets describing the dataset.
+    facets
+        Facets describing the dataset.
     """
     def __init__(self, **facets: FacetValue):
 
@@ -85,7 +87,7 @@ class Dataset:
 
         Returns
         -------
-        list of :obj:`Dataset`
+        list[Dataset]
             A list of datasets.
         """
         from ._recipe import datasets_from_recipe
@@ -244,7 +246,7 @@ class Dataset:
 
         Parameters
         ----------
-        shorten : bool
+        shorten
             Shorten the summary.
 
         Returns
@@ -280,16 +282,16 @@ class Dataset:
     def __setitem__(self, key, value):
         self.facets[key] = value
 
-    def set_facet(self, key, value, persist=True):
+    def set_facet(self, key: str, value: FacetValue, persist: bool = True):
         """Set facet.
 
         Parameters
         ----------
-        key : str
+        key
             The name of the facet.
-        value : FacetValue
+        value
             The value of the facet.
-        persist : bool
+        persist
             When writing a dataset to a recipe, only persistent facets
             will get written.
         """
@@ -298,16 +300,16 @@ class Dataset:
             self._persist.add(key)
 
     @property
-    def minimal_facets(self):
+    def minimal_facets(self) -> Facets:
         """A dictionary with the persistent facets."""
         return {k: v for k, v in self.facets.items() if k in self._persist}
 
     def set_version(self) -> None:
         """Set the 'version' facet based on the available data."""
-        versions = set()
+        versions: set[str] = set()
         for file in self.files:
             if 'version' in file.facets:
-                versions.add(file.facets['version'])
+                versions.add(file.facets['version'])  # type: ignore
         version = versions.pop() if len(versions) == 1 else sorted(versions)
         if version:
             self.set_facet('version', version)
@@ -335,7 +337,7 @@ class Dataset:
 
         Parameters
         ----------
-        **facets : Facets
+        **facets
             Facets describing the ancillary variable.
         """
         ancillary = self.copy(**facets)
@@ -350,7 +352,7 @@ class Dataset:
 
         Parameters
         ----------
-        session : Session
+        session
             The session containing the required configuration.
         """
         if session is None:
@@ -382,7 +384,7 @@ class Dataset:
 
         Parameters
         ----------
-        session : Session
+        session
             The session containing the required configuration.
         """
         if session is None:
@@ -446,12 +448,12 @@ class Dataset:
 
         Parameters
         ----------
-        session : Session
+        session
             The session containing the required configuration.
 
         Returns
         -------
-        Cube
+        iris.cube.Cube
             An :mod:`iris` cube with the data corresponding the the dataset.
         """
         if session is None:
@@ -537,7 +539,7 @@ class Dataset:
 
         Returns
         -------
-        list of :obj:`Dataset`
+        list[Dataset]
             A list of datasets.
         """
         datasets = [self]

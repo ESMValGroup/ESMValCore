@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import itertools
 import re
 from pathlib import Path
 
 from ._data_finder import _select_drs, get_input_filelist
 from .config import Session
-from .types import FacetValue
+from .types import Facets, FacetValue
 
 
 def _path2facets(path: Path, drs: str) -> dict[str, str]:
@@ -43,6 +45,25 @@ def find_files(
     debug: bool = False,
     **facets: FacetValue,
 ):
+    """Find files on the local filesystem.
+
+    Parameters
+    ----------
+    session
+        The session.
+    debug
+        When debug is set to `True`, the function will return a tuple
+        with the first element containing the files that were found
+        and the second element containing the globs patterns that
+        were used to search for files.
+    **facets
+        Facets used to search for files.
+
+    Returns
+    -------
+    list[LocalFile]
+        The files that were found.
+    """
     filenames, globs = get_input_filelist(
         facets,
         rootpath=session['rootpath'],
@@ -55,7 +76,7 @@ def find_files(
     files = []
     for filename in filenames:
         file = LocalFile(filename)
-        file.facets = _path2facets(file, drs)
+        file.facets.update(_path2facets(file, drs))
         files.append(file)
 
     if 'version' not in facets:
@@ -67,13 +88,14 @@ def find_files(
 
 
 class LocalFile(type(Path())):  # type: ignore
-
+    """File on the local filesystem."""
     @property
-    def facets(self) -> dict[str, str]:
+    def facets(self) -> Facets:
+        """Facets describing the file."""
         if not hasattr(self, '_facets'):
-            self._facets: dict[str, str] = {}
+            self._facets: Facets = {}
         return self._facets
 
     @facets.setter
-    def facets(self, value: dict[str, str]):
+    def facets(self, value: Facets):
         self._facets = value

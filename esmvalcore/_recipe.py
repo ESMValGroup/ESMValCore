@@ -1666,7 +1666,7 @@ def datasets_to_recipe(datasets: Iterable[Dataset]) -> dict[str, Any]:
             variable_group = dataset.facets['short_name']
         if variable_group not in variables:
             variables[variable_group] = {'additional_datasets': []}
-        facets = dataset.minimal_facets
+        facets: dict[str, Any] = dataset.minimal_facets
         if facets['short_name'] == variable_group:
             facets.pop('short_name')
         if dataset.ancillaries:
