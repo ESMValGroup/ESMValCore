@@ -600,7 +600,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         loaded_scheme = obj(**scheme)
     else:
         loaded_scheme = HORIZONTAL_SCHEMES.get(scheme.lower())
-    
+
     if loaded_scheme is None:
         emsg = 'Unknown regridding scheme, got {!r}.'
         raise ValueError(emsg.format(scheme))
