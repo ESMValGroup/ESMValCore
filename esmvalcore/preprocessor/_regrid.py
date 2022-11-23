@@ -1,6 +1,7 @@
 """Horizontal and vertical regridding module."""
 
 import importlib
+import inspect
 import logging
 import os
 import re
@@ -536,8 +537,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
               extrapolation_mode: nanmask
 
     To use the area weighted regridder available in
-    :class:`esmf_regrid.schemes.ESMFAreaWeighted`, make sure that
-    :doc:`iris-esmf-regrid:index` is installed and use
+    :class:`esmf_regrid.schemes.ESMFAreaWeighted` use
 
     .. code-block:: yaml
 
@@ -547,34 +547,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             scheme:
               reference: esmf_regrid.schemes:ESMFAreaWeighted
 
-    .. note::
-
-        Note that :doc:`iris-esmf-regrid:index` is still experimental.
     """
-    if isinstance(scheme, dict):
-        try:
-            object_ref = scheme.pop("reference")
-        except KeyError as key_err:
-            raise ValueError(
-                "No reference specified for generic regridding.") from key_err
-        module_name, separator, scheme_name = object_ref.partition(":")
-        try:
-            obj = importlib.import_module(module_name)
-        except ImportError as import_err:
-            raise ValueError(
-                "Could not import specified generic regridding module. "
-                "Please double check spelling and that the required module is "
-                "installed.") from import_err
-        if separator:
-            for attr in scheme_name.split('.'):
-                obj = getattr(obj, attr)
-        loaded_scheme = obj(**scheme)
-    else:
-        loaded_scheme = HORIZONTAL_SCHEMES.get(scheme.lower())
-    if loaded_scheme is None:
-        emsg = 'Unknown regridding scheme, got {!r}.'
-        raise ValueError(emsg.format(scheme))
-
     if isinstance(target_grid, str):
         if os.path.isfile(target_grid):
             target_grid = iris.load_cube(target_grid)
@@ -592,13 +565,45 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             ycoord = target_grid.coord(axis='y', dim_coords=True)
             xcoord.coord_system = src_cs
             ycoord.coord_system = src_cs
-
     elif isinstance(target_grid, dict):
         # Generate a target grid from the provided specification,
         target_grid = _regional_stock_cube(target_grid)
 
     if not isinstance(target_grid, iris.cube.Cube):
         raise ValueError(f'Expecting a cube, got {target_grid}.')
+
+    if isinstance(scheme, dict):
+        try:
+            object_ref = scheme.pop("reference")
+        except KeyError as key_err:
+            raise ValueError(
+                "No reference specified for generic regridding.") from key_err
+        module_name, separator, scheme_name = object_ref.partition(":")
+        try:
+            obj = importlib.import_module(module_name)
+        except ImportError as import_err:
+            raise ValueError(
+                "Could not import specified generic regridding module. "
+                "Please double check spelling and that the required module is "
+                "installed.") from import_err
+        if separator:
+            for attr in scheme_name.split('.'):
+                obj = getattr(obj, attr)
+
+        scheme_args = inspect.getfullargspec(obj).args
+        # Add source and target cubes as arguments if required
+        if 'src_cube' in scheme_args:
+            scheme['src_cube'] = cube
+        if 'grid_cube' in scheme_args:
+            scheme['grid_cube'] = target_grid
+
+        loaded_scheme = obj(**scheme)
+    else:
+        loaded_scheme = HORIZONTAL_SCHEMES.get(scheme.lower())
+
+    if loaded_scheme is None:
+        emsg = 'Unknown regridding scheme, got {!r}.'
+        raise ValueError(emsg.format(scheme))
 
     # Unstructured regridding requires x2 2d spatial coordinates,
     # so ensure to purge any 1d native spatial dimension coordinates
@@ -629,6 +634,10 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         # Perform the horizontal regridding
         if _attempt_irregular_regridding(cube, scheme):
             cube = esmpy_regrid(cube, target_grid, scheme)
+        elif isinstance(loaded_scheme, iris.cube.Cube):
+            # Return regridded cube in cases in which the
+            # scheme is a function f(src_cube, grid_cube) -> Cube
+            return loaded_scheme
         else:
             cube = cube.regrid(target_grid, loaded_scheme)
 
