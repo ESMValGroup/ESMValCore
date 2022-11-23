@@ -548,31 +548,6 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
               reference: esmf_regrid.schemes:ESMFAreaWeighted
 
     """
-    scheme_args = None
-    if isinstance(scheme, dict):
-        try:
-            object_ref = scheme.pop("reference")
-        except KeyError as key_err:
-            raise ValueError(
-                "No reference specified for generic regridding.") from key_err
-        module_name, separator, scheme_name = object_ref.partition(":")
-        try:
-            obj = importlib.import_module(module_name)
-        except ImportError as import_err:
-            raise ValueError(
-                "Could not import specified generic regridding module. "
-                "Please double check spelling and that the required module is "
-                "installed.") from import_err
-        if separator:
-            for attr in scheme_name.split('.'):
-                obj = getattr(obj, attr)
-        scheme_args = inspect.getfullargspec(obj).args
-    else:
-        loaded_scheme = HORIZONTAL_SCHEMES.get(scheme.lower())
-        if loaded_scheme is None:
-            emsg = 'Unknown regridding scheme, got {!r}.'
-            raise ValueError(emsg.format(scheme))
-
     if isinstance(target_grid, str):
         if os.path.isfile(target_grid):
             target_grid = iris.load_cube(target_grid)
@@ -590,20 +565,43 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             ycoord = target_grid.coord(axis='y', dim_coords=True)
             xcoord.coord_system = src_cs
             ycoord.coord_system = src_cs
-
     elif isinstance(target_grid, dict):
         # Generate a target grid from the provided specification,
         target_grid = _regional_stock_cube(target_grid)
-
+    
     if not isinstance(target_grid, iris.cube.Cube):
         raise ValueError('Expecting a cube, got {}.'.format(target_grid))
 
-    if isinstance(scheme_args, list):
+    if isinstance(scheme, dict):
+        try:
+            object_ref = scheme.pop("reference")
+        except KeyError as key_err:
+            raise ValueError(
+                "No reference specified for generic regridding.") from key_err
+        module_name, separator, scheme_name = object_ref.partition(":")
+        try:
+            obj = importlib.import_module(module_name)
+        except ImportError as import_err:
+            raise ValueError(
+                "Could not import specified generic regridding module. "
+                "Please double check spelling and that the required module is "
+                "installed.") from import_err
+        if separator:
+            for attr in scheme_name.split('.'):
+                obj = getattr(obj, attr)
+
+        scheme_args = inspect.getfullargspec(obj).args
         if 'src_cube' in scheme_args:
             scheme['src_cube'] = cube
         if 'grid_cube' in scheme_args:
             scheme['grid_cube'] = target_grid
+
         loaded_scheme = obj(**scheme)
+    else:
+        loaded_scheme = HORIZONTAL_SCHEMES.get(scheme.lower())
+        if loaded_scheme is None:
+            emsg = 'Unknown regridding scheme, got {!r}.'
+            raise ValueError(emsg.format(scheme))
 
     # Unstructured regridding requires x2 2d spatial coordinates,
     # so ensure to purge any 1d native spatial dimension coordinates
@@ -636,7 +634,6 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         else:
             if isinstance(loaded_scheme, iris.cube.Cube):
                 return loaded_scheme
-
             cube = cube.regrid(target_grid, loaded_scheme)
 
         # Preserve dtype and use masked arrays for 'unstructured_nearest'
