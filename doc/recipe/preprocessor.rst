@@ -926,10 +926,13 @@ example of its usage in an ESMValTool preprocessor is:
             reference: esmf_regrid.schemes:ESMFAreaWeighted
             mdtol: 0.7
 
-Additionally, the use of generic schemes that take source and target grid cubes as 
-arguments is also supported. The `regrid` module will automatically pass 
-the cubes as inputs of the scheme. An example of this usage is
-the :func:`~esmf_regrid.schemes.regrid_rectilinear_to_rectilinear` scheme available in :doc:`iris-esmf-regrid:index`:
+Additionally, the use of generic schemes that take source and target grid cubes as
+arguments is also supported. The call function for such schemes must be defined as
+`(src_cube, grid_cube, **kwargs)` and they must return `iris.cube.Cube` objects.
+The `regrid` module will automatically pass the source and grid cubes as inputs
+of the scheme. An example of this usage is
+the :func:`~esmf_regrid.schemes.regrid_rectilinear_to_rectilinear`
+scheme available in :doc:`iris-esmf-regrid:index`:git 
 
 .. code-block:: yaml
 
