@@ -591,6 +591,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
                 obj = getattr(obj, attr)
 
         scheme_args = inspect.getfullargspec(obj).args
+        # Add source and target cubes as arguments if required
         if 'src_cube' in scheme_args:
             scheme['src_cube'] = cube
         if 'grid_cube' in scheme_args:
@@ -628,12 +629,15 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             else:
                 fill_value = GLOBAL_FILL_VALUE
             da.ma.set_fill_value(cube.core_data(), fill_value)
+        
         # Perform the horizontal regridding
         if _attempt_irregular_regridding(cube, scheme):
             cube = esmpy_regrid(cube, target_grid, scheme)
+        elif isinstance(loaded_scheme, iris.cube.Cube):
+            # Return regridded cube in cases in which the 
+            # scheme is a function f(src_cube, grid_cube) -> Cube.
+            return loaded_scheme
         else:
-            if isinstance(loaded_scheme, iris.cube.Cube):
-                return loaded_scheme
             cube = cube.regrid(target_grid, loaded_scheme)
 
         # Preserve dtype and use masked arrays for 'unstructured_nearest'
