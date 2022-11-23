@@ -334,6 +334,7 @@ def test_multimodel_scalar_cubes(timeseries_cubes_month):
 
     result = multimodel_test(cubes, span=span, statistic='mean')['mean']
     assert result.shape == ()
+    assert result.coord('time').bounds is None
 
 
 @pytest.mark.use_sample_data

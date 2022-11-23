@@ -147,14 +147,13 @@ def _unify_time_coordinates(cubes):
 def _guess_time_bounds(cube):
     """Guess time bounds if possible."""
     cube.coord('time').bounds = None
-    try:
-        cube.coord('time').guess_bounds()
-    except ValueError:  # Time has length 1 --> guessing bounds not possible
+    if cube.coord('time').shape == (1,):
         logger.debug(
             "Encountered scalar time coordinate in multi_model_statistics: "
             "cannot determine its bounds"
         )
-        return
+    else:
+        cube.coord('time').guess_bounds()
 
 
 def _time_coords_are_aligned(cubes):
