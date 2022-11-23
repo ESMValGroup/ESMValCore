@@ -77,7 +77,7 @@ ESGF_FACETS = (
     {
         'project': 'CMIP6',
         'source_id': 'AWI-ESM-1-1-LR',
-        'variant_label': 'r1i1p1f1',
+        'member_id': 'r1i1p1f1',
         'experiment_id': 'historical',
         'grid_label': 'gn',
         'table_id': 'Amon',
@@ -147,6 +147,11 @@ def test_esgf_search_files(mocker):
     # Set up some fake FileResults
     dataset_id = ('cmip5.output1.INM.inmcm4.historical'
                   '.mon.atmos.Amon.r1i1p1.v20130207')
+    dataset_id_template = (
+        'cmip5.%(product)s.%(valid_institute)s.%(model)s.'
+        '%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.'
+        '%(ensemble)s'
+    )
     filename0 = 'tas_Amon_inmcm4_historical_r1i1p1_185001-189912.nc'
     filename1 = 'tas_Amon_inmcm4_historical_r1i1p1_190001-200512.nc'
 
@@ -165,6 +170,7 @@ def test_esgf_search_files(mocker):
             'checksum': ['123'],
             'checksum_type': ['SHA256'],
             'dataset_id': dataset_id + '|aims3.llnl.gov',
+            'dataset_id_template_': [dataset_id_template],
             'project': ['CMIP5'],
             'size': 100,
             'title': filename0,
@@ -176,6 +182,7 @@ def test_esgf_search_files(mocker):
     file_aims1 = FileResult(
         {
             'dataset_id': dataset_id + '|aims3.llnl.gov',
+            'dataset_id_template_': [dataset_id_template],
             'project': ['CMIP5'],
             'size': 200,
             'title': filename1,
@@ -189,6 +196,7 @@ def test_esgf_search_files(mocker):
             'checksum': ['456'],
             'checksum_type': ['MD5'],
             'dataset_id': dataset_id + '|esgf2.dkrz.de',
+            'dataset_id_template_': [dataset_id_template],
             'project': ['CMIP5'],
             'size': 100,
             'title': filename0,
@@ -213,7 +221,6 @@ def test_esgf_search_files(mocker):
     connection.new_context.assert_called_with(
         pyesgf.search.context.FileSearchContext,
         **facets,
-        latest=True,
     )
     context.search.assert_called_with(
         batch_size=500,
@@ -282,6 +289,11 @@ def test_esgf_search_fails(mocker):
 def test_select_by_time():
     dataset_id = ('CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.historical'
                   '.r1i1p1f1.Amon.tas.gn.v20200212')
+    dataset_id_template = (
+        '%(mip_era)s.%(activity_drs)s.%(institution_id)s.'
+        '%(source_id)s.%(experiment_id)s.%(member_id)s.%(table_id)s.'
+        '%(variable_id)s.%(grid_label)s'
+    )
     filenames = [
         'tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_185001-185012.nc',
         'tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_185101-185112.nc',
@@ -293,6 +305,7 @@ def test_select_by_time():
             json={
                 'title': filename,
                 'dataset_id': dataset_id + '|xyz.com',
+                'dataset_id_template_': [dataset_id_template],
                 'project': ['CMIP5'],
                 'size': 100,
             },
@@ -309,12 +322,17 @@ def test_select_by_time():
 def test_select_by_time_nodate():
     dataset_id = (
         'cmip3.MIROC.miroc3_2_hires.historical.mon.atmos.run1.tas.v1')
+    dataset_id_template = (
+        '%(project)s.%(institute)s.%(model)s.%(experiment)s.'
+        '%(time_frequency)s.%(realm)s.%(ensemble)s.%(variable)s'
+    )
     filenames = ['tas_A1.nc']
     results = [
         FileResult(
             json={
                 'title': filename,
                 'dataset_id': dataset_id + '|xyz.com',
+                'dataset_id_template_': [dataset_id_template],
                 'project': ['CMIP5'],
                 'size': 100,
             },
@@ -331,6 +349,11 @@ def test_select_by_time_period():
 
     dataset_id = ('CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.historical'
                   '.r1i1p1f1.Amon.tas.gn.v20200212')
+    dataset_id_template = (
+        '%(mip_era)s.%(activity_drs)s.%(institution_id)s.'
+        '%(source_id)s.%(experiment_id)s.%(member_id)s.%(table_id)s.'
+        '%(variable_id)s.%(grid_label)s'
+    )
     filenames = [
         'tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_185001-185012.nc',
         'tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_185101-185112.nc',
@@ -342,6 +365,7 @@ def test_select_by_time_period():
             json={
                 'title': filename,
                 'dataset_id': dataset_id + '|xyz.com',
+                'dataset_id_template_': [dataset_id_template],
                 'project': ['CMIP5'],
                 'size': 100,
             },

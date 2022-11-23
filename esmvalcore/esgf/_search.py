@@ -6,12 +6,7 @@ from functools import lru_cache
 import pyesgf.search
 import requests.exceptions
 
-from .._data_finder import (
-    _get_timerange_from_years,
-    _parse_period,
-    _truncate_dates,
-    get_start_end_date,
-)
+from .._data_finder import _parse_period, _truncate_dates, get_start_end_date
 from ..config._esgf_pyclient import get_esgf_config
 from ._download import ESGFFile
 from .facets import DATASET_MAP, FACETS
@@ -26,6 +21,9 @@ def get_esgf_facets(variable):
     for our_name, esgf_name in FACETS[project].items():
         if our_name in variable:
             values = variable[our_name]
+            if values == '*':
+                # Wildcards can be specified on ESGF by omitting the facet
+                continue
 
             if isinstance(values, (tuple, list)):
                 values = list(values)
@@ -42,7 +40,7 @@ def get_esgf_facets(variable):
     return facets
 
 
-def select_latest_versions(files):
+def select_latest_versions(files, versions):
     """Select only the latest version of files."""
     result = []
 
@@ -52,14 +50,24 @@ def select_latest_versions(files):
         dataset = file.dataset.rsplit('.', 1)[0]
         return (dataset, file.name)
 
+    if isinstance(versions, str):
+        versions = (versions, )
+
     files = sorted(files, key=same_file)
-    for _, versions in itertools.groupby(files, key=same_file):
-        versions = sorted(versions, reverse=True)
-        latest_version = versions[0]
+    for _, group in itertools.groupby(files, key=same_file):
+        group = sorted(group, reverse=True)
+        if versions:
+            selection = [f for f in group if f.facets['version'] in versions]
+            if not selection:
+                raise FileNotFoundError(
+                    f"Requested versions {', '.join(versions)} of file not "
+                    f"found. Available files: {group}")
+            group = selection
+        latest_version = group[0]
         result.append(latest_version)
-        if len(versions) > 1:
+        if len(group) > 1:
             logger.debug("Only using the latest version %s, not %s",
-                         latest_version, versions[1:])
+                         latest_version, group[1:])
 
     return result
 
@@ -100,7 +108,6 @@ def _search_index_nodes(facets):
         context = connection.new_context(
             pyesgf.search.context.FileSearchContext,
             **facets,
-            latest=True,
         )
         logger.debug("Searching %s for datasets using facets=%s", url, facets)
         try:
@@ -134,8 +141,6 @@ def esgf_search_files(facets):
 
     files = ESGFFile._from_results(results, facets)
 
-    files = select_latest_versions(files)
-
     msg = 'none' if not files else '\n' + '\n'.join(str(f) for f in files)
     logger.debug("Found the following files matching facets %s: %s", facets,
                  msg)
@@ -145,6 +150,10 @@ def esgf_search_files(facets):
 
 def select_by_time(files, timerange):
     """Select files containing data between a timerange."""
+    if '*' in timerange:
+        # TODO: support * combined with a period
+        return files
+
     selection = []
 
     for file in files:
@@ -231,8 +240,7 @@ def find_files(*, project, short_name, dataset, **facets):
     ...     ensemble='r1i1p1',
     ...     domain='EUR-11',
     ...     driver='MPI-M-MPI-ESM-LR',
-    ...     start_year=1990,
-    ...     end_year=2000,
+    ...     timerange='1990/2000',
     ... )  # doctest: +SKIP
     [ESGFFile:cordex/output/EUR-11/CLMcom-ETH/MPI-M-MPI-ESM-LR/historical/r1i1p1/COSMO-crCLIM-v1-1/v1/mon/tas/v20191219/tas_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-ETH-COSMO-crCLIM-v1-1_v1_mon_198101-199012.nc,
     ESGFFile:cordex/output/EUR-11/CLMcom-ETH/MPI-M-MPI-ESM-LR/historical/r1i1p1/COSMO-crCLIM-v1-1/v1/mon/tas/v20191219/tas_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-ETH-COSMO-crCLIM-v1-1_v1_mon_199101-200012.nc]
@@ -282,10 +290,10 @@ def cached_search(**facets):
     """
     esgf_facets = get_esgf_facets(facets)
     files = esgf_search_files(esgf_facets)
-    _get_timerange_from_years(facets)
-    filter_timerange = (facets.get('frequency', '') != 'fx'
-                        and 'timerange' in facets)
-    if filter_timerange:
+
+    files = select_latest_versions(files, facets.get('version'))
+
+    if 'timerange' in facets:
         files = select_by_time(files, facets['timerange'])
         logger.debug("Selected files:\n%s", '\n'.join(str(f) for f in files))
 
