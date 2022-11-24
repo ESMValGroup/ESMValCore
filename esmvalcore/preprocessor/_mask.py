@@ -169,8 +169,8 @@ def mask_landsea(cube, mask_out, always_use_ne_mask=False):
 def mask_landseaice(cube, mask_out):
     """Mask out either landsea (combined) or ice.
 
-    Function that masks out either landsea (land and seas) or ice (Antarctica
-    and Greenland and some wee glaciers).
+    Function that masks out either landsea (land and seas) or ice (Antarctica,
+    Greenland and some glaciers).
 
     It uses dedicated ancillary variables (sftgif).
 
@@ -377,7 +377,7 @@ def count_spells(data, threshold, axis, spell_length):
         axis += data.ndim
     # Threshold the data to find the 'significant' points.
     if not threshold:
-        data_hits = data
+        data_hits = da.ones_like(data)
     else:
         data_hits = data > float(threshold)
     # Make an array with data values "windowed" along the time axis.
