@@ -269,7 +269,7 @@ def _get_geometries_from_shp(shapefilename):
     """Get the mask geometries out from a shapefile."""
     reader = shpreader.Reader(shapefilename)
     # Index 0 grabs the lowest resolution mask (no zoom)
-    geometries = list(reader.geometries)
+    geometries = list(reader.geometries())
     if not geometries:
         msg = f"Could not find any geometry in {shapefilename}"
         raise ValueError(msg)
@@ -377,7 +377,7 @@ def count_spells(data, threshold, axis, spell_length):
         axis += data.ndim
     # Threshold the data to find the 'significant' points.
     if not threshold:
-        data_hits = np.ones_like(data)
+        data_hits = np.ones_like(data, dtype=bool)
     else:
         data_hits = data > float(threshold)
     # Make an array with data values "windowed" along the time axis.
