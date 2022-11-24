@@ -258,7 +258,7 @@ def _equalise_coordinates(cubes):
 
         # Additionally remove specific scalar coordinates which are not
         # expected to be equal in the input cubes
-        scalar_coords_to_remove = ['p0', 'ptop']
+        scalar_coords_to_remove = ['p0', 'ptop', 'type']
         for scalar_coord in cube.coords(dimensions=()):
             if scalar_coord.var_name in scalar_coords_to_remove:
                 cube.remove_coord(scalar_coord)
@@ -266,6 +266,7 @@ def _equalise_coordinates(cubes):
         cube.long_name = None
         cube.standard_name = None
 
+        #add_scalar_typesi_coord(cube)
 
 
 def _equalise_fx_variables(cubes):
