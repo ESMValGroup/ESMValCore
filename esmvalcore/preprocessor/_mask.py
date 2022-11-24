@@ -271,7 +271,7 @@ def _get_geometries_from_shp(shapefilename):
     # Index 0 grabs the lowest resolution mask (no zoom)
     geometries = list(reader.geometries())
     if not geometries:
-        msg = f"Could not find any geometry in {shapefilename}"
+        msg = "Could not find any geometry in {}".format(shapefilename)
         raise ValueError(msg)
 
     # TODO might need this for a later, more enhanced, version
