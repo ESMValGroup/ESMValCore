@@ -32,6 +32,7 @@ REQUIREMENTS = {
         'cf-units',
         'dask[array]',
         'esgf-pyclient>=0.3.1',
+        'esmf-regrid',
         'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
         'fiona',
         'fire',
