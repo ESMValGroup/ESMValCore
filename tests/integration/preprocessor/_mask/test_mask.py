@@ -168,30 +168,6 @@ class Test:
         expected.mask[:, 1, 2] = True
         assert_array_equal(result_sea.data, expected)
 
-        # Mask with shp files although sftlf is available
-        new_cube_land = iris.cube.Cube(
-            self.new_cube_data,
-            dim_coords_and_dims=self.cube_coords_spec
-        )
-        new_cube_land = add_fx_variables(new_cube_land, fx_vars,
-                                         CheckLevels.IGNORE)
-        new_cube_sea = iris.cube.Cube(
-            self.new_cube_data,
-            dim_coords_and_dims=self.cube_coords_spec
-        )
-        new_cube_sea = add_fx_variables(new_cube_sea, fx_vars,
-                                        CheckLevels.IGNORE)
-        result_land = mask_landsea(
-            new_cube_land,
-            'land',
-            always_use_ne_mask=True,
-        )
-        result_sea = mask_landsea(
-            new_cube_sea,
-            'sea',
-            always_use_ne_mask=True,
-        )
-
         # Bear in mind all points are in the ocean
         np.ma.set_fill_value(result_land.data, 1e+20)
         np.ma.set_fill_value(result_sea.data, 1e+20)
