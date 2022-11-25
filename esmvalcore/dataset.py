@@ -21,7 +21,7 @@ from .config._config import get_activity, get_extra_facets, get_institutes
 from .exceptions import InputFilesNotFound, RecipeError
 from .local import _dates_to_timerange, _get_output_file, _get_start_end_date
 from .preprocessor import preprocess
-from .types import Facets, FacetValue
+from .typing import Facets, FacetValue
 
 logger = logging.getLogger(__name__)
 

@@ -51,7 +51,7 @@ from .preprocessor._regrid import (
     get_reference_levels,
     parse_cell_spec,
 )
-from .types import Facets
+from .typing import Facets
 
 logger = logging.getLogger(__name__)
 

@@ -15,7 +15,7 @@ import isodate
 from .config import Session
 from .config._config import get_project_config
 from .exceptions import RecipeError
-from .types import Facets, FacetValue
+from .typing import Facets, FacetValue
 
 logger = logging.getLogger(__name__)
 
