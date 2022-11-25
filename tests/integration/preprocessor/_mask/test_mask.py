@@ -168,14 +168,6 @@ class Test:
         expected.mask[:, 1, 2] = True
         assert_array_equal(result_sea.data, expected)
 
-        # Bear in mind all points are in the ocean
-        np.ma.set_fill_value(result_land.data, 1e+20)
-        np.ma.set_fill_value(result_sea.data, 1e+20)
-        expected.mask = np.zeros((3, 3), bool)
-        assert_array_equal(result_land.data, expected)
-        expected.mask = np.ones((3, 3), bool)
-        assert_array_equal(result_sea.data, expected)
-
         # mask with shp files
         new_cube_land = iris.cube.Cube(
             self.new_cube_data,
