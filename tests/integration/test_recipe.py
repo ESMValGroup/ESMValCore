@@ -2764,7 +2764,7 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
     for product in task.products:
         assert 'mask_landsea' in product.settings
         settings = product.settings['mask_landsea']
-        assert len(settings) == 2
+        assert len(settings) == 1
         assert settings['mask_out'] == 'sea'
         fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
