@@ -169,8 +169,8 @@ def mask_landsea(cube, mask_out, always_use_ne_mask=False):
 def mask_landseaice(cube, mask_out):
     """Mask out either landsea (combined) or ice.
 
-    Function that masks out either landsea (land and seas) or ice (Antarctica
-    and Greenland and some wee glaciers).
+    Function that masks out either landsea (land and seas) or ice (Antarctica,
+    Greenland and some glaciers).
 
     It uses dedicated ancillary variables (sftgif).
 
@@ -269,7 +269,7 @@ def _get_geometries_from_shp(shapefilename):
     """Get the mask geometries out from a shapefile."""
     reader = shpreader.Reader(shapefilename)
     # Index 0 grabs the lowest resolution mask (no zoom)
-    geometries = [contour for contour in reader.geometries()]
+    geometries = list(reader.geometries())
     if not geometries:
         msg = "Could not find any geometry in {}".format(shapefilename)
         raise ValueError(msg)
@@ -377,7 +377,7 @@ def count_spells(data, threshold, axis, spell_length):
         axis += data.ndim
     # Threshold the data to find the 'significant' points.
     if not threshold:
-        data_hits = data
+        data_hits = np.ones_like(data, dtype=bool)
     else:
         data_hits = data > float(threshold)
     # Make an array with data values "windowed" along the time axis.
@@ -645,7 +645,8 @@ def mask_fillvalues(products,
                     used.add(product)
             else:
                 raise NotImplementedError(
-                    "Unable to handle {} dimensional data".format(n_dims))
+                    f"Unable to handle {n_dims} dimensional data"
+                )
 
     if np.any(combined_mask):
         logger.debug("Applying fillvalues mask")
@@ -673,8 +674,9 @@ def _get_fillvalues_mask(cube, threshold_fraction, min_value, time_window):
     # basic checks
     if threshold_fraction < 0 or threshold_fraction > 1.0:
         raise ValueError(
-            "Fraction of missing values {} should be between 0 and 1.0".format(
-                threshold_fraction))
+            f"Fraction of missing values {threshold_fraction} should be "
+            f"between 0 and 1.0"
+        )
     nr_time_points = len(cube.coord('time').points)
     if time_window > nr_time_points:
         msg = "Time window (in time units) larger than total time span. Stop."

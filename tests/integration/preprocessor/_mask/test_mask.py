@@ -5,6 +5,7 @@ Integration tests for the :func:`esmvalcore.preprocessor._mask`
 module.
 
 """
+from unittest import mock
 
 import iris
 import iris.fileformats
@@ -24,6 +25,7 @@ from tests import assert_array_equal
 
 class Test:
     """Test class."""
+
     @pytest.fixture(autouse=True)
     def setUp(self):
         """Assemble a stock cube."""
@@ -279,7 +281,7 @@ class Test:
         assert_array_equal(result_1.data, data_1)
 
     def test_mask_fillvalues_zero_threshold(self, tmp_path):
-        """Test the fillvalues mask: func mask_fillvalues for 0-threshold"""
+        """Test the fillvalues mask: func mask_fillvalues for 0-threshold."""
         data_1 = self.mock_data
         data_2 = self.mock_data[0:3]
         data_1.mask = np.ones((4, 3, 3), bool)
@@ -316,3 +318,41 @@ class Test:
         cumulative_mask = cube_1[1:2].data.mask | cube_2[1:2].data.mask
         assert_array_equal(result_1[1:2].data.mask, cumulative_mask)
         assert_array_equal(result_2[2:3].data.mask, cumulative_mask)
+
+    def test_mask_fillvalues_min_value_none(self, tmp_path):
+        """Test ``mask_fillvalues`` for min_value=None."""
+        # We use non-masked data here and explicitly set some values to 0 here
+        # since this caused problems in the past, see
+        # github.com/ESMValGroup/ESMValCore/issues/487#issuecomment-677732121
+        data_1 = self.mock_data
+        data_2 = np.ones((3, 3, 3))
+        data_2[:, 0, :] = 0.0
+
+        coords_spec = [(self.times, 0), (self.lats, 1), (self.lons, 2)]
+        coords_spec2 = [(self.time2, 0), (self.lats, 1), (self.lons, 2)]
+        cube_1 = iris.cube.Cube(data_1, dim_coords_and_dims=coords_spec)
+        cube_2 = iris.cube.Cube(data_2, dim_coords_and_dims=coords_spec2)
+        filename_1 = str(tmp_path / 'file1.nc')
+        filename_2 = str(tmp_path / 'file2.nc')
+
+        # Mock PreprocessorFile to avoid provenance errors
+        product_1 = mock.create_autospec(PreprocessorFile, instance=True)
+        product_1.filename = filename_1
+        product_1.cubes = [cube_1]
+        product_2 = mock.create_autospec(PreprocessorFile, instance=True)
+        product_2.filename = filename_2
+        product_2.cubes = [cube_2]
+
+        results = mask_fillvalues(
+            {product_1, product_2},
+            threshold_fraction=1.0,
+            min_value=None,
+        )
+
+        assert len(results) == 2
+        for product in results:
+            if product.filename in (filename_1, filename_2):
+                assert len(product.cubes) == 1
+                assert not np.ma.is_masked(product.cubes[0].data)
+            else:
+                assert False, f"Invalid filename: {product.filename}"
