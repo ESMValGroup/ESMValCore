@@ -709,7 +709,7 @@ def test_from_recipe_with_glob(tmp_path, session, mocker):
 
     mocker.patch.object(
         esmvalcore.local,
-        'get_input_filelist',
+        '_get_input_filelist',
         autospec=True,
         spec_set=True,
         return_value=(filenames, []),
@@ -1005,10 +1005,12 @@ def test_load(mocker, session):
     dataset.session = session
     output_file = Path('/path/to/output.nc')
     fix_dir = Path('/path/to/output_fixed')
-    get_output_file = mocker.patch.object(esmvalcore.dataset,
-                                          'get_output_file',
-                                          create_autospec=True,
-                                          return_value=output_file)
+    _get_output_file = mocker.patch.object(
+        esmvalcore.dataset,
+        '_get_output_file',
+        create_autospec=True,
+        return_value=output_file,
+    )
     args = {}
     order = []
 
@@ -1099,4 +1101,4 @@ def test_load(mocker, session):
 
     assert args == load_args
 
-    get_output_file.assert_called_with(dataset.facets, session.preproc_dir)
+    _get_output_file.assert_called_with(dataset.facets, session.preproc_dir)

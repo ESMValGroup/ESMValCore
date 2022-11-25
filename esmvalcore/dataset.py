@@ -13,17 +13,13 @@ from typing import Any, Iterator, Optional, Union
 from iris.cube import Cube
 
 from . import esgf, local
-from ._data_finder import (
-    dates_to_timerange,
-    get_output_file,
-    get_start_end_date,
-)
 from ._recipe_checks import data_availability as check_data_availability
 from ._recipe_checks import valid_time_selection as check_valid_time_selection
 from .cmor.table import _get_facets_from_cmor_table
 from .config import Session
 from .config._config import get_activity, get_extra_facets, get_institutes
 from .exceptions import InputFilesNotFound, RecipeError
+from .local import _dates_to_timerange, _get_output_file, _get_start_end_date
 from .preprocessor import preprocess
 from .types import Facets, FacetValue
 
@@ -485,7 +481,7 @@ class Dataset:
 
     def _load(self, preproc_dir: Path, check_level) -> Cube:
         """Load self.files into an iris cube and return it."""
-        output_file = get_output_file(self.facets, preproc_dir)
+        output_file = _get_output_file(self.facets, preproc_dir)
 
         settings: dict[str, dict[str, Any]] = {}
         settings['fix_file'] = {
@@ -599,7 +595,7 @@ class Dataset:
         if '*' in timerange:
             self.find_files(session)
             check_data_availability(self)
-            intervals = [get_start_end_date(f.name) for f in self.files]
+            intervals = [_get_start_end_date(f.name) for f in self.files]
             self._files = None
 
             min_date = min(interval[0] for interval in intervals)
@@ -614,7 +610,7 @@ class Dataset:
 
         # Make sure that years are in format YYYY
         (start_date, end_date) = timerange.split('/')
-        timerange = dates_to_timerange(start_date, end_date)
+        timerange = _dates_to_timerange(start_date, end_date)
         check_valid_time_selection(timerange)
 
         self.set_facet('timerange', timerange)

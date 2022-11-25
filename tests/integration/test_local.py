@@ -1,4 +1,4 @@
-"""Tests for _data_finder.py."""
+"""Tests for `esmvalcore.local`."""
 import os
 import pprint
 import shutil
@@ -8,8 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from esmvalcore._data_finder import get_output_file
-from esmvalcore.local import find_files
+from esmvalcore.local import _get_output_file, find_files
 
 # Load test configuration
 with open(os.path.join(os.path.dirname(__file__), 'data_finder.yml')) as file:
@@ -59,7 +58,7 @@ def create_tree(path, filenames=None, symlinks=None):
 @pytest.mark.parametrize('cfg', CONFIG['get_output_file'])
 def test_get_output_file(cfg):
     """Test getting output name for preprocessed files."""
-    output_file = get_output_file(cfg['variable'], cfg['preproc_dir'])
+    output_file = _get_output_file(cfg['variable'], cfg['preproc_dir'])
     expected = Path(cfg['output_file'])
     assert output_file == expected
 

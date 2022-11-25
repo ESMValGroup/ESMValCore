@@ -12,7 +12,6 @@ from nested_lookup import get_occurrence_of_value
 from PIL import Image
 
 import esmvalcore
-from esmvalcore._data_finder import get_output_file
 from esmvalcore._recipe import (
     _get_input_datasets,
     _representative_dataset,
@@ -24,6 +23,7 @@ from esmvalcore.config._config import TASKSEP
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
+from esmvalcore.local import _get_output_file
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 
 from .test_provenance import check_provenance
@@ -244,7 +244,7 @@ def test_simple_recipe(tmp_path, patched_datafinder, session):
         assert task.order == list(DEFAULT_ORDER)
         for product in task.products:
             dataset = [
-                d for d in datasets if get_output_file(
+                d for d in datasets if _get_output_file(
                     d.facets, session.preproc_dir) == product.filename
             ][0]
             assert product.datasets == [dataset]

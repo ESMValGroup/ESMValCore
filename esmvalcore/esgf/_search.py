@@ -6,8 +6,8 @@ from functools import lru_cache
 import pyesgf.search
 import requests.exceptions
 
-from .._data_finder import _parse_period, _truncate_dates, get_start_end_date
 from ..config._esgf_pyclient import get_esgf_config
+from ..local import _get_start_end_date, _parse_period, _truncate_dates
 from ._download import ESGFFile
 from .facets import DATASET_MAP, FACETS
 
@@ -159,7 +159,7 @@ def select_by_time(files, timerange):
     for file in files:
         start_date, end_date = _parse_period(timerange)
         try:
-            start, end = get_start_end_date(file.name)
+            start, end = _get_start_end_date(file.name)
         except ValueError:
             # If start and end year cannot be read from the filename
             # just select everything.

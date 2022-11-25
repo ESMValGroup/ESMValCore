@@ -16,14 +16,6 @@ from nested_lookup import nested_delete
 from . import __version__
 from . import _recipe_checks as check
 from . import esgf
-from ._data_finder import (
-    _get_timerange_from_years,
-    _parse_period,
-    _truncate_dates,
-    dates_to_timerange,
-    get_multiproduct_filename,
-    get_output_file,
-)
 from ._provenance import get_recipe_provenance
 from ._task import DiagnosticTask, ResumeTask, TaskSet
 from .cmor.table import CMOR_TABLES, _get_facets_from_cmor_table
@@ -33,6 +25,14 @@ from .config._diagnostics import TAGS
 from .dataset import Dataset, _isglob
 from .esgf import ESGFFile
 from .exceptions import InputFilesNotFound, RecipeError
+from .local import (
+    _dates_to_timerange,
+    _get_multiproduct_filename,
+    _get_output_file,
+    _get_timerange_from_years,
+    _parse_period,
+    _truncate_dates,
+)
 from .preprocessor import (
     DEFAULT_ORDER,
     FINAL_STEPS,
@@ -236,7 +236,7 @@ def _get_default_settings(dataset):
 
     # Clean up fixed files
     if not session['save_intermediary_cubes']:
-        output_file = get_output_file(facets, session.preproc_dir)
+        output_file = _get_output_file(facets, session.preproc_dir)
         fix_dir = f"{output_file.with_suffix('')}_fixed"
         # TODO: check that fixed files are also removed for derived vars
         settings['cleanup'] = {
@@ -504,7 +504,7 @@ def _get_common_attributes(products, settings):
         timerange = product.attributes['timerange']
         start, end = _parse_period(timerange)
         if 'timerange' not in attributes:
-            attributes['timerange'] = dates_to_timerange(start, end)
+            attributes['timerange'] = _dates_to_timerange(start, end)
         else:
             start_date, end_date = _parse_period(attributes['timerange'])
             start_date, start = _truncate_dates(start_date, start)
@@ -523,7 +523,7 @@ def _get_common_attributes(products, settings):
                 start_date = min([start, start_date])
                 end_date = max([end, end_date])
 
-            attributes['timerange'] = dates_to_timerange(start_date, end_date)
+            attributes['timerange'] = _dates_to_timerange(start_date, end_date)
 
     # Ensure that attributes start_year and end_year are always available
     start_year, end_year = _parse_period(attributes['timerange'])
@@ -619,8 +619,8 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
                                             statistic_attributes[step])
             statistic_attributes.setdefault('dataset',
                                             statistic_attributes[step])
-            filename = get_multiproduct_filename(statistic_attributes,
-                                                 preproc_dir)
+            filename = _get_multiproduct_filename(statistic_attributes,
+                                                  preproc_dir)
             statistic_product = PreprocessorFile(
                 filename=filename,
                 attributes=statistic_attributes,
@@ -757,7 +757,10 @@ def _get_preprocessor_products(
         _schedule_for_download(input_datasets)
         logger.info("Found input files for %s", dataset.summary(shorten=True))
 
-        filename = get_output_file(dataset.facets, dataset.session.preproc_dir)
+        filename = _get_output_file(
+            dataset.facets,
+            dataset.session.preproc_dir,
+        )
         product = PreprocessorFile(
             filename=filename,
             attributes=dataset.facets,

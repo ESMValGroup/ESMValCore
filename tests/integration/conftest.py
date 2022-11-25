@@ -4,7 +4,7 @@ from pathlib import Path
 import iris
 import pytest
 
-from esmvalcore import _data_finder
+import esmvalcore.local
 from esmvalcore.config import CFG, _config
 from esmvalcore.config._config_object import CFG_DEFAULT
 
@@ -16,7 +16,7 @@ def session(tmp_path, monkeypatch):
     session.update(CFG_DEFAULT)
     session['output_dir'] = tmp_path / 'esmvaltool_output'
 
-    # The patched_data_finder fixture does not return the correct input
+    # The patched_datafinder fixture does not return the correct input
     # directory structure, so make sure it is set to flat for every project
     session['drs'] = {}
     for project in _config.CFG:
@@ -75,7 +75,7 @@ def patched_datafinder(tmp_path, monkeypatch):
     def glob(file_glob):
         return _get_filenames(tmp_path, file_glob, tracking_id)
 
-    monkeypatch.setattr(_data_finder, 'glob', glob)
+    monkeypatch.setattr(esmvalcore.local, 'glob', glob)
 
 
 @pytest.fixture
@@ -100,4 +100,4 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
             return []
         return _get_filenames(tmp_path, filename, tracking_id)
 
-    monkeypatch.setattr(_data_finder, 'glob', glob)
+    monkeypatch.setattr(esmvalcore.local, 'glob', glob)

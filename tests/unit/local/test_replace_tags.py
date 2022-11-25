@@ -1,10 +1,10 @@
-"""Tests for _replace_tags in _data_finder.py."""
+"""Tests for `_replace_tags` in `esmvalcore.local`."""
 from pathlib import Path
 
 import pytest
 
-from esmvalcore._data_finder import _replace_tags
 from esmvalcore.exceptions import RecipeError
+from esmvalcore.local import _replace_tags
 
 VARIABLE = {
     'project': 'CMIP6',
@@ -20,7 +20,7 @@ VARIABLE = {
 
 
 def test_replace_tags():
-    """Tests for get_start_end_year function."""
+    """Tests for `_replace_tags` function."""
     path = _replace_tags(
         '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/'
         '{grid}/{version}', VARIABLE)
@@ -64,7 +64,7 @@ def test_replace_tags_list_of_str():
 
 
 def test_replace_tags_with_subexperiment():
-    """Tests for get_start_end_year function."""
+    """Tests for `_replace_tags` function."""
     variable = {'sub_experiment': '199411', **VARIABLE}
     paths = _replace_tags(
         '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/'
