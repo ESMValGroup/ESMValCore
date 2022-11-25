@@ -7,7 +7,6 @@ masking with ancillary variables, masking with Natural Earth shapefiles
 
 import logging
 import os
-import warnings
 
 import cartopy.io.shapereader as shpreader
 import dask.array as da
@@ -16,8 +15,6 @@ import numpy as np
 import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
 from iris.util import rolling_window
-
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +59,7 @@ def _apply_fx_mask(fx_mask, var_data):
     return var_data
 
 
-def mask_landsea(cube, mask_out, always_use_ne_mask=False):
+def mask_landsea(cube, mask_out):
     """Mask out either land mass or sea (oceans, seas and lakes).
 
     It uses dedicated ancillary variables (sftlf or sftof) or,
@@ -79,18 +76,6 @@ def mask_landsea(cube, mask_out, always_use_ne_mask=False):
 
     mask_out: str
         either "land" to mask out land mass or "sea" to mask out seas.
-
-    always_use_ne_mask: bool, optional (default: False)
-        always apply Natural Earths mask, regardless if fx files are available
-        or not.
-
-        .. warning::
-            This option has been deprecated in ESMValCore version 2.5. To
-            always use Natural Earth masks, either explicitly remove all
-            ``ancillary_variables`` from the input cube (when this function is
-            used directly) or specify ``fx_variables: null`` as option for this
-            preprocessor in the recipe (when this function is used as part of
-            ESMValTool).
 
     Returns
     -------
@@ -112,55 +97,35 @@ def mask_landsea(cube, mask_out, always_use_ne_mask=False):
         'sea': os.path.join(cwd, 'ne_masks/ne_50m_ocean.shp')
     }
 
-    if not always_use_ne_mask:
-        # preserve importance order: try stflf first then sftof
-        fx_cube = None
+    # preserve importance order: try stflf first then sftof
+    fx_cube = None
+    try:
+        fx_cube = cube.ancillary_variable('land_area_fraction')
+    except iris.exceptions.AncillaryVariableNotFoundError:
         try:
-            fx_cube = cube.ancillary_variable('land_area_fraction')
+            fx_cube = cube.ancillary_variable('sea_area_fraction')
         except iris.exceptions.AncillaryVariableNotFoundError:
-            try:
-                fx_cube = cube.ancillary_variable('sea_area_fraction')
-            except iris.exceptions.AncillaryVariableNotFoundError:
-                logger.debug('Ancillary variables land/sea area fraction '
-                             'not found in cube. Check fx_file availability.')
+            logger.debug('Ancillary variables land/sea area fraction not '
+                         'found in cube. Check fx_file availability.')
 
-        if fx_cube:
-            fx_cube_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
-            landsea_mask = _get_fx_mask(fx_cube_data, mask_out,
-                                        fx_cube.var_name)
-            cube.data = _apply_fx_mask(landsea_mask, cube.data)
-            logger.debug("Applying land-sea mask: %s", fx_cube.var_name)
-        else:
-            if cube.coord('longitude').points.ndim < 2:
-                cube = _mask_with_shp(cube, shapefiles[mask_out], [
-                    0,
-                ])
-                logger.debug(
-                    "Applying land-sea mask from Natural Earth"
-                    " shapefile: \n%s", shapefiles[mask_out])
-            else:
-                msg = ("Use of shapefiles with irregular grids not "
-                       "yet implemented, land-sea mask not applied.")
-                raise ValueError(msg)
+    if fx_cube:
+        fx_cube_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
+        landsea_mask = _get_fx_mask(fx_cube_data, mask_out,
+                                    fx_cube.var_name)
+        cube.data = _apply_fx_mask(landsea_mask, cube.data)
+        logger.debug("Applying land-sea mask: %s", fx_cube.var_name)
     else:
-        deprecation_msg = (
-            "The option ``always_use_ne_masks``' has been deprecated in "
-            "ESMValCore version 2.5. To always use Natural Earth masks, "
-            "either explicitly remove all ``ancillary_variables`` from the "
-            "input cube (when this function is used directly) or specify "
-            "``fx_variables: null`` as option for this preprocessor in the "
-            "recipe (when this function is used as part of ESMValTool).")
-        warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
         if cube.coord('longitude').points.ndim < 2:
             cube = _mask_with_shp(cube, shapefiles[mask_out], [
                 0,
             ])
             logger.debug(
-                "Applying land-sea mask from Natural Earth"
-                " shapefile: \n%s", shapefiles[mask_out])
+                "Applying land-sea mask from Natural Earth shapefile: \n%s",
+                shapefiles[mask_out],
+            )
         else:
-            msg = ("Use of shapefiles with irregular grids not "
-                   "yet implemented, land-sea mask not applied.")
+            msg = ("Use of shapefiles with irregular grids not yet "
+                   "implemented, land-sea mask not applied.")
             raise ValueError(msg)
 
     return cube
