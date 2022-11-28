@@ -266,8 +266,6 @@ def _equalise_coordinates(cubes):
         cube.long_name = None
         cube.standard_name = None
 
-        #add_scalar_typesi_coord(cube)
-
 
 def _equalise_fx_variables(cubes):
     """Equalise fx variables in cubes (in-place)."""

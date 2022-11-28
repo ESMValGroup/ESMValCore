@@ -1,7 +1,10 @@
 """Fixes for GFDL-ESM4 model."""
 from ..common import SiconcFixScalarCoord
 from ..fix import Fix
-from ..shared import add_scalar_depth_coord, fix_ocean_depth_coord
+from ..shared import (
+    add_scalar_depth_coord,
+    fix_ocean_depth_coord,
+)
 
 
 class Fgco2(Fix):

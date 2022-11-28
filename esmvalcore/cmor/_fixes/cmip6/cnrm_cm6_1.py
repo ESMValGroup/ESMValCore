@@ -5,8 +5,8 @@ from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import (
     add_aux_coords_from_cubes,
-    fix_ocean_depth_coord,
     get_bounds_cube,
+    fix_ocean_depth_coord
 )
 
 
