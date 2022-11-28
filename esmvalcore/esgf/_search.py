@@ -115,6 +115,7 @@ def _search_index_nodes(facets):
             requests.exceptions.HTTPError,
             requests.exceptions.Timeout,
         ) as error:
+            logger.debug("Unable to connect to %s due to %s", url, error)
             errors.append(error)
 
     raise FileNotFoundError("Failed to search ESGF, unable to connect:\n" +
