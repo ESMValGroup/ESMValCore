@@ -8,6 +8,7 @@ from unittest.mock import create_autospec, patch, sentinel
 
 import iris
 import pytest
+import requests
 import yaml
 from nested_lookup import get_occurrence_of_value, nested_update
 from PIL import Image
@@ -1054,6 +1055,7 @@ def test_update_timerange_no_files_online(config_user):
         esmvalcore._recipe._update_timerange(variable, config_user)
 
 
+@pytest.mark.xfail(raises=requests.exceptions.HTTPError, run=True)
 def test_update_timerange_no_files_offline(config_user):
     variable = {
         'alias': 'CMIP6',
