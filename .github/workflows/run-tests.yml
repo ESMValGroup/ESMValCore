@@ -21,6 +21,7 @@ on:
   push:
     branches:
       - main
+      - xfail_esgf_searh_test
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
