@@ -17,7 +17,7 @@ dependencies:
   - geopy
   - humanfriendly
   - importlib_resources
-  - iris>=3.2.1
+  # - iris>=3.2.1
   - iris-esmf-regrid
   - isodate
   - jinja2
