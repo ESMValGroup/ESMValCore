@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 
 import pytest
+import requests
 import yaml
 from pyesgf.search.results import FileResult
 
@@ -128,6 +129,7 @@ def test_mock_search(variable, mocker):
         ]
 
 
+@pytest.mark.xfail(raises=requests.exceptions.HTTPError, run=True)
 def test_real_search():
     """Test a real search for a single file."""
     variable = {
