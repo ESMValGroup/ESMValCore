@@ -10,9 +10,8 @@ from typing import Dict, Optional
 import yaml
 
 from esmvalcore._recipe import Recipe as RecipeEngine
-from esmvalcore.experimental.config import Session
+from esmvalcore.config import CFG, Session
 
-from . import CFG
 from ._logging import log_to_dir
 from .recipe_info import RecipeInfo
 from .recipe_output import RecipeOutput

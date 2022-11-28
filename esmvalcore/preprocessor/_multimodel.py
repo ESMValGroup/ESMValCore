@@ -96,7 +96,7 @@ def _unify_time_coordinates(cubes):
     are no mismatches in the time arrays.
 
     If cubes have different time units, it will reset the calendar to a
-    default gregorian calendar with unit "days since 1850-01-01".
+    the "standard" calendar with unit "days since 1850-01-01".
 
     Might not work for (sub)daily data, because different calendars may have
     different number of days in the year.

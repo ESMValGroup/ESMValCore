@@ -8,8 +8,9 @@ from typing import Optional, Tuple, Type
 
 import iris
 
-from ..config._config import TASKSEP
-from .config import Session
+from esmvalcore.config import Session
+from esmvalcore.config._config import TASKSEP
+
 from .recipe_info import RecipeInfo
 from .recipe_metadata import Contributor, Reference
 from .templates import get_template
