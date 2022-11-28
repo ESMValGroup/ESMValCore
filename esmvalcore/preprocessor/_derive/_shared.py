@@ -3,9 +3,11 @@
 import logging
 from copy import deepcopy
 
+import dask as da
 import iris
 import numpy as np
 from iris import NameConstraint
+from iris.analysis.cartography import gridcell_angles, rotate_grid_vectors
 from scipy import constants
 
 logger = logging.getLogger(__name__)
@@ -205,3 +207,21 @@ def _get_pressure_level_widths(array, air_pressure_axis=1):
     # Calculate level widths
     p_level_widths = -np.diff(array_centers, axis=air_pressure_axis)
     return p_level_widths
+
+
+def rotate_vector(x_cube, y_cube, component):
+    angles = gridcell_angles(x_cube)
+    if x_cube.ndim > 2:
+        angles = iris.util.new_axis(angles)
+    if x_cube.ndim > 3:
+        angles = iris.util.new_axis(angles)
+    angles_data = da.broadcast_to(angles.lazy_data(), x_cube.shape)
+    angles = x_cube.copy(angles_data)
+
+    xrot, yrot = rotate_grid_vectors(x_cube, y_cube, angles)
+
+    if component == 'x':
+        return xrot
+    
+    if component == 'y':
+        return yrot
