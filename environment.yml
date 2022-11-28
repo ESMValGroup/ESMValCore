@@ -5,7 +5,7 @@ channels:
   - nodefaults
 
 dependencies:
-  - cartopy >=0.20
+  - cartopy
   - cf-units
   - cftime
   - dask
