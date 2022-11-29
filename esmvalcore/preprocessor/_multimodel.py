@@ -587,30 +587,29 @@ def multi_model_statistics(products,
     supported and can be specified like ``pXX.YY`` (for percentile ``XX.YY``;
     decimal part optional).
 
-    Metadata handling
-    -----------------
     This function can handle cubes with differing metadata:
 
-    - **:attr:`~iris.cube.Cube.attributes`**: Differing attributes are deleted,
+    - :attr:`~iris.cube.Cube.attributes`: Differing attributes are deleted,
       see :func:`iris.util.equalise_attributes`.
-    - **:meth:`~iris.cube.Cube.cell_methods`**: All cell methods are deleted
+    - :attr:`~iris.cube.Cube.cell_methods`: All cell methods are deleted
       prior to combining cubes.
-    - **:meth:`~iris.cube.Cube.cell_measures`**: All cell measures are deleted
+    - :meth:`~iris.cube.Cube.cell_measures`: All cell measures are deleted
       prior to combining cubes, see
       :func:`esmvalcore.preprocessor.remove_fx_variables`.
-    - **:meth:`~iris.cube.Cube.ancillary_variables`**: All ancillary variables
+    - :meth:`~iris.cube.Cube.ancillary_variables`: All ancillary variables
       are deleted prior to combining cubes, see
       :func:`esmvalcore.preprocessor.remove_fx_variables`.
-    - **:meth:`~iris.cube.Cube.coords`**: Exactly identical coordinates are
+    - :meth:`~iris.cube.Cube.coords`: Exactly identical coordinates are
       preserved. For coordinates with equal :meth:`~iris.coords.Coord.name` and
-      :meth:`~iris.coords.Coord.units`, names are equalized,
+      :attr:`~iris.coords.Coord.units`, names are equalized,
       :attr:`~iris.coords.Coord.attributes` deleted and
-      :attr:`~iris.coords.Coord.circular` is set to ``False``. For all other
+      :attr:`~iris.coords.DimCoord.circular` is set to ``False``. For all other
       coordinates, :attr:`~iris.coords.Coord.long_name` is removed,
       :attr:`~iris.coords.Coord.attributes` deleted and
-      :attr:`~iris.coords.Coord.circular` is set to ``False``. Please note that
-      some special scalar coordinates (ancillary coordinates for derived
-      coordinates like `p0` and `ptop`) are removed as well.
+      :attr:`~iris.coords.DimCoord.circular` is set to ``False``. Please note
+      that some special scalar coordinates which are expected to differe across
+      cubes(ancillary coordinates for derived coordinates like `p0` and `ptop`)
+      are removed as well.
 
     Notes
     -----
