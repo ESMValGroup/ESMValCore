@@ -119,7 +119,7 @@ def get_mock_connection(mocker, search_results):
     cfg = {
         'search_connection': {
             'urls': [
-                'https://esgf.ceda.ac.uk/esg-search',
+                'https://esgf.example.com/esg-search',
                 'https://esgf-index2.example.com/esg-search',
             ]
         },
