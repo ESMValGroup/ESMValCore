@@ -966,9 +966,10 @@ def test_map_to_new_time_int_coords():
     assert out_cube.coord('year').bounds is None
     assert out_cube.coord('decade').bounds is None
     assert np.issubdtype(out_cube.coord('year').dtype, np.integer)
+    assert np.issubdtype(out_cube.coord('decade').dtype, np.integer)
 
 
- def test_arbitrary_dims_5d(cubes_5d):
+def test_arbitrary_dims_5d(cubes_5d):
     """Test ``multi_model_statistics`` with 5D cubes."""
     stat_cubes = multi_model_statistics(
         cubes_5d,
@@ -1041,7 +1042,7 @@ def test_arbitrary_dims_0d(cubes_with_arbitrary_dimensions):
     assert 'sum' in stat_cubes
     stat_cube = stat_cubes['sum']
     assert stat_cube.shape == ()
-    assert_array_allclose(stat_cube.data, np.ma.array(0.0))   assert np.issubdtype(out_cube.coord('decade').dtype, np.integer)
+    assert_array_allclose(stat_cube.data, np.ma.array(0.0))
 
 
 def test_preserve_equal_coordinates():
@@ -1054,7 +1055,7 @@ def test_preserve_equal_coordinates():
     stat_cube = stat_cubes['sum']
     assert_array_allclose(stat_cube.data, np.ma.array([5.0, 5.0, 5.0]))
 
-    # The equal coordinate ('year') was not changed
+    # The equal coordinate 'year' was not changed
     assert stat_cube.coord('year').var_name == 'year'
     assert stat_cube.coord('year').standard_name is None
     assert stat_cube.coord('year').long_name == 'year'
@@ -1064,6 +1065,11 @@ def test_preserve_equal_coordinates():
 def test_preserve_non_equal_coordinates():
     """Test ``multi_model_statistics`` with non_equal input coordinates."""
     cubes = get_cube_for_equal_coords_test(5)
+
+    # Use "circular" attribute for one cube to check that it is set to "False"
+    # for each cube
+    cubes[2].coord('time').circular = False
+
     stat_cubes = multi_model_statistics(cubes, span='overlap',
                                         statistics=['sum'])
 
@@ -1071,7 +1077,12 @@ def test_preserve_non_equal_coordinates():
     stat_cube = stat_cubes['sum']
     assert_array_allclose(stat_cube.data, np.ma.array([5.0, 5.0, 5.0]))
 
-    # The long_name and attributes of the non-equal coordinate ('x') have been
+    # The attributes and circular property of the non-equal coordinate 'time'
+    # (due to differing circular) have been removed
+    assert stat_cube.coord('time').attributes == {}
+    assert stat_cube.coord('time').circular is False
+
+    # The long_name and attributes of the non-equal coordinate 'x' have been
     # removed
     assert stat_cube.coord('x').var_name == 'x'
     assert stat_cube.coord('x').standard_name is None
