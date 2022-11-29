@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from esmvalcore.local import _path2facets
+from esmvalcore.local import LocalFile, _path2facets
 
 
 def test_path2facets():
@@ -16,3 +16,10 @@ def test_path2facets():
     result = _path2facets(filepath, drs)
 
     assert result == expected
+
+
+def test_localfile():
+    file = LocalFile('/a/b.nc')
+    file.facets = {'a': 'A'}
+    assert Path(file) == Path('/a/b.nc')
+    assert file.facets == {'a': 'A'}
