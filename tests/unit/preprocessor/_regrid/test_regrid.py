@@ -103,10 +103,9 @@ class Test(tests.Test):
             regrid(self.src_cube, dummy, scheme)
 
     def test_invalid_scheme__unknown(self):
-        dummy = mock.sentinel.dummy
         emsg = 'Unknown regridding scheme'
         with self.assertRaisesRegex(ValueError, emsg):
-            regrid(dummy, dummy, 'wibble')
+            regrid(self.src_cube, self.src_cube, 'wibble')
 
     def test_horizontal_schemes(self):
         self.assertEqual(
