@@ -16,17 +16,6 @@ from netCDF4 import Dataset
 from . import __version__
 from . import _recipe_checks as check
 from . import esgf
-from ._data_finder import (
-    _find_input_files,
-    _get_timerange_from_years,
-    _parse_period,
-    _truncate_dates,
-    dates_to_timerange,
-    get_input_filelist,
-    get_multiproduct_filename,
-    get_output_file,
-    get_start_end_date,
-)
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._task import DiagnosticTask, ResumeTask, TaskSet
 from .cmor.check import CheckLevels
@@ -39,6 +28,12 @@ from .config._config import (
 )
 from .config._diagnostics import TAGS
 from .exceptions import InputFilesNotFound, RecipeError
+from .local import _dates_to_timerange as dates_to_timerange
+from .local import _get_input_filelist as get_input_filelist
+from .local import _get_multiproduct_filename as get_multiproduct_filename
+from .local import _get_output_file as get_output_file
+from .local import _get_start_end_date as get_start_end_date
+from .local import _get_timerange_from_years, _parse_period, _truncate_dates
 from .preprocessor import (
     DEFAULT_ORDER,
     FINAL_STEPS,
@@ -225,7 +220,7 @@ def _augment(base, update):
 
 def _dataset_to_file(variable, config_user):
     """Find the first file belonging to dataset from variable info."""
-    (files, dirnames, filenames) = _get_input_files(variable, config_user)
+    (files, globs) = _get_input_files(variable, config_user)
     if not files and variable.get('derive'):
         required_vars = get_required(variable['short_name'],
                                      variable['project'])
@@ -233,12 +228,11 @@ def _dataset_to_file(variable, config_user):
             _augment(required_var, variable)
             _add_cmor_info(required_var, override=True)
             _add_extra_facets(required_var, config_user['extra_facets_dir'])
-            (files, dirnames,
-             filenames) = _get_input_files(required_var, config_user)
+            (files, globs) = _get_input_files(required_var, config_user)
             if files:
                 variable = required_var
                 break
-    check.data_availability(files, variable, dirnames, filenames)
+    check.data_availability(files, variable, globs)
     return files[0]
 
 
@@ -584,10 +578,9 @@ def _get_input_files(variable, config_user):
 
         variable['start_year'] = start_year
         variable['end_year'] = end_year
-    (input_files, dirnames,
-     filenames) = get_input_filelist(variable=variable,
-                                     rootpath=config_user['rootpath'],
-                                     drs=config_user['drs'])
+    input_files, globs = get_input_filelist(variable=variable,
+                                            rootpath=config_user['rootpath'],
+                                            drs=config_user['drs'])
 
     # Set up downloading from ESGF if requested.
     if (not config_user['offline']
@@ -596,8 +589,7 @@ def _get_input_files(variable, config_user):
             check.data_availability(
                 input_files,
                 variable,
-                dirnames,
-                filenames,
+                globs,
                 log=False,
             )
         except RecipeError:
@@ -611,15 +603,14 @@ def _get_input_files(variable, config_user):
                         DOWNLOAD_FILES.add(file)
                     input_files.append(str(local_copy))
 
-            dirnames.append('ESGF:')
+            globs.append('ESGF:')
 
-    return (input_files, dirnames, filenames)
+    return (input_files, globs)
 
 
 def _get_ancestors(variable, config_user):
     """Get the input files for a single dataset and setup provenance."""
-    (input_files, dirnames,
-     filenames) = _get_input_files(variable, config_user)
+    (input_files, globs) = _get_input_files(variable, config_user)
 
     logger.debug(
         "Using input files for variable %s of dataset %s:\n%s",
@@ -629,7 +620,7 @@ def _get_ancestors(variable, config_user):
             f'{f} (will be downloaded)' if not os.path.exists(f) else str(f)
             for f in input_files),
     )
-    check.data_availability(input_files, variable, dirnames, filenames)
+    check.data_availability(input_files, variable, globs)
     logger.info("Found input files for %s",
                 variable['alias'].replace('_', ' '))
 
@@ -836,11 +827,11 @@ def _update_timerange(variable, config_user):
     check.valid_time_selection(timerange)
 
     if '*' in timerange:
-        (files, _, _) = _find_input_files(
-            variable, config_user['rootpath'], config_user['drs'])
+        facets = deepcopy(variable)
+        facets.pop('timerange', None)
+        files, _ = get_input_filelist(
+            facets, config_user['rootpath'], config_user['drs'])
         if not files and not config_user.get('offline', True):
-            facets = deepcopy(variable)
-            facets.pop('timerange', None)
             files = [file.name for file in esgf.find_files(**facets)]
 
         if not files:
@@ -1094,7 +1085,7 @@ def _get_single_preprocessor_task(variables,
 
     logger.info("PreprocessingTask %s created.", task.name)
     logger.debug("PreprocessingTask %s will create the files:\n%s", task.name,
-                 '\n'.join(p.filename for p in task.products))
+                 '\n'.join(str(p.filename) for p in task.products))
 
     return task
 

@@ -561,7 +561,7 @@ datasets are listed in any recipe, under either the ``datasets`` and/or
     - {dataset: HadGEM2-CC, project: CMIP5, exp: historical, ensemble: r1i1p1, start_year: 2001, end_year: 2004}
     - {dataset: UKESM1-0-LL, project: CMIP6, exp: historical, ensemble: r1i1p1f2, grid: gn, start_year: 2004, end_year: 2014}
 
-``_data_finder`` will use this information to find data for **all** the variables specified in ``diagnostics/variables``.
+The data finding feature will use this information to find data for **all** the variables specified in ``diagnostics/variables``.
 
 Recap and example
 =================

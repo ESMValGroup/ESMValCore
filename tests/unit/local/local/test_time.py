@@ -1,12 +1,13 @@
-"""Unit tests for :func:`esmvalcore._data_finder.regrid._stock_cube`"""
-
+"""Unit tests for time related functions in `esmvalcore.local`."""
 import iris
 import pytest
 
-from esmvalcore._data_finder import (
+from esmvalcore.local import (
+    _dates_to_timerange,
+    _get_start_end_date,
+    _get_start_end_year,
     _get_timerange_from_years,
-    get_start_end_date,
-    get_start_end_year,
+    _truncate_dates,
 )
 
 FILENAME_CASES = [
@@ -61,32 +62,32 @@ FILENAME_DATE_CASES = [
 
 @pytest.mark.parametrize('case', FILENAME_CASES)
 def test_get_start_end_year(case):
-    """Tests for get_start_end_year function."""
+    """Tests for _get_start_end_year function."""
     filename, case_start, case_end = case
     if case_start is None and case_end is None:
         # If the filename is inconclusive or too difficult
         # we resort to reading the file, which fails here
         # because the file is not there.
         with pytest.raises(ValueError):
-            get_start_end_year(filename)
+            _get_start_end_year(filename)
     else:
-        start, end = get_start_end_year(filename)
+        start, end = _get_start_end_year(filename)
         assert case_start == start
         assert case_end == end
 
 
 @pytest.mark.parametrize('case', FILENAME_DATE_CASES)
 def test_get_start_end_date(case):
-    """Tests for get_start_end_date function."""
+    """Tests for _get_start_end_date function."""
     filename, case_start, case_end = case
     if case_start is None and case_end is None:
         # If the filename is inconclusive or too difficult
         # we resort to reading the file, which fails here
         # because the file is not there.
         with pytest.raises(ValueError):
-            get_start_end_date(filename)
+            _get_start_end_date(filename)
     else:
-        start, end = get_start_end_date(filename)
+        start, end = _get_start_end_date(filename)
         assert case_start == start
         assert case_end == end
 
@@ -101,7 +102,7 @@ def test_read_time_from_cube(monkeypatch, tmp_path):
                                 units='days since 1990-01-01')
     cube.add_dim_coord(time, 0)
     iris.save(cube, temp_file)
-    start, end = get_start_end_year(temp_file)
+    start, end = _get_start_end_year(temp_file)
     assert start == 1990
     assert end == 1991
 
@@ -116,7 +117,7 @@ def test_read_datetime_from_cube(monkeypatch, tmp_path):
                                 units='days since 1990-01-01')
     cube.add_dim_coord(time, 0)
     iris.save(cube, temp_file)
-    start, end = get_start_end_date(temp_file)
+    start, end = _get_start_end_date(temp_file)
     assert start == '19900101'
     assert end == '19910102'
 
@@ -128,14 +129,14 @@ def test_raises_if_unable_to_deduce(monkeypatch, tmp_path):
     cube = iris.cube.Cube([0, 0], var_name='var')
     iris.save(cube, temp_file)
     with pytest.raises(ValueError):
-        get_start_end_date(temp_file)
+        _get_start_end_date(temp_file)
 
 
 def test_fails_if_no_date_present():
     """Test raises if no date is present."""
     with pytest.raises((ValueError, OSError)):
-        get_start_end_date('var_whatever')
-        get_start_end_year('var_whatever')
+        _get_start_end_date('var_whatever')
+        _get_start_end_year('var_whatever')
 
 
 def test_get_timerange_from_years():
@@ -176,3 +177,65 @@ def test_get_timerange_from_end_year():
 
     assert 'end_year' not in variable
     assert variable['timerange'] == '2002/2002'
+
+
+TEST_DATES_TO_TIMERANGE = [
+    (2000, 2000, '2000/2000'),
+    (1, 2000, '0001/2000'),
+    (2000, 1, '2000/0001'),
+    (1, 2, '0001/0002'),
+    ('2000', '2000', '2000/2000'),
+    ('1', '2000', '0001/2000'),
+    (2000, '1', '2000/0001'),
+    ('1', 2, '0001/0002'),
+    ('*', '*', '*/*'),
+    (2000, '*', '2000/*'),
+    ('2000', '*', '2000/*'),
+    (1, '*', '0001/*'),
+    ('1', '*', '0001/*'),
+    ('*', 2000, '*/2000'),
+    ('*', '2000', '*/2000'),
+    ('*', 1, '*/0001'),
+    ('*', '1', '*/0001'),
+    ('P5Y', 'P5Y', 'P5Y/P5Y'),
+    (2000, 'P5Y', '2000/P5Y'),
+    ('2000', 'P5Y', '2000/P5Y'),
+    (1, 'P5Y', '0001/P5Y'),
+    ('1', 'P5Y', '0001/P5Y'),
+    ('P5Y', 2000, 'P5Y/2000'),
+    ('P5Y', '2000', 'P5Y/2000'),
+    ('P5Y', 1, 'P5Y/0001'),
+    ('P5Y', '1', 'P5Y/0001'),
+    ('*', 'P5Y', '*/P5Y'),
+    ('P5Y', '*', 'P5Y/*'),
+]
+
+
+@pytest.mark.parametrize('start_date,end_date,expected_timerange',
+                         TEST_DATES_TO_TIMERANGE)
+def test_dates_to_timerange(start_date, end_date, expected_timerange):
+    """Test ``_dates_to_timerange``."""
+    timerange = _dates_to_timerange(start_date, end_date)
+    assert timerange == expected_timerange
+
+
+TEST_TRUNCATE_DATES = [
+    ('2000', '2000', (2000, 2000)),
+    ('200001', '2000', (2000, 2000)),
+    ('2000', '200001', (2000, 2000)),
+    ('200001', '2000', (2000, 2000)),
+    ('200001', '200001', (200001, 200001)),
+    ('20000102', '200001', (200001, 200001)),
+    ('200001', '20000102', (200001, 200001)),
+    ('20000102', '20000102', (20000102, 20000102)),
+    ('20000102T23:59:59', '20000102', (20000102, 20000102)),
+    ('20000102', '20000102T23:59:59', (20000102, 20000102)),
+    ('20000102T235959', '20000102T01:02:03', (20000102235959, 20000102010203)),
+]
+
+
+@pytest.mark.parametrize('date,date_file,expected_output', TEST_TRUNCATE_DATES)
+def test_truncate_dates(date, date_file, expected_output):
+    """Test ``_truncate_dates``."""
+    output = _truncate_dates(date, date_file)
+    assert output == expected_output

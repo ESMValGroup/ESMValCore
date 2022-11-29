@@ -1,32 +1,23 @@
-"""Data finder module for the ESMValTool."""
-import glob
+"""Find files on the local filesystem."""
+from __future__ import annotations
+
+import itertools
 import logging
 import os
 import re
+from glob import glob
 from pathlib import Path
+from typing import Any, Union
 
 import iris
 import isodate
 
+from .config import Session
 from .config._config import get_project_config
 from .exceptions import RecipeError
+from .typing import Facets, FacetValue
 
 logger = logging.getLogger(__name__)
-
-
-def find_files(dirnames, filenames):
-    """Find files matching filenames in dirnames."""
-    logger.debug("Looking for files matching %s in %s", filenames, dirnames)
-
-    result = []
-    for dirname in dirnames:
-        for filename_pattern in filenames:
-            pat = os.path.join(dirname, filename_pattern)
-            files = glob.glob(pat)
-            files.sort()  # sorting makes it easier to see what was found
-            result.extend(files)
-
-    return result
 
 
 def _get_from_pattern(pattern, date_range_pattern, stem, group):
@@ -68,7 +59,7 @@ def _get_from_pattern(pattern, date_range_pattern, stem, group):
     return start_point, end_point
 
 
-def get_start_end_date(filename):
+def _get_start_end_date(filename):
     """Get the start and end dates as a string from a file name.
 
     Examples of allowed dates : 1980, 198001, 19801231,
@@ -124,7 +115,7 @@ def get_start_end_date(filename):
     return start_date, end_date
 
 
-def dates_to_timerange(start_date, end_date):
+def _dates_to_timerange(start_date, end_date):
     """Convert ``start_date`` and ``end_date`` to ``timerange``.
 
     Note
@@ -162,16 +153,16 @@ def _get_timerange_from_years(variable):
     start_year = variable.get('start_year')
     end_year = variable.get('end_year')
     if start_year and end_year:
-        variable['timerange'] = dates_to_timerange(start_year, end_year)
+        variable['timerange'] = _dates_to_timerange(start_year, end_year)
     elif start_year:
-        variable['timerange'] = dates_to_timerange(start_year, start_year)
+        variable['timerange'] = _dates_to_timerange(start_year, start_year)
     elif end_year:
-        variable['timerange'] = dates_to_timerange(end_year, end_year)
+        variable['timerange'] = _dates_to_timerange(end_year, end_year)
     variable.pop('start_year', None)
     variable.pop('end_year', None)
 
 
-def get_start_end_year(filename):
+def _get_start_end_year(filename):
     """Get the start and end year from a file name.
 
     Examples of allowed dates : 1980, 198001, 19801231,
@@ -293,7 +284,7 @@ def _truncate_dates(date, file_date):
     return int(date), int(file_date)
 
 
-def select_files(filenames, timerange):
+def _select_files(filenames, timerange):
     """Select files containing data between a given timerange.
 
     If the timerange is given as a period, the file selection
@@ -302,11 +293,15 @@ def select_files(filenames, timerange):
     Otherwise, the file selection occurs taking into account
     the time resolution of the file.
     """
+    if '*' in timerange:
+        # TODO: support * combined with a period
+        return filenames
+
     selection = []
 
     for filename in filenames:
         start_date, end_date = _parse_period(timerange)
-        start, end = get_start_end_date(filename)
+        start, end = _get_start_end_date(filename)
 
         start_date, start = _truncate_dates(start_date, start)
         end_date, end = _truncate_dates(end_date, end)
@@ -317,37 +312,40 @@ def select_files(filenames, timerange):
     return selection
 
 
-def _replace_tags(paths, variable):
+def _replace_tags(
+    paths: Union[str, list[str]],
+    variable: Facets,
+) -> list[Path]:
     """Replace tags in the config-developer's file with actual values."""
     if isinstance(paths, str):
-        paths = set((paths.strip('/'), ))
+        pathset = set((paths.strip('/'), ))
     else:
-        paths = set(path.strip('/') for path in paths)
-    tlist = set()
-    for path in paths:
+        pathset = set(path.strip('/') for path in paths)
+    tlist: set[str] = set()
+    for path in pathset:
         tlist = tlist.union(re.findall(r'{([^}]*)}', path))
     if 'sub_experiment' in variable:
-        new_paths = []
-        for path in paths:
-            new_paths.extend(
+        new_paths: set[str] = set()
+        for path in pathset:
+            new_paths.update(
                 (re.sub(r'(\b{ensemble}\b)', r'{sub_experiment}-\1', path),
                  re.sub(r'({ensemble})', r'{sub_experiment}-\1', path)))
             tlist.add('sub_experiment')
-        paths = new_paths
+        pathset = new_paths
 
     for tag in tlist:
         original_tag = tag
         tag, _, _ = _get_caps_options(tag)
 
-        if tag == 'latestversion':  # handled separately later
-            continue
         if tag in variable:
             replacewith = variable[tag]
+        elif tag == 'version':
+            replacewith = '*'
         else:
             raise RecipeError(f"Dataset key '{tag}' must be specified for "
                               f"{variable}, check your recipe entry")
-        paths = _replace_tag(paths, original_tag, replacewith)
-    return paths
+        pathset = _replace_tag(pathset, original_tag, replacewith)
+    return [Path(p) for p in pathset]
 
 
 def _replace_tag(paths, tag, replacewith):
@@ -383,29 +381,6 @@ def _apply_caps(original, lower, upper):
     return original
 
 
-def _resolve_latestversion(dirname_template):
-    """Resolve the 'latestversion' tag.
-
-    This implementation avoid globbing on centralized clusters with very
-    large data root dirs (i.e. ESGF nodes like Jasmin/DKRZ).
-    """
-    if '{latestversion}' not in dirname_template:
-        return dirname_template
-
-    # Find latest version
-    part1, part2 = dirname_template.split('{latestversion}')
-    part2 = part2.lstrip(os.sep)
-    if os.path.exists(part1):
-        versions = os.listdir(part1)
-        versions.sort(reverse=True)
-        for version in ['latest'] + versions:
-            dirname = os.path.join(part1, version, part2)
-            if os.path.isdir(dirname):
-                return dirname
-
-    return None
-
-
 def _select_drs(input_type, drs, project):
     """Select the directory structure of input path."""
     cfg = get_project_config(project)
@@ -422,87 +397,60 @@ def _select_drs(input_type, drs, project):
             structure, project))
 
 
-ROOTPATH_WARNED = set()
+_ROOTPATH_WARNED = set()
 
 
-def get_rootpath(rootpath, project):
+def _get_rootpath(rootpath, project):
     """Select the rootpath."""
     for key in (project, 'default'):
         if key in rootpath:
             nonexistent = tuple(p for p in rootpath[key]
                                 if not os.path.exists(p))
-            if nonexistent and (key, nonexistent) not in ROOTPATH_WARNED:
+            if nonexistent and (key, nonexistent) not in _ROOTPATH_WARNED:
                 logger.warning(
                     "'%s' rootpaths '%s' set in config-user.yml do not exist",
                     key, ', '.join(str(p) for p in nonexistent))
-                ROOTPATH_WARNED.add((key, nonexistent))
+                _ROOTPATH_WARNED.add((key, nonexistent))
             return rootpath[key]
     raise KeyError('default rootpath must be specified in config-user file')
 
 
-def _find_input_dirs(variable, rootpath, drs):
-    """Return a the full paths to input directories."""
+def _get_globs(variable, rootpath, drs):
+    """Compose the globs that will be used to look for files."""
     project = variable['project']
 
-    root = get_rootpath(rootpath, project)
-    path_template = _select_drs('input_dir', drs, project)
+    rootpaths = _get_rootpath(rootpath, project)
 
-    dirnames = []
-    for dirname_template in _replace_tags(path_template, variable):
-        for base_path in root:
-            dirname = os.path.join(base_path, dirname_template)
-            dirname = _resolve_latestversion(dirname)
-            if dirname is None:
-                continue
-            matches = glob.glob(dirname)
-            matches = [match for match in matches if os.path.isdir(match)]
-            if matches:
-                for match in matches:
-                    dirnames.append(match)
-            else:
-                logger.debug("Skipping non-existent %s", dirname)
+    dirname_template = _select_drs('input_dir', drs, project)
+    dirname_globs = _replace_tags(dirname_template, variable)
 
-    return dirnames
+    filename_template = _select_drs('input_file', drs, project)
+    filename_globs = _replace_tags(filename_template, variable)
+
+    globs = sorted(r / d / f for r in rootpaths for d in dirname_globs
+                   for f in filename_globs)
+    return globs
 
 
-def _get_filenames_glob(variable, drs):
-    """Return patterns that can be used to look for input files."""
-    path_template = _select_drs('input_file', drs, variable['project'])
-    filenames_glob = _replace_tags(path_template, variable)
-    return filenames_glob
-
-
-def _find_input_files(variable, rootpath, drs):
-    """Find available input files.
-
-    Return the files, the directory in which they are located in, and
-    the file name.
-    """
-    short_name = variable['short_name']
-    variable['short_name'] = variable['original_short_name']
-    input_dirs = _find_input_dirs(variable, rootpath, drs)
-    filenames_glob = _get_filenames_glob(variable, drs)
-    files = find_files(input_dirs, filenames_glob)
-    variable['short_name'] = short_name
-    return (files, input_dirs, filenames_glob)
-
-
-def get_input_filelist(variable, rootpath, drs):
+def _get_input_filelist(variable, rootpath, drs):
     """Return the full path to input files."""
-    # change ensemble to fixed r0i0p0 for fx variables
-    # this is needed and is not a duplicate effort
-    if variable['project'] == 'CMIP5' and variable['frequency'] == 'fx':
-        variable['ensemble'] = 'r0i0p0'
-    (files, dirnames, filenames) = _find_input_files(variable, rootpath, drs)
-    # do time gating only for non-fx variables
-    if variable['frequency'] != 'fx':
-        files = select_files(
-            files,
-            variable['timerange'])
-    return (files, dirnames, filenames)
+    variable = dict(variable)
+    if 'original_short_name' in variable:
+        variable['short_name'] = variable['original_short_name']
+
+    globs = _get_globs(variable, rootpath, drs)
+    logger.debug("Looking for files matching %s", globs)
+
+    files = list(Path(file) for glob_ in globs for file in glob(str(glob_)))
+    files.sort()  # sorting makes it easier to see what was found
+
+    if 'timerange' in variable:
+        files = _select_files(files, variable['timerange'])
+
+    return files, globs
 
 
-def get_output_file(variable, preproc_dir):
+def _get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
     """Return the full path to the output (preprocessed) file."""
     cfg = get_project_config(variable['project'])
 
@@ -510,22 +458,20 @@ def get_output_file(variable, preproc_dir):
     if isinstance(variable.get('exp'), (list, tuple)):
         variable = dict(variable)
         variable['exp'] = '-'.join(variable['exp'])
-
-    outfile = os.path.join(
-        preproc_dir,
-        variable['diagnostic'],
-        variable['variable_group'],
-        _replace_tags(cfg['output_file'], variable)[0],
-    )
-    if variable['frequency'] != 'fx':
+    outfile = _replace_tags(cfg['output_file'], variable)[0]
+    if 'timerange' in variable:
         timerange = variable['timerange'].replace('/', '-')
-        outfile += f'_{timerange}'
+        outfile = Path(f'{outfile}_{timerange}')
+    outfile = Path(f"{outfile}.nc")
+    return Path(
+        preproc_dir,
+        variable.get('diagnostic', ''),
+        variable.get('variable_group', ''),
+        outfile,
+    )
 
-    outfile += '.nc'
-    return outfile
 
-
-def get_multiproduct_filename(attributes, preproc_dir):
+def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
     """Get ensemble/multi-model filename depending on settings."""
     relevant_keys = [
         'project', 'dataset', 'exp', 'ensemble_statistics',
@@ -547,7 +493,7 @@ def get_multiproduct_filename(attributes, preproc_dir):
     filename_segments.append(
         f"{attributes['timerange'].replace('/', '-')}.nc")
 
-    outfile = os.path.join(
+    outfile = Path(
         preproc_dir,
         attributes['diagnostic'],
         attributes['variable_group'],
@@ -555,3 +501,121 @@ def get_multiproduct_filename(attributes, preproc_dir):
     )
 
     return outfile
+
+
+def _path2facets(path: Path, drs: str) -> dict[str, str]:
+    """Extract facets from a path using a DRS like '{facet1}/{facet2}'."""
+    keys = []
+    for key in re.findall(r"{(.*?)}", drs):
+        key = key.split('.')[0]  # Remove trailing .lower and .upper
+        keys.append(key)
+    start, end = -len(keys) - 1, -1
+    values = path.parts[start:end]
+    facets = {key: values[idx] for idx, key in enumerate(keys)}
+    return facets
+
+
+def _select_latest_version(files: list['LocalFile']) -> list['LocalFile']:
+    """Select only the latest version of files."""
+
+    def filename(file):
+        return file.name
+
+    def version(file):
+        return file.facets.get('version', '')
+
+    result = []
+    for _, group in itertools.groupby(sorted(files, key=filename),
+                                      key=filename):
+        duplicates = sorted(group, key=version)
+        latest = duplicates[-1]
+        result.append(latest)
+    return result
+
+
+def find_files(
+    session: Session,
+    *,
+    debug: bool = False,
+    **facets: FacetValue,
+):
+    """Find files on the local filesystem.
+
+    Parameters
+    ----------
+    session
+        The session.
+    debug
+        When debug is set to `True`, the function will return a tuple
+        with the first element containing the files that were found
+        and the second element containing the globs patterns that
+        were used to search for files.
+    **facets
+        Facets used to search for files. An '*' can be used to indicate
+        any value. By default, only the latest version of a file will
+        be returned. To select all versions use ``version='*'``. It is also
+        possible to specify multiple values for a facet, e.g.
+        ``exp=['historical', 'ssp585']`` will match any file that belongs
+        to either the historical or ssp585 experiment.
+
+    Examples
+    --------
+    Search for CMIP6 files containing surface air temperature
+    from any model for the historical experiment:
+
+    >>> session = esmvalcore.config.CFG.start_session('test')  # doctest: +SKIP
+
+    >>> esmvalcore.local.find_files(
+    ...     session,
+    ...     project='CMIP6',
+    ...     activity='CMIP',
+    ...     mip='Amon',
+    ...     short_name='tas',
+    ...     exp='historical',
+    ...     dataset='*',
+    ...     ensemble='*',
+    ...     grid='*',
+    ...     institute='*',
+    ... )  # doctest: +SKIP
+    [LocalFile('/home/bandela/climate_data/CMIP6/CMIP/BCC/BCC-ESM1/historical/r1i1p1f1/Amon/tas/gn/v20181214/tas_Amon_BCC-ESM1_historical_r1i1p1f1_gn_185001-201412.nc')]
+
+    Returns
+    -------
+    list[LocalFile]
+        The files that were found.
+    """
+    filenames, globs = _get_input_filelist(
+        facets,
+        rootpath=session['rootpath'],
+        drs=session['drs'],
+    )
+    drs = _select_drs('input_dir', session['drs'], facets['project'])
+    if isinstance(drs, list):
+        # Not sure how to handle a list of DRSs
+        drs = ''
+    files = []
+    for filename in filenames:
+        file = LocalFile(filename)
+        file.facets.update(_path2facets(file, drs))
+        files.append(file)
+
+    if 'version' not in facets:
+        files = _select_latest_version(files)
+
+    if debug:
+        return files, globs
+    return files
+
+
+class LocalFile(type(Path())):  # type: ignore
+    """File on the local filesystem."""
+    @property
+    def facets(self) -> Facets:
+        """Facets describing the file."""
+        if not hasattr(self, '_facets'):
+            self._facets: Facets = {}
+        return self._facets
+
+    @facets.setter
+    def facets(self, value: Facets):
+        self._facets = value

@@ -1,35 +1,18 @@
-"""Tests for _data_finder.py."""
+"""Tests for `esmvalcore.local`."""
 import os
+import pprint
 import shutil
 import tempfile
+from pathlib import Path
 
 import pytest
 import yaml
 
-import esmvalcore.config
-from esmvalcore._data_finder import (
-    _find_input_files,
-    get_input_filelist,
-    get_output_file,
-)
+from esmvalcore.local import _get_output_file, find_files
 
 # Load test configuration
 with open(os.path.join(os.path.dirname(__file__), 'data_finder.yml')) as file:
     CONFIG = yaml.safe_load(file)
-
-
-def _augment_with_extra_facets(variable):
-    """Augment variable dict with extra facets."""
-    extra_facets = esmvalcore.config._config.get_extra_facets(
-        variable['project'],
-        variable['dataset'],
-        variable['mip'],
-        variable['short_name'],
-        (),
-    )
-    for (key, val) in extra_facets.items():
-        if key not in variable:
-            variable[key] = val
 
 
 def print_path(path):
@@ -75,9 +58,9 @@ def create_tree(path, filenames=None, symlinks=None):
 @pytest.mark.parametrize('cfg', CONFIG['get_output_file'])
 def test_get_output_file(cfg):
     """Test getting output name for preprocessed files."""
-    _augment_with_extra_facets(cfg['variable'])
-    output_file = get_output_file(cfg['variable'], cfg['preproc_dir'])
-    assert output_file == cfg['output_file']
+    output_file = _get_output_file(cfg['variable'], cfg['preproc_dir'])
+    expected = Path(cfg['output_file'])
+    assert output_file == expected
 
 
 @pytest.fixture
@@ -91,35 +74,26 @@ def root():
 
 
 @pytest.mark.parametrize('cfg', CONFIG['get_input_filelist'])
-def test_get_input_filelist(root, cfg):
+def test_find_files(root, cfg):
     """Test retrieving input filelist."""
+    print(f"Testing DRS {cfg['drs']} with variable:\n",
+          pprint.pformat(cfg['variable']))
+
     create_tree(root, cfg.get('available_files'),
                 cfg.get('available_symlinks'))
-
-    # Augment variable dict with extra facets
-    _augment_with_extra_facets(cfg['variable'])
 
     # Find files
     rootpath = {cfg['variable']['project']: [root]}
     drs = {cfg['variable']['project']: cfg['drs']}
-    timerange = cfg['variable'].get('timerange')
-    if timerange and '*' in timerange:
-        (files, _, _) = _find_input_files(cfg['variable'], rootpath, drs)
-        ref_files = [
-            os.path.join(root, file) for file in cfg['found_files']]
-        # Test result
-        assert sorted(files) == sorted(ref_files)
-    else:
-        (input_filelist, dirnames,
-         filenames) = get_input_filelist(cfg['variable'], rootpath, drs)
-        # Test result
-        ref_files = [os.path.join(root, file) for file in cfg['found_files']]
-        if cfg['dirs'] is None:
-            ref_dirs = []
-        else:
-            ref_dirs = [os.path.join(root, dir) for dir in cfg['dirs']]
-        ref_patterns = cfg['file_patterns']
-
-        assert sorted(input_filelist) == sorted(ref_files)
-        assert sorted(dirnames) == sorted(ref_dirs)
-        assert sorted(filenames) == sorted(ref_patterns)
+    session = {
+        'drs': drs,
+        'rootpath': rootpath,
+    }
+    input_filelist, globs = find_files(session, debug=True, **cfg['variable'])
+    # Test result
+    ref_files = [Path(root, file) for file in cfg['found_files']]
+    ref_globs = [
+        Path(root, d, f) for d in cfg['dirs'] for f in cfg['file_patterns']
+    ]
+    assert sorted([Path(f) for f in input_filelist]) == sorted(ref_files)
+    assert sorted([Path(g) for g in globs]) == sorted(ref_globs)
