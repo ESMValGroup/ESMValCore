@@ -278,18 +278,18 @@ def find_files(*, project, short_name, dataset, **facets):
 
     Search for all available versions of a file:
 
-   >>> find_files(
-   ...     project='CMIP5',
-   ...     mip='Amon',
-   ...     short_name='tas',
-   ...     dataset='CCSM4',
-   ...     exp='historical',
-   ...     ensemble='r1i1p1',
-   ...     version='*',
-   ... )  # doctest: +SKIP
-   [ESGFFile:cmip5/output1/NCAR/CCSM4/historical/mon/atmos/Amon/r1i1p1/v20121031/tas_Amon_CCSM4_historical_r1i1p1_185001-200512.nc,
-    ESGFFile:cmip5/output1/NCAR/CCSM4/historical/mon/atmos/Amon/r1i1p1/v20130425/tas_Amon_CCSM4_historical_r1i1p1_185001-200512.nc,
-    ESGFFile:cmip5/output1/NCAR/CCSM4/historical/mon/atmos/Amon/r1i1p1/v20160829/tas_Amon_CCSM4_historical_r1i1p1_185001-200512.nc]
+    >>> find_files(
+    ...     project='CMIP5',
+    ...     mip='Amon',
+    ...     short_name='tas',
+    ...     dataset='CCSM4',
+    ...     exp='historical',
+    ...     ensemble='r1i1p1',
+    ...     version='*',
+    ... )  # doctest: +SKIP
+    [ESGFFile:cmip5/output1/NCAR/CCSM4/historical/mon/atmos/Amon/r1i1p1/v20121031/tas_Amon_CCSM4_historical_r1i1p1_185001-200512.nc,
+     ESGFFile:cmip5/output1/NCAR/CCSM4/historical/mon/atmos/Amon/r1i1p1/v20130425/tas_Amon_CCSM4_historical_r1i1p1_185001-200512.nc,
+     ESGFFile:cmip5/output1/NCAR/CCSM4/historical/mon/atmos/Amon/r1i1p1/v20160829/tas_Amon_CCSM4_historical_r1i1p1_185001-200512.nc]
 
     Returns
     -------
