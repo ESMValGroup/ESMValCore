@@ -10,8 +10,8 @@ import iris.coord_categorisation
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.coords import AuxCoord
-from iris.cube import Cube
+from iris.coords import AuxCoord, DimCoord
+from iris.cube import Cube, CubeList
 
 import esmvalcore.preprocessor._multimodel as mm
 from esmvalcore.iris_helpers import date2num
@@ -34,12 +34,56 @@ def assert_array_allclose(this, other):
     np.testing.assert_allclose(this, other)
 
 
+@pytest.fixture
+def cubes_with_arbitrary_dimensions():
+    """Create cubes with non-standard dimensions."""
+    a_coord = DimCoord([1, 2, 3], var_name='a')
+    b_coord = DimCoord([1], var_name='b')
+    s_coord = AuxCoord(0, var_name='s')
+    cube_kwargs = {
+        'var_name': 'x',
+        'dim_coords_and_dims': [(a_coord, 0), (b_coord, 1)],
+        'aux_coords_and_dims': [(s_coord, ())],
+    }
+
+    cubes = CubeList([
+        Cube([[0.0], [0.0], [0.0]], **cube_kwargs),
+        Cube([[0.0], [2.0], [1.0]], **cube_kwargs),
+        Cube([[0.0], [4.0], [2.0]], **cube_kwargs),
+    ])
+
+    return cubes
+
+
+@pytest.fixture
+def cubes_5d():
+    """Create 5d cubes."""
+    a_coord = DimCoord([1], var_name='a')
+    b_coord = DimCoord([1], var_name='b')
+    c_coord = DimCoord([1], var_name='c')
+    d_coord = DimCoord([1], var_name='d')
+    e_coord = DimCoord([1], var_name='e')
+    coord_spec = [
+        (a_coord, 0),
+        (b_coord, 1),
+        (c_coord, 2),
+        (d_coord, 3),
+        (e_coord, 4),
+    ]
+
+    cubes = CubeList([
+        Cube(np.full((1, 1, 1, 1, 1), 1.0), dim_coords_and_dims=coord_spec),
+        Cube(np.full((1, 1, 1, 1, 1), 2.0), dim_coords_and_dims=coord_spec),
+    ])
+
+    return cubes
+
+
 def timecoord(frequency,
               calendar='standard',
               offset='days since 1850-01-01',
               num=3):
     """Return a time coordinate with the given time points and calendar."""
-
     time_points = range(1, num + 1)
 
     if frequency == 'hourly':
@@ -53,7 +97,7 @@ def timecoord(frequency,
 
     unit = Unit(offset, calendar=calendar)
     points = date2num(dates, unit)
-    return iris.coords.DimCoord(points, standard_name='time', units=unit)
+    return DimCoord(points, standard_name='time', units=unit)
 
 
 def generate_cube_from_dates(
@@ -90,9 +134,9 @@ def generate_cube_from_dates(
     else:
         len_data = len(dates)
         unit = Unit(offset, calendar=calendar)
-        time = iris.coords.DimCoord(date2num(dates, unit),
-                                    standard_name='time',
-                                    units=unit)
+        time = DimCoord(date2num(dates, unit),
+                        standard_name='time',
+                        units=unit)
 
     data = np.array((fill_val, ) * len_data, dtype=np.float32)
 
@@ -104,7 +148,6 @@ def generate_cube_from_dates(
 
 def get_cubes_for_validation_test(frequency, lazy=False):
     """Set up cubes used for testing multimodel statistics."""
-
     # Simple 1d cube with standard time cord
     cube1 = generate_cube_from_dates(frequency, lazy=lazy)
 
@@ -127,7 +170,7 @@ def get_cubes_for_validation_test(frequency, lazy=False):
 
 
 def get_cube_for_equal_coords_test(num_cubes):
-    """Setup cubes with equal auxiliary coordinates."""
+    """Set up cubes with equal auxiliary coordinates."""
     cubes = []
 
     for num in range(num_cubes):
@@ -309,7 +352,6 @@ def test_lazy_data_inconsistent_times(span):
     This hits `_align`, which adds additional computations which must be
     lazy.
     """
-
     cubes = (
         generate_cube_from_dates(
             [datetime(1850, i, 15, 0, 0, 0) for i in range(1, 10)], lazy=True),
@@ -376,10 +418,8 @@ def test_get_consistent_time_unit(calendar1, calendar2, expected):
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
 def test_align(span):
     """Test _align function."""
-
     # TODO --> check that if a cube is extended,
     #          the extended points are masked (not NaN!)
-
     len_data = 3
 
     cubes = []
@@ -390,7 +430,7 @@ def test_align(span):
                                         len_data=3)
         cubes.append(cube)
 
-    result_cubes = mm._align(cubes, span)
+    result_cubes = mm._align_time_coord(cubes, span)
 
     calendars = set(cube.coord('time').units.calendar for cube in result_cubes)
 
@@ -439,8 +479,12 @@ def test_combine_different_shape_fail():
         cube = generate_cube_from_dates('monthly', '360_day', len_data=num)
         cubes.append(cube)
 
-    with pytest.raises(iris.exceptions.MergeError):
-        _ = mm._combine(cubes)
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
+    with pytest.raises(ValueError, match=msg):
+        mm._combine(cubes)
 
 
 def test_combine_inconsistent_var_names_fail():
@@ -454,8 +498,12 @@ def test_combine_inconsistent_var_names_fail():
                                         var_name=f'test_var_{num}')
         cubes.append(cube)
 
-    with pytest.raises(iris.exceptions.MergeError):
-        _ = mm._combine(cubes)
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
+    with pytest.raises(ValueError, match=msg):
+        mm._combine(cubes)
 
 
 @pytest.mark.parametrize('scalar_coord', ['p0', 'ptop'])
@@ -819,7 +867,7 @@ def test_daily_inconsistent_calendars():
     cubes = [leapcube, noleapcube]
 
     # span=full
-    aligned_cubes = mm._align(cubes, span='full')
+    aligned_cubes = mm._align_time_coord(cubes, span='full')
     for cube in aligned_cubes:
         assert cube.coord('time').units.calendar in ("standard", "gregorian")
         assert cube.shape == (367, )
@@ -832,7 +880,7 @@ def test_daily_inconsistent_calendars():
     assert result_cube[366].data == 1  # outside original range
 
     # span=overlap
-    aligned_cubes = mm._align(cubes, span='overlap')
+    aligned_cubes = mm._align_time_coord(cubes, span='overlap')
     for cube in aligned_cubes:
         assert cube.coord('time').units.calendar in ("standard", "gregorian")
         assert cube.shape == (365, )
@@ -859,7 +907,7 @@ def test_remove_fx_variables():
 
 def test_no_warn_model_dim_non_contiguous(recwarn):
     """Test that now warning is raised that model dim is non-contiguous."""
-    coord = iris.coords.DimCoord(
+    coord = DimCoord(
         [0.5, 1.5],
         bounds=[[0, 1.], [1., 2.]],
         standard_name='time',
@@ -921,3 +969,79 @@ def test_preserve_equal_coordinates():
     assert stat_cube.coord('x').standard_name is None
     assert stat_cube.coord('x').long_name is None
     assert stat_cube.coord('x').attributes == {}
+
+
+def test_arbitrary_dims_5d(cubes_5d):
+    """Test ``multi_model_statistics`` with 5D cubes."""
+    stat_cubes = multi_model_statistics(
+        cubes_5d,
+        span='overlap',
+        statistics=['sum'],
+    )
+    assert len(stat_cubes) == 1
+    assert 'sum' in stat_cubes
+    stat_cube = stat_cubes['sum']
+    assert stat_cube.shape == (1, 1, 1, 1, 1)
+    assert_array_allclose(
+        stat_cube.data,
+        np.ma.array(np.full((1, 1, 1, 1, 1), 3.0)),
+    )
+
+
+def test_arbitrary_dims_2d(cubes_with_arbitrary_dimensions):
+    """Test ``multi_model_statistics`` with arbitrary dimensions."""
+    stat_cubes = multi_model_statistics(
+        cubes_with_arbitrary_dimensions,
+        span='overlap',
+        statistics=['sum'],
+    )
+    assert len(stat_cubes) == 1
+    assert 'sum' in stat_cubes
+    stat_cube = stat_cubes['sum']
+    assert stat_cube.shape == (3, 1)
+    assert_array_allclose(stat_cube.data, np.ma.array([[0.0], [6.0], [3.0]]))
+
+
+def test_arbitrary_dims_1d_1(cubes_with_arbitrary_dimensions):
+    """Test ``multi_model_statistics`` with arbitrary dimensions."""
+    cubes = [cube[0] for cube in cubes_with_arbitrary_dimensions]
+    stat_cubes = multi_model_statistics(
+        cubes,
+        span='overlap',
+        statistics=['sum'],
+    )
+    assert len(stat_cubes) == 1
+    assert 'sum' in stat_cubes
+    stat_cube = stat_cubes['sum']
+    assert stat_cube.shape == (1,)
+    assert_array_allclose(stat_cube.data, np.ma.array([0.0]))
+
+
+def test_arbitrary_dims_1d_3(cubes_with_arbitrary_dimensions):
+    """Test ``multi_model_statistics`` with arbitrary dimensions."""
+    cubes = [cube[:, 0] for cube in cubes_with_arbitrary_dimensions]
+    stat_cubes = multi_model_statistics(
+        cubes,
+        span='overlap',
+        statistics=['sum'],
+    )
+    assert len(stat_cubes) == 1
+    assert 'sum' in stat_cubes
+    stat_cube = stat_cubes['sum']
+    assert stat_cube.shape == (3,)
+    assert_array_allclose(stat_cube.data, np.ma.array([0.0, 6.0, 3.0]))
+
+
+def test_arbitrary_dims_0d(cubes_with_arbitrary_dimensions):
+    """Test ``multi_model_statistics`` with arbitrary dimensions."""
+    cubes = [cube[0, 0] for cube in cubes_with_arbitrary_dimensions]
+    stat_cubes = multi_model_statistics(
+        cubes,
+        span='overlap',
+        statistics=['sum'],
+    )
+    assert len(stat_cubes) == 1
+    assert 'sum' in stat_cubes
+    stat_cube = stat_cubes['sum']
+    assert stat_cube.shape == ()
+    assert_array_allclose(stat_cube.data, np.ma.array(0.0))
