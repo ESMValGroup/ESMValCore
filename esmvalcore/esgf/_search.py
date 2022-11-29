@@ -189,9 +189,11 @@ def find_files(*, project, short_name, dataset, **facets):
         The name of the variable.
     dataset : str
         The name of the dataset.
-    **facets:
-        Any other search facets. Values can be strings, list of strings, or
-        'start_year' and 'end_year' with values of type :obj:`int`.
+    **facets : typing.Union[str, list[str]]
+        Any other search facets. The special value ``'*'`` will match anything.
+        If no ``version`` facet is specified, the function returns only the
+        latest version of each file, while other omitted facets will default
+        to ``'*'``.
 
     Examples
     --------
@@ -248,9 +250,9 @@ def find_files(*, project, short_name, dataset, **facets):
     ...     timerange='1990/2000',
     ... )  # doctest: +SKIP
     [ESGFFile:cordex/output/EUR-11/CLMcom-ETH/MPI-M-MPI-ESM-LR/historical/r1i1p1/COSMO-crCLIM-v1-1/v1/mon/tas/v20191219/tas_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-ETH-COSMO-crCLIM-v1-1_v1_mon_198101-199012.nc,
-    ESGFFile:cordex/output/EUR-11/CLMcom-ETH/MPI-M-MPI-ESM-LR/historical/r1i1p1/COSMO-crCLIM-v1-1/v1/mon/tas/v20191219/tas_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-ETH-COSMO-crCLIM-v1-1_v1_mon_199101-200012.nc]
+     ESGFFile:cordex/output/EUR-11/CLMcom-ETH/MPI-M-MPI-ESM-LR/historical/r1i1p1/COSMO-crCLIM-v1-1/v1/mon/tas/v20191219/tas_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-ETH-COSMO-crCLIM-v1-1_v1_mon_199101-200012.nc]
 
-    Search for a obs4MIPs dataset:
+    Search for an obs4MIPs dataset:
 
     >>> find_files(
     ...     project='obs4MIPs',
@@ -259,6 +261,35 @@ def find_files(*, project, short_name, dataset, **facets):
     ...     short_name='rsutcs',
     ... )  # doctest: +SKIP
     [ESGFFile:obs4MIPs/NASA-LaRC/CERES-EBAF/atmos/mon/v20160610/rsutcs_CERES-EBAF_L3B_Ed2-8_200003-201404.nc]
+
+    Search for any ensemble member:
+
+    >>> find_files(
+    ...     project='CMIP6',
+    ...     mip='Amon',
+    ...     short_name='tas',
+    ...     dataset='BCC-CSM2-MR',
+    ...     exp='historical',
+    ...     ensemble='*',
+    ... )  # doctest: +SKIP
+    [ESGFFile:CMIP6/CMIP/BCC/BCC-CSM2-MR/historical/r1i1p1f1/Amon/tas/gn/v20181126/tas_Amon_BCC-CSM2-MR_historical_r1i1p1f1_gn_185001-201412.nc,
+     ESGFFile:CMIP6/CMIP/BCC/BCC-CSM2-MR/historical/r2i1p1f1/Amon/tas/gn/v20181115/tas_Amon_BCC-CSM2-MR_historical_r2i1p1f1_gn_185001-201412.nc,
+     ESGFFile:CMIP6/CMIP/BCC/BCC-CSM2-MR/historical/r3i1p1f1/Amon/tas/gn/v20181119/tas_Amon_BCC-CSM2-MR_historical_r3i1p1f1_gn_185001-201412.nc]
+
+    Search for all available versions of a file:
+
+   >>> find_files(
+   ...     project='CMIP5',
+   ...     mip='Amon',
+   ...     short_name='tas',
+   ...     dataset='CCSM4',
+   ...     exp='historical',
+   ...     ensemble='r1i1p1',
+   ...     version='*',
+   ... )  # doctest: +SKIP
+   [ESGFFile:cmip5/output1/NCAR/CCSM4/historical/mon/atmos/Amon/r1i1p1/v20121031/tas_Amon_CCSM4_historical_r1i1p1_185001-200512.nc,
+    ESGFFile:cmip5/output1/NCAR/CCSM4/historical/mon/atmos/Amon/r1i1p1/v20130425/tas_Amon_CCSM4_historical_r1i1p1_185001-200512.nc,
+    ESGFFile:cmip5/output1/NCAR/CCSM4/historical/mon/atmos/Amon/r1i1p1/v20160829/tas_Amon_CCSM4_historical_r1i1p1_185001-200512.nc]
 
     Returns
     -------
@@ -296,7 +327,8 @@ def cached_search(**facets):
     esgf_facets = get_esgf_facets(facets)
     files = esgf_search_files(esgf_facets)
 
-    files = select_latest_versions(files, facets.get('version'))
+    if 'version' in facets and facets['version'] != '*':
+        files = select_latest_versions(files, facets['version'])
 
     if 'timerange' in facets:
         files = select_by_time(files, facets['timerange'])
