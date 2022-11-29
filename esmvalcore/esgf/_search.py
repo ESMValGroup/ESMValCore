@@ -327,8 +327,8 @@ def cached_search(**facets):
     esgf_facets = get_esgf_facets(facets)
     files = esgf_search_files(esgf_facets)
 
-    if 'version' in facets and facets['version'] != '*':
-        files = select_latest_versions(files, facets['version'])
+    if 'version' not in facets or facets['version'] != '*':
+        files = select_latest_versions(files, facets.get('version'))
 
     if 'timerange' in facets:
         files = select_by_time(files, facets['timerange'])
