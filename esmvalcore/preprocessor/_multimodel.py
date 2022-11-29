@@ -605,10 +605,10 @@ def multi_model_statistics(products,
       preserved. For coordinates with equal :meth:`~iris.coords.Coord.name` and
       :meth:`~iris.coords.Coord.units`, names are equalized,
       :attr:`~iris.coords.Coord.attributes` deleted and
-      :attr:`iris.coords.Coord.circular` is set to ``False``. For all other
+      :attr:`~iris.coords.Coord.circular` is set to ``False``. For all other
       coordinates, :attr:`~iris.coords.Coord.long_name` is removed,
       :attr:`~iris.coords.Coord.attributes` deleted and
-      :attr:`iris.coords.Coord.circular` is set to ``False``. Please note that
+      :attr:`~iris.coords.Coord.circular` is set to ``False``. Please note that
       some special scalar coordinates (ancillary coordinates for derived
       coordinates like `p0` and `ptop`) are removed as well.
 
