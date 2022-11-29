@@ -208,7 +208,7 @@ def test_esgf_search_files(mocker):
     files = _search.esgf_search_files(facets)
 
     SearchConnection.assert_called_once_with(
-        url='https://esgf.ceda.ac.uk/esg-search')
+        url='https://esgf.example.com/esg-search')
     connection = SearchConnection.return_value
     connection.new_context.assert_called_with(
         pyesgf.search.context.FileSearchContext,
