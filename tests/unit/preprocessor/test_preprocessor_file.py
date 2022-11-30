@@ -13,6 +13,7 @@ ATTRIBUTES = {
     'long_name': 'Precipitation',
     'short_name': 'pr',
     'units': 'kg m-2 s-1',
+    'frequency': 'mon',
 }
 
 
@@ -25,6 +26,7 @@ def product():
         standard_name='air_temperature',
         long_name='Near-Surface Air Temperature',
         units='K',
+        attributes={'frequency': 'day'},
     )
     product = PreprocessorFile(attributes=ATTRIBUTES, settings={})
     product._cubes = CubeList([cube, cube, cube])
@@ -50,6 +52,7 @@ def test_update_attributes(product):
         'long_name': 'Near-Surface Air Temperature',
         'short_name': 'tas',
         'units': 'K',
+        'frequency': 'day',
     }
     assert isinstance(product.attributes['units'], str)
 
@@ -65,6 +68,7 @@ def test_update_attributes_empty_standard_name(product):
         'long_name': 'Near-Surface Air Temperature',
         'short_name': 'tas',
         'units': 'K',
+        'frequency': 'day',
     }
     assert isinstance(product.attributes['units'], str)
 
@@ -80,6 +84,7 @@ def test_update_attributes_empty_long_name(product):
         'long_name': '',
         'short_name': 'tas',
         'units': 'K',
+        'frequency': 'day',
     }
     assert isinstance(product.attributes['units'], str)
 
@@ -94,6 +99,39 @@ def test_update_attributes_empty_var_name(product):
         'standard_name': 'air_temperature',
         'long_name': 'Near-Surface Air Temperature',
         'short_name': '',
+        'units': 'K',
+        'frequency': 'day',
+    }
+    assert isinstance(product.attributes['units'], str)
+
+
+def test_update_attributes_empty_frequency(product):
+    """Test ``update_attributes``."""
+    product._cubes[0].attributes.pop('frequency')
+    product.update_attributes()
+
+    assert product.attributes == {
+        'filename': 'file.nc',
+        'standard_name': 'air_temperature',
+        'long_name': 'Near-Surface Air Temperature',
+        'short_name': 'tas',
+        'units': 'K',
+        'frequency': 'mon',
+    }
+    assert isinstance(product.attributes['units'], str)
+
+
+def test_update_attributes_no_frequency(product):
+    """Test ``update_attributes``."""
+    product._cubes[0].attributes.pop('frequency')
+    product.attributes.pop('frequency')
+    product.update_attributes()
+
+    assert product.attributes == {
+        'filename': 'file.nc',
+        'standard_name': 'air_temperature',
+        'long_name': 'Near-Surface Air Temperature',
+        'short_name': 'tas',
         'units': 'K',
     }
     assert isinstance(product.attributes['units'], str)

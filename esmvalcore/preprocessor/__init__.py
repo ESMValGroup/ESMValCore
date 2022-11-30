@@ -475,6 +475,8 @@ class PreprocessorFile(TrackedFile):
         if not self._cubes:
             return
         ref_cube = self._cubes[0]
+
+        # Names
         names = {
             'standard_name': 'standard_name',
             'long_name': 'long_name',
@@ -483,7 +485,13 @@ class PreprocessorFile(TrackedFile):
         for (name_in, name_out) in names.items():
             cube_val = getattr(ref_cube, name_in)
             self.attributes[name_out] = '' if cube_val is None else cube_val
+
+        # Units
         self.attributes['units'] = str(ref_cube.units)
+
+        # Frequency
+        if 'frequency' in ref_cube.attributes:
+            self.attributes['frequency'] = ref_cube.attributes['frequency']
 
     @property
     def is_closed(self):
