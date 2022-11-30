@@ -427,19 +427,6 @@ class AllVars(IconFix):
         for mesh_coord in mesh.to_MeshCoords('face'):
             cube.add_aux_coord(mesh_coord, mesh_idx)
 
-    def _fix_var_metadata(self, cube):
-        """Fix metadata of variable."""
-        if self.vardef.standard_name == '':
-            cube.standard_name = None
-        else:
-            cube.standard_name = self.vardef.standard_name
-        cube.var_name = self.vardef.short_name
-        cube.long_name = self.vardef.long_name
-        if cube.units != self.vardef.units:
-            cube.convert_units(self.vardef.units)
-        if self.vardef.positive != '':
-            cube.attributes['positive'] = self.vardef.positive
-
     @staticmethod
     def _get_start_index(horizontal_grid):
         """Get start index used to name nodes from horizontal grid.
