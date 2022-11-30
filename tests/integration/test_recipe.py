@@ -13,7 +13,6 @@ from nested_lookup import get_occurrence_of_value, nested_update
 from PIL import Image
 
 import esmvalcore
-from esmvalcore._config import TAGS
 from esmvalcore._recipe import (
     TASKSEP,
     _dataset_to_file,
@@ -22,11 +21,11 @@ from esmvalcore._recipe import (
 )
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
 
-from .test_diagnostic_run import write_config_user_file
 from .test_provenance import check_provenance
 
 TAGS_FOR_TESTING = {
@@ -101,9 +100,8 @@ INITIALIZATION_ERROR_MSG = 'Could not create all tasks'
 
 
 @pytest.fixture
-def config_user(tmp_path):
-    filename = write_config_user_file(tmp_path)
-    cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
+def config_user(session):
+    cfg = session.to_config_user()
     cfg['offline'] = True
     cfg['check_level'] = CheckLevels.DEFAULT
     cfg['diagnostics'] = set()
@@ -2734,7 +2732,6 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
           landmask:
             mask_landsea:
               mask_out: sea
-              always_use_ne_mask: false
 
         diagnostics:
           diagnostic_name:
@@ -2767,9 +2764,8 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
     for product in task.products:
         assert 'mask_landsea' in product.settings
         settings = product.settings['mask_landsea']
-        assert len(settings) == 2
+        assert len(settings) == 1
         assert settings['mask_out'] == 'sea'
-        assert settings['always_use_ne_mask'] is False
         fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
         fx_variables = fx_variables.values()
@@ -3603,6 +3599,7 @@ def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
 
     recipe.tasks.run = mocker.Mock()
     recipe.write_filled_recipe = mocker.Mock()
+    recipe.write_html_summary = mocker.Mock()
     recipe.run()
 
     esmvalcore._recipe.esgf.download.assert_called_once_with(
@@ -3610,6 +3607,7 @@ def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
     recipe.tasks.run.assert_called_once_with(
         max_parallel_tasks=config_user['max_parallel_tasks'])
     recipe.write_filled_recipe.assert_called_once()
+    recipe.write_html_summary.assert_called_once()
 
 
 @patch('esmvalcore._recipe.check.data_availability', autospec=True)

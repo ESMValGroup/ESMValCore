@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from esmvalcore._config._logging import configure_logging
+from esmvalcore.config._logging import configure_logging
 
 
 @pytest.mark.parametrize('level', (None, 'INFO', 'DEBUG'))

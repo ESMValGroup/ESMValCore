@@ -754,7 +754,7 @@ For example, this is used to automatically add ``product: output1`` to any
 variable of any CMIP5 dataset that does not have a ``product`` key yet:
 
 .. code-block:: yaml
-   :caption: Extra facet example file `cmip5-product.yml <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/_config/extra_facets/cmip5-product.yml>`_
+   :caption: Extra facet example file `cmip5-product.yml <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config/extra_facets/cmip5-product.yml>`_
 
    '*':
      '*':
@@ -765,7 +765,7 @@ Location of the extra facets files
 Extra facets files can be placed in several different places. When we use them
 to support a particular use-case within the ESMValTool project, they will be
 provided in the sub-folder `extra_facets` inside the package
-`esmvalcore._config`. If they are used from the user side, they can be either
+:mod:`esmvalcore.config`. If they are used from the user side, they can be either
 placed in `~/.esmvaltool/extra_facets` or in any other directory of the users
 choosing. In that case this directory must be added to the `config-user.yml`
 file under the `extra_facets_dir` setting, which can take a single directory or
@@ -773,7 +773,7 @@ a list of directories.
 
 The order in which the directories are searched is
 
-1. The internal directory `esmvalcore._config/extra_facets`
+1. The internal directory `esmvalcore.config/extra_facets`
 2. The default user directory `~/.esmvaltool/extra_facets`
 3. The custom user directories in the order in which they are given in
    `config-user.yml`.

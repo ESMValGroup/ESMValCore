@@ -4,6 +4,23 @@ import iris
 import pytest
 
 from esmvalcore import _data_finder
+from esmvalcore.config import CFG, _config
+from esmvalcore.config._config_object import CFG_DEFAULT
+
+
+@pytest.fixture
+def session(tmp_path, monkeypatch):
+    session = CFG.start_session('recipe_test')
+    session.clear()
+    session.update(CFG_DEFAULT)
+    session['output_dir'] = tmp_path / 'esmvaltool_output'
+
+    # The patched_data_finder fixture does not return the correct input
+    # directory structure, so make sure it is set to flat for every project
+    session['drs'] = {}
+    for project in _config.CFG:
+        monkeypatch.setitem(_config.CFG[project]['input_dir'], 'default', '/')
+    return session
 
 
 def create_test_file(filename, tracking_id=None):
