@@ -4,7 +4,8 @@ import logging
 
 import iris
 
-from esmvalcore.iris_helpers import var_name_constraint
+#from esmvalcore.iris_helpers import var_name_constraint
+from iris import NameConstraint
 
 from ._baseclass import DerivedVariableBase
 
@@ -43,7 +44,8 @@ class DerivedVariable(DerivedVariableBase):
         R / cp = 0.286
 
         """
-        ta = cubes.extract_cube(var_name_constraint('ta'))
+        #ta = cubes.extract_cube(var_name_constraint('ta'))
+        ta = cubes.extract_cube(NameConstraint(var_name='ta'))
 
         t1000 = ta.interpolate([('air_pressure', 100000.)],
                                scheme=iris.analysis.Linear())
