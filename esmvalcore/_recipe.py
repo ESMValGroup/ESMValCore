@@ -578,9 +578,7 @@ def _get_input_files(variable, config_user):
 
         variable['start_year'] = start_year
         variable['end_year'] = end_year
-    input_files, globs = get_input_filelist(variable=variable,
-                                            rootpath=config_user['rootpath'],
-                                            drs=config_user['drs'])
+    input_files, globs = get_input_filelist(variable=variable)
 
     # Set up downloading from ESGF if requested.
     if (not config_user['offline']
@@ -829,8 +827,7 @@ def _update_timerange(variable, config_user):
     if '*' in timerange:
         facets = deepcopy(variable)
         facets.pop('timerange', None)
-        files, _ = get_input_filelist(
-            facets, config_user['rootpath'], config_user['drs'])
+        files, _ = get_input_filelist(facets)
         if not files and not config_user.get('offline', True):
             files = [file.name for file in esgf.find_files(**facets)]
 

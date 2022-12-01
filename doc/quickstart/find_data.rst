@@ -33,16 +33,16 @@ ensures that files and paths to them are named according to a
 standardized convention. Examples of this convention, also used by
 ESMValTool for file discovery and data retrieval, include:
 
-* CMIP6 file: ``[variable_short_name]_[mip]_[dataset_name]_[experiment]_[ensemble]_[grid]_[start-date]-[end-date].nc``
-* CMIP5 file: ``[variable_short_name]_[mip]_[dataset_name]_[experiment]_[ensemble]_[start-date]-[end-date].nc``
-* OBS file: ``[project]_[dataset_name]_[type]_[version]_[mip]_[short_name]_[start-date]-[end-date].nc``
+* CMIP6 file: ``{variable_short_name}_{mip}_{dataset_name}_{experiment}_{ensemble}_{grid}_{start-date}-{end-date}.nc``
+* CMIP5 file: ``{variable_short_name}_{mip}_{dataset_name}_{experiment}_{ensemble}_{start-date}-{end-date}.nc``
+* OBS file: ``{project}_{dataset_name}_{type}_{version}_{mip}_{short_name}_{start-date}-{end-date}.nc``
 
 Similar standards exist for the standard paths (input directories); for the
 ESGF data nodes, these paths differ slightly, for example:
 
-* CMIP6 path for BADC: ``ROOT-BADC/[institute]/[dataset_name]/[experiment]/[ensemble]/[mip]/
-  [variable_short_name]/[grid]``;
-* CMIP6 path for ETHZ: ``ROOT-ETHZ/[experiment]/[mip]/[variable_short_name]/[dataset_name]/[ensemble]/[grid]``
+* CMIP6 path for BADC: ``ROOT-BADC/{institute}/{dataset_name}/{experiment}/{ensemble}/{mip}/
+  {variable_short_name}/{grid}``;
+* CMIP6 path for ETHZ: ``ROOT-ETHZ/{experiment}/{mip}/{variable_short_name}/{dataset_name}/{ensemble}/{grid}``
 
 From the ESMValTool user perspective the number of data input parameters is
 optimized to allow for ease of use. We detail this procedure in the next
@@ -168,9 +168,9 @@ The default naming conventions for input directories and files for CESM are
 
 * input directories: 3 different types supported:
    * ``/`` (run directory)
-   * ``[case]/[gcomp]/hist`` (short-term archiving)
-   * ``[case]/[gcomp]/proc/[tdir]/[tperiod]`` (post-processed data)
-* input files: ``[case].[scomp].[type].[string]*nc``
+   * ``{case}/{gcomp}/hist`` (short-term archiving)
+   * ``{case}/{gcomp}/proc/{tdir}/{tperiod}`` (post-processed data)
+* input files: ``{case}.{scomp}.{type}.{string}*nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
 default DRS ``drs: default`` in the :ref:`user configuration file`).
@@ -179,12 +179,12 @@ More information about CESM naming conventions are given `here
 
 .. note::
 
-   The ``[string]`` entry in the input file names above does not only
+   The ``{string}`` entry in the input file names above does not only
    correspond to the (optional) ``$string`` entry for `CESM model output files
    <https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html#modelOutputFilenames>`__,
    but can also be used to read `post-processed files
    <https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html#ppDataFilenames>`__.
-   In the latter case, ``[string]`` corresponds to the combination
+   In the latter case, ``{string}`` corresponds to the combination
    ``$SSTRING.$TSTRING``.
 
 Thus, example dataset entries could look like this:
@@ -244,8 +244,8 @@ model output.
 
 The default naming conventions for input directories and files for EMAC are
 
-* input directories: ``[exp]/[channel]``
-* input files: ``[exp]*[channel][postproc_flag].nc``
+* input directories: ``{exp}/{channel}``
+* input files: ``{exp}*{channel}{postproc_flag}.nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
 default DRS ``drs: default`` in the :ref:`user configuration file`).
@@ -313,8 +313,8 @@ ESMValTool is able to read native `ICON
 
 The default naming conventions for input directories and files for ICON are
 
-* input directories: ``[exp]`` or ``{exp}/outdata``
-* input files: ``[exp]_[var_type]*.nc``
+* input directories: ``{exp}`` or ``{exp}/outdata``
+* input files: ``{exp}_{var_type}*.nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
 default DRS ``drs: default`` in the :ref:`user configuration file`).
@@ -478,11 +478,11 @@ type of root paths they need the data from, e.g.:
 will tell the tool that the user needs data from a repository structured
 according to the BADC DRS structure, i.e.:
 
-``ROOT/[institute]/[dataset_name]/[experiment]/[ensemble]/[mip]/[variable_short_name]/[grid]``;
+``ROOT/{institute}/{dataset_name}/{experiment}/{ensemble}/{mip}/{variable_short_name}/{grid}``;
 
 setting the ``ROOT`` parameter is explained below. This is a
 strictly-structured repository tree and if there are any sort of irregularities
-(e.g. there is no ``[mip]`` directory) the data will not be found! ``BADC`` can
+(e.g. there is no ``{mip}`` directory) the data will not be found! ``BADC`` can
 be replaced with ``DKRZ`` or ``ETHZ`` depending on the existing ``ROOT``
 directory structure.
 The snippet

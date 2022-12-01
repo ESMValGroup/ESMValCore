@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from esmvalcore.config import CFG
 from esmvalcore.local import LocalFile, _get_output_file, find_files
 
 # Load test configuration
@@ -74,22 +75,18 @@ def root():
 
 
 @pytest.mark.parametrize('cfg', CONFIG['get_input_filelist'])
-def test_find_files(root, cfg):
+def test_find_files(monkeypatch, root, cfg):
     """Test retrieving input filelist."""
     print(f"Testing DRS {cfg['drs']} with variable:\n",
           pprint.pformat(cfg['variable']))
-
+    project = cfg['variable']['project']
+    monkeypatch.setitem(CFG, 'drs', {project: cfg['drs']})
+    monkeypatch.setitem(CFG, 'rootpath', {project: root})
     create_tree(root, cfg.get('available_files'),
                 cfg.get('available_symlinks'))
 
     # Find files
-    rootpath = {cfg['variable']['project']: [root]}
-    drs = {cfg['variable']['project']: cfg['drs']}
-    session = {
-        'drs': drs,
-        'rootpath': rootpath,
-    }
-    input_filelist, globs = find_files(session, debug=True, **cfg['variable'])
+    input_filelist, globs = find_files(debug=True, **cfg['variable'])
     # Test result
     ref_files = [Path(root, file) for file in cfg['found_files']]
     ref_globs = [
@@ -99,23 +96,21 @@ def test_find_files(root, cfg):
     assert sorted([Path(g) for g in globs]) == sorted(ref_globs)
 
 
-def test_find_files_with_facets(root):
+def test_find_files_with_facets(monkeypatch, root):
     """Test that a LocalFile with populated `facets` is returned."""
     for cfg in CONFIG['get_input_filelist']:
         if cfg['drs'] != 'default':
             break
 
+    project = cfg['variable']['project']
+    monkeypatch.setitem(CFG, 'drs', {project: cfg['drs']})
+    monkeypatch.setitem(CFG, 'rootpath', {project: root})
+
     create_tree(root, cfg.get('available_files'),
                 cfg.get('available_symlinks'))
 
     # Find files
-    rootpath = {cfg['variable']['project']: [root]}
-    drs = {cfg['variable']['project']: cfg['drs']}
-    session = {
-        'drs': drs,
-        'rootpath': rootpath,
-    }
-    input_filelist = find_files(session, **cfg['variable'])
+    input_filelist = find_files(**cfg['variable'])
     ref_files = [Path(root, file) for file in cfg['found_files']]
     assert sorted([Path(f) for f in input_filelist]) == sorted(ref_files)
     assert isinstance(input_filelist[0], LocalFile)

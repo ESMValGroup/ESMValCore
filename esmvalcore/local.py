@@ -12,7 +12,7 @@ from typing import Any, Union
 import iris
 import isodate
 
-from .config import Session
+from .config import CFG
 from .config._config import get_project_config
 from .exceptions import RecipeError
 from .typing import Facets, FacetValue
@@ -381,14 +381,14 @@ def _apply_caps(original, lower, upper):
     return original
 
 
-def _select_drs(input_type, drs, project):
+def _select_drs(input_type, project):
     """Select the directory structure of input path."""
     cfg = get_project_config(project)
     input_path = cfg[input_type]
     if isinstance(input_path, str):
         return input_path
 
-    structure = drs.get(project, 'default')
+    structure = CFG['drs'].get(project, 'default')
     if structure in input_path:
         return input_path[structure]
 
@@ -400,8 +400,9 @@ def _select_drs(input_type, drs, project):
 _ROOTPATH_WARNED = set()
 
 
-def _get_rootpath(rootpath, project):
+def _get_rootpath(project):
     """Select the rootpath."""
+    rootpath = CFG['rootpath']
     for key in (project, 'default'):
         if key in rootpath:
             nonexistent = tuple(p for p in rootpath[key]
@@ -415,16 +416,16 @@ def _get_rootpath(rootpath, project):
     raise KeyError('default rootpath must be specified in config-user file')
 
 
-def _get_globs(variable, rootpath, drs):
+def _get_globs(variable):
     """Compose the globs that will be used to look for files."""
     project = variable['project']
 
-    rootpaths = _get_rootpath(rootpath, project)
+    rootpaths = _get_rootpath(project)
 
-    dirname_template = _select_drs('input_dir', drs, project)
+    dirname_template = _select_drs('input_dir', project)
     dirname_globs = _replace_tags(dirname_template, variable)
 
-    filename_template = _select_drs('input_file', drs, project)
+    filename_template = _select_drs('input_file', project)
     filename_globs = _replace_tags(filename_template, variable)
 
     globs = sorted(r / d / f for r in rootpaths for d in dirname_globs
@@ -432,13 +433,13 @@ def _get_globs(variable, rootpath, drs):
     return globs
 
 
-def _get_input_filelist(variable, rootpath, drs):
+def _get_input_filelist(variable):
     """Return the full path to input files."""
     variable = dict(variable)
     if 'original_short_name' in variable:
         variable['short_name'] = variable['original_short_name']
 
-    globs = _get_globs(variable, rootpath, drs)
+    globs = _get_globs(variable)
     logger.debug("Looking for files matching %s", globs)
 
     files = list(Path(file) for glob_ in globs for file in glob(str(glob_)))
@@ -534,24 +535,32 @@ def _select_latest_version(files: list['LocalFile']) -> list['LocalFile']:
 
 
 def find_files(
-    session: Session,
     *,
     debug: bool = False,
     **facets: FacetValue,
-):
+) -> Union[list[LocalFile], tuple[list[LocalFile], list[Path]]]:
     """Find files on the local filesystem.
+
+    The directories that are searched for files are defined in
+    :data:`esmvalcore.config.CFG` under the ``'rootpath'`` key using the
+    directory structure defined under the ``'drs'`` key.
+    If ``esmvalcore.config.CFG['rootpath']`` contains a key that matches the
+    value of the ``project`` facet, those paths will be used. If there is no
+    project specific key, the directories in
+    ``esmvalcore.config.CFG['rootpath']['default']`` will be searched.
+
+    See :ref:`findingdata` for extensive instructions on configuring ESMValCore
+    so it can find files locally.
 
     Parameters
     ----------
-    session
-        The session.
     debug
-        When debug is set to `True`, the function will return a tuple
+        When debug is set to :obj:`True`, the function will return a tuple
         with the first element containing the files that were found
         and the second element containing the globs patterns that
         were used to search for files.
     **facets
-        Facets used to search for files. An '*' can be used to indicate
+        Facets used to search for files. An ``'*'`` can be used to match
         any value. By default, only the latest version of a file will
         be returned. To select all versions use ``version='*'``. It is also
         possible to specify multiple values for a facet, e.g.
@@ -560,13 +569,10 @@ def find_files(
 
     Examples
     --------
-    Search for CMIP6 files containing surface air temperature
-    from any model for the historical experiment:
-
-    >>> session = esmvalcore.config.CFG.start_session('test')  # doctest: +SKIP
+    Search for files containing surface air temperature from any CMIP6 model
+    for the historical experiment:
 
     >>> esmvalcore.local.find_files(
-    ...     session,
     ...     project='CMIP6',
     ...     activity='CMIP',
     ...     mip='Amon',
@@ -584,12 +590,8 @@ def find_files(
     list[LocalFile]
         The files that were found.
     """
-    filenames, globs = _get_input_filelist(
-        facets,
-        rootpath=session['rootpath'],
-        drs=session['drs'],
-    )
-    drs = _select_drs('input_dir', session['drs'], facets['project'])
+    filenames, globs = _get_input_filelist(facets)
+    drs = _select_drs('input_dir', facets['project'])
     if isinstance(drs, list):
         # Not sure how to handle a list of DRSs
         drs = ''
@@ -609,6 +611,7 @@ def find_files(
 
 class LocalFile(type(Path())):  # type: ignore
     """File on the local filesystem."""
+
     @property
     def facets(self) -> Facets:
         """Facets describing the file."""

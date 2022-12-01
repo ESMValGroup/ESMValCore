@@ -14,5 +14,6 @@ library. This section documents the public API of ESMValCore.
    esmvalcore.esgf
    esmvalcore.exceptions
    esmvalcore.iris_helpers
+   esmvalcore.local
    esmvalcore.preprocessor
    esmvalcore.experimental
