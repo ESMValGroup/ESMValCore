@@ -9,6 +9,7 @@ from iris import NameConstraint
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
+from esmvalcore.cmor._fixes.icon._base_fixes import IconFix
 from esmvalcore.cmor._fixes.icon.icon import AllVars, Siconc, Siconca
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
@@ -19,6 +20,12 @@ TEST_GRID_FILE_URI = (
     'https://seafile.zfn.uni-bremen.de/f/f66b000792434878bcbf/?dl=1'
 )
 TEST_GRID_FILE_NAME = 'f66b000792434878bcbf'
+
+
+@pytest.fixture(autouse=True)
+def tmp_cache_dir(monkeypatch, tmp_path):
+    """Always use temporary path as cache directory."""
+    monkeypatch.setattr(IconFix, 'CACHE_DIR', tmp_path)
 
 
 # Note: test_data_path is defined in tests/integration/cmor/_fixes/conftest.py
@@ -861,7 +868,7 @@ def test_add_time_fail():
         fix._add_time(cube, cubes)
 
 
-def test_add_latitude(cubes_2d, tmp_path, monkeypatch):
+def test_add_latitude(cubes_2d):
     """Test fix."""
     # Remove latitude from tas cube to test automatic addition
     tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
@@ -869,9 +876,6 @@ def test_add_latitude(cubes_2d, tmp_path, monkeypatch):
     cubes = CubeList([tas_cube])
     fix = get_allvars_fix('Amon', 'tas')
 
-    # Temporary overwrite default cache location for downloads
-    monkeypatch.setattr(fix, 'CACHE_DIR', tmp_path)
-
     assert len(fix._horizontal_grids) == 0
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -882,7 +886,7 @@ def test_add_latitude(cubes_2d, tmp_path, monkeypatch):
     assert TEST_GRID_FILE_NAME in fix._horizontal_grids
 
 
-def test_add_longitude(cubes_2d, tmp_path, monkeypatch):
+def test_add_longitude(cubes_2d):
     """Test fix."""
     # Remove longitude from tas cube to test automatic addition
     tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
@@ -890,9 +894,6 @@ def test_add_longitude(cubes_2d, tmp_path, monkeypatch):
     cubes = CubeList([tas_cube])
     fix = get_allvars_fix('Amon', 'tas')
 
-    # Temporary overwrite default cache location for downloads
-    monkeypatch.setattr(fix, 'CACHE_DIR', tmp_path)
-
     assert len(fix._horizontal_grids) == 0
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -903,7 +904,7 @@ def test_add_longitude(cubes_2d, tmp_path, monkeypatch):
     assert TEST_GRID_FILE_NAME in fix._horizontal_grids
 
 
-def test_add_latitude_longitude(cubes_2d, tmp_path, monkeypatch):
+def test_add_latitude_longitude(cubes_2d):
     """Test fix."""
     # Remove latitude and longitude from tas cube to test automatic addition
     tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
@@ -911,9 +912,6 @@ def test_add_latitude_longitude(cubes_2d, tmp_path, monkeypatch):
     tas_cube.remove_coord('longitude')
     cubes = CubeList([tas_cube])
     fix = get_allvars_fix('Amon', 'tas')
-
-    # Temporary overwrite default cache location for downloads
-    monkeypatch.setattr(fix, 'CACHE_DIR', tmp_path)
 
     assert len(fix._horizontal_grids) == 0
     fixed_cubes = fix.fix_metadata(cubes)
@@ -974,8 +972,7 @@ def test_add_coord_from_grid_file_fail_no_url():
         fix._add_coord_from_grid_file(Cube(0), 'latitude')
 
 
-def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_2d, tmp_path,
-                                                 monkeypatch):
+def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_2d):
     """Test fix."""
     # Remove latitude from tas cube to test automatic addition
     tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
@@ -984,26 +981,19 @@ def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_2d, tmp_path,
     tas_cube.add_dim_coord(index_coord, 1)
     fix = get_allvars_fix('Amon', 'tas')
 
-    # Temporary overwrite default cache location for downloads
-    monkeypatch.setattr(fix, 'CACHE_DIR', tmp_path)
-
     msg = ("Cannot determine coordinate dimension for coordinate 'latitude', "
            "cube does not contain a single unnamed dimension")
     with pytest.raises(ValueError, match=msg):
         fix._add_coord_from_grid_file(tas_cube, 'latitude')
 
 
-def test_add_coord_from_grid_fail_two_unnamed_dims(cubes_2d, tmp_path,
-                                                   monkeypatch):
+def test_add_coord_from_grid_fail_two_unnamed_dims(cubes_2d):
     """Test fix."""
     # Remove latitude from tas cube to test automatic addition
     tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
     tas_cube.remove_coord('latitude')
     tas_cube = iris.util.new_axis(tas_cube)
     fix = get_allvars_fix('Amon', 'tas')
-
-    # Temporary overwrite default cache location for downloads
-    monkeypatch.setattr(fix, 'CACHE_DIR', tmp_path)
 
     msg = ("Cannot determine coordinate dimension for coordinate 'latitude', "
            "cube does not contain a single unnamed dimension")
@@ -1024,8 +1014,7 @@ def test_get_horizontal_grid_cached_in_dict(mock_requests):
 
 
 @mock.patch('esmvalcore.cmor._fixes.icon._base_fixes.requests', autospec=True)
-def test_get_horizontal_grid_cached_in_file(mock_requests, tmp_path,
-                                            monkeypatch):
+def test_get_horizontal_grid_cached_in_file(mock_requests, tmp_path):
     """Test fix."""
     cube = Cube(0, attributes={
         'grid_file_uri': 'https://temporary.url/this/is/the/grid_file.nc'})
@@ -1035,9 +1024,6 @@ def test_get_horizontal_grid_cached_in_file(mock_requests, tmp_path,
     # Save temporary grid file
     grid_cube = Cube(0, var_name='grid')
     iris.save(grid_cube, str(tmp_path / 'grid_file.nc'))
-
-    # Temporary overwrite default cache location for downloads
-    monkeypatch.setattr(fix, 'CACHE_DIR', tmp_path)
 
     grid = fix.get_horizontal_grid(cube)
     assert isinstance(grid, CubeList)
@@ -1060,7 +1046,6 @@ def test_get_horizontal_grid_cache_file_too_old(tmp_path, monkeypatch):
 
     # Temporary overwrite default cache location for downloads and cache
     # validity duration
-    monkeypatch.setattr(fix, 'CACHE_DIR', tmp_path)
     monkeypatch.setattr(fix, 'CACHE_VALIDITY', -1)
 
     grid = fix.get_horizontal_grid(cube)
@@ -1078,15 +1063,14 @@ def test_get_horizontal_grid_cache_file_too_old(tmp_path, monkeypatch):
 # Test with single-dimension cubes
 
 
-def test_only_time():
+def test_only_time(monkeypatch):
     """Test fix."""
     # We know that ta has dimensions time, plev19, latitude, longitude, but the
     # ICON CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
     vardef = get_var_info('ICON', 'Amon', 'ta')
-    original_dimensions = vardef.dimensions
-    vardef.dimensions = ['time']
+    monkeypatch.setattr(vardef, 'dimensions', ['time'])
     extra_facets = get_extra_facets('ICON', 'ICON', 'Amon', 'ta', ())
     fix = AllVars(vardef, extra_facets=extra_facets)
 
@@ -1119,19 +1103,18 @@ def test_only_time():
     np.testing.assert_allclose(new_time_coord.bounds,
                                [[-0.5, 0.5], [0.5, 1.5]])
 
-    # Restore original dimensions of ta
-    vardef.dimensions = original_dimensions
+    # Check that no mesh has been created
+    assert cube.mesh is None
 
 
-def test_only_height():
+def test_only_height(monkeypatch):
     """Test fix."""
     # We know that ta has dimensions time, plev19, latitude, longitude, but the
     # ICON CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
     vardef = get_var_info('ICON', 'Amon', 'ta')
-    original_dimensions = vardef.dimensions
-    vardef.dimensions = ['plev19']
+    monkeypatch.setattr(vardef, 'dimensions', ['plev19'])
     extra_facets = get_extra_facets('ICON', 'ICON', 'Amon', 'ta', ())
     fix = AllVars(vardef, extra_facets=extra_facets)
 
@@ -1164,19 +1147,18 @@ def test_only_height():
     np.testing.assert_allclose(new_height_coord.points, [1.0, 10.0])
     assert new_height_coord.bounds is None
 
-    # Restore original dimensions of ta
-    vardef.dimensions = original_dimensions
+    # Check that no mesh has been created
+    assert cube.mesh is None
 
 
-def test_only_latitude():
+def test_only_latitude(monkeypatch):
     """Test fix."""
     # We know that ta has dimensions time, plev19, latitude, longitude, but the
     # ICON CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
     vardef = get_var_info('ICON', 'Amon', 'ta')
-    original_dimensions = vardef.dimensions
-    vardef.dimensions = ['latitude']
+    monkeypatch.setattr(vardef, 'dimensions', ['latitude'])
     extra_facets = get_extra_facets('ICON', 'ICON', 'Amon', 'ta', ())
     fix = AllVars(vardef, extra_facets=extra_facets)
 
@@ -1208,19 +1190,18 @@ def test_only_latitude():
     np.testing.assert_allclose(new_lat_coord.points, [0.0, 10.0])
     assert new_lat_coord.bounds is None
 
-    # Restore original dimensions of ta
-    vardef.dimensions = original_dimensions
+    # Check that no mesh has been created
+    assert cube.mesh is None
 
 
-def test_only_longitude():
+def test_only_longitude(monkeypatch):
     """Test fix."""
     # We know that ta has dimensions time, plev19, latitude, longitude, but the
     # ICON CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
     vardef = get_var_info('ICON', 'Amon', 'ta')
-    original_dimensions = vardef.dimensions
-    vardef.dimensions = ['longitude']
+    monkeypatch.setattr(vardef, 'dimensions', ['longitude'])
     extra_facets = get_extra_facets('ICON', 'ICON', 'Amon', 'ta', ())
     fix = AllVars(vardef, extra_facets=extra_facets)
 
@@ -1252,8 +1233,8 @@ def test_only_longitude():
     np.testing.assert_allclose(new_lon_coord.points, [0.0, 180.0])
     assert new_lon_coord.bounds is None
 
-    # Restore original dimensions of ta
-    vardef.dimensions = original_dimensions
+    # Check that no mesh has been created
+    assert cube.mesh is None
 
 
 # Test variable not available in file
