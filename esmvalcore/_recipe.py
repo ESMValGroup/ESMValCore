@@ -601,7 +601,7 @@ def _get_input_files(variable, config_user):
                         DOWNLOAD_FILES.add(file)
                     input_files.append(str(local_copy))
 
-            globs.append('ESGF:')
+            globs.append('ESGF')
 
     return (input_files, globs)
 
