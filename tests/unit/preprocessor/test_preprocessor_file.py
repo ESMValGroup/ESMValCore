@@ -34,17 +34,17 @@ def product():
 
 
 def test_update_attributes_empty_cubes(product):
-    """Test ``update_attributes``."""
+    """Test ``_update_attributes``."""
     product._cubes = CubeList([])
-    product.update_attributes()
+    product._update_attributes()
 
     assert not product._cubes
     assert product.attributes == ATTRIBUTES
 
 
 def test_update_attributes(product):
-    """Test ``update_attributes``."""
-    product.update_attributes()
+    """Test ``_update_attributes``."""
+    product._update_attributes()
 
     assert product.attributes == {
         'filename': 'file.nc',
@@ -67,9 +67,9 @@ def test_update_attributes(product):
 )
 def test_update_attributes_empty_names(product, name, cube_property,
                                        expected_name):
-    """Test ``update_attributes``."""
+    """Test ``_update_attributes``."""
     setattr(product._cubes[0], cube_property, None)
-    product.update_attributes()
+    product._update_attributes()
 
     expected_attributes = {
         'filename': 'file.nc',
@@ -85,9 +85,9 @@ def test_update_attributes_empty_names(product, name, cube_property,
 
 
 def test_update_attributes_empty_frequency(product):
-    """Test ``update_attributes``."""
+    """Test ``_update_attributes``."""
     product._cubes[0].attributes.pop('frequency')
-    product.update_attributes()
+    product._update_attributes()
 
     assert product.attributes == {
         'filename': 'file.nc',
@@ -101,10 +101,10 @@ def test_update_attributes_empty_frequency(product):
 
 
 def test_update_attributes_no_frequency(product):
-    """Test ``update_attributes``."""
+    """Test ``_update_attributes``."""
     product._cubes[0].attributes.pop('frequency')
     product.attributes.pop('frequency')
-    product.update_attributes()
+    product._update_attributes()
 
     assert product.attributes == {
         'filename': 'file.nc',
@@ -123,7 +123,7 @@ def test_close_no_cubes():
 
     PreprocessorFile.close(product)
 
-    product.update_attributes.assert_not_called()
+    product._update_attributes.assert_not_called()
     product.save.assert_not_called()
     product.save_provenance.assert_not_called()
     assert product._cubes is None
@@ -136,7 +136,7 @@ def test_close():
 
     PreprocessorFile.close(product)
 
-    product.update_attributes.assert_called_once_with()
+    product._update_attributes.assert_called_once_with()
     product.save.assert_called_once_with()
     product.save_provenance.assert_called_once_with()
     assert product._cubes is None

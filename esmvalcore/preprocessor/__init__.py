@@ -465,12 +465,12 @@ class PreprocessorFile(TrackedFile):
     def close(self):
         """Close the file."""
         if self._cubes is not None:
-            self.update_attributes()
+            self._update_attributes()
             self.save()
             self._cubes = None
             self.save_provenance()
 
-    def update_attributes(self):
+    def _update_attributes(self):
         """Update product attributes from cube metadata."""
         if not self._cubes:
             return
