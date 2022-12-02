@@ -296,7 +296,7 @@ def get_grid_representants(src, dst):
         aux_coords_and_dims.append((coord, dims))
 
     # Add scalar dimensions of source cube to target
-    for scalar_coord in src_rep.coords(dimensions=()):
+    for scalar_coord in src.coords(dimensions=()):
         aux_coords_and_dims.append((scalar_coord, ()))
 
     dst_rep = iris.cube.Cube(
