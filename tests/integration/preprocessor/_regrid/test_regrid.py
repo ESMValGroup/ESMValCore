@@ -264,3 +264,17 @@ class Test(tests.Test):
         # Make sure that output is a masked array with correct fill value
         # (= GLOBAL_FILL_VALUE)
         np.testing.assert_allclose(result.data.fill_value, GLOBAL_FILL_VALUE)
+
+    def test_regrid__unstructured_nearest_int(self):
+        """Test unstructured_nearest regridding with cube of ints."""
+        self.unstructured_grid_cube.data = np.full((3, 2, 2), 1, dtype=int)
+        result = regrid(self.unstructured_grid_cube,
+                        self.grid_for_unstructured_nearest,
+                        'unstructured_nearest')
+        expected = np.array([[[1]], [[1]], [[1]]])
+        np.testing.assert_array_equal(result.data, expected)
+
+        # Make sure that output is a masked array with correct fill value
+        # (= maximum int)
+        np.testing.assert_allclose(result.data.fill_value,
+                                   float(np.iinfo(int).max))
