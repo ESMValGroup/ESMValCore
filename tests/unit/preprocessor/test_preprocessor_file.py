@@ -57,51 +57,30 @@ def test_update_attributes(product):
     assert isinstance(product.attributes['units'], str)
 
 
-def test_update_attributes_empty_standard_name(product):
+@pytest.mark.parametrize(
+    'name,cube_property,expected_name',
+    [
+        ('standard_name', 'standard_name', ''),
+        ('long_name', 'long_name', ''),
+        ('short_name', 'var_name', ''),
+    ],
+)
+def test_update_attributes_empty_names(product, name, cube_property,
+                                       expected_name):
     """Test ``update_attributes``."""
-    product._cubes[0].standard_name = None
+    setattr(product._cubes[0], cube_property, None)
     product.update_attributes()
 
-    assert product.attributes == {
+    expected_attributes = {
         'filename': 'file.nc',
-        'standard_name': '',
+        'standard_name': 'air_temperature',
         'long_name': 'Near-Surface Air Temperature',
         'short_name': 'tas',
         'units': 'K',
         'frequency': 'day',
     }
-    assert isinstance(product.attributes['units'], str)
-
-
-def test_update_attributes_empty_long_name(product):
-    """Test ``update_attributes``."""
-    product._cubes[0].long_name = None
-    product.update_attributes()
-
-    assert product.attributes == {
-        'filename': 'file.nc',
-        'standard_name': 'air_temperature',
-        'long_name': '',
-        'short_name': 'tas',
-        'units': 'K',
-        'frequency': 'day',
-    }
-    assert isinstance(product.attributes['units'], str)
-
-
-def test_update_attributes_empty_var_name(product):
-    """Test ``update_attributes``."""
-    product._cubes[0].var_name = None
-    product.update_attributes()
-
-    assert product.attributes == {
-        'filename': 'file.nc',
-        'standard_name': 'air_temperature',
-        'long_name': 'Near-Surface Air Temperature',
-        'short_name': '',
-        'units': 'K',
-        'frequency': 'day',
-    }
+    expected_attributes[name] = expected_name
+    assert product.attributes == expected_attributes
     assert isinstance(product.attributes['units'], str)
 
 
