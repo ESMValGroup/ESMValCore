@@ -279,7 +279,7 @@ def _check_multi_model_settings(products):
                 reference = product
             elif reference.settings[step] != settings:
                 raise ValueError(
-                    f"Unable to combine differing multi-dataset settings for "
+                    "Unable to combine differing multi-dataset settings for "
                     f"{reference.filename} and {product.filename}, "
                     f"{reference.settings[step]} and {settings}"
                 )
@@ -651,10 +651,10 @@ class PreprocessingTask(BaseTask):
         ]
         products = '\n\n'.join('\n'.join([str(p), pformat(p.settings)])
                                for p in self.products)
-        txt = (
-            f"{self.__class__.__name__}: {self.name}\n"
-            f"order: {order}\n"
-            f"{products}\n"
-            f"{self.print_ancestors()}"
-        )
+        txt = "\n".join([
+            f"{self.__class__.__name__}: {self.name}",
+            f"order: {order}",
+            f"{products}",
+            self.print_ancestors(),
+        ])
         return txt
