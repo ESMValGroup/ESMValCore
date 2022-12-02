@@ -22,4 +22,5 @@ dependencies:
   - pip!=21.3
   - python>=3.8
   - python-stratify
+  - py-cordex
   - scipy>=1.6

@@ -50,6 +50,7 @@ REQUIREMENTS = {
         'psutil',
         'pybtex',
         'pyyaml',
+        'py-cordex',
         'requests',
         'scipy>=1.6',
         'scitools-iris>=3.2.1',
