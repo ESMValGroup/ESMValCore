@@ -473,6 +473,19 @@ class AllVars(IconFix):
             lon_coord.bounds = (lon_coord.bounds + 360.0) % 360.0
 
 
+class Clwvi(IconFix):
+    """Fixes for ``clwvi``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = (
+            self.get_cube(cubes, var_name='cllvi') +
+            self.get_cube(cubes, var_name='clivi')
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
 Hur = SetUnitsTo1
 
 
