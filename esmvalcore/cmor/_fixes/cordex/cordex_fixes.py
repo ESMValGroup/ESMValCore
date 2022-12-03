@@ -4,6 +4,7 @@ import cordex as cx
 import iris
 
 from esmvalcore.cmor.fix import Fix
+from iris.coord_systems import RotatedGeogCS
 
 
 class MOHCHadREM3GA705(Fix):
@@ -90,7 +91,7 @@ class AllVars(Fix):
         domain = cx.cordex_domain(data_domain, add_vertices=True)
         domain_info = cx.domain_info(data_domain)
         for dim_coord in ['rlat', 'rlon']:
-            old_coord = cube.coord(var_name=dim_coord)
+            old_coord = cube.coord(domain[dim_coord].standard_name)
             old_coord_dims = old_coord.cube_dims(cube)
             points = domain[dim_coord].data
             coord_system = iris.coord_systems.RotatedGeogCS(
@@ -113,8 +114,8 @@ class AllVars(Fix):
         data_domain = self.extra_facets['domain']
         domain = cx.cordex_domain(data_domain, add_vertices=True)
         for aux_coord in ['lat', 'lon']:
-            # check if la coord existeix
-            old_coord = cube.coord(var_name=aux_coord)
+            old_coord = cube.coord(domain[aux_coord].standard_name)
+            cube.remove_coord(old_coord)
             points = domain[aux_coord].data
             bounds = domain[f'{aux_coord}_vertices'].data
             new_coord = iris.coords.AuxCoord(
@@ -125,14 +126,12 @@ class AllVars(Fix):
                 units=Unit(domain[aux_coord].units),
                 bounds=bounds
             )
-            cube.remove_coord(old_coord)
-            cube.add_aux_coord(new_coord, (1,2))
-
+            cube.add_aux_coord(new_coord, (1, 2))
         
     def fix_metadata(self, cubes):
         for cube in cubes:
-            coord_system = cube.coord(axis='X').coord_system
-            if isinstance(coord_system, iris.coord_systems.RotatedGeogCS):
+            coord_system = cube.coord_system()
+            if isinstance(coord_system, RotatedGeogCS):
                 self._fix_rotated_coords(cube)
                 self._fix_geographical_coords(cube)
         

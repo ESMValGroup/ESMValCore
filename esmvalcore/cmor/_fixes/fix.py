@@ -157,15 +157,26 @@ class Fix:
             extra_facets = {}
 
         fixes = []
-        try:
-            if project == 'cordex':
-                driver = extra_facets['driver'].replace('-', '_').lower()
-                fixes_module = importlib.import_module(
-                    f'esmvalcore.cmor._fixes.{project}.{driver}.{dataset}')
-            else:
-                fixes_module = importlib.import_module(
-                    'esmvalcore.cmor._fixes.{0}.{1}'.format(project, dataset))
-
+        
+        if project == 'cordex':
+            driver = extra_facets['driver'].replace('-', '_').lower()
+            fixes_modules = []
+            try:
+                fixes_modules.append(importlib.import_module(
+                    f'esmvalcore.cmor._fixes.{project}.{driver}.{dataset}'
+                ))
+            except ImportError:
+                pass
+            fixes_modules.append(importlib.import_module(
+                f'esmvalcore.cmor._fixes.cordex.cordex_fixes'))
+        else:
+            try:
+                fixes_modules = [importlib.import_module(
+                    f'esmvalcore.cmor._fixes.{project}.{dataset}')]
+            except ImportError:
+                pass
+        
+        for fixes_module in fixes_modules:
             classes = inspect.getmembers(fixes_module, inspect.isclass)
             classes = dict((name.lower(), value) for name, value in classes)
             for fix_name in (short_name, mip.lower(), 'allvars'):
@@ -173,8 +184,7 @@ class Fix:
                     fixes.append(classes[fix_name](vardef, extra_facets))
                 except KeyError:
                     pass
-        except ImportError:
-            pass
+        
         return fixes
 
     @staticmethod
