@@ -80,7 +80,7 @@ def test_clmcomcclm4817_fix_metadata(cubes):
         calendar='proleptic_gregorian')
     cubes[1].coord('time').units = Unit(
         'days since 1850-1-1 00:00:00',
-        calendar='gregorian')
+        calendar='standard')
     for coord in cubes[1].coords():
         coord.points = coord.core_points().astype(
             '>f8', casting='same_kind')

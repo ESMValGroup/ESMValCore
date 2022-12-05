@@ -78,7 +78,7 @@ class CLMcomCCLM4817(Fix):
 
         """
         for cube in cubes:
-            if cube.coord('time').units.calendar == 'gregorian':
+            if cube.coord('time').units.calendar == 'standard':
                 cube.coord('time').units = Unit(
                     'days since 1850-1-1 00:00:00',
                     calendar='proleptic_gregorian'
