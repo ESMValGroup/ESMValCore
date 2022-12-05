@@ -1,6 +1,7 @@
 """Fixes that are shared between datasets and drivers."""
 from cf_units import Unit
 import cordex as cx
+import numpy as np
 import iris
 
 from esmvalcore.cmor.fix import Fix
@@ -82,6 +83,13 @@ class CLMcomCCLM4817(Fix):
                     'days since 1850-1-1 00:00:00',
                     calendar='proleptic_gregorian'
                 )
+            for coord in cube.coords():
+                if coord.dtype in ['>f8', '>f4']:
+                    coord.points = coord.core_points().astype(
+                        np.float64, casting='same_kind')
+                    if coord.bounds is not None:
+                        coord.bounds = coord.core_bounds().astype(
+                            np.float64, casting='same_kind')
         return cubes
 
 

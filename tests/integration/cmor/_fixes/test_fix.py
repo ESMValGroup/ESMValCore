@@ -14,6 +14,7 @@ from esmvalcore.cmor._fixes.cmip5.cesm1_bgc import Gpp
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Omon, Tos
 from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.cnrm_aladin63 import (
     Tas)
+from esmvalcore.cmor._fixes.cordex.cordex_fixes import AllVars
 from esmvalcore.cmor.fix import Fix
 
 
@@ -42,7 +43,7 @@ class TestFix(unittest.TestCase):
                 'Amon',
                 'tas',
                 extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'}),
-            [Tas(None)])
+            [Tas(None), AllVars(None)])
 
     def test_get_fixes_with_replace(self):
         self.assertListEqual(Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'ch4'),
