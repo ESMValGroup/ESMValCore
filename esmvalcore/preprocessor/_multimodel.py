@@ -19,7 +19,7 @@ import iris.coord_categorisation
 import numpy as np
 from iris.cube import Cube, CubeList
 from iris.exceptions import MergeError
-from iris.util import equalise_attributes
+from iris.util import equalise_attributes, new_axis
 
 from esmvalcore.iris_helpers import date2num
 from esmvalcore.preprocessor import remove_fx_variables
@@ -302,8 +302,15 @@ def _combine(cubes):
 
     cubes = CubeList(cubes)
 
+    # For a single cube, merging returns a scalar CONCAT_DIM, which leads to a
+    # "Cannot collapse a dimension which does not describe any data" error when
+    # collapsing. Thus, treat single cubes differently here.
+    if len(cubes) == 1:
+        return new_axis(cubes[0], scalar_coord=CONCAT_DIM)
+
     try:
         merged_cube = cubes.merge_cube()
+        print(merged_cube)
     except MergeError as exc:
         # Note: str(exc) starts with "failed to merge into a single cube.\n"
         # --> remove this here for clear error message
@@ -411,9 +418,10 @@ def _multicube_statistics(cubes, statistics, span):
     Cubes are merged and subsequently collapsed along a new auxiliary
     coordinate. Inconsistent attributes will be removed.
     """
-    if len(cubes) == 1:
-        raise ValueError('Cannot perform multicube statistics '
-                         'for a single cube.')
+    if not cubes:
+        raise ValueError(
+            "Cannot perform multicube statistics for an empty list of cubes"
+        )
 
     # Avoid modifying inputs
     copied_cubes = [cube.copy() for cube in cubes]
