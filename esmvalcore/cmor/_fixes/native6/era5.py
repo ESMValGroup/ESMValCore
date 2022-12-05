@@ -9,6 +9,7 @@ from esmvalcore.iris_helpers import date2num
 
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
+from ...table import CMOR_TABLES
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +75,17 @@ def divide_by_gravity(cube):
 
 class Clt(Fix):
     """Fixes for clt."""
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            cube.units = '%'
+            cube.data = cube.core_data()*100.
+
+        return cubes
+
+
+class Cl(Fix):
+    """Fixes for cl."""
     def fix_metadata(self, cubes):
         for cube in cubes:
             # Invalid input cube units (ignored on load) were '0-1'
@@ -328,6 +340,13 @@ class AllVars(Fix):
 
         for coord_def in self.vardef.coordinates.values():
             axis = coord_def.axis
+            # ERA5 uses regular pressure level coordinate. In case the cmor
+            # variable requires a hybrid level coordinate, we replace this with
+            # a regular pressure level coordinate.
+            # (https://github.com/ESMValGroup/ESMValCore/issues/1029)
+            if axis == "" and coord_def.name == "alevel":
+                axis = "Z"
+                coord_def = CMOR_TABLES['CMIP6'].coords['plev19'] 
             coord = cube.coord(axis=axis)
             if axis == 'T':
                 coord.convert_units('days since 1850-1-1 00:00:00.0')
