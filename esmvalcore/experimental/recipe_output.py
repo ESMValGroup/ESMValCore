@@ -1,21 +1,21 @@
 """API for handing recipe output."""
 import base64
 import logging
-import os
+import warnings
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Optional, Tuple, Type
 
 import iris
 
-from .config import Session
+from esmvalcore.config import Session
+from esmvalcore.config._config import TASKSEP
+
 from .recipe_info import RecipeInfo
 from .recipe_metadata import Contributor, Reference
 from .templates import get_template
 
 logger = logging.getLogger(__name__)
-
-TASKSEP = os.sep
 
 
 class TaskOutput:
@@ -190,7 +190,10 @@ class RecipeOutput(Mapping):
         recipe_config = recipe_output['recipe_config']
         recipe_filename = recipe_output['recipe_filename']
 
-        session = Session.from_config_user(recipe_config)
+        with warnings.catch_warnings():
+            # ignore deprecation warning
+            warnings.simplefilter("ignore")
+            session = Session.from_config_user(recipe_config)
         info = RecipeInfo(recipe_data, filename=recipe_filename)
         info.resolve()
 
@@ -253,7 +256,7 @@ class OutputFile():
 
     kind: Optional[str] = None
 
-    def __init__(self, path: str, attributes: dict = None):
+    def __init__(self, path: str, attributes: Optional[dict] = None):
         if not attributes:
             attributes = {}
 
@@ -289,7 +292,7 @@ class OutputFile():
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
 
-    def _get_derived_path(self, append: str, suffix: str = None):
+    def _get_derived_path(self, append: str, suffix: Optional[str] = None):
         """Return path of related files.
 
         Parameters
@@ -323,7 +326,12 @@ class OutputFile():
         return self._get_derived_path('_provenance', '.xml')
 
     @classmethod
-    def create(cls, path: str, attributes: dict = None) -> 'OutputFile':
+    def create(
+        cls,
+        path: str,
+        attributes:
+        Optional[dict] = None,
+    ) -> 'OutputFile':
         """Construct new instances of OutputFile.
 
         Chooses a derived class if suitable.

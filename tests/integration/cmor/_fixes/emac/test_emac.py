@@ -9,7 +9,6 @@ from iris import NameConstraint
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
-from esmvalcore._config import get_extra_facets
 from esmvalcore.cmor._fixes.emac.emac import (
     AllVars,
     Cl,
@@ -43,6 +42,7 @@ from esmvalcore.cmor._fixes.emac.emac import (
 )
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
+from esmvalcore.config._config import get_extra_facets
 
 
 @pytest.fixture

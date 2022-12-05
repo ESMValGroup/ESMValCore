@@ -5,16 +5,12 @@ import warnings
 from collections.abc import MutableMapping
 from typing import Callable, Dict, Tuple
 
-from .._exceptions import SuppressedError
+from esmvalcore.exceptions import (
+    InvalidConfigParameter,
+    MissingConfigParameter,
+)
+
 from ._config_validators import ValidationError
-
-
-class InvalidConfigParameter(SuppressedError):
-    """Config parameter is invalid."""
-
-
-class MissingConfigParameter(UserWarning):
-    """Config parameter is missing."""
 
 
 # The code for this class was take from matplotlib (v3.3) and modified to
@@ -89,4 +85,4 @@ class ValidatedConfig(MutableMapping):
 
     def clear(self):
         """Clear Config."""
-        self._mapping.clear(self)
+        self._mapping.clear()

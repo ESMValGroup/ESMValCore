@@ -20,8 +20,6 @@ from typing import Optional
 
 import yaml
 
-from ._config import _normalize_path
-
 keyring: Optional[ModuleType] = None
 try:
     keyring = importlib.import_module('keyring')
@@ -145,7 +143,7 @@ def load_esgf_pyclient_config():
             # List of available index nodes: https://esgf.llnl.gov/nodes.html
             # Be careful about the url, not all search urls have CMIP3 data?
             'urls': [
-                'https://esgf-index1.ceda.ac.uk/esg-search',
+                'https://esgf.ceda.ac.uk/esg-search',
                 'https://esgf-node.llnl.gov/esg-search',
                 'https://esgf-data.dkrz.de/esg-search',
                 'https://esgf-node.ipsl.upmc.fr/esg-search',
@@ -169,7 +167,8 @@ def load_esgf_pyclient_config():
         cfg[section].update(file_cfg.get(section, {}))
 
     if 'cache' in cfg['search_connection']:
-        cache_file = _normalize_path(cfg['search_connection']['cache'])
+        cache_file = Path(os.path.expandvars(
+            cfg['search_connection']['cache'])).expanduser().absolute()
         cfg['search_connection']['cache'] = cache_file
         Path(cache_file).parent.mkdir(parents=True, exist_ok=True)
 
