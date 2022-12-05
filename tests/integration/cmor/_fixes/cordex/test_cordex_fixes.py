@@ -1,10 +1,12 @@
 """Tests for general CORDEX fixes."""
+import cordex as cx
 import iris
 import numpy as np
 import pytest
 from cf_units import Unit
 
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
+    AllVars,
     CLMcomCCLM4817,
     MOHCHadREM3GA705,
     TimeLongName,
@@ -56,6 +58,49 @@ def cubes():
     return iris.cube.CubeList([correct_cube, wrong_cube])
 
 
+@pytest.fixture
+def cordex_cubes():
+    coord_system = iris.coord_systems.RotatedGeogCS(
+                grid_north_pole_latitude=39.25,
+                grid_north_pole_longitude=-162
+    )
+    time = iris.coords.DimCoord(np.arange(0, 3),
+                                var_name='time',
+                                standard_name='time')
+
+    rlat = iris.coords.DimCoord(np.arange(0, 412),
+                                var_name='rlat',
+                                standard_name='grid_latitude',
+                                coord_system=coord_system,
+                                )
+    rlon = iris.coords.DimCoord(np.arange(0, 424),
+                                var_name='rlon',
+                                standard_name='grid_longitude',
+                                coord_system=coord_system,
+                                )
+    lat = iris.coords.AuxCoord(np.ones((412, 424)),
+                               var_name='lat',
+                               standard_name='latitude')
+    lon = iris.coords.AuxCoord(np.ones((412, 424)),
+                               var_name='lon',
+                               standard_name='longitude')
+    
+    cube = iris.cube.Cube(
+        np.ones((3, 412, 424)),
+        var_name='tas',
+        dim_coords_and_dims=[
+            (time, 0),
+            (rlat, 1),
+            (rlon, 2)],
+        aux_coords_and_dims=[
+            (lat, (1,2)),
+            (lon, (1,2))
+        ]
+
+    )
+    return iris.cube.CubeList([cube])
+
+
 def test_mohchadrem3ga705_fix_metadata(cubes):
     fix = MOHCHadREM3GA705(None)
     out_cubes = fix.fix_metadata(cubes)
@@ -98,3 +143,18 @@ def test_clmcomcclm4817_fix_metadata(cubes):
             calendar='proleptic_gregorian')
         for coord in cube.coords():
             assert coord.points.dtype == np.float64
+
+
+def test_rotated_grid_fix(cordex_
+    fix = AllVars(
+        vardef=None,
+        extra_facets={'domain': 'EUR-11'})
+    out_cubes = fix.fix_metadata(cordex_cubes)
+    domain = cx.cordex_domain('EUR-11', add_vertices=True)
+    assert cordex_cubes is out_cubes
+    for cube in out_cubes:
+        for coord in ['rlat', 'rlon', 'lat', 'lon']:
+            cube_coord = cube.coord(var_name=coord)
+            domain_coord = domain[coord].data
+            np.testing.assert_array_equal(
+                cube_coord.points, domain_coord)
