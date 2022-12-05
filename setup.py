@@ -51,7 +51,8 @@ REQUIREMENTS = {
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        'scitools-iris>=3.2.1',
+        'scitools-iris @ '
+        'https://github.com/pp-mo/iris/archive/lazy_save.tar.gz',
         'shapely[vectorized]',
         'stratify',
         'yamale',
@@ -67,7 +68,7 @@ REQUIREMENTS = {
         'pytest-mypy',
         'pytest-mock',
         'pytest-xdist',
-        'ESMValTool_sample_data==0.0.3',
+        # 'ESMValTool_sample_data==0.0.3',
         # MyPy library stubs
         'mypy>=0.990',
         'types-requests',
