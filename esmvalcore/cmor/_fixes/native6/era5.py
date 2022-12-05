@@ -346,7 +346,7 @@ class AllVars(Fix):
             # (https://github.com/ESMValGroup/ESMValCore/issues/1029)
             if axis == "" and coord_def.name == "alevel":
                 axis = "Z"
-                coord_def = CMOR_TABLES['CMIP6'].coords['plev19'] 
+                coord_def = CMOR_TABLES['CMIP6'].coords['plev19']
             coord = cube.coord(axis=axis)
             if axis == 'T':
                 coord.convert_units('days since 1850-1-1 00:00:00.0')
