@@ -310,7 +310,6 @@ def _combine(cubes):
 
     try:
         merged_cube = cubes.merge_cube()
-        print(merged_cube)
     except MergeError as exc:
         # Note: str(exc) starts with "failed to merge into a single cube.\n"
         # --> remove this here for clear error message
