@@ -145,10 +145,11 @@ def test_clmcomcclm4817_fix_metadata(cubes):
             assert coord.points.dtype == np.float64
 
 
-def test_rotated_grid_fix(cordex_
+def test_rotated_grid_fix(cordex_cubes):
     fix = AllVars(
         vardef=None,
         extra_facets={'domain': 'EUR-11'})
+
     out_cubes = fix.fix_metadata(cordex_cubes)
     domain = cx.cordex_domain('EUR-11', add_vertices=True)
     assert cordex_cubes is out_cubes
