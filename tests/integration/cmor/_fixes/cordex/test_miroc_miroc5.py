@@ -23,6 +23,7 @@ def cubes():
     )
     return iris.cube.CubeList([wrong_cube])
 
+
 @pytest.mark.parametrize('short_name', ['pr', 'tas'])
 def test_get_clmcom_cclm4_8_17fix(short_name):
     fix = Fix.get_fixes(
@@ -44,7 +45,7 @@ def test_get_gerics_remo2015_fix():
     assert isinstance(fix[0], Fix)
 
 
-def test_get_gerics_remo2015_fix():
+def test_get_uhoh_wrf361h_fix():
     fix = Fix.get_fixes(
         'CORDEX',
         'UHOH-WRF361H',
