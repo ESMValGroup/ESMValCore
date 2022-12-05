@@ -945,7 +945,7 @@ class CMORCheck():
         calendar_aliases = {
             'all_leap': '366_day',
             'noleap': '365_day',
-            'standard': 'gregorian',
+            'gregorian': 'standard',
         }
         return calendar_aliases.get(calendar, calendar)
 

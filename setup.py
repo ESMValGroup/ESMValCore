@@ -29,9 +29,10 @@ REQUIREMENTS = {
     'install': [
         'cartopy',
         # see https://github.com/SciTools/cf-units/issues/218
-        'cf-units>=3.0.0,<3.1.0,!=3.0.1.post0',  # ESMValCore/issues/1655
+        'cf-units',
         'dask[array]',
         'esgf-pyclient>=0.3.1',
+        'esmf-regrid',
         'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
         'fiona',
         'fire',
@@ -42,15 +43,15 @@ REQUIREMENTS = {
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
         'nested-lookup',
-        'netCDF4!=1.6.1',  # github.com/ESMValGroup/ESMValCore/issues/1723
+        'netCDF4',
         'numpy',
         'pandas',
         'pillow',
         'prov',
         'psutil',
+        'py-cordex',
         'pybtex',
         'pyyaml',
-        'py-cordex',
         'requests',
         'scipy>=1.6',
         'scitools-iris>=3.2.1',
@@ -60,7 +61,7 @@ REQUIREMENTS = {
     ],
     # Test dependencies
     'test': [
-        'flake8<5.0',  # github.com/ESMValGroup/ESMValCore/issues/1696
+        'flake8',
         'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
         'pytest-cov>=2.10.1',
         'pytest-env',
@@ -78,8 +79,8 @@ REQUIREMENTS = {
     ],
     # Documentation dependencies
     'doc': [
-        'autodocsumm',
-        'sphinx>2',
+        'autodocsumm>=0.2.2',
+        'sphinx>5',
         'sphinx_rtd_theme',
     ],
     # Development dependencies
