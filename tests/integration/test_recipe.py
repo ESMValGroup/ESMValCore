@@ -2734,7 +2734,6 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
           landmask:
             mask_landsea:
               mask_out: sea
-              always_use_ne_mask: false
 
         diagnostics:
           diagnostic_name:
@@ -2767,9 +2766,8 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
     for product in task.products:
         assert 'mask_landsea' in product.settings
         settings = product.settings['mask_landsea']
-        assert len(settings) == 2
+        assert len(settings) == 1
         assert settings['mask_out'] == 'sea'
-        assert settings['always_use_ne_mask'] is False
         fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
         fx_variables = fx_variables.values()
@@ -3656,12 +3654,11 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
         'force_derivation': True,
         'frequency': 'mon',
         'mip': 'Amon',
-        'original_short_name': 'lwp',
+        'original_short_name': 'alb',
         'project': 'ICON',
-        'short_name': 'lwp',
+        'short_name': 'alb',
         'start_year': 1990,
         'timerange': '1990/2000',
-        'var_type': 'atm_2d_ml',
     }
     filename = _dataset_to_file(variable, config_user)
     assert filename == sentinel.out_file
@@ -3669,7 +3666,7 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
 
     expect_required_var = {
         # Added by get_required
-        'short_name': 'clwvi',
+        'short_name': 'rsdscs',
         # Already present in variable
         'dataset': 'ICON',
         'derive': True,
@@ -3681,15 +3678,15 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
         'project': 'ICON',
         'start_year': 1990,
         'timerange': '1990/2000',
-        'var_type': 'atm_2d_ml',
         # Added by _add_cmor_info
-        'long_name': 'Condensed Water Path',
+        'long_name': 'Surface Downwelling Clear-Sky Shortwave Radiation',
         'modeling_realm': ['atmos'],
-        'original_short_name': 'clwvi',
-        'standard_name': 'atmosphere_mass_content_of_cloud_condensed_water',
-        'units': 'kg m-2',
+        'original_short_name': 'rsdscs',
+        'standard_name':
+        'surface_downwelling_shortwave_flux_in_air_assuming_clear_sky',
+        'units': 'W m-2',
         # Added by _add_extra_facets
-        'raw_name': 'cllvi',
+        'var_type': 'atm_2d_ml',
     }
     mock_get_input_files.assert_called_with(expect_required_var, config_user)
     mock_data_availability.assert_called_once()
@@ -3705,20 +3702,19 @@ def test_get_derive_input_variables(patched_datafinder, config_user):
         'force_derivation': True,
         'frequency': 'mon',
         'mip': 'Amon',
-        'original_short_name': 'lwp',
+        'original_short_name': 'alb',
         'project': 'ICON',
-        'short_name': 'lwp',
+        'short_name': 'alb',
         'start_year': 1990,
         'timerange': '1990/2000',
-        'var_type': 'atm_2d_ml',
-        'variable_group': 'lwp_group',
+        'variable_group': 'alb_group',
     }]
     derive_input = _get_derive_input_variables(variables, config_user)
 
     expected_derive_input = {
-        'lwp_group_derive_input_clwvi': [{
+        'alb_group_derive_input_rsdscs': [{
             # Added by get_required
-            'short_name': 'clwvi',
+            'short_name': 'rsdscs',
             # Already present in variables
             'dataset': 'ICON',
             'derive': True,
@@ -3730,21 +3726,20 @@ def test_get_derive_input_variables(patched_datafinder, config_user):
             'project': 'ICON',
             'start_year': 1990,
             'timerange': '1990/2000',
-            'var_type': 'atm_2d_ml',
             # Added by _add_cmor_info
             'standard_name':
-            'atmosphere_mass_content_of_cloud_condensed_water',
-            'long_name': 'Condensed Water Path',
+            'surface_downwelling_shortwave_flux_in_air_assuming_clear_sky',
+            'long_name': 'Surface Downwelling Clear-Sky Shortwave Radiation',
             'modeling_realm': ['atmos'],
-            'original_short_name': 'clwvi',
-            'units': 'kg m-2',
+            'original_short_name': 'rsdscs',
+            'units': 'W m-2',
             # Added by _add_extra_facets
-            'raw_name': 'cllvi',
+            'var_type': 'atm_2d_ml',
             # Added by append
-            'variable_group': 'lwp_group_derive_input_clwvi',
-        }], 'lwp_group_derive_input_clivi': [{
+            'variable_group': 'alb_group_derive_input_rsdscs',
+        }], 'alb_group_derive_input_rsuscs': [{
             # Added by get_required
-            'short_name': 'clivi',
+            'short_name': 'rsuscs',
             # Already present in variables
             'dataset': 'ICON',
             'derive': True,
@@ -3756,15 +3751,17 @@ def test_get_derive_input_variables(patched_datafinder, config_user):
             'project': 'ICON',
             'start_year': 1990,
             'timerange': '1990/2000',
-            'var_type': 'atm_2d_ml',
             # Added by _add_cmor_info
-            'standard_name': 'atmosphere_mass_content_of_cloud_ice',
-            'long_name': 'Ice Water Path',
+            'standard_name':
+            'surface_upwelling_shortwave_flux_in_air_assuming_clear_sky',
+            'long_name': 'Surface Upwelling Clear-Sky Shortwave Radiation',
             'modeling_realm': ['atmos'],
-            'original_short_name': 'clivi',
-            'units': 'kg m-2',
+            'original_short_name': 'rsuscs',
+            'units': 'W m-2',
+            # Added by _add_extra_facets
+            'var_type': 'atm_2d_ml',
             # Added by append
-            'variable_group': 'lwp_group_derive_input_clivi',
+            'variable_group': 'alb_group_derive_input_rsuscs',
         }],
     }
     assert derive_input == expected_derive_input

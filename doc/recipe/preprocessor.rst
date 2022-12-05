@@ -926,10 +926,23 @@ example of its usage in an ESMValTool preprocessor is:
             reference: esmf_regrid.schemes:ESMFAreaWeighted
             mdtol: 0.7
 
-.. TODO: Remove the following warning once things have settled a bit.
-.. warning::
-   Just as the mesh support in Iris itself, this new regridding package is
-   still considered experimental.
+Additionally, the use of generic schemes that take source and target grid cubes as
+arguments is also supported. The call function for such schemes must be defined as
+`(src_cube, grid_cube, **kwargs)` and they must return `iris.cube.Cube` objects.
+The `regrid` module will automatically pass the source and grid cubes as inputs
+of the scheme. An example of this usage is
+the :func:`~esmf_regrid.schemes.regrid_rectilinear_to_rectilinear`
+scheme available in :doc:`iris-esmf-regrid:index`:git 
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 2.5x2.5
+          scheme:
+            reference: esmf_regrid.schemes:regrid_rectilinear_to_rectilinear
+            mdtol: 0.7
 
 .. _ensemble statistics:
 
@@ -1007,14 +1020,13 @@ of argument parameters passed to ``multi_model_statistics``. Percentiles can be
 specified like ``p1.5`` or ``p95``. The decimal point will be replaced by a dash
 in the output file.
 
-Restrictive computation is also available by excluding  any set of models that
+Restrictive computation is also available by excluding any set of models that
 the user will not want to include in the statistics (by setting ``exclude:
-[excluded models list]`` argument). The implementation has a few restrictions
-that apply to the input data: model datasets must have consistent shapes, apart
-from the time dimension; and cubes with more than four dimensions (time,
-vertical axis, two horizontal axes) are not supported.
+[excluded models list]`` argument).
 
-Input datasets may have different time coordinates. Statistics can be computed
+Input datasets may have different time coordinates.
+Apart from that, all dimensions must match.
+Statistics can be computed
 across overlapping times only (``span: overlap``) or across the full time span
 of the combined models (``span: full``). The preprocessor sets a common time
 coordinate on all datasets. As the number of days in a year may vary between
@@ -1037,10 +1049,6 @@ parameter ``keep_input_datasets`` to ``false`` (default value is ``true``).
           statistics: [mean, median]
           exclude: [NCEP]
           keep_input_datasets: false
-
-Input datasets may have different time coordinates. The multi-model statistics
-preprocessor sets a common time coordinate on all datasets. As the number of
-days in a year may vary between calendars, (sub-)daily data are not supported.
 
 Multi-model statistics also supports a ``groupby`` argument. You can group by
 any dataset key (``project``, ``experiment``, etc.) or a combination of keys in a list. You can
@@ -1967,11 +1975,11 @@ See also :func:`esmvalcore.preprocessor.detrend`.
 Rolling window statistics
 =========================
 
-One can calculate rolling window statistics using the 
-preprocessor function ``rolling_window_statistics``. 
+One can calculate rolling window statistics using the
+preprocessor function ``rolling_window_statistics``.
 This function takes three parameters:
 
-* ``coordinate``: coordinate over which the rolling-window statistics is 
+* ``coordinate``: coordinate over which the rolling-window statistics is
   calculated.
 
 * ``operator``: operation to apply. Accepted values are 'mean', 'median',
@@ -1980,12 +1988,12 @@ This function takes three parameters:
 * ``window_length``: size of the rolling window to use (number of points).
 
 This example applied on daily precipitation data calculates two-day rolling
-precipitation sum. 
+precipitation sum.
 
 .. code-block:: yaml
 
   preprocessors:
-    preproc_rolling_window: 
+    preproc_rolling_window:
       coordinate: time
       operator: sum
       window_length: 2
