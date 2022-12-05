@@ -137,4 +137,3 @@ class AllVars(Fix):
                 self._fix_geographical_coords(cube)
 
         return cubes
-
