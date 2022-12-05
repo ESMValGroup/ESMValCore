@@ -83,7 +83,8 @@ class CLMcomCCLM4817(Fix):
                     calendar='proleptic_gregorian'
                 )
         return cubes
-    
+
+
 class AllVars(Fix):
     """General CORDEX grid fix"""
     def _fix_rotated_coords(self, cube):
@@ -127,13 +128,13 @@ class AllVars(Fix):
                 bounds=bounds
             )
             cube.add_aux_coord(new_coord, (1, 2))
-        
+
     def fix_metadata(self, cubes):
         for cube in cubes:
             coord_system = cube.coord_system()
             if isinstance(coord_system, RotatedGeogCS):
                 self._fix_rotated_coords(cube)
                 self._fix_geographical_coords(cube)
-        
+
         return cubes
-    
+

@@ -2,6 +2,7 @@
 import iris
 from esmvalcore.cmor.fix import Fix
 
+
 class Tas(Fix):
     def fix_metadata(self, cubes):
         fixed_cubes = iris.cube.CubeList()
@@ -14,4 +15,3 @@ class Tas(Fix):
                 )
             fixed_cubes.append(iris.util.squeeze(cube))
         return fixed_cubes
-
