@@ -84,7 +84,7 @@ def cordex_cubes():
     lon = iris.coords.AuxCoord(np.ones((412, 424)),
                                var_name='lon',
                                standard_name='longitude')
-    
+
     cube = iris.cube.Cube(
         np.ones((3, 412, 424)),
         var_name='tas',
@@ -93,8 +93,8 @@ def cordex_cubes():
             (rlat, 1),
             (rlon, 2)],
         aux_coords_and_dims=[
-            (lat, (1,2)),
-            (lon, (1,2))
+            (lat, (1, 2)),
+            (lon, (1, 2))
         ]
 
     )
