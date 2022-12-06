@@ -45,6 +45,16 @@ class TestFix(unittest.TestCase):
                 extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'}),
             [Tas(None), AllVars(None)])
 
+    def test_get_grid_fix_cordex(self):
+        self.assertListEqual(
+            Fix.get_fixes(
+                'CORDEX',
+                'CNRM-ALADIN53',
+                'Amon',
+                'tas',
+                extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'}),
+            [AllVars(None)])
+
     def test_get_fixes_with_replace(self):
         self.assertListEqual(Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'ch4'),
                              [Ch4(None)])
