@@ -6,7 +6,12 @@ from functools import lru_cache
 import pyesgf.search
 import requests.exceptions
 
-from .._data_finder import _parse_period, _truncate_dates, get_start_end_date
+from .._data_finder import (
+    _get_timerange_from_years,
+    _parse_period,
+    _truncate_dates,
+    get_start_end_date,
+)
 from ..config._esgf_pyclient import get_esgf_config
 from ._download import ESGFFile
 from .facets import DATASET_MAP, FACETS
@@ -343,6 +348,7 @@ def cached_search(**facets):
     if 'version' not in facets or facets['version'] != '*':
         files = select_latest_versions(files, facets.get('version'))
 
+    _get_timerange_from_years(facets)
     if 'timerange' in facets:
         files = select_by_time(files, facets['timerange'])
         logger.debug("Selected files:\n%s", '\n'.join(str(f) for f in files))

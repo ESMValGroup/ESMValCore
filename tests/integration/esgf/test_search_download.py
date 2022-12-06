@@ -46,7 +46,8 @@ VARIABLES = [{
     'mip': 'Amon',
     'project': 'CMIP5',
     'short_name': 'tas',
-    'timerange': '1990/1999',
+    'start_year': 1990,  # test legacy way of specifying timerange
+    'end_year': 1999,
 }, {
     'dataset': 'AWI-ESM-1-1-LR',
     'ensemble': 'r1i1p1f1',
