@@ -589,7 +589,7 @@ def find_files(
     -------
     list[LocalFile]
         The files that were found.
-    """
+    """  # pylint: disable=line-too-long
     filenames, globs = _get_input_filelist(facets)
     drs = _select_drs('input_dir', facets['project'])
     if isinstance(drs, list):
