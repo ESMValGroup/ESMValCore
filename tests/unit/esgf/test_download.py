@@ -212,7 +212,8 @@ def test_init():
     url = f'http://something.org/ABC/v1/{filename}'
     result = FileResult(
         json={
-            'dataset_id': 'ABC.v1|something.org',
+            'dataset_id': 'CMIP6.ABC.v1|something.org',
+            'dataset_id_template_': ["%(mip_era)s.%(source_id)s"],
             'project': ['CMIP6'],
             'size': 10,
             'source_id': ['ABC'],
@@ -229,9 +230,15 @@ def test_init():
     assert file.size == 10
     assert file.urls == [url]
     assert file._checksums == [('MD5', 'abc')]
-    txt = f"ESGFFile:ABC/v1/{filename} on hosts ['something.org']"
+    assert file.facets == {
+        'dataset': 'ABC',
+        'project': 'CMIP6',
+        'short_name': 'tas',
+        'version': 'v1',
+    }
+    txt = f"ESGFFile:CMIP6/ABC/v1/{filename} on hosts ['something.org']"
     assert repr(file) == txt
-    assert hash(file) == hash(('ABC.v1', filename))
+    assert hash(file) == hash(('CMIP6.ABC.v1', filename))
 
 
 def test_from_results():
@@ -246,7 +253,8 @@ def test_from_results():
         url = f'http://something.org/ABC/v1/{filename}'
         result = FileResult(
             json={
-                'dataset_id': f'ABC{i}.v1|something.org',
+                'dataset_id': f'CMIP6.ABC{i}.v1|something.org',
+                'dataset_id_template_': ["%(mip_era)s.%(source_id)s"],
                 'project': ['CMIP6'],
                 'size': 10,
                 'source_id': [f'ABC{i}'],
@@ -262,7 +270,8 @@ def test_from_results():
     results.append(
         FileResult(
             json={
-                'dataset_id': f'ABC{i}.v1|something.org',
+                'dataset_id': f'CMIP6.ABC{i}.v1|something.org',
+                'dataset_id_template_': ["%(mip_era)s.%(source_id)s"],
                 'project': ['CMIP6'],
                 'size': 10,
                 'source_id': [f'ABC{i}'],
@@ -281,7 +290,8 @@ def test_sorting():
 
     result1 = FileResult(
         json={
-            'dataset_id': 'ABC.v1|something.org',
+            'dataset_id': 'CMIP6.ABC.v1|something.org',
+            'dataset_id_template_': ["%(mip_era)s.%(source_id)s"],
             'project': ['CMIP6'],
             'size': 1,
             'title': 'abc_2000-2001.nc',
@@ -290,7 +300,8 @@ def test_sorting():
     )
     result2 = FileResult(
         json={
-            'dataset_id': 'ABC.v1|something.org',
+            'dataset_id': 'CMIP6.ABC.v1|something.org',
+            'dataset_id_template_': ["%(mip_era)s.%(source_id)s"],
             'project': ['CMIP6'],
             'size': 1,
             'title': 'abc_2001-2002.nc',
@@ -310,10 +321,10 @@ def test_sorting():
 def test_local_file():
     local_path = '/path/to/somewhere'
     filename = 'abc_2000-2001.nc'
-    dataset = 'CMIP6.ABC.v1'
     result = FileResult(
         json={
-            'dataset_id': f'{dataset}|something.org',
+            'dataset_id': 'CMIP6.ABC.v1|something.org',
+            'dataset_id_template_': ["%(mip_era)s.%(source_id)s"],
             'project': ['CMIP6'],
             'size': 10,
             'source_id': ['ABC'],
@@ -323,6 +334,7 @@ def test_local_file():
     )
 
     file = _download.ESGFFile([result])
+    print(file.dataset)
     reference_path = Path(local_path) / 'CMIP6' / 'ABC' / 'v1' / filename
     assert file.local_file(local_path) == reference_path
 
@@ -344,10 +356,16 @@ def test_merge_datasets():
     dataset1 = ('cmip5.output1.FIO.fio-esm.historical.'
                 'mon.atmos.Amon.r1i1p1.v20121010')
 
+    cmip5_template = (
+        'cmip5.%(product)s.%(valid_institute)s.%(model)s.'
+        '%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.'
+        '%(ensemble)s')
+
     results = [
         FileResult(
             {
                 'dataset_id': dataset0 + '|esgf2.dkrz.de',
+                'dataset_id_template_': [cmip5_template],
                 'project': ['CMIP5'],
                 'size': 200,
                 'title': filename,
@@ -358,6 +376,7 @@ def test_merge_datasets():
         FileResult(
             {
                 'dataset_id': dataset1 + '|aims3.llnl.gov',
+                'dataset_id_template_': [cmip5_template],
                 'project': ['CMIP5'],
                 'size': 200,
                 'title': filename,
@@ -397,11 +416,11 @@ def test_single_download(mocker, tmp_path, checksum):
 
     dest_folder = tmp_path
     filename = 'abc_2000-2001.nc'
-    dataset = 'CMIP6.ABC.v1'
     url = f'http://something.org/CMIP6/ABC/v1/{filename}'
 
     json = {
-        'dataset_id': f'{dataset}|something.org',
+        'dataset_id': 'CMIP6.ABC.v1|something.org',
+        'dataset_id_template_': ["%(mip_era)s.%(source_id)s"],
         'project': ['CMIP6'],
         'size': 12,
         'source_id': ['ABC'],
@@ -449,7 +468,8 @@ def test_download_skip_existing(tmp_path, caplog):
     dest_folder = tmp_path
 
     json = {
-        'dataset_id': f'{dataset}|something.org',
+        'dataset_id': f'CMIP6.{dataset}.v1|something.org',
+        'dataset_id_template_': ["%(mip_era)s.%(source_id)s"],
         'project': ['CMIP6'],
         'size': 12,
         'title': filename,
@@ -458,7 +478,7 @@ def test_download_skip_existing(tmp_path, caplog):
 
     # Create local file
     local_file = file.local_file(dest_folder)
-    local_file.parent.mkdir()
+    local_file.parent.mkdir(parents=True)
     local_file.touch()
 
     caplog.set_level(logging.DEBUG)
@@ -488,7 +508,8 @@ def test_single_download_fail(mocker, tmp_path):
     url = f'http://something.org/CMIP6/ABC/v1/{filename}'
 
     json = {
-        'dataset_id': f'{dataset}|something.org',
+        'dataset_id': f'CMIP6.{dataset}.v1|something.org',
+        'dataset_id_template_': ["%(mip_era)s.%(source_id)s"],
         'project': ['CMIP6'],
         'size': 12,
         'title': filename,
@@ -506,7 +527,8 @@ def test_get_download_message():
 
     result1 = FileResult(
         json={
-            'dataset_id': 'ABC.v1|something.org',
+            'dataset_id': 'CMIP6.ABC.v1|something.org',
+            'dataset_id_template_': ["%(mip_era)s.%(source_id)s"],
             'project': ['CMIP6'],
             'size': 4 * 10**9,
             'title': 'abc_1850-1900.nc',
@@ -516,7 +538,8 @@ def test_get_download_message():
     )
     result2 = FileResult(
         json={
-            'dataset_id': 'ABC.v1|something.org',
+            'dataset_id': 'CMIP6.ABC.v1|something.org',
+            'dataset_id_template_': ["%(mip_era)s.%(source_id)s"],
             'project': ['CMIP6'],
             'size': 6 * 10**9,
             'title': 'abc_1900-1950.nc',
@@ -529,8 +552,8 @@ def test_get_download_message():
     expected = textwrap.dedent("""
         Will download 10 GB
         Will download the following files:
-        4 GB\tESGFFile:ABC/v1/abc_1850-1900.nc on hosts ['xyz.org']
-        6 GB\tESGFFile:ABC/v1/abc_1900-1950.nc on hosts ['abc.com']
+        4 GB\tESGFFile:CMIP6/ABC/v1/abc_1850-1900.nc on hosts ['xyz.org']
+        6 GB\tESGFFile:CMIP6/ABC/v1/abc_1900-1950.nc on hosts ['abc.com']
         Downloading 10 GB..
         """).strip()
     assert msg == expected
