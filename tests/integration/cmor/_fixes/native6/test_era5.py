@@ -237,6 +237,29 @@ def cl_era5_monthly():
     return iris.cube.CubeList([cube])
 
 
+def cl_cmor_amon():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('Amon', 'cl')
+    time = _cmor_time('Amon', bounds=True)
+    data = np.ones((3, 2, 3, 3))
+    data = data * 50.0
+    cube = iris.cube.Cube(
+        data.astype('float32'),
+        long_name=vardef.long_name,
+        var_name=vardef.short_name,
+        standard_name=vardef.standard_name,
+        units=Unit(vardef.units),
+        dim_coords_and_dims=[
+            (time, 0),
+            (_cmor_plev(), 1),
+            (_cmor_latitude(), 2),
+            (_cmor_longitude(), 3),
+        ],
+        attributes={'comment': COMMENT},
+    )
+    return iris.cube.CubeList([cube])
+
+
 def clt_era5_hourly():
     time = _era5_time('hourly')
     cube = iris.cube.Cube(
