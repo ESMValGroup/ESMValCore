@@ -4,8 +4,8 @@ import cordex as cx
 import numpy as np
 import iris
 
-from esmvalcore.cmor.fix import Fix
 from iris.coord_systems import RotatedGeogCS
+from esmvalcore.cmor.fix import Fix
 
 
 class MOHCHadREM3GA705(Fix):
@@ -94,8 +94,10 @@ class CLMcomCCLM4817(Fix):
 
 
 class AllVars(Fix):
-    """General CORDEX grid fix"""
+    """General CORDEX grid fix."""
+
     def _fix_rotated_coords(self, cube):
+        """Fix rotated coordinates."""
         data_domain = self.extra_facets['domain']
         domain = cx.cordex_domain(data_domain, add_vertices=True)
         domain_info = cx.domain_info(data_domain)
@@ -120,6 +122,7 @@ class AllVars(Fix):
             cube.add_dim_coord(new_coord, old_coord_dims)
 
     def _fix_geographical_coords(self, cube):
+        """Fix geographical coordinates."""
         data_domain = self.extra_facets['domain']
         domain = cx.cordex_domain(data_domain, add_vertices=True)
         for aux_coord in ['lat', 'lon']:
@@ -138,6 +141,24 @@ class AllVars(Fix):
             cube.add_aux_coord(new_coord, (1, 2))
 
     def fix_metadata(self, cubes):
+        """Fix CORDEX rotated grids.
+
+        Set rotated and geographical coordinates to the
+        values given by each domain specification.
+
+        The domain specifications are retrieved from the
+        py-cordex package.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+
+        """
         for cube in cubes:
             coord_system = cube.coord_system()
             if isinstance(coord_system, RotatedGeogCS):
