@@ -921,6 +921,30 @@ get_input_filelist:
       - OBS6_ERA-Interim_reanaly_42_Omon_deptho[_.]*nc
     found_files: []
 
+  - drs: default
+    variable:
+      short_name: tas
+      dataset: ERA5
+      project: native6
+      frequency: mon
+      mip: Amon
+      tier: 3
+      type: reanaly
+      timerange: '2000/2010'
+    available_files:
+      - Tier3/ERA5/1/mon/tas/era5_2m_temperature_2000_monthly.nc
+      - Tier3/ERA5/1/mon/tas/era5_2m_temperature_2001_monthly.nc
+    dirs:
+      - Tier3/ERA5/*/mon/tas
+    file_patterns:
+      - '*.nc'
+    found_files:
+      - Tier3/ERA5/1/mon/tas/era5_2m_temperature_2000_monthly.nc
+      - Tier3/ERA5/1/mon/tas/era5_2m_temperature_2001_monthly.nc
+    available_symlinks:
+      - link_name: Tier3/ERA5/latest
+        target: '1'
+
   # EMAC
 
   - drs: default

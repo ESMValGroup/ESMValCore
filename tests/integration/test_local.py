@@ -1,8 +1,6 @@
 """Tests for `esmvalcore.local`."""
 import os
 import pprint
-import shutil
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -65,13 +63,12 @@ def test_get_output_file(cfg):
 
 
 @pytest.fixture
-def root():
+def root(tmp_path):
     """Root function for tests."""
-    dirname = tempfile.mkdtemp()
-    yield os.path.join(dirname, 'output1')
+    dirname = str(tmp_path)
+    yield dirname
     print("Directory structure was:")
     tree(dirname)
-    shutil.rmtree(dirname)
 
 
 @pytest.mark.parametrize('cfg', CONFIG['get_input_filelist'])

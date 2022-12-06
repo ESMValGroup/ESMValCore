@@ -599,6 +599,11 @@ def find_files(
     for filename in filenames:
         file = LocalFile(filename)
         file.facets.update(_path2facets(file, drs))
+        if 'version' in file.facets and file.facets['version'] == 'latest':
+            # On compute clusters it is usual to have a symbolic link
+            # to the latest version called 'latest'. Those need to be skipped
+            # in order to find valid version names.
+            continue
         files.append(file)
 
     if 'version' not in facets:
