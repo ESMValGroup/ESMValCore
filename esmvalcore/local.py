@@ -619,7 +619,13 @@ class LocalFile(type(Path())):  # type: ignore
 
     @property
     def facets(self) -> Facets:
-        """Facets describing the file."""
+        """Facets describing the file.
+
+        Note
+        ----
+        When using :func:`find_files`, facets are read from the directory
+        structure. Facets stored in filenames are not yet supported.
+        """
         if not hasattr(self, '_facets'):
             self._facets: Facets = {}
         return self._facets
