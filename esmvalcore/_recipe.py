@@ -570,6 +570,8 @@ def _read_attributes(filename):
 
 def _get_input_files(variable, config_user):
     """Get the input files for a single dataset (locally and via download)."""
+    if variable['project'] == 'CMIP5' and variable['frequency'] == 'fx':
+        variable['ensemble'] = 'r0i0p0'
     if variable['frequency'] != 'fx':
         start_year, end_year = _parse_period(variable['timerange'])
 
