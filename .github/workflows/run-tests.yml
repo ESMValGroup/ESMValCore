@@ -35,7 +35,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.11"]  # ["3.8", "3.9", "3.10", "3.11"]
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:
@@ -45,7 +45,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: esmvalcore
-          environment-file: environment.yml
+          environment-file: environment_py311.yml
           python-version: ${{ matrix.python-version }}
           miniforge-version: "latest"
           miniforge-variant: Mambaforge
@@ -73,7 +73,7 @@ jobs:
     runs-on: "macos-latest"
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.11"]  # ["3.8", "3.9", "3.10"]
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
@@ -83,7 +83,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: esmvalcore
-          environment-file: environment.yml
+          environment-file: environment_py311.yml
           python-version: ${{ matrix.python-version }}
           miniforge-version: "latest"
           miniforge-variant: Mambaforge
