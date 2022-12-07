@@ -242,7 +242,7 @@ def cl_cmor_amon():
     vardef = cmor_table.get_variable('Amon', 'cl')
     time = _cmor_time('Amon', bounds=True)
     data = np.ones((3, 2, 3, 3))
-    data = data * 50.0
+    data = data * 100.0
     cube = iris.cube.Cube(
         data.astype('float32'),
         long_name=vardef.long_name,
