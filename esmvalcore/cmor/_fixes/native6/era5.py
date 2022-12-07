@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 def get_frequency(cube):
     """Determine time frequency of input cube."""
+
     try:
         time = cube.coord(axis='T')
     except iris.exceptions.CoordinateNotFoundError:
@@ -75,6 +76,7 @@ def divide_by_gravity(cube):
 
 class Clt(Fix):
     """Fixes for clt."""
+
     def fix_metadata(self, cubes):
         for cube in cubes:
             # Invalid input cube units (ignored on load) were '0-1'
@@ -86,6 +88,7 @@ class Clt(Fix):
 
 class Cl(Fix):
     """Fixes for cl."""
+
     def fix_metadata(self, cubes):
         for cube in cubes:
             # Invalid input cube units (ignored on load) were '0-1'
@@ -97,6 +100,7 @@ class Cl(Fix):
 
 class Evspsbl(Fix):
     """Fixes for evspsbl."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -111,6 +115,7 @@ class Evspsbl(Fix):
 
 class Evspsblpot(Fix):
     """Fixes for evspsblpot."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -125,6 +130,7 @@ class Evspsblpot(Fix):
 
 class Mrro(Fix):
     """Fixes for mrro."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -137,6 +143,7 @@ class Mrro(Fix):
 
 class Orog(Fix):
     """Fixes for orography."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         fixed_cubes = []
@@ -149,6 +156,7 @@ class Orog(Fix):
 
 class Pr(Fix):
     """Fixes for pr."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -161,6 +169,7 @@ class Pr(Fix):
 
 class Prsn(Fix):
     """Fixes for prsn."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -175,6 +184,7 @@ class Prsn(Fix):
 
 class Ptype(Fix):
     """Fixes for ptype."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -185,6 +195,7 @@ class Ptype(Fix):
 
 class Rlds(Fix):
     """Fixes for Rlds."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -223,6 +234,7 @@ class Rlus(Fix):
 
 class Rls(Fix):
     """Fixes for Rls."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -234,6 +246,7 @@ class Rls(Fix):
 
 class Rsds(Fix):
     """Fixes for Rsds."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -272,6 +285,7 @@ class Rsus(Fix):
 
 class Rsdt(Fix):
     """Fixes for Rsdt."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -284,6 +298,7 @@ class Rsdt(Fix):
 
 class Rss(Fix):
     """Fixes for Rss."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -296,6 +311,7 @@ class Rss(Fix):
 
 class Tasmax(Fix):
     """Fixes for tasmax."""
+
     def fix_metadata(self, cubes):
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
@@ -304,6 +320,7 @@ class Tasmax(Fix):
 
 class Tasmin(Fix):
     """Fixes for tasmin."""
+
     def fix_metadata(self, cubes):
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
@@ -312,6 +329,7 @@ class Tasmin(Fix):
 
 class Zg(Fix):
     """Fixes for Geopotential."""
+
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
@@ -321,6 +339,7 @@ class Zg(Fix):
 
 class AllVars(Fix):
     """Fixes for all variables."""
+
     def _fix_coordinates(self, cube):
         """Fix coordinates."""
         # Fix coordinate increasing direction
