@@ -78,10 +78,11 @@ class Clt(Fix):
     """Fixes for clt."""
 
     def fix_metadata(self, cubes):
+        """Fix metadata."""
         for cube in cubes:
             # Invalid input cube units (ignored on load) were '0-1'
             cube.units = '%'
-            cube.data = cube.core_data()*100.
+            cube.data = cube.core_data() * 100.
 
         return cubes
 
@@ -90,6 +91,7 @@ class Cl(Fix):
     """Fixes for cl."""
 
     def fix_metadata(self, cubes):
+        """Fix metadata."""
         for cube in cubes:
             # Invalid input cube units (ignored on load) were '0-1'
             cube.units = '%'
