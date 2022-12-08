@@ -8,7 +8,7 @@ from pathlib import Path
 import iris
 import isodate
 
-from .config._config import get_project_config
+from ._config import get_project_config
 from .exceptions import RecipeError
 
 logger = logging.getLogger(__name__)
@@ -144,6 +144,7 @@ def dates_to_timerange(start_date, end_date):
     -------
     str
         ``timerange`` in the form ``'start_date/end_date'``.
+
     """
     start_date = str(start_date)
     end_date = str(end_date)
@@ -282,6 +283,7 @@ def _truncate_dates(date, file_date):
     same number of digits. If this is not the case, pad the dates with leading
     zeros (e.g., use ``date='0100'`` and ``file_date='199901'`` for a correct
     comparison).
+
     """
     date = re.sub("[^0-9]", '', date)
     file_date = re.sub("[^0-9]", '', file_date)
@@ -434,7 +436,7 @@ def get_rootpath(rootpath, project):
             if nonexistent and (key, nonexistent) not in ROOTPATH_WARNED:
                 logger.warning(
                     "'%s' rootpaths '%s' set in config-user.yml do not exist",
-                    key, ', '.join(str(p) for p in nonexistent))
+                    key, ', '.join(nonexistent))
                 ROOTPATH_WARNED.add((key, nonexistent))
             return rootpath[key]
     raise KeyError('default rootpath must be specified in config-user file')

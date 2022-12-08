@@ -133,7 +133,7 @@
         "format": [
             "netCDF, CF-1.4"
         ],
-        "index_node": "esgf.ceda.ac.uk",
+        "index_node": "esgf-index1.ceda.ac.uk",
         "instance_id": "cmip5.output1.INM.inmcm4.historical.mon.atmos.Amon.r1i1p1.v20130207.tas_Amon_inmcm4_historical_r1i1p1_185001-200512.nc",
         "institute": [
             "INM"
@@ -499,7 +499,7 @@
         "format": [
             "netCDF, CF-1.4"
         ],
-        "index_node": "esgf.ceda.ac.uk",
+        "index_node": "esgf-index1.ceda.ac.uk",
         "instance_id": "cmip5.output1.INM.inmcm4.rcp85.mon.atmos.Amon.r1i1p1.v20130207.tas_Amon_inmcm4_rcp85_r1i1p1_200601-210012.nc",
         "institute": [
             "INM"

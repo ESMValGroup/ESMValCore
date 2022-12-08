@@ -13,6 +13,7 @@ from nested_lookup import get_occurrence_of_value, nested_update
 from PIL import Image
 
 import esmvalcore
+from esmvalcore._config import TAGS
 from esmvalcore._recipe import (
     TASKSEP,
     _dataset_to_file,
@@ -21,11 +22,11 @@ from esmvalcore._recipe import (
 )
 from esmvalcore._task import DiagnosticTask
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
 
+from .test_diagnostic_run import write_config_user_file
 from .test_provenance import check_provenance
 
 TAGS_FOR_TESTING = {
@@ -100,8 +101,9 @@ INITIALIZATION_ERROR_MSG = 'Could not create all tasks'
 
 
 @pytest.fixture
-def config_user(session):
-    cfg = session.to_config_user()
+def config_user(tmp_path):
+    filename = write_config_user_file(tmp_path)
+    cfg = esmvalcore._config.read_config_user_file(filename, 'recipe_test', {})
     cfg['offline'] = True
     cfg['check_level'] = CheckLevels.DEFAULT
     cfg['diagnostics'] = set()
@@ -2732,6 +2734,7 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
           landmask:
             mask_landsea:
               mask_out: sea
+              always_use_ne_mask: false
 
         diagnostics:
           diagnostic_name:
@@ -2764,8 +2767,9 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
     for product in task.products:
         assert 'mask_landsea' in product.settings
         settings = product.settings['mask_landsea']
-        assert len(settings) == 1
+        assert len(settings) == 2
         assert settings['mask_out'] == 'sea'
+        assert settings['always_use_ne_mask'] is False
         fx_variables = product.settings['add_fx_variables']['fx_variables']
         assert isinstance(fx_variables, dict)
         fx_variables = fx_variables.values()
@@ -3599,7 +3603,6 @@ def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
 
     recipe.tasks.run = mocker.Mock()
     recipe.write_filled_recipe = mocker.Mock()
-    recipe.write_html_summary = mocker.Mock()
     recipe.run()
 
     esmvalcore._recipe.esgf.download.assert_called_once_with(
@@ -3607,7 +3610,6 @@ def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
     recipe.tasks.run.assert_called_once_with(
         max_parallel_tasks=config_user['max_parallel_tasks'])
     recipe.write_filled_recipe.assert_called_once()
-    recipe.write_html_summary.assert_called_once()
 
 
 @patch('esmvalcore._recipe.check.data_availability', autospec=True)
@@ -3650,11 +3652,12 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
         'force_derivation': True,
         'frequency': 'mon',
         'mip': 'Amon',
-        'original_short_name': 'alb',
+        'original_short_name': 'lwp',
         'project': 'ICON',
-        'short_name': 'alb',
+        'short_name': 'lwp',
         'start_year': 1990,
         'timerange': '1990/2000',
+        'var_type': 'atm_2d_ml',
     }
     filename = _dataset_to_file(variable, config_user)
     assert filename == sentinel.out_file
@@ -3662,7 +3665,7 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
 
     expect_required_var = {
         # Added by get_required
-        'short_name': 'rsdscs',
+        'short_name': 'clwvi',
         # Already present in variable
         'dataset': 'ICON',
         'derive': True,
@@ -3674,15 +3677,15 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
         'project': 'ICON',
         'start_year': 1990,
         'timerange': '1990/2000',
-        # Added by _add_cmor_info
-        'long_name': 'Surface Downwelling Clear-Sky Shortwave Radiation',
-        'modeling_realm': ['atmos'],
-        'original_short_name': 'rsdscs',
-        'standard_name':
-        'surface_downwelling_shortwave_flux_in_air_assuming_clear_sky',
-        'units': 'W m-2',
-        # Added by _add_extra_facets
         'var_type': 'atm_2d_ml',
+        # Added by _add_cmor_info
+        'long_name': 'Condensed Water Path',
+        'modeling_realm': ['atmos'],
+        'original_short_name': 'clwvi',
+        'standard_name': 'atmosphere_mass_content_of_cloud_condensed_water',
+        'units': 'kg m-2',
+        # Added by _add_extra_facets
+        'raw_name': 'cllvi',
     }
     mock_get_input_files.assert_called_with(expect_required_var, config_user)
     mock_data_availability.assert_called_once()
@@ -3698,19 +3701,20 @@ def test_get_derive_input_variables(patched_datafinder, config_user):
         'force_derivation': True,
         'frequency': 'mon',
         'mip': 'Amon',
-        'original_short_name': 'alb',
+        'original_short_name': 'lwp',
         'project': 'ICON',
-        'short_name': 'alb',
+        'short_name': 'lwp',
         'start_year': 1990,
         'timerange': '1990/2000',
-        'variable_group': 'alb_group',
+        'var_type': 'atm_2d_ml',
+        'variable_group': 'lwp_group',
     }]
     derive_input = _get_derive_input_variables(variables, config_user)
 
     expected_derive_input = {
-        'alb_group_derive_input_rsdscs': [{
+        'lwp_group_derive_input_clwvi': [{
             # Added by get_required
-            'short_name': 'rsdscs',
+            'short_name': 'clwvi',
             # Already present in variables
             'dataset': 'ICON',
             'derive': True,
@@ -3722,20 +3726,21 @@ def test_get_derive_input_variables(patched_datafinder, config_user):
             'project': 'ICON',
             'start_year': 1990,
             'timerange': '1990/2000',
+            'var_type': 'atm_2d_ml',
             # Added by _add_cmor_info
             'standard_name':
-            'surface_downwelling_shortwave_flux_in_air_assuming_clear_sky',
-            'long_name': 'Surface Downwelling Clear-Sky Shortwave Radiation',
+            'atmosphere_mass_content_of_cloud_condensed_water',
+            'long_name': 'Condensed Water Path',
             'modeling_realm': ['atmos'],
-            'original_short_name': 'rsdscs',
-            'units': 'W m-2',
+            'original_short_name': 'clwvi',
+            'units': 'kg m-2',
             # Added by _add_extra_facets
-            'var_type': 'atm_2d_ml',
+            'raw_name': 'cllvi',
             # Added by append
-            'variable_group': 'alb_group_derive_input_rsdscs',
-        }], 'alb_group_derive_input_rsuscs': [{
+            'variable_group': 'lwp_group_derive_input_clwvi',
+        }], 'lwp_group_derive_input_clivi': [{
             # Added by get_required
-            'short_name': 'rsuscs',
+            'short_name': 'clivi',
             # Already present in variables
             'dataset': 'ICON',
             'derive': True,
@@ -3747,17 +3752,15 @@ def test_get_derive_input_variables(patched_datafinder, config_user):
             'project': 'ICON',
             'start_year': 1990,
             'timerange': '1990/2000',
-            # Added by _add_cmor_info
-            'standard_name':
-            'surface_upwelling_shortwave_flux_in_air_assuming_clear_sky',
-            'long_name': 'Surface Upwelling Clear-Sky Shortwave Radiation',
-            'modeling_realm': ['atmos'],
-            'original_short_name': 'rsuscs',
-            'units': 'W m-2',
-            # Added by _add_extra_facets
             'var_type': 'atm_2d_ml',
+            # Added by _add_cmor_info
+            'standard_name': 'atmosphere_mass_content_of_cloud_ice',
+            'long_name': 'Ice Water Path',
+            'modeling_realm': ['atmos'],
+            'original_short_name': 'clivi',
+            'units': 'kg m-2',
             # Added by append
-            'variable_group': 'alb_group_derive_input_rsuscs',
+            'variable_group': 'lwp_group_derive_input_clivi',
         }],
     }
     assert derive_input == expected_derive_input

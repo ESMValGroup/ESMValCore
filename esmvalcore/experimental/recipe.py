@@ -10,8 +10,9 @@ from typing import Dict, Optional
 import yaml
 
 from esmvalcore._recipe import Recipe as RecipeEngine
-from esmvalcore.config import CFG, Session
+from esmvalcore.experimental.config import Session
 
+from . import CFG
 from ._logging import log_to_dir
 from .recipe_info import RecipeInfo
 from .recipe_output import RecipeOutput
@@ -99,11 +100,7 @@ class Recipe():
                             config_user=config_user,
                             recipe_file=self.path)
 
-    def run(
-        self,
-        task: Optional[str] = None,
-        session: Optional[Session] = None,
-    ):
+    def run(self, task: str = None, session: Session = None):
         """Run the recipe.
 
         This function loads the recipe into the ESMValCore recipe format

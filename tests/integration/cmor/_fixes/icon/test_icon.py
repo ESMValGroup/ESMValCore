@@ -9,10 +9,10 @@ from iris import NameConstraint
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
-from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi, Siconc, Siconca
+from esmvalcore._config import get_extra_facets
+from esmvalcore.cmor._fixes.icon.icon import AllVars, Siconc, Siconca
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
-from esmvalcore.config._config import get_extra_facets
 
 # Note: test_data_path is defined in tests/integration/cmor/_fixes/conftest.py
 
@@ -324,33 +324,19 @@ def test_areacello_fix(cubes_grid):
     check_lat_lon(cube)
 
 
-# Test clwvi (for extra fix)
+# Test clwvi (for extra_facets)
 
 
 def test_get_clwvi_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'clwvi')
-    assert fix == [Clwvi(None), AllVars(None)]
+    assert fix == [AllVars(None)]
 
 
-def test_clwvi_fix(cubes_regular_grid):
+def test_clwvi_fix(cubes_2d):
     """Test fix."""
-    cubes = CubeList([
-        cubes_regular_grid[0].copy(),
-        cubes_regular_grid[0].copy()
-    ])
-    cubes[0].var_name = 'cllvi'
-    cubes[1].var_name = 'clivi'
-    cubes[0].units = '1e3 kg m-2'
-    cubes[1].units = '1e3 kg m-2'
-
-    vardef = get_var_info('ICON', 'Amon', 'clwvi')
-    extra_facets = get_extra_facets('ICON', 'ICON', 'Amon', 'clwvi', ())
-    clwvi_fix = Clwvi(vardef, extra_facets=extra_facets)
-    allvars_fix = get_allvars_fix('Amon', 'clwvi')
-
-    fixed_cubes = clwvi_fix.fix_metadata(cubes)
-    fixed_cubes = allvars_fix.fix_metadata(fixed_cubes)
+    fix = get_allvars_fix('Amon', 'clwvi')
+    fixed_cubes = fix.fix_metadata(cubes_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -358,32 +344,6 @@ def test_clwvi_fix(cubes_regular_grid):
     assert cube.standard_name == ('atmosphere_mass_content_of_cloud_'
                                   'condensed_water')
     assert cube.long_name == 'Condensed Water Path'
-    assert cube.units == 'kg m-2'
-    assert 'positive' not in cube.attributes
-
-    np.testing.assert_allclose(cube.data, [[[0.0, 2000.0], [4000.0, 6000.0]]])
-
-
-# Test lwp (for extra_facets)
-
-
-def test_get_lwp_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes('ICON', 'ICON', 'AERmon', 'lwp')
-    assert fix == [AllVars(None)]
-
-
-def test_lwp_fix(cubes_2d):
-    """Test fix."""
-    fix = get_allvars_fix('AERmon', 'lwp')
-    fixed_cubes = fix.fix_metadata(cubes_2d)
-
-    assert len(fixed_cubes) == 1
-    cube = fixed_cubes[0]
-    assert cube.var_name == 'lwp'
-    assert cube.standard_name == ('atmosphere_mass_content_of_cloud_liquid_'
-                                  'water')
-    assert cube.long_name == 'Liquid Water Path'
     assert cube.units == 'kg m-2'
     assert 'positive' not in cube.attributes
 

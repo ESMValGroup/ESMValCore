@@ -991,7 +991,7 @@
         "format": [
             "netCDF, CF-1.4"
         ],
-        "index_node": "esgf.ceda.ac.uk",
+        "index_node": "esgf-index1.ceda.ac.uk",
         "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_200512-203011.nc_1",
         "institute": [
             "MOHC"
@@ -1167,7 +1167,7 @@
         "format": [
             "netCDF, CF-1.4"
         ],
-        "index_node": "esgf.ceda.ac.uk",
+        "index_node": "esgf-index1.ceda.ac.uk",
         "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_203012-205511.nc_1",
         "institute": [
             "MOHC"
@@ -1343,7 +1343,7 @@
         "format": [
             "netCDF, CF-1.4"
         ],
-        "index_node": "esgf.ceda.ac.uk",
+        "index_node": "esgf-index1.ceda.ac.uk",
         "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc_1",
         "institute": [
             "MOHC"
@@ -1519,7 +1519,7 @@
         "format": [
             "netCDF, CF-1.4"
         ],
-        "index_node": "esgf.ceda.ac.uk",
+        "index_node": "esgf-index1.ceda.ac.uk",
         "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc_1",
         "institute": [
             "MOHC"
@@ -1695,7 +1695,7 @@
         "format": [
             "netCDF, CF-1.4"
         ],
-        "index_node": "esgf.ceda.ac.uk",
+        "index_node": "esgf-index1.ceda.ac.uk",
         "instance_id": "cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531.tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc",
         "institute": [
             "MOHC"

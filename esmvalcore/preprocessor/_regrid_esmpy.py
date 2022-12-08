@@ -7,6 +7,7 @@ import numpy as np
 
 from ._mapping import get_empty_data, map_slices, ref_to_dims_index
 
+
 ESMF_MANAGER = ESMF.Manager(debug=False)
 
 ESMF_LON, ESMF_LAT = 0, 1
@@ -72,9 +73,8 @@ def coords_iris_to_esmpy(lat, lon, circular):
         esmpy_lat_corners = cf_2d_bounds_to_esmpy_corners(lat.bounds, circular)
         esmpy_lon_corners = cf_2d_bounds_to_esmpy_corners(lon.bounds, circular)
     else:
-        raise NotImplementedError(
-            f'Coord dimension is {dim}. Expected 1 or 2.'
-        )
+        raise NotImplementedError('Coord dimension is {}. Expected 1 or 2.'
+                                  ''.format(dim))
     return esmpy_lat, esmpy_lon, esmpy_lat_corners, esmpy_lon_corners
 
 
@@ -202,6 +202,7 @@ def build_regridder_2d(src_rep, dst_rep, regrid_method, mask_threshold):
 
 
 def build_regridder_3d(src_rep, dst_rep, regrid_method, mask_threshold):
+    # pylint: disable=too-many-locals
     # The necessary refactoring will be done for the full 3d regridding.
     """Build regridder for 2.5d regridding."""
     esmf_regridders = []
@@ -294,11 +295,6 @@ def get_grid_representants(src, dst):
         if src_rep.ndim == 3:
             dims = [dim + 1 for dim in dims]
         aux_coords_and_dims.append((coord, dims))
-
-    # Add scalar dimensions of source cube to target
-    for scalar_coord in src.coords(dimensions=()):
-        aux_coords_and_dims.append((scalar_coord, ()))
-
     dst_rep = iris.cube.Cube(
         data=get_empty_data(dst_shape, src.dtype),
         standard_name=src.standard_name,
@@ -321,12 +317,12 @@ def regrid(src, dst, method='linear'):
 
     Parameters
     ----------
-    src: :class:`iris.cube.Cube`
+    src_cube: :class:`iris.cube.Cube`
         Source data. Must have latitude and longitude coords.
         These can be 1d or 2d and should have bounds.
-    dst: :class:`iris.cube.Cube`
+    dst_cube: :class:`iris.cube.Cube`
         Defines the target grid.
-    method:
+    regrid_method:
         Selects the regridding method.
         Can be 'linear', 'area_weighted',
         or 'nearest'. See ESMPy_.

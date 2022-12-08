@@ -7,6 +7,7 @@ masking with ancillary variables, masking with Natural Earth shapefiles
 
 import logging
 import os
+import warnings
 
 import cartopy.io.shapereader as shpreader
 import dask.array as da
@@ -15,6 +16,8 @@ import numpy as np
 import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
 from iris.util import rolling_window
+
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +62,7 @@ def _apply_fx_mask(fx_mask, var_data):
     return var_data
 
 
-def mask_landsea(cube, mask_out):
+def mask_landsea(cube, mask_out, always_use_ne_mask=False):
     """Mask out either land mass or sea (oceans, seas and lakes).
 
     It uses dedicated ancillary variables (sftlf or sftof) or,
@@ -76,6 +79,18 @@ def mask_landsea(cube, mask_out):
 
     mask_out: str
         either "land" to mask out land mass or "sea" to mask out seas.
+
+    always_use_ne_mask: bool, optional (default: False)
+        always apply Natural Earths mask, regardless if fx files are available
+        or not.
+
+        .. warning::
+            This option has been deprecated in ESMValCore version 2.5. To
+            always use Natural Earth masks, either explicitly remove all
+            ``ancillary_variables`` from the input cube (when this function is
+            used directly) or specify ``fx_variables: null`` as option for this
+            preprocessor in the recipe (when this function is used as part of
+            ESMValTool).
 
     Returns
     -------
@@ -97,35 +112,55 @@ def mask_landsea(cube, mask_out):
         'sea': os.path.join(cwd, 'ne_masks/ne_50m_ocean.shp')
     }
 
-    # preserve importance order: try stflf first then sftof
-    fx_cube = None
-    try:
-        fx_cube = cube.ancillary_variable('land_area_fraction')
-    except iris.exceptions.AncillaryVariableNotFoundError:
+    if not always_use_ne_mask:
+        # preserve importance order: try stflf first then sftof
+        fx_cube = None
         try:
-            fx_cube = cube.ancillary_variable('sea_area_fraction')
+            fx_cube = cube.ancillary_variable('land_area_fraction')
         except iris.exceptions.AncillaryVariableNotFoundError:
-            logger.debug('Ancillary variables land/sea area fraction not '
-                         'found in cube. Check fx_file availability.')
+            try:
+                fx_cube = cube.ancillary_variable('sea_area_fraction')
+            except iris.exceptions.AncillaryVariableNotFoundError:
+                logger.debug('Ancillary variables land/sea area fraction '
+                             'not found in cube. Check fx_file availability.')
 
-    if fx_cube:
-        fx_cube_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
-        landsea_mask = _get_fx_mask(fx_cube_data, mask_out,
-                                    fx_cube.var_name)
-        cube.data = _apply_fx_mask(landsea_mask, cube.data)
-        logger.debug("Applying land-sea mask: %s", fx_cube.var_name)
+        if fx_cube:
+            fx_cube_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
+            landsea_mask = _get_fx_mask(fx_cube_data, mask_out,
+                                        fx_cube.var_name)
+            cube.data = _apply_fx_mask(landsea_mask, cube.data)
+            logger.debug("Applying land-sea mask: %s", fx_cube.var_name)
+        else:
+            if cube.coord('longitude').points.ndim < 2:
+                cube = _mask_with_shp(cube, shapefiles[mask_out], [
+                    0,
+                ])
+                logger.debug(
+                    "Applying land-sea mask from Natural Earth"
+                    " shapefile: \n%s", shapefiles[mask_out])
+            else:
+                msg = ("Use of shapefiles with irregular grids not "
+                       "yet implemented, land-sea mask not applied.")
+                raise ValueError(msg)
     else:
+        deprecation_msg = (
+            "The option ``always_use_ne_masks``' has been deprecated in "
+            "ESMValCore version 2.5. To always use Natural Earth masks, "
+            "either explicitly remove all ``ancillary_variables`` from the "
+            "input cube (when this function is used directly) or specify "
+            "``fx_variables: null`` as option for this preprocessor in the "
+            "recipe (when this function is used as part of ESMValTool).")
+        warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
         if cube.coord('longitude').points.ndim < 2:
             cube = _mask_with_shp(cube, shapefiles[mask_out], [
                 0,
             ])
             logger.debug(
-                "Applying land-sea mask from Natural Earth shapefile: \n%s",
-                shapefiles[mask_out],
-            )
+                "Applying land-sea mask from Natural Earth"
+                " shapefile: \n%s", shapefiles[mask_out])
         else:
-            msg = ("Use of shapefiles with irregular grids not yet "
-                   "implemented, land-sea mask not applied.")
+            msg = ("Use of shapefiles with irregular grids not "
+                   "yet implemented, land-sea mask not applied.")
             raise ValueError(msg)
 
     return cube
@@ -134,8 +169,8 @@ def mask_landsea(cube, mask_out):
 def mask_landseaice(cube, mask_out):
     """Mask out either landsea (combined) or ice.
 
-    Function that masks out either landsea (land and seas) or ice (Antarctica,
-    Greenland and some glaciers).
+    Function that masks out either landsea (land and seas) or ice (Antarctica
+    and Greenland and some wee glaciers).
 
     It uses dedicated ancillary variables (sftgif).
 
@@ -234,7 +269,7 @@ def _get_geometries_from_shp(shapefilename):
     """Get the mask geometries out from a shapefile."""
     reader = shpreader.Reader(shapefilename)
     # Index 0 grabs the lowest resolution mask (no zoom)
-    geometries = list(reader.geometries())
+    geometries = [contour for contour in reader.geometries()]
     if not geometries:
         msg = "Could not find any geometry in {}".format(shapefilename)
         raise ValueError(msg)
@@ -342,7 +377,7 @@ def count_spells(data, threshold, axis, spell_length):
         axis += data.ndim
     # Threshold the data to find the 'significant' points.
     if not threshold:
-        data_hits = np.ones_like(data, dtype=bool)
+        data_hits = data
     else:
         data_hits = data > float(threshold)
     # Make an array with data values "windowed" along the time axis.
@@ -610,8 +645,7 @@ def mask_fillvalues(products,
                     used.add(product)
             else:
                 raise NotImplementedError(
-                    f"Unable to handle {n_dims} dimensional data"
-                )
+                    "Unable to handle {} dimensional data".format(n_dims))
 
     if np.any(combined_mask):
         logger.debug("Applying fillvalues mask")
@@ -639,9 +673,8 @@ def _get_fillvalues_mask(cube, threshold_fraction, min_value, time_window):
     # basic checks
     if threshold_fraction < 0 or threshold_fraction > 1.0:
         raise ValueError(
-            f"Fraction of missing values {threshold_fraction} should be "
-            f"between 0 and 1.0"
-        )
+            "Fraction of missing values {} should be between 0 and 1.0".format(
+                threshold_fraction))
     nr_time_points = len(cube.coord('time').points)
     if time_window > nr_time_points:
         msg = "Time window (in time units) larger than total time span. Stop."

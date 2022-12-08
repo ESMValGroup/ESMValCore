@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from esmvalcore.config import _esgf_pyclient
+from esmvalcore._config import _esgf_pyclient
 
 DEFAULT_CONFIG: dict = {
     'logon': {
@@ -14,7 +14,7 @@ DEFAULT_CONFIG: dict = {
     },
     'search_connection': {
         'urls': [
-            'https://esgf.ceda.ac.uk/esg-search',
+            'https://esgf-index1.ceda.ac.uk/esg-search',
             'https://esgf-node.llnl.gov/esg-search',
             'https://esgf-data.dkrz.de/esg-search',
             'https://esgf-node.ipsl.upmc.fr/esg-search',
@@ -28,7 +28,7 @@ DEFAULT_CONFIG: dict = {
         'timeout':
         120,
         'cache':
-        Path.home() / '.esmvaltool' / 'cache' / 'pyesgf-search-results',
+        str(Path.home() / '.esmvaltool' / 'cache' / 'pyesgf-search-results'),
         'expire_after':
         86400,
     },

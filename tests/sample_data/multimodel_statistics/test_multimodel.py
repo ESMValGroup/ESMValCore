@@ -595,8 +595,6 @@ def test_edge_case_time_not_in_middle_of_months(span):
         generate_cube_from_dates(dates1),
         generate_cube_from_dates(dates2),
     )
-    with pytest.raises(ValueError, match=msg):
-        multimodel_regression_test(name=name, span=span, cubes=cubes)
 
     statistic = 'min'
     statistics = (statistic, )
@@ -683,6 +681,7 @@ class PreprocessorFile:
                 identifier.append(attribute)
 
         return '_'.join(identifier)
+
 
 def test_return_products():
     """Check that the right product set is returned."""
@@ -809,8 +808,6 @@ def test_daily_inconsistent_calendars():
         offset='days since 1850-01-01',
         fill_val=1,
     )
-    with pytest.raises(ValueError, match=msg):
-        multimodel_regression_test(name=name, span=span, cubes=cubes)
 
     noleapcube = generate_cube_from_dates(
         noleapdates,
@@ -818,6 +815,7 @@ def test_daily_inconsistent_calendars():
         offset='days since 1850-01-01',
         fill_val=3,
     )
+
     cubes = [leapcube, noleapcube]
 
     # span=full

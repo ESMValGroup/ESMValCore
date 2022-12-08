@@ -41,7 +41,7 @@
         "format": [
             "netCDF, CF-1.4"
         ],
-        "index_node": "esgf.ceda.ac.uk",
+        "index_node": "esgf-index1.ceda.ac.uk",
         "instance_id": "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1.v20121010.tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc",
         "institute": [
             "FIO"

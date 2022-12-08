@@ -196,10 +196,6 @@ class TestHelpers(tests.Test):
                                points=depth_points,
                                bounds=depth_bounds,
                                has_bounds=mock.Mock(return_value=True))
-        self.scalar_coord = mock.Mock(iris.coords.AuxCoord,
-                                      long_name='scalar_coord',
-                                      ndim=1,
-                                      shape=(1,))
         data_shape = lon_2d_points.shape
         raw_data = np.arange(np.prod(data_shape)).reshape(data_shape)
         mask = np.zeros(data_shape)
@@ -229,15 +225,13 @@ class TestHelpers(tests.Test):
         self.coords = {
             'latitude': self.lat_2d,
             'longitude': self.lon_2d,
-            'depth': self.depth,
-            'scalar_coord': self.scalar_coord,
+            'depth': self.depth
         }
         self.coord_dims = {
             'latitude': (0, 1),
             'longitude': (0, 1),
             self.lat_2d: (0, 1),
             self.lon_2d: (0, 1),
-            'scalar_coord': (),
         }
 
         def coord(name=None, axis=None):
@@ -246,12 +240,10 @@ class TestHelpers(tests.Test):
                 raise CoordinateNotFoundError()
             return self.coords[name]
 
-        def coords(dim_coords=None, dimensions=None):
+        def coords(dim_coords=None):
             """Return coordinates for mock cube."""
             if dim_coords:
                 return []
-            if dimensions == ():
-                return [self.scalar_coord]
             return list(self.coords.values())
 
         self.cube = mock.Mock(
@@ -288,12 +280,6 @@ class TestHelpers(tests.Test):
                 return self.coords['depth']
             return self.coords[name]
 
-        def coords_3d(dimensions=None):
-            """Return coordinates for mock cube."""
-            if dimensions == ():
-                return []
-            return [self.lat_2d, self.lon_2d, self.depth]
-
         self.cube_3d = mock.Mock(
             spec=iris.cube.Cube,
             dtype=np.float32,
@@ -308,7 +294,6 @@ class TestHelpers(tests.Test):
             data=self.data_3d,
             coord=coord_3d,
             coord_dims=lambda name: self.coord_dims_3d[name],
-            coords=coords_3d,
         )
         self.cube.__getitem__ = mock.Mock(return_value=self.cube)
 
@@ -651,7 +636,7 @@ class TestHelpers(tests.Test):
             attributes=src.attributes,
             cell_methods=src.cell_methods,
             dim_coords_and_dims=[],
-            aux_coords_and_dims=[(self.scalar_coord, ())],
+            aux_coords_and_dims=[],
         )
 
     @mock.patch('esmvalcore.preprocessor._regrid_esmpy.map_slices')

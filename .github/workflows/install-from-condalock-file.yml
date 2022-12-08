@@ -61,7 +61,9 @@ jobs:
       - shell: bash -l {0}
         run: flake8
       - shell: bash -l {0}
-        run: pytest -n 2 -m "not installation"
+        run: pytest -n 2 -m "not installation and not sequential"
+      - shell: bash -l {0}
+        run: pytest -n 0 -m "sequential"
       - name: Upload artifacts
         if: ${{ always() }}  # upload artifacts even if fail
         uses: actions/upload-artifact@v2

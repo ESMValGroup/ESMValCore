@@ -7,6 +7,7 @@ get_output_file:
       original_short_name: ta
       dataset: HadGEM2-ES
       project: CMIP5
+      cmor_table: CMIP5
       institute: [INPE, MOHC]
       frequency: mon
       modeling_realm: [atmos]
@@ -33,6 +34,7 @@ get_output_file:
       original_short_name: tas
       dataset: EMAC
       project: EMAC
+      cmor_table: CMIP6
       frequency: mon
       mip: Amon
       exp: amip
@@ -48,6 +50,7 @@ get_output_file:
       original_short_name: tas
       dataset: EMAC
       project: EMAC
+      cmor_table: CMIP6
       frequency: mon
       mip: Amon
       exp: piControl
@@ -67,6 +70,7 @@ get_output_file:
       original_short_name: tas
       dataset: ICON
       project: ICON
+      cmor_table: CMIP6
       frequency: mon
       mip: Amon
       exp: amip
@@ -82,6 +86,7 @@ get_output_file:
       original_short_name: tas
       dataset: ICON
       project: ICON
+      cmor_table: CMIP6
       frequency: mon
       mip: Amon
       exp: amip
@@ -100,6 +105,7 @@ get_output_file:
       original_short_name: tas
       dataset: CESM2
       project: CESM
+      cmor_table: CMIP6
       frequency: mon
       mip: Amon
       exp: amip
@@ -117,6 +123,7 @@ get_output_file:
       original_short_name: tas
       dataset: CESM2
       project: CESM
+      cmor_table: CMIP6
       frequency: mon
       mip: Amon
       exp: amip
@@ -156,6 +163,7 @@ get_input_filelist:
       original_short_name: ta
       dataset: HadGEM2-ES
       project: CMIP5
+      cmor_table: CMIP5
       institute: [INPE, MOHC]
       frequency: mon
       modeling_realm: [atmos]
@@ -185,6 +193,7 @@ get_input_filelist:
       original_short_name: o3
       dataset: HadGEM2-ES
       project: CMIP6
+      cmor_table: CMIP6
       institute: [INPE, MOHC]
       frequency: mon
       modeling_realm: [atmos]
@@ -233,6 +242,7 @@ get_input_filelist:
       original_short_name: ta
       dataset: HadGEM2-ES
       project: CMIP5
+      cmor_table: CMIP5
       institute: [INPE, MOHC]
       frequency: mon
       modeling_realm: [atmos]
@@ -418,6 +428,7 @@ get_input_filelist:
       dataset: HadGEM3-GC31-LL
       activity: CMIP
       project: CMIP6
+      cmor_table: CMIP6
       institute: [MOHC, NERC]
       frequency: mon
       modeling_realm: [atmos]
@@ -448,6 +459,7 @@ get_input_filelist:
       original_short_name: ta
       dataset: HADGEM1
       project: CMIP3
+      cmor_table: CMIP3
       institute: [UKMO]
       frequency: mon
       modeling_realm: [atmos]
@@ -477,6 +489,7 @@ get_input_filelist:
       original_short_name: tas
       dataset: ERA-Interim
       project: OBS
+      cmor_table: CMIP5
       frequency: mon
       mip: Amon
       tier: 3
@@ -506,6 +519,7 @@ get_input_filelist:
       original_short_name: tas
       dataset: ERA-Interim
       project: OBS6
+      cmor_table: CMIP6
       frequency: mon
       mip: Amon
       tier: 3
@@ -537,6 +551,7 @@ get_input_filelist:
       root: thredds/tgcc/store
       exp: historical
       project: IPSLCM
+      cmor_table: CMIP6
       frequency: mon
       mip: Amon
       account: p86caub
@@ -586,6 +601,7 @@ get_input_filelist:
       original_short_name: areacella
       dataset: HadGEM2-ES
       project: CMIP5
+      cmor_table: CMIP5
       institute: [INPE, MOHC]
       frequency: fx
       modeling_realm: [atmos]
@@ -611,6 +627,7 @@ get_input_filelist:
       original_short_name: sftlf
       dataset: HadGEM2-ES
       project: CMIP5
+      cmor_table: CMIP5
       institute: [INPE, MOHC]
       frequency: fx
       modeling_realm: [atmos]
@@ -636,6 +653,7 @@ get_input_filelist:
       original_short_name: orog
       dataset: HadGEM2-ES
       project: CMIP5
+      cmor_table: CMIP5
       institute: [INPE, MOHC]
       frequency: fx
       modeling_realm: [atmos]
@@ -660,6 +678,7 @@ get_input_filelist:
       dataset: HadGEM3-GC31-LL
       activity: CMIP
       project: CMIP6
+      cmor_table: CMIP6
       institute: [MOHC, NERC]
       frequency: fx
       modeling_realm: [ocean]
@@ -688,6 +707,7 @@ get_input_filelist:
       dataset: HadGEM3-GC31-LL
       activity: CMIP
       project: CMIP6
+      cmor_table: CMIP6
       institute: [MOHC, NERC]
       frequency: mon
       modeling_realm: [ocean]
@@ -717,6 +737,7 @@ get_input_filelist:
       dataset: HadGEM3-GC31-LL
       activity: CMIP
       project: CMIP6
+      cmor_table: CMIP6
       institute: [MOHC, NERC]
       frequency: mon
       modeling_realm: [ocean]
@@ -745,6 +766,7 @@ get_input_filelist:
       dataset: HadGEM3-GC31-LL
       activity: CMIP
       project: CMIP6
+      cmor_table: CMIP6
       institute: [MOHC, NERC]
       frequency: fx
       modeling_realm: [ocean]
@@ -769,6 +791,7 @@ get_input_filelist:
       original_short_name: areacella
       dataset: HADGEM1
       project: CMIP3
+      cmor_table: CMIP3
       institute: [UKMO]
       frequency: fx
       modeling_realm: [atmos]
@@ -795,6 +818,7 @@ get_input_filelist:
       original_short_name: basin
       dataset: ERA-Interim
       project: OBS
+      cmor_table: CMIP5
       frequency: fx
       mip: fx
       tier: 3
@@ -820,6 +844,7 @@ get_input_filelist:
       original_short_name: deptho
       dataset: ERA-Interim
       project: OBS6
+      cmor_table: CMIP6
       frequency: mon
       mip: Omon
       tier: 3
@@ -848,6 +873,7 @@ get_input_filelist:
       original_short_name: deptho
       dataset: ERA-Interim
       project: OBS6
+      cmor_table: CMIP6
       frequency: mon
       mip: Omon
       tier: 3
@@ -877,6 +903,7 @@ get_input_filelist:
       original_short_name: tas
       dataset: EMAC
       project: EMAC
+      cmor_table: CMIP6
       frequency: mon
       mip: Amon
       exp: amip
@@ -911,6 +938,7 @@ get_input_filelist:
       original_short_name: tas
       dataset: EMAC
       project: EMAC
+      cmor_table: CMIP6
       frequency: mon
       mip: Amon
       exp: amip
@@ -949,6 +977,7 @@ get_input_filelist:
       original_short_name: tas
       dataset: ICON
       project: ICON
+      cmor_table: CMIP6
       frequency: mon
       mip: Amon
       exp: amip
@@ -978,6 +1007,7 @@ get_input_filelist:
       original_short_name: tas
       dataset: ICON
       project: ICON
+      cmor_table: CMIP6
       frequency: mon
       mip: Amon
       exp: amip
@@ -1011,6 +1041,7 @@ get_input_filelist:
       original_short_name: tas
       dataset: CESM2
       project: CESM
+      cmor_table: CMIP6
       frequency: mon
       mip: Amon
       case: f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1
@@ -1039,6 +1070,7 @@ get_input_filelist:
       original_short_name: tas
       dataset: CESM2
       project: CESM
+      cmor_table: CMIP6
       frequency: mon
       mip: Amon
       case: f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1

@@ -2,7 +2,7 @@
 
 import pyesgf.search
 
-from ..config._esgf_pyclient import get_esgf_config
+from .._config._esgf_pyclient import get_esgf_config
 
 FACETS = {
     'CMIP3': {
