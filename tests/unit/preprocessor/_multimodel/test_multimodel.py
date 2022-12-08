@@ -1050,7 +1050,7 @@ def test_empty_input_ensemble_statistics():
         )
 
 
-STATS = ['mean', 'median', 'min', 'max', 'p42.314']  # TODO: std_dev?
+STATS = ['mean', 'median', 'min', 'max', 'p42.314', 'std_dev']
 
 
 @pytest.mark.parametrize('stat', STATS)
@@ -1083,7 +1083,12 @@ def test_single_input_multi_model_statistics(products, stat):
         assert len(result.cubes) == 1
         cube = result.cubes[0]
 
-    np.testing.assert_allclose(cube.data, [1.0, 1.0, 1.0])
+    if stat == 'std_dev':
+        assert_array_allclose(
+            cube.data, np.ma.masked_invalid([np.nan, np.nan, np.nan])
+        )
+    else:
+        assert_array_allclose(cube.data, np.ma.array([1.0, 1.0, 1.0]))
 
 
 @pytest.mark.parametrize('stat', STATS)
@@ -1117,4 +1122,10 @@ def test_single_input_ensemble_statistics(products, stat):
     result = next(iter(results))
     assert len(result.cubes) == 1
     cube = result.cubes[0]
-    np.testing.assert_allclose(cube.data, [1.0, 1.0, 1.0])
+
+    if stat == 'std_dev':
+        assert_array_allclose(
+            cube.data, np.ma.masked_invalid([np.nan, np.nan, np.nan])
+        )
+    else:
+        assert_array_allclose(cube.data, np.ma.array([1.0, 1.0, 1.0]))
