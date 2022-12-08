@@ -31,7 +31,6 @@ REQUIREMENTS = {
         'cf-units',
         'dask[array]',
         'esgf-pyclient>=0.3.1',
-        'esmf-regrid',
         'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
         'fiona',
         'fire',
@@ -77,8 +76,8 @@ REQUIREMENTS = {
     ],
     # Documentation dependencies
     'doc': [
-        'autodocsumm>=0.2.2',
-        'sphinx>5',
+        'autodocsumm',
+        'sphinx>2',
         'sphinx_rtd_theme',
     ],
     # Development dependencies
