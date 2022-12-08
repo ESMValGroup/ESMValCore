@@ -557,7 +557,7 @@ def find_files(
     debug
         When debug is set to :obj:`True`, the function will return a tuple
         with the first element containing the files that were found
-        and the second element containing the globs patterns that
+        and the second element containing the :func:`glob.glob` patterns that
         were used to search for files.
     **facets
         Facets used to search for files. An ``'*'`` can be used to match

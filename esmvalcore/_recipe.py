@@ -29,11 +29,15 @@ from .config._config import (
 from .config._diagnostics import TAGS
 from .exceptions import InputFilesNotFound, RecipeError
 from .local import _dates_to_timerange as dates_to_timerange
-from .local import _get_input_filelist as get_input_filelist
 from .local import _get_multiproduct_filename as get_multiproduct_filename
 from .local import _get_output_file as get_output_file
 from .local import _get_start_end_date as get_start_end_date
-from .local import _get_timerange_from_years, _parse_period, _truncate_dates
+from .local import (
+    _get_timerange_from_years,
+    _parse_period,
+    _truncate_dates,
+    find_files,
+)
 from .preprocessor import (
     DEFAULT_ORDER,
     FINAL_STEPS,
@@ -570,8 +574,6 @@ def _read_attributes(filename):
 
 def _get_input_files(variable, config_user):
     """Get the input files for a single dataset (locally and via download)."""
-    if variable['project'] == 'CMIP5' and variable['frequency'] == 'fx':
-        variable['ensemble'] = 'r0i0p0'
     if variable['frequency'] != 'fx':
         start_year, end_year = _parse_period(variable['timerange'])
 
@@ -580,7 +582,13 @@ def _get_input_files(variable, config_user):
 
         variable['start_year'] = start_year
         variable['end_year'] = end_year
-    input_files, globs = get_input_filelist(variable=variable)
+
+    variable = dict(variable)
+    if variable['project'] == 'CMIP5' and variable['frequency'] == 'fx':
+        variable['ensemble'] = 'r0i0p0'
+    if variable['frequency'] == 'fx':
+        variable.pop('timerange', None)
+    input_files, globs = find_files(debug=True, **variable)
 
     # Set up downloading from ESGF if requested.
     if (not config_user['offline']
@@ -829,7 +837,7 @@ def _update_timerange(variable, config_user):
     if '*' in timerange:
         facets = deepcopy(variable)
         facets.pop('timerange', None)
-        files, _ = get_input_filelist(facets)
+        files = find_files(**facets)
         if not files and not config_user.get('offline', True):
             files = [file.name for file in esgf.find_files(**facets)]
 
@@ -918,6 +926,8 @@ def _get_preprocessor_products(variables, profile, order, ancestor_products,
     preproc_dir = config_user['preproc_dir']
 
     for variable in variables:
+        if variable['frequency'] == 'fx':
+            variable.pop('timerange', None)
         _update_timerange(variable, config_user)
         variable['filename'] = get_output_file(variable,
                                                config_user['preproc_dir'])

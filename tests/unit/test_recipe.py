@@ -261,7 +261,7 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
     local_files = local_file_options[local_availability]
 
     mocker.patch.object(_recipe,
-                        'get_input_filelist',
+                        'find_files',
                         autospec=True,
                         return_value=(list(local_files), []))
     mocker.patch.object(
@@ -311,9 +311,9 @@ def test_search_esgf_timerange(mocker, tmp_path, timerange):
     esgf_files = create_esgf_search_results()
 
     mocker.patch.object(_recipe,
-                        'get_input_filelist',
+                        'find_files',
                         autospec=True,
-                        return_value=([], []))
+                        return_value=[])
     mocker.patch.object(
         _recipe.esgf,
         'find_files',
