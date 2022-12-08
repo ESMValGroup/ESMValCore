@@ -241,11 +241,6 @@ class Test(tests.Test):
         expected = np.array([[[1]], [[1]], [[1]]])
         np.testing.assert_array_equal(result.data, expected)
 
-        # Make sure that dtype is not preserved (since conversion from float to
-        # int would be necessary)
-        assert np.issubdtype(self.unstructured_grid_cube.dtype, np.integer)
-        assert result.dtype == np.float64
-
         # Make sure that output is a masked array with correct fill value
         # (= maximum int)
         np.testing.assert_allclose(result.data.fill_value,
