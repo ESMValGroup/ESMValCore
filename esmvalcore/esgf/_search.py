@@ -195,10 +195,21 @@ def find_files(*, project, short_name, dataset, **facets):
     dataset : str
         The name of the dataset.
     **facets : typing.Union[str, list[str]]
-        Any other search facets. The special value ``'*'`` will match anything.
-        If no ``version`` facet is specified, the function returns only the
-        latest version of each file, while other omitted facets will default
-        to ``'*'``.
+        Any other search facets. An ``'*'`` can be used to match
+        any value. By default, only the latest version of a file will
+        be returned. To select all versions use ``version='*'`` while other
+        omitted facets will default to ``'*'``. It is also
+        possible to specify multiple values for a facet, e.g.
+        ``exp=['historical', 'ssp585']`` will match any file that belongs
+        to either the historical or ssp585 experiment.
+        The ``timerange`` facet can be specified in `ISO 8601 format
+        <https://en.wikipedia.org/wiki/ISO_8601>`__.
+
+    Note
+    ----
+    A value of ``timerange='*'`` is supported, but combining a ``'*'`` with
+    a time or period :ref:`as supported in the recipe <datasets>` is currently
+    not supported and will return all found files.
 
     Examples
     --------
