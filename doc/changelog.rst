@@ -2,6 +2,28 @@ Changelog
 =========
 
 
+.. _changelog-v2-7-1:
+
+
+v2.7.1
+------
+Highlights
+~~~~~~~~~~
+
+This is a bugfix release where we unpin `cf-units` to allow for latest `iris=3.4.0` to be installed.
+
+Installation
+~~~~~~~~~~~~
+
+- Unpin cf-units (`#1770 <https://github.com/ESMValGroup/ESMValCore/pull/1770>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Bug fixes
+~~~~~~~~~
+
+- Improve error handling if an esgf index node is offline (`#1834 <https://github.com/ESMValGroup/ESMValCore/pull/1834>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+
+
 .. _changelog-v2-7-0:
 
 
