@@ -208,8 +208,8 @@ class Clwvi(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            self.get_cube(cubes, var_name=['xlvi_cav', 'xlvi_ave']) +
-            self.get_cube(cubes, var_name=['xivi_cav', 'xivi_ave'])
+            self.get_cube(cubes, var_name=['xlvi_cav', 'xlvi_ave', 'xlvi']) +
+            self.get_cube(cubes, var_name=['xivi_cav', 'xivi_ave', 'xivi'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -245,8 +245,8 @@ class Pr(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            self.get_cube(cubes, var_name=['aprl', 'aprl_cav', 'aprl_ave']) +
-            self.get_cube(cubes, var_name=['aprc', 'aprc_cav', 'aprc_ave'])
+            self.get_cube(cubes, var_name=['aprl_cav', 'aprl_ave', 'aprl']) +
+            self.get_cube(cubes, var_name=['aprc_cav', 'aprc_ave', 'aprc'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -258,8 +258,8 @@ class Rlds(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            self.get_cube(cubes, var_name=['flxtbot_cav', 'flxtbot_ave']) -
-            self.get_cube(cubes, var_name=['tradsu_cav', 'tradsu_ave'])
+            self.get_cube(cubes, var_name=['flxtbot_cav', 'flxtbot_ave', 'flxsbot']) -
+            self.get_cube(cubes, var_name=['tradsu_cav', 'tradsu_ave', 'tradsu'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -280,8 +280,8 @@ class Rsds(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            self.get_cube(cubes, var_name=['flxsbot_cav', 'flxsbot_ave']) -
-            self.get_cube(cubes, var_name=['sradsu_cav', 'sradsu_ave'])
+            self.get_cube(cubes, var_name=['flxsbot_cav', 'flxsbot_ave', 'flxsbot']) -
+            self.get_cube(cubes, var_name=['sradsu_cav', 'sradsu_ave', 'sradsu'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -293,8 +293,8 @@ class Rsdt(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            self.get_cube(cubes, var_name=['flxstop_cav', 'flxstop_ave']) -
-            self.get_cube(cubes, var_name=['srad0u_cav', 'srad0u_ave'])
+            self.get_cube(cubes, var_name=['flxstop_cav', 'flxstop_ave', 'flxstop']) -
+            self.get_cube(cubes, var_name=['srad0u_cav', 'srad0u_ave', 'srad0u'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -315,8 +315,8 @@ class Rtmt(EmacFix):
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            self.get_cube(cubes, var_name=['flxttop_cav', 'flxttop_ave']) +
-            self.get_cube(cubes, var_name=['flxstop_cav', 'flxstop_ave'])
+            self.get_cube(cubes, var_name=['flxttop_cav', 'flxttop_ave', 'flxttop']) +
+            self.get_cube(cubes, var_name=['flxstop_cav', 'flxstop_ave', 'flxstop'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -379,10 +379,10 @@ class MP_BC_tot(EmacFix):  # noqa: N801
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            self.get_cube(cubes, var_name=['MP_BC_ki_cav', 'MP_BC_ki_ave']) +
-            self.get_cube(cubes, var_name=['MP_BC_ks_cav', 'MP_BC_ks_ave']) +
-            self.get_cube(cubes, var_name=['MP_BC_as_cav', 'MP_BC_as_ave']) +
-            self.get_cube(cubes, var_name=['MP_BC_cs_cav', 'MP_BC_cs_ave'])
+            self.get_cube(cubes, var_name=['MP_BC_ki_cav', 'MP_BC_ki_ave', 'MP_BC_ki']) +
+            self.get_cube(cubes, var_name=['MP_BC_ks_cav', 'MP_BC_ks_ave', 'MP_BC_ks']) +
+            self.get_cube(cubes, var_name=['MP_BC_as_cav', 'MP_BC_as_ave', 'MP_BC_as']) +
+            self.get_cube(cubes, var_name=['MP_BC_cs_cav', 'MP_BC_cs_ave', 'MP_BC_cs'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -394,10 +394,10 @@ class MP_DU_tot(EmacFix):  # noqa: N801
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            self.get_cube(cubes, var_name=['MP_DU_ai_cav', 'MP_DU_ai_ave']) +
-            self.get_cube(cubes, var_name=['MP_DU_as_cav', 'MP_DU_as_ave']) +
-            self.get_cube(cubes, var_name=['MP_DU_ci_cav', 'MP_DU_ci_ave']) +
-            self.get_cube(cubes, var_name=['MP_DU_cs_cav', 'MP_DU_cs_ave'])
+            self.get_cube(cubes, var_name=['MP_DU_ai_cav', 'MP_DU_ai_ave', 'MP_DU_ai']) +
+            self.get_cube(cubes, var_name=['MP_DU_as_cav', 'MP_DU_as_ave', 'MP_DU_as']) +
+            self.get_cube(cubes, var_name=['MP_DU_ci_cav', 'MP_DU_ci_ave', 'MP_DU_ci']) +
+            self.get_cube(cubes, var_name=['MP_DU_cs_cav', 'MP_DU_cs_ave', 'MP_DU_cs'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -410,13 +410,13 @@ class MP_SO4mm_tot(EmacFix):  # noqa: N801
         """Fix metadata."""
         cube = (
             self.get_cube(
-                cubes, var_name=['MP_SO4mm_ns_cav', 'MP_SO4mm_ns_ave']) +
+                cubes, var_name=['MP_SO4mm_ns_cav', 'MP_SO4mm_ns_ave', 'MP_SO4mm_ns']) +
             self.get_cube(
-                cubes, var_name=['MP_SO4mm_ks_cav', 'MP_SO4mm_ks_ave']) +
+                cubes, var_name=['MP_SO4mm_ks_cav', 'MP_SO4mm_ks_ave', 'MP_SO4mm_ks']) +
             self.get_cube(
-                cubes, var_name=['MP_SO4mm_as_cav', 'MP_SO4mm_as_ave']) +
+                cubes, var_name=['MP_SO4mm_as_cav', 'MP_SO4mm_as_ave', 'MP_SO4mm_as']) +
             self.get_cube(
-                cubes, var_name=['MP_SO4mm_cs_cav', 'MP_SO4mm_cs_ave'])
+                cubes, var_name=['MP_SO4mm_cs_cav', 'MP_SO4mm_cs_ave', 'MP_SO4mm_cs'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
@@ -428,9 +428,9 @@ class MP_SS_tot(EmacFix):  # noqa: N801
     def fix_metadata(self, cubes):
         """Fix metadata."""
         cube = (
-            self.get_cube(cubes, var_name=['MP_SS_ks_cav', 'MP_SS_ks_ave']) +
-            self.get_cube(cubes, var_name=['MP_SS_as_cav', 'MP_SS_as_ave']) +
-            self.get_cube(cubes, var_name=['MP_SS_cs_cav', 'MP_SS_cs_ave'])
+            self.get_cube(cubes, var_name=['MP_SS_ks_cav', 'MP_SS_ks_ave', 'MP_SS_ks']) +
+            self.get_cube(cubes, var_name=['MP_SS_as_cav', 'MP_SS_as_ave', 'MP_SS_as']) +
+            self.get_cube(cubes, var_name=['MP_SS_cs_cav', 'MP_SS_cs_ave', 'MP_SS_cs'])
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
