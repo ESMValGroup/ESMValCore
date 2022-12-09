@@ -109,7 +109,7 @@ def _get_start_end_date(filename):
             break
 
     if start_date is None or end_date is None:
-        raise ValueError(f'File {filename} dates do not match a recognized'
+        raise ValueError(f'File {filename} dates do not match a recognized '
                          'pattern and time can not be read from the file')
 
     return start_date, end_date
@@ -206,7 +206,7 @@ def _get_start_end_year(filename):
             break
 
     if start_year is None or end_year is None:
-        raise ValueError(f'File {filename} dates do not match a recognized'
+        raise ValueError(f'File {filename} dates do not match a recognized '
                          'pattern and time can not be read from the file')
 
     return int(start_year), int(end_year)
