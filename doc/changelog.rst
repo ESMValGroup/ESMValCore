@@ -27,6 +27,7 @@ Automatic testing
 ~~~~~~~~~~~~~~~~~
 
 - Removed unnecessary test that fails with iris 3.4.0 (`#1846 <https://github.com/ESMValGroup/ESMValCore/pull/1846>`__) `Manuel Schlund <https://github.com/schlunma>`__
+- Update CEDA ESGF index node hostname (`#1838 <https://github.com/ESMValGroup/ESMValCore/pull/1838>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 
 
 .. _changelog-v2-7-0:
