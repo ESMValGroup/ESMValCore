@@ -516,6 +516,25 @@ def _path2facets(path: Path, drs: str) -> dict[str, str]:
     return facets
 
 
+def _filter_versions_called_latest(
+    files: list['LocalFile'],
+) -> list['LocalFile']:
+    """Filter out versions called 'latest' if they are duplicates.
+
+    On compute clusters it is usual to have a symbolic link to the
+    latest version called 'latest'. Those need to be skipped in order to
+    find valid version names and avoid duplicate results.
+    """
+    resolved_valid_versions = {
+        f.resolve(strict=False)
+        for f in files if f.facets.get('version') != 'latest'
+    }
+    return [
+        f for f in files if f.facets.get('version') != 'latest' or f.resolve(
+            strict=False) not in resolved_valid_versions
+    ]
+
+
 def _select_latest_version(files: list['LocalFile']) -> list['LocalFile']:
     """Select only the latest version of files."""
 
@@ -604,15 +623,16 @@ def find_files(
         # Not sure how to handle a list of DRSs
         drs = ''
     files = []
+    filter_latest = False
     for filename in filenames:
         file = LocalFile(filename)
         file.facets.update(_path2facets(file, drs))
-        if 'version' in file.facets and file.facets['version'] == 'latest':
-            # On compute clusters it is usual to have a symbolic link
-            # to the latest version called 'latest'. Those need to be skipped
-            # in order to find valid version names.
-            continue
+        if file.facets.get('version') == 'latest':
+            filter_latest = True
         files.append(file)
+
+    if filter_latest:
+        files = _filter_versions_called_latest(files)
 
     if 'version' not in facets:
         files = _select_latest_version(files)
