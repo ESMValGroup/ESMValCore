@@ -10,7 +10,7 @@ v2.7.1
 Highlights
 ~~~~~~~~~~
 
-This is a bugfix release where we unpin `cf-units` to allow for latest `iris=3.4.0` to be installed. Changelog contains only changes that were made to the main branch.
+This is a bugfix release where we unpin `cf-units` to allow the latest `iris=3.4.0` to be installed. It also includes an update to the default configuration used when searching the ESGF for files, to account for a recent change of the CEDA ESGF index node hostname. The changelog contains only changes that were made to the ``main`` branch.
 
 Installation
 ~~~~~~~~~~~~
