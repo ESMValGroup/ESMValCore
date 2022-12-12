@@ -232,8 +232,9 @@ def check_preprocessor_settings(settings):
     for step in settings:
         if step not in DEFAULT_ORDER:
             raise ValueError(
-                "Unknown preprocessor function '{}', choose from: {}".format(
-                    step, ', '.join(DEFAULT_ORDER)))
+                f"Unknown preprocessor function '{step}', choose from: "
+                f"{', '.join(DEFAULT_ORDER)}"
+            )
 
         function = function = globals()[step]
         argspec = inspect.getfullargspec(function)
@@ -243,9 +244,10 @@ def check_preprocessor_settings(settings):
             invalid_args = set(settings[step]) - set(args)
             if invalid_args:
                 raise ValueError(
-                    "Invalid argument(s): {} encountered for preprocessor "
-                    "function {}. \nValid arguments are: [{}]".format(
-                        ', '.join(invalid_args), step, ', '.join(args)))
+                    f"Invalid argument(s): {', '.join(invalid_args)} "
+                    f"encountered for preprocessor function {step}. \n"
+                    f"Valid arguments are: [{', '.join(args)}]"
+                )
 
         # Check for missing arguments
         defaults = argspec.defaults
@@ -253,8 +255,9 @@ def check_preprocessor_settings(settings):
         missing_args = set(args[:end]) - set(settings[step])
         if missing_args:
             raise ValueError(
-                "Missing required argument(s) {} for preprocessor "
-                "function {}".format(missing_args, step))
+                f"Missing required argument(s) {missing_args} for "
+                f"preprocessor function {step}"
+            )
         # Final sanity check in case the above fails to catch a mistake
         try:
             signature = inspect.Signature.from_callable(function)
@@ -281,10 +284,9 @@ def _check_multi_model_settings(products):
             elif reference.settings[step] != settings:
                 raise ValueError(
                     "Unable to combine differing multi-dataset settings for "
-                    "{} and {}, {} and {}".format(reference.filename,
-                                                  product.filename,
-                                                  reference.settings[step],
-                                                  settings))
+                    f"{reference.filename} and {product.filename}, "
+                    f"{reference.settings[step]} and {settings}"
+                )
 
 
 def _get_multi_model_settings(products, step):
@@ -441,8 +443,8 @@ class PreprocessorFile(TrackedFile):
         """Apply preprocessor step to product."""
         if step not in self.settings:
             raise ValueError(
-                "PreprocessorFile {} has no settings for step {}".format(
-                    self, step))
+                f"PreprocessorFile {self} has no settings for step {step}"
+            )
         self.cubes = preprocess(self.cubes, step,
                                 input_files=self._input_files,
                                 **self.settings[step])
@@ -464,17 +466,50 @@ class PreprocessorFile(TrackedFile):
 
     def save(self):
         """Save cubes to disk."""
+        preprocess(self._cubes,
+                   'save',
+                   input_files=self._input_files,
+                   **self.settings['save'])
+        preprocess([],
+                   'cleanup',
+                   input_files=self._input_files,
+                   **self.settings.get('cleanup', {}))
+
+    def close(self):
+        """Close the file."""
         if self._cubes is not None:
-            preprocess(self._cubes,
-                       'save',
-                       input_files=self._input_files,
-                       **self.settings['save'])
-            preprocess([],
-                       'cleanup',
-                       input_files=self._input_files,
-                       **self.settings.get('cleanup', {}))
-            self.save_provenance()
+            self._update_attributes()
+            self.save()
             self._cubes = None
+            self.save_provenance()
+
+    def _update_attributes(self):
+        """Update product attributes from cube metadata."""
+        if not self._cubes:
+            return
+        ref_cube = self._cubes[0]
+
+        # Names
+        names = {
+            'standard_name': 'standard_name',
+            'long_name': 'long_name',
+            'var_name': 'short_name',
+        }
+        for (name_in, name_out) in names.items():
+            cube_val = getattr(ref_cube, name_in)
+            self.attributes[name_out] = '' if cube_val is None else cube_val
+
+        # Units
+        self.attributes['units'] = str(ref_cube.units)
+
+        # Frequency
+        if 'frequency' in ref_cube.attributes:
+            self.attributes['frequency'] = ref_cube.attributes['frequency']
+
+    @property
+    def is_closed(self):
+        """Check if the file is closed."""
+        return self._cubes is None
 
     def _initialize_entity(self):
         """Initialize the provenance entity representing the file."""
@@ -608,10 +643,10 @@ class PreprocessingTask(BaseTask):
                         if step in product.settings:
                             product.apply(step, self.debug)
                     if block == blocks[-1]:
-                        product.save()
+                        product.close()
 
         for product in self.products:
-            product.save()
+            product.close()
         metadata_files = write_metadata(self.products,
                                         self.write_ncl_interface)
         return metadata_files
@@ -627,11 +662,10 @@ class PreprocessingTask(BaseTask):
             'input files: ' + pformat(p._input_files),
             'settings: ' + pformat(p.settings),
         ]) for p in self.products)
-        txt = "{}: {}\norder: {}\n{}\n{}".format(
-            self.__class__.__name__,
-            self.name,
-            order,
-            products,
+        txt = "\n".join([
+            f"{self.__class__.__name__}: {self.name}",
+            f"order: {order}",
+            f"{products}",
             self.print_ancestors(),
-        )
+        ])
         return txt

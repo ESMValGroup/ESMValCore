@@ -154,7 +154,7 @@ BAD_TIMERANGES = [
 
 
 @pytest.mark.parametrize('timerange,message', BAD_TIMERANGES)
-def test_valid_time_selection_rehections(timerange, message):
+def test_valid_time_selection_rejections(timerange, message):
     """Check that bad definitions raise RecipeError."""
     with pytest.raises(check.RecipeError) as rec_err:
         check.valid_time_selection(timerange)

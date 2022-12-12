@@ -7,6 +7,7 @@ import os
 import re
 from copy import deepcopy
 from decimal import Decimal
+from pathlib import Path
 from typing import Dict
 
 import iris
@@ -557,23 +558,22 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         target_grid.ancillaries.clear()
         target_grid.files = [target_grid.files[0]]
         target_grid = target_grid.load()
+    elif isinstance(target_grid, (str, Path)) and os.path.isfile(target_grid):
+        target_grid = iris.load_cube(target_grid)
     elif isinstance(target_grid, str):
-        if os.path.isfile(target_grid):
-            target_grid = iris.load_cube(target_grid)
-        else:
-            # Generate a target grid from the provided cell-specification,
-            # and cache the resulting stock cube for later use.
-            target_grid = _CACHE.setdefault(
-                target_grid,
-                _global_stock_cube(target_grid, lat_offset, lon_offset),
-            )
-            # Align the target grid coordinate system to the source
-            # coordinate system.
-            src_cs = cube.coord_system()
-            xcoord = target_grid.coord(axis='x', dim_coords=True)
-            ycoord = target_grid.coord(axis='y', dim_coords=True)
-            xcoord.coord_system = src_cs
-            ycoord.coord_system = src_cs
+        # Generate a target grid from the provided cell-specification,
+        # and cache the resulting stock cube for later use.
+        target_grid = _CACHE.setdefault(
+            target_grid,
+            _global_stock_cube(target_grid, lat_offset, lon_offset),
+        )
+        # Align the target grid coordinate system to the source
+        # coordinate system.
+        src_cs = cube.coord_system()
+        xcoord = target_grid.coord(axis='x', dim_coords=True)
+        ycoord = target_grid.coord(axis='y', dim_coords=True)
+        xcoord.coord_system = src_cs
+        ycoord.coord_system = src_cs
     elif isinstance(target_grid, dict):
         # Generate a target grid from the provided specification,
         target_grid = _regional_stock_cube(target_grid)

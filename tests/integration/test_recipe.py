@@ -354,7 +354,6 @@ def test_fx_preproc_error(tmp_path, patched_datafinder, session):
 
 
 def test_default_preprocessor(tmp_path, patched_datafinder, session):
-
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -464,7 +463,6 @@ def test_disable_preprocessor_function(tmp_path, patched_datafinder, session):
 
 
 def test_default_fx_preprocessor(tmp_path, patched_datafinder, session):
-
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -638,7 +636,6 @@ def test_recipe_iso_timerange_as_dataset(tmp_path, patched_datafinder, session,
 
 
 def test_reference_dataset(tmp_path, patched_datafinder, session, monkeypatch):
-
     levels = [100]
     get_reference_levels = create_autospec(
         esmvalcore._recipe.get_reference_levels, return_value=levels)
@@ -732,7 +729,6 @@ def test_reference_dataset(tmp_path, patched_datafinder, session, monkeypatch):
 
 
 def test_custom_preproc_order(tmp_path, patched_datafinder, session):
-
     content = dedent("""
         preprocessors:
           default: &default
@@ -816,7 +812,6 @@ def test_custom_preproc_order(tmp_path, patched_datafinder, session):
 
 
 def test_derive(tmp_path, patched_datafinder, session):
-
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -853,7 +848,6 @@ def test_derive(tmp_path, patched_datafinder, session):
 
 
 def test_derive_not_needed(tmp_path, patched_datafinder, session):
-
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -1050,7 +1044,6 @@ def test_derive_with_optional_var_nodata(tmp_path, patched_failing_datafinder,
 
 
 def test_derive_contains_start_end_year(tmp_path, patched_datafinder, session):
-
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -2169,7 +2162,6 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, session):
           landmask:
             mask_landsea:
               mask_out: sea
-              always_use_ne_mask: false
 
         diagnostics:
           diagnostic_name:
@@ -2202,9 +2194,8 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, session):
     for product in task.products:
         assert 'mask_landsea' in product.settings
         settings = product.settings['mask_landsea']
-        assert len(settings) == 2
+        assert len(settings) == 1
         assert settings['mask_out'] == 'sea'
-        assert settings['always_use_ne_mask'] is False
         assert len(product.datasets) == 1
         dataset = product.datasets[0]
         assert dataset.ancillaries == []
@@ -2990,7 +2981,6 @@ def test_obs4mips_case_correct(tmp_path, patched_datafinder, session):
 
 
 def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
-
     content = dedent("""
         diagnostics:
           diagnostic_name:
@@ -3057,9 +3047,9 @@ def test_representative_dataset_derived_var(patched_datafinder, session,
         'force_derivation': force_derivation,
         'frequency': 'mon',
         'mip': 'Amon',
-        'original_short_name': 'lwp',
+        'original_short_name': 'alb',
         'project': 'ICON',
-        'short_name': 'lwp',
+        'short_name': 'alb',
         'timerange': '1990/2000',
         'var_type': 'atm_2d_ml',
     }
@@ -3069,7 +3059,7 @@ def test_representative_dataset_derived_var(patched_datafinder, session,
 
     expect_required_var = {
         # Added by get_required
-        'short_name': 'clwvi',
+        'short_name': 'rsdscs',
         # Already present in variable
         'dataset': 'ICON',
         'derive': True,
@@ -3079,15 +3069,15 @@ def test_representative_dataset_derived_var(patched_datafinder, session,
         'mip': 'Amon',
         'project': 'ICON',
         'timerange': '1990/2000',
-        'var_type': 'atm_2d_ml',
         # Added by _add_cmor_info
-        'long_name': 'Condensed Water Path',
+        'long_name': 'Surface Downwelling Clear-Sky Shortwave Radiation',
         'modeling_realm': ['atmos'],
-        'original_short_name': 'clwvi',
-        'standard_name': 'atmosphere_mass_content_of_cloud_condensed_water',
-        'units': 'kg m-2',
+        'original_short_name': 'rsdscs',
+        'standard_name':
+        'surface_downwelling_shortwave_flux_in_air_assuming_clear_sky',
+        'units': 'W m-2',
         # Added by _add_extra_facets
-        'raw_name': 'cllvi',
+        'var_type': 'atm_2d_ml',
     }
     if force_derivation:
         expected_dataset = Dataset(**expect_required_var)
@@ -3100,26 +3090,24 @@ def test_representative_dataset_derived_var(patched_datafinder, session,
 
 def test_get_derive_input_variables(patched_datafinder, session):
     """Test ``_get_derive_input_variables``."""
-    lwp_facets = {
+    alb_facets = {
         'dataset': 'ICON',
         'derive': True,
         'exp': 'atm_amip-rad_R2B4_r1i1p1f1',
         'force_derivation': True,
         'frequency': 'mon',
         'mip': 'Amon',
-        'original_short_name': 'lwp',
+        'original_short_name': 'alb',
         'project': 'ICON',
-        'short_name': 'lwp',
+        'short_name': 'alb',
         'timerange': '1990/2000',
-        'var_type': 'atm_2d_ml',
-        'variable_group': 'lwp_group',
     }
-    lwp = Dataset(**lwp_facets)
-    lwp.session = session
+    alb = Dataset(**alb_facets)
+    alb.session = session
 
-    clwvi_facets = {
+    rsdscs_facets = {
         # Added by get_required
-        'short_name': 'clwvi',
+        'short_name': 'rsdscs',
         # Already present in variables
         'dataset': 'ICON',
         'derive': True,
@@ -3129,24 +3117,22 @@ def test_get_derive_input_variables(patched_datafinder, session):
         'mip': 'Amon',
         'project': 'ICON',
         'timerange': '1990/2000',
-        'var_type': 'atm_2d_ml',
-        'variable_group': 'lwp_group',
         # Added by _add_cmor_info
         'standard_name':
-        'atmosphere_mass_content_of_cloud_condensed_water',
-        'long_name': 'Condensed Water Path',
+        'surface_downwelling_shortwave_flux_in_air_assuming_clear_sky',
+        'long_name': 'Surface Downwelling Clear-Sky Shortwave Radiation',
         'modeling_realm': ['atmos'],
-        'original_short_name': 'clwvi',
-        'units': 'kg m-2',
+        'original_short_name': 'rsdscs',
+        'units': 'W m-2',
         # Added by _add_extra_facets
-        'raw_name': 'cllvi',
+        'var_type': 'atm_2d_ml',
     }
-    clwvi = Dataset(**clwvi_facets)
-    clwvi.session = session
+    rsdscs = Dataset(**rsdscs_facets)
+    rsdscs.session = session
 
-    clivi_facets = {
+    rsuscs_facets = {
         # Added by get_required
-        'short_name': 'clivi',
+        'short_name': 'rsuscs',
         # Already present in variables
         'dataset': 'ICON',
         'derive': True,
@@ -3156,20 +3142,21 @@ def test_get_derive_input_variables(patched_datafinder, session):
         'mip': 'Amon',
         'project': 'ICON',
         'timerange': '1990/2000',
-        'var_type': 'atm_2d_ml',
-        'variable_group': 'lwp_group',
         # Added by _add_cmor_info
-        'standard_name': 'atmosphere_mass_content_of_cloud_ice',
-        'long_name': 'Ice Water Path',
+        'standard_name':
+        'surface_upwelling_shortwave_flux_in_air_assuming_clear_sky',
+        'long_name': 'Surface Upwelling Clear-Sky Shortwave Radiation',
         'modeling_realm': ['atmos'],
-        'original_short_name': 'clivi',
-        'units': 'kg m-2',
+        'original_short_name': 'rsuscs',
+        'units': 'W m-2',
+        # Added by _add_extra_facets
+        'var_type': 'atm_2d_ml',
     }
-    clivi = Dataset(**clivi_facets)
-    clivi.session = session
+    rsuscs = Dataset(**rsuscs_facets)
+    rsuscs.session = session
 
-    lwp_derive_input = _get_input_datasets(lwp)
-    assert lwp_derive_input == [clwvi, clivi]
+    alb_derive_input = _get_input_datasets(alb)
+    assert alb_derive_input == [rsdscs, rsuscs]
 
 
 TEST_DIAG_SELECTION = [

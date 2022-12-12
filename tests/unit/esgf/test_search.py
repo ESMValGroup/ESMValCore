@@ -55,6 +55,12 @@ OUR_FACETS = (
         'project': 'obs4MIPs',
         'short_name': 'rsutcs',
     },
+    {
+        'dataset': 'CERES-EBAF',
+        'frequency': '*',
+        'project': 'obs4MIPs',
+        'short_name': 'rsutcs',
+    },
 )
 
 ESGF_FACETS = (
@@ -97,6 +103,11 @@ ESGF_FACETS = (
         'project': 'obs4MIPs',
         'source_id': 'CERES-EBAF',
         'time_frequency': 'mon',
+        'variable': 'rsutcs',
+    },
+    {
+        'project': 'obs4MIPs',
+        'source_id': 'CERES-EBAF',
         'variable': 'rsutcs',
     },
 )
@@ -286,7 +297,23 @@ def test_esgf_search_fails(mocker):
     assert str(excinfo.value) == error_message
 
 
-def test_select_by_time():
+def test_select_latest_versions_filenotfound(mocker):
+    """Test `select_latest_versions` raises FileNotFoundError."""
+    file = mocker.create_autospec(ESGFFile, instance=True)
+    file.name = 'ta.nc'
+    file.dataset = 'CMIP6.MODEL.v1'
+    file.facets = {'version': 'v1'}
+    file.__repr__ = lambda _: 'ESGFFile:CMIP6/MODEL/v1/ta.nc'
+    with pytest.raises(FileNotFoundError):
+        _search.select_latest_versions(files=[file], versions='v2')
+
+
+@pytest.mark.parametrize('timerange,selection', [
+    ('1851/1852', slice(1, 3)),
+    ('1851/P1Y', slice(1, 3)),
+    ('*', slice(None)),
+])
+def test_select_by_time(timerange, selection):
     dataset_id = ('CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.historical'
                   '.r1i1p1f1.Amon.tas.gn.v20200212')
     dataset_id_template = (
@@ -314,8 +341,8 @@ def test_select_by_time():
     ]
     files = [ESGFFile([r]) for r in results]
 
-    result = _search.select_by_time(files, '1851/1852')
-    reference = files[1:3]
+    result = _search.select_by_time(files, timerange)
+    reference = files[selection]
     assert sorted(result) == sorted(reference)
 
 

@@ -8,7 +8,7 @@ import re
 import textwrap
 from fnmatch import fnmatchcase
 from pathlib import Path
-from typing import Any, Iterator, Optional, Union
+from typing import Any, Iterator, Optional, Sequence, Union
 
 from iris.cube import Cube
 
@@ -64,6 +64,7 @@ class Dataset:
     facets
         Facets describing the dataset.
     """
+
     def __init__(self, **facets: FacetValue):
 
         self.facets: Facets = {}
@@ -71,8 +72,8 @@ class Dataset:
 
         self._persist: set[str] = set()
         self._session: Optional[Session] = None
-        self._files: Optional[list[File]] = None
-        self._files_debug = None
+        self._files: Optional[Sequence[File]] = None
+        self._files_debug: Optional[Sequence[Path]] = None
 
         for key, value in facets.items():
             self.set_facet(key, copy.deepcopy(value), persist=True)
@@ -269,8 +270,7 @@ class Dataset:
         )
         return (
             f"{self.__class__.__name__}: " +
-            ", ".join(str(self.facets[k]) for k in keys if k in self.facets)
-        )
+            ", ".join(str(self.facets[k]) for k in keys if k in self.facets))
 
     def __getitem__(self, key):
         return self.facets[key]
@@ -392,7 +392,6 @@ class Dataset:
 
     def _find_files(self, session: Session) -> None:
         self.files, self._files_debug = local.find_files(
-            session,
             debug=True,
             **self.facets,
         )
@@ -428,7 +427,7 @@ class Dataset:
                             self.files[idx] = file
 
     @property
-    def files(self) -> list[Union[local.LocalFile, esgf.ESGFFile]]:
+    def files(self) -> Sequence[File]:
         """A list of files associated with this dataset."""
         # TODO: Make cache more reliable? E.g. based on facets.
         if self._files is None:

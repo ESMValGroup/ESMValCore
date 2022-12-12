@@ -12,7 +12,7 @@ from typing import Any, Union
 import iris
 import isodate
 
-from .config import Session
+from .config import CFG
 from .config._config import get_project_config
 from .exceptions import RecipeError
 from .typing import Facets, FacetValue
@@ -109,7 +109,7 @@ def _get_start_end_date(filename):
             break
 
     if start_date is None or end_date is None:
-        raise ValueError(f'File {filename} dates do not match a recognized'
+        raise ValueError(f'File {filename} dates do not match a recognized '
                          'pattern and time can not be read from the file')
 
     return start_date, end_date
@@ -206,7 +206,7 @@ def _get_start_end_year(filename):
             break
 
     if start_year is None or end_year is None:
-        raise ValueError(f'File {filename} dates do not match a recognized'
+        raise ValueError(f'File {filename} dates do not match a recognized '
                          'pattern and time can not be read from the file')
 
     return int(start_year), int(end_year)
@@ -381,14 +381,14 @@ def _apply_caps(original, lower, upper):
     return original
 
 
-def _select_drs(input_type, drs, project):
+def _select_drs(input_type, project):
     """Select the directory structure of input path."""
     cfg = get_project_config(project)
     input_path = cfg[input_type]
     if isinstance(input_path, str):
         return input_path
 
-    structure = drs.get(project, 'default')
+    structure = CFG['drs'].get(project, 'default')
     if structure in input_path:
         return input_path[structure]
 
@@ -400,8 +400,9 @@ def _select_drs(input_type, drs, project):
 _ROOTPATH_WARNED = set()
 
 
-def _get_rootpath(rootpath, project):
+def _get_rootpath(project):
     """Select the rootpath."""
+    rootpath = CFG['rootpath']
     for key in (project, 'default'):
         if key in rootpath:
             nonexistent = tuple(p for p in rootpath[key]
@@ -415,16 +416,16 @@ def _get_rootpath(rootpath, project):
     raise KeyError('default rootpath must be specified in config-user file')
 
 
-def _get_globs(variable, rootpath, drs):
+def _get_globs(variable):
     """Compose the globs that will be used to look for files."""
     project = variable['project']
 
-    rootpaths = _get_rootpath(rootpath, project)
+    rootpaths = _get_rootpath(project)
 
-    dirname_template = _select_drs('input_dir', drs, project)
+    dirname_template = _select_drs('input_dir', project)
     dirname_globs = _replace_tags(dirname_template, variable)
 
-    filename_template = _select_drs('input_file', drs, project)
+    filename_template = _select_drs('input_file', project)
     filename_globs = _replace_tags(filename_template, variable)
 
     globs = sorted(r / d / f for r in rootpaths for d in dirname_globs
@@ -432,13 +433,13 @@ def _get_globs(variable, rootpath, drs):
     return globs
 
 
-def _get_input_filelist(variable, rootpath, drs):
+def _get_input_filelist(variable):
     """Return the full path to input files."""
     variable = dict(variable)
     if 'original_short_name' in variable:
         variable['short_name'] = variable['original_short_name']
 
-    globs = _get_globs(variable, rootpath, drs)
+    globs = _get_globs(variable)
     logger.debug("Looking for files matching %s", globs)
 
     files = list(Path(file) for glob_ in globs for file in glob(str(glob_)))
@@ -515,6 +516,25 @@ def _path2facets(path: Path, drs: str) -> dict[str, str]:
     return facets
 
 
+def _filter_versions_called_latest(
+    files: list['LocalFile'],
+) -> list['LocalFile']:
+    """Filter out versions called 'latest' if they are duplicates.
+
+    On compute clusters it is usual to have a symbolic link to the
+    latest version called 'latest'. Those need to be skipped in order to
+    find valid version names and avoid duplicate results.
+    """
+    resolved_valid_versions = {
+        f.resolve(strict=False)
+        for f in files if f.facets.get('version') != 'latest'
+    }
+    return [
+        f for f in files if f.facets.get('version') != 'latest' or f.resolve(
+            strict=False) not in resolved_valid_versions
+    ]
+
+
 def _select_latest_version(files: list['LocalFile']) -> list['LocalFile']:
     """Select only the latest version of files."""
 
@@ -534,39 +554,52 @@ def _select_latest_version(files: list['LocalFile']) -> list['LocalFile']:
 
 
 def find_files(
-    session: Session,
     *,
     debug: bool = False,
     **facets: FacetValue,
-):
+) -> Union[list[LocalFile], tuple[list[LocalFile], list[Path]]]:
     """Find files on the local filesystem.
+
+    The directories that are searched for files are defined in
+    :data:`esmvalcore.config.CFG` under the ``'rootpath'`` key using the
+    directory structure defined under the ``'drs'`` key.
+    If ``esmvalcore.config.CFG['rootpath']`` contains a key that matches the
+    value of the ``project`` facet, those paths will be used. If there is no
+    project specific key, the directories in
+    ``esmvalcore.config.CFG['rootpath']['default']`` will be searched.
+
+    See :ref:`findingdata` for extensive instructions on configuring ESMValCore
+    so it can find files locally.
 
     Parameters
     ----------
-    session
-        The session.
     debug
-        When debug is set to `True`, the function will return a tuple
+        When debug is set to :obj:`True`, the function will return a tuple
         with the first element containing the files that were found
-        and the second element containing the globs patterns that
+        and the second element containing the :func:`glob.glob` patterns that
         were used to search for files.
     **facets
-        Facets used to search for files. An '*' can be used to indicate
+        Facets used to search for files. An ``'*'`` can be used to match
         any value. By default, only the latest version of a file will
         be returned. To select all versions use ``version='*'``. It is also
         possible to specify multiple values for a facet, e.g.
         ``exp=['historical', 'ssp585']`` will match any file that belongs
         to either the historical or ssp585 experiment.
+        The ``timerange`` facet can be specified in `ISO 8601 format
+        <https://en.wikipedia.org/wiki/ISO_8601>`__.
+
+    Note
+    ----
+    A value of ``timerange='*'`` is supported, but combining a ``'*'`` with
+    a time or period :ref:`as supported in the recipe <datasets>` is currently
+    not supported and will return all found files.
 
     Examples
     --------
-    Search for CMIP6 files containing surface air temperature
-    from any model for the historical experiment:
-
-    >>> session = esmvalcore.config.CFG.start_session('test')  # doctest: +SKIP
+    Search for files containing surface air temperature from any CMIP6 model
+    for the historical experiment:
 
     >>> esmvalcore.local.find_files(
-    ...     session,
     ...     project='CMIP6',
     ...     activity='CMIP',
     ...     mip='Amon',
@@ -583,21 +616,23 @@ def find_files(
     -------
     list[LocalFile]
         The files that were found.
-    """
-    filenames, globs = _get_input_filelist(
-        facets,
-        rootpath=session['rootpath'],
-        drs=session['drs'],
-    )
-    drs = _select_drs('input_dir', session['drs'], facets['project'])
+    """  # pylint: disable=line-too-long
+    filenames, globs = _get_input_filelist(facets)
+    drs = _select_drs('input_dir', facets['project'])
     if isinstance(drs, list):
         # Not sure how to handle a list of DRSs
         drs = ''
     files = []
+    filter_latest = False
     for filename in filenames:
         file = LocalFile(filename)
         file.facets.update(_path2facets(file, drs))
+        if file.facets.get('version') == 'latest':
+            filter_latest = True
         files.append(file)
+
+    if filter_latest:
+        files = _filter_versions_called_latest(files)
 
     if 'version' not in facets:
         files = _select_latest_version(files)
@@ -609,9 +644,16 @@ def find_files(
 
 class LocalFile(type(Path())):  # type: ignore
     """File on the local filesystem."""
+
     @property
     def facets(self) -> Facets:
-        """Facets describing the file."""
+        """Facets describing the file.
+
+        Note
+        ----
+        When using :func:`find_files`, facets are read from the directory
+        structure. Facets stored in filenames are not yet supported.
+        """
         if not hasattr(self, '_facets'):
             self._facets: Facets = {}
         return self._facets

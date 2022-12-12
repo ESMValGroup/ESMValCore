@@ -180,14 +180,16 @@ class ESGFFile:
 
     Attributes
     ----------
-    urls : :class:`list` of :class:`str`
-        The URLs where the file can be downloaded.
     dataset : str
         The name of the dataset that the file is part of.
+    facets : dict[str,str]
+        Facets describing the file.
     name : str
         The name of the file.
     size : int
         The size of the file in bytes.
+    urls : list[str]
+        The URLs where the file can be downloaded.
     """
 
     def __init__(self, results):
@@ -336,7 +338,7 @@ class ESGFFile:
 
         Returns
         -------
-        Path
+        LocalFile
             The path where the file will be located after download.
         """
         file = LocalFile(
@@ -362,7 +364,7 @@ class ESGFFile:
 
         Returns
         -------
-        Path
+        LocalFile
             The path where the file will be located after download.
         """
         local_file = self.local_file(dest_folder)

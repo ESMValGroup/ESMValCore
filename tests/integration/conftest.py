@@ -18,7 +18,7 @@ def session(tmp_path, monkeypatch):
 
     # The patched_datafinder fixture does not return the correct input
     # directory structure, so make sure it is set to flat for every project
-    session['drs'] = {}
+    monkeypatch.setitem(CFG, 'drs', {})
     for project in _config.CFG:
         monkeypatch.setitem(_config.CFG[project]['input_dir'], 'default', '/')
     return session

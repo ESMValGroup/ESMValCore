@@ -2,6 +2,7 @@
 
 Integration tests for the :func:`esmvalcore.preprocessor._mask` module.
 """
+from pathlib import Path
 
 import iris
 import iris.fileformats
@@ -20,6 +21,7 @@ from tests import assert_array_equal
 
 class Test:
     """Test class."""
+
     @pytest.fixture(autouse=True)
     def setUp(self):
         """Assemble a stock cube."""
@@ -127,36 +129,6 @@ class Test:
         expected.mask[:, 1, 2] = True
         assert_array_equal(result_sea.data, expected)
 
-        # Mask with shp files although sftlf is available
-        new_cube_land = iris.cube.Cube(
-            self.new_cube_data,
-            dim_coords_and_dims=self.cube_coords_spec
-        )
-        new_cube_land = add_fx_variables(new_cube_land, [self.fx_mask])
-        new_cube_sea = iris.cube.Cube(
-            self.new_cube_data,
-            dim_coords_and_dims=self.cube_coords_spec
-        )
-        new_cube_sea = add_fx_variables(new_cube_sea, [self.fx_mask])
-        result_land = mask_landsea(
-            new_cube_land,
-            'land',
-            always_use_ne_mask=True,
-        )
-        result_sea = mask_landsea(
-            new_cube_sea,
-            'sea',
-            always_use_ne_mask=True,
-        )
-
-        # Bear in mind all points are in the ocean
-        np.ma.set_fill_value(result_land.data, 1e+20)
-        np.ma.set_fill_value(result_sea.data, 1e+20)
-        expected.mask = np.zeros((3, 3), bool)
-        assert_array_equal(result_land.data, expected)
-        expected.mask = np.ones((3, 3), bool)
-        assert_array_equal(result_sea.data, expected)
-
         # mask with shp files
         new_cube_land = iris.cube.Cube(
             self.new_cube_data,
@@ -245,8 +217,8 @@ class Test:
         coords_spec2 = [(self.time2, 0), (self.lats, 1), (self.lons, 2)]
         cube_1 = iris.cube.Cube(data_1, dim_coords_and_dims=coords_spec)
         cube_2 = iris.cube.Cube(data_2, dim_coords_and_dims=coords_spec2)
-        filename_1 = 'file1.nc'
-        filename_2 = 'file2.nc'
+        filename_1 = Path('file1.nc')
+        filename_2 = Path('file2.nc')
         product_1 = mocker.create_autospec(
             PreprocessorFile,
             spec_set=True,
@@ -273,7 +245,53 @@ class Test:
             result_2.data[0, ...].mask,
             result_1.data[0, ...].mask,
         )
-        # identical masks with cumluative
+        # identical masks with cumulative
         cumulative_mask = cube_1[1:2].data.mask | cube_2[1:2].data.mask
         assert_array_equal(result_1[1:2].data.mask, cumulative_mask)
         assert_array_equal(result_2[2:3].data.mask, cumulative_mask)
+
+    def test_mask_fillvalues_min_value_none(self, mocker):
+        """Test ``mask_fillvalues`` for min_value=None."""
+        # We use non-masked data here and explicitly set some values to 0 here
+        # since this caused problems in the past, see
+        # github.com/ESMValGroup/ESMValCore/issues/487#issuecomment-677732121
+        data_1 = self.mock_data
+        data_2 = np.ones((3, 3, 3))
+        data_2[:, 0, :] = 0.0
+
+        coords_spec = [(self.times, 0), (self.lats, 1), (self.lons, 2)]
+        coords_spec2 = [(self.time2, 0), (self.lats, 1), (self.lons, 2)]
+        cube_1 = iris.cube.Cube(data_1, dim_coords_and_dims=coords_spec)
+        cube_2 = iris.cube.Cube(data_2, dim_coords_and_dims=coords_spec2)
+        filename_1 = Path('file1.nc')
+        filename_2 = Path('file2.nc')
+
+        # Mock PreprocessorFile to avoid provenance errors
+        product_1 = mocker.create_autospec(
+            PreprocessorFile,
+            spec_set=True,
+            instance=True,
+        )
+        product_1.filename = filename_1
+        product_1.cubes = [cube_1]
+        product_2 = mocker.create_autospec(
+            PreprocessorFile,
+            spec_set=True,
+            instance=True,
+        )
+        product_2.filename = filename_2
+        product_2.cubes = [cube_2]
+
+        results = mask_fillvalues(
+            {product_1, product_2},
+            threshold_fraction=1.0,
+            min_value=None,
+        )
+
+        assert len(results) == 2
+        for product in results:
+            if product.filename in (filename_1, filename_2):
+                assert len(product.cubes) == 1
+                assert not np.ma.is_masked(product.cubes[0].data)
+            else:
+                assert False, f"Invalid filename: {product.filename}"

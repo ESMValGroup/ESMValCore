@@ -10,7 +10,6 @@ from esmvalcore.dataset import Dataset
 
 @pytest.fixture
 def example_data(tmp_path):
-
     cwd = Path(__file__).parent
     tas_src = cwd / 'tas.nc'
     areacella_src = cwd / 'areacella.nc'
@@ -30,13 +29,12 @@ def example_data(tmp_path):
     areacella_tgt.parent.mkdir(parents=True, exist_ok=True)
     areacella_tgt.symlink_to(areacella_src)
 
-    CFG['rootpath']['CMIP5'] = str(rootpath)
+    CFG['rootpath']['CMIP5'] = [str(rootpath)]
     CFG['drs']['CMIP5'] = 'ESGF'
     CFG['output_dir'] = tmp_path / 'output_dir'
 
 
 def test_load(example_data):
-
     session = CFG.start_session('test_session')
     tas = Dataset(
         short_name='tas',
@@ -52,6 +50,7 @@ def test_load(example_data):
     tas.augment_facets(session)
 
     tas.find_files(session)
+    print(tas.files)
 
     cube = tas.load(session)
 

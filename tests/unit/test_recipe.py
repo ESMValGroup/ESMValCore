@@ -420,8 +420,8 @@ def test_update_multiproduct_ensemble_statistics():
 
     assert len(output) == 1
     product = list(output)[0]
-    assert (product.filename == Path(
-        '/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc'))
+    assert product.filename == Path(
+        '/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc')
 
     for attr in common_attributes:
         assert attr in product.attributes
@@ -443,8 +443,8 @@ def test_update_multiproduct_ensemble_statistics():
     stats = output_products['CMIP6_CanESM2']
     assert len(stats) == 1
     assert 'median' in stats
-    assert (stats['median'].filename == Path(
-        '/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc'))
+    assert stats['median'].filename == Path(
+        '/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc')
 
 
 def test_update_multiproduct_no_product():
