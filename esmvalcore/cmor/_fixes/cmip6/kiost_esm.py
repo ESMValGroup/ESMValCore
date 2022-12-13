@@ -1,4 +1,6 @@
 """Fixes for KIOST-ESM model."""
+from dask import array as da
+
 from ..common import SiconcFixScalarCoord
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
@@ -17,7 +19,8 @@ class Tas(Fix):
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.Cubes
+            Fixed cubes.
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 2.0)
@@ -45,7 +48,8 @@ class SfcWind(Fix):
 
         Returns
         -------
-        iris.cube.Cube
+        iris.cube.Cubes
+            Fixed cubes.
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 10.0)
@@ -60,4 +64,23 @@ class Vas(SfcWind):
     """Fixes for vas."""
 
 
-Siconc = SiconcFixScalarCoord
+class Siconc(SiconcFixScalarCoord):
+    """Fixes for siconc."""
+
+    def fix_data(self, cube):
+        """Fix data.
+
+        Fix missing values.
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+            Input cube.
+
+        Returns
+        -------
+        iris.cube.Cube
+            Fixed cube.
+        """
+        cube.data = da.ma.masked_invalid(cube.core_data())
+        return cube

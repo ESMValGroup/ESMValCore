@@ -312,6 +312,19 @@ class AllVars(IconFix):
         cube.add_dim_coord(index_coord, horizontal_idx)
 
 
+class Clwvi(IconFix):
+    """Fixes for ``clwvi``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = (
+            self.get_cube(cubes, var_name='cllvi') +
+            self.get_cube(cubes, var_name='clivi')
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
 Hur = SetUnitsTo1
 
 

@@ -8,6 +8,7 @@ import itertools
 import logging
 import os
 import random
+import re
 import shutil
 from pathlib import Path
 from statistics import median
@@ -178,14 +179,16 @@ class ESGFFile:
 
     Attributes
     ----------
-    urls : :class:`list` of :class:`str`
-        The URLs where the file can be downloaded.
     dataset : str
         The name of the dataset that the file is part of.
+    facets : dict[str,str]
+        Facets describing the file.
     name : str
         The name of the file.
     size : int
         The size of the file in bytes.
+    urls : list[str]
+        The URLs where the file can be downloaded.
     """
 
     def __init__(self, results):
@@ -193,6 +196,7 @@ class ESGFFile:
         self.name = str(Path(results[0].filename).with_suffix('.nc'))
         self.size = results[0].size
         self.dataset = self._get_dataset_id(results)
+        self.facets = self._get_facets(results)
         self.urls = []
         self._checksums = []
         for result in results:
@@ -225,9 +229,63 @@ class ESGFFile:
                 logger.debug(
                     "Ignoring file(s) %s containing wrong variable '%s' in"
                     " found in search for variable '%s'", file.urls, variable,
-                    facets['variable'])
+                    facets.get('variable', facets.get('variable_id', '?')))
 
         return files
+
+    @staticmethod
+    def _get_facets(results):
+        """Read the facets from the `dataset_id`."""
+        # This reads the facets from the dataset_id because the facets
+        # provided by ESGF are unreliable.
+        #
+        # Example dataset_id_template_ values:
+        # CMIP3: '%(project)s.%(institute)s.%(model)s.%(experiment)s.
+        #         %(time_frequency)s.%(realm)s.%(ensemble)s.%(variable)s'
+        # CMIP5: 'cmip5.%(product)s.%(valid_institute)s.%(model)s.
+        #         %(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.
+        #         %(ensemble)s'
+        # CMIP6: '%(mip_era)s.%(activity_drs)s.%(institution_id)s.
+        #         %(source_id)s.%(experiment_id)s.%(member_id)s.%(table_id)s.
+        #         %(variable_id)s.%(grid_label)s'
+        # CORDEX: 'cordex.%(product)s.%(domain)s.%(institute)s.
+        #          %(driving_model)s.%(experiment)s.%(ensemble)s.%(rcm_name)s.
+        #          %(rcm_version)s.%(time_frequency)s.%(variable)s'
+        # obs4MIPs: '%(project)s.%(institute)s.%(source_id)s.%(realm)s.
+        #            %(time_frequency)s'
+        project = results[0].json['project'][0]
+
+        # Read the keys from `dataset_id_template_` and translate to our keys
+        template = results[0].json['dataset_id_template_'][0]
+        keys = re.findall(r"%\((.*?)\)s", template)
+        reverse_facet_map = {v: k for k, v in FACETS[project].items()}
+        reverse_facet_map['mip_era'] = 'project'  # CMIP6 oddity
+        reverse_facet_map['variable_id'] = 'short_name'  # CMIP6 oddity
+        reverse_facet_map['valid_institute'] = 'institute'  # CMIP5 oddity
+        keys = [reverse_facet_map.get(k, k) for k in keys]
+        keys.append('version')
+        if keys[0] == 'project':
+            # The project is sometimes hardcoded all lowercase in the template
+            keys = keys[1:]
+
+        # Read values from dataset_id
+        # Pick the first dataset_id if there are differences in case
+        dataset_id = sorted(r.json['dataset_id'].split('|')[0]
+                            for r in results)[0]
+        values = dataset_id.split('.')[1:]
+
+        # Compose facets
+        facets = {
+            'project': project,
+        }
+        for idx, key in enumerate(keys):
+            facets[key] = values[idx]
+        # The dataset_id does not contain the short_name for all projects,
+        # so get it from the filename if needed:
+        if 'short_name' not in facets:
+            facets['short_name'] = results[0].json['title'].split('_')[0]
+
+        return facets
 
     @staticmethod
     def _get_dataset_id(results):
@@ -256,7 +314,10 @@ class ESGFFile:
 
     def __eq__(self, other):
         """Compare `self` to `other`."""
-        return (self.dataset, self.name) == (other.dataset, other.name)
+        return (
+            isinstance(other, self.__class__)
+            and (self.dataset, self.name) == (other.dataset, other.name)
+        )
 
     def __lt__(self, other):
         """Compare `self` to `other`."""

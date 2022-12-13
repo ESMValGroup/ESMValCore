@@ -26,10 +26,11 @@ ICON:
     # 2D dynamical/meteorological variables
     clivi: {var_type: atm_2d_ml}
     clt: {var_type: atm_2d_ml}
-    clwvi: {raw_name: cllvi, var_type: atm_2d_ml}
+    clwvi: {var_type: atm_2d_ml}
     evspsbl: {var_type: atm_2d_ml}
     hfls: {var_type: atm_2d_ml}
     hfss: {var_type: atm_2d_ml}
+    lwp: {raw_name: cllvi, var_type: atm_2d_ml}
     pr: {var_type: atm_2d_ml}
     prw: {var_type: atm_2d_ml}
     ps: {var_type: atm_2d_ml}

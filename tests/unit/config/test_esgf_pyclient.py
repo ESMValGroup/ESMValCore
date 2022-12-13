@@ -14,7 +14,7 @@ DEFAULT_CONFIG: dict = {
     },
     'search_connection': {
         'urls': [
-            'https://esgf-index1.ceda.ac.uk/esg-search',
+            'https://esgf.ceda.ac.uk/esg-search',
             'https://esgf-node.llnl.gov/esg-search',
             'https://esgf-data.dkrz.de/esg-search',
             'https://esgf-node.ipsl.upmc.fr/esg-search',
