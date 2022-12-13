@@ -1,5 +1,4 @@
 """Module with functions to check a recipe."""
-import itertools
 import logging
 import os
 import re
@@ -10,8 +9,8 @@ from shutil import which
 import isodate
 import yamale
 
-from ._data_finder import get_start_end_year
 from .exceptions import InputFilesNotFound, RecipeError
+from .local import _get_start_end_year
 from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from .preprocessor._multimodel import STATISTIC_MAPPING
 
@@ -94,28 +93,18 @@ def variable(var, required_keys):
                 missing, var.get('short_name'), var.get('diagnostic')))
 
 
-def _log_data_availability_errors(input_files, var, dirnames, filenames):
+def _log_data_availability_errors(input_files, var, patterns):
     """Check if the required input data is available."""
     var = dict(var)
     if not input_files:
         var.pop('filename', None)
         logger.error("No input files found for variable %s", var)
-        if dirnames and filenames:
-            patterns = itertools.product(dirnames, filenames)
-            patterns = [os.path.join(d, f) for (d, f) in patterns]
+        if patterns:
             if len(patterns) == 1:
                 msg = f': {patterns[0]}'
             else:
-                msg = '\n{}'.format('\n'.join(patterns))
+                msg = '\n{}'.format('\n'.join(str(p) for p in patterns))
             logger.error("Looked for files matching%s", msg)
-        elif dirnames and not filenames:
-            logger.error(
-                "Looked for files in %s, but did not find any file pattern "
-                "to match against", dirnames)
-        elif filenames and not dirnames:
-            logger.error(
-                "Looked for files matching %s, but did not find any existing "
-                "input directory", filenames)
         logger.error("Set 'log_level' to 'debug' to get more information")
 
 
@@ -145,10 +134,10 @@ def _group_years(years):
     return ", ".join(ranges)
 
 
-def data_availability(input_files, var, dirnames, filenames, log=True):
+def data_availability(input_files, var, patterns, log=True):
     """Check if input_files cover the required years."""
     if log:
-        _log_data_availability_errors(input_files, var, dirnames, filenames)
+        _log_data_availability_errors(input_files, var, patterns)
 
     if not input_files:
         raise InputFilesNotFound(
@@ -163,7 +152,7 @@ def data_availability(input_files, var, dirnames, filenames, log=True):
     available_years = set()
 
     for filename in input_files:
-        start, end = get_start_end_year(filename)
+        start, end = _get_start_end_year(filename)
         available_years.update(range(start, end + 1))
 
     missing_years = required_years - available_years
