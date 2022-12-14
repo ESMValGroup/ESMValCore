@@ -11,6 +11,7 @@ from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
     MOHCHadREM3GA705,
     TimeLongName,
 )
+from esmvalcore.exceptions import RecipeError
 
 
 @pytest.fixture
@@ -148,14 +149,38 @@ def test_clmcomcclm4817_fix_metadata(cubes):
 def test_rotated_grid_fix(cordex_cubes):
     fix = AllVars(
         vardef=None,
-        extra_facets={'domain': 'EUR-11'})
-
-    out_cubes = fix.fix_metadata(cordex_cubes)
+        extra_facets={
+            'domain': 'EUR-11',
+            'dataset': 'DATASET',
+            'driver': 'DRIVER'
+            }
+        )
     domain = cx.cordex_domain('EUR-11', add_vertices=True)
-    assert cordex_cubes is out_cubes
-    for cube in out_cubes:
+    for cube in cordex_cubes:
         for coord in ['rlat', 'rlon', 'lat', 'lon']:
             cube_coord = cube.coord(var_name=coord)
+            cube_coord.points = domain[coord].data + 1e-6
+    out_cubes = fix.fix_metadata(cordex_cubes)
+    assert cordex_cubes is out_cubes
+    for out_cube in out_cubes:
+        for coord in ['rlat', 'rlon', 'lat', 'lon']:
+            cube_coord = out_cube.coord(var_name=coord)
             domain_coord = domain[coord].data
             np.testing.assert_array_equal(
                 cube_coord.points, domain_coord)
+
+def test_rotated_grid_fix_error(cordex_cubes):
+    fix = AllVars(
+        vardef=None,
+        extra_facets={
+            'domain': 'EUR-11',
+            'dataset': 'DATASET',
+            'driver': 'DRIVER'
+            }
+        )
+    msg = ("Differences between the original grid and the "
+           "standarised grid are above 10e-4 degrees.")
+    with pytest.raises(RecipeError) as exc:
+        fix.fix_metadata(cordex_cubes)
+    assert msg == exc.value.message
+

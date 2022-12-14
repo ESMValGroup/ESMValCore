@@ -3,10 +3,12 @@ from cf_units import Unit
 import cordex as cx
 import numpy as np
 import iris
+import logging
 
 from iris.coord_systems import RotatedGeogCS
 from esmvalcore.cmor.fix import Fix
-
+from esmvalcore.exceptions import RecipeError
+logger = logging.getLogger(__name__)
 
 class MOHCHadREM3GA705(Fix):
     """General fix for MOHC-HadREM3-GA7-05."""
@@ -96,6 +98,28 @@ class CLMcomCCLM4817(Fix):
 class AllVars(Fix):
     """General CORDEX grid fix."""
 
+    _grid_diff_msg = ('Maximum difference between original {} '
+                      'points and standard {} domain points '
+                      'for dataset {} and driver {} is: {}')
+
+    def _check_grid_differences(self, old_coord, new_coord):
+        """Check differences between coords."""
+        diff = np.max(np.abs(old_coord.points - new_coord.points))
+        logger.debug(
+            self._grid_diff_msg,
+            new_coord.var_name,
+            self.extra_facets['domain'],
+            self.extra_facets['dataset'],
+            self.extra_facets['driver'],
+            diff
+        )
+
+        if diff > 10e-4:
+            raise RecipeError(
+                    "Differences between the original grid and the "
+                    f"standarised grid are above 10e-4 {new_coord.units}.",
+                )
+
     def _fix_rotated_coords(self, cube):
         """Fix rotated coordinates."""
         data_domain = self.extra_facets['domain']
@@ -117,6 +141,7 @@ class AllVars(Fix):
                 units=Unit('degrees'),
                 coord_system=coord_system,
             )
+            self._check_grid_differences(old_coord, new_coord)
             new_coord.guess_bounds()
             cube.remove_coord(old_coord)
             cube.add_dim_coord(new_coord, old_coord_dims)
@@ -138,7 +163,15 @@ class AllVars(Fix):
                 units=Unit(domain[aux_coord].units),
                 bounds=bounds
             )
-            cube.add_aux_coord(new_coord, (1, 2))
+            logger.info(old_coord.units)
+            self._check_grid_differences(old_coord, new_coord)
+            aux_coord_dims = (
+                cube.coord(var_name='rlat').cube_dims(cube) +
+                cube.coord(var_name='rlon').cube_dims(cube)
+            )
+            cube.add_aux_coord(
+                new_coord,
+                aux_coord_dims)
 
     def fix_metadata(self, cubes):
         """Fix CORDEX rotated grids.
