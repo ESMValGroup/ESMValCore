@@ -99,21 +99,14 @@ class CLMcomCCLM4817(Fix):
 class AllVars(Fix):
     """General CORDEX grid fix."""
 
-    _grid_diff_msg = ('Maximum difference between original {} '
-                      'points and standard {} domain points '
-                      'for dataset {} and driver {} is: {}')
-
     def _check_grid_differences(self, old_coord, new_coord):
         """Check differences between coords."""
         diff = np.max(np.abs(old_coord.points - new_coord.points))
         logger.debug(
-            self._grid_diff_msg,
-            new_coord.var_name,
-            self.extra_facets['domain'],
-            self.extra_facets['dataset'],
-            self.extra_facets['driver'],
-            diff
-        )
+            f"Maximum difference between original {new_coord.var_name} "
+            f"points and standard {self.extra_facets['domain']} domain points "
+            f"for dataset {self.extra_facets['dataset']} and "
+            f"driver {self.extra_facets['driver']} is: {diff}.")
 
         if diff > 10e-4:
             raise RecipeError(
