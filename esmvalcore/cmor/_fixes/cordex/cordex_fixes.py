@@ -10,6 +10,7 @@ from esmvalcore.cmor.fix import Fix
 from esmvalcore.exceptions import RecipeError
 logger = logging.getLogger(__name__)
 
+
 class MOHCHadREM3GA705(Fix):
     """General fix for MOHC-HadREM3-GA7-05."""
 

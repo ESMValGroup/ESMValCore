@@ -169,6 +169,7 @@ def test_rotated_grid_fix(cordex_cubes):
             np.testing.assert_array_equal(
                 cube_coord.points, domain_coord)
 
+
 def test_rotated_grid_fix_error(cordex_cubes):
     fix = AllVars(
         vardef=None,
@@ -183,4 +184,3 @@ def test_rotated_grid_fix_error(cordex_cubes):
     with pytest.raises(RecipeError) as exc:
         fix.fix_metadata(cordex_cubes)
     assert msg == exc.value.message
-
