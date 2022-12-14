@@ -18,12 +18,11 @@ from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 def session(tmp_path):
     CFG.clear()
     CFG.update(CFG_DEFAULT)
-    CFG['output_dir'] = tmp_path
+    CFG['output_dir'] = tmp_path / 'esmvaltool_output'
     return CFG.start_session('recipe_test')
 
 
 def test_repr():
-
     ds = Dataset(short_name='tas', dataset='dataset1')
 
     assert repr(ds) == textwrap.dedent("""
@@ -170,12 +169,12 @@ def test_augment_facets(session, facets, added_facets):
     expected_facets.update(added_facets)
 
     dataset = Dataset(**facets)
-    dataset._augment_facets(session)
+    dataset.session = session
+    dataset._augment_facets()
     assert dataset.facets == expected_facets
 
 
 def test_from_recipe(session, tmp_path):
-
     recipe_txt = textwrap.dedent("""
 
     diagnostics:
@@ -209,7 +208,6 @@ def test_from_recipe(session, tmp_path):
 
 
 def test_from_recipe_advanced(session, tmp_path):
-
     recipe_txt = textwrap.dedent("""
 
     datasets:
@@ -309,7 +307,6 @@ def test_from_recipe_advanced(session, tmp_path):
 
 
 def test_from_recipe_with_ranges(session, tmp_path):
-
     recipe_txt = textwrap.dedent("""
 
     datasets:
@@ -358,7 +355,6 @@ def test_from_recipe_with_ranges(session, tmp_path):
 
 
 def test_from_recipe_with_ancillary(session, tmp_path):
-
     recipe_txt = textwrap.dedent("""
 
     datasets:
@@ -753,7 +749,6 @@ def test_from_recipe_with_glob(tmp_path, session, mocker):
 
 
 def test_expand_ensemble():
-
     dataset = Dataset(ensemble='r(1:2)i(2:3)p(3:4)')
 
     expanded = dataset._expand_range('ensemble')
@@ -772,7 +767,6 @@ def test_expand_ensemble():
 
 
 def test_expand_subexperiment():
-
     dataset = Dataset(sub_experiment='s(1998:2005)')
 
     expanded = dataset._expand_range('sub_experiment')
@@ -792,7 +786,6 @@ def test_expand_subexperiment():
 
 
 def test_expand_ensemble_nolist():
-
     dataset = Dataset(
         dataset='XYZ',
         ensemble=['r1i1p1', 'r(1:2)i1p1'],
@@ -866,7 +859,6 @@ def create_esgf_search_results():
 
 @pytest.mark.parametrize("local_availability", ['all', 'partial', 'none'])
 def test_find_files(mocker, local_availability):
-
     esgf_files = create_esgf_search_results()
 
     local_dir = Path('/local_dir')
@@ -905,14 +897,14 @@ def test_find_files(mocker, local_availability):
         'alias': 'CMIP6_EC-Eeath3_tas',
     }
     dataset = Dataset(**variable)
-    session = {
+    dataset.session = {
         'offline': False,
         'download_dir': Path('/download_dir'),
         'rootpath': None,
         'drs': {},
         'download_latest_datasets': True,
     }
-    dataset._find_files(session)
+    dataset._find_files()
     input_files = dataset.files
 
     expected = {
@@ -925,7 +917,6 @@ def test_find_files(mocker, local_availability):
 
 @pytest.mark.parametrize('timerange', ['*', '185001/*', '*/185112'])
 def test_update_timerange_from_esgf(mocker, timerange):
-
     esgf_files = create_esgf_search_results()
     variable = {
         'project': 'CMIP6',
@@ -966,7 +957,8 @@ def test_update_timerange_year_format(session, input_time, output_time):
         'timerange': input_time
     }
     dataset = Dataset(**variable)
-    dataset._update_timerange(session)
+    dataset.session = session
+    dataset._update_timerange()
     assert dataset['timerange'] == output_time
 
 
@@ -986,9 +978,10 @@ def test_update_timerange_no_files(session, offline):
         'timerange': '*/2000',
     }
     dataset = Dataset(**variable)
+    dataset.session = session
     msg = r"Missing data for Dataset: CMIP6, Amon, tas, HadGEM3-GC31-LL.*"
     with pytest.raises(InputFilesNotFound, match=msg):
-        dataset._update_timerange(session)
+        dataset._update_timerange()
 
 
 def test_load(mocker, session):

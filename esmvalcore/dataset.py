@@ -6,6 +6,7 @@ import logging
 import pprint
 import re
 import textwrap
+import uuid
 from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import Any, Iterator, Optional, Sequence, Union
@@ -16,7 +17,7 @@ from . import esgf, local
 from ._recipe_checks import data_availability as check_data_availability
 from ._recipe_checks import valid_time_selection as check_valid_time_selection
 from .cmor.table import _get_facets_from_cmor_table
-from .config import Session
+from .config import CFG, Session
 from .config._config import get_activity, get_extra_facets, get_institutes
 from .exceptions import InputFilesNotFound, RecipeError
 from .local import _dates_to_timerange, _get_output_file, _get_start_end_date
@@ -93,8 +94,6 @@ class Dataset:
     def from_files(self) -> Iterator['Dataset']:
         """Create a list of datasets from the available files.
 
-        Requires that self.session is set.
-
         Yields
         ------
         Dataset
@@ -167,7 +166,7 @@ class Dataset:
             self.ancillaries = ancillaries
             yield self
 
-    def copy(self, **facets) -> 'Dataset':
+    def copy(self, **facets: FacetValue) -> 'Dataset':
         """Create a copy.
 
         Parameters
@@ -316,10 +315,8 @@ class Dataset:
     def session(self) -> Session:
         """A :obj:`esmvalcore.config.Session` associated with the dataset."""
         if self._session is None:
-            raise ValueError(
-                "Session not set, please create a session by using "
-                "`esmvalcore.config.CFG.start_session` and "
-                "and add it to this dataset.")
+            session_name = f"session-{uuid.uuid4()}"
+            self._session = CFG.start_session(session_name)
         return self._session
 
     @session.setter
@@ -340,25 +337,18 @@ class Dataset:
         ancillary.ancillaries = []
         self.ancillaries.append(ancillary)
 
-    def augment_facets(self, session: Optional[Session] = None) -> None:
+    def augment_facets(self) -> None:
         """Add extra facets.
 
         This function will update the dataset with additional facets
         from various sources.
-
-        Parameters
-        ----------
-        session
-            The session containing the required configuration.
         """
-        if session is None:
-            session = self.session
-        self._augment_facets(session)
+        self._augment_facets()
         for ancillary in self.ancillaries:
-            ancillary._augment_facets(session)
+            ancillary._augment_facets()
 
-    def _augment_facets(self, session):
-        extra_facets = get_extra_facets(self, session['extra_facets_dir'])
+    def _augment_facets(self):
+        extra_facets = get_extra_facets(self, self.session['extra_facets_dir'])
         _augment(self.facets, extra_facets)
         if 'institute' not in self.facets:
             institute = get_institutes(self.facets)
@@ -372,25 +362,18 @@ class Dataset:
         if self.facets.get('frequency') == 'fx':
             self.facets.pop('timerange', None)
 
-    def find_files(self, session: Optional[Session] = None) -> None:
+    def find_files(self) -> None:
         """Find files.
 
-        Look for files and populate the :obj:`Dataset.files` property
-        of the dataset and its ancillary datasets.
-
-        Parameters
-        ----------
-        session
-            The session containing the required configuration.
+        Look for files and populate the :obj:`Dataset.files` property of
+        the dataset and its ancillary datasets.
         """
-        if session is None:
-            session = self.session
-        self.augment_facets(session)
-        self._find_files(session)
+        self.augment_facets()
+        self._find_files()
         for ancillary in self.ancillaries:
-            ancillary._find_files(session)
+            ancillary.find_files()
 
-    def _find_files(self, session: Session) -> None:
+    def _find_files(self) -> None:
         self.files, self._files_debug = local.find_files(
             debug=True,
             **self.facets,
@@ -400,8 +383,8 @@ class Dataset:
 
         # Set up downloading from ESGF if requested.
         search_esgf = False
-        if not session['offline'] and project in esgf.facets.FACETS:
-            if session['download_latest_datasets']:
+        if not self.session['offline'] and project in esgf.facets.FACETS:
+            if self.session['download_latest_datasets']:
                 search_esgf = True
             else:
                 try:
@@ -438,24 +421,15 @@ class Dataset:
     def files(self, value):
         self._files = value
 
-    def load(self, session: Optional[Session] = None) -> Cube:
+    def load(self) -> Cube:
         """Load dataset.
-
-        Parameters
-        ----------
-        session
-            The session containing the required configuration.
 
         Returns
         -------
         iris.cube.Cube
             An :mod:`iris` cube with the data corresponding the the dataset.
         """
-        if session is None:
-            session = self.session
-        check_level = session['check_level']
-        preproc_dir = session.preproc_dir
-        cube = self._load(preproc_dir, check_level)
+        cube = self._load()
         fx_cubes = []
         ancillary_names = set()
         for ancillary_dataset in self.ancillaries:
@@ -465,7 +439,7 @@ class Dataset:
                     f"{self} already has an ancillary variable {short_name}.")
             if ancillary_dataset.files:
                 ancillary_names.add(short_name)
-                fx_cube = ancillary_dataset._load(preproc_dir, check_level)
+                fx_cube = ancillary_dataset._load()
                 fx_cubes.append(fx_cube)
         input_files = list(self.files)
         for anc in self.ancillaries:
@@ -478,9 +452,9 @@ class Dataset:
         )
         return cubes[0]
 
-    def _load(self, preproc_dir: Path, check_level) -> Cube:
+    def _load(self) -> Cube:
         """Load self.files into an iris cube and return it."""
-        output_file = _get_output_file(self.facets, preproc_dir)
+        output_file = _get_output_file(self.facets, self.session.preproc_dir)
 
         settings: dict[str, dict[str, Any]] = {}
         settings['fix_file'] = {
@@ -489,12 +463,12 @@ class Dataset:
         }
         settings['load'] = {}
         settings['fix_metadata'] = {
-            'check_level': check_level,
+            'check_level': self.session['check_level'],
             **self.facets,
         }
         settings['concatenate'] = {}
         settings['cmor_check_metadata'] = {
-            'check_level': check_level,
+            'check_level': self.session['check_level'],
             'cmor_table': self.facets['project'],
             'mip': self.facets['mip'],
             'frequency': self.facets['frequency'],
@@ -505,11 +479,11 @@ class Dataset:
                 'timerange': self.facets['timerange'],
             }
         settings['fix_data'] = {
-            'check_level': check_level,
+            'check_level': self.session['check_level'],
             **self.facets,
         }
         settings['cmor_check_data'] = {
-            'check_level': check_level,
+            'check_level': self.session['check_level'],
             'cmor_table': self.facets['project'],
             'mip': self.facets['mip'],
             'frequency': self.facets['frequency'],
@@ -577,7 +551,7 @@ class Dataset:
 
         return expanded
 
-    def _update_timerange(self, session: Session | None = None):
+    def _update_timerange(self):
         """Update wildcards in timerange with found datetime values.
 
         If the timerange is given as a year, it ensures it's formatted
@@ -592,7 +566,7 @@ class Dataset:
         check_valid_time_selection(timerange)
 
         if '*' in timerange:
-            self.find_files(session)
+            self.find_files()
             check_data_availability(self)
             intervals = [_get_start_end_date(f.name) for f in self.files]
             self._files = None

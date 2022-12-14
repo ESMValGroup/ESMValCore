@@ -9,7 +9,7 @@ from esmvalcore.dataset import Dataset
 
 
 @pytest.fixture
-def example_data(tmp_path):
+def example_data(tmp_path, monkeypatch):
     cwd = Path(__file__).parent
     tas_src = cwd / 'tas.nc'
     areacella_src = cwd / 'areacella.nc'
@@ -29,13 +29,12 @@ def example_data(tmp_path):
     areacella_tgt.parent.mkdir(parents=True, exist_ok=True)
     areacella_tgt.symlink_to(areacella_src)
 
-    CFG['rootpath']['CMIP5'] = [str(rootpath)]
-    CFG['drs']['CMIP5'] = 'ESGF'
-    CFG['output_dir'] = tmp_path / 'output_dir'
+    monkeypatch.setitem(CFG, 'rootpath', {'CMIP5': str(rootpath)})
+    monkeypatch.setitem(CFG, 'drs', {'CMIP5': 'ESGF'})
+    monkeypatch.setitem(CFG, 'output_dir', tmp_path / 'output_dir')
 
 
 def test_load(example_data):
-    session = CFG.start_session('test_session')
     tas = Dataset(
         short_name='tas',
         mip='Amon',
@@ -47,12 +46,12 @@ def test_load(example_data):
     )
     tas.add_ancillary(short_name='areacella', mip='fx', ensemble='r0i0p0')
 
-    tas.augment_facets(session)
+    tas.augment_facets()
 
-    tas.find_files(session)
+    tas.find_files()
     print(tas.files)
 
-    cube = tas.load(session)
+    cube = tas.load()
 
     assert isinstance(cube, iris.cube.Cube)
     assert cube.cell_measures()
