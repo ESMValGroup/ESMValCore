@@ -161,6 +161,7 @@ class Fix:
         fixes_modules = []
         if project == 'cordex':
             driver = extra_facets['driver'].replace('-', '_').lower()
+            extra_facets['dataset'] = dataset
             try:
                 fixes_modules.append(importlib.import_module(
                     f'esmvalcore.cmor._fixes.{project}.{driver}.{dataset}'
