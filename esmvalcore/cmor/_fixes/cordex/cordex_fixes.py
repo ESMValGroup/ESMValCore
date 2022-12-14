@@ -1,11 +1,12 @@
 """Fixes that are shared between datasets and drivers."""
+import logging
 from cf_units import Unit
 import cordex as cx
 import numpy as np
 import iris
-import logging
 
 from iris.coord_systems import RotatedGeogCS
+from esmvalcore.cmor.check import CMORCheck
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.exceptions import RecipeError
 logger = logging.getLogger(__name__)
@@ -117,9 +118,9 @@ class AllVars(Fix):
 
         if diff > 10e-4:
             raise RecipeError(
-                    "Differences between the original grid and the "
-                    f"standarised grid are above 10e-4 {new_coord.units}.",
-                )
+                "Differences between the original grid and the "
+                f"standarised grid are above 10e-4 {new_coord.units}.",
+            )
 
     def _fix_rotated_coords(self, cube):
         """Fix rotated coordinates."""
@@ -164,7 +165,6 @@ class AllVars(Fix):
                 units=Unit(domain[aux_coord].units),
                 bounds=bounds
             )
-            logger.info(old_coord.units)
             self._check_grid_differences(old_coord, new_coord)
             aux_coord_dims = (
                 cube.coord(var_name='rlat').cube_dims(cube) +
