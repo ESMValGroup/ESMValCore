@@ -6,7 +6,6 @@ import numpy as np
 import iris
 
 from iris.coord_systems import RotatedGeogCS
-from esmvalcore.cmor.check import CMORCheck
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.exceptions import RecipeError
 logger = logging.getLogger(__name__)
