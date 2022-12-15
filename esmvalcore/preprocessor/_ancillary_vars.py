@@ -1,6 +1,7 @@
 """Preprocessor functions for ancillary variables and cell measures."""
 
 import logging
+from pathlib import Path
 
 import dask.array as da
 import iris
@@ -158,7 +159,7 @@ def add_fx_variables(cube, fx_variables, check_level):
     for fx_info in fx_variables.values():
         if not fx_info:
             continue
-        if isinstance(fx_info['filename'], str):
+        if isinstance(fx_info['filename'], (str, Path)):
             fx_info['filename'] = [fx_info['filename']]
         fx_cube = _load_fx(cube, fx_info, check_level)
 

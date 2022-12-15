@@ -136,7 +136,7 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
             'diagnostic': 'diagnostic_name',
             'ensemble': 'r1i1p1',
             'exp': 'historical',
-            'filename': fix_dir.replace('_fixed', '.nc'),
+            'filename': Path(fix_dir.replace('_fixed', '.nc')),
             'frequency': 'yr',
             'institute': ['CCCma'],
             'long_name': 'Total Chlorophyll Mass Concentration',
@@ -161,7 +161,7 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
             'diagnostic': 'diagnostic_name',
             'ensemble': 'r1i1p1',
             'exp': 'historical',
-            'filename': fix_dir.replace('_fixed', '.nc'),
+            'filename': Path(fix_dir.replace('_fixed', '.nc')),
             'frequency': 'yr',
             'institute': ['CCCma'],
             'long_name': 'Total Chlorophyll Mass Concentration',
@@ -185,7 +185,7 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
             'diagnostic': 'diagnostic_name',
             'ensemble': 'r1i1p1',
             'exp': 'historical',
-            'filename': fix_dir.replace('_fixed', '.nc'),
+            'filename': Path(fix_dir.replace('_fixed', '.nc')),
             'frequency': 'yr',
             'institute': ['CCCma'],
             'long_name': 'Total Chlorophyll Mass Concentration',
@@ -595,7 +595,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'diagnostic': 'diagnostic_name',
             'ensemble': 'r0i0p0',
             'exp': 'historical',
-            'filename': fix_dir.replace('_fixed', '.nc'),
+            'filename': Path(fix_dir.replace('_fixed', '.nc')),
             'frequency': 'fx',
             'institute': ['CCCma'],
             'long_name': 'Land Area Fraction',
@@ -619,7 +619,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'diagnostic': 'diagnostic_name',
             'ensemble': 'r0i0p0',
             'exp': 'historical',
-            'filename': fix_dir.replace('_fixed', '.nc'),
+            'filename': Path(fix_dir.replace('_fixed', '.nc')),
             'frequency': 'fx',
             'institute': ['CCCma'],
             'long_name': 'Land Area Fraction',
@@ -642,7 +642,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
             'diagnostic': 'diagnostic_name',
             'ensemble': 'r0i0p0',
             'exp': 'historical',
-            'filename': fix_dir.replace('_fixed', '.nc'),
+            'filename': Path(fix_dir.replace('_fixed', '.nc')),
             'frequency': 'fx',
             'institute': ['CCCma'],
             'long_name': 'Land Area Fraction',
@@ -874,7 +874,7 @@ def test_simple_cordex_recipe(tmp_path, patched_datafinder, config_user):
 
     recipe = get_recipe(tmp_path, content, config_user)
     variable = recipe.diagnostics['test']['preprocessor_output']['tas'][0]
-    filename = variable.pop('filename').split('/')[-1]
+    filename = variable.pop('filename').name
     assert (filename ==
             'CORDEX_MOHC-HadGEM3-RA_v1_ECMWF-ERAINT_AFR-44_mon_evaluation_'
             'r1i1p1_tas_1991-1993.nc')
@@ -939,7 +939,7 @@ TEST_ISO_TIMERANGE = [
 def test_recipe_iso_timerange(tmp_path, patched_datafinder, config_user,
                               input_time, output_time):
     """Test recipe with timerange tag."""
-    content = dedent("""
+    content = dedent(f"""
         diagnostics:
           test:
             additional_datasets:
@@ -948,44 +948,46 @@ def test_recipe_iso_timerange(tmp_path, patched_datafinder, config_user,
                 exp: historical
                 ensemble: r2i1p1f1
                 grid: gn
-                timerange:
             variables:
               pr:
                 mip: 3hr
+                timerange: '{input_time}'
               areacella:
                 mip: fx
             scripts: null
         """)
 
-    recipe = yaml.safe_load(content)
-    (recipe['diagnostics']['test']['additional_datasets'][0]['timerange']
-     ) = input_time
-    content = yaml.safe_dump(recipe)
-
     recipe = get_recipe(tmp_path, content, config_user)
-    variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
-    filename = variable.pop('filename').split('/')[-1]
-    assert (filename == 'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
-            f'pr_gn_{output_time}.nc')
-    fx_variable = (
-        recipe.diagnostics['test']['preprocessor_output']['areacella'][0])
-    fx_filename = fx_variable.pop('filename').split('/')[-1]
-    assert (fx_filename ==
-            'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella_gn.nc')
+    assert len(recipe.tasks) == 2
+    pr_task = [t for t in recipe.tasks if t.name.endswith('pr')][0]
+    assert len(pr_task.products) == 1
+    pr_product = pr_task.products.pop()
+
+    filename = ('CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
+                f'pr_gn_{output_time}.nc')
+    assert pr_product.filename.name == filename
+
+    areacella_task = [t for t in recipe.tasks
+                      if t.name.endswith('areacella')][0]
+    assert len(areacella_task.products) == 1
+    areacella_product = areacella_task.products.pop()
+
+    filename = 'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella_gn.nc'
+    assert areacella_product.filename.name == filename
 
 
 @pytest.mark.parametrize('input_time,output_time', TEST_ISO_TIMERANGE)
 def test_recipe_iso_timerange_as_dataset(tmp_path, patched_datafinder,
                                          config_user, input_time, output_time):
     """Test recipe with timerange tag in the datasets section."""
-    content = dedent("""
+    content = dedent(f"""
         datasets:
           - dataset: HadGEM3-GC31-LL
             project: CMIP6
             exp: historical
             ensemble: r2i1p1f1
             grid: gn
-            timerange:
+            timerange: '{input_time}'
         diagnostics:
           test:
             variables:
@@ -996,18 +998,14 @@ def test_recipe_iso_timerange_as_dataset(tmp_path, patched_datafinder,
             scripts: null
         """)
 
-    recipe = yaml.safe_load(content)
-    (recipe['datasets'][0]['timerange']) = input_time
-    content = yaml.safe_dump(recipe)
-
     recipe = get_recipe(tmp_path, content, config_user)
     variable = recipe.diagnostics['test']['preprocessor_output']['pr'][0]
-    filename = variable.pop('filename').split('/')[-1]
+    filename = variable.pop('filename').name
     assert (filename == 'CMIP6_HadGEM3-GC31-LL_3hr_historical_r2i1p1f1_'
             f'pr_gn_{output_time}.nc')
     fx_variable = (
         recipe.diagnostics['test']['preprocessor_output']['areacella'][0])
-    fx_filename = fx_variable.pop('filename').split('/')[-1]
+    fx_filename = fx_variable.pop('filename').name
     assert (fx_filename ==
             'CMIP6_HadGEM3-GC31-LL_fx_historical_r2i1p1f1_areacella_gn.nc')
 
@@ -2584,8 +2582,8 @@ def test_empty_fxvar_dict(tmp_path, patched_datafinder, config_user):
     assert product.settings['add_fx_variables']['fx_variables'] == {}
 
 
-def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
-    content = dedent("""
+@pytest.mark.parametrize('content', [
+    pytest.param(dedent("""
         preprocessors:
           landmask:
             mask_landsea:
@@ -2620,45 +2618,46 @@ def test_user_defined_fxvar(tmp_path, patched_datafinder, config_user):
                 additional_datasets:
                   - {dataset: CanESM2}
             scripts: null
-        """)
-    recipe = get_recipe(tmp_path, content, config_user)
-
-    # Check custom fx variables
-    task = recipe.tasks.pop()
-    product = task.products.pop()
-
-    # landsea
-    settings = product.settings['mask_landsea']
-    assert len(settings) == 1
-    assert settings['mask_out'] == 'sea'
-    fx_variables = product.settings['add_fx_variables']['fx_variables']
-    assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 4
-    assert '_fx_' in fx_variables['sftlf']['filename']
-    assert '_piControl_' in fx_variables['sftlf']['filename']
-
-    # landseaice
-    settings = product.settings['mask_landseaice']
-    assert len(settings) == 1
-    assert settings['mask_out'] == 'sea'
-    assert '_fx_' in fx_variables['sftgif']['filename']
-    assert '_piControl_' in fx_variables['sftgif']['filename']
-
-    # volume statistics
-    settings = product.settings['volume_statistics']
-    assert len(settings) == 1
-    assert settings['operator'] == 'mean'
-    assert 'volcello' in fx_variables
-
-    # area statistics
-    settings = product.settings['area_statistics']
-    assert len(settings) == 1
-    assert settings['operator'] == 'mean'
-    assert '_fx_' in fx_variables['areacello']['filename']
-    assert '_piControl_' in fx_variables['areacello']['filename']
-
-
-def test_user_defined_fxlist(tmp_path, patched_datafinder, config_user):
+        """),
+                 id='fx_variables_as_dict_of_dicts'),
+    pytest.param(dedent("""
+        preprocessors:
+          landmask:
+            mask_landsea:
+              mask_out: sea
+              fx_variables: [{'short_name': 'sftlf', 'exp': 'piControl'}]
+            mask_landseaice:
+              mask_out: sea
+              fx_variables: [{'short_name': 'sftgif', 'exp': 'piControl'}]
+            volume_statistics:
+              operator: mean
+            area_statistics:
+              operator: mean
+              fx_variables: [{'short_name': 'areacello', 'mip': 'fx',
+                         'exp': 'piControl'}]
+        diagnostics:
+          diagnostic_name:
+            variables:
+              gpp:
+                preprocessor: landmask
+                project: CMIP5
+                mip: Lmon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """),
+                 id='fx_variables_as_list_of_dicts'),
+])
+def test_user_defined_fxvar(
+    tmp_path,
+    patched_datafinder,
+    config_user,
+    content,
+):
     content = dedent("""
         preprocessors:
           landmask:
@@ -2702,15 +2701,15 @@ def test_user_defined_fxlist(tmp_path, patched_datafinder, config_user):
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 4
-    assert '_fx_' in fx_variables['sftlf']['filename']
-    assert '_piControl_' in fx_variables['sftlf']['filename']
+    assert '_fx_' in fx_variables['sftlf']['filename'].name
+    assert '_piControl_' in fx_variables['sftlf']['filename'].name
 
     # landseaice
     settings = product.settings['mask_landseaice']
     assert len(settings) == 1
     assert settings['mask_out'] == 'sea'
-    assert '_fx_' in fx_variables['sftlf']['filename']
-    assert '_piControl_' in fx_variables['sftlf']['filename']
+    assert '_fx_' in fx_variables['sftlf']['filename'].name
+    assert '_piControl_' in fx_variables['sftlf']['filename'].name
 
     # volume statistics
     settings = product.settings['volume_statistics']
@@ -2722,8 +2721,8 @@ def test_user_defined_fxlist(tmp_path, patched_datafinder, config_user):
     settings = product.settings['area_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
-    assert '_fx_' in fx_variables['areacello']['filename']
-    assert '_piControl_' in fx_variables['areacello']['filename']
+    assert '_fx_' in fx_variables['areacello']['filename'].name
+    assert '_piControl_' in fx_variables['areacello']['filename'].name
 
 
 def test_landmask_no_fx(tmp_path, patched_failing_datafinder, config_user):
@@ -2779,14 +2778,17 @@ def test_fx_vars_fixed_mip_cmip6(tmp_path, patched_datafinder, config_user):
     content = dedent("""
         preprocessors:
           preproc:
-           area_statistics:
-             operator: mean
-             fx_variables:
-               sftgif:
-                 mip: fx
-               volcello:
-                 ensemble: r2i1p1f1
-                 mip: Ofx
+            volume_statistics:
+              operator: mean
+              fx_variables:
+                volcello:
+                  ensemble: r2i1p1f1
+                  mip: Ofx
+            mask_landseaice:
+              mask_out: ice
+              fx_variables:
+                sftgif:
+                  mip: fx
 
         diagnostics:
           diagnostic_name:
@@ -2813,9 +2815,9 @@ def test_fx_vars_fixed_mip_cmip6(tmp_path, patched_datafinder, config_user):
     assert len(task.products) == 1
     product = task.products.pop()
 
-    # Check area_statistics
-    assert 'area_statistics' in product.settings
-    settings = product.settings['area_statistics']
+    # Check volume_statistics
+    assert 'volume_statistics' in product.settings
+    settings = product.settings['volume_statistics']
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
 
@@ -2823,9 +2825,9 @@ def test_fx_vars_fixed_mip_cmip6(tmp_path, patched_datafinder, config_user):
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 2
-    assert '_fx_' in fx_variables['sftgif']['filename']
-    assert '_r2i1p1f1_' in fx_variables['volcello']['filename']
-    assert '_Ofx_' in fx_variables['volcello']['filename']
+    assert '_fx_' in fx_variables['sftgif']['filename'].name
+    assert '_r2i1p1f1_' in fx_variables['volcello']['filename'].name
+    assert '_Ofx_' in fx_variables['volcello']['filename'].name
 
 
 def test_fx_vars_invalid_mip_cmip6(tmp_path, patched_datafinder, config_user):
@@ -2960,11 +2962,11 @@ def test_fx_vars_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 5
-    assert '_fx_' in fx_variables['areacella']['filename']
-    assert '_Ofx_' in fx_variables['areacello']['filename']
-    assert '_Efx_' in fx_variables['clayfrac']['filename']
-    assert '_fx_' in fx_variables['sftlf']['filename']
-    assert '_Ofx_' in fx_variables['sftof']['filename']
+    assert '_fx_' in fx_variables['areacella']['filename'].name
+    assert '_Ofx_' in fx_variables['areacello']['filename'].name
+    assert '_Efx_' in fx_variables['clayfrac']['filename'].name
+    assert '_fx_' in fx_variables['sftlf']['filename'].name
+    assert '_Ofx_' in fx_variables['sftof']['filename'].name
 
 
 def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
@@ -2972,15 +2974,18 @@ def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
     content = dedent("""
         preprocessors:
           preproc:
-           area_statistics:
-             operator: mean
-             fx_variables: [
-               'areacella',
-               'areacello',
-               'clayfrac',
-               'sftlf',
-               'sftof',
-               ]
+            area_statistics:
+              operator: mean
+              fx_variables: [
+                'areacella',
+                'areacello',
+              ]
+            mask_landsea:
+              mask_out: sea
+              fx_variables: [
+                'sftlf',
+                'sftof',
+              ]
 
         diagnostics:
           diagnostic_name:
@@ -3016,12 +3021,11 @@ def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, config_user):
     # Check add_fx_variables
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
-    assert len(fx_variables) == 5
-    assert '_fx_' in fx_variables['areacella']['filename']
-    assert '_Ofx_' in fx_variables['areacello']['filename']
-    assert '_Efx_' in fx_variables['clayfrac']['filename']
-    assert '_fx_' in fx_variables['sftlf']['filename']
-    assert '_Ofx_' in fx_variables['sftof']['filename']
+    assert len(fx_variables) == 4
+    assert '_fx_' in fx_variables['areacella']['filename'].name
+    assert '_Ofx_' in fx_variables['areacello']['filename'].name
+    assert '_fx_' in fx_variables['sftlf']['filename'].name
+    assert '_Ofx_' in fx_variables['sftof']['filename'].name
 
 
 def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
@@ -3070,8 +3074,8 @@ def test_fx_vars_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Omon_' not in fx_variables['volcello']['filename']
-    assert '_Ofx_' in fx_variables['volcello']['filename']
+    assert '_Omon_' not in fx_variables['volcello']['filename'].name
+    assert '_Ofx_' in fx_variables['volcello']['filename'].name
 
 
 def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
@@ -3119,9 +3123,9 @@ def test_fx_dicts_volcello_in_ofx_cmip6(tmp_path, patched_datafinder,
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Oyr_' in fx_variables['volcello']['filename'][0]
-    assert '_piControl_' in fx_variables['volcello']['filename'][0]
-    assert '_Omon_' not in fx_variables['volcello']['filename'][0]
+    assert '_Oyr_' in fx_variables['volcello']['filename'][0].name
+    assert '_piControl_' in fx_variables['volcello']['filename'][0].name
+    assert '_Omon_' not in fx_variables['volcello']['filename'][0].name
 
 
 def test_fx_vars_list_no_preproc_cmip6(tmp_path, patched_datafinder,
@@ -3221,8 +3225,8 @@ def test_fx_vars_volcello_in_omon_cmip6(tmp_path, patched_failing_datafinder,
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Ofx_' not in fx_variables['volcello']['filename'][0]
-    assert '_Omon_' in fx_variables['volcello']['filename'][0]
+    assert '_Ofx_' not in fx_variables['volcello']['filename'][0].name
+    assert '_Omon_' in fx_variables['volcello']['filename'][0].name
 
 
 def test_fx_vars_volcello_in_oyr_cmip6(tmp_path, patched_failing_datafinder,
@@ -3269,8 +3273,8 @@ def test_fx_vars_volcello_in_oyr_cmip6(tmp_path, patched_failing_datafinder,
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_Ofx_' not in fx_variables['volcello']['filename'][0]
-    assert '_Oyr_' in fx_variables['volcello']['filename'][0]
+    assert '_Ofx_' not in fx_variables['volcello']['filename'][0].name
+    assert '_Oyr_' in fx_variables['volcello']['filename'][0].name
 
 
 def test_fx_vars_volcello_in_fx_cmip5(tmp_path, patched_datafinder,
@@ -3315,8 +3319,8 @@ def test_fx_vars_volcello_in_fx_cmip5(tmp_path, patched_datafinder,
     fx_variables = product.settings['add_fx_variables']['fx_variables']
     assert isinstance(fx_variables, dict)
     assert len(fx_variables) == 1
-    assert '_fx_' in fx_variables['volcello']['filename']
-    assert '_Omon_' not in fx_variables['volcello']['filename']
+    assert '_fx_' in fx_variables['volcello']['filename'].name
+    assert '_Omon_' not in fx_variables['volcello']['filename'].name
 
 
 def test_wrong_project(tmp_path, patched_datafinder, config_user):
@@ -3434,8 +3438,8 @@ def test_unique_fx_var_in_multiple_mips_cmip6(tmp_path,
     content = dedent("""
         preprocessors:
           preproc:
-           area_statistics:
-             operator: mean
+           mask_landseaice:
+             mask_out: ice
              fx_variables:
                sftgif:
 
@@ -3464,11 +3468,11 @@ def test_unique_fx_var_in_multiple_mips_cmip6(tmp_path,
     assert len(task.products) == 1
     product = task.products.pop()
 
-    # Check area_statistics
-    assert 'area_statistics' in product.settings
-    settings = product.settings['area_statistics']
+    # Check mask_landseaice
+    assert 'mask_landseaice' in product.settings
+    settings = product.settings['mask_landseaice']
     assert len(settings) == 1
-    assert settings['operator'] == 'mean'
+    assert settings['mask_out'] == 'ice'
 
     # Check add_fx_variables
     # Due to failing datafinder, only files in LImon are found even though
@@ -3479,7 +3483,7 @@ def test_unique_fx_var_in_multiple_mips_cmip6(tmp_path,
     sftgif_files = fx_variables['sftgif']['filename']
     assert isinstance(sftgif_files, list)
     assert len(sftgif_files) == 1
-    assert '_LImon_' in sftgif_files[0]
+    assert '_LImon_' in sftgif_files[0].name
 
 
 def test_multimodel_mask(tmp_path, patched_datafinder, config_user):
@@ -3639,8 +3643,8 @@ def test_dataset_to_file_derived_var(mock_get_input_files,
                                      mock_data_availability, config_user):
     """Test ``_dataset_to_file`` with derived variable."""
     mock_get_input_files.side_effect = [
-        ([], [], []),
-        ([sentinel.out_file], [sentinel.dirname], [sentinel.filename]),
+        ([], []),
+        ([sentinel.out_file], [sentinel.globs]),
     ]
     variable = {
         'dataset': 'ICON',

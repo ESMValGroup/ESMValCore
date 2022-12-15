@@ -2,6 +2,7 @@
 import copy
 import inspect
 import logging
+from pathlib import Path
 from pprint import pformat
 
 from iris.cube import Cube
@@ -325,7 +326,7 @@ def _run_preproc_function(function, items, kwargs, input_files=None):
                         f"here; refer to the debug log for a full list)")
 
         # Make sure that the arguments are indexable
-        if isinstance(items, (PreprocessorFile, Cube, str)):
+        if isinstance(items, (PreprocessorFile, Cube, str, Path)):
             items = [items]
         if isinstance(items, set):
             items = list(items)
@@ -361,7 +362,7 @@ def preprocess(items, step, input_files=None, **settings):
 
     items = []
     for item in result:
-        if isinstance(item, (PreprocessorFile, Cube, str)):
+        if isinstance(item, (PreprocessorFile, Cube, str, Path)):
             items.append(item)
         else:
             items.extend(item)

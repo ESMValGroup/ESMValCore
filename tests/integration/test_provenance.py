@@ -3,7 +3,7 @@ from prov.model import ProvDerivation
 
 
 def get_file_record(prov, filename):
-    records = prov.get_record('file:' + filename)
+    records = prov.get_record(f'file:{filename}')
     assert records
     return records[0]
 

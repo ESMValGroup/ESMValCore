@@ -438,8 +438,8 @@ Example of the CMIP6 project configuration:
    CMIP6:
      input_dir:
        default: '/'
-       BADC: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
-       DKRZ: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
+       BADC: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
+       DKRZ: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
        ETHZ: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/{grid}/'
      input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
      output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
@@ -462,7 +462,7 @@ at each site. As an example, the CMIP6 directory path on BADC would be:
 
 .. code-block:: yaml
 
-   '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
+   '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
 
 The resulting directory path would look something like this:
 
@@ -475,8 +475,8 @@ which may be needed:
 
 .. code-block:: yaml
 
-  - '{exp}/{ensemble}/original/{mip}/{short_name}/{grid}/{latestversion}'
-  - '{exp}/{ensemble}/computed/{mip}/{short_name}/{grid}/{latestversion}'
+  - '{exp}/{ensemble}/original/{mip}/{short_name}/{grid}/{version}'
+  - '{exp}/{ensemble}/computed/{mip}/{short_name}/{grid}/{version}'
 
 In that case, the resultant directories will be:
 
@@ -629,7 +629,7 @@ Example:
    native6:
      cmor_strict: false
      input_dir:
-       default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
+       default: 'Tier{tier}/{dataset}/{version}/{frequency}/{short_name}'
      input_file:
        default: '*.nc'
      output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
