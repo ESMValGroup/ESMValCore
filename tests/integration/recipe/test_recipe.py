@@ -12,7 +12,7 @@ from nested_lookup import get_occurrence_of_value
 from PIL import Image
 
 import esmvalcore
-from esmvalcore._recipe import (
+from esmvalcore._recipe.recipe import (
     _get_input_datasets,
     _representative_dataset,
     read_recipe_file,
@@ -25,8 +25,7 @@ from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.local import _get_output_file
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
-
-from .test_provenance import check_provenance
+from tests.integration.test_provenance import check_provenance
 
 TAGS_FOR_TESTING = {
     'authors': {
@@ -134,7 +133,8 @@ def patched_tas_derivation(monkeypatch):
         ]
         return required
 
-    monkeypatch.setattr(esmvalcore._recipe, 'get_required', get_required)
+    monkeypatch.setattr(esmvalcore._recipe.datasets, 'get_required',
+                        get_required)
 
 
 DEFAULT_DOCUMENTATION = dedent("""
@@ -304,7 +304,7 @@ def test_write_filled_recipe(tmp_path, patched_datafinder, session):
     recipe = get_recipe(tmp_path, content, session)
 
     session.run_dir.mkdir(parents=True)
-    esmvalcore._recipe.Recipe.write_filled_recipe(recipe)
+    esmvalcore._recipe.recipe.Recipe.write_filled_recipe(recipe)
 
     recipe_file = session.run_dir / 'recipe_test_filled.yml'
     assert recipe_file.is_file()
@@ -638,8 +638,8 @@ def test_recipe_iso_timerange_as_dataset(tmp_path, patched_datafinder, session,
 def test_reference_dataset(tmp_path, patched_datafinder, session, monkeypatch):
     levels = [100]
     get_reference_levels = create_autospec(
-        esmvalcore._recipe.get_reference_levels, return_value=levels)
-    monkeypatch.setattr(esmvalcore._recipe, 'get_reference_levels',
+        esmvalcore._recipe.recipe.get_reference_levels, return_value=levels)
+    monkeypatch.setattr(esmvalcore._recipe.recipe, 'get_reference_levels',
                         get_reference_levels)
 
     content = dedent("""
@@ -2997,7 +2997,7 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     session['download_dir'] = tmp_path / 'download_dir'
     session['offline'] = False
 
-    mocker.patch.object(esmvalcore._recipe.esgf,
+    mocker.patch.object(esmvalcore._recipe.recipe.esgf,
                         'download',
                         create_autospec=True)
 
@@ -3008,7 +3008,7 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
     recipe.write_html_summary = mocker.Mock()
     recipe.run()
 
-    esmvalcore._recipe.esgf.download.assert_called_once_with(
+    esmvalcore._recipe.recipe.esgf.download.assert_called_once_with(
         set(), session['download_dir'])
     recipe.tasks.run.assert_called_once_with(
         max_parallel_tasks=session['max_parallel_tasks'])

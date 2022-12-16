@@ -1,4 +1,4 @@
-"""Integration tests for :mod:`esmvalcore._recipe_checks`."""
+"""Integration tests for :mod:`esmvalcore._recipe.check`."""
 import os.path
 from pathlib import Path
 from typing import Any, List
@@ -7,8 +7,9 @@ from unittest import mock
 import pyesgf.search.results
 import pytest
 
-import esmvalcore._recipe_checks as check
+import esmvalcore._recipe.check
 import esmvalcore.esgf
+from esmvalcore._recipe import check
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.preprocessor import PreprocessorFile
@@ -50,7 +51,7 @@ DATA_AVAILABILITY_DATA = [
 
 
 @pytest.mark.parametrize('input_files,var,error', DATA_AVAILABILITY_DATA)
-@mock.patch('esmvalcore._recipe_checks.logger', autospec=True)
+@mock.patch('esmvalcore._recipe.check.logger', autospec=True)
 def test_data_availability_data(mock_logger, input_files, var, error):
     """Test check for data when data is present."""
     dataset = Dataset(**var)
@@ -77,7 +78,7 @@ DATA_AVAILABILITY_NO_DATA: List[Any] = [
 
 
 @pytest.mark.parametrize('dirnames,filenames,error', DATA_AVAILABILITY_NO_DATA)
-@mock.patch('esmvalcore._recipe_checks.logger', autospec=True)
+@mock.patch('esmvalcore._recipe.check.logger', autospec=True)
 def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
     """Test check for data when no data is present."""
     facets = {

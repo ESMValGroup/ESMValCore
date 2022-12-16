@@ -1,4 +1,3 @@
-import textwrap
 from pathlib import Path
 from unittest import mock
 
@@ -6,69 +5,12 @@ import iris
 import numpy as np
 import pyesgf.search.results
 import pytest
-import yaml
 
+import esmvalcore._recipe.recipe as _recipe
 import esmvalcore.experimental.recipe_output
-from esmvalcore import _recipe
 from esmvalcore.dataset import Dataset
 from esmvalcore.esgf._download import ESGFFile
 from tests import PreprocessorFile
-
-
-def test_datasets_to_recipe():
-    datasets = [
-        Dataset(
-            short_name='ta',
-            dataset='dataset1',
-        ),
-        Dataset(
-            short_name='ta',
-            dataset='dataset2',
-        ),
-    ]
-    for dataset in datasets:
-        dataset.facets['diagnostic'] = 'diagnostic1'
-    recipe_txt = textwrap.dedent("""
-
-    diagnostics:
-      diagnostic1:
-        variables:
-          ta:
-            additional_datasets:
-              - {dataset: 'dataset1'}
-              - {dataset: 'dataset2'}
-
-    """)
-    recipe = yaml.safe_load(recipe_txt)
-
-    assert _recipe.datasets_to_recipe(datasets) == recipe
-
-
-def test_ancillary_datasets_to_recipe():
-
-    dataset = Dataset(
-        short_name='ta',
-        dataset='dataset1',
-    )
-    dataset['diagnostic'] = 'diagnostic1'
-    dataset['variable_group'] = 'group1'
-    dataset.add_ancillary(short_name='areacella')
-
-    recipe_txt = textwrap.dedent("""
-
-    diagnostics:
-      diagnostic1:
-        variables:
-          group1:
-            short_name: 'ta'
-            ancillary_variables:
-              - short_name: areacella
-            additional_datasets:
-              - dataset: 'dataset1'
-
-    """)
-    recipe = yaml.safe_load(recipe_txt)
-    assert _recipe.datasets_to_recipe([dataset]) == recipe
 
 
 class MockRecipe(_recipe.Recipe):
@@ -133,6 +75,7 @@ def test_resume_preprocessor_tasks(mocker, tmp_path):
 
     class Session(dict):
         pass
+
     session = Session(resume_from=[prev_output])
     session.preproc_dir = Path('/path/to/recipe_test_20210101_000000/preproc')
     recipe.session = session
@@ -521,7 +464,7 @@ TEST_CREATE_DIAGNOSTIC_TASKS = [
 
 @pytest.mark.parametrize('tasks_to_run,tasks_run',
                          TEST_CREATE_DIAGNOSTIC_TASKS)
-@mock.patch('esmvalcore._recipe.DiagnosticTask', autospec=True)
+@mock.patch('esmvalcore._recipe.recipe.DiagnosticTask', autospec=True)
 def test_create_diagnostic_tasks(mock_diag_task, tasks_to_run, tasks_run):
     """Test ``Recipe._create_diagnostic_tasks``."""
     cfg = {'run_diagnostic': True}
@@ -570,37 +513,3 @@ def test_update_warning_settings_step_present():
     assert len(settings['load']) == 2
     assert settings['load']['filename'] == 'in.nc'
     assert 'ignore_warnings' in settings['load']
-
-
-def test_group_identical_facets():
-
-    variable = {
-        'short_name': 'tas',
-        'additional_datasets': [
-            {
-                'dataset': 'dataset1',
-                'ensemble': 'r1i1p1f1',
-            },
-            {
-                'dataset': 'dataset2',
-                'ensemble': 'r1i1p1f1',
-            },
-        ],
-    }
-
-    result = _recipe.group_identical_facets(variable)
-
-    expected = {
-        'short_name': 'tas',
-        'ensemble': 'r1i1p1f1',
-        'additional_datasets': [
-            {
-                'dataset': 'dataset1',
-            },
-            {
-                'dataset': 'dataset2',
-            },
-        ],
-    }
-
-    assert result == expected

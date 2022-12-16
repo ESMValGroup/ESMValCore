@@ -1,12 +1,12 @@
 """Classes and functions for defining, finding, and loading data."""
 from __future__ import annotations
 
-import copy
 import logging
 import pprint
 import re
 import textwrap
 import uuid
+from copy import deepcopy
 from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import Any, Iterator, Optional, Sequence, Union
@@ -14,8 +14,7 @@ from typing import Any, Iterator, Optional, Sequence, Union
 from iris.cube import Cube
 
 from . import esgf, local
-from ._recipe_checks import data_availability as check_data_availability
-from ._recipe_checks import valid_time_selection as check_valid_time_selection
+from ._recipe import check
 from .cmor.table import _get_facets_from_cmor_table
 from .config import CFG, Session
 from .config._config import get_activity, get_extra_facets, get_institutes
@@ -77,7 +76,7 @@ class Dataset:
         self._files_debug: Optional[Sequence[Path]] = None
 
         for key, value in facets.items():
-            self.set_facet(key, copy.deepcopy(value), persist=True)
+            self.set_facet(key, deepcopy(value), persist=True)
 
     @staticmethod
     def from_recipe(recipe: Path, session: Session) -> list['Dataset']:
@@ -88,7 +87,7 @@ class Dataset:
         list[Dataset]
             A list of datasets.
         """
-        from ._recipe import datasets_from_recipe
+        from esmvalcore._recipe.datasets import datasets_from_recipe
         return datasets_from_recipe(recipe, session)
 
     def from_files(self) -> Iterator['Dataset']:
@@ -184,9 +183,9 @@ class Dataset:
         new = self.__class__()
         new._session = self._session
         for key, value in self.facets.items():
-            new.set_facet(key, copy.deepcopy(value), key in self._persist)
+            new.set_facet(key, deepcopy(value), key in self._persist)
         for key, value in facets.items():
-            new.set_facet(key, copy.deepcopy(value))
+            new.set_facet(key, deepcopy(value))
         for ancillary in self.ancillaries:
             # The short_name and mip of the ancillary variable are probably
             # different from the main variable, so don't copy those facets.
@@ -374,6 +373,8 @@ class Dataset:
             ancillary.find_files()
 
     def _find_files(self) -> None:
+        from esmvalcore._recipe import check
+
         self.files, self._files_debug = local.find_files(
             debug=True,
             **self.facets,
@@ -388,7 +389,7 @@ class Dataset:
                 search_esgf = True
             else:
                 try:
-                    check_data_availability(self, log=False)
+                    check.data_availability(self, log=False)
                 except InputFilesNotFound:
                     search_esgf = True
 
@@ -563,11 +564,11 @@ class Dataset:
         timerange = self.facets.pop('timerange')
         if not isinstance(timerange, str):
             raise TypeError(f"timerange should be a string, got {timerange!r}")
-        check_valid_time_selection(timerange)
+        check.valid_time_selection(timerange)
 
         if '*' in timerange:
             self.find_files()
-            check_data_availability(self)
+            check.data_availability(self)
             intervals = [_get_start_end_date(f.name) for f in self.files]
             self._files = None
 
@@ -584,6 +585,6 @@ class Dataset:
         # Make sure that years are in format YYYY
         (start_date, end_date) = timerange.split('/')
         timerange = _dates_to_timerange(start_date, end_date)
-        check_valid_time_selection(timerange)
+        check.valid_time_selection(timerange)
 
         self.set_facet('timerange', timerange)

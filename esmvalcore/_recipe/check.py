@@ -9,11 +9,11 @@ from shutil import which
 import isodate
 import yamale
 
-from .exceptions import InputFilesNotFound, RecipeError
-from .local import _get_start_end_year, _parse_period
-from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
-from .preprocessor._ancillary_vars import PREPROCESSOR_ANCILLARIES
-from .preprocessor._multimodel import STATISTIC_MAPPING
+from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore.local import _get_start_end_year, _parse_period
+from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
+from esmvalcore.preprocessor._ancillary_vars import PREPROCESSOR_ANCILLARIES
+from esmvalcore.preprocessor._multimodel import STATISTIC_MAPPING
 
 logger = logging.getLogger(__name__)
 

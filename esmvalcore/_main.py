@@ -73,7 +73,7 @@ def process_recipe(recipe_file: Path, session):
     import datetime
     import shutil
 
-    from ._recipe import read_recipe_file
+    from ._recipe.recipe import read_recipe_file
     if not recipe_file.is_file():
         import errno
         raise OSError(errno.ENOENT, "Specified recipe file does not exist",
