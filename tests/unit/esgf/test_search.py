@@ -372,40 +372,6 @@ def test_select_by_time_nodate():
     assert result == files
 
 
-def test_select_by_time_period():
-
-    dataset_id = ('CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.historical'
-                  '.r1i1p1f1.Amon.tas.gn.v20200212')
-    dataset_id_template = (
-        '%(mip_era)s.%(activity_drs)s.%(institution_id)s.'
-        '%(source_id)s.%(experiment_id)s.%(member_id)s.%(table_id)s.'
-        '%(variable_id)s.%(grid_label)s'
-    )
-    filenames = [
-        'tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_185001-185012.nc',
-        'tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_185101-185112.nc',
-        'tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_185201-185212.nc',
-        'tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_185301-185312.nc',
-    ]
-    results = [
-        FileResult(
-            json={
-                'title': filename,
-                'dataset_id': dataset_id + '|xyz.com',
-                'dataset_id_template_': [dataset_id_template],
-                'project': ['CMIP5'],
-                'size': 100,
-            },
-            context=None,
-        ) for filename in filenames
-    ]
-    files = [ESGFFile([r]) for r in results]
-
-    result = _search.select_by_time(files, '1851/P1Y')
-    reference = files[1:3]
-    assert sorted(result) == sorted(reference)
-
-
 def test_search_unknown_project():
     project = 'Unknown'
     msg = (f"Unable to download from ESGF, because project {project} is not on"
