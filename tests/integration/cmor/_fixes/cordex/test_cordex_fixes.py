@@ -184,3 +184,21 @@ def test_rotated_grid_fix_error(cordex_cubes):
     with pytest.raises(RecipeError) as exc:
         fix.fix_metadata(cordex_cubes)
     assert msg == exc.value.message
+
+
+def test_lambert_grid_warning(cubes, caplog):
+    fix = AllVars(
+        vardef=None,
+        extra_facets={
+            'domain': 'EUR-11',
+            'dataset': 'DATASET',
+            'driver': 'DRIVER'
+            }
+        )
+    for cube in cubes:
+        cube.coord_system = iris.coord_systems.LambertConformal
+    fix.fix_metadata(cubes)
+    msg = ("Support for CORDEX datasets in a Lambert Conformal "
+           "coordinate system is ongoing. Certain preprocessor "
+           "functions may fail.")
+    assert msg in caplog.text

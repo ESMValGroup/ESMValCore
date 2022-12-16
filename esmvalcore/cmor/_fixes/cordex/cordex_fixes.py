@@ -5,7 +5,7 @@ import cordex as cx
 import numpy as np
 import iris
 
-from iris.coord_systems import RotatedGeogCS
+from iris.coord_systems import RotatedGeogCS, LambertConformal
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.exceptions import RecipeError
 logger = logging.getLogger(__name__)
@@ -103,10 +103,15 @@ class AllVars(Fix):
         """Check differences between coords."""
         diff = np.max(np.abs(old_coord.points - new_coord.points))
         logger.debug(
-            f"Maximum difference between original {new_coord.var_name} "
-            f"points and standard {self.extra_facets['domain']} domain points "
-            f"for dataset {self.extra_facets['dataset']} and "
-            f"driver {self.extra_facets['driver']} is: {diff}.")
+            "Maximum difference between original %s"
+            "points and standard %s domain points "
+            "for dataset %s and driver %s is: %s.",
+            new_coord.var_name,
+            self.extra_facets['domain'],
+            self.extra_facets['dataset'],
+            self.extra_facets['driver'],
+            str(diff)
+        )
 
         if diff > 10e-4:
             raise RecipeError(
@@ -190,5 +195,12 @@ class AllVars(Fix):
             if isinstance(coord_system, RotatedGeogCS):
                 self._fix_rotated_coords(cube)
                 self._fix_geographical_coords(cube)
+            if isinstance(coord_system, LambertConformal):
+                logger.warning(
+                    "Support for CORDEX datasets in a Lambert Conformal "
+                    "coordinate system is ongoing. Certain preprocessor "
+                    "functions may fail."
+                )
+
 
         return cubes
