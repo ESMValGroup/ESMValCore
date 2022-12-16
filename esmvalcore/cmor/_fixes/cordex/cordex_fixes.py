@@ -202,5 +202,4 @@ class AllVars(Fix):
                     "functions may fail."
                 )
 
-
         return cubes
