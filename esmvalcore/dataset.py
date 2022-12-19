@@ -181,12 +181,16 @@ class Dataset:
             # The short_name and mip of the ancillary variable are probably
             # different from the main variable, so don't copy those facets.
             skip = ('short_name', 'mip')
-            ancillary_facets = {k: facets[k] for k in facets if k not in skip}
+            ancillary_facets = {
+                k: v
+                for k, v in facets.items() if k not in skip
+            }
             new_ancillary = ancillary.copy(**ancillary_facets)
             new.ancillaries.append(new_ancillary)
         return new
 
     def __eq__(self, other) -> bool:
+        """Compare with another dataset."""
         try:
             other_session = other.session
         except ValueError:
@@ -197,7 +201,7 @@ class Dataset:
                 and self.ancillaries == other.ancillaries)
 
     def __repr__(self) -> str:
-
+        """Create a string representation."""
         first_keys = (
             'diagnostic',
             'variable_group',
@@ -262,9 +266,11 @@ class Dataset:
             ", ".join(str(self.facets[k]) for k in keys if k in self.facets))
 
     def __getitem__(self, key):
+        """Get a facet value."""
         return self.facets[key]
 
     def __setitem__(self, key, value):
+        """Set a facet value."""
         self.facets[key] = value
 
     def set_facet(self, key: str, value: FacetValue, persist: bool = True):
@@ -286,7 +292,7 @@ class Dataset:
 
     @property
     def minimal_facets(self) -> Facets:
-        """A dictionary with the persistent facets."""
+        """Return a dictionary with the persistent facets."""
         return {k: v for k, v in self.facets.items() if k in self._persist}
 
     def set_version(self) -> None:
@@ -412,7 +418,7 @@ class Dataset:
 
     @property
     def files(self) -> Sequence[File]:
-        """A list of files associated with this dataset."""
+        """The files associated with this dataset."""
         if self._files is None:
             self.find_files()
         return self._files  # type: ignore
@@ -492,7 +498,7 @@ class Dataset:
         return cube
 
     def from_ranges(self) -> list['Dataset']:
-        """Factory function that expands shorthands to generate datasets.
+        """Create a list of datasets from short notations.
 
         This expands the 'ensemble' and 'sub_experiment' facets in the
         dataset definition if they are ranges.
@@ -504,7 +510,7 @@ class Dataset:
         Returns
         -------
         list[Dataset]
-            A list of datasets.
+            The datasets.
         """
         datasets = [self]
         for key in 'ensemble', 'sub_experiment':
@@ -516,7 +522,7 @@ class Dataset:
         return datasets
 
     def _expand_range(self, input_tag):
-        """Expand ranges such as ensemble members or stardates.
+        """Expand ranges such as ensemble members or start dates.
 
         Expansion only supports ensembles defined as strings, not lists.
         """
