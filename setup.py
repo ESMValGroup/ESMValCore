@@ -33,7 +33,8 @@ REQUIREMENTS = {
         'dask[array]',
         'esgf-pyclient>=0.3.1',
         'esmf-regrid',
-        'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
+        # see github.com/ESMValGroup/ESMValCore/issues/1208
+        'esmpy!=8.1.0,<8.4',
         'fiona',
         'fire',
         'geopy',
