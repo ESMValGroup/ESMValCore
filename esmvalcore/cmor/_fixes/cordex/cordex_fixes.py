@@ -1,14 +1,29 @@
 """Fixes that are shared between datasets and drivers."""
 import logging
-from cf_units import Unit
-import cordex as cx
-import numpy as np
-import iris
+from functools import lru_cache
 
-from iris.coord_systems import RotatedGeogCS, LambertConformal
+import cordex as cx
+import iris
+import numpy as np
+from cf_units import Unit
+from iris.coord_systems import LambertConformal, RotatedGeogCS
+
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.exceptions import RecipeError
+
 logger = logging.getLogger(__name__)
+
+
+@lru_cache
+def _get_domain(data_domain):
+    domain = cx.cordex_domain(data_domain, add_vertices=True)
+    return domain
+
+
+@lru_cache
+def _get_domain_info(data_domain):
+    domain_info = cx.domain_info(data_domain)
+    return domain_info
 
 
 class MOHCHadREM3GA705(Fix):
@@ -25,7 +40,6 @@ class MOHCHadREM3GA705(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             cube.coord('latitude').var_name = 'lat'
@@ -39,8 +53,7 @@ class TimeLongName(Fix):
     """Fixes for time coordinate."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix time long_name.
+        """Fix time long_name.
 
         Parameters
         ----------
@@ -50,7 +63,6 @@ class TimeLongName(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             cube.coord('time').long_name = 'time'
@@ -78,7 +90,6 @@ class CLMcomCCLM4817(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             time_unit = cube.coord('time').units
@@ -103,20 +114,15 @@ class AllVars(Fix):
         diff = np.max(np.abs(old_coord.points - new_coord.points))
         logger.debug(
             "Maximum difference between original %s"
-            "points and standard %s domain points "
-            "for dataset %s and driver %s is: %s.",
-            new_coord.var_name,
-            self.extra_facets['domain'],
-            self.extra_facets['dataset'],
-            self.extra_facets['driver'],
-            str(diff)
-        )
+            "points and standard %s domain points  "
+            "for dataset %s and driver %s is: %s.", new_coord.var_name,
+            self.extra_facets['domain'], self.extra_facets['dataset'],
+            self.extra_facets['driver'], str(diff))
 
         if diff > 10e-4:
             raise RecipeError(
                 "Differences between the original grid and the "
-                f"standarised grid are above 10e-4 {new_coord.units}.",
-            )
+                f"standardised grid are above 10e-4 {new_coord.units}.", )
 
     def _fix_rotated_coords(self, cube, domain, domain_info):
         """Fix rotated coordinates."""
@@ -126,8 +132,7 @@ class AllVars(Fix):
             points = domain[dim_coord].data
             coord_system = iris.coord_systems.RotatedGeogCS(
                 grid_north_pole_latitude=domain_info['pollat'],
-                grid_north_pole_longitude=domain_info['pollon']
-            )
+                grid_north_pole_longitude=domain_info['pollon'])
             new_coord = iris.coords.DimCoord(
                 points,
                 var_name=dim_coord,
@@ -157,13 +162,9 @@ class AllVars(Fix):
                 bounds=bounds,
             )
             self._check_grid_differences(old_coord, new_coord)
-            aux_coord_dims = (
-                cube.coord(var_name='rlat').cube_dims(cube) +
-                cube.coord(var_name='rlon').cube_dims(cube)
-            )
-            cube.add_aux_coord(
-                new_coord,
-                aux_coord_dims)
+            aux_coord_dims = (cube.coord(var_name='rlat').cube_dims(cube) +
+                              cube.coord(var_name='rlon').cube_dims(cube))
+            cube.add_aux_coord(new_coord, aux_coord_dims)
 
     def fix_metadata(self, cubes):
         """Fix CORDEX rotated grids.
@@ -182,11 +183,10 @@ class AllVars(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         data_domain = self.extra_facets['domain']
-        domain = cx.cordex_domain(data_domain, add_vertices=True)
-        domain_info = cx.domain_info(data_domain)
+        domain = _get_domain(data_domain)
+        domain_info = _get_domain_info(data_domain)
         for cube in cubes:
             coord_system = cube.coord_system()
             if isinstance(coord_system, RotatedGeogCS):
@@ -196,13 +196,11 @@ class AllVars(Fix):
                 logger.warning(
                     "Support for CORDEX datasets in a Lambert Conformal "
                     "coordinate system is ongoing. Certain preprocessor "
-                    "functions may fail."
-                )
+                    "functions may fail.")
             else:
                 raise RecipeError(
                     f"Coordinate system {coord_system.grid_mapping_name} "
                     "not supported in CORDEX datasets. Must be "
-                    "rotated_latitude_longitude or lambert_conformal_conic.",
-                )
+                    "rotated_latitude_longitude or lambert_conformal_conic.", )
 
         return cubes
