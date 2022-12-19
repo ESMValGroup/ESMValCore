@@ -101,11 +101,12 @@ def cordex_cubes():
     )
     return iris.cube.CubeList([cube])
 
+
 @pytest.mark.parametrize(
     'coord, var_name, long_name',
     [
         ('time', 'time', 'time'),
-        ('latitude','lat', 'latitude'),
+        ('latitude', 'lat', 'latitude'),
         ('longitude', 'lon', 'longitude'),
     ])
 def test_mohchadrem3ga705_fix_metadata(cubes, coord, var_name, long_name):
