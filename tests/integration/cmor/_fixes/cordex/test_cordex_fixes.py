@@ -63,7 +63,7 @@ def cubes():
 def cordex_cubes():
     coord_system = iris.coord_systems.RotatedGeogCS(
                 grid_north_pole_latitude=39.25,
-                grid_north_pole_longitude=-162
+                grid_north_pole_longitude=-162,
     )
     time = iris.coords.DimCoord(np.arange(0, 3),
                                 var_name='time',
