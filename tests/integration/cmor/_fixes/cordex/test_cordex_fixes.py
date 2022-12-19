@@ -186,7 +186,7 @@ def test_rotated_grid_fix_error(cordex_cubes):
             }
         )
     msg = ("Differences between the original grid and the "
-           "standarised grid are above 10e-4 degrees.")
+           "standardised grid are above 10e-4 degrees.")
     with pytest.raises(RecipeError) as exc:
         fix.fix_metadata(cordex_cubes)
     assert msg == exc.value.message
