@@ -24,7 +24,6 @@ class AllVars(Fix):
         Returns
         -------
         iris.cube.CubeList
-            Fixed cubes.
 
         """
         cube = self.get_cube_from_list(cubes)
@@ -49,7 +48,6 @@ class Clcalipso(Fix):
         Returns
         -------
         iris.cube.CubeList
-            Fixed cubes.
 
         """
         cube = self.get_cube_from_list(cubes)
@@ -166,7 +164,6 @@ class Omon(Fix):
         Returns
         -------
         iris.cube.CubeList
-            Fixed cubes.
 
         """
         for cube in cubes:
