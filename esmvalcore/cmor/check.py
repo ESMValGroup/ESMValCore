@@ -1082,6 +1082,8 @@ def _get_cmor_checker(table,
 
     cmor_table = CMOR_TABLES[table]
     if table == 'CORDEX' and mip.endswith('hr'):
+        # CORDEX X-hourly tables define the mip
+        # as ending in 'h' instead of 'hr'.
         mip = mip.replace('hr', 'h')
     var_info = cmor_table.get_variable(mip, short_name)
     if var_info is None:

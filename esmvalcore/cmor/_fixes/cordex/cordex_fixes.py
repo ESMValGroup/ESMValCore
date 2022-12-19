@@ -119,11 +119,8 @@ class AllVars(Fix):
                 f"standarised grid are above 10e-4 {new_coord.units}.",
             )
 
-    def _fix_rotated_coords(self, cube):
+    def _fix_rotated_coords(self, cube, domain, domain_info):
         """Fix rotated coordinates."""
-        data_domain = self.extra_facets['domain']
-        domain = cx.cordex_domain(data_domain, add_vertices=True)
-        domain_info = cx.domain_info(data_domain)
         for dim_coord in ['rlat', 'rlon']:
             old_coord = cube.coord(domain[dim_coord].standard_name)
             old_coord_dims = old_coord.cube_dims(cube)
@@ -145,10 +142,8 @@ class AllVars(Fix):
             cube.remove_coord(old_coord)
             cube.add_dim_coord(new_coord, old_coord_dims)
 
-    def _fix_geographical_coords(self, cube):
+    def _fix_geographical_coords(self, cube, domain):
         """Fix geographical coordinates."""
-        data_domain = self.extra_facets['domain']
-        domain = cx.cordex_domain(data_domain, add_vertices=True)
         for aux_coord in ['lat', 'lon']:
             old_coord = cube.coord(domain[aux_coord].standard_name)
             cube.remove_coord(old_coord)
@@ -190,16 +185,25 @@ class AllVars(Fix):
         iris.cube.CubeList
 
         """
+        data_domain = self.extra_facets['domain']
+        domain = cx.cordex_domain(data_domain, add_vertices=True)
+        domain_info = cx.domain_info(data_domain)
         for cube in cubes:
             coord_system = cube.coord_system()
             if isinstance(coord_system, RotatedGeogCS):
-                self._fix_rotated_coords(cube)
-                self._fix_geographical_coords(cube)
-            if isinstance(coord_system, LambertConformal):
+                self._fix_rotated_coords(cube, domain, domain_info)
+                self._fix_geographical_coords(cube, domain)
+            elif isinstance(coord_system, LambertConformal):
                 logger.warning(
                     "Support for CORDEX datasets in a Lambert Conformal "
                     "coordinate system is ongoing. Certain preprocessor "
                     "functions may fail."
+                )
+            else:
+                raise RecipeError(
+                    f"Coordinate system {coord_system.grid_mapping_name} "
+                    "not supported in CORDEX datasets. Must be "
+                    "rotated_latitude_longitude or lambert_conformal_conic.",
                 )
 
         return cubes

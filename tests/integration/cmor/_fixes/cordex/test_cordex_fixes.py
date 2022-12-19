@@ -202,3 +202,22 @@ def test_lambert_grid_warning(cubes, caplog):
            "coordinate system is ongoing. Certain preprocessor "
            "functions may fail.")
     assert msg in caplog.text
+
+
+def test_wrong_coord_system(cubes):
+    fix = AllVars(
+        vardef=None,
+        extra_facets={
+            'domain': 'EUR-11',
+            'dataset': 'DATASET',
+            'driver': 'DRIVER'
+            }
+        )
+    for cube in cubes:
+        cube.coord_system = iris.coord_systems.AlbersEqualArea
+    msg = ("Coordinate system albers_conical_equal_area not supported in "
+           "CORDEX datasets. Must be rotated_latitude_longitude "
+           "or lambert_conformal_conic.")
+    with pytest.raises(RecipeError) as exc:
+        fix.fix_metadata(cubes)
+    assert msg == exc.value.message
