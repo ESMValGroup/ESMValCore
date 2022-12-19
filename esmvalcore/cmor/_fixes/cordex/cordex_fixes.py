@@ -160,7 +160,7 @@ class AllVars(Fix):
                 standard_name=domain[aux_coord].standard_name,
                 long_name=domain[aux_coord].long_name,
                 units=Unit(domain[aux_coord].units),
-                bounds=bounds
+                bounds=bounds,
             )
             self._check_grid_differences(old_coord, new_coord)
             aux_coord_dims = (
