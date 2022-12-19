@@ -50,6 +50,7 @@ REQUIREMENTS = {
         'pillow',
         'prov',
         'psutil',
+        'py-cordex',
         'pybtex',
         'pyyaml',
         'requests',
