@@ -41,7 +41,7 @@ def _augment(base, update):
 
 def _isglob(facet_value: Union[FacetValue, None]) -> bool:
     if isinstance(facet_value, str):
-        return bool(re.match('.*[\*\?]+.*|.*\[.*\].*', facet_value))
+        return bool(re.match(r'.*[\*\?]+.*|.*\[.*\].*', facet_value))
     return False
 
 

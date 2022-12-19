@@ -141,7 +141,8 @@ def data_availability(input_files, var, patterns, log=True):
 
     if not input_files:
         raise InputFilesNotFound(
-            f"Missing data for {var.get('alias', 'dataset')}: {var['short_name']}"
+            f"Missing data for {var.get('alias', 'dataset')}: "
+            f"{var['short_name']}"
         )
 
     if 'timerange' not in var:
