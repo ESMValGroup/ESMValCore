@@ -81,11 +81,9 @@ class CLMcomCCLM4817(Fix):
 
         """
         for cube in cubes:
-            if cube.coord('time').units.calendar == 'standard':
-                cube.coord('time').units = Unit(
-                    'days since 1850-1-1 00:00:00',
-                    calendar='proleptic_gregorian'
-                )
+            time_unit = cube.coord('time').units
+            if time_unit.calendar == 'standard':
+                time_unit.change_calendar('proleptic_gregorian')
             for coord in cube.coords():
                 if coord.dtype in ['>f8', '>f4']:
                     coord.points = coord.core_points().astype(
