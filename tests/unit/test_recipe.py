@@ -254,8 +254,8 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
 
     # Local files can cover the entire period, part of it, or nothing
     local_file_options = {
-        'all': [f.local_file(rootpath).as_posix() for f in esgf_files],
-        'partial': [esgf_files[1].local_file(rootpath).as_posix()],
+        'all': [f.local_file(rootpath) for f in esgf_files],
+        'partial': [esgf_files[1].local_file(rootpath)],
         'none': [],
     }
     local_files = local_file_options[local_availability]

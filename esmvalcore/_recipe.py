@@ -19,7 +19,7 @@ from . import esgf
 from ._provenance import TrackedFile, get_recipe_provenance
 from ._task import DiagnosticTask, ResumeTask, TaskSet
 from .cmor.check import CheckLevels
-from .cmor.table import CMOR_TABLES
+from .cmor.table import _CMOR_KEYS, CMOR_TABLES, _update_cmor_facets
 from .config._config import (
     get_activity,
     get_extra_facets,
@@ -78,36 +78,10 @@ def read_recipe_file(filename, config_user, initialize_tasks=True):
 
 def _add_cmor_info(variable, override=False):
     """Add information from CMOR tables to variable."""
-    # Copy the following keys from CMOR table
-    cmor_keys = [
-        'standard_name', 'long_name', 'units', 'modeling_realm', 'frequency'
-    ]
-    project = variable['project']
-    mip = variable['mip']
-    short_name = variable['short_name']
-    derive = variable.get('derive', False)
-    table = CMOR_TABLES.get(project)
-    if table:
-        table_entry = table.get_variable(mip, short_name, derive)
-    else:
-        table_entry = None
-    if table_entry is None:
-        raise RecipeError(
-            f"Unable to load CMOR table (project) '{project}' for variable "
-            f"'{short_name}' with mip '{mip}'")
-    variable['original_short_name'] = table_entry.short_name
-    for key in cmor_keys:
-        if key not in variable or override:
-            value = getattr(table_entry, key, None)
-            if value is not None:
-                variable[key] = value
-            else:
-                logger.debug(
-                    "Failed to add key %s to variable %s from CMOR table", key,
-                    variable)
+    _update_cmor_facets(variable, override)
 
     # Check that keys are available
-    check.variable(variable, required_keys=cmor_keys)
+    check.variable(variable, required_keys=_CMOR_KEYS)
 
 
 def _add_extra_facets(variable, extra_facets_dir):
