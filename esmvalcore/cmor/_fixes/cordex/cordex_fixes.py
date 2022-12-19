@@ -83,7 +83,8 @@ class CLMcomCCLM4817(Fix):
         for cube in cubes:
             time_unit = cube.coord('time').units
             if time_unit.calendar == 'standard':
-                time_unit.change_calendar('proleptic_gregorian')
+                new_unit = time_unit.change_calendar('proleptic_gregorian')
+                cube.coord('time').units = new_unit
             for coord in cube.coords():
                 if coord.dtype in ['>f8', '>f4']:
                     coord.points = coord.core_points().astype(
