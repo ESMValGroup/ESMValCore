@@ -9,7 +9,7 @@ import uuid
 from copy import deepcopy
 from fnmatch import fnmatchcase
 from pathlib import Path
-from typing import Any, Iterator, Optional, Sequence, Union
+from typing import Any, Iterator, Optional, Sequence
 
 from iris.cube import Cube
 
@@ -29,7 +29,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-File = Union[esgf.ESGFFile, local.LocalFile]
+File = esgf.ESGFFile | local.LocalFile
 
 
 def _augment(base: dict, update: dict):
@@ -39,11 +39,10 @@ def _augment(base: dict, update: dict):
             base[key] = update[key]
 
 
-def _isglob(facet_value: Union[FacetValue, None]) -> bool:
+def _isglob(facet_value: FacetValue | None) -> bool:
     """Check if a facet value is a glob pattern."""
-    if isinstance(facet_value, str):
-        return bool(re.match(r'.*[\*\?]+.*|.*\[.*\].*', facet_value))
-    return False
+    return (isinstance(facet_value, str)
+            and bool(re.match(r'.*[\*\?]+.*|.*\[.*\].*', facet_value)))
 
 
 def _ismatch(facet_value: FacetValue, pattern: FacetValue) -> bool:
@@ -115,7 +114,7 @@ class Dataset:
                 yield dict(facetset)
 
     def from_files(self) -> Iterator['Dataset']:
-        """Create a list of datasets from the available files.
+        """Create datasets based on the available files.
 
         Yields
         ------
@@ -131,22 +130,22 @@ class Dataset:
                     if k in self.facets and _isglob(self.facets[k])
                     and _ismatch(v, self.facets[k])
                 }
-                new_ds = self.copy()
-                new_ds.facets.update(updated_facets)
-                new_ds._update_timerange()
+                dataset = self.copy()
+                dataset.facets.update(updated_facets)
+                dataset._update_timerange()
 
                 ancillaries: list['Dataset'] = []
-                for ancillary_ds in new_ds.ancillaries:
+                for ancillary_ds in dataset.ancillaries:
                     afacets = ancillary_ds.facets
                     for key, value in updated_facets.items():
                         if _isglob(afacets.get(key)):
                             # Only overwrite ancillary facets that were globs.
                             afacets[key] = value
                     ancillaries.extend(ancillary_ds.from_files())
-                new_ds.ancillaries = ancillaries
+                dataset.ancillaries = ancillaries
 
                 expanded = True
-                yield new_ds
+                yield dataset
 
         if not expanded:
             # If the definition contains no wildcards or no files were found,
@@ -164,8 +163,8 @@ class Dataset:
         ----------
         **facets
             Update these facets in the copy. Note that for ancillary datasets
-            attached to the dataset, the 'short_name' and 'mip' facets will
-            not be updated with these values.
+            attached to the dataset, the ``'short_name'`` and ``'mip'`` facets
+            will not be updated with these values.
 
         Returns
         -------
@@ -297,7 +296,7 @@ class Dataset:
         return {k: v for k, v in self.facets.items() if k in self._persist}
 
     def set_version(self) -> None:
-        """Set the 'version' facet based on the available data."""
+        """Set the ``'version'`` facet based on the available data."""
         versions: set[str] = set()
         for file in self.files:
             if 'version' in file.facets:
@@ -501,12 +500,12 @@ class Dataset:
     def from_ranges(self) -> list['Dataset']:
         """Create a list of datasets from short notations.
 
-        This expands the 'ensemble' and 'sub_experiment' facets in the
+        This expands the ``'ensemble'`` and ``'sub_experiment'`` facets in the
         dataset definition if they are ranges.
 
-        For example 'ensemble: r(1:3)i1p1f1' will be expanded to
-        three datasets, with 'ensemble' values 'r1i1p1f1', 'r2i1p1f1',
-        'r3i1p1f1'.
+        For example ``'ensemble'='r(1:3)i1p1f1'`` will be expanded to
+        three datasets, with ``'ensemble'`` values ``'r1i1p1f1'``,
+        ``'r2i1p1f1'``, ``'r3i1p1f1'``.
 
         Returns
         -------
