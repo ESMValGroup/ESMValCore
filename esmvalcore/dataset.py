@@ -32,20 +32,22 @@ logger = logging.getLogger(__name__)
 File = Union[esgf.ESGFFile, local.LocalFile]
 
 
-def _augment(base, update):
-    """Update dict base with values from dict update."""
+def _augment(base: dict, update: dict):
+    """Update dict `base` with values from dict `update`."""
     for key in update:
         if key not in base:
             base[key] = update[key]
 
 
 def _isglob(facet_value: Union[FacetValue, None]) -> bool:
+    """Check if a facet value is a glob pattern."""
     if isinstance(facet_value, str):
         return bool(re.match(r'.*[\*\?]+.*|.*\[.*\].*', facet_value))
     return False
 
 
 def _ismatch(facet_value: FacetValue, pattern: FacetValue) -> bool:
+    """Check if a facet value matches a glob pattern."""
     return (isinstance(pattern, str) and isinstance(facet_value, str)
             and fnmatchcase(facet_value, pattern))
 
@@ -81,6 +83,37 @@ class Dataset:
         for key, value in facets.items():
             self.set_facet(key, deepcopy(value), persist=True)
 
+    def _get_available_facets(self) -> Iterator[Facets]:
+        """Yield unique combinations of facets based on the available files."""
+
+        def same(facets_a, facets_b):
+            """Define when two sets of facets are the same."""
+            return facets_a.issubset(facets_b) or facets_b.issubset(facets_a)
+
+        dataset = self.copy()
+        dataset.ancillaries = []
+        if _isglob(dataset.facets.get('timerange')):
+            # Remove wildcard `timerange` facet, because data finding cannot
+            # handle it
+            dataset.facets.pop('timerange')
+
+        seen: list[frozenset[tuple[str, FacetValue]]] = []
+        for file in dataset.files:
+            facets = dict(file.facets)
+            if 'version' not in self.facets:
+                # Remove version facet if no specific version requested
+                facets.pop('version', None)
+
+            facetset = frozenset(facets.items())
+
+            # Filter out identical facetsets
+            for prev_facetset in seen:
+                if same(facetset, prev_facetset):
+                    break
+            else:
+                seen.append(facetset)
+                yield dict(facetset)
+
     def from_files(self) -> Iterator['Dataset']:
         """Create a list of datasets from the available files.
 
@@ -89,56 +122,24 @@ class Dataset:
         Dataset
             Datasets representing the available files.
         """
-
-        def same(facets_a, facets_b):
-            """Define when two sets of facets are the same."""
-            return facets_a.issubset(facets_b) or facets_b.issubset(facets_a)
-
-        dataset = self.copy()
-        dataset.ancillaries = []
-        timerange = dataset.facets.get('timerange')
-        if _isglob(timerange):
-            # Remove wildcard `timerange` facet, because data finding cannot
-            # handle it
-            dataset.facets.pop('timerange')
-
         expanded = False
         if any(_isglob(v) for v in self.facets.values()):
-            available_facets: list[frozenset[tuple[str, FacetValue]]] = []
-            for file in dataset.files:
-                facets = dict(file.facets)
-                if 'version' not in self.facets:
-                    # Remove version facet if no specific version requested
-                    facets.pop('version', None)
-
-                facetset = frozenset(facets.items())
-
-                # Filter out identical facetsets
-                for prev_facetset in available_facets:
-                    if same(facetset, prev_facetset):
-                        break
-                else:
-                    available_facets.append(facetset)
-
-            for facetset in sorted(available_facets):
+            for facets in self._get_available_facets():
                 updated_facets = {
                     k: v
-                    for k, v in facetset
+                    for k, v in facets.items()
                     if k in self.facets and _isglob(self.facets[k])
                     and _ismatch(v, self.facets[k])
                 }
                 new_ds = self.copy()
                 new_ds.facets.update(updated_facets)
-
-                if timerange is not None:
-                    new_ds['timerange'] = timerange
-                    new_ds._update_timerange()
+                new_ds._update_timerange()
 
                 ancillaries: list['Dataset'] = []
                 for ancillary_ds in new_ds.ancillaries:
                     afacets = ancillary_ds.facets
                     for key, value in updated_facets.items():
-                        if (key in afacets and _isglob(afacets[key])):
+                        if _isglob(afacets.get(key)):
                             # Only overwrite ancillary facets that were globs.
                             afacets[key] = value
                     ancillaries.extend(ancillary_ds.from_files())
