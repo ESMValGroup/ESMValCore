@@ -20,6 +20,25 @@ def test_select_files():
     assert result == expected
 
 
+def test_select_files_different_length_start_end():
+
+    files = [
+        "pr_Amon_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_195501-195912.nc",
+        "pr_Amon_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_196001-196412.nc",
+        "pr_Amon_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_196501-196912.nc",
+        "pr_Amon_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_197001-197412.nc",
+    ]
+
+    result = _select_files(files, '196201/1967')
+
+    expected = [
+        "pr_Amon_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_196001-196412.nc",
+        "pr_Amon_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_196501-196912.nc",
+    ]
+
+    assert result == expected
+
+
 def test_select_files_monthly_resolution():
     """Test file selection works for monthly data."""
     files = [
