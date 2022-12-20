@@ -13,18 +13,28 @@ from typing import Any, Iterator, Optional, Sequence
 
 from iris.cube import Cube
 
-from . import _recipe_checks as check
-from . import esgf, local
-from .cmor.table import _update_cmor_facets
-from .config import CFG, Session
-from .config._config import get_activity, get_extra_facets, get_institutes
-from .exceptions import InputFilesNotFound, RecipeError
-from .local import _dates_to_timerange, _get_output_file, _get_start_end_date
-from .preprocessor import preprocess
-from .typing import Facets, FacetValue
+from esmvalcore import esgf, local
+from esmvalcore._recipe import check
+from esmvalcore._recipe.datasets import datasets_to_recipe
+from esmvalcore.cmor.table import _update_cmor_facets
+from esmvalcore.config import CFG, Session
+from esmvalcore.config._config import (
+    get_activity,
+    get_extra_facets,
+    get_institutes,
+)
+from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore.local import (
+    _dates_to_timerange,
+    _get_output_file,
+    _get_start_end_date,
+)
+from esmvalcore.preprocessor import preprocess
+from esmvalcore.typing import Facets, FacetValue
 
 __all__ = [
     'Dataset',
+    'datasets_to_recipe',
 ]
 
 logger = logging.getLogger(__name__)

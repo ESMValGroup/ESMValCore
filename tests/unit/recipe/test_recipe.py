@@ -7,8 +7,8 @@ import numpy as np
 import pyesgf.search.results
 import pytest
 
+import esmvalcore._recipe.recipe as _recipe
 import esmvalcore.experimental.recipe_output
-from esmvalcore import _recipe
 from esmvalcore.esgf._download import ESGFFile
 from esmvalcore.exceptions import RecipeError
 from tests import PreprocessorFile
@@ -648,7 +648,7 @@ TEST_CREATE_DIAGNOSTIC_TASKS = [
 
 @pytest.mark.parametrize('tasks_to_run,tasks_run',
                          TEST_CREATE_DIAGNOSTIC_TASKS)
-@mock.patch('esmvalcore._recipe.DiagnosticTask', autospec=True)
+@mock.patch('esmvalcore._recipe.recipe.DiagnosticTask', autospec=True)
 def test_create_diagnostic_tasks(mock_diag_task, tasks_to_run, tasks_run):
     """Test ``Recipe._create_diagnostic_tasks``."""
     cfg = {'run_diagnostic': True}

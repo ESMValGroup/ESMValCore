@@ -9,10 +9,10 @@ from shutil import which
 import isodate
 import yamale
 
-from .exceptions import InputFilesNotFound, RecipeError
-from .local import _get_start_end_year, _parse_period
-from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
-from .preprocessor._multimodel import STATISTIC_MAPPING
+from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore.local import _get_start_end_year, _parse_period
+from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
+from esmvalcore.preprocessor._multimodel import STATISTIC_MAPPING
 
 logger = logging.getLogger(__name__)
 
@@ -142,8 +142,7 @@ def data_availability(input_files, var, patterns, log=True):
     if not input_files:
         raise InputFilesNotFound(
             f"Missing data for {var.get('alias', 'dataset')}: "
-            f"{var['short_name']}"
-        )
+            f"{var['short_name']}")
 
     if 'timerange' not in var:
         return

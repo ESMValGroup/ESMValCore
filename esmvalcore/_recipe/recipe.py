@@ -13,32 +13,30 @@ import yaml
 from nested_lookup import get_all_keys, nested_delete, nested_lookup
 from netCDF4 import Dataset
 
-from . import __version__
-from . import _recipe_checks as check
-from . import esgf
-from ._provenance import TrackedFile, get_recipe_provenance
-from ._task import DiagnosticTask, ResumeTask, TaskSet
-from .cmor.check import CheckLevels
-from .cmor.table import _CMOR_KEYS, CMOR_TABLES, _update_cmor_facets
-from .config._config import (
+from esmvalcore import __version__, esgf
+from esmvalcore._provenance import TrackedFile, get_recipe_provenance
+from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
+from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.cmor.table import _CMOR_KEYS, CMOR_TABLES, _update_cmor_facets
+from esmvalcore.config._config import (
     get_activity,
     get_extra_facets,
     get_institutes,
     get_project_config,
 )
-from .config._diagnostics import TAGS
-from .exceptions import InputFilesNotFound, RecipeError
-from .local import _dates_to_timerange as dates_to_timerange
-from .local import _get_multiproduct_filename as get_multiproduct_filename
-from .local import _get_output_file as get_output_file
-from .local import _get_start_end_date as get_start_end_date
-from .local import (
+from esmvalcore.config._diagnostics import TAGS
+from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore.local import _dates_to_timerange as dates_to_timerange
+from esmvalcore.local import _get_multiproduct_filename
+from esmvalcore.local import _get_output_file as get_output_file
+from esmvalcore.local import _get_start_end_date as get_start_end_date
+from esmvalcore.local import (
     _get_timerange_from_years,
     _parse_period,
     _truncate_dates,
     find_files,
 )
-from .preprocessor import (
+from esmvalcore.preprocessor import (
     DEFAULT_ORDER,
     FINAL_STEPS,
     INITIAL_STEPS,
@@ -46,15 +44,17 @@ from .preprocessor import (
     PreprocessingTask,
     PreprocessorFile,
 )
-from .preprocessor._derive import get_required
-from .preprocessor._io import DATASET_KEYS, concatenate_callback
-from .preprocessor._other import _group_products
-from .preprocessor._regrid import (
+from esmvalcore.preprocessor._derive import get_required
+from esmvalcore.preprocessor._io import DATASET_KEYS, concatenate_callback
+from esmvalcore.preprocessor._other import _group_products
+from esmvalcore.preprocessor._regrid import (
     _spec_to_latlonvals,
     get_cmor_levels,
     get_reference_levels,
     parse_cell_spec,
 )
+
+from . import check
 
 logger = logging.getLogger(__name__)
 
@@ -762,8 +762,8 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
                                             statistic_attributes[step])
             statistic_attributes.setdefault('dataset',
                                             statistic_attributes[step])
-            filename = get_multiproduct_filename(statistic_attributes,
-                                                 preproc_dir)
+            filename = _get_multiproduct_filename(statistic_attributes,
+                                                  preproc_dir)
             statistic_attributes['filename'] = filename
             statistic_product = PreprocessorFile(statistic_attributes,
                                                  downstream_settings)
