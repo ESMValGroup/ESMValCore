@@ -2,7 +2,7 @@ import textwrap
 
 import yaml
 
-from esmvalcore._recipe.datasets import (
+from esmvalcore._recipe.from_datasets import (
     _group_ensemble_names,
     _group_identical_facets,
     datasets_to_recipe,

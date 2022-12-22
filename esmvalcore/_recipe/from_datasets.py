@@ -1,3 +1,4 @@
+"""Functions for creating/updating a recipe with `Dataset`s"""
 from __future__ import annotations
 
 import itertools
@@ -20,6 +21,7 @@ Facets = dict[str, Any]
 
 
 def _datasets_to_raw_recipe(datasets: Iterable[Dataset]) -> Recipe:
+    """Convert datasets to a recipe dict."""
     diagnostics: dict[str, dict[str, Any]] = {}
 
     for dataset in datasets:
@@ -55,6 +57,7 @@ def _datasets_to_raw_recipe(datasets: Iterable[Dataset]) -> Recipe:
 
 
 def _datasets_to_recipe(datasets: Iterable[Dataset]) -> Recipe:
+    """Convert datasets to a condensed recipe dict."""
     recipe = _datasets_to_raw_recipe(datasets)
     diagnostics = recipe['diagnostics'].values()
 
@@ -96,6 +99,7 @@ def _group_identical_facets(variable: Mapping[str, Any]) -> Recipe:
 
 
 def _group_ensemble_members(dataset_facets: Iterable[Facets]) -> list[Facets]:
+    """This is the inverse operation of `Dataset.from_ranges` for ensembles."""
     def grouper(facets):
         return tuple((k, facets[k]) for k in sorted(facets) if k != 'ensemble')
 
@@ -113,15 +117,27 @@ def _group_ensemble_members(dataset_facets: Iterable[Facets]) -> list[Facets]:
 
 
 def _group_ensemble_names(ensemble_names: Iterable[str]) -> list[str]:
-    if not ensemble_names:
-        return []
+    """Group ensemble names.
 
+    Examples
+    --------
+    ensemble_names=[
+        'r1i1p1',
+        'r2i1p1',
+        'r3i1p1',
+        'r1i1p2',
+    ]
+    will return [
+        'r(1:3)i1p1',
+        'r1i1p2',
+    ].
+    """
     ensemble_tuples = [
         tuple(int(i) for i in re.findall(r'\d+', ens))
         for ens in ensemble_names
     ]
 
-    ensemble_ranges = _group_ensemble_tuples(ensemble_tuples)
+    ensemble_ranges = _create_ensemble_ranges(ensemble_tuples)
 
     groups = []
     for ensemble_range in ensemble_ranges:
@@ -137,10 +153,26 @@ def _group_ensemble_names(ensemble_names: Iterable[str]) -> list[str]:
     return groups
 
 
-def _group_ensemble_tuples(
+def _create_ensemble_ranges(
     ensembles: Sequence[tuple[int,
                               ...]], ) -> list[tuple[tuple[int, int], ...]]:
+    """Create ranges from tuples.
 
+    Examples
+    --------
+    Input ensemble member tuple (1, 1, 1) represents 'r1i1p1'.
+    The input tuples will be converted to ranges, for example
+    ensembles=[
+        (1, 1, 1),
+        (2, 1, 1),
+        (3, 1, 1),
+        (1, 1, 2),
+    ]
+    will return [
+        ((1, 3), (1, 1), (1, 1)),
+        ((1, 1), (1, 1), (2, 2)),
+    ].
+    """
     n_items = len(ensembles[0])
     for i in range(n_items):
 

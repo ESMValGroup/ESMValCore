@@ -15,7 +15,7 @@ from iris.cube import Cube
 
 from esmvalcore import esgf, local
 from esmvalcore._recipe import check
-from esmvalcore._recipe.datasets import datasets_to_recipe
+from esmvalcore._recipe.from_datasets import datasets_to_recipe
 from esmvalcore.cmor.table import _update_cmor_facets
 from esmvalcore.config import CFG, Session
 from esmvalcore.config._config import (
@@ -87,7 +87,7 @@ class Dataset:
         self._persist: set[str] = set()
         self._session: Optional[Session] = None
         self._files: Optional[Sequence[File]] = None
-        self._files_debug: Optional[Sequence[Path]] = None
+        self._file_globs: Optional[Sequence[Path]] = None
 
         for key, value in facets.items():
             self.set_facet(key, deepcopy(value), persist=True)
@@ -201,12 +201,8 @@ class Dataset:
 
     def __eq__(self, other) -> bool:
         """Compare with another dataset."""
-        try:
-            other_session = other.session
-        except ValueError:
-            other_session = None
         return (isinstance(other, self.__class__)
-                and self._session == other_session
+                and self._session == other._session
                 and self.facets == other.facets
                 and self.ancillaries == other.ancillaries)
 
@@ -239,6 +235,8 @@ class Dataset:
             txt.extend(
                 textwrap.indent(facets2str(a.facets), "  ")
                 for a in self.ancillaries)
+        if self._session:
+            txt.append(f"session: '{self.session.session_name}'")
         return "\n".join(txt)
 
     def summary(self, shorten: bool = False) -> str:
@@ -258,9 +256,9 @@ class Dataset:
             return repr(self)
 
         keys = (
-            'project',
-            'mip',
             'short_name',
+            'mip',
+            'project',
             'dataset',
             'rcm_version',
             'driver',
@@ -271,9 +269,21 @@ class Dataset:
             'grid',
             'version',
         )
-        return (
-            f"{self.__class__.__name__}: " +
+        title = self.__class__.__name__
+        txt = (
+            f"{title}: " +
             ", ".join(str(self.facets[k]) for k in keys if k in self.facets))
+
+        def ancillary_summary(dataset):
+            return ", ".join(
+                str(dataset.facets[k]) for k in keys
+                if k in dataset.facets and dataset[k] != self.facets.get(k))
+
+        if self.ancillaries:
+            txt += (", ancillaries: " +
+                    "; ".join(ancillary_summary(a)
+                              for a in self.ancillaries) + "")
+        return txt
 
     def __getitem__(self, key):
         """Get a facet value."""
@@ -390,7 +400,7 @@ class Dataset:
             ancillary.find_files()
 
     def _find_files(self) -> None:
-        self.files, self._files_debug = local.find_files(
+        self.files, self._file_globs = local.find_files(
             debug=True,
             **self.facets,
         )
@@ -403,7 +413,7 @@ class Dataset:
                 check.data_availability(
                     self.files,
                     self.facets,
-                    self._files_debug,
+                    self._file_globs,
                     log=False,
                 )
             except InputFilesNotFound:
@@ -571,16 +581,21 @@ class Dataset:
         if 'timerange' not in self.facets:
             return
 
-        timerange = self.facets.pop('timerange')
+        timerange = self.facets['timerange']
         if not isinstance(timerange, str):
             raise TypeError(f"timerange should be a string, got {timerange!r}")
         check.valid_time_selection(timerange)
 
         if '*' in timerange:
-            self.find_files()
-            check.data_availability(self.files, self.facets, self._files_debug)
-            intervals = [_get_start_end_date(f.name) for f in self.files]
-            self._files = None
+            dataset = self.copy()
+            dataset.facets.pop('timerange')
+            dataset.ancillaries = []
+            check.data_availability(
+                dataset.files,
+                dataset.facets,
+                dataset._file_globs,
+            )
+            intervals = [_get_start_end_date(f.name) for f in dataset.files]
 
             min_date = min(interval[0] for interval in intervals)
             max_date = max(interval[1] for interval in intervals)
@@ -593,7 +608,7 @@ class Dataset:
                 timerange = timerange.replace('*', max_date)
 
         # Make sure that years are in format YYYY
-        (start_date, end_date) = timerange.split('/')
+        start_date, end_date = timerange.split('/')
         timerange = _dates_to_timerange(start_date, end_date)
         check.valid_time_selection(timerange)
 
