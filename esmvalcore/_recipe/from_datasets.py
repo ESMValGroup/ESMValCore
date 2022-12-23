@@ -1,4 +1,4 @@
-"""Functions for creating/updating a recipe with `Dataset`s"""
+"""Functions for creating/updating a recipe with `Dataset`s."""
 from __future__ import annotations
 
 import itertools
@@ -26,9 +26,8 @@ def _datasets_to_raw_recipe(datasets: Iterable[Dataset]) -> Recipe:
 
     for dataset in datasets:
         if 'diagnostic' not in dataset.facets:
-            raise RecipeError(
-                f"'diagnostic' facet missing from dataset {dataset},"
-                "unable to convert to recipe.")
+            raise RecipeError(f"'diagnostic' facet missing from {dataset},"
+                              "unable to convert to recipe.")
         diagnostic_name: str = dataset.facets['diagnostic']  # type: ignore
         if diagnostic_name not in diagnostics:
             diagnostics[diagnostic_name] = {'variables': {}}
@@ -40,6 +39,7 @@ def _datasets_to_raw_recipe(datasets: Iterable[Dataset]) -> Recipe:
         if variable_group not in variables:
             variables[variable_group] = {'additional_datasets': []}
         facets: dict[str, Any] = dataset.minimal_facets
+        facets.pop('diagnostic', None)
         if facets['short_name'] == variable_group:
             facets.pop('short_name')
         if dataset.ancillaries:
@@ -74,10 +74,58 @@ def _datasets_to_recipe(datasets: Iterable[Dataset]) -> Recipe:
             for variable_group, variable in diagnostic['variables'].items()
         }
 
-    # TODO: make recipe look nicer
-    # - deduplicate by moving datasets up from variable to diagnostic to recipe
+    # Deduplicate by moving datasets up from variable to diagnostic to recipe
+    recipe = _move_datasets_up(recipe)
 
     return recipe
+
+
+def _move_datasets_up(recipe: Recipe) -> Recipe:
+    """Move datasets from variable to diagnostic to recipe."""
+    # Move `additional_datasets` from variable to diagnostic level
+    for diagnostic in recipe['diagnostics'].values():
+        _move_one_level_up(diagnostic, 'variables', 'additional_datasets')
+
+    # Move `additional_datasets` from diagnostic to `datasets` at recipe level
+    _move_one_level_up(recipe, 'diagnostics', 'datasets')
+
+    return recipe
+
+
+def _move_one_level_up(base: dict, level: str, target: str):
+    """Move datasets one level up in the recipe."""
+    groups = base[level]
+
+    # Create a mapping from objects that can be hashed to the dicts
+    # describing the datasets.
+    dataset_mapping = {}
+    for name, group in groups.items():
+        dataset_mapping[name] = {
+            tuple(
+                sorted((k, tuple(v) if isinstance(v, list) else v)
+                       for k, v in ds.items())): ds
+            for ds in group['additional_datasets']
+        }
+
+    # Set datasets that are common to all groups
+    first_datasets = next(iter(dataset_mapping.values()))
+    common_datasets = set(first_datasets)
+    for datasets in dataset_mapping.values():
+        common_datasets &= set(datasets)
+    base[target] = [
+        v for k, v in first_datasets.items() if k in common_datasets
+    ]
+
+    # Remove common datasets from groups
+    for name, datasets in dataset_mapping.items():
+        group = groups[name]
+        var_datasets = set(datasets) - common_datasets
+        if var_datasets:
+            group['additional_datasets'] = [
+                v for k, v in datasets.items() if k in var_datasets
+            ]
+        else:
+            group.pop('additional_datasets')
 
 
 def _group_identical_facets(variable: Mapping[str, Any]) -> Recipe:
@@ -100,6 +148,7 @@ def _group_identical_facets(variable: Mapping[str, Any]) -> Recipe:
 
 def _group_ensemble_members(dataset_facets: Iterable[Facets]) -> list[Facets]:
     """This is the inverse operation of `Dataset.from_ranges` for ensembles."""
+
     def grouper(facets):
         return tuple((k, facets[k]) for k in sorted(facets) if k != 'ensemble')
 

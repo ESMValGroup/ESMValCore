@@ -583,7 +583,8 @@ class Dataset:
 
         timerange = self.facets['timerange']
         if not isinstance(timerange, str):
-            raise TypeError(f"timerange should be a string, got {timerange!r}")
+            raise TypeError(
+                f"timerange should be a string, got '{timerange!r}'")
         check.valid_time_selection(timerange)
 
         if '*' in timerange:
