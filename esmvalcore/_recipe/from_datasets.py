@@ -5,14 +5,15 @@ import itertools
 import logging
 import re
 from copy import deepcopy
+from functools import partial
 from typing import TYPE_CHECKING, Any, Iterable, Mapping, Sequence
 
 from nested_lookup import nested_delete
 
+from esmvalcore.exceptions import RecipeError
+
 if TYPE_CHECKING:
     from esmvalcore.dataset import Dataset
-
-from esmvalcore.exceptions import RecipeError
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +26,6 @@ def _datasets_to_raw_recipe(datasets: Iterable[Dataset]) -> Recipe:
     diagnostics: dict[str, dict[str, Any]] = {}
 
     for dataset in datasets:
-        if 'diagnostic' not in dataset.facets:
-            raise RecipeError(f"'diagnostic' facet missing from {dataset},"
-                              "unable to convert to recipe.")
         diagnostic_name: str = dataset.facets['diagnostic']  # type: ignore
         if diagnostic_name not in diagnostics:
             diagnostics[diagnostic_name] = {'variables': {}}
@@ -58,6 +56,11 @@ def _datasets_to_raw_recipe(datasets: Iterable[Dataset]) -> Recipe:
 
 def _datasets_to_recipe(datasets: Iterable[Dataset]) -> Recipe:
     """Convert datasets to a condensed recipe dict."""
+    for dataset in datasets:
+        if 'diagnostic' not in dataset.facets:
+            raise RecipeError(f"'diagnostic' facet missing from {dataset},"
+                              "unable to convert to recipe.")
+
     recipe = _datasets_to_raw_recipe(datasets)
     diagnostics = recipe['diagnostics'].values()
 
@@ -147,7 +150,11 @@ def _group_identical_facets(variable: Mapping[str, Any]) -> Recipe:
 
 
 def _group_ensemble_members(dataset_facets: Iterable[Facets]) -> list[Facets]:
-    """This is the inverse operation of `Dataset.from_ranges` for ensembles."""
+    """Group ensemble members.
+
+    This is the inverse operation of `Dataset.from_ranges` for
+    ensembles.
+    """
 
     def grouper(facets):
         return tuple((k, facets[k]) for k in sorted(facets) if k != 'ensemble')
@@ -222,21 +229,21 @@ def _create_ensemble_ranges(
         ((1, 1), (1, 1), (2, 2)),
     ].
     """
-    n_items = len(ensembles[0])
-    for i in range(n_items):
 
-        def order(ens):
-            prefix, suffix = ens[:i], ens[i + 1:]
-            return (prefix, suffix, ens[i])
+    def order(i, ens):
+        prefix, suffix = ens[:i], ens[i + 1:]
+        return (prefix, suffix, ens[i])
 
-        def grouper(ens):
-            prefix, suffix = ens[:i], ens[i + 1:]
-            return (prefix, suffix)
+    def grouper(i, ens):
+        prefix, suffix = ens[:i], ens[i + 1:]
+        return (prefix, suffix)
 
+    for i in range(len(ensembles[0])):
         grouped_ensembles = []
-        ensembles = sorted(ensembles, key=order)
-        for (prefix, suffix), ibunch in itertools.groupby(ensembles,
-                                                          key=grouper):
+        ensembles = sorted(ensembles, key=partial(order, i))
+        for (prefix,
+             suffix), ibunch in itertools.groupby(ensembles,
+                                                  key=partial(grouper, i)):
             bunch = list(ibunch)
             prev = bunch[0][i]
             groups = [[prev]]
@@ -261,8 +268,8 @@ def _create_ensemble_ranges(
 
 def datasets_to_recipe(
     datasets: Iterable[Dataset],
-    recipe: Recipe | None = None,
-) -> Recipe:
+    recipe: dict | None = None,
+) -> dict:
     """Create or update a recipe from datasets.
 
     Parameters

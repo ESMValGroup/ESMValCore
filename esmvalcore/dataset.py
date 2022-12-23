@@ -9,7 +9,7 @@ import uuid
 from copy import deepcopy
 from fnmatch import fnmatchcase
 from pathlib import Path
-from typing import Any, Iterator, Optional, Sequence
+from typing import Any, Iterator, Sequence
 
 from iris.cube import Cube
 
@@ -85,9 +85,9 @@ class Dataset:
         self.ancillaries: list['Dataset'] = []
 
         self._persist: set[str] = set()
-        self._session: Optional[Session] = None
-        self._files: Optional[Sequence[File]] = None
-        self._file_globs: Optional[Sequence[Path]] = None
+        self._session: Session | None = None
+        self._files: Sequence[File] | None = None
+        self._file_globs: Sequence[Path] | None = None
 
         for key, value in facets.items():
             self.set_facet(key, deepcopy(value), persist=True)
@@ -336,7 +336,7 @@ class Dataset:
         return self._session
 
     @session.setter
-    def session(self, session: Optional[Session]) -> None:
+    def session(self, session: Session | None) -> None:
         self._session = session
         for ancillary in self.ancillaries:
             ancillary._session = session
