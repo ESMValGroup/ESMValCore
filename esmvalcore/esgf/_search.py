@@ -6,12 +6,12 @@ from functools import lru_cache
 import pyesgf.search
 import requests.exceptions
 
-from .._config._esgf_pyclient import get_esgf_config
-from .._data_finder import (
+from ..config._esgf_pyclient import get_esgf_config
+from ..local import (
+    _get_start_end_date,
     _get_timerange_from_years,
     _parse_period,
     _truncate_dates,
-    get_start_end_date,
 )
 from ._download import ESGFFile
 from .facets import DATASET_MAP, FACETS
@@ -26,6 +26,9 @@ def get_esgf_facets(variable):
     for our_name, esgf_name in FACETS[project].items():
         if our_name in variable:
             values = variable[our_name]
+            if values == '*':
+                # Wildcards can be specified on ESGF by omitting the facet
+                continue
 
             if isinstance(values, (tuple, list)):
                 values = list(values)
@@ -42,7 +45,7 @@ def get_esgf_facets(variable):
     return facets
 
 
-def select_latest_versions(files):
+def select_latest_versions(files, versions):
     """Select only the latest version of files."""
     result = []
 
@@ -52,14 +55,24 @@ def select_latest_versions(files):
         dataset = file.dataset.rsplit('.', 1)[0]
         return (dataset, file.name)
 
+    if isinstance(versions, str):
+        versions = (versions, )
+
     files = sorted(files, key=same_file)
-    for _, versions in itertools.groupby(files, key=same_file):
-        versions = sorted(versions, reverse=True)
-        latest_version = versions[0]
+    for _, group in itertools.groupby(files, key=same_file):
+        group = sorted(group, reverse=True)
+        if versions:
+            selection = [f for f in group if f.facets['version'] in versions]
+            if not selection:
+                raise FileNotFoundError(
+                    f"Requested versions {', '.join(versions)} of file not "
+                    f"found. Available files: {group}")
+            group = selection
+        latest_version = group[0]
         result.append(latest_version)
-        if len(versions) > 1:
+        if len(group) > 1:
             logger.debug("Only using the latest version %s, not %s",
-                         latest_version, versions[1:])
+                         latest_version, group[1:])
 
     return result
 
@@ -100,7 +113,6 @@ def _search_index_nodes(facets):
         context = connection.new_context(
             pyesgf.search.context.FileSearchContext,
             **facets,
-            latest=True,
         )
         logger.debug("Searching %s for datasets using facets=%s", url, facets)
         try:
@@ -110,7 +122,12 @@ def _search_index_nodes(facets):
             )
             FIRST_ONLINE_INDEX_NODE = url
             return results
-        except requests.exceptions.Timeout as error:
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.HTTPError,
+            requests.exceptions.Timeout,
+        ) as error:
+            logger.debug("Unable to connect to %s due to %s", url, error)
             errors.append(error)
 
     raise FileNotFoundError("Failed to search ESGF, unable to connect:\n" +
@@ -134,8 +151,6 @@ def esgf_search_files(facets):
 
     files = ESGFFile._from_results(results, facets)
 
-    files = select_latest_versions(files)
-
     msg = 'none' if not files else '\n' + '\n'.join(str(f) for f in files)
     logger.debug("Found the following files matching facets %s: %s", facets,
                  msg)
@@ -145,12 +160,16 @@ def esgf_search_files(facets):
 
 def select_by_time(files, timerange):
     """Select files containing data between a timerange."""
+    if '*' in timerange:
+        # TODO: support * combined with a period
+        return files
+
     selection = []
 
     for file in files:
         start_date, end_date = _parse_period(timerange)
         try:
-            start, end = get_start_end_date(file.name)
+            start, end = _get_start_end_date(file.name)
         except ValueError:
             # If start and end year cannot be read from the filename
             # just select everything.
@@ -175,9 +194,22 @@ def find_files(*, project, short_name, dataset, **facets):
         The name of the variable.
     dataset : str
         The name of the dataset.
-    **facets:
-        Any other search facets. Values can be strings, list of strings, or
-        'start_year' and 'end_year' with values of type :obj:`int`.
+    **facets : typing.Union[str, list[str]]
+        Any other search facets. An ``'*'`` can be used to match
+        any value. By default, only the latest version of a file will
+        be returned. To select all versions use ``version='*'`` while other
+        omitted facets will default to ``'*'``. It is also
+        possible to specify multiple values for a facet, e.g.
+        ``exp=['historical', 'ssp585']`` will match any file that belongs
+        to either the historical or ssp585 experiment.
+        The ``timerange`` facet can be specified in `ISO 8601 format
+        <https://en.wikipedia.org/wiki/ISO_8601>`__.
+
+    Note
+    ----
+    A value of ``timerange='*'`` is supported, but combining a ``'*'`` with
+    a time or period :ref:`as supported in the recipe <datasets>` is currently
+    not supported and will return all found files.
 
     Examples
     --------
@@ -231,13 +263,12 @@ def find_files(*, project, short_name, dataset, **facets):
     ...     ensemble='r1i1p1',
     ...     domain='EUR-11',
     ...     driver='MPI-M-MPI-ESM-LR',
-    ...     start_year=1990,
-    ...     end_year=2000,
+    ...     timerange='1990/2000',
     ... )  # doctest: +SKIP
     [ESGFFile:cordex/output/EUR-11/CLMcom-ETH/MPI-M-MPI-ESM-LR/historical/r1i1p1/COSMO-crCLIM-v1-1/v1/mon/tas/v20191219/tas_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-ETH-COSMO-crCLIM-v1-1_v1_mon_198101-199012.nc,
-    ESGFFile:cordex/output/EUR-11/CLMcom-ETH/MPI-M-MPI-ESM-LR/historical/r1i1p1/COSMO-crCLIM-v1-1/v1/mon/tas/v20191219/tas_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-ETH-COSMO-crCLIM-v1-1_v1_mon_199101-200012.nc]
+     ESGFFile:cordex/output/EUR-11/CLMcom-ETH/MPI-M-MPI-ESM-LR/historical/r1i1p1/COSMO-crCLIM-v1-1/v1/mon/tas/v20191219/tas_EUR-11_MPI-M-MPI-ESM-LR_historical_r1i1p1_CLMcom-ETH-COSMO-crCLIM-v1-1_v1_mon_199101-200012.nc]
 
-    Search for a obs4MIPs dataset:
+    Search for an obs4MIPs dataset:
 
     >>> find_files(
     ...     project='obs4MIPs',
@@ -246,6 +277,48 @@ def find_files(*, project, short_name, dataset, **facets):
     ...     short_name='rsutcs',
     ... )  # doctest: +SKIP
     [ESGFFile:obs4MIPs/NASA-LaRC/CERES-EBAF/atmos/mon/v20160610/rsutcs_CERES-EBAF_L3B_Ed2-8_200003-201404.nc]
+
+    Search for any ensemble member:
+
+    >>> find_files(
+    ...     project='CMIP6',
+    ...     mip='Amon',
+    ...     short_name='tas',
+    ...     dataset='BCC-CSM2-MR',
+    ...     exp='historical',
+    ...     ensemble='*',
+    ... )  # doctest: +SKIP
+    [ESGFFile:CMIP6/CMIP/BCC/BCC-CSM2-MR/historical/r1i1p1f1/Amon/tas/gn/v20181126/tas_Amon_BCC-CSM2-MR_historical_r1i1p1f1_gn_185001-201412.nc,
+     ESGFFile:CMIP6/CMIP/BCC/BCC-CSM2-MR/historical/r2i1p1f1/Amon/tas/gn/v20181115/tas_Amon_BCC-CSM2-MR_historical_r2i1p1f1_gn_185001-201412.nc,
+     ESGFFile:CMIP6/CMIP/BCC/BCC-CSM2-MR/historical/r3i1p1f1/Amon/tas/gn/v20181119/tas_Amon_BCC-CSM2-MR_historical_r3i1p1f1_gn_185001-201412.nc]
+
+    Search for all available versions of a file:
+
+    >>> find_files(
+    ...     project='CMIP5',
+    ...     mip='Amon',
+    ...     short_name='tas',
+    ...     dataset='CCSM4',
+    ...     exp='historical',
+    ...     ensemble='r1i1p1',
+    ...     version='*',
+    ... )  # doctest: +SKIP
+    [ESGFFile:cmip5/output1/NCAR/CCSM4/historical/mon/atmos/Amon/r1i1p1/v20121031/tas_Amon_CCSM4_historical_r1i1p1_185001-200512.nc,
+     ESGFFile:cmip5/output1/NCAR/CCSM4/historical/mon/atmos/Amon/r1i1p1/v20130425/tas_Amon_CCSM4_historical_r1i1p1_185001-200512.nc,
+     ESGFFile:cmip5/output1/NCAR/CCSM4/historical/mon/atmos/Amon/r1i1p1/v20160829/tas_Amon_CCSM4_historical_r1i1p1_185001-200512.nc]
+
+    Search for a specific version of a file:
+
+    >>> find_files(
+    ...     project='CMIP5',
+    ...     mip='Amon',
+    ...     short_name='tas',
+    ...     dataset='CCSM4',
+    ...     exp='historical',
+    ...     ensemble='r1i1p1',
+    ...     version='v20130425',
+    ... )  # doctest: +SKIP
+    [ESGFFile:cmip5/output1/NCAR/CCSM4/historical/mon/atmos/Amon/r1i1p1/v20130425/tas_Amon_CCSM4_historical_r1i1p1_185001-200512.nc]
 
     Returns
     -------
@@ -282,10 +355,12 @@ def cached_search(**facets):
     """
     esgf_facets = get_esgf_facets(facets)
     files = esgf_search_files(esgf_facets)
+
+    if 'version' not in facets or facets['version'] != '*':
+        files = select_latest_versions(files, facets.get('version'))
+
     _get_timerange_from_years(facets)
-    filter_timerange = (facets.get('frequency', '') != 'fx'
-                        and 'timerange' in facets)
-    if filter_timerange:
+    if 'timerange' in facets:
         files = select_by_time(files, facets['timerange'])
         logger.debug("Selected files:\n%s", '\n'.join(str(f) for f in files))
 

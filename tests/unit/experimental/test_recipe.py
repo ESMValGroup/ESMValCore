@@ -1,6 +1,6 @@
 import pytest
 
-from esmvalcore._config import DIAGNOSTICS, TAGS
+from esmvalcore.config._diagnostics import DIAGNOSTICS, TAGS
 from esmvalcore.experimental import get_recipe
 
 pytest.importorskip(

@@ -346,7 +346,7 @@ The default settings are:
 .. code-block:: yaml
 
     urls:
-      - 'https://esgf-index1.ceda.ac.uk/esg-search'
+      - 'https://esgf.ceda.ac.uk/esg-search'
       - 'https://esgf-node.llnl.gov/esg-search'
       - 'https://esgf-data.dkrz.de/esg-search'
       - 'https://esgf-node.ipsl.upmc.fr/esg-search'
@@ -438,8 +438,8 @@ Example of the CMIP6 project configuration:
    CMIP6:
      input_dir:
        default: '/'
-       BADC: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
-       DKRZ: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
+       BADC: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
+       DKRZ: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
        ETHZ: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/{grid}/'
      input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
      output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
@@ -462,7 +462,7 @@ at each site. As an example, the CMIP6 directory path on BADC would be:
 
 .. code-block:: yaml
 
-   '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
+   '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
 
 The resulting directory path would look something like this:
 
@@ -475,8 +475,8 @@ which may be needed:
 
 .. code-block:: yaml
 
-  - '{exp}/{ensemble}/original/{mip}/{short_name}/{grid}/{latestversion}'
-  - '{exp}/{ensemble}/computed/{mip}/{short_name}/{grid}/{latestversion}'
+  - '{exp}/{ensemble}/original/{mip}/{short_name}/{grid}/{version}'
+  - '{exp}/{ensemble}/computed/{mip}/{short_name}/{grid}/{version}'
 
 In that case, the resultant directories will be:
 
@@ -629,7 +629,7 @@ Example:
    native6:
      cmor_strict: false
      input_dir:
-       default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
+       default: 'Tier{tier}/{dataset}/{version}/{frequency}/{short_name}'
      input_file:
        default: '*.nc'
      output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
@@ -754,7 +754,7 @@ For example, this is used to automatically add ``product: output1`` to any
 variable of any CMIP5 dataset that does not have a ``product`` key yet:
 
 .. code-block:: yaml
-   :caption: Extra facet example file `cmip5-product.yml <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/_config/extra_facets/cmip5-product.yml>`_
+   :caption: Extra facet example file `cmip5-product.yml <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config/extra_facets/cmip5-product.yml>`_
 
    '*':
      '*':
@@ -765,7 +765,7 @@ Location of the extra facets files
 Extra facets files can be placed in several different places. When we use them
 to support a particular use-case within the ESMValTool project, they will be
 provided in the sub-folder `extra_facets` inside the package
-`esmvalcore._config`. If they are used from the user side, they can be either
+:mod:`esmvalcore.config`. If they are used from the user side, they can be either
 placed in `~/.esmvaltool/extra_facets` or in any other directory of the users
 choosing. In that case this directory must be added to the `config-user.yml`
 file under the `extra_facets_dir` setting, which can take a single directory or
@@ -773,7 +773,7 @@ a list of directories.
 
 The order in which the directories are searched is
 
-1. The internal directory `esmvalcore._config/extra_facets`
+1. The internal directory `esmvalcore.config/extra_facets`
 2. The default user directory `~/.esmvaltool/extra_facets`
 3. The custom user directories in the order in which they are given in
    `config-user.yml`.
