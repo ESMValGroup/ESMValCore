@@ -294,7 +294,7 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
     input_files = _recipe._get_input_files(variable, config_user)[0]
 
     download_files = [
-        f.local_file(download_dir).as_posix() for f in esgf_files
+        f.local_file(download_dir) for f in esgf_files
     ]
 
     expected = {
