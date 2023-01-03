@@ -12,6 +12,9 @@ from esmvalcore.cmor._fixes.cmip5.bnu_esm import Ch4
 from esmvalcore.cmor._fixes.cmip5.canesm2 import FgCo2
 from esmvalcore.cmor._fixes.cmip5.cesm1_bgc import Gpp
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Omon, Tos
+from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.cnrm_aladin63 import (
+    Tas)
+from esmvalcore.cmor._fixes.cordex.cordex_fixes import AllVars
 from esmvalcore.cmor.fix import Fix
 
 
@@ -31,6 +34,26 @@ class TestFix(unittest.TestCase):
     def test_get_fix_case_insensitive(self):
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'CanESM2', 'Amon', 'fgCo2'), [FgCo2(None)])
+
+    def test_get_fix_cordex(self):
+        self.assertListEqual(
+            Fix.get_fixes(
+                'CORDEX',
+                'CNRM-ALADIN63',
+                'Amon',
+                'tas',
+                extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'}),
+            [Tas(None), AllVars(None)])
+
+    def test_get_grid_fix_cordex(self):
+        self.assertListEqual(
+            Fix.get_fixes(
+                'CORDEX',
+                'CNRM-ALADIN53',
+                'Amon',
+                'tas',
+                extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'}),
+            [AllVars(None)])
 
     def test_get_fixes_with_replace(self):
         self.assertListEqual(Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'ch4'),

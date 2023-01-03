@@ -1,4 +1,5 @@
 """Integration tests for :mod:`esmvalcore._recipe_checks`."""
+import os.path
 from typing import Any, List
 from unittest import mock
 
@@ -11,13 +12,8 @@ from esmvalcore.exceptions import RecipeError
 from esmvalcore.preprocessor import PreprocessorFile
 
 ERR_ALL = 'Looked for files matching%s'
-ERR_D = ('Looked for files in %s, but did not find any file pattern to match '
-         'against')
-ERR_F = ('Looked for files matching %s, but did not find any existing input '
-         'directory')
 ERR_RANGE = 'No input data available for years {} in files:\n{}'
 VAR = {
-    'filename': 'a/c.nc',
     'frequency': 'mon',
     'short_name': 'tas',
     'timerange': '2020/2025',
@@ -26,7 +22,6 @@ VAR = {
     'end_year': 2025
 }
 FX_VAR = {
-    'filename': 'a/b.nc',
     'frequency': 'fx',
     'short_name': 'areacella',
 }
@@ -69,17 +64,8 @@ def test_data_availability_data(mock_logger, input_files, var, error):
 
 DATA_AVAILABILITY_NO_DATA: List[Any] = [
     ([], [], None),
-    ([], None, None),
-    (None, [], None),
-    (None, None, None),
-    (['dir1'], [], (ERR_D, ['dir1'])),
-    (['dir1', 'dir2'], [], (ERR_D, ['dir1', 'dir2'])),
-    (['dir1'], None, (ERR_D, ['dir1'])),
-    (['dir1', 'dir2'], None, (ERR_D, ['dir1', 'dir2'])),
-    ([], ['a*.nc'], (ERR_F, ['a*.nc'])),
-    ([], ['a*.nc', 'b*.nc'], (ERR_F, ['a*.nc', 'b*.nc'])),
-    (None, ['a*.nc'], (ERR_F, ['a*.nc'])),
-    (None, ['a*.nc', 'b*.nc'], (ERR_F, ['a*.nc', 'b*.nc'])),
+    ([''], ['a*.nc'], (ERR_ALL, ': a*.nc')),
+    ([''], ['a*.nc', 'b*.nc'], (ERR_ALL, '\na*.nc\nb*.nc')),
     (['1'], ['a'], (ERR_ALL, ': 1/a')),
     (['1'], ['a', 'b'], (ERR_ALL, '\n1/a\n1/b')),
     (['1', '2'], ['a'], (ERR_ALL, '\n1/a\n2/a')),
@@ -100,10 +86,13 @@ def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
         'start_year': 2020,
         'end_year': 2025
     }
+    patterns = [
+        os.path.join(d, f) for d in dirnames for f in filenames
+    ]
     error_first = ('No input files found for variable %s', var_no_filename)
     error_last = ("Set 'log_level' to 'debug' to get more information", )
     with pytest.raises(RecipeError) as rec_err:
-        check.data_availability([], var, dirnames, filenames)
+        check.data_availability([], var, patterns)
     assert str(rec_err.value) == 'Missing data for alias: tas'
     if error is None:
         assert mock_logger.error.call_count == 2
@@ -137,7 +126,7 @@ GOOD_TIMERANGES = [
     '*/P2Y21DT12H00M00S',
     '1/301',
     '1/*',
-    '*/301'
+    '*/301',
 ]
 
 
@@ -161,7 +150,7 @@ BAD_TIMERANGES = [
 
 
 @pytest.mark.parametrize('timerange,message', BAD_TIMERANGES)
-def test_valid_time_selection_rehections(timerange, message):
+def test_valid_time_selection_rejections(timerange, message):
     """Check that bad definitions raise RecipeError."""
     with pytest.raises(check.RecipeError) as rec_err:
         check.valid_time_selection(timerange)
@@ -179,7 +168,8 @@ def test_data_availability_nonexistent(tmp_path):
     }
     result = pyesgf.search.results.FileResult(
         json={
-            'dataset_id': 'ABC',
+            'dataset_id': 'CMIP6.ABC.v1|something.org',
+            'dataset_id_template_': ["%(mip_era)s.%(source_id)s"],
             'project': ['CMIP6'],
             'size': 10,
             'title': 'tas_1990-1992.nc',
@@ -188,7 +178,7 @@ def test_data_availability_nonexistent(tmp_path):
     )
     dest_folder = tmp_path
     input_files = [esmvalcore.esgf.ESGFFile([result]).local_file(dest_folder)]
-    check.data_availability(input_files, var, dirnames=[], filenames=[])
+    check.data_availability(input_files, var, patterns=[])
 
 
 def test_reference_for_bias_preproc_empty():

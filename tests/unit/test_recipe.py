@@ -1,4 +1,5 @@
 from collections import defaultdict
+from pathlib import Path
 from unittest import mock
 
 import iris
@@ -178,12 +179,20 @@ def test_resume_preprocessor_tasks(mocker, tmp_path):
 
 def create_esgf_search_results():
     """Prepare some fake ESGF search results."""
+    dataset_id = (
+        'CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.historical.r1i1p1f1'
+        '.Amon.tas.gr.v20200310|esgf-data1.llnl.gov'
+    )
+    dataset_id_template = (
+        '%(mip_era)s.%(activity_drs)s.%(institution_id)s.'
+        '%(source_id)s.%(experiment_id)s.%(member_id)s.%(table_id)s.'
+        '%(variable_id)s.%(grid_label)s'
+    )
     file0 = ESGFFile([
         pyesgf.search.results.FileResult(
             json={
-                'dataset_id':
-                'CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.historical.r1i1p1f1'
-                '.Amon.tas.gr.v20200310|esgf-data1.llnl.gov',
+                'dataset_id':  dataset_id,
+                'dataset_id_template_': [dataset_id_template],
                 'project': ['CMIP6'],
                 'size':
                 4745571,
@@ -204,9 +213,8 @@ def create_esgf_search_results():
     file1 = ESGFFile([
         pyesgf.search.results.FileResult(
             {
-                'dataset_id':
-                'CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.historical.r1i1p1f1'
-                '.Amon.tas.gr.v20200310|esgf-data1.llnl.gov',
+                'dataset_id': dataset_id,
+                'dataset_id_template_': [dataset_id_template],
                 'project': ['CMIP6'],
                 'size':
                 4740192,
@@ -253,9 +261,9 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
     local_files = local_file_options[local_availability]
 
     mocker.patch.object(_recipe,
-                        'get_input_filelist',
+                        'find_files',
                         autospec=True,
-                        return_value=(list(local_files), [], []))
+                        return_value=(list(local_files), []))
     mocker.patch.object(
         _recipe.esgf,
         'find_files',
@@ -303,9 +311,9 @@ def test_search_esgf_timerange(mocker, tmp_path, timerange):
     esgf_files = create_esgf_search_results()
 
     mocker.patch.object(_recipe,
-                        '_find_input_files',
+                        'find_files',
                         autospec=True,
-                        return_value=([], [], []))
+                        return_value=[])
     mocker.patch.object(
         _recipe.esgf,
         'find_files',
@@ -457,8 +465,10 @@ def test_update_multiproduct_multi_model_statistics():
     assert len(output) == 2
 
     filenames = [p.filename for p in output]
-    assert '/preproc/d/var/CMIP6_MultiModelMean_2002-2004.nc' in filenames
-    assert '/preproc/d/var/CMIP6_MultiModelStd_Dev_2002-2004.nc' in filenames
+    assert Path(
+        '/preproc/d/var/CMIP6_MultiModelMean_2002-2004.nc') in filenames
+    assert Path(
+        '/preproc/d/var/CMIP6_MultiModelStd_Dev_2002-2004.nc') in filenames
 
     for product in output:
         for attr in common_attributes:
@@ -473,12 +483,12 @@ def test_update_multiproduct_multi_model_statistics():
             assert product.attributes['start_year'] == 2002
             assert 'end_year' in product.attributes
             assert product.attributes['end_year'] == 2004
-        if 'MultiModelStd_Dev' in product.filename:
+        if 'MultiModelStd_Dev' in str(product.filename):
             assert product.attributes['alias'] == 'MultiModelStd_Dev'
             assert product.attributes['dataset'] == 'MultiModelStd_Dev'
             assert (product.attributes['multi_model_statistics'] ==
                     'MultiModelStd_Dev')
-        elif 'MultiModelMean' in product.filename:
+        elif 'MultiModelMean' in str(product.filename):
             assert product.attributes['alias'] == 'MultiModelMean'
             assert product.attributes['dataset'] == 'MultiModelMean'
             assert (product.attributes['multi_model_statistics'] ==
@@ -491,8 +501,8 @@ def test_update_multiproduct_multi_model_statistics():
     assert len(stats) == 2
     assert 'mean' in stats
     assert 'std_dev' in stats
-    assert 'MultiModelMean' in stats['mean'].filename
-    assert 'MultiModelStd_Dev' in stats['std_dev'].filename
+    assert 'MultiModelMean' in str(stats['mean'].filename)
+    assert 'MultiModelStd_Dev' in str(stats['std_dev'].filename)
 
 
 def test_update_multiproduct_ensemble_statistics():
@@ -529,8 +539,8 @@ def test_update_multiproduct_ensemble_statistics():
 
     assert len(output) == 1
     product = list(output)[0]
-    assert (product.filename ==
-            '/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc')
+    assert product.filename == Path(
+        '/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc')
 
     for attr in common_attributes:
         assert attr in product.attributes
@@ -552,8 +562,8 @@ def test_update_multiproduct_ensemble_statistics():
     stats = output_products['CMIP6_CanESM2']
     assert len(stats) == 1
     assert 'median' in stats
-    assert (stats['median'].filename ==
-            '/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc')
+    assert stats['median'].filename == Path(
+        '/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc')
 
 
 def test_update_multiproduct_no_product():

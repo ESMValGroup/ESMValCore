@@ -40,7 +40,7 @@ def recipe():
 
 @pytest.mark.use_sample_data
 @pytest.mark.parametrize('task', (None, 'example/ta'))
-def test_run_recipe(task, recipe, tmp_path):
+def test_run_recipe(monkeypatch, task, recipe, tmp_path):
     """Test running a basic recipe using sample data.
 
     Recipe contains no provenance and no diagnostics.
@@ -50,12 +50,13 @@ def test_run_recipe(task, recipe, tmp_path):
     assert isinstance(recipe, Recipe)
     assert isinstance(recipe._repr_html_(), str)
 
+    sample_data_config = esmvaltool_sample_data.get_rootpaths()
+    monkeypatch.setitem(CFG, 'rootpath', sample_data_config['rootpath'])
+    monkeypatch.setitem(CFG, 'drs', {'CMIP6': 'SYNDA'})
     session = CFG.start_session(recipe.path.stem)
     session.clear()
     session.update(CFG_DEFAULT)
     session['output_dir'] = tmp_path / 'esmvaltool_output'
-    session.update(esmvaltool_sample_data.get_rootpaths())
-    session['drs'] = {'CMIP6': 'SYNDA'}
     session['max_parallel_tasks'] = 1
     session['remove_preproc_dir'] = False
 
@@ -82,14 +83,14 @@ def test_run_recipe(task, recipe, tmp_path):
 
 
 @pytest.mark.use_sample_data
-def test_run_recipe_diagnostic_failing(recipe, tmp_path):
+def test_run_recipe_diagnostic_failing(monkeypatch, recipe, tmp_path):
     """Test running a single diagnostic using sample data.
 
     Recipe contains no provenance and no diagnostics.
     """
     TAGS.set_tag_values(AUTHOR_TAGS)
 
-    CFG['output_dir'] = tmp_path
+    monkeypatch.setitem(CFG, 'output_dir', tmp_path)
 
     session = CFG.start_session(recipe.path.stem)
 
