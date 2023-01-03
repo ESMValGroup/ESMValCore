@@ -588,7 +588,7 @@ def _get_input_files(variable, config_user):
                 if local_copy.name not in local_files:
                     if not local_copy.exists():
                         DOWNLOAD_FILES.add(file)
-                    input_files.append(str(local_copy))
+                    input_files.append(local_copy)
 
             globs.append('ESGF')
 
