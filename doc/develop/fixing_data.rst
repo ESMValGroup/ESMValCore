@@ -377,7 +377,7 @@ To allow ESMValCore to locate the data files, use the following steps:
         native6:
           ...
           input_dir:
-            default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
+            default: 'Tier{tier}/{dataset}/{version}/{frequency}/{short_name}'
             MY_DATA_ORG: '{dataset}/{exp}/{simulation}/{version}/{type}'
           input_file:
             default: '*.nc'

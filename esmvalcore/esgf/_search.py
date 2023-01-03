@@ -6,13 +6,13 @@ from functools import lru_cache
 import pyesgf.search
 import requests.exceptions
 
-from .._data_finder import (
+from ..config._esgf_pyclient import get_esgf_config
+from ..local import (
+    _get_start_end_date,
     _get_timerange_from_years,
     _parse_period,
     _truncate_dates,
-    get_start_end_date,
 )
-from ..config._esgf_pyclient import get_esgf_config
 from ._download import ESGFFile
 from .facets import DATASET_MAP, FACETS
 
@@ -169,7 +169,7 @@ def select_by_time(files, timerange):
     for file in files:
         start_date, end_date = _parse_period(timerange)
         try:
-            start, end = get_start_end_date(file.name)
+            start, end = _get_start_end_date(file.name)
         except ValueError:
             # If start and end year cannot be read from the filename
             # just select everything.
@@ -195,10 +195,21 @@ def find_files(*, project, short_name, dataset, **facets):
     dataset : str
         The name of the dataset.
     **facets : typing.Union[str, list[str]]
-        Any other search facets. The special value ``'*'`` will match anything.
-        If no ``version`` facet is specified, the function returns only the
-        latest version of each file, while other omitted facets will default
-        to ``'*'``.
+        Any other search facets. An ``'*'`` can be used to match
+        any value. By default, only the latest version of a file will
+        be returned. To select all versions use ``version='*'`` while other
+        omitted facets will default to ``'*'``. It is also
+        possible to specify multiple values for a facet, e.g.
+        ``exp=['historical', 'ssp585']`` will match any file that belongs
+        to either the historical or ssp585 experiment.
+        The ``timerange`` facet can be specified in `ISO 8601 format
+        <https://en.wikipedia.org/wiki/ISO_8601>`__.
+
+    Note
+    ----
+    A value of ``timerange='*'`` is supported, but combining a ``'*'`` with
+    a time or period :ref:`as supported in the recipe <datasets>` is currently
+    not supported and will return all found files.
 
     Examples
     --------
