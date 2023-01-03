@@ -288,6 +288,7 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
         'rootpath': None,
         'drs': None,
         'offline': False,
+        'always_search_esgf': False,
         'download_dir': download_dir
     }
     input_files = _recipe._get_input_files(variable, config_user)[0]

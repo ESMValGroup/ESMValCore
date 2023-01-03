@@ -407,8 +407,9 @@ class Dataset:
         project = self.facets['project']
 
         # Set up downloading from ESGF if requested.
-        search_esgf = False
-        if not self.session['offline'] and project in esgf.facets.FACETS:
+        search_esgf = (not self.session['offline']
+                       and project in esgf.facets.FACETS)
+        if search_esgf and not self.session['always_search_esgf']:
             try:
                 check.data_availability(
                     self.files,
@@ -417,7 +418,9 @@ class Dataset:
                     log=False,
                 )
             except InputFilesNotFound:
-                search_esgf = True
+                pass
+            else:
+                search_esgf = False
 
         if search_esgf:
             local_files = {f.name: f for f in self.files}

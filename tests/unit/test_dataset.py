@@ -613,8 +613,9 @@ def dataset():
         alias='CMIP6_EC-Eeath3_tas',
     )
     dataset.session = {
-        'offline': False,
+        'always_search_esgf': False,
         'download_dir': Path('/download_dir'),
+        'offline': False,
         'rootpath': None,
         'drs': {},
     }

@@ -291,6 +291,7 @@ _validators = {
     'run_diagnostic': validate_bool,
     'output_file_type': validate_string,
     "offline": validate_bool,
+    'always_search_esgf': validate_bool,
 
     # From CLI
     "resume_from": validate_pathlist,

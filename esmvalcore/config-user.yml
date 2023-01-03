@@ -48,6 +48,10 @@ max_parallel_tasks: null
 # on a computer without an internet connection.
 offline: true
 
+# Search ESGF for files even when files are available locally. This option is
+# useful to make sure you have the latest version of all files.
+always_search_esgf: false
+
 # Log level of the console --- debug/[info]/warning/error
 # For much more information printed to screen set log_level to ``debug``.
 log_level: info

@@ -567,15 +567,20 @@ def _get_input_files(variable, config_user):
     # Set up downloading from ESGF if requested.
     if (not config_user['offline']
             and variable['project'] in esgf.facets.FACETS):
-        try:
-            check.data_availability(
-                input_files,
-                variable,
-                globs,
-                log=False,
-            )
-        except RecipeError:
+        search_esgf = config_user['always_search_esgf']
+        if not search_esgf:
             # Only look on ESGF if files are not available locally.
+            try:
+                check.data_availability(
+                    input_files,
+                    variable,
+                    globs,
+                    log=False,
+                )
+            except RecipeError:
+                search_esgf = True
+
+        if search_esgf:
             local_files = set(Path(f).name for f in input_files)
             search_result = esgf.find_files(**variable)
             for file in search_result:
