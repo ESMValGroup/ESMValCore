@@ -7,6 +7,7 @@ import os
 import re
 from copy import deepcopy
 from decimal import Decimal
+from pathlib import Path
 from typing import Dict
 
 import iris
@@ -548,7 +549,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
               reference: esmf_regrid.schemes:ESMFAreaWeighted
 
     """
-    if isinstance(target_grid, str):
+    if isinstance(target_grid, (str, Path)):
         if os.path.isfile(target_grid):
             target_grid = iris.load_cube(target_grid)
         else:
