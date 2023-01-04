@@ -24,7 +24,7 @@ TEST_GRID_FILE_NAME = 'f66b000792434878bcbf'
 
 @pytest.fixture(autouse=True)
 def tmp_cache_dir(monkeypatch, tmp_path):
-    """Always use temporary path as cache directory."""
+    """Use temporary path as cache directory for all tests in this module."""
     monkeypatch.setattr(IconFix, 'CACHE_DIR', tmp_path)
 
 
@@ -195,14 +195,13 @@ def check_heightxm(cube, height_value):
     assert height.bounds is None
 
 
-# TODO: uncomment checks
 def check_lat(cube):
     """Check latitude coordinate of cube."""
     assert cube.coords('latitude', dim_coords=False)
     lat = cube.coord('latitude', dim_coords=False)
-    # assert lat.var_name == 'lat'
+    assert lat.var_name == 'lat'
     assert lat.standard_name == 'latitude'
-    # assert lat.long_name == 'latitude'
+    assert lat.long_name == 'latitude'
     assert lat.units == 'degrees_north'
     assert lat.attributes == {}
     np.testing.assert_allclose(
@@ -227,14 +226,13 @@ def check_lat(cube):
     return lat
 
 
-# TODO: uncomment checks
 def check_lon(cube):
     """Check longitude coordinate of cube."""
     assert cube.coords('longitude', dim_coords=False)
     lon = cube.coord('longitude', dim_coords=False)
-    # assert lon.var_name == 'lon'
+    assert lon.var_name == 'lon'
     assert lon.standard_name == 'longitude'
-    # assert lon.long_name == 'longitude'
+    assert lon.long_name == 'longitude'
     assert lon.units == 'degrees_east'
     assert lon.attributes == {}
     np.testing.assert_allclose(
