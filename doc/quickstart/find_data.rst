@@ -373,8 +373,8 @@ An example is the horizontal regridding of native ICON data to a regular grid.
 While the built-in :ref:`unstructured_nearest scheme <built-in regridding
 schemes>` can handle unstructured grids not in UGRID format, using more complex
 regridding algorithms (for example provided by the
-:doc:`iris-esmf-regrid:index` module through :ref:`generic regridding schemes`)
-requires the input data in UGRID format.
+:doc:`iris-esmf-regrid:index` package through :ref:`generic regridding
+schemes`) requires the input data in UGRID format.
 The following code snippet provides a preprocessor that regrids native ICON
 data to a 1°x1° grid using `ESMF's first-order conservative regridding
 algorithm <https://earthsystemmodeling.org/regrid/#regridding-methods>`__:
