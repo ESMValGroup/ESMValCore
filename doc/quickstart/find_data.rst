@@ -369,12 +369,12 @@ loading the data.
 The UGRID conventions provide a standardized format to store data on
 unstructured grids, which is required by many software packages or tools to
 work correctly.
-An example is the horizontal regridding of ICON data to a regular grid.  While
-the built-in :ref:`unstructured nearest scheme <built-in regridding schemes>`
-can handle unstructured grids not in UGRID format, using more complex
-regridding algorithms (for example provided by the :mod:`iris-esmf-regrid`
-module through :ref:`generic regridding schemes`) requires the input data in
-UGRID format.
+An example is the horizontal regridding of native ICON data to a regular grid.
+While the built-in :ref:`unstructured_nearest scheme <built-in regridding
+schemes>` can handle unstructured grids not in UGRID format, using more complex
+regridding algorithms (for example provided by the
+:doc:`iris-esmf-regrid:index` module through :ref:`generic regridding schemes`)
+requires the input data in UGRID format.
 The following code snippet provides a preprocessor that regrids native ICON
 data to a 1°x1° grid using `ESMF's first-order conservative regridding
 algorithm <https://earthsystemmodeling.org/regrid/#regridding-methods>`__:
@@ -385,9 +385,9 @@ algorithm <https://earthsystemmodeling.org/regrid/#regridding-methods>`__:
      regrid_icon:
        regrid:
          target_grid: 1x1
-           scheme:
-             reference: esmf_regrid.experimental.unstructured_scheme:regrid_unstructured_to_rectilinear
-             method: conservative
+         scheme:
+           reference: esmf_regrid.experimental.unstructured_scheme:regrid_unstructured_to_rectilinear
+           method: conservative
 
 .. hint::
 
