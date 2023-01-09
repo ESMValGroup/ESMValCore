@@ -1784,6 +1784,8 @@ def test_alias_generation(tmp_path, patched_datafinder, config_user):
                   - {dataset: EC-EARTH,  ensemble: r1i1p1}
                   - {dataset: EC-EARTH,  ensemble: r2i1p1}
                   - {dataset: EC-EARTH,  ensemble: r3i1p1, alias: my_alias}
+                  - {dataset: FGOALS-g3, sub_experiment: s1960, ensemble: r1}
+                  - {dataset: FGOALS-g3, sub_experiment: s1961, ensemble: r1}
                   - {project: OBS, dataset: ERA-Interim,  version: 1}
                   - {project: OBS, dataset: ERA-Interim,  version: 2}
                   - {project: CMIP6, activity: CMP, dataset: GF3, ensemble: r1}
@@ -1801,6 +1803,11 @@ def test_alias_generation(tmp_path, patched_datafinder, config_user):
         if dataset['project'] == 'CMIP5':
             if dataset['dataset'] == 'GFDL-CM3':
                 assert dataset['alias'] == 'CMIP5_GFDL-CM3'
+            elif dataset['dataset'] == 'FGOALS-g3':
+                if dataset['sub_experiment'] == 's1960':
+                    assert dataset['alias'] == 'CMIP5_FGOALS-g3_s1960'
+                else:
+                    assert dataset['alias'] == 'CMIP5_FGOALS-g3_s1961'
             else:
                 if dataset['ensemble'] == 'r1i1p1':
                     assert dataset['alias'] == 'CMIP5_EC-EARTH_r1i1p1'
