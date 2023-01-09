@@ -121,7 +121,7 @@ def _search_index_nodes(facets):
                 ignore_facet_check=True,
             )
             FIRST_ONLINE_INDEX_NODE = url
-            return results
+            return list(results)
         except (
             requests.exceptions.ConnectionError,
             requests.exceptions.HTTPError,
