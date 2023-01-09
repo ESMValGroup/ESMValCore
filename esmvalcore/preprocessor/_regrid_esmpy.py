@@ -1,34 +1,41 @@
 # -*- coding: utf-8 -*-
 """Provides regridding for irregular grids."""
 
-import ESMF
+try:
+    import esmpy
+except ImportError as exc:
+    # Prior to v8.4.0, `esmpy`` could be imported as `ESMF`.
+    try:
+        import ESMF as esmpy  # noqa: N811
+    except ImportError:
+        raise exc
 import iris
 import numpy as np
 
 from ._mapping import get_empty_data, map_slices, ref_to_dims_index
 
-ESMF_MANAGER = ESMF.Manager(debug=False)
+ESMF_MANAGER = esmpy.Manager(debug=False)
 
 ESMF_LON, ESMF_LAT = 0, 1
 
 ESMF_REGRID_METHODS = {
-    'linear': ESMF.RegridMethod.BILINEAR,
-    'area_weighted': ESMF.RegridMethod.CONSERVE,
-    'nearest': ESMF.RegridMethod.NEAREST_STOD,
+    'linear': esmpy.RegridMethod.BILINEAR,
+    'area_weighted': esmpy.RegridMethod.CONSERVE,
+    'nearest': esmpy.RegridMethod.NEAREST_STOD,
 }
 
 MASK_REGRIDDING_MASK_VALUE = {
-    ESMF.RegridMethod.BILINEAR: np.array([1]),
-    ESMF.RegridMethod.CONSERVE: np.array([1]),
-    ESMF.RegridMethod.NEAREST_STOD: np.array([]),
+    esmpy.RegridMethod.BILINEAR: np.array([1]),
+    esmpy.RegridMethod.CONSERVE: np.array([1]),
+    esmpy.RegridMethod.NEAREST_STOD: np.array([]),
 }
 
 # ESMF_REGRID_METHODS = {
-#     'bilinear': ESMF.RegridMethod.BILINEAR,
-#     'patch': ESMF.RegridMethod.PATCH,
-#     'conserve': ESMF.RegridMethod.CONSERVE,
-#     'nearest_stod': ESMF.RegridMethod.NEAREST_STOD,
-#     'nearest_dtos': ESMF.RegridMethod.NEAREST_DTOS,
+#     'bilinear': esmpy.RegridMethod.BILINEAR,
+#     'patch': esmpy.RegridMethod.PATCH,
+#     'conserve': esmpy.RegridMethod.CONSERVE,
+#     'nearest_stod': esmpy.RegridMethod.NEAREST_STOD,
+#     'nearest_dtos': esmpy.RegridMethod.NEAREST_DTOS,
 # }
 
 
@@ -85,19 +92,19 @@ def get_grid(esmpy_lat, esmpy_lon,
         num_peri_dims = 1
     else:
         num_peri_dims = 0
-    grid = ESMF.Grid(np.array(esmpy_lat.shape),
-                     num_peri_dims=num_peri_dims,
-                     staggerloc=[ESMF.StaggerLoc.CENTER])
+    grid = esmpy.Grid(np.array(esmpy_lat.shape),
+                      num_peri_dims=num_peri_dims,
+                      staggerloc=[esmpy.StaggerLoc.CENTER])
     grid.get_coords(ESMF_LON)[...] = esmpy_lon
     grid.get_coords(ESMF_LAT)[...] = esmpy_lat
-    grid.add_coords([ESMF.StaggerLoc.CORNER])
+    grid.add_coords([esmpy.StaggerLoc.CORNER])
     grid_lon_corners = grid.get_coords(ESMF_LON,
-                                       staggerloc=ESMF.StaggerLoc.CORNER)
+                                       staggerloc=esmpy.StaggerLoc.CORNER)
     grid_lat_corners = grid.get_coords(ESMF_LAT,
-                                       staggerloc=ESMF.StaggerLoc.CORNER)
+                                       staggerloc=esmpy.StaggerLoc.CORNER)
     grid_lon_corners[...] = esmpy_lon_corners
     grid_lat_corners[...] = esmpy_lat_corners
-    grid.add_item(ESMF.GridItem.MASK, ESMF.StaggerLoc.CENTER)
+    grid.add_item(esmpy.GridItem.MASK, esmpy.StaggerLoc.CENTER)
     return grid
 
 
@@ -128,9 +135,9 @@ def cube_to_empty_field(cube):
     circular = is_lon_circular(lon)
     esmpy_coords = coords_iris_to_esmpy(lat, lon, circular)
     grid = get_grid(*esmpy_coords, circular=circular)
-    field = ESMF.Field(grid,
-                       name=cube.long_name,
-                       staggerloc=ESMF.StaggerLoc.CENTER)
+    field = esmpy.Field(grid,
+                        name=cube.long_name,
+                        staggerloc=esmpy.StaggerLoc.CENTER)
     return field
 
 
@@ -151,13 +158,13 @@ def regrid_mask_2d(src_data, regridding_arguments, mask_threshold):
     regrid_method = regridding_arguments['regrid_method']
     original_src_mask = np.ma.getmaskarray(src_data)
     src_field.data[...] = ~original_src_mask.T
-    src_mask = src_field.grid.get_item(ESMF.GridItem.MASK,
-                                       ESMF.StaggerLoc.CENTER)
+    src_mask = src_field.grid.get_item(esmpy.GridItem.MASK,
+                                       esmpy.StaggerLoc.CENTER)
     src_mask[...] = original_src_mask.T
-    center_mask = dst_field.grid.get_item(ESMF.GridItem.MASK,
-                                          ESMF.StaggerLoc.CENTER)
+    center_mask = dst_field.grid.get_item(esmpy.GridItem.MASK,
+                                          esmpy.StaggerLoc.CENTER)
     center_mask[...] = 0
-    mask_regridder = ESMF.Regrid(
+    mask_regridder = esmpy.Regrid(
         src_mask_values=MASK_REGRIDDING_MASK_VALUE[regrid_method],
         dst_mask_values=np.array([]),
         **regridding_arguments)
@@ -177,14 +184,14 @@ def build_regridder_2d(src_rep, dst_rep, regrid_method, mask_threshold):
         'srcfield': src_field,
         'dstfield': dst_field,
         'regrid_method': regrid_method,
-        'unmapped_action': ESMF.UnmappedAction.IGNORE,
+        'unmapped_action': esmpy.UnmappedAction.IGNORE,
         'ignore_degenerate': True,
     }
     dst_mask = regrid_mask_2d(src_rep.data,
                               regridding_arguments, mask_threshold)
-    field_regridder = ESMF.Regrid(src_mask_values=np.array([1]),
-                                  dst_mask_values=np.array([1]),
-                                  **regridding_arguments)
+    field_regridder = esmpy.Regrid(src_mask_values=np.array([1]),
+                                   dst_mask_values=np.array([1]),
+                                   **regridding_arguments)
 
     def regridder(src):
         """Regrid 2d for irregular grids."""
@@ -296,7 +303,7 @@ def get_grid_representants(src, dst):
         aux_coords_and_dims.append((coord, dims))
 
     # Add scalar dimensions of source cube to target
-    for scalar_coord in src_rep.coords(dimensions=()):
+    for scalar_coord in src.coords(dimensions=()):
         aux_coords_and_dims.append((scalar_coord, ()))
 
     dst_rep = iris.cube.Cube(
