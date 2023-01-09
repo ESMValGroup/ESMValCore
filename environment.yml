@@ -11,7 +11,7 @@ dependencies:
   - dask
   - compilers
   - esgf-pyclient>=0.3.1
-  - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
+  - esmpy!=8.1.0,<8.4  # see github.com/ESMValGroup/ESMValCore/issues/1208
   - fiona
   - fire
   - geopy
@@ -30,6 +30,7 @@ dependencies:
   - pip!=21.3
   - prov
   - psutil
+  - py-cordex
   - pybtex
   - python>=3.8
   - python-stratify
