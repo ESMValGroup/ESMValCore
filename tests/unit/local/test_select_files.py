@@ -1,3 +1,5 @@
+import pytest
+
 from esmvalcore.local import _select_files
 
 
@@ -20,7 +22,8 @@ def test_select_files():
     assert result == expected
 
 
-def test_select_files_different_length_start_end():
+@pytest.mark.parametrize('timerange', ['196201/1967', '1962/196706'])
+def test_select_files_different_length_start_end(timerange):
 
     files = [
         "pr_Amon_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_195501-195912.nc",
@@ -29,7 +32,7 @@ def test_select_files_different_length_start_end():
         "pr_Amon_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_197001-197412.nc",
     ]
 
-    result = _select_files(files, '196201/1967')
+    result = _select_files(files, timerange)
 
     expected = [
         "pr_Amon_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_196001-196412.nc",
