@@ -263,7 +263,7 @@ def test_esgf_search_files(mocker):
 
 def test_esgf_search_uses_second_index_node(mocker):
     """Test that the second index node is used if the first is offline."""
-    search_result = mocker.sentinel.search_result
+    search_result = [mocker.sentinel.search_result]
     search_results = [
         requests.exceptions.ReadTimeout("Timeout error message"),
         search_result,
