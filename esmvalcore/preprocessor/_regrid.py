@@ -478,14 +478,11 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     target_grid : Cube or str or dict
         The (location of a) cube that specifies the target or reference grid
         for the regridding operation.
-
         Alternatively, a string cell specification may be provided,
         of the form ``MxN``, which specifies the extent of the cell, longitude
         by latitude (degrees) for a global, regular target grid.
-
         Alternatively, a dictionary with a regional target grid may
         be specified (see above).
-
     scheme : str or dict
         The regridding scheme to perform. If both source and target grid are
         structured (regular or irregular), can be one of the built-in schemes
@@ -574,6 +571,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         raise ValueError(f'Expecting a cube, got {target_grid}.')
 
     if isinstance(scheme, dict):
+        scheme = dict(scheme)  # do not overwrite original scheme
         try:
             object_ref = scheme.pop("reference")
         except KeyError as key_err:
