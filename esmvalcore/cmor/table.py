@@ -548,6 +548,8 @@ class VariableInfo(JsonInfo):
         """Data frequency"""
         self.positive = ''
         """Increasing direction"""
+        self.cell_methods = ''
+        """Cell methods"""
 
         self.dimensions = []
         """List of dimensions"""
