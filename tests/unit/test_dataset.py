@@ -945,3 +945,12 @@ def test_load(mocker, session):
     assert args == load_args
 
     _get_output_file.assert_called_with(dataset.facets, session.preproc_dir)
+
+
+def test_load_fail(session):
+    dataset = Dataset()
+    dataset.session = session
+    dataset.session['offline'] = False
+    dataset.files = []
+    with pytest.raises(InputFilesNotFound):
+        dataset.load()
