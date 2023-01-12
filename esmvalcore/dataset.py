@@ -460,6 +460,11 @@ class Dataset:
     def load(self) -> Cube:
         """Load dataset.
 
+        Raises
+        ------
+        InputFilesNotFound
+            When no files were found.
+
         Returns
         -------
         iris.cube.Cube
@@ -470,10 +475,9 @@ class Dataset:
         input_files = list(self.files)
         ancillary_cubes = []
         for ancillary_dataset in self.ancillaries:
-            if ancillary_dataset.files:
-                input_files.extend(ancillary_dataset.files)
-                ancillary_cube = ancillary_dataset._load()
-                ancillary_cubes.append(ancillary_cube)
+            input_files.extend(ancillary_dataset.files)
+            ancillary_cube = ancillary_dataset._load()
+            ancillary_cubes.append(ancillary_cube)
 
         cubes = preprocess(
             [cube],
@@ -485,6 +489,17 @@ class Dataset:
 
     def _load(self) -> Cube:
         """Load self.files into an iris cube and return it."""
+        if not self.files:
+            lines = [
+                f"No files were found for {self}",
+                "locally using glob patterns:",
+                "\n".join(str(f) for f in self._file_globs or []),
+            ]
+            if self.session['offline'] is False:
+                lines.append('or on ESGF.')
+            msg = "\n".join(lines)
+            raise InputFilesNotFound(msg)
+
         output_file = _get_output_file(self.facets, self.session.preproc_dir)
 
         settings: dict[str, dict[str, Any]] = {}
