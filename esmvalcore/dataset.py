@@ -344,6 +344,13 @@ class Dataset:
     def add_ancillary(self, **facets: FacetValue) -> None:
         """Add an ancillary dataset.
 
+        This is a convenience function that will create a copy of the current
+        dataset, update its facets with the values specified in ``**facets``,
+        and append it to :obj:`Dataset.ancillaries`. For more control
+        over the creation of the ancillary dataset, first create a new
+        :class:`Dataset` describing the ancillary dataset and then append
+        it to :obj:`Dataset.ancillaries`.
+
         Parameters
         ----------
         **facets
