@@ -279,6 +279,10 @@ def datasets_to_recipe(
     recipe
         If provided, the datasets in the recipe will be replaced.
 
+    Examples
+    --------
+    See :ref:`/notebooks/composing-recipes.ipynb` for example use cases.
+
     Returns
     -------
     dict
