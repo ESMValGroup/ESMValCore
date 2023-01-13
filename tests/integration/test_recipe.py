@@ -1769,7 +1769,7 @@ def test_alias_generation(tmp_path, patched_datafinder, config_user):
         diagnostics:
           diagnostic_name:
             variables:
-              ta:
+              pr:
                 project: CMIP5
                 mip: Amon
                 exp: historical
@@ -1779,28 +1779,39 @@ def test_alias_generation(tmp_path, patched_datafinder, config_user):
                 type: reanaly
                 tier: 2
                 version: latest
+                domain: EUR-11
+                rcm_version: 1
                 additional_datasets:
                   - {dataset: GFDL-CM3,  ensemble: r1i1p1}
                   - {dataset: EC-EARTH,  ensemble: r1i1p1}
                   - {dataset: EC-EARTH,  ensemble: r2i1p1}
                   - {dataset: EC-EARTH,  ensemble: r3i1p1, alias: my_alias}
+                  - {dataset: FGOALS-g3, sub_experiment: s1960, ensemble: r1}
+                  - {dataset: FGOALS-g3, sub_experiment: s1961, ensemble: r1}
                   - {project: OBS, dataset: ERA-Interim,  version: 1}
                   - {project: OBS, dataset: ERA-Interim,  version: 2}
                   - {project: CMIP6, activity: CMP, dataset: GF3, ensemble: r1}
                   - {project: CMIP6, activity: CMP, dataset: GF2, ensemble: r1}
                   - {project: CMIP6, activity: HRMP, dataset: EC, ensemble: r1}
                   - {project: CMIP6, activity: HRMP, dataset: HA, ensemble: r1}
+                  - {project: CORDEX, driver: ICHEC-EC-EARTH, dataset: SMHI-RCA4, ensemble: r1, mip: mon}
+                  - {project: CORDEX, driver: MIROC-MIROC5, dataset: SMHI-RCA4, ensemble: r1, mip: mon}
             scripts: null
         """)  # noqa:
 
     recipe = get_recipe(tmp_path, content, config_user)
     assert len(recipe.diagnostics) == 1
     diag = recipe.diagnostics['diagnostic_name']
-    var = diag['preprocessor_output']['ta']
+    var = diag['preprocessor_output']['pr']
     for dataset in var:
         if dataset['project'] == 'CMIP5':
             if dataset['dataset'] == 'GFDL-CM3':
                 assert dataset['alias'] == 'CMIP5_GFDL-CM3'
+            elif dataset['dataset'] == 'FGOALS-g3':
+                if dataset['sub_experiment'] == 's1960':
+                    assert dataset['alias'] == 'CMIP5_FGOALS-g3_s1960'
+                else:
+                    assert dataset['alias'] == 'CMIP5_FGOALS-g3_s1961'
             else:
                 if dataset['ensemble'] == 'r1i1p1':
                     assert dataset['alias'] == 'CMIP5_EC-EARTH_r1i1p1'
@@ -1817,6 +1828,11 @@ def test_alias_generation(tmp_path, patched_datafinder, config_user):
                 assert dataset['alias'] == 'CMIP6_HRMP_EC'
             else:
                 assert dataset['alias'] == 'CMIP6_HRMP_HA'
+        elif dataset['project'] == 'CORDEX':
+            if dataset['driver'] == 'ICHEC-EC-EARTH':
+                assert dataset['alias'] == 'CORDEX_ICHEC-EC-EARTH'
+            else:
+                assert dataset['alias'] == 'CORDEX_MIROC-MIROC5'
         else:
             if dataset['version'] == 1:
                 assert dataset['alias'] == 'OBS_1'
