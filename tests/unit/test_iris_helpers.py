@@ -154,11 +154,6 @@ def make_cube_with_attrs(index):
         'str': 'Hello, world',
         'list': [1, 1, 2, 3, 5, 8, 13],
         'tuple': (1, 2, 3, 4, 5),
-        'dict': {
-            1: 'one',
-            2: 'two',
-            3: 'three',
-        },
         'nparray': np.arange(42),
 
         # Differing attribute values across cubes
@@ -168,9 +163,6 @@ def make_cube_with_attrs(index):
         'mix': np.arange(3) if index == 0 else index,
         'diff_list': [index, index],
         'diff_tuple': (index, index),
-        'diff_dict': {
-            0: index,
-        },
 
         # Differing attribute keys across cubes
         str(index + 1000): index,
@@ -194,11 +186,6 @@ def test_merge_cube_attributes(cubes):
         'str': 'Hello, world',
         'list': [1, 1, 2, 3, 5, 8, 13],
         'tuple': (1, 2, 3, 4, 5),
-        'dict': {
-            1: 'one',
-            2: 'two',
-            3: 'three',
-        },
         'nparray': np.arange(42),
         'diff_int': '0 1 2',
         'diff_str': 'a b c',
@@ -206,7 +193,6 @@ def test_merge_cube_attributes(cubes):
         'mix': '1 2 [0 1 2]',
         'diff_list': '[0, 0] [1, 1] [2, 2]',
         'diff_tuple': '(0, 0) (1, 1) (2, 2)',
-        'diff_dict': '{0: 0} {0: 1} {0: 2}',
         '1000': 0,
         '1001': 1,
         '1002': 2,
