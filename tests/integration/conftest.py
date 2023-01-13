@@ -18,7 +18,7 @@ def session(tmp_path, monkeypatch):
 
     # The patched_datafinder fixture does not return the correct input
     # directory structure, so make sure it is set to flat for every project
-    monkeypatch.setitem(CFG, 'drs', {})
+    monkeypatch.setitem(CFG, 'rootpath', {'default': {tmp_path: 'default'}})
     for project in _config.CFG:
         monkeypatch.setitem(_config.CFG[project]['input_dir'], 'default', '/')
     return session
@@ -89,6 +89,7 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
     tracking_id = tracking_ids()
 
     def glob(filename):
+        filename = Path(filename).name
         # Fail for specified fx variables
         if 'fx_' in filename:
             return []

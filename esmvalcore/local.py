@@ -5,6 +5,7 @@ import itertools
 import logging
 import os
 import re
+from dataclasses import dataclass
 from glob import glob
 from pathlib import Path
 from typing import Any, Union
@@ -380,74 +381,85 @@ def _apply_caps(original, lower, upper):
     return original
 
 
-def _select_drs(input_type, project):
+def _select_drs(input_type: str, project: str, structure: str) -> list[str]:
     """Select the directory structure of input path."""
     cfg = get_project_config(project)
-    input_path = cfg[input_type]
-    if isinstance(input_path, str):
-        return input_path
+    input_path_patterns = cfg[input_type]
+    if isinstance(input_path_patterns, str):
+        return [input_path_patterns]
 
-    structure = CFG['drs'].get(project, 'default')
-    if structure in input_path:
-        return input_path[structure]
+    if structure in input_path_patterns:
+        value = input_path_patterns[structure]
+        if isinstance(value, str):
+            value = [value]
+        return value
 
     raise KeyError(
         'drs {} for {} project not specified in config-developer file'.format(
             structure, project))
 
 
+@dataclass(order=True, frozen=True)
+class DataSource:
+    """Class for storing a data source and finding the associated files."""
+    rootpath: Path
+    dirname_template: str
+    filename_template: str
+
+    def get_glob_patterns(self, **facets) -> list[Path]:
+        """Compose the globs that will be used to look for files."""
+        dirname_globs = _replace_tags(self.dirname_template, facets)
+        filename_globs = _replace_tags(self.filename_template, facets)
+        return sorted(self.rootpath / d / f for d in dirname_globs
+                      for f in filename_globs)
+
+    def find_files(self, **facets) -> list[LocalFile]:
+        """Find files."""
+        globs = self.get_glob_patterns(**facets)
+        logger.debug("Looking for files matching %s", globs)
+
+        files = []
+        for glob_ in globs:
+            for filename in glob(str(glob_)):
+                file = LocalFile(filename)
+                file.facets.update(_path2facets(file, self.dirname_template))
+                files.append(file)
+        files.sort()  # sorting makes it easier to see what was found
+
+        if 'timerange' in facets:
+            files = _select_files(files, facets['timerange'])
+        return files
+
+
 _ROOTPATH_WARNED = set()
 
 
-def _get_rootpath(project):
-    """Select the rootpath."""
-    rootpath = CFG['rootpath']
+def _get_data_sources(project: str) -> list[DataSource]:
+    """Get a list of data sources."""
+    rootpaths = CFG['rootpath']
     for key in (project, 'default'):
-        if key in rootpath:
-            nonexistent = tuple(p for p in rootpath[key]
-                                if not os.path.exists(p))
+        if key in rootpaths:
+            paths = rootpaths[key]
+            nonexistent = tuple(p for p in paths if not os.path.exists(p))
             if nonexistent and (key, nonexistent) not in _ROOTPATH_WARNED:
                 logger.warning(
                     "'%s' rootpaths '%s' set in config-user.yml do not exist",
                     key, ', '.join(str(p) for p in nonexistent))
                 _ROOTPATH_WARNED.add((key, nonexistent))
-            return rootpath[key]
+            if isinstance(paths, list):
+                structure = CFG['drs'].get(project, 'default')
+                paths = {p: structure for p in paths}
+            sources: list[DataSource] = []
+            for path, structure in paths.items():
+                dir_templates = _select_drs('input_dir', project, structure)
+                file_templates = _select_drs('input_file', project, structure)
+                sources.extend(
+                    DataSource(path, d, f)
+                    for d in dir_templates for f in file_templates
+                )
+            return sources
+
     raise KeyError('default rootpath must be specified in config-user file')
-
-
-def _get_globs(variable):
-    """Compose the globs that will be used to look for files."""
-    project = variable['project']
-
-    rootpaths = _get_rootpath(project)
-
-    dirname_template = _select_drs('input_dir', project)
-    dirname_globs = _replace_tags(dirname_template, variable)
-
-    filename_template = _select_drs('input_file', project)
-    filename_globs = _replace_tags(filename_template, variable)
-
-    globs = sorted(r / d / f for r in rootpaths for d in dirname_globs
-                   for f in filename_globs)
-    return globs
-
-
-def _get_input_filelist(variable):
-    """Return the full path to input files."""
-    variable = dict(variable)
-    if 'original_short_name' in variable:
-        variable['short_name'] = variable['original_short_name']
-
-    globs = _get_globs(variable)
-    logger.debug("Looking for files matching %s", globs)
-
-    files = list(Path(file) for glob_ in globs for file in glob(str(glob_)))
-    files.sort()  # sorting makes it easier to see what was found
-
-    if 'timerange' in variable:
-        files = _select_files(files, variable['timerange'])
-
-    return files, globs
 
 
 def _get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
@@ -616,19 +628,18 @@ def find_files(
     list[LocalFile]
         The files that were found.
     """  # pylint: disable=line-too-long
-    filenames, globs = _get_input_filelist(facets)
-    drs = _select_drs('input_dir', facets['project'])
-    if isinstance(drs, list):
-        # Not sure how to handle a list of DRSs
-        drs = ''
+    facets = dict(facets)
+    if 'original_short_name' in facets:
+        facets['short_name'] = facets['original_short_name']
+
     files = []
     filter_latest = False
-    for filename in filenames:
-        file = LocalFile(filename)
-        file.facets.update(_path2facets(file, drs))
-        if file.facets.get('version') == 'latest':
-            filter_latest = True
-        files.append(file)
+    data_sources = _get_data_sources(facets['project'])  # type: ignore
+    for data_source in data_sources:
+        for file in data_source.find_files(**facets):
+            if file.facets.get('version') == 'latest':
+                filter_latest = True
+            files.append(file)
 
     if filter_latest:
         files = _filter_versions_called_latest(files)
@@ -636,8 +647,13 @@ def find_files(
     if 'version' not in facets:
         files = _select_latest_version(files)
 
+    files.sort()  # sorting makes it easier to see what was found
+
     if debug:
-        return files, globs
+        globs = []
+        for data_source in data_sources:
+            globs.extend(data_source.get_glob_patterns(**facets))
+        return files, sorted(globs)
     return files
 
 
