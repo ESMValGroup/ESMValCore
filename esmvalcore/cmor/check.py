@@ -945,7 +945,7 @@ class CMORCheck():
         calendar_aliases = {
             'all_leap': '366_day',
             'noleap': '365_day',
-            'standard': 'gregorian',
+            'gregorian': 'standard',
         }
         return calendar_aliases.get(calendar, calendar)
 
@@ -1081,6 +1081,10 @@ def _get_cmor_checker(table,
                 table, ', '.join(CMOR_TABLES)))
 
     cmor_table = CMOR_TABLES[table]
+    if table == 'CORDEX' and mip.endswith('hr'):
+        # CORDEX X-hourly tables define the mip
+        # as ending in 'h' instead of 'hr'.
+        mip = mip.replace('hr', 'h')
     var_info = cmor_table.get_variable(mip, short_name)
     if var_info is None:
         var_info = CMOR_TABLES['custom'].get_variable(mip, short_name)

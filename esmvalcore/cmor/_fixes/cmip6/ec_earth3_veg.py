@@ -1,6 +1,6 @@
 """Fixes for EC-Earth3-Veg model."""
 import numpy as np
-
+import cf_units
 from ..fix import Fix
 
 
@@ -22,6 +22,19 @@ class Siconca(Fix):
         """
         cube.data = cube.core_data() * 100.
         return cube
+
+
+class Siconc(Fix):
+    """Fixes for siconc variable."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            if cube.coords('time'):
+                time_coord = cube.coord('time')
+                time_coord.units = cf_units.Unit(time_coord.units.origin,
+                                                 'proleptic_gregorian')
+        return cubes
 
 
 class Tas(Fix):
