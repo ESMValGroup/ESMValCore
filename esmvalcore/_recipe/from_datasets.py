@@ -277,7 +277,9 @@ def datasets_to_recipe(
     datasets
         Datasets to use in the recipe.
     recipe
-        If provided, the datasets in the recipe will be replaced.
+        If provided, the datasets in the recipe will be replaced. The value
+        provided here should be a :ref:`recipe <recipe>` file that is loaded
+        using e.g. :func:`yaml.safe_load`.
 
     Examples
     --------
@@ -286,7 +288,8 @@ def datasets_to_recipe(
     Returns
     -------
     dict
-        The recipe with the datasets.
+        The recipe with the datasets. To convert the :obj:`dict` to a
+        :ref:`recipe <recipe>`, use e.g. :func:`yaml.safe_dump`.
 
     Raises
     ------
