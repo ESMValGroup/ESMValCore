@@ -15,7 +15,7 @@ import yaml
 from esmvalcore import __version__, esgf
 from esmvalcore._provenance import get_recipe_provenance
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
-from esmvalcore.cmor.table import CMOR_TABLES, _get_facets_from_cmor_table
+from esmvalcore.cmor.table import CMOR_TABLES, _update_cmor_facets
 from esmvalcore.config._config import TASKSEP, get_project_config
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
@@ -46,11 +46,11 @@ from esmvalcore.preprocessor._regrid import (
 from esmvalcore.typing import Facets
 
 from . import check
-from .datasets import (
+from .from_datasets import datasets_to_recipe
+from .to_datasets import (
     _derive_needed,
     _get_input_datasets,
     _representative_dataset,
-    update_recipe_with_datasets,
 )
 
 logger = logging.getLogger(__name__)
@@ -362,7 +362,7 @@ def _add_legacy_ancillary_datasets(dataset: Dataset, settings):
         legacy_ds.add_ancillary(**facets)
 
     for ancillary_ds in legacy_ds.ancillaries:
-        _get_facets_from_cmor_table(ancillary_ds.facets, override=True)
+        _update_cmor_facets(ancillary_ds.facets, override=True)
         if ancillary_ds.files:
             dataset.ancillaries.append(ancillary_ds)
 
@@ -1244,7 +1244,7 @@ class Recipe:
         """Write copy of recipe with filled wildcards."""
         # TODO: check dataset selection, this doesn't look right
         datasets = [ds for ds in self.datasets if ds.files]
-        recipe = update_recipe_with_datasets(self._raw_recipe, datasets)
+        recipe = datasets_to_recipe(datasets, self._raw_recipe)
         filename = self.session.run_dir / f"{self._filename.stem}_filled.yml"
         with filename.open('w', encoding='utf-8') as file:
             yaml.safe_dump(recipe, file, sort_keys=False)

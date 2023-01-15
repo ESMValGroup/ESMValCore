@@ -103,7 +103,7 @@ def variable(var, required_keys):
 def _log_data_availability_errors(dataset):
     """Check if the required input data is available."""
     input_files = dataset.files
-    patterns = dataset._files_debug
+    patterns = dataset._file_globs
     if not input_files:
         logger.error("No input files found for %s", dataset)
         if patterns:

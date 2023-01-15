@@ -133,8 +133,11 @@ def patched_tas_derivation(monkeypatch):
         ]
         return required
 
-    monkeypatch.setattr(esmvalcore._recipe.datasets, 'get_required',
-                        get_required)
+    monkeypatch.setattr(
+        esmvalcore._recipe.to_datasets,
+        'get_required',
+        get_required,
+    )
 
 
 DEFAULT_DOCUMENTATION = dedent("""
@@ -1258,7 +1261,7 @@ def test_alias_generation(tmp_path, patched_datafinder, session):
         diagnostics:
           diagnostic_name:
             variables:
-              ta:
+              pr:
                 project: CMIP5
                 mip: Amon
                 exp: historical
@@ -1268,26 +1271,37 @@ def test_alias_generation(tmp_path, patched_datafinder, session):
                 type: reanaly
                 tier: 2
                 version: latest
+                domain: EUR-11
+                rcm_version: 1
                 additional_datasets:
                   - {dataset: GFDL-CM3,  ensemble: r1i1p1}
                   - {dataset: EC-EARTH,  ensemble: r1i1p1}
                   - {dataset: EC-EARTH,  ensemble: r2i1p1}
                   - {dataset: EC-EARTH,  ensemble: r3i1p1, alias: my_alias}
+                  - {dataset: FGOALS-g3, sub_experiment: s1960, ensemble: r1}
+                  - {dataset: FGOALS-g3, sub_experiment: s1961, ensemble: r1}
                   - {project: OBS, dataset: ERA-Interim,  version: 1}
                   - {project: OBS, dataset: ERA-Interim,  version: 2}
                   - {project: CMIP6, activity: CMP, dataset: GF3, ensemble: r1, institute: fake}
                   - {project: CMIP6, activity: CMP, dataset: GF2, ensemble: r1, institute: fake}
                   - {project: CMIP6, activity: HRMP, dataset: EC, ensemble: r1, institute: fake}
                   - {project: CMIP6, activity: HRMP, dataset: HA, ensemble: r1, institute: fake}
+                  - {project: CORDEX, driver: ICHEC-EC-EARTH, dataset: SMHI-RCA4, ensemble: r1, mip: mon}
+                  - {project: CORDEX, driver: MIROC-MIROC5, dataset: SMHI-RCA4, ensemble: r1, mip: mon}
             scripts: null
         """)  # noqa:
 
     recipe = get_recipe(tmp_path, content, session)
-    assert len(recipe.diagnostics) == 1
+    assert len(recipe.datasets) == 14
     for dataset in recipe.datasets:
         if dataset['project'] == 'CMIP5':
             if dataset['dataset'] == 'GFDL-CM3':
                 assert dataset['alias'] == 'CMIP5_GFDL-CM3'
+            elif dataset['dataset'] == 'FGOALS-g3':
+                if dataset['sub_experiment'] == 's1960':
+                    assert dataset['alias'] == 'CMIP5_FGOALS-g3_s1960'
+                else:
+                    assert dataset['alias'] == 'CMIP5_FGOALS-g3_s1961'
             else:
                 if dataset['ensemble'] == 'r1i1p1':
                     assert dataset['alias'] == 'CMIP5_EC-EARTH_r1i1p1'
@@ -1304,6 +1318,11 @@ def test_alias_generation(tmp_path, patched_datafinder, session):
                 assert dataset['alias'] == 'CMIP6_HRMP_EC'
             else:
                 assert dataset['alias'] == 'CMIP6_HRMP_HA'
+        elif dataset['project'] == 'CORDEX':
+            if dataset['driver'] == 'ICHEC-EC-EARTH':
+                assert dataset['alias'] == 'CORDEX_ICHEC-EC-EARTH'
+            else:
+                assert dataset['alias'] == 'CORDEX_MIROC-MIROC5'
         else:
             if dataset['version'] == 1:
                 assert dataset['alias'] == 'OBS_1'

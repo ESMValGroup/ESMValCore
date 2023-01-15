@@ -121,7 +121,7 @@ def _search_index_nodes(facets):
                 ignore_facet_check=True,
             )
             FIRST_ONLINE_INDEX_NODE = url
-            return results
+            return list(results)
         except (
             requests.exceptions.ConnectionError,
             requests.exceptions.HTTPError,
@@ -175,8 +175,8 @@ def select_by_time(files, timerange):
             # just select everything.
             selection.append(file)
         else:
-            start_date, start = _truncate_dates(start_date, start)
-            end_date, end = _truncate_dates(end_date, end)
+            start_date, end = _truncate_dates(start_date, end)
+            end_date, start = _truncate_dates(end_date, start)
             if start <= end_date and end >= start_date:
                 selection.append(file)
 

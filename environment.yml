@@ -30,6 +30,7 @@ dependencies:
   - pip!=21.3
   - prov
   - psutil
+  - py-cordex
   - pybtex
   - python>=3.8
   - python-stratify
@@ -40,6 +41,8 @@ dependencies:
   - yamale
   # Python packages needed for building docs
   - autodocsumm>=0.2.2
+  - ipython
+  - nbsphinx
   - sphinx>=5
   - sphinx_rtd_theme
   # Python packages needed for testing

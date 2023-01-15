@@ -1,4 +1,4 @@
-"""Test add_fx_variables.
+"""Test add_ancillary_variables.
 
 Integration tests for the
 :func:`esmvalcore.preprocessor._ancillary_vars` module.
@@ -13,8 +13,8 @@ import pytest
 from esmvalcore.preprocessor._ancillary_vars import (
     _is_fx_broadcastable,
     add_ancillary_variable,
+    add_ancillary_variables,
     add_cell_measure,
-    add_fx_variables,
     remove_fx_variables,
 )
 
@@ -132,7 +132,7 @@ class Test:
         self.fx_area.units = 'm2'
         cube = iris.cube.Cube(self.new_cube_data,
                               dim_coords_and_dims=self.coords_spec)
-        cube = add_fx_variables(cube, [self.fx_area])
+        cube = add_ancillary_variables(cube, [self.fx_area])
         assert cube.cell_measure(self.fx_area.standard_name) is not None
 
     def test_add_cell_measure_volume(self):
@@ -145,7 +145,7 @@ class Test:
                                   (self.depth, 0),
                                   (self.lats, 1),
                                   (self.lons, 2)])
-        cube = add_fx_variables(cube, [self.fx_volume])
+        cube = add_ancillary_variables(cube, [self.fx_volume])
         assert cube.cell_measure(self.fx_volume.standard_name) is not None
 
     def test_no_cell_measure(self):
@@ -155,7 +155,7 @@ class Test:
                                   (self.depth, 0),
                                   (self.lats, 1),
                                   (self.lons, 2)])
-        cube = add_fx_variables(cube, [])
+        cube = add_ancillary_variables(cube, [])
         assert cube.cell_measures() == []
 
     def test_add_ancillary_vars(self):
@@ -165,7 +165,7 @@ class Test:
         self.fx_area.units = '%'
         cube = iris.cube.Cube(self.new_cube_data,
                               dim_coords_and_dims=self.coords_spec)
-        cube = add_fx_variables(cube, [self.fx_area])
+        cube = add_ancillary_variables(cube, [self.fx_area])
         assert cube.ancillary_variable(self.fx_area.standard_name) is not None
 
     def test_wrong_shape(self):
@@ -188,8 +188,8 @@ class Test:
                                  (self.lats, 2),
                                  (self.lons, 3)])
         cube.var_name = 'thetao'
-        cube = add_fx_variables(cube, [volume_cube])
-        assert cube.cell_measures() == []
+        with pytest.raises(iris.exceptions.CannotAddError):
+            add_ancillary_variables(cube, [volume_cube])
 
     def test_remove_fx_vars(self):
         """Test fx_variables are removed from cube."""

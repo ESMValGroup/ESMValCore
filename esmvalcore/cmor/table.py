@@ -38,9 +38,8 @@ _CMOR_KEYS = (
 )
 
 
-def _get_facets_from_cmor_table(facets, override=False):
-    """Add information from CMOR tables to facets."""
-    # Copy the following keys from CMOR table
+def _update_cmor_facets(facets, override=False):
+    """Update `facets` with information from CMOR table."""
     project = facets['project']
     mip = facets['mip']
     short_name = facets['short_name']

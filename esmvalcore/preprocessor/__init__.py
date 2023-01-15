@@ -12,7 +12,11 @@ from .._provenance import TrackedFile
 from .._task import BaseTask
 from ..cmor.check import cmor_check_data, cmor_check_metadata
 from ..cmor.fix import fix_data, fix_file, fix_metadata
-from ._ancillary_vars import add_fx_variables, remove_fx_variables
+from ._ancillary_vars import (
+    add_ancillary_variables,
+    add_fx_variables,
+    remove_fx_variables,
+)
 from ._area import (
     area_statistics,
     extract_named_regions,
@@ -103,6 +107,8 @@ __all__ = [
     # Data reformatting/CMORization
     'fix_data',
     'cmor_check_data',
+    # Attach ancillary variables and cell measures
+    'add_ancillary_variables',
     # Load fx_variables in cube
     'add_fx_variables',
     # Time extraction (as defined in the preprocessor section)

@@ -31,6 +31,17 @@ def test_repr():
     """).strip()
 
 
+def test_repr_session(mocker):
+    ds = Dataset(short_name='tas', dataset='dataset1')
+    ds.session = mocker.Mock()
+    ds.session.session_name = 'test-session'
+    assert repr(ds) == textwrap.dedent("""
+        Dataset:
+        {'dataset': 'dataset1', 'short_name': 'tas'}
+        session: 'test-session'
+    """).strip()
+
+
 def test_repr_ancillary():
     ds = Dataset(dataset='dataset1', short_name='tas')
     ds.add_ancillary(short_name='areacella')
@@ -41,6 +52,37 @@ def test_repr_ancillary():
         ancillaries:
           {'dataset': 'dataset1', 'short_name': 'areacella'}
         """).strip()
+
+
+def test_short_summary():
+    ds = Dataset(
+        project='CMIP6',
+        dataset='dataset1',
+        short_name='tos',
+        mip='Omon',
+    )
+    ds.add_ancillary(short_name='areacello', mip='Ofx')
+    ds.add_ancillary(short_name='volcello')
+    expected = ("Dataset: tos, Omon, CMIP6, dataset1, "
+                "ancillaries: areacello, Ofx; volcello")
+    assert ds.summary(shorten=True) == expected
+
+
+def test_long_summary():
+    ds = Dataset(dataset='dataset1', short_name='tas')
+    assert ds.summary(shorten=False) == repr(ds)
+
+
+def test_session_setter():
+    ds = Dataset(short_name='tas')
+    ds.add_ancillary(short_name='areacella')
+    assert ds._session is None
+    assert ds.ancillaries[0]._session is None
+
+    ds.session
+
+    assert isinstance(ds.session, esmvalcore.config.Session)
+    assert ds.session == ds.ancillaries[0].session
 
 
 @pytest.mark.parametrize(
@@ -404,6 +446,8 @@ def test_from_recipe_with_ancillary(session, tmp_path):
 @pytest.mark.parametrize('pattern,result', (
     ['a', False],
     ['*', True],
+    ['r?i1p1', True],
+    ['r[1-3]i1p1*', True],
 ))
 def test_isglob(pattern, result):
     assert esmvalcore.dataset._isglob(pattern) == result
@@ -572,7 +616,7 @@ def test_from_files_with_ancillary(session, mocker):
     assert datasets == [expected]
 
 
-def test_from_files_with_double_wildcards(mocker, session):
+def test_from_files_with_globs(monkeypatch, session):
     """Test `from_files` with wildcards in dataset and ancillary."""
     rootpath = Path('/path/to/data')
     file = esmvalcore.local.LocalFile(
@@ -638,20 +682,28 @@ def test_from_files_with_double_wildcards(mocker, session):
         project='CMIP6',
         short_name='tas',
     )
-    dataset.session = session
     dataset.add_ancillary(
         short_name='areacella',
         mip='fx',
         activity='*',
         exp='*',
     )
+    dataset.facets['timerange'] = '*'
+    dataset.session = session
+    print(dataset)
 
-    mocker.patch.object(
-        Dataset,
-        'files',
-        new_callable=mocker.PropertyMock,
-        side_effect=[[file], [afile]],
-    )
+    def augment_facets(self):
+        pass
+
+    def _find_files(self):
+        if self.facets['short_name'] == 'tas':
+            self.files = [file]
+        if self.facets['short_name'] == 'areacella':
+            self.files = [afile]
+
+    monkeypatch.setattr(Dataset, 'augment_facets', augment_facets)
+    monkeypatch.setattr(Dataset, '_find_files', _find_files)
+
     datasets = list(dataset.from_files())
 
     assert all(ds.session == session for ds in datasets)
@@ -669,13 +721,15 @@ def test_from_files_with_double_wildcards(mocker, session):
         project='CMIP6',
         short_name='tas',
     )
-    expected.session = session
     expected.add_ancillary(
         short_name='areacella',
         mip='fx',
         activity='GMMIP',
         exp='hist-resIPO',
     )
+    expected.facets['timerange'] = '185001/201412'
+    expected.session = session
+
     assert datasets == [expected]
 
 
@@ -748,6 +802,15 @@ def test_from_recipe_with_glob(tmp_path, session, mocker):
     assert datasets == expected
 
 
+def test_from_ranges():
+    dataset = Dataset(ensemble='r(1:2)i1p1f1')
+    expected = [
+        Dataset(ensemble='r1i1p1f1'),
+        Dataset(ensemble='r2i1p1f1'),
+    ]
+    assert dataset.from_ranges() == expected
+
+
 def test_expand_ensemble():
     dataset = Dataset(ensemble='r(1:2)i(2:3)p(3:4)')
 
@@ -785,6 +848,14 @@ def test_expand_subexperiment():
     assert expanded == subexperiments
 
 
+def test_expand_ensemble_list_ok():
+    dataset = Dataset(ensemble=['r0i0p0', 'r1i1p1'])
+
+    expected = [['r0i0p0', 'r1i1p1']]
+
+    assert dataset._expand_range('ensemble') == expected
+
+
 def test_expand_ensemble_nolist():
     dataset = Dataset(
         dataset='XYZ',
@@ -795,71 +866,68 @@ def test_expand_ensemble_nolist():
         dataset._expand_range('ensemble')
 
 
-def create_esgf_search_results():
+def create_esgf_file(timerange, version):
     """Prepare some fake ESGF search results."""
-    file0 = ESGFFile([
-        pyesgf.search.results.FileResult(
-            json={
-                'dataset_id':
-                'CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.historical.r1i1p1f1'
-                '.Amon.tas.gr.v20200310|esgf-data1.llnl.gov',
-                'dataset_id_template_': [
-                    '%(mip_era)s.%(activity_drs)s.%(institution_id)s.' +
-                    '%(source_id)s.%(experiment_id)s.%(member_id)s.' +
-                    '%(table_id)s.%(variable_id)s.%(grid_label)s'
-                ],
-                'project': ['CMIP6'],
-                'size':
-                4745571,
-                'source_id': ['EC-Earth3'],
-                'title':
-                'tas_Amon_EC-Earth3_historical_r1i1p1f1_gr_185001-185012.nc',
-                'url': [
-                    'http://esgf-data1.llnl.gov/thredds/fileServer/css03_data'
-                    '/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/historical'
-                    '/r1i1p1f1/Amon/tas/gr/v20200310/tas_Amon_EC-Earth3'
-                    '_historical_r1i1p1f1_gr_185001-185012.nc'
-                    '|application/netcdf|HTTPServer',
-                ],
-            },
-            context=None,
-        )
-    ])
-    file1 = ESGFFile([
-        pyesgf.search.results.FileResult(
-            {
-                'dataset_id':
-                'CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.historical.r1i1p1f1'
-                '.Amon.tas.gr.v20200310|esgf-data1.llnl.gov',
-                'dataset_id_template_': [
-                    '%(mip_era)s.%(activity_drs)s.%(institution_id)s.' +
-                    '%(source_id)s.%(experiment_id)s.%(member_id)s.' +
-                    '%(table_id)s.%(variable_id)s.%(grid_label)s'
-                ],
-                'project': ['CMIP6'],
-                'size':
-                4740192,
-                'source_id': ['EC-Earth3'],
-                'title':
-                'tas_Amon_EC-Earth3_historical_r1i1p1f1_gr_185101-185112.nc',
-                'url': [
-                    'http://esgf-data1.llnl.gov/thredds/fileServer/css03_data'
-                    '/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/historical'
-                    '/r1i1p1f1/Amon/tas/gr/v20200310/tas_Amon_EC-Earth3'
-                    '_historical_r1i1p1f1_gr_185101-185112.nc'
-                    '|application/netcdf|HTTPServer',
-                ],
-            },
-            context=None,
-        )
-    ])
+    json = {
+        'dataset_id':
+        'CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.historical'
+        f'.r1i1p1f1.Amon.tas.gr.{version}|esgf-data1.llnl.gov',
+        'dataset_id_template_': [
+            '%(mip_era)s.%(activity_drs)s.%(institution_id)s.'
+            '%(source_id)s.%(experiment_id)s.%(member_id)s.'
+            '%(table_id)s.%(variable_id)s.%(grid_label)s'
+        ],
+        'project': ['CMIP6'],
+        'size':
+        4745571,
+        'source_id': ['EC-Earth3'],
+        'title':
+        f'tas_Amon_EC-Earth3_historical_r1i1p1f1_gr_{timerange}.nc',
+        'url': [
+            'http://esgf-data1.llnl.gov/thredds/fileServer/css03_data'
+            '/CMIP6/CMIP/EC-Earth-Consortium/EC-Earth3/historical'
+            f'/r1i1p1f1/Amon/tas/gr/{version}/tas_Amon_EC-Earth3'
+            f'_historical_r1i1p1f1_gr_{timerange}.nc'
+            '|application/netcdf|HTTPServer',
+        ],
+    }
 
-    return [file0, file1]
+    results = [pyesgf.search.results.FileResult(json=json, context=None)]
+
+    return ESGFFile(results)
+
+
+@pytest.fixture
+def dataset():
+    dataset = Dataset(
+        project='CMIP6',
+        mip='Amon',
+        frequency='mon',
+        short_name='tas',
+        dataset='EC.-Earth3',
+        exp='historical',
+        ensemble='r1i1p1f1',
+        grid='gr',
+        timerange='1850/1851',
+        alias='CMIP6_EC-Eeath3_tas',
+    )
+    dataset.session = {
+        'always_search_esgf': False,
+        'download_dir': Path('/download_dir'),
+        'offline': False,
+        'rootpath': None,
+        'drs': {},
+    }
+    return dataset
 
 
 @pytest.mark.parametrize("local_availability", ['all', 'partial', 'none'])
-def test_find_files(mocker, local_availability):
-    esgf_files = create_esgf_search_results()
+def test_find_files(mocker, dataset, local_availability):
+    """Test `find_files`."""
+    esgf_files = [
+        create_esgf_file(version='v1', timerange='185001-185012'),
+        create_esgf_file(version='v1', timerange='185101-185112'),
+    ]
 
     local_dir = Path('/local_dir')
 
@@ -872,52 +940,122 @@ def test_find_files(mocker, local_availability):
     local_files = local_file_options[local_availability]
 
     mocker.patch.object(
+        esmvalcore.dataset.Dataset,
+        'augment_facets',
+        autospec=True,
+    )
+
+    mocker.patch.object(
         esmvalcore.dataset.local,
         'find_files',
         autospec=True,
-        return_value=(list(local_files), ([], [])),
+        return_value=(list(local_files), []),
     )
     mocker.patch.object(
         esmvalcore.dataset.esgf,
         'find_files',
         autospec=True,
-        return_value=esgf_files,
+        return_value=list(esgf_files),
     )
-
-    variable = {
-        'project': 'CMIP6',
-        'mip': 'Amon',
-        'frequency': 'mon',
-        'short_name': 'tas',
-        'dataset': 'EC.-Earth3',
-        'exp': 'historical',
-        'ensemble': 'r1i1p1f1',
-        'grid': 'gr',
-        'timerange': '1850/1851',
-        'alias': 'CMIP6_EC-Eeath3_tas',
-    }
-    dataset = Dataset(**variable)
-    dataset.session = {
-        'offline': False,
-        'download_dir': Path('/download_dir'),
-        'rootpath': None,
-        'drs': {},
-        'download_latest_datasets': True,
-    }
-    dataset._find_files()
-    input_files = dataset.files
 
     expected = {
         'all': local_files,
         'partial': local_files + esgf_files[:1],
         'none': esgf_files,
     }
-    assert input_files == expected[local_availability]
+    assert dataset.files == expected[local_availability]
+
+
+def test_find_files_wildcard_timerange(mocker, dataset):
+    """Test that `find_files` works with a '*' in the timerange."""
+    dataset.facets['timerange'] = '*'
+
+    esgf_files = [
+        create_esgf_file(version='v1', timerange='185001-185012'),
+        create_esgf_file(version='v1', timerange='185101-185112'),
+    ]
+    local_files = []
+
+    mocker.patch.object(
+        esmvalcore.dataset.Dataset,
+        'augment_facets',
+        autospec=True,
+    )
+
+    mocker.patch.object(
+        esmvalcore.dataset.local,
+        'find_files',
+        autospec=True,
+        return_value=(local_files, []),
+    )
+    mocker.patch.object(
+        esmvalcore.dataset.esgf,
+        'find_files',
+        autospec=True,
+        return_value=list(esgf_files),
+    )
+
+    assert dataset.files == esgf_files
+    assert dataset.facets['timerange'] == '185001/185112'
+
+
+def test_find_files_outdated_local(mocker, dataset):
+    """Test newer files from ESGF are found when local data is incomplete."""
+    esgf_files = [
+        create_esgf_file(version='v2', timerange='185001-185012'),
+        create_esgf_file(version='v2', timerange='185101-185112'),
+    ]
+
+    local_dir = Path('/local_dir')
+    local_files = [
+        create_esgf_file(version='v1',
+                         timerange='185001-185012').local_file(local_dir),
+    ]
+
+    mocker.patch.object(
+        esmvalcore.dataset.Dataset,
+        'augment_facets',
+        autospec=True,
+    )
+
+    mocker.patch.object(
+        esmvalcore.dataset.local,
+        'find_files',
+        autospec=True,
+        return_value=(local_files, []),
+    )
+    mocker.patch.object(
+        esmvalcore.dataset.esgf,
+        'find_files',
+        autospec=True,
+        return_value=list(esgf_files),
+    )
+
+    assert dataset.files == esgf_files
+
+
+def test_set_version():
+    dataset = Dataset(short_name='tas')
+    dataset.add_ancillary(short_name='areacella')
+    file_v1 = esmvalcore.local.LocalFile('/path/to/v1/tas.nc')
+    file_v1.facets['version'] = 'v1'
+    file_v2 = esmvalcore.local.LocalFile('/path/to/v2/tas.nc')
+    file_v2.facets['version'] = 'v2'
+    afile = esmvalcore.local.LocalFile('/path/to/v3/areacella.nc')
+    afile.facets['version'] = 'v3'
+    dataset.files = [file_v2, file_v1]
+    dataset.ancillaries[0].files = [afile]
+    dataset.set_version()
+    assert dataset.facets['version'] == ['v1', 'v2']
+    assert dataset.ancillaries[0].facets['version'] == 'v3'
 
 
 @pytest.mark.parametrize('timerange', ['*', '185001/*', '*/185112'])
 def test_update_timerange_from_esgf(mocker, timerange):
-    esgf_files = create_esgf_search_results()
+    esgf_files = [
+        create_esgf_file(version='v20200310', timerange='185001-185012'),
+        create_esgf_file(version='v20200310', timerange='185101-185112'),
+    ]
     variable = {
         'project': 'CMIP6',
         'mip': 'Amon',
@@ -929,9 +1067,13 @@ def test_update_timerange_from_esgf(mocker, timerange):
         'grid': 'gr',
         'timerange': timerange,
     }
-    mocker.patch.object(Dataset, 'find_files', create_autospec=True)
+    mocker.patch.object(
+        Dataset,
+        'files',
+        new_callable=mocker.PropertyMock,
+        return_value=esgf_files,
+    )
     dataset = Dataset(**variable)
-    dataset.files = esgf_files
     dataset._update_timerange()
 
     assert dataset['timerange'] == '185001/185112'
@@ -978,9 +1120,16 @@ def test_update_timerange_no_files(session, offline):
         'timerange': '*/2000',
     }
     dataset = Dataset(**variable)
-    dataset.session = session
-    msg = r"Missing data for Dataset: CMIP6, Amon, tas, HadGEM3-GC31-LL.*"
+    dataset.files = []
+    msg = r"Missing data for Dataset: tas, Amon, CMIP6, HadGEM3-GC31-LL.*"
     with pytest.raises(InputFilesNotFound, match=msg):
+        dataset._update_timerange()
+
+
+def test_update_timerange_typeerror():
+    dataset = Dataset(timerange=42)
+    msg = r"timerange should be a string, got '42'"
+    with pytest.raises(TypeError, match=msg):
         dataset._update_timerange()
 
 
@@ -1030,7 +1179,7 @@ def test_load(mocker, session):
         'clip_timerange',
         'fix_data',
         'cmor_check_data',
-        'add_fx_variables',
+        'add_ancillary_variables',
     ]
     assert order == load_order
 
@@ -1087,11 +1236,20 @@ def test_load(mocker, session):
             'frequency': 'yr',
         },
         'concatenate': {},
-        'add_fx_variables': {
-            'fx_variables': [],
+        'add_ancillary_variables': {
+            'ancillary_cubes': [],
         },
     }
 
     assert args == load_args
 
     _get_output_file.assert_called_with(dataset.facets, session.preproc_dir)
+
+
+def test_load_fail(session):
+    dataset = Dataset()
+    dataset.session = session
+    dataset.session['offline'] = False
+    dataset.files = []
+    with pytest.raises(InputFilesNotFound):
+        dataset.load()

@@ -91,7 +91,7 @@ def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
     }
     dataset = Dataset(**facets)
     dataset.files = []
-    dataset._files_debug = [
+    dataset._file_globs = [
         os.path.join(d, f) for d in dirnames for f in filenames
     ]
     error_first = ('No input files found for %s', dataset)

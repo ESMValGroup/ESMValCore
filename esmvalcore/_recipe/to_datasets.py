@@ -4,12 +4,11 @@ import logging
 from copy import deepcopy
 from itertools import groupby
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Iterable
 
 import yaml
-from nested_lookup import nested_delete
 
-from esmvalcore.cmor.table import _get_facets_from_cmor_table
+from esmvalcore.cmor.table import _update_cmor_facets
 from esmvalcore.config import Session
 from esmvalcore.dataset import Dataset, _isglob
 from esmvalcore.exceptions import RecipeError
@@ -24,8 +23,10 @@ logger = logging.getLogger(__name__)
 _ALIAS_INFO_KEYS = (
     'project',
     'activity',
+    'driver',
     'dataset',
     'exp',
+    'sub_experiment',
     'ensemble',
     'version',
 )
@@ -316,7 +317,7 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
     for input_facets in required_vars:
         input_dataset = dataset.copy(**input_facets)
         # idea: specify facets in list of dicts that is value of 'derive'?
-        _get_facets_from_cmor_table(input_dataset.facets, override=True)
+        _update_cmor_facets(input_dataset.facets, override=True)
         input_dataset.augment_facets()
         if input_facets.get('optional') and not input_dataset.files:
             logger.info(
@@ -377,100 +378,3 @@ def _from_representative_files(dataset: Dataset) -> list[Dataset]:
         raise RecipeError("\n".join(errors))
 
     return result
-
-
-def datasets_to_recipe(datasets: Iterable[Dataset]) -> dict[str, Any]:
-    diagnostics: dict[str, dict[str, Any]] = {}
-
-    for dataset in datasets:
-        if 'diagnostic' not in dataset.facets:
-            raise RecipeError(
-                f"'diagnostic' facet missing from dataset {dataset},"
-                "unable to convert to recipe.")
-        diagnostic_name: str = dataset.facets['diagnostic']  # type: ignore
-        if diagnostic_name not in diagnostics:
-            diagnostics[diagnostic_name] = {'variables': {}}
-        variables = diagnostics[diagnostic_name]['variables']
-        if 'variable_group' in dataset.facets:
-            variable_group = dataset.facets['variable_group']
-        else:
-            variable_group = dataset.facets['short_name']
-        if variable_group not in variables:
-            variables[variable_group] = {'additional_datasets': []}
-        facets: dict[str, Any] = dataset.minimal_facets
-        if facets['short_name'] == variable_group:
-            facets.pop('short_name')
-        if dataset.ancillaries:
-            facets['ancillary_variables'] = []
-        for ancillary in dataset.ancillaries:
-            anc_facets = {}
-            for key, value in ancillary.minimal_facets.items():
-                if facets.get(key) != value:
-                    anc_facets[key] = value
-            facets['ancillary_variables'].append(anc_facets)
-        variables[variable_group]['additional_datasets'].append(facets)
-
-    # Move identical facets from dataset to variable
-    for diagnostic in diagnostics.values():
-        diagnostic['variables'] = {
-            variable_group: group_identical_facets(variable)
-            for variable_group, variable in diagnostic['variables'].items()
-        }
-
-    # TODO: make recipe look nicer
-    # - deduplicate by moving datasets up from variable to diagnostic to recipe
-
-    recipe = {'diagnostics': diagnostics}
-    return recipe
-
-
-def group_identical_facets(variable: Mapping[str, Any]) -> dict[str, Any]:
-    """Move identical facets from datasets to variable."""
-    result = dict(variable)
-    dataset_facets = result.pop('additional_datasets')
-    variable_keys = [
-        k for k, v in dataset_facets[0].items()
-        if k != 'dataset'  # keep at least one key in every dataset
-        and all((k, v) in d.items() for d in dataset_facets[1:])
-    ]
-    result.update(
-        (k, v) for k, v in dataset_facets[0].items() if k in variable_keys)
-    result['additional_datasets'] = [{
-        k: v
-        for k, v in d.items() if k not in variable_keys
-    } for d in dataset_facets]
-    return result
-
-
-def update_recipe_with_datasets(
-    recipe: dict[str, Any],
-    datasets: Iterable[Dataset],
-) -> dict[str, Any]:
-    """Replace the datasets in an existing recipe with `datasets`."""
-    recipe = deepcopy(recipe)
-
-    # Remove dataset sections from recipe
-    recipe.pop('datasets', None)
-    nested_delete(recipe, 'additional_datasets', in_place=True)
-
-    # Update datasets section
-    dataset_recipe = datasets_to_recipe(datasets)
-    if 'datasets' in dataset_recipe:
-        recipe['datasets'] = dataset_recipe['datasets']
-
-    for diag, dataset_diagnostic in dataset_recipe['diagnostics'].items():
-        diagnostic = recipe['diagnostics'][diag]
-        # Update diagnostic level datasets
-        if 'additional_datasets' in dataset_diagnostic:
-            additional_datasets = dataset_diagnostic['additional_datasets']
-            diagnostic['additional_datasets'] = additional_datasets
-        # Update variable level datasets
-        if 'variables' in dataset_diagnostic:
-            diagnostic['variables'] = dataset_diagnostic['variables']
-
-    # Format description nicer
-    doc = recipe['documentation']
-    if 'description' in doc:
-        doc['description'] = doc['description'].strip()
-
-    return recipe

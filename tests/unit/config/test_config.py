@@ -152,6 +152,7 @@ def test_load_default_config(monkeypatch, default_config):
     cfg = CFG.start_session('recipe_example')
 
     default_cfg = {
+        'always_search_esgf': False,
         'auxiliary_data_dir': Path.home() / 'auxiliary_data',
         'check_level': CheckLevels.DEFAULT,
         'compress_netcdf': False,
@@ -159,7 +160,6 @@ def test_load_default_config(monkeypatch, default_config):
         'config_file': CONFIG_USER_FILE,
         'diagnostics': None,
         'download_dir': Path.home() / 'climate_data',
-        'download_latest_datasets': False,
         'drs': {
             'CMIP3': 'ESGF',
             'CMIP5': 'ESGF',
