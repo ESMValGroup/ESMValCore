@@ -9,7 +9,7 @@ from typing import Dict, Optional
 
 import yaml
 
-from esmvalcore._recipe import Recipe as RecipeEngine
+from esmvalcore._recipe.recipe import Recipe as RecipeEngine
 from esmvalcore.config import CFG, Session
 
 from ._logging import log_to_dir

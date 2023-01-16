@@ -9,10 +9,10 @@ from shutil import which
 import isodate
 import yamale
 
-from .exceptions import InputFilesNotFound, RecipeError
-from .local import _get_start_end_year
-from .preprocessor import TIME_PREPROCESSORS, PreprocessingTask
-from .preprocessor._multimodel import STATISTIC_MAPPING
+from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore.local import _get_start_end_year, _parse_period
+from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
+from esmvalcore.preprocessor._multimodel import STATISTIC_MAPPING
 
 logger = logging.getLogger(__name__)
 
@@ -141,18 +141,20 @@ def data_availability(input_files, var, patterns, log=True):
 
     if not input_files:
         raise InputFilesNotFound(
-            f"Missing data for {var['alias']}: {var['short_name']}")
+            f"Missing data for {var.get('alias', 'dataset')}: "
+            f"{var['short_name']}")
 
-    if var['frequency'] == 'fx':
-        # check time availability only for non-fx variables
+    if 'timerange' not in var:
         return
-    start_year = var['start_year']
-    end_year = var['end_year']
+
+    start_date, end_date = _parse_period(var['timerange'])
+    start_year = int(start_date[0:4])
+    end_year = int(end_date[0:4])
     required_years = set(range(start_year, end_year + 1, 1))
     available_years = set()
 
-    for filename in input_files:
-        start, end = _get_start_end_year(filename)
+    for file in input_files:
+        start, end = _get_start_end_year(file.name)
         available_years.update(range(start, end + 1))
 
     missing_years = required_years - available_years
@@ -246,8 +248,7 @@ def _verify_keep_input_datasets(keep_input_datasets):
     if not isinstance(keep_input_datasets, bool):
         raise RecipeError(
             "Invalid value encountered for `keep_input_datasets`."
-            f"Must be defined as a boolean. Got {keep_input_datasets}."
-        )
+            f"Must be defined as a boolean. Got {keep_input_datasets}.")
 
 
 def _verify_arguments(given, expected):
