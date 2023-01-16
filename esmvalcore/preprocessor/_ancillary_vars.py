@@ -2,6 +2,7 @@
 
 import logging
 from pathlib import Path
+from typing import Iterable
 
 import dask.array as da
 import iris
@@ -156,6 +157,7 @@ def add_fx_variables(cube, fx_variables, check_level):
 
     if not fx_variables:
         return cube
+    fx_cubes = []
     for fx_info in fx_variables.values():
         if not fx_info:
             continue
@@ -166,16 +168,41 @@ def add_fx_variables(cube, fx_variables, check_level):
         if fx_cube is None:
             continue
 
-        measure_name = {
-            'areacella': 'area',
-            'areacello': 'area',
-            'volcello': 'volume'
-        }
+        fx_cubes.append(fx_cube)
 
-        if fx_cube.var_name in measure_name:
-            add_cell_measure(cube, fx_cube, measure_name[fx_cube.var_name])
+    add_ancillary_variables(cube, fx_cubes)
+    return cube
+
+
+def add_ancillary_variables(
+    cube: iris.cube.Cube,
+    ancillary_cubes: Iterable[iris.cube.Cube],
+) -> iris.cube.Cube:
+    """Add ancillary variables and/or cell measures.
+
+    Parameters
+    ----------
+    cube:
+        Cube to add to.
+    ancillary_cubes:
+        Iterable of cubes containing the ancillary variables.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Cube with added ancillary variables and/or cell measures.
+    """
+    measure_names = {
+        'areacella': 'area',
+        'areacello': 'area',
+        'volcello': 'volume'
+    }
+    for ancillary_cube in ancillary_cubes:
+        if ancillary_cube.var_name in measure_names:
+            measure_name = measure_names[ancillary_cube.var_name]
+            add_cell_measure(cube, ancillary_cube, measure_name)
         else:
-            add_ancillary_variable(cube, fx_cube)
+            add_ancillary_variable(cube, ancillary_cube)
     return cube
 
 

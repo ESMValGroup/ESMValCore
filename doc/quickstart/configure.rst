@@ -62,6 +62,11 @@ omitted in the file.
   # on a computer without an internet connection.
   offline: true
 
+  # Search ESGF for files even when files are available locally --- true/[false]
+  # This option is useful to make sure you have the latest version of all files.
+  # Remember to set ``offline: false`` if this option is set to ``true``.
+  always_search_esgf: false
+
   # Auxiliary data directory
   # Used by some recipes to look for additional datasets.
   auxiliary_data_dir: ~/auxiliary_data
