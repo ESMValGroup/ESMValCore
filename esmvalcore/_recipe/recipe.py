@@ -13,32 +13,30 @@ import yaml
 from nested_lookup import get_all_keys, nested_delete, nested_lookup
 from netCDF4 import Dataset
 
-from . import __version__
-from . import _recipe_checks as check
-from . import esgf
-from ._provenance import TrackedFile, get_recipe_provenance
-from ._task import DiagnosticTask, ResumeTask, TaskSet
-from .cmor.check import CheckLevels
-from .cmor.table import CMOR_TABLES
-from .config._config import (
+from esmvalcore import __version__, esgf
+from esmvalcore._provenance import TrackedFile, get_recipe_provenance
+from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
+from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.cmor.table import _CMOR_KEYS, CMOR_TABLES, _update_cmor_facets
+from esmvalcore.config._config import (
     get_activity,
     get_extra_facets,
     get_institutes,
     get_project_config,
 )
-from .config._diagnostics import TAGS
-from .exceptions import InputFilesNotFound, RecipeError
-from .local import _dates_to_timerange as dates_to_timerange
-from .local import _get_multiproduct_filename as get_multiproduct_filename
-from .local import _get_output_file as get_output_file
-from .local import _get_start_end_date as get_start_end_date
-from .local import (
+from esmvalcore.config._diagnostics import TAGS
+from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore.local import _dates_to_timerange as dates_to_timerange
+from esmvalcore.local import _get_multiproduct_filename
+from esmvalcore.local import _get_output_file as get_output_file
+from esmvalcore.local import _get_start_end_date as get_start_end_date
+from esmvalcore.local import (
     _get_timerange_from_years,
     _parse_period,
     _truncate_dates,
     find_files,
 )
-from .preprocessor import (
+from esmvalcore.preprocessor import (
     DEFAULT_ORDER,
     FINAL_STEPS,
     INITIAL_STEPS,
@@ -46,15 +44,17 @@ from .preprocessor import (
     PreprocessingTask,
     PreprocessorFile,
 )
-from .preprocessor._derive import get_required
-from .preprocessor._io import DATASET_KEYS, concatenate_callback
-from .preprocessor._other import _group_products
-from .preprocessor._regrid import (
+from esmvalcore.preprocessor._derive import get_required
+from esmvalcore.preprocessor._io import DATASET_KEYS, concatenate_callback
+from esmvalcore.preprocessor._other import _group_products
+from esmvalcore.preprocessor._regrid import (
     _spec_to_latlonvals,
     get_cmor_levels,
     get_reference_levels,
     parse_cell_spec,
 )
+
+from . import check
 
 logger = logging.getLogger(__name__)
 
@@ -78,36 +78,10 @@ def read_recipe_file(filename, config_user, initialize_tasks=True):
 
 def _add_cmor_info(variable, override=False):
     """Add information from CMOR tables to variable."""
-    # Copy the following keys from CMOR table
-    cmor_keys = [
-        'standard_name', 'long_name', 'units', 'modeling_realm', 'frequency'
-    ]
-    project = variable['project']
-    mip = variable['mip']
-    short_name = variable['short_name']
-    derive = variable.get('derive', False)
-    table = CMOR_TABLES.get(project)
-    if table:
-        table_entry = table.get_variable(mip, short_name, derive)
-    else:
-        table_entry = None
-    if table_entry is None:
-        raise RecipeError(
-            f"Unable to load CMOR table (project) '{project}' for variable "
-            f"'{short_name}' with mip '{mip}'")
-    variable['original_short_name'] = table_entry.short_name
-    for key in cmor_keys:
-        if key not in variable or override:
-            value = getattr(table_entry, key, None)
-            if value is not None:
-                variable[key] = value
-            else:
-                logger.debug(
-                    "Failed to add key %s to variable %s from CMOR table", key,
-                    variable)
+    _update_cmor_facets(variable, override)
 
     # Check that keys are available
-    check.variable(variable, required_keys=cmor_keys)
+    check.variable(variable, required_keys=_CMOR_KEYS)
 
 
 def _add_extra_facets(variable, extra_facets_dir):
@@ -593,15 +567,20 @@ def _get_input_files(variable, config_user):
     # Set up downloading from ESGF if requested.
     if (not config_user['offline']
             and variable['project'] in esgf.facets.FACETS):
-        try:
-            check.data_availability(
-                input_files,
-                variable,
-                globs,
-                log=False,
-            )
-        except RecipeError:
+        search_esgf = config_user['always_search_esgf']
+        if not search_esgf:
             # Only look on ESGF if files are not available locally.
+            try:
+                check.data_availability(
+                    input_files,
+                    variable,
+                    globs,
+                    log=False,
+                )
+            except RecipeError:
+                search_esgf = True
+
+        if search_esgf:
             local_files = set(Path(f).name for f in input_files)
             search_result = esgf.find_files(**variable)
             for file in search_result:
@@ -609,7 +588,7 @@ def _get_input_files(variable, config_user):
                 if local_copy.name not in local_files:
                     if not local_copy.exists():
                         DOWNLOAD_FILES.add(file)
-                    input_files.append(str(local_copy))
+                    input_files.append(local_copy)
 
             globs.append('ESGF')
 
@@ -788,8 +767,8 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
                                             statistic_attributes[step])
             statistic_attributes.setdefault('dataset',
                                             statistic_attributes[step])
-            filename = get_multiproduct_filename(statistic_attributes,
-                                                 preproc_dir)
+            filename = _get_multiproduct_filename(statistic_attributes,
+                                                  preproc_dir)
             statistic_attributes['filename'] = filename
             statistic_product = PreprocessorFile(statistic_attributes,
                                                  downstream_settings)
@@ -1253,8 +1232,8 @@ def _get_preprocessor_task(variables, profiles, config_user, task_name):
 class Recipe:
     """Recipe object."""
 
-    info_keys = ('project', 'activity', 'dataset', 'exp', 'ensemble',
-                 'version')
+    info_keys = ('project', 'activity', 'driver', 'dataset', 'exp',
+                 'sub_experiment', 'ensemble', 'version')
     """List of keys to be used to compose the alias, ordered by priority."""
 
     def __init__(self,
