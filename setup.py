@@ -58,6 +58,7 @@ REQUIREMENTS = {
         'scitools-iris>=3.2.1',
         'shapely[vectorized]',
         'stratify',
+        'typer>=0.4.1',
         'yamale',
     ],
     # Test dependencies
