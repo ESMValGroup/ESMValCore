@@ -38,7 +38,7 @@ dependencies:
   - requests
   - scipy>=1.6
   - shapely
-  - typer >=0.4.1
+  - typer >=0.7.0
   - yamale
   # Python packages needed for building docs
   - autodocsumm>=0.2.2
