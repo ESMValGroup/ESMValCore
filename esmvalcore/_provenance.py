@@ -144,10 +144,10 @@ class TrackedFile:
         return f"{self.__class__.__name__}: {self.filename}"
 
     def __eq__(self, other):
-        return hasattr(other, 'filename') and other.filename == self.filename
+        return hasattr(other, 'filename') and self.filename == other.filename
 
     def __lt__(self, other):
-        return hasattr(other, 'filename') and other.filename < self.filename
+        return hasattr(other, 'filename') and self.filename < other.filename
 
     def __hash__(self):
         return hash(self.filename)
