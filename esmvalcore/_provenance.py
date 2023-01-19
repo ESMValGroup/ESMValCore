@@ -2,6 +2,7 @@
 import copy
 import logging
 import os
+from functools import total_ordering
 
 from netCDF4 import Dataset
 from PIL import Image
@@ -98,6 +99,7 @@ def get_task_provenance(task, recipe_entity):
     return activity
 
 
+@total_ordering
 class TrackedFile:
     """File with provenance tracking."""
 
@@ -140,6 +142,15 @@ class TrackedFile:
     def __repr__(self):
         """Return representation string (e.g., used by ``pformat``)."""
         return f"{self.__class__.__name__}: {self.filename}"
+
+    def __eq__(self, other):
+        return hasattr(other, 'filename') and other.filename == self.filename
+
+    def __lt__(self, other):
+        return hasattr(other, 'filename') and other.filename < self.filename
+
+    def __hash__(self):
+        return hash(self.filename)
 
     def copy_provenance(self):
         """Create a copy with identical provenance information."""

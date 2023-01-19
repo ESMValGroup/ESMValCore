@@ -191,7 +191,9 @@ def write_ncl_settings(settings, filename, mode='wt'):
     lines = []
 
     # ignore some settings for NCL diagnostic
-    ignore_settings = ['profile_diagnostic', ]
+    ignore_settings = [
+        'profile_diagnostic',
+    ]
     for sett in ignore_settings:
         settings_copy = dict(settings)
         if 'diag_script_info' not in settings_copy:
@@ -274,7 +276,7 @@ class BaseTask:
         """Return a mapping of product attributes."""
         return {
             product.filename: product.attributes
-            for product in self.products
+            for product in sorted(self.products)
         }
 
     def print_ancestors(self):
@@ -414,7 +416,9 @@ class DiagnosticTask(BaseTask):
         run_dir.mkdir(parents=True, exist_ok=True)
 
         # ignore some settings for diagnostic
-        ignore_settings = ['profile_diagnostic', ]
+        ignore_settings = [
+            'profile_diagnostic',
+        ]
         for sett in ignore_settings:
             settings_copy = dict(self.settings)
             settings_copy.pop(sett, None)
