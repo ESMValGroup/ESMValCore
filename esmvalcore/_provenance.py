@@ -144,12 +144,15 @@ class TrackedFile:
         return f"{self.__class__.__name__}: {self.filename}"
 
     def __eq__(self, other):
+        """Check if `other` equals `self`."""
         return hasattr(other, 'filename') and self.filename == other.filename
 
     def __lt__(self, other):
+        """Check if `other` should be sorted before `self`."""
         return hasattr(other, 'filename') and self.filename < other.filename
 
     def __hash__(self):
+        """Return a unique hash for the file."""
         return hash(self.filename)
 
     def copy_provenance(self):
