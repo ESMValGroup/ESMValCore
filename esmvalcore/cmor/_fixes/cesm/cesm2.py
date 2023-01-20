@@ -57,6 +57,14 @@ class AllVars(NativeDatasetFix):
         time points to center of time period given by time bounds (currently
         the points are located at the end of the interval).
 
+        Example of monthly time coordinate before this fix (Jan. & Feb. 2000):
+            Points: ``[2000-02-01, 2000-03-01]``
+            Bounds: ``[[2000-01-01, 2000-02-01], [2000-02-01, 2000-03-01]]``
+
+        Example of monthly time coordinate after this fix (Jan. & Feb. 2000):
+            Points: ``[2000-01-15, 2000-02-14]``
+            Bounds: ``[[2000-01-01, 2000-02-01], [2000-02-01, 2000-03-01]]``
+
         """
         # Only modify time points if data contains a time dimension, is monthly
         # data, and does not describe point measurements.
