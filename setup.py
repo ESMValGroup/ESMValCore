@@ -49,6 +49,7 @@ REQUIREMENTS = {
         'pillow',
         'prov',
         'psutil',
+        'py-cordex',
         'pybtex',
         'pyyaml',
         'requests',
@@ -79,6 +80,8 @@ REQUIREMENTS = {
     # Documentation dependencies
     'doc': [
         'autodocsumm>=0.2.2',
+        'ipython',
+        'nbsphinx',
         'sphinx>5',
         'sphinx_rtd_theme',
     ],

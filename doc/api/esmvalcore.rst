@@ -11,6 +11,7 @@ library. This section documents the public API of ESMValCore.
 
    esmvalcore.cmor
    esmvalcore.config
+   esmvalcore.dataset
    esmvalcore.esgf
    esmvalcore.exceptions
    esmvalcore.iris_helpers

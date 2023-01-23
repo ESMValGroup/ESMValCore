@@ -20,7 +20,7 @@ from typing import Optional, Union
 
 import yaml
 
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,41 @@ CMORTable = Union['CMIP3Info', 'CMIP5Info', 'CMIP6Info', 'CustomInfo']
 
 CMOR_TABLES: dict[str, CMORTable] = {}
 """dict of str, obj: CMOR info objects."""
+
+_CMOR_KEYS = (
+    'standard_name',
+    'long_name',
+    'units',
+    'modeling_realm',
+    'frequency',
+)
+
+
+def _update_cmor_facets(facets, override=False):
+    """Update `facets` with information from CMOR table."""
+    project = facets['project']
+    mip = facets['mip']
+    short_name = facets['short_name']
+    derive = facets.get('derive', False)
+    table = CMOR_TABLES.get(project)
+    if table:
+        table_entry = table.get_variable(mip, short_name, derive)
+    else:
+        table_entry = None
+    if table_entry is None:
+        raise RecipeError(
+            f"Unable to load CMOR table (project) '{project}' for variable "
+            f"'{short_name}' with mip '{mip}'")
+    facets['original_short_name'] = table_entry.short_name
+    for key in _CMOR_KEYS:
+        if key not in facets or override:
+            value = getattr(table_entry, key, None)
+            if value is not None:
+                facets[key] = value
+            else:
+                logger.debug(
+                    "Failed to add key %s to variable %s from CMOR table", key,
+                    facets)
 
 
 def get_var_info(project, mip, short_name):

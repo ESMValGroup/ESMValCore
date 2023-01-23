@@ -263,7 +263,7 @@ def test_esgf_search_files(mocker):
 
 def test_esgf_search_uses_second_index_node(mocker):
     """Test that the second index node is used if the first is offline."""
-    search_result = mocker.sentinel.search_result
+    search_result = [mocker.sentinel.search_result]
     search_results = [
         requests.exceptions.ReadTimeout("Timeout error message"),
         search_result,
@@ -370,6 +370,31 @@ def test_select_by_time_nodate():
 
     result = _search.select_by_time(files, '1851/1852')
     assert result == files
+
+
+def test_invalid_dataset_id_template():
+    dataset_id = (
+        'obs4MIPs.IUP.XCH4_CRDP3.xch4.mon.v100')
+    dataset_id_template = (
+        '%(project)s.%(institute)s.%(source_id)s.%(time_frequency)s'
+    )
+    filenames = ['xch4_ghgcci_l3_v100_200301_201412.nc']
+    results = [
+        FileResult(
+            json={
+                'title': filename,
+                'dataset_id': dataset_id + '|esgf.ceda.ac.uk',
+                'dataset_id_template_': [dataset_id_template],
+                'project': ['obs4MIPs'],
+                'size': 100,
+                'source_id': 'XCH4_CRDP3',
+            },
+            context=None,
+        ) for filename in filenames
+    ]
+    file = ESGFFile(results)
+
+    assert file.name == filenames[0]
 
 
 def test_search_unknown_project():

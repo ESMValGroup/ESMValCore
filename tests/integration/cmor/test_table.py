@@ -4,7 +4,60 @@ import os
 import unittest
 
 import esmvalcore.cmor
-from esmvalcore.cmor.table import CMIP3Info, CMIP5Info, CMIP6Info, CustomInfo
+from esmvalcore.cmor.table import (
+    CMIP3Info,
+    CMIP5Info,
+    CMIP6Info,
+    CustomInfo,
+    _update_cmor_facets,
+)
+
+
+def test_update_cmor_facets():
+    facets = {
+        'project': 'CMIP6',
+        'mip': 'Amon',
+        'short_name': 'tas',
+    }
+
+    _update_cmor_facets(facets)
+
+    expected = {
+        'project': 'CMIP6',
+        'mip': 'Amon',
+        'short_name': 'tas',
+        'original_short_name': 'tas',
+        'standard_name': 'air_temperature',
+        'long_name': 'Near-Surface Air Temperature',
+        'units': 'K',
+        'modeling_realm': ['atmos'],
+        'frequency': 'mon',
+    }
+    assert facets == expected
+
+
+def test_update_cmor_facets_facet_not_in_table(mocker):
+    facets = {
+        'project': 'CMIP6',
+        'mip': 'Amon',
+        'short_name': 'tas',
+    }
+
+    mocker.patch.object(
+        esmvalcore.cmor.table,
+        'getattr',
+        create_autospec=True,
+        return_value=None,
+    )
+    _update_cmor_facets(facets)
+
+    expected = {
+        'project': 'CMIP6',
+        'mip': 'Amon',
+        'short_name': 'tas',
+        'original_short_name': 'tas',
+    }
+    assert facets == expected
 
 
 class TestCMIP6Info(unittest.TestCase):
