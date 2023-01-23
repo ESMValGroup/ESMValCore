@@ -367,7 +367,7 @@ Key           Description                   Default value if not specified
 
    To use the :func:`~esmvalcore.preprocessor.extract_levels` on native ICON
    data, you need to specify the name of the vertical coordinate (e.g.,
-   ``coordinate: air_pressure``) since native ICON data usually uses a 3D air
+   ``coordinate: air_pressure``) since native ICON output usually provides a 3D air
    pressure field instead of a simple 1D vertical coordinate.
    Example:
 
