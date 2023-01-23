@@ -365,6 +365,22 @@ Key           Description                   Default value if not specified
 
 .. hint::
 
+   To use the :func:`esmvalcore.preprocessor.extract_levels` on native ICON
+   data, you need to specify the name of the vertical coordinate, e.g.,
+   ``coordinate: air_pressure``.
+   Example:
+
+   .. code-block:: yaml
+
+    preprocessors:
+      extract_500hPa_level_from_icon:
+        extract_levels:
+          levels: 50000
+          scheme: linear
+          coordinate: air_pressure
+
+.. hint::
+
    In order to read cell area files (``areacella`` and ``areacello``), one
    additional manual step is necessary:
    Copy the ICON grid file (you can find a download link in the global
