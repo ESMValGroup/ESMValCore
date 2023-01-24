@@ -10,7 +10,7 @@ import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
-from esmvalcore.preprocessor._io import load
+from esmvalcore.preprocessor._io import concatenate_callback, load
 
 
 def _create_sample_cube():
@@ -60,6 +60,9 @@ class TestLoad(unittest.TestCase):
             self._save_cube(cube)
         for temp_file in self.temp_files:
             cubes = load(temp_file)
+            cubes = iris.cube.CubeList(
+                [concatenate_callback(raw_cube) for raw_cube in cubes]
+            )
             cube = cubes[0]
             self.assertEqual(1, len(cubes))
             self.assertTrue((cube.data == np.array([1, 2])).all())
