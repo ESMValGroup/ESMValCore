@@ -73,7 +73,7 @@ REQUIREMENTS = {
         'pytest-xdist',
         'ESMValTool_sample_data==0.0.3',
         # MyPy library stubs
-        'mypy<0.990',  # >=0.990',
+        'mypy>=0.990',
         'types-requests',
         'types-pkg_resources',
         'types-PyYAML',
