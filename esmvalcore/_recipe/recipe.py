@@ -45,7 +45,7 @@ from esmvalcore.preprocessor import (
     PreprocessorFile,
 )
 from esmvalcore.preprocessor._derive import get_required
-from esmvalcore.preprocessor._io import DATASET_KEYS, concatenate_callback
+from esmvalcore.preprocessor._io import DATASET_KEYS
 from esmvalcore.preprocessor._other import _group_products
 from esmvalcore.preprocessor._regrid import (
     _spec_to_latlonvals,
@@ -244,10 +244,6 @@ def _get_default_settings(variable, config_user, derive=False):
     """Get default preprocessor settings."""
     settings = {}
 
-    # Configure loading
-    settings['load'] = {
-        'callback': concatenate_callback,
-    }
     # Configure concatenation
     settings['concatenate'] = {}
 
