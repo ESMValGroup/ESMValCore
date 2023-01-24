@@ -99,7 +99,8 @@ def concatenate_callback(raw_cube, field=None):
         # regardless of value in file, so reinstating file value
         if field:
             if coord.standard_name in ['longitude', 'latitude']:
-                units = _get_attr_from_field_coord(field, coord.var_name, 'units')
+                units = _get_attr_from_field_coord(field,
+                                                   coord.var_name, 'units')
                 if units is not None:
                     coord.units = units
 
