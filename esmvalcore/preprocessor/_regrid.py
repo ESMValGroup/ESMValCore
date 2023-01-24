@@ -22,7 +22,7 @@ from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.fix import fix_file, fix_metadata
 from ..cmor.table import CMOR_TABLES
 from ._ancillary_vars import add_ancillary_variable, add_cell_measure
-from ._io import GLOBAL_FILL_VALUE, load
+from ._io import GLOBAL_FILL_VALUE, concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
 
@@ -1079,6 +1079,11 @@ def get_reference_levels(filename, project, dataset, short_name, mip,
         output_dir=fix_dir,
     )
     cubes = load(filename)
+    # preserve older functionality of concatenate_callback
+    # at load point, after we have deleted the callback in load()
+    cubes = iris.cube.CubeList(
+        [concatenate_callback(cube) for cube in cubes]
+    )
     cubes = fix_metadata(
         cubes=cubes,
         short_name=short_name,
