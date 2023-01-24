@@ -47,7 +47,7 @@ dependencies:
   - sphinx_rtd_theme
   # Python packages needed for testing
   - flake8
-  - mypy  # >=0.990
+  - mypy<0.990  # >=0.990
   - pytest>=3.9,!=6.0.0rc1,!=6.0.0
   - pytest-cov>=2.10.1
   - pytest-env
