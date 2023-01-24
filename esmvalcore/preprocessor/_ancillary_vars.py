@@ -25,14 +25,16 @@ def _load_fx(var_cube, fx_info, check_level):
     freq = fx_info['frequency']
 
     for fx_file in fx_info['filename']:
-        loaded_cube = load(fx_file)
+        loaded_cubes = load(fx_file)
         # preserve older functionality of concatenate_callback
         # at load point, after we have deleted the callback in load()
-        loaded_cube = concatenate_callback(loaded_cube)
-        loaded_cube = fix_metadata(loaded_cube,
-                                   check_level=check_level,
-                                   **fx_info)
-        fx_cubes.append(loaded_cube[0])
+        loaded_cubes = iris.cube.CubeList(
+            [concatenate_callback(cube) for cube in loaded_cubes]
+        )
+        loaded_cubes = fix_metadata(loaded_cubes,
+                                    check_level=check_level,
+                                    **fx_info)
+        fx_cubes.append(loaded_cubes[0])
 
     fx_cube = concatenate(fx_cubes)
 
