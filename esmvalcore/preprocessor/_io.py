@@ -87,7 +87,7 @@ def _get_attr_from_field_coord(ncfield, coord_name, attr):
     return None
 
 
-def concatenate_callback(raw_cube, field, _):
+def concatenate_callback(raw_cube, field=None):
     """Use this callback to fix anything Iris tries to break."""
     # Remove attributes that cause issues with merging and concatenation
     _delete_attributes(
@@ -97,12 +97,16 @@ def concatenate_callback(raw_cube, field, _):
     for coord in raw_cube.coords():
         # Iris chooses to change longitude and latitude units to degrees
         # regardless of value in file, so reinstating file value
-        if coord.standard_name in ['longitude', 'latitude']:
-            units = _get_attr_from_field_coord(field, coord.var_name, 'units')
-            if units is not None:
-                coord.units = units
+        if field:
+            if coord.standard_name in ['longitude', 'latitude']:
+                units = _get_attr_from_field_coord(field, coord.var_name, 'units')
+                if units is not None:
+                    coord.units = units
+
         # CMOR sometimes adds a history to the coordinates.
         _delete_attributes(coord, ('history', ))
+
+    return raw_cube
 
 
 def _delete_attributes(iris_object, atts):
