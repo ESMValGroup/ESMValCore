@@ -1,4 +1,6 @@
 """Recipe parser."""
+from __future__ import annotations
+
 import fnmatch
 import logging
 import os
@@ -195,6 +197,9 @@ def _get_default_settings(dataset):
 
     settings = {}
 
+    # Configure (deprecated, remove for v2.10.0) load callback
+    settings['load'] = {'callback': 'default'}
+
     if _derive_needed(dataset):
         settings['derive'] = {
             'short_name': facets['short_name'],
@@ -212,8 +217,8 @@ def _get_default_settings(dataset):
             'remove': [fix_dir],
         }
 
-    # Configure fx settings
-    settings['remove_fx_variables'] = {}
+    # Strip ancillary variables before saving
+    settings['remove_ancillary_variables'] = {}
 
     # Configure saving cubes to file
     settings['save'] = {'compress': session['compress_netcdf']}
@@ -413,14 +418,15 @@ def _schedule_for_download(datasets):
             "Using input files for variable %s of dataset %s:\n%s",
             dataset.facets['short_name'],
             dataset.facets['alias'].replace('_', ' '),
-            '\n'.join(
-                f'{f} (will be downloaded)' if not f.exists() else str(f)
-                for f in files),
+            '\n'.join(f'{f} (will be downloaded)' if not f.exists() else str(f)
+                      for f in files),
         )
 
 
-def _check_input_files(input_datasets: list[Dataset],
-                       settings: dict[str, Any]):
+def _check_input_files(
+        input_datasets: list[Dataset],
+        settings: dict[str, Any],
+) -> set[str]:
     """Check that the required input files are available."""
     missing = set()
 

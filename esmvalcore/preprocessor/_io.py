@@ -3,6 +3,7 @@ import copy
 import logging
 import os
 import shutil
+import warnings
 from itertools import groupby
 from warnings import catch_warnings, filterwarnings
 
@@ -12,6 +13,8 @@ import iris.exceptions
 import numpy as np
 import yaml
 from cf_units import suppress_errors
+
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 from .._task import write_ncl_settings
 from ._time import extract_time
@@ -111,13 +114,18 @@ def _delete_attributes(iris_object, atts):
             del iris_object.attributes[att]
 
 
-def load(file, ignore_warnings=None):
+def load(file, callback=None, ignore_warnings=None):
     """Load iris cubes from files.
 
     Parameters
     ----------
     file: str
         File to be loaded.
+    callback: callable or None, optional (default: None)
+        Callback function passed to :func:`iris.load_raw`.
+
+        .. deprecated:: 2.8.0
+            This argument will be removed in 2.10.0.
     ignore_warnings: list of dict or None, optional (default: None)
         Keyword arguments passed to :func:`warnings.filterwarnings` used to
         ignore warnings issued by :func:`iris.load_raw`. Each list element
@@ -133,6 +141,13 @@ def load(file, ignore_warnings=None):
     ValueError
         Cubes are empty.
     """
+    if not(callback is None or callback == 'default'):
+        msg = ("The argument `callback` has been deprecated in "
+               "ESMValCore version 2.8.0 and is scheduled for removal in "
+               "version 2.10.0.")
+        warnings.warn(msg, ESMValCoreDeprecationWarning)
+    if callback == 'default':
+        callback = concatenate_callback
     file = str(file)
     logger.debug("Loading:\n%s", file)
     if ignore_warnings is None:
@@ -163,7 +178,7 @@ def load(file, ignore_warnings=None):
         # warnings.filterwarnings
         # (see https://github.com/SciTools/cf-units/issues/240)
         with suppress_errors():
-            raw_cubes = iris.load_raw(file, callback=concatenate_callback)
+            raw_cubes = iris.load_raw(file, callback=callback)
     logger.debug("Done with loading %s", file)
     if not raw_cubes:
         raise ValueError(f'Can not load cubes from {file}')

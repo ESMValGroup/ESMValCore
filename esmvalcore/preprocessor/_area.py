@@ -18,7 +18,7 @@ from ._ancillary_vars import (
     add_ancillary_variable,
     add_cell_measure,
     register_ancillaries,
-    remove_fx_variables,
+    remove_ancillary_variables,
 )
 from ._shared import (
     get_iris_analysis_operation,
@@ -661,7 +661,7 @@ def _mask_cube(cube, selections):
     cubelist = iris.cube.CubeList()
     for id_, select in selections.items():
         _cube = cube.copy()
-        remove_fx_variables(_cube)
+        remove_ancillary_variables(_cube)
         _cube.add_aux_coord(
             iris.coords.AuxCoord(id_, units='no_unit', long_name="shape_id"))
         select = da.broadcast_to(select, _cube.shape)

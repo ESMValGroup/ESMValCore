@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 Recipe = dict[str, Any]
 Facets = dict[str, Any]
 
+# TODO: move tests for this module to their own file
+
 
 def _datasets_to_raw_recipe(datasets: Iterable[Dataset]) -> Recipe:
     """Convert datasets to a recipe dict."""
@@ -95,6 +97,15 @@ def _move_datasets_up(recipe: Recipe) -> Recipe:
     return recipe
 
 
+def _to_frozen(item):
+    """Return a frozen and sorted copy of nested dicts and lists."""
+    if isinstance(item, list):
+        return tuple(sorted(_to_frozen(elem) for elem in item))
+    if isinstance(item, dict):
+        return tuple(sorted((k, _to_frozen(v)) for k, v in item.items()))
+    return item
+
+
 def _move_one_level_up(base: dict, level: str, target: str):
     """Move datasets one level up in the recipe."""
     groups = base[level]
@@ -106,9 +117,7 @@ def _move_one_level_up(base: dict, level: str, target: str):
     dataset_mapping = {}
     for name, group in groups.items():
         dataset_mapping[name] = {
-            tuple(
-                sorted((k, tuple(v) if isinstance(v, list) else v)
-                       for k, v in ds.items())): ds
+            _to_frozen(ds): ds
             for ds in group['additional_datasets']
         }
 

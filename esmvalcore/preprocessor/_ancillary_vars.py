@@ -1,6 +1,7 @@
 """Preprocessor functions for ancillary variables and cell measures."""
 
 import logging
+import warnings
 from pathlib import Path
 from typing import Iterable
 
@@ -10,7 +11,8 @@ import iris.cube
 
 from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
 from esmvalcore.cmor.fix import fix_data, fix_metadata
-from esmvalcore.preprocessor._io import concatenate, concatenate_callback, load
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+from esmvalcore.preprocessor._io import concatenate, load
 from esmvalcore.preprocessor._time import clip_timerange
 
 logger = logging.getLogger(__name__)
@@ -56,7 +58,7 @@ def _load_fx(var_cube, fx_info, check_level):
     freq = fx_info['frequency']
 
     for fx_file in fx_info['filename']:
-        loaded_cube = load(fx_file, callback=concatenate_callback)
+        loaded_cube = load(fx_file)
         loaded_cube = fix_metadata(loaded_cube,
                                    check_level=check_level,
                                    **fx_info)
@@ -170,6 +172,12 @@ def add_fx_variables(cube, fx_variables, check_level):
     variables as cell measures or ancillary variables in the cube containing
     the data.
 
+    .. deprecated:: 2.8.0
+        This function is deprecated and will be removed in version 2.10.0.
+        Please use a :class:`esmvalcore.dataset.Dataset` or
+        :func:`esmvalcore.preprocessor.add_ancillary_variables`
+        instead.
+
     Parameters
     ----------
     cube: iris.cube.Cube
@@ -179,13 +187,17 @@ def add_fx_variables(cube, fx_variables, check_level):
     check_level: CheckLevels
         Level of strictness of the checks.
 
-
     Returns
     -------
     iris.cube.Cube
         Cube with added cell measures or ancillary variables.
     """
-
+    msg = (
+        "The function `add_fx_variables` has been deprecated in "
+        "ESMValCore version 2.8.0 and is scheduled for removal in "
+        "version 2.10.0. Use a `esmvalcore.dataset.Dataset` or the function "
+        "`add_ancillary_variables` instead.")
+    warnings.warn(msg, ESMValCoreDeprecationWarning)
     if not fx_variables:
         return cube
     fx_cubes = []
@@ -229,6 +241,8 @@ def add_ancillary_variables(
         'volcello': 'volume'
     }
     for ancillary_cube in ancillary_cubes:
+        # TODO: add use_legacy_ancillaries feature flag and skip cubes
+        # with mismatched dimensions
         if ancillary_cube.var_name in measure_names:
             measure_name = measure_names[ancillary_cube.var_name]
             add_cell_measure(cube, ancillary_cube, measure_name)
@@ -237,15 +251,16 @@ def add_ancillary_variables(
     return cube
 
 
-def remove_fx_variables(cube: iris.cube.Cube):
-    """Remove fx variables present as cell measures or ancillary variables in
-    the cube containing the data.
+def remove_ancillary_variables(cube: iris.cube.Cube):
+    """Remove ancillary variables.
+
+    Strip cell measures or ancillary variables from the cube containing the
+    data.
 
     Parameters
     ----------
     cube: iris.cube.Cube
         Iris cube with  data and cell measures or ancillary variables.
-
 
     Returns
     -------
@@ -260,3 +275,31 @@ def remove_fx_variables(cube: iris.cube.Cube):
         for variable in cube.ancillary_variables():
             cube.remove_ancillary_variable(variable)
     return cube
+
+
+def remove_fx_variables(cube):
+    """Remove fx variables present as cell measures or ancillary variables in
+    the cube containing the data.
+
+    .. deprecated:: 2.8.0
+        This function is deprecated and will be removed in version 2.10.0.
+        Please use
+        :func:`esmvalcore.preprocessor.remove_ancillary_variables`
+        instead.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        Iris cube with  data and cell measures or ancillary variables.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Cube without cell measures or ancillary variables.
+    """
+    msg = ("The function `remove_fx_variables` has been deprecated in "
+           "ESMValCore version 2.8.0 and is scheduled for removal in "
+           "version 2.10.0. Use the function `remove_ancillary_variables` "
+           "instead.")
+    warnings.warn(msg, ESMValCoreDeprecationWarning)
+    return remove_ancillary_variables(cube)

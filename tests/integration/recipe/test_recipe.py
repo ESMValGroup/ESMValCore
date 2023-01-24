@@ -80,8 +80,9 @@ MANDATORY_SCRIPT_SETTINGS_KEYS = (
 )
 
 DEFAULT_PREPROCESSOR_STEPS = (
+    'load',
     'cleanup',
-    'remove_fx_variables',
+    'remove_ancillary_variables',
     'save',
 )
 
@@ -104,7 +105,10 @@ def create_test_file(filename, tracking_id=None):
 def _get_default_settings_for_chl(fix_dir, save_filename):
     """Get default preprocessor settings for chl."""
     defaults = {
-        'remove_fx_variables': {},
+        'load': {
+            'callback': 'default'
+        },
+        'remove_ancillary_variables': {},
         'cleanup': {
             'remove': [fix_dir]
         },
@@ -440,7 +444,7 @@ def test_disable_preprocessor_function(tmp_path, patched_datafinder, session):
 
         preprocessors:
           keep_ancillaries:
-            remove_fx_variables: False
+            remove_ancillary_variables: False
 
         diagnostics:
           diagnostic_name:
@@ -462,7 +466,7 @@ def test_disable_preprocessor_function(tmp_path, patched_datafinder, session):
     task = recipe.tasks.pop()
     assert len(task.products) == 1
     product = task.products.pop()
-    assert 'remove_fx_variables' not in product.settings
+    assert 'remove_ancillary_variables' not in product.settings
 
 
 def test_default_fx_preprocessor(tmp_path, patched_datafinder, session):
@@ -493,7 +497,10 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, session):
                            'CMIP5_CanESM2_fx_historical_r0i0p0_sftlf_fixed')
 
     defaults = {
-        'remove_fx_variables': {},
+        'load': {
+            'callback': 'default'
+        },
+        'remove_ancillary_variables': {},
         'cleanup': {
             'remove': [fix_dir]
         },
@@ -2270,7 +2277,7 @@ def test_fx_vars_fixed_mip_cmip6(tmp_path, patched_datafinder, session):
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
 
-    # Check add_fx_variables
+    # Check legacy method of adding ancillary variables
     assert len(product.datasets) == 1
     dataset = product.datasets[0]
     ancillaries = {ds.facets['short_name']: ds for ds in dataset.ancillaries}
@@ -2409,7 +2416,7 @@ def test_fx_vars_mip_search_cmip6(tmp_path, patched_datafinder, session):
     assert len(settings) == 1
     assert settings['mask_out'] == 'sea'
 
-    # Check add_fx_variables
+    # Check legacy method of adding ancillary variables
     assert len(product.datasets) == 1
     dataset = product.datasets[0]
     assert len(dataset.ancillaries) == 4
@@ -2469,7 +2476,7 @@ def test_fx_list_mip_search_cmip6(tmp_path, patched_datafinder, session):
     assert len(settings) == 1
     assert settings['operator'] == 'mean'
 
-    # Check add_fx_variables
+    # Check legacy method of adding ancillary variables
     assert len(product.datasets) == 1
     dataset = product.datasets[0]
     assert len(dataset.ancillaries) == 4
@@ -2926,7 +2933,7 @@ def test_unique_fx_var_in_multiple_mips_cmip6(tmp_path,
     assert len(settings) == 1
     assert settings['mask_out'] == 'ice'
 
-    # Check add_fx_variables
+    # Check legacy method of adding ancillary variables
     # Due to failing datafinder, only files in LImon are found even though
     # sftgif is available in the tables fx, IyrAnt, IyrGre and LImon
     assert len(product.datasets) == 1

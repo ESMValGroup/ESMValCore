@@ -471,13 +471,17 @@ class Dataset:
         iris.cube.Cube
             An :mod:`iris` cube with the data corresponding the the dataset.
         """
-        cube = self._load()
+        return self._load_with_callback(callback='default')
+
+    def _load_with_callback(self, callback):
+        # TODO: Remove the callback argument for v2.10.0.
+        cube = self._load(callback)
 
         input_files = list(self.files)
         ancillary_cubes = []
         for ancillary_dataset in self.ancillaries:
             input_files.extend(ancillary_dataset.files)
-            ancillary_cube = ancillary_dataset._load()
+            ancillary_cube = ancillary_dataset._load(callback)
             ancillary_cubes.append(ancillary_cube)
 
         cubes = preprocess(
@@ -488,7 +492,7 @@ class Dataset:
         )
         return cubes[0]
 
-    def _load(self) -> Cube:
+    def _load(self, callback) -> Cube:
         """Load self.files into an iris cube and return it."""
         if not self.files:
             lines = [
@@ -508,7 +512,7 @@ class Dataset:
             'output_dir': Path(f"{output_file.with_suffix('')}_fixed"),
             **self.facets,
         }
-        settings['load'] = {}
+        settings['load'] = {'callback': callback}
         settings['fix_metadata'] = {
             'check_level': self.session['check_level'],
             **self.facets,

@@ -15,6 +15,7 @@ from ..cmor.fix import fix_data, fix_file, fix_metadata
 from ._ancillary_vars import (
     add_ancillary_variables,
     add_fx_variables,
+    remove_ancillary_variables,
     remove_fx_variables,
 )
 from ._area import (
@@ -108,9 +109,8 @@ __all__ = [
     'fix_data',
     'cmor_check_data',
     # Attach ancillary variables and cell measures
-    'add_ancillary_variables',
-    # Load fx_variables in cube
     'add_fx_variables',
+    'add_ancillary_variables',
     # Time extraction (as defined in the preprocessor section)
     'extract_time',
     'extract_season',
@@ -184,7 +184,8 @@ __all__ = [
     'multi_model_statistics',
     # Bias calculation
     'bias',
-    # Remove fx_variables from cube
+    # Remove ancillary variables from cube
+    'remove_ancillary_variables',
     'remove_fx_variables',
     # Save to file
     'save',
@@ -206,16 +207,15 @@ TIME_PREPROCESSORS = [
     'regrid_time',
 ]
 
-# TODO: add deprecation warning about using load-like functions
-
 DEFAULT_ORDER = tuple(__all__)
 """
 By default, preprocessor functions are applied in this order.
 """
 
 # The order of initial and final steps cannot be configured
-INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('add_fx_variables') + 1]
-FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('remove_fx_variables'):]
+INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('add_ancillary_variables') +
+                              1]
+FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('remove_ancillary_variables'):]
 
 MULTI_MODEL_FUNCTIONS = {
     'bias',
@@ -383,7 +383,7 @@ def get_step_blocks(steps, order):
     """Group steps into execution blocks."""
     blocks = []
     prev_step_type = None
-    for step in order[order.index('add_fx_variables') + 1:order.index('save')]:
+    for step in order[len(INITIAL_STEPS):-len(FINAL_STEPS)]:
         if step in steps:
             step_type = step in MULTI_MODEL_FUNCTIONS
             if step_type is not prev_step_type:
@@ -463,7 +463,10 @@ class PreprocessorFile(TrackedFile):
     def cubes(self):
         """Cubes."""
         if self._cubes is None:
-            self._cubes = [ds.load() for ds in self.datasets]
+            callback = self.settings.get('load', {}).get('callback')
+            self._cubes = [
+                ds._load_with_callback(callback) for ds in self.datasets
+            ]
         return self._cubes
 
     @cubes.setter

@@ -1184,7 +1184,9 @@ def test_load(mocker, session):
     assert order == load_order
 
     load_args = {
-        'load': {},
+        'load': {
+            'callback': 'default'
+        },
         'fix_file': {
             'dataset': 'CanESM2',
             'ensemble': 'r1i1p1',
