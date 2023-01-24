@@ -9,7 +9,7 @@ import iris
 
 from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
 from esmvalcore.cmor.fix import fix_data, fix_metadata
-from esmvalcore.preprocessor._io import concatenate, load
+from esmvalcore.preprocessor._io import concatenate, concatenate_callback, load
 from esmvalcore.preprocessor._time import clip_timerange
 
 logger = logging.getLogger(__name__)
@@ -26,6 +26,9 @@ def _load_fx(var_cube, fx_info, check_level):
 
     for fx_file in fx_info['filename']:
         loaded_cube = load(fx_file)
+        # preserve older functionality of concatenate_callback
+        # at load point, after we have deleted the callback in load()
+        loaded_cube = concatenate_callback(loaded_cube)
         loaded_cube = fix_metadata(loaded_cube,
                                    check_level=check_level,
                                    **fx_info)
