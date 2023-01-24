@@ -24,7 +24,6 @@ from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
-from esmvalcore.preprocessor._io import concatenate_callback
 
 from tests.integration.test_provenance import check_provenance
 
@@ -91,7 +90,6 @@ DEFAULT_PREPROCESSOR_STEPS = (
     'fix_data',
     'fix_file',
     'fix_metadata',
-    'load',
     'remove_fx_variables',
     'save',
 )
@@ -126,9 +124,6 @@ def _get_default_settings_for_chl(fix_dir, save_filename, preprocessor):
     standard_name = ('mass_concentration_of_phytoplankton_'
                      'expressed_as_chlorophyll_in_sea_water')
     defaults = {
-        'load': {
-            'callback': concatenate_callback,
-        },
         'concatenate': {},
         'fix_file': {
             'alias': 'CanESM2',
@@ -589,9 +584,6 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, config_user):
                            'CMIP5_CanESM2_fx_historical_r0i0p0_sftlf_fixed')
 
     defaults = {
-        'load': {
-            'callback': concatenate_callback,
-        },
         'concatenate': {},
         'fix_file': {
             'alias': 'CanESM2',
