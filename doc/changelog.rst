@@ -2,6 +2,34 @@ Changelog
 =========
 
 
+.. _changelog-v2-7-1:
+
+
+v2.7.1
+------
+Highlights
+~~~~~~~~~~
+
+This is a bugfix release where we unpin `cf-units` to allow the latest `iris=3.4.0` to be installed. It also includes an update to the default configuration used when searching the ESGF for files, to account for a recent change of the CEDA ESGF index node hostname. The changelog contains only changes that were made to the ``main`` branch.
+
+Installation
+~~~~~~~~~~~~
+
+- Set the version number on the development branches to one minor version more than the previous release (`#1854 <https://github.com/ESMValGroup/ESMValCore/pull/1854>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+- Unpin cf-units (`#1770 <https://github.com/ESMValGroup/ESMValCore/pull/1770>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Bug fixes
+~~~~~~~~~
+
+- Improve error handling if an esgf index node is offline (`#1834 <https://github.com/ESMValGroup/ESMValCore/pull/1834>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+- Removed unnecessary test that fails with iris 3.4.0 (`#1846 <https://github.com/ESMValGroup/ESMValCore/pull/1846>`__) `Manuel Schlund <https://github.com/schlunma>`__
+- Update CEDA ESGF index node hostname (`#1838 <https://github.com/ESMValGroup/ESMValCore/pull/1838>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+
+
 .. _changelog-v2-7-0:
 
 
