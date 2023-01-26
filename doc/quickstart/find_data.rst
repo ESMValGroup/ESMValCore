@@ -363,7 +363,7 @@ Key           Description                   Default value if not specified
               file                          default DRS is used)
 ============= ============================= =================================
 
-ESMValTool automatically makes native ICON data `UGRID
+ESMValCore automatically makes native ICON data `UGRID
 <https://ugrid-conventions.github.io/ugrid-conventions/>`__-compliant when
 loading the data.
 The UGRID conventions provide a standardized format to store data on
