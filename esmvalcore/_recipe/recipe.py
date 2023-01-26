@@ -1241,7 +1241,7 @@ class Recipe:
         output['recipe_data'] = self._raw_recipe
         output['task_output'] = {}
 
-        for task in self.tasks.flatten():
+        for task in sorted(self.tasks.flatten(), key=lambda t: t.priority):
             if self.session['remove_preproc_dir'] and isinstance(
                     task, PreprocessingTask):
                 # Skip preprocessing tasks that are deleted afterwards
