@@ -6,15 +6,19 @@ function.
 
 import iris
 import numpy as np
+import pytest
 from numpy import ma
 
-import tests
+from esmvalcore.dataset import Dataset
 from esmvalcore.preprocessor import regrid
 from esmvalcore.preprocessor._io import GLOBAL_FILL_VALUE
+from tests import assert_array_equal
 from tests.unit.preprocessor._regrid import _make_cube
 
 
-class Test(tests.Test):
+class Test:
+
+    @pytest.fixture(autouse=True)
     def setUp(self):
         """Prepare tests."""
         shape = (3, 2, 2)
@@ -90,7 +94,28 @@ class Test(tests.Test):
     def test_regrid__linear(self):
         result = regrid(self.cube, self.grid_for_linear, 'linear')
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
-        self.assert_array_equal(result.data, expected)
+        assert_array_equal(result.data, expected)
+
+    def test_regrid__linear_file(self, tmp_path):
+        file = tmp_path / "file.nc"
+        iris.save(self.grid_for_linear, target=file)
+        result = regrid(self.cube, file, 'linear')
+        expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
+        assert_array_equal(result.data, expected)
+
+    def test_regrid__linear_dataset(self, monkeypatch):
+        monkeypatch.setattr(Dataset, 'files', ["file.nc"])
+
+        def load(_):
+            return self.grid_for_linear
+
+        monkeypatch.setattr(Dataset, 'load', load)
+        dataset = Dataset(
+            short_name='tas',
+        )
+        result = regrid(self.cube, dataset, 'linear')
+        expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
+        assert_array_equal(result.data, expected)
 
     def test_regrid__esmf_rectilinear(self):
         scheme_name = 'esmf_regrid.schemes:regrid_rectilinear_to_rectilinear'
@@ -125,7 +150,7 @@ class Test(tests.Test):
         self.cube.data = self.cube.data.astype(int)
         result = regrid(self.cube, self.grid_for_linear, 'linear')
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
-        self.assert_array_equal(result.data, expected)
+        assert_array_equal(result.data, expected)
         assert np.issubdtype(self.cube.dtype, np.integer)
         assert np.issubdtype(result.dtype, np.floating)
 
@@ -147,7 +172,7 @@ class Test(tests.Test):
         expected = [[[-3., -1.5, 0.], [0., 1.5, 3.], [3., 4.5, 6.]],
                     [[1., 2.5, 4.], [4., 5.5, 7.], [7., 8.5, 10.]],
                     [[5., 6.5, 8.], [8., 9.5, 11.], [11., 12.5, 14.]]]
-        self.assert_array_equal(result.data, expected)
+        assert_array_equal(result.data, expected)
 
     def test_regrid__linear_extrapolate_with_mask(self):
         data = np.empty((3, 3))
@@ -168,7 +193,7 @@ class Test(tests.Test):
         expected = ma.empty((3, 3, 3))
         expected.mask = ma.masked
         expected[:, 1, 1] = np.array([1.5, 5.5, 9.5])
-        self.assert_array_equal(result.data, expected)
+        assert_array_equal(result.data, expected)
 
     def test_regrid__nearest(self):
         data = np.empty((1, 1))
@@ -186,7 +211,7 @@ class Test(tests.Test):
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(self.cube, grid, 'nearest')
         expected = np.array([[[3]], [[7]], [[11]]])
-        self.assert_array_equal(result.data, expected)
+        assert_array_equal(result.data, expected)
 
     def test_regrid__nearest_extrapolate_with_mask(self):
         data = np.empty((3, 3))
@@ -206,7 +231,7 @@ class Test(tests.Test):
         expected = ma.empty((3, 3, 3))
         expected.mask = ma.masked
         expected[:, 1, 1] = np.array([3, 7, 11])
-        self.assert_array_equal(result.data, expected)
+        assert_array_equal(result.data, expected)
 
     def test_regrid__area_weighted(self):
         data = np.empty((1, 1))
