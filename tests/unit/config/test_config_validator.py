@@ -20,6 +20,7 @@ from esmvalcore.config._config_validators import (
     validate_string,
     validate_string_or_none,
 )
+from esmvalcore.exceptions import InvalidConfigParameter
 
 
 def generate_validator_testcases(valid):
@@ -187,11 +188,16 @@ def test_validator_invalid(validator, arg, exception_type):
 
 @pytest.mark.parametrize('version', (current_version, '0.0.1', '9.9.9'))
 def test_deprecate(version):
-    def test_func():
-        pass
+    def test_func(value):
+        return value
 
-    # This always warns
-    with pytest.warns(UserWarning):
-        f = deprecate(test_func, 'test_var', version)
+    validate = deprecate(test_func, 'test_var', version)
+    assert callable(validate)
 
-    assert callable(f)
+    if version != '9.9.9':
+        with pytest.raises(InvalidConfigParameter):
+            validate('value')
+    else:
+        with pytest.warns(UserWarning):
+            result = validate('value')
+        assert result == 'value'

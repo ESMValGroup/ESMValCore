@@ -62,7 +62,9 @@ class Config(ValidatedConfig):
                 raise
             mapping = {}
 
-        new.update(CFG_DEFAULT)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', ESMValCoreDeprecationWarning)
+            new.update(CFG_DEFAULT)
         new.update(mapping)
         new.check_missing()
 
@@ -90,8 +92,8 @@ class Config(ValidatedConfig):
         return new
 
     def load_from_file(
-            self,
-            filename: Optional[Union[os.PathLike, str]] = None,
+        self,
+        filename: Optional[Union[os.PathLike, str]] = None,
     ) -> None:
         """Load user configuration from the given file."""
         if filename is None:
@@ -278,5 +280,7 @@ USER_CONFIG_DIR = Path.home() / '.esmvaltool'
 USER_CONFIG = USER_CONFIG_DIR / 'config-user.yml'
 
 # initialize placeholders
-CFG_DEFAULT = MappingProxyType(Config._load_default_config(DEFAULT_CONFIG))
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore', ESMValCoreDeprecationWarning)
+    CFG_DEFAULT = MappingProxyType(Config._load_default_config(DEFAULT_CONFIG))
 CFG = Config._load_user_config(USER_CONFIG, raise_exception=False)

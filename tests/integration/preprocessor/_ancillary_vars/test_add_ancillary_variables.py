@@ -8,6 +8,7 @@ import iris.fileformats
 import numpy as np
 import pytest
 
+import esmvalcore.config
 from esmvalcore.preprocessor._ancillary_vars import (
     add_ancillary_variable,
     add_ancillary_variables,
@@ -119,8 +120,13 @@ class Test:
         cube = add_ancillary_variables(cube, [self.fx_area])
         assert cube.ancillary_variable(self.fx_area.standard_name) is not None
 
-    def test_wrong_shape(self):
-        """Test fx_variable is not added if it's not broadcastable to cube."""
+    def test_wrong_shape(self, monkeypatch):
+        """Test variable is not added if it's not broadcastable to cube."""
+        monkeypatch.setitem(
+            esmvalcore.config.CFG,
+            'use_legacy_ancillaries',
+            False,
+        )
         volume_data = np.ones((2, 3, 3, 3))
         volume_cube = iris.cube.Cube(
             volume_data,

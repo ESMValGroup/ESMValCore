@@ -73,6 +73,18 @@ remove_preproc_dir: true
 # Use netCDF compression --- true/[false]
 compress_netcdf: false
 
+# Use legacy method of specifying ancillary variables and cell measures in the
+# recipe. Prior to v2.8.0 of the tool, it was not possible to specify ancillary
+# variables per dataset, but they could be specified for select preprocessor
+# functions using the 'fx_variables' keyword argument and in some cases they
+# would be automatically added, but ignored if no data was found.
+# It is recommended to upgrade recipes and use the 'ancillary_variables' group
+# to specify the correct ancillary variables.
+#
+# The default value of this option will be set to false in v2.9.0 and it will
+# be removed in v2.10.0.
+use_legacy_ancillaries: true
+
 # Save intermediary cubes in the preprocessor --- true/[false]
 # Setting this to ``true`` will save the output cube from each preprocessing
 # step. These files are numbered according to the preprocessing order.

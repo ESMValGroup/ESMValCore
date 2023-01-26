@@ -4,7 +4,7 @@ import inspect
 import logging
 from pathlib import Path
 from pprint import pformat
-from typing import Any
+from typing import Any, Iterable
 
 from iris.cube import Cube
 
@@ -576,11 +576,11 @@ class PreprocessingTask(BaseTask):
 
     def __init__(
         self,
-        products,
-        name='',
-        order=DEFAULT_ORDER,
-        debug=None,
-        write_ncl_interface=False,
+        products: Iterable[PreprocessorFile],
+        name: str = '',
+        order: Iterable[str] = DEFAULT_ORDER,
+        debug: bool | None = None,
+        write_ncl_interface: bool = False,
     ):
         """Initialize."""
         _check_multi_model_settings(products)
@@ -639,6 +639,11 @@ class PreprocessingTask(BaseTask):
             for product in self.products for step in product.settings
         }
         blocks = get_step_blocks(steps, self.order)
+        if not blocks:
+            for product in self.products:
+                product.cubes
+                product.close()
+
         for block in blocks:
             logger.debug("Running block %s", block)
             if block[0] in MULTI_MODEL_FUNCTIONS:

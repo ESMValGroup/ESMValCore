@@ -20,8 +20,6 @@ logger = logging.getLogger(__name__)
 Recipe = dict[str, Any]
 Facets = dict[str, Any]
 
-# TODO: move tests for this module to their own file
-
 
 def _datasets_to_raw_recipe(datasets: Iterable[Dataset]) -> Recipe:
     """Convert datasets to a recipe dict."""

@@ -11,6 +11,7 @@ import iris.cube
 
 from esmvalcore.cmor.check import cmor_check_data, cmor_check_metadata
 from esmvalcore.cmor.fix import fix_data, fix_metadata
+from esmvalcore.config import CFG
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.preprocessor._io import concatenate, load
 from esmvalcore.preprocessor._time import clip_timerange
@@ -241,8 +242,9 @@ def add_ancillary_variables(
         'volcello': 'volume'
     }
     for ancillary_cube in ancillary_cubes:
-        # TODO: add use_legacy_ancillaries feature flag and skip cubes
-        # with mismatched dimensions
+        if (CFG['use_legacy_ancillaries']
+                and not _is_fx_broadcastable(ancillary_cube, cube)):
+            continue
         if ancillary_cube.var_name in measure_names:
             measure_name = measure_names[ancillary_cube.var_name]
             add_cell_measure(cube, ancillary_cube, measure_name)

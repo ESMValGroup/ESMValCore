@@ -10,7 +10,7 @@ from copy import deepcopy
 from itertools import groupby
 from pathlib import Path
 from pprint import pformat
-from typing import Any
+from typing import Any, Iterable
 
 import yaml
 
@@ -210,11 +210,13 @@ def _get_default_settings(dataset):
 
     # Clean up fixed files
     if not session['save_intermediary_cubes']:
-        output_file = _get_output_file(facets, session.preproc_dir)
-        fix_dir = f"{output_file.with_suffix('')}_fixed"
-        # TODO: check that fixed files are also removed for derived vars
+        fix_dirs = []
+        for item in [dataset] + dataset.ancillaries:
+            output_file = _get_output_file(item.facets, session.preproc_dir)
+            fix_dir = f"{output_file.with_suffix('')}_fixed"
+            fix_dirs.append(fix_dir)
         settings['cleanup'] = {
-            'remove': [fix_dir],
+            'remove': fix_dirs,
         }
 
     # Strip ancillary variables before saving
@@ -356,6 +358,8 @@ def _get_legacy_ancillary_facets(
 
 def _add_legacy_ancillary_datasets(dataset: Dataset, settings):
     """Update fx settings depending on the needed method."""
+    if not dataset.session['use_legacy_ancillaries']:
+        return
     if dataset.ancillaries:
         # Ancillaries have been defined using the new method.
         return
@@ -424,8 +428,8 @@ def _schedule_for_download(datasets):
 
 
 def _check_input_files(
-        input_datasets: list[Dataset],
-        settings: dict[str, Any],
+    input_datasets: Iterable[Dataset],
+    settings: dict[str, Any],
 ) -> set[str]:
     """Check that the required input files are available."""
     missing = set()

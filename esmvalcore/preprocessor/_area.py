@@ -240,7 +240,11 @@ def area_statistics(cube, operator):
     Parameters
     ----------
         cube: iris.cube.Cube
-            Input cube.
+            Input cube. The input cube should have a
+            :class:`iris.coords.CellMeasure` named ``'cell_area'``, unless it
+            has regular 1D latitude and longitude coordinates so the cell areas
+            can be computed using
+            :func:`iris.analysis.cartography.area_weights`.
         operator: str
             The operation, options: mean, median, min, max, std_dev, sum,
             variance, rms.

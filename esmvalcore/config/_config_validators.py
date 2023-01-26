@@ -16,7 +16,10 @@ from esmvalcore.config._config import (
     importlib_files,
     load_config_developer,
 )
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+from esmvalcore.exceptions import (
+    ESMValCoreDeprecationWarning,
+    InvalidConfigParameter,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -245,68 +248,78 @@ def validate_diagnostics(
     }
 
 
-def deprecate(func, variable, version: Optional[str] = None):
-    """Wrap function to mark variables to be deprecated.
+def deprecate(func, option, version: Optional[str] = None):
+    """Wrap function to mark variables as deprecated.
 
-    This will give a warning if the function will be/has been deprecated.
+    This will give a warning if the function has been deprecated and raise
+    an exception once the parameter (should have been) removed.
 
     Parameters
     ----------
     func:
         Validator function to wrap
-    variable: str
-        Name of the variable to deprecate
+    option: str
+        Name of the option to deprecate
     version: str
-        Version to deprecate the variable in, should be something
-        like '2.2.3'
+        Version to remove the option in, should be something like '2.2.3'
     """
-    if not version:
-        version = 'a future version'
+    def get_version(version_string):
+        return tuple(int(i) for i in version_string.split('.')[:3])
 
-    if current_version >= version:
-        warnings.warn(f"`{variable}` has been removed in {version}",
-                      ESMValCoreDeprecationWarning)
-    else:
-        warnings.warn(f"`{variable}` will be removed in {version}.",
-                      ESMValCoreDeprecationWarning,
-                      stacklevel=2)
+    msg_head = f"The configuration option '{option}'"
+    msg_tail = f"removed in {version}."
 
-    return func
+    def wrapper(func):
+        if get_version(current_version) >= get_version(version):
+            raise InvalidConfigParameter(f"{msg_head} has been {msg_tail}")
+        else:
+            warnings.warn(
+                f"{msg_head} will be {msg_tail}",
+                ESMValCoreDeprecationWarning,
+                stacklevel=2,
+            )
+
+        return func
+
+    return wrapper
 
 
 _validators = {
     # From user config
-    'log_level': validate_string,
-    'exit_on_warning': validate_bool,
-    'output_dir': validate_path,
-    'download_dir': validate_path,
-    'auxiliary_data_dir': validate_path,
-    'extra_facets_dir': validate_pathtuple,
-    'compress_netcdf': validate_bool,
-    'save_intermediary_cubes': validate_bool,
-    'remove_preproc_dir': validate_bool,
-    'max_parallel_tasks': validate_int_or_none,
-    'config_developer_file': validate_config_developer,
-    'profile_diagnostic': validate_bool,
-    'run_diagnostic': validate_bool,
-    'output_file_type': validate_string,
-    "offline": validate_bool,
     'always_search_esgf': validate_bool,
+    'auxiliary_data_dir': validate_path,
+    'compress_netcdf': validate_bool,
+    'config_developer_file': validate_config_developer,
+    'download_dir': validate_path,
+    'drs': validate_drs,
+    'exit_on_warning': validate_bool,
+    'extra_facets_dir': validate_pathtuple,
+    'log_level': validate_string,
+    'max_parallel_tasks': validate_int_or_none,
+    'offline': validate_bool,
+    'output_dir': validate_path,
+    'output_file_type': validate_string,
+    'profile_diagnostic': validate_bool,
+    'remove_preproc_dir': validate_bool,
+    'rootpath': validate_rootpath,
+    'run_diagnostic': validate_bool,
+    'save_intermediary_cubes': validate_bool,
+    'use_legacy_ancillaries': deprecate(
+        validate_bool,
+        'use_legacy_ancillaries',
+        '2.10.0',
+    ),
 
     # From CLI
-    "resume_from": validate_pathlist,
-    "skip_nonexistent": validate_bool,
-    "diagnostics": validate_diagnostics,
-    "check_level": validate_check_level,
+    'check_level': validate_check_level,
+    'diagnostics': validate_diagnostics,
     'max_years': validate_int_positive_or_none,
     'max_datasets': validate_int_positive_or_none,
+    'resume_from': validate_pathlist,
+    'skip_nonexistent': validate_bool,
 
     # From recipe
     'write_ncl_interface': validate_bool,
-
-    # oldstyle
-    'rootpath': validate_rootpath,
-    'drs': validate_drs,
 
     # config location
     'config_file': validate_path,

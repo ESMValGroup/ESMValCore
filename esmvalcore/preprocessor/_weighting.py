@@ -20,9 +20,8 @@ def _get_land_fraction(cube):
         try:
             fx_cube = cube.ancillary_variable('sea_area_fraction')
         except iris.exceptions.AncillaryVariableNotFoundError:
-            errors.append(
-                'Ancillary variables land/sea area fraction '
-                'not found in cube. Check fx_file availability.')
+            errors.append('Ancillary variables land/sea area fraction not '
+                          'found in cube. Check ancillary data availability.')
             return (land_fraction, errors)
 
     if fx_cube.var_name == 'sftlf':
@@ -51,7 +50,10 @@ def weighting_landsea_fraction(cube, area_type):
     Parameters
     ----------
     cube : iris.cube.Cube
-        Data cube to be weighted.
+        Data cube to be weighted. It should have an
+        :class:`iris.coords.AncillaryVariable` with standard name
+        ``'land_area_fraction'`` or ``'sea_area_fraction'``. If both are
+        present, only the ``'land_area_fraction'`` will be used.
     area_type : str
         Use land (``'land'``) or sea (``'sea'``) fraction for weighting.
 

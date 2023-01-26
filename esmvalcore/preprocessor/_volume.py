@@ -57,7 +57,7 @@ def extract_volume(cube, z_min, z_max):
 def calculate_volume(cube):
     """Calculate volume from a cube.
 
-    This function is used when the volume netcdf fx_variables can't be found.
+    This function is used when the volume ancillary variables can't be found.
 
     Parameters
     ----------
@@ -96,14 +96,18 @@ def calculate_volume(cube):
 def volume_statistics(cube, operator):
     """Apply a statistical operation over a volume.
 
-    The volume average is weighted according to the cell volume. Cell volume
-    is calculated from iris's cartography tool multiplied by the cell
-    thickness.
+    The volume average is weighted according to the cell volume.
 
     Parameters
     ----------
     cube: iris.cube.Cube
-        Input cube.
+        Input cube. The input cube should have a
+        :class:`iris.coords.CellMeasure` with standard name ``'ocean_volume'``,
+        unless it has regular 1D latitude and longitude coordinates so the cell
+        volumes can be computed by using
+        :func:`iris.analysis.cartography.area_weights` to compute the cell
+        areas and multiplying those by the cell thickness, computed from the
+        bounds of the vertical coordinate.
     operator: str
         The operation to apply to the cube, options are: 'mean'.
 

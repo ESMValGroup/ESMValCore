@@ -70,15 +70,21 @@ def mask_landsea(cube, mask_out):
 
     It uses dedicated ancillary variables (sftlf or sftof) or,
     in their absence, it applies a
-    Natural Earth mask (land or ocean contours).
+    `Natural Earth <https://www.naturalearthdata.com>`_ mask (land or ocean
+    contours).
     Note that the Natural Earth masks have different resolutions:
     10m for land, and 50m for seas.
-    These are more than enough for ESMValTool purposes.
+    These are more than enough for masking climate model data.
 
     Parameters
     ----------
     cube: iris.cube.Cube
-        data cube to be masked.
+        data cube to be masked. If the cube has an
+        :class:`iris.coords.AncillaryVariable` with standard name
+        ``'land_area_fraction'`` or ``'sea_area_fraction'`` that will be used.
+        If both are present, only the 'land_area_fraction' will be used. If the
+        ancillary variable is not available, the mask will be calculated from
+        Natural Earth shapefiles.
 
     mask_out: str
         either "land" to mask out land mass or "sea" to mask out seas.
@@ -91,7 +97,8 @@ def mask_landsea(cube, mask_out):
     Raises
     ------
     ValueError
-        Error raised if masking on irregular grids is attempted.
+        Error raised if masking on irregular grids is attempted without
+        an ancillary variable.
         Irregular grids are not currently supported for masking
         with Natural Earth shapefile masks.
     """
@@ -152,7 +159,9 @@ def mask_landseaice(cube, mask_out):
     Parameters
     ----------
     cube: iris.cube.Cube
-        data cube to be masked.
+        data cube to be masked. It should have an
+        :class:`iris.coords.AncillaryVariable` with standard name
+        ``'land_ice_area_fraction'``.
 
     mask_out: str
         either "landsea" to mask out landsea or "ice" to mask out ice.
@@ -186,7 +195,7 @@ def mask_landseaice(cube, mask_out):
     return cube
 
 
-def mask_glaciated(cube, mask_out):
+def mask_glaciated(cube, mask_out: str = "glaciated"):
     """Mask out glaciated areas.
 
     It applies a Natural Earth mask. Note that for computational reasons
