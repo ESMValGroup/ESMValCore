@@ -11,6 +11,9 @@ from ..fix import Fix
 from ..shared import add_scalar_height_coord
 from ...table import CMOR_TABLES
 
+from iris import NameConstraint
+from iris.cube import CubeList
+
 logger = logging.getLogger(__name__)
 
 
@@ -74,6 +77,29 @@ def divide_by_gravity(cube):
     return cube
 
 
+class Cl(Fix):
+    """Fixes for cl."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            cube.units = '%'
+            cube.data = cube.core_data() * 100.
+
+        return cubes
+
+
+class Cli(Fix):
+    """Fixes for cli."""
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            cube.units = 'kg kg-1'
+
+        return cubes
+
+
 class Clt(Fix):
     """Fixes for clt."""
 
@@ -87,15 +113,12 @@ class Clt(Fix):
         return cubes
 
 
-class Cl(Fix):
-    """Fixes for cl."""
-
+class Clw(Fix):
+    """Fixes for clw."""
     def fix_metadata(self, cubes):
-        """Fix metadata."""
         for cube in cubes:
             # Invalid input cube units (ignored on load) were '0-1'
-            cube.units = '%'
-            cube.data = cube.core_data() * 100.
+            cube.units = 'kg kg-1'
 
         return cubes
 
@@ -126,6 +149,16 @@ class Evspsblpot(Fix):
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
             multiply_with_density(cube)
+
+        return cubes
+
+
+class Hus(Fix):
+    """Fixes for hus."""
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            cube.units = 'kg kg-1'
 
         return cubes
 
@@ -234,6 +267,39 @@ class Rlus(Fix):
         return cubes
 
 
+class Rlut(Fix):
+    """Fixes for rlut."""
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            metadata = cube.metadata
+            cube *= -1
+            cube.metadata = metadata
+            fix_hourly_time_coordinate(cube)
+            cube.attributes['positive'] = 'down'
+            fix_accumulated_units(cube)
+            cube.units = 'W m-2'
+            cube.attributes['positive'] = 'up'
+        return cubes
+
+
+class Rlutcs(Fix):
+    """Fixes for rlutcs."""
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            metadata = cube.metadata
+            cube *= -1
+            cube.metadata = metadata
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            cube.units = 'W m-2'
+            cube.attributes['positive'] = 'up'
+
+        return cubes
+
+
 class Rls(Fix):
     """Fixes for Rls."""
 
@@ -259,8 +325,34 @@ class Rsds(Fix):
         return cubes
 
 
+class Rsdt(Fix):
+    """Fixes for Rsdt."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            cube.attributes['positive'] = 'down'
+
+        return cubes
+
+
 class Rsns(Fix):
     """Fixes for Rsns."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            fix_hourly_time_coordinate(cube)
+            fix_accumulated_units(cube)
+            cube.attributes['positive'] = 'down'
+
+        return cubes
+
+
+class Rss(Fix):
+    """Fixes for Rss."""
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
@@ -285,30 +377,28 @@ class Rsus(Fix):
         return cubes
 
 
-class Rsdt(Fix):
-    """Fixes for Rsdt."""
-
+class Rtmt(Fix):
+    """Fixes for rtmt."""
     def fix_metadata(self, cubes):
-        """Fix metadata."""
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
             cube.attributes['positive'] = 'down'
 
         return cubes
 
 
-class Rss(Fix):
-    """Fixes for Rss."""
+class Swcre(Fix):
+    """Fixes for ``swcre``."""
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
-        for cube in cubes:
-            fix_hourly_time_coordinate(cube)
-            fix_accumulated_units(cube)
-            cube.attributes['positive'] = 'down'
-
-        return cubes
+        print(cubes)
+        cube = (
+            cubes.extract_cube(NameConstraint(var_name='mtnswrf')) -
+            cubes.extract_cube(NameConstraint(var_name='mtnswrfcs'))
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
 
 
 class Tasmax(Fix):
