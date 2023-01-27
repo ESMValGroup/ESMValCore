@@ -120,12 +120,13 @@ class Test:
         cube = add_ancillary_variables(cube, [self.fx_area])
         assert cube.ancillary_variable(self.fx_area.standard_name) is not None
 
-    def test_wrong_shape(self, monkeypatch):
+    @pytest.mark.parametrize('use_legacy_ancillaries', [True, False])
+    def test_wrong_shape(self, use_legacy_ancillaries, monkeypatch):
         """Test variable is not added if it's not broadcastable to cube."""
         monkeypatch.setitem(
             esmvalcore.config.CFG,
             'use_legacy_ancillaries',
-            False,
+            use_legacy_ancillaries,
         )
         volume_data = np.ones((2, 3, 3, 3))
         volume_cube = iris.cube.Cube(
@@ -145,8 +146,11 @@ class Test:
                                  (self.lats, 2),
                                  (self.lons, 3)])
         cube.var_name = 'thetao'
-        with pytest.raises(iris.exceptions.CannotAddError):
-            add_ancillary_variables(cube, [volume_cube])
+        if use_legacy_ancillaries:
+            assert cube.cell_measures() == []
+        else:
+            with pytest.raises(iris.exceptions.CannotAddError):
+                add_ancillary_variables(cube, [volume_cube])
 
     def test_remove_ancillary_vars(self):
         """Test ancillary variables are removed from cube."""

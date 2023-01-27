@@ -435,17 +435,11 @@ def _check_input_files(
     missing = set()
 
     for input_dataset in input_datasets:
-        try:
-            check.data_availability(input_dataset)
-        except RecipeError as ex:
-            missing.add(ex.message)
-        try:
-            check.ancillary_availability(
-                dataset=input_dataset,
-                settings=settings,
-            )
-        except RecipeError as ex:
-            missing.add(ex.message)
+        for dataset in [input_dataset] + input_dataset.ancillaries:
+            try:
+                check.data_availability(dataset)
+            except RecipeError as ex:
+                missing.add(ex.message)
 
     return missing
 
@@ -648,7 +642,7 @@ def _set_version(dataset: Dataset, input_datasets: list[Dataset]):
     versions = set()
     for in_dataset in input_datasets:
         in_dataset.set_version()
-        if version := dataset.facets.get('version'):
+        if version := in_dataset.facets.get('version'):
             if isinstance(version, list):
                 versions.update(version)
             else:
@@ -656,6 +650,8 @@ def _set_version(dataset: Dataset, input_datasets: list[Dataset]):
     if versions:
         version = versions.pop() if len(versions) == 1 else sorted(versions)
         dataset.set_facet('version', version)
+    for ancillary_ds in dataset.ancillaries:
+        ancillary_ds.set_version()
 
 
 def _get_preprocessor_products(
@@ -686,6 +682,7 @@ def _get_preprocessor_products(
         input_datasets = _get_input_datasets(dataset)
         for input_dataset in input_datasets:
             _add_legacy_ancillary_datasets(input_dataset, settings)
+            check.preprocessor_ancillaries(input_dataset, settings)
         missing = _check_input_files(input_datasets, settings)
         if missing:
             if _allow_skipping(dataset):

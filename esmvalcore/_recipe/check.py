@@ -174,18 +174,15 @@ def data_availability(dataset, log=True):
                 missing_txt, "\n".join(str(f) for f in input_files)))
 
 
-def ancillary_availability(dataset, settings):
-    """Check if the required ancillary files are available."""
+def preprocessor_ancillaries(dataset, settings):
+    """Check that the required ancillary variables have been added."""
     steps = [step for step in settings if step in PREPROCESSOR_ANCILLARIES]
-    ancillaries = {d.facets['short_name']: d for d in dataset.ancillaries}
+    ancillaries = {d.facets['short_name'] for d in dataset.ancillaries}
 
-    # Check that the required ancillary variables are defined in the recipe
-    steps_ok = []
     for step in steps:
         ancs = PREPROCESSOR_ANCILLARIES[step]
         for short_name in ancs['variables']:
             if short_name in ancillaries:
-                steps_ok.append(step)
                 break
         else:
             if ancs['required'] == "require_at_least_one":
@@ -198,39 +195,6 @@ def ancillary_availability(dataset, settings):
                     "Preprocessor function %s works best when at least "
                     "one ancillary variable of %s is defined in the "
                     "recipe for %s.",
-                    step,
-                    ancs['variables'],
-                    dataset,
-                )
-
-    # Check that the required ancillary data can be found
-    for step in steps_ok:
-        ancs = PREPROCESSOR_ANCILLARIES[step]
-        found_files = False
-        for short_name in ancs['variables']:
-            if short_name in ancillaries:
-                ancillary_ds = ancillaries[short_name]
-                try:
-                    data_availability(ancillary_ds, log=False)
-                except RecipeError:
-                    _log_data_availability_errors(dataset)
-                else:
-                    found_files = True
-                    logger.debug(
-                        "Using ancillary files:\n%s\nfor preprocessor "
-                        "function %s with %s", pformat(ancillary_ds.files),
-                        step, dataset)
-
-        if not found_files:
-            if ancs['required'] == "require_at_least_one":
-                raise InputFilesNotFound(
-                    "Missing ancillary data for preprocessor function "
-                    f"{step}, which requires at least one of "
-                    f"{ancs['variables']} for {dataset}")
-            elif ancs['required'] == "prefer_at_least_one":
-                logger.warning(
-                    "Missing ancillary data for preprocessor function %s, "
-                    "which works best with at least one of %s for %s",
                     step,
                     ancs['variables'],
                     dataset,

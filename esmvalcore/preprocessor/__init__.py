@@ -640,6 +640,7 @@ class PreprocessingTask(BaseTask):
         }
         blocks = get_step_blocks(steps, self.order)
         if not blocks:
+            # If no preprocessing is configured, just load the data and save.
             for product in self.products:
                 product.cubes
                 product.close()

@@ -7,9 +7,11 @@ import pyesgf.search.results
 import pytest
 
 import esmvalcore._recipe.recipe as _recipe
+import esmvalcore.config
 import esmvalcore.experimental.recipe_output
 from esmvalcore.dataset import Dataset
 from esmvalcore.esgf._download import ESGFFile
+from esmvalcore.exceptions import RecipeError
 from tests import PreprocessorFile
 
 
@@ -513,3 +515,87 @@ def test_update_warning_settings_step_present():
     assert len(settings['load']) == 2
     assert settings['load']['filename'] == 'in.nc'
     assert 'ignore_warnings' in settings['load']
+
+
+def test_update_regrid_time():
+    """Test `_update_regrid_time."""
+    dataset = Dataset(frequency='mon')
+    settings = {'regrid_time': {}}
+    _recipe._update_regrid_time(dataset, settings)
+    assert settings == {'regrid_time': {'frequency': 'mon'}}
+
+
+def test_select_dataset_fails():
+    dataset = Dataset(dataset='dataset1')
+    with pytest.raises(RecipeError):
+        _recipe._select_dataset('dataset2', [dataset])
+
+
+def test_limit_datasets():
+
+    datasets = [
+        Dataset(dataset='dataset1', alias='dataset1'),
+        Dataset(dataset='dataset2', alias='dataset2'),
+    ]
+    datasets[0].session = {'max_datasets': 1}
+
+    result = _recipe._limit_datasets(datasets, {})
+
+    assert result == datasets[:1]
+
+
+def test_get_default_settings(mocker):
+    mocker.patch.object(
+        _recipe,
+        '_get_output_file',
+        autospec=True,
+        return_value=Path('/path/to/file.nc'),
+    )
+    session = mocker.create_autospec(esmvalcore.config.Session, instance=True)
+    session.__getitem__.return_value = False
+
+    dataset = Dataset(
+        short_name='sic',
+        original_short_name='siconc',
+        mip='Amon',
+        project='CMIP6',
+    )
+    dataset.session = session
+
+    settings = _recipe._get_default_settings(dataset)
+    assert settings == {
+        'load': {'callback': 'default'},
+        'remove_ancillary_variables': {},
+        'save': {'compress': False, 'alias': 'sic'},
+        'cleanup': {'remove': ['/path/to/file_fixed']},
+    }
+
+
+def test_add_legacy_ancillaries_disabled():
+    """Test that calling _add_legacy_ancillaries does nothing when disabled."""
+    dataset = Dataset()
+    dataset.session = {'use_legacy_ancillaries': False}
+    _recipe._add_legacy_ancillary_datasets(dataset, settings={})
+
+
+def test_set_version(mocker):
+
+    dataset = Dataset(short_name='tas')
+    ancillary = Dataset(short_name='areacella')
+    dataset.ancillaries = [ancillary]
+
+    input_dataset = Dataset(short_name='tas')
+    file1 = mocker.Mock()
+    file1.facets = {'version': 'v1'}
+    file2 = mocker.Mock()
+    file2.facets = {'version': 'v2'}
+    input_dataset.files = [file1, file2]
+
+    file3 = mocker.Mock()
+    file3.facets = {'version': 'v3'}
+    ancillary.files = [file3]
+
+    _recipe._set_version(dataset, [input_dataset])
+    print(dataset)
+    assert dataset.facets['version'] == ['v1', 'v2']
+    assert dataset.ancillaries[0].facets['version'] == 'v3'
