@@ -28,13 +28,17 @@ def fix_file(file, short_name, project, dataset, mip, output_dir: Path,
     Parameters
     ----------
     file: str
-        Path to the original file
+        Path to the original file.
     short_name: str
-        Variable's short name
+        Variable's short name.
     project: str
-    dataset:str
+        Project of the dataset.
+    dataset: str
+        Name of the dataset.
+    mip: str
+        Variable's MIP.
     output_dir: str
-        Output directory for fixed files
+        Output directory for fixed files.
     **extra_facets: dict, optional
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
@@ -42,10 +46,19 @@ def fix_file(file, short_name, project, dataset, mip, output_dir: Path,
     Returns
     -------
     str:
-        Path to the fixed file
+        Path to the fixed file.
     """
     if not output_dir.exists():
         output_dir.mkdir(parents=True, exist_ok=True)
+    # Update extra_facets with variable information given as regular arguments
+    # to this function
+    extra_facets.update({
+        'short_name': short_name,
+        'project': project,
+        'dataset': dataset,
+        'mip': mip,
+    })
+
     for fix in Fix.get_fixes(project=project,
                              dataset=dataset,
                              mip=mip,
@@ -73,18 +86,17 @@ def fix_metadata(cubes,
     Parameters
     ----------
     cubes: iris.cube.CubeList
-        Cubes to fix
+        Cubes to fix.
     short_name: str
-        Variable's short name
+        Variable's short name.
     project: str
-
+        Project of the dataset.
     dataset: str
-
+        Name of the dataset.
     mip: str
-        Variable's MIP
-
+        Variable's MIP.
     frequency: str, optional
-        Variable's data frequency, if available
+        Variable's data frequency, if available.
     check_level: CheckLevels
         Level of strictness of the checks. Set to default.
     **extra_facets: dict, optional
@@ -94,13 +106,23 @@ def fix_metadata(cubes,
     Returns
     -------
     iris.cube.Cube:
-        Fixed and checked cube
+        Fixed and checked cube.
 
     Raises
     ------
     CMORCheckError
         If the checker detects errors in the metadata that it can not fix.
     """
+    # Update extra_facets with variable information given as regular arguments
+    # to this function
+    extra_facets.update({
+        'short_name': short_name,
+        'project': project,
+        'dataset': dataset,
+        'mip': mip,
+        'frequency': frequency,
+    })
+
     fixes = Fix.get_fixes(project=project,
                           dataset=dataset,
                           mip=mip,
@@ -140,10 +162,10 @@ def _get_single_cube(cube_list, short_name, project, dataset):
             break
     if not cube:
         raise ValueError(
-            'More than one cube found for variable %s in %s:%s but '
-            'none of their var_names match the expected. \n'
-            'Full list of cubes encountered: %s' %
-            (short_name, project, dataset, cube_list))
+            f'More than one cube found for variable {short_name} in '
+            f'{project}:{dataset} but none of their var_names match the '
+            f'expected.\nFull list of cubes encountered: {cube_list}'
+        )
     logger.warning(
         'Found variable %s in %s:%s, but there were other present in '
         'the file. Those extra variables are usually metadata '
@@ -174,15 +196,17 @@ def fix_data(cube,
     Parameters
     ----------
     cube: iris.cube.Cube
-        Cube to fix
+        Cube to fix.
     short_name: str
-        Variable's short name
+        Variable's short name.
     project: str
+        Project of the dataset.
     dataset: str
+        Name of the dataset.
     mip: str
-        Variable's MIP
+        Variable's MIP.
     frequency: str, optional
-        Variable's data frequency, if available
+        Variable's data frequency, if available.
     check_level: CheckLevels
         Level of strictness of the checks. Set to default.
     **extra_facets: dict, optional
@@ -192,13 +216,23 @@ def fix_data(cube,
     Returns
     -------
     iris.cube.Cube:
-        Fixed and checked cube
+        Fixed and checked cube.
 
     Raises
     ------
     CMORCheckError
         If the checker detects errors in the data that it can not fix.
     """
+    # Update extra_facets with variable information given as regular arguments
+    # to this function
+    extra_facets.update({
+        'short_name': short_name,
+        'project': project,
+        'dataset': dataset,
+        'mip': mip,
+        'frequency': frequency,
+    })
+
     for fix in Fix.get_fixes(project=project,
                              dataset=dataset,
                              mip=mip,
