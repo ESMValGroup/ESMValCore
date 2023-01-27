@@ -3,6 +3,7 @@
 import unittest
 from copy import deepcopy
 
+import dask.array as da
 import iris
 import iris.coord_categorisation
 import iris.coords
@@ -594,6 +595,34 @@ class TestCMORCheck(unittest.TestCase):
         )
         self._check_warnings_on_metadata(automatic_fixes=False,
                                          check_level=CheckLevels.IGNORE)
+
+    def test_check_lazy(self):
+        """Test checker does not realise data or aux_coords."""
+        self.cube.data = self.cube.lazy_data()
+        self.cube.remove_coord('latitude')
+        self.cube.remove_coord('longitude')
+        self.cube.add_aux_coord(
+            iris.coords.AuxCoord(
+                da.reshape(da.linspace(-90, 90, num=20*20), (20, 20)),
+                var_name='lat',
+                standard_name='latitude',
+                units='degrees_north'
+            ),
+            (1, 2)
+        )
+        self.cube.add_aux_coord(
+            iris.coords.AuxCoord(
+                da.reshape(da.linspace(0, 360, num=20*20), (20, 20)),
+                var_name='lon',
+                standard_name='longitude',
+                units='degrees_east'
+            ),
+            (1, 2)
+        )
+        self._check_cube()
+        self.assertTrue(self.cube.coord('latitude').has_lazy_points())
+        self.assertTrue(self.cube.coord('longitude').has_lazy_points())
+        self.assertTrue(self.cube.has_lazy_data())
 
     def _check_fails_in_metadata(self, automatic_fixes=False, frequency=None,
                                  check_level=CheckLevels.DEFAULT):
