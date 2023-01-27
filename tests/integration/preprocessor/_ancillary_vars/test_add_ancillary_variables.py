@@ -147,6 +147,7 @@ class Test:
                                  (self.lons, 3)])
         cube.var_name = 'thetao'
         if use_legacy_ancillaries:
+            add_ancillary_variables(cube, [volume_cube])
             assert cube.cell_measures() == []
         else:
             with pytest.raises(iris.exceptions.CannotAddError):
