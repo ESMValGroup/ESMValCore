@@ -1042,12 +1042,12 @@ parameter ``keep_input_datasets`` to ``false`` (default value is ``true``).
         multi_model_statistics:
           span: overlap
           statistics: [mean, median]
-          exclude: [NCEP]
+          exclude: [NCEP-NCAR-R1]
       multi_model_without_saving_input:
         multi_model_statistics:
           span: overlap
           statistics: [mean, median]
-          exclude: [NCEP]
+          exclude: [NCEP-NCAR-R1]
           keep_input_datasets: false
 
 Multi-model statistics also supports a ``groupby`` argument. You can group by
@@ -1070,7 +1070,7 @@ can group by ``ensemble_statistics`` as well. For example:
           span: overlap
           statistics: [min, max]
           groupby: [ensemble_statistics]
-          exclude: [NCEP]
+          exclude: [NCEP-NCAR-R1]
 
 This will first compute ensemble mean and median, and then compute the multi-model
 min and max separately for the ensemble means and medians. Note that this combination
