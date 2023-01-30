@@ -1,4 +1,5 @@
 import os
+import re
 from collections import defaultdict
 from pathlib import Path
 from pprint import pformat
@@ -172,17 +173,10 @@ def get_recipe(tempdir: Path, content: str, session: Session):
 
 def test_recipe_no_datasets(tmp_path, session):
     content = dedent("""
-        preprocessors:
-          preprocessor_name:
-            extract_levels:
-              levels: 85000
-              scheme: nearest
-
         diagnostics:
           diagnostic_name:
             variables:
               ta:
-                preprocessor: preprocessor_name
                 project: CMIP5
                 mip: Amon
                 exp: historical
@@ -199,8 +193,38 @@ def test_recipe_no_datasets(tmp_path, session):
     assert str(exc.value) == exc_message
 
 
-def test_simple_recipe(tmp_path, patched_datafinder, session):
-    script = tmp_path / 'diagnostic.py'
+@pytest.mark.parametrize('skip_nonexistent', [True, False])
+def test_recipe_no_data(tmp_path, session, skip_nonexistent):
+    content = dedent("""
+        datasets:
+          - dataset: GFDL-ESM2G
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                start_year: 1999
+                end_year: 2002
+            scripts: null
+        """)
+    session['skip_nonexistent'] = skip_nonexistent
+    with pytest.raises(RecipeError) as error:
+        get_recipe(tmp_path, content, session)
+    if skip_nonexistent:
+        msg = ("Did not find any input data for task diagnostic_name/ta")
+    else:
+        msg = ("Missing data for preprocessor diagnostic_name/ta:\n"
+               "- Missing data for Dataset: .*")
+    assert re.match(msg, error.value.failed_tasks[0].message)
+
+
+@pytest.mark.parametrize('script_file', ['diagnostic.py', 'diagnostic.ncl'])
+def test_simple_recipe(tmp_path, patched_datafinder, session, script_file):
+    script = tmp_path / script_file
     script.write_text('')
     content = dedent("""
         datasets:
@@ -272,6 +296,10 @@ def test_simple_recipe(tmp_path, patched_datafinder, session):
         for key in MANDATORY_SCRIPT_SETTINGS_KEYS:
             assert key in task.settings and task.settings[key]
         assert task.settings['custom_setting'] == 1
+
+    # Check that NCL interface is enabled for NCL scripts.
+    write_ncl_interface = script.suffix == '.ncl'
+    assert datasets[0].session['write_ncl_interface'] == write_ncl_interface
 
 
 def test_write_filled_recipe(tmp_path, patched_datafinder, session):
@@ -430,6 +458,31 @@ def test_default_preprocessor_custom_order(tmp_path, patched_datafinder,
         preproc_dir, 'CMIP5_CanESM2_Oyr_historical_r1i1p1_chl_2000-2005_fixed')
     defaults = _get_default_settings_for_chl(fix_dir, product.filename)
     assert product.settings == defaults
+
+
+def test_invalid_preprocessor(tmp_path, patched_datafinder, session):
+    """Test the error message when the named prepreprocesor is not defined."""
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              chl:
+                preprocessor: not_defined
+                project: CMIP5
+                mip: Oyr
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+
+    with pytest.raises(RecipeError) as error:
+        get_recipe(tmp_path, content, session)
+    msg = "Unknown preprocessor 'not_defined' in .*"
+    assert re.match(msg, error.value.failed_tasks[0].message)
 
 
 def test_disable_preprocessor_function(tmp_path, patched_datafinder, session):
@@ -680,18 +733,17 @@ def test_reference_dataset(tmp_path, patched_datafinder, session, monkeypatch):
                 end_year: 2005
                 ensemble: r1i1p1
                 additional_datasets:
-                  - {dataset: GFDL-CM3}
-                  - {dataset: MPI-ESM-LR}
+                  - dataset: GFDL-CM3
+                  - dataset: MPI-ESM-LR
                 reference_dataset: MPI-ESM-LR
               ch4:
                 <<: *var
                 preprocessor: test_from_cmor_table
                 additional_datasets:
-                  - {dataset: GFDL-CM3}
+                  - dataset: GFDL-CM3
 
             scripts: null
         """)
-
     recipe = get_recipe(tmp_path, content, session)
 
     assert len(recipe.tasks) == 2
@@ -736,6 +788,38 @@ def test_reference_dataset(tmp_path, patched_datafinder, session, monkeypatch):
         16000,
         18000,
     ]
+
+
+def test_reference_dataset_undefined(tmp_path, monkeypatch, session):
+    content = dedent("""
+        preprocessors:
+          test_from_reference:
+            extract_levels:
+              levels: reference_dataset
+              scheme: linear
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta: &var
+                preprocessor: test_from_reference
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - dataset: GFDL-CM3
+                  - dataset: MPI-ESM-LR
+
+            scripts: null
+        """)
+    with pytest.raises(RecipeError) as error:
+        get_recipe(tmp_path, content, session)
+    msg = ("Preprocessor 'test_from_reference' uses 'reference_dataset', but "
+           "'reference_dataset' is not defined")
+    assert msg in error.value.failed_tasks[0].message
 
 
 def test_custom_preproc_order(tmp_path, patched_datafinder, session):
@@ -1874,9 +1958,9 @@ def test_weighting_landsea_fraction_exclude_fail(tmp_path, patched_datafinder,
         get_recipe(tmp_path, content, session)
     assert str(exc_info.value) == INITIALIZATION_ERROR_MSG
     assert str(exc_info.value.failed_tasks[0].message) == (
-        'Preprocessor landfrac_weighting uses alternative_dataset, but '
-        'alternative_dataset is not defined for variable gpp of diagnostic '
-        'diagnostic_name')
+        "Preprocessor 'landfrac_weighting' uses 'alternative_dataset', but "
+        "'alternative_dataset' is not defined for variable 'gpp' of "
+        "diagnostic 'diagnostic_name'.")
 
 
 def test_area_statistics(tmp_path, patched_datafinder, session):

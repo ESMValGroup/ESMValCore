@@ -77,12 +77,12 @@ def _special_name_to_dataset(facets, special_name):
     if special_name in ('reference_dataset', 'alternative_dataset'):
         if special_name not in facets:
             raise RecipeError(
-                "Preprocessor {preproc} uses {name}, but {name} is not "
-                "defined for variable {short_name} of diagnostic "
-                "{diagnostic}".format(
+                "Preprocessor '{preproc}' uses '{name}', but '{name}' is not "
+                "defined for variable '{variable_group}' of diagnostic "
+                "'{diagnostic}'.".format(
                     preproc=facets['preprocessor'],
                     name=special_name,
-                    short_name=facets['short_name'],
+                    variable_group=facets['variable_group'],
                     diagnostic=facets['diagnostic'],
                 ))
         special_name = facets[special_name]
@@ -116,6 +116,7 @@ def _update_target_levels(dataset, datasets, settings):
         else:
             target_ds = _select_dataset(dataset_name, datasets)
             representative_ds = _representative_dataset(target_ds)
+            check.data_availability(representative_ds)
             settings['extract_levels']['levels'] = get_reference_levels(
                 representative_ds)
 
@@ -133,6 +134,7 @@ def _update_target_grid(dataset, datasets, settings):
     elif any(grid == d.facets['dataset'] for d in datasets):
         representative_ds = _representative_dataset(
             _select_dataset(grid, datasets))
+        check.data_availability(representative_ds)
         settings['regrid']['target_grid'] = representative_ds
     else:
         # Check that MxN grid spec is correct
@@ -158,8 +160,11 @@ def _select_dataset(dataset_name, datasets):
     for dataset in datasets:
         if dataset.facets['dataset'] == dataset_name:
             return dataset
+    diagnostic = datasets[0].facets['diagnostic']
+    variable_group = datasets[0].facets['variable_group']
     raise RecipeError(
-        f"Unable to find matching file for dataset {dataset_name}")
+        f"Unable to find dataset '{dataset_name}' in the list of datasets"
+        f"for variable '{variable_group}' of diagnostic '{diagnostic}'.")
 
 
 def _limit_datasets(datasets, profile):
@@ -799,7 +804,7 @@ def _get_preprocessor_task(datasets, profiles, task_name):
     session = datasets[0].session
     if facets['preprocessor'] not in profiles:
         raise RecipeError(
-            f"Unknown preprocessor {facets['preprocessor']} in variable "
+            f"Unknown preprocessor '{facets['preprocessor']}' in variable "
             f"{facets['variable_group']} of diagnostic {facets['diagnostic']}")
     logger.info("Creating preprocessor '%s' task for variable '%s'",
                 facets['preprocessor'], facets['variable_group'])

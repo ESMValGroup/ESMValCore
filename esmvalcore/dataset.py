@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import os.path
 import pprint
 import re
 import textwrap
@@ -11,6 +12,7 @@ from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import Any, Iterator, Sequence
 
+import yaml
 from iris.cube import Cube
 
 from esmvalcore import esgf, local
@@ -93,8 +95,21 @@ class Dataset:
             self.set_facet(key, deepcopy(value), persist=True)
 
     @staticmethod
-    def from_recipe(recipe: Path, session: Session) -> list['Dataset']:
+    def from_recipe(
+        recipe: Path | str | dict,
+        session: Session,
+    ) -> list['Dataset']:
         """Factory function that creates datasets from a recipe.
+
+        Parameters
+        ----------
+        recipe
+            :ref:`Recipe <recipe>` to load the datasets from. The value
+            provided here should be either a path to a file, a recipe file
+            that has been loaded using e.g. :func:`yaml.safe_load`, or an
+            :obj:`str` that can be loaded using :func:`yaml.safe_load`.
+        session
+            Datasets to use in the recipe.
 
         Returns
         -------
@@ -102,7 +117,15 @@ class Dataset:
             A list of datasets.
         """
         from esmvalcore._recipe.to_datasets import datasets_from_recipe
-        return datasets_from_recipe(recipe, session)
+
+        if isinstance(recipe, Path) or (isinstance(recipe, str)
+                                        and os.path.exists(recipe)):
+            recipe = Path(recipe).read_text(encoding='utf-8')
+
+        if isinstance(recipe, str):
+            recipe = yaml.safe_load(recipe)
+
+        return datasets_from_recipe(recipe, session)  # type: ignore
 
     def _get_available_facets(self) -> Iterator[Facets]:
         """Yield unique combinations of facets based on the available files."""

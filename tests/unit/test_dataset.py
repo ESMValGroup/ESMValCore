@@ -7,19 +7,9 @@ import pytest
 import esmvalcore.dataset
 import esmvalcore.local
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.config import CFG
-from esmvalcore.config._config_object import CFG_DEFAULT
 from esmvalcore.dataset import Dataset
 from esmvalcore.esgf import ESGFFile
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
-
-
-@pytest.fixture
-def session(tmp_path):
-    CFG.clear()
-    CFG.update(CFG_DEFAULT)
-    CFG['output_dir'] = tmp_path / 'esmvaltool_output'
-    return CFG.start_session('recipe_test')
 
 
 def test_repr():

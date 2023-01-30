@@ -3,10 +3,7 @@ from __future__ import annotations
 import logging
 from copy import deepcopy
 from itertools import groupby
-from pathlib import Path
-from typing import Iterable
-
-import yaml
+from typing import Any, Iterable
 
 from esmvalcore.cmor.table import _update_cmor_facets
 from esmvalcore.config import Session
@@ -147,27 +144,30 @@ def _get_next_alias(alias, datasets_info, i):
         )
 
 
+def _check_ancillaries_valid(facets):
+    """Check that ancillary variables have a short_name."""
+    for ancillary_facets in facets.get('ancillary_variables', []):
+        if 'short_name' not in ancillary_facets:
+            raise RecipeError(
+                "'short_name' is required for ancillary_variables "
+                "entries, but missing in {facets}")
+
+
 def _merge_ancillary_dicts(var_facets, ds_facets):
     """Update the elements of `var_facets` with those in `ds_facets`.
 
     Both are lists of dicts containing facets
     """
     merged = {}
-    msg = ("'short_name' is required for ancillary_variables entries, "
-           "but missing in")
     for facets in var_facets:
-        if 'short_name' not in facets:
-            raise RecipeError(f"{msg} {facets}")
         merged[facets['short_name']] = facets
     for facets in ds_facets:
-        if 'short_name' not in facets:
-            raise RecipeError(f"{msg} {facets}")
         short_name = facets['short_name']
         if short_name not in merged:
             merged[short_name] = {}
         merged[short_name].update(facets)
-
-    return list(merged.values())
+    var_facets.clear()
+    var_facets.extend(merged.values())
 
 
 _REQUIRED_KEYS = (
@@ -178,11 +178,13 @@ _REQUIRED_KEYS = (
 )
 
 
-def datasets_from_recipe(recipe: Path, session: Session) -> list[Dataset]:
+def datasets_from_recipe(
+    recipe: dict[str, Any],
+    session: Session,
+) -> list[Dataset]:
     datasets = []
 
-    loaded_recipe = yaml.safe_load(recipe.read_text(encoding='utf-8'))
-    diagnostics = loaded_recipe.get('diagnostics') or {}
+    diagnostics = recipe.get('diagnostics') or {}
     for name, diagnostic in diagnostics.items():
         for variable_group in diagnostic.get('variables', {}):
             logger.debug(
@@ -192,16 +194,18 @@ def datasets_from_recipe(recipe: Path, session: Session) -> list[Dataset]:
             recipe_variable = diagnostic['variables'][variable_group]
             if recipe_variable is None:
                 recipe_variable = {}
+            _check_ancillaries_valid(recipe_variable)
             # Read datasets from recipe
-            recipe_datasets = (loaded_recipe.get('datasets', []) +
+            recipe_datasets = (recipe.get('datasets', []) +
                                diagnostic.get('additional_datasets', []) +
                                recipe_variable.get('additional_datasets', []))
             check.datasets(recipe_datasets, name, variable_group)
 
             idx = 0
             for recipe_dataset in recipe_datasets:
-                DATASET_KEYS.union(recipe_dataset)
+                DATASET_KEYS.update(recipe_dataset)
                 recipe_dataset = deepcopy(recipe_dataset)
+                _check_ancillaries_valid(recipe_dataset)
                 facets = deepcopy(recipe_variable)
                 facets.pop('additional_datasets', None)
                 for key, value in recipe_dataset.items():
@@ -271,7 +275,7 @@ def _clean_ancillaries(dataset: Dataset) -> None:
         group = sorted(duplicates, key=match, reverse=True)
         ancillary_ds = group[0]
         if len(group) > 1:
-            logger.warning(
+            logger.info(
                 "For dataset %s: only using ancillary dataset %s, "
                 "ignoring duplicate ancillary datasets\n%s",
                 dataset.summary(shorten=True),
@@ -345,11 +349,17 @@ def _representative_dataset(dataset: Dataset) -> Dataset:
 
 def _from_representative_files(dataset: Dataset) -> list[Dataset]:
     """Replace facet values of '*' based on available files."""
-    logger.info("Expanding dataset globs in recipe, this may take a while..")
     result: list[Dataset] = []
     errors = []
-    repr_dataset = _representative_dataset(dataset)
 
+    if any(_isglob(f) for f in dataset.facets.values()) or any(
+            _isglob(f) for ds in dataset.ancillaries
+            for f in ds.facets.values()):
+        logger.debug(
+            "Expanding dataset globs for dataset %s, "
+            "this may take a while..", dataset.summary(shorten=True))
+
+    repr_dataset = _representative_dataset(dataset)
     for repr_ds in repr_dataset.from_files():
         updated_facets = {}
         failed = {}
@@ -361,17 +371,24 @@ def _from_representative_files(dataset: Dataset) -> list[Dataset]:
                     failed[key] = value
 
         if failed:
-            errors.append("Unable to replace " +
-                          ", ".join(f"{k}={v}" for k, v in failed.items()) +
-                          f" by a value for {dataset}. Do the paths to:\n" +
-                          "\n".join(str(f) for f in repr_ds.files) +
-                          "\ncontain the facet values?")
+            msg = ("Unable to replace " +
+                   ", ".join(f"{k}={v}" for k, v in failed.items()) +
+                   f" by a value for\n{dataset}")
+            if repr_ds.files:
+                msg = (f"{msg}\nDo the paths to:\n" +
+                       "\n".join(str(f) for f in repr_ds.files) +
+                       "\ncontain the missing facet values?")
+            else:
+                msg = (f"{msg}\nNo files found matching:\n" +
+                       "\n".join(str(p)
+                                 for p in repr_ds._file_globs))  # type:ignore
+            errors.append(msg)
 
         new_ds = dataset.copy()
         new_ds.facets.update(updated_facets)
         new_ds.ancillaries = [ds.copy() for ds in repr_ds.ancillaries]
         _clean_ancillaries(new_ds)
-        logger.debug("Using ancillary dataset %s", new_ds)
+        logger.debug("Found %s", new_ds.summary(shorten=True))
         result.append(new_ds)
 
     if errors:

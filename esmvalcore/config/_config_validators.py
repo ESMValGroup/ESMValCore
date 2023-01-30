@@ -276,7 +276,6 @@ def deprecate(func, option, version: Optional[str] = None):
             warnings.warn(
                 f"{msg_head} will be {msg_tail}",
                 ESMValCoreDeprecationWarning,
-                stacklevel=2,
             )
 
         return func

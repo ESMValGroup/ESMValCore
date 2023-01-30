@@ -526,7 +526,11 @@ def test_update_regrid_time():
 
 
 def test_select_dataset_fails():
-    dataset = Dataset(dataset='dataset1')
+    dataset = Dataset(
+        dataset='dataset1',
+        diagnostic='diagnostic1',
+        variable_group='tas',
+    )
     with pytest.raises(RecipeError):
         _recipe._select_dataset('dataset2', [dataset])
 
