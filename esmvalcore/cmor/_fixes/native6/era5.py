@@ -163,6 +163,20 @@ class Hus(Fix):
         return cubes
 
 
+class Lwcre(Fix):
+    """Fixes for ``lwcre``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        print(cubes)
+        cube = (
+            cubes.extract_cube(NameConstraint(var_name='mtnlwrf')) -
+            cubes.extract_cube(NameConstraint(var_name='mtnlwrfcs'))
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
 class Mrro(Fix):
     """Fixes for mrro."""
 
