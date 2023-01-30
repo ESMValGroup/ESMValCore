@@ -13,6 +13,7 @@ from nested_lookup import get_occurrence_of_value
 from PIL import Image
 
 import esmvalcore
+import esmvalcore._task
 from esmvalcore._recipe.recipe import (
     _get_input_datasets,
     _representative_dataset,
@@ -223,7 +224,24 @@ def test_recipe_no_data(tmp_path, session, skip_nonexistent):
 
 
 @pytest.mark.parametrize('script_file', ['diagnostic.py', 'diagnostic.ncl'])
-def test_simple_recipe(tmp_path, patched_datafinder, session, script_file):
+def test_simple_recipe(
+    tmp_path,
+    patched_datafinder,
+    session,
+    script_file,
+    monkeypatch,
+):
+
+    def ncl_version():
+        return '6.5'
+
+    monkeypatch.setattr(esmvalcore._recipe.check, 'ncl_version', ncl_version)
+
+    def which(interpreter):
+        return interpreter
+
+    monkeypatch.setattr(esmvalcore._task, 'which', which)
+
     script = tmp_path / script_file
     script.write_text('')
     content = dedent("""
