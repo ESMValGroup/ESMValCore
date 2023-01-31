@@ -80,19 +80,19 @@ def diagnostics(diags):
 def duplicate_datasets(
     datasets: list[dict[str, Any]],
     diagnostic: str,
-    variable: str,
+    variable_group: str,
 ) -> None:
     """Check for duplicate datasets."""
     if not datasets:
         raise RecipeError(
-            "You have not specified any dataset or additional_dataset"
-            f" groups for variable {variable} in diagnostic {diagnostic}.")
+            "You have not specified any dataset or additional_dataset groups "
+            f"for variable {variable_group} in diagnostic {diagnostic}.")
     checked_datasets_ = []
     for dataset in datasets:
         if dataset in checked_datasets_:
             raise RecipeError(
-                f"Duplicate dataset {dataset} for variable {variable} in "
-                f"diagnostic {diagnostic}.")
+                f"Duplicate dataset {dataset} for variable {variable_group} "
+                f"in diagnostic {diagnostic}.")
         checked_datasets_.append(dataset)
 
 
