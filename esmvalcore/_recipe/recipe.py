@@ -821,8 +821,8 @@ def _update_preproc_functions(settings, dataset, datasets, missing_vars):
             datasets=datasets,
             settings=settings,
         )
-    except RecipeError as exc:
-        missing_vars.add(exc.message)
+    except RecipeError as ex:
+        missing_vars.add(ex.message)
     _update_regrid_time(dataset, settings)
     if dataset.facets.get('frequency') == 'fx':
         check.check_for_temporal_preprocs(settings)
