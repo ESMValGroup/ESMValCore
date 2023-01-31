@@ -1,10 +1,13 @@
 """Module with functions to check a recipe."""
+from __future__ import annotations
+
 import logging
 import os
 import re
 import subprocess
 from pprint import pformat
 from shutil import which
+from typing import Any, Iterable
 
 import isodate
 import yamale
@@ -74,7 +77,11 @@ def diagnostics(diags):
                         script_name, name))
 
 
-def datasets(datasets, diagnostic: str, variable: str):
+def duplicate_datasets(
+    datasets: list[dict[str, Any]],
+    diagnostic: str,
+    variable: str,
+) -> None:
     """Check for duplicate datasets."""
     if not datasets:
         raise RecipeError(
@@ -89,15 +96,16 @@ def datasets(datasets, diagnostic: str, variable: str):
         checked_datasets_.append(dataset)
 
 
-def variable(var, required_keys):
+def variable(var: dict[str, Any], required_keys: Iterable[str]):
     """Check variables as derived from recipe."""
     required = set(required_keys)
     missing = required - set(var)
     if missing:
         raise RecipeError(
-            "Missing keys {} in {} from variable {} in diagnostic {}".format(
-                missing, pformat(var), var.get('variable_group'),
-                var.get('diagnostic')))
+            f"Missing keys {missing} in\n"
+            f"{pformat(var)}\n"
+            "for variable {var['variable_group']} in diagnostic "
+            f"{var['diagnostic']}")
 
 
 def _log_data_availability_errors(dataset):

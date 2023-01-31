@@ -1,3 +1,4 @@
+"""Module that contains functions for reading the `Dataset`s from a recipe."""
 from __future__ import annotations
 
 import logging
@@ -9,9 +10,10 @@ from esmvalcore.cmor.table import _update_cmor_facets
 from esmvalcore.config import Session
 from esmvalcore.dataset import Dataset, _isglob
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.local import _get_timerange_from_years
+from esmvalcore.local import _replace_years_with_timerange
 from esmvalcore.preprocessor._derive import get_required
 from esmvalcore.preprocessor._io import DATASET_KEYS
+from esmvalcore.typing import Facets, FacetValue
 
 from . import check
 
@@ -30,15 +32,13 @@ _ALIAS_INFO_KEYS = (
 """List of keys to be used to compose the alias, ordered by priority."""
 
 
-def _set_aliases(datasets: Iterable[Dataset]):
-    """Add a unique alias per diagnostic."""
-    for _, group in groupby(datasets, key=lambda ds: ds.facets['diagnostic']):
-        diag_datasets = [
-            list(h)
-            for _, h in groupby(group,
-                                key=lambda ds: ds.facets['variable_group'])
-        ]
-        _set_alias(diag_datasets)
+def _facet_to_str(facet_value: FacetValue) -> str:
+    """Get a string representation of a facet value."""
+    if isinstance(facet_value, str):
+        return facet_value
+    if isinstance(facet_value, Iterable):
+        return '-'.join(str(v) for v in facet_value)
+    return str(facet_value)
 
 
 def _set_alias(variables):
@@ -90,18 +90,10 @@ def _set_alias(variables):
     """
     datasets_info = set()
 
-    def _key_str(obj):
-        if isinstance(obj, str):
-            return obj
-        try:
-            return '-'.join(obj)
-        except TypeError:
-            return str(obj)
-
     for variable in variables:
         for dataset in variable:
             alias = tuple(
-                _key_str(dataset.facets.get(key, None))
+                _facet_to_str(dataset.facets.get(key, None))
                 for key in _ALIAS_INFO_KEYS)
             datasets_info.add(alias)
             if 'alias' not in dataset.facets:
@@ -144,20 +136,25 @@ def _get_next_alias(alias, datasets_info, i):
         )
 
 
-def _check_ancillaries_valid(facets):
+def _check_ancillaries_valid(ancillaries: Iterable[Facets]) -> None:
     """Check that ancillary variables have a short_name."""
-    for ancillary_facets in facets.get('ancillary_variables', []):
-        if 'short_name' not in ancillary_facets:
+    for facets in ancillaries:
+        if 'short_name' not in facets:
             raise RecipeError(
                 "'short_name' is required for ancillary_variables "
-                "entries, but missing in {facets}")
+                f"entries, but missing in {facets}")
 
 
-def _merge_ancillary_dicts(var_facets, ds_facets):
-    """Update the elements of `var_facets` with those in `ds_facets`.
+def _merge_ancillary_dicts(
+    var_facets: Iterable[Facets],
+    ds_facets: Iterable[Facets],
+) -> list[Facets]:
+    """Merge the elements of `var_facets` with those in `ds_facets`.
 
     Both are lists of dicts containing facets
     """
+    _check_ancillaries_valid(var_facets)
+    _check_ancillaries_valid(ds_facets)
     merged = {}
     for facets in var_facets:
         merged[facets['short_name']] = facets
@@ -166,93 +163,138 @@ def _merge_ancillary_dicts(var_facets, ds_facets):
         if short_name not in merged:
             merged[short_name] = {}
         merged[short_name].update(facets)
-    var_facets.clear()
-    var_facets.extend(merged.values())
+    return list(merged.values())
 
 
-_REQUIRED_KEYS = (
-    'short_name',
-    'mip',
-    'dataset',
-    'project',
-)
+def _get_facets_from_recipe(
+    variable_group: str,
+    recipe_variable: dict[str, Any],
+    recipe_dataset: dict[str, Any],
+    session: Session,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Read the facets for a single dataset definition from the recipe."""
+    facets = deepcopy(recipe_variable)
+    recipe_dataset = deepcopy(recipe_dataset)
+
+    ancillaries = _merge_ancillary_dicts(
+        facets.pop('ancillary_variables', []),
+        recipe_dataset.pop('ancillary_variables', []),
+    )
+
+    facets.update(recipe_dataset)
+
+    if 'short_name' not in facets:
+        facets['short_name'] = variable_group
+
+    # Flaky support for limiting the number of years in a recipe.
+    # If we want this to work, it should actually be done based on `timerange`,
+    # after any wildcards have been resolved.
+    if 'end_year' in facets and session['max_years']:
+        facets['end_year'] = min(
+            facets['end_year'],
+            facets['start_year'] + session['max_years'] - 1)
+
+    # Legacy: support start_year and end_year instead of timerange
+    _replace_years_with_timerange(facets)
+
+    # Legacy: support wrong capitalization of obs4MIPs
+    if facets['project'] == 'obs4mips':
+        logger.warning("Correcting capitalization, project 'obs4mips' "
+                       "should be written as 'obs4MIPs'")
+        facets['project'] = 'obs4MIPs'
+
+    check.variable(
+        facets,
+        required_keys=(
+            'short_name',
+            'mip',
+            'dataset',
+            'project',
+        ),
+    )
+
+    return facets, ancillaries
+
+
+def _get_all_datasets_for_variable(
+    diagnostic: str,
+    variable_group: str,
+    recipe_variable: dict[str, Any],
+    recipe_datasets: Iterable[dict[str, Any]],
+    session: Session,
+) -> list[Dataset]:
+    """Read the datasets from a variable definition in the recipe."""
+    datasets = []
+    idx = 0
+
+    for recipe_dataset in recipe_datasets:
+        facets, ancillaries = _get_facets_from_recipe(
+            variable_group=variable_group,
+            recipe_variable=recipe_variable,
+            recipe_dataset=recipe_dataset,
+            session=session,
+        )
+
+        dataset = Dataset(**facets)
+        dataset.session = session
+        dataset['diagnostic'] = diagnostic
+        dataset['variable_group'] = variable_group
+
+        for dataset1 in dataset.from_ranges():
+            for ancillary_facets in ancillaries:
+                dataset1.add_ancillary(**ancillary_facets)
+            for ancillary_ds in dataset1.ancillaries:
+                ancillary_ds.facets.pop('preprocessor', None)
+            for dataset2 in _from_representative_files(dataset1):
+                dataset2['recipe_dataset_index'] = idx  # type: ignore
+                datasets.append(dataset2)
+                idx += 1
+
+    return datasets
 
 
 def datasets_from_recipe(
     recipe: dict[str, Any],
     session: Session,
 ) -> list[Dataset]:
+    """Read datasets from a recipe."""
     datasets = []
 
+    recipe = deepcopy(recipe)
     diagnostics = recipe.get('diagnostics') or {}
     for name, diagnostic in diagnostics.items():
+        diagnostic_datasets = []
         for variable_group in diagnostic.get('variables', {}):
+
+            # Read variable from recipe
             logger.debug(
                 "Populating list of datasets for variable %s in "
                 "diagnostic %s", variable_group, name)
-            # Read variable from recipe
             recipe_variable = diagnostic['variables'][variable_group]
             if recipe_variable is None:
                 recipe_variable = {}
-            _check_ancillaries_valid(recipe_variable)
+
             # Read datasets from recipe
             recipe_datasets = (recipe.get('datasets', []) +
                                diagnostic.get('additional_datasets', []) +
-                               recipe_variable.get('additional_datasets', []))
-            check.datasets(recipe_datasets, name, variable_group)
+                               recipe_variable.pop('additional_datasets', []))
+            # The NCL interface requires a distinction between variable and
+            # dataset keys as defined in the recipe. `DATASET_KEYS` is used to
+            # keep track of which keys are part of the dataset.
+            DATASET_KEYS.update(key for ds in recipe_datasets for key in ds)
+            check.duplicate_datasets(recipe_datasets, name, variable_group)
 
-            idx = 0
-            for recipe_dataset in recipe_datasets:
-                DATASET_KEYS.update(recipe_dataset)
-                recipe_dataset = deepcopy(recipe_dataset)
-                _check_ancillaries_valid(recipe_dataset)
-                facets = deepcopy(recipe_variable)
-                facets.pop('additional_datasets', None)
-                for key, value in recipe_dataset.items():
-                    if key == 'ancillary_variables' and key in facets:
-                        _merge_ancillary_dicts(facets[key], value)
-                    else:
-                        facets[key] = value
-                # Legacy: support start_year and end_year instead of timerange
-                if 'end_year' in facets and session['max_years']:
-                    facets['end_year'] = min(
-                        facets['end_year'],
-                        facets['start_year'] + session['max_years'] - 1)
-                _get_timerange_from_years(facets)
-                # Legacy: support wrong capitalization of obs4MIPs
-                if facets['project'] == 'obs4mips':
-                    logger.warning(
-                        "Correcting capitalization, project 'obs4mips' "
-                        "should be written as 'obs4MIPs'")
-                    facets['project'] = 'obs4MIPs'
+            variable_datasets = _get_all_datasets_for_variable(
+                diagnostic=name,
+                variable_group=variable_group,
+                recipe_variable=recipe_variable,
+                recipe_datasets=recipe_datasets,
+                session=session,
+            )
+            diagnostic_datasets.append(variable_datasets)
+            datasets.extend(variable_datasets)
 
-                persist = set(facets)
-                facets['diagnostic'] = name
-                facets['variable_group'] = variable_group
-                if 'short_name' not in facets:
-                    facets['short_name'] = variable_group
-                    persist.add('short_name')
-                check.variable(facets, required_keys=_REQUIRED_KEYS)
-                preprocessor = str(facets.pop('preprocessor', 'default'))
-                ancillaries = facets.pop('ancillary_variables', [])
-                dataset = Dataset()
-                dataset.session = session
-                for key, value in facets.items():
-                    dataset.set_facet(key, value, key in persist)
-                dataset.set_facet('preprocessor', preprocessor,
-                                  preprocessor != 'default')
-                for dataset1 in dataset.from_ranges():
-                    for ancillary_facets in ancillaries:
-                        dataset1.add_ancillary(**ancillary_facets)
-                    for ancillary_ds in dataset1.ancillaries:
-                        ancillary_ds.facets.pop('preprocessor')
-                    for dataset2 in _from_representative_files(dataset1):
-                        dataset2.facets[
-                            'recipe_dataset_index'] = idx  # type: ignore
-                        datasets.append(dataset2)
-                        idx += 1
-
-    _set_aliases(datasets)
+        _set_alias(diagnostic_datasets)
 
     return datasets
 

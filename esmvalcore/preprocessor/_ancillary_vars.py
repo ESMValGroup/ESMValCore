@@ -269,7 +269,6 @@ def remove_ancillary_variables(cube: iris.cube.Cube):
     iris.cube.Cube
         Cube without cell measures or ancillary variables.
     """
-
     if cube.cell_measures():
         for measure in cube.cell_measures():
             cube.remove_cell_measure(measure)

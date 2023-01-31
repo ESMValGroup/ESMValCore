@@ -16,8 +16,15 @@ from .check import CheckLevels, _get_cmor_checker
 logger = logging.getLogger(__name__)
 
 
-def fix_file(file, short_name, project, dataset, mip, output_dir: Path,
-             **extra_facets):
+def fix_file(
+    file: Path,
+    short_name: str,
+    project: str,
+    dataset: str,
+    mip: str,
+    output_dir: Path,
+    **extra_facets,
+) -> Path:
     """Fix files before ESMValTool can load them.
 
     This fixes are only for issues that prevent iris from loading the cube or
@@ -27,7 +34,7 @@ def fix_file(file, short_name, project, dataset, mip, output_dir: Path,
 
     Parameters
     ----------
-    file: str
+    file: Path
         Path to the original file.
     short_name: str
         Variable's short name.
@@ -37,7 +44,7 @@ def fix_file(file, short_name, project, dataset, mip, output_dir: Path,
         Name of the dataset.
     mip: str
         Variable's MIP.
-    output_dir: str
+    output_dir: Path
         Output directory for fixed files.
     **extra_facets: dict, optional
         Extra facets are mainly used for data outside of the big projects like
@@ -45,7 +52,7 @@ def fix_file(file, short_name, project, dataset, mip, output_dir: Path,
 
     Returns
     -------
-    str:
+    Path:
         Path to the fixed file.
     """
     if not output_dir.exists():

@@ -148,8 +148,8 @@ def _dates_to_timerange(start_date, end_date):
     return f'{start_date}/{end_date}'
 
 
-def _get_timerange_from_years(variable):
-    """Build `timerange` tag from tags `start_year` and `end_year`."""
+def _replace_years_with_timerange(variable):
+    """Set `timerange` tag from tags `start_year` and `end_year`."""
     start_year = variable.get('start_year')
     end_year = variable.get('end_year')
     if start_year and end_year:

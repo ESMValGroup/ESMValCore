@@ -1,4 +1,6 @@
 """Preprocessor module."""
+from __future__ import annotations
+
 import copy
 import inspect
 import logging
@@ -642,7 +644,7 @@ class PreprocessingTask(BaseTask):
         if not blocks:
             # If no preprocessing is configured, just load the data and save.
             for product in self.products:
-                product.cubes
+                product.cubes  # pylint: disable=pointless-statement
                 product.close()
 
         for block in blocks:

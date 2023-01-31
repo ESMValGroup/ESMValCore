@@ -99,7 +99,7 @@ class Dataset:
         recipe: Path | str | dict,
         session: Session,
     ) -> list['Dataset']:
-        """Factory function that creates datasets from a recipe.
+        """Read datasets from a recipe.
 
         Parameters
         ----------

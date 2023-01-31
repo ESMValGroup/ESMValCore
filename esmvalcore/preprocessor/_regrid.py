@@ -453,7 +453,7 @@ def extract_point(cube, latitude, longitude, scheme):
 
 
 def is_dataset(dataset):
-    """Test if something is an `esmvalcore.dataset.Dataset`"""
+    """Test if something is an `esmvalcore.dataset.Dataset`."""
     # Use this function to avoid circular imports
     return hasattr(dataset, 'facets')
 
@@ -1071,8 +1071,8 @@ def get_reference_levels(dataset):
     cube = dataset.load()
     try:
         coord = cube.coord(axis='Z')
-    except iris.exceptions.CoordinateNotFoundError:
-        raise ValueError(f'z-coord not available in {dataset.files}')
+    except iris.exceptions.CoordinateNotFoundError as exc:
+        raise ValueError(f'z-coord not available in {dataset.files}') from exc
     return coord.points.tolist()
 
 

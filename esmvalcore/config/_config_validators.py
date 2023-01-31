@@ -248,7 +248,7 @@ def validate_diagnostics(
     }
 
 
-def deprecate(func, option, version: Optional[str] = None):
+def deprecate(validator, option, version: Optional[str] = None):
     """Wrap function to mark variables as deprecated.
 
     This will give a warning if the function has been deprecated and raise
@@ -256,12 +256,12 @@ def deprecate(func, option, version: Optional[str] = None):
 
     Parameters
     ----------
-    func:
-        Validator function to wrap
+    validator:
+        Validator function to wrap.
     option: str
-        Name of the option to deprecate
+        Name of the option to deprecate.
     version: str
-        Version to remove the option in, should be something like '2.2.3'
+        Version to remove the option in, should be something like '2.2.3'.
     """
     def get_version(version_string):
         return tuple(int(i) for i in version_string.split('.')[:3])
@@ -269,16 +269,14 @@ def deprecate(func, option, version: Optional[str] = None):
     msg_head = f"The configuration option '{option}'"
     msg_tail = f"removed in {version}."
 
-    def wrapper(func):
+    def wrapper(value):
         if get_version(current_version) >= get_version(version):
             raise InvalidConfigParameter(f"{msg_head} has been {msg_tail}")
-        else:
-            warnings.warn(
-                f"{msg_head} will be {msg_tail}",
-                ESMValCoreDeprecationWarning,
-            )
-
-        return func
+        warnings.warn(
+            f"{msg_head} will be {msg_tail}",
+            ESMValCoreDeprecationWarning,
+        )
+        return validator(value)
 
     return wrapper
 

@@ -10,7 +10,7 @@ from copy import deepcopy
 from itertools import groupby
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Iterable
+from typing import Any, Iterable, Sequence
 
 import yaml
 
@@ -288,12 +288,11 @@ def _guess_fx_mip(facets: dict, dataset: Dataset):
     return mip
 
 
-def _get_legacy_ancillary_facets(
+def _set_default_preproc_fx_variables(
     dataset: Dataset,
     settings: PreprocessorSettings,
-) -> list[Facets]:
-    """Load the ancillary dataset facets from the preprocessor settings."""
-    # Update `fx_variables` key in preprocessor settings with defaults
+) -> None:
+    """Update `fx_variables` key in preprocessor settings with defaults."""
     default_fx = {
         'area_statistics': {
             'areacella': None,
@@ -316,19 +315,19 @@ def _get_legacy_ancillary_facets(
         default_fx['mask_landsea']['sftof'] = None
         default_fx['weighting_landsea_fraction']['sftof'] = None
 
-    for step in default_fx:
+    for step, fx_variables in default_fx.items():
         if step in settings and 'fx_variables' not in settings[step]:
-            settings[step]['fx_variables'] = default_fx[step]
+            settings[step]['fx_variables'] = fx_variables
 
-    # Read facets from `fx_variables` key in preprocessor settings
+
+def _get_ancillaries_from_fx_variables(
+    settings: PreprocessorSettings,
+) -> list[Facets]:
+    """Read ancillary facets from `fx_variables` in preprocessor settings."""
     ancillaries = []
     for step, kwargs in settings.items():
         allowed = PREPROCESSOR_ANCILLARIES.get(step, {}).get('variables', [])
-        if 'fx_variables' in kwargs:
-            fx_variables = kwargs['fx_variables']
-
-            if fx_variables is None:
-                continue
+        if fx_variables := kwargs.get('fx_variables'):
 
             if isinstance(fx_variables, list):
                 result: dict[str, Facets] = {}
@@ -351,6 +350,19 @@ def _get_legacy_ancillary_facets(
                     facets = {}
                 facets['short_name'] = short_name
                 ancillaries.append(facets)
+
+    return ancillaries
+
+
+def _get_legacy_ancillary_facets(
+    dataset: Dataset,
+    settings: PreprocessorSettings,
+) -> list[Facets]:
+    """Load the ancillary dataset facets from the preprocessor settings."""
+    # First update `fx_variables` in preprocessor settings with defaults
+    _set_default_preproc_fx_variables(dataset, settings)
+
+    ancillaries = _get_ancillaries_from_fx_variables(settings)
 
     # Guess the ensemble and mip if they is not specified
     for facets in ancillaries:
@@ -432,10 +444,7 @@ def _schedule_for_download(datasets):
         )
 
 
-def _check_input_files(
-    input_datasets: Iterable[Dataset],
-    settings: dict[str, Any],
-) -> set[str]:
+def _check_input_files(input_datasets: Iterable[Dataset]) -> set[str]:
     """Check that the required input files are available."""
     missing = set()
 
@@ -443,8 +452,8 @@ def _check_input_files(
         for dataset in [input_dataset] + input_dataset.ancillaries:
             try:
                 check.data_availability(dataset)
-            except RecipeError as ex:
-                missing.add(ex.message)
+            except RecipeError as exc:
+                missing.add(exc.message)
 
     return missing
 
@@ -688,7 +697,7 @@ def _get_preprocessor_products(
         for input_dataset in input_datasets:
             _add_legacy_ancillary_datasets(input_dataset, settings)
             check.preprocessor_ancillaries(input_dataset, settings)
-        missing = _check_input_files(input_datasets, settings)
+        missing = _check_input_files(input_datasets)
         if missing:
             if _allow_skipping(dataset):
                 logger.info("Skipping: %s", missing)
@@ -720,9 +729,29 @@ def _get_preprocessor_products(
 
     check.reference_for_bias_preproc(products)
 
+    _configure_multi_product_preprocessor(
+        products=products,
+        preproc_dir=datasets[0].session.preproc_dir,
+        profile=profile,
+        order=order,
+    )
+
+    for product in products:
+        _set_start_end_year(product)
+        product.check()
+
+    return products
+
+
+def _configure_multi_product_preprocessor(
+    products: Iterable[PreprocessorFile],
+    preproc_dir: Path,
+    profile: PreprocessorSettings,
+    order: Sequence[str],
+):
+    """Configure preprocessing of ensemble and multimodel statistics."""
     ensemble_step = 'ensemble_statistics'
     multi_model_step = 'multi_model_statistics'
-    preproc_dir = datasets[0].session.preproc_dir
     if ensemble_step in profile:
         ensemble_products, ensemble_settings = _update_multiproduct(
             products, order, preproc_dir, ensemble_step)
@@ -758,18 +787,20 @@ def _get_preprocessor_products(
     else:
         multimodel_products = set()
 
-    for product in products | multimodel_products | ensemble_products:
+    for product in multimodel_products | ensemble_products:
         product.check()
+        _set_start_end_year(product)
 
-        # Ensure that attributes start_year and end_year are always available
-        # for all products if a timerange is specified
-        if 'timerange' in product.attributes:
-            start_year, end_year = _parse_period(
-                product.attributes['timerange'])
-            product.attributes['start_year'] = int(str(start_year[0:4]))
-            product.attributes['end_year'] = int(str(end_year[0:4]))
 
-    return products
+def _set_start_end_year(product: PreprocessorFile) -> None:
+    """Set the attributes `start_year` and `end_year`.
+
+    These attributes are used by many diagnostic scripts in ESMValTool.
+    """
+    if 'timerange' in product.attributes:
+        start_year, end_year = _parse_period(product.attributes['timerange'])
+        product.attributes['start_year'] = int(str(start_year[0:4]))
+        product.attributes['end_year'] = int(str(end_year[0:4]))
 
 
 def _update_preproc_functions(settings, dataset, datasets, missing_vars):
@@ -782,16 +813,16 @@ def _update_preproc_functions(settings, dataset, datasets, missing_vars):
             datasets=datasets,
             settings=settings,
         )
-    except RecipeError as ex:
-        missing_vars.add(ex.message)
+    except RecipeError as exc:
+        missing_vars.add(exc.message)
     try:
         _update_target_grid(
             dataset=dataset,
             datasets=datasets,
             settings=settings,
         )
-    except RecipeError as ex:
-        missing_vars.add(ex.message)
+    except RecipeError as exc:
+        missing_vars.add(exc.message)
     _update_regrid_time(dataset, settings)
     if dataset.facets.get('frequency') == 'fx':
         check.check_for_temporal_preprocs(settings)
@@ -802,13 +833,14 @@ def _get_preprocessor_task(datasets, profiles, task_name):
     # First set up the preprocessor profile
     facets = datasets[0].facets
     session = datasets[0].session
-    if facets['preprocessor'] not in profiles:
+    preprocessor = facets.get('preprocessor', 'default')
+    if preprocessor not in profiles:
         raise RecipeError(
-            f"Unknown preprocessor '{facets['preprocessor']}' in variable "
+            f"Unknown preprocessor '{preprocessor}' in variable "
             f"{facets['variable_group']} of diagnostic {facets['diagnostic']}")
     logger.info("Creating preprocessor '%s' task for variable '%s'",
-                facets['preprocessor'], facets['variable_group'])
-    profile = deepcopy(profiles[facets['preprocessor']])
+                preprocessor, facets['variable_group'])
+    profile = deepcopy(profiles[preprocessor])
     order = _extract_preprocessor_order(profile)
 
     # Create preprocessor task
@@ -1140,8 +1172,8 @@ class Recipe:
                         profiles=self._preprocessors,
                         task_name=task_name,
                     )
-                except RecipeError as ex:
-                    failed_tasks.append(ex)
+                except RecipeError as exc:
+                    failed_tasks.append(exc)
                 else:
                     tasks.append(task)
 
