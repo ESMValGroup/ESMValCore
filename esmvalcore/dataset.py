@@ -631,7 +631,10 @@ class Dataset:
         If the timerange is given as a year, it ensures it's formatted
         as a 4-digit value (YYYY).
         """
-        if 'timerange' not in self.facets:
+        dataset = self.copy()
+        dataset.augment_facets()
+        if 'timerange' not in dataset.facets:
+            self.facets.pop('timerange', None)
             return
 
         timerange = self.facets['timerange']

@@ -1105,7 +1105,13 @@ def test_update_timerange_no_files(session, offline):
 
 
 def test_update_timerange_typeerror():
-    dataset = Dataset(timerange=42)
+    dataset = Dataset(
+        short_name='tas',
+        mip='Amon',
+        project='CMIP6',
+        dataset='dataset1',
+        timerange=42,
+    )
     msg = r"timerange should be a string, got '42'"
     with pytest.raises(TypeError, match=msg):
         dataset._update_timerange()

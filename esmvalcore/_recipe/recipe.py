@@ -881,10 +881,6 @@ def _extract_preprocessor_order(profile):
 class Recipe:
     """Recipe object."""
 
-    info_keys = ('project', 'activity', 'dataset', 'exp', 'ensemble',
-                 'version')
-    """List of keys to be used to compose the alias, ordered by priority."""
-
     def __init__(self, raw_recipe, session, recipe_file: Path):
         """Parse a recipe file into an object."""
         # Clear the global variable containing the set of files to download
