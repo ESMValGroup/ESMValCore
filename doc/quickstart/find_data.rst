@@ -363,6 +363,32 @@ Key           Description                   Default value if not specified
               file                          default DRS is used)
 ============= ============================= =================================
 
+ESMValCore automatically makes native ICON data `UGRID
+<https://ugrid-conventions.github.io/ugrid-conventions/>`__-compliant when
+loading the data.
+The UGRID conventions provide a standardized format to store data on
+unstructured grids, which is required by many software packages or tools to
+work correctly.
+An example is the horizontal regridding of native ICON data to a regular grid.
+While the built-in :ref:`unstructured_nearest scheme <built-in regridding
+schemes>` can handle unstructured grids not in UGRID format, using more complex
+regridding algorithms (for example provided by the
+:doc:`iris-esmf-regrid:index` package through :ref:`generic regridding
+schemes`) requires the input data in UGRID format.
+The following code snippet provides a preprocessor that regrids native ICON
+data to a 1°x1° grid using `ESMF's first-order conservative regridding
+algorithm <https://earthsystemmodeling.org/regrid/#regridding-methods>`__:
+
+.. code-block:: yaml
+
+   preprocessors:
+     regrid_icon:
+       regrid:
+         target_grid: 1x1
+         scheme:
+           reference: esmf_regrid.experimental.unstructured_scheme:regrid_unstructured_to_rectilinear
+           method: conservative
+
 .. hint::
 
    To use the :func:`~esmvalcore.preprocessor.extract_levels` preprocessor on

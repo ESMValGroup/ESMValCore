@@ -88,6 +88,7 @@ class IconFix(NativeDatasetFix):
         # Download file if necessary
         logger.debug("Attempting to download ICON grid file from '%s' to '%s'",
                      grid_url, grid_path)
+        self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
         with requests.get(grid_url, stream=True,
                           timeout=self.TIMEOUT) as response:
             response.raise_for_status()

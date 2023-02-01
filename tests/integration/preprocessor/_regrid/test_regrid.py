@@ -11,7 +11,6 @@ from numpy import ma
 
 from esmvalcore.dataset import Dataset
 from esmvalcore.preprocessor import regrid
-from esmvalcore.preprocessor._io import GLOBAL_FILL_VALUE
 from tests import assert_array_equal
 from tests.unit.preprocessor._regrid import _make_cube
 
@@ -89,7 +88,9 @@ class Test:
         self.unstructured_grid_cube.remove_coord('Pressure Slice')
         self.unstructured_grid_cube.add_aux_coord(lons, (1, 2))
         self.unstructured_grid_cube.add_aux_coord(lats, (1, 2))
-        self.unstructured_grid_cube.data = self.cube.data.astype(np.float32)
+        self.unstructured_grid_cube.data = np.ma.masked_less(
+            self.cube.data.astype(np.float32), 3.5
+        )
 
     def test_regrid__linear(self):
         result = regrid(self.cube, self.grid_for_linear, 'linear')
@@ -277,7 +278,9 @@ class Test:
         result = regrid(self.unstructured_grid_cube,
                         self.grid_for_unstructured_nearest,
                         'unstructured_nearest')
-        expected = np.array([[[3.0]], [[7.0]], [[11.0]]])
+        expected = np.ma.array([[[3.0]], [[7.0]], [[11.0]]],
+                               mask=[[[True]], [[False]], [[False]]])
+        np.testing.assert_array_equal(result.data.mask, expected.mask)
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
 
         # Make sure that dtype is preserved (without an adaption in
@@ -286,20 +289,11 @@ class Test:
         assert self.unstructured_grid_cube.dtype == np.float32
         assert result.dtype == np.float32
 
-        # Make sure that output is a masked array with correct fill value
-        # (= GLOBAL_FILL_VALUE)
-        np.testing.assert_allclose(result.data.fill_value, GLOBAL_FILL_VALUE)
-
     def test_regrid__unstructured_nearest_int(self):
         """Test unstructured_nearest regridding with cube of ints."""
-        self.unstructured_grid_cube.data = np.full((3, 2, 2), 1, dtype=int)
+        self.unstructured_grid_cube.data = np.ones((3, 2, 2), dtype=int)
         result = regrid(self.unstructured_grid_cube,
                         self.grid_for_unstructured_nearest,
                         'unstructured_nearest')
         expected = np.array([[[1]], [[1]], [[1]]])
         np.testing.assert_array_equal(result.data, expected)
-
-        # Make sure that output is a masked array with correct fill value
-        # (= maximum int)
-        np.testing.assert_allclose(result.data.fill_value,
-                                   float(np.iinfo(int).max))
