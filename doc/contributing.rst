@@ -779,6 +779,11 @@ previous release.
 Review the results, and if anything needs changing, change it on GitHub and
 re-run the script until the changelog looks acceptable.
 Copy the result to the file ``doc/changelog.rst``.
+Additionally, list any backward incompatible changes that the 
+release may include. The :ref:`backward compatibility policy 
+<esmvaltool:backward_compatibility>` 
+lists the information that should be provided by the developer of any backward 
+incompatible change for inclusion in the release notes.
 Make a pull request and get it merged into ``main`` and cherry pick it into
 the release branch.
 
