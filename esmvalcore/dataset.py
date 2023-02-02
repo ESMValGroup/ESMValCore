@@ -10,7 +10,7 @@ import uuid
 from copy import deepcopy
 from fnmatch import fnmatchcase
 from pathlib import Path
-from typing import Any, Iterator, Sequence
+from typing import Any, Iterator, Sequence, Union
 
 import yaml
 from iris.cube import Cube
@@ -41,7 +41,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-File = esgf.ESGFFile | local.LocalFile
+File = Union[esgf.ESGFFile, local.LocalFile]
 
 
 def _augment(base: dict, update: dict):
