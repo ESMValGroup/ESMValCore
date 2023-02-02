@@ -10,8 +10,10 @@ FacetValue = Union[str, Sequence[str], Number]
 Facets = Dict[str, FacetValue]
 """Type describing a collection of facets."""
 
-NetCDFAttrType = Union[str, Number, Iterable]
-"""NetCDF attributes.
+NetCDFAttr = Union[str, Number, Iterable]
+"""Type describing netCDF attributes.
 
-`NetCDF attributes <https://unidata.github.io/netcdf4-python/#attributes-in-a-netcdf-file>`_ can be strings, numbers or sequences.
+`NetCDF attributes
+<https://unidata.github.io/netcdf4-python/#attributes-in-a-netcdf-file>`_ can
+be strings, numbers or sequences.
 """

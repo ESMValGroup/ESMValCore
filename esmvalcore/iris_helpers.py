@@ -9,7 +9,7 @@ import numpy as np
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 
-from esmvalcore.typing import NetCDFAttrType
+from esmvalcore.typing import NetCDFAttr
 
 
 def add_leading_dim_to_cube(cube, dim_coord):
@@ -137,7 +137,7 @@ def merge_cube_attributes(
         return
 
     # Step 1: collect all attribute values in a list
-    attributes: Dict[str, List[NetCDFAttrType]] = {}
+    attributes: Dict[str, List[NetCDFAttr]] = {}
     for cube in cubes:
         for (attr, val) in cube.attributes.items():
             attributes.setdefault(attr, [])
@@ -146,7 +146,7 @@ def merge_cube_attributes(
     # Step 2: if values are not equal, first convert them to strings (so that
     # set() can be used); then extract unique elements from this list, sort it,
     # and use the delimiter to join all elements to a single string
-    final_attributes: Dict[str, NetCDFAttrType] = {}
+    final_attributes: Dict[str, NetCDFAttr] = {}
     for (attr, vals) in attributes.items():
         set_of_str = sorted({str(v) for v in vals})
         if len(set_of_str) == 1:
