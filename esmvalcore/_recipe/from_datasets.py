@@ -6,7 +6,7 @@ import logging
 import re
 from copy import deepcopy
 from functools import partial
-from typing import TYPE_CHECKING, Any, Iterable, Mapping, Sequence
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Mapping, Sequence
 
 from nested_lookup import nested_delete
 
@@ -17,8 +17,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-Recipe = dict[str, Any]
-Facets = dict[str, Any]
+Recipe = Dict[str, Any]
+Facets = Dict[str, Any]
 
 
 def _datasets_to_raw_recipe(datasets: Iterable[Dataset]) -> Recipe:

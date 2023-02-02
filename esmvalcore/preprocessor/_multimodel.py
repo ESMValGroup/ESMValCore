@@ -17,6 +17,7 @@ import cf_units
 import iris
 import iris.coord_categorisation
 import numpy as np
+from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 from iris.exceptions import MergeError
 from iris.util import equalise_attributes, new_axis
@@ -242,13 +243,8 @@ def _equalise_cell_methods(cubes):
         cube.cell_methods = None
 
 
-def _equalise_coordinates(cubes):
-    """Equalise coordinates in cubes (in-place)."""
-    if not cubes:
-        return
-
-    # If metadata of a coordinate metadata is equal for all cubes, do not
-    # modify it; else remove long_name and attributes.
+def _get_equal_coords_metadata(cubes):
+    """Get metadata for exactly matching coordinates across cubes."""
     equal_coords_metadata = []
     for coord in cubes[0].coords():
         for other_cube in cubes[1:]:
@@ -260,13 +256,103 @@ def _equalise_coordinates(cubes):
                 break
         else:
             equal_coords_metadata.append(coord.metadata)
+    return equal_coords_metadata
 
-    # Modify coordinates accordingly
+
+def _get_equal_coord_names_metadata(cubes, equal_coords_metadata):
+    """Get metadata for coords with matching names and units across cubes.
+
+    Note
+    ----
+    Ignore coordinates whose names are not unique.
+
+    """
+    equal_names_metadata = {}
+    for coord in cubes[0].coords():
+        coord_name = coord.name()
+
+        # Ignore exactly matching coordinates
+        if coord.metadata in equal_coords_metadata:
+            continue
+
+        # Ignore coordinates that are not unique in original cube
+        if len(cubes[0].coords(coord_name)) > 1:
+            continue
+
+        # Check if coordinate names and units match across all cubes
+        for other_cube in cubes[1:]:
+
+            # Ignore names that do not exist in other cube/are not unique
+            if len(other_cube.coords(coord_name)) != 1:
+                break
+
+            # Ignore names where units do not match across cubes
+            if coord.units != other_cube.coord(coord_name).units:
+                break
+
+        # Coordinate name exists in all other cubes with identical units
+        # --> Get metadata that is identical across all cubes
+        else:
+            std_names = list(
+                {c.coord(coord_name).standard_name for c in cubes}
+            )
+            long_names = list(
+                {c.coord(coord_name).long_name for c in cubes}
+            )
+            var_names = list(
+                {c.coord(coord_name).var_name for c in cubes}
+            )
+            equal_names_metadata[coord_name] = dict(
+                standard_name=std_names[0] if len(std_names) == 1 else None,
+                long_name=long_names[0] if len(long_names) == 1 else None,
+                var_name=var_names[0] if len(var_names) == 1 else None,
+            )
+
+    return equal_names_metadata
+
+
+def _equalise_coordinate_metadata(cubes):
+    """Equalise coordinates in cubes (in-place)."""
+    if not cubes:
+        return
+
+    # Filter out coordinates with exactly matching metadata across all cubes
+    # --> these will not be modified at all
+    equal_coords_metadata = _get_equal_coords_metadata(cubes)
+
+    # Filter out coordinates with matching names and units
+    # --> keep matching names of these coordinates
+    # Note: ignores duplicate coordinates
+    equal_names_metadata = _get_equal_coord_names_metadata(
+        cubes,
+        equal_coords_metadata
+    )
+
+    # Modify all coordinates of all cubes accordingly
     for cube in cubes:
         for coord in cube.coords():
-            if coord.metadata not in equal_coords_metadata:
-                coord.long_name = None
-                coord.attributes = None
+
+            # Exactly matching coordinates --> do not modify
+            if coord.metadata in equal_coords_metadata:
+                continue
+
+            # Non-exactly matching coordinates --> first, delete attributes and
+            # circular property
+            coord.attributes = {}
+            if isinstance(coord, DimCoord):
+                coord.circular = False
+
+            # Matching names and units --> set common names
+            if coord.name() in equal_names_metadata:
+                equal_names = equal_names_metadata[coord.name()]
+                coord.standard_name = equal_names['standard_name']
+                coord.long_name = equal_names['long_name']
+                coord.var_name = equal_names['var_name']
+                continue
+
+            # Remaining coordinates --> remove long_name
+            # Note: remaining differences will raise an error at a later stage
+            coord.long_name = None
 
         # Additionally remove specific scalar coordinates which are not
         # expected to be equal in the input cubes
@@ -293,7 +379,7 @@ def _combine(cubes):
     #    merge_and_concat.html#common-issues-with-merge-and-concatenate
     equalise_attributes(cubes)
     _equalise_cell_methods(cubes)
-    _equalise_coordinates(cubes)
+    _equalise_coordinate_metadata(cubes)
     _equalise_fx_variables(cubes)
 
     for i, cube in enumerate(cubes):
@@ -507,6 +593,30 @@ def multi_model_statistics(products,
     ``mean``, ``median``, ``min``, ``max``, and ``std``. Percentiles are also
     supported and can be specified like ``pXX.YY`` (for percentile ``XX.YY``;
     decimal part optional).
+
+    This function can handle cubes with differing metadata:
+
+    - :attr:`~iris.cube.Cube.attributes`: Differing attributes are deleted,
+      see :func:`iris.util.equalise_attributes`.
+    - :attr:`~iris.cube.Cube.cell_methods`: All cell methods are deleted
+      prior to combining cubes.
+    - :meth:`~iris.cube.Cube.cell_measures`: All cell measures are deleted
+      prior to combining cubes, see
+      :func:`esmvalcore.preprocessor.remove_fx_variables`.
+    - :meth:`~iris.cube.Cube.ancillary_variables`: All ancillary variables
+      are deleted prior to combining cubes, see
+      :func:`esmvalcore.preprocessor.remove_fx_variables`.
+    - :meth:`~iris.cube.Cube.coords`: Exactly identical coordinates are
+      preserved. For coordinates with equal :meth:`~iris.coords.Coord.name` and
+      :attr:`~iris.coords.Coord.units`, names are equalized,
+      :attr:`~iris.coords.Coord.attributes` deleted and
+      :attr:`~iris.coords.DimCoord.circular` is set to ``False``. For all other
+      coordinates, :attr:`~iris.coords.Coord.long_name` is removed,
+      :attr:`~iris.coords.Coord.attributes` deleted and
+      :attr:`~iris.coords.DimCoord.circular` is set to ``False``. Please note
+      that some special scalar coordinates which are expected to differe across
+      cubes(ancillary coordinates for derived coordinates like `p0` and `ptop`)
+      are removed as well.
 
     Notes
     -----

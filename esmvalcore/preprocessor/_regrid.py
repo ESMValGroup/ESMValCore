@@ -22,7 +22,7 @@ from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.fix import fix_file, fix_metadata
 from ..cmor.table import CMOR_TABLES
 from ._ancillary_vars import add_ancillary_variable, add_cell_measure
-from ._io import GLOBAL_FILL_VALUE, concatenate_callback, load
+from ._io import concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
 
@@ -478,14 +478,11 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     target_grid : Cube or str or dict
         The (location of a) cube that specifies the target or reference grid
         for the regridding operation.
-
         Alternatively, a string cell specification may be provided,
         of the form ``MxN``, which specifies the extent of the cell, longitude
         by latitude (degrees) for a global, regular target grid.
-
         Alternatively, a dictionary with a regional target grid may
         be specified (see above).
-
     scheme : str or dict
         The regridding scheme to perform. If both source and target grid are
         structured (regular or irregular), can be one of the built-in schemes
@@ -574,6 +571,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         raise ValueError(f'Expecting a cube, got {target_grid}.')
 
     if isinstance(scheme, dict):
+        scheme = dict(scheme)  # do not overwrite original scheme
         try:
             object_ref = scheme.pop("reference")
         except KeyError as key_err:
@@ -616,49 +614,24 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
                 [coord] = coords
                 cube.remove_coord(coord)
 
-    # Return non-regridded cube if horizontal grid is the same.
-    if not _horizontal_grid_is_close(cube, target_grid):
-        original_dtype = cube.core_data().dtype
-
-        # For 'unstructured_nearest', make sure that consistent fill value is
-        # used since the data is not masked after regridding (see
-        # https://github.com/SciTools/iris/issues/4463)
-        # Note: da.ma.set_fill_value() works with any kind of input data
-        # (masked and unmasked, numpy and dask)
-        if scheme == 'unstructured_nearest':
-            if np.issubdtype(cube.dtype, np.integer):
-                fill_value = np.iinfo(cube.dtype).max
-            else:
-                fill_value = GLOBAL_FILL_VALUE
-            da.ma.set_fill_value(cube.core_data(), fill_value)
-
-        # Perform the horizontal regridding
-        if _attempt_irregular_regridding(cube, scheme):
-            cube = esmpy_regrid(cube, target_grid, scheme)
-        elif isinstance(loaded_scheme, iris.cube.Cube):
-            # Return regridded cube in cases in which the
-            # scheme is a function f(src_cube, grid_cube) -> Cube
-            return loaded_scheme
-        else:
-            cube = cube.regrid(target_grid, loaded_scheme)
-
-        # Preserve dtype and use masked arrays for 'unstructured_nearest'
-        # scheme (see https://github.com/SciTools/iris/issues/4463)
-        if scheme == 'unstructured_nearest':
-            try:
-                cube.data = cube.core_data().astype(original_dtype,
-                                                    casting='same_kind')
-            except TypeError as exc:
-                logger.warning(
-                    "dtype of data changed during regridding from '%s' to "
-                    "'%s': %s", original_dtype, cube.core_data().dtype,
-                    str(exc))
-            cube.data = da.ma.masked_equal(cube.core_data(), fill_value)
-    else:
-        # force target coordinates
+    # Horizontal grids from source and target (almost) match
+    # -> Return source cube with target coordinates
+    if _horizontal_grid_is_close(cube, target_grid):
         for coord in ['latitude', 'longitude']:
             cube.coord(coord).points = target_grid.coord(coord).points
             cube.coord(coord).bounds = target_grid.coord(coord).bounds
+        return cube
+
+    # Horizontal grids from source and target do not match
+    # -> Regrid
+    if _attempt_irregular_regridding(cube, scheme):
+        cube = esmpy_regrid(cube, target_grid, scheme)
+    elif isinstance(loaded_scheme, iris.cube.Cube):
+        # Return regridded cube in cases in which the
+        # scheme is a function f(src_cube, grid_cube) -> Cube
+        cube = loaded_scheme
+    else:
+        cube = cube.regrid(target_grid, loaded_scheme)
 
     return cube
 
