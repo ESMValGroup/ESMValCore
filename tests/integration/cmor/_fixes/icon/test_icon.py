@@ -15,11 +15,11 @@ from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 from esmvalcore.config._config import get_extra_facets
 
-# TODO: ADAPT ONCE THE FILE IS AVAILABLE ON GITHUB
 TEST_GRID_FILE_URI = (
-    'https://seafile.zfn.uni-bremen.de/f/f66b000792434878bcbf/?dl=1'
+    'https://github.com/ESMValGroup/ESMValCore/raw/main/tests/integration/'
+    'cmor/_fixes/test_data/icon_grid.nc'
 )
-TEST_GRID_FILE_NAME = 'f66b000792434878bcbf'
+TEST_GRID_FILE_NAME = 'icon_grid.nc'
 
 
 @pytest.fixture(autouse=True)
