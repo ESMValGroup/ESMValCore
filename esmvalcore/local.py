@@ -459,7 +459,9 @@ def _get_data_sources(project: str) -> list[DataSource]:
                 )
             return sources
 
-    raise KeyError('default rootpath must be specified in config-user file')
+    raise KeyError(
+        f"No '{project}' or 'default' path specified under 'rootpath' in "
+        "the user configuration.")
 
 
 def _get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
@@ -502,8 +504,7 @@ def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
     filename_segments = list(dict.fromkeys(filename_segments))
 
     # Add period and extension
-    filename_segments.append(
-        f"{attributes['timerange'].replace('/', '-')}.nc")
+    filename_segments.append(f"{attributes['timerange'].replace('/', '-')}.nc")
 
     outfile = Path(
         preproc_dir,
