@@ -9,10 +9,24 @@ from iris import NameConstraint
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
+from esmvalcore.cmor._fixes.icon._base_fixes import IconFix
 from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi, Siconc, Siconca
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 from esmvalcore.config._config import get_extra_facets
+
+TEST_GRID_FILE_URI = (
+    'https://github.com/ESMValGroup/ESMValCore/raw/main/tests/integration/'
+    'cmor/_fixes/test_data/icon_grid.nc'
+)
+TEST_GRID_FILE_NAME = 'icon_grid.nc'
+
+
+@pytest.fixture(autouse=True)
+def tmp_cache_dir(monkeypatch, tmp_path):
+    """Use temporary path as cache directory for all tests in this module."""
+    monkeypatch.setattr(IconFix, 'CACHE_DIR', tmp_path)
+
 
 # Note: test_data_path is defined in tests/integration/cmor/_fixes/conftest.py
 
@@ -189,6 +203,7 @@ def check_lat(cube):
     assert lat.standard_name == 'latitude'
     assert lat.long_name == 'latitude'
     assert lat.units == 'degrees_north'
+    assert lat.attributes == {}
     np.testing.assert_allclose(
         lat.points,
         [-45.0, -45.0, -45.0, -45.0, 45.0, 45.0, 45.0, 45.0],
@@ -219,22 +234,23 @@ def check_lon(cube):
     assert lon.standard_name == 'longitude'
     assert lon.long_name == 'longitude'
     assert lon.units == 'degrees_east'
+    assert lon.attributes == {}
     np.testing.assert_allclose(
         lon.points,
-        [-135.0, -45.0, 45.0, 135.0, -135.0, -45.0, 45.0, 135.0],
+        [225.0, 315.0, 45.0, 135.0, 225.0, 315.0, 45.0, 135.0],
         rtol=1e-5
     )
     np.testing.assert_allclose(
         lon.bounds,
         [
-            [-135.0, -90.0, -180.0],
-            [-45.0, 0.0, -90.0],
-            [45.0, 90.0, 0.0],
-            [135.0, 180.0, 90.0],
-            [-180.0, -90.0, -135.0],
-            [-90.0, 0.0, -45.0],
-            [0.0, 90.0, 45.0],
-            [90.0, 180.0, 135.0],
+            [0.0, 270.0, 180.0],
+            [0.0, 0.0, 270.0],
+            [0.0, 90.0, 0.0],
+            [0.0, 180.0, 90.0],
+            [180.0, 270.0, 0.0],
+            [270.0, 0.0, 0.0],
+            [0.0, 90.0, 0.0],
+            [90.0, 180.0, 0.0],
         ],
         rtol=1e-5
     )
@@ -242,11 +258,15 @@ def check_lon(cube):
 
 
 def check_lat_lon(cube):
-    """Check latitude, longitude and spatial index coordinates of cube."""
+    """Check latitude, longitude and mesh of cube."""
     lat = check_lat(cube)
     lon = check_lon(cube)
 
-    # Check spatial index coordinate
+    # Check that latitude and longitude are mesh coordinates
+    assert cube.coords('latitude', mesh_coords=True)
+    assert cube.coords('longitude', mesh_coords=True)
+
+    # Check dimensional coordinate describing the mesh
     assert cube.coords('first spatial index for variables stored on an '
                        'unstructured grid', dim_coords=True)
     i_coord = cube.coord('first spatial index for variables stored on an '
@@ -262,6 +282,131 @@ def check_lat_lon(cube):
     assert len(cube.coord_dims(lat)) == 1
     assert cube.coord_dims(lat) == cube.coord_dims(lon)
     assert cube.coord_dims(lat) == cube.coord_dims(i_coord)
+
+    # Check the mesh itself
+    assert cube.location == 'face'
+    mesh = cube.mesh
+    check_mesh(mesh)
+
+
+def check_mesh(mesh):
+    """Check the mesh."""
+    assert mesh is not None
+    assert mesh.var_name is None
+    assert mesh.standard_name is None
+    assert mesh.long_name is None
+    assert mesh.units == 'unknown'
+    assert mesh.attributes == {}
+    assert mesh.cf_role == 'mesh_topology'
+    assert mesh.topology_dimension == 2
+
+    # Check face coordinates
+    assert len(mesh.coords(include_faces=True)) == 2
+
+    mesh_face_lat = mesh.coord(include_faces=True, axis='y')
+    assert mesh_face_lat.var_name == 'lat'
+    assert mesh_face_lat.standard_name == 'latitude'
+    assert mesh_face_lat.long_name == 'latitude'
+    assert mesh_face_lat.units == 'degrees_north'
+    assert mesh_face_lat.attributes == {}
+    np.testing.assert_allclose(
+        mesh_face_lat.points,
+        [-45.0, -45.0, -45.0, -45.0, 45.0, 45.0, 45.0, 45.0],
+        rtol=1e-5
+    )
+    np.testing.assert_allclose(
+        mesh_face_lat.bounds,
+        [
+            [-90.0, 0.0, 0.0],
+            [-90.0, 0.0, 0.0],
+            [-90.0, 0.0, 0.0],
+            [-90.0, 0.0, 0.0],
+            [0.0, 0.0, 90.0],
+            [0.0, 0.0, 90.0],
+            [0.0, 0.0, 90.0],
+            [0.0, 0.0, 90.0],
+        ],
+        rtol=1e-5
+    )
+
+    mesh_face_lon = mesh.coord(include_faces=True, axis='x')
+    assert mesh_face_lon.var_name == 'lon'
+    assert mesh_face_lon.standard_name == 'longitude'
+    assert mesh_face_lon.long_name == 'longitude'
+    assert mesh_face_lon.units == 'degrees_east'
+    assert mesh_face_lon.attributes == {}
+    np.testing.assert_allclose(
+        mesh_face_lon.points,
+        [225.0, 315.0, 45.0, 135.0, 225.0, 315.0, 45.0, 135.0],
+        rtol=1e-5
+    )
+    np.testing.assert_allclose(
+        mesh_face_lon.bounds,
+        [
+            [0.0, 270.0, 180.0],
+            [0.0, 0.0, 270.0],
+            [0.0, 90.0, 0.0],
+            [0.0, 180.0, 90.0],
+            [180.0, 270.0, 0.0],
+            [270.0, 0.0, 0.0],
+            [0.0, 90.0, 0.0],
+            [90.0, 180.0, 0.0],
+        ],
+        rtol=1e-5
+    )
+
+    # Check node coordinates
+    assert len(mesh.coords(include_nodes=True)) == 2
+
+    mesh_node_lat = mesh.coord(include_nodes=True, axis='y')
+    assert mesh_node_lat.var_name == 'nlat'
+    assert mesh_node_lat.standard_name == 'latitude'
+    assert mesh_node_lat.long_name == 'node latitude'
+    assert mesh_node_lat.units == 'degrees_north'
+    assert mesh_node_lat.attributes == {}
+    np.testing.assert_allclose(
+        mesh_node_lat.points,
+        [-90.0, 0.0, 0.0, 0.0, 0.0, 90.0],
+        rtol=1e-5
+    )
+    assert mesh_node_lat.bounds is None
+
+    mesh_node_lon = mesh.coord(include_nodes=True, axis='x')
+    assert mesh_node_lon.var_name == 'nlon'
+    assert mesh_node_lon.standard_name == 'longitude'
+    assert mesh_node_lon.long_name == 'node longitude'
+    assert mesh_node_lon.units == 'degrees_east'
+    assert mesh_node_lon.attributes == {}
+    np.testing.assert_allclose(
+        mesh_node_lon.points,
+        [0.0, 180.0, 270.0, 0.0, 90, 0.0],
+        rtol=1e-5
+    )
+    assert mesh_node_lon.bounds is None
+
+    # Check connectivity
+    assert len(mesh.connectivities()) == 1
+    conn = mesh.connectivity()
+    assert conn.var_name is None
+    assert conn.standard_name is None
+    assert conn.long_name is None
+    assert conn.units == 'unknown'
+    assert conn.attributes == {}
+    assert conn.cf_role == 'face_node_connectivity'
+    assert conn.start_index == 1
+    assert conn.location_axis == 0
+    assert conn.shape == (8, 3)
+    np.testing.assert_array_equal(
+        conn.indices,
+        [[1, 3, 2],
+         [1, 4, 3],
+         [1, 5, 4],
+         [1, 2, 5],
+         [2, 3, 6],
+         [3, 4, 6],
+         [4, 5, 6],
+         [5, 2, 6]],
+    )
 
 
 def check_typesi(cube):
@@ -761,21 +906,13 @@ def test_add_time_fail():
         fix._add_time(cube, cubes)
 
 
-def test_add_latitude(cubes_2d, tmp_path):
+def test_add_latitude(cubes_2d):
     """Test fix."""
     # Remove latitude from tas cube to test automatic addition
     tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
     tas_cube.remove_coord('latitude')
-    tas_cube.attributes['grid_file_uri'] = (
-        'https://github.com/ESMValGroup/ESMValCore/raw/main/tests/'
-        'integration/cmor/_fixes/test_data/icon_grid.nc'
-    )
     cubes = CubeList([tas_cube])
     fix = get_allvars_fix('Amon', 'tas')
-
-    # Temporary overwrite default cache location for downloads
-    original_cache_dir = fix.CACHE_DIR
-    fix.CACHE_DIR = tmp_path
 
     assert len(fix._horizontal_grids) == 0
     fixed_cubes = fix.fix_metadata(cubes)
@@ -784,27 +921,16 @@ def test_add_latitude(cubes_2d, tmp_path):
     assert cube.shape == (1, 8)
     check_lat_lon(cube)
     assert len(fix._horizontal_grids) == 1
-    assert 'icon_grid.nc' in fix._horizontal_grids
-
-    # Restore cache location
-    fix.CACHE_DIR = original_cache_dir
+    assert TEST_GRID_FILE_NAME in fix._horizontal_grids
 
 
-def test_add_longitude(cubes_2d, tmp_path):
+def test_add_longitude(cubes_2d):
     """Test fix."""
     # Remove longitude from tas cube to test automatic addition
     tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
     tas_cube.remove_coord('longitude')
-    tas_cube.attributes['grid_file_uri'] = (
-        'https://github.com/ESMValGroup/ESMValCore/raw/main/tests/'
-        'integration/cmor/_fixes/test_data/icon_grid.nc'
-    )
     cubes = CubeList([tas_cube])
     fix = get_allvars_fix('Amon', 'tas')
-
-    # Temporary overwrite default cache location for downloads
-    original_cache_dir = fix.CACHE_DIR
-    fix.CACHE_DIR = tmp_path
 
     assert len(fix._horizontal_grids) == 0
     fixed_cubes = fix.fix_metadata(cubes)
@@ -813,28 +939,17 @@ def test_add_longitude(cubes_2d, tmp_path):
     assert cube.shape == (1, 8)
     check_lat_lon(cube)
     assert len(fix._horizontal_grids) == 1
-    assert 'icon_grid.nc' in fix._horizontal_grids
-
-    # Restore cache location
-    fix.CACHE_DIR = original_cache_dir
+    assert TEST_GRID_FILE_NAME in fix._horizontal_grids
 
 
-def test_add_latitude_longitude(cubes_2d, tmp_path):
+def test_add_latitude_longitude(cubes_2d):
     """Test fix."""
     # Remove latitude and longitude from tas cube to test automatic addition
     tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
     tas_cube.remove_coord('latitude')
     tas_cube.remove_coord('longitude')
-    tas_cube.attributes['grid_file_uri'] = (
-        'https://github.com/ESMValGroup/ESMValCore/raw/main/tests/'
-        'integration/cmor/_fixes/test_data/icon_grid.nc'
-    )
     cubes = CubeList([tas_cube])
     fix = get_allvars_fix('Amon', 'tas')
-
-    # Temporary overwrite default cache location for downloads
-    original_cache_dir = fix.CACHE_DIR
-    fix.CACHE_DIR = tmp_path
 
     assert len(fix._horizontal_grids) == 0
     fixed_cubes = fix.fix_metadata(cubes)
@@ -843,17 +958,16 @@ def test_add_latitude_longitude(cubes_2d, tmp_path):
     assert cube.shape == (1, 8)
     check_lat_lon(cube)
     assert len(fix._horizontal_grids) == 1
-    assert 'icon_grid.nc' in fix._horizontal_grids
-
-    # Restore cache location
-    fix.CACHE_DIR = original_cache_dir
+    assert TEST_GRID_FILE_NAME in fix._horizontal_grids
 
 
 def test_add_latitude_fail(cubes_2d):
     """Test fix."""
-    # Remove latitude from tas cube to test automatic addition
+    # Remove latitude and grid file attribute from tas cube to test automatic
+    # addition
     tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
     tas_cube.remove_coord('latitude')
+    tas_cube.attributes = {}
     cubes = CubeList([tas_cube])
     fix = get_allvars_fix('Amon', 'tas')
 
@@ -864,9 +978,11 @@ def test_add_latitude_fail(cubes_2d):
 
 def test_add_longitude_fail(cubes_2d):
     """Test fix."""
-    # Remove longitude from tas cube to test automatic addition
+    # Remove longitude and grid file attribute from tas cube to test automatic
+    # addition
     tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
     tas_cube.remove_coord('longitude')
+    tas_cube.attributes = {}
     cubes = CubeList([tas_cube])
     fix = get_allvars_fix('Amon', 'tas')
 
@@ -881,8 +997,7 @@ def test_add_coord_from_grid_file_fail_invalid_coord():
 
     msg = r"coord_name must be one of .* got 'invalid_coord_name'"
     with pytest.raises(ValueError, match=msg):
-        fix._add_coord_from_grid_file(mock.sentinel.cube, 'invalid_coord_name',
-                                      'invalid_target_name')
+        fix._add_coord_from_grid_file(mock.sentinel.cube, 'invalid_coord_name')
 
 
 def test_add_coord_from_grid_file_fail_no_url():
@@ -892,58 +1007,36 @@ def test_add_coord_from_grid_file_fail_no_url():
     msg = ("Cube does not contain the attribute 'grid_file_uri' necessary to "
            "download the ICON horizontal grid file")
     with pytest.raises(ValueError, match=msg):
-        fix._add_coord_from_grid_file(Cube(0), 'grid_latitude', 'latitude')
+        fix._add_coord_from_grid_file(Cube(0), 'latitude')
 
 
-def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_2d, tmp_path):
+def test_add_coord_from_grid_fail_no_unnamed_dim(cubes_2d):
     """Test fix."""
     # Remove latitude from tas cube to test automatic addition
     tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
     tas_cube.remove_coord('latitude')
-    tas_cube.attributes['grid_file_uri'] = (
-        'https://github.com/ESMValGroup/ESMValCore/raw/main/tests/'
-        'integration/cmor/_fixes/test_data/icon_grid.nc'
-    )
     index_coord = DimCoord(np.arange(8), var_name='ncells')
     tas_cube.add_dim_coord(index_coord, 1)
     fix = get_allvars_fix('Amon', 'tas')
 
-    # Temporary overwrite default cache location for downloads
-    original_cache_dir = fix.CACHE_DIR
-    fix.CACHE_DIR = tmp_path
-
     msg = ("Cannot determine coordinate dimension for coordinate 'latitude', "
            "cube does not contain a single unnamed dimension")
     with pytest.raises(ValueError, match=msg):
-        fix._add_coord_from_grid_file(tas_cube, 'grid_latitude', 'latitude')
-
-    # Restore cache location
-    fix.CACHE_DIR = original_cache_dir
+        fix._add_coord_from_grid_file(tas_cube, 'latitude')
 
 
-def test_add_coord_from_grid_fail_two_unnamed_dims(cubes_2d, tmp_path):
+def test_add_coord_from_grid_fail_two_unnamed_dims(cubes_2d):
     """Test fix."""
     # Remove latitude from tas cube to test automatic addition
     tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
     tas_cube.remove_coord('latitude')
-    tas_cube.attributes['grid_file_uri'] = (
-        'https://github.com/ESMValGroup/ESMValCore/raw/main/tests/'
-        'integration/cmor/_fixes/test_data/icon_grid.nc'
-    )
     tas_cube = iris.util.new_axis(tas_cube)
     fix = get_allvars_fix('Amon', 'tas')
-
-    # Temporary overwrite default cache location for downloads
-    original_cache_dir = fix.CACHE_DIR
-    fix.CACHE_DIR = tmp_path
 
     msg = ("Cannot determine coordinate dimension for coordinate 'latitude', "
            "cube does not contain a single unnamed dimension")
     with pytest.raises(ValueError, match=msg):
-        fix._add_coord_from_grid_file(tas_cube, 'grid_latitude', 'latitude')
-
-    # Restore cache location
-    fix.CACHE_DIR = original_cache_dir
+        fix._add_coord_from_grid_file(tas_cube, 'latitude')
 
 
 @mock.patch('esmvalcore.cmor._fixes.icon._base_fixes.requests', autospec=True)
@@ -970,10 +1063,6 @@ def test_get_horizontal_grid_cached_in_file(mock_requests, tmp_path):
     grid_cube = Cube(0, var_name='grid')
     iris.save(grid_cube, str(tmp_path / 'grid_file.nc'))
 
-    # Temporary overwrite default cache location for downloads
-    original_cache_dir = fix.CACHE_DIR
-    fix.CACHE_DIR = tmp_path
-
     grid = fix.get_horizontal_grid(cube)
     assert isinstance(grid, CubeList)
     assert len(grid) == 1
@@ -982,16 +1071,10 @@ def test_get_horizontal_grid_cached_in_file(mock_requests, tmp_path):
     assert 'grid_file.nc' in fix._horizontal_grids
     assert mock_requests.mock_calls == []
 
-    # Restore cache location
-    fix.CACHE_DIR = original_cache_dir
 
-
-def test_get_horizontal_grid_cache_file_too_old(tmp_path):
+def test_get_horizontal_grid_cache_file_too_old(tmp_path, monkeypatch):
     """Test fix."""
-    cube = Cube(0, attributes={
-        'grid_file_uri': 'https://github.com/ESMValGroup/ESMValCore/raw/main/'
-                         'tests/integration/cmor/_fixes/test_data/'
-                         'icon_grid.nc'})
+    cube = Cube(0, attributes={'grid_file_uri': TEST_GRID_FILE_URI})
     fix = get_allvars_fix('Amon', 'tas')
     assert len(fix._horizontal_grids) == 0
 
@@ -1001,35 +1084,31 @@ def test_get_horizontal_grid_cache_file_too_old(tmp_path):
 
     # Temporary overwrite default cache location for downloads and cache
     # validity duration
-    original_cache_dir = fix.CACHE_DIR
-    original_cache_validity = fix.CACHE_VALIDITY
-    fix.CACHE_DIR = tmp_path
-    fix.CACHE_VALIDITY = -1
+    monkeypatch.setattr(fix, 'CACHE_VALIDITY', -1)
 
     grid = fix.get_horizontal_grid(cube)
     assert isinstance(grid, CubeList)
-    assert len(grid) == 1
-    assert grid[0].var_name == 'cell_area'
+    assert len(grid) == 4
+    var_names = [cube.var_name for cube in grid]
+    assert 'cell_area' in var_names
+    assert 'dual_area' in var_names
+    assert 'vertex_index' in var_names
+    assert 'vertex_of_cell' in var_names
     assert len(fix._horizontal_grids) == 1
-    assert 'icon_grid.nc' in fix._horizontal_grids
-
-    # Restore cache location
-    fix.CACHE_DIR = original_cache_dir
-    fix.CACHE_VALIDITY = original_cache_validity
+    assert TEST_GRID_FILE_NAME in fix._horizontal_grids
 
 
 # Test with single-dimension cubes
 
 
-def test_only_time():
+def test_only_time(monkeypatch):
     """Test fix."""
     # We know that ta has dimensions time, plev19, latitude, longitude, but the
     # ICON CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
     vardef = get_var_info('ICON', 'Amon', 'ta')
-    original_dimensions = vardef.dimensions
-    vardef.dimensions = ['time']
+    monkeypatch.setattr(vardef, 'dimensions', ['time'])
     extra_facets = get_extra_facets('ICON', 'ICON', 'Amon', 'ta', ())
     fix = AllVars(vardef, extra_facets=extra_facets)
 
@@ -1062,19 +1141,18 @@ def test_only_time():
     np.testing.assert_allclose(new_time_coord.bounds,
                                [[-0.5, 0.5], [0.5, 1.5]])
 
-    # Restore original dimensions of ta
-    vardef.dimensions = original_dimensions
+    # Check that no mesh has been created
+    assert cube.mesh is None
 
 
-def test_only_height():
+def test_only_height(monkeypatch):
     """Test fix."""
     # We know that ta has dimensions time, plev19, latitude, longitude, but the
     # ICON CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
     vardef = get_var_info('ICON', 'Amon', 'ta')
-    original_dimensions = vardef.dimensions
-    vardef.dimensions = ['plev19']
+    monkeypatch.setattr(vardef, 'dimensions', ['plev19'])
     extra_facets = get_extra_facets('ICON', 'ICON', 'Amon', 'ta', ())
     fix = AllVars(vardef, extra_facets=extra_facets)
 
@@ -1107,19 +1185,18 @@ def test_only_height():
     np.testing.assert_allclose(new_height_coord.points, [1.0, 10.0])
     assert new_height_coord.bounds is None
 
-    # Restore original dimensions of ta
-    vardef.dimensions = original_dimensions
+    # Check that no mesh has been created
+    assert cube.mesh is None
 
 
-def test_only_latitude():
+def test_only_latitude(monkeypatch):
     """Test fix."""
     # We know that ta has dimensions time, plev19, latitude, longitude, but the
     # ICON CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
     vardef = get_var_info('ICON', 'Amon', 'ta')
-    original_dimensions = vardef.dimensions
-    vardef.dimensions = ['latitude']
+    monkeypatch.setattr(vardef, 'dimensions', ['latitude'])
     extra_facets = get_extra_facets('ICON', 'ICON', 'Amon', 'ta', ())
     fix = AllVars(vardef, extra_facets=extra_facets)
 
@@ -1151,19 +1228,18 @@ def test_only_latitude():
     np.testing.assert_allclose(new_lat_coord.points, [0.0, 10.0])
     assert new_lat_coord.bounds is None
 
-    # Restore original dimensions of ta
-    vardef.dimensions = original_dimensions
+    # Check that no mesh has been created
+    assert cube.mesh is None
 
 
-def test_only_longitude():
+def test_only_longitude(monkeypatch):
     """Test fix."""
     # We know that ta has dimensions time, plev19, latitude, longitude, but the
     # ICON CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
     vardef = get_var_info('ICON', 'Amon', 'ta')
-    original_dimensions = vardef.dimensions
-    vardef.dimensions = ['longitude']
+    monkeypatch.setattr(vardef, 'dimensions', ['longitude'])
     extra_facets = get_extra_facets('ICON', 'ICON', 'Amon', 'ta', ())
     fix = AllVars(vardef, extra_facets=extra_facets)
 
@@ -1195,8 +1271,8 @@ def test_only_longitude():
     np.testing.assert_allclose(new_lon_coord.points, [0.0, 180.0])
     assert new_lon_coord.bounds is None
 
-    # Restore original dimensions of ta
-    vardef.dimensions = original_dimensions
+    # Check that no mesh has been created
+    assert cube.mesh is None
 
 
 # Test variable not available in file
@@ -1221,3 +1297,38 @@ def test_invalid_time_units(cubes_2d):
     msg = "Expected time units"
     with pytest.raises(ValueError, match=msg):
         fix.fix_metadata(cubes_2d)
+
+
+# Test mesh creation fails because bounds do not match vertices
+
+
+def test_get_mesh_fail_invalid_clat_bounds(cubes_2d):
+    """Test fix."""
+    # Slightly modify latitude bounds from tas cube to make mesh creation fail
+    tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
+    lat_bnds = tas_cube.coord('latitude').bounds.copy()
+    lat_bnds[0, 0] = 40.0
+    tas_cube.coord('latitude').bounds = lat_bnds
+    cubes = CubeList([tas_cube])
+    fix = get_allvars_fix('Amon', 'tas')
+
+    msg = ("Cannot create mesh from horizontal grid file: latitude bounds of "
+           "the face coordinate")
+    with pytest.raises(ValueError, match=msg):
+        fix.fix_metadata(cubes)
+
+
+def test_get_mesh_fail_invalid_clon_bounds(cubes_2d):
+    """Test fix."""
+    # Slightly modify longitude bounds from tas cube to make mesh creation fail
+    tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
+    lon_bnds = tas_cube.coord('longitude').bounds.copy()
+    lon_bnds[0, 1] = 40.0
+    tas_cube.coord('longitude').bounds = lon_bnds
+    cubes = CubeList([tas_cube])
+    fix = get_allvars_fix('Amon', 'tas')
+
+    msg = ("Cannot create mesh from horizontal grid file: longitude bounds "
+           "of the face coordinate")
+    with pytest.raises(ValueError, match=msg):
+        fix.fix_metadata(cubes)

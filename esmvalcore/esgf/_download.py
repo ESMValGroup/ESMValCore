@@ -224,7 +224,7 @@ class ESGFFile:
             # cmip5.output1.ICHEC.EC-EARTH.historical
             # .mon.atmos.Amon.r1i1p1.v20121115
             variable = file.name.split('_')[0]
-            if 'variable' in facets and facets['variable'] == variable:
+            if 'variable' not in facets or facets['variable'] == variable:
                 files.append(file)
             else:
                 logger.debug(
@@ -279,8 +279,12 @@ class ESGFFile:
         facets = {
             'project': project,
         }
-        for idx, key in enumerate(keys):
-            facets[key] = values[idx]
+        if len(keys) == len(values):
+            for idx, key in enumerate(keys):
+                facets[key] = values[idx]
+        else:
+            logger.debug("Wrong dataset_id_template_ %s for dataset %s",
+                         template, dataset_id)
         # The dataset_id does not contain the short_name for all projects,
         # so get it from the filename if needed:
         if 'short_name' not in facets:
