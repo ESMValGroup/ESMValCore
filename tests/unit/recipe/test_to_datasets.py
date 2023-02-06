@@ -332,7 +332,6 @@ def test_remove_not_found_ancillaries():
 
 @pytest.mark.parametrize('found_files', [True, False])
 def test_from_representative_files_fails(monkeypatch, found_files):
-
     def from_files(_):
         dataset = Dataset(
             dataset='*',
@@ -354,7 +353,6 @@ def test_from_representative_files_fails(monkeypatch, found_files):
 
 
 def test_fix_cmip5_fx_ensemble(monkeypatch):
-
     def find_files(self):
         if self.facets['ensemble'] == 'r0i0p0':
             self._files = ['file1.nc']
@@ -369,6 +367,6 @@ def test_fix_cmip5_fx_ensemble(monkeypatch):
         ensemble='r1i1p1',
     )
 
-    to_datasets._fix_cmip5_fx_ensemble([dataset])
+    to_datasets._fix_cmip5_fx_ensemble(dataset)
 
     assert dataset['ensemble'] == 'r0i0p0'

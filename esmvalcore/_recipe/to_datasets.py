@@ -168,22 +168,20 @@ def _merge_ancillary_dicts(
     return list(merged.values())
 
 
-def _fix_cmip5_fx_ensemble(datasets):
+def _fix_cmip5_fx_ensemble(dataset: Dataset):
     """Automatically correct the wrong ensemble for CMIP5 fx variables."""
-    for dataset in datasets:
-        if (dataset.facets['project'] == 'CMIP5'
-                and dataset.facets['mip'] == 'fx'
-                and dataset.facets['ensemble'] != 'r0i0p0'
-                and not dataset.files):
-            copy = dataset.copy()
-            copy.facets['ensemble'] = 'r0i0p0'
-            if copy.files:
-                logger.info(
-                    "Corrected wrong 'ensemble' from '%s' to '%s' for %s",
-                    dataset['ensemble'], copy['ensemble'],
-                    dataset.summary(shorten=True))
-                dataset.facets['ensemble'] = 'r0i0p0'
-                dataset.files = None
+    if (dataset.facets.get('project') == 'CMIP5'
+            and dataset.facets.get('mip') == 'fx'
+            and dataset.facets.get('ensemble') != 'r0i0p0'
+            and not dataset.files):
+        copy = dataset.copy()
+        copy.facets['ensemble'] = 'r0i0p0'
+        if copy.files:
+            logger.info("Corrected wrong 'ensemble' from '%s' to '%s' for %s",
+                        dataset['ensemble'], copy['ensemble'],
+                        dataset.summary(shorten=True))
+            dataset.facets['ensemble'] = 'r0i0p0'
+            dataset.find_files()
 
 
 def _get_facets_from_recipe(
@@ -316,8 +314,6 @@ def datasets_from_recipe(
 
         _set_alias(diagnostic_datasets)
 
-    _fix_cmip5_fx_ensemble(datasets)
-
     return datasets
 
 
@@ -376,7 +372,7 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
     """Determine the input datasets needed for deriving `dataset`."""
     facets = dataset.facets
     if not _derive_needed(dataset):
-        # No derivation requested or needed
+        _fix_cmip5_fx_ensemble(dataset)
         return [dataset]
 
     # Configure input datasets needed to derive variable
@@ -387,6 +383,7 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
         # idea: specify facets in list of dicts that is value of 'derive'?
         _update_cmor_facets(input_dataset.facets, override=True)
         input_dataset.augment_facets()
+        _fix_cmip5_fx_ensemble(input_dataset)
         if input_facets.get('optional') and not input_dataset.files:
             logger.info(
                 "Skipping: no data found for %s which is marked as "
