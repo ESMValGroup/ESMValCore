@@ -402,6 +402,7 @@ def _select_drs(input_type: str, project: str, structure: str) -> list[str]:
 @dataclass(order=True, frozen=True)
 class DataSource:
     """Class for storing a data source and finding the associated files."""
+
     rootpath: Path
     dirname_template: str
     filename_template: str
