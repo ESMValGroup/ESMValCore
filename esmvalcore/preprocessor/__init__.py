@@ -98,8 +98,6 @@ __all__ = [
     'fix_file',
     # Load cubes from file
     'load',
-    # Derive variable
-    'derive',
     # Metadata reformatting/CMORization
     'fix_metadata',
     # Concatenate all cubes in one
@@ -113,6 +111,8 @@ __all__ = [
     # Attach ancillary variables and cell measures
     'add_fx_variables',
     'add_ancillary_variables',
+    # Derive variable
+    'derive',
     # Time extraction (as defined in the preprocessor section)
     'extract_time',
     'extract_season',
