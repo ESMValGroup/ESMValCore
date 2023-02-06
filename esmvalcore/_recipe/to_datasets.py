@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 from copy import deepcopy
 from itertools import groupby
+from pathlib import Path
 from typing import Any, Iterable
 
 from esmvalcore.cmor.table import _update_cmor_facets
@@ -16,6 +17,7 @@ from esmvalcore.preprocessor._io import DATASET_KEYS
 from esmvalcore.typing import Facets, FacetValue
 
 from . import check
+from ._io import _load_recipe
 
 logger = logging.getLogger(__name__)
 
@@ -254,13 +256,13 @@ def _get_all_datasets_for_variable(
 
 
 def datasets_from_recipe(
-    recipe: dict[str, Any],
+    recipe: Path | str | dict[str, Any],
     session: Session,
 ) -> list[Dataset]:
     """Read datasets from a recipe."""
     datasets = []
 
-    recipe = deepcopy(recipe)
+    recipe = _load_recipe(recipe)
     diagnostics = recipe.get('diagnostics') or {}
     for name, diagnostic in diagnostics.items():
         diagnostic_datasets = []

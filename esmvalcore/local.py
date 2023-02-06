@@ -439,7 +439,10 @@ def _get_input_filelist(variable):
         variable['short_name'] = variable['original_short_name']
 
     globs = _get_globs(variable)
-    logger.debug("Looking for files matching %s", globs)
+    logger.debug(
+        "Looking for files matching:\n%s",
+        "\n".join(str(g) for g in globs),
+    )
 
     files = list(Path(file) for glob_ in globs for file in glob(str(glob_)))
     files.sort()  # sorting makes it easier to see what was found

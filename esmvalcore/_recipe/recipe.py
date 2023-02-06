@@ -62,6 +62,9 @@ PreprocessorSettings = dict[str, Any]
 DOWNLOAD_FILES = set()
 """Use a global variable to keep track of files that need to be downloaded."""
 
+USED_DATASETS = []
+"""Use a global variable to keep track of datasets that are actually used."""
+
 
 def read_recipe_file(filename: Path, session):
     """Read a recipe from file."""
@@ -705,6 +708,7 @@ def _get_preprocessor_products(
                 missing_vars.update(missing)
             continue
         _set_version(dataset, input_datasets)
+        USED_DATASETS.append(dataset)
         _schedule_for_download(input_datasets)
         logger.info("Found input files for %s", dataset.summary(shorten=True))
 
@@ -885,6 +889,7 @@ class Recipe:
         """Parse a recipe file into an object."""
         # Clear the global variable containing the set of files to download
         DOWNLOAD_FILES.clear()
+        USED_DATASETS.clear()
         self._download_files: set[esgf.ESGFFile] = set()
         self.session = session
         self.session['write_ncl_interface'] = self._need_ncl(
@@ -1282,9 +1287,7 @@ class Recipe:
 
     def write_filled_recipe(self):
         """Write copy of recipe with filled wildcards."""
-        # TODO: check dataset selection, this doesn't look right
-        datasets = [ds for ds in self.datasets if ds.files]
-        recipe = datasets_to_recipe(datasets, self._raw_recipe)
+        recipe = datasets_to_recipe(USED_DATASETS, self._raw_recipe)
         filename = self.session.run_dir / f"{self._filename.stem}_filled.yml"
         with filename.open('w', encoding='utf-8') as file:
             yaml.safe_dump(recipe, file, sort_keys=False)

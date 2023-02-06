@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-import os.path
 import pprint
 import re
 import textwrap
@@ -12,7 +11,6 @@ from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import Any, Iterator, Sequence, Union
 
-import yaml
 from iris.cube import Cube
 
 from esmvalcore import esgf, local
@@ -117,15 +115,7 @@ class Dataset:
             A list of datasets.
         """
         from esmvalcore._recipe.to_datasets import datasets_from_recipe
-
-        if isinstance(recipe, Path) or (isinstance(recipe, str)
-                                        and os.path.exists(recipe)):
-            recipe = Path(recipe).read_text(encoding='utf-8')
-
-        if isinstance(recipe, str):
-            recipe = yaml.safe_load(recipe)
-
-        return datasets_from_recipe(recipe, session)  # type: ignore
+        return datasets_from_recipe(recipe, session)
 
     def _get_available_facets(self) -> Iterator[Facets]:
         """Yield unique combinations of facets based on the available files."""

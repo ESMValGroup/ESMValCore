@@ -4,13 +4,15 @@ from __future__ import annotations
 import itertools
 import logging
 import re
-from copy import deepcopy
 from functools import partial
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterable, Mapping, Sequence
 
 from nested_lookup import nested_delete
 
 from esmvalcore.exceptions import RecipeError
+
+from ._io import _load_recipe
 
 if TYPE_CHECKING:
     from esmvalcore.dataset import Dataset
@@ -275,9 +277,33 @@ def _create_ensemble_ranges(
     return sorted(ensembles)  # type: ignore
 
 
+def _clean_recipe(recipe: Recipe, diagnostics: list[str]) -> Recipe:
+    """Clean up the input recipe."""
+    # Format description nicer
+    if 'documentation' in recipe:
+        doc = recipe['documentation']
+        if 'description' in doc:
+            doc['description'] = doc['description'].strip()
+
+    # Filter out unused diagnostics
+    recipe['diagnostics'] = {
+        k: v
+        for k, v in recipe['diagnostics'].items() if k in diagnostics
+    }
+
+    # Remove legacy ancillary definitions form the recipe
+    nested_delete(
+        recipe.get('preprocessors', {}),
+        'fx_variables',
+        in_place=True,
+    )
+
+    return recipe
+
+
 def datasets_to_recipe(
     datasets: Iterable[Dataset],
-    recipe: dict | None = None,
+    recipe: Path | str | dict[str, Any] | None = None,
 ) -> dict:
     """Create or update a recipe from datasets.
 
@@ -286,9 +312,10 @@ def datasets_to_recipe(
     datasets
         Datasets to use in the recipe.
     recipe
-        If provided, the datasets in the recipe will be replaced. The value
-        provided here should be a :ref:`recipe <recipe>` file that is loaded
-        using e.g. :func:`yaml.safe_load`.
+        :ref:`Recipe <recipe>` to load the datasets from. The value
+        provided here should be either a path to a file, a recipe file
+        that has been loaded using e.g. :func:`yaml.safe_load`, or an
+        :obj:`str` that can be loaded using :func:`yaml.safe_load`.
 
     Examples
     --------
@@ -305,20 +332,15 @@ def datasets_to_recipe(
     RecipeError
         Raised when a dataset is missing the ``diagnostic`` facet.
     """
-    # TODO: should recipe be a dict, a string, or a file?
-    if recipe is None:
-        recipe = {
-            'diagnostics': {},
-        }
-    else:
-        recipe = deepcopy(recipe)
+    recipe = _load_recipe(recipe)
+    dataset_recipe = _datasets_to_recipe(datasets)
+    _clean_recipe(recipe, diagnostics=dataset_recipe['diagnostics'])
 
     # Remove dataset sections from recipe
     recipe.pop('datasets', None)
     nested_delete(recipe, 'additional_datasets', in_place=True)
 
     # Update datasets section
-    dataset_recipe = _datasets_to_recipe(datasets)
     if 'datasets' in dataset_recipe:
         recipe['datasets'] = dataset_recipe['datasets']
 
@@ -333,11 +355,5 @@ def datasets_to_recipe(
         # Update variable level datasets
         if 'variables' in dataset_diagnostic:
             diagnostic['variables'] = dataset_diagnostic['variables']
-
-    # Format description nicer
-    if 'documentation' in recipe:
-        doc = recipe['documentation']
-        if 'description' in doc:
-            doc['description'] = doc['description'].strip()
 
     return recipe
