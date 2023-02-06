@@ -10,7 +10,7 @@ from copy import deepcopy
 from itertools import groupby
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Iterable, Sequence
+from typing import Any, Dict, Iterable, Sequence
 
 import yaml
 
@@ -57,7 +57,7 @@ from .to_datasets import (
 
 logger = logging.getLogger(__name__)
 
-PreprocessorSettings = dict[str, Any]
+PreprocessorSettings = Dict[str, Any]
 
 DOWNLOAD_FILES = set()
 """Use a global variable to keep track of files that need to be downloaded."""
