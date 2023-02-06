@@ -765,10 +765,10 @@ class CMORCheck():
                 self._cube = self._cube.intersection(lon_extent)
             else:
                 new_lons = coord.core_points().copy()
-                self._set_range_in_0_360(new_lons)
+                new_lons = self._set_range_in_0_360(new_lons)
                 if coord.bounds is not None:
                     new_bounds = coord.bounds.copy()
-                    self._set_range_in_0_360(new_bounds)
+                    new_bounds = self._set_range_in_0_360(new_bounds)
                 else:
                     new_bounds = None
                 new_coord = coord.copy(new_lons, new_bounds)
@@ -796,10 +796,8 @@ class CMORCheck():
 
     @staticmethod
     def _set_range_in_0_360(array):
-        while array.min() < 0:
-            array[array < 0] += 360
-        while array.max() > 360:
-            array[array > 360] -= 360
+        """Convert longitude coordinate to [0, 360]."""
+        return (array + 360.0) % 360.0
 
     def _check_requested_values(self, coord, coord_info, var_name):
         """Check requested values."""
