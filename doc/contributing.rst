@@ -139,14 +139,15 @@ The icons indicate whether the item will be checked during the
 - 🛠 The :ref:`list of authors <authors>` is up to date
 - 🛠 The :ref:`checks shown below the pull request <pull_request_checks>` are successful
 
-Pull requests introducing changes that causes a recipe to no longer run successfully
+Pull requests introducing a change that causes a recipe to no longer run successfully
 (*breaking change*), or which results in scientifically significant changes in results
-(*science change*) require addition item defined in the
+(*science change*) require additional items to be reviewed defined in the
 :ref:`backward compatibility policy<https://docs.esmvaltool.org/projects/ESMValTool/en/latest/community/backward_compatibility.html>`__.
 These include in particular:
 
-- 🛠 Instructions for the release notes available to assist *recipe
-  developers* to adapt their recipe in light of the *backward-incompatible change*.
+- 🛠 Instructions for the release notes to assist *recipe
+  developers* to adapt their recipe in light of the *backward-incompatible change*
+  available.
 - 🛠 General instructions for *recipe developers* working on *user
   recipes* to enable them to adapt their code related to
   *backward-incompatible changes* available (see `ESMValTool_Tutorial: issue
