@@ -168,6 +168,24 @@ def _merge_ancillary_dicts(
     return list(merged.values())
 
 
+def _fix_cmip5_fx_ensemble(datasets):
+    """Automatically correct the wrong ensemble for CMIP5 fx variables."""
+    for dataset in datasets:
+        if (dataset.facets['project'] == 'CMIP5'
+                and dataset.facets['mip'] == 'fx'
+                and dataset.facets['ensemble'] != 'r0i0p0'
+                and not dataset.files):
+            copy = dataset.copy()
+            copy.facets['ensemble'] = 'r0i0p0'
+            if copy.files:
+                logger.info(
+                    "Corrected wrong 'ensemble' from '%s' to '%s' for %s",
+                    dataset['ensemble'], copy['ensemble'],
+                    dataset.summary(shorten=True))
+                dataset.facets['ensemble'] = 'r0i0p0'
+                dataset.files = None
+
+
 def _get_facets_from_recipe(
     variable_group: str,
     recipe_variable: dict[str, Any],
@@ -297,6 +315,8 @@ def datasets_from_recipe(
             datasets.extend(variable_datasets)
 
         _set_alias(diagnostic_datasets)
+
+    _fix_cmip5_fx_ensemble(datasets)
 
     return datasets
 
