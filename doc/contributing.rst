@@ -139,6 +139,27 @@ The icons indicate whether the item will be checked during the
 - 🛠 The :ref:`list of authors <authors>` is up to date
 - 🛠 The :ref:`checks shown below the pull request <pull_request_checks>` are successful
 
+Pull requests introducing changes that causes a recipe to no longer run successfully
+(*breaking change*), or which results in scientifically significant changes in results
+(*science change*) require addition item defined in the
+:ref:`backward compatibility policy<https://docs.esmvaltool.org/projects/ESMValTool/en/latest/community/backward_compatibility.html>`__.
+These include in particular:
+
+- 🛠 Instructions for the release notes available to assist *recipe
+  developers* to adapt their recipe in light of the *backward-incompatible change*.
+- 🛠 General instructions for *recipe developers* working on *user
+  recipes* to enable them to adapt their code related to
+  *backward-incompatible changes* available (see `ESMValTool_Tutorial: issue
+  #263 <https://github.com/ESMValGroup/ESMValTool_Tutorial/issues/263>`__).
+- 🛠 Core development team tagged to notify them of the
+  *backward-incompatible change*, and give at least
+  2 weeks for objections to be raised before merging to the main
+  branch. If a strong objection is raised the backward-incompatible
+  change should not be merged until the objection is resolved.
+- 🛠 Information required for the “*backward-incompatible changes*”
+  section in the PR  that introduces the *backward-incompatible change*
+  available.
+
 .. _scientific_relevance:
 
 Scientific relevance
@@ -558,6 +579,13 @@ there are also users who choose not to share their work there.
 While our commitment is first and foremost to users who do share their recipes
 in the ESMValTool repository, we still try to be nice to all of the ESMValCore
 users.
+
+.. note::
+
+   The :ref:`backward compatibility policy<https://docs.esmvaltool.org/projects/ESMValTool/en/latest/community/backward_compatibility.html>`__
+   outlines the key principles on backward compatibility and additional guidance on handling
+   *backward-incompatible changes*. This policy applies to both, ESMValCore and ESMValTool.
+
 When making changes, e.g. to the :ref:`recipe format <recipe_overview>`, the
 :ref:`diagnostic script interface <interfaces>`, the public
 :ref:`Python API <api>`, or the :ref:`configuration file format <config>`,
