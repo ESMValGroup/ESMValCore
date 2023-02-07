@@ -660,6 +660,7 @@ class PreprocessingTask(BaseTask):
                         if step in product.settings:
                             product.apply(step, self.debug)
                     if block == blocks[-1]:
+                        product.cubes  # pylint: disable=pointless-statement
                         product.close()
 
         for product in self.products:
