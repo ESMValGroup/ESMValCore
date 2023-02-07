@@ -310,7 +310,7 @@ def test_remove_duplicate_ancillaries():
     ancillary1.facets['exp'] = '1pctCO2'
     dataset.ancillaries = [ancillary1, ancillary2]
 
-    to_datasets._clean_ancillaries(dataset)
+    to_datasets._remove_duplicate_ancillaries(dataset)
 
     assert len(dataset.ancillaries) == 1
     assert dataset.ancillaries[0] == ancillary2
@@ -325,13 +325,14 @@ def test_remove_not_found_ancillaries():
         exp='historical',
     )
     dataset.add_ancillary(short_name='areacella', mip='fx', exp='*')
-    to_datasets._clean_ancillaries(dataset)
+    to_datasets._remove_unexpanded_ancillaries(dataset)
 
     assert len(dataset.ancillaries) == 0
 
 
 @pytest.mark.parametrize('found_files', [True, False])
 def test_from_representative_files_fails(monkeypatch, found_files):
+
     def from_files(_):
         dataset = Dataset(
             dataset='*',
@@ -353,6 +354,7 @@ def test_from_representative_files_fails(monkeypatch, found_files):
 
 
 def test_fix_cmip5_fx_ensemble(monkeypatch):
+
     def find_files(self):
         if self.facets['ensemble'] == 'r0i0p0':
             self._files = ['file1.nc']
@@ -370,3 +372,65 @@ def test_fix_cmip5_fx_ensemble(monkeypatch):
     to_datasets._fix_cmip5_fx_ensemble(dataset)
 
     assert dataset['ensemble'] == 'r0i0p0'
+
+
+def test_get_ancillary_short_names(monkeypatch):
+
+    def _update_cmor_facets(facets):
+        facets['modeling_realm'] = 'atmos'
+
+    monkeypatch.setattr(
+        to_datasets,
+        '_update_cmor_facets',
+        _update_cmor_facets,
+    )
+    facets = {
+        'short_name': 'tas',
+    }
+    result = to_datasets._get_ancillary_short_names(facets, 'mask_landsea')
+    assert result == ['sftlf']
+
+
+def test_append_missing_ancillaries():
+    ancillaries = [
+        {
+            'short_name': 'areacella',
+        },
+    ]
+    facets = {
+        'short_name': 'tas',
+        'project': 'CMIP6',
+        'mip': 'Amon',
+    }
+
+    settings = {
+        'mask_landsea': {
+            'mask_out': 'land'
+        },
+        'area_statistics': {
+            'operator': 'mean'
+        },
+    }
+
+    to_datasets._append_missing_ancillaries(ancillaries, facets, settings)
+
+    short_names = {f['short_name'] for f in ancillaries}
+    assert short_names == {'areacella', 'sftlf'}
+
+
+def test_match_datasets():
+    dataset1 = Dataset(
+        short_name='areacella',
+        ensemble=['r1i1p1f1'],
+        exp='historical',
+        realms=['atmos', 'land'],
+    )
+    dataset2 = Dataset(
+        short_name='tas',
+        ensemble='r1i1p1f1',
+        exp=['historical', 'ssp585'],
+        realms=['atmos'],
+    )
+
+    score = to_datasets._match_datasets(dataset1, dataset2)
+    assert score == 3

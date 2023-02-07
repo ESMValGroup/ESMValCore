@@ -16,7 +16,7 @@ from iris.cube import Cube
 from esmvalcore import esgf, local
 from esmvalcore._recipe import check
 from esmvalcore._recipe.from_datasets import datasets_to_recipe
-from esmvalcore.cmor.table import _update_cmor_facets
+from esmvalcore.cmor.table import _get_mips, _update_cmor_facets
 from esmvalcore.config import CFG, Session
 from esmvalcore.config._config import (
     get_activity,
@@ -119,13 +119,36 @@ class Dataset:
 
     def _get_available_facets(self) -> Iterator[Facets]:
         """Yield unique combinations of facets based on the available files."""
+        if _isglob(self.facets['mip']):
+            available_mips = _get_mips(
+                self.facets['project'],  # type: ignore
+                self.facets['short_name'],  # type: ignore
+            )
+            mips = [
+                mip for mip in available_mips
+                if _ismatch(mip, self.facets['mip'])
+            ]
+        else:
+            mips = [self.facets['mip']]  # type: ignore
+
+        for mip in mips:
+            dataset = self.copy(mip=mip)
+            dataset.ancillaries = []
+            for facets in dataset._get_available_mip_facets():
+                facets.setdefault('mip', mip)
+                yield facets
+
+    def _get_available_mip_facets(self) -> Iterator[Facets]:
+        """Yield unique combinations of facets based on the available files.
+
+        This function requires that self.facets['mip'] is not a glob pattern.
+        """
 
         def same(facets_a, facets_b):
             """Define when two sets of facets are the same."""
             return facets_a.issubset(facets_b) or facets_b.issubset(facets_a)
 
         dataset = self.copy()
-        dataset.ancillaries = []
         if _isglob(dataset.facets.get('timerange')):
             # Remove wildcard `timerange` facet, because data finding cannot
             # handle it

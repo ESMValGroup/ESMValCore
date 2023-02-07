@@ -3,15 +3,18 @@ from __future__ import annotations
 
 import logging
 from copy import deepcopy
+from functools import partial
 from itertools import groupby
+from numbers import Number
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, Iterator
 
 from esmvalcore.cmor.table import _update_cmor_facets
 from esmvalcore.config import Session
 from esmvalcore.dataset import Dataset, _isglob
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.local import _replace_years_with_timerange
+from esmvalcore.preprocessor._ancillary_vars import PREPROCESSOR_ANCILLARIES
 from esmvalcore.preprocessor._derive import get_required
 from esmvalcore.preprocessor._io import DATASET_KEYS
 from esmvalcore.typing import Facets, FacetValue
@@ -184,12 +187,83 @@ def _fix_cmip5_fx_ensemble(dataset: Dataset):
             dataset.find_files()
 
 
-def _get_facets_from_recipe(
+def _get_ancillary_short_names(
+    facets: Facets,
+    step: str,
+) -> list[str]:
+    """Get the most applicable ancillary short_names."""
+    # Determine if the main variable is an ocean variable.
+    var_facets = dict(facets)
+    _update_cmor_facets(var_facets)
+    realms = var_facets.get('modeling_realm', [])
+    if isinstance(realms, (str, Number)):
+        realms = [str(realms)]
+    ocean_realms = {'ocean', 'seaIce', 'ocnBgchem'}
+    is_ocean_variable = any(realm in ocean_realms for realm in realms)
+
+    # Guess the best matching ancillary variable based on the realm.
+    short_names = PREPROCESSOR_ANCILLARIES[step]['variables']
+    if set(short_names) == {'areacella', 'areacello'}:
+        short_names = ['areacello'] if is_ocean_variable else ['areacella']
+    if set(short_names) == {'sftlf', 'sftof'}:
+        short_names = ['sftof'] if is_ocean_variable else ['sftlf']
+
+    return short_names
+
+
+def _append_missing_ancillaries(
+    ancillaries: list[Facets],
+    facets: Facets,
+    settings: dict[str, Any],
+) -> None:
+    """Append wildcard definitions for missing ancillary variables."""
+    default_facets = {
+        'CMIP6': [
+            'activity',
+            'institute',
+        ],
+        'CMIP5': [
+            'institute',
+            'product',
+        ],
+        'CMIP3': [
+            'institute',
+        ],
+    }
+    keep_facets = (
+        'project',
+        'dataset',
+        'driver',
+        'domain',
+        'grid',
+    )
+
+    steps = [step for step in settings if step in PREPROCESSOR_ANCILLARIES]
+
+    project: str = facets['project']  # type: ignore
+    for step in steps:
+        for short_name in _get_ancillary_short_names(facets, step):
+            short_names = {f['short_name'] for f in ancillaries}
+            if short_name in short_names:
+                continue
+            afacets: Facets = {
+                facet: '*'
+                for facet in list(facets) + default_facets.get(project, [])
+            }
+            for facet in keep_facets:
+                if facet in facets:
+                    afacets[facet] = facets[facet]
+            afacets['short_name'] = short_name
+            ancillaries.append(afacets)
+
+
+def _get_dataset_facets_from_recipe(
     variable_group: str,
     recipe_variable: dict[str, Any],
     recipe_dataset: dict[str, Any],
+    profiles: dict[str, Any],
     session: Session,
-) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+) -> tuple[Facets, list[Facets]]:
     """Read the facets for a single dataset definition from the recipe."""
     facets = deepcopy(recipe_variable)
     recipe_dataset = deepcopy(recipe_dataset)
@@ -231,38 +305,78 @@ def _get_facets_from_recipe(
         ),
     )
 
+    if not session['use_legacy_ancillaries']:
+        preprocessor = facets.get('preprocessor', 'default')
+        settings = profiles.get(preprocessor, {})
+        _append_missing_ancillaries(ancillaries, facets, settings)
+
     return facets, ancillaries
 
 
-def _get_all_datasets_for_variable(
-    diagnostic: str,
+def _get_facets_from_recipe(
+    recipe: dict[str, Any],
+    diagnostic_name: str,
     variable_group: str,
-    recipe_variable: dict[str, Any],
-    recipe_datasets: Iterable[dict[str, Any]],
     session: Session,
-) -> list[Dataset]:
-    """Read the datasets from a variable definition in the recipe."""
-    datasets = []
-    idx = 0
+) -> Iterator[tuple[Facets, list[Facets]]]:
+    """Read the facets for the detasets of one variable from the recipe."""
+    diagnostic = recipe['diagnostics'][diagnostic_name]
+    recipe_variable = diagnostic['variables'][variable_group]
+    if recipe_variable is None:
+        recipe_variable = {}
+
+    recipe_datasets = (recipe.get('datasets', []) +
+                       diagnostic.get('additional_datasets', []) +
+                       recipe_variable.pop('additional_datasets', []))
+    check.duplicate_datasets(recipe_datasets, diagnostic_name, variable_group)
+
+    # The NCL interface requires a distinction between variable and
+    # dataset keys as defined in the recipe. `DATASET_KEYS` is used to
+    # keep track of which keys are part of the dataset.
+    DATASET_KEYS.update(key for ds in recipe_datasets for key in ds)
+
+    profiles = recipe.setdefault('preprocessors', {'default': {}})
 
     for recipe_dataset in recipe_datasets:
-        facets, ancillaries = _get_facets_from_recipe(
+        yield _get_dataset_facets_from_recipe(
             variable_group=variable_group,
             recipe_variable=recipe_variable,
             recipe_dataset=recipe_dataset,
+            profiles=profiles,
             session=session,
         )
 
+
+def _get_datasets_for_variable(
+    recipe: dict[str, Any],
+    diagnostic_name: str,
+    variable_group: str,
+    session: Session,
+) -> list[Dataset]:
+    """Read the datasets from a variable definition in the recipe."""
+    logger.debug(
+        "Populating list of datasets for variable %s in "
+        "diagnostic %s", variable_group, diagnostic_name)
+
+    datasets = []
+    idx = 0
+
+    for facets, ancillaries in _get_facets_from_recipe(
+            recipe,
+            diagnostic_name=diagnostic_name,
+            variable_group=variable_group,
+            session=session,
+    ):
         dataset = Dataset(**facets)
         dataset.session = session
-        dataset['diagnostic'] = diagnostic
-        dataset['variable_group'] = variable_group
 
         for dataset1 in dataset.from_ranges():
             for ancillary_facets in ancillaries:
                 dataset1.add_ancillary(**ancillary_facets)
             for ancillary_ds in dataset1.ancillaries:
                 ancillary_ds.facets.pop('preprocessor', None)
+            dataset1['diagnostic'] = diagnostic_name
+            dataset1['variable_group'] = variable_group
             for dataset2 in _from_representative_files(dataset1):
                 dataset2['recipe_dataset_index'] = idx  # type: ignore
                 datasets.append(dataset2)
@@ -283,30 +397,10 @@ def datasets_from_recipe(
     for name, diagnostic in diagnostics.items():
         diagnostic_datasets = []
         for variable_group in diagnostic.get('variables', {}):
-
-            # Read variable from recipe
-            logger.debug(
-                "Populating list of datasets for variable %s in "
-                "diagnostic %s", variable_group, name)
-            recipe_variable = diagnostic['variables'][variable_group]
-            if recipe_variable is None:
-                recipe_variable = {}
-
-            # Read datasets from recipe
-            recipe_datasets = (recipe.get('datasets', []) +
-                               diagnostic.get('additional_datasets', []) +
-                               recipe_variable.pop('additional_datasets', []))
-            # The NCL interface requires a distinction between variable and
-            # dataset keys as defined in the recipe. `DATASET_KEYS` is used to
-            # keep track of which keys are part of the dataset.
-            DATASET_KEYS.update(key for ds in recipe_datasets for key in ds)
-            check.duplicate_datasets(recipe_datasets, name, variable_group)
-
-            variable_datasets = _get_all_datasets_for_variable(
-                diagnostic=name,
+            variable_datasets = _get_datasets_for_variable(
+                recipe,
+                diagnostic_name=name,
                 variable_group=variable_group,
-                recipe_variable=recipe_variable,
-                recipe_datasets=recipe_datasets,
                 session=session,
             )
             diagnostic_datasets.append(variable_datasets)
@@ -317,41 +411,61 @@ def datasets_from_recipe(
     return datasets
 
 
-def _clean_ancillaries(dataset: Dataset) -> None:
-    """Ignore duplicate and not expanded ancillary variables."""
-
-    def match(ancillary_ds: Dataset) -> int:
-        """Compute match of ancillary dataset with main dataset."""
-        score = 0
-        for key, value in dataset.facets.items():
-            if key in ancillary_ds.facets:
-                if ancillary_ds.facets[key] == value:
-                    score += 1
-        return score
-
+def _remove_unexpanded_ancillaries(dataset: Dataset) -> None:
+    """Remove ancillaries where wildcards could not be expanded."""
     ancillaries = []
-    for _, duplicates in groupby(dataset.ancillaries,
-                                 key=lambda ds: ds['short_name']):
-        group = sorted(duplicates, key=match, reverse=True)
-        ancillary_ds = group[0]
-        if len(group) > 1:
-            logger.info(
-                "For dataset %s: only using ancillary dataset %s, "
-                "ignoring duplicate ancillary datasets\n%s",
-                dataset.summary(shorten=True),
-                ancillary_ds.summary(shorten=True),
-                "\n".join(ds.summary(shorten=True) for ds in group[1:]),
-            )
-        if any(_isglob(v) for v in ancillary_ds.facets.values()):
+    for ancillary_ds in dataset.ancillaries:
+        unexpanded = [f for f, v in ancillary_ds.facets.items() if _isglob(v)]
+        if unexpanded:
             logger.warning(
                 "For dataset %s: ignoring ancillary dataset %s, "
-                "unable to expand wildcards.",
+                "unable to expand wildcards %s.",
                 dataset.summary(shorten=True),
                 ancillary_ds.summary(shorten=True),
+                ", ".join(f"'{f}'" for f in unexpanded),
             )
         else:
             ancillaries.append(ancillary_ds)
     dataset.ancillaries = ancillaries
+
+
+def _match_datasets(dataset1: Dataset, dataset2: Dataset) -> int:
+    """Compute the match between two datasets."""
+    score = 0
+    for facet, value2 in dataset2.facets.items():
+        if facet in dataset1.facets:
+            value1 = dataset1.facets[facet]
+            if isinstance(value1, (list, tuple)):
+                if isinstance(value2, (list, tuple)):
+                    score += any(elem in value2 for elem in value1)
+                else:
+                    score += value2 in value1
+            else:
+                if isinstance(value2, (list, tuple)):
+                    score += value1 in value2
+                else:
+                    score += value1 == value2
+    return score
+
+
+def _remove_duplicate_ancillaries(dataset: Dataset) -> None:
+    """Remove ancillaries that are duplicates."""
+    score = partial(_match_datasets, dataset2=dataset)
+    ancillaries = []
+    not_used = []
+    for _, duplicates in groupby(dataset.ancillaries,
+                                 key=lambda ds: ds['short_name']):
+        group = sorted(duplicates, key=score, reverse=True)
+        ancillaries.append(group[0])
+        not_used.extend(group[1:])
+    dataset.ancillaries = ancillaries
+
+    if not_used:
+        logger.info(
+            "For %s, not using duplicate ancillary datasets:\n%s",
+            dataset.summary(shorten=True),
+            "\n".join(sorted(ds.summary(shorten=True) for ds in not_used)),
+        )
 
 
 def _derive_needed(dataset: Dataset) -> bool:
@@ -445,10 +559,12 @@ def _from_representative_files(dataset: Dataset) -> list[Dataset]:
                                  for p in repr_ds._file_globs))  # type:ignore
             errors.append(msg)
 
+        _remove_unexpanded_ancillaries(repr_ds)
+        _remove_duplicate_ancillaries(repr_ds)
+
         new_ds = dataset.copy()
         new_ds.facets.update(updated_facets)
         new_ds.ancillaries = [ds.copy() for ds in repr_ds.ancillaries]
-        _clean_ancillaries(new_ds)
         logger.debug("Found %s", new_ds.summary(shorten=True))
         result.append(new_ds)
 

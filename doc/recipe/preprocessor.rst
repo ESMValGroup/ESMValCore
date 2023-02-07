@@ -176,6 +176,10 @@ Only one of the listed variables is required. Ancillary variables can be defined
 in the recipe as described in :ref:`ancillary_variables`. In some cases,
 preprocessor functions may work without ancillary variables, this is documented
 case by case in the preprocessor function definition.
+If a preprocessor function is used that uses ancillary variables, but they have
+not been specified in the recipe, they will be automatically added. If the
+automatic selection does not give the desired result, specify the ancillary
+variables in the recipe as described in :ref:`ancillary_variables`.
 
 By default, ancillary variables and cell measures will be removed from the
 variable before saving it to file because they can be as big as the main

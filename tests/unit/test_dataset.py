@@ -409,11 +409,79 @@ def test_from_recipe_with_ancillary(session, tmp_path):
     )
     dataset.ancillaries = [
         Dataset(
-            diagnostic='diagnostic1',
-            variable_group='tos',
             short_name='sftof',
             dataset='dataset1',
             ensemble='r1i1p1',
+            project='CMIP5',
+            mip='fx',
+        ),
+    ]
+    dataset.session = session
+
+    assert Dataset.from_recipe(recipe, session) == [dataset]
+
+
+def test_from_recipe_with_automatic_ancillary(session, tmp_path, monkeypatch):
+    session['use_legacy_ancillaries'] = False
+
+    def find_files(self):
+        if self.facets['short_name'] == 'areacello':
+            file = esmvalcore.local.LocalFile()
+            file.facets = {
+                'short_name': 'areacello',
+                'mip': 'fx',
+                'project': 'CMIP5',
+                'dataset': 'dataset1',
+                'ensemble': 'r0i0p0',
+                'institute': 'X',
+                'product': 'output1',
+            }
+            files = [file]
+        else:
+            files = []
+        self._files = files
+
+    monkeypatch.setattr(Dataset, 'find_files', find_files)
+    recipe_txt = textwrap.dedent("""
+
+    preprocessors:
+      global_mean:
+        area_statistics:
+          operator: mean
+
+    datasets:
+      - {dataset: 'dataset1', ensemble: r1i1p1}
+
+    diagnostics:
+      diagnostic1:
+        variables:
+          tos:
+            project: CMIP5
+            mip: Omon
+            preprocessor: global_mean
+    """)
+    recipe = tmp_path / 'recipe_test.yml'
+    recipe.write_text(recipe_txt, encoding='utf-8')
+
+    dataset = Dataset(
+        diagnostic='diagnostic1',
+        variable_group='tos',
+        short_name='tos',
+        dataset='dataset1',
+        ensemble='r1i1p1',
+        preprocessor='global_mean',
+        project='CMIP5',
+        mip='Omon',
+        alias='dataset1',
+        recipe_dataset_index=0,
+    )
+    dataset.ancillaries = [
+        Dataset(
+            short_name='areacello',
+            dataset='dataset1',
+            institute='X',
+            product='output1',
+            ensemble='r0i0p0',
             project='CMIP5',
             mip='fx',
         ),
