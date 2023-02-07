@@ -511,12 +511,14 @@ class Dataset:
 
     def _load_with_callback(self, callback):
         # TODO: Remove the callback argument for v2.10.0.
-        cube = self._load(callback)
-
         input_files = list(self.files)
-        ancillary_cubes = []
         for ancillary_dataset in self.ancillaries:
             input_files.extend(ancillary_dataset.files)
+        esgf.download(input_files, self.session['download_dir'])
+
+        cube = self._load(callback)
+        ancillary_cubes = []
+        for ancillary_dataset in self.ancillaries:
             ancillary_cube = ancillary_dataset._load(callback)
             ancillary_cubes.append(ancillary_cube)
 
@@ -577,7 +579,10 @@ class Dataset:
             'short_name': self.facets['short_name'],
         }
 
-        result = self.files
+        result = [
+            file.local_file(self.session['download_dir']) if isinstance(
+                file, esgf.ESGFFile) else file for file in self.files
+        ]
         for step, kwargs in settings.items():
             result = preprocess(result, step, input_files=self.files, **kwargs)
         cube = result[0]

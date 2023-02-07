@@ -482,6 +482,10 @@ def download(files, dest_folder, n_jobs=4):
     DownloadError:
         Raised if one or more files failed to download.
     """
+    files = [
+        file for file in files if isinstance(file, ESGFFile)
+        and not file.local_file(dest_folder).exists()
+    ]
     if not files:
         logger.info("All required data is available locally,"
                     " not downloading anything.")
