@@ -266,6 +266,7 @@ def _get_dataset_facets_from_recipe(
 ) -> tuple[Facets, list[Facets]]:
     """Read the facets for a single dataset definition from the recipe."""
     facets = deepcopy(recipe_variable)
+    facets.pop('additional_datasets', None)
     recipe_dataset = deepcopy(recipe_dataset)
 
     ancillaries = _merge_ancillary_dicts(
@@ -327,7 +328,7 @@ def _get_facets_from_recipe(
 
     recipe_datasets = (recipe.get('datasets', []) +
                        diagnostic.get('additional_datasets', []) +
-                       recipe_variable.pop('additional_datasets', []))
+                       recipe_variable.get('additional_datasets', []))
     check.duplicate_datasets(recipe_datasets, diagnostic_name, variable_group)
 
     # The NCL interface requires a distinction between variable and
