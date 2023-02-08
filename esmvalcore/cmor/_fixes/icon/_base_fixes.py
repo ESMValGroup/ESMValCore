@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 import iris
 import numpy as np
 import requests
+from filelock import FileLock
 from iris import NameConstraint
 from iris.experimental.ugrid import Connectivity, Mesh
 
@@ -184,31 +185,45 @@ class IconFix(NativeDatasetFix):
 
         # Check if grid file has recently been downloaded and load it if
         # possible
-        grid_path = self.CACHE_DIR / grid_name
-        if grid_path.exists():
-            mtime = grid_path.stat().st_mtime
-            now = datetime.now().timestamp()
-            age = now - mtime
-            if age < self.CACHE_VALIDITY:
-                logger.debug("Using cached ICON grid file '%s'", grid_path)
-                self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
-                return self._horizontal_grids[grid_name].copy()
-            logger.debug("Existing cached ICON grid file '%s' is outdated",
-                         grid_path)
+        # Note: we use a lock here to prevent multiple processes from
+        # downloading the file simultaneously and to ensure that other
+        # processes wait until the download has finished
+        lock = FileLock(self.CACHE_DIR / f"{grid_name}.lock")
+        with lock:
+            grid_path = self.CACHE_DIR / grid_name
+            if grid_path.exists():
+                mtime = grid_path.stat().st_mtime
+                now = datetime.now().timestamp()
+                age = now - mtime
+                if age < self.CACHE_VALIDITY:
+                    logger.debug("Using cached ICON grid file '%s'", grid_path)
+                    self._horizontal_grids[grid_name] = self._load_cubes(
+                        grid_path
+                    )
+                    return self._horizontal_grids[grid_name].copy()
+                logger.debug("Existing cached ICON grid file '%s' is outdated",
+                             grid_path)
 
-        # Download file if necessary
-        logger.debug("Attempting to download ICON grid file from '%s' to '%s'",
-                     grid_url, grid_path)
-        self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        with requests.get(grid_url, stream=True,
-                          timeout=self.TIMEOUT) as response:
-            response.raise_for_status()
-            with open(grid_path, 'wb') as file:
-                copyfileobj(response.raw, file)
-        logger.info("Successfully downloaded ICON grid file from '%s' to '%s'",
-                    grid_url, grid_path)
+            # Download file if necessary
+            logger.debug(
+                "Attempting to download ICON grid file from '%s' to '%s'",
+                grid_url,
+                grid_path,
+            )
+            self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            with requests.get(grid_url, stream=True,
+                              timeout=self.TIMEOUT) as response:
+                response.raise_for_status()
+                with open(grid_path, 'wb') as file:
+                    copyfileobj(response.raw, file)
+            logger.info(
+                "Successfully downloaded ICON grid file from '%s' to '%s'",
+                grid_url,
+                grid_path,
+            )
 
-        self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
+            self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
+
         return self._horizontal_grids[grid_name].copy()
 
     def get_mesh(self, cube):
