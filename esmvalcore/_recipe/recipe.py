@@ -878,8 +878,12 @@ def _extract_preprocessor_order(profile):
     custom_order = profile.pop('custom_order', False)
     if not custom_order:
         return DEFAULT_ORDER
-    order = tuple(p for p in profile if p not in INITIAL_STEPS + FINAL_STEPS)
-    return INITIAL_STEPS + order + FINAL_STEPS
+    if 'derive' not in profile:
+        initial_steps = INITIAL_STEPS + ('derive', )
+    else:
+        initial_steps = INITIAL_STEPS
+    order = tuple(p for p in profile if p not in initial_steps + FINAL_STEPS)
+    return initial_steps + order + FINAL_STEPS
 
 
 class Recipe:

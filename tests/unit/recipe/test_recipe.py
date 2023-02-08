@@ -603,3 +603,21 @@ def test_set_version(mocker):
     print(dataset)
     assert dataset.facets['version'] == ['v1', 'v2']
     assert dataset.ancillaries[0].facets['version'] == 'v3'
+
+
+def test_extract_preprocessor_order():
+    profile = {
+        'custom_order': True,
+        'regrid': {
+            'target_grid': '1x1'
+        },
+        'derive': {
+            'long_name': 'albedo at the surface',
+            'short_name': 'alb',
+            'standard_name': '',
+            'units': '1'
+        },
+    }
+    order = _recipe._extract_preprocessor_order(profile)
+    assert any(order[i:i + 2] == ('regrid', 'derive')
+               for i in range(len(order) - 1))
