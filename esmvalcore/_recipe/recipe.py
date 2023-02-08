@@ -384,7 +384,7 @@ def _add_legacy_ancillary_datasets(dataset: Dataset, settings):
         # Ancillaries have been defined using the new method.
         return
 
-    logger.info("Using legacy method of adding ancillary variables.")
+    logger.debug("Using legacy method to add ancillaries to %s", dataset)
 
     legacy_ds = dataset.copy()
     for facets in _get_legacy_ancillary_facets(dataset, settings):

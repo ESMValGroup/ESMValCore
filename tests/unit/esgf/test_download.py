@@ -615,7 +615,7 @@ def test_download_fail(mocker, tmp_path, caplog):
 
 def test_download_noop(caplog):
     """Test downloading no files."""
-    caplog.set_level('INFO')
+    caplog.set_level('DEBUG')
     esmvalcore.esgf.download([], dest_folder='/does/not/exist')
 
     msg = ("All required data is available locally,"
