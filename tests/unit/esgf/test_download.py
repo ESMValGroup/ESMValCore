@@ -568,6 +568,7 @@ def test_download(mocker, tmp_path, caplog):
     ]
     for i, file in enumerate(test_files):
         file.__str__.return_value = f'file{i}.nc'
+        file.local_file.return_value.exists.return_value = False
         file.size = 200 * 10**6
         file.__lt__.return_value = False
 
@@ -590,6 +591,7 @@ def test_download_fail(mocker, tmp_path, caplog):
     ]
     for i, file in enumerate(test_files):
         file.__str__.return_value = f'file{i}.nc'
+        file.local_file.return_value.exists.return_value = False
         file.size = 100 * 10**6
         file.__lt__.return_value = False
 
