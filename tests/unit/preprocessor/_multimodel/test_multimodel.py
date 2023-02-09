@@ -25,6 +25,16 @@ FREQUENCY_OPTIONS = ('daily', 'monthly', 'yearly')  # hourly
 CALENDAR_OPTIONS = ('360_day', '365_day', 'standard', 'proleptic_gregorian',
                     'julian')
 
+EQUAL_NAMES = [
+    ['var_name'],
+    ['standard_name'],
+    ['long_name'],
+    ['var_name', 'standard_name'],
+    ['var_name', 'long_name'],
+    ['standard_name', 'long_name'],
+    ['var_name', 'standard_name', 'long_name'],
+]
+
 
 def assert_array_allclose(this, other):
     """Assert that array `this` is close to array `other`."""
@@ -1032,6 +1042,97 @@ def test_arbitrary_dims_0d(cubes_with_arbitrary_dimensions):
     assert_array_allclose(stat_cube.data, np.ma.array(0.0))
 
 
+@pytest.mark.parametrize('equal_names', EQUAL_NAMES)
+def test_preserve_equal_name_cubes(equal_names):
+    """Test ``multi_model_statistics`` with equal-name cubes."""
+    all_names = ['var_name', 'standard_name', 'long_name']
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(5))
+
+    # Prepare names of input cubes accordingly
+    for (idx, cube) in enumerate(cubes):
+        for name in all_names:
+            if name in equal_names or idx != 0:
+                setattr(cube, name, 'air_pressure')
+            else:  # Different value for first cube if non-equal name
+                setattr(cube, name, None)
+
+    stat_cubes = multi_model_statistics(cubes, span='overlap',
+                                        statistics=['sum'])
+
+    assert len(stat_cubes) == 1
+    stat_cube = stat_cubes['sum']
+    assert_array_allclose(stat_cube.data, np.ma.array([5.0, 5.0, 5.0]))
+
+    for name in all_names:
+        if name in equal_names:
+            assert getattr(stat_cube, name) == 'air_pressure'
+        else:
+            assert getattr(stat_cube, name) is None
+
+
+@pytest.mark.parametrize('equal_names', EQUAL_NAMES)
+def test_equal_name_different_units_cubes(equal_names):
+    """Test ``multi_model_statistics`` with equal-name non-equal unit cubes."""
+    all_names = ['var_name', 'standard_name', 'long_name']
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(5))
+
+    # Prepare names of input cubes accordingly
+    cubes[0].units = 'kg'
+    for (idx, cube) in enumerate(cubes):
+        for name in all_names:
+            if name in equal_names or idx != 0:
+                setattr(cube, name, 'air_pressure')
+            else:  # Different value for first cube if non-equal name
+                setattr(cube, name, None)
+
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
+    with pytest.raises(ValueError, match=msg):
+        multi_model_statistics(cubes, span='overlap', statistics=['sum'])
+
+
+def test_equalise_var_metadata():
+    """Test ``_equalise_var_metadata``."""
+    cubes = CubeList(
+        generate_cube_from_dates('monthly', var_name='x') for _ in range(5)
+    )
+
+    # Prepare names of input cubes accordingly
+    cubes[0].units = 'kg'
+    cubes[0].standard_name = 'air_pressure'
+    cubes[1].units = 'kg'
+    cubes[1].standard_name = 'air_pressure'
+    cubes[1].var_name = 'y'
+    cubes[2].units = 'kg'
+    cubes[3].units = 'm'
+    cubes[4].units = 'm'
+
+    mm._equalise_var_metadata(cubes)
+
+    assert cubes[0].standard_name == 'air_pressure'
+    assert cubes[0].long_name is None
+    assert cubes[0].var_name is None
+    assert cubes[0].units == 'kg'
+    assert cubes[1].standard_name == 'air_pressure'
+    assert cubes[1].long_name is None
+    assert cubes[1].var_name is None
+    assert cubes[1].units == 'kg'
+    assert cubes[2].standard_name is None
+    assert cubes[2].long_name is None
+    assert cubes[2].var_name == 'x'
+    assert cubes[2].units == 'kg'
+    assert cubes[3].standard_name is None
+    assert cubes[3].long_name is None
+    assert cubes[3].var_name == 'x'
+    assert cubes[3].units == 'm'
+    assert cubes[4].standard_name is None
+    assert cubes[4].long_name is None
+    assert cubes[4].var_name == 'x'
+    assert cubes[4].units == 'm'
+
+
 def test_preserve_equal_coordinates():
     """Test ``multi_model_statistics`` with equal input coordinates."""
     cubes = get_cube_for_equal_coords_test(5)
@@ -1077,18 +1178,7 @@ def test_preserve_non_equal_coordinates():
     assert stat_cube.coord('x').attributes == {}
 
 
-@pytest.mark.parametrize(
-    'equal_names',
-    [
-        ['var_name'],
-        ['standard_name'],
-        ['long_name'],
-        ['var_name', 'standard_name'],
-        ['var_name', 'long_name'],
-        ['standard_name', 'long_name'],
-        ['var_name', 'standard_name', 'long_name'],
-    ]
-)
+@pytest.mark.parametrize('equal_names', EQUAL_NAMES)
 def test_preserve_equal_name_coordinates(equal_names):
     """Test ``multi_model_statistics`` with equal-name coordinates."""
     all_names = ['var_name', 'standard_name', 'long_name']

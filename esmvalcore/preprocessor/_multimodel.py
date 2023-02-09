@@ -369,6 +369,39 @@ def _equalise_fx_variables(cubes):
         remove_fx_variables(cube)
 
 
+def _equalise_var_metadata(cubes):
+    """Equalise variable metadata in cubes (in-place).
+
+    If cubes have the same ``name()`` and ``units``, assign identical
+    `standard_names`, `long_names`, and `var_names`.
+
+    """
+    attrs = ['standard_name', 'long_name', 'var_name']
+    equal_names_metadata = {}
+
+    # Collect all names from the different cubes, grouped by cube.name() and
+    # cube.units
+    for cube in cubes:
+        cube_id = f"{cube.name()} ({cube.units})"
+        equal_names_metadata.setdefault(cube_id, {a: set() for a in attrs})
+        for attr in attrs:
+            equal_names_metadata[cube_id][attr].add(getattr(cube, attr))
+
+    # Unify names (use `None` for non-unique elements)
+    for names in equal_names_metadata.values():
+        for attr in attrs:
+            if len(names[attr]) == 1:
+                names[attr] = list(names[attr])[0]
+            else:
+                names[attr] = None
+
+    # Assign equal names for cubes with identical cube.name() and cube.units
+    for cube in cubes:
+        cube_id = f"{cube.name()} ({cube.units})"
+        for attr in attrs:
+            setattr(cube, attr, equal_names_metadata[cube_id][attr])
+
+
 def _combine(cubes):
     """Merge iris cubes into a single big cube with new dimension.
 
@@ -378,6 +411,7 @@ def _combine(cubes):
     # https://scitools-iris.readthedocs.io/en/stable/userguide/
     #    merge_and_concat.html#common-issues-with-merge-and-concatenate
     equalise_attributes(cubes)
+    _equalise_var_metadata(cubes)
     _equalise_cell_methods(cubes)
     _equalise_coordinate_metadata(cubes)
     _equalise_fx_variables(cubes)
@@ -596,6 +630,12 @@ def multi_model_statistics(products,
 
     This function can handle cubes with differing metadata:
 
+    - Cubes with identical :meth:`~iris.coords.Coord.name`s and
+      :attr:`~iris.coords.Coord.units` will get identical values for
+      :attr:`~iris.coords.Coord.standard_name`,
+      :attr:`~iris.coords.Coord.long_name`, and
+      :attr:`~iris.coords.Coord.var_name` (which is ``None`` if the different
+      cubes have different values for them).
     - :attr:`~iris.cube.Cube.attributes`: Differing attributes are deleted,
       see :func:`iris.util.equalise_attributes`.
     - :attr:`~iris.cube.Cube.cell_methods`: All cell methods are deleted
