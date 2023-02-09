@@ -630,12 +630,12 @@ def multi_model_statistics(products,
 
     This function can handle cubes with differing metadata:
 
-    - Cubes with identical :meth:`~iris.coords.Coord.name`s and
+    - Cubes with identical :meth:`~iris.coords.Coord.name` and
       :attr:`~iris.coords.Coord.units` will get identical values for
       :attr:`~iris.coords.Coord.standard_name`,
       :attr:`~iris.coords.Coord.long_name`, and
-      :attr:`~iris.coords.Coord.var_name` (which is ``None`` if the different
-      cubes have different values for them).
+      :attr:`~iris.coords.Coord.var_name` (which will be ``None`` if the
+      different cubes have different values for them).
     - :attr:`~iris.cube.Cube.attributes`: Differing attributes are deleted,
       see :func:`iris.util.equalise_attributes`.
     - :attr:`~iris.cube.Cube.cell_methods`: All cell methods are deleted
