@@ -147,6 +147,37 @@ class IconFix(NativeDatasetFix):
         grid_name = Path(parsed_url.path).name
         return (grid_url, grid_name)
 
+    def _get_node_coords(self, horizontal_grid):
+        """Get node coordinates from horizontal grid.
+
+        Extract node coordinates from dummy variable 'dual_area' in horizontal
+        grid file (in ICON jargon called 'vertex latitude' and 'vertex
+        longitude'), remove their bounds (not accepted by UGRID), and adapt
+        metadata.
+
+        """
+        dual_area_cube = horizontal_grid.extract_cube(
+            NameConstraint(var_name='dual_area'))
+        node_lat = dual_area_cube.coord(var_name='vlat')
+        node_lon = dual_area_cube.coord(var_name='vlon')
+
+        # Fix metadata
+        node_lat.bounds = None
+        node_lon.bounds = None
+        node_lat.var_name = 'nlat'
+        node_lon.var_name = 'nlon'
+        node_lat.standard_name = 'latitude'
+        node_lon.standard_name = 'longitude'
+        node_lat.long_name = 'node latitude'
+        node_lon.long_name = 'node longitude'
+        node_lat.convert_units('degrees_north')
+        node_lon.convert_units('degrees_east')
+
+        # Convert longitude to [0, 360]
+        self._set_range_in_0_360(node_lon)
+
+        return (node_lat, node_lon)
+
     def get_horizontal_grid(self, cube):
         """Get copy of ICON horizontal grid from global attribute of cube.
 
@@ -262,6 +293,22 @@ class IconFix(NativeDatasetFix):
         return self._meshes[grid_name]
 
     @staticmethod
+    def _get_start_index(horizontal_grid):
+        """Get start index used to name nodes from horizontal grid.
+
+        Extract start index used to name nodes from the the horizontal grid
+        file (in ICON jargon called 'vertex_index').
+
+        Note
+        ----
+        UGRID expects this to be a int32.
+
+        """
+        vertex_index = horizontal_grid.extract_cube(
+            NameConstraint(var_name='vertex_index'))
+        return np.int32(np.min(vertex_index.data))
+
+    @staticmethod
     def _load_cubes(path):
         """Load cubes and ignore certain warnings."""
         with warnings.catch_warnings():
@@ -273,6 +320,13 @@ class IconFix(NativeDatasetFix):
             )
             cubes = iris.load(str(path))
         return cubes
+
+    @staticmethod
+    def _set_range_in_0_360(lon_coord):
+        """Convert longitude coordinate to [0, 360]."""
+        lon_coord.points = (lon_coord.points + 360.0) % 360.0
+        if lon_coord.bounds is not None:
+            lon_coord.bounds = (lon_coord.bounds + 360.0) % 360.0
 
 
 class SetUnitsTo1(IconFix):

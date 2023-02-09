@@ -279,37 +279,6 @@ class AllVars(IconFix):
 
         return cube
 
-    def _get_node_coords(self, horizontal_grid):
-        """Get node coordinates from horizontal grid.
-
-        Extract node coordinates from dummy variable 'dual_area' in horizontal
-        grid file (in ICON jargon called 'vertex latitude' and 'vertex
-        longitude'), remove their bounds (not accepted by UGRID), and adapt
-        metadata.
-
-        """
-        dual_area_cube = horizontal_grid.extract_cube(
-            NameConstraint(var_name='dual_area'))
-        node_lat = dual_area_cube.coord(var_name='vlat')
-        node_lon = dual_area_cube.coord(var_name='vlon')
-
-        # Fix metadata
-        node_lat.bounds = None
-        node_lon.bounds = None
-        node_lat.var_name = 'nlat'
-        node_lon.var_name = 'nlon'
-        node_lat.standard_name = 'latitude'
-        node_lon.standard_name = 'longitude'
-        node_lat.long_name = 'node latitude'
-        node_lon.long_name = 'node longitude'
-        node_lat.convert_units('degrees_north')
-        node_lon.convert_units('degrees_east')
-
-        # Convert longitude to [0, 360]
-        self._set_range_in_0_360(node_lon)
-
-        return (node_lat, node_lon)
-
     def _fix_mesh(self, cube, mesh_idx):
         """Fix mesh."""
         # Remove any already-present dimensional coordinate describing the mesh
@@ -372,13 +341,6 @@ class AllVars(IconFix):
             return False
 
         return True
-
-    @staticmethod
-    def _set_range_in_0_360(lon_coord):
-        """Convert longitude coordinate to [0, 360]."""
-        lon_coord.points = (lon_coord.points + 360.0) % 360.0
-        if lon_coord.bounds is not None:
-            lon_coord.bounds = (lon_coord.bounds + 360.0) % 360.0
 
 
 class Clwvi(IconFix):
