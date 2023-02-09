@@ -235,7 +235,7 @@ Note that by default, ancillary variables and cell measures will be removed
 from the variable before saving it to file because they can be as big as the
 main variable.
 To keep the ancillary variables, disable the preprocessor function that removes
-them by setting `remove_ancillary_variables: false` in the preprocessor profile
+them by setting ``remove_ancillary_variables: false`` in the preprocessor profile
 in the recipe.
 
 Concatenating data corresponding to multiple facets

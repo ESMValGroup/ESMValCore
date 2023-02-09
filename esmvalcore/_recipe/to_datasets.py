@@ -177,14 +177,32 @@ def _fix_cmip5_fx_ensemble(dataset: Dataset):
             and dataset.facets.get('mip') == 'fx'
             and dataset.facets.get('ensemble') != 'r0i0p0'
             and not dataset.files):
+        original_ensemble = dataset['ensemble']
         copy = dataset.copy()
         copy.facets['ensemble'] = 'r0i0p0'
         if copy.files:
-            logger.info("Corrected wrong 'ensemble' from '%s' to '%s' for %s",
-                        dataset['ensemble'], copy['ensemble'],
-                        dataset.summary(shorten=True))
             dataset.facets['ensemble'] = 'r0i0p0'
+            logger.info("Corrected wrong 'ensemble' from '%s' to '%s' for %s",
+                        original_ensemble, dataset['ensemble'],
+                        dataset.summary(shorten=True))
             dataset.find_files()
+
+
+def _fix_fx_exp(dataset: Dataset):
+    for ancillary_ds in dataset.ancillaries:
+        exps = ancillary_ds.facets.get('exp')
+        frequency = ancillary_ds.facets.get('frequency')
+        if isinstance(exps, list) and len(exps) > 1 and frequency == 'fx':
+            for exp in exps:
+                copy = ancillary_ds.copy(exp=exp)
+                if copy.files:
+                    ancillary_ds.facets['exp'] = exp
+                    logger.info(
+                        "Corrected wrong 'exp' from '%s' to '%s' for "
+                        "ancillary variable '%s' of %s", exps, exp,
+                        ancillary_ds.facets['short_name'],
+                        dataset.summary(shorten=True))
+                    break
 
 
 def _get_ancillary_short_names(
@@ -383,6 +401,9 @@ def _get_datasets_for_variable(
                 datasets.append(dataset2)
                 idx += 1
 
+    for dataset in datasets:
+        _fix_fx_exp(dataset)
+
     return datasets
 
 
@@ -493,9 +514,10 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
     # Configure input datasets needed to derive variable
     datasets = []
     required_vars = get_required(facets['short_name'], facets['project'])
+    # idea: add option to specify facets in list of dicts that is value of
+    # 'derive' in the recipe and use that instead of get_required?
     for input_facets in required_vars:
         input_dataset = dataset.copy(**input_facets)
-        # idea: specify facets in list of dicts that is value of 'derive'?
         _update_cmor_facets(input_dataset.facets, override=True)
         input_dataset.augment_facets()
         _fix_cmip5_fx_ensemble(input_dataset)

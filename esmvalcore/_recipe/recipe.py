@@ -51,6 +51,7 @@ from . import check
 from .from_datasets import datasets_to_recipe
 from .to_datasets import (
     _derive_needed,
+    _fix_fx_exp,
     _get_input_datasets,
     _representative_dataset,
 )
@@ -394,6 +395,8 @@ def _add_legacy_ancillary_datasets(dataset: Dataset, settings):
         _update_cmor_facets(ancillary_ds.facets, override=True)
         if ancillary_ds.files:
             dataset.ancillaries.append(ancillary_ds)
+
+    _fix_fx_exp(dataset)
 
     # Remove preprocessor keyword argument `fx_variables`
     for kwargs in settings.values():
