@@ -342,10 +342,20 @@ class ESGFFile:
         dataset_name = DATASET_MAP[project].get(dataset_name, dataset_name)
         return f"{project}.{dataset_name}.{version}"
 
+    def _get_relative_path(self) -> Path:
+        """Get the subdirectories."""
+        if self.facets['project'] == 'obs4MIPs':
+            # Avoid errors due to a to a `.` in the dataset name
+            facets = ['project', 'dataset', 'version']
+            path = Path(*[self.facets[f] for f in facets])
+        else:
+            path = Path(*self.dataset.split('.'))
+        return path / self.name
+
     def __repr__(self):
         """Represent the file as a string."""
         hosts = [urlparse(u).hostname for u in self.urls]
-        return (f"ESGFFile:{self.dataset.replace('.', '/')}/{self.name}"
+        return (f"ESGFFile:{self._get_relative_path()}"
                 f" on hosts {hosts}")
 
     def __eq__(self, other):
@@ -374,11 +384,7 @@ class ESGFFile:
         LocalFile
             The path where the file will be located after download.
         """
-        file = LocalFile(
-            dest_folder,
-            *self.dataset.split('.'),
-            self.name,
-        ).absolute()
+        file = LocalFile(dest_folder, self._get_relative_path())
         file.facets = self.facets
         return file
 

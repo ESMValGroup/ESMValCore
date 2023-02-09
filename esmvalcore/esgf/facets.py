@@ -10,6 +10,7 @@ FACETS = {
         'ensemble': 'ensemble',
         'exp': 'experiment',
         'frequency': 'time_frequency',
+        'realm': 'realm',
         'short_name': 'variable',
     },
     'CMIP5': {
@@ -20,6 +21,7 @@ FACETS = {
         'institute': 'institute',
         'mip': 'cmor_table',
         'product': 'product',
+        'realm': 'realm',
         'short_name': 'variable',
     },
     'CMIP6': {
@@ -47,6 +49,7 @@ FACETS = {
         'dataset': 'source_id',
         'frequency': 'time_frequency',
         'institute': 'institute',
+        'realm': 'realm',
         'short_name': 'variable',
     }
 }
