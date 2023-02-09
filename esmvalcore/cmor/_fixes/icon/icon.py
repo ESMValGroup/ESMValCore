@@ -296,29 +296,14 @@ class AllVars(IconFix):
         )
         cube.add_dim_coord(index_coord, mesh_idx)
 
-        # Get mesh and replace the original latitude and longitude coordinates
-        # with their new mesh versions
-        mesh = self.get_mesh(cube)
-        cube.remove_coord('latitude')
-        cube.remove_coord('longitude')
-        for mesh_coord in mesh.to_MeshCoords('face'):
-            cube.add_aux_coord(mesh_coord, mesh_idx)
-
-    @staticmethod
-    def _get_start_index(horizontal_grid):
-        """Get start index used to name nodes from horizontal grid.
-
-        Extract start index used to name nodes from the the horizontal grid
-        file (in ICON jargon called 'vertex_index').
-
-        Note
-        ----
-        UGRID expects this to be a int32.
-
-        """
-        vertex_index = horizontal_grid.extract_cube(
-            NameConstraint(var_name='vertex_index'))
-        return np.int32(np.min(vertex_index.data))
+        # If desired, get mesh and replace the original latitude and longitude
+        # coordinates with their new mesh versions
+        if self.extra_facets.get('ugrid', True):
+            mesh = self.get_mesh(cube)
+            cube.remove_coord('latitude')
+            cube.remove_coord('longitude')
+            for mesh_coord in mesh.to_MeshCoords('face'):
+                cube.add_aux_coord(mesh_coord, mesh_idx)
 
     @staticmethod
     def _is_unstructured_grid(lat_idx, lon_idx):

@@ -729,7 +729,38 @@ def test_tas_scalar_height2m_already_present(cubes_2d):
     check_heightxm(cube, 2.0)
 
 
-def test_tas_dim_height2m_already_present(cubes_2d):
+def test_tas_dim_height2m_already_present(cubes_2d, monkeypatch):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'tas')
+    monkeypatch.setitem(fix.extra_facets, 'ugrid', False)
+    fixed_cubes = fix.fix_metadata(cubes_2d)
+
+    cube = check_tas_metadata(fixed_cubes)
+
+    assert cube.mesh is None
+
+    assert cube.coords('first spatial index for variables stored on an '
+                       'unstructured grid', dim_coords=True)
+    i_coord = cube.coord('first spatial index for variables stored on an '
+                         'unstructured grid', dim_coords=True)
+    assert i_coord.var_name == 'i'
+    assert i_coord.standard_name is None
+    assert i_coord.long_name == ('first spatial index for variables stored on '
+                                 'an unstructured grid')
+    assert i_coord.units == '1'
+    np.testing.assert_allclose(i_coord.points, [0, 1, 2, 3, 4, 5, 6, 7])
+    assert i_coord.bounds is None
+
+    assert cube.coords('latitude', dim_coords=False)
+    assert cube.coords('longitude', dim_coords=False)
+    lat = cube.coord('latitude', dim_coords=False)
+    lon = cube.coord('longitude', dim_coords=False)
+    assert len(cube.coord_dims(lat)) == 1
+    assert cube.coord_dims(lat) == cube.coord_dims(lon)
+    assert cube.coord_dims(lat) == cube.coord_dims(i_coord)
+
+
+def test_tas_no_mesh(cubes_2d):
     """Test fix."""
     fix = get_allvars_fix('Amon', 'tas')
 
