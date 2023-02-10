@@ -397,7 +397,7 @@ def _equalise_var_metadata(cubes):
             if not vals:  # all names were `None`
                 names[attr] = None
             else:  # always use first encountered value
-                names[attr] = sorted(names[attr])[0]
+                names[attr] = vals[0]
 
     # Assign equal names for cubes with identical cube.name() and cube.units
     for cube in cubes:
@@ -648,7 +648,7 @@ def multi_model_statistics(products,
       :attr:`~iris.coords.Coord.standard_name`,
       :attr:`~iris.coords.Coord.long_name`, and
       :attr:`~iris.coords.Coord.var_name` (which will be arbitrarily set to the
-      first encountered value of different cubes have different values for
+      first encountered value if different cubes have different values for
       them).
     - :attr:`~iris.cube.Cube.attributes`: Differing attributes are deleted,
       see :func:`iris.util.equalise_attributes`.
