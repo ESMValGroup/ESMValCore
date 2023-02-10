@@ -1064,10 +1064,7 @@ def test_preserve_equal_name_cubes(equal_names):
     assert_array_allclose(stat_cube.data, np.ma.array([5.0, 5.0, 5.0]))
 
     for name in all_names:
-        if name in equal_names:
-            assert getattr(stat_cube, name) == 'air_pressure'
-        else:
-            assert getattr(stat_cube, name) is None
+        assert getattr(stat_cube, name) == 'air_pressure'
 
 
 @pytest.mark.parametrize('equal_names', EQUAL_NAMES)
@@ -1102,33 +1099,37 @@ def test_equalise_var_metadata():
     # Prepare names of input cubes accordingly
     cubes[0].units = 'kg'
     cubes[0].standard_name = 'air_pressure'
+    cubes[0].long_name = 'b'
     cubes[1].units = 'kg'
     cubes[1].standard_name = 'air_pressure'
+    cubes[1].long_name = 'a'
     cubes[1].var_name = 'y'
     cubes[2].units = 'kg'
     cubes[3].units = 'm'
+    cubes[3].long_name = 'X'
     cubes[4].units = 'm'
+    cubes[4].long_name = 'X'
 
     mm._equalise_var_metadata(cubes)
 
     assert cubes[0].standard_name == 'air_pressure'
-    assert cubes[0].long_name is None
-    assert cubes[0].var_name is None
+    assert cubes[0].long_name == 'a'
+    assert cubes[0].var_name == 'x'
     assert cubes[0].units == 'kg'
     assert cubes[1].standard_name == 'air_pressure'
-    assert cubes[1].long_name is None
-    assert cubes[1].var_name is None
+    assert cubes[1].long_name == 'a'
+    assert cubes[1].var_name == 'x'
     assert cubes[1].units == 'kg'
     assert cubes[2].standard_name is None
     assert cubes[2].long_name is None
     assert cubes[2].var_name == 'x'
     assert cubes[2].units == 'kg'
     assert cubes[3].standard_name is None
-    assert cubes[3].long_name is None
+    assert cubes[3].long_name == 'X'
     assert cubes[3].var_name == 'x'
     assert cubes[3].units == 'm'
     assert cubes[4].standard_name is None
-    assert cubes[4].long_name is None
+    assert cubes[4].long_name == 'X'
     assert cubes[4].var_name == 'x'
     assert cubes[4].units == 'm'
 

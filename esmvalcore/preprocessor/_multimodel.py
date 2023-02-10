@@ -380,20 +380,24 @@ def _equalise_var_metadata(cubes):
     equal_names_metadata = {}
 
     # Collect all names from the different cubes, grouped by cube.name() and
-    # cube.units
+    # cube.units (ignore `None`)
     for cube in cubes:
         cube_id = f"{cube.name()} ({cube.units})"
         equal_names_metadata.setdefault(cube_id, {a: set() for a in attrs})
         for attr in attrs:
-            equal_names_metadata[cube_id][attr].add(getattr(cube, attr))
+            val = getattr(cube, attr)
+            if val is not None:
+                equal_names_metadata[cube_id][attr].add(val)
 
-    # Unify names (use `None` for non-unique elements)
+    # Unify names (always use first encountered value, even if there are
+    # different values)
     for names in equal_names_metadata.values():
         for attr in attrs:
-            if len(names[attr]) == 1:
-                names[attr] = list(names[attr])[0]
-            else:
+            vals = sorted(names[attr])
+            if not vals:  # all names were `None`
                 names[attr] = None
+            else:  # always use first encountered value
+                names[attr] = sorted(names[attr])[0]
 
     # Assign equal names for cubes with identical cube.name() and cube.units
     for cube in cubes:
@@ -492,6 +496,15 @@ def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
                 message=(
                     "Collapsing a non-contiguous coordinate. "
                     f"Metadata may not be fully descriptive for '{CONCAT_DIM}."
+                ),
+                category=UserWarning,
+                module='iris',
+            )
+            warnings.filterwarnings(
+                'ignore',
+                message=(
+                    f"Cannot check if coordinate is contiguous: Invalid "
+                    f"operation for '{CONCAT_DIM}'"
                 ),
                 category=UserWarning,
                 module='iris',
@@ -634,8 +647,9 @@ def multi_model_statistics(products,
       :attr:`~iris.coords.Coord.units` will get identical values for
       :attr:`~iris.coords.Coord.standard_name`,
       :attr:`~iris.coords.Coord.long_name`, and
-      :attr:`~iris.coords.Coord.var_name` (which will be ``None`` if the
-      different cubes have different values for them).
+      :attr:`~iris.coords.Coord.var_name` (which will be arbitrarily set to the
+      first encountered value of different cubes have different values for
+      them).
     - :attr:`~iris.cube.Cube.attributes`: Differing attributes are deleted,
       see :func:`iris.util.equalise_attributes`.
     - :attr:`~iris.cube.Cube.cell_methods`: All cell methods are deleted
