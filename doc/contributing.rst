@@ -142,7 +142,7 @@ The icons indicate whether the item will be checked during the
 Pull requests introducing a change that causes a recipe to no longer run successfully
 (*breaking change*), or which results in scientifically significant changes in results
 (*science change*) require additional items to be reviewed defined in the
-:ref:`backward compatibility policy<esmvaltool:backward_compatibility>`__.
+:ref:`backward compatibility policy<esmvaltool:backward_compatibility>`.
 These include in particular:
 
 - 🛠 Instructions for the release notes to assist *recipe
@@ -151,7 +151,7 @@ These include in particular:
 - 🛠 General instructions for *recipe developers* working on *user
   recipes* to enable them to adapt their code related to
   *backward-incompatible changes* available (see `ESMValTool_Tutorial: issue
-  #263 <https://github.com/ESMValGroup/ESMValTool_Tutorial/issues/263>`__).
+  #263 <https://github.com/ESMValGroup/ESMValTool_Tutorial/issues/263>`).
 - 🛠 Core development team tagged to notify them of the
   *backward-incompatible change*, and give at least
   2 weeks for objections to be raised before merging to the main
@@ -583,7 +583,7 @@ users.
 
 .. note::
 
-   The :ref:`backward compatibility policy<esmvaltool:backward_compatibility>`__
+   The :ref:`backward compatibility policy<esmvaltool:backward_compatibility>`
    outlines the key principles on backward compatibility and additional guidance on handling
    *backward-incompatible changes*. This policy applies to both, ESMValCore and ESMValTool.
 
@@ -801,7 +801,7 @@ the release branch.
 4. Add release notes
 ~~~~~~~~~~~~~~~~~~~~
 Use the script
-:ref:`esmvaltool/utils/draft_release_notes.py <esmvaltool:draft_release_notes.py>`
+:ref:`esmvaltool/utils/draft_release_notes.py <draft_release_notes.py>`
 to create create a draft of the release notes.
 This script uses the titles and labels of merged pull requests since the
 previous release.
