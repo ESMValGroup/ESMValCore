@@ -363,7 +363,7 @@ algorithm <https://earthsystemmodeling.org/regrid/#regridding-methods>`__:
            reference: esmf_regrid.experimental.unstructured_scheme:regrid_unstructured_to_rectilinear
            method: conservative
 
-This automatic UGRIDization is enabled by default, but can be switched of with
+This automatic UGRIDization is enabled by default, but can be switched off with
 the facet ``ugrid: false`` in the recipe or the extra facets (see below).
 This is useful for diagnostics that do not support input data in UGRID format
 (yet) like the :ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>` or
