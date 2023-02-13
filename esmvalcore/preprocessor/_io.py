@@ -10,11 +10,11 @@ from warnings import catch_warnings, filterwarnings
 import iris
 import iris.aux_factory
 import iris.exceptions
-import numpy as np
 import yaml
 from cf_units import suppress_errors
 
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+from esmvalcore.iris_helpers import merge_cube_attributes
 
 from .._task import write_ncl_settings
 from ._time import extract_time
@@ -141,7 +141,7 @@ def load(file, callback=None, ignore_warnings=None):
     ValueError
         Cubes are empty.
     """
-    if not(callback is None or callback == 'default'):
+    if not (callback is None or callback == 'default'):
         msg = ("The argument `callback` has been deprecated in "
                "ESMValCore version 2.8.0 and is scheduled for removal in "
                "version 2.10.0.")
@@ -187,21 +187,6 @@ def load(file, callback=None, ignore_warnings=None):
     return raw_cubes
 
 
-def _fix_cube_attributes(cubes):
-    """Unify attributes of different cubes to allow concatenation."""
-    attributes = {}
-    for cube in cubes:
-        for (attr, val) in cube.attributes.items():
-            if attr not in attributes:
-                attributes[attr] = val
-            else:
-                if not np.array_equal(val, attributes[attr]):
-                    attributes[attr] = '{};{}'.format(str(attributes[attr]),
-                                                      str(val))
-    for cube in cubes:
-        cube.attributes = attributes
-
-
 def _by_two_concatenation(cubes):
     """Perform a by-2 concatenation to avoid gaps."""
     concatenated = iris.cube.CubeList(cubes).concatenate()
@@ -239,7 +224,7 @@ def concatenate(cubes):
     if len(cubes) == 1:
         return cubes[0]
 
-    _fix_cube_attributes(cubes)
+    merge_cube_attributes(cubes)
 
     if len(cubes) > 1:
         # order cubes by first time point
