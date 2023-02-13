@@ -7,6 +7,7 @@ import yaml
 from esmvalcore._recipe import to_datasets
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
+from esmvalcore.local import LocalFile
 
 
 def test_from_recipe(session):
@@ -297,48 +298,16 @@ def test_max_years(session):
     assert datasets[0].facets['timerange'] == '2000/2001'
 
 
-def test_remove_duplicate_ancillaries():
-    dataset = Dataset(
-        dataset='dataset1',
-        short_name='tas',
-        mip='Amon',
-        project='CMIP6',
-        exp='historical',
-    )
-    ancillary1 = dataset.copy(short_name='areacella')
-    ancillary2 = ancillary1.copy()
-    ancillary1.facets['exp'] = '1pctCO2'
-    dataset.ancillaries = [ancillary1, ancillary2]
-
-    to_datasets._remove_duplicate_ancillaries(dataset)
-
-    assert len(dataset.ancillaries) == 1
-    assert dataset.ancillaries[0] == ancillary2
-
-
-def test_remove_not_found_ancillaries():
-    dataset = Dataset(
-        dataset='dataset1',
-        short_name='tas',
-        mip='Amon',
-        project='CMIP6',
-        exp='historical',
-    )
-    dataset.add_ancillary(short_name='areacella', mip='fx', exp='*')
-    to_datasets._remove_unexpanded_ancillaries(dataset)
-
-    assert len(dataset.ancillaries) == 0
-
-
 @pytest.mark.parametrize('found_files', [True, False])
-def test_from_representative_files_fails(monkeypatch, found_files):
-
+def test_dataset_from_files_fails(monkeypatch, found_files):
     def from_files(_):
+        file = LocalFile('/path/to/file')
+        file.facets = {'facets1': 'value1'}
         dataset = Dataset(
             dataset='*',
             short_name='tas',
         )
-        dataset.files = ['/path/to/tas.nc'] if found_files else []
+        dataset.files = [file] if found_files else []
         dataset._file_globs = ['/path/to/tas_*.nc']
         return [dataset]
 
@@ -350,11 +319,10 @@ def test_from_representative_files_fails(monkeypatch, found_files):
     )
 
     with pytest.raises(RecipeError, match="Unable to replace dataset.*"):
-        to_datasets._from_representative_files(dataset)
+        to_datasets._dataset_from_files(dataset)
 
 
 def test_fix_cmip5_fx_ensemble(monkeypatch):
-
     def find_files(self):
         if self.facets['ensemble'] == 'r0i0p0':
             self._files = ['file1.nc']
@@ -375,7 +343,6 @@ def test_fix_cmip5_fx_ensemble(monkeypatch):
 
 
 def test_get_ancillary_short_names(monkeypatch):
-
     def _update_cmor_facets(facets):
         facets['modeling_realm'] = 'atmos'
 
@@ -416,21 +383,3 @@ def test_append_missing_ancillaries():
 
     short_names = {f['short_name'] for f in ancillaries}
     assert short_names == {'areacella', 'sftlf'}
-
-
-def test_match_datasets():
-    dataset1 = Dataset(
-        short_name='areacella',
-        ensemble=['r1i1p1f1'],
-        exp='historical',
-        realms=['atmos', 'land'],
-    )
-    dataset2 = Dataset(
-        short_name='tas',
-        ensemble='r1i1p1f1',
-        exp=['historical', 'ssp585'],
-        realms=['atmos'],
-    )
-
-    score = to_datasets._match_datasets(dataset1, dataset2)
-    assert score == 3

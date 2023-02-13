@@ -3,8 +3,6 @@ from __future__ import annotations
 
 import logging
 from copy import deepcopy
-from functools import partial
-from itertools import groupby
 from numbers import Number
 from pathlib import Path
 from typing import Any, Iterable, Iterator
@@ -12,6 +10,7 @@ from typing import Any, Iterable, Iterator
 from esmvalcore.cmor.table import _update_cmor_facets
 from esmvalcore.config import Session
 from esmvalcore.dataset import Dataset, _isglob
+from esmvalcore.esgf.facets import FACETS
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.local import _replace_years_with_timerange
 from esmvalcore.preprocessor._ancillary_vars import PREPROCESSOR_ANCILLARIES
@@ -188,23 +187,6 @@ def _fix_cmip5_fx_ensemble(dataset: Dataset):
             dataset.find_files()
 
 
-def _fix_fx_exp(dataset: Dataset):
-    for ancillary_ds in dataset.ancillaries:
-        exps = ancillary_ds.facets.get('exp')
-        frequency = ancillary_ds.facets.get('frequency')
-        if isinstance(exps, list) and len(exps) > 1 and frequency == 'fx':
-            for exp in exps:
-                copy = ancillary_ds.copy(exp=exp)
-                if copy.files:
-                    ancillary_ds.facets['exp'] = exp
-                    logger.info(
-                        "Corrected wrong 'exp' from '%s' to '%s' for "
-                        "ancillary variable '%s' of %s", exps, exp,
-                        ancillary_ds.facets['short_name'],
-                        dataset.summary(shorten=True))
-                    break
-
-
 def _get_ancillary_short_names(
     facets: Facets,
     step: str,
@@ -249,11 +231,12 @@ def _append_missing_ancillaries(
         ],
     }
     keep_facets = (
-        'project',
         'dataset',
-        'driver',
         'domain',
+        'driver',
         'grid',
+        'project',
+        'timerange',
     )
 
     steps = [step for step in settings if step in PREPROCESSOR_ANCILLARIES]
@@ -268,6 +251,12 @@ def _append_missing_ancillaries(
                 facet: '*'
                 for facet in list(facets) + default_facets.get(project, [])
             }
+            if project in FACETS:
+                afacets = {
+                    k: v
+                    for k, v in afacets.items() if k in FACETS[project]
+                }
+
             for facet in keep_facets:
                 if facet in facets:
                     afacets[facet] = facets[facet]
@@ -386,23 +375,20 @@ def _get_datasets_for_variable(
             variable_group=variable_group,
             session=session,
     ):
-        dataset = Dataset(**facets)
-        dataset.session = session
-
-        for dataset1 in dataset.from_ranges():
+        template0 = Dataset(**facets)
+        template0.session = session
+        for template1 in template0.from_ranges():
             for ancillary_facets in ancillaries:
-                dataset1.add_ancillary(**ancillary_facets)
-            for ancillary_ds in dataset1.ancillaries:
+                template1.add_ancillary(**ancillary_facets)
+            for ancillary_ds in template1.ancillaries:
                 ancillary_ds.facets.pop('preprocessor', None)
-            dataset1['diagnostic'] = diagnostic_name
-            dataset1['variable_group'] = variable_group
-            for dataset2 in _from_representative_files(dataset1):
-                dataset2['recipe_dataset_index'] = idx  # type: ignore
-                datasets.append(dataset2)
+            for dataset in _dataset_from_files(template1):
+                dataset['variable_group'] = variable_group
+                dataset['diagnostic'] = diagnostic_name
+                dataset['recipe_dataset_index'] = idx  # type: ignore
+                logger.debug("Found %s", dataset.summary(shorten=True))
+                datasets.append(dataset)
                 idx += 1
-
-    for dataset in datasets:
-        _fix_fx_exp(dataset)
 
     return datasets
 
@@ -433,61 +419,50 @@ def datasets_from_recipe(
     return datasets
 
 
-def _remove_unexpanded_ancillaries(dataset: Dataset) -> None:
-    """Remove ancillaries where wildcards could not be expanded."""
-    ancillaries = []
-    for ancillary_ds in dataset.ancillaries:
-        unexpanded = [f for f, v in ancillary_ds.facets.items() if _isglob(v)]
-        if unexpanded:
-            logger.warning(
-                "For dataset %s: ignoring ancillary dataset %s, "
-                "unable to expand wildcards %s.",
-                dataset.summary(shorten=True),
-                ancillary_ds.summary(shorten=True),
-                ", ".join(f"'{f}'" for f in unexpanded),
-            )
-        else:
-            ancillaries.append(ancillary_ds)
-    dataset.ancillaries = ancillaries
+def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
+    """Replace facet values of '*' based on available files."""
+    result: list[Dataset] = []
+    errors = []
 
+    if any(_isglob(f) for f in dataset.facets.values()):
+        logger.debug(
+            "Expanding dataset globs for dataset %s, "
+            "this may take a while..", dataset.summary(shorten=True))
 
-def _match_datasets(dataset1: Dataset, dataset2: Dataset) -> int:
-    """Compute the match between two datasets."""
-    score = 0
-    for facet, value2 in dataset2.facets.items():
-        if facet in dataset1.facets:
-            value1 = dataset1.facets[facet]
-            if isinstance(value1, (list, tuple)):
-                if isinstance(value2, (list, tuple)):
-                    score += any(elem in value2 for elem in value1)
+    repr_dataset = _representative_dataset(dataset)
+    for repr_ds in repr_dataset.from_files():
+        updated_facets = {}
+        failed = {}
+        for key, value in dataset.facets.items():
+            if _isglob(value):
+                if key in repr_ds.facets and not _isglob(repr_ds[key]):
+                    updated_facets[key] = repr_ds.facets[key]
                 else:
-                    score += value2 in value1
+                    failed[key] = value
+
+        if failed:
+            msg = ("Unable to replace " +
+                   ", ".join(f"{k}={v}" for k, v in failed.items()) +
+                   f" by a value for\n{dataset}")
+            if repr_ds.files:
+                msg = (f"{msg}\nDo the (paths of) the files:\n" +
+                       "\n".join(f"{f}: {f.facets}" for f in repr_ds.files) +
+                       "\ncontain the missing facet values?")
             else:
-                if isinstance(value2, (list, tuple)):
-                    score += value1 in value2
-                else:
-                    score += value1 == value2
-    return score
+                msg = (f"{msg}\nNo files found matching:\n" +
+                       "\n".join(str(p)
+                                 for p in repr_ds._file_globs))  # type:ignore
+            errors.append(msg)
 
+        new_ds = dataset.copy()
+        new_ds.facets.update(updated_facets)
+        new_ds.ancillaries = repr_ds.ancillaries
+        result.append(new_ds)
 
-def _remove_duplicate_ancillaries(dataset: Dataset) -> None:
-    """Remove ancillaries that are duplicates."""
-    score = partial(_match_datasets, dataset2=dataset)
-    ancillaries = []
-    not_used = []
-    for _, duplicates in groupby(dataset.ancillaries,
-                                 key=lambda ds: ds['short_name']):
-        group = sorted(duplicates, key=score, reverse=True)
-        ancillaries.append(group[0])
-        not_used.extend(group[1:])
-    dataset.ancillaries = ancillaries
+    if errors:
+        raise RecipeError("\n".join(errors))
 
-    if not_used:
-        logger.info(
-            "For %s, not using duplicate ancillary datasets:\n%s",
-            dataset.summary(shorten=True),
-            "\n".join(sorted(ds.summary(shorten=True) for ds in not_used)),
-        )
+    return result
 
 
 def _derive_needed(dataset: Dataset) -> bool:
@@ -501,7 +476,9 @@ def _derive_needed(dataset: Dataset) -> bool:
         dataset = dataset.copy()
         dataset.facets.pop('timerange')
 
-    return not dataset.files
+    copy = dataset.copy()
+    copy.ancillaries = []
+    return not copy.files
 
 
 def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
@@ -540,58 +517,9 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
 
 def _representative_dataset(dataset: Dataset) -> Dataset:
     """Find a representative dataset that has files available."""
-    datasets = _get_input_datasets(dataset)
+    copy = dataset.copy()
+    copy.ancillaries = []
+    datasets = _get_input_datasets(copy)
     representative_dataset = datasets[0]
+    representative_dataset.ancillaries = dataset.ancillaries
     return representative_dataset
-
-
-def _from_representative_files(dataset: Dataset) -> list[Dataset]:
-    """Replace facet values of '*' based on available files."""
-    result: list[Dataset] = []
-    errors = []
-
-    if any(_isglob(f) for f in dataset.facets.values()) or any(
-            _isglob(f) for ds in dataset.ancillaries
-            for f in ds.facets.values()):
-        logger.debug(
-            "Expanding dataset globs for dataset %s, "
-            "this may take a while..", dataset.summary(shorten=True))
-
-    repr_dataset = _representative_dataset(dataset)
-    for repr_ds in repr_dataset.from_files():
-        updated_facets = {}
-        failed = {}
-        for key, value in dataset.facets.items():
-            if _isglob(value):
-                if key in repr_ds.facets and not _isglob(repr_ds[key]):
-                    updated_facets[key] = repr_ds.facets[key]
-                else:
-                    failed[key] = value
-
-        if failed:
-            msg = ("Unable to replace " +
-                   ", ".join(f"{k}={v}" for k, v in failed.items()) +
-                   f" by a value for\n{dataset}")
-            if repr_ds.files:
-                msg = (f"{msg}\nDo the paths to:\n" +
-                       "\n".join(str(f) for f in repr_ds.files) +
-                       "\ncontain the missing facet values?")
-            else:
-                msg = (f"{msg}\nNo files found matching:\n" +
-                       "\n".join(str(p)
-                                 for p in repr_ds._file_globs))  # type:ignore
-            errors.append(msg)
-
-        _remove_unexpanded_ancillaries(repr_ds)
-        _remove_duplicate_ancillaries(repr_ds)
-
-        new_ds = dataset.copy()
-        new_ds.facets.update(updated_facets)
-        new_ds.ancillaries = [ds.copy() for ds in repr_ds.ancillaries]
-        logger.debug("Found %s", new_ds.summary(shorten=True))
-        result.append(new_ds)
-
-    if errors:
-        raise RecipeError("\n".join(errors))
-
-    return result

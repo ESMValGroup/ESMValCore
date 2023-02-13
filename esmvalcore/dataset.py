@@ -8,6 +8,7 @@ import textwrap
 import uuid
 from copy import deepcopy
 from fnmatch import fnmatchcase
+from itertools import groupby
 from pathlib import Path
 from typing import Any, Iterator, Sequence, Union
 
@@ -191,28 +192,98 @@ class Dataset:
                 dataset = self.copy()
                 dataset.facets.update(updated_facets)
                 dataset._update_timerange()
-
-                ancillaries: list['Dataset'] = []
-                for ancillary_ds in dataset.ancillaries:
-                    afacets = ancillary_ds.facets
-                    for key, value in updated_facets.items():
-                        if _isglob(afacets.get(key)):
-                            # Only overwrite ancillary facets that were globs.
-                            afacets[key] = value
-                    ancillaries.extend(ancillary_ds.from_files())
-                dataset.ancillaries = ancillaries
+                dataset._ancillaries_from_files()
 
                 expanded = True
                 yield dataset
 
         if not expanded:
             # If the definition contains no wildcards or no files were found,
-            # yield the original (but do expand any ancillary globs).
-            ancillaries = []
-            for ancillary_ds in self.ancillaries:
-                ancillaries.extend(ancillary_ds.from_files())
-            self.ancillaries = ancillaries
+            # yield the original, but do expand any ancillary globs.
+            self._ancillaries_from_files()
             yield self
+
+    def _ancillaries_from_files(self) -> None:
+        """Expand wildcards in ancillary datasets."""
+        ancillaries: list[Dataset] = []
+        for ancillary_ds in self.ancillaries:
+            ancillaries.extend(ancillary_ds.from_files())
+        self.ancillaries = ancillaries
+        self._remove_unexpanded_ancillaries()
+        self._remove_duplicate_ancillaries()
+        self._fix_fx_exp()
+
+    def _remove_unexpanded_ancillaries(self) -> None:
+        """Remove ancillaries where wildcards could not be expanded."""
+        ancillaries = []
+        for ancillary_ds in self.ancillaries:
+            unexpanded = [
+                f for f, v in ancillary_ds.facets.items() if _isglob(v)
+            ]
+            if unexpanded:
+                logger.info(
+                    "For %s: ignoring ancillary variable '%s', "
+                    "unable to expand wildcards %s.",
+                    self.summary(shorten=True),
+                    ancillary_ds.facets['short_name'],
+                    ", ".join(f"'{f}'" for f in unexpanded),
+                )
+            else:
+                ancillaries.append(ancillary_ds)
+        self.ancillaries = ancillaries
+
+    def _match(self, other: Dataset) -> int:
+        """Compute the match between two datasets."""
+        score = 0
+        for facet, value2 in self.facets.items():
+            if facet in other.facets:
+                value1 = other.facets[facet]
+                if isinstance(value1, (list, tuple)):
+                    if isinstance(value2, (list, tuple)):
+                        score += any(elem in value2 for elem in value1)
+                    else:
+                        score += value2 in value1
+                else:
+                    if isinstance(value2, (list, tuple)):
+                        score += value1 in value2
+                    else:
+                        score += value1 == value2
+        return score
+
+    def _remove_duplicate_ancillaries(self) -> None:
+        """Remove ancillaries that are duplicates."""
+        not_used = []
+        ancillaries = list(self.ancillaries)
+        self.ancillaries.clear()
+        for _, duplicates in groupby(ancillaries,
+                                     key=lambda ds: ds['short_name']):
+            group = sorted(duplicates, key=self._match, reverse=True)
+            self.ancillaries.append(group[0])
+            not_used.extend(group[1:])
+
+        if not_used:
+            logger.debug(
+                "List of all ancillary datasets found for %s:\n%s",
+                self.summary(shorten=True),
+                "\n".join(
+                    sorted(ds.summary(shorten=True) for ds in ancillaries)),
+            )
+
+    def _fix_fx_exp(self) -> None:
+        for ancillary_ds in self.ancillaries:
+            exps = ancillary_ds.facets.get('exp')
+            frequency = ancillary_ds.facets.get('frequency')
+            if isinstance(exps, list) and len(exps) > 1 and frequency == 'fx':
+                for exp in exps:
+                    dataset = ancillary_ds.copy(exp=exp)
+                    if dataset.files:
+                        ancillary_ds.facets['exp'] = exp
+                        logger.info(
+                            "Corrected wrong 'exp' from '%s' to '%s' for "
+                            "ancillary variable '%s' of %s", exps, exp,
+                            ancillary_ds.facets['short_name'],
+                            self.summary(shorten=True))
+                        break
 
     def copy(self, **facets: FacetValue) -> 'Dataset':
         """Create a copy.
@@ -650,6 +721,7 @@ class Dataset:
         as a 4-digit value (YYYY).
         """
         dataset = self.copy()
+        dataset.ancillaries = []
         dataset.augment_facets()
         if 'timerange' not in dataset.facets:
             self.facets.pop('timerange', None)

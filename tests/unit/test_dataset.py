@@ -1,4 +1,5 @@
 import textwrap
+from collections import defaultdict
 from pathlib import Path
 
 import pyesgf
@@ -501,7 +502,20 @@ def test_isglob(pattern, result):
     assert esmvalcore.dataset._isglob(pattern) == result
 
 
-def test_from_files(session, mocker):
+def mock_find_files(*files):
+    files_map = defaultdict(list)
+    for file in files:
+        files_map[file.facets['short_name']].append(file)
+
+    def find_files(self):
+        self.files = files_map[self['short_name']]
+        for ancillary in self.ancillaries:
+            ancillary.files = files_map[ancillary['short_name']]
+
+    return find_files
+
+
+def test_from_files(session, monkeypatch):
     rootpath = Path('/path/to/data')
     file1 = esmvalcore.local.LocalFile(
         rootpath,
@@ -568,6 +582,9 @@ def test_from_files(session, mocker):
         'grid': 'gn',
         'version': 'v20190815',
     }
+    find_files = mock_find_files(file1, file2, file3)
+    monkeypatch.setattr(Dataset, 'find_files', find_files)
+
     dataset = Dataset(
         short_name='tas',
         mip='Amon',
@@ -575,13 +592,8 @@ def test_from_files(session, mocker):
         dataset='*',
     )
     dataset.session = session
-    mocker.patch.object(
-        Dataset,
-        'files',
-        new_callable=mocker.PropertyMock,
-        side_effect=[[file1, file2, file3]],
-    )
     datasets = list(dataset.from_files())
+
     expected = [
         Dataset(short_name='tas',
                 mip='Amon',
@@ -599,8 +611,33 @@ def test_from_files(session, mocker):
     assert datasets == expected
 
 
-def test_from_files_with_ancillary(session, mocker):
+def test_from_files_with_ancillary(session, monkeypatch):
     rootpath = Path('/path/to/data')
+    file = esmvalcore.local.LocalFile(
+        rootpath,
+        'CMIP6',
+        'CMIP',
+        'CAS',
+        'FGOALS-g3',
+        'historical',
+        'r3i1p1f1',
+        'Amon',
+        'tas',
+        'gn',
+        'v20190827',
+        'tas_Amon_FGOALS-g3_historical_r3i1p1f1_gn_199001-199912.nc',
+    )
+    file.facets = {
+        'activity': 'CMIP',
+        'institute': 'CAS',
+        'dataset': 'FGOALS-g3',
+        'exp': 'historical',
+        'mip': 'Amon',
+        'ensemble': 'r3i1p1f1',
+        'short_name': 'tas',
+        'grid': 'gn',
+        'version': 'v20190827',
+    }
     afile = esmvalcore.local.LocalFile(
         rootpath,
         'CMIP6',
@@ -626,21 +663,17 @@ def test_from_files_with_ancillary(session, mocker):
         'grid': 'gn',
         'version': 'v20210615',
     }
+    monkeypatch.setattr(Dataset, 'find_files', mock_find_files(file, afile))
+
     dataset = Dataset(
         short_name='tas',
         mip='Amon',
         project='CMIP6',
         dataset='FGOALS-g3',
-        ensemble='r3i1p1f1',
+        ensemble='*',
     )
     dataset.session = session
-    dataset.add_ancillary(short_name='areacella', mip='fx', ensemble='*')
-    mocker.patch.object(
-        Dataset,
-        'files',
-        new_callable=mocker.PropertyMock,
-        side_effect=[[afile]],
-    )
+    dataset.add_ancillary(short_name='areacella', mip='*', ensemble='*')
 
     expected = Dataset(
         short_name='tas',
@@ -740,17 +773,7 @@ def test_from_files_with_globs(monkeypatch, session):
     dataset.session = session
     print(dataset)
 
-    def augment_facets(self):
-        pass
-
-    def _find_files(self):
-        if self.facets['short_name'] == 'tas':
-            self.files = [file]
-        if self.facets['short_name'] == 'areacella':
-            self.files = [afile]
-
-    monkeypatch.setattr(Dataset, 'augment_facets', augment_facets)
-    monkeypatch.setattr(Dataset, '_find_files', _find_files)
+    monkeypatch.setattr(Dataset, 'find_files', mock_find_files(file, afile))
 
     datasets = list(dataset.from_files())
 
@@ -779,6 +802,57 @@ def test_from_files_with_globs(monkeypatch, session):
     expected.session = session
 
     assert datasets == [expected]
+
+
+def test_match():
+    dataset1 = Dataset(
+        short_name='areacella',
+        ensemble=['r1i1p1f1'],
+        exp='historical',
+        realms=['atmos', 'land'],
+    )
+    dataset2 = Dataset(
+        short_name='tas',
+        ensemble='r1i1p1f1',
+        exp=['historical', 'ssp585'],
+        realms=['atmos'],
+    )
+
+    score = dataset1._match(dataset2)
+    assert score == 3
+
+
+def test_remove_duplicate_ancillaries():
+    dataset = Dataset(
+        dataset='dataset1',
+        short_name='tas',
+        mip='Amon',
+        project='CMIP6',
+        exp='historical',
+    )
+    ancillary1 = dataset.copy(short_name='areacella')
+    ancillary2 = ancillary1.copy()
+    ancillary1.facets['exp'] = '1pctCO2'
+    dataset.ancillaries = [ancillary1, ancillary2]
+
+    dataset._remove_duplicate_ancillaries()
+
+    assert len(dataset.ancillaries) == 1
+    assert dataset.ancillaries[0] == ancillary2
+
+
+def test_remove_not_found_ancillaries():
+    dataset = Dataset(
+        dataset='dataset1',
+        short_name='tas',
+        mip='Amon',
+        project='CMIP6',
+        exp='historical',
+    )
+    dataset.add_ancillary(short_name='areacella', mip='fx', exp='*')
+    dataset._remove_unexpanded_ancillaries()
+
+    assert len(dataset.ancillaries) == 0
 
 
 def test_from_recipe_with_glob(tmp_path, session, mocker):
