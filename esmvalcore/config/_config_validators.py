@@ -188,7 +188,17 @@ def validate_rootpath(value):
                 "Correcting capitalization, project 'obs4mips' should be "
                 "written as 'obs4MIPs' in 'rootpath' in config-user.yml")
             key = 'obs4MIPs'
-        new_mapping[key] = validate_pathlist(paths)
+        if isinstance(paths, Path):
+            paths = str(paths)
+        if isinstance(paths, (str, list)):
+            new_mapping[key] = validate_pathlist(paths)
+        else:
+            validate_dict(paths)
+            new_mapping[key] = {
+                validate_path(path): validate_string(drs)
+                for path, drs in paths.items()
+            }
+
     return new_mapping
 
 
@@ -276,37 +286,35 @@ def deprecate(func, variable, version: Optional[str] = None):
 
 _validators = {
     # From user config
-    'log_level': validate_string,
-    'exit_on_warning': validate_bool,
-    'output_dir': validate_path,
-    'download_dir': validate_path,
-    'auxiliary_data_dir': validate_path,
-    'extra_facets_dir': validate_pathtuple,
-    'compress_netcdf': validate_bool,
-    'save_intermediary_cubes': validate_bool,
-    'remove_preproc_dir': validate_bool,
-    'max_parallel_tasks': validate_int_or_none,
-    'config_developer_file': validate_config_developer,
-    'profile_diagnostic': validate_bool,
-    'run_diagnostic': validate_bool,
-    'output_file_type': validate_string,
-    "offline": validate_bool,
     'always_search_esgf': validate_bool,
+    'auxiliary_data_dir': validate_path,
+    'compress_netcdf': validate_bool,
+    'config_developer_file': validate_config_developer,
+    'drs': validate_drs,
+    'download_dir': validate_path,
+    'exit_on_warning': validate_bool,
+    'extra_facets_dir': validate_pathtuple,
+    'log_level': validate_string,
+    'max_parallel_tasks': validate_int_or_none,
+    'offline': validate_bool,
+    'output_dir': validate_path,
+    'output_file_type': validate_string,
+    'profile_diagnostic': validate_bool,
+    'remove_preproc_dir': validate_bool,
+    'rootpath': validate_rootpath,
+    'run_diagnostic': validate_bool,
+    'save_intermediary_cubes': validate_bool,
 
     # From CLI
+    "check_level": validate_check_level,
+    "diagnostics": validate_diagnostics,
+    'max_datasets': validate_int_positive_or_none,
+    'max_years': validate_int_positive_or_none,
     "resume_from": validate_pathlist,
     "skip_nonexistent": validate_bool,
-    "diagnostics": validate_diagnostics,
-    "check_level": validate_check_level,
-    'max_years': validate_int_positive_or_none,
-    'max_datasets': validate_int_positive_or_none,
 
     # From recipe
     'write_ncl_interface': validate_bool,
-
-    # oldstyle
-    'rootpath': validate_rootpath,
-    'drs': validate_drs,
 
     # config location
     'config_file': validate_path,

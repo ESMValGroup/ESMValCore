@@ -26,7 +26,7 @@ User configuration file
 
 
 The ``config-user.yml`` configuration file contains all the global level
-information needed by ESMValTool. It can be reused as many times the user needs
+information needed by ESMValCore. It can be reused as many times the user needs
 to before changing any of the options stored in it. This file is essentially
 the gateway between the user and the machine-specific instructions to
 ``esmvaltool``. By default, esmvaltool looks for it in the home directory,
@@ -73,7 +73,7 @@ omitted in the file.
 
   # Rootpaths to the data from different projects
   # This default setting will work if files have been downloaded by the
-  # ESMValTool via ``offline=False``. Lists are also possible. For
+  # ESMValCore via ``offline=False``. Lists are also possible. For
   # site-specific entries, see the default ``config-user.yml`` file that can be
   # installed with the command ``esmvaltool config get_config_user``. For each
   # project, this can be either a single path or a list of paths. Comment out
@@ -83,7 +83,7 @@ omitted in the file.
 
   # Directory structure for input data --- [default]/ESGF/BADC/DKRZ/ETHZ/etc.
   # This default setting will work if files have been downloaded by the
-  # ESMValTool via ``offline=False``. See ``config-developer.yml`` for
+  # ESMValCore via ``offline=False``. See ``config-developer.yml`` for
   # definitions. Comment out/replace as per needed.
   drs:
     CMIP3: ESGF
@@ -179,7 +179,7 @@ and memory usage.
 A detailed explanation of the data finding-related sections of the
 ``config-user.yml`` (``rootpath`` and ``drs``) is presented in the
 :ref:`data-retrieval` section. This section relates directly to the data
-finding capabilities  of ESMValTool and are very important to be understood by
+finding capabilities of ESMValCore and are very important to be understood by
 the user.
 
 .. note::
@@ -715,7 +715,7 @@ addition of more details per project, dataset, mip table, and variable name.
 
 More precisely, one can provide this information in an extra yaml file, named
 `{project}-something.yml`, where `{project}` corresponds to the project as used
-by ESMValTool in :ref:`Datasets` and "something" is arbitrary.
+by ESMValCore in :ref:`Datasets` and "something" is arbitrary.
 
 Format of the extra facets files
 --------------------------------
@@ -768,7 +768,7 @@ variable of any CMIP5 dataset that does not have a ``product`` key yet:
 Location of the extra facets files
 ----------------------------------
 Extra facets files can be placed in several different places. When we use them
-to support a particular use-case within the ESMValTool project, they will be
+to support a particular use-case within the ESMValCore project, they will be
 provided in the sub-folder `extra_facets` inside the package
 :mod:`esmvalcore.config`. If they are used from the user side, they can be either
 placed in `~/.esmvaltool/extra_facets` or in any other directory of the users
