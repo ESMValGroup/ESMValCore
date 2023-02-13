@@ -142,7 +142,7 @@ The icons indicate whether the item will be checked during the
 Pull requests introducing a change that causes a recipe to no longer run successfully
 (*breaking change*), or which results in scientifically significant changes in results
 (*science change*) require additional items to be reviewed defined in the
-:ref:`backward compatibility policy<https://docs.esmvaltool.org/projects/ESMValTool/en/latest/community/backward_compatibility.html>`__.
+:ref:`backward compatibility policy<esmvaltool:backward_compatibility>`__.
 These include in particular:
 
 - 🛠 Instructions for the release notes to assist *recipe
@@ -583,7 +583,7 @@ users.
 
 .. note::
 
-   The :ref:`backward compatibility policy<https://docs.esmvaltool.org/projects/ESMValTool/en/latest/community/backward_compatibility.html>`__
+   The :ref:`backward compatibility policy<esmvaltool:backward_compatibility>`__
    outlines the key principles on backward compatibility and additional guidance on handling
    *backward-incompatible changes*. This policy applies to both, ESMValCore and ESMValTool.
 
