@@ -236,6 +236,13 @@ class ESGFFile:
         return files
 
     def _get_facets(self, results):
+        """Read the facets.
+
+        This works by first reading the facets from the json response of
+        the first search result. Next, an alternative set of facets is
+        read from the `dataset_id` and filename and used to correct any
+        wrong facets values.
+        """
         project = results[0].json['project'][0]
 
         # Read the facets from the metadata
