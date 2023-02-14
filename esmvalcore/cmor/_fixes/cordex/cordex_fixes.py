@@ -213,6 +213,7 @@ class AllVars(Fix):
         geog_system = iris.coord_systems.GeogCS(
             iff.pp.EARTH_RADIUS).as_cartopy_crs()
 
+
         xyz = lambert_system.transform_points(
             geog_system, np.array(lons), np.array(lats))
 
@@ -236,6 +237,7 @@ class AllVars(Fix):
                 coord_system=cube.coord_system()
             )
             data['coord'].guess_bounds()
+
 
         gx, gy = np.meshgrid(dims['x']['standard'], dims['y']['standard'])
         lonlat = geog_system.transform_points(lambert_system, gx, gy)
