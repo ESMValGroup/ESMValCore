@@ -223,7 +223,7 @@ class Test(tests.Test):
             default.coord(axis='Z').points, expected_levels_default)
         self.assert_array_equal(
             nearest.coord(axis='Z').points, expected_levels_nearest)
-    
+
     def test_extract_volume_mean(self):
         """Test to extract the top two layers and compute the weighted average
         of a cube."""
