@@ -8,13 +8,10 @@ import json
 import re
 import os
 
-# import xarray as xr 
-# from esmf_regrid.esmf_regridder import Regridder
-# from cartopy.crs import RotatedGeodetic
-
 import numpy as np
 from cf_units import Unit
 from iris.coord_systems import LambertConformal, RotatedGeogCS
+from iris import fileformats as iff
 
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.exceptions import RecipeError
@@ -24,13 +21,15 @@ logger = logging.getLogger(__name__)
 
 @lru_cache
 def _get_domains_boundaries():
-    """ load from the corresponding JSON file """
-    location = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+    """Load from the corresponding JSON file."""
+    location = os.path.realpath(
+        os.path.join(os.getcwd(), os.path.dirname(__file__)))
     # Build file path assuming it is located in the same directory as this file
     fpath = os.path.join(location, 'nrp_rcm_domain_boundaries.json')
     # JSON file contains comments which are not supported by json base package
     with open(fpath, "r") as f:
-        data = json.loads("".join(re.split(r"(?://|#).*(?=\n)", f.read())).strip())
+        data = json.loads("".join(
+            re.split(r"(?://|#).*(?=\n)", f.read())).strip())
     return data
 
 
@@ -187,67 +186,74 @@ class AllVars(Fix):
             cube.add_aux_coord(new_coord, aux_coord_dims)
 
     def _fix_lambert_conformal_coords(self, cube, data_domain):
-        """Fix lambert conformal coordinates"""
-        # Load domain boundaries 
-        #  and get corresponding data from the data_domain 3 first letters (e.g. 'EUR-11' -> 'EUR')
+        """Fix lambert conformal coordinates."""
+        # Load domain boundaries.
         boundaries = _get_domains_boundaries()[data_domain[:3]]
         lats, lons = boundaries["lats"], boundaries["lons"]
 
-        # load cmor grid for cordex
+        # Load cmor grid for cordex.
         from .. . import table as ct
         table = ct.CMOR_TABLES['CORDEX']
         table._load_table(table._cmor_folder + "/CORDEX_grids")
-        
-        # compute coord indices
+
+        # Compute coord indices.
         has_time = 'time' in self.vardef.dimensions
         xc_ix, yc_ix = (2, 1) if has_time else (1, 0)
-        ndim = len(cube.shape)
-        if ndim < (2 + (1 if has_time else 0)):
+
+        if cube.ndim < (2 + (1 if has_time else 0)):
             raise RecipeError(
-                f"Missing coordinate: expected a least 2 coordinates (+time for cubes concerned)"
-                 "corresponding to x and y. Got: {ndim}")
-    
-        # Domain boundaries coordinates are in actual coordinates so we transform the points in Lambert
+                "Missing coordinate: expected a least 2 coordinates "
+                "(+time for cubes concerned) "
+                f"corresponding to x and y. Got: {cube.ndim}")
+
+        # Domain boundaries coordinates are in actual coordinates.
+        # So we transform the points in Lambert.
         lambert_system = cube.coord_system().as_cartopy_crs()
-        geog_system = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS).as_cartopy_crs()
-        xyz = lambert_system.transform_points(geog_system, np.array(lons), np.array(lats))
 
-        # dicts to store variables for loops
-        dims = {"x": {"idx": xc_ix, "coord": None}, "y": {"idx": yc_ix, "coord": None}}
-        auxi = {"longitude": {"idx": 0}, "latitude": {"idx": 1}}
+        geog_system = iris.coord_systems.GeogCS(
+            iff.pp.EARTH_RADIUS).as_cartopy_crs()
 
-        # DimCoords
-        for coord in cube.coords():
-            for key, data in dims.items():
-                data['standard'] = np.linspace(xyz[:,0].min(),
-                                               xyz[:,0].max(),
-                                               cube.shape[data['idx']])
-                data['coord'] = iris.coords.DimCoord(
-                    data['standard'],
-                    var_name=table.coords[key].name,
-                    standard_name=table.coords[key].standard_name,
-                    long_name=table.coords[key].long_name,
-                    units=table.coords[key].units,
-                    coord_system=cube.coord_system()
-                )
-                data['coord'].guess_bounds()
+        xyz = lambert_system.transform_points(
+            geog_system, np.array(lons), np.array(lats))
 
-        # 
+        # Dicts to store variables for loops.
+        dims = {
+            "x": {"idx": xc_ix, "coord": None},
+            "y": {"idx": yc_ix, "coord": None}}
+        auxi = {
+            "longitude": {"idx": 0},
+            "latitude": {"idx": 1}}
+
+        for key, data in dims.items():
+            data['standard'] = np.linspace(xyz[:, 0].min(),
+                                            xyz[:, 0].max(),
+                                            cube.shape[data['idx']])
+            data['coord'] = iris.coords.DimCoord(
+                data['standard'],
+                var_name=table.coords[key].name,
+                standard_name=table.coords[key].standard_name,
+                long_name=table.coords[key].long_name,
+                units=table.coords[key].units,
+                coord_system=cube.coord_system()
+            )
+            data['coord'].guess_bounds()
+
         gx, gy = np.meshgrid(dims['x']['standard'], dims['y']['standard'])
         lonlat = geog_system.transform_points(lambert_system, gx, gy)
-        
-        gx_bounds, gy_bounds = np.meshgrid(dims['x']['coord'].bounds, dims['y']['coord'].bounds)
-        lonlat_bounds = geog_system.transform_points(lambert_system, gx_bounds, gy_bounds)
 
-        # AuxCoords
+        gx_bounds, gy_bounds = np.meshgrid(
+            dims['x']['coord'].bounds, dims['y']['coord'].bounds)
+        lonlat_bounds = geog_system.transform_points(
+            lambert_system, gx_bounds, gy_bounds)
+
         for key, data in auxi.items():
             bounds = lonlat_bounds[:, :, data["idx"]]
-            bounds = [bounds[::2, ::2]  , bounds[::2, 1::2],
+            bounds = [bounds[::2, ::2], bounds[::2, 1::2],
                       bounds[1::2, 1::2], bounds[1::2, ::2]]
             bounds = np.array(bounds)
             bounds = np.moveaxis(bounds, 0, -1)
             data["coord"] = iris.coords.AuxCoord(
-                lonlat[:, :, data["idx"]], # Points
+                lonlat[:, :, data["idx"]],  # Points
                 var_name=table.coords[key].name,
                 standard_name=table.coords[key].standard_name,
                 long_name=table.coords[key].long_name,
@@ -255,26 +261,11 @@ class AllVars(Fix):
                 bounds=bounds,
             )
 
-        # For testing purposes, TODO: remove in final version
-        diff_pxc = cube.coord('projection_x_coordinate').points - dims['x']['coord'].points
-        diff_pyc = cube.coord('projection_y_coordinate').points - dims['y']['coord'].points
-        diff_lon = cube.coord('longitude').points - auxi['longitude']['coord'].points
-        diff_lat = cube.coord('latitude').points - auxi['latitude']['coord'].points
-        infos = ["sum", "mean", "std", "min", "max"]
-        infos_pxc = [diff_pxc.sum(), diff_pxc.mean(), diff_pxc.std(), diff_pxc.min(), diff_pxc.max()]   
-        infos_pyc = [diff_pyc.sum(), diff_pyc.mean(), diff_pyc.std(), diff_pyc.min(), diff_pyc.max()]
-        infos_lon = [diff_lon.sum(), diff_lon.mean(), diff_lon.std(), diff_lon.min(), diff_lon.max()]
-        infos_lat = [diff_lat.sum(), diff_lat.mean(), diff_lat.std(), diff_lat.min(), diff_lat.max()]
-        for info in [infos_pxc, infos_pyc, infos_lon, infos_lat]:
-            for name, val in zip(infos, info):
-                print(name, val),
-            print("")
-
-        # remove all old coords attached to axis
+        # Remove all old coords attached to axis.
         for coord in cube.coords(axis="x") + cube.coords(axis="y"):
             cube.remove_coord(coord)
-        
-        # plug in new coords
+
+        # Plug in new coords.
         cube.add_dim_coord(dims['x']['coord'], xc_ix)
         cube.add_dim_coord(dims['y']['coord'], yc_ix)
         cube.add_aux_coord(auxi['longitude']['coord'], (yc_ix, xc_ix))

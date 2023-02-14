@@ -4,7 +4,7 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-
+from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
     AllVars,
     CLMcomCCLM4817,
@@ -192,23 +192,50 @@ def test_rotated_grid_fix_error(cordex_cubes):
     assert msg == exc.value.message
 
 
-def test_lambert_grid_warning(cubes, caplog):
+def test_lambert_grid(cordex_cubes):
+    cmor_table = CMOR_TABLES["CORDEX"]
+    mip = "mon"
+    short_name = "tas"
+    vardef = cmor_table.get_variable(mip, short_name)
+    cmor_table._load_table(cmor_table._cmor_folder + "/CORDEX_grids")
+
     fix = AllVars(
-        vardef=None,
+        vardef=vardef,
         extra_facets={
             'domain': 'EUR-11',
             'dataset': 'DATASET',
             'driver': 'DRIVER'
             }
         )
-    for cube in cubes:
+    for cube in cordex_cubes:
         cube.coord_system = iris.coord_systems.LambertConformal
-    fix.fix_metadata(cubes)
-    msg = ("Support for CORDEX datasets in a Lambert Conformal "
-           "coordinate system is ongoing. Certain preprocessor "
-           "functions may fail.")
-    assert msg in caplog.text
+    out_cubes = fix.fix_metadata(cordex_cubes)
+    assert cordex_cubes is out_cubes
 
+def test_lambert_missing_dimension(cordex_cubes):
+    cmor_table = CMOR_TABLES["CORDEX"]
+    mip = "mon"
+    short_name = "tas"
+    vardef = cmor_table.get_variable(mip, short_name)
+    cmor_table._load_table(cmor_table._cmor_folder + "/CORDEX_grids")
+
+    fix = AllVars(
+        vardef=vardef,
+        extra_facets={
+            'domain': 'EUR-11',
+            'dataset': 'DATASET',
+            'driver': 'DRIVER'
+            }
+        )
+    cube = cordex_cubes[0]
+    cube = cube.slices(['grid_latitude', 'time']).next()
+    cube.coord_system = iris.coord_systems.LambertConformal
+    msg = ("Missing coordinate: expected a least 2 coordinates "
+           "(+time for cubes concerned)"
+           "corresponding to x and y. Got: 2")
+    with pytest.raises(RecipeError) as exc:
+        fix.fix_metadata([cube])
+    assert msg == exc.value.message
 
 def test_wrong_coord_system(cubes):
     fix = AllVars(
