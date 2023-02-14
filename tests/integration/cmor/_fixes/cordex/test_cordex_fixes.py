@@ -232,7 +232,7 @@ def test_lambert_missing_dimension(cordex_cubes):
     cube = cube.slices(['grid_latitude', 'time']).next()
     cube.coord_system = iris.coord_systems.LambertConformal
     msg = ("Missing coordinate: expected a least 2 coordinates "
-           "(+time for cubes concerned)"
+           "(+time for cubes concerned) "
            "corresponding to x and y. Got: 2")
     with pytest.raises(RecipeError) as exc:
         fix.fix_metadata([cube])
