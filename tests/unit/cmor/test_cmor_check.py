@@ -3,6 +3,7 @@
 import unittest
 from copy import deepcopy
 
+import dask.array as da
 import iris
 import iris.coord_categorisation
 import iris.coords
@@ -12,8 +13,11 @@ import numpy as np
 from cf_units import Unit
 
 from esmvalcore.cmor.check import (
-    CheckLevels, CMORCheck,
-    CMORCheckError, _get_cmor_checker)
+    CheckLevels,
+    CMORCheck,
+    CMORCheckError,
+    _get_cmor_checker,
+)
 
 
 class VariableInfoMock:
@@ -595,6 +599,34 @@ class TestCMORCheck(unittest.TestCase):
         self._check_warnings_on_metadata(automatic_fixes=False,
                                          check_level=CheckLevels.IGNORE)
 
+    def test_check_lazy(self):
+        """Test checker does not realise data or aux_coords."""
+        self.cube.data = self.cube.lazy_data()
+        self.cube.remove_coord('latitude')
+        self.cube.remove_coord('longitude')
+        self.cube.add_aux_coord(
+            iris.coords.AuxCoord(
+                da.reshape(da.linspace(-90, 90, num=20*20), (20, 20)),
+                var_name='lat',
+                standard_name='latitude',
+                units='degrees_north'
+            ),
+            (1, 2)
+        )
+        self.cube.add_aux_coord(
+            iris.coords.AuxCoord(
+                da.reshape(da.linspace(0, 360, num=20*20), (20, 20)),
+                var_name='lon',
+                standard_name='longitude',
+                units='degrees_east'
+            ),
+            (1, 2)
+        )
+        self._check_cube()
+        self.assertTrue(self.cube.coord('latitude').has_lazy_points())
+        self.assertTrue(self.cube.coord('longitude').has_lazy_points())
+        self.assertTrue(self.cube.has_lazy_data())
+
     def _check_fails_in_metadata(self, automatic_fixes=False, frequency=None,
                                  check_level=CheckLevels.DEFAULT):
         checker = CMORCheck(
@@ -731,8 +763,7 @@ class TestCMORCheck(unittest.TestCase):
         cube_points = self.cube.coord('latitude').points
         reference = np.linspace(90, -90, 20, endpoint=True)
         for index in range(20):
-            self.assertTrue(
-                iris.util.approx_equal(cube_points[index], reference[index]))
+            np.testing.assert_allclose(cube_points[index], reference[index])
         # test bounds are contiguous
         bounds = self.cube.coord('latitude').bounds
         right_bounds = bounds[:-2, 1]
@@ -1083,6 +1114,21 @@ class TestCMORCheck(unittest.TestCase):
         checker = _get_cmor_checker('CORDEX', '3hr', 'tas', '3hr')
         assert checker(self.cube)._cmor_var.short_name == 'tas'
         assert checker(self.cube)._cmor_var.frequency == '3hr'
+
+    def test_set_range_in_0_360(self):
+        checker = _get_cmor_checker('CMIP5', 'Amon', 'tas', 'mon')
+        arr_in = np.array([[-120.0, 0.0, 20.0], [-1.0, 360.0, 400.0]])
+        arr_exp = np.array([[240.0, 0.0, 20.0], [359.0, 0.0, 40.0]])
+        arr_out = checker(self.cube)._set_range_in_0_360(arr_in)
+        np.testing.assert_allclose(arr_out, arr_exp)
+
+    def test_set_range_in_0_360_lazy(self):
+        checker = _get_cmor_checker('CMIP5', 'Amon', 'tas', 'mon')
+        arr_in = da.from_array([[-120.0, 0.0, 20.0], [-1.0, 360.0, 400.0]])
+        arr_exp = da.from_array([[240.0, 0.0, 20.0], [359.0, 0.0, 40.0]])
+        arr_out = checker(self.cube)._set_range_in_0_360(arr_in)
+        self.assertTrue(isinstance(arr_out, da.core.Array))
+        np.testing.assert_allclose(arr_out.compute(), arr_exp.compute())
 
     def _check_fails_on_data(self):
         checker = CMORCheck(self.cube, self.var_info)

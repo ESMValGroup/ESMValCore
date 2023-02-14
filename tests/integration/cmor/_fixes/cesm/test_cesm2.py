@@ -3,7 +3,7 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.coords import DimCoord
+from iris.coords import CellMethod, DimCoord
 from iris.cube import Cube, CubeList
 
 import esmvalcore.cmor._fixes.cesm.cesm2
@@ -21,31 +21,47 @@ def cubes_2d(test_data_path):
     return iris.load(str(nc_path))
 
 
-def _get_fix(mip, short_name, fix_name):
+@pytest.fixture
+def cube_1d_time():
+    """1D cube with simple time coordinate."""
+    time_coord = DimCoord(
+        [2, 4, 6],
+        bounds=[[0, 2], [2, 4], [4, 6]],
+        standard_name='time',
+        var_name='time',
+        long_name='time',
+        units='days since 1850-01-01',
+    )
+    cube = Cube([0, 0, 0], dim_coords_and_dims=[(time_coord, 0)])
+    return cube
+
+
+def _get_fix(mip, frequency, short_name, fix_name):
     """Load a fix from :mod:`esmvalcore.cmor._fixes.cesm.cesm2`."""
     extra_facets = get_extra_facets('CESM', 'CESM2', mip, short_name, ())
+    extra_facets['frequency'] = frequency
     vardef = get_var_info(project='CESM', mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.cesm.cesm2, fix_name)
     fix = cls(vardef, extra_facets=extra_facets)
     return fix
 
 
-def get_fix(mip, short_name):
+def get_fix(mip, frequency, short_name):
     """Load a variable fix from esmvalcore.cmor._fixes.cesm.cesm."""
     fix_name = short_name[0].upper() + short_name[1:]
-    return _get_fix(mip, short_name, fix_name)
+    return _get_fix(mip, frequency, short_name, fix_name)
 
 
-def get_allvars_fix(mip, short_name):
+def get_allvars_fix(mip, frequency, short_name):
     """Load the AllVars fix from esmvalcore.cmor._fixes.cesm.cesm."""
-    return _get_fix(mip, short_name, 'AllVars')
+    return _get_fix(mip, frequency, short_name, 'AllVars')
 
 
-def fix_metadata(cubes, mip, short_name):
+def fix_metadata(cubes, mip, frequency, short_name):
     """Fix metadata of cubes."""
-    fix = get_fix(mip, short_name)
+    fix = get_fix(mip, frequency, short_name)
     cubes = fix.fix_metadata(cubes)
-    fix = get_allvars_fix(mip, short_name)
+    fix = get_allvars_fix(mip, frequency, short_name)
     cubes = fix.fix_metadata(cubes)
     return cubes
 
@@ -71,7 +87,11 @@ def check_time(cube):
     assert time.long_name == 'time'
     assert time.units == Unit('days since 1979-01-01 00:00:00',
                               calendar='365_day')
-    assert time.shape == (12,)
+    np.testing.assert_allclose(
+        time.points,
+        [7649.5, 7680.5, 7710.0, 7739.5, 7770.0, 7800.5, 7831.0, 7861.5,
+         7892.5, 7923.0, 7953.5, 7984.0],
+    )
     assert time.bounds.shape == (12, 2)
     assert time.attributes == {}
 
@@ -137,7 +157,7 @@ def check_heightxm(cube, height_value):
 
 def test_only_time(monkeypatch):
     """Test fix."""
-    fix = get_allvars_fix('Amon', 'tas')
+    fix = get_allvars_fix('Amon', 'mon', 'tas')
 
     # We know that tas has dimensions time, latitude, longitude, but the CESM2
     # CMORizer is designed to check for the presence of each dimension
@@ -177,7 +197,7 @@ def test_only_time(monkeypatch):
 
 def test_only_latitude(monkeypatch):
     """Test fix."""
-    fix = get_allvars_fix('Amon', 'tas')
+    fix = get_allvars_fix('Amon', 'mon', 'tas')
 
     # We know that tas has dimensions time, latitude, longitude, but the CESM2
     # CMORizer is designed to check for the presence of each dimension
@@ -217,7 +237,7 @@ def test_only_latitude(monkeypatch):
 
 def test_only_longitude(monkeypatch):
     """Test fix."""
-    fix = get_allvars_fix('Amon', 'tas')
+    fix = get_allvars_fix('Amon', 'mon', 'tas')
 
     # We know that tas has dimensions time, latitude, longitude, but the CESM2
     # CMORizer is designed to check for the presence of each dimension
@@ -255,6 +275,38 @@ def test_only_longitude(monkeypatch):
                                [[-90.0, 90.0], [90.0, 270.0]])
 
 
+# Test AllVars._fix_time
+
+
+def test_fix_time_mon(cube_1d_time):
+    """Test `_fix_time``."""
+    fix = get_allvars_fix('Amon', 'mon', 'tas')
+    fix._fix_time(cube_1d_time)
+    time_coord = cube_1d_time.coord('time')
+    np.testing.assert_array_equal(time_coord.points, [1, 3, 5])
+    np.testing.assert_array_equal(time_coord.bounds, [[0, 2], [2, 4], [4, 6]])
+
+
+def test_fix_time_mon_point(cube_1d_time):
+    """Test `_fix_time``."""
+    cube_1d_time.add_cell_method(CellMethod('point', 'time'))
+    fix = get_allvars_fix('Amon', 'mon', 'tas')
+    fix._fix_time(cube_1d_time)
+    time_coord = cube_1d_time.coord('time')
+    np.testing.assert_array_equal(time_coord.points, [2, 4, 6])
+    np.testing.assert_array_equal(time_coord.bounds, [[0, 2], [2, 4], [4, 6]])
+
+
+def test_fix_time_day(monkeypatch, cube_1d_time):
+    """Test `_fix_time``."""
+    fix = get_allvars_fix('Amon', 'mon', 'tas')
+    monkeypatch.setitem(fix.extra_facets, 'frequency', 'day')
+    fix._fix_time(cube_1d_time)
+    time_coord = cube_1d_time.coord('time')
+    np.testing.assert_array_equal(time_coord.points, [2, 4, 6])
+    np.testing.assert_array_equal(time_coord.bounds, [[0, 2], [2, 4], [4, 6]])
+
+
 # Test 2D variables in extra_facets/cesm-mappings.yml
 
 
@@ -268,7 +320,7 @@ def test_get_tas_fix():
 
 def test_tas_fix(cubes_2d):
     """Test fix."""
-    fix = get_allvars_fix('Amon', 'tas')
+    fix = get_allvars_fix('Amon', 'mon', 'tas')
     fixed_cubes = fix.fix_metadata(cubes_2d)
 
     fixed_cube = check_tas_metadata(fixed_cubes)
@@ -286,7 +338,7 @@ def test_tas_fix(cubes_2d):
 
 def test_fix_invalid_units(monkeypatch):
     """Test fix."""
-    fix = get_allvars_fix('Amon', 'tas')
+    fix = get_allvars_fix('Amon', 'mon', 'tas')
 
     # We know that tas has units 'K', but to check if the invalid units
     # 'fraction' are correctly handled, we change tas' units to '1'. This is an

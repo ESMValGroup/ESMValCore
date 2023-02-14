@@ -1,11 +1,15 @@
 """Auxiliary functions for :mod:`iris`."""
+from typing import Dict, List, Sequence
 
 import dask.array as da
 import iris
 import iris.cube
 import iris.util
 import numpy as np
+from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
+
+from esmvalcore.typing import NetCDFAttr
 
 
 def add_leading_dim_to_cube(cube, dim_coord):
@@ -58,7 +62,7 @@ def add_leading_dim_to_cube(cube, dim_coord):
     # Create new cube with shape (w, x, ..., z) where w is length of dim_coord
     # and already add ancillary variables and cell measures
     new_data = da.broadcast_to(cube.core_data(), new_shape)
-    new_cube = iris.cube.Cube(
+    new_cube = Cube(
         new_data,
         ancillary_variables_and_dims=ancillary_variables,
         cell_measures_and_dims=cell_measures,
@@ -100,3 +104,56 @@ def date2num(date, unit, dtype=np.float64):
         return num.astype(dtype)
     except AttributeError:
         return dtype(num)
+
+
+def merge_cube_attributes(
+    cubes: Sequence[Cube],
+    delimiter: str = ' ',
+) -> None:
+    """Merge attributes of all given cubes in-place.
+
+    After this operation, the attributes of all given cubes are equal. This is
+    useful for operations that combine cubes, such as
+    :meth:`iris.cube.CubeList.merge_cube` or
+    :meth:`iris.cube.CubeList.concatenate_cube`.
+
+    Note
+    ----
+    This function differs from :func:`iris.util.equalise_attributes` in this
+    respect that it does not delete attributes that are not identical but
+    rather concatenates them (sorted) using the given ``delimiter``. E.g., the
+    attributes ``exp: historical`` and ``exp: ssp585`` end up as ``exp:
+    historical ssp585`` using the default ``delimiter = ' '``.
+
+    Parameters
+    ----------
+    cubes:
+        Input cubes whose attributes will be modified in-place.
+    delimiter:
+        Delimiter that is used to concatenate non-identical attributes.
+
+    """
+    if len(cubes) <= 1:
+        return
+
+    # Step 1: collect all attribute values in a list
+    attributes: Dict[str, List[NetCDFAttr]] = {}
+    for cube in cubes:
+        for (attr, val) in cube.attributes.items():
+            attributes.setdefault(attr, [])
+            attributes[attr].append(val)
+
+    # Step 2: if values are not equal, first convert them to strings (so that
+    # set() can be used); then extract unique elements from this list, sort it,
+    # and use the delimiter to join all elements to a single string
+    final_attributes: Dict[str, NetCDFAttr] = {}
+    for (attr, vals) in attributes.items():
+        set_of_str = sorted({str(v) for v in vals})
+        if len(set_of_str) == 1:
+            final_attributes[attr] = vals[0]
+        else:
+            final_attributes[attr] = delimiter.join(set_of_str)
+
+    # Step 3: modify the cubes in-place
+    for cube in cubes:
+        cube.attributes = final_attributes
