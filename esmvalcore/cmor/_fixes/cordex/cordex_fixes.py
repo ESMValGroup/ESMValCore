@@ -225,9 +225,8 @@ class AllVars(Fix):
             "latitude": {"idx": 1}}
 
         for key, data in dims.items():
-            data['standard'] = np.linspace(xyz[:, 0].min(),
-                                            xyz[:, 0].max(),
-                                            cube.shape[data['idx']])
+            data['standard'] = np.linspace(
+                xyz[:, 0].min(), xyz[:, 0].max(), cube.shape[data['idx']])
             data['coord'] = iris.coords.DimCoord(
                 data['standard'],
                 var_name=table.coords[key].name,
@@ -240,7 +239,6 @@ class AllVars(Fix):
 
         gx, gy = np.meshgrid(dims['x']['standard'], dims['y']['standard'])
         lonlat = geog_system.transform_points(lambert_system, gx, gy)
-
         gx_bounds, gy_bounds = np.meshgrid(
             dims['x']['coord'].bounds, dims['y']['coord'].bounds)
         lonlat_bounds = geog_system.transform_points(
