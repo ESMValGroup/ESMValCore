@@ -194,6 +194,36 @@ class Test(tests.Test):
         print(result.data, expected.data)
         self.assert_array_equal(result.data, expected)
 
+    def test_extract_volume_intervals(self):
+        """Test to extract open and closed intervals."""
+        open_interval = extract_volume(self.grid_3d, 0., 5.)
+        expected_levels_open = np.array([
+            0.5,
+        ])
+
+        closed_interval = extract_volume(self.grid_3d, 0., 5., 'closed',
+                                         'closed')
+        expected_levels_closed = np.array([0.5, 5.])
+
+        self.assert_array_equal(
+            open_interval.coord(axis='Z').points, expected_levels_open)
+        self.assert_array_equal(
+            closed_interval.coord(axis='Z').points, expected_levels_closed)
+
+    def test_extract_volume_nearest_values(self):
+        """Test to extract nearest values"""
+        default = extract_volume(self.grid_3d, 0, 48, 'closed', 'closed',
+                                 False)
+        expected_levels_default = np.array([0.5, 5.])
+
+        nearest = extract_volume(self.grid_3d, 0, 48, 'closed', 'closed', True)
+        expected_levels_nearest = np.array([0.5, 5., 50.])
+
+        self.assert_array_equal(
+            default.coord(axis='Z').points, expected_levels_default)
+        self.assert_array_equal(
+            nearest.coord(axis='Z').points, expected_levels_nearest)
+    
     def test_extract_volume_mean(self):
         """Test to extract the top two layers and compute the weighted average
         of a cube."""

@@ -1789,13 +1789,45 @@ The ``_volume.py`` module contains the following preprocessor functions:
 ``extract_volume``
 ------------------
 
-Extract a specific range in the `z`-direction from a cube.  This function
-takes two arguments, a minimum and a maximum (``z_min`` and ``z_max``,
-respectively) in the `z`-direction.
+Extract a specific range in the `z`-direction from a cube. The range can be given as an open,
+closed or mixed interval: ``(z_min, z_max)``, ``[z_min, z_max]``, ``(z_min, z_max]``, ``[z_min, z_max)``.
+This function takes four arguments:
+  * ``z_min``  to define the minimum value of the range to extract in the `z`-direction.
+  * ``z_max`` to define the maximum value of the range to extract in the `z`-direction.
+  * ``left`` to define whether the left bound of the interval is `open` or `closed`. Default is `open`.
+  * ``right`` to define whether the right bound of the interval is `open` or `closed`. Default is `open`.
+  * ``nearest_value`` to extract a range taking into account the values of the z-coordinate that
+    are closest to `z_min` and `z_max`. Default is `False`.
+
+For example, in a cube with `z_coord = [0., 0.5, 1., 5., 15.]`, the preprocessor below:
+
+.. code-block:: yaml
+
+  preprocessors:
+    extract_volume:
+      z_min: 0.
+      z_max: 4.
+      left: 'closed'
+      right: 'closed'
+
+would return a cube with a `z_coord` defined as `z_coord = [0., 0.5, 1.,]`. Whereas setting `ǹearest_value: True`:
+
+.. code-block:: yaml
+
+  preprocessors:
+    extract_volume:
+      z_min: 0.
+      z_max: 4.
+      left: 'closed'
+      right: 'closed'
+      nearest_value: True
+
+would return a cube with a `z_coord`` defined as `z_coord = [0., 0.5, 1., 5.]`,
+since `z_max = 4`` is closest to the coordinate point `z = 5` than it is to `z = 1`.
 
 Note that this requires the requested `z`-coordinate range to be the same sign
 as the Iris cube. That is, if the cube has `z`-coordinate as negative, then
-``z_min`` and ``z_max`` need to be negative numbers.
+``z_min`` and ``z_max`` need to be negative numbers
 
 See also :func:`esmvalcore.preprocessor.extract_volume`.
 

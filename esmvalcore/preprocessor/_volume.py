@@ -14,15 +14,23 @@ from ._shared import get_iris_analysis_operation, operator_accept_weights
 logger = logging.getLogger(__name__)
 
 
-def extract_volume(cube, z_min, z_max):
+def extract_volume(cube,
+                   z_min,
+                   z_max,
+                   left='open',
+                   right='open',
+                   nearest_value=False):
     """Subset a cube based on a range of values in the z-coordinate.
-
-    Function that subsets a cube on a box (z_min, z_max)
-    This function is a restriction of masked_cube_lonlat();
+    Function that subsets a cube on a box of (z_min, z_max),
+    (z_min, z_max], [z_min, z_max) or [z_min, z_max]
     Note that this requires the requested z-coordinate range to be the
     same sign as the iris cube. ie, if the cube has z-coordinate as
     negative, then z_min and z_max need to be negative numbers.
-
+    If nearest_value is set to `False`, the extraction will be
+    performed with the given z_min and z_max values.
+    If nearest_value is set to `True`, the cube extraction will be
+    performed taking into account the z_coord values that are closest
+    to the z_min and z_max values.
     Parameters
     ----------
     cube: iris.cube.Cube
@@ -31,7 +39,12 @@ def extract_volume(cube, z_min, z_max):
         minimum depth to extract.
     z_max: float
         maximum depth to extract.
-
+    left: str
+        sets left bound of the interval to either 'open' or 'closed'.
+    right: str
+        sets right bound of the interval to either 'open' or 'closed'.
+    nearest_value: bool
+        extracts considering the nearest value of z-coord to z_min and z_max.
     Returns
     -------
     iris.cube.Cube
@@ -45,9 +58,30 @@ def extract_volume(cube, z_min, z_max):
         zmax = float(z_max)
         zmin = float(z_min)
 
+    signs = []
+    for bound in [left, right]:
+        if bound == 'open':
+            signs.append('<')
+        elif bound == 'closed':
+            signs.append('<=')
+        else:
+            raise ValueError(
+                'Depth extraction interval can be set to "open" or "closed".'
+                f'Got {bound}.')
+
+    z_coord = cube.coord(axis='Z')
+
+    if nearest_value:
+        min_index = np.argmin(np.abs(z_coord.core_points() - zmin))
+        max_index = np.argmin(np.abs(z_coord.core_points() - zmax))
+        zmin = z_coord.core_points()[min_index]
+        zmax = z_coord.core_points()[max_index]
+
     z_constraint = iris.Constraint(
         coord_values={
-            cube.coord(axis='Z'): lambda cell: zmin < cell.point < zmax
+            z_coord:
+            eval(
+                f'lambda cell: {zmin} {signs[0]} cell.point {signs[1]} {zmax}')
         })
 
     return cube.extract(z_constraint)
