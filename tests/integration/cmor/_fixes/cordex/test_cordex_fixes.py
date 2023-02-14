@@ -212,6 +212,7 @@ def test_lambert_grid(cordex_cubes):
     out_cubes = fix.fix_metadata(cordex_cubes)
     assert cordex_cubes is out_cubes
 
+
 def test_lambert_missing_dimension(cordex_cubes):
     cmor_table = CMOR_TABLES["CORDEX"]
     mip = "mon"
@@ -236,6 +237,7 @@ def test_lambert_missing_dimension(cordex_cubes):
     with pytest.raises(RecipeError) as exc:
         fix.fix_metadata([cube])
     assert msg == exc.value.message
+
 
 def test_wrong_coord_system(cubes):
     fix = AllVars(
