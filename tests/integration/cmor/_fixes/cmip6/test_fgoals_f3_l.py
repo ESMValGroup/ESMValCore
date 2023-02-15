@@ -5,7 +5,7 @@ import iris
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.cmip6.fgoals_f3_l import AllVars, Tos
+from esmvalcore.cmor._fixes.cmip6.fgoals_f3_l import AllVars, Clt, Tos
 from esmvalcore.cmor._fixes.common import OceanFixGrid
 from esmvalcore.cmor.fix import Fix
 
