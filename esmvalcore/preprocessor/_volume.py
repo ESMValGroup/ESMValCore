@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 def extract_volume(cube,
                    z_min,
                    z_max,
-                   left='open',
-                   right='open',
+                   left_bound='open',
+                   right_bound='open',
                    nearest_value=False):
     """Subset a cube based on a range of values in the z-coordinate.
     Function that subsets a cube on a box of (z_min, z_max),
@@ -58,17 +58,6 @@ def extract_volume(cube,
         zmax = float(z_max)
         zmin = float(z_min)
 
-    signs = []
-    for bound in [left, right]:
-        if bound == 'open':
-            signs.append('<')
-        elif bound == 'closed':
-            signs.append('<=')
-        else:
-            raise ValueError(
-                'Depth extraction interval can be set to "open" or "closed".'
-                f'Got {bound}.')
-
     z_coord = cube.coord(axis='Z')
 
     if nearest_value:
@@ -77,12 +66,20 @@ def extract_volume(cube,
         zmin = z_coord.core_points()[min_index]
         zmax = z_coord.core_points()[max_index]
 
-    z_constraint = iris.Constraint(
-        coord_values={
-            z_coord:
-            eval(
-                f'lambda cell: {zmin} {signs[0]} cell.point {signs[1]} {zmax}')
-        })
+    if left_bound == 'open' and right_bound == 'open':
+        coord_values = {z_coord: lambda cell: zmin < cell.point < zmax}
+    elif left_bound == 'closed' and right_bound == 'closed':
+        coord_values = {z_coord: lambda cell: zmin <= cell.point <= zmax}
+    elif left_bound == 'open' and right_bound == 'closed':
+        coord_values = {z_coord: lambda cell: zmin < cell.point <= zmax}
+    elif left_bound == 'closed' and right_bound == 'open':
+        coord_values = {z_coord: lambda cell: zmin <= cell.point < zmax}
+    else:
+        raise ValueError(
+            'Depth extraction bounds can be set to "open" or "closed". '
+            f'Got "{left_bound}" and "{right_bound}".')
+
+    z_constraint = iris.Constraint(coord_values=coord_values)
 
     return cube.extract(z_constraint)
 
@@ -166,11 +163,12 @@ def volume_statistics(cube, operator):
         raise ValueError('Cube shape ({}) doesn`t match grid volume shape '
                          f'({cube.shape, grid_volume.shape})')
 
-    masked_volume = da.ma.masked_where(
-        da.ma.getmaskarray(cube.lazy_data()),
-        grid_volume)
+    masked_volume = da.ma.masked_where(da.ma.getmaskarray(cube.lazy_data()),
+                                       grid_volume)
     result = cube.collapsed(
-        [cube.coord(axis='Z'), cube.coord(axis='Y'), cube.coord(axis='X')],
+        [cube.coord(axis='Z'),
+         cube.coord(axis='Y'),
+         cube.coord(axis='X')],
         iris.analysis.MEAN,
         weights=masked_volume)
 
@@ -203,15 +201,12 @@ def axis_statistics(cube, axis, operator):
     try:
         coord = cube.coord(axis=axis)
     except iris.exceptions.CoordinateNotFoundError as err:
-        raise ValueError(
-            'Axis {} not found in cube {}'.format(
-                axis,
-                cube.summary(shorten=True))) from err
+        raise ValueError('Axis {} not found in cube {}'.format(
+            axis, cube.summary(shorten=True))) from err
     coord_dims = cube.coord_dims(coord)
     if len(coord_dims) > 1:
-        raise NotImplementedError(
-            'axis_statistics not implemented for '
-            'multidimensional coordinates.')
+        raise NotImplementedError('axis_statistics not implemented for '
+                                  'multidimensional coordinates.')
     operation = get_iris_analysis_operation(operator)
     if operator_accept_weights(operator):
         coord_dim = coord_dims[0]
@@ -221,9 +216,7 @@ def axis_statistics(cube, axis, operator):
         weights = np.abs(bounds[..., 1] - bounds[..., 0])
         weights = np.expand_dims(weights, expand)
         weights = da.broadcast_to(weights, cube.shape)
-        result = cube.collapsed(coord,
-                                operation,
-                                weights=weights)
+        result = cube.collapsed(coord, operation, weights=weights)
     else:
         result = cube.collapsed(coord, operation)
 
