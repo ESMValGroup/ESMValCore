@@ -5,7 +5,12 @@ import iris
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.cmip6.fgoals_f3_l import AllVars, Clt, Tos
+from esmvalcore.cmor._fixes.cmip6.fgoals_f3_l import (
+    AllVars,
+    Clt,
+    Sftlf,
+    Tos,
+)
 from esmvalcore.cmor._fixes.common import OceanFixGrid
 from esmvalcore.cmor.fix import Fix
 
@@ -119,3 +124,14 @@ def test_clt_fix_data(clt_cube):
     fix = Clt(None)
     out_cube = fix.fix_data(clt_cube)
     assert out_cube.data == [100.0]
+
+
+def test_get_sftlf_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'FGOALS-f3-l', 'Amon', 'sftlf')
+    assert fix == [Sftlf(None), AllVars(None)]
+
+
+def test_sftlf_fix():
+    """Test fix for ``sftlf``."""
+    assert Sftlf is Clt
