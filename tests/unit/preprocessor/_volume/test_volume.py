@@ -200,22 +200,33 @@ class Test(tests.Test):
             0.5,
         ])
 
-        closed_interval = extract_volume(self.grid_3d, 0., 5., 'closed',
-                                         'closed')
+        closed_interval = extract_volume(self.grid_3d, 0., 5., 'closed')
         expected_levels_closed = np.array([0.5, 5.])
 
         self.assert_array_equal(
             open_interval.coord(axis='Z').points, expected_levels_open)
         self.assert_array_equal(
             closed_interval.coord(axis='Z').points, expected_levels_closed)
+    
+    def test_extract_volume_mixed_intervals(self):
+        left_closed = extract_volume(self.grid_3d, 0.5, 5., 'left_closed')
+        expected_levels_left = np.array([0.5, ])
+
+        right_closed = extract_volume(self.grid_3d, 0.5, 5., 'right_closed')
+        expected_levels_right = np.array([5., ])
+
+        self.assert_array_equal(
+            left_closed.coord(axis='Z').points, expected_levels_left)
+        self.assert_array_equal(
+            right_closed.coord(axis='Z').points, expected_levels_right)
 
     def test_extract_volume_nearest_values(self):
         """Test to extract nearest values."""
-        default = extract_volume(self.grid_3d, 0, 48, 'closed', 'closed',
+        default = extract_volume(self.grid_3d, 0, 48, 'closed',
                                  False)
         expected_levels_default = np.array([0.5, 5.])
 
-        nearest = extract_volume(self.grid_3d, 0, 48, 'closed', 'closed', True)
+        nearest = extract_volume(self.grid_3d, 0, 48, 'closed', True)
         expected_levels_nearest = np.array([0.5, 5., 50.])
 
         self.assert_array_equal(
@@ -227,8 +238,9 @@ class Test(tests.Test):
         with self.assertRaises(ValueError) as err:
             extract_volume(self.grid_3d, 0., 5., 'wrong')
         self.assertEqual(
-            ('Depth extraction bounds can be set to "open" or "closed". '
-             'Got "wrong" and "open".'), str(err.exception))
+            ('Depth extraction bounds can be set to "open", "closed", '
+             '"left_closed", or "right_closed". '
+             'Got "wrong".'), str(err.exception))
 
     def test_extract_volume_mean(self):
         """Test to extract the top two layers and compute the weighted average

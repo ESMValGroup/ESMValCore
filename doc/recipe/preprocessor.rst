@@ -1790,12 +1790,12 @@ The ``_volume.py`` module contains the following preprocessor functions:
 ------------------
 
 Extract a specific range in the `z`-direction from a cube. The range can be given as an open,
-closed or mixed interval: ``(z_min, z_max)``, ``[z_min, z_max]``, ``(z_min, z_max]``, ``[z_min, z_max)``.
+closed or mixed interval: ``(z_min, z_max)``, ``[z_min, z_max]``, ``[z_min, z_max)``, ``(z_min, z_max]``.
 This function takes four arguments:
   * ``z_min``  to define the minimum value of the range to extract in the `z`-direction.
   * ``z_max`` to define the maximum value of the range to extract in the `z`-direction.
-  * ``left`` to define whether the left bound of the interval is `open` or `closed`. Default is `open`.
-  * ``right`` to define whether the right bound of the interval is `open` or `closed`. Default is `open`.
+  * ``interval_bounds`` to define whether the bounds of the interval are `open` or `closed`, 
+     `left_closed` or `right_closed`. Default is `open`.
   * ``nearest_value`` to extract a range taking into account the values of the z-coordinate that
     are closest to `z_min` and `z_max`. Default is `False`.
 
@@ -1807,10 +1807,11 @@ For example, in a cube with `z_coord = [0., 0.5, 1., 5., 15.]`, the preprocessor
     extract_volume:
       z_min: 0.
       z_max: 4.
-      left: 'closed'
-      right: 'closed'
+      interval_bounds: 'closed'
 
-would return a cube with a `z_coord` defined as `z_coord = [0., 0.5, 1.,]`. Whereas setting `ǹearest_value: True`:
+would return a cube with a `z_coord` defined as `z_coord = [0., 0.5, 1.,]`. 
+
+Whereas setting `ǹearest_value: True`:
 
 .. code-block:: yaml
 
@@ -1818,8 +1819,7 @@ would return a cube with a `z_coord` defined as `z_coord = [0., 0.5, 1.,]`. Wher
     extract_volume:
       z_min: 0.
       z_max: 4.
-      left: 'closed'
-      right: 'closed'
+      interval_bounds: 'closed'
       nearest_value: True
 
 would return a cube with a `z_coord`` defined as `z_coord = [0., 0.5, 1., 5.]`,

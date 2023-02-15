@@ -17,8 +17,7 @@ logger = logging.getLogger(__name__)
 def extract_volume(cube,
                    z_min,
                    z_max,
-                   left_bound='open',
-                   right_bound='open',
+                   interval_bounds='open',
                    nearest_value=False):
     """Subset a cube based on a range of values in the z-coordinate.
     Function that subsets a cube on a box of (z_min, z_max),
@@ -39,10 +38,9 @@ def extract_volume(cube,
         minimum depth to extract.
     z_max: float
         maximum depth to extract.
-    left: str
-        sets left bound of the interval to either 'open' or 'closed'.
-    right: str
-        sets right bound of the interval to either 'open' or 'closed'.
+    interval_bounds: str
+        sets left bound of the interval to either 'open', 'closed',
+        'left_closed' or 'right_closed'.
     nearest_value: bool
         extracts considering the nearest value of z-coord to z_min and z_max.
     Returns
@@ -66,18 +64,18 @@ def extract_volume(cube,
         zmin = z_coord.core_points()[min_index]
         zmax = z_coord.core_points()[max_index]
 
-    if left_bound == 'open' and right_bound == 'open':
+    if interval_bounds == 'open':
         coord_values = {z_coord: lambda cell: zmin < cell.point < zmax}
-    elif left_bound == 'closed' and right_bound == 'closed':
+    elif interval_bounds == 'closed':
         coord_values = {z_coord: lambda cell: zmin <= cell.point <= zmax}
-    elif left_bound == 'open' and right_bound == 'closed':
-        coord_values = {z_coord: lambda cell: zmin < cell.point <= zmax}
-    elif left_bound == 'closed' and right_bound == 'open':
+    elif interval_bounds == 'left_closed':
         coord_values = {z_coord: lambda cell: zmin <= cell.point < zmax}
+    elif interval_bounds == 'right_closed':
+        coord_values = {z_coord: lambda cell: zmin < cell.point <= zmax}
     else:
         raise ValueError(
-            'Depth extraction bounds can be set to "open" or "closed". '
-            f'Got "{left_bound}" and "{right_bound}".')
+            'Depth extraction bounds can be set to "open", "closed", '
+            f'"left_closed", or "right_closed". Got "{interval_bounds}".')
 
     z_constraint = iris.Constraint(coord_values=coord_values)
 
@@ -201,8 +199,8 @@ def axis_statistics(cube, axis, operator):
     try:
         coord = cube.coord(axis=axis)
     except iris.exceptions.CoordinateNotFoundError as err:
-        raise ValueError('Axis {} not found in cube {}'.format(
-            axis, cube.summary(shorten=True))) from err
+        raise ValueError(
+            f'Axis {axis} not found in cube {cube.summary(shorten=True)}') from err
     coord_dims = cube.coord_dims(coord)
     if len(coord_dims) > 1:
         raise NotImplementedError('axis_statistics not implemented for '
