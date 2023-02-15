@@ -99,7 +99,7 @@ def test_tos_fix():
 def test_get_clt_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'FGOALS-f3-l', 'Amon', 'clt')
-    assert fix == [Clt(None)]
+    assert fix == [Clt(None), AllVars(None)]
 
 
 @pytest.fixture
