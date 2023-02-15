@@ -9,6 +9,8 @@ import re
 import os
 
 import numpy as np
+import dask.array as da
+from pyproj import Transformer as pT
 from cf_units import Unit
 from iris.coord_systems import LambertConformal, RotatedGeogCS
 from iris import fileformats as iff
@@ -185,6 +187,16 @@ class AllVars(Fix):
                               cube.coord(var_name='rlon').cube_dims(cube))
             cube.add_aux_coord(new_coord, aux_coord_dims)
 
+    @staticmethod
+    def _lazy_transformation(transformer, x, y):
+        """cartopy.CRS.transform_points in our case using dask API"""
+        result_shape = x.shape + (3, )
+        x, y = x.flatten(), y.flatten()
+        res = da.empty([x.shape[0], 3], dtype=np.double)
+        res[:, 0], res[:, 1], res[:, 2] = transformer.transform(
+            x, y, da.zeros_like(x), errcheck=True)
+        return res.reshape(result_shape)
+
     def _fix_lambert_conformal_coords(self, cube, data_domain):
         """Fix lambert conformal coordinates."""
         # Load domain boundaries.
@@ -237,19 +249,23 @@ class AllVars(Fix):
             )
             data['coord'].guess_bounds()
 
-        gx, gy = np.meshgrid(dims['x']['standard'], dims['y']['standard'])
-        lonlat = geog_system.transform_points(lambert_system, gx, gy)
-        gx_bounds, gy_bounds = np.meshgrid(
+        transformer = pT.from_crs(lambert_system, geog_system, always_xy=True)
+
+        gx, gy = da.meshgrid(dims['x']['standard'], dims['y']['standard'])
+        lonlat = self._lazy_transformation(transformer, gx, gy)
+
+        gx_bounds, gy_bounds = da.meshgrid(
             dims['x']['coord'].bounds, dims['y']['coord'].bounds)
-        lonlat_bounds = geog_system.transform_points(
-            lambert_system, gx_bounds, gy_bounds)
+
+        lonlat_bounds = self._lazy_transformation(
+            transformer, gx_bounds, gy_bounds)
 
         for key, data in auxi.items():
             bounds = lonlat_bounds[:, :, data["idx"]]
             bounds = [bounds[::2, ::2], bounds[::2, 1::2],
                       bounds[1::2, 1::2], bounds[1::2, ::2]]
-            bounds = np.array(bounds)
-            bounds = np.moveaxis(bounds, 0, -1)
+            bounds = da.array(bounds)
+            bounds = da.moveaxis(bounds, 0, -1)
             data["coord"] = iris.coords.AuxCoord(
                 lonlat[:, :, data["idx"]],  # Points
                 var_name=table.coords[key].name,
