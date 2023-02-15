@@ -197,6 +197,38 @@ class AllVars(Fix):
             x, y, da.zeros_like(x), errcheck=True)
         return res.reshape(result_shape)
 
+    @staticmethod
+    def _make_projection_coord(start, stop, size, vardef, crs):
+        """Create a projection coordinate from the specifications."""
+        standard = np.linspace(start, stop, size)
+        coord = iris.coords.DimCoord(
+            standard,
+            var_name=vardef.name,
+            standard_name=vardef.standard_name,
+            long_name=vardef.long_name,
+            units=vardef.units,
+            coord_system=crs
+        )
+        coord.guess_bounds()
+        return standard, coord
+
+    @staticmethod
+    def _make_geographical_coord(grid, bounds, vardef, dim):
+        """Create a geographical coordinate from the specifications."""
+        bounds = bounds[:, :, dim]
+        bounds = [bounds[::2, ::2], bounds[::2, 1::2],
+                  bounds[1::2, 1::2], bounds[1::2, ::2]]
+        bounds = da.array(bounds)
+        bounds = da.moveaxis(bounds, 0, -1)
+        return iris.coords.AuxCoord(
+            grid[:, :, dim],
+            var_name=vardef.name,
+            standard_name=vardef.standard_name,
+            long_name=vardef.long_name,
+            units=vardef.units,
+            bounds=bounds,
+        )
+
     def _fix_lambert_conformal_coords(self, cube, data_domain):
         """Fix lambert conformal coordinates."""
         # Load domain boundaries.
@@ -205,12 +237,12 @@ class AllVars(Fix):
 
         # Load cmor grid for cordex.
         from .. . import table as ct
-        table = ct.CMOR_TABLES['CORDEX']
-        table._load_table(table._cmor_folder + "/CORDEX_grids")
+        vardef = ct.CMOR_TABLES['CORDEX']
+        vardef._load_table(vardef._cmor_folder + "/CORDEX_grids")
 
         # Compute coord indices.
         has_time = 'time' in self.vardef.dimensions
-        xc_ix, yc_ix = (2, 1) if has_time else (1, 0)
+        xc_idx, yc_idx = (2, 1) if has_time else (1, 0)
 
         if cube.ndim < (2 + (1 if has_time else 0)):
             raise RecipeError(
@@ -225,65 +257,43 @@ class AllVars(Fix):
         geog_system = iris.coord_systems.GeogCS(
             iff.pp.EARTH_RADIUS).as_cartopy_crs()
 
-        xyz = lambert_system.transform_points(
+        lambert_bounds = lambert_system.transform_points(
             geog_system, np.array(lons), np.array(lats))
+        start, end = lambert_bounds[:, 0].min(), lambert_bounds[:, 0].max()
 
-        # Dicts to store variables for loops.
-        dims = {
-            "x": {"idx": xc_ix, "coord": None},
-            "y": {"idx": yc_ix, "coord": None}}
-        auxi = {
-            "longitude": {"idx": 0},
-            "latitude": {"idx": 1}}
+        # Then build coords passing the boundaries and the specifications.
+        standard_x, coord_x = self._make_projection_coord(
+            start, end, cube.shape[xc_idx],
+            vardef.coords["x"], cube.coord_system())
 
-        for key, data in dims.items():
-            data['standard'] = np.linspace(
-                xyz[:, 0].min(), xyz[:, 0].max(), cube.shape[data['idx']])
-            data['coord'] = iris.coords.DimCoord(
-                data['standard'],
-                var_name=table.coords[key].name,
-                standard_name=table.coords[key].standard_name,
-                long_name=table.coords[key].long_name,
-                units=table.coords[key].units,
-                coord_system=cube.coord_system()
-            )
-            data['coord'].guess_bounds()
+        standard_y, coord_y = self._make_projection_coord(
+            start, end, cube.shape[yc_idx],
+            vardef.coords["y"], cube.coord_system())
+
+        # Same principle but lazy for AuxCoords.
+        gx, gy = da.meshgrid(standard_x, standard_y)
+        gx_bounds, gy_bounds = da.meshgrid(coord_x.bounds, coord_y.bounds)
 
         transformer = pT.from_crs(lambert_system, geog_system, always_xy=True)
-
-        gx, gy = da.meshgrid(dims['x']['standard'], dims['y']['standard'])
         lonlat = self._lazy_transformation(transformer, gx, gy)
-
-        gx_bounds, gy_bounds = da.meshgrid(
-            dims['x']['coord'].bounds, dims['y']['coord'].bounds)
-
         lonlat_bounds = self._lazy_transformation(
             transformer, gx_bounds, gy_bounds)
 
-        for key, data in auxi.items():
-            bounds = lonlat_bounds[:, :, data["idx"]]
-            bounds = [bounds[::2, ::2], bounds[::2, 1::2],
-                      bounds[1::2, 1::2], bounds[1::2, ::2]]
-            bounds = da.array(bounds)
-            bounds = da.moveaxis(bounds, 0, -1)
-            data["coord"] = iris.coords.AuxCoord(
-                lonlat[:, :, data["idx"]],  # Points
-                var_name=table.coords[key].name,
-                standard_name=table.coords[key].standard_name,
-                long_name=table.coords[key].long_name,
-                units=table.coords[key].units,
-                bounds=bounds,
-            )
+        coord_lon = self._make_geographical_coord(
+            lonlat, lonlat_bounds, vardef.coords["longitude"], 0)
 
-        # Remove all old coords attached to axis.
+        coord_lat = self._make_geographical_coord(
+            lonlat, lonlat_bounds, vardef.coords["latitude"], 1)
+
+        # Remove all old coords attached to cube axis.
         for coord in cube.coords(axis="x") + cube.coords(axis="y"):
             cube.remove_coord(coord)
 
         # Plug in new coords.
-        cube.add_dim_coord(dims['x']['coord'], xc_ix)
-        cube.add_dim_coord(dims['y']['coord'], yc_ix)
-        cube.add_aux_coord(auxi['longitude']['coord'], (yc_ix, xc_ix))
-        cube.add_aux_coord(auxi['latitude']['coord'], (yc_ix, xc_ix))
+        cube.add_dim_coord(coord_x, xc_idx)
+        cube.add_dim_coord(coord_y, yc_idx)
+        cube.add_aux_coord(coord_lon, (yc_idx, xc_idx))
+        cube.add_aux_coord(coord_lat, (yc_idx, xc_idx))
 
     def fix_metadata(self, cubes):
         """Fix CORDEX rotated grids.
