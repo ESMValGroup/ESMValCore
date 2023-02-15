@@ -207,13 +207,17 @@ class Test(tests.Test):
             open_interval.coord(axis='Z').points, expected_levels_open)
         self.assert_array_equal(
             closed_interval.coord(axis='Z').points, expected_levels_closed)
-    
+
     def test_extract_volume_mixed_intervals(self):
         left_closed = extract_volume(self.grid_3d, 0.5, 5., 'left_closed')
-        expected_levels_left = np.array([0.5, ])
+        expected_levels_left = np.array([
+            0.5,
+        ])
 
         right_closed = extract_volume(self.grid_3d, 0.5, 5., 'right_closed')
-        expected_levels_right = np.array([5., ])
+        expected_levels_right = np.array([
+            5.,
+        ])
 
         self.assert_array_equal(
             left_closed.coord(axis='Z').points, expected_levels_left)
@@ -222,8 +226,7 @@ class Test(tests.Test):
 
     def test_extract_volume_nearest_values(self):
         """Test to extract nearest values."""
-        default = extract_volume(self.grid_3d, 0, 48, 'closed',
-                                 False)
+        default = extract_volume(self.grid_3d, 0, 48, 'closed', False)
         expected_levels_default = np.array([0.5, 5.])
 
         nearest = extract_volume(self.grid_3d, 0, 48, 'closed', True)

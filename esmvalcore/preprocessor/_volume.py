@@ -199,8 +199,8 @@ def axis_statistics(cube, axis, operator):
     try:
         coord = cube.coord(axis=axis)
     except iris.exceptions.CoordinateNotFoundError as err:
-        raise ValueError(
-            f'Axis {axis} not found in cube {cube.summary(shorten=True)}') from err
+        raise ValueError(f'Axis {axis} not found in cube '
+                         f'{cube.summary(shorten=True)}') from err
     coord_dims = cube.coord_dims(coord)
     if len(coord_dims) > 1:
         raise NotImplementedError('axis_statistics not implemented for '
