@@ -740,7 +740,38 @@ def test_tas_scalar_height2m_already_present(cubes_2d):
     check_heightxm(cube, 2.0)
 
 
-def test_tas_dim_height2m_already_present(cubes_2d):
+def test_tas_dim_height2m_already_present(cubes_2d, monkeypatch):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'tas')
+    monkeypatch.setitem(fix.extra_facets, 'ugrid', False)
+    fixed_cubes = fix.fix_metadata(cubes_2d)
+
+    cube = check_tas_metadata(fixed_cubes)
+
+    assert cube.mesh is None
+
+    assert cube.coords('first spatial index for variables stored on an '
+                       'unstructured grid', dim_coords=True)
+    i_coord = cube.coord('first spatial index for variables stored on an '
+                         'unstructured grid', dim_coords=True)
+    assert i_coord.var_name == 'i'
+    assert i_coord.standard_name is None
+    assert i_coord.long_name == ('first spatial index for variables stored on '
+                                 'an unstructured grid')
+    assert i_coord.units == '1'
+    np.testing.assert_allclose(i_coord.points, [0, 1, 2, 3, 4, 5, 6, 7])
+    assert i_coord.bounds is None
+
+    assert cube.coords('latitude', dim_coords=False)
+    assert cube.coords('longitude', dim_coords=False)
+    lat = cube.coord('latitude', dim_coords=False)
+    lon = cube.coord('longitude', dim_coords=False)
+    assert len(cube.coord_dims(lat)) == 1
+    assert cube.coord_dims(lat) == cube.coord_dims(lon)
+    assert cube.coord_dims(lat) == cube.coord_dims(i_coord)
+
+
+def test_tas_no_mesh(cubes_2d):
     """Test fix."""
     fix = get_allvars_fix('Amon', 'tas')
 
@@ -1048,11 +1079,13 @@ def test_add_coord_from_grid_fail_two_unnamed_dims(cubes_2d):
 def test_get_horizontal_grid_cached_in_dict(mock_requests):
     """Test fix."""
     cube = Cube(0, attributes={'grid_file_uri': 'cached_grid_url.nc'})
+    grid_cube = Cube(0)
     fix = get_allvars_fix('Amon', 'tas')
-    fix._horizontal_grids['cached_grid_url.nc'] = mock.sentinel.grid
+    fix._horizontal_grids['cached_grid_url.nc'] = grid_cube
 
     grid = fix.get_horizontal_grid(cube)
-    assert grid == mock.sentinel.grid
+    assert grid == grid_cube
+    assert grid is not grid_cube
     assert mock_requests.mock_calls == []
 
 
@@ -1305,10 +1338,11 @@ def test_invalid_time_units(cubes_2d):
         fix.fix_metadata(cubes_2d)
 
 
-# Test mesh creation fails because bounds do not match vertices
+# Test mesh creation raises warning because bounds do not match vertices
 
 
-def test_get_mesh_fail_invalid_clat_bounds(cubes_2d):
+@mock.patch('esmvalcore.cmor._fixes.icon._base_fixes.logger', autospec=True)
+def test_get_mesh_fail_invalid_clat_bounds(mock_logger, cubes_2d):
     """Test fix."""
     # Slightly modify latitude bounds from tas cube to make mesh creation fail
     tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
@@ -1318,13 +1352,21 @@ def test_get_mesh_fail_invalid_clat_bounds(cubes_2d):
     cubes = CubeList([tas_cube])
     fix = get_allvars_fix('Amon', 'tas')
 
-    msg = ("Cannot create mesh from horizontal grid file: latitude bounds of "
-           "the face coordinate")
-    with pytest.raises(ValueError, match=msg):
-        fix.fix_metadata(cubes)
+    fixed_cubes = fix.fix_metadata(cubes)
+    cube = check_tas_metadata(fixed_cubes)
+
+    assert cube.coord('latitude').bounds[0, 0] != 40.0
+    mock_logger.warning.assert_called_once_with(
+        "Latitude bounds of the face coordinate ('clat_vertices' in "
+        "the grid file) differ from the corresponding values "
+        "calculated from the connectivity ('vertex_of_cell') and the "
+        "node coordinate ('vlat'). Using bounds defined by "
+        "connectivity."
+    )
 
 
-def test_get_mesh_fail_invalid_clon_bounds(cubes_2d):
+@mock.patch('esmvalcore.cmor._fixes.icon._base_fixes.logger', autospec=True)
+def test_get_mesh_fail_invalid_clon_bounds(mock_logger, cubes_2d):
     """Test fix."""
     # Slightly modify longitude bounds from tas cube to make mesh creation fail
     tas_cube = cubes_2d.extract_cube(NameConstraint(var_name='tas'))
@@ -1334,7 +1376,60 @@ def test_get_mesh_fail_invalid_clon_bounds(cubes_2d):
     cubes = CubeList([tas_cube])
     fix = get_allvars_fix('Amon', 'tas')
 
-    msg = ("Cannot create mesh from horizontal grid file: longitude bounds "
-           "of the face coordinate")
+    fixed_cubes = fix.fix_metadata(cubes)
+    cube = check_tas_metadata(fixed_cubes)
+
+    assert cube.coord('longitude').bounds[0, 1] != 40.0
+    mock_logger.warning.assert_called_once_with(
+        "Longitude bounds of the face coordinate ('clon_vertices' in "
+        "the grid file) differ from the corresponding values "
+        "calculated from the connectivity ('vertex_of_cell') and the "
+        "node coordinate ('vlon'). Note that these values are allowed "
+        "to differ by 360° or at the poles of the grid. Using bounds "
+        "defined by connectivity."
+    )
+
+
+# Test _get_grid_url
+
+
+def test_get_grid_url():
+    """Test fix."""
+    cube = Cube(0, attributes={'grid_file_uri': TEST_GRID_FILE_URI})
+    fix = get_allvars_fix('Amon', 'tas')
+    (grid_url, grid_name) = fix._get_grid_url(cube)
+    assert grid_url == TEST_GRID_FILE_URI
+    assert grid_name == TEST_GRID_FILE_NAME
+
+
+def test_get_grid_url_fail():
+    """Test fix."""
+    cube = Cube(0)
+    fix = get_allvars_fix('Amon', 'tas')
+    msg = ("Cube does not contain the attribute 'grid_file_uri' necessary to "
+           "download the ICON horizontal grid file")
     with pytest.raises(ValueError, match=msg):
-        fix.fix_metadata(cubes)
+        fix._get_grid_url(cube)
+
+
+# Test get_mesh
+
+
+def test_get_mesh_cached(monkeypatch):
+    """Test fix."""
+    cube = Cube(0, attributes={'grid_file_uri': TEST_GRID_FILE_URI})
+    fix = get_allvars_fix('Amon', 'tas')
+    monkeypatch.setattr(fix, '_create_mesh', mock.Mock())
+    fix._meshes[TEST_GRID_FILE_NAME] = mock.sentinel.mesh
+    mesh = fix.get_mesh(cube)
+    assert mesh == mock.sentinel.mesh
+    fix._create_mesh.assert_not_called()
+
+
+def test_get_mesh_not_cached(monkeypatch):
+    """Test fix."""
+    cube = Cube(0, attributes={'grid_file_uri': TEST_GRID_FILE_URI})
+    fix = get_allvars_fix('Amon', 'tas')
+    monkeypatch.setattr(fix, '_create_mesh', mock.Mock())
+    fix.get_mesh(cube)
+    fix._create_mesh.assert_called_once_with(cube)
