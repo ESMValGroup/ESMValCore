@@ -1034,6 +1034,11 @@ calendars, (sub-)daily data with different calendars are not supported.
 The preprocessor saves both the input single model files as well as the multi-model
 results. In case you do not want to keep the single model files, set the
 parameter ``keep_input_datasets`` to ``false`` (default value is ``true``).
+To ignore different scalar coordinates in the input datasets, use the option
+``ignore_scalar_coords: true``.
+This is helpful if you encounter a ``ValueError: Multi-model statistics failed
+to merge input cubes into a single array`` with ``Coordinates in
+cube.aux_coords (scalar) differ``.
 
 .. code-block:: yaml
 
@@ -1049,6 +1054,7 @@ parameter ``keep_input_datasets`` to ``false`` (default value is ``true``).
           statistics: [mean, median]
           exclude: [NCEP-NCAR-R1]
           keep_input_datasets: false
+          ignore_scalar_coords: true
 
 Multi-model statistics also supports a ``groupby`` argument. You can group by
 any dataset key (``project``, ``experiment``, etc.) or a combination of keys in a list. You can
