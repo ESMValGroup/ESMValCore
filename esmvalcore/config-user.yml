@@ -6,10 +6,10 @@
 # --------------
 # Site-specific entries for different HPC centers are given at the bottom of
 # this file. Comment out/replace as needed. This default version of the file
-# can be used in combination with the command line argument ``offline=False``
-# If only certain values are allowed for an option, these are listed after
-# ``---``. The option in square brackets is the default value, i.e., the one
-# that is used if this option is omitted in the file.
+# can be used in combination with the command line argument
+# ``search_esgf=default``. If only certain values are allowed for an option,
+# these are listed after ``---``. The option in square brackets is the default
+# value, i.e., the one that is used if this option is omitted in the file.
 #
 ###############################################################################
 #
@@ -87,17 +87,16 @@ config_developer_file: null
 profile_diagnostic: false
 
 # Rootpaths to the data from different projects
-# This default setting will work if files have been downloaded by the
-# ESMValTool via ``offline=False``. Lists are also possible. For site-specific
-# entries and more examples, see below. Comment out these when using a
-# site-specific path.
+# This default setting will work if files have been downloaded by ESMValTool
+# via ``search_esgf``. Lists are also possible. For site-specific entries and
+# more examples, see below. Comment out these when using a site-specific path.
 rootpath:
   default: ~/climate_data
 
 # Directory structure for input data --- [default]/ESGF/BADC/DKRZ/ETHZ/etc.
-# This default setting will work if files have been downloaded by the
-# ESMValTool via ``offline=False``. See ``config-developer.yml`` for
-# definitions. Comment out/replace as per needed.
+# This default setting will work if files have been downloaded by ESMValTool
+# via ``search_esgf``. See ``config-developer.yml`` for definitions.  Comment
+# out/replace as per needed.
 drs:
   CMIP3: ESGF
   CMIP5: ESGF
@@ -128,7 +127,7 @@ drs:
 
 # Directory tree created by automatically downloading from ESGF
 # Uncomment the lines below to locate data that has been automatically
-# downloaded from ESGF (using ``offline: false``).
+# downloaded from ESGF (using ``search_esgf``).
 #rootpath:
 #  CMIP3: ~/climate_data
 #  CMIP5: ~/climate_data
@@ -166,7 +165,7 @@ drs:
 
 # Site-specific entries: DKRZ-Levante
 # For bd0854 members a shared download directory is available
-#offline: false
+#search_esgf: default
 #download_dir: /work/bd0854/DATA/ESMValTool2/download
 # Uncomment the lines below to locate data on Levante at DKRZ.
 #auxiliary_data_dir: /work/bd0854/DATA/ESMValTool2/AUX

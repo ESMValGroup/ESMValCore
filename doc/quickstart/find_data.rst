@@ -483,9 +483,10 @@ retrieval parameters is explained below.
 
 Enabling automatic downloads from the ESGF
 ------------------------------------------
-To enable automatic downloads from ESGF, set ``offline: false`` in
-the :ref:`user configuration file` or provide the command line argument
-``--offline=False`` when running the recipe.
+To enable automatic downloads from ESGF, set ``search_esgf: default`` or
+``search_esgf: always`` in the :ref:`user configuration file`, or provide the
+corresponding command line arguments ``--search_esgf=default`` or
+``--search_esgf=always`` when running the recipe.
 The files will be stored in the ``download_dir`` set in
 the :ref:`user configuration file`.
 
