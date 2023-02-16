@@ -1039,6 +1039,8 @@ To ignore different scalar coordinates in the input datasets, use the option
 This is helpful if you encounter a ``ValueError: Multi-model statistics failed
 to merge input cubes into a single array`` with ``Coordinates in
 cube.aux_coords (scalar) differ``.
+Some special scalar coordinates which are expected to differ across cubes (`p0`
+and `ptop`) are always removed.
 
 .. code-block:: yaml
 

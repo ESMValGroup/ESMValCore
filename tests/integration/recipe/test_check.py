@@ -315,7 +315,7 @@ def test_invalid_multi_model_keep_input():
             INVALID_MM_SETTINGS['keep_input_datasets'])
     assert str(rec_err.value) == (
         'Invalid value encountered for `keep_input_datasets`.'
-        'Must be defined as a boolean. Got wrong.')
+        'Must be defined as a boolean (true or false). Got wrong.')
 
 
 def test_invalid_multi_model_ignore_scalar_coords():
@@ -324,7 +324,7 @@ def test_invalid_multi_model_ignore_scalar_coords():
             INVALID_MM_SETTINGS['ignore_scalar_coords'])
     assert str(rec_err.value) == (
         'Invalid value encountered for `ignore_scalar_coords`.'
-        'Must be defined as a boolean. Got wrong.')
+        'Must be defined as a boolean (true or false). Got wrong.')
 
 
 def test_invalid_ensemble_statistics():

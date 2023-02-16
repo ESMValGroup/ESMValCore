@@ -247,15 +247,17 @@ def _verify_groupby(groupby):
 def _verify_keep_input_datasets(keep_input_datasets):
     if not isinstance(keep_input_datasets, bool):
         raise RecipeError(
-            "Invalid value encountered for `keep_input_datasets`."
-            f"Must be defined as a boolean. Got {keep_input_datasets}.")
+            f"Invalid value encountered for `keep_input_datasets`."
+            f"Must be defined as a boolean (true or false). "
+            f"Got {keep_input_datasets}.")
 
 
 def _verify_ignore_scalar_coords(ignore_scalar_coords):
     if not isinstance(ignore_scalar_coords, bool):
         raise RecipeError(
-            "Invalid value encountered for `ignore_scalar_coords`."
-            f"Must be defined as a boolean. Got {ignore_scalar_coords}.")
+            f"Invalid value encountered for `ignore_scalar_coords`."
+            f"Must be defined as a boolean (true or false). Got "
+            f"{ignore_scalar_coords}.")
 
 
 def _verify_arguments(given, expected):
