@@ -1,21 +1,20 @@
 """Fixes that are shared between datasets and drivers."""
 import logging
+import os
+import json
 from functools import lru_cache
 
-import cordex as cx
-import iris
-import json
-import re
-import os
-
-import numpy as np
-import dask.array as da
-from pyproj import Transformer as pT
 from cf_units import Unit
+import cordex as cx
+import dask.array as da
+import iris
 from iris.coord_systems import LambertConformal, RotatedGeogCS
-from iris import fileformats as iff
+from iris.fileformats.pp import EARTH_RADIUS
+import numpy as np
+from pyproj import Transformer
 
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.exceptions import RecipeError
 
 logger = logging.getLogger(__name__)
@@ -28,10 +27,8 @@ def _get_domains_boundaries():
         os.path.join(os.getcwd(), os.path.dirname(__file__)))
     # Build file path assuming it is located in the same directory as this file
     fpath = os.path.join(location, 'nrp_rcm_domain_boundaries.json')
-    # JSON file contains comments which are not supported by json base package
     with open(fpath, "r") as f:
-        data = json.loads("".join(
-            re.split(r"(?://|#).*(?=\n)", f.read())).strip())
+        data = json.loads(f.read())
     return data
 
 
@@ -200,9 +197,8 @@ class AllVars(Fix):
     @staticmethod
     def _make_projection_coord(start, stop, size, vardef, crs):
         """Create a projection coordinate from the specifications."""
-        standard = np.linspace(start, stop, size)
         coord = iris.coords.DimCoord(
-            standard,
+            np.linspace(start, stop, size),
             var_name=vardef.name,
             standard_name=vardef.standard_name,
             long_name=vardef.long_name,
@@ -210,7 +206,7 @@ class AllVars(Fix):
             coord_system=crs
         )
         coord.guess_bounds()
-        return standard, coord
+        return coord
 
     @staticmethod
     def _make_geographical_coord(grid, bounds, vardef, dim):
@@ -233,57 +229,59 @@ class AllVars(Fix):
         """Fix lambert conformal coordinates."""
         # Load domain boundaries.
         boundaries = _get_domains_boundaries()[data_domain[:3]]
-        lats, lons = boundaries["lats"], boundaries["lons"]
+        lats, lons = np.array(boundaries["lats"]), np.array(boundaries["lons"])
 
         # Load cmor grid for cordex.
-        from .. . import table as ct
-        vardef = ct.CMOR_TABLES['CORDEX']
-        vardef._load_table(vardef._cmor_folder + "/CORDEX_grids")
+        cordex_tables = CMOR_TABLES['CORDEX']
+        cordex_tables._load_table(cordex_tables._cmor_folder + "/CORDEX_grids")
 
         # Compute coord indices.
         has_time = 'time' in self.vardef.dimensions
         xc_idx, yc_idx = (2, 1) if has_time else (1, 0)
 
-        if cube.ndim < (2 + (1 if has_time else 0)):
+        # Check dim validity.
+        theoretical = len(self.vardef.dimensions)
+        if cube.ndim < theoretical:
             raise RecipeError(
-                "Missing coordinate: expected a least 2 coordinates "
-                "(+time for cubes concerned) "
-                f"corresponding to x and y. Got: {cube.ndim}")
+                f"Missing dimension in cube: expected {theoretical} "
+                f"got: {cube.ndim}")
 
         # Domain boundaries coordinates are in actual coordinates.
         # So we transform the points in Lambert.
         lambert_system = cube.coord_system().as_cartopy_crs()
-
-        geog_system = iris.coord_systems.GeogCS(
-            iff.pp.EARTH_RADIUS).as_cartopy_crs()
+        geog_system = iris.coord_systems.GeogCS(EARTH_RADIUS).as_cartopy_crs()
 
         lambert_bounds = lambert_system.transform_points(
-            geog_system, np.array(lons), np.array(lats))
+            src_crs=geog_system, x=lons, y=lats)
         start, end = lambert_bounds[:, 0].min(), lambert_bounds[:, 0].max()
 
         # Then build coords passing the boundaries and the specifications.
-        standard_x, coord_x = self._make_projection_coord(
+        coord_x = self._make_projection_coord(
             start, end, cube.shape[xc_idx],
-            vardef.coords["x"], cube.coord_system())
+            cordex_tables.coords["x"], cube.coord_system())
 
-        standard_y, coord_y = self._make_projection_coord(
+        coord_y = self._make_projection_coord(
             start, end, cube.shape[yc_idx],
-            vardef.coords["y"], cube.coord_system())
+            cordex_tables.coords["y"], cube.coord_system())
 
-        # Same principle but lazy for AuxCoords.
-        gx, gy = da.meshgrid(standard_x, standard_y)
+        # AuxCoords are built in 2D from the coords.
+        gx, gy = da.meshgrid(coord_x.points, coord_y.points)
+
         gx_bounds, gy_bounds = da.meshgrid(coord_x.bounds, coord_y.bounds)
 
-        transformer = pT.from_crs(lambert_system, geog_system, always_xy=True)
+        # Inverse transformation is applied.
+        transformer = Transformer.from_crs(
+            crs_from=lambert_system, crs_to=geog_system, always_xy=True)
+
         lonlat = self._lazy_transformation(transformer, gx, gy)
         lonlat_bounds = self._lazy_transformation(
             transformer, gx_bounds, gy_bounds)
 
         coord_lon = self._make_geographical_coord(
-            lonlat, lonlat_bounds, vardef.coords["longitude"], 0)
+            lonlat, lonlat_bounds, cordex_tables.coords["longitude"], 0)
 
         coord_lat = self._make_geographical_coord(
-            lonlat, lonlat_bounds, vardef.coords["latitude"], 1)
+            lonlat, lonlat_bounds, cordex_tables.coords["latitude"], 1)
 
         # Remove all old coords attached to cube axis.
         for coord in cube.coords(axis="x") + cube.coords(axis="y"):
