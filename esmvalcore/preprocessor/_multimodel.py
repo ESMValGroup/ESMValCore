@@ -686,7 +686,7 @@ def multi_model_statistics(products,
       :attr:`~iris.coords.DimCoord.circular` is set to ``False``. Differing
       scalar coordinates can be ignored with the option
       ``ignore_scalar_coords``. Please note that some special scalar
-      coordinates which are expected to differe across cubes(ancillary
+      coordinates which are expected to differ across cubes (ancillary
       coordinates for derived coordinates like `p0` and `ptop`) are always
       removed.
 
@@ -722,10 +722,10 @@ def multi_model_statistics(products,
     ignore_scalar_coords: bool
         If True, remove any scalar coordinate in the input datasets before
         merging the input cubes into the multi-dataset cube. The resulting
-        multi-model-statistics cube will have no scalar coordinates (the input
-        datasets will remain unchanged). If False, scalar coordinates will
-        remain in the merged cube, which might lead to merge conflicts in case
-        the input datasets have different scalar coordinates.
+        multi-dataset cube will have no scalar coordinates (the input datasets
+        will remain unchanged). If False, scalar coordinates will remain in the
+        input datasets, which might lead to merge conflicts in case the input
+        datasets have different scalar coordinates.
 
     Returns
     -------
@@ -801,10 +801,10 @@ def ensemble_statistics(products, statistics,
     ignore_scalar_coords: bool
         If True, remove any scalar coordinate in the input datasets before
         merging the input cubes into the multi-dataset cube. The resulting
-        multi-model-statistics cube will have no scalar coordinates (the input
-        datasets will remain unchanged). If False, scalar coordinates will
-        remain in the merged cube, which might lead to merge conflicts in case
-        the input datasets have different scalar coordinates.
+        multi-dataset cube will have no scalar coordinates (the input datasets
+        will remain unchanged). If False, scalar coordinates will remain in the
+        input datasets, which might lead to merge conflicts in case the input
+        datasets have different scalar coordinates.
 
     Returns
     -------
