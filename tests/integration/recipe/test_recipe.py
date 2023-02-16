@@ -101,7 +101,7 @@ INITIALIZATION_ERROR_MSG = 'Could not create all tasks'
 @pytest.fixture
 def config_user(session):
     cfg = session.to_config_user()
-    cfg['sea'] = 'never'
+    cfg['search_esgf'] = 'never'
     cfg['check_level'] = CheckLevels.DEFAULT
     cfg['diagnostics'] = set()
     return cfg

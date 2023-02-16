@@ -1288,8 +1288,8 @@ class Recipe:
             logger.error(
                 "To automatically download the required files to "
                 "`download_dir: %s`, set `search_esgf: default` or "
-                "`search_esgf: always` in %s or run the recipe with the extra "
-                "command line argument --search_esgf=default or "
+                "`search_esgf: always` in %s, or run the recipe with the "
+                "extra command line argument --search_esgf=default or "
                 "--search_esgf=always",
                 self._cfg['download_dir'],
                 self._cfg['config_file'],

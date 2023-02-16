@@ -309,14 +309,14 @@ _validators = {
     'profile_diagnostic': validate_bool,
     'run_diagnostic': validate_bool,
     'output_file_type': validate_string,
-    "offline": validate_bool,
-    "search_esgf": validate_search_esgf,
+    'offline': validate_bool,
+    'search_esgf': validate_search_esgf,
 
     # From CLI
     "resume_from": validate_pathlist,
-    "skip_nonexistent": validate_bool,
-    "diagnostics": validate_diagnostics,
-    "check_level": validate_check_level,
+    'skip_nonexistent': validate_bool,
+    'diagnostics': validate_diagnostics,
+    'check_level': validate_check_level,
     'max_years': validate_int_positive_or_none,
     'max_datasets': validate_int_positive_or_none,
 

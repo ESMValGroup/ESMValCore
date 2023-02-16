@@ -804,7 +804,7 @@ def test_update_timerange_year_format(session, input_time, output_time):
     assert dataset['timerange'] == output_time
 
 
-@pytest.mark.parametrize('search_esgf', ['never', 'default'])
+@pytest.mark.parametrize('search_esgf', ['never', 'default', 'always'])
 def test_update_timerange_no_files(session, search_esgf):
     session['search_esgf'] = search_esgf
     variable = {
