@@ -564,34 +564,39 @@ def _get_input_files(variable, config_user):
         variable.pop('timerange', None)
     input_files, globs = find_files(debug=True, **variable)
 
-    # Set up downloading from ESGF if requested.
-    if (not config_user['offline']
-            and variable['project'] in esgf.facets.FACETS):
-        search_esgf = config_user['always_search_esgf']
-        if not search_esgf:
-            # Only look on ESGF if files are not available locally.
-            try:
-                check.data_availability(
-                    input_files,
-                    variable,
-                    globs,
-                    log=False,
-                )
-            except RecipeError:
-                search_esgf = True
+    # If project does not support automatic downloads from ESGF, stop here
+    if variable['project'] not in esgf.facets.FACETS:
+        return (input_files, globs)
 
-        if search_esgf:
-            local_files = set(Path(f).name for f in input_files)
-            search_result = esgf.find_files(**variable)
-            for file in search_result:
-                local_copy = file.local_file(config_user['download_dir'])
-                if local_copy.name not in local_files:
-                    if not local_copy.exists():
-                        DOWNLOAD_FILES.add(file)
-                    input_files.append(local_copy)
+    # 'never' mode: never download files from ESGF and stop here
+    if config_user['search_esgf'] == 'never':
+        return (input_files, globs)
 
-            globs.append('ESGF')
+    # 'default' mode: if files are available locally, do not check ESGF
+    if config_user['search_esgf'] == 'default':
+        try:
+            check.data_availability(
+                input_files,
+                variable,
+                globs,
+                log=False,
+            )
+        except InputFilesNotFound:
+            pass  # search ESGF for files
+        else:
+            return (input_files, globs)  # use local files
 
+    # Local files are not available in 'default' mode or 'always' mode is used:
+    # check ESGF
+    local_files = set(Path(f).name for f in input_files)
+    search_result = esgf.find_files(**variable)
+    for file in search_result:
+        local_copy = file.local_file(config_user['download_dir'])
+        if local_copy.name not in local_files:
+            if not local_copy.exists():
+                DOWNLOAD_FILES.add(file)
+            input_files.append(local_copy)
+    globs.append('ESGF')
     return (input_files, globs)
 
 
@@ -817,7 +822,7 @@ def _update_timerange(variable, config_user):
         facets = deepcopy(variable)
         facets.pop('timerange', None)
         files = find_files(**facets)
-        if not files and not config_user.get('offline', True):
+        if not files and config_user['search_esgf'] != 'never':
             files = [file.name for file in esgf.find_files(**facets)]
 
         if not files:
@@ -1270,7 +1275,7 @@ class Recipe:
         for task in exc.failed_tasks:
             logger.error(task.message)
 
-        if self._cfg['offline'] and any(
+        if self._cfg['search_esgf'] == 'never' and any(
                 isinstance(err, InputFilesNotFound)
                 for err in exc.failed_tasks):
             logger.error(
@@ -1282,8 +1287,10 @@ class Recipe:
                 "configuration file %s", self._cfg['config_file'])
             logger.error(
                 "To automatically download the required files to "
-                "`download_dir: %s`, set `offline: false` in %s or run the "
-                "recipe with the extra command line argument --offline=False",
+                "`download_dir: %s`, set `search_esgf: default` or "
+                "`search_esgf: always` in %s or run the recipe with the extra "
+                "command line argument --search_esgf=default or "
+                "--search_esgf=always",
                 self._cfg['download_dir'],
                 self._cfg['config_file'],
             )
@@ -1894,7 +1901,7 @@ class Recipe:
             raise RecipeError('No tasks to run!')
 
         # Download required data
-        if not self._cfg['offline']:
+        if self._cfg['search_esgf'] != 'never':
             esgf.download(self._download_files, self._cfg['download_dir'])
 
         self.tasks.run(max_parallel_tasks=self._cfg['max_parallel_tasks'])

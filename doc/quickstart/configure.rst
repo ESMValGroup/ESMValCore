@@ -56,16 +56,14 @@ omitted in the file.
   # Directory for storing downloaded climate data
   download_dir: ~/climate_data
 
-  # Disable automatic downloads --- [true]/false
-  # Disable the automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX,
-  # and obs4MIPs data from ESGF by default. This is useful if you are working
-  # on a computer without an internet connection.
-  offline: true
-
-  # Search ESGF for files even when files are available locally --- true/[false]
-  # This option is useful to make sure you have the latest version of all files.
-  # Remember to set ``offline: false`` if this option is set to ``true``.
-  always_search_esgf: false
+  # Automatic data download from ESGF --- [never]/default/always
+  # Use automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs
+  # data from ESGF. ``never`` disables this feature, which is useful if you are
+  # working on a computer without an internet connection. ``default`` enables
+  # the automatic download for files that are not available locally. ``always``
+  # will always check ESGF for the latest version of a file, and only uses
+  # local files if they correspond to that latest version.
+  search_esgf: never
 
   # Auxiliary data directory
   # Used by some recipes to look for additional datasets.

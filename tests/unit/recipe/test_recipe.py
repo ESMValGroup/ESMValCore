@@ -287,8 +287,7 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
     config_user = {
         'rootpath': None,
         'drs': None,
-        'offline': False,
-        'always_search_esgf': False,
+        'search_esgf': 'default',
         'download_dir': download_dir
     }
     input_files = _recipe._get_input_files(variable, config_user)[0]
@@ -339,7 +338,7 @@ def test_search_esgf_timerange(mocker, tmp_path, timerange):
     config_user = {
         'rootpath': None,
         'drs': None,
-        'offline': False,
+        'search_esgf': 'default',
         'download_dir': download_dir
     }
     _recipe._update_timerange(variable, config_user)

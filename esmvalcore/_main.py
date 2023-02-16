@@ -333,7 +333,7 @@ class ESMValTool():
             max_datasets=None,
             max_years=None,
             skip_nonexistent=None,
-            offline=None,
+            search_esgf=None,
             diagnostics=None,
             check_level=None,
             **kwargs):
@@ -360,8 +360,12 @@ class ESMValTool():
             Maximum number of years to use.
         skip_nonexistent: bool, optional
             If True, the run will not fail if some datasets are not available.
-        offline: bool, optional
-            If True, the tool will not download missing data from ESGF.
+        search_esgf: str, optional
+            If `never`, disable automatic download of data from the ESGF. If
+            `default`, enable the automatic download of files that are not
+            available locally. If `always`, always check ESGF for the latest
+            version of a file, and only uses local files if they correspond to
+            that latest version.
         diagnostics: list(str), optional
             Only run the selected diagnostics from the recipe. To provide more
             than one diagnostic to filter use the syntax 'diag1 diag2/script1'
@@ -387,8 +391,8 @@ class ESMValTool():
             session['max_datasets'] = max_datasets
         if max_years is not None:
             session['max_years'] = max_years
-        if offline is not None:
-            session['offline'] = offline
+        if search_esgf is not None:
+            session['search_esgf'] = search_esgf
         if skip_nonexistent is not None:
             session['skip_nonexistent'] = skip_nonexistent
         session['resume_from'] = parse_resume(resume_from, recipe)
@@ -426,7 +430,7 @@ class ESMValTool():
                                       console_log_level=session['log_level'])
         self._log_header(session['config_file'], log_files)
 
-        if not session['offline']:
+        if session['search_esgf'] != 'never':
             from .esgf._logon import logon
             logon()
 

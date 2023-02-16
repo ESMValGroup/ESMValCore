@@ -21,6 +21,13 @@ from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 logger = logging.getLogger(__name__)
 
 
+SEARCH_ESGF_OPTIONS = (
+    'never',  # Never search ESGF for files
+    'default',  # Only search ESGF if no local files are available
+    'always',  # Always search ESGF for files
+)
+
+
 class ValidationError(ValueError):
     """Custom validation error."""
 
@@ -231,6 +238,18 @@ def validate_check_level(value):
     return value
 
 
+def validate_search_esgf(value):
+    """Validate options for ESGF search."""
+    value = validate_string(value)
+    value = value.lower()
+    if value not in SEARCH_ESGF_OPTIONS:
+        raise ValidationError(
+            f'`{value}` is not a valid option ESGF search option, possible '
+            f'values are {SEARCH_ESGF_OPTIONS}'
+        ) from None
+    return value
+
+
 def validate_diagnostics(
     diagnostics: Union[Iterable[str], str, None],
 ) -> Optional[set[str]]:
@@ -291,7 +310,7 @@ _validators = {
     'run_diagnostic': validate_bool,
     'output_file_type': validate_string,
     "offline": validate_bool,
-    'always_search_esgf': validate_bool,
+    "search_esgf": validate_search_esgf,
 
     # From CLI
     "resume_from": validate_pathlist,

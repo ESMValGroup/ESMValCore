@@ -25,7 +25,6 @@ from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.preprocessor import DEFAULT_ORDER, PreprocessingTask
 from esmvalcore.preprocessor._io import concatenate_callback
-
 from tests.integration.test_provenance import check_provenance
 
 TAGS_FOR_TESTING = {
@@ -102,7 +101,7 @@ INITIALIZATION_ERROR_MSG = 'Could not create all tasks'
 @pytest.fixture
 def config_user(session):
     cfg = session.to_config_user()
-    cfg['offline'] = True
+    cfg['sea'] = 'never'
     cfg['check_level'] = CheckLevels.DEFAULT
     cfg['diagnostics'] = set()
     return cfg
@@ -1070,7 +1069,7 @@ def test_update_timerange_no_files_offline(config_user):
         'timerange': '*/2000',
     }
     config_user = dict(config_user)
-    config_user['offline'] = False
+    config_user['search_esgf'] = 'default'
     msg = "Missing data for CMIP6: tas. Cannot determine indeterminate time "
     with pytest.raises(InputFilesNotFound, match=msg):
         esmvalcore._recipe.recipe._update_timerange(variable, config_user)
@@ -3613,7 +3612,7 @@ def test_recipe_run(tmp_path, patched_datafinder, config_user, mocker):
             scripts: null
         """)
     config_user['download_dir'] = tmp_path / 'download_dir'
-    config_user['offline'] = False
+    config_user['search_esgf'] = 'default'
 
     mocker.patch.object(esmvalcore._recipe.recipe.esgf,
                         'download',

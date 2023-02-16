@@ -613,9 +613,8 @@ def dataset():
         alias='CMIP6_EC-Eeath3_tas',
     )
     dataset.session = {
-        'always_search_esgf': False,
+        'search_esgf': 'default',
         'download_dir': Path('/download_dir'),
-        'offline': False,
         'rootpath': None,
         'drs': {},
     }
@@ -805,9 +804,9 @@ def test_update_timerange_year_format(session, input_time, output_time):
     assert dataset['timerange'] == output_time
 
 
-@pytest.mark.parametrize('offline', [True, False])
-def test_update_timerange_no_files(session, offline):
-    session['offline'] = offline
+@pytest.mark.parametrize('search_esgf', ['never', 'default'])
+def test_update_timerange_no_files(session, search_esgf):
+    session['search_esgf'] = search_esgf
     variable = {
         'alias': 'CMIP6',
         'project': 'CMIP6',
@@ -950,7 +949,7 @@ def test_load(mocker, session):
 def test_load_fail(session):
     dataset = Dataset()
     dataset.session = session
-    dataset.session['offline'] = False
+    dataset.session['search_esgf'] = 'default'
     dataset.files = []
     with pytest.raises(InputFilesNotFound):
         dataset.load()

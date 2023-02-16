@@ -46,7 +46,7 @@ def session(cfg):
     ('max_datasets', 2),
     ('max_years', 2),
     ('skip_nonexistent', True),
-    ('offline', False),
+    ('search_esgf', 'default'),
     ('diagnostics', 'diagnostic_name/group_name'),
     ('check_level', 'strict'),
 ])
@@ -76,9 +76,9 @@ def test_run_command_line_config(mocker, cfg, argument, value):
     assert session[argument] == value
 
 
-@pytest.mark.parametrize('offline', [True, False])
-def test_run(mocker, session, offline):
-    session['offline'] = offline
+@pytest.mark.parametrize('search_esgf', ['never', 'default', 'always'])
+def test_run(mocker, session, search_esgf):
+    session['search_esgf'] = search_esgf
     session['log_level'] = 'default'
     session['config_file'] = '/path/to/config-user.yml'
     session['remove_preproc_dir'] = True
@@ -120,7 +120,7 @@ def test_run(mocker, session, offline):
         console_log_level=session['log_level'],
     )
 
-    if offline:
+    if search_esgf == 'never':
         esmvalcore.esgf._logon.logon.assert_not_called()
     else:
         esmvalcore.esgf._logon.logon.assert_called_once()
