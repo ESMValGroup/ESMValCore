@@ -262,6 +262,7 @@ temperature and store both in the same file:
 Automatically define the required ancillary variable (``sftlf`` in this case)
 and cell measure (``areacella``), but do not use ``areacella`` for dataset
 ``BCC-ESM1``:
+
 .. code-block:: yaml
 
   datasets:
