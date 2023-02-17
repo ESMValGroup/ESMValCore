@@ -584,8 +584,8 @@ is for example useful for climate models which do not offer land/sea fraction
 files. This arguments also accepts the special dataset specifiers
 ``reference_dataset`` and ``alternative_dataset``.
 
-This function requires a land or sea area fraction `supplementary variable`_.
-The supplementary variable, either ``sftlf`` or ``sftof``, should be attached
+This function requires a land or sea area fraction `ancillary variable`_.
+This supplementary variable, either ``sftlf`` or ``sftof``, should be attached
 to the main dataset as described in :ref:`supplementary_variables`.
 
 .. deprecated:: 2.8.0
@@ -611,7 +611,7 @@ the model data and keeping only the values associated with grid points that
 correspond to, e.g., land, ocean or ice surfaces, as specified by the
 user. Where possible, the masking is realized using the standard mask files
 provided together with the model data as part of the CMIP data request (the
-so-called supplementary variable). In the absence of these files, the Natural Earth masks
+so-called ancillary variable). In the absence of these files, the Natural Earth masks
 are used: although these are not model-specific, they represent a good
 approximation since they have a much higher resolution than most of the models
 and they are regularly updated with changing geographical features.
@@ -633,10 +633,10 @@ To mask out a certain domain (e.g., sea) in the preprocessor,
 
 and requires only one argument: ``mask_out``: either ``land`` or ``sea``.
 
-This function prefers using a land or sea area fraction `supplementary variable`_,
+This function prefers using a land or sea area fraction `ancillary variable`_,
 but if it is not available it will compute a mask based on
 `Natural Earth <https://www.naturalearthdata.com>`_ shapefiles.
-The supplementary variable, either ``sftlf`` or ``sftof``, can be attached
+This supplementary variable, either ``sftlf`` or ``sftof``, can be attached
 to the main dataset as described in :ref:`supplementary_variables`.
 
 .. deprecated:: 2.8.0
@@ -645,7 +645,7 @@ to the main dataset as described in :ref:`supplementary_variables`.
   More details on this are given in :ref:`Fx variables as cell measures or ancillary variables`.
 
 
-If the corresponding supplementary variable is not available (which is
+If the corresponding ancillary variable is not available (which is
 the case for some models and almost all observational datasets), the
 preprocessor attempts to mask the data using Natural Earth mask files (that are
 vectorized rasters). As mentioned above, the spatial resolution of the the
@@ -672,8 +672,8 @@ losing generality. To mask ice out, ``mask_landseaice`` can be used:
 
 and requires only one argument: ``mask_out``: either ``landsea`` or ``ice``.
 
-This function requires a land ice area fraction `supplementary variable`_.
-The supplementary variable ``sftgif`` should be attached to the main dataset as
+This function requires a land ice area fraction `ancillary variable`_.
+This supplementary variable ``sftgif`` should be attached to the main dataset as
 described in :ref:`supplementary_variables`.
 
 .. deprecated:: 2.8.0
@@ -1844,7 +1844,7 @@ as described in :ref:`supplementary_variables`.
 .. deprecated:: 2.8.0
   The optional ``fx_variables`` argument specifies the fx variables that the user
   wishes to input to the function. More details on this are given in :ref:`Fx
-  variables as cell measures or supplementary variables`.
+  variables as cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
 
@@ -1900,7 +1900,8 @@ No depth coordinate is required as this is determined by Iris.
 .. deprecated:: 2.8.0
   The optional ``fx_variables`` argument specifies the fx variables that the
   user wishes to input to the function.
-  More details on this are given in :ref:`Fx variables as cell measures or ancillary variables`.
+  More details on this are given in
+  :ref:`Fx variables as cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 
