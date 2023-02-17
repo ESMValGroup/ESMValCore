@@ -17,6 +17,7 @@ from esmvalcore.config._config_validators import (
     validate_path,
     validate_path_or_none,
     validate_positive,
+    validate_search_esgf,
     validate_string,
     validate_string_or_none,
 )
@@ -158,6 +159,23 @@ def generate_validator_testcases(valid):
             'validator': validate_string_or_none,
             'success': ((None, None), ),
             'fail': (),
+        },
+        {
+            'validator': validate_search_esgf,
+            'success': (
+                ('never', 'never'),
+                ('NEVER', 'never'),
+                ('default', 'default'),
+                ('dEfaUlT', 'default'),
+                ('always', 'always'),
+                ('Always', 'always'),
+            ),
+            'fail': (
+                (0, ValueError),
+                (3.14, ValueError),
+                (True, ValueError),
+                ('fail', ValueError),
+            ),
         },
     )
 
