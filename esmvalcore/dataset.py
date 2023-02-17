@@ -30,7 +30,7 @@ from esmvalcore.local import (
     _get_output_file,
     _get_start_end_date,
 )
-from esmvalcore.preprocessor import _get_debug_filename, preprocess, save
+from esmvalcore.preprocessor import preprocess
 from esmvalcore.typing import Facets, FacetValue
 
 __all__ = [
@@ -615,12 +615,16 @@ class Dataset:
             supplementary_cube = supplementary_dataset._load(callback)
             supplementary_cubes.append(supplementary_cube)
 
+        output_file = _get_output_file(self.facets, self.session.preproc_dir)
         cubes = preprocess(
             [cube],
             'add_supplementary_variables',
             input_files=input_files,
+            output_file=output_file,
+            debug=self.session['save_intermediary_cubes'],
             supplementary_cubes=supplementary_cubes,
         )
+
         return cubes[0]
 
     def _load(self, callback) -> Cube:
@@ -677,12 +681,14 @@ class Dataset:
                 file, esgf.ESGFFile) else file for file in self.files
         ]
         for step, kwargs in settings.items():
-            result = preprocess(result, step, input_files=self.files, **kwargs)
-            if self.session['save_intermediary_cubes']:
-                logger.debug("Result %s", result)
-                if all(isinstance(elem, Cube) for elem in result):
-                    filename = _get_debug_filename(output_file, step)
-                    save(result, filename)
+            result = preprocess(
+                result,
+                step,
+                input_files=self.files,
+                output_file=output_file,
+                debug=self.session['save_intermediary_cubes'],
+                **kwargs,
+            )
 
         cube = result[0]
         return cube

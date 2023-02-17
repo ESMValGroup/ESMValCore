@@ -2,7 +2,6 @@ import textwrap
 from collections import defaultdict
 from pathlib import Path
 
-import iris.cube
 import pyesgf
 import pytest
 
@@ -1309,9 +1308,7 @@ def test_update_timerange_typeerror():
         dataset._update_timerange()
 
 
-@pytest.mark.parametrize('save_intermediary_cubes', [False, True])
-def test_load(mocker, session, save_intermediary_cubes):
-    session['save_intermediary_cubes'] = save_intermediary_cubes
+def test_load(mocker, session):
     dataset = Dataset(
         short_name='chl',
         mip='Oyr',
@@ -1334,7 +1331,8 @@ def test_load(mocker, session, save_intermediary_cubes):
     args = {}
     order = []
 
-    def mock_preprocess(items, step, input_files, **kwargs):
+    def mock_preprocess(items, step, input_files, output_file, debug,
+                        **kwargs):
         order.append(step)
         args[step] = kwargs
         return items
@@ -1343,13 +1341,6 @@ def test_load(mocker, session, save_intermediary_cubes):
 
     items = [mocker.sentinel.file]
     dataset.files = items
-
-    # Mocks for saving intermediary cubes
-    def mock_isinstance(item, class_):
-        return class_ is iris.cube.Cube
-
-    mocker.patch.object(esmvalcore.dataset, 'isinstance', mock_isinstance)
-    save = mocker.patch.object(esmvalcore.dataset, 'save', autospec=True)
 
     cube = dataset.load()
 
@@ -1431,9 +1422,6 @@ def test_load(mocker, session, save_intermediary_cubes):
     assert args == load_args
 
     _get_output_file.assert_called_with(dataset.facets, session.preproc_dir)
-
-    if save_intermediary_cubes:
-        save.assert_called()
 
 
 def test_load_fail(session):

@@ -357,7 +357,14 @@ def _run_preproc_function(function, items, kwargs, input_files=None):
         raise
 
 
-def preprocess(items, step, input_files=None, **settings):
+def preprocess(
+    items,
+    step,
+    input_files=None,
+    output_file=None,
+    debug=False,
+    **settings
+):
     """Run preprocessor."""
     logger.debug("Running preprocessor step %s", step)
     function = globals()[step]
@@ -378,6 +385,12 @@ def preprocess(items, step, input_files=None, **settings):
             items.append(item)
         else:
             items.extend(item)
+
+    if debug:
+        logger.debug("Result %s", items)
+        if all(isinstance(elem, Cube) for elem in items):
+            filename = _get_debug_filename(output_file, step)
+            save(items, filename)
 
     return items
 
@@ -456,11 +469,9 @@ class PreprocessorFile(TrackedFile):
             )
         self.cubes = preprocess(self.cubes, step,
                                 input_files=self._input_files,
+                                output_file=self.filename,
+                                debug=debug,
                                 **self.settings[step])
-        if debug:
-            logger.debug("Result %s", self.cubes)
-            filename = _get_debug_filename(self.filename, step)
-            save(self.cubes, filename)
 
     @property
     def cubes(self):
