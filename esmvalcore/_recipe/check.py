@@ -154,7 +154,7 @@ def data_availability(input_files, var, patterns, log=True):
     available_years = set()
 
     for file in input_files:
-        start, end = _get_start_end_year(file.name)
+        start, end = _get_start_end_year(file)
         available_years.update(range(start, end + 1))
 
     missing_years = required_years - available_years

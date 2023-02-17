@@ -162,7 +162,7 @@ def _get_timerange_from_years(variable):
     variable.pop('end_year', None)
 
 
-def _get_start_end_year(filename):
+def _get_start_end_year(file):
     """Get the start and end year from a file name.
 
     Examples of allowed dates : 1980, 198001, 19801231,
@@ -174,10 +174,25 @@ def _get_start_end_year(filename):
 
     Look first for two dates separated by - or _, then for one single
     date, and if they are multiple, for one date at start or end.
+
+    Parameters
+    ----------
+    file: LocalFile or esmvalcore.esgf.ESGFFile
+        The file to read the start and end year from.
+
+    Returns
+    -------
+    tuple[int, int]
+        The start and end year.
+
+    Raises
+    ------
+    ValueError
+        When start or end year cannot be determined.
+
     """
-    stem = Path(filename).stem
     start_year = end_year = None
-    #
+
     time_pattern = (r"(?P<hour>[0-2][0-9]"
                     r"(?P<minute>[0-5][0-9]"
                     r"(?P<second>[0-5][0-9])?)?Z?)")
@@ -185,15 +200,16 @@ def _get_start_end_year(filename):
                     r"(?P<month>[01][0-9]"
                     r"(?P<day>[0-3][0-9]"
                     rf"(T?{time_pattern})?)?)?")
-    #
+
     end_date_pattern = date_pattern.replace(">", "_end>")
     date_range_pattern = date_pattern + r"[-_]" + end_date_pattern
     start_year, end_year = _get_from_pattern(date_pattern, date_range_pattern,
-                                             stem, 'year')
+                                             Path(file.name).stem, 'year')
     # As final resort, try to get the dates from the file contents
-    if (start_year is None or end_year is None) and Path(filename).exists():
-        logger.debug("Must load file %s for daterange ", filename)
-        cubes = iris.load(filename)
+    if ((start_year is None or end_year is None) and isinstance(file, Path)
+            and file.exists()):
+        logger.debug("Must load file %s for daterange ", file)
+        cubes = iris.load(file)
 
         for cube in cubes:
             logger.debug(cube)
@@ -206,7 +222,7 @@ def _get_start_end_year(filename):
             break
 
     if start_year is None or end_year is None:
-        raise ValueError(f'File {filename} dates do not match a recognized '
+        raise ValueError(f'File {file} dates do not match a recognized '
                          'pattern and time can not be read from the file')
 
     return int(start_year), int(end_year)
