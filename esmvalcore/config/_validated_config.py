@@ -6,6 +6,7 @@ from collections.abc import MutableMapping
 from typing import Callable, Dict, Tuple
 
 from esmvalcore.exceptions import (
+    ESMValCoreDeprecationWarning,
     InvalidConfigParameter,
     MissingConfigParameter,
 )
@@ -38,6 +39,22 @@ class ValidatedConfig(MutableMapping):
         except KeyError:
             raise InvalidConfigParameter(
                 f"`{key}` is not a valid config parameter.") from None
+
+        # Deprecations
+        if key == 'offline':
+            deprecation_msg = (
+                "The configuration option or command line argument `offline` "
+                "been deprecated in ESMValCore version 2.8.0 and is scheduled "
+                "for removal in version 2.10.0. Please use the options "
+                "`search_esgf=never` (for `offline=True`) or "
+                "`search_esgf=default` (for `offline=False`). These are "
+                "exact replacements."
+            )
+            warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+            if cval:
+                self._mapping['search_esgf'] = 'never'
+            else:
+                self._mapping['search_esgf'] = 'default'
 
         self._mapping[key] = cval
 

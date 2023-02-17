@@ -120,6 +120,12 @@ def test_run_with_max_datasets():
 
 
 @patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
+def test_run_with_offline():
+    with arguments('esmvaltool', 'run', 'recipe.yml', '--offline'):
+        run()
+
+
+@patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
 def test_run_with_search_esgf():
     with arguments('esmvaltool', 'run', 'recipe.yml', '--search_esgf=always'):
         run()
