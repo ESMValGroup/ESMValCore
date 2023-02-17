@@ -8,6 +8,7 @@ from esmvalcore.config._config_validators import (
     _listify_validator,
     deprecate,
     validate_bool,
+    validate_bool_or_none,
     validate_check_level,
     validate_diagnostics,
     validate_float,
@@ -90,6 +91,11 @@ def generate_validator_testcases(valid):
             ((_, [1, 2])
              for _ in ('1, 2', [1.5, 2.5], [1, 2], (1, 2), np.array((1, 2)))),
             'fail': ((_, ValueError) for _ in ('fail', ('a', 1), (1, 2, 3)))
+        },
+        {
+            'validator': validate_bool_or_none,
+            'success': ((None, None), (True, True), (False, False)),
+            'fail': (),
         },
         {
             'validator': validate_int_or_none,
@@ -191,7 +197,12 @@ def test_deprecate(version):
     def test_func(value):
         return value
 
-    validate = deprecate(test_func, 'test_var', version)
+    validate = deprecate(
+        validator=test_func,
+        option='test_var',
+        default=None,
+        version=version,
+    )
     assert callable(validate)
 
     if version != '9.9.9':

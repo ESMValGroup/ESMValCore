@@ -317,6 +317,9 @@ def _get_dataset_facets_from_recipe(
         preprocessor = facets.get('preprocessor', 'default')
         settings = profiles.get(preprocessor, {})
         _append_missing_ancillaries(ancillaries, facets, settings)
+        ancillaries = [
+            facets for facets in ancillaries if not facets.pop('skip', False)
+        ]
 
     return facets, ancillaries
 

@@ -422,6 +422,54 @@ def test_from_recipe_with_ancillary(session, tmp_path):
     assert Dataset.from_recipe(recipe, session) == [dataset]
 
 
+def test_from_recipe_with_skip_ancillary(session, tmp_path):
+    session['use_legacy_ancillaries'] = False
+
+    recipe_txt = textwrap.dedent("""
+
+    datasets:
+      - {dataset: 'dataset1', ensemble: r1i1p1}
+
+    diagnostics:
+      diagnostic1:
+        variables:
+          tos:
+            project: CMIP5
+            mip: Omon
+            ancillary_variables:
+              - short_name: sftof
+                mip: fx
+              - short_name: areacello
+                skip: true
+    """)
+    recipe = tmp_path / 'recipe_test.yml'
+    recipe.write_text(recipe_txt, encoding='utf-8')
+
+    dataset = Dataset(
+        diagnostic='diagnostic1',
+        variable_group='tos',
+        short_name='tos',
+        dataset='dataset1',
+        ensemble='r1i1p1',
+        project='CMIP5',
+        mip='Omon',
+        alias='dataset1',
+        recipe_dataset_index=0,
+    )
+    dataset.ancillaries = [
+        Dataset(
+            short_name='sftof',
+            dataset='dataset1',
+            ensemble='r1i1p1',
+            project='CMIP5',
+            mip='fx',
+        ),
+    ]
+    dataset.session = session
+
+    assert Dataset.from_recipe(recipe, session) == [dataset]
+
+
 def test_from_recipe_with_automatic_ancillary(session, tmp_path, monkeypatch):
     session['use_legacy_ancillaries'] = False
 

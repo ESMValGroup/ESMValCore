@@ -77,15 +77,16 @@ class Config(ValidatedConfig):
 
         mapping = _read_config_file(filename)
         # Add defaults that are not available in esmvalcore/config-user.yml
+        mapping['check_level'] = CheckLevels.DEFAULT
         mapping['config_file'] = filename
         mapping['diagnostics'] = None
         mapping['extra_facets_dir'] = tuple()
-        mapping['resume_from'] = []
-        mapping['check_level'] = CheckLevels.DEFAULT
         mapping['max_datasets'] = None
         mapping['max_years'] = None
+        mapping['resume_from'] = []
         mapping['run_diagnostic'] = True
         mapping['skip_nonexistent'] = False
+        mapping['use_legacy_ancillaries'] = None
 
         new.update(mapping)
 

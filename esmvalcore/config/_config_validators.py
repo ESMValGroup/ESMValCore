@@ -5,9 +5,9 @@ import logging
 import os.path
 import warnings
 from collections.abc import Iterable
-from functools import lru_cache
+from functools import lru_cache, partial
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from esmvalcore import __version__ as current_version
 from esmvalcore.cmor.check import CheckLevels
@@ -38,6 +38,7 @@ def _make_type_validator(cls, *, allow_none=False):
     Return a validator that converts inputs to *cls* or raises (and
     possibly allows ``None`` as well).
     """
+
     def validator(inp):
         looks_like_none = isinstance(inp, str) and (inp.lower() == "none")
         if (allow_none and (inp is None or looks_like_none)):
@@ -71,6 +72,7 @@ def _listify_validator(scalar_validator,
                        docstring=None,
                        return_type=list):
     """Apply the validator to a list."""
+
     def func(inp):
         if isinstance(inp, str):
             try:
@@ -147,6 +149,7 @@ def validate_positive(value):
 
 def _chain_validator(*funcs):
     """Chain a series of validators."""
+
     def chained(value):
         for func in funcs:
             value = func(value)
@@ -159,6 +162,8 @@ validate_string = _make_type_validator(str)
 validate_string_or_none = _make_type_validator(str, allow_none=True)
 validate_stringlist = _listify_validator(validate_string,
                                          docstring='Return a list of strings.')
+
+validate_bool_or_none = partial(validate_bool, allow_none=True)
 validate_int = _make_type_validator(int)
 validate_int_or_none = _make_type_validator(int, allow_none=True)
 validate_float = _make_type_validator(float)
@@ -235,7 +240,7 @@ def validate_check_level(value):
 
 
 def validate_diagnostics(
-    diagnostics: Union[Iterable[str], str, None],
+    diagnostics: Union[Iterable[str], str, None]
 ) -> Optional[set[str]]:
     """Validate diagnostic location."""
     if diagnostics is None:
@@ -248,7 +253,7 @@ def validate_diagnostics(
     }
 
 
-def deprecate(validator, option, version: Optional[str] = None):
+def deprecate(validator, option: str, default: Any, version: str):
     """Wrap function to mark variables as deprecated.
 
     This will give a warning if the function has been deprecated and raise
@@ -258,11 +263,14 @@ def deprecate(validator, option, version: Optional[str] = None):
     ----------
     validator:
         Validator function to wrap.
-    option: str
+    option:
         Name of the option to deprecate.
-    version: str
+    default:
+        The new default value, no warning is issued when setting this value.
+    version:
         Version to remove the option in, should be something like '2.2.3'.
     """
+
     def get_version(version_string):
         return tuple(int(i) for i in version_string.split('.')[:3])
 
@@ -272,14 +280,23 @@ def deprecate(validator, option, version: Optional[str] = None):
     def wrapper(value):
         if get_version(current_version) >= get_version(version):
             raise InvalidConfigParameter(f"{msg_head} has been {msg_tail}")
-        warnings.warn(
-            f"{msg_head} will be {msg_tail}",
-            ESMValCoreDeprecationWarning,
-        )
+
+        if value != default:
+            warnings.warn(
+                f"{msg_head} will be {msg_tail}",
+                ESMValCoreDeprecationWarning,
+            )
         return validator(value)
 
     return wrapper
 
+
+_validate_use_legacy_ancillaries = deprecate(
+    validator=validate_bool_or_none,
+    option='use_legacy_ancillaries',
+    default=None,
+    version='2.10.0',
+)
 
 _validators = {
     # From user config
@@ -301,11 +318,7 @@ _validators = {
     'rootpath': validate_rootpath,
     'run_diagnostic': validate_bool,
     'save_intermediary_cubes': validate_bool,
-    'use_legacy_ancillaries': deprecate(
-        validate_bool,
-        'use_legacy_ancillaries',
-        '2.10.0',
-    ),
+    'use_legacy_ancillaries': _validate_use_legacy_ancillaries,
 
     # From CLI
     'check_level': validate_check_level,

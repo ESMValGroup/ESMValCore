@@ -18,10 +18,15 @@ from esmvalcore import __version__, esgf
 from esmvalcore._provenance import get_recipe_provenance
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
 from esmvalcore.cmor.table import CMOR_TABLES, _update_cmor_facets
+from esmvalcore.config import CFG
 from esmvalcore.config._config import TASKSEP, get_project_config
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
-from esmvalcore.exceptions import InputFilesNotFound, RecipeError
+from esmvalcore.exceptions import (
+    ESMValCoreDeprecationWarning,
+    InputFilesNotFound,
+    RecipeError,
+)
 from esmvalcore.local import (
     _dates_to_timerange,
     _get_multiproduct_filename,
@@ -324,7 +329,7 @@ def _set_default_preproc_fx_variables(
 
 
 def _get_ancillaries_from_fx_variables(
-    settings: PreprocessorSettings,
+    settings: PreprocessorSettings
 ) -> list[Facets]:
     """Read ancillary facets from `fx_variables` in preprocessor settings."""
     ancillaries = []
@@ -381,7 +386,13 @@ def _add_legacy_ancillary_datasets(dataset: Dataset, settings):
     if not dataset.session['use_legacy_ancillaries']:
         return
     if dataset.ancillaries:
-        # Ancillaries have been defined using the new method.
+        # Ancillaries have been defined in the recipe.
+        # Just remove any skipped ancillaries (they have been kept so we know
+        # that ancillaries have been defined in the recipe).
+        dataset.ancillaries = [
+            ds for ds in dataset.ancillaries
+            if not ds.facets.get('skip', False)
+        ]
         return
 
     logger.debug("Using legacy method to add ancillaries to %s", dataset)
@@ -900,12 +911,13 @@ class Recipe:
         self.session = session
         self.session['write_ncl_interface'] = self._need_ncl(
             raw_recipe['diagnostics'])
-        self.datasets = Dataset.from_recipe(recipe_file, session)
         self._raw_recipe = raw_recipe
         self._filename = Path(recipe_file.name)
         self._preprocessors = raw_recipe.get('preprocessors', {})
         if 'default' not in self._preprocessors:
             self._preprocessors['default'] = {}
+        self._set_use_legacy_ancillaries()
+        self.datasets = Dataset.from_recipe(recipe_file, session)
         self.diagnostics = self._initialize_diagnostics(
             raw_recipe['diagnostics'])
         self.entity = self._initialize_provenance(
@@ -915,6 +927,39 @@ class Recipe:
         except RecipeError as exc:
             self._log_recipe_errors(exc)
             raise
+
+    def _set_use_legacy_ancillaries(self):
+        """Automatically determine if legacy ancillaries are used."""
+        names = set()
+        steps = set()
+        for name, profile in self._preprocessors.items():
+            for step, kwargs in profile.items():
+                if isinstance(kwargs, dict) and 'fx_variables' in kwargs:
+                    names.add(name)
+                    steps.add(step)
+                    if self.session['use_legacy_ancillaries'] is False:
+                        kwargs.pop('fx_variables')
+        if names:
+            warnings.warn(
+                ESMValCoreDeprecationWarning(
+                    "Encountered 'fx_variables' argument in preprocessor(s) "
+                    f"{sorted(names)}, function(s) {sorted(steps)}. The "
+                    "'fx_variables' argument is deprecated and will stop "
+                    "working in v2.10. Please remove it and if automatic "
+                    "definition of ancillary variables does not work "
+                    "correctly, specify the ancillary variables in the "
+                    "recipe as described in TODO: add URL."))
+            if self.session['use_legacy_ancillaries'] is None:
+                logger.info("Running with --use-legacy-ancillaries=True")
+                self.session['use_legacy_ancillaries'] = True
+
+        # Also set the global config because it is used to check if
+        # mismatching shapes should be ignored when attaching
+        # ancillary variables in
+        # `esmvalcore.preprocessor._ancillary_vars.add_ancillary_variables`
+        # to avoid having to introduce a new function argument that is
+        # immediately deprecated.
+        CFG['use_legacy_ancillaries'] = self.session['use_legacy_ancillaries']
 
     def _log_recipe_errors(self, exc):
         """Log a message with recipe errors."""

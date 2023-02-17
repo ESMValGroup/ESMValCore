@@ -231,9 +231,26 @@ The available datasets are shown in the log messages when running a recipe
 with wildcards, so if a different ancillary dataset is preferred, these messages
 can be used to see what facet values are available.
 
-Note that by default, ancillary variables and cell measures will be removed
-from the variable before saving it to file because they can be as big as the
-main variable.
+Automatic definition of ancillary variables
+-------------------------------------------
+
+If an ancillary variable or cell measure is
+:ref:`needed by a preprocessor function <preprocessors_using_ancillary_variables>`,
+but it is not specified in the recipe, the tool will automatically make a best
+guess using the syntax above.
+Usually this will work fine, but if it does not, it is recommended to explicitly
+define the ancillary variables in the recipe.
+
+To disable this automatic addition, define the ancillary variable as usual,
+but add the special facet ``skip`` with value ``true``.
+See :ref:`preprocessors_using_ancillary_variables` for an example recipe.
+
+Saving ancillary variables and cell measures
+--------------------------------------------
+
+By default, ancillary variables and cell measures will be removed
+from the main variable before saving it to file because they can be as big as
+the main variable.
 To keep the ancillary variables, disable the preprocessor function that removes
 them by setting ``remove_ancillary_variables: false`` in the preprocessor profile
 in the recipe.

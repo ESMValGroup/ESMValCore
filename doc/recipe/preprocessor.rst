@@ -258,6 +258,43 @@ temperature and store both in the same file:
               exp: 1pctCO2
       scripts: null
 
+
+Automatically define the required ancillary variable (``sftlf`` in this case)
+and cell measure (``areacella``), but do not use ``areacella`` for dataset
+``BCC-ESM1``:
+.. code-block:: yaml
+
+  datasets:
+    - dataset: BCC-ESM1
+      project: CMIP6
+      ensemble: r1i1p1f1
+      grid: gn
+      ancillary_variables:
+        - short_name: areacella
+          skip: true
+    - dataset: CanESM2
+      project: CMIP5
+      ensemble: r1i1p1
+
+  preprocessors:
+    global_land_mean:
+      mask_landsea:
+        mask_out: sea
+      area_statistics:
+        operator: mean
+
+  diagnostics:
+    example_diagnostic:
+      description: Global mean temperature.
+      variables:
+        tas:
+          mip: Amon
+          preprocessor: global_land_mean
+          exp: historical
+          timerange: '1990/2000'
+      scripts: null
+
+
 .. _`Fx variables as cell measures or ancillary variables`:
 
 Legacy method of specifying ancillary variables
@@ -265,9 +302,14 @@ Legacy method of specifying ancillary variables
 
 .. deprecated:: 2.8.0
   The legacy method of specifying ancillary variables is deprecated and will be
-  disabled by default starting with version 2.9.0 and removed in version 2.10.0.
-  To use the legacy behaviour, set ``use_legacy_ancillaries: true`` in the
-  :ref:`user configuration file`.
+  removed in version 2.10.0.
+  To upgrade, remove all occurrences of ``fx_variables`` from your recipes and
+  rely on automatically defining the ancillary variables based on the
+  requirement of the preprocessor functions or specify them using the methods
+  described above.
+  To keep using the legacy behaviour until v2.10.0, set
+  ``use_legacy_ancillaries: true`` in the :ref:`user configuration file` or run
+  the tool with the flag ``--use-legacy-ancillaries=True``.
 
 Prior to version 2.8.0 of the tool, the ancillary variables could not be defined
 at the variable or dataset level in the recipe, but could only be defined in

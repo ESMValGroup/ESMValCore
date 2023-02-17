@@ -582,6 +582,49 @@ def test_add_legacy_ancillaries_disabled():
     _recipe._add_legacy_ancillary_datasets(dataset, settings={})
 
 
+def test_enable_legacy_ancillaries_when_used(mocker, session):
+    """Test that legacy ancillaries are enabled when used in the recipe."""
+    recipe = mocker.create_autospec(_recipe.Recipe, instance=True)
+    recipe.session = session
+    recipe._preprocessors = {
+        'preproc1': {
+            'area_statistics': {
+                'operator': 'mean',
+                'fx_variables': 'areacella',
+            }
+        }
+    }
+    session['use_legacy_ancillaries'] = None
+    _recipe.Recipe._set_use_legacy_ancillaries(recipe)
+
+    assert session['use_legacy_ancillaries'] is True
+
+
+def test_strip_legacy_ancillaries_when_disabled(mocker, session):
+    """Test that legacy ancillaries are removed when disabled."""
+    recipe = mocker.create_autospec(_recipe.Recipe, instance=True)
+    recipe.session = session
+    recipe._preprocessors = {
+        'preproc1': {
+            'area_statistics': {
+                'operator': 'mean',
+                'fx_variables': 'areacella',
+            }
+        }
+    }
+    session['use_legacy_ancillaries'] = False
+    _recipe.Recipe._set_use_legacy_ancillaries(recipe)
+
+    assert session['use_legacy_ancillaries'] is False
+    assert recipe._preprocessors == {
+        'preproc1': {
+            'area_statistics': {
+                'operator': 'mean',
+            }
+        }
+    }
+
+
 def test_set_version(mocker):
 
     dataset = Dataset(short_name='tas')

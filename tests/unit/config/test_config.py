@@ -69,13 +69,13 @@ def test_load_extra_facets(project, extra_facets_dir, expected):
 
 
 def test_get_extra_facets(tmp_path):
-
-    dataset = Dataset(**{
-        'project': 'test_project',
-        'mip': 'test_mip',
-        'dataset': 'test_dataset',
-        'short_name': 'test_short_name',
-    })
+    dataset = Dataset(
+        **{
+            'project': 'test_project',
+            'mip': 'test_mip',
+            'dataset': 'test_dataset',
+            'short_name': 'test_short_name',
+        })
     extra_facets_file = tmp_path / f"{dataset['project']}-test.yml"
     extra_facets_file.write_text(
         textwrap.dedent("""
@@ -91,7 +91,6 @@ def test_get_extra_facets(tmp_path):
 
 
 def test_get_extra_facets_cmip3():
-
     dataset = Dataset(**{
         'project': 'CMIP3',
         'mip': 'A1',
@@ -104,18 +103,19 @@ def test_get_extra_facets_cmip3():
 
 
 def test_get_extra_facets_cmip5():
-
-    dataset = Dataset(**{
-        'project': 'CMIP5',
-        'mip': 'Amon',
-        'short_name': 'tas',
-        'dataset': 'ACCESS1-0',
-    })
+    dataset = Dataset(
+        **{
+            'project': 'CMIP5',
+            'mip': 'Amon',
+            'short_name': 'tas',
+            'dataset': 'ACCESS1-0',
+        })
     extra_facets = get_extra_facets(dataset, extra_facets_dir=tuple())
 
     assert extra_facets == {
-        'institute': ['CSIRO-BOM'], 'product': ['output1', 'output2']
-        }
+        'institute': ['CSIRO-BOM'],
+        'product': ['output1', 'output2']
+    }
 
 
 def test_get_project_config(mocker):
@@ -185,7 +185,7 @@ def test_load_default_config(monkeypatch, default_config):
         'run_diagnostic': True,
         'skip_nonexistent': False,
         'save_intermediary_cubes': False,
-        'use_legacy_ancillaries': True,
+        'use_legacy_ancillaries': None,
     }
 
     directory_attrs = {
