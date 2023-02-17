@@ -1034,11 +1034,13 @@ calendars, (sub-)daily data with different calendars are not supported.
 The preprocessor saves both the input single model files as well as the multi-model
 results. In case you do not want to keep the single model files, set the
 parameter ``keep_input_datasets`` to ``false`` (default value is ``true``).
-To ignore different scalar coordinates in the input datasets, use the option
-``ignore_scalar_coords: true``.
-This is helpful if you encounter a ``ValueError: Multi-model statistics failed
-to merge input cubes into a single array`` with ``Coordinates in
-cube.aux_coords (scalar) differ``.
+To remove scalar coordinates before merging input datasets into the
+multi-dataset cube, use the option ``ignore_scalar_coords: true``.
+The resulting multi-dataset cube will not have scalar coordinates in this case.
+This ensures that differences in scalar coordinates in the input datasets are
+ignored, which is helpful if you encounter a ``ValueError: Multi-model
+statistics failed to merge input cubes into a single array`` with ``Coordinates
+in cube.aux_coords (scalar) differ``.
 Some special scalar coordinates which are expected to differ across cubes (`p0`
 and `ptop`) are always removed.
 
