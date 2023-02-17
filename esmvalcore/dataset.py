@@ -30,7 +30,7 @@ from esmvalcore.local import (
     _get_output_file,
     _get_start_end_date,
 )
-from esmvalcore.preprocessor import preprocess
+from esmvalcore.preprocessor import _get_debug_filename, preprocess, save
 from esmvalcore.typing import Facets, FacetValue
 
 __all__ = [
@@ -678,6 +678,12 @@ class Dataset:
         ]
         for step, kwargs in settings.items():
             result = preprocess(result, step, input_files=self.files, **kwargs)
+            if self.session['save_intermediary_cubes']:
+                logger.debug("Result %s", result)
+                if all(isinstance(elem, Cube) for elem in result):
+                    filename = _get_debug_filename(output_file, step)
+                    save(result, filename)
+
         cube = result[0]
         return cube
 
