@@ -32,6 +32,7 @@ def test_suppressedhook(capsys, exception):
 @pytest.fixture
 def temp_esmvalcore_deprec_warnings():
     """Make sure to not overwrite ESMVALCORE_DEPRECATION_WARNINGS."""
+    esmvalcore.exceptions.ESMVALCORE_DEPRECATION_WARNINGS = set()
     yield esmvalcore.exceptions.ESMVALCORE_DEPRECATION_WARNINGS
     esmvalcore.exceptions.ESMVALCORE_DEPRECATION_WARNINGS = set()
 

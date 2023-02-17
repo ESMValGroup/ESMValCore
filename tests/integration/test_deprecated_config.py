@@ -12,3 +12,7 @@ def test_read_config_user():
     )
     assert len(cfg) > 1
     assert cfg['search_esgf'] == 'default'
+
+
+def test_session_offline():
+    """"""
