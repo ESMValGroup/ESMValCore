@@ -282,8 +282,9 @@ def _clean_recipe(recipe: Recipe, diagnostics: list[str]) -> Recipe:
     # Format description nicer
     if 'documentation' in recipe:
         doc = recipe['documentation']
-        if 'description' in doc:
-            doc['description'] = doc['description'].strip()
+        for key in ['title', 'description']:
+            if key in doc:
+                doc[key] = doc[key].strip()
 
     # Filter out unused diagnostics
     recipe['diagnostics'] = {
