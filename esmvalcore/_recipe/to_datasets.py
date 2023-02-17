@@ -232,14 +232,6 @@ def _append_missing_supplementaries(
             'institute',
         ],
     }
-    keep_facets = (
-        'dataset',
-        'domain',
-        'driver',
-        'grid',
-        'project',
-        'timerange',
-    )
 
     steps = [step for step in settings if step in PREPROCESSOR_SUPPLEMENTARIES]
 
@@ -258,10 +250,6 @@ def _append_missing_supplementaries(
                     k: v
                     for k, v in afacets.items() if k in FACETS[project]
                 }
-
-            for facet in keep_facets:
-                if facet in facets:
-                    afacets[facet] = facets[facet]
             afacets['short_name'] = short_name
             supplementaries.append(afacets)
 

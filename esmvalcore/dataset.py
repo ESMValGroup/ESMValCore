@@ -35,6 +35,7 @@ from esmvalcore.typing import Facets, FacetValue
 
 __all__ = [
     'Dataset',
+    'INHERITED_FACETS',
     'datasets_to_recipe',
 ]
 
@@ -42,6 +43,20 @@ logger = logging.getLogger(__name__)
 
 File = Union[esgf.ESGFFile, local.LocalFile]
 
+INHERITED_FACETS: list[str] = [
+    'dataset',
+    'domain',
+    'driver',
+    'grid',
+    'project',
+    'timerange',
+]
+"""Inherited facets.
+
+Supplementary datasets created based on the available files using the
+:func:`Dataset.from_files` method will inherit the values of these facets from
+the main dataset.
+"""
 
 def _augment(base: dict, update: dict):
     """Update dict `base` with values from dict `update`."""
@@ -175,6 +190,9 @@ class Dataset:
     def from_files(self) -> Iterator['Dataset']:
         """Create datasets based on the available files.
 
+        Supplementary datasets will in inherit the facet values from the main
+        dataset for those facets listed in :obj:`INHERITED_FACETS`.
+
         Yields
         ------
         Dataset
@@ -207,6 +225,9 @@ class Dataset:
         """Expand wildcards in supplementary datasets."""
         supplementaries: list[Dataset] = []
         for supplementary_ds in self.supplementaries:
+            for facet in INHERITED_FACETS:
+                if facet in self.facets:
+                    supplementary_ds.facets[facet] = self.facets[facet]
             supplementaries.extend(supplementary_ds.from_files())
         self.supplementaries = supplementaries
         self._remove_unexpanded_supplementaries()
