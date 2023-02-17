@@ -74,8 +74,8 @@ class Dataset:
 
     Attributes
     ----------
-    ancillaries : list[Dataset]
-        List of ancillary datasets.
+    supplementaries : list[Dataset]
+        List of supplementary datasets.
     facets: :obj:`esmvalcore.typing.Facets`
         Facets describing the dataset.
     """
@@ -83,7 +83,7 @@ class Dataset:
     def __init__(self, **facets: FacetValue):
 
         self.facets: Facets = {}
-        self.ancillaries: list['Dataset'] = []
+        self.supplementaries: list['Dataset'] = []
 
         self._persist: set[str] = set()
         self._session: Session | None = None
@@ -134,7 +134,7 @@ class Dataset:
 
         for mip in mips:
             dataset = self.copy(mip=mip)
-            dataset.ancillaries = []
+            dataset.supplementaries = []
             for facets in dataset._get_available_mip_facets():
                 facets.setdefault('mip', mip)
                 yield facets
@@ -192,45 +192,45 @@ class Dataset:
                 dataset = self.copy()
                 dataset.facets.update(updated_facets)
                 dataset._update_timerange()
-                dataset._ancillaries_from_files()
+                dataset._supplementaries_from_files()
 
                 expanded = True
                 yield dataset
 
         if not expanded:
             # If the definition contains no wildcards or no files were found,
-            # yield the original, but do expand any ancillary globs.
-            self._ancillaries_from_files()
+            # yield the original, but do expand any supplementary globs.
+            self._supplementaries_from_files()
             yield self
 
-    def _ancillaries_from_files(self) -> None:
-        """Expand wildcards in ancillary datasets."""
-        ancillaries: list[Dataset] = []
-        for ancillary_ds in self.ancillaries:
-            ancillaries.extend(ancillary_ds.from_files())
-        self.ancillaries = ancillaries
-        self._remove_unexpanded_ancillaries()
-        self._remove_duplicate_ancillaries()
+    def _supplementaries_from_files(self) -> None:
+        """Expand wildcards in supplementary datasets."""
+        supplementaries: list[Dataset] = []
+        for supplementary_ds in self.supplementaries:
+            supplementaries.extend(supplementary_ds.from_files())
+        self.supplementaries = supplementaries
+        self._remove_unexpanded_supplementaries()
+        self._remove_duplicate_supplementaries()
         self._fix_fx_exp()
 
-    def _remove_unexpanded_ancillaries(self) -> None:
-        """Remove ancillaries where wildcards could not be expanded."""
-        ancillaries = []
-        for ancillary_ds in self.ancillaries:
+    def _remove_unexpanded_supplementaries(self) -> None:
+        """Remove supplementaries where wildcards could not be expanded."""
+        supplementaries = []
+        for supplementary_ds in self.supplementaries:
             unexpanded = [
-                f for f, v in ancillary_ds.facets.items() if _isglob(v)
+                f for f, v in supplementary_ds.facets.items() if _isglob(v)
             ]
             if unexpanded:
                 logger.info(
-                    "For %s: ignoring ancillary variable '%s', "
+                    "For %s: ignoring supplementary variable '%s', "
                     "unable to expand wildcards %s.",
                     self.summary(shorten=True),
-                    ancillary_ds.facets['short_name'],
+                    supplementary_ds.facets['short_name'],
                     ", ".join(f"'{f}'" for f in unexpanded),
                 )
             else:
-                ancillaries.append(ancillary_ds)
-        self.ancillaries = ancillaries
+                supplementaries.append(supplementary_ds)
+        self.supplementaries = supplementaries
 
     def _match(self, other: Dataset) -> int:
         """Compute the match between two datasets."""
@@ -250,38 +250,39 @@ class Dataset:
                         score += value1 == value2
         return score
 
-    def _remove_duplicate_ancillaries(self) -> None:
-        """Remove ancillaries that are duplicates."""
+    def _remove_duplicate_supplementaries(self) -> None:
+        """Remove supplementaries that are duplicates."""
         not_used = []
-        ancillaries = list(self.ancillaries)
-        self.ancillaries.clear()
-        for _, duplicates in groupby(ancillaries,
+        supplementaries = list(self.supplementaries)
+        self.supplementaries.clear()
+        for _, duplicates in groupby(supplementaries,
                                      key=lambda ds: ds['short_name']):
             group = sorted(duplicates, key=self._match, reverse=True)
-            self.ancillaries.append(group[0])
+            self.supplementaries.append(group[0])
             not_used.extend(group[1:])
 
         if not_used:
             logger.debug(
-                "List of all ancillary datasets found for %s:\n%s",
+                "List of all supplementary datasets found for %s:\n%s",
                 self.summary(shorten=True),
                 "\n".join(
-                    sorted(ds.summary(shorten=True) for ds in ancillaries)),
+                    sorted(ds.summary(shorten=True)
+                           for ds in supplementaries)),
             )
 
     def _fix_fx_exp(self) -> None:
-        for ancillary_ds in self.ancillaries:
-            exps = ancillary_ds.facets.get('exp')
-            frequency = ancillary_ds.facets.get('frequency')
+        for supplementary_ds in self.supplementaries:
+            exps = supplementary_ds.facets.get('exp')
+            frequency = supplementary_ds.facets.get('frequency')
             if isinstance(exps, list) and len(exps) > 1 and frequency == 'fx':
                 for exp in exps:
-                    dataset = ancillary_ds.copy(exp=exp)
+                    dataset = supplementary_ds.copy(exp=exp)
                     if dataset.files:
-                        ancillary_ds.facets['exp'] = exp
+                        supplementary_ds.facets['exp'] = exp
                         logger.info(
                             "Corrected wrong 'exp' from '%s' to '%s' for "
-                            "ancillary variable '%s' of %s", exps, exp,
-                            ancillary_ds.facets['short_name'],
+                            "supplementary variable '%s' of %s", exps, exp,
+                            supplementary_ds.facets['short_name'],
                             self.summary(shorten=True))
                         break
 
@@ -291,9 +292,9 @@ class Dataset:
         Parameters
         ----------
         **facets
-            Update these facets in the copy. Note that for ancillary datasets
-            attached to the dataset, the ``'short_name'`` and ``'mip'`` facets
-            will not be updated with these values.
+            Update these facets in the copy. Note that for supplementary
+            datasets attached to the dataset, the ``'short_name'`` and
+            ``'mip'`` facets will not be updated with these values.
 
         Returns
         -------
@@ -306,16 +307,16 @@ class Dataset:
             new.set_facet(key, deepcopy(value), key in self._persist)
         for key, value in facets.items():
             new.set_facet(key, deepcopy(value))
-        for ancillary in self.ancillaries:
-            # The short_name and mip of the ancillary variable are probably
+        for supplementary in self.supplementaries:
+            # The short_name and mip of the supplementary variable are probably
             # different from the main variable, so don't copy those facets.
             skip = ('short_name', 'mip')
-            ancillary_facets = {
+            supplementary_facets = {
                 k: v
                 for k, v in facets.items() if k not in skip
             }
-            new_ancillary = ancillary.copy(**ancillary_facets)
-            new.ancillaries.append(new_ancillary)
+            new_supplementary = supplementary.copy(**supplementary_facets)
+            new.supplementaries.append(new_supplementary)
         return new
 
     def __eq__(self, other) -> bool:
@@ -323,7 +324,7 @@ class Dataset:
         return (isinstance(other, self.__class__)
                 and self._session == other._session
                 and self.facets == other.facets
-                and self.ancillaries == other.ancillaries)
+                and self.supplementaries == other.supplementaries)
 
     def __repr__(self) -> str:
         """Create a string representation."""
@@ -349,11 +350,11 @@ class Dataset:
             f"{self.__class__.__name__}:",
             facets2str(self.facets),
         ]
-        if self.ancillaries:
-            txt.append("ancillaries:")
+        if self.supplementaries:
+            txt.append("supplementaries:")
             txt.extend(
                 textwrap.indent(facets2str(a.facets), "  ")
-                for a in self.ancillaries)
+                for a in self.supplementaries)
         if self._session:
             txt.append(f"session: '{self.session.session_name}'")
         return "\n".join(txt)
@@ -393,15 +394,14 @@ class Dataset:
             f"{title}: " +
             ", ".join(str(self.facets[k]) for k in keys if k in self.facets))
 
-        def ancillary_summary(dataset):
+        def supplementary_summary(dataset):
             return ", ".join(
                 str(dataset.facets[k]) for k in keys
                 if k in dataset.facets and dataset[k] != self.facets.get(k))
 
-        if self.ancillaries:
-            txt += (", ancillaries: " +
-                    "; ".join(ancillary_summary(a)
-                              for a in self.ancillaries) + "")
+        if self.supplementaries:
+            txt += (", supplementaries: " + "; ".join(
+                supplementary_summary(a) for a in self.supplementaries) + "")
         return txt
 
     def __getitem__(self, key):
@@ -443,8 +443,8 @@ class Dataset:
         version = versions.pop() if len(versions) == 1 else sorted(versions)
         if version:
             self.set_facet('version', version)
-        for ancillary_ds in self.ancillaries:
-            ancillary_ds.set_version()
+        for supplementary_ds in self.supplementaries:
+            supplementary_ds.set_version()
 
     @property
     def session(self) -> Session:
@@ -457,27 +457,27 @@ class Dataset:
     @session.setter
     def session(self, session: Session | None) -> None:
         self._session = session
-        for ancillary in self.ancillaries:
-            ancillary._session = session
+        for supplementary in self.supplementaries:
+            supplementary._session = session
 
-    def add_ancillary(self, **facets: FacetValue) -> None:
-        """Add an ancillary dataset.
+    def add_supplementary(self, **facets: FacetValue) -> None:
+        """Add an supplementary dataset.
 
         This is a convenience function that will create a copy of the current
         dataset, update its facets with the values specified in ``**facets``,
-        and append it to :obj:`Dataset.ancillaries`. For more control
-        over the creation of the ancillary dataset, first create a new
-        :class:`Dataset` describing the ancillary dataset and then append
-        it to :obj:`Dataset.ancillaries`.
+        and append it to :obj:`Dataset.supplementaries`. For more control
+        over the creation of the supplementary dataset, first create a new
+        :class:`Dataset` describing the supplementary dataset and then append
+        it to :obj:`Dataset.supplementaries`.
 
         Parameters
         ----------
         **facets
-            Facets describing the ancillary variable.
+            Facets describing the supplementary variable.
         """
-        ancillary = self.copy(**facets)
-        ancillary.ancillaries = []
-        self.ancillaries.append(ancillary)
+        supplementary = self.copy(**facets)
+        supplementary.supplementaries = []
+        self.supplementaries.append(supplementary)
 
     def augment_facets(self) -> None:
         """Add extra facets.
@@ -486,8 +486,8 @@ class Dataset:
         from various sources.
         """
         self._augment_facets()
-        for ancillary in self.ancillaries:
-            ancillary._augment_facets()
+        for supplementary in self.supplementaries:
+            supplementary._augment_facets()
 
     def _augment_facets(self):
         extra_facets = get_extra_facets(self, self.session['extra_facets_dir'])
@@ -508,7 +508,7 @@ class Dataset:
         """Find files.
 
         Look for files and populate the :obj:`Dataset.files` property of
-        the dataset and its ancillary datasets.
+        the dataset and its supplementary datasets.
         """
         self.augment_facets()
 
@@ -516,8 +516,8 @@ class Dataset:
             self._update_timerange()
 
         self._find_files()
-        for ancillary in self.ancillaries:
-            ancillary.find_files()
+        for supplementary in self.supplementaries:
+            supplementary.find_files()
 
     def _find_files(self) -> None:
         self.files, self._file_globs = local.find_files(
@@ -583,21 +583,21 @@ class Dataset:
     def _load_with_callback(self, callback):
         # TODO: Remove the callback argument for v2.10.0.
         input_files = list(self.files)
-        for ancillary_dataset in self.ancillaries:
-            input_files.extend(ancillary_dataset.files)
+        for supplementary_dataset in self.supplementaries:
+            input_files.extend(supplementary_dataset.files)
         esgf.download(input_files, self.session['download_dir'])
 
         cube = self._load(callback)
-        ancillary_cubes = []
-        for ancillary_dataset in self.ancillaries:
-            ancillary_cube = ancillary_dataset._load(callback)
-            ancillary_cubes.append(ancillary_cube)
+        supplementary_cubes = []
+        for supplementary_dataset in self.supplementaries:
+            supplementary_cube = supplementary_dataset._load(callback)
+            supplementary_cubes.append(supplementary_cube)
 
         cubes = preprocess(
             [cube],
-            'add_ancillary_variables',
+            'add_supplementary_variables',
             input_files=input_files,
-            ancillary_cubes=ancillary_cubes,
+            supplementary_cubes=supplementary_cubes,
         )
         return cubes[0]
 
@@ -721,7 +721,7 @@ class Dataset:
         as a 4-digit value (YYYY).
         """
         dataset = self.copy()
-        dataset.ancillaries = []
+        dataset.supplementaries = []
         dataset.augment_facets()
         if 'timerange' not in dataset.facets:
             self.facets.pop('timerange', None)
@@ -736,7 +736,7 @@ class Dataset:
         if '*' in timerange:
             dataset = self.copy()
             dataset.facets.pop('timerange')
-            dataset.ancillaries = []
+            dataset.supplementaries = []
             check.data_availability(dataset)
             intervals = [_get_start_end_date(f.name) for f in dataset.files]
 

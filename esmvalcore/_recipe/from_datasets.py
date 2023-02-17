@@ -42,14 +42,14 @@ def _datasets_to_raw_recipe(datasets: Iterable[Dataset]) -> Recipe:
         facets.pop('diagnostic', None)
         if facets['short_name'] == variable_group:
             facets.pop('short_name')
-        if dataset.ancillaries:
-            facets['ancillary_variables'] = []
-        for ancillary in dataset.ancillaries:
+        if dataset.supplementaries:
+            facets['supplementary_variables'] = []
+        for supplementary in dataset.supplementaries:
             anc_facets = {}
-            for key, value in ancillary.minimal_facets.items():
+            for key, value in supplementary.minimal_facets.items():
                 if facets.get(key) != value:
                     anc_facets[key] = value
-            facets['ancillary_variables'].append(anc_facets)
+            facets['supplementary_variables'].append(anc_facets)
         variables[variable_group]['additional_datasets'].append(facets)
 
     recipe = {'diagnostics': diagnostics}
@@ -291,7 +291,7 @@ def _clean_recipe(recipe: Recipe, diagnostics: list[str]) -> Recipe:
         for k, v in recipe['diagnostics'].items() if k in diagnostics
     }
 
-    # Remove legacy ancillary definitions form the recipe
+    # Remove legacy supplementary definitions form the recipe
     nested_delete(
         recipe.get('preprocessors', {}),
         'fx_variables',

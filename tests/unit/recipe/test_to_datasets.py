@@ -178,14 +178,14 @@ def test_from_recipe_dict(session):
     assert len(datasets) == 1
 
 
-def test_merge_ancillaries_dataset_takes_priority(session):
+def test_merge_supplementaries_dataset_takes_priority(session):
     recipe_txt = textwrap.dedent("""
     datasets:
       - dataset: AWI-ESM-1-1-LR
         grid: gn
       - dataset: BCC-ESM1
         grid: gn
-        ancillary_variables:
+        supplementary_variables:
             - short_name: areacella
               exp: 1pctCO2
 
@@ -203,7 +203,7 @@ def test_merge_ancillaries_dataset_takes_priority(session):
             mip: Amon
             preprocessor: global_mean_land
             project: CMIP6
-            ancillary_variables:
+            supplementary_variables:
               - short_name: areacella
                 mip: fx
 
@@ -212,17 +212,17 @@ def test_merge_ancillaries_dataset_takes_priority(session):
     datasets = Dataset.from_recipe(recipe_txt, session)
     print(datasets)
     assert len(datasets) == 2
-    assert all(len(ds.ancillaries) == 1 for ds in datasets)
-    assert datasets[0].ancillaries[0].facets['exp'] == 'historical'
-    assert datasets[1].ancillaries[0].facets['exp'] == '1pctCO2'
+    assert all(len(ds.supplementaries) == 1 for ds in datasets)
+    assert datasets[0].supplementaries[0].facets['exp'] == 'historical'
+    assert datasets[1].supplementaries[0].facets['exp'] == '1pctCO2'
 
 
-def test_merge_ancillaries_combine_dataset_with_variable(session):
+def test_merge_supplementaries_combine_dataset_with_variable(session):
     recipe_txt = textwrap.dedent("""
     datasets:
       - dataset: AWI-ESM-1-1-LR
         grid: gn
-        ancillary_variables:
+        supplementary_variables:
           - short_name: sftlf
             mip: fx
 
@@ -242,7 +242,7 @@ def test_merge_ancillaries_combine_dataset_with_variable(session):
             mip: Amon
             preprocessor: global_mean_land
             project: CMIP6
-            ancillary_variables:
+            supplementary_variables:
               - short_name: areacella
                 mip: fx
 
@@ -251,12 +251,12 @@ def test_merge_ancillaries_combine_dataset_with_variable(session):
     datasets = Dataset.from_recipe(recipe_txt, session)
     print(datasets)
     assert len(datasets) == 1
-    assert len(datasets[0].ancillaries) == 2
-    assert datasets[0].ancillaries[0].facets['short_name'] == 'areacella'
-    assert datasets[0].ancillaries[1].facets['short_name'] == 'sftlf'
+    assert len(datasets[0].supplementaries) == 2
+    assert datasets[0].supplementaries[0].facets['short_name'] == 'areacella'
+    assert datasets[0].supplementaries[1].facets['short_name'] == 'sftlf'
 
 
-def test_merge_ancillaries_missing_short_name_fails(session):
+def test_merge_supplementaries_missing_short_name_fails(session):
     recipe_txt = textwrap.dedent("""
     diagnostics:
       diagnostic1:
@@ -266,7 +266,7 @@ def test_merge_ancillaries_missing_short_name_fails(session):
             exp: historical
             mip: Amon
             project: CMIP6
-            ancillary_variables:
+            supplementary_variables:
               - mip: fx
             additional_datasets:
               - dataset: AWI-ESM-1-1-LR
@@ -342,7 +342,7 @@ def test_fix_cmip5_fx_ensemble(monkeypatch):
     assert dataset['ensemble'] == 'r0i0p0'
 
 
-def test_get_ancillary_short_names(monkeypatch):
+def test_get_supplementary_short_names(monkeypatch):
     def _update_cmor_facets(facets):
         facets['modeling_realm'] = 'atmos'
 
@@ -354,12 +354,12 @@ def test_get_ancillary_short_names(monkeypatch):
     facets = {
         'short_name': 'tas',
     }
-    result = to_datasets._get_ancillary_short_names(facets, 'mask_landsea')
+    result = to_datasets._get_supplementary_short_names(facets, 'mask_landsea')
     assert result == ['sftlf']
 
 
-def test_append_missing_ancillaries():
-    ancillaries = [
+def test_append_missing_supplementaries():
+    supplementaries = [
         {
             'short_name': 'areacella',
         },
@@ -379,7 +379,8 @@ def test_append_missing_ancillaries():
         },
     }
 
-    to_datasets._append_missing_ancillaries(ancillaries, facets, settings)
+    to_datasets._append_missing_supplementaries(supplementaries, facets,
+                                                settings)
 
-    short_names = {f['short_name'] for f in ancillaries}
+    short_names = {f['short_name'] for f in supplementaries}
     assert short_names == {'areacella', 'sftlf'}

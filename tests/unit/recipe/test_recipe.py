@@ -569,21 +569,21 @@ def test_get_default_settings(mocker):
     settings = _recipe._get_default_settings(dataset)
     assert settings == {
         'load': {'callback': 'default'},
-        'remove_ancillary_variables': {},
+        'remove_supplementary_variables': {},
         'save': {'compress': False, 'alias': 'sic'},
         'cleanup': {'remove': ['/path/to/file_fixed']},
     }
 
 
-def test_add_legacy_ancillaries_disabled():
-    """Test that calling _add_legacy_ancillaries does nothing when disabled."""
+def test_add_legacy_supplementaries_disabled():
+    """Test that `_add_legacy_supplementaries` does nothing when disabled."""
     dataset = Dataset()
-    dataset.session = {'use_legacy_ancillaries': False}
-    _recipe._add_legacy_ancillary_datasets(dataset, settings={})
+    dataset.session = {'use_legacy_supplementaries': False}
+    _recipe._add_legacy_supplementary_datasets(dataset, settings={})
 
 
-def test_enable_legacy_ancillaries_when_used(mocker, session):
-    """Test that legacy ancillaries are enabled when used in the recipe."""
+def test_enable_legacy_supplementaries_when_used(mocker, session):
+    """Test that legacy supplementaries are enabled when used in the recipe."""
     recipe = mocker.create_autospec(_recipe.Recipe, instance=True)
     recipe.session = session
     recipe._preprocessors = {
@@ -594,14 +594,14 @@ def test_enable_legacy_ancillaries_when_used(mocker, session):
             }
         }
     }
-    session['use_legacy_ancillaries'] = None
-    _recipe.Recipe._set_use_legacy_ancillaries(recipe)
+    session['use_legacy_supplementaries'] = None
+    _recipe.Recipe._set_use_legacy_supplementaries(recipe)
 
-    assert session['use_legacy_ancillaries'] is True
+    assert session['use_legacy_supplementaries'] is True
 
 
-def test_strip_legacy_ancillaries_when_disabled(mocker, session):
-    """Test that legacy ancillaries are removed when disabled."""
+def test_strip_legacy_supplementaries_when_disabled(mocker, session):
+    """Test that legacy supplementaries are removed when disabled."""
     recipe = mocker.create_autospec(_recipe.Recipe, instance=True)
     recipe.session = session
     recipe._preprocessors = {
@@ -612,10 +612,10 @@ def test_strip_legacy_ancillaries_when_disabled(mocker, session):
             }
         }
     }
-    session['use_legacy_ancillaries'] = False
-    _recipe.Recipe._set_use_legacy_ancillaries(recipe)
+    session['use_legacy_supplementaries'] = False
+    _recipe.Recipe._set_use_legacy_supplementaries(recipe)
 
-    assert session['use_legacy_ancillaries'] is False
+    assert session['use_legacy_supplementaries'] is False
     assert recipe._preprocessors == {
         'preproc1': {
             'area_statistics': {
@@ -628,8 +628,8 @@ def test_strip_legacy_ancillaries_when_disabled(mocker, session):
 def test_set_version(mocker):
 
     dataset = Dataset(short_name='tas')
-    ancillary = Dataset(short_name='areacella')
-    dataset.ancillaries = [ancillary]
+    supplementary = Dataset(short_name='areacella')
+    dataset.supplementaries = [supplementary]
 
     input_dataset = Dataset(short_name='tas')
     file1 = mocker.Mock()
@@ -640,12 +640,12 @@ def test_set_version(mocker):
 
     file3 = mocker.Mock()
     file3.facets = {'version': 'v3'}
-    ancillary.files = [file3]
+    supplementary.files = [file3]
 
     _recipe._set_version(dataset, [input_dataset])
     print(dataset)
     assert dataset.facets['version'] == ['v1', 'v2']
-    assert dataset.ancillaries[0].facets['version'] == 'v3'
+    assert dataset.supplementaries[0].facets['version'] == 'v3'
 
 
 def test_extract_preprocessor_order():

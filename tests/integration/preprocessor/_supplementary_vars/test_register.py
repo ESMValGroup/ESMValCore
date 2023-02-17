@@ -1,18 +1,18 @@
 import pytest
 
-from esmvalcore.preprocessor import _ancillary_vars
+from esmvalcore.preprocessor import _supplementary_vars
 
 
 def test_register(monkeypatch):
-    """Test registering an ancillary variable."""
+    """Test registering an supplementary variable."""
     registered = {}
     monkeypatch.setattr(
-        _ancillary_vars,
-        'PREPROCESSOR_ANCILLARIES',
+        _supplementary_vars,
+        'PREPROCESSOR_SUPPLEMENTARIES',
         registered,
     )
 
-    @_ancillary_vars.register_ancillaries(
+    @_supplementary_vars.register_supplementaries(
         ['areacella'],
         required='require_at_least_one',
     )
@@ -31,7 +31,7 @@ def test_register_invalid_fails():
     """test that registering an invalid requirement fails."""
     with pytest.raises(NotImplementedError):
 
-        @_ancillary_vars.register_ancillaries(
+        @_supplementary_vars.register_supplementaries(
             ['areacella'],
             required='invalid',
         )

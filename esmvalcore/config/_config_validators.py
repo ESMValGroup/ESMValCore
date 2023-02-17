@@ -291,9 +291,9 @@ def deprecate(validator, option: str, default: Any, version: str):
     return wrapper
 
 
-_validate_use_legacy_ancillaries = deprecate(
+_validate_use_legacy_supplementaries = deprecate(
     validator=validate_bool_or_none,
-    option='use_legacy_ancillaries',
+    option='use_legacy_supplementaries',
     default=None,
     version='2.10.0',
 )
@@ -318,7 +318,7 @@ _validators = {
     'rootpath': validate_rootpath,
     'run_diagnostic': validate_bool,
     'save_intermediary_cubes': validate_bool,
-    'use_legacy_ancillaries': _validate_use_legacy_ancillaries,
+    'use_legacy_supplementaries': _validate_use_legacy_supplementaries,
 
     # From CLI
     'check_level': validate_check_level,

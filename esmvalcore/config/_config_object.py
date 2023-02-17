@@ -86,7 +86,7 @@ class Config(ValidatedConfig):
         mapping['resume_from'] = []
         mapping['run_diagnostic'] = True
         mapping['skip_nonexistent'] = False
-        mapping['use_legacy_ancillaries'] = None
+        mapping['use_legacy_supplementaries'] = None
 
         new.update(mapping)
 

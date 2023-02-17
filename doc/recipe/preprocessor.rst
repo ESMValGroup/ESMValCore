@@ -9,7 +9,7 @@ roughly following the default order in which preprocessor functions are applied:
 
 * :ref:`Variable derivation`
 * :ref:`CMOR check and dataset-specific fixes`
-* :ref:`preprocessors_using_ancillary_variables`
+* :ref:`preprocessors_using_supplementary_variables`
 * :ref:`Vertical interpolation`
 * :ref:`Weighting`
 * :ref:`Land/Sea/Ice masking`
@@ -152,7 +152,7 @@ steps:
 To get an overview on data fixes and how to implement new ones, please go to
 :ref:`fixing_data`.
 
-.. _preprocessors_using_ancillary_variables:
+.. _preprocessors_using_supplementary_variables:
 
 Ancillary variables and cell measures
 =====================================
@@ -160,7 +160,8 @@ The following preprocessor functions either require or prefer using an
 `ancillary variable <https://cfconventions.org/cf-conventions/cf-conventions.html#ancillary-data>`_
 or
 `cell measure <https://cfconventions.org/cf-conventions/cf-conventions.html#cell-measures>`_
-to perform their computations:
+to perform their computations.
+In ESMValCore we call these such variables "supplementary variables".
 
 ============================================================== ============================== =====================================
 Preprocessor                                                   Variable short name            Variable standard name
@@ -172,28 +173,29 @@ Preprocessor                                                   Variable short na
 :ref:`weighting_landsea_fraction<land/sea fraction weighting>` ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
 ============================================================== ============================== =====================================
 
-Only one of the listed variables is required. Ancillary variables can be defined
-in the recipe as described in :ref:`ancillary_variables`. In some cases,
-preprocessor functions may work without ancillary variables, this is documented
-case by case in the preprocessor function definition.
-If a preprocessor function is used that uses ancillary variables, but they have
-not been specified in the recipe, they will be automatically added. If the
-automatic selection does not give the desired result, specify the ancillary
-variables in the recipe as described in :ref:`ancillary_variables`.
+Only one of the listed variables is required. Supplementary variables can be
+defined in the recipe as described in :ref:`supplementary_variables`.
+In some cases, preprocessor functions may work without supplementary variables,
+this is documented case by case in the preprocessor function definition.
+If a preprocessor function is used that uses supplementary variables, but they
+have not been specified in the recipe, they will be automatically added.
+If the automatic selection does not give the desired result, specify the
+supplementary variables in the recipe as described in
+:ref:`supplementary_variables`.
 
 By default, ancillary variables and cell measures will be removed from the
 variable before saving it to file because they can be as big as the main
 variable.
 To keep the ancillary variables and cell measures, disable the preprocessor
-function :func:`esmvalcore.preprocessor.remove_ancillary_variables` that removes
-them by setting ``remove_ancillary_variables: false`` in the preprocessor
-in the recipe.
+function :func:`esmvalcore.preprocessor.remove_supplementary_variables` that
+removes them by setting ``remove_supplementary_variables: false`` in the
+preprocessor in the recipe.
 
 Examples
 --------
 
 Compute the global mean surface air temperature, while
-:ref:`automatically selecting the best matching ancillary dataset <ancillary_dataset_wildcards>`:
+:ref:`automatically selecting the best matching supplementary dataset <supplementary_dataset_wildcards>`:
 
 .. code-block:: yaml
 
@@ -220,7 +222,7 @@ Compute the global mean surface air temperature, while
           preprocessor: global_mean
           exp: historical
           timerange: '1990/2000'
-          ancillary_variables:
+          supplementary_variables:
             - short_name: areacella
               mip: fx
               exp: '*'
@@ -240,7 +242,7 @@ temperature and store both in the same file:
 
   preprocessors:
     keep_land_area_fraction:
-      remove_ancillary_variables: false
+      remove_supplementary_variables: false
 
   diagnostics:
     example_diagnostic:
@@ -252,7 +254,7 @@ temperature and store both in the same file:
           preprocessor: keep_land_area_fraction
           exp: historical
           timerange: '1990/2000'
-          ancillary_variables:
+          supplementary_variables:
             - short_name: sftlf
               mip: fx
               exp: 1pctCO2
@@ -270,7 +272,7 @@ and cell measure (``areacella``), but do not use ``areacella`` for dataset
       project: CMIP6
       ensemble: r1i1p1f1
       grid: gn
-      ancillary_variables:
+      supplementary_variables:
         - short_name: areacella
           skip: true
     - dataset: CanESM2
@@ -298,29 +300,30 @@ and cell measure (``areacella``), but do not use ``areacella`` for dataset
 
 .. _`Fx variables as cell measures or ancillary variables`:
 
-Legacy method of specifying ancillary variables
------------------------------------------------
+Legacy method of specifying supplementary variables
+---------------------------------------------------
 
 .. deprecated:: 2.8.0
-  The legacy method of specifying ancillary variables is deprecated and will be
-  removed in version 2.10.0.
+  The legacy method of specifying supplementary variables is deprecated and will
+  be removed in version 2.10.0.
   To upgrade, remove all occurrences of ``fx_variables`` from your recipes and
-  rely on automatically defining the ancillary variables based on the
+  rely on automatically defining the supplementary variables based on the
   requirement of the preprocessor functions or specify them using the methods
   described above.
   To keep using the legacy behaviour until v2.10.0, set
-  ``use_legacy_ancillaries: true`` in the :ref:`user configuration file` or run
-  the tool with the flag ``--use-legacy-ancillaries=True``.
+  ``use_legacy_supplementaries: true`` in the :ref:`user configuration file` or
+  run the tool with the flag ``--use-legacy-supplementaries=True``.
 
-Prior to version 2.8.0 of the tool, the ancillary variables could not be defined
-at the variable or dataset level in the recipe, but could only be defined in
-the preprocessor function that uses them using the ``fx_variables`` argument.
+Prior to version 2.8.0 of the tool, the supplementary variables could not be
+defined at the variable or dataset level in the recipe, but could only be
+defined in the preprocessor function that uses them using the ``fx_variables``
+argument.
 This does not work well because in practice different datasets store their
-ancillary variables under different facets.
+supplementary variables under different facets.
 For example, one dataset might only provide the ``areacella`` variable under the
 ``1pctCO2`` experiment while another one might only provide it for the
 ``historical`` experiment.
-This forced the user to define a preprocessor per dataset, which was very
+This forced the user to define a preprocessor per dataset, which was
 inconvenient.
 
 ============================================================== =====================
@@ -581,9 +584,9 @@ is for example useful for climate models which do not offer land/sea fraction
 files. This arguments also accepts the special dataset specifiers
 ``reference_dataset`` and ``alternative_dataset``.
 
-This function requires a land or sea area fraction `ancillary variable`_.
-The ancillary variable, either ``sftlf`` or ``sftof``, should be attached
-to the main dataset as described in :ref:`ancillary_variables`.
+This function requires a land or sea area fraction `supplementary variable`_.
+The supplementary variable, either ``sftlf`` or ``sftof``, should be attached
+to the main dataset as described in :ref:`supplementary_variables`.
 
 .. deprecated:: 2.8.0
   The optional ``fx_variables`` argument specifies the fx variables that the
@@ -608,7 +611,7 @@ the model data and keeping only the values associated with grid points that
 correspond to, e.g., land, ocean or ice surfaces, as specified by the
 user. Where possible, the masking is realized using the standard mask files
 provided together with the model data as part of the CMIP data request (the
-so-called ancillary variable). In the absence of these files, the Natural Earth masks
+so-called supplementary variable). In the absence of these files, the Natural Earth masks
 are used: although these are not model-specific, they represent a good
 approximation since they have a much higher resolution than most of the models
 and they are regularly updated with changing geographical features.
@@ -630,11 +633,11 @@ To mask out a certain domain (e.g., sea) in the preprocessor,
 
 and requires only one argument: ``mask_out``: either ``land`` or ``sea``.
 
-This function prefers using a land or sea area fraction `ancillary variable`_,
+This function prefers using a land or sea area fraction `supplementary variable`_,
 but if it is not available it will compute a mask based on
 `Natural Earth <https://www.naturalearthdata.com>`_ shapefiles.
-The ancillary variable, either ``sftlf`` or ``sftof``, can be attached
-to the main dataset as described in :ref:`ancillary_variables`.
+The supplementary variable, either ``sftlf`` or ``sftof``, can be attached
+to the main dataset as described in :ref:`supplementary_variables`.
 
 .. deprecated:: 2.8.0
   The optional ``fx_variables`` argument specifies the fx variables that the
@@ -642,7 +645,7 @@ to the main dataset as described in :ref:`ancillary_variables`.
   More details on this are given in :ref:`Fx variables as cell measures or ancillary variables`.
 
 
-If the corresponding ancillary variable is not available (which is
+If the corresponding supplementary variable is not available (which is
 the case for some models and almost all observational datasets), the
 preprocessor attempts to mask the data using Natural Earth mask files (that are
 vectorized rasters). As mentioned above, the spatial resolution of the the
@@ -669,9 +672,9 @@ losing generality. To mask ice out, ``mask_landseaice`` can be used:
 
 and requires only one argument: ``mask_out``: either ``landsea`` or ``ice``.
 
-This function requires a land ice area fraction `ancillary variable`_.
-The ancillary variable ``sftgif`` should be attached to the main dataset as
-described in :ref:`ancillary_variables`.
+This function requires a land ice area fraction `supplementary variable`_.
+The supplementary variable ``sftgif`` should be attached to the main dataset as
+described in :ref:`supplementary_variables`.
 
 .. deprecated:: 2.8.0
   The optional ``fx_variables`` argument specifies the fx variables that the
@@ -1834,14 +1837,14 @@ removed using other preprocessor operations in advance.
 This function requires a cell area `cell measure`_, unless the coordinates of the
 input data are regular 1D latitude and longitude coordinates so the cell areas
 can be computed.
-The required ancillary variable, either ``areacella`` for atmospheric variables
+The required supplementary variable, either ``areacella`` for atmospheric variables
 or ``areacello`` for ocean variables, can be attached to the main dataset
-as described in :ref:`ancillary_variables`.
+as described in :ref:`supplementary_variables`.
 
 .. deprecated:: 2.8.0
   The optional ``fx_variables`` argument specifies the fx variables that the user
   wishes to input to the function. More details on this are given in :ref:`Fx
-  variables as cell measures or ancillary variables`.
+  variables as cell measures or supplementary variables`.
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
 
@@ -1889,8 +1892,8 @@ apply over the volume.
 This function requires a cell volume `cell measure`_, unless the coordinates of
 the input data are regular 1D latitude and longitude coordinates so the cell
 volumes can be computed.
-The required ancillary variable ``volcello`` can be attached to the main dataset
-as described in :ref:`ancillary_variables`.
+The required supplementary variable ``volcello`` can be attached to the main dataset
+as described in :ref:`supplementary_variables`.
 
 No depth coordinate is required as this is determined by Iris.
 

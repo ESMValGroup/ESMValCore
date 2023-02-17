@@ -185,7 +185,7 @@ def test_load_default_config(monkeypatch, default_config):
         'run_diagnostic': True,
         'skip_nonexistent': False,
         'save_intermediary_cubes': False,
-        'use_legacy_ancillaries': None,
+        'use_legacy_supplementaries': None,
     }
 
     directory_attrs = {

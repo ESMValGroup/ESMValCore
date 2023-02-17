@@ -16,7 +16,7 @@ import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
 from iris.util import rolling_window
 
-from ._ancillary_vars import register_ancillaries
+from ._supplementary_vars import register_supplementaries
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ def _apply_fx_mask(fx_mask, var_data):
     return var_data
 
 
-@register_ancillaries(
+@register_supplementaries(
     variables=['sftlf', 'sftof'],
     required='prefer_at_least_one',
 )
@@ -144,7 +144,7 @@ def mask_landsea(cube, mask_out):
     return cube
 
 
-@register_ancillaries(
+@register_supplementaries(
     variables=['sftgif'],
     required='require_at_least_one',
 )

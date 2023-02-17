@@ -14,12 +14,6 @@ from .._provenance import TrackedFile
 from .._task import BaseTask
 from ..cmor.check import cmor_check_data, cmor_check_metadata
 from ..cmor.fix import fix_data, fix_file, fix_metadata
-from ._ancillary_vars import (
-    add_ancillary_variables,
-    add_fx_variables,
-    remove_ancillary_variables,
-    remove_fx_variables,
-)
 from ._area import (
     area_statistics,
     extract_named_regions,
@@ -61,6 +55,12 @@ from ._regrid import (
     regrid,
 )
 from ._rolling_window import rolling_window_statistics
+from ._supplementary_vars import (
+    add_fx_variables,
+    add_supplementary_variables,
+    remove_fx_variables,
+    remove_supplementary_variables,
+)
 from ._time import (
     annual_statistics,
     anomalies,
@@ -110,7 +110,7 @@ __all__ = [
     'cmor_check_data',
     # Attach ancillary variables and cell measures
     'add_fx_variables',
-    'add_ancillary_variables',
+    'add_supplementary_variables',
     # Derive variable
     'derive',
     # Time extraction (as defined in the preprocessor section)
@@ -186,8 +186,8 @@ __all__ = [
     'multi_model_statistics',
     # Bias calculation
     'bias',
-    # Remove ancillary variables from cube
-    'remove_ancillary_variables',
+    # Remove supplementary variables from cube
+    'remove_supplementary_variables',
     'remove_fx_variables',
     # Save to file
     'save',
@@ -215,9 +215,10 @@ By default, preprocessor functions are applied in this order.
 """
 
 # The order of initial and final steps cannot be configured
-INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index('add_ancillary_variables') +
-                              1]
-FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index('remove_ancillary_variables'):]
+INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index(
+    'add_supplementary_variables') + 1]
+FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index(
+    'remove_supplementary_variables'):]
 
 MULTI_MODEL_FUNCTIONS = {
     'bias',
@@ -411,8 +412,8 @@ class PreprocessorFile(TrackedFile):
             input_files = []
             for dataset in datasets:
                 input_files.extend(dataset.files)
-                for ancillary in dataset.ancillaries:
-                    input_files.extend(ancillary.files)
+                for supplementary in dataset.supplementaries:
+                    input_files.extend(supplementary.files)
             ancestors = [TrackedFile(f) for f in input_files]
         else:
             # Multimodel preprocessor functions set ancestors at runtime

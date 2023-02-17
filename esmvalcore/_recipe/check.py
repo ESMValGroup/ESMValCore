@@ -15,8 +15,10 @@ import yamale
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import _get_start_end_year, _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
-from esmvalcore.preprocessor._ancillary_vars import PREPROCESSOR_ANCILLARIES
 from esmvalcore.preprocessor._multimodel import STATISTIC_MAPPING
+from esmvalcore.preprocessor._supplementary_vars import (
+    PREPROCESSOR_SUPPLEMENTARIES,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -182,26 +184,26 @@ def data_availability(dataset, log=True):
                 missing_txt, "\n".join(str(f) for f in input_files)))
 
 
-def preprocessor_ancillaries(dataset, settings):
-    """Check that the required ancillary variables have been added."""
-    steps = [step for step in settings if step in PREPROCESSOR_ANCILLARIES]
-    ancillaries = {d.facets['short_name'] for d in dataset.ancillaries}
+def preprocessor_supplementaries(dataset, settings):
+    """Check that the required supplementary variables have been added."""
+    steps = [step for step in settings if step in PREPROCESSOR_SUPPLEMENTARIES]
+    supplementaries = {d.facets['short_name'] for d in dataset.supplementaries}
 
     for step in steps:
-        ancs = PREPROCESSOR_ANCILLARIES[step]
+        ancs = PREPROCESSOR_SUPPLEMENTARIES[step]
         for short_name in ancs['variables']:
-            if short_name in ancillaries:
+            if short_name in supplementaries:
                 break
         else:
             if ancs['required'] == "require_at_least_one":
                 raise RecipeError(
                     f"Preprocessor function {step} requires that at least "
-                    f"one ancillary variable of {ancs['variables']} is "
+                    f"one supplementary variable of {ancs['variables']} is "
                     f"defined in the recipe for {dataset}.")
             if ancs['required'] == "prefer_at_least_one":
                 logger.warning(
                     "Preprocessor function %s works best when at least "
-                    "one ancillary variable of %s is defined in the "
+                    "one supplementary variable of %s is defined in the "
                     "recipe for %s.",
                     step,
                     ancs['variables'],

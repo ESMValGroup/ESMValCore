@@ -33,14 +33,14 @@ def test_repr_session(mocker):
     """).strip()
 
 
-def test_repr_ancillary():
+def test_repr_supplementary():
     ds = Dataset(dataset='dataset1', short_name='tas')
-    ds.add_ancillary(short_name='areacella')
+    ds.add_supplementary(short_name='areacella')
 
     assert repr(ds) == textwrap.dedent("""
         Dataset:
         {'dataset': 'dataset1', 'short_name': 'tas'}
-        ancillaries:
+        supplementaries:
           {'dataset': 'dataset1', 'short_name': 'areacella'}
         """).strip()
 
@@ -52,10 +52,10 @@ def test_short_summary():
         short_name='tos',
         mip='Omon',
     )
-    ds.add_ancillary(short_name='areacello', mip='Ofx')
-    ds.add_ancillary(short_name='volcello')
+    ds.add_supplementary(short_name='areacello', mip='Ofx')
+    ds.add_supplementary(short_name='volcello')
     expected = ("Dataset: tos, Omon, CMIP6, dataset1, "
-                "ancillaries: areacello, Ofx; volcello")
+                "supplementaries: areacello, Ofx; volcello")
     assert ds.summary(shorten=True) == expected
 
 
@@ -66,14 +66,14 @@ def test_long_summary():
 
 def test_session_setter():
     ds = Dataset(short_name='tas')
-    ds.add_ancillary(short_name='areacella')
+    ds.add_supplementary(short_name='areacella')
     assert ds._session is None
-    assert ds.ancillaries[0]._session is None
+    assert ds.supplementaries[0]._session is None
 
     ds.session
 
     assert isinstance(ds.session, esmvalcore.config.Session)
-    assert ds.session == ds.ancillaries[0].session
+    assert ds.session == ds.supplementaries[0].session
 
 
 @pytest.mark.parametrize(
@@ -378,7 +378,7 @@ def test_from_recipe_with_ranges(session, tmp_path):
     assert Dataset.from_recipe(recipe, session) == datasets
 
 
-def test_from_recipe_with_ancillary(session, tmp_path):
+def test_from_recipe_with_supplementary(session, tmp_path):
     recipe_txt = textwrap.dedent("""
 
     datasets:
@@ -390,7 +390,7 @@ def test_from_recipe_with_ancillary(session, tmp_path):
           tos:
             project: CMIP5
             mip: Omon
-            ancillary_variables:
+            supplementary_variables:
               - short_name: sftof
                 mip: fx
     """)
@@ -408,7 +408,7 @@ def test_from_recipe_with_ancillary(session, tmp_path):
         alias='dataset1',
         recipe_dataset_index=0,
     )
-    dataset.ancillaries = [
+    dataset.supplementaries = [
         Dataset(
             short_name='sftof',
             dataset='dataset1',
@@ -422,8 +422,8 @@ def test_from_recipe_with_ancillary(session, tmp_path):
     assert Dataset.from_recipe(recipe, session) == [dataset]
 
 
-def test_from_recipe_with_skip_ancillary(session, tmp_path):
-    session['use_legacy_ancillaries'] = False
+def test_from_recipe_with_skip_supplementary(session, tmp_path):
+    session['use_legacy_supplementaries'] = False
 
     recipe_txt = textwrap.dedent("""
 
@@ -436,7 +436,7 @@ def test_from_recipe_with_skip_ancillary(session, tmp_path):
           tos:
             project: CMIP5
             mip: Omon
-            ancillary_variables:
+            supplementary_variables:
               - short_name: sftof
                 mip: fx
               - short_name: areacello
@@ -456,7 +456,7 @@ def test_from_recipe_with_skip_ancillary(session, tmp_path):
         alias='dataset1',
         recipe_dataset_index=0,
     )
-    dataset.ancillaries = [
+    dataset.supplementaries = [
         Dataset(
             short_name='sftof',
             dataset='dataset1',
@@ -470,8 +470,9 @@ def test_from_recipe_with_skip_ancillary(session, tmp_path):
     assert Dataset.from_recipe(recipe, session) == [dataset]
 
 
-def test_from_recipe_with_automatic_ancillary(session, tmp_path, monkeypatch):
-    session['use_legacy_ancillaries'] = False
+def test_from_recipe_with_automatic_supplementary(session, tmp_path,
+                                                  monkeypatch):
+    session['use_legacy_supplementaries'] = False
 
     def find_files(self):
         if self.facets['short_name'] == 'areacello':
@@ -524,7 +525,7 @@ def test_from_recipe_with_automatic_ancillary(session, tmp_path, monkeypatch):
         alias='dataset1',
         recipe_dataset_index=0,
     )
-    dataset.ancillaries = [
+    dataset.supplementaries = [
         Dataset(
             short_name='areacello',
             dataset='dataset1',
@@ -557,8 +558,8 @@ def mock_find_files(*files):
 
     def find_files(self):
         self.files = files_map[self['short_name']]
-        for ancillary in self.ancillaries:
-            ancillary.files = files_map[ancillary['short_name']]
+        for supplementary in self.supplementaries:
+            supplementary.files = files_map[supplementary['short_name']]
 
     return find_files
 
@@ -659,7 +660,7 @@ def test_from_files(session, monkeypatch):
     assert datasets == expected
 
 
-def test_from_files_with_ancillary(session, monkeypatch):
+def test_from_files_with_supplementary(session, monkeypatch):
     rootpath = Path('/path/to/data')
     file = esmvalcore.local.LocalFile(
         rootpath,
@@ -721,7 +722,7 @@ def test_from_files_with_ancillary(session, monkeypatch):
         ensemble='*',
     )
     dataset.session = session
-    dataset.add_ancillary(short_name='areacella', mip='*', ensemble='*')
+    dataset.add_supplementary(short_name='areacella', mip='*', ensemble='*')
 
     expected = Dataset(
         short_name='tas',
@@ -731,7 +732,7 @@ def test_from_files_with_ancillary(session, monkeypatch):
         ensemble='r3i1p1f1',
     )
     expected.session = session
-    expected.add_ancillary(
+    expected.add_supplementary(
         short_name='areacella',
         mip='fx',
         ensemble='r1i1p1f1',
@@ -741,12 +742,12 @@ def test_from_files_with_ancillary(session, monkeypatch):
 
     assert all(ds.session == session for ds in datasets)
     assert all(ads.session == session for ds in datasets
-               for ads in ds.ancillaries)
+               for ads in ds.supplementaries)
     assert datasets == [expected]
 
 
 def test_from_files_with_globs(monkeypatch, session):
-    """Test `from_files` with wildcards in dataset and ancillary."""
+    """Test `from_files` with wildcards in dataset and supplementary."""
     rootpath = Path('/path/to/data')
     file = esmvalcore.local.LocalFile(
         rootpath,
@@ -811,7 +812,7 @@ def test_from_files_with_globs(monkeypatch, session):
         project='CMIP6',
         short_name='tas',
     )
-    dataset.add_ancillary(
+    dataset.add_supplementary(
         short_name='areacella',
         mip='fx',
         activity='*',
@@ -827,7 +828,7 @@ def test_from_files_with_globs(monkeypatch, session):
 
     assert all(ds.session == session for ds in datasets)
     assert all(ads.session == session for ds in datasets
-               for ads in ds.ancillaries)
+               for ads in ds.supplementaries)
 
     expected = Dataset(
         activity='CMIP',
@@ -840,7 +841,7 @@ def test_from_files_with_globs(monkeypatch, session):
         project='CMIP6',
         short_name='tas',
     )
-    expected.add_ancillary(
+    expected.add_supplementary(
         short_name='areacella',
         mip='fx',
         activity='GMMIP',
@@ -870,7 +871,7 @@ def test_match():
     assert score == 3
 
 
-def test_remove_duplicate_ancillaries():
+def test_remove_duplicate_supplementaries():
     dataset = Dataset(
         dataset='dataset1',
         short_name='tas',
@@ -878,18 +879,18 @@ def test_remove_duplicate_ancillaries():
         project='CMIP6',
         exp='historical',
     )
-    ancillary1 = dataset.copy(short_name='areacella')
-    ancillary2 = ancillary1.copy()
-    ancillary1.facets['exp'] = '1pctCO2'
-    dataset.ancillaries = [ancillary1, ancillary2]
+    supplementary1 = dataset.copy(short_name='areacella')
+    supplementary2 = supplementary1.copy()
+    supplementary1.facets['exp'] = '1pctCO2'
+    dataset.supplementaries = [supplementary1, supplementary2]
 
-    dataset._remove_duplicate_ancillaries()
+    dataset._remove_duplicate_supplementaries()
 
-    assert len(dataset.ancillaries) == 1
-    assert dataset.ancillaries[0] == ancillary2
+    assert len(dataset.supplementaries) == 1
+    assert dataset.supplementaries[0] == supplementary2
 
 
-def test_remove_not_found_ancillaries():
+def test_remove_not_found_supplementaries():
     dataset = Dataset(
         dataset='dataset1',
         short_name='tas',
@@ -897,10 +898,10 @@ def test_remove_not_found_ancillaries():
         project='CMIP6',
         exp='historical',
     )
-    dataset.add_ancillary(short_name='areacella', mip='fx', exp='*')
-    dataset._remove_unexpanded_ancillaries()
+    dataset.add_supplementary(short_name='areacella', mip='fx', exp='*')
+    dataset._remove_unexpanded_supplementaries()
 
-    assert len(dataset.ancillaries) == 0
+    assert len(dataset.supplementaries) == 0
 
 
 def test_from_recipe_with_glob(tmp_path, session, mocker):
@@ -1204,7 +1205,7 @@ def test_find_files_outdated_local(mocker, dataset):
 
 def test_set_version():
     dataset = Dataset(short_name='tas')
-    dataset.add_ancillary(short_name='areacella')
+    dataset.add_supplementary(short_name='areacella')
     file_v1 = esmvalcore.local.LocalFile('/path/to/v1/tas.nc')
     file_v1.facets['version'] = 'v1'
     file_v2 = esmvalcore.local.LocalFile('/path/to/v2/tas.nc')
@@ -1212,10 +1213,10 @@ def test_set_version():
     afile = esmvalcore.local.LocalFile('/path/to/v3/areacella.nc')
     afile.facets['version'] = 'v3'
     dataset.files = [file_v2, file_v1]
-    dataset.ancillaries[0].files = [afile]
+    dataset.supplementaries[0].files = [afile]
     dataset.set_version()
     assert dataset.facets['version'] == ['v1', 'v2']
-    assert dataset.ancillaries[0].facets['version'] == 'v3'
+    assert dataset.supplementaries[0].facets['version'] == 'v3'
 
 
 @pytest.mark.parametrize('timerange', ['*', '185001/*', '*/185112'])
@@ -1353,7 +1354,7 @@ def test_load(mocker, session):
         'clip_timerange',
         'fix_data',
         'cmor_check_data',
-        'add_ancillary_variables',
+        'add_supplementary_variables',
     ]
     assert order == load_order
 
@@ -1412,8 +1413,8 @@ def test_load(mocker, session):
             'frequency': 'yr',
         },
         'concatenate': {},
-        'add_ancillary_variables': {
-            'ancillary_cubes': [],
+        'add_supplementary_variables': {
+            'supplementary_cubes': [],
         },
     }
 

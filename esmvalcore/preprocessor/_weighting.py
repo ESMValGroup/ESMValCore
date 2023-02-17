@@ -4,7 +4,7 @@ import logging
 
 import iris
 
-from ._ancillary_vars import register_ancillaries
+from ._supplementary_vars import register_supplementaries
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ def _get_land_fraction(cube):
     return (land_fraction, errors)
 
 
-@register_ancillaries(
+@register_supplementaries(
     variables=['sftlf', 'sftof'],
     required='require_at_least_one',
 )

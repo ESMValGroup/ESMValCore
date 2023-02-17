@@ -18,11 +18,11 @@ from esmvalcore.preprocessor._time import clip_timerange
 
 logger = logging.getLogger(__name__)
 
-PREPROCESSOR_ANCILLARIES = {}
+PREPROCESSOR_SUPPLEMENTARIES = {}
 
 
-def register_ancillaries(variables, required):
-    """Register ancillary variables required for a preprocessor function.
+def register_supplementaries(variables, required):
+    """Register supplementary variables required for a preprocessor function.
 
     Parameters
     ----------
@@ -37,13 +37,13 @@ def register_ancillaries(variables, required):
     valid = ('require_at_least_one', 'prefer_at_least_one')
     if required not in valid:
         raise NotImplementedError(f"`required` should be one of {valid}")
-    ancillaries = {
+    supplementaries = {
         'variables': variables,
         'required': required,
     }
 
     def wrapper(func):
-        PREPROCESSOR_ANCILLARIES[func.__name__] = ancillaries
+        PREPROCESSOR_SUPPLEMENTARIES[func.__name__] = supplementaries
         return func
 
     return wrapper
@@ -104,22 +104,22 @@ def _is_fx_broadcastable(fx_cube, cube):
     return True
 
 
-def add_cell_measure(cube, fx_cube, measure):
-    """Add fx cube as a cell_measure in the cube containing the data.
+def add_cell_measure(cube, cell_measure_cube, measure):
+    """Add a cube as a cell_measure in the cube containing the data.
 
     Parameters
     ----------
     cube: iris.cube.Cube
         Iris cube with input data.
-    fx_cube: iris.cube.Cube
-        Iris cube with fx data.
+    cell_measure_cube: iris.cube.Cube
+        Iris cube with cell measure data.
     measure: str
         Name of the measure, can be 'area' or 'volume'.
 
     Returns
     -------
     iris.cube.Cube
-        Cube with added ancillary variables
+        Cube with added cell measure
 
     Raises
     ------
@@ -129,27 +129,29 @@ def add_cell_measure(cube, fx_cube, measure):
     if measure not in ['area', 'volume']:
         raise ValueError(f"measure name must be 'area' or 'volume', "
                          f"got {measure} instead")
-    measure = iris.coords.CellMeasure(fx_cube.core_data(),
-                                      standard_name=fx_cube.standard_name,
-                                      units=fx_cube.units,
-                                      measure=measure,
-                                      var_name=fx_cube.var_name,
-                                      attributes=fx_cube.attributes)
+    measure = iris.coords.CellMeasure(
+        cell_measure_cube.core_data(),
+        standard_name=cell_measure_cube.standard_name,
+        units=cell_measure_cube.units,
+        measure=measure,
+        var_name=cell_measure_cube.var_name,
+        attributes=cell_measure_cube.attributes,
+    )
     start_dim = cube.ndim - len(measure.shape)
     cube.add_cell_measure(measure, range(start_dim, cube.ndim))
-    logger.debug('Added %s as cell measure in cube of %s.', fx_cube.var_name,
-                 cube.var_name)
+    logger.debug('Added %s as cell measure in cube of %s.',
+                 cell_measure_cube.var_name, cube.var_name)
 
 
-def add_ancillary_variable(cube, fx_cube):
-    """Add fx cube as an ancillary_variable in the cube containing the data.
+def add_ancillary_variable(cube, ancillary_cube):
+    """Add cube as an ancillary variable in the cube containing the data.
 
     Parameters
     ----------
     cube: iris.cube.Cube
         Iris cube with input data.
-    fx_cube: iris.cube.Cube
-        Iris cube with fx data.
+    ancillary_cube: iris.cube.Cube
+        Iris cube with ancillary data.
 
     Returns
     -------
@@ -157,15 +159,15 @@ def add_ancillary_variable(cube, fx_cube):
         Cube with added ancillary variables
     """
     ancillary_var = iris.coords.AncillaryVariable(
-        fx_cube.core_data(),
-        standard_name=fx_cube.standard_name,
-        units=fx_cube.units,
-        var_name=fx_cube.var_name,
-        attributes=fx_cube.attributes)
+        ancillary_cube.core_data(),
+        standard_name=ancillary_cube.standard_name,
+        units=ancillary_cube.units,
+        var_name=ancillary_cube.var_name,
+        attributes=ancillary_cube.attributes)
     start_dim = cube.ndim - len(ancillary_var.shape)
     cube.add_ancillary_variable(ancillary_var, range(start_dim, cube.ndim))
     logger.debug('Added %s as ancillary variable in cube of %s.',
-                 fx_cube.var_name, cube.var_name)
+                 ancillary_cube.var_name, cube.var_name)
 
 
 def add_fx_variables(cube, fx_variables, check_level):
@@ -176,7 +178,7 @@ def add_fx_variables(cube, fx_variables, check_level):
     .. deprecated:: 2.8.0
         This function is deprecated and will be removed in version 2.10.0.
         Please use a :class:`esmvalcore.dataset.Dataset` or
-        :func:`esmvalcore.preprocessor.add_ancillary_variables`
+        :func:`esmvalcore.preprocessor.add_supplementary_variables`
         instead.
 
     Parameters
@@ -197,7 +199,7 @@ def add_fx_variables(cube, fx_variables, check_level):
         "The function `add_fx_variables` has been deprecated in "
         "ESMValCore version 2.8.0 and is scheduled for removal in "
         "version 2.10.0. Use a `esmvalcore.dataset.Dataset` or the function "
-        "`add_ancillary_variables` instead.")
+        "`add_supplementary_variables` instead.")
     warnings.warn(msg, ESMValCoreDeprecationWarning)
     if not fx_variables:
         return cube
@@ -214,13 +216,13 @@ def add_fx_variables(cube, fx_variables, check_level):
 
         fx_cubes.append(fx_cube)
 
-    add_ancillary_variables(cube, fx_cubes)
+    add_supplementary_variables(cube, fx_cubes)
     return cube
 
 
-def add_ancillary_variables(
+def add_supplementary_variables(
     cube: iris.cube.Cube,
-    ancillary_cubes: Iterable[iris.cube.Cube],
+    supplementary_cubes: Iterable[iris.cube.Cube],
 ) -> iris.cube.Cube:
     """Add ancillary variables and/or cell measures.
 
@@ -228,8 +230,8 @@ def add_ancillary_variables(
     ----------
     cube:
         Cube to add to.
-    ancillary_cubes:
-        Iterable of cubes containing the ancillary variables.
+    supplementary_cubes:
+        Iterable of cubes containing the supplementary variables.
 
     Returns
     -------
@@ -241,20 +243,20 @@ def add_ancillary_variables(
         'areacello': 'area',
         'volcello': 'volume'
     }
-    for ancillary_cube in ancillary_cubes:
-        if (CFG['use_legacy_ancillaries']
-                and not _is_fx_broadcastable(ancillary_cube, cube)):
+    for supplementary_cube in supplementary_cubes:
+        if (CFG['use_legacy_supplementaries']
+                and not _is_fx_broadcastable(supplementary_cube, cube)):
             continue
-        if ancillary_cube.var_name in measure_names:
-            measure_name = measure_names[ancillary_cube.var_name]
-            add_cell_measure(cube, ancillary_cube, measure_name)
+        if supplementary_cube.var_name in measure_names:
+            measure_name = measure_names[supplementary_cube.var_name]
+            add_cell_measure(cube, supplementary_cube, measure_name)
         else:
-            add_ancillary_variable(cube, ancillary_cube)
+            add_ancillary_variable(cube, supplementary_cube)
     return cube
 
 
-def remove_ancillary_variables(cube: iris.cube.Cube):
-    """Remove ancillary variables.
+def remove_supplementary_variables(cube: iris.cube.Cube):
+    """Remove supplementary variables.
 
     Strip cell measures or ancillary variables from the cube containing the
     data.
@@ -262,7 +264,7 @@ def remove_ancillary_variables(cube: iris.cube.Cube):
     Parameters
     ----------
     cube: iris.cube.Cube
-        Iris cube with  data and cell measures or ancillary variables.
+        Iris cube with data and cell measures or ancillary variables.
 
     Returns
     -------
@@ -285,13 +287,13 @@ def remove_fx_variables(cube):
     .. deprecated:: 2.8.0
         This function is deprecated and will be removed in version 2.10.0.
         Please use
-        :func:`esmvalcore.preprocessor.remove_ancillary_variables`
+        :func:`esmvalcore.preprocessor.remove_supplementary_variables`
         instead.
 
     Parameters
     ----------
     cube: iris.cube.Cube
-        Iris cube with  data and cell measures or ancillary variables.
+        Iris cube with data and cell measures or ancillary variables.
 
     Returns
     -------
@@ -300,7 +302,7 @@ def remove_fx_variables(cube):
     """
     msg = ("The function `remove_fx_variables` has been deprecated in "
            "ESMValCore version 2.8.0 and is scheduled for removal in "
-           "version 2.10.0. Use the function `remove_ancillary_variables` "
+           "version 2.10.0. Use the function `remove_supplementary_variables` "
            "instead.")
     warnings.warn(msg, ESMValCoreDeprecationWarning)
-    return remove_ancillary_variables(cube)
+    return remove_supplementary_variables(cube)

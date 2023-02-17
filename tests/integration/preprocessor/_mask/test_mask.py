@@ -11,7 +11,7 @@ import pytest
 
 from esmvalcore.preprocessor import (
     PreprocessorFile,
-    add_ancillary_variables,
+    add_supplementary_variables,
     mask_fillvalues,
     mask_landsea,
     mask_landseaice,
@@ -72,7 +72,10 @@ class Test:
             self.new_cube_data,
             dim_coords_and_dims=self.cube_coords_spec
         )
-        new_cube_land = add_ancillary_variables(new_cube_land, [self.fx_mask])
+        new_cube_land = add_supplementary_variables(
+            new_cube_land,
+            [self.fx_mask],
+        )
         result_land = mask_landsea(
             new_cube_land,
             'land',
@@ -85,7 +88,10 @@ class Test:
             self.new_cube_data,
             dim_coords_and_dims=self.cube_coords_spec
         )
-        new_cube_ice = add_ancillary_variables(new_cube_ice, [self.fx_mask])
+        new_cube_ice = add_supplementary_variables(
+            new_cube_ice,
+            [self.fx_mask],
+        )
         result_ice = mask_landseaice(
             new_cube_ice,
             'ice',
@@ -100,12 +106,18 @@ class Test:
             self.new_cube_data,
             dim_coords_and_dims=self.cube_coords_spec
         )
-        new_cube_land = add_ancillary_variables(new_cube_land, [self.fx_mask])
+        new_cube_land = add_supplementary_variables(
+            new_cube_land,
+            [self.fx_mask],
+        )
         new_cube_sea = iris.cube.Cube(
             self.new_cube_data,
             dim_coords_and_dims=self.cube_coords_spec
         )
-        new_cube_sea = add_ancillary_variables(new_cube_sea, [self.fx_mask])
+        new_cube_sea = add_supplementary_variables(
+            new_cube_sea,
+            [self.fx_mask],
+        )
 
         # mask with fx files
         result_land = mask_landsea(
@@ -157,7 +169,10 @@ class Test:
             self.new_cube_data,
             dim_coords_and_dims=self.cube_coords_spec
         )
-        new_cube_ice = add_ancillary_variables(new_cube_ice, [self.fx_mask])
+        new_cube_ice = add_supplementary_variables(
+            new_cube_ice,
+            [self.fx_mask],
+        )
         result_ice = mask_landseaice(new_cube_ice, 'ice')
         expected = np.ma.empty((2, 3, 3))
         expected.data[:] = 200.

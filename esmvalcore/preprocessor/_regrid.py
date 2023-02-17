@@ -20,9 +20,9 @@ from iris.util import broadcast_to_shape
 
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.table import CMOR_TABLES
-from ._ancillary_vars import add_ancillary_variable, add_cell_measure
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
+from ._supplementary_vars import add_ancillary_variable, add_cell_measure
 
 logger = logging.getLogger(__name__)
 
@@ -551,7 +551,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     """
     if is_dataset(target_grid):
         target_grid = target_grid.copy()
-        target_grid.ancillaries.clear()
+        target_grid.supplementaries.clear()
         target_grid.files = [target_grid.files[0]]
         target_grid = target_grid.load()
     elif isinstance(target_grid, (str, Path)) and os.path.isfile(target_grid):
@@ -1038,7 +1038,7 @@ def get_reference_levels(dataset):
         levels or the string is badly formatted.
     """
     dataset = dataset.copy()
-    dataset.ancillaries.clear()
+    dataset.supplementaries.clear()
     dataset.files = [dataset.files[0]]
     cube = dataset.load()
     try:

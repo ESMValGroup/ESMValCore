@@ -13,9 +13,11 @@ from esmvalcore.dataset import Dataset, _isglob
 from esmvalcore.esgf.facets import FACETS
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.local import _replace_years_with_timerange
-from esmvalcore.preprocessor._ancillary_vars import PREPROCESSOR_ANCILLARIES
 from esmvalcore.preprocessor._derive import get_required
 from esmvalcore.preprocessor._io import DATASET_KEYS
+from esmvalcore.preprocessor._supplementary_vars import (
+    PREPROCESSOR_SUPPLEMENTARIES,
+)
 from esmvalcore.typing import Facets, FacetValue
 
 from . import check
@@ -140,16 +142,16 @@ def _get_next_alias(alias, datasets_info, i):
         )
 
 
-def _check_ancillaries_valid(ancillaries: Iterable[Facets]) -> None:
-    """Check that ancillary variables have a short_name."""
-    for facets in ancillaries:
+def _check_supplementaries_valid(supplementaries: Iterable[Facets]) -> None:
+    """Check that supplementary variables have a short_name."""
+    for facets in supplementaries:
         if 'short_name' not in facets:
             raise RecipeError(
-                "'short_name' is required for ancillary_variables "
+                "'short_name' is required for supplementary_variables "
                 f"entries, but missing in {facets}")
 
 
-def _merge_ancillary_dicts(
+def _merge_supplementary_dicts(
     var_facets: Iterable[Facets],
     ds_facets: Iterable[Facets],
 ) -> list[Facets]:
@@ -157,8 +159,8 @@ def _merge_ancillary_dicts(
 
     Both are lists of dicts containing facets
     """
-    _check_ancillaries_valid(var_facets)
-    _check_ancillaries_valid(ds_facets)
+    _check_supplementaries_valid(var_facets)
+    _check_supplementaries_valid(ds_facets)
     merged = {}
     for facets in var_facets:
         merged[facets['short_name']] = facets
@@ -187,11 +189,11 @@ def _fix_cmip5_fx_ensemble(dataset: Dataset):
             dataset.find_files()
 
 
-def _get_ancillary_short_names(
+def _get_supplementary_short_names(
     facets: Facets,
     step: str,
 ) -> list[str]:
-    """Get the most applicable ancillary short_names."""
+    """Get the most applicable supplementary short_names."""
     # Determine if the main variable is an ocean variable.
     var_facets = dict(facets)
     _update_cmor_facets(var_facets)
@@ -201,8 +203,8 @@ def _get_ancillary_short_names(
     ocean_realms = {'ocean', 'seaIce', 'ocnBgchem'}
     is_ocean_variable = any(realm in ocean_realms for realm in realms)
 
-    # Guess the best matching ancillary variable based on the realm.
-    short_names = PREPROCESSOR_ANCILLARIES[step]['variables']
+    # Guess the best matching supplementary variable based on the realm.
+    short_names = PREPROCESSOR_SUPPLEMENTARIES[step]['variables']
     if set(short_names) == {'areacella', 'areacello'}:
         short_names = ['areacello'] if is_ocean_variable else ['areacella']
     if set(short_names) == {'sftlf', 'sftof'}:
@@ -211,12 +213,12 @@ def _get_ancillary_short_names(
     return short_names
 
 
-def _append_missing_ancillaries(
-    ancillaries: list[Facets],
+def _append_missing_supplementaries(
+    supplementaries: list[Facets],
     facets: Facets,
     settings: dict[str, Any],
 ) -> None:
-    """Append wildcard definitions for missing ancillary variables."""
+    """Append wildcard definitions for missing supplementary variables."""
     default_facets = {
         'CMIP6': [
             'activity',
@@ -239,12 +241,12 @@ def _append_missing_ancillaries(
         'timerange',
     )
 
-    steps = [step for step in settings if step in PREPROCESSOR_ANCILLARIES]
+    steps = [step for step in settings if step in PREPROCESSOR_SUPPLEMENTARIES]
 
     project: str = facets['project']  # type: ignore
     for step in steps:
-        for short_name in _get_ancillary_short_names(facets, step):
-            short_names = {f['short_name'] for f in ancillaries}
+        for short_name in _get_supplementary_short_names(facets, step):
+            short_names = {f['short_name'] for f in supplementaries}
             if short_name in short_names:
                 continue
             afacets: Facets = {
@@ -261,7 +263,7 @@ def _append_missing_ancillaries(
                 if facet in facets:
                     afacets[facet] = facets[facet]
             afacets['short_name'] = short_name
-            ancillaries.append(afacets)
+            supplementaries.append(afacets)
 
 
 def _get_dataset_facets_from_recipe(
@@ -276,9 +278,9 @@ def _get_dataset_facets_from_recipe(
     facets.pop('additional_datasets', None)
     recipe_dataset = deepcopy(recipe_dataset)
 
-    ancillaries = _merge_ancillary_dicts(
-        facets.pop('ancillary_variables', []),
-        recipe_dataset.pop('ancillary_variables', []),
+    supplementaries = _merge_supplementary_dicts(
+        facets.pop('supplementary_variables', []),
+        recipe_dataset.pop('supplementary_variables', []),
     )
 
     facets.update(recipe_dataset)
@@ -313,15 +315,16 @@ def _get_dataset_facets_from_recipe(
         ),
     )
 
-    if not session['use_legacy_ancillaries']:
+    if not session['use_legacy_supplementaries']:
         preprocessor = facets.get('preprocessor', 'default')
         settings = profiles.get(preprocessor, {})
-        _append_missing_ancillaries(ancillaries, facets, settings)
-        ancillaries = [
-            facets for facets in ancillaries if not facets.pop('skip', False)
+        _append_missing_supplementaries(supplementaries, facets, settings)
+        supplementaries = [
+            facets for facets in supplementaries
+            if not facets.pop('skip', False)
         ]
 
-    return facets, ancillaries
+    return facets, supplementaries
 
 
 def _get_facets_from_recipe(
@@ -372,7 +375,7 @@ def _get_datasets_for_variable(
     datasets = []
     idx = 0
 
-    for facets, ancillaries in _get_facets_from_recipe(
+    for facets, supplementaries in _get_facets_from_recipe(
             recipe,
             diagnostic_name=diagnostic_name,
             variable_group=variable_group,
@@ -381,10 +384,10 @@ def _get_datasets_for_variable(
         template0 = Dataset(**facets)
         template0.session = session
         for template1 in template0.from_ranges():
-            for ancillary_facets in ancillaries:
-                template1.add_ancillary(**ancillary_facets)
-            for ancillary_ds in template1.ancillaries:
-                ancillary_ds.facets.pop('preprocessor', None)
+            for supplementary_facets in supplementaries:
+                template1.add_supplementary(**supplementary_facets)
+            for supplementary_ds in template1.supplementaries:
+                supplementary_ds.facets.pop('preprocessor', None)
             for dataset in _dataset_from_files(template1):
                 dataset['variable_group'] = variable_group
                 dataset['diagnostic'] = diagnostic_name
@@ -459,7 +462,7 @@ def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
 
         new_ds = dataset.copy()
         new_ds.facets.update(updated_facets)
-        new_ds.ancillaries = repr_ds.ancillaries
+        new_ds.supplementaries = repr_ds.supplementaries
         result.append(new_ds)
 
     if errors:
@@ -480,7 +483,7 @@ def _derive_needed(dataset: Dataset) -> bool:
         dataset.facets.pop('timerange')
 
     copy = dataset.copy()
-    copy.ancillaries = []
+    copy.supplementaries = []
     return not copy.files
 
 
@@ -521,8 +524,8 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
 def _representative_dataset(dataset: Dataset) -> Dataset:
     """Find a representative dataset that has files available."""
     copy = dataset.copy()
-    copy.ancillaries = []
+    copy.supplementaries = []
     datasets = _get_input_datasets(copy)
     representative_dataset = datasets[0]
-    representative_dataset.ancillaries = dataset.ancillaries
+    representative_dataset.supplementaries = dataset.supplementaries
     return representative_dataset

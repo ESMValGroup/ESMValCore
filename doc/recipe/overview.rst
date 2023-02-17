@@ -162,7 +162,7 @@ The filename of this recipe will end with ``_filled.yml``.
 For the ``timerange`` facet, special syntax is available.
 See :ref:`timerange_examples` for more information.
 
-.. _ancillary_variables:
+.. _supplementary_variables:
 
 Adding ancillary variables and cell measures
 --------------------------------------------
@@ -170,14 +170,16 @@ Adding ancillary variables and cell measures
 It is common practice to store ancillary variables (e.g. land/sea/ice masks)
 and cell measures (e.g. cell area, cell volume) in separate datasets that are
 described by slightly different facets.
+In ESMValCore, we call ancillary variables and cell measures "supplementary
+variables".
 Some :ref:`preprocessor functions <Preprocessors>` need this information to
 work.
 For example, the :ref:`area_statistics<area_statistics>` preprocessor function
 needs to know area of each grid cell in order to compute a correctly weighted
 statistic.
 
-To attach these variables to a dataset, the ``ancillary_variables`` keyword can
-be used.
+To attach these variables to a dataset, the ``supplementary_variables`` keyword
+can be used.
 For example, to add cell area to a dataset, it can be specified as follows:
 
 .. code-block:: yaml
@@ -188,23 +190,23 @@ For example, to add cell area to a dataset, it can be specified as follows:
       exp: historical
       ensemble: r1i1p1f1
       grid: gn
-      ancillary_variables:
+      supplementary_variables:
         - short_name: areacella
           mip: fx
           exp: 1pctCO2
 
-Note that the ancillary variable will inherit the facet values from the main
+Note that the supplementary variable will inherit the facet values from the main
 dataset, so only those facet values that differ need to be specified.
 
-.. _ancillary_dataset_wildcards:
+.. _supplementary_dataset_wildcards:
 
-Automatically selecting the ancillary dataset
----------------------------------------------
+Automatically selecting the supplementary dataset
+-------------------------------------------------
 
 When using many datasets, it may be quite a bit of work to find out which facet
-values are required to find the corresponding ancillary data.
-The tool can automatically guess the best matching ancillary dataset.
-To use this feature, the ancillary dataset can be specified as:
+values are required to find the corresponding supplementary data.
+The tool can automatically guess the best matching supplementary dataset.
+To use this feature, the supplementary dataset can be specified as:
 
 .. code-block:: yaml
 
@@ -214,7 +216,7 @@ To use this feature, the ancillary dataset can be specified as:
       exp: historical
       ensemble: r1i1p1f1
       grid: gn
-      ancillary_variables:
+      supplementary_variables:
         - short_name: areacella
           mip: fx
           exp: '*'
@@ -222,28 +224,28 @@ To use this feature, the ancillary dataset can be specified as:
           ensemble: '*'
 
 With this syntax, the tool will search all available values of ``exp``,
-``activity``, and ``ensemble`` and use the ancillary dataset that shares the
+``activity``, and ``ensemble`` and use the supplementary dataset that shares the
 most facet values with the main dataset.
 Note that this behaviour is different from
 :ref:`using wildcards in the main dataset <dataset_wildcards>`,
 where they will be expanded to generate all matching datasets.
-The available datasets are shown in the log messages when running a recipe
-with wildcards, so if a different ancillary dataset is preferred, these messages
-can be used to see what facet values are available.
+The available datasets are shown in the debug log messages when running a recipe
+with wildcards, so if a different supplementary dataset is preferred, these
+messages can be used to see what facet values are available.
 
-Automatic definition of ancillary variables
--------------------------------------------
+Automatic definition of supplementary variables
+-----------------------------------------------
 
 If an ancillary variable or cell measure is
-:ref:`needed by a preprocessor function <preprocessors_using_ancillary_variables>`,
+:ref:`needed by a preprocessor function <preprocessors_using_supplementary_variables>`,
 but it is not specified in the recipe, the tool will automatically make a best
 guess using the syntax above.
 Usually this will work fine, but if it does not, it is recommended to explicitly
-define the ancillary variables in the recipe.
+define the supplementary variables in the recipe.
 
-To disable this automatic addition, define the ancillary variable as usual,
+To disable this automatic addition, define the supplementary variable as usual,
 but add the special facet ``skip`` with value ``true``.
-See :ref:`preprocessors_using_ancillary_variables` for an example recipe.
+See :ref:`preprocessors_using_supplementary_variables` for an example recipe.
 
 Saving ancillary variables and cell measures
 --------------------------------------------
@@ -251,9 +253,9 @@ Saving ancillary variables and cell measures
 By default, ancillary variables and cell measures will be removed
 from the main variable before saving it to file because they can be as big as
 the main variable.
-To keep the ancillary variables, disable the preprocessor function that removes
-them by setting ``remove_ancillary_variables: false`` in the preprocessor profile
-in the recipe.
+To keep the supplementary variables, disable the preprocessor function that
+removes them by setting ``remove_supplementary_variables: false`` in the
+preprocessor profile in the recipe.
 
 Concatenating data corresponding to multiple facets
 ---------------------------------------------------

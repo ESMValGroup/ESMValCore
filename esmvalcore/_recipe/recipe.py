@@ -42,13 +42,15 @@ from esmvalcore.preprocessor import (
     PreprocessingTask,
     PreprocessorFile,
 )
-from esmvalcore.preprocessor._ancillary_vars import PREPROCESSOR_ANCILLARIES
 from esmvalcore.preprocessor._other import _group_products
 from esmvalcore.preprocessor._regrid import (
     _spec_to_latlonvals,
     get_cmor_levels,
     get_reference_levels,
     parse_cell_spec,
+)
+from esmvalcore.preprocessor._supplementary_vars import (
+    PREPROCESSOR_SUPPLEMENTARIES,
 )
 from esmvalcore.typing import Facets
 
@@ -224,7 +226,7 @@ def _get_default_settings(dataset):
     # Clean up fixed files
     if not session['save_intermediary_cubes']:
         fix_dirs = []
-        for item in [dataset] + dataset.ancillaries:
+        for item in [dataset] + dataset.supplementaries:
             output_file = _get_output_file(item.facets, session.preproc_dir)
             fix_dir = f"{output_file.with_suffix('')}_fixed"
             fix_dirs.append(fix_dir)
@@ -232,8 +234,8 @@ def _get_default_settings(dataset):
             'remove': fix_dirs,
         }
 
-    # Strip ancillary variables before saving
-    settings['remove_ancillary_variables'] = {}
+    # Strip supplementary variables before saving
+    settings['remove_supplementary_variables'] = {}
 
     # Configure saving cubes to file
     settings['save'] = {'compress': session['compress_netcdf']}
@@ -270,7 +272,7 @@ def _guess_fx_mip(facets: dict, dataset: Dataset):
         logger.debug("For fx variable '%s', found table '%s'",
                      facets['short_name'], mip)
         fx_dataset = dataset.copy(**facets)
-        fx_dataset.ancillaries = []
+        fx_dataset.supplementaries = []
         fx_dataset.set_facet('mip', mip)
         fx_dataset.facets.pop('timerange', None)
         fx_files = fx_dataset.files
@@ -328,20 +330,21 @@ def _set_default_preproc_fx_variables(
             settings[step]['fx_variables'] = fx_variables
 
 
-def _get_ancillaries_from_fx_variables(
+def _get_supplementaries_from_fx_variables(
     settings: PreprocessorSettings
 ) -> list[Facets]:
-    """Read ancillary facets from `fx_variables` in preprocessor settings."""
-    ancillaries = []
+    """Read supplementary facets from `fx_variables` in preprocessor."""
+    supplementaries = []
     for step, kwargs in settings.items():
-        allowed = PREPROCESSOR_ANCILLARIES.get(step, {}).get('variables', [])
+        allowed = PREPROCESSOR_SUPPLEMENTARIES.get(step,
+                                                   {}).get('variables', [])
         if fx_variables := kwargs.get('fx_variables'):
 
             if isinstance(fx_variables, list):
                 result: dict[str, Facets] = {}
                 for fx_variable in fx_variables:
                     if isinstance(fx_variable, str):
-                        # Legacy legacy method of specifying ancillary variable
+                        # Legacy legacy method of specifying fx variable
                         short_name = fx_variable
                         result[short_name] = {}
                     elif isinstance(fx_variable, dict):
@@ -353,58 +356,58 @@ def _get_ancillaries_from_fx_variables(
                 if short_name not in allowed:
                     raise RecipeError(
                         f"Preprocessor function '{step}' does not support "
-                        f"ancillary variable '{short_name}'")
+                        f"supplementary variable '{short_name}'")
                 if facets is None:
                     facets = {}
                 facets['short_name'] = short_name
-                ancillaries.append(facets)
+                supplementaries.append(facets)
 
-    return ancillaries
+    return supplementaries
 
 
-def _get_legacy_ancillary_facets(
+def _get_legacy_supplementary_facets(
     dataset: Dataset,
     settings: PreprocessorSettings,
 ) -> list[Facets]:
-    """Load the ancillary dataset facets from the preprocessor settings."""
+    """Load the supplementary dataset facets from the preprocessor settings."""
     # First update `fx_variables` in preprocessor settings with defaults
     _set_default_preproc_fx_variables(dataset, settings)
 
-    ancillaries = _get_ancillaries_from_fx_variables(settings)
+    supplementaries = _get_supplementaries_from_fx_variables(settings)
 
     # Guess the ensemble and mip if they is not specified
-    for facets in ancillaries:
+    for facets in supplementaries:
         if 'ensemble' not in facets and dataset.facets['project'] == 'CMIP5':
             facets['ensemble'] = 'r0i0p0'
         if 'mip' not in facets:
             facets['mip'] = _guess_fx_mip(facets, dataset)
-    return ancillaries
+    return supplementaries
 
 
-def _add_legacy_ancillary_datasets(dataset: Dataset, settings):
+def _add_legacy_supplementary_datasets(dataset: Dataset, settings):
     """Update fx settings depending on the needed method."""
-    if not dataset.session['use_legacy_ancillaries']:
+    if not dataset.session['use_legacy_supplementaries']:
         return
-    if dataset.ancillaries:
-        # Ancillaries have been defined in the recipe.
-        # Just remove any skipped ancillaries (they have been kept so we know
-        # that ancillaries have been defined in the recipe).
-        dataset.ancillaries = [
-            ds for ds in dataset.ancillaries
+    if dataset.supplementaries:
+        # Supplementaries have been defined in the recipe.
+        # Just remove any skipped supplementaries (they have been kept so we
+        # know that supplementaries have been defined in the recipe).
+        dataset.supplementaries = [
+            ds for ds in dataset.supplementaries
             if not ds.facets.get('skip', False)
         ]
         return
 
-    logger.debug("Using legacy method to add ancillaries to %s", dataset)
+    logger.debug("Using legacy method to add supplementaries to %s", dataset)
 
     legacy_ds = dataset.copy()
-    for facets in _get_legacy_ancillary_facets(dataset, settings):
-        legacy_ds.add_ancillary(**facets)
+    for facets in _get_legacy_supplementary_facets(dataset, settings):
+        legacy_ds.add_supplementary(**facets)
 
-    for ancillary_ds in legacy_ds.ancillaries:
-        _update_cmor_facets(ancillary_ds.facets, override=True)
-        if ancillary_ds.files:
-            dataset.ancillaries.append(ancillary_ds)
+    for supplementary_ds in legacy_ds.supplementaries:
+        _update_cmor_facets(supplementary_ds.facets, override=True)
+        if supplementary_ds.files:
+            dataset.supplementaries.append(supplementary_ds)
 
     dataset._fix_fx_exp()
 
@@ -444,12 +447,12 @@ def _schedule_for_download(datasets):
     """Schedule files for download and show the list of files in the log."""
     for dataset in datasets:
         _add_to_download_list(dataset)
-        for ancillary_ds in dataset.ancillaries:
-            _add_to_download_list(ancillary_ds)
+        for supplementary_ds in dataset.supplementaries:
+            _add_to_download_list(supplementary_ds)
 
         files = list(dataset.files)
-        for ancillary_ds in dataset.ancillaries:
-            files.extend(ancillary_ds.files)
+        for supplementary_ds in dataset.supplementaries:
+            files.extend(supplementary_ds.files)
 
         logger.debug(
             "Using input files for variable %s of dataset %s:\n%s",
@@ -465,7 +468,7 @@ def _check_input_files(input_datasets: Iterable[Dataset]) -> set[str]:
     missing = set()
 
     for input_dataset in input_datasets:
-        for dataset in [input_dataset] + input_dataset.ancillaries:
+        for dataset in [input_dataset] + input_dataset.supplementaries:
             try:
                 check.data_availability(dataset)
             except RecipeError as exc:
@@ -680,8 +683,8 @@ def _set_version(dataset: Dataset, input_datasets: list[Dataset]):
     if versions:
         version = versions.pop() if len(versions) == 1 else sorted(versions)
         dataset.set_facet('version', version)
-    for ancillary_ds in dataset.ancillaries:
-        ancillary_ds.set_version()
+    for supplementary_ds in dataset.supplementaries:
+        supplementary_ds.set_version()
 
 
 def _get_preprocessor_products(
@@ -711,8 +714,8 @@ def _get_preprocessor_products(
         _update_preproc_functions(settings, dataset, datasets, missing_vars)
         input_datasets = _get_input_datasets(dataset)
         for input_dataset in input_datasets:
-            _add_legacy_ancillary_datasets(input_dataset, settings)
-            check.preprocessor_ancillaries(input_dataset, settings)
+            _add_legacy_supplementary_datasets(input_dataset, settings)
+            check.preprocessor_supplementaries(input_dataset, settings)
         missing = _check_input_files(input_datasets)
         if missing:
             if _allow_skipping(dataset):
@@ -916,7 +919,7 @@ class Recipe:
         self._preprocessors = raw_recipe.get('preprocessors', {})
         if 'default' not in self._preprocessors:
             self._preprocessors['default'] = {}
-        self._set_use_legacy_ancillaries()
+        self._set_use_legacy_supplementaries()
         self.datasets = Dataset.from_recipe(recipe_file, session)
         self.diagnostics = self._initialize_diagnostics(
             raw_recipe['diagnostics'])
@@ -928,8 +931,8 @@ class Recipe:
             self._log_recipe_errors(exc)
             raise
 
-    def _set_use_legacy_ancillaries(self):
-        """Automatically determine if legacy ancillaries are used."""
+    def _set_use_legacy_supplementaries(self):
+        """Automatically determine if legacy supplementaries are used."""
         names = set()
         steps = set()
         for name, profile in self._preprocessors.items():
@@ -937,7 +940,7 @@ class Recipe:
                 if isinstance(kwargs, dict) and 'fx_variables' in kwargs:
                     names.add(name)
                     steps.add(step)
-                    if self.session['use_legacy_ancillaries'] is False:
+                    if self.session['use_legacy_supplementaries'] is False:
                         kwargs.pop('fx_variables')
         if names:
             warnings.warn(
@@ -946,20 +949,20 @@ class Recipe:
                     f"{sorted(names)}, function(s) {sorted(steps)}. The "
                     "'fx_variables' argument is deprecated and will stop "
                     "working in v2.10. Please remove it and if automatic "
-                    "definition of ancillary variables does not work "
-                    "correctly, specify the ancillary variables in the "
+                    "definition of supplementary variables does not work "
+                    "correctly, specify the supplementary variables in the "
                     "recipe as described in TODO: add URL."))
-            if self.session['use_legacy_ancillaries'] is None:
-                logger.info("Running with --use-legacy-ancillaries=True")
-                self.session['use_legacy_ancillaries'] = True
+            if self.session['use_legacy_supplementaries'] is None:
+                logger.info("Running with --use-legacy-supplementaries=True")
+                self.session['use_legacy_supplementaries'] = True
 
         # Also set the global config because it is used to check if
         # mismatching shapes should be ignored when attaching
-        # ancillary variables in
-        # `esmvalcore.preprocessor._ancillary_vars.add_ancillary_variables`
-        # to avoid having to introduce a new function argument that is
-        # immediately deprecated.
-        CFG['use_legacy_ancillaries'] = self.session['use_legacy_ancillaries']
+        # supplementary variables in `esmvalcore.preprocessor.
+        # _supplementary_vars.add_supplementary_variables` to avoid having to
+        # introduce a new function argument that is immediately deprecated.
+        option = 'use_legacy_supplementaries'
+        CFG[option] = self.session[option]
 
     def _log_recipe_errors(self, exc):
         """Log a message with recipe errors."""

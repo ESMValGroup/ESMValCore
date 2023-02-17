@@ -9,8 +9,8 @@ import dask.array as da
 import iris
 import numpy as np
 
-from ._ancillary_vars import register_ancillaries
 from ._shared import get_iris_analysis_operation, operator_accept_weights
+from ._supplementary_vars import register_supplementaries
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,7 @@ def calculate_volume(cube):
     return grid_volume
 
 
-@register_ancillaries(
+@register_supplementaries(
     variables=['volcello'],
     required='prefer_at_least_one',
 )

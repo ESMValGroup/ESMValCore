@@ -23,7 +23,9 @@ from iris.exceptions import MergeError
 from iris.util import equalise_attributes, new_axis
 
 from esmvalcore.iris_helpers import date2num
-from esmvalcore.preprocessor import remove_ancillary_variables
+from esmvalcore.preprocessor._supplementary_vars import (
+    remove_supplementary_variables,
+)
 
 from ._other import _group_products
 
@@ -366,7 +368,7 @@ def _equalise_fx_variables(cubes):
     """Equalise fx variables in cubes (in-place)."""
     # Simple remove all fx variables
     for cube in cubes:
-        remove_ancillary_variables(cube)
+        remove_supplementary_variables(cube)
 
 
 def _equalise_var_metadata(cubes):

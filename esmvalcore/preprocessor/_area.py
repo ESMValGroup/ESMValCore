@@ -14,16 +14,16 @@ import shapely.ops
 from dask import array as da
 from iris.exceptions import CoordinateNotFoundError
 
-from ._ancillary_vars import (
-    add_ancillary_variable,
-    add_cell_measure,
-    register_ancillaries,
-    remove_ancillary_variables,
-)
 from ._shared import (
     get_iris_analysis_operation,
     guess_bounds,
     operator_accept_weights,
+)
+from ._supplementary_vars import (
+    add_ancillary_variable,
+    add_cell_measure,
+    register_supplementaries,
+    remove_supplementary_variables,
 )
 
 logger = logging.getLogger(__name__)
@@ -203,7 +203,7 @@ def compute_area_weights(cube):
     return weights
 
 
-@register_ancillaries(
+@register_supplementaries(
     variables=['areacella', 'areacello'],
     required='prefer_at_least_one',
 )
@@ -665,7 +665,7 @@ def _mask_cube(cube, selections):
     cubelist = iris.cube.CubeList()
     for id_, select in selections.items():
         _cube = cube.copy()
-        remove_ancillary_variables(_cube)
+        remove_supplementary_variables(_cube)
         _cube.add_aux_coord(
             iris.coords.AuxCoord(id_, units='no_unit', long_name="shape_id"))
         select = da.broadcast_to(select, _cube.shape)
