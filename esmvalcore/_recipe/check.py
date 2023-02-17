@@ -247,8 +247,17 @@ def _verify_groupby(groupby):
 def _verify_keep_input_datasets(keep_input_datasets):
     if not isinstance(keep_input_datasets, bool):
         raise RecipeError(
-            "Invalid value encountered for `keep_input_datasets`."
-            f"Must be defined as a boolean. Got {keep_input_datasets}.")
+            f"Invalid value encountered for `keep_input_datasets`."
+            f"Must be defined as a boolean (true or false). "
+            f"Got {keep_input_datasets}.")
+
+
+def _verify_ignore_scalar_coords(ignore_scalar_coords):
+    if not isinstance(ignore_scalar_coords, bool):
+        raise RecipeError(
+            f"Invalid value encountered for `ignore_scalar_coords`."
+            f"Must be defined as a boolean (true or false). Got "
+            f"{ignore_scalar_coords}.")
 
 
 def _verify_arguments(given, expected):
@@ -262,7 +271,13 @@ def _verify_arguments(given, expected):
 
 def multimodel_statistics_preproc(settings):
     """Check that the multi-model settings are valid."""
-    valid_keys = ['span', 'groupby', 'statistics', 'keep_input_datasets']
+    valid_keys = [
+        'groupby',
+        'ignore_scalar_coords',
+        'keep_input_datasets',
+        'span',
+        'statistics',
+    ]
     _verify_arguments(settings.keys(), valid_keys)
 
     span = settings.get('span', None)  # optional, default: overlap
@@ -280,10 +295,17 @@ def multimodel_statistics_preproc(settings):
     keep_input_datasets = settings.get('keep_input_datasets', True)
     _verify_keep_input_datasets(keep_input_datasets)
 
+    ignore_scalar_coords = settings.get('ignore_scalar_coords', False)
+    _verify_ignore_scalar_coords(ignore_scalar_coords)
+
 
 def ensemble_statistics_preproc(settings):
     """Check that the ensemble settings are valid."""
-    valid_keys = ['statistics', 'span']
+    valid_keys = [
+        'ignore_scalar_coords',
+        'span',
+        'statistics',
+    ]
     _verify_arguments(settings.keys(), valid_keys)
 
     span = settings.get('span', 'overlap')  # optional, default: overlap
@@ -293,6 +315,9 @@ def ensemble_statistics_preproc(settings):
     statistics = settings.get('statistics', None)
     if statistics:
         _verify_statistics(statistics, 'ensemble_statistics')
+
+    ignore_scalar_coords = settings.get('ignore_scalar_coords', False)
+    _verify_ignore_scalar_coords(ignore_scalar_coords)
 
 
 def _check_delimiter(timerange):
