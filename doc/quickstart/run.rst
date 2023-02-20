@@ -60,8 +60,10 @@ It is also possible to explicitly change values from the config file using flags
 	esmvaltool run --argument_name argument_value recipe_example.yml
 
 To automatically download the files required to run a recipe from ESGF, set
-``search_esgf`` to ``default`` or ``always`` in the :ref:`user configuration
-file` or run the tool with the corresponding commands
+``search_esgf`` to ``default`` (use local files whenever possible) or
+``always`` (always search ESGF for latest version of files and only use local
+data if it is the latest version) in the :ref:`user configuration file` or run
+the tool with the corresponding commands
 
 .. code:: bash
 
