@@ -164,16 +164,19 @@ The same simplified syntax can be used to add multiple sub-experiment ids:
 When using the ``timerange`` tag to specify the start and end points, possible values can be as follows:
 
   - A start and end point specified with a resolution up to seconds (YYYYMMDDThhmmss)
+
     * ``timerange: '1980/1982'``. Spans from 01/01/1980 to 31/12/1980.
     * ``timerange: '198002/198205'``. Spans from 01/02/1980 to 31/05/1982.
     * ``timerange: '19800302/19820403'``. Spans from 02/03/1980 to 03/04/1982.
     * ``timerange: '19800504T100000/19800504T110000'``. Spans from 04/05/1980 at 10h to 11h.
 
   - A start point or end point, and a relative period with a resolution up to second (P[n]Y[n]M[n]DT[n]H[n]M[n]S).
+
     * ``timerange: '1980/P5Y'``. Starting from 01/01/1980, spans 5 years.
     * ``timerange: 'P2Y5M/198202``. Ending at 28/02/1982, spans 2 years and 5 months.
 
   - A wildcard to load all available years, the first available start point or the last available end point.
+
     * ``timerange: '*'``. Finds all available years.
     * ``timerange: '*/1982``. Finds first available point, spans to 31/12/1982.
     * ``timerange: '*/P6Y``. Finds first available point, spans 6 years from it.
