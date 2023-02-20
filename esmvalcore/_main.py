@@ -491,13 +491,8 @@ class ESMValTool():
 def run():
     """Run the `esmvaltool` program, logging any exceptions."""
     import sys
-    import warnings
 
-    from .exceptions import (
-        ESMValCoreDeprecationWarning,
-        RecipeError,
-        show_esmvalcore_deprecation_warnings,
-    )
+    from .exceptions import RecipeError
 
     # Workaround to avoid using more for the output
 
@@ -507,46 +502,33 @@ def run():
 
     fire.core.Display = display
 
-    # Always show ESMValCoreDeprecationWarnings at the end of the run to make
-    # them more visible for users.
-    # For this, ignore ESMValCoreDeprecationWarnings when they appear and use
-    # the global variable ESMVALCORE_DEPRECATION_WARNINGS (where these warnings
-    # are stored) to raise them at the end.
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore', category=ESMValCoreDeprecationWarning)
-
-        # Run ESMValTool
-        try:
-            fire.Fire(ESMValTool())
-        except fire.core.FireExit:
-            raise
-        except RecipeError as exc:
-            # Hide the stack trace for RecipeErrors
-            logger.error("%s", exc)
-            logger.debug("Stack trace for debugging:", exc_info=True)
-            show_esmvalcore_deprecation_warnings()
-            sys.exit(1)
-        except Exception:  # noqa
-            if not logger.handlers:
-                # Add a logging handler if main failed to do so.
-                logging.basicConfig()
-            logger.exception(
-                "Program terminated abnormally, see stack trace "
-                "below for more information:",
-                exc_info=True)
-            logger.info(
-                "\n"
-                "If you have a question or need help, please start a new "
-                "discussion on "
-                "https://github.com/ESMValGroup/ESMValTool/discussions"
-                "\n"
-                "If you suspect this is a bug, please open an issue on "
-                "https://github.com/ESMValGroup/ESMValTool/issues"
-                "\n"
-                "To make it easier to find out what the problem is, please "
-                "consider attaching the files run/recipe_*.yml and "
-                "run/main_log_debug.txt from the output directory.")
-            show_esmvalcore_deprecation_warnings()
-            sys.exit(1)
-
-        show_esmvalcore_deprecation_warnings()
+    try:
+        fire.Fire(ESMValTool())
+    except fire.core.FireExit:
+        raise
+    except RecipeError as exc:
+        # Hide the stack trace for RecipeErrors
+        logger.error("%s", exc)
+        logger.debug("Stack trace for debugging:", exc_info=True)
+        sys.exit(1)
+    except Exception:  # noqa
+        if not logger.handlers:
+            # Add a logging handler if main failed to do so.
+            logging.basicConfig()
+        logger.exception(
+            "Program terminated abnormally, see stack trace "
+            "below for more information:",
+            exc_info=True)
+        logger.info(
+            "\n"
+            "If you have a question or need help, please start a new "
+            "discussion on "
+            "https://github.com/ESMValGroup/ESMValTool/discussions"
+            "\n"
+            "If you suspect this is a bug, please open an issue on "
+            "https://github.com/ESMValGroup/ESMValTool/issues"
+            "\n"
+            "To make it easier to find out what the problem is, please "
+            "consider attaching the files run/recipe_*.yml and "
+            "run/main_log_debug.txt from the output directory.")
+        sys.exit(1)

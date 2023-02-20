@@ -144,8 +144,7 @@ not available locally and store it in ``download_dir`` using the ``ESGF``
 directory structure defined in the :ref:`config-developer`.
 If ``search_esgf`` is set to ``always``, the tool will check for the data
 mentioned above on ESGF regardless of the data availability on the local
-filesystem, and only use local files if they correspond to the latest version
-(all other files will be downloaded).
+filesystem, and only use local files if they correspond to the latest version.
 
 The ``auxiliary_data_dir`` setting is the path to place any required
 additional auxiliary data files. This is necessary because certain
