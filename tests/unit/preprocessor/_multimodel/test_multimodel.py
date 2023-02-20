@@ -25,6 +25,16 @@ FREQUENCY_OPTIONS = ('daily', 'monthly', 'yearly')  # hourly
 CALENDAR_OPTIONS = ('360_day', '365_day', 'standard', 'proleptic_gregorian',
                     'julian')
 
+EQUAL_NAMES = [
+    ['var_name'],
+    ['standard_name'],
+    ['long_name'],
+    ['var_name', 'standard_name'],
+    ['var_name', 'long_name'],
+    ['standard_name', 'long_name'],
+    ['var_name', 'standard_name', 'long_name'],
+]
+
 
 def assert_array_allclose(this, other):
     """Assert that array `this` is close to array `other`."""
@@ -514,16 +524,37 @@ def test_combine_inconsistent_var_names_fail():
         mm._combine(cubes)
 
 
-@pytest.mark.parametrize('scalar_coord', ['p0', 'ptop'])
-def test_combine_with_scalar_coords_to_remove(scalar_coord):
+def test_combine_with_scalar_coords_to_remove():
     """Test _combine with scalar coordinates that should be removed."""
-    num_cubes = 5
-    cubes = []
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(3))
+    scalar_coord_0 = AuxCoord(0.0, standard_name='height', units='m')
+    scalar_coord_1 = AuxCoord(1.0, long_name='Test scalar coordinate')
+    cubes[0].add_aux_coord(scalar_coord_0, ())
+    cubes[1].add_aux_coord(scalar_coord_1, ())
 
-    for num in range(num_cubes):
-        cube = generate_cube_from_dates('monthly')
-        cubes.append(cube)
+    merged_cube = mm._combine(cubes, ignore_scalar_coords=True)
+    assert merged_cube.shape == (3, 3)
+    assert not merged_cube.coords(dimensions=())
 
+
+def test_combine_with_scalar_coords_to_remove_fail():
+    """Test _combine with scalar coordinates that should not be removed."""
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(2))
+    scalar_coord_0 = AuxCoord(0.0, standard_name='height', units='m')
+    cubes[0].add_aux_coord(scalar_coord_0, ())
+
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
+    with pytest.raises(ValueError, match=msg):
+        mm._combine(cubes)
+
+
+@pytest.mark.parametrize('scalar_coord', ['p0', 'ptop'])
+def test_combine_with_special_scalar_coords_to_remove(scalar_coord):
+    """Test _combine with scalar coordinates that should be removed."""
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(5))
     scalar_coord_0 = AuxCoord(0.0, var_name=scalar_coord)
     scalar_coord_1 = AuxCoord(1.0, var_name=scalar_coord)
     cubes[0].add_aux_coord(scalar_coord_0, ())
@@ -840,6 +871,65 @@ def test_ignore_tas_scalar_height_coord():
     assert result["mean"].coord("height").points == 1.75
 
 
+PRODUCTS = [
+    CubeList(generate_cube_from_dates('monthly') for _ in range(3)),
+    [
+        PreprocessorFile(generate_cube_from_dates('monthly')) for _ in range(3)
+    ],
+]
+SCALAR_COORD = AuxCoord(2.0, standard_name='height', units='m')
+PRODUCTS[0][0].add_aux_coord(SCALAR_COORD, ())
+PRODUCTS[1][0].cubes[0].add_aux_coord(SCALAR_COORD, ())
+PRODUCTS[1] = set(PRODUCTS[1])
+
+
+@pytest.mark.parametrize('products', PRODUCTS)
+def test_ignore_different_scalar_coords(products):
+    """Ignore different scalar coords if desired."""
+    stat = 'mean'
+    output = PreprocessorFile()
+    output_products = {'': {stat: output}}
+    kwargs = {
+        'statistics': [stat],
+        'span': 'full',
+        'output_products': output_products,
+        'keep_input_datasets': False,
+        'ignore_scalar_coords': True,
+    }
+
+    results = mm.multi_model_statistics(products, **kwargs)
+
+    assert len(results) == 1
+    if isinstance(results, dict):  # for cube as input
+        cube = results[stat]
+    else:  # for PreprocessorFile as input
+        result = next(iter(results))
+        assert len(result.cubes) == 1
+        cube = result.cubes[0]
+    assert not cube.coords(dimensions=())
+
+
+@pytest.mark.parametrize('products', PRODUCTS)
+def test_do_not_ignore_different_scalar_coords(products):
+    """Do not ignore different scalar coords if desired."""
+    stat = 'mean'
+    output = PreprocessorFile()
+    output_products = {'': {stat: output}}
+    kwargs = {
+        'statistics': [stat],
+        'span': 'full',
+        'output_products': output_products,
+        'keep_input_datasets': False,
+    }
+
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
+    with pytest.raises(ValueError, match=msg):
+        mm.multi_model_statistics(products, **kwargs)
+
+
 def test_daily_inconsistent_calendars():
     """Determine behaviour for inconsistent calendars.
 
@@ -1032,6 +1122,98 @@ def test_arbitrary_dims_0d(cubes_with_arbitrary_dimensions):
     assert_array_allclose(stat_cube.data, np.ma.array(0.0))
 
 
+@pytest.mark.parametrize('equal_names', EQUAL_NAMES)
+def test_preserve_equal_name_cubes(equal_names):
+    """Test ``multi_model_statistics`` with equal-name cubes."""
+    all_names = ['var_name', 'standard_name', 'long_name']
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(5))
+
+    # Prepare names of input cubes accordingly
+    for (idx, cube) in enumerate(cubes):
+        for name in all_names:
+            if name in equal_names or idx != 0:
+                setattr(cube, name, 'air_pressure')
+            else:  # Different value for first cube if non-equal name
+                setattr(cube, name, None)
+
+    stat_cubes = multi_model_statistics(cubes, span='overlap',
+                                        statistics=['sum'])
+
+    assert len(stat_cubes) == 1
+    stat_cube = stat_cubes['sum']
+    assert_array_allclose(stat_cube.data, np.ma.array([5.0, 5.0, 5.0]))
+
+    for name in all_names:
+        assert getattr(stat_cube, name) == 'air_pressure'
+
+
+@pytest.mark.parametrize('equal_names', EQUAL_NAMES)
+def test_equal_name_different_units_cubes(equal_names):
+    """Test ``multi_model_statistics`` with equal-name non-equal unit cubes."""
+    all_names = ['var_name', 'standard_name', 'long_name']
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(5))
+
+    # Prepare names of input cubes accordingly
+    cubes[0].units = 'kg'
+    for (idx, cube) in enumerate(cubes):
+        for name in all_names:
+            if name in equal_names or idx != 0:
+                setattr(cube, name, 'air_pressure')
+            else:  # Different value for first cube if non-equal name
+                setattr(cube, name, None)
+
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
+    with pytest.raises(ValueError, match=msg):
+        multi_model_statistics(cubes, span='overlap', statistics=['sum'])
+
+
+def test_equalise_var_metadata():
+    """Test ``_equalise_var_metadata``."""
+    cubes = CubeList(
+        generate_cube_from_dates('monthly', var_name='x') for _ in range(5)
+    )
+
+    # Prepare names of input cubes accordingly
+    cubes[0].units = 'kg'
+    cubes[0].standard_name = 'air_pressure'
+    cubes[0].long_name = 'b'
+    cubes[1].units = 'kg'
+    cubes[1].standard_name = 'air_pressure'
+    cubes[1].long_name = 'a'
+    cubes[1].var_name = 'y'
+    cubes[2].units = 'kg'
+    cubes[3].units = 'm'
+    cubes[3].long_name = 'X'
+    cubes[4].units = 'm'
+    cubes[4].long_name = 'X'
+
+    mm._equalise_var_metadata(cubes)
+
+    assert cubes[0].standard_name == 'air_pressure'
+    assert cubes[0].long_name == 'a'
+    assert cubes[0].var_name == 'x'
+    assert cubes[0].units == 'kg'
+    assert cubes[1].standard_name == 'air_pressure'
+    assert cubes[1].long_name == 'a'
+    assert cubes[1].var_name == 'x'
+    assert cubes[1].units == 'kg'
+    assert cubes[2].standard_name is None
+    assert cubes[2].long_name is None
+    assert cubes[2].var_name == 'x'
+    assert cubes[2].units == 'kg'
+    assert cubes[3].standard_name is None
+    assert cubes[3].long_name == 'X'
+    assert cubes[3].var_name == 'x'
+    assert cubes[3].units == 'm'
+    assert cubes[4].standard_name is None
+    assert cubes[4].long_name == 'X'
+    assert cubes[4].var_name == 'x'
+    assert cubes[4].units == 'm'
+
+
 def test_preserve_equal_coordinates():
     """Test ``multi_model_statistics`` with equal input coordinates."""
     cubes = get_cube_for_equal_coords_test(5)
@@ -1077,18 +1259,7 @@ def test_preserve_non_equal_coordinates():
     assert stat_cube.coord('x').attributes == {}
 
 
-@pytest.mark.parametrize(
-    'equal_names',
-    [
-        ['var_name'],
-        ['standard_name'],
-        ['long_name'],
-        ['var_name', 'standard_name'],
-        ['var_name', 'long_name'],
-        ['standard_name', 'long_name'],
-        ['var_name', 'standard_name', 'long_name'],
-    ]
-)
+@pytest.mark.parametrize('equal_names', EQUAL_NAMES)
 def test_preserve_equal_name_coordinates(equal_names):
     """Test ``multi_model_statistics`` with equal-name coordinates."""
     all_names = ['var_name', 'standard_name', 'long_name']

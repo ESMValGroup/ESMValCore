@@ -12,6 +12,7 @@ dependencies:
   - compilers
   - esgf-pyclient>=0.3.1
   - esmpy!=8.1.0,<8.4  # see github.com/ESMValGroup/ESMValCore/issues/1208
+  - filelock
   - fiona
   - fire
   - geopy

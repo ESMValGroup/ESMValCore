@@ -301,6 +301,10 @@ class ESMValTool():
         self.config = Config()
         self.recipes = Recipes()
         self._extra_packages = {}
+        if not list(iter_entry_points('esmvaltool_commands')):
+            print("Running esmvaltool executable from ESMValCore. "
+                  "No other command line utilities are available "
+                  "until ESMValTool is installed.")
         for entry_point in iter_entry_points('esmvaltool_commands'):
             self._extra_packages[entry_point.dist.project_name] = \
                 entry_point.dist.version
