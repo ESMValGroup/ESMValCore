@@ -134,65 +134,92 @@ class Dataset:
         from esmvalcore._recipe.to_datasets import datasets_from_recipe
         return datasets_from_recipe(recipe, session)
 
-    def _get_available_facets(self) -> Iterator[Facets]:
-        """Yield unique combinations of facets based on the available files."""
-        if _isglob(self.facets['mip']):
-            available_mips = _get_mips(
-                self.facets['project'],  # type: ignore
-                self.facets['short_name'],  # type: ignore
-            )
-            mips = [
-                mip for mip in available_mips
-                if _ismatch(mip, self.facets['mip'])
-            ]
-        else:
-            mips = [self.facets['mip']]  # type: ignore
-
-        for mip in mips:
-            dataset = self.copy(mip=mip)
-            dataset.supplementaries = []
-            for facets in dataset._get_available_mip_facets():
-                facets.setdefault('mip', mip)
-                yield facets
-
-    def _get_available_mip_facets(self) -> Iterator[Facets]:
-        """Yield unique combinations of facets based on the available files.
+    def _get_available_datasets(self) -> Iterator[Dataset]:
+        """Yield datasets based on the available files.
 
         This function requires that self.facets['mip'] is not a glob pattern.
         """
-
-        def same(facets_a, facets_b):
-            """Define when two sets of facets are the same."""
-            return facets_a.issubset(facets_b) or facets_b.issubset(facets_a)
-
-        dataset = self.copy()
-        if _isglob(dataset.facets.get('timerange')):
+        dataset_template = self.copy()
+        dataset_template.supplementaries = []
+        if _isglob(dataset_template.facets.get('timerange')):
             # Remove wildcard `timerange` facet, because data finding cannot
             # handle it
-            dataset.facets.pop('timerange')
+            dataset_template.facets.pop('timerange')
 
-        seen: list[frozenset[tuple[str, FacetValue]]] = []
-        for file in dataset.files:
+        seen = set()
+        partially_defined = []
+        expanded = False
+        for file in dataset_template.files:
             facets = dict(file.facets)
             if 'version' not in self.facets:
                 # Remove version facet if no specific version requested
                 facets.pop('version', None)
 
-            facetset = frozenset(facets.items())
+            updated_facets = {
+                f: v
+                for f, v in facets.items() if f in self.facets
+                and _isglob(self.facets[f]) and _ismatch(v, self.facets[f])
+            }
+            dataset = self.copy()
+            dataset.facets.update(updated_facets)
 
-            # Filter out identical facetsets
-            for prev_facetset in seen:
-                if same(facetset, prev_facetset):
-                    break
+            # Filter out identical datasets
+            facetset = frozenset(
+                (f, frozenset(v) if isinstance(v, list) else v)
+                for f, v in dataset.facets.items())
+            if facetset not in seen:
+                seen.add(facetset)
+                if any(_isglob(v) for f, v in dataset.facets.items()
+                       if f != 'timerange'):
+                    partially_defined.append((dataset, file))
+                else:
+                    dataset._update_timerange()
+                    dataset._supplementaries_from_files()
+                    expanded = True
+                    yield dataset
+
+        # Only yield datasets with globs if there is no better alternative
+        for dataset, file in partially_defined:
+            msg = (
+                f"{dataset} with unexpanded wildcards, created from file "
+                f"{file} with facets {file.facets}. Are the missing facets "
+                "in the path to the file" if isinstance(
+                        file, local.LocalFile) else "available on ESGF"
+            )
+            if expanded:
+                logger.info("Ignoring %s", msg)
             else:
-                seen.append(facetset)
-                yield dict(facetset)
+                logger.debug(
+                    "Not updating timerange and supplementaries for %s "
+                    "because it still contains wildcards.", msg)
+                yield dataset
 
     def from_files(self) -> Iterator['Dataset']:
         """Create datasets based on the available files.
 
+        The facet values for local files are retrieved from the directory tree
+        where the directories represent the facets values.
+        Reading facet values from file names is not yet supported.
+        See :ref:`CMOR-DRS` for more information on this kind of file
+        organization.
+
+        :func:`glob.glob` patterns can be used as facet values to select
+        multiple datasets.
+        If for some of the datasets not all glob patterns can be expanded
+        (e.g. because the required facet values cannot be inferred from the
+        directory names), these datasets will be ignored, unless this happens
+        to be all datasets.
+
+        If :func:`glob.glob` patterns are used in supplementary variables and
+        multiple matching datasets are found, only the supplementary dataset
+        that has most facets in common with the main dataset will be attached.
+
         Supplementary datasets will in inherit the facet values from the main
         dataset for those facets listed in :obj:`INHERITED_FACETS`.
+
+        Examples
+        --------
+        See :ref:`/notebooks/discovering-data.ipynb` for example use cases.
 
         Yields
         ------
@@ -201,24 +228,28 @@ class Dataset:
         """
         expanded = False
         if any(_isglob(v) for v in self.facets.values()):
-            for facets in self._get_available_facets():
-                updated_facets = {
-                    k: v
-                    for k, v in facets.items()
-                    if k in self.facets and _isglob(self.facets[k])
-                    and _ismatch(v, self.facets[k])
-                }
-                dataset = self.copy()
-                dataset.facets.update(updated_facets)
-                dataset._update_timerange()
-                dataset._supplementaries_from_files()
+            if _isglob(self.facets['mip']):
+                available_mips = _get_mips(
+                    self.facets['project'],  # type: ignore
+                    self.facets['short_name'],  # type: ignore
+                )
+                mips = [
+                    mip for mip in available_mips
+                    if _ismatch(mip, self.facets['mip'])
+                ]
+            else:
+                mips = [self.facets['mip']]  # type: ignore
 
-                expanded = True
-                yield dataset
+            for mip in mips:
+                dataset_template = self.copy(mip=mip)
+                for dataset in dataset_template._get_available_datasets():
+                    expanded = True
+                    yield dataset
 
         if not expanded:
-            # If the definition contains no wildcards or no files were found,
-            # yield the original, but do expand any supplementary globs.
+            # If the definition contains no wildcards, no files were found,
+            # or the file facets didn't match the specification, yield the
+            # original, but do expand any supplementary globs.
             self._supplementaries_from_files()
             yield self
 

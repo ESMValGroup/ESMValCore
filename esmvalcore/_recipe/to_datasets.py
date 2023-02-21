@@ -12,7 +12,7 @@ from esmvalcore.config import Session
 from esmvalcore.dataset import Dataset, _isglob
 from esmvalcore.esgf.facets import FACETS
 from esmvalcore.exceptions import RecipeError
-from esmvalcore.local import _replace_years_with_timerange
+from esmvalcore.local import LocalFile, _replace_years_with_timerange
 from esmvalcore.preprocessor._derive import get_required
 from esmvalcore.preprocessor._io import DATASET_KEYS
 from esmvalcore.preprocessor._supplementary_vars import (
@@ -438,15 +438,26 @@ def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
             msg = ("Unable to replace " +
                    ", ".join(f"{k}={v}" for k, v in failed.items()) +
                    f" by a value for\n{dataset}")
+            # Set supplementaries to [] to avoid searching for supplementary
+            # files.
+            repr_ds.supplementaries = []
             if repr_ds.files:
-                msg = (f"{msg}\nDo the (paths of) the files:\n" +
-                       "\n".join(f"{f}: {f.facets}" for f in repr_ds.files) +
-                       "\ncontain the missing facet values?")
+                paths_msg = "paths to " if any(
+                    isinstance(f, LocalFile) for f in repr_ds.files) else ""
+                msg = (f"{msg}\nDo the {paths_msg}the files:\n" +
+                       "\n".join(f"{f} with facets: {f.facets}"
+                                 for f in repr_ds.files) +
+                       "\nprovide the missing facet values?")
             else:
-                msg = (f"{msg}\nNo files found matching:\n" +
-                       "\n".join(str(p)
-                                 for p in repr_ds._file_globs))  # type:ignore
+                timerange = repr_ds.facets.get('timerange')
+                patterns = repr_ds._file_globs
+                msg = (
+                    f"{msg}\nNo files found matching:\n" +
+                    "\n".join(str(p) for p in patterns) +  # type:ignore
+                    (f"\nwithin the requested timerange {timerange}."
+                     if timerange else ""))
             errors.append(msg)
+            continue
 
         new_ds = dataset.copy()
         new_ds.facets.update(updated_facets)
