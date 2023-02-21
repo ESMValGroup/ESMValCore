@@ -301,6 +301,7 @@ class ESGFFile:
         template = results[0].json['dataset_id_template_'][0]
         keys = re.findall(r"%\((.*?)\)s", template)
         reverse_facet_map = {v: k for k, v in FACETS[project].items()}
+        reverse_facet_map['realm'] = 'modeling_realm'
         reverse_facet_map['mip_era'] = 'project'  # CMIP6 oddity
         reverse_facet_map['variable_id'] = 'short_name'  # CMIP6 oddity
         reverse_facet_map['valid_institute'] = 'institute'  # CMIP5 oddity

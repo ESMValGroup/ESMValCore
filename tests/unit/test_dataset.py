@@ -474,7 +474,7 @@ def test_from_recipe_with_automatic_supplementary(session, tmp_path,
                                                   monkeypatch):
     session['use_legacy_supplementaries'] = False
 
-    def find_files(self):
+    def _find_files(self):
         if self.facets['short_name'] == 'areacello':
             file = esmvalcore.local.LocalFile()
             file.facets = {
@@ -483,6 +483,7 @@ def test_from_recipe_with_automatic_supplementary(session, tmp_path,
                 'project': 'CMIP5',
                 'dataset': 'dataset1',
                 'ensemble': 'r0i0p0',
+                'exp': 'piControl',
                 'institute': 'X',
                 'product': 'output1',
             }
@@ -491,7 +492,7 @@ def test_from_recipe_with_automatic_supplementary(session, tmp_path,
             files = []
         self._files = files
 
-    monkeypatch.setattr(Dataset, 'find_files', find_files)
+    monkeypatch.setattr(Dataset, '_find_files', _find_files)
     recipe_txt = textwrap.dedent("""
 
     preprocessors:
@@ -508,6 +509,7 @@ def test_from_recipe_with_automatic_supplementary(session, tmp_path,
           tos:
             project: CMIP5
             mip: Omon
+            exp: historical
             preprocessor: global_mean
     """)
     recipe = tmp_path / 'recipe_test.yml'
@@ -519,6 +521,7 @@ def test_from_recipe_with_automatic_supplementary(session, tmp_path,
         short_name='tos',
         dataset='dataset1',
         ensemble='r1i1p1',
+        exp='historical',
         preprocessor='global_mean',
         project='CMIP5',
         mip='Omon',
@@ -532,6 +535,7 @@ def test_from_recipe_with_automatic_supplementary(session, tmp_path,
             institute='X',
             product='output1',
             ensemble='r0i0p0',
+            exp='piControl',
             project='CMIP5',
             mip='fx',
         ),
@@ -1082,13 +1086,13 @@ def test_match():
         short_name='areacella',
         ensemble=['r1i1p1f1'],
         exp='historical',
-        realms=['atmos', 'land'],
+        modeling_realm=['atmos', 'land'],
     )
     dataset2 = Dataset(
         short_name='tas',
         ensemble='r1i1p1f1',
         exp=['historical', 'ssp585'],
-        realms=['atmos'],
+        modeling_realm=['atmos'],
     )
 
     score = dataset1._match(dataset2)

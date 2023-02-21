@@ -713,9 +713,8 @@ def _get_preprocessor_products(
         _update_multi_dataset_settings(dataset.facets, settings)
         _update_preproc_functions(settings, dataset, datasets, missing_vars)
         _add_legacy_supplementary_datasets(dataset, settings)
+        check.preprocessor_supplementaries(dataset, settings)
         input_datasets = _get_input_datasets(dataset)
-        for input_dataset in input_datasets:
-            check.preprocessor_supplementaries(input_dataset, settings)
         missing = _check_input_files(input_datasets)
         if missing:
             if _allow_skipping(dataset):

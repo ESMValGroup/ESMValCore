@@ -7,7 +7,7 @@ from numbers import Number
 from pathlib import Path
 from typing import Any, Iterable, Iterator
 
-from esmvalcore.cmor.table import _update_cmor_facets
+from esmvalcore.cmor.table import _CMOR_KEYS, _update_cmor_facets
 from esmvalcore.config import Session
 from esmvalcore.dataset import Dataset, _isglob
 from esmvalcore.esgf.facets import FACETS
@@ -219,20 +219,6 @@ def _append_missing_supplementaries(
     settings: dict[str, Any],
 ) -> None:
     """Append wildcard definitions for missing supplementary variables."""
-    default_facets = {
-        'CMIP6': [
-            'activity',
-            'institute',
-        ],
-        'CMIP5': [
-            'institute',
-            'product',
-        ],
-        'CMIP3': [
-            'institute',
-        ],
-    }
-
     steps = [step for step in settings if step in PREPROCESSOR_SUPPLEMENTARIES]
 
     project: str = facets['project']  # type: ignore
@@ -241,17 +227,14 @@ def _append_missing_supplementaries(
             short_names = {f['short_name'] for f in supplementaries}
             if short_name in short_names:
                 continue
-            afacets: Facets = {
+
+            supplementary_facets: Facets = {
                 facet: '*'
-                for facet in list(facets) + default_facets.get(project, [])
+                for facet in FACETS.get(project, ['mip'])
+                if facet not in _CMOR_KEYS
             }
-            if project in FACETS:
-                afacets = {
-                    k: v
-                    for k, v in afacets.items() if k in FACETS[project]
-                }
-            afacets['short_name'] = short_name
-            supplementaries.append(afacets)
+            supplementary_facets['short_name'] = short_name
+            supplementaries.append(supplementary_facets)
 
 
 def _get_dataset_facets_from_recipe(
