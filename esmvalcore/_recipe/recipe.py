@@ -951,7 +951,9 @@ class Recipe:
                     "working in v2.10. Please remove it and if automatic "
                     "definition of supplementary variables does not work "
                     "correctly, specify the supplementary variables in the "
-                    "recipe as described in TODO: add URL."))
+                    "recipe as described in https://docs.esmvaltool.org/"
+                    "projects/esmvalcore/en/latest/recipe/preprocessor.html"
+                    "#ancillary-variables-and-cell-measures"))
             if self.session['use_legacy_supplementaries'] is None:
                 logger.info("Running with --use-legacy-supplementaries=True")
                 self.session['use_legacy_supplementaries'] = True
@@ -1345,6 +1347,8 @@ class Recipe:
         filename = self.session.run_dir / f"{self._filename.stem}_filled.yml"
         with filename.open('w', encoding='utf-8') as file:
             yaml.safe_dump(recipe, file, sort_keys=False)
+        logger.info("Wrote recipe with version numbers to:\nfile://%s",
+                    filename)
 
     def write_html_summary(self):
         """Write summary html file to the output dir."""

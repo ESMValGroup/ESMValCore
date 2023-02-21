@@ -936,6 +936,77 @@ def test_from_files_with_globs_and_missing_facets(monkeypatch, session):
     assert datasets == [expected]
 
 
+def test_from_files_with_globs_and_automatic_missing(monkeypatch, session):
+    """Test `from_files`.
+
+    Test with wildcards and files with missing facets that can be automatically
+    added.
+    """
+    rootpath = Path('/path/to/data')
+    file = esmvalcore.local.LocalFile(
+        rootpath,
+        'CMIP6',
+        'BCC-CSM2-MR',
+        'historical',
+        'r1i1p1f1',
+        'Amon',
+        'tas',
+        'gn',
+        'v20181126',
+        'tas_Amon_BCC-CSM2-MR_historical_r1i1p1f1_gn_185001-201412.nc',
+    )
+    file.facets = {
+        'dataset': 'BCC-CSM2-MR',
+        'exp': 'historical',
+        'ensemble': 'r1i1p1f1',
+        'grid': 'gn',
+        'mip': 'Amon',
+        'project': 'CMIP6',
+        'short_name': 'tas',
+        'version': 'v20181126',
+    }
+
+    dataset = Dataset(
+        activity='CMIP',
+        dataset='*',
+        ensemble='r1i1p1f1',
+        exp='historical',
+        grid='gn',
+        institute='*',
+        mip='Amon',
+        project='CMIP6',
+        short_name='tas',
+        timerange='*',
+    )
+
+    dataset.session = session
+    print(dataset)
+
+    monkeypatch.setattr(Dataset, 'find_files', mock_find_files(file))
+
+    datasets = list(dataset.from_files())
+
+    assert all(ds.session == session for ds in datasets)
+    assert all(ads.session == session for ds in datasets
+               for ads in ds.supplementaries)
+
+    expected = Dataset(
+        activity='CMIP',
+        dataset='BCC-CSM2-MR',
+        ensemble='r1i1p1f1',
+        exp='historical',
+        grid='gn',
+        mip='Amon',
+        project='CMIP6',
+        short_name='tas',
+        timerange='185001/201412',
+    )
+
+    expected.session = session
+
+    assert datasets == [expected]
+
+
 def test_from_files_with_globs_and_only_missing_facets(monkeypatch, session):
     """Test `from_files` with wildcards and only files with missing facets."""
     rootpath = Path('/path/to/data')

@@ -134,6 +134,40 @@ class Dataset:
         from esmvalcore._recipe.to_datasets import datasets_from_recipe
         return datasets_from_recipe(recipe, session)
 
+    def _file_to_dataset(
+        self,
+        file: esgf.ESGFFile | local.LocalFile,
+    ) -> Dataset:
+        """Create a dataset from a file with a `facets` attribute."""
+        facets = dict(file.facets)
+        if 'version' not in self.facets:
+            # Remove version facet if no specific version requested
+            facets.pop('version', None)
+
+        updated_facets = {
+            f: v
+            for f, v in facets.items() if f in self.facets
+            and _isglob(self.facets[f]) and _ismatch(v, self.facets[f])
+        }
+        dataset = self.copy()
+        dataset.facets.update(updated_facets)
+
+        # If possible, remove unexpanded facets that can be automatically
+        # populated.
+        unexpanded = {f for f, v in dataset.facets.items() if _isglob(v)}
+        required_for_augment = {'project', 'mip', 'short_name', 'dataset'}
+        if unexpanded and not unexpanded & required_for_augment:
+            copy = dataset.copy()
+            copy.supplementaries = []
+            for facet in unexpanded:
+                copy.facets.pop(facet)
+            copy.augment_facets()
+            for facet in unexpanded:
+                if facet in copy.facets:
+                    dataset.facets.pop(facet)
+
+        return dataset
+
     def _get_available_datasets(self) -> Iterator[Dataset]:
         """Yield datasets based on the available files.
 
@@ -150,18 +184,7 @@ class Dataset:
         partially_defined = []
         expanded = False
         for file in dataset_template.files:
-            facets = dict(file.facets)
-            if 'version' not in self.facets:
-                # Remove version facet if no specific version requested
-                facets.pop('version', None)
-
-            updated_facets = {
-                f: v
-                for f, v in facets.items() if f in self.facets
-                and _isglob(self.facets[f]) and _ismatch(v, self.facets[f])
-            }
-            dataset = self.copy()
-            dataset.facets.update(updated_facets)
+            dataset = self._file_to_dataset(file)
 
             # Filter out identical datasets
             facetset = frozenset(
@@ -180,12 +203,10 @@ class Dataset:
 
         # Only yield datasets with globs if there is no better alternative
         for dataset, file in partially_defined:
-            msg = (
-                f"{dataset} with unexpanded wildcards, created from file "
-                f"{file} with facets {file.facets}. Are the missing facets "
-                "in the path to the file" if isinstance(
-                        file, local.LocalFile) else "available on ESGF"
-            )
+            msg = (f"{dataset} with unexpanded wildcards, created from file "
+                   f"{file} with facets {file.facets}. Are the missing facets "
+                   "in the path to the file?" if isinstance(
+                       file, local.LocalFile) else "available on ESGF?")
             if expanded:
                 logger.info("Ignoring %s", msg)
             else:
