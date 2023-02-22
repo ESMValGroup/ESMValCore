@@ -743,7 +743,7 @@ class CMIP5Info(InfoBase):
         self._last_line_read = None
 
         for table_file in glob.glob(os.path.join(self._cmor_folder, '*')):
-            if '_grids' in table_file:
+            if '_grids' in table_file and 'cordex' not in self._cmor_folder:
                 continue
             try:
                 self._load_table(table_file)
