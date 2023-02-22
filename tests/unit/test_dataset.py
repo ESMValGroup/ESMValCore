@@ -486,6 +486,7 @@ def test_from_recipe_with_automatic_supplementary(session, tmp_path,
                 'exp': 'piControl',
                 'institute': 'X',
                 'product': 'output1',
+                'version': 'v2',
             }
             files = [file]
         else:
@@ -511,6 +512,7 @@ def test_from_recipe_with_automatic_supplementary(session, tmp_path,
             mip: Omon
             exp: historical
             preprocessor: global_mean
+            version: v1
     """)
     recipe = tmp_path / 'recipe_test.yml'
     recipe.write_text(recipe_txt, encoding='utf-8')
@@ -524,6 +526,7 @@ def test_from_recipe_with_automatic_supplementary(session, tmp_path,
         exp='historical',
         preprocessor='global_mean',
         project='CMIP5',
+        version='v1',
         mip='Omon',
         alias='dataset1',
         recipe_dataset_index=0,
@@ -537,6 +540,7 @@ def test_from_recipe_with_automatic_supplementary(session, tmp_path,
             ensemble='r0i0p0',
             exp='piControl',
             project='CMIP5',
+            version='v2',
             mip='fx',
         ),
     ]

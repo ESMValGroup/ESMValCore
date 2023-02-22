@@ -233,6 +233,8 @@ def _append_missing_supplementaries(
                 for facet in FACETS.get(project, ['mip'])
                 if facet not in _CMOR_KEYS
             }
+            if 'version' in facets:
+                supplementary_facets['version'] = '*'
             supplementary_facets['short_name'] = short_name
             supplementaries.append(supplementary_facets)
 
