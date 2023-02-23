@@ -34,7 +34,7 @@ REQUIREMENTS = {
         'esgf-pyclient>=0.3.1',
         'esmf-regrid',
         # see github.com/ESMValGroup/ESMValCore/issues/1208
-        'esmpy!=8.1.0,<8.4',
+        'esmpy!=8.1.0',  # ,<8.4',
         'filelock',
         'fiona',
         'fire',
@@ -94,7 +94,7 @@ REQUIREMENTS = {
         'docformatter',
         'isort',
         'pre-commit',
-        'prospector[with_pyroma,with_mypy]!=1.1.6.3,!=1.1.6.4',
+        # 'prospector[with_pyroma,with_mypy]!=1.1.6.3,!=1.1.6.4',
         'vprof',
         'yamllint',
         'yapf',
