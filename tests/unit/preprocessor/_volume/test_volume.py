@@ -23,7 +23,7 @@ class Test(tests.Test):
 
     def setUp(self):
         """Prepare tests."""
-        coord_sys = iris.coord_systems.GeogCS(3864000)
+        coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
         data1 = np.ones((3, 2, 2))
         data2 = np.ma.ones((2, 3, 2, 2))
         data3 = np.ma.ones((4, 3, 2, 2))
