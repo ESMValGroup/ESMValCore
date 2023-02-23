@@ -1217,7 +1217,7 @@ Parameters:
     * operator: operation to apply. Accepted values are 'mean',
       'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
 
-See also :func:`esmvalcore.preprocessor.daily_statistics`.
+See also :func:`esmvalcore.preprocessor.hourly_statistics`.
 
 .. _daily_statistics:
 
@@ -1802,12 +1802,12 @@ This function takes four arguments:
 
 * ``z_min``  to define the minimum value of the range to extract in the `z`-direction.
 * ``z_max`` to define the maximum value of the range to extract in the `z`-direction.
-* ``interval_bounds`` to define whether the bounds of the interval are `open`, `closed`,
-    `left_closed` or `right_closed`. Default is `open`.
+* ``interval_bounds`` to define whether the bounds of the interval are ``open``, ``closed``,
+    ``left_closed`` or ``right_closed``. Default is ``open``.
 * ``nearest_value`` to extract a range taking into account the values of the z-coordinate that
-    are closest to `z_min` and `z_max`. Default is `False`.
+    are closest to ``z_min`` and ``z_max``. Default is ``False``.
 
-For example, in a cube with `z_coord = [0., 0.5, 1., 5., 15.]`, the preprocessor below:
+For example, in a cube with ``z_coord = [0., 0.5, 1., 5., 15.]``, the preprocessor below:
 
 .. code-block:: yaml
 
@@ -1817,9 +1817,9 @@ For example, in a cube with `z_coord = [0., 0.5, 1., 5., 15.]`, the preprocessor
       z_max: 4.
       interval_bounds: 'closed'
 
-would return a cube with a `z_coord` defined as `z_coord = [0., 0.5, 1.,]`.
+would return a cube with a ``z_coord`` defined as ``z_coord = [0., 0.5, 1.,]``.
 
-Whereas setting `ǹearest_value: True`:
+Whereas setting ``ǹearest_value: True``:
 
 .. code-block:: yaml
 
@@ -1830,12 +1830,12 @@ Whereas setting `ǹearest_value: True`:
       interval_bounds: 'closed'
       nearest_value: True
 
-would return a cube with a `z_coord`` defined as `z_coord = [0., 0.5, 1., 5.]`,
-since `z_max = 4` is closest to the coordinate point `z = 5` than it is to `z = 1`.
+would return a cube with a ``z_coord`` defined as ``z_coord = [0., 0.5, 1., 5.]``,
+since ``z_max = 4`` is closest to the coordinate point ``z = 5`` than it is to ``z = 1``.
 
 Note that this requires the requested `z`-coordinate range to be the same sign
 as the Iris cube. That is, if the cube has `z`-coordinate as negative, then
-``z_min`` and ``z_max`` need to be negative numbers
+``z_min`` and ``z_max`` need to be negative numbers.
 
 See also :func:`esmvalcore.preprocessor.extract_volume`.
 
