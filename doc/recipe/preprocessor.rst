@@ -177,8 +177,9 @@ Only one of the listed variables is required. Supplementary variables can be
 defined in the recipe as described in :ref:`supplementary_variables`.
 In some cases, preprocessor functions may work without supplementary variables,
 this is documented case by case in the preprocessor function definition.
-If a preprocessor function is used that uses supplementary variables, but they
-have not been specified in the recipe, they will be automatically added.
+If a preprocessor function requiring supplementary variables is used
+without specifying these in the recipe, these will be automatically
+added.
 If the automatic selection does not give the desired result, specify the
 supplementary variables in the recipe as described in
 :ref:`supplementary_variables`.
