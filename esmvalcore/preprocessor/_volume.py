@@ -20,6 +20,7 @@ def extract_volume(cube,
                    interval_bounds='open',
                    nearest_value=False):
     """Subset a cube based on a range of values in the z-coordinate.
+
     Function that subsets a cube on a box of (z_min, z_max),
     (z_min, z_max], [z_min, z_max) or [z_min, z_max]
     Note that this requires the requested z-coordinate range to be the
