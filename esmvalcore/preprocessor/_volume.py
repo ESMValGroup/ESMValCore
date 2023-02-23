@@ -14,11 +14,13 @@ from ._shared import get_iris_analysis_operation, operator_accept_weights
 logger = logging.getLogger(__name__)
 
 
-def extract_volume(cube,
-                   z_min,
-                   z_max,
-                   interval_bounds='open',
-                   nearest_value=False):
+def extract_volume(
+    cube,
+    z_min,
+    z_max,
+    interval_bounds='open',
+    nearest_value=False
+):
     """Subset a cube based on a range of values in the z-coordinate.
 
     Function that subsets a cube on a box of (z_min, z_max),
@@ -31,6 +33,7 @@ def extract_volume(cube,
     If nearest_value is set to `True`, the cube extraction will be
     performed taking into account the z_coord values that are closest
     to the z_min and z_max values.
+
     Parameters
     ----------
     cube: iris.cube.Cube
