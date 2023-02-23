@@ -635,7 +635,7 @@ recipes in ESMValTool and link the ESMValTool pull request(s) in the ESMValCore
 pull request description.
 You can ask the `@ESMValGroup/esmvaltool-recipe-maintainers`_ for help with
 updating existing recipes, but please be considerate of their time.
-You should tag the tag the `@ESMValGroup/esmvaltool-coreteam`_ to
+You should tag the `@ESMValGroup/esmvaltool-coreteam`_ to
 notify them of the backward-incompatible change, and give at least
 2 weeks for objections to be raised before merging to the main
 branch. If a strong objection is raised the backwards-incompatible
