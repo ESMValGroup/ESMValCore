@@ -19,7 +19,7 @@ dependencies:
   - humanfriendly
   - importlib_resources
   - iris>=3.4.0
-  - iris-esmf-regrid
+  # - iris-esmf-regrid
   - isodate
   - jinja2
   - nc-time-axis
