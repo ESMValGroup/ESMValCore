@@ -151,7 +151,7 @@ These include in particular:
 - 🛠 General instructions for *recipe developers* working on *user
   recipes* to enable them to adapt their code related to
   *backward-incompatible changes* available (see `ESMValTool_Tutorial: issue
-  #263 <https://github.com/ESMValGroup/ESMValTool_Tutorial/issues/263>`).
+  #263 <https://github.com/ESMValGroup/ESMValTool_Tutorial/issues/263>`__).
 - 🛠 Core development team tagged to notify them of the
   *backward-incompatible change*, and give at least
   2 weeks for objections to be raised before merging to the main
