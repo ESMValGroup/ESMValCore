@@ -805,6 +805,14 @@ Use the script
 to create create a draft of the release notes.
 This script uses the titles and labels of merged pull requests since the
 previous release.
+Open a discussion to allow members of the development team to nominate pull 
+requests as highlights. Add the most voted pull requests as highlights at the 
+beginning of changelog. After the highlights section, list any backward 
+incompatible changes that the release may include. The 
+:ref:`backward compatibility policy<esmvaltool:backward-compatibility-policy>`.
+lists the information that should be provided by the developer of any backward 
+incompatible change. Make sure to also list any deprecations that the release 
+may include, as well as a brief description on how to upgrade a deprecated feature.
 Review the results, and if anything needs changing, change it on GitHub and
 re-run the script until the changelog looks acceptable.
 Copy the result to the file ``doc/changelog.rst``.
