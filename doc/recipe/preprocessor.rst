@@ -1792,11 +1792,7 @@ The ``_volume.py`` module contains the following preprocessor functions:
 Extract a specific range in the `z`-direction from a cube. The range is given as an interval
 that can be open ``(z_min, z_max)``, closed ``[z_min, z_max]``, left closed ``[z_min, z_max)``
 or right closed ``(z_min, z_max]``. The extraction is performed by applying a constraint on the
-coordinate values, without any kind of interpolation.
-
-As the coordinate points are likely to depend on the dataset, sometimes it might be
-useful to adjust the given ``z_min`` and ``z_max`` values to the values of the coordinate
-points before performing an extraction.  
+coordinate values, without any kind of interpolation. 
 
 This function takes four arguments:
 
@@ -1807,17 +1803,23 @@ This function takes four arguments:
 * ``nearest_value`` to extract a range taking into account the values of the z-coordinate that
     are closest to ``z_min`` and ``z_max``. Default is ``False``.
 
-For example, in a cube with ``z_coord = [0., 0.5, 1., 5., 15.]``, the preprocessor below:
+As the coordinate points are likely to vary depending on the dataset, sometimes it might be
+useful to adjust the given ``z_min`` and ``z_max`` values to the values of the coordinate
+points before performing an extraction.  This behaviour can be achieved by setting the
+``nearest_value`` argument to ``True``.
+
+For example, in a cube with ``z_coord = [0., 1.5, 2.6., 3.8., 5.4]``, the preprocessor below:
 
 .. code-block:: yaml
 
   preprocessors:
     extract_volume:
-      z_min: 0.
-      z_max: 4.
+      z_min: 1.
+      z_max: 5.
       interval_bounds: 'closed'
 
-would return a cube with a ``z_coord`` defined as ``z_coord = [0., 0.5, 1.,]``.
+would return a cube with a ``z_coord`` defined as ``z_coord = [1.5, 2.6., 3.8.]``,
+since these are the values that strictly fall into the range given by ``[z_min=1, z_max=5]``.
 
 Whereas setting ``ǹearest_value: True``:
 
@@ -1825,15 +1827,15 @@ Whereas setting ``ǹearest_value: True``:
 
   preprocessors:
     extract_volume:
-      z_min: 0.
-      z_max: 4.
+      z_min: 1.
+      z_max: 5.
       interval_bounds: 'closed'
       nearest_value: True
 
-would return a cube with a ``z_coord`` defined as ``z_coord = [0., 0.5, 1., 5.]``,
-since ``z_max = 4`` is closest to the coordinate point ``z = 5`` than it is to ``z = 1``.
+would return a cube with a ``z_coord`` defined as ``z_coord = [1.5, 2.6., 3.8., 5.4]``,
+since ``z_max = 5`` is closest to the coordinate point ``z = 5.4`` than it is to ``z = 3.8``.
 
-Note that this requires the requested `z`-coordinate range to be the same sign
+Note that this preprocessor requires the requested `z`-coordinate range to be the same sign
 as the Iris cube. That is, if the cube has `z`-coordinate as negative, then
 ``z_min`` and ``z_max`` need to be negative numbers.
 
