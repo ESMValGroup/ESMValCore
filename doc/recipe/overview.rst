@@ -162,10 +162,14 @@ The filename of this recipe will end with ``_filled.yml``.
 For the ``timerange`` facet, special syntax is available.
 See :ref:`timerange_examples` for more information.
 
+If populating a recipe using wildcards does not work, this is because there
+were either no files found that match those facets, or the facets could not be
+read from the directory name or ESGF.
+
 .. _supplementary_variables:
 
-Adding ancillary variables and cell measures
---------------------------------------------
+Defining supplementary variables (ancillary variables and cell measures)
+------------------------------------------------------------------------
 
 It is common practice to store ancillary variables (e.g. land/sea/ice masks)
 and cell measures (e.g. cell area, cell volume) in separate datasets that are
@@ -232,6 +236,12 @@ where they will be expanded to generate all matching datasets.
 The available datasets are shown in the debug log messages when running a recipe
 with wildcards, so if a different supplementary dataset is preferred, these
 messages can be used to see what facet values are available.
+The facet values for local files are retrieved from the directory tree where the
+directories represent the facets values.
+Reading facet values from file names is not yet supported.
+If wildcard expansion fails, this is because there were either no files found
+that match those facets, or the facets could not be read from the directory
+name or ESGF.
 
 Automatic definition of supplementary variables
 -----------------------------------------------

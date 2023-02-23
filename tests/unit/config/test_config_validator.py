@@ -95,7 +95,7 @@ def generate_validator_testcases(valid):
         {
             'validator': validate_bool_or_none,
             'success': ((None, None), (True, True), (False, False)),
-            'fail': (),
+            'fail': (('A', ValueError), (1, ValueError)),
         },
         {
             'validator': validate_int_or_none,

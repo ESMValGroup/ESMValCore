@@ -154,14 +154,14 @@ To get an overview on data fixes and how to implement new ones, please go to
 
 .. _preprocessors_using_supplementary_variables:
 
-Ancillary variables and cell measures
-=====================================
+Supplementary variables (ancillary variables and cell measures)
+===============================================================
 The following preprocessor functions either require or prefer using an
 `ancillary variable <https://cfconventions.org/cf-conventions/cf-conventions.html#ancillary-data>`_
 or
 `cell measure <https://cfconventions.org/cf-conventions/cf-conventions.html#cell-measures>`_
 to perform their computations.
-In ESMValCore we call these such variables "supplementary variables".
+In ESMValCore we call both types of variables "supplementary variables".
 
 ============================================================== ============================== =====================================
 Preprocessor                                                   Variable short name            Variable standard name
@@ -184,10 +184,10 @@ If the automatic selection does not give the desired result, specify the
 supplementary variables in the recipe as described in
 :ref:`supplementary_variables`.
 
-By default, ancillary variables and cell measures will be removed from the
+By default, supplementary variables will be removed from the
 variable before saving it to file because they can be as big as the main
 variable.
-To keep the ancillary variables and cell measures, disable the preprocessor
+To keep the supplementary variables, disable the preprocessor
 function :func:`esmvalcore.preprocessor.remove_supplementary_variables` that
 removes them by setting ``remove_supplementary_variables: false`` in the
 preprocessor in the recipe.
@@ -205,7 +205,7 @@ Compute the global mean surface air temperature, while
       project: CMIP6
       ensemble: r1i1p1f1
       grid: gn
-    - dataset: CanESM2
+    - dataset: MPI-ESM-MR
       project: CMIP5
       ensemble: r1i1p1,
 
@@ -276,7 +276,7 @@ and cell measure (``areacella``), but do not use ``areacella`` for dataset
       supplementary_variables:
         - short_name: areacella
           skip: true
-    - dataset: CanESM2
+    - dataset: MPI-ESM-MR
       project: CMIP5
       ensemble: r1i1p1
 

@@ -62,9 +62,7 @@ class Config(ValidatedConfig):
                 raise
             mapping = {}
 
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', ESMValCoreDeprecationWarning)
-            new.update(CFG_DEFAULT)
+        new.update(CFG_DEFAULT)
         new.update(mapping)
         new.check_missing()
 
@@ -281,7 +279,5 @@ USER_CONFIG_DIR = Path.home() / '.esmvaltool'
 USER_CONFIG = USER_CONFIG_DIR / 'config-user.yml'
 
 # initialize placeholders
-with warnings.catch_warnings():
-    warnings.simplefilter('ignore', ESMValCoreDeprecationWarning)
-    CFG_DEFAULT = MappingProxyType(Config._load_default_config(DEFAULT_CONFIG))
+CFG_DEFAULT = MappingProxyType(Config._load_default_config(DEFAULT_CONFIG))
 CFG = Config._load_user_config(USER_CONFIG, raise_exception=False)

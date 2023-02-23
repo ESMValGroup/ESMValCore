@@ -1307,13 +1307,16 @@ class Recipe:
         """Run all tasks in the recipe."""
         if not self.tasks:
             raise RecipeError('No tasks to run!')
-        self.write_filled_recipe()
+        filled_recipe = self.write_filled_recipe()
 
         # Download required data
         if not self.session['offline']:
             esgf.download(self._download_files, self.session['download_dir'])
 
         self.tasks.run(max_parallel_tasks=self.session['max_parallel_tasks'])
+        logger.info(
+            "Wrote recipe with version numbers and wildcards "
+            "to:\nfile://%s", filled_recipe)
         self.write_html_summary()
 
     def get_output(self) -> dict:
@@ -1346,8 +1349,10 @@ class Recipe:
         filename = self.session.run_dir / f"{self._filename.stem}_filled.yml"
         with filename.open('w', encoding='utf-8') as file:
             yaml.safe_dump(recipe, file, sort_keys=False)
-        logger.info("Wrote recipe with version numbers to:\nfile://%s",
-                    filename)
+        logger.info(
+            "Wrote recipe with version numbers and wildcards "
+            "to:\nfile://%s", filename)
+        return filename
 
     def write_html_summary(self):
         """Write summary html file to the output dir."""
