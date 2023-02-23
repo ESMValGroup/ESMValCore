@@ -55,8 +55,9 @@ class AllVars(Fix):
         return cubes
 
 
-class Sftlf(Fix):
-    """Fixes for sftlf."""
+class Clt(Fix):
+    """Fixes for clt."""
+
     def fix_data(self, cube):
         """Fix data.
 
@@ -75,3 +76,6 @@ class Sftlf(Fix):
         if cube.units == "%" and da.max(cube.core_data()).compute() <= 1.:
             cube.data = cube.core_data() * 100.
         return cube
+
+
+Sftlf = Clt

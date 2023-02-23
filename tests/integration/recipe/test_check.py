@@ -1,13 +1,14 @@
-"""Integration tests for :mod:`esmvalcore._recipe_checks`."""
+"""Integration tests for :mod:`esmvalcore._recipe.check`."""
 import os.path
+from pathlib import Path
 from typing import Any, List
 from unittest import mock
 
 import pyesgf.search.results
 import pytest
 
-import esmvalcore._recipe_checks as check
 import esmvalcore.esgf
+from esmvalcore._recipe import check
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.preprocessor import PreprocessorFile
 
@@ -48,10 +49,11 @@ DATA_AVAILABILITY_DATA = [
 
 
 @pytest.mark.parametrize('input_files,var,error', DATA_AVAILABILITY_DATA)
-@mock.patch('esmvalcore._recipe_checks.logger', autospec=True)
+@mock.patch('esmvalcore._recipe.check.logger', autospec=True)
 def test_data_availability_data(mock_logger, input_files, var, error):
     """Test check for data when data is present."""
     saved_var = dict(var)
+    input_files = [Path(f) for f in input_files]
     if error is None:
         check.data_availability(input_files, var, None, None)
         mock_logger.error.assert_not_called()
@@ -74,7 +76,7 @@ DATA_AVAILABILITY_NO_DATA: List[Any] = [
 
 
 @pytest.mark.parametrize('dirnames,filenames,error', DATA_AVAILABILITY_NO_DATA)
-@mock.patch('esmvalcore._recipe_checks.logger', autospec=True)
+@mock.patch('esmvalcore._recipe.check.logger', autospec=True)
 def test_data_availability_no_data(mock_logger, dirnames, filenames, error):
     """Test check for data when no data is present."""
     var = dict(VAR)
@@ -257,18 +259,26 @@ INVALID_MM_SETTINGS = {
         'statistics': ['wrong'],
         'span': 'wrong',
         'groupby': 'wrong',
-        'keep_input_datasets': 'wrong'
+        'keep_input_datasets': 'wrong',
+        'ignore_scalar_coords': 'wrong',
     }
 
 
 def test_invalid_multi_model_settings():
-    valid_keys = ['span', 'groupby', 'statistics', 'keep_input_datasets']
+    valid_keys = [
+        'groupby',
+        'ignore_scalar_coords',
+        'keep_input_datasets',
+        'span',
+        'statistics',
+    ]
     with pytest.raises(RecipeError) as rec_err:
         check._verify_arguments(INVALID_MM_SETTINGS, valid_keys)
     assert str(rec_err.value) == (
         "Unexpected keyword argument encountered: wrong_parametre. "
         "Valid keywords are: "
-        "['span', 'groupby', 'statistics', 'keep_input_datasets'].")
+        "['groupby', 'ignore_scalar_coords', 'keep_input_datasets', "
+        "'span', 'statistics'].")
 
 
 def test_invalid_multi_model_statistics():
@@ -305,7 +315,16 @@ def test_invalid_multi_model_keep_input():
             INVALID_MM_SETTINGS['keep_input_datasets'])
     assert str(rec_err.value) == (
         'Invalid value encountered for `keep_input_datasets`.'
-        'Must be defined as a boolean. Got wrong.')
+        'Must be defined as a boolean (true or false). Got wrong.')
+
+
+def test_invalid_multi_model_ignore_scalar_coords():
+    with pytest.raises(RecipeError) as rec_err:
+        check._verify_ignore_scalar_coords(
+            INVALID_MM_SETTINGS['ignore_scalar_coords'])
+    assert str(rec_err.value) == (
+        'Invalid value encountered for `ignore_scalar_coords`.'
+        'Must be defined as a boolean (true or false). Got wrong.')
 
 
 def test_invalid_ensemble_statistics():

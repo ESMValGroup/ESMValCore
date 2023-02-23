@@ -74,7 +74,7 @@ def process_recipe(recipe_file: Path, session):
     import shutil
     import warnings
 
-    from ._recipe import read_recipe_file
+    from esmvalcore._recipe.recipe import read_recipe_file
     if not recipe_file.is_file():
         import errno
         raise OSError(errno.ENOENT, "Specified recipe file does not exist",
@@ -301,6 +301,10 @@ class ESMValTool():
         self.config = Config()
         self.recipes = Recipes()
         self._extra_packages = {}
+        if not list(iter_entry_points('esmvaltool_commands')):
+            print("Running esmvaltool executable from ESMValCore. "
+                  "No other command line utilities are available "
+                  "until ESMValTool is installed.")
         for entry_point in iter_entry_points('esmvaltool_commands'):
             self._extra_packages[entry_point.dist.project_name] = \
                 entry_point.dist.version

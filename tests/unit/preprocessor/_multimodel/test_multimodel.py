@@ -25,6 +25,16 @@ FREQUENCY_OPTIONS = ('daily', 'monthly', 'yearly')  # hourly
 CALENDAR_OPTIONS = ('360_day', '365_day', 'standard', 'proleptic_gregorian',
                     'julian')
 
+EQUAL_NAMES = [
+    ['var_name'],
+    ['standard_name'],
+    ['long_name'],
+    ['var_name', 'standard_name'],
+    ['var_name', 'long_name'],
+    ['standard_name', 'long_name'],
+    ['var_name', 'standard_name', 'long_name'],
+]
+
 
 def assert_array_allclose(this, other):
     """Assert that array `this` is close to array `other`."""
@@ -177,19 +187,27 @@ def get_cube_for_equal_coords_test(num_cubes):
         cube = generate_cube_from_dates('monthly')
         cubes.append(cube)
 
-    # Create cubes that have one equal coordinate ('year') and one non-equal
-    # coordinate ('x')
+    # Create cubes that have one exactly equal coordinate ('year'), one
+    # coordinate with matching names ('m') and one coordinate with non-matching
+    # names
     year_coord = AuxCoord([1, 2, 3], var_name='year', long_name='year',
                           units='1', attributes={'test': 1})
+    m_coord = AuxCoord([1, 2, 3], var_name='m', long_name='m', units='s',
+                       attributes={'test': 0})
     x_coord = AuxCoord([1, 2, 3], var_name='x', long_name='x', units='s',
                        attributes={'test': 2})
     for (idx, cube) in enumerate(cubes):
+        new_m_coord = m_coord.copy()
+        new_m_coord.var_name = f'm_{idx}'
         new_x_coord = x_coord.copy()
         new_x_coord.long_name = f'x_{idx}'
         cube.add_aux_coord(year_coord.copy(), 0)
+        cube.add_aux_coord(new_m_coord, 0)
         cube.add_aux_coord(new_x_coord, 0)
         assert cube.coord('year').metadata is not year_coord.metadata
         assert cube.coord('year').metadata == year_coord.metadata
+        assert cube.coord('m').metadata is not m_coord.metadata
+        assert cube.coord('m').metadata != m_coord.metadata
         assert cube.coord(f'x_{idx}').metadata is not x_coord.metadata
         assert cube.coord(f'x_{idx}').metadata != x_coord.metadata
 
@@ -506,16 +524,37 @@ def test_combine_inconsistent_var_names_fail():
         mm._combine(cubes)
 
 
-@pytest.mark.parametrize('scalar_coord', ['p0', 'ptop'])
-def test_combine_with_scalar_coords_to_remove(scalar_coord):
+def test_combine_with_scalar_coords_to_remove():
     """Test _combine with scalar coordinates that should be removed."""
-    num_cubes = 5
-    cubes = []
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(3))
+    scalar_coord_0 = AuxCoord(0.0, standard_name='height', units='m')
+    scalar_coord_1 = AuxCoord(1.0, long_name='Test scalar coordinate')
+    cubes[0].add_aux_coord(scalar_coord_0, ())
+    cubes[1].add_aux_coord(scalar_coord_1, ())
 
-    for num in range(num_cubes):
-        cube = generate_cube_from_dates('monthly')
-        cubes.append(cube)
+    merged_cube = mm._combine(cubes, ignore_scalar_coords=True)
+    assert merged_cube.shape == (3, 3)
+    assert not merged_cube.coords(dimensions=())
 
+
+def test_combine_with_scalar_coords_to_remove_fail():
+    """Test _combine with scalar coordinates that should not be removed."""
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(2))
+    scalar_coord_0 = AuxCoord(0.0, standard_name='height', units='m')
+    cubes[0].add_aux_coord(scalar_coord_0, ())
+
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
+    with pytest.raises(ValueError, match=msg):
+        mm._combine(cubes)
+
+
+@pytest.mark.parametrize('scalar_coord', ['p0', 'ptop'])
+def test_combine_with_special_scalar_coords_to_remove(scalar_coord):
+    """Test _combine with scalar coordinates that should be removed."""
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(5))
     scalar_coord_0 = AuxCoord(0.0, var_name=scalar_coord)
     scalar_coord_1 = AuxCoord(1.0, var_name=scalar_coord)
     cubes[0].add_aux_coord(scalar_coord_0, ())
@@ -525,33 +564,46 @@ def test_combine_with_scalar_coords_to_remove(scalar_coord):
     assert merged_cube.shape == (5, 3)
 
 
-def test_combine_preserve_equal_coordinates():
+def test_combine_equal_coordinates():
     """Test ``_combine`` with equal input coordinates."""
     cubes = get_cube_for_equal_coords_test(5)
     merged_cube = mm._combine(cubes)
 
-    # The equal coordinate ('year') was not changed; the non-equal one ('x')
-    # does not have a long_name and attributes anymore
+    # The equal coordinate ('year') was not changed
     assert merged_cube.coord('year').var_name == 'year'
     assert merged_cube.coord('year').standard_name is None
     assert merged_cube.coord('year').long_name == 'year'
     assert merged_cube.coord('year').attributes == {'test': 1}
+
+
+def test_combine_non_equal_coordinates():
+    """Test ``_combine`` with non-equal input coordinates."""
+    cubes = get_cube_for_equal_coords_test(5)
+    merged_cube = mm._combine(cubes)
+
+    # The var_name of the matching name coordinate ('m') has been removed, and
+    # the non-equal one ('x') does not have a long_name anymore
+    # Both coordinates lost their attributes
+    assert merged_cube.coord('m').var_name is None
+    assert merged_cube.coord('m').standard_name is None
+    assert merged_cube.coord('m').long_name == 'm'
+    assert merged_cube.coord('m').attributes == {}
     assert merged_cube.coord('x').var_name == 'x'
     assert merged_cube.coord('x').standard_name is None
     assert merged_cube.coord('x').long_name is None
     assert merged_cube.coord('x').attributes == {}
 
 
-def test_equalise_coordinates_no_cubes():
-    """Test that _equalise_coordinates doesn't fail with empty cubes."""
-    mm._equalise_coordinates([])
+def test_equalise_coordinate_metadata_no_cubes():
+    """Test _equalise_coordinate_metadata doesn't fail with empty cubes."""
+    mm._equalise_coordinate_metadata([])
 
 
-def test_equalise_coordinates_one_cube():
-    """Test that _equalise_coordinates doesn't fail with a single cubes."""
+def test_equalise_coordinate_metadata_one_cube():
+    """Test _equalise_coordinate_metadata doesn't fail with a single cubes."""
     cube = generate_cube_from_dates('monthly')
     new_cube = cube.copy()
-    mm._equalise_coordinates([new_cube])
+    mm._equalise_coordinate_metadata([new_cube])
     assert new_cube is not cube
     assert new_cube == cube
 
@@ -661,19 +713,6 @@ def test_edge_case_sub_daily_data_fail(span):
     """Test case when cubes with sub-daily time coords are passed."""
     cube = generate_cube_from_dates('hourly')
     cubes = (cube, cube)
-
-    statistic = 'min'
-    statistics = (statistic, )
-
-    with pytest.raises(ValueError):
-        _ = multi_model_statistics(cubes, span, statistics)
-
-
-@pytest.mark.parametrize('span', SPAN_OPTIONS)
-def test_edge_case_single_cube_fail(span):
-    """Test that an error is raised when a single cube is passed."""
-    cube = generate_cube_from_dates('monthly')
-    cubes = (cube, )
 
     statistic = 'min'
     statistics = (statistic, )
@@ -832,6 +871,65 @@ def test_ignore_tas_scalar_height_coord():
     assert result["mean"].coord("height").points == 1.75
 
 
+PRODUCTS = [
+    CubeList(generate_cube_from_dates('monthly') for _ in range(3)),
+    [
+        PreprocessorFile(generate_cube_from_dates('monthly')) for _ in range(3)
+    ],
+]
+SCALAR_COORD = AuxCoord(2.0, standard_name='height', units='m')
+PRODUCTS[0][0].add_aux_coord(SCALAR_COORD, ())
+PRODUCTS[1][0].cubes[0].add_aux_coord(SCALAR_COORD, ())
+PRODUCTS[1] = set(PRODUCTS[1])
+
+
+@pytest.mark.parametrize('products', PRODUCTS)
+def test_ignore_different_scalar_coords(products):
+    """Ignore different scalar coords if desired."""
+    stat = 'mean'
+    output = PreprocessorFile()
+    output_products = {'': {stat: output}}
+    kwargs = {
+        'statistics': [stat],
+        'span': 'full',
+        'output_products': output_products,
+        'keep_input_datasets': False,
+        'ignore_scalar_coords': True,
+    }
+
+    results = mm.multi_model_statistics(products, **kwargs)
+
+    assert len(results) == 1
+    if isinstance(results, dict):  # for cube as input
+        cube = results[stat]
+    else:  # for PreprocessorFile as input
+        result = next(iter(results))
+        assert len(result.cubes) == 1
+        cube = result.cubes[0]
+    assert not cube.coords(dimensions=())
+
+
+@pytest.mark.parametrize('products', PRODUCTS)
+def test_do_not_ignore_different_scalar_coords(products):
+    """Do not ignore different scalar coords if desired."""
+    stat = 'mean'
+    output = PreprocessorFile()
+    output_products = {'': {stat: output}}
+    kwargs = {
+        'statistics': [stat],
+        'span': 'full',
+        'output_products': output_products,
+        'keep_input_datasets': False,
+    }
+
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
+    with pytest.raises(ValueError, match=msg):
+        mm.multi_model_statistics(products, **kwargs)
+
+
 def test_daily_inconsistent_calendars():
     """Determine behaviour for inconsistent calendars.
 
@@ -948,29 +1046,6 @@ def test_map_to_new_time_int_coords():
     assert np.issubdtype(out_cube.coord('decade').dtype, np.integer)
 
 
-def test_preserve_equal_coordinates():
-    """Test ``multi_model_statistics`` with equal input coordinates."""
-    cubes = get_cube_for_equal_coords_test(5)
-    stat_cubes = multi_model_statistics(cubes, span='overlap',
-                                        statistics=['sum'])
-
-    assert len(stat_cubes) == 1
-    assert 'sum' in stat_cubes
-    stat_cube = stat_cubes['sum']
-    assert_array_allclose(stat_cube.data, np.ma.array([5.0, 5.0, 5.0]))
-
-    # The equal coordinate ('year') was not changed; the non-equal one ('x')
-    # does not have a long_name and attributes anymore
-    assert stat_cube.coord('year').var_name == 'year'
-    assert stat_cube.coord('year').standard_name is None
-    assert stat_cube.coord('year').long_name == 'year'
-    assert stat_cube.coord('year').attributes == {'test': 1}
-    assert stat_cube.coord('x').var_name == 'x'
-    assert stat_cube.coord('x').standard_name is None
-    assert stat_cube.coord('x').long_name is None
-    assert stat_cube.coord('x').attributes == {}
-
-
 def test_arbitrary_dims_5d(cubes_5d):
     """Test ``multi_model_statistics`` with 5D cubes."""
     stat_cubes = multi_model_statistics(
@@ -1045,3 +1120,351 @@ def test_arbitrary_dims_0d(cubes_with_arbitrary_dimensions):
     stat_cube = stat_cubes['sum']
     assert stat_cube.shape == ()
     assert_array_allclose(stat_cube.data, np.ma.array(0.0))
+
+
+@pytest.mark.parametrize('equal_names', EQUAL_NAMES)
+def test_preserve_equal_name_cubes(equal_names):
+    """Test ``multi_model_statistics`` with equal-name cubes."""
+    all_names = ['var_name', 'standard_name', 'long_name']
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(5))
+
+    # Prepare names of input cubes accordingly
+    for (idx, cube) in enumerate(cubes):
+        for name in all_names:
+            if name in equal_names or idx != 0:
+                setattr(cube, name, 'air_pressure')
+            else:  # Different value for first cube if non-equal name
+                setattr(cube, name, None)
+
+    stat_cubes = multi_model_statistics(cubes, span='overlap',
+                                        statistics=['sum'])
+
+    assert len(stat_cubes) == 1
+    stat_cube = stat_cubes['sum']
+    assert_array_allclose(stat_cube.data, np.ma.array([5.0, 5.0, 5.0]))
+
+    for name in all_names:
+        assert getattr(stat_cube, name) == 'air_pressure'
+
+
+@pytest.mark.parametrize('equal_names', EQUAL_NAMES)
+def test_equal_name_different_units_cubes(equal_names):
+    """Test ``multi_model_statistics`` with equal-name non-equal unit cubes."""
+    all_names = ['var_name', 'standard_name', 'long_name']
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(5))
+
+    # Prepare names of input cubes accordingly
+    cubes[0].units = 'kg'
+    for (idx, cube) in enumerate(cubes):
+        for name in all_names:
+            if name in equal_names or idx != 0:
+                setattr(cube, name, 'air_pressure')
+            else:  # Different value for first cube if non-equal name
+                setattr(cube, name, None)
+
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
+    with pytest.raises(ValueError, match=msg):
+        multi_model_statistics(cubes, span='overlap', statistics=['sum'])
+
+
+def test_equalise_var_metadata():
+    """Test ``_equalise_var_metadata``."""
+    cubes = CubeList(
+        generate_cube_from_dates('monthly', var_name='x') for _ in range(5)
+    )
+
+    # Prepare names of input cubes accordingly
+    cubes[0].units = 'kg'
+    cubes[0].standard_name = 'air_pressure'
+    cubes[0].long_name = 'b'
+    cubes[1].units = 'kg'
+    cubes[1].standard_name = 'air_pressure'
+    cubes[1].long_name = 'a'
+    cubes[1].var_name = 'y'
+    cubes[2].units = 'kg'
+    cubes[3].units = 'm'
+    cubes[3].long_name = 'X'
+    cubes[4].units = 'm'
+    cubes[4].long_name = 'X'
+
+    mm._equalise_var_metadata(cubes)
+
+    assert cubes[0].standard_name == 'air_pressure'
+    assert cubes[0].long_name == 'a'
+    assert cubes[0].var_name == 'x'
+    assert cubes[0].units == 'kg'
+    assert cubes[1].standard_name == 'air_pressure'
+    assert cubes[1].long_name == 'a'
+    assert cubes[1].var_name == 'x'
+    assert cubes[1].units == 'kg'
+    assert cubes[2].standard_name is None
+    assert cubes[2].long_name is None
+    assert cubes[2].var_name == 'x'
+    assert cubes[2].units == 'kg'
+    assert cubes[3].standard_name is None
+    assert cubes[3].long_name == 'X'
+    assert cubes[3].var_name == 'x'
+    assert cubes[3].units == 'm'
+    assert cubes[4].standard_name is None
+    assert cubes[4].long_name == 'X'
+    assert cubes[4].var_name == 'x'
+    assert cubes[4].units == 'm'
+
+
+def test_preserve_equal_coordinates():
+    """Test ``multi_model_statistics`` with equal input coordinates."""
+    cubes = get_cube_for_equal_coords_test(5)
+    stat_cubes = multi_model_statistics(cubes, span='overlap',
+                                        statistics=['sum'])
+
+    assert len(stat_cubes) == 1
+    stat_cube = stat_cubes['sum']
+    assert_array_allclose(stat_cube.data, np.ma.array([5.0, 5.0, 5.0]))
+
+    # The equal coordinate 'year' was not changed
+    assert stat_cube.coord('year').var_name == 'year'
+    assert stat_cube.coord('year').standard_name is None
+    assert stat_cube.coord('year').long_name == 'year'
+    assert stat_cube.coord('year').attributes == {'test': 1}
+
+
+def test_preserve_non_equal_coordinates():
+    """Test ``multi_model_statistics`` with non_equal input coordinates."""
+    cubes = get_cube_for_equal_coords_test(5)
+
+    # Use "circular" attribute for one cube to check that it is set to "False"
+    # for each cube
+    cubes[2].coord('time').circular = False
+
+    stat_cubes = multi_model_statistics(cubes, span='overlap',
+                                        statistics=['sum'])
+
+    assert len(stat_cubes) == 1
+    stat_cube = stat_cubes['sum']
+    assert_array_allclose(stat_cube.data, np.ma.array([5.0, 5.0, 5.0]))
+
+    # The attributes and circular property of the non-equal coordinate 'time'
+    # (due to differing circular) have been removed
+    assert stat_cube.coord('time').attributes == {}
+    assert stat_cube.coord('time').circular is False
+
+    # The long_name and attributes of the non-equal coordinate 'x' have been
+    # removed
+    assert stat_cube.coord('x').var_name == 'x'
+    assert stat_cube.coord('x').standard_name is None
+    assert stat_cube.coord('x').long_name is None
+    assert stat_cube.coord('x').attributes == {}
+
+
+@pytest.mark.parametrize('equal_names', EQUAL_NAMES)
+def test_preserve_equal_name_coordinates(equal_names):
+    """Test ``multi_model_statistics`` with equal-name coordinates."""
+    all_names = ['var_name', 'standard_name', 'long_name']
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(5))
+
+    # Prepare names of coordinates of input cubes accordingly
+    for (idx, cube) in enumerate(cubes):
+        time_coord = cube.coord('time')
+        for name in all_names:
+            if name in equal_names or idx != 0:
+                setattr(time_coord, name, 'time')
+            else:  # Different value for first cube if non-equal name
+                setattr(time_coord, name, None)
+
+        # Use different coordinate attributes for each cube so the different
+        # coordinates are not exactly identical
+        time_coord.attributes = {'test': idx}
+
+    stat_cubes = multi_model_statistics(cubes, span='overlap',
+                                        statistics=['sum'])
+
+    assert len(stat_cubes) == 1
+    stat_cube = stat_cubes['sum']
+    assert_array_allclose(stat_cube.data, np.ma.array([5.0, 5.0, 5.0]))
+
+    assert len(stat_cube.coords()) == 1
+    time_coord = stat_cube.coords()[0]
+
+    for name in all_names:
+        if name in equal_names:
+            assert getattr(time_coord, name) == 'time'
+        else:
+            assert getattr(time_coord, name) is None
+    assert time_coord.name() == 'time'
+    assert time_coord.units == 'days since 1850-01-01'
+    assert time_coord.attributes == {}
+
+
+def test_ignore_equal_coordinates():
+    """Test ``_get_equal_coord_names_metadata``."""
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(5))
+
+    equal_coords_metadata = [cubes[0].coord('time').metadata]
+    equal_names_metadata = mm._get_equal_coord_names_metadata(
+        cubes,
+        equal_coords_metadata,
+    )
+
+    # The equal_names_metadata dict should be empty since the exactly identical
+    # coordinate should be ignored
+    assert not equal_names_metadata
+
+
+@pytest.mark.parametrize('cube_idx', [0, 1, 2, 3, 4])
+def test_ignore_duplicate_equal_name_coordinates(cube_idx):
+    """Test ``_get_equal_coord_names_metadata``."""
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(5))
+
+    # Add duplicate scalar coordinate
+    d_coord_0 = AuxCoord(
+        0.0,
+        var_name='d',
+        long_name='d',
+        units='m',
+        attributes={'test': 1}
+    )
+    d_coord_1 = AuxCoord(
+        1.0,
+        var_name='d',
+        long_name='d',
+        units='m',
+    )
+    for cube in cubes:
+        cube.add_aux_coord(d_coord_0, ())
+    cubes[cube_idx].add_aux_coord(d_coord_1, ())
+
+    equal_names_metadata = mm._get_equal_coord_names_metadata(cubes, [])
+
+    # The equal_names_metadata dict should only contain the equal 'time'
+    # dimension, not the duplicate dimension
+    assert len(equal_names_metadata) == 1
+    assert 'time' in equal_names_metadata
+
+
+def test_ignore_non_existing_coordinates():
+    """Test ``_get_equal_coord_names_metadata``."""
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(5))
+
+    # Add coordinate only for first cube
+    cubes[0].add_aux_coord(AuxCoord(0.0, long_name='x'), ())
+
+    equal_names_metadata = mm._get_equal_coord_names_metadata(cubes, [])
+
+    # The equal_names_metadata dict should only contain the equal 'time'
+    # dimension, not the coordinate that only exists for the first cube
+    assert len(equal_names_metadata) == 1
+    assert 'time' in equal_names_metadata
+
+
+def test_ignore_coordinates_different_units():
+    """Test ``_get_equal_coord_names_metadata``."""
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(5))
+
+    # Adapt time units of one cube
+    cubes[3].coord('time').units = 'days since 1900-01-01'
+
+    equal_names_metadata = mm._get_equal_coord_names_metadata(cubes, [])
+
+    # The equal_names_metadata dict should be empty since the time units do not
+    # match
+    assert not equal_names_metadata
+
+
+def test_empty_input_multi_model_statistics():
+    """Check that ``multi_model_statistics`` fails with empty input."""
+    msg = "Cannot perform multicube statistics for an empty list of cubes"
+    with pytest.raises(ValueError, match=msg):
+        mm.multi_model_statistics([], span='full', statistics=['mean'])
+
+
+def test_empty_input_ensemble_statistics():
+    """Check that ``ensemble_statistics`` fails with empty input."""
+    msg = "Cannot perform multicube statistics for an empty list of cubes"
+    with pytest.raises(ValueError, match=msg):
+        mm.ensemble_statistics(
+            [], span='full', statistics=['mean'], output_products=[]
+        )
+
+
+STATS = ['mean', 'median', 'min', 'max', 'p42.314', 'std_dev']
+
+
+@pytest.mark.parametrize('stat', STATS)
+@pytest.mark.parametrize(
+    'products',
+    [
+        CubeList([generate_cube_from_dates('monthly')]),
+        set([PreprocessorFile(generate_cube_from_dates('monthly'))]),
+    ],
+)
+def test_single_input_multi_model_statistics(products, stat):
+    """Check that ``multi_model_statistics`` works with a single cube."""
+    output = PreprocessorFile()
+    output_products = {'': {stat: output}}
+    kwargs = {
+        'statistics': [stat],
+        'span': 'full',
+        'output_products': output_products,
+        'keep_input_datasets': False,
+    }
+
+    results = mm.multi_model_statistics(products, **kwargs)
+
+    assert len(results) == 1
+
+    if isinstance(results, dict):  # for cube as input
+        cube = results[stat]
+    else:  # for PreprocessorFile as input
+        result = next(iter(results))
+        assert len(result.cubes) == 1
+        cube = result.cubes[0]
+
+    if stat == 'std_dev':
+        assert_array_allclose(
+            cube.data, np.ma.masked_invalid([np.nan, np.nan, np.nan])
+        )
+    else:
+        assert_array_allclose(cube.data, np.ma.array([1.0, 1.0, 1.0]))
+
+
+@pytest.mark.parametrize('stat', STATS)
+@pytest.mark.parametrize(
+    'products',
+    [
+        CubeList([generate_cube_from_dates('monthly')]),
+        {PreprocessorFile(generate_cube_from_dates('monthly'))},
+    ],
+)
+def test_single_input_ensemble_statistics(products, stat):
+    """Check that ``ensemble_statistics`` works with a single cube."""
+    cube = generate_cube_from_dates('monthly')
+    attributes = {
+        'project': 'project',
+        'dataset': 'dataset',
+        'exp': 'exp',
+        'ensemble': '1',
+    }
+    products = {PreprocessorFile(cube, attributes=attributes)}
+    output = PreprocessorFile()
+    output_products = {'project_dataset_exp': {stat: output}}
+    kwargs = {
+        'statistics': [stat],
+        'output_products': output_products,
+    }
+
+    results = mm.ensemble_statistics(products, **kwargs)
+
+    assert len(results) == 1
+    result = next(iter(results))
+    assert len(result.cubes) == 1
+    cube = result.cubes[0]
+
+    if stat == 'std_dev':
+        assert_array_allclose(
+            cube.data, np.ma.masked_invalid([np.nan, np.nan, np.nan])
+        )
+    else:
+        assert_array_allclose(cube.data, np.ma.array([1.0, 1.0, 1.0]))

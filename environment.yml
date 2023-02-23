@@ -12,13 +12,14 @@ dependencies:
   - compilers
   - esgf-pyclient>=0.3.1
   - esmpy!=8.1.0,<8.4  # see github.com/ESMValGroup/ESMValCore/issues/1208
+  - filelock
   - fiona
   - fire
   - geopy
   - humanfriendly
   - importlib_resources
-  # - iris>=3.2.1
-  # - iris-esmf-regrid
+  - iris>=3.4.0
+  - iris-esmf-regrid
   - isodate
   - jinja2
   - nc-time-axis
@@ -41,6 +42,8 @@ dependencies:
   - yamale
   # Python packages needed for building docs
   - autodocsumm>=0.2.2
+  - ipython
+  - nbsphinx
   - sphinx>=5
   - sphinx_rtd_theme
   # Python packages needed for testing

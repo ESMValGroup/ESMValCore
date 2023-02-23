@@ -7,8 +7,8 @@ import numpy as np
 import pyesgf.search.results
 import pytest
 
+import esmvalcore._recipe.recipe as _recipe
 import esmvalcore.experimental.recipe_output
-from esmvalcore import _recipe
 from esmvalcore.esgf._download import ESGFFile
 from esmvalcore.exceptions import RecipeError
 from tests import PreprocessorFile
@@ -254,8 +254,8 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
 
     # Local files can cover the entire period, part of it, or nothing
     local_file_options = {
-        'all': [f.local_file(rootpath).as_posix() for f in esgf_files],
-        'partial': [esgf_files[1].local_file(rootpath).as_posix()],
+        'all': [f.local_file(rootpath) for f in esgf_files],
+        'partial': [esgf_files[1].local_file(rootpath)],
         'none': [],
     }
     local_files = local_file_options[local_availability]
@@ -288,12 +288,13 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
         'rootpath': None,
         'drs': None,
         'offline': False,
+        'always_search_esgf': False,
         'download_dir': download_dir
     }
     input_files = _recipe._get_input_files(variable, config_user)[0]
 
     download_files = [
-        f.local_file(download_dir).as_posix() for f in esgf_files
+        f.local_file(download_dir) for f in esgf_files
     ]
 
     expected = {
@@ -648,7 +649,7 @@ TEST_CREATE_DIAGNOSTIC_TASKS = [
 
 @pytest.mark.parametrize('tasks_to_run,tasks_run',
                          TEST_CREATE_DIAGNOSTIC_TASKS)
-@mock.patch('esmvalcore._recipe.DiagnosticTask', autospec=True)
+@mock.patch('esmvalcore._recipe.recipe.DiagnosticTask', autospec=True)
 def test_create_diagnostic_tasks(mock_diag_task, tasks_to_run, tasks_run):
     """Test ``Recipe._create_diagnostic_tasks``."""
     cfg = {'run_diagnostic': True}

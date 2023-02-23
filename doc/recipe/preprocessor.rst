@@ -932,17 +932,17 @@ arguments is also supported. The call function for such schemes must be defined 
 The `regrid` module will automatically pass the source and grid cubes as inputs
 of the scheme. An example of this usage is
 the :func:`~esmf_regrid.schemes.regrid_rectilinear_to_rectilinear`
-scheme available in :doc:`iris-esmf-regrid:index`:git 
+scheme available in :doc:`iris-esmf-regrid:index`:
 
 .. code-block:: yaml
 
-    preprocessors:
-      regrid_preprocessor:
-        regrid:
-          target_grid: 2.5x2.5
-          scheme:
-            reference: esmf_regrid.schemes:regrid_rectilinear_to_rectilinear
-            mdtol: 0.7
+  preprocessors:
+    regrid_preprocessor:
+      regrid:
+        target_grid: 2.5x2.5
+        scheme:
+          reference: esmf_regrid.schemes:regrid_rectilinear_to_rectilinear
+          mdtol: 0.7
 
 .. _ensemble statistics:
 
@@ -1034,6 +1034,15 @@ calendars, (sub-)daily data with different calendars are not supported.
 The preprocessor saves both the input single model files as well as the multi-model
 results. In case you do not want to keep the single model files, set the
 parameter ``keep_input_datasets`` to ``false`` (default value is ``true``).
+To remove scalar coordinates before merging input datasets into the
+multi-dataset cube, use the option ``ignore_scalar_coords: true``.
+The resulting multi-dataset cube will not have scalar coordinates in this case.
+This ensures that differences in scalar coordinates in the input datasets are
+ignored, which is helpful if you encounter a ``ValueError: Multi-model
+statistics failed to merge input cubes into a single array`` with ``Coordinates
+in cube.aux_coords (scalar) differ``.
+Some special scalar coordinates which are expected to differ across cubes (`p0`
+and `ptop`) are always removed.
 
 .. code-block:: yaml
 
@@ -1042,13 +1051,14 @@ parameter ``keep_input_datasets`` to ``false`` (default value is ``true``).
         multi_model_statistics:
           span: overlap
           statistics: [mean, median]
-          exclude: [NCEP]
+          exclude: [NCEP-NCAR-R1]
       multi_model_without_saving_input:
         multi_model_statistics:
           span: overlap
           statistics: [mean, median]
-          exclude: [NCEP]
+          exclude: [NCEP-NCAR-R1]
           keep_input_datasets: false
+          ignore_scalar_coords: true
 
 Multi-model statistics also supports a ``groupby`` argument. You can group by
 any dataset key (``project``, ``experiment``, etc.) or a combination of keys in a list. You can
@@ -1070,7 +1080,7 @@ can group by ``ensemble_statistics`` as well. For example:
           span: overlap
           statistics: [min, max]
           groupby: [ensemble_statistics]
-          exclude: [NCEP]
+          exclude: [NCEP-NCAR-R1]
 
 This will first compute ensemble mean and median, and then compute the multi-model
 min and max separately for the ensemble means and medians. Note that this combination

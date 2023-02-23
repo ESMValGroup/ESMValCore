@@ -17,9 +17,10 @@ import cf_units
 import iris
 import iris.coord_categorisation
 import numpy as np
+from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 from iris.exceptions import MergeError
-from iris.util import equalise_attributes
+from iris.util import equalise_attributes, new_axis
 
 from esmvalcore.iris_helpers import date2num
 from esmvalcore.preprocessor import remove_fx_variables
@@ -242,13 +243,8 @@ def _equalise_cell_methods(cubes):
         cube.cell_methods = None
 
 
-def _equalise_coordinates(cubes):
-    """Equalise coordinates in cubes (in-place)."""
-    if not cubes:
-        return
-
-    # If metadata of a coordinate metadata is equal for all cubes, do not
-    # modify it; else remove long_name and attributes.
+def _get_equal_coords_metadata(cubes):
+    """Get metadata for exactly matching coordinates across cubes."""
     equal_coords_metadata = []
     for coord in cubes[0].coords():
         for other_cube in cubes[1:]:
@@ -260,19 +256,114 @@ def _equalise_coordinates(cubes):
                 break
         else:
             equal_coords_metadata.append(coord.metadata)
+    return equal_coords_metadata
 
-    # Modify coordinates accordingly
+
+def _get_equal_coord_names_metadata(cubes, equal_coords_metadata):
+    """Get metadata for coords with matching names and units across cubes.
+
+    Note
+    ----
+    Ignore coordinates whose names are not unique.
+
+    """
+    equal_names_metadata = {}
+    for coord in cubes[0].coords():
+        coord_name = coord.name()
+
+        # Ignore exactly matching coordinates
+        if coord.metadata in equal_coords_metadata:
+            continue
+
+        # Ignore coordinates that are not unique in original cube
+        if len(cubes[0].coords(coord_name)) > 1:
+            continue
+
+        # Check if coordinate names and units match across all cubes
+        for other_cube in cubes[1:]:
+
+            # Ignore names that do not exist in other cube/are not unique
+            if len(other_cube.coords(coord_name)) != 1:
+                break
+
+            # Ignore names where units do not match across cubes
+            if coord.units != other_cube.coord(coord_name).units:
+                break
+
+        # Coordinate name exists in all other cubes with identical units
+        # --> Get metadata that is identical across all cubes
+        else:
+            std_names = list(
+                {c.coord(coord_name).standard_name for c in cubes}
+            )
+            long_names = list(
+                {c.coord(coord_name).long_name for c in cubes}
+            )
+            var_names = list(
+                {c.coord(coord_name).var_name for c in cubes}
+            )
+            equal_names_metadata[coord_name] = dict(
+                standard_name=std_names[0] if len(std_names) == 1 else None,
+                long_name=long_names[0] if len(long_names) == 1 else None,
+                var_name=var_names[0] if len(var_names) == 1 else None,
+            )
+
+    return equal_names_metadata
+
+
+def _equalise_coordinate_metadata(cubes, ignore_scalar_coords=False):
+    """Equalise coordinates in cubes (in-place)."""
+    if not cubes:
+        return
+
+    # Filter out coordinates with exactly matching metadata across all cubes
+    # --> these will not be modified at all
+    equal_coords_metadata = _get_equal_coords_metadata(cubes)
+
+    # Filter out coordinates with matching names and units
+    # --> keep matching names of these coordinates
+    # Note: ignores duplicate coordinates
+    equal_names_metadata = _get_equal_coord_names_metadata(
+        cubes,
+        equal_coords_metadata
+    )
+
+    # Modify all coordinates of all cubes accordingly
     for cube in cubes:
         for coord in cube.coords():
-            if coord.metadata not in equal_coords_metadata:
-                coord.long_name = None
-                coord.attributes = None
 
-        # Additionally remove specific scalar coordinates which are not
-        # expected to be equal in the input cubes
-        scalar_coords_to_remove = ['p0', 'ptop']
+            # Exactly matching coordinates --> do not modify
+            if coord.metadata in equal_coords_metadata:
+                continue
+
+            # Non-exactly matching coordinates --> first, delete attributes and
+            # circular property
+            coord.attributes = {}
+            if isinstance(coord, DimCoord):
+                coord.circular = False
+
+            # Matching names and units --> set common names
+            if coord.name() in equal_names_metadata:
+                equal_names = equal_names_metadata[coord.name()]
+                coord.standard_name = equal_names['standard_name']
+                coord.long_name = equal_names['long_name']
+                coord.var_name = equal_names['var_name']
+                continue
+
+            # Remaining coordinates --> remove long_name
+            # Note: remaining differences will raise an error at a later stage
+            coord.long_name = None
+
+        # Remove scalar coordinates if desired. In addition, always remove
+        # specific scalar coordinates which are not expected to be equal in the
+        # input cubes.
+        scalar_coords_to_always_remove = ['p0', 'ptop']
         for scalar_coord in cube.coords(dimensions=()):
-            if scalar_coord.var_name in scalar_coords_to_remove:
+            remove_coord = (
+                ignore_scalar_coords or
+                scalar_coord.var_name in scalar_coords_to_always_remove
+            )
+            if remove_coord:
                 cube.remove_coord(scalar_coord)
 
 
@@ -283,7 +374,44 @@ def _equalise_fx_variables(cubes):
         remove_fx_variables(cube)
 
 
-def _combine(cubes):
+def _equalise_var_metadata(cubes):
+    """Equalise variable metadata in cubes (in-place).
+
+    If cubes have the same ``name()`` and ``units``, assign identical
+    `standard_names`, `long_names`, and `var_names`.
+
+    """
+    attrs = ['standard_name', 'long_name', 'var_name']
+    equal_names_metadata = {}
+
+    # Collect all names from the different cubes, grouped by cube.name() and
+    # cube.units (ignore `None`)
+    for cube in cubes:
+        cube_id = f"{cube.name()} ({cube.units})"
+        equal_names_metadata.setdefault(cube_id, {a: set() for a in attrs})
+        for attr in attrs:
+            val = getattr(cube, attr)
+            if val is not None:
+                equal_names_metadata[cube_id][attr].add(val)
+
+    # Unify names (always use first encountered value, even if there are
+    # different values)
+    for names in equal_names_metadata.values():
+        for attr in attrs:
+            vals = sorted(names[attr])
+            if not vals:  # all names were `None`
+                names[attr] = None
+            else:  # always use first encountered value
+                names[attr] = vals[0]
+
+    # Assign equal names for cubes with identical cube.name() and cube.units
+    for cube in cubes:
+        cube_id = f"{cube.name()} ({cube.units})"
+        for attr in attrs:
+            setattr(cube, attr, equal_names_metadata[cube_id][attr])
+
+
+def _combine(cubes, ignore_scalar_coords=False):
     """Merge iris cubes into a single big cube with new dimension.
 
     This assumes that all input cubes have the same shape.
@@ -292,8 +420,11 @@ def _combine(cubes):
     # https://scitools-iris.readthedocs.io/en/stable/userguide/
     #    merge_and_concat.html#common-issues-with-merge-and-concatenate
     equalise_attributes(cubes)
+    _equalise_var_metadata(cubes)
     _equalise_cell_methods(cubes)
-    _equalise_coordinates(cubes)
+    _equalise_coordinate_metadata(
+        cubes, ignore_scalar_coords=ignore_scalar_coords
+    )
     _equalise_fx_variables(cubes)
 
     for i, cube in enumerate(cubes):
@@ -301,6 +432,12 @@ def _combine(cubes):
         cube.add_aux_coord(concat_dim)
 
     cubes = CubeList(cubes)
+
+    # For a single cube, merging returns a scalar CONCAT_DIM, which leads to a
+    # "Cannot collapse a dimension which does not describe any data" error when
+    # collapsing. Thus, treat single cubes differently here.
+    if len(cubes) == 1:
+        return new_axis(cubes[0], scalar_coord=CONCAT_DIM)
 
     try:
         merged_cube = cubes.merge_cube()
@@ -349,7 +486,7 @@ def _compute_slices(cubes):
 
 
 def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
-                   **kwargs):
+                   ignore_scalar_coords=False, **kwargs):
     """Compute statistics one slice at a time."""
     _ = [cube.data for cube in cubes]  # make sure the cubes' data are realized
 
@@ -359,13 +496,25 @@ def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
             single_model_slices = cubes  # scalar cubes
         else:
             single_model_slices = [cube[chunk] for cube in cubes]
-        combined_slice = _combine(single_model_slices)
+        combined_slice = _combine(
+            single_model_slices,
+            ignore_scalar_coords=ignore_scalar_coords,
+        )
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 'ignore',
                 message=(
                     "Collapsing a non-contiguous coordinate. "
                     f"Metadata may not be fully descriptive for '{CONCAT_DIM}."
+                ),
+                category=UserWarning,
+                module='iris',
+            )
+            warnings.filterwarnings(
+                'ignore',
+                message=(
+                    f"Cannot check if coordinate is contiguous: Invalid "
+                    f"operation for '{CONCAT_DIM}'"
                 ),
                 category=UserWarning,
                 module='iris',
@@ -403,7 +552,7 @@ def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
     return result_cube
 
 
-def _multicube_statistics(cubes, statistics, span):
+def _multicube_statistics(cubes, statistics, span, ignore_scalar_coords=False):
     """Compute statistics over multiple cubes.
 
     Can be used e.g. for ensemble or multi-model statistics.
@@ -411,9 +560,10 @@ def _multicube_statistics(cubes, statistics, span):
     Cubes are merged and subsequently collapsed along a new auxiliary
     coordinate. Inconsistent attributes will be removed.
     """
-    if len(cubes) == 1:
-        raise ValueError('Cannot perform multicube statistics '
-                         'for a single cube.')
+    if not cubes:
+        raise ValueError(
+            "Cannot perform multicube statistics for an empty list of cubes"
+        )
 
     # Avoid modifying inputs
     copied_cubes = [cube.copy() for cube in cubes]
@@ -440,6 +590,7 @@ def _multicube_statistics(cubes, statistics, span):
 
         result_cube = _compute_eager(aligned_cubes,
                                      operator=operator,
+                                     ignore_scalar_coords=ignore_scalar_coords,
                                      **kwargs)
         statistics_cubes[statistic] = result_cube
 
@@ -450,16 +601,20 @@ def _multiproduct_statistics(products,
                              statistics,
                              output_products,
                              span=None,
-                             keep_input_datasets=None):
+                             keep_input_datasets=None,
+                             ignore_scalar_coords=False):
     """Compute multi-cube statistics on ESMValCore products.
 
     Extract cubes from products, calculate multicube statistics and
     assign the resulting output cubes to the output_products.
     """
     cubes = [cube for product in products for cube in product.cubes]
-    statistics_cubes = _multicube_statistics(cubes=cubes,
-                                             statistics=statistics,
-                                             span=span)
+    statistics_cubes = _multicube_statistics(
+        cubes=cubes,
+        statistics=statistics,
+        span=span,
+        ignore_scalar_coords=ignore_scalar_coords,
+    )
     statistics_products = set()
     for statistic, cube in statistics_cubes.items():
         statistics_product = output_products[statistic]
@@ -482,7 +637,8 @@ def multi_model_statistics(products,
                            statistics,
                            output_products=None,
                            groupby=None,
-                           keep_input_datasets=True):
+                           keep_input_datasets=True,
+                           ignore_scalar_coords=False):
     """Compute multi-model statistics.
 
     This function computes multi-model statistics on a list of ``products``,
@@ -500,6 +656,39 @@ def multi_model_statistics(products,
     ``mean``, ``median``, ``min``, ``max``, and ``std``. Percentiles are also
     supported and can be specified like ``pXX.YY`` (for percentile ``XX.YY``;
     decimal part optional).
+
+    This function can handle cubes with differing metadata:
+
+    - Cubes with identical :meth:`~iris.coords.Coord.name` and
+      :attr:`~iris.coords.Coord.units` will get identical values for
+      :attr:`~iris.coords.Coord.standard_name`,
+      :attr:`~iris.coords.Coord.long_name`, and
+      :attr:`~iris.coords.Coord.var_name` (which will be arbitrarily set to the
+      first encountered value if different cubes have different values for
+      them).
+    - :attr:`~iris.cube.Cube.attributes`: Differing attributes are deleted,
+      see :func:`iris.util.equalise_attributes`.
+    - :attr:`~iris.cube.Cube.cell_methods`: All cell methods are deleted
+      prior to combining cubes.
+    - :meth:`~iris.cube.Cube.cell_measures`: All cell measures are deleted
+      prior to combining cubes, see
+      :func:`esmvalcore.preprocessor.remove_fx_variables`.
+    - :meth:`~iris.cube.Cube.ancillary_variables`: All ancillary variables
+      are deleted prior to combining cubes, see
+      :func:`esmvalcore.preprocessor.remove_fx_variables`.
+    - :meth:`~iris.cube.Cube.coords`: Exactly identical coordinates are
+      preserved. For coordinates with equal :meth:`~iris.coords.Coord.name` and
+      :attr:`~iris.coords.Coord.units`, names are equalized,
+      :attr:`~iris.coords.Coord.attributes` deleted and
+      :attr:`~iris.coords.DimCoord.circular` is set to ``False``. For all other
+      coordinates, :attr:`~iris.coords.Coord.long_name` is removed,
+      :attr:`~iris.coords.Coord.attributes` deleted and
+      :attr:`~iris.coords.DimCoord.circular` is set to ``False``. Scalar
+      coordinates can be removed if desired by the option
+      ``ignore_scalar_coords=True``. Please note that some special scalar
+      coordinates which are expected to differ across cubes (ancillary
+      coordinates for derived coordinates like `p0` and `ptop`) are always
+      removed.
 
     Notes
     -----
@@ -530,6 +719,13 @@ def multi_model_statistics(products,
     keep_input_datasets: bool
         If True, the output will include the input datasets.
         If False, only the computed statistics will be returned.
+    ignore_scalar_coords: bool
+        If True, remove any scalar coordinate in the input datasets before
+        merging the input cubes into the multi-dataset cube. The resulting
+        multi-dataset cube will have no scalar coordinates (the actual input
+        datasets will remain unchanged). If False, scalar coordinates will
+        remain in the input datasets, which might lead to merge conflicts in
+        case the input datasets have different scalar coordinates.
 
     Returns
     -------
@@ -548,6 +744,7 @@ def multi_model_statistics(products,
             cubes=products,
             statistics=statistics,
             span=span,
+            ignore_scalar_coords=ignore_scalar_coords,
         )
     if all(type(p).__name__ == 'PreprocessorFile' for p in products):
         # Avoid circular input: https://stackoverflow.com/q/16964467
@@ -561,7 +758,8 @@ def multi_model_statistics(products,
                 statistics=statistics,
                 output_products=sub_output_products,
                 span=span,
-                keep_input_datasets=keep_input_datasets
+                keep_input_datasets=keep_input_datasets,
+                ignore_scalar_coords=ignore_scalar_coords,
             )
 
             statistics_products |= group_statistics
@@ -575,7 +773,8 @@ def multi_model_statistics(products,
 
 
 def ensemble_statistics(products, statistics,
-                        output_products, span='overlap'):
+                        output_products, span='overlap',
+                        ignore_scalar_coords=False):
     """Entry point for ensemble statistics.
 
     An ensemble grouping is performed on the input products.
@@ -599,6 +798,13 @@ def ensemble_statistics(products, statistics,
         Overlap or full; if overlap, statitstics are computed on common time-
         span; if full, statistics are computed on full time spans, ignoring
         missing data.
+    ignore_scalar_coords: bool
+        If True, remove any scalar coordinate in the input datasets before
+        merging the input cubes into the multi-dataset cube. The resulting
+        multi-dataset cube will have no scalar coordinates (the actual input
+        datasets will remain unchanged). If False, scalar coordinates will
+        remain in the input datasets, which might lead to merge conflicts in
+        case the input datasets have different scalar coordinates.
 
     Returns
     -------
@@ -617,5 +823,6 @@ def ensemble_statistics(products, statistics,
         statistics=statistics,
         output_products=output_products,
         groupby=ensemble_grouping,
-        keep_input_datasets=False
+        keep_input_datasets=False,
+        ignore_scalar_coords=ignore_scalar_coords,
     )
