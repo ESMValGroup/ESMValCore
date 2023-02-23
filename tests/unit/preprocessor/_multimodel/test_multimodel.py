@@ -524,16 +524,37 @@ def test_combine_inconsistent_var_names_fail():
         mm._combine(cubes)
 
 
-@pytest.mark.parametrize('scalar_coord', ['p0', 'ptop'])
-def test_combine_with_scalar_coords_to_remove(scalar_coord):
+def test_combine_with_scalar_coords_to_remove():
     """Test _combine with scalar coordinates that should be removed."""
-    num_cubes = 5
-    cubes = []
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(3))
+    scalar_coord_0 = AuxCoord(0.0, standard_name='height', units='m')
+    scalar_coord_1 = AuxCoord(1.0, long_name='Test scalar coordinate')
+    cubes[0].add_aux_coord(scalar_coord_0, ())
+    cubes[1].add_aux_coord(scalar_coord_1, ())
 
-    for num in range(num_cubes):
-        cube = generate_cube_from_dates('monthly')
-        cubes.append(cube)
+    merged_cube = mm._combine(cubes, ignore_scalar_coords=True)
+    assert merged_cube.shape == (3, 3)
+    assert not merged_cube.coords(dimensions=())
 
+
+def test_combine_with_scalar_coords_to_remove_fail():
+    """Test _combine with scalar coordinates that should not be removed."""
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(2))
+    scalar_coord_0 = AuxCoord(0.0, standard_name='height', units='m')
+    cubes[0].add_aux_coord(scalar_coord_0, ())
+
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
+    with pytest.raises(ValueError, match=msg):
+        mm._combine(cubes)
+
+
+@pytest.mark.parametrize('scalar_coord', ['p0', 'ptop'])
+def test_combine_with_special_scalar_coords_to_remove(scalar_coord):
+    """Test _combine with scalar coordinates that should be removed."""
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(5))
     scalar_coord_0 = AuxCoord(0.0, var_name=scalar_coord)
     scalar_coord_1 = AuxCoord(1.0, var_name=scalar_coord)
     cubes[0].add_aux_coord(scalar_coord_0, ())
@@ -848,6 +869,65 @@ def test_ignore_tas_scalar_height_coord():
     # iris automatically averages the value of the scalar coordinate.
     assert len(result['mean'].coords("height")) == 1
     assert result["mean"].coord("height").points == 1.75
+
+
+PRODUCTS = [
+    CubeList(generate_cube_from_dates('monthly') for _ in range(3)),
+    [
+        PreprocessorFile(generate_cube_from_dates('monthly')) for _ in range(3)
+    ],
+]
+SCALAR_COORD = AuxCoord(2.0, standard_name='height', units='m')
+PRODUCTS[0][0].add_aux_coord(SCALAR_COORD, ())
+PRODUCTS[1][0].cubes[0].add_aux_coord(SCALAR_COORD, ())
+PRODUCTS[1] = set(PRODUCTS[1])
+
+
+@pytest.mark.parametrize('products', PRODUCTS)
+def test_ignore_different_scalar_coords(products):
+    """Ignore different scalar coords if desired."""
+    stat = 'mean'
+    output = PreprocessorFile()
+    output_products = {'': {stat: output}}
+    kwargs = {
+        'statistics': [stat],
+        'span': 'full',
+        'output_products': output_products,
+        'keep_input_datasets': False,
+        'ignore_scalar_coords': True,
+    }
+
+    results = mm.multi_model_statistics(products, **kwargs)
+
+    assert len(results) == 1
+    if isinstance(results, dict):  # for cube as input
+        cube = results[stat]
+    else:  # for PreprocessorFile as input
+        result = next(iter(results))
+        assert len(result.cubes) == 1
+        cube = result.cubes[0]
+    assert not cube.coords(dimensions=())
+
+
+@pytest.mark.parametrize('products', PRODUCTS)
+def test_do_not_ignore_different_scalar_coords(products):
+    """Do not ignore different scalar coords if desired."""
+    stat = 'mean'
+    output = PreprocessorFile()
+    output_products = {'': {stat: output}}
+    kwargs = {
+        'statistics': [stat],
+        'span': 'full',
+        'output_products': output_products,
+        'keep_input_datasets': False,
+    }
+
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
+    with pytest.raises(ValueError, match=msg):
+        mm.multi_model_statistics(products, **kwargs)
 
 
 def test_daily_inconsistent_calendars():

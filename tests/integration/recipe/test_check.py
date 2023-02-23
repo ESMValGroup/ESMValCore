@@ -259,18 +259,26 @@ INVALID_MM_SETTINGS = {
         'statistics': ['wrong'],
         'span': 'wrong',
         'groupby': 'wrong',
-        'keep_input_datasets': 'wrong'
+        'keep_input_datasets': 'wrong',
+        'ignore_scalar_coords': 'wrong',
     }
 
 
 def test_invalid_multi_model_settings():
-    valid_keys = ['span', 'groupby', 'statistics', 'keep_input_datasets']
+    valid_keys = [
+        'groupby',
+        'ignore_scalar_coords',
+        'keep_input_datasets',
+        'span',
+        'statistics',
+    ]
     with pytest.raises(RecipeError) as rec_err:
         check._verify_arguments(INVALID_MM_SETTINGS, valid_keys)
     assert str(rec_err.value) == (
         "Unexpected keyword argument encountered: wrong_parametre. "
         "Valid keywords are: "
-        "['span', 'groupby', 'statistics', 'keep_input_datasets'].")
+        "['groupby', 'ignore_scalar_coords', 'keep_input_datasets', "
+        "'span', 'statistics'].")
 
 
 def test_invalid_multi_model_statistics():
@@ -307,7 +315,16 @@ def test_invalid_multi_model_keep_input():
             INVALID_MM_SETTINGS['keep_input_datasets'])
     assert str(rec_err.value) == (
         'Invalid value encountered for `keep_input_datasets`.'
-        'Must be defined as a boolean. Got wrong.')
+        'Must be defined as a boolean (true or false). Got wrong.')
+
+
+def test_invalid_multi_model_ignore_scalar_coords():
+    with pytest.raises(RecipeError) as rec_err:
+        check._verify_ignore_scalar_coords(
+            INVALID_MM_SETTINGS['ignore_scalar_coords'])
+    assert str(rec_err.value) == (
+        'Invalid value encountered for `ignore_scalar_coords`.'
+        'Must be defined as a boolean (true or false). Got wrong.')
 
 
 def test_invalid_ensemble_statistics():
