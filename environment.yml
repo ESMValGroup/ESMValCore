@@ -11,7 +11,8 @@ dependencies:
   - dask
   - compilers
   - esgf-pyclient>=0.3.1
-  - esmpy!=8.1.0,<8.4  # see github.com/ESMValGroup/ESMValCore/issues/1208
+  # Pin <8.4 blocks Python 3.11
+  - esmpy!=8.1.0  # ,<8.4  # see github.com/ESMValGroup/ESMValCore/issues/1208
   - filelock
   - fiona
   - fire
@@ -19,7 +20,7 @@ dependencies:
   - humanfriendly
   - importlib_resources
   - iris>=3.4.0
-  # - iris-esmf-regrid
+  - iris-esmf-regrid
   - isodate
   - jinja2
   - nc-time-axis
@@ -33,7 +34,7 @@ dependencies:
   - psutil
   - py-cordex
   - pybtex
-  - python>=3.8
+  - python>=3.11
   - python-stratify
   - pyyaml
   - requests
@@ -67,7 +68,8 @@ dependencies:
   - docformatter
   - isort
   - pre-commit
-  - prospector!=1.1.6.3,!=1.1.6.4
+  # Prospector is not Python 3.11-compatible
+  # - prospector!=1.1.6.3,!=1.1.6.4
   # Not on conda forge - vprof
   - yamllint
   - yapf
