@@ -503,15 +503,60 @@ def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
     return outfile
 
 
-def _path2facets(path: Path, drs: str) -> dict[str, str]:
+def _path2facets(
+    path: Path,
+    dirname_template: str,
+    filename_template: str,
+) -> dict[str, str]:
     """Extract facets from a path using a DRS like '{facet1}/{facet2}'."""
-    keys = []
-    for key in re.findall(r"{(.*?)}", drs):
-        key = key.split('.')[0]  # Remove trailing .lower and .upper
-        keys.append(key)
-    start, end = -len(keys) - 1, -1
-    values = path.parts[start:end]
-    facets = {key: values[idx] for idx, key in enumerate(keys)}
+    n_subdirs = len(dirname_template.split("/"))
+    subdirs = "/".join(path.parts[-1 - n_subdirs:-1])
+    facets = _str2facets(subdirs, dirname_template)
+    facets.update(_str2facets(path.stem, filename_template))
+    return facets
+
+
+def _str2facets(path: str, template: str) -> dict[str, str]:
+    """Extract facets from a path using a template like '{facet1}/{facet2}'."""
+    # Split the template into separators and facet names
+    template_list = re.split(r"{(.*?)}", template)
+    separators = template_list[::2]
+    keys = template_list[1::2]
+
+    # Ignore any facets followed by and after a wildcard separator.
+    for end, sep in enumerate(separators):
+        if '*' in sep or '[' in sep:
+            separators = separators[:end]
+            keys = keys[:end]
+            break
+
+    # Ignore any facets followed by and after an empty separator, unless
+    # it is the first or last sepator.
+    for end, sep in enumerate(separators[1:-1], 1):
+        if sep == '':
+            separators = separators[:end]
+            keys = keys[:end]
+            break
+
+    facets: dict[str, str] = {}
+    if not keys:
+        return facets
+
+    skip = len(separators[0])
+    for sep, key in zip(separators[1:], keys):
+        path = path[skip:]
+        if sep == '':
+            # This happens when the final separator is empty
+            value = path
+        else:
+            value = path.split(sep, 1)[0]
+        skip = len(value) + len(sep)
+        if key.endswith('.lower') or key.endswith('.upper'):
+            # Ignore facets with .lower and .upper because there is no way to
+            # retrieve the correct case.
+            continue
+        facets[key] = value
+
     return facets
 
 
@@ -617,15 +662,21 @@ def find_files(
         The files that were found.
     """  # pylint: disable=line-too-long
     filenames, globs = _get_input_filelist(facets)
-    drs = _select_drs('input_dir', facets['project'])
-    if isinstance(drs, list):
-        # Not sure how to handle a list of DRSs
-        drs = ''
+    dirname_template = _select_drs('input_dir', facets['project'])
+    filename_template = _select_drs('input_file', facets['project'])
+    # Support for a list of templates will be added in
+    # https://github.com/ESMValGroup/ESMValCore/pull/1894
+    if isinstance(dirname_template, list):
+        dirname_template = ''
+    if isinstance(filename_template, list):
+        filename_template = ''
+
     files = []
     filter_latest = False
     for filename in filenames:
         file = LocalFile(filename)
-        file.facets.update(_path2facets(file, drs))
+        file.facets.update(
+            _path2facets(file, dirname_template, filename_template))
         if file.facets.get('version') == 'latest':
             filter_latest = True
         files.append(file)
