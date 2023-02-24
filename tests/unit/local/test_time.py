@@ -6,7 +6,7 @@ from esmvalcore.local import (
     _dates_to_timerange,
     _get_start_end_date,
     _get_start_end_year,
-    _get_timerange_from_years,
+    _replace_years_with_timerange,
     _truncate_dates,
 )
 
@@ -146,7 +146,7 @@ def test_get_timerange_from_years():
         'start_year': 2000,
         'end_year': 2002}
 
-    _get_timerange_from_years(variable)
+    _replace_years_with_timerange(variable)
 
     assert 'start_year' not in variable
     assert 'end_year' not in variable
@@ -160,7 +160,7 @@ def test_get_timerange_from_start_year():
         'start_year': 2000
     }
 
-    _get_timerange_from_years(variable)
+    _replace_years_with_timerange(variable)
 
     assert 'start_year' not in variable
     assert variable['timerange'] == '2000/2000'
@@ -173,7 +173,7 @@ def test_get_timerange_from_end_year():
         'end_year': 2002
     }
 
-    _get_timerange_from_years(variable)
+    _replace_years_with_timerange(variable)
 
     assert 'end_year' not in variable
     assert variable['timerange'] == '2002/2002'

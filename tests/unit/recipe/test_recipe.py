@@ -1,4 +1,3 @@
-from collections import defaultdict
 from pathlib import Path
 from unittest import mock
 
@@ -8,7 +7,9 @@ import pyesgf.search.results
 import pytest
 
 import esmvalcore._recipe.recipe as _recipe
+import esmvalcore.config
 import esmvalcore.experimental.recipe_output
+from esmvalcore.dataset import Dataset
 from esmvalcore.esgf._download import ESGFFile
 from esmvalcore.exceptions import RecipeError
 from tests import PreprocessorFile
@@ -19,74 +20,8 @@ class MockRecipe(_recipe.Recipe):
 
     def __init__(self, cfg, diagnostics):
         """Simple constructor used for testing."""
-        self._cfg = cfg
+        self.session = cfg
         self.diagnostics = diagnostics
-
-
-class TestRecipe:
-
-    def test_expand_ensemble(self):
-
-        datasets = [
-            {
-                'dataset': 'XYZ',
-                'ensemble': 'r(1:2)i(2:3)p(3:4)',
-            },
-        ]
-
-        expanded = _recipe.Recipe._expand_tag(datasets, 'ensemble')
-
-        ensembles = [
-            'r1i2p3',
-            'r1i2p4',
-            'r1i3p3',
-            'r1i3p4',
-            'r2i2p3',
-            'r2i2p4',
-            'r2i3p3',
-            'r2i3p4',
-        ]
-        for i, ensemble in enumerate(ensembles):
-            assert expanded[i] == {'dataset': 'XYZ', 'ensemble': ensemble}
-
-    def test_expand_subexperiment(self):
-
-        datasets = [
-            {
-                'dataset': 'XYZ',
-                'sub_experiment': 's(1998:2005)',
-            },
-        ]
-
-        expanded = _recipe.Recipe._expand_tag(datasets, 'sub_experiment')
-
-        subexperiments = [
-            's1998',
-            's1999',
-            's2000',
-            's2001',
-            's2002',
-            's2003',
-            's2004',
-            's2005',
-        ]
-        for i, subexperiment in enumerate(subexperiments):
-            assert expanded[i] == {
-                'dataset': 'XYZ',
-                'sub_experiment': subexperiment
-            }
-
-    def test_expand_ensemble_nolist(self):
-
-        datasets = [
-            {
-                'dataset': 'XYZ',
-                'ensemble': ['r1i1p1', 'r(1:2)i1p1']
-            },
-        ]
-
-        with pytest.raises(RecipeError):
-            _recipe.Recipe._expand_tag(datasets, 'ensemble')
 
 
 VAR_A = {'dataset': 'A'}
@@ -94,55 +29,33 @@ VAR_A_REF_A = {'dataset': 'A', 'reference_dataset': 'A'}
 VAR_A_REF_B = {'dataset': 'A', 'reference_dataset': 'B'}
 
 TEST_ALLOW_SKIPPING = [
-    ([], VAR_A, {}, False),
-    ([], VAR_A, {
+    (VAR_A, {
         'skip_nonexistent': False
     }, False),
-    ([], VAR_A, {
+    (VAR_A, {
         'skip_nonexistent': True
     }, True),
-    ([], VAR_A_REF_A, {}, False),
-    ([], VAR_A_REF_A, {
+    (VAR_A_REF_A, {
         'skip_nonexistent': False
     }, False),
-    ([], VAR_A_REF_A, {
+    (VAR_A_REF_A, {
         'skip_nonexistent': True
     }, False),
-    ([], VAR_A_REF_B, {}, False),
-    ([], VAR_A_REF_B, {
+    (VAR_A_REF_B, {
         'skip_nonexistent': False
     }, False),
-    ([], VAR_A_REF_B, {
+    (VAR_A_REF_B, {
         'skip_nonexistent': True
     }, True),
-    (['A'], VAR_A, {}, False),
-    (['A'], VAR_A, {
-        'skip_nonexistent': False
-    }, False),
-    (['A'], VAR_A, {
-        'skip_nonexistent': True
-    }, False),
-    (['A'], VAR_A_REF_A, {}, False),
-    (['A'], VAR_A_REF_A, {
-        'skip_nonexistent': False
-    }, False),
-    (['A'], VAR_A_REF_A, {
-        'skip_nonexistent': True
-    }, False),
-    (['A'], VAR_A_REF_B, {}, False),
-    (['A'], VAR_A_REF_B, {
-        'skip_nonexistent': False
-    }, False),
-    (['A'], VAR_A_REF_B, {
-        'skip_nonexistent': True
-    }, False),
 ]
 
 
-@pytest.mark.parametrize('ancestors,var,cfg,out', TEST_ALLOW_SKIPPING)
-def test_allow_skipping(ancestors, var, cfg, out):
+@pytest.mark.parametrize('var,cfg,out', TEST_ALLOW_SKIPPING)
+def test_allow_skipping(var, cfg, out):
     """Test ``_allow_skipping``."""
-    result = _recipe._allow_skipping(ancestors, var, cfg)
+    dataset = Dataset(**var)
+    dataset.session = cfg
+    result = _recipe._allow_skipping(dataset)
     assert result is out
 
 
@@ -161,13 +74,18 @@ def test_resume_preprocessor_tasks(mocker, tmp_path):
 
     # Create a mock recipe
     recipe = mocker.create_autospec(_recipe.Recipe, instance=True)
-    recipe._cfg = {
-        'resume_from': [str(prev_output)],
-        'preproc_dir': '/path/to/recipe_test_20210101_000000/preproc',
-    }
+
+    class Session(dict):
+        pass
+
+    session = Session(resume_from=[prev_output])
+    session.preproc_dir = Path('/path/to/recipe_test_20210101_000000/preproc')
+    recipe.session = session
 
     # Create a very simplified list of datasets
-    diagnostic = {'preprocessor_output': {'tas': [{'short_name': 'tas'}]}}
+    diagnostic = {
+        'datasets': [Dataset(short_name='tas', variable_group='tas')],
+    }
 
     # Create tasks
     tasks, failed = _recipe.Recipe._create_preprocessor_tasks(
@@ -191,7 +109,7 @@ def create_esgf_search_results():
     file0 = ESGFFile([
         pyesgf.search.results.FileResult(
             json={
-                'dataset_id':  dataset_id,
+                'dataset_id': dataset_id,
                 'dataset_id_template_': [dataset_id_template],
                 'project': ['CMIP6'],
                 'size':
@@ -237,39 +155,19 @@ def create_esgf_search_results():
 
 
 @pytest.mark.parametrize("local_availability", ['all', 'partial', 'none'])
-@pytest.mark.parametrize('already_downloaded', [True, False])
-def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
-
-    rootpath = tmp_path / 'local'
-    download_dir = tmp_path / 'download_dir'
+def test_schedule_for_download(monkeypatch, tmp_path, local_availability):
+    """Test that `_schedule_for_download` updates DOWNLOAD_FILES."""
     esgf_files = create_esgf_search_results()
-
-    # ESGF files may have been downloaded previously, but not have
-    # been found if the download_dir is not configured as a rootpath
-    if already_downloaded:
-        for file in esgf_files:
-            local_path = file.local_file(download_dir)
-            local_path.parent.mkdir(parents=True, exist_ok=True)
-            local_path.touch()
+    download_dir = tmp_path / 'download_dir'
+    local_dir = Path('/local_dir')
 
     # Local files can cover the entire period, part of it, or nothing
     local_file_options = {
-        'all': [f.local_file(rootpath) for f in esgf_files],
-        'partial': [esgf_files[1].local_file(rootpath)],
+        'all': [f.local_file(local_dir) for f in esgf_files],
+        'partial': [esgf_files[1].local_file(local_dir)],
         'none': [],
     }
     local_files = local_file_options[local_availability]
-
-    mocker.patch.object(_recipe,
-                        'find_files',
-                        autospec=True,
-                        return_value=(list(local_files), []))
-    mocker.patch.object(
-        _recipe.esgf,
-        'find_files',
-        autospec=True,
-        return_value=esgf_files,
-    )
 
     variable = {
         'project': 'CMIP6',
@@ -283,67 +181,24 @@ def test_search_esgf(mocker, tmp_path, local_availability, already_downloaded):
         'timerange': '1850/1851',
         'alias': 'CMIP6_EC-Eeath3_tas',
     }
-
-    config_user = {
-        'rootpath': None,
-        'drs': None,
-        'search_esgf': 'default',
-        'download_dir': download_dir
-    }
-    input_files = _recipe._get_input_files(variable, config_user)[0]
-
-    download_files = [
-        f.local_file(download_dir) for f in esgf_files
-    ]
-
-    expected = {
+    dataset = Dataset(**variable)
+    files = {
         'all': local_files,
-        'partial': local_files + download_files[:1],
-        'none': download_files,
+        'partial': local_files + esgf_files[:1],
+        'none': esgf_files,
     }
-    assert input_files == expected[local_availability]
+    dataset.session = {'download_dir': download_dir}
+    dataset.files = list(files[local_availability])
 
-
-@pytest.mark.parametrize('timerange', ['*', '185001/*', '*/185112'])
-def test_search_esgf_timerange(mocker, tmp_path, timerange):
-
-    download_dir = tmp_path / 'download_dir'
-    esgf_files = create_esgf_search_results()
-
-    mocker.patch.object(_recipe,
-                        'find_files',
-                        autospec=True,
-                        return_value=[])
-    mocker.patch.object(
-        _recipe.esgf,
-        'find_files',
-        autospec=True,
-        return_value=esgf_files,
-    )
-
-    variable = {
-        'project': 'CMIP6',
-        'mip': 'Amon',
-        'frequency': 'mon',
-        'short_name': 'tas',
-        'dataset': 'EC.-Earth3',
-        'exp': 'historical',
-        'ensemble': 'r1i1p1f1',
-        'grid': 'gr',
-        'timerange': timerange,
-        'alias': 'CMIP6_EC-Eeath3_tas',
-        'original_short_name': 'tas'
+    monkeypatch.setattr(_recipe, 'DOWNLOAD_FILES', set())
+    _recipe._schedule_for_download([dataset])
+    print(esgf_files)
+    expected = {
+        'all': set(),
+        'partial': set(esgf_files[:1]),
+        'none': set(esgf_files),
     }
-
-    config_user = {
-        'rootpath': None,
-        'drs': None,
-        'search_esgf': 'default',
-        'download_dir': download_dir
-    }
-    _recipe._update_timerange(variable, config_user)
-
-    assert variable['timerange'] == '185001/185112'
+    assert _recipe.DOWNLOAD_FILES == expected[local_availability]
 
 
 def test_write_html_summary(mocker, caplog):
@@ -362,35 +217,6 @@ def test_write_html_summary(mocker, caplog):
 
     assert f"Could not write HTML report: {message}" in caplog.text
     mock_recipe.get_output.assert_called_once()
-
-
-def test_add_fxvar_keys_extra_facets():
-    """Test correct addition of extra facets to fx variables."""
-    fx_info = {'short_name': 'areacella', 'mip': 'fx'}
-    variable = {'project': 'ICON', 'dataset': 'ICON'}
-    extra_facets_dir = tuple()
-    fx_var = _recipe._add_fxvar_keys(fx_info, variable, extra_facets_dir)
-    expected_fx_var = {
-        # Already given by fx_info and variable
-        'short_name': 'areacella',
-        'mip': 'fx',
-        'project': 'ICON',
-        'dataset': 'ICON',
-        # Added by _add_fxvar_keys
-        'variable_group': 'areacella',
-        # Added by _add_cmor_info
-        'original_short_name': 'areacella',
-        'standard_name': 'cell_area',
-        'long_name': 'Grid-Cell Area for Atmospheric Grid Variables',
-        'units': 'm2',
-        'modeling_realm': ['atmos', 'land'],
-        'frequency': 'fx',
-        # Added by _add_extra_facets
-        'latitude': 'grid_latitude',
-        'longitude': 'grid_longitude',
-        'raw_name': 'cell_area',
-    }
-    assert fx_var == expected_fx_var
 
 
 def test_multi_model_filename_overlap():
@@ -579,12 +405,6 @@ def test_update_multiproduct_no_product():
     assert settings == {}
 
 
-def test_match_products_no_product():
-    variables = [{'var_name': 'var'}]
-    grouped_products = _recipe._match_products(None, variables)
-    assert grouped_products == defaultdict(list)
-
-
 SCRIPTS_CFG = {
     'output_dir': mock.sentinel.output_dir,
     'script': mock.sentinel.script,
@@ -602,7 +422,7 @@ DIAGNOSTICS = {
     }},
 }
 TEST_GET_TASKS_TO_RUN = [
-    (None, []),
+    (None, None),
     ({''}, {''}),
     ({'wrong_task/*'}, {'wrong_task/*'}),
     ({'d1/*'}, {'d1/*'}),
@@ -625,9 +445,7 @@ TEST_GET_TASKS_TO_RUN = [
                          TEST_GET_TASKS_TO_RUN)
 def test_get_tasks_to_run(diags_to_run, tasknames_to_run):
     """Test ``Recipe._get_tasks_to_run``."""
-    cfg = {}
-    if diags_to_run is not None:
-        cfg = {'diagnostics': diags_to_run}
+    cfg = {'diagnostics': diags_to_run}
 
     recipe = MockRecipe(cfg, DIAGNOSTICS)
     tasks_to_run = recipe._get_tasks_to_run()
@@ -671,34 +489,6 @@ def test_create_diagnostic_tasks(mock_diag_task, tasks_to_run, tasks_run):
         assert expected_call in mock_diag_task.mock_calls
 
 
-def test_differing_timeranges(caplog):
-    timeranges = set()
-    timeranges.add('1950/1951')
-    timeranges.add('1950/1952')
-    required_variables = [
-        {
-            'short_name': 'rsdscs',
-            'timerange': '1950/1951'
-        },
-        {
-            'short_name': 'rsuscs',
-            'timerange': '1950/1952'
-        },
-    ]
-    with pytest.raises(ValueError) as exc:
-        _recipe._check_differing_timeranges(
-            timeranges, required_variables)
-    expected_log = (
-        f"Differing timeranges with values {timeranges} "
-        "found for required variables "
-        "[{'short_name': 'rsdscs', 'timerange': '1950/1951'}, "
-        "{'short_name': 'rsuscs', 'timerange': '1950/1952'}]. "
-        "Set `timerange` to a common value."
-    )
-
-    assert expected_log in str(exc.value)
-
-
 def test_update_warning_settings_nonaffected_project():
     """Test ``_update_warning_settings``."""
     settings = {'save': {'filename': 'out.nc'}, 'load': {'filename': 'in.nc'}}
@@ -725,3 +515,152 @@ def test_update_warning_settings_step_present():
     assert len(settings['load']) == 2
     assert settings['load']['filename'] == 'in.nc'
     assert 'ignore_warnings' in settings['load']
+
+
+def test_update_regrid_time():
+    """Test `_update_regrid_time."""
+    dataset = Dataset(frequency='mon')
+    settings = {'regrid_time': {}}
+    _recipe._update_regrid_time(dataset, settings)
+    assert settings == {'regrid_time': {'frequency': 'mon'}}
+
+
+def test_select_dataset_fails():
+    dataset = Dataset(
+        dataset='dataset1',
+        diagnostic='diagnostic1',
+        variable_group='tas',
+    )
+    with pytest.raises(RecipeError):
+        _recipe._select_dataset('dataset2', [dataset])
+
+
+def test_limit_datasets():
+
+    datasets = [
+        Dataset(dataset='dataset1', alias='dataset1'),
+        Dataset(dataset='dataset2', alias='dataset2'),
+    ]
+    datasets[0].session = {'max_datasets': 1}
+
+    result = _recipe._limit_datasets(datasets, {})
+
+    assert result == datasets[:1]
+
+
+def test_get_default_settings(mocker):
+    mocker.patch.object(
+        _recipe,
+        '_get_output_file',
+        autospec=True,
+        return_value=Path('/path/to/file.nc'),
+    )
+    session = mocker.create_autospec(esmvalcore.config.Session, instance=True)
+    session.__getitem__.return_value = False
+
+    dataset = Dataset(
+        short_name='sic',
+        original_short_name='siconc',
+        mip='Amon',
+        project='CMIP6',
+    )
+    dataset.session = session
+
+    settings = _recipe._get_default_settings(dataset)
+    assert settings == {
+        'load': {'callback': 'default'},
+        'remove_supplementary_variables': {},
+        'save': {'compress': False, 'alias': 'sic'},
+        'cleanup': {'remove': ['/path/to/file_fixed']},
+    }
+
+
+def test_add_legacy_supplementaries_disabled():
+    """Test that `_add_legacy_supplementaries` does nothing when disabled."""
+    dataset = Dataset()
+    dataset.session = {'use_legacy_supplementaries': False}
+    _recipe._add_legacy_supplementary_datasets(dataset, settings={})
+
+
+def test_enable_legacy_supplementaries_when_used(mocker, session):
+    """Test that legacy supplementaries are enabled when used in the recipe."""
+    recipe = mocker.create_autospec(_recipe.Recipe, instance=True)
+    recipe.session = session
+    recipe._preprocessors = {
+        'preproc1': {
+            'area_statistics': {
+                'operator': 'mean',
+                'fx_variables': 'areacella',
+            }
+        }
+    }
+    session['use_legacy_supplementaries'] = None
+    _recipe.Recipe._set_use_legacy_supplementaries(recipe)
+
+    assert session['use_legacy_supplementaries'] is True
+
+
+def test_strip_legacy_supplementaries_when_disabled(mocker, session):
+    """Test that legacy supplementaries are removed when disabled."""
+    recipe = mocker.create_autospec(_recipe.Recipe, instance=True)
+    recipe.session = session
+    recipe._preprocessors = {
+        'preproc1': {
+            'area_statistics': {
+                'operator': 'mean',
+                'fx_variables': 'areacella',
+            }
+        }
+    }
+    session['use_legacy_supplementaries'] = False
+    _recipe.Recipe._set_use_legacy_supplementaries(recipe)
+
+    assert session['use_legacy_supplementaries'] is False
+    assert recipe._preprocessors == {
+        'preproc1': {
+            'area_statistics': {
+                'operator': 'mean',
+            }
+        }
+    }
+
+
+def test_set_version(mocker):
+
+    dataset = Dataset(short_name='tas')
+    supplementary = Dataset(short_name='areacella')
+    dataset.supplementaries = [supplementary]
+
+    input_dataset = Dataset(short_name='tas')
+    file1 = mocker.Mock()
+    file1.facets = {'version': 'v1'}
+    file2 = mocker.Mock()
+    file2.facets = {'version': 'v2'}
+    input_dataset.files = [file1, file2]
+
+    file3 = mocker.Mock()
+    file3.facets = {'version': 'v3'}
+    supplementary.files = [file3]
+
+    _recipe._set_version(dataset, [input_dataset])
+    print(dataset)
+    assert dataset.facets['version'] == ['v1', 'v2']
+    assert dataset.supplementaries[0].facets['version'] == 'v3'
+
+
+def test_extract_preprocessor_order():
+    profile = {
+        'custom_order': True,
+        'regrid': {
+            'target_grid': '1x1'
+        },
+        'derive': {
+            'long_name': 'albedo at the surface',
+            'short_name': 'alb',
+            'standard_name': '',
+            'units': '1'
+        },
+    }
+    order = _recipe._extract_preprocessor_order(profile)
+    assert any(order[i:i + 2] == ('regrid', 'derive')
+               for i in range(len(order) - 1))

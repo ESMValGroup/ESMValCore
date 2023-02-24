@@ -10,6 +10,7 @@ import esmvalcore.cmor._fixes.cesm.cesm2
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 from esmvalcore.config._config import get_extra_facets
+from esmvalcore.dataset import Dataset
 
 # Note: test_data_path is defined in tests/integration/cmor/_fixes/conftest.py
 
@@ -38,7 +39,13 @@ def cube_1d_time():
 
 def _get_fix(mip, frequency, short_name, fix_name):
     """Load a fix from :mod:`esmvalcore.cmor._fixes.cesm.cesm2`."""
-    extra_facets = get_extra_facets('CESM', 'CESM2', mip, short_name, ())
+    dataset = Dataset(
+        project='CESM',
+        dataset='CESM2',
+        mip=mip,
+        short_name=short_name,
+    )
+    extra_facets = get_extra_facets(dataset, ())
     extra_facets['frequency'] = frequency
     vardef = get_var_info(project='CESM', mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.cesm.cesm2, fix_name)

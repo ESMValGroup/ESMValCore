@@ -5,9 +5,9 @@ import logging
 import os.path
 import warnings
 from collections.abc import Iterable
-from functools import lru_cache
+from functools import lru_cache, partial
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from esmvalcore import __version__ as current_version
 from esmvalcore.cmor.check import CheckLevels
@@ -16,7 +16,10 @@ from esmvalcore.config._config import (
     importlib_files,
     load_config_developer,
 )
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+from esmvalcore.exceptions import (
+    ESMValCoreDeprecationWarning,
+    InvalidConfigParameter,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +45,7 @@ def _make_type_validator(cls, *, allow_none=False):
     Return a validator that converts inputs to *cls* or raises (and
     possibly allows ``None`` as well).
     """
+
     def validator(inp):
         looks_like_none = isinstance(inp, str) and (inp.lower() == "none")
         if (allow_none and (inp is None or looks_like_none)):
@@ -75,6 +79,7 @@ def _listify_validator(scalar_validator,
                        docstring=None,
                        return_type=list):
     """Apply the validator to a list."""
+
     def func(inp):
         if isinstance(inp, str):
             try:
@@ -131,7 +136,7 @@ def validate_bool(value, allow_none=False):
 
 
 def validate_path(value, allow_none=False):
-    """Return a `Path` object."""
+    """Return a `Path` obect."""
     if (value is None) and allow_none:
         return value
     try:
@@ -151,6 +156,7 @@ def validate_positive(value):
 
 def _chain_validator(*funcs):
     """Chain a series of validators."""
+
     def chained(value):
         for func in funcs:
             value = func(value)
@@ -163,6 +169,8 @@ validate_string = _make_type_validator(str)
 validate_string_or_none = _make_type_validator(str, allow_none=True)
 validate_stringlist = _listify_validator(validate_string,
                                          docstring='Return a list of strings.')
+
+validate_bool_or_none = partial(validate_bool, allow_none=True)
 validate_int = _make_type_validator(int)
 validate_int_or_none = _make_type_validator(int, allow_none=True)
 validate_float = _make_type_validator(float)
@@ -251,7 +259,7 @@ def validate_search_esgf(value):
 
 
 def validate_diagnostics(
-    diagnostics: Union[Iterable[str], str, None],
+    diagnostics: Union[Iterable[str], str, None]
 ) -> Optional[set[str]]:
     """Validate diagnostic location."""
     if diagnostics is None:
@@ -264,68 +272,83 @@ def validate_diagnostics(
     }
 
 
-def deprecate(func, variable, version: Optional[str] = None):
-    """Wrap function to mark variables to be deprecated.
+def deprecate(validator, option: str, default: Any, version: str):
+    """Wrap function to mark variables as deprecated.
 
-    This will give a warning if the function will be/has been deprecated.
+    This will give a warning if the function has been deprecated and raise
+    an exception once the parameter (should have been) removed.
 
     Parameters
     ----------
-    func:
-        Validator function to wrap
-    variable: str
-        Name of the variable to deprecate
-    version: str
-        Version to deprecate the variable in, should be something
-        like '2.2.3'
+    validator:
+        Validator function to wrap.
+    option:
+        Name of the option to deprecate.
+    default:
+        The new default value, no warning is issued when setting this value.
+    version:
+        Version to remove the option in, should be something like '2.2.3'.
     """
-    if not version:
-        version = 'a future version'
 
-    if current_version >= version:
-        warnings.warn(f"`{variable}` has been removed in {version}",
-                      ESMValCoreDeprecationWarning)
-    else:
-        warnings.warn(f"`{variable}` will be removed in {version}.",
-                      ESMValCoreDeprecationWarning,
-                      stacklevel=2)
+    def get_version(version_string):
+        return tuple(int(i) for i in version_string.split('.')[:3])
 
-    return func
+    msg_head = f"The configuration option '{option}'"
+    msg_tail = f"removed in {version}."
 
+    def wrapper(value):
+        if get_version(current_version) >= get_version(version):
+            raise InvalidConfigParameter(f"{msg_head} has been {msg_tail}")
+
+        if value != default:
+            warnings.warn(
+                f"{msg_head} will be {msg_tail}",
+                ESMValCoreDeprecationWarning,
+            )
+        return validator(value)
+
+    return wrapper
+
+
+_validate_use_legacy_supplementaries = deprecate(
+    validator=validate_bool_or_none,
+    option='use_legacy_supplementaries',
+    default=None,
+    version='2.10.0',
+)
 
 _validators = {
     # From user config
-    'log_level': validate_string,
-    'exit_on_warning': validate_bool,
-    'output_dir': validate_path,
-    'download_dir': validate_path,
     'auxiliary_data_dir': validate_path,
-    'extra_facets_dir': validate_pathtuple,
     'compress_netcdf': validate_bool,
-    'save_intermediary_cubes': validate_bool,
-    'remove_preproc_dir': validate_bool,
-    'max_parallel_tasks': validate_int_or_none,
     'config_developer_file': validate_config_developer,
-    'profile_diagnostic': validate_bool,
-    'run_diagnostic': validate_bool,
-    'output_file_type': validate_string,
+    'download_dir': validate_path,
+    'drs': validate_drs,
+    'exit_on_warning': validate_bool,
+    'extra_facets_dir': validate_pathtuple,
+    'log_level': validate_string,
+    'max_parallel_tasks': validate_int_or_none,
     'offline': validate_bool,
+    'output_dir': validate_path,
+    'output_file_type': validate_string,
+    'profile_diagnostic': validate_bool,
+    'remove_preproc_dir': validate_bool,
+    'rootpath': validate_rootpath,
+    'run_diagnostic': validate_bool,
     'search_esgf': validate_search_esgf,
 
     # From CLI
-    "resume_from": validate_pathlist,
-    'skip_nonexistent': validate_bool,
-    'diagnostics': validate_diagnostics,
     'check_level': validate_check_level,
-    'max_years': validate_int_positive_or_none,
+    'diagnostics': validate_diagnostics,
     'max_datasets': validate_int_positive_or_none,
+    'max_years': validate_int_positive_or_none,
+    'resume_from': validate_pathlist,
+    'save_intermediary_cubes': validate_bool,
+    'skip_nonexistent': validate_bool,
+    'use_legacy_supplementaries': _validate_use_legacy_supplementaries,
 
     # From recipe
     'write_ncl_interface': validate_bool,
-
-    # oldstyle
-    'rootpath': validate_rootpath,
-    'drs': validate_drs,
 
     # config location
     'config_file': validate_path,

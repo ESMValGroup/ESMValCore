@@ -73,8 +73,8 @@ the following:
 Recipe section: ``datasets``
 ============================
 
-The ``datasets`` section includes dictionaries that, via key-value pairs, define standardized
-data specifications:
+The ``datasets`` section includes dictionaries that, via key-value pairs or
+"facets", define standardized data specifications:
 
 - dataset name (key ``dataset``, value e.g. ``MPI-ESM-LR`` or ``UKESM1-0-LL``).
 - project (key ``project``, value ``CMIP5`` or ``CMIP6`` for CMIP data,
@@ -114,6 +114,162 @@ For example, a datasets section could be:
       - {dataset: HadGEM3-GC31-MM, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s2000, grid: gn, start_year: 2000, end_year, 2002}
       - {dataset: BCC-CSM2-MR, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s2000, grid: gn, timerange: '*'}
 
+.. _dataset_wildcards:
+
+Automatically populating a recipe with all available datasets
+-------------------------------------------------------------
+
+It is possible to use :obj:`glob` patterns or wildcards for certain facet
+values, to make it easy to find all available datasets locally and/or on ESGF.
+Note that ``project`` cannot be a wildcard.
+
+The facet values for local files are retrieved from the directory tree where the
+directories represent the facets values.
+Reading facet values from file names is not yet supported.
+See :ref:`CMOR-DRS` for more information on this kind of file organization.
+
+When (some) files are available locally, the tool will not automatically look
+for more files on ESGF. To populate a recipe with all available datasets from
+ESGF, ``offline`` should be set to ``false`` and ``always_search_esgf`` should
+be set to ``true`` in the
+:ref:`user configuration file<user configuration file>`.
+
+For more control over which datasets are selected, it is recommended to use
+a Python script or `Jupyter notebook <https://jupyter.org/>`_ to compose
+the recipe.
+See :ref:`/notebooks/composing-recipes.ipynb` for an example.
+This is particularly useful when specific relations are required between
+datasets, e.g. when a dataset needs to be available for multiple variables
+or experiments.
+
+An example recipe that will use all CMIP6 datasets and all ensemble members
+which have a ``'historical'`` experiment could look like this:
+
+.. code-block:: yaml
+
+  datasets:
+    - project: CMIP6
+      exp: historical
+      dataset: '*'
+      institute: '*'
+      ensemble: '*'
+      grid: '*'
+
+After running the recipe, a copy specifying exactly which datasets were used
+is available in the output directory in the ``run`` subdirectory.
+The filename of this recipe will end with ``_filled.yml``.
+
+For the ``timerange`` facet, special syntax is available.
+See :ref:`timerange_examples` for more information.
+
+If populating a recipe using wildcards does not work, this is because there
+were either no files found that match those facets, or the facets could not be
+read from the directory name or ESGF.
+
+.. _supplementary_variables:
+
+Defining supplementary variables (ancillary variables and cell measures)
+------------------------------------------------------------------------
+
+It is common practice to store ancillary variables (e.g. land/sea/ice masks)
+and cell measures (e.g. cell area, cell volume) in separate datasets that are
+described by slightly different facets.
+In ESMValCore, we call ancillary variables and cell measures "supplementary
+variables".
+Some :ref:`preprocessor functions <Preprocessors>` need this information to
+work.
+For example, the :ref:`area_statistics<area_statistics>` preprocessor function
+needs to know area of each grid cell in order to compute a correctly weighted
+statistic.
+
+To attach these variables to a dataset, the ``supplementary_variables`` keyword
+can be used.
+For example, to add cell area to a dataset, it can be specified as follows:
+
+.. code-block:: yaml
+
+  datasets:
+    - dataset: BCC-ESM1
+      project: CMIP6
+      exp: historical
+      ensemble: r1i1p1f1
+      grid: gn
+      supplementary_variables:
+        - short_name: areacella
+          mip: fx
+          exp: 1pctCO2
+
+Note that the supplementary variable will inherit the facet values from the main
+dataset, so only those facet values that differ need to be specified.
+
+.. _supplementary_dataset_wildcards:
+
+Automatically selecting the supplementary dataset
+-------------------------------------------------
+
+When using many datasets, it may be quite a bit of work to find out which facet
+values are required to find the corresponding supplementary data.
+The tool can automatically guess the best matching supplementary dataset.
+To use this feature, the supplementary dataset can be specified as:
+
+.. code-block:: yaml
+
+  datasets:
+    - dataset: BCC-ESM1
+      project: CMIP6
+      exp: historical
+      ensemble: r1i1p1f1
+      grid: gn
+      supplementary_variables:
+        - short_name: areacella
+          mip: fx
+          exp: '*'
+          activity: '*'
+          ensemble: '*'
+
+With this syntax, the tool will search all available values of ``exp``,
+``activity``, and ``ensemble`` and use the supplementary dataset that shares the
+most facet values with the main dataset.
+Note that this behaviour is different from
+:ref:`using wildcards in the main dataset <dataset_wildcards>`,
+where they will be expanded to generate all matching datasets.
+The available datasets are shown in the debug log messages when running a recipe
+with wildcards, so if a different supplementary dataset is preferred, these
+messages can be used to see what facet values are available.
+The facet values for local files are retrieved from the directory tree where the
+directories represent the facets values.
+Reading facet values from file names is not yet supported.
+If wildcard expansion fails, this is because there were either no files found
+that match those facets, or the facets could not be read from the directory
+name or ESGF.
+
+Automatic definition of supplementary variables
+-----------------------------------------------
+
+If an ancillary variable or cell measure is
+:ref:`needed by a preprocessor function <preprocessors_using_supplementary_variables>`,
+but it is not specified in the recipe, the tool will automatically make a best
+guess using the syntax above.
+Usually this will work fine, but if it does not, it is recommended to explicitly
+define the supplementary variables in the recipe.
+
+To disable this automatic addition, define the supplementary variable as usual,
+but add the special facet ``skip`` with value ``true``.
+See :ref:`preprocessors_using_supplementary_variables` for an example recipe.
+
+Saving ancillary variables and cell measures
+--------------------------------------------
+
+By default, ancillary variables and cell measures will be removed
+from the main variable before saving it to file because they can be as big as
+the main variable.
+To keep the supplementary variables, disable the preprocessor function that
+removes them by setting ``remove_supplementary_variables: false`` in the
+preprocessor profile in the recipe.
+
+Concatenating data corresponding to multiple facets
+---------------------------------------------------
+
 It is possible to define the experiment as a list to concatenate two experiments.
 Here it is an example concatenating the `historical` experiment with `rcp85`
 
@@ -129,6 +285,9 @@ In this case, the specified datasets are concatenated into a single cube:
 
     datasets:
       - {dataset: CanESM2, project: CMIP5, exp: [historical, rcp85], ensemble: [r1i1p1, r1i2p1], start_year: 2001, end_year: 2004}
+
+Short notation of ensemble members and sub-experiments
+------------------------------------------------------
 
 ESMValTool also supports a simplified syntax to add multiple ensemble members from the same dataset.
 In the ensemble key, any element in the form `(x:y)` will be replaced with all numbers from x to y (both inclusive),
@@ -152,7 +311,7 @@ Please, bear in mind that this syntax can only be used in the ensemble tag.
 Also, note that the combination of multiple experiments and ensembles, like
 exp: [historical, rcp85], ensemble: [r1i1p1, "r(2:3)i1p1"] is not supported and will raise an error.
 
-The same simplified syntax can be used to add multiple sub-experiment ids:
+The same simplified syntax can be used to add multiple sub-experiments:
 
 .. code-block:: yaml
 
@@ -160,6 +319,9 @@ The same simplified syntax can be used to add multiple sub-experiment ids:
       - {dataset: MIROC6, project: CMIP6, exp: dcppA-hindcast, ensemble: r1i1p1f1, sub_experiment: s(2000:2002), grid: gn, start_year: 2003, end_year: 2004}
 
 .. _timerange_examples:
+
+Time ranges
+-----------
 
 When using the ``timerange`` tag to specify the start and end points, possible values can be as follows:
 
@@ -278,7 +440,7 @@ section will include:
 - a description of the diagnostic and lists of themes and realms that it applies to;
 - an optional ``additional_datasets`` section.
 - an optional ``title`` and ``description``, used to generate the title and description
-  of the ``index.html`` output file.
+  in the ``index.html`` output file.
 
 .. _tasks:
 
@@ -286,9 +448,7 @@ The diagnostics section defines tasks
 -------------------------------------
 The diagnostic section(s) define the tasks that will be executed when running the recipe.
 For each variable a preprocessing task will be defined and for each diagnostic script a
-diagnostic task will be defined. If variables need to be derived
-from other variables, a preprocessing task for each of the variables
-needed to derive that variable will be defined as well. These tasks can be viewed
+diagnostic task will be defined. These tasks can be viewed
 in the main_log_debug.txt file that is produced every run. Each task has a unique
 name that defines the subdirectory where the results of that task are stored. Task
 names start with the name of the diagnostic section followed by a '/' and then

@@ -72,7 +72,6 @@ def process_recipe(recipe_file: Path, session):
     """Process recipe."""
     import datetime
     import shutil
-    import warnings
 
     from esmvalcore._recipe.recipe import read_recipe_file
     if not recipe_file.is_file():
@@ -117,11 +116,7 @@ def process_recipe(recipe_file: Path, session):
     shutil.copy2(recipe_file, session.run_dir)
 
     # parse recipe
-    with warnings.catch_warnings():
-        # ignore deprecation warning
-        warnings.simplefilter("ignore")
-        config_user = session.to_config_user()
-    recipe = read_recipe_file(recipe_file, config_user)
+    recipe = read_recipe_file(recipe_file, session)
     logger.debug("Recipe summary:\n%s", recipe)
     # run
     recipe.run()
