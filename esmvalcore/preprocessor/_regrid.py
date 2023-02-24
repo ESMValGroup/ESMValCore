@@ -19,12 +19,10 @@ from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
 
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
-from ..cmor.fix import fix_file, fix_metadata
 from ..cmor.table import CMOR_TABLES
-from ._ancillary_vars import add_ancillary_variable, add_cell_measure
-from ._io import concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
+from ._supplementary_vars import add_ancillary_variable, add_cell_measure
 
 logger = logging.getLogger(__name__)
 
@@ -453,6 +451,12 @@ def extract_point(cube, latitude, longitude, scheme):
     return cube
 
 
+def is_dataset(dataset):
+    """Test if something is an `esmvalcore.dataset.Dataset`."""
+    # Use this function to avoid circular imports
+    return hasattr(dataset, 'facets')
+
+
 def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     """Perform horizontal regridding.
 
@@ -544,25 +548,28 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             target: 1x1
             scheme:
               reference: esmf_regrid.schemes:ESMFAreaWeighted
-
     """
-    if isinstance(target_grid, (str, Path)):
-        if os.path.isfile(target_grid):
-            target_grid = iris.load_cube(target_grid)
-        else:
-            # Generate a target grid from the provided cell-specification,
-            # and cache the resulting stock cube for later use.
-            target_grid = _CACHE.setdefault(
-                target_grid,
-                _global_stock_cube(target_grid, lat_offset, lon_offset),
-            )
-            # Align the target grid coordinate system to the source
-            # coordinate system.
-            src_cs = cube.coord_system()
-            xcoord = target_grid.coord(axis='x', dim_coords=True)
-            ycoord = target_grid.coord(axis='y', dim_coords=True)
-            xcoord.coord_system = src_cs
-            ycoord.coord_system = src_cs
+    if is_dataset(target_grid):
+        target_grid = target_grid.copy()
+        target_grid.supplementaries.clear()
+        target_grid.files = [target_grid.files[0]]
+        target_grid = target_grid.load()
+    elif isinstance(target_grid, (str, Path)) and os.path.isfile(target_grid):
+        target_grid = iris.load_cube(target_grid)
+    elif isinstance(target_grid, str):
+        # Generate a target grid from the provided cell-specification,
+        # and cache the resulting stock cube for later use.
+        target_grid = _CACHE.setdefault(
+            target_grid,
+            _global_stock_cube(target_grid, lat_offset, lon_offset),
+        )
+        # Align the target grid coordinate system to the source
+        # coordinate system.
+        src_cs = cube.coord_system()
+        xcoord = target_grid.coord(axis='x', dim_coords=True)
+        ycoord = target_grid.coord(axis='y', dim_coords=True)
+        xcoord.coord_system = src_cs
+        ycoord.coord_system = src_cs
     elif isinstance(target_grid, dict):
         # Generate a target grid from the provided specification,
         target_grid = _regional_stock_cube(target_grid)
@@ -1012,26 +1019,13 @@ def get_cmor_levels(cmor_table, coordinate):
     )
 
 
-def get_reference_levels(filename, project, dataset, short_name, mip,
-                         frequency, fix_dir):
+def get_reference_levels(dataset):
     """Get level definition from a reference dataset.
 
     Parameters
     ----------
-    filename: str
-        Path to the reference file
-    project : str
-        Name of the project
-    dataset : str
-        Name of the dataset
-    short_name : str
-        Name of the variable
-    mip : str
-        Name of the mip table
-    frequency : str
-        Time frequency
-    fix_dir : str
-        Output directory for fixed data
+    dataset: esmvalcore.dataset.Dataset
+        Dataset containing the reference files.
 
     Returns
     -------
@@ -1043,28 +1037,14 @@ def get_reference_levels(filename, project, dataset, short_name, mip,
         If the dataset is not defined, the coordinate does not specify any
         levels or the string is badly formatted.
     """
-    filename = fix_file(
-        file=filename,
-        short_name=short_name,
-        project=project,
-        dataset=dataset,
-        mip=mip,
-        output_dir=fix_dir,
-    )
-    cubes = load(filename, callback=concatenate_callback)
-    cubes = fix_metadata(
-        cubes=cubes,
-        short_name=short_name,
-        project=project,
-        dataset=dataset,
-        mip=mip,
-        frequency=frequency,
-    )
-    cube = cubes[0]
+    dataset = dataset.copy()
+    dataset.supplementaries.clear()
+    dataset.files = [dataset.files[0]]
+    cube = dataset.load()
     try:
         coord = cube.coord(axis='Z')
-    except iris.exceptions.CoordinateNotFoundError:
-        raise ValueError('z-coord not available in {}'.format(filename))
+    except iris.exceptions.CoordinateNotFoundError as exc:
+        raise ValueError(f'z-coord not available in {dataset.files}') from exc
     return coord.points.tolist()
 
 

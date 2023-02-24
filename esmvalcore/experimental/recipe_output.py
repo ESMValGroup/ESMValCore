@@ -1,16 +1,13 @@
 """API for handing recipe output."""
 import base64
 import logging
-import warnings
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Optional, Tuple, Type
 
 import iris
 
-from esmvalcore.config import Session
-from esmvalcore.config._config import TASKSEP
-
+from ..config._config import TASKSEP
 from .recipe_info import RecipeInfo
 from .recipe_metadata import Contributor, Reference
 from .templates import get_template
@@ -121,7 +118,7 @@ class RecipeOutput(Mapping):
         Dictionary with recipe output grouped by diagnostic.
     info : RecipeInfo
         The recipe used to create the output.
-    session : Session
+    session : esmvalcore.config.Session
         The session used to run the recipe.
     """
 
@@ -175,10 +172,7 @@ class RecipeOutput(Mapping):
         """Construct instance from `_recipe.Recipe` output.
 
         The core recipe format is not directly compatible with the API. This
-        constructor does the following:
-
-        1. Convert `config-user` dict to an instance of :obj:`Session`
-        2. Converts the raw recipe dict to :obj:`RecipeInfo`
+        constructor converts the raw recipe dict to :obj:`RecipeInfo`
 
         Parameters
         ----------
@@ -187,13 +181,9 @@ class RecipeOutput(Mapping):
         """
         task_output = recipe_output['task_output']
         recipe_data = recipe_output['recipe_data']
-        recipe_config = recipe_output['recipe_config']
+        session = recipe_output['session']
         recipe_filename = recipe_output['recipe_filename']
 
-        with warnings.catch_warnings():
-            # ignore deprecation warning
-            warnings.simplefilter("ignore")
-            session = Session.from_config_user(recipe_config)
         info = RecipeInfo(recipe_data, filename=recipe_filename)
         info.resolve()
 

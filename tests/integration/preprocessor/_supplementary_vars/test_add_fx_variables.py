@@ -1,7 +1,7 @@
 """Test add_fx_variables.
 
 Integration tests for the
-:func:`esmvalcore.preprocessor._ancillary_vars` module.
+:func:`esmvalcore.preprocessor._supplementary_vars` module.
 """
 import logging
 
@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.preprocessor._ancillary_vars import (
+from esmvalcore.preprocessor._supplementary_vars import (
     _is_fx_broadcastable,
     add_ancillary_variable,
     add_cell_measure,
@@ -219,7 +219,7 @@ class Test:
         cube = add_fx_variables(cube, {'areacello': None}, CheckLevels.IGNORE)
         assert cube.cell_measures() == []
 
-    def test_add_ancillary_vars(self, tmp_path):
+    def test_add_ancillary_variables(self, tmp_path):
         """Test invalid variable is not added as cell measure."""
         self.fx_area.var_name = 'sftlf'
         self.fx_area.standard_name = "land_area_fraction"
