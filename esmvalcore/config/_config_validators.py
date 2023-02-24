@@ -317,6 +317,7 @@ _validate_use_legacy_supplementaries = deprecate(
     version='2.10.0',
 )
 
+
 _validators = {
     # From user config
     'auxiliary_data_dir': validate_path,
@@ -335,7 +336,9 @@ _validators = {
     'remove_preproc_dir': validate_bool,
     'rootpath': validate_rootpath,
     'run_diagnostic': validate_bool,
+    'save_intermediary_cubes': validate_bool,
     'search_esgf': validate_search_esgf,
+    'use_legacy_supplementaries': _validate_use_legacy_supplementaries,
 
     # From CLI
     'check_level': validate_check_level,
@@ -343,9 +346,7 @@ _validators = {
     'max_datasets': validate_int_positive_or_none,
     'max_years': validate_int_positive_or_none,
     'resume_from': validate_pathlist,
-    'save_intermediary_cubes': validate_bool,
     'skip_nonexistent': validate_bool,
-    'use_legacy_supplementaries': _validate_use_legacy_supplementaries,
 
     # From recipe
     'write_ncl_interface': validate_bool,
