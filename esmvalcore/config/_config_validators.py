@@ -136,7 +136,7 @@ def validate_bool(value, allow_none=False):
 
 
 def validate_path(value, allow_none=False):
-    """Return a `Path` obect."""
+    """Return a `Path` object."""
     if (value is None) and allow_none:
         return value
     try:

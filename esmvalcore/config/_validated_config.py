@@ -44,9 +44,9 @@ class ValidatedConfig(MutableMapping):
         if key == 'offline':
             deprecation_msg = (
                 "The configuration option or command line argument `offline` "
-                "been deprecated in ESMValCore version 2.8.0 and is scheduled "
-                "for removal in version 2.10.0. Please use the options "
-                "`search_esgf=never` (for `offline=True`) or "
+                "has been deprecated in ESMValCore version 2.8.0 and is "
+                "scheduled for removal in version 2.10.0. Please use the "
+                "options `search_esgf=never` (for `offline=True`) or "
                 "`search_esgf=default` (for `offline=False`). These are "
                 "exact replacements."
             )
