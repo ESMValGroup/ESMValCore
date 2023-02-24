@@ -3,6 +3,7 @@ import copy
 import logging
 import os
 import shutil
+import warnings
 from itertools import groupby
 from warnings import catch_warnings, filterwarnings
 
@@ -12,6 +13,7 @@ import iris.exceptions
 import yaml
 from cf_units import suppress_errors
 
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import merge_cube_attributes
 
 from .._task import write_ncl_settings
@@ -121,6 +123,9 @@ def load(file, callback=None, ignore_warnings=None):
         File to be loaded.
     callback: callable or None, optional (default: None)
         Callback function passed to :func:`iris.load_raw`.
+
+        .. deprecated:: 2.8.0
+            This argument will be removed in 2.10.0.
     ignore_warnings: list of dict or None, optional (default: None)
         Keyword arguments passed to :func:`warnings.filterwarnings` used to
         ignore warnings issued by :func:`iris.load_raw`. Each list element
@@ -136,6 +141,13 @@ def load(file, callback=None, ignore_warnings=None):
     ValueError
         Cubes are empty.
     """
+    if not (callback is None or callback == 'default'):
+        msg = ("The argument `callback` has been deprecated in "
+               "ESMValCore version 2.8.0 and is scheduled for removal in "
+               "version 2.10.0.")
+        warnings.warn(msg, ESMValCoreDeprecationWarning)
+    if callback == 'default':
+        callback = concatenate_callback
     file = str(file)
     logger.debug("Loading:\n%s", file)
     if ignore_warnings is None:

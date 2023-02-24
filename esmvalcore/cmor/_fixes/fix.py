@@ -2,6 +2,7 @@
 import importlib
 import inspect
 import os
+from pathlib import Path
 
 from ..table import CMOR_TABLES
 
@@ -25,7 +26,7 @@ class Fix:
             extra_facets = {}
         self.extra_facets = extra_facets
 
-    def fix_file(self, filepath, output_dir):
+    def fix_file(self, filepath: Path, output_dir: Path) -> Path:
         """Apply fixes to the files prior to creating the cube.
 
         Should be used only to fix errors that prevent loading or can
@@ -34,14 +35,14 @@ class Fix:
 
         Parameters
         ----------
-        filepath: str
+        filepath: Path
             file to fix
-        output_dir: str
+        output_dir: Path
             path to the folder to store the fixed files, if required
 
         Returns
         -------
-        str
+        Path
             Path to the corrected file. It can be different from the original
             filepath if a fix has been applied, but if not it should be the
             original filepath

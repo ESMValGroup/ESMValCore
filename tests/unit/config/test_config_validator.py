@@ -8,6 +8,7 @@ from esmvalcore.config._config_validators import (
     _listify_validator,
     deprecate,
     validate_bool,
+    validate_bool_or_none,
     validate_check_level,
     validate_diagnostics,
     validate_float,
@@ -20,6 +21,7 @@ from esmvalcore.config._config_validators import (
     validate_string,
     validate_string_or_none,
 )
+from esmvalcore.exceptions import InvalidConfigParameter
 
 
 def generate_validator_testcases(valid):
@@ -89,6 +91,11 @@ def generate_validator_testcases(valid):
             ((_, [1, 2])
              for _ in ('1, 2', [1.5, 2.5], [1, 2], (1, 2), np.array((1, 2)))),
             'fail': ((_, ValueError) for _ in ('fail', ('a', 1), (1, 2, 3)))
+        },
+        {
+            'validator': validate_bool_or_none,
+            'success': ((None, None), (True, True), (False, False)),
+            'fail': (('A', ValueError), (1, ValueError)),
         },
         {
             'validator': validate_int_or_none,
@@ -187,11 +194,21 @@ def test_validator_invalid(validator, arg, exception_type):
 
 @pytest.mark.parametrize('version', (current_version, '0.0.1', '9.9.9'))
 def test_deprecate(version):
-    def test_func():
-        pass
+    def test_func(value):
+        return value
 
-    # This always warns
-    with pytest.warns(UserWarning):
-        f = deprecate(test_func, 'test_var', version)
+    validate = deprecate(
+        validator=test_func,
+        option='test_var',
+        default=None,
+        version=version,
+    )
+    assert callable(validate)
 
-    assert callable(f)
+    if version != '9.9.9':
+        with pytest.raises(InvalidConfigParameter):
+            validate('value')
+    else:
+        with pytest.warns(UserWarning):
+            result = validate('value')
+        assert result == 'value'
