@@ -184,7 +184,6 @@ def test_load_default_config(monkeypatch, default_config):
         'search_esgf': 'never',
         'skip_nonexistent': False,
         'save_intermediary_cubes': False,
-        'use_legacy_supplementaries': None,
     }
 
     directory_attrs = {
