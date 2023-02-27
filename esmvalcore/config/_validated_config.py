@@ -1,12 +1,12 @@
 """Config validation objects."""
+from __future__ import annotations
 
 import pprint
 import warnings
-from collections.abc import MutableMapping
-from typing import Callable, Dict, Tuple
+from collections.abc import Callable, MutableMapping
+from typing import Any
 
 from esmvalcore.exceptions import (
-    ESMValCoreDeprecationWarning,
     InvalidConfigParameter,
     MissingConfigParameter,
 )
@@ -21,8 +21,37 @@ from ._config_validators import ValidationError
 class ValidatedConfig(MutableMapping):
     """Based on `matplotlib.rcParams`."""
 
-    _validate: Dict[str, Callable] = {}
-    _warn_if_missing: Tuple[Tuple[str, str], ...] = ()
+    _validate: dict[str, Callable] = {}
+    """Validation function for each configuration option.
+
+    Each key and value in the dictionary corresponds to a configuration option
+    and a corresponding validation function, respectively. Validation functions
+    should have signatures ``f(value) -> validated_value`` and raise a
+    ``ValidationError`` if invalid values are given.
+    """
+
+    _deprecate: dict[str, Callable] = {}
+    """Handle deprecated options.
+
+    Each key and value in the dictionary corresponds to a configuration option
+    and a corresponding deprecation function, respectively. Deprecation
+    functions should have signatures
+    ``f(self, value, validated_value) -> None``.
+    """
+
+    _deprecated_defaults: dict[str, Any] = {}
+    """Default values for deprecated options.
+
+    Default values for deprecated options that are used if the option is not
+    present in the ``_mapping`` dictionary.
+    """
+
+    _warn_if_missing: tuple[tuple[str, str], ...] = ()
+    """Handle missing options.
+
+    Each sub-tuple in the tuple consists of an option for which a warning is
+    emitted and a string with more information for the user on that option.
+    """
 
     # validate values on the way in
     def __init__(self, *args, **kwargs):
@@ -40,27 +69,19 @@ class ValidatedConfig(MutableMapping):
             raise InvalidConfigParameter(
                 f"`{key}` is not a valid config parameter.") from None
 
-        # Deprecations
-        if key == 'offline':
-            deprecation_msg = (
-                "The configuration option or command line argument `offline` "
-                "has been deprecated in ESMValCore version 2.8.0 and is "
-                "scheduled for removal in version 2.10.0. Please use the "
-                "options `search_esgf=never` (for `offline=True`) or "
-                "`search_esgf=default` (for `offline=False`). These are "
-                "exact replacements."
-            )
-            warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
-            if cval:
-                self._mapping['search_esgf'] = 'never'
-            else:
-                self._mapping['search_esgf'] = 'default'
+        if key in self._deprecate:
+            self._deprecate[key](self, val, cval)
 
         self._mapping[key] = cval
 
     def __getitem__(self, key):
         """Return value mapped by key."""
-        return self._mapping[key]
+        try:
+            return self._mapping[key]
+        except KeyError:
+            if key in self._deprecated_defaults:
+                return self._deprecated_defaults[key]
+            raise
 
     def __repr__(self):
         """Return canonical string representation."""

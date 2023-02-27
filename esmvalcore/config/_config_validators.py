@@ -4,10 +4,12 @@ from __future__ import annotations
 import logging
 import os.path
 import warnings
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from functools import lru_cache, partial
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
+
+from packaging import version
 
 from esmvalcore import __version__ as current_version
 from esmvalcore.cmor.check import CheckLevels
@@ -20,6 +22,9 @@ from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
     InvalidConfigParameter,
 )
+
+if TYPE_CHECKING:
+    from ._validated_config import ValidatedConfig
 
 logger = logging.getLogger(__name__)
 
@@ -272,52 +277,6 @@ def validate_diagnostics(
     }
 
 
-def deprecate(validator, option: str, default: Any, version: str):
-    """Wrap function to mark variables as deprecated.
-
-    This will give a warning if the function has been deprecated and raise
-    an exception once the parameter (should have been) removed.
-
-    Parameters
-    ----------
-    validator:
-        Validator function to wrap.
-    option:
-        Name of the option to deprecate.
-    default:
-        The new default value, no warning is issued when setting this value.
-    version:
-        Version to remove the option in, should be something like '2.2.3'.
-    """
-
-    def get_version(version_string):
-        return tuple(int(i) for i in version_string.split('.')[:3])
-
-    msg_head = f"The configuration option '{option}'"
-    msg_tail = f"removed in {version}."
-
-    def wrapper(value):
-        if get_version(current_version) >= get_version(version):
-            raise InvalidConfigParameter(f"{msg_head} has been {msg_tail}")
-
-        if value != default:
-            warnings.warn(
-                f"{msg_head} will be {msg_tail}",
-                ESMValCoreDeprecationWarning,
-            )
-        return validator(value)
-
-    return wrapper
-
-
-_validate_use_legacy_supplementaries = deprecate(
-    validator=validate_bool_or_none,
-    option='use_legacy_supplementaries',
-    default=None,
-    version='2.10.0',
-)
-
-
 _validators = {
     # From user config
     'auxiliary_data_dir': validate_path,
@@ -338,7 +297,7 @@ _validators = {
     'run_diagnostic': validate_bool,
     'save_intermediary_cubes': validate_bool,
     'search_esgf': validate_search_esgf,
-    'use_legacy_supplementaries': _validate_use_legacy_supplementaries,
+    'use_legacy_supplementaries': validate_bool_or_none,
 
     # From CLI
     'check_level': validate_check_level,
@@ -353,4 +312,96 @@ _validators = {
 
     # config location
     'config_file': validate_path,
+}
+
+
+# Handle deprecations (using ``ValidatedConfig._deprecate``)
+
+def _handle_deprecation(
+    option: str,
+    deprecated_version: str,
+    remove_version: str,
+    more_info: str,
+) -> None:
+    """Handle deprecated configuration option."""
+    if version.parse(current_version) >= version.parse(remove_version):
+        remove_msg = (
+            f"The configuration option or command line argument `{option}` "
+            f"has been removed in ESMValCore version {remove_version}."
+            f"{more_info}"
+        )
+        raise InvalidConfigParameter(remove_msg)
+
+    deprecation_msg = (
+        f"The configuration option or command line argument `{option}` has "
+        f"been deprecated in ESMValCore version {deprecated_version} and is "
+        f"scheduled for removal in version {remove_version}.{more_info}"
+    )
+    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+
+
+def deprecate_offline(
+    validated_config: ValidatedConfig,
+    value: Any,
+    validated_value: Any,
+) -> None:
+    """Deprecate ``offline`` option.
+
+    Parameters
+    ----------
+    validated_config: ValidatedConfig
+        ``ValidatedConfig`` instance which will be modified in place.
+    value: Any
+        Raw input value for ``offline`` option.
+    validated_value: Any
+        Validated value for ``offline`` option.
+    """
+    option = 'offline'
+    deprecated_version = '2.8.0'
+    remove_version = '2.10.0'
+    more_info = (
+        " Please use the options `search_esgf=never` (for `offline=True`) or "
+        "`search_esgf=default` (for `offline=False`) instead. These are exact "
+        "replacements."
+    )
+    _handle_deprecation(option, deprecated_version, remove_version, more_info)
+    if validated_value:
+        validated_config['search_esgf'] = 'never'
+    else:
+        validated_config['search_esgf'] = 'default'
+
+
+def deprecate_use_legacy_supplementaries(
+    validated_config: ValidatedConfig,
+    value: Any,
+    validated_value: Any,
+) -> None:
+    """Deprecate ``use_legacy_supplementaries`` option.
+
+    Parameters
+    ----------
+    validated_config: ValidatedConfig
+        ``ValidatedConfig`` instance which will be modified in place.
+    value: Any
+        Raw input value for ``use_legacy_supplementaries`` option.
+    validated_value: Any
+        Validated value for ``use_legacy_supplementaries`` option.
+    """
+    option = 'use_legacy_supplementaries'
+    deprecated_version = '2.8.0'
+    remove_version = '2.10.0'
+    more_info = ''
+    _handle_deprecation(option, deprecated_version, remove_version, more_info)
+
+
+_deprecators: dict[str, Callable] = {
+    'offline': deprecate_offline,
+    'use_legacy_supplementaries': deprecate_use_legacy_supplementaries,
+}
+
+
+# Default values for deprecated options
+_deprecated_options_defaults: dict[str, Any] = {
+    'offline': True,
+    'use_legacy_supplementaries': None,
 }
