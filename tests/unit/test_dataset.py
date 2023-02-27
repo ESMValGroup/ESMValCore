@@ -126,7 +126,7 @@ def test_session_setter():
                 'short_name': 'pr',
                 'mip': '3hr',
                 'project': 'CMIP5',
-                'dataset': 'CanESM2',
+                'dataset': 'CNRM-CM5',
                 'exp': 'historical',
                 'ensemble': 'r1i1p1',
                 'timerange': '2000/2000',
@@ -140,7 +140,7 @@ def test_session_setter():
                 'standard_name': 'precipitation_flux',
                 'units': 'kg m-2 s-1',
                 # Added from extra facets YAML file
-                'institute': ['CCCma'],
+                'institute': ['CNRM-CERFACS'],
                 'product': ['output1', 'output2'],
             },
         ],
