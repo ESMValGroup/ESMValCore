@@ -53,8 +53,9 @@ omitted in the file.
   # Includes log files and performance stats.
   output_dir: ~/esmvaltool_output
 
-  # Directory for storing downloaded climate data
-  download_dir: ~/climate_data
+  # Auxiliary data directory
+  # Used by some recipes to look for additional datasets.
+  auxiliary_data_dir: ~/auxiliary_data
 
   # Automatic data download from ESGF --- [never]/default/always
   # Use automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs
@@ -65,9 +66,12 @@ omitted in the file.
   # local files if they correspond to that latest version.
   search_esgf: never
 
-  # Auxiliary data directory
-  # Used by some recipes to look for additional datasets.
-  auxiliary_data_dir: ~/auxiliary_data
+  # Directory for storing downloaded climate data
+  # Make sure to use a directory where you can store multible GBs of data. Your
+  # home directory on a HPC is usually not suited for that purpose, so please
+  # adapt the default value in this case!
+  download_dir: ~/climate_data
+
 
   # Rootpaths to the data from different projects
   # This default setting will work if files have been downloaded by ESMValTool

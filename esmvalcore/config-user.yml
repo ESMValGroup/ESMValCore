@@ -26,21 +26,9 @@
 # Includes log files and performance stats.
 output_dir: ~/esmvaltool_output
 
-# Directory for storing downloaded climate data
-download_dir: ~/climate_data
-
 # Auxiliary data directory
 # Used by some recipes to look for additional datasets.
 auxiliary_data_dir: ~/auxiliary_data
-
-# Run at most this many tasks in parallel --- [null]/1/2/3/4/...
-# Set to ``null`` to use the number of available CPUs. If you run out of
-# memory, try setting max_parallel_tasks to ``1`` and check the amount of
-# memory you need for that by inspecting the file ``run/resource_usage.txt`` in
-# the output directory. Using the number there you can increase the number of
-# parallel tasks again to a reasonable number for the amount of memory
-# available in your system.
-max_parallel_tasks: null
 
 # Automatic data download from ESGF --- [never]/default/always
 # Use automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs
@@ -50,6 +38,21 @@ max_parallel_tasks: null
 # always check ESGF for the latest version of a file, and only uses local files
 # if they correspond to that latest version.
 search_esgf: never
+
+# Directory for storing downloaded climate data
+# Make sure to use a directory where you can store multible GBs of data. Your
+# home directory on a HPC is usually not suited for that purpose, so please
+# adapt the default value in this case!
+download_dir: ~/climate_data
+
+# Run at most this many tasks in parallel --- [null]/1/2/3/4/...
+# Set to ``null`` to use the number of available CPUs. If you run out of
+# memory, try setting max_parallel_tasks to ``1`` and check the amount of
+# memory you need for that by inspecting the file ``run/resource_usage.txt`` in
+# the output directory. Using the number there you can increase the number of
+# parallel tasks again to a reasonable number for the amount of memory
+# available in your system.
+max_parallel_tasks: null
 
 # Log level of the console --- debug/[info]/warning/error
 # For much more information printed to screen set log_level to ``debug``.
