@@ -607,8 +607,9 @@ class Dataset:
         if self.session['search_esgf'] == 'never':
             return
 
-        # 'default' mode: if files are available locally, do not check ESGF
-        if self.session['search_esgf'] == 'default':
+        # 'when_missing' mode: if files are available locally, do not check
+        # ESGF
+        if self.session['search_esgf'] == 'when_missing':
             try:
                 check.data_availability(self, log=False)
             except InputFilesNotFound:
@@ -616,8 +617,8 @@ class Dataset:
             else:
                 return  # use local files
 
-        # Local files are not available in 'default' mode or 'always' mode is
-        # used: check ESGF
+        # Local files are not available in 'when_missing' mode or 'always' mode
+        # is used: check ESGF
         local_files = {f.name: f for f in self.files}
         search_result = esgf.find_files(**self.facets)
         for file in search_result:

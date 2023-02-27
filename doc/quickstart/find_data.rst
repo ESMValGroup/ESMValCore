@@ -483,12 +483,12 @@ retrieval parameters is explained below.
 
 Enabling automatic downloads from the ESGF
 ------------------------------------------
-To enable automatic downloads from ESGF, set ``search_esgf: default`` (use
+To enable automatic downloads from ESGF, set ``search_esgf: when_missing`` (use
 local files whenever possible) or ``search_esgf: always`` (always search ESGF
 for latest version of files and only use local data if it is the latest
 version) in the :ref:`user configuration file`, or provide the corresponding
-command line arguments ``--search_esgf=default`` or ``--search_esgf=always``
-when running the recipe.
+command line arguments ``--search_esgf=when_missing`` or
+``--search_esgf=always`` when running the recipe.
 The files will be stored in the ``download_dir`` set in
 the :ref:`user configuration file`.
 

@@ -983,9 +983,9 @@ class Recipe:
                 "configuration file %s", self.session['config_file'])
             logger.error(
                 "To automatically download the required files to "
-                "`download_dir: %s`, set `search_esgf: default` or "
+                "`download_dir: %s`, set `search_esgf: when_missing` or "
                 "`search_esgf: always` in %s, or run the recipe with the "
-                "extra command line argument --search_esgf=default or "
+                "extra command line argument --search_esgf=when_missing or "
                 "--search_esgf=always",
                 self.session['download_dir'],
                 self.session['config_file'],

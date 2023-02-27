@@ -175,8 +175,8 @@ def generate_validator_testcases(valid):
             'success': (
                 ('never', 'never'),
                 ('NEVER', 'never'),
-                ('default', 'default'),
-                ('dEfaUlT', 'default'),
+                ('when_missing', 'when_missing'),
+                ('WhEN_MIssIng', 'when_missing'),
                 ('always', 'always'),
                 ('Always', 'always'),
             ),

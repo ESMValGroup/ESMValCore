@@ -57,17 +57,17 @@ omitted in the file.
   # Used by some recipes to look for additional datasets.
   auxiliary_data_dir: ~/auxiliary_data
 
-  # Automatic data download from ESGF --- [never]/default/always
+  # Automatic data download from ESGF --- [never]/when_missing/always
   # Use automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs
   # data from ESGF. ``never`` disables this feature, which is useful if you are
-  # working on a computer without an internet connection. ``default`` enables
-  # the automatic download for files that are not available locally. ``always``
-  # will always check ESGF for the latest version of a file, and only uses
-  # local files if they correspond to that latest version.
+  # working on a computer without an internet connection. ``when_missing``
+  # enables the automatic download for files that are not available locally.
+  # ``always`` will always check ESGF for the latest version of a file, and
+  # only uses local files if they correspond to that latest version.
   search_esgf: never
 
   # Directory for storing downloaded climate data
-  # Make sure to use a directory where you can store multible GBs of data. Your
+  # Make sure to use a directory where you can store multiple GBs of data. Your
   # home directory on a HPC is usually not suited for that purpose, so please
   # adapt the default value in this case!
   download_dir: ~/climate_data
@@ -142,7 +142,7 @@ The ``search_esgf`` setting can be used to disable or enable automatic
 downloads from ESGF.
 If ``search_esgf`` is set to ``never``, the tool does not download any data
 from the ESGF.
-If ``search_esgf`` is set to ``default``, the tool will download any CMIP3,
+If ``search_esgf`` is set to ``when_missing``, the tool will download any CMIP3,
 CMIP5, CMIP6, CORDEX, and obs4MIPs data that is required to run a recipe but
 not available locally and store it in ``download_dir`` using the ``ESGF``
 directory structure defined in the :ref:`config-developer`.
@@ -207,9 +207,9 @@ The ``esmvaltool run`` command can automatically download the files required
 to run a recipe from ESGF for the projects CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
 The downloaded files will be stored in the ``download_dir`` specified in the
 :ref:`user configuration file`.
-To enable automatic downloads from ESGF, set ``search_esgf: default`` or
+To enable automatic downloads from ESGF, set ``search_esgf: when_missing`` or
 ``search_esgf: always`` in the :ref:`user configuration file`, or provide the
-corresponding command line arguments ``--search_esgf=default`` or
+corresponding command line arguments ``--search_esgf=when_missing`` or
 ``--search_esgf=always`` when running the recipe.
 
 .. note::

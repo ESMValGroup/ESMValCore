@@ -363,11 +363,11 @@ class ESMValTool():
                 This option has been deprecated in ESMValCore version 2.8.0 and
                 is scheduled for removal in version 2.10.0. Please use the
                 options `search_esgf=never` (for `offline=True`) or
-                `search_esgf=default` (for `offline=False`). These are exact
-                replacements.
+                `search_esgf=when_missing` (for `offline=False`). These are
+                exact replacements.
         search_esgf: str, optional
             If `never`, disable automatic download of data from the ESGF. If
-            `default`, enable the automatic download of files that are not
+            `when_missing`, enable the automatic download of files that are not
             available locally. If `always`, always check ESGF for the latest
             version of a file, and only uses local files if they correspond to
             that latest version.

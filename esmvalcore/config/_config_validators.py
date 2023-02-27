@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 SEARCH_ESGF_OPTIONS = (
     'never',  # Never search ESGF for files
-    'default',  # Only search ESGF if no local files are available
+    'when_missing',  # Only search ESGF if no local files are available
     'always',  # Always search ESGF for files
 )
 
@@ -361,14 +361,14 @@ def deprecate_offline(
     remove_version = '2.10.0'
     more_info = (
         " Please use the options `search_esgf=never` (for `offline=True`) or "
-        "`search_esgf=default` (for `offline=False`) instead. These are exact "
-        "replacements."
+        "`search_esgf=when_missing` (for `offline=False`) instead. These are "
+        "exact replacements."
     )
     _handle_deprecation(option, deprecated_version, remove_version, more_info)
     if validated_value:
         validated_config['search_esgf'] = 'never'
     else:
-        validated_config['search_esgf'] = 'default'
+        validated_config['search_esgf'] = 'when_missing'
 
 
 def deprecate_use_legacy_supplementaries(

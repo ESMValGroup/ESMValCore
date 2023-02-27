@@ -91,7 +91,7 @@ def test_offline_deprecation_session_update():
     with pytest.warns(ESMValCoreDeprecationWarning, match=msg):
         session.update({'offline': False})
     assert session['offline'] is False
-    assert session['search_esgf'] == 'default'
+    assert session['search_esgf'] == 'when_missing'
 
 
 def test_offline_true_deprecation_config(monkeypatch):
@@ -111,7 +111,7 @@ def test_offline_false_deprecation_config(monkeypatch):
     with pytest.warns(ESMValCoreDeprecationWarning, match=msg):
         monkeypatch.setitem(CFG, 'offline', False)
     assert CFG['offline'] is False
-    assert CFG['search_esgf'] == 'default'
+    assert CFG['search_esgf'] == 'when_missing'
 
 
 def test_use_legacy_supplementaries_default_cfg():

@@ -46,7 +46,7 @@ def session(cfg):
     ('max_datasets', 2),
     ('max_years', 2),
     ('skip_nonexistent', True),
-    ('search_esgf', 'default'),
+    ('search_esgf', 'when_missing'),
     ('diagnostics', 'diagnostic_name/group_name'),
     ('check_level', 'strict'),
 ])
@@ -76,7 +76,7 @@ def test_run_command_line_config(mocker, cfg, argument, value):
     assert session[argument] == value
 
 
-@pytest.mark.parametrize('search_esgf', ['never', 'default', 'always'])
+@pytest.mark.parametrize('search_esgf', ['never', 'when_missing', 'always'])
 def test_run(mocker, session, search_esgf):
     session['search_esgf'] = search_esgf
     session['log_level'] = 'default'
