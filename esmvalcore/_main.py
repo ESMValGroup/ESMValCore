@@ -386,7 +386,8 @@ class ESMValTool():
 
         recipe = self._get_recipe(recipe)
 
-        CFG.load_from_file(config_file)
+        if config_file is not None:
+            CFG.load_from_file(config_file)
         session = CFG.start_session(recipe.stem)
         if check_level is not None:
             session['check_level'] = check_level

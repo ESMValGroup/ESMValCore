@@ -131,7 +131,15 @@ class Config(ValidatedConfig):
         -------
         Session
         """
-        return Session(config=self.copy(), name=name)
+        with warnings.catch_warnings():
+            # Don't repeat deprecation warnings every time a new session is
+            # started.
+            warnings.simplefilter(
+                action='ignore',
+                category=ESMValCoreDeprecationWarning,
+            )
+            session = Session(config=self.copy(), name=name)
+        return session
 
 
 class Session(ValidatedConfig):
