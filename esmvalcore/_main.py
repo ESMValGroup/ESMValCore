@@ -386,7 +386,8 @@ class ESMValTool():
 
         recipe = self._get_recipe(recipe)
 
-        CFG.load_from_file(config_file)
+        if config_file is not None:
+            CFG.load_from_file(config_file)
         session = CFG.start_session(recipe.stem)
         if check_level is not None:
             session['check_level'] = check_level
@@ -406,6 +407,8 @@ class ESMValTool():
         session.update(kwargs)
 
         self._run(recipe, session)
+        # Print warnings about deprecated configuration options again:
+        CFG.reload()
 
     @staticmethod
     def _create_session_dir(session):
