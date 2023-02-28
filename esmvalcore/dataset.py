@@ -627,7 +627,7 @@ class Dataset:
                 self.files.append(file)
             else:
                 # Use ESGF files that are newer than the locally available
-                # files
+                # files.
                 local_file = local_files[file.name]
                 if 'version' in local_file.facets:
                     if file.facets['version'] > local_file.facets['version']:
