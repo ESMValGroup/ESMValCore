@@ -957,13 +957,14 @@ class Recipe:
                 logger.info("Running with --use-legacy-supplementaries=True")
                 self.session['use_legacy_supplementaries'] = True
 
-        # Also set the global config because it is used to check if
-        # mismatching shapes should be ignored when attaching
+        # Also adapt the global config if necessary because it is used to check
+        # if mismatching shapes should be ignored when attaching
         # supplementary variables in `esmvalcore.preprocessor.
         # _supplementary_vars.add_supplementary_variables` to avoid having to
         # introduce a new function argument that is immediately deprecated.
-        option = 'use_legacy_supplementaries'
-        CFG[option] = self.session[option]
+        session_use_legacy_supp = self.session['use_legacy_supplementaries']
+        if session_use_legacy_supp is not None:
+            CFG['use_legacy_supplementaries'] = session_use_legacy_supp
 
     def _log_recipe_errors(self, exc):
         """Log a message with recipe errors."""
