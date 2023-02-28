@@ -60,18 +60,18 @@ omitted in the file.
   # Automatic data download from ESGF --- [never]/when_missing/always
   # Use automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs
   # data from ESGF. ``never`` disables this feature, which is useful if you are
-  # working on a computer without an internet connection. ``when_missing``
-  # enables the automatic download for files that are not available locally.
-  # ``always`` will always check ESGF for the latest version of a file, and
-  # only uses local files if they correspond to that latest version.
+  # working on a computer without an internet connection, or if you have limited
+  # disk space. ``when_missing`` enables the automatic download for files that
+  # are not available locally.  ``always`` will always check ESGF for the latest
+  # version of a file, and will only use local files if they correspond to that
+  # latest version.
   search_esgf: never
 
   # Directory for storing downloaded climate data
   # Make sure to use a directory where you can store multiple GBs of data. Your
-  # home directory on a HPC is usually not suited for that purpose, so please
-  # adapt the default value in this case!
+  # home directory on a HPC is usually not suited for this purpose, so please
+  # change the default value in this case!
   download_dir: ~/climate_data
-
 
   # Rootpaths to the data from different projects
   # This default setting will work if files have been downloaded by ESMValTool
@@ -146,9 +146,9 @@ If ``search_esgf`` is set to ``when_missing``, the tool will download any CMIP3,
 CMIP5, CMIP6, CORDEX, and obs4MIPs data that is required to run a recipe but
 not available locally and store it in ``download_dir`` using the ``ESGF``
 directory structure defined in the :ref:`config-developer`.
-If ``search_esgf`` is set to ``always``, the tool will check for the data
-mentioned above on ESGF regardless of the data availability on the local
-filesystem, and only use local files if they correspond to the latest version.
+If ``search_esgf`` is set to ``always``, the tool will check ESGF for the data
+mentioned above, regardless of the data availability on the local filesystem,
+and only use local files if they correspond to the latest version.
 
 The ``auxiliary_data_dir`` setting is the path to place any required
 additional auxiliary data files. This is necessary because certain

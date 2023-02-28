@@ -369,7 +369,7 @@ class ESMValTool():
             If `never`, disable automatic download of data from the ESGF. If
             `when_missing`, enable the automatic download of files that are not
             available locally. If `always`, always check ESGF for the latest
-            version of a file, and only uses local files if they correspond to
+            version of a file, and only use local files if they correspond to
             that latest version.
         diagnostics: list(str), optional
             Only run the selected diagnostics from the recipe. To provide more

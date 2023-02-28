@@ -34,16 +34,17 @@ auxiliary_data_dir: ~/auxiliary_data
 # Automatic data download from ESGF --- [never]/when_missing/always
 # Use automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs
 # data from ESGF. ``never`` disables this feature, which is useful if you are
-# working on a computer without an internet connection. ``when_missing``
-# enables the automatic download for files that are not available locally.
-# ``always`` will always check ESGF for the latest version of a file, and only
-# uses local files if they correspond to that latest version.
+# working on a computer without an internet connection, or if you have limited
+# disk space. ``when_missing`` enables the automatic download for files that
+# are not available locally.  ``always`` will always check ESGF for the latest
+# version of a file, and will only use local files if they correspond to that
+# latest version.
 search_esgf: never
 
 # Directory for storing downloaded climate data
 # Make sure to use a directory where you can store multiple GBs of data. Your
-# home directory on a HPC is usually not suited for that purpose, so please
-# adapt the default value in this case!
+# home directory on a HPC is usually not suited for this purpose, so please
+# change the default value in this case!
 download_dir: ~/climate_data
 
 # Run at most this many tasks in parallel --- [null]/1/2/3/4/...
