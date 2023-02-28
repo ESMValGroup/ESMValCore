@@ -407,6 +407,8 @@ class ESMValTool():
         session.update(kwargs)
 
         self._run(recipe, session)
+        # Print warnings about deprecated configuration options again:
+        CFG.reload()
 
     @staticmethod
     def _create_session_dir(session):
