@@ -36,7 +36,7 @@ auxiliary_data_dir: ~/auxiliary_data
 # data from ESGF. ``never`` disables this feature, which is useful if you are
 # working on a computer without an internet connection, or if you have limited
 # disk space. ``when_missing`` enables the automatic download for files that
-# are not available locally.  ``always`` will always check ESGF for the latest
+# are not available locally. ``always`` will always check ESGF for the latest
 # version of a file, and will only use local files if they correspond to that
 # latest version.
 search_esgf: never

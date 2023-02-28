@@ -62,7 +62,7 @@ omitted in the file.
   # data from ESGF. ``never`` disables this feature, which is useful if you are
   # working on a computer without an internet connection, or if you have limited
   # disk space. ``when_missing`` enables the automatic download for files that
-  # are not available locally.  ``always`` will always check ESGF for the latest
+  # are not available locally. ``always`` will always check ESGF for the latest
   # version of a file, and will only use local files if they correspond to that
   # latest version.
   search_esgf: never
@@ -146,9 +146,11 @@ If ``search_esgf`` is set to ``when_missing``, the tool will download any CMIP3,
 CMIP5, CMIP6, CORDEX, and obs4MIPs data that is required to run a recipe but
 not available locally and store it in ``download_dir`` using the ``ESGF``
 directory structure defined in the :ref:`config-developer`.
-If ``search_esgf`` is set to ``always``, the tool will check ESGF for the data
-mentioned above, regardless of the data availability on the local filesystem,
-and only use local files if they correspond to the latest version.
+If ``search_esgf`` is set to ``always``, the tool will first check the ESGF for
+the needed data, regardless of any local data availability; if the data found
+on ESGF is newer than the local data (if any) or the user specifies a version
+of the data that is available only from the ESGF, then that data will be
+downloaded; otherwise, local data will be used.
 
 The ``auxiliary_data_dir`` setting is the path to place any required
 additional auxiliary data files. This is necessary because certain
