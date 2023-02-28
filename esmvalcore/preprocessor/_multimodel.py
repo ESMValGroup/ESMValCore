@@ -398,6 +398,7 @@ def _equalise_var_metadata(cubes):
 
     # Unify names (always use first encountered value, even if there are
     # different values)
+
     for names in equal_names_metadata.values():
         for attr in attrs:
             vals = sorted(names[attr])
@@ -411,6 +412,9 @@ def _equalise_var_metadata(cubes):
         cube_id = f"{cube.name()} ({cube.units})"
         for attr in attrs:
             setattr(cube, attr, equal_names_metadata[cube_id][attr])
+
+        # +++++++++++ QUICK AND DIRTY FIX +++++++++
+        cube.standard_name = None
 
 
 def _combine(cubes, ignore_scalar_coords=False):
