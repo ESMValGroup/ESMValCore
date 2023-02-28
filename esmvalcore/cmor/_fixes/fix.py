@@ -1,13 +1,15 @@
 """Contains the base class for dataset fixes."""
 import importlib
-import os
 import inspect
+import os
+from pathlib import Path
 
 from ..table import CMOR_TABLES
 
 
 class Fix:
     """Base class for dataset fixes."""
+
     def __init__(self, vardef, extra_facets=None):
         """Initialize fix object.
 
@@ -24,7 +26,7 @@ class Fix:
             extra_facets = {}
         self.extra_facets = extra_facets
 
-    def fix_file(self, filepath, output_dir):
+    def fix_file(self, filepath: Path, output_dir: Path) -> Path:
         """Apply fixes to the files prior to creating the cube.
 
         Should be used only to fix errors that prevent loading or can
@@ -33,14 +35,14 @@ class Fix:
 
         Parameters
         ----------
-        filepath: str
+        filepath: Path
             file to fix
-        output_dir: str
+        output_dir: Path
             path to the folder to store the fixed files, if required
 
         Returns
         -------
-        str
+        Path
             Path to the corrected file. It can be different from the original
             filepath if a fix has been applied, but if not it should be the
             original filepath
@@ -91,7 +93,7 @@ class Fix:
         for cube in cubes:
             if cube.var_name == short_name:
                 return cube
-        raise Exception('Cube for variable "{}" not found'.format(short_name))
+        raise Exception(f'Cube for variable "{short_name}" not found')
 
     def fix_data(self, cube):
         """Apply fixes to the data of the cube.
@@ -111,9 +113,11 @@ class Fix:
         return cube
 
     def __eq__(self, other):
+        """Fix equality."""
         return isinstance(self, other.__class__)
 
     def __ne__(self, other):
+        """Fix inequality."""
         return not self.__eq__(other)
 
     @staticmethod
@@ -134,9 +138,13 @@ class Fix:
         Parameters
         ----------
         project: str
+            Project of the dataset.
         dataset: str
+            Name of the dataset.
         mip: str
+            Variable's MIP.
         short_name: str
+            Variable's short name.
         extra_facets: dict, optional
             Extra facets are mainly used for data outside of the big projects
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
@@ -144,7 +152,7 @@ class Fix:
         Returns
         -------
         list(Fix)
-            Fixes to apply for the given data
+            Fixes to apply for the given data.
         """
         cmor_table = CMOR_TABLES[project]
         vardef = cmor_table.get_variable(mip, short_name)
@@ -194,13 +202,15 @@ class Fix:
 
         Parameters
         ----------
-        var_path: str
-            Original path
+        output_dir: str
+            Output directory.
+        filepath: str
+            Original path.
 
         Returns
         -------
         str
-            Path to the fixed file
+            Path to the fixed file.
         """
         if not os.path.isdir(output_dir):
             os.makedirs(output_dir)

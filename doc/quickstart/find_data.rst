@@ -337,6 +337,39 @@ A variable-specific default for the facet ``var_type`` is given in the extra
 facets (see next paragraph) for many variables, but this can be overwritten in
 the recipe.
 
+ESMValCore can automatically make native ICON data `UGRID
+<https://ugrid-conventions.github.io/ugrid-conventions/>`__-compliant when
+loading the data.
+The UGRID conventions provide a standardized format to store data on
+unstructured grids, which is required by many software packages or tools to
+work correctly.
+An example is the horizontal regridding of native ICON data to a regular grid.
+While the built-in :ref:`unstructured_nearest scheme <built-in regridding
+schemes>` can handle unstructured grids not in UGRID format, using more complex
+regridding algorithms (for example provided by the
+:doc:`iris-esmf-regrid:index` package through :ref:`generic regridding
+schemes`) requires the input data in UGRID format.
+The following code snippet provides a preprocessor that regrids native ICON
+data to a 1°x1° grid using `ESMF's first-order conservative regridding
+algorithm <https://earthsystemmodeling.org/regrid/#regridding-methods>`__:
+
+.. code-block:: yaml
+
+   preprocessors:
+     regrid_icon:
+       regrid:
+         target_grid: 1x1
+         scheme:
+           reference: esmf_regrid.experimental.unstructured_scheme:regrid_unstructured_to_rectilinear
+           method: conservative
+
+This automatic UGRIDization is enabled by default, but can be switched off with
+the facet ``ugrid: false`` in the recipe or the extra facets (see below).
+This is useful for diagnostics that do not support input data in UGRID format
+(yet) like the :ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>` or
+if you want to use the built-in :ref:`unstructured_nearest scheme <built-in
+regridding schemes>` regridding scheme.
+
 Similar to any other fix, the ICON fix allows the use of :ref:`extra
 facets<extra_facets>`.
 By default, the file :download:`icon-mappings.yml
@@ -358,6 +391,8 @@ Key           Description                   Default value if not specified
 ``raw_name``  Variable name of the          CMOR variable name of the
               variable in the raw input     corresponding variable
               file
+``ugrid``     Automatic UGRIDization of     ``True``
+              the input data
 ``var_type``  Variable type of the          No default (needs to be specified
               variable in the raw input     in extra facets or recipe if
               file                          default DRS is used)

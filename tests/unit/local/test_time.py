@@ -3,10 +3,11 @@ import iris
 import pytest
 
 from esmvalcore.local import (
+    LocalFile,
     _dates_to_timerange,
     _get_start_end_date,
     _get_start_end_year,
-    _get_timerange_from_years,
+    _replace_years_with_timerange,
     _truncate_dates,
 )
 
@@ -64,6 +65,7 @@ FILENAME_DATE_CASES = [
 def test_get_start_end_year(case):
     """Tests for _get_start_end_year function."""
     filename, case_start, case_end = case
+    filename = LocalFile(filename)
     if case_start is None and case_end is None:
         # If the filename is inconclusive or too difficult
         # we resort to reading the file, which fails here
@@ -80,6 +82,7 @@ def test_get_start_end_year(case):
 def test_get_start_end_date(case):
     """Tests for _get_start_end_date function."""
     filename, case_start, case_end = case
+    filename = LocalFile(filename)
     if case_start is None and case_end is None:
         # If the filename is inconclusive or too difficult
         # we resort to reading the file, which fails here
@@ -95,7 +98,7 @@ def test_get_start_end_date(case):
 def test_read_time_from_cube(monkeypatch, tmp_path):
     """Try to get time from cube if no date in filename."""
     monkeypatch.chdir(tmp_path)
-    temp_file = 'test.nc'
+    temp_file = LocalFile('test.nc')
     cube = iris.cube.Cube([0, 0], var_name='var')
     time = iris.coords.DimCoord([0, 366],
                                 'time',
@@ -142,11 +145,9 @@ def test_fails_if_no_date_present():
 def test_get_timerange_from_years():
     """Test a `timerange` tag with value `start_year/end_year` can be built
     from tags `start_year` and `end_year`."""
-    variable = {
-        'start_year': 2000,
-        'end_year': 2002}
+    variable = {'start_year': 2000, 'end_year': 2002}
 
-    _get_timerange_from_years(variable)
+    _replace_years_with_timerange(variable)
 
     assert 'start_year' not in variable
     assert 'end_year' not in variable
@@ -156,11 +157,9 @@ def test_get_timerange_from_years():
 def test_get_timerange_from_start_year():
     """Test a `timerange` tag with value `start_year/start_year` can be built
     from tag `start_year` when an `end_year` is not given."""
-    variable = {
-        'start_year': 2000
-    }
+    variable = {'start_year': 2000}
 
-    _get_timerange_from_years(variable)
+    _replace_years_with_timerange(variable)
 
     assert 'start_year' not in variable
     assert variable['timerange'] == '2000/2000'
@@ -169,11 +168,9 @@ def test_get_timerange_from_start_year():
 def test_get_timerange_from_end_year():
     """Test a `timerange` tag with value `end_year/end_year` can be built from
     tag `end_year` when a `start_year` is not given."""
-    variable = {
-        'end_year': 2002
-    }
+    variable = {'end_year': 2002}
 
-    _get_timerange_from_years(variable)
+    _replace_years_with_timerange(variable)
 
     assert 'end_year' not in variable
     assert variable['timerange'] == '2002/2002'

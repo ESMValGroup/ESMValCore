@@ -21,6 +21,9 @@ def session(tmp_path, monkeypatch):
     monkeypatch.setitem(CFG, 'drs', {})
     for project in _config.CFG:
         monkeypatch.setitem(_config.CFG[project]['input_dir'], 'default', '/')
+    # The patched datafinder fixture does not return any facets, so automatic
+    # supplementary definition does not work with it.
+    session['use_legacy_supplementaries'] = True
     return session
 
 
@@ -64,7 +67,6 @@ def _get_filenames(root_path, filename, tracking_id):
 
 @pytest.fixture
 def patched_datafinder(tmp_path, monkeypatch):
-
     def tracking_ids(i=0):
         while True:
             yield i
@@ -80,7 +82,6 @@ def patched_datafinder(tmp_path, monkeypatch):
 
 @pytest.fixture
 def patched_failing_datafinder(tmp_path, monkeypatch):
-
     def tracking_ids(i=0):
         while True:
             yield i
