@@ -47,6 +47,7 @@ REQUIREMENTS = {
         'nested-lookup',
         'netCDF4',
         'numpy',
+        'packaging',
         'pandas',
         'pillow',
         'prov',

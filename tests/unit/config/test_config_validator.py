@@ -5,8 +5,8 @@ import pytest
 
 from esmvalcore import __version__ as current_version
 from esmvalcore.config._config_validators import (
+    _handle_deprecation,
     _listify_validator,
-    deprecate,
     validate_bool,
     validate_bool_or_none,
     validate_check_level,
@@ -18,10 +18,14 @@ from esmvalcore.config._config_validators import (
     validate_path,
     validate_path_or_none,
     validate_positive,
+    validate_search_esgf,
     validate_string,
     validate_string_or_none,
 )
-from esmvalcore.exceptions import InvalidConfigParameter
+from esmvalcore.exceptions import (
+    ESMValCoreDeprecationWarning,
+    InvalidConfigParameter,
+)
 
 
 def generate_validator_testcases(valid):
@@ -166,6 +170,23 @@ def generate_validator_testcases(valid):
             'success': ((None, None), ),
             'fail': (),
         },
+        {
+            'validator': validate_search_esgf,
+            'success': (
+                ('never', 'never'),
+                ('NEVER', 'never'),
+                ('when_missing', 'when_missing'),
+                ('WhEN_MIssIng', 'when_missing'),
+                ('always', 'always'),
+                ('Always', 'always'),
+            ),
+            'fail': (
+                (0, ValueError),
+                (3.14, ValueError),
+                (True, ValueError),
+                ('fail', ValueError),
+            ),
+        },
     )
 
     for validator_dict in validation_tests:
@@ -192,23 +213,30 @@ def test_validator_invalid(validator, arg, exception_type):
         validator(arg)
 
 
-@pytest.mark.parametrize('version', (current_version, '0.0.1', '9.9.9'))
-def test_deprecate(version):
-    def test_func(value):
-        return value
+@pytest.mark.parametrize('remove_version', (current_version, '0.0.1', '9.9.9'))
+def test_handle_deprecation(remove_version):
+    """Test ``_handle_deprecation``."""
+    option = 'test_var'
+    deprecated_version = '2.7.0'
+    more_info = ' More information on this is not available.'
 
-    validate = deprecate(
-        validator=test_func,
-        option='test_var',
-        default=None,
-        version=version,
-    )
-    assert callable(validate)
-
-    if version != '9.9.9':
-        with pytest.raises(InvalidConfigParameter):
-            validate('value')
+    if remove_version != '9.9.9':
+        msg = (
+            r"The configuration option or command line argument `test_var` "
+            r"has been removed in ESMValCore version .* More information on "
+            r"this is not available."
+        )
+        with pytest.raises(InvalidConfigParameter, match=msg):
+            _handle_deprecation(
+                option, deprecated_version, remove_version, more_info
+            )
     else:
-        with pytest.warns(UserWarning):
-            result = validate('value')
-        assert result == 'value'
+        msg = (
+            r"The configuration option or command line argument `test_var` "
+            r"has been deprecated in ESMValCore version .* More information "
+            r"on this is not available."
+        )
+        with pytest.warns(ESMValCoreDeprecationWarning, match=msg):
+            _handle_deprecation(
+                option, deprecated_version, remove_version, more_info
+            )

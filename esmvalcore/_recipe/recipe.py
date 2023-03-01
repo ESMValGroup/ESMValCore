@@ -957,13 +957,14 @@ class Recipe:
                 logger.info("Running with --use-legacy-supplementaries=True")
                 self.session['use_legacy_supplementaries'] = True
 
-        # Also set the global config because it is used to check if
-        # mismatching shapes should be ignored when attaching
+        # Also adapt the global config if necessary because it is used to check
+        # if mismatching shapes should be ignored when attaching
         # supplementary variables in `esmvalcore.preprocessor.
         # _supplementary_vars.add_supplementary_variables` to avoid having to
         # introduce a new function argument that is immediately deprecated.
-        option = 'use_legacy_supplementaries'
-        CFG[option] = self.session[option]
+        session_use_legacy_supp = self.session['use_legacy_supplementaries']
+        if session_use_legacy_supp is not None:
+            CFG['use_legacy_supplementaries'] = session_use_legacy_supp
 
     def _log_recipe_errors(self, exc):
         """Log a message with recipe errors."""
@@ -971,7 +972,7 @@ class Recipe:
         for task in exc.failed_tasks:
             logger.error(task.message)
 
-        if self.session['offline'] and any(
+        if self.session['search_esgf'] == 'never' and any(
                 isinstance(err, InputFilesNotFound)
                 for err in exc.failed_tasks):
             logger.error(
@@ -983,8 +984,10 @@ class Recipe:
                 "configuration file %s", self.session['config_file'])
             logger.error(
                 "To automatically download the required files to "
-                "`download_dir: %s`, set `offline: false` in %s or run the "
-                "recipe with the extra command line argument --offline=False",
+                "`download_dir: %s`, set `search_esgf: when_missing` or "
+                "`search_esgf: always` in %s, or run the recipe with the "
+                "extra command line argument --search_esgf=when_missing or "
+                "--search_esgf=always",
                 self.session['download_dir'],
                 self.session['config_file'],
             )
@@ -1310,7 +1313,7 @@ class Recipe:
         filled_recipe = self.write_filled_recipe()
 
         # Download required data
-        if not self.session['offline']:
+        if self.session['search_esgf'] != 'never':
             esgf.download(self._download_files, self.session['download_dir'])
 
         self.tasks.run(max_parallel_tasks=self.session['max_parallel_tasks'])
