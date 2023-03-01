@@ -15,14 +15,25 @@ from ._supplementary_vars import register_supplementaries
 logger = logging.getLogger(__name__)
 
 
-def extract_volume(cube, z_min, z_max):
+def extract_volume(
+    cube,
+    z_min,
+    z_max,
+    interval_bounds='open',
+    nearest_value=False
+):
     """Subset a cube based on a range of values in the z-coordinate.
 
-    Function that subsets a cube on a box (z_min, z_max)
-    This function is a restriction of masked_cube_lonlat();
+    Function that subsets a cube on a box of (z_min, z_max),
+    (z_min, z_max], [z_min, z_max) or [z_min, z_max]
     Note that this requires the requested z-coordinate range to be the
     same sign as the iris cube. ie, if the cube has z-coordinate as
     negative, then z_min and z_max need to be negative numbers.
+    If nearest_value is set to `False`, the extraction will be
+    performed with the given z_min and z_max values.
+    If nearest_value is set to `True`, the cube extraction will be
+    performed taking into account the z_coord values that are closest
+    to the z_min and z_max values.
 
     Parameters
     ----------
@@ -32,7 +43,11 @@ def extract_volume(cube, z_min, z_max):
         minimum depth to extract.
     z_max: float
         maximum depth to extract.
-
+    interval_bounds: str
+        sets left bound of the interval to either 'open', 'closed',
+        'left_closed' or 'right_closed'.
+    nearest_value: bool
+        extracts considering the nearest value of z-coord to z_min and z_max.
     Returns
     -------
     iris.cube.Cube
@@ -46,10 +61,28 @@ def extract_volume(cube, z_min, z_max):
         zmax = float(z_max)
         zmin = float(z_min)
 
-    z_constraint = iris.Constraint(
-        coord_values={
-            cube.coord(axis='Z'): lambda cell: zmin < cell.point < zmax
-        })
+    z_coord = cube.coord(axis='Z')
+
+    if nearest_value:
+        min_index = np.argmin(np.abs(z_coord.core_points() - zmin))
+        max_index = np.argmin(np.abs(z_coord.core_points() - zmax))
+        zmin = z_coord.core_points()[min_index]
+        zmax = z_coord.core_points()[max_index]
+
+    if interval_bounds == 'open':
+        coord_values = {z_coord: lambda cell: zmin < cell.point < zmax}
+    elif interval_bounds == 'closed':
+        coord_values = {z_coord: lambda cell: zmin <= cell.point <= zmax}
+    elif interval_bounds == 'left_closed':
+        coord_values = {z_coord: lambda cell: zmin <= cell.point < zmax}
+    elif interval_bounds == 'right_closed':
+        coord_values = {z_coord: lambda cell: zmin < cell.point <= zmax}
+    else:
+        raise ValueError(
+            'Depth extraction bounds can be set to "open", "closed", '
+            f'"left_closed", or "right_closed". Got "{interval_bounds}".')
+
+    z_constraint = iris.Constraint(coord_values=coord_values)
 
     return cube.extract(z_constraint)
 
@@ -141,11 +174,12 @@ def volume_statistics(cube, operator):
         raise ValueError('Cube shape ({}) doesn`t match grid volume shape '
                          f'({cube.shape, grid_volume.shape})')
 
-    masked_volume = da.ma.masked_where(
-        da.ma.getmaskarray(cube.lazy_data()),
-        grid_volume)
+    masked_volume = da.ma.masked_where(da.ma.getmaskarray(cube.lazy_data()),
+                                       grid_volume)
     result = cube.collapsed(
-        [cube.coord(axis='Z'), cube.coord(axis='Y'), cube.coord(axis='X')],
+        [cube.coord(axis='Z'),
+         cube.coord(axis='Y'),
+         cube.coord(axis='X')],
         iris.analysis.MEAN,
         weights=masked_volume)
 
@@ -178,15 +212,12 @@ def axis_statistics(cube, axis, operator):
     try:
         coord = cube.coord(axis=axis)
     except iris.exceptions.CoordinateNotFoundError as err:
-        raise ValueError(
-            'Axis {} not found in cube {}'.format(
-                axis,
-                cube.summary(shorten=True))) from err
+        raise ValueError(f'Axis {axis} not found in cube '
+                         f'{cube.summary(shorten=True)}') from err
     coord_dims = cube.coord_dims(coord)
     if len(coord_dims) > 1:
-        raise NotImplementedError(
-            'axis_statistics not implemented for '
-            'multidimensional coordinates.')
+        raise NotImplementedError('axis_statistics not implemented for '
+                                  'multidimensional coordinates.')
     operation = get_iris_analysis_operation(operator)
     if operator_accept_weights(operator):
         coord_dim = coord_dims[0]
@@ -196,9 +227,7 @@ def axis_statistics(cube, axis, operator):
         weights = np.abs(bounds[..., 1] - bounds[..., 0])
         weights = np.expand_dims(weights, expand)
         weights = da.broadcast_to(weights, cube.shape)
-        result = cube.collapsed(coord,
-                                operation,
-                                weights=weights)
+        result = cube.collapsed(coord, operation, weights=weights)
     else:
         result = cube.collapsed(coord, operation)
 

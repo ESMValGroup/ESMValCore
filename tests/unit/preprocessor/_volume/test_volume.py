@@ -34,9 +34,8 @@ class Test(tests.Test):
         time = iris.coords.DimCoord([15, 45],
                                     standard_name='time',
                                     bounds=[[1., 30.], [30., 60.]],
-                                    units=Unit(
-                                        'days since 1950-01-01',
-                                        calendar='gregorian'))
+                                    units=Unit('days since 1950-01-01',
+                                               calendar='gregorian'))
         time2 = iris.coords.DimCoord([1., 2., 3., 4.],
                                      standard_name='time',
                                      bounds=[
@@ -45,9 +44,8 @@ class Test(tests.Test):
                                          [2.5, 3.5],
                                          [3.5, 4.5],
                                      ],
-                                     units=Unit(
-                                         'days since 1950-01-01',
-                                         calendar='gregorian'))
+                                     units=Unit('days since 1950-01-01',
+                                                calendar='gregorian'))
 
         zcoord = iris.coords.DimCoord([0.5, 5., 50.],
                                       long_name='zcoord',
@@ -73,8 +71,8 @@ class Test(tests.Test):
         self.grid_4d = iris.cube.Cube(data2, dim_coords_and_dims=coords_spec4)
 
         coords_spec5 = [(time2, 0), (zcoord, 1), (lats2, 2), (lons2, 3)]
-        self.grid_4d_2 = iris.cube.Cube(
-            data3, dim_coords_and_dims=coords_spec5)
+        self.grid_4d_2 = iris.cube.Cube(data3,
+                                        dim_coords_and_dims=coords_spec5)
 
         # allow iris to figure out the axis='z' coordinate
         iris.util.guess_coord_axis(self.grid_3d.coord('zcoord'))
@@ -151,25 +149,28 @@ class Test(tests.Test):
         i_coord = iris.coords.DimCoord(
             [0, 1],
             long_name='cell index along first dimension',
-            units='1',)
+            units='1',
+        )
 
         j_coord = iris.coords.DimCoord(
             [0, 1],
             long_name='cell index along second dimension',
-            units='1',)
+            units='1',
+        )
 
         lat_coord = iris.coords.AuxCoord(
             [[-40.0, -20.0], [-20.0, 0.0]],
             var_name='lat',
             standard_name='latitude',
-            units='degrees_north',)
+            units='degrees_north',
+        )
 
         lon_coord = iris.coords.AuxCoord(
             [[100.0, 140.0], [80.0, 100.0]],
             var_name='lon',
             standard_name='longitude',
             units='degrees_east',
-            )
+        )
 
         cube = iris.cube.Cube(
             np.ones((2, 2)),
@@ -182,10 +183,8 @@ class Test(tests.Test):
 
         with self.assertRaises(NotImplementedError) as err:
             axis_statistics(cube, 'x', 'mean')
-        self.assertEqual(
-            ('axis_statistics not implemented for '
-             'multidimensional coordinates.'),
-            str(err.exception))
+        self.assertEqual(('axis_statistics not implemented for '
+                          'multidimensional coordinates.'), str(err.exception))
 
     def test_extract_volume(self):
         """Test to extract the top two layers of a 3 layer depth column."""
@@ -194,15 +193,66 @@ class Test(tests.Test):
         print(result.data, expected.data)
         self.assert_array_equal(result.data, expected)
 
+    def test_extract_volume_intervals(self):
+        """Test to extract open and closed intervals."""
+        open_interval = extract_volume(self.grid_3d, 0., 5.)
+        expected_levels_open = np.array([
+            0.5,
+        ])
+
+        closed_interval = extract_volume(self.grid_3d, 0., 5., 'closed')
+        expected_levels_closed = np.array([0.5, 5.])
+
+        self.assert_array_equal(
+            open_interval.coord(axis='Z').points, expected_levels_open)
+        self.assert_array_equal(
+            closed_interval.coord(axis='Z').points, expected_levels_closed)
+
+    def test_extract_volume_mixed_intervals(self):
+        left_closed = extract_volume(self.grid_3d, 0.5, 5., 'left_closed')
+        expected_levels_left = np.array([
+            0.5,
+        ])
+
+        right_closed = extract_volume(self.grid_3d, 0.5, 5., 'right_closed')
+        expected_levels_right = np.array([
+            5.,
+        ])
+
+        self.assert_array_equal(
+            left_closed.coord(axis='Z').points, expected_levels_left)
+        self.assert_array_equal(
+            right_closed.coord(axis='Z').points, expected_levels_right)
+
+    def test_extract_volume_nearest_values(self):
+        """Test to extract nearest values."""
+        default = extract_volume(self.grid_3d, 0, 48, 'closed', False)
+        expected_levels_default = np.array([0.5, 5.])
+
+        nearest = extract_volume(self.grid_3d, 0, 48, 'closed', True)
+        expected_levels_nearest = np.array([0.5, 5., 50.])
+
+        self.assert_array_equal(
+            default.coord(axis='Z').points, expected_levels_default)
+        self.assert_array_equal(
+            nearest.coord(axis='Z').points, expected_levels_nearest)
+
+    def test_extract_volume_error(self):
+        with self.assertRaises(ValueError) as err:
+            extract_volume(self.grid_3d, 0., 5., 'wrong')
+        self.assertEqual(
+            ('Depth extraction bounds can be set to "open", "closed", '
+             '"left_closed", or "right_closed". '
+             'Got "wrong".'), str(err.exception))
+
     def test_extract_volume_mean(self):
         """Test to extract the top two layers and compute the weighted average
         of a cube."""
         grid_volume = calculate_volume(self.grid_4d)
-        measure = iris.coords.CellMeasure(
-            grid_volume,
-            standard_name='ocean_volume',
-            units='m3',
-            measure='volume')
+        measure = iris.coords.CellMeasure(grid_volume,
+                                          standard_name='ocean_volume',
+                                          units='m3',
+                                          measure='volume')
         self.grid_4d.add_cell_measure(measure, range(0, measure.ndim))
         result = extract_volume(self.grid_4d, 0., 10.)
         expected = np.ma.ones((2, 2, 2, 2))
@@ -223,11 +273,10 @@ class Test(tests.Test):
         The volume measure is pre-loaded in the cube.
         """
         grid_volume = calculate_volume(self.grid_4d)
-        measure = iris.coords.CellMeasure(
-            grid_volume,
-            standard_name='ocean_volume',
-            units='m3',
-            measure='volume')
+        measure = iris.coords.CellMeasure(grid_volume,
+                                          standard_name='ocean_volume',
+                                          units='m3',
+                                          measure='volume')
         self.grid_4d.add_cell_measure(measure, range(0, measure.ndim))
         result = volume_statistics(self.grid_4d, 'mean')
         expected = np.ma.array([1., 1.], mask=False)
@@ -266,25 +315,21 @@ class Test(tests.Test):
         """
         data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
         self.grid_4d.data = data
-        measure = iris.coords.CellMeasure(
-            data,
-            standard_name='ocean_volume',
-            units='m3',
-            measure='volume'
-        )
+        measure = iris.coords.CellMeasure(data,
+                                          standard_name='ocean_volume',
+                                          units='m3',
+                                          measure='volume')
         self.grid_4d.add_cell_measure(measure, range(0, measure.ndim))
         result = volume_statistics(self.grid_4d, 'mean')
-        expected = np.ma.array(
-            [8.333333333333334, 19.144144144144143],
-            mask=[False, False])
+        expected = np.ma.array([8.333333333333334, 19.144144144144143],
+                               mask=[False, False])
         self.assert_array_equal(result.data, expected)
 
     def test_volume_statistics_wrong_operator(self):
         with self.assertRaises(ValueError) as err:
             volume_statistics(self.grid_4d, 'wrong')
-        self.assertEqual(
-            'Volume operator wrong not recognised.',
-            str(err.exception))
+        self.assertEqual('Volume operator wrong not recognised.',
+                         str(err.exception))
 
     def test_depth_integration_1d(self):
         """Test to take the depth integration of a 3 layer cube."""
