@@ -1,6 +1,7 @@
 import textwrap
 from collections import defaultdict
 from pathlib import Path
+from unittest import mock
 
 import pyesgf
 import pytest
@@ -8,6 +9,7 @@ import pytest
 import esmvalcore.dataset
 import esmvalcore.local
 from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.config import CFG
 from esmvalcore.dataset import Dataset
 from esmvalcore.esgf import ESGFFile
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
@@ -126,7 +128,7 @@ def test_session_setter():
                 'short_name': 'pr',
                 'mip': '3hr',
                 'project': 'CMIP5',
-                'dataset': 'CanESM2',
+                'dataset': 'CNRM-CM5',
                 'exp': 'historical',
                 'ensemble': 'r1i1p1',
                 'timerange': '2000/2000',
@@ -140,7 +142,7 @@ def test_session_setter():
                 'standard_name': 'precipitation_flux',
                 'units': 'kg m-2 s-1',
                 # Added from extra facets YAML file
-                'institute': ['CCCma'],
+                'institute': ['CNRM-CERFACS'],
                 'product': ['output1', 'output2'],
             },
         ],
@@ -1313,9 +1315,8 @@ def dataset():
         alias='CMIP6_EC-Eeath3_tas',
     )
     dataset.session = {
-        'always_search_esgf': False,
+        'search_esgf': 'when_missing',
         'download_dir': Path('/download_dir'),
-        'offline': False,
         'rootpath': None,
         'drs': {},
     }
@@ -1435,6 +1436,65 @@ def test_find_files_outdated_local(mocker, dataset):
     assert dataset.files == esgf_files
 
 
+@pytest.mark.parametrize(
+    'project',
+    ['CESM', 'EMAC', 'ICON', 'IPSLCM', 'OBS', 'OBS6', 'ana4mips', 'native6'],
+)
+def test_find_files_non_esgf_projects(mocker, project, monkeypatch):
+    """Test that find_files does never download files for non-ESGF projects."""
+    monkeypatch.setitem(CFG, 'search_esgf', 'always')
+    mock_local_find_files = mocker.patch.object(
+        esmvalcore.dataset.local,
+        'find_files',
+        autospec=True,
+        return_value=(mock.sentinel.files, mock.sentinel.file_globs),
+    )
+    mock_esgf_find_files = mocker.patch.object(
+        esmvalcore.dataset.esgf,
+        'find_files',
+        autospec=True,
+    )
+
+    tas = Dataset(
+        short_name='tas',
+        mip='Amon',
+        project=project,
+        dataset='MY_DATASET',
+        timerange='2000/2000',
+        account='account',
+        case='case',
+        channel='channel',
+        dir='dir',
+        exp='amip',
+        freq='freq',
+        gcomp='gcomp',
+        group='group',
+        ipsl_varname='ipsl_varname',
+        model='model',
+        out='out',
+        root='root',
+        scomp='scomp',
+        simulation='simulation',
+        status='status',
+        string='string',
+        tag='tag',
+        tdir='tdir',
+        tier=3,
+        tperiod='tperiod',
+        type='sat',
+        var_type='var_type',
+        version=1,
+    )
+    tas.augment_facets()
+    tas.find_files()
+
+    mock_local_find_files.assert_called_once()
+    mock_esgf_find_files.assert_not_called()
+
+    assert tas.files == mock.sentinel.files
+    assert tas._file_globs == mock.sentinel.file_globs
+
+
 def test_set_version():
     dataset = Dataset(short_name='tas')
     dataset.add_supplementary(short_name='areacella')
@@ -1505,9 +1565,9 @@ def test_update_timerange_year_format(session, input_time, output_time):
     assert dataset['timerange'] == output_time
 
 
-@pytest.mark.parametrize('offline', [True, False])
-def test_update_timerange_no_files(session, offline):
-    session['offline'] = offline
+@pytest.mark.parametrize('search_esgf', ['never', 'when_missing', 'always'])
+def test_update_timerange_no_files(session, search_esgf):
+    session['search_esgf'] = search_esgf
     variable = {
         'alias': 'CMIP6',
         'project': 'CMIP6',
@@ -1659,7 +1719,7 @@ def test_load(mocker, session):
 def test_load_fail(session):
     dataset = Dataset()
     dataset.session = session
-    dataset.session['offline'] = False
+    dataset.session['search_esgf'] = 'when_missing'
     dataset.files = []
     with pytest.raises(InputFilesNotFound):
         dataset.load()
