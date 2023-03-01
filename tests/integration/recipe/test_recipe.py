@@ -3127,7 +3127,7 @@ def test_recipe_run(tmp_path, patched_datafinder, session, mocker):
             scripts: null
         """)
     session['download_dir'] = tmp_path / 'download_dir'
-    session['offline'] = False
+    session['search_esgf'] = 'when_missing'
 
     mocker.patch.object(esmvalcore._recipe.recipe.esgf,
                         'download',

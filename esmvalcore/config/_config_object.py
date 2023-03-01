@@ -13,7 +13,11 @@ import esmvalcore
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
-from ._config_validators import _validators
+from ._config_validators import (
+    _deprecated_options_defaults,
+    _deprecators,
+    _validators,
+)
 from ._validated_config import ValidatedConfig
 
 URL = ('https://docs.esmvaltool.org/projects/'
@@ -28,6 +32,8 @@ class Config(ValidatedConfig):
     """
 
     _validate = _validators
+    _deprecate = _deprecators
+    _deprecated_defaults = _deprecated_options_defaults
     _warn_if_missing = (
         ('drs', URL),
         ('rootpath', URL),
@@ -84,7 +90,6 @@ class Config(ValidatedConfig):
         mapping['resume_from'] = []
         mapping['run_diagnostic'] = True
         mapping['skip_nonexistent'] = False
-        mapping['use_legacy_supplementaries'] = None
 
         new.update(mapping)
 
@@ -145,6 +150,8 @@ class Session(ValidatedConfig):
     """
 
     _validate = _validators
+    _deprecate = _deprecators
+    _deprecated_defaults = _deprecated_options_defaults
 
     relative_preproc_dir = Path('preproc')
     relative_fixed_file_dir = Path('preproc', 'fixed_files')
@@ -227,7 +234,8 @@ class Session(ValidatedConfig):
             "scheduled for removal in version 2.9.0. ",
             ESMValCoreDeprecationWarning,
         )
-        dct = self.copy()
+        dct = self._deprecated_defaults.copy()
+        dct.update(self)
         dct['run_dir'] = self.run_dir
         dct['work_dir'] = self.work_dir
         dct['preproc_dir'] = self.preproc_dir
