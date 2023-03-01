@@ -1881,7 +1881,7 @@ The ``_volume.py`` module contains the following preprocessor functions:
 Extract a specific range in the `z`-direction from a cube. The range is given as an interval
 that can be:
 
-* open ``(z_min, z_max)``, in which the extracted range does not includes ``z_min`` nor ``z_max``.
+* open ``(z_min, z_max)``, in which the extracted range does not include ``z_min`` nor ``z_max``.
 * closed ``[z_min, z_max]``, in which the extracted includes both ``z_min`` and ``z_max``.
 * left closed ``[z_min, z_max)``, in which the extracted range includes ``z_min`` but not ``z_max``.
 * right closed ``(z_min, z_max]``, in which the extracted range includes ``z_max`` but not ``z_min``.
