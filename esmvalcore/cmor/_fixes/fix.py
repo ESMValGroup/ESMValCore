@@ -1,7 +1,8 @@
 """Contains the base class for dataset fixes."""
+from __future__ import annotations
+
 import importlib
 import inspect
-import os
 from pathlib import Path
 
 from ..table import CMOR_TABLES
@@ -197,14 +198,17 @@ class Fix:
         return fixes
 
     @staticmethod
-    def get_fixed_filepath(output_dir, filepath):
+    def get_fixed_filepath(
+        output_dir: str | Path,
+        filepath: str | Path,
+    ) -> str:
         """Get the filepath for the fixed file.
 
         Parameters
         ----------
-        output_dir: str
+        output_dir: str or Path
             Output directory.
-        filepath: str
+        filepath: str or Path
             Original path.
 
         Returns
@@ -212,6 +216,7 @@ class Fix:
         str
             Path to the fixed file.
         """
-        if not os.path.isdir(output_dir):
-            os.makedirs(output_dir)
-        return os.path.join(output_dir, os.path.basename(filepath))
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        filepath = Path(filepath)
+        return str(output_dir / filepath.name)

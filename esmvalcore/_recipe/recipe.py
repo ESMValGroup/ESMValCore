@@ -223,17 +223,6 @@ def _get_default_settings(dataset):
             'units': facets['units'],
         }
 
-    # Clean up fixed files
-    if not session['save_intermediary_cubes']:
-        fix_dirs = []
-        for item in [dataset] + dataset.supplementaries:
-            output_file = _get_output_file(item.facets, session.preproc_dir)
-            fix_dir = f"{output_file.with_suffix('')}_fixed"
-            fix_dirs.append(fix_dir)
-        settings['cleanup'] = {
-            'remove': fix_dirs,
-        }
-
     # Strip supplementary variables before saving
     settings['remove_supplementary_variables'] = {}
 

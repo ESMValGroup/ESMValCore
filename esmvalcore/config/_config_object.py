@@ -147,6 +147,7 @@ class Session(ValidatedConfig):
     _validate = _validators
 
     relative_preproc_dir = Path('preproc')
+    relative_fixed_file_dir = Path('preproc', 'fixed_files')
     relative_work_dir = Path('work')
     relative_plot_dir = Path('plots')
     relative_run_dir = Path('run')
@@ -176,6 +177,11 @@ class Session(ValidatedConfig):
     def preproc_dir(self):
         """Return preproc directory."""
         return self.session_dir / self.relative_preproc_dir
+
+    @property
+    def fixed_file_dir(self):
+        """Return fixed file directory."""
+        return self.session_dir / self.relative_fixed_file_dir
 
     @property
     def work_dir(self):

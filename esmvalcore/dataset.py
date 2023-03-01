@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 import pprint
 import re
+import tempfile
 import textwrap
 import uuid
 from copy import deepcopy
@@ -696,7 +697,7 @@ class Dataset:
 
         settings: dict[str, dict[str, Any]] = {}
         settings['fix_file'] = {
-            'output_dir': Path(f"{output_file.with_suffix('')}_fixed"),
+            'output_dir': self.get_temporary_fixed_file_dir(),
             **self.facets,
         }
         settings['load'] = {'callback': callback}
@@ -842,3 +843,21 @@ class Dataset:
         check.valid_time_selection(timerange)
 
         self.set_facet('timerange', timerange)
+
+    def get_temporary_fixed_file_dir(self) -> Path:
+        """Create and return new temporary directory for storing fixed files.
+
+        Returns
+        -------
+        Path
+            Path to new temporary directory.
+
+        """
+        fixed_file_dir = self.session.fixed_file_dir
+        fixed_file_dir.mkdir(parents=True, exist_ok=True)
+        facets_for_prefix = ('project', 'dataset', 'mip', 'short_name')
+        prefix = '_'.join(
+            [str(self.facets.get(facet, '')) for facet in facets_for_prefix] +
+            ['']
+        )
+        return Path(tempfile.mkdtemp(prefix=prefix, dir=fixed_file_dir))

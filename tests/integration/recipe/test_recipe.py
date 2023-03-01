@@ -83,7 +83,6 @@ MANDATORY_SCRIPT_SETTINGS_KEYS = (
 
 DEFAULT_PREPROCESSOR_STEPS = (
     'load',
-    'cleanup',
     'remove_supplementary_variables',
     'save',
 )
@@ -104,16 +103,13 @@ def create_test_file(filename, tracking_id=None):
     iris.save(cube, filename)
 
 
-def _get_default_settings_for_chl(fix_dir, save_filename):
+def _get_default_settings_for_chl(save_filename):
     """Get default preprocessor settings for chl."""
     defaults = {
         'load': {
             'callback': 'default'
         },
         'remove_supplementary_variables': {},
-        'cleanup': {
-            'remove': [fix_dir]
-        },
         'save': {
             'compress': False,
             'filename': save_filename,
@@ -432,9 +428,7 @@ def test_default_preprocessor(tmp_path, patched_datafinder, session):
     preproc_dir = os.path.dirname(product.filename)
     assert preproc_dir.startswith(str(tmp_path))
 
-    fix_dir = os.path.join(
-        preproc_dir, 'CMIP5_CanESM2_Oyr_historical_r1i1p1_chl_2000-2005_fixed')
-    defaults = _get_default_settings_for_chl(fix_dir, product.filename)
+    defaults = _get_default_settings_for_chl(product.filename)
     assert product.settings == defaults
 
 
@@ -472,9 +466,7 @@ def test_default_preprocessor_custom_order(tmp_path, patched_datafinder,
     preproc_dir = os.path.dirname(product.filename)
     assert preproc_dir.startswith(str(tmp_path))
 
-    fix_dir = os.path.join(
-        preproc_dir, 'CMIP5_CanESM2_Oyr_historical_r1i1p1_chl_2000-2005_fixed')
-    defaults = _get_default_settings_for_chl(fix_dir, product.filename)
+    defaults = _get_default_settings_for_chl(product.filename)
     assert product.settings == defaults
 
 
@@ -564,17 +556,11 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, session):
     preproc_dir = os.path.dirname(product.filename)
     assert preproc_dir.startswith(str(tmp_path))
 
-    fix_dir = os.path.join(preproc_dir,
-                           'CMIP5_CanESM2_fx_historical_r0i0p0_sftlf_fixed')
-
     defaults = {
         'load': {
             'callback': 'default'
         },
         'remove_supplementary_variables': {},
-        'cleanup': {
-            'remove': [fix_dir]
-        },
         'save': {
             'compress': False,
             'filename': product.filename,
