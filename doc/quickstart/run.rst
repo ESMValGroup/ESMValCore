@@ -60,12 +60,20 @@ It is also possible to explicitly change values from the config file using flags
 	esmvaltool run --argument_name argument_value recipe_example.yml
 
 To automatically download the files required to run a recipe from ESGF, set
-``offline`` to ``false`` in the :ref:`user configuration file`
-or run the tool with the command
+``search_esgf`` to ``when_missing`` (use local files whenever possible) or
+``always`` (always search ESGF for latest version of files and only use local
+data if it is the latest version) in the :ref:`user configuration file` or run
+the tool with the corresponding commands
 
 .. code:: bash
 
-    esmvaltool run --offline=False recipe_example.yml
+    esmvaltool run --search_esgf=when_missing recipe_example.yml
+
+or
+
+.. code:: bash
+
+    esmvaltool run --search_esgf=always recipe_example.yml
 
 This feature is available for projects that are hosted on the ESGF, i.e.
 CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.

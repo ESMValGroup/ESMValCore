@@ -53,38 +53,40 @@ omitted in the file.
   # Includes log files and performance stats.
   output_dir: ~/esmvaltool_output
 
-  # Directory for storing downloaded climate data
-  download_dir: ~/climate_data
-
-  # Disable automatic downloads --- [true]/false
-  # Disable the automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX,
-  # and obs4MIPs data from ESGF by default. This is useful if you are working
-  # on a computer without an internet connection.
-  offline: true
-
-  # Search ESGF for files even when files are available locally --- true/[false]
-  # This option is useful to make sure you have the latest version of all files.
-  # Remember to set ``offline: false`` if this option is set to ``true``.
-  always_search_esgf: false
-
   # Auxiliary data directory
   # Used by some recipes to look for additional datasets.
   auxiliary_data_dir: ~/auxiliary_data
 
+  # Automatic data download from ESGF --- [never]/when_missing/always
+  # Use automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs
+  # data from ESGF. ``never`` disables this feature, which is useful if you are
+  # working on a computer without an internet connection, or if you have limited
+  # disk space. ``when_missing`` enables the automatic download for files that
+  # are not available locally. ``always`` will always check ESGF for the latest
+  # version of a file, and will only use local files if they correspond to that
+  # latest version.
+  search_esgf: never
+
+  # Directory for storing downloaded climate data
+  # Make sure to use a directory where you can store multiple GBs of data. Your
+  # home directory on a HPC is usually not suited for this purpose, so please
+  # change the default value in this case!
+  download_dir: ~/climate_data
+
   # Rootpaths to the data from different projects
-  # This default setting will work if files have been downloaded by the
-  # ESMValTool via ``offline=False``. Lists are also possible. For
-  # site-specific entries, see the default ``config-user.yml`` file that can be
-  # installed with the command ``esmvaltool config get_config_user``. For each
-  # project, this can be either a single path or a list of paths. Comment out
-  # these when using a site-specific path.
+  # This default setting will work if files have been downloaded by ESMValTool
+  # via ``search_esgf``. Lists are also possible. For site-specific entries,
+  # see the default ``config-user.yml`` file that can be installed with the
+  # command ``esmvaltool config get_config_user``. For each project, this can
+  # be either a single path or a list of paths. Comment out these when using a
+  # site-specific path.
   rootpath:
     default: ~/climate_data
 
   # Directory structure for input data --- [default]/ESGF/BADC/DKRZ/ETHZ/etc.
-  # This default setting will work if files have been downloaded by the
-  # ESMValTool via ``offline=False``. See ``config-developer.yml`` for
-  # definitions. Comment out/replace as per needed.
+  # This default setting will work if files have been downloaded by ESMValTool
+  # via ``search_esgf``. See ``config-developer.yml`` for definitions. Comment
+  # out/replace as per needed.
   drs:
     CMIP3: ESGF
     CMIP5: ESGF
@@ -136,11 +138,19 @@ omitted in the file.
   # ``config-developer.yml`` for an example. Set to ``null`` to use the default.
   config_developer_file: null
 
-The ``offline`` setting can be used to disable or enable automatic downloads from ESGF.
-If ``offline`` is set to ``false``, the tool will automatically download
-any CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs data that is required to run a recipe
-but not available locally and store it in ``download_dir`` using the ``ESGF``
+The ``search_esgf`` setting can be used to disable or enable automatic
+downloads from ESGF.
+If ``search_esgf`` is set to ``never``, the tool does not download any data
+from the ESGF.
+If ``search_esgf`` is set to ``when_missing``, the tool will download any CMIP3,
+CMIP5, CMIP6, CORDEX, and obs4MIPs data that is required to run a recipe but
+not available locally and store it in ``download_dir`` using the ``ESGF``
 directory structure defined in the :ref:`config-developer`.
+If ``search_esgf`` is set to ``always``, the tool will first check the ESGF for
+the needed data, regardless of any local data availability; if the data found
+on ESGF is newer than the local data (if any) or the user specifies a version
+of the data that is available only from the ESGF, then that data will be
+downloaded; otherwise, local data will be used.
 
 The ``auxiliary_data_dir`` setting is the path to place any required
 additional auxiliary data files. This is necessary because certain
@@ -199,9 +209,10 @@ The ``esmvaltool run`` command can automatically download the files required
 to run a recipe from ESGF for the projects CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
 The downloaded files will be stored in the ``download_dir`` specified in the
 :ref:`user configuration file`.
-To enable automatic downloads from ESGF, set ``offline: false`` in
-the :ref:`user configuration file` or provide the command line argument
-``--offline=False`` when running the recipe.
+To enable automatic downloads from ESGF, set ``search_esgf: when_missing`` or
+``search_esgf: always`` in the :ref:`user configuration file`, or provide the
+corresponding command line arguments ``--search_esgf=when_missing`` or
+``--search_esgf=always`` when running the recipe.
 
 .. note::
 

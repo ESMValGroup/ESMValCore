@@ -598,35 +598,41 @@ class Dataset:
             debug=True,
             **self.facets,
         )
-        project = self.facets['project']
 
-        # Set up downloading from ESGF if requested.
-        search_esgf = (not self.session['offline']
-                       and project in esgf.facets.FACETS)
-        if search_esgf and not self.session['always_search_esgf']:
+        # If project does not support automatic downloads from ESGF, stop here
+        if self.facets['project'] not in esgf.facets.FACETS:
+            return
+
+        # 'never' mode: never download files from ESGF and stop here
+        if self.session['search_esgf'] == 'never':
+            return
+
+        # 'when_missing' mode: if files are available locally, do not check
+        # ESGF
+        if self.session['search_esgf'] == 'when_missing':
             try:
                 check.data_availability(self, log=False)
             except InputFilesNotFound:
-                pass
+                pass  # search ESGF for files
             else:
-                search_esgf = False
+                return  # use local files
 
-        if search_esgf:
-            local_files = {f.name: f for f in self.files}
-            search_result = esgf.find_files(**self.facets)
-            for file in search_result:
-                if file.name not in local_files:
-                    # Use ESGF files that are not available locally.
-                    self.files.append(file)
-                else:
-                    # Use ESGF files that are newer than the locally available
-                    # files.
-                    local_file = local_files[file.name]
-                    if 'version' in local_file.facets:
-                        if file.facets['version'] > local_file.facets[
-                                'version']:
-                            idx = self.files.index(local_file)
-                            self.files[idx] = file
+        # Local files are not available in 'when_missing' mode or 'always' mode
+        # is used: check ESGF
+        local_files = {f.name: f for f in self.files}
+        search_result = esgf.find_files(**self.facets)
+        for file in search_result:
+            if file.name not in local_files:
+                # Use ESGF files that are not available locally.
+                self.files.append(file)
+            else:
+                # Use ESGF files that are newer than the locally available
+                # files.
+                local_file = local_files[file.name]
+                if 'version' in local_file.facets:
+                    if file.facets['version'] > local_file.facets['version']:
+                        idx = self.files.index(local_file)
+                        self.files[idx] = file
 
     @property
     def files(self) -> Sequence[File]:
@@ -687,7 +693,7 @@ class Dataset:
                 "locally using glob patterns:",
                 "\n".join(str(f) for f in self._file_globs or []),
             ]
-            if self.session['offline'] is False:
+            if self.session['search_esgf'] != 'never':
                 lines.append('or on ESGF.')
             msg = "\n".join(lines)
             raise InputFilesNotFound(msg)

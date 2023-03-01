@@ -26,6 +26,7 @@ dependencies:
   - nested-lookup
   - netcdf4
   - numpy
+  - packaging
   - pandas
   - pillow
   - pip!=21.3
