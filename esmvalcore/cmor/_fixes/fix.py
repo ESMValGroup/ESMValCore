@@ -33,7 +33,7 @@ class Fix:
         self,
         filepath: Path,
         output_dir: Path,
-        create_temporary_dir: bool = False,
+        add_unique_suffix: bool = False,
     ) -> Path:
         """Apply fixes to the files prior to creating the cube.
 
@@ -46,14 +46,9 @@ class Fix:
         filepath: Path
             File to fix.
         output_dir: Path
-            Output directory for fixed files or prefix for
-            :func:`tempfile.mkdtemp` (see `create_temporary_dir`). Make sure
-            this directory exists if `create_temporary_dir=False` is used.
-        create_temporary_dir: bool, optional (default: False)
-            If `True`, create temporary directory using `output_dir` as a
-            `prefix` for :func:`tempfile.mkdtemp` and store the fixed files in
-            there. If `False`, use the `output_dir` as directory to store fixed
-            files.
+            Output directory for fixed files.
+        add_unique_suffix: bool, optional (default: False)
+            Adds a unique suffix to `output_dir` for thread safety.
 
         Returns
         -------
@@ -221,22 +216,19 @@ class Fix:
     def get_fixed_filepath(
         output_dir: str | Path,
         filepath: str | Path,
-        create_temporary_dir: bool = False,
+        add_unique_suffix: bool = False,
     ) -> Path:
         """Get the filepath for the fixed file.
 
         Parameters
         ----------
-        output_dir: str or Path
-            Output directory or prefix for :func:`tempfile.mkdtemp` (see
-            `create_temporary_dir`). Will be created if it does not exist, yet.
+        output_dir: Path
+            Output directory for fixed files. Will be created if it does not
+            exist yet.
         filepath: str or Path
             Original path.
-        create_temporary_dir: bool, optional (default: False)
-            If `True`, create temporary directory using `output_dir` as a
-            `prefix` for :func:`tempfile.mkdtemp` and store the fixed files in
-            there. If `False`, use the `output_dir` as directory to store fixed
-            files.
+        add_unique_suffix: bool, optional (default: False)
+            Adds a unique suffix to `output_dir` for thread safety.
 
         Returns
         -------
@@ -245,7 +237,7 @@ class Fix:
 
         """
         output_dir = Path(output_dir)
-        if create_temporary_dir:
+        if add_unique_suffix:
             parent_dir = output_dir.parent
             parent_dir.mkdir(parents=True, exist_ok=True)
             prefix = output_dir.name

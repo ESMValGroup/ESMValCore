@@ -1689,7 +1689,7 @@ def test_load(mocker, session):
             'callback': 'default'
         },
         'fix_file': {
-            'create_temporary_dir': True,
+            'add_unique_suffix': True,
             'dataset': 'CanESM2',
             'ensemble': 'r1i1p1',
             'exp': 'historical',

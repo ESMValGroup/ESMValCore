@@ -113,7 +113,7 @@ def test_get_fixed_filepath_temporary_paths(tmp_path):
     filepath = Path('this', 'is', 'a', 'file.nc')
     assert not output_dir.parent.is_dir()
     fixed_path = Fix(None).get_fixed_filepath(
-        output_dir, filepath, create_temporary_dir=True
+        output_dir, filepath, add_unique_suffix=True
     )
     assert fixed_path.parent.is_dir()
     assert isinstance(fixed_path, Path)
@@ -137,7 +137,7 @@ def test_get_fixed_filepath_temporary_strs(tmp_path):
     filepath = os.path.join('this', 'is', 'a', 'file.nc')
     assert not Path(output_dir).parent.is_dir()
     fixed_path = Fix(None).get_fixed_filepath(
-        output_dir, filepath, create_temporary_dir=True
+        output_dir, filepath, add_unique_suffix=True
     )
     assert fixed_path.parent.is_dir()
     assert isinstance(fixed_path, Path)

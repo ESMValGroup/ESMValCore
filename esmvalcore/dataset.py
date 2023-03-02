@@ -721,7 +721,7 @@ class Dataset:
         settings: dict[str, dict[str, Any]] = {}
         settings['fix_file'] = {
             'output_dir': self._get_fixed_file_dir_prefix(),
-            'create_temporary_dir': True,
+            'add_unique_suffix': True,
             **self.facets,
         }
         settings['load'] = {'callback': callback}
@@ -872,11 +872,11 @@ class Dataset:
         """Get directory prefix for storing fixed files.
 
         This can be used as `prefix` for :func:`tempfile.mkdtemp` to create a
-        temporary directory to store fixed files.
+        unique directory to store fixed files.
 
         Note
         ----
-        Does not create the directory.
+        This is thread safe. Does not create the directory.
 
         Returns
         -------

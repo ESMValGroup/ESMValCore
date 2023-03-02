@@ -91,7 +91,7 @@ def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
     fix = Cl(None)
     fixed_file = fix.fix_file(nc_path, tmp_path)
     mock_get_filepath.assert_called_once_with(
-        tmp_path, nc_path, create_temporary_dir=False
+        tmp_path, nc_path, add_unique_suffix=False
     )
     fixed_cubes = iris.load(fixed_file)
     assert len(fixed_cubes) == 2
