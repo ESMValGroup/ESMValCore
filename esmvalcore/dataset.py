@@ -4,7 +4,6 @@ from __future__ import annotations
 import logging
 import pprint
 import re
-import tempfile
 import textwrap
 import uuid
 from copy import deepcopy
@@ -721,7 +720,8 @@ class Dataset:
 
         settings: dict[str, dict[str, Any]] = {}
         settings['fix_file'] = {
-            'output_dir': self._get_temporary_fixed_file_dir(),
+            'output_dir': self._get_fixed_file_dir_prefix(),
+            'create_temporary_dir': True,
             **self.facets,
         }
         settings['load'] = {'callback': callback}
@@ -868,16 +868,21 @@ class Dataset:
 
         self.set_facet('timerange', timerange)
 
-    def _get_temporary_fixed_file_dir(self) -> Path:
-        """Create and return new temporary directory for storing fixed files.
+    def _get_fixed_file_dir_prefix(self) -> Path:
+        """Get directory prefix for storing fixed files.
+
+        This can be used as `prefix` for :func:`tempfile.mkdtemp` to create a
+        temporary directory to store fixed files.
+
+        Note
+        ----
+        Does not create the directory.
 
         Returns
         -------
         Path
-            Path to new temporary directory.
+            Directory prefix.
 
         """
-        fixed_file_dir = self.session._fixed_file_dir
-        fixed_file_dir.mkdir(parents=True, exist_ok=True)
         prefix = self._get_joined_summary_facets('_', join_lists=True) + '_'
-        return Path(tempfile.mkdtemp(prefix=prefix, dir=fixed_file_dir))
+        return self.session._fixed_file_dir / prefix

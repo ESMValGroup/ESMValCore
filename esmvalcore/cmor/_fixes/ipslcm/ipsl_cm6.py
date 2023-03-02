@@ -16,7 +16,7 @@ VARNAME_KEY = "ipsl_varname"
 class AllVars(Fix):
     """Fixes for all IPSLCM variables."""
 
-    def fix_file(self, filepath, output_dir):
+    def fix_file(self, filepath, output_dir, create_temporary_dir=False):
         """Select IPSLCM variable in filepath.
 
         This is done only if input file is a multi-variable one. This
@@ -48,7 +48,9 @@ class AllVars(Fix):
         # Proceed with CDO selvar
         varname = self.extra_facets.get(VARNAME_KEY, self.vardef.short_name)
         alt_filepath = str(filepath).replace(".nc", "_cdo_selected.nc")
-        outfile = self.get_fixed_filepath(output_dir, alt_filepath)
+        outfile = self.get_fixed_filepath(
+            output_dir, alt_filepath, create_temporary_dir=create_temporary_dir
+        )
         tim1 = time.time()
         logger.debug("Using CDO for selecting %s in %s", varname, filepath)
         command = ["cdo", "-selvar,%s" % varname, str(filepath), str(outfile)]

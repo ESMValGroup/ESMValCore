@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import importlib
 import inspect
+import tempfile
 from pathlib import Path
 
 from ..table import CMOR_TABLES
@@ -17,36 +18,50 @@ class Fix:
         Parameters
         ----------
         vardef: str
-            CMOR table entry
+            CMOR table entry.
         extra_facets: dict, optional
             Extra facets are mainly used for data outside of the big projects
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
+
         """
         self.vardef = vardef
         if extra_facets is None:
             extra_facets = {}
         self.extra_facets = extra_facets
 
-    def fix_file(self, filepath: Path, output_dir: Path) -> Path:
+    def fix_file(
+        self,
+        filepath: Path,
+        output_dir: Path,
+        create_temporary_dir: bool = False,
+    ) -> Path:
         """Apply fixes to the files prior to creating the cube.
 
-        Should be used only to fix errors that prevent loading or can
-        not be fixed in the cube (i.e. those related with missing_value
-        and _FillValue)
+        Should be used only to fix errors that prevent loading or cannot be
+        fixed in the cube (e.g., those related to `missing_value` or
+        `_FillValue`).
 
         Parameters
         ----------
         filepath: Path
-            file to fix
+            File to fix.
         output_dir: Path
-            path to the folder to store the fixed files, if required
+            Output directory for fixed files or prefix for
+            :func:`tempfile.mkdtemp` (see `create_temporary_dir`). Make sure
+            this directory exists if `create_temporary_dir=False` is used.
+        create_temporary_dir: bool, optional (default: False)
+            If `True`, create temporary directory using `output_dir` as a
+            `prefix` for :func:`tempfile.mkdtemp` and store the fixed files in
+            there. If `False`, use the `output_dir` as directory to store fixed
+            files.
 
         Returns
         -------
         Path
             Path to the corrected file. It can be different from the original
             filepath if a fix has been applied, but if not it should be the
-            original filepath
+            original filepath.
+
         """
         return filepath
 
@@ -60,12 +75,13 @@ class Fix:
         Parameters
         ----------
         cubes: iris.cube.CubeList
-            Cubes to fix
+            Cubes to fix.
 
         Returns
         -------
         iris.cube.CubeList
             Fixed cubes. They can be different instances.
+
         """
         return cubes
 
@@ -75,19 +91,21 @@ class Fix:
         Parameters
         ----------
         cubes : iris.cube.CubeList
-            List of cubes to search
-        short_name : str
-            Cube's variable short name. If None, short name is the class name
+            List of cubes to search.
+        short_name : str or None
+            Cube's variable short name. If `None`, `short name` is the class
+            name.
 
         Raises
         ------
         Exception
-            If no cube is found
+            If no cube is found.
 
         Returns
         -------
         iris.Cube
             Variable's cube
+
         """
         if short_name is None:
             short_name = self.vardef.short_name
@@ -104,12 +122,13 @@ class Fix:
         Parameters
         ----------
         cube: iris.cube.Cube
-            Cube to fix
+            Cube to fix.
 
         Returns
         -------
         iris.cube.Cube
             Fixed cube. It can be a difference instance.
+
         """
         return cube
 
@@ -152,8 +171,9 @@ class Fix:
 
         Returns
         -------
-        list(Fix)
+        list[Fix]
             Fixes to apply for the given data.
+
         """
         cmor_table = CMOR_TABLES[project]
         vardef = cmor_table.get_variable(mip, short_name)
@@ -201,21 +221,35 @@ class Fix:
     def get_fixed_filepath(
         output_dir: str | Path,
         filepath: str | Path,
+        create_temporary_dir: bool = False,
     ) -> Path:
         """Get the filepath for the fixed file.
 
         Parameters
         ----------
         output_dir: str or Path
-            Output directory.
+            Output directory or prefix for :func:`tempfile.mkdtemp` (see
+            `create_temporary_dir`). Will be created if it does not exist, yet.
         filepath: str or Path
             Original path.
+        create_temporary_dir: bool, optional (default: False)
+            If `True`, create temporary directory using `output_dir` as a
+            `prefix` for :func:`tempfile.mkdtemp` and store the fixed files in
+            there. If `False`, use the `output_dir` as directory to store fixed
+            files.
 
         Returns
         -------
         Path
             Path to the fixed file.
+
         """
         output_dir = Path(output_dir)
-        output_dir.mkdir(parents=True, exist_ok=True)
+        if create_temporary_dir:
+            parent_dir = output_dir.parent
+            parent_dir.mkdir(parents=True, exist_ok=True)
+            prefix = output_dir.name
+            output_dir = Path(tempfile.mkdtemp(prefix=prefix, dir=parent_dir))
+        else:
+            output_dir.mkdir(parents=True, exist_ok=True)
         return output_dir / Path(filepath).name

@@ -18,9 +18,16 @@ from ..shared import (
 class Cl(Fix):
     """Fixes for ``cl``."""
 
-    def _fix_formula_terms(self, filepath, output_dir):
+    def _fix_formula_terms(
+        self,
+        filepath,
+        output_dir,
+        create_temporary_dir=False,
+    ):
         """Fix ``formula_terms`` attribute."""
-        new_path = self.get_fixed_filepath(output_dir, filepath)
+        new_path = self.get_fixed_filepath(
+            output_dir, filepath, create_temporary_dir=create_temporary_dir
+        )
         copyfile(filepath, new_path)
         dataset = Dataset(new_path, mode='a')
         dataset.variables['lev'].formula_terms = 'p0: p0 a: a b: b ps: ps'
@@ -29,7 +36,7 @@ class Cl(Fix):
         dataset.close()
         return new_path
 
-    def fix_file(self, filepath, output_dir):
+    def fix_file(self, filepath, output_dir, create_temporary_dir=False):
         """Fix hybrid pressure coordinate.
 
         Adds missing ``formula_terms`` attribute to file.
@@ -47,6 +54,11 @@ class Cl(Fix):
             Path to the original file.
         output_dir : str
             Path of the directory where the fixed file is saved to.
+        create_temporary_dir: bool, optional (default: False)
+            If `True`, create temporary directory using `output_dir` as a
+            `prefix` for :func:`tempfile.mkdtemp` and store the fixed files in
+            there. If `False`, use the `output_dir` as directory to store fixed
+            files.
 
         Returns
         -------
@@ -54,7 +66,9 @@ class Cl(Fix):
             Path to the fixed file.
 
         """
-        new_path = self._fix_formula_terms(filepath, output_dir)
+        new_path = self._fix_formula_terms(
+            filepath, output_dir, create_temporary_dir=create_temporary_dir
+        )
         dataset = Dataset(new_path, mode='a')
         dataset.variables['a_bnds'][:] = dataset.variables['a_bnds'][::-1, :]
         dataset.variables['b_bnds'][:] = dataset.variables['b_bnds'][::-1, :]

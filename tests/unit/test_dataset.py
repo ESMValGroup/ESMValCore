@@ -1647,9 +1647,9 @@ def test_load(mocker, session):
         create_autospec=True,
         return_value=output_file,
     )
-    test_get_temporary_fixed_file_dir = mocker.patch.object(
+    test_get_fixed_file_dir_prefix = mocker.patch.object(
         dataset,
-        '_get_temporary_fixed_file_dir',
+        '_get_fixed_file_dir_prefix',
         create_autospec=True,
         return_value=fix_dir,
     )
@@ -1747,7 +1747,7 @@ def test_load(mocker, session):
     assert args == load_args
 
     _get_output_file.assert_called_with(dataset.facets, session.preproc_dir)
-    test_get_temporary_fixed_file_dir.assert_called_once_with()
+    test_get_fixed_file_dir_prefix.assert_called_once_with()
 
 
 def test_load_fail(session):
@@ -1770,10 +1770,9 @@ def test_load_fail(session):
         (Dataset(), '_'),
     ]
 )
-def test_get_temporary_fixed_file_dir(session, dataset, prefix):
-    """Test ``Dataset._get_temporary_fixed_file_dir``."""
+def test_get_fixed_file_dir_prefix(session, dataset, prefix):
+    """Test ``Dataset._get_fixed_file_dir_prefix``."""
     dataset.session = session
-    temp_dir = dataset._get_temporary_fixed_file_dir()
-    assert temp_dir.parent == session.session_dir / 'preproc' / 'fixed_files'
-    assert temp_dir.is_dir()
-    assert temp_dir.name.startswith(prefix)
+    temp_dir = dataset._get_fixed_file_dir_prefix()
+    assert temp_dir == session.session_dir / 'preproc' / 'fixed_files' / prefix
+    assert not temp_dir.exists()
