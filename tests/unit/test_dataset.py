@@ -1649,7 +1649,7 @@ def test_load(mocker, session):
     )
     test_get_temporary_fixed_file_dir = mocker.patch.object(
         dataset,
-        'get_temporary_fixed_file_dir',
+        '_get_temporary_fixed_file_dir',
         create_autospec=True,
         return_value=fix_dir,
     )
@@ -1773,7 +1773,7 @@ def test_load_fail(session):
 def test_get_temporary_fixed_file_dir(session, dataset, prefix):
     """Test ``Dataset._get_temporary_fixed_file_dir``."""
     dataset.session = session
-    temp_dir = dataset.get_temporary_fixed_file_dir()
+    temp_dir = dataset._get_temporary_fixed_file_dir()
     assert temp_dir.parent == session.session_dir / 'preproc' / 'fixed_files'
     assert temp_dir.is_dir()
     assert temp_dir.name.startswith(prefix)

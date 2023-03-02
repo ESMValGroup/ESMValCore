@@ -457,7 +457,7 @@ class ESMValTool():
         import shutil
 
         if (not session['save_intermediary_cubes'] and
-                session.fixed_file_dir.exists()):
+                session._fixed_file_dir.exists()):
             logger.debug(
                 "Removing `preproc/fixed_files` directory containing fixed "
                 "data"
@@ -467,7 +467,7 @@ class ESMValTool():
                 "`save_intermediary_cubes` to `true` and `remove_preproc_dir` "
                 "to `false` in your user configuration file"
             )
-            shutil.rmtree(session.fixed_file_dir)
+            shutil.rmtree(session._fixed_file_dir)
 
         if session['remove_preproc_dir'] and session.preproc_dir.exists():
             logger.info(

@@ -721,7 +721,7 @@ class Dataset:
 
         settings: dict[str, dict[str, Any]] = {}
         settings['fix_file'] = {
-            'output_dir': self.get_temporary_fixed_file_dir(),
+            'output_dir': self._get_temporary_fixed_file_dir(),
             **self.facets,
         }
         settings['load'] = {'callback': callback}
@@ -868,7 +868,7 @@ class Dataset:
 
         self.set_facet('timerange', timerange)
 
-    def get_temporary_fixed_file_dir(self) -> Path:
+    def _get_temporary_fixed_file_dir(self) -> Path:
         """Create and return new temporary directory for storing fixed files.
 
         Returns
@@ -877,7 +877,7 @@ class Dataset:
             Path to new temporary directory.
 
         """
-        fixed_file_dir = self.session.fixed_file_dir
+        fixed_file_dir = self.session._fixed_file_dir
         fixed_file_dir.mkdir(parents=True, exist_ok=True)
         prefix = self._get_joined_summary_facets('_', join_lists=True)
         if prefix != '':
