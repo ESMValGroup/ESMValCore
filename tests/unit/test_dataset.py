@@ -1640,18 +1640,16 @@ def test_load(mocker, session):
     )
     dataset.session = session
     output_file = Path('/path/to/output.nc')
-    fix_dir = Path('/path/to/output_fixed')
+    fix_dir_prefix = Path(
+        session.preproc_dir,
+        'fixed_files',
+        'chl_Oyr_CMIP5_CanESM2_historical_r1i1p1_',
+    )
     _get_output_file = mocker.patch.object(
         esmvalcore.dataset,
         '_get_output_file',
         create_autospec=True,
         return_value=output_file,
-    )
-    test_get_fixed_file_dir_prefix = mocker.patch.object(
-        dataset,
-        '_get_fixed_file_dir_prefix',
-        create_autospec=True,
-        return_value=fix_dir,
     )
     args = {}
     order = []
@@ -1695,7 +1693,7 @@ def test_load(mocker, session):
             'exp': 'historical',
             'frequency': 'yr',
             'mip': 'Oyr',
-            'output_dir': fix_dir,
+            'output_dir': fix_dir_prefix,
             'project': 'CMIP5',
             'short_name': 'chl',
             'timerange': '2000/2005',
@@ -1748,7 +1746,6 @@ def test_load(mocker, session):
     assert args == load_args
 
     _get_output_file.assert_called_with(dataset.facets, session.preproc_dir)
-    test_get_fixed_file_dir_prefix.assert_called_once_with()
 
 
 def test_load_fail(session):
@@ -1758,22 +1755,3 @@ def test_load_fail(session):
     dataset.files = []
     with pytest.raises(InputFilesNotFound):
         dataset.load()
-
-
-@pytest.mark.parametrize(
-    'dataset,prefix',
-    [
-        (Dataset(project='OBS', dataset='X', mip='fx', short_name='sftlf'),
-         'sftlf_fx_OBS_X_'),
-        (Dataset(mip=('fx', 'day'), short_name='sftlf', exp=['exp1', 'exp2']),
-         'sftlf_fx-day_exp1-exp2_'),
-        (Dataset(dataset='Y'), 'Y_'),
-        (Dataset(), '_'),
-    ]
-)
-def test_get_fixed_file_dir_prefix(session, dataset, prefix):
-    """Test ``Dataset._get_fixed_file_dir_prefix``."""
-    dataset.session = session
-    temp_dir = dataset._get_fixed_file_dir_prefix()
-    assert temp_dir == session.session_dir / 'preproc' / 'fixed_files' / prefix
-    assert not temp_dir.exists()

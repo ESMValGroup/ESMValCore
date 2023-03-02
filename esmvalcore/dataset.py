@@ -717,10 +717,14 @@ class Dataset:
             raise InputFilesNotFound(msg)
 
         output_file = _get_output_file(self.facets, self.session.preproc_dir)
+        fix_dir_prefix = Path(
+            self.session._fixed_file_dir,
+            self._get_joined_summary_facets('_', join_lists=True) + '_',
+        )
 
         settings: dict[str, dict[str, Any]] = {}
         settings['fix_file'] = {
-            'output_dir': self._get_fixed_file_dir_prefix(),
+            'output_dir': fix_dir_prefix,
             'add_unique_suffix': True,
             **self.facets,
         }
@@ -867,22 +871,3 @@ class Dataset:
         check.valid_time_selection(timerange)
 
         self.set_facet('timerange', timerange)
-
-    def _get_fixed_file_dir_prefix(self) -> Path:
-        """Get directory prefix for storing fixed files.
-
-        This can be used as `prefix` for :func:`tempfile.mkdtemp` to create a
-        unique directory to store fixed files.
-
-        Note
-        ----
-        This is thread safe. Does not create the directory.
-
-        Returns
-        -------
-        Path
-            Directory prefix.
-
-        """
-        prefix = self._get_joined_summary_facets('_', join_lists=True) + '_'
-        return self.session._fixed_file_dir / prefix
