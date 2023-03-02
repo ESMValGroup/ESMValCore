@@ -51,7 +51,7 @@ class AllVars(Fix):
         outfile = self.get_fixed_filepath(output_dir, alt_filepath)
         tim1 = time.time()
         logger.debug("Using CDO for selecting %s in %s", varname, filepath)
-        command = ["cdo", "-selvar,%s" % varname, str(filepath), outfile]
+        command = ["cdo", "-selvar,%s" % varname, str(filepath), str(outfile)]
         subprocess.run(command, check=True)
         logger.debug("CDO selection done in %.2f seconds", time.time() - tim1)
         return outfile

@@ -201,7 +201,7 @@ class Fix:
     def get_fixed_filepath(
         output_dir: str | Path,
         filepath: str | Path,
-    ) -> str:
+    ) -> Path:
         """Get the filepath for the fixed file.
 
         Parameters
@@ -213,10 +213,9 @@ class Fix:
 
         Returns
         -------
-        str
+        Path
             Path to the fixed file.
         """
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
-        filepath = Path(filepath)
-        return str(output_dir / filepath.name)
+        return output_dir / Path(filepath).name
