@@ -352,8 +352,9 @@ def cleanup(files, remove=None):
     Warning
     -------
     .. deprecated:: 2.8.0
-        This function has been deprecated in ESMValCore version 2.8.0 and is
-        scheduled for removal in version 2.10.0.
+        This function is no longer used and has been deprecated since
+        ESMValCore version 2.8.0. It is scheduled for removal in version
+        2.10.0.
 
     Parameters
     ----------

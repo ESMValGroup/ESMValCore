@@ -879,7 +879,5 @@ class Dataset:
         """
         fixed_file_dir = self.session._fixed_file_dir
         fixed_file_dir.mkdir(parents=True, exist_ok=True)
-        prefix = self._get_joined_summary_facets('_', join_lists=True)
-        if prefix != '':
-            prefix += '_'
+        prefix = self._get_joined_summary_facets('_', join_lists=True) + '_'
         return Path(tempfile.mkdtemp(prefix=prefix, dir=fixed_file_dir))

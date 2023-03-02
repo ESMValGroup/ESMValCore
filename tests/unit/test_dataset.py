@@ -1767,7 +1767,7 @@ def test_load_fail(session):
         (Dataset(mip=('fx', 'day'), short_name='sftlf', exp=['exp1', 'exp2']),
          'sftlf_fx-day_exp1-exp2_'),
         (Dataset(dataset='Y'), 'Y_'),
-        (Dataset(), ''),
+        (Dataset(), '_'),
     ]
 )
 def test_get_temporary_fixed_file_dir(session, dataset, prefix):
