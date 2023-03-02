@@ -347,7 +347,34 @@ def _get_debug_filename(filename, step):
 
 
 def cleanup(files, remove=None):
-    """Clean up after running the preprocessor."""
+    """_summary_Clean up after running the preprocessor.
+
+    Warning
+    -------
+    .. deprecated:: 2.8.0
+        This function has been deprecated in ESMValCore version 2.8.0 and is
+        scheduled for removal in version 2.10.0.
+
+    Parameters
+    ----------
+    files: list of Path
+        Preprocessor output files (will not be removed if not in `removed`).
+    remove: list of Path or None, optional (default: None)
+        Files or directories to remove.
+
+    Returns
+    -------
+    list of Path
+        Preprocessor output files.
+
+    """
+    deprecation_msg = (
+        "The preprocessor function `cleanup` has been deprecated in "
+        "ESMValCore version 2.8.0 and is scheduled for removal in version "
+        "2.10.0."
+    )
+    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+
     if remove is None:
         remove = []
 

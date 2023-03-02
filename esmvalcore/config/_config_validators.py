@@ -355,6 +355,7 @@ def deprecate_offline(
         Raw input value for ``offline`` option.
     validated_value: Any
         Validated value for ``offline`` option.
+
     """
     option = 'offline'
     deprecated_version = '2.8.0'
@@ -386,6 +387,7 @@ def deprecate_use_legacy_supplementaries(
         Raw input value for ``use_legacy_supplementaries`` option.
     validated_value: Any
         Validated value for ``use_legacy_supplementaries`` option.
+
     """
     option = 'use_legacy_supplementaries'
     deprecated_version = '2.8.0'
