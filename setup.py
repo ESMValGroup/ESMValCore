@@ -33,7 +33,9 @@ REQUIREMENTS = {
         'dask[array]',
         'esgf-pyclient>=0.3.1',
         'esmf-regrid',
-        'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
+        # see github.com/ESMValGroup/ESMValCore/issues/1208
+        'esmpy!=8.1.0,<8.4',
+        'filelock',
         'fiona',
         'fire',
         'geopy',
@@ -45,6 +47,7 @@ REQUIREMENTS = {
         'nested-lookup',
         'netCDF4',
         'numpy',
+        'packaging',
         'pandas',
         'pillow',
         'prov',
@@ -54,7 +57,7 @@ REQUIREMENTS = {
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        'scitools-iris>=3.2.1',
+        'scitools-iris>=3.4.0',
         'shapely[vectorized]',
         'stratify',
         'yamale',

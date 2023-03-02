@@ -126,6 +126,12 @@ def test_run_with_offline():
 
 
 @patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
+def test_run_with_search_esgf():
+    with arguments('esmvaltool', 'run', 'recipe.yml', '--search_esgf=always'):
+        run()
+
+
+@patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
 def test_run_with_check_level():
     with arguments('esmvaltool', 'run', 'recipe.yml', '--check_level=default'):
         run()

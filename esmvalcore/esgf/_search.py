@@ -9,8 +9,8 @@ import requests.exceptions
 from ..config._esgf_pyclient import get_esgf_config
 from ..local import (
     _get_start_end_date,
-    _get_timerange_from_years,
     _parse_period,
+    _replace_years_with_timerange,
     _truncate_dates,
 )
 from ._download import ESGFFile
@@ -359,7 +359,7 @@ def cached_search(**facets):
     if 'version' not in facets or facets['version'] != '*':
         files = select_latest_versions(files, facets.get('version'))
 
-    _get_timerange_from_years(facets)
+    _replace_years_with_timerange(facets)
     if 'timerange' in facets:
         files = select_by_time(files, facets['timerange'])
         logger.debug("Selected files:\n%s", '\n'.join(str(f) for f in files))

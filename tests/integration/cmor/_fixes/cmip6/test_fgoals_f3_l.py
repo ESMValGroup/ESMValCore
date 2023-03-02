@@ -5,7 +5,12 @@ import iris
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.cmip6.fgoals_f3_l import AllVars, Tos
+from esmvalcore.cmor._fixes.cmip6.fgoals_f3_l import (
+    AllVars,
+    Clt,
+    Sftlf,
+    Tos,
+)
 from esmvalcore.cmor._fixes.common import OceanFixGrid
 from esmvalcore.cmor.fix import Fix
 
@@ -94,3 +99,39 @@ def test_allvars_fix_metadata(cubes):
 def test_tos_fix():
     """Test fix for ``tos``."""
     assert Tos is OceanFixGrid
+
+
+def test_get_clt_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'FGOALS-f3-l', 'Amon', 'clt')
+    assert fix == [Clt(None), AllVars(None)]
+
+
+@pytest.fixture
+def clt_cube():
+    """``clt`` cube."""
+    cube = iris.cube.Cube(
+        [1.0],
+        var_name='clt',
+        standard_name='cloud_area_fraction',
+        units='%',
+    )
+    return cube
+
+
+def test_clt_fix_data(clt_cube):
+    """Test ``fix_data`` for ``clt``."""
+    fix = Clt(None)
+    out_cube = fix.fix_data(clt_cube)
+    assert out_cube.data == [100.0]
+
+
+def test_get_sftlf_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'FGOALS-f3-l', 'Amon', 'sftlf')
+    assert fix == [Sftlf(None), AllVars(None)]
+
+
+def test_sftlf_fix():
+    """Test fix for ``sftlf``."""
+    assert Sftlf is Clt

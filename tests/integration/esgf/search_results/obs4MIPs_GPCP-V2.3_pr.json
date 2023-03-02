@@ -1,0 +1,69 @@
+[
+    {
+        "id": "obs4MIPs.NASA-GSFC.GPCP.atmos.mon.v20180519.pr_GPCP-SG_L3_v2.3_197901-201710.nc|dpesgf03.nccs.nasa.gov",
+        "version": "1",
+        "cf_standard_name": [
+            "precipitation_flux"
+        ],
+        "checksum": [
+            "4dd4678b79ef139446c8406da5aae4fed210abb2f2160ef95f6988bf83e4525b"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "data_node": "dpesgf03.nccs.nasa.gov",
+        "dataset_id": "obs4MIPs.NASA-GSFC.GPCP-V2.3.atmos.mon.v20180519|dpesgf03.nccs.nasa.gov",
+        "dataset_id_template_": [
+            "%(project)s.%(institute)s.%(source_id)s.%(realm)s.%(time_frequency)s"
+        ],
+        "index_node": "esgf-node.llnl.gov",
+        "instance_id": "obs4MIPs.NASA-GSFC.GPCP.atmos.mon.v20180519.pr_GPCP-SG_L3_v2.3_197901-201710.nc",
+        "institute": [
+            "NASA-GSFC"
+        ],
+        "latest": true,
+        "master_id": "obs4MIPs.NASA-GSFC.GPCP.atmos.mon.pr_GPCP-SG_L3_v2.3_197901-201710.nc",
+        "model": [
+            "Obs-GPCP"
+        ],
+        "product": [
+            "observations"
+        ],
+        "project": [
+            "obs4MIPs"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": false,
+        "size": 19348352,
+        "source_id": [
+            "GPCP-V2.3"
+        ],
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2018-02-17T17:17:54Z",
+        "title": "pr_GPCP-SG_L3_v2.3_197901-201710.nc",
+        "tracking_id": [
+            "4070c751-6c2d-440f-a4d7-5b325fb98990"
+        ],
+        "type": "File",
+        "url": [
+            "https://dpesgf03.nccs.nasa.gov/thredds/fileServer/obs4MIPs/observations/NASA-GSFC/Obs-GPCP/GPCP/V2.3/atmos/pr/pr_GPCP-SG_L3_v2.3_197901-201710.nc|application/netcdf|HTTPServer"
+        ],
+        "variable": [
+            "pr"
+        ],
+        "variable_long_name": [
+            "Precipitation"
+        ],
+        "variable_units": [
+            "kg m-2 s-1"
+        ],
+        "_version_": 1662343940370595840,
+        "retracted": false,
+        "_timestamp": "2020-03-27T18:45:20.965Z",
+        "score": 1.0
+    }
+]

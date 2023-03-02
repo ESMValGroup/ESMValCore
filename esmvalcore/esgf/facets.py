@@ -17,6 +17,7 @@ FACETS = {
         'ensemble': 'ensemble',
         'exp': 'experiment',
         'frequency': 'time_frequency',
+        'institute': 'institute',
         'mip': 'cmor_table',
         'product': 'product',
         'short_name': 'variable',
@@ -38,11 +39,14 @@ FACETS = {
         'ensemble': 'ensemble',
         'exp': 'experiment',
         'frequency': 'time_frequency',
+        'institute': 'institute',
+        'product': 'product',
         'short_name': 'variable',
     },
     'obs4MIPs': {
         'dataset': 'source_id',
         'frequency': 'time_frequency',
+        'institute': 'institute',
         'short_name': 'variable',
     }
 }

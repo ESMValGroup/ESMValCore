@@ -1,5 +1,35 @@
+.. _changelog:
+
 Changelog
 =========
+
+
+.. _changelog-v2-7-1:
+
+
+v2.7.1
+------
+Highlights
+~~~~~~~~~~
+
+This is a bugfix release where we unpin `cf-units` to allow the latest `iris=3.4.0` to be installed. It also includes an update to the default configuration used when searching the ESGF for files, to account for a recent change of the CEDA ESGF index node hostname. The changelog contains only changes that were made to the ``main`` branch.
+
+Installation
+~~~~~~~~~~~~
+
+- Set the version number on the development branches to one minor version more than the previous release (`#1854 <https://github.com/ESMValGroup/ESMValCore/pull/1854>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+- Unpin cf-units (`#1770 <https://github.com/ESMValGroup/ESMValCore/pull/1770>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Bug fixes
+~~~~~~~~~
+
+- Improve error handling if an esgf index node is offline (`#1834 <https://github.com/ESMValGroup/ESMValCore/pull/1834>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+- Removed unnecessary test that fails with iris 3.4.0 (`#1846 <https://github.com/ESMValGroup/ESMValCore/pull/1846>`__) `Manuel Schlund <https://github.com/schlunma>`__
+- Update CEDA ESGF index node hostname (`#1838 <https://github.com/ESMValGroup/ESMValCore/pull/1838>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 
 
 .. _changelog-v2-7-0:
@@ -202,7 +232,7 @@ Highlights
 
 -  The new preprocessor :func:`~esmvalcore.preprocessor.extract_location` can extract arbitrary locations on the Earth using the `geopy <https://pypi.org/project/geopy/>`__ package that connects to OpenStreetMap. For details, see :ref:`Extract location <extract_location>`.
 -  Time ranges can now be extracted using the `ISO 8601 format <https://en.wikipedia.org/wiki/ISO_8601>`_. In addition, wildcards are allowed, which makes the time selection much more flexible. For details, see :ref:`Recipe section: Datasets <Datasets>`.
--  The new preprocessor :func:`~esmvalcore.preprocessor.ensemble_statistics` can calculate arbitrary statitics over all ensemble members of a simulation. In addition, the preprocessor :func:`~esmvalcore.preprocessor.multi_model_statistics` now accepts the keyword ``groupy``, which allows the calculation of multi-model statistics over arbitrary multi-model ensembles. For details, see :ref:`Ensemble statistics <ensemble statistics>` and :ref:`Multi-model statistics <multi-model statistics>`.
+-  The new preprocessor :func:`~esmvalcore.preprocessor.ensemble_statistics` can calculate arbitrary statistics over all ensemble members of a simulation. In addition, the preprocessor :func:`~esmvalcore.preprocessor.multi_model_statistics` now accepts the keyword ``groupy``, which allows the calculation of multi-model statistics over arbitrary multi-model ensembles. For details, see :ref:`Ensemble statistics <ensemble statistics>` and :ref:`Multi-model statistics <multi-model statistics>`.
 
 This release includes
 
@@ -297,7 +327,7 @@ Automatic testing
 -  Switch to Mambaforge in Github Actions tests (`#1438 <https://github.com/ESMValGroup/ESMValCore/pull/1438>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Turn off conda lock file creation on any push on `main` branch from Github Action test (`#1489 <https://github.com/ESMValGroup/ESMValCore/pull/1489>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Add DRS path test for IPSLCM files (`#1490 <https://github.com/ESMValGroup/ESMValCore/pull/1490>`__) `Stéphane Sénési <https://github.com/senesis>`__
--  Add a test module that runs tests of `iris` I/O everytime we notice serious bugs there (`#1510 <https://github.com/ESMValGroup/ESMValCore/pull/1510>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Add a test module that runs tests of `iris` I/O every time we notice serious bugs there (`#1510 <https://github.com/ESMValGroup/ESMValCore/pull/1510>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  [Github Actions] Trigger Github Actions tests (`run-tests.yml` workflow) from a comment in a PR (`#1520 <https://github.com/ESMValGroup/ESMValCore/pull/1520>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Update Linux condalock file (various pull requests) github-actions[bot]
 
@@ -587,7 +617,7 @@ Automatic testing
 -  Report coverage for tests that run on any pull request (`#994 <https://github.com/ESMValGroup/ESMValCore/pull/994>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Install ESMValTool sample data from PyPI (`#998 <https://github.com/ESMValGroup/ESMValCore/pull/998>`__) `Javier Vegas-Regidor <https://github.com/jvegasbsc>`__
 -  Fix tests for multi-processing with spawn method (i.e. macOSX with Python>3.8) (`#1003 <https://github.com/ESMValGroup/ESMValCore/pull/1003>`__) `Barbara Vreede <https://github.com/bvreede>`__
--  Switch to running the Github Action test workflow every 3 hours in single thread mode to observe if Sementation Faults occur (`#1022 <https://github.com/ESMValGroup/ESMValCore/pull/1022>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Switch to running the Github Action test workflow every 3 hours in single thread mode to observe if Segmentation Faults occur (`#1022 <https://github.com/ESMValGroup/ESMValCore/pull/1022>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Revert to original Github Actions test workflow removing the 3-hourly test run with -n 1 (`#1025 <https://github.com/ESMValGroup/ESMValCore/pull/1025>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Avoid stale cache for multimodel statistics regression tests (`#1030 <https://github.com/ESMValGroup/ESMValCore/pull/1030>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Add newer Python versions in OSX to Github Actions (`#1035 <https://github.com/ESMValGroup/ESMValCore/pull/1035>`__) `Barbara Vreede <https://github.com/bvreede>`__

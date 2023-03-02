@@ -1,5 +1,6 @@
 """Unit tests for error logging of :mod:`esmvalcore.preprocessor`."""
 
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -45,7 +46,7 @@ def assert_error_call_ok(mock_logger):
 
 
 KWARGS = {'test': 42, 'list': ['a', 'b']}
-PREPROC_FILE = PreprocessorFile({'filename': 'a'}, {})
+PREPROC_FILE = PreprocessorFile(Path('a'))
 TEST_ITEMS_SHORT = [
     # Scalars
     PREPROC_FILE,
@@ -246,22 +247,3 @@ class MockAncestor():
     def __init__(self, filename):
         """Initialize mock ancestor."""
         self.filename = filename
-
-
-def test_input_files_for_log():
-    """Test :meth:`PreprocessorFile._input_files_for_log`."""
-    ancestors = [
-        MockAncestor('a.nc'),
-        MockAncestor('b.nc'),
-    ]
-    preproc_file = PreprocessorFile({'filename': 'p.nc'}, {},
-                                    ancestors=ancestors)
-
-    assert preproc_file._input_files == ['a.nc', 'b.nc']
-    assert preproc_file.files == ['a.nc', 'b.nc']
-    assert preproc_file._input_files_for_log() is None
-
-    preproc_file.files = ['c.nc', 'd.nc']
-    assert preproc_file._input_files == ['a.nc', 'b.nc']
-    assert preproc_file.files == ['c.nc', 'd.nc']
-    assert preproc_file._input_files_for_log() == ['a.nc', 'b.nc']

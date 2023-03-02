@@ -7,10 +7,40 @@ from esmvalcore._recipe.from_datasets import (
     _group_ensemble_names,
     _group_identical_facets,
     _move_one_level_up,
+    _to_frozen,
     datasets_to_recipe,
 )
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
+
+
+def test_to_frozen():
+    data = {
+        'abc': 'x',
+        'a': {
+            'b': [
+                'd',
+                'c',
+            ],
+        },
+    }
+
+    result = _to_frozen(data)
+    expected = (
+        (
+            'a',
+            ((
+                'b',
+                (
+                    'c',
+                    'd',
+                ),
+            ), ),
+        ),
+        ('abc', 'x'),
+    )
+
+    assert result == expected
 
 
 def test_datasets_to_recipe():
@@ -27,19 +57,19 @@ def test_datasets_to_recipe():
 
     recipe_txt = textwrap.dedent("""
     datasets:
-      - {dataset: 'dataset1'}
+      - dataset: 'dataset1'
     diagnostics:
       diagnostic1:
         variables:
           tas:
             additional_datasets:
-              - {dataset: 'dataset2'}
+              - dataset: 'dataset2'
           pr: {}
       diagnostic2:
         variables:
           tas: {}
         additional_datasets:
-          - {dataset: 'dataset3'}
+          - dataset: 'dataset3'
     """)
     recipe = yaml.safe_load(recipe_txt)
 
@@ -81,14 +111,14 @@ def test_update_datasets_in_recipe():
     assert datasets_to_recipe([dataset], recipe=existing_recipe) == recipe
 
 
-def test_ancillary_datasets_to_recipe():
+def test_supplementary_datasets_to_recipe():
     dataset = Dataset(
         short_name='ta',
         dataset='dataset1',
     )
     dataset['diagnostic'] = 'diagnostic1'
     dataset['variable_group'] = 'group1'
-    dataset.add_ancillary(short_name='areacella')
+    dataset.add_supplementary(short_name='areacella')
 
     recipe_txt = textwrap.dedent("""
     datasets:
@@ -98,7 +128,7 @@ def test_ancillary_datasets_to_recipe():
         variables:
           group1:
             short_name: 'ta'
-            ancillary_variables:
+            supplementary_variables:
               - short_name: areacella
     """)
     recipe = yaml.safe_load(recipe_txt)

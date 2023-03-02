@@ -63,9 +63,9 @@ class AllVars(IconFix):
         else:
             lon_idx = None
 
-        # Fix cell index for unstructured grid if necessary
-        if self._cell_index_needs_fixing(lat_idx, lon_idx):
-            self._fix_unstructured_cell_index(cube, lat_idx)
+        # Fix unstructured mesh of unstructured grid if present
+        if self._is_unstructured_grid(lat_idx, lon_idx):
+            self._fix_mesh(cube, lat_idx)
 
         # Fix scalar coordinates
         self.fix_scalar_coords(cube)
@@ -75,8 +75,7 @@ class AllVars(IconFix):
 
         return CubeList([cube])
 
-    def _add_coord_from_grid_file(self, cube, coord_name,
-                                  target_coord_long_name):
+    def _add_coord_from_grid_file(self, cube, coord_name):
         """Add coordinate from grid file to cube.
 
         Note
@@ -89,10 +88,8 @@ class AllVars(IconFix):
         cube: iris.cube.Cube
             ICON data to which the coordinate from the grid file is added.
         coord_name: str
-            Name of the coordinate in the grid file. Must be one of
-            ``'grid_latitude'``, ``'grid_longitude'``.
-        target_coord_long_name: str
-            Long name that is assigned to the newly added coordinate.
+            Name of the coordinate to add from the grid file. Must be one of
+            ``'latitude'``, ``'longitude'``.
 
         Raises
         ------
@@ -102,35 +99,43 @@ class AllVars(IconFix):
             coordinate.
 
         """
-        allowed_coord_names = ('grid_latitude', 'grid_longitude')
-        if coord_name not in allowed_coord_names:
+        # The following dict maps from desired coordinate name in output file
+        # (dict keys) to coordinate name in grid file (dict values)
+        coord_names_mapping = {
+            'latitude': 'grid_latitude',
+            'longitude': 'grid_longitude',
+        }
+        if coord_name not in coord_names_mapping:
             raise ValueError(
-                f"coord_name must be one of {allowed_coord_names}, got "
+                f"coord_name must be one of {list(coord_names_mapping)}, got "
                 f"'{coord_name}'")
-        horizontal_grid = self.get_horizontal_grid(cube)
+        coord_name_in_grid = coord_names_mapping[coord_name]
 
-        # Use 'cell_area' as dummy cube to extract coordinates
+        # Use 'cell_area' as dummy cube to extract desired coordinates
         # Note: it might be necessary to expand this when more coord_names are
         # supported
+        horizontal_grid = self.get_horizontal_grid(cube)
         grid_cube = horizontal_grid.extract_cube(
             NameConstraint(var_name='cell_area'))
-        coord = grid_cube.coord(coord_name)
+        coord = grid_cube.coord(coord_name_in_grid)
 
-        # Find index of horizontal coordinate (= single unnamed dimension)
+        # Find index of mesh dimension (= single unnamed dimension)
         n_unnamed_dimensions = cube.ndim - len(cube.dim_coords)
         if n_unnamed_dimensions != 1:
             raise ValueError(
                 f"Cannot determine coordinate dimension for coordinate "
-                f"'{target_coord_long_name}', cube does not contain a single "
-                f"unnamed dimension:\n{cube}")
+                f"'{coord_name}', cube does not contain a single unnamed "
+                f"dimension:\n{cube}")
         coord_dims = ()
         for idx in range(cube.ndim):
             if not cube.coords(dimensions=idx, dim_coords=True):
                 coord_dims = (idx,)
                 break
 
+        # Adapt coordinate names so that the coordinate can be referenced with
+        # 'cube.coord(coord_name)'; the exact name will be set at a later stage
         coord.standard_name = None
-        coord.long_name = target_coord_long_name
+        coord.long_name = coord_name
         cube.add_aux_coord(coord, coord_dims)
 
     def _add_time(self, cube, cubes):
@@ -210,7 +215,7 @@ class AllVars(IconFix):
         # Add latitude coordinate if not already present
         if not cube.coords(lat_name):
             try:
-                self._add_coord_from_grid_file(cube, 'grid_latitude', lat_name)
+                self._add_coord_from_grid_file(cube, 'latitude')
             except Exception as exc:
                 msg = "Failed to add missing latitude coordinate to cube"
                 raise ValueError(msg) from exc
@@ -227,14 +232,14 @@ class AllVars(IconFix):
         # Add longitude coordinate if not already present
         if not cube.coords(lon_name):
             try:
-                self._add_coord_from_grid_file(
-                    cube, 'grid_longitude', lon_name)
+                self._add_coord_from_grid_file(cube, 'longitude')
             except Exception as exc:
                 msg = "Failed to add missing longitude coordinate to cube"
                 raise ValueError(msg) from exc
 
-        # Fix metadata
+        # Fix metadata and convert to [0, 360]
         lon = self.fix_lon_metadata(cube, lon_name)
+        self._set_range_in_0_360(lon)
 
         return cube.coord_dims(lon)
 
@@ -274,42 +279,53 @@ class AllVars(IconFix):
 
         return cube
 
-    @staticmethod
-    def _cell_index_needs_fixing(lat_idx, lon_idx):
-        """Check if cell index coordinate of unstructured grid needs fixing."""
-        # If either latitude or longitude are not present (i.e., the
-        # corresponding index is None), no fix is necessary
-        if lat_idx is None:
-            return False
-        if lon_idx is None:
-            return False
+    def _fix_mesh(self, cube, mesh_idx):
+        """Fix mesh."""
+        # Remove any already-present dimensional coordinate describing the mesh
+        # dimension
+        if cube.coords(dimensions=mesh_idx, dim_coords=True):
+            cube.remove_coord(cube.coord(dimensions=mesh_idx, dim_coords=True))
 
-        # If latitude and longitude do not share their dimensions, no fix is
-        # necessary
-        if lat_idx != lon_idx:
-            return False
-
-        # If latitude and longitude are multi-dimensional (i.e., curvilinear
-        # instead of unstructured grid is given), no fix is necessary
-        if len(lat_idx) != 1:
-            return False
-
-        return True
-
-    @staticmethod
-    def _fix_unstructured_cell_index(cube, horizontal_idx):
-        """Fix unstructured cell index coordinate."""
-        if cube.coords(dimensions=horizontal_idx, dim_coords=True):
-            cube.remove_coord(cube.coord(dimensions=horizontal_idx,
-                                         dim_coords=True))
+        # Add dimensional coordinate that describes the mesh dimension
         index_coord = DimCoord(
-            np.arange(cube.shape[horizontal_idx[0]]),
+            np.arange(cube.shape[mesh_idx[0]]),
             var_name='i',
             long_name=('first spatial index for variables stored on an '
                        'unstructured grid'),
             units='1',
         )
-        cube.add_dim_coord(index_coord, horizontal_idx)
+        cube.add_dim_coord(index_coord, mesh_idx)
+
+        # If desired, get mesh and replace the original latitude and longitude
+        # coordinates with their new mesh versions
+        if self.extra_facets.get('ugrid', True):
+            mesh = self.get_mesh(cube)
+            cube.remove_coord('latitude')
+            cube.remove_coord('longitude')
+            for mesh_coord in mesh.to_MeshCoords('face'):
+                cube.add_aux_coord(mesh_coord, mesh_idx)
+
+    @staticmethod
+    def _is_unstructured_grid(lat_idx, lon_idx):
+        """Check if data is defined on an unstructured grid."""
+        # If either latitude or longitude are not present (i.e., the
+        # corresponding index is None), no unstructured grid is present
+        if lat_idx is None:
+            return False
+        if lon_idx is None:
+            return False
+
+        # If latitude and longitude do not share their dimensions, no
+        # unstructured grid is present
+        if lat_idx != lon_idx:
+            return False
+
+        # If latitude and longitude are multi-dimensional (e.g., curvilinear
+        # grid), no unstructured grid is present
+        if len(lat_idx) != 1:
+            return False
+
+        return True
 
 
 class Clwvi(IconFix):
