@@ -45,7 +45,6 @@ Bug fixes
 -  Fix LWP of ICON on-the-fly CMORizer (`#1839 <https://github.com/ESMValGroup/ESMValCore/pull/1839>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Fixed issue in irregular regridding regarding scalar coordinates (`#1845 <https://github.com/ESMValGroup/ESMValCore/pull/1845>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Update product attributes and `metadata.yml` with cube metadata before saving files (`#1837 <https://github.com/ESMValGroup/ESMValCore/pull/1837>`__) `Manuel Schlund <https://github.com/schlunma>`__
--  Add standard variable names for EMAC (`#1853 <https://github.com/ESMValGroup/ESMValCore/pull/1853>`__) `FranziskaWinterstein <https://github.com/FranziskaWinterstein>`__
 -  Remove an extra space character from a filename (`#1883 <https://github.com/ESMValGroup/ESMValCore/pull/1883>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Improve resilience of ESGF search (`#1869 <https://github.com/ESMValGroup/ESMValCore/pull/1869>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Fix issue with no files found if timerange start/end differs in length (`#1880 <https://github.com/ESMValGroup/ESMValCore/pull/1880>`__) `Bouwe Andela <https://github.com/bouweandela>`__
@@ -54,7 +53,6 @@ Bug fixes
 -  Fix type hints for Python versions < 3.10 (`#1897 <https://github.com/ESMValGroup/ESMValCore/pull/1897>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Fixed `set_range_in_0_360` for dask arrays (`#1919 <https://github.com/ESMValGroup/ESMValCore/pull/1919>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Made equalized attributes in concatenated cubes consistent across runs (`#1783 <https://github.com/ESMValGroup/ESMValCore/pull/1783>`__) `Manuel Schlund <https://github.com/schlunma>`__
--  Improve reading facets from ESGF search results (`#1920 <https://github.com/ESMValGroup/ESMValCore/pull/1920>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Fix issue with reading dates from files (`#1936 <https://github.com/ESMValGroup/ESMValCore/pull/1936>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Add institute name used on ESGF for CMIP5 CanAM4, CanCM4, and CanESM2 (`#1937 <https://github.com/ESMValGroup/ESMValCore/pull/1937>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
@@ -93,6 +91,7 @@ Improvements
 -  Refactored `regrid()` and removed unnecessary code not needed anymore due to new iris version (`#1898 <https://github.com/ESMValGroup/ESMValCore/pull/1898>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Smarter removal of coordinate metadata in `multi_model_statistics` preprocessor (`#1813 <https://github.com/ESMValGroup/ESMValCore/pull/1813>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Do not realise coordinates in `check.py` (`#1912 <https://github.com/ESMValGroup/ESMValCore/pull/1912>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Improve reading facets from ESGF search results (`#1920 <https://github.com/ESMValGroup/ESMValCore/pull/1920>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Allowed usage of `multi_model_statistics` on cubes with identical `name()` and `units` (but e.g. different long_name) (`#1921 <https://github.com/ESMValGroup/ESMValCore/pull/1921>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Fix automatic download of ICON grid file and make ICON UGRIDization optional (default: true) (`#1922 <https://github.com/ESMValGroup/ESMValCore/pull/1922>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Allowed ignoring scalar coordinates in `multi_model_statistics` (`#1934 <https://github.com/ESMValGroup/ESMValCore/pull/1934>`__) `Manuel Schlund <https://github.com/schlunma>`__
@@ -104,6 +103,7 @@ Fixes for datasets
 -  Add siconc fixes for EC-Earth3-Veg and EC-Earth3-Veg-LR models (`#1771 <https://github.com/ESMValGroup/ESMValCore/pull/1771>`__) `Evgenia Galytska <https://github.com/egalytska>`__
 -  Fix siconc in KIOST-ESM (`#1829 <https://github.com/ESMValGroup/ESMValCore/pull/1829>`__) `Lisa Bock <https://github.com/LisaBock>`__
 -  Extension of ERA5 CMORizer (variable cl) (`#1850 <https://github.com/ESMValGroup/ESMValCore/pull/1850>`__) `Axel Lauer <https://github.com/axel-lauer>`__
+-  Add standard variable names for EMAC (`#1853 <https://github.com/ESMValGroup/ESMValCore/pull/1853>`__) `FranziskaWinterstein <https://github.com/FranziskaWinterstein>`__
 -  Fix for FGOALS-f3-L clt (`#1928 <https://github.com/ESMValGroup/ESMValCore/pull/1928>`__) `Lisa Bock <https://github.com/LisaBock>`__
 
 Installation
