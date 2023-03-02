@@ -28,7 +28,6 @@ TODO: add examples of how to deal with these changes
 Notebook API (experimental)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Add `esmvalcore.config` module (`#1769 <https://github.com/ESMValGroup/ESMValCore/pull/1769>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Support searching ESGF for a specific version of a file (`#1822 <https://github.com/ESMValGroup/ESMValCore/pull/1822>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Add `esmvalcore.dataset` module (`#1877 <https://github.com/ESMValGroup/ESMValCore/pull/1877>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Fix issues with searching for files on ESGF (`#1863 <https://github.com/ESMValGroup/ESMValCore/pull/1863>`__) `Bouwe Andela <https://github.com/bouweandela>`__
@@ -69,6 +68,7 @@ CMOR standard
 Deprecations
 ~~~~~~~~~~~~
 
+-  Add `esmvalcore.config` module (`#1769 <https://github.com/ESMValGroup/ESMValCore/pull/1769>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Combined `offline` and `always_search_esgf` into a single option `search_esgf` (`#1935 <https://github.com/ESMValGroup/ESMValCore/pull/1935>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
 Documentation
