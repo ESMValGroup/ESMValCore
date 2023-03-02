@@ -347,7 +347,7 @@ def _get_debug_filename(filename, step):
 
 
 def cleanup(files, remove=None):
-    """_summary_Clean up after running the preprocessor.
+    """Clean up after running the preprocessor.
 
     Warning
     -------
