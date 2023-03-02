@@ -22,7 +22,8 @@ Backwards incompatible changes
 TODO: add examples of how to deal with these changes
 
 -  Support wildcards in the recipe and improve support for ancillary variables and dataset versioning (`#1609 <https://github.com/ESMValGroup/ESMValCore/pull/1609>`__) `Bouwe Andela <https://github.com/bouweandela>`__
--  Remove deprecated features scheduled for removal in v2.8.0 or earlier (`#1826 <https://github.com/ESMValGroup/ESMValCore/pull/1826>`__) `Manuel Schlund <https://github.com/schlunma>`__-  Add `esmvalcore.local`, a module to search data on the local filesystem (`#1835 <https://github.com/ESMValGroup/ESMValCore/pull/1835>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Remove deprecated features scheduled for removal in v2.8.0 or earlier (`#1826 <https://github.com/ESMValGroup/ESMValCore/pull/1826>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Add `esmvalcore.local`, a module to search data on the local filesystem (`#1835 <https://github.com/ESMValGroup/ESMValCore/pull/1835>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Update filename template for obs4MIPs to better match filenames (`#1866 <https://github.com/ESMValGroup/ESMValCore/pull/1866>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
 Notebook API (experimental)
