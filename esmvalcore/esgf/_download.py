@@ -396,7 +396,7 @@ class ESGFFile:
         file.facets = self.facets
         return file
 
-    def download(self, dest_folder):
+    def download(self, dest_folder, session):
         """Download the file.
 
         Arguments
@@ -424,7 +424,7 @@ class ESGFFile:
         errors = {}
         for url in sort_hosts(self.urls):
             try:
-                self._download(local_file, url)
+                self._download(local_file, session, url)
             except (DownloadError,
                     requests.exceptions.RequestException) as error:
                 logger.debug("Not able to download %s. Error message: %s", url,
@@ -447,7 +447,7 @@ class ESGFFile:
         with NamedTemporaryFile(prefix=f"{local_file}.") as tmp_file:
             return Path(tmp_file.name)
 
-    def _download(self, local_file, url):
+    def _download(self, local_file, session, url):
         """Download file from a single url."""
         idx = self.urls.index(url)
         checksum_type, checksum = self._checksums[idx]
@@ -460,10 +460,7 @@ class ESGFFile:
 
         logger.debug("Downloading %s to %s", url, tmp_file)
         start_time = datetime.datetime.now()
-        response = requests.get(url,
-                                stream=True,
-                                timeout=TIMEOUT,
-                                cert=get_credentials())
+        response = session.get(url)
         response.raise_for_status()
         with tmp_file.open("wb") as file:
             for chunk in response.iter_content(chunk_size=None):
@@ -539,9 +536,9 @@ def download(files, dest_folder, n_jobs=4):
     files = sorted(files)
     logger.info(get_download_message(files))
 
-    def _download(file: ESGFFile):
+    def _download(session: requests.Session, file: ESGFFile):
         """Download file to dest_folder."""
-        file.download(dest_folder)
+        file.download(dest_folder, session)
 
     total_size = 0
     start_time = datetime.datetime.now()
@@ -549,10 +546,15 @@ def download(files, dest_folder, n_jobs=4):
     errors = []
     random.shuffle(files)
     with concurrent.futures.ThreadPoolExecutor(max_workers=n_jobs) as executor:
-        future_to_file = {
-            executor.submit(_download, file): file
-            for file in files
-        }
+        with requests.Session() as session:
+            session.stream = True
+            session.params = {'timeout': TIMEOUT}
+            session.cert = get_credentials()
+
+            future_to_file = {
+                executor.submit(_download, session, file): file
+                for file in files
+            }
 
         for future in concurrent.futures.as_completed(future_to_file):
             file = future_to_file[future]
