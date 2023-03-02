@@ -108,6 +108,20 @@ def test_get_fixed_filepath_paths(tmp_path):
     assert fixed_path == tmp_path / 'fixed' / 'file.nc'
 
 
+def test_get_fixed_filepath_temporary_paths(tmp_path):
+    output_dir = tmp_path / 'fixed' / 'prefix_1_'
+    filepath = Path('this', 'is', 'a', 'file.nc')
+    assert not output_dir.parent.is_dir()
+    fixed_path = Fix(None).get_fixed_filepath(
+        output_dir, filepath, create_temporary_dir=True
+    )
+    assert fixed_path.parent.is_dir()
+    assert isinstance(fixed_path, Path)
+    assert fixed_path != tmp_path / 'fixed' / 'prefix_1_' / 'file.nc'
+    assert fixed_path.parent.name.startswith('prefix_1_')
+    assert fixed_path.name == 'file.nc'
+
+
 def test_get_fixed_filepath_strs(tmp_path):
     output_dir = os.path.join(str(tmp_path), 'fixed')
     filepath = os.path.join('this', 'is', 'a', 'file.nc')
@@ -116,3 +130,17 @@ def test_get_fixed_filepath_strs(tmp_path):
     assert Path(output_dir).is_dir()
     assert isinstance(fixed_path, Path)
     assert fixed_path == tmp_path / 'fixed' / 'file.nc'
+
+
+def test_get_fixed_filepath_temporary_strs(tmp_path):
+    output_dir = os.path.join(str(tmp_path), 'fixed', 'prefix_1_')
+    filepath = os.path.join('this', 'is', 'a', 'file.nc')
+    assert not Path(output_dir).parent.is_dir()
+    fixed_path = Fix(None).get_fixed_filepath(
+        output_dir, filepath, create_temporary_dir=True
+    )
+    assert fixed_path.parent.is_dir()
+    assert isinstance(fixed_path, Path)
+    assert fixed_path != tmp_path / 'fixed' / 'prefix_1_' / 'file.nc'
+    assert fixed_path.parent.name.startswith('prefix_1_')
+    assert fixed_path.name == 'file.nc'
