@@ -863,7 +863,7 @@ class Dataset:
         fixed_file_dir.mkdir(parents=True, exist_ok=True)
         facets_for_prefix = ('project', 'dataset', 'mip', 'short_name')
         prefix = '_'.join(
-            [str(self.facets.get(facet, '')) for facet in facets_for_prefix] +
+            ["-".join(str(elem) for elem in value) if isinstance(value, (list, tuple)) else str(value) for facet, value in self.facets.items() if facets in facets_for_prefix] +
             ['']
         )
         return Path(tempfile.mkdtemp(prefix=prefix, dir=fixed_file_dir))
