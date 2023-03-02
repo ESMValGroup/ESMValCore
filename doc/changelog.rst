@@ -44,7 +44,6 @@ Bug fixes
 -  Import from `esmvalcore.config` in the `esmvalcore.experimental` module (`#1816 <https://github.com/ESMValGroup/ESMValCore/pull/1816>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Added scalar coords of input cubes to output of esmpy_regrid (`#1811 <https://github.com/ESMValGroup/ESMValCore/pull/1811>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Fix severe bug in `mask_fillvalues` (`#1823 <https://github.com/ESMValGroup/ESMValCore/pull/1823>`__) `Manuel Schlund <https://github.com/schlunma>`__
--  Improve error handling if an esgf index node is offline (`#1834 <https://github.com/ESMValGroup/ESMValCore/pull/1834>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Fix LWP of ICON on-the-fly CMORizer (`#1839 <https://github.com/ESMValGroup/ESMValCore/pull/1839>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Fixed issue in irregular regridding regarding scalar coordinates (`#1845 <https://github.com/ESMValGroup/ESMValCore/pull/1845>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Update product attributes and `metadata.yml` with cube metadata before saving files (`#1837 <https://github.com/ESMValGroup/ESMValCore/pull/1837>`__) `Manuel Schlund <https://github.com/schlunma>`__
@@ -82,7 +81,6 @@ Documentation
 -  Fix mistake in the documentation of `esmvalcore.esgf.find_files` (`#1784 <https://github.com/ESMValGroup/ESMValCore/pull/1784>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Add all deps to the conda-forge environment and suppress installing and reinstalling deps with pip at readthedocs builds (`#1786 <https://github.com/ESMValGroup/ESMValCore/pull/1786>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Support linking to "stable" ESMValTool version on readthedocs (`#1608 <https://github.com/ESMValGroup/ESMValCore/pull/1608>`__) `Bouwe Andela <https://github.com/bouweandela>`__
--  Update CEDA ESGF index node hostname (`#1838 <https://github.com/ESMValGroup/ESMValCore/pull/1838>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Updated ICON doc with information on usage of extract_levels preprocessor (`#1903 <https://github.com/ESMValGroup/ESMValCore/pull/1903>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Add changelog for latest released version v2.7.1 (`#1905 <https://github.com/ESMValGroup/ESMValCore/pull/1905>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Update preprocessor.rst due to renaming of NCEP dataset to NCEP-NCAR-R1 (`#1908 <https://github.com/ESMValGroup/ESMValCore/pull/1908>`__) `Birgit Hassler <https://github.com/hb326>`__
@@ -115,18 +113,11 @@ Installation
 ~~~~~~~~~~~~
 
 -  Pin netCDF4<1.6.1 (`#1805 <https://github.com/ESMValGroup/ESMValCore/pull/1805>`__) `Bouwe Andela <https://github.com/bouweandela>`__
--  Unpin cf-units (`#1770 <https://github.com/ESMValGroup/ESMValCore/pull/1770>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Unpin NetCF4 (`#1814 <https://github.com/ESMValGroup/ESMValCore/pull/1814>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Unpin flake8 (`#1820 <https://github.com/ESMValGroup/ESMValCore/pull/1820>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Add iris-esmf-regrid as a dependency (`#1809 <https://github.com/ESMValGroup/ESMValCore/pull/1809>`__) `sloosvel <https://github.com/sloosvel>`__
--  Set the version number on the development branches to one minor version more than the previous release (`#1854 <https://github.com/ESMValGroup/ESMValCore/pull/1854>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Pin esmpy<8.4 (`#1871 <https://github.com/ESMValGroup/ESMValCore/pull/1871>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
 -  Update esmpy import for ESMF v8.4.0 (`#1876 <https://github.com/ESMValGroup/ESMValCore/pull/1876>`__) `Bouwe Andela <https://github.com/bouweandela>`__
-
-Iris
-~~~~
-
--  Removed unnecessary test that fails with iris 3.4.0 (`#1846 <https://github.com/ESMValGroup/ESMValCore/pull/1846>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
 Automatic testing
 ~~~~~~~~~~~~~~~~~
