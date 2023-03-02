@@ -61,7 +61,6 @@ Bug fixes
 CMOR standard
 ~~~~~~~~~~~~~
 
--  Fix siconc in KIOST-ESM (`#1829 <https://github.com/ESMValGroup/ESMValCore/pull/1829>`__) `Lisa Bock <https://github.com/LisaBock>`__
 -  Fix rotated coordinate grids and `tas` and `pr` for CORDEX datasets (`#1765 <https://github.com/ESMValGroup/ESMValCore/pull/1765>`__) `sloosvel <https://github.com/sloosvel>`__
 
 Deprecations
@@ -103,6 +102,7 @@ Fixes for datasets
 ~~~~~~~~~~~~~~~~~~
 
 -  Add siconc fixes for EC-Earth3-Veg and EC-Earth3-Veg-LR models (`#1771 <https://github.com/ESMValGroup/ESMValCore/pull/1771>`__) `Evgenia Galytska <https://github.com/egalytska>`__
+-  Fix siconc in KIOST-ESM (`#1829 <https://github.com/ESMValGroup/ESMValCore/pull/1829>`__) `Lisa Bock <https://github.com/LisaBock>`__
 -  Extension of ERA5 CMORizer (variable cl) (`#1850 <https://github.com/ESMValGroup/ESMValCore/pull/1850>`__) `Axel Lauer <https://github.com/axel-lauer>`__
 -  Fix for FGOALS-f3-L clt (`#1928 <https://github.com/ESMValGroup/ESMValCore/pull/1928>`__) `Lisa Bock <https://github.com/LisaBock>`__
 
