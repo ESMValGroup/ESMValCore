@@ -75,7 +75,6 @@ Deprecations
 Documentation
 ~~~~~~~~~~~~~
 
--  Update CITATION.cff file with 2.7.0 release info (`#1757 <https://github.com/ESMValGroup/ESMValCore/pull/1757>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Updating changelog and CITATION in main to reflect files from 2.7.0 release (`#1756 <https://github.com/ESMValGroup/ESMValCore/pull/1756>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Fix anaconda badge in README (`#1759 <https://github.com/ESMValGroup/ESMValCore/pull/1759>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Fix mistake in the documentation of `esmvalcore.esgf.find_files` (`#1784 <https://github.com/ESMValGroup/ESMValCore/pull/1784>`__) `Bouwe Andela <https://github.com/bouweandela>`__
