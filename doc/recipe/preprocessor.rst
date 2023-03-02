@@ -1298,7 +1298,7 @@ Parameters:
     * operator: operation to apply. Accepted values are 'mean',
       'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
 
-See also :func:`esmvalcore.preprocessor.daily_statistics`.
+See also :func:`esmvalcore.preprocessor.hourly_statistics`.
 
 .. _daily_statistics:
 
@@ -1878,11 +1878,58 @@ The ``_volume.py`` module contains the following preprocessor functions:
 ``extract_volume``
 ------------------
 
-Extract a specific range in the `z`-direction from a cube.  This function
-takes two arguments, a minimum and a maximum (``z_min`` and ``z_max``,
-respectively) in the `z`-direction.
+Extract a specific range in the `z`-direction from a cube. The range is given as an interval
+that can be:
 
-Note that this requires the requested `z`-coordinate range to be the same sign
+* open ``(z_min, z_max)``, in which the extracted range does not include ``z_min`` nor ``z_max``.
+* closed ``[z_min, z_max]``, in which the extracted includes both ``z_min`` and ``z_max``.
+* left closed ``[z_min, z_max)``, in which the extracted range includes ``z_min`` but not ``z_max``.
+* right closed ``(z_min, z_max]``, in which the extracted range includes ``z_max`` but not ``z_min``.
+
+The extraction is performed by applying a constraint on the coordinate values, without any kind of interpolation. 
+
+This function takes four arguments:
+
+* ``z_min``  to define the minimum value of the range to extract in the `z`-direction.
+* ``z_max`` to define the maximum value of the range to extract in the `z`-direction.
+* ``interval_bounds`` to define whether the bounds of the interval are ``open``, ``closed``,
+    ``left_closed`` or ``right_closed``. Default is ``open``.
+* ``nearest_value`` to extract a range taking into account the values of the z-coordinate that
+    are closest to ``z_min`` and ``z_max``. Default is ``False``.
+
+As the coordinate points are likely to vary depending on the dataset, sometimes it might be
+useful to adjust the given ``z_min`` and ``z_max`` values to the values of the coordinate
+points before performing an extraction.  This behaviour can be achieved by setting the
+``nearest_value`` argument to ``True``.
+
+For example, in a cube with ``z_coord = [0., 1.5, 2.6., 3.8., 5.4]``, the preprocessor below:
+
+.. code-block:: yaml
+
+  preprocessors:
+    extract_volume:
+      z_min: 1.
+      z_max: 5.
+      interval_bounds: 'closed'
+
+would return a cube with a ``z_coord`` defined as ``z_coord = [1.5, 2.6., 3.8.]``,
+since these are the values that strictly fall into the range given by ``[z_min=1, z_max=5]``.
+
+Whereas setting ``ǹearest_value: True``:
+
+.. code-block:: yaml
+
+  preprocessors:
+    extract_volume:
+      z_min: 1.
+      z_max: 5.
+      interval_bounds: 'closed'
+      nearest_value: True
+
+would return a cube with a ``z_coord`` defined as ``z_coord = [1.5, 2.6., 3.8., 5.4]``,
+since ``z_max = 5`` is closest to the coordinate point ``z = 5.4`` than it is to ``z = 3.8``.
+
+Note that this preprocessor requires the requested `z`-coordinate range to be the same sign
 as the Iris cube. That is, if the cube has `z`-coordinate as negative, then
 ``z_min`` and ``z_max`` need to be negative numbers.
 
