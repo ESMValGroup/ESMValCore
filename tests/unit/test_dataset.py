@@ -47,6 +47,33 @@ def test_repr_supplementary():
         """).strip()
 
 
+@pytest.mark.parametrize(
+    "separator,join_lists,output",
+    [
+        ('_', False, "1_d_dom_a_('e1', 'e2')_['ens2', 'ens1']_g1_v1"),
+        ('_', True, "1_d_dom_a_e1-e2_ens2-ens1_g1_v1"),
+        (' ', False, "1 d dom a ('e1', 'e2') ['ens2', 'ens1'] g1 v1"),
+        (' ', True, "1 d dom a e1-e2 ens2-ens1 g1 v1"),
+    ]
+)
+def test_get_joined_summary_facet(separator, join_lists, output):
+    ds = Dataset(
+        test='this should not appear',
+        rcm_version='1',
+        driver='d',
+        domain='dom',
+        activity='a',
+        exp=('e1', 'e2'),
+        ensemble=['ens2', 'ens1'],
+        grid='g1',
+        version='v1',
+    )
+    joined_str = ds._get_joined_summary_facets(
+        separator, join_lists=join_lists
+    )
+    assert joined_str == output
+
+
 def test_short_summary():
     ds = Dataset(
         project='CMIP6',
@@ -1736,9 +1763,11 @@ def test_load_fail(session):
     'dataset,prefix',
     [
         (Dataset(project='OBS', dataset='X', mip='fx', short_name='sftlf'),
-         'OBS_X_fx_sftlf_'),
-        (Dataset(dataset='Y'), '_Y___'),
-        (Dataset(), '____'),
+         'sftlf_fx_OBS_X_'),
+        (Dataset(mip=('fx', 'day'), short_name='sftlf', exp=['exp1', 'exp2']),
+         'sftlf_fx-day_exp1-exp2_'),
+        (Dataset(dataset='Y'), 'Y_'),
+        (Dataset(), ''),
     ]
 )
 def test_get_temporary_fixed_file_dir(session, dataset, prefix):
