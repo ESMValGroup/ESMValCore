@@ -66,6 +66,7 @@ Deprecations
 
 -  Add `esmvalcore.config` module (`#1769 <https://github.com/ESMValGroup/ESMValCore/pull/1769>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Combined `offline` and `always_search_esgf` into a single option `search_esgf` (`#1935 <https://github.com/ESMValGroup/ESMValCore/pull/1935>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fixed race condition that may result in errors in `cleanup` and deprecate `cleanup` (`#1949 <https://github.com/ESMValGroup/ESMValCore/pull/1949>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
 Documentation
 ~~~~~~~~~~~~~
