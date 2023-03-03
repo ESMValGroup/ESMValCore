@@ -8,7 +8,7 @@ modeling_realm:    ocean
 ! Variable attributes:
 !----------------------------------
 standard_name:
-units:             J
+units:             J m-3
 cell_methods:      time: mean area: where sea
 cell_measures:     volume: volcello
 long_name:         Heat content in grid cell

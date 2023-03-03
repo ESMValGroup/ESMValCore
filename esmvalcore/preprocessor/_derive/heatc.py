@@ -1,4 +1,4 @@
-"""Derivation of variable `sithick`."""
+"""Derivation of variable `heatc`."""
 import logging
 
 import iris
@@ -10,10 +10,11 @@ from ._baseclass import DerivedVariableBase
 logger = logging.getLogger(__name__)
 
 DENSITY = iris.coords.AuxCoord(1025, units=Unit('kg m-3'))
-HEAT_CAPACITY = iris.coords.AuxCoord(3850, units=Unit('J kg K-1'))
+HEAT_CAPACITY = iris.coords.AuxCoord(3985, units=Unit('J kg K-1'))
+
 
 class DerivedVariable(DerivedVariableBase):
-    """Derivation of variable `siextent`."""
+    """Derivation of variable `heatc`."""
 
     @staticmethod
     def required(project):
@@ -21,7 +22,7 @@ class DerivedVariable(DerivedVariableBase):
         required = [
             {
                 'short_name': 'thetao',
-            },]
+            }, ]
         return required
 
     @staticmethod
@@ -33,7 +34,7 @@ class DerivedVariable(DerivedVariableBase):
 
         Use in combination with the preprocessor `extract_volume` and
         `axis_statistics(axis='Z', operator='sum')` to obtain the global values
-        over a given watercolumn. Additionally, use in combination with the
+        over a given water column. Additionally, use in combination with the
         preprocessor `area_statistics(operator='mean') in order to obtain
         spatially averaged values.
 
@@ -45,8 +46,10 @@ class DerivedVariable(DerivedVariableBase):
         -------
             Cube containing heat content.
         """
-        
-        thetao = cubes.extract_cube(Constraint(standard_name='sea_water_potential_temperature'))
+
+        thetao = cubes.extract_cube(
+            Constraint(name='sea_water_potential_temperature')
+        )
         thetao.convert_units('K')
         heatc = thetao * DENSITY * HEAT_CAPACITY
 
