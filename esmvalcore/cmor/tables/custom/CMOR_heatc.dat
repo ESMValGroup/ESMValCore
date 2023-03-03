@@ -1,0 +1,24 @@
+SOURCE: CMIP5
+generic_levels:    olevel
+!============
+variable_entry:    heatc
+!============
+modeling_realm:    ocean
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             J m-3
+cell_methods:      area: mean where sea time: mean
+cell_measures:     area: areacello volume: volcello
+long_name:         Total Amount of Heat Stored by the Oceans
+comment:           
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude olevel time
+type:              real
+valid_min:
+valid_max:
+!----------------------------------
+!
