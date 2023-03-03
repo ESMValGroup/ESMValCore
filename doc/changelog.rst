@@ -37,7 +37,6 @@ Notebook API (experimental)
 Bug fixes
 ~~~~~~~~~
 
--  Merge release v2.7.0 branch `release_270stable` into `main` (`#1775 <https://github.com/ESMValGroup/ESMValCore/pull/1775>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Remove duplicate implicit_optional = True line in setup.cfg (`#1791 <https://github.com/ESMValGroup/ESMValCore/pull/1791>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Fix type hints for Python 3.8 (`#1795 <https://github.com/ESMValGroup/ESMValCore/pull/1795>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Import from `esmvalcore.config` in the `esmvalcore.experimental` module (`#1816 <https://github.com/ESMValGroup/ESMValCore/pull/1816>`__) `Bouwe Andela <https://github.com/bouweandela>`__
@@ -71,7 +70,6 @@ Deprecations
 Documentation
 ~~~~~~~~~~~~~
 
--  Updating changelog and CITATION in main to reflect files from 2.7.0 release (`#1756 <https://github.com/ESMValGroup/ESMValCore/pull/1756>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Fix anaconda badge in README (`#1759 <https://github.com/ESMValGroup/ESMValCore/pull/1759>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Fix mistake in the documentation of `esmvalcore.esgf.find_files` (`#1784 <https://github.com/ESMValGroup/ESMValCore/pull/1784>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Support linking to "stable" ESMValTool version on readthedocs (`#1608 <https://github.com/ESMValGroup/ESMValCore/pull/1608>`__) `Bouwe Andela <https://github.com/bouweandela>`__
