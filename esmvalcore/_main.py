@@ -456,10 +456,28 @@ class ESMValTool():
     def _clean_preproc(session):
         import shutil
 
-        if session["remove_preproc_dir"] and session.preproc_dir.exists():
-            logger.info("Removing preproc containing preprocessed data")
-            logger.info("If this data is further needed, then")
-            logger.info("set remove_preproc_dir to false in config-user.yml")
+        if (not session['save_intermediary_cubes'] and
+                session._fixed_file_dir.exists()):
+            logger.debug(
+                "Removing `preproc/fixed_files` directory containing fixed "
+                "data"
+            )
+            logger.debug(
+                "If this data is further needed, then set "
+                "`save_intermediary_cubes` to `true` and `remove_preproc_dir` "
+                "to `false` in your user configuration file"
+            )
+            shutil.rmtree(session._fixed_file_dir)
+
+        if session['remove_preproc_dir'] and session.preproc_dir.exists():
+            logger.info(
+                "Removing `preproc` directory containing preprocessed data"
+            )
+            logger.info(
+                "If this data is further needed, then set "
+                "`remove_preproc_dir` to `false` in your user configuration "
+                "file"
+            )
             shutil.rmtree(session.preproc_dir)
 
     @staticmethod
