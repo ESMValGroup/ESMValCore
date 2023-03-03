@@ -113,6 +113,10 @@ Installation
 -  Pin esmpy<8.4 (`#1871 <https://github.com/ESMValGroup/ESMValCore/pull/1871>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
 -  Update esmpy import for ESMF v8.4.0 (`#1876 <https://github.com/ESMValGroup/ESMValCore/pull/1876>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
+Release
+~~~~~~~
+-  Increase version number for ESMValCore `v2.8.0rc1` (`#1955 <https://github.com/ESMValGroup/ESMValCore/pull/1955>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+
 Automatic testing
 ~~~~~~~~~~~~~~~~~
 
