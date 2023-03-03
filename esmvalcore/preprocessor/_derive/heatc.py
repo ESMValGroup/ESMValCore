@@ -10,7 +10,7 @@ from ._baseclass import DerivedVariableBase
 logger = logging.getLogger(__name__)
 
 DENSITY = iris.coords.AuxCoord(1025, units=Unit('kg m-3'))
-HEAT_CAPACITY = iris.coords.AuxCoord(3985, units=Unit('J kg K-1'))
+HEAT_CAPACITY = iris.coords.AuxCoord(3985, units=Unit('J kg-1 K-1'))
 
 
 class DerivedVariable(DerivedVariableBase):
@@ -27,7 +27,7 @@ class DerivedVariable(DerivedVariableBase):
 
     @staticmethod
     def calculate(cubes):
-        """Compute sea ice extent.
+        """Compute ocean heat content.
 
         Returns the sea water potential temperature multiplied by the
         sea water specific heat.
@@ -52,5 +52,6 @@ class DerivedVariable(DerivedVariableBase):
         )
         thetao.convert_units('K')
         heatc = thetao * DENSITY * HEAT_CAPACITY
+        heatc.convert_units('J m-3')
 
-        return heatc
+heat        return heatc
