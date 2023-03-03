@@ -37,7 +37,7 @@ def _get_domain_info(data_domain):
 @lru_cache
 def _get_domain_boundaries(data_domain):
     json_file = Path(__file__).parent / 'nrp_rcm_domain_boundaries.json'
-    with open(json_file, "r") as file:
+    with open(json_file, mode="r", encoding='utf-8') as file:
         domain_bndrs = json.loads(file.read())
     return domain_bndrs[data_domain]
 
@@ -209,48 +209,43 @@ class AllVars(Fix):
         )
 
     @staticmethod
-    def _transform_points(crs_from, crs_to, x, y, lazy=False):
+    def _transform_points(crs_from, crs_to, x_data, y_data, lazy=False):
         """Transform points between one pyproj.crs.CRS to another."""
-        res = da.empty(x.shape + (2,)) if lazy else np.empty(x.shape + (2,))
+        out_shape = x_data.shape + (2,)
+        res = da.empty(out_shape) if lazy else np.empty(out_shape)
         res[..., 0], res[..., 1] = Transformer.from_crs(
             crs_from=crs_from,
             crs_to=crs_to,
             always_xy=True
-        ).transform(x, y, errcheck=True)
+        ).transform(x_data, y_data, errcheck=True)
         return res
 
     def _check_lambert_conformal_proj_coords(self, cube, domain_bounds):
         """Check lambert conformal projection coordinates."""
-        lambert_system = cube.coord_system().as_cartopy_crs()
         lambert_bounds = self._transform_points(
-            GEOG_SYSTEM, lambert_system,
+            GEOG_SYSTEM, cube.coord_system().as_cartopy_crs(),
             np.array(domain_bounds['lons']),
             np.array(domain_bounds['lats']))
-        lons, lats = lambert_bounds[:, 0], lambert_bounds[:, 1]
 
         x_coord = cube.coord(var_name='x')
         y_coord = cube.coord(var_name='y')
         x_coord.convert_units('m')
         y_coord.convert_units('m')
-        proj_y, proj_x = y_coord.points, x_coord.points
-        xmin, xmax = proj_x.min(), proj_x.max()
-        ymin, ymax = proj_y.min(), proj_y.max()
+
+        xmin, xmax = x_coord.points.min(), x_coord.points.max()
+        ymin, ymax = y_coord.points.min(), y_coord.points.max()
 
         # Lambdas not allowed.
-        def dist(a, b):
-            return np.linalg.norm(np.array(a) - np.array(b))
+        def dist(point_a, point_b):
+            return np.linalg.norm(np.array(point_a) - np.array(point_b))
 
         # Compare the 4 corners of cube domain vs. the standard domain ones.
-        top_left = [lons[0], lats[0]]
-        top_right = [lons[2], lats[2]]
-        bot_left = [lons[6], lats[6]]
-        bot_right = [lons[8], lats[8]]
+        cube_corners = np.take(lambert_bounds, indices=[0, 2, 6, 8], axis=0)
+        domain_corners = np.array([
+            [xmin, ymax], [xmax, ymax], [xmin, ymin], [xmax, ymin]])
+        return np.mean(
+            [dist(x, y) for x, y in zip(cube_corners, domain_corners)]) < 1e6
 
-        d1 = dist(top_left, [xmin, ymax])
-        d2 = dist(top_right, [xmax, ymax])
-        d3 = dist(bot_left, [xmin, ymin])
-        d4 = dist(bot_right, [xmax, ymin])
-        return (np.mean([d1, d2, d3, d4]) < 1e6)
 
     def _check_lambert_conformal_geog_coords(
             self, cube, domain_bounds):
@@ -263,7 +258,7 @@ class AllVars(Fix):
                                     end_longitude=lons.max(),
                                     start_latitude=lats.min(),
                                     end_latitude=lats.max())
-        return ((np.sum(cube2d.shape) / np.sum(cube_x_std.shape)) < 1.15)
+        return (np.sum(cube2d.shape) / np.sum(cube_x_std.shape)) < 1.15
 
     def _fix_lambert_projection_coord_using_geographical(self, cube):
         """Use geographical coords to retrieve projection coords."""
@@ -275,8 +270,8 @@ class AllVars(Fix):
         # lonlat are in geographical and Dim coords are in lambert system.
         lonlat_lambert = self._transform_points(crs_from=GEOG_SYSTEM,
                                                 crs_to=lambert_system,
-                                                x=lon_pts,
-                                                y=lat_pts)
+                                                x_data=lon_pts,
+                                                y_data=lat_pts)
 
         # Derived from the way aux_coords are built.
         x_points = np.average(lonlat_lambert[:, :, 0], axis=0)
@@ -296,40 +291,40 @@ class AllVars(Fix):
 
     def _fix_geographical_coord_using_projection(self, cube):
         """Use projection coords to retrieve geographical coords."""
-        # Retrieve infos from cube.
-        coord_x = cube.coord("projection_x_coordinate")
-        coord_y = cube.coord("projection_y_coordinate")
         lambert_system = cube.coord_system().as_cartopy_crs()
 
         # Make sure there are bounds to the projection coordinates.
-        if not coord_x.has_bounds():
-            coord_x.guess_bounds()
-        if not coord_y.has_bounds():
-            coord_y.guess_bounds()
+        if not cube.coord("projection_x_coordinate").has_bounds():
+            cube.coord("projection_x_coordinate").guess_bounds()
+        if not cube.coord("projection_y_coordinate").has_bounds():
+            cube.coord("projection_y_coordinate").guess_bounds()
 
         # AuxCoords are built in 2D from the coords points.
-        gx, gy = da.meshgrid(coord_x.points, coord_y.points)
-        gx_bounds, gy_bounds = da.meshgrid(coord_x.bounds, coord_y.bounds)
+        grid_x, grid_y = da.meshgrid(
+            cube.coord("projection_x_coordinate").points,
+            cube.coord("projection_y_coordinate").points)
+
+        gx_bounds, gy_bounds = da.meshgrid(
+            cube.coord("projection_x_coordinate").bounds,
+            cube.coord("projection_y_coordinate").bounds)
 
         # Dim coords are in lambert system and lonlat are in geographical.
         lonlat = self._transform_points(
             crs_from=lambert_system, crs_to=GEOG_SYSTEM,
-            x=gx, y=gy, lazy=True)
+            x_data=grid_x, y_data=grid_y, lazy=True)
         lonlat_bounds = self._transform_points(
             crs_from=lambert_system, crs_to=GEOG_SYSTEM,
-            x=gx_bounds, y=gy_bounds, lazy=True)
-
-        table = CMOR_TABLES["CORDEX"]
+            x_data=gx_bounds, y_data=gy_bounds, lazy=True)
 
         # For each coord, make new and replace.
         for var_name, index in zip(["longitude", "latitude"], [0, 1]):
             bounds = lonlat_bounds[:, :, index]
             bounds = [bounds[::2, ::2], bounds[::2, 1::2],
                       bounds[1::2, 1::2], bounds[1::2, ::2]]
-            bounds = da.array(bounds)
-            bounds = da.moveaxis(bounds, 0, -1)
+            bounds = da.moveaxis(da.array(bounds), 0, -1)
             coord = self._make_geographical_coord(
-                lonlat[:, :, index], bounds, table.coords[var_name])
+                lonlat[:, :, index], bounds,
+                CMOR_TABLES["CORDEX"].coords[var_name])
             old_coord = cube.coord(var_name)
             dim = old_coord.cube_dims(cube)
             cube.remove_coord(old_coord)
