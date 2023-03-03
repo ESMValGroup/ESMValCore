@@ -96,6 +96,22 @@ class Dataset:
         Facets describing the dataset.
     """
 
+    _SUMMARY_FACETS = (
+        'short_name',
+        'mip',
+        'project',
+        'dataset',
+        'rcm_version',
+        'driver',
+        'domain',
+        'activity',
+        'exp',
+        'ensemble',
+        'grid',
+        'version',
+    )
+    """Facets used to create a summary of a Dataset instance."""
+
     def __init__(self, **facets: FacetValue):
 
         self.facets: Facets = {}
@@ -433,6 +449,24 @@ class Dataset:
             txt.append(f"session: '{self.session.session_name}'")
         return "\n".join(txt)
 
+    def _get_joined_summary_facets(
+        self,
+        separator: str,
+        join_lists: bool = False,
+    ) -> str:
+        """Get string consisting of joined summary facets."""
+        summary_facets_vals = []
+        for key in self._SUMMARY_FACETS:
+            if key not in self.facets:
+                continue
+            val = self.facets[key]
+            if join_lists and isinstance(val, (tuple, list)):
+                val = '-'.join(str(elem) for elem in val)
+            else:
+                val = str(val)
+            summary_facets_vals.append(val)
+        return separator.join(summary_facets_vals)
+
     def summary(self, shorten: bool = False) -> str:
         """Summarize the content of dataset.
 
@@ -449,28 +483,12 @@ class Dataset:
         if not shorten:
             return repr(self)
 
-        keys = (
-            'short_name',
-            'mip',
-            'project',
-            'dataset',
-            'rcm_version',
-            'driver',
-            'domain',
-            'activity',
-            'exp',
-            'ensemble',
-            'grid',
-            'version',
-        )
         title = self.__class__.__name__
-        txt = (
-            f"{title}: " +
-            ", ".join(str(self.facets[k]) for k in keys if k in self.facets))
+        txt = f"{title}: " + self._get_joined_summary_facets(', ')
 
         def supplementary_summary(dataset):
             return ", ".join(
-                str(dataset.facets[k]) for k in keys
+                str(dataset.facets[k]) for k in self._SUMMARY_FACETS
                 if k in dataset.facets and dataset[k] != self.facets.get(k))
 
         if self.supplementaries:
@@ -699,10 +717,15 @@ class Dataset:
             raise InputFilesNotFound(msg)
 
         output_file = _get_output_file(self.facets, self.session.preproc_dir)
+        fix_dir_prefix = Path(
+            self.session._fixed_file_dir,
+            self._get_joined_summary_facets('_', join_lists=True) + '_',
+        )
 
         settings: dict[str, dict[str, Any]] = {}
         settings['fix_file'] = {
-            'output_dir': Path(f"{output_file.with_suffix('')}_fixed"),
+            'output_dir': fix_dir_prefix,
+            'add_unique_suffix': True,
             **self.facets,
         }
         settings['load'] = {'callback': callback}

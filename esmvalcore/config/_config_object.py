@@ -159,6 +159,7 @@ class Session(ValidatedConfig):
     relative_run_dir = Path('run')
     relative_main_log = Path('run', 'main_log.txt')
     relative_main_log_debug = Path('run', 'main_log_debug.txt')
+    _relative_fixed_file_dir = Path('preproc', 'fixed_files')
 
     def __init__(self, config: dict, name: str = 'session'):
         super().__init__(config)
@@ -213,6 +214,11 @@ class Session(ValidatedConfig):
     def main_log_debug(self):
         """Return main log debug file."""
         return self.session_dir / self.relative_main_log_debug
+
+    @property
+    def _fixed_file_dir(self):
+        """Return fixed file directory."""
+        return self.session_dir / self._relative_fixed_file_dir
 
     def to_config_user(self) -> dict:
         """Turn the `Session` object into a recipe-compatible dict.

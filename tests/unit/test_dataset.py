@@ -47,6 +47,33 @@ def test_repr_supplementary():
         """).strip()
 
 
+@pytest.mark.parametrize(
+    "separator,join_lists,output",
+    [
+        ('_', False, "1_d_dom_a_('e1', 'e2')_['ens2', 'ens1']_g1_v1"),
+        ('_', True, "1_d_dom_a_e1-e2_ens2-ens1_g1_v1"),
+        (' ', False, "1 d dom a ('e1', 'e2') ['ens2', 'ens1'] g1 v1"),
+        (' ', True, "1 d dom a e1-e2 ens2-ens1 g1 v1"),
+    ]
+)
+def test_get_joined_summary_facet(separator, join_lists, output):
+    ds = Dataset(
+        test='this should not appear',
+        rcm_version='1',
+        driver='d',
+        domain='dom',
+        activity='a',
+        exp=('e1', 'e2'),
+        ensemble=['ens2', 'ens1'],
+        grid='g1',
+        version='v1',
+    )
+    joined_str = ds._get_joined_summary_facets(
+        separator, join_lists=join_lists
+    )
+    assert joined_str == output
+
+
 def test_short_summary():
     ds = Dataset(
         project='CMIP6',
@@ -1613,7 +1640,11 @@ def test_load(mocker, session):
     )
     dataset.session = session
     output_file = Path('/path/to/output.nc')
-    fix_dir = Path('/path/to/output_fixed')
+    fix_dir_prefix = Path(
+        session.preproc_dir,
+        'fixed_files',
+        'chl_Oyr_CMIP5_CanESM2_historical_r1i1p1_',
+    )
     _get_output_file = mocker.patch.object(
         esmvalcore.dataset,
         '_get_output_file',
@@ -1656,12 +1687,13 @@ def test_load(mocker, session):
             'callback': 'default'
         },
         'fix_file': {
+            'add_unique_suffix': True,
             'dataset': 'CanESM2',
             'ensemble': 'r1i1p1',
             'exp': 'historical',
             'frequency': 'yr',
             'mip': 'Oyr',
-            'output_dir': fix_dir,
+            'output_dir': fix_dir_prefix,
             'project': 'CMIP5',
             'short_name': 'chl',
             'timerange': '2000/2005',

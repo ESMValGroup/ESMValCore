@@ -493,10 +493,11 @@ class PreprocessorFile(TrackedFile):
                    'save',
                    input_files=self._input_files,
                    **self.settings['save'])
-        preprocess([],
-                   'cleanup',
-                   input_files=self._input_files,
-                   **self.settings.get('cleanup', {}))
+        if 'cleanup' in self.settings:
+            preprocess([],
+                       'cleanup',
+                       input_files=self._input_files,
+                       **self.settings['cleanup'])
 
     def close(self):
         """Close the file."""

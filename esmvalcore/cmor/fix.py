@@ -23,6 +23,7 @@ def fix_file(
     dataset: str,
     mip: str,
     output_dir: Path,
+    add_unique_suffix: bool = False,
     **extra_facets,
 ) -> Path:
     """Fix files before ESMValTool can load them.
@@ -46,6 +47,8 @@ def fix_file(
         Variable's MIP.
     output_dir: Path
         Output directory for fixed files.
+    add_unique_suffix: bool, optional (default: False)
+        Adds a unique suffix to `output_dir` for thread safety.
     **extra_facets: dict, optional
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
@@ -55,8 +58,6 @@ def fix_file(
     Path:
         Path to the fixed file.
     """
-    if not output_dir.exists():
-        output_dir.mkdir(parents=True, exist_ok=True)
     # Update extra_facets with variable information given as regular arguments
     # to this function
     extra_facets.update({
@@ -71,7 +72,9 @@ def fix_file(
                              mip=mip,
                              short_name=short_name,
                              extra_facets=extra_facets):
-        file = fix.fix_file(file, output_dir)
+        file = fix.fix_file(
+            file, output_dir, add_unique_suffix=add_unique_suffix
+        )
     return file
 
 

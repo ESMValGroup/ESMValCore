@@ -571,7 +571,6 @@ def test_get_default_settings(mocker):
         'load': {'callback': 'default'},
         'remove_supplementary_variables': {},
         'save': {'compress': False, 'alias': 'sic'},
-        'cleanup': {'remove': ['/path/to/file_fixed']},
     }
 
 
