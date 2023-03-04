@@ -38,5 +38,5 @@ def test_heatc_required():
     derived_var = heatc.DerivedVariable()
     output = derived_var.required(None)
     assert output == [
-        {'short_name': 'thetao',},
+        {'short_name': 'thetao', },
     ]
