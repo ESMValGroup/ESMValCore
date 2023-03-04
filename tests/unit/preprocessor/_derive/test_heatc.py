@@ -12,9 +12,9 @@ def cubes():
     thetao_name = 'sea_water_potential_temperature'
     time_coord = iris.coords.DimCoord([0., 1., 2.],
                                       standard_name='time')
-    thetao_cube = iris.cube.Cube([[[-272.15, -272.15 ], [-272.15, -272.15 ]],
-                               [[-272.15, -272.15 ], [-272.15, -272.15 ]],
-                               [[-272.15, -272.15 ], [-272.15, -272.15 ]]],
+    thetao_cube = iris.cube.Cube([[[-272.15, -272.15], [-272.15, -272.15]],
+                               [[-272.15, -272.15], [-272.15, -272.15]],
+                               [[-272.15, -272.15], [-272.15, -272.15]]],
                               units='degC',
                               standard_name=thetao_name,
                               var_name='thetao',
