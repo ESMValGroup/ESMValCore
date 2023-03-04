@@ -5,7 +5,6 @@ import numpy as np
 import pytest
 
 import esmvalcore.preprocessor._derive.heatc as heatc
-from esmvalcore.exceptions import RecipeError
 
 
 @pytest.fixture
@@ -13,9 +12,9 @@ def cubes():
     thetao_name = 'sea_water_potential_temperature'
     time_coord = iris.coords.DimCoord([0., 1., 2.],
                                       standard_name='time')
-    thetao_cube = iris.cube.Cube([[[-272.15 , -272.15 ], [-272.15 , -272.15 ]],
-                               [[-272.15 , -272.15 ], [-272.15 , -272.15 ]],
-                               [[-272.15 , -272.15 ], [-272.15 , -272.15 ]]],
+    thetao_cube = iris.cube.Cube([[[-272.15, -272.15 ], [-272.15, -272.15 ]],
+                               [[-272.15, -272.15 ], [-272.15, -272.15 ]],
+                               [[-272.15, -272.15 ], [-272.15, -272.15 ]]],
                               units='degC',
                               standard_name=thetao_name,
                               var_name='thetao',
@@ -24,7 +23,7 @@ def cubes():
 
 
 def test_heatc_calculation(cubes):
-    """Test function ``calculate`` when sic is available."""
+    """Test function ``calculate`` for heatc."""
     derived_var = heatc.DerivedVariable()
     out_cube = derived_var.calculate(cubes)
     assert out_cube.units == cf_units.Unit('J m-3')

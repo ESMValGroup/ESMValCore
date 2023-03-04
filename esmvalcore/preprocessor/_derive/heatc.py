@@ -54,4 +54,4 @@ class DerivedVariable(DerivedVariableBase):
         heatc = thetao * DENSITY * HEAT_CAPACITY
         heatc.convert_units('J m-3')
 
-heat        return heatc
+        return heatc
