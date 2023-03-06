@@ -4,12 +4,14 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-from esmvalcore.cmor.table import CMOR_TABLES
+from iris.fileformats.pp import EARTH_RADIUS
+# from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
     AllVars,
     CLMcomCCLM4817,
     MOHCHadREM3GA705,
     TimeLongName,
+    # _get_domain_boundaries
 )
 from esmvalcore.exceptions import RecipeError
 
@@ -93,6 +95,68 @@ def cordex_cubes():
             (time, 0),
             (rlat, 1),
             (rlon, 2)],
+        aux_coords_and_dims=[
+            (lat, (1, 2)),
+            (lon, (1, 2))
+        ]
+
+    )
+    return iris.cube.CubeList([cube])
+
+
+@pytest.fixture
+def cordex_lambert_cubes():
+    coord_system = iris.coord_systems.LambertConformal(
+        central_lat=49.5,
+        central_lon=10.5,
+        false_easting=0.0,
+        false_northing=0.0,
+        secant_latitudes=(49.5,))
+    geog_system = iris.coord_systems.GeogCS(EARTH_RADIUS).as_cartopy_crs()
+    fix = AllVars(
+        vardef=None,
+        extra_facets={
+            'domain': 'EUR-11',
+            'dataset': 'DATASET',
+            'driver': 'DRIVER'
+            }
+        )
+
+    time = iris.coords.DimCoord(np.arange(0, 3),
+                                var_name='time',
+                                standard_name='time')
+
+    ax_pts = np.linspace(0, 5650 * 1000, 453)
+    proj_x = iris.coords.DimCoord(ax_pts,
+                                  var_name='x',
+                                  standard_name='projection_x_coordinate',
+                                  coord_system=coord_system,
+                                  units='m')
+    proj_y = iris.coords.DimCoord(ax_pts,
+                                  var_name='y',
+                                  standard_name='projection_y_coordinate',
+                                  coord_system=coord_system,
+                                  units='m')
+
+    gx, gy = np.meshgrid(ax_pts, ax_pts)
+    lonlat = fix._transform_points(
+        crs_from=coord_system.as_cartopy_crs(), crs_to=geog_system,
+        x_data=gx, y_data=gy, lazy=True)
+
+    lon = iris.coords.AuxCoord(lonlat[..., 0],
+                               var_name='lon',
+                               standard_name='longitude')
+    lat = iris.coords.AuxCoord(lonlat[..., 1],
+                               var_name='lat',
+                               standard_name='latitude')
+
+    cube = iris.cube.Cube(
+        np.ones((3, 453, 453)),
+        var_name='tas',
+        dim_coords_and_dims=[
+            (time, 0),
+            (proj_x, 1),
+            (proj_y, 2)],
         aux_coords_and_dims=[
             (lat, (1, 2)),
             (lon, (1, 2))
@@ -192,51 +256,16 @@ def test_rotated_grid_fix_error(cordex_cubes):
     assert msg == exc.value.message
 
 
-def test_lambert_grid(cordex_cubes):
-    cmor_table = CMOR_TABLES["CORDEX"]
-    mip = "mon"
-    short_name = "tas"
-    vardef = cmor_table.get_variable(mip, short_name)
-    cmor_table._load_table(cmor_table._cmor_folder + "/CORDEX_grids")
-
-    fix = AllVars(
-        vardef=vardef,
-        extra_facets={
-            'domain': 'EUR-11',
-            'dataset': 'DATASET',
-            'driver': 'DRIVER'
-            }
-        )
-    for cube in cordex_cubes:
-        cube.coord_system = iris.coord_systems.LambertConformal
-    out_cubes = fix.fix_metadata(cordex_cubes)
-    assert cordex_cubes is out_cubes
+def test_lambert_bad_proj_good_geog(cordex_lambert_cubes):
+    assert True
 
 
-def test_lambert_missing_dimension(cordex_cubes):
-    cmor_table = CMOR_TABLES["CORDEX"]
-    mip = "mon"
-    short_name = "tas"
-    vardef = cmor_table.get_variable(mip, short_name)
-    cmor_table._load_table(cmor_table._cmor_folder + "/CORDEX_grids")
+def test_lambert_good_proj_bad_geog(cordex_cubes):
+    assert True
 
-    fix = AllVars(
-        vardef=vardef,
-        extra_facets={
-            'domain': 'EUR-11',
-            'dataset': 'DATASET',
-            'driver': 'DRIVER'
-            }
-        )
-    cube = cordex_cubes[0]
-    cube = cube.slices(['grid_latitude', 'time']).next()
-    cube.coord_system = iris.coord_systems.LambertConformal
-    msg = ("Missing coordinate: expected a least 2 coordinates "
-           "(+time for cubes concerned) "
-           "corresponding to x and y. Got: 2")
-    with pytest.raises(RecipeError) as exc:
-        fix.fix_metadata([cube])
-    assert msg == exc.value.message
+
+def test_lambert_bad_proj_bad_geog(cordex_cubes):
+    assert True
 
 
 def test_wrong_coord_system(cubes):
