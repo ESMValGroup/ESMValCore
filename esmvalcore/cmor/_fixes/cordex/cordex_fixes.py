@@ -290,7 +290,6 @@ class AllVars(Fix):
 
     def _fix_geographical_coord_using_projection(self, cube):
         """Use projection coords to retrieve geographical coords."""
-        lambert_system = cube.coord_system().as_cartopy_crs()
         proj_x = cube.coord("projection_x_coordinate")
         proj_y = cube.coord("projection_y_coordinate")
 
@@ -301,26 +300,28 @@ class AllVars(Fix):
             proj_y.guess_bounds()
 
         # AuxCoords are built in 2D from the coords points.
-        grid_x, grid_y = da.meshgrid(proj_x.points, proj_y.points)
-        gx_bounds, gy_bounds = da.meshgrid(proj_x.bounds, proj_y.bounds)
+        points_grid = da.meshgrid(proj_x.points, proj_y.points)
+        bounds_grid = da.meshgrid(proj_x.bounds, proj_y.bounds)
 
         # Dim coords are in lambert system and lonlat are in geographical.
         lonlat = self._transform_points(
-            crs_from=lambert_system, crs_to=GEOG_SYSTEM,
-            x_data=grid_x, y_data=grid_y, lazy=True)
+            crs_from=cube.coord_system().as_cartopy_crs(), crs_to=GEOG_SYSTEM,
+            x_data=points_grid[0], y_data=points_grid[1], lazy=True)
         lonlat_bounds = self._transform_points(
-            crs_from=lambert_system, crs_to=GEOG_SYSTEM,
-            x_data=gx_bounds, y_data=gy_bounds, lazy=True)
+            crs_from=cube.coord_system().as_cartopy_crs(), crs_to=GEOG_SYSTEM,
+            x_data=bounds_grid[0], y_data=bounds_grid[1], lazy=True)
 
         # For each coord, make new and replace.
-        for var_name, index in zip(["longitude", "latitude"], [0, 1]):
-            bounds = lonlat_bounds[:, :, index]
+        for i, var_name in enumerate(["longitude", "latitude"]):
+            bounds = lonlat_bounds[:, :, i]
             bounds = [bounds[::2, ::2], bounds[::2, 1::2],
                       bounds[1::2, 1::2], bounds[1::2, ::2]]
             bounds = da.moveaxis(da.array(bounds), 0, -1)
+
             coord = self._make_geographical_coord(
-                lonlat[:, :, index], bounds,
+                lonlat[:, :, i], bounds,
                 CMOR_TABLES["CORDEX"].coords[var_name])
+            
             old_coord = cube.coord(var_name)
             dim = old_coord.cube_dims(cube)
             cube.remove_coord(old_coord)
