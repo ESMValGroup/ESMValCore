@@ -756,6 +756,8 @@ Perform the steps listed below with two persons, to reduce the risk of error.
    `readthedocs <https://readthedocs.org/dashboard/esmvalcore/users/>`__.
 
 The release of ESMValCore is tied to the release of ESMValTool. 
+The detailed steps can be found in the ESMValTool documentation
+:ref:`esmvaltool:release_steps`.
 To start the procedure, ESMValCore gets released as a 
 release candidate to test the recipes in ESMValTool. If bugs are found
 during the testing phase of the release candidate, make as many release 
