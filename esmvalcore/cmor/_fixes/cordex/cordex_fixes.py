@@ -321,7 +321,7 @@ class AllVars(Fix):
             coord = self._make_geographical_coord(
                 lonlat[:, :, i], bounds,
                 CMOR_TABLES["CORDEX"].coords[var_name])
-            
+
             old_coord = cube.coord(var_name)
             dim = old_coord.cube_dims(cube)
             cube.remove_coord(old_coord)
