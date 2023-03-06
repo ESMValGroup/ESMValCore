@@ -246,7 +246,6 @@ class AllVars(Fix):
         return np.mean(
             [dist(x, y) for x, y in zip(cube_corners, domain_corners)]) < 1e6
 
-
     def _check_lambert_conformal_geog_coords(
             self, cube, domain_bounds):
         """Check lambert conformal geographical coordinates."""
@@ -292,21 +291,18 @@ class AllVars(Fix):
     def _fix_geographical_coord_using_projection(self, cube):
         """Use projection coords to retrieve geographical coords."""
         lambert_system = cube.coord_system().as_cartopy_crs()
+        proj_x = cube.coord("projection_x_coordinate")
+        proj_y = cube.coord("projection_y_coordinate")
 
         # Make sure there are bounds to the projection coordinates.
-        if not cube.coord("projection_x_coordinate").has_bounds():
-            cube.coord("projection_x_coordinate").guess_bounds()
-        if not cube.coord("projection_y_coordinate").has_bounds():
-            cube.coord("projection_y_coordinate").guess_bounds()
+        if not proj_x.has_bounds():
+            proj_x.guess_bounds()
+        if not proj_y.has_bounds():
+            proj_y.guess_bounds()
 
         # AuxCoords are built in 2D from the coords points.
-        grid_x, grid_y = da.meshgrid(
-            cube.coord("projection_x_coordinate").points,
-            cube.coord("projection_y_coordinate").points)
-
-        gx_bounds, gy_bounds = da.meshgrid(
-            cube.coord("projection_x_coordinate").bounds,
-            cube.coord("projection_y_coordinate").bounds)
+        grid_x, grid_y = da.meshgrid(proj_x.points, proj_y.points)
+        gx_bounds, gy_bounds = da.meshgrid(proj_x.bounds, proj_y.bounds)
 
         # Dim coords are in lambert system and lonlat are in geographical.
         lonlat = self._transform_points(
