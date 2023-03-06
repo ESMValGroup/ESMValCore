@@ -11,9 +11,12 @@ from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
     CLMcomCCLM4817,
     MOHCHadREM3GA705,
     TimeLongName,
-    # _get_domain_boundaries
+    _get_domain_boundaries
 )
 from esmvalcore.exceptions import RecipeError
+
+
+SPAN = (5650 * 1000)
 
 
 @pytest.fixture
@@ -126,7 +129,7 @@ def cordex_lambert_cubes():
                                 var_name='time',
                                 standard_name='time')
 
-    ax_pts = np.linspace(0, 5650 * 1000, 453)
+    ax_pts = np.linspace(-SPAN//2, SPAN//2, 453)
     proj_x = iris.coords.DimCoord(ax_pts,
                                   var_name='x',
                                   standard_name='projection_x_coordinate',
@@ -257,15 +260,84 @@ def test_rotated_grid_fix_error(cordex_cubes):
 
 
 def test_lambert_bad_proj_good_geog(cordex_lambert_cubes):
-    assert True
+    fix = AllVars(
+        vardef=None,
+        extra_facets={
+                'domain': 'EUR-11',
+                'dataset': 'DATASET',
+                'driver': 'DRIVER'
+        })
+
+    # Mess up proj coords.
+    cube = cordex_lambert_cubes[0]
+    proj_x = cube.coord(var_name="x")
+    proj_y = cube.coord(var_name="y")
+    proj_x = proj_x.copy(proj_x.points + SPAN//2)
+    proj_y = proj_x.copy(proj_x.points + SPAN//2)
+    cube.replace_coord(proj_x)
+    cube.replace_coord(proj_y)
+
+    out_cubes = fix.fix_metadata(cordex_lambert_cubes)
+    for cube in out_cubes:
+        assert fix._check_lambert_conformal_proj_coords(
+            cube, _get_domain_boundaries("EUR"))
 
 
-def test_lambert_good_proj_bad_geog(cordex_cubes):
-    assert True
+def test_lambert_good_proj_bad_geog(cordex_lambert_cubes):
+    fix = AllVars(
+        vardef=None,
+        extra_facets={
+                'domain': 'EUR-11',
+                'dataset': 'DATASET',
+                'driver': 'DRIVER'
+        })
+
+    # Mess up geog coords.
+    cube = cordex_lambert_cubes[0]
+    lon = cube.coord(var_name="lon")
+    lat = cube.coord(var_name="lat")
+    lon = lon.copy(lon.points * 2)
+    lat = lat.copy(lat.points * 2)
+    cube.replace_coord(lon)
+    cube.replace_coord(lat)
+
+    out_cubes = fix.fix_metadata(cordex_lambert_cubes)
+    for cube in out_cubes:
+        assert fix._check_lambert_conformal_geog_coords(
+            cube, _get_domain_boundaries("EUR"))
 
 
-def test_lambert_bad_proj_bad_geog(cordex_cubes):
-    assert True
+def test_lambert_bad_proj_bad_geog(cordex_lambert_cubes):
+    fix = AllVars(
+        vardef=None,
+        extra_facets={
+                'domain': 'EUR-11',
+                'dataset': 'DATASET',
+                'driver': 'DRIVER'
+        })
+    # Mess up both.
+    cube = cordex_lambert_cubes[0]
+
+    proj_x = cube.coord(var_name="x")
+    proj_y = cube.coord(var_name="y")
+    proj_x = proj_x.copy(proj_x.points + SPAN//2)
+    proj_y = proj_x.copy(proj_x.points + SPAN//2)
+    cube.replace_coord(proj_x)
+    cube.replace_coord(proj_y)
+
+    lon = cube.coord(var_name="lon")
+    lat = cube.coord(var_name="lat")
+    lon = lon.copy(lon.points * 2)
+    lat = lat.copy(lat.points * 2)
+    cube.replace_coord(lon)
+    cube.replace_coord(lat)
+
+    msg = ("Both projection and geographical "
+           "coordinates of the cube seems to present large "
+           "differences with the standard domain.")
+    with pytest.raises(RecipeError) as exc:
+        fix.fix_metadata(cordex_lambert_cubes)
+    assert msg == exc.value.message
 
 
 def test_wrong_coord_system(cubes):
