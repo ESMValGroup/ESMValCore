@@ -233,9 +233,8 @@ class AllVars(Fix):
     def _check_lambert_conformal_proj_coords(self, cube, domain_bounds):
         """Check lambert conformal projection coordinates."""
         # Transform std domain points in lambert to compare.
-        lambert_system = cube.coord_system()
         lambert_bounds = self._transform_points(
-            GEOG_SYSTEM, lambert_system.as_cartopy_crs(),
+            GEOG_SYSTEM, cube.coord_system().as_cartopy_crs(),
             np.array(domain_bounds['lons']),
             np.array(domain_bounds['lats']))
 
@@ -244,27 +243,31 @@ class AllVars(Fix):
         proj_x.convert_units('m')
         proj_y.convert_units('m')
 
-        xmin, xmax = proj_x.points.min(), proj_x.points.max()
-        ymin, ymax = proj_y.points.min(), proj_y.points.max()
-
         # Compare the 4 corners of cube domain vs. the standard domain ones.
         cube_corners = np.take(lambert_bounds, indices=[0, 2, 6, 8], axis=0)
         domain_corners = np.array([
-            [xmin, ymax], [xmax, ymax],
-            [xmin, ymin], [xmax, ymin]])
+            [proj_x.points.min(), proj_y.points.max()],
+            [proj_x.points.max(), proj_y.points.max()],
+            [proj_x.points.min(), proj_y.points.min()],
+            [proj_x.points.max(), proj_y.points.min()]])
         # Check: euclidean distance between cube domain and std domain < 1e6.
         check = np.mean(
             np.linalg.norm(cube_corners - domain_corners, axis=1)) < 1e6
 
         # Check passes -> proj coords are good -> fix and plug metadata.
         if check:
-            var_infos = CMOR_TABLES["CORDEX"].coords
-            new_proj_x = self._make_projection_coord(
-                proj_x.points, var_infos["x"], lambert_system)
-            new_proj_y = self._make_projection_coord(
-                proj_y.points, var_infos["y"], lambert_system)
-            self._replace_coord(cube, proj_x, new_proj_x)
-            self._replace_coord(cube, proj_y, new_proj_y)
+            self._replace_coord(
+                cube, proj_x, self._make_projection_coord(
+                    proj_x.points,
+                    CMOR_TABLES["CORDEX"].coords["x"],
+                    cube.coord_system()
+                ))
+            self._replace_coord(
+                cube, proj_y, self._make_projection_coord(
+                    proj_y.points,
+                    CMOR_TABLES["CORDEX"].coords["y"],
+                    cube.coord_system()
+                ))
         return check
 
     def _check_lambert_conformal_geog_coords(self, cube, domain_bounds):
@@ -283,12 +286,14 @@ class AllVars(Fix):
         check = (np.sum(cube2d.shape) / np.sum(cube_x_std.shape)) < 1.15
         # Check passes -> geog coords are good -> fix and plug metadata.
         if check:
-            var_infos = CMOR_TABLES["CORDEX"].coords
             for var_name in ["longitude", "latitude"]:
                 old_coord = cube.coord(var_name)
-                new_coord = self._make_geographical_coord(
-                    old_coord.points, var_infos[var_name], old_coord.bounds)
-                self._replace_coord(cube, old_coord, new_coord)
+                self._replace_coord(
+                    cube, old_coord, self._make_geographical_coord(
+                        old_coord.points,
+                        CMOR_TABLES["CORDEX"].coords[var_name],
+                        old_coord.bounds
+                    ))
         return check
 
     def _fix_lambert_projection_coord_using_geographical(self, cube):
@@ -309,12 +314,13 @@ class AllVars(Fix):
         y_points = np.average(lonlat_lambert[:, :, 1], axis=1)
 
         # For each coord, make new and replace.
-        var_infos = CMOR_TABLES["CORDEX"].coords
-        for var_name, points in zip(['x', 'y'], [x_points, y_points]):
-            new_coord = self._make_projection_coord(points,
-                                                    var_infos[var_name],
-                                                    cube.coord_system())
-            self._replace_coord(cube, cube.coord(var_name=var_name), new_coord)
+        for vname, points in zip(['x', 'y'], [x_points, y_points]):
+            self._replace_coord(
+                cube, cube.coord(var_name=vname), self._make_projection_coord(
+                    points,
+                    CMOR_TABLES["CORDEX"].coords[vname],
+                    cube.coord_system()
+                ))
 
     def _fix_geographical_coord_using_projection(self, cube):
         """Use projection coords to retrieve geographical coords."""
@@ -340,9 +346,12 @@ class AllVars(Fix):
                       bounds[1::2, 1::2], bounds[1::2, ::2]]
             bounds = da.moveaxis(da.array(bounds), 0, -1)
 
-            new_coord = self._make_geographical_coord(
-                lonlat[..., i], CMOR_TABLES["CORDEX"].coords[var_name], bounds)
-            self._replace_coord(cube, cube.coord(var_name), new_coord)
+            self._replace_coord(
+                cube, cube.coord(var_name), self._make_geographical_coord(
+                    lonlat[:, :, i],
+                    CMOR_TABLES["CORDEX"].coords[var_name],
+                    bounds
+                ))
 
     def fix_metadata(self, cubes):
         """Fix CORDEX rotated grids.
