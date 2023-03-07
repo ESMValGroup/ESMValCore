@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from cf_units import Unit
 from iris.fileformats.pp import EARTH_RADIUS
-# from esmvalcore.cmor.table import CMOR_TABLES
+from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
     AllVars,
     CLMcomCCLM4817,
@@ -260,8 +260,12 @@ def test_rotated_grid_fix_error(cordex_cubes):
 
 
 def test_lambert_bad_proj_good_geog(cordex_lambert_cubes):
+    cmor_table = CMOR_TABLES["CORDEX"]
+    mip = "mon"
+    short_name = "tas"
+    vardef = cmor_table.get_variable(mip, short_name)
     fix = AllVars(
-        vardef=None,
+        vardef=vardef,
         extra_facets={
                 'domain': 'EUR-11',
                 'dataset': 'DATASET',
@@ -284,8 +288,12 @@ def test_lambert_bad_proj_good_geog(cordex_lambert_cubes):
 
 
 def test_lambert_good_proj_bad_geog(cordex_lambert_cubes):
+    cmor_table = CMOR_TABLES["CORDEX"]
+    mip = "mon"
+    short_name = "tas"
+    vardef = cmor_table.get_variable(mip, short_name)
     fix = AllVars(
-        vardef=None,
+        vardef=vardef,
         extra_facets={
                 'domain': 'EUR-11',
                 'dataset': 'DATASET',
@@ -308,8 +316,12 @@ def test_lambert_good_proj_bad_geog(cordex_lambert_cubes):
 
 
 def test_lambert_bad_proj_bad_geog(cordex_lambert_cubes):
+    cmor_table = CMOR_TABLES["CORDEX"]
+    mip = "mon"
+    short_name = "tas"
+    vardef = cmor_table.get_variable(mip, short_name)
     fix = AllVars(
-        vardef=None,
+        vardef=vardef,
         extra_facets={
                 'domain': 'EUR-11',
                 'dataset': 'DATASET',
