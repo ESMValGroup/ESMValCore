@@ -183,28 +183,28 @@ class AllVars(Fix):
             cube.add_aux_coord(new_coord, aux_coord_dims)
 
     @staticmethod
-    def _make_projection_coord(points, vardef, crs):
+    def _make_projection_coord(points, coord_info, crs):
         """Create a projection coordinate from the specifications."""
         coord = iris.coords.DimCoord(
             points,
-            var_name=vardef.name,
-            standard_name=vardef.standard_name,
-            long_name=vardef.long_name,
-            units=Unit(vardef.units),
+            var_name=coord_info.name,
+            standard_name=coord_info.standard_name,
+            long_name=coord_info.long_name,
+            units=Unit(coord_info.units),
             coord_system=crs
         )
         coord.guess_bounds()
         return coord
 
     @staticmethod
-    def _make_geographical_coord(points, bounds, vardef):
+    def _make_geographical_coord(points, coord_info, bounds):
         """Create a geographical coordinate from the specifications."""
         return iris.coords.AuxCoord(
             points,
-            var_name=vardef.name,
-            standard_name=vardef.standard_name,
-            long_name=vardef.long_name,
-            units=Unit(vardef.units),
+            var_name=coord_info.name,
+            standard_name=coord_info.standard_name,
+            long_name=coord_info.long_name,
+            units=Unit(coord_info.units),
             bounds=bounds,
         )
 
@@ -235,19 +235,15 @@ class AllVars(Fix):
         xmin, xmax = x_coord.points.min(), x_coord.points.max()
         ymin, ymax = y_coord.points.min(), y_coord.points.max()
 
-        # Lambdas not allowed.
-        def dist(point_a, point_b):
-            return np.linalg.norm(np.array(point_a) - np.array(point_b))
-
         # Compare the 4 corners of cube domain vs. the standard domain ones.
         cube_corners = np.take(lambert_bounds, indices=[0, 2, 6, 8], axis=0)
         domain_corners = np.array([
-            [xmin, ymax], [xmax, ymax], [xmin, ymin], [xmax, ymin]])
-        return np.mean(
-            [dist(x, y) for x, y in zip(cube_corners, domain_corners)]) < 1e6
+            [xmin, ymax], [xmax, ymax],
+            [xmin, ymin], [xmax, ymin]])
+        return np.mean(np.linalg.norm(
+            cube_corners - domain_corners, axis=1)) < 1e6
 
-    def _check_lambert_conformal_geog_coords(
-            self, cube, domain_bounds):
+    def _check_lambert_conformal_geog_coords(self, cube, domain_bounds):
         """Check lambert conformal geographical coordinates."""
         lons = np.array(domain_bounds['lons'])
         lats = np.array(domain_bounds['lats'])
