@@ -524,7 +524,7 @@ def test_combine_inconsistent_var_names_fail():
         mm._combine(cubes)
 
 
-def test_combine_scalar_coords_fail():
+def test_combine_differing_scalar_coords_fail():
     """Test _combine with differing scalar coordinates."""
     cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(2))
     scalar_coord_0 = AuxCoord(0.0, standard_name='height', units='m')

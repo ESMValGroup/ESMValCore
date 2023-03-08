@@ -463,6 +463,10 @@ def test_multimodel_ignore_scalar_coords(timeseries_cubes_month, span):
     )['mean']
     assert result.shape == (3, 2)
 
+    # Make sure that the input cubes still contain the scalar coords
+    for (idx, cube) in enumerate(cubes):
+        assert cube.coord(var_name=f'name_{idx}', dimensions=())
+
 
 @pytest.mark.use_sample_data
 @pytest.mark.parametrize('span', SPAN_PARAMS)

@@ -365,8 +365,9 @@ def _equalise_coordinate_metadata(cubes):
             coord.long_name = None
 
         # Remove special scalar coordinates which are not expected to be equal
-        # in the input cubes. Note: if `ignore_scalar_coords=True` is used, the
-        # cubes not contain scalar coordinates at this point anymore.
+        # in the input cubes. Note: if `ignore_scalar_coords=True` is used for
+        # `multi_model_statistics`, the cubes do not contain scalar coordinates
+        # at this point anymore.
         scalar_coords_to_always_remove = ['p0', 'ptop']
         for scalar_coord in cube.coords(dimensions=()):
             if scalar_coord.var_name in scalar_coords_to_always_remove:
