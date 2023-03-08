@@ -75,6 +75,7 @@ Documentation
 -  Update preprocessor.rst due to renaming of NCEP dataset to NCEP-NCAR-R1 (`#1908 <https://github.com/ESMValGroup/ESMValCore/pull/1908>`__) `Birgit Hassler <https://github.com/hb326>`__
 -  Replace timerange nested lists in docs with overview table (`#1940 <https://github.com/ESMValGroup/ESMValCore/pull/1940>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
 -  Updated section "backward compatibility" in contributing.rst (`#1918 <https://github.com/ESMValGroup/ESMValCore/pull/1918>`__) `Axel Lauer <https://github.com/axel-lauer>`__
+-  Synchronize documentation table of contents with ESMValTool (`#1958 <https://github.com/ESMValGroup/ESMValCore/pull/1958>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
 Improvements
 ~~~~~~~~~~~~
