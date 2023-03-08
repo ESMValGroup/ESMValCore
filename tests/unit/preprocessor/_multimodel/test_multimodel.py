@@ -524,21 +524,8 @@ def test_combine_inconsistent_var_names_fail():
         mm._combine(cubes)
 
 
-def test_combine_with_scalar_coords_to_remove():
-    """Test _combine with scalar coordinates that should be removed."""
-    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(3))
-    scalar_coord_0 = AuxCoord(0.0, standard_name='height', units='m')
-    scalar_coord_1 = AuxCoord(1.0, long_name='Test scalar coordinate')
-    cubes[0].add_aux_coord(scalar_coord_0, ())
-    cubes[1].add_aux_coord(scalar_coord_1, ())
-
-    merged_cube = mm._combine(cubes, ignore_scalar_coords=True)
-    assert merged_cube.shape == (3, 3)
-    assert not merged_cube.coords(dimensions=())
-
-
-def test_combine_with_scalar_coords_to_remove_fail():
-    """Test _combine with scalar coordinates that should not be removed."""
+def test_combine_scalar_coords_fail():
+    """Test _combine with differing scalar coordinates."""
     cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(2))
     scalar_coord_0 = AuxCoord(0.0, standard_name='height', units='m')
     cubes[0].add_aux_coord(scalar_coord_0, ())
