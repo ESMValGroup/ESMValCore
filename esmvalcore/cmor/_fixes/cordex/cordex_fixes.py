@@ -1,16 +1,16 @@
 """Fixes that are shared between datasets and drivers."""
-import logging
 import json
+import logging
 from functools import lru_cache
 from pathlib import Path
 
-from cf_units import Unit
 import cordex as cx
-import iris
-from iris.coord_systems import LambertConformal, RotatedGeogCS, GeogCS
-from iris.fileformats.pp import EARTH_RADIUS
-import numpy as np
 import dask.array as da
+import iris
+import numpy as np
+from cf_units import Unit
+from iris.coord_systems import GeogCS, LambertConformal, RotatedGeogCS
+from iris.fileformats.pp import EARTH_RADIUS
 from pyproj import Transformer
 
 from esmvalcore.cmor.fix import Fix
@@ -195,14 +195,12 @@ class AllVars(Fix):
     @staticmethod
     def _make_projection_coord(points, coord_info, crs):
         """Create a projection coordinate from the specifications."""
-        coord = iris.coords.DimCoord(
-            points,
-            var_name=coord_info.name,
-            standard_name=coord_info.standard_name,
-            long_name=coord_info.long_name,
-            units=Unit(coord_info.units),
-            coord_system=crs
-        )
+        coord = iris.coords.DimCoord(points,
+                                     var_name=coord_info.name,
+                                     standard_name=coord_info.standard_name,
+                                     long_name=coord_info.long_name,
+                                     units=Unit(coord_info.units),
+                                     coord_system=crs)
         coord.guess_bounds()
         return coord
 
@@ -215,18 +213,19 @@ class AllVars(Fix):
             standard_name=coord_info.standard_name,
             long_name=coord_info.long_name,
             units=Unit(coord_info.units),
-            bounds=bounds if not lazy or bounds is None else da.array(bounds)
-        )
+            bounds=bounds if not lazy or bounds is None else da.array(bounds))
 
     @staticmethod
     def _transform_points(x_data, y_data, crs_from, crs_to):
         """Transform points between one pyproj.crs.CRS to another."""
-        res = np.empty(x_data.shape + (2,))
-        res[..., 0], res[..., 1] = Transformer.from_crs(
-            crs_from=crs_from,
-            crs_to=crs_to,
-            always_xy=True
-        ).transform(x_data, y_data, errcheck=True)
+        res = np.empty(x_data.shape + (2, ))
+        res[..., 0], res[...,
+                         1] = Transformer.from_crs(crs_from=crs_from,
+                                                   crs_to=crs_to,
+                                                   always_xy=True).transform(
+                                                       x_data,
+                                                       y_data,
+                                                       errcheck=True)
         return res
 
     def _check_lambert_conformal_proj_coords(self, cube, domain_bounds):
@@ -236,8 +235,7 @@ class AllVars(Fix):
             np.array(domain_bounds['lons']),
             np.array(domain_bounds['lats']),
             crs_from=GEOG_SYSTEM,
-            crs_to=cube.coord_system().as_cartopy_crs()
-        )
+            crs_to=cube.coord_system().as_cartopy_crs())
 
         proj_x = cube.coord(var_name='x')
         proj_y = cube.coord(var_name='y')
@@ -246,28 +244,29 @@ class AllVars(Fix):
 
         # Compare the 4 corners of cube domain vs. the standard domain ones.
         cube_corners = np.take(lambert_bounds, indices=[0, 2, 6, 8], axis=0)
-        domain_corners = np.array([
-            [proj_x.points.min(), proj_y.points.max()],
-            [proj_x.points.max(), proj_y.points.max()],
-            [proj_x.points.min(), proj_y.points.min()],
-            [proj_x.points.max(), proj_y.points.min()]])
+        domain_corners = np.array([[proj_x.points.min(),
+                                    proj_y.points.max()],
+                                   [proj_x.points.max(),
+                                    proj_y.points.max()],
+                                   [proj_x.points.min(),
+                                    proj_y.points.min()],
+                                   [proj_x.points.max(),
+                                    proj_y.points.min()]])
         # Check: euclidean distance between cube domain and std domain < 1e6.
-        check = np.mean(
-            np.linalg.norm(cube_corners - domain_corners, axis=1)) < 1e6
+        check = np.mean(np.linalg.norm(cube_corners - domain_corners,
+                                       axis=1)) < 1e6
 
         # Check passes -> proj coords domain is good -> fix and plug metadata.
         if check:
             # We remake the points to account for possible non monotonicity.
             for vname, coord in zip(("x", "y"), (proj_x, proj_y)):
                 self._replace_coord(
-                    cube, coord, self._make_projection_coord(
-                        np.linspace(
-                            coord.points.min(),
-                            coord.points.max(),
-                            coord.shape[0]),
+                    cube, coord,
+                    self._make_projection_coord(
+                        np.linspace(coord.points.min(), coord.points.max(),
+                                    coord.shape[0]),
                         CMOR_TABLES["CORDEX"].coords[vname],
-                        cube.coord_system()
-                    ))
+                        cube.coord_system()))
         return check
 
     def _check_lambert_conformal_geog_coords(self, cube, domain_bounds):
@@ -289,11 +288,10 @@ class AllVars(Fix):
             for vname in ("longitude", "latitude"):
                 old_coord = cube.coord(vname)
                 self._replace_coord(
-                    cube, old_coord, self._make_geographical_coord(
-                        old_coord.points,
-                        CMOR_TABLES["CORDEX"].coords[vname],
-                        old_coord.bounds
-                    ))
+                    cube, old_coord,
+                    self._make_geographical_coord(
+                        old_coord.points, CMOR_TABLES["CORDEX"].coords[vname],
+                        old_coord.bounds))
         return check
 
     def _fix_lambert_projection_coord_using_geographical(self, cube):
@@ -306,8 +304,7 @@ class AllVars(Fix):
         lonlat_lambert = self._transform_points(x_data=lon_pts,
                                                 y_data=lat_pts,
                                                 crs_from=GEOG_SYSTEM,
-                                                crs_to=lambert_system
-                                                )
+                                                crs_to=lambert_system)
 
         # Derived from the way aux_coords are built.
         x_points = np.average(lonlat_lambert[:, :, 0], axis=0)
@@ -316,30 +313,28 @@ class AllVars(Fix):
         # For each coord, make new and replace.
         for vname, points in zip(('x', 'y'), (x_points, y_points)):
             self._replace_coord(
-                cube, cube.coord(var_name=vname), self._make_projection_coord(
-                    points,
-                    CMOR_TABLES["CORDEX"].coords[vname],
-                    cube.coord_system()
-                ))
+                cube, cube.coord(var_name=vname),
+                self._make_projection_coord(
+                    points, CMOR_TABLES["CORDEX"].coords[vname],
+                    cube.coord_system()))
 
     @staticmethod
     def _make_geog_bounds_from_proj_bounds(bounds_x, bounds_y, crs_from):
         """Use projection coords bounds to make geographical coords bounds."""
         gx, gy = np.meshgrid(bounds_x, bounds_y)
-        grid_geog = __class__._transform_points(
-            x_data=gx,
-            y_data=gy,
-            crs_from=crs_from,
-            crs_to=GEOG_SYSTEM
-        )
+        grid_geog = __class__._transform_points(x_data=gx,
+                                                y_data=gy,
+                                                crs_from=crs_from,
+                                                crs_to=GEOG_SYSTEM)
 
         def make_bounds(bounds):
             bounds = np.array([
-                bounds[::2, ::2], bounds[::2, 1::2],
-                bounds[1::2, 1::2], bounds[1::2, ::2]
+                bounds[::2, ::2], bounds[::2, 1::2], bounds[1::2, 1::2],
+                bounds[1::2, ::2]
             ])
             bounds = np.moveaxis(bounds, 0, -1)
             return bounds
+
         return make_bounds(grid_geog[:, :, 0]), make_bounds(grid_geog[:, :, 1])
 
     def _fix_geographical_coord_using_projection(self, cube):
@@ -349,11 +344,10 @@ class AllVars(Fix):
         proj_y = cube.coord("projection_y_coordinate")
 
         # Dim coords are in lambert system and lonlat are in geographical.
-        lonlat = self._transform_points(
-            *np.meshgrid(proj_x.points, proj_y.points),
-            crs_from=lambert_system,
-            crs_to=GEOG_SYSTEM
-        )
+        lonlat = self._transform_points(*np.meshgrid(proj_x.points,
+                                                     proj_y.points),
+                                        crs_from=lambert_system,
+                                        crs_to=GEOG_SYSTEM)
 
         lonlat_bounds = self._make_geog_bounds_from_proj_bounds(
             proj_x.bounds, proj_y.bounds, lambert_system)
@@ -362,12 +356,12 @@ class AllVars(Fix):
                                          (lonlat[:, :, 0], lonlat[:, :, 1]),
                                          lonlat_bounds):
             self._replace_coord(
-                cube, cube.coord(vname), self._make_geographical_coord(
+                cube, cube.coord(vname),
+                self._make_geographical_coord(
                     points,
                     CMOR_TABLES["CORDEX"].coords[vname],
                     bounds,
-                    lazy=True
-                ))
+                    lazy=True))
 
     def _check_lonlat_bounds(self, cube):
         """Make sure longitude and latitude have bounds."""
