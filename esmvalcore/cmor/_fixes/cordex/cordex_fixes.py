@@ -325,25 +325,24 @@ class AllVars(Fix):
                     cube.coord_system()
                     ))
 
-    @staticmethod
-    def _make_geog_bounds_from_proj_bounds(bounds_x, bounds_y, crs_from):
+    @classmethod
+    def _make_geog_bounds_from_proj_bounds(cls, bounds_x, bounds_y, crs_from):
         """Use projection coords bounds to make geographical coords bounds."""
-        gx, gy = np.meshgrid(bounds_x, bounds_y)
-        grid_geog = __class__._transform_points(x_data=gx,
-                                                y_data=gy,
-                                                crs_from=crs_from,
-                                                crs_to=GEOG_SYSTEM
-                                                )
+        grid_geog = cls._transform_points(
+            *np.meshgrid(bounds_x,
+                         bounds_y),
+            crs_from=crs_from,
+            crs_to=GEOG_SYSTEM
+            )
 
-        def make_bounds(bounds):
+        def format_bnds(bounds):
             bounds = np.array([
-                bounds[::2, ::2], bounds[::2, 1::2], bounds[1::2, 1::2],
-                bounds[1::2, ::2]
+                bounds[0::2, 0::2], bounds[0::2, 1::2],
+                bounds[1::2, 1::2], bounds[1::2, 0::2]
             ])
-            bounds = np.moveaxis(bounds, 0, -1)
-            return bounds
+            return np.moveaxis(bounds, 0, -1)
 
-        return make_bounds(grid_geog[:, :, 0]), make_bounds(grid_geog[:, :, 1])
+        return format_bnds(grid_geog[:, :, 0]), format_bnds(grid_geog[:, :, 1])
 
     def _fix_geographical_coord_using_projection(self, cube):
         """Use projection coords to retrieve geographical coords."""
