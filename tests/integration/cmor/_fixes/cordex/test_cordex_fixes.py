@@ -144,7 +144,7 @@ def cordex_lambert_cubes():
     gx, gy = np.meshgrid(ax_pts, ax_pts)
     lonlat = fix._transform_points(
         crs_from=coord_system.as_cartopy_crs(), crs_to=geog_system,
-        x_data=gx, y_data=gy, lazy=True)
+        x_data=gx, y_data=gy)
 
     lon = iris.coords.AuxCoord(lonlat[..., 0],
                                var_name='lon',
@@ -345,7 +345,7 @@ def test_lambert_bad_proj_bad_geog(cordex_lambert_cubes):
     cube.replace_coord(lat)
 
     msg = ("Both projection and geographical "
-           "coordinates of the cube seems to present large "
+           "coordinates of the cube seem to present large "
            "differences with the standard domain.")
     with pytest.raises(RecipeError) as exc:
         fix.fix_metadata(cordex_lambert_cubes)

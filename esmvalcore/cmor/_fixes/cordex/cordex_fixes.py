@@ -207,22 +207,21 @@ class AllVars(Fix):
         return coord
 
     @staticmethod
-    def _make_geographical_coord(points, coord_info, bounds):
+    def _make_geographical_coord(points, coord_info, bounds, lazy=True):
         """Create a geographical coordinate from the specifications."""
         return iris.coords.AuxCoord(
-            points,
+            points if not lazy else da.array(points),
             var_name=coord_info.name,
             standard_name=coord_info.standard_name,
             long_name=coord_info.long_name,
             units=Unit(coord_info.units),
-            bounds=bounds
+            bounds=bounds if not lazy or bounds is None else da.array(bounds)
         )
 
     @staticmethod
-    def _transform_points(crs_from, crs_to, x_data, y_data, lazy=False):
+    def _transform_points(x_data, y_data, crs_from, crs_to):
         """Transform points between one pyproj.crs.CRS to another."""
-        out_shape = x_data.shape + (2,)
-        res = da.empty(out_shape) if lazy else np.empty(out_shape)
+        res = np.empty(x_data.shape + (2,))
         res[..., 0], res[..., 1] = Transformer.from_crs(
             crs_from=crs_from,
             crs_to=crs_to,
@@ -234,9 +233,11 @@ class AllVars(Fix):
         """Check lambert conformal projection coordinates."""
         # Transform std domain points in lambert to compare.
         lambert_bounds = self._transform_points(
-            GEOG_SYSTEM, cube.coord_system().as_cartopy_crs(),
             np.array(domain_bounds['lons']),
-            np.array(domain_bounds['lats']))
+            np.array(domain_bounds['lats']),
+            crs_from=GEOG_SYSTEM,
+            crs_to=cube.coord_system().as_cartopy_crs()
+        )
 
         proj_x = cube.coord(var_name='x')
         proj_y = cube.coord(var_name='y')
@@ -254,20 +255,19 @@ class AllVars(Fix):
         check = np.mean(
             np.linalg.norm(cube_corners - domain_corners, axis=1)) < 1e6
 
-        # Check passes -> proj coords are good -> fix and plug metadata.
+        # Check passes -> proj coords domain is good -> fix and plug metadata.
         if check:
-            self._replace_coord(
-                cube, proj_x, self._make_projection_coord(
-                    proj_x.points,
-                    CMOR_TABLES["CORDEX"].coords["x"],
-                    cube.coord_system()
-                ))
-            self._replace_coord(
-                cube, proj_y, self._make_projection_coord(
-                    proj_y.points,
-                    CMOR_TABLES["CORDEX"].coords["y"],
-                    cube.coord_system()
-                ))
+            # We remake the points to account for possible non monotonicity.
+            for vname, coord in zip(("x", "y"), (proj_x, proj_y)):
+                self._replace_coord(
+                    cube, coord, self._make_projection_coord(
+                        np.linspace(
+                            coord.points.min(),
+                            coord.points.max(),
+                            coord.shape[0]),
+                        CMOR_TABLES["CORDEX"].coords[vname],
+                        cube.coord_system()
+                    ))
         return check
 
     def _check_lambert_conformal_geog_coords(self, cube, domain_bounds):
@@ -284,37 +284,37 @@ class AllVars(Fix):
                                     end_latitude=dom_lats.max())
         # Check: <15% diff in size between original cube and cropped.
         check = (np.sum(cube2d.shape) / np.sum(cube_x_std.shape)) < 1.15
-        # Check passes -> geog coords are good -> fix and plug metadata.
+        # Check passes -> geog coords domain is good -> fix and plug metadata.
         if check:
-            for var_name in ["longitude", "latitude"]:
-                old_coord = cube.coord(var_name)
+            for vname in ("longitude", "latitude"):
+                old_coord = cube.coord(vname)
                 self._replace_coord(
                     cube, old_coord, self._make_geographical_coord(
                         old_coord.points,
-                        CMOR_TABLES["CORDEX"].coords[var_name],
+                        CMOR_TABLES["CORDEX"].coords[vname],
                         old_coord.bounds
                     ))
         return check
 
     def _fix_lambert_projection_coord_using_geographical(self, cube):
         """Use geographical coords to retrieve projection coords."""
-        # Retrieve infos from cube.
         lambert_system = cube.coord_system().as_cartopy_crs()
         lon_pts = cube.coord("longitude").points
         lat_pts = cube.coord("latitude").points
 
         # lonlat are in geographical and Dim coords are in lambert system.
-        lonlat_lambert = self._transform_points(crs_from=GEOG_SYSTEM,
-                                                crs_to=lambert_system,
-                                                x_data=lon_pts,
-                                                y_data=lat_pts)
+        lonlat_lambert = self._transform_points(x_data=lon_pts,
+                                                y_data=lat_pts,
+                                                crs_from=GEOG_SYSTEM,
+                                                crs_to=lambert_system
+                                                )
 
         # Derived from the way aux_coords are built.
         x_points = np.average(lonlat_lambert[:, :, 0], axis=0)
         y_points = np.average(lonlat_lambert[:, :, 1], axis=1)
 
         # For each coord, make new and replace.
-        for vname, points in zip(['x', 'y'], [x_points, y_points]):
+        for vname, points in zip(('x', 'y'), (x_points, y_points)):
             self._replace_coord(
                 cube, cube.coord(var_name=vname), self._make_projection_coord(
                     points,
@@ -322,36 +322,63 @@ class AllVars(Fix):
                     cube.coord_system()
                 ))
 
+    @staticmethod
+    def _make_geog_bounds_from_proj_bounds(bounds_x, bounds_y, crs_from):
+        """Use projection coords bounds to make geographical coords bounds."""
+        gx, gy = np.meshgrid(bounds_x, bounds_y)
+        grid_geog = __class__._transform_points(
+            x_data=gx,
+            y_data=gy,
+            crs_from=crs_from,
+            crs_to=GEOG_SYSTEM
+        )
+
+        def make_bounds(bounds):
+            bounds = np.array([
+                bounds[::2, ::2], bounds[::2, 1::2],
+                bounds[1::2, 1::2], bounds[1::2, ::2]
+            ])
+            bounds = np.moveaxis(bounds, 0, -1)
+            return bounds
+        return make_bounds(grid_geog[:, :, 0]), make_bounds(grid_geog[:, :, 1])
+
     def _fix_geographical_coord_using_projection(self, cube):
         """Use projection coords to retrieve geographical coords."""
+        lambert_system = cube.coord_system().as_cartopy_crs()
         proj_x = cube.coord("projection_x_coordinate")
         proj_y = cube.coord("projection_y_coordinate")
 
-        # AuxCoords are built in 2D from the coords points.
-        points_grid = da.meshgrid(proj_x.points, proj_y.points)
-        bounds_grid = da.meshgrid(proj_x.bounds, proj_y.bounds)
-
         # Dim coords are in lambert system and lonlat are in geographical.
         lonlat = self._transform_points(
-            crs_from=cube.coord_system().as_cartopy_crs(), crs_to=GEOG_SYSTEM,
-            x_data=points_grid[0], y_data=points_grid[1], lazy=True)
-        lonlat_bounds = self._transform_points(
-            crs_from=cube.coord_system().as_cartopy_crs(), crs_to=GEOG_SYSTEM,
-            x_data=bounds_grid[0], y_data=bounds_grid[1], lazy=True)
+            *np.meshgrid(proj_x.points, proj_y.points),
+            crs_from=lambert_system,
+            crs_to=GEOG_SYSTEM
+        )
 
-        # For each coord, make new and replace.
-        for i, var_name in enumerate(["longitude", "latitude"]):
-            bounds = lonlat_bounds[:, :, i]
-            bounds = [bounds[::2, ::2], bounds[::2, 1::2],
-                      bounds[1::2, 1::2], bounds[1::2, ::2]]
-            bounds = da.moveaxis(da.array(bounds), 0, -1)
+        lonlat_bounds = self._make_geog_bounds_from_proj_bounds(
+            proj_x.bounds, proj_y.bounds, lambert_system)
 
+        for vname, points, bounds in zip(("longitude", "latitude"),
+                                         (lonlat[:, :, 0], lonlat[:, :, 1]),
+                                         lonlat_bounds):
             self._replace_coord(
-                cube, cube.coord(var_name), self._make_geographical_coord(
-                    lonlat[:, :, i],
-                    CMOR_TABLES["CORDEX"].coords[var_name],
-                    bounds
+                cube, cube.coord(vname), self._make_geographical_coord(
+                    points,
+                    CMOR_TABLES["CORDEX"].coords[vname],
+                    bounds,
+                    lazy=True
                 ))
+
+    def _check_lonlat_bounds(self, cube):
+        """Make sure longitude and latitude have bounds."""
+        lambert_system = cube.coord_system().as_cartopy_crs()
+        lon = cube.coord("longitude")
+        lat = cube.coord("latitude")
+        if lon.bounds is None or lat.bounds is None:
+            bounds_x = cube.coord("projection_x_coordinate").bounds
+            bounds_y = cube.coord("projection_y_coordinate").bounds
+            lon.bounds, lat.bounds = self._make_geog_bounds_from_proj_bounds(
+                bounds_x, bounds_y, lambert_system)
 
     def fix_metadata(self, cubes):
         """Fix CORDEX rotated grids.
@@ -395,8 +422,12 @@ class AllVars(Fix):
                 if not proj_is_good and not geog_is_good:
                     raise RecipeError(
                         "Both projection and geographical "
-                        "coordinates of the cube seems to present large "
+                        "coordinates of the cube seem to present large "
                         "differences with the standard domain.")
+
+                # Not necessary for the fixes, but important for later.
+                self._check_lonlat_bounds(cube)
+
             else:
                 raise RecipeError(
                     f"Coordinate system {coord_system.grid_mapping_name} "
