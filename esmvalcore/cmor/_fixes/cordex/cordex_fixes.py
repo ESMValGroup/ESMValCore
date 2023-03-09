@@ -308,8 +308,7 @@ class AllVars(Fix):
         lonlat_lambert = self._transform_points(x_data=lon_pts,
                                                 y_data=lat_pts,
                                                 crs_from=GEOG_SYSTEM,
-                                                crs_to=lambert_system
-                                                )
+                                                crs_to=lambert_system)
 
         # Derived from the way aux_coords are built.
         x_points = np.average(lonlat_lambert[:, :, 0], axis=0)
@@ -322,8 +321,7 @@ class AllVars(Fix):
                 self._make_projection_coord(
                     points,
                     CMOR_TABLES["CORDEX"].coords[vname],
-                    cube.coord_system()
-                    ))
+                    cube.coord_system()))
 
     @classmethod
     def _make_geog_bounds_from_proj_bounds(cls, bounds_x, bounds_y, crs_from):
@@ -332,8 +330,7 @@ class AllVars(Fix):
             *np.meshgrid(bounds_x,
                          bounds_y),
             crs_from=crs_from,
-            crs_to=GEOG_SYSTEM
-            )
+            crs_to=GEOG_SYSTEM)
 
         def format_bnds(bounds):
             bounds = np.array([
