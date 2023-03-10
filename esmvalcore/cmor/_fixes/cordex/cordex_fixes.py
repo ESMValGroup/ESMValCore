@@ -205,7 +205,7 @@ class AllVars(Fix):
         return coord
 
     @staticmethod
-    def _make_geographical_coord(points, coord_info, bounds, lazy=True):
+    def _make_geographical_coord(points, bounds, coord_info, lazy=True):
         """Create a geographical coordinate from the specifications."""
         return iris.coords.AuxCoord(
             points if not lazy else da.array(points),
@@ -288,12 +288,12 @@ class AllVars(Fix):
                     cube, old_coord,
                     self._make_geographical_coord(
                         old_coord.points,
-                        CMOR_TABLES["CORDEX"].coords[vname],
-                        old_coord.bounds))
+                        old_coord.bounds,
+                        CMOR_TABLES["CORDEX"].coords[vname]))
         return check
 
     def _fix_lambert_projection_coord_using_geographical(self, cube):
-        """Use geographical coords to retrieve projection coords."""
+        """Use geographical coords to make projection coords."""
         lambert_system = cube.coord_system().as_cartopy_crs()
         lon_pts = cube.coord("longitude").points
         lat_pts = cube.coord("latitude").points
@@ -321,29 +321,28 @@ class AllVars(Fix):
     def _make_geog_bounds_from_proj_bounds(cls, bounds_x, bounds_y, crs_from):
         """Use projection coords bounds to make geographical coords bounds."""
         grid_geog = cls._transform_points(
-            *np.meshgrid(bounds_x,
-                         bounds_y),
+            *np.meshgrid(bounds_x, bounds_y),
             crs_from=crs_from,
             crs_to=GEOG_SYSTEM)
 
         def format_bnds(bounds):
-            bounds = np.array([
-                bounds[0::2, 0::2], bounds[0::2, 1::2],
-                bounds[1::2, 1::2], bounds[1::2, 0::2]])
-            return np.moveaxis(bounds, 0, -1)
+            return np.moveaxis(
+                np.array([
+                    bounds[0::2, 0::2], bounds[0::2, 1::2],
+                    bounds[1::2, 1::2], bounds[1::2, 0::2]]
+                ), 0, -1)
 
         return format_bnds(grid_geog[:, :, 0]), format_bnds(grid_geog[:, :, 1])
 
     def _fix_geographical_coord_using_projection(self, cube):
-        """Use projection coords to retrieve geographical coords."""
+        """Use projection coords to make geographical coords."""
         lambert_system = cube.coord_system().as_cartopy_crs()
         proj_x = cube.coord("projection_x_coordinate")
         proj_y = cube.coord("projection_y_coordinate")
 
         # Dim coords are in lambert system and lonlat are in geographical.
         lonlat = self._transform_points(
-            *np.meshgrid(proj_x.points,
-                         proj_y.points),
+            *np.meshgrid(proj_x.points, proj_y.points),
             crs_from=lambert_system,
             crs_to=GEOG_SYSTEM)
 
@@ -357,11 +356,11 @@ class AllVars(Fix):
                 cube, cube.coord(vname),
                 self._make_geographical_coord(
                     points,
-                    CMOR_TABLES["CORDEX"].coords[vname],
                     bounds,
+                    CMOR_TABLES["CORDEX"].coords[vname],
                     lazy=True))
 
-    def _check_lonlat_bounds(self, cube):
+    def _fix_lambert_geog_coords_bounds(self, cube):
         """Make sure longitude and latitude have bounds."""
         lambert_system = cube.coord_system().as_cartopy_crs()
         lon = cube.coord("longitude")
@@ -418,7 +417,7 @@ class AllVars(Fix):
                         "differences with the standard domain.")
 
                 # Not necessary for the fixes, but important for later.
-                self._check_lonlat_bounds(cube)
+                self._fix_lambert_geog_coords_bounds(cube)
 
             else:
                 raise RecipeError(
