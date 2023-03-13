@@ -58,6 +58,7 @@ Bug fixes
 -  Made equalized attributes in concatenated cubes consistent across runs (`#1783 <https://github.com/ESMValGroup/ESMValCore/pull/1783>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Fix issue with reading dates from files (`#1936 <https://github.com/ESMValGroup/ESMValCore/pull/1936>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Add institute name used on ESGF for CMIP5 CanAM4, CanCM4, and CanESM2 (`#1937 <https://github.com/ESMValGroup/ESMValCore/pull/1937>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Update the institute facet of the CSIRO-Mk3L-1-2 model (`#1966 <https://github.com/ESMValGroup/ESMValCore/pull/1966>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
 
 CMOR standard
 ~~~~~~~~~~~~~
