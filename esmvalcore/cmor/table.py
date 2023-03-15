@@ -568,7 +568,7 @@ class VariableInfo(JsonInfo):
         Parameters
         ----------
         short_name: str
-            variable's short name
+            Variable's short name.
         """
         super(VariableInfo, self).__init__()
         self.table_type = table_type
@@ -608,7 +608,7 @@ class VariableInfo(JsonInfo):
         Returns
         -------
         VariableInfo
-           Shallow copy of this object
+           Shallow copy of this object.
         """
         return copy.copy(self)
 
@@ -620,11 +620,10 @@ class VariableInfo(JsonInfo):
         Parameters
         ----------
         json_data: dict
-            dictionary created by the json reader containing
-            variable information
-
+            Dictionary created by the json reader containing variable
+            information.
         default_freq: str
-            Default frequency to use if it is not defined at variable level
+            Default frequency to use if it is not defined at variable level.
         """
         self._json_data = json_data
 
@@ -639,6 +638,34 @@ class VariableInfo(JsonInfo):
         self.frequency = self._read_json_variable('frequency', default_freq)
 
         self.dimensions = self._read_json_variable('dimensions').split()
+
+    def has_dimension_that_startswith(self, pattern: str) -> bool:
+        """Check a dimension exists whose name starts with a given `pattern`.
+
+        For some dimensions, multiple (slightly different) versions of them
+        with different names exist. For example, the CMIP6 tables provide 4
+        different `time` dimensions: `time`, `time1`, time2`, and `time3`.
+        Other examples would be the CMIP6 pressure levels (`plev19`, `plev23`,
+        `plev27`, etc.) and the altitudes (`alt16`, `alt40`). This function can
+        be used to check for the existence of at least one of the different
+        names.
+
+        Parameters
+        ----------
+        pattern: str
+            Pattern to be checked.
+
+        Returns
+        -------
+        bool
+            `True` if at least one dimension name starts with `pattern`,
+            `False` if not.
+
+        """
+        for dim_name in self.dimensions:
+            if dim_name.startswith(pattern):
+                return True
+        return False
 
 
 class CoordinateInfo(JsonInfo):

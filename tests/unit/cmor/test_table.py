@@ -10,67 +10,77 @@ class TestVariableInfo(unittest.TestCase):
 
     def setUp(self):
         """Prepare for testing."""
+        self.info = VariableInfo('table_type', 'var')
         self.value = 'value'
 
     def test_constructor(self):
         """Test basic constructor."""
-        info = VariableInfo('table_type', 'var')
-        self.assertEqual('table_type', info.table_type)
-        self.assertEqual('var', info.short_name)
+        self.assertEqual('table_type', self.info.table_type)
+        self.assertEqual('var', self.info.short_name)
 
     def test_read_empty_dictionary(self):
         """Test read empty dict."""
-        info = VariableInfo('table_type', 'var')
-        info.read_json({}, '')
-        self.assertEqual('', info.standard_name)
+        self.info.read_json({}, '')
+        self.assertEqual('', self.info.standard_name)
 
     def test_read_standard_name(self):
         """Test standard_name."""
-        info = VariableInfo('table_type', 'var')
-        info.read_json({'standard_name': self.value}, '')
-        self.assertEqual(info.standard_name, self.value)
+        self.info.read_json({'standard_name': self.value}, '')
+        self.assertEqual(self.info.standard_name, self.value)
 
     def test_read_long_name(self):
         """Test long_name."""
-        info = VariableInfo('table_type', 'var')
-        info.read_json({'long_name': self.value}, '')
-        self.assertEqual(info.long_name, self.value)
+        self.info.read_json({'long_name': self.value}, '')
+        self.assertEqual(self.info.long_name, self.value)
 
     def test_read_units(self):
         """Test units."""
-        info = VariableInfo('table_type', 'var')
-        info.read_json({'units': self.value}, '')
-        self.assertEqual(info.units, self.value)
+        self.info.read_json({'units': self.value}, '')
+        self.assertEqual(self.info.units, self.value)
 
     def test_read_valid_min(self):
         """Test valid_min."""
-        info = VariableInfo('table_type', 'var')
-        info.read_json({'valid_min': self.value}, '')
-        self.assertEqual(info.valid_min, self.value)
+        self.info.read_json({'valid_min': self.value}, '')
+        self.assertEqual(self.info.valid_min, self.value)
 
     def test_read_valid_max(self):
         """Test valid_max."""
-        info = VariableInfo('table_type', 'var')
-        info.read_json({'valid_max': self.value}, '')
-        self.assertEqual(info.valid_max, self.value)
+        self.info.read_json({'valid_max': self.value}, '')
+        self.assertEqual(self.info.valid_max, self.value)
 
     def test_read_positive(self):
         """Test positive."""
-        info = VariableInfo('table_type', 'var')
-        info.read_json({'positive': self.value}, '')
-        self.assertEqual(info.positive, self.value)
+        self.info.read_json({'positive': self.value}, '')
+        self.assertEqual(self.info.positive, self.value)
 
     def test_read_frequency(self):
-        """Test positive."""
-        info = VariableInfo('table_type', 'var')
-        info.read_json({'frequency': self.value}, '')
-        self.assertEqual(info.frequency, self.value)
+        """Test frequency."""
+        self.info.read_json({'frequency': self.value}, '')
+        self.assertEqual(self.info.frequency, self.value)
 
     def test_read_default_frequency(self):
-        """Test positive."""
-        info = VariableInfo('table_type', 'var')
-        info.read_json({}, self.value)
-        self.assertEqual(info.frequency, self.value)
+        """Test frequency."""
+        self.info.read_json({}, self.value)
+        self.assertEqual(self.info.frequency, self.value)
+
+    def test_has_dimension_that_startswith_empty_dim(self):
+        """Test `has_dimension_that_startswith`."""
+        assert self.info.has_dimension_that_startswith('time') is False
+
+    def test_has_dimension_that_startswith_false(self):
+        """Test `has_dimension_that_startswith`."""
+        self.info.dimensions = ['test', 'not_time', 'TIME', '_time_']
+        assert self.info.has_dimension_that_startswith('time') is False
+
+    def test_has_dimension_that_startswith_true(self):
+        """Test `has_dimension_that_startswith`."""
+        self.info.dimensions = ['test', 'time1']
+        assert self.info.has_dimension_that_startswith('time') is True
+
+    def test_has_dimension_that_startswith_multiple(self):
+        """Test `has_dimension_that_startswith`."""
+        self.info.dimensions = ['test', 'time1', 'time', 'time2']
+        assert self.info.has_dimension_that_startswith('time') is True
 
 
 class TestCoordinateInfo(unittest.TestCase):
