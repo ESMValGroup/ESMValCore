@@ -72,10 +72,8 @@ class AllVars(EmacFix):
         self.fix_regular_lon(cube)
 
         # Fix regular pressure levels (considers plev19, plev39, etc.)
-        for dim_name in self.vardef.dimensions:
-            if 'plev' in dim_name:
-                self._fix_plev(cube)
-                break
+        if self.vardef.has_dimension_that_startswith('plev'):
+            self._fix_plev(cube)
 
         # Fix hybrid pressure levels
         if 'alevel' in self.vardef.dimensions:

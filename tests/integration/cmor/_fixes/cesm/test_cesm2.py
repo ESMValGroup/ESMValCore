@@ -294,6 +294,18 @@ def test_fix_time_mon(cube_1d_time):
     np.testing.assert_array_equal(time_coord.bounds, [[0, 2], [2, 4], [4, 6]])
 
 
+def test_fix_time1_mon(cube_1d_time, monkeypatch):
+    """Test `_fix_time``."""
+    fix = get_allvars_fix('Amon', 'mon', 'tas')
+    monkeypatch.setattr(
+        fix.vardef, 'dimensions', ['time1', 'latitude', 'longitude']
+    )
+    fix._fix_time(cube_1d_time)
+    time_coord = cube_1d_time.coord('time')
+    np.testing.assert_array_equal(time_coord.points, [1, 3, 5])
+    np.testing.assert_array_equal(time_coord.bounds, [[0, 2], [2, 4], [4, 6]])
+
+
 def test_fix_time_mon_point(cube_1d_time):
     """Test `_fix_time``."""
     cube_1d_time.add_cell_method(CellMethod('point', 'time'))

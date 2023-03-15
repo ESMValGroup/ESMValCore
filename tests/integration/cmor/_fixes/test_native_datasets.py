@@ -197,6 +197,9 @@ def test_get_cube_fail(cubes, fix):
     'coord,coord_name,func_name',
     [
         ('time', 'time', 'fix_regular_time'),
+        ('time1', 'time', 'fix_regular_time'),
+        ('time2', 'time', 'fix_regular_time'),
+        ('time3', 'time', 'fix_regular_time'),
         ('latitude', 'latitude', 'fix_regular_lat'),
         ('longitude', 'longitude', 'fix_regular_lon'),
     ]
@@ -220,6 +223,9 @@ def test_fix_regular_coords_from_cube(monkeypatch, sample_cube, fix, coord,
     'coord,coord_name,func_name',
     [
         ('time', 'time', 'fix_regular_time'),
+        ('time1', 'time', 'fix_regular_time'),
+        ('time2', 'time', 'fix_regular_time'),
+        ('time3', 'time', 'fix_regular_time'),
         ('latitude', 'latitude', 'fix_regular_lat'),
         ('longitude', 'longitude', 'fix_regular_lon'),
     ]

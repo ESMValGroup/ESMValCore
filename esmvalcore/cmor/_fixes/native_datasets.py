@@ -123,7 +123,7 @@ class NativeDatasetFix(Fix):
             bounds.
 
         """
-        if 'time' not in self.vardef.dimensions:
+        if not self.vardef.has_dimension_that_startswith('time'):
             return
         coord = self.fix_time_metadata(cube, coord)
         if guess_bounds:

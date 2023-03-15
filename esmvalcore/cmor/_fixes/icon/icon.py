@@ -27,7 +27,7 @@ class AllVars(IconFix):
         cube = self.get_cube(cubes)
 
         # Fix time
-        if 'time' in self.vardef.dimensions:
+        if self.vardef.has_dimension_that_startswith('time'):
             cube = self._fix_time(cube, cubes)
 
         # Fix height (note: cannot use "if 'height' in self.vardef.dimensions"

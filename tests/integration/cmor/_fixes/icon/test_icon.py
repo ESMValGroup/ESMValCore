@@ -790,6 +790,22 @@ def test_tas_no_mesh(cubes_2d):
     check_heightxm(cube, 2.0)
 
 
+def test_tas_with_time1_dimensions(cubes_2d, monkeypatch):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'tas')
+    monkeypatch.setattr(
+        fix.vardef,
+        'dimensions',
+        ['time1', 'height2m', 'latitude', 'longitude'],
+    )
+    fixed_cubes = fix.fix_metadata(cubes_2d)
+
+    cube = check_tas_metadata(fixed_cubes)
+    check_time(cube)
+    check_lat_lon(cube)
+    check_heightxm(cube, 2.0)
+
+
 # Test uas (for height10m coordinate)
 
 
