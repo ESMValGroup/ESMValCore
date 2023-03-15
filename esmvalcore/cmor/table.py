@@ -640,11 +640,11 @@ class VariableInfo(JsonInfo):
         self.dimensions = self._read_json_variable('dimensions').split()
 
     def has_dimension_that_startswith(self, pattern: str) -> bool:
-        """Check a dimension exists whose name starts with a given `pattern`.
+        """Check if a dimension exists whose name starts with a given pattern.
 
-        For some dimensions, multiple (slightly different) versions of them
-        with different names exist. For example, the CMIP6 tables provide 4
-        different `time` dimensions: `time`, `time1`, time2`, and `time3`.
+        For some dimensions, multiple (slightly different) versions with
+        different names exist. For example, the CMIP6 tables provide 4
+        different `time` dimensions: `time`, `time1`, `time2`, and `time3`.
         Other examples would be the CMIP6 pressure levels (`plev19`, `plev23`,
         `plev27`, etc.) and the altitudes (`alt16`, `alt40`). This function can
         be used to check for the existence of at least one of the different
