@@ -92,7 +92,7 @@
 'CSIRO-Mk3L-1-2':
   '*':
     '*':
-      institute: ['CSIRO-QCCCE']
+      institute: ['UNSW']
 'EC-EARTH':
   '*':
     '*':
