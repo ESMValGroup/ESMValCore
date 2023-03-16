@@ -644,12 +644,13 @@ class VariableInfo(JsonInfo):
 
         For some coordinates, multiple (slightly different) versions with
         different dimension names but identical `standard_name` exist. For
-        example, the CMIP6 tables provide 4 different `time` dimensions:
-        `time`, `time1`, `time2`, and `time3`.  Other examples would be the
-        CMIP6 pressure levels (`plev19`, `plev23`, `plev27`, etc.) and the
-        altitudes (`alt16`, `alt40`).
+        example, the CMIP6 tables provide 4 different `standard_name=time`
+        dimensions: `time`, `time1`, `time2`, and `time3`. Other examples would
+        be the CMIP6 pressure levels (`plev19`, `plev23`, `plev27`, etc.  with
+        standard name `air_pressure`) and the altitudes (`alt16`, `alt40` with
+        standard name `altitude`).
 
-        This function can be used to check for the existence of specific
+        This function can be used to check for the existence of a specific
         coordinate defined by its `standard_name`, not its dimension name.
 
         Parameters
