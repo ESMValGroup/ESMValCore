@@ -24,7 +24,7 @@ Backwards incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  Support wildcards in the recipe and improve support for ancillary variables and dataset versioning (`#1609 <https://github.com/ESMValGroup/ESMValCore/pull/1609>`__) `Bouwe Andela <https://github.com/bouweandela>`__
--  Remove deprecated features scheduled for removal in v2.8.0 or earlier (`#1826 <https://github.com/ESMValGroup/ESMValCore/pull/1826>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Remove deprecated features scheduled for removal in v2.8.0 or earlier (`#1826 <https://github.com/ESMValGroup/ESMValCore/pull/1826>`__) `Manuel Schlund <https://github.com/schlunma>`__. Removed `esmvalcore.iris_helpers.var_name_constraint` (has been deprecated in v2.6.0; please use [`iris.NameConstraint`](https://scitools-iris.readthedocs.io/en/latest/generated/api/iris.html#iris.NameConstraint) with the keyword argument `var_name` instead) and the option `always_use_ne_mask` for `esmvalcore.preprocessor.mask_landsea` (has been deprecated in v2.5.0; the same behavior can now be achieved by specifying [`supplementary_variables`]
 -  Add `esmvalcore.local`, a module to search data on the local filesystem (`#1835 <https://github.com/ESMValGroup/ESMValCore/pull/1835>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Update filename template for obs4MIPs to better match filenames (`#1866 <https://github.com/ESMValGroup/ESMValCore/pull/1866>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
@@ -32,8 +32,8 @@ Deprecations
 ~~~~~~~~~~~~
 
 -  Add `esmvalcore.config` module (`#1769 <https://github.com/ESMValGroup/ESMValCore/pull/1769>`__) `Bouwe Andela <https://github.com/bouweandela>`__
--  Combined `offline` and `always_search_esgf` into a single option `search_esgf` (`#1935 <https://github.com/ESMValGroup/ESMValCore/pull/1935>`__) `Manuel Schlund <https://github.com/schlunma>`__
--  Fixed race condition that may result in errors in `cleanup` and deprecate `cleanup` (`#1949 <https://github.com/ESMValGroup/ESMValCore/pull/1949>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Combined `offline` and `always_search_esgf` into a single option `search_esgf` (`#1935 <https://github.com/ESMValGroup/ESMValCore/pull/1935>`__) `Manuel Schlund <https://github.com/schlunma>`__. The configuration option/command line argument `offline` has been deprecated in favor for `search_esgf`. The old `offline: true` is now `search_esgf: never` (the default); the old `offline: false` is now `search_esgf: when_missing`. More details on how to adapt your workflow regarding these new options are given in the corresponding [pull request descrpition](https://github.com/ESMValGroup/ESMValCore/pull/1935) and the [documentation](https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html?highlight=search_esgf#user-configuration-file). 
+-  Fixed race condition that may result in errors in `cleanup` and deprecate `cleanup` (`#1949 <https://github.com/ESMValGroup/ESMValCore/pull/1949>`__) `Manuel Schlund <https://github.com/schlunma>`__. The preprocessor `cleanup` has been deprecated. Please do not use this anymore in the recipe (it is not necessary).
 
 Python API
 ~~~~~~~~~~
