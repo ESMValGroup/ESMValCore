@@ -12,7 +12,7 @@ v2.8.0
 Highlights
 ~~~~~~~~~~
 
--  ESMValCore now support wildcard in recipes and offers improved support for ancillary variables and dataset versioning thanks to contributions by `Bouwe Andela <https://github.com/bouweandela>`__. For details, see :ref:`Automatically populating a recipe with all available datasets <dataset_wildcards>` and :ref:`Defining supplementary variables <supplementary_variables>`. 
+-  ESMValCore now supports wildcards in recipes and offers improved support for ancillary variables and dataset versioning thanks to contributions by `Bouwe Andela <https://github.com/bouweandela>`__. For details, see :ref:`Automatically populating a recipe with all available datasets <dataset_wildcards>` and :ref:`Defining supplementary variables <supplementary_variables>`. 
 -  Support for CORDEX datasets has been added by `sloosvel <https://github.com/sloosvel>`__.
 -  The `ICON <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/find_data.html#icon>`__  output are not made UGIRD-compliant on-the-fly to unlock the use of more sophisticated regridding algorithms, thanks to `Manuel Schlund <https://github.com/schlunma>`__.
 -  The Python API has been extended with the addition of three modules: :mod:`esmvalcore.config`, :mod:`esmvalcore.dataset`, and :mod:`esmvalcore.local`, all these features courtesy of `Bouwe Andela <https://github.com/bouweandela>`__. For details, see our new example `notebooks <https://docs.esmvaltool.org/projects/esmvalcore/en/latest/example-notebooks.html>`__.
@@ -32,7 +32,7 @@ Deprecations
 ~~~~~~~~~~~~
 
 -  Add :mod:`esmvalcore.config` module (`#1769 <https://github.com/ESMValGroup/ESMValCore/pull/1769>`__) `Bouwe Andela <https://github.com/bouweandela>`__
--  Combined `offline` and `always_search_esgf` into a single option `search_esgf` (`#1935 <https://github.com/ESMValGroup/ESMValCore/pull/1935>`__) `Manuel Schlund <https://github.com/schlunma>`__. The configuration option/command line argument `offline` has been deprecated in favor for `search_esgf`. The old `offline: true` is now `search_esgf: never` (the default); the old `offline: false` is now `search_esgf: when_missing`. More details on how to adapt your workflow regarding these new options are given in the corresponding pull request description and the `documentation <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html?highlight=search_esgf#user-configuration-file>`__. 
+-  Combined ``offline`` and ``always_search_esgf`` into a single option ``search_esgf`` (`#1935 <https://github.com/ESMValGroup/ESMValCore/pull/1935>`__) `Manuel Schlund <https://github.com/schlunma>`__. The configuration option/command line argument ``offline`` has been deprecated in favor for ``search_esgf``. The old ``offline: true`` is now ``search_esgf: never`` (the default); the old ``offline: false`` is now ``search_esgf: when_missing``. More details on how to adapt your workflow regarding these new options are given in the corresponding pull request description and the `documentation <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html?highlight=search_esgf#user-configuration-file>`__. 
 -  Fixed race condition that may result in errors in `cleanup` and deprecate `cleanup` (`#1949 <https://github.com/ESMValGroup/ESMValCore/pull/1949>`__) `Manuel Schlund <https://github.com/schlunma>`__. The preprocessor `cleanup` has been deprecated. Please do not use this anymore in the recipe (it is not necessary).
 
 Python API
