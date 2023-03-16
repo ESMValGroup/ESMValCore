@@ -12,7 +12,7 @@ v2.8.0
 Highlights
 ~~~~~~~~~~
 
--  ESMValCore now support wildcard in recipes and offers improved support for ancillary variables and dataset versioning thanks to contributions by `Bouwe Andela <https://github.com/bouweandela>`__. For details, see :ref:`Automatically populating a recipe with all available datasets<dataset_wildcards>` and :ref:`Defining supplementary variables<supplementary_variables>`. 
+-  ESMValCore now support wildcard in recipes and offers improved support for ancillary variables and dataset versioning thanks to contributions by `Bouwe Andela <https://github.com/bouweandela>`__. For details, see :ref:`Automatically populating a recipe with all available datasets <dataset_wildcards>` and :ref:`Defining supplementary variables <supplementary_variables>`. 
 -  Support for CORDEX datasets has been added by `sloosvel <https://github.com/sloosvel>`__.
 -  The `ICON <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/find_data.html#icon>`__  output are not made UGIRD-compliant on-the-fly to unlock the use of more sophisticated regridding algorithms, thanks to `Manuel Schlund <https://github.com/schlunma>`__.
 -  The Python API has been extended with the addition of three modules: :mod:`esmvalcore.config`, :mod:`esmvalcore.dataset`, and :mod:`esmvalcore.local`, all these features courtesy of `Bouwe Andela <https://github.com/bouweandela>`__. For details, see our new example `notebooks https://docs.esmvaltool.org/projects/esmvalcore/en/latest/example-notebooks.html`__.
