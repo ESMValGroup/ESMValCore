@@ -14,7 +14,7 @@ Highlights
 
 -  ESMValCore now supports wildcards in recipes and offers improved support for ancillary variables and dataset versioning thanks to contributions by `Bouwe Andela <https://github.com/bouweandela>`__. For details, see :ref:`Automatically populating a recipe with all available datasets <dataset_wildcards>` and :ref:`Defining supplementary variables <supplementary_variables>`. 
 -  Support for CORDEX datasets has been added by `sloosvel <https://github.com/sloosvel>`__.
--  The `ICON <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/find_data.html#icon>`__  output are not made UGIRD-compliant on-the-fly to unlock the use of more sophisticated regridding algorithms, thanks to `Manuel Schlund <https://github.com/schlunma>`__.
+-  Native `ICON <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/find_data.html#icon>`__  output is now made UGRID-compliant on-the-fly to unlock the use of more sophisticated regridding algorithms, thanks to `Manuel Schlund <https://github.com/schlunma>`__.
 -  The Python API has been extended with the addition of three modules: :mod:`esmvalcore.config`, :mod:`esmvalcore.dataset`, and :mod:`esmvalcore.local`, all these features courtesy of `Bouwe Andela <https://github.com/bouweandela>`__. For details, see our new example `notebooks <https://docs.esmvaltool.org/projects/esmvalcore/en/latest/example-notebooks.html>`__.
 -  The preprocessor :func:`~esmvalcore.preprocessor.multi_model_statistics` has been extended to support more use-cases thanks to contributions by `Manuel Schlund <https://github.com/schlunma>`__. For details, see :ref:`Multi-model statistics <multi-model statistics>`.
 
@@ -24,7 +24,7 @@ Backwards incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  Support wildcards in the recipe and improve support for ancillary variables and dataset versioning (`#1609 <https://github.com/ESMValGroup/ESMValCore/pull/1609>`__) `Bouwe Andela <https://github.com/bouweandela>`__
--  Remove deprecated features scheduled for removal in v2.8.0 or earlier (`#1826 <https://github.com/ESMValGroup/ESMValCore/pull/1826>`__) `Manuel Schlund <https://github.com/schlunma>`__. Removed `esmvalcore.iris_helpers.var_name_constraint` (has been deprecated in v2.6.0; please use :class:`iris.NameConstraint` with the keyword argument `var_name` instead) and the option `always_use_ne_mask` for :func:`~esmvalcore.preprocessor.mask_landsea` (has been deprecated in v2.5.0; the same behavior can now be achieved by specifying `supplementary_variables`.
+-  Remove deprecated features scheduled for removal in v2.8.0 or earlier (`#1826 <https://github.com/ESMValGroup/ESMValCore/pull/1826>`__) `Manuel Schlund <https://github.com/schlunma>`__. Removed ``esmvalcore.iris_helpers.var_name_constraint`` (has been deprecated in v2.6.0; please use :class:`iris.NameConstraint` with the keyword argument `var_name` instead) and the option `always_use_ne_mask` for :func:`~esmvalcore.preprocessor.mask_landsea` (has been deprecated in v2.5.0; the same behavior can now be achieved by specifying `supplementary_variables`.
 -  Add :mod:`esmvalcore.local`, a module to search data on the local filesystem (`#1835 <https://github.com/ESMValGroup/ESMValCore/pull/1835>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Update filename template for obs4MIPs to better match filenames (`#1866 <https://github.com/ESMValGroup/ESMValCore/pull/1866>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
