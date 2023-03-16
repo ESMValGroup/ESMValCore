@@ -123,7 +123,7 @@ class NativeDatasetFix(Fix):
             bounds.
 
         """
-        if not self.vardef.has_dimension_that_startswith('time'):
+        if not self.vardef.has_coord_with_standard_name('time'):
             return
         coord = self.fix_time_metadata(cube, coord)
         if guess_bounds:
@@ -144,7 +144,7 @@ class NativeDatasetFix(Fix):
             bounds.
 
         """
-        if 'latitude' not in self.vardef.dimensions:
+        if not self.vardef.has_coord_with_standard_name('latitude'):
             return
         coord = self.fix_lat_metadata(cube, coord)
         if guess_bounds:
@@ -165,7 +165,7 @@ class NativeDatasetFix(Fix):
             bounds.
 
         """
-        if 'longitude' not in self.vardef.dimensions:
+        if not self.vardef.has_coord_with_standard_name('longitude'):
             return
         coord = self.fix_lon_metadata(cube, coord)
         if guess_bounds:

@@ -12,6 +12,11 @@ class TestVariableInfo(unittest.TestCase):
         """Prepare for testing."""
         self.info = VariableInfo('table_type', 'var')
         self.value = 'value'
+        self.coords = {
+            'dim0': CoordinateInfo('dim0'),
+            'dim1': CoordinateInfo('dim1'),
+            'dim2': CoordinateInfo('dim2'),
+        }
 
     def test_constructor(self):
         """Test basic constructor."""
@@ -63,24 +68,27 @@ class TestVariableInfo(unittest.TestCase):
         self.info.read_json({}, self.value)
         self.assertEqual(self.info.frequency, self.value)
 
-    def test_has_dimension_that_startswith_empty_dim(self):
-        """Test `has_dimension_that_startswith`."""
-        assert self.info.has_dimension_that_startswith('time') is False
+    def test_has_coord_with_standard_name_empty(self):
+        """Test `has_coord_with_standard_name`."""
+        assert self.info.has_coord_with_standard_name('time') is False
 
-    def test_has_dimension_that_startswith_false(self):
-        """Test `has_dimension_that_startswith`."""
-        self.info.dimensions = ['test', 'not_time', 'TIME', '_time_']
-        assert self.info.has_dimension_that_startswith('time') is False
+    def test_has_coord_with_standard_name_false(self):
+        """Test `has_coord_with_standard_name`."""
+        self.info.coordinates = self.coords
+        assert self.info.has_coord_with_standard_name('time') is False
 
-    def test_has_dimension_that_startswith_true(self):
-        """Test `has_dimension_that_startswith`."""
-        self.info.dimensions = ['test', 'time1']
-        assert self.info.has_dimension_that_startswith('time') is True
+    def test_has_coord_with_standard_name_true(self):
+        """Test `has_coord_with_standard_name`."""
+        self.info.coordinates = self.coords
+        self.info.coordinates['dim0'].standard_name = 'time'
+        assert self.info.has_coord_with_standard_name('time') is True
 
-    def test_has_dimension_that_startswith_multiple(self):
-        """Test `has_dimension_that_startswith`."""
-        self.info.dimensions = ['test', 'time1', 'time', 'time2']
-        assert self.info.has_dimension_that_startswith('time') is True
+    def test_has_coord_with_standard_name_multiple(self):
+        """Test `has_coord_with_standard_name`."""
+        self.info.coordinates = self.coords
+        self.info.coordinates['dim1'].standard_name = 'time'
+        self.info.coordinates['dim2'].standard_name = 'time'
+        assert self.info.has_coord_with_standard_name('time') is True
 
 
 class TestCoordinateInfo(unittest.TestCase):

@@ -27,7 +27,7 @@ class AllVars(IconFix):
         cube = self.get_cube(cubes)
 
         # Fix time
-        if self.vardef.has_dimension_that_startswith('time'):
+        if self.vardef.has_coord_with_standard_name('time'):
             cube = self._fix_time(cube, cubes)
 
         # Fix height (note: cannot use "if 'height' in self.vardef.dimensions"
@@ -52,13 +52,13 @@ class AllVars(IconFix):
                 cube = self._fix_height(cube, cubes)
 
         # Fix latitude
-        if 'latitude' in self.vardef.dimensions:
+        if self.vardef.has_coord_with_standard_name('latitude'):
             lat_idx = self._fix_lat(cube)
         else:
             lat_idx = None
 
         # Fix longitude
-        if 'longitude' in self.vardef.dimensions:
+        if self.vardef.has_coord_with_standard_name('longitude'):
             lon_idx = self._fix_lon(cube)
         else:
             lon_idx = None

@@ -639,31 +639,33 @@ class VariableInfo(JsonInfo):
 
         self.dimensions = self._read_json_variable('dimensions').split()
 
-    def has_dimension_that_startswith(self, pattern: str) -> bool:
-        """Check if a dimension exists whose name starts with a given pattern.
+    def has_coord_with_standard_name(self, standard_name: str) -> bool:
+        """Check if a coordinate with a given `standard_name` exists.
 
-        For some dimensions, multiple (slightly different) versions with
-        different names exist. For example, the CMIP6 tables provide 4
-        different `time` dimensions: `time`, `time1`, `time2`, and `time3`.
-        Other examples would be the CMIP6 pressure levels (`plev19`, `plev23`,
-        `plev27`, etc.) and the altitudes (`alt16`, `alt40`). This function can
-        be used to check for the existence of at least one of the different
-        names.
+        For some coordinates, multiple (slightly different) versions with
+        different dimension names but identical `standard_name` exist. For
+        example, the CMIP6 tables provide 4 different `time` dimensions:
+        `time`, `time1`, `time2`, and `time3`.  Other examples would be the
+        CMIP6 pressure levels (`plev19`, `plev23`, `plev27`, etc.) and the
+        altitudes (`alt16`, `alt40`).
+
+        This function can be used to check for the existence of specific
+        coordinate defined by its `standard_name`, not its dimension name.
 
         Parameters
         ----------
-        pattern: str
-            Pattern to be checked.
+        standard_name: str
+            Standard name to be checked.
 
         Returns
         -------
         bool
-            `True` if at least one dimension name starts with `pattern`,
-            `False` if not.
+            `True` if there is at least one coordinate with the given
+            `standard_name`, `False` if not.
 
         """
-        for dim_name in self.dimensions:
-            if dim_name.startswith(pattern):
+        for coord in self.coordinates.values():
+            if coord.standard_name == standard_name:
                 return True
         return False
 
