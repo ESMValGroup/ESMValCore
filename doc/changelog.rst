@@ -19,7 +19,7 @@ Highlights
    and :ref:`Defining supplementary variables <supplementary_variables>`.
 -  Support for CORDEX datasets in a rotated pole coordinate system has been
    added by `sloosvel <https://github.com/sloosvel>`__.
--  Native :ref:`ICON <esmvaltool:read_icon>` output is now made UGRID-compliant
+-  Native :ref:`ICON <read_icon>` output is now made UGRID-compliant
    on-the-fly to unlock the use of more sophisticated regridding algorithms,
    thanks to `Manuel Schlund <https://github.com/schlunma>`__.
 -  The Python API has been extended with the addition of three
