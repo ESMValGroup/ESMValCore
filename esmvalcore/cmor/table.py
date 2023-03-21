@@ -782,6 +782,8 @@ class CMIP5Info(InfoBase):
                 if key == 'table_id':
                     table = TableInfo()
                     table.name = value[len('Table '):]
+                    if table.name.endswith('h'):
+                        table.name = table.name.replace('h', 'hr')
                     self.tables[table.name] = table
                 elif key == 'frequency':
                     table.frequency = value

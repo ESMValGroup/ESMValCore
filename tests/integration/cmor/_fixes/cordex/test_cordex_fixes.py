@@ -11,7 +11,6 @@ from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
     CLMcomCCLM4817,
     MOHCHadREM3GA705,
     TimeLongName,
-    _get_domain_boundaries,
 )
 from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.exceptions import RecipeError
@@ -228,7 +227,7 @@ def test_rotated_grid_fix_error(cordex_cubes):
     assert msg == exc.value.message
 
 
-def test_lambert_bad_proj_good_geog(cordex_lambert_cubes):
+def test_lambert_grid_fix(cordex_lambert_cubes):
     cmor_table = CMOR_TABLES["CORDEX"]
     mip = "mon"
     short_name = "tas"
@@ -250,39 +249,15 @@ def test_lambert_bad_proj_good_geog(cordex_lambert_cubes):
     cube.replace_coord(proj_y)
 
     out_cubes = fix.fix_metadata(cordex_lambert_cubes)
-    for cube in out_cubes:
-        assert fix._check_lambert_conformal_proj_coords(
-            cube, _get_domain_boundaries("EUR"))
+    assert cordex_lambert_cubes is out_cubes
+    for out_cube, input_cube in zip(out_cubes, cordex_lambert_cubes):
+        for coord in ['x', 'y', 'lat', 'lon']:
+            np.testing.assert_array_equal(
+                out_cube.coord(var_name=coord).points,
+                input_cube.coord(var_name=coord).points)
 
 
-def test_lambert_good_proj_bad_geog(cordex_lambert_cubes):
-    cmor_table = CMOR_TABLES["CORDEX"]
-    mip = "mon"
-    short_name = "tas"
-    vardef = cmor_table.get_variable(mip, short_name)
-    fix = AllVars(vardef=vardef,
-                  extra_facets={
-                      'domain': 'EUR-11',
-                      'dataset': 'DATASET',
-                      'driver': 'DRIVER'
-                  })
-
-    # Mess up geog coords.
-    cube = cordex_lambert_cubes[0]
-    lon = cube.coord(var_name="lon")
-    lat = cube.coord(var_name="lat")
-    lon = lon.copy(lon.points * 2)
-    lat = lat.copy(lat.points * 2)
-    cube.replace_coord(lon)
-    cube.replace_coord(lat)
-
-    out_cubes = fix.fix_metadata(cordex_lambert_cubes)
-    for cube in out_cubes:
-        assert fix._check_lambert_conformal_geog_coords(
-            cube, _get_domain_boundaries("EUR"))
-
-
-def test_lambert_bad_proj_bad_geog(cordex_lambert_cubes):
+def test_lambert_grid_fix_error(cordex_lambert_cubes):
     cmor_table = CMOR_TABLES["CORDEX"]
     mip = "mon"
     short_name = "tas"
@@ -310,9 +285,8 @@ def test_lambert_bad_proj_bad_geog(cordex_lambert_cubes):
     cube.replace_coord(lon)
     cube.replace_coord(lat)
 
-    msg = ("Both projection and geographical "
-           "coordinates of the cube seem to present large "
-           "differences with the standard domain.")
+    msg = ('Differences between standard geographical domain '
+           'and the domain of the cube are above 15%')
     with pytest.raises(RecipeError) as exc:
         fix.fix_metadata(cordex_lambert_cubes)
     assert msg == exc.value.message

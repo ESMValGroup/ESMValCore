@@ -388,6 +388,11 @@ class TestCORDEXInfo(unittest.TestCase):
     def test_get_bad_variable(self):
         """Get none if a variable is not in the given table."""
         self.assertIsNone(self.variables_info.get_variable('Omon', 'tas'))
+    
+    def test_get_subdaily_variable_tas(self):
+        """Get tas in 3hr and 6hr frequencies"""
+        tas_3hr = self.variables_info.get_variable('3hr', 'tas')
+        self.assertEqual(tas_3hr.frequency, '3hr')
 
 
 class TestCustomInfo(unittest.TestCase):
