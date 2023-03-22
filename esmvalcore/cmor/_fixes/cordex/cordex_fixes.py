@@ -50,6 +50,7 @@ def _transform_points(x_data, y_data, crs_from, crs_to):
         always_xy=True,).transform(x_data, y_data, errcheck=True)
     return res
 
+
 class MOHCHadREM3GA705(Fix):
     """General fix for MOHC-HadREM3-GA7-05."""
 
@@ -163,7 +164,7 @@ class LambertGrid(Fix):
             new_coord.guess_bounds()
             cube.remove_coord(old_coord)
             cube.add_dim_coord(new_coord, old_coord_dims)
-        
+
     def _fix_geographical_coords_lambert(self, cube):
         """Fix geographical coordinate metadata and guess bounds."""
         bounds_x = cube.coord('projection_x_coordinate').bounds
@@ -211,7 +212,6 @@ class LambertGrid(Fix):
             self._fix_projection_coords(cube)
             self._fix_geographical_coords_lambert(cube)
         return cubes
-
 
 
 class AllVars(Fix):
@@ -273,7 +273,6 @@ class AllVars(Fix):
             aux_coord_dims = (cube.coord(var_name='rlat').cube_dims(cube) +
                               cube.coord(var_name='rlon').cube_dims(cube))
             cube.add_aux_coord(new_coord, aux_coord_dims)
-
 
     def _check_geographical_domain(self, cube, domain_bounds):
         """Check geographical domain fits with the standard domain."""
