@@ -192,6 +192,7 @@ Release
 -  Changelog for `v2.8.0rc2` (`#1959 <https://github.com/ESMValGroup/ESMValCore/pull/1959>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
 -  Increase version number for ESMValCore `v2.8.0rc2` (`#1973 <https://github.com/ESMValGroup/ESMValCore/pull/1973>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
 -  Changelog for `v2.8.0` (`#1978 <https://github.com/ESMValGroup/ESMValCore/pull/1978>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Increase version number for ESMValCore `v2.8.0` (`#1983 <https://github.com/ESMValGroup/ESMValCore/pull/1983>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
 
 Automatic testing
 ~~~~~~~~~~~~~~~~~
