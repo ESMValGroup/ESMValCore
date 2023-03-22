@@ -508,7 +508,7 @@ def _multimodel_mask_products(products, shape):
             new_mask = da.ma.getmaskarray(cube.core_data())
             mask |= new_mask
             if da.any(new_mask):
-                used_products.add(product)
+                used_products.add(product.copy_provenance())
 
     # Apply common mask and update provenance information
     for product in products:

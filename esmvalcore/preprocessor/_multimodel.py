@@ -623,7 +623,7 @@ def _multiproduct_statistics(products,
         statistics_product.cubes = [cube]
 
         for product in products:
-            statistics_product.wasderivedfrom(product)
+            statistics_product.wasderivedfrom(product.copy_provenance())
 
         logger.info("Generated %s", statistics_product)
         statistics_products.add(statistics_product)

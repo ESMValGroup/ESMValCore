@@ -747,6 +747,9 @@ class PreprocessorFile:
     def wasderivedfrom(self, product):
         pass
 
+    def copy_provenance(self):
+        return self
+
     def group(self, keys: list) -> str:
         """Generate group keyword.
 
