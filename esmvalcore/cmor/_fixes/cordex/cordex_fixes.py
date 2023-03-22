@@ -7,7 +7,6 @@ from pathlib import Path
 import cordex as cx
 import iris
 import numpy as np
-import math
 from cf_units import Unit
 from iris.coord_systems import GeogCS, LambertConformal, RotatedGeogCS
 from iris.fileformats.pp import EARTH_RADIUS
@@ -192,6 +191,21 @@ class LambertGrid(Fix):
             coord.bounds = bounds
 
     def fix_metadata(self, cubes):
+        """Fix CORDEX lambert conformal conic grids.
+
+        Set projection coordinates taking into account the
+        geographical coordinate values and guess bounds
+        for both sets of coordinates.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+        """
 
         for cube in cubes:
             self._fix_projection_coords(cube)
@@ -287,13 +301,14 @@ class AllVars(Fix):
     def fix_metadata(self, cubes):
         """Fix CORDEX rotated grids.
 
-        Set rotated and geographical coordinates to the
+        Set rotated coordinates to the
         values given by each domain specification.
         The domain specifications are retrieved from the
         py-cordex package.
 
-        Set projection and geographical coordinates to the
-        values given by the domain boundary specifications.
+        Check that the geographical domain
+        for datasets in a Lamber Conformal Conic system
+        is within the domain given by the specifications.
 
         Parameters
         ----------
