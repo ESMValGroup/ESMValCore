@@ -726,11 +726,13 @@ class Dataset:
         settings['fix_file'] = {
             'output_dir': fix_dir_prefix,
             'add_unique_suffix': True,
+            'auxiliary_data_dir': self.session['auxiliary_data_dir'],
             **self.facets,
         }
         settings['load'] = {'callback': callback}
         settings['fix_metadata'] = {
             'check_level': self.session['check_level'],
+            'auxiliary_data_dir': self.session['auxiliary_data_dir'],
             **self.facets,
         }
         settings['concatenate'] = {}
@@ -747,6 +749,7 @@ class Dataset:
             }
         settings['fix_data'] = {
             'check_level': self.session['check_level'],
+            'auxiliary_data_dir': self.session['auxiliary_data_dir'],
             **self.facets,
         }
         settings['cmor_check_data'] = {

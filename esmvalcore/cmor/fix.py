@@ -24,6 +24,7 @@ def fix_file(
     mip: str,
     output_dir: Path,
     add_unique_suffix: bool = False,
+    auxiliary_data_dir: list[Path] | Path | None = None,
     **extra_facets,
 ) -> Path:
     """Fix files before ESMValTool can load them.
@@ -49,6 +50,8 @@ def fix_file(
         Output directory for fixed files.
     add_unique_suffix: bool, optional (default: False)
         Adds a unique suffix to `output_dir` for thread safety.
+    auxiliary_data_dir: Path or list of Path, optional
+        One or more directories where additional auxiliary data is stored.
     **extra_facets: dict, optional
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
@@ -71,7 +74,8 @@ def fix_file(
                              dataset=dataset,
                              mip=mip,
                              short_name=short_name,
-                             extra_facets=extra_facets):
+                             extra_facets=extra_facets,
+                             auxiliary_data_dir=auxiliary_data_dir):
         file = fix.fix_file(
             file, output_dir, add_unique_suffix=add_unique_suffix
         )
@@ -85,6 +89,7 @@ def fix_metadata(cubes,
                  mip,
                  frequency=None,
                  check_level=CheckLevels.DEFAULT,
+                 auxiliary_data_dir: list[Path] | Path | None = None,
                  **extra_facets):
     """Fix cube metadata if fixes are required and check it anyway.
 
@@ -109,6 +114,8 @@ def fix_metadata(cubes,
         Variable's data frequency, if available.
     check_level: CheckLevels
         Level of strictness of the checks. Set to default.
+    auxiliary_data_dir: Path or list of Path, optional
+        One or more directories where additional auxiliary data is stored.
     **extra_facets: dict, optional
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
@@ -137,7 +144,8 @@ def fix_metadata(cubes,
                           dataset=dataset,
                           mip=mip,
                           short_name=short_name,
-                          extra_facets=extra_facets)
+                          extra_facets=extra_facets,
+                          auxiliary_data_dir=auxiliary_data_dir)
     fixed_cubes = []
     by_file = defaultdict(list)
     for cube in cubes:
@@ -193,6 +201,7 @@ def fix_data(cube,
              mip,
              frequency=None,
              check_level=CheckLevels.DEFAULT,
+             auxiliary_data_dir: list[Path] | Path | None = None,
              **extra_facets):
     """Fix cube data if fixes add present and check it anyway.
 
@@ -219,6 +228,8 @@ def fix_data(cube,
         Variable's data frequency, if available.
     check_level: CheckLevels
         Level of strictness of the checks. Set to default.
+    auxiliary_data_dir: Path or list of Path, optional
+        One or more directories where additional auxiliary data is stored.
     **extra_facets: dict, optional
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
@@ -247,7 +258,8 @@ def fix_data(cube,
                              dataset=dataset,
                              mip=mip,
                              short_name=short_name,
-                             extra_facets=extra_facets):
+                             extra_facets=extra_facets,
+                             auxiliary_data_dir=auxiliary_data_dir):
         cube = fix.fix_data(cube)
     checker = _get_cmor_checker(frequency=frequency,
                                 table=project,

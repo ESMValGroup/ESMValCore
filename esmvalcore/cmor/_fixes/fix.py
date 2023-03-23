@@ -12,12 +12,12 @@ from ..table import CMOR_TABLES
 class Fix:
     """Base class for dataset fixes."""
 
-    def __init__(self, vardef, extra_facets=None):
+    def __init__(self, vardef, extra_facets=None, auxiliary_data_dir=None):
         """Initialize fix object.
 
         Parameters
         ----------
-        vardef: str
+        vardef: VariableInfo
             CMOR table entry.
         extra_facets: dict, optional
             Extra facets are mainly used for data outside of the big projects
@@ -28,6 +28,7 @@ class Fix:
         if extra_facets is None:
             extra_facets = {}
         self.extra_facets = extra_facets
+        self.auxiliary_data_dir = auxiliary_data_dir
 
     def fix_file(
         self,
@@ -136,7 +137,14 @@ class Fix:
         return not self.__eq__(other)
 
     @staticmethod
-    def get_fixes(project, dataset, mip, short_name, extra_facets=None):
+    def get_fixes(
+        project: str,
+        dataset: str,
+        mip: str,
+        short_name: str,
+        extra_facets: dict | None = None,
+        auxiliary_data_dir: list[Path] | Path | None = None,
+    ) -> list:
         """Get the fixes that must be applied for a given dataset.
 
         It will look for them at the module
@@ -163,6 +171,8 @@ class Fix:
         extra_facets: dict, optional
             Extra facets are mainly used for data outside of the big projects
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
+        auxiliary_data_dir: Path or list of Path, optional
+            One or more directories where additional auxiliary data is stored.
 
         Returns
         -------
@@ -206,7 +216,9 @@ class Fix:
             classes = dict((name.lower(), value) for name, value in classes)
             for fix_name in (short_name, mip.lower(), 'allvars'):
                 try:
-                    fixes.append(classes[fix_name](vardef, extra_facets))
+                    fixes.append(classes[fix_name](
+                        vardef, extra_facets, auxiliary_data_dir
+                    ))
                 except KeyError:
                     pass
 
