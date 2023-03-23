@@ -277,9 +277,23 @@ def validate_diagnostics(
     }
 
 
+def validate_auxiliary_data_dir(value):
+    """Validate `auxiliary_data_dir`."""
+    try:
+        auxiliary_data_dir = validate_path(value)
+    except ValidationError:
+        try:
+            auxiliary_data_dir = validate_pathlist(value)
+        except ValidationError:
+            raise ValidationError(
+                f"Expected a path or list of paths, got '{value}'"
+            )
+    return auxiliary_data_dir
+
+
 _validators = {
     # From user config
-    'auxiliary_data_dir': validate_path,
+    'auxiliary_data_dir': validate_auxiliary_data_dir,
     'compress_netcdf': validate_bool,
     'config_developer_file': validate_config_developer,
     'download_dir': validate_path,
