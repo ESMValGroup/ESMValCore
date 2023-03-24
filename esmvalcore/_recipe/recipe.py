@@ -641,18 +641,12 @@ def _update_extract_shape(settings, session):
     if 'extract_shape' in settings:
         shapefile = settings['extract_shape'].get('shapefile')
         if shapefile:
-            if not Path(shapefile).is_file():
-                aux_dirs = session['auxiliary_data_dir']
-                if not isinstance(aux_dirs, list):
-                    aux_dirs = [aux_dirs]
-                for aux_dir in aux_dirs:
-                    new_shapefile = aux_dir / shapefile
-                    if new_shapefile.is_file():
-                        settings['extract_shape']['shapefile'] = new_shapefile
-                        break
-                    # Note: if no valid shape file has been found an error will
-                    # be reported in check.extract_shape
-
+            if not os.path.exists(shapefile):
+                shapefile = os.path.join(
+                    session['auxiliary_data_dir'],
+                    shapefile,
+                )
+                settings['extract_shape']['shapefile'] = shapefile
         check.extract_shape(settings['extract_shape'])
 
 
