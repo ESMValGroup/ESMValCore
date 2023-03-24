@@ -337,6 +337,17 @@ A variable-specific default for the facet ``var_type`` is given in the extra
 facets (see next paragraph) for many variables, but this can be overwritten in
 the recipe.
 
+Usually, ESMValTool will need the corresponding ICON grid file of your
+simulation to work properly (examples: setting latitude/longitude coordinates
+if these are not yet present, UGRIDization [see below], etc.).
+This grid file can either be specified as absolute or relative (to
+``auxiliary_data_dir`` as defined in the :ref:`user configuration file`) path
+with the facet ``horizontal_grid`` in the recipe or the extra facets (see
+below), or retrieved automatically from the `grid_file_uri` attribute of the
+input files.
+In the latter case, the file is downloaded once and then cached.
+The cached file is valid for 7 days.
+
 ESMValCore can automatically make native ICON data `UGRID
 <https://ugrid-conventions.github.io/ugrid-conventions/>`__-compliant when
 loading the data.
@@ -379,24 +390,29 @@ For some variables, extra facets are necessary; otherwise ESMValTool cannot
 read them properly.
 Supported keys for extra facets are:
 
-============= ============================= =================================
-Key           Description                   Default value if not specified
-============= ============================= =================================
-``latitude``  Standard name of the latitude ``latitude``
-              coordinate in the raw input
-              file
-``longitude`` Standard name of the          ``longitude``
-              longitude coordinate in the
-              raw input file
-``raw_name``  Variable name of the          CMOR variable name of the
-              variable in the raw input     corresponding variable
-              file
-``ugrid``     Automatic UGRIDization of     ``True``
-              the input data
-``var_type``  Variable type of the          No default (needs to be specified
-              variable in the raw input     in extra facets or recipe if
-              file                          default DRS is used)
-============= ============================= =================================
+=================== ================================ ===================================
+Key                 Description                      Default value if not specified
+=================== ================================ ===================================
+``latitude``        Standard name of the latitude    ``latitude``
+                    coordinate in the raw input
+                    file
+``longitude``       Standard name of the             ``longitude``
+                    longitude coordinate in the
+                    raw input file
+``horizontal_grid`` Absolute or relative (to         If not given, use file attribute
+                    ``auxiliary_data_dir`` defined   `grid_file_uri` to retrieve ICON
+                    in the                           grid file
+                    :ref:`user configuration file`)
+                    path to the ICON grid file
+``raw_name``        Variable name of the             CMOR variable name of the
+                    variable in the raw input        corresponding variable
+                    file
+``ugrid``           Automatic UGRIDization of        ``True``
+                    the input data
+``var_type``        Variable type of the             No default (needs to be specified
+                    variable in the raw input        in extra facets or recipe if
+                    file                             default DRS is used)
+=================== ================================ ===================================
 
 .. hint::
 

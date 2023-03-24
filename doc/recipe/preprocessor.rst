@@ -1886,7 +1886,7 @@ that can be:
 * left closed ``[z_min, z_max)``, in which the extracted range includes ``z_min`` but not ``z_max``.
 * right closed ``(z_min, z_max]``, in which the extracted range includes ``z_max`` but not ``z_min``.
 
-The extraction is performed by applying a constraint on the coordinate values, without any kind of interpolation. 
+The extraction is performed by applying a constraint on the coordinate values, without any kind of interpolation.
 
 This function takes four arguments:
 
