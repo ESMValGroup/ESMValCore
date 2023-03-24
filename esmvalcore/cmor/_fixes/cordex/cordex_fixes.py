@@ -132,6 +132,7 @@ class CLMcomCCLM4817(Fix):
 
 
 class LambertGrid(Fix):
+    """General grid fix for CORDEX datasets in a LCC grid."""
 
     def _fix_projection_coords(self, cube):
         """Use geographical coords to fix projection coords."""
