@@ -208,7 +208,6 @@ class LambertGrid(Fix):
         -------
         iris.cube.CubeList
         """
-
         for cube in cubes:
             self._fix_projection_coords(cube)
             self._fix_geographical_coords_lambert(cube)
