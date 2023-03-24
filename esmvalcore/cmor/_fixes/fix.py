@@ -226,8 +226,10 @@ class Fix:
                 pass
 
         for fixes_module in fixes_modules:
-            classes = inspect.getmembers(fixes_module, inspect.isclass)
-            classes = dict((name.lower(), value) for name, value in classes)
+            classes = dict(
+                (name.lower(), value) for (name, value) in
+                inspect.getmembers(fixes_module, inspect.isclass)
+            )
             for fix_name in (short_name, mip.lower(), 'allvars'):
                 try:
                     fixes.append(classes[fix_name](
