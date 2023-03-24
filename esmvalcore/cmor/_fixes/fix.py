@@ -5,14 +5,24 @@ import importlib
 import inspect
 import tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING, Optional
 
 from ..table import CMOR_TABLES
+
+if TYPE_CHECKING:
+    from ...config import Session
+    from ..table import VariableInfo
 
 
 class Fix:
     """Base class for dataset fixes."""
 
-    def __init__(self, vardef, extra_facets=None, auxiliary_data_dir=None):
+    def __init__(
+        self,
+        vardef: VariableInfo,
+        extra_facets: Optional[dict] = None,
+        session: Optional[Session] = None,
+    ):
         """Initialize fix object.
 
         Parameters
@@ -22,13 +32,16 @@ class Fix:
         extra_facets: dict, optional
             Extra facets are mainly used for data outside of the big projects
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
+        session: Session, optional
+            Current session which includes configuration and directory
+            information.
 
         """
         self.vardef = vardef
         if extra_facets is None:
             extra_facets = {}
         self.extra_facets = extra_facets
-        self.auxiliary_data_dir = auxiliary_data_dir
+        self.session = session
 
     def fix_file(
         self,
@@ -142,8 +155,8 @@ class Fix:
         dataset: str,
         mip: str,
         short_name: str,
-        extra_facets: dict | None = None,
-        auxiliary_data_dir: list[Path] | Path | None = None,
+        extra_facets: Optional[dict] = None,
+        session: Optional[Session] = None,
     ) -> list:
         """Get the fixes that must be applied for a given dataset.
 
@@ -171,8 +184,9 @@ class Fix:
         extra_facets: dict, optional
             Extra facets are mainly used for data outside of the big projects
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
-        auxiliary_data_dir: Path or list of Path, optional
-            One or more directories where additional auxiliary data is stored.
+        session: Session, optional
+            Current session which includes configuration and directory
+            information.
 
         Returns
         -------
@@ -217,7 +231,7 @@ class Fix:
             for fix_name in (short_name, mip.lower(), 'allvars'):
                 try:
                     fixes.append(classes[fix_name](
-                        vardef, extra_facets, auxiliary_data_dir
+                        vardef, extra_facets=extra_facets, session=session
                     ))
                 except KeyError:
                     pass
