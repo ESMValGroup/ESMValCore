@@ -742,7 +742,7 @@ def test_tas_scalar_height2m_already_present(cubes_2d):
     check_heightxm(cube, 2.0)
 
 
-def test_tas_dim_height2m_already_present(cubes_2d, monkeypatch):
+def test_tas_dim_height2m_already_present(cubes_2d):
     """Test fix."""
     fix = get_allvars_fix('Amon', 'tas')
     fix.extra_facets['ugrid'] = False
