@@ -1,4 +1,5 @@
 """Tests for the ICON on-the-fly CMORizer."""
+from pathlib import Path
 from unittest import mock
 
 import iris
@@ -14,6 +15,7 @@ from esmvalcore.cmor._fixes.icon._base_fixes import IconFix
 from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi, Siconc, Siconca
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
+from esmvalcore.config import CFG
 from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
 
@@ -89,7 +91,7 @@ def cubes_2d_lat_lon_grid():
     return CubeList([cube])
 
 
-def _get_fix(mip, short_name, fix_name):
+def _get_fix(mip, short_name, fix_name, session=None):
     """Load a fix from esmvalcore.cmor._fixes.icon.icon."""
     dataset = Dataset(
         project='ICON',
@@ -100,26 +102,26 @@ def _get_fix(mip, short_name, fix_name):
     extra_facets = get_extra_facets(dataset, ())
     vardef = get_var_info(project='ICON', mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.icon.icon, fix_name)
-    fix = cls(vardef, extra_facets=extra_facets)
+    fix = cls(vardef, extra_facets=extra_facets, session=session)
     return fix
 
 
-def get_fix(mip, short_name):
+def get_fix(mip, short_name, session=None):
     """Load a variable fix from esmvalcore.cmor._fixes.icon.icon."""
     fix_name = short_name[0].upper() + short_name[1:]
-    return _get_fix(mip, short_name, fix_name)
+    return _get_fix(mip, short_name, fix_name, session=session)
 
 
-def get_allvars_fix(mip, short_name):
+def get_allvars_fix(mip, short_name, session=None):
     """Load the AllVars fix from esmvalcore.cmor._fixes.icon.icon."""
-    return _get_fix(mip, short_name, 'AllVars')
+    return _get_fix(mip, short_name, 'AllVars', session=session)
 
 
-def fix_metadata(cubes, mip, short_name):
+def fix_metadata(cubes, mip, short_name, session=None):
     """Fix metadata of cubes."""
-    fix = get_fix(mip, short_name)
+    fix = get_fix(mip, short_name, session=session)
     cubes = fix.fix_metadata(cubes)
-    fix = get_allvars_fix(mip, short_name)
+    fix = get_allvars_fix(mip, short_name, session=session)
     cubes = fix.fix_metadata(cubes)
     return cubes
 
@@ -743,7 +745,7 @@ def test_tas_scalar_height2m_already_present(cubes_2d):
 def test_tas_dim_height2m_already_present(cubes_2d, monkeypatch):
     """Test fix."""
     fix = get_allvars_fix('Amon', 'tas')
-    monkeypatch.setitem(fix.extra_facets, 'ugrid', False)
+    fix.extra_facets['ugrid'] = False
     fixed_cubes = fix.fix_metadata(cubes_2d)
 
     cube = check_tas_metadata(fixed_cubes)
@@ -1075,22 +1077,40 @@ def test_add_coord_from_grid_fail_two_unnamed_dims(cubes_2d):
         fix._add_coord_from_grid_file(tas_cube, 'latitude')
 
 
+# Test get_horizontal_grid
+
+
+@mock.patch.object(IconFix, '_get_grid_from_facet', autospec=True)
 @mock.patch('esmvalcore.cmor._fixes.icon._base_fixes.requests', autospec=True)
-def test_get_horizontal_grid_cached_in_dict(mock_requests):
+def test_get_horizontal_grid_from_attr_cached_in_dict(
+    mock_requests,
+    mock_get_grid_from_facet,
+):
     """Test fix."""
     cube = Cube(0, attributes={'grid_file_uri': 'cached_grid_url.nc'})
     grid_cube = Cube(0)
     fix = get_allvars_fix('Amon', 'tas')
     fix._horizontal_grids['cached_grid_url.nc'] = grid_cube
+    fix._horizontal_grids['grid_from_facet.nc'] = mock.sentinel.wrong_grid
 
     grid = fix.get_horizontal_grid(cube)
+    assert len(fix._horizontal_grids) == 2
+    assert 'cached_grid_url.nc' in fix._horizontal_grids
+    assert 'grid_from_facet.nc' in fix._horizontal_grids  # has not been used
+    assert fix._horizontal_grids['cached_grid_url.nc'] == grid
     assert grid == grid_cube
     assert grid is not grid_cube
     assert mock_requests.mock_calls == []
+    mock_get_grid_from_facet.assert_not_called()
 
 
+@mock.patch.object(IconFix, '_get_grid_from_facet', autospec=True)
 @mock.patch('esmvalcore.cmor._fixes.icon._base_fixes.requests', autospec=True)
-def test_get_horizontal_grid_cached_in_file(mock_requests, tmp_path):
+def test_get_horizontal_grid_from_attr_cached_in_file(
+    mock_requests,
+    mock_get_grid_from_facet,
+    tmp_path,
+):
     """Test fix."""
     cube = Cube(0, attributes={
         'grid_file_uri': 'https://temporary.url/this/is/the/grid_file.nc'})
@@ -1107,10 +1127,17 @@ def test_get_horizontal_grid_cached_in_file(mock_requests, tmp_path):
     assert grid[0].var_name == 'grid'
     assert len(fix._horizontal_grids) == 1
     assert 'grid_file.nc' in fix._horizontal_grids
+    assert fix._horizontal_grids['grid_file.nc'] == grid
     assert mock_requests.mock_calls == []
+    mock_get_grid_from_facet.assert_not_called()
 
 
-def test_get_horizontal_grid_cache_file_too_old(tmp_path, monkeypatch):
+@mock.patch.object(IconFix, '_get_grid_from_facet', autospec=True)
+def test_get_horizontal_grid_from_attr_cache_file_too_old(
+    mock_get_grid_from_facet,
+    tmp_path,
+    monkeypatch,
+):
     """Test fix."""
     cube = Cube(0, attributes={'grid_file_uri': TEST_GRID_FILE_URI})
     fix = get_allvars_fix('Amon', 'tas')
@@ -1134,6 +1161,78 @@ def test_get_horizontal_grid_cache_file_too_old(tmp_path, monkeypatch):
     assert 'vertex_of_cell' in var_names
     assert len(fix._horizontal_grids) == 1
     assert TEST_GRID_FILE_NAME in fix._horizontal_grids
+    assert fix._horizontal_grids[TEST_GRID_FILE_NAME] == grid
+    mock_get_grid_from_facet.assert_not_called()
+
+
+@mock.patch.object(IconFix, '_get_grid_from_cube_attr', autospec=True)
+def test_get_horizontal_grid_from_facet_cached_in_dict(
+    mock_get_grid_from_cube_attr,
+):
+    """Test fix."""
+    # Make sure that grid specified by cube attribute is NOT used
+    cube = Cube(0, attributes={'grid_file_uri': 'cached_grid_url.nc'})
+    grid_cube = Cube(0)
+    fix = get_allvars_fix('Amon', 'tas')
+    fix.extra_facets['horizontal_grid'] = '/random/path/grid_from_facet.nc'
+    fix._horizontal_grids['cached_grid_url.nc'] = mock.sentinel.wrong_grid
+    fix._horizontal_grids['grid_from_facet.nc'] = grid_cube
+
+    grid = fix.get_horizontal_grid(cube)
+    assert len(fix._horizontal_grids) == 2
+    assert 'cached_grid_url.nc' in fix._horizontal_grids  # has not been used
+    assert 'grid_from_facet.nc' in fix._horizontal_grids
+    assert fix._horizontal_grids['grid_from_facet.nc'] == grid
+    assert grid == grid_cube
+    assert grid is not grid_cube
+    mock_get_grid_from_cube_attr.assert_not_called()
+
+
+@pytest.mark.parametrize('grid_path', ['{tmp_path}/grid.nc', 'grid.nc'])
+@mock.patch.object(IconFix, '_get_grid_from_cube_attr', autospec=True)
+def test_get_horizontal_grid_from_facet(
+    mock_get_grid_from_cube_attr,
+    grid_path,
+    tmp_path,
+):
+    """Test fix."""
+    session = CFG.start_session('my session')
+    session['auxiliary_data_dir'] = tmp_path
+
+    # Make sure that grid specified by cube attribute is NOT used
+    cube = Cube(0, attributes={'grid_file_uri': 'cached_grid_url.nc'})
+
+    # Save temporary grid file
+    grid_path = grid_path.format(tmp_path=tmp_path)
+    grid_cube = Cube(0, var_name='grid')
+    iris.save(grid_cube, tmp_path / 'grid.nc')
+
+    fix = get_allvars_fix('Amon', 'tas', session=session)
+    fix.extra_facets['horizontal_grid'] = grid_path
+    fix._horizontal_grids['cached_grid_url.nc'] = mock.sentinel.wrong_grid
+
+    grid = fix.get_horizontal_grid(cube)
+    assert isinstance(grid, CubeList)
+    assert len(grid) == 1
+    assert grid[0].var_name == 'grid'
+    assert len(fix._horizontal_grids) == 2
+    assert 'cached_grid_url.nc' in fix._horizontal_grids  # has not been used
+    assert 'grid.nc' in fix._horizontal_grids
+    assert fix._horizontal_grids['grid.nc'] == grid
+    mock_get_grid_from_cube_attr.assert_not_called()
+
+
+def test_get_horizontal_grid_from_facet_fail(tmp_path):
+    """Test fix."""
+    session = CFG.start_session('my session')
+    session['auxiliary_data_dir'] = tmp_path
+
+    cube = Cube(0)
+    fix = get_allvars_fix('Amon', 'tas', session=session)
+    fix.extra_facets['horizontal_grid'] = '/this/does/not/exist.nc'
+
+    with pytest.raises(FileNotFoundError):
+        fix.get_horizontal_grid(cube)
 
 
 # Test with single-dimension cubes
@@ -1415,7 +1514,7 @@ def test_get_grid_url_fail():
 # Test get_mesh
 
 
-def test_get_mesh_cached(monkeypatch):
+def test_get_mesh_cached_from_attr(monkeypatch):
     """Test fix."""
     cube = Cube(0, attributes={'grid_file_uri': TEST_GRID_FILE_URI})
     fix = get_allvars_fix('Amon', 'tas')
@@ -1426,10 +1525,47 @@ def test_get_mesh_cached(monkeypatch):
     fix._create_mesh.assert_not_called()
 
 
-def test_get_mesh_not_cached(monkeypatch):
+def test_get_mesh_not_cached_from_attr(monkeypatch):
     """Test fix."""
     cube = Cube(0, attributes={'grid_file_uri': TEST_GRID_FILE_URI})
     fix = get_allvars_fix('Amon', 'tas')
     monkeypatch.setattr(fix, '_create_mesh', mock.Mock())
     fix.get_mesh(cube)
     fix._create_mesh.assert_called_once_with(cube)
+
+
+def test_get_mesh_cached_from_facet(monkeypatch):
+    """Test fix."""
+    cube = Cube(0, attributes={'grid_file_uri': TEST_GRID_FILE_URI})
+    fix = get_allvars_fix('Amon', 'tas')
+    fix.extra_facets['horizontal_grid'] = '/path/to/grid_from_facet.nc'
+    monkeypatch.setattr(fix, '_create_mesh', mock.Mock())
+    fix._meshes[TEST_GRID_FILE_NAME] = mock.sentinel.wrong_mesh
+    fix._meshes['grid_from_facet.nc'] = mock.sentinel.mesh
+    mesh = fix.get_mesh(cube)
+    assert mesh == mock.sentinel.mesh
+    fix._create_mesh.assert_not_called()
+
+
+def test_get_mesh_not_cached_from_facet(monkeypatch):
+    """Test fix."""
+    cube = Cube(0, attributes={'grid_file_uri': TEST_GRID_FILE_URI})
+    fix = get_allvars_fix('Amon', 'tas')
+    fix.extra_facets['horizontal_grid'] = '/path/to/grid_from_facet.nc'
+    monkeypatch.setattr(fix, '_create_mesh', mock.Mock())
+    fix._meshes[TEST_GRID_FILE_NAME] = mock.sentinel.wrong_mesh
+    fix.get_mesh(cube)
+    fix._create_mesh.assert_called_once_with(cube)
+
+
+# Test _get_grid_path_from_facet
+
+
+def test_get_grid_path_from_facet():
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'tas')
+    fix.extra_facets['horizontal_grid'] = '/path/to/grid_R2B5.nc'
+    (grid_path, grid_name) = fix._get_grid_path_from_facet()
+    assert isinstance(grid_path, Path)
+    assert grid_path == Path('/', 'path', 'to', 'grid_R2B5.nc')
+    assert grid_name == 'grid_R2B5.nc'
