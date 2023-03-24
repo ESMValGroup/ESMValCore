@@ -232,6 +232,36 @@ class NativeDatasetFix(Fix):
         return coord
 
     @staticmethod
+    def fix_alt40_metadata(cube, coord=None):
+        """Fix metadata of alt40 coordinate (in-place).
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+            Input cube.
+        coord: str or iris.coords.Coord or None, optional (default: None)
+            Coordinate for which metadata will be fixed in-place. If ``None``,
+            assume the coordinate's name is `altitude`.
+
+        Returns
+        -------
+        iris.coords.AuxCoord or iris.coords.DimCoord
+            Fixed altitude coordinate. The coordinate is altered in-place; it
+            is just returned out of convenience for easy access.
+
+        """
+        if coord is None:
+            coord = cube.coord('altitude')
+        elif isinstance(coord, str):
+            coord = cube.coord(coord)
+        coord.var_name = 'alt40'
+        coord.standard_name = 'altitude'
+        coord.long_name = 'altitude'
+        coord.convert_units('m')
+        coord.attributes['positive'] = 'up'
+        return coord
+
+    @staticmethod
     def fix_height_metadata(cube, coord=None):
         """Fix metadata of height coordinate (in-place).
 

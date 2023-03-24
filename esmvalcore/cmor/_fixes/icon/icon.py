@@ -152,46 +152,59 @@ class AllVars(IconFix):
             f"'{self.vardef.short_name}', cube and other cubes in file do not "
             f"contain it")
 
+    def _get_z_coord(self, cubes, points_name, bounds_name=None):
+        """Get z-coordinate without metadata (reversed)."""
+        points_cube = iris.util.reverse(
+            cubes.extract_cube(NameConstraint(var_name=points_name)),
+            'height',
+        )
+        points = points_cube.core_data()
+
+        # Get bounds if possible
+        if bounds_name is not None:
+            bounds_cube = iris.util.reverse(
+                cubes.extract_cube(NameConstraint(var_name=bounds_name)),
+                'height',
+            )
+            bounds = bounds_cube.core_data()
+            bounds = da.stack((bounds[:, :-1], bounds[:, 1:]), axis=-1)
+        else:
+            bounds = None
+
+        z_coord = AuxCoord(
+            points,
+            bounds=bounds,
+            units=points_cube.units,
+        )
+        return z_coord
+
     def _fix_height(self, cube, cubes):
         """Fix height coordinate of cube."""
         # Reverse entire cube along height axis so that index 0 is surface
         # level
         cube = iris.util.reverse(cube, 'height')
 
-        # Add air_pressure coordinate if possible
-        # (make sure to also reverse pressure cubes)
+        # If possible, extract reversed air_pressure coordinate from list of
+        # cubes and add it to cube
         if cubes.extract(NameConstraint(var_name='pfull')):
-            plev_points_cube = iris.util.reverse(
-                cubes.extract_cube(NameConstraint(var_name='pfull')),
-                'height',
-            )
-            air_pressure_points = plev_points_cube.core_data()
-
-            # Get bounds from half levels and reshape array
             if cubes.extract(NameConstraint(var_name='phalf')):
-                plev_bounds_cube = iris.util.reverse(
-                    cubes.extract_cube(NameConstraint(var_name='phalf')),
-                    'height',
-                )
-                air_pressure_bounds = plev_bounds_cube.core_data()
-                air_pressure_bounds = da.stack(
-                    (air_pressure_bounds[:, :-1], air_pressure_bounds[:, 1:]),
-                    axis=-1)
+                phalf = 'phalf'
             else:
-                air_pressure_bounds = None
+                phalf = None
+            plev_coord = self._get_z_coord(cubes, 'pfull', bounds_name=phalf)
+            self.fix_plev_metadata(cube, plev_coord)
+            cube.add_aux_coord(plev_coord, np.arange(cube.ndim))
 
-            # Setup air pressure coordinate with correct metadata and add to
-            # cube
-            air_pressure_coord = AuxCoord(
-                air_pressure_points,
-                bounds=air_pressure_bounds,
-                var_name='plev',
-                standard_name='air_pressure',
-                long_name='pressure',
-                units=plev_points_cube.units,
-                attributes={'positive': 'down'},
-            )
-            cube.add_aux_coord(air_pressure_coord, np.arange(cube.ndim))
+        # If possible, extract reversed altitude coordinate from list of cubes
+        # and add it to cube
+        if cubes.extract(NameConstraint(var_name='zg')):
+            if cubes.extract(NameConstraint(var_name='zghalf')):
+                zghalf = 'zghalf'
+            else:
+                zghalf = None
+            alt_coord = self._get_z_coord(cubes, 'zg', bounds_name=zghalf)
+            self.fix_alt40_metadata(cube, alt_coord)
+            cube.add_aux_coord(alt_coord, np.arange(cube.ndim)[-2:])
 
         # Fix metadata
         z_coord = cube.coord('height')
