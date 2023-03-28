@@ -24,6 +24,7 @@ class AllVars(IconFix):
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
+        cubes = self.add_additional_cubes(cubes)
         cube = self.get_cube(cubes)
 
         # Fix time
@@ -167,7 +168,9 @@ class AllVars(IconFix):
                 'height',
             )
             bounds = bounds_cube.core_data()
-            bounds = da.stack((bounds[:, :-1], bounds[:, 1:]), axis=-1)
+            bounds = da.stack(
+                (bounds[..., :-1, :], bounds[..., 1:, :]), axis=-1
+            )
         else:
             bounds = None
 
@@ -186,6 +189,7 @@ class AllVars(IconFix):
 
         # If possible, extract reversed air_pressure coordinate from list of
         # cubes and add it to cube
+        # Note: pfull/phalf have dimensions (time, height, spatial_dim)
         if cubes.extract(NameConstraint(var_name='pfull')):
             if cubes.extract(NameConstraint(var_name='phalf')):
                 phalf = 'phalf'
@@ -197,6 +201,7 @@ class AllVars(IconFix):
 
         # If possible, extract reversed altitude coordinate from list of cubes
         # and add it to cube
+        # Note: zg/zghalf have dimensions (height, spatial_dim)
         if cubes.extract(NameConstraint(var_name='zg')):
             if cubes.extract(NameConstraint(var_name='zghalf')):
                 zghalf = 'zghalf'
@@ -204,6 +209,9 @@ class AllVars(IconFix):
                 zghalf = None
             alt_coord = self._get_z_coord(cubes, 'zg', bounds_name=zghalf)
             self.fix_alt40_metadata(cube, alt_coord)
+
+            # Altitude coordinate only spans height and spatial dimensions (no
+            # time) -> these are always the last two dimensions in the cube
             cube.add_aux_coord(alt_coord, np.arange(cube.ndim)[-2:])
 
         # Fix metadata
