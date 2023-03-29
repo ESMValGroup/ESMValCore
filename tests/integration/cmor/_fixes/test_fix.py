@@ -13,12 +13,13 @@ from esmvalcore.cmor._fixes.cmip5.canesm2 import FgCo2
 from esmvalcore.cmor._fixes.cmip5.cesm1_bgc import Gpp
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Omon, Tos
 from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.cnrm_aladin63 import (
-    Tas)
-from esmvalcore.cmor._fixes.cordex.cordex_fixes import AllVars
+    Tas, )
+from esmvalcore.cmor._fixes.cordex.cordex_fixes import AllVars, LambertGrid
 from esmvalcore.cmor.fix import Fix
 
 
 class TestFix(unittest.TestCase):
+
     def setUp(self):
         """Set up temp folder."""
         self.temp_folder = tempfile.mkdtemp()
@@ -37,23 +38,21 @@ class TestFix(unittest.TestCase):
 
     def test_get_fix_cordex(self):
         self.assertListEqual(
-            Fix.get_fixes(
-                'CORDEX',
-                'CNRM-ALADIN63',
-                'Amon',
-                'tas',
-                extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'}),
+            Fix.get_fixes('CORDEX',
+                          'CNRM-ALADIN63',
+                          'Amon',
+                          'tas',
+                          extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'}),
             [Tas(None), AllVars(None)])
 
     def test_get_grid_fix_cordex(self):
         self.assertListEqual(
-            Fix.get_fixes(
-                'CORDEX',
-                'CNRM-ALADIN53',
-                'Amon',
-                'tas',
-                extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'}),
-            [AllVars(None)])
+            Fix.get_fixes('CORDEX',
+                          'CNRM-ALADIN53',
+                          'Amon',
+                          'tas',
+                          extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'}),
+            [LambertGrid(None), AllVars(None)])
 
     def test_get_fixes_with_replace(self):
         self.assertListEqual(Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'ch4'),
@@ -76,17 +75,16 @@ class TestFix(unittest.TestCase):
             Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'BAD_VAR'), [])
 
     def test_get_fix_only_mip(self):
-        self.assertListEqual(
-            Fix.get_fixes('CMIP6', 'CESM2', 'Omon', 'thetao'), [Omon(None)])
+        self.assertListEqual(Fix.get_fixes('CMIP6', 'CESM2', 'Omon', 'thetao'),
+                             [Omon(None)])
 
     def test_get_fix_only_mip_case_insensitive(self):
-        self.assertListEqual(
-            Fix.get_fixes('CMIP6', 'CESM2', 'omOn', 'thetao'), [Omon(None)])
+        self.assertListEqual(Fix.get_fixes('CMIP6', 'CESM2', 'omOn', 'thetao'),
+                             [Omon(None)])
 
     def test_get_fix_mip_and_var(self):
-        self.assertListEqual(
-            Fix.get_fixes('CMIP6', 'CESM2', 'Omon', 'tos'),
-            [Tos(None), Omon(None)])
+        self.assertListEqual(Fix.get_fixes('CMIP6', 'CESM2', 'Omon', 'tos'),
+                             [Tos(None), Omon(None)])
 
     def test_fix_metadata(self):
         cube = Cube([0])
