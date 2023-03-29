@@ -1,13 +1,13 @@
 """On-the-fly CMORizer for ICON."""
 
 import logging
-from datetime import datetime
 
 import cf_units
 import dask.array as da
 import iris
 import iris.util
 import numpy as np
+import pandas as pd
 from iris import NameConstraint
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import CubeList
@@ -270,8 +270,18 @@ class AllVars(IconFix):
         new_t_unit = cf_units.Unit('days since 1850-01-01',
                                    calendar='proleptic_gregorian')
 
-        new_datetimes = [datetime.strptime(str(dt), '%Y%m%d.%f') for dt in
-                         time_coord.points]
+        # new routine to convert time of daily and hourly data
+        # conversion of time into string values
+        time_str = [str(x) for x in time_coord.points]
+        year_month_day_str = pd.Series(time_str).str.extract(
+            r'(\d*)\.?\d*', expand=False
+        )
+        year_month_day = pd.to_datetime(year_month_day_str, format='%Y%m%d')
+        day_float_str = pd.Series(time_str).str.extract(
+            r'\d*(\.\d*)', expand=False
+        ).fillna('0.0')
+        day_float = pd.to_timedelta(day_float_str.astype(float), unit='D')
+        new_datetimes = (year_month_day + day_float).dt.to_pydatetime()
         new_dt_points = date2num(np.array(new_datetimes), new_t_unit)
 
         time_coord.points = new_dt_points
