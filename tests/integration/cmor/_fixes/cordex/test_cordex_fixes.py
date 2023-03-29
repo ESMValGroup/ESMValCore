@@ -11,6 +11,7 @@ from iris.fileformats.pp import EARTH_RADIUS
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
     AllVars,
     CLMcomCCLM4817,
+    LambertGrid,
     MOHCHadREM3GA705,
     TimeLongName,
     _transform_points,
@@ -259,15 +260,8 @@ def test_lambert_grid_fix_error(cordex_lambert_cubes):
                       'dataset': 'DATASET',
                       'driver': 'DRIVER'
                   })
-    # Mess up both.
+    # Mess up geographical coords.
     cube = cordex_lambert_cubes[0]
-
-    proj_x = cube.coord(var_name="x")
-    proj_y = cube.coord(var_name="y")
-    proj_x = proj_x.copy(proj_x.points + SPAN // 2)
-    proj_y = proj_x.copy(proj_x.points + SPAN // 2)
-    cube.replace_coord(proj_x)
-    cube.replace_coord(proj_y)
 
     lon = cube.coord(var_name="lon")
     lat = cube.coord(var_name="lat")
@@ -281,6 +275,33 @@ def test_lambert_grid_fix_error(cordex_lambert_cubes):
     with pytest.raises(RecipeError) as exc:
         fix.fix_metadata(cordex_lambert_cubes)
     assert msg == exc.value.message
+
+
+def test_lambert_grid_fix(cordex_lambert_cubes):
+    fix = LambertGrid(
+        vardef=None,
+        extra_facets={
+            'domain': 'EUR-11',
+            'dataset': 'DATASET',
+            'driver': 'DRIVER',
+        },
+    )
+    # Mess up projection coordinates.
+    cube = cordex_lambert_cubes[0]
+
+    proj_x = cube.coord(var_name="x")
+    proj_y = cube.coord(var_name="y")
+    proj_x = proj_x.copy(proj_x.points + SPAN // 2)
+    proj_y = proj_x.copy(proj_x.points + SPAN // 2)
+    cube.replace_coord(proj_x)
+    cube.replace_coord(proj_y)
+
+    out_cubes = fix.fix_metadata(cordex_lambert_cubes)
+    assert cordex_lambert_cubes is out_cubes
+
+    for cube in out_cubes:
+        for coord in ['x', 'y', 'lat', 'lon']:
+            assert cube.coord(var_name=coord).has_bounds()
 
 
 def test_wrong_coord_system(cubes):
