@@ -1,4 +1,6 @@
 """Tests for general CORDEX fixes."""
+import logging
+
 import cordex as cx
 import iris
 import numpy as np
@@ -11,6 +13,7 @@ from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
     CLMcomCCLM4817,
     MOHCHadREM3GA705,
     TimeLongName,
+    _transform_points,
 )
 from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.exceptions import RecipeError
@@ -105,12 +108,6 @@ def cordex_lambert_cubes():
         false_northing=0.0,
         secant_latitudes=(49.5, ))
     geog_system = iris.coord_systems.GeogCS(EARTH_RADIUS).as_cartopy_crs()
-    fix = AllVars(vardef=None,
-                  extra_facets={
-                      'domain': 'EUR-11',
-                      'dataset': 'DATASET',
-                      'driver': 'DRIVER'
-                  })
 
     time = iris.coords.DimCoord(np.arange(0, 3),
                                 var_name='time',
@@ -129,10 +126,10 @@ def cordex_lambert_cubes():
                                   units='m')
 
     gx, gy = np.meshgrid(ax_pts, ax_pts)
-    lonlat = fix._transform_points(crs_from=coord_system.as_cartopy_crs(),
-                                   crs_to=geog_system,
-                                   x_data=gx,
-                                   y_data=gy)
+    lonlat = _transform_points(crs_from=coord_system.as_cartopy_crs(),
+                               crs_to=geog_system,
+                               x_data=gx,
+                               y_data=gy)
 
     lon = iris.coords.AuxCoord(lonlat[..., 0],
                                var_name='lon',
@@ -227,7 +224,8 @@ def test_rotated_grid_fix_error(cordex_cubes):
     assert msg == exc.value.message
 
 
-def test_lambert_grid_fix(cordex_lambert_cubes):
+def test_check_lambert_domain(cordex_lambert_cubes, caplog):
+    caplog.set_level(logging.DEBUG)
     cmor_table = CMOR_TABLES["CORDEX"]
     mip = "mon"
     short_name = "tas"
@@ -238,23 +236,16 @@ def test_lambert_grid_fix(cordex_lambert_cubes):
                       'dataset': 'DATASET',
                       'driver': 'DRIVER'
                   })
+    domain_msg = ('Standard EUR-11 domain and data domain for dataset DATASET '
+                  'and driver DRIVER present differences of 0.0 %')
 
-    # Mess up proj coords.
-    cube = cordex_lambert_cubes[0]
-    proj_x = cube.coord(var_name="x")
-    proj_y = cube.coord(var_name="y")
-    proj_x = proj_x.copy(proj_x.points + SPAN // 2)
-    proj_y = proj_x.copy(proj_x.points + SPAN // 2)
-    cube.replace_coord(proj_x)
-    cube.replace_coord(proj_y)
+    fixes_msg = ('Further coordinate fixes for Lambert Conformal Conic '
+                 'coordinate systems are applied at dataset level.')
 
     out_cubes = fix.fix_metadata(cordex_lambert_cubes)
     assert cordex_lambert_cubes is out_cubes
-    for out_cube, input_cube in zip(out_cubes, cordex_lambert_cubes):
-        for coord in ['x', 'y', 'lat', 'lon']:
-            np.testing.assert_array_equal(
-                out_cube.coord(var_name=coord).points,
-                input_cube.coord(var_name=coord).points)
+    assert domain_msg in caplog.text
+    assert fixes_msg in caplog.text
 
 
 def test_lambert_grid_fix_error(cordex_lambert_cubes):

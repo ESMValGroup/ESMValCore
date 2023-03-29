@@ -47,7 +47,8 @@ def _transform_points(x_data, y_data, crs_from, crs_to):
     res[..., 0], res[..., 1] = Transformer.from_crs(
         crs_from=crs_from,
         crs_to=crs_to,
-        always_xy=True,).transform(x_data, y_data, errcheck=True)
+        always_xy=True,
+    ).transform(x_data, y_data, errcheck=True)
     return res
 
 
@@ -330,9 +331,8 @@ class AllVars(Fix):
             elif isinstance(coord_system, LambertConformal):
                 self._check_geographical_domain(cube, domain_bounds)
                 logger.debug(
-                    "Further coordinate fixes for Lambert Conformal Conic"
-                    "coordinate systems are applied at dataset level."
-                )
+                    "Further coordinate fixes for Lambert Conformal Conic "
+                    "coordinate systems are applied at dataset level.")
             else:
                 raise RecipeError(
                     f"Coordinate system {coord_system.grid_mapping_name} "
