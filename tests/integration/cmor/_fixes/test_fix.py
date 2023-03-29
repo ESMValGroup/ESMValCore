@@ -43,7 +43,8 @@ class TestFix(unittest.TestCase):
                           'Amon',
                           'tas',
                           extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'}),
-            [Tas(None), AllVars(None)])
+            [Tas(None), LambertGrid(None),
+             AllVars(None)])
 
     def test_get_grid_fix_cordex(self):
         self.assertListEqual(
