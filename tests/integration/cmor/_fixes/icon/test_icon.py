@@ -194,18 +194,20 @@ def check_time(cube):
     assert time.attributes == {}
 
 
-def check_height(cube, plev_has_bounds=True):
-    """Check height coordinate of cube."""
+def check_model_level_metadata(cube):
+    """Check metadata of model_level coordinate."""
     assert cube.coords('model level number', dim_coords=True)
     height = cube.coord('model level number', dim_coords=True)
     assert height.var_name == 'model_level'
     assert height.standard_name is None
     assert height.long_name == 'model level number'
     assert height.units == 'no unit'
-    np.testing.assert_array_equal(height.points, np.arange(47))
-    assert height.bounds is None
     assert height.attributes == {'positive': 'up'}
+    return height
 
+
+def check_air_pressure_metadata(cube):
+    """Check metadata of air_pressure coordinate."""
     assert cube.coords('air_pressure', dim_coords=False)
     plev = cube.coord('air_pressure', dim_coords=False)
     assert plev.var_name == 'plev'
@@ -213,6 +215,16 @@ def check_height(cube, plev_has_bounds=True):
     assert plev.long_name == 'pressure'
     assert plev.units == 'Pa'
     assert plev.attributes == {'positive': 'down'}
+    return plev
+
+
+def check_height(cube, plev_has_bounds=True):
+    """Check height coordinate of cube."""
+    height = check_model_level_metadata(cube)
+    np.testing.assert_array_equal(height.points, np.arange(47))
+    assert height.bounds is None
+
+    plev = check_air_pressure_metadata(cube)
     assert cube.coord_dims('air_pressure') == (0, 1, 2)
 
     np.testing.assert_allclose(
@@ -1549,8 +1561,6 @@ def test_add_additional_cubes_fail(path, facet, tmp_path):
 @pytest.mark.parametrize('bounds', [True, False])
 def test_fix_height_plev(bounds, simple_unstructured_cube):
     """Test fix."""
-    fix = get_allvars_fix('Amon', 'ta')
-
     cube = simple_unstructured_cube[:, 1:, :]
     pfull_cube = simple_unstructured_cube[:, 1:, :]
     pfull_cube.var_name = 'pfull'
@@ -1561,42 +1571,62 @@ def test_fix_height_plev(bounds, simple_unstructured_cube):
         phalf_cube.var_name = 'phalf'
         phalf_cube.units = 'Pa'
         cubes.append(phalf_cube)
-
-    print(cube)
-    print(cube.coord('height'))
-    print(cube.data)
+    fix = get_allvars_fix('Amon', 'ta')
 
     fixed_cube = fix._fix_height(cube, cubes)
 
     expected_data = [[[4.0, 5.0], [2.0, 3.0]]]
     np.testing.assert_allclose(fixed_cube.data, expected_data)
 
-    height = fixed_cube.coord('model level number')
-    assert height.var_name == 'model_level'
-    assert height.standard_name is None
-    assert height.long_name == 'model level number'
-    assert height.units == 'no unit'
+    height = check_model_level_metadata(fixed_cube)
     np.testing.assert_array_equal(height.points, [0, 1])
     assert height.bounds is None
-    assert height.attributes == {'positive': 'up'}
 
-    plev = fixed_cube.coord('air_pressure', dim_coords=False)
-    assert plev.var_name == 'plev'
-    assert plev.standard_name == 'air_pressure'
-    assert plev.long_name == 'pressure'
-    assert plev.units == 'Pa'
-    assert plev.attributes == {'positive': 'down'}
+    plev = check_air_pressure_metadata(fixed_cube)
     assert fixed_cube.coord_dims('air_pressure') == (0, 1, 2)
     np.testing.assert_allclose(plev.points, expected_data)
     if bounds:
-        np.testing.assert_allclose(
-            plev.bounds,
-            [[[2.0, 3.0],
-              [4.0, 5.0]]],
-            [[[[4.0, 2.0],
-               [5.0, 3.0]],
-              [[2.0, 0.0],
-               [3.0, 1.0]]]],
-        )
+        expected_bnds = [[[[4.0, 2.0], [5.0, 3.0]], [[2.0, 0.0], [3.0, 1.0]]]]
+        np.testing.assert_allclose(plev.bounds, expected_bnds)
     else:
         assert plev.bounds is None
+
+
+@pytest.mark.parametrize('bounds', [True, False])
+def test_fix_height_alt40(bounds, simple_unstructured_cube):
+    """Test fix."""
+    cube = simple_unstructured_cube[:, 1:, :]
+    zg_cube = simple_unstructured_cube[0, 1:, :]
+    zg_cube.var_name = 'zg'
+    zg_cube.units = 'm'
+    cubes = CubeList([cube, zg_cube])
+    if bounds:
+        zghalf_cube = simple_unstructured_cube[0, :, :]
+        zghalf_cube.var_name = 'zghalf'
+        zghalf_cube.units = 'm'
+        cubes.append(zghalf_cube)
+    fix = get_allvars_fix('Amon', 'ta')
+
+    fixed_cube = fix._fix_height(cube, cubes)
+
+    expected_data = [[[4.0, 5.0], [2.0, 3.0]]]
+    np.testing.assert_allclose(fixed_cube.data, expected_data)
+
+    height = check_model_level_metadata(fixed_cube)
+    np.testing.assert_array_equal(height.points, [0, 1])
+    assert height.bounds is None
+
+    assert fixed_cube.coords('altitude', dim_coords=False)
+    alt40 = fixed_cube.coord('altitude', dim_coords=False)
+    assert alt40.var_name == 'alt40'
+    assert alt40.standard_name == 'altitude'
+    assert alt40.long_name == 'altitude'
+    assert alt40.units == 'm'
+    assert alt40.attributes == {'positive': 'up'}
+    assert fixed_cube.coord_dims('altitude') == (1, 2)
+    np.testing.assert_allclose(alt40.points, expected_data[0])
+    if bounds:
+        expected_bnds = [[[4.0, 2.0], [5.0, 3.0]], [[2.0, 0.0], [3.0, 1.0]]]
+        np.testing.assert_allclose(alt40.bounds, expected_bnds)
+    else:
+        assert alt40.bounds is None
