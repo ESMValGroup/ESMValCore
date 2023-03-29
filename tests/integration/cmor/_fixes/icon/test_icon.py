@@ -1,4 +1,5 @@
 """Tests for the ICON on-the-fly CMORizer."""
+from datetime import datetime
 from unittest import mock
 
 import iris
@@ -1337,6 +1338,21 @@ def test_invalid_time_units(cubes_2d):
     with pytest.raises(ValueError, match=msg):
         fix.fix_metadata(cubes_2d)
 
+# Test fix with hourly data
+
+
+def test_hourly_data(cubes_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'tas')
+    for cube in cubes_2d:
+        cube.coord('time').points = [20220314.1]
+
+    fixed_cubes = fix.fix_metadata(cubes_2d)
+
+    cube = check_tas_metadata(fixed_cubes)
+    date = cube.coord('time').units.num2date(cube.coord('time').points)
+    np.testing.assert_array_equal(date, [datetime(2022, 3, 14, 2, 24)])
+    assert cube.coord('time').bounds is None
 
 # Test mesh creation raises warning because bounds do not match vertices
 
