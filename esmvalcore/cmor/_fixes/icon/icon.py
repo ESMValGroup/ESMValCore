@@ -249,18 +249,18 @@ class AllVars(IconFix):
         if not cube.coords('time'):
             cube = self._add_time(cube, cubes)
 
-        # Fix metadata and add bounds
+        # Fix metadata
         time_coord = self.fix_time_metadata(cube)
-        self.guess_coord_bounds(cube, time_coord)
         if 'invalid_units' not in time_coord.attributes:
+            self.guess_coord_bounds(cube, time_coord)
             return cube
 
         # If necessary, convert invalid time units of the form "day as
         # %Y%m%d.%f" to CF format (e.g., "days since 1850-01-01")
-        # Notes:
-        # - It might be necessary to expand this to other time formats in the
-        #   raw file.
-        # - This has not been tested with sub-daily data
+        # ICON data has no time bounds, but to make sure we remove the bounds
+        # here (they will be added after converting the time points to the
+        # correct units)
+        time_coord.bounds = None
         time_format = 'day as %Y%m%d.%f'
         t_unit = time_coord.attributes.pop('invalid_units')
         if t_unit != time_format:
@@ -286,6 +286,7 @@ class AllVars(IconFix):
 
         time_coord.points = new_dt_points
         time_coord.units = new_t_unit
+        self.guess_coord_bounds(cube, time_coord)
 
         return cube
 
