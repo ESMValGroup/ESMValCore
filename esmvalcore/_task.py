@@ -276,7 +276,7 @@ class BaseTask:
         """Return a mapping of product attributes."""
         return {
             product.filename: product.attributes
-            for product in self.products
+            for product in sorted(self.products)
         }
 
     def print_ancestors(self):

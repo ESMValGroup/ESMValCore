@@ -53,9 +53,12 @@ def _load_extra_facets(project, extra_facets_dir):
     return config
 
 
-def get_extra_facets(project, dataset, mip, short_name, extra_facets_dir):
+def get_extra_facets(dataset, extra_facets_dir):
     """Read configuration files with additional variable information."""
-    project_details = _load_extra_facets(project, extra_facets_dir)
+    project_details = _load_extra_facets(
+        dataset.facets['project'],
+        extra_facets_dir,
+    )
 
     def pattern_filter(patterns, name):
         """Get the subset of the list `patterns` that `name` matches.
@@ -75,10 +78,10 @@ def get_extra_facets(project, dataset, mip, short_name, extra_facets_dir):
         return [pat for pat in patterns if fnmatch.fnmatchcase(name, pat)]
 
     extra_facets = {}
-    for dataset_ in pattern_filter(project_details, dataset):
-        for mip_ in pattern_filter(project_details[dataset_], mip):
+    for dataset_ in pattern_filter(project_details, dataset['dataset']):
+        for mip_ in pattern_filter(project_details[dataset_], dataset['mip']):
             for var in pattern_filter(project_details[dataset_][mip_],
-                                      short_name):
+                                      dataset['short_name']):
                 facets = project_details[dataset_][mip_][var]
                 extra_facets.update(facets)
 
@@ -97,7 +100,15 @@ def load_config_developer(cfg_file):
         cfg['obs4MIPs'] = cfg.pop('obs4mips')
 
     for project, settings in cfg.items():
+        for site, drs in settings['input_dir'].items():
+            # Since v2.8, 'version' can be used instead of 'latestversion'
+            if isinstance(drs, list):
+                drs = [d.replace('{latestversion}', '{version}') for d in drs]
+            else:
+                drs = drs.replace('{latestversion}', '{version}')
+            settings['input_dir'][site] = drs
         CFG[project] = settings
+
     read_cmor_tables(cfg_file)
 
 

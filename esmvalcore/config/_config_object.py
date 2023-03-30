@@ -13,7 +13,11 @@ import esmvalcore
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
-from ._config_validators import _validators
+from ._config_validators import (
+    _deprecated_options_defaults,
+    _deprecators,
+    _validators,
+)
 from ._validated_config import ValidatedConfig
 
 URL = ('https://docs.esmvaltool.org/projects/'
@@ -28,6 +32,8 @@ class Config(ValidatedConfig):
     """
 
     _validate = _validators
+    _deprecate = _deprecators
+    _deprecated_defaults = _deprecated_options_defaults
     _warn_if_missing = (
         ('drs', URL),
         ('rootpath', URL),
@@ -75,13 +81,13 @@ class Config(ValidatedConfig):
 
         mapping = _read_config_file(filename)
         # Add defaults that are not available in esmvalcore/config-user.yml
+        mapping['check_level'] = CheckLevels.DEFAULT
         mapping['config_file'] = filename
         mapping['diagnostics'] = None
         mapping['extra_facets_dir'] = tuple()
-        mapping['resume_from'] = []
-        mapping['check_level'] = CheckLevels.DEFAULT
         mapping['max_datasets'] = None
         mapping['max_years'] = None
+        mapping['resume_from'] = []
         mapping['run_diagnostic'] = True
         mapping['skip_nonexistent'] = False
 
@@ -90,8 +96,8 @@ class Config(ValidatedConfig):
         return new
 
     def load_from_file(
-            self,
-            filename: Optional[Union[os.PathLike, str]] = None,
+        self,
+        filename: Optional[Union[os.PathLike, str]] = None,
     ) -> None:
         """Load user configuration from the given file."""
         if filename is None:
@@ -144,6 +150,8 @@ class Session(ValidatedConfig):
     """
 
     _validate = _validators
+    _deprecate = _deprecators
+    _deprecated_defaults = _deprecated_options_defaults
 
     relative_preproc_dir = Path('preproc')
     relative_work_dir = Path('work')
@@ -151,6 +159,7 @@ class Session(ValidatedConfig):
     relative_run_dir = Path('run')
     relative_main_log = Path('run', 'main_log.txt')
     relative_main_log_debug = Path('run', 'main_log_debug.txt')
+    _relative_fixed_file_dir = Path('preproc', 'fixed_files')
 
     def __init__(self, config: dict, name: str = 'session'):
         super().__init__(config)
@@ -206,6 +215,11 @@ class Session(ValidatedConfig):
         """Return main log debug file."""
         return self.session_dir / self.relative_main_log_debug
 
+    @property
+    def _fixed_file_dir(self):
+        """Return fixed file directory."""
+        return self.session_dir / self._relative_fixed_file_dir
+
     def to_config_user(self) -> dict:
         """Turn the `Session` object into a recipe-compatible dict.
 
@@ -220,7 +234,8 @@ class Session(ValidatedConfig):
             "scheduled for removal in version 2.9.0. ",
             ESMValCoreDeprecationWarning,
         )
-        dct = self.copy()
+        dct = self._deprecated_defaults.copy()
+        dct.update(self)
         dct['run_dir'] = self.run_dir
         dct['work_dir'] = self.work_dir
         dct['preproc_dir'] = self.preproc_dir

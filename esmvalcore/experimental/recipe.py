@@ -9,7 +9,7 @@ from typing import Dict, Optional
 
 import yaml
 
-from esmvalcore._recipe import Recipe as RecipeEngine
+from esmvalcore._recipe.recipe import Recipe as RecipeEngine
 from esmvalcore.config import CFG, Session
 
 from ._logging import log_to_dir
@@ -91,12 +91,10 @@ class Recipe():
         recipe : :obj:`esmvalcore._recipe.Recipe`
             Return an instance of the Recipe
         """
-        config_user = session.to_config_user()
-
-        logger.info(pprint.pformat(config_user))
+        logger.info(pprint.pformat(session))
 
         return RecipeEngine(raw_recipe=self.data,
-                            config_user=config_user,
+                            session=session,
                             recipe_file=self.path)
 
     def run(

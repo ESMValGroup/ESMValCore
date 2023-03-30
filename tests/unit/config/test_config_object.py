@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from esmvalcore.config import Config, _config_object
+from esmvalcore.config import Config, Session, _config_object
 from esmvalcore.exceptions import InvalidConfigParameter
 
 
@@ -70,6 +70,12 @@ def test_load_from_file(monkeypatch):
     assert config
 
 
+def test_config_key_error():
+    config = Config()
+    with pytest.raises(KeyError):
+        config['invalid_key']
+
+
 def test_session():
     config = Config({'output_dir': 'config'})
 
@@ -78,3 +84,9 @@ def test_session():
 
     session['output_dir'] = 'session'
     assert session != config
+
+
+def test_session_key_error():
+    session = Session({})
+    with pytest.raises(KeyError):
+        session['invalid_key']

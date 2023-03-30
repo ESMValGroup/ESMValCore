@@ -1,9 +1,10 @@
 import os
+from pathlib import Path
 
 import iris
 import pytest
 
-from esmvalcore import _data_finder
+import esmvalcore.local
 from esmvalcore.config import CFG, _config
 from esmvalcore.config._config_object import CFG_DEFAULT
 
@@ -15,11 +16,14 @@ def session(tmp_path, monkeypatch):
     session.update(CFG_DEFAULT)
     session['output_dir'] = tmp_path / 'esmvaltool_output'
 
-    # The patched_data_finder fixture does not return the correct input
+    # The patched_datafinder fixture does not return the correct input
     # directory structure, so make sure it is set to flat for every project
-    session['drs'] = {}
+    monkeypatch.setitem(CFG, 'drs', {})
     for project in _config.CFG:
         monkeypatch.setitem(_config.CFG[project]['input_dir'], 'default', '/')
+    # The patched datafinder fixture does not return any facets, so automatic
+    # supplementary definition does not work with it.
+    session['use_legacy_supplementaries'] = True
     return session
 
 
@@ -36,8 +40,8 @@ def create_test_file(filename, tracking_id=None):
     iris.save(cube, filename)
 
 
-def _get_filenames(root_path, filenames, tracking_id):
-    filename = filenames[0]
+def _get_filenames(root_path, filename, tracking_id):
+    filename = Path(filename).name
     filename = str(root_path / 'input' / filename)
     filenames = []
     if filename.endswith('[_.]*nc'):
@@ -63,7 +67,6 @@ def _get_filenames(root_path, filenames, tracking_id):
 
 @pytest.fixture
 def patched_datafinder(tmp_path, monkeypatch):
-
     def tracking_ids(i=0):
         while True:
             yield i
@@ -71,19 +74,14 @@ def patched_datafinder(tmp_path, monkeypatch):
 
     tracking_id = tracking_ids()
 
-    def find_files(_, filenames):
-        # Any occurrence of [something] in filename should have
-        # been replaced before this function is called.
-        for filename in filenames:
-            assert '{' not in filename
-        return _get_filenames(tmp_path, filenames, tracking_id)
+    def glob(file_glob):
+        return _get_filenames(tmp_path, file_glob, tracking_id)
 
-    monkeypatch.setattr(_data_finder, 'find_files', find_files)
+    monkeypatch.setattr(esmvalcore.local, 'glob', glob)
 
 
 @pytest.fixture
 def patched_failing_datafinder(tmp_path, monkeypatch):
-
     def tracking_ids(i=0):
         while True:
             yield i
@@ -91,22 +89,16 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
 
     tracking_id = tracking_ids()
 
-    def find_files(_, filenames):
-        # Any occurrence of [something] in filename should have
-        # been replaced before this function is called.
-        for filename in filenames:
-            assert '{' not in filename
-
+    def glob(filename):
         # Fail for specified fx variables
-        for filename in filenames:
-            if 'fx_' in filename:
-                return []
-            if 'sftlf' in filename:
-                return []
-            if 'IyrAnt_' in filename:
-                return []
-            if 'IyrGre_' in filename:
-                return []
-        return _get_filenames(tmp_path, filenames, tracking_id)
+        if 'fx_' in filename:
+            return []
+        if 'sftlf' in filename:
+            return []
+        if 'IyrAnt_' in filename:
+            return []
+        if 'IyrGre_' in filename:
+            return []
+        return _get_filenames(tmp_path, filename, tracking_id)
 
-    monkeypatch.setattr(_data_finder, 'find_files', find_files)
+    monkeypatch.setattr(esmvalcore.local, 'glob', glob)

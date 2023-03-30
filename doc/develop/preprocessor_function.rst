@@ -103,6 +103,34 @@ relevant :ref:`iris <iris_docs>` code.
 Code that is more involved, e.g. lots of work with Numpy and Dask arrays,
 and more broadly applicable, should be implemented in iris instead.
 
+Metadata
+========
+
+Preprocessor functions may change the metadata of datasets.
+An obvious example is :func:`~esmvalcore.preprocessor.convert_units`, which
+changes units.
+If cube metadata is changed in a preprocessor function, the :ref:`metadata.yml
+<metadata_yml>` file is automatically updated with this information.
+The following attributes are taken into account:
+
++------------------------------------+--------------------------------------------+
+| Attribute in ``metadata.yml`` file | Updated from                               |
++====================================+============================================+
+| ``standard_name``                  | :attr:`iris.cube.Cube.standard_name`       |
++------------------------------------+--------------------------------------------+
+| ``long_name``                      | :attr:`iris.cube.Cube.long_name`           |
++------------------------------------+--------------------------------------------+
+| ``short_name``                     | :attr:`iris.cube.Cube.var_name`            |
++------------------------------------+--------------------------------------------+
+| ``units``                          | :attr:`iris.cube.Cube.units`               |
++------------------------------------+--------------------------------------------+
+| ``frequency``                      | ``iris.cube.Cube.attributes['frequency']`` |
++------------------------------------+--------------------------------------------+
+
+If a given cube property is ``None``, the corresponding attribute is updated
+with an empty string (``''``).
+If a cube property is not given, the corresponding attribute is not updated.
+
 Documentation
 =============
 

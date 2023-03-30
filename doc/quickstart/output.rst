@@ -104,6 +104,8 @@ The first item in the settings file will be a list of `Metadata.yml`_ files.
 There is a metadata.yml file generated for each field in each diagnostic.
 
 
+.. _metadata_yml:
+
 Metadata.yml
 ============
 

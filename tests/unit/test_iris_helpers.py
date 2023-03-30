@@ -1,5 +1,7 @@
 """Tests for :mod:`esmvalcore.iris_helpers`."""
 import datetime
+from copy import deepcopy
+from itertools import permutations
 from unittest import mock
 
 import numpy as np
@@ -15,7 +17,11 @@ from iris.coords import (
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateMultiDimError
 
-from esmvalcore.iris_helpers import add_leading_dim_to_cube, date2num
+from esmvalcore.iris_helpers import (
+    add_leading_dim_to_cube,
+    date2num,
+    merge_cube_attributes,
+)
 
 
 @pytest.fixture
@@ -128,3 +134,89 @@ def test_date2num_scalar(date, dtype, expected, units):
     num = date2num(date, units, dtype=dtype)
     assert num == expected
     assert num.dtype == dtype
+
+
+def assert_attribues_equal(attrs_1: dict, attrs_2: dict) -> None:
+    """Check attributes using :func:`numpy.testing.assert_array_equal`."""
+    assert len(attrs_1) == len(attrs_2)
+    for (attr, val) in attrs_1.items():
+        assert attr in attrs_2
+        np.testing.assert_array_equal(attrs_2[attr], val)
+
+
+def make_cube_with_attrs(index):
+    """Make cube that contains different types of attributes."""
+    attributes = {
+        # Identical attribute values across cubes
+        'int': 42,
+        'float': 3.1415,
+        'bool': True,
+        'str': 'Hello, world',
+        'list': [1, 1, 2, 3, 5, 8, 13],
+        'tuple': (1, 2, 3, 4, 5),
+        'nparray': np.arange(42),
+
+        # Differing attribute values across cubes
+        'diff_int': index,
+        'diff_str': 'abc'[index],
+        'diff_nparray': np.arange(index),
+        'mix': np.arange(3) if index == 0 else index,
+        'diff_list': [index, index],
+        'diff_tuple': (index, index),
+
+        # Differing attribute keys across cubes
+        str(index + 1000): index,
+        str(index % 2 + 100): index,
+        str(index % 2): index % 2,
+    }
+    return Cube(0.0, attributes=attributes)
+
+
+CUBES = [make_cube_with_attrs(i) for i in range(3)]
+
+
+# Test all permutations of CUBES to test that results do not depend on order
+@pytest.mark.parametrize("cubes", list(permutations(CUBES)))
+def test_merge_cube_attributes(cubes):
+    """Test `merge_cube_attributes`."""
+    expected_attributes = {
+        'int': 42,
+        'float': 3.1415,
+        'bool': True,
+        'str': 'Hello, world',
+        'list': [1, 1, 2, 3, 5, 8, 13],
+        'tuple': (1, 2, 3, 4, 5),
+        'nparray': np.arange(42),
+        'diff_int': '0 1 2',
+        'diff_str': 'a b c',
+        'diff_nparray': '[0 1] [0] []',
+        'mix': '1 2 [0 1 2]',
+        'diff_list': '[0, 0] [1, 1] [2, 2]',
+        'diff_tuple': '(0, 0) (1, 1) (2, 2)',
+        '1000': 0,
+        '1001': 1,
+        '1002': 2,
+        '100': '0 2',
+        '101': 1,
+        '0': 0,
+        '1': 1,
+    }
+    cubes = deepcopy(cubes)
+    merge_cube_attributes(cubes)
+    assert len(cubes) == 3
+    for cube in cubes:
+        assert_attribues_equal(cube.attributes, expected_attributes)
+
+
+def test_merge_cube_attributes_0_cubes():
+    """Test `merge_cube_attributes` with 0 cubes."""
+    merge_cube_attributes([])
+
+
+def test_merge_cube_attributes_1_cube():
+    """Test `merge_cube_attributes` with 1 cube."""
+    cubes = CubeList([deepcopy(CUBES[0])])
+    expected_attributes = deepcopy(cubes[0].attributes)
+    merge_cube_attributes(cubes)
+    assert len(cubes) == 1
+    assert_attribues_equal(cubes[0].attributes, expected_attributes)

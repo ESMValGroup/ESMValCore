@@ -47,17 +47,19 @@ class TestOther(unittest.TestCase):
 def test_group_products_string_list():
     products = [
         PreprocessorFile(
+            filename='A_B.nc',
             attributes={
                 'project': 'A',
                 'dataset': 'B',
-                'filename': 'A_B.nc'},
-            settings={}),
+            },
+        ),
         PreprocessorFile(
+            filename='A_C.nc',
             attributes={
                 'project': 'A',
                 'dataset': 'C',
-                'filename': 'A_C.nc'},
-            settings={})
+            }
+        ),
     ]
     grouped_by_string = _group_products(products, 'project')
     grouped_by_list = _group_products(products, ['project'])
