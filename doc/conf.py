@@ -56,6 +56,8 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
+    # github.com/readthedocs/sphinx_rtd_theme/issues/1451
+    'sphinxcontrib.jquery',
 ]
 
 autodoc_default_options = {
