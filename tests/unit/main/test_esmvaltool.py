@@ -30,6 +30,7 @@ def cfg(mocker, tmp_path):
     session.session_dir = output_dir / 'recipe_test'
     session.run_dir = session.session_dir / 'run_dir'
     session.preproc_dir = session.session_dir / 'preproc_dir'
+    session._fixed_file_dir = session.preproc_dir / 'fixed_files'
 
     cfg = mocker.Mock()
     cfg.start_session.return_value = session
@@ -46,7 +47,7 @@ def session(cfg):
     ('max_datasets', 2),
     ('max_years', 2),
     ('skip_nonexistent', True),
-    ('offline', False),
+    ('search_esgf', 'when_missing'),
     ('diagnostics', 'diagnostic_name/group_name'),
     ('check_level', 'strict'),
 ])
@@ -76,12 +77,13 @@ def test_run_command_line_config(mocker, cfg, argument, value):
     assert session[argument] == value
 
 
-@pytest.mark.parametrize('offline', [True, False])
-def test_run(mocker, session, offline):
-    session['offline'] = offline
+@pytest.mark.parametrize('search_esgf', ['never', 'when_missing', 'always'])
+def test_run(mocker, session, search_esgf):
+    session['search_esgf'] = search_esgf
     session['log_level'] = 'default'
     session['config_file'] = '/path/to/config-user.yml'
     session['remove_preproc_dir'] = True
+    session['save_intermediary_cubes'] = False
 
     recipe = Path('/recipe_dir/recipe_test.yml')
 
@@ -120,7 +122,7 @@ def test_run(mocker, session, offline):
         console_log_level=session['log_level'],
     )
 
-    if offline:
+    if search_esgf == 'never':
         esmvalcore.esgf._logon.logon.assert_not_called()
     else:
         esmvalcore.esgf._logon.logon.assert_called_once()
@@ -156,10 +158,24 @@ def test_run_session_dir_exists_alternative_fails(mocker, session):
 
 def test_clean_preproc_dir(session):
     session.preproc_dir.mkdir(parents=True)
+    session._fixed_file_dir.mkdir(parents=True)
     session['remove_preproc_dir'] = True
+    session['save_intermediary_cubes'] = False
     program = ESMValTool()
     program._clean_preproc(session)
     assert not session.preproc_dir.exists()
+    assert not session._fixed_file_dir.exists()
+
+
+def test_do_not_clean_preproc_dir(session):
+    session.preproc_dir.mkdir(parents=True)
+    session._fixed_file_dir.mkdir(parents=True)
+    session['remove_preproc_dir'] = False
+    session['save_intermediary_cubes'] = True
+    program = ESMValTool()
+    program._clean_preproc(session)
+    assert session.preproc_dir.exists()
+    assert session._fixed_file_dir.exists()
 
 
 @mock.patch('esmvalcore._main.iter_entry_points')

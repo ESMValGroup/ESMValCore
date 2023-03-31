@@ -337,33 +337,7 @@ A variable-specific default for the facet ``var_type`` is given in the extra
 facets (see next paragraph) for many variables, but this can be overwritten in
 the recipe.
 
-Similar to any other fix, the ICON fix allows the use of :ref:`extra
-facets<extra_facets>`.
-By default, the file :download:`icon-mappings.yml
-</../esmvalcore/config/extra_facets/icon-mappings.yml>` is used for that
-purpose.
-For some variables, extra facets are necessary; otherwise ESMValTool cannot
-read them properly.
-Supported keys for extra facets are:
-
-============= ============================= =================================
-Key           Description                   Default value if not specified
-============= ============================= =================================
-``latitude``  Standard name of the latitude ``latitude``
-              coordinate in the raw input
-              file
-``longitude`` Standard name of the          ``longitude``
-              longitude coordinate in the
-              raw input file
-``raw_name``  Variable name of the          CMOR variable name of the
-              variable in the raw input     corresponding variable
-              file
-``var_type``  Variable type of the          No default (needs to be specified
-              variable in the raw input     in extra facets or recipe if
-              file                          default DRS is used)
-============= ============================= =================================
-
-ESMValCore automatically makes native ICON data `UGRID
+ESMValCore can automatically make native ICON data `UGRID
 <https://ugrid-conventions.github.io/ugrid-conventions/>`__-compliant when
 loading the data.
 The UGRID conventions provide a standardized format to store data on
@@ -388,6 +362,41 @@ algorithm <https://earthsystemmodeling.org/regrid/#regridding-methods>`__:
          scheme:
            reference: esmf_regrid.experimental.unstructured_scheme:regrid_unstructured_to_rectilinear
            method: conservative
+
+This automatic UGRIDization is enabled by default, but can be switched off with
+the facet ``ugrid: false`` in the recipe or the extra facets (see below).
+This is useful for diagnostics that do not support input data in UGRID format
+(yet) like the :ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>` or
+if you want to use the built-in :ref:`unstructured_nearest scheme <built-in
+regridding schemes>` regridding scheme.
+
+Similar to any other fix, the ICON fix allows the use of :ref:`extra
+facets<extra_facets>`.
+By default, the file :download:`icon-mappings.yml
+</../esmvalcore/config/extra_facets/icon-mappings.yml>` is used for that
+purpose.
+For some variables, extra facets are necessary; otherwise ESMValTool cannot
+read them properly.
+Supported keys for extra facets are:
+
+============= ============================= =================================
+Key           Description                   Default value if not specified
+============= ============================= =================================
+``latitude``  Standard name of the latitude ``latitude``
+              coordinate in the raw input
+              file
+``longitude`` Standard name of the          ``longitude``
+              longitude coordinate in the
+              raw input file
+``raw_name``  Variable name of the          CMOR variable name of the
+              variable in the raw input     corresponding variable
+              file
+``ugrid``     Automatic UGRIDization of     ``True``
+              the input data
+``var_type``  Variable type of the          No default (needs to be specified
+              variable in the raw input     in extra facets or recipe if
+              file                          default DRS is used)
+============= ============================= =================================
 
 .. hint::
 
@@ -474,9 +483,12 @@ retrieval parameters is explained below.
 
 Enabling automatic downloads from the ESGF
 ------------------------------------------
-To enable automatic downloads from ESGF, set ``offline: false`` in
-the :ref:`user configuration file` or provide the command line argument
-``--offline=False`` when running the recipe.
+To enable automatic downloads from ESGF, set ``search_esgf: when_missing`` (use
+local files whenever possible) or ``search_esgf: always`` (always search ESGF
+for latest version of files and only use local data if it is the latest
+version) in the :ref:`user configuration file`, or provide the corresponding
+command line arguments ``--search_esgf=when_missing`` or
+``--search_esgf=always`` when running the recipe.
 The files will be stored in the ``download_dir`` set in
 the :ref:`user configuration file`.
 

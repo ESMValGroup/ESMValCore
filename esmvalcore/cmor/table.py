@@ -65,6 +65,13 @@ def _update_cmor_facets(facets, override=False):
                     facets)
 
 
+def _get_mips(project: str, short_name: str) -> list[str]:
+    """Get all available MIP tables in a project."""
+    tables = CMOR_TABLES[project].tables
+    mips = [mip for mip in tables if short_name in tables[mip]]
+    return mips
+
+
 def get_var_info(project, mip, short_name):
     """Get variable information.
 

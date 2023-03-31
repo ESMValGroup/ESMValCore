@@ -11,7 +11,6 @@ import numpy as np
 from iris import NameConstraint
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import CubeList
-from iris.experimental.ugrid import Connectivity, Mesh
 
 from esmvalcore.iris_helpers import add_leading_dim_to_cube, date2num
 
@@ -280,128 +279,6 @@ class AllVars(IconFix):
 
         return cube
 
-    def _get_mesh(self, cube):
-        """Create mesh from horizontal grid file.
-
-        Note
-        ----
-        This functions creates a new :class:`iris.experimental.ugrid.Mesh` from
-        the ``clat`` (already present in the cube), ``clon`` (already present
-        in the cube), ``vertex_index``, ``vertex_of_cell``, ``vlat``, and
-        ``vlon`` variables of the horizontal grid file.
-
-        We do not use :func:`iris.experimental.ugrid.Mesh.from_coords` with the
-        existing latitude and longitude coordinates here because this would
-        produce lots of duplicated entries for the node coordinates. The reason
-        for this is that the node coordinates are constructed from the bounds;
-        since each node is contained 6 times in the bounds array (each node is
-        shared by 6 neighboring cells) the number of nodes is 6 times higher
-        with :func:`iris.experimental.ugrid.Mesh.from_coords` compared to using
-        the information already present in the horizontal grid file.
-
-        """
-        horizontal_grid = self.get_horizontal_grid(cube)
-
-        # Extract connectivity (i.e., the mapping cell faces -> cell nodes)
-        # from the the horizontal grid file (in ICON jargon called
-        # 'vertex_of_cell'; since UGRID expects a different dimension ordering
-        # we transpose the cube here)
-        vertex_of_cell = horizontal_grid.extract_cube(
-            NameConstraint(var_name='vertex_of_cell'))
-        vertex_of_cell.transpose()
-
-        # Extract start index used to name nodes from the the horizontal grid
-        # file
-        start_index = self._get_start_index(horizontal_grid)
-
-        # Extract face coordinates from cube (in ICON jargon called 'cell
-        # latitude' and 'cell longitude')
-        face_lat = cube.coord('latitude')
-        face_lon = cube.coord('longitude')
-
-        # Extract node coordinates from horizontal grid
-        (node_lat, node_lon) = self._get_node_coords(horizontal_grid)
-
-        # The bounds given by the face coordinates slightly differ from the
-        # bounds determined by the connectivity. We arbitrarily assume here
-        # that the information given by the connectivity is correct.
-        conn_node_inds = vertex_of_cell.data - start_index
-
-        # Latitude: there might be slight numerical differences (-> check that
-        # the differences are very small before fixing it)
-        if not np.allclose(face_lat.bounds, node_lat.points[conn_node_inds]):
-            raise ValueError(
-                "Cannot create mesh from horizontal grid file: latitude "
-                "bounds of the face coordinate ('clat_vertices' in the grid "
-                "file) differ from the corresponding values calculated from "
-                "the connectivity ('vertex_of_cell') and the node coordinate "
-                "('vlat')")
-        face_lat.bounds = node_lat.points[conn_node_inds]
-
-        # Longitude: there might be differences at the poles, where the
-        # longitude information does not matter (-> check that the only large
-        # differences are located at the poles). In addition, values might
-        # differ by 360°, which is also okay.
-        face_lon_bounds_to_check = face_lon.bounds % 360
-        node_lon_conn_to_check = node_lon.points[conn_node_inds] % 360
-        idx_notclose = ~np.isclose(face_lon_bounds_to_check,
-                                   node_lon_conn_to_check)
-        if not np.allclose(np.abs(face_lat.bounds[idx_notclose]), 90.0):
-            raise ValueError(
-                "Cannot create mesh from horizontal grid file: longitude "
-                "bounds of the face coordinate ('clon_vertices' in the grid "
-                "file) differ from the corresponding values calculated from "
-                "the connectivity ('vertex_of_cell') and the node coordinate "
-                "('vlon'). Note that these values are allowed to differ by "
-                "360° or at the poles of the grid.")
-        face_lon.bounds = node_lon.points[conn_node_inds]
-
-        # Create mesh
-        connectivity = Connectivity(
-            indices=vertex_of_cell.data,
-            cf_role='face_node_connectivity',
-            start_index=start_index,
-            location_axis=0,
-        )
-        mesh = Mesh(
-            topology_dimension=2,
-            node_coords_and_axes=[(node_lat, 'y'), (node_lon, 'x')],
-            connectivities=[connectivity],
-            face_coords_and_axes=[(face_lat, 'y'), (face_lon, 'x')],
-        )
-        return mesh
-
-    def _get_node_coords(self, horizontal_grid):
-        """Get node coordinates from horizontal grid.
-
-        Extract node coordinates from dummy variable 'dual_area' in horizontal
-        grid file (in ICON jargon called 'vertex latitude' and 'vertex
-        longitude'), remove their bounds (not accepted by UGRID), and adapt
-        metadata.
-
-        """
-        dual_area_cube = horizontal_grid.extract_cube(
-            NameConstraint(var_name='dual_area'))
-        node_lat = dual_area_cube.coord(var_name='vlat')
-        node_lon = dual_area_cube.coord(var_name='vlon')
-
-        # Fix metadata
-        node_lat.bounds = None
-        node_lon.bounds = None
-        node_lat.var_name = 'nlat'
-        node_lon.var_name = 'nlon'
-        node_lat.standard_name = 'latitude'
-        node_lon.standard_name = 'longitude'
-        node_lat.long_name = 'node latitude'
-        node_lon.long_name = 'node longitude'
-        node_lat.convert_units('degrees_north')
-        node_lon.convert_units('degrees_east')
-
-        # Convert longitude to [0, 360]
-        self._set_range_in_0_360(node_lon)
-
-        return (node_lat, node_lon)
-
     def _fix_mesh(self, cube, mesh_idx):
         """Fix mesh."""
         # Remove any already-present dimensional coordinate describing the mesh
@@ -419,29 +296,14 @@ class AllVars(IconFix):
         )
         cube.add_dim_coord(index_coord, mesh_idx)
 
-        # Create mesh and replace the original latitude and longitude
+        # If desired, get mesh and replace the original latitude and longitude
         # coordinates with their new mesh versions
-        mesh = self._get_mesh(cube)
-        cube.remove_coord('latitude')
-        cube.remove_coord('longitude')
-        for mesh_coord in mesh.to_MeshCoords('face'):
-            cube.add_aux_coord(mesh_coord, mesh_idx)
-
-    @staticmethod
-    def _get_start_index(horizontal_grid):
-        """Get start index used to name nodes from horizontal grid.
-
-        Extract start index used to name nodes from the the horizontal grid
-        file (in ICON jargon called 'vertex_index').
-
-        Note
-        ----
-        UGRID expects this to be a int32.
-
-        """
-        vertex_index = horizontal_grid.extract_cube(
-            NameConstraint(var_name='vertex_index'))
-        return np.int32(np.min(vertex_index.data))
+        if self.extra_facets.get('ugrid', True):
+            mesh = self.get_mesh(cube)
+            cube.remove_coord('latitude')
+            cube.remove_coord('longitude')
+            for mesh_coord in mesh.to_MeshCoords('face'):
+                cube.add_aux_coord(mesh_coord, mesh_idx)
 
     @staticmethod
     def _is_unstructured_grid(lat_idx, lon_idx):
@@ -464,13 +326,6 @@ class AllVars(IconFix):
             return False
 
         return True
-
-    @staticmethod
-    def _set_range_in_0_360(lon_coord):
-        """Convert longitude coordinate to [0, 360]."""
-        lon_coord.points = (lon_coord.points + 360.0) % 360.0
-        if lon_coord.bounds is not None:
-            lon_coord.bounds = (lon_coord.bounds + 360.0) % 360.0
 
 
 class Clwvi(IconFix):

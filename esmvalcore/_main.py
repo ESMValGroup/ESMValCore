@@ -72,7 +72,6 @@ def process_recipe(recipe_file: Path, session):
     """Process recipe."""
     import datetime
     import shutil
-    import warnings
 
     from esmvalcore._recipe.recipe import read_recipe_file
     if not recipe_file.is_file():
@@ -117,11 +116,7 @@ def process_recipe(recipe_file: Path, session):
     shutil.copy2(recipe_file, session.run_dir)
 
     # parse recipe
-    with warnings.catch_warnings():
-        # ignore deprecation warning
-        warnings.simplefilter("ignore")
-        config_user = session.to_config_user()
-    recipe = read_recipe_file(recipe_file, config_user)
+    recipe = read_recipe_file(recipe_file, session)
     logger.debug("Recipe summary:\n%s", recipe)
     # run
     recipe.run()
@@ -334,6 +329,7 @@ class ESMValTool():
             max_years=None,
             skip_nonexistent=None,
             offline=None,
+            search_esgf=None,
             diagnostics=None,
             check_level=None,
             **kwargs):
@@ -362,6 +358,19 @@ class ESMValTool():
             If True, the run will not fail if some datasets are not available.
         offline: bool, optional
             If True, the tool will not download missing data from ESGF.
+
+            .. deprecated:: 2.8.0
+                This option has been deprecated in ESMValCore version 2.8.0 and
+                is scheduled for removal in version 2.10.0. Please use the
+                options `search_esgf=never` (for `offline=True`) or
+                `search_esgf=when_missing` (for `offline=False`). These are
+                exact replacements.
+        search_esgf: str, optional
+            If `never`, disable automatic download of data from the ESGF. If
+            `when_missing`, enable the automatic download of files that are not
+            available locally. If `always`, always check ESGF for the latest
+            version of a file, and only use local files if they correspond to
+            that latest version.
         diagnostics: list(str), optional
             Only run the selected diagnostics from the recipe. To provide more
             than one diagnostic to filter use the syntax 'diag1 diag2/script1'
@@ -389,12 +398,16 @@ class ESMValTool():
             session['max_years'] = max_years
         if offline is not None:
             session['offline'] = offline
+        if search_esgf is not None:
+            session['search_esgf'] = search_esgf
         if skip_nonexistent is not None:
             session['skip_nonexistent'] = skip_nonexistent
         session['resume_from'] = parse_resume(resume_from, recipe)
         session.update(kwargs)
 
         self._run(recipe, session)
+        # Print warnings about deprecated configuration options again:
+        CFG.reload()
 
     @staticmethod
     def _create_session_dir(session):
@@ -426,7 +439,7 @@ class ESMValTool():
                                       console_log_level=session['log_level'])
         self._log_header(session['config_file'], log_files)
 
-        if not session['offline']:
+        if session['search_esgf'] != 'never':
             from .esgf._logon import logon
             logon()
 
@@ -443,10 +456,28 @@ class ESMValTool():
     def _clean_preproc(session):
         import shutil
 
-        if session["remove_preproc_dir"] and session.preproc_dir.exists():
-            logger.info("Removing preproc containing preprocessed data")
-            logger.info("If this data is further needed, then")
-            logger.info("set remove_preproc_dir to false in config-user.yml")
+        if (not session['save_intermediary_cubes'] and
+                session._fixed_file_dir.exists()):
+            logger.debug(
+                "Removing `preproc/fixed_files` directory containing fixed "
+                "data"
+            )
+            logger.debug(
+                "If this data is further needed, then set "
+                "`save_intermediary_cubes` to `true` and `remove_preproc_dir` "
+                "to `false` in your user configuration file"
+            )
+            shutil.rmtree(session._fixed_file_dir)
+
+        if session['remove_preproc_dir'] and session.preproc_dir.exists():
+            logger.info(
+                "Removing `preproc` directory containing preprocessed data"
+            )
+            logger.info(
+                "If this data is further needed, then set "
+                "`remove_preproc_dir` to `false` in your user configuration "
+                "file"
+            )
             shutil.rmtree(session.preproc_dir)
 
     @staticmethod

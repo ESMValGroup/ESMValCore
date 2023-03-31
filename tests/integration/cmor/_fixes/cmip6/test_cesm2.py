@@ -90,7 +90,9 @@ def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
                                                   'fixed_cesm2_cl.nc')
     fix = Cl(None)
     fixed_file = fix.fix_file(nc_path, tmp_path)
-    mock_get_filepath.assert_called_once_with(tmp_path, nc_path)
+    mock_get_filepath.assert_called_once_with(
+        tmp_path, nc_path, add_unique_suffix=False
+    )
     fixed_cubes = iris.load(fixed_file)
     assert len(fixed_cubes) == 2
     var_names = [cube.var_name for cube in fixed_cubes]

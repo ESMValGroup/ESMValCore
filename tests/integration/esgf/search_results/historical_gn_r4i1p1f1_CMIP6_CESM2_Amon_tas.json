@@ -1,0 +1,767 @@
+[
+    {
+        "id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|aims3.llnl.gov",
+        "version": "1",
+        "activity_drs": [
+            "CMIP"
+        ],
+        "activity_id": [
+            "CMIP"
+        ],
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "5f7cdf4fd94b995bfdbf0d9316555980f5b0d0d246c07e1cb6356cd7a4fbdce5"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "citation_url": [
+            "http://cera-www.dkrz.de/WDCC/meta/CMIP6/CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.json"
+        ],
+        "data_node": "aims3.llnl.gov",
+        "data_specs_version": [
+            "01.00.29"
+        ],
+        "dataset_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308|aims3.llnl.gov",
+        "dataset_id_template_": [
+            "%(mip_era)s.%(activity_drs)s.%(institution_id)s.%(source_id)s.%(experiment_id)s.%(member_id)s.%(table_id)s.%(variable_id)s.%(grid_label)s"
+        ],
+        "directory_format_template_": [
+            "%(root)s/%(mip_era)s/%(activity_drs)s/%(institution_id)s/%(source_id)s/%(experiment_id)s/%(member_id)s/%(table_id)s/%(variable_id)s/%(grid_label)s/%(version)s"
+        ],
+        "experiment_id": [
+            "historical"
+        ],
+        "experiment_title": [
+            "all-forcing simulation of the recent past"
+        ],
+        "frequency": [
+            "mon"
+        ],
+        "further_info_url": [
+            "https://furtherinfo.es-doc.org/CMIP6.NCAR.CESM2.historical.none.r4i1p1f1"
+        ],
+        "grid": [
+            "native 0.9x1.25 finite volume grid (192x288 latxlon)"
+        ],
+        "grid_label": [
+            "gn"
+        ],
+        "index_node": "esgf-node.llnl.gov",
+        "instance_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "institution_id": [
+            "NCAR"
+        ],
+        "latest": true,
+        "master_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "member_id": [
+            "r4i1p1f1"
+        ],
+        "mip_era": [
+            "CMIP6"
+        ],
+        "model_cohort": [
+            "Registered"
+        ],
+        "nominal_resolution": [
+            "100 km"
+        ],
+        "pid": [
+            "hdl:21.14100/68b38e85-2b6b-3d8a-9918-03dc3094fe47"
+        ],
+        "product": [
+            "model-output"
+        ],
+        "project": [
+            "CMIP6"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 243060396,
+        "source_id": [
+            "CESM2"
+        ],
+        "source_type": [
+            "AOGCM",
+            "BGC"
+        ],
+        "sub_experiment_id": [
+            "none"
+        ],
+        "table_id": [
+            "Amon"
+        ],
+        "timestamp": "2019-02-14T23:00:57Z",
+        "title": "tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "tracking_id": [
+            "hdl:21.14100/ef376c2e-c83b-4e73-a770-010e28bb1776"
+        ],
+        "type": "File",
+        "url": [
+            "http://aims3.llnl.gov/thredds/fileServer/css03_data/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|application/netcdf|HTTPServer",
+            "http://aims3.llnl.gov/thredds/dodsC/css03_data/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc.html|application/opendap-html|OPENDAP",
+            "gsiftp://aimsdtn3.llnl.gov:2811//css03_data/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|application/gridftp|GridFTP",
+            "globus:415a6320-e49c-11e5-9798-22000b9da45e/css03_data/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_id": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "variant_label": [
+            "r4i1p1f1"
+        ],
+        "_version_": 1634813750696476672,
+        "retracted": false,
+        "_timestamp": "2019-05-28T21:44:46.147Z",
+        "score": 1.0
+    },
+    {
+        "id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|esgf-data.ucar.edu",
+        "version": "1",
+        "activity_drs": [
+            "CMIP"
+        ],
+        "activity_id": [
+            "CMIP"
+        ],
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "5f7cdf4fd94b995bfdbf0d9316555980f5b0d0d246c07e1cb6356cd7a4fbdce5"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "citation_url": [
+            "http://cera-www.dkrz.de/WDCC/meta/CMIP6/CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.json"
+        ],
+        "data_node": "esgf-data.ucar.edu",
+        "data_specs_version": [
+            "01.00.29"
+        ],
+        "dataset_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308|esgf-data.ucar.edu",
+        "dataset_id_template_": [
+            "%(mip_era)s.%(activity_drs)s.%(institution_id)s.%(source_id)s.%(experiment_id)s.%(member_id)s.%(table_id)s.%(variable_id)s.%(grid_label)s"
+        ],
+        "directory_format_template_": [
+            "%(root)s/%(mip_era)s/%(activity_drs)s/%(institution_id)s/%(source_id)s/%(experiment_id)s/%(member_id)s/%(table_id)s/%(variable_id)s/%(grid_label)s/%(version)s"
+        ],
+        "experiment_id": [
+            "historical"
+        ],
+        "experiment_title": [
+            "all-forcing simulation of the recent past"
+        ],
+        "frequency": [
+            "mon"
+        ],
+        "further_info_url": [
+            "https://furtherinfo.es-doc.org/CMIP6.NCAR.CESM2.historical.none.r4i1p1f1"
+        ],
+        "grid": [
+            "native 0.9x1.25 finite volume grid (192x288 latxlon)"
+        ],
+        "grid_label": [
+            "gn"
+        ],
+        "index_node": "esgf-node.llnl.gov",
+        "instance_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "institution_id": [
+            "NCAR"
+        ],
+        "latest": true,
+        "master_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "member_id": [
+            "r4i1p1f1"
+        ],
+        "mip_era": [
+            "CMIP6"
+        ],
+        "model_cohort": [
+            "Registered"
+        ],
+        "nominal_resolution": [
+            "100 km"
+        ],
+        "pid": [
+            "hdl:21.14100/68b38e85-2b6b-3d8a-9918-03dc3094fe47"
+        ],
+        "product": [
+            "model-output"
+        ],
+        "project": [
+            "CMIP6"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": false,
+        "size": 243060396,
+        "source_id": [
+            "CESM2"
+        ],
+        "source_type": [
+            "AOGCM",
+            "BGC"
+        ],
+        "sub_experiment_id": [
+            "none"
+        ],
+        "table_id": [
+            "Amon"
+        ],
+        "timestamp": "2019-02-15T00:00:57Z",
+        "title": "tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "tracking_id": [
+            "hdl:21.14100/ef376c2e-c83b-4e73-a770-010e28bb1776"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf-data.ucar.edu/thredds/fileServer/esg_dataroot/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|application/netcdf|HTTPServer",
+            "http://esgf-data.ucar.edu/thredds/dodsC/esg_dataroot/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc.html|application/opendap-html|OPENDAP"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_id": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "variant_label": [
+            "r4i1p1f1"
+        ],
+        "_version_": 1627753368139071488,
+        "retracted": false,
+        "_timestamp": "2019-03-11T23:23:00.638Z",
+        "score": 1.0
+    },
+    {
+        "id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|esgf-data04.diasjp.net",
+        "version": "1",
+        "activity_drs": [
+            "CMIP"
+        ],
+        "activity_id": [
+            "CMIP"
+        ],
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "5f7cdf4fd94b995bfdbf0d9316555980f5b0d0d246c07e1cb6356cd7a4fbdce5"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "citation_url": [
+            "http://cera-www.dkrz.de/WDCC/meta/CMIP6/CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.json"
+        ],
+        "data_node": "esgf-data04.diasjp.net",
+        "data_specs_version": [
+            "01.00.29"
+        ],
+        "dataset_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308|esgf-data04.diasjp.net",
+        "dataset_id_template_": [
+            "%(mip_era)s.%(activity_drs)s.%(institution_id)s.%(source_id)s.%(experiment_id)s.%(member_id)s.%(table_id)s.%(variable_id)s.%(grid_label)s"
+        ],
+        "directory_format_template_": [
+            "%(root)s/%(mip_era)s/%(activity_drs)s/%(institution_id)s/%(source_id)s/%(experiment_id)s/%(member_id)s/%(table_id)s/%(variable_id)s/%(grid_label)s/%(version)s"
+        ],
+        "experiment_id": [
+            "historical"
+        ],
+        "experiment_title": [
+            "all-forcing simulation of the recent past"
+        ],
+        "frequency": [
+            "mon"
+        ],
+        "further_info_url": [
+            "https://furtherinfo.es-doc.org/CMIP6.NCAR.CESM2.historical.none.r4i1p1f1"
+        ],
+        "grid": [
+            "native 0.9x1.25 finite volume grid (192x288 latxlon)"
+        ],
+        "grid_label": [
+            "gn"
+        ],
+        "index_node": "esgf-node.llnl.gov",
+        "instance_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "institution_id": [
+            "NCAR"
+        ],
+        "latest": true,
+        "master_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "member_id": [
+            "r4i1p1f1"
+        ],
+        "mip_era": [
+            "CMIP6"
+        ],
+        "model_cohort": [
+            "Published"
+        ],
+        "nominal_resolution": [
+            "100 km"
+        ],
+        "pid": [
+            "hdl:21.14100/68b38e85-2b6b-3d8a-9918-03dc3094fe47"
+        ],
+        "product": [
+            "model-output"
+        ],
+        "project": [
+            "CMIP6"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 243060396,
+        "source_id": [
+            "CESM2"
+        ],
+        "source_type": [
+            "AOGCM",
+            "BGC"
+        ],
+        "sub_experiment_id": [
+            "none"
+        ],
+        "table_id": [
+            "Amon"
+        ],
+        "timestamp": "2019-02-15T16:00:57Z",
+        "title": "tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "tracking_id": [
+            "hdl:21.14100/ef376c2e-c83b-4e73-a770-010e28bb1776"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf-data04.diasjp.net/thredds/fileServer/esg_dataroot/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|application/netcdf|HTTPServer",
+            "http://esgf-data04.diasjp.net/thredds/dodsC/esg_dataroot/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc.html|application/opendap-html|OPENDAP"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_id": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "variant_label": [
+            "r4i1p1f1"
+        ],
+        "_version_": 1745366949768986624,
+        "retracted": false,
+        "_timestamp": "2022-09-30T04:20:32.699Z",
+        "score": 1.0
+    },
+    {
+        "id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|esgf.ceda.ac.uk",
+        "version": "1",
+        "activity_drs": [
+            "CMIP"
+        ],
+        "activity_id": [
+            "CMIP"
+        ],
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "5f7cdf4fd94b995bfdbf0d9316555980f5b0d0d246c07e1cb6356cd7a4fbdce5"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "citation_url": [
+            "http://cera-www.dkrz.de/WDCC/meta/CMIP6/CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.json"
+        ],
+        "data_node": "esgf.ceda.ac.uk",
+        "data_specs_version": [
+            "01.00.29"
+        ],
+        "dataset_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308|esgf.ceda.ac.uk",
+        "dataset_id_template_": [
+            "%(mip_era)s.%(activity_drs)s.%(institution_id)s.%(source_id)s.%(experiment_id)s.%(member_id)s.%(table_id)s.%(variable_id)s.%(grid_label)s"
+        ],
+        "directory_format_template_": [
+            "%(root)s/%(mip_era)s/%(activity_drs)s/%(institution_id)s/%(source_id)s/%(experiment_id)s/%(member_id)s/%(table_id)s/%(variable_id)s/%(grid_label)s/%(version)s"
+        ],
+        "experiment_id": [
+            "historical"
+        ],
+        "experiment_title": [
+            "all-forcing simulation of the recent past"
+        ],
+        "frequency": [
+            "mon"
+        ],
+        "further_info_url": [
+            "https://furtherinfo.es-doc.org/CMIP6.NCAR.CESM2.historical.none.r4i1p1f1"
+        ],
+        "grid": [
+            "native 0.9x1.25 finite volume grid (192x288 latxlon)"
+        ],
+        "grid_label": [
+            "gn"
+        ],
+        "index_node": "esgf.ceda.ac.uk",
+        "instance_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "institution_id": [
+            "NCAR"
+        ],
+        "latest": true,
+        "master_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "member_id": [
+            "r4i1p1f1"
+        ],
+        "metadata_format": "THREDDS",
+        "mip_era": [
+            "CMIP6"
+        ],
+        "model_cohort": [
+            "Registered"
+        ],
+        "nominal_resolution": [
+            "100 km"
+        ],
+        "pid": [
+            "hdl:21.14100/68b38e85-2b6b-3d8a-9918-03dc3094fe47"
+        ],
+        "product": [
+            "model-output"
+        ],
+        "project": [
+            "CMIP6"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 243060396,
+        "source_id": [
+            "CESM2"
+        ],
+        "source_type": [
+            "AOGCM",
+            "BGC"
+        ],
+        "sub_experiment_id": [
+            "none"
+        ],
+        "table_id": [
+            "Amon"
+        ],
+        "timestamp": "2019-04-03T22:45:17Z",
+        "title": "tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "tracking_id": [
+            "hdl:21.14100/ef376c2e-c83b-4e73-a770-010e28bb1776"
+        ],
+        "type": "File",
+        "url": [
+            "https://esgf.ceda.ac.uk/thredds/fileServer/esg_cmip6/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgf-dn1.ceda.ac.uk:2811/esg_cmip6/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|application/gridftp|GridFTP",
+            "https://esgf.ceda.ac.uk/thredds/dodsC/esg_cmip6/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc.html|application/opendap-html|OPENDAP",
+            "globus:ee3aa1a0-7e4c-11e6-afc4-22000b92c261/esg_cmip6/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_id": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "variant_label": [
+            "r4i1p1f1"
+        ],
+        "retracted": false,
+        "_timestamp": "2019-04-03T23:51:41.808Z",
+        "score": 1.0,
+        "_version_": 1732993029382340611
+    },
+    {
+        "id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|esgf.nci.org.au",
+        "version": "1",
+        "activity_drs": [
+            "CMIP"
+        ],
+        "activity_id": [
+            "CMIP"
+        ],
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "5f7cdf4fd94b995bfdbf0d9316555980f5b0d0d246c07e1cb6356cd7a4fbdce5"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "citation_url": [
+            "http://cera-www.dkrz.de/WDCC/meta/CMIP6/CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.json"
+        ],
+        "data_node": "esgf.nci.org.au",
+        "data_specs_version": [
+            "01.00.29"
+        ],
+        "dataset_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308|esgf.nci.org.au",
+        "dataset_id_template_": [
+            "%(mip_era)s.%(activity_drs)s.%(institution_id)s.%(source_id)s.%(experiment_id)s.%(member_id)s.%(table_id)s.%(variable_id)s.%(grid_label)s"
+        ],
+        "directory_format_template_": [
+            "%(root)s/%(mip_era)s/%(activity_drs)s/%(institution_id)s/%(source_id)s/%(experiment_id)s/%(member_id)s/%(table_id)s/%(variable_id)s/%(grid_label)s/%(version)s"
+        ],
+        "experiment_id": [
+            "historical"
+        ],
+        "experiment_title": [
+            "all-forcing simulation of the recent past"
+        ],
+        "frequency": [
+            "mon"
+        ],
+        "further_info_url": [
+            "https://furtherinfo.es-doc.org/CMIP6.NCAR.CESM2.historical.none.r4i1p1f1"
+        ],
+        "grid": [
+            "native 0.9x1.25 finite volume grid (192x288 latxlon)"
+        ],
+        "grid_label": [
+            "gn"
+        ],
+        "index_node": "esgf.nci.org.au",
+        "instance_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "institution_id": [
+            "NCAR"
+        ],
+        "latest": true,
+        "master_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "member_id": [
+            "r4i1p1f1"
+        ],
+        "mip_era": [
+            "CMIP6"
+        ],
+        "model_cohort": [
+            "Registered"
+        ],
+        "nominal_resolution": [
+            "100 km"
+        ],
+        "pid": [
+            "hdl:21.14100/68b38e85-2b6b-3d8a-9918-03dc3094fe47"
+        ],
+        "product": [
+            "model-output"
+        ],
+        "project": [
+            "CMIP6"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 243060396,
+        "source_id": [
+            "CESM2"
+        ],
+        "source_type": [
+            "AOGCM",
+            "BGC"
+        ],
+        "sub_experiment_id": [
+            "none"
+        ],
+        "table_id": [
+            "Amon"
+        ],
+        "timestamp": "2019-02-14T23:00:57Z",
+        "title": "tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "tracking_id": [
+            "hdl:21.14100/ef376c2e-c83b-4e73-a770-010e28bb1776"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf.nci.org.au/thredds/fileServer/replica/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgfdtn.nci.org.au:2811//replica/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|application/gridftp|GridFTP",
+            "http://esgf.nci.org.au/thredds/dodsC/replica/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc.html|application/opendap-html|OPENDAP",
+            "globus:2058c7d6-a79f-11e6-9ad6-22000a1e3b52/replica/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_id": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "variant_label": [
+            "r4i1p1f1"
+        ],
+        "_version_": 1689411304271380480,
+        "retracted": false,
+        "_timestamp": "2021-01-20T13:09:30.730Z",
+        "score": 1.0
+    },
+    {
+        "id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|esgf3.dkrz.de",
+        "version": "1",
+        "activity_drs": [
+            "CMIP"
+        ],
+        "activity_id": [
+            "CMIP"
+        ],
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "5f7cdf4fd94b995bfdbf0d9316555980f5b0d0d246c07e1cb6356cd7a4fbdce5"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "citation_url": [
+            "http://cera-www.dkrz.de/WDCC/meta/CMIP6/CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.json"
+        ],
+        "data_node": "esgf3.dkrz.de",
+        "data_specs_version": [
+            "01.00.29"
+        ],
+        "dataset_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308|esgf3.dkrz.de",
+        "dataset_id_template_": [
+            "%(mip_era)s.%(activity_drs)s.%(institution_id)s.%(source_id)s.%(experiment_id)s.%(member_id)s.%(table_id)s.%(variable_id)s.%(grid_label)s"
+        ],
+        "directory_format_template_": [
+            "%(root)s/%(mip_era)s/%(activity_drs)s/%(institution_id)s/%(source_id)s/%(experiment_id)s/%(member_id)s/%(table_id)s/%(variable_id)s/%(grid_label)s/%(version)s"
+        ],
+        "experiment_id": [
+            "historical"
+        ],
+        "experiment_title": [
+            "all-forcing simulation of the recent past"
+        ],
+        "frequency": [
+            "mon"
+        ],
+        "further_info_url": [
+            "https://furtherinfo.es-doc.org/CMIP6.NCAR.CESM2.historical.none.r4i1p1f1"
+        ],
+        "grid": [
+            "native 0.9x1.25 finite volume grid (192x288 latxlon)"
+        ],
+        "grid_label": [
+            "gn"
+        ],
+        "index_node": "esgf-data.dkrz.de",
+        "instance_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "institution_id": [
+            "NCAR"
+        ],
+        "latest": true,
+        "master_id": "CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "member_id": [
+            "r4i1p1f1"
+        ],
+        "mip_era": [
+            "CMIP6"
+        ],
+        "model_cohort": [
+            "Registered"
+        ],
+        "nominal_resolution": [
+            "100 km"
+        ],
+        "pid": [
+            "hdl:21.14100/68b38e85-2b6b-3d8a-9918-03dc3094fe47"
+        ],
+        "product": [
+            "model-output"
+        ],
+        "project": [
+            "CMIP6"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 243060396,
+        "source_id": [
+            "CESM2"
+        ],
+        "source_type": [
+            "AOGCM",
+            "BGC"
+        ],
+        "sub_experiment_id": [
+            "none"
+        ],
+        "table_id": [
+            "Amon"
+        ],
+        "timestamp": "2019-02-14T23:00:57Z",
+        "title": "tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc",
+        "tracking_id": [
+            "hdl:21.14100/ef376c2e-c83b-4e73-a770-010e28bb1776"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf3.dkrz.de/thredds/fileServer/cmip6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgf3.dkrz.de:2811//cmip6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|application/gridftp|GridFTP",
+            "http://esgf3.dkrz.de/thredds/dodsC/cmip6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc.html|application/opendap-html|OPENDAP",
+            "globus:4981cd16-d651-11e6-9ccd-22000a1e3b52/cmip6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_id": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "variant_label": [
+            "r4i1p1f1"
+        ],
+        "_version_": 1648708687555985408,
+        "retracted": false,
+        "_timestamp": "2019-10-29T06:38:50.558Z",
+        "score": 1.0
+    }
+]

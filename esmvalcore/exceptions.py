@@ -39,13 +39,9 @@ class RecipeError(Error):
     """Recipe contains an error."""
 
     def __init__(self, msg):
-        super().__init__(self)
+        super().__init__(msg)
         self.message = msg
         self.failed_tasks = []
-
-    def __str__(self):
-        """Return message string."""
-        return self.message
 
 
 class InputFilesNotFound(RecipeError):

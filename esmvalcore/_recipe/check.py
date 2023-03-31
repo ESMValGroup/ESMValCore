@@ -1,10 +1,13 @@
 """Module with functions to check a recipe."""
+from __future__ import annotations
+
 import logging
 import os
 import re
 import subprocess
 from pprint import pformat
 from shutil import which
+from typing import Any, Iterable
 
 import isodate
 import yamale
@@ -13,6 +16,9 @@ from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import _get_start_end_year, _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from esmvalcore.preprocessor._multimodel import STATISTIC_MAPPING
+from esmvalcore.preprocessor._supplementary_vars import (
+    PREPROCESSOR_SUPPLEMENTARIES,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -73,32 +79,43 @@ def diagnostics(diags):
                         script_name, name))
 
 
-def duplicate_datasets(datasets):
+def duplicate_datasets(
+    datasets: list[dict[str, Any]],
+    diagnostic: str,
+    variable_group: str,
+) -> None:
     """Check for duplicate datasets."""
+    if not datasets:
+        raise RecipeError(
+            "You have not specified any dataset or additional_dataset groups "
+            f"for variable {variable_group} in diagnostic {diagnostic}.")
     checked_datasets_ = []
     for dataset in datasets:
         if dataset in checked_datasets_:
             raise RecipeError(
-                "Duplicate dataset {} in datasets section".format(dataset))
+                f"Duplicate dataset {dataset} for variable {variable_group} "
+                f"in diagnostic {diagnostic}.")
         checked_datasets_.append(dataset)
 
 
-def variable(var, required_keys):
+def variable(var: dict[str, Any], required_keys: Iterable[str]):
     """Check variables as derived from recipe."""
     required = set(required_keys)
     missing = required - set(var)
     if missing:
         raise RecipeError(
-            "Missing keys {} from variable {} in diagnostic {}".format(
-                missing, var.get('short_name'), var.get('diagnostic')))
+            f"Missing keys {missing} in\n"
+            f"{pformat(var)}\n"
+            "for variable {var['variable_group']} in diagnostic "
+            f"{var['diagnostic']}")
 
 
-def _log_data_availability_errors(input_files, var, patterns):
+def _log_data_availability_errors(dataset):
     """Check if the required input data is available."""
-    var = dict(var)
+    input_files = dataset.files
+    patterns = dataset._file_globs
     if not input_files:
-        var.pop('filename', None)
-        logger.error("No input files found for variable %s", var)
+        logger.error("No input files found for %s", dataset)
         if patterns:
             if len(patterns) == 1:
                 msg = f': {patterns[0]}'
@@ -134,27 +151,28 @@ def _group_years(years):
     return ", ".join(ranges)
 
 
-def data_availability(input_files, var, patterns, log=True):
+def data_availability(dataset, log=True):
     """Check if input_files cover the required years."""
+    input_files = dataset.files
+    facets = dataset.facets
+
     if log:
-        _log_data_availability_errors(input_files, var, patterns)
+        _log_data_availability_errors(dataset)
 
     if not input_files:
-        raise InputFilesNotFound(
-            f"Missing data for {var.get('alias', 'dataset')}: "
-            f"{var['short_name']}")
+        raise InputFilesNotFound(f"Missing data for {dataset.summary(True)}")
 
-    if 'timerange' not in var:
+    if 'timerange' not in facets:
         return
 
-    start_date, end_date = _parse_period(var['timerange'])
+    start_date, end_date = _parse_period(facets['timerange'])
     start_year = int(start_date[0:4])
     end_year = int(end_date[0:4])
     required_years = set(range(start_year, end_year + 1, 1))
     available_years = set()
 
     for file in input_files:
-        start, end = _get_start_end_year(file.name)
+        start, end = _get_start_end_year(file)
         available_years.update(range(start, end + 1))
 
     missing_years = required_years - available_years
@@ -164,6 +182,33 @@ def data_availability(input_files, var, patterns, log=True):
         raise InputFilesNotFound(
             "No input data available for years {} in files:\n{}".format(
                 missing_txt, "\n".join(str(f) for f in input_files)))
+
+
+def preprocessor_supplementaries(dataset, settings):
+    """Check that the required supplementary variables have been added."""
+    steps = [step for step in settings if step in PREPROCESSOR_SUPPLEMENTARIES]
+    supplementaries = {d.facets['short_name'] for d in dataset.supplementaries}
+
+    for step in steps:
+        ancs = PREPROCESSOR_SUPPLEMENTARIES[step]
+        for short_name in ancs['variables']:
+            if short_name in supplementaries:
+                break
+        else:
+            if ancs['required'] == "require_at_least_one":
+                raise RecipeError(
+                    f"Preprocessor function {step} requires that at least "
+                    f"one supplementary variable of {ancs['variables']} is "
+                    f"defined in the recipe for {dataset}.")
+            if ancs['required'] == "prefer_at_least_one":
+                logger.warning(
+                    "Preprocessor function %s works best when at least "
+                    "one supplementary variable of %s is defined in the "
+                    "recipe for %s.",
+                    step,
+                    ancs['variables'],
+                    dataset,
+                )
 
 
 def tasks_valid(tasks):
@@ -247,8 +292,17 @@ def _verify_groupby(groupby):
 def _verify_keep_input_datasets(keep_input_datasets):
     if not isinstance(keep_input_datasets, bool):
         raise RecipeError(
-            "Invalid value encountered for `keep_input_datasets`."
-            f"Must be defined as a boolean. Got {keep_input_datasets}.")
+            f"Invalid value encountered for `keep_input_datasets`."
+            f"Must be defined as a boolean (true or false). "
+            f"Got {keep_input_datasets}.")
+
+
+def _verify_ignore_scalar_coords(ignore_scalar_coords):
+    if not isinstance(ignore_scalar_coords, bool):
+        raise RecipeError(
+            f"Invalid value encountered for `ignore_scalar_coords`."
+            f"Must be defined as a boolean (true or false). Got "
+            f"{ignore_scalar_coords}.")
 
 
 def _verify_arguments(given, expected):
@@ -262,7 +316,13 @@ def _verify_arguments(given, expected):
 
 def multimodel_statistics_preproc(settings):
     """Check that the multi-model settings are valid."""
-    valid_keys = ['span', 'groupby', 'statistics', 'keep_input_datasets']
+    valid_keys = [
+        'groupby',
+        'ignore_scalar_coords',
+        'keep_input_datasets',
+        'span',
+        'statistics',
+    ]
     _verify_arguments(settings.keys(), valid_keys)
 
     span = settings.get('span', None)  # optional, default: overlap
@@ -280,10 +340,17 @@ def multimodel_statistics_preproc(settings):
     keep_input_datasets = settings.get('keep_input_datasets', True)
     _verify_keep_input_datasets(keep_input_datasets)
 
+    ignore_scalar_coords = settings.get('ignore_scalar_coords', False)
+    _verify_ignore_scalar_coords(ignore_scalar_coords)
+
 
 def ensemble_statistics_preproc(settings):
     """Check that the ensemble settings are valid."""
-    valid_keys = ['statistics', 'span']
+    valid_keys = [
+        'ignore_scalar_coords',
+        'span',
+        'statistics',
+    ]
     _verify_arguments(settings.keys(), valid_keys)
 
     span = settings.get('span', 'overlap')  # optional, default: overlap
@@ -293,6 +360,9 @@ def ensemble_statistics_preproc(settings):
     statistics = settings.get('statistics', None)
     if statistics:
         _verify_statistics(statistics, 'ensemble_statistics')
+
+    ignore_scalar_coords = settings.get('ignore_scalar_coords', False)
+    _verify_ignore_scalar_coords(ignore_scalar_coords)
 
 
 def _check_delimiter(timerange):
@@ -349,6 +419,15 @@ def valid_time_selection(timerange):
         for date in timerange:
             date = _check_format_years(date)
             _check_timerange_values(date, timerange)
+
+
+def differing_timeranges(timeranges, required_vars):
+    """Log error if required variables have differing timeranges."""
+    if len(timeranges) > 1:
+        raise ValueError(
+            f"Differing timeranges with values {timeranges} "
+            f"found for required variables {required_vars}. "
+            "Set `timerange` to a common value.")
 
 
 def reference_for_bias_preproc(products):

@@ -1,5 +1,6 @@
 """Unit tests for :class:`esmvalcore.preprocessor.PreprocessorFile`."""
 
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -8,7 +9,7 @@ from iris.cube import Cube, CubeList
 from esmvalcore.preprocessor import PreprocessorFile
 
 ATTRIBUTES = {
-    'filename': 'file.nc',
+    'filename': Path('file.nc'),
     'standard_name': 'precipitation',
     'long_name': 'Precipitation',
     'short_name': 'pr',
@@ -28,7 +29,11 @@ def product():
         units='K',
         attributes={'frequency': 'day'},
     )
-    product = PreprocessorFile(attributes=ATTRIBUTES, settings={})
+    product = PreprocessorFile(
+        filename=Path('file.nc'),
+        attributes={k: v for k, v in ATTRIBUTES.items() if k != 'filename'},
+        settings={},
+    )
     product._cubes = CubeList([cube, cube, cube])
     return product
 
@@ -47,7 +52,7 @@ def test_update_attributes(product):
     product._update_attributes()
 
     assert product.attributes == {
-        'filename': 'file.nc',
+        'filename': Path('file.nc'),
         'standard_name': 'air_temperature',
         'long_name': 'Near-Surface Air Temperature',
         'short_name': 'tas',
@@ -72,7 +77,7 @@ def test_update_attributes_empty_names(product, name, cube_property,
     product._update_attributes()
 
     expected_attributes = {
-        'filename': 'file.nc',
+        'filename': Path('file.nc'),
         'standard_name': 'air_temperature',
         'long_name': 'Near-Surface Air Temperature',
         'short_name': 'tas',
@@ -90,7 +95,7 @@ def test_update_attributes_empty_frequency(product):
     product._update_attributes()
 
     assert product.attributes == {
-        'filename': 'file.nc',
+        'filename': Path('file.nc'),
         'standard_name': 'air_temperature',
         'long_name': 'Near-Surface Air Temperature',
         'short_name': 'tas',
@@ -107,7 +112,7 @@ def test_update_attributes_no_frequency(product):
     product._update_attributes()
 
     assert product.attributes == {
-        'filename': 'file.nc',
+        'filename': Path('file.nc'),
         'standard_name': 'air_temperature',
         'long_name': 'Near-Surface Air Temperature',
         'short_name': 'tas',
@@ -140,3 +145,38 @@ def test_close():
     product.save.assert_called_once_with()
     product.save_provenance.assert_called_once_with()
     assert product._cubes is None
+
+
+@mock.patch('esmvalcore.preprocessor.preprocess', autospec=True)
+def test_save_no_cleanup(mock_preprocess):
+    """Test ``save``."""
+    product = mock.create_autospec(PreprocessorFile, instance=True)
+    product.settings = {'save': {}}
+    product._cubes = mock.sentinel.cubes
+    product._input_files = mock.sentinel.input_files
+
+    PreprocessorFile.save(product)
+
+    assert mock_preprocess.mock_calls == [
+        mock.call(
+            mock.sentinel.cubes, 'save', input_files=mock.sentinel.input_files
+        ),
+    ]
+
+
+@mock.patch('esmvalcore.preprocessor.preprocess', autospec=True)
+def test_save_cleanup(mock_preprocess):
+    """Test ``save``."""
+    product = mock.create_autospec(PreprocessorFile, instance=True)
+    product.settings = {'save': {}, 'cleanup': {}}
+    product._cubes = mock.sentinel.cubes
+    product._input_files = mock.sentinel.input_files
+
+    PreprocessorFile.save(product)
+
+    assert mock_preprocess.mock_calls == [
+        mock.call(
+            mock.sentinel.cubes, 'save', input_files=mock.sentinel.input_files
+        ),
+        mock.call([], 'cleanup', input_files=mock.sentinel.input_files),
+    ]
