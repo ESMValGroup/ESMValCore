@@ -13,14 +13,12 @@ build:
   jobs:
     post_create_environment:
       # python in /home/docs/checkouts/readthedocs.org/user_builds/esmvalcore/conda/1832/bin/python
-      - PYTHONPATH=$(which python)
-      - echo $PYTHONPATH
-      - PYDIR="$(dirname "$PYTHONPATH")"
-      - CONDADIR="$PYDIR/.."
-      - echo $CONDADIR
+      - export PYTHONPATH=$(which python)
+      - export PYDIR="$(dirname "$PYTHONPATH")"
+      - ls -la $PYDIR
+      - export CONDADIR="$PYDIR/.."
       - ls -la $CONDADIR
-      - ESMFMKFILE="$CONDADIR/lib/esmf.mk"
-      - echo $ESMFMKFILE
+      - export ESMFMKFILE="$CONDADIR/lib/esmf.mk"
       - ls -la $ESMFMKFILE
       - pip install . --no-deps
 
