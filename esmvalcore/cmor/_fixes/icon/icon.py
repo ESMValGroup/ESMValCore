@@ -270,24 +270,24 @@ class AllVars(IconFix):
         new_t_unit = cf_units.Unit('days since 1850-01-01',
                                    calendar='proleptic_gregorian')
 
-        # new routine to convert time of daily and hourly data
+        # New routine to convert time of daily and hourly data
         # The string %f (fraction of day) is not a valid format string
         # for datetime.strptime, so we have to convert it ourselves
+        time_str = [str(x) for x in time_coord.points]
 
         # First, extract date (year, month, day) from string
         # and convert it to datetime object
-        time_str = [str(x) for x in time_coord.points]
-        # Second, extract day fraction and convert it to timedelta object
         year_month_day_str = pd.Series(time_str).str.extract(
             r'(\d*)\.?\d*', expand=False
         )
         year_month_day = pd.to_datetime(year_month_day_str, format='%Y%m%d')
-        # Finally, add date and day fraction to get final datetime
-        # and convert it to correct units
+        # Second, extract day fraction and convert it to timedelta object
         day_float_str = pd.Series(time_str).str.extract(
             r'\d*(\.\d*)', expand=False
         ).fillna('0.0')
         day_float = pd.to_timedelta(day_float_str.astype(float), unit='D')
+        # Finally, add date and day fraction to get final datetime
+        # and convert it to correct units
         new_datetimes = (year_month_day + day_float).dt.to_pydatetime()
         new_dt_points = date2num(np.array(new_datetimes), new_t_unit)
 
