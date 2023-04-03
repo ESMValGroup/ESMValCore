@@ -12,12 +12,12 @@ build:
     python: "mambaforge-4.10"
   jobs:
     post_create_environment:
-      - which python
-      - export CONDA_PREFIX="/home/docs/checkouts/readthedocs.org/user_builds/esmvalcore/conda"
-      - echo $CONDA_PREFIX
-      - ls -la $CONDA_PREFIX
-      - export ESMFMKFILE=$CONDA_PREFIX/lib/esmf.mk
-      - echo $ESMFMKFILE
+      # python in /home/docs/checkouts/readthedocs.org/user_builds/esmvalcore/conda/1832/bin/python
+      - PYTHONPATH=$(which python)
+      - PYDIR="$(dirname "$PYTHONPATH")"
+      - CONDADIR="$PYDIR/.."
+      - ESMFMKFILE=$CONDADIR/lib/esmf.mk
+      - ls -la $ESMFMKFILE
       - pip install . --no-deps
 
 # Declare the requirements required to build your docs
