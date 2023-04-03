@@ -84,7 +84,7 @@ REQUIREMENTS = {
         'autodocsumm>=0.2.2',
         'ipython',
         'nbsphinx',
-        'sphinx>=6.1.3',
+        'sphinx',  # currently 6.1.3 does not support python=3.11
         'sphinx_rtd_theme',
     ],
     # Development dependencies
