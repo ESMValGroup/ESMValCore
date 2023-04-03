@@ -12,6 +12,7 @@ build:
     python: "mambaforge-4.10"
   jobs:
     post_create_environment:
+      - which python
       - export CONDA_PREFIX="/home/docs/checkouts/readthedocs.org/user_builds/esmvalcore/conda"
       - echo $CONDA_PREFIX
       - ls -la $CONDA_PREFIX
