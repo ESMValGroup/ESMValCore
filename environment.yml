@@ -11,8 +11,7 @@ dependencies:
   - dask
   - compilers
   - esgf-pyclient>=0.3.1
-  # Pin <8.4 blocks Python 3.11
-  - esmpy!=8.1.0  # ,<8.4  # see github.com/ESMValGroup/ESMValCore/issues/1208
+  - esmpy!=8.1.0
   - filelock
   - fiona
   - fire
@@ -20,7 +19,7 @@ dependencies:
   - humanfriendly
   - importlib_resources
   - iris>=3.4.0
-  - iris-esmf-regrid
+  - iris-esmf-regrid >=0.6.0  # to work with latest esmpy
   - isodate
   - jinja2
   - nc-time-axis
