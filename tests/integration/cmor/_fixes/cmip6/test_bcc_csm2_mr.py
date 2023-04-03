@@ -1,5 +1,6 @@
 """Test fixes for BCC-CSM2-MR."""
 from esmvalcore.cmor._fixes.cmip6.bcc_csm2_mr import (
+    Areacello,
     Cl,
     Cli,
     Clw,
@@ -12,6 +13,17 @@ from esmvalcore.cmor._fixes.common import (
     OceanFixGrid,
 )
 from esmvalcore.cmor._fixes.fix import Fix
+
+
+def test_get_areacello_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'BCC-CSM2-MR', 'Amon', 'areacello')
+    assert fix == [Areacello(None)]
+
+
+def test_areacello_fix():
+    """Test fix for ``areacello``."""
+    assert Areacello is OceanFixGrid
 
 
 def test_get_cl_fix():

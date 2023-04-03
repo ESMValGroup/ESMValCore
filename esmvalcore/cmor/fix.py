@@ -6,6 +6,7 @@ variables to be sure that all known errors are fixed.
 """
 import logging
 from collections import defaultdict
+from pathlib import Path
 
 from iris.cube import CubeList
 
@@ -15,8 +16,16 @@ from .check import CheckLevels, _get_cmor_checker
 logger = logging.getLogger(__name__)
 
 
-def fix_file(file, short_name, project, dataset, mip, output_dir,
-             **extra_facets):
+def fix_file(
+    file: Path,
+    short_name: str,
+    project: str,
+    dataset: str,
+    mip: str,
+    output_dir: Path,
+    add_unique_suffix: bool = False,
+    **extra_facets,
+) -> Path:
     """Fix files before ESMValTool can load them.
 
     This fixes are only for issues that prevent iris from loading the cube or
@@ -26,7 +35,7 @@ def fix_file(file, short_name, project, dataset, mip, output_dir,
 
     Parameters
     ----------
-    file: str
+    file: Path
         Path to the original file.
     short_name: str
         Variable's short name.
@@ -36,15 +45,17 @@ def fix_file(file, short_name, project, dataset, mip, output_dir,
         Name of the dataset.
     mip: str
         Variable's MIP.
-    output_dir: str
+    output_dir: Path
         Output directory for fixed files.
+    add_unique_suffix: bool, optional (default: False)
+        Adds a unique suffix to `output_dir` for thread safety.
     **extra_facets: dict, optional
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 
     Returns
     -------
-    str:
+    Path:
         Path to the fixed file.
     """
     # Update extra_facets with variable information given as regular arguments
@@ -61,7 +72,9 @@ def fix_file(file, short_name, project, dataset, mip, output_dir,
                              mip=mip,
                              short_name=short_name,
                              extra_facets=extra_facets):
-        file = fix.fix_file(file, output_dir)
+        file = fix.fix_file(
+            file, output_dir, add_unique_suffix=add_unique_suffix
+        )
     return file
 
 

@@ -16,7 +16,7 @@ from iris.cube import Cube, CubeList
 import esmvalcore.preprocessor._multimodel as mm
 from esmvalcore.iris_helpers import date2num
 from esmvalcore.preprocessor import multi_model_statistics
-from esmvalcore.preprocessor._ancillary_vars import add_ancillary_variable
+from esmvalcore.preprocessor._supplementary_vars import add_ancillary_variable
 
 SPAN_OPTIONS = ('overlap', 'full')
 

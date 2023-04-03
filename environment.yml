@@ -27,6 +27,7 @@ dependencies:
   - nested-lookup
   - netcdf4
   - numpy
+  - packaging
   - pandas
   - pillow
   - pip!=21.3
@@ -45,7 +46,7 @@ dependencies:
   - autodocsumm>=0.2.2
   - ipython
   - nbsphinx
-  - sphinx>=5
+  - sphinx>=6.1.3
   - sphinx_rtd_theme
   # Python packages needed for testing
   - flake8

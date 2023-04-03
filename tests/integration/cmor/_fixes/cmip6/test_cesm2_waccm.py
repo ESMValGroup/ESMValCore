@@ -45,8 +45,10 @@ def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
     mock_get_filepath.return_value = os.path.join(tmp_path,
                                                   'fixed_cesm2_waccm_cl.nc')
     fix = Cl(None)
-    fixed_file = fix.fix_file(str(nc_path), tmp_path)
-    mock_get_filepath.assert_called_once_with(tmp_path, str(nc_path))
+    fixed_file = fix.fix_file(nc_path, tmp_path)
+    mock_get_filepath.assert_called_once_with(
+        tmp_path, nc_path, add_unique_suffix=False
+    )
     fixed_cube = iris.load_cube(fixed_file)
     lev_coord = fixed_cube.coord(var_name='lev')
     a_coord = fixed_cube.coord(var_name='a')

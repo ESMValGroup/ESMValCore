@@ -1,7 +1,10 @@
 """Contains the base class for dataset fixes."""
+from __future__ import annotations
+
 import importlib
 import inspect
-import os
+import tempfile
+from pathlib import Path
 
 from ..table import CMOR_TABLES
 
@@ -15,36 +18,45 @@ class Fix:
         Parameters
         ----------
         vardef: str
-            CMOR table entry
+            CMOR table entry.
         extra_facets: dict, optional
             Extra facets are mainly used for data outside of the big projects
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
+
         """
         self.vardef = vardef
         if extra_facets is None:
             extra_facets = {}
         self.extra_facets = extra_facets
 
-    def fix_file(self, filepath, output_dir):
+    def fix_file(
+        self,
+        filepath: Path,
+        output_dir: Path,
+        add_unique_suffix: bool = False,
+    ) -> Path:
         """Apply fixes to the files prior to creating the cube.
 
-        Should be used only to fix errors that prevent loading or can
-        not be fixed in the cube (i.e. those related with missing_value
-        and _FillValue)
+        Should be used only to fix errors that prevent loading or cannot be
+        fixed in the cube (e.g., those related to `missing_value` or
+        `_FillValue`).
 
         Parameters
         ----------
-        filepath: str
-            file to fix
-        output_dir: str
-            path to the folder to store the fixed files, if required
+        filepath: Path
+            File to fix.
+        output_dir: Path
+            Output directory for fixed files.
+        add_unique_suffix: bool, optional (default: False)
+            Adds a unique suffix to `output_dir` for thread safety.
 
         Returns
         -------
-        str
+        Path
             Path to the corrected file. It can be different from the original
             filepath if a fix has been applied, but if not it should be the
-            original filepath
+            original filepath.
+
         """
         return filepath
 
@@ -58,12 +70,13 @@ class Fix:
         Parameters
         ----------
         cubes: iris.cube.CubeList
-            Cubes to fix
+            Cubes to fix.
 
         Returns
         -------
         iris.cube.CubeList
             Fixed cubes. They can be different instances.
+
         """
         return cubes
 
@@ -73,19 +86,21 @@ class Fix:
         Parameters
         ----------
         cubes : iris.cube.CubeList
-            List of cubes to search
-        short_name : str
-            Cube's variable short name. If None, short name is the class name
+            List of cubes to search.
+        short_name : str or None
+            Cube's variable short name. If `None`, `short name` is the class
+            name.
 
         Raises
         ------
         Exception
-            If no cube is found
+            If no cube is found.
 
         Returns
         -------
         iris.Cube
             Variable's cube
+
         """
         if short_name is None:
             short_name = self.vardef.short_name
@@ -102,12 +117,13 @@ class Fix:
         Parameters
         ----------
         cube: iris.cube.Cube
-            Cube to fix
+            Cube to fix.
 
         Returns
         -------
         iris.cube.Cube
             Fixed cube. It can be a difference instance.
+
         """
         return cube
 
@@ -150,8 +166,9 @@ class Fix:
 
         Returns
         -------
-        list(Fix)
+        list[Fix]
             Fixes to apply for the given data.
+
         """
         cmor_table = CMOR_TABLES[project]
         vardef = cmor_table.get_variable(mip, short_name)
@@ -196,21 +213,35 @@ class Fix:
         return fixes
 
     @staticmethod
-    def get_fixed_filepath(output_dir, filepath):
+    def get_fixed_filepath(
+        output_dir: str | Path,
+        filepath: str | Path,
+        add_unique_suffix: bool = False,
+    ) -> Path:
         """Get the filepath for the fixed file.
 
         Parameters
         ----------
-        output_dir: str
-            Output directory.
-        filepath: str
+        output_dir: Path
+            Output directory for fixed files. Will be created if it does not
+            exist yet.
+        filepath: str or Path
             Original path.
+        add_unique_suffix: bool, optional (default: False)
+            Adds a unique suffix to `output_dir` for thread safety.
 
         Returns
         -------
-        str
+        Path
             Path to the fixed file.
+
         """
-        if not os.path.isdir(output_dir):
-            os.makedirs(output_dir)
-        return os.path.join(output_dir, os.path.basename(filepath))
+        output_dir = Path(output_dir)
+        if add_unique_suffix:
+            parent_dir = output_dir.parent
+            parent_dir.mkdir(parents=True, exist_ok=True)
+            prefix = output_dir.name
+            output_dir = Path(tempfile.mkdtemp(prefix=prefix, dir=parent_dir))
+        else:
+            output_dir.mkdir(parents=True, exist_ok=True)
+        return output_dir / Path(filepath).name

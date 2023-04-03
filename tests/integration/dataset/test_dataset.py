@@ -44,7 +44,7 @@ def test_load(example_data):
         exp='historical',
         timerange='1850/185002',
     )
-    tas.add_ancillary(short_name='areacella', mip='fx', ensemble='r0i0p0')
+    tas.add_supplementary(short_name='areacella', mip='fx', ensemble='r0i0p0')
 
     tas.augment_facets()
 

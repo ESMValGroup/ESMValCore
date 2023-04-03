@@ -301,6 +301,7 @@ class ESGFFile:
         template = results[0].json['dataset_id_template_'][0]
         keys = re.findall(r"%\((.*?)\)s", template)
         reverse_facet_map = {v: k for k, v in FACETS[project].items()}
+        reverse_facet_map['realm'] = 'modeling_realm'
         reverse_facet_map['mip_era'] = 'project'  # CMIP6 oddity
         reverse_facet_map['variable_id'] = 'short_name'  # CMIP6 oddity
         reverse_facet_map['valid_institute'] = 'institute'  # CMIP5 oddity
@@ -526,9 +527,13 @@ def download(files, dest_folder, n_jobs=4):
     DownloadError:
         Raised if one or more files failed to download.
     """
+    files = [
+        file for file in files if isinstance(file, ESGFFile)
+        and not file.local_file(dest_folder).exists()
+    ]
     if not files:
-        logger.info("All required data is available locally,"
-                    " not downloading anything.")
+        logger.debug("All required data is available locally,"
+                     " not downloading anything.")
         return
 
     files = sorted(files)

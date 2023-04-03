@@ -18,7 +18,7 @@ Amon_r1i1p1_historical,rcp85_INM-CM4_CMIP5_tas.json:
     mip: Amon
     product: output1
     project: CMIP5
-    realm: atmos
+    modeling_realm: atmos
     short_name: tas
     version: v20130207
   local_file: cmip5/output1/INM/inmcm4/historical/mon/atmos/Amon/r1i1p1/v20130207/tas_Amon_inmcm4_historical_r1i1p1_185001-200512.nc
@@ -48,7 +48,7 @@ Amon_r1i1p1_historical,rcp85_INM-CM4_CMIP5_tas.json:
     mip: Amon
     product: output1
     project: CMIP5
-    realm: atmos
+    modeling_realm: atmos
     short_name: tas
     version: v20130207
   local_file: cmip5/output1/INM/inmcm4/rcp85/mon/atmos/Amon/r1i1p1/v20130207/tas_Amon_inmcm4_rcp85_r1i1p1_200601-210012.nc
@@ -79,7 +79,7 @@ Amon_r1i1p1_historical_FIO-ESM_CMIP5_tas.json:
     mip: Amon
     product: output1
     project: CMIP5
-    realm: atmos
+    modeling_realm: atmos
     short_name: tas
     version: v20121010
   local_file: cmip5/output1/FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc
@@ -106,7 +106,7 @@ Amon_r1i1p1_rcp85_HadGEM2-CC_CMIP5_tas.json:
     mip: Amon
     product: output1
     project: CMIP5
-    realm: atmos
+    modeling_realm: atmos
     short_name: tas
     version: v20120531
   local_file: cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc
@@ -130,7 +130,7 @@ Amon_r1i1p1_rcp85_HadGEM2-CC_CMIP5_tas.json:
     mip: Amon
     product: output1
     project: CMIP5
-    realm: atmos
+    modeling_realm: atmos
     short_name: tas
     version: v20120531
   local_file: cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc
@@ -154,7 +154,7 @@ Amon_r1i1p1_rcp85_HadGEM2-CC_CMIP5_tas.json:
     mip: Amon
     product: output1
     project: CMIP5
-    realm: atmos
+    modeling_realm: atmos
     short_name: tas
     version: v20120531
   local_file: cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc
@@ -254,7 +254,7 @@ obs4MIPs_CERES-EBAF_mon_rsutcs.json:
     frequency: mon
     institute: NASA-LaRC
     project: obs4MIPs
-    realm: atmos
+    modeling_realm: atmos
     short_name: rsutcs
     version: v20160610
   local_file: obs4MIPs/CERES-EBAF/v20160610/rsutcs_CERES-EBAF_L3B_Ed2-8_200003-201404.nc
@@ -272,7 +272,6 @@ obs4MIPs_GPCP-V2.3_pr.json:
     frequency: mon
     institute: NASA-GSFC
     project: obs4MIPs
-    realm: atmos
     short_name: pr
     version: v20180519
   local_file: obs4MIPs/GPCP-V2.3/v20180519/pr_GPCP-SG_L3_v2.3_197901-201710.nc
@@ -292,7 +291,7 @@ run1_historical_cccma_cgcm3_1_CMIP3_mon_tas.json:
     frequency: mon
     institute: CCCma
     project: CMIP3
-    realm: atmos
+    modeling_realm: atmos
     short_name: tas
     version: v1
   local_file: cmip3/CCCma/cccma_cgcm3_1/historical/mon/atmos/run1/tas/v1/tas_a1_20c3m_1_cgcm3.1_t47_1850_2000.nc

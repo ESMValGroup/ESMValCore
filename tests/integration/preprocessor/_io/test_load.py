@@ -21,6 +21,7 @@ def _create_sample_cube():
 
 class TestLoad(unittest.TestCase):
     """Tests for :func:`esmvalcore.preprocessor.load`."""
+
     def setUp(self):
         """Start tests."""
         self.temp_files = []
@@ -59,7 +60,7 @@ class TestLoad(unittest.TestCase):
                 cube.attributes[attr] = attr
             self._save_cube(cube)
         for temp_file in self.temp_files:
-            cubes = load(temp_file, callback=concatenate_callback)
+            cubes = load(temp_file, callback='default')
             cube = cubes[0]
             self.assertEqual(1, len(cubes))
             self.assertTrue((cube.data == np.array([1, 2])).all())
@@ -78,7 +79,7 @@ class TestLoad(unittest.TestCase):
                     coord.attributes[attr] = attr
             self._save_cube(cube)
         for temp_file in self.temp_files:
-            cubes = load(temp_file, callback=concatenate_callback)
+            cubes = load(temp_file, callback='default')
             cube = cubes[0]
             self.assertEqual(1, len(cubes))
             self.assertTrue((cube.data == np.array([1, 2])).all())

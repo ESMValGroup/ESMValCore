@@ -47,6 +47,7 @@ REQUIREMENTS = {
         'nested-lookup',
         'netCDF4',
         'numpy',
+        'packaging',
         'pandas',
         'pillow',
         'prov',
@@ -84,7 +85,7 @@ REQUIREMENTS = {
         'autodocsumm>=0.2.2',
         'ipython',
         'nbsphinx',
-        'sphinx>5',
+        'sphinx>=6.1.3',
         'sphinx_rtd_theme',
     ],
     # Development dependencies
