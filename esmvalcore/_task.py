@@ -843,7 +843,7 @@ class TaskSet(set):
         for task in sorted(tasks, key=lambda t: t.priority):
             task.run()
 
-    def _run_parallel(self, max_parallel_tasks: int | None = None):
+    def _run_parallel(self, max_parallel_tasks=None):
         """Run tasks in parallel."""
         scheduled = self.flatten()
         running = {}
