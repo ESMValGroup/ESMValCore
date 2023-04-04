@@ -3,6 +3,7 @@ import copy
 import logging
 import os
 from functools import total_ordering
+from pathlib import Path
 
 from netCDF4 import Dataset
 from PIL import Image
@@ -104,7 +105,7 @@ class TrackedFile:
     """File with provenance tracking."""
 
     def __init__(self,
-                 filename,
+                 filename: Path,
                  attributes=None,
                  ancestors=None,
                  prov_filename=None):
@@ -112,7 +113,7 @@ class TrackedFile:
 
         Arguments
         ---------
-        filename: str
+        filename:
             Path to the file on disk.
         attributes: dict
             Dictionary with facets describing the file. If set to None, this

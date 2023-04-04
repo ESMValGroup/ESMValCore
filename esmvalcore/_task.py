@@ -1,4 +1,6 @@
 """ESMValtool task definition."""
+from __future__ import annotations
+
 import abc
 import contextlib
 import datetime
@@ -24,6 +26,7 @@ import yaml
 
 from ._citation import _write_citation_files
 from ._provenance import TrackedFile, get_task_provenance
+from .config import Session
 from .config._diagnostics import DIAGNOSTICS, TAGS
 
 
@@ -193,7 +196,9 @@ def write_ncl_settings(settings, filename, mode='wt'):
     lines = []
 
     # ignore some settings for NCL diagnostic
-    ignore_settings = ['profile_diagnostic', ]
+    ignore_settings = [
+        'profile_diagnostic',
+    ]
     for sett in ignore_settings:
         settings_copy = dict(settings)
         if 'diag_script_info' not in settings_copy:
@@ -416,7 +421,9 @@ class DiagnosticTask(BaseTask):
         run_dir.mkdir(parents=True, exist_ok=True)
 
         # ignore some settings for diagnostic
-        ignore_settings = ['profile_diagnostic', ]
+        ignore_settings = [
+            'profile_diagnostic',
+        ]
         for sett in ignore_settings:
             settings_copy = dict(self.settings)
             settings_copy.pop(sett, None)
@@ -712,29 +719,30 @@ class TaskSet(set):
                 independent_tasks.add(task)
         return independent_tasks
 
-    def run(self, cfg) -> None:
+    def run(self, session: Session) -> None:
         """Run tasks.
 
         Parameters
         ----------
-        cfg : dict
-            Config-user dict.
+        session : esmvalcore.config.Session
+            Session.
         """
-        max_parallel_tasks = cfg['max_parallel_tasks']
+        max_parallel_tasks = session['max_parallel_tasks']
         if max_parallel_tasks == -1:
-            self._run_dask(cfg)
+            self._run_distributed(session)
         elif max_parallel_tasks == 1:
             self._run_sequential()
         else:
             self._run_parallel(max_parallel_tasks)
 
-    def _run_dask(self, cfg) -> None:
-        """Run tasks using dask."""
-        # Configure dask
-        client_args = cfg.get('dask', {}).get('client', {}).copy()
-        cluster_args = cfg.get('dask', {}).get('cluster', {}).copy()
+    def _run_distributed(self, session: Session) -> None:
+        """Run tasks using Dask Distributed."""
+        # Configure the scheduler
+        client_args = session.get('dask', {}).get('client', {}).copy()
+        cluster_args = session.get('dask', {}).get('cluster', {}).copy()
 
         if 'address' in client_args:
+            cluster = None
             if cluster_args:
                 logger.warning(
                     "Not using 'dask: cluster' settings because a cluster "
@@ -749,27 +757,82 @@ class TaskSet(set):
             cluster_module = importlib.import_module(cluster_module_name)
             cluster_cls = getattr(cluster_module, cluster_cls_name)
             cluster = cluster_cls(**cluster_args)
-            client_args['address'] = cluster
+            client_args['address'] = cluster.scheduler_address
 
         # Connect client and run computation
         with dask.distributed.Client(**client_args) as client:
             logger.info(f"Dask dashboard: {client.dashboard_link}")
+            tasks = sorted((t for t in self.flatten()),
+                           key=lambda t: t.priority)
+            for task in tasks:
+                if (isinstance(task, DiagnosticTask)
+                        and Path(task.script).suffix.lower() == '.py'):
+                    # Only use the scheduler address if running a Python script
+                    task.settings[
+                        'scheduler_address'] = client.scheduler.address
+
+            # Create a graph for dask.array operations in PreprocessingTasks
+            preprocessing_tasks = [t for t in tasks if hasattr(t, 'delayeds')]
+
+            futures_to_preproc_tasks: dict[dask.distributed.Future,
+                                           BaseTask] = {}
+            for task in preprocessing_tasks:
+                future = client.submit(_run_preprocessing_task,
+                                       task,
+                                       priority=-task.priority)
+                futures_to_preproc_tasks[future] = task
+
+            for future in dask.distributed.as_completed(
+                    futures_to_preproc_tasks):
+                task = futures_to_preproc_tasks[future]
+                _copy_preprocessing_results(task, future)
+
+            # Compute dask.array operations for PreprocessingTasks
             futures_to_files: dict[dask.distributed.Future, Path] = {}
-            for task in sorted(self.flatten(), key=lambda t: t.priority):
-                if hasattr(task, 'delayeds'):
-                    logger.info(f"Scheduling task {task.name}")
-                    task.run()
-                    logger.info(f"Computing task {task.name}")
-                    task_futures = client.compute(
-                        list(task.delayeds.values()),
-                        priority=-task.priority,
-                    )
-                    futures_to_files.update(zip(task_futures, task.delayeds))
-                else:
-                    logger.info(f"Skipping task {task.name}")
-            for future in dask.distributed.as_completed(futures_to_files):
-                filename = futures_to_files[future]
-                logger.info(f"Wrote (delayed) {filename}")
+            for task in preprocessing_tasks:
+                logger.info(f"Computing task {task.name}")
+                futures = client.compute(
+                    list(task.delayeds.values()),
+                    priority=-task.priority,
+                )
+                futures_to_files.update(zip(futures, task.delayeds))
+
+            # Start computing DiagnosticTasks as soon as the relevant
+            # PreprocessingTasks complete
+            waiting = [t for t in tasks if t not in preprocessing_tasks]
+            futures_to_tasks: dict[dask.distributed.Future, BaseTask] = {}
+            ready_files = set()
+            ready_tasks = set()
+            iterator = dask.distributed.as_completed(futures_to_files)
+            for future in iterator:
+                if future in futures_to_files:
+                    filename = futures_to_files[future]
+                    logger.info(f"Wrote (delayed) {filename}")
+                    ready_files.add(filename)
+                    # Check if a PreprocessingTask has finished
+                    for preproc_task in preprocessing_tasks:
+                        filenames = set(preproc_task.delayeds)
+                        if filenames.issubset(ready_files):
+                            ready_tasks.add(preproc_task)
+                elif future in futures_to_tasks:
+                    # Check if a ResumeTask or DiagnosticTask has finished
+                    task = futures_to_tasks[future]
+                    _copy_results(task, future)
+                    ready_tasks.add(task)
+
+                # Schedule any new tasks that can be scheduled
+                for task in waiting:
+                    if set(task.ancestors).issubset(ready_tasks):
+                        future = client.submit(_run_task,
+                                               task,
+                                               priority=-task.priority)
+                        iterator.add(future)
+                        futures_to_tasks[future] = task
+                        waiting.pop(waiting.index(task))
+
+        # Shutdown the cluster if it is managed by us.
+        if cluster is not None:
+            cluster.close()
 
     def _run_sequential(self) -> None:
         """Run tasks sequentially."""
@@ -780,7 +843,7 @@ class TaskSet(set):
         for task in sorted(tasks, key=lambda t: t.priority):
             task.run()
 
-    def _run_parallel(self, max_parallel_tasks=None):
+    def _run_parallel(self, max_parallel_tasks: int | None = None):
         """Run tasks in parallel."""
         scheduled = self.flatten()
         running = {}
@@ -812,7 +875,7 @@ class TaskSet(set):
                 # Handle completed tasks
                 ready = {t for t in running if running[t].ready()}
                 for task in ready:
-                    _copy_results(task, running[task])
+                    _copy_results2(task, running[task])
                     running.pop(task)
 
                 # Wait if there are still tasks running
@@ -833,12 +896,27 @@ class TaskSet(set):
             pool.join()
 
 
-def _copy_results(task, future):
-    """Update task with the results from the remote process."""
-    task.output_files, task.products = future.get()
-
-
 def _run_task(task):
     """Run task and return the result."""
     output_files = task.run()
     return output_files, task.products
+
+
+def _copy_results(task, future):
+    """Update task with the results from the remote process."""
+    task.output_files, task.products = future.result()
+
+
+def _copy_results2(task, future):
+    """Update task with the results from the remote process."""
+    task.output_files, task.products = future.get()
+
+
+def _run_preprocessing_task(task):
+    output_files = task.run()
+    return output_files, task.products, task.delayeds
+
+
+def _copy_preprocessing_results(task, future):
+    """Update task with the results from the remote process."""
+    task.output_files, task.products, task.delayeds = future.result()

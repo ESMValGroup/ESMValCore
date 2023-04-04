@@ -610,7 +610,7 @@ class PreprocessingTask(BaseTask):
         self.order = list(order)
         self.debug = debug
         self.write_ncl_interface = write_ncl_interface
-        self.delayeds: dict[str, Delayed] = {}
+        self.delayeds: dict[Path, Delayed] = {}
 
     def _initialize_product_provenance(self):
         """Initialize product provenance."""
