@@ -41,7 +41,7 @@ def sample_cube():
         long_name='air_pressure',
         units='hPa',
     )
-    alt40_coord = AuxCoord(
+    alt16_coord = AuxCoord(
         [2.0, 4.0],
         long_name='altitude',
         units='km',
@@ -73,7 +73,7 @@ def sample_cube():
                              (plev_coord, 1),
                              (lat_coord, 2),
                              (lon_coord, 3)],
-        aux_coords_and_dims=[(alt40_coord, 1),
+        aux_coords_and_dims=[(alt16_coord, 1),
                              (height_coord, 1),
                              (coord_with_bounds, 1)],
     )
@@ -371,12 +371,12 @@ def test_fix_time_metadata_from_coord(sample_cube, fix):
     assert out_coord.bounds is None
 
 
-def test_fix_alt40_metadata(sample_cube, fix):
-    """Test ``fix_alt40_metadata``."""
-    out_coord = fix.fix_alt40_metadata(sample_cube)
+def test_fix_alt16_metadata(sample_cube, fix):
+    """Test ``fix_alt16_metadata``."""
+    out_coord = fix.fix_alt16_metadata(sample_cube)
     assert out_coord is sample_cube.coord('altitude')
     assert out_coord.standard_name == 'altitude'
-    assert out_coord.var_name == 'alt40'
+    assert out_coord.var_name == 'alt16'
     assert out_coord.long_name == 'altitude'
     assert out_coord.units == 'm'
     assert out_coord.attributes['positive'] == 'up'
@@ -384,12 +384,12 @@ def test_fix_alt40_metadata(sample_cube, fix):
     assert out_coord.bounds is None
 
 
-def test_fix_alt40_metadata_from_str(sample_cube, fix):
-    """Test ``fix_alt40_metadata`` from string."""
-    out_coord = fix.fix_alt40_metadata(sample_cube, coord='altitude')
+def test_fix_alt16_metadata_from_str(sample_cube, fix):
+    """Test ``fix_alt16_metadata`` from string."""
+    out_coord = fix.fix_alt16_metadata(sample_cube, coord='altitude')
     assert out_coord is sample_cube.coord('altitude')
     assert out_coord.standard_name == 'altitude'
-    assert out_coord.var_name == 'alt40'
+    assert out_coord.var_name == 'alt16'
     assert out_coord.long_name == 'altitude'
     assert out_coord.units == 'm'
     assert out_coord.attributes['positive'] == 'up'
@@ -397,13 +397,13 @@ def test_fix_alt40_metadata_from_str(sample_cube, fix):
     assert out_coord.bounds is None
 
 
-def test_fix_alt40_metadata_from_coord(sample_cube, fix):
-    """Test ``fix_alt40_metadata`` from string."""
+def test_fix_alt16_metadata_from_coord(sample_cube, fix):
+    """Test ``fix_alt16_metadata`` from string."""
     coord = AuxCoord([2.0], units='m')
-    out_coord = fix.fix_alt40_metadata(sample_cube, coord=coord)
+    out_coord = fix.fix_alt16_metadata(sample_cube, coord=coord)
     assert out_coord is coord
     assert out_coord.standard_name == 'altitude'
-    assert out_coord.var_name == 'alt40'
+    assert out_coord.var_name == 'alt16'
     assert out_coord.long_name == 'altitude'
     assert out_coord.units == 'm'
     assert out_coord.attributes['positive'] == 'up'

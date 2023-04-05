@@ -208,7 +208,7 @@ class AllVars(IconFix):
             else:
                 zghalf = None
             alt_coord = self._get_z_coord(cubes, 'zg', bounds_name=zghalf)
-            self.fix_alt40_metadata(cube, alt_coord)
+            self.fix_alt16_metadata(cube, alt_coord)
 
             # Altitude coordinate only spans height and spatial dimensions (no
             # time) -> these are always the last two dimensions in the cube

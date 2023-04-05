@@ -232,8 +232,8 @@ class NativeDatasetFix(Fix):
         return coord
 
     @staticmethod
-    def fix_alt40_metadata(cube, coord=None):
-        """Fix metadata of alt40 coordinate (in-place).
+    def fix_alt16_metadata(cube, coord=None):
+        """Fix metadata of alt16 coordinate (in-place).
 
         Parameters
         ----------
@@ -254,7 +254,7 @@ class NativeDatasetFix(Fix):
             coord = cube.coord('altitude')
         elif isinstance(coord, str):
             coord = cube.coord(coord)
-        coord.var_name = 'alt40'
+        coord.var_name = 'alt16'
         coord.standard_name = 'altitude'
         coord.long_name = 'altitude'
         coord.convert_units('m')

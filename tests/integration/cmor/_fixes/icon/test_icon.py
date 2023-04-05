@@ -1593,7 +1593,7 @@ def test_fix_height_plev(bounds, simple_unstructured_cube):
 
 
 @pytest.mark.parametrize('bounds', [True, False])
-def test_fix_height_alt40(bounds, simple_unstructured_cube):
+def test_fix_height_alt16(bounds, simple_unstructured_cube):
     """Test fix."""
     cube = simple_unstructured_cube[:, 1:, :]
     zg_cube = simple_unstructured_cube[0, 1:, :]
@@ -1617,16 +1617,16 @@ def test_fix_height_alt40(bounds, simple_unstructured_cube):
     assert height.bounds is None
 
     assert fixed_cube.coords('altitude', dim_coords=False)
-    alt40 = fixed_cube.coord('altitude', dim_coords=False)
-    assert alt40.var_name == 'alt40'
-    assert alt40.standard_name == 'altitude'
-    assert alt40.long_name == 'altitude'
-    assert alt40.units == 'm'
-    assert alt40.attributes == {'positive': 'up'}
+    alt16 = fixed_cube.coord('altitude', dim_coords=False)
+    assert alt16.var_name == 'alt16'
+    assert alt16.standard_name == 'altitude'
+    assert alt16.long_name == 'altitude'
+    assert alt16.units == 'm'
+    assert alt16.attributes == {'positive': 'up'}
     assert fixed_cube.coord_dims('altitude') == (1, 2)
-    np.testing.assert_allclose(alt40.points, expected_data[0])
+    np.testing.assert_allclose(alt16.points, expected_data[0])
     if bounds:
         expected_bnds = [[[4.0, 2.0], [5.0, 3.0]], [[2.0, 0.0], [3.0, 1.0]]]
-        np.testing.assert_allclose(alt40.bounds, expected_bnds)
+        np.testing.assert_allclose(alt16.bounds, expected_bnds)
     else:
-        assert alt40.bounds is None
+        assert alt16.bounds is None
