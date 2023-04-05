@@ -1,4 +1,5 @@
 """Tests for shared functions for fixes."""
+import dask.array as da
 import iris
 import iris.coords
 import iris.cube
@@ -8,6 +9,7 @@ from cf_units import Unit
 from iris import NameConstraint
 
 from esmvalcore.cmor._fixes.shared import (
+    _conservative_map,
     add_altitude_from_plev,
     add_aux_coords_from_cubes,
     add_plev_from_altitude,
@@ -103,18 +105,81 @@ def test_add_aux_coords_from_cubes(coord_dict, output):
         assert "got 2" in str(err.value)
 
 
+def test_conservative_map_empty_np_array():
+    """Test `_conservative_map` with empty numpy array."""
+    array_in = np.array([])
+    output = _conservative_map(lambda x: x**2, array_in)
+    assert isinstance(output, np.ndarray)
+    assert not np.ma.isMaskedArray(output)
+    np.testing.assert_equal(output, [])
+
+
+def test_conservative_map_empty_da_array():
+    """Test `_conservative_map` with empty dask array."""
+    array_in = da.array([])
+    output = _conservative_map(lambda x: x**2, array_in)
+    assert isinstance(output, da.core.Array)
+    output = output.compute()
+    assert not np.ma.isMaskedArray(output)
+    np.testing.assert_equal(output, [])
+
+
+def test_conservative_map_np_no_mask():
+    """Test `_conservative_map` with non-masked numpy array."""
+    array_in = np.array([1, 2, 3])
+    output = _conservative_map(lambda x: x**2, array_in)
+    assert isinstance(output, np.ndarray)
+    assert not np.ma.isMaskedArray(output)
+    np.testing.assert_equal(output, [1, 4, 9])
+
+
+def test_conservative_map_np_mask():
+    """Test `_conservative_map` with masked numpy array."""
+    array_in = np.ma.masked_equal([999.0, 4.0, 999.0], 999.0)
+    output = _conservative_map(lambda x: x**2, array_in)
+    assert isinstance(output, np.ndarray)
+    assert np.ma.isMaskedArray(output)
+    np.testing.assert_allclose(output, [999.0, 16.0, 999.0])
+    np.testing.assert_equal(output.mask, [True, False, True])
+
+
+def test_conservative_map_da_no_mask():
+    """Test `_conservative_map` with non-masked dask array."""
+    array_in = da.arange(3)
+    output = _conservative_map(lambda x: x**2, array_in)
+    assert isinstance(output, da.core.Array)
+    output = output.compute()
+    assert not np.ma.isMaskedArray(output)
+    np.testing.assert_equal(output, [0, 1, 4])
+
+
+def test_conservative_map_da_mask():
+    """Test `_conservative_map` with masked dask array."""
+    array_in = da.ma.masked_equal(da.arange(3) + 3, 3)
+    output = _conservative_map(lambda x: x**2, array_in)
+    assert isinstance(output, da.core.Array)
+    output = output.compute()
+    assert np.ma.isMaskedArray(output)
+    np.testing.assert_equal(output, [3, 16, 25])
+    np.testing.assert_equal(output.mask, [True, False, False])
+
+
 ALT_COORD = iris.coords.AuxCoord([0.0], bounds=[[-100.0, 500.0]],
                                  standard_name='altitude', units='m')
+ALT_COORD_MASKED = ALT_COORD.copy(np.ma.masked_equal([0.0], 0.0))
 ALT_COORD_NB = iris.coords.AuxCoord([0.0], standard_name='altitude', units='m')
 ALT_COORD_KM = iris.coords.AuxCoord([0.0], bounds=[[-0.1, 0.5]],
                                     var_name='alt', long_name='altitude',
                                     standard_name='altitude', units='km')
 P_COORD = iris.coords.AuxCoord([101325.0], bounds=[[102532.0, 95460.8]],
                                standard_name='air_pressure', units='Pa')
+P_COORD_MASKED = P_COORD.copy(np.ma.masked_equal([0.0], 0.0))
 P_COORD_NB = iris.coords.AuxCoord([101325.0], standard_name='air_pressure',
                                   units='Pa')
 CUBE_ALT = iris.cube.Cube([1.0], var_name='x',
                           aux_coords_and_dims=[(ALT_COORD, 0)])
+CUBE_ALT_MASKED = iris.cube.Cube([1.0], var_name='x',
+                                 aux_coords_and_dims=[(ALT_COORD_MASKED, 0)])
 CUBE_ALT_NB = iris.cube.Cube([1.0], var_name='x',
                              aux_coords_and_dims=[(ALT_COORD_NB, 0)])
 CUBE_ALT_KM = iris.cube.Cube([1.0], var_name='x',
@@ -123,6 +188,7 @@ CUBE_ALT_KM = iris.cube.Cube([1.0], var_name='x',
 
 TEST_ADD_PLEV_FROM_ALTITUDE = [
     (CUBE_ALT.copy(), P_COORD.copy()),
+    (CUBE_ALT_MASKED.copy(), P_COORD_MASKED.copy()),
     (CUBE_ALT_NB.copy(), P_COORD_NB.copy()),
     (CUBE_ALT_KM.copy(), P_COORD.copy()),
     (iris.cube.Cube(0.0), None),
@@ -142,7 +208,24 @@ def test_add_plev_from_altitude(cube, output):
     assert not cube.coords('air_pressure')
     add_plev_from_altitude(cube)
     air_pressure_coord = cube.coord('air_pressure')
-    assert air_pressure_coord == output
+    metadata_list = [
+        'var_name',
+        'standard_name',
+        'long_name',
+        'units',
+        'attributes',
+    ]
+    for attr in metadata_list:
+        assert getattr(air_pressure_coord, attr) == getattr(output, attr)
+    np.testing.assert_allclose(
+        air_pressure_coord.points, output.points, atol=1e-7
+    )
+    if output.bounds is None:
+        assert air_pressure_coord.bounds is None
+    else:
+        np.testing.assert_allclose(
+            air_pressure_coord.bounds, output.bounds, rtol=1e-3
+        )
     assert cube.coords('altitude')
 
 
@@ -152,6 +235,8 @@ P_COORD_HPA = iris.coords.AuxCoord([1013.25], bounds=[[1025.32, 954.60]],
                                    long_name='pressure', units='hPa')
 CUBE_PLEV = iris.cube.Cube([1.0], var_name='x',
                            aux_coords_and_dims=[(P_COORD, 0)])
+CUBE_PLEV_MASKED = iris.cube.Cube([1.0], var_name='x',
+                                  aux_coords_and_dims=[(P_COORD_MASKED, 0)])
 CUBE_PLEV_NB = iris.cube.Cube([1.0], var_name='x',
                               aux_coords_and_dims=[(P_COORD_NB, 0)])
 CUBE_PLEV_HPA = iris.cube.Cube([1.0], var_name='x',
@@ -160,6 +245,7 @@ CUBE_PLEV_HPA = iris.cube.Cube([1.0], var_name='x',
 
 TEST_ADD_ALTITUDE_FROM_PLEV = [
     (CUBE_PLEV.copy(), ALT_COORD.copy()),
+    (CUBE_PLEV_MASKED.copy(), ALT_COORD_MASKED.copy()),
     (CUBE_PLEV_NB.copy(), ALT_COORD_NB.copy()),
     (CUBE_PLEV_HPA.copy(), ALT_COORD.copy()),
     (iris.cube.Cube(0.0), None),
