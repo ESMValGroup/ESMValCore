@@ -47,35 +47,31 @@ def add_aux_coords_from_cubes(cube, cubes, coord_dict):
         cubes.remove(coord_cube)
 
 
-def _conservative_map(function, array):
-    """Map function on array while preserving array type.
+def _map_on_filled(function, array):
+    """Map function on filled array."""
+    if array.size == 0:
+        return array
 
-    Note
-    ----
-    Masked elements are converted to NaNs before applying the function.
+    # We support dask and numpy arrays
+    # Note: numpy's dispatch mechanism does not work here because of the usage
+    # of `np.ma.filled` and `np.ma.masked_array`.
+    if isinstance(array, da.core.Array):
+        num_module = da
+    else:
+        num_module = np
 
-    """
-    # Note: because of numpy's dispatch mechanism
-    # (https://numpy.org/neps/nep-0018-array-function-protocol.html) we do not
-    # need to differentiate between numpy and dask arrays and can simply use
-    # `np` (e.g., `np.ma.masked_array` will use `da.ma.masked_array` for dask
-    # arrays).
-    mask = np.ma.getmaskarray(array)
+    mask = num_module.ma.getmaskarray(array)
 
     # Fill masked values with dummy value (simply use first value in array for
     # this to preserve dtype, these get masked later so the actual value does
-    # not matter). Note: array.fill_value does not work for dask arrays.
-    if mask.any():
-        fill_value = np.ravel(array)[0]
-        array = np.ma.filled(array, fill_value)
+    # not matter). Note: `array.fill_value` is not defined for dask arrays, and
+    # `ma.filled` also works for regular (non-masked) arrays.
+    fill_value = num_module.ravel(array)[0]
+    array = num_module.ma.filled(array, fill_value)
 
+    # Apply function and return masked array
     array = function(array)
-
-    # Re-apply mask
-    if mask.any():
-        array = np.ma.masked_array(array, mask=mask)
-
-    return array
+    return num_module.ma.masked_array(array, mask=mask)
 
 
 def add_plev_from_altitude(cube):
@@ -96,13 +92,13 @@ def add_plev_from_altitude(cube):
         if height_coord.units != 'm':
             height_coord.convert_units('m')
         altitude_to_pressure = get_altitude_to_pressure_func()
-        pressure_points = _conservative_map(
+        pressure_points = _map_on_filled(
             altitude_to_pressure, height_coord.core_points()
         )
         if height_coord.core_bounds() is None:
             pressure_bounds = None
         else:
-            pressure_bounds = _conservative_map(
+            pressure_bounds = _map_on_filled(
                 altitude_to_pressure, height_coord.core_bounds()
             )
         pressure_coord = iris.coords.AuxCoord(pressure_points,
@@ -134,13 +130,13 @@ def add_altitude_from_plev(cube):
         if plev_coord.units != 'Pa':
             plev_coord.convert_units('Pa')
         pressure_to_altitude = get_pressure_to_altitude_func()
-        altitude_points = _conservative_map(
+        altitude_points = _map_on_filled(
             pressure_to_altitude, plev_coord.core_points()
         )
         if plev_coord.core_bounds() is None:
             altitude_bounds = None
         else:
-            altitude_bounds = _conservative_map(
+            altitude_bounds = _map_on_filled(
                 pressure_to_altitude, plev_coord.core_bounds()
             )
         altitude_coord = iris.coords.AuxCoord(altitude_points,

@@ -9,7 +9,7 @@ from cf_units import Unit
 from iris import NameConstraint
 
 from esmvalcore.cmor._fixes.shared import (
-    _conservative_map,
+    _map_on_filled,
     add_altitude_from_plev,
     add_aux_coords_from_cubes,
     add_plev_from_altitude,
@@ -105,63 +105,84 @@ def test_add_aux_coords_from_cubes(coord_dict, output):
         assert "got 2" in str(err.value)
 
 
-def test_conservative_map_empty_np_array():
-    """Test `_conservative_map` with empty numpy array."""
+def test_map_on_filled_np_empty_array():
+    """Test `_map_on_filled` with empty numpy array."""
     array_in = np.array([])
-    output = _conservative_map(lambda x: x**2, array_in)
+    output = _map_on_filled(lambda x: x**2, array_in)
     assert isinstance(output, np.ndarray)
     assert not np.ma.isMaskedArray(output)
     np.testing.assert_equal(output, [])
 
 
-def test_conservative_map_empty_da_array():
-    """Test `_conservative_map` with empty dask array."""
-    array_in = da.array([])
-    output = _conservative_map(lambda x: x**2, array_in)
-    assert isinstance(output, da.core.Array)
-    output = output.compute()
-    assert not np.ma.isMaskedArray(output)
-    np.testing.assert_equal(output, [])
-
-
-def test_conservative_map_np_no_mask():
-    """Test `_conservative_map` with non-masked numpy array."""
+def test_map_on_filled_np_no_mask():
+    """Test `_map_on_filled` with non-masked numpy array."""
     array_in = np.array([1, 2, 3])
-    output = _conservative_map(lambda x: x**2, array_in)
+    output = _map_on_filled(lambda x: x**2, array_in)
     assert isinstance(output, np.ndarray)
-    assert not np.ma.isMaskedArray(output)
+    assert np.ma.isMaskedArray(output)
     np.testing.assert_equal(output, [1, 4, 9])
 
 
-def test_conservative_map_np_mask():
-    """Test `_conservative_map` with masked numpy array."""
+def test_map_on_filled_np_mask():
+    """Test `_map_on_filled` with masked numpy array."""
     array_in = np.ma.masked_equal([999.0, 4.0, 999.0], 999.0)
-    output = _conservative_map(lambda x: x**2, array_in)
+    output = _map_on_filled(lambda x: x**2, array_in)
     assert isinstance(output, np.ndarray)
     assert np.ma.isMaskedArray(output)
     np.testing.assert_allclose(output, [999.0, 16.0, 999.0])
     np.testing.assert_equal(output.mask, [True, False, True])
 
 
-def test_conservative_map_da_no_mask():
-    """Test `_conservative_map` with non-masked dask array."""
-    array_in = da.arange(3)
-    output = _conservative_map(lambda x: x**2, array_in)
+def test_map_on_filled_np_mask_not_used():
+    """Test `_map_on_filled` with masked numpy array."""
+    array_in = np.ma.masked_equal([2, 4, 5], 10)
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, np.ndarray)
+    assert np.ma.isMaskedArray(output)
+    np.testing.assert_allclose(output, [4, 16, 25])
+    np.testing.assert_equal(output.mask, [False, False, False])
+
+
+def test_map_on_filled_da_empty_array():
+    """Test `_map_on_filled` with empty dask array."""
+    array_in = da.array([])
+    output = _map_on_filled(lambda x: x**2, array_in)
     assert isinstance(output, da.core.Array)
     output = output.compute()
     assert not np.ma.isMaskedArray(output)
+    np.testing.assert_equal(output, [])
+
+
+def test_map_on_filled_da_no_mask():
+    """Test `_map_on_filled` with non-masked dask array."""
+    array_in = da.arange(3)
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, da.core.Array)
+    output = output.compute()
+    assert np.ma.isMaskedArray(output)
     np.testing.assert_equal(output, [0, 1, 4])
 
 
-def test_conservative_map_da_mask():
-    """Test `_conservative_map` with masked dask array."""
+def test_map_on_filled_da_mask():
+    """Test `_map_on_filled` with masked dask array."""
     array_in = da.ma.masked_equal(da.arange(3) + 3, 3)
-    output = _conservative_map(lambda x: x**2, array_in)
+    output = _map_on_filled(lambda x: x**2, array_in)
     assert isinstance(output, da.core.Array)
     output = output.compute()
     assert np.ma.isMaskedArray(output)
     np.testing.assert_equal(output, [3, 16, 25])
     np.testing.assert_equal(output.mask, [True, False, False])
+
+
+def test_map_on_filled_da_mask_not_used():
+    """Test `_map_on_filled` with masked dask array."""
+    array_in = da.ma.masked_equal(da.arange(3), 10)
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, da.core.Array)
+    output = output.compute()
+    assert np.ma.isMaskedArray(output)
+    np.testing.assert_allclose(output, [0, 1, 4])
+    np.testing.assert_equal(output.mask, [False, False, False])
 
 
 ALT_COORD = iris.coords.AuxCoord([0.0], bounds=[[-100.0, 500.0]],
