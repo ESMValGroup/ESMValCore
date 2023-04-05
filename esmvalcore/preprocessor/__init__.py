@@ -654,12 +654,8 @@ class PreprocessingTask(BaseTask):
             for product in self.products for step in product.settings
         }
         blocks = get_step_blocks(steps, self.order)
-        if not blocks:
-            # If no preprocessing is configured, just load the data and save.
-            for product in self.products:
-                product.cubes  # pylint: disable=pointless-statement
-                product.close()
 
+        saved = set()
         for block in blocks:
             logger.debug("Running block %s", block)
             if block[0] in MULTI_MODEL_FUNCTIONS:
@@ -675,9 +671,13 @@ class PreprocessingTask(BaseTask):
                     if block == blocks[-1]:
                         product.cubes  # pylint: disable=pointless-statement
                         product.close()
+                        saved.add(product.filename)
 
         for product in self.products:
-            product.close()
+            if product.filename not in saved:
+                product.cubes  # pylint: disable=pointless-statement
+                product.close()
+
         metadata_files = write_metadata(self.products,
                                         self.write_ncl_interface)
         return metadata_files
