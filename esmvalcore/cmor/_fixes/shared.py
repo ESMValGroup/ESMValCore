@@ -63,9 +63,9 @@ def _map_on_filled(function, array):
     mask = num_module.ma.getmaskarray(array)
 
     # Fill masked values with dummy value (simply use first value in array for
-    # this to preserve dtype, these get masked later so the actual value does
-    # not matter). Note: `array.fill_value` is not defined for dask arrays, and
-    # `ma.filled` also works for regular (non-masked) arrays.
+    # this to preserve dtype; these entries get re-masked later so the actual
+    # value does not matter). Note: `array.fill_value` is not defined for dask
+    # arrays, and `ma.filled` also works for regular (non-masked) arrays.
     fill_value = num_module.ravel(array)[0]
     array = num_module.ma.filled(array, fill_value)
 
