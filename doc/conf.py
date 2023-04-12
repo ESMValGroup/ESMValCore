@@ -25,6 +25,9 @@ sys.path.insert(0, str(root))
 
 from esmvalcore import __version__
 
+# set the ESMFMKFILE needed by esmpy to cow since tests don't actually run
+os.environ["ESMFMKFILE"] = "cow"
+
 # -- RTD configuration ------------------------------------------------
 
 # on_rtd is whether we are on readthedocs.org, this line of code grabbed from
