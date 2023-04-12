@@ -102,3 +102,15 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
         return _get_filenames(tmp_path, filename, tracking_id)
 
     monkeypatch.setattr(esmvalcore.local, 'glob', glob)
+
+
+@pytest.fixture
+def httprequest():
+    return "ReadTimeoutError"
+
+@pytest.fixture(autouse=True)
+def skip_by_httprequest(request, httprequest):
+    if request.node.get_closest_marker('skip_requesttimeout'):
+        marker = request.node.get_closest_marker('skip_requesttimeout')
+        if marker.args[0] == httprequest:
+            pytest.skip('skipped because of {httprequest}')
