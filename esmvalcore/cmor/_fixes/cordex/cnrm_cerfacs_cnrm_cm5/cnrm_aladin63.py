@@ -2,6 +2,7 @@
 import numpy as np
 
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import TimeLongName as BaseFix
+from esmvalcore.cmor._fixes.cordex.cordex_fixes import LambertGrid as GridFix
 from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
 from esmvalcore.cmor.fix import Fix
 
@@ -31,3 +32,5 @@ class Tas(Fix):
 
 
 Pr = BaseFix
+
+AllVars = GridFix

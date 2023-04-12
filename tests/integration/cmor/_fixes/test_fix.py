@@ -13,7 +13,7 @@ from esmvalcore.cmor._fixes.cmip6.cesm2 import Omon, Tos
 from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.cnrm_aladin63 import (
     Tas,
 )
-from esmvalcore.cmor._fixes.cordex.cordex_fixes import AllVars
+from esmvalcore.cmor._fixes.cordex.cordex_fixes import AllVars, LambertGrid
 from esmvalcore.cmor.fix import Fix
 
 
@@ -33,7 +33,7 @@ def test_get_fix_cordex():
         'tas',
         extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'},
     )
-    assert fix == [Tas(None), AllVars(None)]
+    assert fix == [Tas(None), LambertGrid(None), AllVars(None)]
 
 
 def test_get_grid_fix_cordex():
@@ -44,7 +44,7 @@ def test_get_grid_fix_cordex():
         'tas',
         extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'},
     )
-    assert fix == [AllVars(None)]
+    assert fix == [LambertGrid(None), AllVars(None)]
 
 
 def test_get_fixes_with_replace():
