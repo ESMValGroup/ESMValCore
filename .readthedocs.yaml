@@ -12,14 +12,6 @@ build:
     python: "mambaforge-4.10"
   jobs:
     post_create_environment:
-      # python in /home/docs/checkouts/readthedocs.org/user_builds/esmvalcore/conda/1832/bin/python
-      - export PYTHONPATH=$(which python)
-      - export PYDIR="$(dirname "$PYTHONPATH")"
-      - ls -la $PYDIR
-      - export CONDADIR="$PYDIR/.."
-      - ls -la $CONDADIR
-      - export ESMFMKFILE="$CONDADIR/lib/esmf.mk"
-      - ls -la $ESMFMKFILE
       - pip install . --no-deps
 
 # Declare the requirements required to build your docs
