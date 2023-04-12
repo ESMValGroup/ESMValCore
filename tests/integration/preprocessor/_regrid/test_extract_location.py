@@ -5,10 +5,12 @@ import iris.fileformats
 import numpy as np
 from iris.coords import CellMethod, DimCoord
 
+import pytest
 import tests
 from esmvalcore.preprocessor import extract_location
 
 
+@pytest.mark.skip_requesttimeout('ReadTimeoutError')
 class Test(tests.Test):
     def setUp(self):
         """Prepare tests."""
