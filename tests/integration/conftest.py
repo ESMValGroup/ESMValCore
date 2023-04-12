@@ -109,12 +109,16 @@ def geolocator_httprequest():
     """Test connection to geolocator."""
     from geopy.geocoders import Nominatim
     from geopy.exc import GeocoderUnavailable, GeocoderRateLimited
+    from geopy.adapters import AdapterHTTPError
 
     try:
         geolocator = Nominatim(user_agent='esmvalcore')
         geolocator.geocode("Romania")
-    except GeocoderUnavailable or GeocoderRateLimited:
-        return "ReadTimeoutError"
+    except exc:
+        if exc in (GeocoderUnavailable,
+                   GeocoderRateLimited,
+                   AdapterHTTPError):
+            return "ReadTimeoutError"
 
 
 @pytest.fixture(autouse=True)
