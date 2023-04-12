@@ -114,7 +114,7 @@ def geolocator_httprequest():
     try:
         geolocator = Nominatim(user_agent='esmvalcore')
         geolocator.geocode("Romania")
-    except exc:
+    except Exception as exc:
         if exc in (GeocoderUnavailable,
                    GeocoderRateLimited,
                    AdapterHTTPError):
