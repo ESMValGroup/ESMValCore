@@ -25,8 +25,8 @@ sys.path.insert(0, str(root))
 
 from esmvalcore import __version__
 
-# set the ESMFMKFILE needed by esmpy since tests don't actually run
-os.environ["ESMFMKFILE"] = "esmf.mk"
+# set the ESMFMKFILE
+os.environ["ESMFMKFILE"] = "$CONDA_PREFIX/lib/esmf.mk"
 
 # -- RTD configuration ------------------------------------------------
 
