@@ -108,12 +108,12 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
 def geolocator_httprequest():
     """Test connection to geolocator."""
     from geopy.geocoders import Nominatim
-    from geopy.exc import GeocoderUnavailable as geopyerr
+    from geopy.exc import GeocoderUnavailable
 
     try:
         geolocator = Nominatim(user_agent='esmvalcore')
         geolocator.geocode("Romania")
-    except geopyerr:
+    except GeocoderUnavailable:
         return "ReadTimeoutError"
 
 
