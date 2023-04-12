@@ -105,12 +105,19 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def httprequest():
-    return "ReadTimeoutError"
+def geolocator_httprequest():
+    """Test connection to geolocator."""
+    from geopy.geocoders import Nominatim
+    try:
+        geolocator = Nominatim(user_agent='esmvalcore')
+        geolocation = geolocator.geocode("Romania")
+    except ReadTimeoutError:
+        return "ReadTimeoutError"
+
 
 @pytest.fixture(autouse=True)
-def skip_by_httprequest(request, httprequest):
+def skip_by_httprequest(request, geolocator_httprequest):
     if request.node.get_closest_marker('skip_requesttimeout'):
         marker = request.node.get_closest_marker('skip_requesttimeout')
-        if marker.args[0] == httprequest:
+        if marker.args[0] == geolocator_httprequest:
             pytest.skip('skipped because of {httprequest}')
