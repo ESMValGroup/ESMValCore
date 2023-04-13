@@ -13,7 +13,8 @@ build:
   jobs:
     post_create_environment:
       - pip install . --no-deps
-      - conda install --force-reinstall -c conda-forge esmpy
+      - conda update -n base conda
+      - conda install --force-reinstall -y -c conda-forge esmpy>=8.4
 
 # Declare the requirements required to build your docs
 conda:
