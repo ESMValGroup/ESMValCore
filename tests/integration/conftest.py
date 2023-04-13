@@ -106,7 +106,16 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
 
 @pytest.fixture
 def geolocator_httprequest():
-    """Test connection to geolocator."""
+    """
+    Test connection to geolocator.
+
+    This builds a custom condition for a custom pytest marker
+    called "skip_requesttimeout". This is needed for geopy since
+    the CI is running into very frequent HTTP timeout errors, and
+    these come in various forms from geopy. Note, however, that the
+    tests are skipped only after N retries happen, so these are taking
+    time, and prolong the test run time unnecessarily. 
+    """
     from geopy.geocoders import Nominatim
     from geopy.exc import GeocoderUnavailable, GeocoderRateLimited
     from geopy.adapters import AdapterHTTPError
@@ -124,6 +133,12 @@ def geolocator_httprequest():
 
 @pytest.fixture(autouse=True)
 def skip_by_httprequest(request, geolocator_httprequest):
+    """
+    Mark skipped test for custom reason - error from geopy.
+
+    Trigger skip on ReadTimeoutError returned
+    by geolocator_httprequest.
+    """
     if request.node.get_closest_marker('skip_requesttimeout'):
         marker = request.node.get_closest_marker('skip_requesttimeout')
         if marker.args[0] == geolocator_httprequest:
