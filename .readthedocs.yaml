@@ -12,7 +12,7 @@ build:
     python: "mambaforge-4.10"
   jobs:
     post_create_environment:
-      - pip install . --no-deps
+      - conda run -n ${CONDA_DEFAULT_ENV} pip install . --no-deps
 
 # Declare the requirements required to build your docs
 conda:
