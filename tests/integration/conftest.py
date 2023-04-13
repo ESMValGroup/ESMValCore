@@ -115,9 +115,10 @@ def geolocator_httprequest():
         geolocator = Nominatim(user_agent='esmvalcore')
         geolocator.geocode("Romania")
     except Exception as exc:
-        if exc in (GeocoderUnavailable,
-                   GeocoderRateLimited,
-                   AdapterHTTPError):
+        print("New geolocator exception", exc)
+        if isinstance(exc, (GeocoderUnavailable,
+                            GeocoderRateLimited,
+                            AdapterHTTPError)):
             return "ReadTimeoutError"
 
 
