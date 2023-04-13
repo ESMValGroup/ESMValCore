@@ -34,7 +34,8 @@ on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 # This is used for linking and such so we link to the thing we're building
 rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
 if on_rtd:
-    os.environ["ESMFMKFILE"] = f"/home/docs/checkouts/readthedocs.org/user_builds/esmvalcore/conda/{rtd_version}/lib/esmf.mk"
+    rtd_project = os.environ.get("READTHEDOCS_PROJECT")
+    os.environ["ESMFMKFILE"] = f"/home/docs/checkouts/readthedocs.org/user_builds/{rtd_project}/conda/{rtd_version}/lib/esmf.mk"
 if rtd_version not in ["latest", "stable", "doc"]:
     rtd_version = "latest"
 
