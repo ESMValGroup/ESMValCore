@@ -114,7 +114,7 @@ def geolocator_httprequest():
     the CI is running into very frequent HTTP timeout errors, and
     these come in various forms from geopy. Note, however, that the
     tests are skipped only after N retries happen, so these are taking
-    time, and prolong the test run time unnecessarily. 
+    time, and prolong the test run time unnecessarily.
     """
     from geopy.geocoders import Nominatim
     from geopy.exc import GeocoderUnavailable, GeocoderRateLimited
