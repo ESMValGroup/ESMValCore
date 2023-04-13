@@ -15,16 +15,6 @@ from esmvalcore.iris_helpers import date2num
 from .table import CMOR_TABLES
 
 CheckLevels = IntEnum('CheckLevels', 'DEBUG STRICT DEFAULT RELAXED IGNORE')
-"""Level of strictness of the checks.
-
-   Attributes
-   ------
-   - DEBUG: Report any debug message that the checker wants to communicate.
-   - STRICT: Fail if there are warnings regarding compliance of CMOR standards.
-   - DEFAULT: Fail if cubes present any discrepancy with CMOR standards.
-   - RELAXED: Fail if cubes present severe discrepancies with CMOR standards.
-   - IGNORE: Do not fail for any discrepancy with CMOR standards.
-"""
 
 
 def _get_next_month(month, year):
