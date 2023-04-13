@@ -25,9 +25,6 @@ sys.path.insert(0, str(root))
 
 from esmvalcore import __version__
 
-# set the ESMFMKFILE
-os.environ["ESMFMKFILE"] = "$CONDA_PREFIX/lib/esmf.mk"
-
 # -- RTD configuration ------------------------------------------------
 
 # on_rtd is whether we are on readthedocs.org, this line of code grabbed from
