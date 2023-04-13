@@ -31,6 +31,9 @@ from esmvalcore import __version__
 # docs.readthedocs.org
 on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 
+if on_rtd:
+    os.environ["ESMFMKFILE"] = f"{os.environ['CONDA_PREFIX']}/lib/esmf.mk"
+
 # This is used for linking and such so we link to the thing we're building
 rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
 if rtd_version not in ["latest", "stable", "doc"]:
