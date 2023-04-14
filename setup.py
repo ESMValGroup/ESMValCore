@@ -84,13 +84,8 @@ REQUIREMENTS = {
         'autodocsumm>=0.2.2',
         'ipython',
         'nbsphinx',
-        # sphinx >=6 can not be installed because
-        # sphinx_rtd_theme are pinning docutils<0.19 which is the only
-        # practical version that supports python=3.11; see
-        # github.com/readthedocs/sphinx_rtd_theme/issues/1323
-        # github.com/conda-forge/sphinx_rtd_theme-feedstock/issues/28
-        'sphinx',
-        'sphinx_rtd_theme',
+        'sphinx>=6.1.3',
+        'pydata_sphinx_theme',
     ],
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
