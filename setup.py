@@ -89,7 +89,7 @@ REQUIREMENTS = {
         # practical version that supports python=3.11; see
         # github.com/readthedocs/sphinx_rtd_theme/issues/1323
         # github.com/conda-forge/sphinx_rtd_theme-feedstock/issues/28
-        'sphinx>=6.1.3',
+        'sphinx',
         'sphinx_rtd_theme',
     ],
     # Development dependencies
