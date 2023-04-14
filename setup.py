@@ -82,9 +82,11 @@ REQUIREMENTS = {
     # Documentation dependencies
     'doc': [
         'autodocsumm>=0.2.2',
+        # see github.com/conda-forge/sphinx_rtd_theme-feedstock/issues/28
+        'docutils>=1.18.1',
         'ipython',
         'nbsphinx',
-        'sphinx',  # currently 6.1.3 does not support python=3.11
+        'sphinx>=6',  # see pin on docutils
         'sphinx_rtd_theme',
     ],
     # Development dependencies
