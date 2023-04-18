@@ -257,7 +257,7 @@ class AllVars(IconFix):
 
         # If necessary, convert invalid time units of the form "day as
         # %Y%m%d.%f" to CF format (e.g., "days since 1850-01-01")
-        # ICON data has no time bounds, but let's make sure we remove the bounds
+        # ICON data has no time bounds, let's make sure we remove the bounds
         # here (they will be added after converting the time points to the
         # correct units)
         time_coord.bounds = None
