@@ -478,7 +478,9 @@ def _get_requested_geometries(
     else:
         id_keys = SHAPE_ID_KEYS
 
-    # IDs should be strings
+    # IDs should be strings or None
+    if not ids:
+        ids = None
     if ids is not None:
         ids = [str(id) for id in ids]
 
@@ -658,13 +660,13 @@ def extract_shape(
         `shape_id` describing the requested regions.
     ids: list or dict or None, optional
         Shapes to be read from the shape file. Can be given as:
-
         * :obj:`list`: IDs are assigned from the attributes `name`, `NAME`,
           `Name`, `id`, or `ID` (in that priority order; the first one
           available is used). If none of these attributes are available in the
           shape file, assume that the given `ids` correspond to the reading
           order of the individual shapes, e.g., ``ids=[0, 2]`` corresponds to
-          the first and third shape read from the shape file.
+          the first and third shape read from the shape file. Note: An empty
+          list is interpreted as `ids=None`.
         * :obj:`dict`: IDs (dictionary value; :obj:`list` of :obj:`str`) are
           assigned from attribute given as dictionary key (:obj:`str`). Only
           dictionaries with length 1 are supported.
