@@ -5,6 +5,8 @@ bounds; selecting geographical regions; constructing area averages; etc.
 """
 import logging
 import warnings
+from pathlib import Path
+from typing import Optional
 
 import fiona
 import iris
@@ -12,6 +14,7 @@ import numpy as np
 import shapely
 import shapely.ops
 from dask import array as da
+from iris.cube import AuxCoord, Cube, CubeList
 from iris.exceptions import CoordinateNotFoundError
 
 from ._shared import (
@@ -578,13 +581,15 @@ def fix_coordinate_ordering(cube):
     return cube
 
 
-def extract_shape(cube,
-                  shapefile,
-                  method='contains',
-                  crop=True,
-                  decomposed=False,
-                  ids=None):
-    """Extract a region defined by a shapefile.
+def extract_shape(
+    cube: Cube,
+    shapefile: str | Path,
+    method: str = 'contains',
+    crop: bool = True,
+    decomposed: bool = False,
+    ids: Optional[list] = None,
+) -> Cube:
+    """Extract a region defined by a shapefile using masking.
 
     Note that this function does not work for shapes crossing the
     prime meridian or poles.
@@ -593,7 +598,7 @@ def extract_shape(cube,
     ----------
     cube: iris.cube.Cube
        input cube.
-    shapefile: str
+    shapefile: str or Path
         A shapefile defining the region(s) to extract.
     method: str, optional
         Select all points contained by the shape or select a single
@@ -601,16 +606,18 @@ def extract_shape(cube,
         If 'contains' is used, but not a single grid point is contained by the
         shape, a representative point will selected.
     crop: bool, optional
-        Crop the resulting cube using `extract_region()`. Note that data on
-        irregular grids will not be cropped.
+        In addition to masking, crop the resulting cube using
+        :func:`~esmvalcore.preprocessor.extract_region`. Cannot be used if
+        regions are selected by reading order (see `ids` below).
     decomposed: bool, optional
-        Whether or not to retain the sub shapes of the shapefile in the output.
-        If this is set to True, the output cube has a dimension for the sub
+        If set to `True`, the output cube will have an additional dimension
+        `shape_id` describing the selected regions.
+    ids: list, optional
+        List of shapes to be read from the file. The ids are assigned from the
+        attributes `name`, `NAME`, `Name`, `id`, or `ID` (in that priority
+        order; the first one available is used) if present in the file or
+        correspond to the reading order if not. If `None`, select all available
         shapes.
-    ids: list(str), optional
-        List of shapes to be read from the file. The ids are assigned from
-        the attributes 'name' or 'id' (in that priority order) if present in
-        the file or correspond to the reading order if not.
 
     Returns
     -------
@@ -658,16 +665,24 @@ def extract_shape(cube,
                                                 decomposed=decomposed,
                                                 ids=ids)
 
-    return _mask_cube(cube, selections)
+    # Mask input cube based on selected regions
+    result = _mask_cube(cube, selections)
+
+    # Remove dummy scalar coordinate if final cube is not decomposed
+    if not decomposed:
+        result.remove_coord('shape_id')
+
+    return result
 
 
 def _mask_cube(cube, selections):
-    cubelist = iris.cube.CubeList()
+    cubelist = CubeList()
     for id_, select in selections.items():
         _cube = cube.copy()
         remove_supplementary_variables(_cube)
         _cube.add_aux_coord(
-            iris.coords.AuxCoord(id_, units='no_unit', long_name="shape_id"))
+            AuxCoord(id_, units='no_unit', long_name='shape_id')
+        )
         select = da.broadcast_to(select, _cube.shape)
         _cube.data = da.ma.masked_where(~select, _cube.core_data())
         cubelist.append(_cube)
