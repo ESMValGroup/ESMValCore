@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import logging
 import os
-from pathlib import Path
 import re
 import subprocess
+from pathlib import Path
 from pprint import pformat
 from shutil import which
 from typing import Any, Iterable
