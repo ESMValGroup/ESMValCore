@@ -422,7 +422,7 @@ intersphinx_mapping = {
     'cf_units': ('https://cf-units.readthedocs.io/en/latest/', None),
     'cftime': ('https://unidata.github.io/cftime/', None),
     'esmvalcore':
-    (f'https://docs.esmvaltool.org/projects/esmvalcore/en/{rtd_version}/',
+    (f'https://docs.esmvaltool.org/projects/ESMValCore/en/{rtd_version}/',
      None),
     'esmvaltool': (f'https://docs.esmvaltool.org/en/{rtd_version}/', None),
     'iris': ('https://scitools-iris.readthedocs.io/en/latest/', None),
