@@ -14,6 +14,7 @@ from typing import Any, Dict, Iterable, Sequence
 
 import yaml
 
+import esmvalcore
 from esmvalcore import __version__, esgf
 from esmvalcore._provenance import get_recipe_provenance
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
@@ -641,12 +642,34 @@ def _update_extract_shape(settings, session):
     if 'extract_shape' in settings:
         shapefile = settings['extract_shape'].get('shapefile')
         if shapefile:
-            if not os.path.exists(shapefile):
-                shapefile = os.path.join(
-                    session['auxiliary_data_dir'],
-                    shapefile,
+            shapefile = Path(shapefile)
+            abs_shapefile = shapefile
+
+            # If shapefile not found, first, try path relative to
+            # auxiliary_data_dir
+            if not abs_shapefile.exists():
+                abs_shapefile = session['auxiliary_data_dir'] / shapefile
+
+            # Second, try path relative to esmvalcore/preprocessor/shapefiles/
+            if not abs_shapefile.exists():
+                abs_shapefile = (
+                    Path(esmvalcore.__file__).parent /
+                    'preprocessor' /
+                    'shapefiles' /
+                    shapefile
                 )
-                settings['extract_shape']['shapefile'] = shapefile
+
+            # As final resort, add suffix '.shp' and try path relative to
+            # esmvalcore/preprocessor/shapefiles/ again
+            if not abs_shapefile.exists():
+                abs_shapefile = (
+                    Path(esmvalcore.__file__).parent /
+                    'preprocessor' /
+                    'shapefiles' /
+                    shapefile.with_suffix('.shp')
+                )
+
+            settings['extract_shape']['shapefile'] = abs_shapefile
         check.extract_shape(settings['extract_shape'])
 
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 import re
 import subprocess
 from pprint import pformat
@@ -238,7 +239,7 @@ def check_for_temporal_preprocs(profile):
 def extract_shape(settings):
     """Check that `extract_shape` arguments are valid."""
     shapefile = settings.get('shapefile', '')
-    if not os.path.exists(shapefile):
+    if not Path(shapefile).exists:
         raise RecipeError("In preprocessor function `extract_shape`: "
                           f"Unable to find 'shapefile: {shapefile}'")
 

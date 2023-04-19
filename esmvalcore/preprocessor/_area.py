@@ -682,6 +682,7 @@ def extract_shape(
     --------
     extract_region : Extract a region from a cube.
     """
+    shapefile = Path(shapefile)
     with fiona.open(shapefile) as geometries:
 
         # Get parameters specific to the shapefile (NE used case e.g.
@@ -738,7 +739,7 @@ def extract_shape(
 
 
 def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
-    """Mask input cube"""
+    """Mask input cube."""
     cubelist = CubeList()
     for id_, mask in masks.items():
         _cube = cube.copy()
