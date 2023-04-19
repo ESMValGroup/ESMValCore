@@ -3,8 +3,11 @@
 Allows for selecting data subsets using certain latitude and longitude
 bounds; selecting geographical regions; constructing area averages; etc.
 """
+from __future__ import annotations
+
 import logging
 import warnings
+from numbers import Number
 from pathlib import Path
 from typing import Optional
 
@@ -420,8 +423,12 @@ def _select_representative_point(shape, lon, lat):
     return select
 
 
-def _correct_coords_from_shapefile(cube, cmor_coords, pad_north_pole,
-                                   pad_hawaii):
+def _correct_coords_from_shapefile(
+    cube: Cube,
+    cmor_coords: bool,
+    pad_north_pole: bool,
+    pad_hawaii: bool,
+) -> np.ndarray:
     """Get correct lat and lon from shapefile."""
     lon = cube.coord(axis='X').points
     lat = cube.coord(axis='Y').points
@@ -444,108 +451,138 @@ def _correct_coords_from_shapefile(cube, cmor_coords, pad_north_pole,
     return lon, lat
 
 
-def _get_masks_from_geometries(geometries,
-                               lon,
-                               lat,
-                               method='contains',
-                               decomposed=False,
-                               ids=None):
+def _get_requested_geometries(
+    geometries: fiona.collection.Collection,
+    ids: list | dict | None,
+) -> dict[str, fiona.model.feature]:
+    """Return requested geometries."""
+    # If ids is a dict, all geometries needs to have the requested attribute
+    # key
+    if isinstance(ids, dict):
+        if len(ids) != 1:
+            raise ValueError(
+                f"If `ids` is given as dict, it needs exactly one entry, got "
+                f"{ids}"
+            )
+        key = list(ids.keys())[0]
+        for geometry in geometries:
+            if key not in geometry.properties:
+                raise ValueError(
+                    f"Geometry {dict(geometry.properties)} does not have "
+                    f"requested attribute {key}"
+                )
+        id_keys = (key, )
+        ids = ids[key]
 
+    # Otherwise, use SHAPE_ID_KEYS to get ID
+    else:
+        id_keys = SHAPE_ID_KEYS
+
+    # IDs should be strings
+    if ids is not None:
+        ids = [str(id) for id in ids]
+
+    # Iterate through all geometries and select matching elements
+    requested_geometries = {}
+    for (reading_order, geometry) in enumerate(geometries):
+        for key in id_keys:
+            if key in geometry.properties:
+                geometry_id = str(geometry.properties[key])
+                break
+
+        # If none of the attributes are available in the geometry, use reading
+        # order as last resort
+        else:
+            geometry_id = str(reading_order)
+
+        logger.debug("Found shape '%s'", geometry_id)
+
+        # Select geometry if its ID is requested or all IDs are requested
+        # (i.e., ids=None)
+        if ids is None or geometry_id in ids:
+            requested_geometries[geometry_id] = geometry
+
+    # Check if all requested IDs have been found
+    if ids is not None:
+        missing = set(ids) - set(requested_geometries.keys())
+        if missing:
+            raise ValueError(f"Requested shapes {missing} not found")
+
+    return requested_geometries
+
+
+def _get_masks_from_geometries(
+    geometries: dict[str, fiona.model.feature],
+    lon: np.ndarray,
+    lat: np.ndarray,
+    method: str = 'contains',
+    decomposed: bool = False,
+) -> dict[str, np.ndarray]:
+    """Get cube masks from requested regions."""
     if method not in {'contains', 'representative'}:
         raise ValueError(
             "Invalid value for `method`. Choose from 'contains', ",
             "'representative'.")
 
-    selections = dict()
-    if ids:
-        ids = [str(id_) for id_ in ids]
-    for i, item in enumerate(geometries):
-        for id_prop in SHAPE_ID_KEYS:
-            if id_prop in item['properties']:
-                id_ = str(item['properties'][id_prop])
-                break
-        else:
-            id_ = str(i)
-        logger.debug('Shape "%s" found', id_)
-        if ids and id_ not in ids:
-            continue
-        selections[id_] = _get_shape(lon, lat, method, item)
+    masks = {}
+    for (id, geometry) in geometries.items():
+        masks[id] = _get_single_mask(lon, lat, method, geometry)
 
-    if ids:
-        missing = set(ids) - set(selections.keys())
-        if missing:
-            raise ValueError(f'Shapes {" ".join(missing)!r} not found')
+    if not decomposed and len(masks) > 1:
+        return _merge_masks(masks, lat.shape)
 
-    if not decomposed and len(selections) > 1:
-        return _merge_shapes(selections, lat.shape)
-
-    return selections
+    return masks
 
 
-def _geometry_matches_ids(geometry: dict, ids: list):
-    """Returns True if `geometry` matches one of the `ids`."""
-    props = geometry['properties']
-
-    geom_id = [props.get(key, None) for key in SHAPE_ID_KEYS]
-    geom_id = [key for key in geom_id if key is not None]
-
-    if not geom_id:
-        raise KeyError(f'{props} dict has no `name` or `id` key')
-
-    geom_id = geom_id[0]
-
-    return geom_id in ids
-
-
-def _get_bounds(geometries, ids=None):
-    """Get bounds from the subset of geometries defined by `ids`.
+def _get_bounds(
+    geometries: dict[str, fiona.model.feature],
+) -> tuple[Number, Number, Number, Number]:
+    """Get bounds from given geometries.
 
     Parameters
     ----------
-    geometries : fiona.Collection
+    geometries: fiona.collection.Collection
         Fiona collection of shapes (geometries).
-    ids : tuple of str, optional
-        List of ids to select from geometry collection. If None,
-        return global bounds (``geometries.bounds``)
 
     Returns
     -------
     lat_min, lon_min, lat_max, lon_max
-        Returns coordinates deliminating bounding box for shape ids.
+        Coordinates deliminating bounding box for shape ids.
+
     """
-    if not ids:
-        return geometries.bounds
-
-    subset = [geom for geom in geometries if _geometry_matches_ids(geom, ids)]
-
-    if not subset:
-        raise ValueError(
-            "Cropping failed: no given ID matches a shape ID in the shape "
-            "file. Note that ``crop=True`` cannot be used when shapes are "
-            "selected by reading order (i.e., using integers as IDs)"
-        )
-
-    all_bounds = np.vstack([fiona.bounds(geom) for geom in subset])
+    all_bounds = np.vstack(
+        [fiona.bounds(geom) for geom in geometries.values()]
+    )
     lon_max, lat_max = all_bounds[:, 2:].max(axis=0)
     lon_min, lat_min = all_bounds[:, :2].min(axis=0)
 
     return lon_min, lat_min, lon_max, lat_max
 
 
-def _get_shape(lon, lat, method, item):
-    shape = shapely.geometry.shape(item['geometry'])
+def _get_single_mask(
+    lon: np.ndarray,
+    lat: np.ndarray,
+    method: str,
+    geometry: fiona.model.feature,
+) -> np.ndarray:
+    """Get single mask from one region."""
+    shape = shapely.geometry.shape(geometry.geometry)
     if method == 'contains':
-        select = shapely.vectorized.contains(shape, lon, lat)
-    if method == 'representative' or not select.any():
-        select = _select_representative_point(shape, lon, lat)
-    return select
+        mask = shapely.vectorized.contains(shape, lon, lat)
+    if method == 'representative' or not mask.any():
+        mask = _select_representative_point(shape, lon, lat)
+    return mask
 
 
-def _merge_shapes(selections, shape):
-    selection = np.zeros(shape, dtype=bool)
-    for select in selections.values():
-        selection |= select
-    return {0: selection}
+def _merge_masks(
+    masks: dict[str, np.ndarray],
+    shape: tuple,
+) -> dict[str, np.ndarray]:
+    """Merge masks into one."""
+    merged_mask = np.zeros(shape, dtype=bool)
+    for mask in masks.values():
+        merged_mask |= mask
+    return {'0': merged_mask}
 
 
 def fix_coordinate_ordering(cube):
@@ -595,9 +632,9 @@ def extract_shape(
     method: str = 'contains',
     crop: bool = True,
     decomposed: bool = False,
-    ids: Optional[list] = None,
+    ids: Optional[list | dict] = None,
 ) -> Cube:
-    """Extract a region defined by a shapefile using masking.
+    """Extract a region defined by a shape file using masking.
 
     Note that this function does not work for shapes crossing the
     prime meridian or poles.
@@ -607,25 +644,32 @@ def extract_shape(
     cube: iris.cube.Cube
        input cube.
     shapefile: str or Path
-        A shapefile defining the region(s) to extract.
+        A shape file defining the region(s) to extract.
     method: str, optional
         Select all points contained by the shape or select a single
-        representative point. Choose either 'contains' or 'representative'.
-        If 'contains' is used, but not a single grid point is contained by the
-        shape, a representative point will selected.
+        representative point. Choose either `'contains'` or `'representative'`.
+        If `'contains'` is used, but not a single grid point is contained by
+        the shape, a representative point will be selected.
     crop: bool, optional
         In addition to masking, crop the resulting cube using
-        :func:`~esmvalcore.preprocessor.extract_region`. Cannot be used if
-        regions are selected by reading order (see `ids` below).
+        :func:`~esmvalcore.preprocessor.extract_region`.
     decomposed: bool, optional
         If set to `True`, the output cube will have an additional dimension
-        `shape_id` describing the selected regions.
-    ids: list, optional
-        List of shapes to be read from the file. The ids are assigned from the
-        attributes `name`, `NAME`, `Name`, `id`, or `ID` (in that priority
-        order; the first one available is used) if present in the file or
-        correspond to the reading order if not. If `None`, select all available
-        shapes.
+        `shape_id` describing the requested regions.
+    ids: list or dict or None, optional
+        Shapes to be read from the shape file. Can be given as:
+
+        * :obj:`list`: IDs are assigned from the attributes `name`, `NAME`,
+          `Name`, `id`, or `ID` (in that priority order; the first one
+          available is used). If none of these attributes are available in the
+          shape file, assume that the given `ids` correspond to the reading
+          order of the individual shapes, e.g., ``ids=[0, 2]`` corresponds to
+          the first and third shape read from the shape file.
+        * :obj:`dict`: IDs (dictionary value; :obj:`list` of :obj:`str`) are
+          assigned from attribute given as dictionary key (:obj:`str`). Only
+          dictionaries with length 1 are supported.
+          Example: ``ids={'Acronym': ['GIC', 'WNA']}``.
+        * `None`: Select all available shapes from the shape file.
 
     Returns
     -------
@@ -638,9 +682,8 @@ def extract_shape(
     """
     with fiona.open(shapefile) as geometries:
 
-        # get parameters specific to the shapefile (NE used case
-        # eg longitudes [-180, 180] or latitude missing
-        # or overflowing edges)
+        # Get parameters specific to the shapefile (NE used case e.g.
+        # longitudes [-180, 180] or latitude missing or overflowing edges)
         cmor_coords = True
         pad_north_pole = False
         pad_hawaii = False
@@ -651,30 +694,39 @@ def extract_shape(
         if geometries.bounds[0] > -180. and geometries.bounds[0] < 179.:
             pad_hawaii = True
 
+        requested_geometries = _get_requested_geometries(geometries, ids)
+
+        # Crop cube if desired
         if crop:
             lon_min, lat_min, lon_max, lat_max = _get_bounds(
-                geometries=geometries,
-                ids=ids,
+                requested_geometries
             )
-            cube = _crop_cube(cube,
-                              start_longitude=lon_min,
-                              start_latitude=lat_min,
-                              end_longitude=lon_max,
-                              end_latitude=lat_max,
-                              cmor_coords=cmor_coords)
+            cube = _crop_cube(
+                cube,
+                start_longitude=lon_min,
+                start_latitude=lat_min,
+                end_longitude=lon_max,
+                end_latitude=lat_max,
+                cmor_coords=cmor_coords,
+            )
 
-        lon, lat = _correct_coords_from_shapefile(cube, cmor_coords,
-                                                  pad_north_pole, pad_hawaii)
+        lon, lat = _correct_coords_from_shapefile(
+            cube,
+            cmor_coords,
+            pad_north_pole,
+            pad_hawaii,
+        )
 
-        selections = _get_masks_from_geometries(geometries,
-                                                lon,
-                                                lat,
-                                                method=method,
-                                                decomposed=decomposed,
-                                                ids=ids)
+        masks = _get_masks_from_geometries(
+            requested_geometries,
+            lon,
+            lat,
+            method=method,
+            decomposed=decomposed,
+        )
 
-    # Mask input cube based on selected regions
-    result = _mask_cube(cube, selections)
+    # Mask input cube based on requested regions
+    result = _mask_cube(cube, masks)
 
     # Remove dummy scalar coordinate if final cube is not decomposed
     if not decomposed:
@@ -683,16 +735,17 @@ def extract_shape(
     return result
 
 
-def _mask_cube(cube, selections):
+def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
+    """Mask input cube"""
     cubelist = CubeList()
-    for id_, select in selections.items():
+    for id_, mask in masks.items():
         _cube = cube.copy()
         remove_supplementary_variables(_cube)
         _cube.add_aux_coord(
             AuxCoord(id_, units='no_unit', long_name='shape_id')
         )
-        select = da.broadcast_to(select, _cube.shape)
-        _cube.data = da.ma.masked_where(~select, _cube.core_data())
+        mask = da.broadcast_to(mask, _cube.shape)
+        _cube.data = da.ma.masked_where(~mask, _cube.core_data())
         cubelist.append(_cube)
     result = fix_coordinate_ordering(cubelist.merge_cube())
     if cube.cell_measures():
