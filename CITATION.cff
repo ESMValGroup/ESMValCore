@@ -186,6 +186,10 @@ authors:
     family-names: Hohn
     given-names: David
     orcid: "https://orcid.org/0000-0002-5317-1247"
+  -
+    affiliation: "DLR, Germany"
+    family-names: Bauer
+    given-names: Julian
 
 cff-version: 1.2.0
 date-released: 2023-03-23
