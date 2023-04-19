@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 from cf_units import Unit
 from iris.cube import Cube
+from iris.fileformats.pp import EARTH_RADIUS
 from numpy.testing._private.utils import assert_raises
 from shapely.geometry import Polygon, mapping
 
@@ -27,8 +28,7 @@ class Test(tests.Test):
     """Test class for the :func:`esmvalcore.preprocessor._area_pp` module."""
     def setUp(self):
         """Prepare tests."""
-        self.coord_sys = iris.coord_systems.GeogCS(
-            iris.fileformats.pp.EARTH_RADIUS)
+        self.coord_sys = iris.coord_systems.GeogCS(EARTH_RADIUS)
         data = np.ones((5, 5), dtype=np.float32)
         lons = iris.coords.DimCoord(
             [i + .5 for i in range(5)],
@@ -406,7 +406,7 @@ def create_rotated_grid_cube(data):
                                     units='degrees',
                                     coord_system=coord_sys_rotated)
 
-    coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+    coord_sys = iris.coord_systems.GeogCS(EARTH_RADIUS)
     glon, glat = np.meshgrid(grid_lons, grid_lats)
     lons, lats = iris.analysis.cartography.unrotate_pole(
         np.deg2rad(glon), np.deg2rad(glat), grid_north_pole_longitude,
@@ -503,7 +503,7 @@ def test_area_statistics_rotated(case):
 @pytest.fixture
 def make_testcube():
     """Create a test cube on a Cartesian grid."""
-    coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+    coord_sys = iris.coord_systems.GeogCS(EARTH_RADIUS)
     data = np.ones((5, 5))
     lons = iris.coords.DimCoord(
         [i + .5 for i in range(5)],

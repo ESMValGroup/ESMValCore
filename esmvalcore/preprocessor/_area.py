@@ -35,7 +35,7 @@ from ._supplementary_vars import (
 
 logger = logging.getLogger(__name__)
 
-SHAPE_ID_KEYS = ('name', 'NAME', 'Name', 'id', 'ID')
+SHAPE_ID_KEYS: tuple[str, ...] = ('name', 'NAME', 'Name', 'id', 'ID')
 
 
 def extract_region(cube, start_longitude, end_longitude, start_latitude,
@@ -428,7 +428,7 @@ def _correct_coords_from_shapefile(
     cmor_coords: bool,
     pad_north_pole: bool,
     pad_hawaii: bool,
-) -> np.ndarray:
+) -> tuple[np.ndarray, np.ndarray]:
     """Get correct lat and lon from shapefile."""
     lon = cube.coord(axis='X').points
     lat = cube.coord(axis='Y').points
@@ -471,7 +471,7 @@ def _get_requested_geometries(
                     f"Geometry {dict(geometry.properties)} does not have "
                     f"requested attribute {key}"
                 )
-        id_keys = (key, )
+        id_keys: tuple[str, ...] = (key, )
         ids = ids[key]
 
     # Otherwise, use SHAPE_ID_KEYS to get ID
