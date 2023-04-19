@@ -318,11 +318,11 @@ IRREGULAR_EXTRACT_REGION_TESTS = [
     },
     {
         'region': (0, 0, -100, 0),
-        'raises': "Invalid start_latitude: -100."
+        'raises': "Invalid start_latitude: -100"
     },
     {
         'region': (0, 0, 0, 100),
-        'raises': "Invalid end_latitude: -100."
+        'raises': "Invalid end_latitude: 100"
     },
 ]
 
@@ -368,7 +368,7 @@ def test_extract_region_irregular(irregular_extract_region_cube, case):
             np.testing.assert_array_equal(cube.data[i].mask, case['mask'])
         np.testing.assert_array_equal(cube.data.data, case['data'])
     else:
-        with pytest.raises(ValueError) as exc:
+        with pytest.raises(ValueError, match=case['raises']):
             extract_region(
                 irregular_extract_region_cube,
                 start_longitude=start_lon,
@@ -376,7 +376,6 @@ def test_extract_region_irregular(irregular_extract_region_cube, case):
                 start_latitude=start_lat,
                 end_latitude=end_lat,
             )
-            assert exc.value == case['raises']
 
 
 def create_rotated_grid_cube(data):
@@ -956,11 +955,10 @@ def test_extract_shape_irregular(irreg_extract_shape_cube, tmp_path, method):
         np.testing.assert_array_equal(cube.data[i].mask, mask)
 
 
-def test_extract_shape_wrong_method_raises():
-    with pytest.raises(ValueError) as exc:
-        extract_shape(iris.cube.Cube([]), 'test.shp', method='wrong')
-        assert exc.value == ("Invalid value for `method`. Choose from "
-                             "'contains', 'representative'.")
+def test_extract_shape_wrong_method_raises(make_testcube, ne_ocean_shapefile):
+    msg = "Invalid value for `method`"
+    with pytest.raises(ValueError, match=msg):
+        extract_shape(make_testcube, ne_ocean_shapefile, method='wrong')
 
 
 if __name__ == '__main__':
