@@ -14,7 +14,8 @@ import numpy as np
 import shapely
 import shapely.ops
 from dask import array as da
-from iris.cube import AuxCoord, Cube, CubeList
+from iris.coords import AuxCoord
+from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateNotFoundError
 
 from ._shared import (
@@ -516,6 +517,13 @@ def _get_bounds(geometries, ids=None):
         return geometries.bounds
 
     subset = [geom for geom in geometries if _geometry_matches_ids(geom, ids)]
+
+    if not subset:
+        raise ValueError(
+            "Cropping failed: no given ID matches a shape ID in the shape "
+            "file. Note that ``crop=True`` cannot be used when shapes are "
+            "selected by reading order (i.e., using integers as IDs)"
+        )
 
     all_bounds = np.vstack([fiona.bounds(geom) for geom in subset])
     lon_max, lat_max = all_bounds[:, 2:].max(axis=0)
