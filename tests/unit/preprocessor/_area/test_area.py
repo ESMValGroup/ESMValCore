@@ -675,9 +675,7 @@ def test_crop_cube_with_ne_file(ne_ocean_shapefile):
 
 
 @pytest.mark.parametrize('crop', [True, False])
-@pytest.mark.parametrize('ids', [None, [
-    0,
-]])
+@pytest.mark.parametrize('ids', [None, [0]])
 def test_extract_shape(make_testcube, square_shape, tmp_path, crop, ids):
     """Test for extracting a region with shapefile."""
     expected = square_shape
@@ -698,11 +696,9 @@ def test_extract_shape(make_testcube, square_shape, tmp_path, crop, ids):
 def test_extract_shape_natural_earth(make_testcube, ne_ocean_shapefile):
     """Test for extracting a shape from NE file."""
     expected = np.ones((5, 5))
-    preproc_path = Path(esmvalcore.preprocessor.__file__).parent
-    shp_file = preproc_path / "ne_masks" / "ne_50m_ocean.shp"
     result = extract_shape(
         make_testcube,
-        shp_file,
+        ne_ocean_shapefile,
         crop=False,
     )
     np.testing.assert_array_equal(result.data.data, expected)
@@ -711,8 +707,6 @@ def test_extract_shape_natural_earth(make_testcube, ne_ocean_shapefile):
 def test_extract_shape_fx(make_testcube, ne_ocean_shapefile):
     """Test for extracting a shape from NE file."""
     expected = np.ones((5, 5))
-    preproc_path = Path(esmvalcore.preprocessor.__file__).parent
-    shp_file = preproc_path / "ne_masks" / "ne_50m_ocean.shp"
     cube = make_testcube
     measure = iris.coords.CellMeasure(cube.data,
                                       standard_name='cell_area',
@@ -728,7 +722,7 @@ def test_extract_shape_fx(make_testcube, ne_ocean_shapefile):
     cube.add_ancillary_variable(ancillary_var, (0, 1))
     result = extract_shape(
         cube,
-        shp_file,
+        ne_ocean_shapefile,
         crop=False,
     )
     np.testing.assert_array_equal(result.data.data, expected)
