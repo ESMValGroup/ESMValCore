@@ -666,6 +666,7 @@ def extract_shape(
         `shape_id` describing the requested regions.
     ids: list or dict or None, optional
         Shapes to be read from the shapefile. Can be given as:
+
         * :obj:`list`: IDs are assigned from the attributes `name`, `NAME`,
           `Name`, `id`, or `ID` (in that priority order; the first one
           available is used). If none of these attributes are available in the

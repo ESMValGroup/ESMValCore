@@ -1698,31 +1698,33 @@ Parameters:
     This path can be relative to ``auxiliary_data_dir`` defined in the
     :ref:`user configuration file` or relative to
     ``esmvalcore/preprocessor/shapefiles`` (in that priority order).
-    Finally, a string (see "Shapefile name" below) can be given to load one of
-    the following shapefiles that are shipped with ESMValCore:
-    ========== ===================== ==========================================
-    Shapefile  Description           Reference
-    name
-    ========== ===================== ==========================================
-    ar6        IPCC WG1 reference    https://doi.org/10.5281/zenodo.5176260
-               regions (v4) used in
-               Assessment Report 6
-    ========== ===================== ==========================================
+    Alternatively, a string (see "Shapefile name" below) can be given to load
+    one of the following shapefiles that are shipped with ESMValCore:
+
+    =============== ===================== ==========================================
+    Shapefile name  Description           Reference
+    =============== ===================== ==========================================
+    ar6             IPCC WG1 reference    https://doi.org/10.5281/zenodo.5176260
+                    regions (v4) used in
+                    Assessment Report 6
+    =============== ===================== ==========================================
+
   * ``method``: the method to select the region, selecting either all points
-      contained by the shape or a single representative point.
-      Choose either `'contains'` or `'representative'`.
-      If not a single grid point is contained
-      in the shape, a representative point will be selected.
+    contained by the shape or a single representative point.
+    Choose either `'contains'` or `'representative'`.
+    If not a single grid point is contained in the shape, a representative
+    point will be selected.
   * ``crop``: by default extract_region_ will be used to crop the data to a
-      minimal rectangular region containing the shape.
-      Set to ``false`` to only mask data outside the shape.
-      Data on irregular grids will not be cropped.
+    minimal rectangular region containing the shape.
+    Set to ``false`` to only mask data outside the shape.
+    Data on irregular grids will not be cropped.
   * ``decomposed``: by default ``false``; in this case the union of all the
     regions in the shapefile is masked out.
     If ``true``, the regions in the shapefiles are masked out separately,
     generating a new auxiliary dimension for the cube for this.
   * ``ids``: Shapes to be read from the shapefile.
     Can be given as:
+
     * :obj:`list`: IDs are assigned from the attributes ``name``, ``NAME``,
       ``Name``, ``id``, or ``ID`` (in that priority order; the first one
       available is used).
