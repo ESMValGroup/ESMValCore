@@ -239,7 +239,7 @@ def check_for_temporal_preprocs(profile):
 def extract_shape(settings):
     """Check that `extract_shape` arguments are valid."""
     shapefile = settings.get('shapefile', '')
-    if not Path(shapefile).exists:
+    if not Path(shapefile).exists():
         raise RecipeError("In preprocessor function `extract_shape`: "
                           f"Unable to find 'shapefile: {shapefile}'")
 
