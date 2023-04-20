@@ -988,12 +988,11 @@ def test_extract_shape_ar6_all_region(
         ids=ids,
     )
 
-    mask = np.ma.getmaskarray(cube.data)
     if decomposed:
         assert cube.shape == (58, 5, 5)
         assert cube.coords('shape_id')
         assert cube.coord_dims('shape_id') == (0, )
-        assert mask.any()
+        assert np.ma.is_masked(cube.data)
     else:
         assert cube.shape == (5, 5)
         assert not cube.coords('shape_id')
@@ -1046,7 +1045,6 @@ def test_extract_shape_ar6_one_region(
         ids=ids,
     )
 
-    mask = np.ma.getmaskarray(cube.data)
     lat = cube.coord('latitude')
     lon = cube.coord('longitude')
     if decomposed:
@@ -1068,7 +1066,7 @@ def test_extract_shape_ar6_one_region(
             assert lat == make_testcube.coord('latitude')
         assert lon == make_testcube.coord('longitude')
         assert not cube.coords('shape_id')
-    assert mask.any()
+    assert np.ma.is_masked(cube.data)
 
 
 @pytest.mark.parametrize(
@@ -1093,9 +1091,9 @@ def test_extract_shape_ar6_two_regions(
         ids=ids,
     )
 
-    mask = np.ma.getmaskarray(cube.data)
     if decomposed:
         assert cube.shape == (2, 5, 5)
+        mask = np.ma.getmaskarray(cube.data)
         np.testing.assert_array_equal(mask[0], EAO_MASK)
         np.testing.assert_array_equal(mask[1], WAF_MASK)
         assert cube.coords('shape_id')

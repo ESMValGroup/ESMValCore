@@ -456,13 +456,13 @@ def _correct_coords_from_shapefile(
     return lon, lat
 
 
-def _get_requested_geometries(
+def _process_ids(
     geometries: fiona.collection.Collection,
     ids: list | dict | None,
-) -> dict[str, dict]:
-    """Return requested geometries."""
-    # If ids is a dict, all geometries needs to have the requested attribute
-    # key
+) -> tuple:
+    """Read requested IDs and ID keys."""
+    # If ids is a dict, it needs to have length 1 and all geometries needs to
+    # have the requested attribute key
     if isinstance(ids, dict):
         if len(ids) != 1:
             raise ValueError(
@@ -487,7 +487,17 @@ def _get_requested_geometries(
     if not ids:
         ids = None
     if ids is not None:
-        ids = [str(id) for id in ids]
+        ids = [str(id_) for id_ in ids]
+
+    return (id_keys, ids)
+
+
+def _get_requested_geometries(
+    geometries: fiona.collection.Collection,
+    ids: list | dict | None,
+) -> dict[str, dict]:
+    """Return requested geometries."""
+    (id_keys, ids) = _process_ids(geometries, ids)
 
     # Iterate through all geometries and select matching elements
     requested_geometries = {}
@@ -532,8 +542,8 @@ def _get_masks_from_geometries(
             "'representative'.")
 
     masks = {}
-    for (id, geometry) in geometries.items():
-        masks[id] = _get_single_mask(lon, lat, method, geometry)
+    for (id_, geometry) in geometries.items():
+        masks[id_] = _get_single_mask(lon, lat, method, geometry)
 
     if not decomposed and len(masks) > 1:
         return _merge_masks(masks, lat.shape)
