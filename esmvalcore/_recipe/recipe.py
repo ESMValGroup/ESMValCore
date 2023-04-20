@@ -14,7 +14,7 @@ from typing import Any, Dict, Iterable, Sequence
 
 import yaml
 
-import esmvalcore
+import esmvalcore.preprocessor
 from esmvalcore import __version__, esgf
 from esmvalcore._provenance import get_recipe_provenance
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
@@ -653,8 +653,7 @@ def _update_extract_shape(settings, session):
             # Second, try path relative to esmvalcore/preprocessor/shapefiles/
             if not abs_shapefile.exists():
                 abs_shapefile = (
-                    Path(esmvalcore.__file__).parent /
-                    'preprocessor' /
+                    Path(esmvalcore.preprocessor.__file__).parent /
                     'shapefiles' /
                     shapefile
                 )
@@ -663,8 +662,7 @@ def _update_extract_shape(settings, session):
             # esmvalcore/preprocessor/shapefiles/ again
             if not abs_shapefile.exists():
                 abs_shapefile = (
-                    Path(esmvalcore.__file__).parent /
-                    'preprocessor' /
+                    Path(esmvalcore.preprocessor.__file__).parent /
                     'shapefiles' /
                     shapefile.with_suffix('.shp')
                 )
