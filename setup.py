@@ -56,8 +56,7 @@ REQUIREMENTS = {
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        'scitools-iris @ '
-        'https://github.com/pp-mo/iris/archive/lazy_save_2.tar.gz',
+        'scitools-iris @ git+https://github.com/scitools/iris.git',
         'shapely[vectorized]',
         'stratify',
         'yamale',
