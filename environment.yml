@@ -35,7 +35,7 @@ dependencies:
   - py-cordex
   - pybtex
   - python>=3.8
-  - python-stratify
+  - python-stratify>=0.3
   - pyyaml
   - requests
   - scipy>=1.6
