@@ -687,18 +687,18 @@ class CMORCheck():
 
         if not coord.is_monotonic():
             self.report_critical(self._is_msg, var_name, 'monotonic')
-        if len(coord.points) == 1:
+        if len(coord.core_points()) == 1:
             return
         if cmor.stored_direction:
             if cmor.stored_direction == 'increasing':
-                if coord.points[0] > coord.points[1]:
+                if coord.core_points()[0] > coord.core_points()[1]:
                     if not self.automatic_fixes or coord.ndim > 1:
                         self.report_critical(self._is_msg, var_name,
                                              'increasing')
                     else:
                         self._reverse_coord(coord)
             elif cmor.stored_direction == 'decreasing':
-                if coord.points[0] < coord.points[1]:
+                if coord.core_points()[0] < coord.core_points()[1]:
                     if not self.automatic_fixes or coord.ndim > 1:
                         self.report_critical(self._is_msg, var_name,
                                              'decreasing')
@@ -731,7 +731,7 @@ class CMORCheck():
         # Check coordinate value ranges
         if coord_info.valid_min:
             valid_min = float(coord_info.valid_min)
-            if np.any(coord.points < valid_min):
+            if np.any(coord.core_points() < valid_min):
                 if coord_info.standard_name == 'longitude' and \
                         self.automatic_fixes:
                     l_fix_coord_value = self._check_longitude_min(
@@ -743,7 +743,7 @@ class CMORCheck():
 
         if coord_info.valid_max:
             valid_max = float(coord_info.valid_max)
-            if np.any(coord.points > valid_max):
+            if np.any(coord.core_points() > valid_max):
                 if coord_info.standard_name == 'longitude' and \
                         self.automatic_fixes:
                     l_fix_coord_value = self._check_longitude_max(
@@ -764,11 +764,11 @@ class CMORCheck():
                                                      False)
                 self._cube = self._cube.intersection(lon_extent)
             else:
-                new_lons = coord.points.copy()
-                self._set_range_in_0_360(new_lons)
+                new_lons = coord.core_points().copy()
+                new_lons = self._set_range_in_0_360(new_lons)
                 if coord.bounds is not None:
                     new_bounds = coord.bounds.copy()
-                    self._set_range_in_0_360(new_bounds)
+                    new_bounds = self._set_range_in_0_360(new_bounds)
                 else:
                     new_bounds = None
                 new_coord = coord.copy(new_lons, new_bounds)
@@ -781,14 +781,14 @@ class CMORCheck():
                                                      var_name)
 
     def _check_longitude_max(self, coord, var_name):
-        if np.any(coord.points > 720):
+        if np.any(coord.core_points() > 720):
             self.report_critical(
                 f'{var_name} longitude coordinate has values > 720 degrees')
             return False
         return True
 
     def _check_longitude_min(self, coord, var_name):
-        if np.any(coord.points < -360):
+        if np.any(coord.core_points() < -360):
             self.report_critical(
                 f'{var_name} longitude coordinate has values < -360 degrees')
             return False
@@ -796,18 +796,16 @@ class CMORCheck():
 
     @staticmethod
     def _set_range_in_0_360(array):
-        while array.min() < 0:
-            array[array < 0] += 360
-        while array.max() > 360:
-            array[array > 360] -= 360
+        """Convert longitude coordinate to [0, 360]."""
+        return (array + 360.0) % 360.0
 
     def _check_requested_values(self, coord, coord_info, var_name):
         """Check requested values."""
         if coord_info.requested:
-            if coord.points.ndim != 1:
+            if coord.core_points().ndim != 1:
                 self.report_warning(
                     "Cannot check requested values of {}D coordinate {} since "
-                    "it is not 1D", coord.points.ndim, var_name)
+                    "it is not 1D", coord.core_points().ndim, var_name)
                 return
             try:
                 cmor_points = np.array(coord_info.requested, dtype=float)
@@ -816,16 +814,16 @@ class CMORCheck():
             else:
                 atol = 1e-7 * np.mean(cmor_points)
                 if (self.automatic_fixes
-                        and coord.points.shape == cmor_points.shape
+                        and coord.core_points().shape == cmor_points.shape
                         and np.allclose(
-                            coord.points,
+                            coord.core_points(),
                             cmor_points,
                             rtol=1e-7,
                             atol=atol,
                         )):
                     coord.points = cmor_points
             for point in cmor_points:
-                if point not in coord.points:
+                if point not in coord.core_points():
                     self.report_warning(self._contain_msg, var_name,
                                         str(point), str(coord.units))
 
@@ -945,7 +943,7 @@ class CMORCheck():
         calendar_aliases = {
             'all_leap': '366_day',
             'noleap': '365_day',
-            'standard': 'gregorian',
+            'gregorian': 'standard',
         }
         return calendar_aliases.get(calendar, calendar)
 
@@ -1081,6 +1079,10 @@ def _get_cmor_checker(table,
                 table, ', '.join(CMOR_TABLES)))
 
     cmor_table = CMOR_TABLES[table]
+    if table == 'CORDEX' and mip.endswith('hr'):
+        # CORDEX X-hourly tables define the mip
+        # as ending in 'h' instead of 'hr'.
+        mip = mip.replace('hr', 'h')
     var_info = cmor_table.get_variable(mip, short_name)
     if var_info is None:
         var_info = CMOR_TABLES['custom'].get_variable(mip, short_name)

@@ -33,7 +33,7 @@ on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 
 # This is used for linking and such so we link to the thing we're building
 rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
-if rtd_version not in ["latest", "doc"]:  # TODO: add "stable" once we have it
+if rtd_version not in ["latest", "stable", "doc"]:
     rtd_version = "latest"
 
 # -- General configuration ------------------------------------------------
@@ -45,6 +45,8 @@ if rtd_version not in ["latest", "doc"]:  # TODO: add "stable" once we have it
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'autodocsumm',
+    'nbsphinx',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
@@ -54,7 +56,8 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
-    'autodocsumm',
+    # github.com/readthedocs/sphinx_rtd_theme/issues/1451
+    'sphinxcontrib.jquery',
 ]
 
 autodoc_default_options = {

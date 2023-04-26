@@ -1,11 +1,13 @@
 """Horizontal and vertical regridding module."""
 
 import importlib
+import inspect
 import logging
 import os
 import re
 from copy import deepcopy
 from decimal import Decimal
+from pathlib import Path
 from typing import Dict
 
 import iris
@@ -17,12 +19,10 @@ from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
 
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
-from ..cmor.fix import fix_file, fix_metadata
 from ..cmor.table import CMOR_TABLES
-from ._ancillary_vars import add_ancillary_variable, add_cell_measure
-from ._io import GLOBAL_FILL_VALUE, concatenate_callback, load
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
+from ._supplementary_vars import add_ancillary_variable, add_cell_measure
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ _LON_MAX = 360.0
 _LON_RANGE = _LON_MAX - _LON_MIN
 
 # A cached stock of standard horizontal target grids.
-_CACHE: Dict[str, iris.cube.Cube] = dict()
+_CACHE: Dict[str, iris.cube.Cube] = {}
 
 # Supported point interpolation schemes.
 POINT_INTERPOLATION_SCHEMES = {
@@ -451,6 +451,12 @@ def extract_point(cube, latitude, longitude, scheme):
     return cube
 
 
+def is_dataset(dataset):
+    """Test if something is an `esmvalcore.dataset.Dataset`."""
+    # Use this function to avoid circular imports
+    return hasattr(dataset, 'facets')
+
+
 def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     """Perform horizontal regridding.
 
@@ -476,14 +482,11 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     target_grid : Cube or str or dict
         The (location of a) cube that specifies the target or reference grid
         for the regridding operation.
-
         Alternatively, a string cell specification may be provided,
         of the form ``MxN``, which specifies the extent of the cell, longitude
         by latitude (degrees) for a global, regular target grid.
-
         Alternatively, a dictionary with a regional target grid may
         be specified (see above).
-
     scheme : str or dict
         The regridding scheme to perform. If both source and target grid are
         structured (regular or irregular), can be one of the built-in schemes
@@ -536,8 +539,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
               extrapolation_mode: nanmask
 
     To use the area weighted regridder available in
-    :class:`esmf_regrid.schemes.ESMFAreaWeighted`, make sure that
-    :doc:`iris-esmf-regrid:index` is installed and use
+    :class:`esmf_regrid.schemes.ESMFAreaWeighted` use
 
     .. code-block:: yaml
 
@@ -546,12 +548,37 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             target: 1x1
             scheme:
               reference: esmf_regrid.schemes:ESMFAreaWeighted
-
-    .. note::
-
-        Note that :doc:`iris-esmf-regrid:index` is still experimental.
     """
+    if is_dataset(target_grid):
+        target_grid = target_grid.copy()
+        target_grid.supplementaries.clear()
+        target_grid.files = [target_grid.files[0]]
+        target_grid = target_grid.load()
+    elif isinstance(target_grid, (str, Path)) and os.path.isfile(target_grid):
+        target_grid = iris.load_cube(target_grid)
+    elif isinstance(target_grid, str):
+        # Generate a target grid from the provided cell-specification,
+        # and cache the resulting stock cube for later use.
+        target_grid = _CACHE.setdefault(
+            target_grid,
+            _global_stock_cube(target_grid, lat_offset, lon_offset),
+        )
+        # Align the target grid coordinate system to the source
+        # coordinate system.
+        src_cs = cube.coord_system()
+        xcoord = target_grid.coord(axis='x', dim_coords=True)
+        ycoord = target_grid.coord(axis='y', dim_coords=True)
+        xcoord.coord_system = src_cs
+        ycoord.coord_system = src_cs
+    elif isinstance(target_grid, dict):
+        # Generate a target grid from the provided specification,
+        target_grid = _regional_stock_cube(target_grid)
+
+    if not isinstance(target_grid, iris.cube.Cube):
+        raise ValueError(f'Expecting a cube, got {target_grid}.')
+
     if isinstance(scheme, dict):
+        scheme = dict(scheme)  # do not overwrite original scheme
         try:
             object_ref = scheme.pop("reference")
         except KeyError as key_err:
@@ -568,37 +595,21 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         if separator:
             for attr in scheme_name.split('.'):
                 obj = getattr(obj, attr)
+
+        scheme_args = inspect.getfullargspec(obj).args
+        # Add source and target cubes as arguments if required
+        if 'src_cube' in scheme_args:
+            scheme['src_cube'] = cube
+        if 'grid_cube' in scheme_args:
+            scheme['grid_cube'] = target_grid
+
         loaded_scheme = obj(**scheme)
     else:
         loaded_scheme = HORIZONTAL_SCHEMES.get(scheme.lower())
+
     if loaded_scheme is None:
         emsg = 'Unknown regridding scheme, got {!r}.'
         raise ValueError(emsg.format(scheme))
-
-    if isinstance(target_grid, str):
-        if os.path.isfile(target_grid):
-            target_grid = iris.load_cube(target_grid)
-        else:
-            # Generate a target grid from the provided cell-specification,
-            # and cache the resulting stock cube for later use.
-            target_grid = _CACHE.setdefault(
-                target_grid,
-                _global_stock_cube(target_grid, lat_offset, lon_offset),
-            )
-            # Align the target grid coordinate system to the source
-            # coordinate system.
-            src_cs = cube.coord_system()
-            xcoord = target_grid.coord(axis='x', dim_coords=True)
-            ycoord = target_grid.coord(axis='y', dim_coords=True)
-            xcoord.coord_system = src_cs
-            ycoord.coord_system = src_cs
-
-    elif isinstance(target_grid, dict):
-        # Generate a target grid from the provided specification,
-        target_grid = _regional_stock_cube(target_grid)
-
-    if not isinstance(target_grid, iris.cube.Cube):
-        raise ValueError('Expecting a cube, got {}.'.format(target_grid))
 
     # Unstructured regridding requires x2 2d spatial coordinates,
     # so ensure to purge any 1d native spatial dimension coordinates
@@ -610,45 +621,24 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
                 [coord] = coords
                 cube.remove_coord(coord)
 
-    # Return non-regridded cube if horizontal grid is the same.
-    if not _horizontal_grid_is_close(cube, target_grid):
-        original_dtype = cube.core_data().dtype
-
-        # For 'unstructured_nearest', make sure that consistent fill value is
-        # used since the data is not masked after regridding (see
-        # https://github.com/SciTools/iris/issues/4463)
-        # Note: da.ma.set_fill_value() works with any kind of input data
-        # (masked and unmasked, numpy and dask)
-        if scheme == 'unstructured_nearest':
-            if np.issubdtype(cube.dtype, np.integer):
-                fill_value = np.iinfo(cube.dtype).max
-            else:
-                fill_value = GLOBAL_FILL_VALUE
-            da.ma.set_fill_value(cube.core_data(), fill_value)
-
-        # Perform the horizontal regridding
-        if _attempt_irregular_regridding(cube, scheme):
-            cube = esmpy_regrid(cube, target_grid, scheme)
-        else:
-            cube = cube.regrid(target_grid, loaded_scheme)
-
-        # Preserve dtype and use masked arrays for 'unstructured_nearest'
-        # scheme (see https://github.com/SciTools/iris/issues/4463)
-        if scheme == 'unstructured_nearest':
-            try:
-                cube.data = cube.core_data().astype(original_dtype,
-                                                    casting='same_kind')
-            except TypeError as exc:
-                logger.warning(
-                    "dtype of data changed during regridding from '%s' to "
-                    "'%s': %s", original_dtype, cube.core_data().dtype,
-                    str(exc))
-            cube.data = da.ma.masked_equal(cube.core_data(), fill_value)
-    else:
-        # force target coordinates
+    # Horizontal grids from source and target (almost) match
+    # -> Return source cube with target coordinates
+    if _horizontal_grid_is_close(cube, target_grid):
         for coord in ['latitude', 'longitude']:
             cube.coord(coord).points = target_grid.coord(coord).points
             cube.coord(coord).bounds = target_grid.coord(coord).bounds
+        return cube
+
+    # Horizontal grids from source and target do not match
+    # -> Regrid
+    if _attempt_irregular_regridding(cube, scheme):
+        cube = esmpy_regrid(cube, target_grid, scheme)
+    elif isinstance(loaded_scheme, iris.cube.Cube):
+        # Return regridded cube in cases in which the
+        # scheme is a function f(src_cube, grid_cube) -> Cube
+        cube = loaded_scheme
+    else:
+        cube = cube.regrid(target_grid, loaded_scheme)
 
     return cube
 
@@ -1004,12 +994,13 @@ def get_cmor_levels(cmor_table, coordinate):
     """
     if cmor_table not in CMOR_TABLES:
         raise ValueError(
-            "Level definition cmor_table '{}' not available".format(
-                cmor_table))
+            f"Level definition cmor_table '{cmor_table}' not available"
+        )
 
     if coordinate not in CMOR_TABLES[cmor_table].coords:
-        raise ValueError('Coordinate {} not available for {}'.format(
-            coordinate, cmor_table))
+        raise ValueError(
+            f'Coordinate {coordinate} not available for {cmor_table}'
+        )
 
     cmor = CMOR_TABLES[cmor_table].coords[coordinate]
 
@@ -1019,30 +1010,18 @@ def get_cmor_levels(cmor_table, coordinate):
         return [float(cmor.value)]
 
     raise ValueError(
-        'Coordinate {} in {} does not have requested values'.format(
-            coordinate, cmor_table))
+        f'Coordinate {coordinate} in {cmor_table} does not have requested '
+        f'values'
+    )
 
 
-def get_reference_levels(filename, project, dataset, short_name, mip,
-                         frequency, fix_dir):
+def get_reference_levels(dataset):
     """Get level definition from a reference dataset.
 
     Parameters
     ----------
-    filename: str
-        Path to the reference file
-    project : str
-        Name of the project
-    dataset : str
-        Name of the dataset
-    short_name : str
-        Name of the variable
-    mip : str
-        Name of the mip table
-    frequency : str
-        Time frequency
-    fix_dir : str
-        Output directory for fixed data
+    dataset: esmvalcore.dataset.Dataset
+        Dataset containing the reference files.
 
     Returns
     -------
@@ -1054,28 +1033,14 @@ def get_reference_levels(filename, project, dataset, short_name, mip,
         If the dataset is not defined, the coordinate does not specify any
         levels or the string is badly formatted.
     """
-    filename = fix_file(
-        file=filename,
-        short_name=short_name,
-        project=project,
-        dataset=dataset,
-        mip=mip,
-        output_dir=fix_dir,
-    )
-    cubes = load(filename, callback=concatenate_callback)
-    cubes = fix_metadata(
-        cubes=cubes,
-        short_name=short_name,
-        project=project,
-        dataset=dataset,
-        mip=mip,
-        frequency=frequency,
-    )
-    cube = cubes[0]
+    dataset = dataset.copy()
+    dataset.supplementaries.clear()
+    dataset.files = [dataset.files[0]]
+    cube = dataset.load()
     try:
         coord = cube.coord(axis='Z')
-    except iris.exceptions.CoordinateNotFoundError:
-        raise ValueError('z-coord not available in {}'.format(filename))
+    except iris.exceptions.CoordinateNotFoundError as exc:
+        raise ValueError(f'z-coord not available in {dataset.files}') from exc
     return coord.points.tolist()
 
 
@@ -1110,7 +1075,6 @@ def extract_coordinate_points(cube, definition, scheme):
     ValueError:
         If the interpolation scheme is not provided or is not recognised.
     """
-
     msg = f"Unknown interpolation scheme, got {scheme!r}."
     scheme = POINT_INTERPOLATION_SCHEMES.get(scheme.lower())
     if not scheme:

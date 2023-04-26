@@ -4,6 +4,9 @@ import os
 import tempfile
 import unittest
 
+import pytest
+
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.preprocessor import _io
 
 
@@ -37,3 +40,9 @@ class TestCleanup(unittest.TestCase):
         _io.cleanup([], self.temp_paths)
         for path in self.temp_paths:
             self.assertFalse(os.path.exists(path))
+
+    def test_deprecation(self):
+        """Test that deprecation warning is properly raised."""
+        msg = "cleanup"
+        with pytest.warns(ESMValCoreDeprecationWarning, match=msg):
+            _io.cleanup([], [])

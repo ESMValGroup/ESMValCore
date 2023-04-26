@@ -1,49 +1,62 @@
 """Contains the base class for dataset fixes."""
+from __future__ import annotations
+
 import importlib
-import os
 import inspect
+import tempfile
+from pathlib import Path
 
 from ..table import CMOR_TABLES
 
 
 class Fix:
     """Base class for dataset fixes."""
+
     def __init__(self, vardef, extra_facets=None):
         """Initialize fix object.
 
         Parameters
         ----------
         vardef: str
-            CMOR table entry
+            CMOR table entry.
         extra_facets: dict, optional
             Extra facets are mainly used for data outside of the big projects
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
+
         """
         self.vardef = vardef
         if extra_facets is None:
             extra_facets = {}
         self.extra_facets = extra_facets
 
-    def fix_file(self, filepath, output_dir):
+    def fix_file(
+        self,
+        filepath: Path,
+        output_dir: Path,
+        add_unique_suffix: bool = False,
+    ) -> Path:
         """Apply fixes to the files prior to creating the cube.
 
-        Should be used only to fix errors that prevent loading or can
-        not be fixed in the cube (i.e. those related with missing_value
-        and _FillValue)
+        Should be used only to fix errors that prevent loading or cannot be
+        fixed in the cube (e.g., those related to `missing_value` or
+        `_FillValue`).
 
         Parameters
         ----------
-        filepath: str
-            file to fix
-        output_dir: str
-            path to the folder to store the fixed files, if required
+        filepath: Path
+            File to fix.
+        output_dir: Path
+            Output directory for fixed files.
+        add_unique_suffix: bool, optional (default: False)
+            Adds a unique suffix to `output_dir` for thread safety.
 
         Returns
         -------
-        str
+        Path
             Path to the corrected file. It can be different from the original
             filepath if a fix has been applied, but if not it should be the
-            original filepath
+            original filepath.
+
         """
         return filepath
 
@@ -57,12 +70,13 @@ class Fix:
         Parameters
         ----------
         cubes: iris.cube.CubeList
-            Cubes to fix
+            Cubes to fix.
 
         Returns
         -------
         iris.cube.CubeList
             Fixed cubes. They can be different instances.
+
         """
         return cubes
 
@@ -72,26 +86,28 @@ class Fix:
         Parameters
         ----------
         cubes : iris.cube.CubeList
-            List of cubes to search
-        short_name : str
-            Cube's variable short name. If None, short name is the class name
+            List of cubes to search.
+        short_name : str or None
+            Cube's variable short name. If `None`, `short name` is the class
+            name.
 
         Raises
         ------
         Exception
-            If no cube is found
+            If no cube is found.
 
         Returns
         -------
         iris.Cube
             Variable's cube
+
         """
         if short_name is None:
             short_name = self.vardef.short_name
         for cube in cubes:
             if cube.var_name == short_name:
                 return cube
-        raise Exception('Cube for variable "{}" not found'.format(short_name))
+        raise Exception(f'Cube for variable "{short_name}" not found')
 
     def fix_data(self, cube):
         """Apply fixes to the data of the cube.
@@ -101,19 +117,22 @@ class Fix:
         Parameters
         ----------
         cube: iris.cube.Cube
-            Cube to fix
+            Cube to fix.
 
         Returns
         -------
         iris.cube.Cube
             Fixed cube. It can be a difference instance.
+
         """
         return cube
 
     def __eq__(self, other):
+        """Fix equality."""
         return isinstance(self, other.__class__)
 
     def __ne__(self, other):
+        """Fix inequality."""
         return not self.__eq__(other)
 
     @staticmethod
@@ -134,17 +153,22 @@ class Fix:
         Parameters
         ----------
         project: str
+            Project of the dataset.
         dataset: str
+            Name of the dataset.
         mip: str
+            Variable's MIP.
         short_name: str
+            Variable's short name.
         extra_facets: dict, optional
             Extra facets are mainly used for data outside of the big projects
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 
         Returns
         -------
-        list(Fix)
-            Fixes to apply for the given data
+        list[Fix]
+            Fixes to apply for the given data.
+
         """
         cmor_table = CMOR_TABLES[project]
         vardef = cmor_table.get_variable(mip, short_name)
@@ -157,10 +181,27 @@ class Fix:
             extra_facets = {}
 
         fixes = []
-        try:
-            fixes_module = importlib.import_module(
-                'esmvalcore.cmor._fixes.{0}.{1}'.format(project, dataset))
 
+        fixes_modules = []
+        if project == 'cordex':
+            driver = extra_facets['driver'].replace('-', '_').lower()
+            extra_facets['dataset'] = dataset
+            try:
+                fixes_modules.append(importlib.import_module(
+                    f'esmvalcore.cmor._fixes.{project}.{driver}.{dataset}'
+                ))
+            except ImportError:
+                pass
+            fixes_modules.append(importlib.import_module(
+                'esmvalcore.cmor._fixes.cordex.cordex_fixes'))
+        else:
+            try:
+                fixes_modules.append(importlib.import_module(
+                    f'esmvalcore.cmor._fixes.{project}.{dataset}'))
+            except ImportError:
+                pass
+
+        for fixes_module in fixes_modules:
             classes = inspect.getmembers(fixes_module, inspect.isclass)
             classes = dict((name.lower(), value) for name, value in classes)
             for fix_name in (short_name, mip.lower(), 'allvars'):
@@ -168,24 +209,39 @@ class Fix:
                     fixes.append(classes[fix_name](vardef, extra_facets))
                 except KeyError:
                     pass
-        except ImportError:
-            pass
+
         return fixes
 
     @staticmethod
-    def get_fixed_filepath(output_dir, filepath):
+    def get_fixed_filepath(
+        output_dir: str | Path,
+        filepath: str | Path,
+        add_unique_suffix: bool = False,
+    ) -> Path:
         """Get the filepath for the fixed file.
 
         Parameters
         ----------
-        var_path: str
-            Original path
+        output_dir: Path
+            Output directory for fixed files. Will be created if it does not
+            exist yet.
+        filepath: str or Path
+            Original path.
+        add_unique_suffix: bool, optional (default: False)
+            Adds a unique suffix to `output_dir` for thread safety.
 
         Returns
         -------
-        str
-            Path to the fixed file
+        Path
+            Path to the fixed file.
+
         """
-        if not os.path.isdir(output_dir):
-            os.makedirs(output_dir)
-        return os.path.join(output_dir, os.path.basename(filepath))
+        output_dir = Path(output_dir)
+        if add_unique_suffix:
+            parent_dir = output_dir.parent
+            parent_dir.mkdir(parents=True, exist_ok=True)
+            prefix = output_dir.name
+            output_dir = Path(tempfile.mkdtemp(prefix=prefix, dir=parent_dir))
+        else:
+            output_dir.mkdir(parents=True, exist_ok=True)
+        return output_dir / Path(filepath).name

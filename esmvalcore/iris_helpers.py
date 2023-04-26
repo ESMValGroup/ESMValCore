@@ -1,15 +1,15 @@
 """Auxiliary functions for :mod:`iris`."""
-import warnings
+from typing import Dict, List, Sequence
 
 import dask.array as da
 import iris
 import iris.cube
 import iris.util
 import numpy as np
-from iris import NameConstraint
+from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+from esmvalcore.typing import NetCDFAttr
 
 
 def add_leading_dim_to_cube(cube, dim_coord):
@@ -62,7 +62,7 @@ def add_leading_dim_to_cube(cube, dim_coord):
     # Create new cube with shape (w, x, ..., z) where w is length of dim_coord
     # and already add ancillary variables and cell measures
     new_data = da.broadcast_to(cube.core_data(), new_shape)
-    new_cube = iris.cube.Cube(
+    new_cube = Cube(
         new_data,
         ancillary_variables_and_dims=ancillary_variables,
         cell_measures_and_dims=cell_measures,
@@ -106,33 +106,54 @@ def date2num(date, unit, dtype=np.float64):
         return dtype(num)
 
 
-def var_name_constraint(var_name):
-    """:class:`iris.Constraint` using ``var_name``.
+def merge_cube_attributes(
+    cubes: Sequence[Cube],
+    delimiter: str = ' ',
+) -> None:
+    """Merge attributes of all given cubes in-place.
 
-    Warning
-    -------
-    .. deprecated:: 2.6.0
-        This function has been deprecated in ESMValCore version 2.6.0 and is
-        scheduled for removal in version 2.8.0. Please use the function
-        :class:`iris.NameConstraint` with the argument ``var_name`` instead:
-        this is an exact replacement.
+    After this operation, the attributes of all given cubes are equal. This is
+    useful for operations that combine cubes, such as
+    :meth:`iris.cube.CubeList.merge_cube` or
+    :meth:`iris.cube.CubeList.concatenate_cube`.
+
+    Note
+    ----
+    This function differs from :func:`iris.util.equalise_attributes` in this
+    respect that it does not delete attributes that are not identical but
+    rather concatenates them (sorted) using the given ``delimiter``. E.g., the
+    attributes ``exp: historical`` and ``exp: ssp585`` end up as ``exp:
+    historical ssp585`` using the default ``delimiter = ' '``.
 
     Parameters
     ----------
-    var_name: str
-        ``var_name`` used for the constraint.
-
-    Returns
-    -------
-    iris.Constraint
-        Constraint.
+    cubes:
+        Input cubes whose attributes will be modified in-place.
+    delimiter:
+        Delimiter that is used to concatenate non-identical attributes.
 
     """
-    deprecation_msg = (
-        "The function ``var_name_constraint`` has been deprecated in "
-        "ESMValCore version 2.6.0 and is scheduled for removal in version "
-        "2.8.0. Please use the function ``iris.NameConstraint`` with the "
-        "argument ``var_name`` instead: this is an exact replacement."
-    )
-    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
-    return NameConstraint(var_name=var_name)
+    if len(cubes) <= 1:
+        return
+
+    # Step 1: collect all attribute values in a list
+    attributes: Dict[str, List[NetCDFAttr]] = {}
+    for cube in cubes:
+        for (attr, val) in cube.attributes.items():
+            attributes.setdefault(attr, [])
+            attributes[attr].append(val)
+
+    # Step 2: if values are not equal, first convert them to strings (so that
+    # set() can be used); then extract unique elements from this list, sort it,
+    # and use the delimiter to join all elements to a single string
+    final_attributes: Dict[str, NetCDFAttr] = {}
+    for (attr, vals) in attributes.items():
+        set_of_str = sorted({str(v) for v in vals})
+        if len(set_of_str) == 1:
+            final_attributes[attr] = vals[0]
+        else:
+            final_attributes[attr] = delimiter.join(set_of_str)
+
+    # Step 3: modify the cubes in-place
+    for cube in cubes:
+        cube.attributes = final_attributes
