@@ -1,12 +1,14 @@
 """Fixes for EC-Earth3-Veg model."""
-import numpy as np
 import cf_units
-from ..fix import Fix
+import numpy as np
+
 from ..common import NemoGridFix
+from ..fix import Fix
 
 
 class Siconca(Fix):
     """Fixes for siconca."""
+
     def fix_data(self, cube):
         """Fix data.
 
@@ -63,5 +65,6 @@ class Tas(Fix):
             latitude.bounds = np.round(latitude.bounds, 8)
 
         return cubes
+
 
 Omon = NemoGridFix

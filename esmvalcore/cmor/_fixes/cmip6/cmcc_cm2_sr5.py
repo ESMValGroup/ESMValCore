@@ -16,11 +16,11 @@ class Cl(ClFixHybridPressureCoord):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube = self.get_cube_from_list(cubes)
         ps_coord = cube.coord(var_name='ps')
         ps_coord.standard_name = None
         return super().fix_metadata(cubes)
+
 
 Omon = NemoGridFix

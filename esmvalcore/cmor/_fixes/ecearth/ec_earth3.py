@@ -1,11 +1,10 @@
 """Fixes for EC-Earth3 model."""
 import cf_units
-import iris
 import numpy as np
 
+from ..common import NemoGridFix
 from ..fix import Fix
 from ..shared import round_coordinates
-from ..common import NemoGridFix
 
 
 class AllVars(Fix):
@@ -74,5 +73,6 @@ class Tas(Fix):
             latitude.bounds = np.round(latitude.bounds, 8)
 
         return cubes
+
 
 Omon = NemoGridFix
