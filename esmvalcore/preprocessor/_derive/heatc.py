@@ -6,6 +6,7 @@ from cf_units import Unit
 from iris import Constraint
 
 from ._baseclass import DerivedVariableBase
+from .._supplementary_vars import add_supplementary_variables
 
 logger = logging.getLogger(__name__)
 
@@ -53,5 +54,9 @@ class DerivedVariable(DerivedVariableBase):
         thetao.convert_units('K')
         heatc = thetao * DENSITY * HEAT_CAPACITY
         heatc.convert_units('J m-3')
+        if thetao.cell_measures():
+            add_supplementary_variables(heatc, thetao.cell_measures())
+        if thetao.ancillary_variables():
+            add_supplementary_variables(heatc, thetao.ancillary_variables())
 
         return heatc
