@@ -1,4 +1,4 @@
-"""Fixes for EC-Earth3-Veg-LR model."""
+"""Fixes for CMCC-CM2-VHR4 model."""
 from ..common import NemoGridFix
 
 Omon = NemoGridFix

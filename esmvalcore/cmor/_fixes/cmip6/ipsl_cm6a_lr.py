@@ -3,6 +3,7 @@ from iris.cube import CubeList
 
 from ..fix import Fix
 from ..shared import fix_ocean_depth_coord
+from ..common import NemoGridFix
 
 
 class AllVars(Fix):
@@ -54,7 +55,7 @@ class Clcalipso(Fix):
         return CubeList([cube])
 
 
-class Omon(Fix):
+class Omon(NemoGridFix):
     """Fixes for ocean variables."""
 
     def fix_metadata(self, cubes):
@@ -75,4 +76,5 @@ class Omon(Fix):
                 z_coord = cube.coord(axis='Z')
                 if z_coord.var_name == 'olevel':
                     fix_ocean_depth_coord(cube)
+        cubes = NemoGridFix.fix_metadata(self, cubes)
         return cubes

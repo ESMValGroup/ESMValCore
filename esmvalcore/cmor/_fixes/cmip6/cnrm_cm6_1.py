@@ -98,6 +98,7 @@ class Omon(NemoGridFix):
                 z_coord = cube.coord(axis='Z')
                 if z_coord.standard_name is None:
                     fix_ocean_depth_coord(cube)
+        cubes = NemoGridFix(self, cubes)
         return cubes
 
 
