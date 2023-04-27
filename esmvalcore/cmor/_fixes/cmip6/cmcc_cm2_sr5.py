@@ -1,5 +1,5 @@
 """Fixes for CMCC-CM2-SR5 model."""
-from ..common import ClFixHybridPressureCoord
+from ..common import ClFixHybridPressureCoord, NemoGridFix
 
 
 class Cl(ClFixHybridPressureCoord):
@@ -22,3 +22,5 @@ class Cl(ClFixHybridPressureCoord):
         ps_coord = cube.coord(var_name='ps')
         ps_coord.standard_name = None
         return super().fix_metadata(cubes)
+
+Omon = NemoGridFix

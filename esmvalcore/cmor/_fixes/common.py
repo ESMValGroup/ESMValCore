@@ -216,3 +216,18 @@ class SiconcFixScalarCoord(Fix):
         cube = self.get_cube_from_list(cubes)
         add_scalar_typesi_coord(cube)
         return iris.cube.CubeList([cube])
+
+
+class NemoGridFix(Fix):
+
+    def fix_metadata(self, cubes):
+        for cube in cubes:
+            try:
+                lon = cube.coord('longitude')
+                lat = cube.coord('latitude')
+            except iris.exceptions.CoordinateNotFoundError:
+                continue
+            else:
+                if lon.ndim > 1 and lat.ndim > 1:
+                    cube = cube[..., 1:, 1:]
+        return super().fix_metadata(cubes)
