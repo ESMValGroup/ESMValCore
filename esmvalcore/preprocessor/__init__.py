@@ -436,7 +436,6 @@ class PreprocessorFile(TrackedFile):
             ancestors = []
 
         self.datasets = datasets
-        self.delayed = None
         self._cubes = None
         self._input_files = input_files
 
@@ -495,8 +494,6 @@ class PreprocessorFile(TrackedFile):
             self._cubes,
             **self.settings['save'],
         )
-        if isinstance(result, Delayed):
-            self.delayed = result
         self.files = [self.settings['save']['filename']]
         if 'cleanup' in self.settings:
             self.files = preprocess(
@@ -505,14 +502,17 @@ class PreprocessorFile(TrackedFile):
                 input_files=self._input_files,
                 **self.settings.get('cleanup', {}),
             )
+        return result
 
     def close(self):
         """Close the file."""
+        result = None
         if self._cubes is not None:
             self._update_attributes()
-            self.save()
+            result = self.save()
             self._cubes = None
             self.save_provenance()
+        return result
 
     def _update_attributes(self):
         """Update product attributes from cube metadata."""
@@ -679,15 +679,17 @@ class PreprocessingTask(BaseTask):
                             product.apply(step, self.debug)
                     if block == blocks[-1]:
                         product.cubes  # pylint: disable=pointless-statement
-                        product.close()
+                        result = product.close()
+                        if isinstance(result, Delayed):
+                            self.delayeds[product.filename] = result
                         saved.add(product.filename)
 
         for product in self.products:
             if product.filename not in saved:
                 product.cubes  # pylint: disable=pointless-statement
-                product.close()
-            if product.delayed is not None:
-                self.delayeds[product.filename] = product.delayed
+                result = product.close()
+                if isinstance(result, Delayed):
+                    self.delayeds[product.filename] = result
 
         metadata_files = write_metadata(self.products,
                                         self.write_ncl_interface)

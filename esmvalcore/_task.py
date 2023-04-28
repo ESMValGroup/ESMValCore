@@ -18,6 +18,7 @@ from copy import deepcopy
 from multiprocessing import Pool
 from pathlib import Path, PosixPath
 from shutil import which
+from typing import TYPE_CHECKING
 
 import dask
 import dask.distributed
@@ -28,6 +29,9 @@ from ._citation import _write_citation_files
 from ._provenance import TrackedFile, get_task_provenance
 from .config import Session
 from .config._diagnostics import DIAGNOSTICS, TAGS
+
+if TYPE_CHECKING:
+    from esmvalcore.preprocessor import PreprocessingTask
 
 
 def path_representer(dumper, data):
@@ -703,6 +707,54 @@ class DiagnosticTask(BaseTask):
         return string
 
 
+@contextlib.contextmanager
+def get_distributed_client(session):
+    """Get a Dask distributed client."""
+    dask_args = session.get('dask', {})
+    client_args = dask_args.get('client', {}).copy()
+    cluster_args = dask_args.get('cluster', {}).copy()
+
+    # Start a cluster, if requested
+    if 'address' in client_args:
+        # Use an externally managed cluster.
+        cluster = None
+        if cluster_args:
+            logger.warning(
+                "Not using 'dask: cluster' settings because a cluster "
+                "'address' is already provided in 'dask: client'.")
+    elif cluster_args:
+        # Start cluster.
+        cluster_type = cluster_args.pop(
+            'type',
+            'dask.distributed.LocalCluster',
+        )
+        cluster_module_name, cluster_cls_name = cluster_type.rsplit('.', 1)
+        cluster_module = importlib.import_module(cluster_module_name)
+        cluster_cls = getattr(cluster_module, cluster_cls_name)
+        cluster = cluster_cls(**cluster_args)
+        client_args['address'] = cluster.scheduler_address
+    else:
+        # No cluster configured, use Dask default scheduler, or a LocalCluster
+        # managed through Client.
+        cluster = None
+
+    # Start a client, if requested
+    if dask_args:
+        client = dask.distributed.Client(**client_args)
+        logger.info(f"Dask dashboard: {client.dashboard_link}")
+    else:
+        logger.info("Using the Dask default scheduler.")
+        client = None
+
+    try:
+        yield client
+    finally:
+        if client is not None:
+            client.close()
+        if cluster is not None:
+            cluster.close()
+
+
 class TaskSet(set):
     """Container for tasks."""
 
@@ -727,112 +779,93 @@ class TaskSet(set):
         session : esmvalcore.config.Session
             Session.
         """
-        max_parallel_tasks = session['max_parallel_tasks']
-        if max_parallel_tasks == -1:
-            self._run_distributed(session)
-        elif max_parallel_tasks == 1:
-            self._run_sequential()
-        else:
-            self._run_parallel(max_parallel_tasks)
+        with get_distributed_client(session) as client:
+            if client is None:
+                scheduler_address = None
+            else:
+                scheduler_address = client.scheduler.address
+                for task in self.flatten():
+                    if (isinstance(task, DiagnosticTask)
+                            and Path(task.script).suffix.lower() == '.py'):
+                        # Only use the scheduler address if running a
+                        # Python script.
+                        task.settings['scheduler_address'] = scheduler_address
 
-    def _run_distributed(self, session: Session) -> None:
+            max_parallel_tasks = session['max_parallel_tasks']
+            if max_parallel_tasks == 0:
+                if client is None:
+                    raise ValueError(
+                        "Unable to run tasks using Dask distributed without a "
+                        "configured dask client. Please edit config-user.yml "
+                        "to configure dask.")
+                self._run_distributed(client)
+            elif max_parallel_tasks == 1:
+                self._run_sequential()
+            else:
+                self._run_parallel(scheduler_address, max_parallel_tasks)
+
+    def _run_distributed(self, client: dask.distributed.Client) -> None:
         """Run tasks using Dask Distributed."""
-        # Configure the scheduler
-        client_args = session.get('dask', {}).get('client', {}).copy()
-        cluster_args = session.get('dask', {}).get('cluster', {}).copy()
+        client.forward_logging()
+        tasks = sorted((t for t in self.flatten()), key=lambda t: t.priority)
 
-        if 'address' in client_args:
-            cluster = None
-            if cluster_args:
-                logger.warning(
-                    "Not using 'dask: cluster' settings because a cluster "
-                    "'address' is already provided in 'dask: client'.")
-        else:
-            # Start cluster
-            cluster_type = cluster_args.pop(
-                'type',
-                'dask.distributed.LocalCluster',
+        # Create a graph for dask.array operations in PreprocessingTasks
+        preprocessing_tasks = [t for t in tasks if hasattr(t, 'delayeds')]
+
+        futures_to_preproc_tasks: dict[dask.distributed.Future,
+                                       PreprocessingTask] = {}
+        for task in preprocessing_tasks:
+            future = client.submit(_run_preprocessing_task,
+                                   task,
+                                   priority=-task.priority)
+            futures_to_preproc_tasks[future] = task
+
+        for future in dask.distributed.as_completed(futures_to_preproc_tasks):
+            task = futures_to_preproc_tasks[future]
+            _copy_preprocessing_results(task, future)
+
+        # Launch dask.array compute operations for PreprocessingTasks
+        futures_to_files: dict[dask.distributed.Future, Path] = {}
+        for task in preprocessing_tasks:
+            logger.info(f"Computing task {task.name}")
+            futures = client.compute(
+                list(task.delayeds.values()),
+                priority=-task.priority,
             )
-            cluster_module_name, cluster_cls_name = cluster_type.rsplit('.', 1)
-            cluster_module = importlib.import_module(cluster_module_name)
-            cluster_cls = getattr(cluster_module, cluster_cls_name)
-            cluster = cluster_cls(**cluster_args)
-            client_args['address'] = cluster.scheduler_address
+            futures_to_files.update(zip(futures, task.delayeds))
 
-        # Connect client and run computation
-        with dask.distributed.Client(**client_args) as client:
-            logger.info(f"Dask dashboard: {client.dashboard_link}")
-            tasks = sorted((t for t in self.flatten()),
-                           key=lambda t: t.priority)
-            for task in tasks:
-                if (isinstance(task, DiagnosticTask)
-                        and Path(task.script).suffix.lower() == '.py'):
-                    # Only use the scheduler address if running a Python script
-                    task.settings[
-                        'scheduler_address'] = client.scheduler.address
+        # Start computing DiagnosticTasks as soon as the relevant
+        # PreprocessingTasks complete
+        waiting = [t for t in tasks if t not in preprocessing_tasks]
+        futures_to_tasks: dict[dask.distributed.Future, BaseTask] = {}
+        done_files = set()
+        done_tasks = set()
+        iterator = dask.distributed.as_completed(futures_to_files)
+        for future in iterator:
+            if future in futures_to_files:
+                filename = futures_to_files[future]
+                logger.info(f"Wrote (delayed) {filename}")
+                done_files.add(filename)
+                # Check if a PreprocessingTask has finished
+                for preproc_task in preprocessing_tasks:
+                    filenames = set(preproc_task.delayeds)
+                    if filenames.issubset(done_files):
+                        done_tasks.add(preproc_task)
+            elif future in futures_to_tasks:
+                # Check if a ResumeTask or DiagnosticTask has finished
+                task = futures_to_tasks[future]
+                _copy_distributed_results(task, future)
+                done_tasks.add(task)
 
-            # Create a graph for dask.array operations in PreprocessingTasks
-            preprocessing_tasks = [t for t in tasks if hasattr(t, 'delayeds')]
-
-            futures_to_preproc_tasks: dict[dask.distributed.Future,
-                                           BaseTask] = {}
-            for task in preprocessing_tasks:
-                future = client.submit(_run_preprocessing_task,
-                                       task,
-                                       priority=-task.priority)
-                futures_to_preproc_tasks[future] = task
-
-            for future in dask.distributed.as_completed(
-                    futures_to_preproc_tasks):
-                task = futures_to_preproc_tasks[future]
-                _copy_preprocessing_results(task, future)
-
-            # Compute dask.array operations for PreprocessingTasks
-            futures_to_files: dict[dask.distributed.Future, Path] = {}
-            for task in preprocessing_tasks:
-                logger.info(f"Computing task {task.name}")
-                futures = client.compute(
-                    list(task.delayeds.values()),
-                    priority=-task.priority,
-                )
-                futures_to_files.update(zip(futures, task.delayeds))
-
-            # Start computing DiagnosticTasks as soon as the relevant
-            # PreprocessingTasks complete
-            waiting = [t for t in tasks if t not in preprocessing_tasks]
-            futures_to_tasks: dict[dask.distributed.Future, BaseTask] = {}
-            ready_files = set()
-            ready_tasks = set()
-            iterator = dask.distributed.as_completed(futures_to_files)
-            for future in iterator:
-                if future in futures_to_files:
-                    filename = futures_to_files[future]
-                    logger.info(f"Wrote (delayed) {filename}")
-                    ready_files.add(filename)
-                    # Check if a PreprocessingTask has finished
-                    for preproc_task in preprocessing_tasks:
-                        filenames = set(preproc_task.delayeds)
-                        if filenames.issubset(ready_files):
-                            ready_tasks.add(preproc_task)
-                elif future in futures_to_tasks:
-                    # Check if a ResumeTask or DiagnosticTask has finished
-                    task = futures_to_tasks[future]
-                    _copy_results(task, future)
-                    ready_tasks.add(task)
-
-                # Schedule any new tasks that can be scheduled
-                for task in waiting:
-                    if set(task.ancestors).issubset(ready_tasks):
-                        future = client.submit(_run_task,
-                                               task,
-                                               priority=-task.priority)
-                        iterator.add(future)
-                        futures_to_tasks[future] = task
-                        waiting.pop(waiting.index(task))
-
-        # Shutdown the cluster if it is managed by us.
-        if cluster is not None:
-            cluster.close()
+            # Schedule any new tasks that can be scheduled
+            for task in waiting:
+                if set(task.ancestors).issubset(done_tasks):
+                    future = client.submit(_run_task,
+                                           task,
+                                           priority=-task.priority)
+                    iterator.add(future)
+                    futures_to_tasks[future] = task
+                    waiting.pop(waiting.index(task))
 
     def _run_sequential(self) -> None:
         """Run tasks sequentially."""
@@ -843,7 +876,7 @@ class TaskSet(set):
         for task in sorted(tasks, key=lambda t: t.priority):
             task.run()
 
-    def _run_parallel(self, max_parallel_tasks=None):
+    def _run_parallel(self, scheduler_address, max_parallel_tasks=None):
         """Run tasks in parallel."""
         scheduled = self.flatten()
         running = {}
@@ -868,14 +901,15 @@ class TaskSet(set):
                     if len(running) >= max_parallel_tasks:
                         break
                     if all(done(t) for t in task.ancestors):
-                        future = pool.apply_async(_run_task, [task])
+                        future = pool.apply_async(_run_task,
+                                                  [task, scheduler_address])
                         running[task] = future
                         scheduled.remove(task)
 
                 # Handle completed tasks
                 ready = {t for t in running if running[t].ready()}
                 for task in ready:
-                    _copy_results2(task, running[task])
+                    _copy_multiprocessing_results(task, running[task])
                     running.pop(task)
 
                 # Wait if there are still tasks running
@@ -896,18 +930,22 @@ class TaskSet(set):
             pool.join()
 
 
-def _run_task(task):
+def _run_task(task, scheduler_address=None):
     """Run task and return the result."""
-    output_files = task.run()
+    if scheduler_address is None:
+        output_files = task.run()
+    else:
+        with dask.distributed.Client(scheduler_address):
+            output_files = task.run()
     return output_files, task.products
 
 
-def _copy_results(task, future):
-    """Update task with the results from the remote process."""
+def _copy_distributed_results(task, future):
+    """Update task with the results from the dask worker."""
     task.output_files, task.products = future.result()
 
 
-def _copy_results2(task, future):
+def _copy_multiprocessing_results(task, future):
     """Update task with the results from the remote process."""
     task.output_files, task.products = future.get()
 
@@ -918,5 +956,5 @@ def _run_preprocessing_task(task):
 
 
 def _copy_preprocessing_results(task, future):
-    """Update task with the results from the remote process."""
+    """Update task with the results from the dask worker."""
     task.output_files, task.products, task.delayeds = future.result()

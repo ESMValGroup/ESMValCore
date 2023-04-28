@@ -229,7 +229,7 @@ def _get_default_settings(dataset):
     # Configure saving cubes to file
     settings['save'] = {
         'compress': session['compress_netcdf'],
-        'compute': session['max_parallel_tasks'] != -1,
+        'compute': session['max_parallel_tasks'] != 0,
     }
     if facets['short_name'] != facets['original_short_name']:
         settings['save']['alias'] = facets['short_name']
