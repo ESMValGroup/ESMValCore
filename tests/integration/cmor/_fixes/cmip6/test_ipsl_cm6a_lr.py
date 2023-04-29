@@ -112,24 +112,35 @@ def thetao_cubes():
     time_coord = iris.coords.DimCoord(
         [0.0004, 1.09776], var_name='time', standard_name='time',
         units='days since 1850-01-01 00:00:00')
-    lat_coord = iris.coords.DimCoord(
-        [0.0, 1.0], var_name='lat', standard_name='latitude', units='degrees')
-    lon_coord = iris.coords.DimCoord(
-        [0.0, 1.0], var_name='lon', standard_name='longitude', units='degrees')
+    i_coord = iris.coords.DimCoord(
+        [0, 1], var_name='i', units='1')
+    j_coord = iris.coords.DimCoord(
+        [0, 1], var_name='j', units='1')
     lev_coord = iris.coords.DimCoord(
         [5.0, 10.0], bounds=[[2.5, 7.5], [7.5, 12.5]],
         var_name='olevel', standard_name=None, units='m',
         attributes={'positive': 'up'})
+    lat_coord = iris.coords.AuxCoord(
+            [[-40.0, -20.0], [-20.0, 0.0]],
+            var_name='lat',
+            standard_name='latitude',
+            units='degrees_north',)
+    lon_coord = iris.coords.AuxCoord(
+            [[100.0, 140.0], [80.0, 100.0]],
+            var_name='lon',
+            standard_name='longitude',
+            units='degrees_east',)
     coord_specs = [
         (time_coord, 0),
         (lev_coord, 1),
-        (lat_coord, 2),
-        (lon_coord, 3),
+        (j_coord, 2),
+        (i_coord, 3),
     ]
     thetao_cube = iris.cube.Cube(
         np.ones((2, 2, 2, 2)),
         var_name='thetao',
         dim_coords_and_dims=coord_specs,
+        aux_coords_and_dims=[(lat_coord, (2, 3)), (lon_coord, (2, 3))],
     )
     return iris.cube.CubeList([thetao_cube])
 
@@ -145,10 +156,11 @@ def test_thetao_fix_metadata(thetao_cubes):
     vardef = get_var_info('CMIP6', 'Omon', 'thetao')
     fix = Omon(vardef)
     out_cubes = fix.fix_metadata(thetao_cubes)
-    assert out_cubes is thetao_cubes
     assert len(out_cubes) == 1
     out_cube = out_cubes[0]
 
+    assert out_cube.coord('latitude').shape == (1, 1)
+    assert out_cube.coord('longitude').shape == (1, 1)
     # Check metadata of depth coordinate
     depth_coord = out_cube.coord('depth')
     assert depth_coord.standard_name == 'depth'
