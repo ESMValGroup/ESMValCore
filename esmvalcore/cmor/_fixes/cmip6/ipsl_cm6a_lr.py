@@ -2,16 +2,14 @@
 from iris.cube import CubeList
 
 from ..fix import Fix
-from ..shared import fix_ocean_depth_coord
-from ..common import NemoGridFix
+from ..shared import fix_nemo_grid, fix_ocean_depth_coord
 
 
 class AllVars(Fix):
     """Fixes for thetao."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix cell_area coordinate.
+        """Fix cell_area coordinate.
 
         Parameters
         ----------
@@ -21,7 +19,6 @@ class AllVars(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         if cube.coords('latitude'):
@@ -45,7 +42,6 @@ class Clcalipso(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         alt_40_coord = cube.coord('height')
@@ -55,7 +51,7 @@ class Clcalipso(Fix):
         return CubeList([cube])
 
 
-class Omon(NemoGridFix):
+class Omon(Fix):
     """Fixes for ocean variables."""
 
     def fix_metadata(self, cubes):
@@ -69,12 +65,11 @@ class Omon(NemoGridFix):
         Returns
         -------
         iris.cube.CubeList
-
         """
-        for cube in cubes:
-            if cube.coords(axis='Z'):
-                z_coord = cube.coord(axis='Z')
-                if z_coord.var_name == 'olevel':
-                    fix_ocean_depth_coord(cube)
-        cubes = NemoGridFix.fix_metadata(self, cubes)
-        return cubes
+        cube = self.get_cube_from_list(cubes)
+        if cube.coords(axis='Z'):
+            z_coord = cube.coord(axis='Z')
+            if z_coord.var_name == 'olevel':
+                fix_ocean_depth_coord(cube)
+        cube = fix_nemo_grid(cube)
+        return CubeList([cube])

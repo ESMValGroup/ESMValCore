@@ -1,12 +1,13 @@
 """Fixes for CNRM-CM6-1 model."""
 import iris
 
-from ..common import ClFixHybridPressureCoord, NemoGridFix
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import (
     add_aux_coords_from_cubes,
+    fix_nemo_grid,
+    fix_ocean_depth_coord,
     get_bounds_cube,
-    fix_ocean_depth_coord
 )
 
 
@@ -24,7 +25,6 @@ class Cl(ClFixHybridPressureCoord):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube = self.get_cube_from_list(cubes)
 
@@ -69,7 +69,6 @@ class Clcalipso(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         alt_40_coord = cube.coord('alt40')
@@ -77,7 +76,7 @@ class Clcalipso(Fix):
         return iris.cube.CubeList([cube])
 
 
-class Omon(NemoGridFix):
+class Omon(Fix):
     """Fixes for ocean variables."""
 
     def fix_metadata(self, cubes):
@@ -91,15 +90,14 @@ class Omon(NemoGridFix):
         Returns
         -------
         iris.cube.CubeList
-
         """
-        for cube in cubes:
-            if cube.coords(axis='Z'):
-                z_coord = cube.coord(axis='Z')
-                if z_coord.standard_name is None:
-                    fix_ocean_depth_coord(cube)
-        cubes = NemoGridFix(self, cubes)
-        return cubes
+        cube = self.get_cube_from_list(cubes)
+        if cube.coords(axis='Z'):
+            z_coord = cube.coord(axis='Z')
+            if z_coord.standard_name is None:
+                fix_ocean_depth_coord(cube)
+        cube = fix_nemo_grid(cube)
+        return iris.cube.CubeList([cube])
 
 
 Cli = Cl

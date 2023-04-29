@@ -322,6 +322,18 @@ def fix_bounds(cube, cubes, coord_var_names):
         logger.debug("Fixed bounds of coordinate '%s'", coord_var_name)
 
 
+def fix_nemo_grid(cube):
+    try:
+        lon = cube.coord('longitude')
+        lat = cube.coord('latitude')
+    except iris.exceptions.CoordinateNotFoundError:
+        pass
+    else:
+        if lon.ndim > 1 and lat.ndim > 1:
+            cube = cube[..., 1:, 1:]
+    return cube
+
+
 def round_coordinates(cubes, decimals=5, coord_names=None):
     """Round all dimensional coordinates of all cubes in place.
 
