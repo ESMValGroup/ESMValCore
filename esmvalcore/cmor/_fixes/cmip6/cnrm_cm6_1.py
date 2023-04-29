@@ -1,7 +1,7 @@
 """Fixes for CNRM-CM6-1 model."""
 import iris
 
-from ..common import ClFixHybridPressureCoord
+from ..common import ClFixHybridPressureCoord, NemoGridFix
 from ..fix import Fix
 from ..shared import (
     add_aux_coords_from_cubes,
@@ -103,3 +103,5 @@ class Omon(Fix):
 Cli = Cl
 
 Clw = Cl
+
+Ofx = NemoGridFix

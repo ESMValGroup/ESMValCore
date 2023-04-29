@@ -24,3 +24,5 @@ class Cl(ClFixHybridPressureCoord):
 
 
 Omon = NemoGridFix
+
+Ofx = NemoGridFix

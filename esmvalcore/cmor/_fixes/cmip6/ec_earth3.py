@@ -76,3 +76,5 @@ class Tas(Fix):
 
 
 Omon = NemoGridFix
+
+Ofx = NemoGridFix

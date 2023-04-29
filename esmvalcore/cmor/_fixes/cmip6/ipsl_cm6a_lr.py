@@ -1,6 +1,7 @@
 """Fixes for IPSL-CM6A-LR model."""
 from iris.cube import CubeList
 
+from ..common import NemoGridFix
 from ..fix import Fix
 from ..shared import fix_nemo_grid, fix_ocean_depth_coord
 
@@ -73,3 +74,6 @@ class Omon(Fix):
                 fix_ocean_depth_coord(cube)
         cube = fix_nemo_grid(cube)
         return CubeList([cube])
+
+
+Ofx = NemoGridFix
