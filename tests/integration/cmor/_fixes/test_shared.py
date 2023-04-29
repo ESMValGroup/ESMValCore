@@ -19,6 +19,7 @@ from esmvalcore.cmor._fixes.shared import (
     add_scalar_typesi_coord,
     cube_to_aux_coord,
     fix_bounds,
+    fix_nemo_grid,
     fix_ocean_depth_coord,
     get_altitude_to_pressure_func,
     get_bounds_cube,
@@ -52,20 +53,46 @@ def test_pressure_to_altitude_func():
     np.testing.assert_allclose(func(75.9448), 50000)
     np.testing.assert_allclose(func(0.1), 91607.36011892557)
     np.testing.assert_allclose(func(np.array([101325.0, 177687.0])),
-                               [0.0, -5000.0], atol=1.0e-7)
+                               [0.0, -5000.0],
+                               atol=1.0e-7)
 
 
 TEST_ADD_AUX_COORDS_FROM_CUBES = [
     ({}, 1),
-    ({'x': ()}, 0),
-    ({'x': 1, 'a': ()}, 0),
-    ({'a': ()}, 1),
-    ({'a': (), 'b': 1}, 1),
-    ({'a': (), 'b': 1}, 1),
-    ({'c': 1}, 2),
-    ({'a': (), 'b': 1, 'c': 1}, 2),
-    ({'d': (0, 1)}, 1),
-    ({'a': (), 'b': 1, 'd': (0, 1)}, 1),
+    ({
+        'x': ()
+    }, 0),
+    ({
+        'x': 1,
+        'a': ()
+    }, 0),
+    ({
+        'a': ()
+    }, 1),
+    ({
+        'a': (),
+        'b': 1
+    }, 1),
+    ({
+        'a': (),
+        'b': 1
+    }, 1),
+    ({
+        'c': 1
+    }, 2),
+    ({
+        'a': (),
+        'b': 1,
+        'c': 1
+    }, 2),
+    ({
+        'd': (0, 1)
+    }, 1),
+    ({
+        'a': (),
+        'b': 1,
+        'd': (0, 1)
+    }, 1),
 ]
 
 
@@ -103,23 +130,33 @@ def test_add_aux_coords_from_cubes(coord_dict, output):
         assert "got 2" in str(err.value)
 
 
-ALT_COORD = iris.coords.AuxCoord([0.0], bounds=[[-100.0, 500.0]],
-                                 standard_name='altitude', units='m')
+ALT_COORD = iris.coords.AuxCoord([0.0],
+                                 bounds=[[-100.0, 500.0]],
+                                 standard_name='altitude',
+                                 units='m')
 ALT_COORD_NB = iris.coords.AuxCoord([0.0], standard_name='altitude', units='m')
-ALT_COORD_KM = iris.coords.AuxCoord([0.0], bounds=[[-0.1, 0.5]],
-                                    var_name='alt', long_name='altitude',
-                                    standard_name='altitude', units='km')
-P_COORD = iris.coords.AuxCoord([101325.0], bounds=[[102532.0, 95460.8]],
-                               standard_name='air_pressure', units='Pa')
-P_COORD_NB = iris.coords.AuxCoord([101325.0], standard_name='air_pressure',
+ALT_COORD_KM = iris.coords.AuxCoord([0.0],
+                                    bounds=[[-0.1, 0.5]],
+                                    var_name='alt',
+                                    long_name='altitude',
+                                    standard_name='altitude',
+                                    units='km')
+P_COORD = iris.coords.AuxCoord([101325.0],
+                               bounds=[[102532.0, 95460.8]],
+                               standard_name='air_pressure',
+                               units='Pa')
+P_COORD_NB = iris.coords.AuxCoord([101325.0],
+                                  standard_name='air_pressure',
                                   units='Pa')
-CUBE_ALT = iris.cube.Cube([1.0], var_name='x',
+CUBE_ALT = iris.cube.Cube([1.0],
+                          var_name='x',
                           aux_coords_and_dims=[(ALT_COORD, 0)])
-CUBE_ALT_NB = iris.cube.Cube([1.0], var_name='x',
+CUBE_ALT_NB = iris.cube.Cube([1.0],
+                             var_name='x',
                              aux_coords_and_dims=[(ALT_COORD_NB, 0)])
-CUBE_ALT_KM = iris.cube.Cube([1.0], var_name='x',
+CUBE_ALT_KM = iris.cube.Cube([1.0],
+                             var_name='x',
                              aux_coords_and_dims=[(ALT_COORD_KM, 0)])
-
 
 TEST_ADD_PLEV_FROM_ALTITUDE = [
     (CUBE_ALT.copy(), P_COORD.copy()),
@@ -146,17 +183,21 @@ def test_add_plev_from_altitude(cube, output):
     assert cube.coords('altitude')
 
 
-P_COORD_HPA = iris.coords.AuxCoord([1013.25], bounds=[[1025.32, 954.60]],
+P_COORD_HPA = iris.coords.AuxCoord([1013.25],
+                                   bounds=[[1025.32, 954.60]],
                                    var_name='plev',
                                    standard_name='air_pressure',
-                                   long_name='pressure', units='hPa')
-CUBE_PLEV = iris.cube.Cube([1.0], var_name='x',
+                                   long_name='pressure',
+                                   units='hPa')
+CUBE_PLEV = iris.cube.Cube([1.0],
+                           var_name='x',
                            aux_coords_and_dims=[(P_COORD, 0)])
-CUBE_PLEV_NB = iris.cube.Cube([1.0], var_name='x',
+CUBE_PLEV_NB = iris.cube.Cube([1.0],
+                              var_name='x',
                               aux_coords_and_dims=[(P_COORD_NB, 0)])
-CUBE_PLEV_HPA = iris.cube.Cube([1.0], var_name='x',
+CUBE_PLEV_HPA = iris.cube.Cube([1.0],
+                               var_name='x',
                                aux_coords_and_dims=[(P_COORD_HPA, 0)])
-
 
 TEST_ADD_ALTITUDE_FROM_PLEV = [
     (CUBE_PLEV.copy(), ALT_COORD.copy()),
@@ -192,7 +233,8 @@ def test_add_altitude_from_plev(cube, output):
     if output.bounds is None:
         assert altitude_coord.bounds is None
     else:
-        np.testing.assert_allclose(altitude_coord.bounds, output.bounds,
+        np.testing.assert_allclose(altitude_coord.bounds,
+                                   output.bounds,
                                    rtol=1e-3)
     assert cube.coords('air_pressure')
 
@@ -485,11 +527,14 @@ def test_round_coordinate(cubes_in, decimals, out):
 def test_round_coordinates_single_coord():
     """Test rounding of specified coordinate."""
     coords, bounds = [10.0001], [[9.0001, 11.0001]]
-    latcoord = iris.coords.DimCoord(coords.copy(), bounds=bounds.copy(),
+    latcoord = iris.coords.DimCoord(coords.copy(),
+                                    bounds=bounds.copy(),
                                     standard_name='latitude')
-    loncoord = iris.coords.DimCoord(coords.copy(), bounds=bounds.copy(),
+    loncoord = iris.coords.DimCoord(coords.copy(),
+                                    bounds=bounds.copy(),
                                     standard_name='longitude')
-    cube = iris.cube.Cube([[1.0]], standard_name='air_temperature',
+    cube = iris.cube.Cube([[1.0]],
+                          standard_name='air_temperature',
                           dim_coords_and_dims=[(latcoord, 0), (loncoord, 1)])
     cubes = iris.cube.CubeList([cube])
 
@@ -502,9 +547,11 @@ def test_round_coordinates_single_coord():
 
 def test_fix_ocean_depth_coord():
     """Test `fix_ocean_depth_coord`."""
-    z_coord = iris.coords.DimCoord(0.0, var_name='alt',
+    z_coord = iris.coords.DimCoord(0.0,
+                                   var_name='alt',
                                    attributes={'positive': 'up'})
-    cube = iris.cube.Cube([0.0], var_name='x',
+    cube = iris.cube.Cube([0.0],
+                          var_name='x',
                           dim_coords_and_dims=[(z_coord, 0)])
     fix_ocean_depth_coord(cube)
     depth_coord = cube.coord('depth')
@@ -513,3 +560,56 @@ def test_fix_ocean_depth_coord():
     assert depth_coord.units == 'm'
     assert depth_coord.long_name == 'ocean depth coordinate'
     assert depth_coord.attributes == {'positive': 'down'}
+
+
+def test_fix_nemo_grid():
+    """Test `fix_nemo_grid`"""
+    i_coord = iris.coords.DimCoord([0, 1], var_name='i', units='1')
+    j_coord = iris.coords.DimCoord([0, 1], var_name='j', units='1')
+    lat_coord = iris.coords.AuxCoord(
+        [[-40.0, -20.0], [-20.0, 0.0]],
+        var_name='lat',
+        standard_name='latitude',
+        units='degrees_north',
+    )
+    lon_coord = iris.coords.AuxCoord(
+        [[100.0, 140.0], [80.0, 100.0]],
+        var_name='lon',
+        standard_name='longitude',
+        units='degrees_east',
+    )
+    coord_specs = [
+        (j_coord, 0),
+        (i_coord, 1),
+    ]
+    cube = iris.cube.Cube(
+        np.ones((2, 2)),
+        dim_coords_and_dims=coord_specs,
+        aux_coords_and_dims=[(lat_coord, (0, 1)), (lon_coord, (0, 1))],
+    )
+    out_cube = fix_nemo_grid(cube)
+    assert out_cube.shape == (1, 1)
+
+
+def test_no_fix_nemo_grid():
+    """Test `fix_nemo_grid`"""
+
+    lat_coord = iris.coords.DimCoord(
+        [0.0, 1.0],
+        var_name='lon',
+        standard_name='longitude',
+        units='degrees',
+    )
+    depth_coord = iris.coords.DimCoord(
+        [0.0, 0.5],
+        standard_name='depth',
+        long_name='depth',
+        bounds=None,
+    )
+    coord_specs = [(lat_coord, 0), (depth_coord, 1)]
+    cube = iris.cube.Cube(
+        np.ones((2, 2)),
+        dim_coords_and_dims=coord_specs,
+    )
+    out_cube = fix_nemo_grid(cube)
+    assert out_cube.shape == (2, 2)
