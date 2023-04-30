@@ -214,8 +214,20 @@ class SiconcFixScalarCoord(Fix):
 
 
 class NemoGridFix(Fix):
+    """Fixes variables in a Nemo grid."""
 
     def fix_metadata(self, cubes):
+        """Fix Nemo grids by removing the first grid point.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+        """
         cube = self.get_cube_from_list(cubes)
         fix_nemo_grid(cube)
         return iris.cube.CubeList([cube])

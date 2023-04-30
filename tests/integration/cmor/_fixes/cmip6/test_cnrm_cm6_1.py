@@ -4,8 +4,15 @@ import iris
 import numpy as np
 import pytest
 
-from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import (Cl, Clcalipso,
-                                                     Cli, Clw, Omon)
+from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import (
+    Cl,
+    Clcalipso,
+    Cli,
+    Clw,
+    Ofx,
+    Omon,
+)
+from esmvalcore.cmor._fixes.common import NemoGridFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -17,24 +24,15 @@ def test_get_cl_fix():
     assert fix == [Cl(None)]
 
 
-AIR_PRESSURE_POINTS = np.array([[[[1.0, 1.0],
-                                  [1.0, 1.0]],
-                                 [[2.0, 3.0],
-                                  [4.0, 5.0]],
-                                 [[5.0, 8.0],
-                                  [11.0, 14.0]]]])
-AIR_PRESSURE_BOUNDS = np.array([[[[[0.0, 1.5],
-                                   [-1.0, 2.0]],
-                                  [[-2.0, 2.5],
-                                   [-3.0, 3.0]]],
-                                 [[[1.5, 3.0],
-                                   [2.0, 5.0]],
-                                  [[2.5, 7.0],
-                                   [3.0, 9.0]]],
-                                 [[[3.0, 6.0],
-                                   [5.0, 11.0]],
-                                  [[7.0, 16.0],
-                                   [9.0, 21.0]]]]])
+AIR_PRESSURE_POINTS = np.array([[[[1.0, 1.0], [1.0, 1.0]],
+                                 [[2.0, 3.0], [4.0, 5.0]],
+                                 [[5.0, 8.0], [11.0, 14.0]]]])
+AIR_PRESSURE_BOUNDS = np.array([[[[[0.0, 1.5], [-1.0, 2.0]],
+                                  [[-2.0, 2.5], [-3.0, 3.0]]],
+                                 [[[1.5, 3.0], [2.0, 5.0]],
+                                  [[2.5, 7.0], [3.0, 9.0]]],
+                                 [[[3.0, 6.0], [5.0, 11.0]],
+                                  [[7.0, 16.0], [9.0, 21.0]]]]])
 
 
 def test_cl_fix_metadata(test_data_path):
@@ -78,8 +76,7 @@ def test_cl_fix_metadata(test_data_path):
     assert lon_coord.bounds is not None
     np.testing.assert_allclose(lat_coord.bounds,
                                [[-45.0, -15.0], [-15.0, 15.0]])
-    np.testing.assert_allclose(lon_coord.bounds,
-                               [[15.0, 45.0], [45.0, 75.0]])
+    np.testing.assert_allclose(lon_coord.bounds, [[15.0, 45.0], [45.0, 75.0]])
 
 
 def test_get_clcalipso_fix():
@@ -92,9 +89,11 @@ def test_get_clcalipso_fix():
 def clcalipso_cubes():
     """Cubes to test fix for ``clcalipso``."""
     alt_40_coord = iris.coords.DimCoord([0.0], var_name='alt40')
-    cube = iris.cube.Cube([0.0], var_name='clcalipso',
+    cube = iris.cube.Cube([0.0],
+                          var_name='clcalipso',
                           dim_coords_and_dims=[(alt_40_coord.copy(), 0)])
-    x_cube = iris.cube.Cube([0.0], var_name='x',
+    x_cube = iris.cube.Cube([0.0],
+                            var_name='x',
                             dim_coords_and_dims=[(alt_40_coord.copy(), 0)])
     return iris.cube.CubeList([cube, x_cube])
 
@@ -136,3 +135,14 @@ def test_get_thetao_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1', 'Omon', 'thetao')
     assert fix == [Omon(None)]
+
+
+def test_get_ofx_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1', 'Ofx', 'areacello')
+    assert fix == [Ofx(None)]
+
+
+def test_ofx_fix():
+    """Test fix for ``Ofx``."""
+    assert Ofx is NemoGridFix

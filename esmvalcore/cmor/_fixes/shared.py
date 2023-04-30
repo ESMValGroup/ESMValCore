@@ -323,6 +323,22 @@ def fix_bounds(cube, cubes, coord_var_names):
 
 
 def fix_nemo_grid(cube):
+    """Remove point located at (y,x) = (0,0) for Nemo grids.
+
+    The point is masked in the original cube and its removal allows
+    to pass the contiguity check for latitude and longitudes when
+    using iris-esmf regriding schemes.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        Cube in the original Nemo grid.
+
+    Returns
+    -------
+    cube: iris.cube.Cube
+        Cube with grid-point (0,0) removed.
+    """
     try:
         lon = cube.coord('longitude')
         lat = cube.coord('latitude')

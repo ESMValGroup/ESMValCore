@@ -4,8 +4,8 @@ from unittest import mock
 import iris
 import pytest
 
-from esmvalcore.cmor._fixes.cmip6.cmcc_cm2_sr5 import Cl
-from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.cmip6.cmcc_cm2_sr5 import Cl, Ofx, Omon
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord, NemoGridFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -19,7 +19,8 @@ def test_get_cl_fix():
 @pytest.fixture
 def cl_cubes():
     """``cl`` cubes."""
-    ps_coord = iris.coords.AuxCoord([0.0], var_name='ps',
+    ps_coord = iris.coords.AuxCoord([0.0],
+                                    var_name='ps',
                                     standard_name='air_pressure')
     cube = iris.cube.Cube(
         [1.0],
@@ -38,7 +39,8 @@ def test_cl_fix():
 
 @mock.patch(
     'esmvalcore.cmor._fixes.cmip6.cmcc_cm2_sr5.ClFixHybridPressureCoord.'
-    'fix_metadata', autospec=True)
+    'fix_metadata',
+    autospec=True)
 def test_cl_fix_metadata(mock_base_fix_metadata, cl_cubes):
     """Test ``fix_metadata`` for ``cl``."""
     mock_base_fix_metadata.side_effect = lambda x, y: y
@@ -47,3 +49,25 @@ def test_cl_fix_metadata(mock_base_fix_metadata, cl_cubes):
     assert cl_cubes[0].coord(var_name='ps').standard_name == 'air_pressure'
     out_cube = fix.fix_metadata(cl_cubes)[0]
     assert out_cube.coord(var_name='ps').standard_name is None
+
+
+def test_get_omon_fix():
+    """Test getting of fix."""
+    fixes = Fix.get_fixes('CMIP6', 'CMCC-CM2-SR5', 'Omon', 'tos')
+    assert Omon(None) in fixes
+
+
+def test_get_ofx_fix():
+    """Test getting of fix."""
+    fixes = Fix.get_fixes('CMIP6', 'CMCC-CM2-SR5', 'Ofx', 'areacello')
+    assert Ofx(None) in fixes
+
+
+def test_omon_fix():
+    """Test fix for ``Omon``."""
+    assert Omon is NemoGridFix
+
+
+def test_ofx_fix():
+    """Test fix for ``Ofx``."""
+    assert Ofx is NemoGridFix

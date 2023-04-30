@@ -7,8 +7,15 @@ from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cl as BaseCl
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Clcalipso as BaseClcalipso
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Cli as BaseCli
 from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import Clw as BaseClw
-from esmvalcore.cmor._fixes.cmip6.cnrm_esm2_1 import (Cl, Clcalipso,
-                                                      Cli, Clw, Omon)
+from esmvalcore.cmor._fixes.cmip6.cnrm_esm2_1 import (
+    Cl,
+    Clcalipso,
+    Cli,
+    Clw,
+    Ofx,
+    Omon,
+)
+from esmvalcore.cmor._fixes.common import NemoGridFix
 from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -60,27 +67,30 @@ def test_clw_fix():
 @pytest.fixture
 def thetao_cubes():
     """Cubes to test fixes for ``thetao``."""
-    time_coord = iris.coords.DimCoord(
-        [0.0004, 1.09776], var_name='time', standard_name='time',
-        units='days since 1850-01-01 00:00:00')
-    i_coord = iris.coords.DimCoord(
-        [0, 1], var_name='i', units='1')
-    j_coord = iris.coords.DimCoord(
-        [0, 1], var_name='j', units='1')
-    lev_coord = iris.coords.DimCoord(
-        [5.0, 10.0], bounds=[[2.5, 7.5], [7.5, 12.5]],
-        var_name='lev', standard_name=None, units='m',
-        attributes={'positive': 'up'})
+    time_coord = iris.coords.DimCoord([0.0004, 1.09776],
+                                      var_name='time',
+                                      standard_name='time',
+                                      units='days since 1850-01-01 00:00:00')
+    i_coord = iris.coords.DimCoord([0, 1], var_name='i', units='1')
+    j_coord = iris.coords.DimCoord([0, 1], var_name='j', units='1')
+    lev_coord = iris.coords.DimCoord([5.0, 10.0],
+                                     bounds=[[2.5, 7.5], [7.5, 12.5]],
+                                     var_name='lev',
+                                     standard_name=None,
+                                     units='m',
+                                     attributes={'positive': 'up'})
     lat_coord = iris.coords.AuxCoord(
-            [[-40.0, -20.0], [-20.0, 0.0]],
-            var_name='lat',
-            standard_name='latitude',
-            units='degrees_north',)
+        [[-40.0, -20.0], [-20.0, 0.0]],
+        var_name='lat',
+        standard_name='latitude',
+        units='degrees_north',
+    )
     lon_coord = iris.coords.AuxCoord(
-            [[100.0, 140.0], [80.0, 100.0]],
-            var_name='lon',
-            standard_name='longitude',
-            units='degrees_east',)
+        [[100.0, 140.0], [80.0, 100.0]],
+        var_name='lon',
+        standard_name='longitude',
+        units='degrees_east',
+    )
     coord_specs = [
         (time_coord, 0),
         (lev_coord, 1),
@@ -119,3 +129,14 @@ def test_thetao_fix_metadata(thetao_cubes):
     assert depth_coord.long_name == 'ocean depth coordinate'
     assert depth_coord.units == 'm'
     assert depth_coord.attributes == {'positive': 'down'}
+
+
+def test_get_ofx_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'CNRM-ESM2-1', 'Ofx', 'areacello')
+    assert fix == [Ofx(None)]
+
+
+def test_ofx_fix():
+    """Test fix for ``Ofx``."""
+    assert Ofx is NemoGridFix

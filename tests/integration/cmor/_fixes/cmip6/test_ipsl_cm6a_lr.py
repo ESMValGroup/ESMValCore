@@ -8,7 +8,13 @@ from iris.coords import AuxCoord
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateNotFoundError
 
-from esmvalcore.cmor._fixes.cmip6.ipsl_cm6a_lr import AllVars, Clcalipso, Omon
+from esmvalcore.cmor._fixes.cmip6.ipsl_cm6a_lr import (
+    AllVars,
+    Clcalipso,
+    Ofx,
+    Omon,
+)
+from esmvalcore.cmor._fixes.common import NemoGridFix
 from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -86,9 +92,11 @@ def test_get_clcalipso_fix():
 def clcalipso_cubes():
     """Cubes to test fix for ``clcalipso``."""
     alt_40_coord = iris.coords.DimCoord([0.0], var_name='height')
-    cube = iris.cube.Cube([0.0], var_name='clcalipso',
+    cube = iris.cube.Cube([0.0],
+                          var_name='clcalipso',
                           dim_coords_and_dims=[(alt_40_coord.copy(), 0)])
-    x_cube = iris.cube.Cube([0.0], var_name='x',
+    x_cube = iris.cube.Cube([0.0],
+                            var_name='x',
                             dim_coords_and_dims=[(alt_40_coord.copy(), 0)])
     return iris.cube.CubeList([cube, x_cube])
 
@@ -109,27 +117,30 @@ def test_clcalipso_fix_metadata(clcalipso_cubes):
 @pytest.fixture
 def thetao_cubes():
     """Cubes to test fixes for ``thetao``."""
-    time_coord = iris.coords.DimCoord(
-        [0.0004, 1.09776], var_name='time', standard_name='time',
-        units='days since 1850-01-01 00:00:00')
-    i_coord = iris.coords.DimCoord(
-        [0, 1], var_name='i', units='1')
-    j_coord = iris.coords.DimCoord(
-        [0, 1], var_name='j', units='1')
-    lev_coord = iris.coords.DimCoord(
-        [5.0, 10.0], bounds=[[2.5, 7.5], [7.5, 12.5]],
-        var_name='olevel', standard_name=None, units='m',
-        attributes={'positive': 'up'})
+    time_coord = iris.coords.DimCoord([0.0004, 1.09776],
+                                      var_name='time',
+                                      standard_name='time',
+                                      units='days since 1850-01-01 00:00:00')
+    i_coord = iris.coords.DimCoord([0, 1], var_name='i', units='1')
+    j_coord = iris.coords.DimCoord([0, 1], var_name='j', units='1')
+    lev_coord = iris.coords.DimCoord([5.0, 10.0],
+                                     bounds=[[2.5, 7.5], [7.5, 12.5]],
+                                     var_name='olevel',
+                                     standard_name=None,
+                                     units='m',
+                                     attributes={'positive': 'up'})
     lat_coord = iris.coords.AuxCoord(
-            [[-40.0, -20.0], [-20.0, 0.0]],
-            var_name='lat',
-            standard_name='latitude',
-            units='degrees_north',)
+        [[-40.0, -20.0], [-20.0, 0.0]],
+        var_name='lat',
+        standard_name='latitude',
+        units='degrees_north',
+    )
     lon_coord = iris.coords.AuxCoord(
-            [[100.0, 140.0], [80.0, 100.0]],
-            var_name='lon',
-            standard_name='longitude',
-            units='degrees_east',)
+        [[100.0, 140.0], [80.0, 100.0]],
+        var_name='lon',
+        standard_name='longitude',
+        units='degrees_east',
+    )
     coord_specs = [
         (time_coord, 0),
         (lev_coord, 1),
@@ -168,3 +179,14 @@ def test_thetao_fix_metadata(thetao_cubes):
     assert depth_coord.long_name == 'ocean depth coordinate'
     assert depth_coord.units == 'm'
     assert depth_coord.attributes == {'positive': 'down'}
+
+
+def test_get_ofx_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'IPSL-CM6A-LR', 'Ofx', 'areacello')
+    assert fix == [Ofx(None), AllVars(None)]
+
+
+def test_ofx_fix():
+    """Test fix for ``Ofx``."""
+    assert Ofx is NemoGridFix

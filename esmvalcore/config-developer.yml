@@ -189,3 +189,12 @@ CESM:
   output_file: '{project}_{dataset}_{case}_{gcomp}_{scomp}_{type}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
+
+ECEARTH:
+  input_dir:
+    default: '/'
+    BSC:
+      - '{expid}/original_files/cmorfiles/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
+  input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
+  output_file: '{project}_{expid}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
+  cmor_type: 'CMIP6'

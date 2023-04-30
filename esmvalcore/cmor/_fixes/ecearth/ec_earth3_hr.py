@@ -2,3 +2,5 @@
 from ..common import NemoGridFix
 
 Omon = NemoGridFix
+
+Ofx = NemoGridFix

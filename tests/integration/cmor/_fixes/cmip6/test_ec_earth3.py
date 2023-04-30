@@ -8,7 +8,14 @@ import pytest
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip6.ec_earth3 import AllVars, Siconca, Tas
+from esmvalcore.cmor._fixes.cmip6.ec_earth3 import (
+    AllVars,
+    Ofx,
+    Omon,
+    Siconca,
+    Tas,
+)
+from esmvalcore.cmor._fixes.common import NemoGridFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -138,3 +145,25 @@ def test_allvars_r3i1p1f1_fix_latitude():
 
     assert fixed_cubes[0].coord('latitude').points[0] == -71.228
     assert fixed_cubes[1].coord('latitude').points[0] == -71.228
+
+
+def test_get_omon_fix():
+    """Test getting of fix."""
+    fixes = Fix.get_fixes('CMIP6', 'EC-Earth3', 'Omon', 'tos')
+    assert Omon(None) in fixes
+
+
+def test_omon_fix():
+    """Test fix for ``Omon``."""
+    assert Omon is NemoGridFix
+
+
+def test_get_ofx_fix():
+    """Test getting of fix."""
+    fixes = Fix.get_fixes('CMIP6', 'EC-Earth3', 'Ofx', 'areacello')
+    assert Ofx(None) in fixes
+
+
+def test_ofx_fix():
+    """Test fix for ``Ofx``."""
+    assert Ofx is NemoGridFix

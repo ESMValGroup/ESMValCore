@@ -8,13 +8,21 @@ import pytest
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip6.ec_earth3_veg import Siconc, Siconca, Tas
+from esmvalcore.cmor._fixes.cmip6.ec_earth3_veg import (
+    Ofx,
+    Omon,
+    Siconc,
+    Siconca,
+    Tas,
+)
+from esmvalcore.cmor._fixes.common import NemoGridFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
 
 class TestSiconca(unittest.TestCase):
     """Test sftof fixes."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='siconca', units='%')
@@ -107,3 +115,25 @@ def test_tas_fix_metadata(tas_cubes):
     fix = Tas(vardef)
     fixed_cubes = fix.fix_metadata(tas_cubes)
     assert fixed_cubes[0].coord('latitude') == fixed_cubes[1].coord('latitude')
+
+
+def test_get_omon_fix():
+    """Test getting of fix."""
+    fixes = Fix.get_fixes('CMIP6', 'EC-Earth3-Veg', 'Omon', 'tos')
+    assert Omon(None) in fixes
+
+
+def test_omon_fix():
+    """Test fix for ``Omon``."""
+    assert Omon is NemoGridFix
+
+
+def test_get_ofx_fix():
+    """Test getting of fix."""
+    fixes = Fix.get_fixes('CMIP6', 'EC-Earth3-Veg', 'Ofx', 'areacello')
+    assert Ofx(None) in fixes
+
+
+def test_ofx_fix():
+    """Test fix for ``Ofx``."""
+    assert Ofx is NemoGridFix
