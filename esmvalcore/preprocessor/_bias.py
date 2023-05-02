@@ -106,7 +106,7 @@ def bias(products, bias_type='absolute', denominator_mask_threshold=1e-3,
         cube.metadata = cube_metadata
         cube.units = new_units
         product.attributes['units'] = new_units
-        product.wasderivedfrom(reference_product.copy_provenance())
+        product.wasderivedfrom(reference_product)
 
         product.cubes = iris.cube.CubeList([cube])
         output_products.add(product)

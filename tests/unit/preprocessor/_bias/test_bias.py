@@ -152,8 +152,6 @@ def test_absolute_bias(regular_cubes, ref_cubes):
     product_b.wasderivedfrom.assert_called_once()
     assert product_b.mock_ancestors == {ref_product}
 
-    assert ref_product.copy_provenance.call_count == 2
-
 
 def test_relative_bias(regular_cubes, ref_cubes):
     """Test calculation of relative bias."""
@@ -204,8 +202,6 @@ def test_relative_bias(regular_cubes, ref_cubes):
     product_b.wasderivedfrom.assert_called_once()
     assert product_b.mock_ancestors == {ref_product}
 
-    assert ref_product.copy_provenance.call_count == 2
-
 
 def test_denominator_mask_threshold(regular_cubes, ref_cubes):
     """Test denominator_mask_threshold argument."""
@@ -236,8 +232,6 @@ def test_denominator_mask_threshold(regular_cubes, ref_cubes):
     assert out_cube.aux_coords == regular_cubes[0].aux_coords
     product_a.wasderivedfrom.assert_called_once()
     assert product_a.mock_ancestors == {ref_product}
-
-    ref_product.copy_provenance.assert_called_once_with()
 
 
 def test_keep_reference_dataset(regular_cubes, ref_cubes):

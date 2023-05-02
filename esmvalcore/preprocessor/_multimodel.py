@@ -618,16 +618,11 @@ def _multiproduct_statistics(products,
         ignore_scalar_coords=ignore_scalar_coords,
     )
     statistics_products = set()
-
-    # Create copies of products to avoid recursively adding ancestors
-    copied_products = {p.copy_provenance() for p in products}
-
-    # Create new products for multi-model cubes
     for statistic, cube in statistics_cubes.items():
         statistics_product = output_products[statistic]
         statistics_product.cubes = [cube]
 
-        for product in copied_products:
+        for product in products:
             statistics_product.wasderivedfrom(product)
 
         logger.info("Generated %s", statistics_product)
