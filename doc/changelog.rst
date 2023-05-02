@@ -106,7 +106,7 @@ Python API
 Bug fixes
 ~~~~~~~~~
 
--  Import from `esmvalcore.config` in the `esmvalcore.experimental` module (`#1816 <https://github.com/ESMValGroup/ESMValCore/pull/1816>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Import from :mod:`esmvalcore.config` in the :mod:`esmvalcore.experimental` module (`#1816 <https://github.com/ESMValGroup/ESMValCore/pull/1816>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Added scalar coords of input cubes to output of esmpy_regrid (`#1811 <https://github.com/ESMValGroup/ESMValCore/pull/1811>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Fix severe bug in :func:`esmvalcore.preprocessor.mask_fillvalues` (`#1823 <https://github.com/ESMValGroup/ESMValCore/pull/1823>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Fix LWP of ICON on-the-fly CMORizer (`#1839 <https://github.com/ESMValGroup/ESMValCore/pull/1839>`__) `Manuel Schlund <https://github.com/schlunma>`__
@@ -132,13 +132,13 @@ Documentation
 ~~~~~~~~~~~~~
 
 -  Fix anaconda badge in README (`#1759 <https://github.com/ESMValGroup/ESMValCore/pull/1759>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
--  Fix mistake in the documentation of `esmvalcore.esgf.find_files` (`#1784 <https://github.com/ESMValGroup/ESMValCore/pull/1784>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Fix mistake in the documentation of :obj:`esmvalcore.esgf.find_files` (`#1784 <https://github.com/ESMValGroup/ESMValCore/pull/1784>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Support linking to "stable" ESMValTool version on readthedocs (`#1608 <https://github.com/ESMValGroup/ESMValCore/pull/1608>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Updated ICON doc with information on usage of extract_levels preprocessor (`#1903 <https://github.com/ESMValGroup/ESMValCore/pull/1903>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Add changelog for latest released version v2.7.1 (`#1905 <https://github.com/ESMValGroup/ESMValCore/pull/1905>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
--  Update preprocessor.rst due to renaming of NCEP dataset to NCEP-NCAR-R1 (`#1908 <https://github.com/ESMValGroup/ESMValCore/pull/1908>`__) `Birgit Hassler <https://github.com/hb326>`__
+-  Update `preprocessor.rst` due to renaming of NCEP dataset to NCEP-NCAR-R1 (`#1908 <https://github.com/ESMValGroup/ESMValCore/pull/1908>`__) `Birgit Hassler <https://github.com/hb326>`__
 -  Replace timerange nested lists in docs with overview table (`#1940 <https://github.com/ESMValGroup/ESMValCore/pull/1940>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
--  Updated section "backward compatibility" in contributing.rst (`#1918 <https://github.com/ESMValGroup/ESMValCore/pull/1918>`__) `Axel Lauer <https://github.com/axel-lauer>`__
+-  Updated section "backward compatibility" in `contributing.rst` (`#1918 <https://github.com/ESMValGroup/ESMValCore/pull/1918>`__) `Axel Lauer <https://github.com/axel-lauer>`__
 -  Add link to ESMValTool release procedure steps (`#1957 <https://github.com/ESMValGroup/ESMValCore/pull/1957>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
 -  Synchronize documentation table of contents with ESMValTool (`#1958 <https://github.com/ESMValGroup/ESMValCore/pull/1958>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
@@ -156,7 +156,7 @@ Fixes for datasets
 
 -  Fix rotated coordinate grids and `tas` and `pr` for CORDEX datasets (`#1765 <https://github.com/ESMValGroup/ESMValCore/pull/1765>`__) `sloosvel <https://github.com/sloosvel>`__
 -  Made ICON output UGRID-compliant (on-the-fly) (`#1664 <https://github.com/ESMValGroup/ESMValCore/pull/1664>`__) `Manuel Schlund <https://github.com/schlunma>`__
--  Fix automatic download of ICON grid file and make ICON UGRIDization optional (default: true) (`#1922 <https://github.com/ESMValGroup/ESMValCore/pull/1922>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fix automatic download of ICON grid file and make ICON UGRIDization optional (`default: true`) (`#1922 <https://github.com/ESMValGroup/ESMValCore/pull/1922>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Add siconc fixes for EC-Earth3-Veg and EC-Earth3-Veg-LR models (`#1771 <https://github.com/ESMValGroup/ESMValCore/pull/1771>`__) `Evgenia Galytska <https://github.com/egalytska>`__
 -  Fix siconc in KIOST-ESM (`#1829 <https://github.com/ESMValGroup/ESMValCore/pull/1829>`__) `Lisa Bock <https://github.com/LisaBock>`__
 -  Extension of ERA5 CMORizer (variable cl) (`#1850 <https://github.com/ESMValGroup/ESMValCore/pull/1850>`__) `Axel Lauer <https://github.com/axel-lauer>`__
@@ -187,20 +187,22 @@ Preprocessor
 
 Release
 ~~~~~~~
--  Changelog for`v2.8.0rc1` (`#1952 <https://github.com/ESMValGroup/ESMValCore/pull/1952>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Changelog for `v2.8.0rc1` (`#1952 <https://github.com/ESMValGroup/ESMValCore/pull/1952>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
 -  Increase version number for ESMValCore `v2.8.0rc1` (`#1955 <https://github.com/ESMValGroup/ESMValCore/pull/1955>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
--  Changelog for`v2.8.0rc2` (`#1959 <https://github.com/ESMValGroup/ESMValCore/pull/1959>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Changelog for `v2.8.0rc2` (`#1959 <https://github.com/ESMValGroup/ESMValCore/pull/1959>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
 -  Increase version number for ESMValCore `v2.8.0rc2` (`#1973 <https://github.com/ESMValGroup/ESMValCore/pull/1973>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Changelog for `v2.8.0` (`#1978 <https://github.com/ESMValGroup/ESMValCore/pull/1978>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Increase version number for ESMValCore `v2.8.0` (`#1983 <https://github.com/ESMValGroup/ESMValCore/pull/1983>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
 
 Automatic testing
 ~~~~~~~~~~~~~~~~~
 
--  Set implicit optional to true in mypy config to avert side effects and test fails from new mypy version (`#1790 <https://github.com/ESMValGroup/ESMValCore/pull/1790>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
--  Remove duplicate implicit_optional = True line in setup.cfg (`#1791 <https://github.com/ESMValGroup/ESMValCore/pull/1791>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Set implicit optional to true in `mypy` config to avert side effects and test fails from new mypy version (`#1790 <https://github.com/ESMValGroup/ESMValCore/pull/1790>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Remove duplicate `implicit_optional = True` line in ``setup.cfg`` (`#1791 <https://github.com/ESMValGroup/ESMValCore/pull/1791>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Fix failing test due to missing sample data (`#1797 <https://github.com/ESMValGroup/ESMValCore/pull/1797>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Remove outdated cmor_table facet from data finder tests (`#1798 <https://github.com/ESMValGroup/ESMValCore/pull/1798>`__) `Bouwe Andela <https://github.com/bouweandela>`__
--  Modernize tests for `esmvalcore.preprocessor.save` (`#1799 <https://github.com/ESMValGroup/ESMValCore/pull/1799>`__) `Bouwe Andela <https://github.com/bouweandela>`__
--  No more sequential tests since SegFaults were not noticed anymore (knock on wood) (`#1819 <https://github.com/ESMValGroup/ESMValCore/pull/1819>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Modernize tests for :func:`esmvalcore.preprocessor.save` (`#1799 <https://github.com/ESMValGroup/ESMValCore/pull/1799>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  No more sequential tests since SegFaults were not noticed anymore (`#1819 <https://github.com/ESMValGroup/ESMValCore/pull/1819>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Update pre-commit configuration (`#1821 <https://github.com/ESMValGroup/ESMValCore/pull/1821>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Updated URL of ICON grid file used for testing (`#1914 <https://github.com/ESMValGroup/ESMValCore/pull/1914>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
