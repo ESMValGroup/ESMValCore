@@ -644,11 +644,17 @@ def _update_extract_shape(settings, session):
         if shapefile:
             shapefile = Path(shapefile)
             abs_shapefile = shapefile
+            logger.debug(
+                "extract_shape: Looking for shapefile %s", abs_shapefile
+            )
 
             # If shapefile not found, first, try path relative to
             # auxiliary_data_dir
             if not abs_shapefile.exists():
                 abs_shapefile = session['auxiliary_data_dir'] / shapefile
+                logger.debug(
+                    "extract_shape: Looking for shapefile %s", abs_shapefile
+                )
 
             # Second, try path relative to esmvalcore/preprocessor/shapefiles/
             if not abs_shapefile.exists():
@@ -656,6 +662,9 @@ def _update_extract_shape(settings, session):
                     Path(esmvalcore.preprocessor.__file__).parent /
                     'shapefiles' /
                     shapefile
+                )
+                logger.debug(
+                    "extract_shape: Looking for shapefile %s", abs_shapefile
                 )
 
             # As final resort, add suffix '.shp' and try path relative to
@@ -665,6 +674,9 @@ def _update_extract_shape(settings, session):
                     Path(esmvalcore.preprocessor.__file__).parent /
                     'shapefiles' /
                     shapefile.with_suffix('.shp')
+                )
+                logger.debug(
+                    "extract_shape: Looking for shapefile %s", abs_shapefile
                 )
 
             settings['extract_shape']['shapefile'] = abs_shapefile
