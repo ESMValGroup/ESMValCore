@@ -10,6 +10,7 @@ from warnings import catch_warnings, filterwarnings
 import iris
 import iris.aux_factory
 import iris.exceptions
+from iris.util import unify_time_units
 import yaml
 from cf_units import suppress_errors
 
@@ -225,6 +226,7 @@ def concatenate(cubes):
         return cubes[0]
 
     merge_cube_attributes(cubes)
+    unify_time_units(cubes)
 
     if len(cubes) > 1:
         # order cubes by first time point
