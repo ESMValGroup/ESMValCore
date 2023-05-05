@@ -136,6 +136,11 @@ class OceanFixGrid(Fix):
                 "irregular ocean grid, but it was only tested on 3D (time, "
                 "latitude, longitude) data so far; got %dD data", cube.ndim)
 
+        try:
+            cube.coord("longitude", dim_coords=False)
+            cube.coord("latitude", dim_coords=False)
+        except iris.exceptions.CoordinateNotFoundError:
+            return cubes
         # Get dimensional coordinates. Note:
         # - First dimension i -> X-direction (= longitude)
         # - Second dimension j -> Y-direction (= latitude)
