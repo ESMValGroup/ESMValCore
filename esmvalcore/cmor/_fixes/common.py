@@ -148,6 +148,13 @@ class OceanFixGrid(Fix):
             cube.coord_dims(cube.coord('latitude', dim_coords=False)) +
             cube.coord_dims(cube.coord('longitude', dim_coords=False))
         ))
+        try:
+            cube.coord(dim_coords=True, dimensions=i_dim)
+            cube.coord(dim_coords=True, dimensions=j_dim)
+        except iris.exceptions.CoordinateNotFoundError:
+            cube.add_dim_coord(iris.coords.DimCoord(np.arange(cube.shape[i_dim]), var_name="i"), i_dim)
+            cube.add_dim_coord(iris.coords.DimCoord(np.arange(cube.shape[j_dim]), var_name="j"), j_dim)
+
         i_coord = cube.coord(dim_coords=True, dimensions=i_dim)
         j_coord = cube.coord(dim_coords=True, dimensions=j_dim)
 
