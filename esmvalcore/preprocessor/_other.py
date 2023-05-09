@@ -75,10 +75,11 @@ def _group_products(products, by_key):
 
 
 def get_array_module(*args):
-    """Returns the array module for arguments.
+    """Return the best matching array module.
 
     If at least one of the arguments is a :class:`dask.array.Array` object,
-    the :mod:`dask.array` module is returned.
+    the :mod:`dask.array` module is returned. In all other cases the
+    :mod:`numpy` module is returned.
     """
     for arg in args:
         if isinstance(arg, da.Array):
