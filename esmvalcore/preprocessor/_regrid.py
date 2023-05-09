@@ -796,7 +796,7 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
                                     extrapolation=extrapolation)
 
     # Calculate the mask based on the any NaN values in the interpolated data.
-    new_data = da.ma.masked_equal(new_data, np.nan)
+    new_data = da.ma.masked_where(da.isnan(new_data), new_data)
 
     # Construct the resulting cube with the interpolated data.
     return _create_cube(cube, new_data, src_levels, levels.astype(float))

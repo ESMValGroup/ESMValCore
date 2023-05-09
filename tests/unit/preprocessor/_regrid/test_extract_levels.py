@@ -264,7 +264,7 @@ class Test(tests.Test):
         new_data_mask = np.zeros(new_data.shape, bool)
         new_data_mask[new_data == _MDI] = True
         new_data = np.ma.array(new_data, mask=new_data_mask)
-        self.assert_array_equal(args[1], new_data)
+        self.assert_array_equal(args[1].compute(), new_data)
         self.assert_array_equal(args[2],
                                 self.cube.coord(axis='z', dim_coords=True))
         self.assert_array_equal(args[3], levels)
@@ -318,9 +318,10 @@ class Test(tests.Test):
         new_data_mask = np.zeros(new_data.shape, bool)
         new_data_mask[new_data == _MDI] = True
         new_data = np.ma.array(new_data, mask=new_data_mask)
-        self.assert_array_equal(args[1], new_data)
-        self.assertTrue(ma.isMaskedArray(args[1]))
-        self.assert_array_equal(args[1].mask, new_data_mask)
+        arg1 = args[1].compute()
+        self.assert_array_equal(arg1, new_data)
+        self.assertTrue(ma.isMaskedArray(arg1))
+        self.assert_array_equal(arg1.mask, new_data_mask)
         self.assert_array_equal(args[2],
                                 self.cube.coord(axis='z', dim_coords=True))
         self.assert_array_equal(args[3], levels)
