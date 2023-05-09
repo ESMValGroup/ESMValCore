@@ -72,6 +72,24 @@ class Test(tests.Test):
         self.shape[self.z_dim] = len(levels)
         self.assertEqual(result.shape, tuple(self.shape))
 
+    def test_interpolation__linear_lazy(self):
+        levels = [0.5, 1.5]
+        scheme = 'linear'
+        cube = self.cube.copy(self.cube.lazy_data())
+        result = extract_levels(cube, levels, scheme)
+        self.assertTrue(result.has_lazy_data())
+        expected = np.ma.array([
+            [
+                [[2., 3.], [4., 5.]],
+                [[6., 7.], [8., 9.]],
+            ],
+            [
+                [[14., 15.], [16., 17.]],
+                [[18., 19.], [20., 21.]],
+            ],
+        ])
+        self.assert_array_equal(result.data, expected)
+
     def test_interpolation__nearest(self):
         levels = [0.49, 1.51]
         scheme = 'nearest'
