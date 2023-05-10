@@ -73,8 +73,7 @@ dependencies:
   - docformatter
   - isort
   - pre-commit
-  # Prospector is not Python 3.11-compatible
-  # - prospector!=1.1.6.3,!=1.1.6.4
+  - prospector >=1.9.0
   # Not on conda forge - vprof
   - yamllint
   - yapf
