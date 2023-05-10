@@ -1,16 +1,20 @@
 """Fixes for FIO-ESM-2-0 model."""
+import iris
+
 from ..common import OceanFixGrid
 from ..fix import Fix
 from ..shared import round_coordinates
 
 Tos = OceanFixGrid
 
+
+
 class Omon(Fix):
-    """Fixes for Omon."""
+    """Fixes for all vars."""
 
     def fix_metadata(self, cubes):
         """
-        Fix latitude and longitude rounding to 6 d.p.
+        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
 
         Parameters
         ----------
@@ -24,3 +28,45 @@ class Omon(Fix):
         """
         round_coordinates(cubes, decimals=6, coord_names=["longitude", "latitude"])
         return cubes
+
+
+def _check_bounds_monotonicity(coord):
+    """Check monotonicity of a coords bounds array."""
+    if coord.has_bounds():
+        for i in range(coord.nbounds):
+            if not iris.util.monotonic(coord.bounds[..., i], strict=True):
+                return False
+
+    return True
+
+class ta(Fix):
+    """Fixes for all vars."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata.
+
+        FGOALS-g3 mrsos data contains error in co-ordinate bounds.
+
+        Parameters
+        ----------
+        cubes : iris.cube.CubeList
+            Input cubes.
+
+        Returns
+        -------
+        iris.cube.CubeList
+        """
+        cube = self.get_cube_from_list(cubes)
+
+        # Check both lat and lon coords and replace bounds if necessary
+        if not _check_bounds_monotonicity(cube.coord("latitude")):
+            cube.coord("latitude").bounds = None
+            cube.coord("latitude").guess_bounds()
+            iris.util.promote_aux_coord_to_dim_coord(cube, "latitude")
+
+        if not _check_bounds_monotonicity(cube.coord("longitude")):
+            cube.coord("longitude").bounds = None
+            cube.coord("longitude").guess_bounds()
+            iris.util.promote_aux_coord_to_dim_coord(cube, "longitude")
+
+        return super().fix_metadata(cubes)
