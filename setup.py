@@ -56,7 +56,7 @@ REQUIREMENTS = {
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        'scitools-iris @ git+https://github.com/scitools/iris.git',
+        'scitools-iris>=3.6.0rc0',
         'shapely[vectorized]',
         'stratify',
         'yamale',

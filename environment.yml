@@ -1,6 +1,7 @@
 ---
 name: esmvaltool
 channels:
+  - conda-forge/label/rc_iris
   - conda-forge
   - nodefaults
 
@@ -19,7 +20,7 @@ dependencies:
   - geopy
   - humanfriendly
   - importlib_resources
-  - iris>=3.4.0
+  - iris>=3.6.0rc0
   - iris-esmf-regrid
   - isodate
   - jinja2
