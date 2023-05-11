@@ -1346,13 +1346,13 @@ def test_hourly_data(cubes_2d):
     """Test fix."""
     fix = get_allvars_fix('Amon', 'tas')
     for cube in cubes_2d:
-        cube.coord('time').points = [20220314.1]
+        cube.coord('time').points = [20041104.5833333]
 
     fixed_cubes = fix.fix_metadata(cubes_2d)
 
     cube = check_tas_metadata(fixed_cubes)
     date = cube.coord('time').units.num2date(cube.coord('time').points)
-    np.testing.assert_array_equal(date, [datetime(2022, 3, 14, 2, 24)])
+    np.testing.assert_array_equal(date, [datetime(2004, 11, 4, 14, 0)])
     assert cube.coord('time').bounds is None
 
 
