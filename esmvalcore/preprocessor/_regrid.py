@@ -5,6 +5,7 @@ import inspect
 import logging
 import os
 import re
+import ssl
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
@@ -360,15 +361,16 @@ def extract_location(cube, location, scheme):
     if scheme is None:
         raise ValueError("Interpolation scheme needs to be specified."
                          " Use either 'linear' or 'nearest'.")
-    geolocator = Nominatim(user_agent='esmvalcore')
+    ssl_context = ssl.create_default_context()
+    geolocator = Nominatim(user_agent='esmvalcore', ssl_context=ssl_context)
     geolocation = geolocator.geocode(location)
     if geolocation is None:
         raise ValueError(f'Requested location {location} can not be found.')
     logger.info("Extracting data for %s (%s °N, %s °E)", geolocation,
                 geolocation.latitude, geolocation.longitude)
 
-    return extract_point(cube, geolocation.latitude,
-                         geolocation.longitude, scheme)
+    return extract_point(cube, geolocation.latitude, geolocation.longitude,
+                         scheme)
 
 
 def extract_point(cube, latitude, longitude, scheme):
@@ -998,13 +1000,11 @@ def get_cmor_levels(cmor_table, coordinate):
     """
     if cmor_table not in CMOR_TABLES:
         raise ValueError(
-            f"Level definition cmor_table '{cmor_table}' not available"
-        )
+            f"Level definition cmor_table '{cmor_table}' not available")
 
     if coordinate not in CMOR_TABLES[cmor_table].coords:
         raise ValueError(
-            f'Coordinate {coordinate} not available for {cmor_table}'
-        )
+            f'Coordinate {coordinate} not available for {cmor_table}')
 
     cmor = CMOR_TABLES[cmor_table].coords[coordinate]
 
@@ -1015,8 +1015,7 @@ def get_cmor_levels(cmor_table, coordinate):
 
     raise ValueError(
         f'Coordinate {coordinate} in {cmor_table} does not have requested '
-        f'values'
-    )
+        f'values')
 
 
 def get_reference_levels(dataset):
