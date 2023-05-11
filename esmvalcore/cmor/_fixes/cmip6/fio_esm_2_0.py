@@ -16,7 +16,7 @@ def _check_bounds_monotonicity(coord):
 
     return True
 
-class Omon(Fix):
+class Tos(Fix):
     """Fixes for all vars."""
 
     def fix_metadata(self, cubes):
@@ -43,7 +43,7 @@ class Ta(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata.
 
-        FGOALS-g3 mrsos data contains error in co-ordinate bounds.
+        FIO-ESM-2-0 ta data contains error in co-ordinate bounds.
 
         Parameters
         ----------

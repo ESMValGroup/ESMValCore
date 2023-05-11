@@ -12,7 +12,7 @@ class AllVars(Fix):
     def fix_metadata(self, cubes):
         """Fix parent time units.
 
-        IITM mon data may have a bad time bounds spanning 20 days.
+        IITM-ESM mon data may have a bad time bounds spanning 20 days.
 
         Parameters
         ----------

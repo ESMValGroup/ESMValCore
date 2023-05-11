@@ -13,12 +13,12 @@ Cli = ClFixHybridPressureCoord
 Clw = ClFixHybridPressureCoord
 
 
-class Omon(Fix):
-    """Fixes for all vars."""
+class Tos(Fix):
+    """Fixes for ** all vars."""
 
     def fix_metadata(self, cubes):
         """
-        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+        ***Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
 
         Parameters
         ----------
