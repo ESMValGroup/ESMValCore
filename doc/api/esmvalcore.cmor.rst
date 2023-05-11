@@ -7,6 +7,7 @@ Checking compliance
 -------------------
 
 .. automodule:: esmvalcore.cmor.check
+   :member-order: bysource
 
 Automatically fixing issues
 ---------------------------

@@ -1,4 +1,5 @@
 """Tests for the ICON on-the-fly CMORizer."""
+from datetime import datetime
 from pathlib import Path
 from unittest import mock
 
@@ -1368,6 +1369,73 @@ def test_invalid_time_units(cubes_2d):
     msg = "Expected time units"
     with pytest.raises(ValueError, match=msg):
         fix.fix_metadata(cubes_2d)
+
+
+# Test fix with hourly data
+
+
+def test_hourly_data(cubes_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'tas')
+    for cube in cubes_2d:
+        cube.coord('time').points = [20220314.1]
+
+    fixed_cubes = fix.fix_metadata(cubes_2d)
+
+    cube = check_tas_metadata(fixed_cubes)
+    date = cube.coord('time').units.num2date(cube.coord('time').points)
+    np.testing.assert_array_equal(date, [datetime(2022, 3, 14, 2, 24)])
+    assert cube.coord('time').bounds is None
+
+
+@pytest.mark.parametrize(
+    'bounds',
+    [
+        None,
+        [
+            [20211231.9, 20220101.1],
+            [20220101.1, 20220101.6],
+            [20220101.6, 20220102.4],
+        ],
+    ],
+)
+def test_hourly_data_multiple_points(bounds, cubes_2d):
+    """Test fix."""
+    time_coord = DimCoord(
+        [20220101, 20220101.2, 20220102],
+        bounds=bounds,
+        standard_name='time',
+        attributes={'invalid_units': 'day as %Y%m%d.%f'},
+    )
+    cube = Cube(
+        [1, 2, 3],
+        var_name='tas',
+        units='K',
+        dim_coords_and_dims=[(time_coord, 0)],
+    )
+    cubes = CubeList([cube])
+    fix = get_allvars_fix('Amon', 'tas')
+
+    fixed_cube = fix._fix_time(cube, cubes)
+
+    points = fixed_cube.coord('time').units.num2date(cube.coord('time').points)
+    bounds = fixed_cube.coord('time').units.num2date(cube.coord('time').bounds)
+    np.testing.assert_array_equal(
+        points,
+        [
+            datetime(2022, 1, 1, 0, 0),
+            datetime(2022, 1, 1, 4, 48),
+            datetime(2022, 1, 2, 0, 0),
+        ],
+    )
+    np.testing.assert_array_equal(
+        bounds,
+        [
+            [datetime(2021, 12, 31, 21, 36), datetime(2022, 1, 1, 2, 24)],
+            [datetime(2022, 1, 1, 2, 24), datetime(2022, 1, 1, 14, 24)],
+            [datetime(2022, 1, 1, 14, 24), datetime(2022, 1, 2, 9, 36)],
+        ],
+    )
 
 
 # Test mesh creation raises warning because bounds do not match vertices
