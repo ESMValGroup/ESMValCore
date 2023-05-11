@@ -116,7 +116,7 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             mkdir /logs
             conda activate esmvaltool
-            pip install .[test] > /logs/install.txt 2>&1
+            pip install --pre --upgrade scitools-iris .[test] > /logs/install.txt 2>&1
       - test_and_report
       - save_cache:
           key: test-{{ .Branch }}-{{ checksum "cache_key.txt" }}
