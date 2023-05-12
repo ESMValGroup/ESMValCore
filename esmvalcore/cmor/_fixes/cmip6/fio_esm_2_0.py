@@ -16,12 +16,12 @@ def _check_bounds_monotonicity(coord):
 
     return True
 
-class Tos(Fix):
-    """Fixes for all vars."""
+class Omon(Fix):
+    """Fixes for Omon vars."""
 
     def fix_metadata(self, cubes):
         """
-        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+        Fix latitude and longitude with round to 6 d.p.
 
         Parameters
         ----------
@@ -37,8 +37,8 @@ class Tos(Fix):
         return cubes
 
 
-class Ta(Fix):
-    """Fixes for all vars."""
+class Amon(Fix):
+    """Fixes for Amon vars."""
 
     def fix_metadata(self, cubes):
         """Fix metadata.
