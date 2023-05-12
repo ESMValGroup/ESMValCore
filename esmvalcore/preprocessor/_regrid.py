@@ -361,11 +361,15 @@ def extract_location(cube, location, scheme):
     if scheme is None:
         raise ValueError("Interpolation scheme needs to be specified."
                          " Use either 'linear' or 'nearest'.")
-    # Use the default SSL context, see
-    # https://github.com/ESMValGroup/ESMValCore/issues/2012 for more
-    # information.
-    ssl_context = ssl.create_default_context()
-    geolocator = Nominatim(user_agent='esmvalcore', ssl_context=ssl_context)
+    try:
+        # Try to use the default SSL context, see
+        # https://github.com/ESMValGroup/ESMValCore/issues/2012 for more
+        # information.
+        ssl_context = ssl.create_default_context()
+        geolocator = Nominatim(user_agent='esmvalcore',
+                               ssl_context=ssl_context)
+    except ssl.SSLError:
+        geolocator = Nominatim(user_agent='esmvalcore')
     geolocation = geolocator.geocode(location)
     if geolocation is None:
         raise ValueError(f'Requested location {location} can not be found.')
