@@ -1,6 +1,8 @@
 """On-the-fly CMORizer for ICON."""
 
 import logging
+from calendar import monthrange
+from datetime import timedelta
 
 import cf_units
 import dask.array as da
@@ -251,55 +253,81 @@ class AllVars(IconFix):
 
         # Fix metadata
         time_coord = self.fix_time_metadata(cube)
-        if 'invalid_units' not in time_coord.attributes:
-            self.guess_coord_bounds(cube, time_coord)
-            return cube
 
         # If necessary, convert invalid time units of the form "day as
         # %Y%m%d.%f" to CF format (e.g., "days since 1850-01-01")
-        # ICON data has no time bounds, let's make sure we remove the bounds
-        # here (they will be added after converting the time points to the
-        # correct units)
-        time_coord.bounds = None
-        time_format = 'day as %Y%m%d.%f'
-        t_unit = time_coord.attributes.pop('invalid_units')
-        if t_unit != time_format:
-            raise ValueError(
-                f"Expected time units '{time_format}' in input file, got "
-                f"'{t_unit}'")
-        new_t_unit = cf_units.Unit('days since 1850-01-01',
-                                   calendar='proleptic_gregorian')
+        if 'invalid_units' in time_coord.attributes:
+            self._fix_invalid_time_units(time_coord)
 
-        # New routine to convert time of daily and hourly data. The string %f
-        # (fraction of day) is not a valid format string for datetime.strptime,
-        # so we have to convert it ourselves.
-        time_str = pd.Series(time_coord.points, dtype=str)
-
-        # First, extract date (year, month, day) from string and convert it to
-        # datetime object
-        year_month_day_str = time_str.str.extract(r'(\d*)\.?\d*', expand=False)
-        year_month_day = pd.to_datetime(year_month_day_str, format='%Y%m%d')
-
-        # Second, extract day fraction and convert it to timedelta object
-        day_float_str = time_str.str.extract(
-            r'\d*(\.\d*)', expand=False
-        ).fillna('0.0')
-        day_float = pd.to_timedelta(day_float_str.astype(float), unit='D')
-
-        # Finally, add date and day fraction to get final datetime and convert
-        # it to correct units. Note: we also round to next second, otherwise
-        # this results in times that are off by 1s (e.g., 13:59:59 instead of
-        # 14:00:00).
-        new_datetimes = (year_month_day + day_float).round(
-            'S'
-        ).dt.to_pydatetime()
-        new_dt_points = date2num(np.array(new_datetimes), new_t_unit)
-
-        time_coord.points = new_dt_points
-        time_coord.units = new_t_unit
-        self.guess_coord_bounds(cube, time_coord)
+        # ICON reports aggregated values at the end of the time period, e.g.,
+        # for monthly output, ICON reports the month February as 1 March. Thus,
+        # shift all time points back by 1/2 of the given time period.
+        self._shift_time_coord(cube, time_coord)
 
         return cube
+
+    def _shift_time_coord(self, cube, time_coord):
+        """Shift time points back by 1/2 of given time period."""
+        # Do not modify time coordinate for point measurements
+        for cell_method in cube.cell_methods:
+            is_point_measurement = ('time' in cell_method.coord_names and
+                                    'point' in cell_method.method)
+            if is_point_measurement:
+                return
+
+        # Use original time points to calculate bounds (for a given point,
+        # start of bounds is previous point, end of bounds is point)
+
+        self.guess_coord_bounds(cube, time_coord)
+
+    def _get_neighbor_time_point(self, datetime_point, scale=1):
+        """Get neighbor time point."""
+        freq = self.extra_facets['frequency']
+        year = datetime_point.year
+        month = datetime_point.month
+
+        # Invalid input
+        if 'fx' in freq:
+            raise ValueError(
+                "Cannot determine neighbor time point for fx data"
+            )
+        if 'subhr' in freq:
+            raise ValueError(
+                "Cannot determine neighbor time point for subhr data"
+            )
+
+        # Decadal data
+        if 'dec' in freq:
+            try:
+                return datetime_point.replace(year=year + scale * 10)
+            except ValueError:  # leap year
+                return datetime_point.replace(year=year + scale * 10, day=28)
+
+        # Yearly data
+        if 'yr' in freq:
+            try:
+                return datetime_point.replace(year=year + scale)
+            except ValueError:  # leap year
+                return datetime_point.replace(year=year + scale, day=28)
+
+        # Monthly data
+        if 'mon' in freq:
+            (_, days_in_month) = monthrange(year, month)
+            return datetime_point + scale * timedelta(days=days_in_month)
+
+        # Daily data
+        if 'day' in freq:
+            return datetime_point + scale * timedelta(days=1)
+
+        # Hourly data
+        if 'hr' in freq:
+            (n_hours, _, _) = freq.partition('hr')
+            return datetime_point + scale * timedelta(hours=int(n_hours))
+
+        # Unknown input
+        raise NotImplementedError(
+            f"Cannot determine neighbor time point for frequency {freq}"
+        )
 
     def _fix_mesh(self, cube, mesh_idx):
         """Fix mesh."""
@@ -348,6 +376,51 @@ class AllVars(IconFix):
             return False
 
         return True
+
+    @staticmethod
+    def _fix_invalid_time_units(time_coord):
+        """Fix invalid time units (in-place)."""
+        # ICON data usually has no time bounds. To be 100% sure, we remove the
+        # bounds here (they will be added at a later stage in
+        # _shift_time_coord).
+        time_coord.bounds = None
+        time_format = 'day as %Y%m%d.%f'
+        t_unit = time_coord.attributes.pop('invalid_units')
+        if t_unit != time_format:
+            raise ValueError(
+                f"Expected time units '{time_format}' in input file, got "
+                f"'{t_unit}'")
+        new_t_unit = cf_units.Unit('days since 1850-01-01',
+                                   calendar='proleptic_gregorian')
+
+        # New routine to convert time of daily and hourly data. The string %f
+        # (fraction of day) is not a valid format string for datetime.strptime,
+        # so we have to convert it ourselves.
+        time_str = pd.Series(time_coord.points, dtype=str)
+
+        # First, extract date (year, month, day) from string and convert it to
+        # datetime object
+        year_month_day_str = time_str.str.extract(r'(\d*)\.?\d*', expand=False)
+        year_month_day = pd.to_datetime(year_month_day_str, format='%Y%m%d')
+
+        # Second, extract day fraction and convert it to timedelta object
+        day_float_str = time_str.str.extract(
+            r'\d*(\.\d*)', expand=False
+        ).fillna('0.0')
+        day_float = pd.to_timedelta(day_float_str.astype(float), unit='D')
+
+        # Finally, add date and day fraction to get final datetime and convert
+        # it to correct units. Note: we also round to next second, otherwise
+        # this results in times that are off by 1s (e.g., 13:59:59 instead of
+        # 14:00:00).
+        new_datetimes = (year_month_day + day_float).round(
+            'S'
+        ).dt.to_pydatetime()
+        new_dt_points = date2num(np.array(new_datetimes), new_t_unit)
+
+        # Modify time coordinate in place
+        time_coord.points = new_dt_points
+        time_coord.units = new_t_unit
 
 
 class Clwvi(IconFix):

@@ -1458,6 +1458,106 @@ def test_hourly_data_multiple_points(bounds, cubes_2d):
     )
 
 
+# Test _get_neighbor_time_point
+
+
+@pytest.mark.parametrize(
+    'frequency,scale,input,output',
+    [
+        ('dec', 1, datetime(2000, 1, 1), datetime(2010, 1, 1)),
+        ('dec', -1, datetime(2000, 1, 1), datetime(1990, 1, 1)),
+        ('dec', -1, datetime(2000, 2, 29), datetime(1990, 2, 28)),
+        ('yr', 1, datetime(2000, 1, 1), datetime(2001, 1, 1)),
+        ('yr', -1, datetime(2000, 1, 1), datetime(1999, 1, 1)),
+        ('yr', -1, datetime(2000, 2, 29), datetime(1999, 2, 28)),
+        ('yrPt', 1, datetime(2000, 1, 1), datetime(2001, 1, 1)),
+        ('yrPt', -1, datetime(2000, 1, 1), datetime(1999, 1, 1)),
+        ('yrPt', -1, datetime(2000, 2, 29), datetime(1999, 2, 28)),
+        ('mon', 1, datetime(2000, 1, 1), datetime(2000, 2, 1)),
+        ('mon', -1, datetime(2000, 1, 1), datetime(1999, 12, 1)),
+        ('mon', 1, datetime(2000, 12, 31), datetime(2001, 1, 31)),
+        ('mon', -1, datetime(2000, 12, 31), datetime(2000, 11, 30)),
+        ('monC', 1, datetime(2000, 1, 1), datetime(2000, 2, 1)),
+        ('monC', -1, datetime(2000, 1, 1), datetime(1999, 12, 1)),
+        ('monC', 1, datetime(2000, 12, 31), datetime(2001, 1, 31)),
+        ('monC', -1, datetime(2000, 12, 31), datetime(2000, 11, 30)),
+        ('monPt', 1, datetime(2000, 1, 1), datetime(2000, 2, 1)),
+        ('monPt', -1, datetime(2000, 1, 1), datetime(1999, 12, 1)),
+        ('monPt', 1, datetime(2000, 12, 31), datetime(2001, 1, 31)),
+        ('monPt', -1, datetime(2000, 12, 31), datetime(2000, 11, 30)),
+        ('day', 1, datetime(2000, 1, 1), datetime(2000, 1, 2)),
+        ('day', -1, datetime(2000, 1, 1), datetime(1999, 12, 31)),
+        ('day', 1, datetime(2000, 12, 31), datetime(2001, 1, 1)),
+        ('day', -1, datetime(2000, 12, 31), datetime(2000, 12, 30)),
+        ('1hr', 1, datetime(2000, 1, 1), datetime(2000, 1, 1, 1)),
+        ('1hr', -1, datetime(2000, 1, 1), datetime(1999, 12, 31, 23)),
+        ('1hr', 1, datetime(2000, 12, 31, 23), datetime(2001, 1, 1)),
+        ('1hr', -1, datetime(2000, 12, 31, 23), datetime(2000, 12, 31, 22)),
+        ('1hrPt', 1, datetime(2000, 1, 1), datetime(2000, 1, 1, 1)),
+        ('1hrPt', -1, datetime(2000, 1, 1), datetime(1999, 12, 31, 23)),
+        ('1hrPt', 1, datetime(2000, 12, 31, 23), datetime(2001, 1, 1)),
+        ('1hrPt', -1, datetime(2000, 12, 31, 23), datetime(2000, 12, 31, 22)),
+        ('1hrCM', 1, datetime(2000, 1, 1), datetime(2000, 1, 1, 1)),
+        ('1hrCM', -1, datetime(2000, 1, 1), datetime(1999, 12, 31, 23)),
+        ('1hrCM', 1, datetime(2000, 12, 31, 23), datetime(2001, 1, 1)),
+        ('1hrCM', -1, datetime(2000, 12, 31, 23), datetime(2000, 12, 31, 22)),
+        ('3hr', 1, datetime(2000, 1, 1), datetime(2000, 1, 1, 3)),
+        ('3hr', -1, datetime(2000, 1, 1), datetime(1999, 12, 31, 21)),
+        ('3hr', 1, datetime(2000, 12, 31, 23), datetime(2001, 1, 1, 2)),
+        ('3hr', -1, datetime(2000, 12, 31, 23), datetime(2000, 12, 31, 20)),
+        ('3hrPt', 1, datetime(2000, 1, 1), datetime(2000, 1, 1, 3)),
+        ('3hrPt', -1, datetime(2000, 1, 1), datetime(1999, 12, 31, 21)),
+        ('3hrPt', 1, datetime(2000, 12, 31, 23), datetime(2001, 1, 1, 2)),
+        ('3hrPt', -1, datetime(2000, 12, 31, 23), datetime(2000, 12, 31, 20)),
+        ('3hrCM', 1, datetime(2000, 1, 1), datetime(2000, 1, 1, 3)),
+        ('3hrCM', -1, datetime(2000, 1, 1), datetime(1999, 12, 31, 21)),
+        ('3hrCM', 1, datetime(2000, 12, 31, 23), datetime(2001, 1, 1, 2)),
+        ('3hrCM', -1, datetime(2000, 12, 31, 23), datetime(2000, 12, 31, 20)),
+        ('6hr', 1, datetime(2000, 1, 1), datetime(2000, 1, 1, 6)),
+        ('6hr', -1, datetime(2000, 1, 1), datetime(1999, 12, 31, 18)),
+        ('6hr', 1, datetime(2000, 12, 31, 23), datetime(2001, 1, 1, 5)),
+        ('6hr', -1, datetime(2000, 12, 31, 23), datetime(2000, 12, 31, 17)),
+        ('6hrPt', 1, datetime(2000, 1, 1), datetime(2000, 1, 1, 6)),
+        ('6hrPt', -1, datetime(2000, 1, 1), datetime(1999, 12, 31, 18)),
+        ('6hrPt', 1, datetime(2000, 12, 31, 23), datetime(2001, 1, 1, 5)),
+        ('6hrPt', -1, datetime(2000, 12, 31, 23), datetime(2000, 12, 31, 17)),
+        ('6hrCM', 1, datetime(2000, 1, 1), datetime(2000, 1, 1, 6)),
+        ('6hrCM', -1, datetime(2000, 1, 1), datetime(1999, 12, 31, 18)),
+        ('6hrCM', 1, datetime(2000, 12, 31, 23), datetime(2001, 1, 1, 5)),
+        ('6hrCM', -1, datetime(2000, 12, 31, 23), datetime(2000, 12, 31, 17)),
+    ],
+)
+def test_get_neighbor_time_point(frequency, scale, input, output, monkeypatch):
+    """Test ``_get_neighbor_time_point``."""
+    fix = get_allvars_fix('Amon', 'tas')
+    monkeypatch.setitem(fix.extra_facets, 'frequency', frequency)
+
+    new_datetime = fix._get_neighbor_time_point(input, scale=scale)
+
+    assert new_datetime == output
+
+
+@pytest.mark.parametrize('frequency', ['fx', 'subhrPt'])
+def test_get_neighbor_time_point_fx_subhr(frequency, monkeypatch):
+    """Test ``_get_neighbor_time_point``."""
+    fix = get_allvars_fix('Amon', 'tas')
+    monkeypatch.setitem(fix.extra_facets, 'frequency', frequency)
+
+    msg = "Cannot determine neighbor time point"
+    with pytest.raises(ValueError, match=msg):
+        fix._get_neighbor_time_point(datetime(2000, 1, 1))
+
+
+def test_get_neighbor_time_point_invalid_frequency(monkeypatch):
+    """Test ``_get_neighbor_time_point``."""
+    fix = get_allvars_fix('Amon', 'tas')
+    monkeypatch.setitem(fix.extra_facets, 'frequency', 'invalid_freq')
+
+    msg = "Cannot determine neighbor time point"
+    with pytest.raises(NotImplementedError, match=msg):
+        fix._get_neighbor_time_point(datetime(2000, 1, 1))
+
+
 # Test mesh creation raises warning because bounds do not match vertices
 
 
