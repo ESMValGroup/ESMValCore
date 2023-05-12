@@ -42,7 +42,7 @@ from esmvalcore.cmor._fixes.emac.emac import (
     Zg,
 )
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor.table import get_var_info
+from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
 
@@ -569,7 +569,9 @@ def test_only_time(monkeypatch):
     # EMAC CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
-    monkeypatch.setattr(fix.vardef, 'dimensions', ['time'])
+    coord_info = CoordinateInfo('time')
+    coord_info.standard_name = 'time'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'time': coord_info})
 
     # Create cube with only a single dimension
     time_coord = DimCoord([0.0, 1.0],
@@ -613,7 +615,9 @@ def test_only_plev(monkeypatch):
     # EMAC CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
-    monkeypatch.setattr(fix.vardef, 'dimensions', ['plev19'])
+    coord_info = CoordinateInfo('plev19')
+    coord_info.standard_name = 'air_pressure'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'plev19': coord_info})
 
     # Create cube with only a single dimension
     plev_coord = DimCoord([1000.0, 900.0],
@@ -656,7 +660,9 @@ def test_only_latitude(monkeypatch):
     # EMAC CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
-    monkeypatch.setattr(fix.vardef, 'dimensions', ['latitude'])
+    coord_info = CoordinateInfo('latitude')
+    coord_info.standard_name = 'latitude'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'latitude': coord_info})
 
     # Create cube with only a single dimension
     lat_coord = DimCoord([0.0, 10.0],
@@ -699,7 +705,9 @@ def test_only_longitude(monkeypatch):
     # EMAC CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
-    monkeypatch.setattr(fix.vardef, 'dimensions', ['longitude'])
+    coord_info = CoordinateInfo('longitude')
+    coord_info.standard_name = 'longitude'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'longitude': coord_info})
 
     # Create cube with only a single dimension
     lon_coord = DimCoord([0.0, 180.0],
