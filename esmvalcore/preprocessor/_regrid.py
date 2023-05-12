@@ -369,6 +369,7 @@ def extract_location(cube, location, scheme):
         geolocator = Nominatim(user_agent='esmvalcore',
                                ssl_context=ssl_context)
     except ssl.SSLError:
+        logger.warning("ssl.create_default_context() encountered a problem, not using it.")
         geolocator = Nominatim(user_agent='esmvalcore')
     geolocation = geolocator.geocode(location)
     if geolocation is None:
