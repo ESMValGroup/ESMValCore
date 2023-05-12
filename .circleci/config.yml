@@ -166,7 +166,7 @@ jobs:
             mkdir /logs
             # conda update -y conda > /logs/conda.txt 2>&1
             # Create and activate conda environment
-            mamba create -y --name esmvaltool 'python=3.10'
+            mamba create -y --name esmvaltool 'python=3.11'
             set +x; conda activate esmvaltool; set -x
             # Install
             mamba install -y esmvalcore
