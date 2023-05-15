@@ -62,6 +62,9 @@ jobs:
         run: |
           which python
           python --version
+      - name: Show environment contents
+        shell: bash -l {0}
+        run: conda list
       - shell: bash -l {0}
         run: pip install -e .[develop]
       - shell: bash -l {0}
