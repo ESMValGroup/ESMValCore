@@ -4,8 +4,9 @@ on:
   # Trigger on push on main or other branch for testing
   # NOTE that push: main will create the file very often
   # and hence lots of automated PRs
-  # push:
-  #   branches:
+  push:
+    branches:
+      - modernize_conda_lock_creation
   #     - main
   schedule:
     - cron: '0 4 */10 * *'
@@ -22,12 +23,13 @@ jobs:
         with:
           auto-update-conda: true
           python-version: "3.11"
-          miniconda-version: "latest"
-          activate-environment: esmvaltool-fromlock
-          channels: conda-forge
+          miniforge-version: "latest"
+          miniforge-variant: Mambaforge
+          use-mamba: true
       - name: Show conda config
         shell: bash -l {0}
         run: |
+          conda update -n base -c conda-forge conda
           conda info
           conda list
           conda config --show-sources
@@ -39,7 +41,10 @@ jobs:
           python --version
       - name: Install conda-lock
         shell: bash -l {0}
-        run: conda install -y conda-lock
+        run: mamba install -y conda-lock
+      - name: Check version of conda-lock
+        shell: bash -l {0}
+        run: conda-lock --version
       - name: Create conda lock file for linux-64
         shell: bash -l {0}
         run: conda-lock lock --platform linux-64 -f environment.yml --mamba --kind explicit
@@ -48,7 +53,7 @@ jobs:
         run: conda create --name esmvaltool-fromlock --file conda-linux-64.lock
       - name: Installing pip
         shell: bash -l {0}
-        run: conda install pip
+        run: mamba install -y pip
       - name: Gather pip info
         shell: bash -l {0}
         run: pip --version
