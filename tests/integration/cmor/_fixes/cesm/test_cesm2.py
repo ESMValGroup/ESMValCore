@@ -8,7 +8,7 @@ from iris.cube import Cube, CubeList
 
 import esmvalcore.cmor._fixes.cesm.cesm2
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor.table import get_var_info
+from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
 
@@ -170,7 +170,9 @@ def test_only_time(monkeypatch):
     # CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of tas to create
     # an artificial, but realistic test case.
-    monkeypatch.setattr(fix.vardef, 'dimensions', ['time'])
+    coord_info = CoordinateInfo('time')
+    coord_info.standard_name = 'time'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'time': coord_info})
 
     # Create cube with only a single dimension
     time_coord = DimCoord([0.0, 1.0], var_name='time', standard_name='time',
@@ -210,7 +212,9 @@ def test_only_latitude(monkeypatch):
     # CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of tas to create
     # an artificial, but realistic test case.
-    monkeypatch.setattr(fix.vardef, 'dimensions', ['latitude'])
+    coord_info = CoordinateInfo('latitude')
+    coord_info.standard_name = 'latitude'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'latitude': coord_info})
 
     # Create cube with only a single dimension
     lat_coord = DimCoord([0.0, 10.0], var_name='lat', standard_name='latitude',
@@ -250,7 +254,9 @@ def test_only_longitude(monkeypatch):
     # CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of tas to create
     # an artificial, but realistic test case.
-    monkeypatch.setattr(fix.vardef, 'dimensions', ['longitude'])
+    coord_info = CoordinateInfo('longitude')
+    coord_info.standard_name = 'longitude'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'longitude': coord_info})
 
     # Create cube with only a single dimension
     lon_coord = DimCoord([0.0, 180.0], var_name='lon',
@@ -288,6 +294,16 @@ def test_only_longitude(monkeypatch):
 def test_fix_time_mon(cube_1d_time):
     """Test `_fix_time``."""
     fix = get_allvars_fix('Amon', 'mon', 'tas')
+    fix._fix_time(cube_1d_time)
+    time_coord = cube_1d_time.coord('time')
+    np.testing.assert_array_equal(time_coord.points, [1, 3, 5])
+    np.testing.assert_array_equal(time_coord.bounds, [[0, 2], [2, 4], [4, 6]])
+
+
+def test_fix_time2_mon(cube_1d_time):
+    """Test `_fix_time``."""
+    # ch4Clim has dimensions [longitude, latitude, plev19, time2]
+    fix = get_allvars_fix('Amon', 'mon', 'ch4Clim')
     fix._fix_time(cube_1d_time)
     time_coord = cube_1d_time.coord('time')
     np.testing.assert_array_equal(time_coord.points, [1, 3, 5])
