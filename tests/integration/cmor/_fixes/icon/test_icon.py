@@ -15,7 +15,7 @@ import esmvalcore.cmor._fixes.icon.icon
 from esmvalcore.cmor._fixes.icon._base_fixes import IconFix
 from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi, Siconc, Siconca
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor.table import get_var_info
+from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config import CFG
 from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
@@ -920,6 +920,47 @@ def test_2d_lat_lon_grid_fix(cubes_2d_lat_lon_grid):
     assert cube.coords('height', dim_coords=False, dimensions=())
 
 
+# Test ch4Clim (for time dimension time2)
+
+
+def test_get_ch4clim_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'ch4Clim')
+    assert fix == [AllVars(None)]
+
+
+def test_ch4clim_fix(cubes_regular_grid):
+    """Test fix."""
+    cube = cubes_regular_grid[0]
+    cube.var_name = 'ch4Clim'
+    cube.units = 'mol mol-1'
+    cube.coord('time').units = 'no_unit'
+    cube.coord('time').attributes['invalid_units'] = 'day as %Y%m%d.%f'
+    cube.coord('time').points = [18500104.0]
+    cube.coord('time').long_name = 'wrong_time_name'
+
+    fix = get_allvars_fix('Amon', 'ch4Clim')
+    fixed_cubes = fix.fix_metadata(cubes_regular_grid)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'ch4Clim'
+    assert cube.standard_name == 'mole_fraction_of_methane_in_air'
+    assert cube.long_name == 'Mole Fraction of CH4'
+    assert cube.units == 'mol mol-1'
+    assert 'positive' not in cube.attributes
+
+    time_coord = cube.coord('time')
+    assert time_coord.var_name == 'time'
+    assert time_coord.standard_name == 'time'
+    assert time_coord.long_name == 'time'
+    assert time_coord.units == Unit(
+        'days since 1850-01-01', calendar='proleptic_gregorian'
+    )
+    np.testing.assert_allclose(time_coord.points, [3.0])
+    assert time_coord.bounds is None
+
+
 # Test fix with empty standard_name
 
 
@@ -1179,7 +1220,9 @@ def test_only_time(monkeypatch):
     # ICON CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
-    monkeypatch.setattr(fix.vardef, 'dimensions', ['time'])
+    coord_info = CoordinateInfo('time')
+    coord_info.standard_name = 'time'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'time': coord_info})
 
     # Create cube with only a single dimension
     time_coord = DimCoord([0.0, 1.0],
@@ -1224,7 +1267,9 @@ def test_only_height(monkeypatch):
     # ICON CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
-    monkeypatch.setattr(fix.vardef, 'dimensions', ['plev19'])
+    coord_info = CoordinateInfo('plev19')
+    coord_info.standard_name = 'air_pressure'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'plev19': coord_info})
 
     # Create cube with only a single dimension
     height_coord = DimCoord([1000.0, 100.0],
@@ -1257,6 +1302,9 @@ def test_only_height(monkeypatch):
     np.testing.assert_allclose(new_height_coord.points, [1.0, 10.0])
     assert new_height_coord.bounds is None
 
+    # Check that no air_pressure coordinate has been created
+    assert not cube.coords('air_pressure')
+
     # Check that no mesh has been created
     assert cube.mesh is None
 
@@ -1268,7 +1316,9 @@ def test_only_latitude(monkeypatch):
     # ICON CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
-    monkeypatch.setattr(fix.vardef, 'dimensions', ['latitude'])
+    coord_info = CoordinateInfo('latitude')
+    coord_info.standard_name = 'latitude'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'latitude': coord_info})
 
     # Create cube with only a single dimension
     lat_coord = DimCoord([0.0, 10.0],
@@ -1311,7 +1361,9 @@ def test_only_longitude(monkeypatch):
     # ICON CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
-    monkeypatch.setattr(fix.vardef, 'dimensions', ['longitude'])
+    coord_info = CoordinateInfo('longitude')
+    coord_info.standard_name = 'longitude'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'longitude': coord_info})
 
     # Create cube with only a single dimension
     lon_coord = DimCoord([0.0, 180.0],

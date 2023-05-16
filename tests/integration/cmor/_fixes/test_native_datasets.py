@@ -8,7 +8,7 @@ from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
-from esmvalcore.cmor.table import get_var_info
+from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 
 
 @pytest.fixture
@@ -203,6 +203,9 @@ def test_get_cube_fail(cubes, fix):
     'coord,coord_name,func_name',
     [
         ('time', 'time', 'fix_regular_time'),
+        ('time1', 'time', 'fix_regular_time'),
+        ('time2', 'time', 'fix_regular_time'),
+        ('time3', 'time', 'fix_regular_time'),
         ('latitude', 'latitude', 'fix_regular_lat'),
         ('longitude', 'longitude', 'fix_regular_lon'),
     ]
@@ -210,7 +213,9 @@ def test_get_cube_fail(cubes, fix):
 def test_fix_regular_coords_from_cube(monkeypatch, sample_cube, fix, coord,
                                       coord_name, func_name):
     """Test fixing of regular coords from cube."""
-    monkeypatch.setattr(fix.vardef, 'dimensions', [coord])
+    coord_info = CoordinateInfo(coord)
+    coord_info.standard_name = coord_name
+    monkeypatch.setattr(fix.vardef, 'coordinates', {coord: coord_info})
 
     func = getattr(fix, func_name)
     func(sample_cube)
@@ -226,6 +231,9 @@ def test_fix_regular_coords_from_cube(monkeypatch, sample_cube, fix, coord,
     'coord,coord_name,func_name',
     [
         ('time', 'time', 'fix_regular_time'),
+        ('time1', 'time', 'fix_regular_time'),
+        ('time2', 'time', 'fix_regular_time'),
+        ('time3', 'time', 'fix_regular_time'),
         ('latitude', 'latitude', 'fix_regular_lat'),
         ('longitude', 'longitude', 'fix_regular_lon'),
     ]
@@ -233,7 +241,9 @@ def test_fix_regular_coords_from_cube(monkeypatch, sample_cube, fix, coord,
 def test_fix_regular_coords_from_str(monkeypatch, sample_cube, fix, coord,
                                      coord_name, func_name):
     """Test fixing of regular coords from string."""
-    monkeypatch.setattr(fix.vardef, 'dimensions', [coord])
+    coord_info = CoordinateInfo(coord)
+    coord_info.standard_name = coord_name
+    monkeypatch.setattr(fix.vardef, 'coordinates', {coord: coord_info})
 
     func = getattr(fix, func_name)
     func(sample_cube, coord=coord_name)
