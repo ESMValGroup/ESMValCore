@@ -1,13 +1,13 @@
 """On-the-fly CMORizer for ICON."""
 
 import logging
-from datetime import datetime
 
 import cf_units
 import dask.array as da
 import iris
 import iris.util
 import numpy as np
+import pandas as pd
 from iris import NameConstraint
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import CubeList
@@ -27,7 +27,7 @@ class AllVars(IconFix):
         cube = self.get_cube(cubes)
 
         # Fix time
-        if 'time' in self.vardef.dimensions:
+        if self.vardef.has_coord_with_standard_name('time'):
             cube = self._fix_time(cube, cubes)
 
         # Fix height (note: cannot use "if 'height' in self.vardef.dimensions"
@@ -52,13 +52,13 @@ class AllVars(IconFix):
                 cube = self._fix_height(cube, cubes)
 
         # Fix latitude
-        if 'latitude' in self.vardef.dimensions:
+        if self.vardef.has_coord_with_standard_name('latitude'):
             lat_idx = self._fix_lat(cube)
         else:
             lat_idx = None
 
         # Fix longitude
-        if 'longitude' in self.vardef.dimensions:
+        if self.vardef.has_coord_with_standard_name('longitude'):
             lon_idx = self._fix_lon(cube)
         else:
             lon_idx = None
@@ -249,18 +249,18 @@ class AllVars(IconFix):
         if not cube.coords('time'):
             cube = self._add_time(cube, cubes)
 
-        # Fix metadata and add bounds
+        # Fix metadata
         time_coord = self.fix_time_metadata(cube)
-        self.guess_coord_bounds(cube, time_coord)
         if 'invalid_units' not in time_coord.attributes:
+            self.guess_coord_bounds(cube, time_coord)
             return cube
 
         # If necessary, convert invalid time units of the form "day as
         # %Y%m%d.%f" to CF format (e.g., "days since 1850-01-01")
-        # Notes:
-        # - It might be necessary to expand this to other time formats in the
-        #   raw file.
-        # - This has not been tested with sub-daily data
+        # ICON data has no time bounds, let's make sure we remove the bounds
+        # here (they will be added after converting the time points to the
+        # correct units)
+        time_coord.bounds = None
         time_format = 'day as %Y%m%d.%f'
         t_unit = time_coord.attributes.pop('invalid_units')
         if t_unit != time_format:
@@ -270,12 +270,34 @@ class AllVars(IconFix):
         new_t_unit = cf_units.Unit('days since 1850-01-01',
                                    calendar='proleptic_gregorian')
 
-        new_datetimes = [datetime.strptime(str(dt), '%Y%m%d.%f') for dt in
-                         time_coord.points]
+        # New routine to convert time of daily and hourly data. The string %f
+        # (fraction of day) is not a valid format string for datetime.strptime,
+        # so we have to convert it ourselves.
+        time_str = pd.Series(time_coord.points, dtype=str)
+
+        # First, extract date (year, month, day) from string and convert it to
+        # datetime object
+        year_month_day_str = time_str.str.extract(r'(\d*)\.?\d*', expand=False)
+        year_month_day = pd.to_datetime(year_month_day_str, format='%Y%m%d')
+
+        # Second, extract day fraction and convert it to timedelta object
+        day_float_str = time_str.str.extract(
+            r'\d*(\.\d*)', expand=False
+        ).fillna('0.0')
+        day_float = pd.to_timedelta(day_float_str.astype(float), unit='D')
+
+        # Finally, add date and day fraction to get final datetime and convert
+        # it to correct units. Note: we also round to next second, otherwise
+        # this results in times that are off by 1s (e.g., 13:59:59 instead of
+        # 14:00:00).
+        new_datetimes = (year_month_day + day_float).round(
+            'S'
+        ).dt.to_pydatetime()
         new_dt_points = date2num(np.array(new_datetimes), new_t_unit)
 
         time_coord.points = new_dt_points
         time_coord.units = new_t_unit
+        self.guess_coord_bounds(cube, time_coord)
 
         return cube
 
