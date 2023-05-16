@@ -203,7 +203,8 @@ def _map_to_new_time(cube, time_points):
             additional_info = (
                 " Note: this alignment does not work for scalar time "
                 "coordinates. To ignore all scalar coordinates in the input "
-                "data, use the option `ignore_scalar_coords=True`."
+                "data, use the preprocessor option "
+                "`ignore_scalar_coords=True`."
             )
         raise ValueError(
             f"Tried to align cubes in multi-model statistics, but failed for "
@@ -372,6 +373,11 @@ def _equalise_coordinate_metadata(cubes):
         for scalar_coord in cube.coords(dimensions=()):
             if scalar_coord.var_name in scalar_coords_to_always_remove:
                 cube.remove_coord(scalar_coord)
+                logger.debug(
+                    "Removed scalar coordinate '%s' from cube %s",
+                    scalar_coord.var_name,
+                    cube.summary(shorten=True),
+                )
 
 
 def _equalise_fx_variables(cubes):
@@ -580,6 +586,12 @@ def _multicube_statistics(cubes, statistics, span, ignore_scalar_coords=False):
         for cube in copied_cubes:
             for scalar_coord in cube.coords(dimensions=()):
                 cube.remove_coord(scalar_coord)
+                logger.debug(
+                    "Removed scalar coordinate '%s' from cube %s since "
+                    "ignore_scalar_coords=True",
+                    scalar_coord.var_name,
+                    cube.summary(shorten=True),
+                )
 
     # If all cubes contain a time coordinate, align them. If no cube contains a
     # time coordinate, do nothing. Else, raise an exception.
