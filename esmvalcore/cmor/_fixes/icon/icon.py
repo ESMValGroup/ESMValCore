@@ -2,14 +2,14 @@
 
 import logging
 from calendar import monthrange
-from datetime import timedelta
+from datetime import datetime, timedelta
 
-import cf_units
 import dask.array as da
 import iris
 import iris.util
 import numpy as np
 import pandas as pd
+from cf_units import Unit
 from iris import NameConstraint
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import CubeList
@@ -259,10 +259,16 @@ class AllVars(IconFix):
         if 'invalid_units' in time_coord.attributes:
             self._fix_invalid_time_units(time_coord)
 
-        # ICON reports aggregated values at the end of the time period, e.g.,
-        # for monthly output, ICON reports the month February as 1 March. Thus,
-        # shift all time points back by 1/2 of the given time period.
-        self._shift_time_coord(cube, time_coord)
+        # ICON usually reports aggregated values at the end of the time period,
+        # e.g., for monthly output, ICON reports the month February as 1 March.
+        # Thus, if not disabled, shift all time points back by 1/2 of the given
+        # time period.
+        # if self.extra_facets.get('shift_time', True):
+        #     self._shift_time_coord(cube, time_coord)
+
+        # If not already present, try to add bounds here. Usually bounds are
+        # set in _shift_time_coord.
+        self.guess_coord_bounds(cube, time_coord)
 
         return cube
 
@@ -275,59 +281,90 @@ class AllVars(IconFix):
             if is_point_measurement:
                 return
 
+        # Remove bounds; they will be re-added later after shifting
+        time_coord.bounds = None
+
+        # For decadal, yearly and monthly data, round datetimes to closest day
+        freq = self.extra_facets['frequency']
+        if 'dec' in freq or 'yr' in freq or 'mon' in freq:
+            time_units = time_coord.units
+            time_coord.convert_units(
+                Unit('days since 1850-01-01', calendar=time_units.calendar)
+            )
+            time_coord.points = np.around(time_coord.points)
+            time_coord.convert_units(time_units)
+
         # Use original time points to calculate bounds (for a given point,
         # start of bounds is previous point, end of bounds is point)
+        first_datetime = time_coord.units.num2date(time_coord.points[0])
+        previous_time_point = time_coord.units.date2num(
+            self._get_previous_timestep(first_datetime)
+        )
+        extended_time_points = np.concatenate(
+            ([previous_time_point], time_coord.points)
+        )
+        time_coord.points = (
+            np.convolve(extended_time_points, np.ones(2), 'valid') / 2.0
+        )  # running mean with window length 2
+        time_coord.bounds = np.stack(
+            (extended_time_points[:-1], extended_time_points[1:]), axis=-1
+        )
+        print(time_coord)
 
-        self.guess_coord_bounds(cube, time_coord)
-
-    def _get_neighbor_time_point(self, datetime_point, scale=1):
-        """Get neighbor time point."""
+    def _get_previous_timestep(self, datetime_point):
+        """Get previous time step."""
         freq = self.extra_facets['frequency']
         year = datetime_point.year
         month = datetime_point.month
 
         # Invalid input
-        if 'fx' in freq:
-            raise ValueError(
-                "Cannot determine neighbor time point for fx data"
-            )
-        if 'subhr' in freq:
-            raise ValueError(
-                "Cannot determine neighbor time point for subhr data"
-            )
+        invalid_freq_error_msg = (
+            f"Cannot shift time coordinate: failed to determine previous time "
+            f"step for frequency '{freq}'. Use `shift_time=false` in the "
+            f"recipe to disable this feature"
+        )
+        if 'fx' in freq or 'subhr' in freq:
+            raise ValueError(invalid_freq_error_msg)
+
+        # For decadal, yearly and monthly data, the points needs to be the
+        # first of the month 00:00:00
+        if 'dec' in freq or 'yr' in freq or 'mon' in freq:
+            if datetime_point != datetime(year, month, 1):
+                raise ValueError(
+                    f"Cannot shift time coordinate: expected first of the "
+                    f"month at 00:00:00 for decadal, yearly and monthly data, "
+                    f"got {datetime_point}. Use `shift_time=false` in the "
+                    f"recipe to disable this feature"
+                )
 
         # Decadal data
         if 'dec' in freq:
-            try:
-                return datetime_point.replace(year=year + scale * 10)
-            except ValueError:  # leap year
-                return datetime_point.replace(year=year + scale * 10, day=28)
+            return datetime_point.replace(year=year - 10)
 
         # Yearly data
         if 'yr' in freq:
-            try:
-                return datetime_point.replace(year=year + scale)
-            except ValueError:  # leap year
-                return datetime_point.replace(year=year + scale, day=28)
+            return datetime_point.replace(year=year - 1)
 
         # Monthly data
         if 'mon' in freq:
-            (_, days_in_month) = monthrange(year, month)
-            return datetime_point + scale * timedelta(days=days_in_month)
+            new_month = (month - 2) % 12 + 1
+            new_year = year + (month - 2) // 12
+            (_, days_in_new_month) = monthrange(new_year, new_month)
+            return datetime_point - timedelta(days=days_in_new_month)
 
         # Daily data
         if 'day' in freq:
-            return datetime_point + scale * timedelta(days=1)
+            return datetime_point - timedelta(days=1)
 
         # Hourly data
         if 'hr' in freq:
             (n_hours, _, _) = freq.partition('hr')
-            return datetime_point + scale * timedelta(hours=int(n_hours))
+            if not n_hours:
+                n_hours = 1
+            return datetime_point - timedelta(hours=int(n_hours))
 
         # Unknown input
-        raise NotImplementedError(
-            f"Cannot determine neighbor time point for frequency {freq}"
-        )
+        raise ValueError(invalid_freq_error_msg)
 
     def _fix_mesh(self, cube, mesh_idx):
         """Fix mesh."""
@@ -381,17 +418,18 @@ class AllVars(IconFix):
     def _fix_invalid_time_units(time_coord):
         """Fix invalid time units (in-place)."""
         # ICON data usually has no time bounds. To be 100% sure, we remove the
-        # bounds here (they will be added at a later stage in
-        # _shift_time_coord).
+        # bounds here (they will be added at a later stage).
         time_coord.bounds = None
         time_format = 'day as %Y%m%d.%f'
         t_unit = time_coord.attributes.pop('invalid_units')
         if t_unit != time_format:
             raise ValueError(
                 f"Expected time units '{time_format}' in input file, got "
-                f"'{t_unit}'")
-        new_t_unit = cf_units.Unit('days since 1850-01-01',
-                                   calendar='proleptic_gregorian')
+                f"'{t_unit}'"
+            )
+        new_t_units = Unit(
+            'days since 1850-01-01', calendar='proleptic_gregorian'
+        )
 
         # New routine to convert time of daily and hourly data. The string %f
         # (fraction of day) is not a valid format string for datetime.strptime,
@@ -416,11 +454,11 @@ class AllVars(IconFix):
         new_datetimes = (year_month_day + day_float).round(
             'S'
         ).dt.to_pydatetime()
-        new_dt_points = date2num(np.array(new_datetimes), new_t_unit)
+        new_dt_points = date2num(np.array(new_datetimes), new_t_units)
 
         # Modify time coordinate in place
         time_coord.points = new_dt_points
-        time_coord.units = new_t_unit
+        time_coord.units = new_t_units
 
 
 class Clwvi(IconFix):
