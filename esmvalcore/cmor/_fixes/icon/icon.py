@@ -1,7 +1,6 @@
 """On-the-fly CMORizer for ICON."""
 
 import logging
-from calendar import monthrange
 from datetime import datetime, timedelta
 
 import dask.array as da
@@ -358,8 +357,7 @@ class AllVars(IconFix):
         if 'mon' in freq:
             new_month = (month - 2) % 12 + 1
             new_year = year + (month - 2) // 12
-            (_, days_in_new_month) = monthrange(new_year, new_month)
-            return datetime_point - timedelta(days=days_in_new_month)
+            return datetime_point.replace(year=new_year, month=new_month)
 
         # Daily data
         if 'day' in freq:

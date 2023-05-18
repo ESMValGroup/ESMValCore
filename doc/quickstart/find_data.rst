@@ -348,7 +348,9 @@ Thus, by default, ESMValCore shifts all time points back by 1/2 of the output
 time interval so that the new time point corresponds to the center of the
 interval.
 This can be disabled by using ``shift_time: false`` in the recipe or the extra
-facets (see below.)
+facets (see below).
+For point measurements (identified by ``cell_methods = "time: point"``), this
+is always disabled.
 
 ESMValCore can automatically make native ICON data `UGRID
 <https://ugrid-conventions.github.io/ugrid-conventions/>`__-compliant when
@@ -406,7 +408,7 @@ Key                 Description                      Default value if not specif
                     file
 ``shift_time``      Shift time points back by 1/2 of ``True``
                     the corresponding output time
-                    interval.
+                    interval
 ``ugrid``           Automatic UGRIDization of        ``True``
                     the input data
 ``var_type``        Variable type of the             No default (needs to be specified
