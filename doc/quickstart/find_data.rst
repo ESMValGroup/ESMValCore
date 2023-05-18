@@ -334,8 +334,21 @@ Please note the duplication of the name ``ICON`` in ``project`` and
 ``dataset``, which is necessary to comply with ESMValTool's data finding and
 CMORizing functionalities.
 A variable-specific default for the facet ``var_type`` is given in the extra
-facets (see next paragraph) for many variables, but this can be overwritten in
-the recipe.
+facets (see below) for many variables, but this can be overwritten in the
+recipe.
+This is necessary if your ICON is structured in one variable per file.
+For example, if your output is stored in files called
+``<exp>_<variable_name>_atm_2d_ml_YYYYMMDDThhmmss.nc``, use ``var_type:
+<variable_name>_atm_2d_ml`` in the recipe for this variable.
+
+Usually, ICON reports aggregated values at the end of the corresponding time
+output intervals.
+For example, for monthly output, ICON reports the month February as "1 March".
+Thus, by default, ESMValCore shifts all time points back by 1/2 of the output
+time interval so that the new time point corresponds to the center of the
+interval.
+This can be disabled by using ``shift_time: false`` in the recipe or the extra
+facets (see below.)
 
 ESMValCore can automatically make native ICON data `UGRID
 <https://ugrid-conventions.github.io/ugrid-conventions/>`__-compliant when
@@ -379,24 +392,27 @@ For some variables, extra facets are necessary; otherwise ESMValTool cannot
 read them properly.
 Supported keys for extra facets are:
 
-============= ============================= =================================
-Key           Description                   Default value if not specified
-============= ============================= =================================
-``latitude``  Standard name of the latitude ``latitude``
-              coordinate in the raw input
-              file
-``longitude`` Standard name of the          ``longitude``
-              longitude coordinate in the
-              raw input file
-``raw_name``  Variable name of the          CMOR variable name of the
-              variable in the raw input     corresponding variable
-              file
-``ugrid``     Automatic UGRIDization of     ``True``
-              the input data
-``var_type``  Variable type of the          No default (needs to be specified
-              variable in the raw input     in extra facets or recipe if
-              file                          default DRS is used)
-============= ============================= =================================
+=================== ================================ ===================================
+Key                 Description                      Default value if not specified
+=================== ================================ ===================================
+``latitude``        Standard name of the latitude    ``latitude``
+                    coordinate in the raw input
+                    file
+``longitude``       Standard name of the             ``longitude``
+                    longitude coordinate in the
+                    raw input file
+``raw_name``        Variable name of the             CMOR variable name of the
+                    variable in the raw input        corresponding variable
+                    file
+``shift_time``      Shift time points back by 1/2 of ``True``
+                    the corresponding output time
+                    interval.
+``ugrid``           Automatic UGRIDization of        ``True``
+                    the input data
+``var_type``        Variable type of the             No default (needs to be specified
+                    variable in the raw input        in extra facets or recipe if
+                    file                             default DRS is used)
+=================== ================================ ===================================
 
 .. hint::
 
