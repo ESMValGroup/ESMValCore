@@ -263,8 +263,8 @@ class AllVars(IconFix):
         # e.g., for monthly output, ICON reports the month February as 1 March.
         # Thus, if not disabled, shift all time points back by 1/2 of the given
         # time period.
-        # if self.extra_facets.get('shift_time', True):
-        #     self._shift_time_coord(cube, time_coord)
+        if self.extra_facets.get('shift_time', True):
+            self._shift_time_coord(cube, time_coord)
 
         # If not already present, try to add bounds here. Usually bounds are
         # set in _shift_time_coord.
@@ -291,7 +291,17 @@ class AllVars(IconFix):
             time_coord.convert_units(
                 Unit('days since 1850-01-01', calendar=time_units.calendar)
             )
-            time_coord.points = np.around(time_coord.points)
+            try:
+                time_coord.points = np.around(time_coord.points)
+            except ValueError as exc:
+                error_msg = (
+                    "Cannot shift time coordinate: Rounding to closest day "
+                    "failed. Most likely you specified the wrong frequency in "
+                    "the recipe (use `frequency: <your_frequency>` to fix "
+                    "this). Alternatively, use `shift_time=false` in the "
+                    "recipe to disable this feature"
+                )
+                raise ValueError(error_msg) from exc
             time_coord.convert_units(time_units)
 
         # Use original time points to calculate bounds (for a given point,
