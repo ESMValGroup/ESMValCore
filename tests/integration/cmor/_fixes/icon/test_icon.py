@@ -692,7 +692,7 @@ def test_ta_fix_no_plev_bounds(cubes_3d):
     check_lat_lon(cube)
 
 
-# Test tas (for height2m coordinate)
+# Test tas (for height2m coordinate, no mesh, no shift time)
 
 
 def test_get_tas_fix():
@@ -790,6 +790,28 @@ def test_tas_no_mesh(cubes_2d):
     cube = fixed_cubes[0]
     assert cube.shape == (1, 8)
     check_heightxm(cube, 2.0)
+
+
+def test_tas_no_shift_time(cubes_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'tas')
+    fix.extra_facets['shift_time'] = False
+    fixed_cubes = fix.fix_metadata(cubes_2d)
+
+    cube = check_tas_metadata(fixed_cubes)
+    check_lat_lon(cube)
+    check_heightxm(cube, 2.0)
+
+    assert cube.coords('time', dim_coords=True)
+    time = cube.coord('time', dim_coords=True)
+    assert time.var_name == 'time'
+    assert time.standard_name == 'time'
+    assert time.long_name == 'time'
+    assert time.units == Unit('days since 1850-01-01',
+                              calendar='proleptic_gregorian')
+    np.testing.assert_allclose(time.points, [54786.0])
+    assert time.bounds is None
+    assert time.attributes == {}
 
 
 # Test uas (for height10m coordinate)
@@ -1392,7 +1414,7 @@ def test_invalid_time_units(cubes_2d):
         fix.fix_metadata(cubes_2d)
 
 
-# Test fix with hourly data
+# Test fix with (sub-)hourly data
 
 
 def test_hourly_data(cubes_2d):
@@ -1423,7 +1445,7 @@ def test_hourly_data(cubes_2d):
         ],
     ],
 )
-def test_hourly_data_multiple_points(bounds, cubes_2d):
+def test_6hourly_data_multiple_points(bounds):
     """Test fix."""
     time_coord = DimCoord(
         [20220101, 20220101.25],
@@ -1454,6 +1476,41 @@ def test_hourly_data_multiple_points(bounds, cubes_2d):
         [
             [datetime(2021, 12, 31, 18), datetime(2022, 1, 1)],
             [datetime(2022, 1, 1), datetime(2022, 1, 1, 6)],
+        ],
+    )
+
+
+def test_subhourly_data_no_shift():
+    """Test fix."""
+    time_coord = DimCoord(
+        [0.5, 1.0],
+        standard_name='time',
+        units=Unit('hours since 2022-01-01', calendar='proleptic_gregorian'),
+    )
+    cube = Cube(
+        [1, 2],
+        var_name='tas',
+        units='K',
+        dim_coords_and_dims=[(time_coord, 0)],
+    )
+    cubes = CubeList([cube])
+    fix = get_allvars_fix('Amon', 'tas')
+    fix.extra_facets['frequency'] = 'subhr'
+    fix.extra_facets['shift_time'] = False
+
+    fixed_cube = fix._fix_time(cube, cubes)
+
+    points = fixed_cube.coord('time').units.num2date(cube.coord('time').points)
+    bounds = fixed_cube.coord('time').units.num2date(cube.coord('time').bounds)
+    np.testing.assert_array_equal(
+        points,
+        [datetime(2022, 1, 1, 0, 30), datetime(2022, 1, 1, 1)],
+    )
+    np.testing.assert_array_equal(
+        bounds,
+        [
+            [datetime(2022, 1, 1, 0, 15), datetime(2022, 1, 1, 0, 45)],
+            [datetime(2022, 1, 1, 0, 45), datetime(2022, 1, 1, 1, 15)],
         ],
     )
 

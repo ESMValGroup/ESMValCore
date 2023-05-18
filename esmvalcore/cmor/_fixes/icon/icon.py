@@ -273,7 +273,7 @@ class AllVars(IconFix):
         return cube
 
     def _shift_time_coord(self, cube, time_coord):
-        """Shift time points back by 1/2 of given time period."""
+        """Shift time points back by 1/2 of given time period (in-place)."""
         # Do not modify time coordinate for point measurements
         for cell_method in cube.cell_methods:
             is_point_measurement = ('time' in cell_method.coord_names and
@@ -319,7 +319,6 @@ class AllVars(IconFix):
         time_coord.bounds = np.stack(
             (extended_time_points[:-1], extended_time_points[1:]), axis=-1
         )
-        print(time_coord)
 
     def _get_previous_timestep(self, datetime_point):
         """Get previous time step."""
