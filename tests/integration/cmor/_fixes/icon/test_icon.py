@@ -1617,7 +1617,7 @@ def test_shift_time_coord(frequency, dt_in, dt_out, bounds):
         ('1hr', [(2000, 1, 1, 4), (2000, 1, 1, 5)]),
     ],
 )
-def test_shift_time_point(frequency, dt_in):
+def test_shift_time_point_measurement(frequency, dt_in):
     """Test ``_shift_time_coord``."""
     cube = Cube(0, cell_methods=[CellMethod('point', 'time')])
     datetimes = [datetime(*dt) for dt in dt_in]
@@ -1721,8 +1721,17 @@ def test_shift_time_coord_invalid_freq(frequency):
         ('dec', (2000, 1, 1), (1990, 1, 1)),
         ('yr', (2000, 1, 1), (1999, 1, 1)),
         ('yrPt', (2001, 6, 1), (2000, 6, 1)),
-        ('mon', (2001, 6, 1), (2001, 5, 1)),
-        ('monC', (2000, 1, 1), (1999, 12, 1)),
+        ('mon', (2001, 1, 1), (2000, 12, 1)),
+        ('mon', (2001, 2, 1), (2001, 1, 1)),
+        ('mon', (2001, 3, 1), (2001, 2, 1)),
+        ('mon', (2001, 4, 1), (2001, 3, 1)),
+        ('monC', (2000, 5, 1), (2000, 4, 1)),
+        ('monC', (2000, 6, 1), (2000, 5, 1)),
+        ('monC', (2000, 7, 1), (2000, 6, 1)),
+        ('monC', (2000, 8, 1), (2000, 7, 1)),
+        ('monPt', (2002, 9, 1), (2002, 8, 1)),
+        ('monPt', (2002, 10, 1), (2002, 9, 1)),
+        ('monPt', (2002, 11, 1), (2002, 10, 1)),
         ('monPt', (2002, 12, 1), (2002, 11, 1)),
         ('day', (2000, 1, 1), (1999, 12, 31)),
         ('day', (2000, 3, 1), (2000, 2, 29)),
