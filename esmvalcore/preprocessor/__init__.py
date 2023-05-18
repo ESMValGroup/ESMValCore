@@ -91,6 +91,8 @@ from ._volume import (
 )
 from ._weighting import weighting_landsea_fraction
 
+from esmvalcore.cmor.table import _get_mips
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -410,6 +412,81 @@ def get_step_blocks(steps, order):
     return blocks
 
 
+def _detect_single_step_freq_change(attributes, settings):
+    """Guess target mip if use of a single time statistics preprocessor."""
+    attributes = copy.deepcopy(attributes)
+
+    freq_modifiers = [
+        tp for tp in TIME_PREPROCESSORS
+        if tp.endswith('_statistics')]
+
+    steps = [
+        preproc for preproc in settings.keys()
+        if preproc not in INITIAL_STEPS
+        and preproc not in FINAL_STEPS]
+
+    if len(steps) != 1 or all(s not in freq_modifiers for s in steps):
+        return None
+
+    step = steps[0]
+
+    mips = _get_mips(attributes['project'], attributes['short_name'])
+    decorators = []
+    input_mip = attributes['mip']
+    mip = None
+
+    def _get_first_match(mips, target_freq, decorators):
+        # Lowercase target mip to account for capitalized CMIP5 entries.
+        sel = [mip for mip in mips if target_freq in mip.lower()]
+        if len(sel) > 1:
+            # Try to apply decorators, keep it only if there is a match.
+            for d in decorators:
+                seld = [mip for mip in sel if d in mip]
+                if len(seld) > 0:
+                    sel = seld
+        return sel[0] if len(sel) > 0 else None
+
+    if 'Plev' in input_mip:
+        decorators.append('Plev')
+    if 'Lev' in input_mip:
+        decorators.append('Lev')
+    if 'Z' in input_mip:
+        decorators.append('Z')
+
+    if step == 'climate_statistics':
+        period = settings[step].get('period')
+        if 'mon' in period or 'season' in period:
+            step = 'monthly_statistics'
+        elif 'da' in period:
+            step = 'daily_statistics'
+
+    if step == 'hourly_statistics':
+        hours = int(settings[step].get('hours'))
+        if hours == 1:
+            mip = _get_first_match(mips, '1h', decorators)
+        if int(hours) == 3:
+            mip = _get_first_match(mips, '3h', decorators)
+        elif int(hours) == 6:
+            mip = _get_first_match(mips, '6h', decorators)
+        mip = mip if mip else _get_first_match(mips, 'hr', decorators)
+    elif step == 'daily_statistics':
+        mip = _get_first_match(mips, 'day', decorators)
+    elif step == ('monthly_statistics', 'seasonal_statistics'):
+        mip = _get_first_match(mips, 'mon', decorators)
+    elif step in 'annual_statistics':
+        mip = _get_first_match(mips, 'yr', decorators)
+    elif step == 'decadal_statistics':
+        mip = _get_first_match(mips, 'dec', decorators)
+        mip = mip if mip else _get_first_match(mips, 'yr', decorators)
+
+    if mip:
+        fname = attributes['filename'].name
+        logger.info(
+            f"Guessed change of mip from {input_mip} to {mip} after single"
+            f" preprocessing step {step} for file {fname}")
+    return mip
+
+
 class PreprocessorFile(TrackedFile):
     """Preprocessor output file."""
 
@@ -451,6 +528,9 @@ class PreprocessorFile(TrackedFile):
 
         attributes['filename'] = filename
 
+        self._1step_freq_change = _detect_single_step_freq_change(
+            attributes, settings)
+
         super().__init__(
             filename=filename,
             attributes=attributes,
@@ -467,11 +547,38 @@ class PreprocessorFile(TrackedFile):
             raise ValueError(
                 f"PreprocessorFile {self} has no settings for step {step}"
             )
-        self.cubes = preprocess(self.cubes, step,
-                                input_files=self._input_files,
-                                output_file=self.filename,
-                                debug=debug,
-                                **self.settings[step])
+        if self._1step_freq_change:
+            self.cubes = self.statisticized_cubes(
+                {'statistics': {step: self.settings[step]}})
+        else:
+            self.cubes = preprocess(self.cubes, step,
+                                    input_files=self._input_files,
+                                    output_file=self.filename,
+                                    debug=debug,
+                                    **self.settings[step])
+
+    def statisticized_cubes(self, statistitcs_settings):
+        # Should not happen: debug.
+        if self._cubes is not None:
+            logger.debug("Unexpected behaviour in applying single step "
+                         "preprocessor, cubes loaded several times")
+
+        # Change metadata.
+        parent, name = self.filename.parent, self.filename.name
+        name = name.replace(self.attributes['mip'], self._1step_freq_change)
+        self.filename = Path(parent).joinpath(name)
+        self.settings['save']['filename'] = self.filename
+
+        self.attributes['mip'] = self._1step_freq_change
+
+        # Load.
+        self._cubes = [
+            ds._load_with_callback(
+                self.settings.get('load', {}).get('callback'),
+                **statistitcs_settings)
+            for ds in self.datasets
+        ]
+        return self._cubes
 
     @property
     def cubes(self):
