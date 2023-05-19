@@ -318,8 +318,10 @@ def test_multimodel_only_time_dimension(timeseries_cubes_month, span):
 def test_multimodel_no_time_dimension(timeseries_cubes_month, span):
     """Test statistic without time dimension using monthly data.
 
-    Also remove air_pressure dimensions since this slightly differs across
-    cubes. See https://github.com/ESMValGroup/ESMValCore/issues/956.
+    Note: we collapse the air_pressure dimension here (by selecting only its
+    first value) since the original coordinate differs slightly across cubes
+    and leads to merge errors. See also
+    https://github.com/ESMValGroup/ESMValCore/issues/956.
 
     """
     cubes = [cube[0, 0] for cube in timeseries_cubes_month]
@@ -344,8 +346,10 @@ def test_multimodel_scalar_cubes(timeseries_cubes_month, span):
 def test_multimodel_0d_1d_time_no_ignore_scalars(timeseries_cubes_month, span):
     """Test statistic fail on 0D and 1D time dimension using monthly data.
 
-    Also remove air_pressure dimensions since this slightly differs across
-    cubes. See https://github.com/ESMValGroup/ESMValCore/issues/956.
+    Note: we collapse the air_pressure dimension here (by selecting only its
+    first value) since the original coordinate differs slightly across cubes
+    and leads to merge errors. See also
+    https://github.com/ESMValGroup/ESMValCore/issues/956.
 
     """
     cubes = [cube[:, 0] for cube in timeseries_cubes_month]  # remove Z-dim
@@ -361,8 +365,10 @@ def test_multimodel_0d_1d_time_no_ignore_scalars(timeseries_cubes_month, span):
 def test_multimodel_0d_1d_time_ignore_scalars(timeseries_cubes_month, span):
     """Test statistic fail on 0D and 1D time dimension using monthly data.
 
-    Also remove air_pressure dimensions since this slightly differs across
-    cubes. See https://github.com/ESMValGroup/ESMValCore/issues/956.
+    Note: we collapse the air_pressure dimension here (by selecting only its
+    first value) since the original coordinate differs slightly across cubes
+    and leads to merge errors. See also
+    https://github.com/ESMValGroup/ESMValCore/issues/956.
 
     """
     cubes = [cube[:, 0] for cube in timeseries_cubes_month]  # remove Z-dim
@@ -384,8 +390,10 @@ def test_multimodel_0d_1d_time_ignore_scalars(timeseries_cubes_month, span):
 def test_multimodel_only_some_time_dimensions(timeseries_cubes_month, span):
     """Test statistic fail if only some cubes have time dimension.
 
-    Also remove air_pressure dimensions since this slightly differs across
-    cubes. See https://github.com/ESMValGroup/ESMValCore/issues/956.
+    Note: we collapse the air_pressure dimension here (by selecting only its
+    first value) since the original coordinate differs slightly across cubes
+    and leads to merge errors. See also
+    https://github.com/ESMValGroup/ESMValCore/issues/956.
 
     """
     cubes = [cube[:, 0] for cube in timeseries_cubes_month]  # remove Z-dim
@@ -408,8 +416,10 @@ def test_multimodel_only_some_time_dimensions(timeseries_cubes_month, span):
 def test_multimodel_diff_scalar_time_fail(timeseries_cubes_month, span):
     """Test statistic fail on different scalar time dimensions.
 
-    Also remove air_pressure dimensions since this slightly differs across
-    cubes. See https://github.com/ESMValGroup/ESMValCore/issues/956.
+    Note: we collapse the air_pressure dimension here (by selecting only its
+    first value) since the original coordinate differs slightly across cubes
+    and leads to merge errors. See also
+    https://github.com/ESMValGroup/ESMValCore/issues/956.
 
     """
     cubes = [cube[0, 0] for cube in timeseries_cubes_month]
@@ -428,8 +438,10 @@ def test_multimodel_diff_scalar_time_fail(timeseries_cubes_month, span):
 def test_multimodel_diff_scalar_time_ignore(timeseries_cubes_month, span):
     """Ignore different scalar time dimensions.
 
-    Also remove air_pressure dimensions since this slightly differs across
-    cubes. See https://github.com/ESMValGroup/ESMValCore/issues/956.
+    Note: we collapse the air_pressure dimension here (by selecting only its
+    first value) since the original coordinate differs slightly across cubes
+    and leads to merge errors. See also
+    https://github.com/ESMValGroup/ESMValCore/issues/956.
 
     """
     cubes = [cube[0, 0] for cube in timeseries_cubes_month]
@@ -449,8 +461,10 @@ def test_multimodel_diff_scalar_time_ignore(timeseries_cubes_month, span):
 def test_multimodel_ignore_scalar_coords(timeseries_cubes_month, span):
     """Test statistic does not fail on different scalar coords when ignored.
 
-    Also remove air_pressure dimensions since this slightly differs across
-    cubes. See https://github.com/ESMValGroup/ESMValCore/issues/956.
+    Note: we collapse the air_pressure dimension here (by selecting only its
+    first value) since the original coordinate differs slightly across cubes
+    and leads to merge errors. See also
+    https://github.com/ESMValGroup/ESMValCore/issues/956.
 
     """
     cubes = [cube[0, 0] for cube in timeseries_cubes_month]
@@ -473,8 +487,10 @@ def test_multimodel_ignore_scalar_coords(timeseries_cubes_month, span):
 def test_multimodel_do_not_ignore_scalar_coords(timeseries_cubes_month, span):
     """Test statistic fail on different scalar coords.
 
-    Also remove air_pressure dimensions since this slightly differs across
-    cubes. See https://github.com/ESMValGroup/ESMValCore/issues/956.
+    Note: we collapse the air_pressure dimension here (by selecting only its
+    first value) since the original coordinate differs slightly across cubes
+    and leads to merge errors. See also
+    https://github.com/ESMValGroup/ESMValCore/issues/956.
 
     """
     cubes = [cube[0, 0] for cube in timeseries_cubes_month]
