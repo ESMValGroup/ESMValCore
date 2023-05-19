@@ -41,7 +41,7 @@ class DownloadError(Exception):
 
 
 class UniqueSession(requests.Session):
-    """Implements singleton design pattern around requests.Session"""
+    """Implements singleton design pattern around requests.Session."""
 
     _instance = None
 
