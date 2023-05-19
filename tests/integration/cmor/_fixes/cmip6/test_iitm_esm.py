@@ -4,7 +4,7 @@ import iris
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.cmip6.kace_1_0_g import (
+from esmvalcore.cmor._fixes.cmip6.iitm_esm import (
     AllVars,
     Tos,
 )
