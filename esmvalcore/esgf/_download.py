@@ -477,9 +477,6 @@ class ESGFFile:
         logger.debug("Downloading %s to %s", url, tmp_file)
         start_time = datetime.datetime.now()
         response = UniqueSession().get(url)
-        # stream=True,
-        # timeout=TIMEOUT,
-        # cert=get_credentials()
         response.raise_for_status()
         with tmp_file.open("wb") as file:
             for chunk in response.iter_content(chunk_size=None):
