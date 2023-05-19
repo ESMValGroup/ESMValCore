@@ -327,13 +327,3 @@ class IconFix(NativeDatasetFix):
         lon_coord.points = (lon_coord.points + 360.0) % 360.0
         if lon_coord.bounds is not None:
             lon_coord.bounds = (lon_coord.bounds + 360.0) % 360.0
-
-
-class SetUnitsTo1(IconFix):
-    """Base fix to set units to '1'."""
-
-    def fix_metadata(self, cubes):
-        """Fix metadata."""
-        cube = self.get_cube(cubes)
-        cube.units = '1'
-        return cubes

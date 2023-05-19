@@ -12,7 +12,7 @@ from iris.cube import Cube, CubeList
 
 import esmvalcore.cmor._fixes.icon.icon
 from esmvalcore.cmor._fixes.icon._base_fixes import IconFix
-from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi, Siconc, Siconca
+from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config._config import get_extra_facets
@@ -615,12 +615,13 @@ def test_rsut_fix(cubes_2d):
 def test_get_siconc_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'SImon', 'siconc')
-    assert fix == [Siconc(None), AllVars(None)]
+    assert fix == [AllVars(None)]
 
 
 def test_siconc_fix(cubes_2d):
     """Test fix."""
-    fixed_cubes = fix_metadata(cubes_2d, 'SImon', 'siconc')
+    fix = get_allvars_fix('SImon', 'siconc')
+    fixed_cubes = fix.fix_metadata(cubes_2d)
 
     cube = check_siconc_metadata(fixed_cubes, 'siconc',
                                  'Sea-Ice Area Percentage (Ocean Grid)')
@@ -637,12 +638,13 @@ def test_siconc_fix(cubes_2d):
 def test_get_siconca_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'SImon', 'siconca')
-    assert fix == [Siconca(None), AllVars(None)]
+    assert fix == [AllVars(None)]
 
 
 def test_siconca_fix(cubes_2d):
     """Test fix."""
-    fixed_cubes = fix_metadata(cubes_2d, 'SImon', 'siconca')
+    fix = get_allvars_fix('SImon', 'siconca')
+    fixed_cubes = fix.fix_metadata(cubes_2d)
 
     cube = check_siconc_metadata(fixed_cubes, 'siconca',
                                  'Sea-Ice Area Percentage (Atmospheric Grid)')
