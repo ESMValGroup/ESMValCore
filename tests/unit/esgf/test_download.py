@@ -409,7 +409,7 @@ def test_single_download(mocker, tmp_path, checksum):
                                       spec_set=True,
                                       instance=True)
     response.iter_content.return_value = [b'chunk1', b'chunk2']
-    get = mocker.patch.object(_download.requests,
+    get = mocker.patch.object(_download.requests.Session,
                               'get',
                               autospec=True,
                               return_value=response)
@@ -497,7 +497,7 @@ def test_single_download_fail(mocker, tmp_path):
                                       instance=True)
     response.raise_for_status.side_effect = (
         requests.exceptions.RequestException("test error"))
-    mocker.patch.object(_download.requests,
+    mocker.patch.object(_download.requests.Session,
                         'get',
                         autospec=True,
                         return_value=response)
