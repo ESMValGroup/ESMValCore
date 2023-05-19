@@ -10,6 +10,7 @@ import cf_units
 import iris
 import numpy as np
 import pytest
+from iris.coords import AuxCoord
 
 from esmvalcore.preprocessor import extract_time
 from esmvalcore.preprocessor._multimodel import multi_model_statistics
@@ -156,13 +157,14 @@ def timeseries_cubes_day(request):
     return cube_dict
 
 
-def multimodel_test(cubes, statistic, span):
+def multimodel_test(cubes, statistic, span, **kwargs):
     """Run multimodel test with some simple checks."""
     statistics = [statistic]
 
     result = multi_model_statistics(products=cubes,
                                     statistics=statistics,
-                                    span=span)
+                                    span=span,
+                                    **kwargs)
     assert isinstance(result, dict)
     assert statistic in result
 
@@ -279,21 +281,21 @@ def test_multimodel_regression_day_proleptic_gregorian(
 
 
 @pytest.mark.use_sample_data
-def test_multimodel_no_vertical_dimension(timeseries_cubes_month):
+@pytest.mark.parametrize('span', SPAN_PARAMS)
+def test_multimodel_no_vertical_dimension(timeseries_cubes_month, span):
     """Test statistic without vertical dimension using monthly data."""
-    span = 'full'
     cubes = [cube[:, 0] for cube in timeseries_cubes_month]
     multimodel_test(cubes, span=span, statistic='mean')
 
 
 @pytest.mark.use_sample_data
-def test_multimodel_merge_error(timeseries_cubes_month):
+@pytest.mark.parametrize('span', SPAN_PARAMS)
+def test_multimodel_merge_error(timeseries_cubes_month, span):
     """Test statistic with slightly different vertical coordinates.
 
     See https://github.com/ESMValGroup/ESMValCore/issues/956.
 
     """
-    span = 'full'
     cubes = timeseries_cubes_month
     msg = (
         "Multi-model statistics failed to merge input cubes into a single "
@@ -304,22 +306,24 @@ def test_multimodel_merge_error(timeseries_cubes_month):
 
 
 @pytest.mark.use_sample_data
-def test_multimodel_only_time_dimension(timeseries_cubes_month):
+@pytest.mark.parametrize('span', SPAN_PARAMS)
+def test_multimodel_only_time_dimension(timeseries_cubes_month, span):
     """Test statistic without only the time dimension using monthly data."""
-    span = 'full'
     cubes = [cube[:, 0, 0, 0] for cube in timeseries_cubes_month]
     multimodel_test(cubes, span=span, statistic='mean')
 
 
 @pytest.mark.use_sample_data
-def test_multimodel_no_time_dimension(timeseries_cubes_month):
+@pytest.mark.parametrize('span', SPAN_PARAMS)
+def test_multimodel_no_time_dimension(timeseries_cubes_month, span):
     """Test statistic without time dimension using monthly data.
 
-    Also remove air_pressure dimensions since this slightly differs across
-    cubes. See https://github.com/ESMValGroup/ESMValCore/issues/956.
+    Note: we collapse the air_pressure dimension here (by selecting only its
+    first value) since the original coordinate differs slightly across cubes
+    and leads to merge errors. See also
+    https://github.com/ESMValGroup/ESMValCore/issues/956.
 
     """
-    span = 'full'
     cubes = [cube[0, 0] for cube in timeseries_cubes_month]
 
     result = multimodel_test(cubes, span=span, statistic='mean')['mean']
@@ -327,9 +331,9 @@ def test_multimodel_no_time_dimension(timeseries_cubes_month):
 
 
 @pytest.mark.use_sample_data
-def test_multimodel_scalar_cubes(timeseries_cubes_month):
+@pytest.mark.parametrize('span', SPAN_PARAMS)
+def test_multimodel_scalar_cubes(timeseries_cubes_month, span):
     """Test statistic with scalar cubes."""
-    span = 'full'
     cubes = [cube[0, 0, 0, 0] for cube in timeseries_cubes_month]
 
     result = multimodel_test(cubes, span=span, statistic='mean')['mean']
@@ -338,14 +342,16 @@ def test_multimodel_scalar_cubes(timeseries_cubes_month):
 
 
 @pytest.mark.use_sample_data
-def test_multimodel_0d_and_1d_time_dimensions(timeseries_cubes_month):
+@pytest.mark.parametrize('span', SPAN_PARAMS)
+def test_multimodel_0d_1d_time_no_ignore_scalars(timeseries_cubes_month, span):
     """Test statistic fail on 0D and 1D time dimension using monthly data.
 
-    Also remove air_pressure dimensions since this slightly differs across
-    cubes. See https://github.com/ESMValGroup/ESMValCore/issues/956.
+    Note: we collapse the air_pressure dimension here (by selecting only its
+    first value) since the original coordinate differs slightly across cubes
+    and leads to merge errors. See also
+    https://github.com/ESMValGroup/ESMValCore/issues/956.
 
     """
-    span = 'full'
     cubes = [cube[:, 0] for cube in timeseries_cubes_month]  # remove Z-dim
     cubes[1] = cubes[1][0]  # use 0D time dim for one cube
 
@@ -355,14 +361,41 @@ def test_multimodel_0d_and_1d_time_dimensions(timeseries_cubes_month):
 
 
 @pytest.mark.use_sample_data
-def test_multimodel_only_some_time_dimensions(timeseries_cubes_month):
-    """Test statistic fail if only some cubes have time dimension.
+@pytest.mark.parametrize('span', SPAN_PARAMS)
+def test_multimodel_0d_1d_time_ignore_scalars(timeseries_cubes_month, span):
+    """Test statistic fail on 0D and 1D time dimension using monthly data.
 
-    Also remove air_pressure dimensions since this slightly differs across
-    cubes. See https://github.com/ESMValGroup/ESMValCore/issues/956.
+    Note: we collapse the air_pressure dimension here (by selecting only its
+    first value) since the original coordinate differs slightly across cubes
+    and leads to merge errors. See also
+    https://github.com/ESMValGroup/ESMValCore/issues/956.
 
     """
-    span = 'full'
+    cubes = [cube[:, 0] for cube in timeseries_cubes_month]  # remove Z-dim
+    cubes[1] = cubes[1][0]  # use 0D time dim for one cube
+
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array: some cubes have a 'time' dimension, some do not have a 'time' "
+        "dimension."
+    )
+    with pytest.raises(ValueError, match=msg):
+        multimodel_test(
+            cubes, span=span, statistic='mean', ignore_scalar_coords=True
+        )
+
+
+@pytest.mark.use_sample_data
+@pytest.mark.parametrize('span', SPAN_PARAMS)
+def test_multimodel_only_some_time_dimensions(timeseries_cubes_month, span):
+    """Test statistic fail if only some cubes have time dimension.
+
+    Note: we collapse the air_pressure dimension here (by selecting only its
+    first value) since the original coordinate differs slightly across cubes
+    and leads to merge errors. See also
+    https://github.com/ESMValGroup/ESMValCore/issues/956.
+
+    """
     cubes = [cube[:, 0] for cube in timeseries_cubes_month]  # remove Z-dim
 
     # Remove time dimension for one cube
@@ -379,14 +412,16 @@ def test_multimodel_only_some_time_dimensions(timeseries_cubes_month):
 
 
 @pytest.mark.use_sample_data
-def test_multimodel_0d_different_time_dimensions(timeseries_cubes_month):
+@pytest.mark.parametrize('span', SPAN_PARAMS)
+def test_multimodel_diff_scalar_time_fail(timeseries_cubes_month, span):
     """Test statistic fail on different scalar time dimensions.
 
-    Also remove air_pressure dimensions since this slightly differs across
-    cubes. See https://github.com/ESMValGroup/ESMValCore/issues/956.
+    Note: we collapse the air_pressure dimension here (by selecting only its
+    first value) since the original coordinate differs slightly across cubes
+    and leads to merge errors. See also
+    https://github.com/ESMValGroup/ESMValCore/issues/956.
 
     """
-    span = 'full'
     cubes = [cube[0, 0] for cube in timeseries_cubes_month]
 
     # Use different scalar time point and bounds for one cube
@@ -394,5 +429,78 @@ def test_multimodel_0d_different_time_dimensions(timeseries_cubes_month):
     cubes[1].coord('time').bounds = [0.0, 40.0]
 
     msg = "Tried to align cubes in multi-model statistics, but failed for cube"
+    with pytest.raises(ValueError, match=msg):
+        multimodel_test(cubes, span=span, statistic='mean')
+
+
+@pytest.mark.use_sample_data
+@pytest.mark.parametrize('span', SPAN_PARAMS)
+def test_multimodel_diff_scalar_time_ignore(timeseries_cubes_month, span):
+    """Ignore different scalar time dimensions.
+
+    Note: we collapse the air_pressure dimension here (by selecting only its
+    first value) since the original coordinate differs slightly across cubes
+    and leads to merge errors. See also
+    https://github.com/ESMValGroup/ESMValCore/issues/956.
+
+    """
+    cubes = [cube[0, 0] for cube in timeseries_cubes_month]
+
+    # Use different scalar time point and bounds for one cube
+    cubes[1].coord('time').points = 20.0
+    cubes[1].coord('time').bounds = [0.0, 40.0]
+
+    result = multimodel_test(
+        cubes, span=span, statistic='mean', ignore_scalar_coords=True
+    )['mean']
+    assert result.shape == (3, 2)
+
+
+@pytest.mark.use_sample_data
+@pytest.mark.parametrize('span', SPAN_PARAMS)
+def test_multimodel_ignore_scalar_coords(timeseries_cubes_month, span):
+    """Test statistic does not fail on different scalar coords when ignored.
+
+    Note: we collapse the air_pressure dimension here (by selecting only its
+    first value) since the original coordinate differs slightly across cubes
+    and leads to merge errors. See also
+    https://github.com/ESMValGroup/ESMValCore/issues/956.
+
+    """
+    cubes = [cube[0, 0] for cube in timeseries_cubes_month]
+    for (idx, cube) in enumerate(cubes):
+        aux_coord = AuxCoord(0.0, var_name=f'name_{idx}')
+        cube.add_aux_coord(aux_coord, ())
+
+    result = multimodel_test(
+        cubes, span=span, statistic='mean', ignore_scalar_coords=True
+    )['mean']
+    assert result.shape == (3, 2)
+
+    # Make sure that the input cubes still contain the scalar coords
+    for (idx, cube) in enumerate(cubes):
+        assert cube.coord(var_name=f'name_{idx}', dimensions=())
+
+
+@pytest.mark.use_sample_data
+@pytest.mark.parametrize('span', SPAN_PARAMS)
+def test_multimodel_do_not_ignore_scalar_coords(timeseries_cubes_month, span):
+    """Test statistic fail on different scalar coords.
+
+    Note: we collapse the air_pressure dimension here (by selecting only its
+    first value) since the original coordinate differs slightly across cubes
+    and leads to merge errors. See also
+    https://github.com/ESMValGroup/ESMValCore/issues/956.
+
+    """
+    cubes = [cube[0, 0] for cube in timeseries_cubes_month]
+    for (idx, cube) in enumerate(cubes):
+        aux_coord = AuxCoord(0.0, var_name=f'name_{idx}')
+        cube.add_aux_coord(aux_coord, ())
+
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
     with pytest.raises(ValueError, match=msg):
         multimodel_test(cubes, span=span, statistic='mean')

@@ -219,6 +219,7 @@ class IconFix(NativeDatasetFix):
         # Note: we use a lock here to prevent multiple processes from
         # downloading the file simultaneously and to ensure that other
         # processes wait until the download has finished
+        self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
         lock = FileLock(self.CACHE_DIR / f"{grid_name}.lock")
         with lock:
             grid_path = self.CACHE_DIR / grid_name
@@ -241,7 +242,6 @@ class IconFix(NativeDatasetFix):
                 grid_url,
                 grid_path,
             )
-            self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
             with requests.get(grid_url, stream=True,
                               timeout=self.TIMEOUT) as response:
                 response.raise_for_status()
