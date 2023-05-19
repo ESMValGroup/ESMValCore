@@ -10,6 +10,7 @@ dependencies:
   - cftime
   - compilers
   - dask
+  - distributed
   - esgf-pyclient>=0.3.1
   - esmpy!=8.1.0
   - filelock
@@ -18,7 +19,7 @@ dependencies:
   - geopy
   - humanfriendly
   - importlib_resources
-  - iris>=3.4.0
+  - iris>=3.6.0
   - iris-esmf-regrid >=0.6.0  # to work with latest esmpy
   - isodate
   - jinja2
@@ -72,3 +73,6 @@ dependencies:
   # Not on conda forge - vprof
   - yamllint
   - yapf
+  - pip
+  - pip:
+      - ESMValTool_sample_data==0.0.3

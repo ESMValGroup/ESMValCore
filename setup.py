@@ -28,9 +28,8 @@ REQUIREMENTS = {
     # Use with pip install . to install from source
     'install': [
         'cartopy',
-        # see https://github.com/SciTools/cf-units/issues/218
         'cf-units',
-        'dask[array]',
+        'dask[array,distributed]',
         'esgf-pyclient>=0.3.1',
         'esmf-regrid',
         'esmpy!=8.1.0',
@@ -56,8 +55,8 @@ REQUIREMENTS = {
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        'scitools-iris>=3.4.0',
-        'shapely[vectorized]',
+        'scitools-iris>=3.6.0',
+        'shapely',
         'stratify',
         'yamale',
     ],
