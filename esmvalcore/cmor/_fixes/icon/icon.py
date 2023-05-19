@@ -278,6 +278,11 @@ class AllVars(IconFix):
             is_point_measurement = ('time' in cell_method.coord_names and
                                     'point' in cell_method.method)
             if is_point_measurement:
+                logger.debug(
+                    "ICON data describes point measurements: time coordinate "
+                    "will not be shifted back by 1/2 of output interval (%s)",
+                    self.extra_facets['frequency'],
+                )
                 return
 
         # Remove bounds; they will be re-added later after shifting
@@ -302,6 +307,10 @@ class AllVars(IconFix):
                 )
                 raise ValueError(error_msg) from exc
             time_coord.convert_units(time_units)
+            logger.debug(
+                "Rounded ICON time coordinate to closest day for decadal, "
+                "yearly and monthly data"
+            )
 
         # Use original time points to calculate bounds (for a given point,
         # start of bounds is previous point, end of bounds is point)
@@ -317,6 +326,10 @@ class AllVars(IconFix):
         )  # running mean with window length 2
         time_coord.bounds = np.stack(
             (extended_time_points[:-1], extended_time_points[1:]), axis=-1
+        )
+        logger.debug(
+            "Shifted ICON time coordinate back by 1/2 of output interval (%s)",
+            self.extra_facets['frequency'],
         )
 
     def _get_previous_timestep(self, datetime_point):
