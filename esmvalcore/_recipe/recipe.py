@@ -212,9 +212,6 @@ def _get_default_settings(dataset):
 
     settings = {}
 
-    # Configure (deprecated, remove for v2.10.0) load callback
-    settings['load'] = {'callback': 'default'}
-
     if _derive_needed(dataset):
         settings['derive'] = {
             'short_name': facets['short_name'],
@@ -555,6 +552,8 @@ def _update_warning_settings(settings, project):
     if 'ignore_warnings' not in cfg:
         return
     for (step, ignored_warnings) in cfg['ignore_warnings'].items():
+        if step == 'load':
+            continue  # handled in esmvalcore.Dataset._load()
         if step in settings:
             settings[step]['ignore_warnings'] = ignored_warnings
 

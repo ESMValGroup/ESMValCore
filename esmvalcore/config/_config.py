@@ -139,3 +139,15 @@ def get_activity(variable):
         return CMOR_TABLES[project].activities[exp][0]
     except (KeyError, AttributeError):
         return None
+
+
+def get_ignored_warnings(project: str, step: str) -> None | list:
+    """Get ignored warnings for a given preprocessing step."""
+    if project not in CFG:
+        return None
+    project_cfg = CFG[project]
+    if 'ignore_warnings' not in project_cfg:
+        return None
+    if step not in project_cfg['ignore_warnings']:
+        return None
+    return project_cfg['ignore_warnings'][step]

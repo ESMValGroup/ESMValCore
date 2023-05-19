@@ -22,6 +22,7 @@ from esmvalcore.config import CFG, Session
 from esmvalcore.config._config import (
     get_activity,
     get_extra_facets,
+    get_ignored_warnings,
     get_institutes,
 )
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
@@ -728,7 +729,12 @@ class Dataset:
             'add_unique_suffix': True,
             **self.facets,
         }
-        settings['load'] = {'callback': callback}
+        settings['load'] = {
+            'callback': callback,
+            'ignore_warnings': get_ignored_warnings(
+                self.facets['project'], 'load'
+            ),
+        }
         settings['fix_metadata'] = {
             'check_level': self.session['check_level'],
             **self.facets,
