@@ -455,7 +455,7 @@ def test_single_download(mocker, tmp_path, checksum):
     # File was downloaded only once
     get.assert_called_once()
     # From the correct URL
-    get.assert_called_with(url, stream=True, timeout=300, cert=credentials)
+    get.assert_called_with(_download.UniqueSession(), url)
     # We checked for a valid response
     response.raise_for_status.assert_called_once()
     # And requested a reasonable chunk size

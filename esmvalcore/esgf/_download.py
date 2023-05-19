@@ -54,17 +54,6 @@ class UniqueSession(requests.Session):
         return cls._instance
 
 
-# def create_session():
-#     """Creates the session object for all requests."""
-#     global SESSION
-#     s = requests.Session()
-#     s.stream = True
-#     s.params = {'timeout': TIMEOUT}
-#     s.cert = get_credentials()
-#     logging.info("requests Session opened")
-#     SESSION = s
-
-
 def compute_speed(size, duration):
     """Compute download speed in MB/s."""
     if duration != 0:
