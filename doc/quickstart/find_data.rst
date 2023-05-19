@@ -355,7 +355,7 @@ is always disabled.
 .. warning::
 
    To get all desired time points, do **not** use ``start_year`` and
-   ``end_year`` in the recipe, but rather ``timerange`` with at least 6 digits.
+   ``end_year`` in the recipe, but rather ``timerange`` with at least 8 digits.
    For example, to get data for the years 2000 and 2001, use ``timerange:
    20000101/20020101`` instead of ``timerange: 2000/2001`` or ``start_year:
    2000``, ``end_year: 2001``.
