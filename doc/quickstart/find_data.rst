@@ -216,6 +216,10 @@ Key                  Description                            Default value if not
                                                             default DRS is used)
 ``raw_name``         Variable name of the variable in the   CMOR variable name of the
                      raw input file                         corresponding variable
+``raw_units``        Units of the variable in the raw       If specified, the value given by
+                     input file                             the ``units`` attribute in the
+                                                            raw input file; otherwise
+                                                            ``unknown``
 ``scomp``            Specific component-model name          No default (needs to be specified
                                                             in extra facets or recipe if
                                                             default DRS is used)
@@ -284,6 +288,10 @@ Key                  Description                            Default value if not
 ``postproc_flag``    Postprocessing flag of the data        ``''`` (empty string)
 ``raw_name``         Variable name of the variable in the   CMOR variable name of the
                      raw input file                         corresponding variable
+``raw_units``        Units of the variable in the raw       If specified, the value given by
+                     input file                             the ``units`` attribute in the
+                                                            raw input file; otherwise
+                                                            ``unknown``
 ==================== ====================================== =================================
 
 .. note::
@@ -379,24 +387,28 @@ For some variables, extra facets are necessary; otherwise ESMValTool cannot
 read them properly.
 Supported keys for extra facets are:
 
-============= ============================= =================================
-Key           Description                   Default value if not specified
-============= ============================= =================================
-``latitude``  Standard name of the latitude ``latitude``
-              coordinate in the raw input
-              file
-``longitude`` Standard name of the          ``longitude``
-              longitude coordinate in the
-              raw input file
-``raw_name``  Variable name of the          CMOR variable name of the
-              variable in the raw input     corresponding variable
-              file
-``ugrid``     Automatic UGRIDization of     ``True``
-              the input data
-``var_type``  Variable type of the          No default (needs to be specified
-              variable in the raw input     in extra facets or recipe if
-              file                          default DRS is used)
-============= ============================= =================================
+=================== ================================ ===================================
+Key                 Description                      Default value if not specified
+=================== ================================ ===================================
+``latitude``        Standard name of the latitude    ``latitude``
+                    coordinate in the raw input
+                    file
+``longitude``       Standard name of the             ``longitude``
+                    longitude coordinate in the
+                    raw input file
+``raw_name``        Variable name of the             CMOR variable name of the
+                    variable in the raw input        corresponding variable
+                    file
+``raw_units``       Units of the variable in the     If specified, the value given by
+                    raw input file                   the ``units`` attribute in the
+                                                     raw input file; otherwise
+                                                     ``unknown``
+``ugrid``           Automatic UGRIDization of        ``True``
+                    the input data
+``var_type``        Variable type of the             No default (needs to be specified
+                    variable in the raw input        in extra facets or recipe if
+                    file                             default DRS is used)
+=================== ================================ ===================================
 
 .. hint::
 
