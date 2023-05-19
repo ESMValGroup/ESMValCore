@@ -1,4 +1,6 @@
 """Functions dealing with config-user.yml / config-developer.yml."""
+from __future__ import annotations
+
 import collections.abc
 import fnmatch
 import logging
@@ -11,6 +13,7 @@ import yaml
 
 from esmvalcore.cmor.table import CMOR_TABLES, read_cmor_tables
 from esmvalcore.exceptions import RecipeError
+from esmvalcore.typing import FacetValue
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +144,7 @@ def get_activity(variable):
         return None
 
 
-def get_ignored_warnings(project: str, step: str) -> None | list:
+def get_ignored_warnings(project: FacetValue, step: str) -> None | list:
     """Get ignored warnings for a given preprocessing step."""
     if project not in CFG:
         return None
