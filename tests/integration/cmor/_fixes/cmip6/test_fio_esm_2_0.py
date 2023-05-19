@@ -13,13 +13,13 @@ from esmvalcore.cmor.table import get_var_info
 
 def test_get_tas_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'FIO-ESM-2-0', 'Amon', 'wrong_lat_bounds')
+    fix = Fix.get_fixes('CMIP6', 'FIO-ESM-2-0', 'Amon', 'tas')
     assert fix == [Amon(None)]
 
 
 def test_get_tos_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'FIO-ESM-2-0', 'Omon', 'wrong_lat_bounds')
+    fix = Fix.get_fixes('CMIP6', 'FIO-ESM-2-0', 'Omon', 'tos')
     assert fix == [Omon(None), Tos(None)]
 
 

@@ -109,7 +109,7 @@ def tos_cubes():
 
 
 def test_get_allvars_fix():
-    fix = Fix.get_fixes('CMIP6', 'KACE-1-0-G', 'Omon', 'wrong_time_bnds')
+    fix = Fix.get_fixes('CMIP6', 'KACE-1-0-G', 'Omon', 'tos')
     assert fix == [AllVars(None)]
 
 

@@ -1,6 +1,5 @@
 """Test fixes for NESM3."""
 import iris
-import numpy as np
 import pytest
 
 from esmvalcore.cmor._fixes.cmip6.nesm3 import Cl, Cli, Clw, AllVars
