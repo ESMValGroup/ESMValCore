@@ -241,7 +241,7 @@ EMAC:
     cl:
       raw_name: [aclcac_cav, aclcac_ave]
       raw_units: '1'
-      jhannel: Amon
+      channel: Amon
     cli:
       raw_name: [xim1_cav, xim1_ave]
       channel: Amon
