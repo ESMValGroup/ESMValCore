@@ -352,6 +352,16 @@ facets (see below).
 For point measurements (identified by ``cell_methods = "time: point"``), this
 is always disabled.
 
+.. warning::
+
+   To get all desired time points, do **not** use ``start_year`` and
+   ``end_year`` in the recipe, but rather ``timerange`` with at least 6 digits.
+   For example, to get data for the years 2000 and 2001, use ``timerange:
+   20000101/20020101`` instead of ``timerange: 2000/2001`` or ``start_year:
+   2000``, ``end_year: 2001``.
+   See :ref:`timerange_examples` for more information on the ``timerange``
+   option.
+
 ESMValCore can automatically make native ICON data `UGRID
 <https://ugrid-conventions.github.io/ugrid-conventions/>`__-compliant when
 loading the data.
