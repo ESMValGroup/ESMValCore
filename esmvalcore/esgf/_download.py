@@ -42,9 +42,11 @@ class DownloadError(Exception):
 
 class UniqueSession(requests.Session):
     """Implements singleton design pattern around requests.Session"""
+
     _instance = None
 
     def __new__(cls, *args, **kwargs):
+        """Create the instance if it does not exists, then returns it."""
         if not cls._instance:
             cls._instance = super().__new__(cls, *args, **kwargs)
             cls._instance.stream = True
