@@ -678,14 +678,14 @@ class Dataset:
         """
         return self._load_with_callback(callback='default')
 
-    def _load_with_callback(self, callback):
+    def _load_with_callback(self, callback, **kwargs):
         # TODO: Remove the callback argument for v2.10.0.
         input_files = list(self.files)
         for supplementary_dataset in self.supplementaries:
             input_files.extend(supplementary_dataset.files)
         esgf.download(input_files, self.session['download_dir'])
 
-        cube = self._load(callback)
+        cube = self._load(callback, **kwargs)
         supplementary_cubes = []
         for supplementary_dataset in self.supplementaries:
             supplementary_cube = supplementary_dataset._load(callback)
@@ -703,7 +703,7 @@ class Dataset:
 
         return cubes[0]
 
-    def _load(self, callback) -> Cube:
+    def _load(self, callback, **kwargs) -> Cube:
         """Load self.files into an iris cube and return it."""
         if not self.files:
             lines = [
@@ -729,6 +729,12 @@ class Dataset:
             **self.facets,
         }
         settings['load'] = {'callback': callback}
+
+        # Load with time statistics feature.
+        statistics = kwargs.get('statistics', None)
+        if statistics:
+            settings.update(statistics)
+
         settings['fix_metadata'] = {
             'check_level': self.session['check_level'],
             **self.facets,

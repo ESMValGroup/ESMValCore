@@ -171,6 +171,10 @@ class TrackedFile:
         """Filename."""
         return self._filename
 
+    @filename.setter
+    def filename(self, value):
+        self._filename = value
+
     @property
     def provenance_file(self):
         """Filename of provenance."""
