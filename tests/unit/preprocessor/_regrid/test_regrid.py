@@ -315,6 +315,5 @@ def test_use_mask_if_discontiguities_in_coords():
     assert scheme == {'use_src_mask': True}
 
 
-
 if __name__ == '__main__':
     unittest.main()
