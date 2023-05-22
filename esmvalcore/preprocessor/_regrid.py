@@ -383,6 +383,18 @@ def extract_location(cube, location, scheme):
                          scheme)
 
 
+def _check_grid_discontiguities(cube, scheme, scheme_args):
+    """Check if there are grid discontiguities. If so, set use_src_mask to True."""
+    try:
+        discontiguities = iris.util.find_discontiguities(cube)
+    except NotImplementedError:
+        pass
+    else:
+        if np.isin(True, discontiguities) and 'use_src_mask' in scheme_args:
+            scheme['use_src_mask'] = True
+    return scheme
+
+
 def extract_point(cube, latitude, longitude, scheme):
     """Extract a point, with interpolation.
 
@@ -614,6 +626,7 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             scheme['src_cube'] = cube
         if 'grid_cube' in scheme_args:
             scheme['grid_cube'] = target_grid
+        scheme = _check_grid_discontiguities(cube, scheme, scheme_args)
 
         loaded_scheme = obj(**scheme)
     else:
