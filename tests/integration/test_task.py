@@ -68,8 +68,7 @@ def example_tasks(tmp_path):
     ('fork', None),
     ('spawn', 2),
 ])
-def test_run_tasks(monkeypatch, tmp_path, max_parallel_tasks, example_tasks,
-                   mpmethod):
+def test_run_tasks(monkeypatch, max_parallel_tasks, example_tasks, mpmethod):
     """Check that tasks are run correctly."""
     monkeypatch.setattr(esmvalcore._task, 'Pool',
                         multiprocessing.get_context(mpmethod).Pool)
@@ -82,7 +81,11 @@ def test_run_tasks(monkeypatch, tmp_path, max_parallel_tasks, example_tasks,
 
 @pytest.mark.parametrize('runner', [
     TaskSet._run_sequential,
-    partial(TaskSet._run_parallel, max_parallel_tasks=1),
+    partial(
+        TaskSet._run_parallel,
+        scheduler_address=None,
+        max_parallel_tasks=1,
+    ),
 ])
 def test_runner_uses_priority(monkeypatch, runner, example_tasks):
     """Check that the runner tries to respect task priority."""
