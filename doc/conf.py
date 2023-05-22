@@ -425,6 +425,8 @@ intersphinx_mapping = {
     (f'https://docs.esmvaltool.org/projects/ESMValCore/en/{rtd_version}/',
      None),
     'esmvaltool': (f'https://docs.esmvaltool.org/en/{rtd_version}/', None),
+    'dask': ('https://docs.dask.org/en/stable/', None),
+    'distributed': ('https://distributed.dask.org/en/stable/', None),
     'iris': ('https://scitools-iris.readthedocs.io/en/latest/', None),
     'iris-esmf-regrid': ('https://iris-esmf-regrid.readthedocs.io/en/latest',
                          None),
