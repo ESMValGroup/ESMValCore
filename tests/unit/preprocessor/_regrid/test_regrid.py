@@ -301,14 +301,15 @@ def test_use_mask_if_discontiguities_in_coords():
         units='degrees_east',
         bounds=lon_bounds,
     )
-    cube = iris.cube.Cube(
-        np.ma.array(
+    data = np.ma.array(
         [[-40.0, -20.0, 0.0], [-20.0, 0.0, 20.0]],
-        mask=[[True, False, True], [False, True, False]]
-        ),
+        mask=[[True, False, True], [False, True, False]],
+    )
+    cube = iris.cube.Cube(
+        data,
         aux_coords_and_dims=[(lat_coord, (0, 1)), (lon_coord, (0, 1))],
     )
-    
+
     scheme = {}
     scheme = _check_grid_discontiguities(cube, scheme)
     assert scheme == {'use_src_mask': True}
