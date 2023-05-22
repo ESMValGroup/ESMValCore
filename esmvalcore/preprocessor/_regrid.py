@@ -384,7 +384,7 @@ def extract_location(cube, location, scheme):
 
 
 def _check_grid_discontiguities(cube, scheme, scheme_args):
-    """Check if there are grid discontiguities. If so, set use_src_mask to True."""
+    """Check if there are grid discontiguities and set use_src_mask to True."""
     try:
         discontiguities = iris.util.find_discontiguities(cube)
     except NotImplementedError:
