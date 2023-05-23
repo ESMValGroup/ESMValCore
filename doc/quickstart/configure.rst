@@ -244,6 +244,13 @@ all available resources:
 
 this should work well for most personal computers.
 
+.. note::
+
+   Note that, if running this configuration on a shared node of an HPC cluster,
+   Dask will try and use as many resources it can find available, and this may
+   lead to overcrowding the node by a single user (you)!
+
+
 Create a Dask distruted cluster on the computer running ESMValCore, with
 4 workers with two 2 GiB of memory each (8 GiB in total):
 
