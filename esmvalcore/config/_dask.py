@@ -1,3 +1,4 @@
+"""Configuration for Dask distributed."""
 import contextlib
 import importlib
 import logging
@@ -50,7 +51,7 @@ def get_distributed_client():
     # Start a client, if requested
     if dask_args:
         client = Client(**client_args)
-        logger.info(f"Dask dashboard: {client.dashboard_link}")
+        logger.info("Dask dashboard: %s", client.dashboard_link)
     else:
         logger.info("Using the Dask basic scheduler.")
         client = None
