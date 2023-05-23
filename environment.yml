@@ -73,6 +73,3 @@ dependencies:
   # Not on conda forge - vprof
   - yamllint
   - yapf
-  - pip
-  - pip:
-      - ESMValTool_sample_data==0.0.3
