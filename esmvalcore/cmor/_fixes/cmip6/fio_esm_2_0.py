@@ -7,6 +7,7 @@ from ..shared import round_coordinates
 
 Tos = OceanFixGrid
 
+
 def _check_bounds_monotonicity(coord):
     """Check monotonicity of a coords bounds array."""
     if coord.has_bounds():
@@ -16,12 +17,12 @@ def _check_bounds_monotonicity(coord):
 
     return True
 
+
 class Omon(Fix):
     """Fixes for Omon vars."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix latitude and longitude with round to 6 d.p.
+        """Fix latitude and longitude with round to 6 d.p.
 
         Parameters
         ----------
@@ -31,9 +32,10 @@ class Omon(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
-        round_coordinates(cubes, decimals=6, coord_names=["longitude", "latitude"])
+        round_coordinates(cubes,
+                          decimals=6,
+                          coord_names=["longitude", "latitude"])
         return cubes
 
 
@@ -43,7 +45,7 @@ class Amon(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata.
 
-        FIO-ESM-2-0 ta data contains error in co-ordinate bounds.
+        FIO-ESM-2-0 ta data contains error in coordinate bounds.
 
         Parameters
         ----------

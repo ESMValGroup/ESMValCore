@@ -1,14 +1,12 @@
 """Fixes for MIROC6 model."""
-from ..common import ClFixHybridPressureCoord
-from ..fix import Fix
 import numpy as np
 
+from ..common import ClFixHybridPressureCoord
+from ..fix import Fix
 
 Cl = ClFixHybridPressureCoord
 
-
 Cli = ClFixHybridPressureCoord
-
 
 Clw = ClFixHybridPressureCoord
 
@@ -17,8 +15,8 @@ class Tos(Fix):
     """Fixes for ** all vars."""
 
     def fix_metadata(self, cubes):
-        """
-        ***Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+        """Fix latitude_bounds and longitude_bounds data type and round to 4
+        d.p.
 
         Parameters
         ----------
@@ -28,7 +26,6 @@ class Tos(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             latitude = cube.coord('latitude')
