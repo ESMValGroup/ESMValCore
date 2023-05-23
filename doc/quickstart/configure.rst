@@ -234,7 +234,7 @@ the cluster can be provided.
 
 Below are some example configurations:
 
-Create a Dask distruted cluster on the computer running ESMValCore using
+Create a Dask distributed cluster on the computer running ESMValCore using
 all available resources:
 
 .. code:: yaml
@@ -251,7 +251,7 @@ this should work well for most personal computers.
    lead to overcrowding the node by a single user (you)!
 
 
-Create a Dask distruted cluster on the computer running ESMValCore, with
+Create a Dask distributed cluster on the computer running ESMValCore, with
 4 workers with two 2 GiB of memory each (8 GiB in total):
 
 .. code:: yaml
