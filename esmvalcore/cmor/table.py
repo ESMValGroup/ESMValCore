@@ -568,7 +568,7 @@ class VariableInfo(JsonInfo):
         Parameters
         ----------
         short_name: str
-            variable's short name
+            Variable's short name.
         """
         super(VariableInfo, self).__init__()
         self.table_type = table_type
@@ -608,7 +608,7 @@ class VariableInfo(JsonInfo):
         Returns
         -------
         VariableInfo
-           Shallow copy of this object
+           Shallow copy of this object.
         """
         return copy.copy(self)
 
@@ -620,11 +620,10 @@ class VariableInfo(JsonInfo):
         Parameters
         ----------
         json_data: dict
-            dictionary created by the json reader containing
-            variable information
-
+            Dictionary created by the json reader containing variable
+            information.
         default_freq: str
-            Default frequency to use if it is not defined at variable level
+            Default frequency to use if it is not defined at variable level.
         """
         self._json_data = json_data
 
@@ -639,6 +638,37 @@ class VariableInfo(JsonInfo):
         self.frequency = self._read_json_variable('frequency', default_freq)
 
         self.dimensions = self._read_json_variable('dimensions').split()
+
+    def has_coord_with_standard_name(self, standard_name: str) -> bool:
+        """Check if a coordinate with a given `standard_name` exists.
+
+        For some coordinates, multiple (slightly different) versions with
+        different dimension names but identical `standard_name` exist. For
+        example, the CMIP6 tables provide 4 different `standard_name=time`
+        dimensions: `time`, `time1`, `time2`, and `time3`. Other examples would
+        be the CMIP6 pressure levels (`plev19`, `plev23`, `plev27`, etc.  with
+        standard name `air_pressure`) and the altitudes (`alt16`, `alt40` with
+        standard name `altitude`).
+
+        This function can be used to check for the existence of a specific
+        coordinate defined by its `standard_name`, not its dimension name.
+
+        Parameters
+        ----------
+        standard_name: str
+            Standard name to be checked.
+
+        Returns
+        -------
+        bool
+            `True` if there is at least one coordinate with the given
+            `standard_name`, `False` if not.
+
+        """
+        for coord in self.coordinates.values():
+            if coord.standard_name == standard_name:
+                return True
+        return False
 
 
 class CoordinateInfo(JsonInfo):

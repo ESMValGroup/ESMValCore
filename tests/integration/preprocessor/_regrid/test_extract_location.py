@@ -1,4 +1,6 @@
 """Integration tests for :func:`esmvalcore.preprocessor.extract_location."""
+import ssl
+from unittest.mock import patch
 
 import iris
 import iris.fileformats
@@ -14,17 +16,13 @@ def mocked_geopy_geocoders_nominatim(mocker):
     """Mock :class:`geopy.geocoders.Nominatim`.
 
     See https://github.com/ESMValGroup/ESMValCore/issues/1982.
-
     """
     mocked_nominatim = mocker.patch(
-        'esmvalcore.preprocessor._regrid.Nominatim', autospec=True
-    )
-    geolocation_penacaballera = mocker.Mock(
-        latitude=40.3442754, longitude=-5.8606859
-    )
+        'esmvalcore.preprocessor._regrid.Nominatim', autospec=True)
+    geolocation_penacaballera = mocker.Mock(latitude=40.3442754,
+                                            longitude=-5.8606859)
     mocked_nominatim.return_value.geocode.side_effect = (
-        lambda x: geolocation_penacaballera if x == 'Peñacaballera' else None
-    )
+        lambda x: geolocation_penacaballera if x == 'Peñacaballera' else None)
 
 
 @pytest.fixture
@@ -96,9 +94,7 @@ def test_no_location_parameter(test_cube):
     """Test if no location supplied."""
     msg = "Location needs to be specified."
     with pytest.raises(ValueError, match=msg):
-        extract_location(test_cube,
-                         scheme='nearest',
-                         location=None)
+        extract_location(test_cube, scheme='nearest', location=None)
 
 
 def test_no_scheme_parameter(test_cube):
@@ -108,3 +104,14 @@ def test_no_scheme_parameter(test_cube):
         extract_location(test_cube,
                          scheme=None,
                          location='Calvitero,Candelario')
+
+
+@patch("esmvalcore.preprocessor._regrid.ssl.create_default_context")
+def test_create_default_ssl_context_raises_exception(mock_create, test_cube):
+    """Test the original way 'extract_location' worked before adding the
+    default SSL context, see
+    https://github.com/ESMValGroup/ESMValCore/issues/2012 for more
+    information."""
+    mock_create.side_effect = ssl.SSLSyscallError
+    extract_location(test_cube, scheme="nearest", location="Peñacaballera")
+    mock_create.assert_called_once()

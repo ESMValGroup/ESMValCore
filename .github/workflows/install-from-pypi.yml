@@ -34,6 +34,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
+        # TODO add "3.11" once we have the package built
         python-version: ["3.8", "3.9", "3.10"]
       # fail-fast set to False allows all other tests
       # in the workflow to run regardless of any fail

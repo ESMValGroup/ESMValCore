@@ -27,7 +27,7 @@ class AllVars(IconFix):
         cube = self.get_cube(cubes)
 
         # Fix time
-        if 'time' in self.vardef.dimensions:
+        if self.vardef.has_coord_with_standard_name('time'):
             cube = self._fix_time(cube, cubes)
 
         # Fix height (note: cannot use "if 'height' in self.vardef.dimensions"
@@ -52,13 +52,13 @@ class AllVars(IconFix):
                 cube = self._fix_height(cube, cubes)
 
         # Fix latitude
-        if 'latitude' in self.vardef.dimensions:
+        if self.vardef.has_coord_with_standard_name('latitude'):
             lat_idx = self._fix_lat(cube)
         else:
             lat_idx = None
 
         # Fix longitude
-        if 'longitude' in self.vardef.dimensions:
+        if self.vardef.has_coord_with_standard_name('longitude'):
             lon_idx = self._fix_lon(cube)
         else:
             lon_idx = None
@@ -270,25 +270,29 @@ class AllVars(IconFix):
         new_t_unit = cf_units.Unit('days since 1850-01-01',
                                    calendar='proleptic_gregorian')
 
-        # New routine to convert time of daily and hourly data
-        # The string %f (fraction of day) is not a valid format string
-        # for datetime.strptime, so we have to convert it ourselves
-        time_str = [str(x) for x in time_coord.points]
+        # New routine to convert time of daily and hourly data. The string %f
+        # (fraction of day) is not a valid format string for datetime.strptime,
+        # so we have to convert it ourselves.
+        time_str = pd.Series(time_coord.points, dtype=str)
 
-        # First, extract date (year, month, day) from string
-        # and convert it to datetime object
-        year_month_day_str = pd.Series(time_str).str.extract(
-            r'(\d*)\.?\d*', expand=False
-        )
+        # First, extract date (year, month, day) from string and convert it to
+        # datetime object
+        year_month_day_str = time_str.str.extract(r'(\d*)\.?\d*', expand=False)
         year_month_day = pd.to_datetime(year_month_day_str, format='%Y%m%d')
+
         # Second, extract day fraction and convert it to timedelta object
-        day_float_str = pd.Series(time_str).str.extract(
+        day_float_str = time_str.str.extract(
             r'\d*(\.\d*)', expand=False
         ).fillna('0.0')
         day_float = pd.to_timedelta(day_float_str.astype(float), unit='D')
-        # Finally, add date and day fraction to get final datetime
-        # and convert it to correct units
-        new_datetimes = (year_month_day + day_float).dt.to_pydatetime()
+
+        # Finally, add date and day fraction to get final datetime and convert
+        # it to correct units. Note: we also round to next second, otherwise
+        # this results in times that are off by 1s (e.g., 13:59:59 instead of
+        # 14:00:00).
+        new_datetimes = (year_month_day + day_float).round(
+            'S'
+        ).dt.to_pydatetime()
         new_dt_points = date2num(np.array(new_datetimes), new_t_unit)
 
         time_coord.points = new_dt_points
