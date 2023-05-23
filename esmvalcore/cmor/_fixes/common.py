@@ -6,11 +6,7 @@ import numpy as np
 from scipy.ndimage import map_coordinates
 
 from .fix import Fix
-from .shared import (
-    add_plev_from_altitude,
-    add_scalar_typesi_coord,
-    fix_bounds,
-)
+from .shared import add_plev_from_altitude, add_scalar_typesi_coord, fix_bounds
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +25,6 @@ class ClFixHybridHeightCoord(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
 
@@ -68,7 +63,6 @@ class ClFixHybridPressureCoord(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
 
@@ -144,16 +138,20 @@ class OceanFixGrid(Fix):
         # Get dimensional coordinates. Note:
         # - First dimension i -> X-direction (= longitude)
         # - Second dimension j -> Y-direction (= latitude)
-        (j_dim, i_dim) = sorted(set(
-            cube.coord_dims(cube.coord('latitude', dim_coords=False)) +
-            cube.coord_dims(cube.coord('longitude', dim_coords=False))
-        ))
+        (j_dim, i_dim) = sorted(
+            set(
+                cube.coord_dims(cube.coord('latitude', dim_coords=False)) +
+                cube.coord_dims(cube.coord('longitude', dim_coords=False))))
         try:
             cube.coord(dim_coords=True, dimensions=i_dim)
             cube.coord(dim_coords=True, dimensions=j_dim)
         except iris.exceptions.CoordinateNotFoundError:
-            cube.add_dim_coord(iris.coords.DimCoord(np.arange(cube.shape[i_dim]), var_name="i"), i_dim)
-            cube.add_dim_coord(iris.coords.DimCoord(np.arange(cube.shape[j_dim]), var_name="j"), j_dim)
+            cube.add_dim_coord(
+                iris.coords.DimCoord(np.arange(cube.shape[i_dim]),
+                                     var_name="i"), i_dim)
+            cube.add_dim_coord(
+                iris.coords.DimCoord(np.arange(cube.shape[j_dim]),
+                                     var_name="j"), j_dim)
 
         i_coord = cube.coord(dim_coords=True, dimensions=i_dim)
         j_coord = cube.coord(dim_coords=True, dimensions=j_dim)
@@ -190,12 +188,10 @@ class OceanFixGrid(Fix):
                                      i_coord.bounds[:, i],
                                      indexing='ij')
             lat_vertices.append(
-                map_coordinates(cube.coord('latitude').points,
-                                [j_v, i_v],
+                map_coordinates(cube.coord('latitude').points, [j_v, i_v],
                                 mode='nearest'))
             lon_vertices.append(
-                map_coordinates(cube.coord('longitude').points,
-                                [j_v, i_v],
+                map_coordinates(cube.coord('longitude').points, [j_v, i_v],
                                 mode='wrap'))
         lat_vertices = np.array(lat_vertices)
         lon_vertices = np.array(lon_vertices)
@@ -223,7 +219,6 @@ class SiconcFixScalarCoord(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_typesi_coord(cube)

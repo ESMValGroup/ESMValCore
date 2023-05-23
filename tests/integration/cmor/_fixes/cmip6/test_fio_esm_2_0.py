@@ -118,7 +118,7 @@ def test_tos_fix_metadata(tos_cubes):
     np.testing.assert_equal(fixed_lat.points, [23.021156])
 
 
-def test_Amon_fix_metadata(tas_cubes):
+def test_amon_fix_metadata(tas_cubes):
     fix = Amon(None)
     out_cubes = fix.fix_metadata(tas_cubes)
     assert tas_cubes is out_cubes
