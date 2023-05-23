@@ -222,7 +222,7 @@ resulting in excessive memory use when using e.g. the
 Therefore it is recommended that you take a moment to configure the
 `Dask distributed <https://distributed.dask.org>`_ scheduler.
 A Dask scheduler and the 'workers' running the actual computations, are
-together called a Dask 'cluster'.
+collectively called a 'Dask cluster'.
 
 In ESMValCore, the Dask cluster can configured by creating a file called
 ``~/.esmvaltool/dask.yml``, where ``~`` is short for your home directory.
