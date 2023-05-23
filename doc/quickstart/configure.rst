@@ -205,32 +205,32 @@ Dask distributed configuration
 ==============================
 
 The :ref:`preprocessor functions <preprocessor_functions>` and many of the
-diagnostics in ESMValTool make use of the :ref:`Iris <iris:iris_docs>` library
-to work with the data.
+:ref:`Python diagnostics in ESMValTool <esmvaltool:recipes>` make use of the
+:ref:`Iris <iris:iris_docs>` library to work with the data.
 In Iris, data can be either :ref:`real or lazy <iris:real_and_lazy_data>`.
 Lazy data is represented by `dask arrays <https://docs.dask.org/en/stable/array.html>`_.
 Dask arrays consist of many small
 `numpy arrays <https://numpy.org/doc/stable/user/absolute_beginners.html#what-is-an-array>`_
-(called chunks) and if possible, computations are run on those small arrays
-in parallel.
+(called chunks) and if possible, computations are run on those small arrays in
+parallel.
 In order to figure out what needs to be computed when, Dask makes use of a
 '`scheduler <https://docs.dask.org/en/stable/scheduling.html>`_'.
 The default scheduler in Dask is rather basic, so it can only run on a single
 computer and it may not always find the optimal task scheduling solution,
 resulting in excessive memory use when using e.g. the
-:func:`esmvalcore.preprocessor.multi_model_statistics`.
+:func:`esmvalcore.preprocessor.multi_model_statistics` preprocessor function.
 Therefore it is recommended that you take a moment to configure the
 `Dask distributed <https://distributed.dask.org>`_ scheduler.
-A Dask scheduler and the 'workers' running the actual computations,
-are together called a Dask 'cluster'.
+A Dask scheduler and the 'workers' running the actual computations, are
+together called a Dask 'cluster'.
 
 In ESMValCore, the Dask cluster can configured by creating a file called
 ``~/.esmvaltool/dask.yml``, where ``~`` is short for your home directory.
 In this file, under the ``client`` keyword, the arguments to
 :obj:`distributed.Client` can be provided.
 Under the ``cluster`` keyword, the type of cluster (e.g.
-:obj:`distributed.LocalCluster`), as well as any arguments
-required to start the cluster can be provided.
+:obj:`distributed.LocalCluster`), as well as any arguments required to start
+the cluster can be provided.
 
 Below are some example configurations:
 
@@ -255,8 +255,9 @@ Create a Dask distruted cluster on the computer running ESMValCore, with
     memory_limit: 2 GiB
 
 Create a Dask distributed cluster on the
-`Levante <https://docs.dkrz.de/doc/levante/running-jobs/index.html>`
-supercomputer:
+`Levante <https://docs.dkrz.de/doc/levante/running-jobs/index.html>`_
+supercomputer using the `Dask-Jobqueue <https://jobqueue.dask.org/en/latest/>`_
+package:
 
 .. code:: yaml
 
@@ -270,15 +271,15 @@ supercomputer:
     n_workers: 2
 
 Use an externally managed cluster, e.g. a cluster that you started using the
-`Dask Jupyterlab extension <https://github.com/dask/dask-labextension#dask-jupyterlab-extension>`_
-or see
-`here <https://jobqueue.dask.org/en/latest/interactive.html>`_
-for an example.
+`Dask Jupyterlab extension <https://github.com/dask/dask-labextension#dask-jupyterlab-extension>`_:
 
 .. code:: yaml
 
   client:
     address: '127.0.0.1:8786'
+
+See `here <https://jobqueue.dask.org/en/latest/interactive.html>`_
+for an example of how to configure this on a remote system.
 
 For debugging purposes, it can be useful to start the cluster outside of
 ESMValCore because then
@@ -287,9 +288,10 @@ available after ESMValCore has finished running.
 
 .. note::
 
-  If not all preprocessor functions use lazy data, computational performance
-  may be best with the default scheduler.
-
+  If not all preprocessor functions support lazy data, computational
+  performance may be best with the default scheduler.
+  See `issue #674 <https://github.com/ESMValGroup/ESMValCore/issues/674>`_ for
+  progress on making all preprocessor functions lazy.
 
 .. _config-esgf:
 
