@@ -1,16 +1,10 @@
 """Tests for the fixes of KACE-1-0-G."""
-import numpy as np
 import iris
+import numpy as np
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.cmip6.kace_1_0_g import (
-    AllVars,
-    Cl,
-    Cli,
-    Clw,
-    Tos,
-)
+from esmvalcore.cmor._fixes.cmip6.kace_1_0_g import AllVars, Cl, Cli, Clw, Tos
 from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord, OceanFixGrid
 from esmvalcore.cmor.fix import Fix
 
@@ -74,26 +68,23 @@ def tos_cubes():
         standard_name='time',
         units=Unit('days since 0001-01-01 00:00:00', calendar='365_day'))
 
-    correct_lat_coord = iris.coords.DimCoord(
-        [0.0, 1.0],
-        bounds=[[-0.5, 0.5], [0.5, 1.5]],
-        var_name='lat',
-        standard_name='latitude',
-        units='degrees')
+    correct_lat_coord = iris.coords.DimCoord([0.0, 1.0],
+                                             bounds=[[-0.5, 0.5], [0.5, 1.5]],
+                                             var_name='lat',
+                                             standard_name='latitude',
+                                             units='degrees')
 
-    correct_lon_coord = iris.coords.DimCoord(
-        [0.0, 1.0],
-        bounds=[[-0.5, 0.5], [0.5, 1.5]],
-        var_name='lon',
-        standard_name='longitude',
-        units='degrees')
+    correct_lon_coord = iris.coords.DimCoord([0.0, 1.0],
+                                             bounds=[[-0.5, 0.5], [0.5, 1.5]],
+                                             var_name='lon',
+                                             standard_name='longitude',
+                                             units='degrees')
 
     correct_cube = iris.cube.Cube(10 * np.ones((3, 2, 2)),
                                   var_name='tos',
                                   dim_coords_and_dims=[(correct_time_coord, 0),
                                                        (correct_lat_coord, 1),
-                                                       (correct_lon_coord, 2)
-                                                       ],
+                                                       (correct_lon_coord, 2)],
                                   attributes={'table_id': 'Omon'},
                                   units=Unit('degC'))
 

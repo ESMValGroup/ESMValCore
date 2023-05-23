@@ -1,11 +1,10 @@
 """Tests for the fixes of FIO-ESM-2-0."""
-import pytest
-
 import iris
 import numpy as np
+import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.cmip6.fio_esm_2_0 import Omon, Amon, Tos
+from esmvalcore.cmor._fixes.cmip6.fio_esm_2_0 import Amon, Omon, Tos
 from esmvalcore.cmor._fixes.common import OceanFixGrid
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
@@ -37,40 +36,35 @@ def tas_cubes():
         standard_name='time',
         units=Unit('days since 0001-01-01 00:00:00', calendar='365_day'))
 
-    correct_lat_coord = iris.coords.DimCoord(
-        [0.0, 1.0],
-        bounds=[[-0.5, 0.5], [0.5, 1.5]],
-        var_name='lat',
-        standard_name='latitude',
-        units='degrees')
+    correct_lat_coord = iris.coords.DimCoord([0.0, 1.0],
+                                             bounds=[[-0.5, 0.5], [0.5, 1.5]],
+                                             var_name='lat',
+                                             standard_name='latitude',
+                                             units='degrees')
 
-    wrong_lat_coord = iris.coords.DimCoord(
-        [0.0, 1.0],
-        bounds=[[-0.5, 0.5], [1.5, 2.]],
-        var_name='lat',
-        standard_name='latitude',
-        units='degrees')
+    wrong_lat_coord = iris.coords.DimCoord([0.0, 1.0],
+                                           bounds=[[-0.5, 0.5], [1.5, 2.]],
+                                           var_name='lat',
+                                           standard_name='latitude',
+                                           units='degrees')
 
-    correct_lon_coord = iris.coords.DimCoord(
-        [0.0, 1.0],
-        bounds=[[-0.5, 0.5], [0.5, 1.5]],
-        var_name='lon',
-        standard_name='longitude',
-        units='degrees')
+    correct_lon_coord = iris.coords.DimCoord([0.0, 1.0],
+                                             bounds=[[-0.5, 0.5], [0.5, 1.5]],
+                                             var_name='lon',
+                                             standard_name='longitude',
+                                             units='degrees')
 
-    wrong_lon_coord = iris.coords.DimCoord(
-        [0.0, 1.0],
-        bounds=[[-0.5, 0.5], [1.5, 2.]],
-        var_name='lon',
-        standard_name='longitude',
-        units='degrees')
+    wrong_lon_coord = iris.coords.DimCoord([0.0, 1.0],
+                                           bounds=[[-0.5, 0.5], [1.5, 2.]],
+                                           var_name='lon',
+                                           standard_name='longitude',
+                                           units='degrees')
 
     correct_cube = iris.cube.Cube(10 * np.ones((3, 2, 2)),
                                   var_name='tas',
                                   dim_coords_and_dims=[(correct_time_coord, 0),
                                                        (correct_lat_coord, 1),
-                                                       (correct_lon_coord, 2)
-                                                       ],
+                                                       (correct_lon_coord, 2)],
                                   attributes={'table_id': 'Amon'},
                                   units=Unit('degC'))
 
@@ -88,16 +82,23 @@ def tas_cubes():
 @pytest.fixture
 def tos_cubes():
     """Sample cube."""
-    time_coord = iris.coords.DimCoord([0.2], standard_name='time',
+    time_coord = iris.coords.DimCoord([0.2],
+                                      standard_name='time',
                                       var_name='time',
                                       units='days since 1850-01-01')
-    lat_coord = iris.coords.DimCoord([23.0211555789], standard_name='latitude',
-                                     var_name='lat', units='degrees_north')
-    lon_coord = iris.coords.DimCoord([30.0211534556], standard_name='longitude',
-                                     var_name='lon', units='degrees_east')
+    lat_coord = iris.coords.DimCoord([23.0211555789],
+                                     standard_name='latitude',
+                                     var_name='lat',
+                                     units='degrees_north')
+    lon_coord = iris.coords.DimCoord([30.0211534556],
+                                     standard_name='longitude',
+                                     var_name='lon',
+                                     units='degrees_east')
     coords_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]
-    cube = iris.cube.Cube([[[22.0]]], standard_name='sea_surface_temperature',
-                          var_name='tos', units='degC',
+    cube = iris.cube.Cube([[[22.0]]],
+                          standard_name='sea_surface_temperature',
+                          var_name='tos',
+                          units='degC',
                           dim_coords_and_dims=coords_specs)
     return iris.cube.CubeList([cube])
 

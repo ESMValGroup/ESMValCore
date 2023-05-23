@@ -45,18 +45,25 @@ def test_clw_fix():
 @pytest.fixture
 def tos_cubes():
     """Sample cube."""
-    time_coord = iris.coords.DimCoord([0.2], standard_name='time',
+    time_coord = iris.coords.DimCoord([0.2],
+                                      standard_name='time',
                                       var_name='time',
                                       units='days since 1850-01-01')
-    lat_coord = iris.coords.DimCoord([23.021155], standard_name='latitude',
-                                     var_name='lat', units='degrees_north',
-                                     bounds = [21.3466839, 24.6956261])
-    lon_coord = iris.coords.DimCoord([23.021155], standard_name='longitude',
-                                     var_name='lon', units='degrees_east',
-                                     bounds = [21.3466839, 24.6956261])
+    lat_coord = iris.coords.DimCoord([23.021155],
+                                     standard_name='latitude',
+                                     var_name='lat',
+                                     units='degrees_north',
+                                     bounds=[21.3466839, 24.6956261])
+    lon_coord = iris.coords.DimCoord([23.021155],
+                                     standard_name='longitude',
+                                     var_name='lon',
+                                     units='degrees_east',
+                                     bounds=[21.3466839, 24.6956261])
     coords_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]
-    cube = iris.cube.Cube([[[22.0]]], standard_name='sea_surface_temperature',
-                          var_name='tos', units='degC',
+    cube = iris.cube.Cube([[[22.0]]],
+                          standard_name='sea_surface_temperature',
+                          var_name='tos',
+                          units='degC',
                           dim_coords_and_dims=coords_specs)
     return iris.cube.CubeList([cube])
 
@@ -78,8 +85,11 @@ def test_tos_fix_metadata(tos_cubes):
     fixed_lat = fixed_tos_cube.coord('latitude')
     assert fixed_lon.bounds is not None
     assert fixed_lat.bounds is not None
-    np.testing.assert_equal(fixed_lon.points, np.array([23.021155], dtype=np.float32))
-    np.testing.assert_equal(fixed_lat.points, np.array([23.021155], dtype=np.float32))
-    np.testing.assert_equal(fixed_lon.bounds, np.array([[21.3467, 24.6956]], dtype=np.float32))
-    np.testing.assert_equal(fixed_lat.bounds, np.array([[21.3467, 24.6956]], dtype=np.float32))
-
+    np.testing.assert_equal(fixed_lon.points,
+                            np.array([23.021155], dtype=np.float32))
+    np.testing.assert_equal(fixed_lat.points,
+                            np.array([23.021155], dtype=np.float32))
+    np.testing.assert_equal(fixed_lon.bounds,
+                            np.array([[21.3467, 24.6956]], dtype=np.float32))
+    np.testing.assert_equal(fixed_lat.bounds,
+                            np.array([[21.3467, 24.6956]], dtype=np.float32))
