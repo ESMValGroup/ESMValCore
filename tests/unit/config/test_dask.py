@@ -4,6 +4,12 @@ import yaml
 from esmvalcore.config import _dask
 
 
+def test_get_no_distributed_client(mocker, tmp_path):
+    mocker.patch.object(_dask, 'CONFIG_FILE', tmp_path / 'nonexistent.yml')
+    with _dask.get_distributed_client() as client:
+        assert client is None
+
+
 @pytest.mark.parametrize('warn_unused_args', [False, True])
 def test_get_distributed_client_external(mocker, tmp_path, warn_unused_args):
     # Create mock client configuration.
