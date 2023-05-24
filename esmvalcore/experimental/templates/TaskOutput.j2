@@ -21,6 +21,10 @@
 
 <h4>Data files</h4>
 
+
+<button class="toggle_data_files" onclick="toggleDataFiles(this, 'df_{{ task.title }}')">Show</button>
+
+<div id="df_{{ task.title }}" class="data_files">
 <ul>
 {% for file in task.data_files %}
 
@@ -34,3 +38,4 @@
 
 {% endfor %}
 </ul>
+</div>

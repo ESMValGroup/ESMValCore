@@ -93,3 +93,26 @@
   // Get the element with id="defaultOpen" and click on it
   document.getElementById("defaultOpen").click();
 </script>
+
+<script>
+  function toggleDataFiles(button, data_files_id) {
+    var data_files = document.getElementById(data_files_id);
+    if (data_files.style.display === "none") {
+      data_files.style.display = "block";
+      button.innerText = "Hide"
+    } else {
+      data_files.style.display = "none";
+      button.innerText = "Show"
+    }
+  }
+
+  // Hide all data files
+  function hideDataFiles() {
+    var i, list_data_files;
+    list_data_files = document.getElementsByClassName("data_files");
+    for (i = 0; i < list_data_files.length; i++) {
+      list_data_files[i].style.display = "none";
+    }
+  }
+  hideDataFiles()
+</script>
