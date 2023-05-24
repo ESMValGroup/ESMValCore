@@ -49,23 +49,33 @@ def tos_cubes():
                                       standard_name='time',
                                       var_name='time',
                                       units='days since 1850-01-01')
-    lat_coord = iris.coords.DimCoord([23.021155],
+    lat_coord = iris.coords.DimCoord([23.0211550, 26.3700972],
                                      standard_name='latitude',
                                      var_name='lat',
                                      units='degrees_north',
-                                     bounds=[21.3466839, 24.6956261])
-    lon_coord = iris.coords.DimCoord([23.021155],
+                                     bounds=[[21.3466839, 24.6956261],
+                                             [24.6956261, 28.0445683]])
+    lon_coord = iris.coords.DimCoord([23.0211550, 26.3700972],
                                      standard_name='longitude',
                                      var_name='lon',
                                      units='degrees_east',
-                                     bounds=[21.3466839, 24.6956261])
+                                     bounds=[[21.3466839, 24.6956261],
+                                             [24.6956261, 28.0445683]])
     coords_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]
-    cube = iris.cube.Cube([[[22.0]]],
-                          standard_name='sea_surface_temperature',
-                          var_name='tos',
-                          units='degC',
-                          dim_coords_and_dims=coords_specs)
-    return iris.cube.CubeList([cube])
+    cube_with_bounds = iris.cube.Cube([[[22.0, 22.0], [22.0, 22.0]]],
+                                      standard_name='sea_surface_temperature',
+                                      var_name='tos',
+                                      units='degC',
+                                      dim_coords_and_dims=coords_specs)
+    lat_coord.bounds = None
+    lon_coord.bounds = None
+    coords_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]
+    cube_no_bounds = iris.cube.Cube([[[22.0, 22.0], [22.0, 22.0]]],
+                                    standard_name='sea_surface_temperature',
+                                    var_name='tos',
+                                    units='degC',
+                                    dim_coords_and_dims=coords_specs)
+    return iris.cube.CubeList([cube_with_bounds, cube_no_bounds])
 
 
 def test_get_tos_fix():
@@ -79,17 +89,22 @@ def test_tos_fix_metadata(tos_cubes):
     vardef = get_var_info('CMIP6', 'Omon', 'tos')
     fix = Tos(vardef)
     fixed_cubes = fix.fix_metadata(tos_cubes)
-    assert len(fixed_cubes) == 1
-    fixed_tos_cube = fixed_cubes.extract_cube('sea_surface_temperature')
-    fixed_lon = fixed_tos_cube.coord('longitude')
-    fixed_lat = fixed_tos_cube.coord('latitude')
-    assert fixed_lon.bounds is not None
-    assert fixed_lat.bounds is not None
-    np.testing.assert_equal(fixed_lon.points,
-                            np.array([23.021155], dtype=np.float32))
-    np.testing.assert_equal(fixed_lat.points,
-                            np.array([23.021155], dtype=np.float32))
-    np.testing.assert_equal(fixed_lon.bounds,
-                            np.array([[21.3467, 24.6956]], dtype=np.float32))
-    np.testing.assert_equal(fixed_lat.bounds,
-                            np.array([[21.3467, 24.6956]], dtype=np.float32))
+    for fixed_tos_cube in fixed_cubes:
+        fixed_lon = fixed_tos_cube.coord('longitude')
+        fixed_lat = fixed_tos_cube.coord('latitude')
+        assert fixed_lon.bounds is not None
+        assert fixed_lat.bounds is not None
+        np.testing.assert_equal(
+            fixed_lon.points,
+            np.array([23.0211550, 26.3700972], dtype=np.float32))
+        np.testing.assert_equal(
+            fixed_lat.points,
+            np.array([23.0211550, 26.3700972], dtype=np.float32))
+        np.testing.assert_equal(
+            fixed_lon.bounds,
+            np.array([[21.3467, 24.6956], [24.6956, 28.0446]],
+                     dtype=np.float32))
+        np.testing.assert_equal(
+            fixed_lat.bounds,
+            np.array([[21.3467, 24.6956], [24.6956, 28.0446]],
+                     dtype=np.float32))
