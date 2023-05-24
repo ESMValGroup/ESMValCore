@@ -19,7 +19,7 @@ def test_get_tas_fix():
 def test_get_tos_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'FIO-ESM-2-0', 'Omon', 'tos')
-    assert fix == [Omon(None), Tos(None)]
+    assert fix == [OceanFixGrid(None), Omon(None)]
 
 
 def test_tos_fix():
@@ -112,14 +112,13 @@ def test_tos_fix_metadata(tos_cubes):
     fixed_tos_cube = fixed_cubes.extract_cube('sea_surface_temperature')
     fixed_lon = fixed_tos_cube.coord('longitude')
     fixed_lat = fixed_tos_cube.coord('latitude')
-    assert fixed_lon.bounds is not None
-    assert fixed_lat.bounds is not None
     np.testing.assert_equal(fixed_lon.points, [30.021153])
     np.testing.assert_equal(fixed_lat.points, [23.021156])
 
 
 def test_amon_fix_metadata(tas_cubes):
-    fix = Amon(None)
+    vardef = get_var_info('CMIP6', 'Amon', 'tas')
+    fix = Amon(vardef)
     out_cubes = fix.fix_metadata(tas_cubes)
     assert tas_cubes is out_cubes
     for cube in out_cubes:

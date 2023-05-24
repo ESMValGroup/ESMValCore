@@ -56,17 +56,19 @@ class Amon(Fix):
         -------
         iris.cube.CubeList
         """
-        cube = self.get_cube_from_list(cubes)
+        for cube in cubes:
+            # Check both lat and lon coords and replace bounds if necessary
+            latitude = cube.coord("latitude")
+            if latitude.has_bounds():
+                if latitude.bounds[1:, 0] != latitude.bounds[:-1, 1]:
+                    latitude.bounds = None
+                    latitude.guess_bounds()
+                    iris.util.promote_aux_coord_to_dim_coord(cube, "latitude")
 
-        # Check both lat and lon coords and replace bounds if necessary
-        if not _check_bounds_monotonicity(cube.coord("latitude")):
-            cube.coord("latitude").bounds = None
-            cube.coord("latitude").guess_bounds()
-            iris.util.promote_aux_coord_to_dim_coord(cube, "latitude")
-
-        if not _check_bounds_monotonicity(cube.coord("longitude")):
-            cube.coord("longitude").bounds = None
-            cube.coord("longitude").guess_bounds()
-            iris.util.promote_aux_coord_to_dim_coord(cube, "longitude")
-
-        return super().fix_metadata(cubes)
+            longitude = cube.coord("longitude")
+            if longitude.has_bounds():
+                if longitude.bounds[1:, 0] != longitude.bounds[:-1, 1]:
+                    longitude.bounds = None
+                    longitude.guess_bounds()
+                    iris.util.promote_aux_coord_to_dim_coord(cube, "longitude")
+        return cubes

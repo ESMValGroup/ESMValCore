@@ -12,7 +12,7 @@ from esmvalcore.cmor.fix import Fix
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'KACE-1-0-G', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    assert fix == [Cl(None), AllVars(None)]
 
 
 def test_cl_fix():
@@ -23,7 +23,7 @@ def test_cl_fix():
 def test_get_cli_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'KACE-1-0-G', 'Amon', 'cli')
-    assert fix == [Cli(None)]
+    assert fix == [Cli(None), AllVars(None)]
 
 
 def test_cli_fix():
@@ -34,7 +34,7 @@ def test_cli_fix():
 def test_get_clw_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'KACE-1-0-G', 'Amon', 'clw')
-    assert fix == [Clw(None)]
+    assert fix == [Clw(None), AllVars(None)]
 
 
 def test_clw_fix():
@@ -45,7 +45,7 @@ def test_clw_fix():
 def test_get_tos_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'KACE-1-0-G', 'Omon', 'tos')
-    assert fix == [Tos(None)]
+    assert fix == [Tos(None), AllVars(None)]
 
 
 def test_tos_fix():
@@ -101,11 +101,12 @@ def tos_cubes():
 
 def test_get_allvars_fix():
     fix = Fix.get_fixes('CMIP6', 'KACE-1-0-G', 'Omon', 'tos')
-    assert fix == [AllVars(None)]
+    assert fix == [OceanFixGrid(None), AllVars(None)]
 
 
-def test_allvars_fix_metadata(tos_cubes):
+def test_allvars_fix_metadata(monkeypatch, tos_cubes):
     fix = AllVars(None)
+    monkeypatch.setitem(fix.extra_facets, 'frequency', 'mon')
     out_cubes = fix.fix_metadata(tos_cubes)
     assert tos_cubes is out_cubes
     for cube in out_cubes:

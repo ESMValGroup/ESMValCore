@@ -11,7 +11,11 @@ from esmvalcore.cmor.fix import Fix
 
 def test_get_tos_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'IITM-ESM', 'Omon', 'tos')
+    fix = Fix.get_fixes('CMIP6',
+                        'IITM-ESM',
+                        'Omon',
+                        'tos',
+                        extra_facets={"frequency": "mon"})
     assert fix == [Tos(None), AllVars(None)]
 
 
@@ -66,8 +70,9 @@ def cubes():
     return iris.cube.CubeList([correct_cube, wrong_cube])
 
 
-def test_allvars_fix_metadata(cubes):
+def test_allvars_fix_metadata(monkeypatch, cubes):
     fix = AllVars(None)
+    monkeypatch.setitem(fix.extra_facets, 'frequency', 'mon')
     out_cubes = fix.fix_metadata(cubes)
     assert cubes is out_cubes
     for cube in out_cubes:
