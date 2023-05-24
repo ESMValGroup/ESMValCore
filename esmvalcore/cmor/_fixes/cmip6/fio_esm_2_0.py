@@ -35,7 +35,7 @@ class Amon(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata.
 
-        FIO-ESM-2-0 ta data contains error in coordinate bounds.
+        FIO-ESM-2-0 Amon data contains error in coordinate bounds.
 
         Parameters
         ----------
