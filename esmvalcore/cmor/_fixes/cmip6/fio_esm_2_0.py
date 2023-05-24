@@ -1,6 +1,4 @@
 """Fixes for FIO-ESM-2-0 model."""
-import iris
-
 from ..common import OceanFixGrid
 from ..fix import Fix
 from ..shared import round_coordinates
@@ -53,12 +51,10 @@ class Amon(Fix):
                 if latitude.bounds[1:, 0] != latitude.bounds[:-1, 1]:
                     latitude.bounds = None
                     latitude.guess_bounds()
-                    iris.util.promote_aux_coord_to_dim_coord(cube, "latitude")
 
             longitude = cube.coord("longitude")
             if longitude.has_bounds():
                 if longitude.bounds[1:, 0] != longitude.bounds[:-1, 1]:
                     longitude.bounds = None
                     longitude.guess_bounds()
-                    iris.util.promote_aux_coord_to_dim_coord(cube, "longitude")
         return cubes
