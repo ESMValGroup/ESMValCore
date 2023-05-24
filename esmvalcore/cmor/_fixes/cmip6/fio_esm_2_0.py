@@ -8,16 +8,6 @@ from ..shared import round_coordinates
 Tos = OceanFixGrid
 
 
-def _check_bounds_monotonicity(coord):
-    """Check monotonicity of a coords bounds array."""
-    if coord.has_bounds():
-        for i in range(coord.nbounds):
-            if not iris.util.monotonic(coord.bounds[..., i], strict=True):
-                return False
-
-    return True
-
-
 class Omon(Fix):
     """Fixes for Omon vars."""
 
