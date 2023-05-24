@@ -62,20 +62,12 @@ def tos_cubes():
                                      bounds=[[21.3466839, 24.6956261],
                                              [24.6956261, 28.0445683]])
     coords_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]
-    cube_with_bounds = iris.cube.Cube([[[22.0, 22.0], [22.0, 22.0]]],
-                                      standard_name='sea_surface_temperature',
-                                      var_name='tos',
-                                      units='degC',
-                                      dim_coords_and_dims=coords_specs)
-    lat_coord.bounds = None
-    lon_coord.bounds = None
-    coords_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]
-    cube_no_bounds = iris.cube.Cube([[[22.0, 22.0], [22.0, 22.0]]],
-                                    standard_name='sea_surface_temperature',
-                                    var_name='tos',
-                                    units='degC',
-                                    dim_coords_and_dims=coords_specs)
-    return iris.cube.CubeList([cube_with_bounds, cube_no_bounds])
+    cube = iris.cube.Cube([[[22.0, 22.0], [22.0, 22.0]]],
+                          standard_name='sea_surface_temperature',
+                          var_name='tos',
+                          units='degC',
+                          dim_coords_and_dims=coords_specs)
+    return iris.cube.CubeList([cube])
 
 
 def test_get_tos_fix():

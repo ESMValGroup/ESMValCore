@@ -29,15 +29,13 @@ class Tos(Fix):
         """
         for cube in cubes:
             latitude = cube.coord('latitude')
-            if latitude.bounds is None:
-                latitude.guess_bounds()
-            latitude.bounds = latitude.bounds.astype(np.float32)
-            latitude.bounds = np.round(latitude.bounds, 4)
-            latitude.points = latitude.points.astype(np.float32)
+            if latitude.bounds is not None:
+                latitude.bounds = latitude.bounds.astype(np.float32)
+                latitude.bounds = np.round(latitude.bounds, 4)
+                latitude.points = latitude.points.astype(np.float32)
             longitude = cube.coord('longitude')
-            if longitude.bounds is None:
-                longitude.guess_bounds()
-            longitude.bounds = longitude.bounds.astype(np.float32)
-            longitude.bounds = np.round(longitude.bounds, 4)
-            longitude.points = longitude.points.astype(np.float32)
+            if longitude.bounds is not None:
+                longitude.bounds = longitude.bounds.astype(np.float32)
+                longitude.bounds = np.round(longitude.bounds, 4)
+                longitude.points = longitude.points.astype(np.float32)
         return cubes
