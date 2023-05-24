@@ -868,6 +868,10 @@ def _compute_anomalies(cube, reference, period, seasons):
 
 def _get_period_coord(cube, period, seasons):
     """Get periods."""
+    if period in ['hourly', 'hour', 'hr']:
+        if not cube.coords('hour'):
+            iris.coord_categorisation.add_hour(cube, 'time')
+        return cube.coord('hour')
     if period in ['daily', 'day']:
         if not cube.coords('day_of_year'):
             iris.coord_categorisation.add_day_of_year(cube, 'time')
