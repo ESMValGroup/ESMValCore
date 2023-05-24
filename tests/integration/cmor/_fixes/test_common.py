@@ -262,62 +262,6 @@ def get_tos_cubes(wrong_ij_names=False, ij_bounds=False):
     return iris.cube.CubeList([cube, empty_cube])
 
 
-def get_tos_only_aux_coord_cubes():
-    """Cubes containing tos variable."""
-    j_var_name = 'lat'
-    j_long_name = 'latitude'
-    i_var_name = 'lon'
-    i_long_name = 'longitude'
-    j_bounds = [[10.0, 30.0], [30.0, 50.0]]
-    i_bounds = [[5.0, 15.0], [15.0, 25.0], [25.0, 35.0]]
-    j_coord = iris.coords.DimCoord(
-        [20.0, 40.0],
-        bounds=j_bounds,
-        var_name=j_var_name,
-        long_name=j_long_name,
-    )
-    i_coord = iris.coords.DimCoord(
-        [10.0, 20.0, 30.0],
-        bounds=i_bounds,
-        var_name=i_var_name,
-        long_name=i_long_name,
-    )
-    lat_coord = iris.coords.AuxCoord(
-        [[-40.0, -20.0, 0.0], [-20.0, 0.0, 20.0]],
-        var_name='lat',
-        standard_name='latitude',
-        units='degrees_north',
-    )
-    lon_coord = iris.coords.AuxCoord(
-        [[100.0, 140.0, 180.0], [80.0, 100.0, 120.0]],
-        var_name='lon',
-        standard_name='longitude',
-        units='degrees_east',
-    )
-    time_coord = iris.coords.DimCoord(
-        1.0,
-        bounds=[0.0, 2.0],
-        var_name='time',
-        standard_name='time',
-        long_name='time',
-        units='days since 1950-01-01',
-    )
-
-    # Create tos variable cube
-    cube = iris.cube.Cube(
-        np.full((1, 2, 3), 300.0),
-        var_name='tos',
-        long_name='sea_surface_temperature',
-        units='K',
-        dim_coords_and_dims=[(time_coord, 0), (j_coord, 1), (i_coord, 2)],
-        aux_coords_and_dims=[(lat_coord, (1, 2)), (lon_coord, (1, 2))],
-    )
-
-    # Create empty (dummy) cube
-    empty_cube = iris.cube.Cube(0.0)
-    return iris.cube.CubeList([cube, empty_cube])
-
-
 def get_tos_regular_grid_cubes():
     """Cubes containing tos variable."""
 
@@ -491,15 +435,11 @@ def test_ocean_fix_grid_no_ij_bounds(tos_cubes_no_ij_bounds):
         fixed_cube.coord('longitude').bounds, longitude_bounds)
 
 
-@pytest.fixture
-def tos_cubes_only_aux():
-    """Cubes with no ij bounds."""
-    return get_tos_only_aux_coord_cubes()
-
-
 def test_ocean_fix_only_aux_coords(tos_cubes_no_ij_bounds):
     """Test ``fix_metadata`` with cubes with wrong ij names."""
     cube_in = tos_cubes_no_ij_bounds.extract_cube('sea_surface_temperature')
+    cube_in.remove_coord(cube_in.coord(var_name='i'))
+    cube_in.remove_coord(cube_in.coord(var_name='j'))
     assert len(cube_in.coords('latitude')) == 1
     assert len(cube_in.coords('longitude')) == 1
     assert cube_in.coord('latitude', dimensions=(1, 2)).bounds is None
@@ -576,3 +516,7 @@ def test_ocean_fix_grid_regular(tos_cubes_regular_grid_cubes):
     fixed_cubes = fix.fix_metadata(tos_cubes_regular_grid_cubes)
     fixed_cube = fixed_cubes.extract_cube('sea_surface_temperature')
     assert fixed_cube == cube_in
+    assert (fixed_cube.coord("latitude").bounds == cube_in.coord(
+        "latitude").bounds)
+    assert (fixed_cube.coord("longitude").bounds == cube_in.coord(
+        "longitude").bounds)
