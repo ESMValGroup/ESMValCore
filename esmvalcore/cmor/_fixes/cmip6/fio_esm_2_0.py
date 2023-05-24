@@ -50,14 +50,14 @@ class Amon(Fix):
             # Check both lat and lon coords and replace bounds if necessary
             latitude = cube.coord("latitude")
             if latitude.has_bounds():
-                if np.any(latitude.bounds[1:, 0] != 
+                if np.any(latitude.bounds[1:, 0] !=
                           latitude.bounds[:-1, 1]):
                     latitude.bounds = None
                     latitude.guess_bounds()
 
             longitude = cube.coord("longitude")
             if longitude.has_bounds():
-                if np.any(longitude.bounds[1:, 0] != 
+                if np.any(longitude.bounds[1:, 0] !=
                           longitude.bounds[:-1, 1]):
                     longitude.bounds = None
                     longitude.guess_bounds()
