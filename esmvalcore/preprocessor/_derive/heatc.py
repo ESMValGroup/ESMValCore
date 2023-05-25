@@ -56,6 +56,7 @@ class DerivedVariable(DerivedVariableBase):
         heatc.convert_units('J m-3')
         if thetao.cell_measures():
             add_supplementary_variables(heatc, thetao.cell_measures())
+
         if thetao.ancillary_variables():
             add_supplementary_variables(heatc, thetao.ancillary_variables())
 
