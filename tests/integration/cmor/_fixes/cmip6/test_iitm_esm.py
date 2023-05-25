@@ -70,11 +70,16 @@ def cubes():
     return iris.cube.CubeList([correct_cube, wrong_cube])
 
 
-def test_allvars_fix_metadata(monkeypatch, cubes):
+def test_allvars_fix_metadata(monkeypatch, cubes, caplog):
     fix = AllVars(None)
     monkeypatch.setitem(fix.extra_facets, 'frequency', 'mon')
+    monkeypatch.setitem(fix.extra_facets, 'dataset', 'IITM-ESM')
     out_cubes = fix.fix_metadata(cubes)
     assert cubes is out_cubes
     for cube in out_cubes:
         time = cube.coord('time')
         assert all(time.bounds[1:, 0] == time.bounds[:-1, 1])
+    msg = ("Using 'area_weighted' regridder scheme in Omon variables "
+           "for dataset IITM-ESM causes discontinuities in the longitude "
+           "coordinate.")
+    assert msg in caplog.text

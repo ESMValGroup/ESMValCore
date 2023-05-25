@@ -114,7 +114,7 @@ def test_tos_fix_metadata(tos_cubes, caplog):
     fixed_lat = fixed_tos_cube.coord('latitude')
     np.testing.assert_equal(fixed_lon.points, [30.021153])
     np.testing.assert_equal(fixed_lat.points, [23.021156])
-    msg = ("Using 'area_weighted' regrider scheme in Omon variables "
+    msg = ("Using 'area_weighted' regridder scheme in Omon variables "
            "for dataset FIO-ESM-2-0 causes discontinuities in the longitude "
            "coordinate.")
     assert msg in caplog.text

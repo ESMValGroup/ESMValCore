@@ -31,7 +31,7 @@ class Omon(Fix):
                           decimals=6,
                           coord_names=["longitude", "latitude"])
         logger.warning(
-            "Using 'area_weighted' regrider scheme in Omon variables "
+            "Using 'area_weighted' regridder scheme in Omon variables "
             "for dataset %s causes discontinuities in the longitude "
             "coordinate.",
             self.extra_facets['dataset'],
