@@ -103,10 +103,10 @@ def tos_cubes():
     return iris.cube.CubeList([cube])
 
 
-def test_tos_fix_metadata(tos_cubes):
+def test_tos_fix_metadata(tos_cubes, caplog):
     """Test ``fix_metadata``."""
     vardef = get_var_info('CMIP6', 'Omon', 'tos')
-    fix = Omon(vardef)
+    fix = Omon(vardef, extra_facets={'dataset': 'FIO-ESM-2-0'})
     fixed_cubes = fix.fix_metadata(tos_cubes)
     assert len(fixed_cubes) == 1
     fixed_tos_cube = fixed_cubes.extract_cube('sea_surface_temperature')
@@ -114,6 +114,10 @@ def test_tos_fix_metadata(tos_cubes):
     fixed_lat = fixed_tos_cube.coord('latitude')
     np.testing.assert_equal(fixed_lon.points, [30.021153])
     np.testing.assert_equal(fixed_lat.points, [23.021156])
+    msg = ("Using 'area_weighted' regrider scheme in Omon variables "
+           "for dataset FIO-ESM-2-0 causes discontinuities in the longitude "
+           "coordinate.")
+    assert msg in caplog.text
 
 
 def test_amon_fix_metadata(tas_cubes):
