@@ -33,8 +33,7 @@ REQUIREMENTS = {
         'dask[array]',
         'esgf-pyclient>=0.3.1',
         'esmf-regrid',
-        # see github.com/ESMValGroup/ESMValCore/issues/1208
-        'esmpy!=8.1.0,<8.4',
+        'esmpy!=8.1.0',
         'filelock',
         'fiona',
         'fire',
@@ -46,7 +45,7 @@ REQUIREMENTS = {
         'nc-time-axis',  # needed by iris.plot
         'nested-lookup',
         'netCDF4',
-        'numpy',
+        'numpy!=1.24.3',
         'packaging',
         'pandas',
         'pillow',
@@ -86,7 +85,7 @@ REQUIREMENTS = {
         'ipython',
         'nbsphinx',
         'sphinx>=6.1.3',
-        'sphinx_rtd_theme',
+        'pydata_sphinx_theme',
     ],
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
@@ -95,7 +94,7 @@ REQUIREMENTS = {
         'docformatter',
         'isort',
         'pre-commit',
-        'prospector[with_pyroma,with_mypy]!=1.1.6.3,!=1.1.6.4',
+        'prospector[with_pyroma,with_mypy]>=1.9.0',
         'vprof',
         'yamllint',
         'yapf',
@@ -217,9 +216,9 @@ setup(
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Atmospheric Science',
         'Topic :: Scientific/Engineering :: GIS',

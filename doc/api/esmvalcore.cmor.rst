@@ -7,6 +7,8 @@ Checking compliance
 -------------------
 
 .. automodule:: esmvalcore.cmor.check
+   :no-inherited-members:
+   :member-order: bysource
 
 Automatically fixing issues
 ---------------------------
