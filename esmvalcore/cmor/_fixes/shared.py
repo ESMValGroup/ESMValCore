@@ -5,6 +5,7 @@ from functools import lru_cache
 
 import dask.array as da
 import iris
+import numpy as np
 import pandas as pd
 from cf_units import Unit
 from iris import NameConstraint
@@ -46,6 +47,33 @@ def add_aux_coords_from_cubes(cube, cubes, coord_dict):
         cubes.remove(coord_cube)
 
 
+def _map_on_filled(function, array):
+    """Map function on filled array."""
+    if array.size == 0:
+        return array
+
+    # We support dask and numpy arrays
+    # Note: numpy's dispatch mechanism does not work here because of the usage
+    # of `np.ma.filled` and `np.ma.masked_array`.
+    if isinstance(array, da.core.Array):
+        num_module = da
+    else:
+        num_module = np
+
+    mask = num_module.ma.getmaskarray(array)
+
+    # Fill masked values with dummy value (simply use first value in array for
+    # this to preserve dtype; these entries get re-masked later so the actual
+    # value does not matter). Note: `array.fill_value` is not defined for dask
+    # arrays, and `ma.filled` also works for regular (non-masked) arrays.
+    fill_value = num_module.ravel(array)[0]
+    array = num_module.ma.filled(array, fill_value)
+
+    # Apply function and return masked array
+    array = function(array)
+    return num_module.ma.masked_array(array, mask=mask)
+
+
 def add_plev_from_altitude(cube):
     """Add pressure level coordinate from altitude coordinate.
 
@@ -64,11 +92,15 @@ def add_plev_from_altitude(cube):
         if height_coord.units != 'm':
             height_coord.convert_units('m')
         altitude_to_pressure = get_altitude_to_pressure_func()
-        pressure_points = altitude_to_pressure(height_coord.core_points())
+        pressure_points = _map_on_filled(
+            altitude_to_pressure, height_coord.core_points()
+        )
         if height_coord.core_bounds() is None:
             pressure_bounds = None
         else:
-            pressure_bounds = altitude_to_pressure(height_coord.core_bounds())
+            pressure_bounds = _map_on_filled(
+                altitude_to_pressure, height_coord.core_bounds()
+            )
         pressure_coord = iris.coords.AuxCoord(pressure_points,
                                               bounds=pressure_bounds,
                                               standard_name='air_pressure',
@@ -98,11 +130,15 @@ def add_altitude_from_plev(cube):
         if plev_coord.units != 'Pa':
             plev_coord.convert_units('Pa')
         pressure_to_altitude = get_pressure_to_altitude_func()
-        altitude_points = pressure_to_altitude(plev_coord.core_points())
+        altitude_points = _map_on_filled(
+            pressure_to_altitude, plev_coord.core_points()
+        )
         if plev_coord.core_bounds() is None:
             altitude_bounds = None
         else:
-            altitude_bounds = pressure_to_altitude(plev_coord.core_bounds())
+            altitude_bounds = _map_on_filled(
+                pressure_to_altitude, plev_coord.core_bounds()
+            )
         altitude_coord = iris.coords.AuxCoord(altitude_points,
                                               bounds=altitude_bounds,
                                               standard_name='altitude',
