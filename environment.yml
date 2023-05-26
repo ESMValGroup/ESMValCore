@@ -10,6 +10,7 @@ dependencies:
   - cftime
   - compilers
   - dask
+  - dask-jobqueue
   - distributed
   - esgf-pyclient>=0.3.1
   - esmpy!=8.1.0

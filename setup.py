@@ -30,6 +30,7 @@ REQUIREMENTS = {
         'cartopy',
         'cf-units',
         'dask[array,distributed]',
+        'dask-jobqueue',
         'esgf-pyclient>=0.3.1',
         'esmf-regrid',
         'esmpy!=8.1.0',

@@ -274,6 +274,7 @@ package:
     account: bk1088
     cores: 8
     memory: 16GiB
+    interface: ib0
     local_directory: "/work/bd0854/b381141/dask-tmp"
     n_workers: 2
 

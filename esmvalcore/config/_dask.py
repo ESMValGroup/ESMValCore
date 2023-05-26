@@ -12,6 +12,18 @@ logger = logging.getLogger(__name__)
 CONFIG_FILE = Path.home() / '.esmvaltool' / 'dask.yml'
 
 
+def check_distributed_config():
+    """Check the Dask distributed configuration."""
+    if not CONFIG_FILE.exists():
+        logger.warning(
+            "Using the Dask basic scheduler. This may lead to slow "
+            "computations and out-of-memory errors. See https://docs."
+            "esmvaltool.org/projects/ESMValCore/en/latest/quickstart/"
+            "configure.html#dask-distributed-configuration for information "
+            "on how to configure the Dask distributed scheduler."
+        )
+
+
 @contextlib.contextmanager
 def get_distributed_client():
     """Get a Dask distributed client."""
