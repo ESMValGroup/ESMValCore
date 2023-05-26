@@ -232,7 +232,16 @@ Under the ``cluster`` keyword, the type of cluster (e.g.
 :obj:`distributed.LocalCluster`), as well as any arguments required to start
 the cluster can be provided.
 
-Below are some example configurations:
+.. note::
+
+  If not all preprocessor functions support lazy data, computational
+  performance may be best with the default scheduler.
+  See `issue #674 <https://github.com/ESMValGroup/ESMValCore/issues/674>`_ for
+  progress on making all preprocessor functions lazy.
+
+**Example configurations**
+
+*Personal computer*
 
 Create a Dask distributed cluster on the computer running ESMValCore using
 all available resources:
@@ -250,16 +259,22 @@ this should work well for most personal computers.
    Dask will try and use as many resources it can find available, and this may
    lead to overcrowding the node by a single user (you)!
 
+*Shared computer*
 
 Create a Dask distributed cluster on the computer running ESMValCore, with
-4 workers with two 2 GiB of memory each (8 GiB in total):
+2 workers with 4 threads/4 GiB of memory each (8 GiB in total):
 
 .. code:: yaml
 
   cluster:
     type: distributed.LocalCluster
-    n_workers: 4
-    memory_limit: 2 GiB
+    n_workers: 2
+    threads_per_worker: 4
+    memory_limit: 4 GiB
+
+this should work well for shared computers.
+
+*Computer cluster*
 
 Create a Dask distributed cluster on the
 `Levante <https://docs.dkrz.de/doc/levante/running-jobs/index.html>`_
@@ -270,13 +285,25 @@ package:
 
   cluster:
     type: dask_jobqueue.SLURMCluster
-    queue: interactive
+    queue: shared
     account: bk1088
     cores: 8
-    memory: 16GiB
+    memory: 7680MiB
+    processes: 2
     interface: ib0
     local_directory: "/work/bd0854/b381141/dask-tmp"
-    n_workers: 2
+    n_workers: 24
+
+This will start 24 workers with ``cores / processes = 4`` threads each,
+resulting in ``n_workers / processes = 12`` Slurm jobs, where each Slurm job
+will request 8 CPU cores and 7680 MiB of memory and start ``processes = 2``
+workers.
+This example will use the fast infiniband network connection (called ``ib0``
+on Levante) for communication between workers running on different nodes.
+This should work well for larger computations where it is advantageous to use
+multiple nodes in a compute cluster.
+
+*Externally managed Dask cluster*
 
 Use an externally managed cluster, e.g. a cluster that you started using the
 `Dask Jupyterlab extension <https://github.com/dask/dask-labextension#dask-jupyterlab-extension>`_:
@@ -294,12 +321,23 @@ ESMValCore because then
 `Dask dashboard <https://docs.dask.org/en/stable/dashboard.html>`_ remains
 available after ESMValCore has finished running.
 
-.. note::
+**Advice on choosing performant configurations**
 
-  If not all preprocessor functions support lazy data, computational
-  performance may be best with the default scheduler.
-  See `issue #674 <https://github.com/ESMValGroup/ESMValCore/issues/674>`_ for
-  progress on making all preprocessor functions lazy.
+The threads within a single worker can access the same memory locations, so
+they may freely pass around chunks, while communicating a chunk between workers
+is done by copying it, so this is (a bit) slower.
+Therefore it is beneficial for performance to have multiple threads per worker.
+However, due to limitations in the CPython implementation (known as the Global
+Interpreter Lock or GIL), only a single thread in a worker can execute Python
+code (this limitation does not apply to compiled code called by Python code,
+e.g. numpy), therefore the best performing configurations will typically not
+use much more than 10 threads per worker.
+
+Due to limitations of the NetCDF library (it is not thread-safe), only one
+of the threads in a worker can read or write to a NetCDF file at a time.
+Therefore, it may be beneficial to use fewer threads per worker if the
+computation is very simple and the runtime is determined by the
+speed with which the data can be read from and/or written to disk.
 
 .. _config-esgf:
 
