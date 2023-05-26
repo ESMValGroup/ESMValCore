@@ -337,36 +337,6 @@ A variable-specific default for the facet ``var_type`` is given in the extra
 facets (see next paragraph) for many variables, but this can be overwritten in
 the recipe.
 
-For 3D ICON variables, ESMValCore tries to add the pressure level information
-(from the variables `pfull` and `phalf`) and/or altitude information (from the
-variables `zg` and `zghalf`) to the preprocessed output files.
-If neither of these variables are available in the input files, it is possible
-to specify the location of files that include the corresponding `zg` or
-`zghalf` variables by specifying the facets `zg_file` and/or `zghalf_file` in
-the recipe or the extra facets.
-The paths to these files can be specified absolute or relative (to
-``auxiliary_data_dir`` as defined in the :ref:`user configuration file`).
-
-.. hint::
-
-   To use the :func:`~esmvalcore.preprocessor.extract_levels` preprocessor on
-   native ICON data, you need to specify the name of the vertical coordinate
-   (e.g., ``coordinate: air_pressure``) since native ICON output usually
-   provides a 3D air pressure field instead of a simple 1D vertical coordinate.
-   This also works if your files only contain altitude information (in this
-   case, the US standard atmosphere is used to convert between altitude and
-   pressure levels; see :ref:`Vertical interpolation` for details).
-   Example:
-
-   .. code-block:: yaml
-
-    preprocessors:
-      extract_500hPa_level_from_icon:
-        extract_levels:
-          levels: 50000
-          scheme: linear
-          coordinate: air_pressure
-
 ESMValCore can automatically make native ICON data `UGRID
 <https://ugrid-conventions.github.io/ugrid-conventions/>`__-compliant when
 loading the data.
@@ -399,6 +369,36 @@ This is useful for diagnostics that do not support input data in UGRID format
 (yet) like the :ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>` or
 if you want to use the built-in :ref:`unstructured_nearest scheme <built-in
 regridding schemes>` regridding scheme.
+
+For 3D ICON variables, ESMValCore tries to add the pressure level information
+(from the variables `pfull` and `phalf`) and/or altitude information (from the
+variables `zg` and `zghalf`) to the preprocessed output files.
+If neither of these variables are available in the input files, it is possible
+to specify the location of files that include the corresponding `zg` or
+`zghalf` variables with the facets ``zg_file`` and/or ``zghalf_file`` in the
+recipe or the extra facets.
+The paths to these files can be specified absolute or relative (to
+``auxiliary_data_dir`` as defined in the :ref:`user configuration file`).
+
+.. hint::
+
+   To use the :func:`~esmvalcore.preprocessor.extract_levels` preprocessor on
+   native ICON data, you need to specify the name of the vertical coordinate
+   (e.g., ``coordinate: air_pressure``) since native ICON output usually
+   provides a 3D air pressure field instead of a simple 1D vertical coordinate.
+   This also works if your files only contain altitude information (in this
+   case, the US standard atmosphere is used to convert between altitude and
+   pressure levels; see :ref:`Vertical interpolation` for details).
+   Example:
+
+   .. code-block:: yaml
+
+    preprocessors:
+      extract_500hPa_level_from_icon:
+        extract_levels:
+          levels: 50000
+          scheme: linear
+          coordinate: air_pressure
 
 Similar to any other fix, the ICON fix allows the use of :ref:`extra
 facets<extra_facets>`.
