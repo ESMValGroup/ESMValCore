@@ -337,6 +337,36 @@ A variable-specific default for the facet ``var_type`` is given in the extra
 facets (see next paragraph) for many variables, but this can be overwritten in
 the recipe.
 
+For 3D ICON variables, ESMValCore tries to add the pressure level information
+(from the variables `pfull` and `phalf`) and/or altitude information (from the
+variables `zg` and `zghalf`) to the preprocessed output files.
+If neither of these variables are available in the input files, it is possible
+to specify the location of files that include the corresponding `zg` or
+`zghalf` variables by specifying the facets `zg_file` and/or `zghalf_file` in
+the recipe or the extra facets.
+The paths to these files can be specified absolute or relative (to
+``auxiliary_data_dir`` as defined in the :ref:`user configuration file`).
+
+.. hint::
+
+   To use the :func:`~esmvalcore.preprocessor.extract_levels` preprocessor on
+   native ICON data, you need to specify the name of the vertical coordinate
+   (e.g., ``coordinate: air_pressure``) since native ICON output usually
+   provides a 3D air pressure field instead of a simple 1D vertical coordinate.
+   This also works if your files only contain altitude information (in this
+   case, the US standard atmosphere is used to convert between altitude and
+   pressure levels; see :ref:`Vertical interpolation` for details).
+   Example:
+
+   .. code-block:: yaml
+
+    preprocessors:
+      extract_500hPa_level_from_icon:
+        extract_levels:
+          levels: 50000
+          scheme: linear
+          coordinate: air_pressure
+
 ESMValCore can automatically make native ICON data `UGRID
 <https://ugrid-conventions.github.io/ugrid-conventions/>`__-compliant when
 loading the data.
@@ -379,41 +409,36 @@ For some variables, extra facets are necessary; otherwise ESMValTool cannot
 read them properly.
 Supported keys for extra facets are:
 
-============= ============================= =================================
-Key           Description                   Default value if not specified
-============= ============================= =================================
-``latitude``  Standard name of the latitude ``latitude``
-              coordinate in the raw input
-              file
-``longitude`` Standard name of the          ``longitude``
-              longitude coordinate in the
-              raw input file
-``raw_name``  Variable name of the          CMOR variable name of the
-              variable in the raw input     corresponding variable
-              file
-``ugrid``     Automatic UGRIDization of     ``True``
-              the input data
-``var_type``  Variable type of the          No default (needs to be specified
-              variable in the raw input     in extra facets or recipe if
-              file                          default DRS is used)
-============= ============================= =================================
-
-.. hint::
-
-   To use the :func:`~esmvalcore.preprocessor.extract_levels` preprocessor on
-   native ICON data, you need to specify the name of the vertical coordinate
-   (e.g., ``coordinate: air_pressure``) since native ICON output usually
-   provides a 3D air pressure field instead of a simple 1D vertical coordinate.
-   Example:
-
-   .. code-block:: yaml
-
-    preprocessors:
-      extract_500hPa_level_from_icon:
-        extract_levels:
-          levels: 50000
-          scheme: linear
-          coordinate: air_pressure
+=================== ================================ ===================================
+Key                 Description                      Default value if not specified
+=================== ================================ ===================================
+``latitude``        Standard name of the latitude    ``latitude``
+                    coordinate in the raw input
+                    file
+``longitude``       Standard name of the             ``longitude``
+                    longitude coordinate in the
+                    raw input file
+``raw_name``        Variable name of the             CMOR variable name of the
+                    variable in the raw input        corresponding variable
+                    file
+``ugrid``           Automatic UGRIDization of        ``True``
+                    the input data
+``var_type``        Variable type of the             No default (needs to be specified
+                    variable in the raw input        in extra facets or recipe if
+                    file                             default DRS is used)
+``zg_file``         Absolute or relative (to         If possible, use `zg` variable
+                    ``auxiliary_data_dir`` defined   provided by the raw input file
+                    in the
+                    :ref:`user configuration file`)
+                    path to the input file that
+                    contains `zg`
+``zghalf_file``     Absolute or relative (to         If possible, use `zghalf` variable
+                    ``auxiliary_data_dir`` defined   provided by the raw input file
+                    in the
+                    :ref:`user configuration file`)
+                    path to the input file that
+                    contains `zghalf`
+=================== ================================ ===================================
 
 .. hint::
 
