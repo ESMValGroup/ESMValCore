@@ -22,6 +22,7 @@ dependencies:
   - iris-esmf-regrid >=0.6.0  # to work with latest esmpy
   - isodate
   - jinja2
+  - libnetcdf!=4.9.1 # to avoid hdf5 warnings
   - nc-time-axis
   - nested-lookup
   - netcdf4
