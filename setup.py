@@ -42,7 +42,6 @@ REQUIREMENTS = {
         "importlib_resources;python_version<'3.9'",
         'isodate',
         'jinja2',
-        'libnetcdf!=4.9.1',  # to avoid hdf5 warnings
         'nc-time-axis',  # needed by iris.plot
         'nested-lookup',
         'netCDF4',
