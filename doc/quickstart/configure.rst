@@ -231,6 +231,13 @@ In this file, under the ``client`` keyword, the arguments to
 Under the ``cluster`` keyword, the type of cluster (e.g.
 :obj:`distributed.LocalCluster`), as well as any arguments required to start
 the cluster can be provided.
+Extensive documentation on setting up Dask Clusters is available
+`here <https://docs.dask.org/en/latest/deploying.html>`__.
+
+.. warning::
+
+  The format of the ``~/.esmvaltool/dask.yml`` configuration file is not yet
+  fixed and may change in the next release of ESMValCore.
 
 .. note::
 
@@ -291,7 +298,7 @@ package:
     memory: 7680MiB
     processes: 2
     interface: ib0
-    local_directory: "/work/bd0854/b381141/dask-tmp"
+    local_directory: "/scratch/b/b381141/dask-tmp"
     n_workers: 24
 
 This will start 24 workers with ``cores / processes = 4`` threads each,
@@ -300,8 +307,17 @@ will request 8 CPU cores and 7680 MiB of memory and start ``processes = 2``
 workers.
 This example will use the fast infiniband network connection (called ``ib0``
 on Levante) for communication between workers running on different nodes.
-This should work well for larger computations where it is advantageous to use
-multiple nodes in a compute cluster.
+It is
+`important to set the right location for temporary storage <https://docs.dask.org/en/latest/deploying-hpc.html#local-storage>`__,
+in this case the ``/scratch`` space is used.
+It is also possible to use environmental variables to configure the temporary
+storage location, if you cluster provides these.
+
+A configuration like this should work well for larger computations where it is
+advantageous to use multiple nodes in a compute cluster.
+See
+`Deploying Dask Clusters on High Performance Computers <https://docs.dask.org/en/latest/deploying-hpc.html>`_
+for more information.
 
 *Externally managed Dask cluster*
 

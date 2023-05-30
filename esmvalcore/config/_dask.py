@@ -17,11 +17,13 @@ def check_distributed_config():
     if not CONFIG_FILE.exists():
         logger.warning(
             "Using the Dask basic scheduler. This may lead to slow "
-            "computations and out-of-memory errors. See https://docs."
-            "esmvaltool.org/projects/ESMValCore/en/latest/quickstart/"
-            "configure.html#dask-distributed-configuration for information "
-            "on how to configure the Dask distributed scheduler."
-        )
+            "computations and out-of-memory errors. "
+            "Note that the basic scheduler may still be the best choice for "
+            "preprocessor functions that are not lazy. "
+            "In that case, you can safely ignore this warning. "
+            "See https://docs.esmvaltool.org/projects/ESMValCore/en/latest/"
+            "quickstart/configure.html#dask-distributed-configuration for "
+            "more information. ")
 
 
 @contextlib.contextmanager
