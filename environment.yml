@@ -40,7 +40,7 @@ dependencies:
   - pyyaml
   - requests
   - scipy>=1.6
-  - shapely
+  - shapely >=2.0.0
   - yamale
   # Python packages needed for building docs
   - autodocsumm>=0.2.2
