@@ -704,30 +704,31 @@ def climate_statistics(cube,
     """Compute climate statistics with the specified granularity.
 
     Computes statistics for the whole dataset. It is possible to get them for
-    the full period or with the data grouped by day, month or season
+    the full period or with the data grouped by hour, day, month or season.
 
     Parameters
     ----------
     cube: iris.cube.Cube
-        input cube.
+        Input cube.
 
     operator: str, optional
         Select operator to apply.
         Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
-        'max', 'rms'
+        'max', 'rms'.
 
     period: str, optional
         Period to compute the statistic over.
         Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
-        'mon', 'daily', 'day'
+        'mon', 'daily', 'day', 'hourly', 'hour', 'hr'.
 
     seasons: list or tuple of str, optional
-        Seasons to use if needed. Defaults to ('DJF', 'MAM', 'JJA', 'SON')
+        Seasons to use if needed. Defaults to ('DJF', 'MAM', 'JJA', 'SON').
 
     Returns
     -------
     iris.cube.Cube
-        Monthly statistics cube
+        Climate statistics cube.
+
     """
     original_dtype = cube.dtype
     period = period.lower()
@@ -775,34 +776,35 @@ def anomalies(cube,
               seasons=('DJF', 'MAM', 'JJA', 'SON')):
     """Compute anomalies using a mean with the specified granularity.
 
-    Computes anomalies based on daily, monthly, seasonal or yearly means for
-    the full available period
+    Computes anomalies based on hourly, daily, monthly, seasonal or yearly
+    means for the full available period.
 
     Parameters
     ----------
     cube: iris.cube.Cube
-        input cube.
+        Input cube.
 
     period: str
         Period to compute the statistic over.
         Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
-        'mon', 'daily', 'day'
+        'mon', 'daily', 'day', 'hourly', 'hour', 'hr'.
 
     reference: list int, optional, default: None
         Period of time to use a reference, as needed for the 'extract_time'
-        preprocessor function
-        If None, all available data is used as a reference
+        preprocessor function. If ``None``, all available data is used as a
+        reference.
 
     standardize: bool, optional
-        If True standardized anomalies are calculated
+        If ``True`` standardized anomalies are calculated.
 
     seasons: list or tuple of str, optional
-        Seasons to use if needed. Defaults to ('DJF', 'MAM', 'JJA', 'SON')
+        Seasons to use if needed. Defaults to ('DJF', 'MAM', 'JJA', 'SON').
 
     Returns
     -------
     iris.cube.Cube
-        Anomalies cube
+        Anomalies cube.
+
     """
     if reference is None:
         reference_cube = cube
@@ -868,6 +870,10 @@ def _compute_anomalies(cube, reference, period, seasons):
 
 def _get_period_coord(cube, period, seasons):
     """Get periods."""
+    if period in ['hourly', 'hour', 'hr']:
+        if not cube.coords('hour'):
+            iris.coord_categorisation.add_hour(cube, 'time')
+        return cube.coord('hour')
     if period in ['daily', 'day']:
         if not cube.coords('day_of_year'):
             iris.coord_categorisation.add_day_of_year(cube, 'time')
