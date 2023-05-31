@@ -167,8 +167,8 @@ class RecipeOutput(Mapping):
                             attr_list.update(values)
                             self.filters[attr] = attr_list
 
-        for filter in self.filters.keys():
-            self.filters[filter] = sorted(self.filters[filter])
+        for _filter in self.filters.keys():
+            self.filters[_filter] = sorted(self.filters[_filter])
 
     def __repr__(self):
         """Return canonical string representation."""
