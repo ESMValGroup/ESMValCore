@@ -52,15 +52,11 @@ def tos_cubes():
     lat_coord = iris.coords.DimCoord([23.0211550, 26.3700972],
                                      standard_name='latitude',
                                      var_name='lat',
-                                     units='degrees_north',
-                                     bounds=[[21.3466839, 24.6956261],
-                                             [24.6956261, 28.0445683]])
+                                     units='degrees_north')
     lon_coord = iris.coords.DimCoord([23.0211550, 26.3700972],
                                      standard_name='longitude',
                                      var_name='lon',
-                                     units='degrees_east',
-                                     bounds=[[21.3466839, 24.6956261],
-                                             [24.6956261, 28.0445683]])
+                                     units='degrees_east')
     coords_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]
     cube = iris.cube.Cube([[[22.0, 22.0], [22.0, 22.0]]],
                           standard_name='sea_surface_temperature',
