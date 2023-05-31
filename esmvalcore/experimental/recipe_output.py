@@ -71,6 +71,8 @@ class TaskOutput:
         """
         product_attributes = task.get_product_attributes()
         return cls(name=task.name, files=product_attributes)
+    
+
 
 
 class DiagnosticOutput:
@@ -122,12 +124,19 @@ class RecipeOutput(Mapping):
         The session used to run the recipe.
     """
 
+    FILTER_ATTRS: list = [
+        "realms",
+        "plot_types",
+        "variables" # TODO Add in diagnostic, verify attr. name
+    ]
+
     def __init__(self, task_output: dict, session=None, info=None):
         self._raw_task_output = task_output
         self._task_output = {}
         self.diagnostics = {}
         self.info = info
         self.session = session
+        self.filters: dict = {}
 
         # Group create task output and group by diagnostic
         diagnostics: dict = {}
@@ -141,13 +150,27 @@ class RecipeOutput(Mapping):
 
         # Create diagnostic output
         for name, tasks in diagnostics.items():
-            diagnostic_info = info.data['diagnostics'][name]
+            diagnostic_info = info.data['diagnostics'][name] # TODO? This could fail if info is None
             self.diagnostics[name] = DiagnosticOutput(
                 name=name,
                 task_output=tasks,
                 title=diagnostic_info.get('title'),
                 description=diagnostic_info.get('description'),
             )
+
+            # Add data to filters
+            for task in tasks:
+                for file in task.files:
+                    for attr, values in file.attributes.items():
+                        if attr in RecipeOutput.FILTER_ATTRS:
+                            attr_list = self.filters.get(attr, set())
+                            # NOTE: All current filter attributes are lists
+                            attr_list.update(values)
+                            self.filters[attr] = attr_list
+        
+        for filter in self.filters.keys():
+            self.filters[filter] = sorted(self.filters[filter])
+
 
     def __repr__(self):
         """Return canonical string representation."""
@@ -217,6 +240,7 @@ class RecipeOutput(Mapping):
             diagnostics=self.diagnostics.values(),
             session=self.session,
             info=self.info,
+            filters=self.filters,
         )
 
         return rendered
