@@ -11,7 +11,7 @@
 [![Github Actions Test](https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml/badge.svg)](https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml)
 [![Github Actions Dashboard](https://api.meercode.io/badge/ESMValGroup/ESMValCore?type=ci-success-rate&branch=main&lastDay=14)](https://meercode.io)
 
-![esmvaltoollogo](https://github.com/ESMValGroup/ESMValCore/blob/main/doc/figures/ESMValTool-logo-2.png)
+![esmvaltoollogo](https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/doc/figures/ESMValTool-logo-2.png)
 
 ESMValCore: core functionalities for the ESMValTool, a community diagnostic
 and performance metrics tool for routine evaluation of Earth System Models
