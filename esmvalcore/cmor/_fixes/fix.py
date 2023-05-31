@@ -5,29 +5,43 @@ import importlib
 import inspect
 import tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING, Optional
 
 from ..table import CMOR_TABLES
+
+if TYPE_CHECKING:
+    from ...config import Session
+    from ..table import VariableInfo
 
 
 class Fix:
     """Base class for dataset fixes."""
 
-    def __init__(self, vardef, extra_facets=None):
+    def __init__(
+        self,
+        vardef: VariableInfo,
+        extra_facets: Optional[dict] = None,
+        session: Optional[Session] = None,
+    ):
         """Initialize fix object.
 
         Parameters
         ----------
-        vardef: str
+        vardef: VariableInfo
             CMOR table entry.
         extra_facets: dict, optional
             Extra facets are mainly used for data outside of the big projects
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
+        session: Session, optional
+            Current session which includes configuration and directory
+            information.
 
         """
         self.vardef = vardef
         if extra_facets is None:
             extra_facets = {}
         self.extra_facets = extra_facets
+        self.session = session
 
     def fix_file(
         self,
@@ -136,7 +150,14 @@ class Fix:
         return not self.__eq__(other)
 
     @staticmethod
-    def get_fixes(project, dataset, mip, short_name, extra_facets=None):
+    def get_fixes(
+        project: str,
+        dataset: str,
+        mip: str,
+        short_name: str,
+        extra_facets: Optional[dict] = None,
+        session: Optional[Session] = None,
+    ) -> list:
         """Get the fixes that must be applied for a given dataset.
 
         It will look for them at the module
@@ -163,6 +184,9 @@ class Fix:
         extra_facets: dict, optional
             Extra facets are mainly used for data outside of the big projects
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
+        session: Session, optional
+            Current session which includes configuration and directory
+            information.
 
         Returns
         -------
@@ -202,13 +226,15 @@ class Fix:
                 pass
 
         for fixes_module in fixes_modules:
-            classes = inspect.getmembers(fixes_module, inspect.isclass)
-            classes = dict((name.lower(), value) for name, value in classes)
+            classes = dict(
+                (name.lower(), value) for (name, value) in
+                inspect.getmembers(fixes_module, inspect.isclass)
+            )
             for fix_name in (short_name, mip.lower(), 'allvars'):
-                try:
-                    fixes.append(classes[fix_name](vardef, extra_facets))
-                except KeyError:
-                    pass
+                if fix_name in classes:
+                    fixes.append(classes[fix_name](
+                        vardef, extra_facets=extra_facets, session=session
+                    ))
 
         return fixes
 

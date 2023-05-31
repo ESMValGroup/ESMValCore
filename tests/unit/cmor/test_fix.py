@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from unittest import TestCase
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, sentinel
 
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.cmor.fix import Fix, fix_data, fix_file, fix_metadata
@@ -27,6 +27,7 @@ class TestFixFile(TestCase):
                 'mip': 'mip',
                 'short_name': 'short_name',
             },
+            'session': sentinel.session,
         }
 
     def test_fix(self):
@@ -40,6 +41,7 @@ class TestFixFile(TestCase):
                 dataset='model',
                 mip='mip',
                 output_dir=Path('output_dir'),
+                session=sentinel.session,
             )
             self.assertNotEqual(file_returned, self.filename)
             self.assertEqual(file_returned, 'new_filename')
@@ -58,6 +60,7 @@ class TestFixFile(TestCase):
                 dataset='model',
                 mip='mip',
                 output_dir=Path('output_dir'),
+                session=sentinel.session,
             )
             self.assertEqual(file_returned, self.filename)
             mock_get_fixes.assert_called_once_with(
@@ -124,6 +127,7 @@ class TestFixMetadata(TestCase):
                 'short_name': 'short_name',
                 'frequency': None,
             },
+            'session': sentinel.session,
         }
 
     @staticmethod
@@ -146,6 +150,7 @@ class TestFixMetadata(TestCase):
                     project='project',
                     dataset='model',
                     mip='mip',
+                    session=sentinel.session,
                 )[0]
                 self.checker.assert_called_once_with(self.intermediate_cube)
                 self.check_metadata.assert_called_once_with()
@@ -169,6 +174,7 @@ class TestFixMetadata(TestCase):
                     project='project',
                     dataset='model',
                     mip='mip',
+                    session=sentinel.session,
                 )[0]
                 self.checker.assert_called_once_with(self.cube)
                 self.check_metadata.assert_called_once_with()
@@ -266,6 +272,7 @@ class TestFixData(TestCase):
                 'short_name': 'short_name',
                 'frequency': None,
             },
+            'session': sentinel.session,
         }
 
     def test_fix(self):
@@ -281,6 +288,7 @@ class TestFixData(TestCase):
                     project='project',
                     dataset='model',
                     mip='mip',
+                    session=sentinel.session,
                 )
                 self.checker.assert_called_once_with(self.intermediate_cube)
                 self.check_data.assert_called_once_with()
@@ -304,6 +312,7 @@ class TestFixData(TestCase):
                     project='project',
                     dataset='model',
                     mip='mip',
+                    session=sentinel.session,
                 )
                 self.checker.assert_called_once_with(self.cube)
                 self.check_data.assert_called_once_with()
