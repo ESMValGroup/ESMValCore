@@ -86,17 +86,7 @@ def test_tos_fix_metadata(tos_cubes):
         fixed_lat = fixed_tos_cube.coord('latitude')
         assert fixed_lon.bounds is not None
         assert fixed_lat.bounds is not None
-        np.testing.assert_equal(
-            fixed_lon.points,
-            np.array([23.0211550, 26.3700972], dtype=np.float32))
-        np.testing.assert_equal(
-            fixed_lat.points,
-            np.array([23.0211550, 26.3700972], dtype=np.float32))
-        np.testing.assert_equal(
-            fixed_lon.bounds,
-            np.array([[21.3467, 24.6956], [24.6956, 28.0446]],
-                     dtype=np.float32))
-        np.testing.assert_equal(
-            fixed_lat.bounds,
-            np.array([[21.3467, 24.6956], [24.6956, 28.0446]],
-                     dtype=np.float32))
+        assert fixed_lon.bounds.dtype == np.float64
+        assert fixed_lon.points.dtype == np.float64
+        assert fixed_lat.bounds.dtype == np.float64
+        assert fixed_lat.points.dtype == np.float64

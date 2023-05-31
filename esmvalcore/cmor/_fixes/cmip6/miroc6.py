@@ -15,8 +15,8 @@ class Tos(Fix):
     """Fixes for tos."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+        """Fix latitude_bounds and longitude_bounds data type and round to 4
+        d.p.
 
         Parameters
         ----------
@@ -29,13 +29,17 @@ class Tos(Fix):
         """
         for cube in cubes:
             latitude = cube.coord('latitude')
-            if latitude.bounds is not None:
-                latitude.bounds = latitude.bounds.astype(np.float32)
-                latitude.bounds = np.round(latitude.bounds, 4)
-                latitude.points = latitude.points.astype(np.float32)
+            if latitude.bounds is None:
+                latitude.guess_bounds()
+            latitude.points = latitude.points.astype(np.float32).astype(
+                np.float64)
+            latitude.bounds = latitude.bounds.astype(np.float32).astype(
+                np.float64)
             longitude = cube.coord('longitude')
-            if longitude.bounds is not None:
-                longitude.bounds = longitude.bounds.astype(np.float32)
-                longitude.bounds = np.round(longitude.bounds, 4)
-                longitude.points = longitude.points.astype(np.float32)
+            if longitude.bounds is None:
+                longitude.guess_bounds()
+            longitude.points = longitude.points.astype(np.float32).astype(
+                np.float64)
+            longitude.bounds = longitude.bounds.astype(np.float32).astype(
+                np.float64)
         return cubes
