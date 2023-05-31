@@ -1,5 +1,6 @@
 """Tests for the ICON on-the-fly CMORizer."""
 from datetime import datetime
+from pathlib import Path
 from unittest import mock
 
 import iris
@@ -14,7 +15,8 @@ import esmvalcore.cmor._fixes.icon.icon
 from esmvalcore.cmor._fixes.icon._base_fixes import IconFix
 from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi, Siconc, Siconca
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor.table import get_var_info
+from esmvalcore.cmor.table import CoordinateInfo, get_var_info
+from esmvalcore.config import CFG
 from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
 
@@ -90,7 +92,25 @@ def cubes_2d_lat_lon_grid():
     return CubeList([cube])
 
 
-def _get_fix(mip, short_name, fix_name):
+@pytest.fixture
+def simple_unstructured_cube():
+    """Simple cube with unstructured grid."""
+    time_coord = DimCoord([0], var_name='time', standard_name='time',
+                          units='days since 1850-01-01')
+    height_coord = DimCoord([0, 1, 2], var_name='height')
+    lat_coord = AuxCoord([0.0, 1.0], var_name='lat', standard_name='latitude',
+                         long_name='latitude', units='degrees_north')
+    lon_coord = AuxCoord([0.0, 1.0], var_name='lon',
+                         standard_name='longitude', long_name='longitude',
+                         units='degrees_east')
+    cube = Cube([[[0.0, 1.0], [2.0, 3.0], [4.0, 5.0]]], var_name='ta',
+                units='K',
+                dim_coords_and_dims=[(time_coord, 0), (height_coord, 1)],
+                aux_coords_and_dims=[(lat_coord, 2), (lon_coord, 2)])
+    return cube
+
+
+def _get_fix(mip, short_name, fix_name, session=None):
     """Load a fix from esmvalcore.cmor._fixes.icon.icon."""
     dataset = Dataset(
         project='ICON',
@@ -101,26 +121,26 @@ def _get_fix(mip, short_name, fix_name):
     extra_facets = get_extra_facets(dataset, ())
     vardef = get_var_info(project='ICON', mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.icon.icon, fix_name)
-    fix = cls(vardef, extra_facets=extra_facets)
+    fix = cls(vardef, extra_facets=extra_facets, session=session)
     return fix
 
 
-def get_fix(mip, short_name):
+def get_fix(mip, short_name, session=None):
     """Load a variable fix from esmvalcore.cmor._fixes.icon.icon."""
     fix_name = short_name[0].upper() + short_name[1:]
-    return _get_fix(mip, short_name, fix_name)
+    return _get_fix(mip, short_name, fix_name, session=session)
 
 
-def get_allvars_fix(mip, short_name):
+def get_allvars_fix(mip, short_name, session=None):
     """Load the AllVars fix from esmvalcore.cmor._fixes.icon.icon."""
-    return _get_fix(mip, short_name, 'AllVars')
+    return _get_fix(mip, short_name, 'AllVars', session=session)
 
 
-def fix_metadata(cubes, mip, short_name):
+def fix_metadata(cubes, mip, short_name, session=None):
     """Fix metadata of cubes."""
-    fix = get_fix(mip, short_name)
+    fix = get_fix(mip, short_name, session=session)
     cubes = fix.fix_metadata(cubes)
-    fix = get_allvars_fix(mip, short_name)
+    fix = get_allvars_fix(mip, short_name, session=session)
     cubes = fix.fix_metadata(cubes)
     return cubes
 
@@ -175,18 +195,20 @@ def check_time(cube):
     assert time.attributes == {}
 
 
-def check_height(cube, plev_has_bounds=True):
-    """Check height coordinate of cube."""
+def check_model_level_metadata(cube):
+    """Check metadata of model_level coordinate."""
     assert cube.coords('model level number', dim_coords=True)
     height = cube.coord('model level number', dim_coords=True)
     assert height.var_name == 'model_level'
     assert height.standard_name is None
     assert height.long_name == 'model level number'
     assert height.units == 'no unit'
-    np.testing.assert_array_equal(height.points, np.arange(47))
-    assert height.bounds is None
     assert height.attributes == {'positive': 'up'}
+    return height
 
+
+def check_air_pressure_metadata(cube):
+    """Check metadata of air_pressure coordinate."""
     assert cube.coords('air_pressure', dim_coords=False)
     plev = cube.coord('air_pressure', dim_coords=False)
     assert plev.var_name == 'plev'
@@ -194,6 +216,16 @@ def check_height(cube, plev_has_bounds=True):
     assert plev.long_name == 'pressure'
     assert plev.units == 'Pa'
     assert plev.attributes == {'positive': 'down'}
+    return plev
+
+
+def check_height(cube, plev_has_bounds=True):
+    """Check height coordinate of cube."""
+    height = check_model_level_metadata(cube)
+    np.testing.assert_array_equal(height.points, np.arange(47))
+    assert height.bounds is None
+
+    plev = check_air_pressure_metadata(cube)
     assert cube.coord_dims('air_pressure') == (0, 1, 2)
 
     np.testing.assert_allclose(
@@ -888,6 +920,47 @@ def test_2d_lat_lon_grid_fix(cubes_2d_lat_lon_grid):
     assert cube.coords('height', dim_coords=False, dimensions=())
 
 
+# Test ch4Clim (for time dimension time2)
+
+
+def test_get_ch4clim_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'ch4Clim')
+    assert fix == [AllVars(None)]
+
+
+def test_ch4clim_fix(cubes_regular_grid):
+    """Test fix."""
+    cube = cubes_regular_grid[0]
+    cube.var_name = 'ch4Clim'
+    cube.units = 'mol mol-1'
+    cube.coord('time').units = 'no_unit'
+    cube.coord('time').attributes['invalid_units'] = 'day as %Y%m%d.%f'
+    cube.coord('time').points = [18500104.0]
+    cube.coord('time').long_name = 'wrong_time_name'
+
+    fix = get_allvars_fix('Amon', 'ch4Clim')
+    fixed_cubes = fix.fix_metadata(cubes_regular_grid)
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'ch4Clim'
+    assert cube.standard_name == 'mole_fraction_of_methane_in_air'
+    assert cube.long_name == 'Mole Fraction of CH4'
+    assert cube.units == 'mol mol-1'
+    assert 'positive' not in cube.attributes
+
+    time_coord = cube.coord('time')
+    assert time_coord.var_name == 'time'
+    assert time_coord.standard_name == 'time'
+    assert time_coord.long_name == 'time'
+    assert time_coord.units == Unit(
+        'days since 1850-01-01', calendar='proleptic_gregorian'
+    )
+    np.testing.assert_allclose(time_coord.points, [3.0])
+    assert time_coord.bounds is None
+
+
 # Test fix with empty standard_name
 
 
@@ -1147,7 +1220,9 @@ def test_only_time(monkeypatch):
     # ICON CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
-    monkeypatch.setattr(fix.vardef, 'dimensions', ['time'])
+    coord_info = CoordinateInfo('time')
+    coord_info.standard_name = 'time'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'time': coord_info})
 
     # Create cube with only a single dimension
     time_coord = DimCoord([0.0, 1.0],
@@ -1192,7 +1267,9 @@ def test_only_height(monkeypatch):
     # ICON CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
-    monkeypatch.setattr(fix.vardef, 'dimensions', ['plev19'])
+    coord_info = CoordinateInfo('plev19')
+    coord_info.standard_name = 'air_pressure'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'plev19': coord_info})
 
     # Create cube with only a single dimension
     height_coord = DimCoord([1000.0, 100.0],
@@ -1225,6 +1302,9 @@ def test_only_height(monkeypatch):
     np.testing.assert_allclose(new_height_coord.points, [1.0, 10.0])
     assert new_height_coord.bounds is None
 
+    # Check that no air_pressure coordinate has been created
+    assert not cube.coords('air_pressure')
+
     # Check that no mesh has been created
     assert cube.mesh is None
 
@@ -1236,7 +1316,9 @@ def test_only_latitude(monkeypatch):
     # ICON CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
-    monkeypatch.setattr(fix.vardef, 'dimensions', ['latitude'])
+    coord_info = CoordinateInfo('latitude')
+    coord_info.standard_name = 'latitude'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'latitude': coord_info})
 
     # Create cube with only a single dimension
     lat_coord = DimCoord([0.0, 10.0],
@@ -1279,7 +1361,9 @@ def test_only_longitude(monkeypatch):
     # ICON CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
-    monkeypatch.setattr(fix.vardef, 'dimensions', ['longitude'])
+    coord_info = CoordinateInfo('longitude')
+    coord_info.standard_name = 'longitude'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'longitude': coord_info})
 
     # Create cube with only a single dimension
     lon_coord = DimCoord([0.0, 180.0],
@@ -1346,13 +1430,13 @@ def test_hourly_data(cubes_2d):
     """Test fix."""
     fix = get_allvars_fix('Amon', 'tas')
     for cube in cubes_2d:
-        cube.coord('time').points = [20220314.1]
+        cube.coord('time').points = [20041104.5833333]
 
     fixed_cubes = fix.fix_metadata(cubes_2d)
 
     cube = check_tas_metadata(fixed_cubes)
     date = cube.coord('time').units.num2date(cube.coord('time').points)
-    np.testing.assert_array_equal(date, [datetime(2022, 3, 14, 2, 24)])
+    np.testing.assert_array_equal(date, [datetime(2004, 11, 4, 14, 0)])
     assert cube.coord('time').bounds is None
 
 
@@ -1501,3 +1585,168 @@ def test_get_mesh_not_cached(monkeypatch):
     monkeypatch.setattr(fix, '_create_mesh', mock.Mock())
     fix.get_mesh(cube)
     fix._create_mesh.assert_called_once_with(cube)
+
+
+# Test _get_path_from_facet
+
+
+@pytest.mark.parametrize(
+    'path,description,output',
+    [
+        ('{tmp_path}/a.nc', None, '{tmp_path}/a.nc'),
+        ('b.nc', 'Grid file', '{tmp_path}/b.nc'),
+    ],
+)
+def test_get_path_from_facet(path, description, output, tmp_path):
+    """Test fix."""
+    session = CFG.start_session('my session')
+    session['auxiliary_data_dir'] = tmp_path
+    path = path.format(tmp_path=tmp_path)
+    fix = get_allvars_fix('Amon', 'tas', session=session)
+    fix.extra_facets['test_path'] = path
+
+    # Create empty dummy file
+    output = output.format(tmp_path=tmp_path)
+    with open(output, 'w'):
+        pass
+
+    out_path = fix._get_path_from_facet('test_path', description=description)
+
+    assert isinstance(out_path, Path)
+    assert out_path == Path(output.format(tmp_path=tmp_path))
+
+
+@pytest.mark.parametrize(
+    'path,description',
+    [
+        ('{tmp_path}/a.nc', None),
+        ('b.nc', 'Grid file'),
+    ],
+)
+def test_get_path_from_facet_fail(path, description, tmp_path):
+    """Test fix."""
+    session = CFG.start_session('my session')
+    session['auxiliary_data_dir'] = tmp_path
+    path = path.format(tmp_path=tmp_path)
+    fix = get_allvars_fix('Amon', 'tas', session=session)
+    fix.extra_facets['test_path'] = path
+
+    with pytest.raises(FileNotFoundError, match=description):
+        fix._get_path_from_facet('test_path', description=description)
+
+
+# Test add_additional_cubes
+
+
+@pytest.mark.parametrize('facet', ['zg_file', 'zghalf_file'])
+@pytest.mark.parametrize('path', ['{tmp_path}/a.nc', 'a.nc'])
+def test_add_additional_cubes(path, facet, tmp_path):
+    """Test fix."""
+    session = CFG.start_session('my session')
+    session['auxiliary_data_dir'] = tmp_path
+    path = path.format(tmp_path=tmp_path)
+    fix = get_allvars_fix('Amon', 'tas', session=session)
+    fix.extra_facets[facet] = path
+
+    # Save temporary cube
+    cube = Cube(0, var_name=facet)
+    iris.save(cube, tmp_path / 'a.nc')
+
+    cubes = CubeList([])
+    new_cubes = fix.add_additional_cubes(cubes)
+
+    assert new_cubes is cubes
+    assert len(cubes) == 1
+    assert cubes[0].var_name == facet
+
+
+@pytest.mark.parametrize('facet', ['zg_file', 'zghalf_file'])
+@pytest.mark.parametrize('path', ['{tmp_path}/a.nc', 'a.nc'])
+def test_add_additional_cubes_fail(path, facet, tmp_path):
+    """Test fix."""
+    session = CFG.start_session('my session')
+    session['auxiliary_data_dir'] = tmp_path
+    path = path.format(tmp_path=tmp_path)
+    fix = get_allvars_fix('Amon', 'tas', session=session)
+    fix.extra_facets[facet] = path
+
+    cubes = CubeList([])
+    with pytest.raises(FileNotFoundError, match='File'):
+        fix.add_additional_cubes(cubes)
+
+
+# Test _fix_height
+
+
+@pytest.mark.parametrize('bounds', [True, False])
+def test_fix_height_plev(bounds, simple_unstructured_cube):
+    """Test fix."""
+    cube = simple_unstructured_cube[:, 1:, :]
+    pfull_cube = simple_unstructured_cube[:, 1:, :]
+    pfull_cube.var_name = 'pfull'
+    pfull_cube.units = 'Pa'
+    cubes = CubeList([cube, pfull_cube])
+    if bounds:
+        phalf_cube = simple_unstructured_cube.copy()
+        phalf_cube.var_name = 'phalf'
+        phalf_cube.units = 'Pa'
+        cubes.append(phalf_cube)
+    fix = get_allvars_fix('Amon', 'ta')
+
+    fixed_cube = fix._fix_height(cube, cubes)
+
+    expected_data = [[[4.0, 5.0], [2.0, 3.0]]]
+    np.testing.assert_allclose(fixed_cube.data, expected_data)
+
+    height = check_model_level_metadata(fixed_cube)
+    np.testing.assert_array_equal(height.points, [0, 1])
+    assert height.bounds is None
+
+    plev = check_air_pressure_metadata(fixed_cube)
+    assert fixed_cube.coord_dims('air_pressure') == (0, 1, 2)
+    np.testing.assert_allclose(plev.points, expected_data)
+    if bounds:
+        expected_bnds = [[[[4.0, 2.0], [5.0, 3.0]], [[2.0, 0.0], [3.0, 1.0]]]]
+        np.testing.assert_allclose(plev.bounds, expected_bnds)
+    else:
+        assert plev.bounds is None
+
+
+@pytest.mark.parametrize('bounds', [True, False])
+def test_fix_height_alt16(bounds, simple_unstructured_cube):
+    """Test fix."""
+    cube = simple_unstructured_cube[:, 1:, :]
+    zg_cube = simple_unstructured_cube[0, 1:, :]
+    zg_cube.var_name = 'zg'
+    zg_cube.units = 'm'
+    cubes = CubeList([cube, zg_cube])
+    if bounds:
+        zghalf_cube = simple_unstructured_cube[0, :, :]
+        zghalf_cube.var_name = 'zghalf'
+        zghalf_cube.units = 'm'
+        cubes.append(zghalf_cube)
+    fix = get_allvars_fix('Amon', 'ta')
+
+    fixed_cube = fix._fix_height(cube, cubes)
+
+    expected_data = [[[4.0, 5.0], [2.0, 3.0]]]
+    np.testing.assert_allclose(fixed_cube.data, expected_data)
+
+    height = check_model_level_metadata(fixed_cube)
+    np.testing.assert_array_equal(height.points, [0, 1])
+    assert height.bounds is None
+
+    assert fixed_cube.coords('altitude', dim_coords=False)
+    alt16 = fixed_cube.coord('altitude', dim_coords=False)
+    assert alt16.var_name == 'alt16'
+    assert alt16.standard_name == 'altitude'
+    assert alt16.long_name == 'altitude'
+    assert alt16.units == 'm'
+    assert alt16.attributes == {'positive': 'up'}
+    assert fixed_cube.coord_dims('altitude') == (1, 2)
+    np.testing.assert_allclose(alt16.points, expected_data[0])
+    if bounds:
+        expected_bnds = [[[4.0, 2.0], [5.0, 3.0]], [[2.0, 0.0], [3.0, 1.0]]]
+        np.testing.assert_allclose(alt16.bounds, expected_bnds)
+    else:
+        assert alt16.bounds is None

@@ -1381,16 +1381,17 @@ See also :func:`esmvalcore.preprocessor.decadal_statistics`.
 ----------------------
 
 This function produces statistics for the whole dataset. It can produce scalars
-(if the full period is chosen) or daily, monthly or seasonal statistics.
+(if the full period is chosen) or hourly, daily, monthly or seasonal
+statistics.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean', 'median',
       'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
 
     * period: define the granularity of the statistics: get values for the
-      full period, for each month or day of year.
+      full period, for each month, day of year or hour of day.
       Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
-      'mon', 'daily', 'day'. Default is 'full'
+      'mon', 'daily', 'day', 'hourly', 'hour', 'hr'. Default is 'full'
 
     * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
       Default is '[DJF, MAM, JJA, SON]'
@@ -1502,14 +1503,14 @@ See also :func:`esmvalcore.preprocessor.resample_hours`.
 ----------------------
 
 This function computes the anomalies for the whole dataset. It can compute
-anomalies from the full, seasonal, monthly and daily climatologies. Optionally
-standardized anomalies can be calculated.
+anomalies from the full, seasonal, monthly, daily and hourly climatologies.
+Optionally standardized anomalies can be calculated.
 
 Parameters:
     * period: define the granularity of the climatology to use:
-      full period, seasonal, monthly or daily.
+      full period, seasonal, monthly, daily or hourly.
       Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
-      'mon', 'daily', 'day'. Default is 'full'
+      'mon', 'daily', 'day', 'hourly', 'hour', 'hr'. Default is 'full'
     * reference: Time slice to use as the reference to compute the climatology
       on. Can be 'null' to use the full cube or a dictionary with the
       parameters from extract_time_. Default is null

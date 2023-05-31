@@ -8,10 +8,10 @@ dependencies:
   - cartopy
   - cf-units
   - cftime
-  - dask
   - compilers
+  - dask
   - esgf-pyclient>=0.3.1
-  - esmpy!=8.1.0,<8.4  # see github.com/ESMValGroup/ESMValCore/issues/1208
+  - esmpy!=8.1.0
   - filelock
   - fiona
   - fire
@@ -19,9 +19,10 @@ dependencies:
   - humanfriendly
   - importlib_resources
   - iris>=3.4.0
-  - iris-esmf-regrid
+  - iris-esmf-regrid >=0.6.0  # to work with latest esmpy
   - isodate
   - jinja2
+  - libnetcdf!=4.9.1 # to avoid hdf5 warnings
   - nc-time-axis
   - nested-lookup
   - netcdf4
@@ -34,8 +35,8 @@ dependencies:
   - psutil
   - py-cordex
   - pybtex
-  - python>=3.8
-  - python-stratify
+  - python>=3.9
+  - python-stratify>=0.3
   - pyyaml
   - requests
   - scipy>=1.6
@@ -46,7 +47,7 @@ dependencies:
   - ipython
   - nbsphinx
   - sphinx>=6.1.3
-  - sphinx_rtd_theme
+  - pydata-sphinx-theme
   # Python packages needed for testing
   - flake8
   - mypy>=0.990
@@ -68,7 +69,7 @@ dependencies:
   - docformatter
   - isort
   - pre-commit
-  - prospector!=1.1.6.3,!=1.1.6.4
+  - prospector >=1.9.0
   # Not on conda forge - vprof
   - yamllint
   - yapf

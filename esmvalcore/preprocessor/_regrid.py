@@ -5,6 +5,7 @@ import inspect
 import logging
 import os
 import re
+import ssl
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
@@ -13,13 +14,13 @@ from typing import Dict
 import iris
 import numpy as np
 import stratify
-from dask import array as da
 from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
 
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.table import CMOR_TABLES
+from ._other import get_array_module
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
 from ._supplementary_vars import add_ancillary_variable, add_cell_measure
@@ -360,15 +361,26 @@ def extract_location(cube, location, scheme):
     if scheme is None:
         raise ValueError("Interpolation scheme needs to be specified."
                          " Use either 'linear' or 'nearest'.")
-    geolocator = Nominatim(user_agent='esmvalcore')
+    try:
+        # Try to use the default SSL context, see
+        # https://github.com/ESMValGroup/ESMValCore/issues/2012 for more
+        # information.
+        ssl_context = ssl.create_default_context()
+        geolocator = Nominatim(user_agent='esmvalcore',
+                               ssl_context=ssl_context)
+    except ssl.SSLError:
+        logger.warning(
+            "ssl.create_default_context() encountered a problem, not using it."
+        )
+        geolocator = Nominatim(user_agent='esmvalcore')
     geolocation = geolocator.geocode(location)
     if geolocation is None:
         raise ValueError(f'Requested location {location} can not be found.')
     logger.info("Extracting data for %s (%s °N, %s °E)", geolocation,
                 geolocation.latitude, geolocation.longitude)
 
-    return extract_point(cube, geolocation.latitude,
-                         geolocation.longitude, scheme)
+    return extract_point(cube, geolocation.latitude, geolocation.longitude,
+                         scheme)
 
 
 def extract_point(cube, latitude, longitude, scheme):
@@ -785,22 +797,19 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
                                               cube.coord_dims(src_levels))
 
     # force mask onto data as nan's
-    cube.data = da.ma.filled(cube.core_data(), np.nan)
+    npx = get_array_module(cube.core_data())
+    data = npx.ma.filled(cube.core_data(), np.nan)
 
     # Now perform the actual vertical interpolation.
     new_data = stratify.interpolate(levels,
                                     src_levels_broadcast,
-                                    cube.core_data(),
+                                    data,
                                     axis=z_axis,
                                     interpolation=interpolation,
                                     extrapolation=extrapolation)
 
     # Calculate the mask based on the any NaN values in the interpolated data.
-    mask = np.isnan(new_data)
-
-    if np.any(mask):
-        # Ensure that the data is masked appropriately.
-        new_data = np.ma.array(new_data, mask=mask, fill_value=_MDI)
+    new_data = npx.ma.masked_where(npx.isnan(new_data), new_data)
 
     # Construct the resulting cube with the interpolated data.
     return _create_cube(cube, new_data, src_levels, levels.astype(float))
@@ -998,13 +1007,11 @@ def get_cmor_levels(cmor_table, coordinate):
     """
     if cmor_table not in CMOR_TABLES:
         raise ValueError(
-            f"Level definition cmor_table '{cmor_table}' not available"
-        )
+            f"Level definition cmor_table '{cmor_table}' not available")
 
     if coordinate not in CMOR_TABLES[cmor_table].coords:
         raise ValueError(
-            f'Coordinate {coordinate} not available for {cmor_table}'
-        )
+            f'Coordinate {coordinate} not available for {cmor_table}')
 
     cmor = CMOR_TABLES[cmor_table].coords[coordinate]
 
@@ -1015,8 +1022,7 @@ def get_cmor_levels(cmor_table, coordinate):
 
     raise ValueError(
         f'Coordinate {coordinate} in {cmor_table} does not have requested '
-        f'values'
-    )
+        f'values')
 
 
 def get_reference_levels(dataset):

@@ -8,7 +8,7 @@ from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
-from esmvalcore.cmor.table import get_var_info
+from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 
 
 @pytest.fixture
@@ -41,6 +41,11 @@ def sample_cube():
         long_name='air_pressure',
         units='hPa',
     )
+    alt16_coord = AuxCoord(
+        [2.0, 4.0],
+        long_name='altitude',
+        units='km',
+    )
     height_coord = AuxCoord(
         [2.0, 4.0],
         long_name='height',
@@ -68,7 +73,8 @@ def sample_cube():
                              (plev_coord, 1),
                              (lat_coord, 2),
                              (lon_coord, 3)],
-        aux_coords_and_dims=[(height_coord, 1),
+        aux_coords_and_dims=[(alt16_coord, 1),
+                             (height_coord, 1),
                              (coord_with_bounds, 1)],
     )
     return cube
@@ -197,6 +203,9 @@ def test_get_cube_fail(cubes, fix):
     'coord,coord_name,func_name',
     [
         ('time', 'time', 'fix_regular_time'),
+        ('time1', 'time', 'fix_regular_time'),
+        ('time2', 'time', 'fix_regular_time'),
+        ('time3', 'time', 'fix_regular_time'),
         ('latitude', 'latitude', 'fix_regular_lat'),
         ('longitude', 'longitude', 'fix_regular_lon'),
     ]
@@ -204,7 +213,9 @@ def test_get_cube_fail(cubes, fix):
 def test_fix_regular_coords_from_cube(monkeypatch, sample_cube, fix, coord,
                                       coord_name, func_name):
     """Test fixing of regular coords from cube."""
-    monkeypatch.setattr(fix.vardef, 'dimensions', [coord])
+    coord_info = CoordinateInfo(coord)
+    coord_info.standard_name = coord_name
+    monkeypatch.setattr(fix.vardef, 'coordinates', {coord: coord_info})
 
     func = getattr(fix, func_name)
     func(sample_cube)
@@ -220,6 +231,9 @@ def test_fix_regular_coords_from_cube(monkeypatch, sample_cube, fix, coord,
     'coord,coord_name,func_name',
     [
         ('time', 'time', 'fix_regular_time'),
+        ('time1', 'time', 'fix_regular_time'),
+        ('time2', 'time', 'fix_regular_time'),
+        ('time3', 'time', 'fix_regular_time'),
         ('latitude', 'latitude', 'fix_regular_lat'),
         ('longitude', 'longitude', 'fix_regular_lon'),
     ]
@@ -227,7 +241,9 @@ def test_fix_regular_coords_from_cube(monkeypatch, sample_cube, fix, coord,
 def test_fix_regular_coords_from_str(monkeypatch, sample_cube, fix, coord,
                                      coord_name, func_name):
     """Test fixing of regular coords from string."""
-    monkeypatch.setattr(fix.vardef, 'dimensions', [coord])
+    coord_info = CoordinateInfo(coord)
+    coord_info.standard_name = coord_name
+    monkeypatch.setattr(fix.vardef, 'coordinates', {coord: coord_info})
 
     func = getattr(fix, func_name)
     func(sample_cube, coord=coord_name)
@@ -361,6 +377,46 @@ def test_fix_time_metadata_from_coord(sample_cube, fix):
     assert out_coord.var_name == 'time'
     assert out_coord.long_name == 'time'
     assert out_coord.units == 'day since 1950-01-01 00:00:00'
+    np.testing.assert_allclose(out_coord.points, [2.0])
+    assert out_coord.bounds is None
+
+
+def test_fix_alt16_metadata(sample_cube, fix):
+    """Test ``fix_alt16_metadata``."""
+    out_coord = fix.fix_alt16_metadata(sample_cube)
+    assert out_coord is sample_cube.coord('altitude')
+    assert out_coord.standard_name == 'altitude'
+    assert out_coord.var_name == 'alt16'
+    assert out_coord.long_name == 'altitude'
+    assert out_coord.units == 'm'
+    assert out_coord.attributes['positive'] == 'up'
+    np.testing.assert_allclose(out_coord.points, [2000.0, 4000.0])
+    assert out_coord.bounds is None
+
+
+def test_fix_alt16_metadata_from_str(sample_cube, fix):
+    """Test ``fix_alt16_metadata`` from string."""
+    out_coord = fix.fix_alt16_metadata(sample_cube, coord='altitude')
+    assert out_coord is sample_cube.coord('altitude')
+    assert out_coord.standard_name == 'altitude'
+    assert out_coord.var_name == 'alt16'
+    assert out_coord.long_name == 'altitude'
+    assert out_coord.units == 'm'
+    assert out_coord.attributes['positive'] == 'up'
+    np.testing.assert_allclose(out_coord.points, [2000.0, 4000.0])
+    assert out_coord.bounds is None
+
+
+def test_fix_alt16_metadata_from_coord(sample_cube, fix):
+    """Test ``fix_alt16_metadata`` from string."""
+    coord = AuxCoord([2.0], units='m')
+    out_coord = fix.fix_alt16_metadata(sample_cube, coord=coord)
+    assert out_coord is coord
+    assert out_coord.standard_name == 'altitude'
+    assert out_coord.var_name == 'alt16'
+    assert out_coord.long_name == 'altitude'
+    assert out_coord.units == 'm'
+    assert out_coord.attributes['positive'] == 'up'
     np.testing.assert_allclose(out_coord.points, [2.0])
     assert out_coord.bounds is None
 

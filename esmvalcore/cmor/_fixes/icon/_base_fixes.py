@@ -1,6 +1,7 @@
 """Fix base classes for ICON on-the-fly CMORizer."""
 
 import logging
+import os
 import warnings
 from datetime import datetime
 from pathlib import Path
@@ -178,6 +179,75 @@ class IconFix(NativeDatasetFix):
 
         return (node_lat, node_lon)
 
+    def _get_path_from_facet(self, facet, description=None):
+        """Try to get path from facet."""
+        if description is None:
+            description = 'File'
+        path = Path(os.path.expandvars(self.extra_facets[facet])).expanduser()
+        if not path.is_file():
+            new_path = self.session['auxiliary_data_dir'] / path
+            if not new_path.is_file():
+                raise FileNotFoundError(
+                    f"{description} '{path}' given by facet '{facet}' does "
+                    f"not exist (specify a valid absolute path or a path "
+                    f"relative to the auxiliary_data_dir "
+                    f"'{self.session['auxiliary_data_dir']}')"
+                )
+            path = new_path
+        return path
+
+    def add_additional_cubes(self, cubes):
+        """Add additional user-defined cubes to list of cubes (in-place).
+
+        An example use case is adding a vertical coordinate (e.g., `zg`) to the
+        dataset if the vertical coordinate data is stored in a separate ICON
+        output file.
+
+        Currently, the following cubes can be added:
+
+        - `zg` (`geometric_height_at_full_level_center`) from facet `zg_file`.
+          This can be used as vertical coordinate.
+        - `zghalf` (`geometric_height_at_half_level_center`) from facet
+          `zghalf_file`. This can be used as bounds for the vertical
+          coordinate.
+
+        Note
+        ----
+        Files can be specified as absolute or relative (to
+        ``auxiliary_data_dir`` as defined in the :ref:`user configuration
+        file`) paths.
+
+        Parameters
+        ----------
+        cubes: iris.cube.CubeList
+            Input cubes which will be modified in place.
+
+        Returns
+        -------
+        iris.cube.CubeList
+            Modified cubes. The cubes are modified in place; they are just
+            returned out of convenience for easy access.
+
+        Raises
+        ------
+        InputFilesNotFound
+            A specified file does not exist.
+
+        """
+        facets_to_consider = [
+            'zg_file',
+            'zghalf_file',
+        ]
+        for facet in facets_to_consider:
+            if facet not in self.extra_facets:
+                continue
+            path_to_add = self._get_path_from_facet(facet)
+            logger.debug("Adding cubes from %s", path_to_add)
+            new_cubes = self._load_cubes(path_to_add)
+            cubes.extend(new_cubes)
+
+        return cubes
+
     def get_horizontal_grid(self, cube):
         """Get copy of ICON horizontal grid from global attribute of cube.
 
@@ -219,6 +289,7 @@ class IconFix(NativeDatasetFix):
         # Note: we use a lock here to prevent multiple processes from
         # downloading the file simultaneously and to ensure that other
         # processes wait until the download has finished
+        self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
         lock = FileLock(self.CACHE_DIR / f"{grid_name}.lock")
         with lock:
             grid_path = self.CACHE_DIR / grid_name
@@ -241,7 +312,6 @@ class IconFix(NativeDatasetFix):
                 grid_url,
                 grid_path,
             )
-            self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
             with requests.get(grid_url, stream=True,
                               timeout=self.TIMEOUT) as response:
                 response.raise_for_status()
@@ -315,6 +385,14 @@ class IconFix(NativeDatasetFix):
             warnings.filterwarnings(
                 'ignore',
                 message="Ignoring netCDF variable .* invalid units .*",
+                category=UserWarning,
+                module='iris',
+            )
+            warnings.filterwarnings(
+                'ignore',
+                message="Failed to create 'height' dimension coordinate: The "
+                        "'height' DimCoord bounds array must be strictly "
+                        "monotonic.",
                 category=UserWarning,
                 module='iris',
             )

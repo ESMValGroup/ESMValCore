@@ -123,7 +123,7 @@ class NativeDatasetFix(Fix):
             bounds.
 
         """
-        if 'time' not in self.vardef.dimensions:
+        if not self.vardef.has_coord_with_standard_name('time'):
             return
         coord = self.fix_time_metadata(cube, coord)
         if guess_bounds:
@@ -144,7 +144,7 @@ class NativeDatasetFix(Fix):
             bounds.
 
         """
-        if 'latitude' not in self.vardef.dimensions:
+        if not self.vardef.has_coord_with_standard_name('latitude'):
             return
         coord = self.fix_lat_metadata(cube, coord)
         if guess_bounds:
@@ -165,7 +165,7 @@ class NativeDatasetFix(Fix):
             bounds.
 
         """
-        if 'longitude' not in self.vardef.dimensions:
+        if not self.vardef.has_coord_with_standard_name('longitude'):
             return
         coord = self.fix_lon_metadata(cube, coord)
         if guess_bounds:
@@ -229,6 +229,36 @@ class NativeDatasetFix(Fix):
         coord.var_name = 'time'
         coord.standard_name = 'time'
         coord.long_name = 'time'
+        return coord
+
+    @staticmethod
+    def fix_alt16_metadata(cube, coord=None):
+        """Fix metadata of alt16 coordinate (in-place).
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+            Input cube.
+        coord: str or iris.coords.Coord or None, optional (default: None)
+            Coordinate for which metadata will be fixed in-place. If ``None``,
+            assume the coordinate's name is `altitude`.
+
+        Returns
+        -------
+        iris.coords.AuxCoord or iris.coords.DimCoord
+            Fixed altitude coordinate. The coordinate is altered in-place; it
+            is just returned out of convenience for easy access.
+
+        """
+        if coord is None:
+            coord = cube.coord('altitude')
+        elif isinstance(coord, str):
+            coord = cube.coord(coord)
+        coord.var_name = 'alt16'
+        coord.standard_name = 'altitude'
+        coord.long_name = 'altitude'
+        coord.convert_units('m')
+        coord.attributes['positive'] = 'up'
         return coord
 
     @staticmethod

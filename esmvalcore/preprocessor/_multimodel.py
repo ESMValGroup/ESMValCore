@@ -198,9 +198,18 @@ def _map_to_new_time(cube, time_points):
     try:
         new_cube = cube.interpolate(sample_points, scheme)
     except Exception as excinfo:
+        additional_info = ""
+        if cube.coords('time', dimensions=()):
+            additional_info = (
+                " Note: this alignment does not work for scalar time "
+                "coordinates. To ignore all scalar coordinates in the input "
+                "data, use the preprocessor option "
+                "`ignore_scalar_coords=True`."
+            )
         raise ValueError(
             f"Tried to align cubes in multi-model statistics, but failed for "
-            f"cube {cube}\n and time points {time_points}") from excinfo
+            f"cube {cube}\n and time points {time_points}.{additional_info}"
+        ) from excinfo
 
     # Change the dtype of int_time_coords to their original values
     for coord_name in int_time_coords:
@@ -313,7 +322,7 @@ def _get_equal_coord_names_metadata(cubes, equal_coords_metadata):
     return equal_names_metadata
 
 
-def _equalise_coordinate_metadata(cubes, ignore_scalar_coords=False):
+def _equalise_coordinate_metadata(cubes):
     """Equalise coordinates in cubes (in-place)."""
     if not cubes:
         return
@@ -356,17 +365,19 @@ def _equalise_coordinate_metadata(cubes, ignore_scalar_coords=False):
             # Note: remaining differences will raise an error at a later stage
             coord.long_name = None
 
-        # Remove scalar coordinates if desired. In addition, always remove
-        # specific scalar coordinates which are not expected to be equal in the
-        # input cubes.
+        # Remove special scalar coordinates which are not expected to be equal
+        # in the input cubes. Note: if `ignore_scalar_coords=True` is used for
+        # `multi_model_statistics`, the cubes do not contain scalar coordinates
+        # at this point anymore.
         scalar_coords_to_always_remove = ['p0', 'ptop']
         for scalar_coord in cube.coords(dimensions=()):
-            remove_coord = (
-                ignore_scalar_coords or
-                scalar_coord.var_name in scalar_coords_to_always_remove
-            )
-            if remove_coord:
+            if scalar_coord.var_name in scalar_coords_to_always_remove:
                 cube.remove_coord(scalar_coord)
+                logger.debug(
+                    "Removed scalar coordinate '%s' from cube %s",
+                    scalar_coord.var_name,
+                    cube.summary(shorten=True),
+                )
 
 
 def _equalise_fx_variables(cubes):
@@ -413,7 +424,7 @@ def _equalise_var_metadata(cubes):
             setattr(cube, attr, equal_names_metadata[cube_id][attr])
 
 
-def _combine(cubes, ignore_scalar_coords=False):
+def _combine(cubes):
     """Merge iris cubes into a single big cube with new dimension.
 
     This assumes that all input cubes have the same shape.
@@ -424,9 +435,7 @@ def _combine(cubes, ignore_scalar_coords=False):
     equalise_attributes(cubes)
     _equalise_var_metadata(cubes)
     _equalise_cell_methods(cubes)
-    _equalise_coordinate_metadata(
-        cubes, ignore_scalar_coords=ignore_scalar_coords
-    )
+    _equalise_coordinate_metadata(cubes)
     _equalise_fx_variables(cubes)
 
     for i, cube in enumerate(cubes):
@@ -487,8 +496,12 @@ def _compute_slices(cubes):
         yield slice(start, end)
 
 
-def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
-                   ignore_scalar_coords=False, **kwargs):
+def _compute_eager(
+    cubes: list,
+    *,
+    operator: iris.analysis.Aggregator,
+    **kwargs,
+):
     """Compute statistics one slice at a time."""
     _ = [cube.data for cube in cubes]  # make sure the cubes' data are realized
 
@@ -498,10 +511,7 @@ def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
             single_model_slices = cubes  # scalar cubes
         else:
             single_model_slices = [cube[chunk] for cube in cubes]
-        combined_slice = _combine(
-            single_model_slices,
-            ignore_scalar_coords=ignore_scalar_coords,
-        )
+        combined_slice = _combine(single_model_slices)
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 'ignore',
@@ -570,9 +580,22 @@ def _multicube_statistics(cubes, statistics, span, ignore_scalar_coords=False):
     # Avoid modifying inputs
     copied_cubes = [cube.copy() for cube in cubes]
 
+    # Remove scalar coordinates in input cubes if desired to ignore them when
+    # merging
+    if ignore_scalar_coords:
+        for cube in copied_cubes:
+            for scalar_coord in cube.coords(dimensions=()):
+                cube.remove_coord(scalar_coord)
+                logger.debug(
+                    "Removed scalar coordinate '%s' from cube %s since "
+                    "ignore_scalar_coords=True",
+                    scalar_coord.var_name,
+                    cube.summary(shorten=True),
+                )
+
     # If all cubes contain a time coordinate, align them. If no cube contains a
-    # time coordinate, do nothing. Else, raise an exception
-    time_coords = [cube.coords('time') for cube in cubes]
+    # time coordinate, do nothing. Else, raise an exception.
+    time_coords = [cube.coords('time') for cube in copied_cubes]
     if all(time_coords):
         aligned_cubes = _align_time_coord(copied_cubes, span=span)
     elif not any(time_coords):
@@ -592,7 +615,6 @@ def _multicube_statistics(cubes, statistics, span, ignore_scalar_coords=False):
 
         result_cube = _compute_eager(aligned_cubes,
                                      operator=operator,
-                                     ignore_scalar_coords=ignore_scalar_coords,
                                      **kwargs)
         statistics_cubes[statistic] = result_cube
 

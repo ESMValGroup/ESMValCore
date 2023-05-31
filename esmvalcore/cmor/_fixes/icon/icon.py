@@ -24,10 +24,11 @@ class AllVars(IconFix):
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
+        cubes = self.add_additional_cubes(cubes)
         cube = self.get_cube(cubes)
 
         # Fix time
-        if 'time' in self.vardef.dimensions:
+        if self.vardef.has_coord_with_standard_name('time'):
             cube = self._fix_time(cube, cubes)
 
         # Fix height (note: cannot use "if 'height' in self.vardef.dimensions"
@@ -52,13 +53,13 @@ class AllVars(IconFix):
                 cube = self._fix_height(cube, cubes)
 
         # Fix latitude
-        if 'latitude' in self.vardef.dimensions:
+        if self.vardef.has_coord_with_standard_name('latitude'):
             lat_idx = self._fix_lat(cube)
         else:
             lat_idx = None
 
         # Fix longitude
-        if 'longitude' in self.vardef.dimensions:
+        if self.vardef.has_coord_with_standard_name('longitude'):
             lon_idx = self._fix_lon(cube)
         else:
             lon_idx = None
@@ -152,46 +153,66 @@ class AllVars(IconFix):
             f"'{self.vardef.short_name}', cube and other cubes in file do not "
             f"contain it")
 
+    def _get_z_coord(self, cubes, points_name, bounds_name=None):
+        """Get z-coordinate without metadata (reversed)."""
+        points_cube = iris.util.reverse(
+            cubes.extract_cube(NameConstraint(var_name=points_name)),
+            'height',
+        )
+        points = points_cube.core_data()
+
+        # Get bounds if possible
+        if bounds_name is not None:
+            bounds_cube = iris.util.reverse(
+                cubes.extract_cube(NameConstraint(var_name=bounds_name)),
+                'height',
+            )
+            bounds = bounds_cube.core_data()
+            bounds = da.stack(
+                (bounds[..., :-1, :], bounds[..., 1:, :]), axis=-1
+            )
+        else:
+            bounds = None
+
+        z_coord = AuxCoord(
+            points,
+            bounds=bounds,
+            units=points_cube.units,
+        )
+        return z_coord
+
     def _fix_height(self, cube, cubes):
         """Fix height coordinate of cube."""
         # Reverse entire cube along height axis so that index 0 is surface
         # level
         cube = iris.util.reverse(cube, 'height')
 
-        # Add air_pressure coordinate if possible
-        # (make sure to also reverse pressure cubes)
+        # If possible, extract reversed air_pressure coordinate from list of
+        # cubes and add it to cube
+        # Note: pfull/phalf have dimensions (time, height, spatial_dim)
         if cubes.extract(NameConstraint(var_name='pfull')):
-            plev_points_cube = iris.util.reverse(
-                cubes.extract_cube(NameConstraint(var_name='pfull')),
-                'height',
-            )
-            air_pressure_points = plev_points_cube.core_data()
-
-            # Get bounds from half levels and reshape array
             if cubes.extract(NameConstraint(var_name='phalf')):
-                plev_bounds_cube = iris.util.reverse(
-                    cubes.extract_cube(NameConstraint(var_name='phalf')),
-                    'height',
-                )
-                air_pressure_bounds = plev_bounds_cube.core_data()
-                air_pressure_bounds = da.stack(
-                    (air_pressure_bounds[:, :-1], air_pressure_bounds[:, 1:]),
-                    axis=-1)
+                phalf = 'phalf'
             else:
-                air_pressure_bounds = None
+                phalf = None
+            plev_coord = self._get_z_coord(cubes, 'pfull', bounds_name=phalf)
+            self.fix_plev_metadata(cube, plev_coord)
+            cube.add_aux_coord(plev_coord, np.arange(cube.ndim))
 
-            # Setup air pressure coordinate with correct metadata and add to
-            # cube
-            air_pressure_coord = AuxCoord(
-                air_pressure_points,
-                bounds=air_pressure_bounds,
-                var_name='plev',
-                standard_name='air_pressure',
-                long_name='pressure',
-                units=plev_points_cube.units,
-                attributes={'positive': 'down'},
-            )
-            cube.add_aux_coord(air_pressure_coord, np.arange(cube.ndim))
+        # If possible, extract reversed altitude coordinate from list of cubes
+        # and add it to cube
+        # Note: zg/zghalf have dimensions (height, spatial_dim)
+        if cubes.extract(NameConstraint(var_name='zg')):
+            if cubes.extract(NameConstraint(var_name='zghalf')):
+                zghalf = 'zghalf'
+            else:
+                zghalf = None
+            alt_coord = self._get_z_coord(cubes, 'zg', bounds_name=zghalf)
+            self.fix_alt16_metadata(cube, alt_coord)
+
+            # Altitude coordinate only spans height and spatial dimensions (no
+            # time) -> these are always the last two dimensions in the cube
+            cube.add_aux_coord(alt_coord, np.arange(cube.ndim)[-2:])
 
         # Fix metadata
         z_coord = cube.coord('height')
@@ -270,25 +291,29 @@ class AllVars(IconFix):
         new_t_unit = cf_units.Unit('days since 1850-01-01',
                                    calendar='proleptic_gregorian')
 
-        # New routine to convert time of daily and hourly data
-        # The string %f (fraction of day) is not a valid format string
-        # for datetime.strptime, so we have to convert it ourselves
-        time_str = [str(x) for x in time_coord.points]
+        # New routine to convert time of daily and hourly data. The string %f
+        # (fraction of day) is not a valid format string for datetime.strptime,
+        # so we have to convert it ourselves.
+        time_str = pd.Series(time_coord.points, dtype=str)
 
-        # First, extract date (year, month, day) from string
-        # and convert it to datetime object
-        year_month_day_str = pd.Series(time_str).str.extract(
-            r'(\d*)\.?\d*', expand=False
-        )
+        # First, extract date (year, month, day) from string and convert it to
+        # datetime object
+        year_month_day_str = time_str.str.extract(r'(\d*)\.?\d*', expand=False)
         year_month_day = pd.to_datetime(year_month_day_str, format='%Y%m%d')
+
         # Second, extract day fraction and convert it to timedelta object
-        day_float_str = pd.Series(time_str).str.extract(
+        day_float_str = time_str.str.extract(
             r'\d*(\.\d*)', expand=False
         ).fillna('0.0')
         day_float = pd.to_timedelta(day_float_str.astype(float), unit='D')
-        # Finally, add date and day fraction to get final datetime
-        # and convert it to correct units
-        new_datetimes = (year_month_day + day_float).dt.to_pydatetime()
+
+        # Finally, add date and day fraction to get final datetime and convert
+        # it to correct units. Note: we also round to next second, otherwise
+        # this results in times that are off by 1s (e.g., 13:59:59 instead of
+        # 14:00:00).
+        new_datetimes = (year_month_day + day_float).round(
+            'S'
+        ).dt.to_pydatetime()
         new_dt_points = date2num(np.array(new_datetimes), new_t_unit)
 
         time_coord.points = new_dt_points
