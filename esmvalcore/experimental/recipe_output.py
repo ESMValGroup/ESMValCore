@@ -71,8 +71,6 @@ class TaskOutput:
         """
         product_attributes = task.get_product_attributes()
         return cls(name=task.name, files=product_attributes)
-    
-
 
 
 class DiagnosticOutput:
@@ -127,7 +125,7 @@ class RecipeOutput(Mapping):
     FILTER_ATTRS: list = [
         "realms",
         "plot_types",
-        "variables" # TODO Add in diagnostic, verify attr. name
+        "variables"  # TODO Add in diagnostic, verify attr. name
     ]
 
     def __init__(self, task_output: dict, session=None, info=None):
@@ -150,7 +148,8 @@ class RecipeOutput(Mapping):
 
         # Create diagnostic output
         for name, tasks in diagnostics.items():
-            diagnostic_info = info.data['diagnostics'][name] # TODO? This could fail if info is None
+            # TODO? This could fail if info is None
+            diagnostic_info = info.data['diagnostics'][name]
             self.diagnostics[name] = DiagnosticOutput(
                 name=name,
                 task_output=tasks,
@@ -167,10 +166,9 @@ class RecipeOutput(Mapping):
                             # NOTE: All current filter attributes are lists
                             attr_list.update(values)
                             self.filters[attr] = attr_list
-        
+
         for filter in self.filters.keys():
             self.filters[filter] = sorted(self.filters[filter])
-
 
     def __repr__(self):
         """Return canonical string representation."""
@@ -343,8 +341,7 @@ class OutputFile():
     def create(
         cls,
         path: str,
-        attributes:
-        Optional[dict] = None,
+        attributes: Optional[dict] = None,
     ) -> 'OutputFile':
         """Construct new instances of OutputFile.
 
