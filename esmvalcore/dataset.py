@@ -727,6 +727,7 @@ class Dataset:
         settings['fix_file'] = {
             'output_dir': fix_dir_prefix,
             'add_unique_suffix': True,
+            'session': self.session,
             **self.facets,
         }
         settings['load'] = {
@@ -737,6 +738,7 @@ class Dataset:
         }
         settings['fix_metadata'] = {
             'check_level': self.session['check_level'],
+            'session': self.session,
             **self.facets,
         }
         settings['concatenate'] = {}
@@ -753,6 +755,7 @@ class Dataset:
             }
         settings['fix_data'] = {
             'check_level': self.session['check_level'],
+            'session': self.session,
             **self.facets,
         }
         settings['cmor_check_data'] = {

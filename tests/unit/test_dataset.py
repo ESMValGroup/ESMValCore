@@ -1689,6 +1689,7 @@ def test_load(mocker, session):
         },
         'fix_file': {
             'add_unique_suffix': True,
+            'session': session,
             'dataset': 'CanESM2',
             'ensemble': 'r1i1p1',
             'exp': 'historical',
@@ -1701,6 +1702,7 @@ def test_load(mocker, session):
         },
         'fix_metadata': {
             'check_level': CheckLevels.DEFAULT,
+            'session': session,
             'dataset': 'CanESM2',
             'ensemble': 'r1i1p1',
             'exp': 'historical',
@@ -1722,6 +1724,7 @@ def test_load(mocker, session):
         },
         'fix_data': {
             'check_level': CheckLevels.DEFAULT,
+            'session': session,
             'dataset': 'CanESM2',
             'ensemble': 'r1i1p1',
             'exp': 'historical',
