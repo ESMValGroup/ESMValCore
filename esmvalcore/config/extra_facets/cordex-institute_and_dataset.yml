@@ -1,0 +1,189 @@
+---
+'ALADIN52':
+  '*':
+    '*':
+      institute_and_dataset: ['CHMI-ALADIN52', 'CNRM-ALADIN52', 'HMS-ALADIN52']
+'ALADIN53':
+  '*':
+    '*':
+      institute_and_dataset: ['CNRM-ALADIN53']
+'ALADIN63':
+  '*':
+    '*':
+      institute_and_dataset: ['CNRM-ALADIN63']
+'ALADIN64':
+  '*':
+    '*':
+      institute_and_dataset: ['CNRM-ALADIN64']
+'ALARO-0':
+  '*':
+    '*':
+      institute_and_dataset: ['RMIB-UGent-ALARO-0']
+'ARPEGE51':
+  '*':
+    '*':
+      institute_and_dataset: ['CNRM-ARPEGE51']
+'ARPEGE52':
+  '*':
+    '*':
+      institute_and_dataset: ['CNRM-ARPEGE52']
+'CCAM':
+  '*':
+    '*':
+      institute_and_dataset: ['CSIRO-CCAM']
+'CCAM-1704':
+  '*':
+    '*':
+      institute_and_dataset: ['CSIRO-CCAM-1704']
+'CCLM4-8-17':
+  '*':
+    '*':
+      institute_and_dataset: ['CLMcom-CCLM4-8-17']
+'CRCM5':
+  '*':
+    '*':
+      institute_and_dataset: ['UQAM-CRCM5']
+'CanRCM4':
+  '*':
+    '*':
+      institute_and_dataset: ['CCCma-CanRCM4']
+'HIRHAM5':
+  '*':
+    '*':
+      institute_and_dataset: ['AWI-HIRHAM5', 'DMI-HIRHAM5']
+'HadGEM3-RA':
+  '*':
+    '*':
+      institute_and_dataset: ['MOHC-HadGEM3-RA']
+'HadREM3-GA7-05':
+  '*':
+    '*':
+      institute_and_dataset: ['MOHC-HadREM3-GA7-05']
+'HadRM3P':
+  '*':
+    '*':
+      institute_and_dataset: ['MOHC-HadRM3P']
+'MAR36':
+  '*':
+    '*':
+      institute_and_dataset: ['ULg-MAR36']
+'PROMES':
+  '*':
+    '*':
+      institute_and_dataset: ['UCLM-PROMES']
+'RACMO21P':
+  '*':
+    '*':
+      institute_and_dataset: ['KNMI-RACMO21P']
+'RACMO22E':
+  '*':
+    '*':
+      institute_and_dataset: ['KNMI-RACMO22E']
+'RACMO22T':
+  '*':
+    '*':
+      institute_and_dataset: ['KNMI-RACMO22T']
+'RCA4':
+  '*':
+    '*':
+      institute_and_dataset: ['SMHI-RCA4']
+'RCA4-SN':
+  '*':
+    '*':
+      institute_and_dataset: ['SMHI-RCA4-SN']
+'RCAO':
+  '*':
+    '*':
+      institute_and_dataset: ['SMHI-RCAO']
+'RCAO-SN':
+  '*':
+    '*':
+      institute_and_dataset: ['SMHI-RCAO-SN']
+'RCSM6':
+  '*':
+    '*':
+      institute_and_dataset: ['CNRM-RCSM6']
+'REMO2009':
+  '*':
+    '*':
+      institute_and_dataset: ['GERICS-REMO2009', 'MPI-CSC-REMO2009']
+'REMO2015':
+  '*':
+    '*':
+      institute_and_dataset: ['GERICS-REMO2015']
+'RRCM':
+  '*':
+    '*':
+      institute_and_dataset: ['MGO-RRCM']
+'RegCM4-1':
+  '*':
+    '*':
+      institute_and_dataset: ['IITM-RegCM4-1']
+'RegCM4-2':
+  '*':
+    '*':
+      institute_and_dataset: ['CUNI-RegCM4-2', 'DHMZ-RegCM4-2']
+'RegCM4-3':
+  '*':
+    '*':
+      institute_and_dataset: ['ENEA-RegCM4-3', 'ICTP-RegCM4-3']
+'RegCM4-4':
+  '*':
+    '*':
+      institute_and_dataset: ['IITM-RegCM4-4']
+'RegCM4-6':
+  '*':
+    '*':
+      institute_and_dataset: ['ICTP-RegCM4-6']
+'WRF321B':
+  '*':
+    '*':
+      institute_and_dataset: ['AUTH-LHTEE-WRF321B']
+'WRF331':
+  '*':
+    '*':
+      institute_and_dataset: ['BCCR-WRF331']
+'WRF331A':
+  '*':
+    '*':
+      institute_and_dataset: ['AUTH-Met-WRF331A', 'CRP-GL-WRF331A', 'MIUB-WRF331A']
+'WRF331C':
+  '*':
+    '*':
+      institute_and_dataset: ['BCCR-WRF331C']
+'WRF331D':
+  '*':
+    '*':
+      institute_and_dataset: ['IDL-WRF331D']
+'WRF331F':
+  '*':
+    '*':
+      institute_and_dataset: ['IPSL-INERIS-WRF331F', 'NUIM-WRF331F']
+'WRF331G':
+  '*':
+    '*':
+      institute_and_dataset: ['UCAN-WRF331G']
+'WRF331H':
+  '*':
+    '*':
+      institute_and_dataset: ['UHOH-WRF331H']
+'WRF350I':
+  '*':
+    '*':
+      institute_and_dataset: ['UCAN-WRF350I']
+'WRF360J':
+  '*':
+    '*':
+      institute_and_dataset: ['UNSW-WRF360J']
+'WRF360K':
+  '*':
+    '*':
+      institute_and_dataset: ['UNSW-WRF360K']
+'WRF360L':
+  '*':
+    '*':
+      institute_and_dataset: ['UNSW-WRF360L']
+'WRF381P':
+  '*':
+    '*':
+      institute_and_dataset: ['IPSL-WRF381P']
