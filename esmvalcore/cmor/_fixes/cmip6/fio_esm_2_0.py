@@ -1,9 +1,13 @@
 """Fixes for FIO-ESM-2-0 model."""
+import logging
+
 import numpy as np
 
 from ..common import OceanFixGrid
 from ..fix import Fix
 from ..shared import round_coordinates
+
+logger = logging.getLogger(__name__)
 
 Tos = OceanFixGrid
 
@@ -26,6 +30,12 @@ class Omon(Fix):
         round_coordinates(cubes,
                           decimals=6,
                           coord_names=["longitude", "latitude"])
+        logger.warning(
+            "Using 'area_weighted' regridder scheme in Omon variables "
+            "for dataset %s causes discontinuities in the longitude "
+            "coordinate.",
+            self.extra_facets['dataset'],
+        )
         return cubes
 
 
@@ -50,15 +60,13 @@ class Amon(Fix):
             # Check both lat and lon coords and replace bounds if necessary
             latitude = cube.coord("latitude")
             if latitude.has_bounds():
-                if np.any(latitude.bounds[1:, 0] !=
-                          latitude.bounds[:-1, 1]):
+                if np.any(latitude.bounds[1:, 0] != latitude.bounds[:-1, 1]):
                     latitude.bounds = None
                     latitude.guess_bounds()
 
             longitude = cube.coord("longitude")
             if longitude.has_bounds():
-                if np.any(longitude.bounds[1:, 0] !=
-                          longitude.bounds[:-1, 1]):
+                if np.any(longitude.bounds[1:, 0] != longitude.bounds[:-1, 1]):
                     longitude.bounds = None
                     longitude.guess_bounds()
         return cubes

@@ -104,11 +104,16 @@ def test_get_allvars_fix():
     assert fix == [OceanFixGrid(None), AllVars(None)]
 
 
-def test_allvars_fix_metadata(monkeypatch, tos_cubes):
+def test_allvars_fix_metadata(monkeypatch, tos_cubes, caplog):
     fix = AllVars(None)
     monkeypatch.setitem(fix.extra_facets, 'frequency', 'mon')
+    monkeypatch.setitem(fix.extra_facets, 'dataset', 'KACE-1-0-G')
     out_cubes = fix.fix_metadata(tos_cubes)
     assert tos_cubes is out_cubes
     for cube in out_cubes:
         time = cube.coord('time')
         assert all(time.bounds[1:, 0] == time.bounds[:-1, 1])
+    msg = ("Using 'area_weighted' regridder scheme in Omon variables "
+           "for dataset KACE-1-0-G causes discontinuities in the longitude "
+           "coordinate.")
+    assert msg in caplog.text
