@@ -2,6 +2,13 @@
 
 {% for file in task.image_files %}
 
+<div class="figure
+{% for filter in filters.keys() %}
+    {% if filter in file.attributes %}
+        {% for attr in file.attributes[filter] %} f_{{ attr | replace(' ', '_') }} {% endfor %}
+    {% endif %}
+{% endfor %}
+">
     <figure>
         <a href='{{ file.path.relative_to(session.session_dir) }}'>
         <img src='{{ file.path.relative_to(session.session_dir) }}' alt='{{ file.caption }}'/>
@@ -16,6 +23,7 @@
             <a href='{{ file.provenance_xml_file.relative_to(session.session_dir) }}'>provenance</a>
         </figcaption>
     </figure>
+</div>
 
 {% endfor %}
 

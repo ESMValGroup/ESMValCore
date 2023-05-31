@@ -37,6 +37,25 @@
     border-top: none;
 </style>
 
+
+<!-- Filter -->
+<h3>Filter</h3>
+<div class="filter">
+    {% for filter_type, types in filters.items() %}
+    <div class="filter_{{ filter_type }}">
+        <p>{{ filter_type }}</p>
+        <ul>
+            {% for t in types %}
+            <li><input type="checkbox" rel="f_{{ t|replace(' ', '_') }}" onclick="updateFilter()">{{ t|replace('_', ' ')|title }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endfor %}
+    <button onclick="resetFilter()">Reset Filter</button>
+</div>
+
+
+
 <!-- Tab links -->
 <div class="tab">
   <button class="tablinks" onclick="openTab(event, 'All')" id="defaultOpen">All</button>
@@ -90,6 +109,7 @@
     evt.currentTarget.className += " active";
   }
 
+
   // Get the element with id="defaultOpen" and click on it
   document.getElementById("defaultOpen").click();
 </script>
@@ -106,6 +126,7 @@
     }
   }
 
+
   // Hide all data files
   function hideDataFiles() {
     var i, list_data_files;
@@ -114,5 +135,80 @@
       list_data_files[i].style.display = "none";
     }
   }
+
+
   hideDataFiles()
+</script>
+
+<script>
+function updateFilter(){
+  var filterTypes = document.querySelectorAll(".filter div");
+  
+  var filters = Array(filterTypes.length);
+  for (let i = 0; i < filterTypes.length; i++){
+    let filterType = filterTypes[i];
+    var checkboxes = document.querySelectorAll("."+ filterType.className +" input[type='checkbox']");
+    filters[i] = getSelectedFilters(checkboxes);
+  }
+
+  applyFilter(filters);
+}
+
+
+function getSelectedFilters(checkboxes) {
+  var classes = [];
+
+  if (checkboxes && checkboxes.length > 0) {
+    for (var i = 0; i < checkboxes.length; i++) {
+      var cb = checkboxes[i];
+
+      if (cb.checked) {
+        classes.push(cb.getAttribute("rel"));
+      }
+    }
+  }
+
+  return classes;
+}
+
+
+function applyFilter(filters){
+    var figures = document.getElementsByClassName("figure");
+    
+    if (!figures || figures.length == 0){
+        return;
+    }
+    
+    for (const fig of figures){
+        fig.style.display = "block"; // Show by default
+        for (const selection of filters){
+            if (selection.length == 0) {
+                continue;
+            }
+            let hide = true;
+            for (const element of selection){
+                if (fig.classList.contains(element)){
+                    hide = false;
+                }
+            }
+            if (hide){
+                fig.style.display = "none";
+                break; // Once it's hidden, there's no need to check more
+            }
+        }
+    }
+
+}
+
+
+function resetFilter(){
+    var filters = document.querySelectorAll(".filter input[type='checkbox']");
+    for (const f of filters){
+        f.checked = false;
+    }
+    updateFilter()
+}
+
+
+resetFilter()
 </script>
