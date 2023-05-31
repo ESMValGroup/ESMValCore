@@ -57,7 +57,7 @@ REQUIREMENTS = {
         'requests',
         'scipy>=1.6',
         'scitools-iris>=3.4.0',
-        'shapely[vectorized]',
+        'shapely>=2.0.0',
         'stratify>=0.3',
         'yamale',
     ],
