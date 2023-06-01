@@ -513,6 +513,18 @@ Key                 Description                      Default value if not specif
    default naming conventions listed above).
    Make sure that no other variable uses this ``var_type``.
 
+   If you want to use the :func:`~esmvalcore.preprocessor.area_statistics`
+   preprocessor on *regridded* ICON data, make sure to *not* use the cell area
+   files by using the ``skip: true`` syntax in the recipe as described in
+   :ref:`preprocessors_using_supplementary_variables`, e.g.,
+
+   .. code-block:: yaml
+
+     datasets:
+       - {project: ICON, dataset: ICON, exp: amip,
+          supplementary_variables: [{short_name: areacella, skip: true}]}
+
+
 .. _read_ipsl-cm6:
 
 IPSL-CM6
