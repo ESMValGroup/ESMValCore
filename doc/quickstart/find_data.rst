@@ -336,7 +336,7 @@ CMORizing functionalities.
 A variable-specific default for the facet ``var_type`` is given in the extra
 facets (see below) for many variables, but this can be overwritten in the
 recipe.
-This is necessary if your ICON is structured in one variable per file.
+This is necessary if your output is structured in one variable per file.
 For example, if your output is stored in files called
 ``<exp>_<variable_name>_atm_2d_ml_YYYYMMDDThhmmss.nc``, use ``var_type:
 <variable_name>_atm_2d_ml`` in the recipe for this variable.
