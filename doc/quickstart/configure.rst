@@ -613,7 +613,7 @@ Currently supported preprocessor steps:
 * :func:`~esmvalcore.preprocessor.load`
 
 Here is an example on how to ignore specific warnings during the preprocessor
-step ``load`` for all datasets of project  ``EMAC`` (taken from the default
+step ``load`` for all datasets of project ``EMAC`` (taken from the default
 ``config-developer.yml`` file):
 
 .. code-block:: yaml
