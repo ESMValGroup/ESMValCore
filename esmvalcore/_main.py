@@ -74,6 +74,7 @@ def process_recipe(recipe_file: Path, session):
     import shutil
 
     from esmvalcore._recipe.recipe import read_recipe_file
+    from esmvalcore.config._dask import check_distributed_config
     if not recipe_file.is_file():
         import errno
         raise OSError(errno.ENOENT, "Specified recipe file does not exist",
@@ -102,6 +103,8 @@ def process_recipe(recipe_file: Path, session):
         "memory for keeping this number of tasks in memory.")
     logger.info("If you experience memory problems, try reducing "
                 "'max_parallel_tasks' in your user configuration file.")
+
+    check_distributed_config()
 
     if session['compress_netcdf']:
         logger.warning(
