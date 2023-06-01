@@ -10,6 +10,7 @@ from esmvalcore.config._config import (
     _deep_update,
     _load_extra_facets,
     get_extra_facets,
+    get_ignored_warnings,
     importlib_files,
 )
 from esmvalcore.dataset import Dataset
@@ -256,3 +257,23 @@ def test_load_config_developer_custom(tmp_path, monkeypatch, mocker):
     _config.load_config_developer(cfg_file)
 
     assert 'custom' in _config.CFG
+
+
+@pytest.mark.parametrize(
+    'project,step',
+    [
+        ('invalid_project', 'load'),
+        ('CMIP6', 'load'),
+        ('EMAC', 'save'),
+    ],
+)
+def test_get_ignored_warnings_none(project, step):
+    """Test ``get_ignored_warnings``."""
+    assert get_ignored_warnings(project, step) is None
+
+
+def test_get_ignored_warnings_emac():
+    """Test ``get_ignored_warnings``."""
+    ignored_warnings = get_ignored_warnings('EMAC', 'load')
+    assert isinstance(ignored_warnings, list)
+    assert ignored_warnings
