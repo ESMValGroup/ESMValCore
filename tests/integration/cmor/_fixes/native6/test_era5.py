@@ -219,6 +219,47 @@ def _cmor_data(mip):
     return np.arange(27).reshape(3, 3, 3)[:, ::-1, :]
 
 
+def cl_era5_monthly():
+    time = _era5_time('monthly')
+    data = np.ones((3, 2, 3, 3))
+    cube = iris.cube.Cube(
+        data,
+        long_name='Percentage Cloud Cover',
+        var_name='cl',
+        units='%',
+        dim_coords_and_dims=[
+            (time, 0),
+            (_era5_plev(), 1),
+            (_era5_latitude(), 2),
+            (_era5_longitude(), 3),
+        ],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def cl_cmor_amon():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('Amon', 'cl')
+    time = _cmor_time('Amon', bounds=True)
+    data = np.ones((3, 2, 3, 3))
+    data = data * 100.0
+    cube = iris.cube.Cube(
+        data.astype('float32'),
+        long_name=vardef.long_name,
+        var_name=vardef.short_name,
+        standard_name=vardef.standard_name,
+        units=Unit(vardef.units),
+        dim_coords_and_dims=[
+            (time, 0),
+            (_cmor_plev(), 1),
+            (_cmor_latitude(), 2),
+            (_cmor_longitude(), 3),
+        ],
+        attributes={'comment': COMMENT},
+    )
+    return iris.cube.CubeList([cube])
+
+
 def clt_era5_hourly():
     time = _era5_time('hourly')
     cube = iris.cube.Cube(
@@ -956,6 +997,7 @@ def uas_cmor_e1hr():
 
 VARIABLES = [
     pytest.param(a, b, c, d, id=c + '_' + d) for (a, b, c, d) in [
+        (cl_era5_monthly(), cl_cmor_amon(), 'cl', 'Amon'),
         (clt_era5_hourly(), clt_cmor_e1hr(), 'clt', 'E1hr'),
         (evspsbl_era5_hourly(), evspsbl_cmor_e1hr(), 'evspsbl', 'E1hr'),
         (evspsblpot_era5_hourly(), evspsblpot_cmor_e1hr(), 'evspsblpot',

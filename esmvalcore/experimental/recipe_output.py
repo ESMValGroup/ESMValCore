@@ -1,21 +1,19 @@
 """API for handing recipe output."""
 import base64
 import logging
-import os
+import os.path
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Optional, Tuple, Type
 
 import iris
 
-from .config import Session
+from ..config._config import TASKSEP
 from .recipe_info import RecipeInfo
 from .recipe_metadata import Contributor, Reference
 from .templates import get_template
 
 logger = logging.getLogger(__name__)
-
-TASKSEP = os.sep
 
 
 class TaskOutput:
@@ -121,7 +119,7 @@ class RecipeOutput(Mapping):
         Dictionary with recipe output grouped by diagnostic.
     info : RecipeInfo
         The recipe used to create the output.
-    session : Session
+    session : esmvalcore.config.Session
         The session used to run the recipe.
     """
 
@@ -175,10 +173,7 @@ class RecipeOutput(Mapping):
         """Construct instance from `_recipe.Recipe` output.
 
         The core recipe format is not directly compatible with the API. This
-        constructor does the following:
-
-        1. Convert `config-user` dict to an instance of :obj:`Session`
-        2. Converts the raw recipe dict to :obj:`RecipeInfo`
+        constructor converts the raw recipe dict to :obj:`RecipeInfo`
 
         Parameters
         ----------
@@ -187,10 +182,9 @@ class RecipeOutput(Mapping):
         """
         task_output = recipe_output['task_output']
         recipe_data = recipe_output['recipe_data']
-        recipe_config = recipe_output['recipe_config']
+        session = recipe_output['session']
         recipe_filename = recipe_output['recipe_filename']
 
-        session = Session.from_config_user(recipe_config)
         info = RecipeInfo(recipe_data, filename=recipe_filename)
         info.resolve()
 
@@ -224,6 +218,7 @@ class RecipeOutput(Mapping):
             diagnostics=self.diagnostics.values(),
             session=self.session,
             info=self.info,
+            relpath=os.path.relpath,
         )
 
         return rendered
@@ -253,7 +248,7 @@ class OutputFile():
 
     kind: Optional[str] = None
 
-    def __init__(self, path: str, attributes: dict = None):
+    def __init__(self, path: str, attributes: Optional[dict] = None):
         if not attributes:
             attributes = {}
 
@@ -289,7 +284,7 @@ class OutputFile():
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
 
-    def _get_derived_path(self, append: str, suffix: str = None):
+    def _get_derived_path(self, append: str, suffix: Optional[str] = None):
         """Return path of related files.
 
         Parameters
@@ -323,7 +318,11 @@ class OutputFile():
         return self._get_derived_path('_provenance', '.xml')
 
     @classmethod
-    def create(cls, path: str, attributes: dict = None) -> 'OutputFile':
+    def create(
+        cls,
+        path: str,
+        attributes: Optional[dict] = None,
+    ) -> 'OutputFile':
         """Construct new instances of OutputFile.
 
         Chooses a derived class if suitable.

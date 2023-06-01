@@ -13,17 +13,18 @@ import threading
 import time
 from copy import deepcopy
 from multiprocessing import Pool
-from multiprocessing.pool import ApplyResult
 from pathlib import Path, PosixPath
 from shutil import which
-from typing import Dict, Type
+from typing import Optional
 
 import psutil
 import yaml
+from distributed import Client
 
 from ._citation import _write_citation_files
-from ._config import DIAGNOSTICS, TAGS
 from ._provenance import TrackedFile, get_task_provenance
+from .config._dask import get_distributed_client
+from .config._diagnostics import DIAGNOSTICS, TAGS
 
 
 def path_representer(dumper, data):
@@ -145,7 +146,7 @@ def _py2ncl(value, var_name=''):
     txt = var_name + ' = ' if var_name else ''
     if value is None:
         txt += '_Missing'
-    elif isinstance(value, str):
+    elif isinstance(value, (str, Path)):
         txt += '"{}"'.format(value)
     elif isinstance(value, (list, tuple)):
         if not value:
@@ -275,7 +276,7 @@ class BaseTask:
         """Return a mapping of product attributes."""
         return {
             product.filename: product.attributes
-            for product in self.products
+            for product in sorted(self.products)
         }
 
     def print_ancestors(self):
@@ -632,7 +633,7 @@ class DiagnosticTask(BaseTask):
                 attrs[key] = self.settings[key]
 
         ancestor_products = {
-            p.filename: p
+            str(p.filename): p
             for a in self.ancestors for p in a.products
         }
 
@@ -711,7 +712,7 @@ class TaskSet(set):
                 independent_tasks.add(task)
         return independent_tasks
 
-    def run(self, max_parallel_tasks: int = None) -> None:
+    def run(self, max_parallel_tasks: Optional[int] = None) -> None:
         """Run tasks.
 
         Parameters
@@ -719,10 +720,22 @@ class TaskSet(set):
         max_parallel_tasks : int
             Number of processes to run. If `1`, run the tasks sequentially.
         """
-        if max_parallel_tasks == 1:
-            self._run_sequential()
-        else:
-            self._run_parallel(max_parallel_tasks)
+        with get_distributed_client() as client:
+            if client is None:
+                address = None
+            else:
+                address = client.scheduler.address
+                for task in self.flatten():
+                    if (isinstance(task, DiagnosticTask)
+                            and Path(task.script).suffix.lower() == '.py'):
+                        # Only insert the scheduler address if running a
+                        # Python script.
+                        task.settings['scheduler_address'] = address
+
+            if max_parallel_tasks == 1:
+                self._run_sequential()
+            else:
+                self._run_parallel(address, max_parallel_tasks)
 
     def _run_sequential(self) -> None:
         """Run tasks sequentially."""
@@ -733,10 +746,10 @@ class TaskSet(set):
         for task in sorted(tasks, key=lambda t: t.priority):
             task.run()
 
-    def _run_parallel(self, max_parallel_tasks=None):
+    def _run_parallel(self, scheduler_address, max_parallel_tasks):
         """Run tasks in parallel."""
         scheduled = self.flatten()
-        running: Dict[Type[BaseTask], Type[ApplyResult]] = {}
+        running = {}
 
         n_tasks = n_scheduled = len(scheduled)
         n_running = 0
@@ -758,7 +771,8 @@ class TaskSet(set):
                     if len(running) >= max_parallel_tasks:
                         break
                     if all(done(t) for t in task.ancestors):
-                        future = pool.apply_async(_run_task, [task])
+                        future = pool.apply_async(_run_task,
+                                                  [task, scheduler_address])
                         running[task] = future
                         scheduled.remove(task)
 
@@ -791,7 +805,14 @@ def _copy_results(task, future):
     task.output_files, task.products = future.get()
 
 
-def _run_task(task):
+def _run_task(task, scheduler_address):
     """Run task and return the result."""
-    output_files = task.run()
+    if scheduler_address is None:
+        client = contextlib.nullcontext()
+    else:
+        client = Client(scheduler_address)
+
+    with client:
+        output_files = task.run()
+
     return output_files, task.products

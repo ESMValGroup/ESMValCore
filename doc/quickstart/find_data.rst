@@ -33,16 +33,16 @@ ensures that files and paths to them are named according to a
 standardized convention. Examples of this convention, also used by
 ESMValTool for file discovery and data retrieval, include:
 
-* CMIP6 file: ``[variable_short_name]_[mip]_[dataset_name]_[experiment]_[ensemble]_[grid]_[start-date]-[end-date].nc``
-* CMIP5 file: ``[variable_short_name]_[mip]_[dataset_name]_[experiment]_[ensemble]_[start-date]-[end-date].nc``
-* OBS file: ``[project]_[dataset_name]_[type]_[version]_[mip]_[short_name]_[start-date]-[end-date].nc``
+* CMIP6 file: ``{variable_short_name}_{mip}_{dataset_name}_{experiment}_{ensemble}_{grid}_{start-date}-{end-date}.nc``
+* CMIP5 file: ``{variable_short_name}_{mip}_{dataset_name}_{experiment}_{ensemble}_{start-date}-{end-date}.nc``
+* OBS file: ``{project}_{dataset_name}_{type}_{version}_{mip}_{short_name}_{start-date}-{end-date}.nc``
 
 Similar standards exist for the standard paths (input directories); for the
 ESGF data nodes, these paths differ slightly, for example:
 
-* CMIP6 path for BADC: ``ROOT-BADC/[institute]/[dataset_name]/[experiment]/[ensemble]/[mip]/
-  [variable_short_name]/[grid]``;
-* CMIP6 path for ETHZ: ``ROOT-ETHZ/[experiment]/[mip]/[variable_short_name]/[dataset_name]/[ensemble]/[grid]``
+* CMIP6 path for BADC: ``ROOT-BADC/{institute}/{dataset_name}/{experiment}/{ensemble}/{mip}/
+  {variable_short_name}/{grid}``;
+* CMIP6 path for ETHZ: ``ROOT-ETHZ/{experiment}/{mip}/{variable_short_name}/{dataset_name}/{ensemble}/{grid}``
 
 From the ESMValTool user perspective the number of data input parameters is
 optimized to allow for ease of use. We detail this procedure in the next
@@ -118,7 +118,7 @@ supported.
 ERA5
 ^^^^
 
-- Supported variables: ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``)
+- Supported variables: ``cl``, ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``)
 - Tier: 3
 
 .. _read_native_mswep:
@@ -130,7 +130,7 @@ MSWEP
 - Supported frequencies: ``mon``, ``day``, ``3hr``.
 - Tier: 3
 
-For example for monthly data, place the files in the ``/Tier3/MSWEP/latestversion/mon/pr`` subdirectory of your ``native6`` project location.
+For example for monthly data, place the files in the ``/Tier3/MSWEP/version/mon/pr`` subdirectory of your ``native6`` project location.
 
 .. note::
   For monthly data (``V220``), the data must be postfixed with the date, i.e. rename ``global_monthly_050deg.nc`` to ``global_monthly_050deg_197901-201710.nc``
@@ -148,6 +148,95 @@ The following models are natively supported by ESMValCore.
 In contrast to the native observational datasets listed above, they use
 dedicated projects instead of the project ``native6``.
 
+.. _read_cesm:
+
+CESM
+^^^^
+
+ESMValTool is able to read native `CESM <https://www.cesm.ucar.edu/>`__ model
+output.
+
+.. warning::
+
+   The support for native CESM output is still experimental.
+   Currently, only one variable (`tas`) is fully supported. Other 2D variables
+   might be supported by specifying appropriate facets in the recipe or extra
+   facets files (see text below).
+   3D variables (data that uses a vertical dimension) are not supported, yet.
+
+The default naming conventions for input directories and files for CESM are
+
+* input directories: 3 different types supported:
+   * ``/`` (run directory)
+   * ``{case}/{gcomp}/hist`` (short-term archiving)
+   * ``{case}/{gcomp}/proc/{tdir}/{tperiod}`` (post-processed data)
+* input files: ``{case}.{scomp}.{type}.{string}*nc``
+
+as configured in the :ref:`config-developer file <config-developer>` (using the
+default DRS ``drs: default`` in the :ref:`user configuration file`).
+More information about CESM naming conventions are given `here
+<https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html>`__.
+
+.. note::
+
+   The ``{string}`` entry in the input file names above does not only
+   correspond to the (optional) ``$string`` entry for `CESM model output files
+   <https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html#modelOutputFilenames>`__,
+   but can also be used to read `post-processed files
+   <https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html#ppDataFilenames>`__.
+   In the latter case, ``{string}`` corresponds to the combination
+   ``$SSTRING.$TSTRING``.
+
+Thus, example dataset entries could look like this:
+
+.. code-block:: yaml
+
+  datasets:
+    - {project: CESM, dataset: CESM2, case: f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001, type: h0, mip: Amon, short_name: tas, start_year: 2000, end_year: 2014}
+    - {project: CESM, dataset: CESM2, case: f.e21.F1850_BGC.f09_f09_mg17.CFMIP-hadsst-piForcing.001, type: h0, gcomp: atm, scomp: cam, mip: Amon, short_name: tas, start_year: 2000, end_year: 2014}
+
+Variable-specific defaults for the facet ``gcomp`` and ``scomp`` are given in
+the extra facets (see next paragraph) for some variables, but this can be
+overwritten in the recipe.
+
+Similar to any other fix, the CESM fix allows the use of :ref:`extra
+facets<extra_facets>`.
+By default, the file :download:`cesm-mappings.yml
+</../esmvalcore/config/extra_facets/cesm-mappings.yml>` is used for that
+purpose.
+Currently, this file only contains default facets for a single variable
+(`tas`); for other variables, these entries need to be defined in the recipe.
+Supported keys for extra facets are:
+
+==================== ====================================== =================================
+Key                  Description                            Default value if not specified
+==================== ====================================== =================================
+``gcomp``            Generic component-model name           No default (needs to be specified
+                                                            in extra facets or recipe if
+                                                            default DRS is used)
+``raw_name``         Variable name of the variable in the   CMOR variable name of the
+                     raw input file                         corresponding variable
+``raw_units``        Units of the variable in the raw       If specified, the value given by
+                     input file                             the ``units`` attribute in the
+                                                            raw input file; otherwise
+                                                            ``unknown``
+``scomp``            Specific component-model name          No default (needs to be specified
+                                                            in extra facets or recipe if
+                                                            default DRS is used)
+``string``           Short string which is used to further  ``''`` (empty string)
+                     identify the history file type
+                     (corresponds to ``$string`` or
+                     ``$SSTRING.$TSTRING`` in the CESM file
+                     name conventions; see note above)
+``tdir``             Entry to distinguish time averages     ``''`` (empty string)
+                     from time series from diagnostic plot
+                     sets (only used for post-processed
+                     data)
+``tperiod``          Time period over which the data was    ``''`` (empty string)
+                     processed (only used for
+                     post-processed data)
+==================== ====================================== =================================
+
 .. _read_emac:
 
 EMAC
@@ -159,8 +248,8 @@ model output.
 
 The default naming conventions for input directories and files for EMAC are
 
-* input directories: ``[exp]/[channel]``
-* input files: ``[exp]*[channel][postproc_flag].nc``
+* input directories: ``{exp}/{channel}``
+* input files: ``{exp}*{channel}{postproc_flag}.nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
 default DRS ``drs: default`` in the :ref:`user configuration file`).
@@ -184,7 +273,7 @@ the recipe.
 Similar to any other fix, the EMAC fix allows the use of :ref:`extra
 facets<extra_facets>`.
 By default, the file :download:`emac-mappings.yml
-</../esmvalcore/_config/extra_facets/emac-mappings.yml>` is used for that
+</../esmvalcore/config/extra_facets/emac-mappings.yml>` is used for that
 purpose.
 For some variables, extra facets are necessary; otherwise ESMValTool cannot
 read them properly.
@@ -199,6 +288,10 @@ Key                  Description                            Default value if not
 ``postproc_flag``    Postprocessing flag of the data        ``''`` (empty string)
 ``raw_name``         Variable name of the variable in the   CMOR variable name of the
                      raw input file                         corresponding variable
+``raw_units``        Units of the variable in the raw       If specified, the value given by
+                     input file                             the ``units`` attribute in the
+                                                            raw input file; otherwise
+                                                            ``unknown``
 ==================== ====================================== =================================
 
 .. note::
@@ -228,8 +321,8 @@ ESMValTool is able to read native `ICON
 
 The default naming conventions for input directories and files for ICON are
 
-* input directories: ``[exp]`` or ``{exp}/outdata``
-* input files: ``[exp]_[var_type]*.nc``
+* input directories: ``{exp}`` or ``{exp}/outdata``
+* input files: ``{exp}_{var_type}*.nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
 default DRS ``drs: default`` in the :ref:`user configuration file`).
@@ -252,31 +345,112 @@ A variable-specific default for the facet ``var_type`` is given in the extra
 facets (see next paragraph) for many variables, but this can be overwritten in
 the recipe.
 
+ESMValCore can automatically make native ICON data `UGRID
+<https://ugrid-conventions.github.io/ugrid-conventions/>`__-compliant when
+loading the data.
+The UGRID conventions provide a standardized format to store data on
+unstructured grids, which is required by many software packages or tools to
+work correctly.
+An example is the horizontal regridding of native ICON data to a regular grid.
+While the built-in :ref:`unstructured_nearest scheme <built-in regridding
+schemes>` can handle unstructured grids not in UGRID format, using more complex
+regridding algorithms (for example provided by the
+:doc:`iris-esmf-regrid:index` package through :ref:`generic regridding
+schemes`) requires the input data in UGRID format.
+The following code snippet provides a preprocessor that regrids native ICON
+data to a 1°x1° grid using `ESMF's first-order conservative regridding
+algorithm <https://earthsystemmodeling.org/regrid/#regridding-methods>`__:
+
+.. code-block:: yaml
+
+   preprocessors:
+     regrid_icon:
+       regrid:
+         target_grid: 1x1
+         scheme:
+           reference: esmf_regrid.experimental.unstructured_scheme:regrid_unstructured_to_rectilinear
+           method: conservative
+
+This automatic UGRIDization is enabled by default, but can be switched off with
+the facet ``ugrid: false`` in the recipe or the extra facets (see below).
+This is useful for diagnostics that do not support input data in UGRID format
+(yet) like the :ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>` or
+if you want to use the built-in :ref:`unstructured_nearest scheme <built-in
+regridding schemes>` regridding scheme.
+
+For 3D ICON variables, ESMValCore tries to add the pressure level information
+(from the variables `pfull` and `phalf`) and/or altitude information (from the
+variables `zg` and `zghalf`) to the preprocessed output files.
+If neither of these variables are available in the input files, it is possible
+to specify the location of files that include the corresponding `zg` or
+`zghalf` variables with the facets ``zg_file`` and/or ``zghalf_file`` in the
+recipe or the extra facets.
+The paths to these files can be specified absolute or relative (to
+``auxiliary_data_dir`` as defined in the :ref:`user configuration file`).
+
+.. hint::
+
+   To use the :func:`~esmvalcore.preprocessor.extract_levels` preprocessor on
+   native ICON data, you need to specify the name of the vertical coordinate
+   (e.g., ``coordinate: air_pressure``) since native ICON output usually
+   provides a 3D air pressure field instead of a simple 1D vertical coordinate.
+   This also works if your files only contain altitude information (in this
+   case, the US standard atmosphere is used to convert between altitude and
+   pressure levels; see :ref:`Vertical interpolation` for details).
+   Example:
+
+   .. code-block:: yaml
+
+    preprocessors:
+      extract_500hPa_level_from_icon:
+        extract_levels:
+          levels: 50000
+          scheme: linear
+          coordinate: air_pressure
+
 Similar to any other fix, the ICON fix allows the use of :ref:`extra
 facets<extra_facets>`.
 By default, the file :download:`icon-mappings.yml
-</../esmvalcore/_config/extra_facets/icon-mappings.yml>` is used for that
+</../esmvalcore/config/extra_facets/icon-mappings.yml>` is used for that
 purpose.
 For some variables, extra facets are necessary; otherwise ESMValTool cannot
 read them properly.
 Supported keys for extra facets are:
 
-============= ============================= =================================
-Key           Description                   Default value if not specified
-============= ============================= =================================
-``latitude``  Standard name of the latitude ``latitude``
-              coordinate in the raw input
-              file
-``longitude`` Standard name of the          ``longitude``
-              longitude coordinate in the
-              raw input file
-``raw_name``  Variable name of the          CMOR variable name of the
-              variable in the raw input     corresponding variable
-              file
-``var_type``  Variable type of the          No default (needs to be specified
-              variable in the raw input     in extra facets or recipe if
-              file                          default DRS is used)
-============= ============================= =================================
+=================== ================================ ===================================
+Key                 Description                      Default value if not specified
+=================== ================================ ===================================
+``latitude``        Standard name of the latitude    ``latitude``
+                    coordinate in the raw input
+                    file
+``longitude``       Standard name of the             ``longitude``
+                    longitude coordinate in the
+                    raw input file
+``raw_name``        Variable name of the             CMOR variable name of the
+                    variable in the raw input        corresponding variable
+                    file
+``raw_units``       Units of the variable in the     If specified, the value given by
+                    raw input file                   the ``units`` attribute in the
+                                                     raw input file; otherwise
+                                                     ``unknown``
+``ugrid``           Automatic UGRIDization of        ``True``
+                    the input data
+``var_type``        Variable type of the             No default (needs to be specified
+                    variable in the raw input        in extra facets or recipe if
+                    file                             default DRS is used)
+``zg_file``         Absolute or relative (to         If possible, use `zg` variable
+                    ``auxiliary_data_dir`` defined   provided by the raw input file
+                    in the
+                    :ref:`user configuration file`)
+                    path to the input file that
+                    contains `zg`
+``zghalf_file``     Absolute or relative (to         If possible, use `zghalf` variable
+                    ``auxiliary_data_dir`` defined   provided by the raw input file
+                    in the
+                    :ref:`user configuration file`)
+                    path to the input file that
+                    contains `zghalf`
+=================== ================================ ===================================
 
 .. hint::
 
@@ -320,7 +494,7 @@ The ``Output`` format is an example of a case where variables are grouped in
 multi-variable files, which name cannot be computed directly from datasets
 attributes alone but requires to use an extra_facets file, which principles are
 explained in :ref:`extra_facets`, and which content is :download:`available here
-</../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`. These multi-variable
+</../esmvalcore/config/extra_facets/ipslcm-mappings.yml>`. These multi-variable
 files must also undergo some data selection.
 
 
@@ -346,9 +520,12 @@ retrieval parameters is explained below.
 
 Enabling automatic downloads from the ESGF
 ------------------------------------------
-To enable automatic downloads from ESGF, set ``offline: false`` in
-the :ref:`user configuration file` or provide the command line argument
-``--offline=False`` when running the recipe.
+To enable automatic downloads from ESGF, set ``search_esgf: when_missing`` (use
+local files whenever possible) or ``search_esgf: always`` (always search ESGF
+for latest version of files and only use local data if it is the latest
+version) in the :ref:`user configuration file`, or provide the corresponding
+command line arguments ``--search_esgf=when_missing`` or
+``--search_esgf=always`` when running the recipe.
 The files will be stored in the ``download_dir`` set in
 the :ref:`user configuration file`.
 
@@ -393,11 +570,11 @@ type of root paths they need the data from, e.g.:
 will tell the tool that the user needs data from a repository structured
 according to the BADC DRS structure, i.e.:
 
-``ROOT/[institute]/[dataset_name]/[experiment]/[ensemble]/[mip]/[variable_short_name]/[grid]``;
+``ROOT/{institute}/{dataset_name}/{experiment}/{ensemble}/{mip}/{variable_short_name}/{grid}``;
 
 setting the ``ROOT`` parameter is explained below. This is a
 strictly-structured repository tree and if there are any sort of irregularities
-(e.g. there is no ``[mip]`` directory) the data will not be found! ``BADC`` can
+(e.g. there is no ``{mip}`` directory) the data will not be found! ``BADC`` can
 be replaced with ``DKRZ`` or ``ETHZ`` depending on the existing ``ROOT``
 directory structure.
 The snippet
@@ -476,7 +653,7 @@ datasets are listed in any recipe, under either the ``datasets`` and/or
     - {dataset: HadGEM2-CC, project: CMIP5, exp: historical, ensemble: r1i1p1, start_year: 2001, end_year: 2004}
     - {dataset: UKESM1-0-LL, project: CMIP6, exp: historical, ensemble: r1i1p1f2, grid: gn, start_year: 2004, end_year: 2014}
 
-``_data_finder`` will use this information to find data for **all** the variables specified in ``diagnostics/variables``.
+The data finding feature will use this information to find data for **all** the variables specified in ``diagnostics/variables``.
 
 Recap and example
 =================

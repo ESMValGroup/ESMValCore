@@ -5,7 +5,7 @@ from functools import lru_cache
 import pyesgf.logon
 import pyesgf.search
 
-from .._config._esgf_pyclient import get_esgf_config
+from ..config._esgf_pyclient import get_esgf_config
 
 logger = logging.getLogger(__name__)
 

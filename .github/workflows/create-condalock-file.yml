@@ -21,13 +21,15 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           auto-update-conda: true
-          python-version: "3.10"
-          miniconda-version: "latest"
           activate-environment: esmvaltool-fromlock
-          channels: conda-forge
+          python-version: "3.11"
+          miniforge-version: "latest"
+          miniforge-variant: Mambaforge
+          use-mamba: true
       - name: Show conda config
         shell: bash -l {0}
         run: |
+          conda update -n base -c conda-forge conda
           conda info
           conda list
           conda config --show-sources
@@ -39,7 +41,10 @@ jobs:
           python --version
       - name: Install conda-lock
         shell: bash -l {0}
-        run: conda install -y conda-lock
+        run: mamba install -y conda-lock
+      - name: Check version of conda-lock
+        shell: bash -l {0}
+        run: conda-lock --version
       - name: Create conda lock file for linux-64
         shell: bash -l {0}
         run: conda-lock lock --platform linux-64 -f environment.yml --mamba --kind explicit
@@ -48,7 +53,7 @@ jobs:
         run: conda create --name esmvaltool-fromlock --file conda-linux-64.lock
       - name: Installing pip
         shell: bash -l {0}
-        run: conda install pip
+        run: mamba install -y pip
       - name: Gather pip info
         shell: bash -l {0}
         run: pip --version
@@ -57,6 +62,9 @@ jobs:
         run: |
           which python
           python --version
+      - name: Show environment contents
+        shell: bash -l {0}
+        run: conda list
       - shell: bash -l {0}
         run: pip install -e .[develop]
       - shell: bash -l {0}
@@ -66,9 +74,7 @@ jobs:
       - shell: bash -l {0}
         run: flake8
       - shell: bash -l {0}
-        run: pytest -n 2 -m "not installation and not sequential"
-      - shell: bash -l {0}
-        run: pytest -n 0 -m "sequential"
+        run: pytest -n 2 -m "not installation"
       # Automated PR
       # see https://github.com/marketplace/actions/create-pull-request
       - name: Create Automated PR if conda lock file has changed

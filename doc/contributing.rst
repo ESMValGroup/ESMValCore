@@ -139,6 +139,28 @@ The icons indicate whether the item will be checked during the
 - 🛠 The :ref:`list of authors <authors>` is up to date
 - 🛠 The :ref:`checks shown below the pull request <pull_request_checks>` are successful
 
+Pull requests introducing a change that causes a recipe to no longer run successfully
+(*breaking change*), or which results in scientifically significant changes in results
+(*science change*) require additional items to be reviewed defined in the
+:ref:`backward compatibility policy<esmvaltool:backward-compatibility-policy>`.
+These include in particular:
+
+- 🛠 Instructions for the release notes to assist *recipe
+  developers* to adapt their recipe in light of the *backward-incompatible change*
+  available.
+- 🛠 General instructions for *recipe developers* working on *user
+  recipes* to enable them to adapt their code related to
+  *backward-incompatible changes* available (see `ESMValTool_Tutorial: issue
+  #263 <https://github.com/ESMValGroup/ESMValTool_Tutorial/issues/263>`__).
+- 🛠 Core development team tagged to notify them of the
+  *backward-incompatible change*, and give at least
+  2 weeks for objections to be raised before merging to the main
+  branch. If a strong objection is raised the backward-incompatible
+  change should not be merged until the objection is resolved.
+- 🛠 Information required for the “*backward-incompatible changes*”
+  section in the PR  that introduces the *backward-incompatible change*
+  available.
+
 .. _scientific_relevance:
 
 Scientific relevance
@@ -558,6 +580,13 @@ there are also users who choose not to share their work there.
 While our commitment is first and foremost to users who do share their recipes
 in the ESMValTool repository, we still try to be nice to all of the ESMValCore
 users.
+
+.. note::
+
+   The :ref:`backward compatibility policy<esmvaltool:backward-compatibility-policy>`
+   outlines the key principles on backward compatibility and additional guidance on handling
+   *backward-incompatible changes*. This policy applies to both, ESMValCore and ESMValTool.
+
 When making changes, e.g. to the :ref:`recipe format <recipe_overview>`, the
 :ref:`diagnostic script interface <interfaces>`, the public
 :ref:`Python API <api>`, or the :ref:`configuration file format <config>`,
@@ -606,6 +635,11 @@ recipes in ESMValTool and link the ESMValTool pull request(s) in the ESMValCore
 pull request description.
 You can ask the `@ESMValGroup/esmvaltool-recipe-maintainers`_ for help with
 updating existing recipes, but please be considerate of their time.
+You should tag the `@ESMValGroup/esmvaltool-coreteam`_ to
+notify them of the backward-incompatible change, and give at least
+2 weeks for objections to be raised before merging to the main
+branch. If a strong objection is raised the backwards-incompatible
+change should not be merged until the objection is resolved.
 
 When reviewing a pull request, always check for backward incompatible changes
 and make sure they are needed and have been discussed with the
@@ -635,13 +669,13 @@ When adding or removing dependencies, please consider applying the changes in
 the following files:
 
 - ``environment.yml``
-  contains development dependencies that cannot be installed from
-  `PyPI <https://pypi.org/>`_
+  contains all the development dependencies; these are all from
+  `conda-forge <https://conda-forge.org/>`_
 - ``setup.py``
   contains all Python dependencies, regardless of their installation source
 
 Note that packages may have a different name on
-`conda-forge <https://conda-forge.org/>`__ than on PyPI_.
+`conda-forge <https://conda-forge.org/>`__ than on `PyPI <https://pypi.org/>`_.
 
 Several test jobs on CircleCI_ related to the installation of the tool will only
 run if you change the dependencies.
@@ -721,7 +755,16 @@ Perform the steps listed below with two persons, to reduce the risk of error.
    `PyPI <https://pypi.org/project/ESMValCore/>`__, and
    `readthedocs <https://readthedocs.org/dashboard/esmvalcore/users/>`__.
 
-To make a new release of the package, follow these steps:
+The release of ESMValCore is tied to the release of ESMValTool. 
+The detailed steps can be found in the ESMValTool
+:ref:`documentation <esmvaltool:release_steps>`.
+To start the procedure, ESMValCore gets released as a 
+release candidate to test the recipes in ESMValTool. If bugs are found
+during the testing phase of the release candidate, make as many release 
+candidates for ESMValCore as needed in order to fix them. 
+
+To make a new release of the package, be it a release candidate or the final release, 
+follow these steps:
 
 1. Check that all tests and builds work
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -745,9 +788,6 @@ All tests should pass before making a release (branch).
 Create a branch off the ``main`` branch and push it to GitHub.
 Ask someone with administrative permissions to set up branch protection rules
 for it so only you and the person helping you with the release can push to it.
-Announce the name of the branch in an issue and ask the members of the
-`ESMValTool development team <https://github.com/orgs/ESMValGroup/teams/esmvaltool-developmentteam>`__
-to run their favourite recipe using this branch.
 
 3. Increase the version number
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -763,28 +803,27 @@ the release branch.
 4. Add release notes
 ~~~~~~~~~~~~~~~~~~~~
 Use the script
-:ref:`esmvaltool/utils/draft_release_notes.py <esmvaltool:draft_release_notes.py>`
+:ref:`esmvaltool/utils/draft_release_notes.py <draft_release_notes.py>`
 to create create a draft of the release notes.
 This script uses the titles and labels of merged pull requests since the
 previous release.
+Open a discussion to allow members of the development team to nominate pull 
+requests as highlights. Add the most voted pull requests as highlights at the 
+beginning of changelog. After the highlights section, list any backward 
+incompatible changes that the release may include. The 
+:ref:`backward compatibility policy<esmvaltool:backward-compatibility-policy>`.
+lists the information that should be provided by the developer of any backward 
+incompatible change. Make sure to also list any deprecations that the release 
+may include, as well as a brief description on how to upgrade a deprecated feature.
 Review the results, and if anything needs changing, change it on GitHub and
 re-run the script until the changelog looks acceptable.
 Copy the result to the file ``doc/changelog.rst``.
 Make a pull request and get it merged into ``main`` and cherry pick it into
-the release branch..
-
-5. Cherry pick bugfixes into the release branch
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If a bug is found and fixed (i.e. pull request merged into the
-``main`` branch) during the period of testing, use the command
-``git cherry-pick`` to include the commit for this bugfix into
 the release branch.
-When the testing period is over, make a pull request to update
-the release notes with the latest changes, get it merged into
-``main`` and cherry-pick it into the release branch.
 
-6. Make the release on GitHub
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+5. Make the (pre-)release on GitHub
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Do a final check that all tests on CircleCI and GitHub Actions completed
 successfully.
@@ -792,7 +831,9 @@ Then click the
 `releases tab <https://github.com/ESMValGroup/ESMValCore/releases>`__
 and create the new release from the release branch (i.e. not from ``main``).
 
-7. Create and upload the PyPI package
+Create a tag and tick the `This is a pre-release` box if working with a release candidate.
+
+6. Create and upload the PyPI package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The package is automatically uploaded to the
@@ -823,13 +864,21 @@ Follow these steps to create a new Python package:
 You can read more about this in
 `Packaging Python Projects <https://packaging.python.org/tutorials/packaging-projects/>`__.
 
-8. Create the Conda package
+7. Create the Conda package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``esmvalcore`` package is published on the `conda-forge conda channel
 <https://anaconda.org/conda-forge>`__.
 This is done via a pull request on the `esmvalcore-feedstock repository
 <https://github.com/conda-forge/esmvalcore-feedstock>`__.
+
+To publish a release candidate, you have to open a pull request yourself.
+An example for this can be found `here
+<https://github.com/conda-forge/esmvalcore-feedstock/pull/35>`__.
+Make sure to use the `rc branch
+<https://github.com/conda-forge/esmvalcore-feedstock/tree/rc>`__ as the target
+branch for your pull request and follow all instructions given by the linter
+bot. The testing of ESMValTool will be performed with the published release candidate.
 
 For the final release, this pull request is automatically opened by a bot.
 An example pull request can be found `here
@@ -843,15 +892,8 @@ they will merge the pull request, which will in turn publish the package on
 conda-forge some time later.
 Contact the feedstock maintainers if you want to become a maintainer yourself.
 
-To publish a release candidate, you have to open a pull request yourself.
-An example for this can be found `here
-<https://github.com/conda-forge/esmvalcore-feedstock/pull/35>`__.
-Make sure to use the `rc branch
-<https://github.com/conda-forge/esmvalcore-feedstock/tree/rc>`__ as the target
-branch for your pull request and follow all instructions given by the linter
-bot.
 
-9. Check the Docker images
+8. Check the Docker images
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There are two main Docker container images available for ESMValCore on

@@ -4,19 +4,35 @@ All functions in this module will work even if no fixes are available
 for the given dataset. Therefore is recommended to apply them to all
 variables to be sure that all known errors are fixed.
 """
+from __future__ import annotations
+
 import logging
 from collections import defaultdict
+from pathlib import Path
+from typing import TYPE_CHECKING, Optional
 
 from iris.cube import CubeList
 
 from ._fixes.fix import Fix
 from .check import CheckLevels, _get_cmor_checker
 
+if TYPE_CHECKING:
+    from ..config import Session
+
 logger = logging.getLogger(__name__)
 
 
-def fix_file(file, short_name, project, dataset, mip, output_dir,
-             **extra_facets):
+def fix_file(
+    file: Path,
+    short_name: str,
+    project: str,
+    dataset: str,
+    mip: str,
+    output_dir: Path,
+    add_unique_suffix: bool = False,
+    session: Optional[Session] = None,
+    **extra_facets,
+) -> Path:
     """Fix files before ESMValTool can load them.
 
     This fixes are only for issues that prevent iris from loading the cube or
@@ -26,29 +42,49 @@ def fix_file(file, short_name, project, dataset, mip, output_dir,
 
     Parameters
     ----------
-    file: str
-        Path to the original file
+    file: Path
+        Path to the original file.
     short_name: str
-        Variable's short name
+        Variable's short name.
     project: str
-    dataset:str
-    output_dir: str
-        Output directory for fixed files
+        Project of the dataset.
+    dataset: str
+        Name of the dataset.
+    mip: str
+        Variable's MIP.
+    output_dir: Path
+        Output directory for fixed files.
+    add_unique_suffix: bool, optional (default: False)
+        Adds a unique suffix to `output_dir` for thread safety.
+    session: Session, optional
+        Current session which includes configuration and directory information.
     **extra_facets: dict, optional
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 
     Returns
     -------
-    str:
-        Path to the fixed file
+    Path:
+        Path to the fixed file.
     """
+    # Update extra_facets with variable information given as regular arguments
+    # to this function
+    extra_facets.update({
+        'short_name': short_name,
+        'project': project,
+        'dataset': dataset,
+        'mip': mip,
+    })
+
     for fix in Fix.get_fixes(project=project,
                              dataset=dataset,
                              mip=mip,
                              short_name=short_name,
-                             extra_facets=extra_facets):
-        file = fix.fix_file(file, output_dir)
+                             extra_facets=extra_facets,
+                             session=session):
+        file = fix.fix_file(
+            file, output_dir, add_unique_suffix=add_unique_suffix
+        )
     return file
 
 
@@ -59,6 +95,7 @@ def fix_metadata(cubes,
                  mip,
                  frequency=None,
                  check_level=CheckLevels.DEFAULT,
+                 session: Optional[Session] = None,
                  **extra_facets):
     """Fix cube metadata if fixes are required and check it anyway.
 
@@ -70,20 +107,21 @@ def fix_metadata(cubes,
     Parameters
     ----------
     cubes: iris.cube.CubeList
-        Cubes to fix
+        Cubes to fix.
     short_name: str
-        Variable's short name
+        Variable's short name.
     project: str
-
+        Project of the dataset.
     dataset: str
-
+        Name of the dataset.
     mip: str
-        Variable's MIP
-
+        Variable's MIP.
     frequency: str, optional
-        Variable's data frequency, if available
+        Variable's data frequency, if available.
     check_level: CheckLevels
         Level of strictness of the checks. Set to default.
+    session: Session, optional
+        Current session which includes configuration and directory information.
     **extra_facets: dict, optional
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
@@ -91,18 +129,29 @@ def fix_metadata(cubes,
     Returns
     -------
     iris.cube.Cube:
-        Fixed and checked cube
+        Fixed and checked cube.
 
     Raises
     ------
     CMORCheckError
         If the checker detects errors in the metadata that it can not fix.
     """
+    # Update extra_facets with variable information given as regular arguments
+    # to this function
+    extra_facets.update({
+        'short_name': short_name,
+        'project': project,
+        'dataset': dataset,
+        'mip': mip,
+        'frequency': frequency,
+    })
+
     fixes = Fix.get_fixes(project=project,
                           dataset=dataset,
                           mip=mip,
                           short_name=short_name,
-                          extra_facets=extra_facets)
+                          extra_facets=extra_facets,
+                          session=session)
     fixed_cubes = []
     by_file = defaultdict(list)
     for cube in cubes:
@@ -137,10 +186,10 @@ def _get_single_cube(cube_list, short_name, project, dataset):
             break
     if not cube:
         raise ValueError(
-            'More than one cube found for variable %s in %s:%s but '
-            'none of their var_names match the expected. \n'
-            'Full list of cubes encountered: %s' %
-            (short_name, project, dataset, cube_list))
+            f'More than one cube found for variable {short_name} in '
+            f'{project}:{dataset} but none of their var_names match the '
+            f'expected.\nFull list of cubes encountered: {cube_list}'
+        )
     logger.warning(
         'Found variable %s in %s:%s, but there were other present in '
         'the file. Those extra variables are usually metadata '
@@ -158,6 +207,7 @@ def fix_data(cube,
              mip,
              frequency=None,
              check_level=CheckLevels.DEFAULT,
+             session: Optional[Session] = None,
              **extra_facets):
     """Fix cube data if fixes add present and check it anyway.
 
@@ -171,17 +221,21 @@ def fix_data(cube,
     Parameters
     ----------
     cube: iris.cube.Cube
-        Cube to fix
+        Cube to fix.
     short_name: str
-        Variable's short name
+        Variable's short name.
     project: str
+        Project of the dataset.
     dataset: str
+        Name of the dataset.
     mip: str
-        Variable's MIP
+        Variable's MIP.
     frequency: str, optional
-        Variable's data frequency, if available
+        Variable's data frequency, if available.
     check_level: CheckLevels
         Level of strictness of the checks. Set to default.
+    session: Session, optional
+        Current session which includes configuration and directory information.
     **extra_facets: dict, optional
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
@@ -189,18 +243,29 @@ def fix_data(cube,
     Returns
     -------
     iris.cube.Cube:
-        Fixed and checked cube
+        Fixed and checked cube.
 
     Raises
     ------
     CMORCheckError
         If the checker detects errors in the data that it can not fix.
     """
+    # Update extra_facets with variable information given as regular arguments
+    # to this function
+    extra_facets.update({
+        'short_name': short_name,
+        'project': project,
+        'dataset': dataset,
+        'mip': mip,
+        'frequency': frequency,
+    })
+
     for fix in Fix.get_fixes(project=project,
                              dataset=dataset,
                              mip=mip,
                              short_name=short_name,
-                             extra_facets=extra_facets):
+                             extra_facets=extra_facets,
+                             session=session):
         cube = fix.fix_data(cube)
     checker = _get_cmor_checker(frequency=frequency,
                                 table=project,

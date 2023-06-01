@@ -2,7 +2,7 @@
 
 import pyesgf.search
 
-from .._config._esgf_pyclient import get_esgf_config
+from ..config._esgf_pyclient import get_esgf_config
 
 FACETS = {
     'CMIP3': {
@@ -16,14 +16,18 @@ FACETS = {
         'dataset': 'model',
         'ensemble': 'ensemble',
         'exp': 'experiment',
+        'frequency': 'time_frequency',
+        'institute': 'institute',
         'mip': 'cmor_table',
         'product': 'product',
         'short_name': 'variable',
     },
     'CMIP6': {
+        'activity': 'activity_drs',
         'dataset': 'source_id',
-        'ensemble': 'variant_label',
+        'ensemble': 'member_id',
         'exp': 'experiment_id',
+        'institute': 'institution_id',
         'grid': 'grid_label',
         'mip': 'table_id',
         'short_name': 'variable',
@@ -35,11 +39,14 @@ FACETS = {
         'ensemble': 'ensemble',
         'exp': 'experiment',
         'frequency': 'time_frequency',
+        'institute': 'institute',
+        'product': 'product',
         'short_name': 'variable',
     },
     'obs4MIPs': {
         'dataset': 'source_id',
         'frequency': 'time_frequency',
+        'institute': 'institute',
         'short_name': 'variable',
     }
 }

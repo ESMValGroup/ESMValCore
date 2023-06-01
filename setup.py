@@ -28,11 +28,13 @@ REQUIREMENTS = {
     # Use with pip install . to install from source
     'install': [
         'cartopy',
-        # see https://github.com/SciTools/cf-units/issues/218
-        'cf-units>=3.0.0,<3.1.0,!=3.0.1.post0',  # ESMValCore/issues/1655
-        'dask[array]',
+        'cf-units',
+        'dask[array,distributed]',
+        'dask-jobqueue',
         'esgf-pyclient>=0.3.1',
-        'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
+        'esmf-regrid',
+        'esmpy!=8.1.0',
+        'filelock',
         'fiona',
         'fire',
         'geopy',
@@ -42,24 +44,26 @@ REQUIREMENTS = {
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
         'nested-lookup',
-        'netCDF4!=1.6.1',  # github.com/ESMValGroup/ESMValCore/issues/1723
-        'numpy',
+        'netCDF4',
+        'numpy!=1.24.3',
+        'packaging',
         'pandas',
         'pillow',
         'prov',
         'psutil',
+        'py-cordex',
         'pybtex',
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        'scitools-iris>=3.2.1',
-        'shapely[vectorized]',
-        'stratify',
+        'scitools-iris>=3.6.0',
+        'shapely',
+        'stratify>=0.3',
         'yamale',
     ],
     # Test dependencies
     'test': [
-        'flake8<5.0',  # github.com/ESMValGroup/ESMValCore/issues/1696
+        'flake8',
         'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
         'pytest-cov>=2.10.1',
         'pytest-env',
@@ -70,15 +74,18 @@ REQUIREMENTS = {
         'pytest-xdist',
         'ESMValTool_sample_data==0.0.3',
         # MyPy library stubs
+        'mypy>=0.990',
         'types-requests',
         'types-pkg_resources',
         'types-PyYAML',
     ],
     # Documentation dependencies
     'doc': [
-        'autodocsumm',
-        'sphinx>2',
-        'sphinx_rtd_theme',
+        'autodocsumm>=0.2.2',
+        'ipython',
+        'nbsphinx',
+        'sphinx>=6.1.3',
+        'pydata_sphinx_theme',
     ],
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
@@ -87,7 +94,7 @@ REQUIREMENTS = {
         'docformatter',
         'isort',
         'pre-commit',
-        'prospector[with_pyroma,with_mypy]!=1.1.6.3,!=1.1.6.4',
+        'prospector[with_pyroma,with_mypy]>=1.9.0',
         'vprof',
         'yamllint',
         'yapf',
@@ -209,9 +216,9 @@ setup(
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Atmospheric Science',
         'Topic :: Scientific/Engineering :: GIS',

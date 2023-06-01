@@ -25,6 +25,7 @@ class PreprocessorFile(mock.Mock):
         self.cubes = cubes
         self.mock_ancestors = set()
         self.wasderivedfrom = mock.Mock(side_effect=self.mock_ancestors.add)
+        self.copy_provenance = mock.Mock(return_value=self)
 
 
 def assert_array_equal(array_1, array_2):
@@ -185,6 +186,7 @@ def test_multimodel_mask_products_1d(cube_1d):
     assert out_products[1].filename == 'B'
     assert out_products[1].cubes == iris.cube.CubeList([cube_1d, cube_1d])
     for product in out_products:
+        product.copy_provenance.assert_not_called()
         product.wasderivedfrom.assert_not_called()
         assert product.mock_ancestors == set()
 
@@ -199,8 +201,10 @@ def test_multimodel_mask_products_1d(cube_1d):
     assert_array_equal(out_products[0].cubes[0].data, m_array)
     assert out_products[1].filename == 'B'
     assert out_products[1].cubes == iris.cube.CubeList([cube_masked])
+    out_products[0].copy_provenance.assert_not_called()
     out_products[0].wasderivedfrom.assert_called_once_with(prod_b)
     assert out_products[0].mock_ancestors == {prod_b}
+    out_products[1].copy_provenance.assert_called_once_with()
     out_products[1].wasderivedfrom.assert_not_called()
     assert out_products[1].mock_ancestors == set()
 
@@ -218,6 +222,7 @@ def test_multimodel_mask_products_5d(cube_5d):
     assert out_products[1].filename == 'B'
     assert out_products[1].cubes == iris.cube.CubeList([cube_5d, cube_5d])
     for product in out_products:
+        product.copy_provenance.assert_not_called()
         product.wasderivedfrom.assert_not_called()
         assert product.mock_ancestors == set()
 
@@ -238,10 +243,13 @@ def test_multimodel_mask_products_5d(cube_5d):
     for product in out_products:
         assert len(product.cubes) == 1
         assert_array_equal(product.cubes[0].data, expected_data)
+    out_products[0].copy_provenance.assert_not_called()
     assert out_products[0].wasderivedfrom.call_count == 2
     assert out_products[0].mock_ancestors == {prod_b, prod_c}
+    out_products[1].copy_provenance.assert_called_once_with()
     out_products[1].wasderivedfrom.assert_called_once_with(prod_c)
     assert out_products[1].mock_ancestors == {prod_c}
+    out_products[2].copy_provenance.assert_called_once_with()
     out_products[2].wasderivedfrom.assert_called_once_with(prod_b)
     assert out_products[2].mock_ancestors == {prod_b}
 
@@ -307,9 +315,12 @@ def test_mask_multimodel(cube_2d, cube_4d):
     for product in out_products:
         assert len(product.cubes) == 1
         assert_array_equal(product.cubes[0].data, expected_data)
+    out_products[0].copy_provenance.assert_not_called()
     assert out_products[0].wasderivedfrom.call_count == 2
     assert out_products[0].mock_ancestors == {prod_b, prod_c}
+    out_products[1].copy_provenance.assert_called_once_with()
     out_products[1].wasderivedfrom.assert_called_once_with(prod_c)
     assert out_products[1].mock_ancestors == {prod_c}
+    out_products[2].copy_provenance.assert_called_once_with()
     out_products[2].wasderivedfrom.assert_called_once_with(prod_b)
     assert out_products[2].mock_ancestors == {prod_b}

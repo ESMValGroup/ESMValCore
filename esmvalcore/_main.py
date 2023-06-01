@@ -28,6 +28,7 @@ http://docs.esmvaltool.org. Have fun!
 """  # noqa: line-too-long pylint: disable=line-too-long
 # pylint: disable=import-outside-toplevel
 import logging
+import os
 from pathlib import Path
 
 import fire
@@ -50,7 +51,6 @@ ______________________________________________________________________
 
 def parse_resume(resume, recipe):
     """Set `resume` to a correct value and sanity check."""
-    import os
     if not resume:
         return []
     if isinstance(resume, str):
@@ -68,14 +68,14 @@ def parse_resume(resume, recipe):
     return resume
 
 
-def process_recipe(recipe_file, config_user):
+def process_recipe(recipe_file: Path, session):
     """Process recipe."""
     import datetime
-    import os
     import shutil
 
-    from ._recipe import read_recipe_file
-    if not os.path.isfile(recipe_file):
+    from esmvalcore._recipe.recipe import read_recipe_file
+    from esmvalcore.config._dask import check_distributed_config
+    if not recipe_file.is_file():
         import errno
         raise OSError(errno.ENOENT, "Specified recipe file does not exist",
                       recipe_file)
@@ -89,14 +89,13 @@ def process_recipe(recipe_file, config_user):
 
     logger.info(70 * "-")
     logger.info("RECIPE   = %s", recipe_file)
-    logger.info("RUNDIR     = %s", config_user['run_dir'])
-    logger.info("WORKDIR    = %s", config_user["work_dir"])
-    logger.info("PREPROCDIR = %s", config_user["preproc_dir"])
-    logger.info("PLOTDIR    = %s", config_user["plot_dir"])
+    logger.info("RUNDIR     = %s", session.run_dir)
+    logger.info("WORKDIR    = %s", session.work_dir)
+    logger.info("PREPROCDIR = %s", session.preproc_dir)
+    logger.info("PLOTDIR    = %s", session.plot_dir)
     logger.info(70 * "-")
 
-    from multiprocessing import cpu_count
-    n_processes = config_user['max_parallel_tasks'] or cpu_count()
+    n_processes = session['max_parallel_tasks'] or os.cpu_count()
     logger.info("Running tasks using at most %s processes", n_processes)
 
     logger.info(
@@ -105,7 +104,9 @@ def process_recipe(recipe_file, config_user):
     logger.info("If you experience memory problems, try reducing "
                 "'max_parallel_tasks' in your user configuration file.")
 
-    if config_user['compress_netcdf']:
+    check_distributed_config()
+
+    if session['compress_netcdf']:
         logger.warning(
             "You have enabled NetCDF compression. Accessing .nc files can be "
             "much slower than expected if your access pattern does not match "
@@ -115,10 +116,10 @@ def process_recipe(recipe_file, config_user):
             "NetCDF compression.")
 
     # copy recipe to run_dir for future reference
-    shutil.copy2(recipe_file, config_user['run_dir'])
+    shutil.copy2(recipe_file, session.run_dir)
 
     # parse recipe
-    recipe = read_recipe_file(recipe_file, config_user)
+    recipe = read_recipe_file(recipe_file, session)
     logger.debug("Recipe summary:\n%s", recipe)
     # run
     recipe.run()
@@ -139,10 +140,9 @@ class Config():
 
     @staticmethod
     def _copy_config_file(filename, overwrite, path):
-        import os
         import shutil
 
-        from ._config import configure_logging
+        from .config._logging import configure_logging
         configure_logging(console_log_level='info')
         if not path:
             path = os.path.join(os.path.expanduser('~/.esmvaltool'), filename)
@@ -214,9 +214,8 @@ class Recipes():
 
         Show all installed recipes, grouped by folder.
         """
-        import os
-
-        from ._config import DIAGNOSTICS, configure_logging
+        from .config._diagnostics import DIAGNOSTICS
+        from .config._logging import configure_logging
         configure_logging(console_log_level='info')
         recipes_folder = DIAGNOSTICS.recipes
         logger.info("Showing recipes installed in %s", recipes_folder)
@@ -244,7 +243,8 @@ class Recipes():
         """
         import shutil
 
-        from ._config import DIAGNOSTICS, configure_logging
+        from .config._diagnostics import DIAGNOSTICS
+        from .config._logging import configure_logging
         configure_logging(console_log_level='info')
         installed_recipe = DIAGNOSTICS.recipes / recipe
         if not installed_recipe.exists():
@@ -266,7 +266,8 @@ class Recipes():
         recipe: str
             Name of the recipe to get, including any subdirectories.
         """
-        from ._config import DIAGNOSTICS, configure_logging
+        from .config._diagnostics import DIAGNOSTICS
+        from .config._logging import configure_logging
         configure_logging(console_log_level='info')
         installed_recipe = DIAGNOSTICS.recipes / recipe
         if not installed_recipe.exists():
@@ -276,8 +277,7 @@ class Recipes():
         msg = f'Recipe {recipe}'
         logger.info(msg)
         logger.info('=' * len(msg))
-        with open(installed_recipe) as recipe_file:
-            print(recipe_file.read())
+        print(installed_recipe.read_text(encoding='utf-8'))
 
 
 class ESMValTool():
@@ -296,9 +296,13 @@ class ESMValTool():
     """
 
     def __init__(self):
-        self.recipes = Recipes()
         self.config = Config()
+        self.recipes = Recipes()
         self._extra_packages = {}
+        if not list(iter_entry_points('esmvaltool_commands')):
+            print("Running esmvaltool executable from ESMValCore. "
+                  "No other command line utilities are available "
+                  "until ESMValTool is installed.")
         for entry_point in iter_entry_points('esmvaltool_commands'):
             self._extra_packages[entry_point.dist.project_name] = \
                 entry_point.dist.version
@@ -326,10 +330,11 @@ class ESMValTool():
             resume_from=None,
             max_datasets=None,
             max_years=None,
-            skip_nonexistent=False,
+            skip_nonexistent=None,
             offline=None,
+            search_esgf=None,
             diagnostics=None,
-            check_level='default',
+            check_level=None,
             **kwargs):
         """Execute an ESMValTool recipe.
 
@@ -356,6 +361,19 @@ class ESMValTool():
             If True, the run will not fail if some datasets are not available.
         offline: bool, optional
             If True, the tool will not download missing data from ESGF.
+
+            .. deprecated:: 2.8.0
+                This option has been deprecated in ESMValCore version 2.8.0 and
+                is scheduled for removal in version 2.10.0. Please use the
+                options `search_esgf=never` (for `offline=True`) or
+                `search_esgf=when_missing` (for `offline=False`). These are
+                exact replacements.
+        search_esgf: str, optional
+            If `never`, disable automatic download of data from the ESGF. If
+            `when_missing`, enable the automatic download of files that are not
+            available locally. If `always`, always check ESGF for the latest
+            version of a file, and only use local files if they correspond to
+            that latest version.
         diagnostics: list(str), optional
             Only run the selected diagnostics from the recipe. To provide more
             than one diagnostic to filter use the syntax 'diag1 diag2/script1'
@@ -367,102 +385,109 @@ class ESMValTool():
             default (fail if there are any errors),
             strict (fail if there are any warnings).
         """
-        import os
-        import warnings
-
-        from ._config import configure_logging, read_config_user_file
-        from ._recipe import TASKSEP
-        from .cmor.check import CheckLevels
-        from .esgf._logon import logon
-
-        # Check validity of optional command line arguments with experimental
-        # API
-        with warnings.catch_warnings():
-            # ignore experimental API warning
-            warnings.simplefilter("ignore")
-            from .experimental.config._config_object import Config as ExpConfig
-        explicit_optional_kwargs = {
-            'config_file': config_file,
-            'resume_from': resume_from,
-            'max_datasets': max_datasets,
-            'max_years': max_years,
-            'skip_nonexistent': skip_nonexistent,
-            'offline': offline,
-            'diagnostics': diagnostics,
-            'check_level': check_level,
-        }
-        all_optional_kwargs = dict(kwargs)
-        for (key, val) in explicit_optional_kwargs.items():
-            if val is not None:
-                all_optional_kwargs[key] = val
-        ExpConfig(all_optional_kwargs)
+        from .config import CFG
 
         recipe = self._get_recipe(recipe)
-        cfg = read_config_user_file(config_file, recipe.stem, kwargs)
 
-        # Create run dir
-        if os.path.exists(cfg['run_dir']):
-            print("ERROR: run_dir {} already exists, aborting to "
-                  "prevent data loss".format(cfg['output_dir']))
-        os.makedirs(cfg['run_dir'])
+        CFG.load_from_file(config_file)
+        session = CFG.start_session(recipe.stem)
+        if check_level is not None:
+            session['check_level'] = check_level
+        if diagnostics is not None:
+            session['diagnostics'] = diagnostics
+        if max_datasets is not None:
+            session['max_datasets'] = max_datasets
+        if max_years is not None:
+            session['max_years'] = max_years
+        if offline is not None:
+            session['offline'] = offline
+        if search_esgf is not None:
+            session['search_esgf'] = search_esgf
+        if skip_nonexistent is not None:
+            session['skip_nonexistent'] = skip_nonexistent
+        session['resume_from'] = parse_resume(resume_from, recipe)
+        session.update(kwargs)
+
+        self._run(recipe, session)
+        # Print warnings about deprecated configuration options again:
+        CFG.reload()
+
+    @staticmethod
+    def _create_session_dir(session):
+        """Create `session.session_dir` or an alternative if it exists."""
+        from .exceptions import RecipeError
+
+        session_dir = session.session_dir
+        for suffix in range(1, 1000):
+            try:
+                session_dir.mkdir(parents=True)
+            except FileExistsError:
+                session_dir = Path(f"{session.session_dir}-{suffix}")
+            else:
+                session.session_name = session_dir.name
+                return
+
+        raise RecipeError(
+            f"Output directory '{session.session_dir}' already exists and"
+            " unable to find alternative, aborting to prevent data loss.")
+
+    def _run(self, recipe: Path, session) -> None:
+        """Run `recipe` using `session`."""
+        self._create_session_dir(session)
+        session.run_dir.mkdir()
 
         # configure logging
-        log_files = configure_logging(output_dir=cfg['run_dir'],
-                                      console_log_level=cfg['log_level'])
+        from .config._logging import configure_logging
+        log_files = configure_logging(output_dir=session.run_dir,
+                                      console_log_level=session['log_level'])
+        self._log_header(session['config_file'], log_files)
 
-        self._log_header(cfg['config_file'], log_files)
-
-        cfg['resume_from'] = parse_resume(resume_from, recipe)
-        cfg['skip_nonexistent'] = skip_nonexistent
-        if isinstance(diagnostics, str):
-            diagnostics = diagnostics.split(' ')
-        cfg['diagnostics'] = {
-            pattern if TASKSEP in pattern else pattern + TASKSEP + '*'
-            for pattern in diagnostics or ()
-        }
-        cfg['check_level'] = CheckLevels[check_level.upper()]
-        if offline is not None:
-            # Override config-user.yml from command line
-            cfg['offline'] = offline
-        if not cfg['offline']:
+        if session['search_esgf'] != 'never':
+            from .esgf._logon import logon
             logon()
 
-        def _check_limit(limit, value):
-            if value is not None and value < 1:
-                raise ValueError("--{} should be larger than 0.".format(
-                    limit.replace('_', '-')))
-            if value:
-                cfg[limit] = value
-
-        _check_limit('max_datasets', max_datasets)
-        _check_limit('max_years', max_years)
-
-        resource_log = os.path.join(cfg['run_dir'], 'resource_usage.txt')
+        # configure resource logger and run program
         from ._task import resource_usage_logger
+        resource_log = session.run_dir / 'resource_usage.txt'
         with resource_usage_logger(pid=os.getpid(), filename=resource_log):
-            process_recipe(recipe_file=recipe, config_user=cfg)
+            process_recipe(recipe_file=recipe, session=session)
 
-        self._clean_preproc(cfg)
+        self._clean_preproc(session)
         logger.info("Run was successful")
 
     @staticmethod
-    def _clean_preproc(cfg):
-        import os
+    def _clean_preproc(session):
         import shutil
 
-        if os.path.exists(cfg["preproc_dir"]) and cfg["remove_preproc_dir"]:
-            logger.info("Removing preproc containing preprocessed data")
-            logger.info("If this data is further needed, then")
-            logger.info("set remove_preproc_dir to false in config-user.yml")
-            shutil.rmtree(cfg["preproc_dir"])
+        if (not session['save_intermediary_cubes'] and
+                session._fixed_file_dir.exists()):
+            logger.debug(
+                "Removing `preproc/fixed_files` directory containing fixed "
+                "data"
+            )
+            logger.debug(
+                "If this data is further needed, then set "
+                "`save_intermediary_cubes` to `true` and `remove_preproc_dir` "
+                "to `false` in your user configuration file"
+            )
+            shutil.rmtree(session._fixed_file_dir)
+
+        if session['remove_preproc_dir'] and session.preproc_dir.exists():
+            logger.info(
+                "Removing `preproc` directory containing preprocessed data"
+            )
+            logger.info(
+                "If this data is further needed, then set "
+                "`remove_preproc_dir` to `false` in your user configuration "
+                "file"
+            )
+            shutil.rmtree(session.preproc_dir)
 
     @staticmethod
-    def _get_recipe(recipe):
-        import os
-
-        from esmvalcore._config import DIAGNOSTICS
+    def _get_recipe(recipe) -> Path:
+        from esmvalcore.config._diagnostics import DIAGNOSTICS
         if not os.path.isfile(recipe):
-            installed_recipe = str(DIAGNOSTICS.recipes / recipe)
+            installed_recipe = DIAGNOSTICS.recipes / recipe
             if os.path.isfile(installed_recipe):
                 recipe = installed_recipe
         recipe = Path(os.path.expandvars(recipe)).expanduser().absolute()
