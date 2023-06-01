@@ -404,8 +404,7 @@ algorithm <https://earthsystemmodeling.org/regrid/#regridding-methods>`__:
        regrid:
          target_grid: 1x1
          scheme:
-           reference: esmf_regrid.experimental.unstructured_scheme:regrid_unstructured_to_rectilinear
-           method: conservative
+           reference: esmf_regrid.schemes:ESMFAreaWeighted
 
 This automatic UGRIDization is enabled by default, but can be switched off with
 the facet ``ugrid: false`` in the recipe or the extra facets (see below).
