@@ -42,6 +42,7 @@ EMAC:
       channel: Amon
     clt:
       raw_name: [aclcov_cav, aclcov_ave]
+      raw_units: '1'
       channel: Amon
     clwvi:  # derived from xlvi_*, xivi_*
       channel: Amon
@@ -61,9 +62,11 @@ EMAC:
       channel: Amon
     hurs:
       raw_name: [rh_2m_cav, rh_2m_ave]
+      raw_units: '1'
       channel: Amon
     od550aer:
       raw_name: [aot_opt_TOT_550_total_cav, aot_opt_TOT_550_total_ave]
+      raw_units: '1'
       channel: AERmon
     pr:  # derived from aprl_*, aprc_*
       channel: Amon
@@ -122,9 +125,11 @@ EMAC:
       channel: Amon
     siconc:
       raw_name: [seaice_cav, seaice_ave]
+      raw_units: '1'
       channel: Amon
     siconca:
       raw_name: [seaice_cav, seaice_ave]
+      raw_units: '1'
       channel: Amon
     sithick:
       raw_name: [siced_cav, siced_ave]
@@ -235,6 +240,7 @@ EMAC:
   Amon:
     cl:
       raw_name: [aclcac_cav, aclcac_ave]
+      raw_units: '1'
       channel: Amon
     cli:
       raw_name: [xim1_cav, xim1_ave]
@@ -267,6 +273,7 @@ EMAC:
   CFday:
     cl:
       raw_name: [aclcac_cav, aclcac_ave]
+      raw_units: '1'
       channel: Amon
     cli:
       raw_name: [xim1_cav, xim1_ave]

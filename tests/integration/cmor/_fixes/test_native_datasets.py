@@ -153,6 +153,33 @@ def test_fix_var_metadata_custom_var(monkeypatch, empty_cube, fix):
     np.testing.assert_allclose(empty_cube.data, 1000.0)
 
 
+def test_fix_var_metadata_raw_units(monkeypatch, empty_cube, fix):
+    """Test ``fix_var_metadata`` with ``raw_units``."""
+    empty_cube.units = None
+    monkeypatch.setitem(fix.extra_facets, 'raw_units', 'K')
+
+    fix.fix_var_metadata(empty_cube)
+
+    assert empty_cube.units == 'K'
+    np.testing.assert_allclose(empty_cube.data, 1.0)
+
+
+def test_fix_var_metadata_raw_units_ignore_invalid_units(
+    monkeypatch, empty_cube, fix
+):
+    """Test ``fix_var_metadata`` with raw_units and invalid units."""
+    monkeypatch.setitem(fix.extra_facets, 'raw_units', 'km')
+    monkeypatch.setattr(fix, 'INVALID_UNITS', {'invalid_units': 'kg'})
+    monkeypatch.setattr(fix.vardef, 'units', 'm')
+    empty_cube.attributes['invalid_units'] = 'invalid_units'
+
+    fix.fix_var_metadata(empty_cube)
+
+    assert empty_cube.units == 'm'  # invalid units have been ignored
+    assert 'invalid_units' not in empty_cube.attributes
+    np.testing.assert_allclose(empty_cube.data, 1000.0)
+
+
 def test_fix_var_metadata_units_exponent(monkeypatch, empty_cube, fix):
     """Test ``fix_var_metadata`` with invalid units."""
     monkeypatch.setattr(fix.vardef, 'units', 'm s-2')
