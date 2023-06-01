@@ -199,6 +199,161 @@ the user.
    debugging, etc. You can even provide any config user value as a run flag
    ``--argument_name argument_value``
 
+.. _config-dask:
+
+Dask distributed configuration
+==============================
+
+The :ref:`preprocessor functions <preprocessor_functions>` and many of the
+:ref:`Python diagnostics in ESMValTool <esmvaltool:recipes>` make use of the
+:ref:`Iris <iris:iris_docs>` library to work with the data.
+In Iris, data can be either :ref:`real or lazy <iris:real_and_lazy_data>`.
+Lazy data is represented by `dask arrays <https://docs.dask.org/en/stable/array.html>`_.
+Dask arrays consist of many small
+`numpy arrays <https://numpy.org/doc/stable/user/absolute_beginners.html#what-is-an-array>`_
+(called chunks) and if possible, computations are run on those small arrays in
+parallel.
+In order to figure out what needs to be computed when, Dask makes use of a
+'`scheduler <https://docs.dask.org/en/stable/scheduling.html>`_'.
+The default scheduler in Dask is rather basic, so it can only run on a single
+computer and it may not always find the optimal task scheduling solution,
+resulting in excessive memory use when using e.g. the
+:func:`esmvalcore.preprocessor.multi_model_statistics` preprocessor function.
+Therefore it is recommended that you take a moment to configure the
+`Dask distributed <https://distributed.dask.org>`_ scheduler.
+A Dask scheduler and the 'workers' running the actual computations, are
+collectively called a 'Dask cluster'.
+
+In ESMValCore, the Dask cluster can configured by creating a file called
+``~/.esmvaltool/dask.yml``, where ``~`` is short for your home directory.
+In this file, under the ``client`` keyword, the arguments to
+:obj:`distributed.Client` can be provided.
+Under the ``cluster`` keyword, the type of cluster (e.g.
+:obj:`distributed.LocalCluster`), as well as any arguments required to start
+the cluster can be provided.
+Extensive documentation on setting up Dask Clusters is available
+`here <https://docs.dask.org/en/latest/deploying.html>`__.
+
+.. warning::
+
+  The format of the ``~/.esmvaltool/dask.yml`` configuration file is not yet
+  fixed and may change in the next release of ESMValCore.
+
+.. note::
+
+  If not all preprocessor functions support lazy data, computational
+  performance may be best with the default scheduler.
+  See `issue #674 <https://github.com/ESMValGroup/ESMValCore/issues/674>`_ for
+  progress on making all preprocessor functions lazy.
+
+**Example configurations**
+
+*Personal computer*
+
+Create a Dask distributed cluster on the computer running ESMValCore using
+all available resources:
+
+.. code:: yaml
+
+  cluster:
+    type: distributed.LocalCluster
+
+this should work well for most personal computers.
+
+.. note::
+
+   Note that, if running this configuration on a shared node of an HPC cluster,
+   Dask will try and use as many resources it can find available, and this may
+   lead to overcrowding the node by a single user (you)!
+
+*Shared computer*
+
+Create a Dask distributed cluster on the computer running ESMValCore, with
+2 workers with 4 threads/4 GiB of memory each (8 GiB in total):
+
+.. code:: yaml
+
+  cluster:
+    type: distributed.LocalCluster
+    n_workers: 2
+    threads_per_worker: 4
+    memory_limit: 4 GiB
+
+this should work well for shared computers.
+
+*Computer cluster*
+
+Create a Dask distributed cluster on the
+`Levante <https://docs.dkrz.de/doc/levante/running-jobs/index.html>`_
+supercomputer using the `Dask-Jobqueue <https://jobqueue.dask.org/en/latest/>`_
+package:
+
+.. code:: yaml
+
+  cluster:
+    type: dask_jobqueue.SLURMCluster
+    queue: shared
+    account: bk1088
+    cores: 8
+    memory: 7680MiB
+    processes: 2
+    interface: ib0
+    local_directory: "/scratch/b/b381141/dask-tmp"
+    n_workers: 24
+
+This will start 24 workers with ``cores / processes = 4`` threads each,
+resulting in ``n_workers / processes = 12`` Slurm jobs, where each Slurm job
+will request 8 CPU cores and 7680 MiB of memory and start ``processes = 2``
+workers.
+This example will use the fast infiniband network connection (called ``ib0``
+on Levante) for communication between workers running on different nodes.
+It is
+`important to set the right location for temporary storage <https://docs.dask.org/en/latest/deploying-hpc.html#local-storage>`__,
+in this case the ``/scratch`` space is used.
+It is also possible to use environmental variables to configure the temporary
+storage location, if you cluster provides these.
+
+A configuration like this should work well for larger computations where it is
+advantageous to use multiple nodes in a compute cluster.
+See
+`Deploying Dask Clusters on High Performance Computers <https://docs.dask.org/en/latest/deploying-hpc.html>`_
+for more information.
+
+*Externally managed Dask cluster*
+
+Use an externally managed cluster, e.g. a cluster that you started using the
+`Dask Jupyterlab extension <https://github.com/dask/dask-labextension#dask-jupyterlab-extension>`_:
+
+.. code:: yaml
+
+  client:
+    address: '127.0.0.1:8786'
+
+See `here <https://jobqueue.dask.org/en/latest/interactive.html>`_
+for an example of how to configure this on a remote system.
+
+For debugging purposes, it can be useful to start the cluster outside of
+ESMValCore because then
+`Dask dashboard <https://docs.dask.org/en/stable/dashboard.html>`_ remains
+available after ESMValCore has finished running.
+
+**Advice on choosing performant configurations**
+
+The threads within a single worker can access the same memory locations, so
+they may freely pass around chunks, while communicating a chunk between workers
+is done by copying it, so this is (a bit) slower.
+Therefore it is beneficial for performance to have multiple threads per worker.
+However, due to limitations in the CPython implementation (known as the Global
+Interpreter Lock or GIL), only a single thread in a worker can execute Python
+code (this limitation does not apply to compiled code called by Python code,
+e.g. numpy), therefore the best performing configurations will typically not
+use much more than 10 threads per worker.
+
+Due to limitations of the NetCDF library (it is not thread-safe), only one
+of the threads in a worker can read or write to a NetCDF file at a time.
+Therefore, it may be beneficial to use fewer threads per worker if the
+computation is very simple and the runtime is determined by the
+speed with which the data can be read from and/or written to disk.
 
 .. _config-esgf:
 
