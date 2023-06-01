@@ -623,9 +623,10 @@ class TestClimatology(tests.Test):
                            [151, 181]])
         cube = self._create_cube(data, times, bounds)
 
-        result = climate_statistics(cube, operator='mean', period='season')
-        expected = np.array([1., 1., 1.], dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        for period in ('season', 'seasonal'):
+            result = climate_statistics(cube, operator='mean', period=period)
+            expected = np.array([1., 1., 1.], dtype=np.float32)
+            assert_array_equal(result.data, expected)
 
     def test_custom_season_climatology(self):
         """Test for time avg of a realisitc time axis and 365 day calendar."""
@@ -635,12 +636,13 @@ class TestClimatology(tests.Test):
                            [151, 181], [181, 212], [212, 243]])
         cube = self._create_cube(data, times, bounds)
 
-        result = climate_statistics(cube,
-                                    operator='mean',
-                                    period='season',
-                                    seasons=('jfmamj', 'jasond'))
-        expected = np.array([1., 1.], dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        for period in ('season', 'seasonal'):
+            result = climate_statistics(cube,
+                                        operator='mean',
+                                        period=period,
+                                        seasons=('jfmamj', 'jasond'))
+            expected = np.array([1., 1.], dtype=np.float32)
+            assert_array_equal(result.data, expected)
 
     def test_monthly(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
@@ -650,9 +652,10 @@ class TestClimatology(tests.Test):
                            [151, 181]])
         cube = self._create_cube(data, times, bounds)
 
-        result = climate_statistics(cube, operator='mean', period='mon')
-        expected = np.ones((6, ), dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        for period in ('monthly', 'month', 'mon'):
+            result = climate_statistics(cube, operator='mean', period=period)
+            expected = np.ones((6, ), dtype=np.float32)
+            assert_array_equal(result.data, expected)
 
     def test_day(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
@@ -662,9 +665,25 @@ class TestClimatology(tests.Test):
                            [367, 368]])
         cube = self._create_cube(data, times, bounds)
 
-        result = climate_statistics(cube, operator='mean', period='day')
-        expected = np.array([1, 1, 1], dtype=np.float32)
-        assert_array_equal(result.data, expected)
+        for period in ('daily', 'day'):
+            result = climate_statistics(cube, operator='mean', period=period)
+            expected = np.array([1, 1, 1], dtype=np.float32)
+            assert_array_equal(result.data, expected)
+
+    def test_hour(self):
+        """Test for time avg of a realistic time axis and 365 day calendar."""
+        data = np.array([2., 2., 10., 4., 4., 6.], dtype=np.float32)
+        times = np.array([0.5, 1.5, 2.5, 24.5, 25.5, 48.5])
+        bounds = np.array([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6]])
+        cube = self._create_cube(data, times, bounds)
+        cube.coord('time').units = 'hours since 2000-01-01 00:00:00'
+
+        for period in ('hourly', 'hour', 'hr'):
+            result = climate_statistics(cube, operator='mean', period=period)
+            expected = np.array([4., 3., 10.], dtype=np.float32)
+            assert_array_equal(result.data, expected)
+            expected_hours = [0, 1, 2]
+            assert_array_equal(result.coord('hour').points, expected_hours)
 
     def test_period_not_supported(self):
         """Test for time avg of a realistic time axis and 365 day calendar."""
@@ -1750,6 +1769,20 @@ def test_anomalies_custom_season():
     expected = anom[:, None, None] * [[0, 1], [1, 0]]
     assert_array_equal(result.data, expected)
     assert_array_equal(result.coord('time').points, cube.coord('time').points)
+
+
+@pytest.mark.parametrize('period', ['hourly', 'hour', 'hr'])
+def test_anomalies_hourly(period):
+    """Test ``anomalies`` with hourly data."""
+    cube = make_map_data(number_years=1)[:48, ...]
+    cube.coord('time').units = 'hours since 2000-01-01 00:00:00'
+    result = anomalies(cube, period)
+    expected = np.concatenate((
+        np.broadcast_to(np.array([[0, -12], [-12, 0]]), (24, 2, 2)),
+        np.broadcast_to(np.array([[0, 12], [12, 0]]), (24, 2, 2)),
+    ))
+    assert_array_equal(result.data, expected)
+    assert result.coord('time') == cube.coord('time')
 
 
 def get_0d_time():

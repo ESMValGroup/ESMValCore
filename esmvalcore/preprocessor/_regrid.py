@@ -14,13 +14,13 @@ from typing import Dict
 import iris
 import numpy as np
 import stratify
-from dask import array as da
 from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
 
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.table import CMOR_TABLES
+from ._other import get_array_module
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
 from ._supplementary_vars import add_ancillary_variable, add_cell_measure
@@ -797,22 +797,19 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
                                               cube.coord_dims(src_levels))
 
     # force mask onto data as nan's
-    cube.data = da.ma.filled(cube.core_data(), np.nan)
+    npx = get_array_module(cube.core_data())
+    data = npx.ma.filled(cube.core_data(), np.nan)
 
     # Now perform the actual vertical interpolation.
     new_data = stratify.interpolate(levels,
                                     src_levels_broadcast,
-                                    cube.core_data(),
+                                    data,
                                     axis=z_axis,
                                     interpolation=interpolation,
                                     extrapolation=extrapolation)
 
     # Calculate the mask based on the any NaN values in the interpolated data.
-    mask = np.isnan(new_data)
-
-    if np.any(mask):
-        # Ensure that the data is masked appropriately.
-        new_data = np.ma.array(new_data, mask=mask, fill_value=_MDI)
+    new_data = npx.ma.masked_where(npx.isnan(new_data), new_data)
 
     # Construct the resulting cube with the interpolated data.
     return _create_cube(cube, new_data, src_levels, levels.astype(float))
