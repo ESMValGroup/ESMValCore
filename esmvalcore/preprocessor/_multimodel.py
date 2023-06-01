@@ -250,6 +250,7 @@ def _align_time_coord(cubes, span):
                          "Must be one of 'overlap', 'full'.")
 
     new_cubes = [_map_to_new_time(cube, new_time_points) for cube in cubes]
+
     for cube in new_cubes:
         # Make sure bounds exist and are consistent
         _guess_time_bounds(cube)
@@ -743,8 +744,7 @@ def multi_model_statistics(products,
     arguments. Except for percentiles, these operators are currently not
     supported.
 
-    Lazy operation is supported for all statistics, except
-    ``median``, ``percentile``, ``gmean`` and ``hmean``.
+    Lazy operation is supported for all statistics, except ``median``.
 
     Parameters
     ----------

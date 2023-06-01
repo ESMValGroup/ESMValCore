@@ -70,8 +70,8 @@ class Test(tests.Test):
         )
         self.src_cube.ndim = 1
         self.tgt_grid_coord = mock.Mock()
-        self.tgt_grid = mock.Mock(spec=iris.cube.Cube,
-                                  coord=self.tgt_grid_coord)
+        self.tgt_grid = mock.Mock(
+            spec=iris.cube.Cube, coord=self.tgt_grid_coord)
         self.regrid_schemes = [
             'linear', 'linear_extrapolate', 'nearest', 'area_weighted',
             'unstructured_nearest'
@@ -111,8 +111,8 @@ class Test(tests.Test):
             regrid(self.src_cube, self.src_cube, 'wibble')
 
     def test_horizontal_schemes(self):
-        self.assertEqual(set(HORIZONTAL_SCHEMES.keys()),
-                         set(self.regrid_schemes))
+        self.assertEqual(
+            set(HORIZONTAL_SCHEMES.keys()), set(self.regrid_schemes))
 
     def test_regrid__horizontal_schemes(self):
         for scheme in self.regrid_schemes:
@@ -270,7 +270,7 @@ def test_rechunk_on_increased_grid():
     """Test that an increase in grid size rechunks."""
     with dask.config.set({'array.chunk-size': '128 M'}):
 
-        time_dim = 200
+        time_dim = 246
         src_grid_dims = (91, 180)
         data = da.empty((time_dim, ) + src_grid_dims, dtype=np.float32)
 
@@ -279,7 +279,7 @@ def test_rechunk_on_increased_grid():
 
         result = _rechunk(iris.cube.Cube(data), iris.cube.Cube(tgt_grid))
 
-        assert result.core_data().chunks == ((100, 100), (91, ), (180, ))
+        assert result.core_data().chunks == ((123, 123), (91, ), (180, ))
 
 
 def test_no_rechunk_on_decreased_grid():
