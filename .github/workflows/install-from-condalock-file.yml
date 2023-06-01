@@ -10,7 +10,7 @@ name: Conda-lock Install
 on:
   push:
     branches:
-    - main
+      - main
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
@@ -24,7 +24,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11"]
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:

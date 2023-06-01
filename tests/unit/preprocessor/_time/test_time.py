@@ -1771,6 +1771,20 @@ def test_anomalies_custom_season():
     assert_array_equal(result.coord('time').points, cube.coord('time').points)
 
 
+@pytest.mark.parametrize('period', ['hourly', 'hour', 'hr'])
+def test_anomalies_hourly(period):
+    """Test ``anomalies`` with hourly data."""
+    cube = make_map_data(number_years=1)[:48, ...]
+    cube.coord('time').units = 'hours since 2000-01-01 00:00:00'
+    result = anomalies(cube, period)
+    expected = np.concatenate((
+        np.broadcast_to(np.array([[0, -12], [-12, 0]]), (24, 2, 2)),
+        np.broadcast_to(np.array([[0, 12], [12, 0]]), (24, 2, 2)),
+    ))
+    assert_array_equal(result.data, expected)
+    assert result.coord('time') == cube.coord('time')
+
+
 def get_0d_time():
     """Get 0D time coordinate."""
     time = iris.coords.AuxCoord(15.0,

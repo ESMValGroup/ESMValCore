@@ -53,13 +53,3 @@ class NegateData(EmacFix):
         """Fix data."""
         cube.data = -cube.core_data()
         return cube
-
-
-class SetUnitsTo1(EmacFix):
-    """Base fix to set units to '1'."""
-
-    def fix_metadata(self, cubes):
-        """Fix metadata."""
-        cube = self.get_cube(cubes)
-        cube.units = '1'
-        return cubes

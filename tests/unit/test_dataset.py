@@ -1684,7 +1684,8 @@ def test_load(mocker, session):
 
     load_args = {
         'load': {
-            'callback': 'default'
+            'callback': 'default',
+            'ignore_warnings': None,
         },
         'fix_file': {
             'add_unique_suffix': True,

@@ -8,8 +8,24 @@ from textwrap import dedent
 import pytest
 import yaml
 
+import esmvalcore._task
 from esmvalcore._main import run
 from esmvalcore.config._diagnostics import TAGS
+
+
+@pytest.fixture(autouse=True)
+def get_mock_distributed_client(monkeypatch):
+    """Mock `get_distributed_client` to avoid starting a Dask cluster."""
+
+    @contextlib.contextmanager
+    def get_distributed_client():
+        yield None
+
+    monkeypatch.setattr(
+        esmvalcore._task,
+        'get_distributed_client',
+        get_distributed_client,
+    )
 
 
 def write_config_user_file(dirname):
@@ -51,7 +67,9 @@ def check(result_file):
     }
     missing = required_keys - set(result)
     assert not missing
-    unwanted_keys = ['profile_diagnostic', ]
+    unwanted_keys = [
+        'profile_diagnostic',
+    ]
     for unwanted_key in unwanted_keys:
         assert unwanted_key not in result
 

@@ -15,12 +15,12 @@ name: Install from conda-forge
 
 # runs on a push on main and at the end of every day
 on:
-  # triggering on push without branch name will run tests everytime
+  # triggering on push without branch name will run tests every time
   # there is a push on any branch
   # turn it on only if needed
   push:
     branches:
-    - main
+      - main
   # run the test only if the PR is to main
   # turn it on if required
   # pull_request:
@@ -35,9 +35,9 @@ jobs:
     strategy:
       matrix:
         # TODO add "3.11" once we have the package built
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.9", "3.10"]
       # fail-fast set to False allows all other tests
-      # in the worflow to run regardless of any fail
+      # in the workflow to run regardless of any fail
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:
@@ -75,7 +75,7 @@ jobs:
     runs-on: "macos-latest"
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.9", "3.10"]
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:

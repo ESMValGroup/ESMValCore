@@ -10,6 +10,8 @@ dependencies:
   - cftime
   - compilers
   - dask
+  - dask-jobqueue
+  - distributed
   - esgf-pyclient>=0.3.1
   - esmpy!=8.1.0
   - filelock
@@ -18,10 +20,11 @@ dependencies:
   - geopy
   - humanfriendly
   - importlib_resources
-  - iris>=3.4.0
+  - iris>=3.6.0
   - iris-esmf-regrid >=0.6.0  # to work with latest esmpy
   - isodate
   - jinja2
+  - libnetcdf!=4.9.1 # to avoid hdf5 warnings
   - nc-time-axis
   - nested-lookup
   - netcdf4
@@ -34,8 +37,8 @@ dependencies:
   - psutil
   - py-cordex
   - pybtex
-  - python>=3.8
-  - python-stratify
+  - python>=3.9
+  - python-stratify>=0.3
   - pyyaml
   - requests
   - scipy>=1.6

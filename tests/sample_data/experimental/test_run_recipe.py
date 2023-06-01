@@ -3,11 +3,13 @@
 Runs recipes using :meth:`esmvalcore.experimental.Recipe.run`.
 """
 
+from contextlib import contextmanager
 from pathlib import Path
 
 import iris
 import pytest
 
+import esmvalcore._task
 from esmvalcore.config._config_object import CFG_DEFAULT
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.exceptions import RecipeError
@@ -20,7 +22,6 @@ from esmvalcore.experimental.recipe_output import (
 
 esmvaltool_sample_data = pytest.importorskip("esmvaltool_sample_data")
 
-
 AUTHOR_TAGS = {
     'authors': {
         'doe_john': {
@@ -30,6 +31,21 @@ AUTHOR_TAGS = {
         }
     }
 }
+
+
+@pytest.fixture(autouse=True)
+def get_mock_distributed_client(monkeypatch):
+    """Mock `get_distributed_client` to avoid starting a Dask cluster."""
+
+    @contextmanager
+    def get_distributed_client():
+        yield None
+
+    monkeypatch.setattr(
+        esmvalcore._task,
+        'get_distributed_client',
+        get_distributed_client,
+    )
 
 
 @pytest.fixture

@@ -12,13 +12,10 @@ from iris.cube import Cube, CubeList
 import esmvalcore.cmor._fixes.emac.emac
 from esmvalcore.cmor._fixes.emac.emac import (
     AllVars,
-    Cl,
-    Clt,
     Clwvi,
     Evspsbl,
     Hfls,
     Hfss,
-    Hurs,
     MP_BC_tot,
     MP_DU_tot,
     MP_SO4mm_tot,
@@ -35,8 +32,6 @@ from esmvalcore.cmor._fixes.emac.emac import (
     Rsut,
     Rsutcs,
     Rtmt,
-    Siconc,
-    Siconca,
     Sithick,
     Toz,
     Zg,
@@ -888,13 +883,14 @@ def test_clivi_fix(cubes_2d):
 def test_get_clt_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'clt')
-    assert fix == [Clt(None), AllVars(None)]
+    assert fix == [AllVars(None)]
 
 
 def test_clt_fix(cubes_2d):
     """Test fix."""
     cubes_2d[0].var_name = 'aclcov_cav'
-    fixed_cubes = fix_metadata(cubes_2d, 'Amon', 'clt')
+    fix = get_allvars_fix('Amon', 'clt')
+    fixed_cubes = fix.fix_metadata(cubes_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -1046,13 +1042,14 @@ def test_hfss_fix(cubes_2d):
 def test_get_hurs_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'hurs')
-    assert fix == [Hurs(None), AllVars(None)]
+    assert fix == [AllVars(None)]
 
 
 def test_hurs_fix(cubes_2d):
     """Test fix."""
     cubes_2d[0].var_name = 'rh_2m_cav'
-    fixed_cubes = fix_metadata(cubes_2d, 'Amon', 'hurs')
+    fix = get_allvars_fix('Amon', 'hurs')
+    fixed_cubes = fix.fix_metadata(cubes_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -1560,13 +1557,14 @@ def test_sfcWind_fix(cubes_2d):  # noqa: N802
 def test_get_siconc_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'SImon', 'siconc')
-    assert fix == [Siconc(None), AllVars(None)]
+    assert fix == [AllVars(None)]
 
 
 def test_siconc_fix(cubes_2d):
     """Test fix."""
     cubes_2d[0].var_name = 'seaice_cav'
-    fixed_cubes = fix_metadata(cubes_2d, 'SImon', 'siconc')
+    fix = get_allvars_fix('SImon', 'siconc')
+    fixed_cubes = fix.fix_metadata(cubes_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -1584,17 +1582,14 @@ def test_siconc_fix(cubes_2d):
 def test_get_siconca_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'SImon', 'siconca')
-    assert fix == [Siconca(None), AllVars(None)]
+    assert fix == [AllVars(None)]
 
 
 def test_siconca_fix(cubes_2d):
     """Test fix."""
     cubes_2d[0].var_name = 'seaice_cav'
-    fix = get_fix('SImon', 'siconca')
-    fixed_cubes = fix.fix_metadata(cubes_2d)
-
     fix = get_allvars_fix('SImon', 'siconca')
-    fixed_cubes = fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix.fix_metadata(cubes_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -2360,14 +2355,14 @@ def test_MP_SS_tot_fix(cubes_1d):  # noqa: N802
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'cl')
-    assert fix == [Cl(None), AllVars(None)]
+    assert fix == [AllVars(None)]
 
 
 def test_cl_fix(cubes_3d):
     """Test fix."""
     cubes_3d[0].var_name = 'aclcac_cav'
-
-    fixed_cubes = fix_metadata(cubes_3d, 'Amon', 'cl')
+    fix = get_allvars_fix('Amon', 'cl')
+    fixed_cubes = fix.fix_metadata(cubes_3d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
