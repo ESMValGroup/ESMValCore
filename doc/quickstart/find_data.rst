@@ -342,8 +342,33 @@ Please note the duplication of the name ``ICON`` in ``project`` and
 ``dataset``, which is necessary to comply with ESMValTool's data finding and
 CMORizing functionalities.
 A variable-specific default for the facet ``var_type`` is given in the extra
-facets (see next paragraph) for many variables, but this can be overwritten in
-the recipe.
+facets (see below) for many variables, but this can be overwritten in the
+recipe.
+This is necessary if your ICON output is structured in one variable per file.
+For example, if your output is stored in files called
+``<exp>_<variable_name>_atm_2d_ml_YYYYMMDDThhmmss.nc``, use ``var_type:
+<variable_name>_atm_2d_ml`` in the recipe for this variable.
+
+Usually, ICON reports aggregated values at the end of the corresponding time
+output intervals.
+For example, for monthly output, ICON reports the month February as "1 March".
+Thus, by default, ESMValCore shifts all time points back by 1/2 of the output
+time interval so that the new time point corresponds to the center of the
+interval.
+This can be disabled by using ``shift_time: false`` in the recipe or the extra
+facets (see below).
+For point measurements (identified by ``cell_methods = "time: point"``), this
+is always disabled.
+
+.. warning::
+
+   To get all desired time points, do **not** use ``start_year`` and
+   ``end_year`` in the recipe, but rather ``timerange`` with at least 8 digits.
+   For example, to get data for the years 2000 and 2001, use ``timerange:
+   20000101/20020101`` instead of ``timerange: 2000/2001`` or ``start_year:
+   2000``, ``end_year: 2001``.
+   See :ref:`timerange_examples` for more information on the ``timerange``
+   option.
 
 ESMValCore can automatically make native ICON data `UGRID
 <https://ugrid-conventions.github.io/ugrid-conventions/>`__-compliant when
@@ -429,6 +454,9 @@ Key                 Description                      Default value if not specif
 ``raw_name``        Variable name of the             CMOR variable name of the
                     variable in the raw input        corresponding variable
                     file
+``shift_time``      Shift time points back by 1/2 of ``True``
+                    the corresponding output time
+                    interval
 ``raw_units``       Units of the variable in the     If specified, the value given by
                     raw input file                   the ``units`` attribute in the
                                                      raw input file; otherwise

@@ -329,7 +329,7 @@ When using the ``timerange`` tag to specify the start and end points, possible v
 +---------------------------------------+---------------------------------------------+
 | timerange                             | effect                                      |
 +=======================================+=============================================+
-| ``'1980/1982'``                       | Spans from 01/01/1980 to 31/12/1980         |
+| ``'1980/1982'``                       | Spans from 01/01/1980 to 31/12/1982         |
 +---------------------------------------+---------------------------------------------+
 | ``'198002/198205'``                   | Spans from 01/02/1980 to 31/05/1982         |
 +---------------------------------------+---------------------------------------------+
@@ -547,7 +547,7 @@ data (has ancestors ``diagnostic_1/script_a`` and ``diagnostic_2/precip``).
 Task priority
 -------------
 Tasks are assigned a priority, with tasks appearing earlier on in the recipe
-getting higher priority. The tasks will be executed sequentially or in parellel,
+getting higher priority. The tasks will be executed sequentially or in parallel,
 depending on the setting of ``max_parallel_tasks`` in the :ref:`user configuration file`.
 When there are fewer than ``max_parallel_tasks`` running, tasks will be started
 according to their priority. For obvious reasons, only tasks that are not waiting for
