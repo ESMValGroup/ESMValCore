@@ -1738,7 +1738,7 @@ Parameters:
       if no ``name`` nor ``id`` attributes are present, an integer ID starting
       from 0 will be assigned automatically when reading the shapes.
       We discourage to rely on this last behaviour as we can not assure that
-      the reading order will be the same in different platforms, so we
+      the reading order will be the same on different platforms, so we
       encourage you to specify a custom attribute using a :obj:`dict` (see
       below) instead.
       Note: An empty list is interpreted as ``ids=None`` (see below).
