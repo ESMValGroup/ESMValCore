@@ -370,6 +370,17 @@ is always disabled.
    See :ref:`timerange_examples` for more information on the ``timerange``
    option.
 
+Usually, ESMValCore will need the corresponding ICON grid file of your
+simulation to work properly (examples: setting latitude/longitude coordinates
+if these are not yet present, UGRIDization [see below], etc.).
+This grid file can either be specified as absolute or relative (to
+``auxiliary_data_dir`` as defined in the :ref:`user configuration file`) path
+with the facet ``horizontal_grid`` in the recipe or the extra facets (see
+below), or retrieved automatically from the `grid_file_uri` attribute of the
+input files.
+In the latter case, the file is downloaded once and then cached.
+The cached file is valid for 7 days.
+
 ESMValCore can automatically make native ICON data `UGRID
 <https://ugrid-conventions.github.io/ugrid-conventions/>`__-compliant when
 loading the data.
@@ -393,8 +404,7 @@ algorithm <https://earthsystemmodeling.org/regrid/#regridding-methods>`__:
        regrid:
          target_grid: 1x1
          scheme:
-           reference: esmf_regrid.experimental.unstructured_scheme:regrid_unstructured_to_rectilinear
-           method: conservative
+           reference: esmf_regrid.schemes:ESMFAreaWeighted
 
 This automatic UGRIDization is enabled by default, but can be switched off with
 the facet ``ugrid: false`` in the recipe or the extra facets (see below).
@@ -451,6 +461,11 @@ Key                 Description                      Default value if not specif
 ``longitude``       Standard name of the             ``longitude``
                     longitude coordinate in the
                     raw input file
+``horizontal_grid`` Absolute or relative (to         If not given, use file attribute
+                    ``auxiliary_data_dir`` defined   ``grid_file_uri`` to retrieve ICON
+                    in the                           grid file
+                    :ref:`user configuration file`)
+                    path to the ICON grid file
 ``raw_name``        Variable name of the             CMOR variable name of the
                     variable in the raw input        corresponding variable
                     file
