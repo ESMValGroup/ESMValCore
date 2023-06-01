@@ -1119,7 +1119,9 @@ def test_get_requested_geometries_invalid_ids(ar6_shapefile):
     msg = "does not have requested attribute wrong_attr"
     with fiona.open(ar6_shapefile) as geometries:
         with pytest.raises(ValueError, match=msg):
-            _get_requested_geometries(geometries, {'wrong_attr': [1, 2]})
+            _get_requested_geometries(
+                geometries, {'wrong_attr': [1, 2]}, Path('shape.shp')
+            )
 
 
 if __name__ == '__main__':

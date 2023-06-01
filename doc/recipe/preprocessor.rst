@@ -1721,8 +1721,9 @@ Parameters:
     Data on irregular grids will not be cropped.
   * ``decomposed``: by default ``false``; in this case the union of all the
     regions in the shapefile is masked out.
-    If ``true``, the regions in the shapefiles are masked out separately,
-    generating a new auxiliary dimension for the cube for this.
+    If set to ``true``, the regions in the shapefiles are masked out separately
+    and the output cube will have an additional dimension ``shape_id``
+    describing the requested regions.
   * ``ids``: Shapes to be read from the shapefile.
     Can be given as:
 

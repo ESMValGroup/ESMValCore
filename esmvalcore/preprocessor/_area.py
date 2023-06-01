@@ -456,10 +456,7 @@ def _correct_coords_from_shapefile(
     return lon, lat
 
 
-def _process_ids(
-    geometries: fiona.collection.Collection,
-    ids: list | dict | None,
-) -> tuple:
+def _process_ids(geometries, ids: list | dict | None) -> tuple:
     """Read requested IDs and ID keys."""
     # If ids is a dict, it needs to have length 1 and all geometries needs to
     # have the requested attribute key
@@ -493,8 +490,9 @@ def _process_ids(
 
 
 def _get_requested_geometries(
-    geometries: fiona.collection.Collection,
+    geometries,
     ids: list | dict | None,
+    shapefile: Path,
 ) -> dict[str, dict]:
     """Return requested geometries."""
     (id_keys, ids) = _process_ids(geometries, ids)
@@ -523,7 +521,10 @@ def _get_requested_geometries(
     if ids is not None:
         missing = set(ids) - set(requested_geometries.keys())
         if missing:
-            raise ValueError(f"Requested shapes {missing} not found")
+            raise ValueError(
+                f"Requested shapes {missing} not found in shapefile "
+                f"{shapefile}"
+            )
 
     return requested_geometries
 
@@ -715,7 +716,9 @@ def extract_shape(
         if geometries.bounds[0] > -180. and geometries.bounds[0] < 179.:
             pad_hawaii = True
 
-        requested_geometries = _get_requested_geometries(geometries, ids)
+        requested_geometries = _get_requested_geometries(
+            geometries, ids, shapefile
+        )
 
         # Crop cube if desired
         if crop:
