@@ -14,7 +14,7 @@ from iris.cube import CubeList
 
 from esmvalcore.iris_helpers import add_leading_dim_to_cube, date2num
 
-from ._base_fixes import IconFix, SetUnitsTo1
+from ._base_fixes import IconFix
 
 logger = logging.getLogger(__name__)
 
@@ -382,12 +382,3 @@ class Clwvi(IconFix):
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
-
-
-Hur = SetUnitsTo1
-
-
-Siconc = SetUnitsTo1
-
-
-Siconca = SetUnitsTo1

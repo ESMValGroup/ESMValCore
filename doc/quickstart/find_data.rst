@@ -216,6 +216,10 @@ Key                  Description                            Default value if not
                                                             default DRS is used)
 ``raw_name``         Variable name of the variable in the   CMOR variable name of the
                      raw input file                         corresponding variable
+``raw_units``        Units of the variable in the raw       If specified, the value given by
+                     input file                             the ``units`` attribute in the
+                                                            raw input file; otherwise
+                                                            ``unknown``
 ``scomp``            Specific component-model name          No default (needs to be specified
                                                             in extra facets or recipe if
                                                             default DRS is used)
@@ -284,6 +288,10 @@ Key                  Description                            Default value if not
 ``postproc_flag``    Postprocessing flag of the data        ``''`` (empty string)
 ``raw_name``         Variable name of the variable in the   CMOR variable name of the
                      raw input file                         corresponding variable
+``raw_units``        Units of the variable in the raw       If specified, the value given by
+                     input file                             the ``units`` attribute in the
+                                                            raw input file; otherwise
+                                                            ``unknown``
 ==================== ====================================== =================================
 
 .. note::
@@ -421,6 +429,10 @@ Key                 Description                      Default value if not specif
 ``raw_name``        Variable name of the             CMOR variable name of the
                     variable in the raw input        corresponding variable
                     file
+``raw_units``       Units of the variable in the     If specified, the value given by
+                    raw input file                   the ``units`` attribute in the
+                                                     raw input file; otherwise
+                                                     ``unknown``
 ``ugrid``           Automatic UGRIDization of        ``True``
                     the input data
 ``var_type``        Variable type of the             No default (needs to be specified
