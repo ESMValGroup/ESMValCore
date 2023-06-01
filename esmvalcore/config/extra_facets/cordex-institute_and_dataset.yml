@@ -2,11 +2,11 @@
 'ALADIN52':
   '*':
     '*':
-      institute_and_dataset: ['CHMI-ALADIN52', 'CNRM-ALADIN52', 'HMS-ALADIN52']
+      institute_and_dataset: ['CNRM-ALADIN52', 'HMS-ALADIN52']
 'ALADIN53':
   '*':
     '*':
-      institute_and_dataset: ['CNRM-ALADIN53']
+      institute_and_dataset: ['CHMI-ALADIN53', 'CNRM-ALADIN53']
 'ALADIN63':
   '*':
     '*':
@@ -19,10 +19,10 @@
   '*':
     '*':
       institute_and_dataset: ['RMIB-UGent-ALARO-0']
-'ARPEGE51':
+'AROME41t1':
   '*':
     '*':
-      institute_and_dataset: ['CNRM-ARPEGE51']
+      institute_and_dataset: ['CNRM-AROME41t1']
 'ARPEGE52':
   '*':
     '*':
@@ -35,18 +35,86 @@
   '*':
     '*':
       institute_and_dataset: ['CSIRO-CCAM-1704']
+'CCAM-2008':
+  '*':
+    '*':
+      institute_and_dataset: ['CSIRO-CCAM-2008']
+'CCLM4-21-2':
+  '*':
+    '*':
+      institute_and_dataset: ['CLMcom-CMCC-CCLM4-21-2']
 'CCLM4-8-17':
   '*':
     '*':
       institute_and_dataset: ['CLMcom-CCLM4-8-17']
+'CCLM4-8-17-CLM3-5':
+  '*':
+    '*':
+      institute_and_dataset: ['CLMcom-CCLM4-8-17-CLM3-5']
+'CCLM5-0-0':
+  '*':
+    '*':
+      institute_and_dataset: ['CLMcom-CCLM5-0-0']
+'CCLM5-0-10':
+  '*':
+    '*':
+      institute_and_dataset: ['CLMcom-KIT-CCLM5-0-10']
+'CCLM5-0-14':
+  '*':
+    '*':
+      institute_and_dataset: ['CLMcom-BTU-CCLM5-0-14', 'CLMcom-KIT-CCLM5-0-14', 'CLMcom-ZAMG-CCLM5-0-14']
+'CCLM5-0-15':
+  '*':
+    '*':
+      institute_and_dataset: ['CLMcom-DWD-CCLM5-0-15', 'CLMcom-HZG-CCLM5-0-15', 'CLMcom-JLU-CCLM5-0-15', 'CLMcom-KIT-CCLM5-0-15']
+'CCLM5-0-2':
+  '*':
+    '*':
+      institute_and_dataset: ['CLMcom-CCLM5-0-2']
+'CCLM5-0-6':
+  '*':
+    '*':
+      institute_and_dataset: ['CLMcom-CCLM5-0-6']
+'CCLM5-0-9':
+  '*':
+    '*':
+      institute_and_dataset: ['CLMcom-CMCC-CCLM5-0-9', 'CLMcom-GUF-CCLM5-0-9', 'CLMcom-KIT-CCLM5-0-9', 'CLMcom-WEGC-CCLM5-0-9', 'POSTECH-CCLM5-0-9']
+'CCLM5-0-9-NEMOMED12-3-6':
+  '*':
+    '*':
+      institute_and_dataset: ['CLMcom-GUF-CCLM5-0-9-NEMOMED12-3-6']
+'CCLM5-0-9-NEMOMED12-3-6-NEMONORDIC3-3':
+  '*':
+    '*':
+      institute_and_dataset: ['CLMcom-GUF-CCLM5-0-9-NEMOMED12-3-6-NEMONORDIC3-3']
+'COSMO-crCLIM-v1-1':
+  '*':
+    '*':
+      institute_and_dataset: ['CLMcom-ETH-COSMO-crCLIM-v1-1']
 'CRCM5':
   '*':
     '*':
-      institute_and_dataset: ['UQAM-CRCM5']
+      institute_and_dataset: ['OURANOS-CRCM5', 'UQAM-CRCM5']
+'CRCM5-SN':
+  '*':
+    '*':
+      institute_and_dataset: ['UQAM-CRCM5-SN']
 'CanRCM4':
   '*':
     '*':
       institute_and_dataset: ['CCCma-CanRCM4']
+'EBU1':
+  '*':
+    '*':
+      institute_and_dataset: ['UNIBELGRADE-EBU1']
+'EBUPOM2c1':
+  '*':
+    '*':
+      institute_and_dataset: ['UNIBELGRADE-EBUPOM2c1']
+'ETA':
+  '*':
+    '*':
+      institute_and_dataset: ['INPE-ETA']
 'HIRHAM5':
   '*':
     '*':
@@ -54,7 +122,7 @@
 'HadGEM3-RA':
   '*':
     '*':
-      institute_and_dataset: ['MOHC-HadGEM3-RA']
+      institute_and_dataset: ['MOHC-HadGEM3-RA', 'NIMS-KMA-HadGEM3-RA']
 'HadREM3-GA7-05':
   '*':
     '*':
@@ -99,22 +167,38 @@
   '*':
     '*':
       institute_and_dataset: ['SMHI-RCAO-SN']
+'RCSM4':
+  '*':
+    '*':
+      institute_and_dataset: ['CNRM-RCSM4']
 'RCSM6':
   '*':
     '*':
       institute_and_dataset: ['CNRM-RCSM6']
+'REMHI':
+  '*':
+    '*':
+      institute_and_dataset: ['CMCC-REMHI']
 'REMO2009':
   '*':
     '*':
-      institute_and_dataset: ['GERICS-REMO2009', 'MPI-CSC-REMO2009']
+      institute_and_dataset: ['GERICS-AWI-REMO2009', 'GERICS-REMO2009', 'MPI-CSC-REMO2009']
 'REMO2015':
   '*':
     '*':
       institute_and_dataset: ['GERICS-REMO2015']
+'ROM1.1':
+  '*':
+    '*':
+      institute_and_dataset: ['GERICS-AWI-ROM1.1']
 'RRCM':
   '*':
     '*':
       institute_and_dataset: ['MGO-RRCM']
+'RegCM4-0':
+  '*':
+    '*':
+      institute_and_dataset: ['KNU-RegCM4-0']
 'RegCM4-1':
   '*':
     '*':
@@ -126,51 +210,63 @@
 'RegCM4-3':
   '*':
     '*':
-      institute_and_dataset: ['ENEA-RegCM4-3', 'ICTP-RegCM4-3']
+      institute_and_dataset: ['BOUN-RegCM4-3', 'ENEA-RegCM4-3', 'ICTP-RegCM4-3', 'UM-RegCM4-3']
 'RegCM4-4':
   '*':
     '*':
-      institute_and_dataset: ['IITM-RegCM4-4']
+      institute_and_dataset: ['ICTP-RegCM4-4', 'IITM-RegCM4-4']
 'RegCM4-6':
   '*':
     '*':
       institute_and_dataset: ['ICTP-RegCM4-6']
-'WRF321B':
+'RegCM4-7':
   '*':
     '*':
-      institute_and_dataset: ['AUTH-LHTEE-WRF321B']
+      institute_and_dataset: ['ICTP-RegCM4-7']
+'SNURCM':
+  '*':
+    '*':
+      institute_and_dataset: ['UNIST-SNURCM']
+'WRF311':
+  '*':
+    '*':
+      institute_and_dataset: ['IPSL-WRF311']
+'WRF311NEMO':
+  '*':
+    '*':
+      institute_and_dataset: ['IPSL-WRF311NEMO']
 'WRF331':
   '*':
     '*':
-      institute_and_dataset: ['BCCR-WRF331']
+      institute_and_dataset: ['BCCR-WRF331', 'UM-WRF331']
 'WRF331A':
   '*':
     '*':
-      institute_and_dataset: ['AUTH-Met-WRF331A', 'CRP-GL-WRF331A', 'MIUB-WRF331A']
+      institute_and_dataset: ['CRP-GL-WRF331A', 'MIUB-WRF331A']
 'WRF331C':
   '*':
     '*':
       institute_and_dataset: ['BCCR-WRF331C']
-'WRF331D':
-  '*':
-    '*':
-      institute_and_dataset: ['IDL-WRF331D']
 'WRF331F':
   '*':
     '*':
-      institute_and_dataset: ['IPSL-INERIS-WRF331F', 'NUIM-WRF331F']
+      institute_and_dataset: ['IPSL-INERIS-WRF331F']
 'WRF331G':
   '*':
     '*':
       institute_and_dataset: ['UCAN-WRF331G']
-'WRF331H':
+'WRF341E':
   '*':
     '*':
-      institute_and_dataset: ['UHOH-WRF331H']
-'WRF350I':
+      institute_and_dataset: ['NUIM-WRF341E']
+'WRF341I':
   '*':
     '*':
-      institute_and_dataset: ['UCAN-WRF350I']
+      institute_and_dataset: ['UCAN-WRF341I']
+'WRF350D':
+  '*':
+    '*':
+      institute_and_dataset: ['IDL-WRF350D']
 'WRF360J':
   '*':
     '*':
@@ -183,7 +279,35 @@
   '*':
     '*':
       institute_and_dataset: ['UNSW-WRF360L']
-'WRF381P':
+'WRF360M':
   '*':
     '*':
-      institute_and_dataset: ['IPSL-WRF381P']
+      institute_and_dataset: ['MU-WRF360M']
+'WRF361':
+  '*':
+    '*':
+      institute_and_dataset: ['BCCR-WRF361']
+'WRF361F':
+  '*':
+    '*':
+      institute_and_dataset: ['IPSL-INERIS-WRF361F']
+'WRF361H':
+  '*':
+    '*':
+      institute_and_dataset: ['UHOH-WRF361H']
+'WRF370':
+  '*':
+    '*':
+      institute_and_dataset: ['PNU-WRF370']
+'WRF371M':
+  '*':
+    '*':
+      institute_and_dataset: ['AUTH-MC-WRF371M']
+'WRF371O':
+  '*':
+    '*':
+      institute_and_dataset: ['WEGC-WRF371O']
+'WRF381':
+  '*':
+    '*':
+      institute_and_dataset: ['CRC-BGS-WRF381']
