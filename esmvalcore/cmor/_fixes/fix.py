@@ -231,12 +231,10 @@ class Fix:
                 inspect.getmembers(fixes_module, inspect.isclass)
             )
             for fix_name in (short_name, mip.lower(), 'allvars'):
-                try:
+                if fix_name in classes:
                     fixes.append(classes[fix_name](
                         vardef, extra_facets=extra_facets, session=session
                     ))
-                except KeyError:
-                    pass
 
         return fixes
 

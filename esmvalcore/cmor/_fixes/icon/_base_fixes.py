@@ -148,13 +148,6 @@ class IconFix(NativeDatasetFix):
         grid_name = Path(parsed_url.path).name
         return (grid_url, grid_name)
 
-    def _get_grid_path_from_facet(self):
-        """Get grid path and name from user-defined facet `horizontal_grid`."""
-        grid_path = Path(
-            os.path.expandvars(self.extra_facets['horizontal_grid'])
-        ).expanduser()
-        return (grid_path, grid_path.name)
-
     def _get_node_coords(self, horizontal_grid):
         """Get node coordinates from horizontal grid.
 
@@ -186,27 +179,85 @@ class IconFix(NativeDatasetFix):
 
         return (node_lat, node_lon)
 
+    def _get_path_from_facet(self, facet, description=None):
+        """Try to get path from facet."""
+        if description is None:
+            description = 'File'
+        path = Path(os.path.expandvars(self.extra_facets[facet])).expanduser()
+        if not path.is_file():
+            new_path = self.session['auxiliary_data_dir'] / path
+            if not new_path.is_file():
+                raise FileNotFoundError(
+                    f"{description} '{path}' given by facet '{facet}' does "
+                    f"not exist (specify a valid absolute path or a path "
+                    f"relative to the auxiliary_data_dir "
+                    f"'{self.session['auxiliary_data_dir']}')"
+                )
+            path = new_path
+        return path
+
+    def add_additional_cubes(self, cubes):
+        """Add additional user-defined cubes to list of cubes (in-place).
+
+        An example use case is adding a vertical coordinate (e.g., `zg`) to the
+        dataset if the vertical coordinate data is stored in a separate ICON
+        output file.
+
+        Currently, the following cubes can be added:
+
+        - `zg` (`geometric_height_at_full_level_center`) from facet `zg_file`.
+          This can be used as vertical coordinate.
+        - `zghalf` (`geometric_height_at_half_level_center`) from facet
+          `zghalf_file`. This can be used as bounds for the vertical
+          coordinate.
+
+        Note
+        ----
+        Files can be specified as absolute or relative (to
+        ``auxiliary_data_dir`` as defined in the :ref:`user configuration
+        file`) paths.
+
+        Parameters
+        ----------
+        cubes: iris.cube.CubeList
+            Input cubes which will be modified in place.
+
+        Returns
+        -------
+        iris.cube.CubeList
+            Modified cubes. The cubes are modified in place; they are just
+            returned out of convenience for easy access.
+
+        Raises
+        ------
+        InputFilesNotFound
+            A specified file does not exist.
+
+        """
+        facets_to_consider = [
+            'zg_file',
+            'zghalf_file',
+        ]
+        for facet in facets_to_consider:
+            if facet not in self.extra_facets:
+                continue
+            path_to_add = self._get_path_from_facet(facet)
+            logger.debug("Adding cubes from %s", path_to_add)
+            new_cubes = self._load_cubes(path_to_add)
+            cubes.extend(new_cubes)
+
+        return cubes
+
     def _get_grid_from_facet(self):
         """Get horizontal grid from user-defined facet `horizontal_grid`."""
-        (grid_path, grid_name) = self._get_grid_path_from_facet()
+        grid_path = self._get_path_from_facet(
+            'horizontal_grid', 'Horizontal grid file'
+        )
+        grid_name = grid_path.name
 
         # If already loaded, return the horizontal grid
         if grid_name in self._horizontal_grids:
             return self._horizontal_grids[grid_name]
-
-        # If path does not exists, try relative to auxiliary_data_dir,
-        # otherwise return error
-        if not grid_path.is_file():
-            new_grid_path = self.session['auxiliary_data_dir'] / grid_path
-            if not new_grid_path.is_file():
-                raise FileNotFoundError(
-                    f"Horizontal grid file '{grid_path}' given by facet "
-                    f"'horizontal_grid' does not exist (specify a valid "
-                    f"absolute path or a path relative to the "
-                    f"auxiliary_data_dir "
-                    f"'{self.session['auxiliary_data_dir']}')"
-                )
-            grid_path = new_grid_path
 
         # Load file
         self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
@@ -226,6 +277,7 @@ class IconFix(NativeDatasetFix):
         # Note: we use a lock here to prevent multiple processes from
         # downloading the file simultaneously and to ensure that other
         # processes wait until the download has finished
+        self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
         lock = FileLock(self.CACHE_DIR / f"{grid_name}.lock")
         with lock:
             grid_path = self.CACHE_DIR / grid_name
@@ -248,7 +300,6 @@ class IconFix(NativeDatasetFix):
                 grid_url,
                 grid_path,
             )
-            self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
             with requests.get(grid_url, stream=True,
                               timeout=self.TIMEOUT) as response:
                 response.raise_for_status()
@@ -343,7 +394,10 @@ class IconFix(NativeDatasetFix):
         # If specified by the user, use `horizontal_grid` facet to determine
         # grid name; otherwise, use the `grid_file_uri` attribute of the cube
         if 'horizontal_grid' in self.extra_facets:
-            (_, grid_name) = self._get_grid_path_from_facet()
+            grid_path = self._get_path_from_facet(
+                'horizontal_grid', 'Horizontal grid file'
+            )
+            grid_name = grid_path.name
         else:
             (_, grid_name) = self._get_grid_url(cube)
 
@@ -382,6 +436,14 @@ class IconFix(NativeDatasetFix):
                 category=UserWarning,
                 module='iris',
             )
+            warnings.filterwarnings(
+                'ignore',
+                message="Failed to create 'height' dimension coordinate: The "
+                        "'height' DimCoord bounds array must be strictly "
+                        "monotonic.",
+                category=UserWarning,
+                module='iris',
+            )
             cubes = iris.load(str(path))
         return cubes
 
@@ -391,13 +453,3 @@ class IconFix(NativeDatasetFix):
         lon_coord.points = (lon_coord.points + 360.0) % 360.0
         if lon_coord.bounds is not None:
             lon_coord.bounds = (lon_coord.bounds + 360.0) % 360.0
-
-
-class SetUnitsTo1(IconFix):
-    """Base fix to set units to '1'."""
-
-    def fix_metadata(self, cubes):
-        """Fix metadata."""
-        cube = self.get_cube(cubes)
-        cube.units = '1'
-        return cubes

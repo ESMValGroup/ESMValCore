@@ -216,6 +216,10 @@ Key                  Description                            Default value if not
                                                             default DRS is used)
 ``raw_name``         Variable name of the variable in the   CMOR variable name of the
                      raw input file                         corresponding variable
+``raw_units``        Units of the variable in the raw       If specified, the value given by
+                     input file                             the ``units`` attribute in the
+                                                            raw input file; otherwise
+                                                            ``unknown``
 ``scomp``            Specific component-model name          No default (needs to be specified
                                                             in extra facets or recipe if
                                                             default DRS is used)
@@ -284,6 +288,10 @@ Key                  Description                            Default value if not
 ``postproc_flag``    Postprocessing flag of the data        ``''`` (empty string)
 ``raw_name``         Variable name of the variable in the   CMOR variable name of the
                      raw input file                         corresponding variable
+``raw_units``        Units of the variable in the raw       If specified, the value given by
+                     input file                             the ``units`` attribute in the
+                                                            raw input file; otherwise
+                                                            ``unknown``
 ==================== ====================================== =================================
 
 .. note::
@@ -334,10 +342,35 @@ Please note the duplication of the name ``ICON`` in ``project`` and
 ``dataset``, which is necessary to comply with ESMValTool's data finding and
 CMORizing functionalities.
 A variable-specific default for the facet ``var_type`` is given in the extra
-facets (see next paragraph) for many variables, but this can be overwritten in
-the recipe.
+facets (see below) for many variables, but this can be overwritten in the
+recipe.
+This is necessary if your ICON output is structured in one variable per file.
+For example, if your output is stored in files called
+``<exp>_<variable_name>_atm_2d_ml_YYYYMMDDThhmmss.nc``, use ``var_type:
+<variable_name>_atm_2d_ml`` in the recipe for this variable.
 
-Usually, ESMValTool will need the corresponding ICON grid file of your
+Usually, ICON reports aggregated values at the end of the corresponding time
+output intervals.
+For example, for monthly output, ICON reports the month February as "1 March".
+Thus, by default, ESMValCore shifts all time points back by 1/2 of the output
+time interval so that the new time point corresponds to the center of the
+interval.
+This can be disabled by using ``shift_time: false`` in the recipe or the extra
+facets (see below).
+For point measurements (identified by ``cell_methods = "time: point"``), this
+is always disabled.
+
+.. warning::
+
+   To get all desired time points, do **not** use ``start_year`` and
+   ``end_year`` in the recipe, but rather ``timerange`` with at least 8 digits.
+   For example, to get data for the years 2000 and 2001, use ``timerange:
+   20000101/20020101`` instead of ``timerange: 2000/2001`` or ``start_year:
+   2000``, ``end_year: 2001``.
+   See :ref:`timerange_examples` for more information on the ``timerange``
+   option.
+
+Usually, ESMValCore will need the corresponding ICON grid file of your
 simulation to work properly (examples: setting latitude/longitude coordinates
 if these are not yet present, UGRIDization [see below], etc.).
 This grid file can either be specified as absolute or relative (to
@@ -381,6 +414,36 @@ This is useful for diagnostics that do not support input data in UGRID format
 if you want to use the built-in :ref:`unstructured_nearest scheme <built-in
 regridding schemes>` regridding scheme.
 
+For 3D ICON variables, ESMValCore tries to add the pressure level information
+(from the variables `pfull` and `phalf`) and/or altitude information (from the
+variables `zg` and `zghalf`) to the preprocessed output files.
+If neither of these variables are available in the input files, it is possible
+to specify the location of files that include the corresponding `zg` or
+`zghalf` variables with the facets ``zg_file`` and/or ``zghalf_file`` in the
+recipe or the extra facets.
+The paths to these files can be specified absolute or relative (to
+``auxiliary_data_dir`` as defined in the :ref:`user configuration file`).
+
+.. hint::
+
+   To use the :func:`~esmvalcore.preprocessor.extract_levels` preprocessor on
+   native ICON data, you need to specify the name of the vertical coordinate
+   (e.g., ``coordinate: air_pressure``) since native ICON output usually
+   provides a 3D air pressure field instead of a simple 1D vertical coordinate.
+   This also works if your files only contain altitude information (in this
+   case, the US standard atmosphere is used to convert between altitude and
+   pressure levels; see :ref:`Vertical interpolation` for details).
+   Example:
+
+   .. code-block:: yaml
+
+    preprocessors:
+      extract_500hPa_level_from_icon:
+        extract_levels:
+          levels: 50000
+          scheme: linear
+          coordinate: air_pressure
+
 Similar to any other fix, the ICON fix allows the use of :ref:`extra
 facets<extra_facets>`.
 By default, the file :download:`icon-mappings.yml
@@ -400,36 +463,38 @@ Key                 Description                      Default value if not specif
                     longitude coordinate in the
                     raw input file
 ``horizontal_grid`` Absolute or relative (to         If not given, use file attribute
-                    ``auxiliary_data_dir`` defined   `grid_file_uri` to retrieve ICON
+                    ``auxiliary_data_dir`` defined   ``grid_file_uri`` to retrieve ICON
                     in the                           grid file
                     :ref:`user configuration file`)
                     path to the ICON grid file
 ``raw_name``        Variable name of the             CMOR variable name of the
                     variable in the raw input        corresponding variable
                     file
+``shift_time``      Shift time points back by 1/2 of ``True``
+                    the corresponding output time
+                    interval
+``raw_units``       Units of the variable in the     If specified, the value given by
+                    raw input file                   the ``units`` attribute in the
+                                                     raw input file; otherwise
+                                                     ``unknown``
 ``ugrid``           Automatic UGRIDization of        ``True``
                     the input data
 ``var_type``        Variable type of the             No default (needs to be specified
                     variable in the raw input        in extra facets or recipe if
                     file                             default DRS is used)
+``zg_file``         Absolute or relative (to         If possible, use `zg` variable
+                    ``auxiliary_data_dir`` defined   provided by the raw input file
+                    in the
+                    :ref:`user configuration file`)
+                    path to the input file that
+                    contains `zg`
+``zghalf_file``     Absolute or relative (to         If possible, use `zghalf` variable
+                    ``auxiliary_data_dir`` defined   provided by the raw input file
+                    in the
+                    :ref:`user configuration file`)
+                    path to the input file that
+                    contains `zghalf`
 =================== ================================ ===================================
-
-.. hint::
-
-   To use the :func:`~esmvalcore.preprocessor.extract_levels` preprocessor on
-   native ICON data, you need to specify the name of the vertical coordinate
-   (e.g., ``coordinate: air_pressure``) since native ICON output usually
-   provides a 3D air pressure field instead of a simple 1D vertical coordinate.
-   Example:
-
-   .. code-block:: yaml
-
-    preprocessors:
-      extract_500hPa_level_from_icon:
-        extract_levels:
-          levels: 50000
-          scheme: linear
-          coordinate: air_pressure
 
 .. hint::
 
