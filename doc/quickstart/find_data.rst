@@ -455,27 +455,27 @@ Supported keys for extra facets are:
 =================== ================================ ===================================
 Key                 Description                      Default value if not specified
 =================== ================================ ===================================
+``horizontal_grid`` Absolute or relative (to         If not given, use file attribute
+                    ``auxiliary_data_dir`` defined   ``grid_file_uri`` to retrieve ICON
+                    in the                           grid file
+                    :ref:`user configuration file`)
+                    path to the ICON grid file
 ``latitude``        Standard name of the latitude    ``latitude``
                     coordinate in the raw input
                     file
 ``longitude``       Standard name of the             ``longitude``
                     longitude coordinate in the
                     raw input file
-``horizontal_grid`` Absolute or relative (to         If not given, use file attribute
-                    ``auxiliary_data_dir`` defined   ``grid_file_uri`` to retrieve ICON
-                    in the                           grid file
-                    :ref:`user configuration file`)
-                    path to the ICON grid file
 ``raw_name``        Variable name of the             CMOR variable name of the
                     variable in the raw input        corresponding variable
                     file
-``shift_time``      Shift time points back by 1/2 of ``True``
-                    the corresponding output time
-                    interval
 ``raw_units``       Units of the variable in the     If specified, the value given by
                     raw input file                   the ``units`` attribute in the
                                                      raw input file; otherwise
                                                      ``unknown``
+``shift_time``      Shift time points back by 1/2 of ``True``
+                    the corresponding output time
+                    interval
 ``ugrid``           Automatic UGRIDization of        ``True``
                     the input data
 ``var_type``        Variable type of the             No default (needs to be specified
@@ -514,7 +514,7 @@ Key                 Description                      Default value if not specif
    Make sure that no other variable uses this ``var_type``.
 
    If you want to use the :func:`~esmvalcore.preprocessor.area_statistics`
-   preprocessor on *regridded* ICON data, make sure to *not* use the cell area
+   preprocessor on *regridded* ICON data, make sure to **not** use the cell area
    files by using the ``skip: true`` syntax in the recipe as described in
    :ref:`preprocessors_using_supplementary_variables`, e.g.,
 
