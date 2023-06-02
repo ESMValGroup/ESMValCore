@@ -25,14 +25,10 @@ Bug fixes
 -  Fixed altitude <--> pressure level conversion for masked arrays in the ``extract_levels`` preprocessor (`#1999 <https://github.com/ESMValGroup/ESMValCore/pull/1999>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Allowed ignoring of scalar time coordinates in the ``multi_model_statistics`` preprocessor (`#1961 <https://github.com/ESMValGroup/ESMValCore/pull/1961>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
-CMOR standard
-~~~~~~~~~~~~~
-
--  Add support for hourly ICON data (`#1990 <https://github.com/ESMValGroup/ESMValCore/pull/1990>`__) `Julian Bauer <https://github.com/BauerJul>`__
-
 Fixes for datasets
 ~~~~~~~~~~~~~~~~~~
 
+-  Add support for hourly ICON data (`#1990 <https://github.com/ESMValGroup/ESMValCore/pull/1990>`__) `Julian Bauer <https://github.com/BauerJul>`__
 -  Fix areacello in BCC-CSM2-MR (`#1993 <https://github.com/ESMValGroup/ESMValCore/pull/1993>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
 
 Installation
