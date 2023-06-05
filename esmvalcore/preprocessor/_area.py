@@ -737,7 +737,7 @@ def extract_shape(
         * :obj:`dict`: IDs (dictionary value; :obj:`list` of :obj:`str`) are
           assigned from attribute given as dictionary key (:obj:`str`). Only
           dictionaries with length 1 are supported.
-          Example: ``ids={'Acronym': ['GIC', 'WNA']}`` for ``shapefile='ar6'`.
+          Example: ``ids={'Acronym': ['GIC', 'WNA']}`` for ``shapefile='ar6'``.
         * `None`: select all available shapes from the shapefile.
 
     Returns
