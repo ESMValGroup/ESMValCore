@@ -390,7 +390,7 @@ def _check_grid_discontiguities(cube, scheme):
     except NotImplementedError:
         pass
     else:
-        if np.isin(True, discontiguities):
+        if discontiguities.any():
             scheme['use_src_mask'] = True
     return scheme
 
