@@ -5,7 +5,6 @@ import logging
 import os
 import re
 import subprocess
-from pathlib import Path
 from pprint import pformat
 from shutil import which
 from typing import Any, Iterable
@@ -239,7 +238,7 @@ def check_for_temporal_preprocs(profile):
 def extract_shape(settings):
     """Check that `extract_shape` arguments are valid."""
     shapefile = settings.get('shapefile', '')
-    if not Path(shapefile).exists():
+    if not os.path.exists(shapefile):
         raise RecipeError("In preprocessor function `extract_shape`: "
                           f"Unable to find 'shapefile: {shapefile}'")
 
