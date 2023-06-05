@@ -1521,7 +1521,7 @@ def test_extract_shape(tmp_path, patched_datafinder, session):
     task = recipe.tasks.pop()
     assert len(task.products) == 1
     product = task.products.pop()
-    assert product.settings['extract_shape']['shapefile'] == str(shapefile)
+    assert product.settings['extract_shape']['shapefile'] == shapefile
 
 
 @pytest.mark.parametrize('invalid_arg',
@@ -1555,8 +1555,7 @@ def test_extract_shape_raises(tmp_path, patched_datafinder, session,
                 end_year: 2005
                 ensemble: r1i1p1
                 additional_datasets:
-                  -
-                      dataset: GFDL-CM3
+                  - dataset: GFDL-CM3
             scripts: null
         """)
 

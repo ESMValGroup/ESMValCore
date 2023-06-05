@@ -6,6 +6,7 @@ import numpy as np
 import pyesgf.search.results
 import pytest
 
+import esmvalcore
 import esmvalcore._recipe.recipe as _recipe
 import esmvalcore.config
 import esmvalcore.experimental.recipe_output
@@ -635,3 +636,39 @@ def test_extract_preprocessor_order():
     order = _recipe._extract_preprocessor_order(profile)
     assert any(order[i:i + 2] == ('regrid', 'derive')
                for i in range(len(order) - 1))
+
+
+def test_update_extract_shape_abs_shapefile(session, tmp_path):
+    """Test ``_update_extract_shape``."""
+    session['auxiliary_data_dir'] = '/aux/dir'
+    shapefile = tmp_path / 'my_custom_shapefile.shp'
+    shapefile.write_text("")  # create empty file
+    settings = {'extract_shape': {'shapefile': str(shapefile)}}
+
+    _recipe._update_extract_shape(settings, session)
+
+    assert isinstance(settings['extract_shape']['shapefile'], Path)
+    assert settings['extract_shape']['shapefile'] == shapefile
+
+
+@pytest.mark.parametrize(
+    'shapefile', ['aux_dir/ar6.shp', 'ar6.shp', 'ar6', 'AR6', 'aR6']
+)
+def test_update_extract_shape_rel_shapefile(shapefile, session, tmp_path):
+    """Test ``_update_extract_shape``."""
+    session['auxiliary_data_dir'] = tmp_path
+    (tmp_path / 'aux_dir').mkdir(parents=True, exist_ok=True)
+    aux_dir_shapefile = tmp_path / 'aux_dir' / 'ar6.shp'
+    aux_dir_shapefile.write_text("")  # create empty file
+    settings = {'extract_shape': {'shapefile': shapefile}}
+
+    _recipe._update_extract_shape(settings, session)
+
+    if 'aux_dir' in shapefile:
+        assert settings['extract_shape']['shapefile'] == tmp_path / shapefile
+    else:
+        ar6_file = (
+            Path(esmvalcore.preprocessor.__file__).parent / 'shapefiles' /
+            'ar6.shp'
+        )
+        assert settings['extract_shape']['shapefile'] == ar6_file
