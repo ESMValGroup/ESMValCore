@@ -21,6 +21,7 @@ on:
   push:
     branches:
       - main
+      - GA_add_py11_conda-pypi_install
   # run the test only if the PR is to main
   # turn it on if required
   # pull_request:
@@ -34,8 +35,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        # TODO add "3.11" once we have the package built
-        python-version: ["3.9", "3.10"]
+        python-version: ["3.9", "3.10", "3.11"]
       # fail-fast set to False allows all other tests
       # in the workflow to run regardless of any fail
       fail-fast: false
@@ -75,7 +75,7 @@ jobs:
     runs-on: "macos-latest"
     strategy:
       matrix:
-        python-version: ["3.9", "3.10"]
+        python-version: ["3.9", "3.10", "3.11"]
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
