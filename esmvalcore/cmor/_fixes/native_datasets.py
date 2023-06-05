@@ -57,7 +57,13 @@ class NativeDatasetFix(Fix):
         cube.var_name = self.vardef.short_name
         cube.long_name = self.vardef.long_name
 
-        # Fix units (also handles invalid units in the input files)
+        # Fix units
+        # (1) raw_units set in recipe or extra_facets
+        if 'raw_units' in self.extra_facets:
+            cube.units = self.extra_facets['raw_units']
+            cube.attributes.pop('invalid_units', None)
+
+        # (2) Try to handle other invalid units in the input files
         if 'invalid_units' in cube.attributes:
             invalid_units = cube.attributes.pop('invalid_units')
             new_units = self.INVALID_UNITS.get(
