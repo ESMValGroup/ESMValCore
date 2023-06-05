@@ -14,7 +14,6 @@ from typing import Any, Dict, Iterable, Sequence
 
 import yaml
 
-import esmvalcore.preprocessor
 from esmvalcore import __version__, esgf
 from esmvalcore._provenance import get_recipe_provenance
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
@@ -43,6 +42,7 @@ from esmvalcore.preprocessor import (
     PreprocessingTask,
     PreprocessorFile,
 )
+from esmvalcore.preprocessor._area import _update_shapefile_path
 from esmvalcore.preprocessor._other import _group_products
 from esmvalcore.preprocessor._regrid import (
     _spec_to_latlonvals,
@@ -632,44 +632,8 @@ def _update_extract_shape(settings, session):
     if 'extract_shape' in settings:
         shapefile = settings['extract_shape'].get('shapefile')
         if shapefile:
-            shapefile = Path(shapefile)
-            abs_shapefile = shapefile
-            logger.debug(
-                "extract_shape: Looking for shapefile %s", abs_shapefile
-            )
-
-            # If shapefile not found, first, try path relative to
-            # auxiliary_data_dir
-            if not abs_shapefile.exists():
-                abs_shapefile = session['auxiliary_data_dir'] / shapefile
-                logger.debug(
-                    "extract_shape: Looking for shapefile %s", abs_shapefile
-                )
-
-            # Second, try path relative to esmvalcore/preprocessor/shapefiles/
-            if not abs_shapefile.exists():
-                abs_shapefile = (
-                    Path(esmvalcore.preprocessor.__file__).parent /
-                    'shapefiles' /
-                    shapefile
-                )
-                logger.debug(
-                    "extract_shape: Looking for shapefile %s", abs_shapefile
-                )
-
-            # As final resort, add suffix '.shp' and try path relative to
-            # esmvalcore/preprocessor/shapefiles/ again
-            if not abs_shapefile.exists():
-                abs_shapefile = (
-                    Path(esmvalcore.preprocessor.__file__).parent /
-                    'shapefiles' /
-                    shapefile.with_suffix('.shp')
-                )
-                logger.debug(
-                    "extract_shape: Looking for shapefile %s", abs_shapefile
-                )
-
-            settings['extract_shape']['shapefile'] = abs_shapefile
+            shapefile = _update_shapefile_path(shapefile, session=session)
+            settings['extract_shape']['shapefile'] = shapefile
         check.extract_shape(settings['extract_shape'])
 
 

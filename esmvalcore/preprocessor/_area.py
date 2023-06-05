@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 import warnings
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import fiona
 import iris
@@ -31,6 +31,9 @@ from ._supplementary_vars import (
     register_supplementaries,
     remove_supplementary_variables,
 )
+
+if TYPE_CHECKING:
+    from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
 
@@ -644,6 +647,46 @@ def fix_coordinate_ordering(cube: Cube) -> Cube:
     return cube
 
 
+def _update_shapefile_path(
+    shapefile: str | Path,
+    session: Optional[Session] = None,
+) -> Path:
+    """Update path to shapefile."""
+    shapefile = str(shapefile)
+    shapefile_path = Path(shapefile)
+
+    # Try absolute path
+    logger.debug("extract_shape: Looking for shapefile %s", shapefile_path)
+    if shapefile_path.exists():
+        return shapefile_path
+
+    # Try path relative to auxiliary_data_dir if session is given
+    if session is not None:
+        shapefile_path = session['auxiliary_data_dir'] / shapefile
+        logger.debug("extract_shape: Looking for shapefile %s", shapefile_path)
+        if shapefile_path.exists():
+            return shapefile_path
+
+    # Try path relative to esmvalcore/preprocessor/shapefiles/
+    shapefile_path = Path(__file__).parent / 'shapefiles' / shapefile
+    logger.debug("extract_shape: Looking for shapefile %s", shapefile_path)
+    if shapefile_path.exists():
+        return shapefile_path
+
+    # As final resort, add suffix '.shp' and try path relative to
+    # esmvalcore/preprocessor/shapefiles/ again
+    # Note: this will find "special" shapefiles like 'ar6'
+    shapefile_path = (
+        Path(__file__).parent / 'shapefiles' / f"{shapefile.lower()}.shp"
+    )
+    if shapefile_path.exists():
+        return shapefile_path
+
+    # If no valid shapefile has been found, return original input (an error
+    # will be raised at a later stage)
+    return Path(shapefile)
+
+
 def extract_shape(
     cube: Cube,
     shapefile: str | Path,
@@ -662,7 +705,13 @@ def extract_shape(
     cube: iris.cube.Cube
         Input cube.
     shapefile: str or Path
-        A shapefile defining the region(s) to extract.
+        A shapefile defining the region(s) to extract. Also accepts the
+        following strings to load special shapefiles:
+
+        * ``'ar6'``:  IPCC WG1 reference regions (v4) used in Assessment Report
+          6 (https://doi.org/10.5281/zenodo.5176260). Should be used in
+          combination with a :obj:`dict` for the argument `ids`, e.g.,
+          ``ids={'Acronym': ['GIC', 'WNA']}``.
     method: str, optional
         Select all points contained by the shape or select a single
         representative point. Choose either `'contains'` or `'representative'`.
@@ -688,7 +737,7 @@ def extract_shape(
         * :obj:`dict`: IDs (dictionary value; :obj:`list` of :obj:`str`) are
           assigned from attribute given as dictionary key (:obj:`str`). Only
           dictionaries with length 1 are supported.
-          Example: ``ids={'Acronym': ['GIC', 'WNA']}``.
+          Example: ``ids={'Acronym': ['GIC', 'WNA']}`` for ``shapefile='ar6'`.
         * `None`: select all available shapes from the shapefile.
 
     Returns
@@ -701,7 +750,7 @@ def extract_shape(
     extract_region: Extract a region from a cube.
 
     """
-    shapefile = Path(shapefile)
+    shapefile = _update_shapefile_path(shapefile)
     with fiona.open(shapefile) as geometries:
 
         # Get parameters specific to the shapefile (NE used case e.g.

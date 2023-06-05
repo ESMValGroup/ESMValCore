@@ -17,6 +17,7 @@ import tests
 from esmvalcore.preprocessor._area import (
     _crop_cube,
     _get_requested_geometries,
+    _update_shapefile_path,
     area_statistics,
     extract_named_regions,
     extract_region,
@@ -962,26 +963,14 @@ def test_extract_shape_wrong_method_raises(make_testcube, ne_ocean_shapefile):
         extract_shape(make_testcube, ne_ocean_shapefile, method='wrong')
 
 
-@pytest.fixture
-def ar6_shapefile():
-    """Path to AR6 shapefile."""
-    shapefile = (
-        Path(esmvalcore.preprocessor.__file__).parent / 'shapefiles' /
-        'ar6.shp'
-    )
-    return shapefile
-
-
 @pytest.mark.parametrize('ids', [None, []])
 @pytest.mark.parametrize('crop', [True, False])
 @pytest.mark.parametrize('decomposed', [True, False])
-def test_extract_shape_ar6_all_region(
-    ar6_shapefile, make_testcube, ids, crop, decomposed
-):
+def test_extract_shape_ar6_all_region(make_testcube, ids, crop, decomposed):
     """Test for extracting all AR6 regions with shapefile."""
     cube = extract_shape(
         make_testcube,
-        ar6_shapefile,
+        'AR6',
         method='contains',
         crop=crop,
         decomposed=decomposed,
@@ -1027,9 +1016,7 @@ WAF_MASK = np.array([
 )
 @pytest.mark.parametrize('crop', [True, False])
 @pytest.mark.parametrize('decomposed', [True, False])
-def test_extract_shape_ar6_one_region(
-    ar6_shapefile, make_testcube, ids, crop, decomposed
-):
+def test_extract_shape_ar6_one_region(make_testcube, ids, crop, decomposed):
     """Test for extracting 1 AR6 regions with shapefile."""
     # Adapt lat slightly to test cropping
     lat = make_testcube.coord('latitude')
@@ -1038,7 +1025,7 @@ def test_extract_shape_ar6_one_region(
 
     cube = extract_shape(
         make_testcube,
-        ar6_shapefile,
+        'ar6',
         method='contains',
         crop=crop,
         decomposed=decomposed,
@@ -1078,13 +1065,11 @@ def test_extract_shape_ar6_one_region(
 )
 @pytest.mark.parametrize('crop', [True, False])
 @pytest.mark.parametrize('decomposed', [True, False])
-def test_extract_shape_ar6_two_regions(
-    ar6_shapefile, make_testcube, ids, crop, decomposed
-):
+def test_extract_shape_ar6_two_regions(make_testcube, ids, crop, decomposed):
     """Test for extracting 2 AR6 regions with shapefile."""
     cube = extract_shape(
         make_testcube,
-        ar6_shapefile,
+        'AR6',
         method='contains',
         crop=crop,
         decomposed=decomposed,
@@ -1107,11 +1092,21 @@ def test_extract_shape_ar6_two_regions(
 
 
 @pytest.mark.parametrize('ids', [{}, {'a':  [1, 2], 'b': [1, 2]}])
-def test_extract_shape_invalid_dict(ar6_shapefile, make_testcube, ids):
+def test_extract_shape_invalid_dict(make_testcube, ids):
     """Test for extract_shape with invalid ids."""
     msg = "If `ids` is given as dict, it needs exactly one entry"
     with pytest.raises(ValueError, match=msg):
-        extract_shape(make_testcube, ar6_shapefile, ids=ids)
+        extract_shape(make_testcube, 'ar6', ids=ids)
+
+
+@pytest.fixture
+def ar6_shapefile():
+    """Path to AR6 shapefile."""
+    shapefile = (
+        Path(esmvalcore.preprocessor.__file__).parent / 'shapefiles' /
+        'ar6.shp'
+    )
+    return shapefile
 
 
 def test_get_requested_geometries_invalid_ids(ar6_shapefile):
@@ -1122,6 +1117,48 @@ def test_get_requested_geometries_invalid_ids(ar6_shapefile):
             _get_requested_geometries(
                 geometries, {'wrong_attr': [1, 2]}, Path('shape.shp')
             )
+
+
+@pytest.mark.parametrize('session', [{}, None])
+def test_update_shapefile_path_abs(session, tmp_path):
+    """ Test ``update_shapefile_path``."""
+    if session is not None:
+        session['auxiliary_data_dir'] = tmp_path
+    shapefile = tmp_path / 'my_custom_shapefile.shp'
+    shapefile.write_text("")  # create empty file
+
+    # Test with Path and str object
+    for shapefile_in in (shapefile, str(shapefile)):
+        shapefile_out = _update_shapefile_path(shapefile, session=session)
+        assert isinstance(shapefile_out, Path)
+        assert shapefile_out == shapefile
+
+
+@pytest.mark.parametrize(
+    'shapefile', ['aux_dir/ar6.shp', 'ar6.shp', 'ar6', 'AR6', 'aR6']
+)
+@pytest.mark.parametrize('session', [{}, None])
+def test_update_shapefile_path_rel(
+    shapefile, session, ar6_shapefile, tmp_path
+):
+    """ Test ``update_shapefile_path``."""
+    if session is not None:
+        session['auxiliary_data_dir'] = tmp_path
+    (tmp_path / 'aux_dir').mkdir(parents=True, exist_ok=True)
+    aux_dir_shapefile = tmp_path / 'aux_dir' / 'ar6.shp'
+    aux_dir_shapefile.write_text("")  # create empty file
+
+    # Test with Path and str object
+    for shapefile_in in (Path(shapefile), shapefile):
+        shapefile_out = _update_shapefile_path(shapefile, session=session)
+        assert isinstance(shapefile_out, Path)
+
+        if 'aux_dir' in str(shapefile_in) and session is None:
+            assert shapefile_out == Path(shapefile)
+        elif 'aux_dir' in str(shapefile):
+            assert shapefile_out == tmp_path / shapefile
+        else:
+            assert shapefile_out == ar6_shapefile
 
 
 if __name__ == '__main__':

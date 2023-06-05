@@ -651,7 +651,9 @@ def test_update_extract_shape_abs_shapefile(session, tmp_path):
     assert settings['extract_shape']['shapefile'] == shapefile
 
 
-@pytest.mark.parametrize('shapefile', ['aux_dir/ar6.shp', 'ar6.shp', 'ar6'])
+@pytest.mark.parametrize(
+    'shapefile', ['aux_dir/ar6.shp', 'ar6.shp', 'ar6', 'AR6', 'aR6']
+)
 def test_update_extract_shape_rel_shapefile(shapefile, session, tmp_path):
     """Test ``_update_extract_shape``."""
     session['auxiliary_data_dir'] = tmp_path
