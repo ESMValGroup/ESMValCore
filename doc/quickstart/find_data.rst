@@ -370,6 +370,17 @@ is always disabled.
    See :ref:`timerange_examples` for more information on the ``timerange``
    option.
 
+Usually, ESMValCore will need the corresponding ICON grid file of your
+simulation to work properly (examples: setting latitude/longitude coordinates
+if these are not yet present, UGRIDization [see below], etc.).
+This grid file can either be specified as absolute or relative (to
+``auxiliary_data_dir`` as defined in the :ref:`user configuration file`) path
+with the facet ``horizontal_grid`` in the recipe or the extra facets (see
+below), or retrieved automatically from the `grid_file_uri` attribute of the
+input files.
+In the latter case, the file is downloaded once and then cached.
+The cached file is valid for 7 days.
+
 ESMValCore can automatically make native ICON data `UGRID
 <https://ugrid-conventions.github.io/ugrid-conventions/>`__-compliant when
 loading the data.
@@ -393,8 +404,7 @@ algorithm <https://earthsystemmodeling.org/regrid/#regridding-methods>`__:
        regrid:
          target_grid: 1x1
          scheme:
-           reference: esmf_regrid.experimental.unstructured_scheme:regrid_unstructured_to_rectilinear
-           method: conservative
+           reference: esmf_regrid.schemes:ESMFAreaWeighted
 
 This automatic UGRIDization is enabled by default, but can be switched off with
 the facet ``ugrid: false`` in the recipe or the extra facets (see below).
@@ -445,6 +455,11 @@ Supported keys for extra facets are:
 =================== ================================ ===================================
 Key                 Description                      Default value if not specified
 =================== ================================ ===================================
+``horizontal_grid`` Absolute or relative (to         If not given, use file attribute
+                    ``auxiliary_data_dir`` defined   ``grid_file_uri`` to retrieve ICON
+                    in the                           grid file
+                    :ref:`user configuration file`)
+                    path to the ICON grid file
 ``latitude``        Standard name of the latitude    ``latitude``
                     coordinate in the raw input
                     file
@@ -454,13 +469,13 @@ Key                 Description                      Default value if not specif
 ``raw_name``        Variable name of the             CMOR variable name of the
                     variable in the raw input        corresponding variable
                     file
-``shift_time``      Shift time points back by 1/2 of ``True``
-                    the corresponding output time
-                    interval
 ``raw_units``       Units of the variable in the     If specified, the value given by
                     raw input file                   the ``units`` attribute in the
                                                      raw input file; otherwise
                                                      ``unknown``
+``shift_time``      Shift time points back by 1/2 of ``True``
+                    the corresponding output time
+                    interval
 ``ugrid``           Automatic UGRIDization of        ``True``
                     the input data
 ``var_type``        Variable type of the             No default (needs to be specified
@@ -497,6 +512,18 @@ Key                 Description                      Default value if not specif
    can be found using ``var_type: horizontalgrid`` in the recipe (assuming the
    default naming conventions listed above).
    Make sure that no other variable uses this ``var_type``.
+
+   If you want to use the :func:`~esmvalcore.preprocessor.area_statistics`
+   preprocessor on *regridded* ICON data, make sure to **not** use the cell area
+   files by using the ``skip: true`` syntax in the recipe as described in
+   :ref:`preprocessors_using_supplementary_variables`, e.g.,
+
+   .. code-block:: yaml
+
+     datasets:
+       - {project: ICON, dataset: ICON, exp: amip,
+          supplementary_variables: [{short_name: areacella, skip: true}]}
+
 
 .. _read_ipsl-cm6:
 

@@ -1,50 +1,21 @@
-"""Tests for the fixes of KACE-1-0-G."""
+"""Tests for the fixes of IITM-ESM."""
 import iris
 import numpy as np
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.cmip6.kace_1_0_g import AllVars, Cl, Cli, Clw, Tos
-from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord, OceanFixGrid
+from esmvalcore.cmor._fixes.cmip6.iitm_esm import AllVars, Tos
+from esmvalcore.cmor._fixes.common import OceanFixGrid
 from esmvalcore.cmor.fix import Fix
-
-
-def test_get_cl_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'KACE-1-0-G', 'Amon', 'cl')
-    assert fix == [Cl(None), AllVars(None)]
-
-
-def test_cl_fix():
-    """Test fix for ``cl``."""
-    assert Cl is ClFixHybridHeightCoord
-
-
-def test_get_cli_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'KACE-1-0-G', 'Amon', 'cli')
-    assert fix == [Cli(None), AllVars(None)]
-
-
-def test_cli_fix():
-    """Test fix for ``cli``."""
-    assert Cli is ClFixHybridHeightCoord
-
-
-def test_get_clw_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'KACE-1-0-G', 'Amon', 'clw')
-    assert fix == [Clw(None), AllVars(None)]
-
-
-def test_clw_fix():
-    """Test fix for ``clw``."""
-    assert Clw is ClFixHybridHeightCoord
 
 
 def test_get_tos_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'KACE-1-0-G', 'Omon', 'tos')
+    fix = Fix.get_fixes('CMIP6',
+                        'IITM-ESM',
+                        'Omon',
+                        'tos',
+                        extra_facets={"frequency": "mon"})
     assert fix == [Tos(None), AllVars(None)]
 
 
@@ -54,7 +25,7 @@ def test_tos_fix():
 
 
 @pytest.fixture
-def tos_cubes():
+def cubes():
     correct_time_coord = iris.coords.DimCoord(
         [15.5, 45, 74.5],
         bounds=[[0., 31.], [31., 59.], [59., 90.]],
@@ -99,21 +70,16 @@ def tos_cubes():
     return iris.cube.CubeList([correct_cube, wrong_cube])
 
 
-def test_get_allvars_fix():
-    fix = Fix.get_fixes('CMIP6', 'KACE-1-0-G', 'Omon', 'tos')
-    assert fix == [OceanFixGrid(None), AllVars(None)]
-
-
-def test_allvars_fix_metadata(monkeypatch, tos_cubes, caplog):
+def test_allvars_fix_metadata(monkeypatch, cubes, caplog):
     fix = AllVars(None)
     monkeypatch.setitem(fix.extra_facets, 'frequency', 'mon')
-    monkeypatch.setitem(fix.extra_facets, 'dataset', 'KACE-1-0-G')
-    out_cubes = fix.fix_metadata(tos_cubes)
-    assert tos_cubes is out_cubes
+    monkeypatch.setitem(fix.extra_facets, 'dataset', 'IITM-ESM')
+    out_cubes = fix.fix_metadata(cubes)
+    assert cubes is out_cubes
     for cube in out_cubes:
         time = cube.coord('time')
         assert all(time.bounds[1:, 0] == time.bounds[:-1, 1])
     msg = ("Using 'area_weighted' regridder scheme in Omon variables "
-           "for dataset KACE-1-0-G causes discontinuities in the longitude "
+           "for dataset IITM-ESM causes discontinuities in the longitude "
            "coordinate.")
     assert msg in caplog.text
