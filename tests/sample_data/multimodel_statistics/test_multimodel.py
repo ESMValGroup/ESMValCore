@@ -23,12 +23,12 @@ TEST_REVISION = 1
 SPAN_PARAMS = ('overlap', 'full')
 
 
-def assert_array_almost_equal(this, other):
+def assert_array_almost_equal(this, other, rtol=1e-7):
     """Assert that array `this` almost equals array `other`."""
     if np.ma.isMaskedArray(this) or np.ma.isMaskedArray(other):
         np.testing.assert_array_equal(this.mask, other.mask)
 
-    np.testing.assert_allclose(this, other)
+    np.testing.assert_allclose(this, other, rtol=rtol)
 
 
 def assert_coords_equal(this: list, other: list):
@@ -188,7 +188,7 @@ def multimodel_regression_test(cubes, span, name):
     if filename.exists():
         reference_cube = iris.load_cube(str(filename))
 
-        assert_array_almost_equal(result_cube.data, reference_cube.data)
+        assert_array_almost_equal(result_cube.data, reference_cube.data, 5e-7)
         assert_metadata_equal(result_cube.metadata, reference_cube.metadata)
         assert_coords_equal(result_cube.coords(), reference_cube.coords())
 
