@@ -3,6 +3,46 @@
 Changelog
 =========
 
+.. _changelog-v2-8-1:
+
+v2.8.1
+------
+Highlights
+~~~~~~~~~~
+This release adds support for Python 3.11 and includes several bugfixes.
+
+This release includes:
+
+Bug fixes
+~~~~~~~~~
+
+-  Pin numpy !=1.24.3 (`#2011 <https://github.com/ESMValGroup/ESMValCore/pull/2011>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Fix a bug in recording provenance for the ``mask_multimodel`` preprocessor (`#1984 <https://github.com/ESMValGroup/ESMValCore/pull/1984>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fix ICON hourly data rounding issues (`#2022 <https://github.com/ESMValGroup/ESMValCore/pull/2022>`__) `Julian Bauer <https://github.com/BauerJul>`__
+-  Use the default SSL context when using the ``extract_location`` preprocessor (`#2023 <https://github.com/ESMValGroup/ESMValCore/pull/2023>`__) `Emma Hogan <https://github.com/ehogan>`__
+-  Make time-related CMOR fixes work with time dimensions `time1`, `time2`, `time3` (`#1971 <https://github.com/ESMValGroup/ESMValCore/pull/1971>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Always create a cache directory for storing ICON grid files (`#2030 <https://github.com/ESMValGroup/ESMValCore/pull/2030>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fixed altitude <--> pressure level conversion for masked arrays in the ``extract_levels`` preprocessor (`#1999 <https://github.com/ESMValGroup/ESMValCore/pull/1999>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Allowed ignoring of scalar time coordinates in the ``multi_model_statistics`` preprocessor (`#1961 <https://github.com/ESMValGroup/ESMValCore/pull/1961>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+Fixes for datasets
+~~~~~~~~~~~~~~~~~~
+
+-  Add support for hourly ICON data (`#1990 <https://github.com/ESMValGroup/ESMValCore/pull/1990>`__) `Julian Bauer <https://github.com/BauerJul>`__
+-  Fix areacello in BCC-CSM2-MR (`#1993 <https://github.com/ESMValGroup/ESMValCore/pull/1993>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+
+Installation
+~~~~~~~~~~~~
+
+-  Add support for Python=3.11 (`#1832 <https://github.com/ESMValGroup/ESMValCore/pull/1832>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Modernize conda lock file creation workflow with mamba, Mambaforge etc (`#2027 <https://github.com/ESMValGroup/ESMValCore/pull/2027>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+-  Use mocked `geopy.geocoders.Nominatim` to avoid `ReadTimeoutError` (`#2005 <https://github.com/ESMValGroup/ESMValCore/pull/2005>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Update pre-commit hooks (`#2020 <https://github.com/ESMValGroup/ESMValCore/pull/2020>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
 
 .. _changelog-v2-8-0:
 

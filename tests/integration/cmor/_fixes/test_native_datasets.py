@@ -41,6 +41,11 @@ def sample_cube():
         long_name='air_pressure',
         units='hPa',
     )
+    alt16_coord = AuxCoord(
+        [2.0, 4.0],
+        long_name='altitude',
+        units='km',
+    )
     height_coord = AuxCoord(
         [2.0, 4.0],
         long_name='height',
@@ -68,7 +73,8 @@ def sample_cube():
                              (plev_coord, 1),
                              (lat_coord, 2),
                              (lon_coord, 3)],
-        aux_coords_and_dims=[(height_coord, 1),
+        aux_coords_and_dims=[(alt16_coord, 1),
+                             (height_coord, 1),
                              (coord_with_bounds, 1)],
     )
     return cube
@@ -144,6 +150,33 @@ def test_fix_var_metadata_custom_var(monkeypatch, empty_cube, fix):
     assert empty_cube.long_name == 'Near-Surface Air Temperature'
     assert empty_cube.units == 'g'
     assert empty_cube.attributes['positive'] == mock.sentinel.positive
+    np.testing.assert_allclose(empty_cube.data, 1000.0)
+
+
+def test_fix_var_metadata_raw_units(monkeypatch, empty_cube, fix):
+    """Test ``fix_var_metadata`` with ``raw_units``."""
+    empty_cube.units = None
+    monkeypatch.setitem(fix.extra_facets, 'raw_units', 'K')
+
+    fix.fix_var_metadata(empty_cube)
+
+    assert empty_cube.units == 'K'
+    np.testing.assert_allclose(empty_cube.data, 1.0)
+
+
+def test_fix_var_metadata_raw_units_ignore_invalid_units(
+    monkeypatch, empty_cube, fix
+):
+    """Test ``fix_var_metadata`` with raw_units and invalid units."""
+    monkeypatch.setitem(fix.extra_facets, 'raw_units', 'km')
+    monkeypatch.setattr(fix, 'INVALID_UNITS', {'invalid_units': 'kg'})
+    monkeypatch.setattr(fix.vardef, 'units', 'm')
+    empty_cube.attributes['invalid_units'] = 'invalid_units'
+
+    fix.fix_var_metadata(empty_cube)
+
+    assert empty_cube.units == 'm'  # invalid units have been ignored
+    assert 'invalid_units' not in empty_cube.attributes
     np.testing.assert_allclose(empty_cube.data, 1000.0)
 
 
@@ -371,6 +404,46 @@ def test_fix_time_metadata_from_coord(sample_cube, fix):
     assert out_coord.var_name == 'time'
     assert out_coord.long_name == 'time'
     assert out_coord.units == 'day since 1950-01-01 00:00:00'
+    np.testing.assert_allclose(out_coord.points, [2.0])
+    assert out_coord.bounds is None
+
+
+def test_fix_alt16_metadata(sample_cube, fix):
+    """Test ``fix_alt16_metadata``."""
+    out_coord = fix.fix_alt16_metadata(sample_cube)
+    assert out_coord is sample_cube.coord('altitude')
+    assert out_coord.standard_name == 'altitude'
+    assert out_coord.var_name == 'alt16'
+    assert out_coord.long_name == 'altitude'
+    assert out_coord.units == 'm'
+    assert out_coord.attributes['positive'] == 'up'
+    np.testing.assert_allclose(out_coord.points, [2000.0, 4000.0])
+    assert out_coord.bounds is None
+
+
+def test_fix_alt16_metadata_from_str(sample_cube, fix):
+    """Test ``fix_alt16_metadata`` from string."""
+    out_coord = fix.fix_alt16_metadata(sample_cube, coord='altitude')
+    assert out_coord is sample_cube.coord('altitude')
+    assert out_coord.standard_name == 'altitude'
+    assert out_coord.var_name == 'alt16'
+    assert out_coord.long_name == 'altitude'
+    assert out_coord.units == 'm'
+    assert out_coord.attributes['positive'] == 'up'
+    np.testing.assert_allclose(out_coord.points, [2000.0, 4000.0])
+    assert out_coord.bounds is None
+
+
+def test_fix_alt16_metadata_from_coord(sample_cube, fix):
+    """Test ``fix_alt16_metadata`` from string."""
+    coord = AuxCoord([2.0], units='m')
+    out_coord = fix.fix_alt16_metadata(sample_cube, coord=coord)
+    assert out_coord is coord
+    assert out_coord.standard_name == 'altitude'
+    assert out_coord.var_name == 'alt16'
+    assert out_coord.long_name == 'altitude'
+    assert out_coord.units == 'm'
+    assert out_coord.attributes['positive'] == 'up'
     np.testing.assert_allclose(out_coord.points, [2.0])
     assert out_coord.bounds is None
 

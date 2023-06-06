@@ -1,20 +1,14 @@
-"""Fixes for KACE-1-0-G."""
+"""Fixes for IITM-ESM model."""
 import logging
 
 import numpy as np
 
 from esmvalcore.cmor.check import _get_time_bounds
 
-from ..common import ClFixHybridHeightCoord, OceanFixGrid
+from ..common import OceanFixGrid
 from ..fix import Fix
 
 logger = logging.getLogger(__name__)
-
-Cl = ClFixHybridHeightCoord
-
-Cli = ClFixHybridHeightCoord
-
-Clw = ClFixHybridHeightCoord
 
 Tos = OceanFixGrid
 
@@ -25,7 +19,7 @@ class AllVars(Fix):
     def fix_metadata(self, cubes):
         """Fix parent time units.
 
-        KACE-1-0-G mon data may have a bad time bounds spanning 20 days.
+        IITM-ESM monthly data may have a bad time bounds spanning 20 days.
 
         Parameters
         ----------

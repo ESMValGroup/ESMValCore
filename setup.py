@@ -28,9 +28,9 @@ REQUIREMENTS = {
     # Use with pip install . to install from source
     'install': [
         'cartopy',
-        # see https://github.com/SciTools/cf-units/issues/218
         'cf-units',
-        'dask[array]',
+        'dask[array,distributed]',
+        'dask-jobqueue',
         'esgf-pyclient>=0.3.1',
         'esmf-regrid',
         'esmpy!=8.1.0',
@@ -56,9 +56,9 @@ REQUIREMENTS = {
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        'scitools-iris>=3.4.0',
-        'shapely[vectorized]',
-        'stratify',
+        'scitools-iris>=3.6.0',
+        'shapely',
+        'stratify>=0.3',
         'yamale',
     ],
     # Test dependencies
@@ -216,7 +216,6 @@ setup(
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',

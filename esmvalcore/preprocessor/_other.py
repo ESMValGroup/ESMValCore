@@ -4,6 +4,7 @@ import logging
 from collections import defaultdict
 
 import dask.array as da
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -71,3 +72,16 @@ def _group_products(products, by_key):
 
     grouped = _groupby(products, keyfunc=grouper)
     return grouped.items()
+
+
+def get_array_module(*args):
+    """Return the best matching array module.
+
+    If at least one of the arguments is a :class:`dask.array.Array` object,
+    the :mod:`dask.array` module is returned. In all other cases the
+    :mod:`numpy` module is returned.
+    """
+    for arg in args:
+        if isinstance(arg, da.Array):
+            return da
+    return np

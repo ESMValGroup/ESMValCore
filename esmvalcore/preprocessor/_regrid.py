@@ -11,16 +11,17 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Dict
 
+import dask.array as da
 import iris
 import numpy as np
 import stratify
-from dask import array as da
 from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
 
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.table import CMOR_TABLES
+from ._other import get_array_module
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
 from ._supplementary_vars import add_ancillary_variable, add_cell_measure
@@ -664,7 +665,34 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         # scheme is a function f(src_cube, grid_cube) -> Cube
         cube = loaded_scheme
     else:
+        cube = _rechunk(cube, target_grid)
         cube = cube.regrid(target_grid, loaded_scheme)
+
+    return cube
+
+
+def _rechunk(cube, target_grid):
+    """Re-chunk cube with optimal chunk sizes for target grid."""
+    if not cube.has_lazy_data() or cube.ndim < 3:
+        # Only rechunk lazy multidimensional data
+        return cube
+
+    if 2 * np.prod(cube.shape[-2:]) > np.prod(target_grid.shape):
+        # Only rechunk if target grid is more than a factor of 2 larger,
+        # because rechunking will keep the original chunk in memory.
+        return cube
+
+    data = cube.lazy_data()
+
+    # Compute a good chunk size for the target array
+    tgt_shape = data.shape[:-2] + target_grid.shape
+    tgt_chunks = data.chunks[:-2] + target_grid.shape
+    tgt_data = da.empty(tgt_shape, dtype=data.dtype, chunks=tgt_chunks)
+    tgt_data = tgt_data.rechunk({i: "auto" for i in range(cube.ndim - 2)})
+
+    # Adjust chunks to source array and rechunk
+    chunks = tgt_data.chunks[:-2] + data.shape[-2:]
+    cube.data = data.rechunk(chunks)
 
     return cube
 
@@ -811,22 +839,19 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
                                               cube.coord_dims(src_levels))
 
     # force mask onto data as nan's
-    cube.data = da.ma.filled(cube.core_data(), np.nan)
+    npx = get_array_module(cube.core_data())
+    data = npx.ma.filled(cube.core_data(), np.nan)
 
     # Now perform the actual vertical interpolation.
     new_data = stratify.interpolate(levels,
                                     src_levels_broadcast,
-                                    cube.core_data(),
+                                    data,
                                     axis=z_axis,
                                     interpolation=interpolation,
                                     extrapolation=extrapolation)
 
     # Calculate the mask based on the any NaN values in the interpolated data.
-    mask = np.isnan(new_data)
-
-    if np.any(mask):
-        # Ensure that the data is masked appropriately.
-        new_data = np.ma.array(new_data, mask=mask, fill_value=_MDI)
+    new_data = npx.ma.masked_where(npx.isnan(new_data), new_data)
 
     # Construct the resulting cube with the interpolated data.
     return _create_cube(cube, new_data, src_levels, levels.astype(float))
