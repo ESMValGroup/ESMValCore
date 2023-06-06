@@ -1,6 +1,7 @@
 """Unit tests for the :func:`esmvalcore.preprocessor.regrid.regrid`
 function."""
 
+import logging
 import unittest
 from unittest import mock
 
@@ -22,6 +23,7 @@ from esmvalcore.preprocessor._regrid import (
 
 
 class Test(tests.Test):
+
     def _check(self, tgt_grid, scheme, spec=False):
         expected_scheme = HORIZONTAL_SCHEMES[scheme]
 
@@ -71,8 +73,8 @@ class Test(tests.Test):
         )
         self.src_cube.ndim = 1
         self.tgt_grid_coord = mock.Mock()
-        self.tgt_grid = mock.Mock(
-            spec=iris.cube.Cube, coord=self.tgt_grid_coord)
+        self.tgt_grid = mock.Mock(spec=iris.cube.Cube,
+                                  coord=self.tgt_grid_coord)
         self.regrid_schemes = [
             'linear', 'linear_extrapolate', 'nearest', 'area_weighted',
             'unstructured_nearest'
@@ -112,8 +114,8 @@ class Test(tests.Test):
             regrid(self.src_cube, self.src_cube, 'wibble')
 
     def test_horizontal_schemes(self):
-        self.assertEqual(
-            set(HORIZONTAL_SCHEMES.keys()), set(self.regrid_schemes))
+        self.assertEqual(set(HORIZONTAL_SCHEMES.keys()),
+                         set(self.regrid_schemes))
 
     def test_regrid__horizontal_schemes(self):
         for scheme in self.regrid_schemes:
@@ -155,12 +157,12 @@ class Test(tests.Test):
     third_party_regridder = mock.Mock()
 
     def test_regrid_generic_third_party(self):
-        regrid(self.src_cube, '1x1',
-               {"reference":
-                "tests.unit.preprocessor._regrid.test_regrid:"
+        regrid(
+            self.src_cube, '1x1', {
+                "reference": "tests.unit.preprocessor._regrid.test_regrid:"
                 "Test.third_party_regridder",
                 "method": "good",
-                })
+            })
         self.third_party_regridder.assert_called_once_with(method="good")
 
 
@@ -268,14 +270,14 @@ def test_regrid_is_skipped_if_grids_are_the_same():
 
 
 def test_no_discontiguities_in_coords():
-    """Test that no mask is used if there are no discontiguities in coords."""
+    """Test that no mask is used if there are no discontinuities in coords."""
     cube = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
     scheme = {}
     scheme = _check_grid_discontiguities(cube, scheme)
     assert scheme == {}
 
 
-def test_use_mask_if_discontiguities_in_coords():
+def test_use_mask_if_discontiguities_in_coords(caplog):
     """Test use_src_mask is added to the scheme."""
     lat_bounds = np.array(
         [[[-43.48076211, -34.01923789, -22.00961894, -31.47114317],
@@ -283,8 +285,7 @@ def test_use_mask_if_discontiguities_in_coords():
           [-10.0, -0.53847577, 11.47114317, 2.00961894]],
          [[-31.47114317, -22.00961894, -10.0, -19.46152423],
           [-22.00961894, 2.00961894, 14.01923789, -10.0],
-          [2.00961894, 11.47114317, 23.48076211, 14.01923789]]]
-    )
+          [2.00961894, 11.47114317, 23.48076211, 14.01923789]]])
     lat_coord = iris.coords.AuxCoord(
         [[-40.0, -20.0, 0.0], [-20.0, 0.0, 20.0]],
         var_name='lat',
@@ -315,8 +316,13 @@ def test_use_mask_if_discontiguities_in_coords():
     )
 
     scheme = {}
-    scheme = _check_grid_discontiguities(cube, scheme)
+    with caplog.at_level(logging.DEBUG):
+        scheme = _check_grid_discontiguities(cube, scheme)
     assert scheme == {'use_src_mask': True}
+
+    msg = ('Grid discontinuities were found in the source grid. '
+           'Setting scheme argument `use_src_mask` to True.')
+    assert msg in caplog.text
 
 
 def test_rechunk_on_increased_grid():

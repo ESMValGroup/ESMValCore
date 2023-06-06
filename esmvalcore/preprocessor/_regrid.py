@@ -386,6 +386,7 @@ def extract_location(cube, location, scheme):
 
 def _check_grid_discontiguities(cube, scheme):
     """Check if there are grid discontiguities and set use_src_mask to True."""
+    scheme = dict(scheme)
     try:
         discontiguities = iris.util.find_discontiguities(cube)
     except NotImplementedError:
@@ -393,6 +394,8 @@ def _check_grid_discontiguities(cube, scheme):
     else:
         if discontiguities.any():
             scheme['use_src_mask'] = True
+            logger.debug('Grid discontinuities were found in the source grid. '
+                         'Setting scheme argument `use_src_mask` to True.')
     return scheme
 
 
@@ -573,6 +576,13 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             target: 1x1
             scheme:
               reference: esmf_regrid.schemes:ESMFAreaWeighted
+
+    Since version 0.6 of :doc:`iris-esmf-regrid:index`, the regridder is able
+    to ignore discontinuities in the source grids if the data defined in the
+    discontiguous points is masked.
+    The preprocessor automatically detects if discontinuities are present,
+    and configures the regridding scheme in order to take into account
+    the mask of the source grid to ignore them.
     """
     if is_dataset(target_grid):
         target_grid = target_grid.copy()
