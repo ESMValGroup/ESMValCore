@@ -317,6 +317,8 @@ def test_use_mask_if_discontiguities_in_coords():
     scheme = {}
     scheme = _check_grid_discontiguities(cube, scheme)
     assert scheme == {'use_src_mask': True}
+
+
 def test_rechunk_on_increased_grid():
     """Test that an increase in grid size rechunks."""
     with dask.config.set({'array.chunk-size': '128 M'}):
