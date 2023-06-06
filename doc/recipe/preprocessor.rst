@@ -1015,6 +1015,13 @@ scheme available in :doc:`iris-esmf-regrid:index`:
           reference: esmf_regrid.schemes:regrid_rectilinear_to_rectilinear
           mdtol: 0.7
 
+Since version 0.6 of :doc:`iris-esmf-regrid:index`, the regridder is able
+to ignore discontinuities in the source grids if the data defined in the
+discontiguous points is masked.
+The :func:`~esmvalcore.preprocessor.regrid` preprocessor automatically detects
+if discontinuities are present, and configures the regridding scheme in order to take
+into account the mask of the source grid to ignore them.
+
 .. _ensemble statistics:
 
 Ensemble statistics
@@ -1886,7 +1893,7 @@ that can be:
 * left closed ``[z_min, z_max)``, in which the extracted range includes ``z_min`` but not ``z_max``.
 * right closed ``(z_min, z_max]``, in which the extracted range includes ``z_max`` but not ``z_min``.
 
-The extraction is performed by applying a constraint on the coordinate values, without any kind of interpolation. 
+The extraction is performed by applying a constraint on the coordinate values, without any kind of interpolation.
 
 This function takes four arguments:
 
