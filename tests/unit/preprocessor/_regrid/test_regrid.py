@@ -434,8 +434,11 @@ def test_no_rechunk_unsupported_grid():
         ),
         (0, 1),
     )
+
+    expected_chunks = cube.core_data().chunks
     result = _rechunk(cube, tgt_grid)
-    assert result.core_data().chunks == cube.core_data().chunks
+    assert result is cube
+    assert result.core_data().chunks == expected_chunks
 
 
 if __name__ == '__main__':
