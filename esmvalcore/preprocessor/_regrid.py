@@ -681,13 +681,27 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     return cube
 
 
-def _rechunk(cube, target_grid):
+def _rechunk(
+    cube: iris.cube.Cube,
+    target_grid: iris.cube.Cube,
+) -> iris.cube.Cube:
     """Re-chunk cube with optimal chunk sizes for target grid."""
     if not cube.has_lazy_data() or cube.ndim < 3:
         # Only rechunk lazy multidimensional data
         return cube
 
-    if 2 * np.prod(cube.shape[-2:]) > np.prod(target_grid.shape):
+    lon_coord = target_grid.coord(axis='X')
+    lat_coord = target_grid.coord(axis='Y')
+    if lon_coord.ndim != 1 or lat_coord.ndim != 1:
+        # This function only supports 1D lat/lon coordinates.
+        return cube
+
+    lon_dim, = target_grid.coord_dims(lon_coord)
+    lat_dim, = target_grid.coord_dims(lat_coord)
+    grid_indices = sorted((lon_dim, lat_dim))
+    target_grid_shape = tuple(target_grid.shape[i] for i in grid_indices)
+
+    if 2 * np.prod(cube.shape[-2:]) > np.prod(target_grid_shape):
         # Only rechunk if target grid is more than a factor of 2 larger,
         # because rechunking will keep the original chunk in memory.
         return cube
@@ -695,8 +709,8 @@ def _rechunk(cube, target_grid):
     data = cube.lazy_data()
 
     # Compute a good chunk size for the target array
-    tgt_shape = data.shape[:-2] + target_grid.shape
-    tgt_chunks = data.chunks[:-2] + target_grid.shape
+    tgt_shape = data.shape[:-2] + target_grid_shape
+    tgt_chunks = data.chunks[:-2] + target_grid_shape
     tgt_data = da.empty(tgt_shape, dtype=data.dtype, chunks=tgt_chunks)
     tgt_data = tgt_data.rechunk({i: "auto" for i in range(cube.ndim - 2)})
 
