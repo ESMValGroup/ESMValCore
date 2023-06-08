@@ -325,6 +325,34 @@ def test_use_mask_if_discontiguities_in_coords(caplog):
     assert msg in caplog.text
 
 
+def make_test_cube(shape):
+    data = da.empty(shape, dtype=np.float32)
+    cube = iris.cube.Cube(data)
+    if len(shape) > 2:
+        cube.add_dim_coord(
+            iris.coords.DimCoord(
+                np.arange(shape[0]),
+                standard_name='time',
+            ),
+            0,
+        )
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.linspace(-90., 90., shape[-2], endpoint=True),
+            standard_name='latitude',
+        ),
+        len(shape) - 2,
+    )
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.linspace(0., 360., shape[-1]),
+            standard_name='longitude',
+        ),
+        len(shape) - 1,
+    )
+    return cube
+
+
 def test_rechunk_on_increased_grid():
     """Test that an increase in grid size rechunks."""
     with dask.config.set({'array.chunk-size': '128 M'}):
@@ -333,10 +361,9 @@ def test_rechunk_on_increased_grid():
         src_grid_dims = (91, 180)
         data = da.empty((time_dim, ) + src_grid_dims, dtype=np.float32)
 
-        tgt_grid_dims = (361, 720)
-        tgt_grid = da.empty(tgt_grid_dims, dtype=np.float32)
-
-        result = _rechunk(iris.cube.Cube(data), iris.cube.Cube(tgt_grid))
+        tgt_grid_dims = (2, 361, 720)
+        tgt_grid = make_test_cube(tgt_grid_dims)
+        result = _rechunk(iris.cube.Cube(data), tgt_grid)
 
         assert result.core_data().chunks == ((123, 123), (91, ), (180, ))
 
@@ -350,9 +377,9 @@ def test_no_rechunk_on_decreased_grid():
         data = da.empty((time_dim, ) + src_grid_dims, dtype=np.float32)
 
         tgt_grid_dims = (91, 180)
-        tgt_grid = da.empty(tgt_grid_dims, dtype=np.float32)
+        tgt_grid = make_test_cube(tgt_grid_dims)
 
-        result = _rechunk(iris.cube.Cube(data), iris.cube.Cube(tgt_grid))
+        result = _rechunk(iris.cube.Cube(data), tgt_grid)
 
         assert result.core_data().chunks == data.chunks
 
@@ -378,6 +405,37 @@ def test_no_rechunk_non_lazy():
     tgt_cube = iris.cube.Cube(np.arange(4 * 8).reshape([4, 8]))
     result = _rechunk(cube, tgt_cube)
     assert result.data is cube.data
+
+
+def test_no_rechunk_unsupported_grid():
+    """Test that 2D target coordinates are ignored.
+
+    Because they are not supported at the moment. This could be
+    implemented at a later stage if needed.
+    """
+    cube = iris.cube.Cube(da.arange(2 * 4).reshape([1, 2, 4]))
+    tgt_grid_dims = (5, 10)
+    tgt_data = da.empty(tgt_grid_dims, dtype=np.float32)
+    tgt_grid = iris.cube.Cube(tgt_data)
+    lat_points = np.linspace(-90., 90., tgt_grid_dims[0], endpoint=True)
+    lon_points = np.linspace(0., 360., tgt_grid_dims[1])
+
+    tgt_grid.add_aux_coord(
+        iris.coords.AuxCoord(
+            np.broadcast_to(lat_points.reshape(-1, 1), tgt_grid_dims),
+            standard_name='latitude',
+        ),
+        (0, 1),
+    )
+    tgt_grid.add_aux_coord(
+        iris.coords.AuxCoord(
+            np.broadcast_to(lon_points.reshape(1, -1), tgt_grid_dims),
+            standard_name='longitude',
+        ),
+        (0, 1),
+    )
+    result = _rechunk(cube, tgt_grid)
+    assert result.core_data().chunks == cube.core_data().chunks
 
 
 if __name__ == '__main__':
