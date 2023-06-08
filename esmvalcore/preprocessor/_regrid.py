@@ -681,7 +681,10 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
     return cube
 
 
-def _rechunk(cube: iris.cube.Cube, target_grid: iris.cube.Cube):
+def _rechunk(
+    cube: iris.cube.Cube,
+    target_grid: iris.cube.Cube,
+) -> iris.cube.Cube:
     """Re-chunk cube with optimal chunk sizes for target grid."""
     if not cube.has_lazy_data() or cube.ndim < 3:
         # Only rechunk lazy multidimensional data
