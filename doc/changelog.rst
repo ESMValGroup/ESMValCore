@@ -6,8 +6,16 @@ Changelog
 v2.9.0
 ------
 Highlights
-
-TODO: add highlights
+~~~~~~~~~~
+It is now possible to use the
+`Dask distributed scheduler <https://docs.dask.org/en/latest/deploying.html>`__,
+which can
+`significantly reduce the run-time of recipes <https://github.com/ESMValGroup/ESMValCore/pull/2049#pullrequestreview-1446279391>`__.
+Configuration examples and advice are available in
+:ref:`our documentation <config-dask>`.
+More work on improving the computational performance is planned, so please share
+your experiences, good and bad, with this new feature in
+`ESMValGroup/ESMValCore#1763 <https://github.com/ESMValGroup/ESMValCore/discussions/1763>`__.
 
 This release includes
 
@@ -29,7 +37,7 @@ Bug fixes
 ~~~~~~~~~
 
 -  Respect ``ignore_warnings`` settings from the :ref:`project configuration <filterwarnings_config-developer>` in :func:`esmvalcore.dataset.Dataset.load` (`#2046 <https://github.com/ESMValGroup/ESMValCore/pull/2046>`__) `Manuel Schlund <https://github.com/schlunma>`__
--  Fixed usage of custom location for :ref:`custom tables <custom_cmor_tables>` (`#2052 <https://github.com/ESMValGroup/ESMValCore/pull/2052>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fixed usage of custom location for :ref:`custom CMOR tables <custom_cmor_tables>` (`#2052 <https://github.com/ESMValGroup/ESMValCore/pull/2052>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Fix issue with writing index.html when :ref:`running a recipe <running>` with ``--resume-from`` (`#2055 <https://github.com/ESMValGroup/ESMValCore/pull/2055>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Fixed bug in ICON CMORizer that lead to shifted time coordinates (`#2038 <https://github.com/ESMValGroup/ESMValCore/pull/2038>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
