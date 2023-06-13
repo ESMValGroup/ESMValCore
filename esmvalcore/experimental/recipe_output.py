@@ -1,7 +1,7 @@
 """API for handing recipe output."""
 import base64
 import logging
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Optional, Tuple, Type
 
@@ -125,7 +125,8 @@ class RecipeOutput(Mapping):
     FILTER_ATTRS: list = [
         "realms",
         "plot_types",
-        "variables"  # TODO Add in diagnostic, verify attr. name
+        "group_name",  # TODO Remove, for testing
+        "long_names",  # TODO Decide final name
     ]
 
     def __init__(self, task_output: dict, session=None, info=None):
@@ -164,11 +165,15 @@ class RecipeOutput(Mapping):
                         if attr in RecipeOutput.FILTER_ATTRS:
                             attr_list = self.filters.get(attr, set())
                             # NOTE: All current filter attributes are lists
-                            attr_list.update(values)
+                            if (isinstance(values, str)
+                                    or not isinstance(values, Sequence)):
+                                attr_list.add(values)
+                            else:
+                                attr_list.update(values)
                             self.filters[attr] = attr_list
 
-        for _filter in self.filters.keys():
-            self.filters[_filter] = sorted(self.filters[_filter])
+        for _filter, _attrs in self.filters:
+            self.filters[_filter] = sorted(_attrs)
 
     def __repr__(self):
         """Return canonical string representation."""
