@@ -5,7 +5,12 @@
 <div class="figure
 {% for filter in filters.keys() %}
     {% if filter in file.attributes %}
-        {% for attr in file.attributes[filter] %} f_{{ attr | replace(' ', '_') }} {% endfor %}
+        {% set attribute = file.attributes[filter] %}
+        {% if attribute is string or not attribute is iterable %}
+            f_{{ attribute | replace(' ', '_') }}
+        {% else %}
+            {% for attr in attribute %} f_{{ attr | replace(' ', '_') }} {% endfor %}
+        {% endif %}
     {% endif %}
 {% endfor %}
 ">
