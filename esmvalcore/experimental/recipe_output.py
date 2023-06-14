@@ -125,6 +125,7 @@ class RecipeOutput(Mapping):
 
     FILTER_ATTRS: list = [
         "realms",
+        "plot_type", # Used in monitor/monitor_base.py
         "plot_types",
         "group_name",  # TODO Remove, for testing
         "long_names",  # TODO Decide final name
