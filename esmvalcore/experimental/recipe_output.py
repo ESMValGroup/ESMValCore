@@ -164,8 +164,8 @@ class RecipeOutput(Mapping):
                 for file in task.files:
                     for attr, values in file.attributes.items():
                         if attr in RecipeOutput.FILTER_ATTRS:
+                            # Using set to avoid duplicates
                             attr_list = self.filters.get(attr, set())
-                            # NOTE: All current filter attributes are lists
                             if (isinstance(values, str)
                                     or not isinstance(values, Sequence)):
                                 attr_list.add(values)
@@ -173,8 +173,9 @@ class RecipeOutput(Mapping):
                                 attr_list.update(values)
                             self.filters[attr] = attr_list
 
-        for _filter, _attrs in self.filters:
-            self.filters[_filter] = sorted(_attrs)
+        # Sort at the end because sets are unordered
+        for _filter, _attrs in self.filters.items():
+             self.filters[_filter] = sorted(_attrs)
 
     def __repr__(self):
         """Return canonical string representation."""
