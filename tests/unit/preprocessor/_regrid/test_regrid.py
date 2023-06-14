@@ -1,9 +1,12 @@
 """Unit tests for the :func:`esmvalcore.preprocessor.regrid.regrid`
 function."""
 
+import logging
 import unittest
 from unittest import mock
 
+import dask
+import dask.array as da
 import iris
 import numpy as np
 import pytest
@@ -13,11 +16,14 @@ from esmvalcore.preprocessor import regrid
 from esmvalcore.preprocessor._regrid import (
     _CACHE,
     HORIZONTAL_SCHEMES,
+    _check_grid_discontiguities,
     _horizontal_grid_is_close,
+    _rechunk,
 )
 
 
 class Test(tests.Test):
+
     def _check(self, tgt_grid, scheme, spec=False):
         expected_scheme = HORIZONTAL_SCHEMES[scheme]
 
@@ -65,9 +71,10 @@ class Test(tests.Test):
             regrid=self.regrid,
             dtype=float,
         )
+        self.src_cube.ndim = 1
         self.tgt_grid_coord = mock.Mock()
-        self.tgt_grid = mock.Mock(
-            spec=iris.cube.Cube, coord=self.tgt_grid_coord)
+        self.tgt_grid = mock.Mock(spec=iris.cube.Cube,
+                                  coord=self.tgt_grid_coord)
         self.regrid_schemes = [
             'linear', 'linear_extrapolate', 'nearest', 'area_weighted',
             'unstructured_nearest'
@@ -107,8 +114,8 @@ class Test(tests.Test):
             regrid(self.src_cube, self.src_cube, 'wibble')
 
     def test_horizontal_schemes(self):
-        self.assertEqual(
-            set(HORIZONTAL_SCHEMES.keys()), set(self.regrid_schemes))
+        self.assertEqual(set(HORIZONTAL_SCHEMES.keys()),
+                         set(self.regrid_schemes))
 
     def test_regrid__horizontal_schemes(self):
         for scheme in self.regrid_schemes:
@@ -150,12 +157,12 @@ class Test(tests.Test):
     third_party_regridder = mock.Mock()
 
     def test_regrid_generic_third_party(self):
-        regrid(self.src_cube, '1x1',
-               {"reference":
-                "tests.unit.preprocessor._regrid.test_regrid:"
+        regrid(
+            self.src_cube, '1x1', {
+                "reference": "tests.unit.preprocessor._regrid.test_regrid:"
                 "Test.third_party_regridder",
                 "method": "good",
-                })
+            })
         self.third_party_regridder.assert_called_once_with(method="good")
 
 
@@ -260,6 +267,178 @@ def test_regrid_is_skipped_if_grids_are_the_same():
     # regridding to a different spec returns a different cube
     expected_different_cube = regrid(cube, target_grid='5x5', scheme=scheme)
     assert expected_different_cube is not cube
+
+
+def test_no_discontiguities_in_coords():
+    """Test that no mask is used if there are no discontinuities in coords."""
+    cube = _make_cube(lat=LAT_SPEC1, lon=LON_SPEC1)
+    scheme = {}
+    scheme = _check_grid_discontiguities(cube, scheme)
+    assert scheme == {}
+
+
+def test_use_mask_if_discontiguities_in_coords(caplog):
+    """Test use_src_mask is added to the scheme."""
+    lat_bounds = np.array(
+        [[[-43.48076211, -34.01923789, -22.00961894, -31.47114317],
+          [-34.01923789, -10.0, 2.00961894, -22.00961894],
+          [-10.0, -0.53847577, 11.47114317, 2.00961894]],
+         [[-31.47114317, -22.00961894, -10.0, -19.46152423],
+          [-22.00961894, 2.00961894, 14.01923789, -10.0],
+          [2.00961894, 11.47114317, 23.48076211, 14.01923789]]])
+    lat_coord = iris.coords.AuxCoord(
+        [[-40.0, -20.0, 0.0], [-20.0, 0.0, 20.0]],
+        var_name='lat',
+        standard_name='latitude',
+        units='degrees_north',
+        bounds=lat_bounds,
+    )
+    lon_bounds = np.array([[[140.625, 99.375, 99.375, 140.625],
+                            [99.375, 140.625, 140.625, 99.375],
+                            [140.625, 99.375, 99.375, 140.625]],
+                           [[140., 99.375, 99.375, 140.],
+                            [99.375, 140.625, 140.625, 99.375],
+                            [140., 99.375, 99.375, 140.]]])
+    lon_coord = iris.coords.AuxCoord(
+        [[100.0, 140.0, 180.0], [80.0, 100.0, 120.0]],
+        var_name='lon',
+        standard_name='longitude',
+        units='degrees_east',
+        bounds=lon_bounds,
+    )
+    data = np.ma.array(
+        [[-40.0, -20.0, 0.0], [-20.0, 0.0, 20.0]],
+        mask=[[True, False, True], [False, True, False]],
+    )
+    cube = iris.cube.Cube(
+        data,
+        aux_coords_and_dims=[(lat_coord, (0, 1)), (lon_coord, (0, 1))],
+    )
+
+    scheme = {}
+    with caplog.at_level(logging.DEBUG):
+        scheme = _check_grid_discontiguities(cube, scheme)
+    assert scheme == {'use_src_mask': True}
+
+    msg = ('Grid discontinuities were found in the source grid. '
+           'Setting scheme argument `use_src_mask` to True.')
+    assert msg in caplog.text
+
+
+def make_test_cube(shape):
+    data = da.empty(shape, dtype=np.float32)
+    cube = iris.cube.Cube(data)
+    if len(shape) > 2:
+        cube.add_dim_coord(
+            iris.coords.DimCoord(
+                np.arange(shape[0]),
+                standard_name='time',
+            ),
+            0,
+        )
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.linspace(-90., 90., shape[-2], endpoint=True),
+            standard_name='latitude',
+        ),
+        len(shape) - 2,
+    )
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.linspace(0., 360., shape[-1]),
+            standard_name='longitude',
+        ),
+        len(shape) - 1,
+    )
+    return cube
+
+
+def test_rechunk_on_increased_grid():
+    """Test that an increase in grid size rechunks."""
+    with dask.config.set({'array.chunk-size': '128 M'}):
+
+        time_dim = 246
+        src_grid_dims = (91, 180)
+        data = da.empty((time_dim, ) + src_grid_dims, dtype=np.float32)
+
+        tgt_grid_dims = (2, 361, 720)
+        tgt_grid = make_test_cube(tgt_grid_dims)
+        result = _rechunk(iris.cube.Cube(data), tgt_grid)
+
+        assert result.core_data().chunks == ((123, 123), (91, ), (180, ))
+
+
+def test_no_rechunk_on_decreased_grid():
+    """Test that a decrease in grid size does not rechunk."""
+    with dask.config.set({'array.chunk-size': '128 M'}):
+
+        time_dim = 200
+        src_grid_dims = (361, 720)
+        data = da.empty((time_dim, ) + src_grid_dims, dtype=np.float32)
+
+        tgt_grid_dims = (91, 180)
+        tgt_grid = make_test_cube(tgt_grid_dims)
+
+        result = _rechunk(iris.cube.Cube(data), tgt_grid)
+
+        assert result.core_data().chunks == data.chunks
+
+
+def test_no_rechunk_2d():
+    """Test that a 2D cube is not rechunked."""
+    with dask.config.set({'array.chunk-size': '64 MiB'}):
+
+        src_grid_dims = (361, 720)
+        data = da.empty(src_grid_dims, dtype=np.float32)
+
+        tgt_grid_dims = (3601, 7200)
+        tgt_grid = da.empty(tgt_grid_dims, dtype=np.float32)
+
+        result = _rechunk(iris.cube.Cube(data), iris.cube.Cube(tgt_grid))
+
+        assert result.core_data().chunks == data.chunks
+
+
+def test_no_rechunk_non_lazy():
+    """Test that a cube with non-lazy data does not crash."""
+    cube = iris.cube.Cube(np.arange(2 * 4).reshape([1, 2, 4]))
+    tgt_cube = iris.cube.Cube(np.arange(4 * 8).reshape([4, 8]))
+    result = _rechunk(cube, tgt_cube)
+    assert result.data is cube.data
+
+
+def test_no_rechunk_unsupported_grid():
+    """Test that 2D target coordinates are ignored.
+
+    Because they are not supported at the moment. This could be
+    implemented at a later stage if needed.
+    """
+    cube = iris.cube.Cube(da.arange(2 * 4).reshape([1, 2, 4]))
+    tgt_grid_dims = (5, 10)
+    tgt_data = da.empty(tgt_grid_dims, dtype=np.float32)
+    tgt_grid = iris.cube.Cube(tgt_data)
+    lat_points = np.linspace(-90., 90., tgt_grid_dims[0], endpoint=True)
+    lon_points = np.linspace(0., 360., tgt_grid_dims[1])
+
+    tgt_grid.add_aux_coord(
+        iris.coords.AuxCoord(
+            np.broadcast_to(lat_points.reshape(-1, 1), tgt_grid_dims),
+            standard_name='latitude',
+        ),
+        (0, 1),
+    )
+    tgt_grid.add_aux_coord(
+        iris.coords.AuxCoord(
+            np.broadcast_to(lon_points.reshape(1, -1), tgt_grid_dims),
+            standard_name='longitude',
+        ),
+        (0, 1),
+    )
+
+    expected_chunks = cube.core_data().chunks
+    result = _rechunk(cube, tgt_grid)
+    assert result is cube
+    assert result.core_data().chunks == expected_chunks
 
 
 if __name__ == '__main__':

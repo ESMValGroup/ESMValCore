@@ -15,17 +15,17 @@
 {% endfor %}
 ">
     <figure>
-        <a href='{{ file.path.relative_to(session.session_dir) }}'>
-        <img src='{{ file.path.relative_to(session.session_dir) }}' alt='{{ file.caption }}'/>
+        <a href='{{ relpath(file.path, session.session_dir) }}'>
+        <img src='{{ relpath(file.path, session.session_dir) }}' alt='{{ file.caption }}'/>
         </a>
         <figcaption>
             {{ file.caption }}
             <br>
             <br>
-            <a href='{{ file.path.relative_to(session.session_dir) }}'>download</a> |
-            <a href='{{ file.citation_file.relative_to(session.session_dir) }}'>references</a> |
-            <a href='{{ file.data_citation_file.relative_to(session.session_dir) }}'>extra data citation</a> |
-            <a href='{{ file.provenance_xml_file.relative_to(session.session_dir) }}'>provenance</a>
+            <a href='{{ relpath(file.path, session.session_dir) }}'>download</a> |
+            <a href='{{ relpath(file.citation_file, session.session_dir) }}'>references</a> |
+            <a href='{{ relpath(file.data_citation_file, session.session_dir) }}'>extra data citation</a> |
+            <a href='{{ relpath(file.provenance_xml_file, session.session_dir) }}'>provenance</a>
         </figcaption>
     </figure>
 </div>
@@ -43,10 +43,10 @@
 
     <li>
         {{ file.caption }} |
-        <a href='{{ file.path.relative_to(session.session_dir) }}'>download</a> |
-        <a href='{{ file.citation_file.relative_to(session.session_dir) }}'>references</a> |
-        <a href='{{ file.data_citation_file.relative_to(session.session_dir) }}'>extra data citation</a> |
-        <a href='{{ file.provenance_xml_file.relative_to(session.session_dir) }}'>provenance</a>
+        <a href='{{ relpath(file.path, session.session_dir) }}'>download</a> |
+        <a href='{{ relpath(file.citation_file, session.session_dir) }}'>references</a> |
+        <a href='{{ relpath(file.data_citation_file, session.session_dir) }}'>extra data citation</a> |
+        <a href='{{ relpath(file.provenance_xml_file, session.session_dir) }}'>provenance</a>
     </li>
 
 {% endfor %}

@@ -8,12 +8,12 @@ import numpy as np
 import pytest
 from cf_units import Unit
 from iris import NameConstraint
-from iris.coords import AuxCoord, DimCoord
+from iris.coords import AuxCoord, CellMethod, DimCoord
 from iris.cube import Cube, CubeList
 
 import esmvalcore.cmor._fixes.icon.icon
 from esmvalcore.cmor._fixes.icon._base_fixes import IconFix
-from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi, Siconc, Siconca
+from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config import CFG
@@ -119,6 +119,7 @@ def _get_fix(mip, short_name, fix_name, session=None):
         short_name=short_name,
     )
     extra_facets = get_extra_facets(dataset, ())
+    extra_facets['frequency'] = 'mon'
     vardef = get_var_info(project='ICON', mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.icon.icon, fix_name)
     fix = cls(vardef, extra_facets=extra_facets, session=session)
@@ -190,8 +191,8 @@ def check_time(cube):
     assert time.long_name == 'time'
     assert time.units == Unit('days since 1850-01-01',
                               calendar='proleptic_gregorian')
-    np.testing.assert_allclose(time.points, [54786.0])
-    assert time.bounds is None
+    np.testing.assert_allclose(time.points, [54770.5])
+    np.testing.assert_allclose(time.bounds, [[54755.0, 54786.0]])
     assert time.attributes == {}
 
 
@@ -647,12 +648,13 @@ def test_rsut_fix(cubes_2d):
 def test_get_siconc_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'SImon', 'siconc')
-    assert fix == [Siconc(None), AllVars(None)]
+    assert fix == [AllVars(None)]
 
 
 def test_siconc_fix(cubes_2d):
     """Test fix."""
-    fixed_cubes = fix_metadata(cubes_2d, 'SImon', 'siconc')
+    fix = get_allvars_fix('SImon', 'siconc')
+    fixed_cubes = fix.fix_metadata(cubes_2d)
 
     cube = check_siconc_metadata(fixed_cubes, 'siconc',
                                  'Sea-Ice Area Percentage (Ocean Grid)')
@@ -669,12 +671,13 @@ def test_siconc_fix(cubes_2d):
 def test_get_siconca_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'SImon', 'siconca')
-    assert fix == [Siconca(None), AllVars(None)]
+    assert fix == [AllVars(None)]
 
 
 def test_siconca_fix(cubes_2d):
     """Test fix."""
-    fixed_cubes = fix_metadata(cubes_2d, 'SImon', 'siconca')
+    fix = get_allvars_fix('SImon', 'siconca')
+    fixed_cubes = fix.fix_metadata(cubes_2d)
 
     cube = check_siconc_metadata(fixed_cubes, 'siconca',
                                  'Sea-Ice Area Percentage (Atmospheric Grid)')
@@ -723,7 +726,7 @@ def test_ta_fix_no_plev_bounds(cubes_3d):
     check_lat_lon(cube)
 
 
-# Test tas (for height2m coordinate)
+# Test tas (for height2m coordinate, no mesh, no shift time)
 
 
 def test_get_tas_fix():
@@ -773,10 +776,10 @@ def test_tas_scalar_height2m_already_present(cubes_2d):
     check_heightxm(cube, 2.0)
 
 
-def test_tas_dim_height2m_already_present(cubes_2d, monkeypatch):
+def test_tas_dim_height2m_already_present(cubes_2d):
     """Test fix."""
     fix = get_allvars_fix('Amon', 'tas')
-    monkeypatch.setitem(fix.extra_facets, 'ugrid', False)
+    fix.extra_facets['ugrid'] = False
     fixed_cubes = fix.fix_metadata(cubes_2d)
 
     cube = check_tas_metadata(fixed_cubes)
@@ -821,6 +824,28 @@ def test_tas_no_mesh(cubes_2d):
     cube = fixed_cubes[0]
     assert cube.shape == (1, 8)
     check_heightxm(cube, 2.0)
+
+
+def test_tas_no_shift_time(cubes_2d):
+    """Test fix."""
+    fix = get_allvars_fix('Amon', 'tas')
+    fix.extra_facets['shift_time'] = False
+    fixed_cubes = fix.fix_metadata(cubes_2d)
+
+    cube = check_tas_metadata(fixed_cubes)
+    check_lat_lon(cube)
+    check_heightxm(cube, 2.0)
+
+    assert cube.coords('time', dim_coords=True)
+    time = cube.coord('time', dim_coords=True)
+    assert time.var_name == 'time'
+    assert time.standard_name == 'time'
+    assert time.long_name == 'time'
+    assert time.units == Unit('days since 1850-01-01',
+                              calendar='proleptic_gregorian')
+    np.testing.assert_allclose(time.points, [54786.0])
+    assert time.bounds is None
+    assert time.attributes == {}
 
 
 # Test uas (for height10m coordinate)
@@ -936,7 +961,7 @@ def test_ch4clim_fix(cubes_regular_grid):
     cube.units = 'mol mol-1'
     cube.coord('time').units = 'no_unit'
     cube.coord('time').attributes['invalid_units'] = 'day as %Y%m%d.%f'
-    cube.coord('time').points = [18500104.0]
+    cube.coord('time').points = [18500201.0]
     cube.coord('time').long_name = 'wrong_time_name'
 
     fix = get_allvars_fix('Amon', 'ch4Clim')
@@ -957,8 +982,8 @@ def test_ch4clim_fix(cubes_regular_grid):
     assert time_coord.units == Unit(
         'days since 1850-01-01', calendar='proleptic_gregorian'
     )
-    np.testing.assert_allclose(time_coord.points, [3.0])
-    assert time_coord.bounds is None
+    np.testing.assert_allclose(time_coord.points, [15.5])
+    np.testing.assert_allclose(time_coord.bounds, [[0.0, 31.0]])
 
 
 # Test fix with empty standard_name
@@ -1149,22 +1174,40 @@ def test_add_coord_from_grid_fail_two_unnamed_dims(cubes_2d):
         fix._add_coord_from_grid_file(tas_cube, 'latitude')
 
 
+# Test get_horizontal_grid
+
+
+@mock.patch.object(IconFix, '_get_grid_from_facet', autospec=True)
 @mock.patch('esmvalcore.cmor._fixes.icon._base_fixes.requests', autospec=True)
-def test_get_horizontal_grid_cached_in_dict(mock_requests):
+def test_get_horizontal_grid_from_attr_cached_in_dict(
+    mock_requests,
+    mock_get_grid_from_facet,
+):
     """Test fix."""
     cube = Cube(0, attributes={'grid_file_uri': 'cached_grid_url.nc'})
     grid_cube = Cube(0)
     fix = get_allvars_fix('Amon', 'tas')
     fix._horizontal_grids['cached_grid_url.nc'] = grid_cube
+    fix._horizontal_grids['grid_from_facet.nc'] = mock.sentinel.wrong_grid
 
     grid = fix.get_horizontal_grid(cube)
+    assert len(fix._horizontal_grids) == 2
+    assert 'cached_grid_url.nc' in fix._horizontal_grids
+    assert 'grid_from_facet.nc' in fix._horizontal_grids  # has not been used
+    assert fix._horizontal_grids['cached_grid_url.nc'] == grid
     assert grid == grid_cube
     assert grid is not grid_cube
     assert mock_requests.mock_calls == []
+    mock_get_grid_from_facet.assert_not_called()
 
 
+@mock.patch.object(IconFix, '_get_grid_from_facet', autospec=True)
 @mock.patch('esmvalcore.cmor._fixes.icon._base_fixes.requests', autospec=True)
-def test_get_horizontal_grid_cached_in_file(mock_requests, tmp_path):
+def test_get_horizontal_grid_from_attr_cached_in_file(
+    mock_requests,
+    mock_get_grid_from_facet,
+    tmp_path,
+):
     """Test fix."""
     cube = Cube(0, attributes={
         'grid_file_uri': 'https://temporary.url/this/is/the/grid_file.nc'})
@@ -1181,10 +1224,17 @@ def test_get_horizontal_grid_cached_in_file(mock_requests, tmp_path):
     assert grid[0].var_name == 'grid'
     assert len(fix._horizontal_grids) == 1
     assert 'grid_file.nc' in fix._horizontal_grids
+    assert fix._horizontal_grids['grid_file.nc'] == grid
     assert mock_requests.mock_calls == []
+    mock_get_grid_from_facet.assert_not_called()
 
 
-def test_get_horizontal_grid_cache_file_too_old(tmp_path, monkeypatch):
+@mock.patch.object(IconFix, '_get_grid_from_facet', autospec=True)
+def test_get_horizontal_grid_from_attr_cache_file_too_old(
+    mock_get_grid_from_facet,
+    tmp_path,
+    monkeypatch,
+):
     """Test fix."""
     cube = Cube(0, attributes={'grid_file_uri': TEST_GRID_FILE_URI})
     fix = get_allvars_fix('Amon', 'tas')
@@ -1208,6 +1258,88 @@ def test_get_horizontal_grid_cache_file_too_old(tmp_path, monkeypatch):
     assert 'vertex_of_cell' in var_names
     assert len(fix._horizontal_grids) == 1
     assert TEST_GRID_FILE_NAME in fix._horizontal_grids
+    assert fix._horizontal_grids[TEST_GRID_FILE_NAME] == grid
+    mock_get_grid_from_facet.assert_not_called()
+
+
+@mock.patch.object(IconFix, '_get_grid_from_cube_attr', autospec=True)
+def test_get_horizontal_grid_from_facet_cached_in_dict(
+    mock_get_grid_from_cube_attr,
+    tmp_path,
+):
+    """Test fix."""
+    session = CFG.start_session('my session')
+    session['auxiliary_data_dir'] = tmp_path
+
+    # Save temporary grid file (this will not be used; however, it is necessary
+    # to not raise a FileNotFoundError)
+    grid_path = 'grid.nc'
+    wrong_grid_cube = Cube(0, var_name='wrong_grid')
+    iris.save(wrong_grid_cube, tmp_path / 'grid.nc')
+
+    # Make sure that grid specified by cube attribute is NOT used
+    cube = Cube(0, attributes={'grid_file_uri': 'cached_grid_url.nc'})
+    grid_cube = Cube(0, var_name='grid')
+    fix = get_allvars_fix('Amon', 'tas', session=session)
+    fix.extra_facets['horizontal_grid'] = grid_path
+    fix._horizontal_grids['cached_grid_url.nc'] = mock.sentinel.wrong_grid
+    fix._horizontal_grids['grid.nc'] = grid_cube
+
+    grid = fix.get_horizontal_grid(cube)
+    assert len(fix._horizontal_grids) == 2
+    assert 'cached_grid_url.nc' in fix._horizontal_grids  # has not been used
+    assert 'grid.nc' in fix._horizontal_grids
+    assert fix._horizontal_grids['grid.nc'] == grid
+    assert grid == grid_cube
+    assert grid is not grid_cube
+    mock_get_grid_from_cube_attr.assert_not_called()
+
+
+@pytest.mark.parametrize('grid_path', ['{tmp_path}/grid.nc', 'grid.nc'])
+@mock.patch.object(IconFix, '_get_grid_from_cube_attr', autospec=True)
+def test_get_horizontal_grid_from_facet(
+    mock_get_grid_from_cube_attr,
+    grid_path,
+    tmp_path,
+):
+    """Test fix."""
+    session = CFG.start_session('my session')
+    session['auxiliary_data_dir'] = tmp_path
+
+    # Make sure that grid specified by cube attribute is NOT used
+    cube = Cube(0, attributes={'grid_file_uri': 'cached_grid_url.nc'})
+
+    # Save temporary grid file
+    grid_path = grid_path.format(tmp_path=tmp_path)
+    grid_cube = Cube(0, var_name='grid')
+    iris.save(grid_cube, tmp_path / 'grid.nc')
+
+    fix = get_allvars_fix('Amon', 'tas', session=session)
+    fix.extra_facets['horizontal_grid'] = grid_path
+    fix._horizontal_grids['cached_grid_url.nc'] = mock.sentinel.wrong_grid
+
+    grid = fix.get_horizontal_grid(cube)
+    assert isinstance(grid, CubeList)
+    assert len(grid) == 1
+    assert grid[0].var_name == 'grid'
+    assert len(fix._horizontal_grids) == 2
+    assert 'cached_grid_url.nc' in fix._horizontal_grids  # has not been used
+    assert 'grid.nc' in fix._horizontal_grids
+    assert fix._horizontal_grids['grid.nc'] == grid
+    mock_get_grid_from_cube_attr.assert_not_called()
+
+
+def test_get_horizontal_grid_from_facet_fail(tmp_path):
+    """Test fix."""
+    session = CFG.start_session('my session')
+    session['auxiliary_data_dir'] = tmp_path
+
+    cube = Cube(0)
+    fix = get_allvars_fix('Amon', 'tas', session=session)
+    fix.extra_facets['horizontal_grid'] = '/this/does/not/exist.nc'
+
+    with pytest.raises(FileNotFoundError):
+        fix.get_horizontal_grid(cube)
 
 
 # Test with single-dimension cubes
@@ -1225,7 +1357,7 @@ def test_only_time(monkeypatch):
     monkeypatch.setattr(fix.vardef, 'coordinates', {'time': coord_info})
 
     # Create cube with only a single dimension
-    time_coord = DimCoord([0.0, 1.0],
+    time_coord = DimCoord([0.0, 31.0],
                           var_name='time',
                           standard_name='time',
                           long_name='time',
@@ -1252,9 +1384,9 @@ def test_only_time(monkeypatch):
     assert new_time_coord.units == 'days since 1850-01-01'
 
     # Check time data
-    np.testing.assert_allclose(new_time_coord.points, [0.0, 1.0])
+    np.testing.assert_allclose(new_time_coord.points, [-15.5, 15.5])
     np.testing.assert_allclose(new_time_coord.bounds,
-                               [[-0.5, 0.5], [0.5, 1.5]])
+                               [[-31.0, 0.0], [0.0, 31.0]])
 
     # Check that no mesh has been created
     assert cube.mesh is None
@@ -1423,12 +1555,13 @@ def test_invalid_time_units(cubes_2d):
         fix.fix_metadata(cubes_2d)
 
 
-# Test fix with hourly data
+# Test fix with (sub-)hourly data
 
 
 def test_hourly_data(cubes_2d):
     """Test fix."""
     fix = get_allvars_fix('Amon', 'tas')
+    fix.extra_facets['frequency'] = '1hr'
     for cube in cubes_2d:
         cube.coord('time').points = [20041104.5833333]
 
@@ -1436,8 +1569,11 @@ def test_hourly_data(cubes_2d):
 
     cube = check_tas_metadata(fixed_cubes)
     date = cube.coord('time').units.num2date(cube.coord('time').points)
-    np.testing.assert_array_equal(date, [datetime(2004, 11, 4, 14, 0)])
-    assert cube.coord('time').bounds is None
+    date_bnds = cube.coord('time').units.num2date(cube.coord('time').bounds)
+    np.testing.assert_array_equal(date, [datetime(2004, 11, 4, 13, 30)])
+    np.testing.assert_array_equal(
+        date_bnds, [[datetime(2004, 11, 4, 13), datetime(2004, 11, 4, 14)]]
+    )
 
 
 @pytest.mark.parametrize(
@@ -1445,28 +1581,28 @@ def test_hourly_data(cubes_2d):
     [
         None,
         [
-            [20211231.9, 20220101.1],
-            [20220101.1, 20220101.6],
-            [20220101.6, 20220102.4],
+            [20211231.875, 20220101.125],
+            [20220101.125, 20220101.375],
         ],
     ],
 )
-def test_hourly_data_multiple_points(bounds, cubes_2d):
+def test_6hourly_data_multiple_points(bounds):
     """Test fix."""
     time_coord = DimCoord(
-        [20220101, 20220101.2, 20220102],
+        [20220101, 20220101.25],
         bounds=bounds,
         standard_name='time',
         attributes={'invalid_units': 'day as %Y%m%d.%f'},
     )
     cube = Cube(
-        [1, 2, 3],
+        [1, 2],
         var_name='tas',
         units='K',
         dim_coords_and_dims=[(time_coord, 0)],
     )
     cubes = CubeList([cube])
     fix = get_allvars_fix('Amon', 'tas')
+    fix.extra_facets['frequency'] = '6hr'
 
     fixed_cube = fix._fix_time(cube, cubes)
 
@@ -1474,20 +1610,296 @@ def test_hourly_data_multiple_points(bounds, cubes_2d):
     bounds = fixed_cube.coord('time').units.num2date(cube.coord('time').bounds)
     np.testing.assert_array_equal(
         points,
-        [
-            datetime(2022, 1, 1, 0, 0),
-            datetime(2022, 1, 1, 4, 48),
-            datetime(2022, 1, 2, 0, 0),
-        ],
+        [datetime(2021, 12, 31, 21), datetime(2022, 1, 1, 3)],
     )
     np.testing.assert_array_equal(
         bounds,
         [
-            [datetime(2021, 12, 31, 21, 36), datetime(2022, 1, 1, 2, 24)],
-            [datetime(2022, 1, 1, 2, 24), datetime(2022, 1, 1, 14, 24)],
-            [datetime(2022, 1, 1, 14, 24), datetime(2022, 1, 2, 9, 36)],
+            [datetime(2021, 12, 31, 18), datetime(2022, 1, 1)],
+            [datetime(2022, 1, 1), datetime(2022, 1, 1, 6)],
         ],
     )
+
+
+def test_subhourly_data_no_shift():
+    """Test fix."""
+    time_coord = DimCoord(
+        [0.5, 1.0],
+        standard_name='time',
+        units=Unit('hours since 2022-01-01', calendar='proleptic_gregorian'),
+    )
+    cube = Cube(
+        [1, 2],
+        var_name='tas',
+        units='K',
+        dim_coords_and_dims=[(time_coord, 0)],
+    )
+    cubes = CubeList([cube])
+    fix = get_allvars_fix('Amon', 'tas')
+    fix.extra_facets['frequency'] = 'subhr'
+    fix.extra_facets['shift_time'] = False
+
+    fixed_cube = fix._fix_time(cube, cubes)
+
+    points = fixed_cube.coord('time').units.num2date(cube.coord('time').points)
+    bounds = fixed_cube.coord('time').units.num2date(cube.coord('time').bounds)
+    np.testing.assert_array_equal(
+        points,
+        [datetime(2022, 1, 1, 0, 30), datetime(2022, 1, 1, 1)],
+    )
+    np.testing.assert_array_equal(
+        bounds,
+        [
+            [datetime(2022, 1, 1, 0, 15), datetime(2022, 1, 1, 0, 45)],
+            [datetime(2022, 1, 1, 0, 45), datetime(2022, 1, 1, 1, 15)],
+        ],
+    )
+
+
+# Test _shift_time_coord
+
+
+@pytest.mark.parametrize(
+    'frequency,dt_in,dt_out,bounds',
+    [
+        (
+            'dec',
+            [(2000, 1, 1)],
+            [(1995, 1, 1)],
+            [[(1990, 1, 1), (2000, 1, 1)]],
+        ),
+        (
+            'yr',
+            [(2000, 1, 1), (2001, 1, 1)],
+            [(1999, 7, 2, 12), (2000, 7, 2)],
+            [[(1999, 1, 1), (2000, 1, 1)], [(2000, 1, 1), (2001, 1, 1)]],
+        ),
+        (
+            'mon',
+            [(2000, 1, 1)],
+            [(1999, 12, 16, 12)],
+            [[(1999, 12, 1), (2000, 1, 1)]],
+        ),
+        (
+            'mon',
+            [(2000, 11, 30, 23, 45), (2000, 12, 31, 23)],
+            [(2000, 11, 16), (2000, 12, 16, 12)],
+            [[(2000, 11, 1), (2000, 12, 1)], [(2000, 12, 1), (2001, 1, 1)]],
+        ),
+        (
+            'day',
+            [(2000, 1, 1, 12)],
+            [(2000, 1, 1)],
+            [[(1999, 12, 31, 12), (2000, 1, 1, 12)]],
+        ),
+        (
+            '6hr',
+            [(2000, 1, 5, 14), (2000, 1, 5, 20)],
+            [(2000, 1, 5, 11), (2000, 1, 5, 17)],
+            [
+                [(2000, 1, 5, 8), (2000, 1, 5, 14)],
+                [(2000, 1, 5, 14), (2000, 1, 5, 20)],
+            ],
+        ),
+        (
+            '3hr',
+            [(2000, 1, 1)],
+            [(1999, 12, 31, 22, 30)],
+            [[(1999, 12, 31, 21), (2000, 1, 1)]],
+        ),
+        (
+            '1hr',
+            [(2000, 1, 5, 14), (2000, 1, 5, 15)],
+            [(2000, 1, 5, 13, 30), (2000, 1, 5, 14, 30)],
+            [
+                [(2000, 1, 5, 13), (2000, 1, 5, 14)],
+                [(2000, 1, 5, 14), (2000, 1, 5, 15)],
+            ],
+        ),
+    ],
+)
+def test_shift_time_coord(frequency, dt_in, dt_out, bounds):
+    """Test ``_shift_time_coord``."""
+    cube = Cube(0, cell_methods=[CellMethod('mean', 'time')])
+    datetimes = [datetime(*dt) for dt in dt_in]
+    time_units = Unit('days since 1950-01-01', calendar='proleptic_gregorian')
+    time_coord = DimCoord(
+        time_units.date2num(datetimes),
+        standard_name='time',
+        var_name='time',
+        long_name='time',
+        units=time_units,
+    )
+
+    fix = get_allvars_fix('Amon', 'tas')
+    fix.extra_facets['frequency'] = frequency
+
+    fix._shift_time_coord(cube, time_coord)
+
+    dt_out = [datetime(*dt) for dt in dt_out]
+    bounds = [[datetime(*dt1), datetime(*dt2)] for (dt1, dt2) in bounds]
+    np.testing.assert_allclose(
+        time_coord.points, time_coord.units.date2num(dt_out)
+    )
+    np.testing.assert_allclose(
+        time_coord.bounds, time_coord.units.date2num(bounds)
+    )
+
+
+@pytest.mark.parametrize(
+    'frequency,dt_in',
+    [
+        ('dec', [(2000, 1, 15)]),
+        ('yr', [(2000, 1, 1), (2001, 1, 1)]),
+        ('mon', [(2000, 6, 15)]),
+        ('day', [(2000, 1, 1), (2001, 1, 2)]),
+        ('6hr', [(2000, 6, 15, 12)]),
+        ('3hr', [(2000, 1, 1, 4), (2000, 1, 1, 7)]),
+        ('1hr', [(2000, 1, 1, 4), (2000, 1, 1, 5)]),
+    ],
+)
+def test_shift_time_point_measurement(frequency, dt_in):
+    """Test ``_shift_time_coord``."""
+    cube = Cube(0, cell_methods=[CellMethod('point', 'time')])
+    datetimes = [datetime(*dt) for dt in dt_in]
+    time_units = Unit('days since 1950-01-01', calendar='proleptic_gregorian')
+    time_coord = DimCoord(
+        time_units.date2num(datetimes),
+        standard_name='time',
+        var_name='time',
+        long_name='time',
+        units=time_units,
+    )
+
+    fix = get_allvars_fix('Amon', 'tas')
+    fix.extra_facets['frequency'] = frequency
+
+    fix._shift_time_coord(cube, time_coord)
+
+    np.testing.assert_allclose(
+        time_coord.points, time_coord.units.date2num(datetimes)
+    )
+    assert time_coord.bounds is None
+
+
+@pytest.mark.parametrize(
+    'frequency', ['dec', 'yr', 'yrPt', 'mon', 'monC', 'monPt']
+)
+def test_shift_time_coord_hourly_data_low_freq_fail(frequency):
+    """Test ``_shift_time_coord``."""
+    cube = Cube(0, cell_methods=[CellMethod('mean', 'time')])
+    time_units = Unit('hours since 1950-01-01', calendar='proleptic_gregorian')
+    time_coord = DimCoord(
+        [1, 2, 3],
+        standard_name='time',
+        var_name='time',
+        long_name='time',
+        units=time_units,
+    )
+
+    fix = get_allvars_fix('Amon', 'tas')
+    fix.extra_facets['frequency'] = frequency
+
+    msg = (
+        "Cannot shift time coordinate: Rounding to closest day failed."
+    )
+    with pytest.raises(ValueError, match=msg):
+        fix._shift_time_coord(cube, time_coord)
+
+
+@pytest.mark.parametrize(
+    'frequency', ['dec', 'yr', 'yrPt', 'mon', 'monC', 'monPt']
+)
+def test_shift_time_coord_not_first_of_month(frequency):
+    """Test ``_get_previous_timestep``."""
+    cube = Cube(0, cell_methods=[CellMethod('mean', 'time')])
+    time_units = Unit('days since 1950-01-01', calendar='proleptic_gregorian')
+    time_coord = DimCoord(
+        [1.5],
+        standard_name='time',
+        var_name='time',
+        long_name='time',
+        units=time_units,
+    )
+    fix = get_allvars_fix('Amon', 'tas')
+    fix.extra_facets['frequency'] = frequency
+
+    msg = (
+        "Cannot shift time coordinate: expected first of the month at 00:00:00"
+    )
+    with pytest.raises(ValueError, match=msg):
+        fix._shift_time_coord(cube, time_coord)
+
+
+@pytest.mark.parametrize('frequency', ['fx', 'subhrPt', 'invalid_freq'])
+def test_shift_time_coord_invalid_freq(frequency):
+    """Test ``_get_previous_timestep``."""
+    cube = Cube(0, cell_methods=[CellMethod('mean', 'time')])
+    time_units = Unit('days since 1950-01-01', calendar='proleptic_gregorian')
+    time_coord = DimCoord(
+        [1.5, 2.5],
+        standard_name='time',
+        var_name='time',
+        long_name='time',
+        units=time_units,
+    )
+    fix = get_allvars_fix('Amon', 'tas')
+    fix.extra_facets['frequency'] = frequency
+
+    msg = (
+        "Cannot shift time coordinate: failed to determine previous time step"
+    )
+    with pytest.raises(ValueError, match=msg):
+        fix._shift_time_coord(cube, time_coord)
+
+
+# Test _get_previous_timestep
+
+
+@pytest.mark.parametrize(
+    'frequency,datetime_in,datetime_out',
+    [
+        ('dec', (2000, 1, 1), (1990, 1, 1)),
+        ('yr', (2000, 1, 1), (1999, 1, 1)),
+        ('yrPt', (2001, 6, 1), (2000, 6, 1)),
+        ('mon', (2001, 1, 1), (2000, 12, 1)),
+        ('mon', (2001, 2, 1), (2001, 1, 1)),
+        ('mon', (2001, 3, 1), (2001, 2, 1)),
+        ('mon', (2001, 4, 1), (2001, 3, 1)),
+        ('monC', (2000, 5, 1), (2000, 4, 1)),
+        ('monC', (2000, 6, 1), (2000, 5, 1)),
+        ('monC', (2000, 7, 1), (2000, 6, 1)),
+        ('monC', (2000, 8, 1), (2000, 7, 1)),
+        ('monPt', (2002, 9, 1), (2002, 8, 1)),
+        ('monPt', (2002, 10, 1), (2002, 9, 1)),
+        ('monPt', (2002, 11, 1), (2002, 10, 1)),
+        ('monPt', (2002, 12, 1), (2002, 11, 1)),
+        ('day', (2000, 1, 1), (1999, 12, 31)),
+        ('day', (2000, 3, 1), (2000, 2, 29)),
+        ('day', (2187, 3, 14), (2187, 3, 13)),
+        ('6hr', (2000, 3, 14, 15), (2000, 3, 14, 9)),
+        ('6hrPt', (2000, 1, 1), (1999, 12, 31, 18)),
+        ('6hrCM', (2000, 1, 1, 1), (1999, 12, 31, 19)),
+        ('3hr', (2000, 3, 14, 15), (2000, 3, 14, 12)),
+        ('3hrPt', (2000, 1, 1), (1999, 12, 31, 21)),
+        ('3hrCM', (2000, 1, 1, 1), (1999, 12, 31, 22)),
+        ('1hr', (2000, 3, 14, 15), (2000, 3, 14, 14)),
+        ('1hrPt', (2000, 1, 1), (1999, 12, 31, 23)),
+        ('1hrCM', (2000, 1, 1, 1), (2000, 1, 1)),
+        ('hr', (2000, 3, 14), (2000, 3, 13, 23)),
+    ],
+)
+def test_get_previous_timestep(frequency, datetime_in, datetime_out):
+    """Test ``_get_previous_timestep``."""
+    datetime_in = datetime(*datetime_in)
+    datetime_out = datetime(*datetime_out)
+
+    fix = get_allvars_fix('Amon', 'tas')
+    fix.extra_facets['frequency'] = frequency
+
+    new_datetime = fix._get_previous_timestep(datetime_in)
+
+    assert new_datetime == datetime_out
 
 
 # Test mesh creation raises warning because bounds do not match vertices
@@ -1567,7 +1979,7 @@ def test_get_grid_url_fail():
 # Test get_mesh
 
 
-def test_get_mesh_cached(monkeypatch):
+def test_get_mesh_cached_from_attr(monkeypatch):
     """Test fix."""
     cube = Cube(0, attributes={'grid_file_uri': TEST_GRID_FILE_URI})
     fix = get_allvars_fix('Amon', 'tas')
@@ -1578,12 +1990,58 @@ def test_get_mesh_cached(monkeypatch):
     fix._create_mesh.assert_not_called()
 
 
-def test_get_mesh_not_cached(monkeypatch):
+def test_get_mesh_not_cached_from_attr(monkeypatch):
     """Test fix."""
     cube = Cube(0, attributes={'grid_file_uri': TEST_GRID_FILE_URI})
     fix = get_allvars_fix('Amon', 'tas')
     monkeypatch.setattr(fix, '_create_mesh', mock.Mock())
     fix.get_mesh(cube)
+    fix._create_mesh.assert_called_once_with(cube)
+
+
+def test_get_mesh_cached_from_facet(monkeypatch, tmp_path):
+    """Test fix."""
+    session = CFG.start_session('my session')
+    session['auxiliary_data_dir'] = tmp_path
+
+    # Save temporary grid file (this will not be used; however, it is necessary
+    # to not raise a FileNotFoundError)
+    grid_path = 'grid.nc'
+    grid_cube = Cube(0, var_name='grid')
+    iris.save(grid_cube, tmp_path / 'grid.nc')
+
+    cube = Cube(0, attributes={'grid_file_uri': TEST_GRID_FILE_URI})
+    fix = get_allvars_fix('Amon', 'tas', session=session)
+    fix.extra_facets['horizontal_grid'] = grid_path
+    monkeypatch.setattr(fix, '_create_mesh', mock.Mock())
+    fix._meshes[TEST_GRID_FILE_NAME] = mock.sentinel.wrong_mesh
+    fix._meshes['grid.nc'] = mock.sentinel.mesh
+
+    mesh = fix.get_mesh(cube)
+
+    assert mesh == mock.sentinel.mesh
+    fix._create_mesh.assert_not_called()
+
+
+def test_get_mesh_not_cached_from_facet(monkeypatch, tmp_path):
+    """Test fix."""
+    session = CFG.start_session('my session')
+    session['auxiliary_data_dir'] = tmp_path
+
+    # Save temporary grid file (this will not be used; however, it is necessary
+    # to not raise a FileNotFoundError)
+    grid_path = 'grid.nc'
+    grid_cube = Cube(0, var_name='grid')
+    iris.save(grid_cube, tmp_path / 'grid.nc')
+
+    cube = Cube(0, attributes={'grid_file_uri': TEST_GRID_FILE_URI})
+    fix = get_allvars_fix('Amon', 'tas', session=session)
+    fix.extra_facets['horizontal_grid'] = grid_path
+    monkeypatch.setattr(fix, '_create_mesh', mock.Mock())
+    fix._meshes[TEST_GRID_FILE_NAME] = mock.sentinel.wrong_mesh
+
+    fix.get_mesh(cube)
+
     fix._create_mesh.assert_called_once_with(cube)
 
 

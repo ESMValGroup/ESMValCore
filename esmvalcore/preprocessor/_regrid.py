@@ -11,6 +11,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Dict
 
+import dask.array as da
 import iris
 import numpy as np
 import stratify
@@ -383,6 +384,21 @@ def extract_location(cube, location, scheme):
                          scheme)
 
 
+def _check_grid_discontiguities(cube, scheme):
+    """Check if there are grid discontiguities and set use_src_mask to True."""
+    scheme = dict(scheme)
+    try:
+        discontiguities = iris.util.find_discontiguities(cube)
+    except NotImplementedError:
+        pass
+    else:
+        if discontiguities.any():
+            scheme['use_src_mask'] = True
+            logger.debug('Grid discontinuities were found in the source grid. '
+                         'Setting scheme argument `use_src_mask` to True.')
+    return scheme
+
+
 def extract_point(cube, latitude, longitude, scheme):
     """Extract a point, with interpolation.
 
@@ -560,6 +576,13 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             target: 1x1
             scheme:
               reference: esmf_regrid.schemes:ESMFAreaWeighted
+
+    Since version 0.6 of :doc:`iris-esmf-regrid:index`, the regridder is able
+    to ignore discontinuities in the source grids if the data defined in the
+    discontiguous points is masked.
+    The preprocessor automatically detects if discontinuities are present,
+    and configures the regridding scheme in order to take into account
+    the mask of the source grid to ignore them.
     """
     if is_dataset(target_grid):
         target_grid = target_grid.copy()
@@ -614,6 +637,8 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             scheme['src_cube'] = cube
         if 'grid_cube' in scheme_args:
             scheme['grid_cube'] = target_grid
+        if 'use_src_mask' in scheme_args:
+            scheme = _check_grid_discontiguities(cube, scheme)
 
         loaded_scheme = obj(**scheme)
     else:
@@ -650,7 +675,48 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         # scheme is a function f(src_cube, grid_cube) -> Cube
         cube = loaded_scheme
     else:
+        cube = _rechunk(cube, target_grid)
         cube = cube.regrid(target_grid, loaded_scheme)
+
+    return cube
+
+
+def _rechunk(
+    cube: iris.cube.Cube,
+    target_grid: iris.cube.Cube,
+) -> iris.cube.Cube:
+    """Re-chunk cube with optimal chunk sizes for target grid."""
+    if not cube.has_lazy_data() or cube.ndim < 3:
+        # Only rechunk lazy multidimensional data
+        return cube
+
+    lon_coord = target_grid.coord(axis='X')
+    lat_coord = target_grid.coord(axis='Y')
+    if lon_coord.ndim != 1 or lat_coord.ndim != 1:
+        # This function only supports 1D lat/lon coordinates.
+        return cube
+
+    lon_dim, = target_grid.coord_dims(lon_coord)
+    lat_dim, = target_grid.coord_dims(lat_coord)
+    grid_indices = sorted((lon_dim, lat_dim))
+    target_grid_shape = tuple(target_grid.shape[i] for i in grid_indices)
+
+    if 2 * np.prod(cube.shape[-2:]) > np.prod(target_grid_shape):
+        # Only rechunk if target grid is more than a factor of 2 larger,
+        # because rechunking will keep the original chunk in memory.
+        return cube
+
+    data = cube.lazy_data()
+
+    # Compute a good chunk size for the target array
+    tgt_shape = data.shape[:-2] + target_grid_shape
+    tgt_chunks = data.chunks[:-2] + target_grid_shape
+    tgt_data = da.empty(tgt_shape, dtype=data.dtype, chunks=tgt_chunks)
+    tgt_data = tgt_data.rechunk({i: "auto" for i in range(cube.ndim - 2)})
+
+    # Adjust chunks to source array and rechunk
+    chunks = tgt_data.chunks[:-2] + data.shape[-2:]
+    cube.data = data.rechunk(chunks)
 
     return cube
 

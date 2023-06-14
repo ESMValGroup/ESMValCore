@@ -1,6 +1,7 @@
 """API for handing recipe output."""
 import base64
 import logging
+import os.path
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Optional, Tuple, Type
@@ -244,6 +245,7 @@ class RecipeOutput(Mapping):
             session=self.session,
             info=self.info,
             filters=self.filters,
+            relpath=os.path.relpath,
         )
 
         return rendered
