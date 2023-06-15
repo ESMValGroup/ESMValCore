@@ -2,7 +2,7 @@
 
 {% for file in task.image_files %}
 
-<div class="figure
+<div class="div_figure
 {% for filter in filters.keys() %}
     {% if filter in file.attributes %}
         {% set attribute = file.attributes[filter] %}

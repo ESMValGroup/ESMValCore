@@ -1,43 +1,3 @@
-<style>
-  /* Style the tab */
-  .tab {
-    overflow: hidden;
-    border: 1px solid #ccc;
-    background-color: #f1f1f1;
-  }
-
-  /* Style the buttons that are used to open the tab content */
-  .tab button {
-    background-color: inherit;
-    float: left;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    padding: 14px 16px;
-    transition: 0.3s;
-  }
-
-  /* Change background color of buttons on hover */
-  .tab button:hover {
-    background-color: #ddd;
-  }
-
-  /* Create an active/current tablink class */
-  .tab button.active {
-    background-color: #ccc;
-  }
-
-  /* Style the tab content */
-  .tabbox {
-    border: 1px solid #ccc;
-  }
-  .tabcontent {
-    display: none;
-    padding: 6px 12px;
-    border-top: none;
-</style>
-
-
 <!-- Filter -->
 <h3>Filter</h3>
 <div class="filter">
@@ -53,14 +13,14 @@
     {% endfor %}
     <button onclick="resetFilter()">Reset Filter</button>
 </div>
-
+<p><input type="checkbox" id="cb_hideEmptyDiagnostics" onclick="updateFilter()" checked="true"> Hide empty diagnostics</p>
 
 
 <!-- Tab links -->
 <div class="tab">
-  <button class="tablinks" onclick="openTab(event, 'All')" id="defaultOpen">All</button>
+  <button class="tablinks activeTablink" onclick="openTab(event)" id="tabAll">All</button>
   {% for diagnostic in diagnostics %}
-    <button class="tablinks" onclick="openTab(event, 'tab_{{ diagnostic.title }}')">{{ diagnostic.title }}</button>
+    <button class="tablinks" onclick="openTab(event)" value="tab_{{ diagnostic.title }}">{{ diagnostic.title }}</button>
   {% endfor %}
 </div>
 
@@ -82,39 +42,19 @@
 </div>
 
 <script>
-  function openTab(evt, tabName) {
-    // Declare all variables
-    var i, tabcontent, tablinks;
-
-    // Get all elements with class="tabcontent" and hide them
-    tabcontent = document.getElementsByClassName("tabcontent");
-    for (i = 0; i < tabcontent.length; i++) {
-      tabcontent[i].style.display = "none";
+  function openTab(evt) {
+    // Get all elements with class="tablinks" and remove the class "activeTablink"
+    var tablinks = document.getElementsByClassName("tablinks");
+    for (var i = 0; i < tablinks.length; i++) {
+      tablinks[i].className = tablinks[i].className.replace(" activeTablink", "");
     }
+    // Add an "activeTablink" class to the button that opened the tab
+    evt.currentTarget.className += " activeTablink";
 
-    // Get all elements with class="tablinks" and remove the class "active"
-    tablinks = document.getElementsByClassName("tablinks");
-    for (i = 0; i < tablinks.length; i++) {
-      tablinks[i].className = tablinks[i].className.replace(" active", "");
-    }
-
-    // Show the current tab, and add an "active" class to the button that opened the tab
-    if (tabName == "All"){
-      for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "block";
-      }
-    } else {
-      document.getElementById(tabName).style.display = "block";
-    }
-    evt.currentTarget.className += " active";
+    updateTabVisibility();
   }
 
 
-  // Get the element with id="defaultOpen" and click on it
-  document.getElementById("defaultOpen").click();
-</script>
-
-<script>
   function toggleDataFiles(button, data_files_id) {
     var data_files = document.getElementById(data_files_id);
     if (data_files.style.display === "none") {
@@ -126,7 +66,6 @@
     }
   }
 
-
   // Hide all data files
   function hideDataFiles() {
     var i, list_data_files;
@@ -136,22 +75,56 @@
     }
   }
 
-
-  hideDataFiles()
-</script>
-
-<script>
 function updateFilter(){
   var filterTypes = document.querySelectorAll(".filter div");
   
   var filters = Array(filterTypes.length);
   for (let i = 0; i < filterTypes.length; i++){
     let filterType = filterTypes[i];
-    var checkboxes = document.querySelectorAll("."+ filterType.className +" input[type='checkbox']");
+    let checkboxes = document.querySelectorAll("."+ filterType.className +" input[type='checkbox']");
     filters[i] = getSelectedFilters(checkboxes);
   }
 
   applyFilter(filters);
+  updateTabVisibility();
+}
+
+function updateTabVisibility(){
+    // Find active tablink
+    var activeTablink = document.getElementsByClassName("activeTablink")[0];
+
+    // Get all elements with class="tabcontent" and hide them    
+    var tabcontent = document.getElementsByClassName("tabcontent");
+    for (let tab of tabcontent) {
+        var hideEmpty = document.getElementById("cb_hideEmptyDiagnostics").checked;
+        let hideThisTab = false;
+        if (hideEmpty){
+            let figures = tab.getElementsByClassName("div_figure");
+            hideThisTab = true;
+            for (let fig of figures){
+                if (fig.style.display === ""){ // Default value
+                    hideThisTab = false;
+                    break;
+                }
+            }
+        }
+        if (hideThisTab && tab.id === activeTablink.value){
+            // Current tab will be hidden, so tab has to be changed to al
+            activeTablink.className = activeTablink.className.replace(" activeTablink", "");
+            let tabAll = document.getElementById("tabAll");
+            tabAll.className += " activeTablink";
+            
+            // Reset method and leave
+            updateTabVisibility();
+            return;
+        }
+
+        tab.style.display = (
+            !hideThisTab
+            && (activeTablink.id === "tabAll" || tab.id === activeTablink.value)
+            )? "block" : "none";
+    }
+
 }
 
 
@@ -173,16 +146,17 @@ function getSelectedFilters(checkboxes) {
 
 
 function applyFilter(filters){
-    var figures = document.getElementsByClassName("figure");
+    var figures = document.getElementsByClassName("div_figure");
     
-    if (!figures || figures.length == 0){
+    if (!figures || figures.length === 0){
         return;
     }
     
     for (const fig of figures){
-        fig.style.display = "block"; // Show by default
+        // Show figure by returning to default value
+        fig.style.removeProperty("display");
         for (const selection of filters){
-            if (selection.length == 0) {
+            if (selection.length === 0) {
                 continue;
             }
             let hide = true;
@@ -206,9 +180,12 @@ function resetFilter(){
     for (const f of filters){
         f.checked = false;
     }
-    updateFilter()
+    updateFilter();
 }
 
 
-resetFilter()
+
+hideDataFiles();
+resetFilter();
+
 </script>
