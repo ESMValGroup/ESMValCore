@@ -76,7 +76,6 @@ REQUIREMENTS = {
         # MyPy library stubs
         'mypy>=0.990',
         'types-requests',
-        'types-pkg_resources',
         'types-PyYAML',
     ],
     # Documentation dependencies

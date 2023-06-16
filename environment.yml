@@ -64,7 +64,6 @@ dependencies:
   # Not on conda-forge - ESMValTool_sample_data==0.0.3
   # Still for testing, MyPy library stubs
   - types-requests
-  - types-pkg_resources
   - types-PyYAML
   # Python packages needed for installing in development mode
   - codespell
