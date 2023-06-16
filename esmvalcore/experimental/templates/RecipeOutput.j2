@@ -1,9 +1,9 @@
 <!-- Filter -->
 <h3>Filter</h3>
-<div class="filter">
+<div class="div_filter">
     {% for filter_type, types in filters.items() %}
     <div class="filter_{{ filter_type }}">
-        <p>{{ filter_type }}</p>
+        <p>{{ filter_type|replace('_', ' ')|title }}</p>
         <ul>
             {% for t in types %}
             <li><input type="checkbox" rel="f_{{ t|replace(' ', '_') }}" onclick="updateFilter()">{{ t|replace('_', ' ')|title }}</li>

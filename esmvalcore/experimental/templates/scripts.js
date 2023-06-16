@@ -38,7 +38,7 @@ function hideDataFiles() {
 }
 
 function updateFilter(){
-    var filterTypes = document.querySelectorAll(".filter div");
+    var filterTypes = document.querySelectorAll(".div_filter div");
     
     var filters = Array(filterTypes.length);
     for (let i = 0; i < filterTypes.length; i++){
@@ -137,7 +137,7 @@ function applyFilter(filters){
 
 
 function resetFilter(){
-    var filters = document.querySelectorAll(".filter input[type='checkbox']");
+    var filters = document.querySelectorAll(".div_filter input[type='checkbox']");
     for (const f of filters){
         f.checked = false;
     }
