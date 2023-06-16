@@ -23,6 +23,14 @@ from esmvalcore.local import LocalFile, _path2facets
                 'facet1': 'value1',
                 'facet2': 'value2',
             },
+        ),
+        (
+            '/climate_data/value-1/value-1-value-2/filename.nc',
+            '{facet1}/{facet1}-{facet2}',
+            {
+                'facet1': 'value-1',
+                'facet2': 'value-2',
+            },
         )
     ],
 )
