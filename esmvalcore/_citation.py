@@ -137,7 +137,7 @@ def _extract_tags(tags):
     For example, a single entry in the list `tags` could be the string
     "['acknow_project', 'acknow_author']".
     """
-    pattern = re.compile(r'\w+')
+    pattern = re.compile(r'[\w-]+')
     return set(pattern.findall(str(tags)))
 
 
