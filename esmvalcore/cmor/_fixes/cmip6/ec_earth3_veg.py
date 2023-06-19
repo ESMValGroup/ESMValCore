@@ -1,11 +1,13 @@
 """Fixes for EC-Earth3-Veg model."""
-import numpy as np
 import cf_units
+import numpy as np
+
 from ..fix import Fix
 
 
 class Siconca(Fix):
     """Fixes for siconca."""
+
     def fix_data(self, cube):
         """Fix data.
 
@@ -24,7 +26,7 @@ class Siconca(Fix):
         return cube
 
 
-class Siconc(Fix):
+class CalendarFix(Fix):
     """Fixes for siconc variable."""
 
     def fix_metadata(self, cubes):
@@ -35,6 +37,14 @@ class Siconc(Fix):
                 time_coord.units = cf_units.Unit(time_coord.units.origin,
                                                  'proleptic_gregorian')
         return cubes
+
+
+class Siconc(CalendarFix):
+    """Fixes for siconc variable."""
+
+
+class Tos(CalendarFix):
+    """Fixes for tos."""
 
 
 class Tas(Fix):
