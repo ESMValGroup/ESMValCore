@@ -12,8 +12,14 @@ Clw = ClFixHybridPressureCoord
 
 
 class Tos(Fix):
+    """Fix tos."""
 
     def fix_metadata(self, cubes):
+        """Correct units.
+
+        The files for ssp126 r1i1p5f1 gn v20200115 have wrong units:
+        units in the files are 'degC', but the values are in 'K'.
+        """
         for cube in cubes:
             if (cube.units == 'degC'
                     and da.any(cube.core_data().ravel()[:1000] > 100.)):
