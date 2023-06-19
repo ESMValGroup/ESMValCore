@@ -27,7 +27,11 @@ class Siconca(Fix):
 
 
 class CalendarFix(Fix):
-    """Fixes for siconc variable."""
+    """Use the same calendar for all files.
+
+    The original files contain a mix of `gregorian` for the historical
+    experiment and `proleptic_gregorian` for the ssp experiments.
+    """
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
