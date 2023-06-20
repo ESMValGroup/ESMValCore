@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 from cf_units import Unit
 from iris.cube import Cube
+from iris.fileformats.pp import EARTH_RADIUS
 from numpy.testing._private.utils import assert_raises
 from shapely.geometry import Polygon, mapping
 
@@ -15,6 +16,8 @@ import esmvalcore.preprocessor
 import tests
 from esmvalcore.preprocessor._area import (
     _crop_cube,
+    _get_requested_geometries,
+    _update_shapefile_path,
     area_statistics,
     extract_named_regions,
     extract_region,
@@ -27,8 +30,7 @@ class Test(tests.Test):
     """Test class for the :func:`esmvalcore.preprocessor._area_pp` module."""
     def setUp(self):
         """Prepare tests."""
-        self.coord_sys = iris.coord_systems.GeogCS(
-            iris.fileformats.pp.EARTH_RADIUS)
+        self.coord_sys = iris.coord_systems.GeogCS(EARTH_RADIUS)
         data = np.ones((5, 5), dtype=np.float32)
         lons = iris.coords.DimCoord(
             [i + .5 for i in range(5)],
@@ -318,11 +320,11 @@ IRREGULAR_EXTRACT_REGION_TESTS = [
     },
     {
         'region': (0, 0, -100, 0),
-        'raises': "Invalid start_latitude: -100."
+        'raises': "Invalid start_latitude: -100"
     },
     {
         'region': (0, 0, 0, 100),
-        'raises': "Invalid end_latitude: -100."
+        'raises': "Invalid end_latitude: 100"
     },
 ]
 
@@ -368,7 +370,7 @@ def test_extract_region_irregular(irregular_extract_region_cube, case):
             np.testing.assert_array_equal(cube.data[i].mask, case['mask'])
         np.testing.assert_array_equal(cube.data.data, case['data'])
     else:
-        with pytest.raises(ValueError) as exc:
+        with pytest.raises(ValueError, match=case['raises']):
             extract_region(
                 irregular_extract_region_cube,
                 start_longitude=start_lon,
@@ -376,7 +378,6 @@ def test_extract_region_irregular(irregular_extract_region_cube, case):
                 start_latitude=start_lat,
                 end_latitude=end_lat,
             )
-            assert exc.value == case['raises']
 
 
 def create_rotated_grid_cube(data):
@@ -406,7 +407,7 @@ def create_rotated_grid_cube(data):
                                     units='degrees',
                                     coord_system=coord_sys_rotated)
 
-    coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+    coord_sys = iris.coord_systems.GeogCS(EARTH_RADIUS)
     glon, glat = np.meshgrid(grid_lons, grid_lats)
     lons, lats = iris.analysis.cartography.unrotate_pole(
         np.deg2rad(glon), np.deg2rad(glat), grid_north_pole_longitude,
@@ -503,7 +504,7 @@ def test_area_statistics_rotated(case):
 @pytest.fixture
 def make_testcube():
     """Create a test cube on a Cartesian grid."""
-    coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+    coord_sys = iris.coord_systems.GeogCS(EARTH_RADIUS)
     data = np.ones((5, 5))
     lons = iris.coords.DimCoord(
         [i + .5 for i in range(5)],
@@ -675,9 +676,7 @@ def test_crop_cube_with_ne_file(ne_ocean_shapefile):
 
 
 @pytest.mark.parametrize('crop', [True, False])
-@pytest.mark.parametrize('ids', [None, [
-    0,
-]])
+@pytest.mark.parametrize('ids', [None, [0]])
 def test_extract_shape(make_testcube, square_shape, tmp_path, crop, ids):
     """Test for extracting a region with shapefile."""
     expected = square_shape
@@ -698,11 +697,9 @@ def test_extract_shape(make_testcube, square_shape, tmp_path, crop, ids):
 def test_extract_shape_natural_earth(make_testcube, ne_ocean_shapefile):
     """Test for extracting a shape from NE file."""
     expected = np.ones((5, 5))
-    preproc_path = Path(esmvalcore.preprocessor.__file__).parent
-    shp_file = preproc_path / "ne_masks" / "ne_50m_ocean.shp"
     result = extract_shape(
         make_testcube,
-        shp_file,
+        ne_ocean_shapefile,
         crop=False,
     )
     np.testing.assert_array_equal(result.data.data, expected)
@@ -711,8 +708,6 @@ def test_extract_shape_natural_earth(make_testcube, ne_ocean_shapefile):
 def test_extract_shape_fx(make_testcube, ne_ocean_shapefile):
     """Test for extracting a shape from NE file."""
     expected = np.ones((5, 5))
-    preproc_path = Path(esmvalcore.preprocessor.__file__).parent
-    shp_file = preproc_path / "ne_masks" / "ne_50m_ocean.shp"
     cube = make_testcube
     measure = iris.coords.CellMeasure(cube.data,
                                       standard_name='cell_area',
@@ -728,7 +723,7 @@ def test_extract_shape_fx(make_testcube, ne_ocean_shapefile):
     cube.add_ancillary_variable(ancillary_var, (0, 1))
     result = extract_shape(
         cube,
-        shp_file,
+        ne_ocean_shapefile,
         crop=False,
     )
     np.testing.assert_array_equal(result.data.data, expected)
@@ -962,11 +957,208 @@ def test_extract_shape_irregular(irreg_extract_shape_cube, tmp_path, method):
         np.testing.assert_array_equal(cube.data[i].mask, mask)
 
 
-def test_extract_shape_wrong_method_raises():
-    with pytest.raises(ValueError) as exc:
-        extract_shape(iris.cube.Cube([]), 'test.shp', method='wrong')
-        assert exc.value == ("Invalid value for `method`. Choose from "
-                             "'contains', 'representative'.")
+def test_extract_shape_wrong_method_raises(make_testcube, ne_ocean_shapefile):
+    msg = "Invalid value for `method`"
+    with pytest.raises(ValueError, match=msg):
+        extract_shape(make_testcube, ne_ocean_shapefile, method='wrong')
+
+
+@pytest.mark.parametrize('ids', [None, []])
+@pytest.mark.parametrize('crop', [True, False])
+@pytest.mark.parametrize('decomposed', [True, False])
+def test_extract_shape_ar6_all_region(make_testcube, ids, crop, decomposed):
+    """Test for extracting all AR6 regions with shapefile."""
+    cube = extract_shape(
+        make_testcube,
+        'AR6',
+        method='contains',
+        crop=crop,
+        decomposed=decomposed,
+        ids=ids,
+    )
+
+    if decomposed:
+        assert cube.shape == (58, 5, 5)
+        assert cube.coords('shape_id')
+        assert cube.coord_dims('shape_id') == (0, )
+        assert np.ma.is_masked(cube.data)
+    else:
+        assert cube.shape == (5, 5)
+        assert not cube.coords('shape_id')
+        assert not np.ma.is_masked(cube.data)
+    assert cube.coord('latitude') == make_testcube.coord('latitude')
+    assert cube.coord('longitude') == make_testcube.coord('longitude')
+
+
+EAO_MASK = np.array([
+    [0, 0, 0, 0, 0],
+    [0, 0, 1, 1, 1],
+    [1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1],
+], dtype=bool)
+
+WAF_MASK = np.array([
+    [1, 1, 1, 1, 1],
+    [1, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+], dtype=bool)
+
+
+@pytest.mark.parametrize(
+    'ids',
+    [
+        {'Acronym': ['EAO']},
+        ['Equatorial.Atlantic-Ocean'],
+    ],
+)
+@pytest.mark.parametrize('crop', [True, False])
+@pytest.mark.parametrize('decomposed', [True, False])
+def test_extract_shape_ar6_one_region(make_testcube, ids, crop, decomposed):
+    """Test for extracting 1 AR6 regions with shapefile."""
+    # Adapt lat slightly to test cropping
+    lat = make_testcube.coord('latitude')
+    lat.points = [-45., -40., 2.5, 3.5, 4.5]
+    lat.bounds = [[-50., -41.], [-41., 2.], [2., 3.], [3., 4.], [4., 5.]]
+
+    cube = extract_shape(
+        make_testcube,
+        'ar6',
+        method='contains',
+        crop=crop,
+        decomposed=decomposed,
+        ids=ids,
+    )
+
+    lat = cube.coord('latitude')
+    lon = cube.coord('longitude')
+    if decomposed:
+        if crop:
+            assert cube.shape == (3, 5)
+            np.testing.assert_allclose(lat.points, [2.5, 3.5, 4.5])
+        else:
+            assert cube.shape == (5, 5)
+            assert lat == make_testcube.coord('latitude')
+        assert lon == make_testcube.coord('longitude')
+        assert cube.coords('shape_id')
+        assert cube.coord_dims('shape_id') == ()
+    else:  # not decomposed
+        if crop:
+            assert cube.shape == (3, 5)
+            np.testing.assert_allclose(lat.points, [2.5, 3.5, 4.5])
+        else:
+            assert cube.shape == (5, 5)
+            assert lat == make_testcube.coord('latitude')
+        assert lon == make_testcube.coord('longitude')
+        assert not cube.coords('shape_id')
+    assert np.ma.is_masked(cube.data)
+
+
+@pytest.mark.parametrize(
+    'ids',
+    [
+        {'Acronym': ['EAO', 'WAF']},
+        ['Equatorial.Atlantic-Ocean', 'Western-Africa'],
+    ],
+)
+@pytest.mark.parametrize('crop', [True, False])
+@pytest.mark.parametrize('decomposed', [True, False])
+def test_extract_shape_ar6_two_regions(make_testcube, ids, crop, decomposed):
+    """Test for extracting 2 AR6 regions with shapefile."""
+    cube = extract_shape(
+        make_testcube,
+        'AR6',
+        method='contains',
+        crop=crop,
+        decomposed=decomposed,
+        ids=ids,
+    )
+
+    if decomposed:
+        assert cube.shape == (2, 5, 5)
+        mask = np.ma.getmaskarray(cube.data)
+        np.testing.assert_array_equal(mask[0], EAO_MASK)
+        np.testing.assert_array_equal(mask[1], WAF_MASK)
+        assert cube.coords('shape_id')
+        assert cube.coord_dims('shape_id') == (0, )
+    else:
+        assert cube.shape == (5, 5)
+        assert not np.ma.is_masked(cube.data)
+        assert not cube.coords('shape_id')
+    assert cube.coord('latitude') == make_testcube.coord('latitude')
+    assert cube.coord('longitude') == make_testcube.coord('longitude')
+
+
+@pytest.mark.parametrize('ids', [{}, {'a':  [1, 2], 'b': [1, 2]}])
+def test_extract_shape_invalid_dict(make_testcube, ids):
+    """Test for extract_shape with invalid ids."""
+    msg = "If `ids` is given as dict, it needs exactly one entry"
+    with pytest.raises(ValueError, match=msg):
+        extract_shape(make_testcube, 'ar6', ids=ids)
+
+
+@pytest.fixture
+def ar6_shapefile():
+    """Path to AR6 shapefile."""
+    shapefile = (
+        Path(esmvalcore.preprocessor.__file__).parent / 'shapefiles' /
+        'ar6.shp'
+    )
+    return shapefile
+
+
+def test_get_requested_geometries_invalid_ids(ar6_shapefile):
+    """Test ``_get_requested_geometries`` with invalid ids."""
+    msg = "does not have requested attribute wrong_attr"
+    with fiona.open(ar6_shapefile) as geometries:
+        with pytest.raises(ValueError, match=msg):
+            _get_requested_geometries(
+                geometries, {'wrong_attr': [1, 2]}, Path('shape.shp')
+            )
+
+
+@pytest.mark.parametrize('session', [{}, None])
+def test_update_shapefile_path_abs(session, tmp_path):
+    """ Test ``update_shapefile_path``."""
+    if session is not None:
+        session['auxiliary_data_dir'] = tmp_path
+    shapefile = tmp_path / 'my_custom_shapefile.shp'
+    shapefile.write_text("")  # create empty file
+
+    # Test with Path and str object
+    for shapefile_in in (shapefile, str(shapefile)):
+        shapefile_out = _update_shapefile_path(shapefile, session=session)
+        assert isinstance(shapefile_out, Path)
+        assert shapefile_out == shapefile
+
+
+@pytest.mark.parametrize(
+    'shapefile', ['aux_dir/ar6.shp', 'ar6.shp', 'ar6', 'AR6', 'aR6']
+)
+@pytest.mark.parametrize('session', [{}, None])
+def test_update_shapefile_path_rel(
+    shapefile, session, ar6_shapefile, tmp_path
+):
+    """ Test ``update_shapefile_path``."""
+    if session is not None:
+        session['auxiliary_data_dir'] = tmp_path
+    (tmp_path / 'aux_dir').mkdir(parents=True, exist_ok=True)
+    aux_dir_shapefile = tmp_path / 'aux_dir' / 'ar6.shp'
+    aux_dir_shapefile.write_text("")  # create empty file
+
+    # Test with Path and str object
+    for shapefile_in in (Path(shapefile), shapefile):
+        shapefile_out = _update_shapefile_path(shapefile, session=session)
+        assert isinstance(shapefile_out, Path)
+
+        if 'aux_dir' in str(shapefile_in) and session is None:
+            assert shapefile_out == Path(shapefile)
+        elif 'aux_dir' in str(shapefile):
+            assert shapefile_out == tmp_path / shapefile
+        else:
+            assert shapefile_out == ar6_shapefile
 
 
 if __name__ == '__main__':

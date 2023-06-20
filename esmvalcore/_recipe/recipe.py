@@ -42,6 +42,7 @@ from esmvalcore.preprocessor import (
     PreprocessingTask,
     PreprocessorFile,
 )
+from esmvalcore.preprocessor._area import _update_shapefile_path
 from esmvalcore.preprocessor._other import _group_products
 from esmvalcore.preprocessor._regrid import (
     _spec_to_latlonvals,
@@ -631,12 +632,8 @@ def _update_extract_shape(settings, session):
     if 'extract_shape' in settings:
         shapefile = settings['extract_shape'].get('shapefile')
         if shapefile:
-            if not os.path.exists(shapefile):
-                shapefile = os.path.join(
-                    session['auxiliary_data_dir'],
-                    shapefile,
-                )
-                settings['extract_shape']['shapefile'] = shapefile
+            shapefile = _update_shapefile_path(shapefile, session=session)
+            settings['extract_shape']['shapefile'] = shapefile
         check.extract_shape(settings['extract_shape'])
 
 

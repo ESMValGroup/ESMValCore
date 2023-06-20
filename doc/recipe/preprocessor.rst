@@ -1015,6 +1015,13 @@ scheme available in :doc:`iris-esmf-regrid:index`:
           reference: esmf_regrid.schemes:regrid_rectilinear_to_rectilinear
           mdtol: 0.7
 
+Since version 0.6 of :doc:`iris-esmf-regrid:index`, the regridder is able
+to ignore discontinuities in the source grids if the data defined in the
+discontiguous points is masked.
+The :func:`~esmvalcore.preprocessor.regrid` preprocessor automatically detects
+if discontinuities are present, and configures the regridding scheme in order to take
+into account the mask of the source grid to ignore them.
+
 .. _ensemble statistics:
 
 Ensemble statistics
@@ -1687,40 +1694,67 @@ See also :func:`esmvalcore.preprocessor.extract_named_regions`.
 
 
 ``extract_shape``
--------------------------
+-----------------
 
-Extract a shape or a representative point for this shape from
-the data.
+Extract a shape or a representative point for this shape from the data.
 
 Parameters:
   * ``shapefile``: path to the shapefile containing the geometry of the
-    region to be extracted. If the file contains multiple shapes behaviour
-    depends on the decomposed parameter. This path can be relative to
-    ``auxiliary_data_dir`` defined in the :ref:`user configuration file`.
+    region to be extracted.
+    If the file contains multiple shapes behaviour depends on the
+    ``decomposed`` parameter.
+    This path can be relative to ``auxiliary_data_dir`` defined in the
+    :ref:`user configuration file` or relative to
+    ``esmvalcore/preprocessor/shapefiles`` (in that priority order).
+    Alternatively, a string (see "Shapefile name" below) can be given to load
+    one of the following shapefiles that are shipped with ESMValCore:
+
+    =============== ===================== ==========================================
+    Shapefile name  Description           Reference
+    =============== ===================== ==========================================
+    ar6             IPCC WG1 reference    https://doi.org/10.5281/zenodo.5176260
+                    regions (v4) used in
+                    Assessment Report 6
+    =============== ===================== ==========================================
+
   * ``method``: the method to select the region, selecting either all points
-	  contained by the shape or a single representative point. Choose either
-	  'contains' or 'representative'. If not a single grid point is contained
-	  in the shape, a representative point will be selected.
+    contained by the shape or a single representative point.
+    Choose either `'contains'` or `'representative'`.
+    If not a single grid point is contained in the shape, a representative
+    point will be selected.
   * ``crop``: by default extract_region_ will be used to crop the data to a
-	  minimal rectangular region containing the shape. Set to ``false`` to only
-	  mask data outside the shape. Data on irregular grids will not be cropped.
-  * ``decomposed``: by default ``false``, in this case the union of all the
-    regions in the shape file is masked out. If ``true``, the regions in the
-    shapefiles are masked out separately, generating an auxiliary dimension
-    for the cube for this.
-  * ``ids``: by default, ``[]``, in this case all the shapes in the file will
-    be used. If a list of IDs is provided, only the shapes matching them will
-    be used. The IDs are assigned from the ``name`` or ``id`` attributes (in
-    that order of priority) if present in the file or from the reading order
-    if otherwise not present. So, for example, if a file has both ```name``
-    and ``id`` attributes, the ids will be assigned from ``name``. If the file
-    only has the ``id`` attribute, it will be taken from it and if no ``name``
-    nor ``id`` attributes are present, an integer id starting from 1 will be
-    assigned automatically when reading the shapes. We discourage to rely on
-    this last behaviour as we can not assure that the reading order will be the
-    same in different platforms, so we encourage you to modify the file to add
-    a proper id attribute. If the file has an id attribute with a name that is
-    not supported, please open an issue so we can add support for it.
+    minimal rectangular region containing the shape.
+    Set to ``false`` to only mask data outside the shape.
+    Data on irregular grids will not be cropped.
+  * ``decomposed``: by default ``false``; in this case the union of all the
+    regions in the shapefile is masked out.
+    If set to ``true``, the regions in the shapefiles are masked out separately
+    and the output cube will have an additional dimension ``shape_id``
+    describing the requested regions.
+  * ``ids``: Shapes to be read from the shapefile.
+    Can be given as:
+
+    * :obj:`list`: IDs are assigned from the attributes ``name``, ``NAME``,
+      ``Name``, ``id``, or ``ID`` (in that priority order; the first one
+      available is used).
+      If none of these attributes are available in the shapefile,
+      assume that the given `ids` correspond to the reading order of the
+      individual shapes.
+      So, for example, if a file has both ``name`` and ``id`` attributes, the
+      ids will be assigned from ``name``.
+      If the file only has the ``id`` attribute, it will be taken from it and
+      if no ``name`` nor ``id`` attributes are present, an integer ID starting
+      from 0 will be assigned automatically when reading the shapes.
+      We discourage to rely on this last behaviour as we can not assure that
+      the reading order will be the same on different platforms, so we
+      encourage you to specify a custom attribute using a :obj:`dict` (see
+      below) instead.
+      Note: An empty list is interpreted as ``ids=None`` (see below).
+    * :obj:`dict`: IDs (dictionary value; :obj:`list` of :obj:`str`) are
+      assigned from attribute given as dictionary key (:obj:`str`).
+      Only dictionaries with length 1 are supported.
+      Example: ``ids={'Acronym': ['GIC', 'WNA']}``.
+    * `None`: select all available regions from the shapefile.
 
 Examples:
     * Extract the shape of the river Elbe from a shapefile:
@@ -1745,6 +1779,19 @@ Examples:
               - Italy
               - United Kingdom
               - Taiwan
+
+    * Extract European AR6 regions:
+
+        .. code-block:: yaml
+
+            extract_shape:
+              shapefile: ar6
+              method: contains
+              ids:
+                Acronym:
+                  - NEU
+                  - WCE
+                  - MED
 
 See also :func:`esmvalcore.preprocessor.extract_shape`.
 
