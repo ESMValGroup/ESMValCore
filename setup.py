@@ -94,7 +94,7 @@ REQUIREMENTS = {
         'docformatter',
         'isort',
         'pre-commit',
-        'prospector[with_pyroma]>=1.9.0',
+        'prospector[with_pyroma, with-mypy]>=1.9.0',
         'vprof',
         'yamllint',
         'yapf',
