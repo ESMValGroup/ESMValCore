@@ -177,7 +177,18 @@ def _map_to_new_time(cube, time_points):
     Missing data inside original bounds is filled with nearest neighbour
     Missing data outside original bounds is masked.
     """
-    time_points = cube.coord('time').units.num2date(time_points)
+    time_coord = cube.coord('time')
+
+    # Try if the required time points can be obtained by slicing the cube.
+    time_slice = np.isin(time_coord.points, time_points)
+    if np.any(time_slice) and np.array_equal(time_coord.points[time_slice],
+                                             time_points):
+        time_idx, = cube.coord_dims('time')
+        indices = tuple(time_slice if i == time_idx else slice(None)
+                        for i in range(cube.ndim))
+        return cube[indices]
+
+    time_points = time_coord.units.num2date(time_points)
     sample_points = [('time', time_points)]
     scheme = iris.analysis.Nearest(extrapolation_mode='mask')
 
@@ -198,9 +209,18 @@ def _map_to_new_time(cube, time_points):
     try:
         new_cube = cube.interpolate(sample_points, scheme)
     except Exception as excinfo:
+        additional_info = ""
+        if cube.coords('time', dimensions=()):
+            additional_info = (
+                " Note: this alignment does not work for scalar time "
+                "coordinates. To ignore all scalar coordinates in the input "
+                "data, use the preprocessor option "
+                "`ignore_scalar_coords=True`."
+            )
         raise ValueError(
             f"Tried to align cubes in multi-model statistics, but failed for "
-            f"cube {cube}\n and time points {time_points}") from excinfo
+            f"cube {cube}\n and time points {time_points}.{additional_info}"
+        ) from excinfo
 
     # Change the dtype of int_time_coords to their original values
     for coord_name in int_time_coords:
@@ -313,7 +333,7 @@ def _get_equal_coord_names_metadata(cubes, equal_coords_metadata):
     return equal_names_metadata
 
 
-def _equalise_coordinate_metadata(cubes, ignore_scalar_coords=False):
+def _equalise_coordinate_metadata(cubes):
     """Equalise coordinates in cubes (in-place)."""
     if not cubes:
         return
@@ -356,17 +376,19 @@ def _equalise_coordinate_metadata(cubes, ignore_scalar_coords=False):
             # Note: remaining differences will raise an error at a later stage
             coord.long_name = None
 
-        # Remove scalar coordinates if desired. In addition, always remove
-        # specific scalar coordinates which are not expected to be equal in the
-        # input cubes.
+        # Remove special scalar coordinates which are not expected to be equal
+        # in the input cubes. Note: if `ignore_scalar_coords=True` is used for
+        # `multi_model_statistics`, the cubes do not contain scalar coordinates
+        # at this point anymore.
         scalar_coords_to_always_remove = ['p0', 'ptop']
         for scalar_coord in cube.coords(dimensions=()):
-            remove_coord = (
-                ignore_scalar_coords or
-                scalar_coord.var_name in scalar_coords_to_always_remove
-            )
-            if remove_coord:
+            if scalar_coord.var_name in scalar_coords_to_always_remove:
                 cube.remove_coord(scalar_coord)
+                logger.debug(
+                    "Removed scalar coordinate '%s' from cube %s",
+                    scalar_coord.var_name,
+                    cube.summary(shorten=True),
+                )
 
 
 def _equalise_fx_variables(cubes):
@@ -413,7 +435,7 @@ def _equalise_var_metadata(cubes):
             setattr(cube, attr, equal_names_metadata[cube_id][attr])
 
 
-def _combine(cubes, ignore_scalar_coords=False):
+def _combine(cubes):
     """Merge iris cubes into a single big cube with new dimension.
 
     This assumes that all input cubes have the same shape.
@@ -424,9 +446,7 @@ def _combine(cubes, ignore_scalar_coords=False):
     equalise_attributes(cubes)
     _equalise_var_metadata(cubes)
     _equalise_cell_methods(cubes)
-    _equalise_coordinate_metadata(
-        cubes, ignore_scalar_coords=ignore_scalar_coords
-    )
+    _equalise_coordinate_metadata(cubes)
     _equalise_fx_variables(cubes)
 
     for i, cube in enumerate(cubes):
@@ -487,51 +507,26 @@ def _compute_slices(cubes):
         yield slice(start, end)
 
 
-def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
-                   ignore_scalar_coords=False, **kwargs):
+def _compute_eager(
+    cubes: list,
+    *,
+    operator: iris.analysis.Aggregator,
+    **kwargs,
+):
     """Compute statistics one slice at a time."""
     _ = [cube.data for cube in cubes]  # make sure the cubes' data are realized
 
-    result_slices = []
+    result_slices = iris.cube.CubeList()
     for chunk in _compute_slices(cubes):
         if chunk is None:
-            single_model_slices = cubes  # scalar cubes
+            input_slices = cubes  # scalar cubes
         else:
-            single_model_slices = [cube[chunk] for cube in cubes]
-        combined_slice = _combine(
-            single_model_slices,
-            ignore_scalar_coords=ignore_scalar_coords,
-        )
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore',
-                message=(
-                    "Collapsing a non-contiguous coordinate. "
-                    f"Metadata may not be fully descriptive for '{CONCAT_DIM}."
-                ),
-                category=UserWarning,
-                module='iris',
-            )
-            warnings.filterwarnings(
-                'ignore',
-                message=(
-                    f"Cannot check if coordinate is contiguous: Invalid "
-                    f"operation for '{CONCAT_DIM}'"
-                ),
-                category=UserWarning,
-                module='iris',
-            )
-            collapsed_slice = combined_slice.collapsed(CONCAT_DIM, operator,
-                                                       **kwargs)
-
-        # some iris aggregators modify dtype, see e.g.
-        # https://numpy.org/doc/stable/reference/generated/numpy.ma.average.html
-        collapsed_slice.data = collapsed_slice.data.astype(np.float32)
-
-        result_slices.append(collapsed_slice)
+            input_slices = [cube[chunk] for cube in cubes]
+        result_slice = _compute(input_slices, operator=operator, **kwargs)
+        result_slices.append(result_slice)
 
     try:
-        result_cube = CubeList(result_slices).concatenate_cube()
+        result_cube = result_slices.concatenate_cube()
     except Exception as excinfo:
         raise ValueError(
             f"Multi-model statistics failed to concatenate results into a "
@@ -541,7 +536,45 @@ def _compute_eager(cubes: list, *, operator: iris.analysis.Aggregator,
             f"dtypes") from excinfo
 
     result_cube.data = np.ma.array(result_cube.data)
+
+    return result_cube
+
+
+def _compute(cubes: list, *, operator: iris.analysis.Aggregator, **kwargs):
+    """Compute statistic."""
+    cube = _combine(cubes)
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore',
+            message=(
+                "Collapsing a non-contiguous coordinate. "
+                f"Metadata may not be fully descriptive for '{CONCAT_DIM}."
+            ),
+            category=UserWarning,
+            module='iris',
+        )
+        warnings.filterwarnings(
+            'ignore',
+            message=(
+                f"Cannot check if coordinate is contiguous: Invalid "
+                f"operation for '{CONCAT_DIM}'"
+            ),
+            category=UserWarning,
+            module='iris',
+        )
+        # This will always return a masked array
+        result_cube = cube.collapsed(CONCAT_DIM, operator, **kwargs)
+
+    # Remove concatenation dimension added by _combine
     result_cube.remove_coord(CONCAT_DIM)
+    for cube in cubes:
+        cube.remove_coord(CONCAT_DIM)
+
+    # some iris aggregators modify dtype, see e.g.
+    # https://numpy.org/doc/stable/reference/generated/numpy.ma.average.html
+    result_cube.data = result_cube.core_data().astype(np.float32)
+
     if result_cube.cell_methods:
         cell_method = result_cube.cell_methods[0]
         result_cube.cell_methods = None
@@ -568,15 +601,28 @@ def _multicube_statistics(cubes, statistics, span, ignore_scalar_coords=False):
         )
 
     # Avoid modifying inputs
-    copied_cubes = [cube.copy() for cube in cubes]
+    cubes = [cube.copy() for cube in cubes]
+
+    # Remove scalar coordinates in input cubes if desired to ignore them when
+    # merging
+    if ignore_scalar_coords:
+        for cube in cubes:
+            for scalar_coord in cube.coords(dimensions=()):
+                cube.remove_coord(scalar_coord)
+                logger.debug(
+                    "Removed scalar coordinate '%s' from cube %s since "
+                    "ignore_scalar_coords=True",
+                    scalar_coord.var_name,
+                    cube.summary(shorten=True),
+                )
 
     # If all cubes contain a time coordinate, align them. If no cube contains a
-    # time coordinate, do nothing. Else, raise an exception
+    # time coordinate, do nothing. Else, raise an exception.
     time_coords = [cube.coords('time') for cube in cubes]
     if all(time_coords):
-        aligned_cubes = _align_time_coord(copied_cubes, span=span)
+        cubes = _align_time_coord(cubes, span=span)
     elif not any(time_coords):
-        aligned_cubes = copied_cubes
+        pass
     else:
         raise ValueError(
             "Multi-model statistics failed to merge input cubes into a single "
@@ -586,14 +632,14 @@ def _multicube_statistics(cubes, statistics, span, ignore_scalar_coords=False):
 
     # Calculate statistics
     statistics_cubes = {}
+    lazy_input = any(cube.has_lazy_data() for cube in cubes)
     for statistic in statistics:
         logger.debug('Multicube statistics: computing: %s', statistic)
         operator, kwargs = _resolve_operator(statistic)
-
-        result_cube = _compute_eager(aligned_cubes,
-                                     operator=operator,
-                                     ignore_scalar_coords=ignore_scalar_coords,
-                                     **kwargs)
+        if lazy_input and operator.lazy_func is not None:
+            result_cube = _compute(cubes, operator=operator, **kwargs)
+        else:
+            result_cube = _compute_eager(cubes, operator=operator, **kwargs)
         statistics_cubes[statistic] = result_cube
 
     return statistics_cubes
@@ -697,6 +743,8 @@ def multi_model_statistics(products,
     Some of the operators in :py:mod:`iris.analysis` require additional
     arguments. Except for percentiles, these operators are currently not
     supported.
+
+    Lazy operation is supported for all statistics, except ``median``.
 
     Parameters
     ----------

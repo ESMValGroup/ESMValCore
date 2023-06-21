@@ -60,6 +60,17 @@ called by the preprocessor functions
 :py:func:`esmvalcore.preprocessor.fix_metadata`, and
 :py:func:`esmvalcore.preprocessor.fix_data`.
 
+The :class:`~esmvalcore.cmor._fixes.fix.Fix` class provides the following
+attributes:
+
+- :attr:`Fix.vardef`: :class:`~esmvalcore.cmor.table.VariableInfo` object that
+  corresponds to the variable fixed by the fix.
+- :attr:`Fix.extra_facets`: :obj:`dict` that contains all facets of the
+  corresponding dataset fixed by the fix (see
+  :attr:`esmvalcore.dataset.Dataset.facets`).
+- :attr:`Fix.session`: :class:`~esmvalcore.config.Session` object that includes
+  configuration and directory information.
+
 Fixing a dataset
 ================
 

@@ -5,21 +5,23 @@ import inspect
 import logging
 import os
 import re
+import ssl
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
 from typing import Dict
 
+import dask.array as da
 import iris
 import numpy as np
 import stratify
-from dask import array as da
 from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
 
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.table import CMOR_TABLES
+from ._other import get_array_module
 from ._regrid_esmpy import ESMF_REGRID_METHODS
 from ._regrid_esmpy import regrid as esmpy_regrid
 from ._supplementary_vars import add_ancillary_variable, add_cell_measure
@@ -360,15 +362,41 @@ def extract_location(cube, location, scheme):
     if scheme is None:
         raise ValueError("Interpolation scheme needs to be specified."
                          " Use either 'linear' or 'nearest'.")
-    geolocator = Nominatim(user_agent='esmvalcore')
+    try:
+        # Try to use the default SSL context, see
+        # https://github.com/ESMValGroup/ESMValCore/issues/2012 for more
+        # information.
+        ssl_context = ssl.create_default_context()
+        geolocator = Nominatim(user_agent='esmvalcore',
+                               ssl_context=ssl_context)
+    except ssl.SSLError:
+        logger.warning(
+            "ssl.create_default_context() encountered a problem, not using it."
+        )
+        geolocator = Nominatim(user_agent='esmvalcore')
     geolocation = geolocator.geocode(location)
     if geolocation is None:
         raise ValueError(f'Requested location {location} can not be found.')
     logger.info("Extracting data for %s (%s °N, %s °E)", geolocation,
                 geolocation.latitude, geolocation.longitude)
 
-    return extract_point(cube, geolocation.latitude,
-                         geolocation.longitude, scheme)
+    return extract_point(cube, geolocation.latitude, geolocation.longitude,
+                         scheme)
+
+
+def _check_grid_discontiguities(cube, scheme):
+    """Check if there are grid discontiguities and set use_src_mask to True."""
+    scheme = dict(scheme)
+    try:
+        discontiguities = iris.util.find_discontiguities(cube)
+    except NotImplementedError:
+        pass
+    else:
+        if discontiguities.any():
+            scheme['use_src_mask'] = True
+            logger.debug('Grid discontinuities were found in the source grid. '
+                         'Setting scheme argument `use_src_mask` to True.')
+    return scheme
 
 
 def extract_point(cube, latitude, longitude, scheme):
@@ -548,6 +576,13 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             target: 1x1
             scheme:
               reference: esmf_regrid.schemes:ESMFAreaWeighted
+
+    Since version 0.6 of :doc:`iris-esmf-regrid:index`, the regridder is able
+    to ignore discontinuities in the source grids if the data defined in the
+    discontiguous points is masked.
+    The preprocessor automatically detects if discontinuities are present,
+    and configures the regridding scheme in order to take into account
+    the mask of the source grid to ignore them.
     """
     if is_dataset(target_grid):
         target_grid = target_grid.copy()
@@ -602,6 +637,8 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             scheme['src_cube'] = cube
         if 'grid_cube' in scheme_args:
             scheme['grid_cube'] = target_grid
+        if 'use_src_mask' in scheme_args:
+            scheme = _check_grid_discontiguities(cube, scheme)
 
         loaded_scheme = obj(**scheme)
     else:
@@ -638,7 +675,48 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
         # scheme is a function f(src_cube, grid_cube) -> Cube
         cube = loaded_scheme
     else:
+        cube = _rechunk(cube, target_grid)
         cube = cube.regrid(target_grid, loaded_scheme)
+
+    return cube
+
+
+def _rechunk(
+    cube: iris.cube.Cube,
+    target_grid: iris.cube.Cube,
+) -> iris.cube.Cube:
+    """Re-chunk cube with optimal chunk sizes for target grid."""
+    if not cube.has_lazy_data() or cube.ndim < 3:
+        # Only rechunk lazy multidimensional data
+        return cube
+
+    lon_coord = target_grid.coord(axis='X')
+    lat_coord = target_grid.coord(axis='Y')
+    if lon_coord.ndim != 1 or lat_coord.ndim != 1:
+        # This function only supports 1D lat/lon coordinates.
+        return cube
+
+    lon_dim, = target_grid.coord_dims(lon_coord)
+    lat_dim, = target_grid.coord_dims(lat_coord)
+    grid_indices = sorted((lon_dim, lat_dim))
+    target_grid_shape = tuple(target_grid.shape[i] for i in grid_indices)
+
+    if 2 * np.prod(cube.shape[-2:]) > np.prod(target_grid_shape):
+        # Only rechunk if target grid is more than a factor of 2 larger,
+        # because rechunking will keep the original chunk in memory.
+        return cube
+
+    data = cube.lazy_data()
+
+    # Compute a good chunk size for the target array
+    tgt_shape = data.shape[:-2] + target_grid_shape
+    tgt_chunks = data.chunks[:-2] + target_grid_shape
+    tgt_data = da.empty(tgt_shape, dtype=data.dtype, chunks=tgt_chunks)
+    tgt_data = tgt_data.rechunk({i: "auto" for i in range(cube.ndim - 2)})
+
+    # Adjust chunks to source array and rechunk
+    chunks = tgt_data.chunks[:-2] + data.shape[-2:]
+    cube.data = data.rechunk(chunks)
 
     return cube
 
@@ -785,22 +863,19 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
                                               cube.coord_dims(src_levels))
 
     # force mask onto data as nan's
-    cube.data = da.ma.filled(cube.core_data(), np.nan)
+    npx = get_array_module(cube.core_data())
+    data = npx.ma.filled(cube.core_data(), np.nan)
 
     # Now perform the actual vertical interpolation.
     new_data = stratify.interpolate(levels,
                                     src_levels_broadcast,
-                                    cube.core_data(),
+                                    data,
                                     axis=z_axis,
                                     interpolation=interpolation,
                                     extrapolation=extrapolation)
 
     # Calculate the mask based on the any NaN values in the interpolated data.
-    mask = np.isnan(new_data)
-
-    if np.any(mask):
-        # Ensure that the data is masked appropriately.
-        new_data = np.ma.array(new_data, mask=mask, fill_value=_MDI)
+    new_data = npx.ma.masked_where(npx.isnan(new_data), new_data)
 
     # Construct the resulting cube with the interpolated data.
     return _create_cube(cube, new_data, src_levels, levels.astype(float))
@@ -998,13 +1073,11 @@ def get_cmor_levels(cmor_table, coordinate):
     """
     if cmor_table not in CMOR_TABLES:
         raise ValueError(
-            f"Level definition cmor_table '{cmor_table}' not available"
-        )
+            f"Level definition cmor_table '{cmor_table}' not available")
 
     if coordinate not in CMOR_TABLES[cmor_table].coords:
         raise ValueError(
-            f'Coordinate {coordinate} not available for {cmor_table}'
-        )
+            f'Coordinate {coordinate} not available for {cmor_table}')
 
     cmor = CMOR_TABLES[cmor_table].coords[coordinate]
 
@@ -1015,8 +1088,7 @@ def get_cmor_levels(cmor_table, coordinate):
 
     raise ValueError(
         f'Coordinate {coordinate} in {cmor_table} does not have requested '
-        f'values'
-    )
+        f'values')
 
 
 def get_reference_levels(dataset):

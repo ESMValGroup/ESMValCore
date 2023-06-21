@@ -24,7 +24,7 @@ from netCDF4 import Dataset
 from scipy import constants
 
 from ..shared import add_aux_coords_from_cubes
-from ._base_fixes import EmacFix, NegateData, SetUnitsTo1
+from ._base_fixes import EmacFix, NegateData
 
 logger = logging.getLogger(__name__)
 
@@ -72,10 +72,8 @@ class AllVars(EmacFix):
         self.fix_regular_lon(cube)
 
         # Fix regular pressure levels (considers plev19, plev39, etc.)
-        for dim_name in self.vardef.dimensions:
-            if 'plev' in dim_name:
-                self._fix_plev(cube)
-                break
+        if self.vardef.has_coord_with_standard_name('air_pressure'):
+            self._fix_plev(cube)
 
         # Fix hybrid pressure levels
         if 'alevel' in self.vardef.dimensions:
@@ -198,12 +196,6 @@ class AllVars(EmacFix):
         return cube
 
 
-Cl = SetUnitsTo1
-
-
-Clt = SetUnitsTo1
-
-
 class Clwvi(EmacFix):
     """Fixes for ``clwvi``."""
 
@@ -228,10 +220,7 @@ Hfls = NegateData
 Hfss = NegateData
 
 
-Hurs = SetUnitsTo1
-
-
-class Od550aer(SetUnitsTo1):
+class Od550aer(EmacFix):
     """Fixes for ``od550aer``."""
 
     def fix_metadata(self, cubes):
@@ -334,12 +323,6 @@ class Rtmt(EmacFix):
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
-
-
-Siconc = SetUnitsTo1
-
-
-Siconca = SetUnitsTo1
 
 
 class Sithick(EmacFix):

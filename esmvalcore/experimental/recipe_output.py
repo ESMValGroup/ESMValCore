@@ -1,6 +1,7 @@
 """API for handing recipe output."""
 import base64
 import logging
+import os.path
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Optional, Tuple, Type
@@ -217,6 +218,7 @@ class RecipeOutput(Mapping):
             diagnostics=self.diagnostics.values(),
             session=self.session,
             info=self.info,
+            relpath=os.path.relpath,
         )
 
         return rendered
@@ -319,8 +321,7 @@ class OutputFile():
     def create(
         cls,
         path: str,
-        attributes:
-        Optional[dict] = None,
+        attributes: Optional[dict] = None,
     ) -> 'OutputFile':
         """Construct new instances of OutputFile.
 

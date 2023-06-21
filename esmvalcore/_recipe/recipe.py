@@ -42,6 +42,7 @@ from esmvalcore.preprocessor import (
     PreprocessingTask,
     PreprocessorFile,
 )
+from esmvalcore.preprocessor._area import _update_shapefile_path
 from esmvalcore.preprocessor._other import _group_products
 from esmvalcore.preprocessor._regrid import (
     _spec_to_latlonvals,
@@ -549,16 +550,6 @@ def _update_multi_dataset_settings(facets, settings):
         _exclude_dataset(settings, facets, step)
 
 
-def _update_warning_settings(settings, project):
-    """Update project-specific warning settings."""
-    cfg = get_project_config(project)
-    if 'ignore_warnings' not in cfg:
-        return
-    for (step, ignored_warnings) in cfg['ignore_warnings'].items():
-        if step in settings:
-            settings[step]['ignore_warnings'] = ignored_warnings
-
-
 def _get_tag(step, identifier, statistic):
     # Avoid . in filename for percentiles
     statistic = statistic.replace('.', '-')
@@ -641,12 +632,8 @@ def _update_extract_shape(settings, session):
     if 'extract_shape' in settings:
         shapefile = settings['extract_shape'].get('shapefile')
         if shapefile:
-            if not os.path.exists(shapefile):
-                shapefile = os.path.join(
-                    session['auxiliary_data_dir'],
-                    shapefile,
-                )
-                settings['extract_shape']['shapefile'] = shapefile
+            shapefile = _update_shapefile_path(shapefile, session=session)
+            settings['extract_shape']['shapefile'] = shapefile
         check.extract_shape(settings['extract_shape'])
 
 
@@ -697,7 +684,6 @@ def _get_preprocessor_products(
 
     for dataset in datasets:
         settings = _get_default_settings(dataset)
-        _update_warning_settings(settings, dataset.facets['project'])
         _apply_preprocessor_profile(settings, profile)
         _update_multi_dataset_settings(dataset.facets, settings)
         _update_preproc_functions(settings, dataset, datasets, missing_vars)

@@ -15,6 +15,7 @@ from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.cnrm_aladin63 import (
 )
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import AllVars
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.config import CFG
 
 
 def test_get_fix():
@@ -108,7 +109,7 @@ def test_get_fixed_filepath_paths(tmp_path):
     assert fixed_path == tmp_path / 'fixed' / 'file.nc'
 
 
-def test_get_fixed_filepath_temporary_paths(tmp_path):
+def test_get_fixed_filepath_unique_suffix_paths(tmp_path):
     output_dir = tmp_path / 'fixed' / 'prefix_1_'
     filepath = Path('this', 'is', 'a', 'file.nc')
     assert not output_dir.parent.is_dir()
@@ -132,7 +133,7 @@ def test_get_fixed_filepath_strs(tmp_path):
     assert fixed_path == tmp_path / 'fixed' / 'file.nc'
 
 
-def test_get_fixed_filepath_temporary_strs(tmp_path):
+def test_get_fixed_filepath_unique_suffix_strs(tmp_path):
     output_dir = os.path.join(str(tmp_path), 'fixed', 'prefix_1_')
     filepath = os.path.join('this', 'is', 'a', 'file.nc')
     assert not Path(output_dir).parent.is_dir()
@@ -144,3 +145,14 @@ def test_get_fixed_filepath_temporary_strs(tmp_path):
     assert fixed_path != tmp_path / 'fixed' / 'prefix_1_' / 'file.nc'
     assert fixed_path.parent.name.startswith('prefix_1_')
     assert fixed_path.name == 'file.nc'
+
+
+def test_session_empty():
+    fix = Fix(None)
+    assert fix.session is None
+
+
+def test_session():
+    session = CFG.start_session('my session')
+    fix = Fix(None, session=session)
+    assert fix.session == session
