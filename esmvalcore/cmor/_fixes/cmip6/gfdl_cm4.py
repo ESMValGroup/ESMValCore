@@ -1,7 +1,7 @@
 """Fixes for GFDL-CM4 model."""
 import iris
 
-from ..common import ClFixHybridPressureCoord, SiconcFixScalarCoord
+from ..common import ClFixHybridPressureCoord, SiconcFixScalarCoord, OceanFixGrid
 from ..fix import Fix
 from ..shared import add_aux_coords_from_cubes, add_scalar_height_coord
 from .gfdl_esm4 import Omon as BaseOmon
@@ -110,6 +110,12 @@ class Vas(Fix):
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 10.0)
         return cubes
+
+
+Tos = OceanFixGrid
+
+
+Sos = OceanFixGrid
 
 
 Omon = BaseOmon
