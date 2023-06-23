@@ -28,6 +28,7 @@ from ._derive import derive
 from ._detrend import detrend
 from ._io import (
     _get_debug_filename,
+    _sort_products,
     cleanup,
     concatenate,
     load,
@@ -663,11 +664,7 @@ class PreprocessingTask(BaseTask):
                     self.products = _apply_multimodel(self.products, step,
                                                       self.debug)
             else:
-                for product in sorted(
-                    self.products,
-                    # Sort datasets according to their order in the recipe.
-                    key=lambda p: p.attributes.get('recipe_dataset_index', ''),
-                ):
+                for product in _sort_products(self.products):
                     logger.debug("Applying single-model steps to %s", product)
                     for step in block:
                         if step in product.settings:

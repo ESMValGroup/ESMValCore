@@ -390,18 +390,23 @@ def cleanup(files, remove=None):
     return files
 
 
+def _sort_products(products):
+    """Sort preprocessor output files by their order in the recipe."""
+    return sorted(
+        products,
+        key=lambda p: (
+            p.attributes.get('recipe_dataset_index', 1e6),
+            p.attributes.get('dataset', ''),
+        ),
+    )
+
+
 def write_metadata(products, write_ncl=False):
     """Write product metadata to file."""
     output_files = []
     for output_dir, prods in groupby(products,
                                      lambda p: os.path.dirname(p.filename)):
-        sorted_products = sorted(
-            prods,
-            key=lambda p: (
-                p.attributes.get('recipe_dataset_index', 1e6),
-                p.attributes.get('dataset', ''),
-            ),
-        )
+        sorted_products = _sort_products(prods)
         metadata = {}
         for product in sorted_products:
             if isinstance(product.attributes.get('exp'), (list, tuple)):
