@@ -1,4 +1,8 @@
 """Test fixes for GISS-E2-1-G."""
+import dask.array as da
+import numpy as np
+from iris.cube import Cube
+
 from esmvalcore.cmor._fixes.cmip6.giss_e2_1_g import Cl, Cli, Clw
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
@@ -35,3 +39,15 @@ def test_get_clw_fix():
 def test_clw_fix():
     """Test fix for ``clw``."""
     assert Clw is ClFixHybridPressureCoord
+
+
+def test_tos_fix():
+    fix, = Fix.get_fixes('CMIP6', 'GISS-E2-1-G', 'Omon', 'tos')
+    cube = Cube(
+        da.array([274], dtype=np.float32),
+        var_name='tos',
+        units='degC',
+    )
+    result, = fix.fix_metadata([cube])
+    assert 0. < result.data < 1.
+    assert result.units == 'degC'

@@ -64,9 +64,8 @@ def select_latest_versions(files, versions):
         if versions:
             selection = [f for f in group if f.facets['version'] in versions]
             if not selection:
-                raise FileNotFoundError(
-                    f"Requested versions {', '.join(versions)} of file not "
-                    f"found. Available files: {group}")
+                # Skip the file if it is not the requested version(s).
+                continue
             group = selection
         latest_version = group[0]
         result.append(latest_version)
