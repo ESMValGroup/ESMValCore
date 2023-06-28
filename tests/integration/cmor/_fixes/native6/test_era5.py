@@ -300,7 +300,7 @@ def clt_cmor_e1hr():
 def evspsbl_era5_hourly():
     time = _era5_time('hourly')
     cube = iris.cube.Cube(
-        _era5_data('hourly'),
+        _era5_data('hourly') * -1.,
         long_name='total evapotranspiration',
         var_name='e',
         units='unknown',
@@ -337,7 +337,7 @@ def evspsbl_cmor_e1hr():
 def evspsblpot_era5_hourly():
     time = _era5_time('hourly')
     cube = iris.cube.Cube(
-        _era5_data('hourly'),
+        _era5_data('hourly') * -1.,
         long_name='potential evapotranspiration',
         var_name='epot',
         units='unknown',
