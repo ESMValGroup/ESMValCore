@@ -1,7 +1,6 @@
 """Unit tests for the :func:`esmvalcore.preprocessor.regrid.regrid`
 function."""
 
-import logging
 import unittest
 from unittest import mock
 

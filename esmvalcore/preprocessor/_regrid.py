@@ -383,6 +383,7 @@ def extract_location(cube, location, scheme):
     return extract_point(cube, geolocation.latitude, geolocation.longitude,
                          scheme)
 
+
 def extract_point(cube, latitude, longitude, scheme):
     """Extract a point, with interpolation.
 
