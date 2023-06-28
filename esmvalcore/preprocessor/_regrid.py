@@ -9,7 +9,7 @@ import ssl
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 import dask.array as da
 import iris
@@ -859,20 +859,27 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
 
     # Broadcast the 1d source cube vertical coordinate to fully
     # describe the spatial extent that will be interpolated.
-    src_levels_broadcast = broadcast_to_shape(src_levels.points, cube.shape,
-                                              cube.coord_dims(src_levels))
+    src_levels_broadcast = broadcast_to_shape(
+        src_levels.core_points(),
+        cube.shape,
+        cube.coord_dims(src_levels),
+    )
 
     # force mask onto data as nan's
     npx = get_array_module(cube.core_data())
     data = npx.ma.filled(cube.core_data(), np.nan)
 
+    if isinstance(src_levels_broadcast, da.Array):
+        levels = da.asarray(levels)
     # Now perform the actual vertical interpolation.
-    new_data = stratify.interpolate(levels,
-                                    src_levels_broadcast,
-                                    data,
-                                    axis=z_axis,
-                                    interpolation=interpolation,
-                                    extrapolation=extrapolation)
+    new_data = stratify.interpolate(
+        levels,
+        src_levels_broadcast,
+        data,
+        axis=z_axis,
+        interpolation=interpolation,
+        extrapolation=extrapolation,
+    )
 
     # Calculate the mask based on the any NaN values in the interpolated data.
     new_data = npx.ma.masked_where(npx.isnan(new_data), new_data)
@@ -942,19 +949,21 @@ def parse_vertical_scheme(scheme):
     return scheme, extrap_scheme
 
 
-def extract_levels(cube,
-                   levels,
-                   scheme,
-                   coordinate=None,
-                   rtol=1e-7,
-                   atol=None):
+def extract_levels(
+    cube: iris.cube.Cube,
+    levels: np.typing.ArrayLike,
+    scheme: str,
+    coordinate: Optional[str] = None,
+    rtol: Optional[float] = 1e-7,
+    atol: Optional[float] = None,
+):
     """Perform vertical interpolation.
 
     Parameters
     ----------
     cube : iris.cube.Cube
         The source cube to be vertically interpolated.
-    levels : ArrayLike
+    levels : np.typing.ArrayLike
         One or more target levels for the vertical interpolation. Assumed
         to be in the same S.I. units of the source cube vertical dimension
         coordinate. If the requested levels are sufficiently close to the
@@ -997,7 +1006,8 @@ def extract_levels(cube,
     interpolation, extrapolation = parse_vertical_scheme(scheme)
 
     # Ensure we have a non-scalar array of levels.
-    levels = np.array(levels, ndmin=1)
+    if not isinstance(levels, da.Array):
+        levels = np.array(levels, ndmin=1)
 
     # Get the source cube vertical coordinate, if available.
     if coordinate:
@@ -1016,10 +1026,10 @@ def extract_levels(cube,
         src_levels = cube.coord(axis='z', dim_coords=True)
 
     if (src_levels.shape == levels.shape and np.allclose(
-            src_levels.points,
+            src_levels.core_points(),
             levels,
             rtol=rtol,
-            atol=1e-7 * np.mean(src_levels.points) if atol is None else atol,
+            atol=1e-7 * np.mean(src_levels.core_points()) if atol is None else atol,
     )):
         # Only perform vertical extraction/interpolation if the source
         # and target levels are not "similar" enough.
