@@ -121,6 +121,16 @@ ERA5
 - Supported variables: ``cl``, ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``)
 - Tier: 3
 
+.. note:: According to the description of Evapotranspiration and potential Evapotranspiration on the Copernicus page 
+  (https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels-monthly-means?tab=overview):
+  "The ECMWF Integrated Forecasting System (IFS) convention is that downward fluxes are positive. 
+  Therefore, negative values indicate evaporation and positive values indicate condensation."
+  
+  In the CMOR table, these fluxes are defined as positive, if they go from the surface into the atmosphere:
+  "Evaporation at surface (also known as evapotranspiration): flux of water into the atmosphere due to conversion 
+  of both liquid and solid phases to vapor (from underlying surface and vegetation)."
+  Therefore the fix to cmorize the ERA5 (and ERA5-Land) switches their sign to be comparable to the CMIP models.
+
 .. _read_native_mswep:
 
 MSWEP
