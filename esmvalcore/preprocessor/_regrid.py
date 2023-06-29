@@ -1029,7 +1029,8 @@ def extract_levels(
             src_levels.core_points(),
             levels,
             rtol=rtol,
-            atol=1e-7 * np.mean(src_levels.core_points()) if atol is None else atol,
+            atol=1e-7 * np.mean(src_levels.core_points())
+            if atol is None else atol,
     )):
         # Only perform vertical extraction/interpolation if the source
         # and target levels are not "similar" enough.
