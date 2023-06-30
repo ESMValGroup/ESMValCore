@@ -8,8 +8,9 @@ import re
 import ssl
 from copy import deepcopy
 from decimal import Decimal
+from functools import partial
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 import dask.array as da
 import iris
@@ -17,7 +18,6 @@ import numpy as np
 import stratify
 from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
-from iris.util import broadcast_to_shape
 
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.table import CMOR_TABLES
@@ -851,27 +851,79 @@ def _create_cube(src_cube, data, src_levels, levels):
     return result
 
 
+def is_lazy_masked_data(array):
+    """Similar to `iris._lazy_data.is_lazy_masked_data`."""
+    return isinstance(array, da.Array) and isinstance(
+        da.utils.meta_from_array(array), np.ma.MaskedArray)
+
+
+def broadcast_to_shape(array, shape, chunks, dim_map):
+    """Copy of `iris.util.broadcast_to_shape` that allows specifying chunks."""
+    if isinstance(array, da.Array):
+        chunks = list(chunks)
+        for src_idx, tgt_idx in enumerate(dim_map):
+            # Only use the specified chunks along new dimensions.
+            chunks[tgt_idx] = array.chunks[src_idx]
+        broadcast_to = partial(da.broadcast_to, chunks=chunks)
+    else:
+        broadcast_to = np.broadcast_to
+
+    n_orig_dims = len(array.shape)
+    n_new_dims = len(shape) - n_orig_dims
+    array = array.reshape(array.shape + (1,) * n_new_dims)
+
+    # Get dims in required order.
+    array = np.moveaxis(array, range(n_orig_dims), dim_map)
+    new_array = broadcast_to(array, shape)
+
+    if np.ma.isMA(array):
+        # broadcast_to strips masks so we need to handle them explicitly.
+        mask = np.ma.getmask(array)
+        if mask is np.ma.nomask:
+            new_mask = np.ma.nomask
+        else:
+            new_mask = np.broadcast_to(mask, shape)
+        new_array = np.ma.array(new_array, mask=new_mask)
+
+    elif is_lazy_masked_data(array):
+        # broadcast_to strips masks so we need to handle them explicitly.
+        mask = da.ma.getmaskarray(array)
+        new_mask = broadcast_to(mask, shape)
+        new_array = da.ma.masked_array(new_array, new_mask)
+
+    return new_array
+
+
 def _vertical_interpolate(cube, src_levels, levels, interpolation,
                           extrapolation):
     """Perform vertical interpolation."""
     # Determine the source levels and axis for vertical interpolation.
     z_axis, = cube.coord_dims(cube.coord(axis='z', dim_coords=True))
 
-    # Broadcast the 1d source cube vertical coordinate to fully
-    # describe the spatial extent that will be interpolated.
+    if cube.has_lazy_data():
+        # Make source levels lazy if cube has lazy data.
+        src_points = src_levels.lazy_points()
+    else:
+        src_points = src_levels.core_points()
+
+    # Make the target levels lazy if the input data is lazy.
+    if cube.has_lazy_data() and isinstance(src_points, da.Array):
+        levels = da.asarray(levels)
+
+    # Broadcast the source cube vertical coordinate to fully describe the
+    # spatial extent that will be interpolated.
     src_levels_broadcast = broadcast_to_shape(
-        src_levels.core_points(),
-        cube.shape,
-        cube.coord_dims(src_levels),
+        src_points,
+        shape=cube.shape,
+        chunks=cube.lazy_data().chunks if cube.has_lazy_data() else None,
+        dim_map=cube.coord_dims(src_levels),
     )
 
     # force mask onto data as nan's
     npx = get_array_module(cube.core_data())
     data = npx.ma.filled(cube.core_data(), np.nan)
 
-    if isinstance(src_levels_broadcast, da.Array):
-        levels = da.asarray(levels)
-    # Now perform the actual vertical interpolation.
+    # Perform vertical interpolation.
     new_data = stratify.interpolate(
         levels,
         src_levels_broadcast,
@@ -951,42 +1003,42 @@ def parse_vertical_scheme(scheme):
 
 def extract_levels(
     cube: iris.cube.Cube,
-    levels: np.typing.ArrayLike,
+    levels: Union[np.typing.ArrayLike, da.Array],
     scheme: str,
     coordinate: Optional[str] = None,
-    rtol: Optional[float] = 1e-7,
+    rtol: float = 1e-7,
     atol: Optional[float] = None,
 ):
     """Perform vertical interpolation.
 
     Parameters
     ----------
-    cube : iris.cube.Cube
+    cube:
         The source cube to be vertically interpolated.
-    levels : np.typing.ArrayLike
+    levels:
         One or more target levels for the vertical interpolation. Assumed
         to be in the same S.I. units of the source cube vertical dimension
         coordinate. If the requested levels are sufficiently close to the
         levels of the cube, cube slicing will take place instead of
         interpolation.
-    scheme : str
+    scheme:
         The vertical interpolation scheme to use. Choose from
         'linear',
         'nearest',
         'linear_extrapolate',
         'nearest_extrapolate'.
-    coordinate :  optional str
+    coordinate:
         The coordinate to interpolate. If specified, pressure levels
         (if present) can be converted to height levels and vice versa using
         the US standard atmosphere. E.g. 'coordinate = altitude' will convert
         existing pressure levels (air_pressure) to height levels (altitude);
         'coordinate = air_pressure' will convert existing height levels
         (altitude) to pressure levels (air_pressure).
-    rtol : float
+    rtol:
         Relative tolerance for comparing the levels in `cube` to the requested
         levels. If the levels are sufficiently close, the requested levels
         will be assigned to the cube and no interpolation will take place.
-    atol : float
+    atol:
         Absolute tolerance for comparing the levels in `cube` to the requested
         levels. If the levels are sufficiently close, the requested levels
         will be assigned to the cube and no interpolation will take place.
@@ -1029,8 +1081,8 @@ def extract_levels(
             src_levels.core_points(),
             levels,
             rtol=rtol,
-            atol=1e-7 * np.mean(src_levels.core_points())
-            if atol is None else atol,
+            atol=1e-7 *
+            np.mean(src_levels.core_points()) if atol is None else atol,
     )):
         # Only perform vertical extraction/interpolation if the source
         # and target levels are not "similar" enough.
