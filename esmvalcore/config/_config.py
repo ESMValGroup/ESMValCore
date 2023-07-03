@@ -5,8 +5,8 @@ import collections.abc
 import fnmatch
 import logging
 import os
-import sys
 from functools import lru_cache
+from importlib.resources import files as importlib_files
 from pathlib import Path
 
 import yaml
@@ -20,12 +20,6 @@ logger = logging.getLogger(__name__)
 TASKSEP = os.sep
 
 CFG = {}
-
-if sys.version_info[:2] >= (3, 9):
-    # pylint: disable=no-name-in-module
-    from importlib.resources import files as importlib_files
-else:
-    from importlib_resources import files as importlib_files
 
 
 def _deep_update(dictionary, update):
