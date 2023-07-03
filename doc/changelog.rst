@@ -40,13 +40,13 @@ Bug fixes
 -  Fixed usage of custom location for :ref:`custom CMOR tables <custom_cmor_tables>` (`#2052 <https://github.com/ESMValGroup/ESMValCore/pull/2052>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Fix issue with writing index.html when :ref:`running a recipe <running>` with ``--resume-from`` (`#2055 <https://github.com/ESMValGroup/ESMValCore/pull/2055>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Fixed bug in ICON CMORizer that lead to shifted time coordinates (`#2038 <https://github.com/ESMValGroup/ESMValCore/pull/2038>`__) `Manuel Schlund <https://github.com/schlunma>`__
--  Include `-` in allowed characters for bibtex references (`#2097 <https://github.com/ESMValGroup/ESMValCore/pull/2097>`__) `Alistair Sellar <https://github.com/alistairsellar>`__
+-  Include ``-`` in allowed characters for bibtex references (`#2097 <https://github.com/ESMValGroup/ESMValCore/pull/2097>`__) `Alistair Sellar <https://github.com/alistairsellar>`__
 -  Do not raise an exception if the requested version of a file is not available for all matching files on ESGF (`#2105 <https://github.com/ESMValGroup/ESMValCore/pull/2105>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
 Computational performance improvements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  Add support for :ref:`configuring Dask distributed <config-dask>` (`#2049 <https://github.com/ESMValGroup/ESMValCore/pull/2049>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Add support for :ref:`configuring Dask distributed <config-dask>` (`#2049 <https://github.com/ESMValGroup/ESMValCore/pull/2049>`__, `#2122 <https://github.com/ESMValGroup/ESMValCore/pull/2122>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Make :func:`esmvalcore.preprocessor.extract_levels` lazy (`#1761 <https://github.com/ESMValGroup/ESMValCore/pull/1761>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Lazy implementation of :func:`esmvalcore.preprocessor.multi_model_statistics` and :func:`esmvalcore.preprocessor.ensemble_statistics` (`#968 <https://github.com/ESMValGroup/ESMValCore/pull/968>`__ and `#2087 <https://github.com/ESMValGroup/ESMValCore/pull/2087>`__) `Peter Kalverla <https://github.com/Peter9192>`__
 -  Avoid realizing data in preprocessor function :func:`esmvalcore.preprocessor.concatenate` when cubes overlap (`#2109 <https://github.com/ESMValGroup/ESMValCore/pull/2109>`__) `Bouwe Andela <https://github.com/bouweandela>`__
@@ -67,7 +67,7 @@ Fixes for datasets
 -  ICON: allow specifying horizontal grid file in recipe/extra facets (`#2078 <https://github.com/ESMValGroup/ESMValCore/pull/2078>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Fix tas/tos CMIP6: FIO, KACE, MIROC, IITM (`#2061 <https://github.com/ESMValGroup/ESMValCore/pull/2061>`__) `Pep Cos <https://github.com/pepcos>`__
 -  Add fix for EC-Earth3-Veg tos calendar (`#2100 <https://github.com/ESMValGroup/ESMValCore/pull/2100>`__) `Bouwe Andela <https://github.com/bouweandela>`__
--  Correct GISS-E2-1-G `tos` units (`#2099 <https://github.com/ESMValGroup/ESMValCore/pull/2099>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Correct GISS-E2-1-G ``tos`` units (`#2099 <https://github.com/ESMValGroup/ESMValCore/pull/2099>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
 Installation
 ~~~~~~~~~~~~
