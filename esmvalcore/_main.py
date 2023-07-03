@@ -35,7 +35,7 @@ from pathlib import Path
 if (sys.version_info.major, sys.version_info.minor) < (3, 10):
     from importlib_metadata import entry_points
 else:
-    from importlib.metadata import entry_points
+    from importlib.metadata import entry_points  # type: ignore
 
 import fire
 
