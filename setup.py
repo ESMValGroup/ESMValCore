@@ -39,7 +39,7 @@ REQUIREMENTS = {
         'fire',
         'geopy',
         'humanfriendly',
-        "importlib_resources;python_version<'3.9'",
+        "importlib_metadata;python_version<'3.10'",
         'isodate',
         'jinja2',
         'nc-time-axis',  # needed by iris.plot

@@ -19,7 +19,7 @@ dependencies:
   - fire
   - geopy
   - humanfriendly
-  - importlib_resources
+  - importlib_metadata  # required for Python < 3.10
   - iris>=3.6.0
   - iris-esmf-regrid >=0.7.0  # to work with latest esmpy
   - isodate
