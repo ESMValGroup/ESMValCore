@@ -57,6 +57,7 @@ Documentation
 -  Remove unneeded sphinxcontrib extension (`#2047 <https://github.com/ESMValGroup/ESMValCore/pull/2047>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Show ESMValTool logo on `PyPI webpage <https://pypi.org/project/ESMValCore/>`__ (`#2065 <https://github.com/ESMValGroup/ESMValCore/pull/2065>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Fix gitter badge in README (`#2118 <https://github.com/ESMValGroup/ESMValCore/pull/2118>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Add changelog for v2.9.0 (`#2088 <https://github.com/ESMValGroup/ESMValCore/pull/2088>`__ and `#2123 <https://github.com/ESMValGroup/ESMValCore/pull/2123>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
 Fixes for datasets
 ~~~~~~~~~~~~~~~~~~
