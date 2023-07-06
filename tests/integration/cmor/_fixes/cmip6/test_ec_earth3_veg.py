@@ -8,13 +8,19 @@ import pytest
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip6.ec_earth3_veg import Siconc, Siconca, Tas
+from esmvalcore.cmor._fixes.cmip6.ec_earth3_veg import (
+    CalendarFix,
+    Siconc,
+    Siconca,
+    Tas,
+)
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
 
 class TestSiconca(unittest.TestCase):
     """Test sftof fixes."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='siconca', units='%')
@@ -34,9 +40,15 @@ class TestSiconca(unittest.TestCase):
 
 
 def test_get_siconc_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'EC-Earth3-Veg', 'SImon', 'siconc')
-    assert fix == [Siconc(None)]
+    """Test sinconc calendar is fixed."""
+    fix, = Fix.get_fixes('CMIP6', 'EC-Earth3-Veg', 'SImon', 'siconc')
+    assert isinstance(fix, CalendarFix)
+
+
+def test_get_tos_fix():
+    """Test tos calendar is fixed."""
+    fix, = Fix.get_fixes('CMIP6', 'EC-Earth3-Veg', 'Omon', 'tos')
+    assert isinstance(fix, CalendarFix)
 
 
 def test_siconc_fix_calendar():

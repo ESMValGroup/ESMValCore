@@ -1015,13 +1015,6 @@ scheme available in :doc:`iris-esmf-regrid:index`:
           reference: esmf_regrid.schemes:regrid_rectilinear_to_rectilinear
           mdtol: 0.7
 
-Since version 0.6 of :doc:`iris-esmf-regrid:index`, the regridder is able
-to ignore discontinuities in the source grids if the data defined in the
-discontiguous points is masked.
-The :func:`~esmvalcore.preprocessor.regrid` preprocessor automatically detects
-if discontinuities are present, and configures the regridding scheme in order to take
-into account the mask of the source grid to ignore them.
-
 .. _ensemble statistics:
 
 Ensemble statistics

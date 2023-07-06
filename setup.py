@@ -56,8 +56,10 @@ REQUIREMENTS = {
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        'scitools-iris>=3.6.0',
-        'shapely',
+        # See the following issue for info on the iris pin below:
+        # https://github.com/ESMValGroup/ESMValTool/issues/3239#issuecomment-1613298587
+        'scitools-iris>=3.4.0',
+        'shapely>=2.0.0',
         'stratify>=0.3',
         'yamale',
     ],
@@ -93,7 +95,7 @@ REQUIREMENTS = {
         'docformatter',
         'isort',
         'pre-commit',
-        'prospector[with_pyroma,with_mypy]>=1.9.0',
+        'prospector[with_pyroma]>=1.9.0',
         'vprof',
         'yamllint',
         'yapf',

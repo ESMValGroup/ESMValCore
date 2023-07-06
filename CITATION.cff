@@ -192,11 +192,11 @@ authors:
     given-names: Julian
 
 cff-version: 1.2.0
-date-released: 2023-06-12
+date-released: 2023-07-04
 doi: "10.5281/zenodo.3387139"
 license: "Apache-2.0"
 message: "If you use this software, please cite it using these metadata."
 repository-code: "https://github.com/ESMValGroup/ESMValCore/"
 title: ESMValCore
-version: "v2.9.0rc1"
+version: "v2.9.0"
 ...
