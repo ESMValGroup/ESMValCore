@@ -19,7 +19,7 @@ dependencies:
   - fire
   - geopy
   - humanfriendly
-  - importlib_resources
+  - importlib_metadata  # required for Python < 3.10
   - iris >=3.6.0
   - iris-esmf-regrid >=0.7.0
   - isodate
@@ -64,7 +64,6 @@ dependencies:
   # Not on conda-forge - ESMValTool_sample_data==0.0.3
   # Still for testing, MyPy library stubs
   - types-requests
-  - types-pkg_resources
   - types-PyYAML
   # Python packages needed for installing in development mode
   - codespell
