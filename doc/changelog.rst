@@ -4,7 +4,7 @@ Changelog
 =========
 
 
-.. _changelog-v2-9-0
+.. _changelog-v2-9-0:
 
 
 v2.9.0
