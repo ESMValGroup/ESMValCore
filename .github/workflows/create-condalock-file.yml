@@ -31,13 +31,14 @@ jobs:
           miniforge-version: "latest"
           miniforge-variant: Mambaforge
           use-mamba: true
-      - name: Show conda config
+      - name: Update and show conda config
         run: |
           conda update -n base -c conda-forge conda
           conda info
           conda list
           conda config --show-sources
           conda config --show
+          mamba --version
       - name: Gather Python info
         run: |
           which python
