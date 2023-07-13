@@ -45,8 +45,7 @@ jobs:
           which python
           python --version
       - name: Install conda-lock
-        # conda-lock==2.1.0 has issues building the lockfilr
-        run: mamba install -y conda-lock==2.0.0
+        run: mamba install -y conda-lock
       - name: Check version of conda-lock
         run: conda-lock --version
       - name: Create conda lock file for linux-64
