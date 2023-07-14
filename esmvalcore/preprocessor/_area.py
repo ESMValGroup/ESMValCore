@@ -18,7 +18,7 @@ import shapely.ops
 from dask import array as da
 from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube, CubeList
-from iris.exceptions import CoordinateNotFoundError
+from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 
 from ._shared import (
     get_iris_analysis_operation,
@@ -67,7 +67,8 @@ def extract_region(
 
     Returns
     -------
-    Smaller cube.
+    iris.cube.Cube
+        Smaller cube.
 
     """
     if abs(start_latitude) > 90.:
@@ -147,7 +148,8 @@ def zonal_statistics(cube: Cube, operator: str) -> Cube:
 
     Returns
     -------
-    Zonal statistics cube.
+    iris.cube.Cube
+        Zonal statistics cube.
 
     Raises
     ------
@@ -178,7 +180,8 @@ def meridional_statistics(cube: Cube, operator: str) -> Cube:
 
     Returns
     -------
-    Meridional statistics cube.
+    iris.cube.Cube
+        Meridional statistics cube.
 
     Raises
     ------
@@ -227,8 +230,9 @@ def _add_calculated_cell_area(cube):
     regular_grid = all([
         cube.coord('latitude').points.ndim == 1,
         cube.coord('longitude').points.ndim == 1,
+        cube.coord_dims('latitude') != cube.coord_dims('longitude'),
     ])
-    irregular_grid_with_grid_lat_lon = all([
+    rotated_pole_grid = all([
         cube.coord('latitude').points.ndim == 2,
         cube.coord('longitude').points.ndim == 2,
         cube.coords('grid_latitude'),
@@ -243,14 +247,14 @@ def _add_calculated_cell_area(cube):
 
     # For rotated pole grids, use grid_latitude and grid_longitude to calculate
     # grid cell areas
-    elif irregular_grid_with_grid_lat_lon:
+    elif rotated_pole_grid:
         cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
         cube_tmp = cube.copy()
         cube_tmp.remove_coord('latitude')
         cube_tmp.coord('grid_latitude').rename('latitude')
         cube_tmp.remove_coord('longitude')
         cube_tmp.coord('grid_longitude').rename('longitude')
-        logger.debug("Calculating grid cell areas for irregular grid")
+        logger.debug("Calculating grid cell areas for rotated pole grid")
         cell_areas = compute_area_weights(cube_tmp)
 
     # For all other cases, grid cell areas cannot be calculated
@@ -260,7 +264,7 @@ def _add_calculated_cell_area(cube):
             "areas for irregular or unstructured grid of cube %s",
             cube.summary(shorten=True),
         )
-        raise iris.exceptions.CoordinateMultiDimError(cube.coord('latitude'))
+        raise CoordinateMultiDimError(cube.coord('latitude'))
 
     # Add new cell measure
     cell_measure = CellMeasure(
@@ -273,7 +277,7 @@ def _add_calculated_cell_area(cube):
     variables=['areacella', 'areacello'],
     required='prefer_at_least_one',
 )
-def area_statistics(cube: Cube, operator):
+def area_statistics(cube: Cube, operator: str) -> Cube:
     """Apply a statistical operator in the horizontal plane.
 
     We assume that the horizontal directions are ['longitude', 'latitude'].
@@ -316,7 +320,8 @@ def area_statistics(cube: Cube, operator):
 
     Returns
     -------
-    Collapsed cube.
+    iris.cube.Cube
+        Collapsed cube.
 
     Raises
     ------
@@ -332,7 +337,7 @@ def area_statistics(cube: Cube, operator):
     # Calculate (weighted) statistics
     if operator_accept_weights(operator):
         # If necessary, try to calculate cell_area (this only works for regular
-        # grids and certain irregular grids)
+        # grids and certain irregular grids, and fails for others)
         if not cube.cell_measures('cell_area'):
             _add_calculated_cell_area(cube)
         result = cube.collapsed(coord_names, operation, weights='cell_area')
@@ -370,7 +375,8 @@ def extract_named_regions(cube: Cube, regions: str | Iterable[str]) -> Cube:
 
     Returns
     -------
-    Smaller cube.
+    iris.cube.Cube
+        Smaller cube.
 
     Raises
     ------
@@ -647,6 +653,7 @@ def fix_coordinate_ordering(cube: Cube) -> Cube:
 
     Returns
     -------
+    iris.cube.Cube
         Cube with dimensions transposed to standard order
 
     """
@@ -766,6 +773,7 @@ def extract_shape(
 
     Returns
     -------
+    iris.cube.Cube
         Cube containing the extracted region.
 
     See Also

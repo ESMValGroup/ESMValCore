@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 from cf_units import Unit
 from iris.cube import Cube
+from iris.exceptions import CoordinateMultiDimError
 from iris.fileformats.pp import EARTH_RADIUS
 from numpy.testing._private.utils import assert_raises
 from shapely.geometry import Polygon, mapping
@@ -46,7 +47,11 @@ class Test(tests.Test):
             coord_system=self.coord_sys,
         )
         coords_spec = [(lats, 0), (lons, 1)]
-        self.grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
+        self.grid = iris.cube.Cube(
+            data,
+            dim_coords_and_dims=coords_spec,
+            units='kg m-2 s-1',
+        )
 
         ndata = np.ones((6, 6))
         nlons = iris.coords.DimCoord(
@@ -63,20 +68,14 @@ class Test(tests.Test):
             coord_system=self.coord_sys,
         )
         coords_spec = [(nlats, 0), (nlons, 1)]
-        self.negative_grid = iris.cube.Cube(ndata,
-                                            dim_coords_and_dims=coords_spec)
+        self.negative_grid = iris.cube.Cube(
+            ndata,
+            dim_coords_and_dims=coords_spec,
+            units='kg m-2 s-1',
+        )
 
-    def test_area_statistics_mean(self):
-        """Test for area average of a 2D field."""
-        result = area_statistics(self.grid, 'mean')
-        expected = np.array([1.], dtype=np.float32)
-        self.assert_array_equal(result.data, expected)
-
-    def test_area_statistics_cell_measure_mean(self):
-        """Test for area average of a 2D field.
-
-        The area measure is pre-loaded in the cube
-        """
+    def _add_cell_measure_to_grid(self):
+        """Add cell_area to self.grid."""
         cube = guess_bounds(self.grid, ['longitude', 'latitude'])
         grid_areas = iris.analysis.cartography.area_weights(cube)
         measure = iris.coords.CellMeasure(
@@ -85,33 +84,52 @@ class Test(tests.Test):
             units='m2',
             measure='area')
         self.grid.add_cell_measure(measure, range(0, measure.ndim))
+
+    def test_area_statistics_mean(self):
+        """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'mean')
         expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-2 s-1')
+
+    def test_area_statistics_cell_measure_mean(self):
+        """Test for area average of a 2D field.
+
+        The area measure is pre-loaded in the cube.
+        """
+        self._add_cell_measure_to_grid()
+        result = area_statistics(self.grid, 'mean')
+        expected = np.array([1.], dtype=np.float32)
+        self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-2 s-1')
 
     def test_area_statistics_min(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'min')
         expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-2 s-1')
 
     def test_area_statistics_max(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'max')
         expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-2 s-1')
 
     def test_area_statistics_median(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'median')
         expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-2 s-1')
 
     def test_area_statistics_std_dev(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'std_dev')
         expected = np.array([0.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-2 s-1')
 
     def test_area_statistics_sum(self):
         """Test for sum of a 2D field."""
@@ -119,24 +137,40 @@ class Test(tests.Test):
         grid_areas = iris.analysis.cartography.area_weights(self.grid)
         expected = np.sum(grid_areas).astype(np.float32)
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg s-1')
+
+    def test_area_statistics_cell_measure_sum(self):
+        """Test for area sum of a 2D field.
+
+        The area measure is pre-loaded in the cube.
+        """
+        self._add_cell_measure_to_grid()
+        grid_areas = iris.analysis.cartography.area_weights(self.grid)
+        result = area_statistics(self.grid, 'sum')
+        expected = np.sum(grid_areas).astype(np.float32)
+        self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg s-1')
 
     def test_area_statistics_variance(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'variance')
         expected = np.array([0.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg2 m-4 s-2')
 
     def test_area_statistics_neg_lon(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.negative_grid, 'mean')
         expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-2 s-1')
 
     def test_area_statistics_rms(self):
         """Test for area rms of a 2D field."""
         result = area_statistics(self.grid, 'rms')
         expected = np.array([1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-2 s-1')
 
     def test_extract_region(self):
         """Test for extracting a region from a 2D field."""
@@ -499,6 +533,55 @@ def test_area_statistics_rotated(case):
         grid_areas = iris.analysis.cartography.area_weights(cube_tmp)
         expected = np.sum(grid_areas).astype(np.float32)
         np.testing.assert_array_equal(cube.data, expected)
+
+
+def create_unstructured_grid_cube():
+    """Create test cube with unstructured grid."""
+    lat = iris.coords.AuxCoord(
+        [0, 1, 2], var_name='lat', standard_name='latitude', units='degrees',
+    )
+    lon = iris.coords.AuxCoord(
+        [0, 1, 2], var_name='lon', standard_name='longitude', units='degrees',
+    )
+    cube = iris.cube.Cube(
+        [0, 10, 20],
+        var_name='tas',
+        units='K',
+        aux_coords_and_dims=[(lat, 0), (lon, 0)],
+    )
+    return cube
+
+
+def test_area_statistics_max_irregular_grid():
+    """Test ``area_statistics``."""
+    values = np.arange(12).reshape(2, 2, 3)
+    cube = create_irregular_grid_cube(values, values[0, ...], values[0, ...])
+    result = area_statistics(cube, 'max')
+    assert isinstance(result, Cube)
+    np.testing.assert_array_equal(result.data, [5, 11])
+
+
+def test_area_statistics_max_unstructured_grid():
+    """Test ``area_statistics``."""
+    cube = create_unstructured_grid_cube()
+    result = area_statistics(cube, 'max')
+    assert isinstance(result, Cube)
+    np.testing.assert_array_equal(result.data, 20)
+
+
+def test_area_statistics_sum_irregular_grid_fail():
+    """Test ``area_statistics``."""
+    values = np.arange(12).reshape(2, 2, 3)
+    cube = create_irregular_grid_cube(values, values[0, ...], values[0, ...])
+    with pytest.raises(CoordinateMultiDimError):
+        area_statistics(cube, 'sum')
+
+
+def test_area_statistics_sum_unstructured_grid_fail():
+    """Test ``area_statistics``."""
+    cube = create_unstructured_grid_cube()
+    with pytest.raises(CoordinateMultiDimError):
+        area_statistics(cube, 'sum')
 
 
 @pytest.fixture
