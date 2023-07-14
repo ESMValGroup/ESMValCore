@@ -241,8 +241,8 @@ def _add_calculated_cell_area(cube):
         logger.debug("Calculating grid cell areas for regular grid")
         cell_areas = compute_area_weights(cube)
 
-    # For irregular grids that provide grid_latitude and grid_longitude, use
-    # these to calculate grid cell areas
+    # For rotated pole grids, use grid_latitude and grid_longitude to calculate
+    # grid cell areas
     elif irregular_grid_with_grid_lat_lon:
         cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
         cube_tmp = cube.copy()
@@ -768,7 +768,7 @@ def extract_shape(
     -------
         Cube containing the extracted region.
 
-    See also
+    See Also
     --------
     extract_region: Extract a region from a cube.
 
