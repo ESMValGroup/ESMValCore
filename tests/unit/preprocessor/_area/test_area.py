@@ -27,7 +27,7 @@ from esmvalcore.preprocessor._shared import guess_bounds
 
 
 class Test(tests.Test):
-    """Test class for the :func:`esmvalcore.preprocessor._area_pp` module."""
+    """Test class for the :func:`esmvalcore.preprocessor._area` module."""
     def setUp(self):
         """Prepare tests."""
         self.coord_sys = iris.coord_systems.GeogCS(EARTH_RADIUS)

@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Iterable, Optional
 
 import fiona
 import iris
@@ -16,7 +16,7 @@ import numpy as np
 import shapely
 import shapely.ops
 from dask import array as da
-from iris.coords import AuxCoord
+from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateNotFoundError
 
@@ -40,30 +40,35 @@ logger = logging.getLogger(__name__)
 SHAPE_ID_KEYS: tuple[str, ...] = ('name', 'NAME', 'Name', 'id', 'ID')
 
 
-def extract_region(cube, start_longitude, end_longitude, start_latitude,
-                   end_latitude):
+def extract_region(
+    cube: Cube,
+    start_longitude: float,
+    end_longitude: float,
+    start_latitude: float,
+    end_latitude: float,
+) -> Cube:
     """Extract a region from a cube.
 
     Function that subsets a cube on a box (start_longitude, end_longitude,
-    start_latitude, end_latitude)
+    start_latitude, end_latitude).
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input data cube.
-    start_longitude: float
+    cube:
+        Input data cube.
+    start_longitude:
         Western boundary longitude.
-    end_longitude: float
+    end_longitude:
         Eastern boundary longitude.
-    start_latitude: float
+    start_latitude:
         Southern Boundary latitude.
-    end_latitude: float
+    end_latitude:
         Northern Boundary Latitude.
 
     Returns
     -------
-    iris.cube.Cube
-        smaller cube.
+    Smaller cube.
+
     """
     if abs(start_latitude) > 90.:
         raise ValueError(f"Invalid start_latitude: {start_latitude}")
@@ -129,29 +134,27 @@ def _extract_irregular_region(cube, start_longitude, end_longitude,
     return cube
 
 
-def zonal_statistics(cube, operator):
+def zonal_statistics(cube: Cube, operator: str) -> Cube:
     """Compute zonal statistics.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-
-    operator: str, optional
-        Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
-        'max', 'rms'.
+    cube:
+        Input cube.
+    operator:
+        The operation. Allowed options: `mean`, `median`, `min`, `max`,
+        `std_dev`, `sum`, `variance`, `rms`.
 
     Returns
     -------
-    iris.cube.Cube
-        Zonal statistics cube.
+    Zonal statistics cube.
 
     Raises
     ------
     ValueError
         Error raised if computation on irregular grids is attempted.
         Zonal statistics not yet implemented for irregular grids.
+
     """
     if cube.coord('longitude').points.ndim < 2:
         operation = get_iris_analysis_operation(operator)
@@ -162,29 +165,27 @@ def zonal_statistics(cube, operator):
     raise ValueError(msg)
 
 
-def meridional_statistics(cube, operator):
+def meridional_statistics(cube: Cube, operator: str) -> Cube:
     """Compute meridional statistics.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-
-    operator: str, optional
-        Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
-        'max', 'rms'.
+    cube:
+        Input cube.
+    operator:
+        The operation. Allowed options: `mean`, `median`, `min`, `max`,
+        `std_dev`, `sum`, `variance`, `rms`.
 
     Returns
     -------
-    iris.cube.Cube
-        Meridional statistics cube.
+    Meridional statistics cube.
 
     Raises
     ------
     ValueError
         Error raised if computation on irregular grids is attempted.
         Zonal statistics not yet implemented for irregular grids.
+
     """
     if cube.coord('latitude').points.ndim < 2:
         operation = get_iris_analysis_operation(operator)
@@ -212,125 +213,149 @@ def compute_area_weights(cube):
     return weights
 
 
+def _add_calculated_cell_area(cube):
+    """Add calculated cell measure 'cell_area' to cube (in-place)."""
+    assert not cube.cell_measures('cell_area')
+
+    logger.debug(
+        "Found no or multiple cell measures 'cell_area' in cube %s. Check "
+        "availability of supplementary variables",
+        cube.summary(shorten=True),
+    )
+    logger.debug("Attempting to calculate grid cell area")
+
+    regular_grid = all([
+        cube.coord('latitude').points.ndim == 1,
+        cube.coord('longitude').points.ndim == 1,
+    ])
+    irregular_grid_with_grid_lat_lon = all([
+        cube.coord('latitude').points.ndim == 2,
+        cube.coord('longitude').points.ndim == 2,
+        cube.coords('grid_latitude'),
+        cube.coords('grid_longitude'),
+    ])
+
+    # For regular grids, calculate grid cell areas with iris function
+    if regular_grid:
+        cube = guess_bounds(cube, ['latitude', 'longitude'])
+        logger.debug("Calculating grid cell areas for regular grid")
+        cell_areas = compute_area_weights(cube)
+
+    # For irregular grids that provide grid_latitude and grid_longitude, use
+    # these to calculate grid cell areas
+    elif irregular_grid_with_grid_lat_lon:
+        cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
+        cube_tmp = cube.copy()
+        cube_tmp.remove_coord('latitude')
+        cube_tmp.coord('grid_latitude').rename('latitude')
+        cube_tmp.remove_coord('longitude')
+        cube_tmp.coord('grid_longitude').rename('longitude')
+        logger.debug("Calculating grid cell areas for irregular grid")
+        cell_areas = compute_area_weights(cube_tmp)
+
+    # For all other cases, grid cell areas cannot be calculated
+    else:
+        logger.error(
+            "Supplementary variables are needed to calculate grid cell "
+            "areas for irregular or unstructured grid of cube %s",
+            cube.summary(shorten=True),
+        )
+        raise iris.exceptions.CoordinateMultiDimError(cube.coord('latitude'))
+
+    # Add new cell measure
+    cell_measure = CellMeasure(
+        cell_areas, standard_name='cell_area', units='m2', measure='area',
+    )
+    cube.add_cell_measure(cell_measure, np.arange(cube.ndim))
+
+
 @register_supplementaries(
     variables=['areacella', 'areacello'],
     required='prefer_at_least_one',
 )
-def area_statistics(cube, operator):
-    """Apply a statistical operator in the horizontal direction.
+def area_statistics(cube: Cube, operator):
+    """Apply a statistical operator in the horizontal plane.
 
-    The average in the horizontal direction. We assume that the
-    horizontal directions are ['longitude', 'latutude'].
+    We assume that the horizontal directions are ['longitude', 'latitude'].
 
-    This function can be used to apply
-    several different operations in the horizontal plane: mean, standard
-    deviation, median variance, minimum and maximum. These options are
-    specified using the `operator` argument and the following key word
-    arguments:
+    This function can be used to apply several different operations in the
+    horizontal plane: mean, standard deviation, median variance, minimum and
+    maximum. The following options for `operator` are allowed:
 
     +------------+--------------------------------------------------+
-    | `mean`     | Area weighted mean.                              |
+    | `mean`     | Area weighted mean                               |
     +------------+--------------------------------------------------+
     | `median`   | Median (not area weighted)                       |
     +------------+--------------------------------------------------+
     | `std_dev`  | Standard Deviation (not area weighted)           |
     +------------+--------------------------------------------------+
-    | `sum`      | Area weighted sum.                               |
+    | `sum`      | Area weighted sum                                |
     +------------+--------------------------------------------------+
     | `variance` | Variance (not area weighted)                     |
     +------------+--------------------------------------------------+
-    | `min`:     | Minimum value                                    |
+    | `min`      | Minimum value                                    |
     +------------+--------------------------------------------------+
     | `max`      | Maximum value                                    |
     +------------+--------------------------------------------------+
-    | `rms`      | Area weighted root mean square.                  |
+    | `rms`      | Area weighted root mean square                   |
     +------------+--------------------------------------------------+
+
+    Note that for sums, the units of the resulting cube will be multiplied by
+    m:math:`^2`.
 
     Parameters
     ----------
-        cube: iris.cube.Cube
-            Input cube. The input cube should have a
-            :class:`iris.coords.CellMeasure` named ``'cell_area'``, unless it
-            has regular 1D latitude and longitude coordinates so the cell areas
-            can be computed using
-            :func:`iris.analysis.cartography.area_weights`.
-        operator: str
-            The operation, options: mean, median, min, max, std_dev, sum,
-            variance, rms.
+    cube:
+        Input cube. The input cube should have a
+        :class:`iris.coords.CellMeasure` named ``'cell_area'``, unless it has
+        regular 1D latitude and longitude coordinates so the cell areas can be
+        computed using :func:`iris.analysis.cartography.area_weights`.
+    operator:
+        The operation. Allowed options: `mean`, `median`, `min`, `max`,
+        `std_dev`, `sum`, `variance`, `rms`.
 
     Returns
     -------
-    iris.cube.Cube
-        collapsed cube.
+    Collapsed cube.
 
     Raises
     ------
     iris.exceptions.CoordinateMultiDimError
-        Exception for latitude axis with dim > 2.
-    ValueError
-        if input data cube has different shape than grid area weights
+        Cube has irregular or unstructured grid but supplementary variable
+        `cell_area` is not available.
+
     """
     original_dtype = cube.dtype
-    grid_areas = None
-    try:
-        grid_areas = cube.cell_measure('cell_area').core_data()
-    except iris.exceptions.CellMeasureNotFoundError:
-        logger.debug(
-            'Cell measure "cell_area" not found in cube %s. '
-            'Check fx_file availability.', cube.summary(shorten=True))
-        logger.debug('Attempting to calculate grid cell area...')
-    else:
-        grid_areas = da.broadcast_to(grid_areas, cube.shape)
-
-    if grid_areas is None and cube.coord('latitude').points.ndim == 2:
-        coord_names = [coord.standard_name for coord in cube.coords()]
-        if 'grid_latitude' in coord_names and 'grid_longitude' in coord_names:
-            cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
-            cube_tmp = cube.copy()
-            cube_tmp.remove_coord('latitude')
-            cube_tmp.coord('grid_latitude').rename('latitude')
-            cube_tmp.remove_coord('longitude')
-            cube_tmp.coord('grid_longitude').rename('longitude')
-            grid_areas = compute_area_weights(cube_tmp)
-            logger.debug('Calculated grid area shape: %s', grid_areas.shape)
-        else:
-            logger.error(
-                'fx_file needed to calculate grid cell area for irregular '
-                'grids.')
-            raise iris.exceptions.CoordinateMultiDimError(
-                cube.coord('latitude'))
-
-    coord_names = ['longitude', 'latitude']
-    if grid_areas is None:
-        cube = guess_bounds(cube, coord_names)
-        grid_areas = compute_area_weights(cube)
-        logger.debug('Calculated grid area shape: %s', grid_areas.shape)
-
-    if cube.shape != grid_areas.shape:
-        raise ValueError('Cube shape ({}) doesn`t match grid area shape '
-                         '({})'.format(cube.shape, grid_areas.shape))
-
     operation = get_iris_analysis_operation(operator)
+    coord_names = ['longitude', 'latitude']
 
-    # TODO: implement weighted stdev, median, s var when available in iris.
-    # See iris issue: https://github.com/SciTools/iris/issues/3208
-
+    # Calculate (weighted) statistics
     if operator_accept_weights(operator):
-        result = cube.collapsed(coord_names, operation, weights=grid_areas)
+        # If necessary, try to calculate cell_area (this only works for regular
+        # grids and certain irregular grids)
+        if not cube.cell_measures('cell_area'):
+            _add_calculated_cell_area(cube)
+        result = cube.collapsed(coord_names, operation, weights='cell_area')
     else:
         # Many IRIS analysis functions do not accept weights arguments.
+        # TODO: implement weighted stdev, median, var when available in iris.
+        # See iris issue: https://github.com/SciTools/iris/issues/3208
         result = cube.collapsed(coord_names, operation)
 
+    # Make sure to preserve dtype
     new_dtype = result.dtype
     if original_dtype != new_dtype:
         logger.debug(
-            "area_statistics changed dtype from "
-            "%s to %s, changing back", original_dtype, new_dtype)
+            "area_statistics changed dtype from %s to %s, changing back",
+            original_dtype,
+            new_dtype,
+        )
         result.data = result.core_data().astype(original_dtype)
+
     return result
 
 
-def extract_named_regions(cube, regions):
+def extract_named_regions(cube: Cube, regions: str | Iterable[str]) -> Cube:
     """Extract a specific named region.
 
     The region coordinate exist in certain CMIP datasets.
@@ -338,15 +363,14 @@ def extract_named_regions(cube, regions):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-       input cube.
-    regions: str, list
+    cube:
+       Input cube.
+    regions:
         A region or list of regions to extract.
 
     Returns
     -------
-    iris.cube.Cube
-        collapsed cube.
+    Smaller cube.
 
     Raises
     ------
@@ -354,6 +378,7 @@ def extract_named_regions(cube, regions):
         regions is not list or tuple or set.
     ValueError
         region not included in cube.
+
     """
     # Make sure regions is a list of strings
     if isinstance(regions, str):
@@ -617,12 +642,11 @@ def fix_coordinate_ordering(cube: Cube) -> Cube:
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         Input cube.
 
     Returns
     -------
-    iris.cube.Cube
         Cube with dimensions transposed to standard order
 
     """
@@ -702,9 +726,9 @@ def extract_shape(
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         Input cube.
-    shapefile: str or Path
+    shapefile:
         A shapefile defining the region(s) to extract. Also accepts the
         following strings to load special shapefiles:
 
@@ -712,19 +736,19 @@ def extract_shape(
           6 (https://doi.org/10.5281/zenodo.5176260). Should be used in
           combination with a :obj:`dict` for the argument `ids`, e.g.,
           ``ids={'Acronym': ['GIC', 'WNA']}``.
-    method: str, optional
+    method:
         Select all points contained by the shape or select a single
         representative point. Choose either `'contains'` or `'representative'`.
         If `'contains'` is used, but not a single grid point is contained by
         the shape, a representative point will be selected.
-    crop: bool, optional
+    crop:
         In addition to masking, crop the resulting cube using
         :func:`~esmvalcore.preprocessor.extract_region`. Data on irregular
         grids will not be cropped.
-    decomposed: bool, optional
+    decomposed:
         If set to `True`, the output cube will have an additional dimension
         `shape_id` describing the requested regions.
-    ids: list or dict or None, optional
+    ids:
         Shapes to be read from the shapefile. Can be given as:
 
         * :obj:`list`: IDs are assigned from the attributes `name`, `NAME`,
@@ -742,10 +766,9 @@ def extract_shape(
 
     Returns
     -------
-    iris.cube.Cube
         Cube containing the extracted region.
 
-    See Also
+    See also
     --------
     extract_region: Extract a region from a cube.
 
