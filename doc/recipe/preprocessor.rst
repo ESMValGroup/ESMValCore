@@ -1386,7 +1386,7 @@ statistics.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean', 'median',
-      'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
+      'std_dev', 'variance', 'min', 'max', 'sum' and 'rms'. Default is 'mean'.
 
     * period: define the granularity of the statistics: get values for the
       full period, for each month, day of year or hour of day.
@@ -1395,6 +1395,12 @@ Parameters:
 
     * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
       Default is '[DJF, MAM, JJA, SON]'
+
+.. note::
+   The 'mean', 'sum' and 'rms' operations over the 'full' period are weighted
+   by the time coordinate, i.e., the length of the time intervals.
+   For 'sum', the units of the resulting cube are multiplied by corresponding
+   time units (e.g., days).
 
 Examples:
     * Monthly climatology:
@@ -1875,23 +1881,26 @@ See also :func:`esmvalcore.preprocessor.meridional_means`.
 ``area_statistics``
 -------------------
 
-This function calculates the average value over a region - weighted by the cell
-areas of the region. This function takes the argument, ``operator``: the name
-of the operation to apply.
+This function calculates statistics over a region.
+It takes one argument, ``operator``, which is the name of the operation to
+apply.
 
 This function can be used to apply several different operations in the
-horizontal plane: mean, standard deviation, median, variance, minimum, maximum and root mean square.
+horizontal plane: mean, sum, standard deviation, median, variance, minimum,
+maximum and root mean square.
+The operations mean, sum and root mean square are area weighted.
+For sums, the units of the resulting cubes are multiplied by m:math:`^2`.
 
-Note that this function is applied over the entire dataset. If only a specific
-region, depth layer or time period is required, then those regions need to be
-removed using other preprocessor operations in advance.
+Note that this function is applied over the entire dataset.
+If only a specific region, depth layer or time period is required, then those
+regions need to be removed using other preprocessor operations in advance.
 
-This function requires a cell area `cell measure`_, unless the coordinates of the
-input data are regular 1D latitude and longitude coordinates so the cell areas
-can be computed.
-The required supplementary variable, either ``areacella`` for atmospheric variables
-or ``areacello`` for ocean variables, can be attached to the main dataset
-as described in :ref:`supplementary_variables`.
+This function requires a cell area `cell measure`_, unless the coordinates of
+the input data are regular 1D latitude and longitude coordinates so the cell
+areas can be computed.
+The required supplementary variable, either ``areacella`` for atmospheric
+variables or ``areacello`` for ocean variables, can be attached to the main
+dataset as described in :ref:`supplementary_variables`.
 
 .. deprecated:: 2.8.0
   The optional ``fx_variables`` argument specifies the fx variables that the user
@@ -2023,15 +2032,22 @@ Takes arguments:
    be performed must be one-dimensional, as multidimensional coordinates
    are not supported in this preprocessor.
 
+   The 'mean', 'sum' and 'rms' operations are weighted by the corresponding
+   coordinate bounds.
+   For 'sum', the units of the resulting cube will be multiplied by
+   corresponding coordinate units.
+
 See also :func:`esmvalcore.preprocessor.axis_statistics`.
 
 
 ``depth_integration``
 ---------------------
 
-This function integrates over the depth dimension. This function does a
-weighted sum along the `z`-coordinate, and removes the `z` direction of the
-output cube. This preprocessor takes no arguments.
+This function integrates over the depth dimension.
+This function does a weighted sum along the `z`-coordinate, and removes the `z`
+direction of the output cube.
+This preprocessor takes no arguments.
+The units of the resulting cube are multiplied by the `z`-coordinate units.
 
 See also :func:`esmvalcore.preprocessor.depth_integration`.
 

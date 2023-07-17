@@ -283,7 +283,8 @@ def depth_integration(cube: Cube) -> Cube:
 
     Requires a 3D cube. The z-coordinate integration is calculated by taking
     the sum in the z direction of the cell contents multiplied by the cell
-    thickness.
+    thickness. The units of the resulting cube are multiplied by the
+    z-coordinate units.
 
     Arguments
     ---------
