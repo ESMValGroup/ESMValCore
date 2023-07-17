@@ -8,7 +8,11 @@ import logging
 import dask.array as da
 import iris
 import numpy as np
+from iris.coords import CellMeasure
+from iris.cube import Cube
+from iris.exceptions import CoordinateMultiDimError
 
+from ._area import compute_area_weights
 from ._shared import get_iris_analysis_operation, operator_accept_weights
 from ._supplementary_vars import register_supplementaries
 
@@ -48,6 +52,7 @@ def extract_volume(
         'left_closed' or 'right_closed'.
     nearest_value: bool
         extracts considering the nearest value of z-coord to z_min and z_max.
+
     Returns
     -------
     iris.cube.Cube
@@ -87,10 +92,15 @@ def extract_volume(
     return cube.extract(z_constraint)
 
 
-def calculate_volume(cube):
+def calculate_volume(cube: Cube) -> da.core.Array:
     """Calculate volume from a cube.
 
-    This function is used when the volume ancillary variables can't be found.
+    This function is used when the 'ocean_volume' cell measure can't be found.
+
+    Note
+    ----
+    This only works if the grid cell areas can be calculated (i.e., latitude
+    and longitude are 1D) and if the depth coordinate is 1D or 4D.
 
     Parameters
     ----------
@@ -99,89 +109,103 @@ def calculate_volume(cube):
 
     Returns
     -------
-    float
-        grid volume.
-    """
-    # ####
-    # Load depth field and figure out which dim is which.
-    depth = cube.coord(axis='z')
-    z_dim = cube.coord_dims(cube.coord(axis='z'))[0]
+    dask.array.core.Array
+        Grid volumes.
 
-    # ####
-    # Load z direction thickness
+    """
+    # Load depth field and figure out which dim is which
+    depth = cube.coord(axis='z')
+    z_dim = cube.coord_dims(depth)[0]
+
+    # Calculate Z-direction thickness
     thickness = depth.bounds[..., 1] - depth.bounds[..., 0]
 
-    # ####
-    # Calculate grid volume:
-    area = da.array(iris.analysis.cartography.area_weights(cube))
+    # Try to calculate grid cell area
+    try:
+        area = da.array(compute_area_weights(cube))
+    except CoordinateMultiDimError:
+        logger.error(
+            "Supplementary variables are needed to calculate grid cell "
+            "areas for irregular grid of cube %s",
+            cube.summary(shorten=True),
+        )
+        raise
+
+    # Try to calculate grid cell volume as area * thickness
     if thickness.ndim == 1 and z_dim == 1:
         grid_volume = area * thickness[None, :, None, None]
-    if thickness.ndim == 4 and z_dim == 1:
+    elif thickness.ndim == 4 and z_dim == 1:
         grid_volume = area * thickness[:, :]
+    else:
+        raise ValueError(
+            f"Supplementary variables are needed to calculate grid cell "
+            f"volumes for cubes with {thickness.ndim:d}D depth coordinate, "
+            f"got cube {cube.summary(shorten=True)}"
+        )
 
     return grid_volume
+
+
+def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
+    """Try to add calculated cell measure 'ocean_volume' to cube (in-place)."""
+    logger.debug(
+        "Found no cell measure 'ocean_volume' in cube %s. Check availability "
+        "of supplementary variables",
+        cube.summary(shorten=True),
+    )
+    logger.debug("Attempting to calculate grid cell volume")
+
+    grid_volume = calculate_volume(cube)
+
+    cell_measure = CellMeasure(
+        grid_volume,
+        standard_name='ocean_volume',
+        units='m3',
+        measure='volume',
+    )
+    cube.add_cell_measure(cell_measure, np.arange(cube.ndim))
 
 
 @register_supplementaries(
     variables=['volcello'],
     required='prefer_at_least_one',
 )
-def volume_statistics(cube, operator):
+def volume_statistics(cube: Cube, operator: str) -> Cube:
     """Apply a statistical operation over a volume.
 
     The volume average is weighted according to the cell volume.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         Input cube. The input cube should have a
-        :class:`iris.coords.CellMeasure` with standard name ``'ocean_volume'``,
-        unless it has regular 1D latitude and longitude coordinates so the cell
-        volumes can be computed by using
-        :func:`iris.analysis.cartography.area_weights` to compute the cell
-        areas and multiplying those by the cell thickness, computed from the
-        bounds of the vertical coordinate.
-    operator: str
-        The operation to apply to the cube, options are: 'mean'.
+        :class:`iris.coords.CellMeasure` named ``'ocean_volume'``, unless it
+        has regular 1D latitude and longitude coordinates so the cell volumes
+        can be computed by using :func:`iris.analysis.cartography.area_weights`
+        to compute the cell areas and multiplying those by the cell thickness,
+        computed from the bounds of the vertical coordinate.
+    operator:
+        The operation. Allowed options are: `mean`.
 
     Returns
     -------
     iris.cube.Cube
-        collapsed cube.
+        Collapsed cube.
 
-    Raises
-    ------
-    ValueError
-        if input cube shape differs from grid volume cube shape.
     """
     # TODO: Test sigma coordinates.
     # TODO: Add other operations.
-
     if operator != 'mean':
-        raise ValueError(f'Volume operator {operator} not recognised.')
+        raise ValueError(f"Volume operator {operator} not recognised.")
 
-    try:
-        grid_volume = cube.cell_measure('ocean_volume').core_data()
-    except iris.exceptions.CellMeasureNotFoundError:
-        logger.debug('Cell measure "ocean_volume" not found in cube. '
-                     'Check fx_file availability.')
-        logger.debug('Attempting to calculate grid cell volume...')
-        grid_volume = calculate_volume(cube)
-    else:
-        grid_volume = da.broadcast_to(grid_volume, cube.shape)
+    if not cube.cell_measures('ocean_volume'):
+        _try_adding_calculated_ocean_volume(cube)
 
-    if cube.data.shape != grid_volume.shape:
-        raise ValueError('Cube shape ({}) doesn`t match grid volume shape '
-                         f'({cube.shape, grid_volume.shape})')
-
-    masked_volume = da.ma.masked_where(da.ma.getmaskarray(cube.lazy_data()),
-                                       grid_volume)
     result = cube.collapsed(
-        [cube.coord(axis='Z'),
-         cube.coord(axis='Y'),
-         cube.coord(axis='X')],
+        [cube.coord(axis='Z'), cube.coord(axis='Y'), cube.coord(axis='X')],
         iris.analysis.MEAN,
-        weights=masked_volume)
+        weights='ocean_volume',
+    )
 
     return result
 

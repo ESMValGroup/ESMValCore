@@ -216,13 +216,13 @@ def compute_area_weights(cube):
     return weights
 
 
-def _add_calculated_cell_area(cube):
-    """Add calculated cell measure 'cell_area' to cube (in-place)."""
+def _try_adding_calculated_cell_area(cube: Cube) -> None:
+    """Try to add calculated cell measure 'cell_area' to cube (in-place)."""
     assert not cube.cell_measures('cell_area')
 
     logger.debug(
-        "Found no or multiple cell measures 'cell_area' in cube %s. Check "
-        "availability of supplementary variables",
+        "Found no cell measure 'cell_area' in cube %s. Check availability of "
+        "supplementary variables",
         cube.summary(shorten=True),
     )
     logger.debug("Attempting to calculate grid cell area")
@@ -339,7 +339,7 @@ def area_statistics(cube: Cube, operator: str) -> Cube:
         # If necessary, try to calculate cell_area (this only works for regular
         # grids and certain irregular grids, and fails for others)
         if not cube.cell_measures('cell_area'):
-            _add_calculated_cell_area(cube)
+            _try_adding_calculated_cell_area(cube)
         result = cube.collapsed(coord_names, operation, weights='cell_area')
     else:
         # Many IRIS analysis functions do not accept weights arguments.

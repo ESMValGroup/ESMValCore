@@ -3,8 +3,10 @@
 import unittest
 
 import iris
+import iris.fileformats
 import numpy as np
 from cf_units import Unit
+from iris.exceptions import CoordinateMultiDimError
 
 import tests
 from esmvalcore.preprocessor._volume import (
@@ -53,6 +55,16 @@ class Test(tests.Test):
                                               [25., 250.]],
                                       units='m',
                                       attributes={'positive': 'down'})
+        zcoord_4d = iris.coords.AuxCoord(
+            np.broadcast_to([[[[0.5]], [[5.]], [[50.]]]], (2, 3, 2, 2)),
+            long_name='zcoord',
+            bounds=np.broadcast_to(
+                [[[[[0., 2.5]]], [[[2.5, 25.]]], [[[25., 250.]]]]],
+                (2, 3, 2, 2, 2),
+            ),
+            units='m',
+            attributes={'positive': 'down'},
+        )
         lons2 = iris.coords.DimCoord([1.5, 2.5],
                                      standard_name='longitude',
                                      bounds=[[1., 2.], [2., 3.]],
@@ -68,16 +80,31 @@ class Test(tests.Test):
         self.grid_3d = iris.cube.Cube(data1, dim_coords_and_dims=coords_spec3)
 
         coords_spec4 = [(time, 0), (zcoord, 1), (lats2, 2), (lons2, 3)]
-        self.grid_4d = iris.cube.Cube(data2, dim_coords_and_dims=coords_spec4)
+        self.grid_4d = iris.cube.Cube(
+            data2,
+            dim_coords_and_dims=coords_spec4,
+            units='kg m-3',
+        )
 
         coords_spec5 = [(time2, 0), (zcoord, 1), (lats2, 2), (lons2, 3)]
-        self.grid_4d_2 = iris.cube.Cube(data3,
-                                        dim_coords_and_dims=coords_spec5)
+        self.grid_4d_2 = iris.cube.Cube(
+            data3,
+            dim_coords_and_dims=coords_spec5,
+            units='kg m-3',
+        )
+
+        self.grid_4d_z = iris.cube.Cube(
+            data2,
+            dim_coords_and_dims=[(time, 0), (lats2, 2), (lons2, 3)],
+            aux_coords_and_dims=[(zcoord_4d, (0, 1, 2, 3))],
+            units='kg m-3',
+        )
 
         # allow iris to figure out the axis='z' coordinate
         iris.util.guess_coord_axis(self.grid_3d.coord('zcoord'))
         iris.util.guess_coord_axis(self.grid_4d.coord('zcoord'))
         iris.util.guess_coord_axis(self.grid_4d_2.coord('zcoord'))
+        iris.util.guess_coord_axis(self.grid_4d_z.coord('zcoord'))
 
     def test_axis_statistics_mean(self):
         """Test axis statistics with operator mean."""
@@ -260,12 +287,14 @@ class Test(tests.Test):
         result_mean = volume_statistics(result, 'mean')
         expected_mean = np.ma.array([1., 1.], mask=False)
         self.assert_array_equal(result_mean.data, expected_mean)
+        self.assertEqual(result_mean.units, 'kg m-3')
 
     def test_volume_statistics(self):
         """Test to take the volume weighted average of a (2,3,2,2) cube."""
         result = volume_statistics(self.grid_4d, 'mean')
         expected = np.ma.array([1., 1.], mask=False)
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-3')
 
     def test_volume_statistics_cell_measure(self):
         """Test to take the volume weighted average of a (2,3,2,2) cube.
@@ -281,6 +310,7 @@ class Test(tests.Test):
         result = volume_statistics(self.grid_4d, 'mean')
         expected = np.ma.array([1., 1.], mask=False)
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-3')
 
     def test_volume_statistics_long(self):
         """Test to take the volume weighted average of a (4,3,2,2) cube.
@@ -291,6 +321,7 @@ class Test(tests.Test):
         result = volume_statistics(self.grid_4d_2, 'mean')
         expected = np.ma.array([1., 1., 1., 1.], mask=False)
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-3')
 
     def test_volume_statistics_masked_level(self):
         """Test to take the volume weighted average of a (2,3,2,2) cube where
@@ -307,6 +338,7 @@ class Test(tests.Test):
         result = volume_statistics(self.grid_4d, 'mean')
         expected = np.ma.array([1., 1], mask=[True, False])
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-3')
 
     def test_volume_statistics_weights(self):
         """Test to take the volume weighted average of a (2,3,2,2) cube.
@@ -324,12 +356,45 @@ class Test(tests.Test):
         expected = np.ma.array([8.333333333333334, 19.144144144144143],
                                mask=[False, False])
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-3')
 
-    def test_volume_statistics_wrong_operator(self):
+    def test_volume_statistics_wrong_operator_fail(self):
         with self.assertRaises(ValueError) as err:
             volume_statistics(self.grid_4d, 'wrong')
         self.assertEqual('Volume operator wrong not recognised.',
                          str(err.exception))
+
+    def test_volume_statistics_2d_lat_fail(self):
+        # Create dummy 2D latitude from depth
+        new_lat_coord = self.grid_4d_z.coord('zcoord')[0, 0, :, :]
+        new_lat_coord.rename('latitude')
+        self.grid_4d_z.remove_coord('latitude')
+        self.grid_4d_z.add_aux_coord(new_lat_coord, (2, 3))
+        with self.assertRaises(CoordinateMultiDimError):
+            volume_statistics(self.grid_4d_z, 'mean')
+
+    def test_volume_statistics_4d_depth_fail(self):
+        # Fails because depth coord dims are (0, ...), but must be (1, ...)
+        with self.assertRaises(ValueError) as err:
+            volume_statistics(self.grid_4d_z, 'mean')
+        self.assertIn(
+            "Supplementary variables are needed to calculate grid cell "
+            "volumes for cubes with 4D depth coordinate, got cube ",
+            str(err.exception),
+        )
+
+    def test_volume_statistics_2d_depth_fail(self):
+        # Create new 2D depth coord
+        new_z_coord = self.grid_4d_z.coord('zcoord')[0, :, :, 0]
+        self.grid_4d_z.remove_coord('zcoord')
+        self.grid_4d_z.add_aux_coord(new_z_coord, (1, 2))
+        with self.assertRaises(ValueError) as err:
+            volume_statistics(self.grid_4d_z, 'mean')
+        self.assertIn(
+            "Supplementary variables are needed to calculate grid cell "
+            "volumes for cubes with 2D depth coordinate, got cube ",
+            str(err.exception),
+        )
 
     def test_depth_integration_1d(self):
         """Test to take the depth integration of a 3 layer cube."""
