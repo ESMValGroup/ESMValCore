@@ -8,7 +8,7 @@ import logging
 import dask.array as da
 import iris
 import numpy as np
-from iris.coords import CellMeasure
+from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 
@@ -211,76 +211,83 @@ def volume_statistics(cube: Cube, operator: str) -> Cube:
     return result
 
 
-def axis_statistics(cube, axis, operator):
+def axis_statistics(cube: Cube, axis: str, operator: str) -> Cube:
     """Perform statistics along a given axis.
 
-    Operates over an axis direction. If weights are required,
-    they are computed using the coordinate bounds.
+    Operates over an axis direction. If weights are required, they are computed
+    using the coordinate bounds.
 
     Arguments
     ---------
-    cube: iris.cube.Cube
+    cube:
         Input cube.
-    axis: str
-        Direction over where to apply the operator. Possible values
-        are 'x', 'y', 'z', 't'.
-    operator: str
-        Statistics to perform. Available operators are:
-        'mean', 'median', 'std_dev', 'sum', 'variance',
-        'min', 'max', 'rms'.
+    axis:
+        Direction over where to apply the operator. Possible values are `x`,
+        `y`, `z`, `t`.
+    operator:
+        The operation. Allowed options: `mean`, `median`, `min`, `max`,
+        `std_dev`, `sum`, `variance`, `rms`.
 
     Returns
     -------
     iris.cube.Cube
-        collapsed cube.
+        Collapsed cube.
+
     """
+    operation = get_iris_analysis_operation(operator)
+
+    # Check if a coordinate for the desired axis exists
     try:
         coord = cube.coord(axis=axis)
     except iris.exceptions.CoordinateNotFoundError as err:
-        raise ValueError(f'Axis {axis} not found in cube '
-                         f'{cube.summary(shorten=True)}') from err
+        raise ValueError(
+            f"Axis {axis} not found in cube {cube.summary(shorten=True)}"
+        ) from err
+
+    # Multidimensional coordinates are currently not supported
     coord_dims = cube.coord_dims(coord)
     if len(coord_dims) > 1:
-        raise NotImplementedError('axis_statistics not implemented for '
-                                  'multidimensional coordinates.')
-    operation = get_iris_analysis_operation(operator)
+        raise NotImplementedError(
+            "axis_statistics not implemented for multidimensional "
+            "coordinates."
+        )
+
+    # For weighted operations, create a dummy weights coordinate using the
+    # bounds of the original coordinate (this handles units properly, e.g., for
+    # sums)
     if operator_accept_weights(operator):
-        coord_dim = coord_dims[0]
-        expand = list(range(cube.ndim))
-        expand.remove(coord_dim)
-        bounds = coord.core_bounds()
-        weights = np.abs(bounds[..., 1] - bounds[..., 0])
-        weights = np.expand_dims(weights, expand)
-        weights = da.broadcast_to(weights, cube.shape)
-        result = cube.collapsed(coord, operation, weights=weights)
+        weights_coord = AuxCoord(
+            np.abs(coord.core_bounds()[..., 1] - coord.core_bounds()[..., 0]),
+            long_name=f'{axis}_axis_statistics_weights',
+            units=coord.units,
+        )
+        cube.add_aux_coord(weights_coord, coord_dims)
+        result = cube.collapsed(coord, operation, weights=weights_coord)
     else:
         result = cube.collapsed(coord, operation)
 
     return result
 
 
-def depth_integration(cube):
+def depth_integration(cube: Cube) -> Cube:
     """Determine the total sum over the vertical component.
 
-    Requires a 3D cube. The z-coordinate
-    integration is calculated by taking the sum in the z direction of the
-    cell contents multiplied by the cell thickness.
+    Requires a 3D cube. The z-coordinate integration is calculated by taking
+    the sum in the z direction of the cell contents multiplied by the cell
+    thickness.
 
     Arguments
     ---------
-    cube: iris.cube.Cube
-        input cube.
+    cube:
+        Input cube.
 
     Returns
     -------
     iris.cube.Cube
-        collapsed cube.
+        Collapsed cube.
     """
     result = axis_statistics(cube, axis='z', operator='sum')
     result.rename('Depth_integrated_' + str(cube.name()))
-    # result.units = Unit('m') * result.units # This doesn't work:
-    # TODO: Change units on cube to reflect 2D concentration (not 3D)
-    # Waiting for news from iris community.
     return result
 
 

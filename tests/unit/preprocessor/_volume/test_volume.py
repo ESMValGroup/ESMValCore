@@ -115,6 +115,7 @@ class Test(tests.Test):
         weights = (bounds[:, 1] - bounds[:, 0])
         expected = np.average(data, axis=1, weights=weights)
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-3')
 
     def test_axis_statistics_median(self):
         """Test axis statistics in with operator median."""
@@ -123,6 +124,7 @@ class Test(tests.Test):
         result = axis_statistics(self.grid_4d, 'z', 'median')
         expected = np.median(data, axis=1)
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-3')
 
     def test_axis_statistics_min(self):
         """Test axis statistics with operator min."""
@@ -131,6 +133,7 @@ class Test(tests.Test):
         result = axis_statistics(self.grid_4d, 'z', 'min')
         expected = np.min(data, axis=1)
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-3')
 
     def test_axis_statistics_max(self):
         """Test axis statistics with operator max."""
@@ -139,6 +142,7 @@ class Test(tests.Test):
         result = axis_statistics(self.grid_4d, 'z', 'max')
         expected = np.max(data, axis=1)
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-3')
 
     def test_axis_statistics_rms(self):
         """Test axis statistics with operator rms."""
@@ -151,20 +155,23 @@ class Test(tests.Test):
         result = axis_statistics(self.grid_4d, 'z', 'std_dev')
         expected = np.ma.zeros((2, 2, 2))
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-3')
 
     def test_axis_statistics_variance(self):
         """Test axis statistics with operator variance."""
         result = axis_statistics(self.grid_4d, 'z', 'variance')
         expected = np.ma.zeros((2, 2, 2))
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg2 m-6')
 
     def test_axis_statistics_sum(self):
         """Test axis statistics in multiple operators."""
         result = axis_statistics(self.grid_4d, 'z', 'sum')
         expected = np.ma.ones((2, 2, 2)) * 250
         self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-2')
 
-    def test_wrong_axis_statistics(self):
+    def test_wrong_axis_statistics_fail(self):
         """Test raises error when axis is not found in cube."""
         with self.assertRaises(ValueError) as err:
             axis_statistics(self.grid_3d, 't', 'mean')
@@ -172,7 +179,7 @@ class Test(tests.Test):
             f'Axis t not found in cube {self.grid_3d.summary(shorten=True)}',
             str(err.exception))
 
-    def test_multidimensional_axis_statistics(self):
+    def test_multidimensional_axis_statistics_fail(self):
         i_coord = iris.coords.DimCoord(
             [0, 1],
             long_name='cell index along first dimension',
