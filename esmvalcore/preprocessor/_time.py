@@ -18,6 +18,7 @@ import iris.exceptions
 import iris.util
 import isodate
 import numpy as np
+from iris.coords import AuxCoord
 from iris.cube import Cube, CubeList
 from iris.time import PartialDateTime
 
@@ -385,6 +386,7 @@ def get_time_weights(cube: Cube) -> np.ndarray | da.core.Array:
     -------
     np.ndarray or da.core.Array
         Array of time weights for averaging.
+
     """
     time = cube.coord('time')
     coord_dims = cube.coord_dims('time')
@@ -394,8 +396,8 @@ def get_time_weights(cube: Cube) -> np.ndarray | da.core.Array:
     if len(coord_dims) > 1:
         raise ValueError(
             f"Weighted statistical operations are not supported for "
-            f"{len(coord_dims):d}D time coordinates, expected "
-            f"0D or 1D")
+            f"{len(coord_dims):d}D time coordinates, expected 0D or 1D"
+        )
 
     # Extract 1D time weights (= lengths of time intervals)
     time_weights = time.core_bounds()[:, 1] - time.core_bounds()[:, 0]
@@ -737,14 +739,17 @@ def climate_statistics(
     if period in ('full', ):
         operator_method = get_iris_analysis_operation(operator)
         if operator_accept_weights(operator):
-            time_weights = get_time_weights(cube)
-            if time_weights.min() == time_weights.max():
-                # No weighting needed.
-                clim_cube = cube.collapsed('time', operator_method)
-            else:
-                clim_cube = cube.collapsed('time',
-                                           operator_method,
-                                           weights=time_weights)
+            time_weights_coord = AuxCoord(
+                get_time_weights(cube),
+                long_name='time_weights',
+                units=cube.coord('time').units,
+            )
+            cube.add_aux_coord(time_weights_coord, cube.coord_dims('time'))
+            clim_cube = cube.collapsed(
+                'time',
+                operator_method,
+                weights=time_weights_coord,
+            )
         else:
             clim_cube = cube.collapsed('time', operator_method)
     else:
@@ -1063,6 +1068,8 @@ def timeseries_filter(
     ]
     if filter_type in supported_filters:
         if filter_type == 'lowpass':
+            # These weights sum to one and are dimensionless (-> we do NOT need
+            # to consider units for sums)
             wgts = low_pass_weights(window, 1. / span)
     else:
         raise NotImplementedError(
