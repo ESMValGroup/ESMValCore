@@ -38,14 +38,17 @@ jobs:
           conda list
           conda config --show-sources
           conda config --show
+          # setup-miniconda@v2 installs an old conda and mamba
+          # forcing a modern mamba updates both mamba and conda
           conda install -c conda-forge mamba>=1.4.8
+          conda --version
           mamba --version
       - name: Gather Python info
         run: |
           which python
           python --version
       - name: Install conda-lock
-        run: mamba install -y -c conda-forge conda-lock==2.1.0
+        run: mamba install -y -c conda-forge conda-lock  # >=2.1.0
       - name: Check version of conda-lock
         run: conda-lock --version
       - name: Create conda lock file for linux-64
