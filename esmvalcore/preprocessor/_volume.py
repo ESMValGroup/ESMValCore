@@ -100,7 +100,8 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     Note
     ----
     This only works if the grid cell areas can be calculated (i.e., latitude
-    and longitude are 1D) and if the depth coordinate is 1D or 4D.
+    and longitude are 1D) and if the depth coordinate is 1D or 4D with first
+    dimension 1.
 
     Parameters
     ----------

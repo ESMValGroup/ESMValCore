@@ -33,9 +33,10 @@ def get_iris_analysis_operation(operator: str) -> iris.analysis.Aggregator:
 
     Returns
     -------
-    Object that can be used within :meth:`iris.cube.Cube.collapsed`,
-    :meth:`iris.cube.Cube.aggregated_by`, or
-    :meth:`iris.cube.Cube.rolling_window`.
+    iris.analysis.Aggregator
+        Object that can be used within :meth:`iris.cube.Cube.collapsed`,
+        :meth:`iris.cube.Cube.aggregated_by`, or
+        :meth:`iris.cube.Cube.rolling_window`.
 
     Raises
     ------
@@ -66,7 +67,8 @@ def operator_accept_weights(operator: str) -> bool:
 
     Returns
     -------
-    ``True`` if operator support weights, ``False`` otherwise.
+    bool
+        ``True`` if operator support weights, ``False`` otherwise.
 
     """
     return operator.lower() in ('mean', 'sum', 'rms')
