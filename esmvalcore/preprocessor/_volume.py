@@ -3,7 +3,10 @@
 Allows for selecting data subsets using certain volume bounds; selecting
 depth or height regions; constructing volumetric averages;
 """
+from __future__ import annotations
+
 import logging
+from typing import Iterable, Sequence
 
 import dask.array as da
 import iris
@@ -20,12 +23,12 @@ logger = logging.getLogger(__name__)
 
 
 def extract_volume(
-    cube,
-    z_min,
-    z_max,
-    interval_bounds='open',
-    nearest_value=False
-):
+    cube: Cube,
+    z_min: float,
+    z_max: float,
+    interval_bounds: str = 'open',
+    nearest_value: bool = False,
+) -> Cube:
     """Subset a cube based on a range of values in the z-coordinate.
 
     Function that subsets a cube on a box of (z_min, z_max),
@@ -41,22 +44,23 @@ def extract_volume(
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-    z_min: float
-        minimum depth to extract.
-    z_max: float
-        maximum depth to extract.
-    interval_bounds: str
-        sets left bound of the interval to either 'open', 'closed',
+    cube:
+        Input cube.
+    z_min:
+        Minimum depth to extract.
+    z_max:
+        Maximum depth to extract.
+    interval_bounds:
+        Sets left bound of the interval to either 'open', 'closed',
         'left_closed' or 'right_closed'.
-    nearest_value: bool
-        extracts considering the nearest value of z-coord to z_min and z_max.
+    nearest_value:
+        Extracts considering the nearest value of z-coord to z_min and z_max.
 
     Returns
     -------
     iris.cube.Cube
         z-coord extracted cube.
+
     """
     if z_min > z_max:
         # minimum is below maximum, so switch them around
@@ -285,13 +289,18 @@ def depth_integration(cube: Cube) -> Cube:
     -------
     iris.cube.Cube
         Collapsed cube.
+
     """
     result = axis_statistics(cube, axis='z', operator='sum')
     result.rename('Depth_integrated_' + str(cube.name()))
     return result
 
 
-def extract_transect(cube, latitude=None, longitude=None):
+def extract_transect(
+    cube: Cube,
+    latitude: None | float | Iterable[float] = None,
+    longitude: None | float | Iterable[float] = None,
+) -> Cube:
     """Extract data along a line of constant latitude or longitude.
 
     Both arguments, latitude and longitude, are treated identically.
@@ -315,29 +324,30 @@ def extract_transect(cube, latitude=None, longitude=None):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-    latitude: None, float or [float, float], optional
-        transect latiude or range.
-    longitude:  None, float or [float, float], optional
-        transect longitude or range.
+    cube:
+        Input cube.
+    latitude: optional
+        Transect latitude or range.
+    longitude:  optional
+        Transect longitude or range.
 
     Returns
     -------
     iris.cube.Cube
-        collapsed cube.
+        Collapsed cube.
 
     Raises
     ------
     ValueError
-        slice extraction not implemented for irregular grids.
+        Slice extraction not implemented for irregular grids.
     ValueError
-        latitude and longitude are both floats or lists; not allowed
-        to slice on both axes at the same time.
+        Latitude and longitude are both floats or lists; not allowed to slice
+        on both axes at the same time.
+
     """
     # ###
     coord_dim2 = False
-    second_coord_range = False
+    second_coord_range: None | list = None
     lats = cube.coord('latitude')
     lons = cube.coord('longitude')
 
@@ -375,13 +385,18 @@ def extract_transect(cube, latitude=None, longitude=None):
     slices = [slice(None) for i in cube.shape]
     slices[coord_dim] = coord_index
 
-    if second_coord_range:
+    if second_coord_range is not None:
         slices[coord_dim2] = slice(second_coord_range[0],
                                    second_coord_range[1])
     return cube[tuple(slices)]
 
 
-def extract_trajectory(cube, latitudes, longitudes, number_points=2):
+def extract_trajectory(
+    cube: Cube,
+    latitudes: Sequence[float],
+    longitudes: Sequence[float],
+    number_points: int = 2,
+) -> Cube:
     """Extract data along a trajectory.
 
     latitudes and longitudes are the pairs of coordinates for two points.
@@ -401,24 +416,25 @@ def extract_trajectory(cube, latitudes, longitudes, number_points=2):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-    latitudes: list
-        list of latitude coordinates (floats).
-    longitudes: list
-        list of longitude coordinates (floats).
-    number_points: int
-        number of points to extrapolate (optional).
+    cube:
+        Input cube.
+    latitudes:
+        Latitude coordinates.
+    longitudes:
+        Longitude coordinates.
+    number_points: optional
+        Number of points to extrapolate.
 
     Returns
     -------
     iris.cube.Cube
-        collapsed cube.
+        Collapsed cube.
 
     Raises
     ------
     ValueError
-        if latitude and longitude have different dimensions.
+        Latitude and longitude have different dimensions.
+
     """
     from iris.analysis.trajectory import interpolate
 
