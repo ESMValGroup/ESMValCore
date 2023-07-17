@@ -304,8 +304,8 @@ def area_statistics(cube: Cube, operator: str) -> Cube:
     | `rms`      | Area weighted root mean square                   |
     +------------+--------------------------------------------------+
 
-    Note that for sums, the units of the resulting cube will be multiplied by
-    m:math:`^2`.
+    Note that for area-weighted sums, the units of the resulting cube will be
+    multiplied by m:math:`^2`.
 
     Parameters
     ----------

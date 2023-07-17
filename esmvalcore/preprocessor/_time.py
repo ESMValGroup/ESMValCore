@@ -713,6 +713,13 @@ def climate_statistics(
     Computes statistics for the whole dataset. It is possible to get them for
     the full period or with the data grouped by hour, day, month or season.
 
+    Note
+    ----
+    The `mean`, `sum` and `rms` operations over the `full` period are weighted
+    by the time coordinate, i.e., the length of the time intervals. For `sum`,
+    the units of the resulting cube will be multiplied by corresponding time
+    units (e.g., days).
+
     Parameters
     ----------
     cube:
@@ -736,6 +743,7 @@ def climate_statistics(
     original_dtype = cube.dtype
     period = period.lower()
 
+    # Use Cube.collapsed when full period is requested
     if period in ('full', ):
         operator_method = get_iris_analysis_operation(operator)
         if operator_accept_weights(operator):
@@ -752,6 +760,8 @@ def climate_statistics(
             )
         else:
             clim_cube = cube.collapsed('time', operator_method)
+
+    # Use Cube.aggregated_by for other periods
     else:
         clim_coord = _get_period_coord(cube, period, seasons)
         operator = get_iris_analysis_operation(operator)
@@ -766,6 +776,7 @@ def climate_statistics(
                 clim_cube.slices_over(clim_coord.name())).merge_cube()
         cube.remove_coord(clim_coord)
 
+    # Make sure that original dtype is preserved
     new_dtype = clim_cube.dtype
     if original_dtype != new_dtype:
         logger.debug(

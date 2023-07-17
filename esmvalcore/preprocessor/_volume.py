@@ -218,8 +218,13 @@ def volume_statistics(cube: Cube, operator: str) -> Cube:
 def axis_statistics(cube: Cube, axis: str, operator: str) -> Cube:
     """Perform statistics along a given axis.
 
-    Operates over an axis direction. If weights are required, they are computed
-    using the coordinate bounds.
+    Operates over an axis direction.
+
+    Note
+    ----
+    The `mean`, `sum` and `rms` operations are weighted by the corresponding
+    coordinate bounds. For `sum`, the units of the resulting cube will be
+    multiplied by corresponding coordinate units.
 
     Arguments
     ---------
