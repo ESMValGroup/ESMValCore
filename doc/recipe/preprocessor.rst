@@ -1889,7 +1889,7 @@ This function can be used to apply several different operations in the
 horizontal plane: mean, sum, standard deviation, median, variance, minimum,
 maximum and root mean square.
 The operations mean, sum and root mean square are area weighted.
-For sums, the units of the resulting cubes are multiplied by m:math:`^2`.
+For sums, the units of the resulting cubes are multiplied by m :math:`^2`.
 
 Note that this function is applied over the entire dataset.
 If only a specific region, depth layer or time period is required, then those

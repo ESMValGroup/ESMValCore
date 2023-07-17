@@ -305,7 +305,7 @@ def area_statistics(cube: Cube, operator: str) -> Cube:
     +------------+--------------------------------------------------+
 
     Note that for area-weighted sums, the units of the resulting cube will be
-    multiplied by m:math:`^2`.
+    multiplied by m :math:`^2`.
 
     Parameters
     ----------
