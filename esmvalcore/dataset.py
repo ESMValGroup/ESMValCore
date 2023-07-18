@@ -741,7 +741,9 @@ class Dataset:
             'session': self.session,
             **self.facets,
         }
-        settings['concatenate'] = {}
+        settings['concatenate'] = {
+            'check_level': self.session['check_level']
+        }
         settings['cmor_check_metadata'] = {
             'check_level': self.session['check_level'],
             'cmor_table': self.facets['project'],
