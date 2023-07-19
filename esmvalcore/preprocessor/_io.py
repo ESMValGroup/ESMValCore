@@ -236,7 +236,7 @@ def _check_time_overlaps(cubes):
                         "ends before")
             elif time_1[-1] > time_2[-1]:
                 cubes.pop(index + 1)
-            elif time_1[-1] < time_2[-1]:
+            else:
                 new_time = np.delete(time_1,
                                      np.argwhere(np.in1d(time_1, overlap)))
                 new_dates = overlapping_cubes[0].coord('time').units.num2date(
