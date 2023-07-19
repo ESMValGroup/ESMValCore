@@ -1,17 +1,16 @@
 """Functions for loading and saving cubes."""
 import copy
-import isodate
 import logging
 import os
 import shutil
 import warnings
-from functools import reduce
 from itertools import groupby
 from warnings import catch_warnings, filterwarnings
 
 import iris
 import iris.aux_factory
 import iris.exceptions
+import isodate
 import numpy as np
 import yaml
 from cf_units import suppress_errors
@@ -21,7 +20,7 @@ from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import merge_cube_attributes
 
 from .._task import write_ncl_settings
-from ._time import clip_timerange, extract_time
+from ._time import clip_timerange
 
 logger = logging.getLogger(__name__)
 
@@ -97,10 +96,8 @@ def _get_attr_from_field_coord(ncfield, coord_name, attr):
 def concatenate_callback(raw_cube, field, _):
     """Use this callback to fix anything Iris tries to break."""
     # Remove attributes that cause issues with merging and concatenation
-    _delete_attributes(
-        raw_cube,
-        ('creation_date', 'tracking_id', 'history', 'comment')
-    )
+    _delete_attributes(raw_cube,
+                       ('creation_date', 'tracking_id', 'history', 'comment'))
     for coord in raw_cube.coords():
         # Iris chooses to change longitude and latitude units to degrees
         # regardless of value in file, so reinstating file value
@@ -198,7 +195,7 @@ def _concatenate(cubes, check_level):
         'check_aux_coords': True,
         'check_cell_measures': True,
         'check_ancils': True,
-        #'check_derived_coords': True
+        # 'check_derived_coords': True
     }
 
     if check_level > CheckLevels.DEFAULT:
@@ -218,50 +215,46 @@ def _check_time_overlaps(cubes):
         raise ValueError(
             f"Cubes\n{cubes[0]}\nand\n{cubes[1]}\ncan not be concatenated: "
             f"time units in cubes differ")
-    
+
     times = [cube.coord('time').core_points() for cube in cubes]
     for index, _ in enumerate(times[:-1]):
-        overlap = np.intersect1d(times[index], times[index+1])
+        overlap = np.intersect1d(times[index], times[index + 1])
         if overlap.shape != ():
-            overlapping_cubes = cubes[index:index+2]
+            overlapping_cubes = cubes[index:index + 2]
             time_1 = overlapping_cubes[0].coord('time').core_points()
             time_2 = overlapping_cubes[1].coord('time').core_points()
             if time_1[0] == time_2[0]:
                 if time_1[-1] > time_2[-1]:
-                    cubes.pop(index+1)
+                    cubes.pop(index + 1)
                     logger.debug(
-                    "Both cubes start at the same time but cube %s "
-                    "ends before"
-                )
+                        "Both cubes start at the same time but cube %s "
+                        "ends before")
                 else:
                     cubes.pop(index)
                     logger.debug(
-                    "Both cubes start at the same time but cube %s "
-                    "ends before"
-                )
+                        "Both cubes start at the same time but cube %s "
+                        "ends before")
             elif time_1[-1] > time_2[-1]:
-                cubes.pop(index+1)
+                cubes.pop(index + 1)
             elif time_1[-1] < time_2[-1]:
-                new_time = np.delete(time_1, np.argwhere(np.in1d(time_1, overlap)))
-                new_dates = overlapping_cubes[0].coord('time').units.num2date(new_time)
+                new_time = np.delete(time_1,
+                                     np.argwhere(np.in1d(time_1, overlap)))
+                new_dates = overlapping_cubes[0].coord('time').units.num2date(
+                    new_time)
 
                 start_point = isodate.date_isoformat(
-                   new_dates[0],
-                   format=isodate.isostrf.DATE_BAS_COMPLETE
-                )
+                    new_dates[0], format=isodate.isostrf.DATE_BAS_COMPLETE)
                 end_point = isodate.date_isoformat(
-                    new_dates[-1],
-                    format=isodate.isostrf.DATE_BAS_COMPLETE
-                )
-                new_cube = clip_timerange(
-                    overlapping_cubes[0],
-                    f'{start_point}/{end_point}'
-                )
+                    new_dates[-1], format=isodate.isostrf.DATE_BAS_COMPLETE)
+                new_cube = clip_timerange(overlapping_cubes[0],
+                                          f'{start_point}/{end_point}')
                 if new_cube.shape == ():
-                    new_cube = iris.util.new_axis(new_cube, scalar_coord="time")
+                    new_cube = iris.util.new_axis(new_cube,
+                                                  scalar_coord="time")
 
                 cubes[index] = new_cube
     return cubes
+
 
 def _get_concatenation_error(cubes):
     """Raise an error for concatenation."""
@@ -297,7 +290,7 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
         return cubes
     if len(cubes) == 1:
         return cubes[0]
-    
+
     merge_cube_attributes(cubes)
     cubes = _sort_cubes_by_time(cubes)
     cubes = _check_time_overlaps(cubes)
@@ -432,13 +425,11 @@ def cleanup(files, remove=None):
     -------
     list of Path
         Preprocessor output files.
-
     """
     deprecation_msg = (
         "The preprocessor function `cleanup` has been deprecated in "
         "ESMValCore version 2.8.0 and is scheduled for removal in version "
-        "2.10.0."
-    )
+        "2.10.0.")
     warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
 
     if remove is None:
@@ -518,98 +509,3 @@ def _write_ncl_metadata(output_dir, metadata):
     write_ncl_settings(info, filename)
 
     return filename
-
-
-def _concatenate_overlapping_cubes(cubes):
-    """Concatenate time-overlapping cubes (two cubes only)."""
-    # we arrange [cube1, cube2] so that cube1.start <= cube2.start
-    if cubes[0].coord('time').points[0] <= cubes[1].coord('time').points[0]:
-        cubes = [cubes[0], cubes[1]]
-        logger.debug(
-            "Will attempt to concatenate cubes %s "
-            "and %s in this order", cubes[0], cubes[1])
-    else:
-        cubes = [cubes[1], cubes[0]]
-        logger.debug(
-            "Will attempt to concatenate cubes %s "
-            "and %s in this order", cubes[1], cubes[0])
-
-    # get time end points
-    time_1 = cubes[0].coord('time')
-    time_2 = cubes[1].coord('time')
-    if time_1.units != time_2.units:
-        raise ValueError(
-            f"Cubes\n{cubes[0]}\nand\n{cubes[1]}\ncan not be concatenated: "
-            f"time units {time_1.units}, calendar {time_1.units.calendar} "
-            f"and {time_2.units}, calendar {time_2.units.calendar} differ")
-    data_start_1 = time_1.cell(0).point
-    data_start_2 = time_2.cell(0).point
-    data_end_1 = time_1.cell(-1).point
-    data_end_2 = time_2.cell(-1).point
-
-    # case 1: both cubes start at the same time -> return longer cube
-    if data_start_1 == data_start_2:
-        if data_end_1 <= data_end_2:
-            logger.debug(
-                "Both cubes start at the same time but cube %s "
-                "ends before %s", cubes[0], cubes[1])
-            logger.debug("Cube %s contains all needed data so using it fully",
-                         cubes[1])
-            cubes = [cubes[1]]
-        else:
-            logger.debug(
-                "Both cubes start at the same time but cube %s "
-                "ends before %s", cubes[1], cubes[0])
-            logger.debug("Cube %s contains all needed data so using it fully",
-                         cubes[0])
-            cubes = [cubes[0]]
-
-    # case 2: cube1 starts before cube2
-    else:
-        # find time overlap, if any
-        start_overlap = next((time_1.units.num2date(t)
-                              for t in time_1.points if t in time_2.points),
-                             None)
-        # case 2.0: no overlap (new iris implementation does allow
-        # concatenation of cubes with no overlap)
-        if not start_overlap:
-            logger.debug(
-                "Unable to concatenate non-overlapping cubes\n%s\nand\n%s"
-                "separated in time.", cubes[0], cubes[1])
-        # case 2.1: cube1 ends after cube2 -> return cube1
-        elif data_end_1 > data_end_2:
-            cubes = [cubes[0]]
-            logger.debug("Using only data from %s", cubes[0])
-        # case 2.2: cube1 ends before cube2 -> use full cube2 and shorten cube1
-        else:
-            logger.debug(
-                "Extracting time slice between %s and %s from cube %s to use "
-                "it for concatenation with cube %s", "-".join([
-                    str(data_start_1.year),
-                    str(data_start_1.month),
-                    str(data_start_1.day)
-                ]), "-".join([
-                    str(start_overlap.year),
-                    str(start_overlap.month),
-                    str(start_overlap.day)
-                ]), cubes[0], cubes[1])
-            c1_delta = extract_time(cubes[0], data_start_1.year,
-                                    data_start_1.month, data_start_1.day,
-                                    start_overlap.year, start_overlap.month,
-                                    start_overlap.day)
-            # convert c1_delta scalar cube to vector cube, if needed
-            if c1_delta.shape == ():
-                c1_delta = iris.util.new_axis(c1_delta, scalar_coord="time")
-            cubes = iris.cube.CubeList([c1_delta, cubes[1]])
-            logger.debug("Attempting concatenatenation of %s with %s",
-                         c1_delta, cubes[1])
-            try:
-                cubes = [iris.cube.CubeList(cubes).concatenate_cube()]
-            except iris.exceptions.ConcatenateError as ex:
-                logger.error('Can not concatenate cubes: %s', ex)
-                logger.error('Cubes:')
-                for cube in cubes:
-                    logger.error(cube)
-                raise ex
-
-    return cubes
