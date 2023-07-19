@@ -1741,7 +1741,9 @@ def test_load(mocker, session):
             'short_name': 'chl',
             'frequency': 'yr',
         },
-        'concatenate': {},
+        'concatenate': {
+            'check_level': CheckLevels.DEFAULT,
+        },
         'add_supplementary_variables': {
             'supplementary_cubes': [],
         },
