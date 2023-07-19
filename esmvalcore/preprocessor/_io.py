@@ -218,50 +218,49 @@ def _check_time_overlaps(cubes):
         raise ValueError(
             f"Cubes\n{cubes[0]}\nand\n{cubes[1]}\ncan not be concatenated: "
             f"time units in cubes differ")
-    starts = [cube.coord('time').core_points()[0] for cube in cubes]
-    ends = [cube.coord('time').core_points()[-1] for cube in cubes]
+    
+    times = [cube.coord('time').core_points() for cube in cubes]
+    for index, _ in enumerate(times[:-1]):
+        overlap = np.intersect1d(times[index], times[index+1])
+        if overlap.shape != ():
+            overlapping_cubes = cubes[index:index+2]
+            time_1 = overlapping_cubes[0].coord('time').core_points()
+            time_2 = overlapping_cubes[1].coord('time').core_points()
+            if time_1[0] == time_2[0]:
+                if time_1[-1] > time_2[-1]:
+                    cubes.pop(index+1)
+                    logger.debug(
+                    "Both cubes start at the same time but cube %s "
+                    "ends before"
+                )
+                else:
+                    cubes.pop(index)
+                    logger.debug(
+                    "Both cubes start at the same time but cube %s "
+                    "ends before"
+                )
+            elif time_1[-1] > time_2[-1]:
+                cubes.pop(index+1)
+            elif time_1[-1] < time_2[-1]:
+                new_time = np.delete(time_1, np.argwhere(np.in1d(time_1, overlap)))
+                new_dates = overlapping_cubes[0].coord('time').units.num2date(new_time)
 
-    (overlap, end_index, start_index) = np.intersect1d(ends, starts, return_indices=True)
+                start_point = isodate.date_isoformat(
+                   new_dates[0],
+                   format=isodate.isostrf.DATE_BAS_COMPLETE
+                )
+                end_point = isodate.date_isoformat(
+                    new_dates[-1],
+                    format=isodate.isostrf.DATE_BAS_COMPLETE
+                )
+                new_cube = clip_timerange(
+                    overlapping_cubes[0],
+                    f'{start_point}/{end_point}'
+                )
+                if new_cube.shape == ():
+                    new_cube = iris.util.new_axis(new_cube, scalar_coord="time")
 
-    if overlap:
-        overlapping_cubes = cubes[end_index[0]:start_index[0]+1]
-        time_1 = overlapping_cubes[0].coord('time').core_points()
-        time_2 = overlapping_cubes[1].coord('time').core_points()
-        if time_1[0] == time_2[0]:
-            if time_1[-1] > time_2[-1]:
-                cubes.pop(end_index[0])
-                logger.debug(
-                "Both cubes start at the same time but cube %s "
-                "ends before"
-            )
-            else:
-                cubes.pop(start_index[0])
-                logger.debug(
-                "Both cubes start at the same time but cube %s "
-                "ends before"
-            )
-        elif time_1[-1] > time_2[-1]:
-            cubes.pop(start_index[0])
-        elif time_1[-1] < time_2[-1]:
-            new_time = np.delete(time_1, np.argwhere(time_1==overlap))
-            new_dates = overlapping_cubes[0].coord('time').units.num2date(new_time)
-
-            start_point = isodate.date_isoformat(
-                new_dates[0],
-                format=isodate.isostrf.DATE_BAS_COMPLETE
-            )
-            end_point = isodate.date_isoformat(
-                new_dates[-1],
-                format=isodate.isostrf.DATE_BAS_COMPLETE
-            )
-            new_cube = clip_timerange(
-                overlapping_cubes[0],
-                f'{start_point}/{end_point}'
-            )
-            if new_cube.shape == ():
-                new_cube = iris.util.new_axis(new_cube, scalar_coord="time")
-
-            cubes[end_index[0]] = new_cube
+                cubes[index] = new_cube
     return cubes
 
 def _get_concatenation_error(cubes):
