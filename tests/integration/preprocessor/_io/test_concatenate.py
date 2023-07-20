@@ -298,7 +298,7 @@ def test_relax_concatenation(check_level, caplog):
     msg = ('Concatenation will be performed without checking '
            'auxiliary coordinates, cell measures, ancillaries '
            'and derived coordinates present in the cubes.')
-    assert msg in caplog.txt
+    assert msg in caplog.text
 
 
 class TestConcatenate(unittest.TestCase):
