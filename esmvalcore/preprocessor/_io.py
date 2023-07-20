@@ -195,11 +195,15 @@ def _concatenate(cubes, check_level):
         'check_aux_coords': True,
         'check_cell_measures': True,
         'check_ancils': True,
-        # 'check_derived_coords': True
+        #    'check_derived_coords': True
     }
 
     if check_level > CheckLevels.DEFAULT:
         kwargs = dict.fromkeys(kwargs, False)
+        logger.debug(
+            'Concatenation will be performed without checking '
+            'auxiliary coordinates, cell measures, ancillaries '
+            'and derived coordinates present in the cubes.', )
 
     concatenated = iris.cube.CubeList(cubes).concatenate(**kwargs)
     if len(concatenated) == 1:
@@ -209,7 +213,7 @@ def _concatenate(cubes, check_level):
 
 
 def _check_time_overlaps(cubes):
-
+    """Handle time overlaps."""
     units = set([cube.coord('time').units for cube in cubes])
     if len(units) > 1:
         raise ValueError(

@@ -15,21 +15,25 @@ from iris.aux_factory import (
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
+from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.preprocessor import _io
 
 
 def get_hybrid_pressure_cube():
     """Return cube with hybrid pressure coordinate."""
     ap_coord = AuxCoord([1.0], bounds=[[0.0, 2.0]], var_name='ap', units='Pa')
-    b_coord = AuxCoord([0.0], bounds=[[-0.5, 1.5]],
-                       var_name='b', units=Unit('1'))
+    b_coord = AuxCoord([0.0],
+                       bounds=[[-0.5, 1.5]],
+                       var_name='b',
+                       units=Unit('1'))
     ps_coord = AuxCoord([[[100000]]], var_name='ps', units='Pa')
     x_coord = AuxCoord(
         0.0,
         var_name='x',
         standard_name='atmosphere_hybrid_sigma_pressure_coordinate',
     )
-    cube = Cube([[[[0.0]]]], var_name='x',
+    cube = Cube([[[[0.0]]]],
+                var_name='x',
                 aux_coords_and_dims=[(ap_coord, 1), (b_coord, 1),
                                      (ps_coord, (0, 2, 3)), (x_coord, ())])
     return cube
@@ -54,7 +58,9 @@ def get_hybrid_pressure_cube_list():
 
 def get_time_coord(time_point):
     """Time coordinate."""
-    return DimCoord([time_point], var_name='time', standard_name='time',
+    return DimCoord([time_point],
+                    var_name='time',
+                    standard_name='time',
                     units='days since 6453-2-1')
 
 
@@ -73,11 +79,14 @@ def mock_atmosphere_sigma_cube():
     """Return mocked cube with atmosphere sigma coordinate."""
     cube = unittest.mock.create_autospec(Cube, spec_set=True, instance=True)
     ptop_coord = AuxCoord([1.0], var_name='ptop', units='Pa')
-    lev_coord = AuxCoord([0.0], bounds=[[-0.5, 1.5]], var_name='lev',
+    lev_coord = AuxCoord([0.0],
+                         bounds=[[-0.5, 1.5]],
+                         var_name='lev',
                          units='1')
     ps_coord = AuxCoord([[[100000]]], var_name='ps', units='Pa')
-    cube.coord.side_effect = [ptop_coord, lev_coord, ps_coord,
-                              ptop_coord, lev_coord, ps_coord]
+    cube.coord.side_effect = [
+        ptop_coord, lev_coord, ps_coord, ptop_coord, lev_coord, ps_coord
+    ]
     cube.coords.return_value = [
         ptop_coord,
         lev_coord,
@@ -100,8 +109,9 @@ def mock_hybrid_height_cube():
     lev_coord = AuxCoord([1.0], bounds=[[0.0, 2.0]], var_name='lev', units='m')
     b_coord = AuxCoord([0.0], bounds=[[-0.5, 1.5]], var_name='b')
     orog_coord = AuxCoord([[[100000]]], var_name='orog', units='m')
-    cube.coord.side_effect = [lev_coord, b_coord, orog_coord,
-                              lev_coord, b_coord, orog_coord]
+    cube.coord.side_effect = [
+        lev_coord, b_coord, orog_coord, lev_coord, b_coord, orog_coord
+    ]
     cube.coords.return_value = [
         lev_coord,
         b_coord,
@@ -122,11 +132,14 @@ def mock_hybrid_pressure_cube():
     """Return mocked cube with hybrid pressure coordinate."""
     cube = unittest.mock.create_autospec(Cube, spec_set=True, instance=True)
     ap_coord = AuxCoord([1.0], bounds=[[0.0, 2.0]], var_name='ap', units='Pa')
-    b_coord = AuxCoord([0.0], bounds=[[-0.5, 1.5]],
-                       var_name='b', units=Unit('1'))
+    b_coord = AuxCoord([0.0],
+                       bounds=[[-0.5, 1.5]],
+                       var_name='b',
+                       units=Unit('1'))
     ps_coord = AuxCoord([[[100000]]], var_name='ps', units='Pa')
-    cube.coord.side_effect = [ap_coord, b_coord, ps_coord,
-                              ap_coord, b_coord, ps_coord]
+    cube.coord.side_effect = [
+        ap_coord, b_coord, ps_coord, ap_coord, b_coord, ps_coord
+    ]
     cube.coords.return_value = [
         ap_coord,
         b_coord,
@@ -182,9 +195,10 @@ def test_fix_aux_factories_atmosphere_sigma(mock_atmosphere_sigma_cube):
     # Test with aux_factory object
     _io._fix_aux_factories(mock_atmosphere_sigma_cube)
     mock_atmosphere_sigma_cube.coords.assert_called_once_with()
-    mock_atmosphere_sigma_cube.coord.assert_has_calls([call(var_name='ptop'),
-                                                       call(var_name='lev'),
-                                                       call(var_name='ps')])
+    mock_atmosphere_sigma_cube.coord.assert_has_calls(
+        [call(var_name='ptop'),
+         call(var_name='lev'),
+         call(var_name='ps')])
     mock_atmosphere_sigma_cube.add_aux_factory.assert_not_called()
 
     # Test without aux_factory object
@@ -192,9 +206,10 @@ def test_fix_aux_factories_atmosphere_sigma(mock_atmosphere_sigma_cube):
     mock_atmosphere_sigma_cube.aux_factories = ['dummy']
     _io._fix_aux_factories(mock_atmosphere_sigma_cube)
     mock_atmosphere_sigma_cube.coords.assert_called_once_with()
-    mock_atmosphere_sigma_cube.coord.assert_has_calls([call(var_name='ptop'),
-                                                       call(var_name='lev'),
-                                                       call(var_name='ps')])
+    mock_atmosphere_sigma_cube.coord.assert_has_calls(
+        [call(var_name='ptop'),
+         call(var_name='lev'),
+         call(var_name='ps')])
     mock_atmosphere_sigma_cube.add_aux_factory.assert_called_once()
 
 
@@ -205,9 +220,10 @@ def test_fix_aux_factories_hybrid_height(mock_hybrid_height_cube):
     # Test with aux_factory object
     _io._fix_aux_factories(mock_hybrid_height_cube)
     mock_hybrid_height_cube.coords.assert_called_once_with()
-    mock_hybrid_height_cube.coord.assert_has_calls([call(var_name='lev'),
-                                                    call(var_name='b'),
-                                                    call(var_name='orog')])
+    mock_hybrid_height_cube.coord.assert_has_calls(
+        [call(var_name='lev'),
+         call(var_name='b'),
+         call(var_name='orog')])
     mock_hybrid_height_cube.add_aux_factory.assert_not_called()
 
     # Test without aux_factory object
@@ -215,9 +231,10 @@ def test_fix_aux_factories_hybrid_height(mock_hybrid_height_cube):
     mock_hybrid_height_cube.aux_factories = ['dummy']
     _io._fix_aux_factories(mock_hybrid_height_cube)
     mock_hybrid_height_cube.coords.assert_called_once_with()
-    mock_hybrid_height_cube.coord.assert_has_calls([call(var_name='lev'),
-                                                    call(var_name='b'),
-                                                    call(var_name='orog')])
+    mock_hybrid_height_cube.coord.assert_has_calls(
+        [call(var_name='lev'),
+         call(var_name='b'),
+         call(var_name='orog')])
     mock_hybrid_height_cube.add_aux_factory.assert_called_once()
 
 
@@ -228,9 +245,10 @@ def test_fix_aux_factories_hybrid_pressure(mock_hybrid_pressure_cube):
     # Test with aux_factory object
     _io._fix_aux_factories(mock_hybrid_pressure_cube)
     mock_hybrid_pressure_cube.coords.assert_called_once_with()
-    mock_hybrid_pressure_cube.coord.assert_has_calls([call(var_name='ap'),
-                                                      call(var_name='b'),
-                                                      call(var_name='ps')])
+    mock_hybrid_pressure_cube.coord.assert_has_calls(
+        [call(var_name='ap'),
+         call(var_name='b'),
+         call(var_name='ps')])
     mock_hybrid_pressure_cube.add_aux_factory.assert_not_called()
 
     # Test without aux_factory object
@@ -238,9 +256,10 @@ def test_fix_aux_factories_hybrid_pressure(mock_hybrid_pressure_cube):
     mock_hybrid_pressure_cube.aux_factories = ['dummy']
     _io._fix_aux_factories(mock_hybrid_pressure_cube)
     mock_hybrid_pressure_cube.coords.assert_called_once_with()
-    mock_hybrid_pressure_cube.coord.assert_has_calls([call(var_name='ap'),
-                                                      call(var_name='b'),
-                                                      call(var_name='ps')])
+    mock_hybrid_pressure_cube.coord.assert_has_calls(
+        [call(var_name='ap'),
+         call(var_name='b'),
+         call(var_name='ps')])
     mock_hybrid_pressure_cube.add_aux_factory.assert_called_once()
 
 
@@ -250,8 +269,10 @@ def test_fix_aux_factories_real_cube(real_hybrid_pressure_cube):
     assert not real_hybrid_pressure_cube.coords('air_pressure')
     _io._fix_aux_factories(real_hybrid_pressure_cube)
     air_pressure_coord = real_hybrid_pressure_cube.coord('air_pressure')
-    expected_coord = AuxCoord([[[[1.0]]]], bounds=[[[[[-50000., 150002.]]]]],
-                              standard_name='air_pressure', units='Pa')
+    expected_coord = AuxCoord([[[[1.0]]]],
+                              bounds=[[[[[-50000., 150002.]]]]],
+                              standard_name='air_pressure',
+                              units='Pa')
     assert air_pressure_coord == expected_coord
 
 
@@ -266,6 +287,18 @@ def test_concatenation_with_aux_factory(real_hybrid_pressure_cube_list):
         units='Pa',
     )
     assert air_pressure_coord == expected_coord
+
+
+@pytest.mark.parametrize('check_level',
+                         [CheckLevels.RELAXED, CheckLevels.IGNORE])
+def test_relax_concatenation(check_level, caplog):
+    caplog.set_level('DEBUG')
+    cubes = get_hybrid_pressure_cube_list()
+    _io.concatenate(cubes, check_level)
+    msg = ('Concatenation will be performed without checking '
+           'auxiliary coordinates, cell measures, ancillaries '
+           'and derived coordinates present in the cubes.')
+    assert msg in caplog.txt
 
 
 class TestConcatenate(unittest.TestCase):
@@ -439,7 +472,10 @@ class TestConcatenate(unittest.TestCase):
             concatenated.coord('time').points, np.array([1, 2, 3, 4, 5, 6]))
         self.assertEqual(
             concatenated.attributes,
-            {'equal_attr': 1, 'different_attr': '1 2 3'},
+            {
+                'equal_attr': 1,
+                'different_attr': '1 2 3'
+            },
         )
 
     def test_fail_on_calendar_concatenate_with_overlap(self):
