@@ -302,7 +302,7 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     -------
     cube: iris.cube.Cube
         Resulting concatenated cube.
-    
+
     Raises
     ------
     ValueError
