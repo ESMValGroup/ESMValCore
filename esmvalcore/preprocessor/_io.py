@@ -195,7 +195,7 @@ def _concatenate_cubes(cubes, check_level):
         'check_aux_coords': True,
         'check_cell_measures': True,
         'check_ancils': True,
-        #    'check_derived_coords': True
+        'check_derived_coords': True
     }
 
     if check_level > CheckLevels.DEFAULT:
