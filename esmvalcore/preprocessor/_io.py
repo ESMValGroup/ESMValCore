@@ -216,35 +216,61 @@ def _check_time_overlaps(cubes):
     """Handle time overlaps."""
     units = set([cube.coord('time').units for cube in cubes])
     if len(units) > 1:
-        raise ValueError(
-            f"Cubes\n{cubes[0]}\nand\n{cubes[1]}\ncan not be concatenated: "
-            f"time units in cubes differ")
+        raise ValueError("Cubes cannot be concatenated: "
+                         "time units in cubes differ.")
 
     times = [cube.coord('time').core_points() for cube in cubes]
     for index, _ in enumerate(times[:-1]):
         overlap = np.intersect1d(times[index], times[index + 1])
-        if overlap.shape != ():
+        if overlap.size != 0:
             overlapping_cubes = cubes[index:index + 2]
             time_1 = overlapping_cubes[0].coord('time').core_points()
             time_2 = overlapping_cubes[1].coord('time').core_points()
+
+            # case 1: both cubes start at the same time -> return longer cube
             if time_1[0] == time_2[0]:
-                if time_1[-1] > time_2[-1]:
-                    cubes.pop(index + 1)
-                    logger.debug(
-                        "Both cubes start at the same time but cube %s "
-                        "ends before")
-                else:
+                if time_1[-1] <= time_2[-1]:
                     cubes.pop(index)
-                    logger.debug(
-                        "Both cubes start at the same time but cube %s "
-                        "ends before")
+                    discarded_cube_index = 0
+                    used_cube_index = 1
+                else:
+                    cubes.pop(index + 1)
+                    discarded_cube_index = 1
+                    used_cube_index = 0
+                logger.debug(
+                    "Both cubes start at the same time but cube %s "
+                    "ends before %s",
+                    overlapping_cubes[discarded_cube_index],
+                    overlapping_cubes[used_cube_index],
+                )
+                logger.debug(
+                    "Cube %s contains all needed data so using it fully",
+                    overlapping_cubes[used_cube_index],
+                )
+
+            # case 2: cube1 starts before cube2
+            # case 2.1: cube1 ends after cube2 -> return cube1
             elif time_1[-1] > time_2[-1]:
                 cubes.pop(index + 1)
+                logger.debug("Using only data from %s", overlapping_cubes[0])
+
+            # case 2.2: cube1 ends before cube2 -> use full cube2
+            # and shorten cube1
             else:
-                new_time = np.delete(time_1,
-                                     np.argwhere(np.in1d(time_1, overlap)))
+                new_time = np.delete(
+                    time_1,
+                    np.argwhere(np.in1d(time_1, overlap)),
+                )
                 new_dates = overlapping_cubes[0].coord('time').units.num2date(
                     new_time)
+                logger.debug(
+                    "Extracting time slice between %s and %s from cube %s "
+                    "to use it for concatenation with cube %s",
+                    new_dates[0],
+                    new_dates[-1],
+                    overlapping_cubes[0],
+                    overlapping_cubes[1],
+                )
 
                 start_point = isodate.date_isoformat(
                     new_dates[0], format=isodate.isostrf.DATE_BAS_COMPLETE)
@@ -278,7 +304,7 @@ def _get_concatenation_error(cubes):
 
 
 def _sort_cubes_by_time(cubes):
-    """Sort CubeList by time coordinate"""
+    """Sort CubeList by time coordinate."""
     try:
         cubes = sorted(cubes, key=lambda c: c.coord("time").cell(0).point)
     except iris.exceptions.CoordinateNotFoundError as exc:

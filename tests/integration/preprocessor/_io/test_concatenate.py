@@ -339,7 +339,7 @@ class TestConcatenate(unittest.TestCase):
         np.testing.assert_array_equal(
             concatenated.coord('time').points, np.array([1, 2]))
 
-    def test_concatenate_with_overlap(self):
+    def test_concatenate_with_overlap(self, ):
         """Test concatenation of time overalapping cubes."""
         self._add_cube([6.5, 7.5], [6., 7.])
         concatenated = _io.concatenate(self.raw_cubes)
