@@ -188,8 +188,8 @@ def load(file, callback=None, ignore_warnings=None):
     return raw_cubes
 
 
-def _concatenate(cubes, check_level):
-    """Perform a by-2 concatenation to avoid gaps."""
+def _concatenate_cubes(cubes, check_level):
+    """Concatenate cubes according to the check_level."""
 
     kwargs = {
         'check_aux_coords': True,
@@ -278,6 +278,7 @@ def _get_concatenation_error(cubes):
 
 
 def _sort_cubes_by_time(cubes):
+    """Sort CubeList by time coordinate"""
     try:
         cubes = sorted(cubes, key=lambda c: c.coord("time").cell(0).point)
     except iris.exceptions.CoordinateNotFoundError as exc:
@@ -288,7 +289,25 @@ def _sort_cubes_by_time(cubes):
 
 
 def concatenate(cubes, check_level=CheckLevels.DEFAULT):
-    """Concatenate all cubes after fixing metadata."""
+    """Concatenate all cubes after fixing metadata.
+
+    Parameters
+    ----------
+    cubes: iterable of iris.cube.Cube
+        Data cubes to be concatenated
+    check_level: CheckLevels
+        Level of strictness of the checks in the concatenation.
+
+    Returns
+    -------
+    cube: iris.cube.Cube
+        Resulting concatenated cube.
+    
+    Raises
+    ------
+    ValueError
+        Concatenation was not possible.
+    """
 
     if not cubes:
         return cubes
@@ -298,7 +317,7 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     merge_cube_attributes(cubes)
     cubes = _sort_cubes_by_time(cubes)
     cubes = _check_time_overlaps(cubes)
-    result = _concatenate(cubes, check_level=check_level)
+    result = _concatenate_cubes(cubes, check_level=check_level)
 
     _fix_aux_factories(result)
 
