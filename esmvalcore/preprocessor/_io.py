@@ -195,7 +195,7 @@ def _concatenate_cubes(cubes, check_level):
         'check_aux_coords': True,
         'check_cell_measures': True,
         'check_ancils': True,
-        #        'check_derived_coords': True
+        'check_derived_coords': True
     }
 
     if check_level > CheckLevels.DEFAULT:
@@ -295,11 +295,9 @@ def _fix_calendars(cubes):
         time_coord = cube.coord('time')
         old_calendar = time_coord.units.calendar
         if old_calendar != unique_calendars[calendar_index]:
-            try:
-                new_unit = time_coord.units.change_calendar(
-                    unique_calendars[calendar_index])
-            except TypeError:
-                raise
+            new_unit = time_coord.units.change_calendar(
+                unique_calendars[calendar_index]
+            )
             time_coord.units = new_unit
 
 
@@ -328,6 +326,8 @@ def _sort_cubes_by_time(cubes):
         msg = "One or more cubes {} are missing".format(cubes) + \
               " time coordinate: {}".format(str(exc))
         raise ValueError(msg)
+    except TypeError:
+        raise
     return cubes
 
 

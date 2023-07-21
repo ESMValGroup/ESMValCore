@@ -479,7 +479,7 @@ class TestConcatenate(unittest.TestCase):
         )
 
     def test_convert_calendar_concatenate_with_overlap(self):
-        """Test fail of concatenation with overlap."""
+        """Test compatible calendars get converted."""
         time_coord = DimCoord([4., 5.],
                               var_name='time',
                               standard_name='time',
