@@ -195,7 +195,7 @@ def _concatenate_cubes(cubes, check_level):
         'check_aux_coords': True,
         'check_cell_measures': True,
         'check_ancils': True,
-        'check_derived_coords': True
+        #        'check_derived_coords': True
     }
 
     if check_level > CheckLevels.DEFAULT:
@@ -214,11 +214,6 @@ def _concatenate_cubes(cubes, check_level):
 
 def _check_time_overlaps(cubes):
     """Handle time overlaps."""
-    units = set([cube.coord('time').units for cube in cubes])
-    if len(units) > 1:
-        raise ValueError("Cubes cannot be concatenated: "
-                         "time units in cubes differ.")
-
     times = [cube.coord('time').core_points() for cube in cubes]
     for index, _ in enumerate(times[:-1]):
         overlap = np.intersect1d(times[index], times[index + 1])
@@ -286,6 +281,28 @@ def _check_time_overlaps(cubes):
     return cubes
 
 
+def _fix_calendars(cubes):
+    """Check and homogenise calendars, if possible."""
+    calendars = [cube.coord('time').units.calendar for cube in cubes]
+    unique_calendars = np.unique(calendars)
+
+    calendar_ocurrences = np.array(
+        [calendars.count(calendar) for calendar in unique_calendars])
+    calendar_index = int(
+        np.argwhere(calendar_ocurrences == calendar_ocurrences.max()))
+
+    for cube in cubes:
+        time_coord = cube.coord('time')
+        old_calendar = time_coord.units.calendar
+        if old_calendar != unique_calendars[calendar_index]:
+            try:
+                new_unit = time_coord.units.change_calendar(
+                    unique_calendars[calendar_index])
+            except TypeError:
+                raise
+            time_coord.units = new_unit
+
+
 def _get_concatenation_error(cubes):
     """Raise an error for concatenation."""
     # Concatenation not successful -> retrieve exact error message
@@ -342,6 +359,7 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
 
     merge_cube_attributes(cubes)
     cubes = _sort_cubes_by_time(cubes)
+    _fix_calendars(cubes)
     cubes = _check_time_overlaps(cubes)
     result = _concatenate_cubes(cubes, check_level=check_level)
 
