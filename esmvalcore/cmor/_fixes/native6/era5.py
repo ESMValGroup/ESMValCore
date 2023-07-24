@@ -110,6 +110,7 @@ class Evspsbl(Fix):
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
             multiply_with_density(cube)
+            # Correct sign to align with CMOR standards
             cube.data = cube.core_data() * -1.0
 
         return cubes
@@ -126,6 +127,7 @@ class Evspsblpot(Fix):
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
             multiply_with_density(cube)
+            # Correct sign to align with CMOR standards
             cube.data = cube.core_data() * -1.0
 
         return cubes
