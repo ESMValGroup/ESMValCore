@@ -273,9 +273,6 @@ def _check_time_overlaps(cubes):
                     new_dates[-1], format=isodate.isostrf.DATE_BAS_COMPLETE)
                 new_cube = clip_timerange(overlapping_cubes[0],
                                           f'{start_point}/{end_point}')
-                if new_cube.shape == ():
-                    new_cube = iris.util.new_axis(new_cube,
-                                                  scalar_coord="time")
 
                 cubes[index] = new_cube
     return cubes
