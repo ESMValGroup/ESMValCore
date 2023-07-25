@@ -62,7 +62,7 @@ jobs:
           conda --version
           mamba --version
       - name: Update environment
-        run: mamba update -f environment.yml
+        run: mamba update -c conda-forge -f environment.yml
       - run: mkdir -p source_install_linux_artifacts_python_${{ matrix.python-version }}
       - name: Record versions
         run: |
