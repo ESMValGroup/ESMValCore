@@ -190,7 +190,6 @@ def load(file, callback=None, ignore_warnings=None):
 
 def _concatenate_cubes(cubes, check_level):
     """Concatenate cubes according to the check_level."""
-
     kwargs = {
         'check_aux_coords': True,
         'check_cell_measures': True,
@@ -208,8 +207,8 @@ def _concatenate_cubes(cubes, check_level):
     concatenated = iris.cube.CubeList(cubes).concatenate(**kwargs)
     if len(concatenated) == 1:
         return concatenated[0]
-    else:
-        _get_concatenation_error(concatenated)
+
+    _get_concatenation_error(concatenated)
 
 
 def _check_time_overlaps(cubes):
@@ -293,8 +292,7 @@ def _fix_calendars(cubes):
         old_calendar = time_coord.units.calendar
         if old_calendar != unique_calendars[calendar_index]:
             new_unit = time_coord.units.change_calendar(
-                unique_calendars[calendar_index]
-            )
+                unique_calendars[calendar_index])
             time_coord.units = new_unit
 
 
@@ -323,8 +321,10 @@ def _sort_cubes_by_time(cubes):
         msg = "One or more cubes {} are missing".format(cubes) + \
               " time coordinate: {}".format(str(exc))
         raise ValueError(msg)
-    except TypeError:
-        raise
+    except TypeError as error:
+        msg = ("Cubes cannot be sorted "
+               "due to differing time units: {}".format(str(error)))
+        raise TypeError(msg)
     return cubes
 
 
@@ -348,7 +348,6 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     ValueError
         Concatenation was not possible.
     """
-
     if not cubes:
         return cubes
     if len(cubes) == 1:
