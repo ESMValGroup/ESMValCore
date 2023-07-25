@@ -57,13 +57,14 @@ jobs:
           use-mamba: true
       - name: Update conda and mamba
         run: |
-          conda update -n base -c conda-forge conda
           # setup-miniconda@v2 installs an old conda and mamba
           # forcing a modern mamba updates both mamba and conda
+          # this and next step should be removed when updated upstream
+          conda update -n base -c conda-forge conda
           conda install -c conda-forge "mamba>=1.4.8"
           conda --version
           mamba --version
-      - name: Update environment
+      - name: Update environment with new mamba
         run: mamba update -c conda-forge -f environment.yml
       - run: mkdir -p test_linux_artifacts_python_${{ matrix.python-version }}
       - run: conda --version 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/conda_version.txt
@@ -97,6 +98,17 @@ jobs:
           miniforge-version: "latest"
           miniforge-variant: Mambaforge
           use-mamba: true
+      - name: Update conda and mamba
+        run: |
+          # setup-miniconda@v2 installs an old conda and mamba
+          # forcing a modern mamba updates both mamba and conda
+          # this and next step should be removed when updated upstream
+          conda update -n base -c conda-forge conda
+          conda install -c conda-forge "mamba>=1.4.8"
+          conda --version
+          mamba --version
+      - name: Update environment with new mamba
+        run: mamba update -c conda-forge -f environment.yml
       - run: mkdir -p test_osx_artifacts_python_${{ matrix.python-version }}
       - run: conda --version 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/conda_version.txt
       - run: python -V 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
