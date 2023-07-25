@@ -205,10 +205,8 @@ def _concatenate_cubes(cubes, check_level):
             'and derived coordinates present in the cubes.', )
 
     concatenated = iris.cube.CubeList(cubes).concatenate(**kwargs)
-    if len(concatenated) == 1:
-        return concatenated[0]
 
-    _get_concatenation_error(concatenated)
+    return concatenated
 
 
 def _check_time_overlaps(cubes):
@@ -323,8 +321,8 @@ def _sort_cubes_by_time(cubes):
         raise ValueError(msg)
     except TypeError as error:
         msg = ("Cubes cannot be sorted "
-               "due to differing time units: {}".format(str(error)))
-        raise TypeError(msg)
+               f"due to differing time units: {str(error)}")
+        raise TypeError(msg) from error
     return cubes
 
 
@@ -358,6 +356,11 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     _fix_calendars(cubes)
     cubes = _check_time_overlaps(cubes)
     result = _concatenate_cubes(cubes, check_level=check_level)
+
+    if len(result) == 1:
+        result = result[0]
+    else:
+        _get_concatenation_error(result)
 
     _fix_aux_factories(result)
 
