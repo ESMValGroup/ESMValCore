@@ -21,6 +21,7 @@ on:
   push:
     branches:
       - main
+      - GA_update_condamamba_adhoc
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
@@ -54,6 +55,16 @@ jobs:
           miniforge-version: "latest"
           miniforge-variant: Mambaforge
           use-mamba: true
+      - name: Update conda and mamba
+        run: |
+          conda update -n base -c conda-forge conda
+          # setup-miniconda@v2 installs an old conda and mamba
+          # forcing a modern mamba updates both mamba and conda
+          conda install -c conda-forge "mamba>=1.4.8"
+          conda --version
+          mamba --version
+      - name: Update environment
+        run: mamba update -n esmvalcore -f environment.yml
       - run: mkdir -p test_linux_artifacts_python_${{ matrix.python-version }}
       - run: conda --version 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/conda_version.txt
       - run: python -V 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
