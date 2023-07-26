@@ -11,7 +11,13 @@ build:
   tools:
     python: "mambaforge-4.10"
   jobs:
+    pre_create_environment:
+      # update mamba
+      - mamba update --yes --quiet --name=base mamba
+      - mamba --version
     post_create_environment:
+      # use conda run executable wrapper to have all env variables
+      - conda run -n ${CONDA_DEFAULT_ENV} mamba --version
       - conda run -n ${CONDA_DEFAULT_ENV} pip install . --no-deps
 
 # Declare the requirements required to build your docs
