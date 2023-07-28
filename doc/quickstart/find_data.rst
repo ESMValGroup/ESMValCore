@@ -129,7 +129,7 @@ ERA5
   In the CMOR table, these fluxes are defined as positive, if they go from the surface into the atmosphere:
   "Evaporation at surface (also known as evapotranspiration): flux of water into the atmosphere due to conversion 
   of both liquid and solid phases to vapor (from underlying surface and vegetation)."
-  Therefore, the ERA5 (and ERA5-Land) CMORizer switches the signs of ``evspsbl`` and ``evspsblpot`` to be comparable to the CMIP models.
+  Therefore, the ERA5 (and ERA5-Land) CMORizer switches the signs of ``evspsbl`` and ``evspsblpot`` to be compatible with the CMOR standard used e.g. by the CMIP models.
 
 .. _read_native_mswep:
 
