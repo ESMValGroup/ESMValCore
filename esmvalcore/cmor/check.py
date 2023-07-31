@@ -1,5 +1,8 @@
 """Module for checking iris cubes against their CMOR definitions."""
+from __future__ import annotations
+
 import logging
+from collections.abc import Callable
 from datetime import datetime
 from enum import IntEnum
 
@@ -9,6 +12,7 @@ import iris.coords
 import iris.exceptions
 import iris.util
 import numpy as np
+from iris.cube import Cube
 
 from esmvalcore.iris_helpers import date2num
 
@@ -1071,22 +1075,24 @@ class CMORCheck():
         self.report(CheckLevels.DEBUG, message, *args)
 
 
-def _get_cmor_checker(table,
-                      mip,
-                      short_name,
-                      frequency,
-                      fail_on_error=False,
-                      check_level=CheckLevels.DEFAULT,
-                      automatic_fixes=False):
+def _get_cmor_checker(
+    project: str,
+    mip: str,
+    short_name: str,
+    frequency: None | str,
+    fail_on_error: bool = False,
+    check_level: CheckLevels = CheckLevels.DEFAULT,
+    automatic_fixes: bool = False,
+) -> Callable[[Cube], CMORCheck]:
     """Get a CMOR checker/fixer."""
-    if table not in CMOR_TABLES:
+    if project not in CMOR_TABLES:
         raise NotImplementedError(
-            "No CMOR checker implemented for table {}."
-            "\nThe following options are available: {}".format(
-                table, ', '.join(CMOR_TABLES)))
+            f"No CMOR checker implemented for project {project}.\nThe "
+            f"following options are available: {', '.join(CMOR_TABLES)}"
+        )
 
-    cmor_table = CMOR_TABLES[table]
-    if table == 'CORDEX' and mip.endswith('hr'):
+    cmor_table = CMOR_TABLES[project]
+    if project == 'CORDEX' and mip.endswith('hr'):
         # CORDEX X-hourly tables define the mip
         # as ending in 'h' instead of 'hr'.
         mip = mip.replace('hr', 'h')
@@ -1094,7 +1100,7 @@ def _get_cmor_checker(table,
     if var_info is None:
         var_info = CMOR_TABLES['custom'].get_variable(mip, short_name)
 
-    def _checker(cube):
+    def _checker(cube: Cube) -> CMORCheck:
         return CMORCheck(cube,
                          var_info,
                          frequency=frequency,
@@ -1105,105 +1111,157 @@ def _get_cmor_checker(table,
     return _checker
 
 
-def cmor_check_metadata(cube,
-                        cmor_table,
-                        mip,
-                        short_name,
-                        frequency,
-                        check_level=CheckLevels.DEFAULT):
+def cmor_check_metadata(
+    cube: Cube,
+    cmor_table: str,
+    mip: str,
+    short_name: str,
+    frequency: str,
+    check_level: CheckLevels = CheckLevels.DEFAULT,
+    fail_on_error: bool = False,
+    automatic_fixes: bool = False,
+) -> Cube:
     """Check if metadata conforms to variable's CMOR definition.
 
     None of the checks at this step will force the cube to load the data.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         Data cube to check.
-    cmor_table: str
-        CMOR definitions to use.
+    cmor_table:
+        CMOR definitions to use (i.e., the variable's project).
     mip:
-        Variable's mip.
-    short_name: str
+        Variable's MIP.
+    short_name:
         Variable's short name.
-    frequency: str
+    frequency:
         Data frequency.
-    check_level: CheckLevels
+    check_level: optional
         Level of strictness of the checks.
+    fail_on_error: optional
+        If ``True``, CMOR check stops on the first error. If ``False``, it
+        collects all possible errors before stopping.
+    automatic_fixes: optional
+        If ``True``, CMOR check will try to apply automatic fixes for any
+        detected error, if possible.
+
     """
-    checker = _get_cmor_checker(cmor_table,
-                                mip,
-                                short_name,
-                                frequency,
-                                check_level=check_level)
+    checker = _get_cmor_checker(
+        cmor_table,
+        mip,
+        short_name,
+        frequency,
+        fail_on_error=fail_on_error,
+        check_level=check_level,
+        automatic_fixes=automatic_fixes,
+    )
     checker(cube).check_metadata()
     return cube
 
 
-def cmor_check_data(cube,
-                    cmor_table,
-                    mip,
-                    short_name,
-                    frequency,
-                    check_level=CheckLevels.DEFAULT):
+def cmor_check_data(
+    cube: Cube,
+    cmor_table: str,
+    mip: str,
+    short_name: str,
+    frequency: str,
+    check_level: CheckLevels = CheckLevels.DEFAULT,
+    fail_on_error: bool = False,
+    automatic_fixes: bool = False,
+):
     """Check if data conforms to variable's CMOR definition.
-
-    The checks performed at this step require the data in memory.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         Data cube to check.
-    cmor_table: str
-        CMOR definitions to use.
+    cmor_table:
+        CMOR definitions to use (i.e., the variable's project).
     mip:
-        Variable's mip.
-    short_name: str
+        Variable's MIP.
+    short_name:
         Variable's short name
-    frequency: str
+    frequency:
         Data frequency
-    check_level: CheckLevels
+    check_level: optional
         Level of strictness of the checks.
+    fail_on_error: optional
+        If ``True``, CMOR check stops on the first error. If ``False``, it
+        collects all possible errors before stopping.
+    automatic_fixes: optional
+        If ``True``, CMOR check will try to apply automatic fixes for any
+        detected error, if possible.
+
     """
-    checker = _get_cmor_checker(cmor_table,
-                                mip,
-                                short_name,
-                                frequency,
-                                check_level=check_level)
+    checker = _get_cmor_checker(
+        cmor_table,
+        mip,
+        short_name,
+        frequency,
+        fail_on_error=fail_on_error,
+        check_level=check_level,
+        automatic_fixes=automatic_fixes,
+    )
     checker(cube).check_data()
     return cube
 
 
-def cmor_check(cube, cmor_table, mip, short_name, frequency, check_level):
+def cmor_check(
+    cube: Cube,
+    cmor_table: str,
+    mip: str,
+    short_name: str,
+    frequency: str,
+    check_level: CheckLevels,
+    fail_on_error: bool = False,
+    automatic_fixes: bool = False,
+) -> Cube:
     """Check if cube conforms to variable's CMOR definition.
 
-    Equivalent to calling cmor_check_metadata and cmor_check_data
-    consecutively.
+    Equivalent to calling :func:`cmor_check_metadata` and
+    :func:`cmor_check_data` consecutively.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         Data cube to check.
-    cmor_table: str
-        CMOR definitions to use.
+    cmor_table:
+        CMOR definitions to use (i.e., the variable's project).
     mip:
-        Variable's mip.
-    short_name: str
+        Variable's MIP.
+    short_name:
         Variable's short name.
-    frequency: str
+    frequency:
         Data frequency.
-    check_level: enum.IntEnum
+    check_level: optional
         Level of strictness of the checks.
+    fail_on_error: optional
+        If ``True``, CMOR check stops on the first error. If ``False``, it
+        collects all possible errors before stopping.
+    automatic_fixes: optional
+        If ``True``, CMOR check will try to apply automatic fixes for any
+        detected error, if possible.
+
     """
-    cmor_check_metadata(cube,
-                        cmor_table,
-                        mip,
-                        short_name,
-                        frequency,
-                        check_level=check_level)
-    cmor_check_data(cube,
-                    cmor_table,
-                    mip,
-                    short_name,
-                    frequency,
-                    check_level=check_level)
+    cube = cmor_check_metadata(
+        cube,
+        cmor_table,
+        mip,
+        short_name,
+        frequency,
+        check_level=check_level,
+        fail_on_error=fail_on_error,
+        automatic_fixes=automatic_fixes,
+    )
+    cube = cmor_check_data(
+        cube,
+        cmor_table,
+        mip,
+        short_name,
+        frequency,
+        check_level=check_level,
+        fail_on_error=fail_on_error,
+        automatic_fixes=automatic_fixes,
+    )
     return cube

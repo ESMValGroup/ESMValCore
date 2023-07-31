@@ -11,7 +11,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-from iris.cube import CubeList
+from iris.cube import Cube, CubeList
 
 from ._fixes.fix import Fix
 from .check import CheckLevels, _get_cmor_checker
@@ -35,37 +35,38 @@ def fix_file(
 ) -> Path:
     """Fix files before ESMValTool can load them.
 
-    This fixes are only for issues that prevent iris from loading the cube or
+    These fixes are only for issues that prevent iris from loading the cube or
     that cannot be fixed after the cube is loaded.
 
     Original files are not overwritten.
 
     Parameters
     ----------
-    file: Path
+    file:
         Path to the original file.
-    short_name: str
+    short_name:
         Variable's short name.
-    project: str
+    project:
         Project of the dataset.
-    dataset: str
+    dataset:
         Name of the dataset.
-    mip: str
+    mip:
         Variable's MIP.
-    output_dir: Path
+    output_dir:
         Output directory for fixed files.
-    add_unique_suffix: bool, optional (default: False)
+    add_unique_suffix: optional
         Adds a unique suffix to `output_dir` for thread safety.
-    session: Session, optional
+    session: optional
         Current session which includes configuration and directory information.
-    **extra_facets: dict, optional
+    **extra_facets: optional
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 
     Returns
     -------
-    Path:
+    Path
         Path to the fixed file.
+
     """
     # Update extra_facets with variable information given as regular arguments
     # to this function
@@ -88,53 +89,60 @@ def fix_file(
     return file
 
 
-def fix_metadata(cubes,
-                 short_name,
-                 project,
-                 dataset,
-                 mip,
-                 frequency=None,
-                 check_level=CheckLevels.DEFAULT,
-                 session: Optional[Session] = None,
-                 **extra_facets):
-    """Fix cube metadata if fixes are required and check it anyway.
+def fix_metadata(
+    cubes: CubeList,
+    short_name: str,
+    project: str,
+    dataset: str,
+    mip: str,
+    frequency: Optional[str] = None,
+    perform_cmor_checks: bool = True,
+    check_level: CheckLevels = CheckLevels.DEFAULT,
+    session: Optional[Session] = None,
+    **extra_facets,
+) -> CubeList:
+    """Fix cube metadata if fixes are required and check it if desired.
 
-    This method collects all the relevant fixes for a given variable, applies
-    them and checks the resulting cube (or the original if no fixes were
-    needed) metadata to ensure that it complies with the standards of its
-    project CMOR tables.
+    This method collects all the relevant fixes for a given variable and
+    applies them. If desired, additionally checks the resulting cube (or the
+    original if no fixes were needed) metadata to ensure that it complies with
+    the standards of its project CMOR tables.
 
     Parameters
     ----------
-    cubes: iris.cube.CubeList
+    cubes:
         Cubes to fix.
-    short_name: str
+    short_name:
         Variable's short name.
-    project: str
+    project:
         Project of the dataset.
-    dataset: str
+    dataset:
         Name of the dataset.
-    mip: str
+    mip:
         Variable's MIP.
-    frequency: str, optional
+    frequency: optional
         Variable's data frequency, if available.
-    check_level: CheckLevels
-        Level of strictness of the checks. Set to default.
-    session: Session, optional
+    perform_cmor_checks: optional
+        Perform CMOR checks on the fixed cube metadata.
+    check_level: optional
+        Level of strictness of the checks. Only relevant of
+        `perform_cmor_checks` is set to ``True`` (default).
+    session: optional
         Current session which includes configuration and directory information.
-    **extra_facets: dict, optional
+    **extra_facets: optional
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 
     Returns
     -------
-    iris.cube.Cube:
-        Fixed and checked cube.
+    iris.cube.Cube
+        Fixed and (potentially) checked cube.
 
     Raises
     ------
     CMORCheckError
         If the checker detects errors in the metadata that it can not fix.
+
     """
     # Update extra_facets with variable information given as regular arguments
     # to this function
@@ -153,6 +161,9 @@ def fix_metadata(cubes,
                           extra_facets=extra_facets,
                           session=session)
     fixed_cubes = []
+
+    # Group cubes by input file and apply all fixes to each group element
+    # (i.e., each file) individually
     by_file = defaultdict(list)
     for cube in cubes:
         by_file[cube.attributes.get('source_file', '')].append(cube)
@@ -163,16 +174,23 @@ def fix_metadata(cubes,
             cube_list = fix.fix_metadata(cube_list)
 
         cube = _get_single_cube(cube_list, short_name, project, dataset)
-        checker = _get_cmor_checker(frequency=frequency,
-                                    table=project,
-                                    mip=mip,
-                                    short_name=short_name,
-                                    check_level=check_level,
-                                    fail_on_error=False,
-                                    automatic_fixes=True)
-        cube = checker(cube).check_metadata()
+
+        # Perform CMOR checks if desired
+        if perform_cmor_checks:
+            checker = _get_cmor_checker(
+                project,
+                mip,
+                short_name,
+                frequency,
+                fail_on_error=False,
+                check_level=check_level,
+                automatic_fixes=True,
+            )
+            cube = checker(cube).check_metadata()
+
         cube.attributes.pop('source_file', None)
         fixed_cubes.append(cube)
+
     return fixed_cubes
 
 
@@ -200,55 +218,62 @@ def _get_single_cube(cube_list, short_name, project, dataset):
     return cube
 
 
-def fix_data(cube,
-             short_name,
-             project,
-             dataset,
-             mip,
-             frequency=None,
-             check_level=CheckLevels.DEFAULT,
-             session: Optional[Session] = None,
-             **extra_facets):
-    """Fix cube data if fixes add present and check it anyway.
+def fix_data(
+    cube: Cube,
+    short_name: str,
+    project: str,
+    dataset: str,
+    mip: str,
+    frequency: Optional[str] = None,
+    perform_cmor_checks: bool = True,
+    check_level: CheckLevels = CheckLevels.DEFAULT,
+    session: Optional[Session] = None,
+    **extra_facets,
+) -> Cube:
+    """Fix cube data if fixes add present and check it if desired.
 
     This method assumes that metadata is already fixed and checked.
 
-    This method collects all the relevant fixes for a given variable, applies
-    them and checks resulting cube (or the original if no fixes were
-    needed) metadata to ensure that it complies with the standards of its
-    project CMOR tables.
+    This method collects all the relevant fixes for a given variable and
+    applies them. If desired, additionally checks resulting cube (or the
+    original if no fixes were needed) data to ensure that it complies with the
+    standards of its project CMOR tables.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         Cube to fix.
-    short_name: str
+    short_name:
         Variable's short name.
-    project: str
+    project:
         Project of the dataset.
-    dataset: str
+    dataset:
         Name of the dataset.
-    mip: str
+    mip:
         Variable's MIP.
-    frequency: str, optional
+    frequency: optional
         Variable's data frequency, if available.
-    check_level: CheckLevels
-        Level of strictness of the checks. Set to default.
-    session: Session, optional
+    perform_cmor_checks: optional
+        Perform CMOR checks on the fixed cube metadata.
+    check_level: optional
+        Level of strictness of the checks. Only relevant of
+        `perform_cmor_checks` is set to ``True`` (default).
+    session: optional
         Current session which includes configuration and directory information.
-    **extra_facets: dict, optional
+    **extra_facets: optional
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 
     Returns
     -------
-    iris.cube.Cube:
-        Fixed and checked cube.
+    iris.cube.Cube
+        Fixed and (potentially) checked cube.
 
     Raises
     ------
     CMORCheckError
         If the checker detects errors in the data that it can not fix.
+
     """
     # Update extra_facets with variable information given as regular arguments
     # to this function
@@ -267,12 +292,17 @@ def fix_data(cube,
                              extra_facets=extra_facets,
                              session=session):
         cube = fix.fix_data(cube)
-    checker = _get_cmor_checker(frequency=frequency,
-                                table=project,
-                                mip=mip,
-                                short_name=short_name,
-                                fail_on_error=False,
-                                automatic_fixes=True,
-                                check_level=check_level)
-    cube = checker(cube).check_data()
+
+    if perform_cmor_checks:
+        checker = _get_cmor_checker(
+            project,
+            mip,
+            short_name,
+            frequency,
+            fail_on_error=False,
+            check_level=check_level,
+            automatic_fixes=True,
+        )
+        cube = checker(cube).check_data()
+
     return cube
