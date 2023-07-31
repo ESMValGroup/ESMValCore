@@ -1,10 +1,14 @@
 """Functions for loading and saving cubes."""
+from __future__ import annotations
+
 import copy
 import logging
 import os
 import shutil
+from typing import Optional
 import warnings
 from itertools import groupby
+from pathlib import Path
 from warnings import catch_warnings, filterwarnings
 
 import iris
@@ -12,6 +16,7 @@ import iris.aux_factory
 import iris.exceptions
 import yaml
 from cf_units import suppress_errors
+from iris.cube import CubeList
 
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import merge_cube_attributes
@@ -114,19 +119,25 @@ def _delete_attributes(iris_object, atts):
             del iris_object.attributes[att]
 
 
-def load(file, callback=None, ignore_warnings=None):
-    """Load iris cubes from files.
+def load(
+    file: str | Path | CubeList,
+    callback: Optional[callable] = None,
+    ignore_warnings: Optional[list[dict]] = None,
+) -> CubeList:
+    """Load iris cubes.
 
     Parameters
     ----------
-    file: str
-        File to be loaded.
-    callback: callable or None, optional (default: None)
+    file:
+        File to be loaded. Also accepts an already loaded
+        :class:`~iris.cube.CubeList`, in which case the object is simply
+        returned as is.
+    callback: optional
         Callback function passed to :func:`iris.load_raw`.
 
         .. deprecated:: 2.8.0
             This argument will be removed in 2.10.0.
-    ignore_warnings: list of dict or None, optional (default: None)
+    ignore_warnings: optional
         Keyword arguments passed to :func:`warnings.filterwarnings` used to
         ignore warnings issued by :func:`iris.load_raw`. Each list element
         corresponds to one call to :func:`warnings.filterwarnings`.
@@ -138,8 +149,12 @@ def load(file, callback=None, ignore_warnings=None):
 
     Raises
     ------
+    TypeError
+        `file` is not :obj:`str`, :class:`pathlib.Path` or
+        :class:`iris.cube.CubeList`.
     ValueError
         Cubes are empty.
+
     """
     if not (callback is None or callback == 'default'):
         msg = ("The argument `callback` has been deprecated in "
@@ -148,8 +163,19 @@ def load(file, callback=None, ignore_warnings=None):
         warnings.warn(msg, ESMValCoreDeprecationWarning)
     if callback == 'default':
         callback = concatenate_callback
-    file = str(file)
-    logger.debug("Loading:\n%s", file)
+
+    # If file already is a CubeList, simply return it
+    if isinstance(file, CubeList):
+        logger.debug("Returning already loaded CubeList\n%s", file)
+        return file
+
+    # If file is path-like, load it; else, raise TypeError
+    if isinstance(file, (str, Path)):
+        file = Path(file)
+        logger.debug("Loading:\n%s", file)
+    else:
+        raise TypeError(f"Expected str, Path, or CubeList, got {type(file)}")
+
     if ignore_warnings is None:
         ignore_warnings = []
 
@@ -180,10 +206,15 @@ def load(file, callback=None, ignore_warnings=None):
         with suppress_errors():
             raw_cubes = iris.load_raw(file, callback=callback)
     logger.debug("Done with loading %s", file)
+
     if not raw_cubes:
         raise ValueError(f'Can not load cubes from {file}')
+
+
+
     for cube in raw_cubes:
         cube.attributes['source_file'] = file
+
     return raw_cubes
 
 
