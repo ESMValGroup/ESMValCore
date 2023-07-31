@@ -1,16 +1,18 @@
 """Unit tests for :mod:`esmvalcore.cmor.fix`."""
 
 from pathlib import Path
-from unittest import TestCase
 from unittest.mock import Mock, patch, sentinel
+
+import pytest
 
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.cmor.fix import Fix, fix_data, fix_file, fix_metadata
 
 
-class TestFixFile(TestCase):
+class TestFixFile():
     """Fix file tests."""
 
+    @pytest.fixture(autouse=True)
     def setUp(self):
         """Prepare for testing."""
         self.filename = 'filename'
@@ -43,8 +45,8 @@ class TestFixFile(TestCase):
                 output_dir=Path('output_dir'),
                 session=sentinel.session,
             )
-            self.assertNotEqual(file_returned, self.filename)
-            self.assertEqual(file_returned, 'new_filename')
+            assert file_returned != self.filename
+            assert file_returned == 'new_filename'
             mock_get_fixes.assert_called_once_with(
                 **self.expected_get_fixes_call
             )
@@ -62,15 +64,16 @@ class TestFixFile(TestCase):
                 output_dir=Path('output_dir'),
                 session=sentinel.session,
             )
-            self.assertEqual(file_returned, self.filename)
+            assert file_returned == self.filename
             mock_get_fixes.assert_called_once_with(
                 **self.expected_get_fixes_call
             )
 
 
-class TestGetCube(TestCase):
+class TestGetCube():
     """Test get cube by var_name method."""
 
+    @pytest.fixture(autouse=True)
     def setUp(self):
         """Prepare for testing."""
         self.cube_1 = Mock()
@@ -84,28 +87,27 @@ class TestGetCube(TestCase):
 
     def test_get_first_cube(self):
         """Test selecting first cube."""
-        self.assertIs(self.cube_1,
-                      self.fix.get_cube_from_list(self.cubes, "cube1"))
+        assert self.cube_1 is self.fix.get_cube_from_list(self.cubes, "cube1")
 
     def test_get_second_cube(self):
         """Test selecting second cube."""
-        self.assertIs(self.cube_2,
-                      self.fix.get_cube_from_list(self.cubes, "cube2"))
+        assert self.cube_2 is self.fix.get_cube_from_list(self.cubes, "cube2")
 
     def test_get_default_raises(self):
         """Check that the default raises (Fix is not a cube)."""
-        with self.assertRaises(Exception):
+        with pytest.raises(Exception):
             self.fix.get_cube_from_list(self.cubes)
 
     def test_get_default(self):
         """Check that the default return the cube (fix is a cube)."""
         self.cube_1.var_name = 'fix'
-        self.assertIs(self.cube_1, self.fix.get_cube_from_list(self.cubes))
+        assert self.cube_1 is self.fix.get_cube_from_list(self.cubes)
 
 
-class TestFixMetadata(TestCase):
+class TestFixMetadata():
     """Fix metadata tests."""
 
+    @pytest.fixture(autouse=True)
     def setUp(self):
         """Prepare for testing."""
         self.cube = self._create_mock_cube()
@@ -208,7 +210,7 @@ class TestFixMetadata(TestCase):
         """Check that the same cube is returned if no fix is available."""
         with patch('esmvalcore.cmor._fixes.fix.Fix.get_fixes',
                    return_value=[]):
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 fix_metadata(
                     cubes=[
                         self._create_mock_cube('not_me'),
@@ -220,7 +222,8 @@ class TestFixMetadata(TestCase):
                     mip='mip',
                 )
 
-    def test_cmor_checker_called(self):
+    @pytest.mark.parametrize('perform_cmor_checks', [True, False])
+    def test_cmor_checker_called(self, perform_cmor_checks):
         """Check that the cmor check is done."""
         checker = Mock()
         checker.return_value = Mock()
@@ -235,23 +238,34 @@ class TestFixMetadata(TestCase):
                     dataset='dataset',
                     mip='mip',
                     frequency='frequency',
+                    perform_cmor_checks=perform_cmor_checks,
                 )
-                get_mock.assert_called_once_with(
-                    'CMIP6',
-                    'mip',
-                    'short_name',
-                    'frequency',
-                    fail_on_error=False,
-                    check_level=CheckLevels.DEFAULT,
-                    automatic_fixes=True,
-                )
-                checker.assert_called_once_with(self.cube)
-                checker.return_value.check_metadata.assert_called_once_with()
+
+                if perform_cmor_checks:
+                    get_mock.assert_called_once_with(
+                        'CMIP6',
+                        'mip',
+                        'short_name',
+                        'frequency',
+                        fail_on_error=False,
+                        check_level=CheckLevels.DEFAULT,
+                        automatic_fixes=True,
+                    )
+                    checker.assert_called_once_with(self.cube)
+                    (
+                        checker.return_value.check_metadata.
+                        assert_called_once_with()
+                    )
+                else:
+                    get_mock.assert_not_called()
+                    checker.assert_not_called()
+                    checker.return_value.assert_not_called()
 
 
-class TestFixData(TestCase):
+class TestFixData():
     """Fix data tests."""
 
+    @pytest.fixture(autouse=True)
     def setUp(self):
         """Prepare for testing."""
         self.cube = Mock()
@@ -324,7 +338,8 @@ class TestFixData(TestCase):
                     **self.expected_get_fixes_call
                 )
 
-    def test_cmor_checker_called(self):
+    @pytest.mark.parametrize('perform_cmor_checks', [True, False])
+    def test_cmor_checker_called(self, perform_cmor_checks):
         """Check that the cmor check is done."""
         checker = Mock()
         checker.return_value = Mock()
@@ -332,16 +347,29 @@ class TestFixData(TestCase):
                    return_value=[]):
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=checker) as get_mock:
-                fix_data(self.cube, 'short_name', 'CMIP6', 'model', 'mip',
-                         'frequency')
-                get_mock.assert_called_once_with(
-                    'CMIP6',
-                    'mip',
+                fix_data(
+                    self.cube,
                     'short_name',
+                    'CMIP6',
+                    'model',
+                    'mip',
                     'frequency',
-                    fail_on_error=False,
-                    check_level=CheckLevels.DEFAULT,
-                    automatic_fixes=True,
+                    perform_cmor_checks=perform_cmor_checks,
                 )
-                checker.assert_called_once_with(self.cube)
-                checker.return_value.check_data.assert_called_once_with()
+
+                if perform_cmor_checks:
+                    get_mock.assert_called_once_with(
+                        'CMIP6',
+                        'mip',
+                        'short_name',
+                        'frequency',
+                        fail_on_error=False,
+                        check_level=CheckLevels.DEFAULT,
+                        automatic_fixes=True,
+                    )
+                    checker.assert_called_once_with(self.cube)
+                    checker.return_value.check_data.assert_called_once_with()
+                else:
+                    get_mock.assert_not_called()
+                    checker.assert_not_called()
+                    checker.return_value.assert_not_called()
