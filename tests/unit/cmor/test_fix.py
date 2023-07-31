@@ -237,13 +237,14 @@ class TestFixMetadata(TestCase):
                     frequency='frequency',
                 )
                 get_mock.assert_called_once_with(
-                    automatic_fixes=True,
+                    'CMIP6',
+                    'mip',
+                    'short_name',
+                    'frequency',
                     fail_on_error=False,
-                    frequency='frequency',
-                    mip='mip',
-                    short_name='short_name',
-                    table='CMIP6',
-                    check_level=CheckLevels.DEFAULT,)
+                    check_level=CheckLevels.DEFAULT,
+                    automatic_fixes=True,
+                )
                 checker.assert_called_once_with(self.cube)
                 checker.return_value.check_metadata.assert_called_once_with()
 
@@ -334,13 +335,13 @@ class TestFixData(TestCase):
                 fix_data(self.cube, 'short_name', 'CMIP6', 'model', 'mip',
                          'frequency')
                 get_mock.assert_called_once_with(
-                    table='CMIP6',
-                    automatic_fixes=True,
-                    check_level=CheckLevels.DEFAULT,
+                    'CMIP6',
+                    'mip',
+                    'short_name',
+                    'frequency',
                     fail_on_error=False,
-                    frequency='frequency',
-                    mip='mip',
-                    short_name='short_name',
+                    check_level=CheckLevels.DEFAULT,
+                    automatic_fixes=True,
                 )
                 checker.assert_called_once_with(self.cube)
                 checker.return_value.check_data.assert_called_once_with()

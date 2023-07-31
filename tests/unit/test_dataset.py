@@ -1701,6 +1701,7 @@ def test_load(mocker, session):
             'timerange': '2000/2005',
         },
         'fix_metadata': {
+            'perform_cmor_checks': False,
             'check_level': CheckLevels.DEFAULT,
             'session': session,
             'dataset': 'CanESM2',
@@ -1718,11 +1719,14 @@ def test_load(mocker, session):
             'mip': 'Oyr',
             'short_name': 'chl',
             'frequency': 'yr',
+            'fail_on_error': False,
+            'automatic_fixes': True,
         },
         'clip_timerange': {
             'timerange': '2000/2005',
         },
         'fix_data': {
+            'perform_cmor_checks': False,
             'check_level': CheckLevels.DEFAULT,
             'session': session,
             'dataset': 'CanESM2',
@@ -1740,6 +1744,8 @@ def test_load(mocker, session):
             'mip': 'Oyr',
             'short_name': 'chl',
             'frequency': 'yr',
+            'fail_on_error': False,
+            'automatic_fixes': True,
         },
         'concatenate': {},
         'add_supplementary_variables': {
