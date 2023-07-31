@@ -1169,7 +1169,7 @@ def cmor_check_data(
     check_level: CheckLevels = CheckLevels.DEFAULT,
     fail_on_error: bool = False,
     automatic_fixes: bool = False,
-):
+) -> Cube:
     """Check if data conforms to variable's CMOR definition.
 
     Parameters
