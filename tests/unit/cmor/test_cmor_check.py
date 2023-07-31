@@ -10,6 +10,7 @@ import iris.coords
 import iris.cube
 import iris.util
 import numpy as np
+import pytest
 from cf_units import Unit
 
 from esmvalcore.cmor.check import (
@@ -1130,6 +1131,15 @@ class TestCMORCheck(unittest.TestCase):
         self.assertTrue(isinstance(arr_out, da.core.Array))
         np.testing.assert_allclose(arr_out.compute(), arr_exp.compute())
 
+    def test_custom_variable(self):
+        checker = _get_cmor_checker('CMIP5', 'Amon', 'uajet', 'mon')
+        assert checker(self.cube)._cmor_var.short_name == 'uajet'
+        assert checker(self.cube)._cmor_var.long_name == (
+            'Jet position expressed as latitude of maximum meridional wind '
+            'speed'
+        )
+        assert checker(self.cube)._cmor_var.units == 'degrees'
+
     def _check_fails_on_data(self):
         checker = CMORCheck(self.cube, self.var_info)
         checker.check_metadata()
@@ -1448,6 +1458,12 @@ class TestCMORCheck(unittest.TestCase):
         start = 0
         end = start + delta * 20
         return np.arange(start, end, step=delta)
+
+
+def test_get_cmor_checker_invalid_project_fail():
+    """Test ``_get_cmor_checker`` with invalid project."""
+    with pytest.raises(NotImplementedError):
+        _get_cmor_checker('INVALID_PROJECT', 'mip', 'short_name', 'frequency')
 
 
 if __name__ == "__main__":

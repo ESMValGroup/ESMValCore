@@ -1087,8 +1087,8 @@ def _get_cmor_checker(
     """Get a CMOR checker/fixer."""
     if project not in CMOR_TABLES:
         raise NotImplementedError(
-            f"No CMOR checker implemented for project {project}.\nThe "
-            f"following options are available: {', '.join(CMOR_TABLES)}"
+            f"No CMOR checker implemented for project {project}. The "
+            f"following options are available: {', '.join(CMOR_TABLES)}."
         )
 
     cmor_table = CMOR_TABLES[project]
