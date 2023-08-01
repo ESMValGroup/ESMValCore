@@ -5,6 +5,7 @@ import logging
 from collections.abc import Callable
 from datetime import datetime
 from enum import IntEnum
+from typing import Optional
 
 import cf_units
 import iris.coord_categorisation
@@ -157,7 +158,7 @@ class CMORCheck():
                     self._unstructured = True
         return self._unstructured
 
-    def check_metadata(self, logger=None):
+    def check_metadata(self, logger: Optional[logging.Logger] = None) -> Cube:
         """Check the cube metadata.
 
         Perform all the tests that do not require to have the data in memory.
@@ -171,8 +172,13 @@ class CMORCheck():
 
         Parameters
         ----------
-        logger: logging.Logger
+        logger:
             Given logger.
+
+        Returns
+        -------
+        iris.cube.Cube
+            Checked and (potentially) fixed cube.
 
         Raises
         ------
@@ -180,6 +186,7 @@ class CMORCheck():
             If errors are found. If fail_on_error attribute is set to True,
             raises as soon as an error is detected. If set to False, it perform
             all checks and then raises.
+
         """
         if logger is not None:
             self._logger = logger
@@ -200,7 +207,7 @@ class CMORCheck():
 
         return self._cube
 
-    def check_data(self, logger=None):
+    def check_data(self, logger: Optional[logging.Logger] = None) -> Cube:
         """Check the cube data.
 
         Performs all the tests that require to have the data in memory.
@@ -211,8 +218,13 @@ class CMORCheck():
 
         Parameters
         ----------
-        logger: logging.Logger
+        logger:
             Given logger.
+
+        Returns
+        -------
+        iris.cube.Cube
+            Checked and (potentially) fixed cube.
 
         Raises
         ------
@@ -220,6 +232,7 @@ class CMORCheck():
             If errors are found. If fail_on_error attribute is set to True,
             raises as soon as an error is detected. If set to False, it perform
             all checks and then raises.
+
         """
         if logger is not None:
             self._logger = logger
@@ -1146,6 +1159,11 @@ def cmor_check_metadata(
         If ``True``, CMOR check will try to apply automatic fixes for any
         detected error, if possible.
 
+    Returns
+    -------
+    iris.cube.Cube
+        Checked and (potentially) fixed cube.
+
     """
     checker = _get_cmor_checker(
         cmor_table,
@@ -1192,6 +1210,11 @@ def cmor_check_data(
     automatic_fixes: optional
         If ``True``, CMOR check will try to apply automatic fixes for any
         detected error, if possible.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Checked and (potentially) fixed cube.
 
     """
     checker = _get_cmor_checker(
@@ -1242,6 +1265,11 @@ def cmor_check(
     automatic_fixes: optional
         If ``True``, CMOR check will try to apply automatic fixes for any
         detected error, if possible.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Checked and (potentially) fixed cube.
 
     """
     cube = cmor_check_metadata(
