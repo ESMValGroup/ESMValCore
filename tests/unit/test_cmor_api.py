@@ -20,6 +20,10 @@ def test_cmor_check_metadata(mocker):
     mock_get_cmor_checker = mocker.patch.object(
         esmvalcore.cmor.check, '_get_cmor_checker', autospec=True
     )
+    (
+        mock_get_cmor_checker.return_value.return_value.check_metadata.
+        return_value
+    ) = sentinel.checked_cube
 
     cube = cmor_check_metadata(
         sentinel.cube,
@@ -46,7 +50,7 @@ def test_cmor_check_metadata(mocker):
         mock_get_cmor_checker.return_value.return_value.check_metadata.
         assert_called_once_with()
     )
-    assert cube == sentinel.cube
+    assert cube == sentinel.checked_cube
 
 
 def test_cmor_check_data(mocker):
@@ -54,6 +58,10 @@ def test_cmor_check_data(mocker):
     mock_get_cmor_checker = mocker.patch.object(
         esmvalcore.cmor.check, '_get_cmor_checker', autospec=True
     )
+    (
+        mock_get_cmor_checker.return_value.return_value.check_data.
+        return_value
+    ) = sentinel.checked_cube
 
     cube = cmor_check_data(
         sentinel.cube,
@@ -80,7 +88,7 @@ def test_cmor_check_data(mocker):
         mock_get_cmor_checker.return_value.return_value.check_data.
         assert_called_once_with()
     )
-    assert cube == sentinel.cube
+    assert cube == sentinel.checked_cube
 
 
 def test_cmor_check(mocker):

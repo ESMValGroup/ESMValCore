@@ -1156,7 +1156,7 @@ def cmor_check_metadata(
         check_level=check_level,
         automatic_fixes=automatic_fixes,
     )
-    checker(cube).check_metadata()
+    cube = checker(cube).check_metadata()
     return cube
 
 
@@ -1203,7 +1203,7 @@ def cmor_check_data(
         check_level=check_level,
         automatic_fixes=automatic_fixes,
     )
-    checker(cube).check_data()
+    cube = checker(cube).check_data()
     return cube
 
 
