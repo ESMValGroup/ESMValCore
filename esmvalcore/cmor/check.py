@@ -244,8 +244,10 @@ class CMORCheck():
 
         self._check_coords_data()
 
+        self.report_debug_messages()
         self.report_warnings()
         self.report_errors()
+
         return self._cube
 
     def report_errors(self):
@@ -345,6 +347,9 @@ class CMORCheck():
                 'invalid_units', '').lower() == 'psu'):
             self._cube.units = '1.0'
             del self._cube.attributes['invalid_units']
+            self.report_debug_message(
+                f"Units for {self._cube.var_name} converted from 'psu' to '1'"
+            )
 
         if self._cmor_var.units:
             units = self._get_effective_units()
@@ -742,8 +747,9 @@ class CMORCheck():
                 if np.all(right_bounds != left_bounds):
                     reversed_coord.bounds = np.fliplr(bounds)
                     coord = reversed_coord
-            self.report_debug_message(f'Coordinate {coord.var_name} values'
-                                      'have been reversed.')
+            self.report_debug_message(
+                f'Coordinate {coord.var_name} values have been reversed.'
+            )
 
     def _check_coord_points(self, coord_info, coord, var_name):
         """Check coordinate points: values, bounds and monotonicity."""
@@ -800,6 +806,9 @@ class CMORCheck():
                 self._cube.remove_coord(coord)
                 self._cube.add_aux_coord(new_coord, dims)
             coord = self._cube.coord(var_name=var_name)
+            self.report_debug_message(
+                f"Shifted longitude of {self._cube.var_name} to [0, 360]"
+            )
         self._check_coord_bounds(coord_info, coord, var_name)
         self._check_coord_monotonicity_and_direction(coord_info, coord,
                                                      var_name)
@@ -846,6 +855,9 @@ class CMORCheck():
                             atol=atol,
                         )):
                     coord.points = cmor_points
+                    self.report_debug_message(
+                        f"Aligned {var_name} points with CMOR points"
+                    )
             for point in cmor_points:
                 if point not in coord.core_points():
                     self.report_warning(self._contain_msg, var_name,
