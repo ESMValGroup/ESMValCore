@@ -429,7 +429,6 @@ intersphinx_mapping = {
     'iris-esmf-regrid': ('https://iris-esmf-regrid.readthedocs.io/en/latest',
                          None),
     'matplotlib': ('https://matplotlib.org/stable/', None),
-    'netCDF4': ('https://unidata.github.io/netcdf4-python/', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
     'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/latest/', None),
     'python': ('https://docs.python.org/3/', None),

@@ -144,7 +144,8 @@ steps:
       needs to be created (under no circumstances we want to modify input
       files), which is usually costly and should be avoided.
       Packages that can be used to fix files that cannot be loaded properly by
-      Iris are :mod:`netCDF4` or :mod:`xarray`.
+      Iris are `netCDF4 <https://unidata.github.io/netcdf4-python/>`__ or
+      :mod:`xarray`.
       Note that xarray provides the convenient function
       :meth:`xarray.DataArray.to_iris` to convert a :class:`~xarray.DataArray`
       to a :class:`~iris.cube.Cube`.
