@@ -52,7 +52,7 @@ def fix_file(
         Name of the dataset.
     mip:
         Variable's MIP.
-    output_dir: P
+    output_dir:
         Output directory for fixed files.
     add_unique_suffix: optional
         Adds a unique suffix to `output_dir` for thread safety.

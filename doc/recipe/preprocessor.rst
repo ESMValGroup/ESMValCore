@@ -145,6 +145,9 @@ steps:
       files), which is usually costly and should be avoided.
       Packages that can be used to fix files that cannot be loaded properly by
       Iris are :mod:`netCDF4` or :mod:`xarray`.
+      Note that xarray provides the convenient function
+      :meth:`xarray.DataArray.to_iris` to convert a :class:`~xarray.DataArray`
+      to a :class:`~iris.cube.Cube`.
       See :func:`esmvalcore.preprocessor.fix_file`.
 
     - ``fix_metadata``: metadata fixes are done just before concatenating the
