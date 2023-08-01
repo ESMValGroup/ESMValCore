@@ -142,11 +142,11 @@ steps:
 
     - fix_metadata: metadata fixes are done just before concatenating the cubes
       loaded from different files in the final one. Automatic metadata fixes
-      are also applied at this step. See
+      can also applied at this step. See
       :func:`esmvalcore.preprocessor.fix_metadata`
 
     - fix_data: data fixes are applied before starting any operation that will
-      alter the data itself. Automatic data fixes are also applied at this step.
+      alter the data itself. Automatic data fixes can also applied at this step.
       See :func:`esmvalcore.preprocessor.fix_data`
 
 To get an overview on data fixes and how to implement new ones, please go to
