@@ -5,10 +5,11 @@ import copy
 import logging
 import os
 import shutil
-from typing import Optional
 import warnings
+from collections.abc import Callable
 from itertools import groupby
 from pathlib import Path
+from typing import Optional
 from warnings import catch_warnings, filterwarnings
 
 import iris
@@ -121,7 +122,7 @@ def _delete_attributes(iris_object, atts):
 
 def load(
     file: str | Path | CubeList,
-    callback: Optional[callable] = None,
+    callback: Optional[Callable] = None,
     ignore_warnings: Optional[list[dict]] = None,
 ) -> CubeList:
     """Load iris cubes.
@@ -210,10 +211,8 @@ def load(
     if not raw_cubes:
         raise ValueError(f'Can not load cubes from {file}')
 
-
-
     for cube in raw_cubes:
-        cube.attributes['source_file'] = file
+        cube.attributes['source_file'] = str(file)
 
     return raw_cubes
 

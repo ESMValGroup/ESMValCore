@@ -145,3 +145,14 @@ class TestLoad(unittest.TestCase):
         # Check output
         self.assertEqual(len(cubes), 1)
         self.assertEqual(cubes[0].attributes, {'source_file': 'myfilename'})
+
+    def test_load_cube_list(self):
+        """Test loading :class:`iris.cube.CubeList`."""
+        cubes = CubeList()
+        loaded_cubes = load(cubes)
+        self.assertIs(cubes, loaded_cubes)
+
+    def test_load_invalid_type_fail(self):
+        """Test loading an invalid type."""
+        with self.assertRaises(TypeError):
+            load(0)
