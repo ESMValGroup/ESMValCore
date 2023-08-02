@@ -8,7 +8,7 @@ import numpy as np
 from esmvalcore.iris_helpers import date2num
 
 from ..fix import Fix
-from ..shared import add_scalar_height_coord
+from ..shared import add_scalar_height_coord, add_scalar_pressure_coord
 from ...table import CMOR_TABLES
 
 logger = logging.getLogger(__name__)
@@ -358,6 +358,8 @@ class AllVars(Fix):
             add_scalar_height_coord(cube, 2.)
         if 'height10m' in self.vardef.dimensions:
             add_scalar_height_coord(cube, 10.)
+        if 'p500'in self.vardef.dimensions:
+            add_scalar_pressure_coord(cube, 500.)
 
         for coord_def in self.vardef.coordinates.values():
             axis = coord_def.axis
