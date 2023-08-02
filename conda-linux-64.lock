@@ -345,7 +345,7 @@ https://conda.anaconda.org/conda-forge/linux-64/kealib-1.5.1-h3e6883b_4.conda#ef
 https://conda.anaconda.org/conda-forge/linux-64/libspatialite-5.0.1-hca56755_27.conda#918a735059cab21b96fc13a8d04fbcd8
 https://conda.anaconda.org/conda-forge/linux-64/matplotlib-base-3.7.2-py311h54ef318_0.conda#2631a9e423855fb586c05f8a5ee8b177
 https://conda.anaconda.org/conda-forge/linux-64/pandas-2.0.3-py311h320fe9a_1.conda#5f92f46bd33917832a99d1660b4075ac
-https://conda.anaconda.org/conda-forge/noarch/platformdirs-3.9.1-pyhd8ed1ab_0.conda#044e7a1e0ad42c4e67110bd078150a63
+https://conda.anaconda.org/conda-forge/noarch/platformdirs-3.10.0-pyhd8ed1ab_0.conda#0809187ef9b89a3d94a5c24d13936236
 https://conda.anaconda.org/conda-forge/linux-64/poppler-23.05.0-hd18248d_1.conda#09e0de1aa7330fe697eed76eaeef666d
 https://conda.anaconda.org/conda-forge/noarch/pybtex-0.24.0-pyhd8ed1ab_2.tar.bz2#2099b86a7399c44c0c61cdb6de6915ba
 https://conda.anaconda.org/conda-forge/linux-64/pyproj-3.6.0-py311ha169711_1.conda#92633556d37e88ce45193374d408072c
@@ -389,7 +389,7 @@ https://conda.anaconda.org/conda-forge/linux-64/gtk2-2.24.33-h90689f9_2.tar.bz2#
 https://conda.anaconda.org/conda-forge/noarch/jupyter_client-8.3.0-pyhd8ed1ab_0.conda#1d018ee4ab13217e2544f795eb0a6798
 https://conda.anaconda.org/conda-forge/linux-64/librsvg-2.56.3-h98fae49_0.conda#620e754f4344f4c27259ff460a2b9c50
 https://conda.anaconda.org/conda-forge/noarch/myproxyclient-2.1.0-pyhd8ed1ab_2.tar.bz2#363b0816e411feb0df925d4f224f026a
-https://conda.anaconda.org/conda-forge/noarch/nbformat-5.9.1-pyhd8ed1ab_0.conda#3ec35d84fc1775215061517eb4660693
+https://conda.anaconda.org/conda-forge/noarch/nbformat-5.9.2-pyhd8ed1ab_0.conda#61ba076de6530d9301a0053b02f093d2
 https://conda.anaconda.org/conda-forge/noarch/pep8-naming-0.10.0-pyh9f0ad1d_0.tar.bz2#b3c5536e4f9f58a4b16adb6f1e11732d
 https://conda.anaconda.org/conda-forge/noarch/pre-commit-3.3.3-pyha770c72_0.conda#dd64a0e440754ed97610b3e6b502b6b1
 https://conda.anaconda.org/conda-forge/noarch/prompt_toolkit-3.0.39-hd8ed1ab_0.conda#4bbbe67d5df19db30f04b8e344dc9976
