@@ -32,7 +32,7 @@ def fix_file(
     add_unique_suffix: bool = False,
     session: Optional[Session] = None,
     **extra_facets,
-) -> str | Path | CubeList:
+) -> str | Path:
     """Fix files before ESMValTool can load them.
 
     This fixes are only for issues that prevent iris from loading the cube or
@@ -64,9 +64,8 @@ def fix_file(
 
     Returns
     -------
-    str or pathlib.Path or iris.cube.CubeList
-        Path to the fixed file or the fixed file itself as
-        :class:`~iris.cube.CubeList`.
+    str or pathlib.Path
+        Path to the fixed file.
 
     """
     # Update extra_facets with variable information given as regular arguments

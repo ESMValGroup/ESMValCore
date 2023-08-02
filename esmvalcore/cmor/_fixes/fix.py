@@ -50,7 +50,7 @@ class Fix:
         filepath: Path,
         output_dir: Path,
         add_unique_suffix: bool = False,
-    ) -> str | Path | CubeList:
+    ) -> str | Path:
         """Apply fixes to the files prior to creating the cube.
 
         Should be used only to fix errors that prevent loading or cannot be
@@ -68,11 +68,10 @@ class Fix:
 
         Returns
         -------
-        str or pathlib.Path or iris.cube.CubeList
-            Path to the corrected file or the corrected file itself as
-            :class:`~iris.cube.CubeList`. If a path is given, this can be
-            different from the original filepath if a fix has been applied, but
-            if not it should be the original filepath.
+        str or pathlib.Path
+            Path to the corrected file. It can be different from the original
+            filepath if a fix has been applied, but if not it should be the
+            original filepath.
 
         """
         return filepath

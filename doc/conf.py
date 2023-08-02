@@ -433,7 +433,6 @@ intersphinx_mapping = {
     'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/latest/', None),
     'python': ('https://docs.python.org/3/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/', None),
-    'xarray': ('https://docs.xarray.dev/en/stable/', None),
 }
 
 # -- Custom Document processing ----------------------------------------------

@@ -136,19 +136,9 @@ ESMValCore deals with those issues by applying specific fixes for those
 datasets that require them. Fixes are applied at three different preprocessor
 steps:
 
-    - ``fix_file``: file fixes are intended for files with errors that prevent
-      Iris from loading the files properly.
-      The function takes the file path as input and must return a path
-      (:class:`pathlib.Path` or :obj:`str`) or a :class:`iris.cube.CubeList`.
-      If a path is returned and fixes are necessary, a copy of the input file
-      needs to be created (under no circumstances we want to modify input
-      files), which is usually costly and should be avoided.
-      Packages that can be used to fix files that cannot be loaded properly by
-      Iris are `netCDF4 <https://unidata.github.io/netcdf4-python/>`__ or
-      :mod:`xarray`.
-      Note that xarray provides the convenient function
-      :meth:`xarray.DataArray.to_iris` to convert a :class:`~xarray.DataArray`
-      to a :class:`~iris.cube.Cube`.
+    - ``fix_file``: apply fixes directly to a copy of the file.
+      Copying the files is costly, so only errors that prevent Iris to load the
+      file are fixed here.
       See :func:`esmvalcore.preprocessor.fix_file`.
 
     - ``fix_metadata``: metadata fixes are done just before concatenating the

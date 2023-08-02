@@ -121,7 +121,7 @@ def _delete_attributes(iris_object, atts):
 
 
 def load(
-    file: str | Path | CubeList,
+    file: str | Path,
     callback: Optional[Callable] = None,
     ignore_warnings: Optional[list[dict]] = None,
 ) -> CubeList:
@@ -130,9 +130,7 @@ def load(
     Parameters
     ----------
     file:
-        File to be loaded. Also accepts an already loaded
-        :class:`~iris.cube.CubeList`, in which case the object is simply
-        returned as is.
+        File to be loaded.
     callback: optional
         Callback function passed to :func:`iris.load_raw`.
 
@@ -150,9 +148,6 @@ def load(
 
     Raises
     ------
-    TypeError
-        `file` is not :obj:`str`, :class:`pathlib.Path` or
-        :class:`iris.cube.CubeList`.
     ValueError
         Cubes are empty.
 
@@ -165,17 +160,8 @@ def load(
     if callback == 'default':
         callback = concatenate_callback
 
-    # If file already is a CubeList, simply return it
-    if isinstance(file, CubeList):
-        logger.debug("Returning already loaded CubeList\n%s", file)
-        return file
-
-    # If file is path-like, load it; else, raise TypeError
-    if isinstance(file, (str, Path)):
-        file = Path(file)
-        logger.debug("Loading:\n%s", file)
-    else:
-        raise TypeError(f"Expected str, Path, or CubeList, got {type(file)}")
+    file = Path(file)
+    logger.debug("Loading:\n%s", file)
 
     if ignore_warnings is None:
         ignore_warnings = []
