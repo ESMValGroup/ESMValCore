@@ -222,8 +222,7 @@ class TestFixMetadata():
                     mip='mip',
                 )
 
-    @pytest.mark.parametrize('perform_cmor_checks', [True, False])
-    def test_cmor_checker_called(self, perform_cmor_checks):
+    def test_cmor_checker_called(self):
         """Check that the cmor check is done."""
         checker = Mock()
         checker.return_value = Mock()
@@ -238,28 +237,22 @@ class TestFixMetadata():
                     dataset='dataset',
                     mip='mip',
                     frequency='frequency',
-                    perform_cmor_checks=perform_cmor_checks,
                 )
 
-                if perform_cmor_checks:
-                    get_mock.assert_called_once_with(
-                        'CMIP6',
-                        'mip',
-                        'short_name',
-                        'frequency',
-                        fail_on_error=False,
-                        check_level=CheckLevels.DEFAULT,
-                        automatic_fixes=True,
-                    )
-                    checker.assert_called_once_with(self.cube)
-                    (
-                        checker.return_value.check_metadata.
-                        assert_called_once_with()
-                    )
-                else:
-                    get_mock.assert_not_called()
-                    checker.assert_not_called()
-                    checker.return_value.assert_not_called()
+                get_mock.assert_called_once_with(
+                    'CMIP6',
+                    'mip',
+                    'short_name',
+                    'frequency',
+                    fail_on_error=False,
+                    check_level=CheckLevels.DEFAULT,
+                    automatic_fixes=True,
+                )
+                checker.assert_called_once_with(self.cube)
+                (
+                    checker.return_value.check_metadata.
+                    assert_called_once_with()
+                )
 
 
 class TestFixData():
@@ -338,8 +331,7 @@ class TestFixData():
                     **self.expected_get_fixes_call
                 )
 
-    @pytest.mark.parametrize('perform_cmor_checks', [True, False])
-    def test_cmor_checker_called(self, perform_cmor_checks):
+    def test_cmor_checker_called(self):
         """Check that the cmor check is done."""
         checker = Mock()
         checker.return_value = Mock()
@@ -354,22 +346,16 @@ class TestFixData():
                     'model',
                     'mip',
                     'frequency',
-                    perform_cmor_checks=perform_cmor_checks,
                 )
 
-                if perform_cmor_checks:
-                    get_mock.assert_called_once_with(
-                        'CMIP6',
-                        'mip',
-                        'short_name',
-                        'frequency',
-                        fail_on_error=False,
-                        check_level=CheckLevels.DEFAULT,
-                        automatic_fixes=True,
-                    )
-                    checker.assert_called_once_with(self.cube)
-                    checker.return_value.check_data.assert_called_once_with()
-                else:
-                    get_mock.assert_not_called()
-                    checker.assert_not_called()
-                    checker.return_value.assert_not_called()
+                get_mock.assert_called_once_with(
+                    'CMIP6',
+                    'mip',
+                    'short_name',
+                    'frequency',
+                    fail_on_error=False,
+                    check_level=CheckLevels.DEFAULT,
+                    automatic_fixes=True,
+                )
+                checker.assert_called_once_with(self.cube)
+                checker.return_value.check_data.assert_called_once_with()

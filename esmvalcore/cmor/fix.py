@@ -96,7 +96,6 @@ def fix_metadata(
     dataset: str,
     mip: str,
     frequency: Optional[str] = None,
-    perform_cmor_checks: bool = True,
     check_level: CheckLevels = CheckLevels.DEFAULT,
     session: Optional[Session] = None,
     **extra_facets,
@@ -122,11 +121,8 @@ def fix_metadata(
         Variable's MIP.
     frequency: optional
         Variable's data frequency, if available.
-    perform_cmor_checks: optional
-        Perform CMOR checks on the fixed cube metadata.
     check_level: optional
-        Level of strictness of the checks. Only relevant of
-        `perform_cmor_checks` is set to ``True`` (default).
+        Level of strictness of the checks.
     session: optional
         Current session which includes configuration and directory information.
     **extra_facets: optional
@@ -175,18 +171,19 @@ def fix_metadata(
 
         cube = _get_single_cube(cube_list, short_name, project, dataset)
 
-        # Perform CMOR checks if desired
-        if perform_cmor_checks:
-            checker = _get_cmor_checker(
-                project,
-                mip,
-                short_name,
-                frequency,
-                fail_on_error=False,
-                check_level=check_level,
-                automatic_fixes=True,
-            )
-            cube = checker(cube).check_metadata()
+        # Perform CMOR checks
+        # TODO: remove in v2.12 and replace automatic fixes by AutomaticFix
+        # class
+        checker = _get_cmor_checker(
+            project,
+            mip,
+            short_name,
+            frequency,
+            fail_on_error=False,
+            check_level=check_level,
+            automatic_fixes=True,
+        )
+        cube = checker(cube).check_metadata()
 
         cube.attributes.pop('source_file', None)
         fixed_cubes.append(cube)
@@ -225,7 +222,6 @@ def fix_data(
     dataset: str,
     mip: str,
     frequency: Optional[str] = None,
-    perform_cmor_checks: bool = True,
     check_level: CheckLevels = CheckLevels.DEFAULT,
     session: Optional[Session] = None,
     **extra_facets,
@@ -253,11 +249,8 @@ def fix_data(
         Variable's MIP.
     frequency: optional
         Variable's data frequency, if available.
-    perform_cmor_checks: optional
-        Perform CMOR checks on the fixed cube metadata.
     check_level: optional
-        Level of strictness of the checks. Only relevant of
-        `perform_cmor_checks` is set to ``True`` (default).
+        Level of strictness of the checks.
     session: optional
         Current session which includes configuration and directory information.
     **extra_facets: optional
@@ -293,16 +286,18 @@ def fix_data(
                              session=session):
         cube = fix.fix_data(cube)
 
-    if perform_cmor_checks:
-        checker = _get_cmor_checker(
-            project,
-            mip,
-            short_name,
-            frequency,
-            fail_on_error=False,
-            check_level=check_level,
-            automatic_fixes=True,
-        )
-        cube = checker(cube).check_data()
+    # Perform CMOR checks
+    # TODO: remove in v2.12 and replace automatic fixes by AutomaticFix
+    # class, e.g.,
+    checker = _get_cmor_checker(
+        project,
+        mip,
+        short_name,
+        frequency,
+        fail_on_error=False,
+        check_level=check_level,
+        automatic_fixes=True,
+    )
+    cube = checker(cube).check_data()
 
     return cube

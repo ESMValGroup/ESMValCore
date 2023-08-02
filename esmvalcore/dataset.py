@@ -737,7 +737,6 @@ class Dataset:
             ),
         }
         settings['fix_metadata'] = {
-            'perform_cmor_checks': False,  # done in cmor_check_metadata
             'check_level': self.session['check_level'],
             'session': self.session,
             **self.facets,
@@ -749,15 +748,12 @@ class Dataset:
             'mip': self.facets['mip'],
             'frequency': self.facets['frequency'],
             'short_name': self.facets['short_name'],
-            'fail_on_error': False,
-            'automatic_fixes': True,
         }
         if 'timerange' in self.facets:
             settings['clip_timerange'] = {
                 'timerange': self.facets['timerange'],
             }
         settings['fix_data'] = {
-            'perform_cmor_checks': False,  # done in cmor_check_data
             'check_level': self.session['check_level'],
             'session': self.session,
             **self.facets,
@@ -768,8 +764,6 @@ class Dataset:
             'mip': self.facets['mip'],
             'frequency': self.facets['frequency'],
             'short_name': self.facets['short_name'],
-            'fail_on_error': False,
-            'automatic_fixes': True,
         }
 
         result = [

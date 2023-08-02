@@ -32,8 +32,6 @@ def test_cmor_check_metadata(mocker):
         sentinel.short_name,
         sentinel.frequency,
         check_level=sentinel.check_level,
-        fail_on_error=sentinel.fail_on_error,
-        automatic_fixes=sentinel.automatic_fixes,
     )
 
     mock_get_cmor_checker.assert_called_once_with(
@@ -42,8 +40,6 @@ def test_cmor_check_metadata(mocker):
         sentinel.short_name,
         sentinel.frequency,
         check_level=sentinel.check_level,
-        fail_on_error=sentinel.fail_on_error,
-        automatic_fixes=sentinel.automatic_fixes,
     )
     mock_get_cmor_checker.return_value.assert_called_once_with(sentinel.cube)
     (
@@ -70,8 +66,6 @@ def test_cmor_check_data(mocker):
         sentinel.short_name,
         sentinel.frequency,
         check_level=sentinel.check_level,
-        fail_on_error=sentinel.fail_on_error,
-        automatic_fixes=sentinel.automatic_fixes,
     )
 
     mock_get_cmor_checker.assert_called_once_with(
@@ -80,8 +74,6 @@ def test_cmor_check_data(mocker):
         sentinel.short_name,
         sentinel.frequency,
         check_level=sentinel.check_level,
-        fail_on_error=sentinel.fail_on_error,
-        automatic_fixes=sentinel.automatic_fixes,
     )
     mock_get_cmor_checker.return_value.assert_called_once_with(sentinel.cube)
     (
@@ -97,13 +89,13 @@ def test_cmor_check(mocker):
         esmvalcore.cmor.check,
         'cmor_check_metadata',
         autospec=True,
-        return_value=sentinel.cube,
+        return_value=sentinel.cube_after_check_metadata,
     )
     mock_cmor_check_data = mocker.patch.object(
         esmvalcore.cmor.check,
         'cmor_check_data',
         autospec=True,
-        return_value=sentinel.cube,
+        return_value=sentinel.cube_after_check_data,
     )
 
     cube = cmor_check(
@@ -113,8 +105,6 @@ def test_cmor_check(mocker):
         sentinel.short_name,
         sentinel.frequency,
         sentinel.check_level,
-        fail_on_error=sentinel.fail_on_error,
-        automatic_fixes=sentinel.automatic_fixes,
     )
 
     mock_cmor_check_metadata.assert_called_once_with(
@@ -124,17 +114,13 @@ def test_cmor_check(mocker):
         sentinel.short_name,
         sentinel.frequency,
         check_level=sentinel.check_level,
-        fail_on_error=sentinel.fail_on_error,
-        automatic_fixes=sentinel.automatic_fixes,
     )
     mock_cmor_check_data.assert_called_once_with(
-        sentinel.cube,
+        sentinel.cube_after_check_metadata,
         sentinel.cmor_table,
         sentinel.mip,
         sentinel.short_name,
         sentinel.frequency,
         check_level=sentinel.check_level,
-        fail_on_error=sentinel.fail_on_error,
-        automatic_fixes=sentinel.automatic_fixes,
     )
-    assert cube == sentinel.cube
+    assert cube == sentinel.cube_after_check_data
