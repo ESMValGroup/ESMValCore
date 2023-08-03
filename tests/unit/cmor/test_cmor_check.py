@@ -19,6 +19,7 @@ from esmvalcore.cmor.check import (
     CMORCheckError,
     _get_cmor_checker,
 )
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 
 class VariableInfoMock:
@@ -211,10 +212,10 @@ class TestCMORCheck(unittest.TestCase):
         self.cube.long_name = 'bad_name'
         self._check_fails_in_metadata()
 
-    def test_check_with_unit_conversion(self):
-        """Test check succeeds for a good cube requiring unit conversion."""
+    def test_check_bad_units(self):
+        """Test check fails for bad units."""
         self.cube.units = 'days'
-        self._check_cube()
+        self._check_fails_in_metadata()
 
     def test_check_with_positive(self):
         """Check variable with positive attribute."""
@@ -1190,6 +1191,12 @@ def test_get_cmor_checker_invalid_project_fail():
     """Test ``_get_cmor_checker`` with invalid project."""
     with pytest.raises(KeyError):
         _get_cmor_checker('INVALID_PROJECT', 'mip', 'short_name', 'frequency')
+
+
+def test_deprecate_automatic_fixes():
+    """Test deprecation of automatic_fixes."""
+    with pytest.warns(ESMValCoreDeprecationWarning):
+        CMORCheck('cube', 'var_info', 'frequency', automatic_fixes=True)
 
 
 if __name__ == "__main__":

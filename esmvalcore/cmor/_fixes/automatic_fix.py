@@ -343,14 +343,13 @@ class AutomaticFix:
         """Reverse cube along a given coordinate."""
         if coord.ndim == 1:
             cube = reverse(cube, cube.coord_dims(coord))
-            reversed_coord = cube.coord(var_name=coord.var_name)
-            if reversed_coord.has_bounds():
-                bounds = reversed_coord.bounds
+            coord = cube.coord(var_name=coord.var_name)
+            if coord.has_bounds():
+                bounds = coord.bounds
                 right_bounds = bounds[:-2, 1]
                 left_bounds = bounds[1:-1, 0]
                 if np.all(right_bounds != left_bounds):
-                    reversed_coord.bounds = np.fliplr(bounds)
-                    coord = reversed_coord
+                    coord.bounds = np.fliplr(bounds)
             self._debug_msg(
                 cube,
                 "Coordinate %s values have been reversed",
@@ -381,6 +380,7 @@ class AutomaticFix:
         cube = self.fix_standard_name(cube)
         cube = self.fix_long_name(cube)
         cube = self.fix_psu_units(cube)
+        cube = self.fix_units(cube)
 
         cube = self.fix_regular_coord_names(cube)
         cube = self.fix_alternative_generic_level_coords(cube)
@@ -403,8 +403,6 @@ class AutomaticFix:
             Fixed cube.
 
         """
-        cube = self.fix_units(cube)
-
         return cube
 
     def fix_units(self, cube: Cube) -> Cube:
@@ -759,11 +757,8 @@ class AutomaticFix:
         else:
             new_lons = cube_coord.core_points().copy()
             new_lons = self._set_range_in_0_360(new_lons)
-            if cube_coord.bounds is not None:
-                new_bounds = cube_coord.bounds.copy()
-                new_bounds = self._set_range_in_0_360(new_bounds)
-            else:
-                new_bounds = None
+            new_bounds = cube_coord.core_bounds().copy()
+            new_bounds = self._set_range_in_0_360(new_bounds)
             new_coord = cube_coord.copy(new_lons, new_bounds)
             dims = cube.coord_dims(cube_coord)
             cube.remove_coord(cube_coord)
@@ -793,8 +788,24 @@ class AutomaticFix:
         """
         if cmor_coord.must_have_bounds != 'yes' or cube_coord.has_bounds():
             return
+
+        # Skip guessing bounds for unstructured grids
+        if is_unstructured_grid(cube) and cube_coord.standard_name in (
+                'latitude', 'longitude'):
+            self._debug_msg(
+                cube,
+                "Will not guess bounds for coordinate %s of unstructured grid",
+                cube_coord.var_name,
+            )
+            return
+
         try:
             cube_coord.guess_bounds()
+            self._warning_msg(
+                cube,
+                "Added guessed bounds to coordinate %s",
+                cube_coord.var_name,
+            )
         except ValueError as exc:
             self._warning_msg(
                 cube,
@@ -917,9 +928,8 @@ class AutomaticFix:
             cube_coord.bounds = get_time_bounds(cube_coord, self.frequency)
             self._warning_msg(
                 cube,
-                "Added guessed bounds to coordinate %s from var %s",
+                "Added guessed bounds to coordinate %s",
                 cube_coord.var_name,
-                self.var_info.short_name,
             )
 
     def fix_time_coord(self, cube: Cube) -> Cube:
@@ -983,7 +993,6 @@ class AutomaticFix:
 
         """
         self.fix_coord_units(cube, cmor_coord, cube_coord)
-        self.fix_requested_coord_values(cube, cmor_coord, cube_coord)
         (cube, cube_coord) = self.fix_longitude_0_360(
             cube, cmor_coord, cube_coord
         )
@@ -991,6 +1000,7 @@ class AutomaticFix:
         (cube, cube_coord) = self.fix_coord_direction(
             cube, cmor_coord, cube_coord
         )
+        self.fix_requested_coord_values(cube, cmor_coord, cube_coord)
         return (cube, cube_coord)
 
     def fix_coords(self, cube: Cube) -> Cube:

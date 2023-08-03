@@ -12,9 +12,9 @@ from esmvalcore.cmor._fixes.native6.era5 import (
     Zg,
     get_frequency,
 )
-from esmvalcore.cmor.check import cmor_check_metadata
 from esmvalcore.cmor.fix import Fix, fix_metadata
 from esmvalcore.cmor.table import CMOR_TABLES
+from esmvalcore.preprocessor import cmor_check_metadata
 
 COMMENT = ('Contains modified Copernicus Climate Change Service Information '
            f'{datetime.datetime.now().year}')

@@ -306,17 +306,9 @@ class CMORCheck():
         if self._cmor_var.units:
             units = self._get_effective_units()
             if self._cube.units != units:
-                if not self._cube.units.is_convertible(units):
-                    self.report_error(f'Variable {self._cube.var_name} units '
-                                      f'{self._cube.units} can not be '
-                                      f'converted to {self._cmor_var.units}')
-                else:
-                    # TODO: remove in v2.12
-                    # wrong units should be fixed in AutomaticFix, not here!
-                    self.report_warning(
-                        f'Variable {self._cube.var_name} units '
-                        f'{self._cube.units} will be '
-                        f'converted to {self._cmor_var.units}')
+                self.report_error(self._attr_msg, self._cube.var_name,
+                                  'units', self._cmor_var.units,
+                                  self._cube.units)
 
         # Check other variable attributes that match entries in cube.attributes
         attrs = ('positive', )
