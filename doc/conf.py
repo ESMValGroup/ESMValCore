@@ -77,6 +77,9 @@ autodoc_default_options = {
     'autosummary': True,
 }
 
+# Show type hints in function signature AND docstring
+autodoc_typehints = 'both'
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

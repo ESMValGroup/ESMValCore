@@ -54,11 +54,11 @@ def fix_file(
         Variable's MIP.
     output_dir:
         Output directory for fixed files.
-    add_unique_suffix: optional
+    add_unique_suffix:
         Adds a unique suffix to `output_dir` for thread safety.
-    session: optional
+    session:
         Current session which includes configuration and directory information.
-    **extra_facets: optional
+    **extra_facets:
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 

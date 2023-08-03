@@ -31,10 +31,10 @@ class Fix:
         ----------
         vardef:
             CMOR table entry.
-        extra_facets: optional
+        extra_facets:
             Extra facets are mainly used for data outside of the big projects
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
-        session: optional
+        session:
             Current session which includes configuration and directory
             information.
 
@@ -63,7 +63,7 @@ class Fix:
             File to fix.
         output_dir:
             Output directory for fixed files.
-        add_unique_suffix: optional
+        add_unique_suffix:
             Adds a unique suffix to `output_dir` for thread safety.
 
         Returns
@@ -187,10 +187,10 @@ class Fix:
             Variable's MIP.
         short_name:
             Variable's short name.
-        extra_facets: optional
+        extra_facets:
             Extra facets are mainly used for data outside of the big projects
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
-        session: optional
+        session:
             Current session which includes configuration and directory
             information.
 
@@ -259,7 +259,7 @@ class Fix:
             exist yet.
         filepath:
             Original path.
-        add_unique_suffix: optional
+        add_unique_suffix:
             Adds a unique suffix to `output_dir` for thread safety.
 
         Returns

@@ -131,12 +131,12 @@ def load(
     ----------
     file:
         File to be loaded. Could be string or POSIX Path object.
-    callback: optional
+    callback:
         Callback function passed to :func:`iris.load_raw`.
 
         .. deprecated:: 2.8.0
             This argument will be removed in 2.10.0.
-    ignore_warnings: optional
+    ignore_warnings:
         Keyword arguments passed to :func:`warnings.filterwarnings` used to
         ignore warnings issued by :func:`iris.load_raw`. Each list element
         corresponds to one call to :func:`warnings.filterwarnings`.
