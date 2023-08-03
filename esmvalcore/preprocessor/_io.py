@@ -125,7 +125,7 @@ def load(
     callback: Optional[Callable] = None,
     ignore_warnings: Optional[list[dict]] = None,
 ) -> CubeList:
-    """Load iris cubes.
+    """Load iris cubes from string or Path objects.
 
     Parameters
     ----------
