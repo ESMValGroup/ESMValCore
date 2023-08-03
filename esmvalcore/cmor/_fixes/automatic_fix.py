@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import Optional
 
 import numpy as np
 from cf_units import Unit
@@ -14,10 +14,7 @@ from iris.util import reverse
 
 from esmvalcore.iris_helpers import date2num
 
-from ..table import CMOR_TABLES
-
-if TYPE_CHECKING:
-    from ..table import CoordinateInfo, VariableInfo
+from ..table import CMOR_TABLES, CoordinateInfo, VariableInfo, get_var_info
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +45,9 @@ def get_alternative_generic_lev_coord(
     coord_name:
         Name of the generic level coordinate.
     cmor_table_type:
-        CMOR table type, i.e., the variable's project.
+        CMOR table type, e.g., CMIP3, CMIP5, CMIP6. Note: This is NOT the
+        project of the dataset, but rather the entry `cmor_type` in
+        `config-developer.yml`.
 
     Returns
     -------
@@ -255,7 +254,11 @@ def simplify_calendar(calendar: str) -> str:
 class AutomaticFix:
     """Class providing automatic fixes for all datasets."""
 
-    def __init__(self, var_info: VariableInfo, frequency: str) -> None:
+    def __init__(
+        self,
+        var_info: VariableInfo | None,
+        frequency: Optional[str] = None,
+    ) -> None:
         """Initialize class member.
 
         Parameters
@@ -263,11 +266,56 @@ class AutomaticFix:
         var_info:
             Variable information from the CMOR table.
         frequency:
-            Expected frequency of the variable.
+            Expected frequency of the variable. If not given, use the one from
+            the variable information.
+
+        Raises
+        ------
+        ValueError
+            Variable information is not available (i.e., `var_info=None`):
 
         """
-        self._cmor_var = var_info
+        if var_info is None:
+            raise ValueError(
+                "Cannot setup automatic fix if no variable information is "
+                "given (i.e., var_info=None)"
+            )
+        if frequency is None:
+            frequency = var_info.frequency
+
+        self.var_info = var_info
         self.frequency = frequency
+
+    @classmethod
+    def from_dataset(
+        cls,
+        project: str,
+        mip: str,
+        short_name: str,
+        frequency: Optional[str] = None,
+    ) -> AutomaticFix:
+        """Get Automatic fix from a dataset's project, mip, and short_name.
+
+        Parameters
+        ----------
+        project:
+            The dataset's project.
+        mip:
+            The variable's MIP.
+        short_name:
+            The variable's short name.
+        frequency:
+            Expected frequency of the variable. If not given, use the one from
+            the variable information.
+
+        Returns
+        -------
+        AutomaticFix
+            AutomaticFix object.
+
+        """
+        var_info = get_var_info(project, mip, short_name)
+        return cls(var_info, frequency=frequency)
 
     @staticmethod
     def _msg_prefix(cube: Cube) -> str:
@@ -305,16 +353,16 @@ class AutomaticFix:
                     coord = reversed_coord
             self._debug_msg(
                 cube,
-                "Coordinate %s values have been reversed.",
+                "Coordinate %s values have been reversed",
                 coord.var_name,
             )
         return (cube, coord)
 
     def _get_effective_units(self) -> str:
         """Get effective units."""
-        if self._cmor_var.units.lower() == 'psu':
+        if self.var_info.units.lower() == 'psu':
             return '1'
-        return self._cmor_var.units
+        return self.var_info.units
 
     def fix_metadata(self, cube: Cube) -> Cube:
         """Fix cube metadata.
@@ -373,9 +421,12 @@ class AutomaticFix:
             Fixed cube.
 
         """
-        if self._cmor_var.units:
+        if self.var_info.units:
             units = self._get_effective_units()
-            if cube.units != units:
+
+            # We use str(cube.units) in the following to catch `degrees` !=
+            # `degrees_north`
+            if str(cube.units) != units:
                 old_units = cube.units
                 cube.convert_units(units)
                 self._warning_msg(
@@ -400,14 +451,19 @@ class AutomaticFix:
             Fixed cube.
 
         """
-        if cube.standard_name != self._cmor_var.standard_name:
+        # Do not change empty standard names
+        if not self.var_info.standard_name:
+            return cube
+
+        if cube.standard_name != self.var_info.standard_name:
             self._warning_msg(
                 cube,
-                "Standard name changed from %s to %s",
+                "Standard name changed from '%s' to '%s'",
                 cube.standard_name,
-                self._cmor_var.standard_name,
+                self.var_info.standard_name,
             )
-            cube.standard_name = self._cmor_var.standard_name
+            cube.standard_name = self.var_info.standard_name
+
         return cube
 
     def fix_long_name(self, cube: Cube) -> Cube:
@@ -424,14 +480,19 @@ class AutomaticFix:
             Fixed cube.
 
         """
-        if cube.long_name != self._cmor_var.long_name:
+        # Do not change empty long names
+        if not self.var_info.long_name:
+            return cube
+
+        if cube.long_name != self.var_info.long_name:
             self._warning_msg(
                 cube,
-                "Long name changed from %s to %s",
+                "Long name changed from '%s' to '%s'",
                 cube.long_name,
-                self._cmor_var.long_name,
+                self.var_info.long_name,
             )
-            cube.long_name = self._cmor_var.long_name
+            cube.long_name = self.var_info.long_name
+
         return cube
 
     def fix_psu_units(self, cube: Cube) -> Cube:
@@ -468,7 +529,7 @@ class AutomaticFix:
             Fixed cube.
 
         """
-        for cmor_coord in self._cmor_var.coordinates.values():
+        for cmor_coord in self.var_info.coordinates.values():
             if cmor_coord.generic_level:
                 continue  # Ignore generic level coordinate in this function
             if cube.coords(var_name=cmor_coord.out_name):
@@ -494,27 +555,27 @@ class AutomaticFix:
             Fixed cube.
 
         """
-        for (coord_name, cmor_coord) in self._cmor_var.coordinates.items():
+        for (coord_name, cmor_coord) in self.var_info.coordinates.items():
             if not cmor_coord.generic_level:
                 continue  # Ignore non-generic-level coordinates
             if not cmor_coord.generic_lev_coords:
                 continue  # Cannot fix anything without coordinate info
 
             # Extract names of the generic level coordinates present in the
-            # cube; if coordinates have been found (names are not ``None``), do
-            # nothing
+            # cube; if coordinates have been found and we don't need
+            # alternatives (= names are not ``None``), do nothing
             (standard_name, out_name, _) = get_generic_lev_coord_names(
                 cube, cmor_coord
             )
             if standard_name or out_name:
                 continue
 
-            # Search for alternative coordinates; if none found, do nothing
-            # alternative (regular) level coordinates
+            # Search for alternative coordinates (i.e., regular level
+            # coordinates); if none found, do nothing
             try:
                 (alternative_coord,
                  cube_coord) = get_alternative_generic_lev_coord(
-                    cube, coord_name, self._cmor_var.table_type
+                    cube, coord_name, self.var_info.table_type
                 )
             except ValueError:  # no alternatives found
                 continue
@@ -525,11 +586,11 @@ class AutomaticFix:
                 cube, alternative_coord, cube_coord
             )
             (cube, cube_coord) = self.fix_longitude_0_360(
-                    cube, cmor_coord, cube_coord
-                )
-            self.fix_coord_bounds(cube, cmor_coord, cube_coord)
+                    cube, alternative_coord, cube_coord
+            )
+            self.fix_coord_bounds(cube, alternative_coord, cube_coord)
             (cube, cube_coord) = self.fix_coord_direction(
-                    cube, cmor_coord, cube_coord
+                    cube, alternative_coord, cube_coord
             )
 
         return cube
@@ -553,16 +614,16 @@ class AutomaticFix:
 
         """
         is_cmip6_multidim_lat_lon = all([
-            'CMIP6' in self._cmor_var.table_type,
+            'CMIP6' in self.var_info.table_type,
             cube_coord.ndim > 1,
             cube_coord.standard_name in ('latitude', 'longitude'),
         ])
         if is_cmip6_multidim_lat_lon:
             self._debug_msg(
                 cube,
-                "Multidimensional %s coordinate is not set in CMOR standard. "
-                "ESMValTool will change the original value of %s to %s to "
-                "match the one-dimensional case.",
+                "Multidimensional %s coordinate is not set in CMOR standard, "
+                "ESMValTool will change the original value of '%s' to '%s' to "
+                "match the one-dimensional case",
                 cube_coord.standard_name,
                 cube_coord.var_name,
                 cmor_coord.out_name,
@@ -587,8 +648,12 @@ class AutomaticFix:
             Corresponding coordinate of the cube.
 
         """
-        coord_var_name = cmor_coord.out_name
-        if cmor_coord.units and cube_coord.units != cmor_coord.units:
+        if not cmor_coord.units:
+            return
+
+        # We use str(cube_coord.units) in the following to catch `degrees` !=
+        # `degrees_north`
+        if str(cube_coord.units) != cmor_coord.units:
             old_units = cube_coord.units
             try:
                 cube_coord.convert_units(cmor_coord.units)
@@ -597,15 +662,15 @@ class AutomaticFix:
                     cube,
                     "Failed to convert units of coordinate %s from '%s' to "
                     "'%s'",
-                    coord_var_name,
+                    cmor_coord.out_name,
                     old_units,
                     cmor_coord.units,
                 )
             else:
                 self._warning_msg(
                     cube,
-                    "Coordinate %s units %s converted to %s",
-                    coord_var_name,
+                    "Coordinate %s units '%s' converted to '%s'",
+                    cmor_coord.out_name,
                     old_units,
                     cmor_coord.units,
                 )
@@ -641,17 +706,16 @@ class AutomaticFix:
         except ValueError:
             return
 
-        # Align coordinate points with CMOR values
+        # Align coordinate points with CMOR values if possible
+        if cube_coord.core_points().shape != cmor_points.shape:
+            return
         atol = 1e-7 * np.mean(cmor_points)
-        align_coords = all([
-            cube_coord.core_points().shape == cmor_points.shape,
-            np.allclose(
-                cube_coord.core_points(),
-                cmor_points,
-                rtol=1e-7,
-                atol=atol,
-            ),
-        ])
+        align_coords = np.allclose(
+            cube_coord.core_points(),
+            cmor_points,
+            rtol=1e-7,
+            atol=atol,
+        )
         if align_coords:
             cube_coord.points = cmor_points
             self._debug_msg(
@@ -863,15 +927,15 @@ class AutomaticFix:
 
         # Fix time bounds
         times = {'time', 'time1', 'time2', 'time3'}
-        key = times.intersection(self._cmor_var.coordinates)
-        cmor = self._cmor_var.coordinates[' '.join(key)]
+        key = times.intersection(self.var_info.coordinates)
+        cmor = self.var_info.coordinates[' '.join(key)]
         if cmor.must_have_bounds == 'yes' and not cube_coord.has_bounds():
             cube_coord.bounds = get_time_bounds(cube_coord, self.frequency)
             self._warning_msg(
                 cube,
                 "Added guessed bounds to coordinate %s from var %s",
                 cube_coord.var_name,
-                self._cmor_var.short_name,
+                self.var_info.short_name,
             )
 
         return cube
@@ -890,7 +954,7 @@ class AutomaticFix:
             Fixed cube.
 
         """
-        for cmor_coord in self._cmor_var.coordinates.values():
+        for cmor_coord in self.var_info.coordinates.values():
 
             # Cannot fix generic level coords with no unique CMOR information
             if cmor_coord.generic_level and not cmor_coord.out_name:

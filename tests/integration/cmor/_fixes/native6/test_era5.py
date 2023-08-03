@@ -12,6 +12,7 @@ from esmvalcore.cmor._fixes.native6.era5 import (
     Zg,
     get_frequency,
 )
+from esmvalcore.cmor.check import cmor_check_metadata
 from esmvalcore.cmor.fix import Fix, fix_metadata
 from esmvalcore.cmor.table import CMOR_TABLES
 
@@ -1027,9 +1028,14 @@ VARIABLES = [
 def test_cmorization(era5_cubes, cmor_cubes, var, mip):
     """Verify that cmorization results in the expected target cube."""
     fixed_cubes = fix_metadata(era5_cubes, var, 'native6', 'era5', mip)
+
     assert len(fixed_cubes) == 1
     fixed_cube = fixed_cubes[0]
     cmor_cube = cmor_cubes[0]
+
+    # Test that CMOR checks are passing
+    fixed_cubes = cmor_check_metadata(fixed_cube, 'native6', mip, var)
+
     if fixed_cube.coords('time'):
         for cube in [fixed_cube, cmor_cube]:
             coord = cube.coord('time')

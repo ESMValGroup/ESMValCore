@@ -13,6 +13,8 @@ from typing import TYPE_CHECKING, Optional
 
 from iris.cube import Cube, CubeList
 
+from esmvalcore.cmor._fixes.automatic_fix import AutomaticFix
+
 from ._fixes.fix import Fix
 from .check import CheckLevels, _get_cmor_checker
 
@@ -54,11 +56,11 @@ def fix_file(
         Variable's MIP.
     output_dir:
         Output directory for fixed files.
-    add_unique_suffix: optional
+    add_unique_suffix:
         Adds a unique suffix to `output_dir` for thread safety.
-    session: optional
+    session:
         Current session which includes configuration and directory information.
-    **extra_facets: optional
+    **extra_facets:
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 
@@ -119,13 +121,13 @@ def fix_metadata(
         Name of the dataset.
     mip:
         Variable's MIP.
-    frequency: optional
+    frequency:
         Variable's data frequency, if available.
-    check_level: optional
+    check_level:
         Level of strictness of the checks.
-    session: optional
+    session:
         Current session which includes configuration and directory information.
-    **extra_facets: optional
+    **extra_facets:
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 
@@ -171,9 +173,14 @@ def fix_metadata(
 
         cube = _get_single_cube(cube_list, short_name, project, dataset)
 
+        # Automatic fixes
+        automatic_fixer = AutomaticFix.from_dataset(
+            project, mip, short_name, frequency=frequency
+        )
+        cube = automatic_fixer.fix_metadata(cube)
+
         # Perform CMOR checks
-        # TODO: remove in v2.12 and replace automatic fixes by AutomaticFix
-        # class
+        # TODO: remove in v2.12
         checker = _get_cmor_checker(
             project,
             mip,
@@ -181,7 +188,6 @@ def fix_metadata(
             frequency,
             fail_on_error=False,
             check_level=check_level,
-            automatic_fixes=True,
         )
         cube = checker(cube).check_metadata()
 
@@ -247,13 +253,13 @@ def fix_data(
         Name of the dataset.
     mip:
         Variable's MIP.
-    frequency: optional
+    frequency:
         Variable's data frequency, if available.
-    check_level: optional
+    check_level:
         Level of strictness of the checks.
-    session: optional
+    session:
         Current session which includes configuration and directory information.
-    **extra_facets: optional
+    **extra_facets:
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 
@@ -286,9 +292,14 @@ def fix_data(
                              session=session):
         cube = fix.fix_data(cube)
 
+    # Automatic fixes
+    automatic_fixer = AutomaticFix.from_dataset(
+        project, mip, short_name, frequency=frequency
+    )
+    cube = automatic_fixer.fix_data(cube)
+
     # Perform CMOR checks
-    # TODO: remove in v2.12 and replace automatic fixes by AutomaticFix
-    # class, e.g.,
+    # TODO: remove in v2.12
     checker = _get_cmor_checker(
         project,
         mip,
@@ -296,7 +307,6 @@ def fix_data(
         frequency,
         fail_on_error=False,
         check_level=check_level,
-        automatic_fixes=True,
     )
     cube = checker(cube).check_data()
 

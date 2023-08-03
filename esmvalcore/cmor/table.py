@@ -72,18 +72,50 @@ def _get_mips(project: str, short_name: str) -> list[str]:
     return mips
 
 
-def get_var_info(project, mip, short_name):
+def get_var_info(
+    project: str,
+    mip: str,
+    short_name: str,
+) -> VariableInfo | None:
     """Get variable information.
+
+    Note
+    ----
+    If `project=CORDEX` and the `mip` ends with 'hr', it is cropped to 'h'
+    since CORDEX X-hourly tables define the `mip` as ending in 'h' instead of
+    'hr'.
 
     Parameters
     ----------
-    project : str
+    project:
         Dataset's project.
-    mip : str
-        Variable's cmor table.
-    short_name : str
+    mip:
+        Variable's CMOR table, i.e., MIP.
+    short_name:
         Variable's short name.
+
+    Returns
+    -------
+    VariableInfo | None
+        `VariableInfo` object for the requested variable if found, ``None``
+        otherwise.
+
+    Raises
+    ------
+    KeyError
+        No CMOR tables available for `project`.
+
     """
+    if project not in CMOR_TABLES:
+        raise KeyError(
+            f"No CMOR tables available for project '{project}'. The following "
+            f"tables are available: {', '.join(CMOR_TABLES)}."
+        )
+
+    # CORDEX X-hourly tables define the mip as ending in 'h' instead of 'hr'
+    if project == 'CORDEX' and mip.endswith('hr'):
+        mip = mip.replace('hr', 'h')
+
     return CMOR_TABLES[project].get_variable(mip, short_name)
 
 
@@ -243,28 +275,35 @@ class InfoBase():
         """
         return self.tables.get(table)
 
-    def get_variable(self, table_name, short_name, derived=False):
-        """Search and return the variable info.
+    def get_variable(
+        self,
+        table_name: str,
+        short_name: str,
+        derived: Optional[bool] = False,
+    ) -> VariableInfo | None:
+        """Search and return the variable information.
 
         Parameters
         ----------
-        table_name: str
-            Table name
-        short_name: str
-            Variable's short name
-        derived: bool, optional
-            Variable is derived. Info retrieval for derived variables always
-            look on the default tables if variable is not find in the
-            requested table
+        table_name:
+            Table name, i.e., the variable's MIP.
+        short_name:
+            Variable's short name.
+        derived:
+            Variable is derived. Information retrieval for derived variables
+            always looks in the default tables (usually, the custom tables) if
+            variable is not found in the requested table.
 
         Returns
         -------
-        VariableInfo
-            Return the VariableInfo object for the requested variable if
-            found, returns None if not
+        VariableInfo | None
+            `VariableInfo` object for the requested variable if found, ``None``
+            otherwise.
+
         """
         alt_names_list = self._get_alt_names_list(short_name)
 
+        # First, look in requested table
         table = self.get_table(table_name)
         if table:
             for alt_names in alt_names_list:
@@ -273,10 +312,19 @@ class InfoBase():
                 except KeyError:
                     pass
 
+        # If that didn't work, look in all tables (i.e., other MIPs) if
+        # cmor_strict=False
         var_info = self._look_in_all_tables(alt_names_list)
+
+        # If that didn' work either, look in default table if cmor_strict=False
+        # or derived=True
         if not var_info:
             var_info = self._look_in_default(derived, alt_names_list,
                                              table_name)
+
+        # If necessary, adapt frequency of variable (set it to the one from the
+        # requested MIP). E.g., if the user asked for table `Amon`, but the
+        # variable has been found in `day`, use frequency `mon`.
         if var_info:
             var_info = var_info.copy()
             var_info = self._update_frequency_from_mip(table_name, var_info)
@@ -284,6 +332,7 @@ class InfoBase():
         return var_info
 
     def _look_in_default(self, derived, alt_names_list, table_name):
+        """Look for variable in default table."""
         var_info = None
         if (not self.strict or derived):
             for alt_names in alt_names_list:
@@ -293,6 +342,7 @@ class InfoBase():
         return var_info
 
     def _look_in_all_tables(self, alt_names_list):
+        """Look for variable in all tables."""
         var_info = None
         if not self.strict:
             for alt_names in alt_names_list:
@@ -302,6 +352,7 @@ class InfoBase():
         return var_info
 
     def _get_alt_names_list(self, short_name):
+        """Get list of alternative variable names."""
         alt_names_list = [short_name]
         for alt_names in self.alt_names:
             if short_name in alt_names:
@@ -312,12 +363,14 @@ class InfoBase():
         return alt_names_list
 
     def _update_frequency_from_mip(self, table_name, var_info):
+        """Update frequency information of var_info from table."""
         mip_info = self.get_table(table_name)
         if mip_info:
             var_info.frequency = mip_info.frequency
         return var_info
 
     def _look_all_tables(self, alt_names):
+        """Look for variable in all tables."""
         for table_vars in sorted(self.tables.values()):
             if alt_names in table_vars:
                 return table_vars[alt_names]

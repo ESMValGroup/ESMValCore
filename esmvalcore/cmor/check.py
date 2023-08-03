@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from collections.abc import Callable
 from enum import IntEnum
 from typing import Optional
@@ -14,6 +15,8 @@ import iris.util
 import numpy as np
 from iris.cube import Cube
 
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+
 from ._fixes.automatic_fix import (
     AutomaticFix,
     get_alternative_generic_lev_coord,
@@ -21,7 +24,7 @@ from ._fixes.automatic_fix import (
     is_unstructured_grid,
     simplify_calendar,
 )
-from .table import CMOR_TABLES
+from .table import get_var_info
 
 
 class CheckLevels(IntEnum):
@@ -60,13 +63,23 @@ class CMORCheck():
     var_info: variables_info.VariableInfo
         Variable info to check.
     frequency: str
-        Expected frequency for the data.
+        Expected frequency for the data. If not given, use the one from the
+        variable information.
     fail_on_error: bool
         If true, CMORCheck stops on the first error. If false, it collects
         all possible errors before stopping.
     automatic_fixes: bool
         If True, CMORCheck will try to apply automatic fixes for any
         detected error, if possible.
+
+        .. deprecated:: 2.10.0
+            This option has been deprecated in ESMValCore version 2.10.0 and is
+            scheduled for removal in version 2.12.0. Please use the functions
+            :func:`~esmvalcore.preprocessor.fix_metadata`,
+            :func:`~esmvalcore.preprocessor.fix_data`, or
+            :meth:`esmvalcore.dataset.Dataset.load` (which automatically
+            includes the first two functions) instead. Fixes and CMOR checks
+            have been clearly separated in ESMValCore version 2.10.0.
     check_level: CheckLevels
         Level of strictness of the checks.
 
@@ -105,8 +118,23 @@ class CMORCheck():
         self.frequency = frequency
         self.automatic_fixes = automatic_fixes
 
+        # Deprecate automatic_fixes (remove in v2.12)
+        if automatic_fixes:
+            msg = (
+                "The option `automatic_fixes` has been deprecated in "
+                "ESMValCore version 2.10.0 and is scheduled for removal in "
+                "version 2.12.0. Please use the functions "
+                "esmvalcore.preprocessor.fix_metadata(), "
+                "esmvalcore.preprocessor.fix_data(), or "
+                "esmvalcore.dataset.Dataset.load() (which automatically "
+                "includes the first two functions) instead. Fixes and CMOR "
+                "checks have been clearly separated in ESMValCore version "
+                "2.10.0."
+            )
+            warnings.warn(msg, ESMValCoreDeprecationWarning)
+
         # TODO: remove in v2.12
-        self._automatic_fix = AutomaticFix(var_info, frequency)
+        self._automatic_fix = AutomaticFix(var_info, frequency=frequency)
 
     def _is_unstructured_grid(self):
         if self._unstructured is None:
@@ -486,7 +514,7 @@ class CMORCheck():
             f"for generic level coordinate '{key}'. Subsequent warnings about "
             f"levels that are not contained in '{alternative_coord.out_name}' "
             f"can be safely ignored.")
-        self._check_coord(alternative_coord, cube_coord, self._cube.var_name)
+        self._check_coord(alternative_coord, cube_coord, cube_coord.var_name)
 
     def _check_coords(self):
         """Check coordinates."""
@@ -852,26 +880,13 @@ def _get_cmor_checker(
     project: str,
     mip: str,
     short_name: str,
-    frequency: None | str,
+    frequency: None | str = None,
     fail_on_error: bool = False,
     check_level: CheckLevels = CheckLevels.DEFAULT,
     automatic_fixes: bool = False,  # TODO: remove in v2.12
 ) -> Callable[[Cube], CMORCheck]:
-    """Get a CMOR checker/fixer."""
-    if project not in CMOR_TABLES:
-        raise NotImplementedError(
-            f"No CMOR checker implemented for project {project}. The "
-            f"following options are available: {', '.join(CMOR_TABLES)}."
-        )
-
-    cmor_table = CMOR_TABLES[project]
-    if project == 'CORDEX' and mip.endswith('hr'):
-        # CORDEX X-hourly tables define the mip
-        # as ending in 'h' instead of 'hr'.
-        mip = mip.replace('hr', 'h')
-    var_info = cmor_table.get_variable(mip, short_name)
-    if var_info is None:
-        var_info = CMOR_TABLES['custom'].get_variable(mip, short_name)
+    """Get a CMOR checker."""
+    var_info = get_var_info(project, mip, short_name)
 
     def _checker(cube: Cube) -> CMORCheck:
         return CMORCheck(cube,
@@ -889,7 +904,7 @@ def cmor_check_metadata(
     cmor_table: str,
     mip: str,
     short_name: str,
-    frequency: str,
+    frequency: Optional[str] = None,
     check_level: CheckLevels = CheckLevels.DEFAULT,
 ) -> Cube:
     """Check if metadata conforms to variable's CMOR definition.
@@ -907,8 +922,9 @@ def cmor_check_metadata(
     short_name:
         Variable's short name.
     frequency:
-        Data frequency.
-    check_level: optional
+        Data frequency. If not given, use the one from the CMOR table of the
+        variable.
+    check_level:
         Level of strictness of the checks.
 
     Returns
@@ -921,7 +937,7 @@ def cmor_check_metadata(
         cmor_table,
         mip,
         short_name,
-        frequency,
+        frequency=frequency,
         check_level=check_level,
     )
     cube = checker(cube).check_metadata()
@@ -933,7 +949,7 @@ def cmor_check_data(
     cmor_table: str,
     mip: str,
     short_name: str,
-    frequency: str,
+    frequency: Optional[str] = None,
     check_level: CheckLevels = CheckLevels.DEFAULT,
 ) -> Cube:
     """Check if data conforms to variable's CMOR definition.
@@ -949,8 +965,9 @@ def cmor_check_data(
     short_name:
         Variable's short name
     frequency:
-        Data frequency
-    check_level: optional
+        Data frequency. If not given, use the one from the CMOR table of the
+        variable.
+    check_level:
         Level of strictness of the checks.
 
     Returns
@@ -963,7 +980,7 @@ def cmor_check_data(
         cmor_table,
         mip,
         short_name,
-        frequency,
+        frequency=frequency,
         check_level=check_level,
     )
     cube = checker(cube).check_data()
@@ -975,8 +992,8 @@ def cmor_check(
     cmor_table: str,
     mip: str,
     short_name: str,
-    frequency: str,
-    check_level: CheckLevels,
+    frequency: Optional[str] = None,
+    check_level: CheckLevels = CheckLevels.DEFAULT,
 ) -> Cube:
     """Check if cube conforms to variable's CMOR definition.
 
@@ -994,8 +1011,9 @@ def cmor_check(
     short_name:
         Variable's short name.
     frequency:
-        Data frequency.
-    check_level: optional
+        Data frequency. If not given, use the one from the CMOR table of the
+        variable.
+    check_level:
         Level of strictness of the checks.
 
     Returns
@@ -1009,7 +1027,7 @@ def cmor_check(
         cmor_table,
         mip,
         short_name,
-        frequency,
+        frequency=frequency,
         check_level=check_level,
     )
     cube = cmor_check_data(
@@ -1017,7 +1035,7 @@ def cmor_check(
         cmor_table,
         mip,
         short_name,
-        frequency,
+        frequency=frequency,
         check_level=check_level,
     )
     return cube
