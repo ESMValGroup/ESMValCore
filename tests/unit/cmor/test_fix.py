@@ -147,7 +147,7 @@ class TestFixMetadata():
                    return_value=[self.mock_fix]) as mock_get_fixes:
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=self.checker):
-                with patch('esmvalcore.cmor.fix.AutomaticFix.from_dataset',
+                with patch('esmvalcore.cmor.fix.AutomaticFix.from_facets',
                            return_value=self.mock_fixer):
                     cube_returned = fix_metadata(
                         cubes=[self.cube],
@@ -179,7 +179,7 @@ class TestFixMetadata():
                    return_value=[]) as mock_get_fixes:
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=self.checker):
-                with patch('esmvalcore.cmor.fix.AutomaticFix.from_dataset',
+                with patch('esmvalcore.cmor.fix.AutomaticFix.from_facets',
                            return_value=self.mock_fixer):
                     cube_returned = fix_metadata(
                         cubes=[self.cube],
@@ -209,7 +209,7 @@ class TestFixMetadata():
                    return_value=[]):
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=self.checker):
-                with patch('esmvalcore.cmor.fix.AutomaticFix.from_dataset',
+                with patch('esmvalcore.cmor.fix.AutomaticFix.from_facets',
                            return_value=self.mock_fixer):
                     cube_returned = fix_metadata(
                         cubes=[self.cube,
@@ -280,7 +280,7 @@ class TestFixData():
                    return_value=[self.mock_fix]) as mock_get_fixes:
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=self.checker):
-                with patch('esmvalcore.cmor.fix.AutomaticFix.from_dataset',
+                with patch('esmvalcore.cmor.fix.AutomaticFix.from_facets',
                            return_value=self.mock_fixer):
                     cube_returned = fix_data(
                         self.cube,
@@ -312,7 +312,7 @@ class TestFixData():
                    return_value=[]) as mock_get_fixes:
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=self.checker):
-                with patch('esmvalcore.cmor.fix.AutomaticFix.from_dataset',
+                with patch('esmvalcore.cmor.fix.AutomaticFix.from_facets',
                            return_value=self.mock_fixer):
                     cube_returned = fix_data(
                         self.cube,
