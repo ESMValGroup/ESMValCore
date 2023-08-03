@@ -20,15 +20,15 @@ logger = logging.getLogger(__name__)
 
 
 ALTERNATIVE_GENERIC_LEV_COORDS = {
-        'alevel': {
-            'CMIP5': ['alt40', 'plevs'],
-            'CMIP6': ['alt16', 'plev3'],
-            'obs4MIPs': ['alt16', 'plev3'],
-        },
-        'zlevel': {
-            'CMIP3': ['pressure'],
-        },
-    }
+    'alevel': {
+        'CMIP5': ['alt40', 'plevs'],
+        'CMIP6': ['alt16', 'plev3'],
+        'obs4MIPs': ['alt16', 'plev3'],
+    },
+    'zlevel': {
+        'CMIP3': ['pressure'],
+    },
+}
 
 
 def get_alternative_generic_lev_coord(
@@ -287,14 +287,14 @@ class AutomaticFix:
         self.frequency = frequency
 
     @classmethod
-    def from_dataset(
+    def from_facets(
         cls,
         project: str,
         mip: str,
         short_name: str,
         frequency: Optional[str] = None,
     ) -> AutomaticFix:
-        """Get Automatic fix from a dataset's project, mip, and short_name.
+        """Get dataset's facets (i.e., `project`, `mip`, and `short_name`).
 
         Parameters
         ----------
@@ -306,7 +306,7 @@ class AutomaticFix:
             The variable's short name.
         frequency:
             Expected frequency of the variable. If not given, use the one from
-            the variable information.
+            the CMOR table.
 
         Returns
         -------
@@ -581,16 +581,8 @@ class AutomaticFix:
                 continue
 
             # Fix alternative coord
-            self.fix_coord_units(cube, alternative_coord, cube_coord)
-            self.fix_requested_coord_values(
+            (cube, cube_coord) = self.fix_coord(
                 cube, alternative_coord, cube_coord
-            )
-            (cube, cube_coord) = self.fix_longitude_0_360(
-                    cube, alternative_coord, cube_coord
-            )
-            self.fix_coord_bounds(cube, alternative_coord, cube_coord)
-            (cube, cube_coord) = self.fix_coord_direction(
-                    cube, alternative_coord, cube_coord
             )
 
         return cube
@@ -859,6 +851,77 @@ class AutomaticFix:
 
         return (cube, cube_coord)
 
+    def fix_time_units(self, cube: Cube, cube_coord: Coord) -> None:
+        """Fix time units and attributes.
+
+        Parameters
+        ----------
+        cube:
+            Cube to be fixed.
+        cube_coord:
+            Time coordinate of the cube.
+
+        """
+        # Fix cube units
+        old_units = cube_coord.units
+        cube_coord.convert_units(
+            Unit(
+                'days since 1850-1-1 00:00:00',
+                calendar=cube_coord.units.calendar,
+            )
+        )
+        simplified_cal = simplify_calendar(cube_coord.units.calendar)
+        cube_coord.units = Unit(
+            cube_coord.units.origin, calendar=simplified_cal
+        )
+
+        # Fix units of time-related cube attributes
+        attrs = cube.attributes
+        parent_time = 'parent_time_units'
+        if parent_time in attrs:
+            if attrs[parent_time] in 'no parent':
+                pass
+            else:
+                try:
+                    parent_units = Unit(attrs[parent_time], simplified_cal)
+                except ValueError:
+                    pass
+                else:
+                    attrs[parent_time] = 'days since 1850-1-1 00:00:00'
+
+                    branch_parent = 'branch_time_in_parent'
+                    if branch_parent in attrs:
+                        attrs[branch_parent] = parent_units.convert(
+                            attrs[branch_parent], cube_coord.units)
+
+                    branch_child = 'branch_time_in_child'
+                    if branch_child in attrs:
+                        attrs[branch_child] = old_units.convert(
+                            attrs[branch_child], cube_coord.units)
+
+    def fix_time_bounds(self, cube: Cube, cube_coord: Coord) -> None:
+        """Fix time bounds.
+
+        Parameters
+        ----------
+        cube:
+            Cube to be fixed.
+        cube_coord:
+            Time coordinate of the cube.
+
+        """
+        times = {'time', 'time1', 'time2', 'time3'}
+        key = times.intersection(self.var_info.coordinates)
+        cmor = self.var_info.coordinates[' '.join(key)]
+        if cmor.must_have_bounds == 'yes' and not cube_coord.has_bounds():
+            cube_coord.bounds = get_time_bounds(cube_coord, self.frequency)
+            self._warning_msg(
+                cube,
+                "Added guessed bounds to coordinate %s from var %s",
+                cube_coord.var_name,
+                self.var_info.short_name,
+            )
+
     def fix_time_coord(self, cube: Cube) -> Cube:
         """Fix time coordinate.
 
@@ -886,59 +949,49 @@ class AutomaticFix:
             return cube
 
         # Fix time units
-        old_units = cube_coord.units
-        cube_coord.convert_units(
-            Unit(
-                'days since 1850-1-1 00:00:00',
-                calendar=cube_coord.units.calendar,
-            )
-        )
-        simplified_cal = simplify_calendar(cube_coord.units.calendar)
-        cube_coord.units = Unit(
-            cube_coord.units.origin, calendar=simplified_cal
-        )
-
-        # Fix cube attributes
-        attrs = cube.attributes
-        parent_time = 'parent_time_units'
-        if parent_time in attrs:
-            if attrs[parent_time] in 'no parent':
-                pass
-            else:
-                try:
-                    parent_units = Unit(attrs[parent_time], simplified_cal)
-                except ValueError:
-                    pass
-                else:
-                    attrs[parent_time] = 'days since 1850-1-1 00:00:00'
-
-                    branch_parent = 'branch_time_in_parent'
-                    if branch_parent in attrs:
-                        attrs[branch_parent] = parent_units.convert(
-                            attrs[branch_parent], cube_coord.units)
-
-                    branch_child = 'branch_time_in_child'
-                    if branch_child in attrs:
-                        attrs[branch_child] = old_units.convert(
-                            attrs[branch_child], cube_coord.units)
+        self.fix_time_units(cube, cube_coord)
 
         # Remove time_origin from coordinate attributes
         cube_coord.attributes.pop('time_origin', None)
 
         # Fix time bounds
-        times = {'time', 'time1', 'time2', 'time3'}
-        key = times.intersection(self.var_info.coordinates)
-        cmor = self.var_info.coordinates[' '.join(key)]
-        if cmor.must_have_bounds == 'yes' and not cube_coord.has_bounds():
-            cube_coord.bounds = get_time_bounds(cube_coord, self.frequency)
-            self._warning_msg(
-                cube,
-                "Added guessed bounds to coordinate %s from var %s",
-                cube_coord.var_name,
-                self.var_info.short_name,
-            )
+        self.fix_time_bounds(cube, cube_coord)
 
         return cube
+
+    def fix_coord(
+        self,
+        cube: Cube,
+        cmor_coord: CoordinateInfo,
+        cube_coord: Coord,
+    ) -> tuple[Cube, Coord]:
+        """Fix non-time coordinate.
+
+        Parameters
+        ----------
+        cube:
+            Cube to be fixed.
+        cmor_coord:
+            Coordinate information from the CMOR table.
+        cube_coord:
+            Corresponding coordinate of the cube.
+
+        Returns
+        -------
+        tuple[Cube, Coord]
+            Fixed cube and coordinate.
+
+        """
+        self.fix_coord_units(cube, cmor_coord, cube_coord)
+        self.fix_requested_coord_values(cube, cmor_coord, cube_coord)
+        (cube, cube_coord) = self.fix_longitude_0_360(
+            cube, cmor_coord, cube_coord
+        )
+        self.fix_coord_bounds(cube, cmor_coord, cube_coord)
+        (cube, cube_coord) = self.fix_coord_direction(
+            cube, cmor_coord, cube_coord
+        )
+        return (cube, cube_coord)
 
     def fix_coords(self, cube: Cube) -> Cube:
         """Fix all coordinates.
@@ -970,14 +1023,6 @@ class AutomaticFix:
                 continue
 
             # Fixes
-            self.fix_coord_units(cube, cmor_coord, cube_coord)
-            self.fix_requested_coord_values(cube, cmor_coord, cube_coord)
-            (cube, cube_coord) = self.fix_longitude_0_360(
-                cube, cmor_coord, cube_coord
-            )
-            self.fix_coord_bounds(cube, cmor_coord, cube_coord)
-            (cube, cube_coord) = self.fix_coord_direction(
-                cube, cmor_coord, cube_coord
-            )
+            (cube, cube_coord) = self.fix_coord(cube, cmor_coord, cube_coord)
 
         return cube

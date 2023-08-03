@@ -174,7 +174,7 @@ def fix_metadata(
         cube = _get_single_cube(cube_list, short_name, project, dataset)
 
         # Automatic fixes
-        automatic_fixer = AutomaticFix.from_dataset(
+        automatic_fixer = AutomaticFix.from_facets(
             project, mip, short_name, frequency=frequency
         )
         cube = automatic_fixer.fix_metadata(cube)
@@ -293,7 +293,7 @@ def fix_data(
         cube = fix.fix_data(cube)
 
     # Automatic fixes
-    automatic_fixer = AutomaticFix.from_dataset(
+    automatic_fixer = AutomaticFix.from_facets(
         project, mip, short_name, frequency=frequency
     )
     cube = automatic_fixer.fix_data(cube)
