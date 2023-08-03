@@ -281,7 +281,7 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
     if region_indices:
         regions = [regions[idx] for idx in region_indices]
 
-    # Create a mask for the data (np->da) 
+    # Create a mask for the data (np->da)
     mask = da.zeros(cube.shape, dtype=bool)
 
     # Create a set of x,y points from the cube
@@ -400,7 +400,8 @@ def mask_above_threshold(cube, threshold):
     iris.cube.Cube
         thresholded cube.
     """
-    cube.data = da.ma.masked_where(cube.core_data() > threshold, cube.core_data() )
+    cube.data = (da.ma.masked_where(cube.core_data() > threshold,
+                                    cube.core_data()))
     return cube
 
 
@@ -422,7 +423,8 @@ def mask_below_threshold(cube, threshold):
     iris.cube.Cube
         thresholded cube.
     """
-    cube.data = da.ma.masked_where(cube.core_data() < threshold, cube.core_data() )
+    cube.data = (da.ma.masked_where(cube.core_data() < threshold,
+                                    cube.core_data()))
     return cube
 
 
