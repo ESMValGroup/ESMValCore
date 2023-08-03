@@ -130,7 +130,7 @@ def load(
     Parameters
     ----------
     file:
-        File to be loaded.
+        File to be loaded. Could be string or POSIX Path object.
     callback: optional
         Callback function passed to :func:`iris.load_raw`.
 
