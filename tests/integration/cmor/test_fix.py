@@ -1,30 +1,38 @@
 """Integration tests for fixes."""
 
-from cf_units import Unit
+import dask.array as da
 import numpy as np
 import pytest
-from iris.coords import DimCoord, AuxCoord
+from cf_units import Unit
+from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
-import dask.array as da
 
+from esmvalcore.cmor.check import CMORCheckError
 from esmvalcore.preprocessor import (
-    fix_metadata,
-    fix_data,
     cmor_check_data,
     cmor_check_metadata,
+    fix_data,
+    fix_metadata,
 )
-from esmvalcore.cmor.fix import AutomaticFix
 
 
-@pytest.fixture
-def only_automatic_fixes(monkeypatch):
-    """Only use automatic fixes."""
+# TODO: remove in v2.12
+@pytest.fixture(autouse=True)
+def disable_fix_cmor_checker(mocker):
+    """Disable the CMOR checker in fixes (will be default in v2.12)."""
+    class MockChecker:
 
-    def return_empty_list(*_, **__):
-        """Return empty list."""
-        return []
+        def __init__(self, cube):
+            self._cube = cube
 
-    monkeypatch.setattr(AutomaticFix, 'get_fixes', return_empty_list)
+        def check_metadata(self):
+            return self._cube
+
+        def check_data(self):
+            return self._cube
+
+    mock = mocker.patch('esmvalcore.cmor.fix._get_cmor_checker')
+    mock.return_value = MockChecker
 
 
 class TestAutomaticFix:
@@ -33,11 +41,11 @@ class TestAutomaticFix:
     @pytest.fixture(autouse=True)
     def setup(self, mocker):
         """Setup tests."""
-        self.mock_debug = mocker.patch.object(
-            AutomaticFix, '_debug_msg', autospec=True
+        self.mock_debug = mocker.patch(
+            'esmvalcore.cmor.fix.AutomaticFix._debug_msg', autospec=True
         )
-        self.mock_warning = mocker.patch.object(
-            AutomaticFix, '_warning_msg', autospec=True
+        self.mock_warning = mocker.patch(
+            'esmvalcore.cmor.fix.AutomaticFix._warning_msg', autospec=True
         )
 
         # Create sample data with CMOR errors
@@ -66,6 +74,12 @@ class TestAutomaticFix:
             var_name='lat',
             units='degrees',
         )
+        self.lat_coord_2d = AuxCoord(
+            [[10, -10]],
+            standard_name='latitude',
+            var_name='wrong_name',
+            units='degrees',
+        )
         self.lon_coord = DimCoord(
             [-180, 0],
             standard_name='longitude',
@@ -77,6 +91,12 @@ class TestAutomaticFix:
             bounds=[[-200, -180, -160], [-20, 0, 20]],
             standard_name='longitude',
             var_name='lon',
+            units='degrees',
+        )
+        self.lon_coord_2d = AuxCoord(
+            [[370, 380]],
+            standard_name='longitude',
+            var_name='wrong_name',
             units='degrees',
         )
         self.height2m_coord = AuxCoord(
@@ -136,7 +156,64 @@ class TestAutomaticFix:
         )
         self.cubes_unstructured = CubeList([self.cube_unstructured])
 
-    def assert_ta_metadata(self, cube, time_has_bounds=True):
+        coord_spec_2d = [
+            (self.height2m_coord, ()),
+            (self.lat_coord_2d, (1, 2)),
+            (self.lon_coord_2d, (1, 2)),
+        ]
+        self.cube_2d_latlon = Cube(
+            da.zeros((2, 1, 2)),
+            standard_name='air_pressure',
+            long_name='Air Pressure',
+            var_name='tas',
+            units='celsius',
+            dim_coords_and_dims=[(self.time_coord, 0)],
+            aux_coords_and_dims=coord_spec_2d,
+            attributes={},
+        )
+        self.cubes_2d_latlon = CubeList([self.cube_2d_latlon])
+
+    def assert_time_metadata(self, cube):
+        """Assert time metadata is correct."""
+        assert cube.coord('time').standard_name == 'time'
+        assert cube.coord('time').var_name == 'time'
+        assert cube.coord('time').units == Unit(
+            'days since 1850-01-01', calendar='365_day'
+        )
+        assert cube.coord('time').attributes == {'test': 1}
+
+    def assert_time_data(self, cube, time_has_bounds=True):
+        """Assert time data is correct."""
+        np.testing.assert_allclose(cube.coord('time').points, [380, 410])
+        if time_has_bounds:
+            np.testing.assert_allclose(
+                cube.coord('time').bounds, [[365, 396], [396, 424]],
+            )
+        else:
+            assert cube.coord('time').bounds is None
+
+    def assert_plev_metadata(self, cube):
+        """Assert plev metadata is correct."""
+        assert cube.coord('air_pressure').standard_name == 'air_pressure'
+        assert cube.coord('air_pressure').var_name == 'plev'
+        assert cube.coord('air_pressure').units == 'Pa'
+        assert cube.coord('air_pressure').attributes == {}
+
+    def assert_lat_metadata(self, cube):
+        """Assert lat metadata is correct."""
+        assert cube.coord('latitude').standard_name == 'latitude'
+        assert cube.coord('latitude').var_name == 'lat'
+        assert str(cube.coord('latitude').units) == 'degrees_north'
+        assert cube.coord('latitude').attributes == {}
+
+    def assert_lon_metadata(self, cube):
+        """Assert lon metadata is correct."""
+        assert cube.coord('longitude').standard_name == 'longitude'
+        assert cube.coord('longitude').var_name == 'lon'
+        assert str(cube.coord('longitude').units) == 'degrees_east'
+        assert cube.coord('longitude').attributes == {}
+
+    def assert_ta_metadata(self, cube):
         """Assert ta metadata is correct."""
         # Variable metadata
         assert cube.standard_name == 'air_temperature'
@@ -145,7 +222,8 @@ class TestAutomaticFix:
         assert cube.units == 'K'
         assert cube.attributes == {}
 
-        # Variable data
+    def assert_ta_data(self, cube, time_has_bounds=True):
+        """Assert ta data is correct."""
         assert cube.has_lazy_data()
         np.testing.assert_allclose(
             cube.data,
@@ -164,55 +242,47 @@ class TestAutomaticFix:
         )
 
         # Time
-        assert cube.coord('time').standard_name == 'time'
-        assert cube.coord('time').var_name == 'time'
-        assert cube.coord('time').units == Unit(
-            'days since 1850-01-01', calendar='365_day'
-        )
-        np.testing.assert_allclose(cube.coord('time').points, [380, 410])
-        if time_has_bounds:
-            np.testing.assert_allclose(
-                cube.coord('time').bounds, [[365, 396], [396, 424]],
-            )
-        else:
-            assert cube.coord('time').bounds is None
-        assert cube.coord('time').attributes == {'test': 1}
+        self.assert_time_data(cube, time_has_bounds=time_has_bounds)
 
         # Air pressure
-        assert cube.coord('air_pressure').standard_name == 'air_pressure'
-        assert cube.coord('air_pressure').var_name == 'plev'
-        assert cube.coord('air_pressure').units == 'Pa'
         np.testing.assert_allclose(
             cube.coord('air_pressure').points,
             [85000.0, 50000.0, 25000.0],
             atol=1e-8,
         )
         assert cube.coord('air_pressure').bounds is None
-        assert cube.coord('air_pressure').attributes == {}
 
         # Latitude
-        assert cube.coord('latitude').standard_name == 'latitude'
-        assert cube.coord('latitude').var_name == 'lat'
-        assert str(cube.coord('latitude').units) == 'degrees_north'
         np.testing.assert_allclose(
             cube.coord('latitude').points, [-10.0, 10.0]
         )
         np.testing.assert_allclose(
-            cube.coord('latitude').bounds, [[-20.0, 0.0], [0.0, 20.0]],
+            cube.coord('latitude').bounds, [[-20.0, 0.0], [0.0, 20.0]]
         )
-        assert cube.coord('latitude').attributes == {}
 
         # Longitude
-        assert cube.coord('longitude').standard_name == 'longitude'
-        assert cube.coord('longitude').var_name == 'lon'
-        assert str(cube.coord('longitude').units) == 'degrees_east'
         np.testing.assert_allclose(
             cube.coord('longitude').points, [0.0, 180.0]
         )
         np.testing.assert_allclose(
-            cube.coord('longitude').bounds, [[-90.0, 90.0], [90.0, 270.0]],
+            cube.coord('longitude').bounds, [[-90.0, 90.0], [90.0, 270.0]]
         )
-        assert cube.coord('longitude').attributes == {}
+
+    def assert_tas_metadata(self, cube):
+        """Assert tas metadata is correct."""
+        assert cube.standard_name == 'air_temperature'
+        assert cube.long_name == 'Near-Surface Air Temperature'
+        assert cube.var_name == 'tas'
+        assert cube.units == 'K'
+        assert cube.attributes == {}
+
+        # Height 2m coordinate
+        assert cube.coord('height').standard_name == 'height'
+        assert cube.coord('height').var_name == 'height'
+        assert cube.coord('height').units == 'm'
+        assert cube.coord('height').attributes == {}
+        np.testing.assert_allclose(cube.coord('height').points, 2.0)
+        assert cube.coord('height').bounds is None
 
     def test_fix_metadata_amon_ta(self):
         """Test ``fix_metadata``."""
@@ -233,7 +303,51 @@ class TestAutomaticFix:
         fixed_cube = fixed_cubes[0]
 
         self.assert_ta_metadata(fixed_cube)
+        self.assert_time_metadata(fixed_cube)
+        self.assert_plev_metadata(fixed_cube)
+        self.assert_lat_metadata(fixed_cube)
+        self.assert_lon_metadata(fixed_cube)
+        self.assert_ta_data(fixed_cube)
+
         cmor_check_metadata(fixed_cube, project, mip, short_name)
+
+        assert self.mock_debug.call_count == 3
+        assert self.mock_warning.call_count == 9
+
+    def test_fix_metadata_amon_ta_wrong_lat_units(self):
+        """Test ``fix_metadata``."""
+        short_name = 'ta'
+        project = 'CMIP6'
+        dataset = '__MODEL_WITH_NO_EXPLICIT_FIX__'
+        mip = 'Amon'
+
+        # Change units of latitude
+        self.cubes_4d[0].coord('latitude').units = 'K'
+
+        fixed_cubes = fix_metadata(
+            self.cubes_4d,
+            short_name,
+            project,
+            dataset,
+            mip,
+        )
+
+        assert len(fixed_cubes) == 1
+        fixed_cube = fixed_cubes[0]
+
+        self.assert_ta_metadata(fixed_cube)
+        self.assert_time_metadata(fixed_cube)
+        self.assert_plev_metadata(fixed_cube)
+        self.assert_lon_metadata(fixed_cube)
+        self.assert_ta_data(fixed_cube)
+
+        # CMOR check will fail because of wrong latitude units
+        assert fixed_cube.coord('latitude').units == 'K'
+        with pytest.raises(CMORCheckError):
+            cmor_check_metadata(fixed_cube, project, mip, short_name)
+
+        print(self.mock_debug.mock_calls)
+        print(self.mock_warning.mock_calls)
 
         assert self.mock_debug.call_count == 3
         assert self.mock_warning.call_count == 9
@@ -257,10 +371,51 @@ class TestAutomaticFix:
         fixed_cube = fixed_cubes[0]
 
         self.assert_ta_metadata(fixed_cube)
+        self.assert_time_metadata(fixed_cube)
+        self.assert_plev_metadata(fixed_cube)
+        self.assert_lat_metadata(fixed_cube)
+        self.assert_lon_metadata(fixed_cube)
+        self.assert_ta_data(fixed_cube)
+
         cmor_check_metadata(fixed_cube, project, mip, short_name)
 
         assert self.mock_debug.call_count == 4
         assert self.mock_warning.call_count == 9
+
+    def test_fix_metadata_cfmon_ta_no_alternative(self, mocker):
+        """Test ``fix_metadata`` with  no alternative coordinate."""
+        short_name = 'ta'
+        project = 'CMIP6'
+        dataset = '__MODEL_WITH_NO_EXPLICIT_FIX__'
+        mip = 'CFmon'
+
+        # Remove alternative coordinate
+        self.cubes_4d[0].remove_coord('air_pressure')
+
+        fixed_cubes = fix_metadata(
+            self.cubes_4d,
+            short_name,
+            project,
+            dataset,
+            mip,
+        )
+
+        assert len(fixed_cubes) == 1
+        fixed_cube = fixed_cubes[0]
+
+        self.assert_ta_metadata(fixed_cube)
+        self.assert_time_metadata(fixed_cube)
+        self.assert_time_data(fixed_cube)
+        self.assert_lat_metadata(fixed_cube)
+        self.assert_lon_metadata(fixed_cube)
+
+        # CMOR check will fail because of missing alevel coordinate
+        assert not fixed_cube.coords('air_pressure')
+        with pytest.raises(CMORCheckError):
+            cmor_check_metadata(fixed_cube, project, mip, short_name)
+
+        assert self.mock_debug.call_count == 2
+        assert self.mock_warning.call_count == 8
 
     def test_fix_metadata_e1hr_ta(self):
         """Test ``fix_metadata`` with plev3."""
@@ -269,7 +424,7 @@ class TestAutomaticFix:
         dataset = '__MODEL_WITH_NO_EXPLICIT_FIX__'
         mip = 'E1hr'
 
-        # Slighly adapt plev to test fixing of requested levels
+        # Slightly adapt plev to test fixing of requested levels
         self.cubes_4d[0].coord('air_pressure').points = [
             250.0 + 9e-8, 500.0 + 9e-8, 850.0 + 9e-8
         ]
@@ -286,7 +441,13 @@ class TestAutomaticFix:
         assert len(fixed_cubes) == 1
         fixed_cube = fixed_cubes[0]
 
-        self.assert_ta_metadata(fixed_cube, time_has_bounds=False)
+        self.assert_ta_metadata(fixed_cube)
+        self.assert_time_metadata(fixed_cube)
+        self.assert_plev_metadata(fixed_cube)
+        self.assert_lat_metadata(fixed_cube)
+        self.assert_lon_metadata(fixed_cube)
+        self.assert_ta_data(fixed_cube, time_has_bounds=False)
+
         cmor_check_metadata(
             fixed_cube, project, mip, short_name, frequency='mon'
         )
@@ -295,7 +456,7 @@ class TestAutomaticFix:
         assert self.mock_warning.call_count == 8
 
     def test_fix_metadata_amon_tas_unstructured(self):
-        """Test ``fix_metadata``."""
+        """Test ``fix_metadata`` with unstructured grid."""
         short_name = 'tas'
         project = 'CMIP6'
         dataset = '__MODEL_WITH_NO_EXPLICIT_FIX__'
@@ -312,45 +473,18 @@ class TestAutomaticFix:
         assert len(fixed_cubes) == 1
         fixed_cube = fixed_cubes[0]
 
-        # Variable metadata
-        assert fixed_cube.standard_name == 'air_temperature'
-        assert fixed_cube.long_name == 'Near-Surface Air Temperature'
-        assert fixed_cube.var_name == 'tas'
-        assert fixed_cube.units == 'K'
-        assert fixed_cube.attributes == {}
-
-        # Variable data
-        assert fixed_cube.has_lazy_data()
-        np.testing.assert_allclose(
-            fixed_cube.data, [[273.15, 273.15], [273.15, 273.15]],
-        )
-
-        # Time
-        assert fixed_cube.coord('time').standard_name == 'time'
-        assert fixed_cube.coord('time').var_name == 'time'
-        assert fixed_cube.coord('time').units == Unit(
-            'days since 1850-01-01', calendar='365_day'
-        )
-        np.testing.assert_allclose(fixed_cube.coord('time').points, [380, 410])
-        np.testing.assert_allclose(
-            fixed_cube.coord('time').bounds, [[365, 396], [396, 424]],
-        )
-        assert fixed_cube.coord('time').attributes == {'test': 1}
+        self.assert_tas_metadata(fixed_cube)
+        self.assert_time_metadata(fixed_cube)
+        self.assert_lat_metadata(fixed_cube)
+        self.assert_lon_metadata(fixed_cube)
 
         # Latitude
-        assert fixed_cube.coord('latitude').standard_name == 'latitude'
-        assert fixed_cube.coord('latitude').var_name == 'lat'
-        assert str(fixed_cube.coord('latitude').units) == 'degrees_north'
         np.testing.assert_allclose(
             fixed_cube.coord('latitude').points, [10.0, -10.0]
         )
         assert fixed_cube.coord('latitude').bounds is None
-        assert fixed_cube.coord('latitude').attributes == {}
 
         # Longitude
-        assert fixed_cube.coord('longitude').standard_name == 'longitude'
-        assert fixed_cube.coord('longitude').var_name == 'lon'
-        assert str(fixed_cube.coord('longitude').units) == 'degrees_east'
         np.testing.assert_allclose(
             fixed_cube.coord('longitude').points, [180.0, 0.0]
         )
@@ -358,7 +492,176 @@ class TestAutomaticFix:
             fixed_cube.coord('longitude').bounds,
             [[160.0, 180.0, 200.0], [340.0, 0.0, 20.0]],
         )
-        assert fixed_cube.coord('longitude').attributes == {}
+
+        # Variable data
+        assert fixed_cube.has_lazy_data()
+        np.testing.assert_allclose(
+            fixed_cube.data, [[273.15, 273.15], [273.15, 273.15]]
+        )
+
+        cmor_check_metadata(fixed_cube, project, mip, short_name)
+
+        assert self.mock_debug.call_count == 2
+        assert self.mock_warning.call_count == 6
+
+    def test_fix_metadata_amon_tas_2d_latlon(self):
+        """Test ``fix_metadata`` with 2D latitude/longitude."""
+        short_name = 'tas'
+        project = 'CMIP6'
+        dataset = '__MODEL_WITH_NO_EXPLICIT_FIX__'
+        mip = 'Amon'
+
+        fixed_cubes = fix_metadata(
+            self.cubes_2d_latlon,
+            short_name,
+            project,
+            dataset,
+            mip,
+        )
+
+        assert len(fixed_cubes) == 1
+        fixed_cube = fixed_cubes[0]
+
+        self.assert_tas_metadata(fixed_cube)
+        self.assert_time_metadata(fixed_cube)
+        self.assert_lat_metadata(fixed_cube)
+        self.assert_lon_metadata(fixed_cube)
+
+        # Latitude
+        np.testing.assert_allclose(
+            fixed_cube.coord('latitude').points, [[10.0, -10.0]]
+        )
+        assert fixed_cube.coord('latitude').bounds is None
+
+        # Longitude
+        np.testing.assert_allclose(
+            fixed_cube.coord('longitude').points, [[10.0, 20.0]]
+        )
+        assert fixed_cube.coord('longitude').bounds is None
+
+        # Variable data
+        assert fixed_cube.has_lazy_data()
+        np.testing.assert_allclose(
+            fixed_cube.data, [[[273.15, 273.15]], [[273.15, 273.15]]]
+        )
+
+        cmor_check_metadata(fixed_cube, project, mip, short_name)
+
+        assert self.mock_debug.call_count == 3
+        assert self.mock_warning.call_count == 8
+
+    def test_fix_metadata_amon_tas_invalid_time(self):
+        """Test ``fix_metadata`` with 2D latitude/longitude."""
+        short_name = 'tas'
+        project = 'CMIP6'
+        dataset = '__MODEL_WITH_NO_EXPLICIT_FIX__'
+        mip = 'Amon'
+
+        self.cubes_2d_latlon[0].remove_coord('time')
+        aux_time_coord = AuxCoord(
+            [1, 2],
+            standard_name='time',
+            var_name='time',
+            units='kg',
+        )
+        self.cubes_2d_latlon[0].add_aux_coord(aux_time_coord, 0)
+        self.cubes_2d_latlon[0].attributes = {
+            'parent_time_units': 'this is certainly not a unit',
+            'branch_time_in_parent': 'BRANCH TIME IN PARENT',
+            'branch_time_in_child': 'BRANCH TIME IN CHILD',
+        }
+
+        fixed_cubes = fix_metadata(
+            self.cubes_2d_latlon,
+            short_name,
+            project,
+            dataset,
+            mip,
+        )
+
+        assert len(fixed_cubes) == 1
+        fixed_cube = fixed_cubes[0]
+
+        self.assert_lat_metadata(fixed_cube)
+        self.assert_lon_metadata(fixed_cube)
+
+        assert fixed_cube.coord('time').units == 'kg'
+        assert fixed_cube.attributes == {
+            'parent_time_units': 'this is certainly not a unit',
+            'branch_time_in_parent': 'BRANCH TIME IN PARENT',
+            'branch_time_in_child': 'BRANCH TIME IN CHILD',
+        }
+
+        # CMOR checks fail because calendar is not defined
+        with pytest.raises(ValueError):
+            cmor_check_metadata(fixed_cube, project, mip, short_name)
+
+        assert self.mock_debug.call_count == 3
+        assert self.mock_warning.call_count == 7
+
+    def test_fix_metadata_oimon_ssi(self):
+        """Test ``fix_metadata`` with psu units."""
+        short_name = 'ssi'
+        project = 'CMIP5'
+        dataset = '__MODEL_WITH_NO_EXPLICIT_FIX__'
+        mip = 'OImon'
+
+        self.cubes_2d_latlon[0].var_name = 'ssi'
+        self.cubes_2d_latlon[0].attributes = {
+            'invalid_units': 'psu',
+            'parent_time_units': 'no parent',
+        }
+
+        # Also test 2D longitude that already has bounds
+        self.cubes_2d_latlon[0].coord('latitude').var_name = 'lat'
+        self.cubes_2d_latlon[0].coord('longitude').var_name = 'lon'
+        self.cubes_2d_latlon[0].coord('longitude').bounds = [
+            [[365.0, 375.0], [375.0, 400.0]]
+        ]
+
+        fixed_cubes = fix_metadata(
+            self.cubes_2d_latlon,
+            short_name,
+            project,
+            dataset,
+            mip,
+        )
+
+        assert len(fixed_cubes) == 1
+        fixed_cube = fixed_cubes[0]
+
+        # Variable metadata
+        assert fixed_cube.standard_name == 'sea_ice_salinity'
+        assert fixed_cube.long_name == 'Sea Ice Salinity'
+        assert fixed_cube.var_name == 'ssi'
+        assert fixed_cube.units == '1'
+        assert fixed_cube.attributes == {'parent_time_units': 'no parent'}
+
+        # Coordinates
+        self.assert_time_metadata(fixed_cube)
+        self.assert_lat_metadata(fixed_cube)
+        self.assert_lon_metadata(fixed_cube)
+
+        # Latitude
+        np.testing.assert_allclose(
+            fixed_cube.coord('latitude').points, [[10.0, -10.0]]
+        )
+        assert fixed_cube.coord('latitude').bounds is None
+
+        # Longitude
+        np.testing.assert_allclose(
+            fixed_cube.coord('longitude').points, [[10.0, 20.0]]
+        )
+        np.testing.assert_allclose(
+            fixed_cube.coord('longitude').bounds,
+            [[[5.0, 15.0], [15.0, 40.0]]],
+        )
+
+        # Variable data
+        assert fixed_cube.has_lazy_data()
+        np.testing.assert_allclose(
+            fixed_cube.data, [[[0.0, 0.0]], [[0.0, 0.0]]],
+        )
 
         cmor_check_metadata(fixed_cube, project, mip, short_name)
 

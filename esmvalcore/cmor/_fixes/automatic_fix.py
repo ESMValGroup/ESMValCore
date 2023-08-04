@@ -187,8 +187,8 @@ def get_time_bounds(time: Coord, freq: str):
                                  time.units, time.dtype)
         else:
             delta = {
-                'day': 12 / 24,
-                '6hr': 3 / 24,
+                'day': 12.0 / 24,
+                '6hr': 3.0 / 24,
                 '3hr': 1.5 / 24,
                 '1hr': 0.5 / 24,
             }
@@ -345,7 +345,7 @@ class AutomaticFix:
             cube = reverse(cube, cube.coord_dims(coord))
             coord = cube.coord(var_name=coord.var_name)
             if coord.has_bounds():
-                bounds = coord.bounds
+                bounds = coord.core_bounds()
                 right_bounds = bounds[:-2, 1]
                 left_bounds = bounds[1:-1, 0]
                 if np.all(right_bounds != left_bounds):
@@ -757,8 +757,13 @@ class AutomaticFix:
         else:
             new_lons = cube_coord.core_points().copy()
             new_lons = self._set_range_in_0_360(new_lons)
-            new_bounds = cube_coord.core_bounds().copy()
-            new_bounds = self._set_range_in_0_360(new_bounds)
+
+            if cube_coord.core_bounds() is None:
+                new_bounds = None
+            else:
+                new_bounds = cube_coord.core_bounds().copy()
+                new_bounds = self._set_range_in_0_360(new_bounds)
+
             new_coord = cube_coord.copy(new_lons, new_bounds)
             dims = cube.coord_dims(cube_coord)
             cube.remove_coord(cube_coord)
