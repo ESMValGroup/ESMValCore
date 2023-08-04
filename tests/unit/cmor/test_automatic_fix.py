@@ -1,12 +1,12 @@
 """Unit tests for automatic fixes."""
 
+from unittest.mock import sentinel
+
 import numpy as np
 import pytest
 from iris.coords import AuxCoord
 
-from unittest.mock import sentinel
-
-from esmvalcore.cmor._fixes.automatic_fix import get_time_bounds, AutomaticFix
+from esmvalcore.cmor._fixes.automatic_fix import AutomaticFix, get_time_bounds
 
 
 @pytest.fixture
@@ -59,7 +59,7 @@ def test_automatic_fix_var_info_none():
 
 def test_automatic_fix_empty_long_name(automatic_fix, monkeypatch):
     """Test ``AutomaticFix``."""
-    # Artifically set long_name to empty string for test
+    # Artificially set long_name to empty string for test
     monkeypatch.setattr(automatic_fix.var_info, 'long_name', '')
 
     cube = automatic_fix.fix_long_name(sentinel.cube)
@@ -69,7 +69,7 @@ def test_automatic_fix_empty_long_name(automatic_fix, monkeypatch):
 
 def test_automatic_fix_empty_units(automatic_fix, monkeypatch):
     """Test ``AutomaticFix``."""
-    # Artifically set latitude units to empty string for test
+    # Artificially set latitude units to empty string for test
     coord_info = automatic_fix.var_info.coordinates['latitude']
     monkeypatch.setattr(coord_info, 'units', '')
 
@@ -82,7 +82,7 @@ def test_automatic_fix_empty_units(automatic_fix, monkeypatch):
 
 def test_automatic_fix_no_generic_lev_coords(automatic_fix, monkeypatch):
     """Test ``AutomaticFix``."""
-    # Artifically remove generic_lev_coords
+    # Artificially remove generic_lev_coords
     monkeypatch.setattr(
         automatic_fix.var_info.coordinates['alevel'], 'generic_lev_coords', {}
     )
