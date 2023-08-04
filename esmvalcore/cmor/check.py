@@ -625,20 +625,6 @@ class CMORCheck():
         self._check_coord_monotonicity_and_direction(coord_info, coord,
                                                      var_name)
 
-    def _check_longitude_max(self, coord, var_name):
-        if np.any(coord.core_points() > 720):
-            self.report_critical(
-                f'{var_name} longitude coordinate has values > 720 degrees')
-            return False
-        return True
-
-    def _check_longitude_min(self, coord, var_name):
-        if np.any(coord.core_points() < -360):
-            self.report_critical(
-                f'{var_name} longitude coordinate has values < -360 degrees')
-            return False
-        return True
-
     def _check_requested_values(self, coord, coord_info, var_name):
         """Check requested values."""
         if coord_info.requested:

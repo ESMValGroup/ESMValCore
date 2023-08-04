@@ -1,5 +1,6 @@
 """Unit tests for the CMORCheck class."""
 
+import logging
 import unittest
 from copy import deepcopy
 
@@ -20,6 +21,8 @@ from esmvalcore.cmor.check import (
     _get_cmor_checker,
 )
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+
+logger = logging.getLogger(__name__)
 
 
 class VariableInfoMock:
@@ -146,7 +149,7 @@ class TestCMORCheck(unittest.TestCase):
 
     def _check_cube(self, frequency=None,
                     check_level=CheckLevels.DEFAULT):
-        """Apply checks and optionally automatic fixes to self.cube."""
+        """Apply checks to self.cube."""
         def checker(cube):
             return CMORCheck(
                 cube,
@@ -159,7 +162,7 @@ class TestCMORCheck(unittest.TestCase):
 
     def _check_cube_metadata(self, frequency=None,
                              check_level=CheckLevels.DEFAULT):
-        """Apply checks and optionally automatic fixes to self.cube."""
+        """Apply checks to self.cube."""
         def checker(cube):
             return CMORCheck(
                 cube,
@@ -168,6 +171,14 @@ class TestCMORCheck(unittest.TestCase):
                 check_level=check_level)
 
         self.cube = checker(self.cube).check_metadata()
+
+    def test_check_with_custom_logger(self):
+        """Test checks with custom logger."""
+        def checker(cube):
+            return CMORCheck(cube, self.var_info)
+
+        self.cube = checker(self.cube).check_metadata(logger=logger)
+        self.cube = checker(self.cube).check_data(logger=logger)
 
     def test_check_with_month_number(self):
         """Test checks succeeds for a good cube with month number."""
@@ -649,6 +660,24 @@ class TestCMORCheck(unittest.TestCase):
         self.var_info.coordinates['lat'].stored_direction = 'decreasing'
         self._check_fails_in_metadata()
 
+    # TODO: remove in v2.12
+    def test_non_decreasing_automatic_fix(self):
+        """Automatic fix for decreasing coordinate."""
+        self.var_info.coordinates['lat'].stored_direction = 'decreasing'
+        checker = CMORCheck(self.cube, self.var_info, automatic_fixes=True)
+        checker.check_metadata()
+
+    def test_lat_non_monotonic(self):
+        """Test fail for non monotonic latitude."""
+        lat = self.cube.coord('latitude')
+        points = np.array(lat.points)
+        points[-1] = points[0]
+        dims = self.cube.coord_dims(lat)
+        self.cube.remove_coord(lat)
+        lat = iris.coords.AuxCoord.from_coord(lat)
+        self.cube.add_aux_coord(lat.copy(points), dims)
+        self._check_fails_in_metadata()
+
     def test_not_bounds(self):
         """Warning if bounds are not available."""
         self.cube.coord('longitude').bounds = None
@@ -947,7 +976,7 @@ class TestCMORCheck(unittest.TestCase):
 
         return cube
 
-    def _get_unstructed_grid_cube(self, correct_lon=True, n_bounds=2):
+    def _get_unstructed_grid_cube(self, n_bounds=2):
         """Get cube with unstructured grid."""
         assert n_bounds in (2, 3), "Only 2 or 3 bounds per cell supported"
 
@@ -993,23 +1022,6 @@ class TestCMORCheck(unittest.TestCase):
                 ))
                 coord.bounds = np.swapaxes(new_bounds, 0, 1)
 
-        # Convert longitude to [-180, 180] to check automatic fixes if desired
-        if correct_lon:
-            return cube
-        new_lon = iris.coords.AuxCoord(
-            points=cube.coord('longitude').points,
-            bounds=cube.coord('longitude').bounds,
-            var_name='lon',
-            standard_name='longitude',
-            long_name='Longitude',
-            units='degrees_east',
-        )
-        new_lon.points = np.where(new_lon.points < 180.0, new_lon.points,
-                                  new_lon.points - 360.0)
-        new_lon.bounds = np.where(new_lon.bounds < 180.0, new_lon.bounds,
-                                  new_lon.bounds - 360.0)
-        cube.remove_coord('longitude')
-        cube.add_aux_coord(new_lon, 1)
         return cube
 
     def _setup_generic_level_var(self):
