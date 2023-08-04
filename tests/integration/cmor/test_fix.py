@@ -550,8 +550,8 @@ class TestAutomaticFix:
         assert self.mock_debug.call_count == 3
         assert self.mock_warning.call_count == 8
 
-    def test_fix_metadata_amon_tas_invalid_time(self):
-        """Test ``fix_metadata`` with 2D latitude/longitude."""
+    def test_fix_metadata_amon_tas_invalid_time_units(self):
+        """Test ``fix_metadata`` with invalid time units."""
         short_name = 'tas'
         project = 'CMIP6'
         dataset = '__MODEL_WITH_NO_EXPLICIT_FIX__'
@@ -565,6 +565,37 @@ class TestAutomaticFix:
             units='kg',
         )
         self.cubes_2d_latlon[0].add_aux_coord(aux_time_coord, 0)
+
+        fixed_cubes = fix_metadata(
+            self.cubes_2d_latlon,
+            short_name,
+            project,
+            dataset,
+            mip,
+        )
+
+        assert len(fixed_cubes) == 1
+        fixed_cube = fixed_cubes[0]
+
+        self.assert_lat_metadata(fixed_cube)
+        self.assert_lon_metadata(fixed_cube)
+
+        assert fixed_cube.coord('time').units == 'kg'
+
+        # CMOR checks fail because calendar is not defined
+        with pytest.raises(ValueError):
+            cmor_check_metadata(fixed_cube, project, mip, short_name)
+
+        assert self.mock_debug.call_count == 3
+        assert self.mock_warning.call_count == 7
+
+    def test_fix_metadata_amon_tas_invalid_time_attrs(self):
+        """Test ``fix_metadata`` with invalid time attributes."""
+        short_name = 'tas'
+        project = 'CMIP6'
+        dataset = '__MODEL_WITH_NO_EXPLICIT_FIX__'
+        mip = 'Amon'
+
         self.cubes_2d_latlon[0].attributes = {
             'parent_time_units': 'this is certainly not a unit',
             'branch_time_in_parent': 'BRANCH TIME IN PARENT',
@@ -582,22 +613,20 @@ class TestAutomaticFix:
         assert len(fixed_cubes) == 1
         fixed_cube = fixed_cubes[0]
 
+        self.assert_time_metadata(fixed_cube)
         self.assert_lat_metadata(fixed_cube)
         self.assert_lon_metadata(fixed_cube)
 
-        assert fixed_cube.coord('time').units == 'kg'
         assert fixed_cube.attributes == {
             'parent_time_units': 'this is certainly not a unit',
             'branch_time_in_parent': 'BRANCH TIME IN PARENT',
             'branch_time_in_child': 'BRANCH TIME IN CHILD',
         }
 
-        # CMOR checks fail because calendar is not defined
-        with pytest.raises(ValueError):
-            cmor_check_metadata(fixed_cube, project, mip, short_name)
+        cmor_check_metadata(fixed_cube, project, mip, short_name)
 
         assert self.mock_debug.call_count == 3
-        assert self.mock_warning.call_count == 7
+        assert self.mock_warning.call_count == 8
 
     def test_fix_metadata_oimon_ssi(self):
         """Test ``fix_metadata`` with psu units."""

@@ -5,6 +5,7 @@ from unittest.mock import sentinel
 import numpy as np
 import pytest
 from iris.coords import AuxCoord
+from iris.cube import Cube
 
 from esmvalcore.cmor._fixes.automatic_fix import AutomaticFix, get_time_bounds
 
@@ -164,11 +165,10 @@ def test_fix_direction_string_coord(automatic_fix):
 
 def test_fix_direction_no_stored_direction(automatic_fix, mocker):
     """Test ``AutomaticFix``."""
-    cube_coord = AuxCoord(['a'], standard_name='latitude', units='rad')
+    cube = Cube(0)
+    cube_coord = AuxCoord([0, 1], standard_name='latitude', units='rad')
     cmor_coord = mocker.Mock(stored_direction='')
 
-    ret = automatic_fix.fix_coord_direction(
-        sentinel.cube, cmor_coord, cube_coord
-    )
+    ret = automatic_fix.fix_coord_direction(cube, cmor_coord, cube_coord)
 
-    assert ret == (sentinel.cube, cube_coord)
+    assert ret == (cube, cube_coord)
