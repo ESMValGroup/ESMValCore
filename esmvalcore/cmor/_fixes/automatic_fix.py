@@ -321,17 +321,17 @@ class AutomaticFix:
     def _msg_prefix(cube: Cube) -> str:
         """Get prefix for log messages."""
         if 'source_file' in cube.attributes:
-            return f"For file {cube.attributes['source_file']}: "
-        return f"For variable {cube.var_name}: "
+            return f"\n(for file {cube.attributes['source_file']})"
+        return f"\n(for variable {cube.var_name})"
 
     def _debug_msg(self, cube: Cube, msg: str, *args) -> None:
         """Print debug message."""
-        msg = self._msg_prefix(cube) + msg
+        msg += self._msg_prefix(cube)
         logger.debug(msg, *args)
 
     def _warning_msg(self, cube: Cube, msg: str, *args) -> None:
         """Print debug message."""
-        msg = self._msg_prefix(cube) + msg
+        msg += self._msg_prefix(cube)
         logger.warning(msg, *args)
 
     @staticmethod
@@ -823,7 +823,6 @@ class AutomaticFix:
             self._warning_msg(
                 cube,
                 "Cannot guess bounds for coordinate %s: %s",
-                cube_coord.var_name,
                 cube.var_name,
                 str(exc),
             )
