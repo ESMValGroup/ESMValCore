@@ -7,6 +7,7 @@ variables to be sure that all known errors are fixed.
 from __future__ import annotations
 
 import logging
+import warnings
 from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
@@ -14,6 +15,7 @@ from typing import TYPE_CHECKING, Optional
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.automatic_fix import AutomaticFix
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 from ._fixes.fix import Fix
 from .check import CheckLevels, _get_cmor_checker
@@ -102,12 +104,10 @@ def fix_metadata(
     session: Optional[Session] = None,
     **extra_facets,
 ) -> CubeList:
-    """Fix cube metadata if fixes are required and check it if desired.
+    """Fix cube metadata if fixes are required.
 
-    This method collects all the relevant fixes for a given variable and
-    applies them. If desired, additionally checks the resulting cube (or the
-    original if no fixes were needed) metadata to ensure that it complies with
-    the standards of its project CMOR tables.
+    This method collects all the relevant fixes (including automatic ones) for
+    a given variable and applies them.
 
     Parameters
     ----------
@@ -125,6 +125,15 @@ def fix_metadata(
         Variable's data frequency, if available.
     check_level:
         Level of strictness of the checks.
+
+        .. deprecated:: 2.10.0
+            This option has been deprecated in ESMValCore version 2.10.0 and is
+            scheduled for removal in version 2.12.0. Please use the functions
+            :func:`~esmvalcore.preprocessor.cmor_check_metadata`,
+            :func:`~esmvalcore.preprocessor.cmor_check_data`, or
+            :meth:`~esmvalcore.cmor.check.cmor_check` instead. This function
+            will no longer perform CMOR checks. Fixes and CMOR checks have been
+            clearly separated in ESMValCore version 2.10.0.
     session:
         Current session which includes configuration and directory information.
     **extra_facets:
@@ -134,14 +143,23 @@ def fix_metadata(
     Returns
     -------
     iris.cube.Cube
-        Fixed and (potentially) checked cube.
-
-    Raises
-    ------
-    CMORCheckError
-        If the checker detects errors in the metadata that it can not fix.
+        Fixed cube.
 
     """
+    # Deprecate CMOR checks (remove in v2.12)
+    if check_level != CheckLevels.DEFAULT:
+        msg = (
+            "The option `check_level` has been deprecated in ESMValCore "
+            "version 2.10.0 and is scheduled for removal in version 2.12.0. "
+            "Please use the functions "
+            "esmvalcore.preprocessor.cmor_check_metadata, "
+            "esmvalcore.preprocessor.cmor_check_data, or "
+            "esmvalcore.cmor.check.cmor_check instead. This function will no "
+            "longer perform CMOR checks. Fixes and CMOR checks have been "
+            "clearly separated in ESMValCore version 2.10.0."
+        )
+        warnings.warn(msg, ESMValCoreDeprecationWarning)
+
     # Update extra_facets with variable information given as regular arguments
     # to this function
     extra_facets.update({
@@ -232,14 +250,12 @@ def fix_data(
     session: Optional[Session] = None,
     **extra_facets,
 ) -> Cube:
-    """Fix cube data if fixes add present and check it if desired.
+    """Fix cube data if fixes are required.
 
     This method assumes that metadata is already fixed and checked.
 
-    This method collects all the relevant fixes for a given variable and
-    applies them. If desired, additionally checks resulting cube (or the
-    original if no fixes were needed) data to ensure that it complies with the
-    standards of its project CMOR tables.
+    This method collects all the relevant fixes (including automatic ones) for
+    a given variable and applies them.
 
     Parameters
     ----------
@@ -257,6 +273,15 @@ def fix_data(
         Variable's data frequency, if available.
     check_level:
         Level of strictness of the checks.
+
+        .. deprecated:: 2.10.0
+            This option has been deprecated in ESMValCore version 2.10.0 and is
+            scheduled for removal in version 2.12.0. Please use the functions
+            :func:`~esmvalcore.preprocessor.cmor_check_metadata`,
+            :func:`~esmvalcore.preprocessor.cmor_check_data`, or
+            :meth:`~esmvalcore.cmor.check.cmor_check` instead. This function
+            will no longer perform CMOR checks. Fixes and CMOR checks have been
+            clearly separated in ESMValCore version 2.10.0.
     session:
         Current session which includes configuration and directory information.
     **extra_facets:
@@ -266,14 +291,23 @@ def fix_data(
     Returns
     -------
     iris.cube.Cube
-        Fixed and (potentially) checked cube.
-
-    Raises
-    ------
-    CMORCheckError
-        If the checker detects errors in the data that it can not fix.
+        Fixed cube.
 
     """
+    # Deprecate CMOR checks (remove in v2.12)
+    if check_level != CheckLevels.DEFAULT:
+        msg = (
+            "The option `check_level` has been deprecated in ESMValCore "
+            "version 2.10.0 and is scheduled for removal in version 2.12.0. "
+            "Please use the functions "
+            "esmvalcore.preprocessor.cmor_check_metadata, "
+            "esmvalcore.preprocessor.cmor_check_data, or "
+            "esmvalcore.cmor.check.cmor_check instead. This function will no "
+            "longer perform CMOR checks. Fixes and CMOR checks have been "
+            "clearly separated in ESMValCore version 2.10.0."
+        )
+        warnings.warn(msg, ESMValCoreDeprecationWarning)
+
     # Update extra_facets with variable information given as regular arguments
     # to this function
     extra_facets.update({

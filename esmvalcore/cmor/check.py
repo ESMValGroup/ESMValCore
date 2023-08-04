@@ -53,9 +53,6 @@ class CMORCheckError(Exception):
 class CMORCheck():
     """Class used to check the CMOR-compliance of the data.
 
-    It can also fix some minor errors and does some minor data
-    homogeneization:
-
     Parameters
     ----------
     cube: iris.cube.Cube:
@@ -144,13 +141,7 @@ class CMORCheck():
     def check_metadata(self, logger: Optional[logging.Logger] = None) -> Cube:
         """Check the cube metadata.
 
-        Perform all the tests that do not require to have the data in memory.
-
-        It will also report some warnings in case of minor errors and
-        homogenize some data:
-
-            - Equivalent calendars will all default to the same name.
-            - Time units will be set to days since 1850-01-01
+        It will also report some warnings in case of minor errors.
 
 
         Parameters
@@ -161,7 +152,7 @@ class CMORCheck():
         Returns
         -------
         iris.cube.Cube
-            Checked and (potentially) fixed cube.
+            Checked cube.
 
         Raises
         ------
@@ -197,7 +188,6 @@ class CMORCheck():
     def check_data(self, logger: Optional[logging.Logger] = None) -> Cube:
         """Check the cube data.
 
-        Performs all the tests that require to have the data in memory.
         Assumes that metadata is correct, so you must call check_metadata prior
         to this.
 
@@ -211,7 +201,7 @@ class CMORCheck():
         Returns
         -------
         iris.cube.Cube
-            Checked and (potentially) fixed cube.
+            Checked cube.
 
         Raises
         ------
@@ -908,7 +898,7 @@ def cmor_check_metadata(
     Returns
     -------
     iris.cube.Cube
-        Checked and (potentially) fixed cube.
+        Checked cube.
 
     """
     checker = _get_cmor_checker(
@@ -951,7 +941,7 @@ def cmor_check_data(
     Returns
     -------
     iris.cube.Cube
-        Checked and (potentially) fixed cube.
+        Checked cube.
 
     """
     checker = _get_cmor_checker(
@@ -997,7 +987,7 @@ def cmor_check(
     Returns
     -------
     iris.cube.Cube
-        Checked and (potentially) fixed cube.
+        Checked cube.
 
     """
     cube = cmor_check_metadata(

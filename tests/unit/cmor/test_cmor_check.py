@@ -290,6 +290,14 @@ class TestCMORCheck(unittest.TestCase):
         checker.check_metadata()
         checker.check_data()
 
+    # TODO: remove in v2.12
+    def test_valid_generic_level_automatic_fixes(self):
+        """Test valid generic level coordinate with automatic fixes."""
+        self._setup_generic_level_var()
+        checker = CMORCheck(self.cube, self.var_info, automatic_fixes=True)
+        checker.check_metadata()
+        checker.check_data()
+
     def test_invalid_generic_level(self):
         """Test invalid generic level coordinate."""
         self._setup_generic_level_var()
@@ -661,11 +669,18 @@ class TestCMORCheck(unittest.TestCase):
         self._check_fails_in_metadata()
 
     # TODO: remove in v2.12
-    def test_non_decreasing_automatic_fix(self):
+    def test_non_decreasing_automatic_fix_metadata(self):
         """Automatic fix for decreasing coordinate."""
         self.var_info.coordinates['lat'].stored_direction = 'decreasing'
         checker = CMORCheck(self.cube, self.var_info, automatic_fixes=True)
         checker.check_metadata()
+
+    # TODO: remove in v2.12
+    def test_non_decreasing_automatic_fix_data(self):
+        """Automatic fix for decreasing coordinate."""
+        self.var_info.coordinates['lat'].stored_direction = 'decreasing'
+        checker = CMORCheck(self.cube, self.var_info, automatic_fixes=True)
+        checker.check_data()
 
     def test_lat_non_monotonic(self):
         """Test fail for non monotonic latitude."""

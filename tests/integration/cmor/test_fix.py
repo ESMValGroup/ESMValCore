@@ -7,7 +7,8 @@ from cf_units import Unit
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
-from esmvalcore.cmor.check import CMORCheckError
+from esmvalcore.cmor.check import CheckLevels, CMORCheckError
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.preprocessor import (
     cmor_check_data,
     cmor_check_metadata,
@@ -718,3 +719,27 @@ class TestAutomaticFix:
 
         assert self.mock_debug.call_count == 0
         assert self.mock_warning.call_count == 0
+
+    def test_deprecate_check_level_fix_metadata(self):
+        """Test deprecation of check level in ``fix_metadata``."""
+        with pytest.warns(ESMValCoreDeprecationWarning):
+            fix_metadata(
+                self.cubes_4d,
+                'ta',
+                'CMIP6',
+                'MODEL',
+                'Amon',
+                check_level=CheckLevels.RELAXED,
+            )
+
+    def test_deprecate_check_level_fix_data(self):
+        """Test deprecation of check level in ``fix_data``."""
+        with pytest.warns(ESMValCoreDeprecationWarning):
+            fix_metadata(
+                self.cubes_4d,
+                'ta',
+                'CMIP6',
+                'MODEL',
+                'Amon',
+                check_level=CheckLevels.RELAXED,
+            )
