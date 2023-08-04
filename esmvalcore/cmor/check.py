@@ -21,6 +21,7 @@ from ._fixes.automatic_fix import (
     AutomaticFix,
     get_alternative_generic_lev_coord,
     get_generic_lev_coord_names,
+    get_new_generic_level_coord,
     is_unstructured_grid,
     simplify_calendar,
 )
@@ -421,10 +422,9 @@ class CMORCheck():
                 if not out_name:
                     self.report_error(
                         f'Generic level coordinate {key} has wrong var_name.')
-                level = coordinate.generic_lev_coords[name]
-                level.generic_level = True
-                level.generic_lev_coords = self._cmor_var.coordinates[
-                    key].generic_lev_coords
+                level = get_new_generic_level_coord(
+                    self._cmor_var, coordinate, key, name
+                )
                 self._cmor_var.coordinates[key] = level
                 self.report_debug_message(f'Generic level coordinate {key} '
                                           'will be checked against '

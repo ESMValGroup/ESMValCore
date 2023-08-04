@@ -4,6 +4,7 @@ import dask.array as da
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris.aux_factory import HybridHeightFactory, HybridPressureFactory
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
@@ -62,6 +63,48 @@ class TestAutomaticFix:
             standard_name='air_pressure',
             var_name='plev',
             units='hPa',
+        )
+        self.lev_coord_hybrid_height = DimCoord(
+            [1.0, 0.5, 0.0],
+            standard_name='atmosphere_hybrid_height_coordinate',
+            var_name='lev',
+            units='m',
+        )
+        self.lev_coord_hybrid_pressure = DimCoord(
+            [0.0, 0.5, 1.0],
+            standard_name='atmosphere_hybrid_sigma_pressure_coordinate',
+            var_name='lev',
+            units='1',
+        )
+        self.ap_coord = AuxCoord(
+            [0.0, 0.0, 0.0],
+            var_name='ap',
+            units='Pa',
+        )
+        self.b_coord = AuxCoord(
+            [0.0, 0.5, 1.0],
+            var_name='b',
+            units='1',
+        )
+        self.ps_coord = AuxCoord(
+            np.full((2, 2, 2), 10),
+            var_name='ps',
+            units='Pa',
+        )
+        self.orog_coord = AuxCoord(
+            np.full((2, 2), 10),
+            var_name='orog',
+            units='m',
+        )
+        self.hybrid_height_factory = HybridHeightFactory(
+            delta=self.lev_coord_hybrid_height,
+            sigma=self.b_coord,
+            orography=self.orog_coord,
+        )
+        self.hybrid_pressure_factory = HybridPressureFactory(
+            delta=self.ap_coord,
+            sigma=self.lev_coord_hybrid_pressure,
+            surface_air_pressure=self.ps_coord,
         )
         self.lat_coord = DimCoord(
             [0, 10],
@@ -139,6 +182,54 @@ class TestAutomaticFix:
             attributes={},
         )
         self.cubes_4d = CubeList([self.cube_4d])
+
+        coord_spec_hybrid_height_4d = [
+            (self.time_coord, 0),
+            (self.lev_coord_hybrid_height, 1),
+            (self.lat_coord_rev, 2),
+            (self.lon_coord, 3),
+        ]
+        aux_coord_spec_hybrid_height_4d = [
+            (self.b_coord, 1),
+            (self.orog_coord, (2, 3)),
+        ]
+        self.cube_hybrid_height_4d = Cube(
+            da.arange(2 * 3 * 2 * 2, dtype=np.float32).reshape(2, 3, 2, 2),
+            standard_name='air_pressure',
+            long_name='Air Pressure',
+            var_name='ta',
+            units='celsius',
+            dim_coords_and_dims=coord_spec_hybrid_height_4d,
+            aux_coords_and_dims=aux_coord_spec_hybrid_height_4d,
+            aux_factories=[self.hybrid_height_factory],
+            attributes={},
+        )
+        self.cubes_hybrid_height_4d = CubeList([self.cube_hybrid_height_4d])
+
+        coord_spec_hybrid_pressure_4d = [
+            (self.time_coord, 0),
+            (self.lev_coord_hybrid_pressure, 1),
+            (self.lat_coord_rev, 2),
+            (self.lon_coord, 3),
+        ]
+        aux_coord_spec_hybrid_pressure_4d = [
+            (self.ap_coord, 1),
+            (self.ps_coord, (0, 2, 3)),
+        ]
+        self.cube_hybrid_pressure_4d = Cube(
+            da.arange(2 * 3 * 2 * 2, dtype=np.float32).reshape(2, 3, 2, 2),
+            standard_name='air_pressure',
+            long_name='Air Pressure',
+            var_name='ta',
+            units='celsius',
+            dim_coords_and_dims=coord_spec_hybrid_pressure_4d,
+            aux_coords_and_dims=aux_coord_spec_hybrid_pressure_4d,
+            aux_factories=[self.hybrid_pressure_factory],
+            attributes={},
+        )
+        self.cubes_hybrid_pressure_4d = CubeList([
+            self.cube_hybrid_pressure_4d
+        ])
 
         coord_spec_unstrucutred = [
             (self.height2m_coord, ()),
@@ -353,7 +444,81 @@ class TestAutomaticFix:
         assert self.mock_debug.call_count == 3
         assert self.mock_warning.call_count == 9
 
-    def test_fix_metadata_cfmon_ta(self):
+    def test_fix_metadata_cfmon_ta_hybrid_height(self):
+        """Test ``fix_metadata`` with hybrid height coordinate."""
+        short_name = 'ta'
+        project = 'CMIP6'
+        dataset = '__MODEL_WITH_NO_EXPLICIT_FIX__'
+        mip = 'CFmon'
+
+        fixed_cubes = fix_metadata(
+            self.cubes_hybrid_height_4d,
+            short_name,
+            project,
+            dataset,
+            mip,
+        )
+
+        assert len(fixed_cubes) == 1
+        fixed_cube = fixed_cubes[0]
+
+        hybrid_coord = fixed_cube.coord('atmosphere_hybrid_height_coordinate')
+        assert hybrid_coord.var_name == 'lev'
+        assert hybrid_coord.long_name is None
+        assert hybrid_coord.units == 'm'
+        np.testing.assert_allclose(hybrid_coord.points, [0.0, 0.5, 1.0])
+        assert fixed_cube.coords('altitude')
+        assert fixed_cube.coord_dims('altitude') == (1, 2, 3)
+
+        self.assert_ta_metadata(fixed_cube)
+        self.assert_time_metadata(fixed_cube)
+        self.assert_lat_metadata(fixed_cube)
+        self.assert_lon_metadata(fixed_cube)
+
+        cmor_check_metadata(fixed_cube, project, mip, short_name)
+
+        assert self.mock_debug.call_count == 4
+        assert self.mock_warning.call_count == 9
+
+    def test_fix_metadata_cfmon_ta_hybrid_pressure(self):
+        """Test ``fix_metadata`` with hybrid pressure coordinate."""
+        short_name = 'ta'
+        project = 'CMIP6'
+        dataset = '__MODEL_WITH_NO_EXPLICIT_FIX__'
+        mip = 'CFmon'
+
+        fixed_cubes = fix_metadata(
+            self.cubes_hybrid_pressure_4d,
+            short_name,
+            project,
+            dataset,
+            mip,
+        )
+
+        assert len(fixed_cubes) == 1
+        fixed_cube = fixed_cubes[0]
+
+        hybrid_coord = fixed_cube.coord(
+            'atmosphere_hybrid_sigma_pressure_coordinate'
+        )
+        assert hybrid_coord.var_name == 'lev'
+        assert hybrid_coord.long_name is None
+        assert hybrid_coord.units == '1'
+        np.testing.assert_allclose(hybrid_coord.points, [1.0, 0.5, 0.0])
+        assert fixed_cube.coords('air_pressure')
+        assert fixed_cube.coord_dims('air_pressure') == (0, 1, 2, 3)
+
+        self.assert_ta_metadata(fixed_cube)
+        self.assert_time_metadata(fixed_cube)
+        self.assert_lat_metadata(fixed_cube)
+        self.assert_lon_metadata(fixed_cube)
+
+        cmor_check_metadata(fixed_cube, project, mip, short_name)
+
+        assert self.mock_debug.call_count == 4
+        assert self.mock_warning.call_count == 9
+
+    def test_fix_metadata_cfmon_ta_alternative(self):
         """Test ``fix_metadata`` with alternative generic level coordinate."""
         short_name = 'ta'
         project = 'CMIP6'

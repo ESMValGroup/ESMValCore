@@ -122,6 +122,50 @@ def get_generic_lev_coord_names(
     return (standard_name, out_name, name)
 
 
+def get_new_generic_level_coord(
+    var_info: VariableInfo,
+    generic_level_coord: CoordinateInfo,
+    generic_level_coord_name: str,
+    new_coord_name: str | None,
+) -> CoordinateInfo:
+    """Get new generic level coordinate.
+
+    There are a variety of possible options for each generic level coordinate
+    (e.g., `alevel`), for example, `hybrid_height` or `standard_hybrid_sigma`.
+    This function returns the new coordinate (e.g.,
+    `new_coord_name=hybrid_height`) with the relevant metadata.
+
+    Note
+    ----
+    This alters the corresponding entry of the original generic level
+    coordinate's `generic_level_coords` attribute (i.e.,
+    ``generic_level_coord.generic_level_coords[new_coord_name]`) in-place!
+
+    Parameters
+    ----------
+    var_info:
+        CMOR variable information.
+    generic_level_coord:
+        Original generic level coordinate.
+    generic_level_coord_name:
+        Original name of the generic level coordinate (e.g., `alevel`).
+    new_coord_name:
+        Name of the new generic level coordinate (e.g., `hybrid_height`).
+
+    Returns
+    -------
+    CoordinateInfo
+        New generic level coordinate.
+
+    """
+    new_coord = generic_level_coord.generic_lev_coords[new_coord_name]
+    new_coord.generic_level = True
+    new_coord.generic_lev_coords = (
+        var_info.coordinates[generic_level_coord_name].generic_lev_coords
+    )
+    return new_coord
+
+
 def get_next_month(month: int, year: int) -> tuple[int, int]:
     """Get next month and year.
 
@@ -322,16 +366,16 @@ class AutomaticFix:
         """Get prefix for log messages."""
         if 'source_file' in cube.attributes:
             return f"\n(for file {cube.attributes['source_file']})"
-        return f"\n(for variable {cube.var_name})"
+        return f"For variable {cube.var_name}: "
 
     def _debug_msg(self, cube: Cube, msg: str, *args) -> None:
         """Print debug message."""
-        msg += self._msg_prefix(cube)
+        msg = self._msg_prefix(cube) + msg
         logger.debug(msg, *args)
 
     def _warning_msg(self, cube: Cube, msg: str, *args) -> None:
         """Print debug message."""
-        msg += self._msg_prefix(cube)
+        msg = self._msg_prefix(cube) + msg
         logger.warning(msg, *args)
 
     @staticmethod
@@ -553,18 +597,38 @@ class AutomaticFix:
             Fixed cube.
 
         """
-        for (coord_name, cmor_coord) in self.var_info.coordinates.items():
+        # Avoid overriding existing variable information
+        cmor_var_coordinates = self.var_info.coordinates.copy()
+        for (coord_name, cmor_coord) in cmor_var_coordinates.items():
             if not cmor_coord.generic_level:
                 continue  # Ignore non-generic-level coordinates
             if not cmor_coord.generic_lev_coords:
                 continue  # Cannot fix anything without coordinate info
 
-            # Extract names of the generic level coordinates present in the
-            # cube; if coordinates have been found and we don't need
-            # alternatives (= names are not ``None``), do nothing
-            (standard_name, out_name, _) = get_generic_lev_coord_names(
+            # Extract names of the actual generic level coordinates present in
+            # the cube (e.g., `hybrid_height`, `standard_hybrid_sigma`)
+            (standard_name, out_name, name) = get_generic_lev_coord_names(
                 cube, cmor_coord
             )
+
+            # Make sure to update variable information with actual generic
+            # level coordinate if one has been found; this is necessary for
+            # subsequent fixes
+            if standard_name:
+                new_generic_level_coord = get_new_generic_level_coord(
+                    self.var_info, cmor_coord, coord_name, name
+                )
+                self.var_info.coordinates[coord_name] = new_generic_level_coord
+                self._debug_msg(
+                    cube,
+                    "Generic level coordinate %s will be checked against %s "
+                    "coordinate information",
+                    coord_name,
+                    name,
+                )
+
+            # If a generic level coordinate has been found, we don't need to
+            # look for alternatives
             if standard_name or out_name:
                 continue
 
