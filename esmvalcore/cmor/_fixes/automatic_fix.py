@@ -740,6 +740,14 @@ class AutomaticFix:
         if not cube_coord.standard_name == 'longitude':
             return (cube, cube_coord)
 
+        # Only apply fixes when values are outside of valid range [0, 360]
+        inside_0_360 = all([
+            cube_coord.core_points().min() >= 0.0,
+            cube_coord.core_points().max() <= 360.0,
+        ])
+        if inside_0_360:
+            return (cube, cube_coord)
+
         # Cannot fix longitudes outside [-360, 720]
         if np.any(cube_coord.core_points() < -360.0):
             return (cube, cube_coord)

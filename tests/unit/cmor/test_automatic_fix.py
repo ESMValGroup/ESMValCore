@@ -117,6 +117,19 @@ def test_requested_levels_invalid_arr(automatic_fix, mocker):
     assert ret is None
 
 
+def test_lon_no_fix_needed(automatic_fix):
+    """Test ``AutomaticFix``."""
+    cube_coord = AuxCoord(
+        [0.0, 180.0, 360.0], standard_name='longitude', units='rad'
+    )
+
+    ret = automatic_fix.fix_longitude_0_360(
+        sentinel.cube, sentinel.cmor_coord, cube_coord
+    )
+
+    assert ret == (sentinel.cube, cube_coord)
+
+
 def test_lon_too_low_to_fix(automatic_fix):
     """Test ``AutomaticFix``."""
     cube_coord = AuxCoord(
