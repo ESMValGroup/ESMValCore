@@ -63,7 +63,7 @@ def test_automatic_fix_empty_long_name(automatic_fix, monkeypatch):
     # Artificially set long_name to empty string for test
     monkeypatch.setattr(automatic_fix.var_info, 'long_name', '')
 
-    cube = automatic_fix.fix_long_name(sentinel.cube)
+    cube = automatic_fix._fix_long_name(sentinel.cube)
 
     assert cube == sentinel.cube
 
@@ -74,7 +74,7 @@ def test_automatic_fix_empty_units(automatic_fix, monkeypatch):
     coord_info = automatic_fix.var_info.coordinates['latitude']
     monkeypatch.setattr(coord_info, 'units', '')
 
-    ret = automatic_fix.fix_coord_units(
+    ret = automatic_fix._fix_coord_units(
         sentinel.cube, coord_info, sentinel.cube_coord
     )
 
@@ -88,7 +88,7 @@ def test_automatic_fix_no_generic_lev_coords(automatic_fix, monkeypatch):
         automatic_fix.var_info.coordinates['alevel'], 'generic_lev_coords', {}
     )
 
-    cube = automatic_fix.fix_alternative_generic_level_coords(sentinel.cube)
+    cube = automatic_fix._fix_alternative_generic_level_coords(sentinel.cube)
 
     assert cube == sentinel.cube
 
@@ -98,7 +98,7 @@ def test_requested_levels_2d_coord(automatic_fix, mocker):
     cube_coord = AuxCoord([[0]], standard_name='latitude', units='rad')
     cmor_coord = mocker.Mock(requested=True)
 
-    ret = automatic_fix.fix_requested_coord_values(
+    ret = automatic_fix._fix_requested_coord_values(
         sentinel.cube, cmor_coord, cube_coord
     )
 
@@ -110,7 +110,7 @@ def test_requested_levels_invalid_arr(automatic_fix, mocker):
     cube_coord = AuxCoord([0], standard_name='latitude', units='rad')
     cmor_coord = mocker.Mock(requested=['a', 'b'])
 
-    ret = automatic_fix.fix_requested_coord_values(
+    ret = automatic_fix._fix_requested_coord_values(
         sentinel.cube, cmor_coord, cube_coord
     )
 
@@ -123,7 +123,7 @@ def test_lon_no_fix_needed(automatic_fix):
         [0.0, 180.0, 360.0], standard_name='longitude', units='rad'
     )
 
-    ret = automatic_fix.fix_longitude_0_360(
+    ret = automatic_fix._fix_longitude_0_360(
         sentinel.cube, sentinel.cmor_coord, cube_coord
     )
 
@@ -136,7 +136,7 @@ def test_lon_too_low_to_fix(automatic_fix):
         [-370.0, 0.0], standard_name='longitude', units='rad'
     )
 
-    ret = automatic_fix.fix_longitude_0_360(
+    ret = automatic_fix._fix_longitude_0_360(
         sentinel.cube, sentinel.cmor_coord, cube_coord
     )
 
@@ -147,7 +147,7 @@ def test_lon_too_high_to_fix(automatic_fix):
     """Test ``AutomaticFix``."""
     cube_coord = AuxCoord([750.0, 0.0], standard_name='longitude', units='rad')
 
-    ret = automatic_fix.fix_longitude_0_360(
+    ret = automatic_fix._fix_longitude_0_360(
         sentinel.cube, sentinel.cmor_coord, cube_coord
     )
 
@@ -158,7 +158,7 @@ def test_fix_direction_2d_coord(automatic_fix):
     """Test ``AutomaticFix``."""
     cube_coord = AuxCoord([[0]], standard_name='latitude', units='rad')
 
-    ret = automatic_fix.fix_coord_direction(
+    ret = automatic_fix._fix_coord_direction(
         sentinel.cube, sentinel.cmor_coord, cube_coord
     )
 
@@ -169,7 +169,7 @@ def test_fix_direction_string_coord(automatic_fix):
     """Test ``AutomaticFix``."""
     cube_coord = AuxCoord(['a'], standard_name='latitude', units='rad')
 
-    ret = automatic_fix.fix_coord_direction(
+    ret = automatic_fix._fix_coord_direction(
         sentinel.cube, sentinel.cmor_coord, cube_coord
     )
 
@@ -182,6 +182,6 @@ def test_fix_direction_no_stored_direction(automatic_fix, mocker):
     cube_coord = AuxCoord([0, 1], standard_name='latitude', units='rad')
     cmor_coord = mocker.Mock(stored_direction='')
 
-    ret = automatic_fix.fix_coord_direction(cube, cmor_coord, cube_coord)
+    ret = automatic_fix._fix_coord_direction(cube, cmor_coord, cube_coord)
 
     assert ret == (cube, cube_coord)

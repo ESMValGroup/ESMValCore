@@ -172,6 +172,48 @@ class AutomaticFix:
         var_info = get_var_info(project, mip, short_name)
         return cls(var_info, frequency=frequency)
 
+    def fix_metadata(self, cube: Cube) -> Cube:
+        """Fix cube metadata.
+
+        Parameters
+        ----------
+        cube:
+            Cube to be fixed.
+
+        Returns
+        -------
+        Cube
+            Fixed cube.
+
+        """
+        cube = self._fix_standard_name(cube)
+        cube = self._fix_long_name(cube)
+        cube = self._fix_psu_units(cube)
+        cube = self._fix_units(cube)
+
+        cube = self._fix_regular_coord_names(cube)
+        cube = self._fix_alternative_generic_level_coords(cube)
+        cube = self._fix_coords(cube)
+        cube = self._fix_time_coord(cube)
+
+        return cube
+
+    def fix_data(self, cube: Cube) -> Cube:
+        """Fix cube data.
+
+        Parameters
+        ----------
+        cube:
+            Cube to be fixed.
+
+        Returns
+        -------
+        Cube
+            Fixed cube.
+
+        """
+        return cube
+
     @staticmethod
     def _msg_suffix(cube: Cube) -> str:
         """Get prefix for log messages."""
@@ -218,62 +260,8 @@ class AutomaticFix:
             return '1'
         return self.var_info.units
 
-    def fix_metadata(self, cube: Cube) -> Cube:
-        """Fix cube metadata.
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-
-        Returns
-        -------
-        Cube
-            Fixed cube.
-
-        """
-        cube = self.fix_standard_name(cube)
-        cube = self.fix_long_name(cube)
-        cube = self.fix_psu_units(cube)
-        cube = self.fix_units(cube)
-
-        cube = self.fix_regular_coord_names(cube)
-        cube = self.fix_alternative_generic_level_coords(cube)
-        cube = self.fix_coords(cube)
-        cube = self.fix_time_coord(cube)
-
-        return cube
-
-    def fix_data(self, cube: Cube) -> Cube:
-        """Fix cube data.
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-
-        Returns
-        -------
-        Cube
-            Fixed cube.
-
-        """
-        return cube
-
-    def fix_units(self, cube: Cube) -> Cube:
-        """Fix cube units.
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-
-        Returns
-        -------
-        Cube
-            Fixed cube.
-
-        """
+    def _fix_units(self, cube: Cube) -> Cube:
+        """Fix cube units."""
         if self.var_info.units:
             units = self._get_effective_units()
 
@@ -290,20 +278,8 @@ class AutomaticFix:
                 )
         return cube
 
-    def fix_standard_name(self, cube: Cube) -> Cube:
-        """Fix standard_name.
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-
-        Returns
-        -------
-        Cube
-            Fixed cube.
-
-        """
+    def _fix_standard_name(self, cube: Cube) -> Cube:
+        """Fix standard_name."""
         # Do not change empty standard names
         if not self.var_info.standard_name:
             return cube
@@ -319,20 +295,8 @@ class AutomaticFix:
 
         return cube
 
-    def fix_long_name(self, cube: Cube) -> Cube:
-        """Fix long_name.
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-
-        Returns
-        -------
-        Cube
-            Fixed cube.
-
-        """
+    def _fix_long_name(self, cube: Cube) -> Cube:
+        """Fix long_name."""
         # Do not change empty long names
         if not self.var_info.long_name:
             return cube
@@ -348,66 +312,30 @@ class AutomaticFix:
 
         return cube
 
-    def fix_psu_units(self, cube: Cube) -> Cube:
-        """Fix psu units.
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-
-        Returns
-        -------
-        Cube
-            Fixed cube.
-
-        """
+    def _fix_psu_units(self, cube: Cube) -> Cube:
+        """Fix psu units."""
         if cube.attributes.get('invalid_units', '').lower() == 'psu':
             cube.units = '1'
             cube.attributes.pop('invalid_units')
             self._debug_msg(cube, "Units converted from 'psu' to '1'")
         return cube
 
-    def fix_regular_coord_names(self, cube: Cube) -> Cube:
-        """Fix regular (non-generic-level) coordinate names.
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-
-        Returns
-        -------
-        Cube
-            Fixed cube.
-
-        """
+    def _fix_regular_coord_names(self, cube: Cube) -> Cube:
+        """Fix regular (non-generic-level) coordinate names."""
         for cmor_coord in self.var_info.coordinates.values():
             if cmor_coord.generic_level:
                 continue  # Ignore generic level coordinate in this function
             if cube.coords(var_name=cmor_coord.out_name):
-                continue  # Coordinate found -> fine
+                continue  # Coordinate found -> fine here
             if cube.coords(cmor_coord.standard_name):
                 cube_coord = cube.coord(cmor_coord.standard_name)
-                self.fix_cmip6_multidim_lat_lon_coord(
+                self._fix_cmip6_multidim_lat_lon_coord(
                     cube, cmor_coord, cube_coord
                 )
         return cube
 
-    def fix_alternative_generic_level_coords(self, cube: Cube) -> Cube:
-        """Fix alternative generic level coordinates.
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-
-        Returns
-        -------
-        Cube
-            Fixed cube.
-
-        """
+    def _fix_alternative_generic_level_coords(self, cube: Cube) -> Cube:
+        """Fix alternative generic level coordinates."""
         # Avoid overriding existing variable information
         cmor_var_coordinates = self.var_info.coordinates.copy()
         for (coord_name, cmor_coord) in cmor_var_coordinates.items():
@@ -454,30 +382,19 @@ class AutomaticFix:
                 continue
 
             # Fix alternative coord
-            (cube, cube_coord) = self.fix_coord(
+            (cube, cube_coord) = self._fix_coord(
                 cube, alternative_coord, cube_coord
             )
 
         return cube
 
-    def fix_cmip6_multidim_lat_lon_coord(
+    def _fix_cmip6_multidim_lat_lon_coord(
         self,
         cube: Cube,
         cmor_coord: CoordinateInfo,
         cube_coord: Coord,
     ) -> None:
-        """Fix CMIP6 multidimensional latitude and longitude coordinates.
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-        cmor_coord:
-            Coordinate information from the CMOR table.
-        cube_coord:
-            Corresponding coordinate of the cube.
-
-        """
+        """Fix CMIP6 multidimensional latitude and longitude coordinates."""
         is_cmip6_multidim_lat_lon = all([
             'CMIP6' in self.var_info.table_type,
             cube_coord.ndim > 1,
@@ -495,24 +412,13 @@ class AutomaticFix:
             )
             cube_coord.var_name = cmor_coord.out_name
 
-    def fix_coord_units(
+    def _fix_coord_units(
         self,
         cube: Cube,
         cmor_coord: CoordinateInfo,
         cube_coord: Coord,
     ) -> None:
-        """Fix coordinate units.
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-        cmor_coord:
-            Coordinate information from the CMOR table.
-        cube_coord:
-            Corresponding coordinate of the cube.
-
-        """
+        """Fix coordinate units."""
         if not cmor_coord.units:
             return
 
@@ -540,24 +446,13 @@ class AutomaticFix:
                     cmor_coord.units,
                 )
 
-    def fix_requested_coord_values(
+    def _fix_requested_coord_values(
         self,
         cube: Cube,
         cmor_coord: CoordinateInfo,
         cube_coord: Coord,
     ) -> None:
-        """Fix requested coordinate values.
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-        cmor_coord:
-            Coordinate information from the CMOR table.
-        cube_coord:
-            Corresponding coordinate of the cube.
-
-        """
+        """Fix requested coordinate values."""
         if not cmor_coord.requested:
             return
 
@@ -589,29 +484,13 @@ class AutomaticFix:
                 cmor_coord.out_name,
             )
 
-    def fix_longitude_0_360(
+    def _fix_longitude_0_360(
         self,
         cube: Cube,
         cmor_coord: CoordinateInfo,
         cube_coord: Coord,
     ) -> tuple[Cube, Coord]:
-        """Fix longitude coordinate to be in [0, 360].
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-        cmor_coord:
-            Coordinate information from the CMOR table.
-        cube_coord:
-            Corresponding coordinate of the cube.
-
-        Returns
-        -------
-        tuple[Cube, Coord]
-            Fixed cube and coordinate.
-
-        """
+        """Fix longitude coordinate to be in [0, 360]."""
         if not cube_coord.standard_name == 'longitude':
             return (cube, cube_coord)
 
@@ -656,24 +535,13 @@ class AutomaticFix:
 
         return (cube, new_coord)
 
-    def fix_coord_bounds(
+    def _fix_coord_bounds(
         self,
         cube: Cube,
         cmor_coord: CoordinateInfo,
         cube_coord: Coord,
     ) -> None:
-        """Fix coordinate bounds.
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-        cmor_coord:
-            Coordinate information from the CMOR table.
-        cube_coord:
-            Corresponding coordinate of the cube.
-
-        """
+        """Fix coordinate bounds."""
         if cmor_coord.must_have_bounds != 'yes' or cube_coord.has_bounds():
             return
 
@@ -702,29 +570,13 @@ class AutomaticFix:
                 str(exc),
             )
 
-    def fix_coord_direction(
+    def _fix_coord_direction(
         self,
         cube: Cube,
         cmor_coord: CoordinateInfo,
         cube_coord: Coord,
     ) -> tuple[Cube, Coord]:
-        """Fix coordinate direction (increasing vs. decreasing).
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-        cmor_coord:
-            Coordinate information from the CMOR table.
-        cube_coord:
-            Corresponding coordinate of the cube.
-
-        Returns
-        -------
-        tuple[Cube, Coord]
-            Fixed cube and coordinate.
-
-        """
+        """Fix coordinate direction (increasing vs. decreasing)."""
         # Skip fix for a variety of reasons
         if cube_coord.ndim > 1:
             return (cube, cube_coord)
@@ -749,17 +601,8 @@ class AutomaticFix:
 
         return (cube, cube_coord)
 
-    def fix_time_units(self, cube: Cube, cube_coord: Coord) -> None:
-        """Fix time units and attributes.
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-        cube_coord:
-            Time coordinate of the cube.
-
-        """
+    def _fix_time_units(self, cube: Cube, cube_coord: Coord) -> None:
+        """Fix time units in cube and attributes."""
         # Fix cube units
         old_units = cube_coord.units
         cube_coord.convert_units(
@@ -797,17 +640,8 @@ class AutomaticFix:
                         attrs[branch_child] = old_units.convert(
                             attrs[branch_child], cube_coord.units)
 
-    def fix_time_bounds(self, cube: Cube, cube_coord: Coord) -> None:
-        """Fix time bounds.
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-        cube_coord:
-            Time coordinate of the cube.
-
-        """
+    def _fix_time_bounds(self, cube: Cube, cube_coord: Coord) -> None:
+        """Fix time bounds."""
         times = {'time', 'time1', 'time2', 'time3'}
         key = times.intersection(self.var_info.coordinates)
         cmor = self.var_info.coordinates[' '.join(key)]
@@ -819,20 +653,8 @@ class AutomaticFix:
                 cube_coord.var_name,
             )
 
-    def fix_time_coord(self, cube: Cube) -> Cube:
-        """Fix time coordinate.
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-
-        Returns
-        -------
-        Cube
-            Fixed cube.
-
-        """
+    def _fix_time_coord(self, cube: Cube) -> Cube:
+        """Fix time coordinate."""
         # Make sure to get dimensional time coordinate if possible
         if cube.coords('time', dim_coords=True):
             cube_coord = cube.coord('time', dim_coords=True)
@@ -846,64 +668,36 @@ class AutomaticFix:
             return cube
 
         # Fix time units
-        self.fix_time_units(cube, cube_coord)
+        self._fix_time_units(cube, cube_coord)
 
         # Remove time_origin from coordinate attributes
         cube_coord.attributes.pop('time_origin', None)
 
         # Fix time bounds
-        self.fix_time_bounds(cube, cube_coord)
+        self._fix_time_bounds(cube, cube_coord)
 
         return cube
 
-    def fix_coord(
+    def _fix_coord(
         self,
         cube: Cube,
         cmor_coord: CoordinateInfo,
         cube_coord: Coord,
     ) -> tuple[Cube, Coord]:
-        """Fix non-time coordinate.
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-        cmor_coord:
-            Coordinate information from the CMOR table.
-        cube_coord:
-            Corresponding coordinate of the cube.
-
-        Returns
-        -------
-        tuple[Cube, Coord]
-            Fixed cube and coordinate.
-
-        """
-        self.fix_coord_units(cube, cmor_coord, cube_coord)
-        (cube, cube_coord) = self.fix_longitude_0_360(
+        """Fix non-time coordinate."""
+        self._fix_coord_units(cube, cmor_coord, cube_coord)
+        (cube, cube_coord) = self._fix_longitude_0_360(
             cube, cmor_coord, cube_coord
         )
-        self.fix_coord_bounds(cube, cmor_coord, cube_coord)
-        (cube, cube_coord) = self.fix_coord_direction(
+        self._fix_coord_bounds(cube, cmor_coord, cube_coord)
+        (cube, cube_coord) = self._fix_coord_direction(
             cube, cmor_coord, cube_coord
         )
-        self.fix_requested_coord_values(cube, cmor_coord, cube_coord)
+        self._fix_requested_coord_values(cube, cmor_coord, cube_coord)
         return (cube, cube_coord)
 
-    def fix_coords(self, cube: Cube) -> Cube:
-        """Fix all coordinates.
-
-        Parameters
-        ----------
-        cube:
-            Cube to be fixed.
-
-        Returns
-        -------
-        Cube
-            Fixed cube.
-
-        """
+    def _fix_coords(self, cube: Cube) -> Cube:
+        """Fix non-time coordinates."""
         for cmor_coord in self.var_info.coordinates.values():
 
             # Cannot fix generic level coords with no unique CMOR information
@@ -920,6 +714,6 @@ class AutomaticFix:
                 continue
 
             # Fixes
-            (cube, cube_coord) = self.fix_coord(cube, cmor_coord, cube_coord)
+            (cube, cube_coord) = self._fix_coord(cube, cmor_coord, cube_coord)
 
         return cube

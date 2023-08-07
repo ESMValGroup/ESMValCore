@@ -530,7 +530,7 @@ class CMORCheck():
 
             # TODO: remove in v2.12
             if self.automatic_fixes:
-                (self._cube, coord) = self._automatic_fix.fix_coord_direction(
+                (self._cube, coord) = self._automatic_fix._fix_coord_direction(
                     self._cube, coordinate, coord
                 )
 
