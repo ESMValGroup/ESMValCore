@@ -98,9 +98,9 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     # since this was not raised for irregular grids, we apply the
     # workaround only for regular grids (at present)
     # setp 1: cell measures
-    if cell_measures \
-    and cube.coord('latitude').ndim == 1 \
-    and not region_subset.cell_measures():
+    region_cell_meas = region_subset.cell_measures()
+    if (cell_measures,
+        cube.coord('latitude').ndim == 1) and not region_cell_meas:
         from ._supplementary_vars import add_cell_measure
         for cell_measure in cell_measures:
             logger.info("Workaround: putting back cell "
@@ -127,9 +127,9 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
                              cell_measure_subset,
                              measure_name)
     # step 2: ancillary variables
-    if ancil_vars \
-    and cube.coord('latitude').ndim == 1 \
-    and not region_subset.ancillary_variables():
+    region_subset_ancil = region_subset.ancillary_variables()
+    if (ancil_vars,
+        cube.coord('latitude').ndim == 1) and not region_subset_ancil:
         from ._supplementary_vars import add_ancillary_variable
         for ancil_var in ancil_vars:
             logger.info("Workaround: putting back ancillary "
