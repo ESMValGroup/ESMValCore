@@ -65,6 +65,9 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     iris.cube.Cube
         smaller cube.
     """
+    # first examine if any cell_measures are present
+    cell_measures = cube.cell_measures()
+
     if abs(start_latitude) > 90.:
         raise ValueError(f"Invalid start_latitude: {start_latitude}")
     if abs(end_latitude) > 90.:
@@ -87,6 +90,37 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
             start_latitude,
             end_latitude,
         )
+
+    # put back cell measures; iris.Cube.cube.intersection removes them
+    # this is a workaround resulting from
+    # https://github.com/SciTools/iris/issues/5413
+    if cell_measures:
+        from ._supplementary_vars import add_cell_measure
+        for cell_measure in cell_measures:
+            logger.info("Workaround: putting back cell "
+                        "measure %s in cube %s", cell_measure, region_subset)
+            measure_name = cell_measure.measure
+            coord_spec = [
+                (cube.coord("latitude"), 0), (cube.coord("longitude"), 1)
+            ]
+            cell_measure = iris.cube.Cube(
+                cell_measure.data,
+                var_name=cell_measure.var_name,
+                standard_name=cell_measure.standard_name,
+                dim_coords_and_dims=coord_spec,
+            )
+            cell_measure_subset = cell_measure.intersection(
+                longitude=(start_longitude, end_longitude),
+                latitude=(start_latitude, end_latitude),
+                ignore_bounds=True,
+            )
+            cell_measure_subset = cell_measure_subset.intersection(
+                longitude=(0., 360.)
+            )
+            add_cell_measure(region_subset,
+                             cell_measure_subset,
+                             measure_name)
+
     return region_subset
 
 
