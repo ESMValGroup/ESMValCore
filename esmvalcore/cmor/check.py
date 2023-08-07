@@ -15,17 +15,16 @@ import iris.util
 import numpy as np
 from iris.cube import Cube
 
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
-
-from ._fixes.automatic_fix import (
-    AutomaticFix,
-    get_alternative_generic_lev_coord,
-    get_generic_lev_coord_names,
-    get_new_generic_level_coord,
-    is_unstructured_grid,
-    simplify_calendar,
+from esmvalcore.cmor import (
+    _get_alternative_generic_lev_coord,
+    _get_generic_lev_coord_names,
+    _get_new_generic_level_coord,
+    _get_simplified_calendar,
+    _is_unstructured_grid,
 )
-from .table import get_var_info
+from esmvalcore.cmor._fixes.automatic_fix import AutomaticFix
+from esmvalcore.cmor.table import get_var_info
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 
 class CheckLevels(IntEnum):
@@ -134,9 +133,10 @@ class CMORCheck():
         # TODO: remove in v2.12
         self._automatic_fix = AutomaticFix(var_info, frequency=frequency)
 
-    def _is_unstructured_grid(self):
+    def _uses_unstructured_grid(self):
+        """Check if cube uses unstructured grid."""
         if self._unstructured is None:
-            self._unstructured = is_unstructured_grid(self._cube)
+            self._unstructured = _is_unstructured_grid(self._cube)
         return self._unstructured
 
     def check_metadata(self, logger: Optional[logging.Logger] = None) -> Cube:
@@ -415,14 +415,14 @@ class CMORCheck():
     def _check_generic_level_dim_names(self, key, coordinate):
         """Check name of generic level coordinate."""
         if coordinate.generic_lev_coords:
-            (standard_name, out_name, name) = get_generic_lev_coord_names(
+            (standard_name, out_name, name) = _get_generic_lev_coord_names(
                 self._cube, coordinate
             )
             if standard_name:
                 if not out_name:
                     self.report_error(
                         f'Generic level coordinate {key} has wrong var_name.')
-                level = get_new_generic_level_coord(
+                level = _get_new_generic_level_coord(
                     self._cmor_var, coordinate, key, name
                 )
                 self._cmor_var.coordinates[key] = level
@@ -471,7 +471,7 @@ class CMORCheck():
         """
         try:
             (alternative_coord,
-             cube_coord) = get_alternative_generic_lev_coord(
+             cube_coord) = _get_alternative_generic_lev_coord(
                 self._cube, key, self._cmor_var.table_type
             )
 
@@ -569,7 +569,7 @@ class CMORCheck():
         if coord.dtype.kind == 'U':
             return
 
-        if self._is_unstructured_grid() and \
+        if self._uses_unstructured_grid() and \
            coord.standard_name in ['latitude', 'longitude']:
             self.report_debug_message(
                 f'Coordinate {coord.standard_name} appears to belong to '
@@ -651,7 +651,7 @@ class CMORCheck():
             self.report_critical(self._does_msg, var_name,
                                  'have time reference units')
         else:
-            simplified_cal = simplify_calendar(coord.units.calendar)
+            simplified_cal = _get_simplified_calendar(coord.units.calendar)
             attrs = self._cube.attributes
             parent_time = 'parent_time_units'
             if parent_time in attrs:

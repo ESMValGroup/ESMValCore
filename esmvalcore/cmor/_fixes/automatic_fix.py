@@ -9,161 +9,19 @@ import numpy as np
 from cf_units import Unit
 from iris.coords import Coord, CoordExtent
 from iris.cube import Cube
-from iris.exceptions import CoordinateNotFoundError
 from iris.util import reverse
 
+from esmvalcore.cmor import (
+    _get_alternative_generic_lev_coord,
+    _get_generic_lev_coord_names,
+    _get_new_generic_level_coord,
+    _get_simplified_calendar,
+    _is_unstructured_grid,
+)
+from esmvalcore.cmor.table import CoordinateInfo, VariableInfo, get_var_info
 from esmvalcore.iris_helpers import date2num
 
-from ..table import CMOR_TABLES, CoordinateInfo, VariableInfo, get_var_info
-
 logger = logging.getLogger(__name__)
-
-
-ALTERNATIVE_GENERIC_LEV_COORDS = {
-    'alevel': {
-        'CMIP5': ['alt40', 'plevs'],
-        'CMIP6': ['alt16', 'plev3'],
-        'obs4MIPs': ['alt16', 'plev3'],
-    },
-    'zlevel': {
-        'CMIP3': ['pressure'],
-    },
-}
-
-
-def get_alternative_generic_lev_coord(
-    cube: Cube,
-    coord_name: str,
-    cmor_table_type: str,
-) -> tuple[CoordinateInfo, Coord]:
-    """Find alternative generic level coordinate in cube.
-
-    Parameters
-    ----------
-    cube:
-        Cube to be checked.
-    coord_name:
-        Name of the generic level coordinate.
-    cmor_table_type:
-        CMOR table type, e.g., CMIP3, CMIP5, CMIP6. Note: This is NOT the
-        project of the dataset, but rather the entry `cmor_type` in
-        `config-developer.yml`.
-
-    Returns
-    -------
-    tuple[CoordinateInfo, Coord]
-        Coordinate information from the CMOR tables and the corresponding
-        coordinate in the cube.
-
-    Raises
-    ------
-    ValueError
-        No valid alternative generic level coordinate present in cube.
-
-    """
-    alternatives_for_coord = ALTERNATIVE_GENERIC_LEV_COORDS.get(coord_name, {})
-    allowed_alternatives = alternatives_for_coord.get(cmor_table_type, [])
-
-    # Check if any of the allowed alternative coordinates is present in the
-    # cube
-    for allowed_alternative in allowed_alternatives:
-        cmor_coord = CMOR_TABLES[cmor_table_type].coords[allowed_alternative]
-        if cube.coords(var_name=cmor_coord.out_name):
-            cube_coord = cube.coord(var_name=cmor_coord.out_name)
-            return (cmor_coord, cube_coord)
-
-    raise ValueError(
-        f"Found no valid alternative coordinate for generic level coordinate "
-        f"'{coord_name}'"
-    )
-
-
-def get_generic_lev_coord_names(
-    cube: Cube,
-    cmor_coord: CoordinateInfo,
-) -> tuple[str | None, str | None, str | None]:
-    """Try to get names of a generic level coordinate.
-
-    Parameters
-    ----------
-    cube:
-        Cube to be checked.
-    cmor_coord:
-        Coordinate information from the CMOR table with a non-emmpty
-        `generic_lev_coords` :obj:`dict`.
-
-    Returns
-    -------
-    tuple[str | None, str | None, str | None]
-        Tuple of `standard_name`, `out_name`, and `name` of the generic level
-        coordinate present in the cube. Values are ``None`` if generic level
-        coordinate has not been found in cube.
-
-    """
-    standard_name = None
-    out_name = None
-    name = None
-
-    # Iterate over all possible generic level coordinates
-    for coord in cmor_coord.generic_lev_coords.values():
-        # First, try to use var_name to find coordinate
-        if cube.coords(var_name=coord.out_name):
-            cube_coord = cube.coord(var_name=coord.out_name)
-            out_name = coord.out_name
-            if cube_coord.standard_name == coord.standard_name:
-                standard_name = coord.standard_name
-                name = coord.name
-
-        # Second, try to use standard_name to find coordinate
-        elif cube.coords(coord.standard_name):
-            standard_name = coord.standard_name
-            name = coord.name
-
-    return (standard_name, out_name, name)
-
-
-def get_new_generic_level_coord(
-    var_info: VariableInfo,
-    generic_level_coord: CoordinateInfo,
-    generic_level_coord_name: str,
-    new_coord_name: str | None,
-) -> CoordinateInfo:
-    """Get new generic level coordinate.
-
-    There are a variety of possible options for each generic level coordinate
-    (e.g., `alevel`), for example, `hybrid_height` or `standard_hybrid_sigma`.
-    This function returns the new coordinate (e.g.,
-    `new_coord_name=hybrid_height`) with the relevant metadata.
-
-    Note
-    ----
-    This alters the corresponding entry of the original generic level
-    coordinate's `generic_level_coords` attribute (i.e.,
-    ``generic_level_coord.generic_level_coords[new_coord_name]`) in-place!
-
-    Parameters
-    ----------
-    var_info:
-        CMOR variable information.
-    generic_level_coord:
-        Original generic level coordinate.
-    generic_level_coord_name:
-        Original name of the generic level coordinate (e.g., `alevel`).
-    new_coord_name:
-        Name of the new generic level coordinate (e.g., `hybrid_height`).
-
-    Returns
-    -------
-    CoordinateInfo
-        New generic level coordinate.
-
-    """
-    new_coord = generic_level_coord.generic_lev_coords[new_coord_name]
-    new_coord.generic_level = True
-    new_coord.generic_lev_coords = (
-        var_info.coordinates[generic_level_coord_name].generic_lev_coords
-    )
-    return new_coord
 
 
 def get_next_month(month: int, year: int) -> tuple[int, int]:
@@ -248,53 +106,6 @@ def get_time_bounds(time: Coord, freq: str):
     return np.array(bounds)
 
 
-def is_unstructured_grid(cube: Cube) -> bool:
-    """Check if cube uses unstructured grid.
-
-    Parameters
-    ----------
-    cube:
-        Cube to check.
-
-    Returns
-    -------
-    bool
-        ``True`` if cube uses unstructured grid, ```False`` if not.
-
-    """
-    try:
-        lat = cube.coord('latitude')
-        lon = cube.coord('longitude')
-    except CoordinateNotFoundError:
-        pass
-    else:
-        if lat.ndim == 1 and (cube.coord_dims(lat) == cube.coord_dims(lon)):
-            return True
-    return False
-
-
-def simplify_calendar(calendar: str) -> str:
-    """Simplify calendar.
-
-    Parameters
-    ----------
-    calendar:
-        Input calendar.
-
-    Returns
-    -------
-    str
-        Simplified calendar.
-
-    """
-    calendar_aliases = {
-        'all_leap': '366_day',
-        'noleap': '365_day',
-        'gregorian': 'standard',
-    }
-    return calendar_aliases.get(calendar, calendar)
-
-
 class AutomaticFix:
     """Class providing automatic fixes for all datasets."""
 
@@ -362,20 +173,20 @@ class AutomaticFix:
         return cls(var_info, frequency=frequency)
 
     @staticmethod
-    def _msg_prefix(cube: Cube) -> str:
+    def _msg_suffix(cube: Cube) -> str:
         """Get prefix for log messages."""
         if 'source_file' in cube.attributes:
             return f"\n(for file {cube.attributes['source_file']})"
-        return f"For variable {cube.var_name}: "
+        return f"\n(for variable {cube.var_name})"
 
     def _debug_msg(self, cube: Cube, msg: str, *args) -> None:
         """Print debug message."""
-        msg = self._msg_prefix(cube) + msg
+        msg += self._msg_suffix(cube)
         logger.debug(msg, *args)
 
     def _warning_msg(self, cube: Cube, msg: str, *args) -> None:
         """Print debug message."""
-        msg = self._msg_prefix(cube) + msg
+        msg += self._msg_suffix(cube)
         logger.warning(msg, *args)
 
     @staticmethod
@@ -607,7 +418,7 @@ class AutomaticFix:
 
             # Extract names of the actual generic level coordinates present in
             # the cube (e.g., `hybrid_height`, `standard_hybrid_sigma`)
-            (standard_name, out_name, name) = get_generic_lev_coord_names(
+            (standard_name, out_name, name) = _get_generic_lev_coord_names(
                 cube, cmor_coord
             )
 
@@ -615,7 +426,7 @@ class AutomaticFix:
             # level coordinate if one has been found; this is necessary for
             # subsequent fixes
             if standard_name:
-                new_generic_level_coord = get_new_generic_level_coord(
+                new_generic_level_coord = _get_new_generic_level_coord(
                     self.var_info, cmor_coord, coord_name, name
                 )
                 self.var_info.coordinates[coord_name] = new_generic_level_coord
@@ -636,7 +447,7 @@ class AutomaticFix:
             # coordinates); if none found, do nothing
             try:
                 (alternative_coord,
-                 cube_coord) = get_alternative_generic_lev_coord(
+                 cube_coord) = _get_alternative_generic_lev_coord(
                     cube, coord_name, self.var_info.table_type
                 )
             except ValueError:  # no alternatives found
@@ -867,7 +678,7 @@ class AutomaticFix:
             return
 
         # Skip guessing bounds for unstructured grids
-        if is_unstructured_grid(cube) and cube_coord.standard_name in (
+        if _is_unstructured_grid(cube) and cube_coord.standard_name in (
                 'latitude', 'longitude'):
             self._debug_msg(
                 cube,
@@ -919,7 +730,7 @@ class AutomaticFix:
             return (cube, cube_coord)
         if cube_coord.dtype.kind == 'U':
             return (cube, cube_coord)
-        if is_unstructured_grid(cube) and cube_coord.standard_name in (
+        if _is_unstructured_grid(cube) and cube_coord.standard_name in (
                 'latitude', 'longitude'
         ):
             return (cube, cube_coord)
@@ -957,7 +768,7 @@ class AutomaticFix:
                 calendar=cube_coord.units.calendar,
             )
         )
-        simplified_cal = simplify_calendar(cube_coord.units.calendar)
+        simplified_cal = _get_simplified_calendar(cube_coord.units.calendar)
         cube_coord.units = Unit(
             cube_coord.units.origin, calendar=simplified_cal
         )

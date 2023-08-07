@@ -15,10 +15,9 @@ from typing import TYPE_CHECKING, Optional
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.automatic_fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor.check import CheckLevels, _get_cmor_checker
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
-
-from ._fixes.fix import Fix
-from .check import CheckLevels, _get_cmor_checker
 
 if TYPE_CHECKING:
     from ..config import Session
