@@ -99,16 +99,16 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     # workaround only for regular grids (at present)
     # setp 1: cell measures
     region_cell_meas = region_subset.cell_measures()
-    if (cell_measures,
-        cube.coord('latitude').ndim == 1) and not region_cell_meas:
+    if (cell_measures, cube.coord('latitude').ndim
+            == 1) and not region_cell_meas:
         from ._supplementary_vars import add_cell_measure
         for cell_measure in cell_measures:
-            logger.info("Workaround: putting back cell "
-                        "measure %s in cube %s", cell_measure, region_subset)
+            logger.info(
+                "Workaround: putting back cell "
+                "measure %s in cube %s", cell_measure, region_subset)
             measure_name = cell_measure.measure
-            coord_spec = [
-                (cube.coord("latitude"), 0), (cube.coord("longitude"), 1)
-            ]
+            coord_spec = [(cube.coord("latitude"), 0),
+                          (cube.coord("longitude"), 1)]
             cell_measure = iris.cube.Cube(
                 cell_measure.data,
                 var_name=cell_measure.var_name,
@@ -121,22 +121,19 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
                 ignore_bounds=True,
             )
             cell_measure_subset = cell_measure_subset.intersection(
-                longitude=(0., 360.)
-            )
-            add_cell_measure(region_subset,
-                             cell_measure_subset,
-                             measure_name)
+                longitude=(0., 360.))
+            add_cell_measure(region_subset, cell_measure_subset, measure_name)
     # step 2: ancillary variables
     region_subset_ancil = region_subset.ancillary_variables()
-    if (ancil_vars,
-        cube.coord('latitude').ndim == 1) and not region_subset_ancil:
+    if (ancil_vars, cube.coord('latitude').ndim
+            == 1) and not region_subset_ancil:
         from ._supplementary_vars import add_ancillary_variable
         for ancil_var in ancil_vars:
-            logger.info("Workaround: putting back ancillary "
-                        "variable %s in cube %s", ancil_var, region_subset)
-            coord_spec = [
-                (cube.coord("latitude"), 0), (cube.coord("longitude"), 1)
-            ]
+            logger.info(
+                "Workaround: putting back ancillary "
+                "variable %s in cube %s", ancil_var, region_subset)
+            coord_spec = [(cube.coord("latitude"), 0),
+                          (cube.coord("longitude"), 1)]
             ancil_cube = iris.cube.Cube(
                 ancil_var.data,
                 var_name=ancil_var.var_name,
@@ -148,12 +145,8 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
                 latitude=(start_latitude, end_latitude),
                 ignore_bounds=True,
             )
-            ancil_subset = ancil_subset.intersection(
-                longitude=(0., 360.)
-            )
-            add_ancillary_variable(region_subset,
-                                   ancil_subset,
-            )
+            ancil_subset = ancil_subset.intersection(longitude=(0., 360.))
+            add_ancillary_variable(region_subset, ancil_subset)
 
     return region_subset
 
@@ -535,15 +528,13 @@ def _process_ids(geometries, ids: list | dict | None) -> tuple:
         if len(ids) != 1:
             raise ValueError(
                 f"If `ids` is given as dict, it needs exactly one entry, got "
-                f"{ids}"
-            )
+                f"{ids}")
         key = list(ids.keys())[0]
         for geometry in geometries:
             if key not in geometry['properties']:
                 raise ValueError(
                     f"Geometry {dict(geometry['properties'])} does not have "
-                    f"requested attribute {key}"
-                )
+                    f"requested attribute {key}")
         id_keys: tuple[str, ...] = (key, )
         ids = ids[key]
 
@@ -594,8 +585,7 @@ def _get_requested_geometries(
         if missing:
             raise ValueError(
                 f"Requested shapes {missing} not found in shapefile "
-                f"{shapefile}"
-            )
+                f"{shapefile}")
 
     return requested_geometries
 
@@ -624,8 +614,7 @@ def _get_masks_from_geometries(
 
 
 def _get_bounds(
-    geometries: dict[str, dict],
-) -> tuple[float, float, float, float]:
+    geometries: dict[str, dict], ) -> tuple[float, float, float, float]:
     """Get bounds from given geometries.
 
     Parameters
@@ -640,8 +629,7 @@ def _get_bounds(
 
     """
     all_bounds = np.vstack(
-        [fiona.bounds(geom) for geom in geometries.values()]
-    )
+        [fiona.bounds(geom) for geom in geometries.values()])
     lon_max, lat_max = all_bounds[:, 2:].max(axis=0)
     lon_min, lat_min = all_bounds[:, :2].min(axis=0)
 
@@ -744,9 +732,8 @@ def _update_shapefile_path(
     # As final resort, add suffix '.shp' and try path relative to
     # esmvalcore/preprocessor/shapefiles/ again
     # Note: this will find "special" shapefiles like 'ar6'
-    shapefile_path = (
-        Path(__file__).parent / 'shapefiles' / f"{shapefile.lower()}.shp"
-    )
+    shapefile_path = (Path(__file__).parent / 'shapefiles' /
+                      f"{shapefile.lower()}.shp")
     if shapefile_path.exists():
         return shapefile_path
 
@@ -834,14 +821,12 @@ def extract_shape(
             pad_hawaii = True
 
         requested_geometries = _get_requested_geometries(
-            geometries, ids, shapefile
-        )
+            geometries, ids, shapefile)
 
         # Crop cube if desired
         if crop:
             lon_min, lat_min, lon_max, lat_max = _get_bounds(
-                requested_geometries
-            )
+                requested_geometries)
             cube = _crop_cube(
                 cube,
                 start_longitude=lon_min,
@@ -883,8 +868,7 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
         _cube = cube.copy()
         remove_supplementary_variables(_cube)
         _cube.add_aux_coord(
-            AuxCoord(id_, units='no_unit', long_name='shape_id')
-        )
+            AuxCoord(id_, units='no_unit', long_name='shape_id'))
         mask = da.broadcast_to(mask, _cube.shape)
         _cube.data = da.ma.masked_where(~mask, _cube.core_data())
         cubelist.append(_cube)
