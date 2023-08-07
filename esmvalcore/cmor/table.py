@@ -251,6 +251,7 @@ class InfoBase():
         If False, will look for a variable in other tables if it can not be
         found in the requested one
     """
+
     def __init__(self, default, alt_names, strict):
         if alt_names is None:
             alt_names = ""
@@ -394,6 +395,7 @@ class CMIP6Info(InfoBase):
         If False, will look for a variable in other tables if it can not be
         found in the requested one
     """
+
     def __init__(self,
                  cmor_tables_path,
                  default=None,
@@ -550,6 +552,7 @@ class CMIP6Info(InfoBase):
 @total_ordering
 class TableInfo(dict):
     """Container class for storing a CMOR table."""
+
     def __init__(self, *args, **kwargs):
         """Create a new TableInfo object for storing VariableInfo objects."""
         super(TableInfo, self).__init__(*args, **kwargs)
@@ -575,6 +578,7 @@ class JsonInfo(object):
 
     Provides common utility methods to read json variables
     """
+
     def __init__(self):
         self._json_data = {}
 
@@ -615,6 +619,7 @@ class JsonInfo(object):
 
 class VariableInfo(JsonInfo):
     """Class to read and store variable information."""
+
     def __init__(self, table_type, short_name):
         """Class to read and store variable information.
 
@@ -726,6 +731,7 @@ class VariableInfo(JsonInfo):
 
 class CoordinateInfo(JsonInfo):
     """Class to read and store coordinate information."""
+
     def __init__(self, name):
         """Class to read and store coordinate information.
 
@@ -813,6 +819,7 @@ class CMIP5Info(InfoBase):
         If False, will look for a variable in other tables if it can not be
         found in the requested one
     """
+
     def __init__(self,
                  cmor_tables_path,
                  default=None,
@@ -971,6 +978,7 @@ class CMIP3Info(CMIP5Info):
         If False, will look for a variable in other tables if it can not be
         found in the requested one
     """
+
     def _read_table_file(self, table_file, table=None):
         for dim in ('zlevel', ):
             coord = CoordinateInfo(dim)

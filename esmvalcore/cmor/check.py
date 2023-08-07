@@ -553,7 +553,7 @@ class CMORCheck():
                 'Coordinate {0} from var {1} does not have bounds',
                 coord.var_name, var_name)
 
-    def _check_time_bounds(self, freq, time):
+    def _check_time_bounds(self, time):
         times = {'time', 'time1', 'time2', 'time3'}
         key = times.intersection(self._cmor_var.coordinates)
         cmor = self._cmor_var.coordinates[" ".join(key)]
@@ -725,7 +725,7 @@ class CMORCheck():
                     self.report_error(msg, var_name, freq)
                     break
 
-        self._check_time_bounds(freq, coord)
+        self._check_time_bounds(coord)
 
     def has_errors(self):
         """Check if there are reported errors.
