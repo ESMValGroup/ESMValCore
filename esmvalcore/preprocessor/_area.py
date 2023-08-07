@@ -94,7 +94,11 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     # put back cell measures; iris.Cube.cube.intersection removes them
     # this is a workaround resulting from
     # https://github.com/SciTools/iris/issues/5413
-    if cell_measures:
+    # since this was not raised for irregular grids, we apply the
+    # workaround only for regular grids (at present)
+    if cell_measures \
+    and cube.coord('latitude').ndim == 1 \
+    and not region_subset.cell_measures():
         from ._supplementary_vars import add_cell_measure
         for cell_measure in cell_measures:
             logger.info("Workaround: putting back cell "
