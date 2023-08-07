@@ -613,8 +613,8 @@ def _get_masks_from_geometries(
     return masks
 
 
-def _get_bounds(
-    geometries: dict[str, dict], ) -> tuple[float, float, float, float]:
+def _get_bounds(geometries: dict[str, dict], ) -> tuple[float, float,
+                                                        float, float]:
     """Get bounds from given geometries.
 
     Parameters
