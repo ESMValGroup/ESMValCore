@@ -67,6 +67,7 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     """
     # first examine if any cell_measures are present
     cell_measures = cube.cell_measures()
+    ancil_vars = cube.ancillary_variables()
 
     if abs(start_latitude) > 90.:
         raise ValueError(f"Invalid start_latitude: {start_latitude}")
@@ -96,6 +97,7 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     # https://github.com/SciTools/iris/issues/5413
     # since this was not raised for irregular grids, we apply the
     # workaround only for regular grids (at present)
+    # setp 1: cell measures
     if cell_measures \
     and cube.coord('latitude').ndim == 1 \
     and not region_subset.cell_measures():
@@ -124,6 +126,34 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
             add_cell_measure(region_subset,
                              cell_measure_subset,
                              measure_name)
+    # step 2: ancillary variables
+    if ancil_vars \
+    and cube.coord('latitude').ndim == 1 \
+    and not region_subset.ancillary_variables():
+        from ._supplementary_vars import add_ancillary_variable
+        for ancil_var in ancil_vars:
+            logger.info("Workaround: putting back ancillary "
+                        "variable %s in cube %s", ancil_var, region_subset)
+            coord_spec = [
+                (cube.coord("latitude"), 0), (cube.coord("longitude"), 1)
+            ]
+            ancil_cube = iris.cube.Cube(
+                ancil_var.data,
+                var_name=ancil_var.var_name,
+                standard_name=ancil_var.standard_name,
+                dim_coords_and_dims=coord_spec,
+            )
+            ancil_subset = ancil_cube.intersection(
+                longitude=(start_longitude, end_longitude),
+                latitude=(start_latitude, end_latitude),
+                ignore_bounds=True,
+            )
+            ancil_subset = ancil_subset.intersection(
+                longitude=(0., 360.)
+            )
+            add_ancillary_variable(region_subset,
+                                   ancil_subset,
+            )
 
     return region_subset
 
