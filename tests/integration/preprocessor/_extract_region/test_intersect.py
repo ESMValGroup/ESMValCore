@@ -28,8 +28,7 @@ def test_extract_region_cell_ancil(test_data_path):
                          start_longitude=-90,
                          end_longitude=40,
                          start_latitude=20,
-                         end_latitude=80
-    )
+                         end_latitude=80)
 
     # intersection cube doesn't lose cellmeas/ancillary variables
     # under normal (unpatched) conditions of extract_region
@@ -38,8 +37,7 @@ def test_extract_region_cell_ancil(test_data_path):
                          start_longitude=160,
                          end_longitude=280,
                          start_latitude=-5,
-                         end_latitude=5
-    )
+                         end_latitude=5)
 
     expected_cm = cube.cell_measures()[0]
     result_cm = ex1.cell_measures()
