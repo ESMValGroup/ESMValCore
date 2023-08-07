@@ -92,11 +92,14 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
             end_latitude,
         )
 
-    # put back cell measures; iris.Cube.cube.intersection removes them
-    # this is a workaround resulting from
+    # put back cell measures and ancillary_variables;
+    # iris.Cube.cube.intersection removes them both.
+    # This is a workaround resulting from opening upstream
     # https://github.com/SciTools/iris/issues/5413
-    # since this was not raised for irregular grids, we apply the
-    # workaround only for regular grids (at present)
+    # Since this was not raised for irregular grids, we apply the
+    # workaround only for regular grids (at present).
+    # When removing this block after iris have a fix, make sure to remove the
+    # test too tests/integration/preprocessor/_extract_region/
     # setp 1: cell measures
     region_cell_meas = region_subset.cell_measures()
     if (cell_measures, cube.coord('latitude').ndim
