@@ -119,6 +119,7 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
                 cell_measure_cube_subset.core_data())
             region_subset.add_cell_measure(cell_measure_subset,
                                            cell_measure_dims)
+
     # step 2: ancillary variables
     if ancil_vars and not region_subset.ancillary_variables():
         for ancil_var in ancil_vars:
@@ -128,15 +129,15 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
                 slice(None) if d in ancil_var_dims else 0 for d in range(cube.ndim)
             ))
             ancil_var_cube = cube[idx].copy(ancil_var.core_data())
-            ancil_var_cube_subset = extract_region(
-                ancil_var_cube,
-                start_longitude,
-                end_longitude,
-                start_latitude,
-                end_latitude,
+            ancil_var_cube_subset = ancil_var_cube.intersection(
+                longitude=(start_longitude, end_longitude),
+                latitude=(start_latitude, end_latitude),
+                ignore_bounds=True,
             )
-            ancil_var_subset = ancil_var.copy(ancil_var_cube_subset.core_data())
-            region_subset.add_ancillary_variable(ancil_var_cube_subset, ancil_var_dims)
+            ancil_var_subset = ancil_var.copy(
+                ancil_var_cube_subset.core_data())
+            region_subset.add_ancillary_variable(ancil_var_cube_subset,
+                                                 ancil_var_dims)
 
     return region_subset
 
