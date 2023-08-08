@@ -96,59 +96,50 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     # iris.Cube.cube.intersection removes them both.
     # This is a workaround resulting from opening upstream
     # https://github.com/SciTools/iris/issues/5413
-    # Since this was not raised for irregular grids, we apply the
-    # workaround only for regular grids (at present).
     # When removing this block after iris have a fix, make sure to remove the
     # test too tests/integration/preprocessor/_extract_region/
-    # setp 1: cell measures
-    region_cell_meas = region_subset.cell_measures()
-    if cell_measures and not region_cell_meas:
-        from ._supplementary_vars import add_cell_measure
-        for cell_measure in cell_measures:
-            logger.info(
-                "Workaround: putting back cell "
-                "measure %s in cube %s", cell_measure, region_subset)
-            measure_name = cell_measure.measure
-            coord_spec = [(cube.coord("latitude"), 0),
-                          (cube.coord("longitude"), 1)]
-            cell_measure = iris.cube.Cube(
-                cell_measure.data,
-                var_name=cell_measure.var_name,
-                standard_name=cell_measure.standard_name,
-                dim_coords_and_dims=coord_spec,
-            )
-            cell_measure_subset = cell_measure.intersection(
-                longitude=(start_longitude, end_longitude),
-                latitude=(start_latitude, end_latitude),
-                ignore_bounds=True,
-            )
-            cell_measure_subset = cell_measure_subset.intersection(
-                longitude=(0., 360.))
-            add_cell_measure(region_subset, cell_measure_subset, measure_name)
 
-    # step 2: ancillary variables
-    region_subset_ancil = region_subset.ancillary_variables()
-    if ancil_vars and not region_subset_ancil:
-        from ._supplementary_vars import add_ancillary_variable
+    def _extract_region_from_dim_metadata(dim_metadata, dim_metadata_dims):
+        """Extract region from dimensional metadata."""
+        idx = tuple((
+            slice(None) if d in dim_metadata_dims else 0
+            for d in range(cube.ndim)
+        ))
+        subcube = cube[idx].copy(dim_metadata.core_data())
+        for sub_cm in subcube.cell_measures():
+            subcube.remove_cell_measure(sub_cm)
+        for sub_av in subcube.ancillary_variables():
+            subcube.remove_ancillary_variable(sub_av)
+        subcube = extract_region(
+            subcube,
+            start_longitude,
+            end_longitude,
+            start_latitude,
+            end_latitude,
+        )
+        return dim_metadata.copy(subcube.core_data())
+
+    # Step 1: cell measures
+    if cell_measures and not region_subset.cell_measures():
+        for cell_measure in cell_measures:
+            cell_measure_dims = cube.cell_measure_dims(cell_measure)
+            cell_measure_subset = _extract_region_from_dim_metadata(
+                cell_measure, cell_measure_dims
+            )
+            region_subset.add_cell_measure(
+                cell_measure_subset, cell_measure_dims
+            )
+
+    # Step 2: ancillary variables
+    if ancil_vars and not region_subset.ancillary_variables():
         for ancil_var in ancil_vars:
-            logger.info(
-                "Workaround: putting back ancillary "
-                "variable %s in cube %s", ancil_var, region_subset)
-            coord_spec = [(cube.coord("latitude"), 0),
-                          (cube.coord("longitude"), 1)]
-            ancil_cube = iris.cube.Cube(
-                ancil_var.data,
-                var_name=ancil_var.var_name,
-                standard_name=ancil_var.standard_name,
-                dim_coords_and_dims=coord_spec,
+            ancil_var_dims = cube.ancillary_variable_dims(ancil_var)
+            ancil_var_subset = _extract_region_from_dim_metadata(
+                ancil_var, ancil_var_dims
             )
-            ancil_subset = ancil_cube.intersection(
-                longitude=(start_longitude, end_longitude),
-                latitude=(start_latitude, end_latitude),
-                ignore_bounds=True,
+            region_subset.add_ancillary_variable(
+                ancil_var_subset, ancil_var_dims
             )
-            ancil_subset = ancil_subset.intersection(longitude=(0., 360.))
-            add_ancillary_variable(region_subset, ancil_subset)
 
     return region_subset
 

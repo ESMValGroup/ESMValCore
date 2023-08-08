@@ -6,8 +6,8 @@ https://github.com/SciTools/iris/issues/5413 .
 """
 import iris
 import numpy as np
-
 from iris.fileformats.pp import EARTH_RADIUS
+
 from esmvalcore.preprocessor._area import extract_region
 from esmvalcore.preprocessor._shared import guess_bounds
 
@@ -54,7 +54,7 @@ def make_cube():
 
 
 def test_extract_region_cell_ancil():
-    """Test readding cell measures ancil variables after extract region."""
+    """Test re-adding cell measures ancil variables after extract region."""
     cube = make_cube()
 
     # intersection cube loses cellmeas/ancillary variables
