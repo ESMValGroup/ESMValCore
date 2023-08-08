@@ -1,26 +1,61 @@
 """
+Temporary test.
+
 Remove this test and test file after iris fixes this
-https://github.com/SciTools/iris/issues/5413
+https://github.com/SciTools/iris/issues/5413 .
 """
-from pathlib import Path
-
 import iris
-import pytest
+import numpy as np
 
+from iris.fileformats.pp import EARTH_RADIUS
 from esmvalcore.preprocessor._area import extract_region
+from esmvalcore.preprocessor._shared import guess_bounds
 
 
-@pytest.fixture
-def test_data_path():
-    """Path to test data for CMOR fixes."""
-    parent = Path(__file__).resolve().parent
-    return parent
+def make_cube():
+    """Make a realistic cube with cell measure and ancil var."""
+    coord_sys = iris.coord_systems.GeogCS(EARTH_RADIUS)
+    data = np.ones((192, 288), dtype=np.float32)
+    lons = iris.coords.DimCoord(
+        [i + .5 for i in range(288)],
+        standard_name='longitude',
+        bounds=[[i, i + 1.] for i in range(288)],
+        units='degrees_east',
+        coord_system=coord_sys)
+    lats = iris.coords.DimCoord(
+        [i + .5 for i in range(192)],
+        standard_name='latitude',
+        bounds=[[i, i + 1.] for i in range(192)],
+        units='degrees_north',
+        coord_system=coord_sys,
+    )
+    coords_spec = [(lats, 0), (lons, 1)]
+    simple_cube = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
+
+    # add a cell measure
+    simple_cube = guess_bounds(simple_cube, ['longitude', 'latitude'])
+    grid_areas = iris.analysis.cartography.area_weights(simple_cube)
+    measure = iris.coords.CellMeasure(
+        grid_areas,
+        standard_name='cell_area',
+        units='m2',
+        measure='area')
+    simple_cube.add_cell_measure(measure, range(0, measure.ndim))
+
+    # add ancillary variable
+    ancillary_var = iris.coords.AncillaryVariable(
+        simple_cube.data,
+        standard_name='land_ice_area_fraction',
+        var_name='sftgif',
+        units='%')
+    simple_cube.add_ancillary_variable(ancillary_var, (0, 1))
+
+    return simple_cube
 
 
-def test_extract_region_cell_ancil(test_data_path):
+def test_extract_region_cell_ancil():
     """Test readding cell measures ancil variables after extract region."""
-    cube_posix_path = test_data_path / "cube_for_intersection.nc"
-    cube = iris.load_cube(cube_posix_path)
+    cube = make_cube()
 
     # intersection cube loses cellmeas/ancillary variables
     # under normal (unpatched) conditions of extract_region
