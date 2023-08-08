@@ -101,7 +101,9 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     # When removing this block after iris have a fix, make sure to remove the
     # test too tests/integration/preprocessor/_extract_region/
     # setp 1: cell measures
-    if cell_measures and not region_subset.cell_measures():
+    region_cell_meas = region_subset.cell_measures()
+    if (cell_measures, cube.coord('latitude').ndim
+            == 1) and not region_cell_meas:
         from ._supplementary_vars import add_cell_measure
         for cell_measure in cell_measures:
             logger.info(
