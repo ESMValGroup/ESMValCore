@@ -110,12 +110,10 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
                 else 0 for d in range(cube.ndim)
             ))
             cell_measure_cube = cube[idx].copy(cell_measure.core_data())
-            cell_measure_cube_subset = extract_region(
-                cell_measure_cube,
-                start_longitude,
-                end_longitude,
-                start_latitude,
-                end_latitude,
+            cell_measure_cube_subset = cell_measure_cube.intersection(
+                longitude=(start_longitude, end_longitude),
+                latitude=(start_latitude, end_latitude),
+                ignore_bounds=True,
             )
             cell_measure_subset = cell_measure.copy(
                 cell_measure_cube_subset.core_data())
