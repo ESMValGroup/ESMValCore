@@ -530,13 +530,15 @@ def _process_ids(geometries, ids: list | dict | None) -> tuple:
         if len(ids) != 1:
             raise ValueError(
                 f"If `ids` is given as dict, it needs exactly one entry, got "
-                f"{ids}")
+                f"{ids}"
+            )
         key = list(ids.keys())[0]
         for geometry in geometries:
             if key not in geometry['properties']:
                 raise ValueError(
                     f"Geometry {dict(geometry['properties'])} does not have "
-                    f"requested attribute {key}")
+                    f"requested attribute {key}"
+                )
         id_keys: tuple[str, ...] = (key, )
         ids = ids[key]
 
@@ -615,8 +617,9 @@ def _get_masks_from_geometries(
     return masks
 
 
-def _get_bounds(geometries: dict[str, dict], ) -> tuple[float, float,
-                                                        float, float]:
+def _get_bounds(
+    geometries: dict[str, dict],
+) -> tuple[float, float, float, float]:
     """Get bounds from given geometries.
 
     Parameters
@@ -631,7 +634,8 @@ def _get_bounds(geometries: dict[str, dict], ) -> tuple[float, float,
 
     """
     all_bounds = np.vstack(
-        [fiona.bounds(geom) for geom in geometries.values()])
+        [fiona.bounds(geom) for geom in geometries.values()]
+    )
     lon_max, lat_max = all_bounds[:, 2:].max(axis=0)
     lon_min, lat_min = all_bounds[:, :2].min(axis=0)
 
@@ -735,7 +739,8 @@ def _update_shapefile_path(
     # esmvalcore/preprocessor/shapefiles/ again
     # Note: this will find "special" shapefiles like 'ar6'
     shapefile_path = (Path(__file__).parent / 'shapefiles' /
-                      f"{shapefile.lower()}.shp")
+                      f"{shapefile.lower()}.shp"
+    )
     if shapefile_path.exists():
         return shapefile_path
 
@@ -823,7 +828,8 @@ def extract_shape(
             pad_hawaii = True
 
         requested_geometries = _get_requested_geometries(
-            geometries, ids, shapefile)
+            geometries, ids, shapefile
+        )
 
         # Crop cube if desired
         if crop:
@@ -870,7 +876,8 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
         _cube = cube.copy()
         remove_supplementary_variables(_cube)
         _cube.add_aux_coord(
-            AuxCoord(id_, units='no_unit', long_name='shape_id'))
+            AuxCoord(id_, units='no_unit', long_name='shape_id')
+        )
         mask = da.broadcast_to(mask, _cube.shape)
         _cube.data = da.ma.masked_where(~mask, _cube.core_data())
         cubelist.append(_cube)
