@@ -106,8 +106,7 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
             cell_measure_dims = cube.cell_measure_dims(cell_measure)
             # Slice original cube to get same shape as cell measure
             idx = tuple((
-                slice(None) if d in cell_measure_dims
-                else 0 for d in range(cube.ndim)
+                slice(None) if d in cell_measure_dims else 0 for d in range(cube.ndim)
             ))
             cell_measure_cube = cube[idx].copy(cell_measure.core_data())
             cell_measure_cube_subset = extract_region(
@@ -117,10 +116,8 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
                 start_latitude,
                 end_latitude,
             )
-            cell_measure_subset = cell_measure.copy(
-                cell_measure_cube_subset.core_data())
-            region_subset.add_cell_measure(cell_measure_subset,
-                                           cell_measure_dims)
+            cell_measure_subset = cell_measure.copy(cell_measure_cube_subset.core_data())
+            region_subset.add_cell_measure(cell_measure_subset, cell_measure_dims)
     # step 2: ancillary variables
     region_subset_ancil = region_subset.ancillary_variables()
     if (ancil_vars, cube.coord('latitude').ndim
