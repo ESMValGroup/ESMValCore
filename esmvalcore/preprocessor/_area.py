@@ -589,7 +589,8 @@ def _get_requested_geometries(
         if missing:
             raise ValueError(
                 f"Requested shapes {missing} not found in shapefile "
-                f"{shapefile}")
+                f"{shapefile}"
+            )
 
     return requested_geometries
 
@@ -738,8 +739,8 @@ def _update_shapefile_path(
     # As final resort, add suffix '.shp' and try path relative to
     # esmvalcore/preprocessor/shapefiles/ again
     # Note: this will find "special" shapefiles like 'ar6'
-    shapefile_path = (Path(__file__).parent / 'shapefiles' /
-                      f"{shapefile.lower()}.shp"
+    shapefile_path = (
+        Path(__file__).parent / 'shapefiles' / f"{shapefile.lower()}.shp"
     )
     if shapefile_path.exists():
         return shapefile_path
@@ -834,7 +835,8 @@ def extract_shape(
         # Crop cube if desired
         if crop:
             lon_min, lat_min, lon_max, lat_max = _get_bounds(
-                requested_geometries)
+                requested_geometries
+            )
             cube = _crop_cube(
                 cube,
                 start_longitude=lon_min,
