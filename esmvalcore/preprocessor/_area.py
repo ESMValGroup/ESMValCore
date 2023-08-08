@@ -102,22 +102,28 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
     # test too tests/integration/preprocessor/_extract_region/
     # setp 1: cell measures
     if cell_measures and not region_subset.cell_measures():
+        from ._supplementary_vars import add_cell_measure
         for cell_measure in cell_measures:
-            cell_measure_dims = cube.cell_measure_dims(cell_measure)
-            # Slice original cube to get same shape as cell measure
-            idx = tuple((
-                slice(None) if d in cell_measure_dims else 0 for d in range(cube.ndim)
-            ))
-            cell_measure_cube = cube[idx].copy(cell_measure.core_data())
-            cell_measure_cube_subset = extract_region(
-                cell_measure_cube,
-                start_longitude,
-                end_longitude,
-                start_latitude,
-                end_latitude,
+            logger.info(
+                "Workaround: putting back cell "
+                "measure %s in cube %s", cell_measure, region_subset)
+            measure_name = cell_measure.measure
+            coord_spec = [(cube.coord("latitude"), 0),
+                          (cube.coord("longitude"), 1)]
+            cell_measure = iris.cube.Cube(
+                cell_measure.data,
+                var_name=cell_measure.var_name,
+                standard_name=cell_measure.standard_name,
+                dim_coords_and_dims=coord_spec,
             )
-            cell_measure_subset = cell_measure.copy(cell_measure_cube_subset.core_data())
-            region_subset.add_cell_measure(cell_measure_subset, cell_measure_dims)
+            cell_measure_subset = cell_measure.intersection(
+                longitude=(start_longitude, end_longitude),
+                latitude=(start_latitude, end_latitude),
+                ignore_bounds=True,
+            )
+            cell_measure_subset = cell_measure_subset.intersection(
+                longitude=(0., 360.))
+            add_cell_measure(region_subset, cell_measure_subset, measure_name)
     # step 2: ancillary variables
     region_subset_ancil = region_subset.ancillary_variables()
     if (ancil_vars, cube.coord('latitude').ndim
