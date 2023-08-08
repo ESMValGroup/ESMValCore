@@ -120,29 +120,23 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
             region_subset.add_cell_measure(cell_measure_subset,
                                            cell_measure_dims)
     # step 2: ancillary variables
-    region_subset_ancil = region_subset.ancillary_variables()
-    if (ancil_vars, cube.coord('latitude').ndim
-            == 1) and not region_subset_ancil:
-        from ._supplementary_vars import add_ancillary_variable
+    if ancil_vars and not region_subset.ancillary_variables():
         for ancil_var in ancil_vars:
-            logger.info(
-                "Workaround: putting back ancillary "
-                "variable %s in cube %s", ancil_var, region_subset)
-            coord_spec = [(cube.coord("latitude"), 0),
-                          (cube.coord("longitude"), 1)]
-            ancil_cube = iris.cube.Cube(
-                ancil_var.data,
-                var_name=ancil_var.var_name,
-                standard_name=ancil_var.standard_name,
-                dim_coords_and_dims=coord_spec,
+            ancil_var_dims = cube.ancillary_variable_dims(ancil_var)
+            # Slice original cube to get same shape as ancillary variable
+            idx = tuple((
+                slice(None) if d in ancil_var_dims else 0 for d in range(cube.ndim)
+            ))
+            ancil_var_cube = cube[idx].copy(ancil_var.core_data())
+            ancil_var_cube_subset = extract_region(
+                ancil_var_cube,
+                start_longitude,
+                end_longitude,
+                start_latitude,
+                end_latitude,
             )
-            ancil_subset = ancil_cube.intersection(
-                longitude=(start_longitude, end_longitude),
-                latitude=(start_latitude, end_latitude),
-                ignore_bounds=True,
-            )
-            ancil_subset = ancil_subset.intersection(longitude=(0., 360.))
-            add_ancillary_variable(region_subset, ancil_subset)
+            ancil_var_subset = ancil_var.copy(ancil_var_cube_subset.core_data())
+            region_subset.add_ancillary_variable(ancil_var_cube_subset, ancil_var_dims)
 
     return region_subset
 
