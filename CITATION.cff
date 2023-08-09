@@ -190,6 +190,10 @@ authors:
     affiliation: "DLR, Germany"
     family-names: Bauer
     given-names: Julian
+  -
+    affiliation: "Forschungszentrum Juelich (FZJ), Germany"
+    family-names: Benke
+    given-names: Joerg
 
 cff-version: 1.2.0
 date-released: 2023-07-04
