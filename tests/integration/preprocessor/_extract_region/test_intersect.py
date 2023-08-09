@@ -21,7 +21,7 @@ def make_cube():
         np.arange(0., 10., 1.),
         standard_name='time',
         units=Unit('days since 1950-01-01 00:00:00',
-        calendar='360_day'))
+                   calendar='360_day'))
     lons = iris.coords.DimCoord(
         [i + .5 for i in range(288)],
         standard_name='longitude',
