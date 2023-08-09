@@ -35,7 +35,7 @@ def fix_file(
     add_unique_suffix: bool = False,
     session: Optional[Session] = None,
     **extra_facets,
-) -> Path:
+) -> str | Path:
     """Fix files before ESMValTool can load them.
 
     These fixes are only for issues that prevent iris from loading the cube or
@@ -67,7 +67,7 @@ def fix_file(
 
     Returns
     -------
-    Path
+    str or pathlib.Path
         Path to the fixed file.
 
     """
