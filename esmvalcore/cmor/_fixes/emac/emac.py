@@ -12,6 +12,7 @@ variable) as single argument.
 """
 
 import logging
+import sys
 from shutil import copyfile
 
 import dask.array as da
@@ -56,10 +57,12 @@ class AllVars(EmacFix):
         )
         copyfile(filepath, new_path)
         with Dataset(new_path, mode='a') as dataset:
-            if 'formula_terms' in dataset.variables['lev'].ncattrs():
-                del dataset.variables['lev'].formula_terms
-            if 'formula_terms' in dataset.variables['ilev'].ncattrs():
-                del dataset.variables['ilev'].formula_terms
+            if 'lev' in dataset.variables:
+                if 'formula_terms' in dataset.variables['lev'].ncattrs():
+                    del dataset.variables['lev'].formula_terms
+            if 'ilev' in dataset.variables:
+                if 'formula_terms' in dataset.variables['ilev'].ncattrs():
+                    del dataset.variables['ilev'].formula_terms
         return new_path
 
     def fix_metadata(self, cubes):
@@ -109,11 +112,14 @@ class AllVars(EmacFix):
     @staticmethod
     def _fix_alevel(cube, cubes):
         """Fix hybrid pressure level coordinate of cube."""
+        #aps_name = 'aps_ave'
+        aps_name = 'aps'
+
         # Add coefficients for hybrid pressure level coordinate
         coords_to_add = {
             'hyam': 1,
             'hybm': 1,
-            'aps_ave': (0, 2, 3),
+            aps_name: (0, 2, 3),
         }
         add_aux_coords_from_cubes(cube, cubes, coords_to_add)
 
@@ -126,7 +132,7 @@ class AllVars(EmacFix):
         lev_coord = cube.coord(var_name='lev')
         ap_coord = cube.coord(var_name='hyam')
         b_coord = cube.coord(var_name='hybm')
-        ps_coord = cube.coord(var_name='aps_ave')
+        ps_coord = cube.coord(var_name=aps_name)
 
         lev_coord.var_name = 'lev'
         lev_coord.standard_name = 'atmosphere_hybrid_sigma_pressure_coordinate'

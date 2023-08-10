@@ -45,6 +45,64 @@ class EmacFix(NativeDatasetFix):
             f"levels is not available in the input file."
         )
 
+    def add_additional_cubes(self, cubes):
+        """Add additional user-defined cubes to list of cubes (in-place).
+
+        An example use case is adding a vertical coordinate (e.g., `hyam`) to the
+        dataset if the vertical coordinate data is not provided directly by the
+        output file.
+
+        Currently, the following cubes can be added:
+        - 'hyam'
+        - 'hybm'
+        - 'hyai'
+        - 'hybi'
+
+        Code Delphi start here
+
+
+        - `zg` (`geometric_height_at_full_level_center`) from facet `zg_file`.
+          This can be used as vertical coordinate.
+        - `zghalf` (`geometric_height_at_half_level_center`) from facet
+          `zghalf_file`. This can be used as bounds for the vertical
+          coordinate.
+
+        Note
+        ----
+        Files can be specified as absolute or relative (to
+        ``auxiliary_data_dir`` as defined in the :ref:`user configuration
+        file`) paths.
+
+        Parameters
+        ----------
+        cubes: iris.cube.CubeList
+            Input cubes which will be modified in place.
+
+        Returns
+        -------
+        iris.cube.CubeList
+            Modified cubes. The cubes are modified in place; they are just
+            returned out of convenience for easy access.
+
+        Raises
+        ------
+        InputFilesNotFound
+            A specified file does not exist.
+
+        """
+        facets_to_consider = [
+            'zg_file',
+            'zghalf_file',
+        ]
+        for facet in facets_to_consider:
+            if facet not in self.extra_facets:
+                continue
+            path_to_add = self._get_path_from_facet(facet)
+            logger.debug("Adding cubes from %s", path_to_add)
+            new_cubes = self._load_cubes(path_to_add)
+            cubes.extend(new_cubes)
+
+        return cubes
 
 class NegateData(EmacFix):
     """Base fix to negate data."""

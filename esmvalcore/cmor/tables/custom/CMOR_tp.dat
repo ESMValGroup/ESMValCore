@@ -1,0 +1,21 @@
+SOURCE: CMIP5
+!============
+variable_entry:    tp
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     air_pressure
+units:             Pa
+cell_methods:      area: time: mean
+cell_measures:     area: areacella
+long_name:         Tropopause pressure
+comment:           pressure at the tropopause
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+type:              real
+!----------------------------------
+!
