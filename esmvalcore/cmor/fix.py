@@ -32,7 +32,7 @@ def fix_file(
     add_unique_suffix: bool = False,
     session: Optional[Session] = None,
     **extra_facets,
-) -> Path:
+) -> str | Path:
     """Fix files before ESMValTool can load them.
 
     This fixes are only for issues that prevent iris from loading the cube or
@@ -42,30 +42,31 @@ def fix_file(
 
     Parameters
     ----------
-    file: Path
+    file:
         Path to the original file.
-    short_name: str
+    short_name:
         Variable's short name.
-    project: str
+    project:
         Project of the dataset.
-    dataset: str
+    dataset:
         Name of the dataset.
-    mip: str
+    mip:
         Variable's MIP.
-    output_dir: Path
+    output_dir:
         Output directory for fixed files.
-    add_unique_suffix: bool, optional (default: False)
+    add_unique_suffix:
         Adds a unique suffix to `output_dir` for thread safety.
-    session: Session, optional
+    session:
         Current session which includes configuration and directory information.
-    **extra_facets: dict, optional
+    **extra_facets:
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
 
     Returns
     -------
-    Path:
+    str or pathlib.Path
         Path to the fixed file.
+
     """
     # Update extra_facets with variable information given as regular arguments
     # to this function

@@ -5,7 +5,9 @@ import importlib
 import inspect
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
+
+from iris.cube import Cube, CubeList
 
 from ..table import CMOR_TABLES
 
@@ -22,17 +24,17 @@ class Fix:
         vardef: VariableInfo,
         extra_facets: Optional[dict] = None,
         session: Optional[Session] = None,
-    ):
+    ) -> None:
         """Initialize fix object.
 
         Parameters
         ----------
-        vardef: VariableInfo
+        vardef:
             CMOR table entry.
-        extra_facets: dict, optional
+        extra_facets:
             Extra facets are mainly used for data outside of the big projects
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
-        session: Session, optional
+        session:
             Current session which includes configuration and directory
             information.
 
@@ -48,7 +50,7 @@ class Fix:
         filepath: Path,
         output_dir: Path,
         add_unique_suffix: bool = False,
-    ) -> Path:
+    ) -> str | Path:
         """Apply fixes to the files prior to creating the cube.
 
         Should be used only to fix errors that prevent loading or cannot be
@@ -57,16 +59,16 @@ class Fix:
 
         Parameters
         ----------
-        filepath: Path
+        filepath:
             File to fix.
-        output_dir: Path
+        output_dir:
             Output directory for fixed files.
-        add_unique_suffix: bool, optional (default: False)
+        add_unique_suffix:
             Adds a unique suffix to `output_dir` for thread safety.
 
         Returns
         -------
-        Path
+        str or pathlib.Path
             Path to the corrected file. It can be different from the original
             filepath if a fix has been applied, but if not it should be the
             original filepath.
@@ -74,7 +76,7 @@ class Fix:
         """
         return filepath
 
-    def fix_metadata(self, cubes):
+    def fix_metadata(self, cubes: CubeList) -> CubeList:
         """Apply fixes to the metadata of the cube.
 
         Changes applied here must not require data loading.
@@ -83,7 +85,7 @@ class Fix:
 
         Parameters
         ----------
-        cubes: iris.cube.CubeList
+        cubes:
             Cubes to fix.
 
         Returns
@@ -94,26 +96,30 @@ class Fix:
         """
         return cubes
 
-    def get_cube_from_list(self, cubes, short_name=None):
+    def get_cube_from_list(
+        self,
+        cubes: CubeList,
+        short_name: Optional[str] = None,
+    ) -> Cube:
         """Get a cube from the list with a given short name.
 
         Parameters
         ----------
-        cubes : iris.cube.CubeList
+        cubes:
             List of cubes to search.
-        short_name : str or None
+        short_name:
             Cube's variable short name. If `None`, `short name` is the class
             name.
 
         Raises
         ------
         Exception
-            If no cube is found.
+            No cube is found.
 
         Returns
         -------
-        iris.Cube
-            Variable's cube
+        iris.cube.Cube
+            Variable's cube.
 
         """
         if short_name is None:
@@ -123,14 +129,14 @@ class Fix:
                 return cube
         raise Exception(f'Cube for variable "{short_name}" not found')
 
-    def fix_data(self, cube):
+    def fix_data(self, cube: Cube) -> Cube:
         """Apply fixes to the data of the cube.
 
         These fixes should be applied before checking the data.
 
         Parameters
         ----------
-        cube: iris.cube.Cube
+        cube:
             Cube to fix.
 
         Returns
@@ -141,11 +147,11 @@ class Fix:
         """
         return cube
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         """Fix equality."""
         return isinstance(self, other.__class__)
 
-    def __ne__(self, other):
+    def __ne__(self, other: Any) -> bool:
         """Fix inequality."""
         return not self.__eq__(other)
 
@@ -173,18 +179,18 @@ class Fix:
 
         Parameters
         ----------
-        project: str
+        project:
             Project of the dataset.
-        dataset: str
+        dataset:
             Name of the dataset.
-        mip: str
+        mip:
             Variable's MIP.
-        short_name: str
+        short_name:
             Variable's short name.
-        extra_facets: dict, optional
+        extra_facets:
             Extra facets are mainly used for data outside of the big projects
             like CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
-        session: Session, optional
+        session:
             Current session which includes configuration and directory
             information.
 
@@ -248,12 +254,12 @@ class Fix:
 
         Parameters
         ----------
-        output_dir: Path
+        output_dir:
             Output directory for fixed files. Will be created if it does not
             exist yet.
-        filepath: str or Path
+        filepath:
             Original path.
-        add_unique_suffix: bool, optional (default: False)
+        add_unique_suffix:
             Adds a unique suffix to `output_dir` for thread safety.
 
         Returns
