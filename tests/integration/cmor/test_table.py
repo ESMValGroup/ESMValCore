@@ -476,3 +476,12 @@ class TestCustomInfo(unittest.TestCase):
         self.assertEqual(var.long_name,
                          'Global-mean Near-Surface Air Temperature Anomaly')
         self.assertEqual(var.units, 'K')
+
+    def test_get_variable_ch4s(self):
+        """Get tas variable."""
+        CustomInfo()
+        var = self.variables_info.get_variable('Amon', 'ch4s')
+        self.assertEqual(var.short_name, 'ch4s')
+        self.assertEqual(var.long_name,
+                         'Atmosphere CH4 surface')
+        self.assertEqual(var.units, '1e-09')
