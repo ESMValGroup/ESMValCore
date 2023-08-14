@@ -77,6 +77,9 @@ autodoc_default_options = {
     'autosummary': True,
 }
 
+# Show type hints in function signature AND docstring
+autodoc_typehints = 'both'
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -385,7 +388,7 @@ epub_copyright = u'ESMValTool Development Team'
 # The format is a list of tuples containing the path and title.
 # epub_pre_files = []
 
-# HTML files shat should be inserted after the pages created by sphinx.
+# HTML files that should be inserted after the pages created by sphinx.
 # The format is a list of tuples containing the path and title.
 # epub_post_files = []
 

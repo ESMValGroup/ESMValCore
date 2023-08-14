@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 def get_frequency(cube):
     """Determine time frequency of input cube."""
-
     try:
         time = cube.coord(axis='T')
     except iris.exceptions.CoordinateNotFoundError:
@@ -111,6 +110,8 @@ class Evspsbl(Fix):
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
             multiply_with_density(cube)
+            # Correct sign to align with CMOR standards
+            cube.data = cube.core_data() * -1.0
 
         return cubes
 
@@ -126,6 +127,8 @@ class Evspsblpot(Fix):
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
             multiply_with_density(cube)
+            # Correct sign to align with CMOR standards
+            cube.data = cube.core_data() * -1.0
 
         return cubes
 
@@ -315,6 +318,7 @@ class Tasmax(Fix):
     """Fixes for tasmax."""
 
     def fix_metadata(self, cubes):
+        """Fix metadata."""
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
         return cubes
@@ -324,6 +328,7 @@ class Tasmin(Fix):
     """Fixes for tasmin."""
 
     def fix_metadata(self, cubes):
+        """Fix metadata."""
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
         return cubes

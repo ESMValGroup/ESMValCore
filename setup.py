@@ -39,7 +39,7 @@ REQUIREMENTS = {
         'fire',
         'geopy',
         'humanfriendly',
-        "importlib_resources;python_version<'3.9'",
+        "importlib_metadata;python_version<'3.10'",
         'isodate',
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
@@ -56,7 +56,9 @@ REQUIREMENTS = {
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        'scitools-iris>=3.6.0',
+        # See the following issue for info on the iris pin below:
+        # https://github.com/ESMValGroup/ESMValTool/issues/3239#issuecomment-1613298587
+        'scitools-iris>=3.4.0',
         'shapely>=2.0.0',
         'stratify>=0.3',
         'yamale',
@@ -76,7 +78,6 @@ REQUIREMENTS = {
         # MyPy library stubs
         'mypy>=0.990',
         'types-requests',
-        'types-pkg_resources',
         'types-PyYAML',
     ],
     # Documentation dependencies

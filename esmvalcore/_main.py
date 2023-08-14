@@ -29,10 +29,15 @@ http://docs.esmvaltool.org. Have fun!
 # pylint: disable=import-outside-toplevel
 import logging
 import os
+import sys
 from pathlib import Path
 
+if (sys.version_info.major, sys.version_info.minor) < (3, 10):
+    from importlib_metadata import entry_points
+else:
+    from importlib.metadata import entry_points  # type: ignore
+
 import fire
-from pkg_resources import iter_entry_points
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -299,12 +304,13 @@ class ESMValTool():
         self.config = Config()
         self.recipes = Recipes()
         self._extra_packages = {}
-        if not list(iter_entry_points('esmvaltool_commands')):
+        esmvaltool_commands = entry_points(group='esmvaltool_commands')
+        if not esmvaltool_commands:
             print("Running esmvaltool executable from ESMValCore. "
                   "No other command line utilities are available "
                   "until ESMValTool is installed.")
-        for entry_point in iter_entry_points('esmvaltool_commands'):
-            self._extra_packages[entry_point.dist.project_name] = \
+        for entry_point in esmvaltool_commands:
+            self._extra_packages[entry_point.dist.name] = \
                 entry_point.dist.version
             if hasattr(self, entry_point.name):
                 logger.error('Registered command %s already exists',
