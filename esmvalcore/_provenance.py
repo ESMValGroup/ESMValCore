@@ -3,6 +3,7 @@ import copy
 import logging
 import os
 from functools import total_ordering
+from pathlib import Path
 
 from netCDF4 import Dataset
 from PIL import Image
@@ -53,7 +54,7 @@ def attribute_to_authors(entity, authors):
 
 
 def attribute_to_projects(entity, projects):
-    """Attribute entity to projecs."""
+    """Attribute entity to projects."""
     namespace = 'project'
     create_namespace(entity.bundle, namespace)
 
@@ -193,7 +194,7 @@ class TrackedFile:
         self._initialize_ancestors(activity)
 
     def _initialize_namespaces(self):
-        """Inialize the namespaces."""
+        """Initialize the namespaces."""
         for namespace in ('file', 'attribute', 'preprocessor', 'task'):
             create_namespace(self.provenance, namespace)
 
@@ -206,9 +207,10 @@ class TrackedFile:
         """Initialize the entity representing the file."""
         if self.attributes is None:
             self.attributes = {}
-            with Dataset(self.filename, 'r') as dataset:
-                for attr in dataset.ncattrs():
-                    self.attributes[attr] = dataset.getncattr(attr)
+            if 'nc' in Path(self.filename).suffix:
+                with Dataset(self.filename, 'r') as dataset:
+                    for attr in dataset.ncattrs():
+                        self.attributes[attr] = dataset.getncattr(attr)
 
         attributes = {
             'attribute:' + str(k).replace(' ', '_'): str(v)

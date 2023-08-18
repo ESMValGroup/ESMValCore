@@ -4,12 +4,14 @@ import logging
 
 import iris
 import numpy as np
+from iris.util import reverse
 
 from esmvalcore.iris_helpers import date2num
 
+from ....preprocessor._regrid import _bilinear_unstructured_regrid
+from ...table import CMOR_TABLES
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
-from ...table import CMOR_TABLES
 
 logger = logging.getLogger(__name__)
 
@@ -349,21 +351,13 @@ class AllVars(Fix):
 
     def _fix_coordinates(self, cube):
         """Fix coordinates."""
-        # Fix coordinate increasing direction
-        slices = []
-        for coord in cube.coords():
-            if coord.var_name in ('latitude', 'pressure_level'):
-                slices.append(slice(None, None, -1))
-            else:
-                slices.append(slice(None))
-        cube = cube[tuple(slices)]
-
         # Add scalar height coordinates
         if 'height2m' in self.vardef.dimensions:
             add_scalar_height_coord(cube, 2.)
         if 'height10m' in self.vardef.dimensions:
             add_scalar_height_coord(cube, 10.)
 
+        # Fix coord metadata
         for coord_def in self.vardef.coordinates.values():
             axis = coord_def.axis
             # ERA5 uses regular pressure level coordinate. In case the cmor
@@ -387,6 +381,17 @@ class AllVars(Fix):
                 coord.guess_bounds()
 
         self._fix_monthly_time_coord(cube)
+
+        # Fix coordinate increasing direction
+        if cube.coords('latitude') and cube.coord('latitude').shape[0] > 1:
+            lat = cube.coord('latitude')
+            if lat.points[0] > lat.points[1]:
+                cube = reverse(cube, 'latitude')
+        if (cube.coords('air_pressure') and
+                cube.coord('air_pressure').shape[0] > 1):
+            plev = cube.coord('air_pressure')
+            if plev.points[0] < plev.points[1]:
+                cube = reverse(cube, 'air_pressure')
 
         return cube
 
@@ -420,6 +425,17 @@ class AllVars(Fix):
             if self.vardef.standard_name:
                 cube.standard_name = self.vardef.standard_name
             cube.long_name = self.vardef.long_name
+
+            # If desired, regrid native ERA5 data in GRIB format (which is on a
+            # reduced Gaussian grid)
+            if (
+                    cube.coords('latitude') and
+                    cube.coords('longitude') and
+                    cube.coord('latitude').ndim == 1 and
+                    cube.coord('longitude').ndim == 1 and
+                    cube.coord_dims('latitude') == cube.coord_dims('longitude')
+            ):
+                cube = _bilinear_unstructured_regrid(cube, '0.25x0.25')
 
             cube = self._fix_coordinates(cube)
             self._fix_units(cube)
