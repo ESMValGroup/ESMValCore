@@ -25,15 +25,21 @@ def get_frequency(cube):
 
     time.convert_units('days since 1850-1-1 00:00:00.0')
     if len(time.points) == 1:
-        if cube.long_name != 'Geopotential':
+        acceptable_long_names = (
+            'Geopotential',
+            'Percentage of the Grid Cell Occupied by Land (Including Lakes)',
+        )
+        if cube.long_name not in acceptable_long_names:
             raise ValueError('Unable to infer frequency of cube '
                              f'with length 1 time dimension: {cube}')
         return 'fx'
 
     interval = time.points[1] - time.points[0]
+
     if interval - 1 / 24 < 1e-4:
         return 'hourly'
-
+    if interval - 1.0 < 1e-4:
+        return 'daily'
     return 'monthly'
 
 
@@ -75,6 +81,27 @@ def divide_by_gravity(cube):
     return cube
 
 
+class Albsn(Fix):
+    """Fixes for albsn."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            cube.units = '1'
+        return cubes
+
+
+class Cli(Fix):
+    """Fixes for cli."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = 'kg kg-1'
+        return cubes
+
+
 class Clt(Fix):
     """Fixes for clt."""
 
@@ -85,6 +112,16 @@ class Clt(Fix):
             cube.units = '%'
             cube.data = cube.core_data() * 100.
 
+        return cubes
+
+
+class Clw(Fix):
+    """Fixes for clw."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = 'kg kg-1'
         return cubes
 
 
@@ -148,6 +185,30 @@ class Mrro(Fix):
         return cubes
 
 
+class Hus(Fix):
+    """Fixes for hus."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = 'kg kg-1'
+        return cubes
+
+
+class O3(Fix):
+    """Fixes for o3."""
+
+    def fix_metadata(self, cubes):
+        """Convert mass mixing ratios to mole fractions."""
+        for cube in cubes:
+            cube.units = 'kg kg-1'
+            # Convert to molar mixing ratios, which is almost identical to mole
+            # fraction for small amounts of substances (which we have here)
+            cube.data = cube.core_data() * 28.9644 / 47.9982
+            cube.units = 'mol mol-1'
+        return cubes
+
+
 class Orog(Fix):
     """Fixes for orography."""
 
@@ -186,6 +247,26 @@ class Prsn(Fix):
             fix_accumulated_units(cube)
             multiply_with_density(cube)
 
+        return cubes
+
+
+class Prw(Fix):
+    """Fixes for prw."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = 'kg m-2'
+        return cubes
+
+
+class Ps(Fix):
+    """Fixes for ps."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = 'Pa'
         return cubes
 
 
@@ -316,6 +397,17 @@ class Rss(Fix):
         return cubes
 
 
+class Sftlf(Fix):
+    """Fixes for sftlf."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            # Invalid input cube units (ignored on load) were '0-1'
+            cube.units = '1'
+        return cubes
+
+
 class Tasmax(Fix):
     """Fixes for tasmax."""
 
@@ -427,7 +519,7 @@ class AllVars(Fix):
             cube.long_name = self.vardef.long_name
 
             # If desired, regrid native ERA5 data in GRIB format (which is on a
-            # reduced Gaussian grid)
+            # reduced Gaussian grid, i.e., unstructured grid)
             if (
                     cube.coords('latitude') and
                     cube.coords('longitude') and

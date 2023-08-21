@@ -19,74 +19,183 @@ ERA5:
       version: ''  # necessary to get a nice output file name
 
     # Variable-specific settings
+    albsn:
+      level: sf
+      grib_id: '032'
+    cl:
+      level: pl
+      grib_id: '248'
+    cli:
+      level: pl
+      grib_id: '247'
+    clt:
+      level: sf
+      grib_id: '164'
+    clw:
+      level: pl
+      grib_id: '246'
+    hur:
+      level: pl
+      grib_id: '157'
+    hus:
+      level: pl
+      grib_id: '133'
+    o3:
+      level: pl
+      grib_id: '203'
+    prw:
+      level: sf
+      grib_id: '137'
+    ps:
+      level: sf
+      grib_id: '134'
+    psl:
+      level: sf
+      grib_id: '151'
+    rainmxrat27:
+      level: pl
+      grib_id: '075'
+    sftlf:
+      level: sf
+      grib_id: '172'
+    siconc:
+      level: sf
+      grib_id: '031'
+    siconca:
+      level: sf
+      grib_id: '031'
+    snd:
+      level: sf
+      grib_id: '141'
+    snowmxrat27:
+      level: pl
+      grib_id: '076'
     ta:
       level: pl
       grib_id: '130'
     tas:
       level: sf
       grib_id: '167'
+    tdps:
+      level: sf
+      grib_id: '168'
+    tos:
+      level: sf
+      grib_id: '034'
+    toz:
+      level: sf
+      grib_id: '206'
+    ts:
+      level: sf
+      grib_id: '235'
+    ua:
+      level: pl
+      grib_id: '131'
+    uas:
+      level: sf
+      grib_id: '165'
+    va:
+      level: pl
+      grib_id: '132'
+    vas:
+      level: sf
+      grib_id: '166'
+    wap:
+      level: pl
+      grib_id: '135'
+    zg:
+      level: pl
+      grib_id: '129'
+
+  # unclear:
+    # 075: specific rain water content = rainmxrat27 ??
+    # 076: specific snow water content = snowmxrat27 ??
+    # 136: total column water
+    # 186: low cloud cover p > 0.8 ps
+    # 187: medium cloud cover 0.45 ps < p < 0.8 ps
+    # 188: high cloud cover p < 0.45 ps
+    # 235: skin temperature = ts ??
+    # 243: forecast albedo
 
   # MIP-specific settings
+  AERday:
+    '*':
+      tres: 1D
+  AERhr:
+    '*':
+      tres: 1H
+  AERmon:
+    '*':
+      tres: 1M
+  AERmonZ:
+    '*':
+      tres: 1M
   Amon:
     '*':
       tres: 1M
+  CFday:
+    '*':
+      tres: 1D
+  CFmon:
+    '*':
+      tres: 1M
+  day:
+    '*':
+      tres: 1D
   E1hr:
     '*':
       tres: 1H
-
-
-    # # Cell measures
-    # areacella:
-    #   latitude: grid_latitude
-    #   longitude: grid_longitude
-    #   raw_name: cell_area
-    # areacello:
-    #   latitude: grid_latitude
-    #   longitude: grid_longitude
-    #   raw_name: cell_area
-
-    # # 2D dynamical/meteorological variables
-    # clivi: {var_type: atm_2d_ml}
-    # clt: {var_type: atm_2d_ml}
-    # clwvi: {var_type: atm_2d_ml}
-    # evspsbl: {var_type: atm_2d_ml}
-    # hfls: {var_type: atm_2d_ml}
-    # hfss: {var_type: atm_2d_ml}
-    # lwp: {raw_name: cllvi, var_type: atm_2d_ml}
-    # pr: {var_type: atm_2d_ml}
-    # prw: {var_type: atm_2d_ml}
-    # ps: {var_type: atm_2d_ml}
-    # psl: {var_type: atm_2d_ml}
-    # rlds: {var_type: atm_2d_ml}
-    # rldscs: {var_type: atm_2d_ml}
-    # rlus: {var_type: atm_2d_ml}
-    # rlut: {var_type: atm_2d_ml}
-    # rlutcs: {var_type: atm_2d_ml}
-    # rsds: {var_type: atm_2d_ml}
-    # rsdscs: {var_type: atm_2d_ml}
-    # rsdt: {var_type: atm_2d_ml}
-    # rsus: {var_type: atm_2d_ml}
-    # rsuscs: {var_type: atm_2d_ml}
-    # rsut: {var_type: atm_2d_ml}
-    # rsutcs: {var_type: atm_2d_ml}
-    # siconc: {raw_name: sic, raw_units: '1', var_type: atm_2d_ml}
-    # siconca: {raw_name: sic, raw_units: '1', var_type: atm_2d_ml}
-    # tas: {var_type: atm_2d_ml}
-    # tasmax: {var_type: atm_2d_ml}
-    # tasmin: {var_type: atm_2d_ml}
-    # tauu: {var_type: atm_2d_ml}
-    # tauv: {var_type: atm_2d_ml}
-    # ts: {var_type: atm_2d_ml}
-    # uas: {var_type: atm_2d_ml}
-    # vas: {var_type: atm_2d_ml}
-
-    # # 3D dynamical/meteorological variables
-    # cl: {var_type: atm_3d_ml}
-    # cli: {var_type: atm_3d_ml}
-    # clw: {var_type: atm_3d_ml}
-    # hur: {raw_units: '1', var_type: atm_3d_ml}
-    # hus: {var_type: atm_3d_ml}
-    # ta: {var_type: atm_3d_ml}
-    # ua: {var_type: atm_3d_ml}
-    # va: {var_type: atm_3d_ml}
-    # wap: {var_type: atm_3d_ml}
+  E1hrClimMon:
+    '*':
+      tres: 1H
+  Eday:
+    '*':
+      tres: 1D
+  EdayZ:
+    '*':
+      tres: 1D
+  Efx:
+    '*':
+      tres: IV
+  Emon:
+    '*':
+      tres: 1M
+  EmonZ:
+    '*':
+      tres: 1M
+  fx:
+    '*':
+      tres: IV
+  IfxAnt:
+    '*':
+      tres: IV
+  IfxGre:
+    '*':
+      tres: IV
+  ImonAnt:
+    '*':
+      tres: 1M
+  ImonGre:
+    '*':
+      tres: 1M
+  LImon:
+    '*':
+      tres: 1M
+  Lmon:
+    '*':
+      tres: 1M
+  Oday:
+    '*':
+      tres: 1D
+  Ofx:
+    '*':
+      tres: IV
+  Omon:
+    '*':
+      tres: 1M
+  SIday:
+    '*':
+      tres: 1D
+  SImon:
+    '*':
+      tres: 1M
