@@ -125,7 +125,7 @@ class RecipeOutput(Mapping):
 
     FILTER_ATTRS: list = [
         "realms",
-        "plot_type", # Used by several diagnostics
+        "plot_type",  # Used by several diagnostics
         "plot_types",
         "group_name",  # TODO Remove, for testing
         "long_names",  # TODO Decide final name
@@ -176,7 +176,7 @@ class RecipeOutput(Mapping):
 
         # Sort at the end because sets are unordered
         for _filter, _attrs in self.filters.items():
-             self.filters[_filter] = sorted(_attrs)
+            self.filters[_filter] = sorted(_attrs)
 
     def __repr__(self):
         """Return canonical string representation."""
