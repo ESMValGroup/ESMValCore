@@ -32,20 +32,22 @@
 
 {% endfor %}
 
-<h4>Data files<button class="toggle_data_files" onclick="toggleDataFiles(this, 'df_{{ task.title }}')">Show</button></h4>
+<h4>Data files<button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#df_{{ diagnostic_loop.index }}_{{ loop.index }}" aria-expanded="false" aria-controls="df_{{ diagnostic_loop.index }}_{{ loop.index }}">Show/Hide</button></h4>
 
-<div id="df_{{ task.title }}" class="data_files">
-<ul>
-{% for file in task.data_files %}
+<div id="df_{{ diagnostic_loop.index }}_{{ loop.index }}" class="collapse">
+    <div class="card card-body">
+        <ul>
+        {% for file in task.data_files %}
 
-    <li>
-        {{ file.caption }} |
-        <a href='{{ relpath(file.path, session.session_dir) }}'>download</a> |
-        <a href='{{ relpath(file.citation_file, session.session_dir) }}'>references</a> |
-        <a href='{{ relpath(file.data_citation_file, session.session_dir) }}'>extra data citation</a> |
-        <a href='{{ relpath(file.provenance_xml_file, session.session_dir) }}'>provenance</a>
-    </li>
+            <li>
+                {{ file.caption }} |
+                <a href='{{ relpath(file.path, session.session_dir) }}'>download</a> |
+                <a href='{{ relpath(file.citation_file, session.session_dir) }}'>references</a> |
+                <a href='{{ relpath(file.data_citation_file, session.session_dir) }}'>extra data citation</a> |
+                <a href='{{ relpath(file.provenance_xml_file, session.session_dir) }}'>provenance</a>
+            </li>
 
-{% endfor %}
-</ul>
+        {% endfor %}
+        </ul>
+    </div>
 </div>
