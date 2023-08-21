@@ -181,6 +181,10 @@
         {
             "affiliation": "DLR, Germany",
             "name": "Bauer, Julian"
+        },
+        {
+            "affiliation": "Forschungszentrum Juelich, Germany",
+            "name": "Benke, Joerg"
         }
     ],
     "description": "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.",
