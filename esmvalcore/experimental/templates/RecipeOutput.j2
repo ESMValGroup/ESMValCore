@@ -1,8 +1,9 @@
 <!-- Filter -->
-<h3>Filter</h3>
-<div class="div_filter">
+<div class="container div_filter">
+  <h3>Filter</h3>
+  <div class="row row-cols-auto">
     {% for filter_type, types in filters.items() %}
-    <div class="filter_{{ filter_type }}">
+    <div class="col col-lg-3 filter_{{ filter_type }}">
         <p>{{ filter_type|replace('_', ' ')|title }}</p>
         <ul>
             {% for t in types %}
@@ -11,26 +12,32 @@
         </ul>
     </div>
     {% endfor %}
-    <button onclick="resetFilter()">Reset Filter</button>
+  </div>
+  <button class="btn btn-primary disabled" onclick="resetFilter()">Clear all Filters</button>
 </div>
 <p><input type="checkbox" id="cb_hideEmptyDiagnostics" onclick="updateFilter()" checked="true"> Hide empty diagnostics</p>
 
 
 <!-- Tab links -->
-<div class="tab">
-  <button class="tablinks activeTablink" onclick="openTab(event)" id="tabAll">All</button>
+<ul class="nav nav-tabs" id="tabDiagnostics" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active diagnostics-tab" id="tabAll" data-bs-toggle="tab" data-bs-target="#" type="button" role="tab" aria-controls="" aria-selected="true">All</button>
+  </li>
   {% for diagnostic in diagnostics %}
-    <button class="tablinks" onclick="openTab(event)" value="tab_{{ diagnostic.title }}">{{ diagnostic.title }}</button>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link diagnostics-tab" id="tab_{{ loop.index }}" data-bs-toggle="tab" data-bs-target="#tabPane_{{ loop.index }}" type="button" role="tab" aria-controls="tabPane_{{ loop.index }}" aria-selected="true">{{ diagnostic.title }}</button>
+    </li>
   {% endfor %}
-</div>
+</ul>
 
-<div class="tabbox">
+<div class="tab-content" id="tabContentDiagnostics">
 {% for diagnostic in diagnostics %}
 
-  <div id="tab_{{diagnostic.title}}" class="tabcontent">
+  <div id="tabPane_{{ loop.index }}" class="tab-pane show active diagnostics-tab-pane" role="tabpanel" aria-labelledby="tab_{{ loop.index }}">
     <h2>{{ diagnostic.title }}</h2>
     <p>{{ diagnostic.description }}</p>
 
+    {% set diagnostic_loop = loop %}
     {% for task in diagnostic.task_output %}
 
       {% include 'TaskOutput.j2' %}
@@ -40,7 +47,3 @@
 
 {% endfor %}
 </div>
-
-<script>
-{% include 'scripts.js' %}
-</script>
