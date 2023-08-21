@@ -10,6 +10,11 @@ on:
   schedule:
     - cron: '0 4 */10 * *'
 
+# Required shell entrypoint to have properly configured bash shell
+defaults:
+  run:
+    shell: bash -l {0}
+
 jobs:
   create-verify-lock-file:
     name: Create and verify conda lock file for latest Python
@@ -26,54 +31,49 @@ jobs:
           miniforge-version: "latest"
           miniforge-variant: Mambaforge
           use-mamba: true
-      - name: Show conda config
-        shell: bash -l {0}
+      - name: Update and show conda config
         run: |
           conda update -n base -c conda-forge conda
           conda info
           conda list
           conda config --show-sources
           conda config --show
+          # setup-miniconda@v2 installs an old conda and mamba
+          # forcing a modern mamba updates both mamba and conda
+          conda install -c conda-forge "mamba>=1.4.8"
+          conda --version
+          mamba --version
       - name: Gather Python info
-        shell: bash -l {0}
         run: |
           which python
           python --version
       - name: Install conda-lock
-        shell: bash -l {0}
-        run: mamba install -y conda-lock
+        run: mamba install -y -c conda-forge conda-lock
       - name: Check version of conda-lock
-        shell: bash -l {0}
         run: conda-lock --version
       - name: Create conda lock file for linux-64
-        shell: bash -l {0}
         run: conda-lock lock --platform linux-64 -f environment.yml --mamba --kind explicit
       - name: Creating environment from lock file
-        shell: bash -l {0}
         run: conda create --name esmvaltool-fromlock --file conda-linux-64.lock
       - name: Installing pip
-        shell: bash -l {0}
         run: mamba install -y pip
       - name: Gather pip info
-        shell: bash -l {0}
         run: pip --version
       - name: Gather Python info again
-        shell: bash -l {0}
         run: |
           which python
           python --version
       - name: Show environment contents
-        shell: bash -l {0}
         run: conda list
-      - shell: bash -l {0}
+      - name: Install esmvalcore
         run: pip install -e .[develop]
-      - shell: bash -l {0}
-        run: esmvaltool --help
-      - shell: bash -l {0}
-        run: esmvaltool version
-      - shell: bash -l {0}
+      - name: Run basic commands
+        run: |
+          esmvaltool --help
+          esmvaltool version
+      - name: Run flake8
         run: flake8
-      - shell: bash -l {0}
+      - name: Run pytests
         run: pytest -n 2 -m "not installation"
       # Automated PR
       # see https://github.com/marketplace/actions/create-pull-request

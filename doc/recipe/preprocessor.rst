@@ -136,18 +136,20 @@ ESMValCore deals with those issues by applying specific fixes for those
 datasets that require them. Fixes are applied at three different preprocessor
 steps:
 
-    - fix_file: apply fixes directly to a copy of the file. Copying the files
-      is costly, so only errors that prevent Iris to load the file are fixed
-      here. See :func:`esmvalcore.preprocessor.fix_file`
+    - ``fix_file``: apply fixes directly to a copy of the file.
+      Copying the files is costly, so only errors that prevent Iris to load the
+      file are fixed here.
+      See :func:`esmvalcore.preprocessor.fix_file`.
 
-    - fix_metadata: metadata fixes are done just before concatenating the cubes
-      loaded from different files in the final one. Automatic metadata fixes
-      are also applied at this step. See
-      :func:`esmvalcore.preprocessor.fix_metadata`
+    - ``fix_metadata``: metadata fixes are done just before concatenating the
+      cubes loaded from different files in the final one.
+      Automatic metadata fixes are also applied at this step.
+      See :func:`esmvalcore.preprocessor.fix_metadata`.
 
-    - fix_data: data fixes are applied before starting any operation that will
-      alter the data itself. Automatic data fixes are also applied at this step.
-      See :func:`esmvalcore.preprocessor.fix_data`
+    - ``fix_data``: data fixes are applied before starting any operation that
+      will alter the data itself.
+      Automatic data fixes are also applied at this step.
+      See :func:`esmvalcore.preprocessor.fix_data`.
 
 To get an overview on data fixes and how to implement new ones, please go to
 :ref:`fixing_data`.
@@ -1014,13 +1016,6 @@ scheme available in :doc:`iris-esmf-regrid:index`:
         scheme:
           reference: esmf_regrid.schemes:regrid_rectilinear_to_rectilinear
           mdtol: 0.7
-
-Since version 0.6 of :doc:`iris-esmf-regrid:index`, the regridder is able
-to ignore discontinuities in the source grids if the data defined in the
-discontiguous points is masked.
-The :func:`~esmvalcore.preprocessor.regrid` preprocessor automatically detects
-if discontinuities are present, and configures the regridding scheme in order to take
-into account the mask of the source grid to ignore them.
 
 .. _ensemble statistics:
 
