@@ -21,6 +21,8 @@ from iris.cube import Cube
 from iris.util import broadcast_to_shape
 from scipy.spatial import Delaunay
 
+from esmvalcore.iris_helpers import has_unstructured_grid
+
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.table import CMOR_TABLES
 from ._other import get_array_module
@@ -1146,6 +1148,9 @@ def _bilinear_unstructured_regrid(
 ) -> Cube:
     """Bilinear regridding for unstructured grids.
 
+    The spatial dimension of the data (i.e., the one describing the
+    unstructured grid) needs to be the rightmost dimension.
+
     Note
     ----
     This private function has been introduced to regrid native ERA5 in GRIB
@@ -1163,15 +1168,34 @@ def _bilinear_unstructured_regrid(
     at any point in time without prior warning (just like any other private
     function).
 
+    Warning
+    -------
+    This function will drop all cell measures, ancillary variables and aux
+    factories, and any auxiliary coordinate that spans the spatial dimension.
+
     """
     # This function should only be called on unstructured grid cubes
-    msg = "No unstructured grid"
-    assert cube.coords('latitude'), msg
-    assert cube.coords('longitude'), msg
-    assert cube.coord('latitude').ndim == 1, msg
-    assert cube.coord('longitude').ndim == 1, msg
-    assert cube.coord_dims('latitude') == cube.coord_dims('longitude'), msg
+    if not has_unstructured_grid(cube):
+        raise ValueError(
+            f"Cube {cube.summary(shorten=True)} does not have unstructured "
+            f"grid"
+        )
+
+    # The unstructured grid dimension needs to be the rightmost dimension
     udim = cube.coord_dims('latitude')[0]
+    if udim != cube.ndim - 1:
+        raise ValueError(
+            f"The spatial dimension of cube {cube.summary(shorten=True)} "
+            f"(i.e, the one describing the unstructured grid) needs to be the "
+            f"rightmost dimension"
+        )
+
+    # Generate a target grid from the provided cell-specification, and cache
+    # the resulting stock cube for later use
+    tgt_cube = _CACHE.setdefault(
+        target_grid,
+        _global_stock_cube(target_grid, lat_offset, lon_offset),
+    )
 
     # Make sure the cube has lazy data and rechunk it properly (cube cannot be
     # chunked along latitude and longitude dimension)
@@ -1181,27 +1205,9 @@ def _bilinear_unstructured_regrid(
     in_chunks[udim] = -1  # type: ignore
     cube.data = cube.lazy_data().rechunk(in_chunks)
 
-    # Generate a target grid from the provided cell-specification, and cache
-    # the resulting stock cube for later use
-    target_grid_cube = _CACHE.setdefault(
-        target_grid,
-        _global_stock_cube(target_grid, lat_offset, lon_offset),
-    )
-
-    # Put source and target grid in correct format and calculate vertices and
-    # interpolation weights
-    src_points = np.stack(
-        (cube.coord('latitude').points, cube.coord('longitude').points),
-        axis=-1,
-    )
-    (tgt_lat, tgt_lon) = np.meshgrid(
-        target_grid_cube.coord('latitude').points,
-        target_grid_cube.coord('longitude').points,
-        indexing='ij',
-    )
-    tgt_points = np.stack((tgt_lat.ravel(), tgt_lon.ravel()), axis=-1)
+    # Calculate indices and interpolation weights
     (indices, weights) = _get_linear_interpolation_weights(
-        src_points, tgt_points
+        cube, target_grid, lat_offset, lon_offset
     )
 
     # Perform actual regridding
@@ -1216,54 +1222,88 @@ def _bilinear_unstructured_regrid(
     )
     regridded_data = regridded_data.rechunk('auto')
 
-    # Put regridded data in cube with correct metadata
-    regridded_cube = _get_dummy_regridded_cube(cube, target_grid_cube)
-    regridded_cube.data = regridded_data.reshape(
-        regridded_cube.shape, limit='128MiB'
+    # Create new cube with correct metadata
+    dim_coords_and_dims = [
+        (c, cube.coord_dims(c)) for c in cube.coords(dim_coords=True) if
+        udim not in cube.coord_dims(c)
+    ]
+    dim_coords_and_dims.extend([
+        (tgt_cube.coord('latitude'), cube.ndim - 1),
+        (tgt_cube.coord('longitude'), cube.ndim),
+    ])
+    aux_coords_and_dims = [
+        (c, cube.coord_dims(c)) for c in cube.coords(dim_coords=False) if
+        udim not in cube.coord_dims(c)
+    ]
+    new_shape = cube.shape[:-1] + tgt_cube.shape
+    regridded_cube = Cube(
+        regridded_data.reshape(new_shape, limit='128MiB'),
+        standard_name=cube.standard_name,
+        long_name=cube.long_name,
+        var_name=cube.var_name,
+        units=cube.units,
+        attributes=cube.attributes,
+        cell_methods=cube.cell_methods,
+        dim_coords_and_dims=dim_coords_and_dims,
+        aux_coords_and_dims=aux_coords_and_dims,
     )
 
     return regridded_cube
 
 
-def _get_dummy_regridded_cube(src_cube: Cube, tgt_cube: Cube) -> Cube:
-    """Get dummy regridded cube with correct shape and metadata."""
-    src_cs = src_cube.coord_system()
-    xcoord = tgt_cube.coord(axis='x', dim_coords=True)
-    ycoord = tgt_cube.coord(axis='y', dim_coords=True)
-    xcoord.coord_system = src_cs
-    ycoord.coord_system = src_cs
-    return regrid(src_cube, tgt_cube, 'unstructured_nearest')
+_CACHE_WEIGHTS: Dict[str, tuple[np.ndarray, np.ndarray]] = {}
 
 
 def _get_linear_interpolation_weights(
-    src_points: np.ndarray,
-    tgt_points: np.ndarray,
+    src_cube: Cube,
+    target_grid: str,
+    lat_offset: bool = True,
+    lon_offset: bool = True,
     fill_value: float = np.nan,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Get vertices and weights for 2D linear regridding of unstructured grids.
 
-    Taken from
+    Partly taken from
     https://stackoverflow.com/questions/20915502/speedup-scipy-griddata-for-multiple-interpolations-between-two-irregular-grids.
     This is more than 80x faster than :func:`scipy.interpolate.griddata` and
     gives identical results.
 
-    Parameters
-    ----------
-    src_points: np.ndarray
-        Points of the unstructured source grid. Must be an (N, 2) array, where
-        N is the number of source grid points.
-    tgt_points: np.ndarray
-        Points of the unstructured target grid. Must be an (M, 2) array, where
-        M is the number of target grid points.
-    fill_value: float
-        Fill value for extrapolated values.
-
-    Returns
-    -------
-    tuple[np.ndarray, np.ndarray]
-        Indices and interpolation weights. Both are (M, 3) arrays.
-
     """
+    # Cache result to avoid re-calculating this over and over
+    src_lat = src_cube.coord('latitude')
+    src_lon = src_cube.coord('longitude')
+    cache_key = (
+        f"{src_lat.shape}_"
+        f"{target_grid}_"
+        f"{lat_offset}_"
+        f"{lon_offset}_"
+        f"{fill_value}_"
+    )
+    if cache_key in _CACHE_WEIGHTS:
+        return _CACHE_WEIGHTS[cache_key]
+
+    # Generate a target grid from the provided cell-specification, and cache
+    # the resulting stock cube for later use
+    tgt_cube = _CACHE.setdefault(
+        target_grid,
+        _global_stock_cube(target_grid, lat_offset, lon_offset),
+    )
+
+    # Bring points into correct format
+    # src_points: (N, 2) where N is the number of source grid points
+    # tgt_points: (M, 2) where M is the number of target grid points
+    src_points = np.stack((src_lat.points, src_lon.points), axis=-1)
+    (tgt_lat, tgt_lon) = np.meshgrid(
+        tgt_cube.coord('latitude').points,
+        tgt_cube.coord('longitude').points,
+        indexing='ij',
+    )
+    tgt_points = np.stack((tgt_lat.ravel(), tgt_lon.ravel()), axis=-1)
+
+    # Actual indices and weights calculation using Delaunay triagulation
+    # Return shapes:
+    # indices: (M, 3)
+    # weights: (M, 3)
     n_dims = 2
     tri = Delaunay(src_points)
     simplex = tri.find_simplex(tgt_points)
@@ -1274,6 +1314,10 @@ def _get_linear_interpolation_weights(
     bary = np.einsum('njk,nk->nj', temp[:, :n_dims, :], delta)
     weights = np.hstack((bary, 1 - bary.sum(axis=1, keepdims=True)))
     weights[extra_idx, :] = fill_value
+
+    # Cache result
+    _CACHE_WEIGHTS[cache_key] = (indices, weights)
+
     return (indices, weights)
 
 
