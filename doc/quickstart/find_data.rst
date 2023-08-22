@@ -104,32 +104,101 @@ Supported native reanalysis/observational datasets
 
 The following native reanalysis/observational datasets are supported under the
 ``native6`` project.
-To use these datasets, put the files containing the data in the directory that
-you have configured for the ``native6`` project in your :ref:`user
-configuration file`, in a subdirectory called
-``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``.
+
+.. _read_native_era5_nc:
+
+ERA5 (in netCDF format downloaded from the CDS)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ERA5 data can be downloaded from the Copernicus Climate Data Store (CDS) using
+the convenient tool `era5cli <https://era5cli.readthedocs.io>`__.
+To read this data with ESMValCore, put the files containing the data in the
+``rootpath`` that you have configured for the ``native6`` project in your
+:ref:`user configuration file`, in a subdirectory called
+``Tier3/ERA5/{version}/{frequency}/{short_name}`` (assuming your are using the
+``default`` DRS for ``native6``).
 Replace the items in curly braces by the values used in the variable/dataset
 definition in the :ref:`recipe <recipe_overview>`.
-Below is a list of native reanalysis/observational datasets currently
-supported.
 
-.. _read_native_era5:
+Supported variables: ``cl``, ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``).
 
-ERA5
-^^^^
-
-- Supported variables: ``cl``, ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``)
-- Tier: 3
-
-.. note:: According to the description of Evapotranspiration and potential Evapotranspiration on the Copernicus page 
+.. note:: According to the description of Evapotranspiration and potential Evapotranspiration on the Copernicus page
   (https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels-monthly-means?tab=overview):
-  "The ECMWF Integrated Forecasting System (IFS) convention is that downward fluxes are positive. 
+  "The ECMWF Integrated Forecasting System (IFS) convention is that downward fluxes are positive.
   Therefore, negative values indicate evaporation and positive values indicate condensation."
-  
+
   In the CMOR table, these fluxes are defined as positive, if they go from the surface into the atmosphere:
-  "Evaporation at surface (also known as evapotranspiration): flux of water into the atmosphere due to conversion 
+  "Evaporation at surface (also known as evapotranspiration): flux of water into the atmosphere due to conversion
   of both liquid and solid phases to vapor (from underlying surface and vegetation)."
   Therefore, the ERA5 (and ERA5-Land) CMORizer switches the signs of ``evspsbl`` and ``evspsblpot`` to be compatible with the CMOR standard used e.g. by the CMIP models.
+
+.. _read_native_era5_grib:
+
+ERA5 (in GRIB format available on DKRZ's Levante)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ERA5 data in monthly, daily, and hourly resolution is available on `Levante
+<https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#era-data>`__
+in its native GRIB format.
+To read this data with ESMValCore, use the following settings in your
+:ref:`user configuration file`:
+
+.. code-block:: yaml
+
+  rootpath:
+    ...
+    native6: /pool/data/ERA5
+    ...
+
+  drs:
+    ...
+    native6: DKRZ-ERA5-GRIB
+    ...
+
+The `naming conventions
+<https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#file-and-directory-names>`__
+for input directories and files for native ERA5 data in GRIB format on Levante
+are
+
+* input directories: ``{family}/{level}/{type}/{tres}/{grib_id}``
+* input files: ``{family}{level}{typeid}_{tres}_*_{grib_id}.grb``
+
+All of these facets have reasonable defaults preconfigured in the corresponding
+:ref:`extra facets<extra_facets>` file, which is available here:
+:download:`native6-mappings.yml
+</../esmvalcore/config/extra_facets/cesm-mappings.yml>`.
+If necessary, these facets can be overwritten in the recipe.
+
+Thus, example dataset entries could look like this:
+
+.. code-block:: yaml
+
+  datasets:
+    - {project: native6, dataset: ERA5, timerange: '2000/2001',
+       short_name: tas, mip: Amon}
+    - {project: native6, dataset: ERA5, timerange: '2000/2001',
+       short_name: cl, mip: Amon, tres: 1H, frequency: 1hr}
+    - {project: native6, dataset: ERA5, timerange: '2000/2001',
+       short_name: ta, mip: Amon, type: fc, typeid: '12'}
+
+The native ERA5 output in GRIB format is stored on a `reduced Gaussian grid
+<https://confluence.ecmwf.int/display/CKB/ERA5:+data+documentation#ERA5:datadocumentation-SpatialgridSpatialGrid>`__.
+By default, ESMValCore linearly interpolates the data to a regular 0.25° x
+0.25° grid as `recommended by the ECMWF
+<https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference#heading-Interpolation>`__.
+If you want to use a different target resolution or completely disable this
+feature, you can specify the optional facet ``target_grid`` in the recipe,
+e.g.,
+
+.. code-block:: yaml
+
+  datasets:
+    - {project: native6, dataset: ERA5, timerange: '2000/2001',
+       short_name: tas, mip: Amon, target_grid: 1x1}
+    - {project: native6, dataset: ERA5, timerange: '2000/2001',
+       short_name: tas, mip: Amon, target_grid: false}  # do NOT interpolate
+
+Supported variables: ``albsn``, ``cl``, ``cli``, ``clt``, ``clw``, ``hur``, ``hus``, ``o3``, ``prw``, ``ps``, ``psl``, ``rainmxrat27``, ``sftlf``, ``snd``, ``snowmxrat27``, ``ta``, ``tas``, ``tdps``, ``toz``, ``ts``, ``ua``, ``uas``, ``va``, ``vas``, ``wap``, ``zg``.
 
 .. _read_native_mswep:
 
