@@ -6,12 +6,11 @@ import iris
 import numpy as np
 from iris.util import reverse
 
-from esmvalcore.iris_helpers import date2num
-
-from ....preprocessor._regrid import _bilinear_unstructured_regrid
-from ...table import CMOR_TABLES
-from ..fix import Fix
-from ..shared import add_scalar_height_coord
+from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
+from esmvalcore.cmor.table import CMOR_TABLES
+from esmvalcore.iris_helpers import date2num, has_unstructured_grid
+from esmvalcore.preprocessor._regrid import _bilinear_unstructured_regrid
 
 logger = logging.getLogger(__name__)
 
@@ -281,6 +280,16 @@ class Ptype(Fix):
         return cubes
 
 
+class Rainmxrat27(Fix):
+    """Fixes for rainmxrat27."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = 'kg kg-1'
+        return cubes
+
+
 class Rlds(Fix):
     """Fixes for Rlds."""
 
@@ -408,6 +417,16 @@ class Sftlf(Fix):
         return cubes
 
 
+class Snowmxrat27(Fix):
+    """Fixes for snowmxrat27."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = 'kg kg-1'
+        return cubes
+
+
 class Tasmax(Fix):
     """Fixes for tasmax."""
 
@@ -425,6 +444,19 @@ class Tasmin(Fix):
         """Fix metadata."""
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
+        return cubes
+
+
+class Toz(Fix):
+    """Fixes for toz."""
+
+    def fix_metadata(self, cubes):
+        """Convert 'kg m-2' to 'm'."""
+        for cube in cubes:
+            cube.units = 'kg m-2'
+            # 1 DU = 1e-5 m = 2.1415e-5 kg m-2 --> 1m = 2.1415 kg m-2
+            cube.data = cube.core_data() / 2.1415
+            cube.units = 'm'
         return cubes
 
 
@@ -468,21 +500,24 @@ class AllVars(Fix):
             coord.var_name = coord_def.out_name
             coord.long_name = coord_def.long_name
             coord.points = coord.core_points().astype('float64')
-            if (coord.bounds is None and len(coord.points) > 1
-                    and coord_def.must_have_bounds == "yes"):
+            if (
+                    coord.bounds is None and
+                    len(coord.points) > 1 and
+                    coord_def.must_have_bounds == "yes" and
+                    not has_unstructured_grid(cube)
+            ):
                 coord.guess_bounds()
 
         self._fix_monthly_time_coord(cube)
 
         # Fix coordinate increasing direction
-        if cube.coords('latitude') and cube.coord('latitude').shape[0] > 1:
+        if cube.coords('latitude') and not has_unstructured_grid(cube):
             lat = cube.coord('latitude')
-            if lat.points[0] > lat.points[1]:
+            if lat.points[0] > lat.points[-1]:
                 cube = reverse(cube, 'latitude')
-        if (cube.coords('air_pressure') and
-                cube.coord('air_pressure').shape[0] > 1):
+        if cube.coords('air_pressure'):
             plev = cube.coord('air_pressure')
-            if plev.points[0] < plev.points[1]:
+            if plev.points[0] < plev.points[-1]:
                 cube = reverse(cube, 'air_pressure')
 
         return cube
@@ -521,13 +556,12 @@ class AllVars(Fix):
             # If desired, regrid native ERA5 data in GRIB format (which is on a
             # reduced Gaussian grid, i.e., unstructured grid)
             if (
-                    cube.coords('latitude') and
-                    cube.coords('longitude') and
-                    cube.coord('latitude').ndim == 1 and
-                    cube.coord('longitude').ndim == 1 and
-                    cube.coord_dims('latitude') == cube.coord_dims('longitude')
+                    self.extra_facets.get('target_grid', False) and
+                    has_unstructured_grid(cube)
             ):
-                cube = _bilinear_unstructured_regrid(cube, '0.25x0.25')
+                cube = _bilinear_unstructured_regrid(
+                    cube, self.extra_facets['target_grid']
+                )
 
             cube = self._fix_coordinates(cube)
             self._fix_units(cube)
