@@ -21,6 +21,7 @@ dependencies:
   - humanfriendly
   - importlib_metadata  # required for Python < 3.10
   - iris >=3.6.0
+  - iris-grib
   - iris-esmf-regrid >=0.7.0
   - isodate
   - jinja2
