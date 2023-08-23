@@ -503,8 +503,8 @@ class AllVars(Fix):
             if (coord.bounds is None and len(coord.points) > 1
                     and coord_def.must_have_bounds == "yes"):
                 # Do not guess bounds for lat and lon on unstructured grids
-                if (coord.name() not in ('latitude', 'longitude')
-                        or not has_unstructured_grid(cube)):
+                if not (coord.name() in ('latitude', 'longitude') and
+                        has_unstructured_grid(cube)):
                     coord.guess_bounds()
 
         self._fix_monthly_time_coord(cube)
