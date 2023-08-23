@@ -1274,6 +1274,8 @@ def _get_linear_interpolation_weights(
     src_lon = src_cube.coord('longitude')
     cache_key = (
         f"{src_lat.shape}_"
+        f"{src_lat.points[0]}-{src_lat.points[-1]}-{src_lat.units}_"
+        f"{src_lon.points[0]}-{src_lon.points[-1]}-{src_lon.units}_"
         f"{target_grid}_"
         f"{lat_offset}_"
         f"{lon_offset}_"

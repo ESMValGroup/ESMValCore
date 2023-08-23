@@ -4,7 +4,6 @@ import os
 import tempfile
 import unittest
 import warnings
-# from pathlib import Path
 
 import iris
 import numpy as np
@@ -13,6 +12,8 @@ from iris.cube import Cube, CubeList
 
 # import esmvalcore
 from esmvalcore.preprocessor._io import concatenate_callback, load
+
+# from pathlib import Path
 
 
 def _create_sample_cube():

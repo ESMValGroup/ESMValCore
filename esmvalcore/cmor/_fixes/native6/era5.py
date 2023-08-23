@@ -171,6 +171,16 @@ class Evspsblpot(Fix):
         return cubes
 
 
+class Hus(Fix):
+    """Fixes for hus."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            cube.units = 'kg kg-1'
+        return cubes
+
+
 class Mrro(Fix):
     """Fixes for mrro."""
 
@@ -181,16 +191,6 @@ class Mrro(Fix):
             fix_accumulated_units(cube)
             multiply_with_density(cube)
 
-        return cubes
-
-
-class Hus(Fix):
-    """Fixes for hus."""
-
-    def fix_metadata(self, cubes):
-        """Fix metadata."""
-        for cube in cubes:
-            cube.units = 'kg kg-1'
         return cubes
 
 
