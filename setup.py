@@ -54,6 +54,7 @@ REQUIREMENTS = {
         'psutil',
         'py-cordex',
         'pybtex',
+        'python-eccodes<1.6.0',
         'pyyaml',
         'requests',
         'scipy>=1.6',
