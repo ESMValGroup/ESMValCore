@@ -18,6 +18,7 @@ import stratify
 from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
+import cartopy.crs as ccrs
 
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.table import CMOR_TABLES
@@ -460,9 +461,55 @@ def extract_point(cube, latitude, longitude, scheme):
         raise ValueError(msg)
 
     point = [('latitude', latitude), ('longitude', longitude)]
-    cube = cube.interpolate(point, scheme=scheme)
+    cube = get_pt(cube, point, scheme)
     return cube
 
+def get_pt(cube, point, scheme):
+    """
+    Extract data at a single point from cubes with any coordinate 
+    system or none (if lat-lon only)
+
+    Parameters
+    ----------
+    cube : cube
+        The source cube to extract a point from.
+
+    latitude, longitude : float, or array of float
+        The latitude and longitude of the point.
+
+    scheme : str
+        The interpolation scheme. 'linear' or 'nearest'. No default.
+
+    Returns
+    -------
+    :py:class:`~iris.cube.Cube`
+        Returns a cube with the extracted point(s)
+
+    Raises
+    ------
+    ValueError
+        if cube doesn't have a coordinate system and isn't on a lat-lon grid
+    """
+    x_coord = cube.coord(axis='X', dim_coords=True)
+    y_coord = cube.coord(axis='Y', dim_coords=True)
+    
+    # some lon-lat cubes don't have a coordinate system
+    # check if it is lon-lat and if so just use interpolate
+    # as it is
+    if cube.coord_system() is None:
+        # if coords are equal to lat and lon then
+        # assume we have a lat-lon grid
+
+        if x_coord.name() == 'longitude' and y_coord.name() == 'latitude':
+            return cube.interpolate(point, scheme=scheme)
+        else:
+            raise ValueError('Can only interpolate lat-lon grids if no coordinate system on cube')
+    else:
+        # convert the target point(s) to lat lon and do the interpolation
+        ll = ccrs.Geodetic()
+        trpoints = cube.coord_system().as_cartopy_crs().transform_point(point[1][1], point[0][1], ll) 
+        trpoints = [(y_coord.name(), trpoints[1]),(x_coord.name(), trpoints[0])]
+        return cube.interpolate(trpoints, scheme=scheme)
 
 def is_dataset(dataset):
     """Test if something is an `esmvalcore.dataset.Dataset`."""
