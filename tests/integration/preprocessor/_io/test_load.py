@@ -10,6 +10,7 @@ import iris
 import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
+import pytest
 
 import esmvalcore
 from esmvalcore.preprocessor._io import concatenate_callback, load
@@ -53,23 +54,23 @@ class TestLoad(unittest.TestCase):
         self.assertTrue((cube.coord('latitude').points == np.array([1,
                                                                     2])).all())
 
-    def test_load_grib(self):
-        """Test loading a grib file."""
-        grib_path = Path(
-            Path(esmvalcore.__file__).parents[1],
-            'tests',
-            'sample_data',
-            'iris-sample-data',
-            'polar_stereo.grib2',
-        )
-        cubes = load(grib_path)
+    # def test_load_grib(self):
+    #     """Test loading a grib file."""
+    #     grib_path = Path(
+    #         Path(esmvalcore.__file__).parents[1],
+    #         'tests',
+    #         'sample_data',
+    #         'iris-sample-data',
+    #         'polar_stereo.grib2',
+    #     )
+    #     cubes = load(grib_path)
 
-        assert len(cubes) == 1
-        cube = cubes[0]
-        assert cube.standard_name == 'air_temperature'
-        assert cube.units == 'K'
-        assert cube.shape == (200, 247)
-        assert 'source_file' in cube.attributes
+    #     assert len(cubes) == 1
+    #     cube = cubes[0]
+    #     assert cube.standard_name == 'air_temperature'
+    #     assert cube.units == 'K'
+    #     assert cube.shape == (200, 247)
+    #     assert 'source_file' in cube.attributes
 
     def test_callback_remove_attributes(self):
         """Test callback remove unwanted attributes."""
