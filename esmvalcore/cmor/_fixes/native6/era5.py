@@ -500,13 +500,12 @@ class AllVars(Fix):
             coord.var_name = coord_def.out_name
             coord.long_name = coord_def.long_name
             coord.points = coord.core_points().astype('float64')
-            if (
-                    coord.bounds is None and
-                    len(coord.points) > 1 and
-                    coord_def.must_have_bounds == "yes" and
-                    not has_unstructured_grid(cube)
-            ):
-                coord.guess_bounds()
+            if (coord.bounds is None and len(coord.points) > 1
+                    and coord_def.must_have_bounds == "yes"):
+                # Do not guess bounds for lat and lon on unstructured grids
+                if (coord.name() not in ('latitude', 'longitude')
+                        or not has_unstructured_grid(cube)):
+                    coord.guess_bounds()
 
         self._fix_monthly_time_coord(cube)
 
