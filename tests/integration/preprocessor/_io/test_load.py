@@ -4,15 +4,14 @@ import os
 import tempfile
 import unittest
 import warnings
-from pathlib import Path
+# from pathlib import Path
 
 import iris
 import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
-import pytest
 
-import esmvalcore
+# import esmvalcore
 from esmvalcore.preprocessor._io import concatenate_callback, load
 
 
