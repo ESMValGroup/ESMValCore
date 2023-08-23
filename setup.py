@@ -31,7 +31,6 @@ REQUIREMENTS = {
         'cf-units',
         'dask[array,distributed]',
         'dask-jobqueue',
-        'eccodes<1.6.0',
         'esgf-pyclient>=0.3.1',
         'esmf-regrid',
         'esmpy!=8.1.0',
@@ -41,7 +40,6 @@ REQUIREMENTS = {
         'geopy',
         'humanfriendly',
         "importlib_metadata;python_version<'3.10'",
-        'iris-grib',
         'isodate',
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
