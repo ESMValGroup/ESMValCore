@@ -2,8 +2,6 @@
 
 import numpy as np
 import pytest
-import dask.array as da
-
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube
 
@@ -35,7 +33,7 @@ def unstructured_grid_cube():
         units='degrees_east',
     )
     cube = Cube(
-        da.from_array([[0.0, 1.0, 2.0, 3.0], [0.0, 0.0, 0.0, 0.0]]),
+        np.array([[0.0, 1.0, 2.0, 3.0], [0.0, 0.0, 0.0, 0.0]]),
         standard_name='air_temperature',
         units='K',
         dim_coords_and_dims=[(time, 0)],
@@ -44,17 +42,17 @@ def unstructured_grid_cube():
     return cube
 
 
-TARGET_GRID = '180x90'
-LAT_OFFSET = False
-LON_OFFSET = False
+TARGET_GRID = '120x60'
+LAT_OFFSET = True
+LON_OFFSET = True
 
 
 def test_use_cached_weights(unstructured_grid_cube, mocker):
     """Test `_get_linear_interpolation_weights`."""
     cache = esmvalcore.preprocessor._regrid._CACHE_WEIGHTS
     key = (
-        '(4,)_-1.0-1.0-degrees_north_179.0-179.0-degrees_east_180x90_'
-        'False_False_nan_'
+        '(4,)_-1.0-1.0-degrees_north_179.0-179.0-degrees_east_120x60_'
+        'True_True_nan_'
     )
     cache[key] = mocker.sentinel.cached_weights
 
@@ -72,34 +70,42 @@ def test_bilinear_unstructured_regrid(unstructured_grid_cube):
     )
 
     assert new_cube.metadata == unstructured_grid_cube.metadata
-    assert new_cube.shape == (2, 3, 2)
+    assert new_cube.shape == (2, 3, 3)
 
     assert new_cube.coords('time')
     assert new_cube.coord('time') == unstructured_grid_cube.coord('time')
 
     assert new_cube.coords('latitude')
     lat = new_cube.coord('latitude')
-    np.testing.assert_allclose(lat.points, [-90, 0, 90])
-    np.testing.assert_allclose(lat.bounds, [[-90, -45], [-45, 45], [45, 90]])
+    np.testing.assert_allclose(lat.points, [-60, 0, 60])
+    np.testing.assert_allclose(lat.bounds, [[-90, -30], [-30, 30], [30, 90]])
 
     assert new_cube.coords('longitude')
     lat = new_cube.coord('longitude')
-    np.testing.assert_allclose(lat.points, [0, 180])
-    np.testing.assert_allclose(lat.bounds, [[-90, 90], [90, 270]])
+    np.testing.assert_allclose(lat.points, [60, 180, 300])
+    np.testing.assert_allclose(lat.bounds, [[0, 120], [120, 240], [240, 360]])
 
     np.testing.assert_allclose(
         new_cube.data,
         [
-            [[np.nan, np.nan], [np.nan, 1.5], [np.nan, np.nan]],
-            [[np.nan, np.nan], [np.nan, 0.0], [np.nan, np.nan]],
+            [
+                [np.nan, np.nan, np.nan],
+                [np.nan, 1.5, np.nan],
+                [np.nan, np.nan, np.nan],
+            ],
+            [
+                [np.nan, np.nan, np.nan],
+                [np.nan, 0.0, np.nan],
+                [np.nan, np.nan, np.nan],
+            ],
         ],
     )
 
     cache = esmvalcore.preprocessor._regrid._CACHE_WEIGHTS
     assert len(cache) == 1
     key = (
-        '(4,)_-1.0-1.0-degrees_north_179.0-179.0-degrees_east_180x90_'
-        'False_False_nan_'
+        '(4,)_-1.0-1.0-degrees_north_179.0-179.0-degrees_east_120x60_'
+        'True_True_nan_'
     )
     assert key in cache
     assert len(cache[key]) == 2
@@ -108,7 +114,10 @@ def test_bilinear_unstructured_regrid(unstructured_grid_cube):
         [[3, 1, 0],
          [3, 1, 0],
          [3, 1, 0],
+         [3, 1, 0],
          [1, 3, 2],
+         [3, 1, 0],
+         [3, 1, 0],
          [3, 1, 0],
          [3, 1, 0]],
     )
@@ -117,7 +126,10 @@ def test_bilinear_unstructured_regrid(unstructured_grid_cube):
         [[np.nan, np.nan, np.nan],
          [np.nan, np.nan, np.nan],
          [np.nan, np.nan, np.nan],
+         [np.nan, np.nan, np.nan],
          [0.5, 0.0, 0.5],
+         [np.nan, np.nan, np.nan],
+         [np.nan, np.nan, np.nan],
          [np.nan, np.nan, np.nan],
          [np.nan, np.nan, np.nan]],
     )
