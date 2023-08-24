@@ -3,20 +3,29 @@
   <h3>Filter</h3>
   <div class="row row-cols-auto">
     {% for filter_type, types in filters.items() %}
+    {% set filter_loop = loop %}
     <div class="col col-lg-3 filter_{{ filter_type }}">
-        <p>{{ filter_type|replace('_', ' ')|title }}</p>
-        <ul>
-            {% for t in types %}
-            <li><input type="checkbox" rel="f_{{ t|replace(' ', '_') }}" onclick="updateFilter()">{{ t|replace('_', ' ')|title }}</li>
-            {% endfor %}
-        </ul>
+        <h4>{{ filter_type|replace('_', ' ')|title }}</h4>
+        {% for t in types %}
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="cb_{{ filter_loop.index }}_{{ loop.index }}" rel="f_{{ filter_type|replace(' ', '_') }}_{{ t|replace(' ', '_') }}">
+          <label class="form-check-label" for="cb_{{ filter_loop.index }}_{{ loop.index }}">
+            {{ t|replace('_', ' ')|title }}
+          </label>
+        </div>
+        {% endfor %}
     </div>
     {% endfor %}
   </div>
   <button class="btn btn-primary disabled" onclick="resetFilter()">Clear all Filters</button>
 </div>
-<p><input type="checkbox" id="cb_hideEmptyDiagnostics" onclick="updateFilter()" checked="true"> Hide empty diagnostics</p>
 
+ <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="cb_hideEmptyDiagnostics" rel="" checked>
+          <label class="form-check-label" for="cb_hideEmptyDiagnostics">
+            Hide empty diagnostics
+          </label>
+        </div>
 
 <!-- Tab links -->
 <ul class="nav nav-tabs" id="tabDiagnostics" role="tablist">
