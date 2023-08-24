@@ -104,6 +104,13 @@ Supported native reanalysis/observational datasets
 
 The following native reanalysis/observational datasets are supported under the
 ``native6`` project.
+To read these datasets with ESMValCore, put the files containing the data in
+the ``rootpath`` that you have configured for the ``native6`` project in your
+:ref:`user configuration file`, in a subdirectory called
+``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}`` (assuming your are
+using the ``default`` DRS for ``native6``).
+Replace the items in curly braces by the values used in the variable/dataset
+definition in the :ref:`recipe <recipe_overview>`.
 
 .. _read_native_era5_nc:
 
@@ -112,13 +119,10 @@ ERA5 (in netCDF format downloaded from the CDS)
 
 ERA5 data can be downloaded from the Copernicus Climate Data Store (CDS) using
 the convenient tool `era5cli <https://era5cli.readthedocs.io>`__.
-To read this data with ESMValCore, put the files containing the data in the
-``rootpath`` that you have configured for the ``native6`` project in your
-:ref:`user configuration file`, in a subdirectory called
-``Tier3/ERA5/{version}/{frequency}/{short_name}`` (assuming your are using the
-``default`` DRS for ``native6``).
-Replace the items in curly braces by the values used in the variable/dataset
-definition in the :ref:`recipe <recipe_overview>`.
+For example for monthly data, place the files in the
+``/Tier3/ERA5/version/mon/pr`` subdirectory of your ``rootpath`` that you have
+configured for the ``native6`` project (assuming your are using the ``default``
+DRS for ``native6``).
 
 Supported variables: ``cl``, ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``).
 
@@ -137,7 +141,7 @@ Supported variables: ``cl``, ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``p
 ERA5 (in GRIB format available on DKRZ's Levante)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-ERA5 data in monthly, daily, and hourly resolution is available on `Levante
+ERA5 data in monthly, daily, and hourly resolution is `available on Levante
 <https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#era-data>`__
 in its native GRIB format.
 To read this data with ESMValCore, use the following settings in your
@@ -166,7 +170,7 @@ are
 All of these facets have reasonable defaults preconfigured in the corresponding
 :ref:`extra facets<extra_facets>` file, which is available here:
 :download:`native6-mappings.yml
-</../esmvalcore/config/extra_facets/cesm-mappings.yml>`.
+</../esmvalcore/config/extra_facets/native6-mappings.yml>`.
 If necessary, these facets can be overwritten in the recipe.
 
 Thus, example dataset entries could look like this:
@@ -209,7 +213,10 @@ MSWEP
 - Supported frequencies: ``mon``, ``day``, ``3hr``.
 - Tier: 3
 
-For example for monthly data, place the files in the ``/Tier3/MSWEP/version/mon/pr`` subdirectory of your ``native6`` project location.
+For example for monthly data, place the files in the
+``/Tier3/MSWEP/version/mon/pr`` subdirectory of your ``rootpath`` that you have
+configured for the ``native6`` project (assuming your are using the ``default``
+DRS for ``native6``).
 
 .. note::
   For monthly data (``V220``), the data must be postfixed with the date, i.e. rename ``global_monthly_050deg.nc`` to ``global_monthly_050deg_197901-201710.nc``
