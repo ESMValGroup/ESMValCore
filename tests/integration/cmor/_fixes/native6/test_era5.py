@@ -12,6 +12,7 @@ from esmvalcore.cmor._fixes.native6.era5 import (
     AllVars,
     Evspsbl,
     Zg,
+    fix_accumulated_units,
     get_frequency,
 )
 from esmvalcore.cmor.fix import Fix, fix_metadata
@@ -88,6 +89,7 @@ def test_get_frequency_fx():
     """Test cubes with time invariant frequency."""
     cube = Cube(1., long_name='Cube without time coordinate')
     assert get_frequency(cube) == 'fx'
+
     time = DimCoord(
         0,
         standard_name='time',
@@ -100,9 +102,31 @@ def test_get_frequency_fx():
         dim_coords_and_dims=[(time, 0)],
     )
     assert get_frequency(cube) == 'fx'
+
+    cube.long_name = (
+        'Percentage of the Grid Cell Occupied by Land (Including Lakes)'
+    )
+    assert get_frequency(cube) == 'fx'
+
     cube.long_name = 'Not geopotential'
     with pytest.raises(ValueError):
         get_frequency(cube)
+
+
+def test_fix_accumulated_units_fail():
+    """Test `fix_accumulated_units`."""
+    time = DimCoord(
+        [0, 1, 2],
+        standard_name='time',
+        units=Unit('days since 1900-01-01'),
+    )
+    cube = Cube(
+        [1, 6, 3],
+        var_name='random_var',
+        dim_coords_and_dims=[(time, 0)],
+    )
+    with pytest.raises(NotImplementedError):
+        fix_accumulated_units(cube)
 
 
 def _era5_latitude():
@@ -253,13 +277,21 @@ def _cmor_data(mip):
 
 
 def era5_2d(frequency):
+    if frequency == 'monthly':
+        time = DimCoord(
+            [-31, 0, 31],
+            standard_name='time',
+            units='days since 1850-01-01'
+        )
+    else:
+        time = _era5_time(frequency)
     cube = Cube(
         _era5_data(frequency),
         long_name=None,
         var_name=None,
         units='unknown',
         dim_coords_and_dims=[
-            (_era5_time(frequency), 0),
+            (time, 0),
             (_era5_latitude(), 1),
             (_era5_longitude(), 2),
         ],
@@ -286,6 +318,17 @@ def era5_3d(frequency):
 def cmor_2d(mip, short_name):
     cmor_table = CMOR_TABLES['native6']
     vardef = cmor_table.get_variable(mip, short_name)
+    if 'mon' in mip:
+        time = DimCoord(
+            [-15.5, 15.5, 45.0],
+            bounds=[[-31.0, 0.0], [0.0, 31.0], [31.0, 59.0]],
+            standard_name='time',
+            long_name='time',
+            var_name='time',
+            units='days since 1850-01-01'
+        )
+    else:
+        time = _cmor_time(mip, bounds=True)
     cube = Cube(
         _cmor_data(mip).astype('float32'),
         long_name=vardef.long_name,
@@ -293,7 +336,7 @@ def cmor_2d(mip, short_name):
         standard_name=vardef.standard_name,
         units=Unit(vardef.units),
         dim_coords_and_dims=[
-            (_cmor_time(mip, bounds=True), 0),
+            (time, 0),
             (_cmor_latitude(), 1),
             (_cmor_longitude(), 2),
         ],
@@ -733,6 +776,78 @@ def rlds_cmor_e1hr():
     return CubeList([cube])
 
 
+def rlns_era5_hourly():
+    freq = 'hourly'
+    cube = Cube(
+        _era5_data(freq),
+        long_name=None,
+        var_name=None,
+        units='J m**-2',
+        dim_coords_and_dims=[
+            (_era5_time(freq), 0),
+            (_era5_latitude(), 1),
+            (_era5_longitude(), 2),
+        ],
+    )
+    return CubeList([cube])
+
+
+def rlns_cmor_e1hr():
+    mip = 'E1hr'
+    short_name = 'rlns'
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable(mip, short_name)
+    time = _cmor_time(mip, shifted=True, bounds=True)
+    data = _cmor_data(mip) / 3600
+    cube = Cube(data.astype('float32'),
+                long_name=vardef.long_name,
+                var_name=vardef.short_name,
+                standard_name=vardef.standard_name,
+                units=Unit(vardef.units),
+                dim_coords_and_dims=[(time, 0),
+                                     (_cmor_latitude(), 1),
+                                     (_cmor_longitude(), 2)],
+                attributes={'comment': COMMENT, 'positive': 'down'})
+    cube.coord('latitude').long_name = 'latitude'  # from custom table
+    cube.coord('longitude').long_name = 'longitude'  # from custom table
+    return CubeList([cube])
+
+
+def rlus_era5_hourly():
+    freq = 'hourly'
+    cube = Cube(
+        _era5_data(freq),
+        long_name=None,
+        var_name=None,
+        units='J m**-2',
+        dim_coords_and_dims=[
+            (_era5_time(freq), 0),
+            (_era5_latitude(), 1),
+            (_era5_longitude(), 2),
+        ],
+    )
+    return CubeList([cube])
+
+
+def rlus_cmor_e1hr():
+    mip = 'E1hr'
+    short_name = 'rlus'
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable(mip, short_name)
+    time = _cmor_time(mip, shifted=True, bounds=True)
+    data = _cmor_data(mip) / 3600
+    cube = Cube(data.astype('float32'),
+                long_name=vardef.long_name,
+                var_name=vardef.short_name,
+                standard_name=vardef.standard_name,
+                units=Unit(vardef.units),
+                dim_coords_and_dims=[(time, 0),
+                                     (_cmor_latitude(), 1),
+                                     (_cmor_longitude(), 2)],
+                attributes={'comment': COMMENT, 'positive': 'up'})
+    return CubeList([cube])
+
+
 def rls_era5_hourly():
     time = _era5_time('hourly')
     cube = Cube(
@@ -798,6 +913,78 @@ def rsds_cmor_e1hr():
                                      (_cmor_latitude(), 1),
                                      (_cmor_longitude(), 2)],
                 attributes={'comment': COMMENT, 'positive': 'down'})
+    return CubeList([cube])
+
+
+def rsns_era5_hourly():
+    freq = 'hourly'
+    cube = Cube(
+        _era5_data(freq),
+        long_name=None,
+        var_name=None,
+        units='J m**-2',
+        dim_coords_and_dims=[
+            (_era5_time(freq), 0),
+            (_era5_latitude(), 1),
+            (_era5_longitude(), 2),
+        ],
+    )
+    return CubeList([cube])
+
+
+def rsns_cmor_e1hr():
+    mip = 'E1hr'
+    short_name = 'rsns'
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable(mip, short_name)
+    time = _cmor_time(mip, shifted=True, bounds=True)
+    data = _cmor_data(mip) / 3600
+    cube = Cube(data.astype('float32'),
+                long_name=vardef.long_name,
+                var_name=vardef.short_name,
+                standard_name=vardef.standard_name,
+                units=Unit(vardef.units),
+                dim_coords_and_dims=[(time, 0),
+                                     (_cmor_latitude(), 1),
+                                     (_cmor_longitude(), 2)],
+                attributes={'comment': COMMENT, 'positive': 'down'})
+    cube.coord('latitude').long_name = 'latitude'  # from custom table
+    cube.coord('longitude').long_name = 'longitude'  # from custom table
+    return CubeList([cube])
+
+
+def rsus_era5_hourly():
+    freq = 'hourly'
+    cube = Cube(
+        _era5_data(freq),
+        long_name=None,
+        var_name=None,
+        units='J m**-2',
+        dim_coords_and_dims=[
+            (_era5_time(freq), 0),
+            (_era5_latitude(), 1),
+            (_era5_longitude(), 2),
+        ],
+    )
+    return CubeList([cube])
+
+
+def rsus_cmor_e1hr():
+    mip = 'E1hr'
+    short_name = 'rsus'
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable(mip, short_name)
+    time = _cmor_time(mip, shifted=True, bounds=True)
+    data = _cmor_data(mip) / 3600
+    cube = Cube(data.astype('float32'),
+                long_name=vardef.long_name,
+                var_name=vardef.short_name,
+                standard_name=vardef.standard_name,
+                units=Unit(vardef.units),
+                dim_coords_and_dims=[(time, 0),
+                                     (_cmor_latitude(), 1),
+                                     (_cmor_longitude(), 2)],
+                attributes={'comment': COMMENT, 'positive': 'up'})
     return CubeList([cube])
 
 
@@ -1150,8 +1337,12 @@ VARIABLES = [
         (era5_3d('monthly'), cmor_3d('Emon', 'rainmxrat27'), 'rainmxrat27',
          'Emon'),
         (rlds_era5_hourly(), rlds_cmor_e1hr(), 'rlds', 'E1hr'),
+        (rlns_era5_hourly(), rlns_cmor_e1hr(), 'rlns', 'E1hr'),
+        (rlus_era5_hourly(), rlus_cmor_e1hr(), 'rlus', 'E1hr'),
         (rls_era5_hourly(), rls_cmor_e1hr(), 'rls', 'E1hr'),
         (rsds_era5_hourly(), rsds_cmor_e1hr(), 'rsds', 'E1hr'),
+        (rsns_era5_hourly(), rsns_cmor_e1hr(), 'rsns', 'E1hr'),
+        (rsus_era5_hourly(), rsus_cmor_e1hr(), 'rsus', 'E1hr'),
         (rsdt_era5_hourly(), rsdt_cmor_e1hr(), 'rsdt', 'E1hr'),
         (rss_era5_hourly(), rss_cmor_e1hr(), 'rss', 'E1hr'),
         (sftlf_era5(), sftlf_cmor_fx(), 'sftlf', 'fx'),
@@ -1262,3 +1453,16 @@ def test_no_automatic_regrid(unstructured_grid_cubes):
     lon = fixed_cube.coord('longitude')
     np.testing.assert_allclose(lon.points, [179, 180, 180, 179])
     assert lon.bounds is None
+
+
+def test_no_automatic_regrid_regular_grid():
+    """Test no automatic regridding of regular grid data."""
+    cubes = era5_2d('monthly')
+    fixed_cubes = fix_metadata(
+        cubes, 'ps', 'native6', 'era5', 'Amon', target_grid='1x1',
+    )
+
+    assert len(fixed_cubes) == 1
+    fixed_cube = fixed_cubes[0]
+    assert fixed_cube.shape == (3, 3, 3)
+    assert fixed_cube == cmor_2d('Amon', 'ps')[0]

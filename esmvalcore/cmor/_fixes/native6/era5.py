@@ -56,6 +56,11 @@ def fix_accumulated_units(cube):
         cube.units = cube.units * 'd-1'
     elif get_frequency(cube) == 'hourly':
         cube.units = cube.units * 'h-1'
+    elif get_frequency(cube) == 'daily':
+        raise NotImplementedError(
+            f"Fixing of accumulated units of cube "
+            f"{cube.summary(shorten=True)} is not implemented for daily data"
+        )
     return cube
 
 
