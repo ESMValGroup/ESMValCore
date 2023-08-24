@@ -862,7 +862,7 @@ class Dataset:
             dataset.facets.pop('timerange')
             dataset.supplementaries = []
             check.data_availability(dataset)
-            intervals = [_get_start_end_date(f.name) for f in dataset.files]
+            intervals = [_get_start_end_date(f) for f in dataset.files]
 
             min_date = min(interval[0] for interval in intervals)
             max_date = max(interval[1] for interval in intervals)
