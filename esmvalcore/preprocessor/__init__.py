@@ -370,6 +370,11 @@ def preprocess(
     logger.debug("Running preprocessor step %s", step)
     function = globals()[step]
     itype = _get_itype(step)
+    shapes_before = [c.shape for c in items if isinstance(c, Cube)]
+    chunks_before = [
+        c.lazy_data().chunks for c in items
+        if isinstance(c, Cube) and c.has_lazy_data()
+    ]
 
     result = []
     if itype.endswith('s'):
@@ -386,6 +391,24 @@ def preprocess(
             items.append(item)
         else:
             items.extend(item)
+
+    shapes_after = [c.shape for c in items if isinstance(c, Cube)]
+    chunks_after = [
+        c.lazy_data().chunks for c in items
+        if isinstance(c, Cube) and c.has_lazy_data()
+    ]
+    if shapes_before and shapes_after and shapes_before != shapes_after:
+        for item in items:
+            if isinstance(item, Cube) and item.has_lazy_data():
+                item.data = item.lazy_data().rechunk()
+        rechunked = [
+            c.lazy_data().chunks for c in items
+            if isinstance(c, Cube) and c.has_lazy_data()
+        ]
+        logger.info(
+            "Preprocessor function %s\nChunks before: %s\nChunks after: %s\n"
+            "Rechunked: %s", step, chunks_before, chunks_after, rechunked
+        )
 
     if debug:
         logger.debug("Result %s", items)
