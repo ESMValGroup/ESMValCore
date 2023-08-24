@@ -7,9 +7,9 @@
     {% if filter in file.attributes %}
         {% set attribute = file.attributes[filter] %}
         {% if attribute is string or not attribute is iterable %}
-            f_{{ attribute | replace(' ', '_') }}
+            f_{{ filter|replace(' ', '_') }}_{{ attribute | replace(' ', '_') }}
         {% else %}
-            {% for attr in attribute %} f_{{ attr | replace(' ', '_') }} {% endfor %}
+            {% for attr in attribute %} f_{{ filter|replace(' ', '_') }}_{{ attr | replace(' ', '_') }} {% endfor %}
         {% endif %}
     {% endif %}
 {% endfor %}
