@@ -127,8 +127,7 @@ class RecipeOutput(Mapping):
         "realms",
         "plot_type",  # Used by several diagnostics
         "plot_types",
-        "group_name",  # TODO Remove, for testing
-        "long_names",  # TODO Decide final name
+        "long_names",
     ]
 
     def __init__(self, task_output: dict, session=None, info=None):
@@ -163,18 +162,27 @@ class RecipeOutput(Mapping):
             # Add data to filters
             for task in tasks:
                 for file in task.files:
-                    for attr, values in file.attributes.items():
-                        if attr in RecipeOutput.FILTER_ATTRS:
-                            # Using set to avoid duplicates
-                            attr_list = self.filters.get(attr, set())
-                            if (isinstance(values, str)
-                                    or not isinstance(values, Sequence)):
-                                attr_list.add(values)
-                            else:
-                                attr_list.update(values)
-                            self.filters[attr] = attr_list
+                    self._add_to_filters(file.attributes)
 
         # Sort at the end because sets are unordered
+        self._sort_filters()
+
+    def _add_to_filters(self, attributes):
+        """Adds valid values to the HTML output filters."""
+        for attr in RecipeOutput.FILTER_ATTRS:
+            if attr not in attributes:
+                continue
+            values = attributes[attr]
+            # `set()` to avoid duplicates
+            attr_list = self.filters.get(attr, set())
+            if (isinstance(values, str) or not isinstance(values, Sequence)):
+                attr_list.add(values)
+            else:
+                attr_list.update(values)
+            self.filters[attr] = attr_list
+
+    def _sort_filters(self):
+        """Sorts the HTML output filters."""
         for _filter, _attrs in self.filters.items():
             self.filters[_filter] = sorted(_attrs)
 
