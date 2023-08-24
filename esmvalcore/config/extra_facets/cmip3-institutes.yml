@@ -14,11 +14,11 @@
 'cccma_cgcm3_1':
   '*':
     '*':
-      institute: ['CCCMA']
+      institute: ['CCCMA', 'CCCma']
 'cccma_cgcm3_1_t63':
   '*':
     '*':
-      institute: ['CCCMA']
+      institute: ['CCCMA', 'CCCma']
 'CCSM3':
   '*':
     '*':
@@ -26,11 +26,11 @@
 'CGCM3-1-T47':
   '*':
     '*':
-      institute: ['CCCMA']
+      institute: ['CCCMA', 'CCCma']
 'CGCM3-1-T63':
   '*':
     '*':
-      institute: ['CCCMA']
+      institute: ['CCCMA', 'CCCma']
 'CM2':
   '*':
     '*':
@@ -42,7 +42,7 @@
 'CM3':
   '*':
     '*':
-      institute: ['CNRM', 'INM']
+      institute: ['CNRM', 'INM', 'CNRM_CERFACS']
 'CM4':
   '*':
     '*':
@@ -50,15 +50,15 @@
 'cnrm_cm3':
   '*':
     '*':
-      institute: ['CNRM']
+      institute: ['CNRM', 'CNRM_CERFACS']
 'csiro_mk3_0':
   '*':
     '*':
-      institute: ['CSIRO']
+      institute: ['CSIRO', 'CSIRO-QCCCE']
 'csiro_mk3_5':
   '*':
     '*':
-      institute: ['CSIRO']
+      institute: ['CSIRO', 'CSIRO-QCCCE']
 'ECHAM4':
   '*':
     '*':
@@ -66,7 +66,7 @@
 'ECHAM5':
   '*':
     '*':
-      institute: ['MPIM']
+      institute: ['MPIM', 'MPI-M']
 'ECHO-G':
   '*':
     '*':
@@ -74,7 +74,7 @@
 'FGOALS-G1-0':
   '*':
     '*':
-      institute: ['LASG']
+      institute: ['LASG', 'LASG-IAP']
 'gfdl_cm2_0':
   '*':
     '*':
@@ -86,27 +86,27 @@
 'GISS-AOM':
   '*':
     '*':
-      institute: ['NASA']
+      institute: ['NASA', 'NASA-GISS']
 'GISS-EH':
   '*':
     '*':
-      institute: ['NASA']
+      institute: ['NASA', 'NASA-GISS']
 'GISS-ER':
   '*':
     '*':
-      institute: ['NASA']
+      institute: ['NASA', 'NASA-GISS']
 'giss_aom':
   '*':
     '*':
-      institute: ['NASA']
+      institute: ['NASA', 'NASA-GISS']
 'giss_model_e_h':
   '*':
     '*':
-      institute: ['NASA']
+      institute: ['NASA', 'NASA-GISS']
 'giss_model_e_r':
   '*':
     '*':
-      institute: ['NASA']
+      institute: ['NASA', 'NASA-GISS']
 'HADCM3':
   '*':
     '*':
@@ -118,7 +118,7 @@
 'iap_fgoals1_0_g':
   '*':
     '*':
-      institute: ['LASG']
+      institute: ['LASG', 'LASG-IAP']
 'ingv_echam4':
   '*':
     '*':
@@ -154,15 +154,15 @@
 'MK3':
   '*':
     '*':
-      institute: ['CSIRO']
+      institute: ['CSIRO', 'CSIRO-QCCCE']
 'MK3-5':
   '*':
     '*':
-      institute: ['CSIRO']
+      institute: ['CSIRO', 'CSIRO-QCCCE']
 'mpi_echam5':
   '*':
     '*':
-      institute: ['MPIM']
+      institute: ['MPIM', 'MPI-M']
 'mri_cgcm2_3_2a':
   '*':
     '*':
