@@ -71,4 +71,5 @@ def test_recipe_output_sort_filters(mocker):
     valid_attr = recipe_output.RecipeOutput.FILTER_ATTRS[0]
     unsorted_attributes = ["1", "2", "4", "value", "3"]
     output._add_to_filters({valid_attr: unsorted_attributes})
-    output._sort_filters
+    output._sort_filters()
+    assert output.filters[valid_attr] == sorted(unsorted_attributes)
