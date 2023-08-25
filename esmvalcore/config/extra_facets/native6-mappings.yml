@@ -14,7 +14,8 @@ ERA5:
   '*':
     '*':
       family: E5
-      target_grid: 0.25x0.25
+      regrid:
+        target_grid: 0.25x0.25
       type: an
       typeid: '00'
       version: ''  # necessary to get a nice output file name

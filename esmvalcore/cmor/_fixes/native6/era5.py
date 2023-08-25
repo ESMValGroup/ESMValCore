@@ -560,11 +560,11 @@ class AllVars(Fix):
             # If desired, regrid native ERA5 data in GRIB format (which is on a
             # reduced Gaussian grid, i.e., unstructured grid)
             if (
-                    self.extra_facets.get('target_grid', False) and
+                    self.extra_facets.get('regrid', False) is not False and
                     has_unstructured_grid(cube)
             ):
                 cube = _bilinear_unstructured_regrid(
-                    cube, self.extra_facets['target_grid']
+                    cube, **self.extra_facets['regrid']
                 )
 
             cube = self._fix_coordinates(cube)

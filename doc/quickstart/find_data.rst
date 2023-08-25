@@ -124,7 +124,11 @@ For example for monthly data, place the files in the
 configured for the ``native6`` project (assuming your are using the ``default``
 DRS for ``native6``).
 
-Supported variables: ``cl``, ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``).
+- Supported variables: ``cl``, ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``,
+  ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``,
+  ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``,
+  ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``).
+- Tier: 3
 
 .. note:: According to the description of Evapotranspiration and potential Evapotranspiration on the Copernicus page
   (https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels-monthly-means?tab=overview):
@@ -191,18 +195,27 @@ By default, ESMValCore linearly interpolates the data to a regular 0.25° x
 0.25° grid as `recommended by the ECMWF
 <https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference#heading-Interpolation>`__.
 If you want to use a different target resolution or completely disable this
-feature, you can specify the optional facet ``target_grid`` in the recipe,
-e.g.,
+feature, you can specify the optional facet ``regrid`` in the recipe.
+``regrid`` takes the following keyword arguments: ``target_grid``,
+``lat_offset`` (optional; default: ``True``), and ``lon_offset`` (optional;
+default: ``True``).
+See :func:`esmvalcore.preprocessor.regrid` for details on these keywords.
+Example:
 
 .. code-block:: yaml
 
   datasets:
     - {project: native6, dataset: ERA5, timerange: '2000/2001',
-       short_name: tas, mip: Amon, target_grid: 1x1}
+       short_name: tas, mip: Amon, regrid: {target_grid: 1x1}}
     - {project: native6, dataset: ERA5, timerange: '2000/2001',
-       short_name: tas, mip: Amon, target_grid: false}  # do NOT interpolate
+       short_name: tas, mip: Amon, regrid: {target_grid: 1x1, lat_offset: false}}
+    - {project: native6, dataset: ERA5, timerange: '2000/2001',
+       short_name: tas, mip: Amon, regrid: false}  # do NOT interpolate
 
-Supported variables: ``albsn``, ``cl``, ``cli``, ``clt``, ``clw``, ``hur``, ``hus``, ``o3``, ``prw``, ``ps``, ``psl``, ``rainmxrat27``, ``sftlf``, ``snd``, ``snowmxrat27``, ``ta``, ``tas``, ``tdps``, ``toz``, ``ts``, ``ua``, ``uas``, ``va``, ``vas``, ``wap``, ``zg``.
+- Supported variables: ``albsn``, ``cl``, ``cli``, ``clt``, ``clw``, ``hur``,
+  ``hus``, ``o3``, ``prw``, ``ps``, ``psl``, ``rainmxrat27``, ``sftlf``,
+  ``snd``, ``snowmxrat27``, ``ta``, ``tas``, ``tdps``, ``toz``, ``ts``, ``ua``,
+  ``uas``, ``va``, ``vas``, ``wap``, ``zg``.
 
 .. _read_native_mswep:
 

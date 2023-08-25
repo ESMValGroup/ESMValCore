@@ -1409,7 +1409,7 @@ def test_automatic_regrid(unstructured_grid_cubes):
         'native6',
         'era5',
         'Amon',
-        target_grid='180x90',
+        regrid={'target_grid': '180x90'},
     )
 
     assert len(fixed_cubes) == 1
@@ -1459,7 +1459,7 @@ def test_no_automatic_regrid_regular_grid():
     """Test no automatic regridding of regular grid data."""
     cubes = era5_2d('monthly')
     fixed_cubes = fix_metadata(
-        cubes, 'ps', 'native6', 'era5', 'Amon', target_grid='1x1',
+        cubes, 'ps', 'native6', 'era5', 'Amon', regrid={'target_grid': '1x1'},
     )
 
     assert len(fixed_cubes) == 1
