@@ -71,6 +71,10 @@ def extract_region(
         Smaller cube.
 
     """
+    # first examine if any cell_measures are present
+    cell_measures = cube.cell_measures()
+    ancil_vars = cube.ancillary_variables()
+
     if abs(start_latitude) > 90.:
         raise ValueError(f"Invalid start_latitude: {start_latitude}")
     if abs(end_latitude) > 90.:
@@ -93,6 +97,56 @@ def extract_region(
             start_latitude,
             end_latitude,
         )
+
+    # put back cell measures and ancillary_variables;
+    # iris.Cube.cube.intersection removes them both.
+    # This is a workaround resulting from opening upstream
+    # https://github.com/SciTools/iris/issues/5413
+    # When removing this block after iris have a fix, make sure to remove the
+    # test too tests/integration/preprocessor/_extract_region/
+
+    def _extract_region_from_dim_metadata(dim_metadata, dim_metadata_dims):
+        """Extract region from dimensional metadata."""
+        idx = tuple((
+            slice(None) if d in dim_metadata_dims else 0
+            for d in range(cube.ndim)
+        ))
+        subcube = cube[idx].copy(dim_metadata.core_data())
+        for sub_cm in subcube.cell_measures():
+            subcube.remove_cell_measure(sub_cm)
+        for sub_av in subcube.ancillary_variables():
+            subcube.remove_ancillary_variable(sub_av)
+        subcube = extract_region(
+            subcube,
+            start_longitude,
+            end_longitude,
+            start_latitude,
+            end_latitude,
+        )
+        return dim_metadata.copy(subcube.core_data())
+
+    # Step 1: cell measures
+    if cell_measures and not region_subset.cell_measures():
+        for cell_measure in cell_measures:
+            cell_measure_dims = cube.cell_measure_dims(cell_measure)
+            cell_measure_subset = _extract_region_from_dim_metadata(
+                cell_measure, cell_measure_dims
+            )
+            region_subset.add_cell_measure(
+                cell_measure_subset, cell_measure_dims
+            )
+
+    # Step 2: ancillary variables
+    if ancil_vars and not region_subset.ancillary_variables():
+        for ancil_var in ancil_vars:
+            ancil_var_dims = cube.ancillary_variable_dims(ancil_var)
+            ancil_var_subset = _extract_region_from_dim_metadata(
+                ancil_var, ancil_var_dims
+            )
+            region_subset.add_ancillary_variable(
+                ancil_var_subset, ancil_var_dims
+            )
+
     return region_subset
 
 
