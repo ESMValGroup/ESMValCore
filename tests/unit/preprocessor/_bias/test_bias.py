@@ -1,10 +1,10 @@
 """Unit tests for :mod:`esmvalcore.preprocessor._bias`."""
 
 import iris
-import iris.cube
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor._bias import bias
 from tests import PreprocessorFile
@@ -42,8 +42,8 @@ def get_3d_cube(data, **cube_kwargs):
                                 var_name='lon', long_name='longitude',
                                 units='degrees_east')
     coord_specs = [(times, 0), (lats, 1), (lons, 2)]
-    cube = iris.cube.Cube(data.astype('float32'),
-                          dim_coords_and_dims=coord_specs, **cube_kwargs)
+    cube = Cube(data.astype('float32'),
+                dim_coords_and_dims=coord_specs, **cube_kwargs)
     return cube
 
 
@@ -53,7 +53,7 @@ def regular_cubes():
     cube_data = np.arange(8.0).reshape(2, 2, 2)
     cube = get_3d_cube(cube_data, standard_name='air_temperature',
                        var_name='tas', units='K')
-    return iris.cube.CubeList([cube])
+    return CubeList([cube])
 
 
 @pytest.fixture
@@ -63,7 +63,7 @@ def ref_cubes():
     cube_data[1, 1, 1] = 4.0
     cube = get_3d_cube(cube_data, standard_name='air_temperature',
                        var_name='tas', units='K')
-    return iris.cube.CubeList([cube])
+    return CubeList([cube])
 
 
 def test_no_reference_for_bias(regular_cubes, ref_cubes):
@@ -100,7 +100,7 @@ def test_invalid_bias_type(regular_cubes, ref_cubes):
     msg = (r"Expected one of \['absolute', 'relative'\] for bias_type, got "
            r"'invalid_bias_type'")
     with pytest.raises(ValueError, match=msg):
-        bias(products, 'invalid_bias_type')
+        bias(products, bias_type='invalid_bias_type')
 
 
 def test_absolute_bias(regular_cubes, ref_cubes):
@@ -113,6 +113,8 @@ def test_absolute_bias(regular_cubes, ref_cubes):
         ref_product,
     }
     out_products = bias(products)
+
+    assert isinstance(out_products, set)
     out_dict = products_set_to_dict(out_products)
     assert len(out_dict) == 2
 
@@ -162,7 +164,9 @@ def test_relative_bias(regular_cubes, ref_cubes):
         PreprocessorFile(regular_cubes, 'B', {'dataset': 'b'}),
         ref_product,
     }
-    out_products = bias(products, 'relative')
+    out_products = bias(products, bias_type='relative')
+
+    assert isinstance(out_products, set)
     out_dict = products_set_to_dict(out_products)
     assert len(out_dict) == 2
 
@@ -211,7 +215,11 @@ def test_denominator_mask_threshold(regular_cubes, ref_cubes):
         PreprocessorFile(regular_cubes, 'A', {'dataset': 'a'}),
         ref_product,
     }
-    out_products = bias(products, 'relative', denominator_mask_threshold=3.0)
+    out_products = bias(
+        products, bias_type='relative', denominator_mask_threshold=3.0
+    )
+
+    assert isinstance(out_products, set)
     out_dict = products_set_to_dict(out_products)
     assert len(out_dict) == 1
 
@@ -241,6 +249,8 @@ def test_keep_reference_dataset(regular_cubes, ref_cubes):
         PreprocessorFile(ref_cubes, 'REF', {'reference_for_bias': True})
     }
     out_products = bias(products, keep_reference_dataset=True)
+
+    assert isinstance(out_products, set)
     out_dict = products_set_to_dict(out_products)
     assert len(out_dict) == 2
 
@@ -259,3 +269,75 @@ def test_keep_reference_dataset(regular_cubes, ref_cubes):
     assert out_cube.units == 'K'
     assert out_cube.dim_coords == ref_cubes[0].dim_coords
     assert out_cube.aux_coords == ref_cubes[0].aux_coords
+
+
+def test_absolute_bias_cubes(regular_cubes, ref_cubes):
+    """Test calculation of absolute bias with cubes."""
+    ref_cube = ref_cubes[0]
+    out_cubes = bias(regular_cubes, ref_cube)
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    expected_data = [[[-2.0, -1.0],
+                      [0.0, 1.0]],
+                     [[2.0, 3.0],
+                      [4.0, 3.0]]]
+    assert_array_equal(out_cube.data, expected_data)
+    assert out_cube.var_name == 'tas'
+    assert out_cube.standard_name == 'air_temperature'
+    assert out_cube.units == 'K'
+    assert out_cube.dim_coords == regular_cubes[0].dim_coords
+    assert out_cube.aux_coords == regular_cubes[0].aux_coords
+
+
+def test_relative_bias_cubes(regular_cubes, ref_cubes):
+    """Test calculation of relative bias with cubes."""
+    ref_cube = ref_cubes[0]
+    out_cubes = bias(
+        [regular_cubes[0], regular_cubes[0]],
+        ref_cube,
+        bias_type='relative',
+    )
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 2
+
+    for out_cube in out_cubes:
+        expected_data = [[[-1.0, -0.5],
+                          [0.0, 0.5]],
+                         [[1.0, 1.5],
+                          [2.0, 0.75]]]
+        assert_array_equal(out_cube.data, expected_data)
+        assert out_cube.var_name == 'tas'
+        assert out_cube.standard_name == 'air_temperature'
+        assert out_cube.units == '1'
+        assert out_cube.dim_coords == regular_cubes[0].dim_coords
+        assert out_cube.aux_coords == regular_cubes[0].aux_coords
+
+
+def test_denominator_mask_threshold_cubes(regular_cubes, ref_cubes):
+    """Test denominator_mask_threshold argument with cubes."""
+    ref_cube = ref_cubes[0]
+    out_cubes = bias(
+        regular_cubes,
+        ref_cube,
+        bias_type='relative',
+        denominator_mask_threshold=3.0,
+    )
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    expected_data = np.ma.masked_equal([[[42.0, 42.0],
+                                         [42.0, 42.0]],
+                                        [[42.0, 42.0],
+                                         [42.0, 0.75]]], 42.0)
+    assert_array_equal(out_cube.data, expected_data)
+    assert out_cube.var_name == 'tas'
+    assert out_cube.standard_name == 'air_temperature'
+    assert out_cube.units == '1'
+    assert out_cube.dim_coords == regular_cubes[0].dim_coords
+    assert out_cube.aux_coords == regular_cubes[0].aux_coords

@@ -820,6 +820,7 @@ def _update_preproc_functions(settings, dataset, datasets, missing_vars):
     _update_regrid_time(dataset, settings)
     if dataset.facets.get('frequency') == 'fx':
         check.check_for_temporal_preprocs(settings)
+    check.bias_type(settings)
 
 
 def _get_preprocessor_task(datasets, profiles, task_name):

@@ -2288,7 +2288,7 @@ dimensional coordinates. This can for example be ensured with the preprocessors
 :func:`esmvalcore.preprocessor.regrid` and/or
 :func:`esmvalcore.preprocessor.regrid_time`.
 
-The ``bias`` preprocessor supports 4 optional arguments:
+The ``bias`` preprocessor supports 4 optional arguments in the recipe:
 
    * ``bias_type`` (:obj:`str`, default: ``'absolute'``): Bias type that is
      calculated. Can be ``'absolute'`` (i.e., calculate bias for dataset
