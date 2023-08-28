@@ -2290,27 +2290,27 @@ dimensional coordinates. This can for example be ensured with the preprocessors
 
 The ``bias`` preprocessor supports 4 optional arguments in the recipe:
 
-   * ``bias_type`` (:obj:`str`, default: ``'absolute'``): Bias type that is
-     calculated. Can be ``'absolute'`` (i.e., calculate bias for dataset
-     :math:`X` and reference :math:`R` as :math:`X - R`) or ``relative`` (i.e,
-     calculate bias as :math:`\frac{X - R}{R}`).
-   * ``denominator_mask_threshold`` (:obj:`float`, default: ``1e-3``):
-     Threshold to mask values close to zero in the denominator (i.e., the
-     reference dataset) during the calculation of relative biases. All values
-     in the reference dataset with absolute value less than the given threshold
-     are masked out. This setting is ignored when ``bias_type`` is set to
-     ``'absolute'``. Please note that for some variables with very small
-     absolute values (e.g., carbon cycle fluxes, which are usually :math:`<
-     10^{-6}` kg m :math:`^{-2}` s :math:`^{-1}`) it is absolutely essential to
-     change the default value in order to get reasonable results.
-   * ``keep_reference_dataset`` (:obj:`bool`, default: ``False``): If
-     ``True``, keep the reference dataset in the output. If ``False``, drop the
-     reference dataset.
-   * ``exclude`` (:obj:`list` of :obj:`str`): Exclude specific datasets from
-     this preprocessor. Note that this option is only available in the recipe,
-     not when using :func:`esmvalcore.preprocessor.bias` directly (e.g., in
-     another python script). If the reference dataset has been excluded, an
-     error is raised.
+* ``bias_type`` (:obj:`str`, default: ``'absolute'``): Bias type that is
+  calculated. Can be ``'absolute'`` (i.e., calculate bias for dataset
+  :math:`X` and reference :math:`R` as :math:`X - R`) or ``relative`` (i.e,
+  calculate bias as :math:`\frac{X - R}{R}`).
+* ``denominator_mask_threshold`` (:obj:`float`, default: ``1e-3``):
+  Threshold to mask values close to zero in the denominator (i.e., the
+  reference dataset) during the calculation of relative biases. All values
+  in the reference dataset with absolute value less than the given threshold
+  are masked out. This setting is ignored when ``bias_type`` is set to
+  ``'absolute'``. Please note that for some variables with very small
+  absolute values (e.g., carbon cycle fluxes, which are usually :math:`<
+  10^{-6}` kg m :math:`^{-2}` s :math:`^{-1}`) it is absolutely essential to
+  change the default value in order to get reasonable results.
+* ``keep_reference_dataset`` (:obj:`bool`, default: ``False``): If
+  ``True``, keep the reference dataset in the output. If ``False``, drop the
+  reference dataset.
+* ``exclude`` (:obj:`list` of :obj:`str`): Exclude specific datasets from
+  this preprocessor. Note that this option is only available in the recipe,
+  not when using :func:`esmvalcore.preprocessor.bias` directly (e.g., in
+  another python script). If the reference dataset has been excluded, an
+  error is raised.
 
 Example:
 

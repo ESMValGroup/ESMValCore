@@ -35,21 +35,19 @@ def bias(
     This preprocessor requires a reference dataset, which can be specified with
     the `ref_cube` argument. If `ref_cube` is ``None``, exactly one input
     dataset in the `products` set needs to have the facet ``reference_for_bias:
-    true`` defined in the recipe.  Please do **not** specify the option
+    true`` defined in the recipe. Please do **not** specify the option
     `ref_cube` when using this preprocessor function in a recipe.
 
     Parameters
     ----------
     products:
         Input datasets/cubes for which the bias is calculated relative to a
-        reference dataset/cube. If given as :obj:`set` of
-        :class:`~esmvalcore.preprocessor.PreprocessorFile` objects and
-        `ref_cube` is ``None``, exactly one dataset needs the facet
-        ``reference_for_bias: true``.
+        reference dataset/cube.
     ref_cube:
         Cube which is used as reference for the bias calculation. If ``None``,
-        exactly one dataset in `products` needs the facet ``reference_for_bias:
-        true``.
+        `products` needs to be a :obj:`set` of
+        `~esmvalcore.preprocessor.PreprocessorFile` objects and exactly one
+        dataset in `products` needs the facet ``reference_for_bias: true``.
     bias_type:
         Bias type that is calculated. Must be one of ``'absolute'`` (dataset -
         ref) or ``'relative'`` ((dataset - ref) / ref).
@@ -85,9 +83,15 @@ def bias(
 
     """
     reference_product = None
+    all_cubes_given = all(isinstance(p, Cube) for p in products)
 
-    # Get reference cube if not expclitly given
+    # Get reference cube if not explicitly given
     if ref_cube is None:
+        if all_cubes_given:
+            raise ValueError(
+                "`ref_cube` cannot be `None` when `products` is an iterable "
+                "of Cubes"
+            )
         reference_products = []
         for product in products:
             if product.attributes.get('reference_for_bias', False):
@@ -116,7 +120,7 @@ def bias(
                                             denominator_mask_threshold)
 
     # If input is an Iterable of Cube objects, calculate bias for each element
-    if all(isinstance(p, Cube) for p in products):
+    if all_cubes_given:
         cubes = [_calculate_bias(c, ref_cube, bias_type) for c in products]
         return CubeList(cubes)
 

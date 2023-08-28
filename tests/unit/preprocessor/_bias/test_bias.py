@@ -341,3 +341,9 @@ def test_denominator_mask_threshold_cubes(regular_cubes, ref_cubes):
     assert out_cube.units == '1'
     assert out_cube.dim_coords == regular_cubes[0].dim_coords
     assert out_cube.aux_coords == regular_cubes[0].aux_coords
+
+
+def test_ref_cube_non_cubes(regular_cubes):
+    """Test ref_cube=None with with cubes."""
+    with pytest.raises(ValueError):
+        bias(regular_cubes)
