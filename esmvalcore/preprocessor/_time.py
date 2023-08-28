@@ -9,6 +9,7 @@ import logging
 from typing import Union
 from warnings import filterwarnings
 
+import dask
 import dask.array as da
 import iris
 import iris.coord_categorisation
@@ -622,7 +623,7 @@ def seasonal_statistics(cube,
     return result
 
 
-def annual_statistics(cube, operator='mean'):
+def annual_statistics(cube: iris.cube.Cube, operator='mean'):
     """Compute annual statistics.
 
     Note that this function does not weight the annual mean if
@@ -697,7 +698,7 @@ def decadal_statistics(cube, operator='mean'):
     return result
 
 
-def climate_statistics(cube,
+def climate_statistics(cube: iris.cube.Cube,
                        operator='mean',
                        period='full',
                        seasons=('DJF', 'MAM', 'JJA', 'SON')):
@@ -728,7 +729,6 @@ def climate_statistics(cube,
     -------
     iris.cube.Cube
         Climate statistics cube.
-
     """
     original_dtype = cube.dtype
     period = period.lower()
@@ -804,7 +804,6 @@ def anomalies(cube,
     -------
     iris.cube.Cube
         Anomalies cube.
-
     """
     if reference is None:
         reference_cube = cube
@@ -849,20 +848,18 @@ def anomalies(cube,
 def _compute_anomalies(cube, reference, period, seasons):
     cube_coord = _get_period_coord(cube, period, seasons)
     ref_coord = _get_period_coord(reference, period, seasons)
-
-    data = cube.core_data()
-    cube_time = cube.coord('time')
-    ref = {}
-    for ref_slice in reference.slices_over(ref_coord):
-        ref[ref_slice.coord(ref_coord).points[0]] = ref_slice.core_data()
-
-    cube_coord_dim = cube.coord_dims(cube_coord)[0]
-    slicer = [slice(None)] * len(data.shape)
-    new_data = []
-    for i in range(cube_time.shape[0]):
-        slicer[cube_coord_dim] = i
-        new_data.append(data[tuple(slicer)] - ref[cube_coord.points[i]])
-    data = da.stack(new_data, axis=cube_coord_dim)
+    indices = np.empty_like(cube_coord.points, dtype=np.int32)
+    for idx, value in enumerate(ref_coord.points):
+        indices = np.where(value == cube_coord.points, idx, indices)
+    ref_data = reference.core_data()
+    if reference.has_lazy_data():
+        # Rechunk reference data because iris.cube.Cube.aggregate_by, used to
+        # compute the reference, produces very small chunks.
+        ref_data = ref_data.rechunk()
+    axis = cube.coord_dims(cube_coord)[0]
+    with dask.config.set({"array.slicing.split_large_chunks": True}):
+        ref_data_broadcast = da.take(ref_data, indices=indices, axis=axis)
+    data = cube.core_data() - ref_data_broadcast
     cube = cube.copy(data)
     cube.remove_coord(cube_coord)
     return cube
