@@ -348,7 +348,9 @@ def save(cubes,
             logger.debug('Changing var_name from %s to %s', cube.var_name,
                          alias)
             cube.var_name = alias
+    logger.debug("Saving %s", kwargs['target'])
     iris.save(cubes, **kwargs)
+    logger.debug("Done saving %s", kwargs['target'])
 
     return filename
 
