@@ -11,6 +11,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Dict
 
+import cartopy.crs as ccrs
 import dask.array as da
 import iris
 import numpy as np
@@ -18,7 +19,6 @@ import stratify
 from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
-import cartopy.crs as ccrs
 
 from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
 from ..cmor.table import CMOR_TABLES
@@ -464,10 +464,10 @@ def extract_point(cube, latitude, longitude, scheme):
     cube = get_pt(cube, point, scheme)
     return cube
 
+
 def get_pt(cube, point, scheme):
-    """
-    Extract data at a single point from cubes with any coordinate 
-    system or none (if lat-lon only)
+    """Extract data at a single point from cubes with any coordinate system or
+    none (if lat-lon only)
 
     Parameters
     ----------
@@ -492,7 +492,7 @@ def get_pt(cube, point, scheme):
     """
     x_coord = cube.coord(axis='X', dim_coords=True)
     y_coord = cube.coord(axis='Y', dim_coords=True)
-    
+
     # some lon-lat cubes don't have a coordinate system
     # check if it is lon-lat and if so just use interpolate
     # as it is
@@ -503,7 +503,8 @@ def get_pt(cube, point, scheme):
         if x_coord.name() == 'longitude' and y_coord.name() == 'latitude':
             return cube.interpolate(point, scheme=scheme)
         else:
-            raise ValueError('If no coordinate system on cube then can only interpolate lat-lon grids')
+            raise ValueError('If no coordinate system on cube then ' +
+                             'can only interpolate lat-lon grids')
     else:
         # convert the target point(s) to lat lon and do the interpolation
         ll = ccrs.Geodetic()
@@ -515,10 +516,12 @@ def get_pt(cube, point, scheme):
             xpoints = np.repeat(xpoints, ypoints.size)
         if ypoints.size == 1 and xpoints.size > 1:
             ypoints = np.repeat(ypoints, xpoints.size)
-        
-        trpoints = myccrs.transform_points(ll, xpoints, ypoints) 
-        trpoints = [(y_coord.name(), trpoints[:,1]),(x_coord.name(), trpoints[:,0])]
+
+        trpoints = myccrs.transform_points(ll, xpoints, ypoints)
+        trpoints = [(y_coord.name(), trpoints[:, 1]),
+                    (x_coord.name(), trpoints[:, 0])]
         return cube.interpolate(trpoints, scheme=scheme)
+
 
 def is_dataset(dataset):
     """Test if something is an `esmvalcore.dataset.Dataset`."""
@@ -617,7 +620,6 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             target: 1x1
             scheme:
               reference: esmf_regrid.schemes:ESMFAreaWeighted
-
     """
     if is_dataset(target_grid):
         target_grid = target_grid.copy()
