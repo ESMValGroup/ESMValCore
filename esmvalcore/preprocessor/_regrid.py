@@ -516,10 +516,7 @@ def get_pt(cube, point, scheme):
         if ypoints.size == 1 and xpoints.size > 1:
             ypoints = np.repeat(ypoints, xpoints.size)
         
-        try:
-            trpoints = myccrs.transform_points(ll, xpoints, ypoints) 
-        except:
-            import pdb;pdb.set_trace()
+        trpoints = myccrs.transform_points(ll, xpoints, ypoints) 
         trpoints = [(y_coord.name(), trpoints[:,1]),(x_coord.name(), trpoints[:,0])]
         return cube.interpolate(trpoints, scheme=scheme)
 
