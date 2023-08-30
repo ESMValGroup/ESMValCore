@@ -9,6 +9,7 @@ import ssl
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
+from turtle import pd
 from typing import Dict
 
 import dask.array as da
@@ -503,12 +504,24 @@ def get_pt(cube, point, scheme):
         if x_coord.name() == 'longitude' and y_coord.name() == 'latitude':
             return cube.interpolate(point, scheme=scheme)
         else:
-            raise ValueError('Can only interpolate lat-lon grids if no coordinate system on cube')
+            raise ValueError('If no coordinate system on cube then can only interpolate lat-lon grids')
     else:
         # convert the target point(s) to lat lon and do the interpolation
         ll = ccrs.Geodetic()
-        trpoints = cube.coord_system().as_cartopy_crs().transform_point(point[1][1], point[0][1], ll) 
-        trpoints = [(y_coord.name(), trpoints[1]),(x_coord.name(), trpoints[0])]
+        myccrs = cube.coord_system().as_cartopy_crs()
+        xpoints = np.array(point[1][1])
+        ypoints = np.array(point[0][1])
+        # repeat length 1 arrays to be the right shape
+        if xpoints.size == 1 and ypoints.size > 1:
+            xpoints = np.repeat(xpoints, ypoints.size)
+        if ypoints.size == 1 and xpoints.size > 1:
+            ypoints = np.repeat(ypoints, xpoints.size)
+        
+        try:
+            trpoints = myccrs.transform_points(ll, xpoints, ypoints) 
+        except:
+            import pdb;pdb.set_trace()
+        trpoints = [(y_coord.name(), trpoints[:,1]),(x_coord.name(), trpoints[:,0])]
         return cube.interpolate(trpoints, scheme=scheme)
 
 def is_dataset(dataset):
