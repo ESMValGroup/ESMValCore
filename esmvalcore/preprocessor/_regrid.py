@@ -9,7 +9,6 @@ import ssl
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
-from turtle import pd
 from typing import Dict
 
 import dask.array as da
