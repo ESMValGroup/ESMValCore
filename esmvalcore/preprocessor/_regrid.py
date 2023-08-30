@@ -493,19 +493,16 @@ def get_pt(cube, point, scheme):
     x_coord = cube.coord(axis='X', dim_coords=True)
     y_coord = cube.coord(axis='Y', dim_coords=True)
 
-    # some lon-lat cubes don't have a coordinate system
     # check if it is lon-lat and if so just use interpolate
-    # as it is
-    if cube.coord_system() is None:
-        # if coords are equal to lat and lon then
-        # assume we have a lat-lon grid
+    # as it is (reproduce previous code)
+    if x_coord.name() == 'longitude' and y_coord.name() == 'latitude':
+        return cube.interpolate(point, scheme=scheme)
 
-        if x_coord.name() == 'longitude' and y_coord.name() == 'latitude':
-            return cube.interpolate(point, scheme=scheme)
-        else:
+    else:
+        if cube.coord_system() is None:
             raise ValueError('If no coordinate system on cube then ' +
                              'can only interpolate lat-lon grids')
-    else:
+
         # convert the target point(s) to lat lon and do the interpolation
         ll = ccrs.Geodetic()
         myccrs = cube.coord_system().as_cartopy_crs()
