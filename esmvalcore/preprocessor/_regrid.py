@@ -466,7 +466,9 @@ def extract_point(cube, latitude, longitude, scheme):
 
 
 def get_pt(cube, point, scheme):
-    """Extract data at a single point from cubes with any coordinate system or
+    """Extract data at a single point from cubes.
+
+    Works for cubes with any coordinate system or
     none (if lat-lon only)
 
     Parameters
@@ -474,8 +476,9 @@ def get_pt(cube, point, scheme):
     cube : cube
         The source cube to extract a point from.
 
-    latitude, longitude : float, or array of float
-        The latitude and longitude of the point.
+    point : list containing two tuples - one for
+            latitude and one for longitude e.g
+            [('latitude', latitude), ('longitude', longitude)]
 
     scheme : str
         The interpolation scheme. 'linear' or 'nearest'. No default.
@@ -498,26 +501,25 @@ def get_pt(cube, point, scheme):
     if x_coord.name() == 'longitude' and y_coord.name() == 'latitude':
         return cube.interpolate(point, scheme=scheme)
 
-    else:
-        if cube.coord_system() is None:
-            raise ValueError('If no coordinate system on cube then ' +
-                             'can only interpolate lat-lon grids')
+    if cube.coord_system() is None:
+        raise ValueError('If no coordinate system on cube then ' +
+                         'can only interpolate lat-lon grids')
 
-        # convert the target point(s) to lat lon and do the interpolation
-        ll = ccrs.Geodetic()
-        myccrs = cube.coord_system().as_cartopy_crs()
-        xpoints = np.array(point[1][1])
-        ypoints = np.array(point[0][1])
-        # repeat length 1 arrays to be the right shape
-        if xpoints.size == 1 and ypoints.size > 1:
-            xpoints = np.repeat(xpoints, ypoints.size)
-        if ypoints.size == 1 and xpoints.size > 1:
-            ypoints = np.repeat(ypoints, xpoints.size)
+    # convert the target point(s) to lat lon and do the interpolation
+    ll_cs = ccrs.Geodetic()
+    myccrs = cube.coord_system().as_cartopy_crs()
+    xpoints = np.array(point[1][1])
+    ypoints = np.array(point[0][1])
+    # repeat length 1 arrays to be the right shape
+    if xpoints.size == 1 and ypoints.size > 1:
+        xpoints = np.repeat(xpoints, ypoints.size)
+    if ypoints.size == 1 and xpoints.size > 1:
+        ypoints = np.repeat(ypoints, xpoints.size)
 
-        trpoints = myccrs.transform_points(ll, xpoints, ypoints)
-        trpoints = [(y_coord.name(), trpoints[:, 1]),
-                    (x_coord.name(), trpoints[:, 0])]
-        return cube.interpolate(trpoints, scheme=scheme)
+    trpoints = myccrs.transform_points(ll_cs, xpoints, ypoints)
+    trpoints = [(y_coord.name(), trpoints[:, 1]),
+                (x_coord.name(), trpoints[:, 0])]
+    return cube.interpolate(trpoints, scheme=scheme)
 
 
 def is_dataset(dataset):
