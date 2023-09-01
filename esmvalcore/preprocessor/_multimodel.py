@@ -7,11 +7,14 @@ Wrapper functions separate esmvalcore internals, operating on products, from
 generalized functions that operate on iris cubes. These wrappers support
 grouped execution by passing a groupby keyword.
 """
+from __future__ import annotations
+
 import logging
-import re
 import warnings
+from collections.abc import Iterable
 from datetime import datetime
 from functools import reduce
+from typing import TYPE_CHECKING, Optional
 
 import cf_units
 import iris
@@ -28,60 +31,14 @@ from esmvalcore.preprocessor._supplementary_vars import (
 )
 
 from ._other import _group_products
+from ._shared import get_iris_aggregator
+
+if TYPE_CHECKING:
+    from esmvalcore.preprocessor import PreprocessorFile
 
 logger = logging.getLogger(__name__)
 
-STATISTIC_MAPPING = {
-    'gmean': iris.analysis.GMEAN,  # not lazy in iris
-    'hmean': iris.analysis.HMEAN,  # not lazy in iris
-    'max': iris.analysis.MAX,
-    'median': iris.analysis.MEDIAN,  # not lazy in iris
-    'min': iris.analysis.MIN,
-    'rms': iris.analysis.RMS,
-    'sum': iris.analysis.SUM,
-    'mean': iris.analysis.MEAN,
-    'std_dev': iris.analysis.STD_DEV,
-    'variance': iris.analysis.VARIANCE,
-    # The following require extra kwargs,
-    # atm this is only supported for percentiles via e.g. `pXX`
-    'count': iris.analysis.COUNT,
-    'peak': iris.analysis.PEAK,
-    'percentile': iris.analysis.PERCENTILE,  # not lazy in iris
-    'proportion': iris.analysis.PROPORTION,  # not lazy in iris
-    'wpercentile': iris.analysis.WPERCENTILE,  # not lazy in iris
-}
-
 CONCAT_DIM = 'multi-model'
-
-
-def _resolve_operator(statistic: str):
-    """Find the operator corresponding to the statistic."""
-    statistic = statistic.lower()
-    kwargs = {}
-
-    # special cases
-    if statistic == 'std':
-        logger.warning(
-            "Changing statistics from specified `std` to `std_dev`, "
-            "since multimodel statistics is now using the iris.analysis module"
-            ", which also uses `std_dev`. Please consider replacing 'std' "
-            " with 'std_dev' in your recipe or code.")
-        statistic = 'std_dev'
-
-    elif re.match(r"^(p\d{1,2})(\.\d*)?$", statistic):
-        # percentiles between p0 and p99.99999...
-        percentile = float(statistic[1:])
-        kwargs['percent'] = percentile
-        statistic = 'percentile'
-
-    try:
-        operator = STATISTIC_MAPPING[statistic]
-    except KeyError as err:
-        raise ValueError(
-            f'Statistic `{statistic}` not supported by multicube statistics. '
-            f'Must be one of {tuple(STATISTIC_MAPPING.keys())}.') from err
-
-    return operator, kwargs
 
 
 def _get_consistent_time_unit(cubes):
@@ -587,7 +544,13 @@ def _compute(cubes: list, *, operator: iris.analysis.Aggregator, **kwargs):
     return result_cube
 
 
-def _multicube_statistics(cubes, statistics, span, ignore_scalar_coords=False):
+def _multicube_statistics(
+    cubes,
+    statistics,
+    span,
+    ignore_scalar_coords=False,
+    statistics_kwargs=None,
+):
     """Compute statistics over multiple cubes.
 
     Can be used e.g. for ensemble or multi-model statistics.
@@ -595,6 +558,9 @@ def _multicube_statistics(cubes, statistics, span, ignore_scalar_coords=False):
     Cubes are merged and subsequently collapsed along a new auxiliary
     coordinate. Inconsistent attributes will be removed.
     """
+    if statistics_kwargs is None:
+        statistics_kwargs = [None] * len(statistics)
+
     if not cubes:
         raise ValueError(
             "Cannot perform multicube statistics for an empty list of cubes"
@@ -633,35 +599,43 @@ def _multicube_statistics(cubes, statistics, span, ignore_scalar_coords=False):
     # Calculate statistics
     statistics_cubes = {}
     lazy_input = any(cube.has_lazy_data() for cube in cubes)
-    for statistic in statistics:
+    for (statistic, statistic_kwargs) in zip(statistics, statistics_kwargs):
         logger.debug('Multicube statistics: computing: %s', statistic)
-        operator, kwargs = _resolve_operator(statistic)
-        if lazy_input and operator.lazy_func is not None:
-            result_cube = _compute(cubes, operator=operator, **kwargs)
+
+        (agg, agg_kwargs) = get_iris_aggregator(statistic, statistic_kwargs)
+        if lazy_input and agg.lazy_func is not None:
+            result_cube = _compute(cubes, operator=agg, **agg_kwargs)
         else:
-            result_cube = _compute_eager(cubes, operator=operator, **kwargs)
+            result_cube = _compute_eager(cubes, operator=agg, **agg_kwargs)
         statistics_cubes[statistic] = result_cube
 
     return statistics_cubes
 
 
-def _multiproduct_statistics(products,
-                             statistics,
-                             output_products,
-                             span=None,
-                             keep_input_datasets=None,
-                             ignore_scalar_coords=False):
+def _multiproduct_statistics(
+    products,
+    statistics,
+    output_products,
+    span=None,
+    keep_input_datasets=None,
+    ignore_scalar_coords=False,
+    statistics_kwargs=None
+):
     """Compute multi-cube statistics on ESMValCore products.
 
     Extract cubes from products, calculate multicube statistics and
     assign the resulting output cubes to the output_products.
     """
+    if statistics_kwargs is None:
+        statistics_kwargs = [None] * len(statistics)
+
     cubes = [cube for product in products for cube in product.cubes]
     statistics_cubes = _multicube_statistics(
         cubes=cubes,
         statistics=statistics,
         span=span,
         ignore_scalar_coords=ignore_scalar_coords,
+        statistics_kwargs=statistics_kwargs,
     )
     statistics_products = set()
     for statistic, cube in statistics_cubes.items():
@@ -680,13 +654,16 @@ def _multiproduct_statistics(products,
     return products | statistics_products
 
 
-def multi_model_statistics(products,
-                           span,
-                           statistics,
-                           output_products=None,
-                           groupby=None,
-                           keep_input_datasets=True,
-                           ignore_scalar_coords=False):
+def multi_model_statistics(
+    products: set[PreprocessorFile] | Iterable[Cube],
+    span: str,
+    statistics: list[str],
+    output_products=None,
+    groupby: Optional[tuple] = None,
+    keep_input_datasets: bool = True,
+    ignore_scalar_coords: bool = False,
+    statistics_kwargs: Optional[list[dict] | list[None]] = None,
+):
     """Compute multi-model statistics.
 
     This function computes multi-model statistics on a list of ``products``,
@@ -748,34 +725,36 @@ def multi_model_statistics(products,
 
     Parameters
     ----------
-    products: list
+    products:
         Cubes (or products) over which the statistics will be computed.
-    span: str
+    span:
         Overlap or full; if overlap, statitstics are computed on common time-
         span; if full, statistics are computed on full time spans, ignoring
         missing data. This option is ignored if input cubes do not have time
         dimensions.
-    statistics: list
-        Statistical metrics to be computed, e.g. [``mean``, ``max``]. Choose
-        from the operators listed in the iris.analysis package. Percentiles can
-        be specified like ``pXX.YY``.
-    output_products: dict
+    statistics:
+        Statistical metrics to be computed, e.g. [``mean``, ``max``]. Allowed
+        options are given in :ref:`this table <supported_stat_operator>`.
+    output_products:
         For internal use only. A dict with statistics names as keys and
         preprocessorfiles as values. If products are passed as input, the
         statistics cubes will be assigned to these output products.
-    groupby:  tuple
+    groupby:
         Group products by a given tag or attribute, e.g., ('project',
         'dataset', 'tag1'). This is ignored if ``products`` is a list of cubes.
-    keep_input_datasets: bool
+    keep_input_datasets:
         If True, the output will include the input datasets.
         If False, only the computed statistics will be returned.
-    ignore_scalar_coords: bool
+    ignore_scalar_coords:
         If True, remove any scalar coordinate in the input datasets before
         merging the input cubes into the multi-dataset cube. The resulting
         multi-dataset cube will have no scalar coordinates (the actual input
         datasets will remain unchanged). If False, scalar coordinates will
         remain in the input datasets, which might lead to merge conflicts in
         case the input datasets have different scalar coordinates.
+    statistics_kwargs:
+        Optional keyword arguments for the :class:`iris.analysis.Aggregator`
+        objects defined by `statistics`.
 
     Returns
     -------
@@ -789,12 +768,22 @@ def multi_model_statistics(products,
         If span is neither overlap nor full, or if input type is neither cubes
         nor products.
     """
+    if statistics_kwargs is None:
+        statistics_kwargs = [None] * len(statistics)
+    if len(statistics) != len(statistics_kwargs):
+        raise ValueError(
+            f"Expected identical number of `statistics` and "
+            f"`statistics_kwargs`, got {len(statistics):d} and "
+            f"{len(statistics_kwargs):d}, respectively"
+        )
+
     if all(isinstance(p, Cube) for p in products):
         return _multicube_statistics(
             cubes=products,
             statistics=statistics,
             span=span,
             ignore_scalar_coords=ignore_scalar_coords,
+            statistics_kwargs=statistics_kwargs,
         )
     if all(type(p).__name__ == 'PreprocessorFile' for p in products):
         # Avoid circular input: https://stackoverflow.com/q/16964467
@@ -810,6 +799,7 @@ def multi_model_statistics(products,
                 span=span,
                 keep_input_datasets=keep_input_datasets,
                 ignore_scalar_coords=ignore_scalar_coords,
+                statistics_kwargs=statistics_kwargs,
             )
 
             statistics_products |= group_statistics

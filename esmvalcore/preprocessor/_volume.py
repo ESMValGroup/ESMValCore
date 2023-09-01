@@ -6,7 +6,7 @@ depth or height regions; constructing volumetric averages;
 from __future__ import annotations
 
 import logging
-from typing import Iterable, Sequence
+from typing import Iterable, Optional, Sequence
 
 import dask.array as da
 import iris
@@ -16,7 +16,7 @@ from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 
 from ._area import compute_area_weights
-from ._shared import get_iris_analysis_operation, operator_accept_weights
+from ._shared import aggregator_accept_weights, get_iris_aggregator
 from ._supplementary_vars import register_supplementaries
 
 logger = logging.getLogger(__name__)
@@ -175,7 +175,11 @@ def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
     variables=['volcello'],
     required='prefer_at_least_one',
 )
-def volume_statistics(cube: Cube, operator: str) -> Cube:
+def volume_statistics(
+    cube: Cube,
+    operator: str,
+    operator_kwargs: Optional[dict] = None,
+) -> Cube:
     """Apply a statistical operation over a volume.
 
     The volume average is weighted according to the cell volume.
@@ -190,7 +194,12 @@ def volume_statistics(cube: Cube, operator: str) -> Cube:
         to compute the cell areas and multiplying those by the cell thickness,
         computed from the bounds of the vertical coordinate.
     operator:
-        The operation. Allowed options are: `mean`.
+        The operation. Used to determine the :class:`iris.analysis.Aggregator`
+        object used to calculate the statistics. Currently, only `mean` is
+        allowed.
+    operator_kwargs:
+        Optional keyword arguments for the :class:`iris.analysis.Aggregator`
+        object defined by `operator`.
 
     Returns
     -------
@@ -203,19 +212,31 @@ def volume_statistics(cube: Cube, operator: str) -> Cube:
     if operator != 'mean':
         raise ValueError(f"Volume operator {operator} not recognised.")
 
-    if not cube.cell_measures('ocean_volume'):
-        _try_adding_calculated_ocean_volume(cube)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+    if aggregator_accept_weights(agg) and agg_kwargs.get('weights', True):
+        # If necessary, try to calculate ocean_volume (this only works for
+        # regular grids and certain irregular grids, and fails for others)
+        if not cube.cell_measures('ocean_volume'):
+            _try_adding_calculated_ocean_volume(cube)
+        agg_kwargs['weights'] = 'ocean_volume'
+    else:
+        agg_kwargs.pop('weights', None)
 
     result = cube.collapsed(
         [cube.coord(axis='Z'), cube.coord(axis='Y'), cube.coord(axis='X')],
-        iris.analysis.MEAN,
-        weights='ocean_volume',
+        agg,
+        **agg_kwargs,
     )
 
     return result
 
 
-def axis_statistics(cube: Cube, axis: str, operator: str) -> Cube:
+def axis_statistics(
+    cube: Cube,
+    axis: str,
+    operator: str,
+    operator_kwargs: Optional[dict] = None,
+) -> Cube:
     """Perform statistics along a given axis.
 
     Operates over an axis direction.
@@ -223,8 +244,8 @@ def axis_statistics(cube: Cube, axis: str, operator: str) -> Cube:
     Note
     ----
     The `mean`, `sum` and `rms` operations are weighted by the corresponding
-    coordinate bounds. For `sum`, the units of the resulting cube will be
-    multiplied by corresponding coordinate units.
+    coordinate bounds by default. For `sum`, the units of the resulting cube
+    will be multiplied by corresponding coordinate units.
 
     Arguments
     ---------
@@ -234,8 +255,12 @@ def axis_statistics(cube: Cube, axis: str, operator: str) -> Cube:
         Direction over where to apply the operator. Possible values are `x`,
         `y`, `z`, `t`.
     operator:
-        The operation. Allowed options: `mean`, `median`, `min`, `max`,
-        `std_dev`, `sum`, `variance`, `rms`.
+        The operation. Used to determine the :class:`iris.analysis.Aggregator`
+        object used to calculate the statistics. Allowed options are given in
+        :ref:`this table <supported_stat_operator>`.
+    operator_kwargs:
+        Optional keyword arguments for the :class:`iris.analysis.Aggregator`
+        object defined by `operator`.
 
     Returns
     -------
@@ -243,7 +268,7 @@ def axis_statistics(cube: Cube, axis: str, operator: str) -> Cube:
         Collapsed cube.
 
     """
-    operation = get_iris_analysis_operation(operator)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
 
     # Check if a coordinate for the desired axis exists
     try:
@@ -264,16 +289,19 @@ def axis_statistics(cube: Cube, axis: str, operator: str) -> Cube:
     # For weighted operations, create a dummy weights coordinate using the
     # bounds of the original coordinate (this handles units properly, e.g., for
     # sums)
-    if operator_accept_weights(operator):
+    if aggregator_accept_weights(agg) and agg_kwargs.get('weights', True):
         weights_coord = AuxCoord(
             np.abs(coord.core_bounds()[..., 1] - coord.core_bounds()[..., 0]),
             long_name=f'{axis}_axis_statistics_weights',
             units=coord.units,
         )
         cube.add_aux_coord(weights_coord, coord_dims)
-        result = cube.collapsed(coord, operation, weights=weights_coord)
+        agg_kwargs['weights'] = weights_coord
     else:
-        result = cube.collapsed(coord, operation)
+        agg_kwargs.pop('weights', None)
+    print(agg)
+    print(agg_kwargs)
+    result = cube.collapsed(coord, agg, **agg_kwargs)
 
     return result
 

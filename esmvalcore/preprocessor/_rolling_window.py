@@ -1,26 +1,38 @@
 """Rolling-window operations on data cubes."""
 
 import logging
+from typing import Optional
 
-from ._shared import get_iris_analysis_operation
+from iris.cube import Cube
+
+from ._shared import get_iris_aggregator
 
 logger = logging.getLogger(__name__)
 
 
-def rolling_window_statistics(cube, coordinate, operator, window_length):
+def rolling_window_statistics(
+    cube: Cube,
+    coordinate: str,
+    operator: str,
+    window_length: int,
+    operator_kwargs: Optional[dict] = None,
+):
     """Compute rolling-window statistics over a coordinate.
 
     Parameters
     ----------
-    cube : iris.cube.Cube
+    cube:
         Input cube.
-    coordinate : str
+    coordinate:
         Coordinate over which the rolling-window statistics is calculated.
-    operator : str
-        Select operator to apply. Available operators: ``'mean'``,
-        ``'median'``, ``'std_dev'``, ``'sum'``, ``'variance'``, ``'min'``,
-        ``'max'``.
-    window_length : int
+    operator:
+        The operation. Used to determine the :class:`iris.analysis.Aggregator`
+        object used to calculate the statistics. Allowed options are given in
+        :ref:`this table <supported_stat_operator>`.
+    operator_kwargs:
+        Optional keyword arguments for the :class:`iris.analysis.Aggregator`
+        object defined by `operator`.
+    window_length:
         Size of the window to use.
 
     Returns
@@ -28,15 +40,8 @@ def rolling_window_statistics(cube, coordinate, operator, window_length):
     iris.cube.Cube
         Rolling-window statistics cube.
 
-    Raises
-    ------
-    iris.exceptions.CoordinateNotFoundError:
-        Cube does not have time coordinate.
-    ValueError:
-        Invalid ``'operator'`` given.
     """
-    operation = get_iris_analysis_operation(operator)
-    # applying rolling wondow
-    cube = cube.rolling_window(coordinate, operation, window_length)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+    cube = cube.rolling_window(coordinate, agg, window_length, *agg_kwargs)
 
     return cube

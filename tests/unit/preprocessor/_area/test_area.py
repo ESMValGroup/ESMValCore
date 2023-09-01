@@ -125,7 +125,7 @@ class Test(tests.Test):
     def test_area_statistics_median(self):
         """Test for area average of a 2D field."""
         result = area_statistics(self.grid, 'median')
-        expected = np.ma.array([1., 1.], dtype=np.float32)
+        expected = np.array([1., 1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-2 s-1')
 

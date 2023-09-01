@@ -392,8 +392,8 @@ def test_lazy_data_inconsistent_times(span):
 VALIDATION_DATA_FAIL = (
     ('percentile', ValueError),
     ('wpercentile', ValueError),
-    ('count', TypeError),
-    ('proportion', TypeError),
+    ('count', ValueError),
+    ('proportion', ValueError),
 )
 
 
@@ -420,7 +420,7 @@ def test_get_consistent_time_unit(calendar1, calendar2, expected):
     """Test same calendar returned or default if calendars differ.
 
     Expected behaviour: If the calendars are the same, return that one.
-    If the calendars are not the same, return 'standard'.
+    If the calendars are not the same, return 'stanfdard'.
     """
     cubes = (
         generate_cube_from_dates('monthly', calendar=calendar1),

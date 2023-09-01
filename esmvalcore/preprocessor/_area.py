@@ -21,9 +21,9 @@ from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 
 from ._shared import (
-    get_iris_analysis_operation,
+    aggregator_accept_weights,
+    get_iris_aggregator,
     guess_bounds,
-    operator_accept_weights,
 )
 from ._supplementary_vars import (
     add_ancillary_variable,
@@ -189,7 +189,11 @@ def _extract_irregular_region(cube, start_longitude, end_longitude,
     return cube
 
 
-def zonal_statistics(cube: Cube, operator: str) -> Cube:
+def zonal_statistics(
+    cube: Cube,
+    operator: str,
+    operator_kwargs: Optional[dict] = None,
+) -> Cube:
     """Compute zonal statistics.
 
     Parameters
@@ -197,8 +201,12 @@ def zonal_statistics(cube: Cube, operator: str) -> Cube:
     cube:
         Input cube.
     operator:
-        The operation. Allowed options: `mean`, `median`, `min`, `max`,
-        `std_dev`, `sum`, `variance`, `rms`.
+        The operation. Used to determine the :class:`iris.analysis.Aggregator`
+        object used to calculate the statistics. Allowed options are given in
+        :ref:`this table <supported_stat_operator>`.
+    operator_kwargs:
+        Optional keyword arguments for the :class:`iris.analysis.Aggregator`
+        object defined by `operator`.
 
     Returns
     -------
@@ -212,16 +220,21 @@ def zonal_statistics(cube: Cube, operator: str) -> Cube:
         Zonal statistics not yet implemented for irregular grids.
 
     """
-    if cube.coord('longitude').points.ndim < 2:
-        operation = get_iris_analysis_operation(operator)
-        cube = cube.collapsed('longitude', operation)
-        cube.data = cube.core_data().astype(np.float32, casting='same_kind')
-        return cube
-    msg = ("Zonal statistics on irregular grids not yet implemnted")
-    raise ValueError(msg)
+    if cube.coord('longitude').points.ndim >= 2:
+        raise ValueError(
+            "Zonal statistics on irregular grids not yet implemented"
+        )
+    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+    cube = cube.collapsed('longitude', agg, **agg_kwargs)
+    cube.data = cube.core_data().astype(np.float32, casting='same_kind')
+    return cube
 
 
-def meridional_statistics(cube: Cube, operator: str) -> Cube:
+def meridional_statistics(
+    cube: Cube,
+    operator: str,
+    operator_kwargs: Optional[dict] = None,
+) -> Cube:
     """Compute meridional statistics.
 
     Parameters
@@ -229,8 +242,12 @@ def meridional_statistics(cube: Cube, operator: str) -> Cube:
     cube:
         Input cube.
     operator:
-        The operation. Allowed options: `mean`, `median`, `min`, `max`,
-        `std_dev`, `sum`, `variance`, `rms`.
+        The operation. Used to determine the :class:`iris.analysis.Aggregator`
+        object used to calculate the statistics. Allowed options are given in
+        :ref:`this table <supported_stat_operator>`.
+    operator_kwargs:
+        Optional keyword arguments for the :class:`iris.analysis.Aggregator`
+        object defined by `operator`.
 
     Returns
     -------
@@ -244,13 +261,14 @@ def meridional_statistics(cube: Cube, operator: str) -> Cube:
         Zonal statistics not yet implemented for irregular grids.
 
     """
-    if cube.coord('latitude').points.ndim < 2:
-        operation = get_iris_analysis_operation(operator)
-        cube = cube.collapsed('latitude', operation)
-        cube.data = cube.core_data().astype(np.float32, casting='same_kind')
-        return cube
-    msg = ("Meridional statistics on irregular grids not yet implemented")
-    raise ValueError(msg)
+    if cube.coord('latitude').points.ndim >= 2:
+        raise ValueError(
+            "Meridional statistics on irregular grids not yet implemented"
+        )
+    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+    cube = cube.collapsed('latitude', agg, **agg_kwargs)
+    cube.data = cube.core_data().astype(np.float32, casting='same_kind')
+    return cube
 
 
 def compute_area_weights(cube):
@@ -331,35 +349,19 @@ def _try_adding_calculated_cell_area(cube: Cube) -> None:
     variables=['areacella', 'areacello'],
     required='prefer_at_least_one',
 )
-def area_statistics(cube: Cube, operator: str) -> Cube:
+def area_statistics(
+    cube: Cube,
+    operator: str,
+    operator_kwargs: Optional[dict] = None,
+) -> Cube:
     """Apply a statistical operator in the horizontal plane.
 
     We assume that the horizontal directions are ['longitude', 'latitude'].
 
-    This function can be used to apply several different operations in the
-    horizontal plane: mean, standard deviation, median variance, minimum and
-    maximum. The following options for `operator` are allowed:
-
-    +------------+--------------------------------------------------+
-    | `mean`     | Area weighted mean                               |
-    +------------+--------------------------------------------------+
-    | `median`   | Median (not area weighted)                       |
-    +------------+--------------------------------------------------+
-    | `std_dev`  | Standard Deviation (not area weighted)           |
-    +------------+--------------------------------------------------+
-    | `sum`      | Area weighted sum                                |
-    +------------+--------------------------------------------------+
-    | `variance` | Variance (not area weighted)                     |
-    +------------+--------------------------------------------------+
-    | `min`      | Minimum value                                    |
-    +------------+--------------------------------------------------+
-    | `max`      | Maximum value                                    |
-    +------------+--------------------------------------------------+
-    | `rms`      | Area weighted root mean square                   |
-    +------------+--------------------------------------------------+
-
-    Note that for area-weighted sums, the units of the resulting cube will be
-    multiplied by m :math:`^2`.
+    :ref:`This table <supported_stat_operator>` shows a list of supported
+    operators. All operators that support weights are by default weighted with
+    the grid cell areas. Note that for area-weighted sums, the units of the
+    resulting cube will be multiplied by m :math:`^2`.
 
     Parameters
     ----------
@@ -369,8 +371,12 @@ def area_statistics(cube: Cube, operator: str) -> Cube:
         regular 1D latitude and longitude coordinates so the cell areas can be
         computed using :func:`iris.analysis.cartography.area_weights`.
     operator:
-        The operation. Allowed options: `mean`, `median`, `min`, `max`,
-        `std_dev`, `sum`, `variance`, `rms`.
+        The operation. Used to determine the :class:`iris.analysis.Aggregator`
+        object used to calculate the statistics. Allowed options are given in
+        :ref:`this table <supported_stat_operator>`.
+    operator_kwargs:
+        Optional keyword arguments for the :class:`iris.analysis.Aggregator`
+        object defined by `operator`.
 
     Returns
     -------
@@ -385,21 +391,19 @@ def area_statistics(cube: Cube, operator: str) -> Cube:
 
     """
     original_dtype = cube.dtype
-    operation = get_iris_analysis_operation(operator)
-    coord_names = ['longitude', 'latitude']
 
-    # Calculate (weighted) statistics
-    if operator_accept_weights(operator):
+    # Get aggregator and correct kwargs
+    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+    if aggregator_accept_weights(agg) and agg_kwargs.get('weights', True):
         # If necessary, try to calculate cell_area (this only works for regular
         # grids and certain irregular grids, and fails for others)
         if not cube.cell_measures('cell_area'):
             _try_adding_calculated_cell_area(cube)
-        result = cube.collapsed(coord_names, operation, weights='cell_area')
+        agg_kwargs['weights'] = 'cell_area'
     else:
-        # Many IRIS analysis functions do not accept weights arguments.
-        # TODO: implement weighted stdev, median, var when available in iris.
-        # See iris issue: https://github.com/SciTools/iris/issues/3208
-        result = cube.collapsed(coord_names, operation)
+        agg_kwargs.pop('weights', None)
+
+    result = cube.collapsed(['latitude', 'longitude'], agg, **agg_kwargs)
 
     # Make sure to preserve dtype
     new_dtype = result.dtype

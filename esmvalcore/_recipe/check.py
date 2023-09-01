@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import logging
 import os
-import re
 import subprocess
 from pprint import pformat
 from shutil import which
@@ -15,7 +14,6 @@ import yamale
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import _get_start_end_year, _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
-from esmvalcore.preprocessor._multimodel import STATISTIC_MAPPING
 from esmvalcore.preprocessor._supplementary_vars import (
     PREPROCESSOR_SUPPLEMENTARIES,
 )
@@ -256,20 +254,6 @@ def extract_shape(settings):
                 "{}".format(', '.join(f"'{k}'".lower() for k in valid[key])))
 
 
-def _verify_statistics(statistics, step):
-    """Raise error if multi-model statistics cannot be verified."""
-    valid_names = ['std'] + list(STATISTIC_MAPPING.keys())
-    valid_patterns = [r"^(p\d{1,2})(\.\d*)?$"]
-
-    for statistic in statistics:
-        if not (statistic in valid_names
-                or re.match(r'|'.join(valid_patterns), statistic)):
-            raise RecipeError(
-                "Invalid value encountered for `statistic` in preprocessor "
-                f"{step}. Valid values are {valid_names} "
-                f"or patterns matching {valid_patterns}. Got '{statistic}'.")
-
-
 def _verify_span_value(span):
     """Raise error if span argument cannot be verified."""
     valid_names = ('overlap', 'full')
@@ -333,10 +317,6 @@ def multimodel_statistics_preproc(settings):
     if groupby:
         _verify_groupby(groupby)
 
-    statistics = settings.get('statistics', None)  # required
-    if statistics:
-        _verify_statistics(statistics, 'multi_model_statistics')
-
     keep_input_datasets = settings.get('keep_input_datasets', True)
     _verify_keep_input_datasets(keep_input_datasets)
 
@@ -356,10 +336,6 @@ def ensemble_statistics_preproc(settings):
     span = settings.get('span', 'overlap')  # optional, default: overlap
     if span:
         _verify_span_value(span)
-
-    statistics = settings.get('statistics', None)
-    if statistics:
-        _verify_statistics(statistics, 'ensemble_statistics')
 
     ignore_scalar_coords = settings.get('ignore_scalar_coords', False)
     _verify_ignore_scalar_coords(ignore_scalar_coords)
