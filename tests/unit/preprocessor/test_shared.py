@@ -1,9 +1,10 @@
 """Unit tests for `esmvalcore.preprocessor._shared`."""
 import warnings
+
 import iris.analysis
 import pytest
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.preprocessor._shared import (
     aggregator_accept_weights,
     get_iris_aggregator,
@@ -34,7 +35,7 @@ def test_get_iris_aggregator_max(operator):
     assert agg_kwargs == {}
 
 
-@pytest.mark.parametrize('kwargs', [{}, {'weights': True}])
+@pytest.mark.parametrize('kwargs', [{}, {'weights': True}, {'weights': False}])
 @pytest.mark.parametrize('operator', ['mean', 'mEaN', 'MEAN'])
 def test_get_iris_aggregator_mean(operator, kwargs):
     """Test ``get_iris_aggregator``."""
@@ -142,7 +143,6 @@ def test_get_iris_aggregator_wpercentile(operator, kwargs):
     (agg, agg_kwargs) = get_iris_aggregator(operator, kwargs)
     assert agg == iris.analysis.WPERCENTILE
     assert agg_kwargs == kwargs
-
 
 
 @pytest.mark.parametrize('operator', ['invalid', 'iNvAliD', 'INVALID'])

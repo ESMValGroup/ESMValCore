@@ -8,6 +8,7 @@ In this section, each of the preprocessor modules is described,
 roughly following the default order in which preprocessor functions are applied:
 
 * :ref:`Overview derivation`
+* :ref:`Statistical preprocessors`
 * :ref:`Variable derivation`
 * :ref:`CMOR check and dataset-specific fixes`
 * :ref:`preprocessors_using_supplementary_variables`
@@ -79,13 +80,6 @@ perform the statistical calculations.
 
 Some operators support weights for some preprocessors (see following table),
 which are used by default.
-
-.. warning::
-    The use of weights can be disabled by specifying ``operator_kwargs:
-    {weights: False}``.
-    This option need to be used with great care; we strongly recommend to
-    **not** use it!
-
 The following operators are currently fully supported; other operator might be
 supported too if proper `operator_kwargs` are specified:
 
@@ -117,6 +111,70 @@ supported too if proper `operator_kwargs` are specified:
     :ref:`preprocessors_using_supplementary_variables`);
     :ref:`axis_statistics`: weighted by corresponding coordinate bounds.
 .. [2] :class:`~iris.analysis.MEDIAN` is not lazy.
+
+Examples
+--------
+
+Calculate the global (weighted) mean:
+
+.. code-block:: yaml
+
+  preprocessors:
+    global_mean:
+      area_statistics:
+        operator: mean
+
+Calculate zonal maximum.
+
+.. code-block:: yaml
+
+  preprocessors:
+    zonal_max:
+      zonal_statistics:
+        operator: max
+
+Calculate the 95% percentile over each month separately (will result in 12 time
+steps, one for January, one for February, etc.):
+
+.. code-block:: yaml
+
+  preprocessors:
+    monthly_percentiles:
+      climate_statistics:
+        period: monthly
+        operator: percentile
+        operator_kwargs:
+          percent: 95.0
+
+Calculate multi-model median, 5%, and 95% percentiles:
+
+.. code-block:: yaml
+
+  preprocessors:
+    mm_stats:
+      multi_model_statistics:
+        span: overlap
+        statistics: [percentile, median, percentile]
+        statistics_kwargs:
+          - {percent: 5}   # keyword arguments for 1st percentile
+          - {}             # keyword arguments for median
+          - {percent: 95}  # keyword arguments for 2nd percentile
+
+Calculate the global non-weighted root mean square:
+
+.. code-block:: yaml
+
+  preprocessors:
+    global_mean:
+      area_statistics:
+        operator: rms
+        weighted: false
+
+.. warning::
+
+  The disabled of weights by specifying ``operator_kwargs: {weights: False}``
+  needs to be used with great care; we strongly recommend to
+  **not** use it!
 
 
 .. _Variable derivation:
@@ -1217,7 +1275,7 @@ and `ptop`) are always removed.
         multi_model_statistics:
           span: overlap
           statistics: [percentile, percentile]
-          operator_kwargs:
+          statistics_kwargs:
             - {percent: 5}
             - {percent: 95}
 

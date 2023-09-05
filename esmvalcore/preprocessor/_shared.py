@@ -117,8 +117,12 @@ def get_iris_aggregator(
     # Use dummy cube to check if aggregator_kwargs are valid
     cube = Cube([0], dim_coords_and_dims=[(DimCoord([0], var_name='x'), 0)])
     test_kwargs = dict(aggregator_kwargs)
-    if test_kwargs.get('weights'):
+
+    if (aggregator_accept_weights(aggregator) and
+            test_kwargs.get('weights', True)):
         test_kwargs['weights'] = np.array([1.0])
+    else:
+        test_kwargs.pop('weights', None)
     try:
         cube.collapsed('x', aggregator, **test_kwargs)
     except (ValueError, TypeError) as exc:

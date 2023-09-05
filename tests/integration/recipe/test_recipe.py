@@ -3363,3 +3363,75 @@ def test_diag_selection(tmp_path, patched_datafinder, session, diags_to_run,
     task_names = {task.name for task in recipe.tasks.flatten()}
 
     assert tasks_run == task_names
+
+
+def test_mm_stats_invalid_arg(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test:
+            multi_model_statistics:
+              span: overlap
+              statistics: [mean]
+              invalid_argument: 1
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              chl_default:
+                short_name: chl
+                mip: Oyr
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - {project: CMIP5, dataset: CanESM2, exp: historical,
+                     ensemble: r1i1p1}
+            scripts: null
+        """)
+    with pytest.raises(ValueError):
+        get_recipe(tmp_path, content, session)
+
+
+def test_mm_stats_missing_arg(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test:
+            multi_model_statistics:
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              chl_default:
+                short_name: chl
+                mip: Oyr
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - {project: CMIP5, dataset: CanESM2, exp: historical,
+                     ensemble: r1i1p1}
+            scripts: null
+        """)
+    with pytest.raises(ValueError):
+        get_recipe(tmp_path, content, session)
+
+
+def test_area_statistics_invalid_args(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test:
+            area_statistics:
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              chl_default:
+                short_name: chl
+                mip: Oyr
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - {project: CMIP5, dataset: CanESM2, exp: historical,
+                     ensemble: r1i1p1}
+            scripts: null
+        """)
+    with pytest.raises(ValueError):
+        get_recipe(tmp_path, content, session)

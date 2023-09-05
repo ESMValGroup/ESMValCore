@@ -14,6 +14,7 @@ import yamale
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import _get_start_end_year, _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
+from esmvalcore.preprocessor._shared import get_iris_aggregator
 from esmvalcore.preprocessor._supplementary_vars import (
     PREPROCESSOR_SUPPLEMENTARIES,
 )
@@ -289,26 +290,8 @@ def _verify_ignore_scalar_coords(ignore_scalar_coords):
             f"{ignore_scalar_coords}.")
 
 
-def _verify_arguments(given, expected):
-    """Raise error if arguments cannot be verified."""
-    for key in given:
-        if key not in expected:
-            raise RecipeError(
-                f"Unexpected keyword argument encountered: {key}. Valid "
-                f"keywords are: {expected}.")
-
-
 def multimodel_statistics_preproc(settings):
     """Check that the multi-model settings are valid."""
-    valid_keys = [
-        'groupby',
-        'ignore_scalar_coords',
-        'keep_input_datasets',
-        'span',
-        'statistics',
-    ]
-    _verify_arguments(settings.keys(), valid_keys)
-
     span = settings.get('span', None)  # optional, default: overlap
     if span:
         _verify_span_value(span)
@@ -326,13 +309,6 @@ def multimodel_statistics_preproc(settings):
 
 def ensemble_statistics_preproc(settings):
     """Check that the ensemble settings are valid."""
-    valid_keys = [
-        'ignore_scalar_coords',
-        'span',
-        'statistics',
-    ]
-    _verify_arguments(settings.keys(), valid_keys)
-
     span = settings.get('span', 'overlap')  # optional, default: overlap
     if span:
         _verify_span_value(span)
@@ -432,3 +408,50 @@ def reference_for_bias_preproc(products):
             f"{len(reference_products):d}{ref_products_str}Please also "
             f"ensure that the reference dataset is not excluded with the "
             f"'exclude' option")
+
+
+def statistics_preprocessors(settings: dict) -> None:
+    """Check options of statistics preprocessors."""
+    mm_stats = (
+        'multi_model_statistics',
+        'ensemble_model_statistics',
+    )
+    for (step, step_settings) in settings.items():
+
+        # For multi-model statistics, we need to check each entry of statistics
+        # and statistcs_kwargs
+        if step in mm_stats:
+            statistics = step_settings.get('statistcs', [])
+            statistics_kwargs = step_settings.get(
+                'statistcs_kwargs', [None] * len(statistics)
+            )
+            if len(statistics) != len(statistics_kwargs):
+                raise RecipeError(
+                    f"Expected identical number of `statistics` and "
+                    f"`statistics_kwargs` for {step}, got {len(statistics):d} "
+                    f"and {len(statistics_kwargs):d}, respectively"
+                )
+            for (stat, kwargs) in zip(statistics, statistics_kwargs):
+                try:
+                    get_iris_aggregator(stat, kwargs)
+                except ValueError as exc:
+                    raise RecipeError(
+                        f"Invalid options for {step}: {exc}"
+                    )
+
+        # For other statistics, we can simply check operator and
+        # operator_kwargs
+        elif '_statistics' in step:
+            if 'operator' not in step_settings:
+                raise RecipeError(
+                    f"Missing required argument 'operator' for preprocessor "
+                    f"function {step}"
+                )
+            operator = step_settings.get['operator']
+            operator_kwargs = step_settings.get('operator_kwargs')
+            try:
+                get_iris_aggregator(operator, operator_kwargs)
+            except ValueError as exc:
+                raise RecipeError(
+                    f"Invalid options for {step}: {exc}"
+                )

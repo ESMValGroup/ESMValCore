@@ -305,23 +305,6 @@ INVALID_MM_SETTINGS = {
     }
 
 
-def test_invalid_multi_model_settings():
-    valid_keys = [
-        'groupby',
-        'ignore_scalar_coords',
-        'keep_input_datasets',
-        'span',
-        'statistics',
-    ]
-    with pytest.raises(RecipeError) as rec_err:
-        check._verify_arguments(INVALID_MM_SETTINGS, valid_keys)
-    assert str(rec_err.value) == (
-        "Unexpected keyword argument encountered: wrong_parametre. "
-        "Valid keywords are: "
-        "['groupby', 'ignore_scalar_coords', 'keep_input_datasets', "
-        "'span', 'statistics'].")
-
-
 def test_invalid_multi_model_span():
     with pytest.raises(RecipeError) as rec_err:
         check._verify_span_value(INVALID_MM_SETTINGS['span'])
