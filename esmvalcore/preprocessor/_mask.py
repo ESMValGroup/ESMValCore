@@ -3,6 +3,31 @@
 Module that performs a number of masking operations that include:
 masking with ancillary variables, masking with Natural Earth shapefiles
 (land or ocean), masking on thresholds, missing values masking.
+
+
+
+
+https://docs.dask.org/en/stable/generated/dask.array.ma.getmaskarray.html 
+10:08 
+
+
+Schlund, Manuel 
+
+ 
+
+https://scitools-iris.readthedocs.io/en/stable/generated/api/iris.util.html#iris.util.broadcast_to_shape 
+10:26 
+
+
+Schlund, Manuel 
+
+ 
+
+iris.util.broadcast_to_shape(maskmask = da.array(mask)
+iris.util.broadcast_to_shape(mask, cube.shape, cube.coord_dims('latitude') + cube.coord_dims('longitude'))
+cube.coord_dims('latitude') = (1,)
+(1,) + (2,) =  (1, 2)
+
 """
 
 import logging
@@ -278,18 +303,23 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
     """
     # Create the region
     regions = _get_geometries_from_shp(shapefilename)
+    print(regions)
     if region_indices:
         regions = [regions[idx] for idx in region_indices]
+        print(region_indices)
 
     # Create a mask for the data (np->da)
-    mask = da.zeros(cube.shape, dtype=bool)
+    #mask = np.zeros(cube.shape, dtype=bool)
 
     # Create a set of x,y points from the cube
     # 1D regular grids
     if cube.coord('longitude').points.ndim < 2:
+        print(cube.coord('longitude').points.ndim)
         x_p, y_p = np.meshgrid(
             cube.coord(axis='X').points,
             cube.coord(axis='Y').points)
+        print(x_p.shape)
+        print(y_p.shape)
     # 2D irregular grids; spit an error for now
     else:
         msg = ("No fx-files found (sftlf or sftof)!"
@@ -299,26 +329,46 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
 
     # Wrap around longitude coordinate to match data
     x_p_180 = np.where(x_p >= 180., x_p - 360., x_p)
+    print(*x_p_180)
     # the NE mask has no points at x = -180 and y = +/-90
     # so we will fool it and apply the mask at (-179, -89, 89) instead
     x_p_180 = np.where(x_p_180 == -180., x_p_180 + 1., x_p_180)
+    #print(*x_p_180)
     y_p_0 = np.where(y_p == -90., y_p + 1., y_p)
     y_p_90 = np.where(y_p_0 == 90., y_p_0 - 1., y_p_0)
 
+    mask = None
     for region in regions:
         # Build mask with vectorization
-        if cube.ndim == 2:
+     #   if cube.ndim == 2:
+        if mask is None:
             mask = shp_vect.contains(region, x_p_180, y_p_90)
-        elif cube.ndim == 3:
-            mask[:] = shp_vect.contains(region, x_p_180, y_p_90)
-        elif cube.ndim == 4:
-            mask[:, :] = shp_vect.contains(region, x_p_180, y_p_90)
-
-        # Then apply the mask
-        if isinstance(cube.data, np.ma.MaskedArray):
-            cube.data.mask |= mask
+            #cube.coord_dims('latitude') = (1,)
         else:
-            cube.data = np.ma.masked_array(cube.data, mask)
+            mask |= shp_vect.contains(region, x_p_180, y_p_90)
+            
+            
+    mask = da.array(mask) #.compute()
+    print(*mask) 
+    iris.util.broadcast_to_shape(mask, cube.shape, cube.coord_dims('latitude') + cube.coord_dims('longitude'))
+    print(cube.shape)
+          
+       # elif cube.ndim == 3:
+        #    mask[:] = shp_vect.contains(region, x_p_180, y_p_90)
+        #elif cube.ndim == 4:
+         #   mask[:, :] = shp_vect.contains(region, x_p_180, y_p_90)
+
+        # Then apply the mask (mit getmaskarray)
+    old_mask = da.ma.getmaskarray(cube.core_data())
+    mask = old_mask | mask
+    cube.data = da.ma.masked_array(cube.core_data(), mask=mask) 
+    """
+    if isinstance(cube.core_data(), np.ma.MaskedArray):
+        cube.data.mask |= mask
+        #print(cube.data.mask)
+    else:
+        cube.data = np.ma.masked_array(cube.data, mask)
+    """
 
     return cube
 
