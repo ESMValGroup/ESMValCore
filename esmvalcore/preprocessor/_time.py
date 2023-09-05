@@ -3,20 +3,23 @@
 Allows for selecting data subsets using certain time bounds;
 constructing seasonal and area averages.
 """
+from __future__ import annotations
+
 import copy
 import datetime
 import logging
-from typing import Union
+from typing import Iterable, Optional
 from warnings import filterwarnings
 
 import dask.array as da
 import iris
 import iris.coord_categorisation
-import iris.cube
 import iris.exceptions
 import iris.util
 import isodate
 import numpy as np
+from iris.coords import AuxCoord
+from iris.cube import Cube, CubeList
 from iris.time import PartialDateTime
 
 from esmvalcore.cmor.check import _get_next_month, _get_time_bounds
@@ -44,8 +47,15 @@ for _coord in (
     )
 
 
-def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
-                 end_day):
+def extract_time(
+    cube: Cube,
+    start_year: int,
+    start_month: int,
+    start_day: int,
+    end_year: int,
+    end_month: int,
+    end_day: int,
+) -> Cube:
     """Extract a time range from a cube.
 
     Given a time range passed in as a series of years, months and days, it
@@ -54,20 +64,20 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-    start_year: int
-        start year
-    start_month: int
-        start month
-    start_day: int
-        start day
-    end_year: int
-        end year
-    end_month: int
-        end month
-    end_day: int
-        end day
+    cube:
+        Input cube.
+    start_year:
+        Start year.
+    start_month:
+        Start month.
+    start_day:
+        Start day.
+    end_year:
+        End year.
+    end_month:
+        End month.
+    end_day:
+        End day.
 
     Returns
     -------
@@ -77,7 +87,8 @@ def extract_time(cube, start_year, start_month, start_day, end_year, end_month,
     Raises
     ------
     ValueError
-        if time ranges are outside the cube time limits
+        Time ranges are outside the cube time limits.
+
     """
     t_1 = PartialDateTime(year=int(start_year),
                           month=int(start_month),
@@ -136,10 +147,7 @@ def _duration_to_date(duration, reference, sign):
     return date
 
 
-def _select_timeslice(
-    cube: iris.cube.Cube,
-    select: np.ndarray,
-) -> Union[iris.cube.Cube, None]:
+def _select_timeslice(cube: Cube, select: np.ndarray) -> Cube | None:
     """Slice a cube along its time axis."""
     if select.any():
         coord = cube.coord('time')
@@ -157,10 +165,10 @@ def _select_timeslice(
 
 
 def _extract_datetime(
-    cube: iris.cube.Cube,
+    cube: Cube,
     start_datetime: PartialDateTime,
     end_datetime: PartialDateTime,
-) -> iris.cube.Cube:
+) -> Cube:
     """Extract a time range from a cube.
 
     Given a time range passed in as a datetime.datetime object, it
@@ -169,12 +177,12 @@ def _extract_datetime(
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-    start_datetime: PartialDateTime
-        start datetime
-    end_datetime: PartialDateTime
-        end datetime
+    cube:
+        Input cube.
+    start_datetime:
+        Start datetime
+    end_datetime:
+        End datetime
 
     Returns
     -------
@@ -221,14 +229,14 @@ def _extract_datetime(
     return cube_slice
 
 
-def clip_timerange(cube, timerange):
+def clip_timerange(cube: Cube, timerange: str) -> Cube:
     """Extract time range with a resolution up to seconds.
 
     Parameters
     ----------
-    cube : iris.cube.Cube
+    cube:
         Input cube.
-    timerange : str
+    timerange: str
         Time range in ISO 8601 format.
 
     Returns
@@ -240,12 +248,10 @@ def clip_timerange(cube, timerange):
     ------
     ValueError
         Time ranges are outside the cube's time limits.
-    """
-    start_date = timerange.split('/')[0]
-    start_date = _parse_start_date(start_date)
 
-    end_date = timerange.split('/')[1]
-    end_date = _parse_end_date(end_date)
+    """
+    start_date = _parse_start_date(timerange.split('/')[0])
+    end_date = _parse_end_date(timerange.split('/')[1])
 
     if isinstance(start_date, isodate.duration.Duration):
         start_date = _duration_to_date(start_date, end_date, sign=-1)
@@ -280,14 +286,14 @@ def clip_timerange(cube, timerange):
     return _extract_datetime(cube, t_1, t_2)
 
 
-def extract_season(cube, season):
+def extract_season(cube: Cube, season: str) -> Cube:
     """Slice cube to get only the data belonging to a specific season.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         Original data
-    season: str
+    season:
         Season to extract. Available: DJF, MAM, JJA, SON
         and all sequentially correct combinations: e.g. JJAS
 
@@ -299,7 +305,8 @@ def extract_season(cube, season):
     Raises
     ------
     ValueError
-        if requested season is not present in the cube
+        Requested season is not present in the cube.
+
     """
     season = season.upper()
 
@@ -334,25 +341,26 @@ def extract_season(cube, season):
     return result
 
 
-def extract_month(cube, month):
+def extract_month(cube: Cube, month: int) -> Cube:
     """Slice cube to get only the data belonging to a specific month.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         Original data
-    month: int
-        Month to extract as a number from 1 to 12
+    month:
+        Month to extract as a number from 1 to 12.
 
     Returns
     -------
     iris.cube.Cube
-        data cube for specified month.
+        Cube for specified month.
 
     Raises
     ------
     ValueError
-        if requested month is not present in the cube
+        Requested month is not present in the cube.
+
     """
     if month not in range(1, 13):
         raise ValueError('Please provide a month number between 1 and 12.')
@@ -366,18 +374,19 @@ def extract_month(cube, month):
     return result
 
 
-def get_time_weights(cube):
+def get_time_weights(cube: Cube) -> np.ndarray | da.core.Array:
     """Compute the weighting of the time axis.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
+    cube:
+        Input cube.
 
     Returns
     -------
-    numpy.array
+    np.ndarray or da.core.Array
         Array of time weights for averaging.
+
     """
     time = cube.coord('time')
     coord_dims = cube.coord_dims('time')
@@ -387,8 +396,8 @@ def get_time_weights(cube):
     if len(coord_dims) > 1:
         raise ValueError(
             f"Weighted statistical operations are not supported for "
-            f"{len(coord_dims):d}D time coordinates, expected "
-            f"0D or 1D")
+            f"{len(coord_dims):d}D time coordinates, expected 0D or 1D"
+        )
 
     # Extract 1D time weights (= lengths of time intervals)
     time_weights = time.core_bounds()[:, 1] - time.core_bounds()[:, 0]
@@ -425,28 +434,27 @@ def _aggregate_time_fx(result_cube, source_cube):
                                                    ancillary_dims)
 
 
-def hourly_statistics(cube, hours, operator='mean'):
+def hourly_statistics(cube: Cube, hours: int, operator: str = 'mean') -> Cube:
     """Compute hourly statistics.
 
     Chunks time in x hours periods and computes statistics over them.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-
-    hours: int
-        Number of hours per period. Must be a divisor of 24
-        (1, 2, 3, 4, 6, 8, 12)
-
-    operator: str, optional
-        Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min', 'max'
+    cube:
+        Input cube.
+    hours:
+        Number of hours per period. Must be a divisor of 24, i.e., (1, 2, 3, 4,
+        6, 8, 12).
+    operator: optional
+        The operation. Allowed options: `mean`, `median`, `min`, `max`,
+        `std_dev`, `sum`, `variance`, `rms`.
 
     Returns
     -------
     iris.cube.Cube
-        Hourly statistics cube
+        Hourly statistics cube.
+
     """
     if not cube.coords('hour_group'):
         iris.coord_categorisation.add_categorised_coord(
@@ -471,25 +479,24 @@ def hourly_statistics(cube, hours, operator='mean'):
     return result
 
 
-def daily_statistics(cube, operator='mean'):
+def daily_statistics(cube: Cube, operator: str = 'mean') -> Cube:
     """Compute daily statistics.
 
     Chunks time in daily periods and computes statistics over them;
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-
-    operator: str, optional
-        Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
-        'max', 'rms'
+    cube:
+        Input cube.
+    operator: optional
+        The operation. Allowed options: `mean`, `median`, `min`, `max`,
+        `std_dev`, `sum`, `variance`, `rms`.
 
     Returns
     -------
     iris.cube.Cube
-        Daily statistics cube
+        Daily statistics cube.
+
     """
     if not cube.coords('day_of_year'):
         iris.coord_categorisation.add_day_of_year(cube, 'time')
@@ -504,25 +511,24 @@ def daily_statistics(cube, operator='mean'):
     return result
 
 
-def monthly_statistics(cube, operator='mean'):
+def monthly_statistics(cube: Cube, operator: str = 'mean') -> Cube:
     """Compute monthly statistics.
 
     Chunks time in monthly periods and computes statistics over them;
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-
-    operator: str, optional
-        Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
-        'max', 'rms'
+    cube:
+        Input cube.
+    operator: optional
+        The operation. Allowed options: `mean`, `median`, `min`, `max`,
+        `std_dev`, `sum`, `variance`, `rms`.
 
     Returns
     -------
     iris.cube.Cube
-        Monthly statistics cube
+        Monthly statistics cube.
+
     """
     if not cube.coords('month_number'):
         iris.coord_categorisation.add_month_number(cube, 'time')
@@ -535,24 +541,23 @@ def monthly_statistics(cube, operator='mean'):
     return result
 
 
-def seasonal_statistics(cube,
-                        operator='mean',
-                        seasons=('DJF', 'MAM', 'JJA', 'SON')):
+def seasonal_statistics(
+    cube: Cube,
+    operator: str = 'mean',
+    seasons: Iterable[str] = ('DJF', 'MAM', 'JJA', 'SON'),
+) -> Cube:
     """Compute seasonal statistics.
 
     Chunks time seasons and computes statistics over them.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-
-    operator: str, optional
-        Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
-        'max', 'rms'
-
-    seasons: list or tuple of str, optional
+    cube:
+        Input cube.
+    operator: optional
+        The operation. Allowed options: `mean`, `median`, `min`, `max`,
+        `std_dev`, `sum`, `variance`, `rms`.
+    seasons: optional
         Seasons to build. Available: ('DJF', 'MAM', 'JJA', SON') (default)
         and all sequentially correct combinations holding every month
         of a year: e.g. ('JJAS','ONDJFMAM'), or less in case of prior season
@@ -561,7 +566,8 @@ def seasonal_statistics(cube,
     Returns
     -------
     iris.cube.Cube
-        Seasonal statistic cube
+        Seasonal statistic cube.
+
     """
     seasons = tuple(sea.upper() for sea in seasons)
 
@@ -595,18 +601,19 @@ def seasonal_statistics(cube,
     # Ranging on [29, 31] days makes this calendar-independent
     # the only season this could not work is 'F' but this raises an
     # ValueError
-    def spans_full_season(cube):
+    def spans_full_season(cube: Cube) -> list[bool]:
         """Check for all month present in the season.
 
         Parameters
         ----------
-        cube: iris.cube.Cube
-            input cube.
+        cube:
+            Input cube.
 
         Returns
         -------
-        bool
-            truth statement if time bounds are within (month*29, month*31)
+        list[bool]
+            Truth statements if time bounds are within (month*29, month*31)
+
         """
         time = cube.coord('time')
         num_days = [(tt.bounds[0, 1] - tt.bounds[0, 0]) for tt in time]
@@ -622,7 +629,7 @@ def seasonal_statistics(cube,
     return result
 
 
-def annual_statistics(cube, operator='mean'):
+def annual_statistics(cube: Cube, operator: str = 'mean') -> Cube:
     """Compute annual statistics.
 
     Note that this function does not weight the annual mean if
@@ -631,18 +638,17 @@ def annual_statistics(cube, operator='mean'):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-
-    operator: str, optional
-        Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
-        'max', 'rms'
+    cube:
+        Input cube.
+    operator: optional
+        The operation. Allowed options: `mean`, `median`, `min`, `max`,
+        `std_dev`, `sum`, `variance`, `rms`.
 
     Returns
     -------
     iris.cube.Cube
-        Annual statistics cube
+        Annual statistics cube.
+
     """
     # TODO: Add weighting in time dimension. See iris issue 3290
     # https://github.com/SciTools/iris/issues/3290
@@ -656,7 +662,7 @@ def annual_statistics(cube, operator='mean'):
     return result
 
 
-def decadal_statistics(cube, operator='mean'):
+def decadal_statistics(cube: Cube, operator: str = 'mean') -> Cube:
     """Compute decadal statistics.
 
     Note that this function does not weight the decadal mean if
@@ -665,18 +671,17 @@ def decadal_statistics(cube, operator='mean'):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-
+    cube:
+        Input cube.
     operator: str, optional
-        Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
-        'max', 'rms'
+        The operation. Allowed options: `mean`, `median`, `min`, `max`,
+        `std_dev`, `sum`, `variance`, `rms`.
 
     Returns
     -------
     iris.cube.Cube
-        Decadal statistics cube
+        Decadal statistics cube.
+
     """
     # TODO: Add weighting in time dimension. See iris issue 3290
     # https://github.com/SciTools/iris/issues/3290
@@ -697,31 +702,36 @@ def decadal_statistics(cube, operator='mean'):
     return result
 
 
-def climate_statistics(cube,
-                       operator='mean',
-                       period='full',
-                       seasons=('DJF', 'MAM', 'JJA', 'SON')):
+def climate_statistics(
+    cube: Cube,
+    operator: str = 'mean',
+    period: str = 'full',
+    seasons: Iterable[str] = ('DJF', 'MAM', 'JJA', 'SON'),
+) -> Cube:
     """Compute climate statistics with the specified granularity.
 
     Computes statistics for the whole dataset. It is possible to get them for
     the full period or with the data grouped by hour, day, month or season.
 
+    Note
+    ----
+    The `mean`, `sum` and `rms` operations over the `full` period are weighted
+    by the time coordinate, i.e., the length of the time intervals. For `sum`,
+    the units of the resulting cube will be multiplied by corresponding time
+    units (e.g., days).
+
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         Input cube.
-
-    operator: str, optional
-        Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
-        'max', 'rms'.
-
-    period: str, optional
-        Period to compute the statistic over.
-        Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
-        'mon', 'daily', 'day', 'hourly', 'hour', 'hr'.
-
-    seasons: list or tuple of str, optional
+    operator: optional
+        The operation. Allowed options: `mean`, `median`, `min`, `max`,
+        `std_dev`, `sum`, `variance`, `rms`.
+    period: optional
+        Period to compute the statistic over. Available periods: `full`,
+        `season`, `seasonal`, `monthly`, `month`, `mon`, `daily`, `day`,
+        `hourly`, `hour`, `hr`.
+    seasons:
         Seasons to use if needed. Defaults to ('DJF', 'MAM', 'JJA', 'SON').
 
     Returns
@@ -733,19 +743,25 @@ def climate_statistics(cube,
     original_dtype = cube.dtype
     period = period.lower()
 
+    # Use Cube.collapsed when full period is requested
     if period in ('full', ):
         operator_method = get_iris_analysis_operation(operator)
         if operator_accept_weights(operator):
-            time_weights = get_time_weights(cube)
-            if time_weights.min() == time_weights.max():
-                # No weighting needed.
-                clim_cube = cube.collapsed('time', operator_method)
-            else:
-                clim_cube = cube.collapsed('time',
-                                           operator_method,
-                                           weights=time_weights)
+            time_weights_coord = AuxCoord(
+                get_time_weights(cube),
+                long_name='time_weights',
+                units=cube.coord('time').units,
+            )
+            cube.add_aux_coord(time_weights_coord, cube.coord_dims('time'))
+            clim_cube = cube.collapsed(
+                'time',
+                operator_method,
+                weights=time_weights_coord,
+            )
         else:
             clim_cube = cube.collapsed('time', operator_method)
+
+    # Use Cube.aggregated_by for other periods
     else:
         clim_coord = _get_period_coord(cube, period, seasons)
         operator = get_iris_analysis_operation(operator)
@@ -756,24 +772,28 @@ def climate_statistics(cube,
             iris.util.promote_aux_coord_to_dim_coord(clim_cube,
                                                      clim_coord.name())
         else:
-            clim_cube = iris.cube.CubeList(
+            clim_cube = CubeList(
                 clim_cube.slices_over(clim_coord.name())).merge_cube()
         cube.remove_coord(clim_coord)
 
+    # Make sure that original dtype is preserved
     new_dtype = clim_cube.dtype
     if original_dtype != new_dtype:
         logger.debug(
             "climate_statistics changed dtype from "
             "%s to %s, changing back", original_dtype, new_dtype)
         clim_cube.data = clim_cube.core_data().astype(original_dtype)
+
     return clim_cube
 
 
-def anomalies(cube,
-              period,
-              reference=None,
-              standardize=False,
-              seasons=('DJF', 'MAM', 'JJA', 'SON')):
+def anomalies(
+    cube: Cube,
+    period: str,
+    reference: Optional[dict] = None,
+    standardize: bool = False,
+    seasons: Iterable[str] = ('DJF', 'MAM', 'JJA', 'SON'),
+) -> Cube:
     """Compute anomalies using a mean with the specified granularity.
 
     Computes anomalies based on hourly, daily, monthly, seasonal or yearly
@@ -781,23 +801,19 @@ def anomalies(cube,
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         Input cube.
-
-    period: str
-        Period to compute the statistic over.
-        Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
-        'mon', 'daily', 'day', 'hourly', 'hour', 'hr'.
-
-    reference: list int, optional, default: None
-        Period of time to use a reference, as needed for the 'extract_time'
-        preprocessor function. If ``None``, all available data is used as a
-        reference.
-
-    standardize: bool, optional
+    period:
+        Period to compute the statistic over. Available periods: `full`,
+        `season`, `seasonal`, `monthly`, `month`, `mon`, `daily`, `day`,
+        `hourly`, `hour`, `hr`.
+    reference: optional
+        Period of time to use a reference, as needed for the
+        :func:`~esmvalcore.preprocessor.extract_time` preprocessor function.
+        If ``None``, all available data is used as a reference.
+    standardize: optional
         If ``True`` standardized anomalies are calculated.
-
-    seasons: list or tuple of str, optional
+    seasons: optional
         Seasons to use if needed. Defaults to ('DJF', 'MAM', 'JJA', 'SON').
 
     Returns
@@ -891,7 +907,7 @@ def _get_period_coord(cube, period, seasons):
     raise ValueError(f"Period '{period}' not supported")
 
 
-def regrid_time(cube, frequency):
+def regrid_time(cube: Cube, frequency: str) -> Cube:
     """Align time axis for cubes so they can be subtracted.
 
     Operations on time units, time points and auxiliary
@@ -903,15 +919,16 @@ def regrid_time(cube, frequency):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-    frequency: str
-        data frequency: mon, day, 1hr, 3hr or 6hr
+    cube:
+        Input cube.
+    frequency:
+        Data frequency: `mon`, `day`, `1hr`, `3hr` or `6hr`.
 
     Returns
     -------
     iris.cube.Cube
-        cube with converted time axis and units.
+        Cube with converted time axis and units.
+
     """
     # standardize time points
     coord = cube.coord('time')
@@ -1000,11 +1017,13 @@ def low_pass_weights(window, cutoff):
     return weights[1:-1]
 
 
-def timeseries_filter(cube,
-                      window,
-                      span,
-                      filter_type='lowpass',
-                      filter_stats='sum'):
+def timeseries_filter(
+    cube: Cube,
+    window: int,
+    span: int,
+    filter_type: str = 'lowpass',
+    filter_stats: str = 'sum',
+) -> Cube:
     """Apply a timeseries filter.
 
     Method borrowed from `iris example
@@ -1018,33 +1037,34 @@ def timeseries_filter(cube,
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-    window: int
+    cube:
+        Input cube.
+    window:
         The length of the filter window (in units of cube time coordinate).
-    span: int
+    span:
         Number of months/days (depending on data frequency) on which
         weights should be computed e.g. 2-yearly: span = 24 (2 x 12 months).
         Span should have same units as cube time coordinate.
-    filter_type: str, optional
+    filter_type: optional
         Type of filter to be applied; default 'lowpass'.
         Available types: 'lowpass'.
-    filter_stats: str, optional
-        Type of statistic to aggregate on the rolling window; default 'sum'.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
-        'max', 'rms'
+    filter_stats: optional
+        Type of statistic to aggregate on the rolling window; default: `sum`.
+        Allowed options: `mean`, `median`, `min`, `max`, `std_dev`, `sum`,
+        `variance`, `rms`.
 
     Returns
     -------
     iris.cube.Cube
-        cube time-filtered using 'rolling_window'.
+        Cube time-filtered using 'rolling_window'.
 
     Raises
     ------
     iris.exceptions.CoordinateNotFoundError:
         Cube does not have time coordinate.
     NotImplementedError:
-        If filter_type is not implemented.
+        `filter_type` is not implemented.
+
     """
     try:
         cube.coord('time')
@@ -1059,6 +1079,8 @@ def timeseries_filter(cube,
     ]
     if filter_type in supported_filters:
         if filter_type == 'lowpass':
+            # These weights sum to one and are dimensionless (-> we do NOT need
+            # to consider units for sums)
             wgts = low_pass_weights(window, 1. / span)
     else:
         raise NotImplementedError(
@@ -1075,7 +1097,7 @@ def timeseries_filter(cube,
     return cube
 
 
-def resample_hours(cube, interval, offset=0):
+def resample_hours(cube: Cube, interval: int, offset: int = 0) -> Cube:
     """Convert x-hourly data to y-hourly by eliminating extra timesteps.
 
     Convert x-hourly data to y-hourly (y > x) by eliminating the extra
@@ -1094,11 +1116,11 @@ def resample_hours(cube, interval, offset=0):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         Input cube.
-    interval: int
+    interval:
         The period (hours) of the desired data.
-    offset: int, optional
+    offset: optional
         The firs hour (hours) of the desired data.
 
     Returns
@@ -1110,6 +1132,7 @@ def resample_hours(cube, interval, offset=0):
     ------
     ValueError:
         The specified frequency is not a divisor of 24.
+
     """
     allowed_intervals = (1, 2, 3, 4, 6, 12)
     if interval not in allowed_intervals:
@@ -1136,7 +1159,12 @@ def resample_hours(cube, interval, offset=0):
     return cube
 
 
-def resample_time(cube, month=None, day=None, hour=None):
+def resample_time(
+    cube: Cube,
+    month: Optional[int] = None,
+    day: Optional[int] = None,
+    hour: Optional[int] = None,
+) -> Cube:
     """Change frequency of data by resampling it.
 
     Converts data from one frequency to another by extracting the timesteps
@@ -1160,19 +1188,20 @@ def resample_time(cube, month=None, day=None, hour=None):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         Input cube.
-    month: int, optional
-        Month to extract
-    day: int, optional
-        Day to extract
-    hour: int, optional
-        Hour to extract
+    month: optional
+        Month to extract.
+    day: optional
+        Day to extract.
+    hour: optional
+        Hour to extract.
 
     Returns
     -------
     iris.cube.Cube
         Cube with the new frequency.
+
     """
     time = cube.coord('time')
     dates = time.units.num2date(time.points)

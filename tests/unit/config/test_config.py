@@ -100,7 +100,7 @@ def test_get_extra_facets_cmip3():
     })
     extra_facets = get_extra_facets(dataset, extra_facets_dir=tuple())
 
-    assert extra_facets == {'institute': ['CNRM', 'INM']}
+    assert extra_facets == {'institute': ['CNRM', 'INM', 'CNRM_CERFACS']}
 
 
 def test_get_extra_facets_cmip5():
