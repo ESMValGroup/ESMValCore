@@ -391,11 +391,9 @@ def area_statistics(
 
     # Get aggregator and correct kwargs (incl. weights)
     (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
-    print(cube)
     agg_kwargs = update_weights_kwargs(
         agg, agg_kwargs, 'cell_area', cube, _try_adding_calculated_cell_area
     )
-    print(cube)
 
     result = cube.collapsed(['latitude', 'longitude'], agg, **agg_kwargs)
 
