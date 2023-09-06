@@ -6,7 +6,6 @@ masking with ancillary variables, masking with Natural Earth shapefiles
 
 
 
-
 https://docs.dask.org/en/stable/generated/dask.array.ma.getmaskarray.html 
 10:08 
 
@@ -48,7 +47,7 @@ logger = logging.getLogger(__name__)
 
 def _get_fx_mask(fx_data, fx_option, mask_type):
     """Build a percentage-thresholded mask from an fx file."""
-    inmask = np.zeros_like(fx_data, bool)
+    inmask = da.zeros_like(fx_data, bool)
     if mask_type == 'sftlf':
         if fx_option == 'land':
             # Mask land out
@@ -81,6 +80,7 @@ def _apply_fx_mask(fx_mask, var_data):
         fx_mask |= var_data.mask
 
     # Build the new masked data
+    # var_data = np.ma.array(var_data, mask=fx_mask, fill_value=1e+20)
     var_data = np.ma.array(var_data, mask=fx_mask, fill_value=1e+20)
 
     return var_data
@@ -129,16 +129,23 @@ def mask_landsea(cube, mask_out):
     """
     # Dict to store the Natural Earth masks
     cwd = os.path.dirname(__file__)
+    print("cwd")
+    print(cwd)
+    
     # ne_10m_land is fast; ne_10m_ocean is very slow
     shapefiles = {
         'land': os.path.join(cwd, 'ne_masks/ne_10m_land.shp'),
         'sea': os.path.join(cwd, 'ne_masks/ne_50m_ocean.shp')
     }
-
+    print("shapefiles")
+    print(shapefiles)
+    
     # preserve importance order: try stflf first then sftof
     fx_cube = None
     try:
         fx_cube = cube.ancillary_variable('land_area_fraction')
+        print("fx_cube")
+        print(fx_cube)
     except iris.exceptions.AncillaryVariableNotFoundError:
         try:
             fx_cube = cube.ancillary_variable('sea_area_fraction')
@@ -148,9 +155,17 @@ def mask_landsea(cube, mask_out):
 
     if fx_cube:
         fx_cube_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
+        print("fx_cube_data done ... ")
+        print(fx_cube_data)
         landsea_mask = _get_fx_mask(fx_cube_data, mask_out,
                                     fx_cube.var_name)
+        print("landsea_mask")
+        print(landsea_mask)
+
         cube.data = _apply_fx_mask(landsea_mask, cube.data)
+        print("cube.data")
+        print(cube.data)
+        
         logger.debug("Applying land-sea mask: %s", fx_cube.var_name)
     else:
         if cube.coord('longitude').points.ndim < 2:
