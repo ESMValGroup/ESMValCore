@@ -16,7 +16,7 @@ from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 
 from ._area import compute_area_weights
-from ._shared import aggregator_accept_weights, get_iris_aggregator
+from ._shared import get_iris_aggregator, update_weights_kwargs
 from ._supplementary_vars import register_supplementaries
 
 logger = logging.getLogger(__name__)
@@ -153,6 +153,9 @@ def calculate_volume(cube: Cube) -> da.core.Array:
 
 def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
     """Try to add calculated cell measure 'ocean_volume' to cube (in-place)."""
+    if cube.cell_measures('ocean_volume'):
+        return
+
     logger.debug(
         "Found no cell measure 'ocean_volume' in cube %s. Check availability "
         "of supplementary variables",
@@ -213,14 +216,13 @@ def volume_statistics(
         raise ValueError(f"Volume operator {operator} not recognised.")
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
-    if aggregator_accept_weights(agg) and agg_kwargs.get('weights', True):
-        # If necessary, try to calculate ocean_volume (this only works for
-        # regular grids and certain irregular grids, and fails for others)
-        if not cube.cell_measures('ocean_volume'):
-            _try_adding_calculated_ocean_volume(cube)
-        agg_kwargs['weights'] = 'ocean_volume'
-    else:
-        agg_kwargs.pop('weights', None)
+    agg_kwargs = update_weights_kwargs(
+        agg,
+        agg_kwargs,
+        'ocean_volume',
+        cube,
+        _try_adding_calculated_ocean_volume,
+    )
 
     result = cube.collapsed(
         [cube.coord(axis='Z'), cube.coord(axis='Y'), cube.coord(axis='X')],
@@ -289,21 +291,27 @@ def axis_statistics(
     # For weighted operations, create a dummy weights coordinate using the
     # bounds of the original coordinate (this handles units properly, e.g., for
     # sums)
-    if aggregator_accept_weights(agg) and agg_kwargs.get('weights', True):
-        weights_coord = AuxCoord(
-            np.abs(coord.core_bounds()[..., 1] - coord.core_bounds()[..., 0]),
-            long_name=f'{axis}_axis_statistics_weights',
-            units=coord.units,
-        )
-        cube.add_aux_coord(weights_coord, coord_dims)
-        agg_kwargs['weights'] = weights_coord
-    else:
-        agg_kwargs.pop('weights', None)
-    print(agg)
-    print(agg_kwargs)
+    agg_kwargs = update_weights_kwargs(
+        agg,
+        agg_kwargs,
+        'axis_statistics_weights',
+        cube,
+        _add_axis_stats_weights_coord,
+    )
+
     result = cube.collapsed(coord, agg, **agg_kwargs)
 
     return result
+
+
+def _add_axis_stats_weights_coord(cube, coord, coord_dims):
+    """Add weights for axis_statistics to cube (in-place)."""
+    weights_coord = AuxCoord(
+            np.abs(coord.core_bounds()[..., 1] - coord.core_bounds()[..., 0]),
+            long_name='axis_statistics_weights',
+            units=coord.units,
+        )
+    cube.add_aux_coord(weights_coord, coord_dims)
 
 
 def depth_integration(cube: Cube) -> Cube:

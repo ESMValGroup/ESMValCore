@@ -20,11 +20,7 @@ from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 
-from ._shared import (
-    aggregator_accept_weights,
-    get_iris_aggregator,
-    guess_bounds,
-)
+from ._shared import get_iris_aggregator, guess_bounds, update_weights_kwargs
 from ._supplementary_vars import (
     add_ancillary_variable,
     add_cell_measure,
@@ -290,7 +286,8 @@ def compute_area_weights(cube):
 
 def _try_adding_calculated_cell_area(cube: Cube) -> None:
     """Try to add calculated cell measure 'cell_area' to cube (in-place)."""
-    assert not cube.cell_measures('cell_area')
+    if cube.cell_measures('cell_area'):
+        return
 
     logger.debug(
         "Found no cell measure 'cell_area' in cube %s. Check availability of "
@@ -392,16 +389,13 @@ def area_statistics(
     """
     original_dtype = cube.dtype
 
-    # Get aggregator and correct kwargs
+    # Get aggregator and correct kwargs (incl. weights)
     (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
-    if aggregator_accept_weights(agg) and agg_kwargs.get('weights', True):
-        # If necessary, try to calculate cell_area (this only works for regular
-        # grids and certain irregular grids, and fails for others)
-        if not cube.cell_measures('cell_area'):
-            _try_adding_calculated_cell_area(cube)
-        agg_kwargs['weights'] = 'cell_area'
-    else:
-        agg_kwargs.pop('weights', None)
+    print(cube)
+    agg_kwargs = update_weights_kwargs(
+        agg, agg_kwargs, 'cell_area', cube, _try_adding_calculated_cell_area
+    )
+    print(cube)
 
     result = cube.collapsed(['latitude', 'longitude'], agg, **agg_kwargs)
 

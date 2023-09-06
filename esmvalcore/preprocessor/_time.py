@@ -25,7 +25,7 @@ from iris.time import PartialDateTime
 from esmvalcore.cmor.check import _get_next_month, _get_time_bounds
 from esmvalcore.iris_helpers import date2num
 
-from ._shared import aggregator_accept_weights, get_iris_aggregator
+from ._shared import get_iris_aggregator, update_weights_kwargs
 
 logger = logging.getLogger(__name__)
 
@@ -799,16 +799,9 @@ def climate_statistics(
     # Use Cube.collapsed when full period is requested
     if period in ('full', ):
         (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
-        if aggregator_accept_weights(agg) and agg_kwargs.get('weights', True):
-            time_weights_coord = AuxCoord(
-                get_time_weights(cube),
-                long_name='time_weights',
-                units=cube.coord('time').units,
-            )
-            cube.add_aux_coord(time_weights_coord, cube.coord_dims('time'))
-            agg_kwargs['weights'] = time_weights_coord
-        else:
-            agg_kwargs.pop('weights', None)
+        agg_kwargs = update_weights_kwargs(
+            agg, agg_kwargs, 'time_weights', cube, _add_time_weights_coord
+        )
         clim_cube = cube.collapsed('time', agg, **agg_kwargs)
 
     # Use Cube.aggregated_by for other periods
@@ -835,6 +828,16 @@ def climate_statistics(
         clim_cube.data = clim_cube.core_data().astype(original_dtype)
 
     return clim_cube
+
+
+def _add_time_weights_coord(cube):
+    """Add time weight coordinate to cube (in-place)."""
+    time_weights_coord = AuxCoord(
+        get_time_weights(cube),
+        long_name='time_weights',
+        units=cube.coord('time').units,
+    )
+    cube.add_aux_coord(time_weights_coord, cube.coord_dims('time'))
 
 
 def anomalies(

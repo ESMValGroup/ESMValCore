@@ -6,7 +6,8 @@ Utility functions that can be used for multiple preprocessor steps
 import logging
 import re
 import warnings
-from typing import Optional
+from collections.abc import Callable
+from typing import Any, Optional
 
 import iris.analysis
 import numpy as np
@@ -116,13 +117,9 @@ def get_iris_aggregator(
 
     # Use dummy cube to check if aggregator_kwargs are valid
     cube = Cube([0], dim_coords_and_dims=[(DimCoord([0], var_name='x'), 0)])
-    test_kwargs = dict(aggregator_kwargs)
-
-    if (aggregator_accept_weights(aggregator) and
-            test_kwargs.get('weights', True)):
-        test_kwargs['weights'] = np.array([1.0])
-    else:
-        test_kwargs.pop('weights', None)
+    test_kwargs = update_weights_kwargs(
+        aggregator, aggregator_kwargs, np.array([1.0])
+    )
     try:
         cube.collapsed('x', aggregator, **test_kwargs)
     except (ValueError, TypeError) as exc:
@@ -152,3 +149,43 @@ def aggregator_accept_weights(aggregator: iris.analysis.Aggregator) -> bool:
         iris.analysis.WeightedPercentileAggregator,
     )
     return isinstance(aggregator, weighted_aggregators_cls)
+
+
+def update_weights_kwargs(
+    aggregator: iris.analysis.Aggregator,
+    kwargs: dict,
+    weights: Any,
+    cube: Optional[Cube] = None,
+    callback: Optional[Callable] = None,
+) -> dict:
+    """Update weights keyword argument properly.
+
+    Parameters
+    ----------
+    aggregator:
+        Iris aggregator.
+    kwargs:
+        Keyword arguments to update.
+    weights:
+        Object which will be used as weights if supported and desired.
+    cube:
+        Cube which can be updated through the callback if weights are used.
+    callback:
+        Optional callback with the signature `f(cube: iris.cube.Cube) -> None`.
+        Should update the cube given to this function in-place. Is called when
+        weights should be used.
+
+    Returns
+    -------
+    dict
+        Updated keyword arguments.
+
+    """
+    kwargs = dict(kwargs)
+    if aggregator_accept_weights(aggregator) and kwargs.get('weights', True):
+        kwargs['weights'] = weights
+        if cube is not None and callback is not None:
+            callback(cube)
+    else:
+        kwargs.pop('weights', None)
+    return kwargs
