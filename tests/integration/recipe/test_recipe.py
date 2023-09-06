@@ -3522,6 +3522,7 @@ def test_mm_stats_invalid_stat_kwargs(
         'seasonal_statistics',
         'volume_statistics',
         'zonal_statistics',
+        'rolling_window_statistics',
     ]
 )
 def test_statistics_missing_operator(
@@ -3580,6 +3581,7 @@ def test_statistics_missing_operator(
         'seasonal_statistics',
         'volume_statistics',
         'zonal_statistics',
+        'rolling_window_statistics',
     ]
 )
 def test_statistics_invalid_kwargs(
