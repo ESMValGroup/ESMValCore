@@ -221,6 +221,7 @@ VALIDATION_DATA_SUCCESS = (
     ('full', 'min', (1, 1, 1)),
     ('full', 'max', (9, 9, 5)),
     ('full', 'median', (5, 5, 3)),
+    ('full', 'percentile', (5, 5, 3)),
     ('full', 'p50', (5, 5, 3)),
     ('full', 'p99.5', (8.96, 8.96, 4.98)),
     ('full', 'peak', (9, 9, 5)),
@@ -230,6 +231,7 @@ VALIDATION_DATA_SUCCESS = (
     ('overlap', 'min', (1, 1)),
     ('overlap', 'max', (9, 9)),
     ('overlap', 'median', (5, 5)),
+    ('overlap', 'percentile', (5, 5)),
     ('overlap', 'p50', (5, 5)),
     ('overlap', 'p99.5', (8.96, 8.96)),
     ('overlap', 'peak', (9, 9)),
@@ -324,7 +326,11 @@ def test_multimodel_statistics(frequency, span, statistics, expected):
         statistics = (statistics, )
         expected = (expected, )
 
-    result = multi_model_statistics(cubes, span, statistics)
+    kwargs = {}
+    if statistics == ('percentile', ):
+        kwargs['statistics_kwargs'] = [{'percent': 50.0}]
+
+    result = multi_model_statistics(cubes, span, statistics, **kwargs)
 
     assert isinstance(result, dict)
     assert set(result.keys()) == set(statistics)
@@ -420,7 +426,7 @@ def test_get_consistent_time_unit(calendar1, calendar2, expected):
     """Test same calendar returned or default if calendars differ.
 
     Expected behaviour: If the calendars are the same, return that one.
-    If the calendars are not the same, return 'stanfdard'.
+    If the calendars are not the same, return 'standard'.
     """
     cubes = (
         generate_cube_from_dates('monthly', calendar=calendar1),
@@ -1374,7 +1380,7 @@ def test_empty_input_ensemble_statistics():
         )
 
 
-STATS = ['mean', 'median', 'min', 'max', 'p42.314', 'std_dev']
+STATS = ['mean', 'median', 'min', 'max', 'p42.314', 'percentile', 'std_dev']
 
 
 @pytest.mark.parametrize('stat', STATS)
@@ -1395,6 +1401,8 @@ def test_single_input_multi_model_statistics(products, stat):
         'output_products': output_products,
         'keep_input_datasets': False,
     }
+    if stat == 'percentile':
+        kwargs['statistics_kwargs'] = [{'percent': 42.314}]
 
     results = mm.multi_model_statistics(products, **kwargs)
 
@@ -1439,6 +1447,8 @@ def test_single_input_ensemble_statistics(products, stat):
         'statistics': [stat],
         'output_products': output_products,
     }
+    if stat == 'percentile':
+        kwargs['statistics_kwargs'] = [{'percent': 42.314}]
 
     results = mm.ensemble_statistics(products, **kwargs)
 
