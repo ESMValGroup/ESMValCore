@@ -564,6 +564,14 @@ def _get_tag(step, identifier, statistic):
     return tag
 
 
+def _get_stat_identifier(statistic, statistic_kwargs):
+    if statistic_kwargs is not None:
+        if 'percent' in statistic_kwargs:
+            statistic += str(statistic_kwargs['percent'])
+    statistic = statistic.replace('.', '-')
+    return statistic
+
+
 def _update_multiproduct(input_products, order, preproc_dir, step):
     """Return new products that are aggregated over multiple datasets.
 
@@ -598,9 +606,14 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
     for identifier, products in _group_products(products, by_key=grouping):
         common_attributes = _get_common_attributes(products, settings)
 
-        for statistic in settings.get('statistics', []):
+        statistics = settings.get('statistics', [])
+        statistics_kwargs = settings.get(
+            'statistics_kwargs', [None] * len(statistics)
+        )
+        for (statistic, stat_kwargs) in zip(statistics, statistics_kwargs):
             statistic_attributes = dict(common_attributes)
-            statistic_attributes[step] = _get_tag(step, identifier, statistic)
+            stat_id = _get_stat_identifier(statistic, stat_kwargs)
+            statistic_attributes[step] = _get_tag(step, identifier, stat_id)
             statistic_attributes.setdefault('alias',
                                             statistic_attributes[step])
             statistic_attributes.setdefault('dataset',
@@ -614,7 +627,7 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
             )  # Note that ancestors is set when running the preprocessor func.
             output_products.add(statistic_product)
             relevant_settings['output_products'][identifier][
-                statistic] = statistic_product
+                stat_id] = statistic_product
 
     return output_products, relevant_settings
 

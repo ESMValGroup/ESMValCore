@@ -3365,11 +3365,14 @@ def test_diag_selection(tmp_path, patched_datafinder, session, diags_to_run,
     assert tasks_run == task_names
 
 
-def test_mm_stats_invalid_arg(tmp_path, patched_datafinder, session):
-    content = dedent("""
+@pytest.mark.parametrize(
+    'preproc', ['multi_model_statistics', 'ensemble_statistics']
+)
+def test_mm_stats_invalid_arg(preproc, tmp_path, patched_datafinder, session):
+    content = dedent(f"""
         preprocessors:
           test:
-            multi_model_statistics:
+            {preproc}:
               span: overlap
               statistics: [mean]
               invalid_argument: 1
@@ -3383,19 +3386,24 @@ def test_mm_stats_invalid_arg(tmp_path, patched_datafinder, session):
                 preprocessor: test
                 timerange: '2000/2010'
                 additional_datasets:
-                  - {project: CMIP5, dataset: CanESM2, exp: historical,
-                     ensemble: r1i1p1}
+                  - project: CMIP5
+                    dataset: CanESM2
+                    exp: historical
+                    ensemble: r1i1p1
             scripts: null
         """)
     with pytest.raises(ValueError):
         get_recipe(tmp_path, content, session)
 
 
-def test_mm_stats_missing_arg(tmp_path, patched_datafinder, session):
-    content = dedent("""
+@pytest.mark.parametrize(
+    'preproc', ['multi_model_statistics', 'ensemble_statistics']
+)
+def test_mm_stats_missing_arg(preproc, tmp_path, patched_datafinder, session):
+    content = dedent(f"""
         preprocessors:
           test:
-            multi_model_statistics:
+            {preproc}:
 
         diagnostics:
           diagnostic_name:
@@ -3406,19 +3414,29 @@ def test_mm_stats_missing_arg(tmp_path, patched_datafinder, session):
                 preprocessor: test
                 timerange: '2000/2010'
                 additional_datasets:
-                  - {project: CMIP5, dataset: CanESM2, exp: historical,
-                     ensemble: r1i1p1}
+                  - project: CMIP5
+                    dataset: CanESM2
+                    exp: historical
+                    ensemble: r1i1p1
             scripts: null
         """)
     with pytest.raises(ValueError):
         get_recipe(tmp_path, content, session)
 
 
-def test_area_statistics_invalid_args(tmp_path, patched_datafinder, session):
-    content = dedent("""
+@pytest.mark.parametrize(
+    'preproc', ['multi_model_statistics', 'ensemble_statistics']
+)
+def test_mm_stats_invalid_stats(
+    preproc, tmp_path, patched_datafinder, session
+):
+    content = dedent(f"""
         preprocessors:
           test:
-            area_statistics:
+            {preproc}:
+              span: overlap
+              statistics: [mean]
+              statistics_kwargs: []
 
         diagnostics:
           diagnostic_name:
@@ -3429,9 +3447,171 @@ def test_area_statistics_invalid_args(tmp_path, patched_datafinder, session):
                 preprocessor: test
                 timerange: '2000/2010'
                 additional_datasets:
-                  - {project: CMIP5, dataset: CanESM2, exp: historical,
-                     ensemble: r1i1p1}
+                  - project: CMIP5
+                    dataset: CanESM2
+                    exp: historical
+                    ensemble: r1i1p1
             scripts: null
         """)
-    with pytest.raises(ValueError):
+    msg = "Expected identical number of"
+    with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, session)
+    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
+    assert msg in str(rec_err_exp.value.failed_tasks[0].message)
+
+
+@pytest.mark.parametrize(
+    'stat_kwargs',
+    [
+        {'invalid_value': 1},
+        {'percent': 10, 'invalid_value': 1},
+        {'percent': 10, 'weights': False},
+    ]
+)
+@pytest.mark.parametrize(
+    'preproc', ['multi_model_statistics', 'ensemble_statistics']
+)
+def test_mm_stats_invalid_stat_kwargs(
+    preproc, stat_kwargs, tmp_path, patched_datafinder, session
+):
+    content = dedent(f"""
+        preprocessors:
+          test:
+            {preproc}:
+              span: overlap
+              statistics: [wpercentile]
+              statistics_kwargs: [{stat_kwargs}]
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              chl_default:
+                short_name: chl
+                mip: Oyr
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - project: CMIP5
+                    dataset: CanESM2
+                    exp: historical
+                    ensemble: r1i1p1
+            scripts: null
+        """)
+    msg = (
+        f"Invalid options for {preproc}: Invalid operator_kwargs for operator "
+        f"'wpercentile': "
+    )
+    with pytest.raises(RecipeError) as rec_err_exp:
+        get_recipe(tmp_path, content, session)
+    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
+    assert msg in str(rec_err_exp.value.failed_tasks[0].message)
+
+
+@pytest.mark.parametrize(
+    'preproc',
+    [
+        'annual_statistics',
+        'area_statistics',
+        'axis_statistics',
+        'climate_statistics',
+        'daily_statistics',
+        'decadal_statistics',
+        'hourly_statistics',
+        'meridional_statistics',
+        'monthly_statistics',
+        'seasonal_statistics',
+        'volume_statistics',
+        'zonal_statistics',
+    ]
+)
+def test_statistics_missing_operator(
+    preproc, tmp_path, patched_datafinder, session
+):
+    content = dedent(f"""
+        preprocessors:
+          test:
+            {preproc}:
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              chl_default:
+                short_name: chl
+                mip: Oyr
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - project: CMIP5
+                    dataset: CanESM2
+                    exp: historical
+                    ensemble: r1i1p1
+            scripts: null
+        """)
+    msg = (
+        f"Missing required argument 'operator' for preprocessor function "
+        f"{preproc}"
+    )
+    with pytest.raises(RecipeError) as rec_err_exp:
+        get_recipe(tmp_path, content, session)
+    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
+    assert str(rec_err_exp.value.failed_tasks[0].message) == msg
+
+
+@pytest.mark.parametrize(
+    'op_kwargs',
+    [
+        {'invalid_value': 1},
+        {'percent': 10, 'invalid_value': 1},
+        {'percent': 10, 'weights': False},
+    ]
+)
+@pytest.mark.parametrize(
+    'preproc',
+    [
+        'annual_statistics',
+        'area_statistics',
+        'axis_statistics',
+        'climate_statistics',
+        'daily_statistics',
+        'decadal_statistics',
+        'hourly_statistics',
+        'meridional_statistics',
+        'monthly_statistics',
+        'seasonal_statistics',
+        'volume_statistics',
+        'zonal_statistics',
+    ]
+)
+def test_statistics_invalid_kwargs(
+    op_kwargs, preproc, tmp_path, patched_datafinder, session
+):
+    content = dedent(f"""
+        preprocessors:
+          test:
+            {preproc}:
+              operator: wpercentile
+              operator_kwargs: {op_kwargs}
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              chl_default:
+                short_name: chl
+                mip: Oyr
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - project: CMIP5
+                    dataset: CanESM2
+                    exp: historical
+                    ensemble: r1i1p1
+            scripts: null
+        """)
+    msg = (
+        f"Invalid options for {preproc}: Invalid operator_kwargs for operator "
+        f"'wpercentile': "
+    )
+    with pytest.raises(RecipeError) as rec_err_exp:
+        get_recipe(tmp_path, content, session)
+    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
+    assert msg in str(rec_err_exp.value.failed_tasks[0].message)

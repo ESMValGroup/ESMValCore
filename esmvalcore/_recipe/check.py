@@ -414,16 +414,16 @@ def statistics_preprocessors(settings: dict) -> None:
     """Check options of statistics preprocessors."""
     mm_stats = (
         'multi_model_statistics',
-        'ensemble_model_statistics',
+        'ensemble_statistics',
     )
     for (step, step_settings) in settings.items():
 
         # For multi-model statistics, we need to check each entry of statistics
         # and statistcs_kwargs
         if step in mm_stats:
-            statistics = step_settings.get('statistcs', [])
+            statistics = step_settings.get('statistics', [])
             statistics_kwargs = step_settings.get(
-                'statistcs_kwargs', [None] * len(statistics)
+                'statistics_kwargs', [None] * len(statistics)
             )
             if len(statistics) != len(statistics_kwargs):
                 raise RecipeError(
@@ -447,7 +447,7 @@ def statistics_preprocessors(settings: dict) -> None:
                     f"Missing required argument 'operator' for preprocessor "
                     f"function {step}"
                 )
-            operator = step_settings.get['operator']
+            operator = step_settings['operator']
             operator_kwargs = step_settings.get('operator_kwargs')
             try:
                 get_iris_aggregator(operator, operator_kwargs)

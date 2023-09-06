@@ -332,6 +332,95 @@ def test_update_multiproduct_multi_model_statistics():
     assert 'MultiModelStd_Dev' in str(stats['std_dev'].filename)
 
 
+def test_update_multiproduct_multi_model_statistics_percentile():
+    """Test ``_update_multiproduct``."""
+    settings = {
+        'multi_model_statistics': {
+            'statistics': ['percentile', 'percentile'],
+            'statistics_kwargs': [{'percent': 5.0}, {'percent': 95.0}],
+        },
+    }
+    common_attributes = {
+        'project': 'CMIP6',
+        'diagnostic': 'd',
+        'variable_group': 'var',
+    }
+    cube = iris.cube.Cube(np.array([1]))
+    products = [
+        PreprocessorFile(cube, 'A',
+                         attributes={'dataset': 'a',
+                                     'timerange': '2000/2005',
+                                     **common_attributes},
+                         settings=settings),
+        PreprocessorFile(cube, 'B',
+                         attributes={'dataset': 'b',
+                                     'timerange': '2001/2004',
+                                     **common_attributes},
+                         settings=settings),
+        PreprocessorFile(cube, 'C',
+                         attributes={'dataset': 'c',
+                                     'timerange': '1999/2004',
+                                     **common_attributes},
+                         settings=settings),
+        PreprocessorFile(cube, 'D',
+                         attributes={'dataset': 'd',
+                                     'timerange': '2002/2010',
+                                     **common_attributes},
+                         settings=settings),
+    ]
+    order = ('load', 'multi_model_statistics', 'save')
+    preproc_dir = '/preproc'
+    step = 'multi_model_statistics'
+    output, settings = _recipe._update_multiproduct(
+        products, order, preproc_dir, step)
+
+    assert len(output) == 2
+
+    filenames = [p.filename for p in output]
+    assert (
+        Path('/preproc/d/var/CMIP6_MultiModelPercentile5-0_2002-2004.nc') in
+        filenames
+    )
+    assert (
+        Path('/preproc/d/var/CMIP6_MultiModelPercentile95-0_2002-2004.nc') in
+        filenames
+    )
+
+    for product in output:
+        for attr in common_attributes:
+            assert attr in product.attributes
+            assert product.attributes[attr] == common_attributes[attr]
+            assert 'alias' in product.attributes
+            assert 'dataset' in product.attributes
+            assert 'multi_model_statistics' in product.attributes
+            assert 'timerange' in product.attributes
+            assert product.attributes['timerange'] == '2002/2004'
+            assert 'start_year' in product.attributes
+            assert product.attributes['start_year'] == 2002
+            assert 'end_year' in product.attributes
+            assert product.attributes['end_year'] == 2004
+        if 'MultiModelPercentile5-0' in str(product.filename):
+            assert product.attributes['alias'] == 'MultiModelPercentile5-0'
+            assert product.attributes['dataset'] == 'MultiModelPercentile5-0'
+            assert (product.attributes['multi_model_statistics'] ==
+                    'MultiModelPercentile5-0')
+        elif 'MultiModelPercentile95-0' in str(product.filename):
+            assert product.attributes['alias'] == 'MultiModelPercentile95-0'
+            assert product.attributes['dataset'] == 'MultiModelPercentile95-0'
+            assert (product.attributes['multi_model_statistics'] ==
+                    'MultiModelPercentile95-0')
+
+    assert len(settings) == 1
+    output_products = settings['output_products']
+    assert len(output_products) == 1
+    stats = output_products['']
+    assert len(stats) == 2
+    assert 'percentile5-0' in stats
+    assert 'percentile95-0' in stats
+    assert 'MultiModelPercentile5-0' in str(stats['percentile5-0'].filename)
+    assert 'MultiModelPercentile95-0' in str(stats['percentile95-0'].filename)
+
+
 def test_update_multiproduct_ensemble_statistics():
     """Test ``_update_multiproduct``."""
     settings = {'ensemble_statistics': {'statistics': ['median'],
@@ -391,6 +480,75 @@ def test_update_multiproduct_ensemble_statistics():
     assert 'median' in stats
     assert stats['median'].filename == Path(
         '/preproc/d/var/CMIP6_CanESM2_EnsembleMedian_2000-2000.nc')
+
+
+def test_update_multiproduct_ensemble_statistics_percentile():
+    """Test ``_update_multiproduct``."""
+    settings = {
+        'ensemble_statistics': {
+            'statistics': ['percentile', 'percentile'],
+            'statistics_kwargs': [{'percent': 5}],
+            'span': 'full',
+        },
+    }
+
+    common_attributes = {
+        'dataset': 'CanESM2',
+        'project': 'CMIP6',
+        'timerange': '2000/2000',
+        'diagnostic': 'd',
+        'variable_group': 'var',
+    }
+    cube = iris.cube.Cube(np.array([1]))
+    products = [
+        PreprocessorFile(cube, 'A',
+                         attributes=common_attributes,
+                         settings=settings),
+        PreprocessorFile(cube, 'B',
+                         attributes=common_attributes,
+                         settings=settings),
+        PreprocessorFile(cube, 'C',
+                         attributes=common_attributes,
+                         settings=settings),
+        PreprocessorFile(cube, 'D',
+                         attributes=common_attributes,
+                         settings=settings),
+    ]
+    order = ('load', 'ensemble_statistics', 'save')
+    preproc_dir = '/preproc'
+    step = 'ensemble_statistics'
+    output, settings = _recipe._update_multiproduct(
+        products, order, preproc_dir, step)
+
+    assert len(output) == 1
+    product = list(output)[0]
+    assert product.filename == Path(
+        '/preproc/d/var/CMIP6_CanESM2_EnsemblePercentile5_2000-2000.nc')
+
+    for attr in common_attributes:
+        assert attr in product.attributes
+        assert product.attributes[attr] == common_attributes[attr]
+        assert 'alias' in product.attributes
+        assert product.attributes['alias'] == 'EnsemblePercentile5'
+        assert 'dataset' in product.attributes
+        assert product.attributes['dataset'] == 'CanESM2'
+        assert 'ensemble_statistics' in product.attributes
+        assert product.attributes['ensemble_statistics'] == (
+            'EnsemblePercentile5'
+        )
+        assert 'start_year' in product.attributes
+        assert product.attributes['start_year'] == 2000
+        assert 'end_year' in product.attributes
+        assert product.attributes['end_year'] == 2000
+
+    assert len(settings) == 1
+    output_products = settings['output_products']
+    assert len(output_products) == 1
+    stats = output_products['CMIP6_CanESM2']
+    assert len(stats) == 1
+    assert 'percentile5' in stats
+    assert stats['percentile5'].filename == Path(
+        '/preproc/d/var/CMIP6_CanESM2_EnsemblePercentile5_2000-2000.nc')
 
 
 def test_update_multiproduct_no_product():

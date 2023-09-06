@@ -735,7 +735,7 @@ def multi_model_statistics(
     statistics:
         Statistical metrics to be computed, e.g. [``mean``, ``max``]. Allowed
         options are given in :ref:`this table <supported_stat_operator>`.
-    output_products:
+    output_products: dict
         For internal use only. A dict with statistics names as keys and
         preprocessorfiles as values. If products are passed as input, the
         statistics cubes will be assigned to these output products.
@@ -812,9 +812,14 @@ def multi_model_statistics(
     )
 
 
-def ensemble_statistics(products, statistics,
-                        output_products, span='overlap',
-                        ignore_scalar_coords=False):
+def ensemble_statistics(
+    products: set[PreprocessorFile] | Iterable[Cube],
+    statistics: list[str],
+    output_products,
+    span: str = 'overlap',
+    ignore_scalar_coords: bool = False,
+    statistics_kwargs: Optional[list[dict] | list[None]] = None,
+):
     """Entry point for ensemble statistics.
 
     An ensemble grouping is performed on the input products.
@@ -824,9 +829,9 @@ def ensemble_statistics(products, statistics,
 
     Parameters
     ----------
-    products: list
+    products:
         Cubes (or products) over which the statistics will be computed.
-    statistics: list
+    statistics:
         Statistical metrics to be computed, e.g. [``mean``, ``max``]. Choose
         from the operators listed in the iris.analysis package. Percentiles can
         be specified like ``pXX.YY``.
@@ -834,17 +839,20 @@ def ensemble_statistics(products, statistics,
         For internal use only. A dict with statistics names as keys and
         preprocessorfiles as values. If products are passed as input, the
         statistics cubes will be assigned to these output products.
-    span: str (default: 'overlap')
+    span:
         Overlap or full; if overlap, statitstics are computed on common time-
         span; if full, statistics are computed on full time spans, ignoring
         missing data.
-    ignore_scalar_coords: bool
+    ignore_scalar_coords:
         If True, remove any scalar coordinate in the input datasets before
         merging the input cubes into the multi-dataset cube. The resulting
         multi-dataset cube will have no scalar coordinates (the actual input
         datasets will remain unchanged). If False, scalar coordinates will
         remain in the input datasets, which might lead to merge conflicts in
         case the input datasets have different scalar coordinates.
+    statistics_kwargs:
+        Optional keyword arguments for the :class:`iris.analysis.Aggregator`
+        objects defined by `statistics`.
 
     Returns
     -------
@@ -865,4 +873,5 @@ def ensemble_statistics(products, statistics,
         groupby=ensemble_grouping,
         keep_input_datasets=False,
         ignore_scalar_coords=ignore_scalar_coords,
+        statistics_kwargs=statistics_kwargs,
     )
