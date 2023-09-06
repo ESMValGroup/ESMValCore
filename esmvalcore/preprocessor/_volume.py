@@ -297,6 +297,8 @@ def axis_statistics(
         'axis_statistics_weights',
         cube,
         _add_axis_stats_weights_coord,
+        coord=coord,
+        coord_dims=coord_dims,
     )
 
     result = cube.collapsed(coord, agg, **agg_kwargs)
@@ -307,10 +309,10 @@ def axis_statistics(
 def _add_axis_stats_weights_coord(cube, coord, coord_dims):
     """Add weights for axis_statistics to cube (in-place)."""
     weights_coord = AuxCoord(
-            np.abs(coord.core_bounds()[..., 1] - coord.core_bounds()[..., 0]),
-            long_name='axis_statistics_weights',
-            units=coord.units,
-        )
+        np.abs(coord.core_bounds()[..., 1] - coord.core_bounds()[..., 0]),
+        long_name='axis_statistics_weights',
+        units=coord.units,
+    )
     cube.add_aux_coord(weights_coord, coord_dims)
 
 

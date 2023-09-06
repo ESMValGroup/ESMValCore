@@ -157,6 +157,7 @@ def update_weights_kwargs(
     weights: Any,
     cube: Optional[Cube] = None,
     callback: Optional[Callable] = None,
+    **callback_kwargs,
 ) -> dict:
     """Update weights keyword argument properly.
 
@@ -169,11 +170,14 @@ def update_weights_kwargs(
     weights:
         Object which will be used as weights if supported and desired.
     cube:
-        Cube which can be updated through the callback if weights are used.
+        Cube which can be updated through the callback (if not None) if weights
+        are used.
     callback:
-        Optional callback with the signature `f(cube: iris.cube.Cube) -> None`.
-        Should update the cube given to this function in-place. Is called when
-        weights should be used.
+        Optional callback with the signature `f(cube: iris.cube.Cube, **kwargs)
+        -> None`. Should update the cube given to this function in-place. Is
+        called when weights should be used and cube is not None.
+    **callback_kwargs:
+        Optional keyword arguments passed to the callback.
 
     Returns
     -------
@@ -185,7 +189,7 @@ def update_weights_kwargs(
     if aggregator_accept_weights(aggregator) and kwargs.get('weights', True):
         kwargs['weights'] = weights
         if cube is not None and callback is not None:
-            callback(cube)
+            callback(cube, **callback_kwargs)
     else:
         kwargs.pop('weights', None)
     return kwargs
