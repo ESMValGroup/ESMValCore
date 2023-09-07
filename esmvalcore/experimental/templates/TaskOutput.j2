@@ -3,13 +3,13 @@
 {% for file in task.image_files %}
 
 <div class="div_figure
-{% for filter in filters.keys() %}
-    {% if filter in file.attributes %}
-        {% set attribute = file.attributes[filter] %}
-        {% if attribute is string or not attribute is iterable %}
-            f_{{ filter|replace(' ', '_') }}_{{ attribute | replace(' ', '_') }}
+{% for filter_name in filters.keys() %}
+    {% if filter_name in file.attributes %}
+        {% set attribute = file.attributes[filter_name] %}
+        {% if attribute is string or not (attribute is iterable) %}
+            f_{{ filter_name|replace(' ', '_') }}_{{ attribute | replace(' ', '_') }}
         {% else %}
-            {% for attr in attribute %} f_{{ filter|replace(' ', '_') }}_{{ attr | replace(' ', '_') }} {% endfor %}
+            {% for attr in attribute %} f_{{ filter_name|replace(' ', '_') }}_{{ attr | replace(' ', '_') }} {% endfor %}
         {% endif %}
     {% endif %}
 {% endfor %}
