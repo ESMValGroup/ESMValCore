@@ -46,16 +46,11 @@ def test_get_iris_aggregator_mean(operator, kwargs):
 
 @pytest.mark.parametrize('kwargs', [{}, {'weights': True}])
 @pytest.mark.parametrize('operator', ['median', 'mEdIaN', 'MEDIAN'])
-def test_get_iris_aggregator_median(operator, kwargs, caplog):
+def test_get_iris_aggregator_median(operator, kwargs):
     """Test ``get_iris_aggregator``."""
     (agg, agg_kwargs) = get_iris_aggregator(operator, kwargs)
-    assert agg == iris.analysis.PERCENTILE
-    assert agg_kwargs == {'percent': 50.0}
-    if kwargs:
-        assert len(caplog.records) == 1
-        assert caplog.records[0].levelname == 'WARNING'
-    else:
-        assert len(caplog.records) == 0
+    assert agg == iris.analysis.MEDIAN
+    assert agg_kwargs == kwargs
 
 
 @pytest.mark.parametrize('operator', ['min', 'MiN', 'MIN'])

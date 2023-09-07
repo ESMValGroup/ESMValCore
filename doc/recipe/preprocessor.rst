@@ -95,7 +95,7 @@ supported too if proper `operator_kwargs` are specified:
 ``hmean``                      :const:`iris.analysis.HMEAN`                      no
 ``max``                        :const:`iris.analysis.MAX`                        no
 ``mean``                       :const:`iris.analysis.MEAN`                       yes
-``median``                     :const:`iris.analysis.PERCENTILE` [2]_            no
+``median``                     :const:`iris.analysis.MEDIAN` [2]_                no
 ``min``                        :const:`iris.analysis.MIN`                        no
 ``peak``                       :const:`iris.analysis.PEAK`                       no
 ``percentile``                 :const:`iris.analysis.PERCENTILE`                 no
@@ -115,7 +115,9 @@ supported too if proper `operator_kwargs` are specified:
     :ref:`preprocessors_using_supplementary_variables`);
     :func:`~esmvalcore.preprocessor.axis_statistics`: weighted by
     corresponding coordinate bounds.
-.. [2] :class:`~iris.analysis.MEDIAN` is not lazy.
+.. [2] :const:`iris.analysis.MEDIAN` is not lazy, but much faster than
+    :const:`iris.analysis.PERCENTILE`. For a lazy median, use ``percentile``
+    with ``operator_kwargs: {percent: 50}``.
 
 Examples
 --------

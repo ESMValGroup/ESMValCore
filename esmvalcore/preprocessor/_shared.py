@@ -103,18 +103,6 @@ def get_iris_aggregator(
             f"iris.analysis.Aggregator"
         )
 
-    # Since iris.analysis.MEDIAN is not lazy, use iris.analysis.PERCENTILE
-    # instead
-    if cap_operator == 'MEDIAN':
-        if aggregator_kwargs:
-            logger.warning(
-                "operator_kwargs are ignored for operator '%s', use operator "
-                "'percentile' instead",
-                operator,
-            )
-        aggregator = iris.analysis.PERCENTILE
-        aggregator_kwargs = {'percent': 50.0}
-
     # Use dummy cube to check if aggregator_kwargs are valid
     x_coord = DimCoord([1.0], bounds=[0.0, 2.0], var_name='x')
     cube = Cube([0.0], dim_coords_and_dims=[(x_coord, 0)])
