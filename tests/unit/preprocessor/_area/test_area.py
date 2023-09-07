@@ -23,6 +23,8 @@ from esmvalcore.preprocessor._area import (
     extract_named_regions,
     extract_region,
     extract_shape,
+    meridional_statistics,
+    zonal_statistics,
 )
 from esmvalcore.preprocessor._shared import guess_bounds
 
@@ -1249,6 +1251,38 @@ def test_update_shapefile_path_rel(
             assert shapefile_out == tmp_path / shapefile
         else:
             assert shapefile_out == ar6_shapefile
+
+
+def test_zonal_statistics(make_testcube):
+    """Test ``zonal_statistics``."""
+    res = zonal_statistics(make_testcube, 'sum')
+    assert res.coord('latitude') == make_testcube.coord('latitude')
+    np.testing.assert_allclose(res.coord('longitude').points, [2.5])
+    np.testing.assert_allclose(res.coord('longitude').bounds, [[0.0, 5.0]])
+    np.testing.assert_allclose(res.data, [5.0, 5.0, 5.0, 5.0, 5.0])
+    assert res.dtype == np.float32
+
+
+def test_zonal_statistics_2d_lon_fail(irreg_extract_shape_cube):
+    """Test ``zonal_statistics``."""
+    with pytest.raises(ValueError):
+        zonal_statistics(irreg_extract_shape_cube, 'sum')
+
+
+def test_meridional_statistics(make_testcube):
+    """Test ``zonal_statistics``."""
+    res = meridional_statistics(make_testcube, 'sum')
+    assert res.coord('longitude') == make_testcube.coord('longitude')
+    np.testing.assert_allclose(res.coord('latitude').points, [2.5])
+    np.testing.assert_allclose(res.coord('latitude').bounds, [[0.0, 5.0]])
+    np.testing.assert_allclose(res.data, [5.0, 5.0, 5.0, 5.0, 5.0])
+    assert res.dtype == np.float32
+
+
+def test_meridional_statistics_2d_lon_fail(irreg_extract_shape_cube):
+    """Test ``meridional_statistics``."""
+    with pytest.raises(ValueError):
+        meridional_statistics(irreg_extract_shape_cube, 'sum')
 
 
 if __name__ == '__main__':

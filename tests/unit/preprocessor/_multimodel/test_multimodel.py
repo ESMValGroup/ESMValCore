@@ -1463,3 +1463,13 @@ def test_single_input_ensemble_statistics(products, stat):
         )
     else:
         assert_array_allclose(cube.data, np.ma.array([1.0, 1.0, 1.0]))
+
+
+def test_different_len_stats_kwargs_fail():
+    """Test different number of statistics and kwargs."""
+    msg = "Expected identical number of "
+    with pytest.raises(ValueError) as exc:
+        mm.multi_model_statistics(
+            set(), 'overlap', ['mean'], statistics_kwargs=[]
+        )
+    assert msg in str(exc)
