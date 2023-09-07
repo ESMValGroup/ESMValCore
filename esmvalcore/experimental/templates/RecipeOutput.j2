@@ -2,30 +2,30 @@
 <div class="container div_filter">
   <h3>Filter</h3>
   <div class="row row-cols-auto">
-    {% for filter_type, types in filters.items() %}
+    {% for filter_name, filter_values in filters.items() %}
     {% set filter_loop = loop %}
-    <div class="col col-lg-3 filter_{{ filter_type }}">
-        <h4>{{ filter_type|replace('_', ' ')|title }}</h4>
-        {% for t in types %}
+    <div class="col col-lg-3 filter_category" id="filter_{{ filter_name|replace(' ', '_') }}">
+        <h4>{{ filter_name|replace('_', ' ')|title }}</h4>
+        {% for value in filter_values %}
         <div class="form-check">
-          <input class="form-check-input" type="checkbox" value="" id="cb_{{ filter_loop.index }}_{{ loop.index }}" rel="f_{{ filter_type|replace(' ', '_') }}_{{ t|replace(' ', '_') }}">
+          <input class="form-check-input filter_cb" type="checkbox" value="" id="cb_{{ filter_loop.index }}_{{ loop.index }}" rel="f_{{ filter_name|replace(' ', '_') }}_{{ value|replace(' ', '_') }}">
           <label class="form-check-label" for="cb_{{ filter_loop.index }}_{{ loop.index }}">
-            {{ t|replace('_', ' ')|title }}
+            {{ value|replace('_', ' ')|title }}
           </label>
         </div>
         {% endfor %}
     </div>
     {% endfor %}
   </div>
-  <button class="btn btn-primary disabled" onclick="resetFilter()">Clear all Filters</button>
-</div>
+  <button class="btn btn-primary" id="b_deleteFilters" disabled>Delete Filters</button>
 
- <div class="form-check">
-          <input class="form-check-input" type="checkbox" value="" id="cb_hideEmptyDiagnostics" rel="" checked>
-          <label class="form-check-label" for="cb_hideEmptyDiagnostics">
-            Hide empty diagnostics
-          </label>
-        </div>
+  <div class="form-check">
+    <input class="form-check-input" type="checkbox" value="" id="cb_hideEmptyDiagnostics" rel="" checked>
+    <label class="form-check-label" for="cb_hideEmptyDiagnostics">
+      Hide empty diagnostics
+    </label>
+  </div>
+</div>
 
 <!-- Tab links -->
 <ul class="nav nav-tabs sticky-top bg-light" id="tabDiagnostics" role="tablist">
