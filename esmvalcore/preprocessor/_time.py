@@ -8,6 +8,7 @@ from __future__ import annotations
 import copy
 import datetime
 import logging
+import warnings
 from typing import Iterable, Optional
 from warnings import filterwarnings
 
@@ -802,7 +803,17 @@ def climate_statistics(
         agg_kwargs = update_weights_kwargs(
             agg, agg_kwargs, 'time_weights', cube, _add_time_weights_coord
         )
-        clim_cube = cube.collapsed('time', agg, **agg_kwargs)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                message=(
+                    "Cannot check if coordinate is contiguous: Invalid "
+                    "operation for 'time_weights'"
+                ),
+                category=UserWarning,
+                module='iris',
+            )
+            clim_cube = cube.collapsed('time', agg, **agg_kwargs)
 
     # Use Cube.aggregated_by for other periods
     else:

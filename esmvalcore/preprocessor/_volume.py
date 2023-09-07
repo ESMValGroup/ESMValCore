@@ -6,6 +6,7 @@ depth or height regions; constructing volumetric averages;
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import Iterable, Optional, Sequence
 
 import dask.array as da
@@ -301,7 +302,17 @@ def axis_statistics(
         coord_dims=coord_dims,
     )
 
-    result = cube.collapsed(coord, agg, **agg_kwargs)
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore',
+            message=(
+                "Cannot check if coordinate is contiguous: Invalid "
+                "operation for 'axis_statistics_weights'"
+            ),
+            category=UserWarning,
+            module='iris',
+        )
+        result = cube.collapsed(coord, agg, **agg_kwargs)
 
     return result
 

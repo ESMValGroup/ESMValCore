@@ -442,12 +442,11 @@ def statistics_preprocessors(settings: dict) -> None:
         # For other statistics, we can simply check operator and
         # operator_kwargs
         elif '_statistics' in step:
-            if 'operator' not in step_settings:
-                raise RecipeError(
-                    f"Missing required argument 'operator' for preprocessor "
-                    f"function {step}"
-                )
-            operator = step_settings['operator']
+            # Some preprocessors like climate_statistics use default 'mean' for
+            # operator. If 'operator' is missing for those preprocessors with
+            # no default, this will be detected in PreprocessorFile.check()
+            # later.
+            operator = step_settings.get('operator', 'mean')
             operator_kwargs = step_settings.get('operator_kwargs')
             try:
                 get_iris_aggregator(operator, operator_kwargs)

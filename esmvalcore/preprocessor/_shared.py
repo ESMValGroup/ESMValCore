@@ -116,7 +116,8 @@ def get_iris_aggregator(
         aggregator_kwargs = {'percent': 50.0}
 
     # Use dummy cube to check if aggregator_kwargs are valid
-    cube = Cube([0], dim_coords_and_dims=[(DimCoord([0], var_name='x'), 0)])
+    x_coord = DimCoord([1.0], bounds=[0.0, 2.0], var_name='x')
+    cube = Cube([0.0], dim_coords_and_dims=[(x_coord, 0)])
     test_kwargs = update_weights_kwargs(
         aggregator, aggregator_kwargs, np.array([1.0])
     )

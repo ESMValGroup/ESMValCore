@@ -3510,22 +3510,15 @@ def test_mm_stats_invalid_stat_kwargs(
 @pytest.mark.parametrize(
     'preproc',
     [
-        'annual_statistics',
         'area_statistics',
         'axis_statistics',
-        'climate_statistics',
-        'daily_statistics',
-        'decadal_statistics',
-        'hourly_statistics',
         'meridional_statistics',
-        'monthly_statistics',
-        'seasonal_statistics',
         'volume_statistics',
         'zonal_statistics',
         'rolling_window_statistics',
     ]
 )
-def test_statistics_missing_operator(
+def test_statistics_missing_operator_no_default_fail(
     preproc, tmp_path, patched_datafinder, session
 ):
     content = dedent(f"""
@@ -3548,14 +3541,47 @@ def test_statistics_missing_operator(
                     ensemble: r1i1p1
             scripts: null
         """)
-    msg = (
-        f"Missing required argument 'operator' for preprocessor function "
-        f"{preproc}"
-    )
-    with pytest.raises(RecipeError) as rec_err_exp:
+    with pytest.raises(ValueError):
         get_recipe(tmp_path, content, session)
-    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
-    assert str(rec_err_exp.value.failed_tasks[0].message) == msg
+
+
+@pytest.mark.parametrize(
+    'preproc,option',
+    [
+        ('annual_statistics', ''),
+        ('climate_statistics', ''),
+        ('daily_statistics', ''),
+        ('decadal_statistics', ''),
+        ('hourly_statistics', 'hours: 1'),
+        ('monthly_statistics', ''),
+        ('seasonal_statistics', ''),
+    ]
+)
+def test_statistics_missing_operator_with_default(
+    preproc, option, tmp_path, patched_datafinder, session
+):
+    content = dedent(f"""
+        preprocessors:
+          test:
+            {preproc}:
+              {option}
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              chl_default:
+                short_name: chl
+                mip: Oyr
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - project: CMIP5
+                    dataset: CanESM2
+                    exp: historical
+                    ensemble: r1i1p1
+            scripts: null
+        """)
+    get_recipe(tmp_path, content, session)
 
 
 @pytest.mark.parametrize(

@@ -186,17 +186,21 @@ def test_map_on_filled_da_mask_not_used():
 
 
 ALT_COORD = iris.coords.AuxCoord([0.0], bounds=[[-100.0, 500.0]],
-                                 standard_name='altitude', units='m')
+                                 standard_name='altitude', units='m',
+                                 var_name='alt', long_name='altitude')
 ALT_COORD_MASKED = ALT_COORD.copy(np.ma.masked_equal([0.0], 0.0))
-ALT_COORD_NB = iris.coords.AuxCoord([0.0], standard_name='altitude', units='m')
+ALT_COORD_NB = iris.coords.AuxCoord([0.0], standard_name='altitude', units='m',
+                                    var_name='alt', long_name='altitude')
 ALT_COORD_KM = iris.coords.AuxCoord([0.0], bounds=[[-0.1, 0.5]],
                                     var_name='alt', long_name='altitude',
                                     standard_name='altitude', units='km')
 P_COORD = iris.coords.AuxCoord([101325.0], bounds=[[102532.0, 95460.8]],
-                               standard_name='air_pressure', units='Pa')
+                               standard_name='air_pressure', units='Pa',
+                               var_name='plev', long_name='pressure')
 P_COORD_MASKED = P_COORD.copy(np.ma.masked_equal([0.0], 0.0))
 P_COORD_NB = iris.coords.AuxCoord([101325.0], standard_name='air_pressure',
-                                  units='Pa')
+                                  units='Pa', var_name='plev',
+                                  long_name='pressure')
 CUBE_ALT = iris.cube.Cube([1.0], var_name='x',
                           aux_coords_and_dims=[(ALT_COORD, 0)])
 CUBE_ALT_MASKED = iris.cube.Cube([1.0], var_name='x',
