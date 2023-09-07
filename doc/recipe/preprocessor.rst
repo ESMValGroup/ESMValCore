@@ -91,19 +91,19 @@ supported too if proper `operator_kwargs` are specified:
 ============================== ================================================= =====================================
 `operator`                     Corresponding :class:`~iris.analysis.Aggregator`  Weighted? [1]_
 ============================== ================================================= =====================================
-``gmean``                      :const:`~iris.analysis.GMEAN`                     no
-``hmean``                      :const:`~iris.analysis.HMEAN`                     no
-``max``                        :const:`~iris.analysis.MAX`                       no
-``mean``                       :const:`~iris.analysis.MEAN`                      yes
-``median``                     :const:`~iris.analysis.PERCENTILE` [2]_           no
-``min``                        :const:`~iris.analysis.MIN`                       no
-``peak``                       :const:`~iris.analysis.PEAK`                      no
-``percentile``                 :const:`~iris.analysis.PERCENTILE`                no
-``rms``                        :const:`~iris.analysis.RMS`                       yes
-``std_dev``                    :const:`~iris.analysis.STD_DEV`                   no
-``sum``                        :const:`~iris.analysis.SUM`                       yes
-``variance``                   :const:`~iris.analysis.VARIANCE`                  no
-``wpercentile``                :const:`~iris.analysis.WPERCENTILE`               yes
+``gmean``                      :const:`iris.analysis.GMEAN`                      no
+``hmean``                      :const:`iris.analysis.HMEAN`                      no
+``max``                        :const:`iris.analysis.MAX`                        no
+``mean``                       :const:`iris.analysis.MEAN`                       yes
+``median``                     :const:`iris.analysis.PERCENTILE` [2]_            no
+``min``                        :const:`iris.analysis.MIN`                        no
+``peak``                       :const:`iris.analysis.PEAK`                       no
+``percentile``                 :const:`iris.analysis.PERCENTILE`                 no
+``rms``                        :const:`iris.analysis.RMS`                        yes
+``std_dev``                    :const:`iris.analysis.STD_DEV`                    no
+``sum``                        :const:`iris.analysis.SUM`                        yes
+``variance``                   :const:`iris.analysis.VARIANCE`                   no
+``wpercentile``                :const:`iris.analysis.WPERCENTILE`                yes
 ============================== ================================================= =====================================
 
 .. [1] The following preprocessor support weighted statistics by default:
@@ -113,7 +113,7 @@ supported too if proper `operator_kwargs` are specified:
     time intervals; :func:`~esmvalcore.preprocessor.volume_statistics`:
     weighted by grid cell volumes (see also
     :ref:`preprocessors_using_supplementary_variables`);
-    ::func:`~esmvalcore.preprocessor.axis_statistics`: weighted by
+    :func:`~esmvalcore.preprocessor.axis_statistics`: weighted by
     corresponding coordinate bounds.
 .. [2] :class:`~iris.analysis.MEDIAN` is not lazy.
 
