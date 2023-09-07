@@ -43,6 +43,7 @@ from esmvalcore.preprocessor import (
     PreprocessorFile,
 )
 from esmvalcore.preprocessor._area import _update_shapefile_path
+from esmvalcore.preprocessor._multimodel import _get_stat_identifier
 from esmvalcore.preprocessor._other import _group_products
 from esmvalcore.preprocessor._regrid import (
     _spec_to_latlonvals,
@@ -562,14 +563,6 @@ def _get_tag(step, identifier, statistic):
         tag = identifier + statistic.title()
 
     return tag
-
-
-def _get_stat_identifier(statistic, statistic_kwargs):
-    if statistic_kwargs is not None:
-        if 'percent' in statistic_kwargs:
-            statistic += str(statistic_kwargs['percent'])
-    statistic = statistic.replace('.', '-')
-    return statistic
 
 
 def _update_multiproduct(input_products, order, preproc_dir, step):

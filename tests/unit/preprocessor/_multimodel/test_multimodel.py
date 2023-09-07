@@ -238,6 +238,7 @@ VALIDATION_DATA_SUCCESS = (
     # test multiple statistics
     ('overlap', ('min', 'max'), ((1, 1), (9, 9))),
     ('full', ('min', 'max'), ((1, 1, 1), (9, 9, 5))),
+    ('full', ('percentile', 'percentile'), ((5, 5, 3), (8.96, 8.96, 4.98))),
 )
 
 
@@ -329,14 +330,23 @@ def test_multimodel_statistics(frequency, span, statistics, expected):
     kwargs = {}
     if statistics == ('percentile', ):
         kwargs['statistics_kwargs'] = [{'percent': 50.0}]
+    elif statistics == ('percentile', 'percentile'):
+        kwargs['statistics_kwargs'] = [{'percent': 50}, {'percent': 99.5}]
 
     result = multi_model_statistics(cubes, span, statistics, **kwargs)
 
     assert isinstance(result, dict)
-    assert set(result.keys()) == set(statistics)
+    stat_ids = [
+        mm._get_stat_identifier(s, k) for (s, k) in zip(
+            statistics, kwargs.get(
+                'statistics_kwargs', [None] * len(statistics)
+            )
+        )
+    ]
+    assert set(result.keys()) == set(stat_ids)
 
-    for i, statistic in enumerate(statistics):
-        result_cube = result[statistic]
+    for i, stat_id in enumerate(stat_ids):
+        result_cube = result[stat_id]
         # make sure that temporary coord has been removed
         with pytest.raises(iris.exceptions.CoordinateNotFoundError):
             result_cube.coord('multi-model')
@@ -393,6 +403,29 @@ def test_lazy_data_inconsistent_times(span):
 
     result_cube = result[statistic]
     assert result_cube.has_lazy_data()
+
+
+@pytest.mark.parametrize('span', SPAN_OPTIONS)
+def test_multicube_stats_dict_keys(span):
+    """Test output dict keys of ``_multicube_statistics``."""
+    cubes = (
+        generate_cube_from_dates('monthly', fill_val=1),
+        generate_cube_from_dates('monthly', fill_val=3),
+        generate_cube_from_dates('monthly', fill_val=6),
+    )
+    statistics = ['mean', 'sum', 'percentile', 'percentile']
+    kwargs = [{}, {}, {'percent': 50}, {'percent': 95.0}]
+
+    result = mm._multicube_statistics(
+        cubes, span=span, statistics=statistics, statistics_kwargs=kwargs
+    )
+
+    assert isinstance(result, dict)
+    assert len(result) == 4
+    assert 'mean' in result
+    assert 'sum' in result
+    assert 'percentile50' in result
+    assert 'percentile95.0' in result
 
 
 VALIDATION_DATA_FAIL = (
@@ -1393,23 +1426,29 @@ STATS = ['mean', 'median', 'min', 'max', 'p42.314', 'percentile', 'std_dev']
 )
 def test_single_input_multi_model_statistics(products, stat):
     """Check that ``multi_model_statistics`` works with a single cube."""
+    if stat == 'percentile':
+        stat_kwargs = [{'percent': 42.314}]
+    else:
+        stat_kwargs = [None]
     output = PreprocessorFile()
-    output_products = {'': {stat: output}}
+    output_products = {
+        '': {mm._get_stat_identifier(stat, stat_kwargs[0]): output}
+    }
     kwargs = {
         'statistics': [stat],
         'span': 'full',
         'output_products': output_products,
         'keep_input_datasets': False,
+        'statistics_kwargs': stat_kwargs,
     }
-    if stat == 'percentile':
-        kwargs['statistics_kwargs'] = [{'percent': 42.314}]
 
     results = mm.multi_model_statistics(products, **kwargs)
 
     assert len(results) == 1
 
     if isinstance(results, dict):  # for cube as input
-        cube = results[stat]
+        stat_id = mm._get_stat_identifier(stat, stat_kwargs[0])
+        cube = results[stat_id]
     else:  # for PreprocessorFile as input
         result = next(iter(results))
         assert len(result.cubes) == 1
@@ -1433,6 +1472,12 @@ def test_single_input_multi_model_statistics(products, stat):
 )
 def test_single_input_ensemble_statistics(products, stat):
     """Check that ``ensemble_statistics`` works with a single cube."""
+    if stat == 'percentile':
+        stat_kwargs = [{'percent': 42.314}]
+    else:
+        stat_kwargs = [None]
+    stat_id = mm._get_stat_identifier(stat, stat_kwargs[0])
+
     cube = generate_cube_from_dates('monthly')
     attributes = {
         'project': 'project',
@@ -1442,13 +1487,12 @@ def test_single_input_ensemble_statistics(products, stat):
     }
     products = {PreprocessorFile(cube, attributes=attributes)}
     output = PreprocessorFile()
-    output_products = {'project_dataset_exp': {stat: output}}
+    output_products = {'project_dataset_exp': {stat_id: output}}
     kwargs = {
         'statistics': [stat],
         'output_products': output_products,
+        'statistics_kwargs': stat_kwargs,
     }
-    if stat == 'percentile':
-        kwargs['statistics_kwargs'] = [{'percent': 42.314}]
 
     results = mm.ensemble_statistics(products, **kwargs)
 
@@ -1473,3 +1517,19 @@ def test_different_len_stats_kwargs_fail():
             set(), 'overlap', ['mean'], statistics_kwargs=[]
         )
     assert msg in str(exc)
+
+
+@pytest.mark.parametrize(
+    'stat,kwargs,output',
+    [
+        ('mean', {}, 'mean'),
+        ('mean', {'weights': False}, 'mean'),
+        ('percentile', {}, 'percentile'),
+        ('percentile', {'percent': 50}, 'percentile50'),
+        ('wpercentile', {'weights': False}, 'wpercentile'),
+        ('wpercentile', {'weights': False, 'percent': 5.0}, 'wpercentile5.0'),
+    ]
+)
+def test_get_stat_identifier(stat, kwargs, output):
+    """Test ``_get_stat_identifier``."""
+    assert mm._get_stat_identifier(stat, kwargs) == output

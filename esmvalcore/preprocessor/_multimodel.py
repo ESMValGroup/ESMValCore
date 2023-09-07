@@ -600,14 +600,15 @@ def _multicube_statistics(
     statistics_cubes = {}
     lazy_input = any(cube.has_lazy_data() for cube in cubes)
     for (statistic, statistic_kwargs) in zip(statistics, statistics_kwargs):
-        logger.debug('Multicube statistics: computing: %s', statistic)
+        stat_id = _get_stat_identifier(statistic, statistic_kwargs)
+        logger.debug('Multicube statistics: computing: %s', stat_id)
 
         (agg, agg_kwargs) = get_iris_aggregator(statistic, statistic_kwargs)
         if lazy_input and agg.lazy_func is not None:
             result_cube = _compute(cubes, operator=agg, **agg_kwargs)
         else:
             result_cube = _compute_eager(cubes, operator=agg, **agg_kwargs)
-        statistics_cubes[statistic] = result_cube
+        statistics_cubes[stat_id] = result_cube
 
     return statistics_cubes
 
@@ -638,8 +639,8 @@ def _multiproduct_statistics(
         statistics_kwargs=statistics_kwargs,
     )
     statistics_products = set()
-    for statistic, cube in statistics_cubes.items():
-        statistics_product = output_products[statistic]
+    for stat_id, cube in statistics_cubes.items():
+        statistics_product = output_products[stat_id]
         statistics_product.cubes = [cube]
 
         for product in products:
@@ -654,6 +655,13 @@ def _multiproduct_statistics(
     return products | statistics_products
 
 
+def _get_stat_identifier(statistic, statistic_kwargs):
+    if statistic_kwargs is not None:
+        if 'percent' in statistic_kwargs:
+            statistic += str(statistic_kwargs['percent'])
+    return statistic
+
+
 def multi_model_statistics(
     products: set[PreprocessorFile] | Iterable[Cube],
     span: str,
@@ -663,7 +671,7 @@ def multi_model_statistics(
     keep_input_datasets: bool = True,
     ignore_scalar_coords: bool = False,
     statistics_kwargs: Optional[list[dict] | list[None]] = None,
-):
+) -> dict | set:
     """Compute multi-model statistics.
 
     This function computes multi-model statistics on a list of ``products``,
@@ -758,9 +766,9 @@ def multi_model_statistics(
 
     Returns
     -------
-    dict
-        A dictionary of statistics cubes with statistics' names as keys. (If
-        input type is products, then it will return a set of output_products.)
+    dict | set
+        A :obj:`dict` of cubes or :obj:`set` of `output_products` depending on
+        the type of `products`.
 
     Raises
     ------
@@ -819,7 +827,7 @@ def ensemble_statistics(
     span: str = 'overlap',
     ignore_scalar_coords: bool = False,
     statistics_kwargs: Optional[list[dict] | list[None]] = None,
-):
+) -> dict | set:
     """Entry point for ensemble statistics.
 
     An ensemble grouping is performed on the input products.
@@ -856,8 +864,9 @@ def ensemble_statistics(
 
     Returns
     -------
-    set
-        A set of output_products with the resulting ensemble statistics.
+    dict | set
+        A :obj:`dict` of cubes or :obj:`set` of `output_products` depending on
+        the type of `products`.
 
     See Also
     --------
