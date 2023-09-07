@@ -415,10 +415,10 @@ def test_update_multiproduct_multi_model_statistics_percentile():
     assert len(output_products) == 1
     stats = output_products['']
     assert len(stats) == 2
-    assert 'percentile5-0' in stats
-    assert 'percentile95-0' in stats
-    assert 'MultiModelPercentile5-0' in str(stats['percentile5-0'].filename)
-    assert 'MultiModelPercentile95-0' in str(stats['percentile95-0'].filename)
+    assert 'percentile5.0' in stats
+    assert 'percentile95.0' in stats
+    assert 'MultiModelPercentile5-0' in str(stats['percentile5.0'].filename)
+    assert 'MultiModelPercentile95-0' in str(stats['percentile95.0'].filename)
 
 
 def test_update_multiproduct_ensemble_statistics():
