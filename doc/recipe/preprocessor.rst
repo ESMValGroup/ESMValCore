@@ -63,7 +63,8 @@ Statistical preprocessors
 
 Many preprocessors calculate statistics over data.
 Those preprocessors typically end with ``_statistics``, e.g.,
-``area_statistics`` or ``multi_model_statistics``.
+:func:`~esmvalcore.preprocessor.area_statistics` or
+:func:`~esmvalcore.preprocessor.multi_model_statistics`.
 All these preprocessors support the options `operator` and `operator_kwargs`,
 which directly correspond to :class:`iris.analysis.Aggregator` objects used to
 perform the statistical calculations.
@@ -71,9 +72,9 @@ perform the statistical calculations.
 :class:`iris.analysis.Aggregator` object.
 
 .. note::
-    The preprocessors :ref:`multi-model statistics` and
-    :ref:`ensemble statistics` support the computation of multiple statistics
-    at the same time.
+    The preprocessors :func:`~esmvalcore.preprocessor.multi_model_statistics`
+    and :func:`~esmvalcore.preprocessor.ensemble_statistics` support the
+    computation of multiple statistics at the same time.
     In these cases, they are defined by the option `statistics` (instead of
     `operator`), which takes a list of possible operators.
     Moreover, keywords arguments for these `statistics` can be given by the
@@ -90,28 +91,30 @@ supported too if proper `operator_kwargs` are specified:
 ============================== ================================================= =====================================
 `operator`                     Corresponding :class:`~iris.analysis.Aggregator`  Weighted? [1]_
 ============================== ================================================= =====================================
-``gmean``                      :class:`~iris.analysis.GMEAN`                     no
-``hmean``                      :class:`~iris.analysis.HMEAN`                     no
-``max``                        :class:`~iris.analysis.MAX`                       no
-``mean``                       :class:`~iris.analysis.MEAN`                      yes
-``median``                     :class:`~iris.analysis.PERCENTILE` [2]_           no
-``min``                        :class:`~iris.analysis.MIN`                       no
-``peak``                       :class:`~iris.analysis.PEAK`                      no
-``percentile``                 :class:`~iris.analysis.PERCENTILE`                no
-``rms``                        :class:`~iris.analysis.RMS`                       yes
-``std_dev``                    :class:`~iris.analysis.STD_DEV`                   no
-``sum``                        :class:`~iris.analysis.SUM`                       yes
-``variance``                   :class:`~iris.analysis.VARIANCE`                  no
-``wpercentile``                 :class:`~iris.analysis.WPERCENTILE`              yes
+``gmean``                      :const:`~iris.analysis.GMEAN`                     no
+``hmean``                      :const:`~iris.analysis.HMEAN`                     no
+``max``                        :const:`~iris.analysis.MAX`                       no
+``mean``                       :const:`~iris.analysis.MEAN`                      yes
+``median``                     :const:`~iris.analysis.PERCENTILE` [2]_           no
+``min``                        :const:`~iris.analysis.MIN`                       no
+``peak``                       :const:`~iris.analysis.PEAK`                      no
+``percentile``                 :const:`~iris.analysis.PERCENTILE`                no
+``rms``                        :const:`~iris.analysis.RMS`                       yes
+``std_dev``                    :const:`~iris.analysis.STD_DEV`                   no
+``sum``                        :const:`~iris.analysis.SUM`                       yes
+``variance``                   :const:`~iris.analysis.VARIANCE`                  no
+``wpercentile``                :const:`~iris.analysis.WPERCENTILE`               yes
 ============================== ================================================= =====================================
 
 .. [1] The following preprocessor support weighted statistics by default:
-    :ref:`area_statistics`: weighted by grid cell areas (see also
+    :func:`~esmvalcore.preprocessor.area_statistics`: weighted by grid cell
+    areas (see also :ref:`preprocessors_using_supplementary_variables`);
+    :func:`~esmvalcore.preprocessor.climate_statistics`: weighted by lengths of
+    time intervals; :func:`~esmvalcore.preprocessor.volume_statistics`:
+    weighted by grid cell volumes (see also
     :ref:`preprocessors_using_supplementary_variables`);
-    :ref:`climate_statistics`: weighted by lengths of time intervals;
-    :ref:`volume_statistics`: weighted by grid cell volumes (see also
-    :ref:`preprocessors_using_supplementary_variables`);
-    :ref:`axis_statistics`: weighted by corresponding coordinate bounds.
+    ::func:`~esmvalcore.preprocessor.axis_statistics`: weighted by
+    corresponding coordinate bounds.
 .. [2] :class:`~iris.analysis.MEDIAN` is not lazy.
 
 Examples
@@ -174,7 +177,7 @@ Calculate the global non-weighted root mean square:
 
 .. warning::
 
-  The disabled of weights by specifying ``operator_kwargs: {weights: False}``
+  The disabling of weights by specifying ``operator_kwargs: {weights: False}``
   needs to be used with great care; we strongly recommend to
   **not** use it!
 
