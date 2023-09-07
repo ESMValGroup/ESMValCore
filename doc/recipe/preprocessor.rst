@@ -7,8 +7,8 @@ Preprocessor
 In this section, each of the preprocessor modules is described,
 roughly following the default order in which preprocessor functions are applied:
 
-* :ref:`Overview derivation`
-* :ref:`Statistical preprocessors`
+* :ref:`Overview`
+* :ref:`stat_preprocs`
 * :ref:`Variable derivation`
 * :ref:`CMOR check and dataset-specific fixes`
 * :ref:`preprocessors_using_supplementary_variables`
@@ -31,6 +31,8 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Other`
 
 See :ref:`preprocessor_functions` for implementation details and the exact default order.
+
+.. _overview:
 
 Overview
 ========
@@ -69,8 +71,8 @@ perform the statistical calculations.
 :class:`iris.analysis.Aggregator` object.
 
 .. note::
-    The preprocessors :ref:`multi_model_statistics` and
-    :ref:`ensemble_statistics` support the computation of multiple statistics
+    The preprocessors :ref:`multi-model statistics` and
+    :ref:`ensemble statistics` support the computation of multiple statistics
     at the same time.
     In these cases, they are defined by the option `statistics` (instead of
     `operator`), which takes a list of possible operators.
@@ -86,13 +88,13 @@ supported too if proper `operator_kwargs` are specified:
 .. _supported_stat_operator:
 
 ============================== ================================================= =====================================
-`operator`                     Corresponding :class:`~iris.analysis.Aggregator`  Weighted?[1]_
+`operator`                     Corresponding :class:`~iris.analysis.Aggregator`  Weighted? [1]_
 ============================== ================================================= =====================================
 ``gmean``                      :class:`~iris.analysis.GMEAN`                     no
 ``hmean``                      :class:`~iris.analysis.HMEAN`                     no
 ``max``                        :class:`~iris.analysis.MAX`                       no
 ``mean``                       :class:`~iris.analysis.MEAN`                      yes
-``median``                     :class:`~iris.analysis.PERCENTILE`[2]_            no
+``median``                     :class:`~iris.analysis.PERCENTILE` [2]_           no
 ``min``                        :class:`~iris.analysis.MIN`                       no
 ``peak``                       :class:`~iris.analysis.PEAK`                      no
 ``percentile``                 :class:`~iris.analysis.PERCENTILE`                no
@@ -2191,6 +2193,7 @@ No depth coordinate is required as this is determined by Iris.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 
+.. _axis_statistics:
 
 ``axis_statistics``
 ---------------------
