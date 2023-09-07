@@ -814,6 +814,8 @@ def climate_statistics(
                 module='iris',
             )
             clim_cube = cube.collapsed('time', agg, **agg_kwargs)
+        if clim_cube.coords('time_weights'):
+            clim_cube.remove_coord('time_weights')
 
     # Use Cube.aggregated_by for other periods
     else:

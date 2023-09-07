@@ -116,6 +116,7 @@ class Test(tests.Test):
         expected = np.average(data, axis=1, weights=weights)
         self.assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-3')
+        self.assertFalse(result.coords('axis_statistics_weights'))
 
     def test_axis_statistics_median(self):
         """Test axis statistics in with operator median."""
