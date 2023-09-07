@@ -1,134 +1,120 @@
-
-// Control tab "All", as Bootstrap doesn't provide apropriate controls
-$("#tabAll").on("click", function() {
-    $(this).addClass("active").parent("li").siblings().find("button").removeClass("active");
-    $(".diagnostics-tab-pane").addClass("active").addClass("show");
+// Set up events with jQuery
+// Specific events are defined as anonymous functions
+$(document).ready(function() {
+  
+    $("#tabAll").on("click", function() {
+        /**
+         * Functionality for tab "All", as it is not supported
+         * by Bootstrap.
+         */
+        
+        // Both activate this tab
+        $(this).addClass("active")
+        // and deactivate other tabs
+        .parent("li").siblings().find("button").removeClass("active");
+        
+        // Show all non-filtered tab panes
+        let tabPanes = $(".diagnostics-tab-pane");
+        if ($("#cb_hideEmptyDiagnostics").prop("checked")){
+            tabPanes = tabPanes.not(".filtered")
+        }
+        tabPanes.addClass("active").addClass("show");
+    });
+  
+    $(".diagnostics-tab").not("#tabAll").on("click", function() {
+        /**
+         * Upgrades Bootstrap tab functionality to deactivate
+         * tab "All" by hiding all non-selected panes, as
+         * Bootstrap hides only one pane.
+         */
+        $(".diagnostics-tab-pane").not($(this).attr("data-bs-target"))
+        .removeClass("active").removeClass("show");
+    });
+  
+    // Checkbox "Hide empty diagnostics"
+    $("#cb_hideEmptyDiagnostics").on("click", hideEmptyTabPanes);
+  
+    $("#b_deleteFilters").on("click", function(){
+        /**
+         * Unchecks all filters and disables "Delete filters" button.
+         */
+        $(".filter_cb").prop("checked", false);
+        applyFilters();
+        $(this).prop("disabled", true);
+    })
+  
+    $(".filter_cb").on("click", function(){
+        /**
+         * Update visibility of figures and panes when filters
+         * are applied, and set up disable filters button.
+         */
+        applyFilters();
+    
+        let areFiltersClear = $(".filter_cb:checked").length === 0;
+        $("#b_deleteFilters").prop("disabled", areFiltersClear);
+    });
 });
-// Manual deactivation is necessary as Bootstrap assumes only one tab-pane is active
-$(".diagnostics-tab").not("#tabAll").on("click", function() {
-    $(".diagnostics-tab-pane").not(this.dataset.bsTarget).removeClass("active").removeClass("show");
-});
 
-// function openTab(evt) {
-//     // Get all elements with class="tablinks" and remove the class "activeTablink"
-//     var tablinks = document.getElementsByClassName("tablinks");
-//     for (var i = 0; i < tablinks.length; i++) {
-//         tablinks[i].className = tablinks[i].className.replace(" activeTablink", "");
-//     }
-//     // Add an "activeTablink" class to the button that opened the tab
-//     evt.currentTarget.className += " activeTablink";
+function applyFilters(){
+    /**
+     * Updates visibility according to filters.
+     */
+    filterFigures();
+    filterTabs();
+    hideEmptyTabPanes();
+}
 
-//     updateTabVisibility();
-// }
+function filterFigures(){
+    /**
+     * Update visibility of filtered figures.
+     */
+    let allFigures = $(".div_figure");
+    let selectedFigures = allFigures;
+    $(".filter_category").each(function() {
+        let selection = $(this).find(":checked").map(function() {
+            // Returns the figures that the checkbox relates to.
+            return $("."+$(this).attr("rel")).get();
+        });
+        if (selection.length !== 0){
+            selectedFigures = selectedFigures.filter(selection);
+        }
+    });
+    selectedFigures.addClass("selected").show();
+    allFigures.not(selectedFigures).removeClass("selected").hide();
+}
 
+function filterTabs(){
+    /**
+     * Disable tab buttons for empty diagnostics and
+     * mark empty tabPanes.
+     */
+    $(".diagnostics-tab").not("#tabAll").each(function() {
+        let tabPane = $($(this).attr("data-bs-target"))
+        if (tabPane.find(".div_figure.selected").length === 0){
+            $(this).addClass("disabled");
+            tabPane.addClass("filtered");
+        } else {
+            $(this).removeClass("disabled");
+            tabPane.removeClass("filtered");
+        }
 
-// function updateFilter(){
-//     var filterTypes = document.querySelectorAll(".div_filter div");
-    
-//     var filters = Array(filterTypes.length);
-//     for (let i = 0; i < filterTypes.length; i++){
-//         let filterType = filterTypes[i];
-//         let checkboxes = document.querySelectorAll("."+ filterType.className +" input[type='checkbox']");
-//         filters[i] = getSelectedFilters(checkboxes);
-//     }
+        // If the active tab is disabled, change to "All"
+        if($(".diagnostics-tab.active").hasClass("disabled")){
+            $("#tabAll").click();
+        }
+    });
+}
 
-//     applyFilter(filters);
-//     updateTabVisibility();
-// }
-
-// function updateTabVisibility(){
-//     // Find active tablink
-//     var activeTablink = document.getElementsByClassName("activeTablink")[0];
-
-//     // Get all elements with class="tabcontent" and hide them    
-//     var tabcontent = document.getElementsByClassName("tabcontent");
-//     for (let tab of tabcontent) {
-//         var hideEmpty = document.getElementById("cb_hideEmptyDiagnostics").checked;
-//         let hideThisTab = false;
-//         if (hideEmpty){
-//             let figures = tab.getElementsByClassName("div_figure");
-//             hideThisTab = true;
-//             for (let fig of figures){
-//                 if (fig.style.display === ""){ // Default value
-//                     hideThisTab = false;
-//                     break;
-//                 }
-//             }
-//         }
-//         if (hideThisTab && tab.id === activeTablink.value){
-//             // Current tab will be hidden, so tab has to be changed to al
-//             activeTablink.className = activeTablink.className.replace(" activeTablink", "");
-//             let tabAll = document.getElementById("tabAll");
-//             tabAll.className += " activeTablink";
-            
-//             // Reset method and leave
-//             updateTabVisibility();
-//             return;
-//         }
-
-//         tab.style.display = (
-//             !hideThisTab
-//             && (activeTablink.id === "tabAll" || tab.id === activeTablink.value)
-//             )? "block" : "none";
-//     }
-// }
-
-
-// function getSelectedFilters(checkboxes) {
-//   var classes = [];
-
-//     if (checkboxes && checkboxes.length > 0) {
-//         for (var i = 0; i < checkboxes.length; i++) {
-//             var cb = checkboxes[i];
-
-//             if (cb.checked) {
-//                 classes.push(cb.getAttribute("rel"));
-//             }
-//         }
-//     }
-
-//     return classes;
-// }
-
-
-// function applyFilter(filters){
-//     var figures = document.getElementsByClassName("div_figure");
-    
-//     if (!figures || figures.length === 0){
-//         return;
-//     }
-    
-//     for (const fig of figures){
-//         // Show figure by returning to default value
-//         fig.style.removeProperty("display");
-//         for (const selection of filters){
-//             if (selection.length === 0) {
-//                 continue;
-//             }
-//             let hide = true;
-//             for (const element of selection){
-//                 if (fig.classList.contains(element)){
-//                     hide = false;
-//                 }
-//             }
-//             if (hide){
-//                 fig.style.display = "none";
-//                 break; // Once it's hidden, there's no need to check more
-//             }
-//         }
-//     }
-
-// }
-
-
-// function resetFilter(){
-//     var filters = document.querySelectorAll(".div_filter input[type='checkbox']");
-//     for (const f of filters){
-//         f.checked = false;
-//     }
-//     updateFilter();
-// }
-
-// // Default actions
-// hideDataFiles();
-// resetFilter();
+function hideEmptyTabPanes(){
+    /**
+     * Hide empty tab panes. It's separated from "filterTabs()"
+     * to reuse on the "Hide empty diagnostics" checkbox
+     */
+    if($("#tabAll").hasClass("active")){
+        let panes = $(".diagnostics-tab-pane");
+        panes.addClass("active").addClass("show");
+        if ($("#cb_hideEmptyDiagnostics").prop("checked")){
+            panes.filter(".filtered").removeClass("active").removeClass("show");
+        }
+    }
+}
