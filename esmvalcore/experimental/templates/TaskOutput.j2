@@ -32,6 +32,7 @@
 
 {% endfor %}
 
+{% if task.data_files|length > 0 %}
 <h4>Data files <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#df_{{ diagnostic_loop.index }}_{{ loop.index }}" aria-expanded="false" aria-controls="df_{{ diagnostic_loop.index }}_{{ loop.index }}">Show/Hide</button></h4>
 
 <div id="df_{{ diagnostic_loop.index }}_{{ loop.index }}" class="collapse">
@@ -51,3 +52,4 @@
         </ul>
     </div>
 </div>
+{% endif %}
