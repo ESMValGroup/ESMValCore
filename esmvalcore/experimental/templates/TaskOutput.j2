@@ -2,7 +2,7 @@
 
 {% for file in task.image_files %}
 
-<div class="div_figure
+<div class="div_figure d-inline-flex
 {% for filter_name in filters.keys() %}
     {% if filter_name in file.attributes %}
         {% set attribute = file.attributes[filter_name] %}
@@ -14,11 +14,11 @@
     {% endif %}
 {% endfor %}
 ">
-    <figure>
+    <figure class="figure">
         <a href='{{ relpath(file.path, session.session_dir) }}'>
-        <img src='{{ relpath(file.path, session.session_dir) }}' alt='{{ file.caption }}'/>
+        <img class="figure-img img-fluid" src='{{ relpath(file.path, session.session_dir) }}' alt='{{ file.caption }}'/>
         </a>
-        <figcaption>
+        <figcaption class="figure-caption">
             {{ file.caption }}
             <br>
             <br>
