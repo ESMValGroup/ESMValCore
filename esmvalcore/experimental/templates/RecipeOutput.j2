@@ -12,10 +12,10 @@
       </button>
       <div class="dropdown-menu min-vw-100">
         <div class="container div_filter">
-          <div class="row row-cols-auto">
+          <div class="row d-flex justify-content-center">
             {% for filter_name, filter_values in filters.items() %}
             {% set filter_loop = loop %}
-            <div class="col col-lg-3 filter_category" id="filter_{{ filter_name|replace(' ', '_') }}">
+            <div class="col-lg-3 col-sm-6 filter_category" id="filter_{{ filter_name|replace(' ', '_') }}">
                 <h4>{{ filter_name|replace('_', ' ')|title }}</h4>
                 {% for value in filter_values %}
                 <div class="form-check">
@@ -28,13 +28,16 @@
             </div>
             {% endfor %}
           </div>
-          <button class="btn btn-primary" id="b_deleteFilters" disabled>Delete Filters</button>
-
-          <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" value="" id="cb_hideEmptyDiagnostics" rel="" checked>
-            <label class="form-check-label" for="cb_hideEmptyDiagnostics">
-              Hide empty diagnostics
-            </label>
+          <div class="d-flex justify-content-center align-items-center gap-3">
+            <div class="d-inline-block">
+              <button class="btn btn-primary" id="b_deleteFilters" disabled>Delete Filters</button>
+            </div>
+            <div class="form-check form-switch d-inline-block">
+              <input class="form-check-input" type="checkbox" value="" id="cb_hideEmptyDiagnostics" rel="" checked>
+              <label class="form-check-label" for="cb_hideEmptyDiagnostics">
+                Hide empty diagnostics
+              </label>
+            </div>
           </div>
         </div>
       </div>
