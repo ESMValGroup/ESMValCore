@@ -79,8 +79,10 @@ function filterFigures(){
             selectedFigures = selectedFigures.filter(selection);
         }
     });
-    selectedFigures.addClass("selected").show();
-    allFigures.not(selectedFigures).removeClass("selected").hide();
+    selectedFigures.addClass("selected") // affects the div
+    .find("figure").show(); // affects figure inside the div
+    allFigures.not(selectedFigures).removeClass("selected") // affects the div
+    .find("figure").hide(); // affects figure inside the div
 }
 
 function filterTabs(){
