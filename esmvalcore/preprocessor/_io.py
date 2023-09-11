@@ -15,6 +15,7 @@ from warnings import catch_warnings, filterwarnings
 import iris
 import iris.aux_factory
 import iris.exceptions
+import numpy as np
 import yaml
 from cf_units import suppress_errors
 from iris.cube import CubeList
@@ -321,8 +322,14 @@ def save(cubes,
         return filename
 
     for cube in cubes:
-        logger.debug("Saving cube:\n%s\nwith %s data to %s", cube,
-                     "lazy" if cube.has_lazy_data() else "realized", filename)
+        logger.info("Saving cube:\n%s\nwith %s data to %s", cube,
+                    "lazy" if cube.has_lazy_data() else "realized", filename)
+        if cube.has_lazy_data():
+            logger.info("Computing graph of size %s",
+                        len(cube.lazy_data().dask))
+            for value in cube.lazy_data().dask.values():
+                if isinstance(value, np.ndarray):
+                    logger.debug("Found numpy array in graph: %r", value)
     if optimize_access:
         cube = cubes[0]
         if optimize_access == 'map':
