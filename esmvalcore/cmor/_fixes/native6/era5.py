@@ -123,6 +123,19 @@ class Clw(Fix):
         return cubes
 
 
+class Clwvi(Fix):
+    """Fixes for ``clwvi``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = (
+            cubes.extract_cube(NameConstraint(var_name='tciw')) +
+            cubes.extract_cube(NameConstraint(var_name='tclw'))
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
 class Evspsbl(Fix):
     """Fixes for evspsbl."""
 
@@ -168,7 +181,6 @@ class Lwcre(Fix):
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
-        print(cubes)
         cube = (
             cubes.extract_cube(NameConstraint(var_name='mtnlwrf')) -
             cubes.extract_cube(NameConstraint(var_name='mtnlwrfcs'))
@@ -406,7 +418,6 @@ class Swcre(Fix):
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
-        print(cubes)
         cube = (
             cubes.extract_cube(NameConstraint(var_name='mtnswrf')) -
             cubes.extract_cube(NameConstraint(var_name='mtnswrfcs'))
