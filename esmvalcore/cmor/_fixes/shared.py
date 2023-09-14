@@ -149,6 +149,27 @@ def add_altitude_from_plev(cube):
         "Cannot add 'altitude' coordinate, 'air_pressure' coordinate not "
         "available")
 
+def add_model_level(cube):
+    """Add a simplified level coordinate
+
+    Parameters
+    ----------
+    cube : iris.cube.Cube
+        Input cube.
+
+    Raises
+    ------
+    """
+    z_coord = cube.coord(axis='z', dim_coords=True)
+    n_levels = list(z_coord.shape)[0]
+    levels = np.array(range(n_levels+1, 1, -1),
+                      ndmin=1)
+    level_coords = iris.coords.AuxCoord(levels,
+                                        bounds=None,
+                                        standard_name='model_level_number',
+                                        units='1')
+    cube.add_aux_coord(level_coords, cube.coord_dims(z_coord))
+    return
 
 def add_scalar_depth_coord(cube, depth=0.0):
     """Add scalar coordinate 'depth' with value of `depth`m."""

@@ -53,19 +53,10 @@ class EmacFix(NativeDatasetFix):
         output file.
 
         Currently, the following cubes can be added:
-        - 'hyam'
-        - 'hybm'
-        - 'hyai'
-        - 'hybi'
-
-        Code Delphi start here
-
-
-        - `zg` (`geometric_height_at_full_level_center`) from facet `zg_file`.
-          This can be used as vertical coordinate.
-        - `zghalf` (`geometric_height_at_half_level_center`) from facet
-          `zghalf_file`. This can be used as bounds for the vertical
-          coordinate.
+        - 'hyam' from facet `vct_table`
+        - 'hybm' from facet `vct_table`
+        - 'hyai' from facet `vct_table`
+        - 'hybi' from facet `vct_table`
 
         Note
         ----
@@ -91,8 +82,7 @@ class EmacFix(NativeDatasetFix):
 
         """
         facets_to_consider = [
-            'zg_file',
-            'zghalf_file',
+            'vct_table',
         ]
         for facet in facets_to_consider:
             if facet not in self.extra_facets:

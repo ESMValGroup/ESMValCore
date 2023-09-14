@@ -19,7 +19,7 @@ from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
 from iris.util import broadcast_to_shape
 
-from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
+from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude, add_model_level
 from ..cmor.table import CMOR_TABLES
 from ._other import get_array_module
 from ._regrid_esmpy import ESMF_REGRID_METHODS
@@ -988,6 +988,10 @@ def extract_levels(cube,
             if coordinate == 'altitude' and 'air_pressure' in coord_names:
                 # Calculate altitude coordinate from pressure levels.
                 add_altitude_from_plev(cube)
+            if coordinate == 'model_level_number':
+                # Add simple model_level_number coordinate
+                add_model_level(cube)
+
         src_levels = cube.coord(coordinate)
     else:
         src_levels = cube.coord(axis='z', dim_coords=True)
