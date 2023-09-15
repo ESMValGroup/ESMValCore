@@ -66,8 +66,8 @@ def test_recipe_output_add_to_filters_no_valid_attributes():
     filters: dict = {}
     invalid = "invalid_attribute"
     recipe_output.RecipeOutput._add_to_filters(filters, {invalid: "value"})
-    assert invalid not in recipe_output.RecipeOutput.FILTER_ATTRS and len(
-        filters) == 0
+    assert (invalid not in recipe_output.RecipeOutput.FILTER_ATTRS
+            and len(filters) == 0)
 
 
 def test_recipe_output_sort_filters():
