@@ -136,7 +136,6 @@ class RecipeOutput(Mapping):
         self.diagnostics = {}
         self.info = info
         self.session = session
-        self.filters: dict = {}
 
         # Group create task output and group by diagnostic
         diagnostics: dict = {}
@@ -149,6 +148,7 @@ class RecipeOutput(Mapping):
             diagnostics[name].append(task)
 
         # Create diagnostic output
+        filters: dict = {}
         for name, tasks in diagnostics.items():
             # TODO? This could fail if info is None
             diagnostic_info = info.data['diagnostics'][name]
@@ -162,29 +162,32 @@ class RecipeOutput(Mapping):
             # Add data to filters
             for task in tasks:
                 for file in task.files:
-                    self._add_to_filters(file.attributes)
+                    RecipeOutput._add_to_filters(filters, file.attributes)
 
         # Sort at the end because sets are unordered
-        self._sort_filters()
+        self.filters = RecipeOutput._sort_filters(filters)
 
-    def _add_to_filters(self, attributes):
+    @classmethod
+    def _add_to_filters(cls, filters, attributes):
         """Adds valid values to the HTML output filters."""
         for attr in RecipeOutput.FILTER_ATTRS:
             if attr not in attributes:
                 continue
             values = attributes[attr]
             # `set()` to avoid duplicates
-            attr_list = self.filters.get(attr, set())
+            attr_list = filters.get(attr, set())
             if (isinstance(values, str) or not isinstance(values, Sequence)):
                 attr_list.add(values)
             else:
                 attr_list.update(values)
-            self.filters[attr] = attr_list
+            filters[attr] = attr_list
 
-    def _sort_filters(self):
+    @classmethod
+    def _sort_filters(cls, filters):
         """Sorts the HTML output filters."""
-        for _filter, _attrs in self.filters.items():
-            self.filters[_filter] = sorted(_attrs)
+        for _filter, _attrs in filters.items():
+            filters[_filter] = sorted(_attrs)
+        return filters
 
     def __repr__(self):
         """Return canonical string representation."""
