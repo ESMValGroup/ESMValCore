@@ -60,7 +60,7 @@ def test_recipe_output_add_to_filters_no_attributes():
     assert len(filters) == 0
 
 
-def test_recipe_output_add_to_filters_no_valid_attributes(mocker):
+def test_recipe_output_add_to_filters_no_valid_attributes():
     """Test `RecipeOutput._add_to_filters` with no valid attributes."""
 
     filters: dict = {}
@@ -70,7 +70,7 @@ def test_recipe_output_add_to_filters_no_valid_attributes(mocker):
         filters) == 0
 
 
-def test_recipe_output_sort_filters(mocker):
+def test_recipe_output_sort_filters():
     """Coverage test for `RecipeOutput._sort_filters`."""
 
     filters: dict = {}
