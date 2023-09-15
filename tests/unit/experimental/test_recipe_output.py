@@ -33,7 +33,7 @@ def test_diagnostic_output_repr(mocker):
 def test_recipe_output_add_to_filters():
     """Coverage test for `RecipeOutput._add_to_filters`."""
 
-    filters: dict = {}
+    filters = {}
     valid_attr = recipe_output.RecipeOutput.FILTER_ATTRS[0]
 
     recipe_output.RecipeOutput._add_to_filters(filters,
@@ -55,7 +55,7 @@ def test_recipe_output_add_to_filters():
 def test_recipe_output_add_to_filters_no_attributes():
     """Test `RecipeOutput._add_to_filters` with no attributes."""
 
-    filters: dict = {}
+    filters = {}
     recipe_output.RecipeOutput._add_to_filters(filters, {})
     assert len(filters) == 0
 
@@ -63,7 +63,7 @@ def test_recipe_output_add_to_filters_no_attributes():
 def test_recipe_output_add_to_filters_no_valid_attributes():
     """Test `RecipeOutput._add_to_filters` with no valid attributes."""
 
-    filters: dict = {}
+    filters = {}
     invalid = "invalid_attribute"
     recipe_output.RecipeOutput._add_to_filters(filters, {invalid: "value"})
     assert (invalid not in recipe_output.RecipeOutput.FILTER_ATTRS
@@ -73,7 +73,7 @@ def test_recipe_output_add_to_filters_no_valid_attributes():
 def test_recipe_output_sort_filters():
     """Coverage test for `RecipeOutput._sort_filters`."""
 
-    filters: dict = {}
+    filters = {}
     valid_attr = recipe_output.RecipeOutput.FILTER_ATTRS[0]
     unsorted_attributes = ["1", "2", "4", "value", "3"]
     recipe_output.RecipeOutput._add_to_filters(
