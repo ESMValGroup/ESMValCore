@@ -194,6 +194,11 @@ authors:
     affiliation: "Forschungszentrum Juelich (FZJ), Germany"
     family-names: Benke
     given-names: Joerg
+  -
+    affiliation: "MetOffice, UK"
+    family-names: Savage
+    given-names: Nicholas Henry
+    orcid: "https://orcid.org/0000-0001-9391-5100"
 
 cff-version: 1.2.0
 date-released: 2023-07-04
