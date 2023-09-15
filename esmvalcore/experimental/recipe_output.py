@@ -150,7 +150,6 @@ class RecipeOutput(Mapping):
         # Create diagnostic output
         filters: dict = {}
         for name, tasks in diagnostics.items():
-            # TODO? This could fail if info is None
             diagnostic_info = info.data['diagnostics'][name]
             self.diagnostics[name] = DiagnosticOutput(
                 name=name,
