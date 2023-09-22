@@ -160,6 +160,29 @@ def _group_identical_facets(variable: Mapping[str, Any]) -> Recipe:
     return result
 
 
+class _SortableDict(dict):
+    """A `dict` class that can be sorted."""
+
+    def __lt__(self, other):
+        if self.keys() == other.keys():
+            return tuple(self.values()) < tuple(other.values())
+        else:
+            return tuple(self.keys()) < tuple(other.keys())
+
+
+def _change_dict_type(item, dict_type):
+    """Change the dict type in a nested structure."""
+    change_dict_type = partial(_change_dict_type, dict_type=dict_type)
+    if isinstance(item, dict):
+        new = dict_type()
+        for key, value in item.items():
+            new[key] = change_dict_type(value)
+        return new
+    if isinstance(item, (list, tuple, set)):
+        return type(item)(change_dict_type(elem) for elem in item)
+    return item
+
+
 def _group_ensemble_members(dataset_facets: Iterable[Facets]) -> list[Facets]:
     """Group ensemble members.
 
@@ -168,10 +191,10 @@ def _group_ensemble_members(dataset_facets: Iterable[Facets]) -> list[Facets]:
     """
 
     def grouper(facets):
-        return tuple((k, facets[k]) for k in sorted(facets)
-                     if k not in ('supplementary_variables', 'ensemble'))
+        return tuple((k, facets[k]) for k in sorted(facets) if k != 'ensemble')
 
     result = []
+    dataset_facets = _change_dict_type(dataset_facets, _SortableDict)
     dataset_facets = sorted(dataset_facets, key=grouper)
     for group_facets, group in itertools.groupby(dataset_facets, key=grouper):
         ensembles = [f['ensemble'] for f in group if 'ensemble' in f]
@@ -182,6 +205,7 @@ def _group_ensemble_members(dataset_facets: Iterable[Facets]) -> list[Facets]:
                 facets = dict(group_facets)
                 facets['ensemble'] = ensemble
                 result.append(facets)
+    result = _change_dict_type(result, dict)
     return result
 
 
