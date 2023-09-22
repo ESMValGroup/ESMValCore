@@ -261,6 +261,27 @@ def concatenate(cubes):
     return result
 
 
+def _log_save_info(cubes, filename):
+    """Log some information on the save/compute operation."""
+    for cube in cubes:
+        logger.debug("Saving cube:\n%s\nwith %s data to %s", cube,
+                     "lazy" if cube.has_lazy_data() else "realized", filename)
+        if cube.has_lazy_data():
+            graph_len = len(cube.lazy_data().dask)
+            if graph_len < 100_000:
+                logger.debug(
+                    "Computing Dask graph of %s tasks while saving %s",
+                    graph_len, filename)
+            else:
+                # https://docs.dask.org/en/stable/best-practices.html#avoid-very-large-graphs
+                logger.warning(
+                    "Computing large Dask graph of %s tasks while saving %s, "
+                    "expect poor computational performance or a crash. "
+                    "Please report the issue on "
+                    "https://github.com/esMValGroup/esMValCore/issues.",
+                    graph_len, filename)
+
+
 def save(cubes,
          filename,
          optimize_access='',
@@ -320,9 +341,6 @@ def save(cubes,
             "The cube is probably unchanged.", cubes, filename)
         return filename
 
-    for cube in cubes:
-        logger.debug("Saving cube:\n%s\nwith %s data to %s", cube,
-                     "lazy" if cube.has_lazy_data() else "realized", filename)
     if optimize_access:
         cube = cubes[0]
         if optimize_access == 'map':
@@ -348,6 +366,8 @@ def save(cubes,
             logger.debug('Changing var_name from %s to %s', cube.var_name,
                          alias)
             cube.var_name = alias
+
+    _log_save_info(cubes, filename)
     iris.save(cubes, **kwargs)
 
     return filename
