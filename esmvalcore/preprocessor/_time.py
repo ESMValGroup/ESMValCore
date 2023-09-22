@@ -861,19 +861,28 @@ def anomalies(
     return cube
 
 
-def _compute_anomalies(cube, reference, period, seasons):
+def _compute_anomalies(
+    cube: Cube,
+    reference: Cube,
+    period: str,
+    seasons: Iterable[str],
+):
     cube_coord = _get_period_coord(cube, period, seasons)
     ref_coord = _get_period_coord(reference, period, seasons)
     indices = np.empty_like(cube_coord.points, dtype=np.int32)
-    for idx, value in enumerate(ref_coord.points):
-        indices = np.where(value == cube_coord.points, idx, indices)
+    for idx, point in enumerate(ref_coord.points):
+        indices = np.where(cube_coord.points == point, idx, indices)
     ref_data = reference.core_data()
-    if reference.has_lazy_data():
+    axis, = cube.coord_dims(cube_coord)
+    if cube.has_lazy_data() and reference.has_lazy_data():
         # Rechunk reference data because iris.cube.Cube.aggregate_by, used to
         # compute the reference, produces very small chunks.
         # https://github.com/SciTools/iris/issues/5455
-        ref_data = ref_data.rechunk()
-    axis = cube.coord_dims(cube_coord)[0]
+        ref_chunks = tuple(
+            -1 if i == axis else chunk
+            for i, chunk in enumerate(cube.lazy_data().chunks)
+        )
+        ref_data = ref_data.rechunk(ref_chunks)
     with dask.config.set({"array.slicing.split_large_chunks": True}):
         ref_data_broadcast = da.take(ref_data, indices=indices, axis=axis)
     data = cube.core_data() - ref_data_broadcast
