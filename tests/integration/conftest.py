@@ -23,7 +23,6 @@ def session(tmp_path, monkeypatch):
         monkeypatch.setitem(_config.CFG[project]['input_dir'], 'default', '/')
     # The patched datafinder fixture does not return any facets, so automatic
     # supplementary definition does not work with it.
-    session['use_legacy_supplementaries'] = True
     return session
 
 

@@ -452,8 +452,6 @@ def test_from_recipe_with_supplementary(session, tmp_path):
 
 
 def test_from_recipe_with_skip_supplementary(session, tmp_path):
-    session['use_legacy_supplementaries'] = False
-
     recipe_txt = textwrap.dedent("""
 
     datasets:
@@ -501,7 +499,6 @@ def test_from_recipe_with_skip_supplementary(session, tmp_path):
 
 def test_from_recipe_with_automatic_supplementary(session, tmp_path,
                                                   monkeypatch):
-    session['use_legacy_supplementaries'] = False
 
     def _find_files(self):
         if self.facets['short_name'] == 'areacello':

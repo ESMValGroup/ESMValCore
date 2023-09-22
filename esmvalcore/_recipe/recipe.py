@@ -9,7 +9,6 @@ from collections import defaultdict
 from copy import deepcopy
 from itertools import groupby
 from pathlib import Path
-from pprint import pformat
 from typing import Any, Dict, Iterable, Sequence
 
 import yaml
@@ -17,13 +16,10 @@ import yaml
 from esmvalcore import __version__, esgf
 from esmvalcore._provenance import get_recipe_provenance
 from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
-from esmvalcore.cmor.table import CMOR_TABLES, _update_cmor_facets
-from esmvalcore.config import CFG
-from esmvalcore.config._config import TASKSEP, get_project_config
+from esmvalcore.config._config import TASKSEP
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import (
-    ESMValCoreDeprecationWarning,
     InputFilesNotFound,
     RecipeError,
 )
@@ -50,10 +46,6 @@ from esmvalcore.preprocessor._regrid import (
     get_reference_levels,
     parse_cell_spec,
 )
-from esmvalcore.preprocessor._supplementary_vars import (
-    PREPROCESSOR_SUPPLEMENTARIES,
-)
-from esmvalcore.typing import Facets
 
 from . import check
 from .from_datasets import datasets_to_recipe
@@ -233,177 +225,6 @@ def _get_default_settings(dataset):
         settings['save']['alias'] = facets['short_name']
 
     return settings
-
-
-def _guess_fx_mip(facets: dict, dataset: Dataset):
-    """Search mip for fx variable."""
-    project = facets.get('project', dataset.facets['project'])
-    # check if project in config-developer
-    get_project_config(project)
-
-    tables = CMOR_TABLES[project].tables
-
-    # Get all mips that offer that specific fx variable
-    mips_with_fx_var = []
-    for mip in tables:
-        if facets['short_name'] in tables[mip]:
-            mips_with_fx_var.append(mip)
-
-    # List is empty -> no table includes the fx variable
-    if not mips_with_fx_var:
-        raise RecipeError(
-            f"Requested fx variable '{facets['short_name']}' not available "
-            f"in any CMOR table for '{project}'")
-
-    # Iterate through all possible mips and check if files are available; in
-    # case of ambiguity raise an error
-    fx_files_for_mips = {}
-    for mip in mips_with_fx_var:
-        logger.debug("For fx variable '%s', found table '%s'",
-                     facets['short_name'], mip)
-        fx_dataset = dataset.copy(**facets)
-        fx_dataset.supplementaries = []
-        fx_dataset.set_facet('mip', mip)
-        fx_dataset.facets.pop('timerange', None)
-        fx_files = fx_dataset.files
-        if fx_files:
-            logger.debug("Found fx variables '%s':\n%s", facets['short_name'],
-                         pformat(fx_files))
-            fx_files_for_mips[mip] = fx_files
-
-    # Dict contains more than one element -> ambiguity
-    if len(fx_files_for_mips) > 1:
-        raise RecipeError(
-            f"Requested fx variable '{facets['short_name']}' for dataset "
-            f"'{dataset.facets['dataset']}' of project '{project}' is "
-            f"available in more than one CMOR MIP table for "
-            f"'{project}': {sorted(fx_files_for_mips)}")
-
-    # Dict is empty -> no files found -> handled at later stage
-    if not fx_files_for_mips:
-        return mips_with_fx_var[0]
-
-    # Dict contains one element -> ok
-    mip = list(fx_files_for_mips)[0]
-    return mip
-
-
-def _set_default_preproc_fx_variables(
-    dataset: Dataset,
-    settings: PreprocessorSettings,
-) -> None:
-    """Update `fx_variables` key in preprocessor settings with defaults."""
-    default_fx = {
-        'area_statistics': {
-            'areacella': None,
-        },
-        'mask_landsea': {
-            'sftlf': None,
-        },
-        'mask_landseaice': {
-            'sftgif': None,
-        },
-        'volume_statistics': {
-            'volcello': None,
-        },
-        'weighting_landsea_fraction': {
-            'sftlf': None,
-        },
-    }
-    if dataset.facets['project'] != 'obs4MIPs':
-        default_fx['area_statistics']['areacello'] = None
-        default_fx['mask_landsea']['sftof'] = None
-        default_fx['weighting_landsea_fraction']['sftof'] = None
-
-    for step, fx_variables in default_fx.items():
-        if step in settings and 'fx_variables' not in settings[step]:
-            settings[step]['fx_variables'] = fx_variables
-
-
-def _get_supplementaries_from_fx_variables(
-    settings: PreprocessorSettings
-) -> list[Facets]:
-    """Read supplementary facets from `fx_variables` in preprocessor."""
-    supplementaries = []
-    for step, kwargs in settings.items():
-        allowed = PREPROCESSOR_SUPPLEMENTARIES.get(step,
-                                                   {}).get('variables', [])
-        if fx_variables := kwargs.get('fx_variables'):
-
-            if isinstance(fx_variables, list):
-                result: dict[str, Facets] = {}
-                for fx_variable in fx_variables:
-                    if isinstance(fx_variable, str):
-                        # Legacy legacy method of specifying fx variable
-                        short_name = fx_variable
-                        result[short_name] = {}
-                    elif isinstance(fx_variable, dict):
-                        short_name = fx_variable['short_name']
-                        result[short_name] = fx_variable
-                fx_variables = result
-
-            for short_name, facets in fx_variables.items():
-                if short_name not in allowed:
-                    raise RecipeError(
-                        f"Preprocessor function '{step}' does not support "
-                        f"supplementary variable '{short_name}'")
-                if facets is None:
-                    facets = {}
-                facets['short_name'] = short_name
-                supplementaries.append(facets)
-
-    return supplementaries
-
-
-def _get_legacy_supplementary_facets(
-    dataset: Dataset,
-    settings: PreprocessorSettings,
-) -> list[Facets]:
-    """Load the supplementary dataset facets from the preprocessor settings."""
-    # First update `fx_variables` in preprocessor settings with defaults
-    _set_default_preproc_fx_variables(dataset, settings)
-
-    supplementaries = _get_supplementaries_from_fx_variables(settings)
-
-    # Guess the ensemble and mip if they is not specified
-    for facets in supplementaries:
-        if 'ensemble' not in facets and dataset.facets['project'] == 'CMIP5':
-            facets['ensemble'] = 'r0i0p0'
-        if 'mip' not in facets:
-            facets['mip'] = _guess_fx_mip(facets, dataset)
-    return supplementaries
-
-
-def _add_legacy_supplementary_datasets(dataset: Dataset, settings):
-    """Update fx settings depending on the needed method."""
-    if not dataset.session['use_legacy_supplementaries']:
-        return
-    if dataset.supplementaries:
-        # Supplementaries have been defined in the recipe.
-        # Just remove any skipped supplementaries (they have been kept so we
-        # know that supplementaries have been defined in the recipe).
-        dataset.supplementaries = [
-            ds for ds in dataset.supplementaries
-            if not ds.facets.get('skip', False)
-        ]
-        return
-
-    logger.debug("Using legacy method to add supplementaries to %s", dataset)
-
-    legacy_ds = dataset.copy()
-    for facets in _get_legacy_supplementary_facets(dataset, settings):
-        legacy_ds.add_supplementary(**facets)
-
-    for supplementary_ds in legacy_ds.supplementaries:
-        _update_cmor_facets(supplementary_ds.facets, override=True)
-        if supplementary_ds.files:
-            dataset.supplementaries.append(supplementary_ds)
-
-    dataset._fix_fx_exp()
-
-    # Remove preprocessor keyword argument `fx_variables`
-    for kwargs in settings.values():
-        kwargs.pop('fx_variables', None)
 
 
 def _exclude_dataset(settings, facets, step):
@@ -687,7 +508,6 @@ def _get_preprocessor_products(
         _apply_preprocessor_profile(settings, profile)
         _update_multi_dataset_settings(dataset.facets, settings)
         _update_preproc_functions(settings, dataset, datasets, missing_vars)
-        _add_legacy_supplementary_datasets(dataset, settings)
         check.preprocessor_supplementaries(dataset, settings)
         input_datasets = _get_input_datasets(dataset)
         missing = _check_input_files(input_datasets)
@@ -893,7 +713,6 @@ class Recipe:
         self._preprocessors = raw_recipe.get('preprocessors', {})
         if 'default' not in self._preprocessors:
             self._preprocessors['default'] = {}
-        self._set_use_legacy_supplementaries()
         self.datasets = Dataset.from_recipe(recipe_file, session)
         self.diagnostics = self._initialize_diagnostics(
             raw_recipe['diagnostics'])
@@ -904,42 +723,6 @@ class Recipe:
         except RecipeError as exc:
             self._log_recipe_errors(exc)
             raise
-
-    def _set_use_legacy_supplementaries(self):
-        """Automatically determine if legacy supplementaries are used."""
-        names = set()
-        steps = set()
-        for name, profile in self._preprocessors.items():
-            for step, kwargs in profile.items():
-                if isinstance(kwargs, dict) and 'fx_variables' in kwargs:
-                    names.add(name)
-                    steps.add(step)
-                    if self.session['use_legacy_supplementaries'] is False:
-                        kwargs.pop('fx_variables')
-        if names:
-            warnings.warn(
-                ESMValCoreDeprecationWarning(
-                    "Encountered 'fx_variables' argument in preprocessor(s) "
-                    f"{sorted(names)}, function(s) {sorted(steps)}. The "
-                    "'fx_variables' argument is deprecated and will stop "
-                    "working in v2.10. Please remove it and if automatic "
-                    "definition of supplementary variables does not work "
-                    "correctly, specify the supplementary variables in the "
-                    "recipe as described in https://docs.esmvaltool.org/"
-                    "projects/esmvalcore/en/latest/recipe/preprocessor.html"
-                    "#ancillary-variables-and-cell-measures"))
-            if self.session['use_legacy_supplementaries'] is None:
-                logger.info("Running with --use-legacy-supplementaries=True")
-                self.session['use_legacy_supplementaries'] = True
-
-        # Also adapt the global config if necessary because it is used to check
-        # if mismatching shapes should be ignored when attaching
-        # supplementary variables in `esmvalcore.preprocessor.
-        # _supplementary_vars.add_supplementary_variables` to avoid having to
-        # introduce a new function argument that is immediately deprecated.
-        session_use_legacy_supp = self.session['use_legacy_supplementaries']
-        if session_use_legacy_supp is not None:
-            CFG['use_legacy_supplementaries'] = session_use_legacy_supp
 
     def _log_recipe_errors(self, exc):
         """Log a message with recipe errors."""
