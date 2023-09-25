@@ -171,10 +171,7 @@ def _change_dict_type(item, dict_type):
     """Change the dict type in a nested structure."""
     change_dict_type = partial(_change_dict_type, dict_type=dict_type)
     if isinstance(item, dict):
-        new = dict_type()
-        for key, value in item.items():
-            new[key] = change_dict_type(value)
-        return new
+        return dict_type((k, change_dict_type(v)) for k, v in item.items())
     if isinstance(item, (list, tuple, set)):
         return type(item)(change_dict_type(elem) for elem in item)
     return item
