@@ -289,7 +289,7 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
     # Create a set of x,y points from the cube
     # 1D regular grids
     if cube.coord('longitude').points.ndim < 2:
-        x_p, y_p = np.meshgrid(
+        x_p, y_p = da.meshgrid(
             cube.coord(axis='X').points,
             cube.coord(axis='Y').points)
     # 2D irregular grids; spit an error for now
@@ -300,14 +300,14 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
         raise ValueError(msg)
 
     # Wrap around longitude coordinate to match data
-    x_p_180 = np.where(x_p >= 180., x_p - 360., x_p)
+    x_p_180 = da.where(x_p >= 180., x_p - 360., x_p)
 
     # the NE mask has no points at x = -180 and y = +/-90
     # so we will fool it and apply the mask at (-179, -89, 89) instead
-    x_p_180 = np.where(x_p_180 == -180., x_p_180 + 1., x_p_180)
+    x_p_180 = da.where(x_p_180 == -180., x_p_180 + 1., x_p_180)
 
-    y_p_0 = np.where(y_p == -90., y_p + 1., y_p)
-    y_p_90 = np.where(y_p_0 == 90., y_p_0 - 1., y_p_0)
+    y_p_0 = da.where(y_p == -90., y_p + 1., y_p)
+    y_p_90 = da.where(y_p_0 == 90., y_p_0 - 1., y_p_0)
 
     mask = None
     for region in regions:
