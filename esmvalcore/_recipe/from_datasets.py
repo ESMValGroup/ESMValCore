@@ -164,10 +164,7 @@ class _SortableDict(dict):
     """A `dict` class that can be sorted."""
 
     def __lt__(self, other):
-        if self.keys() == other.keys():
-            return tuple(self.values()) < tuple(other.values())
-        else:
-            return tuple(self.keys()) < tuple(other.keys())
+        return tuple(self.items()) < tuple(other.items())
 
 
 def _change_dict_type(item, dict_type):
