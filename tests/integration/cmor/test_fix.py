@@ -52,99 +52,99 @@ class TestAutomaticFix:
         )
 
         # Create sample data with CMOR errors
-        self.time_coord = DimCoord(
+        time_coord = DimCoord(
             [15, 45],
             standard_name='time',
             var_name='time',
             units=Unit('days since 1851-01-01', calendar='noleap'),
             attributes={'test': 1, 'time_origin': 'will_be_removed'},
         )
-        self.plev_coord_rev = DimCoord(
+        plev_coord_rev = DimCoord(
             [250, 500, 850],
             standard_name='air_pressure',
             var_name='plev',
             units='hPa',
         )
-        self.lev_coord_hybrid_height = DimCoord(
+        lev_coord_hybrid_height = DimCoord(
             [1.0, 0.5, 0.0],
             standard_name='atmosphere_hybrid_height_coordinate',
             var_name='lev',
             units='m',
         )
-        self.lev_coord_hybrid_pressure = DimCoord(
+        lev_coord_hybrid_pressure = DimCoord(
             [0.0, 0.5, 1.0],
             standard_name='atmosphere_hybrid_sigma_pressure_coordinate',
             var_name='lev',
             units='1',
         )
-        self.ap_coord = AuxCoord(
+        ap_coord = AuxCoord(
             [0.0, 0.0, 0.0],
             var_name='ap',
             units='Pa',
         )
-        self.b_coord = AuxCoord(
+        b_coord = AuxCoord(
             [0.0, 0.5, 1.0],
             var_name='b',
             units='1',
         )
-        self.ps_coord = AuxCoord(
+        ps_coord = AuxCoord(
             np.full((2, 2, 2), 10),
             var_name='ps',
             units='Pa',
         )
-        self.orog_coord = AuxCoord(
+        orog_coord = AuxCoord(
             np.full((2, 2), 10),
             var_name='orog',
             units='m',
         )
-        self.hybrid_height_factory = HybridHeightFactory(
-            delta=self.lev_coord_hybrid_height,
-            sigma=self.b_coord,
-            orography=self.orog_coord,
+        hybrid_height_factory = HybridHeightFactory(
+            delta=lev_coord_hybrid_height,
+            sigma=b_coord,
+            orography=orog_coord,
         )
-        self.hybrid_pressure_factory = HybridPressureFactory(
-            delta=self.ap_coord,
-            sigma=self.lev_coord_hybrid_pressure,
-            surface_air_pressure=self.ps_coord,
+        hybrid_pressure_factory = HybridPressureFactory(
+            delta=ap_coord,
+            sigma=lev_coord_hybrid_pressure,
+            surface_air_pressure=ps_coord,
         )
-        self.lat_coord = DimCoord(
+        lat_coord = DimCoord(
             [0, 10],
             standard_name='latitude',
             var_name='lat',
             units='degrees',
         )
-        self.lat_coord_rev = DimCoord(
+        lat_coord_rev = DimCoord(
             [10, -10],
             standard_name='latitude',
             var_name='lat',
             units='degrees',
         )
-        self.lat_coord_2d = AuxCoord(
+        lat_coord_2d = AuxCoord(
             [[10, -10]],
             standard_name='latitude',
             var_name='wrong_name',
             units='degrees',
         )
-        self.lon_coord = DimCoord(
+        lon_coord = DimCoord(
             [-180, 0],
             standard_name='longitude',
             var_name='lon',
             units='degrees',
         )
-        self.lon_coord_unstructured = AuxCoord(
+        lon_coord_unstructured = AuxCoord(
             [-180, 0],
             bounds=[[-200, -180, -160], [-20, 0, 20]],
             standard_name='longitude',
             var_name='lon',
             units='degrees',
         )
-        self.lon_coord_2d = AuxCoord(
+        lon_coord_2d = AuxCoord(
             [[370, 380]],
             standard_name='longitude',
             var_name='wrong_name',
             units='degrees',
         )
-        self.height2m_coord = AuxCoord(
+        height2m_coord = AuxCoord(
             2.0,
             standard_name='height',
             var_name='height',
@@ -152,9 +152,9 @@ class TestAutomaticFix:
         )
 
         coord_spec_3d = [
-            (self.time_coord, 0),
-            (self.lat_coord, 1),
-            (self.lon_coord, 2),
+            (time_coord, 0),
+            (lat_coord, 1),
+            (lon_coord, 2),
         ]
         self.cube_3d = Cube(
             da.arange(2 * 2 * 2, dtype=np.float32).reshape(2, 2, 2),
@@ -163,17 +163,17 @@ class TestAutomaticFix:
             var_name='tas',
             units='celsius',
             dim_coords_and_dims=coord_spec_3d,
-            aux_coords_and_dims=[(self.height2m_coord, ())],
+            aux_coords_and_dims=[(height2m_coord, ())],
             attributes={},
         )
 
         coord_spec_4d = [
-            (self.time_coord, 0),
-            (self.plev_coord_rev, 1),
-            (self.lat_coord_rev, 2),
-            (self.lon_coord, 3),
+            (time_coord, 0),
+            (plev_coord_rev, 1),
+            (lat_coord_rev, 2),
+            (lon_coord, 3),
         ]
-        self.cube_4d = Cube(
+        cube_4d = Cube(
             da.arange(2 * 3 * 2 * 2, dtype=np.float32).reshape(2, 3, 2, 2),
             standard_name='air_pressure',
             long_name='Air Pressure',
@@ -182,19 +182,19 @@ class TestAutomaticFix:
             dim_coords_and_dims=coord_spec_4d,
             attributes={},
         )
-        self.cubes_4d = CubeList([self.cube_4d])
+        self.cubes_4d = CubeList([cube_4d])
 
         coord_spec_hybrid_height_4d = [
-            (self.time_coord, 0),
-            (self.lev_coord_hybrid_height, 1),
-            (self.lat_coord_rev, 2),
-            (self.lon_coord, 3),
+            (time_coord, 0),
+            (lev_coord_hybrid_height, 1),
+            (lat_coord_rev, 2),
+            (lon_coord, 3),
         ]
         aux_coord_spec_hybrid_height_4d = [
-            (self.b_coord, 1),
-            (self.orog_coord, (2, 3)),
+            (b_coord, 1),
+            (orog_coord, (2, 3)),
         ]
-        self.cube_hybrid_height_4d = Cube(
+        cube_hybrid_height_4d = Cube(
             da.arange(2 * 3 * 2 * 2, dtype=np.float32).reshape(2, 3, 2, 2),
             standard_name='air_pressure',
             long_name='Air Pressure',
@@ -202,22 +202,22 @@ class TestAutomaticFix:
             units='celsius',
             dim_coords_and_dims=coord_spec_hybrid_height_4d,
             aux_coords_and_dims=aux_coord_spec_hybrid_height_4d,
-            aux_factories=[self.hybrid_height_factory],
+            aux_factories=[hybrid_height_factory],
             attributes={},
         )
-        self.cubes_hybrid_height_4d = CubeList([self.cube_hybrid_height_4d])
+        self.cubes_hybrid_height_4d = CubeList([cube_hybrid_height_4d])
 
         coord_spec_hybrid_pressure_4d = [
-            (self.time_coord, 0),
-            (self.lev_coord_hybrid_pressure, 1),
-            (self.lat_coord_rev, 2),
-            (self.lon_coord, 3),
+            (time_coord, 0),
+            (lev_coord_hybrid_pressure, 1),
+            (lat_coord_rev, 2),
+            (lon_coord, 3),
         ]
         aux_coord_spec_hybrid_pressure_4d = [
-            (self.ap_coord, 1),
-            (self.ps_coord, (0, 2, 3)),
+            (ap_coord, 1),
+            (ps_coord, (0, 2, 3)),
         ]
-        self.cube_hybrid_pressure_4d = Cube(
+        cube_hybrid_pressure_4d = Cube(
             da.arange(2 * 3 * 2 * 2, dtype=np.float32).reshape(2, 3, 2, 2),
             standard_name='air_pressure',
             long_name='Air Pressure',
@@ -225,46 +225,44 @@ class TestAutomaticFix:
             units='celsius',
             dim_coords_and_dims=coord_spec_hybrid_pressure_4d,
             aux_coords_and_dims=aux_coord_spec_hybrid_pressure_4d,
-            aux_factories=[self.hybrid_pressure_factory],
+            aux_factories=[hybrid_pressure_factory],
             attributes={},
         )
-        self.cubes_hybrid_pressure_4d = CubeList([
-            self.cube_hybrid_pressure_4d
-        ])
+        self.cubes_hybrid_pressure_4d = CubeList([cube_hybrid_pressure_4d])
 
         coord_spec_unstrucutred = [
-            (self.height2m_coord, ()),
-            (self.lat_coord_rev, 1),
-            (self.lon_coord_unstructured, 1),
+            (height2m_coord, ()),
+            (lat_coord_rev, 1),
+            (lon_coord_unstructured, 1),
         ]
-        self.cube_unstructured = Cube(
+        cube_unstructured = Cube(
             da.zeros((2, 2)),
             standard_name='air_pressure',
             long_name='Air Pressure',
             var_name='tas',
             units='celsius',
-            dim_coords_and_dims=[(self.time_coord, 0)],
+            dim_coords_and_dims=[(time_coord, 0)],
             aux_coords_and_dims=coord_spec_unstrucutred,
             attributes={},
         )
-        self.cubes_unstructured = CubeList([self.cube_unstructured])
+        self.cubes_unstructured = CubeList([cube_unstructured])
 
         coord_spec_2d = [
-            (self.height2m_coord, ()),
-            (self.lat_coord_2d, (1, 2)),
-            (self.lon_coord_2d, (1, 2)),
+            (height2m_coord, ()),
+            (lat_coord_2d, (1, 2)),
+            (lon_coord_2d, (1, 2)),
         ]
-        self.cube_2d_latlon = Cube(
+        cube_2d_latlon = Cube(
             da.zeros((2, 1, 2)),
             standard_name='air_pressure',
             long_name='Air Pressure',
             var_name='tas',
             units='celsius',
-            dim_coords_and_dims=[(self.time_coord, 0)],
+            dim_coords_and_dims=[(time_coord, 0)],
             aux_coords_and_dims=coord_spec_2d,
             attributes={},
         )
-        self.cubes_2d_latlon = CubeList([self.cube_2d_latlon])
+        self.cubes_2d_latlon = CubeList([cube_2d_latlon])
 
     def assert_time_metadata(self, cube):
         """Assert time metadata is correct."""
