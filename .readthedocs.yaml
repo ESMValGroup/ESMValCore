@@ -18,6 +18,7 @@ build:
       - mamba update --yes --name=base mamba
       - mamba --version
       - mamba list --name=base
+      - conda env export --name=base
       - mamba env create --name 2204-tst --file environment.yml
     post_create_environment:
       - conda run -n ${CONDA_DEFAULT_ENV} mamba list
