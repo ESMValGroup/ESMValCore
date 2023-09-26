@@ -168,7 +168,7 @@ class CMORCheck():
 
         # TODO: remove in v2.12
         if self.automatic_fixes:
-            self._cube = self._automatic_fix.fix_metadata(self._cube)
+            [self._cube] = self._automatic_fix.fix_metadata([self._cube])
 
         self._check_var_metadata()
         self._check_fill_value()
