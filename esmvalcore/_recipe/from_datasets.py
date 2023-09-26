@@ -171,6 +171,7 @@ def _group_ensemble_members(dataset_facets: Iterable[Facets]) -> list[Facets]:
         return tuple((k, facets[k]) for k in sorted(facets) if k != 'ensemble')
 
     result = []
+    dataset_facets = sorted(dataset_facets, key=grouper)
     for group_facets, group in itertools.groupby(dataset_facets, key=grouper):
         ensembles = [f['ensemble'] for f in group if 'ensemble' in f]
         if not ensembles:
