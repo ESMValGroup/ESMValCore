@@ -10,7 +10,7 @@ import logging
 import warnings
 from collections import defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Iterable, Optional
 
 from iris.cube import Cube, CubeList
 
@@ -93,7 +93,7 @@ def fix_file(
 
 
 def fix_metadata(
-    cubes: CubeList,
+    cubes: Iterable[Cube],
     short_name: str,
     project: str,
     dataset: str,
@@ -141,8 +141,8 @@ def fix_metadata(
 
     Returns
     -------
-    iris.cube.Cube
-        Fixed cube.
+    iris.cube.CubeList
+        Fixed cubes.
 
     """
     # Deprecate CMOR checks (remove in v2.12)
@@ -175,7 +175,7 @@ def fix_metadata(
                           short_name=short_name,
                           extra_facets=extra_facets,
                           session=session)
-    fixed_cubes = []
+    fixed_cubes = CubeList()
 
     # Group cubes by input file and apply all fixes to each group element
     # (i.e., each file) individually

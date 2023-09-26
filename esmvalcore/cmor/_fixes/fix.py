@@ -5,7 +5,7 @@ import importlib
 import inspect
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Iterable, Optional
 
 from iris.cube import Cube, CubeList
 
@@ -76,7 +76,7 @@ class Fix:
         """
         return filepath
 
-    def fix_metadata(self, cubes: CubeList) -> CubeList:
+    def fix_metadata(self, cubes: Iterable[Cube]) -> Iterable[Cube]:
         """Apply fixes to the metadata of the cube.
 
         Changes applied here must not require data loading.
@@ -90,7 +90,7 @@ class Fix:
 
         Returns
         -------
-        iris.cube.CubeList
+        Iterable[iris.cube.Cube]
             Fixed cubes. They can be different instances.
 
         """
