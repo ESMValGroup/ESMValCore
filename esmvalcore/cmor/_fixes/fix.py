@@ -15,7 +15,7 @@ from iris.coords import Coord, CoordExtent
 from iris.cube import Cube, CubeList
 from iris.util import reverse
 
-from esmvalcore.cmor import (
+from esmvalcore.cmor._utils import (
     _get_alternative_generic_lev_coord,
     _get_generic_lev_coord_names,
     _get_new_generic_level_coord,

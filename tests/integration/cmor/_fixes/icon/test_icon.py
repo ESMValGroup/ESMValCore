@@ -514,7 +514,7 @@ def test_areacella_fix(cubes_grid):
 def test_get_areacello_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'Ofx', 'areacello')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), AutomaticFix(None)]
 
 
 def test_areacello_fix(cubes_grid):
