@@ -15,6 +15,7 @@ build:
     pre_create_environment:
       # update mamba just in case
       - mamba install --yes --name=base 'zstandard>=0.20'
+      - mamba list --name=base
       - mamba update --yes --name=base mamba
       - mamba --version
       - mamba list --name=base
