@@ -6,7 +6,6 @@ import logging
 import os
 import shutil
 import warnings
-from collections.abc import Callable
 from itertools import groupby
 from pathlib import Path
 from typing import Optional
