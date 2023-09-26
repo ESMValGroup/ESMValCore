@@ -5,6 +5,7 @@ import logging
 import warnings
 from collections.abc import Callable
 from enum import IntEnum
+from functools import cached_property
 from typing import Optional
 
 import cf_units
@@ -107,7 +108,6 @@ class CMORCheck():
         self._errors = list()
         self._warnings = list()
         self._debug_messages = list()
-        self._unstructured = None
 
         self._cmor_var = var_info
         if not frequency:
@@ -133,11 +133,10 @@ class CMORCheck():
         # TODO: remove in v2.12
         self._automatic_fix = AutomaticFix(var_info, frequency=frequency)
 
-    def _uses_unstructured_grid(self):
-        """Check if cube uses unstructured grid."""
-        if self._unstructured is None:
-            self._unstructured = _is_unstructured_grid(self._cube)
-        return self._unstructured
+    @cached_property
+    def _unstructured_grid(self) -> bool:
+        """Cube uses unstructured grid."""
+        return _is_unstructured_grid(self._cube)
 
     def check_metadata(self, logger: Optional[logging.Logger] = None) -> Cube:
         """Check the cube metadata.
@@ -569,8 +568,8 @@ class CMORCheck():
         if coord.dtype.kind == 'U':
             return
 
-        if self._uses_unstructured_grid() and \
-           coord.standard_name in ['latitude', 'longitude']:
+        if (self._unstructured_grid and
+                coord.standard_name in ['latitude', 'longitude']):
             self.report_debug_message(
                 f'Coordinate {coord.standard_name} appears to belong to '
                 'an unstructured grid. Skipping monotonicity and '
