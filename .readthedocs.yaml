@@ -14,10 +14,12 @@ build:
   jobs:
     pre_create_environment:
       # update mamba just in case
-      - mamba install --yes --quiet --name=base zstandard
-      - mamba update --yes --quiet --name=base mamba
+      - mamba install --yes --name=base zstandard
+      - mamba update --yes --name=base mamba
       - mamba --version
+      - mamba list --name=base
     post_create_environment:
+      - conda run -n ${CONDA_DEFAULT_ENV} mamba list
       # use conda run executable wrapper to have all env variables
       - conda run -n ${CONDA_DEFAULT_ENV} mamba --version
       - conda run -n ${CONDA_DEFAULT_ENV} pip install . --no-deps
