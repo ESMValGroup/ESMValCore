@@ -14,6 +14,7 @@ build:
   jobs:
     pre_create_environment:
       # update mamba just in case
+      - mamba install --yes --quiet --name=base zstandard
       - mamba update --yes --quiet --name=base mamba
       - mamba --version
     post_create_environment:
