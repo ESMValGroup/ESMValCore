@@ -32,7 +32,7 @@ commands:
             pytest -n 4 --junitxml=test-reports/report.xml
             esmvaltool version
       - store_test_results:
-          path: test-reports/
+          path: test-reports/report.xml
       - store_artifacts:
           path: /logs
       - run:
@@ -124,6 +124,9 @@ jobs:
             - /root/.cache/pip
             - .mypy_cache
             - .pytest_cache
+      - run:
+          name: Install gpg (required by codecov orb)
+          command: apt update && apt install -y gpg
       - codecov/upload:
           when: always
           file: 'test-reports/coverage.xml'
