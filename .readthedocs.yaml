@@ -14,13 +14,9 @@ build:
   jobs:
     pre_create_environment:
       # update mamba just in case
-      - mamba install --yes --name=base 'zstandard>=0.20'
-      - mamba list --name=base
-      - mamba update --yes --name=base mamba 'zstd=1.5.2'
+      - mamba update --yes --quiet --name=base mamba 'zstd=1.5.2'
       - mamba --version
       - mamba list --name=base
-      - conda env export --name=base
-      - mamba env create --name 2204-tst --file environment.yml
     post_create_environment:
       - conda run -n ${CONDA_DEFAULT_ENV} mamba list
       # use conda run executable wrapper to have all env variables
