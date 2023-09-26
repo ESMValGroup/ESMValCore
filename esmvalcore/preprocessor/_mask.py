@@ -51,11 +51,11 @@ def _get_fx_mask(fx_data, fx_option, mask_type):
 
 def _apply_fx_mask(fx_mask, var_data):
     """Apply the fx data extracted mask on the actual processed data."""
-    # Apply mask across
+    # Apply mask across 
     # Then apply the mask (with getmaskarray)
     old_mask = da.ma.getmaskarray(var_data)
     mask = old_mask | fx_mask
-    var_data = da.ma.masked_array(var_data, mask=mask)  # evtl fill_value=1e+20 
+    var_data = da.ma.masked_array(var_data, mask=mask)  # maybe fill_value=1e+20 
 
     return var_data
 
@@ -618,29 +618,29 @@ def mask_fillvalues(products,
     used = set()
     for product in products:
         for cube in product.cubes:
-            cube.data = np.ma.fix_invalid(cube.data, copy=False)
+            cube.data = np.ma.fix_invalid(cube.core_data(), copy=False)
             mask = _get_fillvalues_mask(cube, threshold_fraction, min_value,
                                         time_window)
             if combined_mask is None:
-                combined_mask = np.zeros_like(mask)
+                combined_mask = da.zeros_like(mask)
             # Select only valid (not all masked) pressure levels
             n_dims = len(mask.shape)
             if n_dims == 2:
-                valid = ~np.all(mask)
+                valid = ~da.all(mask)
                 if valid:
                     combined_mask |= mask
                     used.add(product)
             elif n_dims == 3:
-                valid = ~np.all(mask, axis=(1, 2))
+                valid = ~da.all(mask, axis=(1, 2))
                 combined_mask[valid] |= mask[valid]
-                if np.any(valid):
+                if da.any(valid):
                     used.add(product)
             else:
                 raise NotImplementedError(
                     f"Unable to handle {n_dims} dimensional data"
                 )
 
-    if np.any(combined_mask):
+    if da.any(combined_mask):
         logger.debug("Applying fillvalues mask")
         used = {p.copy_provenance() for p in used}
         for product in products:
