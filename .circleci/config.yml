@@ -2,8 +2,8 @@
 version: 2.1
 
 orbs:
-  coverage-reporter: codacy/coverage-reporter@11.4.1
-  codecov: codecov/codecov@1.2.3
+  coverage-reporter: codacy/coverage-reporter@13.13.7
+  codecov: codecov/codecov@3.2.5
 
 commands:
   check_changes:
