@@ -7,9 +7,16 @@ import pytest
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.cmip5.gfdl_esm2g import (AllVars, Areacello, Co2,
-                                                     FgCo2, Usi, Vsi,
-                                                     _get_and_remove)
+from esmvalcore.cmor._fixes.cmip5.gfdl_esm2g import (
+    AllVars,
+    Areacello,
+    Co2,
+    FgCo2,
+    Usi,
+    Vsi,
+    _get_and_remove,
+)
+from esmvalcore.cmor._fixes.fix import AutomaticFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -71,7 +78,7 @@ class TestCo2(unittest.TestCase):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-ESM2G', 'Amon', 'co2'),
-            [Co2(None), AllVars(None)])
+            [Co2(None), AllVars(None), AutomaticFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -92,7 +99,9 @@ class TestUsi(unittest.TestCase):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-ESM2G', 'day', 'usi'),
-            [Usi(self.vardef), AllVars(self.vardef)])
+            [Usi(self.vardef),
+             AllVars(self.vardef),
+             AutomaticFix(self.vardef)])
 
     def test_fix_data(self):
         """Test metadata fix."""
@@ -112,7 +121,9 @@ class TestVsi(unittest.TestCase):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-ESM2G', 'day', 'vsi'),
-            [Vsi(self.vardef), AllVars(self.vardef)])
+            [Vsi(self.vardef),
+             AllVars(self.vardef),
+             AutomaticFix(self.vardef)])
 
     def test_fix_data(self):
         """Test metadata fix."""
@@ -132,7 +143,9 @@ class TestAreacello(unittest.TestCase):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-ESM2G', 'fx', 'areacello'),
-            [Areacello(self.vardef), AllVars(self.vardef)])
+            [Areacello(self.vardef),
+             AllVars(self.vardef),
+             AutomaticFix(self.vardef)])
 
     def test_fix_metadata(self):
         """Test data fix."""

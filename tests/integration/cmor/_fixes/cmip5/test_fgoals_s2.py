@@ -4,13 +4,14 @@ from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.cmip5.fgoals_s2 import AllVars
+from esmvalcore.cmor._fixes.fix import AutomaticFix
 from esmvalcore.cmor.fix import Fix
 
 
 def test_get_allvars_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP5', 'FGOALS-s2', 'Amon', 'tas')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), AutomaticFix(None)]
 
 
 LAT_COORD = DimCoord(

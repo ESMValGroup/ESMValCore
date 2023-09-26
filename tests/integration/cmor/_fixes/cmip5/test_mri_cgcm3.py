@@ -3,13 +3,14 @@ import unittest
 
 from esmvalcore.cmor._fixes.cmip5.mri_cgcm3 import Cl, Msftmyz, ThetaO
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.fix import AutomaticFix
 from esmvalcore.cmor.fix import Fix
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP5', 'MRI-CGCM3', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    assert fix == [Cl(None), AutomaticFix(None)]
 
 
 def test_cl_fix():
@@ -24,7 +25,7 @@ class TestMsftmyz(unittest.TestCase):
         """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'MRI-CGCM3', 'Amon', 'msftmyz'),
-            [Msftmyz(None)])
+            [Msftmyz(None), AutomaticFix(None)])
 
 
 class TestThetao(unittest.TestCase):
@@ -34,4 +35,4 @@ class TestThetao(unittest.TestCase):
         """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'MRI-CGCM3', 'Amon', 'thetao'),
-            [ThetaO(None)])
+            [ThetaO(None), AutomaticFix(None)])

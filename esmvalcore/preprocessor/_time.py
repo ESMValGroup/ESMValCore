@@ -22,10 +22,7 @@ from iris.coords import AuxCoord
 from iris.cube import Cube, CubeList
 from iris.time import PartialDateTime
 
-from esmvalcore.cmor._fixes.automatic_fix import (
-    get_next_month,
-    get_time_bounds,
-)
+from esmvalcore.cmor._fixes.fix import get_next_month, get_time_bounds
 from esmvalcore.iris_helpers import date2num
 
 from ._shared import get_iris_analysis_operation, operator_accept_weights

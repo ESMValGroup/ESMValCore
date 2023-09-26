@@ -12,6 +12,7 @@ from esmvalcore.cmor._fixes.cmip6.noresm2_lm import (
     Siconc,
 )
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.fix import AutomaticFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -19,7 +20,7 @@ from esmvalcore.cmor.table import get_var_info
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'NorESM2-LM', 'Amon', 'cl')
-    assert fix == [Cl(None), AllVars(None)]
+    assert fix == [Cl(None), AllVars(None), AutomaticFix(None)]
 
 
 def test_cl_fix():
@@ -30,7 +31,7 @@ def test_cl_fix():
 def test_get_cli_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'NorESM2-LM', 'Amon', 'cli')
-    assert fix == [Cli(None), AllVars(None)]
+    assert fix == [Cli(None), AllVars(None), AutomaticFix(None)]
 
 
 def test_cli_fix():
@@ -41,7 +42,7 @@ def test_cli_fix():
 def test_get_clw_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'NorESM2-LM', 'Amon', 'clw')
-    assert fix == [Clw(None), AllVars(None)]
+    assert fix == [Clw(None), AllVars(None), AutomaticFix(None)]
 
 
 def test_clw_fix():
@@ -97,7 +98,7 @@ def cubes_bounds():
 def test_get_siconc_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'NorESM2-LM', 'SImon', 'siconc')
-    assert fix == [Siconc(None), AllVars(None)]
+    assert fix == [Siconc(None), AllVars(None), AutomaticFix(None)]
 
 
 def test_allvars_fix_lon_bounds(cubes_bounds):

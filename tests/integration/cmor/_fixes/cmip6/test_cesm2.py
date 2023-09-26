@@ -19,6 +19,7 @@ from esmvalcore.cmor._fixes.cmip6.cesm2 import (
     Tos,
 )
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
+from esmvalcore.cmor._fixes.fix import AutomaticFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -26,7 +27,7 @@ from esmvalcore.cmor.table import get_var_info
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    assert fix == [Cl(None), AutomaticFix(None)]
 
 
 AIR_PRESSURE_POINTS = np.array([[[[1.0, 1.0, 1.0, 1.0],
@@ -163,7 +164,7 @@ def test_cl_fix_metadata(cl_cubes):
 def test_get_cli_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2', 'Amon', 'cli')
-    assert fix == [Cli(None)]
+    assert fix == [Cli(None), AutomaticFix(None)]
 
 
 def test_cli_fix():
@@ -174,7 +175,7 @@ def test_cli_fix():
 def test_get_clw_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2', 'Amon', 'clw')
-    assert fix == [Clw(None)]
+    assert fix == [Clw(None), AutomaticFix(None)]
 
 
 def test_clw_fix():
@@ -268,31 +269,31 @@ def thetao_cubes():
 def test_get_tas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2', 'Amon', 'tas')
-    assert fix == [Tas(None)]
+    assert fix == [Tas(None), AutomaticFix(None)]
 
 
 def test_get_tos_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2', 'Omon', 'tos')
-    assert fix == [Tos(None), Omon(None)]
+    assert fix == [Tos(None), Omon(None), AutomaticFix(None)]
 
 
 def test_get_thetao_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2', 'Omon', 'thetao')
-    assert fix == [Omon(None)]
+    assert fix == [Omon(None), AutomaticFix(None)]
 
 
 def test_get_fgco2_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2', 'Omon', 'fgco2')
-    assert fix == [Fgco2(None), Omon(None)]
+    assert fix == [Fgco2(None), Omon(None), AutomaticFix(None)]
 
 
 def test_get_siconc_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2', 'SImon', 'siconc')
-    assert fix == [Siconc(None)]
+    assert fix == [Siconc(None), AutomaticFix(None)]
 
 
 def test_tas_fix_metadata(tas_cubes):

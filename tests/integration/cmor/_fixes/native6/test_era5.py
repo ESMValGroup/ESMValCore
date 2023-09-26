@@ -6,14 +6,15 @@ import numpy as np
 import pytest
 from cf_units import Unit
 
+from esmvalcore.cmor._fixes.fix import AutomaticFix, Fix
 from esmvalcore.cmor._fixes.native6.era5 import (
     AllVars,
     Evspsbl,
     Zg,
     get_frequency,
 )
-from esmvalcore.cmor.fix import Fix, fix_metadata
-from esmvalcore.cmor.table import CMOR_TABLES
+from esmvalcore.cmor.fix import fix_metadata
+from esmvalcore.cmor.table import CMOR_TABLES, get_var_info
 from esmvalcore.preprocessor import cmor_check_metadata
 
 COMMENT = ('Contains modified Copernicus Climate Change Service Information '
@@ -23,13 +24,15 @@ COMMENT = ('Contains modified Copernicus Climate Change Service Information '
 def test_get_evspsbl_fix():
     """Test whether the right fixes are gathered for a single variable."""
     fix = Fix.get_fixes('native6', 'ERA5', 'E1hr', 'evspsbl')
-    assert fix == [Evspsbl(None), AllVars(None)]
+    vardef = get_var_info('native6', 'E1hr', 'evspsbl')
+    assert fix == [Evspsbl(vardef), AllVars(vardef), AutomaticFix(vardef)]
 
 
 def test_get_zg_fix():
     """Test whether the right fix gets found again, for zg as well."""
     fix = Fix.get_fixes('native6', 'ERA5', 'Amon', 'zg')
-    assert fix == [Zg(None), AllVars(None)]
+    vardef = get_var_info('native6', 'E1hr', 'evspsbl')
+    assert fix == [Zg(vardef), AllVars(vardef), AutomaticFix(vardef)]
 
 
 def test_get_frequency_hourly():

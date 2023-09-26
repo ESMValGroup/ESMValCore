@@ -14,6 +14,7 @@ from esmvalcore.cmor._fixes.cmip6.ec_earth3_veg import (
     Siconca,
     Tas,
 )
+from esmvalcore.cmor._fixes.fix import AutomaticFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -30,7 +31,7 @@ class TestSiconca(unittest.TestCase):
         """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP6', 'EC-Earth3-Veg', 'SImon', 'siconca'),
-            [Siconca(None)])
+            [Siconca(None), AutomaticFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -41,13 +42,13 @@ class TestSiconca(unittest.TestCase):
 
 def test_get_siconc_fix():
     """Test sinconc calendar is fixed."""
-    fix, = Fix.get_fixes('CMIP6', 'EC-Earth3-Veg', 'SImon', 'siconc')
+    fix = Fix.get_fixes('CMIP6', 'EC-Earth3-Veg', 'SImon', 'siconc')[0]
     assert isinstance(fix, CalendarFix)
 
 
 def test_get_tos_fix():
     """Test tos calendar is fixed."""
-    fix, = Fix.get_fixes('CMIP6', 'EC-Earth3-Veg', 'Omon', 'tos')
+    fix = Fix.get_fixes('CMIP6', 'EC-Earth3-Veg', 'Omon', 'tos')[0]
     assert isinstance(fix, CalendarFix)
 
 
@@ -110,7 +111,7 @@ def tas_cubes():
 def test_get_tas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'EC-Earth3-Veg', 'Amon', 'tas')
-    assert fix == [Tas(None)]
+    assert fix == [Tas(None), AutomaticFix(None)]
 
 
 def test_tas_fix_metadata(tas_cubes):

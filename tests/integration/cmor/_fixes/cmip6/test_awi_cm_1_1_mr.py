@@ -3,6 +3,7 @@ import iris
 import pytest
 
 from esmvalcore.cmor._fixes.cmip6.awi_cm_1_1_mr import AllVars
+from esmvalcore.cmor._fixes.fix import AutomaticFix
 from esmvalcore.cmor.fix import Fix
 
 
@@ -34,7 +35,7 @@ def cubes():
 
 def test_get_allvars_fix():
     fix = Fix.get_fixes('CMIP6', 'AWI-CM-1-1-MR', 'Amon', 'wrong_lat_lname')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), AutomaticFix(None)]
 
 
 def test_allvars_fix_metadata(cubes):

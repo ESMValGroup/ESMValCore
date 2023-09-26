@@ -4,8 +4,14 @@ import iris
 import numpy as np
 import pytest
 
-from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import (Cl, Clcalipso,
-                                                     Cli, Clw, Omon)
+from esmvalcore.cmor._fixes.cmip6.cnrm_cm6_1 import (
+    Cl,
+    Clcalipso,
+    Cli,
+    Clw,
+    Omon,
+)
+from esmvalcore.cmor._fixes.fix import AutomaticFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -14,7 +20,7 @@ from esmvalcore.cmor.table import get_var_info
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    assert fix == [Cl(None), AutomaticFix(None)]
 
 
 AIR_PRESSURE_POINTS = np.array([[[[1.0, 1.0],
@@ -85,7 +91,7 @@ def test_cl_fix_metadata(test_data_path):
 def test_get_clcalipso_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1', 'CFmon', 'clcalipso')
-    assert fix == [Clcalipso(None)]
+    assert fix == [Clcalipso(None), AutomaticFix(None)]
 
 
 @pytest.fixture
@@ -113,7 +119,7 @@ def test_clcalipso_fix_metadata(clcalipso_cubes):
 def test_get_cli_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1', 'Amon', 'cli')
-    assert fix == [Cli(None)]
+    assert fix == [Cli(None), AutomaticFix(None)]
 
 
 def test_cli_fix():
@@ -124,7 +130,7 @@ def test_cli_fix():
 def test_get_clw_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1', 'Amon', 'clw')
-    assert fix == [Clw(None)]
+    assert fix == [Clw(None), AutomaticFix(None)]
 
 
 def test_clw_fix():
@@ -135,4 +141,4 @@ def test_clw_fix():
 def test_get_thetao_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CNRM-CM6-1', 'Omon', 'thetao')
-    assert fix == [Omon(None)]
+    assert fix == [Omon(None), AutomaticFix(None)]

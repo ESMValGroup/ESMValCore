@@ -3,6 +3,7 @@ import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube, CubeList
 
+from esmvalcore.cmor._fixes.fix import AutomaticFix
 from esmvalcore.cmor._fixes.obs4mips.airs_2_1 import AllVars
 from esmvalcore.cmor.fix import Fix
 
@@ -16,7 +17,7 @@ def get_air_pressure_coord(points, units):
 def test_get_allvars_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('obs4MIPs', 'AIRS-2-1', 'Amon', 'cl')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), AutomaticFix(None)]
 
 
 def test_allvars_fix_no_air_pressure():

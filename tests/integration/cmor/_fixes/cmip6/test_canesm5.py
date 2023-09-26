@@ -4,13 +4,14 @@ import numpy as np
 import pytest
 
 from esmvalcore.cmor._fixes.cmip6.canesm5 import Co2, Gpp
+from esmvalcore.cmor._fixes.fix import AutomaticFix
 from esmvalcore.cmor.fix import Fix
 
 
 def test_get_co2_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CanESM5', 'Amon', 'co2')
-    assert fix == [Co2(None)]
+    assert fix == [Co2(None), AutomaticFix(None)]
 
 
 @pytest.fixture
@@ -48,7 +49,7 @@ def gpp_cube():
 def test_get_gpp_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CanESM5', 'Lmon', 'gpp')
-    assert fix == [Gpp(None)]
+    assert fix == [Gpp(None), AutomaticFix(None)]
 
 
 def test_gpp_fix_data(gpp_cube):

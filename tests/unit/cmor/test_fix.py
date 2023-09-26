@@ -27,8 +27,10 @@ class TestFixFile():
                 'dataset': 'model',
                 'mip': 'mip',
                 'short_name': 'short_name',
+                'frequency': 'frequency',
             },
             'session': sentinel.session,
+            'frequency': 'frequency',
         }
 
     def test_fix(self):
@@ -43,6 +45,7 @@ class TestFixFile():
                 mip='mip',
                 output_dir=Path('output_dir'),
                 session=sentinel.session,
+                frequency='frequency',
             )
             assert file_returned != self.filename
             assert file_returned == 'new_filename'
@@ -62,6 +65,7 @@ class TestFixFile():
                 mip='mip',
                 output_dir=Path('output_dir'),
                 session=sentinel.session,
+                frequency='frequency',
             )
             assert file_returned == self.filename
             mock_get_fixes.assert_called_once_with(
@@ -126,11 +130,11 @@ class TestFixMetadata():
                 'dataset': 'model',
                 'mip': 'mip',
                 'short_name': 'short_name',
-                'frequency': None,
+                'frequency': 'frequency',
             },
             'session': sentinel.session,
+            'frequency': 'frequency',
         }
-        self.mock_fixer = Mock()
 
     @staticmethod
     def _create_mock_cube(var_name='short_name'):
@@ -142,89 +146,72 @@ class TestFixMetadata():
     def test_fix(self):
         """Check that the returned fix is applied."""
         self.check_metadata.side_effect = lambda: self.fixed_cube
-        self.mock_fixer.fix_metadata.return_value = self.intermediate_cube
         with patch('esmvalcore.cmor._fixes.fix.Fix.get_fixes',
                    return_value=[self.mock_fix]) as mock_get_fixes:
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=self.checker):
-                with patch('esmvalcore.cmor.fix.AutomaticFix.from_facets',
-                           return_value=self.mock_fixer):
-                    cube_returned = fix_metadata(
-                        cubes=[self.cube],
-                        short_name='short_name',
-                        project='project',
-                        dataset='model',
-                        mip='mip',
-                        session=sentinel.session,
-                    )[0]
-                    self.checker.assert_called_once_with(
-                        self.intermediate_cube
-                    )
-                    self.check_metadata.assert_called_once_with()
-                    assert cube_returned is not self.cube
-                    assert cube_returned is not self.intermediate_cube
-                    assert cube_returned is self.fixed_cube
-                    mock_get_fixes.assert_called_once_with(
-                        **self.expected_get_fixes_call
-                    )
-                    self.mock_fixer.fix_metadata.assert_called_once_with(
-                        self.intermediate_cube
-                    )
+                cube_returned = fix_metadata(
+                    cubes=[self.cube],
+                    short_name='short_name',
+                    project='project',
+                    dataset='model',
+                    mip='mip',
+                    frequency='frequency',
+                    session=sentinel.session,
+                )[0]
+                self.checker.assert_called_once_with(
+                    self.intermediate_cube
+                )
+                self.check_metadata.assert_called_once_with()
+                assert cube_returned is not self.cube
+                assert cube_returned is not self.intermediate_cube
+                assert cube_returned is self.fixed_cube
+                mock_get_fixes.assert_called_once_with(
+                    **self.expected_get_fixes_call
+                )
 
     def test_nofix(self):
         """Check that the same cube is returned if no fix is available."""
         self.check_metadata.side_effect = lambda: self.cube
-        self.mock_fixer.fix_metadata.return_value = self.cube
         with patch('esmvalcore.cmor._fixes.fix.Fix.get_fixes',
                    return_value=[]) as mock_get_fixes:
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=self.checker):
-                with patch('esmvalcore.cmor.fix.AutomaticFix.from_facets',
-                           return_value=self.mock_fixer):
-                    cube_returned = fix_metadata(
-                        cubes=[self.cube],
-                        short_name='short_name',
-                        project='project',
-                        dataset='model',
-                        mip='mip',
-                        session=sentinel.session,
-                    )[0]
-                    self.checker.assert_called_once_with(self.cube)
-                    self.check_metadata.assert_called_once_with()
-                    assert cube_returned is self.cube
-                    assert cube_returned is not self.intermediate_cube
-                    assert cube_returned is not self.fixed_cube
-                    mock_get_fixes.assert_called_once_with(
-                        **self.expected_get_fixes_call
-                    )
-                    self.mock_fixer.fix_metadata.assert_called_once_with(
-                        self.cube
-                    )
+                cube_returned = fix_metadata(
+                    cubes=[self.cube],
+                    short_name='short_name',
+                    project='project',
+                    dataset='model',
+                    mip='mip',
+                    frequency='frequency',
+                    session=sentinel.session,
+                )[0]
+                self.checker.assert_called_once_with(self.cube)
+                self.check_metadata.assert_called_once_with()
+                assert cube_returned is self.cube
+                assert cube_returned is not self.intermediate_cube
+                assert cube_returned is not self.fixed_cube
+                mock_get_fixes.assert_called_once_with(
+                    **self.expected_get_fixes_call
+                )
 
     def test_select_var(self):
         """Check that the same cube is returned if no fix is available."""
         self.check_metadata.side_effect = lambda: self.cube
-        self.mock_fixer.fix_metadata.return_value = self.cube
         with patch('esmvalcore.cmor._fixes.fix.Fix.get_fixes',
                    return_value=[]):
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=self.checker):
-                with patch('esmvalcore.cmor.fix.AutomaticFix.from_facets',
-                           return_value=self.mock_fixer):
-                    cube_returned = fix_metadata(
-                        cubes=[self.cube,
-                               self._create_mock_cube('extra')],
-                        short_name='short_name',
-                        project='CMIP6',
-                        dataset='model',
-                        mip='mip',
-                    )[0]
-                    self.checker.assert_called_once_with(self.cube)
-                    self.check_metadata.assert_called_once_with()
-                    assert cube_returned is self.cube
-                    self.mock_fixer.fix_metadata.assert_called_once_with(
-                        self.cube
-                    )
+                cube_returned = fix_metadata(
+                    cubes=[self.cube, self._create_mock_cube('extra')],
+                    short_name='short_name',
+                    project='CMIP6',
+                    dataset='model',
+                    mip='mip',
+                )[0]
+                self.checker.assert_called_once_with(self.cube)
+                self.check_metadata.assert_called_once_with()
+                assert cube_returned is self.cube
 
     def test_select_var_failed_if_bad_var_name(self):
         """Check that the same cube is returned if no fix is available."""
@@ -266,70 +253,60 @@ class TestFixData():
                 'dataset': 'model',
                 'mip': 'mip',
                 'short_name': 'short_name',
-                'frequency': None,
+                'frequency': 'frequency',
             },
             'session': sentinel.session,
+            'frequency': 'frequency',
         }
-        self.mock_fixer = Mock()
 
     def test_fix(self):
         """Check that the returned fix is applied."""
         self.check_data.side_effect = lambda: self.fixed_cube
-        self.mock_fixer.fix_data.return_value = self.intermediate_cube
         with patch('esmvalcore.cmor._fixes.fix.Fix.get_fixes',
                    return_value=[self.mock_fix]) as mock_get_fixes:
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=self.checker):
-                with patch('esmvalcore.cmor.fix.AutomaticFix.from_facets',
-                           return_value=self.mock_fixer):
-                    cube_returned = fix_data(
-                        self.cube,
-                        short_name='short_name',
-                        project='project',
-                        dataset='model',
-                        mip='mip',
-                        session=sentinel.session,
-                    )
-                    self.checker.assert_called_once_with(
-                        self.intermediate_cube
-                    )
-                    self.check_data.assert_called_once_with()
-                    assert cube_returned is not self.cube
-                    assert cube_returned is not self.intermediate_cube
-                    assert cube_returned is self.fixed_cube
-                    mock_get_fixes.assert_called_once_with(
-                        **self.expected_get_fixes_call
-                    )
-                    self.mock_fixer.fix_data.assert_called_once_with(
-                        self.intermediate_cube
-                    )
+                cube_returned = fix_data(
+                    self.cube,
+                    short_name='short_name',
+                    project='project',
+                    dataset='model',
+                    mip='mip',
+                    frequency='frequency',
+                    session=sentinel.session,
+                )
+                self.checker.assert_called_once_with(
+                    self.intermediate_cube
+                )
+                self.check_data.assert_called_once_with()
+                assert cube_returned is not self.cube
+                assert cube_returned is not self.intermediate_cube
+                assert cube_returned is self.fixed_cube
+                mock_get_fixes.assert_called_once_with(
+                    **self.expected_get_fixes_call
+                )
 
     def test_nofix(self):
         """Check that the same cube is returned if no fix is available."""
         self.check_data.side_effect = lambda: self.cube
-        self.mock_fixer.fix_data.return_value = self.cube
         with patch('esmvalcore.cmor._fixes.fix.Fix.get_fixes',
                    return_value=[]) as mock_get_fixes:
             with patch('esmvalcore.cmor.fix._get_cmor_checker',
                        return_value=self.checker):
-                with patch('esmvalcore.cmor.fix.AutomaticFix.from_facets',
-                           return_value=self.mock_fixer):
-                    cube_returned = fix_data(
-                        self.cube,
-                        short_name='short_name',
-                        project='project',
-                        dataset='model',
-                        mip='mip',
-                        session=sentinel.session,
-                    )
-                    self.checker.assert_called_once_with(self.cube)
-                    self.check_data.assert_called_once_with()
-                    assert cube_returned is self.cube
-                    assert cube_returned is not self.intermediate_cube
-                    assert cube_returned is not self.fixed_cube
-                    mock_get_fixes.assert_called_once_with(
-                        **self.expected_get_fixes_call
-                    )
-                    self.mock_fixer.fix_data.assert_called_once_with(
-                        self.cube
-                    )
+                cube_returned = fix_data(
+                    self.cube,
+                    short_name='short_name',
+                    project='project',
+                    dataset='model',
+                    mip='mip',
+                    frequency='frequency',
+                    session=sentinel.session,
+                )
+                self.checker.assert_called_once_with(self.cube)
+                self.check_data.assert_called_once_with()
+                assert cube_returned is self.cube
+                assert cube_returned is not self.intermediate_cube
+                assert cube_returned is not self.fixed_cube
+                mock_get_fixes.assert_called_once_with(
+                    **self.expected_get_fixes_call
+                )

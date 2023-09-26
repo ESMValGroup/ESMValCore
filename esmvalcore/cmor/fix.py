@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING, Iterable, Optional
 
 from iris.cube import Cube, CubeList
 
-from esmvalcore.cmor._fixes.automatic_fix import AutomaticFix
 from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor.check import CheckLevels, _get_cmor_checker
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
@@ -34,6 +33,7 @@ def fix_file(
     output_dir: Path,
     add_unique_suffix: bool = False,
     session: Optional[Session] = None,
+    frequency: Optional[str] = None,
     **extra_facets,
 ) -> str | Path:
     """Fix files before ESMValTool can load them.
@@ -61,6 +61,8 @@ def fix_file(
         Adds a unique suffix to `output_dir` for thread safety.
     session:
         Current session which includes configuration and directory information.
+    frequency:
+        Variable's data frequency, if available.
     **extra_facets:
         Extra facets are mainly used for data outside of the big projects like
         CMIP, CORDEX, obs4MIPs. For details, see :ref:`extra_facets`.
@@ -78,6 +80,7 @@ def fix_file(
         'project': project,
         'dataset': dataset,
         'mip': mip,
+        'frequency': frequency,
     })
 
     for fix in Fix.get_fixes(project=project,
@@ -85,7 +88,8 @@ def fix_file(
                              mip=mip,
                              short_name=short_name,
                              extra_facets=extra_facets,
-                             session=session):
+                             session=session,
+                             frequency=frequency):
         file = fix.fix_file(
             file, output_dir, add_unique_suffix=add_unique_suffix
         )
@@ -174,7 +178,8 @@ def fix_metadata(
                           mip=mip,
                           short_name=short_name,
                           extra_facets=extra_facets,
-                          session=session)
+                          session=session,
+                          frequency=frequency)
     fixed_cubes = CubeList()
 
     # Group cubes by input file and apply all fixes to each group element
@@ -189,12 +194,6 @@ def fix_metadata(
             cube_list = fix.fix_metadata(cube_list)
 
         cube = _get_single_cube(cube_list, short_name, project, dataset)
-
-        # Automatic fixes
-        automatic_fixer = AutomaticFix.from_facets(
-            project, mip, short_name, frequency=frequency
-        )
-        cube = automatic_fixer.fix_metadata(cube)
 
         # Perform CMOR checks
         # TODO: remove in v2.12
@@ -322,14 +321,9 @@ def fix_data(
                              mip=mip,
                              short_name=short_name,
                              extra_facets=extra_facets,
-                             session=session):
+                             session=session,
+                             frequency=frequency):
         cube = fix.fix_data(cube)
-
-    # Automatic fixes
-    automatic_fixer = AutomaticFix.from_facets(
-        project, mip, short_name, frequency=frequency
-    )
-    cube = automatic_fixer.fix_data(cube)
 
     # Perform CMOR checks
     # TODO: remove in v2.12

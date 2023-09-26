@@ -8,7 +8,7 @@ from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.cmip6.kiost_esm import SfcWind, Siconc, Tas
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
-from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.fix import AutomaticFix, Fix
 from esmvalcore.cmor.table import get_var_info
 
 
@@ -72,7 +72,7 @@ def tas_cubes():
 
 def test_get_sfcwind_fix():
     fix = Fix.get_fixes('CMIP6', 'KIOST-ESM', 'Amon', 'sfcWind')
-    assert fix == [SfcWind(None)]
+    assert fix == [SfcWind(None), AutomaticFix(None)]
 
 
 def test_sfcwind_fix_metadata(sfcwind_cubes):
@@ -104,7 +104,7 @@ def test_sfcwind_fix_metadata(sfcwind_cubes):
 def test_get_siconc_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'KIOST-ESM', 'SImon', 'siconc')
-    assert fix == [Siconc(None)]
+    assert fix == [Siconc(None), AutomaticFix(None)]
 
 
 def test_siconc_fix():
@@ -127,7 +127,7 @@ def test_siconc_fix_data():
 
 def test_get_tas_fix():
     fix = Fix.get_fixes('CMIP6', 'KIOST-ESM', 'Amon', 'tas')
-    assert fix == [Tas(None)]
+    assert fix == [Tas(None), AutomaticFix(None)]
 
 
 def test_tas_fix_metadata(tas_cubes):

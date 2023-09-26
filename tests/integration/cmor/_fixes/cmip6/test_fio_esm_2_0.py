@@ -6,6 +6,7 @@ from cf_units import Unit
 
 from esmvalcore.cmor._fixes.cmip6.fio_esm_2_0 import Amon, Omon, Tos
 from esmvalcore.cmor._fixes.common import OceanFixGrid
+from esmvalcore.cmor._fixes.fix import AutomaticFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -13,13 +14,13 @@ from esmvalcore.cmor.table import get_var_info
 def test_get_tas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'FIO-ESM-2-0', 'Amon', 'tas')
-    assert fix == [Amon(None)]
+    assert fix == [Amon(None), AutomaticFix(None)]
 
 
 def test_get_tos_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'FIO-ESM-2-0', 'Omon', 'tos')
-    assert fix == [OceanFixGrid(None), Omon(None)]
+    assert fix == [OceanFixGrid(None), Omon(None), AutomaticFix(None)]
 
 
 def test_tos_fix():

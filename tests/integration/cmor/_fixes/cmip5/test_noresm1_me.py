@@ -1,10 +1,11 @@
 """Tests for fixes of NorESM1-ME (CMIP5)."""
-import pytest
 import iris
+import pytest
 from iris.cube import CubeList
 
-from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.noresm1_me import Tas
+from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor.fix import Fix
 
 DIM_COORD_SHORT = iris.coords.DimCoord(
     [1.0, 2.0, 3.0],
@@ -69,4 +70,6 @@ def test_tas(cubes_in, cubes_out):
 
 def test_get():
     """Test fix get"""
-    assert Fix.get_fixes('CMIP5', 'NORESM1-ME', 'Amon', 'tas') == [Tas(None)]
+    assert Fix.get_fixes('CMIP5', 'NORESM1-ME', 'Amon', 'tas') == [
+        Tas(None), AutomaticFix(None)
+    ]

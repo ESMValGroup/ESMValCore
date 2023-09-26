@@ -8,7 +8,7 @@ from iris.cube import Cube
 
 from esmvalcore.cmor._fixes.cmip5.access1_0 import Cl as BaseCl
 from esmvalcore.cmor._fixes.cmip5.access1_3 import AllVars, Cl
-from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.fix import AutomaticFix, Fix
 from esmvalcore.iris_helpers import date2num
 
 
@@ -38,8 +38,9 @@ class TestAllVars:
     @staticmethod
     def test_get():
         """Test getting of fix."""
-        assert (Fix.get_fixes('CMIP5', 'ACCESS1-3', 'Amon', 'tas')
-                == [AllVars(None)])
+        assert Fix.get_fixes('CMIP5', 'ACCESS1-3', 'Amon', 'tas') == [
+             AllVars(None), AutomaticFix(None)
+        ]
 
     @staticmethod
     def test_fix_metadata(cube):
@@ -65,7 +66,7 @@ class TestAllVars:
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP5', 'ACCESS1-3', 'Amon', 'cl')
-    assert fix == [Cl(None), AllVars(None)]
+    assert fix == [Cl(None), AllVars(None), AutomaticFix(None)]
 
 
 def test_cl_fix():

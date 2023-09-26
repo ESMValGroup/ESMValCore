@@ -5,14 +5,14 @@ import pytest
 
 from esmvalcore.cmor._fixes.cmip6.miroc6 import Cl, Cli, Clw, Tos
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
-from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.fix import AutomaticFix, Fix
 from esmvalcore.cmor.table import get_var_info
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'MIROC6', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    assert fix == [Cl(None), AutomaticFix(None)]
 
 
 def test_cl_fix():
@@ -23,7 +23,7 @@ def test_cl_fix():
 def test_get_cli_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'MIROC6', 'Amon', 'cli')
-    assert fix == [Cli(None)]
+    assert fix == [Cli(None), AutomaticFix(None)]
 
 
 def test_cli_fix():
@@ -34,7 +34,7 @@ def test_cli_fix():
 def test_get_clw_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'MIROC6', 'Amon', 'clw')
-    assert fix == [Clw(None)]
+    assert fix == [Clw(None), AutomaticFix(None)]
 
 
 def test_clw_fix():
@@ -69,7 +69,7 @@ def tos_cubes():
 def test_get_tos_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'MIROC6', 'Omon', 'tos')
-    assert fix == [Tos(None)]
+    assert fix == [Tos(None), AutomaticFix(None)]
 
 
 def test_tos_fix_metadata(tos_cubes):

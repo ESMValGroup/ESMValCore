@@ -6,6 +6,7 @@ import numpy as np
 
 from esmvalcore.cmor._fixes.cmip6.fgoals_g3 import Mrsos, Siconc, Tos
 from esmvalcore.cmor._fixes.common import OceanFixGrid
+from esmvalcore.cmor._fixes.fix import AutomaticFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -13,7 +14,7 @@ from esmvalcore.cmor.table import get_var_info
 def test_get_tos_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'BCC-CSM2-MR', 'Omon', 'tos')
-    assert fix == [Tos(None)]
+    assert fix == [Tos(None), AutomaticFix(None)]
 
 
 def test_tos_fix():
@@ -56,7 +57,7 @@ def test_tos_fix_metadata(mock_base_fix_metadata):
 def test_get_siconc_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'BCC-CSM2-MR', 'SImon', 'siconc')
-    assert fix == [Siconc(None)]
+    assert fix == [Siconc(None), AutomaticFix(None)]
 
 
 def test_siconc_fix():
@@ -67,7 +68,7 @@ def test_siconc_fix():
 def test_get_mrsos_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'FGOALS-g3', 'Lmon', 'mrsos')
-    assert fix == [Mrsos(None)]
+    assert fix == [Mrsos(None), AutomaticFix(None)]
 
 
 def test_mrsos_fix():

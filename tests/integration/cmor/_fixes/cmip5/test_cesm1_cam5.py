@@ -3,13 +3,14 @@ import iris
 import pytest
 
 from esmvalcore.cmor._fixes.cmip5.cesm1_cam5 import Cl
+from esmvalcore.cmor._fixes.fix import AutomaticFix
 from esmvalcore.cmor.fix import Fix
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP5', 'CESM1-CAM5', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    assert fix == [Cl(None), AutomaticFix(None)]
 
 
 @pytest.fixture

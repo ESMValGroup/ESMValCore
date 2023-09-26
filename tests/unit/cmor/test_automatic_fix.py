@@ -7,7 +7,8 @@ import pytest
 from iris.coords import AuxCoord
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.automatic_fix import AutomaticFix, get_time_bounds
+from esmvalcore.cmor._fixes.fix import AutomaticFix, get_time_bounds
+from esmvalcore.cmor.table import get_var_info
 
 
 @pytest.fixture
@@ -24,7 +25,8 @@ def time_coord():
 @pytest.fixture
 def automatic_fix():
     """Automatic fix object."""
-    return AutomaticFix.from_facets('CMIP6', 'CFmon', 'ta')
+    vardef = get_var_info('CMIP6', 'CFmon', 'ta')
+    return AutomaticFix(vardef)
 
 
 @pytest.mark.parametrize(
@@ -52,16 +54,10 @@ def test_get_time_bounds_invalid_freq_fail(time_coord):
         get_time_bounds(time_coord, 'invalid_freq')
 
 
-def test_automatic_fix_var_info_none():
-    """Test ``AutomaticFix``."""
-    with pytest.raises(ValueError):
-        AutomaticFix(None)
-
-
 def test_automatic_fix_empty_long_name(automatic_fix, monkeypatch):
     """Test ``AutomaticFix``."""
     # Artificially set long_name to empty string for test
-    monkeypatch.setattr(automatic_fix.var_info, 'long_name', '')
+    monkeypatch.setattr(automatic_fix.vardef, 'long_name', '')
 
     cube = automatic_fix._fix_long_name(sentinel.cube)
 
@@ -71,7 +67,7 @@ def test_automatic_fix_empty_long_name(automatic_fix, monkeypatch):
 def test_automatic_fix_empty_units(automatic_fix, monkeypatch):
     """Test ``AutomaticFix``."""
     # Artificially set latitude units to empty string for test
-    coord_info = automatic_fix.var_info.coordinates['latitude']
+    coord_info = automatic_fix.vardef.coordinates['latitude']
     monkeypatch.setattr(coord_info, 'units', '')
 
     ret = automatic_fix._fix_coord_units(
@@ -85,7 +81,7 @@ def test_automatic_fix_no_generic_lev_coords(automatic_fix, monkeypatch):
     """Test ``AutomaticFix``."""
     # Artificially remove generic_lev_coords
     monkeypatch.setattr(
-        automatic_fix.var_info.coordinates['alevel'], 'generic_lev_coords', {}
+        automatic_fix.vardef.coordinates['alevel'], 'generic_lev_coords', {}
     )
 
     cube = automatic_fix._fix_alternative_generic_level_coords(sentinel.cube)

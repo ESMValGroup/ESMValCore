@@ -5,6 +5,7 @@ import pytest
 from cf_units import Unit
 
 from esmvalcore.cmor._fixes.cmip6.mcm_ua_1_0 import AllVars, Omon, Tas, Uas
+from esmvalcore.cmor._fixes.fix import AutomaticFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -119,17 +120,17 @@ def cubes_bounds():
 def test_get_allvars_fix():
     fix = Fix.get_fixes('CMIP6', 'MCM-UA-1-0', 'Amon',
                         'arbitrary_var_name_and_wrong_lon_bnds')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), AutomaticFix(None)]
 
 
 def test_get_tas_fix():
     fix = Fix.get_fixes('CMIP6', 'MCM-UA-1-0', 'Amon', 'tas')
-    assert fix == [Tas(None), AllVars(None)]
+    assert fix == [Tas(None), AllVars(None), AutomaticFix(None)]
 
 
 def test_get_uas_fix():
     fix = Fix.get_fixes('CMIP6', 'MCM-UA-1-0', 'Amon', 'uas')
-    assert fix == [Uas(None), AllVars(None)]
+    assert fix == [Uas(None), AllVars(None), AutomaticFix(None)]
 
 
 def test_allvars_fix_metadata(cubes):
@@ -265,7 +266,7 @@ def thetao_cubes():
 def test_get_thetao_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'MCM-UA-1-0', 'Omon', 'thetao')
-    assert fix == [Omon(None), AllVars(None)]
+    assert fix == [Omon(None), AllVars(None), AutomaticFix(None)]
 
 
 def test_thetao_fix_metadata(thetao_cubes):

@@ -22,7 +22,7 @@ from esmvalcore.cmor import (
     _get_simplified_calendar,
     _is_unstructured_grid,
 )
-from esmvalcore.cmor._fixes.automatic_fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import AutomaticFix
 from esmvalcore.cmor.table import get_var_info
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 

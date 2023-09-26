@@ -44,10 +44,11 @@ class TestAutomaticFix:
     def setup(self, mocker):
         """Setup tests."""
         self.mock_debug = mocker.patch(
-            'esmvalcore.cmor.fix.AutomaticFix._debug_msg', autospec=True
+            'esmvalcore.cmor._fixes.fix.AutomaticFix._debug_msg', autospec=True
         )
         self.mock_warning = mocker.patch(
-            'esmvalcore.cmor.fix.AutomaticFix._warning_msg', autospec=True
+            'esmvalcore.cmor._fixes.fix.AutomaticFix._warning_msg',
+            autospec=True,
         )
 
         # Create sample data with CMOR errors
