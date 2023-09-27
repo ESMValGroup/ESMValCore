@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
+from typing import Optional
 
 from iris.coords import Coord
 from iris.cube import Cube
@@ -188,8 +189,7 @@ def _is_unstructured_grid(cube: Cube) -> bool:
 def _get_single_cube(
     cube_list: Sequence[Cube],
     short_name: str,
-    project: str,
-    dataset: str,
+    dataset_str: Optional[str] = None,
 ) -> Cube:
     if len(cube_list) == 1:
         return cube_list[0]
@@ -198,17 +198,22 @@ def _get_single_cube(
         if raw_cube.var_name == short_name:
             cube = raw_cube
             break
+
+    if dataset_str is None:
+        dataset_str = ''
+    else:
+        dataset_str = f' in {dataset_str}'
+
     if not cube:
         raise ValueError(
-            f'More than one cube found for variable {short_name} in '
-            f'{project}:{dataset} but none of their var_names match the '
-            f'expected.\nFull list of cubes encountered: {cube_list}'
+            f"More than one cube found for variable {short_name}{dataset_str} "
+            f"but none of their var_names match the expected.\nFull list of "
+            f"cubes encountered: {cube_list}"
         )
     logger.warning(
-        'Found variable %s in %s:%s, but there were other present in '
-        'the file. Those extra variables are usually metadata '
-        '(cell area, latitude descriptions) that was not saved '
-        'according to CF-conventions. It is possible that errors appear '
-        'further on because of this. \nFull list of cubes encountered: %s',
-        short_name, project, dataset, cube_list)
+        "Found variable %s%s, but there were other present in the file. Those "
+        "extra variables are usually metadata (cell area, latitude "
+        "descriptions) that was not saved according to CF-conventions. It is "
+        "possible that errors appear further on because of this.\nFull list "
+        "of cubes encountered: %s", short_name, dataset_str, cube_list)
     return cube

@@ -195,7 +195,8 @@ def fix_metadata(
         for fix in fixes:
             cube_list = fix.fix_metadata(cube_list)
 
-        cube = _get_single_cube(cube_list, short_name, project, dataset)
+        dataset_str = f'{project}:{dataset}'
+        cube = _get_single_cube(cube_list, short_name, dataset_str=dataset_str)
 
         # Perform CMOR checks
         # TODO: remove in v2.12

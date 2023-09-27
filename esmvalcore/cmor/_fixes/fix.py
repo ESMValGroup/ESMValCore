@@ -424,16 +424,21 @@ class GenericFix(Fix):
             Fixed cubes.
 
         """
+        # Make sure the this fix also works when no extra_facets are given
+        if 'project' in self.extra_facets and 'dataset' in self.extra_facets:
+            dataset_str = (
+                f"{self.extra_facets['project']}:"
+                f"{self.extra_facets['dataset']}"
+            )
+        else:
+            dataset_str = None
+
         # The following fixes are designed to operate on the actual cube that
         # corresponds to the variable. Thus, it needs to be assured (possibly
         # by prior dataset-specific fixes) that the cubes here contain only one
         # relevant cube.
-        cube = _get_single_cube(
-            cubes,
-            self.extra_facets['short_name'],
-            self.extra_facets['project'],
-            self.extra_facets['dataset'],
-        )
+        cube = _get_single_cube(cubes, self.vardef.short_name, dataset_str)
+
         cube = self._fix_standard_name(cube)
         cube = self._fix_long_name(cube)
         cube = self._fix_psu_units(cube)

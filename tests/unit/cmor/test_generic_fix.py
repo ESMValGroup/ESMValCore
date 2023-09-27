@@ -186,8 +186,20 @@ def test_fix_direction_no_stored_direction(generic_fix, mocker):
 
 def test_fix_metadata_not_fail_with_empty_cube(generic_fix):
     """Generic fixes should not fail with empty cubes."""
-    cube = Cube(0)
-    fixed_cubes = generic_fix.fix_metadata([cube])
+    fixed_cubes = generic_fix.fix_metadata([Cube(0)])
+
+    assert isinstance(fixed_cubes, CubeList)
+    assert len(fixed_cubes) == 1
+    assert fixed_cubes[0] == Cube(
+        0, standard_name='air_temperature', long_name='Air Temperature'
+    )
+
+
+def test_fix_metadata_no_extra_facets():
+    """Generic fixes should not fail when no extra facets are given."""
+    vardef = get_var_info('CMIP6', 'Amon', 'ta')
+    fix = GenericFix(vardef)
+    fixed_cubes = fix.fix_metadata([Cube(0)])
 
     assert isinstance(fixed_cubes, CubeList)
     assert len(fixed_cubes) == 1
@@ -198,8 +210,17 @@ def test_fix_metadata_not_fail_with_empty_cube(generic_fix):
 
 def test_fix_data_not_fail_with_empty_cube(generic_fix):
     """Generic fixes should not fail with empty cubes."""
-    cube = Cube(0)
-    fixed_cube = generic_fix.fix_data(cube)
+    fixed_cube = generic_fix.fix_data(Cube(0))
+
+    assert isinstance(fixed_cube, Cube)
+    assert fixed_cube == Cube(0)
+
+
+def test_fix_data_no_extra_facets():
+    """Generic fixes should not fail when no extra facets are given."""
+    vardef = get_var_info('CMIP6', 'Amon', 'ta')
+    fix = GenericFix(vardef)
+    fixed_cube = fix.fix_data(Cube(0))
 
     assert isinstance(fixed_cube, Cube)
     assert fixed_cube == Cube(0)

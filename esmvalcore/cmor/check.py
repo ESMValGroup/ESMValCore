@@ -131,6 +131,7 @@ class CMORCheck():
             warnings.warn(msg, ESMValCoreDeprecationWarning)
 
         # TODO: remove in v2.12
+
         self._generic_fix = GenericFix(var_info, frequency=frequency)
 
     @cached_property
