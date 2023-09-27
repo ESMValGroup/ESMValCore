@@ -5,7 +5,7 @@ from unittest.mock import sentinel
 import numpy as np
 import pytest
 from iris.coords import AuxCoord
-from iris.cube import Cube
+from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.fix import AutomaticFix, get_time_bounds
 from esmvalcore.cmor.table import get_var_info
@@ -26,7 +26,8 @@ def time_coord():
 def automatic_fix():
     """Automatic fix object."""
     vardef = get_var_info('CMIP6', 'CFmon', 'ta')
-    return AutomaticFix(vardef)
+    extra_facets = {'short_name': 'ta', 'project': 'CMIP6', 'dataset': 'MODEL'}
+    return AutomaticFix(vardef, extra_facets=extra_facets)
 
 
 @pytest.mark.parametrize(
@@ -181,3 +182,24 @@ def test_fix_direction_no_stored_direction(automatic_fix, mocker):
     ret = automatic_fix._fix_coord_direction(cube, cmor_coord, cube_coord)
 
     assert ret == (cube, cube_coord)
+
+
+def test_fix_metadata_not_fail_with_empty_cube(automatic_fix):
+    """Automatic fixes should not fail with empty cubes."""
+    cube = Cube(0)
+    fixed_cubes = automatic_fix.fix_metadata([cube])
+
+    assert isinstance(fixed_cubes, CubeList)
+    assert len(fixed_cubes) == 1
+    assert fixed_cubes[0] == Cube(
+        0, standard_name='air_temperature', long_name='Air Temperature'
+    )
+
+
+def test_fix_data_not_fail_with_empty_cube(automatic_fix):
+    """Automatic fixes should not fail with empty cubes."""
+    cube = Cube(0)
+    fixed_cube = automatic_fix.fix_data(cube)
+
+    assert isinstance(fixed_cube, Cube)
+    assert fixed_cube == Cube(0)

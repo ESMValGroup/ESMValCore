@@ -1,11 +1,16 @@
-"""CMOR module."""
+"""Utilities for CMOR module."""
 from __future__ import annotations
+
+import logging
+from collections.abc import Sequence
 
 from iris.coords import Coord
 from iris.cube import Cube
 from iris.exceptions import CoordinateNotFoundError
 
-from .table import CMOR_TABLES, CoordinateInfo, VariableInfo
+from esmvalcore.cmor.table import CMOR_TABLES, CoordinateInfo, VariableInfo
+
+logger = logging.getLogger(__name__)
 
 _ALTERNATIVE_GENERIC_LEV_COORDS = {
     'alevel': {
@@ -178,3 +183,32 @@ def _is_unstructured_grid(cube: Cube) -> bool:
         if lat.ndim == 1 and (cube.coord_dims(lat) == cube.coord_dims(lon)):
             return True
     return False
+
+
+def _get_single_cube(
+    cube_list: Sequence[Cube],
+    short_name: str,
+    project: str,
+    dataset: str,
+) -> Cube:
+    if len(cube_list) == 1:
+        return cube_list[0]
+    cube = None
+    for raw_cube in cube_list:
+        if raw_cube.var_name == short_name:
+            cube = raw_cube
+            break
+    if not cube:
+        raise ValueError(
+            f'More than one cube found for variable {short_name} in '
+            f'{project}:{dataset} but none of their var_names match the '
+            f'expected.\nFull list of cubes encountered: {cube_list}'
+        )
+    logger.warning(
+        'Found variable %s in %s:%s, but there were other present in '
+        'the file. Those extra variables are usually metadata '
+        '(cell area, latitude descriptions) that was not saved '
+        'according to CF-conventions. It is possible that errors appear '
+        'further on because of this. \nFull list of cubes encountered: %s',
+        short_name, project, dataset, cube_list)
+    return cube

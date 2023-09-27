@@ -282,7 +282,7 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
         regions = [regions[idx] for idx in region_indices]
 
     # Create a mask for the data (np->da)
-    mask = da.zeros(cube.shape, dtype=bool)
+    mask = np.zeros(cube.shape, dtype=bool)
 
     # Create a set of x,y points from the cube
     # 1D regular grids

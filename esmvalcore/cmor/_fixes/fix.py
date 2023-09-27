@@ -5,14 +5,16 @@ import importlib
 import inspect
 import logging
 import tempfile
+from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterable, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import numpy as np
 from cf_units import Unit
 from iris.coords import Coord, CoordExtent
 from iris.cube import Cube, CubeList
+from iris.exceptions import UnitConversionError
 from iris.util import reverse
 
 from esmvalcore.cmor._utils import (
@@ -20,6 +22,7 @@ from esmvalcore.cmor._utils import (
     _get_generic_lev_coord_names,
     _get_new_generic_level_coord,
     _get_simplified_calendar,
+    _get_single_cube,
     _is_unstructured_grid,
 )
 from esmvalcore.cmor.table import get_var_info
@@ -99,7 +102,7 @@ class Fix:
         """
         return filepath
 
-    def fix_metadata(self, cubes: Iterable[Cube]) -> Iterable[Cube]:
+    def fix_metadata(self, cubes: Sequence[Cube]) -> Sequence[Cube]:
         """Apply fixes to the metadata of the cube.
 
         Changes applied here must not require data loading.
@@ -407,7 +410,7 @@ def get_time_bounds(time: Coord, freq: str):
 class AutomaticFix(Fix):
     """Class providing automatic fixes for all datasets."""
 
-    def fix_metadata(self, cubes: Iterable[Cube]) -> CubeList:
+    def fix_metadata(self, cubes: Sequence[Cube]) -> CubeList:
         """Fix cube metadata.
 
         Parameters
@@ -421,22 +424,27 @@ class AutomaticFix(Fix):
             Fixed cubes.
 
         """
-        fixed_cubes = CubeList()
+        # The following fixes are designed to operate on the actual cube that
+        # corresponds to the variable. Thus, it needs to be assured (possibly
+        # by prior dataset-specific fixes) that the cubes here contain only one
+        # relevant cube.
+        cube = _get_single_cube(
+            cubes,
+            self.extra_facets['short_name'],
+            self.extra_facets['project'],
+            self.extra_facets['dataset'],
+        )
+        cube = self._fix_standard_name(cube)
+        cube = self._fix_long_name(cube)
+        cube = self._fix_psu_units(cube)
+        cube = self._fix_units(cube)
 
-        for cube in cubes:
-            cube = self._fix_standard_name(cube)
-            cube = self._fix_long_name(cube)
-            cube = self._fix_psu_units(cube)
-            cube = self._fix_units(cube)
+        cube = self._fix_regular_coord_names(cube)
+        cube = self._fix_alternative_generic_level_coords(cube)
+        cube = self._fix_coords(cube)
+        cube = self._fix_time_coord(cube)
 
-            cube = self._fix_regular_coord_names(cube)
-            cube = self._fix_alternative_generic_level_coords(cube)
-            cube = self._fix_coords(cube)
-            cube = self._fix_time_coord(cube)
-
-            fixed_cubes.append(cube)
-
-        return fixed_cubes
+        return CubeList([cube])
 
     def fix_data(self, cube: Cube) -> Cube:
         """Fix cube data.
@@ -509,13 +517,22 @@ class AutomaticFix(Fix):
             # `degrees_north`
             if str(cube.units) != units:
                 old_units = cube.units
-                cube.convert_units(units)
-                self._warning_msg(
-                    cube,
-                    "Converted cube units from '%s' to '%s'",
-                    old_units,
-                    cube.units,
-                )
+                try:
+                    cube.convert_units(units)
+                except (ValueError, UnitConversionError):
+                    self._warning_msg(
+                        cube,
+                        "Failed to convert cube units from '%s' to '%s'",
+                        old_units,
+                        units,
+                    )
+                else:
+                    self._warning_msg(
+                        cube,
+                        "Converted cube units from '%s' to '%s'",
+                        old_units,
+                        units,
+                    )
         return cube
 
     def _fix_standard_name(self, cube: Cube) -> Cube:
@@ -668,7 +685,7 @@ class AutomaticFix(Fix):
             old_units = cube_coord.units
             try:
                 cube_coord.convert_units(cmor_coord.units)
-            except ValueError:
+            except (ValueError, UnitConversionError):
                 self._warning_msg(
                     cube,
                     "Failed to convert units of coordinate %s from '%s' to "

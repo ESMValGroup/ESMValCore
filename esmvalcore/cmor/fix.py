@@ -9,12 +9,14 @@ from __future__ import annotations
 import logging
 import warnings
 from collections import defaultdict
+from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Optional
+from typing import TYPE_CHECKING, Optional
 
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._utils import _get_single_cube
 from esmvalcore.cmor.check import CheckLevels, _get_cmor_checker
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
@@ -97,7 +99,7 @@ def fix_file(
 
 
 def fix_metadata(
-    cubes: Iterable[Cube],
+    cubes: Sequence[Cube],
     short_name: str,
     project: str,
     dataset: str,
@@ -211,30 +213,6 @@ def fix_metadata(
         fixed_cubes.append(cube)
 
     return fixed_cubes
-
-
-def _get_single_cube(cube_list, short_name, project, dataset):
-    if len(cube_list) == 1:
-        return cube_list[0]
-    cube = None
-    for raw_cube in cube_list:
-        if raw_cube.var_name == short_name:
-            cube = raw_cube
-            break
-    if not cube:
-        raise ValueError(
-            f'More than one cube found for variable {short_name} in '
-            f'{project}:{dataset} but none of their var_names match the '
-            f'expected.\nFull list of cubes encountered: {cube_list}'
-        )
-    logger.warning(
-        'Found variable %s in %s:%s, but there were other present in '
-        'the file. Those extra variables are usually metadata '
-        '(cell area, latitude descriptions) that was not saved '
-        'according to CF-conventions. It is possible that errors appear '
-        'further on because of this. \nFull list of cubes encountered: %s',
-        short_name, project, dataset, cube_list)
-    return cube
 
 
 def fix_data(
