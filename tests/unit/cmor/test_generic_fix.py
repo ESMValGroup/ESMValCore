@@ -195,6 +195,17 @@ def test_fix_metadata_not_fail_with_empty_cube(generic_fix):
     )
 
 
+@pytest.mark.parametrize(
+    'extra_facets', [{}, {'project': 'P', 'dataset': 'D'}]
+)
+def test_fix_metadata_multiple_cubes_fail(extra_facets):
+    """Generic fixes should fail when multiple invalid cubes are given."""
+    vardef = get_var_info('CMIP6', 'Amon', 'ta')
+    fix = GenericFix(vardef, extra_facets=extra_facets)
+    with pytest.raises(ValueError):
+        fix.fix_metadata([Cube(0), Cube(0)])
+
+
 def test_fix_metadata_no_extra_facets():
     """Generic fixes should not fail when no extra facets are given."""
     vardef = get_var_info('CMIP6', 'Amon', 'ta')
