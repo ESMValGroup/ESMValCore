@@ -10,7 +10,7 @@ from esmvalcore.cmor._fixes.cmip5.gfdl_esm2m import (
     Co2,
     Sftof,
 )
-from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -26,7 +26,7 @@ class TestSftof(unittest.TestCase):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-ESM2M', 'fx', 'sftof'),
-            [Sftof(None), AllVars(None), AutomaticFix(None)])
+            [Sftof(None), AllVars(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -46,7 +46,7 @@ class TestCo2(unittest.TestCase):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-ESM2M', 'Amon', 'co2'),
-            [Co2(None), AllVars(None), AutomaticFix(None)])
+            [Co2(None), AllVars(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -69,7 +69,7 @@ class TestAreacello(unittest.TestCase):
             Fix.get_fixes('CMIP5', 'GFDL-ESM2M', 'fx', 'areacello'),
             [Areacello(self.vardef),
              AllVars(self.vardef),
-             AutomaticFix(self.vardef)])
+             GenericFix(self.vardef)])
 
     def test_fix_metadata(self):
         """Test data fix."""

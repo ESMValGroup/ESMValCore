@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from cf_units import Unit
 
-from esmvalcore.cmor._fixes.fix import AutomaticFix, Fix
+from esmvalcore.cmor._fixes.fix import Fix, GenericFix
 from esmvalcore.cmor._fixes.native6.era5 import (
     AllVars,
     Evspsbl,
@@ -25,14 +25,14 @@ def test_get_evspsbl_fix():
     """Test whether the right fixes are gathered for a single variable."""
     fix = Fix.get_fixes('native6', 'ERA5', 'E1hr', 'evspsbl')
     vardef = get_var_info('native6', 'E1hr', 'evspsbl')
-    assert fix == [Evspsbl(vardef), AllVars(vardef), AutomaticFix(vardef)]
+    assert fix == [Evspsbl(vardef), AllVars(vardef), GenericFix(vardef)]
 
 
 def test_get_zg_fix():
     """Test whether the right fix gets found again, for zg as well."""
     fix = Fix.get_fixes('native6', 'ERA5', 'Amon', 'zg')
     vardef = get_var_info('native6', 'E1hr', 'evspsbl')
-    assert fix == [Zg(vardef), AllVars(vardef), AutomaticFix(vardef)]
+    assert fix == [Zg(vardef), AllVars(vardef), GenericFix(vardef)]
 
 
 def test_get_frequency_hourly():

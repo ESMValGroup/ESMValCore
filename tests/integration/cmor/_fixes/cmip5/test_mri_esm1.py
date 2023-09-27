@@ -2,7 +2,7 @@
 import unittest
 
 from esmvalcore.cmor._fixes.cmip5.mri_esm1 import Msftmyz
-from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 
 
@@ -12,4 +12,4 @@ class TestMsftmyz(unittest.TestCase):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'MRI-ESM1', 'Amon', 'msftmyz'),
-            [Msftmyz(None), AutomaticFix(None)])
+            [Msftmyz(None), GenericFix(None)])

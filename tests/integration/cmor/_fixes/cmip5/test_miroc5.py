@@ -7,14 +7,14 @@ from iris.cube import Cube
 
 from esmvalcore.cmor._fixes.cmip5.miroc5 import Cl, Hur, Pr, Sftof, Tas
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
-from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP5', 'MIROC5', 'Amon', 'cl')
-    assert fix == [Cl(None), AutomaticFix(None)]
+    assert fix == [Cl(None), GenericFix(None)]
 
 
 def test_cl_fix():
@@ -25,13 +25,13 @@ def test_cl_fix():
 def test_get_hur_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP5', 'MIROC5', 'Amon', 'hur')
-    assert fix == [Hur(None), AutomaticFix(None)]
+    assert fix == [Hur(None), GenericFix(None)]
 
 
 def test_get_pr_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP5', 'MIROC5', 'Amon', 'pr')
-    assert fix == [Pr(None), AutomaticFix(None)]
+    assert fix == [Pr(None), GenericFix(None)]
 
 
 @unittest.mock.patch(
@@ -65,7 +65,7 @@ class TestSftof(unittest.TestCase):
     def test_get(self):
         """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'MIROC5', 'Amon', 'sftof'),
-                             [Sftof(None), AutomaticFix(None)])
+                             [Sftof(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -89,7 +89,7 @@ class TestTas(unittest.TestCase):
     def test_get(self):
         """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'MIROC5', 'Amon', 'tas'),
-                             [Tas(None), AutomaticFix(None)])
+                             [Tas(None), GenericFix(None)])
 
     def test_fix_metadata(self):
         """Test metadata fix."""

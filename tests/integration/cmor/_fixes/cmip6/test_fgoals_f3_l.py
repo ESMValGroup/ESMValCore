@@ -7,7 +7,7 @@ from cf_units import Unit
 
 from esmvalcore.cmor._fixes.cmip6.fgoals_f3_l import AllVars, Clt, Sftlf, Tos
 from esmvalcore.cmor._fixes.common import OceanFixGrid
-from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 
 
@@ -76,7 +76,7 @@ def cubes():
 
 def test_get_allvars_fix():
     fix = Fix.get_fixes('CMIP6', 'FGOALS-f3-L', 'Amon', 'wrong_time_bnds')
-    assert fix == [AllVars(None), AutomaticFix(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_allvars_fix_metadata(cubes):
@@ -100,7 +100,7 @@ def test_tos_fix():
 def test_get_clt_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'FGOALS-f3-l', 'Amon', 'clt')
-    assert fix == [Clt(None), AllVars(None), AutomaticFix(None)]
+    assert fix == [Clt(None), AllVars(None), GenericFix(None)]
 
 
 @pytest.fixture
@@ -125,7 +125,7 @@ def test_clt_fix_data(clt_cube):
 def test_get_sftlf_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'FGOALS-f3-l', 'Amon', 'sftlf')
-    assert fix == [Sftlf(None), AllVars(None), AutomaticFix(None)]
+    assert fix == [Sftlf(None), AllVars(None), GenericFix(None)]
 
 
 def test_sftlf_fix():

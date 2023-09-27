@@ -7,7 +7,7 @@ import pytest
 
 from esmvalcore.cmor._fixes.cmip6.access_esm1_5 import Cl, Cli, Clw, Hus, Zg
 from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
-from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -78,7 +78,7 @@ def cl_cubes():
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'ACCESS-ESM1-5', 'Amon', 'cl')
-    assert fix == [Cl(None), AutomaticFix(None)]
+    assert fix == [Cl(None), GenericFix(None)]
 
 
 @unittest.mock.patch(
@@ -102,7 +102,7 @@ def test_cl_fix():
 def test_get_cli_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'ACCESS-ESM1-5', 'Amon', 'cli')
-    assert fix == [Cli(None), AutomaticFix(None)]
+    assert fix == [Cli(None), GenericFix(None)]
 
 
 def test_cli_fix():
@@ -113,7 +113,7 @@ def test_cli_fix():
 def test_get_clw_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'ACCESS-ESM1-5', 'Amon', 'clw')
-    assert fix == [Clw(None), AutomaticFix(None)]
+    assert fix == [Clw(None), GenericFix(None)]
 
 
 def test_clw_fix():
@@ -144,7 +144,7 @@ def cubes_with_wrong_air_pressure():
 def test_get_hus_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'ACCESS-ESM1-5', 'Amon', 'hus')
-    assert fix == [Hus(None), AutomaticFix(None)]
+    assert fix == [Hus(None), GenericFix(None)]
 
 
 def test_hus_fix_metadata(cubes_with_wrong_air_pressure):
@@ -170,7 +170,7 @@ def test_hus_fix_metadata(cubes_with_wrong_air_pressure):
 def test_get_zg_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'ACCESS-ESM1-5', 'Amon', 'zg')
-    assert fix == [Zg(None), AutomaticFix(None)]
+    assert fix == [Zg(None), GenericFix(None)]
 
 
 def test_zg_fix_metadata(cubes_with_wrong_air_pressure):

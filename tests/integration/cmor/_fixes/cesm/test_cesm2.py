@@ -7,7 +7,7 @@ from iris.coords import CellMethod, DimCoord
 from iris.cube import Cube, CubeList
 
 import esmvalcore.cmor._fixes.cesm.cesm2
-from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config._config import get_extra_facets
@@ -339,7 +339,7 @@ def test_get_tas_fix():
     fix = Fix.get_fixes('CESM', 'CESM2', 'Amon', 'tas')
     assert fix == [
         esmvalcore.cmor._fixes.cesm.cesm2.AllVars(None),
-        AutomaticFix(None),
+        GenericFix(None),
     ]
 
 

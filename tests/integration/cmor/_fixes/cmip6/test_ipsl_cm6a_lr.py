@@ -9,7 +9,7 @@ from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateNotFoundError
 
 from esmvalcore.cmor._fixes.cmip6.ipsl_cm6a_lr import AllVars, Clcalipso, Omon
-from esmvalcore.cmor._fixes.fix import AutomaticFix, Fix
+from esmvalcore.cmor._fixes.fix import Fix, GenericFix
 from esmvalcore.cmor.table import get_var_info
 
 
@@ -79,7 +79,7 @@ class TestAllVars(unittest.TestCase):
 def test_get_clcalipso_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'IPSL-CM6A-LR', 'CFmon', 'clcalipso')
-    assert fix == [Clcalipso(None), AllVars(None), AutomaticFix(None)]
+    assert fix == [Clcalipso(None), AllVars(None), GenericFix(None)]
 
 
 @pytest.fixture
@@ -137,7 +137,7 @@ def thetao_cubes():
 def test_get_thetao_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'IPSL-CM6A-LR', 'Omon', 'thetao')
-    assert fix == [Omon(None), AllVars(None), AutomaticFix(None)]
+    assert fix == [Omon(None), AllVars(None), GenericFix(None)]
 
 
 def test_thetao_fix_metadata(thetao_cubes):

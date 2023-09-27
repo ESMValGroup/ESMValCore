@@ -111,8 +111,8 @@ def fix_metadata(
 ) -> CubeList:
     """Fix cube metadata if fixes are required.
 
-    This method collects all the relevant fixes (including automatic ones) for
-    a given variable and applies them.
+    This method collects all the relevant fixes (including generic ones) for a
+    given variable and applies them.
 
     Parameters
     ----------
@@ -230,8 +230,8 @@ def fix_data(
 
     This method assumes that metadata is already fixed and checked.
 
-    This method collects all the relevant fixes (including automatic ones) for
-    a given variable and applies them.
+    This method collects all the relevant fixes (including generic ones) for a
+    given variable and applies them.
 
     Parameters
     ----------

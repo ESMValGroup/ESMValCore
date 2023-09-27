@@ -9,7 +9,7 @@ from iris.exceptions import CoordinateNotFoundError
 
 from esmvalcore.cmor._fixes.cmip5.miroc_esm import AllVars, Cl, Co2, Tro3
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
-from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -17,7 +17,7 @@ from esmvalcore.cmor.table import get_var_info
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP5', 'MIROC-ESM', 'Amon', 'cl')
-    assert fix == [Cl(None), AllVars(None), AutomaticFix(None)]
+    assert fix == [Cl(None), AllVars(None), GenericFix(None)]
 
 
 def test_cl_fix():
@@ -40,7 +40,7 @@ class TestCo2(unittest.TestCase):
             Fix.get_fixes('CMIP5', 'MIROC-ESM', 'Amon', 'co2'),
             [Co2(self.vardef),
              AllVars(self.vardef),
-             AutomaticFix(self.vardef)])
+             GenericFix(self.vardef)])
 
     def test_fix_metadata(self):
         """Test unit fix."""
@@ -61,7 +61,7 @@ class TestTro3(unittest.TestCase):
         """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'MIROC-ESM', 'Amon', 'tro3'),
-            [Tro3(None), AllVars(None), AutomaticFix(None)])
+            [Tro3(None), AllVars(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -105,7 +105,7 @@ class TestAll(unittest.TestCase):
         """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'MIROC-ESM', 'Amon', 'tos'),
-            [AllVars(None), AutomaticFix(None)])
+            [AllVars(None), GenericFix(None)])
 
     def test_fix_metadata_plev(self):
         """Test plev fix."""

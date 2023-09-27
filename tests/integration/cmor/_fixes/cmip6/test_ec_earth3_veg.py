@@ -14,7 +14,7 @@ from esmvalcore.cmor._fixes.cmip6.ec_earth3_veg import (
     Siconca,
     Tas,
 )
-from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -31,7 +31,7 @@ class TestSiconca(unittest.TestCase):
         """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP6', 'EC-Earth3-Veg', 'SImon', 'siconca'),
-            [Siconca(None), AutomaticFix(None)])
+            [Siconca(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -111,7 +111,7 @@ def tas_cubes():
 def test_get_tas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'EC-Earth3-Veg', 'Amon', 'tas')
-    assert fix == [Tas(None), AutomaticFix(None)]
+    assert fix == [Tas(None), GenericFix(None)]
 
 
 def test_tas_fix_metadata(tas_cubes):

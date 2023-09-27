@@ -6,7 +6,7 @@ from cf_units import Unit
 from iris.cube import Cube
 
 from esmvalcore.cmor._fixes.cmip5.miroc_esm_chem import Tro3
-from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 
 
@@ -21,7 +21,7 @@ class TestTro3(unittest.TestCase):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'MIROC-ESM-CHEM', 'Amon', 'tro3'),
-            [Tro3(None), AutomaticFix(None)])
+            [Tro3(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""

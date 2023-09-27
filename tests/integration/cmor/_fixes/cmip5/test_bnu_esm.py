@@ -14,7 +14,7 @@ from esmvalcore.cmor._fixes.cmip5.bnu_esm import (
     SpCo2,
 )
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
-from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -29,7 +29,7 @@ class TestCl(unittest.TestCase):
     def test_get(self):
         """Test fix get"""
         fix = Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'cl')
-        assert fix == [Cl(None), AutomaticFix(None)]
+        assert fix == [Cl(None), GenericFix(None)]
 
     def test_cl_fix(self):
         """Test fix for ``cl``."""
@@ -53,7 +53,7 @@ class TestCo2(unittest.TestCase):
     def test_get(self):
         """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'co2'),
-                             [Co2(self.vardef), AutomaticFix(None)])
+                             [Co2(self.vardef), GenericFix(None)])
 
     def test_fix_metadata(self):
         """Test unit change."""
@@ -81,7 +81,7 @@ class Testfgco2(unittest.TestCase):
         """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'fgco2'),
-            [FgCo2(self.vardef), AutomaticFix(None)])
+            [FgCo2(self.vardef), GenericFix(None)])
 
     def test_fix_metadata(self):
         """Test unit fix."""
@@ -108,7 +108,7 @@ class TestCh4(unittest.TestCase):
     def test_get(self):
         """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'ch4'),
-                             [Ch4(self.vardef), AutomaticFix(None)])
+                             [Ch4(self.vardef), GenericFix(None)])
 
     def test_fix_metadata(self):
         """Test unit fix."""
@@ -135,7 +135,7 @@ class Testspco2(unittest.TestCase):
         """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'spco2'),
-            [SpCo2(None), AutomaticFix(None)])
+            [SpCo2(None), GenericFix(None)])
 
     def test_fix_metadata(self):
         """Test fix."""
@@ -165,7 +165,7 @@ class TestOd550Aer(unittest.TestCase):
         """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'od550aer'),
-            [Od550Aer(None), AutomaticFix(None)])
+            [Od550Aer(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""

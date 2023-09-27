@@ -6,14 +6,14 @@ from iris.cube import Cube
 
 from esmvalcore.cmor._fixes.cmip5.inmcm4 import Cl, Gpp, Lai, Nbp
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
-from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP5', 'inmcm4', 'Amon', 'cl')
-    assert fix == [Cl(None), AutomaticFix(None)]
+    assert fix == [Cl(None), GenericFix(None)]
 
 
 def test_cl_fix():
@@ -32,7 +32,7 @@ class TestGpp(unittest.TestCase):
     def test_get(self):
         """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'INMCM4', 'Amon', 'gpp'),
-                             [Gpp(None), AutomaticFix(None)])
+                             [Gpp(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fox."""
@@ -52,7 +52,7 @@ class TestLai(unittest.TestCase):
     def test_get(self):
         """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'INMCM4', 'Amon', 'lai'),
-                             [Lai(None), AutomaticFix(None)])
+                             [Lai(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -72,7 +72,7 @@ class TestNbp(unittest.TestCase):
     def test_get(self):
         """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'INMCM4', 'Amon', 'nbp'),
-                             [Nbp(None), AutomaticFix(None)])
+                             [Nbp(None), GenericFix(None)])
 
     def test_fix_metadata(self):
         """Test fix on nbp files to set standard_name."""

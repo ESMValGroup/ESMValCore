@@ -16,7 +16,7 @@ import iris.util
 import numpy as np
 from iris.cube import Cube
 
-from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor._utils import (
     _get_alternative_generic_lev_coord,
     _get_generic_lev_coord_names,
@@ -131,7 +131,7 @@ class CMORCheck():
             warnings.warn(msg, ESMValCoreDeprecationWarning)
 
         # TODO: remove in v2.12
-        self._automatic_fix = AutomaticFix(var_info, frequency=frequency)
+        self._generic_fix = GenericFix(var_info, frequency=frequency)
 
     @cached_property
     def _unstructured_grid(self) -> bool:
@@ -167,7 +167,7 @@ class CMORCheck():
 
         # TODO: remove in v2.12
         if self.automatic_fixes:
-            [self._cube] = self._automatic_fix.fix_metadata([self._cube])
+            [self._cube] = self._generic_fix.fix_metadata([self._cube])
 
         self._check_var_metadata()
         self._check_fill_value()
@@ -216,7 +216,7 @@ class CMORCheck():
 
         # TODO: remove in v2.12
         if self.automatic_fixes:
-            self._cube = self._automatic_fix.fix_data(self._cube)
+            self._cube = self._generic_fix.fix_data(self._cube)
 
         self._check_coords_data()
 
@@ -529,7 +529,7 @@ class CMORCheck():
 
             # TODO: remove in v2.12
             if self.automatic_fixes:
-                (self._cube, coord) = self._automatic_fix._fix_coord_direction(
+                (self._cube, coord) = self._generic_fix._fix_coord_direction(
                     self._cube, coordinate, coord
                 )
 

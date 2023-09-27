@@ -5,7 +5,7 @@ from iris.coords import DimCoord
 from iris.cube import Cube
 
 from esmvalcore.cmor._fixes.cmip5.fgoals_g2 import AllVars
-from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 
 
@@ -35,7 +35,7 @@ class TestAll:
     def test_get():
         """Test fix get."""
         assert Fix.get_fixes('CMIP5', 'FGOALS-G2', 'Amon', 'tas') == [
-             AllVars(None), AutomaticFix(None)
+             AllVars(None), GenericFix(None)
         ]
 
     @staticmethod

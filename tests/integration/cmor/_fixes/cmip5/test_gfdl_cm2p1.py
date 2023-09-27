@@ -14,7 +14,7 @@ from esmvalcore.cmor._fixes.cmip5.gfdl_cm2p1 import (
     Sftof,
     Sit,
 )
-from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -25,7 +25,7 @@ class TestCl(unittest.TestCase):
         """Test getting of fix."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'Amon', 'cl'),
-            [Cl(None), AllVars(None), AutomaticFix(None)])
+            [Cl(None), AllVars(None), GenericFix(None)])
 
     def test_fix(self):
         """Test fix for ``cl``."""
@@ -43,7 +43,7 @@ class TestSftof(unittest.TestCase):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'fx', 'sftof'),
-            [Sftof(None), AllVars(None), AutomaticFix(None)])
+            [Sftof(None), AllVars(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -67,7 +67,7 @@ class TestAreacello(unittest.TestCase):
             Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'Amon', 'areacello'),
             [Areacello(self.vardef),
              AllVars(self.vardef),
-             AutomaticFix(self.vardef)])
+             GenericFix(self.vardef)])
 
     def test_fix_metadata(self):
         """Test data fix."""
@@ -109,7 +109,7 @@ class TestSit(unittest.TestCase):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'OImon', 'sit'),
-            [Sit(self.var_info_mock), AllVars(None), AutomaticFix(None)])
+            [Sit(self.var_info_mock), AllVars(None), GenericFix(None)])
 
     def test_fix_metadata_day_do_nothing(self):
         """Test data fix."""

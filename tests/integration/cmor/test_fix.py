@@ -37,17 +37,17 @@ def disable_fix_cmor_checker(mocker):
     mock.return_value = MockChecker
 
 
-class TestAutomaticFix:
-    """Tests for ``AutomaticFix``."""
+class TestGenericFix:
+    """Tests for ``GenericFix``."""
 
     @pytest.fixture(autouse=True)
     def setup(self, mocker):
         """Setup tests."""
         self.mock_debug = mocker.patch(
-            'esmvalcore.cmor._fixes.fix.AutomaticFix._debug_msg', autospec=True
+            'esmvalcore.cmor._fixes.fix.GenericFix._debug_msg', autospec=True
         )
         self.mock_warning = mocker.patch(
-            'esmvalcore.cmor._fixes.fix.AutomaticFix._warning_msg',
+            'esmvalcore.cmor._fixes.fix.GenericFix._warning_msg',
             autospec=True,
         )
 

@@ -4,7 +4,7 @@ import pytest
 
 from esmvalcore.cmor._fixes.cmip6.ukesm1_0_ll import AllVars, Cl, Cli, Clw
 from esmvalcore.cmor._fixes.common import ClFixHybridHeightCoord
-from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 
 
@@ -19,7 +19,7 @@ def sample_cubes():
 def test_get_tas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'UKESM1-0-LL', 'Amon', 'tas')
-    assert fix == [AllVars(None), AutomaticFix(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_allvars_fix_metadata(sample_cubes):
@@ -45,7 +45,7 @@ def test_allvars_no_need_tofix_metadata(sample_cubes):
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'UKESM1-0-LL', 'Amon', 'cl')
-    assert fix == [Cl(None), AllVars(None), AutomaticFix(None)]
+    assert fix == [Cl(None), AllVars(None), GenericFix(None)]
 
 
 def test_cl_fix():
@@ -56,7 +56,7 @@ def test_cl_fix():
 def test_get_cli_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'UKESM1-0-LL', 'Amon', 'cli')
-    assert fix == [Cli(None), AllVars(None), AutomaticFix(None)]
+    assert fix == [Cli(None), AllVars(None), GenericFix(None)]
 
 
 def test_cli_fix():
@@ -67,7 +67,7 @@ def test_cli_fix():
 def test_get_clw_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'UKESM1-0-LL', 'Amon', 'clw')
-    assert fix == [Clw(None), AllVars(None), AutomaticFix(None)]
+    assert fix == [Clw(None), AllVars(None), GenericFix(None)]
 
 
 def test_clw_fix():

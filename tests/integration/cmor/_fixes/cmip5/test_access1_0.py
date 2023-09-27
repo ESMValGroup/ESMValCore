@@ -8,7 +8,7 @@ from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.cmip5.access1_0 import AllVars, Cl
-from esmvalcore.cmor._fixes.fix import AutomaticFix, Fix
+from esmvalcore.cmor._fixes.fix import Fix, GenericFix
 from esmvalcore.cmor.table import get_var_info
 from esmvalcore.iris_helpers import date2num
 
@@ -40,7 +40,7 @@ class TestAllVars:
     def test_get():
         """Test getting of fix."""
         assert Fix.get_fixes('CMIP5', 'ACCESS1-0', 'Amon', 'tas') == [
-            AllVars(None),  AutomaticFix(None)
+            AllVars(None),  GenericFix(None)
         ]
 
     @staticmethod
@@ -67,7 +67,7 @@ class TestAllVars:
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP5', 'ACCESS1-0', 'Amon', 'cl')
-    assert fix == [Cl(None), AllVars(None), AutomaticFix(None)]
+    assert fix == [Cl(None), AllVars(None), GenericFix(None)]
 
 
 @pytest.fixture

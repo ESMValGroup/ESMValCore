@@ -14,14 +14,14 @@ from esmvalcore.cmor._fixes.cmip6.cnrm_esm2_1 import (
     Clw,
     Omon,
 )
-from esmvalcore.cmor._fixes.fix import AutomaticFix, Fix
+from esmvalcore.cmor._fixes.fix import Fix, GenericFix
 from esmvalcore.cmor.table import get_var_info
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CNRM-ESM2-1', 'Amon', 'cl')
-    assert fix == [Cl(None), AutomaticFix(None)]
+    assert fix == [Cl(None), GenericFix(None)]
 
 
 def test_cl_fix():
@@ -32,7 +32,7 @@ def test_cl_fix():
 def test_get_clcalipso_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CNRM-ESM2-1', 'Amon', 'clcalipso')
-    assert fix == [Clcalipso(None), AutomaticFix(None)]
+    assert fix == [Clcalipso(None), GenericFix(None)]
 
 
 def test_clcalipso_fix():
@@ -43,7 +43,7 @@ def test_clcalipso_fix():
 def test_get_cli_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CNRM-ESM2-1', 'Amon', 'cli')
-    assert fix == [Cli(None), AutomaticFix(None)]
+    assert fix == [Cli(None), GenericFix(None)]
 
 
 def test_cli_fix():
@@ -54,7 +54,7 @@ def test_cli_fix():
 def test_get_clw_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CNRM-ESM2-1', 'Amon', 'clw')
-    assert fix == [Clw(None), AutomaticFix(None)]
+    assert fix == [Clw(None), GenericFix(None)]
 
 
 def test_clw_fix():
@@ -93,7 +93,7 @@ def thetao_cubes():
 def test_get_thetao_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CNRM-ESM2-1', 'Omon', 'thetao')
-    assert fix == [Omon(None), AutomaticFix(None)]
+    assert fix == [Omon(None), GenericFix(None)]
 
 
 def test_thetao_fix_metadata(thetao_cubes):

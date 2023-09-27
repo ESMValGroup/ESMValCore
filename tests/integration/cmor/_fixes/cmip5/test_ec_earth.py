@@ -14,7 +14,7 @@ from esmvalcore.cmor._fixes.cmip5.ec_earth import (
     Sic,
     Tas,
 )
-from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 
 
@@ -28,7 +28,7 @@ class TestSic(unittest.TestCase):
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'EC-EARTH', 'Amon', 'sic'),
-                             [Sic(None), AutomaticFix(None)])
+                             [Sic(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -48,7 +48,7 @@ class TestSftlf(unittest.TestCase):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'EC-EARTH', 'Amon', 'sftlf'),
-            [Sftlf(None), AutomaticFix(None)])
+            [Sftlf(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -92,7 +92,7 @@ class TestTas(unittest.TestCase):
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'EC-EARTH', 'Amon', 'tas'),
-                             [Tas(None), AutomaticFix(None)])
+                             [Tas(None), GenericFix(None)])
 
     def test_tas_fix_metadata(self):
         """Test metadata fix."""
@@ -150,7 +150,7 @@ class TestAreacello(unittest.TestCase):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'EC-EARTH', 'Omon', 'areacello'),
-            [Areacello(None), AutomaticFix(None)],
+            [Areacello(None), GenericFix(None)],
         )
 
     def test_areacello_fix_metadata(self):
@@ -212,7 +212,7 @@ class TestPr(unittest.TestCase):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'EC-EARTH', 'Amon', 'pr'),
-            [Pr(None), AutomaticFix(None)],
+            [Pr(None), GenericFix(None)],
         )
 
     def test_pr_fix_metadata(self):

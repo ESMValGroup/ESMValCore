@@ -6,7 +6,7 @@ import pytest
 
 from esmvalcore.cmor._fixes.cmip6.gfdl_esm4 import Fgco2, Omon, Siconc
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
-from esmvalcore.cmor._fixes.fix import AutomaticFix
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -14,7 +14,7 @@ from esmvalcore.cmor.table import get_var_info
 def test_get_siconc_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'GFDL-ESM4', 'SImon', 'siconc')
-    assert fix == [Siconc(None), AutomaticFix(None)]
+    assert fix == [Siconc(None), GenericFix(None)]
 
 
 def test_siconc_fix():
@@ -53,7 +53,7 @@ def thetao_cubes():
 def test_get_thetao_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'GFDL-ESM4', 'Omon', 'thetao')
-    assert fix == [Omon(None), AutomaticFix(None)]
+    assert fix == [Omon(None), GenericFix(None)]
 
 
 def test_thetao_fix_metadata(thetao_cubes):
@@ -77,7 +77,7 @@ def test_thetao_fix_metadata(thetao_cubes):
 def test_get_fgco2_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'GFDL-ESM4', 'Omon', 'fgco2')
-    assert fix == [Fgco2(None), Omon(None), AutomaticFix(None)]
+    assert fix == [Fgco2(None), Omon(None), GenericFix(None)]
 
 
 def test_fgco2_fix_metadata():

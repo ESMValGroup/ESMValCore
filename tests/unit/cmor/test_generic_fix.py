@@ -1,4 +1,4 @@
-"""Unit tests for automatic fixes."""
+"""Unit tests for generic fixes."""
 
 from unittest.mock import sentinel
 
@@ -7,7 +7,7 @@ import pytest
 from iris.coords import AuxCoord
 from iris.cube import Cube, CubeList
 
-from esmvalcore.cmor._fixes.fix import AutomaticFix, get_time_bounds
+from esmvalcore.cmor._fixes.fix import GenericFix, get_time_bounds
 from esmvalcore.cmor.table import get_var_info
 
 
@@ -23,11 +23,11 @@ def time_coord():
 
 
 @pytest.fixture
-def automatic_fix():
-    """Automatic fix object."""
+def generic_fix():
+    """Generic fix object."""
     vardef = get_var_info('CMIP6', 'CFmon', 'ta')
     extra_facets = {'short_name': 'ta', 'project': 'CMIP6', 'dataset': 'MODEL'}
-    return AutomaticFix(vardef, extra_facets=extra_facets)
+    return GenericFix(vardef, extra_facets=extra_facets)
 
 
 @pytest.mark.parametrize(
@@ -55,139 +55,139 @@ def test_get_time_bounds_invalid_freq_fail(time_coord):
         get_time_bounds(time_coord, 'invalid_freq')
 
 
-def test_automatic_fix_empty_long_name(automatic_fix, monkeypatch):
-    """Test ``AutomaticFix``."""
+def test_generic_fix_empty_long_name(generic_fix, monkeypatch):
+    """Test ``GenericFix``."""
     # Artificially set long_name to empty string for test
-    monkeypatch.setattr(automatic_fix.vardef, 'long_name', '')
+    monkeypatch.setattr(generic_fix.vardef, 'long_name', '')
 
-    cube = automatic_fix._fix_long_name(sentinel.cube)
+    cube = generic_fix._fix_long_name(sentinel.cube)
 
     assert cube == sentinel.cube
 
 
-def test_automatic_fix_empty_units(automatic_fix, monkeypatch):
-    """Test ``AutomaticFix``."""
+def test_generic_fix_empty_units(generic_fix, monkeypatch):
+    """Test ``GenericFix``."""
     # Artificially set latitude units to empty string for test
-    coord_info = automatic_fix.vardef.coordinates['latitude']
+    coord_info = generic_fix.vardef.coordinates['latitude']
     monkeypatch.setattr(coord_info, 'units', '')
 
-    ret = automatic_fix._fix_coord_units(
+    ret = generic_fix._fix_coord_units(
         sentinel.cube, coord_info, sentinel.cube_coord
     )
 
     assert ret is None
 
 
-def test_automatic_fix_no_generic_lev_coords(automatic_fix, monkeypatch):
-    """Test ``AutomaticFix``."""
+def test_generic_fix_no_generic_lev_coords(generic_fix, monkeypatch):
+    """Test ``GenericFix``."""
     # Artificially remove generic_lev_coords
     monkeypatch.setattr(
-        automatic_fix.vardef.coordinates['alevel'], 'generic_lev_coords', {}
+        generic_fix.vardef.coordinates['alevel'], 'generic_lev_coords', {}
     )
 
-    cube = automatic_fix._fix_alternative_generic_level_coords(sentinel.cube)
+    cube = generic_fix._fix_alternative_generic_level_coords(sentinel.cube)
 
     assert cube == sentinel.cube
 
 
-def test_requested_levels_2d_coord(automatic_fix, mocker):
-    """Test ``AutomaticFix``."""
+def test_requested_levels_2d_coord(generic_fix, mocker):
+    """Test ``GenericFix``."""
     cube_coord = AuxCoord([[0]], standard_name='latitude', units='rad')
     cmor_coord = mocker.Mock(requested=True)
 
-    ret = automatic_fix._fix_requested_coord_values(
+    ret = generic_fix._fix_requested_coord_values(
         sentinel.cube, cmor_coord, cube_coord
     )
 
     assert ret is None
 
 
-def test_requested_levels_invalid_arr(automatic_fix, mocker):
-    """Test ``AutomaticFix``."""
+def test_requested_levels_invalid_arr(generic_fix, mocker):
+    """Test ``GenericFix``."""
     cube_coord = AuxCoord([0], standard_name='latitude', units='rad')
     cmor_coord = mocker.Mock(requested=['a', 'b'])
 
-    ret = automatic_fix._fix_requested_coord_values(
+    ret = generic_fix._fix_requested_coord_values(
         sentinel.cube, cmor_coord, cube_coord
     )
 
     assert ret is None
 
 
-def test_lon_no_fix_needed(automatic_fix):
-    """Test ``AutomaticFix``."""
+def test_lon_no_fix_needed(generic_fix):
+    """Test ``GenericFix``."""
     cube_coord = AuxCoord(
         [0.0, 180.0, 360.0], standard_name='longitude', units='rad'
     )
 
-    ret = automatic_fix._fix_longitude_0_360(
+    ret = generic_fix._fix_longitude_0_360(
         sentinel.cube, sentinel.cmor_coord, cube_coord
     )
 
     assert ret == (sentinel.cube, cube_coord)
 
 
-def test_lon_too_low_to_fix(automatic_fix):
-    """Test ``AutomaticFix``."""
+def test_lon_too_low_to_fix(generic_fix):
+    """Test ``GenericFix``."""
     cube_coord = AuxCoord(
         [-370.0, 0.0], standard_name='longitude', units='rad'
     )
 
-    ret = automatic_fix._fix_longitude_0_360(
+    ret = generic_fix._fix_longitude_0_360(
         sentinel.cube, sentinel.cmor_coord, cube_coord
     )
 
     assert ret == (sentinel.cube, cube_coord)
 
 
-def test_lon_too_high_to_fix(automatic_fix):
-    """Test ``AutomaticFix``."""
+def test_lon_too_high_to_fix(generic_fix):
+    """Test ``GenericFix``."""
     cube_coord = AuxCoord([750.0, 0.0], standard_name='longitude', units='rad')
 
-    ret = automatic_fix._fix_longitude_0_360(
+    ret = generic_fix._fix_longitude_0_360(
         sentinel.cube, sentinel.cmor_coord, cube_coord
     )
 
     assert ret == (sentinel.cube, cube_coord)
 
 
-def test_fix_direction_2d_coord(automatic_fix):
-    """Test ``AutomaticFix``."""
+def test_fix_direction_2d_coord(generic_fix):
+    """Test ``GenericFix``."""
     cube_coord = AuxCoord([[0]], standard_name='latitude', units='rad')
 
-    ret = automatic_fix._fix_coord_direction(
+    ret = generic_fix._fix_coord_direction(
         sentinel.cube, sentinel.cmor_coord, cube_coord
     )
 
     assert ret == (sentinel.cube, cube_coord)
 
 
-def test_fix_direction_string_coord(automatic_fix):
-    """Test ``AutomaticFix``."""
+def test_fix_direction_string_coord(generic_fix):
+    """Test ``GenericFix``."""
     cube_coord = AuxCoord(['a'], standard_name='latitude', units='rad')
 
-    ret = automatic_fix._fix_coord_direction(
+    ret = generic_fix._fix_coord_direction(
         sentinel.cube, sentinel.cmor_coord, cube_coord
     )
 
     assert ret == (sentinel.cube, cube_coord)
 
 
-def test_fix_direction_no_stored_direction(automatic_fix, mocker):
-    """Test ``AutomaticFix``."""
+def test_fix_direction_no_stored_direction(generic_fix, mocker):
+    """Test ``GenericFix``."""
     cube = Cube(0)
     cube_coord = AuxCoord([0, 1], standard_name='latitude', units='rad')
     cmor_coord = mocker.Mock(stored_direction='')
 
-    ret = automatic_fix._fix_coord_direction(cube, cmor_coord, cube_coord)
+    ret = generic_fix._fix_coord_direction(cube, cmor_coord, cube_coord)
 
     assert ret == (cube, cube_coord)
 
 
-def test_fix_metadata_not_fail_with_empty_cube(automatic_fix):
-    """Automatic fixes should not fail with empty cubes."""
+def test_fix_metadata_not_fail_with_empty_cube(generic_fix):
+    """Generic fixes should not fail with empty cubes."""
     cube = Cube(0)
-    fixed_cubes = automatic_fix.fix_metadata([cube])
+    fixed_cubes = generic_fix.fix_metadata([cube])
 
     assert isinstance(fixed_cubes, CubeList)
     assert len(fixed_cubes) == 1
@@ -196,10 +196,10 @@ def test_fix_metadata_not_fail_with_empty_cube(automatic_fix):
     )
 
 
-def test_fix_data_not_fail_with_empty_cube(automatic_fix):
-    """Automatic fixes should not fail with empty cubes."""
+def test_fix_data_not_fail_with_empty_cube(generic_fix):
+    """Generic fixes should not fail with empty cubes."""
     cube = Cube(0)
-    fixed_cube = automatic_fix.fix_data(cube)
+    fixed_cube = generic_fix.fix_data(cube)
 
     assert isinstance(fixed_cube, Cube)
     assert fixed_cube == Cube(0)

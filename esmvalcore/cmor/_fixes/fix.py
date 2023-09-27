@@ -204,7 +204,7 @@ class Fix:
         before checking because it is not possible to use the character '-' in
         python names.
 
-        In addition, automatic fixes for all datasets are added.
+        In addition, generic fixes for all datasets are added.
 
         Parameters
         ----------
@@ -278,9 +278,9 @@ class Fix:
                         )
                     )
 
-        # Always do automatic fixes for all datasets
+        # Always perform generic fixes for all datasets
         fixes.append(
-            AutomaticFix(
+            GenericFix(
                 vardef,  # type: ignore
                 extra_facets=extra_facets,
                 session=session,
@@ -407,8 +407,8 @@ def get_time_bounds(time: Coord, freq: str):
     return np.array(bounds)
 
 
-class AutomaticFix(Fix):
-    """Class providing automatic fixes for all datasets."""
+class GenericFix(Fix):
+    """Class providing generic fixes for all datasets."""
 
     def fix_metadata(self, cubes: Sequence[Cube]) -> CubeList:
         """Fix cube metadata.
