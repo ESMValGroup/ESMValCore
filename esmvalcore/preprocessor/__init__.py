@@ -371,6 +371,10 @@ def preprocess(
     function = globals()[step]
     itype = _get_itype(step)
 
+    for item in items:
+        if isinstance(item, Cube) and item.has_lazy_data():
+            item.data = item.core_data().rechunk()
+
     result = []
     if itype.endswith('s'):
         result.append(_run_preproc_function(function, items, settings,
