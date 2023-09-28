@@ -23,7 +23,7 @@ from iris.coords import AuxCoord
 from iris.cube import Cube, CubeList
 from iris.time import PartialDateTime
 
-from esmvalcore.cmor.check import _get_next_month, _get_time_bounds
+from esmvalcore.cmor._fixes.fix import get_next_month, get_time_bounds
 from esmvalcore.iris_helpers import date2num
 
 from ._shared import get_iris_analysis_operation, operator_accept_weights
@@ -129,7 +129,7 @@ def _parse_end_date(date):
         if len(date) == 4:
             end_date = datetime.datetime(int(date) + 1, 1, 1, 0, 0, 0)
         elif len(date) == 6:
-            month, year = _get_next_month(int(date[4:]), int(date[0:4]))
+            month, year = get_next_month(int(date[4:]), int(date[0:4]))
             end_date = datetime.datetime(year, month, 1, 0, 0, 0)
         else:
             try:
@@ -973,7 +973,7 @@ def regrid_time(cube: Cube, frequency: str) -> Cube:
 
     # uniformize bounds
     cube.coord('time').bounds = None
-    cube.coord('time').bounds = _get_time_bounds(cube.coord('time'), frequency)
+    cube.coord('time').bounds = get_time_bounds(cube.coord('time'), frequency)
 
     # remove aux coords that will differ
     reset_aux = ['day_of_month', 'day_of_year']

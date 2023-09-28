@@ -7,6 +7,7 @@ from iris.cube import Cube
 
 from esmvalcore.cmor._fixes.cmip5.bnu_esm import Cl as BaseCl
 from esmvalcore.cmor._fixes.cmip5.ccsm4 import AllVars, Cl, Csoil, So
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -59,7 +60,7 @@ class TestsAllVars(unittest.TestCase):
     def test_get(self):
         """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'CCSM4', 'Amon', 'rlut'),
-                             [AllVars(None)])
+                             [AllVars(None), GenericFix(None)])
 
     def test_fix_metadata(self):
         """Check that latitudes values are rounded."""
