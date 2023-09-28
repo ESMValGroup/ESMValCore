@@ -19,10 +19,7 @@ from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
 from esmvalcore.config._config import TASKSEP
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
-from esmvalcore.exceptions import (
-    InputFilesNotFound,
-    RecipeError,
-)
+from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import (
     _dates_to_timerange,
     _get_multiproduct_filename,

@@ -1,7 +1,6 @@
 """Rolling-window operations on data cubes."""
 
 import logging
-from typing import Optional
 
 from iris.cube import Cube
 
@@ -15,7 +14,7 @@ def rolling_window_statistics(
     coordinate: str,
     operator: str,
     window_length: int,
-    operator_kwargs: Optional[dict] = None,
+    **operator_kwargs,
 ):
     """Compute rolling-window statistics over a coordinate.
 
@@ -29,7 +28,7 @@ def rolling_window_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
-    operator_kwargs:
+    **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
     window_length:
@@ -41,7 +40,7 @@ def rolling_window_statistics(
         Rolling-window statistics cube.
 
     """
-    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     cube = cube.rolling_window(coordinate, agg, window_length, *agg_kwargs)
 
     return cube

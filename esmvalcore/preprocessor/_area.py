@@ -188,7 +188,7 @@ def _extract_irregular_region(cube, start_longitude, end_longitude,
 def zonal_statistics(
     cube: Cube,
     operator: str,
-    operator_kwargs: Optional[dict] = None,
+    **operator_kwargs
 ) -> Cube:
     """Compute zonal statistics.
 
@@ -200,7 +200,7 @@ def zonal_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
-    operator_kwargs:
+    **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
 
@@ -220,7 +220,7 @@ def zonal_statistics(
         raise ValueError(
             "Zonal statistics on irregular grids not yet implemented"
         )
-    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     cube = cube.collapsed('longitude', agg, **agg_kwargs)
     cube.data = cube.core_data().astype(np.float32, casting='same_kind')
     return cube
@@ -229,7 +229,7 @@ def zonal_statistics(
 def meridional_statistics(
     cube: Cube,
     operator: str,
-    operator_kwargs: Optional[dict] = None,
+    **operator_kwargs,
 ) -> Cube:
     """Compute meridional statistics.
 
@@ -241,7 +241,7 @@ def meridional_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
-    operator_kwargs:
+    **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
 
@@ -261,7 +261,7 @@ def meridional_statistics(
         raise ValueError(
             "Meridional statistics on irregular grids not yet implemented"
         )
-    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     cube = cube.collapsed('latitude', agg, **agg_kwargs)
     cube.data = cube.core_data().astype(np.float32, casting='same_kind')
     return cube
@@ -349,7 +349,7 @@ def _try_adding_calculated_cell_area(cube: Cube) -> None:
 def area_statistics(
     cube: Cube,
     operator: str,
-    operator_kwargs: Optional[dict] = None,
+    **operator_kwargs,
 ) -> Cube:
     """Apply a statistical operator in the horizontal plane.
 
@@ -371,7 +371,7 @@ def area_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
-    operator_kwargs:
+    **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
 
@@ -390,7 +390,7 @@ def area_statistics(
     original_dtype = cube.dtype
 
     # Get aggregator and correct kwargs (incl. weights)
-    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     agg_kwargs = update_weights_kwargs(
         agg, agg_kwargs, 'cell_area', cube, _try_adding_calculated_cell_area
     )

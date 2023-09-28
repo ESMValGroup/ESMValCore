@@ -440,7 +440,7 @@ def hourly_statistics(
     cube: Cube,
     hours: int,
     operator: str = 'mean',
-    operator_kwargs: Optional[dict] = None,
+    **operator_kwargs,
 ) -> Cube:
     """Compute hourly statistics.
 
@@ -457,7 +457,7 @@ def hourly_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
-    operator_kwargs:
+    **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
 
@@ -479,7 +479,7 @@ def hourly_statistics(
     if not cube.coords('year'):
         iris.coord_categorisation.add_year(cube, 'time')
 
-    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     result = cube.aggregated_by(
         ['hour_group', 'day_of_year', 'year'], agg, **agg_kwargs
     )
@@ -494,7 +494,7 @@ def hourly_statistics(
 def daily_statistics(
     cube: Cube,
     operator: str = 'mean',
-    operator_kwargs: Optional[dict] = None,
+    **operator_kwargs,
 ) -> Cube:
     """Compute daily statistics.
 
@@ -508,7 +508,7 @@ def daily_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
-    operator_kwargs:
+    **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
 
@@ -523,7 +523,7 @@ def daily_statistics(
     if not cube.coords('year'):
         iris.coord_categorisation.add_year(cube, 'time')
 
-    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     result = cube.aggregated_by(['day_of_year', 'year'], agg, **agg_kwargs)
 
     result.remove_coord('day_of_year')
@@ -534,7 +534,7 @@ def daily_statistics(
 def monthly_statistics(
     cube: Cube,
     operator: str = 'mean',
-    operator_kwargs: Optional[dict] = None,
+    **operator_kwargs,
 ) -> Cube:
     """Compute monthly statistics.
 
@@ -548,7 +548,7 @@ def monthly_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
-    operator_kwargs:
+    **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
 
@@ -563,7 +563,7 @@ def monthly_statistics(
     if not cube.coords('year'):
         iris.coord_categorisation.add_year(cube, 'time')
 
-    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     result = cube.aggregated_by(['month_number', 'year'], agg, **agg_kwargs)
     _aggregate_time_fx(result, cube)
     return result
@@ -573,7 +573,7 @@ def seasonal_statistics(
     cube: Cube,
     operator: str = 'mean',
     seasons: Iterable[str] = ('DJF', 'MAM', 'JJA', 'SON'),
-    operator_kwargs: Optional[dict] = None,
+    **operator_kwargs,
 ) -> Cube:
     """Compute seasonal statistics.
 
@@ -592,7 +592,7 @@ def seasonal_statistics(
         and all sequentially correct combinations holding every month
         of a year: e.g. ('JJAS','ONDJFMAM'), or less in case of prior season
         extraction.
-    operator_kwargs:
+    **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
 
@@ -626,7 +626,7 @@ def seasonal_statistics(
                                                   name='season_year',
                                                   seasons=seasons)
 
-    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     result = cube.aggregated_by(
         ['clim_season', 'season_year'], agg, **agg_kwargs
     )
@@ -666,7 +666,7 @@ def seasonal_statistics(
 def annual_statistics(
     cube: Cube,
     operator: str = 'mean',
-    operator_kwargs: Optional[dict] = None,
+    **operator_kwargs,
 ) -> Cube:
     """Compute annual statistics.
 
@@ -682,7 +682,7 @@ def annual_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
-    operator_kwargs:
+    **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
 
@@ -695,7 +695,7 @@ def annual_statistics(
     # TODO: Add weighting in time dimension. See iris issue 3290
     # https://github.com/SciTools/iris/issues/3290
 
-    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
 
     if not cube.coords('year'):
         iris.coord_categorisation.add_year(cube, 'time')
@@ -707,7 +707,7 @@ def annual_statistics(
 def decadal_statistics(
     cube: Cube,
     operator: str = 'mean',
-    operator_kwargs: Optional[dict] = None,
+    **operator_kwargs,
 ) -> Cube:
     """Compute decadal statistics.
 
@@ -723,7 +723,7 @@ def decadal_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
-    operator_kwargs:
+    **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
 
@@ -736,7 +736,7 @@ def decadal_statistics(
     # TODO: Add weighting in time dimension. See iris issue 3290
     # https://github.com/SciTools/iris/issues/3290
 
-    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
 
     if not cube.coords('decade'):
 
@@ -757,7 +757,7 @@ def climate_statistics(
     operator: str = 'mean',
     period: str = 'full',
     seasons: Iterable[str] = ('DJF', 'MAM', 'JJA', 'SON'),
-    operator_kwargs: Optional[dict] = None,
+    **operator_kwargs,
 ) -> Cube:
     """Compute climate statistics with the specified granularity.
 
@@ -785,7 +785,7 @@ def climate_statistics(
         `hourly`, `hour`, `hr`.
     seasons:
         Seasons to use if needed. Defaults to ('DJF', 'MAM', 'JJA', 'SON').
-    operator_kwargs:
+    **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
 
@@ -799,7 +799,7 @@ def climate_statistics(
 
     # Use Cube.collapsed when full period is requested
     if period in ('full', ):
-        (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+        (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
         agg_kwargs = update_weights_kwargs(
             agg, agg_kwargs, 'time_weights', cube, _add_time_weights_coord
         )
@@ -820,7 +820,7 @@ def climate_statistics(
     # Use Cube.aggregated_by for other periods
     else:
         clim_coord = _get_period_coord(cube, period, seasons)
-        (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+        (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
         clim_cube = cube.aggregated_by(clim_coord, agg, **agg_kwargs)
         clim_cube.remove_coord('time')
         _aggregate_time_fx(clim_cube, cube)
@@ -1096,7 +1096,7 @@ def timeseries_filter(
     span: int,
     filter_type: str = 'lowpass',
     filter_stats: str = 'sum',
-    operator_kwargs: Optional[dict] = None,
+    **operator_kwargs,
 ) -> Cube:
     """Apply a timeseries filter.
 
@@ -1127,7 +1127,7 @@ def timeseries_filter(
         Used to determine the :class:`iris.analysis.Aggregator` object used for
         aggregation. Allowed options are given in :ref:`this table
         <supported_stat_operator>`.
-    operator_kwargs:
+    **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `filter_stats`.
 
@@ -1166,7 +1166,7 @@ def timeseries_filter(
             f"please choose one of {', '.join(supported_filters)}")
 
     # Apply filter
-    (agg, agg_kwargs) = get_iris_aggregator(filter_stats, operator_kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(filter_stats, **operator_kwargs)
     agg_kwargs['weights'] = wgts
     cube = cube.rolling_window('time', agg, len(wgts), **agg_kwargs)
 

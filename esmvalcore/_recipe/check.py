@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 import os
 import subprocess
+from inspect import getfullargspec
 from pprint import pformat
 from shutil import which
 from typing import Any, Iterable
@@ -11,6 +12,7 @@ from typing import Any, Iterable
 import isodate
 import yamale
 
+import esmvalcore.preprocessor
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import _get_start_end_year, _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
@@ -428,23 +430,37 @@ def statistics_preprocessors(settings: dict) -> None:
                 except ValueError as exc:
                     raise RecipeError(str(exc))
                 try:
-                    get_iris_aggregator(operator, kwargs)
+                    get_iris_aggregator(operator, **kwargs)
                 except ValueError as exc:
                     raise RecipeError(
                         f"Invalid options for {step}: {exc}"
                     )
 
-        # For other statistics, we can simply check operator and
-        # operator_kwargs
+        # For other statistics, check optional kwargs for operator
         elif '_statistics' in step:
+            step_settings = dict(step_settings)
+
             # Some preprocessors like climate_statistics use default 'mean' for
             # operator. If 'operator' is missing for those preprocessors with
             # no default, this will be detected in PreprocessorFile.check()
             # later.
-            operator = step_settings.get('operator', 'mean')
-            operator_kwargs = step_settings.get('operator_kwargs')
+            operator = step_settings.pop('operator', 'mean')
+
+            # If preprocessor does not exist, do nothing here; this will be
+            # detected in PreprocessorFile.check() later.
             try:
-                get_iris_aggregator(operator, operator_kwargs)
+                preproc_func = getattr(esmvalcore.preprocessor, step)
+            except AttributeError:
+                return
+
+            # Ignore other preprocessor arguments, e.g., 'hours' for
+            # hourly_statistics
+            other_args = getfullargspec(preproc_func).args[1:]
+            operator_kwargs = {
+                k: v for (k, v) in step_settings.items() if k not in other_args
+            }
+            try:
+                get_iris_aggregator(operator, **operator_kwargs)
             except ValueError as exc:
                 raise RecipeError(
                     f"Invalid options for {step}: {exc}"

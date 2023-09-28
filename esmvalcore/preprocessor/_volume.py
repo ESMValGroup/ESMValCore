@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 import warnings
-from typing import Iterable, Optional, Sequence
+from typing import Iterable, Sequence
 
 import dask.array as da
 import iris
@@ -182,7 +182,7 @@ def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
 def volume_statistics(
     cube: Cube,
     operator: str,
-    operator_kwargs: Optional[dict] = None,
+    **operator_kwargs,
 ) -> Cube:
     """Apply a statistical operation over a volume.
 
@@ -201,7 +201,7 @@ def volume_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Currently, only `mean` is
         allowed.
-    operator_kwargs:
+    **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
 
@@ -216,7 +216,7 @@ def volume_statistics(
     if operator != 'mean':
         raise ValueError(f"Volume operator {operator} not recognised.")
 
-    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     agg_kwargs = update_weights_kwargs(
         agg,
         agg_kwargs,
@@ -238,7 +238,7 @@ def axis_statistics(
     cube: Cube,
     axis: str,
     operator: str,
-    operator_kwargs: Optional[dict] = None,
+    **operator_kwargs,
 ) -> Cube:
     """Perform statistics along a given axis.
 
@@ -261,7 +261,7 @@ def axis_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
-    operator_kwargs:
+    **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
 
@@ -271,7 +271,7 @@ def axis_statistics(
         Collapsed cube.
 
     """
-    (agg, agg_kwargs) = get_iris_aggregator(operator, operator_kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
 
     # Check if a coordinate for the desired axis exists
     try:

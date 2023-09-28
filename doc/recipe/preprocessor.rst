@@ -65,11 +65,11 @@ Many preprocessors calculate statistics over data.
 Those preprocessors typically end with ``_statistics``, e.g.,
 :func:`~esmvalcore.preprocessor.area_statistics` or
 :func:`~esmvalcore.preprocessor.multi_model_statistics`.
-All these preprocessors support the options `operator` and `operator_kwargs`,
-which directly correspond to :class:`iris.analysis.Aggregator` objects used to
-perform the statistical calculations.
-`operator_kwargs` are directly passed to the corresponding
-:class:`iris.analysis.Aggregator` object.
+All these preprocessors support the options `operator`, which directly
+correspond to :class:`iris.analysis.Aggregator` objects used to perform the
+statistical calculations.
+In addition, arbitrary keyword arguments can be passed which are directly
+passed to the corresponding :class:`iris.analysis.Aggregator` object.
 
 .. note::
     The preprocessors :func:`~esmvalcore.preprocessor.multi_model_statistics`
@@ -80,13 +80,13 @@ perform the statistical calculations.
     Each operator can be given as single string or as dictionary.
     In the latter case, the dictionary needs the keyword `operator`
     (corresponding to the `operator` as above).
-    All other keywords are interpreted as `operator_kwargs` for the given
+    All other keywords are interpreted as keyword arguments for the given
     operator.
 
 Some operators support weights for some preprocessors (see following table),
 which are used by default.
-The following operators are currently fully supported; other operator might be
-supported too if proper `operator_kwargs` are specified:
+The following operators are currently fully supported; other operators might be
+supported too if proper keyword arguments are specified:
 
 .. _supported_stat_operator:
 
@@ -119,7 +119,7 @@ supported too if proper `operator_kwargs` are specified:
     corresponding coordinate bounds.
 .. [2] :const:`iris.analysis.MEDIAN` is not lazy, but much faster than
     :const:`iris.analysis.PERCENTILE`. For a lazy median, use ``percentile``
-    with ``operator_kwargs: {percent: 50}``.
+    with the keyword argument ``percent: 50``.
 
 Examples
 --------
@@ -152,8 +152,7 @@ steps, one for January, one for February, etc.):
       climate_statistics:
         period: monthly
         operator: percentile
-        operator_kwargs:
-          percent: 95.0
+        percent: 95.0
 
 Calculate multi-model median, 5%, and 95% percentiles:
 
@@ -182,8 +181,8 @@ Calculate the global non-weighted root mean square:
 
 .. warning::
 
-  The disabling of weights by specifying ``operator_kwargs: {weights: False}``
-  needs to be used with great care; we strongly recommend to
+  The disabling of weights by specifying the keyword argument ``weights:
+  False`` needs to be used with great care; we strongly recommend to
   **not** use it!
 
 
@@ -1319,7 +1318,8 @@ Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
       Default is `mean`.
-    * `operator_kwargs`: Optional keyword arguments for the `operator`.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
       See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.hourly_statistics`.
@@ -1335,7 +1335,8 @@ Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
       Default is `mean`.
-    * `operator_kwargs`: Optional keyword arguments for the `operator`.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
       See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.daily_statistics`.
@@ -1351,7 +1352,8 @@ Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
       Default is `mean`.
-    * `operator_kwargs`: Optional keyword arguments for the `operator`.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
       See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.monthly_statistics`.
@@ -1376,7 +1378,8 @@ Parameters:
       Default is `mean`.
     * `seasons`: Seasons to build statistics.
       Default is ``'[DJF, MAM, JJA, SON]'``.
-    * `operator_kwargs`: Optional keyword arguments for the `operator`.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
       See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.seasonal_statistics`.
@@ -1392,7 +1395,8 @@ Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
       Default is `mean`.
-    * `operator_kwargs`: Optional keyword arguments for the `operator`.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
       See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.annual_statistics`.
@@ -1408,7 +1412,8 @@ Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
       Default is `mean`.
-    * `operator_kwargs`: Optional keyword arguments for the `operator`.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
       See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.decadal_statistics`.
@@ -1432,7 +1437,8 @@ Parameters:
       `mon`, `daily`, `day`, `hourly`, `hour`, `hr`. Default is `full`.
     * `seasons`: if period 'seasonal' or 'season' allows to set custom seasons.
       Default is ``'[DJF, MAM, JJA, SON]'``.
-    * `operator_kwargs`: Optional keyword arguments for the `operator`.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
       See :ref:`stat_preprocs` for more details.
 
 .. note::
@@ -1472,9 +1478,9 @@ Examples:
         .. code-block:: yaml
 
             climate_statistics:
-              operator: percentile
               period: month
-              operator_kwargs: {percent: 80}
+              operator: percentile
+              percent: 80
 
 See also :func:`esmvalcore.preprocessor.climate_statistics`.
 
@@ -1911,7 +1917,8 @@ along the longitude coordinate.
 Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
-    * `operator_kwargs`: Optional keyword arguments for the `operator`.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
       See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.zonal_means`.
@@ -1927,7 +1934,8 @@ argument:
 Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
-    * `operator_kwargs`: Optional keyword arguments for the `operator`.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
       See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.meridional_means`.
@@ -2086,7 +2094,8 @@ Takes arguments:
       Possible values for the axis are `x`, `y`, `z`, `t`.
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
-    * `operator_kwargs`: Optional keyword arguments for the `operator`.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
       See :ref:`stat_preprocs` for more details.
 
 .. note::
@@ -2248,7 +2257,8 @@ This function takes three parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
     * `window_length`: size of the rolling window to use (number of points).
-    * `operator_kwargs`: Optional keyword arguments for the `operator`.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
       See :ref:`stat_preprocs` for more details.
 
 This example applied on daily precipitation data calculates two-day rolling

@@ -31,7 +31,7 @@ def guess_bounds(cube, coords):
 
 def get_iris_aggregator(
     operator: str,
-    operator_kwargs: Optional[dict] = None,
+    **operator_kwargs,
 ) -> tuple[iris.analysis.Aggregator, dict]:
     """Get :class:`iris.analysis.Aggregator` and keyword arguments.
 
@@ -43,7 +43,7 @@ def get_iris_aggregator(
         A named operator that is used to search for aggregators. Will be
         capitalized before searching for aggregators, i.e., `MEAN` **and**
         `mean` will find :const:`iris.analysis.MEAN`.
-    operator_kwargs:
+    **operator_kwargs:
         Optional keyword arguments for the aggregator.
 
     Returns
@@ -63,8 +63,6 @@ def get_iris_aggregator(
 
     """
     cap_operator = operator.upper()
-    if operator_kwargs is None:
-        operator_kwargs = {}
     aggregator_kwargs = dict(operator_kwargs)
 
     # Deprecations
@@ -83,8 +81,8 @@ def get_iris_aggregator(
             f"Specifying percentile operators with the syntax 'pXX.YY' (here: "
             f"'{operator}') has been deprecated in ESMValCore version 2.10.0 "
             f"and is scheduled for removal in version 2.12.0. Please use "
-            f"`operator='percentile'` with `operator_kwargs: "
-            "{'percent': XX.YY}` instead. This is an exact replacement."
+            f"`operator='percentile'` with the keyword argument "
+            "`percent='XX.YY'` instead. This is an exact replacement."
         )
         warnings.warn(msg, ESMValCoreDeprecationWarning)
         aggregator_kwargs['percent'] = float(operator[1:])
@@ -113,7 +111,7 @@ def get_iris_aggregator(
         cube.collapsed('x', aggregator, **test_kwargs)
     except (ValueError, TypeError) as exc:
         raise ValueError(
-            f"Invalid operator_kwargs for operator '{operator}': {str(exc)}"
+            f"Invalid kwargs for operator '{operator}': {str(exc)}"
         )
 
     return (aggregator, aggregator_kwargs)

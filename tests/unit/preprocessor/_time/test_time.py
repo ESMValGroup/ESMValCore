@@ -2207,7 +2207,7 @@ def test_statistical_operators(
     operator, kwargs, expected_data, expected_units, easy_2d_cube
 ):
     """Test ``climate_statistics`` with different operators."""
-    res = climate_statistics(easy_2d_cube, operator, operator_kwargs=kwargs)
+    res = climate_statistics(easy_2d_cube, operator, **kwargs)
 
     assert res.var_name == easy_2d_cube.var_name
     assert res.long_name == easy_2d_cube.long_name

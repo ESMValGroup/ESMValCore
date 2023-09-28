@@ -600,7 +600,7 @@ def _multicube_statistics(
         logger.debug('Multicube statistics: computing: %s', stat_id)
 
         (operator, kwargs) = _get_operator_and_kwargs(statistic)
-        (agg, agg_kwargs) = get_iris_aggregator(operator, kwargs)
+        (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
         if lazy_input and agg.lazy_func is not None:
             result_cube = _compute(cubes, operator=agg, **agg_kwargs)
         else:

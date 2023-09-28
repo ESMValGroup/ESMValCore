@@ -2576,7 +2576,7 @@ def test_mm_stats_invalid_stat_kwargs(
             scripts: null
         """)
     msg = (
-        f"Invalid options for {preproc}: Invalid operator_kwargs for operator "
+        f"Invalid options for {preproc}: Invalid kwargs for operator "
         f"'wpercentile': "
     )
     with pytest.raises(RecipeError) as rec_err_exp:
@@ -2619,7 +2619,8 @@ def test_statistics_missing_operator_no_default_fail(
                     ensemble: r1i1p1
             scripts: null
         """)
-    with pytest.raises(ValueError):
+    msg = "Missing required argument"
+    with pytest.raises(ValueError, match=msg):
         get_recipe(tmp_path, content, session)
 
 
@@ -2663,40 +2664,31 @@ def test_statistics_missing_operator_with_default(
 
 
 @pytest.mark.parametrize(
-    'op_kwargs',
+    'preproc,preproc_kwargs',
     [
-        {'invalid_value': 1},
-        {'percent': 10, 'invalid_value': 1},
-        {'percent': 10, 'weights': False},
-    ]
-)
-@pytest.mark.parametrize(
-    'preproc',
-    [
-        'annual_statistics',
-        'area_statistics',
-        'axis_statistics',
-        'climate_statistics',
-        'daily_statistics',
-        'decadal_statistics',
-        'hourly_statistics',
-        'meridional_statistics',
-        'monthly_statistics',
-        'seasonal_statistics',
-        'volume_statistics',
-        'zonal_statistics',
-        'rolling_window_statistics',
+        ('annual_statistics', {'invalid_value': 1}),
+        ('area_statistics', {'percent': 10, 'invalid_value': 1}),
+        ('axis_statistics', {'percent': 10, 'weights': False}),
+        ('climate_statistics', {'invalid_value': 1}),
+        ('daily_statistics', {'percent': 10, 'invalid_value': 1}),
+        ('decadal_statistics', {'percent': 10, 'weights': False}),
+        ('hourly_statistics', {'invalid_value': 1, 'hours': 2}),
+        ('meridional_statistics', {'percent': 10, 'invalid_value': 1}),
+        ('monthly_statistics', {'percent': 10, 'weights': False}),
+        ('seasonal_statistics', {'invalid_value': 1}),
+        ('volume_statistics', {'percent': 10, 'weights': False}),
+        ('zonal_statistics', {'invalid_value': 1}),
+        ('rolling_window_statistics', {'percent': 10, 'invalid_value': 1}),
     ]
 )
 def test_statistics_invalid_kwargs(
-    op_kwargs, preproc, tmp_path, patched_datafinder, session
+    preproc, preproc_kwargs, tmp_path, patched_datafinder, session
 ):
+    preproc_kwargs['operator'] = 'wpercentile'
     content = dedent(f"""
         preprocessors:
           test:
-            {preproc}:
-              operator: wpercentile
-              operator_kwargs: {op_kwargs}
+            {preproc}: {preproc_kwargs}
 
         diagnostics:
           diagnostic_name:
@@ -2714,10 +2706,64 @@ def test_statistics_invalid_kwargs(
             scripts: null
         """)
     msg = (
-        f"Invalid options for {preproc}: Invalid operator_kwargs for operator "
+        f"Invalid options for {preproc}: Invalid kwargs for operator "
         f"'wpercentile': "
     )
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, session)
     assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
     assert msg in str(rec_err_exp.value.failed_tasks[0].message)
+
+
+def test_hourly_statistics(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test:
+            hourly_statistics:
+              hours: 10
+              operator: percentile
+              percent: 50
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              chl_default:
+                short_name: chl
+                mip: Oyr
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - project: CMIP5
+                    dataset: CanESM2
+                    exp: historical
+                    ensemble: r1i1p1
+            scripts: null
+        """)
+    get_recipe(tmp_path, content, session)
+
+
+def test_invalid_stat_preproc(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test:
+            invalid_statistics:
+              operator: mean
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              chl_default:
+                short_name: chl
+                mip: Oyr
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - project: CMIP5
+                    dataset: CanESM2
+                    exp: historical
+                    ensemble: r1i1p1
+            scripts: null
+        """)
+    msg = "Unknown preprocessor function"
+    with pytest.raises(ValueError, match=msg):
+        get_recipe(tmp_path, content, session)

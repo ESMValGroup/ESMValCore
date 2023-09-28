@@ -39,7 +39,7 @@ def test_get_iris_aggregator_max(operator):
 @pytest.mark.parametrize('operator', ['mean', 'mEaN', 'MEAN'])
 def test_get_iris_aggregator_mean(operator, kwargs):
     """Test ``get_iris_aggregator``."""
-    (agg, agg_kwargs) = get_iris_aggregator(operator, kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
     assert agg == iris.analysis.MEAN
     assert agg_kwargs == kwargs
 
@@ -48,7 +48,7 @@ def test_get_iris_aggregator_mean(operator, kwargs):
 @pytest.mark.parametrize('operator', ['median', 'mEdIaN', 'MEDIAN'])
 def test_get_iris_aggregator_median(operator, kwargs):
     """Test ``get_iris_aggregator``."""
-    (agg, agg_kwargs) = get_iris_aggregator(operator, kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
     assert agg == iris.analysis.MEDIAN
     assert agg_kwargs == kwargs
 
@@ -73,7 +73,7 @@ def test_get_iris_aggregator_peak(operator):
 @pytest.mark.parametrize('operator', ['percentile', 'PERCENTILE'])
 def test_get_iris_aggregator_percentile(operator, kwargs):
     """Test ``get_iris_aggregator``."""
-    (agg, agg_kwargs) = get_iris_aggregator(operator, kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
     assert agg == iris.analysis.PERCENTILE
     assert agg_kwargs == kwargs
 
@@ -83,7 +83,7 @@ def test_get_iris_aggregator_percentile(operator, kwargs):
 def test_get_iris_aggregator_pxxyy(operator, kwargs):
     """Test ``get_iris_aggregator``."""
     with pytest.warns(ESMValCoreDeprecationWarning):
-        (agg, agg_kwargs) = get_iris_aggregator(operator, kwargs)
+        (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
     assert agg == iris.analysis.PERCENTILE
     assert agg_kwargs == {'percent': float(operator[1:]), **kwargs}
 
@@ -92,7 +92,7 @@ def test_get_iris_aggregator_pxxyy(operator, kwargs):
 @pytest.mark.parametrize('operator', ['rms', 'rMs', 'RMS'])
 def test_get_iris_aggregator_rms(operator, kwargs):
     """Test ``get_iris_aggregator``."""
-    (agg, agg_kwargs) = get_iris_aggregator(operator, kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
     assert agg == iris.analysis.RMS
     assert agg_kwargs == kwargs
 
@@ -103,13 +103,13 @@ def test_get_iris_aggregator_std(operator, kwargs):
     """Test ``get_iris_aggregator``."""
     if operator.lower() == 'std':
         with pytest.warns(ESMValCoreDeprecationWarning):
-            (agg, agg_kwargs) = get_iris_aggregator(operator, kwargs)
+            (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
     else:
         with warnings.catch_warnings():
             warnings.simplefilter(
                 'error', category=ESMValCoreDeprecationWarning
             )
-            (agg, agg_kwargs) = get_iris_aggregator(operator, kwargs)
+            (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
     assert agg == iris.analysis.STD_DEV
     assert agg_kwargs == kwargs
 
@@ -118,7 +118,7 @@ def test_get_iris_aggregator_std(operator, kwargs):
 @pytest.mark.parametrize('operator', ['sum', 'SuM', 'SUM'])
 def test_get_iris_aggregator_sum(operator, kwargs):
     """Test ``get_iris_aggregator``."""
-    (agg, agg_kwargs) = get_iris_aggregator(operator, kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
     assert agg == iris.analysis.SUM
     assert agg_kwargs == kwargs
 
@@ -135,7 +135,7 @@ def test_get_iris_aggregator_variance(operator):
 @pytest.mark.parametrize('operator', ['wpercentile', 'WPERCENTILE'])
 def test_get_iris_aggregator_wpercentile(operator, kwargs):
     """Test ``get_iris_aggregator``."""
-    (agg, agg_kwargs) = get_iris_aggregator(operator, kwargs)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
     assert agg == iris.analysis.WPERCENTILE
     assert agg_kwargs == kwargs
 
@@ -158,7 +158,7 @@ def test_get_iris_aggregator_no_aggregator_fail(operator, monkeypatch):
 def test_get_iris_aggregator_invalid_kwarg():
     """Test ``get_iris_aggregator``."""
     with pytest.raises(ValueError):
-        get_iris_aggregator('max', {'INVALID_KWARG': 1})
+        get_iris_aggregator('max', invalid_kwarg=1)
 
 
 def test_get_iris_aggregator_missing_kwarg():
