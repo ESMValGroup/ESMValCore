@@ -213,9 +213,6 @@ def _get_default_settings(dataset):
 
     settings = {}
 
-    # Configure (deprecated, remove for v2.10.0) load callback
-    settings['load'] = {'callback': 'default'}
-
     if _derive_needed(dataset):
         settings['derive'] = {
             'short_name': facets['short_name'],

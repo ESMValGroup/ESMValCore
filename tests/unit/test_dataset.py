@@ -1684,7 +1684,6 @@ def test_load(mocker, session):
 
     load_args = {
         'load': {
-            'callback': 'default',
             'ignore_warnings': None,
         },
         'fix_file': {

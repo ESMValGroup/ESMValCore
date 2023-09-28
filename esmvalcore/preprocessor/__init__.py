@@ -371,6 +371,10 @@ def preprocess(
     function = globals()[step]
     itype = _get_itype(step)
 
+    for item in items:
+        if isinstance(item, Cube) and item.has_lazy_data():
+            item.data = item.core_data().rechunk()
+
     result = []
     if itype.endswith('s'):
         result.append(_run_preproc_function(function, items, settings,
@@ -478,10 +482,7 @@ class PreprocessorFile(TrackedFile):
     def cubes(self):
         """Cubes."""
         if self._cubes is None:
-            callback = self.settings.get('load', {}).get('callback')
-            self._cubes = [
-                ds._load_with_callback(callback) for ds in self.datasets
-            ]
+            self._cubes = [ds.load() for ds in self.datasets]
         return self._cubes
 
     @cubes.setter

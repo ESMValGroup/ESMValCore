@@ -12,6 +12,7 @@ from iris.coords import AuxCoord, CellMethod, DimCoord
 from iris.cube import Cube, CubeList
 
 import esmvalcore.cmor._fixes.icon.icon
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor._fixes.icon._base_fixes import IconFix
 from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi
 from esmvalcore.cmor.fix import Fix
@@ -491,7 +492,7 @@ def check_typesi(cube):
 def test_get_areacella_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'fx', 'areacella')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_areacella_fix(cubes_grid):
@@ -513,7 +514,7 @@ def test_areacella_fix(cubes_grid):
 def test_get_areacello_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'Ofx', 'areacello')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_areacello_fix(cubes_grid):
@@ -538,7 +539,7 @@ def test_areacello_fix(cubes_grid):
 def test_get_clwvi_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'clwvi')
-    assert fix == [Clwvi(None), AllVars(None)]
+    assert fix == [Clwvi(None), AllVars(None), GenericFix(None)]
 
 
 def test_clwvi_fix(cubes_regular_grid):
@@ -572,7 +573,7 @@ def test_clwvi_fix(cubes_regular_grid):
 def test_get_lwp_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'AERmon', 'lwp')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_lwp_fix(cubes_2d):
@@ -599,7 +600,7 @@ def test_lwp_fix(cubes_2d):
 def test_get_rsdt_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'rsdt')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_rsdt_fix(cubes_2d):
@@ -622,7 +623,7 @@ def test_rsdt_fix(cubes_2d):
 def test_get_rsut_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'rsut')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_rsut_fix(cubes_2d):
@@ -648,7 +649,7 @@ def test_rsut_fix(cubes_2d):
 def test_get_siconc_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'SImon', 'siconc')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_siconc_fix(cubes_2d):
@@ -671,7 +672,7 @@ def test_siconc_fix(cubes_2d):
 def test_get_siconca_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'SImon', 'siconca')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_siconca_fix(cubes_2d):
@@ -697,7 +698,7 @@ def test_siconca_fix(cubes_2d):
 def test_get_ta_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'ta')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_ta_fix(cubes_3d):
@@ -732,7 +733,7 @@ def test_ta_fix_no_plev_bounds(cubes_3d):
 def test_get_tas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'tas')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_tas_fix(cubes_2d):
@@ -854,7 +855,7 @@ def test_tas_no_shift_time(cubes_2d):
 def test_get_uas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'uas')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_uas_fix(cubes_2d):
@@ -951,7 +952,7 @@ def test_2d_lat_lon_grid_fix(cubes_2d_lat_lon_grid):
 def test_get_ch4clim_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'ch4Clim')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_ch4clim_fix(cubes_regular_grid):

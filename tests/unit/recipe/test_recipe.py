@@ -541,7 +541,6 @@ def test_get_default_settings(mocker):
 
     settings = _recipe._get_default_settings(dataset)
     assert settings == {
-        'load': {'callback': 'default'},
         'remove_supplementary_variables': {},
         'save': {'compress': False, 'alias': 'sic'},
     }
