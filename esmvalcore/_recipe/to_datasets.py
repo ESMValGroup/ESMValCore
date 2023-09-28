@@ -288,14 +288,13 @@ def _get_dataset_facets_from_recipe(
         ),
     )
 
-    if not session['use_legacy_supplementaries']:
-        preprocessor = facets.get('preprocessor', 'default')
-        settings = profiles.get(preprocessor, {})
-        _append_missing_supplementaries(supplementaries, facets, settings)
-        supplementaries = [
-            facets for facets in supplementaries
-            if not facets.pop('skip', False)
-        ]
+    preprocessor = facets.get('preprocessor', 'default')
+    settings = profiles.get(preprocessor, {})
+    _append_missing_supplementaries(supplementaries, facets, settings)
+    supplementaries = [
+        facets for facets in supplementaries
+        if not facets.pop('skip', False)
+    ]
 
     return facets, supplementaries
 

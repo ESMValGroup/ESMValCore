@@ -297,7 +297,6 @@ _validators = {
     'run_diagnostic': validate_bool,
     'save_intermediary_cubes': validate_bool,
     'search_esgf': validate_search_esgf,
-    'use_legacy_supplementaries': validate_bool_or_none,
 
     # From CLI
     'check_level': validate_check_level,
@@ -372,38 +371,12 @@ def deprecate_offline(
         validated_config['search_esgf'] = 'when_missing'
 
 
-def deprecate_use_legacy_supplementaries(
-    validated_config: ValidatedConfig,
-    value: Any,
-    validated_value: Any,
-) -> None:
-    """Deprecate ``use_legacy_supplementaries`` option.
-
-    Parameters
-    ----------
-    validated_config: ValidatedConfig
-        ``ValidatedConfig`` instance which will be modified in place.
-    value: Any
-        Raw input value for ``use_legacy_supplementaries`` option.
-    validated_value: Any
-        Validated value for ``use_legacy_supplementaries`` option.
-
-    """
-    option = 'use_legacy_supplementaries'
-    deprecated_version = '2.8.0'
-    remove_version = '2.10.0'
-    more_info = ''
-    _handle_deprecation(option, deprecated_version, remove_version, more_info)
-
-
 _deprecators: dict[str, Callable] = {
     'offline': deprecate_offline,
-    'use_legacy_supplementaries': deprecate_use_legacy_supplementaries,
 }
 
 
 # Default values for deprecated options
 _deprecated_options_defaults: dict[str, Any] = {
     'offline': True,
-    'use_legacy_supplementaries': None,
 }

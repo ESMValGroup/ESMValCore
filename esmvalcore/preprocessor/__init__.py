@@ -57,9 +57,7 @@ from ._regrid import (
 )
 from ._rolling_window import rolling_window_statistics
 from ._supplementary_vars import (
-    add_fx_variables,
     add_supplementary_variables,
-    remove_fx_variables,
     remove_supplementary_variables,
 )
 from ._time import (
@@ -110,7 +108,6 @@ __all__ = [
     'fix_data',
     'cmor_check_data',
     # Attach ancillary variables and cell measures
-    'add_fx_variables',
     'add_supplementary_variables',
     # Derive variable
     'derive',
@@ -189,7 +186,6 @@ __all__ = [
     'bias',
     # Remove supplementary variables from cube
     'remove_supplementary_variables',
-    'remove_fx_variables',
     # Save to file
     'save',
     'cleanup',

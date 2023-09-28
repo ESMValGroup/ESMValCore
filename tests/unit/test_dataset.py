@@ -452,8 +452,6 @@ def test_from_recipe_with_supplementary(session, tmp_path):
 
 
 def test_from_recipe_with_skip_supplementary(session, tmp_path):
-    session['use_legacy_supplementaries'] = False
-
     recipe_txt = textwrap.dedent("""
 
     datasets:
@@ -501,7 +499,6 @@ def test_from_recipe_with_skip_supplementary(session, tmp_path):
 
 def test_from_recipe_with_automatic_supplementary(session, tmp_path,
                                                   monkeypatch):
-    session['use_legacy_supplementaries'] = False
 
     def _find_files(self):
         if self.facets['short_name'] == 'areacello':
@@ -1163,6 +1160,24 @@ def test_remove_not_found_supplementaries():
     dataset._remove_unexpanded_supplementaries()
 
     assert len(dataset.supplementaries) == 0
+
+
+def test_concatenating_historical_and_future_exps(mocker):
+    mocker.patch.object(Dataset, 'files', True)
+    dataset = Dataset(
+        dataset='dataset1',
+        short_name='tas',
+        mip='Amon',
+        frequency='mon',
+        project='CMIP6',
+        exp=['historical', 'ssp585'],
+    )
+    dataset.add_supplementary(short_name='areacella', mip='fx', frequency='fx')
+    dataset._fix_fx_exp()
+
+    assert len(dataset.supplementaries) == 1
+    assert dataset.facets['exp'] == ['historical', 'ssp585']
+    assert dataset.supplementaries[0].facets['exp'] == 'historical'
 
 
 def test_from_recipe_with_glob(tmp_path, session, mocker):

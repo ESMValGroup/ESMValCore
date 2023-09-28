@@ -546,56 +546,6 @@ def test_get_default_settings(mocker):
     }
 
 
-def test_add_legacy_supplementaries_disabled():
-    """Test that `_add_legacy_supplementaries` does nothing when disabled."""
-    dataset = Dataset()
-    dataset.session = {'use_legacy_supplementaries': False}
-    _recipe._add_legacy_supplementary_datasets(dataset, settings={})
-
-
-def test_enable_legacy_supplementaries_when_used(mocker, session):
-    """Test that legacy supplementaries are enabled when used in the recipe."""
-    recipe = mocker.create_autospec(_recipe.Recipe, instance=True)
-    recipe.session = session
-    recipe._preprocessors = {
-        'preproc1': {
-            'area_statistics': {
-                'operator': 'mean',
-                'fx_variables': 'areacella',
-            }
-        }
-    }
-    session['use_legacy_supplementaries'] = None
-    _recipe.Recipe._set_use_legacy_supplementaries(recipe)
-
-    assert session['use_legacy_supplementaries'] is True
-
-
-def test_strip_legacy_supplementaries_when_disabled(mocker, session):
-    """Test that legacy supplementaries are removed when disabled."""
-    recipe = mocker.create_autospec(_recipe.Recipe, instance=True)
-    recipe.session = session
-    recipe._preprocessors = {
-        'preproc1': {
-            'area_statistics': {
-                'operator': 'mean',
-                'fx_variables': 'areacella',
-            }
-        }
-    }
-    session['use_legacy_supplementaries'] = False
-    _recipe.Recipe._set_use_legacy_supplementaries(recipe)
-
-    assert session['use_legacy_supplementaries'] is False
-    assert recipe._preprocessors == {
-        'preproc1': {
-            'area_statistics': {
-                'operator': 'mean',
-            }
-        }
-    }
-
-
 def test_set_version(mocker):
 
     dataset = Dataset(short_name='tas')
