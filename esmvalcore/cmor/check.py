@@ -773,8 +773,8 @@ class CMORCheck():
             else:
                 new_lons = coord.core_points().copy()
                 new_lons = self._set_range_in_0_360(new_lons)
-                if coord.bounds is not None:
-                    new_bounds = coord.bounds.copy()
+                if coord.core_bounds() is not None:
+                    new_bounds = coord.core_bounds().copy()
                     new_bounds = self._set_range_in_0_360(new_bounds)
                 else:
                     new_bounds = None

@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import pytest
 import yaml
 
 from esmvalcore.cmor.table import CMOR_TABLES
@@ -45,15 +44,11 @@ def test_read_cmor_tables():
     assert table.strict is False
 
 
-@pytest.mark.parametrize('behaviour', ['current', 'deprecated'])
-def test_read_custom_cmor_tables(tmp_path, behaviour):
+def test_read_custom_cmor_tables(tmp_path):
     """Test reading of custom CMOR tables."""
     cfg_file = tmp_path / 'config-developer.yml'
-    if behaviour == 'deprecated':
-        cfg_file = CUSTOM_CFG_DEVELOPER
-    else:
-        with cfg_file.open('w', encoding='utf-8') as file:
-            yaml.safe_dump(CUSTOM_CFG_DEVELOPER, file)
+    with cfg_file.open('w', encoding='utf-8') as file:
+        yaml.safe_dump(CUSTOM_CFG_DEVELOPER, file)
 
     read_cmor_tables(cfg_file)
 
