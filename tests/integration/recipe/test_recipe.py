@@ -82,7 +82,6 @@ MANDATORY_SCRIPT_SETTINGS_KEYS = (
 )
 
 DEFAULT_PREPROCESSOR_STEPS = (
-    'load',
     'remove_supplementary_variables',
     'save',
 )
@@ -106,9 +105,6 @@ def create_test_file(filename, tracking_id=None):
 def _get_default_settings_for_chl(save_filename):
     """Get default preprocessor settings for chl."""
     defaults = {
-        'load': {
-            'callback': 'default'
-        },
         'remove_supplementary_variables': {},
         'save': {
             'compress': False,
@@ -557,9 +553,6 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, session):
     assert preproc_dir.startswith(str(tmp_path))
 
     defaults = {
-        'load': {
-            'callback': 'default'
-        },
         'remove_supplementary_variables': {},
         'save': {
             'compress': False,
