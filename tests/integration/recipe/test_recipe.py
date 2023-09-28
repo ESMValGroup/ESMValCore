@@ -3435,8 +3435,9 @@ def test_mm_stats_invalid_stats(
           test:
             {preproc}:
               span: overlap
-              statistics: [mean]
-              statistics_kwargs: []
+              statistics:
+                - operator_is_missing: here
+                  but_we_need: it
 
         diagnostics:
           diagnostic_name:
@@ -3453,7 +3454,9 @@ def test_mm_stats_invalid_stats(
                     ensemble: r1i1p1
             scripts: null
         """)
-    msg = "Expected identical number of"
+    msg = (
+        "If `statistic` is given as dict, the keyword `operator` is required"
+    )
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, session)
     assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
@@ -3461,7 +3464,7 @@ def test_mm_stats_invalid_stats(
 
 
 @pytest.mark.parametrize(
-    'stat_kwargs',
+    'statistics',
     [
         {'invalid_value': 1},
         {'percent': 10, 'invalid_value': 1},
@@ -3472,15 +3475,15 @@ def test_mm_stats_invalid_stats(
     'preproc', ['multi_model_statistics', 'ensemble_statistics']
 )
 def test_mm_stats_invalid_stat_kwargs(
-    preproc, stat_kwargs, tmp_path, patched_datafinder, session
+    preproc, statistics, tmp_path, patched_datafinder, session
 ):
+    statistics['operator'] = 'wpercentile'
     content = dedent(f"""
         preprocessors:
           test:
             {preproc}:
               span: overlap
-              statistics: [wpercentile]
-              statistics_kwargs: [{stat_kwargs}]
+              statistics: [{statistics}]
 
         diagnostics:
           diagnostic_name:

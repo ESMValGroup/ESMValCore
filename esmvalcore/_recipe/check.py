@@ -14,6 +14,7 @@ import yamale
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import _get_start_end_year, _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
+from esmvalcore.preprocessor._multimodel import _get_operator_and_kwargs
 from esmvalcore.preprocessor._shared import get_iris_aggregator
 from esmvalcore.preprocessor._supplementary_vars import (
     PREPROCESSOR_SUPPLEMENTARIES,
@@ -419,21 +420,15 @@ def statistics_preprocessors(settings: dict) -> None:
     for (step, step_settings) in settings.items():
 
         # For multi-model statistics, we need to check each entry of statistics
-        # and statistcs_kwargs
         if step in mm_stats:
             statistics = step_settings.get('statistics', [])
-            statistics_kwargs = step_settings.get(
-                'statistics_kwargs', [None] * len(statistics)
-            )
-            if len(statistics) != len(statistics_kwargs):
-                raise RecipeError(
-                    f"Expected identical number of `statistics` and "
-                    f"`statistics_kwargs` for {step}, got {len(statistics):d} "
-                    f"and {len(statistics_kwargs):d}, respectively"
-                )
-            for (stat, kwargs) in zip(statistics, statistics_kwargs):
+            for stat in statistics:
                 try:
-                    get_iris_aggregator(stat, kwargs)
+                    (operator, kwargs) = _get_operator_and_kwargs(stat)
+                except ValueError as exc:
+                    raise RecipeError(str(exc))
+                try:
+                    get_iris_aggregator(operator, kwargs)
                 except ValueError as exc:
                     raise RecipeError(
                         f"Invalid options for {step}: {exc}"

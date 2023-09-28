@@ -549,7 +549,6 @@ def _multicube_statistics(
     statistics,
     span,
     ignore_scalar_coords=False,
-    statistics_kwargs=None,
 ):
     """Compute statistics over multiple cubes.
 
@@ -558,9 +557,6 @@ def _multicube_statistics(
     Cubes are merged and subsequently collapsed along a new auxiliary
     coordinate. Inconsistent attributes will be removed.
     """
-    if statistics_kwargs is None:
-        statistics_kwargs = [None] * len(statistics)
-
     if not cubes:
         raise ValueError(
             "Cannot perform multicube statistics for an empty list of cubes"
@@ -599,11 +595,12 @@ def _multicube_statistics(
     # Calculate statistics
     statistics_cubes = {}
     lazy_input = any(cube.has_lazy_data() for cube in cubes)
-    for (statistic, statistic_kwargs) in zip(statistics, statistics_kwargs):
-        stat_id = _get_stat_identifier(statistic, statistic_kwargs)
+    for statistic in statistics:
+        stat_id = _get_stat_identifier(statistic)
         logger.debug('Multicube statistics: computing: %s', stat_id)
 
-        (agg, agg_kwargs) = get_iris_aggregator(statistic, statistic_kwargs)
+        (operator, kwargs) = _get_operator_and_kwargs(statistic)
+        (agg, agg_kwargs) = get_iris_aggregator(operator, kwargs)
         if lazy_input and agg.lazy_func is not None:
             result_cube = _compute(cubes, operator=agg, **agg_kwargs)
         else:
@@ -620,23 +617,18 @@ def _multiproduct_statistics(
     span=None,
     keep_input_datasets=None,
     ignore_scalar_coords=False,
-    statistics_kwargs=None
 ):
     """Compute multi-cube statistics on ESMValCore products.
 
     Extract cubes from products, calculate multicube statistics and
     assign the resulting output cubes to the output_products.
     """
-    if statistics_kwargs is None:
-        statistics_kwargs = [None] * len(statistics)
-
     cubes = [cube for product in products for cube in product.cubes]
     statistics_cubes = _multicube_statistics(
         cubes=cubes,
         statistics=statistics,
         span=span,
         ignore_scalar_coords=ignore_scalar_coords,
-        statistics_kwargs=statistics_kwargs,
     )
     statistics_products = set()
     for stat_id, cube in statistics_cubes.items():
@@ -655,11 +647,28 @@ def _multiproduct_statistics(
     return products | statistics_products
 
 
-def _get_stat_identifier(statistic, statistic_kwargs):
-    if statistic_kwargs is not None:
-        if 'percent' in statistic_kwargs:
-            statistic += str(statistic_kwargs['percent'])
-    return statistic
+def _get_operator_and_kwargs(statistic: str | dict) -> tuple[str, dict]:
+    """Get operator and kwargs from a single statistic."""
+    if isinstance(statistic, dict):
+        statistic = dict(statistic)
+        if 'operator' not in statistic:
+            raise ValueError(
+                f"If `statistic` is given as dict, the keyword `operator` is "
+                f"required, got {statistic}"
+            )
+        operator = statistic.pop('operator')
+        kwargs = statistic
+    else:
+        operator = statistic
+        kwargs = {}
+    return (operator, kwargs)
+
+
+def _get_stat_identifier(statistic: str | dict) -> str:
+    (operator, kwargs) = _get_operator_and_kwargs(statistic)
+    if 'percent' in kwargs:
+        operator += str(kwargs['percent'])
+    return operator
 
 
 def multi_model_statistics(
@@ -670,7 +679,6 @@ def multi_model_statistics(
     groupby: Optional[tuple] = None,
     keep_input_datasets: bool = True,
     ignore_scalar_coords: bool = False,
-    statistics_kwargs: Optional[list[dict] | list[None]] = None,
 ) -> dict | set:
     """Compute multi-model statistics.
 
@@ -760,9 +768,6 @@ def multi_model_statistics(
         datasets will remain unchanged). If False, scalar coordinates will
         remain in the input datasets, which might lead to merge conflicts in
         case the input datasets have different scalar coordinates.
-    statistics_kwargs:
-        Optional keyword arguments for the :class:`iris.analysis.Aggregator`
-        objects defined by `statistics`.
 
     Returns
     -------
@@ -776,22 +781,12 @@ def multi_model_statistics(
         If span is neither overlap nor full, or if input type is neither cubes
         nor products.
     """
-    if statistics_kwargs is None:
-        statistics_kwargs = [None] * len(statistics)
-    if len(statistics) != len(statistics_kwargs):
-        raise ValueError(
-            f"Expected identical number of `statistics` and "
-            f"`statistics_kwargs`, got {len(statistics):d} and "
-            f"{len(statistics_kwargs):d}, respectively"
-        )
-
     if all(isinstance(p, Cube) for p in products):
         return _multicube_statistics(
             cubes=products,
             statistics=statistics,
             span=span,
             ignore_scalar_coords=ignore_scalar_coords,
-            statistics_kwargs=statistics_kwargs,
         )
     if all(type(p).__name__ == 'PreprocessorFile' for p in products):
         # Avoid circular input: https://stackoverflow.com/q/16964467
@@ -807,7 +802,6 @@ def multi_model_statistics(
                 span=span,
                 keep_input_datasets=keep_input_datasets,
                 ignore_scalar_coords=ignore_scalar_coords,
-                statistics_kwargs=statistics_kwargs,
             )
 
             statistics_products |= group_statistics
@@ -826,7 +820,6 @@ def ensemble_statistics(
     output_products,
     span: str = 'overlap',
     ignore_scalar_coords: bool = False,
-    statistics_kwargs: Optional[list[dict] | list[None]] = None,
 ) -> dict | set:
     """Entry point for ensemble statistics.
 
@@ -858,9 +851,6 @@ def ensemble_statistics(
         datasets will remain unchanged). If False, scalar coordinates will
         remain in the input datasets, which might lead to merge conflicts in
         case the input datasets have different scalar coordinates.
-    statistics_kwargs:
-        Optional keyword arguments for the :class:`iris.analysis.Aggregator`
-        objects defined by `statistics`.
 
     Returns
     -------
@@ -882,5 +872,4 @@ def ensemble_statistics(
         groupby=ensemble_grouping,
         keep_input_datasets=False,
         ignore_scalar_coords=ignore_scalar_coords,
-        statistics_kwargs=statistics_kwargs,
     )

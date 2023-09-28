@@ -216,12 +216,13 @@ def get_cube_for_equal_coords_test(num_cubes):
 
 VALIDATION_DATA_SUCCESS = (
     ('full', 'mean', (5, 5, 3)),
+    ('full', {'operator': 'mean'}, (5, 5, 3)),
     ('full', 'std_dev', (5.656854249492381, 4, 2.8284271247461903)),
     ('full', 'std', (5.656854249492381, 4, 2.8284271247461903)),
     ('full', 'min', (1, 1, 1)),
     ('full', 'max', (9, 9, 5)),
     ('full', 'median', (5, 5, 3)),
-    ('full', 'percentile', (5, 5, 3)),
+    ('full', {'operator': 'percentile', 'percent': 50.0}, (5, 5, 3)),
     ('full', 'p50', (5, 5, 3)),
     ('full', 'p99.5', (8.96, 8.96, 4.98)),
     ('full', 'peak', (9, 9, 5)),
@@ -231,14 +232,18 @@ VALIDATION_DATA_SUCCESS = (
     ('overlap', 'min', (1, 1)),
     ('overlap', 'max', (9, 9)),
     ('overlap', 'median', (5, 5)),
-    ('overlap', 'percentile', (5, 5)),
+    ('overlap', {'operator': 'percentile', 'percent': 50.0}, (5, 5)),
     ('overlap', 'p50', (5, 5)),
     ('overlap', 'p99.5', (8.96, 8.96)),
     ('overlap', 'peak', (9, 9)),
     # test multiple statistics
     ('overlap', ('min', 'max'), ((1, 1), (9, 9))),
+    ('overlap', ('min', {'operator': 'max'}), ((1, 1), (9, 9))),
     ('full', ('min', 'max'), ((1, 1, 1), (9, 9, 5))),
-    ('full', ('percentile', 'percentile'), ((5, 5, 3), (8.96, 8.96, 4.98))),
+    ('full', (
+        {'operator': 'percentile', 'percent': 50.0},
+        {'operator': 'percentile', 'percent': 99.5}
+    ), ((5, 5, 3), (8.96, 8.96, 4.98))),
 )
 
 
@@ -323,26 +328,14 @@ def test_multimodel_statistics(frequency, span, statistics, expected):
     """High level test for multicube statistics function."""
     cubes = get_cubes_for_validation_test(frequency)
 
-    if isinstance(statistics, str):
+    if isinstance(statistics, (str, dict)):
         statistics = (statistics, )
         expected = (expected, )
 
-    kwargs = {}
-    if statistics == ('percentile', ):
-        kwargs['statistics_kwargs'] = [{'percent': 50.0}]
-    elif statistics == ('percentile', 'percentile'):
-        kwargs['statistics_kwargs'] = [{'percent': 50}, {'percent': 99.5}]
-
-    result = multi_model_statistics(cubes, span, statistics, **kwargs)
+    result = multi_model_statistics(cubes, span, statistics)
 
     assert isinstance(result, dict)
-    stat_ids = [
-        mm._get_stat_identifier(s, k) for (s, k) in zip(
-            statistics, kwargs.get(
-                'statistics_kwargs', [None] * len(statistics)
-            )
-        )
-    ]
+    stat_ids = [mm._get_stat_identifier(s) for s in statistics]
     assert set(result.keys()) == set(stat_ids)
 
     for i, stat_id in enumerate(stat_ids):
@@ -413,12 +406,14 @@ def test_multicube_stats_dict_keys(span):
         generate_cube_from_dates('monthly', fill_val=3),
         generate_cube_from_dates('monthly', fill_val=6),
     )
-    statistics = ['mean', 'sum', 'percentile', 'percentile']
-    kwargs = [{}, {}, {'percent': 50}, {'percent': 95.0}]
+    statistics = [
+        'mean',
+        {'operator': 'sum'},
+        {'operator': 'percentile', 'percent': 50},
+        {'operator': 'percentile', 'percent': 95.0},
+    ]
 
-    result = mm._multicube_statistics(
-        cubes, span=span, statistics=statistics, statistics_kwargs=kwargs
-    )
+    result = mm._multicube_statistics(cubes, span=span, statistics=statistics)
 
     assert isinstance(result, dict)
     assert len(result) == 4
@@ -1413,7 +1408,15 @@ def test_empty_input_ensemble_statistics():
         )
 
 
-STATS = ['mean', 'median', 'min', 'max', 'p42.314', 'percentile', 'std_dev']
+STATS = [
+    'mean',
+    {'operator': 'median'},
+    'min',
+    'max',
+    'p42.314',
+    {'operator': 'percentile', 'percent': 42.314},
+    'std_dev',
+]
 
 
 @pytest.mark.parametrize('stat', STATS)
@@ -1426,20 +1429,13 @@ STATS = ['mean', 'median', 'min', 'max', 'p42.314', 'percentile', 'std_dev']
 )
 def test_single_input_multi_model_statistics(products, stat):
     """Check that ``multi_model_statistics`` works with a single cube."""
-    if stat == 'percentile':
-        stat_kwargs = [{'percent': 42.314}]
-    else:
-        stat_kwargs = [None]
     output = PreprocessorFile()
-    output_products = {
-        '': {mm._get_stat_identifier(stat, stat_kwargs[0]): output}
-    }
+    output_products = {'': {mm._get_stat_identifier(stat): output}}
     kwargs = {
         'statistics': [stat],
         'span': 'full',
         'output_products': output_products,
         'keep_input_datasets': False,
-        'statistics_kwargs': stat_kwargs,
     }
 
     results = mm.multi_model_statistics(products, **kwargs)
@@ -1447,7 +1443,7 @@ def test_single_input_multi_model_statistics(products, stat):
     assert len(results) == 1
 
     if isinstance(results, dict):  # for cube as input
-        stat_id = mm._get_stat_identifier(stat, stat_kwargs[0])
+        stat_id = mm._get_stat_identifier(stat)
         cube = results[stat_id]
     else:  # for PreprocessorFile as input
         result = next(iter(results))
@@ -1472,11 +1468,7 @@ def test_single_input_multi_model_statistics(products, stat):
 )
 def test_single_input_ensemble_statistics(products, stat):
     """Check that ``ensemble_statistics`` works with a single cube."""
-    if stat == 'percentile':
-        stat_kwargs = [{'percent': 42.314}]
-    else:
-        stat_kwargs = [None]
-    stat_id = mm._get_stat_identifier(stat, stat_kwargs[0])
+    stat_id = mm._get_stat_identifier(stat)
 
     cube = generate_cube_from_dates('monthly')
     attributes = {
@@ -1491,7 +1483,6 @@ def test_single_input_ensemble_statistics(products, stat):
     kwargs = {
         'statistics': [stat],
         'output_products': output_products,
-        'statistics_kwargs': stat_kwargs,
     }
 
     results = mm.ensemble_statistics(products, **kwargs)
@@ -1509,27 +1500,56 @@ def test_single_input_ensemble_statistics(products, stat):
         assert_array_allclose(cube.data, np.ma.array([1.0, 1.0, 1.0]))
 
 
-def test_different_len_stats_kwargs_fail():
-    """Test different number of statistics and kwargs."""
-    msg = "Expected identical number of "
+def test_operator_missing_in_stat():
+    """Test no operator in stat dict."""
+    cubes = CubeList([generate_cube_from_dates('monthly')])
+    msg = "If `statistic` is given as dict, the keyword `operator` is required"
     with pytest.raises(ValueError) as exc:
-        mm.multi_model_statistics(
-            set(), 'overlap', ['mean'], statistics_kwargs=[]
-        )
+        mm.multi_model_statistics(cubes, 'overlap', [{'no': 'operator'}])
     assert msg in str(exc)
 
 
 @pytest.mark.parametrize(
-    'stat,kwargs,output',
+    'statistic,output',
     [
-        ('mean', {}, 'mean'),
-        ('mean', {'weights': False}, 'mean'),
-        ('percentile', {}, 'percentile'),
-        ('percentile', {'percent': 50}, 'percentile50'),
-        ('wpercentile', {'weights': False}, 'wpercentile'),
-        ('wpercentile', {'weights': False, 'percent': 5.0}, 'wpercentile5.0'),
+        ('mean', ('mean', {})),
+        ({'operator': 'mean'}, ('mean', {})),
+        ({'operator': 'mean', 'weights': False}, ('mean', {'weights': False})),
+        ('percentile', ('percentile', {})),
+        ({'operator': 'percentile', 'percent': 50},
+         ('percentile', {'percent': 50})),
+        ({'operator': 'wpercentile', 'weights': False},
+         ('wpercentile', {'weights': False})),
+        ({'operator': 'wpercentile', 'weights': False, 'percent': 5.0},
+         ('wpercentile', {'weights': False, 'percent': 5.0})),
     ]
 )
-def test_get_stat_identifier(stat, kwargs, output):
+def test_get_operator_and_kwargs(statistic, output):
+    """Test ``_get_operator_and_kwargs``."""
+    assert mm._get_operator_and_kwargs(statistic) == output
+
+
+@pytest.mark.parametrize('statistic', [{}, {'no': 'op'}])
+def test_get_operator_and_kwargs_operator_missing(statistic):
+    """Test ``_get_operator_and_kwargs``."""
+    msg = "If `statistic` is given as dict, the keyword `operator` is required"
+    with pytest.raises(ValueError, match=msg):
+        mm._get_operator_and_kwargs(statistic)
+
+
+@pytest.mark.parametrize(
+    'statistic,output',
+    [
+        ('mean', 'mean'),
+        ({'operator': 'mean'}, 'mean'),
+        ({'operator': 'mean', 'weights': False}, 'mean'),
+        ('percentile', 'percentile'),
+        ({'operator': 'percentile', 'percent': 50}, 'percentile50'),
+        ({'operator': 'wpercentile', 'weights': False}, 'wpercentile'),
+        ({'operator': 'wpercentile', 'weights': False, 'percent': 5.0},
+         'wpercentile5.0'),
+    ]
+)
+def test_get_stat_identifier(statistic, output):
     """Test ``_get_stat_identifier``."""
-    assert mm._get_stat_identifier(stat, kwargs) == output
+    assert mm._get_stat_identifier(statistic) == output

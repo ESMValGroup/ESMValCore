@@ -77,9 +77,11 @@ perform the statistical calculations.
     computation of multiple statistics at the same time.
     In these cases, they are defined by the option `statistics` (instead of
     `operator`), which takes a list of possible operators.
-    Moreover, keywords arguments for these `statistics` can be given by the
-    `statistics_kwargs` option (instead of `operator_kwargs`), which takes a
-    list of possible operator keyword arguments.
+    Each operator can be given as single string or as dictionary.
+    In the latter case, the dictionary needs the keyword `operator`
+    (corresponding to the `operator` as above).
+    All other keywords are interpreted as `operator_kwargs` for the given
+    operator.
 
 Some operators support weights for some preprocessors (see following table),
 which are used by default.
@@ -161,11 +163,12 @@ Calculate multi-model median, 5%, and 95% percentiles:
     mm_stats:
       multi_model_statistics:
         span: overlap
-        statistics: [percentile, median, percentile]
-        statistics_kwargs:
-          - {percent: 5}   # keyword arguments for 1st percentile
-          - {}             # keyword arguments for median
-          - {percent: 95}  # keyword arguments for 2nd percentile
+        statistics:
+          - operator: percentile
+            percent: 5
+          - operator: median
+          - operator: percentile
+            percent: 95
 
 Calculate the global non-weighted root mean square:
 
@@ -1175,17 +1178,17 @@ The preprocessor takes a list of statistics as input:
         ensemble_statistics:
           statistics: [mean, median]
 
-Additional keyword arguments can be specified with `statistics_kwargs`:
+Additional keyword arguments can be given by using a dictionary:
 
 .. code-block:: yaml
 
     preprocessors:
       example_preprocessor:
         ensemble_statistics:
-          statistics: [percentile, median]
-          statistics_kwargs:
-            - {percent: 20}  # keyword arguments for percentile
-            - {}             # keyword arguments for median
+          statistics:
+            - operator: percentile
+              percent: 20
+            - operator: median
 
 This preprocessor function exposes the iris analysis package, and works with all
 (capitalized) statistics from the :mod:`iris.analysis` package
@@ -1235,9 +1238,8 @@ number of multi-model statistical measures: using the preprocessor module
 ``mean``, ``median``, ``max``, ``min``, ``std_dev``, and / or ``percentile``
 with a set of argument parameters passed to ``multi_model_statistics``.
 See :ref:`stat_preprocs` for more details on supported statistics.
-Percentiles can be specified with additional keyword arguments specified by
-``statistics: [percentile]`` in combination with ``statistics_kwargs:
-[{percent: xx}]``.
+Percentiles can be specified with additional keyword arguments using the syntax
+``statistics: [{operator: percentile, percent: xx}]``.
 
 Restrictive computation is also available by excluding any set of models that
 the user will not want to include in the statistics (by setting ``exclude:
@@ -1281,10 +1283,11 @@ and `ptop`) are always removed.
       multi_model_percentiles_5_95:
         multi_model_statistics:
           span: overlap
-          statistics: [percentile, percentile]
-          statistics_kwargs:
-            - {percent: 5}
-            - {percent: 95}
+          statistics:
+            - operator: percentile
+              percent: 5
+            - operator: percentile
+              percent: 95
 
 Multi-model statistics also supports a ``groupby`` argument. You can group by
 any dataset key (``project``, ``experiment``, etc.) or a combination of keys in a list. You can

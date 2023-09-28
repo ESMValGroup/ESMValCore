@@ -600,12 +600,9 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
         common_attributes = _get_common_attributes(products, settings)
 
         statistics = settings.get('statistics', [])
-        statistics_kwargs = settings.get(
-            'statistics_kwargs', [None] * len(statistics)
-        )
-        for (statistic, stat_kwargs) in zip(statistics, statistics_kwargs):
+        for statistic in statistics:
             statistic_attributes = dict(common_attributes)
-            stat_id = _get_stat_identifier(statistic, stat_kwargs)
+            stat_id = _get_stat_identifier(statistic)
             statistic_attributes[step] = _get_tag(step, identifier, stat_id)
             statistic_attributes.setdefault('alias',
                                             statistic_attributes[step])

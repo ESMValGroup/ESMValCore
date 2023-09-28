@@ -336,8 +336,10 @@ def test_update_multiproduct_multi_model_statistics_percentile():
     """Test ``_update_multiproduct``."""
     settings = {
         'multi_model_statistics': {
-            'statistics': ['percentile', 'percentile'],
-            'statistics_kwargs': [{'percent': 5.0}, {'percent': 95.0}],
+            'statistics': [
+                {'operator': 'percentile', 'percent': 5.0},
+                {'operator': 'percentile', 'percent': 95.0},
+            ]
         },
     }
     common_attributes = {
@@ -486,8 +488,9 @@ def test_update_multiproduct_ensemble_statistics_percentile():
     """Test ``_update_multiproduct``."""
     settings = {
         'ensemble_statistics': {
-            'statistics': ['percentile', 'percentile'],
-            'statistics_kwargs': [{'percent': 5}],
+            'statistics': [
+                {'operator': 'percentile', 'percent': 5},
+            ],
             'span': 'full',
         },
     }
