@@ -120,6 +120,7 @@ def _get_default_settings_for_chl(save_filename):
 
 @pytest.fixture
 def patched_tas_derivation(monkeypatch):
+
     def get_required(short_name, _):
         if short_name != 'tas':
             assert False
@@ -1801,7 +1802,6 @@ def test_groupby_combined_statistics(tmp_path, patched_datafinder, session):
         mm_products) == len(mm_statistics) * len(ens_statistics) * len(groupby)
 
 
-@pytest.mark.skip  # TODO: check if this test is needed and if yes, fix it
 def test_weighting_landsea_fraction(tmp_path, patched_datafinder, session):
     TAGS.set_tag_values(TAGS_FOR_TESTING)
 
@@ -1826,6 +1826,9 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, session):
                   - {dataset: CanESM2}
                   - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
+                supplementary_variables:
+                  - short_name: sftlf
+                    mip: fx
             scripts: null
         """)
     recipe = get_recipe(tmp_path, content, session)
@@ -1844,16 +1847,8 @@ def test_weighting_landsea_fraction(tmp_path, patched_datafinder, session):
         assert settings['area_type'] == 'land'
         assert len(product.datasets) == 1
         dataset = product.datasets[0]
-        short_names = {
-            ds.facets['short_name']
-            for ds in dataset.supplementaries
-        }
-        if dataset.facets['project'] == 'obs4MIPs':
-            assert len(dataset.supplementaries) == 1
-            assert {'sftlf'} == short_names
-        else:
-            assert len(dataset.supplementaries) == 2
-            assert {'sftlf', 'sftof'} == short_names
+        assert len(dataset.supplementaries) == 1
+        assert dataset.supplementaries[0].facets['short_name'] == 'sftlf'
 
 
 def test_weighting_landsea_fraction_no_fx(tmp_path, patched_failing_datafinder,
@@ -1887,7 +1882,6 @@ def test_weighting_landsea_fraction_no_fx(tmp_path, patched_failing_datafinder,
         get_recipe(tmp_path, content, session)
 
 
-@pytest.mark.skip  # TODO: check if this test is needed and if yes, fix it
 def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
                                             session):
     content = dedent("""
@@ -1912,8 +1906,8 @@ def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
                 additional_datasets:
                   - {dataset: CanESM2}
                   - {dataset: GFDL-CM3}
-                  - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
-                     tier: 1}
+                  - {dataset: TEST, project: obs4MIPs,
+                     supplementary_variables: [{short_name: sftlf, mip: fx}]}
             scripts: null
         """)
     recipe = get_recipe(tmp_path, content, session)
@@ -1971,7 +1965,6 @@ def test_weighting_landsea_fraction_exclude_fail(tmp_path, patched_datafinder,
         "diagnostic 'diagnostic_name'.")
 
 
-@pytest.mark.skip  # TODO: check if this test is needed and if yes, fix it
 def test_area_statistics(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
@@ -1994,6 +1987,9 @@ def test_area_statistics(tmp_path, patched_datafinder, session):
                   - {dataset: CanESM2}
                   - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
+                supplementary_variables:
+                  - short_name: areacella
+                    mip: fx
             scripts: null
         """)
     recipe = get_recipe(tmp_path, content, session)
@@ -2012,17 +2008,10 @@ def test_area_statistics(tmp_path, patched_datafinder, session):
         assert settings['operator'] == 'mean'
         assert len(product.datasets) == 1
         dataset = product.datasets[0]
-        short_names = {
-            ds.facets['short_name']
-            for ds in dataset.supplementaries
-        }
-        if dataset.facets['project'] == 'obs4MIPs':
-            assert short_names == {'areacella'}
-        else:
-            assert short_names == {'areacella', 'areacello'}
+        assert len(dataset.supplementaries) == 1
+        assert dataset.supplementaries[0].facets['short_name'] == 'areacella'
 
 
-@pytest.mark.skip  # TODO: check if this test is needed and if yes, fix it
 def test_landmask(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
@@ -2045,6 +2034,9 @@ def test_landmask(tmp_path, patched_datafinder, session):
                   - {dataset: CanESM2}
                   - {dataset: TEST, project: obs4MIPs, level: 1, version: 1,
                      tier: 1}
+                supplementary_variables:
+                  - short_name: sftlf
+                    mip: fx
             scripts: null
         """)
     recipe = get_recipe(tmp_path, content, session)
@@ -2063,10 +2055,8 @@ def test_landmask(tmp_path, patched_datafinder, session):
         assert settings['mask_out'] == 'sea'
         assert len(product.datasets) == 1
         dataset = product.datasets[0]
-        if dataset.facets['project'] == 'obs4MIPs':
-            assert len(dataset.supplementaries) == 1
-        else:
-            assert len(dataset.supplementaries) == 2
+        assert len(dataset.supplementaries) == 1
+        assert dataset.supplementaries[0].facets['short_name'] == 'sftlf'
 
 
 def test_landmask_no_fx(tmp_path, patched_failing_datafinder, session):
@@ -2112,6 +2102,34 @@ def test_landmask_no_fx(tmp_path, patched_failing_datafinder, session):
         assert len(product.datasets) == 1
         dataset = product.datasets[0]
         assert dataset.supplementaries == []
+
+
+def test_wrong_project(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          preproc:
+           volume_statistics:
+             operator: mean
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tos:
+                preprocessor: preproc
+                project: CMIP7
+                mip: Omon
+                exp: historical
+                start_year: 2000
+                end_year: 2005
+                ensemble: r1i1p1
+                additional_datasets:
+                  - {dataset: CanESM2}
+            scripts: null
+        """)
+    msg = ("Unable to load CMOR table (project) 'CMIP7' for variable 'tos' "
+           "with mip 'Omon'")
+    with pytest.raises(RecipeError) as wrong_proj:
+        get_recipe(tmp_path, content, session)
+    assert str(wrong_proj.value) == msg
 
 
 def test_multimodel_mask(tmp_path, patched_datafinder, session):
