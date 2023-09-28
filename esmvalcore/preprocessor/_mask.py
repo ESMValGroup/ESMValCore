@@ -281,7 +281,7 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
     if region_indices:
         regions = [regions[idx] for idx in region_indices]
 
-    # Create a mask for the data 
+    # Create a mask for the data
     mask = np.zeros(cube.shape, dtype=bool)
 
     # Create a set of x,y points from the cube
