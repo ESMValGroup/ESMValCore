@@ -14,16 +14,22 @@ from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.cnrm_aladin63 import (
     Tas,
 )
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import AllVars
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 from esmvalcore.config import CFG
 
 
 def test_get_fix():
-    assert Fix.get_fixes('CMIP5', 'CanESM2', 'Amon', 'fgco2') == [FgCo2(None)]
+    assert Fix.get_fixes('CMIP5', 'CanESM2', 'Amon', 'fgco2') == [
+        FgCo2(None), GenericFix(None)
+    ]
 
 
 def test_get_fix_case_insensitive():
-    assert Fix.get_fixes('CMIP5', 'CanESM2', 'Amon', 'fgCo2'), [FgCo2(None)]
+    assert Fix.get_fixes('CMIP5', 'CanESM2', 'Amon', 'fgCo2') == [
+        FgCo2(None), GenericFix(None)
+    ]
 
 
 def test_get_fix_cordex():
@@ -34,7 +40,7 @@ def test_get_fix_cordex():
         'tas',
         extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'},
     )
-    assert fix == [Tas(None), AllVars(None)]
+    assert fix == [Tas(None), AllVars(None), GenericFix(None)]
 
 
 def test_get_grid_fix_cordex():
@@ -45,15 +51,19 @@ def test_get_grid_fix_cordex():
         'tas',
         extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'},
     )
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_get_fixes_with_replace():
-    assert Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'ch4') == [Ch4(None)]
+    assert Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'ch4') == [
+        Ch4(None), GenericFix(None)
+    ]
 
 
 def test_get_fixes_with_generic():
-    assert Fix.get_fixes('CMIP5', 'CESM1-BGC', 'Amon', 'gpp') == [Gpp(None)]
+    assert Fix.get_fixes('CMIP5', 'CESM1-BGC', 'Amon', 'gpp') == [
+        Gpp(None), GenericFix(None)
+    ]
 
 
 def test_get_fix_no_project():
@@ -62,24 +72,33 @@ def test_get_fix_no_project():
 
 
 def test_get_fix_no_model():
-    assert Fix.get_fixes('CMIP5', 'BAD_MODEL', 'Amon', 'ch4') == []
+    assert Fix.get_fixes('CMIP5', 'BAD_MODEL', 'Amon', 'ch4') == [
+        GenericFix(None)
+    ]
 
 
 def test_get_fix_no_var():
-    assert Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'BAD_VAR') == []
+    assert Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'BAD_VAR') == [
+        GenericFix(None)
+    ]
 
 
 def test_get_fix_only_mip():
-    assert Fix.get_fixes('CMIP6', 'CESM2', 'Omon', 'thetao') == [Omon(None)]
+    assert Fix.get_fixes('CMIP6', 'CESM2', 'Omon', 'thetao') == [
+        Omon(None), GenericFix(None)
+    ]
 
 
 def test_get_fix_only_mip_case_insensitive():
-    assert Fix.get_fixes('CMIP6', 'CESM2', 'omOn', 'thetao') == [Omon(None)]
+    assert Fix.get_fixes('CMIP6', 'CESM2', 'omOn', 'thetao') == [
+        Omon(None), GenericFix(None)
+    ]
 
 
 def test_get_fix_mip_and_var():
-    assert (Fix.get_fixes('CMIP6', 'CESM2', 'Omon', 'tos') ==
-            [Tos(None), Omon(None)])
+    assert Fix.get_fixes('CMIP6', 'CESM2', 'Omon', 'tos') == [
+        Tos(None), Omon(None), GenericFix(None)
+    ]
 
 
 def test_fix_metadata():
@@ -156,3 +175,25 @@ def test_session():
     session = CFG.start_session('my session')
     fix = Fix(None, session=session)
     assert fix.session == session
+
+
+def test_frequency_empty():
+    fix = Fix(None)
+    assert fix.frequency is None
+
+
+def test_frequency_from_vardef():
+    vardef = get_var_info('CMIP6', 'Amon', 'tas')
+    fix = Fix(vardef)
+    assert fix.frequency == 'mon'
+
+
+def test_frequency_given():
+    fix = Fix(None, frequency='1hr')
+    assert fix.frequency == '1hr'
+
+
+def test_frequency_not_from_vardef():
+    vardef = get_var_info('CMIP6', 'Amon', 'tas')
+    fix = Fix(vardef, frequency='3hr')
+    assert fix.frequency == '3hr'

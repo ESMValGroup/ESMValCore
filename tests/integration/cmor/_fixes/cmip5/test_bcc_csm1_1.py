@@ -1,5 +1,4 @@
 """Test bcc-csm1-1 fixes."""
-import unittest
 
 import iris
 import numpy as np
@@ -9,6 +8,7 @@ from esmvalcore.cmor._fixes.common import (
     ClFixHybridPressureCoord,
     OceanFixGrid,
 )
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
@@ -16,7 +16,7 @@ from esmvalcore.cmor.table import get_var_info
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP5', 'bcc-csm1-1', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    assert fix == [Cl(None), GenericFix(None)]
 
 
 def test_cl_fix():
@@ -24,13 +24,10 @@ def test_cl_fix():
     assert Cl is ClFixHybridPressureCoord
 
 
-class TestTos(unittest.TestCase):
-    """Test tos fixes."""
-
-    def test_get(self):
-        """Test fix get."""
-        self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'bcc-csm1-1', 'Amon', 'tos'), [Tos(None)])
+def test_get_tos_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP5', 'bcc-csm1-1', 'Omon', 'tos')
+    assert fix == [Tos(None), GenericFix(None)]
 
 
 def test_tos_fix():

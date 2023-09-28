@@ -6,6 +6,7 @@ import unittest
 from datetime import datetime
 from typing import List, Tuple
 
+import dask.array as da
 import iris
 import iris.coord_categorisation
 import iris.coords
@@ -1659,8 +1660,9 @@ def make_map_data(number_years=2):
         standard_name='longitude',
     )
     data = np.array([[0, 1], [1, 0]]) * times[:, None, None]
+    chunks = (int(data.shape[0] / 2), 1, 2)
     cube = iris.cube.Cube(
-        data,
+        da.asarray(data, chunks=chunks),
         dim_coords_and_dims=[(time, 0), (lat, 1), (lon, 2)],
     )
     return cube
