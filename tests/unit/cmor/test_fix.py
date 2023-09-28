@@ -214,20 +214,19 @@ class TestFixMetadata():
                 assert cube_returned is self.cube
 
     def test_select_var_failed_if_bad_var_name(self):
-        """Check that the same cube is returned if no fix is available."""
-        with patch('esmvalcore.cmor._fixes.fix.Fix.get_fixes',
-                   return_value=[]):
-            with pytest.raises(ValueError):
-                fix_metadata(
-                    cubes=[
-                        self._create_mock_cube('not_me'),
-                        self._create_mock_cube('me_neither')
-                    ],
-                    short_name='short_name',
-                    project='CMIP6',
-                    dataset='model',
-                    mip='mip',
-                )
+        """Check that an error is raised if short_names do not match."""
+        msg = "More than one cube found for variable tas in CMIP6:model"
+        with pytest.raises(ValueError, match=msg):
+            fix_metadata(
+                cubes=[
+                    self._create_mock_cube('not_me'),
+                    self._create_mock_cube('me_neither')
+                ],
+                short_name='tas',
+                project='CMIP6',
+                dataset='model',
+                mip='Amon',
+            )
 
 
 class TestFixData():
