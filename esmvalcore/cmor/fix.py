@@ -16,7 +16,6 @@ from typing import TYPE_CHECKING, Optional
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.fix import Fix
-from esmvalcore.cmor._utils import _get_single_cube
 from esmvalcore.cmor.check import CheckLevels, _get_cmor_checker
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
@@ -195,8 +194,9 @@ def fix_metadata(
         for fix in fixes:
             cube_list = fix.fix_metadata(cube_list)
 
-        dataset_str = f'{project}:{dataset}'
-        cube = _get_single_cube(cube_list, short_name, dataset_str=dataset_str)
+        # The final fix is always GenericFix, whose fix_metadata method always
+        # returns a single cube
+        cube = cube_list[0]
 
         # Perform CMOR checks
         # TODO: remove in v2.12
