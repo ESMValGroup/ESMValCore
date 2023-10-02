@@ -148,7 +148,7 @@ def test_close():
 
 
 @mock.patch('esmvalcore.preprocessor.preprocess', autospec=True)
-def test_save_no_cleanup(mock_preprocess):
+def test_save_(mock_preprocess):
     """Test ``save``."""
     product = mock.create_autospec(PreprocessorFile, instance=True)
     product.settings = {'save': {}}
@@ -161,22 +161,4 @@ def test_save_no_cleanup(mock_preprocess):
         mock.call(
             mock.sentinel.cubes, 'save', input_files=mock.sentinel.input_files
         ),
-    ]
-
-
-@mock.patch('esmvalcore.preprocessor.preprocess', autospec=True)
-def test_save_cleanup(mock_preprocess):
-    """Test ``save``."""
-    product = mock.create_autospec(PreprocessorFile, instance=True)
-    product.settings = {'save': {}, 'cleanup': {}}
-    product._cubes = mock.sentinel.cubes
-    product._input_files = mock.sentinel.input_files
-
-    PreprocessorFile.save(product)
-
-    assert mock_preprocess.mock_calls == [
-        mock.call(
-            mock.sentinel.cubes, 'save', input_files=mock.sentinel.input_files
-        ),
-        mock.call([], 'cleanup', input_files=mock.sentinel.input_files),
     ]
