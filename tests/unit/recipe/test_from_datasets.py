@@ -4,9 +4,11 @@ import pytest
 import yaml
 
 from esmvalcore._recipe.from_datasets import (
+    _group_ensemble_members,
     _group_ensemble_names,
     _group_identical_facets,
     _move_one_level_up,
+    _SortableDict,
     _to_frozen,
     datasets_to_recipe,
 )
@@ -135,6 +137,12 @@ def test_supplementary_datasets_to_recipe():
     assert datasets_to_recipe([dataset]) == recipe
 
 
+def test_sortable_dict():
+    assert _SortableDict({'a': 1}) < _SortableDict({'a': 2})
+    assert _SortableDict({'a': 1}) < _SortableDict({'a': 1, 'b': 1})
+    assert _SortableDict({'a': 1}) < _SortableDict({'b': 1})
+
+
 def test_datasets_to_recipe_group_ensembles():
     datasets = [
         Dataset(
@@ -209,6 +217,40 @@ def test_group_identical_facets():
     }
 
     assert result == expected
+
+
+def test_group_ensemble_members():
+    datasets = [
+        Dataset(
+            dataset='dataset1',
+            ensemble='r1i1p1f1',
+            grid='gn',
+        ),
+        Dataset(
+            dataset='dataset1',
+            ensemble='r1i1p1f1',
+            grid='gr1',
+        ),
+        Dataset(
+            dataset='dataset1',
+            ensemble='r2i1p1f1',
+            grid='gn',
+        ),
+    ]
+    result = _group_ensemble_members(ds.facets for ds in datasets)
+    print(result)
+    assert result == [
+        {
+            'dataset': 'dataset1',
+            'ensemble': 'r(1:2)i1p1f1',
+            'grid': 'gn',
+        },
+        {
+            'dataset': 'dataset1',
+            'ensemble': 'r1i1p1f1',
+            'grid': 'gr1',
+        },
+    ]
 
 
 def test_group_ensembles_cmip5():
