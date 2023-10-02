@@ -148,7 +148,7 @@ def test_close():
 
 
 @mock.patch('esmvalcore.preprocessor.preprocess', autospec=True)
-def test_save_(mock_preprocess):
+def test_save(mock_preprocess):
     """Test ``save``."""
     product = mock.create_autospec(PreprocessorFile, instance=True)
     product.settings = {'save': {}}
