@@ -12,6 +12,7 @@ from typing import Iterable, Optional
 from warnings import filterwarnings
 
 import dask.array as da
+import dask.config
 import iris
 import iris.coord_categorisation
 import iris.exceptions
@@ -22,7 +23,7 @@ from iris.coords import AuxCoord
 from iris.cube import Cube, CubeList
 from iris.time import PartialDateTime
 
-from esmvalcore.cmor.check import _get_next_month, _get_time_bounds
+from esmvalcore.cmor._fixes.fix import get_next_month, get_time_bounds
 from esmvalcore.iris_helpers import date2num
 
 from ._shared import get_iris_analysis_operation, operator_accept_weights
@@ -128,7 +129,7 @@ def _parse_end_date(date):
         if len(date) == 4:
             end_date = datetime.datetime(int(date) + 1, 1, 1, 0, 0, 0)
         elif len(date) == 6:
-            month, year = _get_next_month(int(date[4:]), int(date[0:4]))
+            month, year = get_next_month(int(date[4:]), int(date[0:4]))
             end_date = datetime.datetime(year, month, 1, 0, 0, 0)
         else:
             try:
@@ -738,7 +739,6 @@ def climate_statistics(
     -------
     iris.cube.Cube
         Climate statistics cube.
-
     """
     original_dtype = cube.dtype
     period = period.lower()
@@ -820,7 +820,6 @@ def anomalies(
     -------
     iris.cube.Cube
         Anomalies cube.
-
     """
     if reference is None:
         reference_cube = cube
@@ -862,23 +861,31 @@ def anomalies(
     return cube
 
 
-def _compute_anomalies(cube, reference, period, seasons):
+def _compute_anomalies(
+    cube: Cube,
+    reference: Cube,
+    period: str,
+    seasons: Iterable[str],
+):
     cube_coord = _get_period_coord(cube, period, seasons)
     ref_coord = _get_period_coord(reference, period, seasons)
-
-    data = cube.core_data()
-    cube_time = cube.coord('time')
-    ref = {}
-    for ref_slice in reference.slices_over(ref_coord):
-        ref[ref_slice.coord(ref_coord).points[0]] = ref_slice.core_data()
-
-    cube_coord_dim = cube.coord_dims(cube_coord)[0]
-    slicer = [slice(None)] * len(data.shape)
-    new_data = []
-    for i in range(cube_time.shape[0]):
-        slicer[cube_coord_dim] = i
-        new_data.append(data[tuple(slicer)] - ref[cube_coord.points[i]])
-    data = da.stack(new_data, axis=cube_coord_dim)
+    indices = np.empty_like(cube_coord.points, dtype=np.int32)
+    for idx, point in enumerate(ref_coord.points):
+        indices = np.where(cube_coord.points == point, idx, indices)
+    ref_data = reference.core_data()
+    axis, = cube.coord_dims(cube_coord)
+    if cube.has_lazy_data() and reference.has_lazy_data():
+        # Rechunk reference data because iris.cube.Cube.aggregate_by, used to
+        # compute the reference, produces very small chunks.
+        # https://github.com/SciTools/iris/issues/5455
+        ref_chunks = tuple(
+            -1 if i == axis else chunk
+            for i, chunk in enumerate(cube.lazy_data().chunks)
+        )
+        ref_data = ref_data.rechunk(ref_chunks)
+    with dask.config.set({"array.slicing.split_large_chunks": True}):
+        ref_data_broadcast = da.take(ref_data, indices=indices, axis=axis)
+    data = cube.core_data() - ref_data_broadcast
     cube = cube.copy(data)
     cube.remove_coord(cube_coord)
     return cube
@@ -966,7 +973,7 @@ def regrid_time(cube: Cube, frequency: str) -> Cube:
 
     # uniformize bounds
     cube.coord('time').bounds = None
-    cube.coord('time').bounds = _get_time_bounds(cube.coord('time'), frequency)
+    cube.coord('time').bounds = get_time_bounds(cube.coord('time'), frequency)
 
     # remove aux coords that will differ
     reset_aux = ['day_of_month', 'day_of_year']

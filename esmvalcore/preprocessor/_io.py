@@ -6,7 +6,6 @@ import logging
 import os
 import shutil
 import warnings
-from collections.abc import Callable
 from itertools import groupby
 from pathlib import Path
 from typing import Optional
@@ -96,7 +95,7 @@ def _get_attr_from_field_coord(ncfield, coord_name, attr):
     return None
 
 
-def concatenate_callback(raw_cube, field, _):
+def _load_callback(raw_cube, field, _):
     """Use this callback to fix anything Iris tries to break."""
     # Remove attributes that cause issues with merging and concatenation
     _delete_attributes(
@@ -122,7 +121,6 @@ def _delete_attributes(iris_object, atts):
 
 def load(
     file: str | Path,
-    callback: Optional[Callable] = None,
     ignore_warnings: Optional[list[dict]] = None,
 ) -> CubeList:
     """Load iris cubes from string or Path objects.
@@ -131,11 +129,6 @@ def load(
     ----------
     file:
         File to be loaded. Could be string or POSIX Path object.
-    callback:
-        Callback function passed to :func:`iris.load_raw`.
-
-        .. deprecated:: 2.8.0
-            This argument will be removed in 2.10.0.
     ignore_warnings:
         Keyword arguments passed to :func:`warnings.filterwarnings` used to
         ignore warnings issued by :func:`iris.load_raw`. Each list element
@@ -152,14 +145,6 @@ def load(
         Cubes are empty.
 
     """
-    if not (callback is None or callback == 'default'):
-        msg = ("The argument `callback` has been deprecated in "
-               "ESMValCore version 2.8.0 and is scheduled for removal in "
-               "version 2.10.0.")
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
-    if callback == 'default':
-        callback = concatenate_callback
-
     file = Path(file)
     logger.debug("Loading:\n%s", file)
 
@@ -191,7 +176,7 @@ def load(
         # warnings.filterwarnings
         # (see https://github.com/SciTools/cf-units/issues/240)
         with suppress_errors():
-            raw_cubes = iris.load_raw(file, callback=callback)
+            raw_cubes = iris.load_raw(file, callback=_load_callback)
     logger.debug("Done with loading %s", file)
 
     if not raw_cubes:
