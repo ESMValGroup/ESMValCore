@@ -438,7 +438,7 @@ def get_next_month(month: int, year: int) -> tuple[int, int]:
     return 1, year + 1
 
 
-def get_time_bounds(time: Coord, freq: str):
+def get_time_bounds(time: Coord, freq: str) -> np.ndarray:
     """Get bounds for time coordinate.
 
     For monthly data, use the first day of the current month and the first day
