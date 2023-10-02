@@ -597,11 +597,6 @@ This function requires a land or sea area fraction `ancillary variable`_.
 This supplementary variable, either ``sftlf`` or ``sftof``, should be attached
 to the main dataset as described in :ref:`supplementary_variables`.
 
-.. deprecated:: 2.8.0
-  The optional ``fx_variables`` argument specifies the fx variables that the
-  user wishes to input to the function.
-  More details on this are given in :ref:`Fx variables as cell measures or ancillary variables`.
-
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
 
@@ -648,12 +643,6 @@ but if it is not available it will compute a mask based on
 This supplementary variable, either ``sftlf`` or ``sftof``, can be attached
 to the main dataset as described in :ref:`supplementary_variables`.
 
-.. deprecated:: 2.8.0
-  The optional ``fx_variables`` argument specifies the fx variables that the
-  user wishes to input to the function.
-  More details on this are given in :ref:`Fx variables as cell measures or ancillary variables`.
-
-
 If the corresponding ancillary variable is not available (which is
 the case for some models and almost all observational datasets), the
 preprocessor attempts to mask the data using Natural Earth mask files (that are
@@ -684,11 +673,6 @@ and requires only one argument: ``mask_out``: either ``landsea`` or ``ice``.
 This function requires a land ice area fraction `ancillary variable`_.
 This supplementary variable ``sftgif`` should be attached to the main dataset as
 described in :ref:`supplementary_variables`.
-
-.. deprecated:: 2.8.0
-  The optional ``fx_variables`` argument specifies the fx variables that the
-  user wishes to input to the function.
-  More details on this are given in :ref:`Fx variables as cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
@@ -1968,11 +1952,6 @@ The required supplementary variable, either ``areacella`` for atmospheric
 variables or ``areacello`` for ocean variables, can be attached to the main
 dataset as described in :ref:`supplementary_variables`.
 
-.. deprecated:: 2.8.0
-  The optional ``fx_variables`` argument specifies the fx variables that the user
-  wishes to input to the function. More details on this are given in :ref:`Fx
-  variables as cell measures or ancillary variables`.
-
 See also :func:`esmvalcore.preprocessor.area_statistics`.
 
 
@@ -2072,12 +2051,6 @@ The required supplementary variable ``volcello`` can be attached to the main dat
 as described in :ref:`supplementary_variables`.
 
 No depth coordinate is required as this is determined by Iris.
-
-.. deprecated:: 2.8.0
-  The optional ``fx_variables`` argument specifies the fx variables that the
-  user wishes to input to the function.
-  More details on this are given in
-  :ref:`Fx variables as cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 
