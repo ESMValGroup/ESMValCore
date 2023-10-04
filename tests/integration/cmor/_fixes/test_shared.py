@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from cf_units import Unit
 from iris import NameConstraint
+from iris.coords import AuxCoord
 
 from esmvalcore.cmor._fixes.shared import (
     _map_on_filled,
@@ -25,6 +26,7 @@ from esmvalcore.cmor._fixes.shared import (
     get_altitude_to_pressure_func,
     get_bounds_cube,
     get_pressure_to_altitude_func,
+    get_time_bounds,
     round_coordinates,
 )
 
@@ -620,3 +622,39 @@ def test_fix_ocean_depth_coord():
     assert depth_coord.units == 'm'
     assert depth_coord.long_name == 'ocean depth coordinate'
     assert depth_coord.attributes == {'positive': 'down'}
+
+
+@pytest.fixture
+def time_coord():
+    """Time coordinate."""
+    time_coord = AuxCoord(
+        [15, 350],
+        standard_name='time',
+        units='days since 1850-01-01'
+    )
+    return time_coord
+
+
+@pytest.mark.parametrize(
+    'freq,expected_bounds',
+    [
+        ('mon', [[0, 31], [334, 365]]),
+        ('mo', [[0, 31], [334, 365]]),
+        ('yr', [[0, 365], [0, 365]]),
+        ('dec', [[0, 3652], [0, 3652]]),
+        ('day', [[14.5, 15.5], [349.5, 350.5]]),
+        ('6hr', [[14.875, 15.125], [349.875, 350.125]]),
+        ('3hr', [[14.9375, 15.0625], [349.9375, 350.0625]]),
+        ('1hr', [[14.97916666, 15.020833333], [349.97916666, 350.020833333]]),
+    ]
+)
+def test_get_time_bounds(time_coord, freq, expected_bounds):
+    """Test ``get_time_bounds`."""
+    bounds = get_time_bounds(time_coord, freq)
+    np.testing.assert_allclose(bounds, expected_bounds)
+
+
+def test_get_time_bounds_invalid_freq_fail(time_coord):
+    """Test ``get_time_bounds`."""
+    with pytest.raises(NotImplementedError):
+        get_time_bounds(time_coord, 'invalid_freq')

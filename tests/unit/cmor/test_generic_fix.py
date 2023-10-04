@@ -2,24 +2,12 @@
 
 from unittest.mock import sentinel
 
-import numpy as np
 import pytest
 from iris.coords import AuxCoord
 from iris.cube import Cube, CubeList
 
-from esmvalcore.cmor._fixes.fix import GenericFix, get_time_bounds
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.table import get_var_info
-
-
-@pytest.fixture
-def time_coord():
-    """Time coordinate."""
-    time_coord = AuxCoord(
-        [15, 350],
-        standard_name='time',
-        units='days since 1850-01-01'
-    )
-    return time_coord
 
 
 @pytest.fixture
@@ -28,31 +16,6 @@ def generic_fix():
     vardef = get_var_info('CMIP6', 'CFmon', 'ta')
     extra_facets = {'short_name': 'ta', 'project': 'CMIP6', 'dataset': 'MODEL'}
     return GenericFix(vardef, extra_facets=extra_facets)
-
-
-@pytest.mark.parametrize(
-    'freq,expected_bounds',
-    [
-        ('mon', [[0, 31], [334, 365]]),
-        ('mo', [[0, 31], [334, 365]]),
-        ('yr', [[0, 365], [0, 365]]),
-        ('dec', [[0, 3652], [0, 3652]]),
-        ('day', [[14.5, 15.5], [349.5, 350.5]]),
-        ('6hr', [[14.875, 15.125], [349.875, 350.125]]),
-        ('3hr', [[14.9375, 15.0625], [349.9375, 350.0625]]),
-        ('1hr', [[14.97916666, 15.020833333], [349.97916666, 350.020833333]]),
-    ]
-)
-def test_get_time_bounds(time_coord, freq, expected_bounds):
-    """Test ``get_time_bounds`."""
-    bounds = get_time_bounds(time_coord, freq)
-    np.testing.assert_allclose(bounds, expected_bounds)
-
-
-def test_get_time_bounds_invalid_freq_fail(time_coord):
-    """Test ``get_time_bounds`."""
-    with pytest.raises(NotImplementedError):
-        get_time_bounds(time_coord, 'invalid_freq')
 
 
 def test_generic_fix_empty_long_name(generic_fix, monkeypatch):
