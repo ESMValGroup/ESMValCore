@@ -4,8 +4,6 @@ from __future__ import annotations
 import copy
 import logging
 import os
-import shutil
-import warnings
 from itertools import groupby
 from pathlib import Path
 from typing import Optional
@@ -18,7 +16,6 @@ import yaml
 from cf_units import suppress_errors
 from iris.cube import CubeList
 
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import merge_cube_attributes
 
 from .._task import write_ncl_settings
@@ -143,7 +140,6 @@ def load(
     ------
     ValueError
         Cubes are empty.
-
     """
     file = Path(file)
     logger.debug("Loading:\n%s", file)
@@ -347,48 +343,6 @@ def _get_debug_filename(filename, step):
         num = 0
     filename = os.path.join(dirname, '{:02}_{}.nc'.format(num, step))
     return filename
-
-
-def cleanup(files, remove=None):
-    """Clean up after running the preprocessor.
-
-    Warning
-    -------
-    .. deprecated:: 2.8.0
-        This function is no longer used and has been deprecated since
-        ESMValCore version 2.8.0. It is scheduled for removal in version
-        2.10.0.
-
-    Parameters
-    ----------
-    files: list of Path
-        Preprocessor output files (will not be removed if not in `removed`).
-    remove: list of Path or None, optional (default: None)
-        Files or directories to remove.
-
-    Returns
-    -------
-    list of Path
-        Preprocessor output files.
-
-    """
-    deprecation_msg = (
-        "The preprocessor function `cleanup` has been deprecated in "
-        "ESMValCore version 2.8.0 and is scheduled for removal in version "
-        "2.10.0."
-    )
-    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
-
-    if remove is None:
-        remove = []
-
-    for path in remove:
-        if os.path.isdir(path):
-            shutil.rmtree(path)
-        elif os.path.isfile(path):
-            os.remove(path)
-
-    return files
 
 
 def _sort_products(products):
