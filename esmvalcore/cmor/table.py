@@ -127,6 +127,8 @@ def read_cmor_tables(cfg_developer: Optional[Path] = None) -> None:
     """
     if cfg_developer is None:
         cfg_developer = Path(__file__).parents[1] / 'config-developer.yml'
+    elif not isinstance(cfg_developer, Path):
+        raise TypeError("cfg_developer %s is not a Path object", cfg_developer)
     mtime = cfg_developer.stat().st_mtime
     cmor_tables = _read_cmor_tables(cfg_developer, mtime)
     CMOR_TABLES.clear()
