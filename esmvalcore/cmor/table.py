@@ -150,7 +150,7 @@ def _read_cmor_tables(cfg_file: Path, mtime: float) -> dict[str, CMORTable]:
         cfg_developer = yaml.safe_load(file)
     cwd = os.path.dirname(os.path.realpath(__file__))
     var_alt_names_file = os.path.join(cwd, 'variable_alt_names.yml')
-    with open(var_alt_names_file, 'r') as yfile:
+    with open(var_alt_names_file, 'r', encoding='utf-8') as yfile:
         alt_names = yaml.safe_load(yfile)
 
     cmor_tables: dict[str, CMORTable] = {}
