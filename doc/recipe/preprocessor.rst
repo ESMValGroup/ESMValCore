@@ -136,18 +136,20 @@ ESMValCore deals with those issues by applying specific fixes for those
 datasets that require them. Fixes are applied at three different preprocessor
 steps:
 
-    - fix_file: apply fixes directly to a copy of the file. Copying the files
-      is costly, so only errors that prevent Iris to load the file are fixed
-      here. See :func:`esmvalcore.preprocessor.fix_file`
+    - ``fix_file``: apply fixes directly to a copy of the file.
+      Copying the files is costly, so only errors that prevent Iris to load the
+      file are fixed here.
+      See :func:`esmvalcore.preprocessor.fix_file`.
 
-    - fix_metadata: metadata fixes are done just before concatenating the cubes
-      loaded from different files in the final one. Automatic metadata fixes
-      are also applied at this step. See
-      :func:`esmvalcore.preprocessor.fix_metadata`
+    - ``fix_metadata``: metadata fixes are done just before concatenating the
+      cubes loaded from different files in the final one.
+      Automatic metadata fixes are also applied at this step.
+      See :func:`esmvalcore.preprocessor.fix_metadata`.
 
-    - fix_data: data fixes are applied before starting any operation that will
-      alter the data itself. Automatic data fixes are also applied at this step.
-      See :func:`esmvalcore.preprocessor.fix_data`
+    - ``fix_data``: data fixes are applied before starting any operation that
+      will alter the data itself.
+      Automatic data fixes are also applied at this step.
+      See :func:`esmvalcore.preprocessor.fix_data`.
 
 To get an overview on data fixes and how to implement new ones, please go to
 :ref:`fixing_data`.
@@ -297,134 +299,6 @@ and cell measure (``areacella``), but do not use ``areacella`` for dataset
           exp: historical
           timerange: '1990/2000'
       scripts: null
-
-
-.. _`Fx variables as cell measures or ancillary variables`:
-
-Legacy method of specifying supplementary variables
----------------------------------------------------
-
-.. deprecated:: 2.8.0
-  The legacy method of specifying supplementary variables is deprecated and will
-  be removed in version 2.10.0.
-  To upgrade, remove all occurrences of ``fx_variables`` from your recipes and
-  rely on automatically defining the supplementary variables based on the
-  requirement of the preprocessor functions or specify them using the methods
-  described above.
-  To keep using the legacy behaviour until v2.10.0, set
-  ``use_legacy_supplementaries: true`` in the :ref:`user configuration file` or
-  run the tool with the flag ``--use-legacy-supplementaries=True``.
-
-Prior to version 2.8.0 of the tool, the supplementary variables could not be
-defined at the variable or dataset level in the recipe, but could only be
-defined in the preprocessor function that uses them using the ``fx_variables``
-argument.
-This does not work well because in practice different datasets store their
-supplementary variables under different facets.
-For example, one dataset might only provide the ``areacella`` variable under the
-``1pctCO2`` experiment while another one might only provide it for the
-``historical`` experiment.
-This forced the user to define a preprocessor per dataset, which was
-inconvenient.
-
-============================================================== =====================
-Preprocessor                                                   Default fx variables
-============================================================== =====================
-:ref:`area_statistics<area_statistics>`                        ``areacella``, ``areacello``
-:ref:`mask_landsea<land/sea/ice masking>`                      ``sftlf``, ``sftof``
-:ref:`mask_landseaice<ice masking>`                            ``sftgif``
-:ref:`volume_statistics<volume_statistics>`                    ``volcello``
-:ref:`weighting_landsea_fraction<land/sea fraction weighting>` ``sftlf``, ``sftof``
-============================================================== =====================
-
-If the option ``fx_variables`` is not explicitly specified for these
-preprocessors, the default fx variables in the second column are automatically
-used. If given, the ``fx_variables`` argument specifies the fx variables that
-the user wishes to input to the corresponding preprocessor function. The user
-may specify these by simply adding the names of the variables, e.g.,
-
-.. code-block:: yaml
-
-    fx_variables:
-      areacello:
-      volcello:
-
-or by additionally specifying further keys that are used to define the fx
-datasets, e.g.,
-
-.. code-block:: yaml
-
-    fx_variables:
-      areacello:
-        mip: Ofx
-        exp: piControl
-      volcello:
-        mip: Omon
-
-This might be useful to select fx files from a specific ``mip`` table or from a
-specific ``exp`` in case not all experiments provide the fx variable.
-
-Alternatively, the ``fx_variables`` argument can also be specified as a list:
-
-.. code-block:: yaml
-
-    fx_variables: ['areacello', 'volcello']
-
-or as a list of dictionaries:
-
-.. code-block:: yaml
-
-    fx_variables: [{'short_name': 'areacello', 'mip': 'Ofx', 'exp': 'piControl'}, {'short_name': 'volcello', 'mip': 'Omon'}]
-
-The recipe parser will automatically find the data files that are associated
-with these variables and pass them to the function for loading and processing.
-
-If ``mip`` is not given, ESMValCore will search for the fx variable in all
-available tables of the specified project.
-
-.. warning::
-   Some fx variables exist in more than one table (e.g., ``volcello`` exists in
-   CMIP6's ``Odec``, ``Ofx``, ``Omon``, and ``Oyr`` tables; ``sftgif`` exists
-   in CMIP6's ``fx``, ``IyrAnt`` and ``IyrGre``, and ``LImon`` tables). If (for
-   a given dataset) fx files are found in more than one table, ``mip`` needs to
-   be specified, otherwise an error is raised.
-
-.. note::
-   To explicitly **not** use any fx variables in a preprocessor, use
-   ``fx_variables: null``.  While some of the preprocessors mentioned above do
-   work without fx variables (e.g., ``area_statistics`` or ``mask_landsea``
-   with datasets that have regular latitude/longitude grids), using this option
-   is **not** recommended.
-
-Internally, the required ``fx_variables`` are automatically loaded by the
-preprocessor step ``add_fx_variables`` which also checks them against CMOR
-standards and adds them either as ``cell_measure`` (see `CF conventions on cell
-measures
-<https://cfconventions.org/cf-conventions/cf-conventions.html#cell-measures>`_
-and :class:`iris.coords.CellMeasure`) or ``ancillary_variable`` (see `CF
-conventions on ancillary variables
-<https://cfconventions.org/cf-conventions/cf-conventions.html#ancillary-data>`_
-and :class:`iris.coords.AncillaryVariable`) inside the cube data. This ensures
-that the defined preprocessor chain is applied to both ``variables`` and
-``fx_variables``.
-
-Note that when calling steps that require ``fx_variables`` inside diagnostic
-scripts, the variables are expected to contain the required ``cell_measures`` or
-``Fx variables as cell measures or ancillary variables``. If missing, they can be added using the following functions:
-
-.. code-block::
-
-    from esmvalcore.preprocessor import (add_cell_measure, add_ancillary_variable)
-
-    cube_with_area_measure = add_cell_measure(cube, area_cube, 'area')
-
-    cube_with_volume_measure = add_cell_measure(cube, volume_cube, 'volume)
-
-    cube_with_ancillary_sftlf = add_ancillary_variable(cube, sftlf_cube)
-
-    cube_with_ancillary_sftgif = add_ancillary_variable(cube, sftgif_cube)
-
-  Details on the arguments needed for each step can be found in the following sections.
 
 .. _Vertical interpolation:
 
@@ -589,11 +463,6 @@ This function requires a land or sea area fraction `ancillary variable`_.
 This supplementary variable, either ``sftlf`` or ``sftof``, should be attached
 to the main dataset as described in :ref:`supplementary_variables`.
 
-.. deprecated:: 2.8.0
-  The optional ``fx_variables`` argument specifies the fx variables that the
-  user wishes to input to the function.
-  More details on this are given in :ref:`Fx variables as cell measures or ancillary variables`.
-
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
 
@@ -640,12 +509,6 @@ but if it is not available it will compute a mask based on
 This supplementary variable, either ``sftlf`` or ``sftof``, can be attached
 to the main dataset as described in :ref:`supplementary_variables`.
 
-.. deprecated:: 2.8.0
-  The optional ``fx_variables`` argument specifies the fx variables that the
-  user wishes to input to the function.
-  More details on this are given in :ref:`Fx variables as cell measures or ancillary variables`.
-
-
 If the corresponding ancillary variable is not available (which is
 the case for some models and almost all observational datasets), the
 preprocessor attempts to mask the data using Natural Earth mask files (that are
@@ -676,11 +539,6 @@ and requires only one argument: ``mask_out``: either ``landsea`` or ``ice``.
 This function requires a land ice area fraction `ancillary variable`_.
 This supplementary variable ``sftgif`` should be attached to the main dataset as
 described in :ref:`supplementary_variables`.
-
-.. deprecated:: 2.8.0
-  The optional ``fx_variables`` argument specifies the fx variables that the
-  user wishes to input to the function.
-  More details on this are given in :ref:`Fx variables as cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
@@ -1386,7 +1244,7 @@ statistics.
 
 Parameters:
     * operator: operation to apply. Accepted values are 'mean', 'median',
-      'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
+      'std_dev', 'variance', 'min', 'max', 'sum' and 'rms'. Default is 'mean'.
 
     * period: define the granularity of the statistics: get values for the
       full period, for each month, day of year or hour of day.
@@ -1395,6 +1253,12 @@ Parameters:
 
     * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
       Default is '[DJF, MAM, JJA, SON]'
+
+.. note::
+   The 'mean', 'sum' and 'rms' operations over the 'full' period are weighted
+   by the time coordinate, i.e., the length of the time intervals.
+   For 'sum', the units of the resulting cube are multiplied by corresponding
+   time units (e.g., days).
 
 Examples:
     * Monthly climatology:
@@ -1875,28 +1739,26 @@ See also :func:`esmvalcore.preprocessor.meridional_means`.
 ``area_statistics``
 -------------------
 
-This function calculates the average value over a region - weighted by the cell
-areas of the region. This function takes the argument, ``operator``: the name
-of the operation to apply.
+This function calculates statistics over a region.
+It takes one argument, ``operator``, which is the name of the operation to
+apply.
 
 This function can be used to apply several different operations in the
-horizontal plane: mean, standard deviation, median, variance, minimum, maximum and root mean square.
+horizontal plane: mean, sum, standard deviation, median, variance, minimum,
+maximum and root mean square.
+The operations mean, sum and root mean square are area weighted.
+For sums, the units of the resulting cubes are multiplied by m :math:`^2`.
 
-Note that this function is applied over the entire dataset. If only a specific
-region, depth layer or time period is required, then those regions need to be
-removed using other preprocessor operations in advance.
+Note that this function is applied over the entire dataset.
+If only a specific region, depth layer or time period is required, then those
+regions need to be removed using other preprocessor operations in advance.
 
-This function requires a cell area `cell measure`_, unless the coordinates of the
-input data are regular 1D latitude and longitude coordinates so the cell areas
-can be computed.
-The required supplementary variable, either ``areacella`` for atmospheric variables
-or ``areacello`` for ocean variables, can be attached to the main dataset
-as described in :ref:`supplementary_variables`.
-
-.. deprecated:: 2.8.0
-  The optional ``fx_variables`` argument specifies the fx variables that the user
-  wishes to input to the function. More details on this are given in :ref:`Fx
-  variables as cell measures or ancillary variables`.
+This function requires a cell area `cell measure`_, unless the coordinates of
+the input data are regular 1D latitude and longitude coordinates so the cell
+areas can be computed.
+The required supplementary variable, either ``areacella`` for atmospheric
+variables or ``areacello`` for ocean variables, can be attached to the main
+dataset as described in :ref:`supplementary_variables`.
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
 
@@ -1996,12 +1858,6 @@ as described in :ref:`supplementary_variables`.
 
 No depth coordinate is required as this is determined by Iris.
 
-.. deprecated:: 2.8.0
-  The optional ``fx_variables`` argument specifies the fx variables that the
-  user wishes to input to the function.
-  More details on this are given in
-  :ref:`Fx variables as cell measures or ancillary variables`.
-
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 
 
@@ -2023,15 +1879,22 @@ Takes arguments:
    be performed must be one-dimensional, as multidimensional coordinates
    are not supported in this preprocessor.
 
+   The 'mean', 'sum' and 'rms' operations are weighted by the corresponding
+   coordinate bounds.
+   For 'sum', the units of the resulting cube will be multiplied by
+   corresponding coordinate units.
+
 See also :func:`esmvalcore.preprocessor.axis_statistics`.
 
 
 ``depth_integration``
 ---------------------
 
-This function integrates over the depth dimension. This function does a
-weighted sum along the `z`-coordinate, and removes the `z` direction of the
-output cube. This preprocessor takes no arguments.
+This function integrates over the depth dimension.
+This function does a weighted sum along the `z`-coordinate, and removes the `z`
+direction of the output cube.
+This preprocessor takes no arguments.
+The units of the resulting cube are multiplied by the `z`-coordinate units.
 
 See also :func:`esmvalcore.preprocessor.depth_integration`.
 

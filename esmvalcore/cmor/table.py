@@ -11,8 +11,6 @@ import glob
 import json
 import logging
 import os
-import tempfile
-import warnings
 from collections import Counter
 from functools import lru_cache, total_ordering
 from pathlib import Path
@@ -20,7 +18,7 @@ from typing import Optional, Union
 
 import yaml
 
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning, RecipeError
+from esmvalcore.exceptions import RecipeError
 
 logger = logging.getLogger(__name__)
 
@@ -72,18 +70,50 @@ def _get_mips(project: str, short_name: str) -> list[str]:
     return mips
 
 
-def get_var_info(project, mip, short_name):
+def get_var_info(
+    project: str,
+    mip: str,
+    short_name: str,
+) -> VariableInfo | None:
     """Get variable information.
+
+    Note
+    ----
+    If `project=CORDEX` and the `mip` ends with 'hr', it is cropped to 'h'
+    since CORDEX X-hourly tables define the `mip` as ending in 'h' instead of
+    'hr'.
 
     Parameters
     ----------
-    project : str
+    project:
         Dataset's project.
-    mip : str
-        Variable's cmor table.
-    short_name : str
+    mip:
+        Variable's CMOR table, i.e., MIP.
+    short_name:
         Variable's short name.
+
+    Returns
+    -------
+    VariableInfo | None
+        `VariableInfo` object for the requested variable if found, ``None``
+        otherwise.
+
+    Raises
+    ------
+    KeyError
+        No CMOR tables available for `project`.
+
     """
+    if project not in CMOR_TABLES:
+        raise KeyError(
+            f"No CMOR tables available for project '{project}'. The following "
+            f"tables are available: {', '.join(CMOR_TABLES)}."
+        )
+
+    # CORDEX X-hourly tables define the mip as ending in 'h' instead of 'hr'
+    if project == 'CORDEX' and mip.endswith('hr'):
+        mip = mip.replace('hr', 'h')
+
     return CMOR_TABLES[project].get_variable(mip, short_name)
 
 
@@ -94,35 +124,11 @@ def read_cmor_tables(cfg_developer: Optional[Path] = None) -> None:
     ----------
     cfg_developer:
         Path to config-developer.yml file.
-
-        Prior to v2.8.0 `cfg_developer` was an :obj:`dict` with the contents
-        of config-developer.yml. This is deprecated and support will be
-        removed in v2.10.0.
     """
-    if isinstance(cfg_developer, dict):
-        warnings.warn(
-            "Using the `read_cmor_tables` file with a dictionary as argument "
-            "has been deprecated in ESMValCore version 2.8.0 and is "
-            "scheduled for removal in version 2.10.0. "
-            "Please use the path to the config-developer.yml file instead.",
-            ESMValCoreDeprecationWarning,
-        )
-        with tempfile.NamedTemporaryFile(
-            mode='w',
-            encoding='utf-8',
-            delete=False,
-        ) as file:
-            yaml.safe_dump(cfg_developer, file)
-            cfg_file = Path(file.name)
-    else:
-        cfg_file = cfg_developer
-    if cfg_file is None:
-        cfg_file = Path(__file__).parents[1] / 'config-developer.yml'
-    mtime = cfg_file.stat().st_mtime
-    cmor_tables = _read_cmor_tables(cfg_file, mtime)
-    if isinstance(cfg_developer, dict):
-        # clean up the temporary file
-        cfg_file.unlink()
+    if cfg_developer is None:
+        cfg_developer = Path(__file__).parents[1] / 'config-developer.yml'
+    mtime = cfg_developer.stat().st_mtime
+    cmor_tables = _read_cmor_tables(cfg_developer, mtime)
     CMOR_TABLES.clear()
     CMOR_TABLES.update(cmor_tables)
 
@@ -219,6 +225,7 @@ class InfoBase():
         If False, will look for a variable in other tables if it can not be
         found in the requested one
     """
+
     def __init__(self, default, alt_names, strict):
         if alt_names is None:
             alt_names = ""
@@ -243,28 +250,35 @@ class InfoBase():
         """
         return self.tables.get(table)
 
-    def get_variable(self, table_name, short_name, derived=False):
-        """Search and return the variable info.
+    def get_variable(
+        self,
+        table_name: str,
+        short_name: str,
+        derived: Optional[bool] = False,
+    ) -> VariableInfo | None:
+        """Search and return the variable information.
 
         Parameters
         ----------
-        table_name: str
-            Table name
-        short_name: str
-            Variable's short name
-        derived: bool, optional
-            Variable is derived. Info retrieval for derived variables always
-            look on the default tables if variable is not find in the
-            requested table
+        table_name:
+            Table name, i.e., the variable's MIP.
+        short_name:
+            Variable's short name.
+        derived:
+            Variable is derived. Information retrieval for derived variables
+            always looks in the default tables (usually, the custom tables) if
+            variable is not found in the requested table.
 
         Returns
         -------
-        VariableInfo
-            Return the VariableInfo object for the requested variable if
-            found, returns None if not
+        VariableInfo | None
+            `VariableInfo` object for the requested variable if found, ``None``
+            otherwise.
+
         """
         alt_names_list = self._get_alt_names_list(short_name)
 
+        # First, look in requested table
         table = self.get_table(table_name)
         if table:
             for alt_names in alt_names_list:
@@ -273,10 +287,19 @@ class InfoBase():
                 except KeyError:
                     pass
 
+        # If that didn't work, look in all tables (i.e., other MIPs) if
+        # cmor_strict=False
         var_info = self._look_in_all_tables(alt_names_list)
+
+        # If that didn' work either, look in default table if cmor_strict=False
+        # or derived=True
         if not var_info:
             var_info = self._look_in_default(derived, alt_names_list,
                                              table_name)
+
+        # If necessary, adapt frequency of variable (set it to the one from the
+        # requested MIP). E.g., if the user asked for table `Amon`, but the
+        # variable has been found in `day`, use frequency `mon`.
         if var_info:
             var_info = var_info.copy()
             var_info = self._update_frequency_from_mip(table_name, var_info)
@@ -284,6 +307,7 @@ class InfoBase():
         return var_info
 
     def _look_in_default(self, derived, alt_names_list, table_name):
+        """Look for variable in default table."""
         var_info = None
         if (not self.strict or derived):
             for alt_names in alt_names_list:
@@ -293,6 +317,7 @@ class InfoBase():
         return var_info
 
     def _look_in_all_tables(self, alt_names_list):
+        """Look for variable in all tables."""
         var_info = None
         if not self.strict:
             for alt_names in alt_names_list:
@@ -302,6 +327,7 @@ class InfoBase():
         return var_info
 
     def _get_alt_names_list(self, short_name):
+        """Get list of alternative variable names."""
         alt_names_list = [short_name]
         for alt_names in self.alt_names:
             if short_name in alt_names:
@@ -312,12 +338,14 @@ class InfoBase():
         return alt_names_list
 
     def _update_frequency_from_mip(self, table_name, var_info):
+        """Update frequency information of var_info from table."""
         mip_info = self.get_table(table_name)
         if mip_info:
             var_info.frequency = mip_info.frequency
         return var_info
 
     def _look_all_tables(self, alt_names):
+        """Look for variable in all tables."""
         for table_vars in sorted(self.tables.values()):
             if alt_names in table_vars:
                 return table_vars[alt_names]
@@ -341,6 +369,7 @@ class CMIP6Info(InfoBase):
         If False, will look for a variable in other tables if it can not be
         found in the requested one
     """
+
     def __init__(self,
                  cmor_tables_path,
                  default=None,
@@ -497,6 +526,7 @@ class CMIP6Info(InfoBase):
 @total_ordering
 class TableInfo(dict):
     """Container class for storing a CMOR table."""
+
     def __init__(self, *args, **kwargs):
         """Create a new TableInfo object for storing VariableInfo objects."""
         super(TableInfo, self).__init__(*args, **kwargs)
@@ -522,6 +552,7 @@ class JsonInfo(object):
 
     Provides common utility methods to read json variables
     """
+
     def __init__(self):
         self._json_data = {}
 
@@ -562,6 +593,7 @@ class JsonInfo(object):
 
 class VariableInfo(JsonInfo):
     """Class to read and store variable information."""
+
     def __init__(self, table_type, short_name):
         """Class to read and store variable information.
 
@@ -673,6 +705,7 @@ class VariableInfo(JsonInfo):
 
 class CoordinateInfo(JsonInfo):
     """Class to read and store coordinate information."""
+
     def __init__(self, name):
         """Class to read and store coordinate information.
 
@@ -760,6 +793,7 @@ class CMIP5Info(InfoBase):
         If False, will look for a variable in other tables if it can not be
         found in the requested one
     """
+
     def __init__(self,
                  cmor_tables_path,
                  default=None,
@@ -918,6 +952,7 @@ class CMIP3Info(CMIP5Info):
         If False, will look for a variable in other tables if it can not be
         found in the requested one
     """
+
     def _read_table_file(self, table_file, table=None):
         for dim in ('zlevel', ):
             coord = CoordinateInfo(dim)

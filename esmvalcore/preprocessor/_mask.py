@@ -400,7 +400,8 @@ def mask_above_threshold(cube, threshold):
     iris.cube.Cube
         thresholded cube.
     """
-    cube.data = np.ma.masked_where(cube.data > threshold, cube.data)
+    cube.data = (da.ma.masked_where(cube.core_data() > threshold,
+                                    cube.core_data()))
     return cube
 
 
@@ -422,7 +423,8 @@ def mask_below_threshold(cube, threshold):
     iris.cube.Cube
         thresholded cube.
     """
-    cube.data = np.ma.masked_where(cube.data < threshold, cube.data)
+    cube.data = (da.ma.masked_where(cube.core_data() < threshold,
+                                    cube.core_data()))
     return cube
 
 
@@ -446,7 +448,7 @@ def mask_inside_range(cube, minimum, maximum):
     iris.cube.Cube
         thresholded cube.
     """
-    cube.data = np.ma.masked_inside(cube.data, minimum, maximum)
+    cube.data = da.ma.masked_inside(cube.core_data(), minimum, maximum)
     return cube
 
 
@@ -470,7 +472,7 @@ def mask_outside_range(cube, minimum, maximum):
     iris.cube.Cube
         thresholded cube.
     """
-    cube.data = np.ma.masked_outside(cube.data, minimum, maximum)
+    cube.data = da.ma.masked_outside(cube.core_data(), minimum, maximum)
     return cube
 
 

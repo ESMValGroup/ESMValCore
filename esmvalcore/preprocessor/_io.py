@@ -1,10 +1,12 @@
 """Functions for loading and saving cubes."""
+from __future__ import annotations
+
 import copy
 import logging
 import os
-import shutil
-import warnings
 from itertools import groupby
+from pathlib import Path
+from typing import Optional
 from warnings import catch_warnings, filterwarnings
 
 import iris
@@ -14,9 +16,8 @@ import isodate
 import numpy as np
 import yaml
 from cf_units import suppress_errors
+from iris.cube import CubeList
 
-from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import merge_cube_attributes
 
 from .._task import write_ncl_settings
@@ -93,7 +94,7 @@ def _get_attr_from_field_coord(ncfield, coord_name, attr):
     return None
 
 
-def concatenate_callback(raw_cube, field, _):
+def _load_callback(raw_cube, field, _):
     """Use this callback to fix anything Iris tries to break."""
     # Remove attributes that cause issues with merging and concatenation
     _delete_attributes(raw_cube,
@@ -115,19 +116,17 @@ def _delete_attributes(iris_object, atts):
             del iris_object.attributes[att]
 
 
-def load(file, callback=None, ignore_warnings=None):
-    """Load iris cubes from files.
+def load(
+    file: str | Path,
+    ignore_warnings: Optional[list[dict]] = None,
+) -> CubeList:
+    """Load iris cubes from string or Path objects.
 
     Parameters
     ----------
-    file: str
-        File to be loaded.
-    callback: callable or None, optional (default: None)
-        Callback function passed to :func:`iris.load_raw`.
-
-        .. deprecated:: 2.8.0
-            This argument will be removed in 2.10.0.
-    ignore_warnings: list of dict or None, optional (default: None)
+    file:
+        File to be loaded. Could be string or POSIX Path object.
+    ignore_warnings:
         Keyword arguments passed to :func:`warnings.filterwarnings` used to
         ignore warnings issued by :func:`iris.load_raw`. Each list element
         corresponds to one call to :func:`warnings.filterwarnings`.
@@ -142,15 +141,9 @@ def load(file, callback=None, ignore_warnings=None):
     ValueError
         Cubes are empty.
     """
-    if not (callback is None or callback == 'default'):
-        msg = ("The argument `callback` has been deprecated in "
-               "ESMValCore version 2.8.0 and is scheduled for removal in "
-               "version 2.10.0.")
-        warnings.warn(msg, ESMValCoreDeprecationWarning)
-    if callback == 'default':
-        callback = concatenate_callback
-    file = str(file)
+    file = Path(file)
     logger.debug("Loading:\n%s", file)
+
     if ignore_warnings is None:
         ignore_warnings = []
 
@@ -179,12 +172,15 @@ def load(file, callback=None, ignore_warnings=None):
         # warnings.filterwarnings
         # (see https://github.com/SciTools/cf-units/issues/240)
         with suppress_errors():
-            raw_cubes = iris.load_raw(file, callback=callback)
+            raw_cubes = iris.load_raw(file, callback=_load_callback)
     logger.debug("Done with loading %s", file)
+
     if not raw_cubes:
         raise ValueError(f'Can not load cubes from {file}')
+
     for cube in raw_cubes:
-        cube.attributes['source_file'] = file
+        cube.attributes['source_file'] = str(file)
+
     return raw_cubes
 
 
@@ -468,46 +464,6 @@ def _get_debug_filename(filename, step):
         num = 0
     filename = os.path.join(dirname, '{:02}_{}.nc'.format(num, step))
     return filename
-
-
-def cleanup(files, remove=None):
-    """Clean up after running the preprocessor.
-
-    Warning
-    -------
-    .. deprecated:: 2.8.0
-        This function is no longer used and has been deprecated since
-        ESMValCore version 2.8.0. It is scheduled for removal in version
-        2.10.0.
-
-    Parameters
-    ----------
-    files: list of Path
-        Preprocessor output files (will not be removed if not in `removed`).
-    remove: list of Path or None, optional (default: None)
-        Files or directories to remove.
-
-    Returns
-    -------
-    list of Path
-        Preprocessor output files.
-    """
-    deprecation_msg = (
-        "The preprocessor function `cleanup` has been deprecated in "
-        "ESMValCore version 2.8.0 and is scheduled for removal in version "
-        "2.10.0.")
-    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
-
-    if remove is None:
-        remove = []
-
-    for path in remove:
-        if os.path.isdir(path):
-            shutil.rmtree(path)
-        elif os.path.isfile(path):
-            os.remove(path)
-
-    return files
 
 
 def _sort_products(products):

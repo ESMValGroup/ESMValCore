@@ -5,13 +5,13 @@ from iris.cube import Cube
 
 from esmvalcore.cmor._fixes.cmip6.giss_e2_1_g import Cl, Cli, Clw
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
-from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix, GenericFix
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'GISS-E2-1-G', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    assert fix == [Cl(None), GenericFix(None)]
 
 
 def test_cl_fix():
@@ -22,7 +22,7 @@ def test_cl_fix():
 def test_get_cli_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'GISS-E2-1-G', 'Amon', 'cli')
-    assert fix == [Cli(None)]
+    assert fix == [Cli(None), GenericFix(None)]
 
 
 def test_cli_fix():
@@ -33,7 +33,7 @@ def test_cli_fix():
 def test_get_clw_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'GISS-E2-1-G', 'Amon', 'clw')
-    assert fix == [Clw(None)]
+    assert fix == [Clw(None), GenericFix(None)]
 
 
 def test_clw_fix():
@@ -42,7 +42,7 @@ def test_clw_fix():
 
 
 def test_tos_fix():
-    fix, = Fix.get_fixes('CMIP6', 'GISS-E2-1-G', 'Omon', 'tos')
+    fix = Fix.get_fixes('CMIP6', 'GISS-E2-1-G', 'Omon', 'tos')[0]
     cube = Cube(
         da.array([274], dtype=np.float32),
         var_name='tos',
