@@ -42,7 +42,7 @@ def create_file(filename):
     if not os.path.exists(dirname):
         os.makedirs(dirname)
 
-    with open(filename, 'a'):
+    with open(filename, 'a', encoding='utf-8'):
         pass
 
 
