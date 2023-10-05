@@ -846,7 +846,7 @@ class CMIP5Info(InfoBase):
         self._read_table_file(table_file, table)
 
     def _read_table_file(self, table_file, table=None):
-        with open(table_file) as self._current_table:
+        with open(table_file, 'r', encoding='utf-8') as self._current_table:
             self._read_line()
             while True:
                 key, value = self._last_line_read
@@ -1057,7 +1057,7 @@ class CustomInfo(CMIP5Info):
         return self.tables['custom'].get(short_name, None)
 
     def _read_table_file(self, table_file, table=None):
-        with open(table_file) as self._current_table:
+        with open(table_file, 'r', encoding='utf-8') as self._current_table:
             self._read_line()
             while True:
                 key, value = self._last_line_read
