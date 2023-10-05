@@ -168,7 +168,7 @@ def select_by_time(files, timerange):
     for file in files:
         start_date, end_date = _parse_period(timerange)
         try:
-            start, end = _get_start_end_date(file.name)
+            start, end = _get_start_end_date(file)
         except ValueError:
             # If start and end year cannot be read from the filename
             # just select everything.
