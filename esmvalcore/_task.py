@@ -301,6 +301,7 @@ class ResumeTask(BaseTask):
 
         # Reconstruct output
         prev_metadata_file = prev_preproc_dir / 'metadata.yml'
+        # don't add encoding; binary mode doesn't accept it
         with prev_metadata_file.open('rb') as file:
             prev_metadata = yaml.safe_load(file)
 
@@ -609,7 +610,7 @@ class DiagnosticTask(BaseTask):
 
         logger.debug("Collecting provenance from %s", provenance_file)
         start = time.time()
-        table = yaml.safe_load(provenance_file.read_text())
+        table = yaml.safe_load(provenance_file.read_text(encoding='utf-8'))
 
         ignore = (
             'auxiliary_data_dir',
