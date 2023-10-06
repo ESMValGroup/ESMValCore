@@ -127,7 +127,8 @@ def _save_citation_info_txt(product_name, info_urls, other_info):
                      for t in sorted(other_info))
 
     if lines:
-        with open(f'{product_name}_data_citation_info.txt', 'w') as file:
+        with open(f'{product_name}_data_citation_info.txt',
+                  'w', encoding='utf-8') as file:
             file.write('\n'.join(lines) + '\n')
 
 
