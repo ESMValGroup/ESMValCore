@@ -29,7 +29,6 @@ from ._detrend import detrend
 from ._io import (
     _get_debug_filename,
     _sort_products,
-    cleanup,
     concatenate,
     load,
     save,
@@ -188,7 +187,6 @@ __all__ = [
     'remove_supplementary_variables',
     # Save to file
     'save',
-    'cleanup',
 ]
 
 TIME_PREPROCESSORS = [
@@ -491,11 +489,6 @@ class PreprocessorFile(TrackedFile):
                    'save',
                    input_files=self._input_files,
                    **self.settings['save'])
-        if 'cleanup' in self.settings:
-            preprocess([],
-                       'cleanup',
-                       input_files=self._input_files,
-                       **self.settings['cleanup'])
 
     def close(self):
         """Close the file."""
