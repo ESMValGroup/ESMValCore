@@ -43,6 +43,17 @@ FACETS = {
         'product': 'product',
         'short_name': 'variable',
     },
+    'CORDEX-Reklies': {
+        'dataset': 'rcm_name',
+        'driver': 'driving_model',
+        'domain': 'domain',
+        'ensemble': 'ensemble',
+        'exp': 'experiment',
+        'frequency': 'time_frequency',
+        'institute': 'institute',
+        'product': 'product',
+        'short_name': 'variable',
+    },
     'obs4MIPs': {
         'dataset': 'source_id',
         'frequency': 'time_frequency',
@@ -73,6 +84,7 @@ DATASET_MAP = {
     },
     'CMIP6': {},
     'CORDEX': {},
+    'CORDEX-Reklies': {},
     'obs4MIPs': {},
 }
 """Cache for the mapping between recipe/filesystem and ESGF dataset names."""
