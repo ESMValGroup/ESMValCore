@@ -119,7 +119,7 @@ def resource_usage_logger(pid, filename, interval=1, children=True):
         """Write resource usage to file."""
         process = psutil.Process(pid)
         start_time = time.time()
-        with open(filename, 'w') as file:
+        with open(filename, 'w', encoding='utf-8') as file:
             for msg, max_mem in _get_resource_usage(process, start_time,
                                                     children):
                 file.write(msg)
@@ -219,7 +219,7 @@ def write_ncl_settings(settings, filename, mode='wt'):
                          'end if\n'.format(var_name=var_name))
             lines.append(_py2ncl(value, var_name))
 
-    with open(filename, mode) as file:
+    with open(filename, mode, encoding='utf-8') as file:
         file.write('\n'.join(lines))
         file.write('\n')
 
@@ -324,7 +324,7 @@ class ResumeTask(BaseTask):
 
         # Write metadata to file
         self._metadata_file.parent.mkdir(parents=True)
-        with self._metadata_file.open('w') as file:
+        with self._metadata_file.open('w', encoding='utf-8') as file:
             yaml.safe_dump(metadata, file)
 
         return [str(self._metadata_file)]
