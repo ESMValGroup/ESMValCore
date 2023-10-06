@@ -415,7 +415,7 @@ class CMIP6Info(InfoBase):
             'CMOR tables not found in {}'.format(cmor_tables_path))
 
     def _load_table(self, json_file):
-        with open(json_file) as inf:
+        with open(json_file, encoding='utf-8') as inf:
             raw_data = json.loads(inf.read())
             if not self._is_table(raw_data):
                 return
@@ -465,7 +465,7 @@ class CMIP6Info(InfoBase):
         self.coords = {}
         for json_file in glob.glob(
                 os.path.join(self._cmor_folder, '*coordinate*.json')):
-            with open(json_file) as inf:
+            with open(json_file, encoding='utf-8') as inf:
                 table_data = json.loads(inf.read())
                 for coord_name in table_data['axis_entry'].keys():
                     coord = CoordinateInfo(coord_name)
@@ -477,7 +477,7 @@ class CMIP6Info(InfoBase):
         self.institutes = {}
         for json_file in glob.glob(os.path.join(self._cmor_folder,
                                                 '*_CV.json')):
-            with open(json_file) as inf:
+            with open(json_file, encoding='utf-8') as inf:
                 table_data = json.loads(inf.read())
                 try:
                     exps = table_data['CV']['experiment_id']
