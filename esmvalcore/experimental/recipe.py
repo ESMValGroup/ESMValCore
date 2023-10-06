@@ -70,9 +70,8 @@ class Recipe():
     def data(self) -> dict:
         """Return dictionary representation of the recipe."""
         if self._data is None:
-            self._data = yaml.safe_load(
-                open(self.path, 'r', encoding='utf-8')
-            )
+            with open(self.path, 'r', encoding='utf-8') as yaml_file:
+                self._data = yaml.safe_load(yaml_file)
         return self._data
 
     def _load(self, session: Session) -> RecipeEngine:
