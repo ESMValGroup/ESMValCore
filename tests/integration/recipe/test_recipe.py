@@ -1251,7 +1251,7 @@ def simulate_diagnostic_run(diagnostic_task):
     plot_file = create_test_image('test', cfg)
     provenance = os.path.join(cfg['run_dir'], 'diagnostic_provenance.yml')
     os.makedirs(cfg['run_dir'])
-    with open(provenance, 'w') as file:
+    with open(provenance, 'w', encoding='utf-8') as file:
         yaml.safe_dump({diagnostic_file: record, plot_file: record}, file)
 
     diagnostic_task._collect_provenance()
