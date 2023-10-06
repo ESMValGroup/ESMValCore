@@ -62,7 +62,8 @@ jobs:
       - run: flake8
       - run: |
           locale
-          sudo update-locale LC_ALL=C
+          echo "export LC_ALL=C" >> $GITHUB_ENV
+      - run: |
           locale
           pytest -n 2 -m "not installation" 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - name: Upload artifacts
