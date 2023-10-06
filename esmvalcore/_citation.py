@@ -101,7 +101,8 @@ def _save_citation_bibtex(product_name, tags, json_urls):
             entries.add(cmip_citation)
     citation_entries.extend(sorted(entries))
 
-    with open(f'{product_name}_citation.bibtex', 'w') as file:
+    with open(f'{product_name}_citation.bibtex',
+              'w', encoding='utf-8') as file:
         file.write('\n'.join(citation_entries))
 
 

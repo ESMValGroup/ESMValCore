@@ -94,7 +94,7 @@ def atomic_write(filename):
     filename.parent.mkdir(parents=True, exist_ok=True)
     with NamedTemporaryFile(prefix=f"{filename}.") as file:
         tmp_file = file.name
-    with open(tmp_file, 'w') as file:
+    with open(tmp_file, 'w', encoding='utf-8') as file:
         yield file
     shutil.move(tmp_file, filename)
 
