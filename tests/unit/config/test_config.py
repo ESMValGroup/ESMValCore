@@ -237,7 +237,7 @@ def test_project_obs4mips_case_correction(tmp_path, monkeypatch, mocker):
     cfg_dev = {
         'obs4mips': project_cfg,
     }
-    with cfg_file.open('w') as file:
+    with cfg_file.open('w', encoding='utf-8') as file:
         yaml.safe_dump(cfg_dev, file)
 
     _config.load_config_developer(cfg_file)
@@ -251,7 +251,7 @@ def test_load_config_developer_custom(tmp_path, monkeypatch, mocker):
     mocker.patch.object(_config, 'read_cmor_tables', autospec=True)
     cfg_file = tmp_path / 'config-developer.yml'
     cfg_dev = {'custom': {'cmor_path': '/path/to/tables'}}
-    with cfg_file.open('w') as file:
+    with cfg_file.open('w', encoding='utf-8') as file:
         yaml.safe_dump(cfg_dev, file)
 
     _config.load_config_developer(cfg_file)
