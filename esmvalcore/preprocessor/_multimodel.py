@@ -595,19 +595,25 @@ def _multicube_statistics(
     # Calculate statistics
     statistics_cubes = {}
     lazy_input = any(cube.has_lazy_data() for cube in cubes)
-    for statistic in statistics:
-        stat_id = _get_stat_identifier(statistic)
-        logger.debug('Multicube statistics: computing: %s', stat_id)
-
-        (operator, kwargs) = _get_operator_and_kwargs(statistic)
-        (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
-        if lazy_input and agg.lazy_func is not None:
-            result_cube = _compute(cubes, operator=agg, **agg_kwargs)
-        else:
-            result_cube = _compute_eager(cubes, operator=agg, **agg_kwargs)
+    for stat in statistics:
+        (stat_id, result_cube) = _compute_statistic(cubes, lazy_input, stat)
         statistics_cubes[stat_id] = result_cube
 
     return statistics_cubes
+
+
+def _compute_statistic(cubes, lazy_input, statistic):
+    """Compute a single statistic."""
+    stat_id = _get_stat_identifier(statistic)
+    logger.debug('Multicube statistics: computing: %s', stat_id)
+
+    (operator, kwargs) = _get_operator_and_kwargs(statistic)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **kwargs)
+    if lazy_input and agg.lazy_func is not None:
+        result_cube = _compute(cubes, operator=agg, **agg_kwargs)
+    else:
+        result_cube = _compute_eager(cubes, operator=agg, **agg_kwargs)
+    return (stat_id, result_cube)
 
 
 def _multiproduct_statistics(
