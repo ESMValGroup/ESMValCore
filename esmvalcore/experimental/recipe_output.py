@@ -225,11 +225,11 @@ class RecipeOutput(Mapping):
 
     def read_main_log(self) -> str:
         """Read log file."""
-        return self.session.main_log.read_text()
+        return self.session.main_log.read_text(encoding='utf-8')
 
     def read_main_log_debug(self) -> str:
         """Read debug log file."""
-        return self.session.main_log_debug.read_text()
+        return self.session.main_log_debug.read_text(encoding='utf-8')
 
 
 class OutputFile():

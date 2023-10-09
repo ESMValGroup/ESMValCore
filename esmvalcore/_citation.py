@@ -198,7 +198,7 @@ def _collect_bibtex_citation(tag):
     """Collect information from bibtex files."""
     bibtex_file = DIAGNOSTICS.references / f'{tag}.bibtex'
     if bibtex_file.is_file():
-        entry = bibtex_file.read_text()
+        entry = bibtex_file.read_text(encoding='utf-8')
     else:
         entry = ''
         logger.warning(

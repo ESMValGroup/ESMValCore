@@ -301,8 +301,7 @@ class ResumeTask(BaseTask):
 
         # Reconstruct output
         prev_metadata_file = prev_preproc_dir / 'metadata.yml'
-        # don't add encoding; binary mode doesn't accept it
-        with prev_metadata_file.open('rb') as file:
+        with prev_metadata_file.open('r', encoding='utf-8') as file:
             prev_metadata = yaml.safe_load(file)
 
         products = set()
