@@ -168,7 +168,7 @@ class RecipeOutput(Mapping):
 
     @classmethod
     def _add_to_filters(cls, filters, attributes):
-        """Adds valid values to the HTML output filters."""
+        """Add valid values to the HTML output filters."""
         for attr in RecipeOutput.FILTER_ATTRS:
             if attr not in attributes:
                 continue
@@ -183,7 +183,7 @@ class RecipeOutput(Mapping):
 
     @classmethod
     def _sort_filters(cls, filters):
-        """Sorts the HTML output filters."""
+        """Sort the HTML output filters."""
         for _filter, _attrs in filters.items():
             filters[_filter] = sorted(_attrs)
         return filters
