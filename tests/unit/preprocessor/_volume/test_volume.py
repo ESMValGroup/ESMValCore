@@ -116,8 +116,8 @@ class Test(tests.Test):
         expected = np.average(data, axis=1, weights=weights)
         self.assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-3')
-        self.assertFalse(self.grid_4d.coords('axis_statistics_weights'))
-        self.assertFalse(result.coords('axis_statistics_weights'))
+        self.assertFalse(self.grid_4d.coords('_axis_statistics_weights_'))
+        self.assertFalse(result.coords('_axis_statistics_weights_'))
 
     def test_axis_statistics_median(self):
         """Test axis statistics in with operator median."""
@@ -290,20 +290,31 @@ class Test(tests.Test):
                                           units='m3',
                                           measure='volume')
         self.grid_4d.add_cell_measure(measure, range(0, measure.ndim))
+
         result = extract_volume(self.grid_4d, 0., 10.)
+
         expected = np.ma.ones((2, 2, 2, 2))
         self.assert_array_equal(result.data, expected)
+
         result_mean = volume_statistics(result, 'mean')
+
         expected_mean = np.ma.array([1., 1.], mask=False)
         self.assert_array_equal(result_mean.data, expected_mean)
         self.assertEqual(result_mean.units, 'kg m-3')
+        self.assertTrue(self.grid_4d.cell_measures('ocean_volume'))
+        self.assertFalse(result_mean.cell_measures('ocean_volume'))
 
     def test_volume_statistics(self):
         """Test to take the volume weighted average of a (2,3,2,2) cube."""
+        self.assertFalse(self.grid_4d.cell_measures('ocean_volume'))
+
         result = volume_statistics(self.grid_4d, 'mean')
+
         expected = np.ma.array([1., 1.], mask=False)
         self.assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-3')
+        self.assertFalse(self.grid_4d.cell_measures('ocean_volume'))
+        self.assertFalse(result.cell_measures('ocean_volume'))
 
     def test_volume_statistics_cell_measure(self):
         """Test to take the volume weighted average of a (2,3,2,2) cube.

@@ -211,6 +211,8 @@ def volume_statistics(
         Collapsed cube.
 
     """
+    has_cell_measure = bool(cube.cell_measures('ocean_volume'))
+
     # TODO: Test sigma coordinates.
     # TODO: Add other operations.
     if operator != 'mean':
@@ -230,6 +232,10 @@ def volume_statistics(
         agg,
         **agg_kwargs,
     )
+
+    # Make sure input cube has not been modified
+    if not has_cell_measure and cube.cell_measures('ocean_volume'):
+        cube.remove_cell_measure('ocean_volume')
 
     return result
 
@@ -295,7 +301,7 @@ def axis_statistics(
     agg_kwargs = update_weights_kwargs(
         agg,
         agg_kwargs,
-        'axis_statistics_weights',
+        '_axis_statistics_weights_',
         cube,
         _add_axis_stats_weights_coord,
         coord=coord,
@@ -307,7 +313,7 @@ def axis_statistics(
             'ignore',
             message=(
                 "Cannot check if coordinate is contiguous: Invalid "
-                "operation for 'axis_statistics_weights'"
+                "operation for '_axis_statistics_weights_'"
             ),
             category=UserWarning,
             module='iris',
@@ -315,10 +321,10 @@ def axis_statistics(
         result = cube.collapsed(coord, agg, **agg_kwargs)
 
     # Make sure input and output cubes do not have auxiliary coordinate
-    if cube.coords('axis_statistics_weights'):
-        cube.remove_coord('axis_statistics_weights')
-    if result.coords('axis_statistics_weights'):
-        result.remove_coord('axis_statistics_weights')
+    if cube.coords('_axis_statistics_weights_'):
+        cube.remove_coord('_axis_statistics_weights_')
+    if result.coords('_axis_statistics_weights_'):
+        result.remove_coord('_axis_statistics_weights_')
 
     return result
 
@@ -327,7 +333,7 @@ def _add_axis_stats_weights_coord(cube, coord, coord_dims):
     """Add weights for axis_statistics to cube (in-place)."""
     weights_coord = AuxCoord(
         np.abs(coord.core_bounds()[..., 1] - coord.core_bounds()[..., 0]),
-        long_name='axis_statistics_weights',
+        long_name='_axis_statistics_weights_',
         units=coord.units,
     )
     cube.add_aux_coord(weights_coord, coord_dims)

@@ -94,10 +94,15 @@ class Test(tests.Test):
 
     def test_area_statistics_mean(self):
         """Test for area average of a 2D field."""
+        self.assertFalse(self.grid.cell_measures('cell_area'))
+
         result = area_statistics(self.grid, 'mean')
+
         expected = np.ma.array([1., 1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-2 s-1')
+        self.assertFalse(self.grid.cell_measures('cell_area'))
+        self.assertFalse(result.cell_measures('cell_area'))
 
     def test_area_statistics_cell_measure_mean(self):
         """Test for area average of a 2D field.
@@ -109,6 +114,8 @@ class Test(tests.Test):
         expected = np.ma.array([1., 1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-2 s-1')
+        self.assertTrue(self.grid.cell_measures('cell_area'))
+        self.assertFalse(result.cell_measures('cell_area'))
 
     def test_area_statistics_min(self):
         """Test for area average of a 2D field."""

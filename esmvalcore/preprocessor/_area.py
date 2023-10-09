@@ -388,6 +388,7 @@ def area_statistics(
 
     """
     original_dtype = cube.dtype
+    has_cell_measure = bool(cube.cell_measures('cell_area'))
 
     # Get aggregator and correct kwargs (incl. weights)
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
@@ -406,6 +407,10 @@ def area_statistics(
             new_dtype,
         )
         result.data = result.core_data().astype(original_dtype)
+
+    # Make sure input cube has not been modified
+    if not has_cell_measure and cube.cell_measures('cell_area'):
+        cube.remove_cell_measure('cell_area')
 
     return result
 
