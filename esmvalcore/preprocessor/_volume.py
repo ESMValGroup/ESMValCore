@@ -314,6 +314,9 @@ def axis_statistics(
         )
         result = cube.collapsed(coord, agg, **agg_kwargs)
 
+    # Make sure input and output cubes do not have auxiliary coordinate
+    if cube.coords('axis_statistics_weights'):
+        cube.remove_coord('axis_statistics_weights')
     if result.coords('axis_statistics_weights'):
         result.remove_coord('axis_statistics_weights')
 
