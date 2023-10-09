@@ -150,7 +150,7 @@ def _read_cmor_tables(cfg_file: Path, mtime: float) -> dict[str, CMORTable]:
         cfg_developer = yaml.safe_load(file)
     cwd = os.path.dirname(os.path.realpath(__file__))
     var_alt_names_file = os.path.join(cwd, 'variable_alt_names.yml')
-    with open(var_alt_names_file, 'r') as yfile:
+    with open(var_alt_names_file, 'r', encoding='utf-8') as yfile:
         alt_names = yaml.safe_load(yfile)
 
     cmor_tables: dict[str, CMORTable] = {}
@@ -415,7 +415,7 @@ class CMIP6Info(InfoBase):
             'CMOR tables not found in {}'.format(cmor_tables_path))
 
     def _load_table(self, json_file):
-        with open(json_file) as inf:
+        with open(json_file, encoding='utf-8') as inf:
             raw_data = json.loads(inf.read())
             if not self._is_table(raw_data):
                 return
@@ -465,7 +465,7 @@ class CMIP6Info(InfoBase):
         self.coords = {}
         for json_file in glob.glob(
                 os.path.join(self._cmor_folder, '*coordinate*.json')):
-            with open(json_file) as inf:
+            with open(json_file, encoding='utf-8') as inf:
                 table_data = json.loads(inf.read())
                 for coord_name in table_data['axis_entry'].keys():
                     coord = CoordinateInfo(coord_name)
@@ -477,7 +477,7 @@ class CMIP6Info(InfoBase):
         self.institutes = {}
         for json_file in glob.glob(os.path.join(self._cmor_folder,
                                                 '*_CV.json')):
-            with open(json_file) as inf:
+            with open(json_file, encoding='utf-8') as inf:
                 table_data = json.loads(inf.read())
                 try:
                     exps = table_data['CV']['experiment_id']
@@ -846,7 +846,7 @@ class CMIP5Info(InfoBase):
         self._read_table_file(table_file, table)
 
     def _read_table_file(self, table_file, table=None):
-        with open(table_file) as self._current_table:
+        with open(table_file, 'r', encoding='utf-8') as self._current_table:
             self._read_line()
             while True:
                 key, value = self._last_line_read
@@ -1057,7 +1057,7 @@ class CustomInfo(CMIP5Info):
         return self.tables['custom'].get(short_name, None)
 
     def _read_table_file(self, table_file, table=None):
-        with open(table_file) as self._current_table:
+        with open(table_file, 'r', encoding='utf-8') as self._current_table:
             self._read_line()
             while True:
                 key, value = self._last_line_read

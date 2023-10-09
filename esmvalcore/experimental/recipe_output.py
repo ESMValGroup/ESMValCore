@@ -200,7 +200,7 @@ class RecipeOutput(Mapping):
         template = get_template('recipe_output_page.j2')
         html_dump = self.render(template=template)
 
-        with open(filename, 'w') as file:
+        with open(filename, 'w', encoding='utf-8') as file:
             file.write(html_dump)
 
         logger.info("Wrote recipe output to:\nfile://%s", filename)
@@ -225,11 +225,11 @@ class RecipeOutput(Mapping):
 
     def read_main_log(self) -> str:
         """Read log file."""
-        return self.session.main_log.read_text()
+        return self.session.main_log.read_text(encoding='utf-8')
 
     def read_main_log_debug(self) -> str:
         """Read debug log file."""
-        return self.session.main_log_debug.read_text()
+        return self.session.main_log_debug.read_text(encoding='utf-8')
 
 
 class OutputFile():

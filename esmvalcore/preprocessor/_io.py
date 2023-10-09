@@ -495,7 +495,7 @@ def write_metadata(products, write_ncl=False):
 
         output_filename = os.path.join(output_dir, 'metadata.yml')
         output_files.append(output_filename)
-        with open(output_filename, 'w') as file:
+        with open(output_filename, 'w', encoding='utf-8') as file:
             yaml.safe_dump(metadata, file)
         if write_ncl:
             output_files.append(_write_ncl_metadata(output_dir, metadata))

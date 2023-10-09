@@ -110,7 +110,7 @@ def read_config_file():
         if mode & stat.S_IRWXG or mode & stat.S_IRWXO:
             logger.warning("Correcting unsafe permissions on %s", CONFIG_FILE)
             os.chmod(CONFIG_FILE, stat.S_IRUSR | stat.S_IWUSR)
-        with CONFIG_FILE.open() as file:
+        with CONFIG_FILE.open(encoding='utf-8') as file:
             cfg = yaml.safe_load(file)
     else:
         logger.info(

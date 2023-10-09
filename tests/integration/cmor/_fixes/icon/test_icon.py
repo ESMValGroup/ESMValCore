@@ -2066,7 +2066,7 @@ def test_get_path_from_facet(path, description, output, tmp_path):
 
     # Create empty dummy file
     output = output.format(tmp_path=tmp_path)
-    with open(output, 'w'):
+    with open(output, 'w', encoding='utf-8'):
         pass
 
     out_path = fix._get_path_from_facet('test_path', description=description)

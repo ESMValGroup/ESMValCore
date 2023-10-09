@@ -119,7 +119,7 @@ def resource_usage_logger(pid, filename, interval=1, children=True):
         """Write resource usage to file."""
         process = psutil.Process(pid)
         start_time = time.time()
-        with open(filename, 'w') as file:
+        with open(filename, 'w', encoding='utf-8') as file:
             for msg, max_mem in _get_resource_usage(process, start_time,
                                                     children):
                 file.write(msg)
@@ -219,7 +219,7 @@ def write_ncl_settings(settings, filename, mode='wt'):
                          'end if\n'.format(var_name=var_name))
             lines.append(_py2ncl(value, var_name))
 
-    with open(filename, mode) as file:
+    with open(filename, mode, encoding='utf-8') as file:
         file.write('\n'.join(lines))
         file.write('\n')
 
@@ -301,7 +301,7 @@ class ResumeTask(BaseTask):
 
         # Reconstruct output
         prev_metadata_file = prev_preproc_dir / 'metadata.yml'
-        with prev_metadata_file.open('rb') as file:
+        with prev_metadata_file.open('r', encoding='utf-8') as file:
             prev_metadata = yaml.safe_load(file)
 
         products = set()
@@ -323,7 +323,7 @@ class ResumeTask(BaseTask):
 
         # Write metadata to file
         self._metadata_file.parent.mkdir(parents=True)
-        with self._metadata_file.open('w') as file:
+        with self._metadata_file.open('w', encoding='utf-8') as file:
             yaml.safe_dump(metadata, file)
 
         return [str(self._metadata_file)]
@@ -609,7 +609,7 @@ class DiagnosticTask(BaseTask):
 
         logger.debug("Collecting provenance from %s", provenance_file)
         start = time.time()
-        table = yaml.safe_load(provenance_file.read_text())
+        table = yaml.safe_load(provenance_file.read_text(encoding='utf-8'))
 
         ignore = (
             'auxiliary_data_dir',
