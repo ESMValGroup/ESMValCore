@@ -164,7 +164,7 @@ def update_weights_kwargs(
         -> None`. Should update the cube given to this function in-place. Is
         called when weights should be used and cube is not None.
     **callback_kwargs:
-        Optional keyword arguments passed to the callback.
+        Optional keyword arguments passed to `callback`.
 
     Returns
     -------
