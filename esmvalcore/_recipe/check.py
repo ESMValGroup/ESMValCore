@@ -423,45 +423,53 @@ def statistics_preprocessors(settings: dict) -> None:
 
         # For multi-model statistics, we need to check each entry of statistics
         if step in mm_stats:
-            statistics = step_settings.get('statistics', [])
-            for stat in statistics:
-                try:
-                    (operator, kwargs) = _get_operator_and_kwargs(stat)
-                except ValueError as exc:
-                    raise RecipeError(str(exc))
-                try:
-                    get_iris_aggregator(operator, **kwargs)
-                except ValueError as exc:
-                    raise RecipeError(
-                        f"Invalid options for {step}: {exc}"
-                    )
+            _check_mm_stat(step, step_settings)
 
         # For other statistics, check optional kwargs for operator
         elif '_statistics' in step:
-            step_settings = dict(step_settings)
+            _check_regular_stat(step, step_settings)
 
-            # Some preprocessors like climate_statistics use default 'mean' for
-            # operator. If 'operator' is missing for those preprocessors with
-            # no default, this will be detected in PreprocessorFile.check()
-            # later.
-            operator = step_settings.pop('operator', 'mean')
 
-            # If preprocessor does not exist, do nothing here; this will be
-            # detected in PreprocessorFile.check() later.
-            try:
-                preproc_func = getattr(esmvalcore.preprocessor, step)
-            except AttributeError:
-                return
+def _check_regular_stat(step, step_settings):
+    """Check regular statistics (non-multi-model statistics) step."""
+    step_settings = dict(step_settings)
 
-            # Ignore other preprocessor arguments, e.g., 'hours' for
-            # hourly_statistics
-            other_args = getfullargspec(preproc_func).args[1:]
-            operator_kwargs = {
-                k: v for (k, v) in step_settings.items() if k not in other_args
-            }
-            try:
-                get_iris_aggregator(operator, **operator_kwargs)
-            except ValueError as exc:
-                raise RecipeError(
-                    f"Invalid options for {step}: {exc}"
-                )
+    # Some preprocessors like climate_statistics use default 'mean' for
+    # operator. If 'operator' is missing for those preprocessors with no
+    # default, this will be detected in PreprocessorFile.check() later.
+    operator = step_settings.pop('operator', 'mean')
+
+    # If preprocessor does not exist, do nothing here; this will be detected in
+    # PreprocessorFile.check() later.
+    try:
+        preproc_func = getattr(esmvalcore.preprocessor, step)
+    except AttributeError:
+        return
+
+    # Ignore other preprocessor arguments, e.g., 'hours' for hourly_statistics
+    other_args = getfullargspec(preproc_func).args[1:]
+    operator_kwargs = {
+        k: v for (k, v) in step_settings.items() if k not in other_args
+    }
+    try:
+        get_iris_aggregator(operator, **operator_kwargs)
+    except ValueError as exc:
+        raise RecipeError(
+            f"Invalid options for {step}: {exc}"
+        )
+
+
+def _check_mm_stat(step, step_settings):
+    """Check multi-model statistic step."""
+    statistics = step_settings.get('statistics', [])
+    for stat in statistics:
+        try:
+            (operator, kwargs) = _get_operator_and_kwargs(stat)
+        except ValueError as exc:
+            raise RecipeError(str(exc))
+        try:
+            get_iris_aggregator(operator, **kwargs)
+        except ValueError as exc:
+            raise RecipeError(
+                f"Invalid options for {step}: {exc}"
+            )
