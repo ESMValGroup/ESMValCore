@@ -653,8 +653,8 @@ def _get_operator_and_kwargs(statistic: str | dict) -> tuple[str, dict]:
         statistic = dict(statistic)
         if 'operator' not in statistic:
             raise ValueError(
-                f"`statistic` given as dictionary, but missing required key `operator`, "
-                f"got {statistic}"
+                f"`statistic` given as dictionary, but missing required key "
+                f"`operator`, got {statistic}"
             )
         operator = statistic.pop('operator')
         kwargs = statistic
