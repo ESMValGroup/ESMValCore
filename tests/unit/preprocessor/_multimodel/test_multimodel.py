@@ -1503,7 +1503,9 @@ def test_single_input_ensemble_statistics(products, stat):
 def test_operator_missing_in_stat():
     """Test no operator in stat dict."""
     cubes = CubeList([generate_cube_from_dates('monthly')])
-    msg = "If `statistic` is given as dict, the keyword `operator` is required"
+    msg = (
+        "`statistic` given as dictionary, but missing required key `operator`"
+    )
     with pytest.raises(ValueError) as exc:
         mm.multi_model_statistics(cubes, 'overlap', [{'no': 'operator'}])
     assert msg in str(exc)
@@ -1532,7 +1534,9 @@ def test_get_operator_and_kwargs(statistic, output):
 @pytest.mark.parametrize('statistic', [{}, {'no': 'op'}])
 def test_get_operator_and_kwargs_operator_missing(statistic):
     """Test ``_get_operator_and_kwargs``."""
-    msg = "If `statistic` is given as dict, the keyword `operator` is required"
+    msg = (
+        "`statistic` given as dictionary, but missing required key `operator`"
+    )
     with pytest.raises(ValueError, match=msg):
         mm._get_operator_and_kwargs(statistic)
 

@@ -2530,7 +2530,7 @@ def test_mm_stats_invalid_stats(
             scripts: null
         """)
     msg = (
-        "If `statistic` is given as dict, the keyword `operator` is required"
+        "`statistic` given as dictionary, but missing required key `operator`"
     )
     with pytest.raises(RecipeError) as rec_err_exp:
         get_recipe(tmp_path, content, session)
