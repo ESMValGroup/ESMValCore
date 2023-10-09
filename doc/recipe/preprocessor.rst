@@ -182,7 +182,7 @@ Calculate the global non-weighted root mean square:
 .. warning::
 
   The disabling of weights by specifying the keyword argument ``weights:
-  False`` needs to be used with great care; we strongly recommend to
+  False`` needs to be used with great care; from a statistical standpoint, we strongly recommend to
   **not** use it!
 
 
