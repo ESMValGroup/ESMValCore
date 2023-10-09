@@ -82,7 +82,8 @@ def get_iris_aggregator(
             f"'{operator}') has been deprecated in ESMValCore version 2.10.0 "
             f"and is scheduled for removal in version 2.12.0. Please use "
             f"`operator='percentile'` with the keyword argument "
-            "`percent='XX.YY'` instead. This is an exact replacement."
+            f"`percent=XX.YY` instead. Example: `percent=95.0` for 'p95.0'. "
+            f"This is an exact replacement."
         )
         warnings.warn(msg, ESMValCoreDeprecationWarning)
         aggregator_kwargs['percent'] = float(operator[1:])
@@ -146,7 +147,7 @@ def update_weights_kwargs(
     callback: Optional[Callable] = None,
     **callback_kwargs,
 ) -> dict:
-    """Update weights keyword argument properly.
+    """Update weights keyword argument.
 
     Parameters
     ----------
@@ -160,9 +161,9 @@ def update_weights_kwargs(
         Cube which can be updated through the callback (if not None) if weights
         are used.
     callback:
-        Optional callback function with signature `f(cube: iris.cube.Cube, **kwargs)
-        -> None`. Should update the cube given to this function in-place. Is
-        called only when weights are used and cube is not None.
+        Optional callback function with signature `f(cube: iris.cube.Cube,
+        **kwargs) -> None`. Should update the cube given to this function
+        in-place. Is called only when weights are used and cube is not None.
     **callback_kwargs:
         Optional keyword arguments passed to `callback`.
 

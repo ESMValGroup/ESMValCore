@@ -182,8 +182,8 @@ Calculate the global non-weighted root mean square:
 .. warning::
 
   The disabling of weights by specifying the keyword argument ``weights:
-  False`` needs to be used with great care; from a statistical standpoint, we strongly recommend to
-  **not** use it!
+  False`` needs to be used with great care; from a scientific standpoint, we
+  strongly recommend to **not** use it!
 
 
 .. _Variable derivation:
@@ -2047,8 +2047,8 @@ By default, the `mean` operation is weighted by the grid cell volumes.
 For weighted statistics, this function requires a cell volume `cell measure`_,
 unless the coordinates of the input data are regular 1D latitude and longitude
 coordinates so the cell volumes can be computed internally.
-The required supplementary variable ``volcello`` can be attached to the main dataset
-as described in :ref:`supplementary_variables`.
+The required supplementary variable ``volcello`` can be attached to the main
+dataset as described in :ref:`supplementary_variables`.
 
 No depth coordinate is required as this is determined by Iris.
 
