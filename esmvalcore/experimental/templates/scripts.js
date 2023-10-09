@@ -1,12 +1,3 @@
-function applyFilters(){
-    /**
-     * Updates visibility according to filters.
-     */
-    filterFigures();
-    filterTabs();
-    hideEmptyTabPanes();
-}
-
 function filterFigures(){
     /**
      * Update visibility of filtered figures.
@@ -62,6 +53,15 @@ function hideEmptyTabPanes(){
             panes.filter(".filtered").removeClass("active").removeClass("show");
         }
     }
+}
+
+function applyFilters(){
+    /**
+     * Updates visibility according to filters.
+     */
+    filterFigures();
+    filterTabs();
+    hideEmptyTabPanes();
 }
 
 // Set up events with jQuery
