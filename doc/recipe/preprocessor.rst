@@ -2046,7 +2046,7 @@ By default, the `mean` operation is weighted by the grid cell volumes.
 
 For weighted statistics, this function requires a cell volume `cell measure`_,
 unless the coordinates of the input data are regular 1D latitude and longitude
-coordinates so the cell volumes can be computed.
+coordinates so the cell volumes can be computed internally.
 The required supplementary variable ``volcello`` can be attached to the main dataset
 as described in :ref:`supplementary_variables`.
 
