@@ -1,5 +1,7 @@
-"""Fixes for rcm KNMI-RACMO22E driven by NCC-NorESM1-M."""
+"""Fixes for rcm RegCM4-6 driven by MPI-M-MPI-ESM-LR."""
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
     TimeLongName as BaseFix)
 
 Pr = BaseFix
+
+Tas = BaseFix

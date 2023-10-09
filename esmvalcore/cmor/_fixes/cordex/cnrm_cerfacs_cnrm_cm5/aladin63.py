@@ -1,4 +1,4 @@
-"""Fixes for rcm CNRM-ALADIN63 driven by CNRM-CERFACS-CNRM-CM5."""
+"""Fixes for rcm ALADIN63 driven by CNRM-CERFACS-CNRM-CM5."""
 import numpy as np
 
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import TimeLongName as BaseFix

@@ -511,12 +511,23 @@ def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
 def _path2facets(path: Path, drs: str) -> dict[str, str]:
     """Extract facets from a path using a DRS like '{facet1}/{facet2}'."""
     keys = []
-    for key in re.findall(r"{(.*?)}", drs):
+    for key in re.findall(r'{(.*?)}[^-]', f'{drs} '):
         key = key.split('.')[0]  # Remove trailing .lower and .upper
         keys.append(key)
     start, end = -len(keys) - 1, -1
     values = path.parts[start:end]
-    facets = {key: values[idx] for idx, key in enumerate(keys)}
+    facets = {
+        key: values[idx] for idx, key in enumerate(keys) if "{" not in key
+    }
+
+    if len(facets) != len(keys):
+        # Extract hyphen separated facet: {facet1}-{facet2},
+        # where facet1 is already known.
+        for idx, key in enumerate(keys):
+            if key not in facets:
+                facet1, facet2 = key.split("}-{")
+                facets[facet2] = values[idx].replace(f'{facets[facet1]}-', '')
+
     return facets
 
 
