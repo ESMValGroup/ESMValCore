@@ -1947,7 +1947,7 @@ regions need to be removed using other preprocessor operations in advance.
 
 For weighted statistics, this function requires a cell area `cell measure`_,
 unless the coordinates of the input data are regular 1D latitude and longitude
-coordinates so the cell areas can be computed.
+coordinates so the cell areas can be computed internally.
 The required supplementary variable, either ``areacella`` for atmospheric
 variables or ``areacello`` for ocean variables, can be attached to the main
 dataset as described in :ref:`supplementary_variables`.
