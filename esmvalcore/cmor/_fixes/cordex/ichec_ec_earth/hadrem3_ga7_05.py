@@ -1,4 +1,4 @@
-"""Fixes for rcm MOHC-HadREM3-GA7-05 driven by MPI-M-MPI-ESM-LR."""
+"""Fixes for rcm HadREM3-GA7-05 driven by ICHEC-EC-EARTH."""
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
     MOHCHadREM3GA705 as BaseFix)
 

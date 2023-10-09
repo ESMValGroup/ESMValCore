@@ -1375,8 +1375,8 @@ def test_alias_generation(tmp_path, patched_datafinder, session):
                   - {project: CMIP6, activity: CMP, dataset: GF2, ensemble: r1, institute: fake}
                   - {project: CMIP6, activity: HRMP, dataset: EC, ensemble: r1, institute: fake}
                   - {project: CMIP6, activity: HRMP, dataset: HA, ensemble: r1, institute: fake}
-                  - {project: CORDEX, driver: ICHEC-EC-EARTH, dataset: SMHI-RCA4, ensemble: r1, mip: mon}
-                  - {project: CORDEX, driver: MIROC-MIROC5, dataset: SMHI-RCA4, ensemble: r1, mip: mon}
+                  - {project: CORDEX, driver: ICHEC-EC-EARTH, dataset: RCA4, ensemble: r1, mip: mon, institute: SMHI}
+                  - {project: CORDEX, driver: MIROC-MIROC5, dataset: RCA4, ensemble: r1, mip: mon, institute: SMHI}
             scripts: null
         """)  # noqa:
 
