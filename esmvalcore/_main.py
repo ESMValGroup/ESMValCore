@@ -64,10 +64,10 @@ def parse_resume(resume, recipe):
         resume[i] = Path(os.path.expandvars(resume_dir)).expanduser()
 
     # Sanity check resume directories:
-    current_recipe = recipe.read_text()
+    current_recipe = recipe.read_text(encoding='utf-8')
     for resume_dir in resume:
         resume_recipe = resume_dir / 'run' / recipe.name
-        if current_recipe != resume_recipe.read_text():
+        if current_recipe != resume_recipe.read_text(encoding='utf-8'):
             raise ValueError(f'Only identical recipes can be resumed, but '
                              f'{resume_recipe} is different from {recipe}')
     return resume

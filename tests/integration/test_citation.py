@@ -33,7 +33,7 @@ def test_references(tmp_path, monkeypatch):
 
     _write_citation_files(filename, provenance)
     citation_file = tmp_path / 'output_citation.bibtex'
-    citation = citation_file.read_text()
+    citation = citation_file.read_text(encoding='utf-8')
     assert citation == '\n'.join([ESMVALTOOL_PAPER, fake_bibtex])
 
 
@@ -84,7 +84,7 @@ def test_cmip6_data_citation(tmp_path, monkeypatch):
         \tdoi = {{{doi}}},
         }}
         """).lstrip()
-    assert citation_file.read_text() == '\n'.join(
+    assert citation_file.read_text(encoding='utf-8') == '\n'.join(
         [ESMVALTOOL_PAPER, fake_bibtex_entry])
 
 
@@ -114,4 +114,4 @@ def test_cmip6_data_citation_url(tmp_path):
         f"- {CMIP6_URL_STEM}/cmip6?input={fake_url_prefix}",
         '',
     ])
-    assert citation_url.read_text() == text
+    assert citation_url.read_text(encoding='utf-8') == text
