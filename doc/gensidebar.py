@@ -10,13 +10,13 @@ import os
 def _write_if_changed(fname, contents):
     """Write/update file only if changed."""
     try:
-        with open(fname, "r") as stream:
+        with open(fname, "r", encoding="utf-8") as stream:
             old_contents = stream.read()
     except IOError:
         old_contents = ""
 
     if old_contents != contents:
-        with open(fname, "w") as stream:
+        with open(fname, "w", encoding="utf-8") as stream:
             stream.write(contents)
 
 
