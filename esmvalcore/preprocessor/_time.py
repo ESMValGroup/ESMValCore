@@ -801,14 +801,14 @@ def climate_statistics(
     if period in ('full', ):
         (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
         agg_kwargs = update_weights_kwargs(
-            agg, agg_kwargs, 'time_weights', cube, _add_time_weights_coord
+            agg, agg_kwargs, '_time_weights_', cube, _add_time_weights_coord
         )
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 'ignore',
                 message=(
                     "Cannot check if coordinate is contiguous: Invalid "
-                    "operation for 'time_weights'"
+                    "operation for '_time_weights_'"
                 ),
                 category=UserWarning,
                 module='iris',
@@ -816,10 +816,10 @@ def climate_statistics(
             clim_cube = cube.collapsed('time', agg, **agg_kwargs)
 
         # Make sure input and output cubes do not have auxiliary coordinate
-        if cube.coords('time_weights'):
-            cube.remove_coord('time_weights')
-        if clim_cube.coords('time_weights'):
-            clim_cube.remove_coord('time_weights')
+        if cube.coords('_time_weights_'):
+            cube.remove_coord('_time_weights_')
+        if clim_cube.coords('_time_weights_'):
+            clim_cube.remove_coord('_time_weights_')
 
     # Use Cube.aggregated_by for other periods
     else:
@@ -851,7 +851,7 @@ def _add_time_weights_coord(cube):
     """Add time weight coordinate to cube (in-place)."""
     time_weights_coord = AuxCoord(
         get_time_weights(cube),
-        long_name='time_weights',
+        long_name='_time_weights_',
         units=cube.coord('time').units,
     )
     cube.add_aux_coord(time_weights_coord, cube.coord_dims('time'))

@@ -551,8 +551,8 @@ class TestClimatology(tests.Test):
         expected = np.array([1.], dtype=np.float32)
         assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-2 s-1')
-        self.assertFalse(cube.coords('time_weights'))
-        self.assertFalse(result.coords('time_weights'))
+        self.assertFalse(cube.coords('_time_weights_'))
+        self.assertFalse(result.coords('_time_weights_'))
 
     def test_time_mean_uneven(self):
         """Test for time average of a 1D field with uneven time boundaries."""
