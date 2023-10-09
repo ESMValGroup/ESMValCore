@@ -160,7 +160,7 @@ def update_weights_kwargs(
         Cube which can be updated through the callback (if not None) if weights
         are used.
     callback:
-        Optional callback with the signature `f(cube: iris.cube.Cube, **kwargs)
+        Optional callback function with signature `f(cube: iris.cube.Cube, **kwargs)
         -> None`. Should update the cube given to this function in-place. Is
         called when weights should be used and cube is not None.
     **callback_kwargs:
