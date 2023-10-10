@@ -1,4 +1,4 @@
-"""Fixes for rcm DMI-HIRHAM driven by MOHC-HadGEM2."""
+"""Fixes for rcm HIRHAM driven by MOHC-HadGEM2."""
 from esmvalcore.cmor.fix import Fix
 
 

@@ -183,7 +183,7 @@ class RunLinter(CustomCommand):
 
 def read_authors(filename):
     """Read the list of authors from .zenodo.json file."""
-    with Path(filename).open() as file:
+    with Path(filename).open(encoding='utf-8') as file:
         info = json.load(file)
         authors = []
         for author in info['creators']:
@@ -194,7 +194,7 @@ def read_authors(filename):
 
 def read_description(filename):
     """Read the description from .zenodo.json file."""
-    with Path(filename).open() as file:
+    with Path(filename).open(encoding='utf-8') as file:
         info = json.load(file)
         return info['description']
 
@@ -203,7 +203,7 @@ setup(
     name='ESMValCore',
     author=read_authors('.zenodo.json'),
     description=read_description('.zenodo.json'),
-    long_description=Path('README.md').read_text(),
+    long_description=Path('README.md').read_text(encoding='utf-8'),
     long_description_content_type='text/markdown',
     url='https://www.esmvaltool.org',
     download_url='https://github.com/ESMValGroup/ESMValCore',

@@ -56,7 +56,7 @@ def arguments(*args):
 
 def check(result_file):
     """Check the results."""
-    result = yaml.safe_load(result_file.read_text())
+    result = yaml.safe_load(result_file.read_text(encoding='utf-8'))
 
     required_keys = {
         'input_files',
@@ -80,7 +80,7 @@ SCRIPTS = {
         import yaml
         import shutil
 
-        with open("settings.yml", 'r') as file:
+        with open("settings.yml", 'r', encoding='utf-8') as file:
             settings = yaml.safe_load(file)
 
         shutil.copy("settings.yml", settings["setting_name"])

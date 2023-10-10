@@ -8,6 +8,7 @@ from cf_units import Unit
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
+from esmvalcore.cmor._fixes.fix import Fix, GenericFix
 from esmvalcore.cmor._fixes.native6.era5 import (
     AllVars,
     Evspsbl,
@@ -15,8 +16,9 @@ from esmvalcore.cmor._fixes.native6.era5 import (
     fix_accumulated_units,
     get_frequency,
 )
-from esmvalcore.cmor.fix import Fix, fix_metadata
-from esmvalcore.cmor.table import CMOR_TABLES
+from esmvalcore.cmor.fix import fix_metadata
+from esmvalcore.cmor.table import CMOR_TABLES, get_var_info
+from esmvalcore.preprocessor import cmor_check_metadata
 
 COMMENT = ('Contains modified Copernicus Climate Change Service Information '
            f'{datetime.datetime.now().year}')
@@ -25,13 +27,15 @@ COMMENT = ('Contains modified Copernicus Climate Change Service Information '
 def test_get_evspsbl_fix():
     """Test whether the right fixes are gathered for a single variable."""
     fix = Fix.get_fixes('native6', 'ERA5', 'E1hr', 'evspsbl')
-    assert fix == [Evspsbl(None), AllVars(None)]
+    vardef = get_var_info('native6', 'E1hr', 'evspsbl')
+    assert fix == [Evspsbl(vardef), AllVars(vardef), GenericFix(vardef)]
 
 
 def test_get_zg_fix():
     """Test whether the right fix gets found again, for zg as well."""
     fix = Fix.get_fixes('native6', 'ERA5', 'Amon', 'zg')
-    assert fix == [Zg(None), AllVars(None)]
+    vardef = get_var_info('native6', 'E1hr', 'evspsbl')
+    assert fix == [Zg(vardef), AllVars(vardef), GenericFix(vardef)]
 
 
 def test_get_frequency_hourly():
@@ -1363,9 +1367,14 @@ VARIABLES = [
 def test_cmorization(era5_cubes, cmor_cubes, var, mip):
     """Verify that cmorization results in the expected target cube."""
     fixed_cubes = fix_metadata(era5_cubes, var, 'native6', 'era5', mip)
+
     assert len(fixed_cubes) == 1
     fixed_cube = fixed_cubes[0]
     cmor_cube = cmor_cubes[0]
+
+    # Test that CMOR checks are passing
+    fixed_cubes = cmor_check_metadata(fixed_cube, 'native6', mip, var)
+
     if fixed_cube.coords('time'):
         for cube in [fixed_cube, cmor_cube]:
             coord = cube.coord('time')

@@ -21,51 +21,54 @@ def guess_bounds(cube, coords):
     return cube
 
 
-def get_iris_analysis_operation(operator):
-    """
-    Determine the iris analysis operator from a string.
+def get_iris_analysis_operation(operator: str) -> iris.analysis.Aggregator:
+    """Determine the iris analysis operator from a :obj:`str`.
 
     Map string to functional operator.
 
     Parameters
     ----------
-    operator: str
+    operator:
         A named operator.
 
     Returns
     -------
-        function: A function from iris.analysis
+    iris.analysis.Aggregator
+        Object that can be used within :meth:`iris.cube.Cube.collapsed`,
+        :meth:`iris.cube.Cube.aggregated_by`, or
+        :meth:`iris.cube.Cube.rolling_window`.
 
     Raises
     ------
     ValueError
-        operator not in allowed operators list.
-        allowed operators: mean, median, std_dev, sum, variance, min, max, rms
+        An invalid operator is specified. Allowed options: `mean`, `median`,
+        `std_dev`, `sum`, `variance`, `min`, `max`, `rms`.
     """
     operators = [
-        'mean', 'median', 'std_dev', 'sum', 'variance', 'min', 'max', 'rms'
+        'mean', 'median', 'std_dev', 'sum', 'variance', 'min', 'max', 'rms',
     ]
     operator = operator.lower()
     if operator not in operators:
-        raise ValueError("operator {} not recognised. "
-                         "Accepted values are: {}."
-                         "".format(operator, ', '.join(operators)))
+        raise ValueError(
+            f"operator '{operator}' not recognised. Accepted values are: "
+            f"{', '.join(operators)}."
+        )
     operation = getattr(iris.analysis, operator.upper())
     return operation
 
 
-def operator_accept_weights(operator):
-    """
-    Get if operator support weights.
+def operator_accept_weights(operator: str) -> bool:
+    """Get if operator support weights.
 
     Parameters
     ----------
-    operator: str
+    operator:
         A named operator.
 
     Returns
     -------
-        bool: True if operator support weights, False otherwise
+    bool
+        ``True`` if operator support weights, ``False`` otherwise.
 
     """
     return operator.lower() in ('mean', 'sum', 'rms')
