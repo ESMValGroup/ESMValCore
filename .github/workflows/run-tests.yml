@@ -21,6 +21,7 @@ on:
   push:
     branches:
       - main
+      - python312
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
@@ -39,7 +40,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:
@@ -71,7 +72,7 @@ jobs:
     runs-on: "macos-latest"
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
