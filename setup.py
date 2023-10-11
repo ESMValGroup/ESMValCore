@@ -27,7 +27,7 @@ REQUIREMENTS = {
     # Installation dependencies
     # Use with pip install . to install from source
     'install': [
-        'cartopy',
+        # 'cartopy',  # Xpy312
         'cf-units',
         'dask[array,distributed]',
         'dask-jobqueue',
