@@ -35,7 +35,7 @@ REQUIREMENTS = {
         'esmf-regrid',
         'esmpy!=8.1.0',
         'filelock',
-        'fiona',
+        # 'fiona',  # Xpy312
         'fire',
         'geopy',
         'humanfriendly',
