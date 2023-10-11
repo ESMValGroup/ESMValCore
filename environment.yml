@@ -6,7 +6,7 @@ channels:
 
 dependencies:
   # - cartopy  # currently incompatible with python=3.12 (11 Oct 2023)
-  - cf-units
+  # - cf-units # currently incompatible with python=3.12 (11 Oct 2023)
   - cftime
   - compilers
   - dask
