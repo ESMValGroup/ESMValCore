@@ -5,7 +5,7 @@ channels:
   - nodefaults
 
 dependencies:
-  - cartopy
+  # - cartopy  # currently incompatible with python=3.12 (11 Oct 2023)
   - cf-units
   - cftime
   - compilers
