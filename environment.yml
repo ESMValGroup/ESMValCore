@@ -15,7 +15,7 @@ dependencies:
   - esgf-pyclient >=0.3.1
   - esmpy !=8.1.0
   - filelock
-  - fiona==1.9.4  # force compat with py312 TODO remove when stable
+  # - fiona  # currently incompatible with python=3.12 (11 Oct 2023)
   - fire
   - geopy
   - humanfriendly
@@ -37,7 +37,7 @@ dependencies:
   - psutil
   - py-cordex
   - pybtex
-  - python >=3.9
+  - python ==3.12
   - python-stratify >=0.3
   - pyyaml
   - requests
