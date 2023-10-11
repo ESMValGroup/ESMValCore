@@ -21,7 +21,7 @@ dependencies:
   - humanfriendly
   - importlib_metadata  # required for Python < 3.10
   # - iris >=3.6.0  # currently incompatible with python=3.12 via cf-units (11 Oct 2023)
-  - iris-esmf-regrid >=0.7.0
+  # - iris-esmf-regrid >=0.7.0  # currently incompatible with python=3.12 via cf-units (11 Oct 2023)
   - isodate
   - jinja2
   - libnetcdf !=4.9.1  # to avoid hdf5 warnings
