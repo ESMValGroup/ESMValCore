@@ -15,7 +15,7 @@ dependencies:
   - esgf-pyclient >=0.3.1
   - esmpy !=8.1.0
   - filelock
-  - fiona
+  - fiona==1.9.4  # force compat with py312 TODO remove when stable
   - fire
   - geopy
   - humanfriendly
