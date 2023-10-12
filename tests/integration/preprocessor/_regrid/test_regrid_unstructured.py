@@ -6,12 +6,9 @@ from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube
 
 from esmvalcore.preprocessor._regrid import _global_stock_cube
-from esmvalcore.preprocessor._regrid_unstructured import (
+from esmvalcore.preprocessor._regrid_unstructured import (  # _bilinear_unstructured_regrid,; _get_linear_interpolation_weights,
     UnstructuredNearest,
-    # _bilinear_unstructured_regrid,
-    # _get_linear_interpolation_weights,
 )
-
 
 # @pytest.fixture(autouse=True)
 # def clear_cache(monkeypatch):

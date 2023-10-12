@@ -11,8 +11,7 @@ from esmvalcore.preprocessor._regrid_esmpy import (
     ESMPyLinear,
     ESMPyNearest,
 )
-from esmvalcore.preprocessor._regrid_unstructured import (
-    # UnstructuredLinear,
+from esmvalcore.preprocessor._regrid_unstructured import (  # UnstructuredLinear,
     UnstructuredNearest,
 )
 

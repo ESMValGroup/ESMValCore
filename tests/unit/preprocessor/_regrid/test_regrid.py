@@ -66,10 +66,7 @@ class Test(tests.Test):
         self.tgt_grid_coord = mock.Mock()
         self.tgt_grid = mock.Mock(spec=iris.cube.Cube,
                                   coord=self.tgt_grid_coord)
-        self.regrid_schemes = [
-            'linear', 'linear_extrapolate', 'nearest', 'area_weighted',
-            'unstructured_nearest'
-        ]
+        self.regrid_schemes = ['linear', 'nearest', 'area_weighted']
 
         def _mock_horizontal_grid_is_close(src, tgt):
             return False

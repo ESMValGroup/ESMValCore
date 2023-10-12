@@ -6,13 +6,12 @@ from typing import Dict
 
 import dask.array as da
 import numpy as np
+from iris.analysis import UnstructuredNearest as IrisUnstructuredNearest
+from iris.analysis.trajectory import UnstructuredNearestNeigbourRegridder
 from iris.cube import Cube
 from scipy.spatial import Delaunay
 
 from esmvalcore.iris_helpers import has_unstructured_grid
-from iris.analysis import UnstructuredNearest as IrisUnstructuredNearest
-from iris.analysis.trajectory import UnstructuredNearestNeigbourRegridder
-
 
 logger = logging.getLogger(__name__)
 

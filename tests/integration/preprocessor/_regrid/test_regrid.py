@@ -10,6 +10,7 @@ import pytest
 from numpy import ma
 
 from esmvalcore.dataset import Dataset
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.preprocessor import regrid
 from tests import assert_array_equal
 from tests.unit.preprocessor._regrid import _make_cube
@@ -54,7 +55,7 @@ class Test:
                                     units='degrees_north',
                                     coord_system=self.cs)
         coords_spec = [(lats, 0), (lons, 1)]
-        self.grid_for_unstructured_nearest = iris.cube.Cube(
+        self.tgt_grid_for_unstructured = iris.cube.Cube(
             data, dim_coords_and_dims=coords_spec)
 
         # Replace 1d spatial coords with 2d spatial coords.
@@ -63,34 +64,37 @@ class Test:
         x, y = np.meshgrid(lons.points, lats.points)
 
         lats = iris.coords.AuxCoord(
-            y,
+            y.ravel(),
             standard_name=lats.metadata.standard_name,
             long_name=lats.metadata.long_name,
             var_name=lats.metadata.var_name,
             units=lats.metadata.units,
             attributes=lats.metadata.attributes,
             coord_system=lats.metadata.coord_system,
-            climatological=lats.metadata.climatological)
+            climatological=lats.metadata.climatological,
+        )
 
         lons = iris.coords.AuxCoord(
-            x,
+            x.ravel(),
             standard_name=lons.metadata.standard_name,
             long_name=lons.metadata.long_name,
             var_name=lons.metadata.var_name,
             units=lons.metadata.units,
             attributes=lons.metadata.attributes,
             coord_system=lons.metadata.coord_system,
-            climatological=lons.metadata.climatological)
-
-        self.unstructured_grid_cube = self.cube.copy()
-        self.unstructured_grid_cube.remove_coord('longitude')
-        self.unstructured_grid_cube.remove_coord('latitude')
-        self.unstructured_grid_cube.remove_coord('Pressure Slice')
-        self.unstructured_grid_cube.add_aux_coord(lons, (1, 2))
-        self.unstructured_grid_cube.add_aux_coord(lats, (1, 2))
-        self.unstructured_grid_cube.data = np.ma.masked_less(
-            self.cube.data.astype(np.float32), 3.5
+            climatological=lons.metadata.climatological,
         )
+
+        unstructured_data = np.ma.masked_less(
+            self.cube.data.reshape(3, 4).astype(np.float32), 3.5
+        )
+
+        self.unstructured_grid_cube = iris.cube.Cube(
+            unstructured_data,
+            dim_coords_and_dims=[(self.cube.coord('air_pressure'), 0)],
+            aux_coords_and_dims=[(lats, 1), (lons, 1)],
+        )
+        self.unstructured_grid_cube.metadata = self.cube.metadata
 
     def test_regrid__linear(self):
         result = regrid(self.cube, self.grid_for_linear, 'linear')
@@ -155,7 +159,7 @@ class Test:
         assert np.issubdtype(self.cube.dtype, np.integer)
         assert np.issubdtype(result.dtype, np.floating)
 
-    def test_regrid__linear_extrapolate(self):
+    def test_regrid__linear_with_extrapolation(self):
         data = np.empty((3, 3))
         lons = iris.coords.DimCoord([0, 1.5, 3],
                                     standard_name='longitude',
@@ -169,13 +173,17 @@ class Test:
                                     coord_system=self.cs)
         coords_spec = [(lats, 0), (lons, 1)]
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
-        result = regrid(self.cube, grid, 'linear_extrapolate')
+        scheme = {
+            'reference': 'iris.analysis:Linear',
+            'extrapolation_mode': 'extrapolate',
+        }
+        result = regrid(self.cube, grid, scheme)
         expected = [[[-3., -1.5, 0.], [0., 1.5, 3.], [3., 4.5, 6.]],
                     [[1., 2.5, 4.], [4., 5.5, 7.], [7., 8.5, 10.]],
                     [[5., 6.5, 8.], [8., 9.5, 11.], [11., 12.5, 14.]]]
         assert_array_equal(result.data, expected)
 
-    def test_regrid__linear_extrapolate_with_mask(self):
+    def test_regrid__linear_with_mask(self):
         data = np.empty((3, 3))
         grid = iris.cube.Cube(data)
         lons = iris.coords.DimCoord([0, 1.5, 3],
@@ -273,11 +281,11 @@ class Test:
         expected = np.array([[[1.499886]], [[5.499886]], [[9.499886]]])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
 
-    def test_regrid__unstructured_nearest_float(self):
-        """Test unstructured_nearest regridding with cube of floats."""
+    def test_regrid_nearest_unstructured_grid_float(self):
+        """Test `nearest` regridding with unstructured cube of floats."""
         result = regrid(self.unstructured_grid_cube,
-                        self.grid_for_unstructured_nearest,
-                        'unstructured_nearest')
+                        self.tgt_grid_for_unstructured,
+                        'nearest')
         expected = np.ma.array([[[3.0]], [[7.0]], [[11.0]]],
                                mask=[[[True]], [[False]], [[False]]])
         np.testing.assert_array_equal(result.data.mask, expected.mask)
@@ -289,11 +297,50 @@ class Test:
         assert self.unstructured_grid_cube.dtype == np.float32
         assert result.dtype == np.float32
 
-    def test_regrid__unstructured_nearest_int(self):
-        """Test unstructured_nearest regridding with cube of ints."""
-        self.unstructured_grid_cube.data = np.ones((3, 2, 2), dtype=int)
+    def test_regrid_nearest_unstructured_grid_int(self):
+        """Test `nearest` regridding with unstructured cube of ints."""
+        self.unstructured_grid_cube.data = np.ones((3, 4), dtype=int)
         result = regrid(self.unstructured_grid_cube,
-                        self.grid_for_unstructured_nearest,
-                        'unstructured_nearest')
+                        self.tgt_grid_for_unstructured,
+                        'nearest')
         expected = np.array([[[1]], [[1]], [[1]]])
         np.testing.assert_array_equal(result.data, expected)
+
+    def test_deprecate_unstrucured_nearest(self):
+        """Test deprecation of `unstructured_nearest` regridding scheme."""
+        with pytest.warns(ESMValCoreDeprecationWarning):
+            result = regrid(
+                self.unstructured_grid_cube,
+                self.tgt_grid_for_unstructured,
+                'unstructured_nearest',
+            )
+        expected = np.ma.array(
+            [[[3.0]], [[7.0]], [[11.0]]],
+            mask=[[[True]], [[False]], [[False]]],
+        )
+        np.testing.assert_array_equal(result.data.mask, expected.mask)
+        np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
+
+    def test_deprecate_linear_extrapolate(self):
+        """Test deprecation of `linear_extrapolate` regridding scheme."""
+        data = np.empty((3, 3))
+        lons = iris.coords.DimCoord([0, 1.5, 3],
+                                    standard_name='longitude',
+                                    bounds=[[0, 1], [1, 2], [2, 3]],
+                                    units='degrees_east',
+                                    coord_system=self.cs)
+        lats = iris.coords.DimCoord([0, 1.5, 3],
+                                    standard_name='latitude',
+                                    bounds=[[0, 1], [1, 2], [2, 3]],
+                                    units='degrees_north',
+                                    coord_system=self.cs)
+        coords_spec = [(lats, 0), (lons, 1)]
+        grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
+
+        with pytest.warns(ESMValCoreDeprecationWarning):
+            result = regrid(self.cube, grid, 'linear_extrapolate')
+
+        expected = [[[-3., -1.5, 0.], [0., 1.5, 3.], [3., 4.5, 6.]],
+                    [[1., 2.5, 4.], [4., 5.5, 7.], [7., 8.5, 10.]],
+                    [[5., 6.5, 8.], [8., 9.5, 11.], [11., 12.5, 14.]]]
+        assert_array_equal(result.data, expected)

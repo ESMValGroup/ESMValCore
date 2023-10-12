@@ -1,10 +1,12 @@
 """Integration tests for regrid schemes."""
 import numpy as np
 import pytest
-
 from iris.cube import Cube
 
-from esmvalcore.preprocessor.regrid_schemes import GenericFuncScheme, _GenericRegridder
+from esmvalcore.preprocessor.regrid_schemes import (
+    GenericFuncScheme,
+    _GenericRegridder,
+)
 
 
 def set_data_to_const(cube, _, const=1.0):

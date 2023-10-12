@@ -894,26 +894,20 @@ third party regridding schemes designed for use with :doc:`Iris
 Built-in regridding schemes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The schemes used for the interpolation and extrapolation operations needed by
-the horizontal regridding functionality directly map to their corresponding
-implementations in :mod:`iris`:
-
-* ``linear``: Linear interpolation without extrapolation, i.e., extrapolation
-  points will be masked even if the source data is not a masked array (uses
-  ``Linear(extrapolation_mode='mask')``, see :obj:`iris.analysis.Linear`).
-* ``linear_extrapolate``: Linear interpolation with extrapolation, i.e.,
-  extrapolation points will be calculated by extending the gradient of the
-  closest two points (uses ``Linear(extrapolation_mode='extrapolate')``, see
-  :obj:`iris.analysis.Linear`).
-* ``nearest``: Nearest-neighbour interpolation without extrapolation, i.e.,
-  extrapolation points will be masked even if the source data is not a masked
-  array (uses ``Nearest(extrapolation_mode='mask')``, see
-  :obj:`iris.analysis.Nearest`).
-* ``area_weighted``: Area-weighted regridding (uses ``AreaWeighted()``, see
-  :obj:`iris.analysis.AreaWeighted`).
-* ``unstructured_nearest``: Nearest-neighbour interpolation for unstructured
-  grids (uses ``UnstructuredNearest()``, see
-  :obj:`iris.analysis.UnstructuredNearest`).
+* ``linear``: Bilinear regridding. For source data on a regular grid, uses
+  :obj:`iris.analysis.Linear` with `extrapolation_mode='mask'`. For source data
+  on an irregular grid, uses
+  :class:`esmvalcore.preprocessor.regrid_schemes.ESMPyLinear`.
+* ``nearest``: Nearest-neighbor regridding. For source data on a regular
+  grid, uses :obj:`iris.analysis.Nearest` with `extrapolation_mode='mask'`. For
+  source data on an irregular grid, uses
+  :class:`esmvalcore.preprocessor.regrid_schemes.ESMPyNearest`. For source data
+  on an unstructured grid, uses
+  :class:`esmvalcore.preprocessor.regrid_schemes.UnstructuredNearest`.
+* ``area_weighted``: First-order (area-weighted) regridding. For source data on
+  a regular grid, uses :obj:`iris.analysis.Area-weighted`. For source data on
+  an irregular grid, uses
+  :class:`esmvalcore.preprocessor.regrid_schemes.ESMPyAreaWeighted`.
 
 See also :func:`esmvalcore.preprocessor.regrid`
 
@@ -966,6 +960,21 @@ tolerance.
           scheme:
             reference: iris.analysis:AreaWeighted
             mdtol: 0.7
+
+Another example is bilinear regridding with extrapolation.
+This can be achieved with the :class:`iris.analysis.Linear` and the ``extrapolation_mode`` keyword.
+Extrapolation points will be calculated by extending the gradient of the
+closest two points.
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 2.5x2.5
+          scheme:
+            reference: iris.analysis:Linear
+            extrapolation_mode: extrapolate
 
 The value of the ``reference`` key has two parts that are separated by a
 ``:`` with no surrounding spaces. The first part is an importable Python
