@@ -911,20 +911,6 @@ Built-in regridding schemes
 
 See also :func:`esmvalcore.preprocessor.regrid`
 
-.. note::
-
-   Controlling the extrapolation mode allows us to avoid situations where
-   extrapolating values makes little physical sense (e.g. extrapolating beyond
-   the last data point).
-
-.. note::
-
-   The regridding mechanism is (at the moment) done with fully realized data in
-   memory, so depending on how fine the target grid is, it may use a rather
-   large amount of memory. Empirically target grids of up to ``0.5x0.5``
-   degrees should not produce any memory-related issues, but be advised that
-   for resolutions of ``< 0.5`` degrees the regridding becomes very slow and
-   will use a lot of memory.
 
 .. _generic regridding schemes:
 
@@ -975,6 +961,12 @@ closest two points.
           scheme:
             reference: iris.analysis:Linear
             extrapolation_mode: extrapolate
+
+.. note::
+
+   Controlling the extrapolation mode allows us to avoid situations where
+   extrapolating values makes little physical sense (e.g. extrapolating beyond
+   the last data point).
 
 The value of the ``reference`` key has two parts that are separated by a
 ``:`` with no surrounding spaces. The first part is an importable Python
