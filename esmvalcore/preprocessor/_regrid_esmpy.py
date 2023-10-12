@@ -11,6 +11,7 @@ except ImportError as exc:
         raise exc
 import iris
 import numpy as np
+from iris.cube import Cube
 
 from ._mapping import get_empty_data, map_slices, ref_to_dims_index
 
@@ -37,6 +38,126 @@ MASK_REGRIDDING_MASK_VALUE = {
 #     'nearest_stod': esmpy.RegridMethod.NEAREST_STOD,
 #     'nearest_dtos': esmpy.RegridMethod.NEAREST_DTOS,
 # }
+
+
+class _ESMPyRegridder:
+
+    def __init__(
+        self,
+        src_cube: Cube,
+        tgt_cube: Cube,
+        method: str = 'linear',
+        mask_threshold: float = 0.99,
+    ):
+        """General ESMPy regridder.
+
+        Parameters
+        ----------
+        src_cube:
+            Cube defining the source grid.
+        tgt_cube:
+            Cube defining the target grid.
+        method:
+            Regridding algorithm.
+        mask_threshold:
+            Threshold used to regrid mask of input cube.
+
+        """
+        self.src_cube = src_cube
+        self.tgt_cube = tgt_cube
+        self.method = method
+        self.mask_threshold = mask_threshold
+
+    def __call__(self, cube: Cube) -> Cube:
+        """Perform regridding.
+
+        Parameters
+        ----------
+        cube:
+            Cube to be regridded.
+
+        Returns
+        -------
+        Cube
+            Regridded cube.
+
+        """
+        src_rep, dst_rep = get_grid_representants(cube, self.tgt_cube)
+        regridder = build_regridder(
+            src_rep, dst_rep, self.method, mask_threshold=self.mask_threshold
+        )
+        result = map_slices(cube, regridder, src_rep, dst_rep)
+        return result
+
+
+class _ESMPyScheme:
+    """General ESMPy regridding scheme."""
+
+    METHOD = ''
+
+    def __init__(self, mask_threshold: float = 0.99):
+        """General irregular regridding scheme.
+
+        This class can be used in :meth:`iris.cube.Cube.regrid`.
+
+        Note
+        ----
+        See `ESMPy <http://www.earthsystemmodeling.org/
+        esmf_releases/non_public/ESMF_7_0_0/esmpy_doc/html/
+        RegridMethod.html#ESMF.api.constants.RegridMethod>`__ for more details
+        on this.
+
+        Parameters
+        ----------
+        mask_threshold:
+            Threshold used to regrid mask of source cube.
+
+        """
+        self.mask_threshold = mask_threshold
+
+    def __repr__(self) -> str:
+        """String representation of class."""
+        return (
+            f'{self.__class__.__name__}(mask_threshold={self.mask_threshold})'
+        )
+
+    def regridder(self, src_cube: Cube, tgt_cube: Cube) -> _ESMPyRegridder:
+        """Get regridder.
+
+        Parameters
+        ----------
+        src_cube:
+            Cube defining the source grid.
+        tgt_cube:
+            Cube defining the target grid.
+
+        Returns
+        -------
+        _ESMPyRegridder
+            Regridder instance.
+
+        """
+        return _ESMPyRegridder(
+            src_cube,
+            tgt_cube,
+            method=self.METHOD,
+            mask_threshold=self.mask_threshold,
+        )
+
+
+class ESMPyAreaWeighted(_ESMPyScheme):
+    """ESMPy nearest-neighbor regridding scheme."""
+    METHOD = 'area_weighted'
+
+
+class ESMPyLinear(_ESMPyScheme):
+    """ESMPy nearest-neighbor regridding scheme."""
+    METHOD = 'linear'
+
+
+class ESMPyNearest(_ESMPyScheme):
+    """ESMPy nearest-neighbor regridding scheme."""
+    METHOD = 'nearest'
 
 
 def cf_2d_bounds_to_esmpy_corners(bounds, circular):

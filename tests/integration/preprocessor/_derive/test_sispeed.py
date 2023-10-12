@@ -4,9 +4,8 @@ import math
 from unittest import mock
 
 import numpy as np
-
-from iris.cube import Cube, CubeList
 from iris.coords import AuxCoord
+from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor._derive.sispeed import DerivedVariable
 
@@ -23,7 +22,9 @@ def get_cube(name, lat=((0.5, 1.5), (2.5, 3.5)), lon=((0.5, 1.5), (2.5, 3.5))):
 
 
 @mock.patch(
-    'esmvalcore.preprocessor._regrid.esmpy_regrid', autospec=True)
+    'esmvalcore.preprocessor._regrid_esmpy._ESMPyRegridder.__call__',
+    autospec=True,
+)
 def test_sispeed_calculation(mock_regrid):
     """Test calculation of `sispeed."""
     siu = get_cube('sea_ice_x_velocity')
@@ -37,7 +38,9 @@ def test_sispeed_calculation(mock_regrid):
 
 
 @mock.patch(
-    'esmvalcore.preprocessor._regrid.esmpy_regrid', autospec=True)
+    'esmvalcore.preprocessor._regrid_esmpy._ESMPyRegridder.__call__',
+    autospec=True,
+)
 def test_sispeed_calculation_coord_differ(mock_regrid):
     """Test calculation of `sispeed."""
     siu = get_cube('sea_ice_x_velocity')
