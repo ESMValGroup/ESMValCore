@@ -1,4 +1,5 @@
 """Fixes for EC-Earth3-Veg model."""
+import cf_units
 import numpy as np
 
 from ..fix import Fix
@@ -6,6 +7,7 @@ from ..fix import Fix
 
 class Siconca(Fix):
     """Fixes for siconca."""
+
     def fix_data(self, cube):
         """Fix data.
 
@@ -22,6 +24,31 @@ class Siconca(Fix):
         """
         cube.data = cube.core_data() * 100.
         return cube
+
+
+class CalendarFix(Fix):
+    """Use the same calendar for all files.
+
+    The original files contain a mix of `gregorian` for the historical
+    experiment and `proleptic_gregorian` for the ssp experiments.
+    """
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            if cube.coords('time'):
+                time_coord = cube.coord('time')
+                time_coord.units = cf_units.Unit(time_coord.units.origin,
+                                                 'proleptic_gregorian')
+        return cubes
+
+
+class Siconc(CalendarFix):
+    """Fixes for siconc variable."""
+
+
+class Tos(CalendarFix):
+    """Fixes for tos."""
 
 
 class Tas(Fix):

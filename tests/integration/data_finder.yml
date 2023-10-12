@@ -7,15 +7,13 @@ get_output_file:
       original_short_name: ta
       dataset: HadGEM2-ES
       project: CMIP5
-      cmor_table: CMIP5
       institute: [INPE, MOHC]
       frequency: mon
       modeling_realm: [atmos]
       mip: Amon
       exp: historical
       ensemble: r1i1p1
-      start_year: 1960
-      end_year: 1980
+      timerange: '1960/1980'
       diagnostic: test_diag
       preprocessor: test_preproc
     preproc_dir: this/is/a/path
@@ -26,6 +24,118 @@ get_output_file:
       exp: [historical, rcp85]
     preproc_dir: /test
     output_file: /test/test_diag/test/CMIP5_HadGEM2-ES_Amon_historical-rcp85_r1i1p1_ta_1960-1980.nc
+
+  # EMAC
+
+  - variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: EMAC
+      project: EMAC
+      frequency: mon
+      mip: Amon
+      exp: amip
+      channel: Amon
+      timerange: '1960/1980'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    preproc_dir: this/is/a/path
+    output_file: this/is/a/path/test_diag/test/EMAC_EMAC_amip_Amon_Amon_tas_1960-1980.nc
+
+  - variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: EMAC
+      project: EMAC
+      frequency: mon
+      mip: Amon
+      exp: piControl
+      channel: CH
+      postproc_flag: -p-mm
+      timerange: '199001/199002'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    preproc_dir: this/is/a/path
+    output_file: this/is/a/path/test_diag/test/EMAC_EMAC_piControl_CH_Amon_tas_199001-199002.nc
+
+  # ICON
+
+  - variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: ICON
+      project: ICON
+      frequency: mon
+      mip: Amon
+      exp: amip
+      var_type: atm_2d_ml
+      timerange: '1960/1980'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    preproc_dir: this/is/a/path
+    output_file: this/is/a/path/test_diag/test/ICON_ICON_amip_atm_2d_ml_Amon_tas_1960-1980.nc
+
+  - variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: ICON
+      project: ICON
+      frequency: mon
+      mip: Amon
+      exp: amip
+      var_type: custom_var_type
+      timerange: '20000101/20000102'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    preproc_dir: this/is/a/path
+    output_file: this/is/a/path/test_diag/test/ICON_ICON_amip_custom_var_type_Amon_tas_20000101-20000102.nc
+
+  # CESM2
+
+  - variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: CESM2
+      project: CESM
+      frequency: mon
+      mip: Amon
+      exp: amip
+      case: f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1
+      gcomp: atm
+      scomp: cam
+      type: h0
+      timerange: '2000/2002'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    preproc_dir: this/is/a/path
+    output_file: this/is/a/path/test_diag/test/CESM_CESM2_f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1_atm_cam_h0_Amon_tas_2000-2002.nc
+
+  - variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: CESM2
+      project: CESM
+      frequency: mon
+      mip: Amon
+      exp: amip
+      case: f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001
+      gcomp: gcomp
+      scomp: scomp
+      type: h1
+      tdir: tseries
+      tperiod: month_1
+      string: TREFHT
+      timerange: '2015/2025'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    preproc_dir: this/is/a/path
+    output_file: this/is/a/path/test_diag/test/CESM_CESM2_f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_gcomp_scomp_h1_Amon_tas_2015-2025.nc
 
 
 get_input_filelist:
@@ -46,19 +156,46 @@ get_input_filelist:
   - drs: default
     variable:
       variable_group: test
-      short_name: tro3
-      original_short_name: o3
+      short_name: ta
+      original_short_name: ta
       dataset: HadGEM2-ES
-      project: CMIP6
-      cmor_table: CMIP6
+      project: CMIP5
       institute: [INPE, MOHC]
       frequency: mon
       modeling_realm: [atmos]
       mip: Amon
       exp: historical
       ensemble: r1i1p1
-      start_year: 1960
-      end_year: 1980
+      timerange: '*'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+    dirs:
+      - ''
+    file_patterns:
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
+    found_files:
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+
+  - drs: default
+    variable:
+      variable_group: test
+      short_name: tro3
+      original_short_name: o3
+      dataset: HadGEM2-ES
+      project: CMIP6
+      institute: [INPE, MOHC]
+      frequency: mon
+      modeling_realm: [atmos]
+      mip: Amon
+      exp: historical
+      ensemble: r1i1p1
+      timerange: '1960/1980'
       diagnostic: test_diag
       preprocessor: test_preproc
       grid: gn
@@ -76,7 +213,7 @@ get_input_filelist:
   - drs: default
     variable:
       <<: *variable
-      end_year: 2060
+      timerange: '1960/2060'
       exp: [historical, rcp85]
     available_files:
       - ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
@@ -95,9 +232,40 @@ get_input_filelist:
 
   - drs: default
     variable:
+      variable_group: test
+      short_name: ta
+      original_short_name: ta
+      dataset: HadGEM2-ES
+      project: CMIP5
+      institute: [INPE, MOHC]
+      frequency: mon
+      modeling_realm: [atmos]
+      mip: Amon
+      ensemble: r1i1p1
+      timerange: '*'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+      exp: [historical, rcp85]
+    available_files:
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1_198413-200512.nc
+      - ta_Amon_HadGEM2-ES_rcp85_r1i1p1_200601-210012.nc
+    dirs:
+      - ''
+    file_patterns:
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
+      - ta_Amon_HadGEM2-ES_rcp85_r1i1p1*.nc
+    found_files:
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1_198413-200512.nc
+      - ta_Amon_HadGEM2-ES_rcp85_r1i1p1_200601-210012.nc
+
+  - drs: default
+    variable:
       <<: *variable
-      start_year: 2010
-      end_year: 2100
+      timerange: '2010/2100'
     available_files:
       - ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
       - ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
@@ -111,16 +279,17 @@ get_input_filelist:
 
   - drs: default
     variable: *variable
-    dirs: null
+    dirs:
+      - ''
     file_patterns:
       - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
     found_files: []
 
+
   - drs: BADC
     variable:
       <<: *variable
-      start_year: 1980
-      end_year: 2002
+      timerange: '1980/2002'
     available_files:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
@@ -129,19 +298,53 @@ get_input_filelist:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
     dirs:
-      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta
+      - INPE/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/*/ta
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/*/ta
     file_patterns:
       - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
     found_files:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
 
+  - drs: BADC
+    variable:
+      <<: *variable
+      timerange: '2000/2005'
+      version: v20110329
+    available_files:
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+    dirs:
+      - INPE/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta
+    file_patterns:
+      - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
+    found_files:
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
 
   - drs: BADC
     variable:
       <<: *variable
-      start_year: 1980
-      end_year: 2002
+      ensemble: '*'
+      timerange: '2000/2005'
+    available_files:
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r2i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r2i1p1_198412-200511.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r2i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r2i1p1_198412-200511.nc
+    dirs:
+      - INPE/HadGEM2-ES/historical/mon/atmos/Amon/*/*/ta
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/*/*/ta
+    file_patterns:
+      - ta_Amon_HadGEM2-ES_historical_**.nc
+    found_files:
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r2i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r2i1p1_198412-200511.nc
+
+  - drs: BADC
+    variable:
+      <<: *variable
+      timerange: '1980/2002'
     available_files:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
@@ -153,18 +356,18 @@ get_input_filelist:
       - link_name: MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/latest
         target: v20120928
     dirs:
-      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/latest/ta
+      - INPE/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/*/ta
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/*/ta
     file_patterns:
       - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
     found_files:
-      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/latest/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
-      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/latest/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
 
   - drs: DKRZ
     variable:
       <<: *variable
-      start_year: 1980
-      end_year: 2002
+      timerange: '1980/2002'
     available_files:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_185912-188411.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_188412-190911.nc
@@ -173,7 +376,8 @@ get_input_filelist:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
     dirs:
-      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110330/ta
+      - INPE/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/*/ta
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/*/ta
     file_patterns:
       - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
     found_files:
@@ -184,8 +388,7 @@ get_input_filelist:
     variable:
       <<: *variable
       exp: [historical, rcp45, rcp85]
-      start_year: 1980
-      end_year: 2100
+      timerange: '1980/2100'
     available_files:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_185912-188411.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_188412-190911.nc
@@ -196,9 +399,12 @@ get_input_filelist:
       - MOHC/HadGEM2-ES/rcp45/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_rcp45_r1i1p1_200601-210012.nc
       - MOHC/HadGEM2-ES/rcp85/mon/atmos/Amon/r1i1p1/v20110330/ta/ta_Amon_HadGEM2-ES_rcp85_r1i1p1_200601-210012.nc
     dirs:
-      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110330/ta
-      - MOHC/HadGEM2-ES/rcp45/mon/atmos/Amon/r1i1p1/v20110330/ta
-      - MOHC/HadGEM2-ES/rcp85/mon/atmos/Amon/r1i1p1/v20110330/ta
+      - INPE/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/*/ta
+      - INPE/HadGEM2-ES/rcp45/mon/atmos/Amon/r1i1p1/*/ta
+      - INPE/HadGEM2-ES/rcp85/mon/atmos/Amon/r1i1p1/*/ta
+      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/*/ta
+      - MOHC/HadGEM2-ES/rcp45/mon/atmos/Amon/r1i1p1/*/ta
+      - MOHC/HadGEM2-ES/rcp85/mon/atmos/Amon/r1i1p1/*/ta
     file_patterns:
       - ta_Amon_HadGEM2-ES_historical_r1i1p1*.nc
       - ta_Amon_HadGEM2-ES_rcp45_r1i1p1*.nc
@@ -212,8 +418,7 @@ get_input_filelist:
   - drs: ETHZ
     variable:
       <<: *variable
-      start_year: 1980
-      end_year: 2002
+      timerange: '1980/2002'
     available_files:
       - historical/Amon/ta/HadGEM2-ES/r1i1p1/ta_Amon_HadGEM2-ES_historical_r1i1p1_185912-188411.nc
       - historical/Amon/ta/HadGEM2-ES/r1i1p1/ta_Amon_HadGEM2-ES_historical_r1i1p1_188412-190911.nc
@@ -232,8 +437,7 @@ get_input_filelist:
   - drs: ETHZ
     variable:
       <<: *variable
-      start_year: 2000
-      end_year: 2100
+      timerange: '2000/2100'
     available_files:
       - historical/Amon/ta/HadGEM2-ES/r1i1p1/ta_Amon_HadGEM2-ES_historical_r1i1p1_185912-188411.nc
       - historical/Amon/ta/HadGEM2-ES/r1i1p1/ta_Amon_HadGEM2-ES_historical_r1i1p1_188412-190911.nc
@@ -259,7 +463,6 @@ get_input_filelist:
       dataset: HadGEM3-GC31-LL
       activity: CMIP
       project: CMIP6
-      cmor_table: CMIP6
       institute: [MOHC, NERC]
       frequency: mon
       modeling_realm: [atmos]
@@ -267,8 +470,7 @@ get_input_filelist:
       exp: historical
       grid: gn
       ensemble: r1i1p1f1
-      start_year: 1999
-      end_year: 2000
+      timerange: '1999/2000'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -277,7 +479,8 @@ get_input_filelist:
       - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/v20200101/ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn_195001-199912.nc
       - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/v20200101/ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn_200001-201412.nc
     dirs:
-      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/v20200101/
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/*/
+      - CMIP/NERC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/*/
     file_patterns:
       - ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn*.nc
     found_files:
@@ -291,15 +494,13 @@ get_input_filelist:
       original_short_name: ta
       dataset: HADGEM1
       project: CMIP3
-      cmor_table: CMIP3
       institute: [UKMO]
       frequency: mon
       modeling_realm: [atmos]
       mip: Amon
       exp: historical
       ensemble: r1i1p1
-      start_year: 1999
-      end_year: 2000
+      timerange: '1999/2000'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -322,14 +523,12 @@ get_input_filelist:
       original_short_name: tas
       dataset: ERA-Interim
       project: OBS
-      cmor_table: CMIP5
       frequency: mon
       mip: Amon
       tier: 3
       type: reanaly
       version: 42
-      start_year: 1999
-      end_year: 2000
+      timerange: '1999/2000'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -353,14 +552,12 @@ get_input_filelist:
       original_short_name: tas
       dataset: ERA-Interim
       project: OBS6
-      cmor_table: CMIP6
       frequency: mon
       mip: Amon
       tier: 3
       type: reanaly
       version: 42
-      start_year: 1999
-      end_year: 2000
+      timerange: '1999/2000'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -377,6 +574,55 @@ get_input_filelist:
       - Tier3/ERA-Interim/OBS6_ERA-Interim_reanaly_42_Amon_tas_197901-199912.nc
       - Tier3/ERA-Interim/OBS6_ERA-Interim_reanaly_42_Amon_tas_200001-201012.nc
 
+  - drs: default
+    variable: &ipsl_variable
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: IPSL-CM6
+      root: thredds/tgcc/store
+      exp: historical
+      project: IPSLCM
+      frequency: mon
+      mip: Amon
+      account: p86caub
+      model: IPSLCM6
+      status: PROD
+      simulation: simulation
+      out: Output
+      freq: MO
+      timerange: '1850/1851'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+      # Next are extra facets, which must be provided explicitly here
+      ipsl_varname: t2m
+      group: histmth
+      dir: ATM
+    available_files:
+      - thredds/tgcc/store/p86caub/IPSLCM6/PROD/historical/simulation/ATM/Output/MO/simulation_18500101_18591231_1M_histmth.nc
+    dirs:
+      - thredds/tgcc/store/p86caub/IPSLCM6/PROD/historical/simulation/ATM/Output/MO
+    file_patterns:
+      - simulation_*_t2m.nc
+      - simulation_*_histmth.nc
+    found_files:
+      - thredds/tgcc/store/p86caub/IPSLCM6/PROD/historical/simulation/ATM/Output/MO/simulation_18500101_18591231_1M_histmth.nc
+
+  - drs: default
+    variable:
+      <<: *ipsl_variable
+      out: Analyse
+      freq: TS_MO
+    available_files:
+      - thredds/tgcc/store/p86caub/IPSLCM6/PROD/historical/simulation/ATM/Analyse/TS_MO/simulation_18500101_20141231_1M_t2m.nc
+    dirs:
+      - thredds/tgcc/store/p86caub/IPSLCM6/PROD/historical/simulation/ATM/Analyse/TS_MO
+    file_patterns:
+      - simulation_*_t2m.nc
+      - simulation_*_histmth.nc
+    found_files:
+      - thredds/tgcc/store/p86caub/IPSLCM6/PROD/historical/simulation/ATM/Analyse/TS_MO/simulation_18500101_20141231_1M_t2m.nc
+
   # Test fx files
 
   - drs: default
@@ -386,13 +632,12 @@ get_input_filelist:
       original_short_name: areacella
       dataset: HadGEM2-ES
       project: CMIP5
-      cmor_table: CMIP5
       institute: [INPE, MOHC]
       frequency: fx
       modeling_realm: [atmos]
       mip: fx
       exp: historical
-      ensemble: r1i1p1
+      ensemble: r0i0p0
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -412,20 +657,20 @@ get_input_filelist:
       original_short_name: sftlf
       dataset: HadGEM2-ES
       project: CMIP5
-      cmor_table: CMIP5
       institute: [INPE, MOHC]
       frequency: fx
       modeling_realm: [atmos]
       mip: fx
       exp: historical
-      ensemble: r1i1p1
+      ensemble: r0i0p0
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
       - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r1i1p1/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r1i1p1.nc
       - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r0i0p0.nc
     dirs:
-      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/sftlf
+      - INPE/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/*/sftlf
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/*/sftlf
     file_patterns:
       - sftlf_fx_HadGEM2-ES_historical_r0i0p0*.nc
     found_files:
@@ -438,19 +683,20 @@ get_input_filelist:
       original_short_name: orog
       dataset: HadGEM2-ES
       project: CMIP5
-      cmor_table: CMIP5
       institute: [INPE, MOHC]
       frequency: fx
       modeling_realm: [atmos]
       mip: fx
       exp: historical
-      ensemble: r1i1p1
+      ensemble: r0i0p0
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
-      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r1i1p1/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r0i0p0.nc
-      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r1i1p1/v20110330/areacella/areacella_fx_HadGEM2-ES_historical_r0i0p0.nc
-    dirs: []
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/sftlf/sftlf_fx_HadGEM2-ES_historical_r0i0p0.nc
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/v20110330/areacella/areacella_fx_HadGEM2-ES_historical_r0i0p0.nc
+    dirs:
+      - INPE/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/*/orog/
+      - MOHC/HadGEM2-ES/historical/fx/atmos/fx/r0i0p0/*/orog/
     file_patterns:
       - orog_fx_HadGEM2-ES_historical_r0i0p0*.nc
     found_files: []
@@ -463,7 +709,6 @@ get_input_filelist:
       dataset: HadGEM3-GC31-LL
       activity: CMIP
       project: CMIP6
-      cmor_table: CMIP6
       institute: [MOHC, NERC]
       frequency: fx
       modeling_realm: [ocean]
@@ -478,7 +723,8 @@ get_input_filelist:
       - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Omon/areacello/gn/v20200101/areacello_Omon-GC31-LL_historical_r1i1p1f1_gn_199901-200012.nc
       - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Ofx/areacello/gn/v20200101/areacello_Ofx_HadGEM3-GC31-LL_historical_r1i1p1f1_gn.nc
     dirs:
-      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Ofx/areacello/gn/v20200101/
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Ofx/areacello/gn/*/
+      - CMIP/NERC/HadGEM3-GC31-LL/historical/r1i1p1f1/Ofx/areacello/gn/*/
     file_patterns:
       - areacello_Ofx_HadGEM3-GC31-LL_historical_r1i1p1f1_gn*.nc
     found_files:
@@ -492,7 +738,6 @@ get_input_filelist:
       dataset: HadGEM3-GC31-LL
       activity: CMIP
       project: CMIP6
-      cmor_table: CMIP6
       institute: [MOHC, NERC]
       frequency: mon
       modeling_realm: [ocean]
@@ -500,8 +745,7 @@ get_input_filelist:
       exp: historical
       grid: gn
       ensemble: r1i1p1f1
-      start_year: 2000
-      end_year: 2000
+      timerange: '2000/2000'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -509,7 +753,8 @@ get_input_filelist:
       - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Omon/areacello/gn/v20200101/areacello_Omon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn_199901-200012.nc
       - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Ofx/areacello/gn/v20200101/areacello_Ofx_HadGEM3-GC31-LL_historical_r1i1p1f1_gn.nc
     dirs:
-      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Omon/areacello/gn/v20200101/
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Omon/areacello/gn/*/
+      - CMIP/NERC/HadGEM3-GC31-LL/historical/r1i1p1f1/Omon/areacello/gn/*/
     file_patterns:
       - areacello_Omon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn*.nc
     found_files:
@@ -523,7 +768,6 @@ get_input_filelist:
       dataset: HadGEM3-GC31-LL
       activity: CMIP
       project: CMIP6
-      cmor_table: CMIP6
       institute: [MOHC, NERC]
       frequency: mon
       modeling_realm: [ocean]
@@ -531,8 +775,7 @@ get_input_filelist:
       exp: historical
       grid: gn
       ensemble: r1i1p1f1
-      start_year: 2000
-      end_year: 2000
+      timerange: '2000/2000'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -540,7 +783,8 @@ get_input_filelist:
       - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Omon/volcello/gn/v20200101/this_is_a_wrong_file.nc
       - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Ofx/volcello/gn/v20200101/volcello_Ofx_HadGEM3-GC31-LL_historical_r1i1p1f1_gn.nc
     dirs:
-      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Omon/volcello/gn/v20200101/
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Omon/volcello/gn/*/
+      - CMIP/NERC/HadGEM3-GC31-LL/historical/r1i1p1f1/Omon/volcello/gn/*/
     file_patterns:
       - volcello_Omon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn*.nc
     found_files: []
@@ -553,7 +797,6 @@ get_input_filelist:
       dataset: HadGEM3-GC31-LL
       activity: CMIP
       project: CMIP6
-      cmor_table: CMIP6
       institute: [MOHC, NERC]
       frequency: fx
       modeling_realm: [ocean]
@@ -561,13 +804,14 @@ get_input_filelist:
       exp: historical
       grid: gn
       ensemble: r1i1p1f1
-      start_year: 2000
-      end_year: 2000
+      timerange: '2000/2000'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
       - CMIP/MOHC/HadGEM3-GC31-LL/historical/r0i0p0/Ofx/volcello/gn/v20200101/volcello_Ofx_HadGEM3-GC31-LL_historical_r0i0p0_gn.nc
-    dirs: []
+    dirs:
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Ofx/volcello/gn/*/
+      - CMIP/NERC/HadGEM3-GC31-LL/historical/r1i1p1f1/Ofx/volcello/gn/*/
     file_patterns:
       - volcello_Ofx_HadGEM3-GC31-LL_historical_r1i1p1f1_gn*.nc
     found_files: []
@@ -579,15 +823,12 @@ get_input_filelist:
       original_short_name: areacella
       dataset: HADGEM1
       project: CMIP3
-      cmor_table: CMIP3
       institute: [UKMO]
       frequency: fx
       modeling_realm: [atmos]
       mip: fx
       exp: historical
       ensemble: r1i1p1
-      start_year: 1999
-      end_year: 2000
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -607,7 +848,6 @@ get_input_filelist:
       original_short_name: basin
       dataset: ERA-Interim
       project: OBS
-      cmor_table: CMIP5
       frequency: fx
       mip: fx
       tier: 3
@@ -633,14 +873,12 @@ get_input_filelist:
       original_short_name: deptho
       dataset: ERA-Interim
       project: OBS6
-      cmor_table: CMIP6
       frequency: mon
       mip: Omon
       tier: 3
       type: reanaly
       version: 42
-      start_year: 1995
-      end_year: 1996
+      timerange: '1995/1996'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -663,14 +901,12 @@ get_input_filelist:
       original_short_name: deptho
       dataset: ERA-Interim
       project: OBS6
-      cmor_table: CMIP6
       frequency: mon
       mip: Omon
       tier: 3
       type: reanaly
       version: 42
-      start_year: 2050
-      end_year: 2100
+      timerange: '2050/2100'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
@@ -684,3 +920,319 @@ get_input_filelist:
     file_patterns:
       - OBS6_ERA-Interim_reanaly_42_Omon_deptho[_.]*nc
     found_files: []
+
+  - drs: default
+    variable:
+      short_name: tas
+      dataset: ERA5
+      project: native6
+      frequency: mon
+      mip: Amon
+      tier: 3
+      type: reanaly
+      timerange: '2000/2010'
+    available_files:
+      - Tier3/ERA5/1/mon/tas/era5_2m_temperature_2000_monthly.nc
+      - Tier3/ERA5/1/mon/tas/era5_2m_temperature_2001_monthly.nc
+    dirs:
+      - Tier3/ERA5/*/mon/tas
+    file_patterns:
+      - '*.nc'
+    found_files:
+      - Tier3/ERA5/1/mon/tas/era5_2m_temperature_2000_monthly.nc
+      - Tier3/ERA5/1/mon/tas/era5_2m_temperature_2001_monthly.nc
+    available_symlinks:
+      - link_name: Tier3/ERA5/latest
+        target: '1'
+
+  # EMAC
+
+  - drs: default
+    variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: EMAC
+      project: EMAC
+      frequency: mon
+      mip: Amon
+      exp: amip
+      channel: Amon
+      postproc_flag: ''
+      timerange: '200002/200003'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - amip/Amon/amip___________200001_Amon.nc
+      - amip/Amon/amip___________200002_Amon.nc
+      - amip/Amon/amip___________200003_Amon.nc
+      - amip/Amon/amip___________200001_Amon-p-mm.nc
+      - amip/Amon/amip___________200002_Amon-p-mm.nc
+      - amip/Amon/amip___________200003_Amon-p-mm.nc
+      - amip/rad/amip___________200001_rad.nc
+      - amip/rad/amip___________200002_rad.nc
+      - amip/rad/amip___________200003_rad.nc
+      - amip/rad/amip___________200001_rad-p-mm.nc
+      - amip/rad/amip___________200002_rad-p-mm.nc
+      - amip/rad/amip___________200003_rad-p-mm.nc
+    dirs:
+      - amip/Amon
+    file_patterns:
+      - amip*Amon.nc
+    found_files:
+      - amip/Amon/amip___________200002_Amon.nc
+      - amip/Amon/amip___________200003_Amon.nc
+
+  - drs: default
+    variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: EMAC
+      project: EMAC
+      frequency: mon
+      mip: Amon
+      exp: amip
+      channel: rad
+      postproc_flag: -p-mm
+      timerange: '200001/200002'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - amip/Amon/amip___________200001_Amon.nc
+      - amip/Amon/amip___________200002_Amon.nc
+      - amip/Amon/amip___________200003_Amon.nc
+      - amip/Amon/amip___________200001_Amon-p-mm.nc
+      - amip/Amon/amip___________200002_Amon-p-mm.nc
+      - amip/Amon/amip___________200003_Amon-p-mm.nc
+      - amip/rad/amip___________200001_rad.nc
+      - amip/rad/amip___________200002_rad.nc
+      - amip/rad/amip___________200003_rad.nc
+      - amip/rad/amip___________200001_rad-p-mm.nc
+      - amip/rad/amip___________200002_rad-p-mm.nc
+      - amip/rad/amip___________200003_rad-p-mm.nc
+    dirs:
+      - amip/rad
+    file_patterns:
+      - amip*rad-p-mm.nc
+    found_files:
+      - amip/rad/amip___________200001_rad-p-mm.nc
+      - amip/rad/amip___________200002_rad-p-mm.nc
+
+  # ICON
+
+  - drs: default
+    variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: ICON
+      project: ICON
+      frequency: mon
+      mip: Amon
+      exp: amip
+      var_type: atm_2d_ml
+      timerange: '200002/200003'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - amip/amip_atm_2d_ml_20000101T000000Z.nc
+      - amip/amip_atm_2d_ml_20000201T000000Z.nc
+      - amip/amip_atm_2d_ml_20000301T000000Z.nc
+      - amip/outdata/amip_atm_2d_ml_20000401T000000Z.nc
+      - amip/outdata/amip_atm_2d_ml_20000501T000000Z.nc
+      - amip/outdata/amip_atm_2d_ml_20000601T000000Z.nc
+    dirs:
+      - amip
+      - amip/outdata
+    file_patterns:
+      - amip_atm_2d_ml*.nc
+    found_files:
+      - amip/amip_atm_2d_ml_20000201T000000Z.nc
+      - amip/amip_atm_2d_ml_20000301T000000Z.nc
+
+  - drs: default
+    variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: ICON
+      project: ICON
+      frequency: mon
+      mip: Amon
+      exp: amip
+      var_type: var
+      timerange: '200003/200005'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - amip/amip_var_20000101T000000Z.nc
+      - amip/amip_var_20000201T000000Z.nc
+      - amip/amip_var_20000301T000000Z.nc
+      - amip/outdata/amip_var_20000401T000000Z.nc
+      - amip/outdata/amip_var_20000501T000000Z.nc
+      - amip/outdata/amip_var_20000601T000000Z.nc
+    dirs:
+      - amip
+      - amip/outdata
+    file_patterns:
+      - amip_var*.nc
+    found_files:
+      - amip/amip_var_20000301T000000Z.nc
+      - amip/outdata/amip_var_20000401T000000Z.nc
+      - amip/outdata/amip_var_20000501T000000Z.nc
+
+  # CESM2
+
+  - drs: default
+    variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: CESM2
+      project: CESM
+      frequency: mon
+      mip: Amon
+      case: f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1
+      gcomp: atm
+      scomp: cam
+      type: h0
+      tdir: ''
+      tperiod: ''
+      string: ''
+      timerange: '2000/2002'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.cam.h0.2000.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.cam.h0.2001.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/atm/hist/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.cam.h0.2002.nc
+    dirs:
+      - ''
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/atm/proc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/atm/hist
+    file_patterns:
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.cam.h0.*nc
+    found_files:
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.cam.h0.2000.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.cam.h0.2001.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/atm/hist/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.cam.h0.2002.nc
+
+  - drs: default
+    variable:
+      variable_group: test
+      short_name: tas
+      original_short_name: tas
+      dataset: CESM2
+      project: CESM
+      frequency: mon
+      mip: Amon
+      case: f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1
+      gcomp: gcomp
+      scomp: scomp
+      type: h1
+      tdir: tseries
+      tperiod: month_1
+      string: TREFHT
+      timerange: '2015/2025'
+      diagnostic: test_diag
+      preprocessor: test_preproc
+    available_files:
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.2000.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.2001.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/hist/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.2002.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/proc/tseries/month_1/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.TREFHT.201001-201912.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/proc/tseries/month_1/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.TREFHT.202001-202912.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/proc/tseries/month_1/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.TREFHT.203001-203912.nc
+    dirs:
+      - ''
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/hist
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/proc/tseries/month_1
+    file_patterns:
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.TREFHT*nc
+    found_files:
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/proc/tseries/month_1/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.TREFHT.201001-201912.nc
+      - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/proc/tseries/month_1/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.TREFHT.202001-202912.nc
+
+  # CORDEX
+
+  - drs: ESGF
+    variable:
+      short_name: tas
+      frequency: mon
+      mip: mon
+      project: CORDEX
+      dataset: RegCM4-6
+      rcm_version: v1
+      driver: ICHEC-EC-EARTH
+      institute: ICTP
+      domain: EUR-11
+      exp: historical
+      ensemble: r12i1p1
+      timerange: '1998/2002'
+      version: 'v20190502'
+    available_files:
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_197001-198012.nc
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_198101-199012.nc
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_199101-200012.nc
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_200101-200512.nc
+    dirs:
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502
+    file_patterns:
+      - tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon*.nc
+    found_files:
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_199101-200012.nc
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_200101-200512.nc
+
+  - drs: BADC
+    variable:
+      short_name: tas
+      frequency: mon
+      mip: mon
+      project: CORDEX
+      dataset: REMO2009
+      rcm_version: v1
+      driver: MPI-M-MPI-ESM-LR
+      institute: MPI-CSC
+      domain: EUR-11
+      exp: rcp26
+      ensemble: r1i1p1
+      timerange: '2008/2010'
+      version: 'v20160525'
+    available_files:
+      - EUR-11/MPI-CSC/MPI-M-MPI-ESM-LR/rcp26/r1i1p1/MPI-CSC-REMO2009/v1/mon/tas/v20160525/tas_EUR-11_MPI-M-MPI-ESM-LR_rcp26_r1i1p1_MPI-CSC-REMO2009_v1_mon_200601-201012.nc
+      - EUR-11/MPI-CSC/MPI-M-MPI-ESM-LR/rcp26/r1i1p1/MPI-CSC-REMO2009/v1/mon/tas/v20160525/tas_EUR-11_MPI-M-MPI-ESM-LR_rcp26_r1i1p1_MPI-CSC-REMO2009_v1_mon_201101-202012.nc
+    dirs:
+      - EUR-11/MPI-CSC/MPI-M-MPI-ESM-LR/rcp26/r1i1p1/MPI-CSC-REMO2009/v1/mon/tas/v20160525
+    file_patterns:
+      - tas_EUR-11_MPI-M-MPI-ESM-LR_rcp26_r1i1p1_MPI-CSC-REMO2009_v1_mon*.nc
+    found_files:
+      - EUR-11/MPI-CSC/MPI-M-MPI-ESM-LR/rcp26/r1i1p1/MPI-CSC-REMO2009/v1/mon/tas/v20160525/tas_EUR-11_MPI-M-MPI-ESM-LR_rcp26_r1i1p1_MPI-CSC-REMO2009_v1_mon_200601-201012.nc
+
+  - drs: DKRZ
+    variable:
+      short_name: tas
+      frequency: mon
+      mip: mon
+      project: CORDEX
+      dataset: RegCM4-6
+      rcm_version: v1
+      driver: ICHEC-EC-EARTH
+      institute: ICTP
+      domain: EUR-11
+      exp: historical
+      ensemble: r12i1p1
+      timerange: '1998/2002'
+      version: 'v20190502'
+    available_files:
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_197001-198012.nc
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_198101-199012.nc
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_199101-200012.nc
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_200101-200512.nc
+    dirs:
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502
+    file_patterns:
+      - tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon*.nc
+    found_files:
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_199101-200012.nc
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_200101-200512.nc

@@ -15,17 +15,19 @@ from esmvalcore.cmor._fixes.cmip6.cesm2_waccm import (
     Cli,
     Clw,
     Fgco2,
+    Omon,
     Siconc,
     Tas,
 )
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2-WACCM', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    assert fix == [Cl(None), GenericFix(None)]
 
 
 def test_cl_fix():
@@ -44,8 +46,10 @@ def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
     mock_get_filepath.return_value = os.path.join(tmp_path,
                                                   'fixed_cesm2_waccm_cl.nc')
     fix = Cl(None)
-    fixed_file = fix.fix_file(str(nc_path), tmp_path)
-    mock_get_filepath.assert_called_once_with(tmp_path, str(nc_path))
+    fixed_file = fix.fix_file(nc_path, tmp_path)
+    mock_get_filepath.assert_called_once_with(
+        tmp_path, nc_path, add_unique_suffix=False
+    )
     fixed_cube = iris.load_cube(fixed_file)
     lev_coord = fixed_cube.coord(var_name='lev')
     a_coord = fixed_cube.coord(var_name='a')
@@ -62,7 +66,7 @@ def test_cl_fix_file(mock_get_filepath, tmp_path, test_data_path):
 def test_get_cli_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2-WACCM', 'Amon', 'cli')
-    assert fix == [Cli(None)]
+    assert fix == [Cli(None), GenericFix(None)]
 
 
 def test_cli_fix():
@@ -73,7 +77,7 @@ def test_cli_fix():
 def test_get_clw_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2-WACCM', 'Amon', 'clw')
-    assert fix == [Clw(None)]
+    assert fix == [Clw(None), GenericFix(None)]
 
 
 def test_clw_fix():
@@ -84,7 +88,7 @@ def test_clw_fix():
 def test_get_fgco2_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2-WACCM', 'Omon', 'fgco2')
-    assert fix == [Fgco2(None)]
+    assert fix == [Fgco2(None), Omon(None), GenericFix(None)]
 
 
 def test_fgco2_fix():
@@ -95,7 +99,7 @@ def test_fgco2_fix():
 def test_get_siconc_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2-WACCM', 'SImon', 'siconc')
-    assert fix == [Siconc(None)]
+    assert fix == [Siconc(None), GenericFix(None)]
 
 
 def test_siconc_fix():
@@ -114,7 +118,7 @@ def tas_cubes():
 def test_get_tas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2-WACCM', 'Amon', 'tas')
-    assert fix == [Tas(None)]
+    assert fix == [Tas(None), GenericFix(None)]
 
 
 def test_tas_fix():

@@ -28,6 +28,7 @@ class RecipeInfo():
         self._maintainers: Optional[Tuple[Contributor, ...]] = None
         self._projects: Optional[Tuple[Project, ...]] = None
         self._references: Optional[Tuple[Reference, ...]] = None
+        self._title: Optional[str] = None
         self._description: Optional[str] = None
 
     def __repr__(self) -> str:
@@ -37,7 +38,7 @@ class RecipeInfo():
     def __str__(self) -> str:
         """Return string representation."""
         bullet = '\n - '
-        string = f'## {self.name}'
+        string = f'## {self.title}'
 
         string += '\n\n'
         string += f'{self.description}'
@@ -71,13 +72,20 @@ class RecipeInfo():
     @classmethod
     def from_yaml(cls, path: str):
         """Return instance of 'RecipeInfo' from a recipe in yaml format."""
-        data = yaml.safe_load(open(path, 'r'))
+        data = yaml.safe_load(Path(path).read_text(encoding='utf-8'))
         return cls(data, filename=path)
 
     @property
     def name(self) -> str:
         """Name of the recipe."""
         return Path(self.filename).stem.replace('_', ' ').capitalize()
+
+    @property
+    def title(self) -> str:
+        """Title of the recipe."""
+        if self._title is None:
+            self._title = self.data['documentation']['title']
+        return self._title
 
     @property
     def description(self) -> str:

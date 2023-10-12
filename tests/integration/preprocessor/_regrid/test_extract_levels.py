@@ -15,6 +15,7 @@ from tests.unit.preprocessor._regrid import _make_cube, _make_vcoord
 
 
 class Test(tests.Test):
+
     def setUp(self):
         """Prepare tests."""
         shape = (3, 2, 2)
@@ -45,24 +46,64 @@ class Test(tests.Test):
         self.assertEqual(result, self.cube)
         self.assertEqual(id(result), id(self.cube))
 
+    def test_levels_almost_match(self):
+        vcoord = self.cube.coord(axis='z', dim_coords=True)
+        levels = np.array(vcoord.points, dtype=float)
+        vcoord.points = vcoord.points + 1.e-7
+        result = extract_levels(self.cube, levels, 'linear')
+        self.assert_array_equal(vcoord.points, levels)
+        self.assertTrue(result is self.cube)
+
     def test_interpolation__linear(self):
         levels = [0.5, 1.5]
         scheme = 'linear'
         result = extract_levels(self.cube, levels, scheme)
-        expected = np.array([[[[2., 3.], [4., 5.]], [[6., 7.], [8., 9.]]],
-                             [[[14., 15.], [16., 17.]], [[18., 19.],
-                                                         [20., 21.]]]])
+        expected = np.ma.array([
+            [
+                [[2., 3.], [4., 5.]],
+                [[6., 7.], [8., 9.]],
+            ],
+            [
+                [[14., 15.], [16., 17.]],
+                [[18., 19.], [20., 21.]],
+            ],
+        ])
         self.assert_array_equal(result.data, expected)
         self.shape[self.z_dim] = len(levels)
         self.assertEqual(result.shape, tuple(self.shape))
+
+    def test_interpolation__linear_lazy(self):
+        levels = [0.5, 1.5]
+        scheme = 'linear'
+        cube = self.cube.copy(self.cube.lazy_data())
+        result = extract_levels(cube, levels, scheme)
+        self.assertTrue(result.has_lazy_data())
+        expected = np.ma.array([
+            [
+                [[2., 3.], [4., 5.]],
+                [[6., 7.], [8., 9.]],
+            ],
+            [
+                [[14., 15.], [16., 17.]],
+                [[18., 19.], [20., 21.]],
+            ],
+        ])
+        self.assert_array_equal(result.data, expected)
 
     def test_interpolation__nearest(self):
         levels = [0.49, 1.51]
         scheme = 'nearest'
         result = extract_levels(self.cube, levels, scheme)
-        expected = np.array([[[[0., 1.], [2., 3.]], [[8., 9.], [10., 11.]]],
-                             [[[12., 13.], [14., 15.]], [[20., 21.],
-                                                         [22., 23.]]]])
+        expected = np.ma.array([
+            [
+                [[0., 1.], [2., 3.]],
+                [[8., 9.], [10., 11.]],
+            ],
+            [
+                [[12., 13.], [14., 15.]],
+                [[20., 21.], [22., 23.]],
+            ],
+        ])
         self.assert_array_equal(result.data, expected)
         self.shape[self.z_dim] = len(levels)
         self.assertEqual(result.shape, tuple(self.shape))
@@ -105,7 +146,7 @@ class Test(tests.Test):
         assert self.cube.coords('air_pressure')
         assert not self.cube.coords('altitude')
         result = extract_levels(self.cube, [1, 2],
-                                'linear_horizontal_extrapolate_vertical',
+                                'linear_extrapolate',
                                 coordinate='altitude')
         assert not result.coords('air_pressure')
         assert result.coords('altitude')
@@ -121,7 +162,7 @@ class Test(tests.Test):
         assert not self.cube.coords('air_pressure')
         assert self.cube.coords('altitude')
         result = extract_levels(self.cube, [1, 2],
-                                'linear_horizontal_extrapolate_vertical',
+                                'linear_extrapolate',
                                 coordinate='air_pressure')
         assert result.coords('air_pressure')
         assert not result.coords('altitude')

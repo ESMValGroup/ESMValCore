@@ -1,6 +1,7 @@
 """Unit tests for :mod:`esmvalcore.preprocessor._weighting`."""
 
 import iris
+import iris.fileformats
 import numpy as np
 import pytest
 from cf_units import Unit
@@ -57,10 +58,10 @@ FRAC_SFTOF = np.array([0.0, 1.0, 0.5, 0.3])
 LAND_FRACTION = [
     (CUBE_3, None, [
         'Ancillary variables land/sea area fraction not found in cube. '
-        'Check fx_file availability.']),
+        'Check ancillary data availability.']),
     (CUBE_4, None, [
         'Ancillary variables land/sea area fraction not found in cube. '
-        'Check fx_file availability.']),
+        'Check ancillary data availability.']),
     (CUBE_ANCILLARY_3, FRAC_SFTLF, []),
     (CUBE_ANCILLARY_4, FRAC_SFTOF, [])
 ]

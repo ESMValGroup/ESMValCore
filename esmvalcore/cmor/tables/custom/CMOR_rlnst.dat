@@ -6,11 +6,11 @@ modeling_realm:    atmos
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
-standard_name:     
+standard_name:
 units:             W m-2
 cell_methods:      time: mean
 cell_measures:     area: areacella
-long_name:         Net Atmospheric Longwave Cooling 
+long_name:         Net Atmospheric Longwave Cooling
 comment:           to surface and outer space
 !----------------------------------
 ! Additional variable information:

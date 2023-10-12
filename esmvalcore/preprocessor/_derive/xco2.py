@@ -25,7 +25,6 @@ class DerivedVariable(DerivedVariableBase):
         """Calculate the column-averaged atmospheric CO2 [1e-6]."""
         co2_cube = cubes.extract_cube(
             Constraint(name='mole_fraction_of_carbon_dioxide_in_air'))
-        print(co2_cube)
         hus_cube = cubes.extract_cube(Constraint(name='specific_humidity'))
         zg_cube = cubes.extract_cube(Constraint(name='geopotential_height'))
         ps_cube = cubes.extract_cube(Constraint(name='surface_air_pressure'))

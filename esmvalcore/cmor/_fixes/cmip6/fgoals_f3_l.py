@@ -3,7 +3,15 @@ import cftime
 import dask.array as da
 import numpy as np
 
+from esmvalcore.iris_helpers import date2num
+
+from ..common import OceanFixGrid
 from ..fix import Fix
+
+Tos = OceanFixGrid
+
+
+Omon = OceanFixGrid
 
 
 class AllVars(Fix):
@@ -24,6 +32,12 @@ class AllVars(Fix):
         """
         for cube in cubes:
             if cube.attributes['table_id'] == 'Amon':
+                for coord in ['latitude', 'longitude']:
+                    cube_coord = cube.coord(coord)
+                    bounds = cube_coord.bounds
+                    if np.any(bounds[:-1, 1] != bounds[1:, 0]):
+                        cube_coord.bounds = None
+                        cube_coord.guess_bounds()
                 time = cube.coord('time')
                 if np.any(time.bounds[:-1, 1] != time.bounds[1:, 0]):
                     times = time.units.num2date(time.points)
@@ -36,13 +50,14 @@ class AllVars(Fix):
                                               1, 1) if c.month < 12 else
                         cftime.DatetimeNoLeap(c.year + 1, 1, 1) for c in times
                     ]
-                    time.bounds = time.units.date2num(
-                        np.stack([starts, ends], -1))
+                    time.bounds = date2num(np.stack([starts, ends], -1),
+                                           time.units)
         return cubes
 
 
-class Sftlf(Fix):
-    """Fixes for sftlf."""
+class Clt(Fix):
+    """Fixes for clt."""
+
     def fix_data(self, cube):
         """Fix data.
 
@@ -61,3 +76,6 @@ class Sftlf(Fix):
         if cube.units == "%" and da.max(cube.core_data()).compute() <= 1.:
             cube.data = cube.core_data() * 100.
         return cube
+
+
+Sftlf = Clt

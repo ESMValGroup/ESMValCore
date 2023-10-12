@@ -1,31 +1,36 @@
 """Tests for shared functions for fixes."""
+import dask.array as da
 import iris
+import iris.coords
+import iris.cube
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris import NameConstraint
+from iris.coords import AuxCoord
 
 from esmvalcore.cmor._fixes.shared import (
+    _map_on_filled,
     add_altitude_from_plev,
     add_aux_coords_from_cubes,
     add_plev_from_altitude,
     add_scalar_depth_coord,
     add_scalar_height_coord,
+    add_scalar_lambda550nm_coord,
     add_scalar_typeland_coord,
     add_scalar_typesea_coord,
     add_scalar_typesi_coord,
-    add_sigma_factory,
     cube_to_aux_coord,
     fix_bounds,
     fix_ocean_depth_coord,
     get_altitude_to_pressure_func,
     get_bounds_cube,
     get_pressure_to_altitude_func,
+    get_time_bounds,
     round_coordinates,
 )
-from esmvalcore.iris_helpers import var_name_constraint
 
 
-@pytest.mark.sequential
 def test_altitude_to_pressure_func():
     """Test altitude to pressure function."""
     func = get_altitude_to_pressure_func()
@@ -40,7 +45,6 @@ def test_altitude_to_pressure_func():
                                [101325.0, 100129.0])
 
 
-@pytest.mark.sequential
 def test_pressure_to_altitude_func():
     """Test pressure to altitude function."""
     func = get_pressure_to_altitude_func()
@@ -69,7 +73,6 @@ TEST_ADD_AUX_COORDS_FROM_CUBES = [
 ]
 
 
-@pytest.mark.sequential
 @pytest.mark.parametrize('coord_dict,output', TEST_ADD_AUX_COORDS_FROM_CUBES)
 def test_add_aux_coords_from_cubes(coord_dict, output):
     """Test extraction of auxiliary coordinates from cubes."""
@@ -91,7 +94,7 @@ def test_add_aux_coords_from_cubes(coord_dict, output):
                 assert cube.coord_dims(coord) == coord_dims
             points = np.full(coord.shape, 0.0)
             assert coord.points == points
-            assert not cubes.extract(var_name_constraint(coord_name))
+            assert not cubes.extract(NameConstraint(var_name=coord_name))
         assert len(cubes) == 5 - len(coord_dict)
         return
     with pytest.raises(ValueError) as err:
@@ -104,23 +107,106 @@ def test_add_aux_coords_from_cubes(coord_dict, output):
         assert "got 2" in str(err.value)
 
 
+def test_map_on_filled_np_empty_array():
+    """Test `_map_on_filled` with empty numpy array."""
+    array_in = np.array([])
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, np.ndarray)
+    assert not np.ma.isMaskedArray(output)
+    np.testing.assert_equal(output, [])
+
+
+def test_map_on_filled_np_no_mask():
+    """Test `_map_on_filled` with non-masked numpy array."""
+    array_in = np.array([1, 2, 3])
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, np.ndarray)
+    assert np.ma.isMaskedArray(output)
+    np.testing.assert_equal(output, [1, 4, 9])
+
+
+def test_map_on_filled_np_mask():
+    """Test `_map_on_filled` with masked numpy array."""
+    array_in = np.ma.masked_equal([999.0, 4.0, 999.0], 999.0)
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, np.ndarray)
+    assert np.ma.isMaskedArray(output)
+    np.testing.assert_allclose(output, [999.0, 16.0, 999.0])
+    np.testing.assert_equal(output.mask, [True, False, True])
+
+
+def test_map_on_filled_np_mask_not_used():
+    """Test `_map_on_filled` with masked numpy array."""
+    array_in = np.ma.masked_equal([2, 4, 5], 10)
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, np.ndarray)
+    assert np.ma.isMaskedArray(output)
+    np.testing.assert_allclose(output, [4, 16, 25])
+    np.testing.assert_equal(output.mask, [False, False, False])
+
+
+def test_map_on_filled_da_empty_array():
+    """Test `_map_on_filled` with empty dask array."""
+    array_in = da.array([])
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, da.core.Array)
+    output = output.compute()
+    assert not np.ma.isMaskedArray(output)
+    np.testing.assert_equal(output, [])
+
+
+def test_map_on_filled_da_no_mask():
+    """Test `_map_on_filled` with non-masked dask array."""
+    array_in = da.arange(3)
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, da.core.Array)
+    output = output.compute()
+    assert np.ma.isMaskedArray(output)
+    np.testing.assert_equal(output, [0, 1, 4])
+
+
+def test_map_on_filled_da_mask():
+    """Test `_map_on_filled` with masked dask array."""
+    array_in = da.ma.masked_equal(da.arange(3) + 3, 3)
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, da.core.Array)
+    output = output.compute()
+    assert np.ma.isMaskedArray(output)
+    np.testing.assert_equal(output, [3, 16, 25])
+    np.testing.assert_equal(output.mask, [True, False, False])
+
+
+def test_map_on_filled_da_mask_not_used():
+    """Test `_map_on_filled` with masked dask array."""
+    array_in = da.ma.masked_equal(da.arange(3), 10)
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, da.core.Array)
+    output = output.compute()
+    assert np.ma.isMaskedArray(output)
+    np.testing.assert_allclose(output, [0, 1, 4])
+    np.testing.assert_equal(output.mask, [False, False, False])
+
+
 ALT_COORD = iris.coords.AuxCoord([0.0], bounds=[[-100.0, 500.0]],
-                                 var_name='alt', long_name='altitude',
-                                 standard_name='altitude', units='m')
-ALT_COORD_NB = iris.coords.AuxCoord([0.0], var_name='alt',
-                                    long_name='altitude',
-                                    standard_name='altitude', units='m')
+                                 standard_name='altitude', units='m',
+                                 var_name='alt', long_name='altitude')
+ALT_COORD_MASKED = ALT_COORD.copy(np.ma.masked_equal([0.0], 0.0))
+ALT_COORD_NB = iris.coords.AuxCoord([0.0], standard_name='altitude', units='m',
+                                    var_name='alt', long_name='altitude')
 ALT_COORD_KM = iris.coords.AuxCoord([0.0], bounds=[[-0.1, 0.5]],
                                     var_name='alt', long_name='altitude',
                                     standard_name='altitude', units='km')
 P_COORD = iris.coords.AuxCoord([101325.0], bounds=[[102532.0, 95460.8]],
-                               var_name='plev', standard_name='air_pressure',
-                               long_name='pressure', units='Pa')
-P_COORD_NB = iris.coords.AuxCoord([101325.0], var_name='plev',
-                                  standard_name='air_pressure',
-                                  long_name='pressure', units='Pa')
+                               standard_name='air_pressure', units='Pa',
+                               var_name='plev', long_name='pressure')
+P_COORD_MASKED = P_COORD.copy(np.ma.masked_equal([0.0], 0.0))
+P_COORD_NB = iris.coords.AuxCoord([101325.0], standard_name='air_pressure',
+                                  units='Pa', var_name='plev',
+                                  long_name='pressure')
 CUBE_ALT = iris.cube.Cube([1.0], var_name='x',
                           aux_coords_and_dims=[(ALT_COORD, 0)])
+CUBE_ALT_MASKED = iris.cube.Cube([1.0], var_name='x',
+                                 aux_coords_and_dims=[(ALT_COORD_MASKED, 0)])
 CUBE_ALT_NB = iris.cube.Cube([1.0], var_name='x',
                              aux_coords_and_dims=[(ALT_COORD_NB, 0)])
 CUBE_ALT_KM = iris.cube.Cube([1.0], var_name='x',
@@ -129,13 +215,13 @@ CUBE_ALT_KM = iris.cube.Cube([1.0], var_name='x',
 
 TEST_ADD_PLEV_FROM_ALTITUDE = [
     (CUBE_ALT.copy(), P_COORD.copy()),
+    (CUBE_ALT_MASKED.copy(), P_COORD_MASKED.copy()),
     (CUBE_ALT_NB.copy(), P_COORD_NB.copy()),
     (CUBE_ALT_KM.copy(), P_COORD.copy()),
     (iris.cube.Cube(0.0), None),
 ]
 
 
-@pytest.mark.sequential
 @pytest.mark.parametrize('cube,output', TEST_ADD_PLEV_FROM_ALTITUDE)
 def test_add_plev_from_altitude(cube, output):
     """Test adding of pressure level coordinate."""
@@ -149,7 +235,24 @@ def test_add_plev_from_altitude(cube, output):
     assert not cube.coords('air_pressure')
     add_plev_from_altitude(cube)
     air_pressure_coord = cube.coord('air_pressure')
-    assert air_pressure_coord == output
+    metadata_list = [
+        'var_name',
+        'standard_name',
+        'long_name',
+        'units',
+        'attributes',
+    ]
+    for attr in metadata_list:
+        assert getattr(air_pressure_coord, attr) == getattr(output, attr)
+    np.testing.assert_allclose(
+        air_pressure_coord.points, output.points, atol=1e-7
+    )
+    if output.bounds is None:
+        assert air_pressure_coord.bounds is None
+    else:
+        np.testing.assert_allclose(
+            air_pressure_coord.bounds, output.bounds, rtol=1e-3
+        )
     assert cube.coords('altitude')
 
 
@@ -159,6 +262,8 @@ P_COORD_HPA = iris.coords.AuxCoord([1013.25], bounds=[[1025.32, 954.60]],
                                    long_name='pressure', units='hPa')
 CUBE_PLEV = iris.cube.Cube([1.0], var_name='x',
                            aux_coords_and_dims=[(P_COORD, 0)])
+CUBE_PLEV_MASKED = iris.cube.Cube([1.0], var_name='x',
+                                  aux_coords_and_dims=[(P_COORD_MASKED, 0)])
 CUBE_PLEV_NB = iris.cube.Cube([1.0], var_name='x',
                               aux_coords_and_dims=[(P_COORD_NB, 0)])
 CUBE_PLEV_HPA = iris.cube.Cube([1.0], var_name='x',
@@ -167,13 +272,13 @@ CUBE_PLEV_HPA = iris.cube.Cube([1.0], var_name='x',
 
 TEST_ADD_ALTITUDE_FROM_PLEV = [
     (CUBE_PLEV.copy(), ALT_COORD.copy()),
+    (CUBE_PLEV_MASKED.copy(), ALT_COORD_MASKED.copy()),
     (CUBE_PLEV_NB.copy(), ALT_COORD_NB.copy()),
     (CUBE_PLEV_HPA.copy(), ALT_COORD.copy()),
     (iris.cube.Cube(0.0), None),
 ]
 
 
-@pytest.mark.sequential
 @pytest.mark.parametrize('cube,output', TEST_ADD_ALTITUDE_FROM_PLEV)
 def test_add_altitude_from_plev(cube, output):
     """Test adding of altitude coordinate."""
@@ -216,9 +321,9 @@ TEST_ADD_SCALAR_COORD = [
     (CUBE_2.copy(), None),
     (CUBE_2.copy(), 100.0),
 ]
+TEST_ADD_SCALAR_COORD_NO_VALS = [CUBE_1.copy(), CUBE_2.copy()]
 
 
-@pytest.mark.sequential
 @pytest.mark.parametrize('cube_in,depth', TEST_ADD_SCALAR_COORD)
 def test_add_scalar_depth_coord(cube_in, depth):
     """Test adding of scalar depth coordinate."""
@@ -246,7 +351,6 @@ def test_add_scalar_depth_coord(cube_in, depth):
     assert coord == depth_coord
 
 
-@pytest.mark.sequential
 @pytest.mark.parametrize('cube_in,height', TEST_ADD_SCALAR_COORD)
 def test_add_scalar_height_coord(cube_in, height):
     """Test adding of scalar height coordinate."""
@@ -274,7 +378,29 @@ def test_add_scalar_height_coord(cube_in, height):
     assert coord == height_coord
 
 
-@pytest.mark.sequential
+@pytest.mark.parametrize('cube_in', TEST_ADD_SCALAR_COORD_NO_VALS)
+def test_add_scalar_lambda550nm_coord(cube_in):
+    """Test adding of scalar lambda550nm coordinate."""
+    cube_in = cube_in.copy()
+    lambda550nm_coord = iris.coords.AuxCoord(
+        550.0,
+        var_name='wavelength',
+        standard_name='radiation_wavelength',
+        long_name='Radiation Wavelength 550 nanometers',
+        units='nm',
+    )
+    with pytest.raises(iris.exceptions.CoordinateNotFoundError):
+        cube_in.coord('radiation_wavelength')
+    cube_out = add_scalar_lambda550nm_coord(cube_in)
+    assert cube_out is cube_in
+    coord = cube_in.coord('radiation_wavelength')
+    assert coord == lambda550nm_coord
+    cube_out_2 = add_scalar_lambda550nm_coord(cube_out)
+    assert cube_out_2 is cube_out
+    coord = cube_in.coord('radiation_wavelength')
+    assert coord == lambda550nm_coord
+
+
 @pytest.mark.parametrize('cube_in,typeland', TEST_ADD_SCALAR_COORD)
 def test_add_scalar_typeland_coord(cube_in, typeland):
     """Test adding of scalar typeland coordinate."""
@@ -301,7 +427,6 @@ def test_add_scalar_typeland_coord(cube_in, typeland):
     assert coord == typeland_coord
 
 
-@pytest.mark.sequential
 @pytest.mark.parametrize('cube_in,typesea', TEST_ADD_SCALAR_COORD)
 def test_add_scalar_typesea_coord(cube_in, typesea):
     """Test adding of scalar typesea coordinate."""
@@ -328,7 +453,6 @@ def test_add_scalar_typesea_coord(cube_in, typesea):
     assert coord == typesea_coord
 
 
-@pytest.mark.sequential
 @pytest.mark.parametrize('cube_in,typesi', TEST_ADD_SCALAR_COORD)
 def test_add_scalar_typesi_coord(cube_in, typesi):
     """Test adding of scalar typesi coordinate."""
@@ -355,44 +479,6 @@ def test_add_scalar_typesi_coord(cube_in, typesi):
     assert coord == typesi_coord
 
 
-PS_COORD = iris.coords.AuxCoord([[[101000.0]]], var_name='ps', units='Pa')
-PTOP_COORD = iris.coords.AuxCoord(1000.0, var_name='ptop', units='Pa')
-LEV_COORD = iris.coords.AuxCoord([0.5], bounds=[[0.2, 0.8]], var_name='lev',
-                                 units='1',
-                                 standard_name='atmosphere_sigma_coordinate')
-P_COORD_HYBRID = iris.coords.AuxCoord([[[[51000.0]]]],
-                                      bounds=[[[[[21000.0, 81000.0]]]]],
-                                      standard_name='air_pressure', units='Pa')
-CUBE_HYBRID = iris.cube.Cube([[[[1.0]]]], var_name='x',
-                             aux_coords_and_dims=[(PS_COORD, (0, 2, 3)),
-                                                  (PTOP_COORD, ()),
-                                                  (LEV_COORD, 1)])
-
-
-TEST_ADD_SIGMA_FACTORY = [
-    (CUBE_HYBRID.copy(), P_COORD_HYBRID.copy()),
-    (iris.cube.Cube(0.0), None),
-]
-
-
-@pytest.mark.sequential
-@pytest.mark.parametrize('cube,output', TEST_ADD_SIGMA_FACTORY)
-def test_add_sigma_factory(cube, output):
-    """Test adding of factory for ``atmosphere_sigma_coordinate``."""
-    if output is None:
-        with pytest.raises(ValueError) as err:
-            add_sigma_factory(cube)
-        msg = ("Cannot add 'air_pressure' coordinate, "
-               "'atmosphere_sigma_coordinate' coordinate not available")
-        assert str(err.value) == msg
-        return
-    assert not cube.coords('air_pressure')
-    add_sigma_factory(cube)
-    air_pressure_coord = cube.coord('air_pressure')
-    assert air_pressure_coord == output
-
-
-@pytest.mark.sequential
 def test_cube_to_aux_coord():
     """Test converting cube to auxiliary coordinate."""
     cube = iris.cube.Cube(
@@ -420,7 +506,6 @@ TEST_GET_BOUNDS_CUBE = [
 ]
 
 
-@pytest.mark.sequential
 @pytest.mark.parametrize('coord_name,output', TEST_GET_BOUNDS_CUBE)
 def test_get_bounds_cube(coord_name, output):
     """Test retrieving of bounds cube from list of cubes."""
@@ -458,7 +543,6 @@ TEST_FIX_BOUNDS = [
 ]
 
 
-@pytest.mark.sequential
 @pytest.mark.parametrize('var_names,output', TEST_FIX_BOUNDS)
 def test_fix_bounds(var_names, output):
     """Test retrieving of bounds cube from list of cubes."""
@@ -497,7 +581,6 @@ TEST_ROUND = [
 ]
 
 
-@pytest.mark.sequential
 @pytest.mark.parametrize('cubes_in,decimals,out', TEST_ROUND)
 def test_round_coordinate(cubes_in, decimals, out):
     """Test rounding of coordinates."""
@@ -512,7 +595,6 @@ def test_round_coordinate(cubes_in, decimals, out):
             assert coords[0] == out[idx]
 
 
-@pytest.mark.sequential
 def test_round_coordinates_single_coord():
     """Test rounding of specified coordinate."""
     coords, bounds = [10.0001], [[9.0001, 11.0001]]
@@ -544,3 +626,39 @@ def test_fix_ocean_depth_coord():
     assert depth_coord.units == 'm'
     assert depth_coord.long_name == 'ocean depth coordinate'
     assert depth_coord.attributes == {'positive': 'down'}
+
+
+@pytest.fixture
+def time_coord():
+    """Time coordinate."""
+    time_coord = AuxCoord(
+        [15, 350],
+        standard_name='time',
+        units='days since 1850-01-01'
+    )
+    return time_coord
+
+
+@pytest.mark.parametrize(
+    'freq,expected_bounds',
+    [
+        ('mon', [[0, 31], [334, 365]]),
+        ('mo', [[0, 31], [334, 365]]),
+        ('yr', [[0, 365], [0, 365]]),
+        ('dec', [[0, 3652], [0, 3652]]),
+        ('day', [[14.5, 15.5], [349.5, 350.5]]),
+        ('6hr', [[14.875, 15.125], [349.875, 350.125]]),
+        ('3hr', [[14.9375, 15.0625], [349.9375, 350.0625]]),
+        ('1hr', [[14.97916666, 15.020833333], [349.97916666, 350.020833333]]),
+    ]
+)
+def test_get_time_bounds(time_coord, freq, expected_bounds):
+    """Test ``get_time_bounds`."""
+    bounds = get_time_bounds(time_coord, freq)
+    np.testing.assert_allclose(bounds, expected_bounds)
+
+
+def test_get_time_bounds_invalid_freq_fail(time_coord):
+    """Test ``get_time_bounds`."""
+    with pytest.raises(NotImplementedError):
+        get_time_bounds(time_coord, 'invalid_freq')

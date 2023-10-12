@@ -4,51 +4,17 @@ from unittest import mock
 import iris
 import numpy as np
 
-from esmvalcore.cmor._fixes.cmip5.fgoals_g2 import Cl as BaseCl
-from esmvalcore.cmor._fixes.cmip6.fgoals_g3 import Cl, Cli, Clw, Siconc
-from esmvalcore.cmor._fixes.cmip6.fgoals_g3 import Tos, Mrsos
+from esmvalcore.cmor._fixes.cmip6.fgoals_g3 import Mrsos, Siconc, Tos
 from esmvalcore.cmor._fixes.common import OceanFixGrid
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
-
-
-def test_get_cl_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'FGOALS-g3', 'Amon', 'cl')
-    assert fix == [Cl(None)]
-
-
-def test_cl_fix():
-    """Test fix for ``cl``."""
-    assert Cl is BaseCl
-
-
-def test_get_cli_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'FGOALS-g3', 'Amon', 'cli')
-    assert fix == [Cli(None)]
-
-
-def test_cli_fix():
-    """Test fix for ``cli``."""
-    assert Cli is BaseCl
-
-
-def test_get_clw_fix():
-    """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'FGOALS-g3', 'Amon', 'clw')
-    assert fix == [Clw(None)]
-
-
-def test_clw_fix():
-    """Test fix for ``clw``."""
-    assert Clw is BaseCl
 
 
 def test_get_tos_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'BCC-CSM2-MR', 'Omon', 'tos')
-    assert fix == [Tos(None)]
+    assert fix == [Tos(None), GenericFix(None)]
 
 
 def test_tos_fix():
@@ -91,7 +57,7 @@ def test_tos_fix_metadata(mock_base_fix_metadata):
 def test_get_siconc_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'BCC-CSM2-MR', 'SImon', 'siconc')
-    assert fix == [Siconc(None)]
+    assert fix == [Siconc(None), GenericFix(None)]
 
 
 def test_siconc_fix():
@@ -102,7 +68,7 @@ def test_siconc_fix():
 def test_get_mrsos_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'FGOALS-g3', 'Lmon', 'mrsos')
-    assert fix == [Mrsos(None)]
+    assert fix == [Mrsos(None), GenericFix(None)]
 
 
 def test_mrsos_fix():

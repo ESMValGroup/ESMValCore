@@ -33,7 +33,18 @@ on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 
 # This is used for linking and such so we link to the thing we're building
 rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
-if rtd_version not in ["latest", "doc"]:  # TODO: add "stable" once we have it
+if on_rtd:
+    # On Readthedocs, the conda environment used for building the documentation
+    # is not `activated`. As a consequence, a few critical environment variables
+    # are not set. Here, we hardcode them instead.
+    # In a normal environment, i.e. a local build of the documentation, the
+    # normal environment activation takes care of this.
+    rtd_project = os.environ.get("READTHEDOCS_PROJECT")
+    rtd_conda_prefix = f"/home/docs/checkouts/readthedocs.org/user_builds/{rtd_project}/conda/{rtd_version}"
+    os.environ["ESMFMKFILE"] = f"{rtd_conda_prefix}/lib/esmf.mk"
+    os.environ["PROJ_DATA"] = f"{rtd_conda_prefix}/share/proj"
+    os.environ["PROJ_NETWORK"] = "OFF"
+if rtd_version not in ["latest", "stable", "doc"]:
     rtd_version = "latest"
 
 # -- General configuration ------------------------------------------------
@@ -45,6 +56,8 @@ if rtd_version not in ["latest", "doc"]:  # TODO: add "stable" once we have it
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'autodocsumm',
+    'nbsphinx',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
@@ -54,7 +67,6 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
-    'autodocsumm',
 ]
 
 autodoc_default_options = {
@@ -65,14 +77,8 @@ autodoc_default_options = {
     'autosummary': True,
 }
 
-autodoc_mock_imports = [
-    'iris',
-    'stratify',
-    'ESMF',
-    'cartopy',
-    'cf_units',
-    'psutil',
-]
+# Show type hints in function signature AND docstring
+autodoc_typehints = 'both'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -141,7 +147,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'pydata_sphinx_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -160,7 +166,7 @@ html_short_title = "ESMValTool {0}".format(release)
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = 'figures/ESMValTool-logo.png'
+html_logo = 'figures/ESMValTool-logo-2.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -252,7 +258,7 @@ latex_elements = {
      \fi}
      \begin{titlepage}
      \begin{center}
-     \includegraphics[width=\textwidth]{figures/ESMValTool-logo.pdf}\par
+     \includegraphics[width=\textwidth]{figures/ESMValTool-logo-2.pdf}\par
      \vspace{2cm}
      {\Huge \bf \sffamily User's and Developer's Guide \par}
      \vspace{1cm}
@@ -382,7 +388,7 @@ epub_copyright = u'ESMValTool Development Team'
 # The format is a list of tuples containing the path and title.
 # epub_pre_files = []
 
-# HTML files shat should be inserted after the pages created by sphinx.
+# HTML files that should be inserted after the pages created by sphinx.
 # The format is a list of tuples containing the path and title.
 # epub_post_files = []
 
@@ -414,15 +420,22 @@ numfig = True
 
 # Configuration for intersphinx
 intersphinx_mapping = {
+    'cf_units': ('https://cf-units.readthedocs.io/en/latest/', None),
+    'cftime': ('https://unidata.github.io/cftime/', None),
     'esmvalcore':
-    (f'https://docs.esmvaltool.org/projects/esmvalcore/en/{rtd_version}/',
+    (f'https://docs.esmvaltool.org/projects/ESMValCore/en/{rtd_version}/',
      None),
     'esmvaltool': (f'https://docs.esmvaltool.org/en/{rtd_version}/', None),
+    'dask': ('https://docs.dask.org/en/stable/', None),
+    'distributed': ('https://distributed.dask.org/en/stable/', None),
     'iris': ('https://scitools-iris.readthedocs.io/en/latest/', None),
-    'matplotlib': ('https://matplotlib.org/', None),
+    'iris-esmf-regrid': ('https://iris-esmf-regrid.readthedocs.io/en/latest',
+                         None),
+    'matplotlib': ('https://matplotlib.org/stable/', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
+    'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/latest/', None),
     'python': ('https://docs.python.org/3/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
 }
 
 # -- Custom Document processing ----------------------------------------------

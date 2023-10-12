@@ -1,13 +1,16 @@
 # ESMValCore package
 
-[![Documentation Status](https://readthedocs.org/projects/esmvaltool/badge/?version=latest)](https://esmvaltool.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/esmvalcore/badge/?version=latest)](https://esmvaltool.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3387139.svg)](https://doi.org/10.5281/zenodo.3387139)
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ESMValGroup?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Chat on Matrix](https://matrix.to/img/matrix-badge.svg)](https://matrix.to/#/#ESMValGroup_Lobby:gitter.im)
 [![CircleCI](https://circleci.com/gh/ESMValGroup/ESMValCore/tree/main.svg?style=svg)](https://circleci.com/gh/ESMValGroup/ESMValCore/tree/main)
 [![codecov](https://codecov.io/gh/ESMValGroup/ESMValCore/branch/main/graph/badge.svg?token=wQnDzguwq6)](https://codecov.io/gh/ESMValGroup/ESMValCore)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/5d496dea9ef64ec68e448a6df5a65783)](https://www.codacy.com/gh/ESMValGroup/ESMValCore?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ESMValGroup/ESMValCore&amp;utm_campaign=Badge_Grade)
 [![Docker Build Status](https://img.shields.io/docker/cloud/build/esmvalgroup/esmvalcore)](https://hub.docker.com/r/esmvalgroup/esmvalcore/)
-[![Anaconda-Server Badge](https://anaconda.org/esmvalgroup/esmvalcore/badges/installer/conda.svg)](https://conda.anaconda.org/esmvalgroup)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/esmvalcore/badges/version.svg)](https://anaconda.org/conda-forge/esmvalcore)
+[![Github Actions Test](https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml/badge.svg)](https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml)
+
+![esmvaltoollogo](https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/doc/figures/ESMValTool-logo-2.png)
 
 ESMValCore: core functionalities for the ESMValTool, a community diagnostic
 and performance metrics tool for routine evaluation of Earth System Models

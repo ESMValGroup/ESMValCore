@@ -1,0 +1,47 @@
+[
+    {
+        "checksum": [
+            "123"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "dataset_id": "cmip5.output1.INM.inmcm4.historical.mon.atmos.Amon.r1i1p1.v20130207|aims3.llnl.gov",
+        "project": [
+            "CMIP5"
+        ],
+        "size": 100,
+        "title": "tas_Amon_inmcm4_historical_r1i1p1_185001-189912.nc",
+        "url": [
+            "http://aims3.llnl.gov/thredds/fileServer/cmip5_css02_data/cmip5/output1/INM/inmcm4/historical/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_inmcm4_historical_r1i1p1_185001-189912.nc|application/netcdf|HTTPServer"
+        ]
+    },
+    {
+        "dataset_id": "cmip5.output1.INM.inmcm4.historical.mon.atmos.Amon.r1i1p1.v20130207|aims3.llnl.gov",
+        "project": [
+            "CMIP5"
+        ],
+        "size": 200,
+        "title": "tas_Amon_inmcm4_historical_r1i1p1_190001-200512.nc",
+        "url": [
+            "http://aims3.llnl.gov/thredds/fileServer/cmip5_css02_data/cmip5/output1/INM/inmcm4/historical/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_inmcm4_historical_r1i1p1_190001-200512.nc|application/netcdf|HTTPServer"
+        ]
+    },
+    {
+        "checksum": [
+            "456"
+        ],
+        "checksum_type": [
+            "MD5"
+        ],
+        "dataset_id": "cmip5.output1.INM.inmcm4.historical.mon.atmos.Amon.r1i1p1.v20130207|esgf2.dkrz.de",
+        "project": [
+            "CMIP5"
+        ],
+        "size": 100,
+        "title": "tas_Amon_inmcm4_historical_r1i1p1_185001-189912.nc",
+        "url": [
+            "http://esgf2.dkrz.de/thredds/fileServer/lta_dataroot/cmip5/output1/INM/inmcm4/historical/mon/atmos/Amon/r1i1p1/v20130207/tas/tas_Amon_inmcm4_historical_r1i1p1_185001-189912.nc|application/netcdf|HTTPServer"
+        ]
+    }
+]

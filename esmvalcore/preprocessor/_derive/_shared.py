@@ -5,16 +5,15 @@ from copy import deepcopy
 
 import iris
 import numpy as np
+from iris import NameConstraint
 from scipy import constants
-
-from esmvalcore.iris_helpers import var_name_constraint
 
 logger = logging.getLogger(__name__)
 
 
 def cloud_area_fraction(cubes, tau_constraint, plev_constraint):
     """Calculate cloud area fraction for different parameters."""
-    clisccp_cube = cubes.extract_cube(var_name_constraint('clisccp'))
+    clisccp_cube = cubes.extract_cube(NameConstraint(var_name='clisccp'))
     new_cube = clisccp_cube
     new_cube = new_cube.extract(tau_constraint & plev_constraint)
     coord_names = [
@@ -97,13 +96,14 @@ def column_average(cube, hus_cube, zg_cube, ps_cube):
              p_layer_widths.data / (mw_air * g_4d_array))
 
     # Number of gas molecules per layer
-    cube = cube * n_dry
+    cube.data = cube.core_data() * n_dry.core_data()
 
     # Column-average
-    x_cube = (
-        cube.collapsed('air_pressure', iris.analysis.SUM) /
-        n_dry.collapsed('air_pressure', iris.analysis.SUM))
-    return x_cube
+    cube = cube.collapsed('air_pressure', iris.analysis.SUM)
+    cube.data = (
+        cube.core_data() /
+        n_dry.collapsed('air_pressure', iris.analysis.SUM).core_data())
+    return cube
 
 
 def pressure_level_widths(cube, ps_cube, top_limit=0.0):

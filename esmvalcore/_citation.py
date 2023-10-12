@@ -7,7 +7,7 @@ from functools import lru_cache
 
 import requests
 
-from ._config import DIAGNOSTICS
+from .config._diagnostics import DIAGNOSTICS
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +101,8 @@ def _save_citation_bibtex(product_name, tags, json_urls):
             entries.add(cmip_citation)
     citation_entries.extend(sorted(entries))
 
-    with open(f'{product_name}_citation.bibtex', 'w') as file:
+    with open(f'{product_name}_citation.bibtex',
+              'w', encoding='utf-8') as file:
         file.write('\n'.join(citation_entries))
 
 
@@ -126,7 +127,8 @@ def _save_citation_info_txt(product_name, info_urls, other_info):
                      for t in sorted(other_info))
 
     if lines:
-        with open(f'{product_name}_data_citation_info.txt', 'w') as file:
+        with open(f'{product_name}_data_citation_info.txt',
+                  'w', encoding='utf-8') as file:
             file.write('\n'.join(lines) + '\n')
 
 
@@ -137,7 +139,7 @@ def _extract_tags(tags):
     For example, a single entry in the list `tags` could be the string
     "['acknow_project', 'acknow_author']".
     """
-    pattern = re.compile(r'\w+')
+    pattern = re.compile(r'[\w-]+')
     return set(pattern.findall(str(tags)))
 
 
@@ -196,7 +198,7 @@ def _collect_bibtex_citation(tag):
     """Collect information from bibtex files."""
     bibtex_file = DIAGNOSTICS.references / f'{tag}.bibtex'
     if bibtex_file.is_file():
-        entry = bibtex_file.read_text()
+        entry = bibtex_file.read_text(encoding='utf-8')
     else:
         entry = ''
         logger.warning(
