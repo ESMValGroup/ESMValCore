@@ -173,14 +173,7 @@ def load(
         # warnings.filterwarnings
         # (see https://github.com/SciTools/cf-units/issues/240)
         with suppress_errors():
-            # GRIB files need to be loaded with iris.load, otherwise we will
-            # get separate (lat, lon) slices for each time step, pressure
-            # level, etc.
-            grib_formats = ('.grib2', '.grib', '.grb2', '.grb', '.gb2', '.gb')
-            if file.suffix in grib_formats:
-                raw_cubes = iris.load(file, callback=_load_callback)
-            else:
-                raw_cubes = iris.load_raw(file, callback=_load_callback)
+            raw_cubes = iris.load_raw(file, callback=_load_callback)
     logger.debug("Done with loading %s", file)
 
     if not raw_cubes:

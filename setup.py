@@ -40,7 +40,6 @@ REQUIREMENTS = {
         'geopy',
         'humanfriendly',
         "importlib_metadata;python_version<'3.10'",
-        'iris-grib',
         'isodate',
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
