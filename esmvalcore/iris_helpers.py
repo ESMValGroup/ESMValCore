@@ -7,7 +7,7 @@ import iris.cube
 import iris.util
 import numpy as np
 from iris.cube import Cube
-from iris.exceptions import CoordinateMultiDimError
+from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 
 from esmvalcore.typing import NetCDFAttr
 
@@ -173,10 +173,11 @@ def has_unstructured_grid(cube: Cube) -> bool:
         ``True`` if input cube has an unstructured grid, else ``False``.
 
     """
-    if not cube.coords('latitude') or not cube.coords('longitude'):
+    try:
+        lat = cube.coord('latitude')
+        lon = cube.coord('longitude')
+    except CoordinateNotFoundError:
         return False
-    lat = cube.coord('latitude')
-    lon = cube.coord('longitude')
     if lat.ndim != 1 or lon.ndim != 1:
         return False
     if cube.coord_dims(lat) != cube.coord_dims(lon):
