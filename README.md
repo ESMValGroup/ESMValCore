@@ -9,7 +9,6 @@
 [![Docker Build Status](https://img.shields.io/docker/cloud/build/esmvalgroup/esmvalcore)](https://hub.docker.com/r/esmvalgroup/esmvalcore/)
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/esmvalcore/badges/version.svg)](https://anaconda.org/conda-forge/esmvalcore)
 [![Github Actions Test](https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml/badge.svg)](https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml)
-[![Github Actions Dashboard](https://api.meercode.io/badge/ESMValGroup/ESMValCore?type=ci-success-rate&branch=main&lastDay=14)](https://meercode.io)
 
 ![esmvaltoollogo](https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/doc/figures/ESMValTool-logo-2.png)
 
