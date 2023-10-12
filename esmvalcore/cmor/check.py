@@ -22,10 +22,10 @@ from esmvalcore.cmor._utils import (
     _get_generic_lev_coord_names,
     _get_new_generic_level_coord,
     _get_simplified_calendar,
-    _is_unstructured_grid,
 )
 from esmvalcore.cmor.table import get_var_info
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+from esmvalcore.iris_helpers import has_unstructured_grid
 
 
 class CheckLevels(IntEnum):
@@ -137,7 +137,7 @@ class CMORCheck():
     @cached_property
     def _unstructured_grid(self) -> bool:
         """Cube uses unstructured grid."""
-        return _is_unstructured_grid(self._cube)
+        return has_unstructured_grid(self._cube)
 
     def check_metadata(self, logger: Optional[logging.Logger] = None) -> Cube:
         """Check the cube metadata.
