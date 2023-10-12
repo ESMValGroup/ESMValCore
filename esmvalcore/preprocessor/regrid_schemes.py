@@ -11,9 +11,7 @@ from esmvalcore.preprocessor._regrid_esmpy import (
     ESMPyLinear,
     ESMPyNearest,
 )
-from esmvalcore.preprocessor._regrid_unstructured import (  # UnstructuredLinear,
-    UnstructuredNearest,
-)
+from esmvalcore.preprocessor._regrid_unstructured import UnstructuredNearest
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +21,6 @@ __all__ = [
     'ESMPyLinear',
     'ESMPyNearest',
     'GenericFuncScheme',
-    # 'UnstructuredLinear',
     'UnstructuredNearest',
 ]
 
@@ -71,7 +68,6 @@ class _GenericRegridder:
 
         """
         return self.func(cube, self.tgt_cube, **self.kwargs)
-
 
 
 class GenericFuncScheme:

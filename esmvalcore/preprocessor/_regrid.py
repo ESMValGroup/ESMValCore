@@ -34,7 +34,7 @@ from esmvalcore.preprocessor._supplementary_vars import (
     add_ancillary_variable,
     add_cell_measure,
 )
-from esmvalcore.preprocessor.regrid_schemes import (  # UnstructuredLinear,
+from esmvalcore.preprocessor.regrid_schemes import (
     ESMPyAreaWeighted,
     ESMPyLinear,
     ESMPyNearest,
@@ -93,7 +93,6 @@ HORIZONTAL_SCHEMES_IRREGULAR = {
 # Supported horizontal regridding schemes for unstructured grids
 HORIZONTAL_SCHEMES_UNSTRUCTURED = {
     'nearest': UnstructuredNearest(),
-    # 'linear': UnstructuredLinear(),
 }
 
 # Supported vertical interpolation schemes.
