@@ -26,7 +26,6 @@ __all__ = [
 
 
 class _GenericRegridder:
-    """Generic function regridder."""
 
     def __init__(
         self,
@@ -71,7 +70,6 @@ class _GenericRegridder:
 
 
 class GenericFuncScheme:
-    """Regridding with a generic function."""
 
     def __init__(self, func: Callable, **kwargs):
         """Regridding with a generic function.

@@ -91,7 +91,6 @@ class _ESMPyRegridder:
 
 
 class _ESMPyScheme:
-    """General ESMPy regridding scheme."""
 
     METHOD = ''
 
@@ -439,37 +438,3 @@ def get_grid_representants(src, dst):
         aux_coords_and_dims=aux_coords_and_dims,
     )
     return src_rep, dst_rep
-
-
-def regrid(src, dst, method='linear'):
-    """
-    Regrid src_cube to the grid defined by dst_cube.
-
-    Regrid the data in src_cube onto the grid defined by dst_cube.
-
-    Parameters
-    ----------
-    src: :class:`iris.cube.Cube`
-        Source data. Must have latitude and longitude coords.
-        These can be 1d or 2d and should have bounds.
-    dst: :class:`iris.cube.Cube`
-        Defines the target grid.
-    method:
-        Selects the regridding method.
-        Can be 'linear', 'area_weighted',
-        or 'nearest'. See ESMPy_.
-
-    Returns
-    -------
-    :class:`iris.cube.Cube`:
-        The regridded cube.
-
-
-    .. _ESMPy: http://www.earthsystemmodeling.org/
-       esmf_releases/non_public/ESMF_7_0_0/esmpy_doc/html/
-       RegridMethod.html#ESMF.api.constants.RegridMethod
-    """
-    src_rep, dst_rep = get_grid_representants(src, dst)
-    regridder = build_regridder(src_rep, dst_rep, method)
-    res = map_slices(src, regridder, src_rep, dst_rep)
-    return res
