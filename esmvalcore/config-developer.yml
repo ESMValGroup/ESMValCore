@@ -110,7 +110,7 @@ obs4MIPs:
     RCAST: '/'
     IPSL: '{realm}/{short_name}/{freq}/{grid}/{institute}/{dataset}/{latest_version}'
   input_file:
-    default: '{short_name}_*.nc'
+    default: '{short_name}_*_{version}_*.nc'
     ESGF: '{short_name}_*.nc'
   output_file: '{project}_{dataset}_{short_name}'
   cmor_type: 'CMIP6'
