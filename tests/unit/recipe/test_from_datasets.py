@@ -8,7 +8,6 @@ from esmvalcore._recipe.from_datasets import (
     _group_ensemble_names,
     _group_identical_facets,
     _move_one_level_up,
-    _SortableDict,
     _to_frozen,
     datasets_to_recipe,
 )
@@ -137,26 +136,23 @@ def test_supplementary_datasets_to_recipe():
     assert datasets_to_recipe([dataset]) == recipe
 
 
-def test_sortable_dict():
-    assert _SortableDict({'a': 1}) < _SortableDict({'a': 2})
-    assert _SortableDict({'a': 1}) < _SortableDict({'a': 1, 'b': 1})
-    assert _SortableDict({'a': 1}) < _SortableDict({'b': 1})
-
-
 def test_datasets_to_recipe_group_ensembles():
     datasets = [
         Dataset(
             short_name='ta',
             ensemble='r1i1p1f1',
+            exp=['historical', 'ssp585'],
             dataset='dataset1',
         ),
         Dataset(
             short_name='ta',
             ensemble='r2i1p1f1',
+            exp=['historical', 'ssp585'],
             dataset='dataset1',
         ),
         Dataset(
             short_name='ta',
+            exp=['historical', 'ssp585'],
             dataset='dataset2',
         ),
     ]
@@ -169,7 +165,8 @@ def test_datasets_to_recipe_group_ensembles():
     diagnostics:
       diagnostic1:
         variables:
-          ta: {}
+          ta:
+            exp: ['historical', 'ssp585']
     """)
     recipe = yaml.safe_load(recipe_txt)
 
