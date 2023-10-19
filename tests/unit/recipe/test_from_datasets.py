@@ -141,18 +141,15 @@ def test_datasets_to_recipe_group_ensembles():
         Dataset(
             short_name='ta',
             ensemble='r1i1p1f1',
-            exp=['historical', 'ssp585'],
             dataset='dataset1',
         ),
         Dataset(
             short_name='ta',
             ensemble='r2i1p1f1',
-            exp=['historical', 'ssp585'],
             dataset='dataset1',
         ),
         Dataset(
             short_name='ta',
-            exp=['historical', 'ssp585'],
             dataset='dataset2',
         ),
     ]
@@ -165,8 +162,7 @@ def test_datasets_to_recipe_group_ensembles():
     diagnostics:
       diagnostic1:
         variables:
-          ta:
-            exp: ['historical', 'ssp585']
+          ta: {}
     """)
     recipe = yaml.safe_load(recipe_txt)
 
@@ -246,6 +242,45 @@ def test_group_ensemble_members():
             'dataset': 'dataset1',
             'ensemble': 'r1i1p1f1',
             'grid': 'gr1',
+        },
+    ]
+
+
+def test_group_ensemble_members_mix_of_versions():
+    datasets = [
+        Dataset(
+            dataset='dataset1',
+            ensemble='r1i1p1f1',
+            exp=['historical', 'ssp585'],
+            version='v1',
+        ),
+        Dataset(
+            dataset='dataset1',
+            ensemble='r2i1p1f1',
+            exp=['historical', 'ssp585'],
+            version='v1',
+        ),
+        Dataset(
+            dataset='dataset1',
+            ensemble='r3i1p1f1',
+            exp=['historical', 'ssp585'],
+            version=['v1', 'v2'],
+        ),
+    ]
+    result = _group_ensemble_members(ds.facets for ds in datasets)
+    print(result)
+    assert result == [
+        {
+            'dataset': 'dataset1',
+            'ensemble': 'r3i1p1f1',
+            'exp': ['historical', 'ssp585'],
+            'version': ['v1', 'v2'],
+        },
+        {
+            'dataset': 'dataset1',
+            'ensemble': 'r(1:2)i1p1f1',
+            'exp': ['historical', 'ssp585'],
+            'version': 'v1',
         },
     ]
 
