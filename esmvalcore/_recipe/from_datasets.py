@@ -168,8 +168,7 @@ def _group_ensemble_members(dataset_facets: Iterable[Facets]) -> list[Facets]:
     """
 
     def grouper(facets):
-        return tuple(
-            (k, str(facets[k])) for k in sorted(facets) if k != 'ensemble')
+        return sorted((f, str(v)) for f, v in facets.items() if f != 'ensemble')
 
     result = []
     dataset_facets = sorted(dataset_facets, key=grouper)
