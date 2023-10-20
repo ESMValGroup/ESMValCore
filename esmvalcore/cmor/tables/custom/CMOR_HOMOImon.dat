@@ -1,0 +1,39 @@
+SOURCE: CMIP6
+!============
+variable_entry:    Dpn2o
+!============
+modeling_realm:    ocnBgchem
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             natm
+cell_methods:      area: time: mean
+cell_measures:     area: areacello
+long_name:         surface_nitrous_oxide_partial_pressure_difference_between_sea_water_and_air
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+!----------------------------------
+!
+
+SOURCE: CMIP6
+!============
+variable_entry:    N2Oflx
+!============
+modeling_realm:    ocnBgchem
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             mol m-2 s-1
+cell_methods:      area: time: mean
+cell_measures:     area: areacello
+long_name:         surface_upward_mole_flux_of_nitrous_oxide
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+!----------------------------------
+!
