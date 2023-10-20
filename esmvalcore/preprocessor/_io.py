@@ -261,10 +261,10 @@ def _check_time_overlaps(cubes):
                     overlapping_cubes[1],
                 )
 
-                start_point = isodate.date_isoformat(
-                    new_dates[0], format=isodate.isostrf.DATE_BAS_COMPLETE)
-                end_point = isodate.date_isoformat(
-                    new_dates[-1], format=isodate.isostrf.DATE_BAS_COMPLETE)
+                start_point = isodate.datetime_isoformat(
+                    new_dates[0], format=isodate.isostrf.DT_BAS_COMPLETE)
+                end_point = isodate.datetime_isoformat(
+                    new_dates[-1], format=isodate.isostrf.DT_BAS_COMPLETE)
                 new_cube = clip_timerange(overlapping_cubes[0],
                                           f'{start_point}/{end_point}')
 
