@@ -7,6 +7,8 @@ Preprocessor
 In this section, each of the preprocessor modules is described,
 roughly following the default order in which preprocessor functions are applied:
 
+* :ref:`Overview`
+* :ref:`stat_preprocs`
 * :ref:`Variable derivation`
 * :ref:`CMOR check and dataset-specific fixes`
 * :ref:`preprocessors_using_supplementary_variables`
@@ -30,6 +32,8 @@ roughly following the default order in which preprocessor functions are applied:
 
 See :ref:`preprocessor_functions` for implementation details and the exact default order.
 
+.. _overview:
+
 Overview
 ========
 
@@ -50,6 +54,136 @@ address specific scientific requirements, but keeping in mind that some
 operations must be necessarily performed in a specific order. This is the case,
 for instance, for multi-model statistics, which required the model to be on a
 common grid and therefore has to be called after the regridding module.
+
+
+.. _stat_preprocs:
+
+Statistical preprocessors
+=========================
+
+Many preprocessors calculate statistics over data.
+Those preprocessors typically end with ``_statistics``, e.g.,
+:func:`~esmvalcore.preprocessor.area_statistics` or
+:func:`~esmvalcore.preprocessor.multi_model_statistics`.
+All these preprocessors support the options `operator`, which directly
+correspond to :class:`iris.analysis.Aggregator` objects used to perform the
+statistical calculations.
+In addition, arbitrary keyword arguments can be passed which are directly
+passed to the corresponding :class:`iris.analysis.Aggregator` object.
+
+.. note::
+    The preprocessors :func:`~esmvalcore.preprocessor.multi_model_statistics`
+    and :func:`~esmvalcore.preprocessor.ensemble_statistics` support the
+    computation of multiple statistics at the same time.
+    In these cases, they are defined by the option `statistics` (instead of
+    `operator`), which takes a list of possible operators.
+    Each operator can be given as single string or as dictionary.
+    In the latter case, the dictionary needs the keyword `operator`
+    (corresponding to the `operator` as above).
+    All other keywords are interpreted as keyword arguments for the given
+    operator.
+
+Some operators support weights for some preprocessors (see following table),
+which are used by default.
+The following operators are currently fully supported; other operators might be
+supported too if proper keyword arguments are specified:
+
+.. _supported_stat_operator:
+
+============================== ================================================= =====================================
+`operator`                     Corresponding :class:`~iris.analysis.Aggregator`  Weighted? [1]_
+============================== ================================================= =====================================
+``gmean``                      :const:`iris.analysis.GMEAN`                      no
+``hmean``                      :const:`iris.analysis.HMEAN`                      no
+``max``                        :const:`iris.analysis.MAX`                        no
+``mean``                       :const:`iris.analysis.MEAN`                       yes
+``median``                     :const:`iris.analysis.MEDIAN` [2]_                no
+``min``                        :const:`iris.analysis.MIN`                        no
+``peak``                       :const:`iris.analysis.PEAK`                       no
+``percentile``                 :const:`iris.analysis.PERCENTILE`                 no
+``rms``                        :const:`iris.analysis.RMS`                        yes
+``std_dev``                    :const:`iris.analysis.STD_DEV`                    no
+``sum``                        :const:`iris.analysis.SUM`                        yes
+``variance``                   :const:`iris.analysis.VARIANCE`                   no
+``wpercentile``                :const:`iris.analysis.WPERCENTILE`                yes
+============================== ================================================= =====================================
+
+.. [1] The following preprocessor support weighted statistics by default:
+    :func:`~esmvalcore.preprocessor.area_statistics`: weighted by grid cell
+    areas (see also :ref:`preprocessors_using_supplementary_variables`);
+    :func:`~esmvalcore.preprocessor.climate_statistics`: weighted by lengths of
+    time intervals; :func:`~esmvalcore.preprocessor.volume_statistics`:
+    weighted by grid cell volumes (see also
+    :ref:`preprocessors_using_supplementary_variables`);
+    :func:`~esmvalcore.preprocessor.axis_statistics`: weighted by
+    corresponding coordinate bounds.
+.. [2] :const:`iris.analysis.MEDIAN` is not lazy, but much faster than
+    :const:`iris.analysis.PERCENTILE`. For a lazy median, use ``percentile``
+    with the keyword argument ``percent: 50``.
+
+Examples
+--------
+
+Calculate the global (weighted) mean:
+
+.. code-block:: yaml
+
+  preprocessors:
+    global_mean:
+      area_statistics:
+        operator: mean
+
+Calculate zonal maximum.
+
+.. code-block:: yaml
+
+  preprocessors:
+    zonal_max:
+      zonal_statistics:
+        operator: max
+
+Calculate the 95% percentile over each month separately (will result in 12 time
+steps, one for January, one for February, etc.):
+
+.. code-block:: yaml
+
+  preprocessors:
+    monthly_percentiles:
+      climate_statistics:
+        period: monthly
+        operator: percentile
+        percent: 95.0
+
+Calculate multi-model median, 5%, and 95% percentiles:
+
+.. code-block:: yaml
+
+  preprocessors:
+    mm_stats:
+      multi_model_statistics:
+        span: overlap
+        statistics:
+          - operator: percentile
+            percent: 5
+          - operator: median
+          - operator: percentile
+            percent: 95
+
+Calculate the global non-weighted root mean square:
+
+.. code-block:: yaml
+
+  preprocessors:
+    global_mean:
+      area_statistics:
+        operator: rms
+        weighted: false
+
+.. warning::
+
+  The disabling of weights by specifying the keyword argument ``weights:
+  False`` needs to be used with great care; from a scientific standpoint, we
+  strongly recommend to **not** use it!
 
 
 .. _Variable derivation:
@@ -463,11 +597,6 @@ This function requires a land or sea area fraction `ancillary variable`_.
 This supplementary variable, either ``sftlf`` or ``sftof``, should be attached
 to the main dataset as described in :ref:`supplementary_variables`.
 
-.. deprecated:: 2.8.0
-  The optional ``fx_variables`` argument specifies the fx variables that the
-  user wishes to input to the function.
-  More details on this are given in :ref:`Fx variables as cell measures or ancillary variables`.
-
 See also :func:`esmvalcore.preprocessor.weighting_landsea_fraction`.
 
 
@@ -514,12 +643,6 @@ but if it is not available it will compute a mask based on
 This supplementary variable, either ``sftlf`` or ``sftof``, can be attached
 to the main dataset as described in :ref:`supplementary_variables`.
 
-.. deprecated:: 2.8.0
-  The optional ``fx_variables`` argument specifies the fx variables that the
-  user wishes to input to the function.
-  More details on this are given in :ref:`Fx variables as cell measures or ancillary variables`.
-
-
 If the corresponding ancillary variable is not available (which is
 the case for some models and almost all observational datasets), the
 preprocessor attempts to mask the data using Natural Earth mask files (that are
@@ -550,11 +673,6 @@ and requires only one argument: ``mask_out``: either ``landsea`` or ``ice``.
 This function requires a land ice area fraction `ancillary variable`_.
 This supplementary variable ``sftgif`` should be attached to the main dataset as
 described in :ref:`supplementary_variables`.
-
-.. deprecated:: 2.8.0
-  The optional ``fx_variables`` argument specifies the fx variables that the
-  user wishes to input to the function.
-  More details on this are given in :ref:`Fx variables as cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.mask_landseaice`.
 
@@ -903,7 +1021,7 @@ statistics. This grouping is performed taking into account the dataset tags
 However, they should typically be computed earlier in the workflow.
 Moreover, because multiple ensemble members of the same model are typically more
 consistent/homogeneous than datasets from different models, the implementation
-is more straigtforward and can benefit from lazy evaluation and more efficient
+is more straightforward and can benefit from lazy evaluation and more efficient
 computation.
 
 The preprocessor takes a list of statistics as input:
@@ -915,10 +1033,22 @@ The preprocessor takes a list of statistics as input:
         ensemble_statistics:
           statistics: [mean, median]
 
+Additional keyword arguments can be given by using a dictionary:
+
+.. code-block:: yaml
+
+    preprocessors:
+      example_preprocessor:
+        ensemble_statistics:
+          statistics:
+            - operator: percentile
+              percent: 20
+            - operator: median
+
 This preprocessor function exposes the iris analysis package, and works with all
 (capitalized) statistics from the :mod:`iris.analysis` package
-that can be executed without additional arguments (e.g. percentiles are not
-supported because it requires additional keywords: percentile.).
+that can be executed without additional arguments.
+See :ref:`stat_preprocs` for more details on supported statistics.
 
 Note that ``ensemble_statistics`` will not return the single model and ensemble files,
 only the requested ensemble statistics results.
@@ -959,11 +1089,12 @@ set-up, initial conditions, forcings and implementation; comparing model data to
 observational data, these biases have a significantly lower statistical impact
 when using a multi-model ensemble. ESMValCore has the capability of computing a
 number of multi-model statistical measures: using the preprocessor module
-``multi_model_statistics`` will enable the user to ask for either a multi-model
-``mean``, ``median``, ``max``, ``min``, ``std_dev``, and / or ``pXX.YY`` with a set
-of argument parameters passed to ``multi_model_statistics``. Percentiles can be
-specified like ``p1.5`` or ``p95``. The decimal point will be replaced by a dash
-in the output file.
+``multi_model_statistics`` will enable the user for example to ask for either a multi-model
+``mean``, ``median``, ``max``, ``min``, ``std_dev``, and / or ``percentile``
+with a set of argument parameters passed to ``multi_model_statistics``.
+See :ref:`stat_preprocs` for more details on supported statistics.
+Percentiles can be specified with additional keyword arguments using the syntax
+``statistics: [{operator: percentile, percent: xx}]``.
 
 Restrictive computation is also available by excluding any set of models that
 the user will not want to include in the statistics (by setting ``exclude:
@@ -1004,6 +1135,14 @@ and `ptop`) are always removed.
           exclude: [NCEP-NCAR-R1]
           keep_input_datasets: false
           ignore_scalar_coords: true
+      multi_model_percentiles_5_95:
+        multi_model_statistics:
+          span: overlap
+          statistics:
+            - operator: percentile
+              percent: 5
+            - operator: percentile
+              percent: 95
 
 Multi-model statistics also supports a ``groupby`` argument. You can group by
 any dataset key (``project``, ``experiment``, etc.) or a combination of keys in a list. You can
@@ -1055,14 +1194,6 @@ Note that those datasets can be excluded if listed in the ``exclude`` option.
 
 See also :func:`esmvalcore.preprocessor.multi_model_statistics`.
 
-.. note::
-
-   The multi-model array operations can be rather memory-intensive (since they
-   are not performed lazily as yet). The Section on :ref:`Memory use` details
-   the memory intake for different run scenarios, but as a thumb rule, for the
-   multi-model preprocessor, the expected maximum memory intake could be
-   approximated as the number of datasets multiplied by the average size in
-   memory for one dataset.
 
 .. _time operations:
 
@@ -1166,11 +1297,14 @@ See also :func:`esmvalcore.preprocessor.extract_month`.
 This function produces statistics at a x-hourly frequency.
 
 Parameters:
-    * every_n_hours: frequency to use to compute the statistics. Must be a divisor of
-      24.
-
-    * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max' and 'sum'. Default is 'mean'
+    * `hour`: Number of hours per period.
+      Must be a divisor of 24, i.e., (1, 2, 3, 4, 6, 8, 12).
+    * `operator`: Operation to apply.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+      Default is `mean`.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.hourly_statistics`.
 
@@ -1182,8 +1316,12 @@ See also :func:`esmvalcore.preprocessor.hourly_statistics`.
 This function produces statistics for each day in the dataset.
 
 Parameters:
-    * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
+    * `operator`: Operation to apply.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+      Default is `mean`.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.daily_statistics`.
 
@@ -1195,8 +1333,12 @@ See also :func:`esmvalcore.preprocessor.daily_statistics`.
 This function produces statistics for each month in the dataset.
 
 Parameters:
-    * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
+    * `operator`: Operation to apply.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+      Default is `mean`.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.monthly_statistics`.
 
@@ -1212,14 +1354,17 @@ looking at the DJF field, but your datasets starts on January 1st, the first
 DJF field will only contain data from January and February.
 
 We recommend using the extract_time to start the dataset from the following
-December and remove such biased initial datapoints.
+December and remove such biased initial data points.
 
 Parameters:
-    * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
-
-    * seasons: seasons to build statistics.
-      Default is '[DJF, MAM, JJA, SON]'
+    * `operator`: Operation to apply.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+      Default is `mean`.
+    * `seasons`: Seasons to build statistics.
+      Default is ``'[DJF, MAM, JJA, SON]'``.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.seasonal_statistics`.
 
@@ -1231,8 +1376,12 @@ See also :func:`esmvalcore.preprocessor.seasonal_statistics`.
 This function produces statistics for each year.
 
 Parameters:
-    * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
+    * `operator`: Operation to apply.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+      Default is `mean`.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.annual_statistics`.
 
@@ -1244,8 +1393,12 @@ See also :func:`esmvalcore.preprocessor.annual_statistics`.
 This function produces statistics for each decade.
 
 Parameters:
-    * operator: operation to apply. Accepted values are 'mean',
-      'median', 'std_dev', 'min', 'max', 'sum' and 'rms'. Default is 'mean'
+    * `operator`: Operation to apply.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+      Default is `mean`.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.decadal_statistics`.
 
@@ -1259,22 +1412,25 @@ This function produces statistics for the whole dataset. It can produce scalars
 statistics.
 
 Parameters:
-    * operator: operation to apply. Accepted values are 'mean', 'median',
-      'std_dev', 'variance', 'min', 'max', 'sum' and 'rms'. Default is 'mean'.
-
-    * period: define the granularity of the statistics: get values for the
+    * `operator`: Operation to apply.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+      Default is `mean`.
+    * `period`: Define the granularity of the statistics: get values for the
       full period, for each month, day of year or hour of day.
-      Available periods: 'full', 'season', 'seasonal', 'monthly', 'month',
-      'mon', 'daily', 'day', 'hourly', 'hour', 'hr'. Default is 'full'
-
-    * seasons: if period 'seasonal' or 'season' allows to set custom seasons.
-      Default is '[DJF, MAM, JJA, SON]'
+      Available periods: `full`, `season`, `seasonal`, `monthly`, `month`,
+      `mon`, `daily`, `day`, `hourly`, `hour`, `hr`. Default is `full`.
+    * `seasons`: if period 'seasonal' or 'season' allows to set custom seasons.
+      Default is ``'[DJF, MAM, JJA, SON]'``.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
 
 .. note::
-   The 'mean', 'sum' and 'rms' operations over the 'full' period are weighted
-   by the time coordinate, i.e., the length of the time intervals.
-   For 'sum', the units of the resulting cube are multiplied by corresponding
-   time units (e.g., days).
+   Some operations are weighted by the time coordinate by default, i.e., the
+   length of the time intervals.
+   See :ref:`stat_preprocs` for more details on supported statistics.
+   For `sum`, the units of the resulting cube are multiplied by the
+   corresponding time units (e.g., days).
 
 Examples:
     * Monthly climatology:
@@ -1282,8 +1438,8 @@ Examples:
         .. code-block:: yaml
 
             climate_statistics:
-                operator: mean
-                period: month
+              operator: mean
+              period: month
 
     * Daily maximum for the full period:
 
@@ -1300,6 +1456,15 @@ Examples:
             climate_statistics:
               operator: min
               period: full
+
+    * 80% percentile for each month:
+
+        .. code-block:: yaml
+
+            climate_statistics:
+              period: month
+              operator: percentile
+              percent: 80
 
 See also :func:`esmvalcore.preprocessor.climate_statistics`.
 
@@ -1717,12 +1882,12 @@ but also mountains or other geographical locations.
    Note that this function's geolocator application needs a
    working internet connection.
 
-Parameters
-  * ``cube``: the input dataset cube to extract a point from.
-  * ``location``: the reference location. Examples: 'mount everest',
-    'romania', 'new york, usa'. Raises ValueError if none supplied.
-  * ``scheme`` : interpolation scheme. ``'linear'`` or ``'nearest'``.
-    There is no default, raises ValueError if none supplied.
+Parameters:
+    * `cube`: the input dataset cube to extract a point from.
+    * `location`: the reference location. Examples: 'mount everest',
+      'romania', 'new york, usa'. Raises ValueError if none supplied.
+    * `scheme` : interpolation scheme. `linear` or `nearest`.
+      There is no default, raises ValueError if none supplied.
 
 See also :func:`esmvalcore.preprocessor.extract_location`.
 
@@ -1731,9 +1896,14 @@ See also :func:`esmvalcore.preprocessor.extract_location`.
 --------------------
 
 The function calculates the zonal statistics by applying an operator
-along the longitude coordinate. This function takes one argument:
+along the longitude coordinate.
 
-* ``operator``: Which operation to apply: mean, std_dev, median, min, max, sum or rms.
+Parameters:
+    * `operator`: Operation to apply.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.zonal_means`.
 
@@ -1745,7 +1915,12 @@ The function calculates the meridional statistics by applying an
 operator along the latitude coordinate. This function takes one
 argument:
 
-* ``operator``: Which operation to apply: mean, std_dev, median, min, max, sum or rms.
+Parameters:
+    * `operator`: Operation to apply.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.meridional_means`.
 
@@ -1760,26 +1935,22 @@ It takes one argument, ``operator``, which is the name of the operation to
 apply.
 
 This function can be used to apply several different operations in the
-horizontal plane: mean, sum, standard deviation, median, variance, minimum,
-maximum and root mean square.
-The operations mean, sum and root mean square are area weighted.
+horizontal plane: for example, mean, sum, standard deviation, median, variance,
+minimum, maximum and root mean square.
+Some operations are grid cell area weighted by default.
 For sums, the units of the resulting cubes are multiplied by m :math:`^2`.
+See :ref:`stat_preprocs` for more details on supported statistics.
 
 Note that this function is applied over the entire dataset.
 If only a specific region, depth layer or time period is required, then those
 regions need to be removed using other preprocessor operations in advance.
 
-This function requires a cell area `cell measure`_, unless the coordinates of
-the input data are regular 1D latitude and longitude coordinates so the cell
-areas can be computed.
+For weighted statistics, this function requires a cell area `cell measure`_,
+unless the coordinates of the input data are regular 1D latitude and longitude
+coordinates so the cell areas can be computed internally.
 The required supplementary variable, either ``areacella`` for atmospheric
 variables or ``areacello`` for ocean variables, can be attached to the main
 dataset as described in :ref:`supplementary_variables`.
-
-.. deprecated:: 2.8.0
-  The optional ``fx_variables`` argument specifies the fx variables that the user
-  wishes to input to the function. More details on this are given in :ref:`Fx
-  variables as cell measures or ancillary variables`.
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
 
@@ -1868,25 +2039,22 @@ See also :func:`esmvalcore.preprocessor.extract_volume`.
 This function calculates the volume-weighted average across three dimensions,
 but maintains the time dimension.
 
-This function takes the argument: ``operator``, which defines the operation to
+This function takes the argument: `operator`, which defines the operation to
 apply over the volume.
+At the moment, only `mean` is supported.
+By default, the `mean` operation is weighted by the grid cell volumes.
 
-This function requires a cell volume `cell measure`_, unless the coordinates of
-the input data are regular 1D latitude and longitude coordinates so the cell
-volumes can be computed.
-The required supplementary variable ``volcello`` can be attached to the main dataset
-as described in :ref:`supplementary_variables`.
+For weighted statistics, this function requires a cell volume `cell measure`_,
+unless the coordinates of the input data are regular 1D latitude and longitude
+coordinates so the cell volumes can be computed internally.
+The required supplementary variable ``volcello`` can be attached to the main
+dataset as described in :ref:`supplementary_variables`.
 
 No depth coordinate is required as this is determined by Iris.
 
-.. deprecated:: 2.8.0
-  The optional ``fx_variables`` argument specifies the fx variables that the
-  user wishes to input to the function.
-  More details on this are given in
-  :ref:`Fx variables as cell measures or ancillary variables`.
-
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 
+.. _axis_statistics:
 
 ``axis_statistics``
 ---------------------
@@ -1895,21 +2063,24 @@ This function operates over a given axis, and removes it from the
 output cube.
 
 Takes arguments:
-  * axis: direction over which the statistics will be performed.
-    Possible values for the axis are 'x', 'y', 'z', 't'.
-  * operator: defines the operation to apply over the axis.
-    Available operator are 'mean', 'median', 'std_dev', 'sum', 'variance',
-    'min', 'max', 'rms'.
+    * `axis`: direction over which the statistics will be performed.
+      Possible values for the axis are `x`, `y`, `z`, `t`.
+    * `operator`: Operation to apply.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
 
 .. note::
    The coordinate associated to the axis over which the operation will
    be performed must be one-dimensional, as multidimensional coordinates
    are not supported in this preprocessor.
 
-   The 'mean', 'sum' and 'rms' operations are weighted by the corresponding
-   coordinate bounds.
-   For 'sum', the units of the resulting cube will be multiplied by
+   Some operations are weighted by the corresponding coordinate bounds by
+   default.
+   For sums, the units of the resulting cubes are multiplied by the
    corresponding coordinate units.
+   See :ref:`stat_preprocs` for more details on supported statistics.
 
 See also :func:`esmvalcore.preprocessor.axis_statistics`.
 
@@ -2054,13 +2225,14 @@ One can calculate rolling window statistics using the
 preprocessor function ``rolling_window_statistics``.
 This function takes three parameters:
 
-* ``coordinate``: coordinate over which the rolling-window statistics is
-  calculated.
-
-* ``operator``: operation to apply. Accepted values are 'mean', 'median',
-  'std_dev', 'min', 'max' and 'sum'.
-
-* ``window_length``: size of the rolling window to use (number of points).
+    * `coordinate`: Coordinate over which the rolling-window statistics is
+      calculated.
+    * `operator`: Operation to apply.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+    * `window_length`: size of the rolling window to use (number of points).
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
 
 This example applied on daily precipitation data calculates two-day rolling
 precipitation sum.

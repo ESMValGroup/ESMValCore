@@ -78,7 +78,9 @@ or
 This feature is available for projects that are hosted on the ESGF, i.e.
 CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
 
-To control the strictness of the CMOR checker, use the flag ``--check_level``:
+To control the strictness of the CMOR checker and the checks during concatenation
+on auxiliary coordinates, supplementary variables, and derived coordinates, 
+use the flag ``--check_level``:
 
 .. code:: bash
 
@@ -86,10 +88,10 @@ To control the strictness of the CMOR checker, use the flag ``--check_level``:
 
 Possible values are:
 
-  - `ignore`: all errors will be reported as warnings
-  - `relaxed`: only fail if there are critical errors
-  - `default`: fail if there are any errors
-  - `strict`: fail if there are any warnings
+  - `ignore`: all errors will be reported as warnings. Concatenation will be performed without checks.
+  - `relaxed`: only fail if there are critical errors. Concatenation will be performed without checks.
+  - `default`: fail if there are any errors.
+  - `strict`: fail if there are any warnings.
 
 To re-use pre-processed files from a previous run of the same recipe, you can
 use

@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pytest
 import yaml
 
 from esmvalcore.cmor.table import CMOR_TABLES
@@ -16,6 +17,14 @@ CUSTOM_CFG_DEVELOPER = {
         'cmor_type': 'CMIP6',
     },
 }
+
+
+def test_read_cmor_tables_raiser():
+    """Test func raiser."""
+    cfg_file = {"cow": "moo"}
+    with pytest.raises(TypeError) as exc:
+        read_cmor_tables(cfg_file)
+        assert "cow" in str(exc)
 
 
 def test_read_cmor_tables():

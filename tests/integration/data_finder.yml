@@ -1153,3 +1153,86 @@ get_input_filelist:
     found_files:
       - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/proc/tseries/month_1/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.TREFHT.201001-201912.nc
       - f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1/gcomp/proc/tseries/month_1/f.e21.FHIST_BGC.f09_f09_mg17.CMIP6-AMIP.001_cosp1.scomp.h1.TREFHT.202001-202912.nc
+
+  # CORDEX
+
+  - drs: ESGF
+    variable:
+      short_name: tas
+      frequency: mon
+      mip: mon
+      project: CORDEX
+      dataset: RegCM4-6
+      rcm_version: v1
+      driver: ICHEC-EC-EARTH
+      institute: ICTP
+      domain: EUR-11
+      exp: historical
+      ensemble: r12i1p1
+      timerange: '1998/2002'
+      version: 'v20190502'
+    available_files:
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_197001-198012.nc
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_198101-199012.nc
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_199101-200012.nc
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_200101-200512.nc
+    dirs:
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502
+    file_patterns:
+      - tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon*.nc
+    found_files:
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_199101-200012.nc
+      - cordex/output/EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_200101-200512.nc
+
+  - drs: BADC
+    variable:
+      short_name: tas
+      frequency: mon
+      mip: mon
+      project: CORDEX
+      dataset: REMO2009
+      rcm_version: v1
+      driver: MPI-M-MPI-ESM-LR
+      institute: MPI-CSC
+      domain: EUR-11
+      exp: rcp26
+      ensemble: r1i1p1
+      timerange: '2008/2010'
+      version: 'v20160525'
+    available_files:
+      - EUR-11/MPI-CSC/MPI-M-MPI-ESM-LR/rcp26/r1i1p1/MPI-CSC-REMO2009/v1/mon/tas/v20160525/tas_EUR-11_MPI-M-MPI-ESM-LR_rcp26_r1i1p1_MPI-CSC-REMO2009_v1_mon_200601-201012.nc
+      - EUR-11/MPI-CSC/MPI-M-MPI-ESM-LR/rcp26/r1i1p1/MPI-CSC-REMO2009/v1/mon/tas/v20160525/tas_EUR-11_MPI-M-MPI-ESM-LR_rcp26_r1i1p1_MPI-CSC-REMO2009_v1_mon_201101-202012.nc
+    dirs:
+      - EUR-11/MPI-CSC/MPI-M-MPI-ESM-LR/rcp26/r1i1p1/MPI-CSC-REMO2009/v1/mon/tas/v20160525
+    file_patterns:
+      - tas_EUR-11_MPI-M-MPI-ESM-LR_rcp26_r1i1p1_MPI-CSC-REMO2009_v1_mon*.nc
+    found_files:
+      - EUR-11/MPI-CSC/MPI-M-MPI-ESM-LR/rcp26/r1i1p1/MPI-CSC-REMO2009/v1/mon/tas/v20160525/tas_EUR-11_MPI-M-MPI-ESM-LR_rcp26_r1i1p1_MPI-CSC-REMO2009_v1_mon_200601-201012.nc
+
+  - drs: DKRZ
+    variable:
+      short_name: tas
+      frequency: mon
+      mip: mon
+      project: CORDEX
+      dataset: RegCM4-6
+      rcm_version: v1
+      driver: ICHEC-EC-EARTH
+      institute: ICTP
+      domain: EUR-11
+      exp: historical
+      ensemble: r12i1p1
+      timerange: '1998/2002'
+      version: 'v20190502'
+    available_files:
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_197001-198012.nc
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_198101-199012.nc
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_199101-200012.nc
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_200101-200512.nc
+    dirs:
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502
+    file_patterns:
+      - tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon*.nc
+    found_files:
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_199101-200012.nc
+      - EUR-11/ICTP/ICHEC-EC-EARTH/historical/r12i1p1/ICTP-RegCM4-6/v1/mon/tas/v20190502/tas_EUR-11_ICHEC-EC-EARTH_historical_r12i1p1_ICTP-RegCM4-6_v1_mon_200101-200512.nc

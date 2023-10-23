@@ -10,7 +10,7 @@ from esmvalcore.cmor._fixes.cmip5.bnu_esm import Ch4
 from esmvalcore.cmor._fixes.cmip5.canesm2 import FgCo2
 from esmvalcore.cmor._fixes.cmip5.cesm1_bgc import Gpp
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Omon, Tos
-from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.cnrm_aladin63 import (
+from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.aladin63 import (
     Tas,
 )
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import AllVars
@@ -35,7 +35,7 @@ def test_get_fix_case_insensitive():
 def test_get_fix_cordex():
     fix = Fix.get_fixes(
         'CORDEX',
-        'CNRM-ALADIN63',
+        'ALADIN63',
         'Amon',
         'tas',
         extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'},
@@ -46,7 +46,7 @@ def test_get_fix_cordex():
 def test_get_grid_fix_cordex():
     fix = Fix.get_fixes(
         'CORDEX',
-        'CNRM-ALADIN53',
+        'ALADIN53',
         'Amon',
         'tas',
         extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'},
