@@ -999,6 +999,44 @@ def uas_cmor_e1hr():
     return iris.cube.CubeList([cube])
 
 
+def vas_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='10m_v_component_of_wind',
+        var_name='v10',
+        units='m s-1',
+        dim_coords_and_dims=[
+            (time, 0),
+            (_era5_latitude(), 1),
+            (_era5_longitude(), 2),
+        ],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def vas_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'vas')
+    time = _cmor_time('E1hr')
+    data = _cmor_data('E1hr')
+    cube = iris.cube.Cube(
+        data.astype('float32'),
+        long_name=vardef.long_name,
+        var_name=vardef.short_name,
+        standard_name=vardef.standard_name,
+        units=Unit(vardef.units),
+        dim_coords_and_dims=[
+            (time, 0),
+            (_cmor_latitude(), 1),
+            (_cmor_longitude(), 2),
+        ],
+        attributes={'comment': COMMENT},
+    )
+    cube.add_aux_coord(_cmor_aux_height(10.))
+    return iris.cube.CubeList([cube])
+
+
 VARIABLES = [
     pytest.param(a, b, c, d, id=c + '_' + d) for (a, b, c, d) in [
         (cl_era5_monthly(), cl_cmor_amon(), 'cl', 'Amon'),
@@ -1022,6 +1060,7 @@ VARIABLES = [
         (tasmax_era5_hourly(), tasmax_cmor_e1hr(), 'tasmax', 'E1hr'),
         (tasmin_era5_hourly(), tasmin_cmor_e1hr(), 'tasmin', 'E1hr'),
         (uas_era5_hourly(), uas_cmor_e1hr(), 'uas', 'E1hr'),
+        (vas_era5_hourly(), vas_cmor_e1hr(), 'vas', 'E1hr'),
         (zg_era5_monthly(), zg_cmor_amon(), 'zg', 'Amon'),
     ]
 ]

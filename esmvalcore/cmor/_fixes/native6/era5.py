@@ -334,6 +334,26 @@ class Tasmin(Fix):
         return cubes
 
 
+class Uas(Fix):
+    """Fixes for uas."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            fix_hourly_time_coordinate(cube)
+        return cubes
+
+
+class Vas(Fix):
+    """Fixes for vas."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        for cube in cubes:
+            fix_hourly_time_coordinate(cube)
+        return cubes
+
+
 class Zg(Fix):
     """Fixes for Geopotential."""
 
