@@ -1086,4 +1086,13 @@ def test_cmorization(era5_cubes, cmor_cubes, var, mip):
                 coord.bounds = np.round(coord.bounds, decimals=7)
     print('cmor_cube:', cmor_cube)
     print('fixed_cube:', fixed_cube)
+    print('cmor_cube data:', cmor_cube.data)
+    print('fixed_cube data:', fixed_cube.data)
+    print("cmor_cube coords:")
+    for coord in cmor_cube.coords():
+        print(coord)
+    print("\n")
+    print("fixed_cube coords:")
+    for coord in fixed_cube.coords():
+        print(coord)
     assert fixed_cube == cmor_cube
