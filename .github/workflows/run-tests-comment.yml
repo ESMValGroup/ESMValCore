@@ -15,7 +15,8 @@ defaults:
 jobs:
   linux:
     # this detects if comment is on a PR and if it contains the trigger word "runGAtests"
-    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'runGAtests') }}
+    # if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'runGAtests') }}
+    if: ${{ contains(github.event.comment.body, 'runGAtests') }}
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
