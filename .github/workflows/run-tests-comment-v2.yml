@@ -5,6 +5,9 @@ name: Run Github Actions via PR Comment
 on:
   issue_comment:
     types: [created]
+  push:
+    branches:
+      - test_GA-runs_from_comment
 
 # Required shell entrypoint to have properly configured bash shell
 defaults:
