@@ -550,18 +550,6 @@ and the result of the tests ran by GitHub Actions can be viewed on the
 of the repository (to learn more about the Github-hosted runners, please have a look
 the `documentation <https://docs.github.com/en/actions/using-github-hosted-runners>`__).
 
-When opening a pull request, if you wish to run the Github Actions `Test <https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml>`__ test,
-you can activate it via a simple comment containing the @runGAtests tag
-(e.g. "@runGAtests" or "@runGAtests please run" - in effect, tagging the runGAtests
-bot that will start the test automatically). This is useful
-to check if a certain feature that you included in the Pull Request, and can be tested
-for via the test suite, works across the supported Python versions, and both on Linux and OSX.
-The test is currently deactivated, so before triggering the test via comment, make sure you activate
-the test in the main `Actions page <https://github.com/ESMValGroup/ESMValCore/actions>`__
-(click on Test via PR Comment and activate it); also and be sure to deactivate it afterwards
-(the Github API still needs a bit more development, and currently it triggers
-the test for **each comment** irrespective of PR, that's why this needs to be activated/decativated).
-
 The configuration of the tests run by CircleCI can be found in the directory
 `.circleci <https://github.com/ESMValGroup/ESMValCore/blob/main/.circleci>`__,
 while the configuration of the tests run by GitHub Actions can be found in the
