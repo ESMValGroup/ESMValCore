@@ -1,7 +1,7 @@
 # this workflow was tuned using this resource
 # https://dev.to/zirkelc/trigger-github-workflow-for-comment-on-pull-request-45l2
 
-name: Test via PR Comment V2
+name: Run Github Actions via PR Comment
 on:
   issue_comment:
     types: [created]
@@ -14,6 +14,7 @@ defaults:
 jobs:
   linux:
     # this detects if comment is on a PR and if it contains the trigger word "runGAtests"
+    # outcome if False: workflow is Skipped, but still shows up in UI list
     if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'runGAtests') }}
     runs-on: "ubuntu-latest"
     strategy:
@@ -23,23 +24,19 @@ jobs:
     name: Linux Python ${{ matrix.python-version }}
     steps:
       # this bit detects what branch the tests should run on
-      # without it tests run amok on all PRs
+      # without it, tests run amok on all PRs, with one single invocation (baad!)
       - name: Get correct PR branch
         uses: xt0rted/pull-request-comment-branch@v1
         id: comment-branch
-      # this bit will make the test appear on the PR webpage
-      #- name: Set latest commit status as pending
-      #  uses: myrotvorets/set-commit-status-action@master
-      #  with:
-      #    sha: ${{ steps.comment-branch.outputs.head_sha }}
-      #    token: ${{ secrets.GITHUB_TOKEN }}
-      #    status: pending
       - name: Checkout correct PR branch
         uses: actions/checkout@v3
         with:
           ref: ${{ steps.comment-branch.outputs.head_ref }}
           fetch-depth: 0
-      - uses: conda-incubator/setup-miniconda@v2
+      - name: Check git branch
+        run: git status
+      - name: Setup Miniconda
+        uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: esmvalcore
           environment-file: environment.yml
