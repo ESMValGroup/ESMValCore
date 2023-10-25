@@ -1,7 +1,7 @@
 # this workflow was tuned using this resource
 # https://dev.to/zirkelc/trigger-github-workflow-for-comment-on-pull-request-45l2
 
-name: Test via PR Comment v2
+name: Test via PR Comment V2
 on:
   issue_comment:
     types: [created]
