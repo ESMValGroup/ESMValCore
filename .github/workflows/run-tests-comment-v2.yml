@@ -1,10 +1,10 @@
 # this workflow was tuned using this resource
 # https://dev.to/zirkelc/trigger-github-workflow-for-comment-on-pull-request-45l2
 
-name: Run Github Actions via PR Comment
+name: Run Github Actions via PR Comment (testing)
 on:
-  issue_comment:
-    types: [created]
+  #issue_comment:
+  #  types: [created]
   push:
     branches:
       - test_GA-runs_from_comment
@@ -18,7 +18,7 @@ jobs:
   linux:
     # this detects if comment is on a PR and if it contains the trigger word "runGAtests"
     # outcome if False: workflow is Skipped, but still shows up in UI list
-    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'runGAtests') }}
+    # if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, 'runGAtests') }}
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
