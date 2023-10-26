@@ -6,7 +6,6 @@ import inspect
 import logging
 import tempfile
 from collections.abc import Sequence
-from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -25,8 +24,8 @@ from esmvalcore.cmor._utils import (
     _get_single_cube,
     _is_unstructured_grid,
 )
+from esmvalcore.cmor.fixes import get_time_bounds
 from esmvalcore.cmor.table import get_var_info
-from esmvalcore.iris_helpers import date2num
 
 if TYPE_CHECKING:
     from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
@@ -323,88 +322,6 @@ class Fix:
         else:
             output_dir.mkdir(parents=True, exist_ok=True)
         return output_dir / Path(filepath).name
-
-
-def get_next_month(month: int, year: int) -> tuple[int, int]:
-    """Get next month and year.
-
-    Parameters
-    ----------
-    month:
-        Current month.
-    year:
-        Current year.
-
-    Returns
-    -------
-    tuple[int, int]
-        Next month and next year.
-
-    """
-    if month != 12:
-        return month + 1, year
-    return 1, year + 1
-
-
-def get_time_bounds(time: Coord, freq: str):
-    """Get bounds for time coordinate.
-
-    Parameters
-    ----------
-    time:
-        Time coordinate.
-    freq:
-        Frequency.
-
-    Returns
-    -------
-    np.ndarray
-        Time bounds
-
-    Raises
-    ------
-    NotImplementedError
-        Non-supported frequency is given.
-
-    """
-    bounds = []
-    dates = time.units.num2date(time.points)
-    for step, date in enumerate(dates):
-        month = date.month
-        year = date.year
-        if freq in ['mon', 'mo']:
-            next_month, next_year = get_next_month(month, year)
-            min_bound = date2num(datetime(year, month, 1, 0, 0),
-                                 time.units, time.dtype)
-            max_bound = date2num(datetime(next_year, next_month, 1, 0, 0),
-                                 time.units, time.dtype)
-        elif freq == 'yr':
-            min_bound = date2num(datetime(year, 1, 1, 0, 0),
-                                 time.units, time.dtype)
-            max_bound = date2num(datetime(year + 1, 1, 1, 0, 0),
-                                 time.units, time.dtype)
-        elif freq == 'dec':
-            min_bound = date2num(datetime(year, 1, 1, 0, 0),
-                                 time.units, time.dtype)
-            max_bound = date2num(datetime(year + 10, 1, 1, 0, 0),
-                                 time.units, time.dtype)
-        else:
-            delta = {
-                'day': 12.0 / 24,
-                '6hr': 3.0 / 24,
-                '3hr': 1.5 / 24,
-                '1hr': 0.5 / 24,
-            }
-            if freq not in delta:
-                raise NotImplementedError(
-                    f"Cannot guess time bounds for frequency '{freq}'"
-                )
-            point = time.points[step]
-            min_bound = point - delta[freq]
-            max_bound = point + delta[freq]
-        bounds.append([min_bound, max_bound])
-
-    return np.array(bounds)
 
 
 class GenericFix(Fix):
