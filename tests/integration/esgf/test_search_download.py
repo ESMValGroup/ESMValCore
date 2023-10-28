@@ -8,96 +8,122 @@ from pyesgf.search.results import FileResult
 
 from esmvalcore.esgf import _search, download, find_files
 
-VARIABLES = [{
-    'dataset': 'cccma_cgcm3_1',
-    'ensemble': 'run1',
-    'exp': 'historical',
-    'frequency': 'mon',
-    'project': 'CMIP3',
-    'short_name': 'tas',
-    'version': 'v1',
-}, {
-    'dataset': 'inmcm4',
-    'ensemble': 'r1i1p1',
-    'exp': ['historical', 'rcp85'],
-    'mip': 'Amon',
-    'project': 'CMIP5',
-    'short_name': 'tas',
-    'version': 'v20130207',
-}, {
-    'dataset': 'FIO-ESM',
-    'ensemble': 'r1i1p1',
-    'exp': 'historical',
-    'mip': 'Amon',
-    'project': 'CMIP5',
-    'short_name': 'tas',
-}, {
-    'dataset': 'HadGEM2-CC',
-    'ensemble': 'r1i1p1',
-    'exp': 'rcp85',
-    'mip': 'Amon',
-    'project': 'CMIP5',
-    'short_name': 'tas',
-    'timerange': '2080/2100',
-}, {
-    'dataset': 'EC-EARTH',
-    'ensemble': 'r1i1p1',
-    'exp': 'historical',
-    'mip': 'Amon',
-    'project': 'CMIP5',
-    'short_name': 'tas',
-    'start_year': 1990,  # test legacy way of specifying timerange
-    'end_year': 1999,
-}, {
-    'dataset': 'AWI-ESM-1-1-LR',
-    'ensemble': 'r1i1p1f1',
-    'exp': 'historical',
-    'grid': 'gn',
-    'mip': 'Amon',
-    'project': 'CMIP6',
-    'short_name': 'tas',
-    'timerange': '2000/2001',
-    'version': 'v20200212',
-}, {
-    'dataset': 'CESM2',
-    'ensemble': 'r4i1p1f1',
-    'exp': 'historical',
-    'grid': 'gn',
-    'mip': 'Amon',
-    'project': 'CMIP6',
-    'short_name': 'tas',
-    'timerange': '2000/2001',
-}, {
-    'dataset': 'RACMO22E',
-    'driver': 'MOHC-HadGEM2-ES',
-    'domain': 'EUR-11',
-    'ensemble': 'r1i1p1',
-    'exp': 'historical',
-    'frequency': 'mon',
-    'project': 'CORDEX',
-    'short_name': 'tas',
-    'timerange': '1950/1952',
-    'version': 'v20160620',
-}, {
-    'dataset': 'CERES-EBAF',
-    'frequency': 'mon',
-    'project': 'obs4MIPs',
-    'short_name': 'rsutcs',
-    'version': 'v20160610',
-}, {
-    'dataset': 'GPCP-V2.3',
-    'project': 'obs4MIPs',
-    'short_name': 'pr',
-}]
+VARIABLES = [
+    {
+        'dataset': 'cccma_cgcm3_1',
+        'ensemble': 'run1',
+        'exp': 'historical',
+        'frequency': 'mon',
+        'project': 'CMIP3',
+        'short_name': 'tas',
+        'version': 'v1',
+    },
+    {
+        'dataset': 'inmcm4',
+        'ensemble': 'r1i1p1',
+        'exp': ['historical', 'rcp85'],
+        'mip': 'Amon',
+        'project': 'CMIP5',
+        'short_name': 'tas',
+        'version': 'v20130207',
+    },
+    {
+        'dataset': 'FIO-ESM',
+        'ensemble': 'r1i1p1',
+        'exp': 'historical',
+        'mip': 'Amon',
+        'project': 'CMIP5',
+        'short_name': 'tas',
+    },
+    {
+        'dataset': 'HadGEM2-CC',
+        'ensemble': 'r1i1p1',
+        'exp': 'rcp85',
+        'mip': 'Amon',
+        'project': 'CMIP5',
+        'short_name': 'tas',
+        'timerange': '2080/2100',
+    },
+    {
+        'dataset': 'EC-EARTH',
+        'ensemble': 'r1i1p1',
+        'exp': 'historical',
+        'mip': 'Amon',
+        'project': 'CMIP5',
+        'short_name': 'tas',
+        'start_year': 1990,  # test legacy way of specifying timerange
+        'end_year': 1999,
+    },
+    {
+        'dataset': 'AWI-ESM-1-1-LR',
+        'ensemble': 'r1i1p1f1',
+        'exp': 'historical',
+        'grid': 'gn',
+        'mip': 'Amon',
+        'project': 'CMIP6',
+        'short_name': 'tas',
+        'timerange': '2000/2001',
+        'version': 'v20200212',
+    },
+    {
+        'dataset': 'CESM2',
+        'ensemble': 'r4i1p1f1',
+        'exp': 'historical',
+        'grid': 'gn',
+        'mip': 'Amon',
+        'project': 'CMIP6',
+        'short_name': 'tas',
+        'timerange': '2000/2001',
+    },
+    {
+        'dataset': 'RACMO22E',
+        'driver': 'MOHC-HadGEM2-ES',
+        'domain': 'EUR-11',
+        'ensemble': 'r1i1p1',
+        'exp': 'historical',
+        'frequency': 'mon',
+        'project': 'CORDEX',
+        'short_name': 'tas',
+        'timerange': '1950/1952',
+        'version': 'v20160620',
+    },
+    {
+        'dataset': 'REMO2009',
+        'driver': 'MPI-M-MPI-ESM-LR',
+        'domain': 'EUR-11',
+        'ensemble': 'r1i1p1',
+        'exp': 'rcp26',
+        'frequency': 'mon',
+        'project': 'CORDEX-Adjust',
+        'short_name': 'tasAdjust',
+        'timerange': '2005/2010',
+        'version': 'v20160919',
+    },
+    {
+        'dataset': 'CERES-EBAF',
+        'frequency': 'mon',
+        'project': 'obs4MIPs',
+        'short_name': 'rsutcs',
+        'version': 'v20160610',
+    },
+    {
+        'dataset': 'GPCP-V2.3',
+        'project': 'obs4MIPs',
+        'short_name': 'pr',
+    }
+]
 
 
 def get_mock_connection(facets, results):
     """Create a mock pyesgf.search.SearchConnection instance."""
+
     class MockFileSearchContext:
+
         def search(self, **kwargs):
             return results
 
     class MockConnection:
+
         def new_context(self, *args, **kwargs):
             assert kwargs == facets
             return MockFileSearchContext()
@@ -138,18 +164,22 @@ def test_mock_search(variable, mocker):
     if json_file in expected_results:
         expected_files = expected_results[json_file]
     else:
-        expected_results[json_file] = [
-            {
-                'checksums': file._checksums,
-                'dataset': file.dataset,
-                'facets': file.facets,
-                'local_file': str(file.local_file(Path())),
-                'name': file.name,
-                'size': file.size,
-                'urls': file.urls,
-            }
-            for file in files
-        ]
+        expected_results[json_file] = [{
+            'checksums':
+            file._checksums,
+            'dataset':
+            file.dataset,
+            'facets':
+            file.facets,
+            'local_file':
+            str(file.local_file(Path())),
+            'name':
+            file.name,
+            'size':
+            file.size,
+            'urls':
+            file.urls,
+        } for file in files]
         with expected_results_file.open('w', encoding='utf-8') as file:
             yaml.safe_dump(expected_results, file)
 
