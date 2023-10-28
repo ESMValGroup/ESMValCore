@@ -100,6 +100,17 @@ VARIABLES = [
         'version': 'v20160919',
     },
     {
+        'dataset': 'EPISODES2018',
+        'driver': 'MPI-M-MPI-ESM-LR',
+        'domain': 'EUR-11',
+        'ensemble': 'r1i1p1',
+        'exp': 'rcp26',
+        'frequency': 'mon',
+        'project': 'CORDEX-ESD',
+        'short_name': 'tas',
+        'version': 'v20180409',
+    },
+    {
         'dataset': 'CERES-EBAF',
         'frequency': 'mon',
         'project': 'obs4MIPs',
