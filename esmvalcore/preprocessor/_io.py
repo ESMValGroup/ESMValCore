@@ -9,10 +9,10 @@ from pathlib import Path
 from typing import Optional
 from warnings import catch_warnings, filterwarnings
 
+import cftime
 import iris
 import iris.aux_factory
 import iris.exceptions
-import isodate
 import numpy as np
 import yaml
 from cf_units import suppress_errors
@@ -22,7 +22,6 @@ from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.iris_helpers import merge_cube_attributes
 
 from .._task import write_ncl_settings
-from ._time import clip_timerange
 
 logger = logging.getLogger(__name__)
 
@@ -206,70 +205,102 @@ def _concatenate_cubes(cubes, check_level):
     return concatenated
 
 
+class _TimesHelper:
+    def __init__(self, time):
+        self.times = time.core_points()
+        self.units = str(time.units)
+
+    def __getattr__(self, name):
+        return getattr(self.times, name)
+
+    def __len__(self):
+        return len(self.times)
+
+    def __getitem__(self, key):
+        return self.times[key]
+
+
 def _check_time_overlaps(cubes):
-    """Handle time overlaps."""
-    times = [cube.coord('time').core_points() for cube in cubes]
-    for index, _ in enumerate(times[:-1]):
-        overlap = np.intersect1d(times[index], times[index + 1])
-        if overlap.size != 0:
-            overlapping_cubes = cubes[index:index + 2]
-            time_1 = overlapping_cubes[0].coord('time').core_points()
-            time_2 = overlapping_cubes[1].coord('time').core_points()
+    """Handle time overlaps.
 
-            # case 1: both cubes start at the same time -> return longer cube
-            if time_1[0] == time_2[0]:
-                if time_1[-1] <= time_2[-1]:
-                    cubes.pop(index)
-                    discarded_cube_index = 0
-                    used_cube_index = 1
-                else:
-                    cubes.pop(index + 1)
-                    discarded_cube_index = 1
-                    used_cube_index = 0
-                logger.debug(
-                    "Both cubes start at the same time but cube %s "
-                    "ends before %s",
-                    overlapping_cubes[discarded_cube_index],
-                    overlapping_cubes[used_cube_index],
-                )
-                logger.debug(
-                    "Cube %s contains all needed data so using it fully",
-                    overlapping_cubes[used_cube_index],
-                )
+    Parameters
+    ----------
+    cubes : iris.cube.CubeList
+        A list of cubes belonging to a single timeseries,
+        ordered by starting point with possible overlaps.
 
-            # case 2: cube1 starts before cube2
-            # case 2.1: cube1 ends after cube2 -> return cube1
-            elif time_1[-1] > time_2[-1]:
-                cubes.pop(index + 1)
-                logger.debug("Using only data from %s", overlapping_cubes[0])
+    Returns
+    -------
+    iris.cube.CubeList
+        A list of cubes belonging to a single timeseries,
+        ordered by starting point with no overlaps.
+    """
+    if (number_of_cubes := len(cubes)) < 2:
+        return cubes
+    new_cubes = iris.cube.CubeList()
+    current_cube = cubes[0]
+    current_times = current_cube.coord("time")
+    current_start, current_end = current_times.core_points()[[0, -1]]
+    for index in range(1, number_of_cubes):
+        new_cube = cubes[index]
+        new_times = new_cube.coord("time")
+        new_start, new_end = new_times.core_points()[[0, -1]]
+        if new_start > current_end:
+            # no overlap, use current cube and start again from new cube
+            new_cubes.append(current_cube)
+            current_cube = new_cube
+            current_times = new_times
+            current_start = new_start
+            current_end = new_end
+            continue
+        # overlap
+        if current_end >= new_end:
+            # current cube ends after new one, just forget new cube
+            logger.debug("Using only data from %s", current_cube)
+            continue
+        if new_start == current_start:
+            # new cube completely covers current one
+            # forget current cube
+            current_cube = new_cube
+            current_times = new_times
+            current_end = new_end
+            # logger.debug(
+            #     "Both cubes start at the same time but cube %s "
+            #     "ends before %s",
+            #     overlapping_cubes[discarded_cube_index],
+            #     overlapping_cubes[used_cube_index],
+            # )
+            # logger.debug(
+            #     "Cube %s contains all needed data so using it fully",
+            #     overlapping_cubes[used_cube_index],
+            # )
+            continue
+        # new cube ends after current one,
+        # use all of new cube, and shorten current cube to
+        # eliminate overlap with new cube
+        cut_index = cftime.time2index(
+            new_start,
+            _TimesHelper(current_times),
+            current_times.units.calendar,
+            select="before",
+        ) + 1
+        new_cubes.append(current_cube[:cut_index])
+        current_cube = new_cube
+        current_times = new_times
+        current_start = new_start
+        current_end = new_end
+        # logger.debug(
+        #     "Extracting time slice between %s and %s from cube %s "
+        #     "to use it for concatenation with cube %s",
+        #     new_dates[0],
+        #     new_dates[-1],
+        #     overlapping_cubes[0],
+        #     overlapping_cubes[1],
+        # )
 
-            # case 2.2: cube1 ends before cube2 -> use full cube2
-            # and shorten cube1
-            else:
-                new_time = np.delete(
-                    time_1,
-                    np.argwhere(np.in1d(time_1, overlap)),
-                )
-                new_dates = overlapping_cubes[0].coord('time').units.num2date(
-                    new_time)
-                logger.debug(
-                    "Extracting time slice between %s and %s from cube %s "
-                    "to use it for concatenation with cube %s",
-                    new_dates[0],
-                    new_dates[-1],
-                    overlapping_cubes[0],
-                    overlapping_cubes[1],
-                )
+    new_cubes.append(current_cube)
 
-                start_point = isodate.datetime_isoformat(
-                    new_dates[0], format=isodate.isostrf.DT_BAS_COMPLETE)
-                end_point = isodate.datetime_isoformat(
-                    new_dates[-1], format=isodate.isostrf.DT_BAS_COMPLETE)
-                new_cube = clip_timerange(overlapping_cubes[0],
-                                          f'{start_point}/{end_point}')
-
-                cubes[index] = new_cube
-    return cubes
+    return new_cubes
 
 
 def _fix_calendars(cubes):
