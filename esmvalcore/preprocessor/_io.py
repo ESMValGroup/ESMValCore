@@ -6,7 +6,7 @@ import logging
 import os
 from itertools import groupby
 from pathlib import Path
-from typing import Optional
+from typing import Optional, NamedTuple
 from warnings import catch_warnings, filterwarnings
 
 import cftime
@@ -238,58 +238,60 @@ def _check_time_overlaps(cubes):
     """
     if len(cubes) < 2:
         return cubes
+
+    class TrackedCube(NamedTuple):
+        cube: iris.cube.Cube
+        times: iris.coords.DimCoord
+        start: float
+        end: float
+
+        @classmethod
+        def from_cube(cls, cube):
+            times = cube.coord("time")
+            start, end = times.core_points()[[0, -1]]
+            return cls(cube, times, start, end)
+
     new_cubes = iris.cube.CubeList()
-    current_cube = cubes[0]
-    current_times = current_cube.coord("time")
-    current_start, current_end = current_times.core_points()[[0, -1]]
-    for new_cube in cubes[1:]:
-        new_times = new_cube.coord("time")
-        new_start, new_end = new_times.core_points()[[0, -1]]
-        if new_start > current_end:
+    current_cube = TrackedCube.from_cube(cubes[0])
+    for new_cube in map(TrackedCube.from_cube, cubes[1:]):
+        if new_cube.start > current_cube.end:
             # no overlap, use current cube and start again from new cube
-            logger.debug("Using %s", current_cube)
-            new_cubes.append(current_cube)
+            logger.debug("Using %s", current_cube.cube)
+            new_cubes.append(current_cube.cube)
             current_cube = new_cube
-            current_times = new_times
-            current_start = new_start
-            current_end = new_end
             continue
         # overlap
-        if current_end >= new_end:
+        if current_cube.end >= new_cube.end:
             # current cube ends after new one, just forget new cube
             logger.debug(
                 "Discarding %s because the time range "
-                "is already covered by %s", new_cube, current_cube)
+                "is already covered by %s", new_cube.cube, current_cube.cube)
             continue
-        if new_start == current_start:
+        if new_cube.start == current_cube.start:
             # new cube completely covers current one
             # forget current cube
             current_cube = new_cube
-            current_times = new_times
-            current_end = new_end
             logger.debug(
                 "Discarding %s because the time range is covered by %s",
-                current_cube, new_cube)
+                current_cube.cube, new_cube.cube)
             continue
         # new cube ends after current one,
         # use all of new cube, and shorten current cube to
         # eliminate overlap with new cube
         cut_index = cftime.time2index(
-            new_start,
-            _TimesHelper(current_times),
-            current_times.units.calendar,
+            new_cube.start,
+            _TimesHelper(current_cube.times),
+            current_cube.times.units.calendar,
             select="before",
         ) + 1
-        logger.debug("Using %s shortened to %s due to overlap", current_cube,
-                     current_times.cell(cut_index))
-        new_cubes.append(current_cube[:cut_index])
+        logger.debug("Using %s shortened to %s due to overlap",
+                     current_cube.cube,
+                     current_cube.times.cell(cut_index).point)
+        new_cubes.append(current_cube.cube[:cut_index])
         current_cube = new_cube
-        current_times = new_times
-        current_start = new_start
-        current_end = new_end
 
-    logger.debug("Using %s", current_cube)
-    new_cubes.append(current_cube)
+    logger.debug("Using %s", current_cube.cube)
+    new_cubes.append(current_cube.cube)
 
     return new_cubes
 
