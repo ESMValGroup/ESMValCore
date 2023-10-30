@@ -261,7 +261,7 @@ def _check_time_overlaps(cubes):
             current_cube = new_cube
             continue
         # overlap
-        if current_cube.end >= new_cube.end:
+        if current_cube.end > new_cube.end:
             # current cube ends after new one, just forget new cube
             logger.debug(
                 "Discarding %s because the time range "
