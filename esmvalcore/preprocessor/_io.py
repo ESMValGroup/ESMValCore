@@ -239,7 +239,7 @@ def _check_time_overlaps(cubes: iris.cube.CubeList) -> iris.cube.CubeList:
     if len(cubes) < 2:
         return cubes
 
-    class TrackedCube(NamedTuple):
+    class _TrackedCube(NamedTuple):
         cube: iris.cube.Cube
         times: iris.coords.DimCoord
         start: float
@@ -252,8 +252,8 @@ def _check_time_overlaps(cubes: iris.cube.CubeList) -> iris.cube.CubeList:
             return cls(cube, times, start, end)
 
     new_cubes = iris.cube.CubeList()
-    current_cube = TrackedCube.from_cube(cubes[0])
-    for new_cube in map(TrackedCube.from_cube, cubes[1:]):
+    current_cube = _TrackedCube.from_cube(cubes[0])
+    for new_cube in map(_TrackedCube.from_cube, cubes[1:]):
         if new_cube.start > current_cube.end:
             # no overlap, use current cube and start again from new cube
             logger.debug("Using %s", current_cube.cube)
