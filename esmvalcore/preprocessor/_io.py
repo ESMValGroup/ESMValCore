@@ -221,7 +221,7 @@ class _TimesHelper:
         return self.times[key]
 
 
-def _check_time_overlaps(cubes):
+def _check_time_overlaps(cubes: iris.cube.CubeList) -> iris.cube.CubeList:
     """Handle time overlaps.
 
     Parameters
