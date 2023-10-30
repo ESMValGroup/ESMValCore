@@ -224,8 +224,6 @@ class _TimesHelper:
 def _check_time_overlaps(cubes):
     """Handle time overlaps.
 
-    
-
     Parameters
     ----------
     cubes : iris.cube.CubeList
@@ -260,8 +258,8 @@ def _check_time_overlaps(cubes):
         if current_end >= new_end:
             # current cube ends after new one, just forget new cube
             logger.debug(
-                "Discarding %s because the time rangs is already covered by %s",
-                new_cube, current_cube)
+                "Discarding %s because the time range "
+                "is already covered by %s", new_cube, current_cube)
             continue
         if new_start == current_start:
             # new cube completely covers current one
@@ -282,7 +280,8 @@ def _check_time_overlaps(cubes):
             current_times.units.calendar,
             select="before",
         ) + 1
-        logger.debug("Using %s shortened to %s due to overlap", current_cube, current_times.cell(cut_index))
+        logger.debug("Using %s shortened to %s due to overlap", current_cube,
+                     current_times.cell(cut_index))
         new_cubes.append(current_cube[:cut_index])
         current_cube = new_cube
         current_times = new_times
