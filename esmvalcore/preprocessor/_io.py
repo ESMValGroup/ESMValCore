@@ -206,6 +206,7 @@ def _concatenate_cubes(cubes, check_level):
 
 
 class _TimesHelper:
+
     def __init__(self, time):
         self.times = time.core_points()
         self.units = str(time.units)
@@ -223,6 +224,8 @@ class _TimesHelper:
 def _check_time_overlaps(cubes):
     """Handle time overlaps.
 
+    
+
     Parameters
     ----------
     cubes : iris.cube.CubeList
@@ -235,18 +238,18 @@ def _check_time_overlaps(cubes):
         A list of cubes belonging to a single timeseries,
         ordered by starting point with no overlaps.
     """
-    if (number_of_cubes := len(cubes)) < 2:
+    if len(cubes) < 2:
         return cubes
     new_cubes = iris.cube.CubeList()
     current_cube = cubes[0]
     current_times = current_cube.coord("time")
     current_start, current_end = current_times.core_points()[[0, -1]]
-    for index in range(1, number_of_cubes):
-        new_cube = cubes[index]
+    for new_cube in cubes[1:]:
         new_times = new_cube.coord("time")
         new_start, new_end = new_times.core_points()[[0, -1]]
         if new_start > current_end:
             # no overlap, use current cube and start again from new cube
+            logger.debug("Using %s", current_cube)
             new_cubes.append(current_cube)
             current_cube = new_cube
             current_times = new_times
@@ -256,7 +259,9 @@ def _check_time_overlaps(cubes):
         # overlap
         if current_end >= new_end:
             # current cube ends after new one, just forget new cube
-            logger.debug("Using only data from %s", current_cube)
+            logger.debug(
+                "Discarding %s because the time rangs is already covered by %s",
+                new_cube, current_cube)
             continue
         if new_start == current_start:
             # new cube completely covers current one
@@ -264,16 +269,9 @@ def _check_time_overlaps(cubes):
             current_cube = new_cube
             current_times = new_times
             current_end = new_end
-            # logger.debug(
-            #     "Both cubes start at the same time but cube %s "
-            #     "ends before %s",
-            #     overlapping_cubes[discarded_cube_index],
-            #     overlapping_cubes[used_cube_index],
-            # )
-            # logger.debug(
-            #     "Cube %s contains all needed data so using it fully",
-            #     overlapping_cubes[used_cube_index],
-            # )
+            logger.debug(
+                "Discarding %s because the time range is covered by %s",
+                current_cube, new_cube)
             continue
         # new cube ends after current one,
         # use all of new cube, and shorten current cube to
@@ -284,20 +282,14 @@ def _check_time_overlaps(cubes):
             current_times.units.calendar,
             select="before",
         ) + 1
+        logger.debug("Using %s shortened to %s due to overlap", current_cube, current_times.cell(cut_index))
         new_cubes.append(current_cube[:cut_index])
         current_cube = new_cube
         current_times = new_times
         current_start = new_start
         current_end = new_end
-        # logger.debug(
-        #     "Extracting time slice between %s and %s from cube %s "
-        #     "to use it for concatenation with cube %s",
-        #     new_dates[0],
-        #     new_dates[-1],
-        #     overlapping_cubes[0],
-        #     overlapping_cubes[1],
-        # )
 
+    logger.debug("Using %s", current_cube)
     new_cubes.append(current_cube)
 
     return new_cubes
