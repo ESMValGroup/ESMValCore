@@ -247,6 +247,7 @@ def _check_time_overlaps(cubes: iris.cube.CubeList) -> iris.cube.CubeList:
 
         @classmethod
         def from_cube(cls, cube):
+            """Construct tracked cube."""
             times = cube.coord("time")
             start, end = times.core_points()[[0, -1]]
             return cls(cube, times, start, end)
