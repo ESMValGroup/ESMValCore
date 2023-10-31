@@ -5,8 +5,8 @@ channels:
   - nodefaults
 
 dependencies:
-  # - cartopy  # currently incompatible with python=3.12 (11 Oct 2023)
-  # - cf-units # currently incompatible with python=3.12 (11 Oct 2023)
+  - cartopy
+  - cf-units
   - cftime
   - compilers
   - dask
@@ -15,13 +15,13 @@ dependencies:
   - esgf-pyclient >=0.3.1
   - esmpy !=8.1.0
   - filelock
-  # - fiona  # currently incompatible with python=3.12 (11 Oct 2023)
+  - fiona
   - fire
   - geopy
   - humanfriendly
   - importlib_metadata  # required for Python < 3.10
-  # - iris >=3.6.0  # currently incompatible with python=3.12 via cf-units (11 Oct 2023)
-  # - iris-esmf-regrid >=0.7.0  # currently incompatible with python=3.12 via cf-units (11 Oct 2023)
+  - iris >=3.6.0
+  - iris-esmf-regrid >=0.7.0
   - isodate
   - jinja2
   - libnetcdf !=4.9.1  # to avoid hdf5 warnings
@@ -37,7 +37,7 @@ dependencies:
   - psutil
   - py-cordex
   - pybtex
-  - python ==3.12
+  - python >=3.9
   - python-stratify >=0.3
   - pyyaml
   - requests
