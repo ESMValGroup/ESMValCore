@@ -27,15 +27,15 @@ REQUIREMENTS = {
     # Installation dependencies
     # Use with pip install . to install from source
     'install': [
-        # 'cartopy',  # Xpy312
-        # 'cf-units',  # Xpy312
+        'cartopy',
+        'cf-units',
         'dask[array,distributed]',
         'dask-jobqueue',
         'esgf-pyclient>=0.3.1',
         'esmf-regrid',
         'esmpy!=8.1.0',
         'filelock',
-        # 'fiona',  # Xpy312
+        'fiona',
         'fire',
         'geopy',
         'humanfriendly',
@@ -58,7 +58,7 @@ REQUIREMENTS = {
         'scipy>=1.6',
         # See the following issue for info on the iris pin below:
         # https://github.com/ESMValGroup/ESMValTool/issues/3239#issuecomment-1613298587
-        # 'scitools-iris>=3.4.0',  # Xpy312 via cf-units
+        'scitools-iris>=3.4.0',
         'shapely>=2.0.0',
         'stratify>=0.3',
         'yamale',
