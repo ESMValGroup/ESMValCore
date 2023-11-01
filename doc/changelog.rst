@@ -19,7 +19,7 @@ Backwards incompatible changes
 -  Remove the deprecated option ``use_legacy_supplementaries`` (`#2202 <https://github.com/ESMValGroup/ESMValCore/pull/2202>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
    - The recommended upgrade procedure is to remove ``use_legacy_supplementaries`` from config-user.yml
-     (if it was there) and remove any mention of fx_variables from the recipe. If automatically defining
+     (if it was there) and remove any mention of ``fx_variables`` from the recipe. If automatically defining
      the required supplementary variables does not work, define them in the variable or
      (``additional_``) ``datasets`` section as described in :ref:`supplementary_variables`.
 
@@ -27,9 +27,9 @@ Backwards incompatible changes
    
    - Some preprocessors handle units better. For details, see the pull request.
 
--  Removed deprecated configuration option `offline` (`#2213 <https://github.com/ESMValGroup/ESMValCore/pull/2213>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Removed deprecated configuration option ``offline`` (`#2213 <https://github.com/ESMValGroup/ESMValCore/pull/2213>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
-   - In :ref:`changelog-v2-8-0`, we replaced the old `offline` configuration option. From this version on, it stops working.
+   - In :ref:`changelog-v2-8-0`, we replaced the old ``offline`` configuration option. From this version on, it stops working.
      Please refer to :ref:`changelog-v2-8-0` for upgrade instructions.
 
 -  Fix issue with CORDEX datasets requiring different dataset tags for downloads and fixes (`#2066 <https://github.com/ESMValGroup/ESMValCore/pull/2066>`__) `Joakim Löw <https://github.com/ljoakim>`__
@@ -37,7 +37,7 @@ Backwards incompatible changes
    - Due to the different facets for CORDEX datasets, there was an inconsistency in the fixing mechanism.
      This change requires changes to existing recipes that use CORDEX datasets. Please refer to the pull request for detailed update instructions.
 
--  Added new operators for statistics preprocesor (e.g., `percentile`) and allowed arbitrary kwargs (`#2191 <https://github.com/ESMValGroup/ESMValCore/pull/2191>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Added new operators for statistics preprocessor (e.g., ``'percentile'``) and allowed passing additional arguments (`#2191 <https://github.com/ESMValGroup/ESMValCore/pull/2191>`__) `Manuel Schlund <https://github.com/schlunma>`__
    
    - This harmonizes the operators for all statistics preprocessors. From this version, the new names can be used; the old arguments will stop working from
      version 2.12.0. Please refer to :ref:`stat_preprocs` for a detailed description.
@@ -64,7 +64,7 @@ Bug fixes
 
    -  Fix sorting of ensemble members in :func:`~esmvalcore.dataset.datasets_to_recipe` (`#2095 <https://github.com/ESMValGroup/ESMValCore/pull/2095>`__) `Bouwe Andela <https://github.com/bouweandela>`__
    -  Fix a problem with sorting datasets that have a mix of facet types (`#2238 <https://github.com/ESMValGroup/ESMValCore/pull/2238>`__) `Bouwe Andela <https://github.com/bouweandela>`__
--  Avoid a crash if dataset has supplementary variables (`#2198 <https://github.com/ESMValGroup/ESMValCore/pull/2198>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+   -  Avoid a crash if dataset has supplementary variables (`#2198 <https://github.com/ESMValGroup/ESMValCore/pull/2198>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
 CMOR standard
 ~~~~~~~~~~~~~
@@ -138,7 +138,7 @@ Improvements
 -  Fix typo in citation file (`#2182 <https://github.com/ESMValGroup/ESMValCore/pull/2182>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Cleaned and extended function that extracts datetimes from paths (`#2181 <https://github.com/ESMValGroup/ESMValCore/pull/2181>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Add file encoding (and some read modes) at open file step (`#2219 <https://github.com/ESMValGroup/ESMValCore/pull/2219>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
--  Check type of argument passed to `esmvalcore.cmor.table.read_cmor_tables` (`#2217 <https://github.com/ESMValGroup/ESMValCore/pull/2217>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Check type of argument passed to :func:`~esmvalcore.cmor.table.read_cmor_tables` (`#2217 <https://github.com/ESMValGroup/ESMValCore/pull/2217>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Dynamic HTML output for monitoring (`#2062 <https://github.com/ESMValGroup/ESMValCore/pull/2062>`__) `Brei Soliño <https://github.com/bsolino>`__
 
 
