@@ -92,11 +92,14 @@ Installation
 
 -  Clean-up how pins are written in conda environment file (`#2125 <https://github.com/ESMValGroup/ESMValCore/pull/2125>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Use importlib.metadata instead of deprecated pkg_resources (`#2096 <https://github.com/ESMValGroup/ESMValCore/pull/2096>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Pin shapely to >=2.0 (`#2075 <https://github.com/ESMValGroup/ESMValCore/pull/2075>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 
 Preprocessor
 ~~~~~~~~~~~~
 
 -  Relax concatenation checks for `--check_level=relax` and `--check_level=ignore` (`#2144 <https://github.com/ESMValGroup/ESMValCore/pull/2144>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Improve preprocessor output sorting code (`#2111 <https://github.com/ESMValGroup/ESMValCore/pull/2111>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Preprocess datasets in the same order as they are listed in the recipe (`#2103 <https://github.com/ESMValGroup/ESMValCore/pull/2103>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
 Automatic testing
 ~~~~~~~~~~~~~~~~~
