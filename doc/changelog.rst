@@ -59,7 +59,6 @@ Deprecations
 Bug fixes
 ~~~~~~~~~
 
--  [Github Actions] Fix Monitor Tests Github Action (`#2135 <https://github.com/ESMValGroup/ESMValCore/pull/2135>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Re-add correctly region-extracted cell measures and ancillary variables after :ref:`extract_region` (`#2166 <https://github.com/ESMValGroup/ESMValCore/pull/2166>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__, `Manuel Schlund <https://github.com/schlunma>`__
 -  Fix sorting of ensemble members in :func:`~esmvalcore.dataset.datasets_to_recipe` (`#2095 <https://github.com/ESMValGroup/ESMValCore/pull/2095>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Avoid a crash if dataset has supplementary variables (`#2198 <https://github.com/ESMValGroup/ESMValCore/pull/2198>`__) `Bouwe Andela <https://github.com/bouweandela>`__
@@ -68,31 +67,22 @@ Bug fixes
 -  Fix ``concatenate`` preprocessor function (`#2240 <https://github.com/ESMValGroup/ESMValCore/pull/2240>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Fix time overlap handling in concatenation (`#2247 <https://github.com/ESMValGroup/ESMValCore/pull/2247>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
 
-Notebook API (experimental)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
--  Check type of argument passed to `esmvalcore.cmor.table.read_cmor_tables` (`#2217 <https://github.com/ESMValGroup/ESMValCore/pull/2217>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
-
 CMOR standard
 ~~~~~~~~~~~~~
 
 -  ERA5 on-the-fly CMORizer: changed sign of variables ``evspsbl`` and ``evspsblpot`` (`#2115 <https://github.com/ESMValGroup/ESMValCore/pull/2115>`__) `katjaweigel <https://github.com/katjaweigel>`__
 -  Add ``ch4`` surface custom cmor table entry (`#2168 <https://github.com/ESMValGroup/ESMValCore/pull/2168>`__) `Birgit Hassler <https://github.com/hb326>`__
 -  Add CMIP3 institutes names used at NCI (`#2152 <https://github.com/ESMValGroup/ESMValCore/pull/2152>`__) `Romain Beucher <https://github.com/rbeucher>`__
--  Call coord.core_bounds() instead of coord.bounds in ``check.py`` (`#2146 <https://github.com/ESMValGroup/ESMValCore/pull/2146>`__) `sloosvel <https://github.com/sloosvel>`__
 -  Added :func:`~esmvalcore.cmor.fixes.get_time_bounds` and :func:`~esmvalcore.cmor.fixes.get_next_month` to public API (`#2214 <https://github.com/ESMValGroup/ESMValCore/pull/2214>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Relax concatenation checks for ``--check_level=relax`` and ``--check_level=ignore`` (`#2144 <https://github.com/ESMValGroup/ESMValCore/pull/2144>`__) `sloosvel <https://github.com/sloosvel>`__
 
 Computational performance improvements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  Make :ref:`threshold_masking` preprocessors lazy  (`#2169 <https://github.com/ESMValGroup/ESMValCore/pull/2169>`__) `Jörg Benke <https://github.com/joergbenke>`__
+-  Call coord.core_bounds() instead of coord.bounds in ``check.py`` (`#2146 <https://github.com/ESMValGroup/ESMValCore/pull/2146>`__) `sloosvel <https://github.com/sloosvel>`__
 -  Rechunk between preprocessor steps (`#2205 <https://github.com/ESMValGroup/ESMValCore/pull/2205>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Reduce the size of the dask graph created by the ``anomalies`` preprocessor function (`#2200 <https://github.com/ESMValGroup/ESMValCore/pull/2200>`__) `Bouwe Andela <https://github.com/bouweandela>`__
-
-Deployment
-~~~~~~~~~~
-
--  Merge v2.9.x into main (`#2128 <https://github.com/ESMValGroup/ESMValCore/pull/2128>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
 Documentation
 ~~~~~~~~~~~~~
@@ -102,6 +92,7 @@ Documentation
 -  Update `mamba` before building environment during Readthedocs build (`#2149 <https://github.com/ESMValGroup/ESMValCore/pull/2149>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Ensure compatible zstandard and zstd versions for .conda support (`#2204 <https://github.com/ESMValGroup/ESMValCore/pull/2204>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
 -  Remove outdated documentation (`#2210 <https://github.com/ESMValGroup/ESMValCore/pull/2210>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Remove meercode badge from README because their API is broken (`#2224 <https://github.com/ESMValGroup/ESMValCore/pull/2224>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Correct usage help text of version command (`#2232 <https://github.com/ESMValGroup/ESMValCore/pull/2232>`__) `James Frost <https://github.com/jfrost-mo>`__
 -  Add ``navigation_with_keys: False`` to ``html_theme_options`` in Readthedocs ``conf.py`` (`#2245 <https://github.com/ESMValGroup/ESMValCore/pull/2245>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Replace squarey badge with roundy shield for Anaconda sticker in README (`#2233 <https://github.com/ESMValGroup/ESMValCore/pull/2233>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
@@ -121,7 +112,6 @@ Installation
 Preprocessor
 ~~~~~~~~~~~~
 
--  Relax concatenation checks for ``--check_level=relax`` and ``--check_level=ignore`` (`#2144 <https://github.com/ESMValGroup/ESMValCore/pull/2144>`__) `sloosvel <https://github.com/sloosvel>`__
 -  Improve preprocessor output sorting code (`#2111 <https://github.com/ESMValGroup/ESMValCore/pull/2111>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Preprocess datasets in the same order as they are listed in the recipe (`#2103 <https://github.com/ESMValGroup/ESMValCore/pull/2103>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
@@ -129,6 +119,7 @@ Automatic testing
 ~~~~~~~~~~~~~~~~~
 
 -  [Github Actions] Compress all bash shell setters into one default option per workflow (`#2126 <https://github.com/ESMValGroup/ESMValCore/pull/2126>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  [Github Actions] Fix Monitor Tests Github Action (`#2135 <https://github.com/ESMValGroup/ESMValCore/pull/2135>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  [condalock] update conda lock file (`#2141 <https://github.com/ESMValGroup/ESMValCore/pull/2141>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  [Condalock] make sure mamba/conda are at latest version by forcing a pinned mamba install (`#2136 <https://github.com/ESMValGroup/ESMValCore/pull/2136>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Update code coverage orbs (`#2206 <https://github.com/ESMValGroup/ESMValCore/pull/2206>`__) `Bouwe Andela <https://github.com/bouweandela>`__
@@ -138,11 +129,12 @@ Automatic testing
 Improvements
 ~~~~~~~~~~~~
 
+-  Merge v2.9.x into main (`#2128 <https://github.com/ESMValGroup/ESMValCore/pull/2128>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Fix typo in citation file (`#2182 <https://github.com/ESMValGroup/ESMValCore/pull/2182>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Cleaned and extended function that extracts datetimes from paths (`#2181 <https://github.com/ESMValGroup/ESMValCore/pull/2181>`__) `Manuel Schlund <https://github.com/schlunma>`__
 -  Add file encoding (and some read modes) at open file step (`#2219 <https://github.com/ESMValGroup/ESMValCore/pull/2219>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Check type of argument passed to `esmvalcore.cmor.table.read_cmor_tables` (`#2217 <https://github.com/ESMValGroup/ESMValCore/pull/2217>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Dynamic HTML output for monitoring (`#2062 <https://github.com/ESMValGroup/ESMValCore/pull/2062>`__) `Brei Soliño <https://github.com/bsolino>`__
--  Remove meercode badge from README because their API is broken (`#2224 <https://github.com/ESMValGroup/ESMValCore/pull/2224>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 
 
 .. _changelog-v2-9-0:
