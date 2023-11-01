@@ -744,6 +744,8 @@ After ``mask_multimodel``, all involved datasets have an identical mask.
 
 See also :func:`esmvalcore.preprocessor.mask_multimodel`.
 
+.. _threshold_masking:
+
 Minimum, maximum and interval masking
 -------------------------------------
 
@@ -1696,6 +1698,7 @@ Examples:
 
 See also :func:`esmvalcore.preprocessor.extract_coordinate_points`.
 
+.. _extract_region:
 
 ``extract_region``
 ------------------
