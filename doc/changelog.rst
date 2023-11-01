@@ -25,7 +25,7 @@ Backwards incompatible changes
 
 -  Use smarter (units-aware) weights (`#2139 <https://github.com/ESMValGroup/ESMValCore/pull/2139>`__) `Manuel Schlund <https://github.com/schlunma>`__
    
-   - Some preprocessors handle units better. For details, see the issue.
+   - Some preprocessors handle units better. For details, see the pull request.
 
 -  Removed deprecated configuration option `offline` (`#2213 <https://github.com/ESMValGroup/ESMValCore/pull/2213>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
@@ -60,12 +60,11 @@ Bug fixes
 ~~~~~~~~~
 
 -  Re-add correctly region-extracted cell measures and ancillary variables after :ref:`extract_region` (`#2166 <https://github.com/ESMValGroup/ESMValCore/pull/2166>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__, `Manuel Schlund <https://github.com/schlunma>`__
--  Fix sorting of ensemble members in :func:`~esmvalcore.dataset.datasets_to_recipe` (`#2095 <https://github.com/ESMValGroup/ESMValCore/pull/2095>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Fix sorting of datasets
+
+   -  Fix sorting of ensemble members in :func:`~esmvalcore.dataset.datasets_to_recipe` (`#2095 <https://github.com/ESMValGroup/ESMValCore/pull/2095>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+   -  Fix a problem with sorting datasets that have a mix of facet types (`#2238 <https://github.com/ESMValGroup/ESMValCore/pull/2238>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Avoid a crash if dataset has supplementary variables (`#2198 <https://github.com/ESMValGroup/ESMValCore/pull/2198>`__) `Bouwe Andela <https://github.com/bouweandela>`__
--  Restored usage of numpy in `_mask_with_shp` (`#2209 <https://github.com/ESMValGroup/ESMValCore/pull/2209>`__) `Jörg Benke <https://github.com/joergbenke>`__
--  Fix a problem with sorting datasets that have a mix of facet types (`#2238 <https://github.com/ESMValGroup/ESMValCore/pull/2238>`__) `Bouwe Andela <https://github.com/bouweandela>`__
--  Fix ``concatenate`` preprocessor function (`#2240 <https://github.com/ESMValGroup/ESMValCore/pull/2240>`__) `Bouwe Andela <https://github.com/bouweandela>`__
--  Fix time overlap handling in concatenation (`#2247 <https://github.com/ESMValGroup/ESMValCore/pull/2247>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
 
 CMOR standard
 ~~~~~~~~~~~~~
@@ -74,12 +73,18 @@ CMOR standard
 -  Add ``ch4`` surface custom cmor table entry (`#2168 <https://github.com/ESMValGroup/ESMValCore/pull/2168>`__) `Birgit Hassler <https://github.com/hb326>`__
 -  Add CMIP3 institutes names used at NCI (`#2152 <https://github.com/ESMValGroup/ESMValCore/pull/2152>`__) `Romain Beucher <https://github.com/rbeucher>`__
 -  Added :func:`~esmvalcore.cmor.fixes.get_time_bounds` and :func:`~esmvalcore.cmor.fixes.get_next_month` to public API (`#2214 <https://github.com/ESMValGroup/ESMValCore/pull/2214>`__) `Manuel Schlund <https://github.com/schlunma>`__
--  Relax concatenation checks for ``--check_level=relax`` and ``--check_level=ignore`` (`#2144 <https://github.com/ESMValGroup/ESMValCore/pull/2144>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Improve concatenation checks
+
+   -  Relax concatenation checks for ``--check_level=relax`` and ``--check_level=ignore`` (`#2144 <https://github.com/ESMValGroup/ESMValCore/pull/2144>`__) `sloosvel <https://github.com/sloosvel>`__
+   -  Fix ``concatenate`` preprocessor function (`#2240 <https://github.com/ESMValGroup/ESMValCore/pull/2240>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+   -  Fix time overlap handling in concatenation (`#2247 <https://github.com/ESMValGroup/ESMValCore/pull/2247>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
 
 Computational performance improvements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  Make :ref:`threshold_masking` preprocessors lazy  (`#2169 <https://github.com/ESMValGroup/ESMValCore/pull/2169>`__) `Jörg Benke <https://github.com/joergbenke>`__
+
+   -  Restored usage of numpy in `_mask_with_shp` (`#2209 <https://github.com/ESMValGroup/ESMValCore/pull/2209>`__) `Jörg Benke <https://github.com/joergbenke>`__
 -  Call coord.core_bounds() instead of coord.bounds in ``check.py`` (`#2146 <https://github.com/ESMValGroup/ESMValCore/pull/2146>`__) `sloosvel <https://github.com/sloosvel>`__
 -  Rechunk between preprocessor steps (`#2205 <https://github.com/ESMValGroup/ESMValCore/pull/2205>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Reduce the size of the dask graph created by the ``anomalies`` preprocessor function (`#2200 <https://github.com/ESMValGroup/ESMValCore/pull/2200>`__) `Bouwe Andela <https://github.com/bouweandela>`__
