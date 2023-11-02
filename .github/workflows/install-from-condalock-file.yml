@@ -11,6 +11,7 @@ on:
   push:
     branches:
       - main
+      - manual_update_condalock_file
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
