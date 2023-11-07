@@ -7,14 +7,13 @@
 # - iris
 # - python-stratify
 
+import json
 import os
 import re
 import sys
 from pathlib import Path
 
 from setuptools import Command, setup
-
-from esmvalcore._version import __version__
 
 PACKAGES = [
     'esmvalcore',
@@ -23,63 +22,90 @@ PACKAGES = [
 REQUIREMENTS = {
     # Installation script (this file) dependencies
     'setup': [
-        'pytest-runner',
         'setuptools_scm',
     ],
     # Installation dependencies
     # Use with pip install . to install from source
     'install': [
+        'cartopy',
         'cf-units',
-        'dask[array]',
+        'dask[array,distributed]',
+        'dask-jobqueue',
+        'esgf-pyclient>=0.3.1',
+        'esmf-regrid',
+        'esmpy!=8.1.0',
+        'filelock',
         'fiona',
+        'fire',
+        'geopy',
+        'humanfriendly',
+        "importlib_metadata;python_version<'3.10'",
+        'isodate',
+        'jinja2',
         'nc-time-axis',  # needed by iris.plot
+        'nested-lookup',
         'netCDF4',
-        'numba',
-        'numpy',
-        'prov[dot]',
+        'numpy!=1.24.3',
+        'packaging',
+        'pandas',
+        'pillow',
+        'prov',
         'psutil',
+        'py-cordex',
+        'pybtex',
         'pyyaml',
-        'scitools-iris>=2.2',
-        'shapely[vectorized]',
-        'stratify',
+        'requests',
+        'scipy>=1.6',
+        # See the following issue for info on the iris pin below:
+        # https://github.com/ESMValGroup/ESMValTool/issues/3239#issuecomment-1613298587
+        'scitools-iris>=3.4.0',
+        'shapely>=2.0.0',
+        'stratify>=0.3',
         'yamale',
     ],
     # Test dependencies
-    # Execute 'python setup.py test' to run tests
     'test': [
-        'pytest>=3.9',
-        'pytest-cov',
+        'flake8',
+        'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
+        'pytest-cov>=2.10.1',
         'pytest-env',
-        'pytest-flake8',
-        'pytest-html',
+        'pytest-html!=2.1.0',
         'pytest-metadata>=1.5.1',
+        'pytest-mypy',
+        'pytest-mock',
+        'pytest-xdist',
+        'ESMValTool_sample_data==0.0.3',
+        # MyPy library stubs
+        'mypy>=0.990',
+        'types-requests',
+        'types-PyYAML',
+    ],
+    # Documentation dependencies
+    'doc': [
+        'autodocsumm>=0.2.2',
+        'ipython',
+        'nbsphinx',
+        'sphinx>=6.1.3',
+        'pydata_sphinx_theme',
     ],
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
     'develop': [
+        'codespell',
+        'docformatter',
         'isort',
-        'prospector[with_pyroma]!=1.1.6.3,!=1.1.6.4',
-        'sphinx',
-        'sphinx_rtd_theme',
-        'vmprof',
+        'pre-commit',
+        'prospector[with_pyroma]>=1.9.0',
+        'vprof',
         'yamllint',
         'yapf',
     ],
 }
 
 
-def read_authors(citation_file):
-    """Read the list of authors from .cff file."""
-    authors = re.findall(
-        r'family-names: (.*)$\s*given-names: (.*)',
-        Path(citation_file).read_text(),
-        re.MULTILINE,
-    )
-    return ', '.join(' '.join(author[::-1]) for author in authors)
-
-
 def discover_python_files(paths, ignore):
     """Discover Python files."""
+
     def _ignore(path):
         """Return True if `path` should be ignored, False otherwise."""
         return any(re.match(pattern, path) for pattern in ignore)
@@ -97,6 +123,7 @@ def discover_python_files(paths, ignore):
 
 class CustomCommand(Command):
     """Custom Command class."""
+
     def install_deps_temp(self):
         """Try to temporarily install packages needed to run the command."""
         if self.distribution.install_requires:
@@ -109,12 +136,14 @@ class CustomCommand(Command):
 class RunLinter(CustomCommand):
     """Class to run a linter and generate reports."""
 
-    user_options = []
+    user_options: list = []
 
     def initialize_options(self):
         """Do nothing."""
+
     def finalize_options(self):
         """Do nothing."""
+
     def run(self):
         """Run prospector and generate a report."""
         check_paths = PACKAGES + [
@@ -152,32 +181,50 @@ class RunLinter(CustomCommand):
         sys.exit(errno)
 
 
+def read_authors(filename):
+    """Read the list of authors from .zenodo.json file."""
+    with Path(filename).open(encoding='utf-8') as file:
+        info = json.load(file)
+        authors = []
+        for author in info['creators']:
+            name = ' '.join(author['name'].split(',')[::-1]).strip()
+            authors.append(name)
+        return ', '.join(authors)
+
+
+def read_description(filename):
+    """Read the description from .zenodo.json file."""
+    with Path(filename).open(encoding='utf-8') as file:
+        info = json.load(file)
+        return info['description']
+
+
 setup(
     name='ESMValCore',
-    version=__version__,
-    author=read_authors('CITATION.cff'),
-    description='Earth System Models eValuation Tool Core',
-    long_description=Path('README.md').read_text(),
+    author=read_authors('.zenodo.json'),
+    description=read_description('.zenodo.json'),
+    long_description=Path('README.md').read_text(encoding='utf-8'),
+    long_description_content_type='text/markdown',
     url='https://www.esmvaltool.org',
     download_url='https://github.com/ESMValGroup/ESMValCore',
     license='Apache License, Version 2.0',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Atmospheric Science',
         'Topic :: Scientific/Engineering :: GIS',
         'Topic :: Scientific/Engineering :: Hydrology',
-        'Topic :: Scientific/Engineering :: Physics'
-        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Topic :: Scientific/Engineering :: Physics',
     ],
     packages=PACKAGES,
     # Include all version controlled files
@@ -186,7 +233,12 @@ setup(
     install_requires=REQUIREMENTS['install'],
     tests_require=REQUIREMENTS['test'],
     extras_require={
-        'develop': REQUIREMENTS['develop'] + REQUIREMENTS['test'],
+        'develop':
+        REQUIREMENTS['develop'] + REQUIREMENTS['test'] + REQUIREMENTS['doc'],
+        'test':
+        REQUIREMENTS['test'],
+        'doc':
+        REQUIREMENTS['doc'],
     },
     entry_points={
         'console_scripts': [
@@ -194,7 +246,6 @@ setup(
         ],
     },
     cmdclass={
-        #         'test': RunTests,
         'lint': RunLinter,
     },
     zip_safe=False,

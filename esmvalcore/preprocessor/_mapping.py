@@ -128,7 +128,7 @@ def get_empty_data(shape, dtype=np.float32):
     """
     Create an empty data object of the given shape.
 
-    Creates an emtpy data object of the given shape, potentially of the lazy
+    Creates an empty data object of the given shape, potentially of the lazy
     kind from biggus or dask, depending on the used iris version.
     """
     data = np.empty(shape, dtype=dtype)

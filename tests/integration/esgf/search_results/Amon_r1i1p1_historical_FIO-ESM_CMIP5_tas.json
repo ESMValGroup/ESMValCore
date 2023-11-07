@@ -1,0 +1,371 @@
+[
+    {
+        "id": "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1.v20121010.tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc|esgf-data1.ceda.ac.uk",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "b6d4b62ccba4cb8141e422d17a31d618a59161c72bd10476391811b693cbff6c"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf-data1.ceda.ac.uk",
+        "dataset_id": "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1.v20121010|esgf-data1.ceda.ac.uk",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "description": [
+            "FIO-ESM model output prepared for CMIP5 historical"
+        ],
+        "drs_id": [
+            "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "historical"
+        ],
+        "experiment_family": [
+            "All",
+            "Historical"
+        ],
+        "forcing": [
+            "Nat,Ant"
+        ],
+        "format": [
+            "netCDF, CF-1.4"
+        ],
+        "index_node": "esgf.ceda.ac.uk",
+        "instance_id": "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1.v20121010.tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc",
+        "institute": [
+            "FIO"
+        ],
+        "latest": true,
+        "master_gateway": [
+            "DEFAULT"
+        ],
+        "master_id": "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1.tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc",
+        "metadata_format": "THREDDS",
+        "model": [
+            "FIO-ESM"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 61398952,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2012-11-11T23:09:27Z",
+        "title": "tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc",
+        "tracking_id": [
+            "316551b4-fa90-42c1-9f43-ab81dec5decf"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf-data1.ceda.ac.uk/thredds/fileServer/esg_dataroot/cmip5/output1/FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgf-dn1.ceda.ac.uk:2811//esg_dataroot/cmip5/output1/FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc|application/gridftp|GridFTP",
+            "http://esgf-data1.ceda.ac.uk/thredds/dodsC/esg_dataroot/cmip5/output1/FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc.html|application/opendap-html|OPENDAP",
+            "globus:ee3aa1a0-7e4c-11e6-afc4-22000b92c261/esg_dataroot/cmip5/output1/FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_timestamp": "2015-11-02T15:37:26.601Z",
+        "retracted": false,
+        "_version_": 1613453295874998272,
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1.v20121010.tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc|esgf.nci.org.au",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "b6d4b62ccba4cb8141e422d17a31d618a59161c72bd10476391811b693cbff6c"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf.nci.org.au",
+        "dataset_id": "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1.v20121010|esgf.nci.org.au",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "directory_format_template_": [
+            "%(root)s/%(project)s/%(product)s/%(institute)s/%(model)s/%(experiment)s/%(time_frequency)s/%(realm)s/%(cmor_table)s/%(ensemble)s/%(version)s/%(variable)s"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "historical"
+        ],
+        "experiment_family": [
+            "All",
+            "Historical"
+        ],
+        "index_node": "esgf.nci.org.au",
+        "instance_id": "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1.v20121010.tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc",
+        "institute": [
+            "FIO"
+        ],
+        "latest": true,
+        "master_id": "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1.tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc",
+        "model": [
+            "FIO-ESM"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 61398952,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2018-12-08T12:19:20Z",
+        "title": "tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc",
+        "tracking_id": [
+            "316551b4-fa90-42c1-9f43-ab81dec5decf"
+        ],
+        "type": "File",
+        "url": [
+            "http://esgf.nci.org.au/thredds/fileServer/replica/CMIP5/output1/FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc|application/netcdf|HTTPServer",
+            "gsiftp://esgfdtn.nci.org.au:2811//replica/CMIP5/output1/FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc|application/gridftp|GridFTP",
+            "http://esgf.nci.org.au/thredds/dodsC/replica/CMIP5/output1/FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc.html|application/opendap-html|OPENDAP",
+            "globus:2058c7d6-a79f-11e6-9ad6-22000a1e3b52/replica/CMIP5/output1/FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1643794043289731072,
+        "retracted": false,
+        "_timestamp": "2019-09-05T00:42:40.547Z",
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1.v20121010.tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc|esgf2.dkrz.de",
+        "version": "1",
+        "cera_acronym": [
+            "FIFIhi"
+        ],
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "970cc36b75466a30cf02b7ae0896a9b0"
+        ],
+        "checksum_type": [
+            "MD5"
+        ],
+        "citation_url": [
+            "https://cera-www.dkrz.de/WDCC/meta/CMIP5/FIFIhi.json"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "esgf2.dkrz.de",
+        "dataset_id": "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1.v20121010|esgf2.dkrz.de",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "drs_id": [
+            "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "historical"
+        ],
+        "experiment_family": [
+            "All",
+            "Historical"
+        ],
+        "format": [
+            "NetCDF"
+        ],
+        "index_node": "esgf-data.dkrz.de",
+        "instance_id": "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1.v20121010.tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc",
+        "institute": [
+            "FIO"
+        ],
+        "latest": true,
+        "lta": [
+            "true"
+        ],
+        "master_id": "cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1.tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc",
+        "model": [
+            "FIO-ESM"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 61398952,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2019-09-04T07:14:41Z",
+        "title": "tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc",
+        "tracking_id": [
+            "316551b4-fa90-42c1-9f43-ab81dec5decf"
+        ],
+        "type": "File",
+        "unit": [
+            "Kelvin"
+        ],
+        "url": [
+            "http://esgf2.dkrz.de/thredds/fileServer/lta_dataroot/cmip5/output1/FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc|application/netcdf|HTTPServer"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "air_temperature"
+        ],
+        "variable_units": [
+            "None"
+        ],
+        "_version_": 1643740318319771648,
+        "retracted": false,
+        "_timestamp": "2019-09-04T10:28:44.422Z",
+        "score": 1.0
+    },
+    {
+        "id": "cmip5.output1.FIO.fio-esm.historical.mon.atmos.Amon.r1i1p1.v20121010.tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc|aims3.llnl.gov",
+        "version": "1",
+        "cf_standard_name": [
+            "air_temperature"
+        ],
+        "checksum": [
+            "b6d4b62ccba4cb8141e422d17a31d618a59161c72bd10476391811b693cbff6c"
+        ],
+        "checksum_type": [
+            "SHA256"
+        ],
+        "cmor_table": [
+            "Amon"
+        ],
+        "data_node": "aims3.llnl.gov",
+        "dataset_id": "cmip5.output1.FIO.fio-esm.historical.mon.atmos.Amon.r1i1p1.v20121010|aims3.llnl.gov",
+        "dataset_id_template_": [
+            "cmip5.%(product)s.%(valid_institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s"
+        ],
+        "description": [
+            "FIO-ESM model output prepared for CMIP5 historical"
+        ],
+        "drs_id": [
+            "cmip5.output1.FIO.fio-esm.historical.mon.atmos.Amon.r1i1p1"
+        ],
+        "ensemble": [
+            "r1i1p1"
+        ],
+        "experiment": [
+            "historical"
+        ],
+        "experiment_family": [
+            "All",
+            "Historical"
+        ],
+        "forcing": [
+            "Nat,Ant"
+        ],
+        "format": [
+            "netCDF, CF-1.4"
+        ],
+        "index_node": "esgf-node.llnl.gov",
+        "instance_id": "cmip5.output1.FIO.fio-esm.historical.mon.atmos.Amon.r1i1p1.v20121010.tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc",
+        "institute": [
+            "FIO"
+        ],
+        "latest": true,
+        "master_gateway": [
+            "DEFAULT"
+        ],
+        "master_id": "cmip5.output1.FIO.fio-esm.historical.mon.atmos.Amon.r1i1p1.tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc",
+        "model": [
+            "FIO-ESM"
+        ],
+        "product": [
+            "output1"
+        ],
+        "project": [
+            "CMIP5"
+        ],
+        "realm": [
+            "atmos"
+        ],
+        "replica": true,
+        "size": 61398952,
+        "time_frequency": [
+            "mon"
+        ],
+        "timestamp": "2012-01-07T03:58:16Z",
+        "title": "tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc",
+        "tracking_id": [
+            "316551b4-fa90-42c1-9f43-ab81dec5decf"
+        ],
+        "type": "File",
+        "url": [
+            "http://aims3.llnl.gov/thredds/fileServer/cmip5_css02_data/cmip5/output1/FIO/fio-esm/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc|application/netcdf|HTTPServer",
+            "http://aims3.llnl.gov/thredds/dodsC/cmip5_css02_data/cmip5/output1/FIO/fio-esm/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc.html|application/opendap-html|OPENDAP",
+            "gsiftp://aimsdtn3.llnl.gov:2811//cmip5_css02_data/cmip5/output1/FIO/fio-esm/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc|application/gridftp|GridFTP",
+            "globus:415a6320-e49c-11e5-9798-22000b9da45e/cmip5_css02_data/cmip5/output1/FIO/fio-esm/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc|Globus|Globus"
+        ],
+        "variable": [
+            "tas"
+        ],
+        "variable_long_name": [
+            "Near-Surface Air Temperature"
+        ],
+        "variable_units": [
+            "K"
+        ],
+        "_version_": 1636356465325244416,
+        "retracted": false,
+        "_timestamp": "2019-06-14T22:25:33.466Z",
+        "score": 1.0
+    }
+]

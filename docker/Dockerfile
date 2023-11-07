@@ -1,19 +1,12 @@
-FROM continuumio/miniconda3
+# To build this container, go to ESMValCore root folder and execute:
+# docker build -t esmvalcore:latest . -f docker/Dockerfile
+FROM condaforge/mambaforge
 
-# update the conda packages
-RUN conda update -y conda pip
+WORKDIR /src/ESMValCore
+COPY environment.yml .
+RUN mamba env create --name esmvaltool --file environment.yml && conda clean --all -y
 
-# install development tools
-RUN apt-get update -y && apt-get install -y \
-    build-essential \
-    curl \
-    unzip
+COPY . .
+RUN conda run --name esmvaltool pip install --no-cache .
 
-# install environment packages
-RUN conda install -c conda-forge -c esmvalgroup -c birdhouse esmvaltool
-
-# run tests
-RUN esmvaltool -h
-
-ENTRYPOINT ["esmvaltool"]
-CMD ["-h"]
+ENTRYPOINT ["conda", "run", "--name", "esmvaltool", "esmvaltool"]

@@ -4,8 +4,10 @@ import unittest
 from cf_units import Unit
 from iris.cube import Cube
 
+from esmvalcore.cmor._fixes.cmip5.gfdl_cm3 import AllVars, Areacello, Sftof
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor._fixes.cmip5.gfdl_cm3 import Sftof, AllVars, Areacello
+from esmvalcore.cmor.table import get_var_info
 
 
 class TestSftof(unittest.TestCase):
@@ -18,8 +20,8 @@ class TestSftof(unittest.TestCase):
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'GFDL-CM3', 'Amon', 'sftof'),
-            [Sftof(None), AllVars(None)])
+            Fix.get_fixes('CMIP5', 'GFDL-CM3', 'fx', 'sftof'),
+            [Sftof(None), AllVars(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -33,13 +35,16 @@ class TestAreacello(unittest.TestCase):
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='areacello', units='m-2')
-        self.fix = Areacello(None)
+        self.vardef = get_var_info('CMIP5', 'fx', self.cube.var_name)
+        self.fix = Areacello(self.vardef)
 
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-CM3', 'Amon', 'areacello'),
-            [Areacello(None), AllVars(None)])
+            [Areacello(self.vardef),
+             AllVars(self.vardef),
+             GenericFix(self.vardef)])
 
     def test_fix_metadata(self):
         """Test data fix."""

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools >= 40.6.0", "wheel", "setuptools_scm>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+version_scheme = "release-branch-semver"
+
+[tool.pylint.main]
+jobs = 1  # Running more than one job in parallel crashes prospector.
+ignore-paths = [
+    "doc/conf.py",  # Sphinx configuration file
+]
+[tool.pylint.basic]
+good-names = [
+    "_",            # Used by convention for unused variables
+    "i", "j", "k",  # Used by convention for indices
+    "logger",       # Our preferred name for the logger
+]
+[tool.pylint.format]
+max-line-length = 79
+[tool.pylint."messages control"]
+disable = [
+    "import-error",      # Needed because Codacy does not install dependencies
+    "file-ignored",      # Disable messages about disabling checks
+    "locally-disabled",  # Disable messages about disabling checks
+]

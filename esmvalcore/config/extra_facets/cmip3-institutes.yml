@@ -1,0 +1,189 @@
+---
+'BCC-CM1':
+  '*':
+    '*':
+      institute: ['CMA']
+'bccr_bcm2_0':
+  '*':
+    '*':
+      institute: ['BCCR']
+'BCM2':
+  '*':
+    '*':
+      institute: ['BCCR']
+'cccma_cgcm3_1':
+  '*':
+    '*':
+      institute: ['CCCMA', 'CCCma']
+'cccma_cgcm3_1_t63':
+  '*':
+    '*':
+      institute: ['CCCMA', 'CCCma']
+'CCSM3':
+  '*':
+    '*':
+      institute: ['NCAR']
+'CGCM3-1-T47':
+  '*':
+    '*':
+      institute: ['CCCMA', 'CCCma']
+'CGCM3-1-T63':
+  '*':
+    '*':
+      institute: ['CCCMA', 'CCCma']
+'CM2':
+  '*':
+    '*':
+      institute: ['GFDL']
+'CM2-1':
+  '*':
+    '*':
+      institute: ['GFDL']
+'CM3':
+  '*':
+    '*':
+      institute: ['CNRM', 'INM', 'CNRM_CERFACS']
+'CM4':
+  '*':
+    '*':
+      institute: ['IPSL']
+'cnrm_cm3':
+  '*':
+    '*':
+      institute: ['CNRM', 'CNRM_CERFACS']
+'csiro_mk3_0':
+  '*':
+    '*':
+      institute: ['CSIRO', 'CSIRO-QCCCE']
+'csiro_mk3_5':
+  '*':
+    '*':
+      institute: ['CSIRO', 'CSIRO-QCCCE']
+'ECHAM4':
+  '*':
+    '*':
+      institute: ['INGV']
+'ECHAM5':
+  '*':
+    '*':
+      institute: ['MPIM', 'MPI-M']
+'ECHO-G':
+  '*':
+    '*':
+      institute: ['MIUB-KMA']
+'FGOALS-G1-0':
+  '*':
+    '*':
+      institute: ['LASG', 'LASG-IAP']
+'gfdl_cm2_0':
+  '*':
+    '*':
+      institute: ['GFDL']
+'gfdl_cm2_1':
+  '*':
+    '*':
+      institute: ['GFDL']
+'GISS-AOM':
+  '*':
+    '*':
+      institute: ['NASA', 'NASA-GISS']
+'GISS-EH':
+  '*':
+    '*':
+      institute: ['NASA', 'NASA-GISS']
+'GISS-ER':
+  '*':
+    '*':
+      institute: ['NASA', 'NASA-GISS']
+'giss_aom':
+  '*':
+    '*':
+      institute: ['NASA', 'NASA-GISS']
+'giss_model_e_h':
+  '*':
+    '*':
+      institute: ['NASA', 'NASA-GISS']
+'giss_model_e_r':
+  '*':
+    '*':
+      institute: ['NASA', 'NASA-GISS']
+'HADCM3':
+  '*':
+    '*':
+      institute: ['UKMO']
+'HADGEM1':
+  '*':
+    '*':
+      institute: ['UKMO']
+'iap_fgoals1_0_g':
+  '*':
+    '*':
+      institute: ['LASG', 'LASG-IAP']
+'ingv_echam4':
+  '*':
+    '*':
+      institute: ['INGV']
+'inmcm3_0':
+  '*':
+    '*':
+      institute: ['INM']
+'ipsl_cm4':
+  '*':
+    '*':
+      institute: ['IPSL']
+'MIROC3-2-HI':
+  '*':
+    '*':
+      institute: ['NIES']
+'MIROC3-2-MED':
+  '*':
+    '*':
+      institute: ['NIES']
+'miroc3_2_hires':
+  '*':
+    '*':
+      institute: ['NIES']
+'miroc3_2_medres':
+  '*':
+    '*':
+      institute: ['NIES']
+'miub_echo_g':
+  '*':
+    '*':
+      institute: ['MIUB-KMA']
+'MK3':
+  '*':
+    '*':
+      institute: ['CSIRO', 'CSIRO-QCCCE']
+'MK3-5':
+  '*':
+    '*':
+      institute: ['CSIRO', 'CSIRO-QCCCE']
+'mpi_echam5':
+  '*':
+    '*':
+      institute: ['MPIM', 'MPI-M']
+'mri_cgcm2_3_2a':
+  '*':
+    '*':
+      institute: ['MRI']
+'ncar_ccsm3_0':
+  '*':
+    '*':
+      institute: ['NCAR']
+'ncar_pcm1':
+  '*':
+    '*':
+      institute: ['NCAR']
+'PCM':
+  '*':
+    '*':
+      institute: ['NCAR']
+'ukmo_hadcm3':
+  '*':
+    '*':
+      institute: ['UKMO']
+'ukmo_hadgem1':
+  '*':
+    '*':
+      institute: ['UKMO']

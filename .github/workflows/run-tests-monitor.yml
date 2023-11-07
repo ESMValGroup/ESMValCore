@@ -1,0 +1,85 @@
+---
+name: Monitor Tests
+on:
+  push:
+    branches:
+      - main
+  # run the test only if the PR is to main
+  # turn it on if required
+  #pull_request:
+  #  branches:
+  #  - main
+  schedule:
+    - cron: '0 0 * * *'  # nightly
+
+# Required shell entrypoint to have properly configured bash shell
+defaults:
+  run:
+    shell: bash -l {0}
+
+jobs:
+  linux:
+    runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+      fail-fast: false
+    name: Linux Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: esmvalcore
+          environment-file: environment.yml
+          python-version: ${{ matrix.python-version }}
+          miniforge-version: "latest"
+          miniforge-variant: Mambaforge
+          use-mamba: true
+      - run: mkdir -p test_linux_artifacts_python_${{ matrix.python-version }}
+      - run: conda --version 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/conda_version.txt
+      - run: python -V 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
+      - run: pip install pytest-monitor
+      - run: pip install -e .[develop] 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/install.txt
+      - run: pytest -n 2 -m "not installation" --db ../.pymon 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/test_report.txt
+      - run: python tests/parse_pymon.py
+      - name: Upload artifacts
+        if: ${{ always() }}  # upload artifacts even if fail
+        uses: actions/upload-artifact@v2
+        with:
+          name: Test_Linux_python_${{ matrix.python-version }}
+          path: test_linux_artifacts_python_${{ matrix.python-version }}
+
+  osx:
+    runs-on: "macos-latest"
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+      fail-fast: false
+    name: OSX Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: esmvalcore
+          environment-file: environment.yml
+          python-version: ${{ matrix.python-version }}
+          miniforge-version: "latest"
+          miniforge-variant: Mambaforge
+          use-mamba: true
+      - run: mkdir -p test_osx_artifacts_python_${{ matrix.python-version }}
+      - run: conda --version 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/conda_version.txt
+      - run: python -V 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
+      - run: pip install pytest-monitor
+      - run: pip install -e .[develop] 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/install.txt
+      - run: pytest -n 2 -m "not installation" --db ../.pymon 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/test_report.txt
+      - run: python tests/parse_pymon.py
+      - name: Upload artifacts
+        if: ${{ always() }}  # upload artifacts even if fail
+        uses: actions/upload-artifact@v2
+        with:
+          name: Test_OSX_python_${{ matrix.python-version }}
+          path: test_osx_artifacts_python_${{ matrix.python-version }}

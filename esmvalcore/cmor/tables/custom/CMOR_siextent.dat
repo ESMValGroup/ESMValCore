@@ -1,0 +1,23 @@
+SOURCE: CMIP5
+!============
+variable_entry:    siextent
+!============
+modeling_realm:    seaIce
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             m2
+cell_methods:      area: mean where sea time: mean
+cell_measures:     area: areacello
+long_name:         Sea Ice Extent
+comment:           
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+type:              real
+valid_min:
+valid_max:
+!----------------------------------
+!

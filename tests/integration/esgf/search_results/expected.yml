@@ -1,0 +1,301 @@
+Amon_r1i1p1_historical,rcp85_INM-CM4_CMIP5_tas.json:
+- checksums:
+  - - SHA256
+    - 0c7cc5410d6f03b3a49b8de9e0ae8090249a66a8ebd27e6d17a78fba96eba3f9
+  - - SHA256
+    - 0c7cc5410d6f03b3a49b8de9e0ae8090249a66a8ebd27e6d17a78fba96eba3f9
+  - - SHA256
+    - 0c7cc5410d6f03b3a49b8de9e0ae8090249a66a8ebd27e6d17a78fba96eba3f9
+  - - MD5
+    - fc448373de679c8fcbfe031364049df1
+  dataset: cmip5.output1.INM.inmcm4.historical.mon.atmos.Amon.r1i1p1.v20130207
+  facets:
+    dataset: inmcm4
+    ensemble: r1i1p1
+    exp: historical
+    frequency: mon
+    institute: INM
+    mip: Amon
+    product: output1
+    project: CMIP5
+    modeling_realm: atmos
+    short_name: tas
+    version: v20130207
+  local_file: cmip5/output1/INM/inmcm4/historical/mon/atmos/Amon/r1i1p1/v20130207/tas_Amon_inmcm4_historical_r1i1p1_185001-200512.nc
+  name: tas_Amon_inmcm4_historical_r1i1p1_185001-200512.nc
+  size: 161801172
+  urls:
+  - http://aims3.llnl.gov/thredds/fileServer/cmip5_css02_data/cmip5/output1/INM/inmcm4/historical/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_inmcm4_historical_r1i1p1_185001-200512.nc
+  - http://esgf-data1.ceda.ac.uk/thredds/fileServer/esg_dataroot/cmip5/output1/INM/inmcm4/historical/mon/atmos/Amon/r1i1p1/v20130207/tas/tas_Amon_inmcm4_historical_r1i1p1_185001-200512.nc
+  - http://esgf.nci.org.au/thredds/fileServer/replica/CMIP5/output1/INM/inmcm4/historical/mon/atmos/Amon/r1i1p1/v20130207/tas/tas_Amon_inmcm4_historical_r1i1p1_185001-200512.nc
+  - http://esgf2.dkrz.de/thredds/fileServer/lta_dataroot/cmip5/output1/INM/inmcm4/historical/mon/atmos/Amon/r1i1p1/v20130207/tas/tas_Amon_inmcm4_historical_r1i1p1_185001-200512.nc
+- checksums:
+  - - SHA256
+    - 4a39b0fb2698ab4305df9070240a1b9ef88c80422f379e3086f67a0dfc2b3047
+  - - SHA256
+    - 4a39b0fb2698ab4305df9070240a1b9ef88c80422f379e3086f67a0dfc2b3047
+  - - SHA256
+    - 4a39b0fb2698ab4305df9070240a1b9ef88c80422f379e3086f67a0dfc2b3047
+  - - MD5
+    - b8885d3860e66b036db76ca6a49e7c51
+  dataset: cmip5.output1.INM.inmcm4.rcp85.mon.atmos.Amon.r1i1p1.v20130207
+  facets:
+    dataset: inmcm4
+    ensemble: r1i1p1
+    exp: rcp85
+    frequency: mon
+    institute: INM
+    mip: Amon
+    product: output1
+    project: CMIP5
+    modeling_realm: atmos
+    short_name: tas
+    version: v20130207
+  local_file: cmip5/output1/INM/inmcm4/rcp85/mon/atmos/Amon/r1i1p1/v20130207/tas_Amon_inmcm4_rcp85_r1i1p1_200601-210012.nc
+  name: tas_Amon_inmcm4_rcp85_r1i1p1_200601-210012.nc
+  size: 98538788
+  urls:
+  - http://aims3.llnl.gov/thredds/fileServer/cmip5_css02_data/cmip5/output1/INM/inmcm4/rcp85/mon/atmos/Amon/r1i1p1/tas/1/tas_Amon_inmcm4_rcp85_r1i1p1_200601-210012.nc
+  - http://esgf-data1.ceda.ac.uk/thredds/fileServer/esg_dataroot/cmip5/output1/INM/inmcm4/rcp85/mon/atmos/Amon/r1i1p1/v20130207/tas/tas_Amon_inmcm4_rcp85_r1i1p1_200601-210012.nc
+  - http://esgf.nci.org.au/thredds/fileServer/replica/CMIP5/output1/INM/inmcm4/rcp85/mon/atmos/Amon/r1i1p1/v20130207/tas/tas_Amon_inmcm4_rcp85_r1i1p1_200601-210012.nc
+  - http://esgf2.dkrz.de/thredds/fileServer/lta_dataroot/cmip5/output1/INM/inmcm4/rcp85/mon/atmos/Amon/r1i1p1/v20130207/tas/tas_Amon_inmcm4_rcp85_r1i1p1_200601-210012.nc
+Amon_r1i1p1_historical_FIO-ESM_CMIP5_tas.json:
+- checksums:
+  - - SHA256
+    - b6d4b62ccba4cb8141e422d17a31d618a59161c72bd10476391811b693cbff6c
+  - - SHA256
+    - b6d4b62ccba4cb8141e422d17a31d618a59161c72bd10476391811b693cbff6c
+  - - MD5
+    - 970cc36b75466a30cf02b7ae0896a9b0
+  - - SHA256
+    - b6d4b62ccba4cb8141e422d17a31d618a59161c72bd10476391811b693cbff6c
+  dataset: cmip5.output1.FIO.FIO-ESM.historical.mon.atmos.Amon.r1i1p1.v20121010
+  facets:
+    dataset: FIO-ESM
+    ensemble: r1i1p1
+    exp: historical
+    frequency: mon
+    institute: FIO
+    mip: Amon
+    product: output1
+    project: CMIP5
+    modeling_realm: atmos
+    short_name: tas
+    version: v20121010
+  local_file: cmip5/output1/FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc
+  name: tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc
+  size: 61398952
+  urls:
+  - http://esgf-data1.ceda.ac.uk/thredds/fileServer/esg_dataroot/cmip5/output1/FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc
+  - http://esgf.nci.org.au/thredds/fileServer/replica/CMIP5/output1/FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc
+  - http://esgf2.dkrz.de/thredds/fileServer/lta_dataroot/cmip5/output1/FIO/FIO-ESM/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc
+  - http://aims3.llnl.gov/thredds/fileServer/cmip5_css02_data/cmip5/output1/FIO/fio-esm/historical/mon/atmos/Amon/r1i1p1/v20121010/tas/tas_Amon_FIO-ESM_historical_r1i1p1_185001-200512.nc
+Amon_r1i1p1_rcp85_HadGEM2-CC_CMIP5_tas.json:
+- checksums:
+  - - SHA256
+    - 10a94293f2ac844ab62496d5d5369ccc0e839c73882a323c21800d71d7780315
+  - - SHA256
+    - 10a94293f2ac844ab62496d5d5369ccc0e839c73882a323c21800d71d7780315
+  dataset: cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531
+  facets:
+    dataset: HadGEM2-CC
+    ensemble: r1i1p1
+    exp: rcp85
+    frequency: mon
+    institute: MOHC
+    mip: Amon
+    product: output1
+    project: CMIP5
+    modeling_realm: atmos
+    short_name: tas
+    version: v20120531
+  local_file: cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc
+  name: tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc
+  size: 33432040
+  urls:
+  - http://esgf-data1.ceda.ac.uk/thredds/fileServer/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc
+  - http://esgf.nci.org.au/thredds/fileServer/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_205512-208011.nc
+- checksums:
+  - - SHA256
+    - 568e590103ed3bec8692aad85686b576466bd76dea872a9b0411c4c1941f44ad
+  - - SHA256
+    - 568e590103ed3bec8692aad85686b576466bd76dea872a9b0411c4c1941f44ad
+  dataset: cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531
+  facets:
+    dataset: HadGEM2-CC
+    ensemble: r1i1p1
+    exp: rcp85
+    frequency: mon
+    institute: MOHC
+    mip: Amon
+    product: output1
+    project: CMIP5
+    modeling_realm: atmos
+    short_name: tas
+    version: v20120531
+  local_file: cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc
+  name: tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc
+  size: 25523776
+  urls:
+  - http://esgf-data1.ceda.ac.uk/thredds/fileServer/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc
+  - http://esgf.nci.org.au/thredds/fileServer/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_208012-209912.nc
+- checksums:
+  - - SHA256
+    - f718b1d91b25e5cc5acd3c0080dabb3762711676ad8efe0f54c0946f495f943a
+  - - SHA256
+    - f718b1d91b25e5cc5acd3c0080dabb3762711676ad8efe0f54c0946f495f943a
+  dataset: cmip5.output1.MOHC.HadGEM2-CC.rcp85.mon.atmos.Amon.r1i1p1.v20120531
+  facets:
+    dataset: HadGEM2-CC
+    ensemble: r1i1p1
+    exp: rcp85
+    frequency: mon
+    institute: MOHC
+    mip: Amon
+    product: output1
+    project: CMIP5
+    modeling_realm: atmos
+    short_name: tas
+    version: v20120531
+  local_file: cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc
+  name: tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc
+  size: 1353448
+  urls:
+  - http://esgf-data1.ceda.ac.uk/thredds/fileServer/esg_dataroot/cmip5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc
+  - http://esgf.nci.org.au/thredds/fileServer/replica/CMIP5/output1/MOHC/HadGEM2-CC/rcp85/mon/atmos/Amon/r1i1p1/v20120531/tas/tas_Amon_HadGEM2-CC_rcp85_r1i1p1_210001-210012.nc
+EUR-11_MOHC-HadGEM2-ES_r1i1p1_historical_CORDEX_RACMO22E_mon_tas.json:
+- checksums:
+  - - SHA256
+    - e27fb1414788529a714c27a7d11169136db9ece7247756ab26dcea70d1da53e3
+  dataset: cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620
+  facets:
+    dataset: RACMO22E
+    domain: EUR-11
+    driver: MOHC-HadGEM2-ES
+    ensemble: r1i1p1
+    exp: historical
+    frequency: mon
+    institute: KNMI
+    product: output
+    project: CORDEX
+    rcm_version: v2
+    short_name: tas
+    version: v20160620
+  local_file: cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195001-195012.nc
+  name: tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195001-195012.nc
+  size: 5982648
+  urls:
+  - http://esgf1.dkrz.de/thredds/fileServer/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195001-195012.nc
+- checksums:
+  - - SHA256
+    - f14160b5411dc0c7716f80709f309e14948736187087a4c50ec33e0aadcacf53
+  dataset: cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1.RACMO22E.v2.mon.tas.v20160620
+  facets:
+    dataset: RACMO22E
+    domain: EUR-11
+    driver: MOHC-HadGEM2-ES
+    ensemble: r1i1p1
+    exp: historical
+    frequency: mon
+    institute: KNMI
+    product: output
+    project: CORDEX
+    rcm_version: v2
+    short_name: tas
+    version: v20160620
+  local_file: cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195101-196012.nc
+  name: tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195101-196012.nc
+  size: 41765410
+  urls:
+  - http://esgf1.dkrz.de/thredds/fileServer/cordex/cordex/output/EUR-11/KNMI/MOHC-HadGEM2-ES/historical/r1i1p1/KNMI-RACMO22E/v2/mon/tas/v20160620/tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1_KNMI-RACMO22E_v2_mon_195101-196012.nc
+historical_gn_r4i1p1f1_CMIP6_CESM2_Amon_tas.json:
+- checksums:
+  - - SHA256
+    - 5f7cdf4fd94b995bfdbf0d9316555980f5b0d0d246c07e1cb6356cd7a4fbdce5
+  - - SHA256
+    - 5f7cdf4fd94b995bfdbf0d9316555980f5b0d0d246c07e1cb6356cd7a4fbdce5
+  - - SHA256
+    - 5f7cdf4fd94b995bfdbf0d9316555980f5b0d0d246c07e1cb6356cd7a4fbdce5
+  - - SHA256
+    - 5f7cdf4fd94b995bfdbf0d9316555980f5b0d0d246c07e1cb6356cd7a4fbdce5
+  - - SHA256
+    - 5f7cdf4fd94b995bfdbf0d9316555980f5b0d0d246c07e1cb6356cd7a4fbdce5
+  - - SHA256
+    - 5f7cdf4fd94b995bfdbf0d9316555980f5b0d0d246c07e1cb6356cd7a4fbdce5
+  dataset: CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308
+  facets:
+    activity: CMIP
+    dataset: CESM2
+    ensemble: r4i1p1f1
+    exp: historical
+    grid: gn
+    institute: NCAR
+    mip: Amon
+    project: CMIP6
+    short_name: tas
+    version: v20190308
+  local_file: CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc
+  name: tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc
+  size: 243060396
+  urls:
+  - http://aims3.llnl.gov/thredds/fileServer/css03_data/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc
+  - http://esgf-data.ucar.edu/thredds/fileServer/esg_dataroot/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc
+  - http://esgf-data04.diasjp.net/thredds/fileServer/esg_dataroot/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc
+  - https://esgf.ceda.ac.uk/thredds/fileServer/esg_cmip6/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc
+  - http://esgf.nci.org.au/thredds/fileServer/replica/CMIP6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc
+  - http://esgf3.dkrz.de/thredds/fileServer/cmip6/CMIP/NCAR/CESM2/historical/r4i1p1f1/Amon/tas/gn/v20190308/tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc
+obs4MIPs_CERES-EBAF_mon_rsutcs.json:
+- checksums:
+  - - SHA256
+    - db1434a04f3c65eb43e85c0f5d5f344dec5c7813989a7e3bfb5aab6ac3a39414
+  dataset: obs4MIPs.CERES-EBAF.v20160610
+  facets:
+    dataset: CERES-EBAF
+    frequency: mon
+    institute: NASA-LaRC
+    project: obs4MIPs
+    modeling_realm: atmos
+    short_name: rsutcs
+    version: v20160610
+  local_file: obs4MIPs/CERES-EBAF/v20160610/rsutcs_CERES-EBAF_L3B_Ed2-8_200003-201404.nc
+  name: rsutcs_CERES-EBAF_L3B_Ed2-8_200003-201404.nc
+  size: 44090540
+  urls:
+  - https://dpesgf03.nccs.nasa.gov/thredds/fileServer/obs4MIPs/NASA-LaRC/observations/atmos/rsutcs/mon/grid/NASA-LaRC/CERES-EBAF/v20140728/rsutcs_CERES-EBAF_L3B_Ed2-8_200003-201404.nc
+obs4MIPs_GPCP-V2.3_pr.json:
+- checksums:
+  - - SHA256
+    - 4dd4678b79ef139446c8406da5aae4fed210abb2f2160ef95f6988bf83e4525b
+  dataset: obs4MIPs.GPCP-V2.3.v20180519
+  facets:
+    dataset: GPCP-V2.3
+    frequency: mon
+    institute: NASA-GSFC
+    project: obs4MIPs
+    short_name: pr
+    version: v20180519
+  local_file: obs4MIPs/GPCP-V2.3/v20180519/pr_GPCP-SG_L3_v2.3_197901-201710.nc
+  name: pr_GPCP-SG_L3_v2.3_197901-201710.nc
+  size: 19348352
+  urls:
+  - https://dpesgf03.nccs.nasa.gov/thredds/fileServer/obs4MIPs/observations/NASA-GSFC/Obs-GPCP/GPCP/V2.3/atmos/pr/pr_GPCP-SG_L3_v2.3_197901-201710.nc
+run1_historical_cccma_cgcm3_1_CMIP3_mon_tas.json:
+- checksums:
+  - - SHA256
+    - ee398fdd869ff702c525ebac091e79e6ff69cf4487e3d042cf8dc1e2f105fcb4
+  dataset: cmip3.CCCma.cccma_cgcm3_1.historical.mon.atmos.run1.tas.v1
+  facets:
+    dataset: cccma_cgcm3_1
+    ensemble: run1
+    exp: historical
+    frequency: mon
+    institute: CCCma
+    project: CMIP3
+    modeling_realm: atmos
+    short_name: tas
+    version: v1
+  local_file: cmip3/CCCma/cccma_cgcm3_1/historical/mon/atmos/run1/tas/v1/tas_a1_20c3m_1_cgcm3.1_t47_1850_2000.nc
+  name: tas_a1_20c3m_1_cgcm3.1_t47_1850_2000.nc
+  size: 33448576
+  urls:
+  - http://aims3.llnl.gov/thredds/fileServer/cmip3_data/data2/20c3m/atm/mo/tas/cccma_cgcm3_1/run1/tas_a1_20c3m_1_cgcm3.1_t47_1850_2000.nc

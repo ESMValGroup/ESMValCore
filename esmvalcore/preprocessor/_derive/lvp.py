@@ -4,7 +4,8 @@ authors:
     - weig_ka
 
 """
-from iris import Constraint
+
+from iris import NameConstraint
 
 from ._baseclass import DerivedVariableBase
 
@@ -31,11 +32,9 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def calculate(cubes):
         """Compute Latent Heat Release from Precipitation."""
-        hfls_cube = cubes.extract_strict(
-            Constraint(name='surface_upward_latent_heat_flux'))
-        pr_cube = cubes.extract_strict(Constraint(name='precipitation_flux'))
-        evspsbl_cube = cubes.extract_strict(
-            Constraint(name='water_evaporation_flux'))
+        hfls_cube = cubes.extract_cube(NameConstraint(var_name='hfls'))
+        pr_cube = cubes.extract_cube(NameConstraint(var_name='pr'))
+        evspsbl_cube = cubes.extract_cube(NameConstraint(var_name='evspsbl'))
 
         lvp_cube = hfls_cube * (pr_cube / evspsbl_cube)
 

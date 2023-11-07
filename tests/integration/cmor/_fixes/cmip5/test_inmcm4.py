@@ -1,24 +1,38 @@
 """Tests for inmcm4 fixes."""
 import unittest
 
-from iris.cube import Cube
 from cf_units import Unit
+from iris.cube import Cube
 
+from esmvalcore.cmor._fixes.cmip5.inmcm4 import Cl, Gpp, Lai, Nbp
+from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor._fixes.cmip5.inmcm4 import Gpp, Lai, Nbp
+
+
+def test_get_cl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP5', 'inmcm4', 'Amon', 'cl')
+    assert fix == [Cl(None), GenericFix(None)]
+
+
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl is ClFixHybridPressureCoord
 
 
 class TestGpp(unittest.TestCase):
     """Test gpp fixes."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='gpp', units='J')
         self.fix = Gpp(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'INMCM4', 'Amon', 'gpp'),
-                             [Gpp(None)])
+                             [Gpp(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fox."""
@@ -29,15 +43,16 @@ class TestGpp(unittest.TestCase):
 
 class TestLai(unittest.TestCase):
     """Test lai fixes."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='lai', units='J')
         self.fix = Lai(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'INMCM4', 'Amon', 'lai'),
-                             [Lai(None)])
+                             [Lai(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -48,15 +63,16 @@ class TestLai(unittest.TestCase):
 
 class TestNbp(unittest.TestCase):
     """Tests for nbp."""
+
     def setUp(self):
         """Prepare tests."""
         self.cube = Cube([1.0], var_name='nbp')
         self.fix = Nbp(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'INMCM4', 'Amon', 'nbp'),
-                             [Nbp(None)])
+                             [Nbp(None), GenericFix(None)])
 
     def test_fix_metadata(self):
         """Test fix on nbp files to set standard_name."""

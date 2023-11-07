@@ -1,8 +1,11 @@
-
 """Fixes for inmcm4 model."""
 import iris
 
+from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
+
+
+Cl = ClFixHybridPressureCoord
 
 
 class Gpp(Fix):
@@ -16,7 +19,8 @@ class Gpp(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.Cube
+        cube : iris.cube.Cube
+            Input cube.
 
         Returns
         -------
@@ -40,7 +44,8 @@ class Lai(Fix):
 
         Parameters
         ----------
-        cube: iris.cube.Cube
+        cube : iris.cube.Cube
+            Input cube.
 
         Returns
         -------

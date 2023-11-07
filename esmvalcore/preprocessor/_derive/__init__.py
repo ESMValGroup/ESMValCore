@@ -95,19 +95,32 @@ def derive(cubes, short_name, long_name, units, standard_name=None):
         cube = DerivedVariable().calculate(cubes)
     except Exception as exc:
         msg = (f"Derivation of variable '{short_name}' failed. If you used "
-               f"the option '--skip-nonexistent' for running your recipe, "
-               f"this might be caused by missing input data for derivation "
-               f"('{short_name}' needs the variables "
-               f"{DerivedVariable().required}).")
+               f"the option '--skip_nonexistent' for running your recipe, "
+               f"this might be caused by missing input data for derivation")
         raise ValueError(msg) from exc
 
     # Set standard attributes
     cube.var_name = short_name
     cube.standard_name = standard_name if standard_name else None
     cube.long_name = long_name
-    cube.units = units
     for temp in cubes:
         if 'source_file' in temp.attributes:
             cube.attributes['source_file'] = temp.attributes['source_file']
+
+    # Check/convert units
+    if cube.units is None or cube.units == units:
+        cube.units = units
+    elif cube.units.is_no_unit() or cube.units.is_unknown():
+        logger.warning(
+            "Units of cube after executing derivation script of '%s' are "
+            "'%s', automatically setting them to '%s'. This might lead to "
+            "incorrect data", short_name, cube.units, units)
+        cube.units = units
+    elif cube.units.is_convertible(units):
+        cube.convert_units(units)
+    else:
+        raise ValueError(
+            f"Units '{cube.units}' after executing derivation script of "
+            f"'{short_name}' cannot be converted to target units '{units}'")
 
     return cube

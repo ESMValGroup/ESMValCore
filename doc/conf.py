@@ -12,10 +12,10 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -23,7 +23,6 @@ from datetime import datetime
 root = Path(__file__).absolute().parent.parent
 sys.path.insert(0, str(root))
 
-from esmvalcore.utils.doc.gensidebar import generate_sidebar
 from esmvalcore import __version__
 
 # -- RTD configuration ------------------------------------------------
@@ -34,7 +33,18 @@ on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 
 # This is used for linking and such so we link to the thing we're building
 rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
-if rtd_version not in ["latest"]:  # TODO: add "stable" once we have it
+if on_rtd:
+    # On Readthedocs, the conda environment used for building the documentation
+    # is not `activated`. As a consequence, a few critical environment variables
+    # are not set. Here, we hardcode them instead.
+    # In a normal environment, i.e. a local build of the documentation, the
+    # normal environment activation takes care of this.
+    rtd_project = os.environ.get("READTHEDOCS_PROJECT")
+    rtd_conda_prefix = f"/home/docs/checkouts/readthedocs.org/user_builds/{rtd_project}/conda/{rtd_version}"
+    os.environ["ESMFMKFILE"] = f"{rtd_conda_prefix}/lib/esmf.mk"
+    os.environ["PROJ_DATA"] = f"{rtd_conda_prefix}/share/proj"
+    os.environ["PROJ_NETWORK"] = "OFF"
+if rtd_version not in ["latest", "stable", "doc"]:
     rtd_version = "latest"
 
 # -- General configuration ------------------------------------------------
@@ -46,6 +56,8 @@ if rtd_version not in ["latest"]:  # TODO: add "stable" once we have it
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'autodocsumm',
+    'nbsphinx',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
@@ -57,24 +69,16 @@ extensions = [
     'sphinx.ext.napoleon',
 ]
 
-autodoc_default_flags = [
-    'members',
-    'undoc-members',
-    'inherited-members',
-    'show-inheritance',
-]
+autodoc_default_options = {
+    'members': True,
+    'undoc-members': True,
+    'inherited-members': True,
+    'show-inheritance': True,
+    'autosummary': True,
+}
 
-# autodoc_mock_imports = ['cf_units', 'iris', 'matplotlib', 'numpy', 'cartopy',
-#                        'cftime', 'netCDF4', 'yaml', 'PIL', 'prov', 'scipy',
-#                        'psutil', 'shapely', 'stratify', 'ESMF']
-autodoc_mock_imports = [
-    'iris',
-    'stratify',
-    'ESMF',
-    'cartopy',
-    'cf_units',
-    'psutil',
-]
+# Show type hints in function signature AND docstring
+autodoc_typehints = 'both'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -90,8 +94,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'ESMValTool'
-copyright = (u"{0}, Veronika Eyring, Axel Lauer, Mattia Righi, "
-             u"Martin Evaldsson et al.").format(datetime.now().year)
+copyright = u'{0}, ESMValTool Development Team'.format(datetime.now().year)
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -114,7 +117,7 @@ release = __version__
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = []
+exclude_patterns: list = []
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -144,12 +147,24 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'pydata_sphinx_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-# html_theme_options = {}
+#
+# Avoid the following warning issued by pydata_sphinx_theme:
+#
+# "WARNING: The default value for `navigation_with_keys` will change to `False`
+# in the next release. If you wish to preserve the old behavior for your site,
+# set `navigation_with_keys=True` in the `html_theme_options` dict in your
+# `conf.py` file.Be aware that `navigation_with_keys = True` has negative
+# accessibility implications:
+# https://github.com/pydata/pydata-sphinx-theme/issues/1492"
+# Short synopsis of said issue: as of now, left/right keys take one
+# to the previous/next page instead of scrolling horizontally; this
+# should be fixed upstream, then we can set again navigation with keys True
+html_theme_options = {"navigation_with_keys": False}
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
@@ -163,7 +178,7 @@ html_short_title = "ESMValTool {0}".format(release)
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = 'figures/ESMValTool-logo.png'
+html_logo = 'figures/ESMValTool-logo-2.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -173,7 +188,7 @@ html_logo = 'figures/ESMValTool-logo.png'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
+html_static_path: list = []
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -255,7 +270,7 @@ latex_elements = {
      \fi}
      \begin{titlepage}
      \begin{center}
-     \includegraphics[width=\textwidth]{figures/ESMValTool-logo.pdf}\par
+     \includegraphics[width=\textwidth]{figures/ESMValTool-logo-2.pdf}\par
      \vspace{2cm}
      {\Huge \bf \sffamily User's and Developer's Guide \par}
      \vspace{1cm}
@@ -385,7 +400,7 @@ epub_copyright = u'ESMValTool Development Team'
 # The format is a list of tuples containing the path and title.
 # epub_pre_files = []
 
-# HTML files shat should be inserted after the pages created by sphinx.
+# HTML files that should be inserted after the pages created by sphinx.
 # The format is a list of tuples containing the path and title.
 # epub_post_files = []
 
@@ -417,17 +432,27 @@ numfig = True
 
 # Configuration for intersphinx
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None),
-    'iris': ('https://scitools.org.uk/iris/docs/latest/', None),
-    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
-    'esmvaltool':
-    ('https://esmvaltool.readthedocs.io/en/%s/' % rtd_version, None),
+    'cf_units': ('https://cf-units.readthedocs.io/en/latest/', None),
+    'cftime': ('https://unidata.github.io/cftime/', None),
     'esmvalcore':
-    ('https://esmvaltool.readthedocs.io/projects/esmvalcore/en/%s/' %
-     rtd_version, None),
+    (f'https://docs.esmvaltool.org/projects/ESMValCore/en/{rtd_version}/',
+     None),
+    'esmvaltool': (f'https://docs.esmvaltool.org/en/{rtd_version}/', None),
+    'dask': ('https://docs.dask.org/en/stable/', None),
+    'distributed': ('https://distributed.dask.org/en/stable/', None),
+    'iris': ('https://scitools-iris.readthedocs.io/en/latest/', None),
+    'iris-esmf-regrid': ('https://iris-esmf-regrid.readthedocs.io/en/latest',
+                         None),
+    'matplotlib': ('https://matplotlib.org/stable/', None),
+    'numpy': ('https://numpy.org/doc/stable/', None),
+    'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/latest/', None),
+    'python': ('https://docs.python.org/3/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
 }
 
 # -- Custom Document processing ----------------------------------------------
+
+sys.path.append(os.path.dirname(__file__))
+from gensidebar import generate_sidebar
 
 generate_sidebar(globals(), "esmvalcore")

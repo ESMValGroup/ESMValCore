@@ -1,0 +1,55 @@
+<h3>{{ task.title }}</h3>
+
+{% for file in task.image_files %}
+
+<div class="div_figure d-inline-flex
+{% for filter_name in filters.keys() %}
+    {% if filter_name in file.attributes %}
+        {% set attribute = file.attributes[filter_name] %}
+        {% if attribute is string or not (attribute is iterable) %}
+            f_{{ filter_name|replace(' ', '_') }}_{{ attribute | replace(' ', '_') }}
+        {% else %}
+            {% for attr in attribute %} f_{{ filter_name|replace(' ', '_') }}_{{ attr | replace(' ', '_') }} {% endfor %}
+        {% endif %}
+    {% endif %}
+{% endfor %}
+">
+    <figure class="figure">
+        <a href='{{ relpath(file.path, session.session_dir) }}'>
+        <img class="figure-img img-fluid" src='{{ relpath(file.path, session.session_dir) }}' alt='{{ file.caption }}'/>
+        </a>
+        <figcaption class="figure-caption">
+            {{ file.caption }}
+            <br>
+            <br>
+            <a href='{{ relpath(file.path, session.session_dir) }}'>download</a> |
+            <a href='{{ relpath(file.citation_file, session.session_dir) }}'>references</a> |
+            <a href='{{ relpath(file.data_citation_file, session.session_dir) }}'>extra data citation</a> |
+            <a href='{{ relpath(file.provenance_xml_file, session.session_dir) }}'>provenance</a>
+        </figcaption>
+    </figure>
+</div>
+
+{% endfor %}
+
+{% if task.data_files|length > 0 %}
+<h4>Data files <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#df_{{ diagnostic_loop.index }}_{{ loop.index }}" aria-expanded="false" aria-controls="df_{{ diagnostic_loop.index }}_{{ loop.index }}">Show/Hide</button></h4>
+
+<div id="df_{{ diagnostic_loop.index }}_{{ loop.index }}" class="collapse">
+    <div class="card card-body">
+        <ul>
+        {% for file in task.data_files %}
+
+            <li>
+                {{ file.caption }} |
+                <a href='{{ relpath(file.path, session.session_dir) }}'>download</a> |
+                <a href='{{ relpath(file.citation_file, session.session_dir) }}'>references</a> |
+                <a href='{{ relpath(file.data_citation_file, session.session_dir) }}'>extra data citation</a> |
+                <a href='{{ relpath(file.provenance_xml_file, session.session_dir) }}'>provenance</a>
+            </li>
+
+        {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}

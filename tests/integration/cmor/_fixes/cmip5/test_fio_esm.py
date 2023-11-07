@@ -4,8 +4,21 @@ import unittest
 from cf_units import Unit
 from iris.cube import Cube
 
+from esmvalcore.cmor._fixes.cmip5.cesm1_cam5 import Cl as BaseCl
+from esmvalcore.cmor._fixes.cmip5.fio_esm import Ch4, Cl, Co2
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor._fixes.cmip5.fio_esm import Ch4, Co2
+
+
+def test_get_cl_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP5', 'FIO-ESM', 'Amon', 'cl')
+    assert fix == [Cl(None), GenericFix(None)]
+
+
+def test_cl_fix():
+    """Test fix for ``cl``."""
+    assert Cl is BaseCl
 
 
 class TestCh4(unittest.TestCase):
@@ -18,7 +31,7 @@ class TestCh4(unittest.TestCase):
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'FIO-ESM', 'Amon', 'ch4'),
-                             [Ch4(None)])
+                             [Ch4(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -37,7 +50,7 @@ class TestCo2(unittest.TestCase):
     def test_get(self):
         """Test fix get"""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'FIO-ESM', 'Amon', 'co2'),
-                             [Co2(None)])
+                             [Co2(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""

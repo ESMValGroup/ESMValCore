@@ -1,0 +1,72 @@
+
+<!-- Tab links -->
+<ul class="nav nav-tabs sticky-top bg-light" id="tabDiagnostics" role="tablist">
+  <li class="nav-item">
+    <!-- Filter -->
+    <div class="dropdown" style="position: static">
+      <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-filter" viewBox="0 0 16 16">
+          <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
+        </svg>
+        Filters
+      </button>
+      <div class="dropdown-menu w-100">
+        <div class="container div_filter">
+          <div class="row justify-content-center">
+            {% for filter_name, filter_values in filters.items() %}
+            {% set filter_loop = loop %}
+            <div class="col-xl-3 col-lg-4 col-sm-6 col-12 filter_category" id="filter_{{ filter_name|replace(' ', '_') }}">
+                <h4>{{ filter_name|replace('_', ' ')|title }}</h4>
+                {% for value in filter_values %}
+                <div class="form-check">
+                  <input class="form-check-input filter_cb" type="checkbox" value="" id="cb_{{ filter_loop.index }}_{{ loop.index }}" rel="f_{{ filter_name|replace(' ', '_') }}_{{ value|replace(' ', '_') }}">
+                  <label class="form-check-label" for="cb_{{ filter_loop.index }}_{{ loop.index }}">
+                    {{ value|replace('_', ' ')|title }}
+                  </label>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+          </div>
+          <div class="d-flex justify-content-center align-items-center gap-3">
+            <div class="d-inline-block">
+              <button class="btn btn-primary" id="b_deleteFilters" disabled>Delete Filters</button>
+            </div>
+            <div class="form-check form-switch d-inline-block">
+              <input class="form-check-input" type="checkbox" value="" id="cb_hideEmptyDiagnostics" rel="" checked>
+              <label class="form-check-label" for="cb_hideEmptyDiagnostics">
+                Hide empty diagnostics
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active diagnostics-tab" id="tabAll" data-bs-toggle="tab" data-bs-target="#" type="button" role="tab" aria-controls="" aria-selected="true">All</button>
+  </li>
+  {% for diagnostic in diagnostics %}
+    <li class="nav-item" role="presentation">
+      <button class="nav-link diagnostics-tab" id="tab_{{ loop.index }}" data-bs-toggle="tab" data-bs-target="#tabPane_{{ loop.index }}" type="button" role="tab" aria-controls="tabPane_{{ loop.index }}" aria-selected="true">{{ diagnostic.title }}</button>
+    </li>
+  {% endfor %}
+</ul>
+
+<div class="tab-content" id="tabContentDiagnostics">
+{% for diagnostic in diagnostics %}
+
+  <div id="tabPane_{{ loop.index }}" class="tab-pane show active diagnostics-tab-pane" role="tabpanel" aria-labelledby="tab_{{ loop.index }}">
+    <h2>{{ diagnostic.title }}</h2>
+    <p>{{ diagnostic.description }}</p>
+
+    {% set diagnostic_loop = loop %}
+    {% for task in diagnostic.task_output %}
+
+      {% include 'TaskOutput.j2' %}
+
+    {% endfor %}
+  </div>
+
+{% endfor %}
+</div>
