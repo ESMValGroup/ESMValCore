@@ -319,7 +319,7 @@ class ESMValTool():
             self.__setattr__(entry_point.name, entry_point.load()())
 
     def version(self):
-        """Show versions of all packages that conform ESMValTool.
+        """Show versions of all packages that form ESMValTool.
 
         In particular, this command will show the version ESMValCore and
         any other package that adds a subcommand to 'esmvaltool'

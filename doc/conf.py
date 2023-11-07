@@ -152,7 +152,19 @@ html_theme = 'pydata_sphinx_theme'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-# html_theme_options = {}
+#
+# Avoid the following warning issued by pydata_sphinx_theme:
+#
+# "WARNING: The default value for `navigation_with_keys` will change to `False`
+# in the next release. If you wish to preserve the old behavior for your site,
+# set `navigation_with_keys=True` in the `html_theme_options` dict in your
+# `conf.py` file.Be aware that `navigation_with_keys = True` has negative
+# accessibility implications:
+# https://github.com/pydata/pydata-sphinx-theme/issues/1492"
+# Short synopsis of said issue: as of now, left/right keys take one
+# to the previous/next page instead of scrolling horizontally; this
+# should be fixed upstream, then we can set again navigation with keys True
+html_theme_options = {"navigation_with_keys": False}
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
