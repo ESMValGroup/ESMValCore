@@ -41,6 +41,20 @@ MASK_REGRIDDING_MASK_VALUE = {
 
 
 class _ESMPyRegridder:
+    """General ESMPy regridder.
+
+    Parameters
+    ----------
+    src_cube:
+        Cube defining the source grid.
+    tgt_cube:
+        Cube defining the target grid.
+    method:
+        Regridding algorithm.
+    mask_threshold:
+        Threshold used to regrid mask of input cube.
+
+    """
 
     def __init__(
         self,
@@ -49,20 +63,7 @@ class _ESMPyRegridder:
         method: str = 'linear',
         mask_threshold: float = 0.99,
     ):
-        """General ESMPy regridder.
-
-        Parameters
-        ----------
-        src_cube:
-            Cube defining the source grid.
-        tgt_cube:
-            Cube defining the target grid.
-        method:
-            Regridding algorithm.
-        mask_threshold:
-            Threshold used to regrid mask of input cube.
-
-        """
+        """Initialize class instance."""
         self.src_cube = src_cube
         self.tgt_cube = tgt_cube
         self.method = method
@@ -91,27 +92,28 @@ class _ESMPyRegridder:
 
 
 class _ESMPyScheme:
+    """General irregular regridding scheme.
+
+    This class can be used in :meth:`iris.cube.Cube.regrid`.
+
+    Note
+    ----
+    See `ESMPy <http://www.earthsystemmodeling.org/
+    esmf_releases/non_public/ESMF_7_0_0/esmpy_doc/html/
+    RegridMethod.html#ESMF.api.constants.RegridMethod>`__ for more details on
+    this.
+
+    Parameters
+    ----------
+    mask_threshold:
+        Threshold used to regrid mask of source cube.
+
+    """
 
     _METHOD = ''
 
     def __init__(self, mask_threshold: float = 0.99):
-        """General irregular regridding scheme.
-
-        This class can be used in :meth:`iris.cube.Cube.regrid`.
-
-        Note
-        ----
-        See `ESMPy <http://www.earthsystemmodeling.org/
-        esmf_releases/non_public/ESMF_7_0_0/esmpy_doc/html/
-        RegridMethod.html#ESMF.api.constants.RegridMethod>`__ for more details
-        on this.
-
-        Parameters
-        ----------
-        mask_threshold:
-            Threshold used to regrid mask of source cube.
-
-        """
+        """Initialize class instance."""
         self.mask_threshold = mask_threshold
 
     def __repr__(self) -> str:
@@ -145,12 +147,12 @@ class _ESMPyScheme:
 
 
 class ESMPyAreaWeighted(_ESMPyScheme):
-    """ESMPy nearest-neighbor regridding scheme."""
+    """ESMPy area-weighted regridding scheme."""
     _METHOD = 'area_weighted'
 
 
 class ESMPyLinear(_ESMPyScheme):
-    """ESMPy nearest-neighbor regridding scheme."""
+    """ESMPy bilinear regridding scheme."""
     _METHOD = 'linear'
 
 

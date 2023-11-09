@@ -26,6 +26,19 @@ __all__ = [
 
 
 class _GenericRegridder:
+    """Generic function regridder.
+
+    This class can be used in :meth:`iris.cube.Cube.regrid`.
+
+    Parameters
+    ----------
+    func:
+        Generic regridding function with signature f(src_cube: Cube, grid_cube:
+        Cube, **kwargs) -> Cube.
+    **kwargs:
+        Keyword arguments for the generic regridding function.
+
+    """
 
     def __init__(
         self,
@@ -34,19 +47,7 @@ class _GenericRegridder:
         func: Callable,
         **kwargs,
     ):
-        """Generic function regridder.
-
-        This class can be used in :meth:`iris.cube.Cube.regrid`.
-
-        Parameters
-        ----------
-        func:
-            Generic regridding function with signature f(src_cube: Cube,
-            grid_cube: Cube, **kwargs) -> Cube.
-        **kwargs:
-            Keyword arguments for the generic regridding function.
-
-        """
+        """Initialize class instance."""
         self.src_cube = src_cube
         self.tgt_cube = tgt_cube
         self.func = func
@@ -70,21 +71,22 @@ class _GenericRegridder:
 
 
 class GenericFuncScheme:
+    """Regridding with a generic function.
+
+    This class can be used in :meth:`iris.cube.Cube.regrid`.
+
+    Parameters
+    ----------
+    func:
+        Generic regridding function with signature f(src_cube: Cube, grid_cube:
+        Cube, **kwargs) -> Cube.
+    **kwargs:
+        Keyword arguments for the generic regridding function.
+
+    """
 
     def __init__(self, func: Callable, **kwargs):
-        """Regridding with a generic function.
-
-        This class can be used in :meth:`iris.cube.Cube.regrid`.
-
-        Parameters
-        ----------
-        func:
-            Generic regridding function with signature f(src_cube: Cube,
-            grid_cube: Cube, **kwargs) -> Cube.
-        **kwargs:
-            Keyword arguments for the generic regridding function.
-
-        """
+        """Initialize class instance."""
         self.func = func
         self.kwargs = kwargs
 
