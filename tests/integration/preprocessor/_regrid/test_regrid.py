@@ -306,6 +306,18 @@ class Test:
         expected = np.array([[[1]], [[1]], [[1]]])
         np.testing.assert_array_equal(result.data, expected)
 
+    def test_invalid_scheme_for_unstructured_grid(self):
+        """Test invalid scheme for unstructured cube."""
+        msg = (
+            "Regridding scheme 'invalid' does not support unstructured data, "
+        )
+        with pytest.raises(ValueError, match=msg):
+            regrid(
+                self.unstructured_grid_cube,
+                self.tgt_grid_for_unstructured,
+                'invalid',
+            )
+
     def test_deprecate_unstrucured_nearest(self):
         """Test deprecation of `unstructured_nearest` regridding scheme."""
         with pytest.warns(ESMValCoreDeprecationWarning):
