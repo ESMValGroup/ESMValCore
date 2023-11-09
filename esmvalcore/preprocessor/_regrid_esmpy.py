@@ -92,7 +92,7 @@ class _ESMPyRegridder:
 
 class _ESMPyScheme:
 
-    METHOD = ''
+    _METHOD = ''
 
     def __init__(self, mask_threshold: float = 0.99):
         """General irregular regridding scheme.
@@ -139,24 +139,24 @@ class _ESMPyScheme:
         return _ESMPyRegridder(
             src_cube,
             tgt_cube,
-            method=self.METHOD,
+            method=self._METHOD,
             mask_threshold=self.mask_threshold,
         )
 
 
 class ESMPyAreaWeighted(_ESMPyScheme):
     """ESMPy nearest-neighbor regridding scheme."""
-    METHOD = 'area_weighted'
+    _METHOD = 'area_weighted'
 
 
 class ESMPyLinear(_ESMPyScheme):
     """ESMPy nearest-neighbor regridding scheme."""
-    METHOD = 'linear'
+    _METHOD = 'linear'
 
 
 class ESMPyNearest(_ESMPyScheme):
     """ESMPy nearest-neighbor regridding scheme."""
-    METHOD = 'nearest'
+    _METHOD = 'nearest'
 
 
 def cf_2d_bounds_to_esmpy_corners(bounds, circular):
