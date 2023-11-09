@@ -409,7 +409,7 @@ def test_single_download(mocker, tmp_path, checksum):
                                       spec_set=True,
                                       instance=True)
     response.iter_content.return_value = [b'chunk1', b'chunk2']
-    get = mocker.patch.object(_download.requests,
+    get = mocker.patch.object(_download.requests.Session,
                               'get',
                               autospec=True,
                               return_value=response)
@@ -455,7 +455,7 @@ def test_single_download(mocker, tmp_path, checksum):
     # File was downloaded only once
     get.assert_called_once()
     # From the correct URL
-    get.assert_called_with(url, stream=True, timeout=300, cert=credentials)
+    get.assert_called_with(_download.UniqueSession(), url)
     # We checked for a valid response
     response.raise_for_status.assert_called_once()
     # And requested a reasonable chunk size
@@ -497,7 +497,7 @@ def test_single_download_fail(mocker, tmp_path):
                                       instance=True)
     response.raise_for_status.side_effect = (
         requests.exceptions.RequestException("test error"))
-    mocker.patch.object(_download.requests,
+    mocker.patch.object(_download.requests.Session,
                         'get',
                         autospec=True,
                         return_value=response)

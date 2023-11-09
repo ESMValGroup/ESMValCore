@@ -40,6 +40,22 @@ class DownloadError(Exception):
     """An error occurred while downloading."""
 
 
+class UniqueSession(requests.Session):
+    """Implements singleton design pattern around requests.Session."""
+
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        """Create the instance if it does not exists, then returns it."""
+        if not cls._instance:
+            cls._instance = super().__new__(cls, *args, **kwargs)
+            cls._instance.stream = True
+            cls._instance.params = {'timeout': TIMEOUT}
+            cls._instance.cert = get_credentials()
+            logging.info("requests Session opened")
+        return cls._instance
+
+
 def compute_speed(size, duration):
     """Compute download speed in MB/s."""
     if duration != 0:
@@ -460,10 +476,7 @@ class ESGFFile:
 
         logger.debug("Downloading %s to %s", url, tmp_file)
         start_time = datetime.datetime.now()
-        response = requests.get(url,
-                                stream=True,
-                                timeout=TIMEOUT,
-                                cert=get_credentials())
+        response = UniqueSession().get(url)
         response.raise_for_status()
         with tmp_file.open("wb") as file:
             for chunk in response.iter_content(chunk_size=None):
