@@ -623,8 +623,9 @@ def _load_generic_scheme(scheme: dict):
         obj: Any = importlib.import_module(module_name)
     except ImportError as import_err:
         raise ValueError(
-            "Could not import specified generic regridding module. Please "
-            "double check spelling and that the required module is installed."
+            f"Could not import specified generic regridding module "
+            f"'{module_name}'. Please double check spelling and that the "
+            f"required module is installed."
         ) from import_err
     if separator:
         for attr in scheme_name.split('.'):
