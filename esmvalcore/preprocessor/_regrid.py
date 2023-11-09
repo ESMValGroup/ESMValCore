@@ -586,31 +586,7 @@ def _load_scheme(src_cube: Cube, scheme: str | dict):
 
     # Scheme is a dict -> assume this describes a generic regridding scheme
     if isinstance(scheme, dict):
-        scheme = dict(scheme)  # do not overwrite original scheme
-        try:
-            object_ref = scheme.pop("reference")
-        except KeyError as key_err:
-            raise ValueError(
-                "No reference specified for generic regridding.") from key_err
-        module_name, separator, scheme_name = object_ref.partition(":")
-        try:
-            obj: Any = importlib.import_module(module_name)
-        except ImportError as import_err:
-            raise ValueError(
-                "Could not import specified generic regridding module. "
-                "Please double check spelling and that the required module is "
-                "installed.") from import_err
-        if separator:
-            for attr in scheme_name.split('.'):
-                obj = getattr(obj, attr)
-
-        # If `obj` is a function that requires `src_cube` and `grid_cube`, use
-        # GenericFuncScheme
-        scheme_args = inspect.getfullargspec(obj).args
-        if 'src_cube' in scheme_args and 'grid_cube' in scheme_args:
-            loaded_scheme = GenericFuncScheme(obj, **scheme)
-        else:
-            loaded_scheme = obj(**scheme)
+        loaded_scheme = _load_generic_scheme(scheme)
 
     # Scheme is a str -> load appropriate regridding scheme depending on the
     # type of input data
@@ -628,6 +604,39 @@ def _load_scheme(src_cube: Cube, scheme: str | dict):
         )
 
     logger.debug("Loaded regridding scheme %s", loaded_scheme)
+
+    return loaded_scheme
+
+
+def _load_generic_scheme(scheme: dict):
+    """Load generic regridding scheme."""
+    scheme = dict(scheme)  # do not overwrite original scheme
+
+    try:
+        object_ref = scheme.pop("reference")
+    except KeyError as key_err:
+        raise ValueError(
+            "No reference specified for generic regridding."
+        ) from key_err
+    module_name, separator, scheme_name = object_ref.partition(":")
+    try:
+        obj: Any = importlib.import_module(module_name)
+    except ImportError as import_err:
+        raise ValueError(
+            "Could not import specified generic regridding module. Please "
+            "double check spelling and that the required module is installed."
+        ) from import_err
+    if separator:
+        for attr in scheme_name.split('.'):
+            obj = getattr(obj, attr)
+
+    # If `obj` is a function that requires `src_cube` and `grid_cube`, use
+    # GenericFuncScheme
+    scheme_args = inspect.getfullargspec(obj).args
+    if 'src_cube' in scheme_args and 'grid_cube' in scheme_args:
+        loaded_scheme = GenericFuncScheme(obj, **scheme)
+    else:
+        loaded_scheme = obj(**scheme)
 
     return loaded_scheme
 

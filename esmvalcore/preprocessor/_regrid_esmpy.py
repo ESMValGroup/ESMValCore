@@ -117,7 +117,7 @@ class _ESMPyScheme:
         self.mask_threshold = mask_threshold
 
     def __repr__(self) -> str:
-        """String representation of class."""
+        """Return string representation of class."""
         return (
             f'{self.__class__.__name__}(mask_threshold={self.mask_threshold})'
         )
@@ -148,16 +148,19 @@ class _ESMPyScheme:
 
 class ESMPyAreaWeighted(_ESMPyScheme):
     """ESMPy area-weighted regridding scheme."""
+
     _METHOD = 'area_weighted'
 
 
 class ESMPyLinear(_ESMPyScheme):
     """ESMPy bilinear regridding scheme."""
+
     _METHOD = 'linear'
 
 
 class ESMPyNearest(_ESMPyScheme):
     """ESMPy nearest-neighbor regridding scheme."""
+
     _METHOD = 'nearest'
 
 

@@ -95,7 +95,7 @@ class GenericFuncScheme:
         self.kwargs = kwargs
 
     def __repr__(self) -> str:
-        """String representation of class."""
+        """Return string representation of class."""
         kwargs = ', '.join(f"{k}={v}" for (k, v) in self.kwargs.items())
         return f'GenericFuncScheme({self.func.__name__}, {kwargs})'
 
