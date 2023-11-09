@@ -26,15 +26,19 @@ __all__ = [
 
 
 class _GenericRegridder:
-    """Generic function regridder.
+    r"""Generic function regridder.
 
     This class can be used in :meth:`iris.cube.Cube.regrid`.
 
     Parameters
     ----------
+    src_cube:
+        Cube defining the source grid.
+    tgt_cube:
+        Cube defining the target grid.
     func:
         Generic regridding function with signature f(src_cube: Cube, grid_cube:
-        Cube, **kwargs) -> Cube.
+        Cube, \*\*kwargs) -> Cube.
     **kwargs:
         Keyword arguments for the generic regridding function.
 
@@ -71,7 +75,7 @@ class _GenericRegridder:
 
 
 class GenericFuncScheme:
-    """Regridding with a generic function.
+    r"""Regridding with a generic function.
 
     This class can be used in :meth:`iris.cube.Cube.regrid`.
 
@@ -79,7 +83,7 @@ class GenericFuncScheme:
     ----------
     func:
         Generic regridding function with signature f(src_cube: Cube, grid_cube:
-        Cube, **kwargs) -> Cube.
+        Cube, \*\*kwargs) -> Cube.
     **kwargs:
         Keyword arguments for the generic regridding function.
 
