@@ -36,7 +36,7 @@ _CMOR_KEYS = (
 )
 
 
-def _update_cmor_facets(facets, override=False):
+def _update_cmor_facets(facets):
     """Update `facets` with information from CMOR table."""
     project = facets['project']
     mip = facets['mip']
@@ -53,7 +53,7 @@ def _update_cmor_facets(facets, override=False):
             f"'{short_name}' with mip '{mip}'")
     facets['original_short_name'] = table_entry.short_name
     for key in _CMOR_KEYS:
-        if key not in facets or override:
+        if key not in facets:
             value = getattr(table_entry, key, None)
             if value is not None:
                 facets[key] = value
