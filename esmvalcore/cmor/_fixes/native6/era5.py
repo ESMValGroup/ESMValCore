@@ -375,6 +375,10 @@ class AllVars(Fix):
             add_scalar_height_coord(cube, 10.)
         if 'p500'in self.vardef.dimensions:
             add_scalar_pressure_coord(cube, 500.)
+        if 'p700'in self.vardef.dimensions:
+            add_scalar_pressure_coord(cube, 700.)
+        if 'p850'in self.vardef.dimensions:
+            add_scalar_pressure_coord(cube, 850.)
 
         for coord_def in self.vardef.coordinates.values():
             axis = coord_def.axis
