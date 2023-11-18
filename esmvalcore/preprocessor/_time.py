@@ -16,12 +16,13 @@ import dask.array as da
 import dask.config
 import iris
 import iris.coord_categorisation
-import iris.exceptions
 import iris.util
 import isodate
 import numpy as np
-from iris.coords import AuxCoord
+from cf_units import Unit
+from iris.coords import AuxCoord, Coord
 from iris.cube import Cube, CubeList
+from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.time import PartialDateTime
 
 from esmvalcore.cmor.fixes import get_next_month, get_time_bounds
@@ -1150,7 +1151,7 @@ def timeseries_filter(
     """
     try:
         cube.coord('time')
-    except iris.exceptions.CoordinateNotFoundError:
+    except CoordinateNotFoundError:
         logger.error("Cube %s does not have time coordinate", cube)
         raise
 
@@ -1291,4 +1292,245 @@ def resample_time(
     if cube is None:
         raise ValueError(
             f"Time coordinate {dates} does not contain {requested} for {cube}")
+    return cube
+
+
+def _guess_time_bounds(time_coord: Coord) -> None:
+    """Guess coordinates of time coordinate in-place."""
+    if time_coord.has_bounds():
+        return
+    try:
+        time_coord.guess_bounds()
+    except ValueError:  # coordinate has only 1 point
+        point = time_coord.points[0]
+        time_coord.bounds = [[point - 0.5, point + 0.5]]
+
+
+def _get_local_time_offset(lon_coord: Coord) -> np.ndarray:
+    """Get offsets to shift UTC time to local solar time."""
+    lon_coord_degrees = lon_coord.copy()
+    lon_coord_degrees.convert_units('degrees')
+    shifted_lon = (lon_coord_degrees.points + 180.0) % 360 - 180.0
+    return shifted_lon / 180.0 * 12.0
+
+
+def _lin_pad(array: np.ndarray, delta: float, pad_with: int) -> np.ndarray:
+    """Linearly pad an array on both sides with constant difference."""
+    end_values = (array[0] - pad_with * delta, array[-1] + pad_with * delta)
+    new_array = np.pad(array, pad_with, 'linear_ramp', end_values=end_values)
+    return new_array
+
+
+def _pad_cube_in_time(cube: Cube) -> Cube:
+    """Pad cube with masked values with 1 time step on both sides."""
+    time_coord = cube.coord('time', dim_coords=True)
+
+    # Pad cube by one time step at beginning and end
+    time_dim = cube.coord_dims(time_coord)[0]
+    idx: list[slice | int] = [slice(None)] * cube.ndim
+    idx[time_dim] = [0] + list(range(time_coord.shape[0])) + [-1]
+    padded_cube = cube[tuple(idx)]
+
+    # Mask newly added values
+    mask = da.ma.getmaskarray(padded_cube.core_data())
+    idx = [slice(None)] * padded_cube.ndim
+    idx[time_dim] = [0, -1]
+    mask[tuple(idx)] = True
+    padded_cube.data = da.ma.masked_array(padded_cube.core_data(), mask=mask)
+
+    # Update time coordinate in cube with padded version. Make sure that this
+    # version uses 'hours' as reference units and has bounds (do NOT overwrite
+    # original time coordinate).
+    time_coord = time_coord.copy()
+    time_coord.convert_units(
+        Unit('hours since 1850-01-01', calendar=time_coord.units.calendar)
+    )
+    _guess_time_bounds(time_coord)
+    dtime = np.abs(
+        time_coord.bounds[0, 1] - time_coord.bounds[0, 0]
+    )
+    new_points = _lin_pad(time_coord.points, dtime, 1)
+    bnds = time_coord.bounds
+    new_bounds = np.stack(
+        (_lin_pad(bnds[:, 0], dtime, 1), _lin_pad(bnds[:, 1], dtime, 1)),
+        axis=-1,
+    )
+    padded_time_coord = time_coord.copy(new_points, bounds=new_bounds)
+    padded_cube.remove_coord('time')
+    padded_cube.add_dim_coord(padded_time_coord, time_dim)
+
+    return padded_cube
+
+
+def _get_local_times(time_coord: Coord, lon_coord: Coord) -> np.ndarray:
+    """Get array of binned local times of shape (lon, time)."""
+    n_time = time_coord.shape[0]
+    n_lon = lon_coord.shape[0]
+    shape = (n_lon, n_time)
+    time_array = np.broadcast_to(time_coord.points, shape)
+    time_offsets = _get_local_time_offset(lon_coord).reshape(-1, 1)
+
+    exact_local_time_array = time_array + time_offsets
+
+    # Put exact local times into bins given be the time coordinate bounds
+    bins = np.concatenate(([time_coord.bounds[0, 0]], time_coord.bounds[:, 1]))
+    idx = np.digitize(exact_local_time_array, bins) - 1  # idx for time points
+    idx[idx < 0] = 0  # will be masked in the final array
+    idx[idx >= n_time] = n_time - 1  # will be masked in the final array
+    local_time_array = time_coord.points[idx]
+
+    return local_time_array
+
+
+_get_indices = np.vectorize(np.searchsorted, signature='(i),(i)->(i)')
+"""Get indices of values from one array in another."""
+
+
+def _transform_to_local_time(
+    data: np.ndarray,
+    *,
+    time_coord: Coord,
+    lon_coord: Coord,
+) -> np.ndarray:
+    """Transform array with UTC coordinate to local solar time coordinate.
+
+    Note
+    ----
+    This function is NOT lazy and should be used within
+    :func:`dask.array.apply_gufunc`. `data` is assumed to have shape (...,
+    time, lon).
+
+    """
+    n_time = time_coord.shape[0]
+    local_time_array = _get_local_times(time_coord, lon_coord)  # (lon, time)
+
+    # Calculate advanced index to sort elements in time based on longitude
+    # using the binned local solar times from local_time_array.  All other
+    # dimensions will stay the same; this is ensured with np.ogrid.
+    time_idx = _get_indices(local_time_array, time_coord.points)  # (lon, time)
+    time_idx[time_idx < 0] = 0  # will be masked in the final array
+    time_idx[time_idx >= n_time] = -1  # will be masked in the final array
+    idx = np.ogrid[tuple([slice(0, d) for d in data.shape])]
+    idx[-2] = np.broadcast_to(time_idx.T, data.shape)  # '-2' is always time
+
+    new_data = data[tuple(idx)]
+
+    return new_data
+
+
+def _check_cube_coords(cube):
+    if not cube.coords('time', dim_coords=True):
+        raise CoordinateNotFoundError(
+            f"Input cube {cube.summary(shorten=True)} needs a dimensional "
+            f"coordinate `time`"
+        )
+    time_coord = cube.coord('time', dim_coords=True)
+    # The following works since DimCoords are always 1D and monotonic
+    if time_coord.points[0] > time_coord.points[-1]:
+        raise ValueError("`time` coordinate must be monotonically increasing")
+
+    if not cube.coords('longitude'):
+        raise CoordinateNotFoundError(
+            f"Input cube {cube.summary(shorten=True)} needs a coordinate "
+            f"`longitude`"
+        )
+    lon_coord = cube.coord('longitude')
+    if lon_coord.ndim > 1:
+        raise CoordinateMultiDimError(
+            f"Input cube {cube.summary(shorten=True)} needs a 1D coordinate "
+            f"`longitude`, got {lon_coord.ndim}D"
+        )
+
+
+def local_solar_time(cube: Cube) -> Cube:
+    """Convert UTC time coordinate to local solar time.
+
+    This preprocessor transforms input data with a UTC-based time coordinate to
+    a local solar time coordinate. For this, data is shifted along the time
+    axis based on the longitude.
+
+    Note
+    ----
+    This preprocessor preserves the temporal frequency of the input data. For
+    example, hourly input data will be transformed into hourly output data. For
+    this, the "exact" local solar time will be put into corresponding bins
+    defined by the bounds of the input time coordinate (in this example, the
+    bin size is 1hr). If time bounds are not given or cannot be approximated
+    (only one time step is given), a bin size of 1hr is assumed.
+
+    The "exact" local solar time is approximated as `UTC_time +
+    longitude/180*12`, where `latitude` is assumed to be in [-180, 180] (this
+    preprocessor automatically calculates the correct format for the
+    longitude). This approximation is justified since the aforementioned
+    binning will introduce uncertainties anyway.
+
+    Parameters
+    ----------
+    cube:
+        Input cube. Needs a 1D monotonically increasing dimensional coordinate
+        `time` (assumed to refer to UTC time) and a 1D coordinate `longitude`.
+
+    Returns
+    -------
+    Cube
+        Transformed cube of same shape as input cube with a local solar time
+        coordinate instead of UTC time.
+
+    Raises
+    ------
+    iris.exceptions.CoordinateNotFoundError
+        Input cube does not contain valid `time` and/or `longitude` coordinate.
+    iris.exceptions.CoordinateMultiDimError
+        Input cube has multidimensional `longitude` coordinate.
+    ValueError
+        `time` coordinate of input cube is not monotonically increasing.
+
+    """
+    # Make sure that cube has valid time and longitude coordinates
+    _check_cube_coords(cube)
+
+    # At beginning and end of time period, we need to use a mask to consider
+    # that not all values for all local times are given. E.g., for hourly data
+    # with first time point 01:00:00 UTC, local time in Berlin is already
+    # 02:00:00 (assuming no daylight saving time). Thus, for 01:00:00 local
+    # time on this day, there is no value for Berlin.
+    # We implement this by adding one time step to the beginning and one time
+    # step to the end of the data which is filled by missing values. Each value
+    # that will be masked in the output data will index either this first or
+    # last time step.
+    padded_cube = _pad_cube_in_time(cube)
+
+    time_coord = padded_cube.coord('time', dim_coords=True)
+    lon_coord = padded_cube.coord('longitude')
+    time_dim = padded_cube.coord_dims(time_coord)[0]
+    lon_dim = padded_cube.coord_dims(lon_coord)[0]
+
+    # Make sure the cube has lazy data and rechunk it properly (cube must not
+    # be chunked along time and longitude dimension)
+    if not padded_cube.has_lazy_data():
+        padded_cube.data = da.from_array(padded_cube.data)
+    new_chunks: list[str | int] = ['auto'] * padded_cube.ndim
+    new_chunks[time_dim] = -1
+    new_chunks[lon_dim] = -1
+    padded_cube.data = padded_cube.lazy_data().rechunk(new_chunks)
+
+    # Calculate new data parallelly
+    new_data = da.apply_gufunc(
+        _transform_to_local_time,
+        '(t,y)->(t,y)',
+        padded_cube.lazy_data(),
+        axes=[(time_dim, lon_dim), (time_dim, lon_dim)],
+        output_dtypes=padded_cube.dtype,
+        time_coord=time_coord,
+        lon_coord=lon_coord,
+    )
+    padded_cube.data = new_data
+
+    # Restore original time coordinate (i.e., remove first and last time step)
+    idx = [slice(None)] * padded_cube.ndim
+    idx[time_dim] = slice(1, -1)
+    cube = padded_cube[tuple(idx)]
+
+    # TODO: also fix aux_coords, cell_measures, aux_vars
+
     return cube

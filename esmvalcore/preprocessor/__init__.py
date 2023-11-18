@@ -70,6 +70,7 @@ from ._time import (
     extract_season,
     extract_time,
     hourly_statistics,
+    local_solar_time,
     monthly_statistics,
     regrid_time,
     resample_hours,
@@ -111,6 +112,7 @@ __all__ = [
     # Derive variable
     'derive',
     # Time extraction (as defined in the preprocessor section)
+    'local_solar_time',
     'extract_time',
     'extract_season',
     'extract_month',
@@ -148,8 +150,6 @@ __all__ = [
     'extract_volume',
     'extract_trajectory',
     'extract_transect',
-    # 'average_zone': average_zone,
-    # 'cross_section': cross_section,
     'detrend',
     'extract_named_regions',
     'axis_statistics',
@@ -157,8 +157,6 @@ __all__ = [
     'area_statistics',
     'volume_statistics',
     # Time operations
-    # 'annual_cycle': annual_cycle,
-    # 'diurnal_cycle': diurnal_cycle,
     'amplitude',
     'zonal_statistics',
     'meridional_statistics',
