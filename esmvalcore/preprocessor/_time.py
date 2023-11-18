@@ -1295,6 +1295,13 @@ def resample_time(
     return cube
 
 
+def _lin_pad(array: np.ndarray, delta: float, pad_with: int) -> np.ndarray:
+    """Linearly pad an array on both sides with constant difference."""
+    end_values = (array[0] - pad_with * delta, array[-1] + pad_with * delta)
+    new_array = np.pad(array, pad_with, 'linear_ramp', end_values=end_values)
+    return new_array
+
+
 def _guess_time_bounds(time_coord: Coord) -> None:
     """Guess coordinates of time coordinate in-place."""
     if time_coord.has_bounds():
@@ -1304,21 +1311,6 @@ def _guess_time_bounds(time_coord: Coord) -> None:
     except ValueError:  # coordinate has only 1 point
         point = time_coord.points[0]
         time_coord.bounds = [[point - 0.5, point + 0.5]]
-
-
-def _get_local_time_offset(lon_coord: Coord) -> np.ndarray:
-    """Get offsets to shift UTC time to local solar time."""
-    lon_coord_degrees = lon_coord.copy()
-    lon_coord_degrees.convert_units('degrees')
-    shifted_lon = (lon_coord_degrees.points + 180.0) % 360 - 180.0
-    return shifted_lon / 180.0 * 12.0
-
-
-def _lin_pad(array: np.ndarray, delta: float, pad_with: int) -> np.ndarray:
-    """Linearly pad an array on both sides with constant difference."""
-    end_values = (array[0] - pad_with * delta, array[-1] + pad_with * delta)
-    new_array = np.pad(array, pad_with, 'linear_ramp', end_values=end_values)
-    return new_array
 
 
 def _pad_cube_in_time(cube: Cube) -> Cube:
@@ -1362,14 +1354,23 @@ def _pad_cube_in_time(cube: Cube) -> Cube:
     return padded_cube
 
 
+def _get_local_time_offset(lon_coord: Coord) -> np.ndarray:
+    """Get offsets to shift UTC time to local solar time."""
+    lon_coord_degrees = lon_coord.copy()
+    lon_coord_degrees.convert_units('degrees')
+    shifted_lon = (lon_coord_degrees.points + 180.0) % 360 - 180.0
+    return shifted_lon / 180.0 * 12.0
+
+
 def _get_local_times(time_coord: Coord, lon_coord: Coord) -> np.ndarray:
     """Get array of binned local times of shape (lon, time)."""
     n_time = time_coord.shape[0]
     n_lon = lon_coord.shape[0]
     shape = (n_lon, n_time)
+
+    # Calculate "exact" local times
     time_array = np.broadcast_to(time_coord.points, shape)
     time_offsets = _get_local_time_offset(lon_coord).reshape(-1, 1)
-
     exact_local_time_array = time_array + time_offsets
 
     # Put exact local times into bins given be the time coordinate bounds
@@ -1514,7 +1515,11 @@ def local_solar_time(cube: Cube) -> Cube:
     new_chunks[lon_dim] = -1
     padded_cube.data = padded_cube.lazy_data().rechunk(new_chunks)
 
-    # Calculate new data parallelly
+    # Calculate new data lazily
+    # Note: _transform_to_local_time uses multidimensional advanced indexing to
+    # shift the data along the time axis based on the longitude. We cannot use
+    # this advanced indexing directly on the cube or dask array yet as dask
+    # does not "yet support nd fancy indexing".
     new_data = da.apply_gufunc(
         _transform_to_local_time,
         '(t,y)->(t,y)',
