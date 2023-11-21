@@ -1463,13 +1463,13 @@ def _rechunk_cube(cube: Cube, complete_dims: list[int]) -> None:
     # Rechunk cell measures that span complete_dims
     for measure in cube.cell_measures():
         dims = cube.cell_measure_dims(measure)
-        if all([d in dims for d in complete_dims]):
+        if all(d in dims for d in complete_dims):
             measure.data = _rechunk(measure.lazy_data(), complete_dims_)
 
     # Rechunk ancillary variables that span complete_dims
     for anc_var in cube.ancillary_variables():
         dims = cube.ancillary_variable_dims(anc_var)
-        if all([d in dims for d in complete_dims]):
+        if all(d in dims for d in complete_dims):
             anc_var.data = _rechunk(anc_var.lazy_data(), complete_dims_)
 
 

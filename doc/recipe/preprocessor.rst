@@ -1659,16 +1659,14 @@ See also :func:`esmvalcore.preprocessor.timeseries_filter`.
 ``local_solar_time``
 --------------------
 
-This preprocessor transforms data with an existing UTC time coordinate so that
-it corresponds to local solar time.
+This preprocessor transforms data with an existing UTC-based time coordinate so
+that it corresponds to local solar time.
 For this, the data is reordered along the time dimension based on the longitude
-information.
+coordinate.
 For example, this kind of transformation is necessary to properly calculate
 diurnal cycles.
 
-Parameters:
-
-This preprocessor does not need any parameters.
+This preprocessor does not need any additional parameters.
 
 Example:
 
