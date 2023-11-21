@@ -1219,6 +1219,7 @@ The ``_time.py`` module contains the following preprocessor functions:
 * regrid_time_: Aligns the time axis of each dataset to have common time
   points and calendars.
 * timeseries_filter_: Allows application of a filter to the time-series data.
+* local_solar_time_: Convert cube with UTC time to local solar time.
 
 Statistics functions are applied by default in the order they appear in the
 list. For example, the following example applied to hourly data will retrieve
@@ -1652,6 +1653,32 @@ Examples:
                 filter_stats: mean    # 3-monthly mean lowpass filter
 
 See also :func:`esmvalcore.preprocessor.timeseries_filter`.
+
+.. _local_solar_time:
+
+``local_solar_time``
+--------------------
+
+This preprocessor transforms data with an existing UTC time coordinate so that
+it corresponds to local solar time.
+For this, the data is reordered along the time dimension based on the longitude
+information.
+For example, this kind of transformation is necessary to properly calculate
+diurnal cycles.
+
+Parameters:
+
+This preprocessor does not need any parameters.
+
+Example:
+
+.. code-block:: yaml
+
+  calculate_local_solar_time:
+    local_solar_time:
+
+See also :func:`esmvalcore.preprocessor.local_solar_time`.
+
 
 .. _area operations:
 

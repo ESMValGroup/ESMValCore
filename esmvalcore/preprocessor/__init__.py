@@ -112,7 +112,6 @@ __all__ = [
     # Derive variable
     'derive',
     # Time extraction (as defined in the preprocessor section)
-    'local_solar_time',
     'extract_time',
     'extract_season',
     'extract_month',
@@ -157,6 +156,7 @@ __all__ = [
     'area_statistics',
     'volume_statistics',
     # Time operations
+    'local_solar_time',
     'amplitude',
     'zonal_statistics',
     'meridional_statistics',
