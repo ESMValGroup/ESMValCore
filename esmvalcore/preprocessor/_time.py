@@ -1350,16 +1350,16 @@ def _pad_cube_in_time(cube: Cube) -> Cube:
                 coord.bounds = _get_masked_array(
                     coord.core_bounds(), time_dim_
                 )
-    for cell_meas in padded_cube.cell_measures():
-        dims = padded_cube.cell_measure_dims(cell_meas)
+    for cell_m in padded_cube.cell_measures():
+        dims = padded_cube.cell_measure_dims(cell_m)
         if time_dim in dims:
             time_dim_ = dims.index(time_dim)
-            cell_meas.data = _get_masked_array(cell_meas.core_data, time_dim_)
+            cell_m.data = _get_masked_array(cell_m.core_data(), time_dim_)
     for anc_var in padded_cube.ancillary_variables():
         dims = padded_cube.ancillary_variable_dims(anc_var)
         if time_dim in dims:
             time_dim_ = dims.index(time_dim)
-            anc_var.data = _get_masked_array(anc_var.core_data, time_dim_)
+            anc_var.data = _get_masked_array(anc_var.core_data(), time_dim_)
 
     # Update time coordinate in cube with padded version. Make sure that this
     # version uses 'hours' as reference units and has bounds (do NOT overwrite
@@ -1394,7 +1394,10 @@ def _get_local_time_offset(lon_coord: Coord) -> np.ndarray:
     180] format.
 
     """
-    # Shift lon to [-180, 180] format first
+    # Make sure that longitude is in degrees and shift it to [-180, 180] first
+    # (do NOT overwrite input coordinate)
+    lon_coord = lon_coord.copy()
+    lon_coord.convert_units('degrees')
     shifted_lon = (lon_coord.points + 180.0) % 360 - 180.0
     return shifted_lon / 180.0 * 12.0
 
@@ -1413,8 +1416,8 @@ def _get_local_times(time_coord: DimCoord, lon_coord: Coord) -> np.ndarray:
     # Put exact local times into bins given be the time coordinate bounds
     bins = np.concatenate(([time_coord.bounds[0, 0]], time_coord.bounds[:, 1]))
     idx = np.digitize(exact_local_time_array, bins) - 1  # idx for time points
-    idx[idx < 0] = 0  # will be masked in the final array
-    idx[idx >= n_time] = - 1  # will be masked in the final array
+    idx[idx < 0] = 0  # will not be present in the final array
+    idx[idx >= n_time] = - 1  # will not be present in the final array
     local_time_array = time_coord.points[idx]
 
     return local_time_array
@@ -1429,8 +1432,8 @@ def _get_time_index(time_coord: DimCoord, lon_coord: Coord) -> np.ndarray:
     # using the binned local solar times
     _get_indices = np.vectorize(np.searchsorted, signature='(i),(i)->(i)')
     time_index = _get_indices(local_times, time_coord.points)  # (lon, time)
-    time_index[time_index < 0] = 0  # will be masked in the final array
-    time_index[time_index >= n_time] = -1  # will be masked in the final array
+    time_index[time_index < 0] = 0  # corresponds to masked value
+    time_index[time_index >= n_time] = -1  # corresponds to masked value
 
     return time_index.T  # (time, lon)
 
@@ -1458,10 +1461,10 @@ def _rechunk_cube(cube: Cube, complete_dims: list[int]) -> None:
                 coord.bounds = _rechunk(coord.lazy_bounds(), complete_dims_)
 
     # Rechunk cell measures that span complete_dims
-    for cell_meas in cube.cell_measures():
-        dims = cube.cell_measure_dims(cell_meas)
+    for cell_m in cube.cell_measures():
+        dims = cube.cell_measure_dims(cell_m)
         if all([d in dims for d in complete_dims]):
-            cell_meas.data = _rechunk(cell_meas.lazy_data(), complete_dims_)
+            cell_m.data = _rechunk(cell_m.lazy_data(), complete_dims_)
 
     # Rechunk ancillary variables that span complete_dims
     for anc_var in cube.ancillary_variables():
@@ -1496,9 +1499,7 @@ def _transform_to_local_time_eager(
     # is ensured with np.ogrid
     idx = np.ogrid[tuple([slice(0, d) for d in data.shape])]
     idx[-2] = np.broadcast_to(time_index, data.shape)  # '-2' is always time
-
     new_data = data[tuple(idx)]
-
     return new_data
 
 
@@ -1508,7 +1509,7 @@ def _transform_to_local_time_lazy(
     time_index: np.ndarray,
     time_dim: int,
     lon_dim: int,
-    output_dtype: DTypeLike,
+    output_dtypes: DTypeLike,
 ) -> da.core.Array:
     """Transform array with UTC coordinate to local solar time coordinate.
 
@@ -1532,7 +1533,7 @@ def _transform_to_local_time_lazy(
         '(t,y)->(t,y)',
         data,
         axes=[(time_dim, lon_dim), (time_dim, lon_dim)],
-        output_dtypes=output_dtype,
+        output_dtypes=output_dtypes,
         time_index=time_index,
     )
     return new_data
@@ -1541,17 +1542,13 @@ def _transform_to_local_time_lazy(
 def _transform_cube_to_local_time(cube: Cube) -> Cube:
     """Transform cube to local solar time coordinate (lazy; in-place)."""
     time_coord = cube.coord('time', dim_coords=True)
+    lon_coord = cube.coord('longitude')
     time_dim = cube.coord_dims(time_coord)[0]
-    lon_dim = cube.coord_dims('longitude')[0]
+    lon_dim = cube.coord_dims(lon_coord)[0]
 
     # Make sure the cube has lazy data and rechunk it properly (cube must not
     # be chunked along time and longitude dimension)
     _rechunk_cube(cube, [time_dim, lon_dim])
-
-    # Make sure that longitude used to calculate local solar time is in units
-    # of degrees; do not modify existing longitude coordinate in-place
-    lon_coord = cube.coord('longitude').copy()
-    lon_coord.convert_units('degrees')
 
     # Transform cube data
     _transform_arr = partial(
@@ -1562,7 +1559,7 @@ def _transform_cube_to_local_time(cube: Cube) -> Cube:
         cube.lazy_data(),
         time_dim=time_dim,
         lon_dim=lon_dim,
-        output_dtype=cube.dtype,
+        output_dtypes=cube.dtype,
     )
 
     # Transform aux coords that span time and longitude dimensions
@@ -1630,11 +1627,11 @@ def _check_cube_coords(cube):
             f"Input cube {cube.summary(shorten=True)} needs a coordinate "
             f"`longitude`"
         )
-    lon_coord = cube.coord('longitude')
-    if lon_coord.ndim > 1:
+    lon_ndim = len(cube.coord_dims('longitude'))
+    if lon_ndim != 1:
         raise CoordinateMultiDimError(
             f"Input cube {cube.summary(shorten=True)} needs a 1D coordinate "
-            f"`longitude`, got {lon_coord.ndim}D"
+            f"`longitude`, got {lon_ndim:d}D"
         )
 
 
@@ -1700,11 +1697,10 @@ def local_solar_time(cube: Cube) -> Cube:
     # longitude dimensions
     padded_cube = _transform_cube_to_local_time(padded_cube)
 
-    # Restore original shape coordinate (i.e., remove first and last time step
+    # Restore original shape of cube (i.e., remove first and last time step
     # that has been added by `_pad_cube_in_time`)
-    time_dim = padded_cube.coord_dims(
-        padded_cube.coord('time', dim_coords=True)
-    )[0]
+    padded_time_coord = padded_cube.coord('time', dim_coords=True)
+    time_dim = padded_cube.coord_dims(padded_time_coord)[0]
     idx = [slice(None)] * padded_cube.ndim
     idx[time_dim] = slice(1, -1)
     cube = padded_cube[tuple(idx)]
