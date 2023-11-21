@@ -1454,7 +1454,7 @@ def _rechunk_cube(cube: Cube, complete_dims: list[int]) -> None:
     # Rechunk aux coords that span complete_dims
     for coord in cube.coords(dim_coords=False):
         dims = cube.coord_dims(coord)
-        if all([d in dims for d in complete_dims]):
+        if all(d in dims for d in complete_dims):
             complete_dims_ = [dims.index(d) for d in complete_dims]
             coord.points = _rechunk(coord.lazy_points(), complete_dims_)
             if coord.lazy_bounds() is not None:
@@ -1497,7 +1497,7 @@ def _transform_to_local_time_eager(
     """
     # Apart from the time index, all other dimensions will stay the same; this
     # is ensured with np.ogrid
-    idx = np.ogrid[tuple([slice(0, d) for d in data.shape])]
+    idx = np.ogrid[tuple(slice(0, d) for d in data.shape)]
     idx[-2] = np.broadcast_to(time_index, data.shape)  # '-2' is always time
     new_data = data[tuple(idx)]
     return new_data
@@ -1641,6 +1641,8 @@ def local_solar_time(cube: Cube) -> Cube:
     This preprocessor transforms input data with a UTC-based time coordinate to
     a local solar time coordinate. For this, data is shifted along the time
     axis based on the longitude.
+
+    For example, this is necessary to properly calculate diurnal cycles.
 
     Note
     ----
