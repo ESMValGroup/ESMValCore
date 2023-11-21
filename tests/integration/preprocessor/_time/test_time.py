@@ -1,16 +1,20 @@
 """Unit tests for the :func:`esmvalcore.preprocessor._time` module."""
 
-from cf_units import Unit
-import numpy as np
 import dask.array as da
+import numpy as np
 import pytest
+from cf_units import Unit
+from iris.coords import (
+    AncillaryVariable,
+    AuxCoord,
+    CellMeasure,
+    CellMethod,
+    DimCoord,
+)
 from iris.cube import Cube
-from iris.coords import DimCoord, AuxCoord, CellMeasure, AncillaryVariable, CellMethod
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 
-from esmvalcore.preprocessor._time import (
-    climate_statistics, local_solar_time
-)
+from esmvalcore.preprocessor._time import climate_statistics, local_solar_time
 from tests import assert_array_equal
 
 
