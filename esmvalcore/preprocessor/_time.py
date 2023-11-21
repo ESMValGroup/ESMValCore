@@ -1350,11 +1350,11 @@ def _pad_cube_in_time(cube: Cube) -> Cube:
                 coord.bounds = _get_masked_array(
                     coord.core_bounds(), time_dim_
                 )
-    for cell_m in padded_cube.cell_measures():
-        dims = padded_cube.cell_measure_dims(cell_m)
+    for measure in padded_cube.cell_measures():
+        dims = padded_cube.cell_measure_dims(measure)
         if time_dim in dims:
             time_dim_ = dims.index(time_dim)
-            cell_m.data = _get_masked_array(cell_m.core_data(), time_dim_)
+            measure.data = _get_masked_array(measure.core_data(), time_dim_)
     for anc_var in padded_cube.ancillary_variables():
         dims = padded_cube.ancillary_variable_dims(anc_var)
         if time_dim in dims:
@@ -1461,10 +1461,10 @@ def _rechunk_cube(cube: Cube, complete_dims: list[int]) -> None:
                 coord.bounds = _rechunk(coord.lazy_bounds(), complete_dims_)
 
     # Rechunk cell measures that span complete_dims
-    for cell_m in cube.cell_measures():
-        dims = cube.cell_measure_dims(cell_m)
+    for measure in cube.cell_measures():
+        dims = cube.cell_measure_dims(measure)
         if all([d in dims for d in complete_dims]):
-            cell_m.data = _rechunk(cell_m.lazy_data(), complete_dims_)
+            measure.data = _rechunk(measure.lazy_data(), complete_dims_)
 
     # Rechunk ancillary variables that span complete_dims
     for anc_var in cube.ancillary_variables():
