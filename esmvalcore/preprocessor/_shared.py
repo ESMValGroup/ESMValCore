@@ -7,8 +7,9 @@ import logging
 import re
 import warnings
 from collections.abc import Callable
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
+import dask.array as da
 import iris.analysis
 import numpy as np
 from iris.coords import DimCoord
@@ -181,3 +182,73 @@ def update_weights_kwargs(
     else:
         kwargs.pop('weights', None)
     return kwargs
+
+
+def get_normalized_cube(
+    cube: Cube,
+    statistics_cube: Cube,
+    normalize_with_stats: Literal['subtract', 'divide'],
+) -> Cube:
+    """Get cube normalized with statistics cube.
+
+    Parameters
+    ----------
+    cube:
+        Input cube that will be normalized.
+    statistics_cube:
+        Cube that is used to normalize the input cube. Needs to be
+        broadcastable to the input cube's shape according to iris' rich
+        broadcasting rules enabled by the use of named dimensions (see also
+        https://scitools-iris.readthedocs.io/en/latest/userguide/cube_maths.
+        html#calculating-a-cube-anomaly). This is usually ensure by using
+        :meth:`iris.cube.Cube.collapsed` to calculate the statistics cube.
+    normalize_with_stats:
+        Normalization operation. Can either be `subtract` (statistics cube is
+        subtracted from the input cube) or `divide` (input cube is divided by
+        the statistics cube).
+
+    Returns
+    -------
+    Cube
+        Input cube normalized with statistics cube.
+
+    """
+    if normalize_with_stats == 'subtract':
+        normalized_cube = cube - statistics_cube
+
+    elif normalize_with_stats == 'divide':
+        # Raise proper zero-division warning if necessary
+        if (statistics_cube.core_data() == 0.0).any():
+            warnings.warn(
+                "Division by zero encountered during cube normalization with "
+                "operation 'divide', these values will be masked",
+                RuntimeWarning,
+            )
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                message="invalid value encountered in divide",
+                category=RuntimeWarning,
+                module='iris',
+            )
+            normalized_cube = cube / statistics_cube
+
+        # Iris sometimes masks zero-divisions, sometimes not
+        # (https://github.com/SciTools/iris/issues/5523). Make sure to
+        # consistently mask them here.
+        normalized_cube.data = da.ma.masked_invalid(
+            normalized_cube.core_data()
+        )
+
+    else:
+        raise ValueError(
+            f"Expected 'subtract' or 'divide' for `normalize_with_stats`, got "
+            f"'{normalize_with_stats}'"
+        )
+
+    # Keep old metadata except for units
+    new_units = normalized_cube.units
+    normalized_cube.metadata = cube.metadata
+    normalized_cube.units = new_units
+
+    return normalized_cube
