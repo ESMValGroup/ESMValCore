@@ -1904,6 +1904,10 @@ along the longitude coordinate.
 Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize_with_stats`: If given, do not return the statistics cube
+      itself, but rather the input cube normalized with the statistics cube.
+      Can either be `subtract` (statistics cube is subtracted from the input
+      cube) or `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
       arguments.
       See :ref:`stat_preprocs` for more details.
@@ -1921,6 +1925,10 @@ argument:
 Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize_with_stats`: If given, do not return the statistics cube
+      itself, but rather the input cube normalized with the statistics cube.
+      Can either be `subtract` (statistics cube is subtracted from the input
+      cube) or `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
       arguments.
       See :ref:`stat_preprocs` for more details.
@@ -1932,10 +1940,6 @@ See also :func:`esmvalcore.preprocessor.meridional_means`.
 
 ``area_statistics``
 -------------------
-
-This function calculates statistics over a region.
-It takes one argument, ``operator``, which is the name of the operation to
-apply.
 
 This function can be used to apply several different operations in the
 horizontal plane: for example, mean, sum, standard deviation, median, variance,
@@ -1954,6 +1958,33 @@ coordinates so the cell areas can be computed internally.
 The required supplementary variable, either ``areacella`` for atmospheric
 variables or ``areacello`` for ocean variables, can be attached to the main
 dataset as described in :ref:`supplementary_variables`.
+
+Parameters:
+    * `operator`: Operation to apply.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize_with_stats`: If given, do not return the statistics cube
+      itself, but rather the input cube normalized with the statistics cube.
+      Can either be `subtract` (statistics cube is subtracted from the input
+      cube) or `divide` (input cube is divided by the statistics cube).
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
+
+Examples:
+* Calculate global mean:
+
+  .. code-block:: yaml
+
+    area_statistics:
+      operator: mean
+
+* Subtract global mean from dataset:
+
+  .. code-block:: yaml
+
+    area_statistics:
+      operator: mean
+      normalize_with_stats: subtract
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
 

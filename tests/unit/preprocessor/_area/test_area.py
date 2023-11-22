@@ -188,6 +188,45 @@ class Test(tests.Test):
         self.assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-2 s-1')
 
+    def test_area_statistics_subtract_mean(self):
+        """Test for area average of a 2D field."""
+        input_data = self.grid.copy()
+        self.assertFalse(input_data.cell_measures('cell_area'))
+
+        result = area_statistics(
+            input_data, 'mean', normalize_with_stats='subtract'
+        )
+
+        self.assertEqual(input_data, self.grid)
+        self.assertEqual(result.shape, input_data.shape)
+        expected = np.ma.zeros((2, 5, 5), dtype=np.float32)
+        self.assert_array_equal(result.data, expected)
+        self.assertFalse(result.cell_measures('cell_area'))
+        self.assertEqual(result.metadata, self.grid.metadata)
+        for coord in self.grid.coords():
+            self.assertEqual(result.coord(coord.name()), coord)
+
+    def test_area_statistics_cell_measure_subtract_mean(self):
+        """Test for area average of a 2D field.
+
+        The area measure is pre-loaded in the cube.
+        """
+        self._add_cell_measure_to_grid()
+        input_data = self.grid.copy()
+
+        result = area_statistics(
+            input_data, 'mean', normalize_with_stats='subtract'
+        )
+
+        self.assertEqual(input_data, self.grid)
+        self.assertEqual(result.shape, input_data.shape)
+        expected = np.ma.zeros((2, 5, 5), dtype=np.float32)
+        self.assert_array_equal(result.data, expected)
+        self.assertFalse(result.cell_measures('cell_area'))
+        self.assertEqual(result.metadata, self.grid.metadata)
+        for coord in self.grid.coords():
+            self.assertEqual(result.coord(coord.name()), coord)
+
     def test_extract_region(self):
         """Test for extracting a region from a 2D field."""
         result = extract_region(self.grid, 1.5, 2.5, 1.5, 2.5)
@@ -1270,6 +1309,43 @@ def test_zonal_statistics(make_testcube):
     assert res.dtype == np.float32
 
 
+def test_zonal_statistics_divide_by_min(make_testcube):
+    """Test ``zonal_statistics``."""
+    make_testcube.data = np.ones(make_testcube.shape, dtype=np.float32)
+    make_testcube.data[0, 0] = 0.0
+    make_testcube.data[1, 0] = -1.0
+    make_testcube.data[2, 0] = -0.5
+    make_testcube.units = 'K'
+    input_data = make_testcube.copy()
+
+    msg = "Division by zero encountered during cube normalization"
+    with pytest.warns(RuntimeWarning, match=msg):
+        res = zonal_statistics(
+            input_data, 'min', normalize_with_stats='divide'
+        )
+
+    assert input_data == make_testcube
+    assert res.shape == input_data.shape
+    expected = np.ma.masked_invalid(
+        [
+            [np.nan, np.nan, np.nan, np.nan, np.nan],
+            [1.0, -1.0, -1.0, -1.0, -1.0],
+            [1.0, -2.0, -2.0, -2.0, -2.0],
+            [1.0, 1.0, 1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0, 1.0, 1.0],
+        ],
+    )
+    tests.assert_array_equal(res.data, expected)
+    assert res.dtype == np.float32
+
+    assert res.standard_name == input_data.standard_name
+    assert res.var_name == input_data.var_name
+    assert res.long_name == input_data.long_name
+    assert res.cell_methods == input_data.cell_methods
+    assert res.attributes == input_data.attributes
+    assert res.units == '1'
+
+
 def test_zonal_statistics_2d_lon_fail(irreg_extract_shape_cube):
     """Test ``zonal_statistics``."""
     with pytest.raises(ValueError):
@@ -1286,10 +1362,53 @@ def test_meridional_statistics(make_testcube):
     assert res.dtype == np.float32
 
 
+def test_meridional_statistics_divide_by_max(make_testcube):
+    """Test ``meridional_statistics``."""
+    make_testcube.data = np.ones(make_testcube.shape, dtype=np.float32)
+    make_testcube.data[:, 0] = 0.0
+    make_testcube.data[0, 1] = 2.0
+    make_testcube.units = 'K'
+    input_data = make_testcube.copy()
+
+    msg = "Division by zero encountered during cube normalization"
+    with pytest.warns(RuntimeWarning, match=msg):
+        res = meridional_statistics(
+            input_data, 'max', normalize_with_stats='divide'
+        )
+
+    assert input_data == make_testcube
+    assert res.shape == input_data.shape
+    expected = np.ma.masked_invalid(
+        [
+            [np.nan, 1.0, 1.0, 1.0, 1.0],
+            [np.nan, 0.5, 1.0, 1.0, 1.0],
+            [np.nan, 0.5, 1.0, 1.0, 1.0],
+            [np.nan, 0.5, 1.0, 1.0, 1.0],
+            [np.nan, 0.5, 1.0, 1.0, 1.0],
+        ],
+    )
+    tests.assert_array_equal(res.data, expected)
+    assert res.dtype == np.float32
+
+    assert res.standard_name == input_data.standard_name
+    assert res.var_name == input_data.var_name
+    assert res.long_name == input_data.long_name
+    assert res.cell_methods == input_data.cell_methods
+    assert res.attributes == input_data.attributes
+    assert res.units == '1'
+
+
 def test_meridional_statistics_2d_lon_fail(irreg_extract_shape_cube):
     """Test ``meridional_statistics``."""
     with pytest.raises(ValueError):
         meridional_statistics(irreg_extract_shape_cube, 'sum')
+
+
+def test_meridional_statistics_invalid_norm_fail(make_testcube):
+    """Test ``meridional_statistics``."""
+    msg = "Expected 'subtract' or 'divide' for `normalize_with_stats`"
+    with pytest.raises(ValueError, match=msg):
+        meridional_statistics(make_testcube, 'sum', normalize_with_stats='x')
 
 
 if __name__ == '__main__':
