@@ -255,6 +255,11 @@ def realistic_unstructured_cube():
         long_name='longitude',
         units='rad',
     )
+    aux_2d = AuxCoord(
+        da.ma.masked_inside(da.arange(4 * 5).reshape(4, 5), 3, 10),
+        var_name='aux_2d',
+    )
+    aux_0d = AuxCoord([0], var_name='aux_0d')
 
     cube = Cube(
         da.arange(4 * 5).reshape(4, 5),
@@ -263,7 +268,9 @@ def realistic_unstructured_cube():
         long_name='Air Temperature',
         units='K',
         dim_coords_and_dims=[(time, 1)],
-        aux_coords_and_dims=[(lat, 0), (lon, 0)],
+        aux_coords_and_dims=[
+            (lat, 0), (lon, 0), (aux_2d, (0, 1)), (aux_0d, ())
+        ],
     )
     return cube
 
@@ -300,6 +307,25 @@ def test_local_solar_time_unstructured(realistic_unstructured_cube):
             [8781.0, 8787.0],
         ],
     )
+
+    assert result.coord('aux_0d') == input_cube.coord('aux_0d')
+    assert (
+        result.coord('aux_2d').metadata == input_cube.coord('aux_2d').metadata
+    )
+    assert result.coord('aux_2d').has_lazy_points()
+    assert_array_equal(
+        result.coord('aux_2d').points,
+        np.ma.masked_equal(
+            [
+                [0, 1, 2, 99, 99],
+                [99, 99, 99, 99, 99],
+                [11, 12, 13, 14, 99],
+                [99, 99, 15, 16, 17],
+            ],
+            99,
+        ),
+    )
+    assert result.coord('aux_2d').bounds is None
 
     assert result.has_lazy_data()
     assert_array_equal(
