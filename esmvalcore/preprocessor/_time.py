@@ -1420,7 +1420,7 @@ def _get_time_index_and_mask(
     searchsorted_r = partial(np.searchsorted, side='right')
     _get_indices_r = np.vectorize(searchsorted_r, signature='(i),(i)->(i)')
     time_index_r = _get_indices_r(lsts, time_coord.points)  # (lon, time)
-    mask = (time_index_l == time_index_r)  # (lon, time)
+    mask = time_index_l == time_index_r  # (lon, time)
 
     # The index is given by the left indices (these are identical to the right
     # indices minus 1)
