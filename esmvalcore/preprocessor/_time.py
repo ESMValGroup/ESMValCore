@@ -25,6 +25,7 @@ from iris.coords import AuxCoord, Coord, DimCoord
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 from iris.time import PartialDateTime
+from iris.util import broadcast_to_shape
 from numpy.typing import DTypeLike
 
 from esmvalcore.cmor.fixes import get_next_month, get_time_bounds
@@ -1317,76 +1318,8 @@ def _guess_time_bounds(time_coord: DimCoord) -> None:
         time_coord.bounds = [[point - 0.5, point + 0.5]]
 
 
-def _get_masked_array(
-    array: np.ndarray | da.core.Array,
-    time_dim: int
-) -> da.core.Array:
-    """Get masked array with masked-out first and last time step."""
-    mask = da.ma.getmaskarray(array)
-    idx: list[slice | list[int]] = [slice(None)] * array.ndim
-    idx[time_dim] = [0, -1]
-    mask[tuple(idx)] = True
-    return da.ma.masked_array(array, mask=mask)
-
-
-def _pad_cube_in_time(cube: Cube) -> Cube:
-    """Pad cube with masked values with 1 time step on both sides."""
-    time_coord = cube.coord('time', dim_coords=True)
-    time_dim = cube.coord_dims(time_coord)[0]
-
-    # Pad cube by one time step at beginning and end
-    idx: list[slice | int] = [slice(None)] * cube.ndim
-    idx[time_dim] = [0] + list(range(time_coord.shape[0])) + [-1]
-    padded_cube = cube[tuple(idx)]
-
-    # Mask newly added data, aux coords, cell measures and ancillary variables
-    padded_cube.data = _get_masked_array(padded_cube.core_data(), time_dim)
-    for coord in padded_cube.coords(dim_coords=False):
-        dims = padded_cube.coord_dims(coord)
-        if time_dim in dims:
-            time_dim_ = dims.index(time_dim)
-            coord.points = _get_masked_array(coord.core_points(), time_dim_)
-            if coord.core_bounds() is not None:
-                coord.bounds = _get_masked_array(
-                    coord.core_bounds(), time_dim_
-                )
-    for measure in padded_cube.cell_measures():
-        dims = padded_cube.cell_measure_dims(measure)
-        if time_dim in dims:
-            time_dim_ = dims.index(time_dim)
-            measure.data = _get_masked_array(measure.core_data(), time_dim_)
-    for anc_var in padded_cube.ancillary_variables():
-        dims = padded_cube.ancillary_variable_dims(anc_var)
-        if time_dim in dims:
-            time_dim_ = dims.index(time_dim)
-            anc_var.data = _get_masked_array(anc_var.core_data(), time_dim_)
-
-    # Update time coordinate in cube with padded version. Make sure that this
-    # version uses 'hours' as reference units and has bounds (do NOT overwrite
-    # original time coordinate).
-    time_coord = time_coord.copy()
-    time_coord.convert_units(
-        Unit('hours since 1850-01-01', calendar=time_coord.units.calendar)
-    )
-    _guess_time_bounds(time_coord)
-    dtime = np.abs(
-        time_coord.bounds[0, 1] - time_coord.bounds[0, 0]
-    )
-    new_points = _lin_pad(time_coord.points, dtime, 1)
-    bnds = time_coord.bounds
-    new_bounds = np.stack(
-        (_lin_pad(bnds[:, 0], dtime, 1), _lin_pad(bnds[:, 1], dtime, 1)),
-        axis=-1,
-    )
-    padded_time_coord = time_coord.copy(new_points, bounds=new_bounds)
-    padded_cube.remove_coord('time')
-    padded_cube.add_dim_coord(padded_time_coord, time_dim)
-
-    return padded_cube
-
-
-def _get_local_time_offset(lon_coord: Coord) -> np.ndarray:
-    """Get offsets to shift UTC time to local solar time.
+def _get_lst_offset(lon_coord: Coord) -> np.ndarray:
+    """Get offsets to shift UTC time to local solar time (LST).
 
     Note
     ----
@@ -1402,40 +1335,99 @@ def _get_local_time_offset(lon_coord: Coord) -> np.ndarray:
     return shifted_lon / 180.0 * 12.0
 
 
-def _get_local_times(time_coord: DimCoord, lon_coord: Coord) -> np.ndarray:
-    """Get array of binned local times of shape (lon, time)."""
+def _get_lsts(time_coord: DimCoord, lon_coord: Coord) -> np.ndarray:
+    """Get array of binned LST of shape (lon, time).
+
+    Note
+    ----
+    LSTs outside of the time bins given be the time coordinate bounds are put
+    into a bin below/above the time coordinate.
+
+    """
+    # Pad time coordinate with 1 time step at both sides for the bins for LSTs
+    # outside of the time coordinate
+    dtime = np.abs(
+        time_coord.bounds[0, 1] - time_coord.bounds[0, 0]
+    )
+    new_points = _lin_pad(time_coord.points, dtime, 1)
+    bnds = time_coord.bounds
+    new_bounds = np.stack(
+        (_lin_pad(bnds[:, 0], dtime, 1), _lin_pad(bnds[:, 1], dtime, 1)),
+        axis=-1,
+    )
+    time_coord = time_coord.copy(new_points, bounds=new_bounds)
+
     n_time = time_coord.shape[0]
     n_lon = lon_coord.shape[0]
-    shape = (n_lon, n_time)
 
-    # Calculate "exact" local times
-    time_array = np.broadcast_to(time_coord.points, shape)
-    time_offsets = _get_local_time_offset(lon_coord).reshape(-1, 1)
-    exact_local_time_array = time_array + time_offsets
+    # Calculate LST
+    time_array = np.broadcast_to(time_coord.points, (n_lon, n_time))
+    time_offsets = _get_lst_offset(lon_coord).reshape(-1, 1)
+    exact_lst_array = time_array + time_offsets  # (lon, time)
 
-    # Put exact local times into bins given be the time coordinate bounds
+    # Put LST into bins given be the time coordinate bounds
     bins = np.concatenate(([time_coord.bounds[0, 0]], time_coord.bounds[:, 1]))
-    idx = np.digitize(exact_local_time_array, bins) - 1  # idx for time points
-    idx[idx < 0] = 0  # will not be present in the final array
-    idx[idx >= n_time] = - 1  # will not be present in the final array
-    local_time_array = time_coord.points[idx]
+    idx = np.digitize(exact_lst_array, bins) - 1  # (lon, time); idx for time
+    idx[idx < 0] = 0  # values outside the time coordinate
+    idx[idx >= n_time] = - 1  # values outside the time coordinate
+    lst_array = time_coord.points[idx]  # (lon, time)
 
-    return local_time_array
+    # Remove time steps again that have been added previously
+    lst_array = lst_array[:, 1:-1]
+
+    return lst_array
 
 
-def _get_time_index(time_coord: DimCoord, lon_coord: Coord) -> np.ndarray:
-    """Get advanced index for time dimension of shape (time, lon)."""
-    local_times = _get_local_times(time_coord, lon_coord)  # (lon, time)
+def _get_time_index_and_mask(
+    time_coord: DimCoord,
+    lon_coord: Coord,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Get advanced index and mask for time dimension of shape (time, lon).
+
+    Note
+    ----
+    The mask considers the fact that not all values for all LSTs are given.
+    E.g., for hourly data with first time point 01:00:00 UTC, LST in Berlin is
+    already 02:00:00 (assuming no daylight saving time). Thus, for 01:00:00 LST
+    on this day, there is no value for Berlin.
+
+    """
+    # Make sure that time coordinate has bounds (these are necessary for the
+    # binning) and uses 'hours' as reference units
+    time_coord.convert_units(
+        Unit('hours since 1850-01-01', calendar=time_coord.units.calendar)
+    )
+    _guess_time_bounds(time_coord)
+
+    lsts = _get_lsts(time_coord, lon_coord)  # (lon, time)
     n_time = time_coord.points.shape[0]
 
-    # Calculate advanced index to sort elements in time based on longitude
-    # using the binned local solar times
-    _get_indices = np.vectorize(np.searchsorted, signature='(i),(i)->(i)')
-    time_index = _get_indices(local_times, time_coord.points)  # (lon, time)
-    time_index[time_index < 0] = 0  # corresponds to masked value
-    time_index[time_index >= n_time] = -1  # corresponds to masked value
+    # We use np.searchsorted to calculate the indices necessary to put the UTC
+    # times into their corresponding (binned) LSTs. These incides are 2D since
+    # they depend on time and longitude.
+    searchsorted_l = partial(np.searchsorted, side='left')
+    _get_indices_l = np.vectorize(searchsorted_l, signature='(i),(i)->(i)')
+    time_index_l = _get_indices_l(lsts, time_coord.points)  # (lon, time)
 
-    return time_index.T  # (time, lon)
+    # To calculate the mask, we need to detect which LSTs are outside of the
+    # time coordinate. Unfortunately, searchsorted can only detect outliers on
+    # one side of the array. This side is determined by the `side` keyword
+    # argument. To consistently detect outliers on both sides, we use
+    # searchsorted again, this time with `side='right'` (the default is
+    # 'left'). Indices that are the same in both arrays need to be masked, as
+    # these are the ones outside of the time coordinate. All others will
+    # change.
+    searchsorted_r = partial(np.searchsorted, side='right')
+    _get_indices_r = np.vectorize(searchsorted_r, signature='(i),(i)->(i)')
+    time_index_r = _get_indices_r(lsts, time_coord.points)  # (lon, time)
+    mask = (time_index_l == time_index_r)  # (lon, time)
+
+    # The index is given by the left indices (these are identical to the right
+    # indices minus 1)
+    time_index_l[time_index_l < 0] = 0  # will be masked
+    time_index_l[time_index_l >= n_time] = -1  # will be masked
+
+    return (time_index_l.T, mask.T)  # (time, lon)
 
 
 def _rechunk(array: da.core.Array, complete_dims: list[int]) -> da.core.Array:
@@ -1473,12 +1465,12 @@ def _rechunk_cube(cube: Cube, complete_dims: list[int]) -> None:
             anc_var.data = _rechunk(anc_var.lazy_data(), complete_dims_)
 
 
-def _transform_to_local_time_eager(
+def _transform_to_lst_eager(
     data: np.ndarray,
     *,
     time_index: np.ndarray,
 ) -> np.ndarray:
-    """Transform array with UTC coordinate to local solar time coordinate.
+    """Transform array with UTC coord to local solar time (LST) coord.
 
     Note
     ----
@@ -1503,19 +1495,20 @@ def _transform_to_local_time_eager(
     return new_data
 
 
-def _transform_to_local_time_lazy(
+def _transform_to_lst_lazy(
     data: da.core.Array,
     *,
     time_index: np.ndarray,
+    mask: np.ndarray,
     time_dim: int,
     lon_dim: int,
     output_dtypes: DTypeLike,
 ) -> da.core.Array:
-    """Transform array with UTC coordinate to local solar time coordinate.
+    """Transform array with UTC coord to local solar time (LST) coord.
 
     Note
     ----
-    This function is the lazy version of `_transform_to_local_time_eager` using
+    This function is the lazy version of `_transform_to_lst_eager` using
     dask's :func:`dask.array.apply_gufunc`.
 
     `data` needs to be at least 2D. `time_dim` and `lon_dim` correspond to the
@@ -1527,20 +1520,32 @@ def _transform_to_local_time_lazy(
     for the time dimension of `data` with shape (time, lon). It is used to
     reorder the data along the time axis based on the longitude axis.
 
+    `mask` is 2D with shape (time, lon) that will be applied to the final data.
+
     """
     new_data = da.apply_gufunc(
-        _transform_to_local_time_eager,
+        _transform_to_lst_eager,
         '(t,y)->(t,y)',
         data,
         axes=[(time_dim, lon_dim), (time_dim, lon_dim)],
         output_dtypes=output_dtypes,
         time_index=time_index,
     )
-    return new_data
+
+    # Apply properly broadcasted mask
+    new_mask = broadcast_to_shape(
+        da.from_array(mask), new_data.shape, (time_dim, lon_dim)
+    )
+    new_mask = new_mask.rechunk(new_data.chunksize)
+    new_mask |= da.ma.getmaskarray(new_data)
+
+    return da.ma.masked_array(new_data, mask=new_mask)
 
 
-def _transform_cube_to_local_time(cube: Cube) -> Cube:
-    """Transform cube to local solar time coordinate (lazy; in-place)."""
+def _transform_cube_to_lst(cube: Cube) -> Cube:
+    """Transform cube to local solar time (LST) coordinate (lazy; in-place)."""
+    cube = cube[...]  # make sure that input cube is not overwritten
+
     time_coord = cube.coord('time', dim_coords=True)
     lon_coord = cube.coord('longitude')
     time_dim = cube.coord_dims(time_coord)[0]
@@ -1551,9 +1556,11 @@ def _transform_cube_to_local_time(cube: Cube) -> Cube:
     _rechunk_cube(cube, [time_dim, lon_dim])
 
     # Transform cube data
+    (time_index, mask) = _get_time_index_and_mask(time_coord, lon_coord)
     _transform_arr = partial(
-        _transform_to_local_time_lazy,
-        time_index=_get_time_index(time_coord, lon_coord),
+        _transform_to_lst_lazy,
+        time_index=time_index,
+        mask=mask,
     )
     cube.data = _transform_arr(
         cube.lazy_data(),
@@ -1694,28 +1701,9 @@ def local_solar_time(cube: Cube) -> Cube:
     # Make sure that cube has valid time and longitude coordinates
     _check_cube_coords(cube)
 
-    # At beginning and end of time period, we need to use a mask to consider
-    # that not all values for all local times are given. E.g., for hourly data
-    # with first time point 01:00:00 UTC, local time in Berlin is already
-    # 02:00:00 (assuming no daylight saving time). Thus, for 01:00:00 local
-    # time on this day, there is no value for Berlin.
-    # We implement this by adding one time step to the beginning and one time
-    # step to the end of the data which is filled by missing values. Each value
-    # that will be masked in the output data will index either this first or
-    # last time step.
-    padded_cube = _pad_cube_in_time(cube)
-
     # Transform cube data and all dimensional metadata that spans time AND
     # longitude dimensions
-    padded_cube = _transform_cube_to_local_time(padded_cube)
-
-    # Restore original shape of cube (i.e., remove first and last time step
-    # that has been added by `_pad_cube_in_time`)
-    padded_time_coord = padded_cube.coord('time', dim_coords=True)
-    time_dim = padded_cube.coord_dims(padded_time_coord)[0]
-    idx = [slice(None)] * padded_cube.ndim
-    idx[time_dim] = slice(1, -1)
-    cube = padded_cube[tuple(idx)]
+    cube = _transform_cube_to_lst(cube)
 
     # Adapt metadata of time coordinate
     cube.coord('time', dim_coords=True).long_name = 'Local Solar Time'
