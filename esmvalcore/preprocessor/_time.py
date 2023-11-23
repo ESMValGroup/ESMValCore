@@ -1636,28 +1636,38 @@ def _check_cube_coords(cube):
 
 
 def local_solar_time(cube: Cube) -> Cube:
-    """Convert UTC time coordinate to local solar time.
+    """Convert UTC time coordinate to local solar time (LST).
 
     This preprocessor transforms input data with a UTC-based time coordinate to
-    a local solar time coordinate. For this, data is shifted along the time
-    axis based on the longitude.
+    a `local solar time (LST) <https://en.wikipedia.org/wiki/Solar_time>`__
+    coordinate. In LST, 12:00 noon is defined as the moment when the sun
+    reaches its highest point in the sky. Thus, LST is mainly determined by
+    longitude of a location. LST is particularly suited to analyze diurnal
+    cycles across larger regions of the globe, which would be phase-shifted
+    against each other when using UTC time.
 
-    For example, this is necessary to properly calculate diurnal cycles.
+    To transform data from UTC to LST, this function shifts data along the time
+    axis based on the longitude. In addition to the `cube`'s data, this
+    function also considers auxiliary coordinates, cell measures and ancillary
+    variables that span both the time and longitude dimension.
 
     Note
     ----
     This preprocessor preserves the temporal frequency of the input data. For
     example, hourly input data will be transformed into hourly output data. For
-    this, the "exact" local solar time will be put into corresponding bins
-    defined by the bounds of the input time coordinate (in this example, the
-    bin size is 1hr). If time bounds are not given or cannot be approximated
-    (only one time step is given), a bin size of 1hr is assumed.
+    this, a localtion's exact LST will be put into corresponding bins defined
+    by the bounds of the input time coordinate (in this example, the bin size
+    is 1 hour). If time bounds are not given or cannot be approximated (only
+    one time step is given), a bin size of 1 hour is assumed.
 
-    The "exact" local solar time is approximated as `UTC_time +
-    longitude/180*12`, where `latitude` is assumed to be in [-180, 180] (this
-    preprocessor automatically calculates the correct format for the
-    longitude). This approximation is justified since the aforementioned
-    binning will introduce uncertainties anyway.
+    LST is approximated as `UTC_time + longitude/180*12`, where `longitude` is
+    assumed to be in [-180, 180] (this function automatically calculates the
+    correct format for the longitude). This is only an approximation since the
+    exact LST also depends on the day of year due to the eccentricity of
+    Earth's orbit (see `equation of time
+    <https://en.wikipedia.org/wiki/Equation_of_time>`__). However, since the
+    corresponding error is ~15 min at most, this is ignored here, as most
+    climate model data has a courser temporal resolution.
 
     Parameters
     ----------
@@ -1668,8 +1678,8 @@ def local_solar_time(cube: Cube) -> Cube:
     Returns
     -------
     Cube
-        Transformed cube of same shape as input cube with a local solar time
-        coordinate instead of UTC time.
+        Transformed cube of same shape as input cube with an LST coordinate
+        instead of UTC time.
 
     Raises
     ------

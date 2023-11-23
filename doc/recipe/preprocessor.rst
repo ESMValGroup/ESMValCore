@@ -1659,12 +1659,35 @@ See also :func:`esmvalcore.preprocessor.timeseries_filter`.
 ``local_solar_time``
 --------------------
 
-This preprocessor transforms data with an existing UTC-based time coordinate so
-that it corresponds to local solar time.
-For this, the data is reordered along the time dimension based on the longitude
-coordinate.
-For example, this kind of transformation is necessary to properly calculate
-diurnal cycles.
+Many variables in the Earth system show a strong diurnal cycle.
+The reason for that is of course Earth's rotation around its own axis, which
+leads to a diurnal cycle of the incoming solar radiation.
+While UTC time is a very good absolute time measure, it is not really suited to
+analyze diurnal cycles over larger regions.
+For example, diurnal cycles over Russia and the USA are phase-shifted by ~180°
+= 12 hr in UTC time.
+
+This is where the `local solar time (LST)
+<https://en.wikipedia.org/wiki/Solar_time>`__ comes into play:
+For a given location, 12:00 noon LST is defined as the moment when the sun
+reaches its highest point in the sky.
+By using this definition based on the origin of the diurnal cycle (the sun), we
+can directly compare diurnal cycles across the globe.
+LST is mainly determined by longitude of a location, but due to the
+eccentricity of Earth's orbit, it also depends on the day of year (see
+`equation of time <https://en.wikipedia.org/wiki/Equation_of_time>`__).
+However, since this correction is at most ~15 min which is usually smaller than
+the highest frequency output of CMIP6 models (1 hr), we ignore that here, and
+use the **mean** LST, which solely depends on longitude:
+
+.. math::
+
+  LST = UTC + lon \cdot \frac{12}{180}
+
+where the times are given in hours and `lon` in degrees in the interval [-180,
+180].
+To transform data from UTC to LST, this preprocessor shifts data along the time
+axis based on the longitude.
 
 This preprocessor does not need any additional parameters.
 
