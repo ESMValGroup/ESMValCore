@@ -65,7 +65,7 @@ REQUIREMENTS = {
     ],
     # Test dependencies
     'test': [
-        'flake8>=6.1.0',  # <6 non-issues in a python=3.12 environment
+        'flake8',
         'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
         'pytest-cov>=2.10.1',
         'pytest-env',
