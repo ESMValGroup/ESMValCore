@@ -1673,16 +1673,16 @@ For a given location, 12:00 noon LST is defined as the moment when the sun
 reaches its highest point in the sky.
 By using this definition based on the origin of the diurnal cycle (the sun), we
 can directly compare diurnal cycles across the globe.
-LST is mainly determined by longitude of a location, but due to the
+LST is mainly determined by the longitude of a location, but due to the
 eccentricity of Earth's orbit, it also depends on the day of year (see
 `equation of time <https://en.wikipedia.org/wiki/Equation_of_time>`__).
-However, since this correction is at most ~15 min which is usually smaller than
-the highest frequency output of CMIP6 models (1 hr), we ignore that here, and
-use the **mean** LST, which solely depends on longitude:
+However, since this correction is at most ~15 min, which is usually smaller
+than the highest frequency output of CMIP6 models (1 hr), we ignore that here,
+and use the **mean** LST, which solely depends on longitude:
 
 .. math::
 
-  LST = UTC + lon \cdot \frac{12}{180}
+  LST = UTC + 12 \cdot \frac{lon}{180°}
 
 where the times are given in hours and `lon` in degrees in the interval [-180,
 180].

@@ -1655,7 +1655,7 @@ def local_solar_time(cube: Cube) -> Cube:
     ----
     This preprocessor preserves the temporal frequency of the input data. For
     example, hourly input data will be transformed into hourly output data. For
-    this, a localtion's exact LST will be put into corresponding bins defined
+    this, a location's exact LST will be put into corresponding bins defined
     by the bounds of the input time coordinate (in this example, the bin size
     is 1 hour). If time bounds are not given or cannot be approximated (only
     one time step is given), a bin size of 1 hour is assumed.
