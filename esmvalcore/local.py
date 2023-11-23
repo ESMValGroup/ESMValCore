@@ -63,8 +63,7 @@ def _get_from_pattern(pattern, date_range_pattern, stem, group):
 
 
 def _get_start_end_date(
-    file: str | Path | LocalFile | ESGFFile
-) -> tuple[str, str]:
+        file: str | Path | LocalFile | ESGFFile) -> tuple[str, str]:
     """Get the start and end dates as a string from a file name.
 
     Examples of allowed dates: 1980, 198001, 1980-01, 19801231, 1980-12-31,
@@ -92,7 +91,6 @@ def _get_start_end_date(
     ------
     ValueError
         Start or end date cannot be determined.
-
     """
     if hasattr(file, 'name'):  # Path, LocalFile, ESGFFile
         stem = Path(file.name).stem
@@ -114,9 +112,8 @@ def _get_start_end_date(
 
     # Dates can either be delimited by '-', '_', or '_cat_' (the latter for
     # CMIP3)
-    date_range_pattern = (
-        datetime_pattern + r"[-_](?:cat_)?" + end_datetime_pattern
-    )
+    date_range_pattern = (datetime_pattern + r"[-_](?:cat_)?" +
+                          end_datetime_pattern)
 
     # Find dates using the regex
     start_date, end_date = _get_from_pattern(datetime_pattern,
@@ -124,8 +121,8 @@ def _get_start_end_date(
                                              'datetime')
 
     # As final resort, try to get the dates from the file contents
-    if ((start_date is None or end_date is None) and
-            isinstance(file, (str, Path)) and Path(file).exists()):
+    if ((start_date is None or end_date is None)
+            and isinstance(file, (str, Path)) and Path(file).exists()):
         logger.debug("Must load file %s for daterange ", file)
         cubes = iris.load(file)
 
@@ -145,8 +142,7 @@ def _get_start_end_date(
     if start_date is None or end_date is None:
         raise ValueError(
             f"File {file} datetimes do not match a recognized pattern and "
-            f"time coordinate can not be read from the file"
-        )
+            f"time coordinate can not be read from the file")
 
     # Remove potential '-' characters from datetimes
     start_date = start_date.replace('-', '')
@@ -156,12 +152,10 @@ def _get_start_end_date(
 
 
 def _get_start_end_year(
-    file: str | Path | LocalFile | ESGFFile
-) -> tuple[int, int]:
+        file: str | Path | LocalFile | ESGFFile) -> tuple[int, int]:
     """Get the start and end year as int from a file name.
 
     See :func:`_get_start_end_date`.
-
     """
     (start_date, end_date) = _get_start_end_date(file)
     return (int(start_date[:4]), int(end_date[:4]))
@@ -224,8 +218,8 @@ def _parse_period(timerange):
     start_date = None
     end_date = None
     time_format = None
-    datetime_format = (
-        isodate.DATE_BAS_COMPLETE + 'T' + isodate.TIME_BAS_COMPLETE)
+    datetime_format = (isodate.DATE_BAS_COMPLETE + 'T' +
+                       isodate.TIME_BAS_COMPLETE)
     if timerange.split('/')[0].startswith('P'):
         try:
             end_date = isodate.parse_datetime(timerange.split('/')[1])
@@ -246,13 +240,13 @@ def _parse_period(timerange):
         end_date = start_date + delta
 
     if time_format == datetime_format:
-        start_date = str(isodate.datetime_isoformat(
-            start_date, format=datetime_format))
-        end_date = str(isodate.datetime_isoformat(
-            end_date, format=datetime_format))
-    elif time_format == isodate.DATE_BAS_COMPLETE:
         start_date = str(
-            isodate.date_isoformat(start_date, format=time_format))
+            isodate.datetime_isoformat(start_date, format=datetime_format))
+        end_date = str(
+            isodate.datetime_isoformat(end_date, format=datetime_format))
+    elif time_format == isodate.DATE_BAS_COMPLETE:
+        start_date = str(isodate.date_isoformat(start_date,
+                                                format=time_format))
         end_date = str(isodate.date_isoformat(end_date, format=time_format))
 
     if start_date is None and end_date is None:
@@ -289,11 +283,11 @@ def _truncate_dates(date, file_date):
 def _select_files(filenames, timerange):
     """Select files containing data between a given timerange.
 
-    If the timerange is given as a period, the file selection
-    occurs taking only the years into account.
+    If the timerange is given as a period, the file selection occurs
+    taking only the years into account.
 
-    Otherwise, the file selection occurs taking into account
-    the time resolution of the file.
+    Otherwise, the file selection occurs taking into account the time
+    resolution of the file.
     """
     if '*' in timerange:
         # TODO: support * combined with a period
@@ -414,7 +408,8 @@ def _get_rootpath(project):
                     key, ', '.join(str(p) for p in nonexistent))
                 _ROOTPATH_WARNED.add((key, nonexistent))
             return rootpath[key]
-    raise KeyError('default rootpath must be specified in config-user file')
+    raise KeyError(f'The "{project}" option is missing from the "rootpath" '
+                   'section in the config-user.yml file.')
 
 
 def _get_globs(variable):
@@ -495,8 +490,7 @@ def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
     filename_segments = list(dict.fromkeys(filename_segments))
 
     # Add period and extension
-    filename_segments.append(
-        f"{attributes['timerange'].replace('/', '-')}.nc")
+    filename_segments.append(f"{attributes['timerange'].replace('/', '-')}.nc")
 
     outfile = Path(
         preproc_dir,
@@ -517,7 +511,8 @@ def _path2facets(path: Path, drs: str) -> dict[str, str]:
     start, end = -len(keys) - 1, -1
     values = path.parts[start:end]
     facets = {
-        key: values[idx] for idx, key in enumerate(keys) if "{" not in key
+        key: values[idx]
+        for idx, key in enumerate(keys) if "{" not in key
     }
 
     if len(facets) != len(keys):
@@ -532,8 +527,7 @@ def _path2facets(path: Path, drs: str) -> dict[str, str]:
 
 
 def _filter_versions_called_latest(
-    files: list['LocalFile'],
-) -> list['LocalFile']:
+        files: list['LocalFile']) -> list['LocalFile']:
     """Filter out versions called 'latest' if they are duplicates.
 
     On compute clusters it is usual to have a symbolic link to the
