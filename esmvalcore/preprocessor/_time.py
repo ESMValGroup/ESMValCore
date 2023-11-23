@@ -1336,7 +1336,7 @@ def _get_lst_offset(lon_coord: Coord) -> np.ndarray:
 
 
 def _get_lsts(time_coord: DimCoord, lon_coord: Coord) -> np.ndarray:
-    """Get array of binned LST of shape (lon, time).
+    """Get array of binned local solar times (LSTs) of shape (lon, time).
 
     Note
     ----
@@ -1386,10 +1386,10 @@ def _get_time_index_and_mask(
 
     Note
     ----
-    The mask considers the fact that not all values for all LSTs are given.
-    E.g., for hourly data with first time point 01:00:00 UTC, LST in Berlin is
-    already 02:00:00 (assuming no daylight saving time). Thus, for 01:00:00 LST
-    on this day, there is no value for Berlin.
+    The mask considers the fact that not all values for all local solar times
+    (LSTs) are given.  E.g., for hourly data with first time point 01:00:00
+    UTC, LST in Berlin is already 02:00:00 (assuming no daylight saving time).
+    Thus, for 01:00:00 LST on this day, there is no value for Berlin.
 
     """
     # Make sure that time coordinate has bounds (these are necessary for the
