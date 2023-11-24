@@ -29,7 +29,7 @@ from iris.util import broadcast_to_shape
 from numpy.typing import DTypeLike
 
 from esmvalcore.cmor.fixes import get_next_month, get_time_bounds
-from esmvalcore.iris_helpers import date2num
+from esmvalcore.iris_helpers import date2num, rechunk_cube
 from esmvalcore.preprocessor._shared import (
     get_iris_aggregator,
     update_weights_kwargs,
@@ -1430,41 +1430,6 @@ def _get_time_index_and_mask(
     return (time_index_l.T, mask.T)  # (time, lon)
 
 
-def _rechunk(array: da.core.Array, complete_dims: list[int]) -> da.core.Array:
-    """Rechunk a given array so that it is not chunked along given dims."""
-    new_chunks: list[str | int] = ['auto'] * array.ndim
-    for dim in complete_dims:
-        new_chunks[dim] = -1
-    return array.rechunk(new_chunks)
-
-
-def _rechunk_cube(cube: Cube, complete_dims: list[int]) -> None:
-    """Rechunk cube in-place so that it is not chunked along given dims."""
-    # Rechunk data
-    cube.data = _rechunk(cube.lazy_data(), complete_dims)
-
-    # Rechunk aux coords that span complete_dims
-    for coord in cube.coords(dim_coords=False):
-        dims = cube.coord_dims(coord)
-        if all(d in dims for d in complete_dims):
-            complete_dims_ = [dims.index(d) for d in complete_dims]
-            coord.points = _rechunk(coord.lazy_points(), complete_dims_)
-            if coord.lazy_bounds() is not None:
-                coord.bounds = _rechunk(coord.lazy_bounds(), complete_dims_)
-
-    # Rechunk cell measures that span complete_dims
-    for measure in cube.cell_measures():
-        dims = cube.cell_measure_dims(measure)
-        if all(d in dims for d in complete_dims):
-            measure.data = _rechunk(measure.lazy_data(), complete_dims_)
-
-    # Rechunk ancillary variables that span complete_dims
-    for anc_var in cube.ancillary_variables():
-        dims = cube.ancillary_variable_dims(anc_var)
-        if all(d in dims for d in complete_dims):
-            anc_var.data = _rechunk(anc_var.lazy_data(), complete_dims_)
-
-
 def _transform_to_lst_eager(
     data: np.ndarray,
     *,
@@ -1544,16 +1509,18 @@ def _transform_to_lst_lazy(
 
 def _transform_cube_to_lst(cube: Cube) -> Cube:
     """Transform cube to local solar time (LST) coordinate (lazy; in-place)."""
-    cube = cube[...]  # make sure that input cube is not overwritten
+    # Rechunk cube properly (it must not be chunked along time and longitude
+    # dimension); this also creates a new cube so the original input cube is
+    # not overwritten
+    complete_coords = [
+        cube.coord('time', dim_coords=True), cube.coord('longitude'),
+    ]
+    cube = rechunk_cube(cube, complete_coords)
 
     time_coord = cube.coord('time', dim_coords=True)
     lon_coord = cube.coord('longitude')
     time_dim = cube.coord_dims(time_coord)[0]
     lon_dim = cube.coord_dims(lon_coord)[0]
-
-    # Make sure the cube has lazy data and rechunk it properly (cube must not
-    # be chunked along time and longitude dimension)
-    _rechunk_cube(cube, [time_dim, lon_dim])
 
     # Transform cube data
     (time_index, mask) = _get_time_index_and_mask(time_coord, lon_coord)

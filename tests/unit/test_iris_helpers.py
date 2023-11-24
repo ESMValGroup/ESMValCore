@@ -4,6 +4,7 @@ from copy import deepcopy
 from itertools import permutations
 from unittest import mock
 
+import dask.array as da
 import numpy as np
 import pytest
 from cf_units import Unit
@@ -21,6 +22,7 @@ from esmvalcore.iris_helpers import (
     add_leading_dim_to_cube,
     date2num,
     merge_cube_attributes,
+    rechunk_cube,
 )
 
 
@@ -220,3 +222,84 @@ def test_merge_cube_attributes_1_cube():
     merge_cube_attributes(cubes)
     assert len(cubes) == 1
     assert_attribues_equal(cubes[0].attributes, expected_attributes)
+
+
+@pytest.fixture
+def cube_3d():
+    """3D sample cube."""
+    # DimCoords
+    x = DimCoord([0, 1, 2], var_name='x')
+    y = DimCoord([0, 1, 2], var_name='y')
+    z = DimCoord([0, 1, 2, 3], var_name='z')
+
+    # AuxCoords
+    aux_x = AuxCoord(da.ones(3, chunks=1), var_name='aux_x')
+    aux_z = AuxCoord(da.ones(4, chunks=1), var_name='aux_z')
+    aux_xy = AuxCoord(da.ones((3, 3), chunks=(1, 1)), var_name='xy')
+    aux_xz = AuxCoord(da.ones((3, 4), chunks=(1, 1)), var_name='xz')
+    aux_yz = AuxCoord(da.ones((3, 4), chunks=(1, 1)), var_name='yz')
+    aux_xyz = AuxCoord(
+        da.ones((3, 3, 4), chunks=(1, 1, 1)),
+        bounds=da.ones((3, 3, 4, 3), chunks=(1, 1, 1, 1)),
+        var_name='xyz',
+    )
+    aux_coords_and_dims = [
+        (aux_x, 0),
+        (aux_z, 2),
+        (aux_xy, (0, 1)),
+        (aux_xz, (0, 2)),
+        (aux_yz, (1, 2)),
+        (aux_xyz, (0, 1, 2)),
+    ]
+
+    # CellMeasures and AncillaryVariables
+    cell_measure = CellMeasure(
+        da.ones((3, 4), chunks=(1, 1)), var_name='cell_measure'
+    )
+    anc_var = AncillaryVariable(
+        da.ones((3, 4), chunks=(1, 1)), var_name='anc_var'
+    )
+
+    return Cube(
+        da.ones((3, 3, 4), chunks=(1, 1, 1)),
+        var_name='cube',
+        dim_coords_and_dims=[(x, 0), (y, 1), (z, 2)],
+        aux_coords_and_dims=aux_coords_and_dims,
+        cell_measures_and_dims=[(cell_measure, (1, 2))],
+        ancillary_variables_and_dims=[(anc_var, (0, 2))],
+    )
+
+
+def test_rechunk_cube(cube_3d):
+    """Test ``rechunk_cube``."""
+    input_cube = cube_3d.copy()
+
+    x_coord = input_cube.coord('x')
+    result = rechunk_cube(input_cube, [x_coord, 'y'], remaining_dims=2)
+
+    assert input_cube == cube_3d
+
+    assert result.core_data().chunksize == (3, 3, 2)
+    assert result.coord('aux_x').core_points().chunksize == (3,)
+    assert result.coord('aux_z').core_points().chunksize == (1,)
+    assert result.coord('xy').core_points().chunksize == (3, 3)
+    assert result.coord('xz').core_points().chunksize == (3, 2)
+    assert result.coord('yz').core_points().chunksize == (3, 2)
+    assert result.coord('xyz').core_points().chunksize == (3, 3, 2)
+    assert result.coord('aux_x').core_bounds() is None
+    assert result.coord('aux_z').core_bounds() is None
+    assert result.coord('xy').core_bounds() is None
+    assert result.coord('xz').core_bounds() is None
+    assert result.coord('yz').core_bounds() is None
+    assert result.coord('xyz').core_bounds().chunksize == (3, 3, 2, 2)
+    assert result.cell_measure('cell_measure').core_data().chunksize == (3, 2)
+    assert result.ancillary_variable('anc_var').core_data().chunksize == (3, 2)
+
+
+def test_rechunk_cube_invalid_coord_fail(cube_3d):
+    """Test ``rechunk_cube``."""
+    msg = (
+        "Complete coordinates must be 1D coordinates, got 2D coordinate 'xy'"
+    )
+    with pytest.raises(CoordinateMultiDimError, match=msg):
+        rechunk_cube(cube_3d, ['xy'])
