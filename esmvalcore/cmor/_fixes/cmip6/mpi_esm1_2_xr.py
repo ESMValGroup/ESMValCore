@@ -9,6 +9,14 @@ class Tas(BaseTas):
     """Fixes for tas."""
 
 
+class Tasmax(BaseTas):
+    """Fixes for tasmax."""
+
+
+class Tasmin(BaseTas):
+    """Fixes for tasmin."""
+
+
 class Ta(BaseFix):
     """Fixes for ta."""
 
@@ -27,3 +35,15 @@ class Ua(BaseFix):
 
 class SfcWind(BaseSfcWind):
     """Fixes for sfcWind."""
+
+
+class Uas(BaseSfcWind):
+    """Fixes for uas."""
+
+
+class Vas(BaseSfcWind):
+    """Fixes for vas."""
+
+
+
+

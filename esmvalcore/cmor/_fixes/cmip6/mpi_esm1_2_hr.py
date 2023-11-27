@@ -47,6 +47,10 @@ class Tas(Fix):
         return cubes
 
 
+class Tasmax(Tas): 
+    """Fixes for tasmax"""
+
+
 class Ta(Fix):
     """Fixes for ta."""
 
@@ -100,3 +104,12 @@ class SfcWind(Fix):
             add_scalar_height_coord(cube, height=10.0)
 
         return cubes
+
+
+class Uas(SfcWind):
+    """Fixes for uas"""
+
+
+class Vas(SfcWind):
+    """Fixes for vas"""
+    
