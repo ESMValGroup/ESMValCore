@@ -283,9 +283,6 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
     if region_indices:
         regions = [regions[idx] for idx in region_indices]
 
-    # Create a mask for the data (np->da)
-    #mask = np.zeros(cube.shape, dtype=bool)
-
     # Create a set of x,y points from the cube
     # 1D regular grids
     if cube.coord('longitude').points.ndim < 2:
@@ -366,23 +363,29 @@ def count_spells(data, threshold, axis, spell_length):
         axis += data.ndim
     # Threshold the data to find the 'significant' points.
     if not threshold:
-        data_hits = np.ones_like(data, dtype=bool)
+        data_hits = da.ones_like(data, dtype=bool)
     else:
         data_hits = data > float(threshold)
+
     # Make an array with data values "windowed" along the time axis.
     ###############################################################
     # WARNING: default step is = window size i.e. no overlapping
     # if you want overlapping windows set the step to be m*spell_length
     # where m is a float
     ###############################################################
+
     hit_windows = rolling_window(data_hits,
                                  window=spell_length,
                                  step=spell_length,
                                  axis=axis)
+    
+
     # Find the windows "full of True-s" (along the added 'window axis').
-    full_windows = np.all(hit_windows, axis=axis + 1)
+    full_windows = da.all(hit_windows, axis=axis + 1)
+
     # Count points fulfilling the condition (along the time axis).
-    spell_point_counts = np.sum(full_windows, axis=axis, dtype=int)
+    spell_point_counts = da.sum(full_windows, axis=axis, dtype=int)
+
     return spell_point_counts
 
 
@@ -618,27 +621,16 @@ def mask_fillvalues(products,
     used = set()
     for product in products:
         for cube in product.cubes:
-            cube.data = np.ma.fix_invalid(cube.core_data(), copy=False)
+#           cube.data = np.ma.fix_invalid(cube.core_data(), copy=False)
+            cube.data = da.ma.masked_invalid(cube.core_data())
             mask = _get_fillvalues_mask(cube, threshold_fraction, min_value,
                                         time_window)
+
             if combined_mask is None:
                 combined_mask = da.zeros_like(mask)
             # Select only valid (not all masked) pressure levels
-            n_dims = len(mask.shape)
-            if n_dims == 2:
-                valid = ~da.all(mask)
-                if valid:
-                    combined_mask |= mask
-                    used.add(product)
-            elif n_dims == 3:
-                valid = ~da.all(mask, axis=(1, 2))
-                combined_mask[valid] |= mask[valid]
-                if da.any(valid):
-                    used.add(product)
-            else:
-                raise NotImplementedError(
-                    f"Unable to handle {n_dims} dimensional data"
-                )
+            combined_mask |= mask
+            used.add(product)
 
     if da.any(combined_mask):
         logger.debug("Applying fillvalues mask")
@@ -669,15 +661,17 @@ def _get_fillvalues_mask(cube, threshold_fraction, min_value, time_window):
             f"Fraction of missing values {threshold_fraction} should be "
             f"between 0 and 1.0"
         )
+
     nr_time_points = len(cube.coord('time').points)
     if time_window > nr_time_points:
         msg = "Time window (in time units) larger than total time span. Stop."
         raise ValueError(msg)
 
     max_counts_per_time_window = nr_time_points / time_window
+
     # round to lower integer
     counts_threshold = int(max_counts_per_time_window * threshold_fraction)
-
+    
     # Make an aggregator
     spell_count = Aggregator('spell_count',
                              count_spells,
@@ -688,10 +682,13 @@ def _get_fillvalues_mask(cube, threshold_fraction, min_value, time_window):
                                           spell_count,
                                           threshold=min_value,
                                           spell_length=time_window)
-
+    
     # Create mask
-    mask = counts_windowed_cube.data < counts_threshold
-    if np.ma.isMaskedArray(mask):
-        mask = mask.data | mask.mask
+    mask = counts_windowed_cube.core_data() < counts_threshold
+    mask = da.array(mask)
 
+    old_mask = da.ma.getmaskarray(cube.core_data())
+    mask = old_mask | mask
+    cube.data = da.ma.masked_array(cube.core_data(), mask=mask)
+    
     return mask
