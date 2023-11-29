@@ -1,18 +1,42 @@
 from pathlib import Path
 
+import pytest
+
 from esmvalcore.local import LocalFile, _path2facets
 
 
-def test_path2facets():
-    """Test `_path2facets1."""
-    filepath = Path("/climate_data/value1/value2/filename.nc")
-    drs = "{facet1}/{facet2.lower}"
-
-    expected = {
-        'facet1': 'value1',
-        'facet2': 'value2',
-    }
-
+@pytest.mark.parametrize(
+    'path,drs,expected',
+    [
+        (
+            '/climate_data/value1/value2/filename.nc',
+            '{facet1}/{facet2.lower}',
+            {
+                'facet1': 'value1',
+                'facet2': 'value2',
+            },
+        ),
+        (
+            '/climate_data/value1/value1-value2/filename.nc',
+            '{facet1}/{facet1}-{facet2}',
+            {
+                'facet1': 'value1',
+                'facet2': 'value2',
+            },
+        ),
+        (
+            '/climate_data/value-1/value-1-value-2/filename.nc',
+            '{facet1}/{facet1}-{facet2}',
+            {
+                'facet1': 'value-1',
+                'facet2': 'value-2',
+            },
+        )
+    ],
+)
+def test_path2facets(path, drs, expected):
+    """Test `_path2facets."""
+    filepath = Path(path)
     result = _path2facets(filepath, drs)
 
     assert result == expected

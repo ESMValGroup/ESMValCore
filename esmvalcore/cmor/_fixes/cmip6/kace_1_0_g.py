@@ -3,7 +3,7 @@ import logging
 
 import numpy as np
 
-from esmvalcore.cmor.check import _get_time_bounds
+from esmvalcore.cmor.fixes import get_time_bounds
 
 from ..common import ClFixHybridHeightCoord, OceanFixGrid
 from ..fix import Fix
@@ -39,7 +39,7 @@ class AllVars(Fix):
         for cube in cubes:
             freq = self.extra_facets["frequency"]
             time = cube.coord("time", dim_coords=True)
-            bounds = _get_time_bounds(time, freq)
+            bounds = get_time_bounds(time, freq)
             if np.any(bounds != time.bounds):
                 time.bounds = bounds
         logger.warning(
