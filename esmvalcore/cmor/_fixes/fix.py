@@ -9,6 +9,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
+import dask
 import numpy as np
 from cf_units import Unit
 from iris.coords import Coord, CoordExtent
@@ -675,18 +676,19 @@ class GenericFix(Fix):
         if not cube_coord.standard_name == 'longitude':
             return (cube, cube_coord)
 
-        # Only apply fixes when values are outside of valid range [0, 360]
-        inside_0_360 = all([
-            cube_coord.core_points().min() >= 0.0,
-            cube_coord.core_points().max() <= 360.0,
-        ])
-        if inside_0_360:
+        min_, max_ = dask.compute(
+            cube_coord.core_points().min(),
+            cube_coord.core_points().max()
+        )
+
+        # Do not apply fixes when values are inside of valid range [0, 360]
+        if min_ >= 0.0 and max_ <= 360.0:
             return (cube, cube_coord)
 
         # Cannot fix longitudes outside [-360, 720]
-        if np.any(cube_coord.core_points() < -360.0):
+        if min_ < -360.0:
             return (cube, cube_coord)
-        if np.any(cube_coord.core_points() > 720.0):
+        if max_ > 720.0:
             return (cube, cube_coord)
 
         # cube.intersection only works for cells with 0 or 2 bounds
