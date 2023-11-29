@@ -17,9 +17,11 @@ from pathlib import Path, PosixPath
 from shutil import which
 from typing import Optional
 
+import matplotlib.pyplot as plt
 import psutil
 import yaml
-from distributed import Client
+from distributed import Client, performance_report
+from distributed.diagnostics import MemorySampler
 
 from ._citation import _write_citation_files
 from ._provenance import TrackedFile, get_task_provenance
@@ -712,7 +714,11 @@ class TaskSet(set):
                 independent_tasks.add(task)
         return independent_tasks
 
-    def run(self, max_parallel_tasks: Optional[int] = None) -> None:
+    def run(
+        self,
+        run_dir: Path,
+        max_parallel_tasks: Optional[int] = None,
+    ) -> None:
         """Run tasks.
 
         Parameters
@@ -731,11 +737,22 @@ class TaskSet(set):
                         # Only insert the scheduler address if running a
                         # Python script.
                         task.settings['scheduler_address'] = address
-
-            if max_parallel_tasks == 1:
-                self._run_sequential()
-            else:
-                self._run_parallel(address, max_parallel_tasks)
+            report = run_dir / "dask-report.html"
+            memorysampler = MemorySampler()
+            with performance_report(filename=report), memorysampler.sample():
+                if max_parallel_tasks == 1:
+                    self._run_sequential()
+                else:
+                    self._run_parallel(address, max_parallel_tasks)
+            df = memorysampler.to_pandas()
+            df.columns = [run_dir.parent.name]
+            df.to_json(run_dir / 'dask-memory-use.json')
+            memorysampler.plot()
+            plt.savefig(run_dir / 'dask-memory-use.png')
+            logger.info(
+                "To view the Dask performance report, run "
+                "`python -m http.server 8000 -d %s` and open "
+                "http://localhost:8000/%s", report.parent, report.name)
 
     def _run_sequential(self) -> None:
         """Run tasks sequentially."""

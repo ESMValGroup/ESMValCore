@@ -1072,7 +1072,11 @@ class Recipe:
         if self.session['search_esgf'] != 'never':
             esgf.download(self._download_files, self.session['download_dir'])
 
-        self.tasks.run(max_parallel_tasks=self.session['max_parallel_tasks'])
+        self.tasks.run(
+            run_dir=self.session.run_dir,
+            max_parallel_tasks=self.session['max_parallel_tasks'],
+        )
+
         logger.info(
             "Wrote recipe with version numbers and wildcards "
             "to:\nfile://%s", filled_recipe)
