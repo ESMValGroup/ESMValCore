@@ -11,7 +11,7 @@ import os
 import cartopy.io.shapereader as shpreader
 import dask.array as da
 import iris
-import numpy as np
+# import numpy as np
 import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
 from iris.util import rolling_window
@@ -51,11 +51,12 @@ def _get_fx_mask(fx_data, fx_option, mask_type):
 
 def _apply_fx_mask(fx_mask, var_data):
     """Apply the fx data extracted mask on the actual processed data."""
-    # Apply mask across 
+    # Apply mask across
     # Then apply the mask (with getmaskarray)
     old_mask = da.ma.getmaskarray(var_data)
     mask = old_mask | fx_mask
-    var_data = da.ma.masked_array(var_data, mask=mask)  # maybe fill_value=1e+20 
+    var_data = da.ma.masked_array(var_data, mask=mask)
+    # maybe fill_value=1e+20
 
     return var_data
 
@@ -103,13 +104,13 @@ def mask_landsea(cube, mask_out):
     """
     # Dict to store the Natural Earth masks
     cwd = os.path.dirname(__file__)
-    
+
     # ne_10m_land is fast; ne_10m_ocean is very slow
     shapefiles = {
         'land': os.path.join(cwd, 'ne_masks/ne_10m_land.shp'),
         'sea': os.path.join(cwd, 'ne_masks/ne_50m_ocean.shp')
     }
-    
+
     # preserve importance order: try stflf first then sftof
     fx_cube = None
     try:
@@ -127,7 +128,7 @@ def mask_landsea(cube, mask_out):
                                     fx_cube.var_name)
 
         cube.data = _apply_fx_mask(landsea_mask, cube.core_data())
-        
+
         logger.debug("Applying land-sea mask: %s", fx_cube.var_name)
     else:
         if cube.coord('longitude').points.ndim < 2:
@@ -313,14 +314,14 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
             mask = shp_vect.contains(region, x_p_180, y_p_90)
         else:
             mask |= shp_vect.contains(region, x_p_180, y_p_90)
-            
-            
-    mask = da.array(mask) 
-    iris.util.broadcast_to_shape(mask, cube.shape, cube.coord_dims('latitude') + cube.coord_dims('longitude'))
+
+    mask = da.array(mask)
+    iris.util.broadcast_to_shape(mask, cube.shape, cube.coord_dims('latitude')
+                                 + cube.coord_dims('longitude'))
 
     old_mask = da.ma.getmaskarray(cube.core_data())
     mask = old_mask | mask
-    cube.data = da.ma.masked_array(cube.core_data(), mask=mask) 
+    cube.data = da.ma.masked_array(cube.core_data(), mask=mask)
 
     return cube
 
@@ -378,7 +379,6 @@ def count_spells(data, threshold, axis, spell_length):
                                  window=spell_length,
                                  step=spell_length,
                                  axis=axis)
-    
 
     # Find the windows "full of True-s" (along the added 'window axis').
     full_windows = da.all(hit_windows, axis=axis + 1)
@@ -621,7 +621,7 @@ def mask_fillvalues(products,
     used = set()
     for product in products:
         for cube in product.cubes:
-#           cube.data = np.ma.fix_invalid(cube.core_data(), copy=False)
+            # cube.data = np.ma.fix_invalid(cube.core_data(), copy=False)
             cube.data = da.ma.masked_invalid(cube.core_data())
             mask = _get_fillvalues_mask(cube, threshold_fraction, min_value,
                                         time_window)
@@ -671,7 +671,7 @@ def _get_fillvalues_mask(cube, threshold_fraction, min_value, time_window):
 
     # round to lower integer
     counts_threshold = int(max_counts_per_time_window * threshold_fraction)
-    
+
     # Make an aggregator
     spell_count = Aggregator('spell_count',
                              count_spells,
@@ -682,7 +682,7 @@ def _get_fillvalues_mask(cube, threshold_fraction, min_value, time_window):
                                           spell_count,
                                           threshold=min_value,
                                           spell_length=time_window)
-    
+
     # Create mask
     mask = counts_windowed_cube.core_data() < counts_threshold
     mask = da.array(mask)
@@ -690,5 +690,5 @@ def _get_fillvalues_mask(cube, threshold_fraction, min_value, time_window):
     old_mask = da.ma.getmaskarray(cube.core_data())
     mask = old_mask | mask
     cube.data = da.ma.masked_array(cube.core_data(), mask=mask)
-    
+
     return mask
