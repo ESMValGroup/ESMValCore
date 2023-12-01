@@ -365,7 +365,7 @@ def count_spells(data, threshold, axis, spell_length):
         axis += data.ndim
     # Threshold the data to find the 'significant' points.
     if not threshold:
-        data_hits = da.ones_like(data, dtype=bool)
+        data_hits = np.ones_like(data, dtype=bool)
     else:
         data_hits = data > float(threshold)
 
@@ -382,10 +382,10 @@ def count_spells(data, threshold, axis, spell_length):
                                  axis=axis)
 
     # Find the windows "full of True-s" (along the added 'window axis').
-    full_windows = da.all(hit_windows, axis=axis + 1)
+    full_windows = np.all(hit_windows, axis=axis + 1)
 
     # Count points fulfilling the condition (along the time axis).
-    spell_point_counts = da.sum(full_windows, axis=axis, dtype=int)
+    spell_point_counts = np.sum(full_windows, axis=axis, dtype=int)
 
     return spell_point_counts
 
