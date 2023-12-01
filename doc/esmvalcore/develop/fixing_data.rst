@@ -485,7 +485,7 @@ e.g. with variable naming issues for finding files or additional information
 that is required for the fixes.
 See :ref:`extra_facets` and :ref:`extra-facets-fixes` for more details on this.
 An example of such a file for IPSL-CM6 is given :download:`here
-<../../esmvalcore/config/extra_facets/ipslcm-mappings.yml>`.
+<../../../esmvalcore/config/extra_facets/ipslcm-mappings.yml>`.
 
 
 .. _extra-facets-fixes:

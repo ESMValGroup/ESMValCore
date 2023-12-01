@@ -44,8 +44,7 @@ def generate_sidebar(conf, conf_api):
                 args = desc, mapping[project][0], link
                 lines.append("    %s <%s%s.html>" % args)
         else:
-            args = desc, link
-            lines.append("    %s <%s>" % args)
+            lines.append(f"    {desc} <{project}/{link}>")
 
     def _header(project, text):
         if project == conf_api or do_gen:
