@@ -616,24 +616,36 @@ def mask_fillvalues(products,
     NotImplementedError
         Implementation missing for data with higher dimensionality than 4.
     """
+
     combined_mask = None
 
     logger.debug("Creating fillvalues mask")
     used = set()
     for product in products:
         for cube in product.cubes:
-            # cube.data = np.ma.fix_invalid(cube.core_data(), copy=False)
-            cube.data = da.ma.masked_invalid(cube.core_data())
+            cube.data = np.ma.fix_invalid(cube.data, copy=False)
             mask = _get_fillvalues_mask(cube, threshold_fraction, min_value,
                                         time_window)
-
             if combined_mask is None:
-                combined_mask = da.zeros_like(mask)
+                combined_mask = np.zeros_like(mask)
             # Select only valid (not all masked) pressure levels
-            combined_mask |= mask
-            used.add(product)
+            n_dims = len(mask.shape)
+            if n_dims == 2:
+                valid = ~np.all(mask)
+                if valid:
+                    combined_mask |= mask
+                    used.add(product)
+            elif n_dims == 3:
+                valid = ~np.all(mask, axis=(1, 2))
+                combined_mask[valid] |= mask[valid]
+                if np.any(valid):
+                    used.add(product)
+            else:
+                raise NotImplementedError(
+                    f"Unable to handle {n_dims} dimensional data"
+                )
 
-    if da.any(combined_mask):
+    if np.any(combined_mask):
         logger.debug("Applying fillvalues mask")
         used = {p.copy_provenance() for p in used}
         for product in products:
@@ -662,14 +674,12 @@ def _get_fillvalues_mask(cube, threshold_fraction, min_value, time_window):
             f"Fraction of missing values {threshold_fraction} should be "
             f"between 0 and 1.0"
         )
-
     nr_time_points = len(cube.coord('time').points)
     if time_window > nr_time_points:
         msg = "Time window (in time units) larger than total time span. Stop."
         raise ValueError(msg)
 
     max_counts_per_time_window = nr_time_points / time_window
-
     # round to lower integer
     counts_threshold = int(max_counts_per_time_window * threshold_fraction)
 
@@ -685,11 +695,9 @@ def _get_fillvalues_mask(cube, threshold_fraction, min_value, time_window):
                                           spell_length=time_window)
 
     # Create mask
-    mask = counts_windowed_cube.core_data() < counts_threshold
-    mask = da.array(mask)
-
-    old_mask = da.ma.getmaskarray(cube.core_data())
-    mask = old_mask | mask
-    cube.data = da.ma.masked_array(cube.core_data(), mask=mask)
+    mask = counts_windowed_cube.data < counts_threshold
+    if np.ma.isMaskedArray(mask):
+        mask = mask.data | mask.mask
 
     return mask
+    
