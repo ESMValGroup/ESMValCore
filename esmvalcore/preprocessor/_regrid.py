@@ -974,7 +974,7 @@ def extract_levels(cube,
     interpolation, extrapolation = parse_vertical_scheme(scheme)
 
     # Ensure we have a non-scalar array of levels.
-    levels = da.array(levels, ndmin=1)
+    levels = np.array(levels, ndmin=1)
 
     # Get the source cube vertical coordinate, if available.
     if coordinate:
@@ -992,11 +992,11 @@ def extract_levels(cube,
     else:
         src_levels = cube.coord(axis='z', dim_coords=True)
 
-    if (src_levels.shape == levels.shape and da.allclose(
+    if (src_levels.shape == levels.shape and np.allclose(
             src_levels.points,
             levels,
             rtol=rtol,
-            atol=1e-7 * da.mean(src_levels.points) if atol is None else atol,
+            atol=1e-7 * np.mean(src_levels.points) if atol is None else atol,
     )):
         # Only perform vertical extraction/interpolation if the source
         # and target levels are not "similar" enough.

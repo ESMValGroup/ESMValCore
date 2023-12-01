@@ -10,6 +10,7 @@ import os
 
 import cartopy.io.shapereader as shpreader
 import dask.array as da
+import numpy as np
 import iris
 
 import shapely.vectorized as shp_vect
