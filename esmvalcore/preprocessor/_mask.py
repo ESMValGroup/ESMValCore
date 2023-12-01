@@ -10,9 +10,8 @@ import os
 
 import cartopy.io.shapereader as shpreader
 import dask.array as da
-import numpy as np
 import iris
-
+import numpy as np
 import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
 from iris.util import rolling_window
@@ -700,4 +699,3 @@ def _get_fillvalues_mask(cube, threshold_fraction, min_value, time_window):
         mask = mask.data | mask.mask
 
     return mask
-    
