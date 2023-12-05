@@ -47,7 +47,7 @@ class Tas(Fix):
         return cubes
 
 
-class Tasmax(Tas): 
+class Tasmax(Tas):
     """Fixes for tasmax"""
 
 
@@ -112,4 +112,3 @@ class Uas(SfcWind):
 
 class Vas(SfcWind):
     """Fixes for vas"""
-    
