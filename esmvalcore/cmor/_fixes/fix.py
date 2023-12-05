@@ -676,10 +676,8 @@ class GenericFix(Fix):
         if not cube_coord.standard_name == 'longitude':
             return (cube, cube_coord)
 
-        min_, max_ = dask.compute(
-            cube_coord.core_points().min(),
-            cube_coord.core_points().max()
-        )
+        points = cube_coord.core_points()
+        min_, max_ = dask.compute(points.min(), points.max())
 
         # Do not apply fixes when values are inside of valid range [0, 360]
         if min_ >= 0.0 and max_ <= 360.0:

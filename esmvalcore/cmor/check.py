@@ -3,17 +3,20 @@ from __future__ import annotations
 
 import logging
 import warnings
+from collections import namedtuple
 from collections.abc import Callable
 from enum import IntEnum
 from functools import cached_property
 from typing import Optional
 
 import cf_units
+import dask
 import iris.coord_categorisation
 import iris.coords
 import iris.exceptions
 import iris.util
 import numpy as np
+from iris.coords import Coord
 from iris.cube import Cube
 
 from esmvalcore.cmor._fixes.fix import GenericFix
@@ -24,7 +27,7 @@ from esmvalcore.cmor._utils import (
     _get_simplified_calendar,
     _is_unstructured_grid,
 )
-from esmvalcore.cmor.table import get_var_info
+from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 
@@ -500,6 +503,7 @@ class CMORCheck():
 
     def _check_coords(self):
         """Check coordinates."""
+        coords = []
         for coordinate in self._cmor_var.coordinates.values():
             # Cannot check generic_level coords with no CMOR information
             if coordinate.generic_level and not coordinate.out_name:
@@ -513,6 +517,36 @@ class CMORCheck():
                 continue
 
             self._check_coord(coordinate, coord, var_name)
+            coords.append((coordinate, coord))
+
+        self._check_coord_ranges(coords)
+
+    def _check_coord_ranges(self, coords: list[tuple[CoordinateInfo, Coord]]):
+        """Check coordinate value are inside valid ranges."""
+        Limit = namedtuple('Limit', ['name', 'type', 'limit', 'value'])
+
+        check = []
+        for coord_info, coord in coords:
+            points = coord.core_points()
+            for limit_type in 'min', 'max':
+                valid = getattr(coord_info, f'valid_{limit_type}')
+                if valid != "":
+                    limit = Limit(
+                        name=coord_info.out_name,
+                        type=limit_type,
+                        limit=float(valid),
+                        value=getattr(points, limit_type)(),
+                    )
+                    check.append(limit)
+
+        check = dask.compute(*check)
+        for limit in check:
+            if limit.type == 'min' and limit.value < limit.limit:
+                self.report_critical(self._vals_msg, limit.name,
+                                     '< valid_min =', limit.limit)
+            if limit.type == 'max' and limit.value > limit.limit:
+                self.report_critical(self._vals_msg, limit.name,
+                                     '> valid_max =', limit.limit)
 
     def _check_coords_data(self):
         """Check coordinate data."""
@@ -593,24 +627,7 @@ class CMORCheck():
 
     def _check_coord_points(self, coord_info, coord, var_name):
         """Check coordinate points: values, bounds and monotonicity."""
-        # Check requested coordinate values exist in coord.points
         self._check_requested_values(coord, coord_info, var_name)
-
-        # Check coordinate value ranges
-        if coord_info.valid_min:
-            valid_min = float(coord_info.valid_min)
-            if np.any(coord.core_points() < valid_min):
-                self.report_critical(self._vals_msg, var_name,
-                                     '< {} ='.format('valid_min'),
-                                     valid_min)
-
-        if coord_info.valid_max:
-            valid_max = float(coord_info.valid_max)
-            if np.any(coord.core_points() > valid_max):
-                self.report_critical(self._vals_msg, var_name,
-                                     '> {} ='.format('valid_max'),
-                                     valid_max)
-
         self._check_coord_bounds(coord_info, coord, var_name)
         self._check_coord_monotonicity_and_direction(coord_info, coord,
                                                      var_name)
