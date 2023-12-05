@@ -525,7 +525,7 @@ class CMORCheck():
         """Check coordinate value are inside valid ranges."""
         Limit = namedtuple('Limit', ['name', 'type', 'limit', 'value'])
 
-        check = []
+        limits = []
         for coord_info, coord in coords:
             points = coord.core_points()
             for limit_type in 'min', 'max':
@@ -537,10 +537,10 @@ class CMORCheck():
                         limit=float(valid),
                         value=getattr(points, limit_type)(),
                     )
-                    check.append(limit)
+                    limits.append(limit)
 
-        check = dask.compute(*check)
-        for limit in check:
+        limits = dask.compute(*limits)
+        for limit in limits:
             if limit.type == 'min' and limit.value < limit.limit:
                 self.report_critical(self._vals_msg, limit.name,
                                      '< valid_min =', limit.limit)
