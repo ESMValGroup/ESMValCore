@@ -225,7 +225,7 @@ def _read_config_file(config_file):
     if not config_file.exists():
         raise IOError(f'Config file `{config_file}` does not exist.')
 
-    with open(config_file, 'r') as file:
+    with open(config_file, 'r', encoding='utf-8') as file:
         cfg = yaml.safe_load(file)
 
     return cfg

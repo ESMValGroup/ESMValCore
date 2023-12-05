@@ -29,7 +29,6 @@ from ._detrend import detrend
 from ._io import (
     _get_debug_filename,
     _sort_products,
-    cleanup,
     concatenate,
     load,
     save,
@@ -57,9 +56,7 @@ from ._regrid import (
 )
 from ._rolling_window import rolling_window_statistics
 from ._supplementary_vars import (
-    add_fx_variables,
     add_supplementary_variables,
-    remove_fx_variables,
     remove_supplementary_variables,
 )
 from ._time import (
@@ -110,7 +107,6 @@ __all__ = [
     'fix_data',
     'cmor_check_data',
     # Attach ancillary variables and cell measures
-    'add_fx_variables',
     'add_supplementary_variables',
     # Derive variable
     'derive',
@@ -189,10 +185,8 @@ __all__ = [
     'bias',
     # Remove supplementary variables from cube
     'remove_supplementary_variables',
-    'remove_fx_variables',
     # Save to file
     'save',
-    'cleanup',
 ]
 
 TIME_PREPROCESSORS = [
@@ -371,6 +365,10 @@ def preprocess(
     function = globals()[step]
     itype = _get_itype(step)
 
+    for item in items:
+        if isinstance(item, Cube) and item.has_lazy_data():
+            item.data = item.core_data().rechunk()
+
     result = []
     if itype.endswith('s'):
         result.append(_run_preproc_function(function, items, settings,
@@ -478,10 +476,7 @@ class PreprocessorFile(TrackedFile):
     def cubes(self):
         """Cubes."""
         if self._cubes is None:
-            callback = self.settings.get('load', {}).get('callback')
-            self._cubes = [
-                ds._load_with_callback(callback) for ds in self.datasets
-            ]
+            self._cubes = [ds.load() for ds in self.datasets]
         return self._cubes
 
     @cubes.setter
@@ -494,11 +489,6 @@ class PreprocessorFile(TrackedFile):
                    'save',
                    input_files=self._input_files,
                    **self.settings['save'])
-        if 'cleanup' in self.settings:
-            preprocess([],
-                       'cleanup',
-                       input_files=self._input_files,
-                       **self.settings['cleanup'])
 
     def close(self):
         """Close the file."""

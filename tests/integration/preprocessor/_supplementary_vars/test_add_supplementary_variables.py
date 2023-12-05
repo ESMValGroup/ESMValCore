@@ -8,7 +8,6 @@ import iris.fileformats
 import numpy as np
 import pytest
 
-import esmvalcore.config
 from esmvalcore.preprocessor._supplementary_vars import (
     add_ancillary_variable,
     add_cell_measure,
@@ -120,14 +119,8 @@ class Test:
         cube = add_supplementary_variables(cube, [self.fx_area])
         assert cube.ancillary_variable(self.fx_area.standard_name) is not None
 
-    @pytest.mark.parametrize('use_legacy_supplementaries', [True, False])
-    def test_wrong_shape(self, use_legacy_supplementaries, monkeypatch):
+    def test_wrong_shape(self, monkeypatch):
         """Test variable is not added if it's not broadcastable to cube."""
-        monkeypatch.setitem(
-            esmvalcore.config.CFG,
-            'use_legacy_supplementaries',
-            use_legacy_supplementaries,
-        )
         volume_data = np.ones((2, 3, 3, 3))
         volume_cube = iris.cube.Cube(
             volume_data,
@@ -146,12 +139,8 @@ class Test:
                                  (self.lats, 2),
                                  (self.lons, 3)])
         cube.var_name = 'thetao'
-        if use_legacy_supplementaries:
+        with pytest.raises(iris.exceptions.CannotAddError):
             add_supplementary_variables(cube, [volume_cube])
-            assert cube.cell_measures() == []
-        else:
-            with pytest.raises(iris.exceptions.CannotAddError):
-                add_supplementary_variables(cube, [volume_cube])
 
     def test_remove_supplementary_vars(self):
         """Test supplementary variables are removed from cube."""
