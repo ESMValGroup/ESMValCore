@@ -84,8 +84,8 @@ def convert_units(cube, units):
     Currently, the following special conversions are supported:
 
     * ``precipitation_flux`` (``kg m-2 s-1``) --
-      ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``m``)
-    * ``precipitation_flux`` (``kg m-2 s-1``) --
+      ``lwe_precipitation_rate`` (``mm day-1``)
+    * ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``m``) --
       ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``1e5 DU``)
 
     Names in the list correspond to ``standard_names`` of the input data.
