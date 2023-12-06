@@ -15,9 +15,6 @@ from pathlib import Path
 
 from setuptools import Command, setup
 
-sys.path.insert(0, os.path.dirname(__file__))
-from esmvalcore._version import __version__  # noqa: E402
-
 PACKAGES = [
     'esmvalcore',
 ]
@@ -31,42 +28,47 @@ REQUIREMENTS = {
     # Use with pip install . to install from source
     'install': [
         'cartopy',
-        'cf-units>=3.0.0',
-        'dask[array]',
+        'cf-units',
+        'dask[array,distributed]',
+        'dask-jobqueue',
         'esgf-pyclient>=0.3.1',
-        'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
+        'esmf-regrid',
+        'esmpy!=8.1.0',
+        'filelock',
         'fiona',
         'fire',
         'geopy',
         'humanfriendly',
-        "importlib_resources;python_version<'3.9'",
+        "importlib_metadata;python_version<'3.10'",
         'isodate',
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
         'nested-lookup',
         'netCDF4',
-        'numpy',
+        'numpy!=1.24.3',
+        'packaging',
         'pandas',
         'pillow',
         'prov',
         'psutil',
+        'py-cordex',
         'pybtex',
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        'scitools-iris>=3.2.1',
-        'shapely[vectorized]',
-        'stratify',
+        # See the following issue for info on the iris pin below:
+        # https://github.com/ESMValGroup/ESMValTool/issues/3239#issuecomment-1613298587
+        'scitools-iris>=3.4.0',
+        'shapely>=2.0.0',
+        'stratify>=0.3',
         'yamale',
     ],
     # Test dependencies
-    # Execute 'python setup.py test' to run tests
     'test': [
-        'flake8<4',  # https://github.com/ESMValGroup/ESMValCore/issues/1405
+        'flake8',
         'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
         'pytest-cov>=2.10.1',
         'pytest-env',
-        'pytest-flake8>=1.0.6',
         'pytest-html!=2.1.0',
         'pytest-metadata>=1.5.1',
         'pytest-mypy',
@@ -74,21 +76,26 @@ REQUIREMENTS = {
         'pytest-xdist',
         'ESMValTool_sample_data==0.0.3',
         # MyPy library stubs
+        'mypy>=0.990',
         'types-requests',
-        'types-pkg_resources',
         'types-PyYAML',
+    ],
+    # Documentation dependencies
+    'doc': [
+        'autodocsumm>=0.2.2',
+        'ipython',
+        'nbsphinx',
+        'sphinx>=6.1.3',
+        'pydata_sphinx_theme',
     ],
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
     'develop': [
-        'autodocsumm',
         'codespell',
         'docformatter',
         'isort',
         'pre-commit',
-        'prospector[with_pyroma,with_mypy]!=1.1.6.3,!=1.1.6.4',
-        'sphinx>2',
-        'sphinx_rtd_theme',
+        'prospector[with_pyroma]>=1.9.0',
         'vprof',
         'yamllint',
         'yapf',
@@ -98,6 +105,7 @@ REQUIREMENTS = {
 
 def discover_python_files(paths, ignore):
     """Discover Python files."""
+
     def _ignore(path):
         """Return True if `path` should be ignored, False otherwise."""
         return any(re.match(pattern, path) for pattern in ignore)
@@ -115,6 +123,7 @@ def discover_python_files(paths, ignore):
 
 class CustomCommand(Command):
     """Custom Command class."""
+
     def install_deps_temp(self):
         """Try to temporarily install packages needed to run the command."""
         if self.distribution.install_requires:
@@ -174,7 +183,7 @@ class RunLinter(CustomCommand):
 
 def read_authors(filename):
     """Read the list of authors from .zenodo.json file."""
-    with Path(filename).open() as file:
+    with Path(filename).open(encoding='utf-8') as file:
         info = json.load(file)
         authors = []
         for author in info['creators']:
@@ -185,17 +194,16 @@ def read_authors(filename):
 
 def read_description(filename):
     """Read the description from .zenodo.json file."""
-    with Path(filename).open() as file:
+    with Path(filename).open(encoding='utf-8') as file:
         info = json.load(file)
         return info['description']
 
 
 setup(
     name='ESMValCore',
-    version=__version__,
     author=read_authors('.zenodo.json'),
     description=read_description('.zenodo.json'),
-    long_description=Path('README.md').read_text(),
+    long_description=Path('README.md').read_text(encoding='utf-8'),
     long_description_content_type='text/markdown',
     url='https://www.esmvaltool.org',
     download_url='https://github.com/ESMValGroup/ESMValCore',
@@ -209,9 +217,9 @@ setup(
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Atmospheric Science',
         'Topic :: Scientific/Engineering :: GIS',
@@ -225,8 +233,12 @@ setup(
     install_requires=REQUIREMENTS['install'],
     tests_require=REQUIREMENTS['test'],
     extras_require={
-        'develop': REQUIREMENTS['develop'] + REQUIREMENTS['test'],
-        'test': REQUIREMENTS['test'],
+        'develop':
+        REQUIREMENTS['develop'] + REQUIREMENTS['test'] + REQUIREMENTS['doc'],
+        'test':
+        REQUIREMENTS['test'],
+        'doc':
+        REQUIREMENTS['doc'],
     },
     entry_points={
         'console_scripts': [
@@ -234,7 +246,6 @@ setup(
         ],
     },
     cmdclass={
-        #         'test': RunTests,
         'lint': RunLinter,
     },
     zip_safe=False,

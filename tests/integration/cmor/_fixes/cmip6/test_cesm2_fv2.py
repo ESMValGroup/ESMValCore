@@ -7,17 +7,19 @@ from esmvalcore.cmor._fixes.cmip6.cesm2_fv2 import (
     Cli,
     Clw,
     Fgco2,
+    Omon,
     Siconc,
     Tas,
 )
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2-FV2', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    assert fix == [Cl(None), GenericFix(None)]
 
 
 def test_cl_fix():
@@ -28,7 +30,7 @@ def test_cl_fix():
 def test_get_cli_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2-FV2', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    assert fix == [Cl(None), GenericFix(None)]
 
 
 def test_cli_fix():
@@ -39,7 +41,7 @@ def test_cli_fix():
 def test_get_clw_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2-FV2', 'Amon', 'clw')
-    assert fix == [Clw(None)]
+    assert fix == [Clw(None), GenericFix(None)]
 
 
 def test_clw_fix():
@@ -50,7 +52,7 @@ def test_clw_fix():
 def test_get_fgco2_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2-FV2', 'Omon', 'fgco2')
-    assert fix == [Fgco2(None)]
+    assert fix == [Fgco2(None), Omon(None), GenericFix(None)]
 
 
 def test_fgco2_fix():
@@ -61,7 +63,7 @@ def test_fgco2_fix():
 def test_get_siconc_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2-FV2', 'SImon', 'siconc')
-    assert fix == [Siconc(None)]
+    assert fix == [Siconc(None), GenericFix(None)]
 
 
 def test_siconc_fix():
@@ -72,7 +74,7 @@ def test_siconc_fix():
 def test_get_tas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CESM2-FV2', 'Amon', 'tas')
-    assert fix == [Tas(None)]
+    assert fix == [Tas(None), GenericFix(None)]
 
 
 def test_tas_fix():

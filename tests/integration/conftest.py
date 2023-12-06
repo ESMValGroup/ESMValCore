@@ -1,9 +1,29 @@
 import os
+from pathlib import Path
 
 import iris
 import pytest
 
-from esmvalcore import _data_finder
+import esmvalcore.local
+from esmvalcore.config import CFG
+from esmvalcore.config._config_object import CFG_DEFAULT
+from esmvalcore.local import (
+    LocalFile,
+    _replace_tags,
+    _select_drs,
+    _select_files,
+)
+
+
+@pytest.fixture
+def session(tmp_path: Path, monkeypatch):
+    CFG.clear()
+    CFG.update(CFG_DEFAULT)
+    monkeypatch.setitem(CFG, 'rootpath', {'default': str(tmp_path)})
+
+    session = CFG.start_session('recipe_test')
+    session['output_dir'] = tmp_path / 'esmvaltool_output'
+    return session
 
 
 def create_test_file(filename, tracking_id=None):
@@ -19,8 +39,10 @@ def create_test_file(filename, tracking_id=None):
     iris.save(cube, filename)
 
 
-def _get_filenames(root_path, filenames, tracking_id):
-    filename = filenames[0]
+def _get_files(root_path, facets, tracking_id):
+    file_template = _select_drs('input_file', facets['project'])
+    file_globs = _replace_tags(file_template, facets)
+    filename = Path(file_globs[0]).name
     filename = str(root_path / 'input' / filename)
     filenames = []
     if filename.endswith('[_.]*nc'):
@@ -29,19 +51,32 @@ def _get_filenames(root_path, filenames, tracking_id):
         filename = filename.replace('[_.]*nc', '_*.nc')
     if filename.endswith('*.nc'):
         filename = filename[:-len('*.nc')] + '_'
-        intervals = [
-            '1990_1999',
-            '2000_2009',
-            '2010_2019',
-        ]
+        if facets['frequency'] == 'fx':
+            intervals = ['']
+        else:
+            intervals = [
+                '1990_1999',
+                '2000_2009',
+                '2010_2019',
+            ]
         for interval in intervals:
             filenames.append(filename + interval + '.nc')
     else:
         filenames.append(filename)
 
+    if 'timerange' in facets:
+        filenames = _select_files(filenames, facets['timerange'])
+
     for filename in filenames:
         create_test_file(filename, next(tracking_id))
-    return filenames
+
+    files = []
+    for filename in filenames:
+        file = LocalFile(filename)
+        file.facets = facets
+        files.append(file)
+
+    return files, file_globs
 
 
 @pytest.fixture
@@ -54,14 +89,13 @@ def patched_datafinder(tmp_path, monkeypatch):
 
     tracking_id = tracking_ids()
 
-    def find_files(_, filenames):
-        # Any occurrence of [something] in filename should have
-        # been replaced before this function is called.
-        for filename in filenames:
-            assert '{' not in filename
-        return _get_filenames(tmp_path, filenames, tracking_id)
+    def find_files(*, debug: bool = False, **facets):
+        files, file_globs = _get_files(tmp_path, facets, tracking_id)
+        if debug:
+            return files, file_globs
+        return files
 
-    monkeypatch.setattr(_data_finder, 'find_files', find_files)
+    monkeypatch.setattr(esmvalcore.local, 'find_files', find_files)
 
 
 @pytest.fixture
@@ -74,22 +108,12 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
 
     tracking_id = tracking_ids()
 
-    def find_files(_, filenames):
-        # Any occurrence of [something] in filename should have
-        # been replaced before this function is called.
-        for filename in filenames:
-            assert '{' not in filename
+    def find_files(*, debug: bool = False, **facets):
+        files, file_globs = _get_files(tmp_path, facets, tracking_id)
+        if 'fx' == facets['frequency']:
+            files = []
+        if debug:
+            return files, file_globs
+        return files
 
-        # Fail for specified fx variables
-        for filename in filenames:
-            if 'fx_' in filename:
-                return []
-            if 'sftlf' in filename:
-                return []
-            if 'IyrAnt_' in filename:
-                return []
-            if 'IyrGre_' in filename:
-                return []
-        return _get_filenames(tmp_path, filenames, tracking_id)
-
-    monkeypatch.setattr(_data_finder, 'find_files', find_files)
+    monkeypatch.setattr(esmvalcore.local, 'find_files', find_files)

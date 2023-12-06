@@ -15,7 +15,7 @@ name: Test
 
 # runs on a push on main and at the end of every day
 on:
-  # triggering on push without branch name will run tests everytime
+  # triggering on push without branch name will run tests every time
   # there is a push on any branch
   # turn it on only if needed
   push:
@@ -29,16 +29,23 @@ on:
   schedule:
     - cron: '0 0 * * *'  # nightly
 
+# Required shell entrypoint to have properly configured bash shell
+defaults:
+  run:
+    shell: bash -l {0}
+
 jobs:
   linux:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.9", "3.10", "3.11"]
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: esmvalcore
@@ -47,18 +54,12 @@ jobs:
           miniforge-version: "latest"
           miniforge-variant: Mambaforge
           use-mamba: true
-      - shell: bash -l {0}
-        run: mkdir -p test_linux_artifacts_python_${{ matrix.python-version }}
-      - shell: bash -l {0}
-        run: conda --version 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/conda_version.txt
-      - shell: bash -l {0}
-        run: python -V 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
-      - shell: bash -l {0}
-        run: pip install -e .[develop] 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/install.txt
-      - shell: bash -l {0}
-        run: pytest -n 2 -m "not installation and not sequential" 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/test_report.txt
-      - shell: bash -l {0}
-        run: pytest -n 0 -m "sequential"
+      - run: mkdir -p test_linux_artifacts_python_${{ matrix.python-version }}
+      - run: conda --version 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/conda_version.txt
+      - run: python -V 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
+      - run: pip install -e .[develop] 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/install.txt
+      - run: flake8
+      - run: pytest -n 2 -m "not installation" 2>&1 | tee test_linux_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - name: Upload artifacts
         if: ${{ always() }}  # upload artifacts even if fail
         uses: actions/upload-artifact@v2
@@ -70,11 +71,13 @@ jobs:
     runs-on: "macos-latest"
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.9", "3.10", "3.11"]
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: esmvalcore
@@ -83,18 +86,12 @@ jobs:
           miniforge-version: "latest"
           miniforge-variant: Mambaforge
           use-mamba: true
-      - shell: bash -l {0}
-        run: mkdir -p test_osx_artifacts_python_${{ matrix.python-version }}
-      - shell: bash -l {0}
-        run: conda --version 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/conda_version.txt
-      - shell: bash -l {0}
-        run: python -V 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
-      - shell: bash -l {0}
-        run: pip install -e .[develop] 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/install.txt
-      - shell: bash -l {0}
-        run: pytest -n 2 -m "not installation and not sequential" 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/test_report.txt
-      - shell: bash -l {0}
-        run: pytest -n 0 -m "sequential"
+      - run: mkdir -p test_osx_artifacts_python_${{ matrix.python-version }}
+      - run: conda --version 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/conda_version.txt
+      - run: python -V 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
+      - run: pip install -e .[develop] 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/install.txt
+      - run: flake8
+      - run: pytest -n 2 -m "not installation" 2>&1 | tee test_osx_artifacts_python_${{ matrix.python-version }}/test_report.txt
       - name: Upload artifacts
         if: ${{ always() }}  # upload artifacts even if fail
         uses: actions/upload-artifact@v2

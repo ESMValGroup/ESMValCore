@@ -53,33 +53,40 @@ omitted in the file.
   # Includes log files and performance stats.
   output_dir: ~/esmvaltool_output
 
-  # Directory for storing downloaded climate data
-  download_dir: ~/climate_data
-
-  # Disable automatic downloads --- [true]/false
-  # Disable the automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX,
-  # and obs4MIPs data from ESGF by default. This is useful if you are working
-  # on a computer without an internet connection.
-  offline: true
-
   # Auxiliary data directory
   # Used by some recipes to look for additional datasets.
   auxiliary_data_dir: ~/auxiliary_data
 
+  # Automatic data download from ESGF --- [never]/when_missing/always
+  # Use automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs
+  # data from ESGF. ``never`` disables this feature, which is useful if you are
+  # working on a computer without an internet connection, or if you have limited
+  # disk space. ``when_missing`` enables the automatic download for files that
+  # are not available locally. ``always`` will always check ESGF for the latest
+  # version of a file, and will only use local files if they correspond to that
+  # latest version.
+  search_esgf: never
+
+  # Directory for storing downloaded climate data
+  # Make sure to use a directory where you can store multiple GBs of data. Your
+  # home directory on a HPC is usually not suited for this purpose, so please
+  # change the default value in this case!
+  download_dir: ~/climate_data
+
   # Rootpaths to the data from different projects
-  # This default setting will work if files have been downloaded by the
-  # ESMValTool via ``offline=False``. Lists are also possible. For
-  # site-specific entries, see the default ``config-user.yml`` file that can be
-  # installed with the command ``esmvaltool config get_config_user``. For each
-  # project, this can be either a single path or a list of paths. Comment out
-  # these when using a site-specific path.
+  # This default setting will work if files have been downloaded by ESMValTool
+  # via ``search_esgf``. Lists are also possible. For site-specific entries,
+  # see the default ``config-user.yml`` file that can be installed with the
+  # command ``esmvaltool config get_config_user``. For each project, this can
+  # be either a single path or a list of paths. Comment out these when using a
+  # site-specific path.
   rootpath:
     default: ~/climate_data
 
   # Directory structure for input data --- [default]/ESGF/BADC/DKRZ/ETHZ/etc.
-  # This default setting will work if files have been downloaded by the
-  # ESMValTool via ``offline=False``. See ``config-developer.yml`` for
-  # definitions. Comment out/replace as per needed.
+  # This default setting will work if files have been downloaded by ESMValTool
+  # via ``search_esgf``. See ``config-developer.yml`` for definitions. Comment
+  # out/replace as per needed.
   drs:
     CMIP3: ESGF
     CMIP5: ESGF
@@ -131,11 +138,19 @@ omitted in the file.
   # ``config-developer.yml`` for an example. Set to ``null`` to use the default.
   config_developer_file: null
 
-The ``offline`` setting can be used to disable or enable automatic downloads from ESGF.
-If ``offline`` is set to ``false``, the tool will automatically download
-any CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs data that is required to run a recipe
-but not available locally and store it in ``download_dir`` using the ``ESGF``
+The ``search_esgf`` setting can be used to disable or enable automatic
+downloads from ESGF.
+If ``search_esgf`` is set to ``never``, the tool does not download any data
+from the ESGF.
+If ``search_esgf`` is set to ``when_missing``, the tool will download any CMIP3,
+CMIP5, CMIP6, CORDEX, and obs4MIPs data that is required to run a recipe but
+not available locally and store it in ``download_dir`` using the ``ESGF``
 directory structure defined in the :ref:`config-developer`.
+If ``search_esgf`` is set to ``always``, the tool will first check the ESGF for
+the needed data, regardless of any local data availability; if the data found
+on ESGF is newer than the local data (if any) or the user specifies a version
+of the data that is available only from the ESGF, then that data will be
+downloaded; otherwise, local data will be used.
 
 The ``auxiliary_data_dir`` setting is the path to place any required
 additional auxiliary data files. This is necessary because certain
@@ -184,6 +199,161 @@ the user.
    debugging, etc. You can even provide any config user value as a run flag
    ``--argument_name argument_value``
 
+.. _config-dask:
+
+Dask distributed configuration
+==============================
+
+The :ref:`preprocessor functions <preprocessor_functions>` and many of the
+:ref:`Python diagnostics in ESMValTool <esmvaltool:recipes>` make use of the
+:ref:`Iris <iris:iris_docs>` library to work with the data.
+In Iris, data can be either :ref:`real or lazy <iris:real_and_lazy_data>`.
+Lazy data is represented by `dask arrays <https://docs.dask.org/en/stable/array.html>`_.
+Dask arrays consist of many small
+`numpy arrays <https://numpy.org/doc/stable/user/absolute_beginners.html#what-is-an-array>`_
+(called chunks) and if possible, computations are run on those small arrays in
+parallel.
+In order to figure out what needs to be computed when, Dask makes use of a
+'`scheduler <https://docs.dask.org/en/stable/scheduling.html>`_'.
+The default scheduler in Dask is rather basic, so it can only run on a single
+computer and it may not always find the optimal task scheduling solution,
+resulting in excessive memory use when using e.g. the
+:func:`esmvalcore.preprocessor.multi_model_statistics` preprocessor function.
+Therefore it is recommended that you take a moment to configure the
+`Dask distributed <https://distributed.dask.org>`_ scheduler.
+A Dask scheduler and the 'workers' running the actual computations, are
+collectively called a 'Dask cluster'.
+
+In ESMValCore, the Dask cluster can configured by creating a file called
+``~/.esmvaltool/dask.yml``, where ``~`` is short for your home directory.
+In this file, under the ``client`` keyword, the arguments to
+:obj:`distributed.Client` can be provided.
+Under the ``cluster`` keyword, the type of cluster (e.g.
+:obj:`distributed.LocalCluster`), as well as any arguments required to start
+the cluster can be provided.
+Extensive documentation on setting up Dask Clusters is available
+`here <https://docs.dask.org/en/latest/deploying.html>`__.
+
+.. warning::
+
+  The format of the ``~/.esmvaltool/dask.yml`` configuration file is not yet
+  fixed and may change in the next release of ESMValCore.
+
+.. note::
+
+  If not all preprocessor functions support lazy data, computational
+  performance may be best with the default scheduler.
+  See `issue #674 <https://github.com/ESMValGroup/ESMValCore/issues/674>`_ for
+  progress on making all preprocessor functions lazy.
+
+**Example configurations**
+
+*Personal computer*
+
+Create a Dask distributed cluster on the computer running ESMValCore using
+all available resources:
+
+.. code:: yaml
+
+  cluster:
+    type: distributed.LocalCluster
+
+this should work well for most personal computers.
+
+.. note::
+
+   Note that, if running this configuration on a shared node of an HPC cluster,
+   Dask will try and use as many resources it can find available, and this may
+   lead to overcrowding the node by a single user (you)!
+
+*Shared computer*
+
+Create a Dask distributed cluster on the computer running ESMValCore, with
+2 workers with 4 threads/4 GiB of memory each (8 GiB in total):
+
+.. code:: yaml
+
+  cluster:
+    type: distributed.LocalCluster
+    n_workers: 2
+    threads_per_worker: 4
+    memory_limit: 4 GiB
+
+this should work well for shared computers.
+
+*Computer cluster*
+
+Create a Dask distributed cluster on the
+`Levante <https://docs.dkrz.de/doc/levante/running-jobs/index.html>`_
+supercomputer using the `Dask-Jobqueue <https://jobqueue.dask.org/en/latest/>`_
+package:
+
+.. code:: yaml
+
+  cluster:
+    type: dask_jobqueue.SLURMCluster
+    queue: shared
+    account: bk1088
+    cores: 8
+    memory: 7680MiB
+    processes: 2
+    interface: ib0
+    local_directory: "/scratch/b/b381141/dask-tmp"
+    n_workers: 24
+
+This will start 24 workers with ``cores / processes = 4`` threads each,
+resulting in ``n_workers / processes = 12`` Slurm jobs, where each Slurm job
+will request 8 CPU cores and 7680 MiB of memory and start ``processes = 2``
+workers.
+This example will use the fast infiniband network connection (called ``ib0``
+on Levante) for communication between workers running on different nodes.
+It is
+`important to set the right location for temporary storage <https://docs.dask.org/en/latest/deploying-hpc.html#local-storage>`__,
+in this case the ``/scratch`` space is used.
+It is also possible to use environmental variables to configure the temporary
+storage location, if you cluster provides these.
+
+A configuration like this should work well for larger computations where it is
+advantageous to use multiple nodes in a compute cluster.
+See
+`Deploying Dask Clusters on High Performance Computers <https://docs.dask.org/en/latest/deploying-hpc.html>`_
+for more information.
+
+*Externally managed Dask cluster*
+
+Use an externally managed cluster, e.g. a cluster that you started using the
+`Dask Jupyterlab extension <https://github.com/dask/dask-labextension#dask-jupyterlab-extension>`_:
+
+.. code:: yaml
+
+  client:
+    address: '127.0.0.1:8786'
+
+See `here <https://jobqueue.dask.org/en/latest/interactive.html>`_
+for an example of how to configure this on a remote system.
+
+For debugging purposes, it can be useful to start the cluster outside of
+ESMValCore because then
+`Dask dashboard <https://docs.dask.org/en/stable/dashboard.html>`_ remains
+available after ESMValCore has finished running.
+
+**Advice on choosing performant configurations**
+
+The threads within a single worker can access the same memory locations, so
+they may freely pass around chunks, while communicating a chunk between workers
+is done by copying it, so this is (a bit) slower.
+Therefore it is beneficial for performance to have multiple threads per worker.
+However, due to limitations in the CPython implementation (known as the Global
+Interpreter Lock or GIL), only a single thread in a worker can execute Python
+code (this limitation does not apply to compiled code called by Python code,
+e.g. numpy), therefore the best performing configurations will typically not
+use much more than 10 threads per worker.
+
+Due to limitations of the NetCDF library (it is not thread-safe), only one
+of the threads in a worker can read or write to a NetCDF file at a time.
+Therefore, it may be beneficial to use fewer threads per worker if the
+computation is very simple and the runtime is determined by the
+speed with which the data can be read from and/or written to disk.
 
 .. _config-esgf:
 
@@ -194,9 +364,10 @@ The ``esmvaltool run`` command can automatically download the files required
 to run a recipe from ESGF for the projects CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
 The downloaded files will be stored in the ``download_dir`` specified in the
 :ref:`user configuration file`.
-To enable automatic downloads from ESGF, set ``offline: false`` in
-the :ref:`user configuration file` or provide the command line argument
-``--offline=False`` when running the recipe.
+To enable automatic downloads from ESGF, set ``search_esgf: when_missing`` or
+``search_esgf: always`` in the :ref:`user configuration file`, or provide the
+corresponding command line arguments ``--search_esgf=when_missing`` or
+``--search_esgf=always`` when running the recipe.
 
 .. note::
 
@@ -337,13 +508,6 @@ be provided in the section ``search_connection``, for example:
 .. code-block:: yaml
 
     search_connection:
-      url: "http://esgf-index1.ceda.ac.uk/esg-search"
-
-to choose the CEDA index node or
-
-.. code-block:: yaml
-
-    search_connection:
       expire_after: 2592000  # the number of seconds in a month
 
 to keep cached search results for a month.
@@ -352,11 +516,27 @@ The default settings are:
 
 .. code-block:: yaml
 
-    url: 'http://esgf-node.llnl.gov/esg-search'
+    urls:
+      - 'https://esgf.ceda.ac.uk/esg-search'
+      - 'https://esgf-node.llnl.gov/esg-search'
+      - 'https://esgf-data.dkrz.de/esg-search'
+      - 'https://esgf-node.ipsl.upmc.fr/esg-search'
+      - 'https://esg-dn1.nsc.liu.se/esg-search'
+      - 'https://esgf.nci.org.au/esg-search'
+      - 'https://esgf.nccs.nasa.gov/esg-search'
+      - 'https://esgdata.gfdl.noaa.gov/esg-search'
     distrib: true
     timeout: 120  # seconds
     cache: '~/.esmvaltool/cache/pyesgf-search-results'
     expire_after: 86400  # cache expires after 1 day
+
+Note that by default the tool will try the
+`ESGF index nodes <https://esgf.llnl.gov/nodes.html>`_
+in the order provided in the configuration file and use the first one that is
+online.
+Some ESGF index nodes may return search results faster than others, so you may
+be able to speed up the search for files by experimenting with placing different
+index nodes at the top of the list.
 
 If you experience errors while searching, it sometimes helps to delete the
 cached results.
@@ -429,8 +609,8 @@ Example of the CMIP6 project configuration:
    CMIP6:
      input_dir:
        default: '/'
-       BADC: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
-       DKRZ: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
+       BADC: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
+       DKRZ: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
        ETHZ: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/{grid}/'
      input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
      output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
@@ -453,7 +633,7 @@ at each site. As an example, the CMIP6 directory path on BADC would be:
 
 .. code-block:: yaml
 
-   '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
+   '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
 
 The resulting directory path would look something like this:
 
@@ -466,8 +646,8 @@ which may be needed:
 
 .. code-block:: yaml
 
-  - '{exp}/{ensemble}/original/{mip}/{short_name}/{grid}/{latestversion}'
-  - '{exp}/{ensemble}/computed/{mip}/{short_name}/{grid}/{latestversion}'
+  - '{exp}/{ensemble}/original/{mip}/{short_name}/{grid}/{version}'
+  - '{exp}/{ensemble}/computed/{mip}/{short_name}/{grid}/{version}'
 
 In that case, the resultant directories will be:
 
@@ -501,9 +681,10 @@ related to CMOR table settings available:
 * ``cmor_type``: can be ``CMIP5`` if the CMOR table is in the same format as the
   CMIP5 table or ``CMIP6`` if the table is in the same format as the CMIP6 table.
 * ``cmor_strict``: if this is set to ``false``, the CMOR table will be
-  extended with variables from the ``esmvalcore/cmor/tables/custom`` directory
-  and it is possible to use variables with a ``mip`` which is different from
-  the MIP table in which they are defined.
+  extended with variables from the :ref:`custom_cmor_tables` (by default loaded
+  from the ``esmvalcore/cmor/tables/custom`` directory) and it is possible to
+  use variables with a ``mip`` which is different from the MIP table in which
+  they are defined.
 * ``cmor_path``: path to the CMOR table.
   Relative paths are with respect to `esmvalcore/cmor/tables`_.
   Defaults to the value provided in ``cmor_type`` written in lower case.
@@ -511,46 +692,144 @@ related to CMOR table settings available:
   to get the name of the file containing the ``mip`` table.
   Defaults to the value provided in ``cmor_type``.
 
+.. _custom_cmor_tables:
+
+Custom CMOR tables
+------------------
+
+As mentioned in the previous section, the CMOR tables of projects that use
+``cmor_strict: false`` will be extended with custom CMOR tables.
+By default, these are loaded from `esmvalcore/cmor/tables/custom
+<https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
+However, by using the special project ``custom`` in the
+``config-developer.yml`` file with the option ``cmor_path``, a custom location
+for these custom CMOR tables can be specified:
+
+.. code-block:: yaml
+
+   custom:
+     cmor_path: ~/my/own/custom_tables
+
+This path can be given as relative path (relative to `esmvalcore/cmor/tables`_)
+or as absolute path.
+Other options given for this special table will be ignored.
+
+Custom tables in this directory need to follow the naming convention
+``CMOR_{short_name}.dat`` and need to be given in CMIP5 format.
+
+Example for the file ``CMOR_asr.dat``:
+
+.. code-block::
+
+   SOURCE: CMIP5
+   !============
+   variable_entry:    asr
+   !============
+   modeling_realm:    atmos
+   !----------------------------------
+   ! Variable attributes:
+   !----------------------------------
+   standard_name:
+   units:             W m-2
+   cell_methods:      time: mean
+   cell_measures:     area: areacella
+   long_name:         Absorbed shortwave radiation
+   !----------------------------------
+   ! Additional variable information:
+   !----------------------------------
+   dimensions:        longitude latitude time
+   type:              real
+   positive:          down
+   !----------------------------------
+   !
+
+It is also possible to use a special coordinates file ``CMOR_coordinates.dat``.
+If this is not present in the custom directory, the one from the default
+directory (`esmvalcore/cmor/tables/custom/CMOR_coordinates.dat
+<https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom/CMOR_coordinates.dat>`_)
+is used.
+
+
+.. _filterwarnings_config-developer:
+
+Filter preprocessor warnings
+----------------------------
+
+It is possible to ignore specific warnings of the preprocessor for a given
+``project``.
+This is particularly useful for native datasets which do not follow the CMOR
+standard by default and consequently produce a lot of warnings when handled by
+Iris.
+This can be configured in the ``config-developer.yml`` file for some steps of
+the preprocessing chain.
+
+Currently supported preprocessor steps:
+
+* :func:`~esmvalcore.preprocessor.load`
+
+Here is an example on how to ignore specific warnings during the preprocessor
+step ``load`` for all datasets of project ``EMAC`` (taken from the default
+``config-developer.yml`` file):
+
+.. code-block:: yaml
+
+   ignore_warnings:
+     load:
+       - {message: 'Missing CF-netCDF formula term variable .*, referenced by netCDF variable .*', module: iris}
+       - {message: 'Ignored formula of unrecognised type: .*', module: iris}
+
+The keyword arguments specified in the list items are directly passed to
+:func:`warnings.filterwarnings` in addition to ``action=ignore`` (may be
+overwritten in ``config-developer.yml``).
+
 .. _configure_native_models:
 
-Configuring native models and observation data sets
-----------------------------------------------------
+Configuring datasets in native format
+-------------------------------------
 
-ESMValCore can be configured for handling native model output formats
-and specific
-observation data sets without preliminary reformatting. You can choose
-to host this new data source either under a dedicated project or under
-project ``native6``; when choosing the latter, such a configuration
-involves the following steps:
+ESMValCore can be configured for handling native model output formats and
+specific reanalysis/observation datasets without preliminary reformatting.
+These datasets can be either hosted under the ``native6`` project (mostly
+native reanalysis/observational datasets) or under a dedicated project, e.g.,
+``ICON`` (mostly native models).
 
-  - allowing for ESMValTool to locate the data files:
+Example:
 
-    - entry ``native6`` of ``config-developer.yml`` should be
-      complemented with sub-entries for ``input_dir`` and ``input_file``
-      that goes under a new key representing the
-      data organization (such as ``MY_DATA_ORG``), and these sub-entries can
-      use an arbitrary list of ``{placeholders}``. Example :
+.. code-block:: yaml
 
-      .. code-block:: yaml
+   native6:
+     cmor_strict: false
+     input_dir:
+       default: 'Tier{tier}/{dataset}/{version}/{frequency}/{short_name}'
+     input_file:
+       default: '*.nc'
+     output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
+     cmor_type: 'CMIP6'
+     cmor_default_table_prefix: 'CMIP6_'
 
-        native6:
-          ...
-          input_dir:
-             default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
-             MY_DATA_ORG: '{model}/{exp}/{simulation}/{version}/{type}'
-          input_file:
-            default: '*.nc'
-            MY_DATA_ORG: '{simulation}_*.nc'
-          ...
+   ICON:
+     cmor_strict: false
+     input_dir:
+       default:
+         - '{exp}'
+         - '{exp}/outdata'
+     input_file:
+       default: '{exp}_{var_type}*.nc'
+     output_file: '{project}_{dataset}_{exp}_{var_type}_{mip}_{short_name}'
+     cmor_type: 'CMIP6'
+     cmor_default_table_prefix: 'CMIP6_'
 
-    - if necessary, provide a so-called ``extra facets file`` which
-      allows to cope e.g. with variable naming issues for finding
-      files. See :ref:`extra_facets` and :download:`this example of
-      such a file for IPSL-CM6
-      <../../esmvalcore/_config/extra_facets/ipslcm-mappings.yml>`.
+A detailed description on how to add support for further native datasets is
+given :ref:`here <add_new_fix_native_datasets>`.
 
-  - ensuring that ESMValCore get the right metadata and data out of
-    your data files: this is described in :ref:`fixing_data`
+.. hint::
+
+   When using native datasets, it might be helpful to specify a custom location
+   for the :ref:`custom_cmor_tables`.
+   This allows reading arbitrary variables from native datasets.
+   Note that this requires the option ``cmor_strict: false`` in the
+   :ref:`project configuration <configure_native_models>` used for the native
+   model output.
 
 
 .. _config-ref:
@@ -646,7 +925,7 @@ For example, this is used to automatically add ``product: output1`` to any
 variable of any CMIP5 dataset that does not have a ``product`` key yet:
 
 .. code-block:: yaml
-   :caption: Extra facet example file `cmip5-product.yml <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/_config/extra_facets/cmip5-product.yml>`_
+   :caption: Extra facet example file `cmip5-product.yml <https://github.com/ESMValGroup/ESMValCore/blob/main/esmvalcore/config/extra_facets/cmip5-product.yml>`_
 
    '*':
      '*':
@@ -657,7 +936,7 @@ Location of the extra facets files
 Extra facets files can be placed in several different places. When we use them
 to support a particular use-case within the ESMValTool project, they will be
 provided in the sub-folder `extra_facets` inside the package
-`esmvalcore._config`. If they are used from the user side, they can be either
+:mod:`esmvalcore.config`. If they are used from the user side, they can be either
 placed in `~/.esmvaltool/extra_facets` or in any other directory of the users
 choosing. In that case this directory must be added to the `config-user.yml`
 file under the `extra_facets_dir` setting, which can take a single directory or
@@ -665,7 +944,7 @@ a list of directories.
 
 The order in which the directories are searched is
 
-1. The internal directory `esmvalcore._config/extra_facets`
+1. The internal directory `esmvalcore.config/extra_facets`
 2. The default user directory `~/.esmvaltool/extra_facets`
 3. The custom user directories in the order in which they are given in
    `config-user.yml`.

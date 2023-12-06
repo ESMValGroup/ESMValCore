@@ -6,15 +6,18 @@ function.
 
 import iris
 import numpy as np
+import pytest
 from numpy import ma
 
-import tests
+from esmvalcore.dataset import Dataset
 from esmvalcore.preprocessor import regrid
-from esmvalcore.preprocessor._io import GLOBAL_FILL_VALUE
+from tests import assert_array_equal
 from tests.unit.preprocessor._regrid import _make_cube
 
 
-class Test(tests.Test):
+class Test:
+
+    @pytest.fixture(autouse=True)
     def setUp(self):
         """Prepare tests."""
         shape = (3, 2, 2)
@@ -85,18 +88,70 @@ class Test(tests.Test):
         self.unstructured_grid_cube.remove_coord('Pressure Slice')
         self.unstructured_grid_cube.add_aux_coord(lons, (1, 2))
         self.unstructured_grid_cube.add_aux_coord(lats, (1, 2))
-        self.unstructured_grid_cube.data = self.cube.data.astype(np.float32)
+        self.unstructured_grid_cube.data = np.ma.masked_less(
+            self.cube.data.astype(np.float32), 3.5
+        )
 
     def test_regrid__linear(self):
         result = regrid(self.cube, self.grid_for_linear, 'linear')
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
-        self.assert_array_equal(result.data, expected)
+        assert_array_equal(result.data, expected)
+
+    def test_regrid__linear_file(self, tmp_path):
+        file = tmp_path / "file.nc"
+        iris.save(self.grid_for_linear, target=file)
+        result = regrid(self.cube, file, 'linear')
+        expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
+        assert_array_equal(result.data, expected)
+
+    def test_regrid__linear_dataset(self, monkeypatch):
+        monkeypatch.setattr(Dataset, 'files', ["file.nc"])
+
+        def load(_):
+            return self.grid_for_linear
+
+        monkeypatch.setattr(Dataset, 'load', load)
+        dataset = Dataset(
+            short_name='tas',
+        )
+        result = regrid(self.cube, dataset, 'linear')
+        expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
+        assert_array_equal(result.data, expected)
+
+    def test_regrid__esmf_rectilinear(self):
+        scheme_name = 'esmf_regrid.schemes:regrid_rectilinear_to_rectilinear'
+        scheme = {
+            'reference': scheme_name
+        }
+        result = regrid(
+            self.cube,
+            self.grid_for_linear,
+            scheme)
+        expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
+        np.testing.assert_array_almost_equal(result.data, expected, decimal=1)
+
+    def test_regrid__regular_coordinates(self):
+        data = np.ones((1, 1))
+        lons = iris.coords.DimCoord([1.50000000000001],
+                                    standard_name='longitude',
+                                    bounds=[[1, 2]],
+                                    units='degrees_east',
+                                    coord_system=self.cs)
+        lats = iris.coords.DimCoord([1.50000000000001],
+                                    standard_name='latitude',
+                                    bounds=[[1, 2]],
+                                    units='degrees_north',
+                                    coord_system=self.cs)
+        coords_spec = [(lats, 0), (lons, 1)]
+        regular_grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
+        result = regrid(regular_grid, self.grid_for_linear, 'linear')
+        iris.common.resolve.Resolve(result, self.grid_for_linear)
 
     def test_regrid__linear_do_not_preserve_dtype(self):
         self.cube.data = self.cube.data.astype(int)
         result = regrid(self.cube, self.grid_for_linear, 'linear')
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
-        self.assert_array_equal(result.data, expected)
+        assert_array_equal(result.data, expected)
         assert np.issubdtype(self.cube.dtype, np.integer)
         assert np.issubdtype(result.dtype, np.floating)
 
@@ -118,7 +173,7 @@ class Test(tests.Test):
         expected = [[[-3., -1.5, 0.], [0., 1.5, 3.], [3., 4.5, 6.]],
                     [[1., 2.5, 4.], [4., 5.5, 7.], [7., 8.5, 10.]],
                     [[5., 6.5, 8.], [8., 9.5, 11.], [11., 12.5, 14.]]]
-        self.assert_array_equal(result.data, expected)
+        assert_array_equal(result.data, expected)
 
     def test_regrid__linear_extrapolate_with_mask(self):
         data = np.empty((3, 3))
@@ -139,7 +194,7 @@ class Test(tests.Test):
         expected = ma.empty((3, 3, 3))
         expected.mask = ma.masked
         expected[:, 1, 1] = np.array([1.5, 5.5, 9.5])
-        self.assert_array_equal(result.data, expected)
+        assert_array_equal(result.data, expected)
 
     def test_regrid__nearest(self):
         data = np.empty((1, 1))
@@ -157,7 +212,7 @@ class Test(tests.Test):
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
         result = regrid(self.cube, grid, 'nearest')
         expected = np.array([[[3]], [[7]], [[11]]])
-        self.assert_array_equal(result.data, expected)
+        assert_array_equal(result.data, expected)
 
     def test_regrid__nearest_extrapolate_with_mask(self):
         data = np.empty((3, 3))
@@ -177,7 +232,7 @@ class Test(tests.Test):
         expected = ma.empty((3, 3, 3))
         expected.mask = ma.masked
         expected[:, 1, 1] = np.array([3, 7, 11])
-        self.assert_array_equal(result.data, expected)
+        assert_array_equal(result.data, expected)
 
     def test_regrid__area_weighted(self):
         data = np.empty((1, 1))
@@ -197,12 +252,35 @@ class Test(tests.Test):
         expected = np.array([1.499886, 5.499886, 9.499886])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
 
+    def test_regrid__esmf_area_weighted(self):
+        data = np.empty((1, 1))
+        lons = iris.coords.DimCoord([1.6],
+                                    standard_name='longitude',
+                                    bounds=[[1, 2]],
+                                    units='degrees_east',
+                                    coord_system=self.cs)
+        lats = iris.coords.DimCoord([1.6],
+                                    standard_name='latitude',
+                                    bounds=[[1, 2]],
+                                    units='degrees_north',
+                                    coord_system=self.cs)
+        coords_spec = [(lats, 0), (lons, 1)]
+        grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
+        scheme = {
+            'reference': 'esmf_regrid.schemes:ESMFAreaWeighted'
+        }
+        result = regrid(self.cube, grid, scheme)
+        expected = np.array([[[1.499886]], [[5.499886]], [[9.499886]]])
+        np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
+
     def test_regrid__unstructured_nearest_float(self):
         """Test unstructured_nearest regridding with cube of floats."""
         result = regrid(self.unstructured_grid_cube,
                         self.grid_for_unstructured_nearest,
                         'unstructured_nearest')
-        expected = np.array([[[3.0]], [[7.0]], [[11.0]]])
+        expected = np.ma.array([[[3.0]], [[7.0]], [[11.0]]],
+                               mask=[[[True]], [[False]], [[False]]])
+        np.testing.assert_array_equal(result.data.mask, expected.mask)
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
 
         # Make sure that dtype is preserved (without an adaption in
@@ -211,25 +289,11 @@ class Test(tests.Test):
         assert self.unstructured_grid_cube.dtype == np.float32
         assert result.dtype == np.float32
 
-        # Make sure that output is a masked array with correct fill value
-        # (= GLOBAL_FILL_VALUE)
-        np.testing.assert_allclose(result.data.fill_value, GLOBAL_FILL_VALUE)
-
     def test_regrid__unstructured_nearest_int(self):
         """Test unstructured_nearest regridding with cube of ints."""
-        self.unstructured_grid_cube.data = np.full((3, 2, 2), 1, dtype=int)
+        self.unstructured_grid_cube.data = np.ones((3, 2, 2), dtype=int)
         result = regrid(self.unstructured_grid_cube,
                         self.grid_for_unstructured_nearest,
                         'unstructured_nearest')
         expected = np.array([[[1]], [[1]], [[1]]])
         np.testing.assert_array_equal(result.data, expected)
-
-        # Make sure that dtype is not preserved (since conversion from float to
-        # int would be necessary)
-        assert np.issubdtype(self.unstructured_grid_cube.dtype, np.integer)
-        assert result.dtype == np.float64
-
-        # Make sure that output is a masked array with correct fill value
-        # (= maximum int)
-        np.testing.assert_allclose(result.data.fill_value,
-                                   float(np.iinfo(int).max))

@@ -10,7 +10,7 @@ from esmvalcore.preprocessor._derive._shared import (
 )
 
 
-def get_cube(data, air_pressure_coord=True, **kwargs):
+def get_cube(data, air_pressure_coord=True, depth_coord=False, **kwargs):
     """Get sample cube."""
     time_coord = iris.coords.DimCoord([0.0], standard_name='time',
                                       var_name='time',
@@ -18,12 +18,18 @@ def get_cube(data, air_pressure_coord=True, **kwargs):
     plev_coord = iris.coords.DimCoord([90000.0, 80000.0],
                                       standard_name='air_pressure',
                                       var_name='plev', units='Pa')
+    dpth_coord = iris.coords.DimCoord([100.0, 600.0, 7000.0],
+                                      standard_name='depth',
+                                      var_name='lev', units='m')
     lat_coord = iris.coords.DimCoord([45.0], standard_name='latitude',
                                      var_name='lat', units='degrees')
     lon_coord = iris.coords.DimCoord([10.0], standard_name='longitude',
                                      var_name='lon', units='degrees')
     if air_pressure_coord:
         coord_specs = [(time_coord, 0), (plev_coord, 1), (lat_coord, 2),
+                       (lon_coord, 3)]
+    elif depth_coord:
+        coord_specs = [(time_coord, 0), (dpth_coord, 1), (lat_coord, 2),
                        (lon_coord, 3)]
     else:
         coord_specs = [(time_coord, 0), (lat_coord, 1), (lon_coord, 2)]

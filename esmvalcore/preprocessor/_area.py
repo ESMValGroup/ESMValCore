@@ -3,8 +3,12 @@
 Allows for selecting data subsets using certain latitude and longitude
 bounds; selecting geographical regions; constructing area averages; etc.
 """
+from __future__ import annotations
+
 import logging
 import warnings
+from pathlib import Path
+from typing import TYPE_CHECKING, Iterable, Optional
 
 import fiona
 import iris
@@ -12,49 +16,61 @@ import numpy as np
 import shapely
 import shapely.ops
 from dask import array as da
-from iris.exceptions import CoordinateNotFoundError
+from iris.coords import AuxCoord, CellMeasure
+from iris.cube import Cube, CubeList
+from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 
-from ._ancillary_vars import (
+from ._shared import get_iris_aggregator, guess_bounds, update_weights_kwargs
+from ._supplementary_vars import (
     add_ancillary_variable,
     add_cell_measure,
-    remove_fx_variables,
+    register_supplementaries,
+    remove_supplementary_variables,
 )
-from ._shared import (
-    get_iris_analysis_operation,
-    guess_bounds,
-    operator_accept_weights,
-)
+
+if TYPE_CHECKING:
+    from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
 
-SHAPE_ID_KEYS = ('name', 'NAME', 'Name', 'id', 'ID')
+SHAPE_ID_KEYS: tuple[str, ...] = ('name', 'NAME', 'Name', 'id', 'ID')
 
 
-def extract_region(cube, start_longitude, end_longitude, start_latitude,
-                   end_latitude):
+def extract_region(
+    cube: Cube,
+    start_longitude: float,
+    end_longitude: float,
+    start_latitude: float,
+    end_latitude: float,
+) -> Cube:
     """Extract a region from a cube.
 
     Function that subsets a cube on a box (start_longitude, end_longitude,
-    start_latitude, end_latitude)
+    start_latitude, end_latitude).
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input data cube.
-    start_longitude: float
+    cube:
+        Input data cube.
+    start_longitude:
         Western boundary longitude.
-    end_longitude: float
+    end_longitude:
         Eastern boundary longitude.
-    start_latitude: float
+    start_latitude:
         Southern Boundary latitude.
-    end_latitude: float
+    end_latitude:
         Northern Boundary Latitude.
 
     Returns
     -------
     iris.cube.Cube
-        smaller cube.
+        Smaller cube.
+
     """
+    # first examine if any cell_measures are present
+    cell_measures = cube.cell_measures()
+    ancil_vars = cube.ancillary_variables()
+
     if abs(start_latitude) > 90.:
         raise ValueError(f"Invalid start_latitude: {start_latitude}")
     if abs(end_latitude) > 90.:
@@ -77,6 +93,56 @@ def extract_region(cube, start_longitude, end_longitude, start_latitude,
             start_latitude,
             end_latitude,
         )
+
+    # put back cell measures and ancillary_variables;
+    # iris.Cube.cube.intersection removes them both.
+    # This is a workaround resulting from opening upstream
+    # https://github.com/SciTools/iris/issues/5413
+    # When removing this block after iris have a fix, make sure to remove the
+    # test too tests/integration/preprocessor/_extract_region/
+
+    def _extract_region_from_dim_metadata(dim_metadata, dim_metadata_dims):
+        """Extract region from dimensional metadata."""
+        idx = tuple((
+            slice(None) if d in dim_metadata_dims else 0
+            for d in range(cube.ndim)
+        ))
+        subcube = cube[idx].copy(dim_metadata.core_data())
+        for sub_cm in subcube.cell_measures():
+            subcube.remove_cell_measure(sub_cm)
+        for sub_av in subcube.ancillary_variables():
+            subcube.remove_ancillary_variable(sub_av)
+        subcube = extract_region(
+            subcube,
+            start_longitude,
+            end_longitude,
+            start_latitude,
+            end_latitude,
+        )
+        return dim_metadata.copy(subcube.core_data())
+
+    # Step 1: cell measures
+    if cell_measures and not region_subset.cell_measures():
+        for cell_measure in cell_measures:
+            cell_measure_dims = cube.cell_measure_dims(cell_measure)
+            cell_measure_subset = _extract_region_from_dim_metadata(
+                cell_measure, cell_measure_dims
+            )
+            region_subset.add_cell_measure(
+                cell_measure_subset, cell_measure_dims
+            )
+
+    # Step 2: ancillary variables
+    if ancil_vars and not region_subset.ancillary_variables():
+        for ancil_var in ancil_vars:
+            ancil_var_dims = cube.ancillary_variable_dims(ancil_var)
+            ancil_var_subset = _extract_region_from_dim_metadata(
+                ancil_var, ancil_var_dims
+            )
+            region_subset.add_ancillary_variable(
+                ancil_var_subset, ancil_var_dims
+            )
+
     return region_subset
 
 
@@ -119,18 +185,24 @@ def _extract_irregular_region(cube, start_longitude, end_longitude,
     return cube
 
 
-def zonal_statistics(cube, operator):
+def zonal_statistics(
+    cube: Cube,
+    operator: str,
+    **operator_kwargs
+) -> Cube:
     """Compute zonal statistics.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-
-    operator: str, optional
-        Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
-        'max', 'rms'.
+    cube:
+        Input cube.
+    operator:
+        The operation. Used to determine the :class:`iris.analysis.Aggregator`
+        object used to calculate the statistics. Allowed options are given in
+        :ref:`this table <supported_stat_operator>`.
+    **operator_kwargs:
+        Optional keyword arguments for the :class:`iris.analysis.Aggregator`
+        object defined by `operator`.
 
     Returns
     -------
@@ -142,28 +214,36 @@ def zonal_statistics(cube, operator):
     ValueError
         Error raised if computation on irregular grids is attempted.
         Zonal statistics not yet implemented for irregular grids.
+
     """
-    if cube.coord('longitude').points.ndim < 2:
-        operation = get_iris_analysis_operation(operator)
-        cube = cube.collapsed('longitude', operation)
-        cube.data = cube.core_data().astype(np.float32, casting='same_kind')
-        return cube
-    msg = ("Zonal statistics on irregular grids not yet implemnted")
-    raise ValueError(msg)
+    if cube.coord('longitude').points.ndim >= 2:
+        raise ValueError(
+            "Zonal statistics on irregular grids not yet implemented"
+        )
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
+    cube = cube.collapsed('longitude', agg, **agg_kwargs)
+    cube.data = cube.core_data().astype(np.float32, casting='same_kind')
+    return cube
 
 
-def meridional_statistics(cube, operator):
+def meridional_statistics(
+    cube: Cube,
+    operator: str,
+    **operator_kwargs,
+) -> Cube:
     """Compute meridional statistics.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-
-    operator: str, optional
-        Select operator to apply.
-        Available operators: 'mean', 'median', 'std_dev', 'sum', 'min',
-        'max', 'rms'.
+    cube:
+        Input cube.
+    operator:
+        The operation. Used to determine the :class:`iris.analysis.Aggregator`
+        object used to calculate the statistics. Allowed options are given in
+        :ref:`this table <supported_stat_operator>`.
+    **operator_kwargs:
+        Optional keyword arguments for the :class:`iris.analysis.Aggregator`
+        object defined by `operator`.
 
     Returns
     -------
@@ -175,14 +255,16 @@ def meridional_statistics(cube, operator):
     ValueError
         Error raised if computation on irregular grids is attempted.
         Zonal statistics not yet implemented for irregular grids.
+
     """
-    if cube.coord('latitude').points.ndim < 2:
-        operation = get_iris_analysis_operation(operator)
-        cube = cube.collapsed('latitude', operation)
-        cube.data = cube.core_data().astype(np.float32, casting='same_kind')
-        return cube
-    msg = ("Meridional statistics on irregular grids not yet implemented")
-    raise ValueError(msg)
+    if cube.coord('latitude').points.ndim >= 2:
+        raise ValueError(
+            "Meridional statistics on irregular grids not yet implemented"
+        )
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
+    cube = cube.collapsed('latitude', agg, **agg_kwargs)
+    cube.data = cube.core_data().astype(np.float32, casting='same_kind')
+    return cube
 
 
 def compute_area_weights(cube):
@@ -202,117 +284,138 @@ def compute_area_weights(cube):
     return weights
 
 
-def area_statistics(cube, operator):
-    """Apply a statistical operator in the horizontal direction.
+def _try_adding_calculated_cell_area(cube: Cube) -> None:
+    """Try to add calculated cell measure 'cell_area' to cube (in-place)."""
+    if cube.cell_measures('cell_area'):
+        return
 
-    The average in the horizontal direction. We assume that the
-    horizontal directions are ['longitude', 'latutude'].
+    logger.debug(
+        "Found no cell measure 'cell_area' in cube %s. Check availability of "
+        "supplementary variables",
+        cube.summary(shorten=True),
+    )
+    logger.debug("Attempting to calculate grid cell area")
 
-    This function can be used to apply
-    several different operations in the horizontal plane: mean, standard
-    deviation, median variance, minimum and maximum. These options are
-    specified using the `operator` argument and the following key word
-    arguments:
+    regular_grid = all([
+        cube.coord('latitude').points.ndim == 1,
+        cube.coord('longitude').points.ndim == 1,
+        cube.coord_dims('latitude') != cube.coord_dims('longitude'),
+    ])
+    rotated_pole_grid = all([
+        cube.coord('latitude').points.ndim == 2,
+        cube.coord('longitude').points.ndim == 2,
+        cube.coords('grid_latitude'),
+        cube.coords('grid_longitude'),
+    ])
 
-    +------------+--------------------------------------------------+
-    | `mean`     | Area weighted mean.                              |
-    +------------+--------------------------------------------------+
-    | `median`   | Median (not area weighted)                       |
-    +------------+--------------------------------------------------+
-    | `std_dev`  | Standard Deviation (not area weighted)           |
-    +------------+--------------------------------------------------+
-    | `sum`      | Area weighted sum.                               |
-    +------------+--------------------------------------------------+
-    | `variance` | Variance (not area weighted)                     |
-    +------------+--------------------------------------------------+
-    | `min`:     | Minimum value                                    |
-    +------------+--------------------------------------------------+
-    | `max`      | Maximum value                                    |
-    +------------+--------------------------------------------------+
-    | `rms`      | Area weighted root mean square.                  |
-    +------------+--------------------------------------------------+
+    # For regular grids, calculate grid cell areas with iris function
+    if regular_grid:
+        cube = guess_bounds(cube, ['latitude', 'longitude'])
+        logger.debug("Calculating grid cell areas for regular grid")
+        cell_areas = compute_area_weights(cube)
+
+    # For rotated pole grids, use grid_latitude and grid_longitude to calculate
+    # grid cell areas
+    elif rotated_pole_grid:
+        cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
+        cube_tmp = cube.copy()
+        cube_tmp.remove_coord('latitude')
+        cube_tmp.coord('grid_latitude').rename('latitude')
+        cube_tmp.remove_coord('longitude')
+        cube_tmp.coord('grid_longitude').rename('longitude')
+        logger.debug("Calculating grid cell areas for rotated pole grid")
+        cell_areas = compute_area_weights(cube_tmp)
+
+    # For all other cases, grid cell areas cannot be calculated
+    else:
+        logger.error(
+            "Supplementary variables are needed to calculate grid cell "
+            "areas for irregular or unstructured grid of cube %s",
+            cube.summary(shorten=True),
+        )
+        raise CoordinateMultiDimError(cube.coord('latitude'))
+
+    # Add new cell measure
+    cell_measure = CellMeasure(
+        cell_areas, standard_name='cell_area', units='m2', measure='area',
+    )
+    cube.add_cell_measure(cell_measure, np.arange(cube.ndim))
+
+
+@register_supplementaries(
+    variables=['areacella', 'areacello'],
+    required='prefer_at_least_one',
+)
+def area_statistics(
+    cube: Cube,
+    operator: str,
+    **operator_kwargs,
+) -> Cube:
+    """Apply a statistical operator in the horizontal plane.
+
+    We assume that the horizontal directions are ['longitude', 'latitude'].
+
+    :ref:`This table <supported_stat_operator>` shows a list of supported
+    operators. All operators that support weights are by default weighted with
+    the grid cell areas. Note that for area-weighted sums, the units of the
+    resulting cube will be multiplied by m :math:`^2`.
 
     Parameters
     ----------
-        cube: iris.cube.Cube
-            Input cube.
-        operator: str
-            The operation, options: mean, median, min, max, std_dev, sum,
-            variance, rms.
+    cube:
+        Input cube. The input cube should have a
+        :class:`iris.coords.CellMeasure` named ``'cell_area'``, unless it has
+        regular 1D latitude and longitude coordinates so the cell areas can be
+        computed using :func:`iris.analysis.cartography.area_weights`.
+    operator:
+        The operation. Used to determine the :class:`iris.analysis.Aggregator`
+        object used to calculate the statistics. Allowed options are given in
+        :ref:`this table <supported_stat_operator>`.
+    **operator_kwargs:
+        Optional keyword arguments for the :class:`iris.analysis.Aggregator`
+        object defined by `operator`.
 
     Returns
     -------
     iris.cube.Cube
-        collapsed cube.
+        Collapsed cube.
 
     Raises
     ------
     iris.exceptions.CoordinateMultiDimError
-        Exception for latitude axis with dim > 2.
-    ValueError
-        if input data cube has different shape than grid area weights
+        Cube has irregular or unstructured grid but supplementary variable
+        `cell_area` is not available.
+
     """
     original_dtype = cube.dtype
-    grid_areas = None
-    try:
-        grid_areas = cube.cell_measure('cell_area').core_data()
-    except iris.exceptions.CellMeasureNotFoundError:
-        logger.debug(
-            'Cell measure "cell_area" not found in cube %s. '
-            'Check fx_file availability.', cube.summary(shorten=True))
-        logger.debug('Attempting to calculate grid cell area...')
-    else:
-        grid_areas = da.broadcast_to(grid_areas, cube.shape)
+    has_cell_measure = bool(cube.cell_measures('cell_area'))
 
-    if grid_areas is None and cube.coord('latitude').points.ndim == 2:
-        coord_names = [coord.standard_name for coord in cube.coords()]
-        if 'grid_latitude' in coord_names and 'grid_longitude' in coord_names:
-            cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
-            cube_tmp = cube.copy()
-            cube_tmp.remove_coord('latitude')
-            cube_tmp.coord('grid_latitude').rename('latitude')
-            cube_tmp.remove_coord('longitude')
-            cube_tmp.coord('grid_longitude').rename('longitude')
-            grid_areas = compute_area_weights(cube_tmp)
-            logger.debug('Calculated grid area shape: %s', grid_areas.shape)
-        else:
-            logger.error(
-                'fx_file needed to calculate grid cell area for irregular '
-                'grids.')
-            raise iris.exceptions.CoordinateMultiDimError(
-                cube.coord('latitude'))
+    # Get aggregator and correct kwargs (incl. weights)
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
+    agg_kwargs = update_weights_kwargs(
+        agg, agg_kwargs, 'cell_area', cube, _try_adding_calculated_cell_area
+    )
 
-    coord_names = ['longitude', 'latitude']
-    if grid_areas is None:
-        cube = guess_bounds(cube, coord_names)
-        grid_areas = compute_area_weights(cube)
-        logger.debug('Calculated grid area shape: %s', grid_areas.shape)
+    result = cube.collapsed(['latitude', 'longitude'], agg, **agg_kwargs)
 
-    if cube.shape != grid_areas.shape:
-        raise ValueError('Cube shape ({}) doesn`t match grid area shape '
-                         '({})'.format(cube.shape, grid_areas.shape))
-
-    operation = get_iris_analysis_operation(operator)
-
-    # TODO: implement weighted stdev, median, s var when available in iris.
-    # See iris issue: https://github.com/SciTools/iris/issues/3208
-
-    if operator_accept_weights(operator):
-        result = cube.collapsed(coord_names, operation, weights=grid_areas)
-    else:
-        # Many IRIS analysis functions do not accept weights arguments.
-        result = cube.collapsed(coord_names, operation)
-
+    # Make sure to preserve dtype
     new_dtype = result.dtype
     if original_dtype != new_dtype:
         logger.debug(
-            "area_statistics changed dtype from "
-            "%s to %s, changing back", original_dtype, new_dtype)
+            "area_statistics changed dtype from %s to %s, changing back",
+            original_dtype,
+            new_dtype,
+        )
         result.data = result.core_data().astype(original_dtype)
+
+    # Make sure input cube has not been modified
+    if not has_cell_measure and cube.cell_measures('cell_area'):
+        cube.remove_cell_measure('cell_area')
+
     return result
 
 
-def extract_named_regions(cube, regions):
+def extract_named_regions(cube: Cube, regions: str | Iterable[str]) -> Cube:
     """Extract a specific named region.
 
     The region coordinate exist in certain CMIP datasets.
@@ -320,15 +423,15 @@ def extract_named_regions(cube, regions):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-       input cube.
-    regions: str, list
+    cube:
+       Input cube.
+    regions:
         A region or list of regions to extract.
 
     Returns
     -------
     iris.cube.Cube
-        collapsed cube.
+        Smaller cube.
 
     Raises
     ------
@@ -336,6 +439,7 @@ def extract_named_regions(cube, regions):
         regions is not list or tuple or set.
     ValueError
         region not included in cube.
+
     """
     # Make sure regions is a list of strings
     if isinstance(regions, str):
@@ -356,13 +460,15 @@ def extract_named_regions(cube, regions):
     return cube
 
 
-def _crop_cube(cube,
-               start_longitude,
-               start_latitude,
-               end_longitude,
-               end_latitude,
-               cmor_coords=True):
-    """Crop cubes on a cartesian grid."""
+def _crop_cube(
+    cube: Cube,
+    start_longitude: float,
+    start_latitude: float,
+    end_longitude: float,
+    end_latitude: float,
+    cmor_coords: bool = True,
+) -> Cube:
+    """Crop cubes on a regular grid."""
     lon_coord = cube.coord(axis='X')
     lat_coord = cube.coord(axis='Y')
     if lon_coord.ndim == 1 and lat_coord.ndim == 1:
@@ -396,19 +502,27 @@ def _crop_cube(cube,
     return cube
 
 
-def _select_representative_point(shape, lon, lat):
-    """Select a representative point for `shape` from `lon` and `lat`."""
+def _select_representative_point(
+    shape,
+    lon: np.ndarray,
+    lat: np.ndarray,
+) -> np.ndarray:
+    """Get mask to select a representative point."""
     representative_point = shape.representative_point()
     points = shapely.geometry.MultiPoint(
         np.stack((np.ravel(lon), np.ravel(lat)), axis=1))
     nearest_point = shapely.ops.nearest_points(points, representative_point)[0]
     nearest_lon, nearest_lat = nearest_point.coords[0]
-    select = (lon == nearest_lon) & (lat == nearest_lat)
-    return select
+    mask = (lon == nearest_lon) & (lat == nearest_lat)
+    return mask
 
 
-def _correct_coords_from_shapefile(cube, cmor_coords, pad_north_pole,
-                                   pad_hawaii):
+def _correct_coords_from_shapefile(
+    cube: Cube,
+    cmor_coords: bool,
+    pad_north_pole: bool,
+    pad_hawaii: bool,
+) -> tuple[np.ndarray, np.ndarray]:
     """Get correct lat and lon from shapefile."""
     lon = cube.coord(axis='X').points
     lat = cube.coord(axis='Y').points
@@ -431,112 +545,157 @@ def _correct_coords_from_shapefile(cube, cmor_coords, pad_north_pole,
     return lon, lat
 
 
-def _get_masks_from_geometries(geometries,
-                               lon,
-                               lat,
-                               method='contains',
-                               decomposed=False,
-                               ids=None):
+def _process_ids(geometries, ids: list | dict | None) -> tuple:
+    """Read requested IDs and ID keys."""
+    # If ids is a dict, it needs to have length 1 and all geometries needs to
+    # have the requested attribute key
+    if isinstance(ids, dict):
+        if len(ids) != 1:
+            raise ValueError(
+                f"If `ids` is given as dict, it needs exactly one entry, got "
+                f"{ids}"
+            )
+        key = list(ids.keys())[0]
+        for geometry in geometries:
+            if key not in geometry['properties']:
+                raise ValueError(
+                    f"Geometry {dict(geometry['properties'])} does not have "
+                    f"requested attribute {key}"
+                )
+        id_keys: tuple[str, ...] = (key, )
+        ids = ids[key]
 
+    # Otherwise, use SHAPE_ID_KEYS to get ID
+    else:
+        id_keys = SHAPE_ID_KEYS
+
+    # IDs should be strings or None
+    if not ids:
+        ids = None
+    if ids is not None:
+        ids = [str(id_) for id_ in ids]
+
+    return (id_keys, ids)
+
+
+def _get_requested_geometries(
+    geometries,
+    ids: list | dict | None,
+    shapefile: Path,
+) -> dict[str, dict]:
+    """Return requested geometries."""
+    (id_keys, ids) = _process_ids(geometries, ids)
+
+    # Iterate through all geometries and select matching elements
+    requested_geometries = {}
+    for (reading_order, geometry) in enumerate(geometries):
+        for key in id_keys:
+            if key in geometry['properties']:
+                geometry_id = str(geometry['properties'][key])
+                break
+
+        # If none of the attributes are available in the geometry, use reading
+        # order as last resort
+        else:
+            geometry_id = str(reading_order)
+
+        logger.debug("Found shape '%s'", geometry_id)
+
+        # Select geometry if its ID is requested or all IDs are requested
+        # (i.e., ids=None)
+        if ids is None or geometry_id in ids:
+            requested_geometries[geometry_id] = geometry
+
+    # Check if all requested IDs have been found
+    if ids is not None:
+        missing = set(ids) - set(requested_geometries.keys())
+        if missing:
+            raise ValueError(
+                f"Requested shapes {missing} not found in shapefile "
+                f"{shapefile}"
+            )
+
+    return requested_geometries
+
+
+def _get_masks_from_geometries(
+    geometries: dict[str, dict],
+    lon: np.ndarray,
+    lat: np.ndarray,
+    method: str = 'contains',
+    decomposed: bool = False,
+) -> dict[str, np.ndarray]:
+    """Get cube masks from requested regions."""
     if method not in {'contains', 'representative'}:
         raise ValueError(
             "Invalid value for `method`. Choose from 'contains', ",
             "'representative'.")
 
-    selections = dict()
-    if ids:
-        ids = [str(id_) for id_ in ids]
-    for i, item in enumerate(geometries):
-        for id_prop in SHAPE_ID_KEYS:
-            if id_prop in item['properties']:
-                id_ = str(item['properties'][id_prop])
-                break
-        else:
-            id_ = str(i)
-        logger.debug('Shape "%s" found', id_)
-        if ids and id_ not in ids:
-            continue
-        selections[id_] = _get_shape(lon, lat, method, item)
+    masks = {}
+    for (id_, geometry) in geometries.items():
+        masks[id_] = _get_single_mask(lon, lat, method, geometry)
 
-    if ids:
-        missing = set(ids) - set(selections.keys())
-        if missing:
-            raise ValueError(f'Shapes {" ".join(missing)!r} not found')
+    if not decomposed and len(masks) > 1:
+        return _merge_masks(masks, lat.shape)
 
-    if not decomposed and len(selections) > 1:
-        return _merge_shapes(selections, lat.shape)
-
-    return selections
+    return masks
 
 
-def _geometry_matches_ids(geometry: dict, ids: list):
-    """Returns True if `geometry` matches one of the `ids`."""
-    props = geometry['properties']
-
-    geom_id = [props.get(key, None) for key in SHAPE_ID_KEYS]
-    geom_id = [key for key in geom_id if key is not None]
-
-    if not geom_id:
-        raise KeyError(f'{props} dict has no `name` or `id` key')
-
-    geom_id = geom_id[0]
-
-    return geom_id in ids
-
-
-def _get_bounds(geometries, ids=None):
-    """Get bounds from the subset of geometries defined by `ids`.
+def _get_bounds(
+    geometries: dict[str, dict],
+) -> tuple[float, float, float, float]:
+    """Get bounds from given geometries.
 
     Parameters
     ----------
-    geometries : fiona.Collection
+    geometries: fiona.collection.Collection
         Fiona collection of shapes (geometries).
-    ids : tuple of str, optional
-        List of ids to select from geometry collection. If None,
-        return global bounds (``geometries.bounds``)
 
     Returns
     -------
     lat_min, lon_min, lat_max, lon_max
-        Returns coordinates deliminating bounding box for shape ids.
+        Coordinates deliminating bounding box for shape ids.
+
     """
-    if not ids:
-        return geometries.bounds
-
-    subset = [geom for geom in geometries if _geometry_matches_ids(geom, ids)]
-
-    all_points = [
-        np.hstack(geom['geometry']['coordinates']) for geom in subset
-    ]
-    all_points = np.vstack(all_points)
-
-    lon_max, lat_max = all_points.max(axis=0)
-    lon_min, lat_min = all_points.min(axis=0)
+    all_bounds = np.vstack(
+        [fiona.bounds(geom) for geom in geometries.values()]
+    )
+    lon_max, lat_max = all_bounds[:, 2:].max(axis=0)
+    lon_min, lat_min = all_bounds[:, :2].min(axis=0)
 
     return lon_min, lat_min, lon_max, lat_max
 
 
-def _get_shape(lon, lat, method, item):
-    shape = shapely.geometry.shape(item['geometry'])
+def _get_single_mask(
+    lon: np.ndarray,
+    lat: np.ndarray,
+    method: str,
+    geometry: dict,
+) -> np.ndarray:
+    """Get single mask from one region."""
+    shape = shapely.geometry.shape(geometry['geometry'])
     if method == 'contains':
-        select = shapely.vectorized.contains(shape, lon, lat)
-    if method == 'representative' or not select.any():
-        select = _select_representative_point(shape, lon, lat)
-    return select
+        mask = shapely.vectorized.contains(shape, lon, lat)
+    if method == 'representative' or not mask.any():
+        mask = _select_representative_point(shape, lon, lat)
+    return mask
 
 
-def _merge_shapes(selections, shape):
-    selection = np.zeros(shape, dtype=bool)
-    for select in selections.values():
-        selection |= select
-    return {0: selection}
+def _merge_masks(
+    masks: dict[str, np.ndarray],
+    shape: tuple,
+) -> dict[str, np.ndarray]:
+    """Merge masks into one."""
+    merged_mask = np.zeros(shape, dtype=bool)
+    for mask in masks.values():
+        merged_mask |= mask
+    return {'0': merged_mask}
 
 
-def fix_coordinate_ordering(cube):
-    """Transpose the dimensions.
+def fix_coordinate_ordering(cube: Cube) -> Cube:
+    """Transpose the cube dimensions.
 
-    This is done such that the order of dimension is
-    in standard order, ie:
+    This is done such that the order of dimension is in standard order, i.e.:
 
     [time] [shape_id] [other_coordinates] latitude longitude
 
@@ -544,13 +703,14 @@ def fix_coordinate_ordering(cube):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-       input cube.
+    cube:
+        Input cube.
 
     Returns
     -------
     iris.cube.Cube
         Cube with dimensions transposed to standard order
+
     """
     try:
         time_dim = cube.coord_dims('time')
@@ -565,47 +725,106 @@ def fix_coordinate_ordering(cube):
     for dim in [time_dim, shape_dim]:
         for i in dim:
             other.remove(i)
-    other = tuple(other)
+    other_dims = tuple(other)
 
-    order = time_dim + shape_dim + other
+    order = time_dim + shape_dim + other_dims
 
     cube.transpose(new_order=order)
     return cube
 
 
-def extract_shape(cube,
-                  shapefile,
-                  method='contains',
-                  crop=True,
-                  decomposed=False,
-                  ids=None):
-    """Extract a region defined by a shapefile.
+def _update_shapefile_path(
+    shapefile: str | Path,
+    session: Optional[Session] = None,
+) -> Path:
+    """Update path to shapefile."""
+    shapefile = str(shapefile)
+    shapefile_path = Path(shapefile)
+
+    # Try absolute path
+    logger.debug("extract_shape: Looking for shapefile %s", shapefile_path)
+    if shapefile_path.exists():
+        return shapefile_path
+
+    # Try path relative to auxiliary_data_dir if session is given
+    if session is not None:
+        shapefile_path = session['auxiliary_data_dir'] / shapefile
+        logger.debug("extract_shape: Looking for shapefile %s", shapefile_path)
+        if shapefile_path.exists():
+            return shapefile_path
+
+    # Try path relative to esmvalcore/preprocessor/shapefiles/
+    shapefile_path = Path(__file__).parent / 'shapefiles' / shapefile
+    logger.debug("extract_shape: Looking for shapefile %s", shapefile_path)
+    if shapefile_path.exists():
+        return shapefile_path
+
+    # As final resort, add suffix '.shp' and try path relative to
+    # esmvalcore/preprocessor/shapefiles/ again
+    # Note: this will find "special" shapefiles like 'ar6'
+    shapefile_path = (
+        Path(__file__).parent / 'shapefiles' / f"{shapefile.lower()}.shp"
+    )
+    if shapefile_path.exists():
+        return shapefile_path
+
+    # If no valid shapefile has been found, return original input (an error
+    # will be raised at a later stage)
+    return Path(shapefile)
+
+
+def extract_shape(
+    cube: Cube,
+    shapefile: str | Path,
+    method: str = 'contains',
+    crop: bool = True,
+    decomposed: bool = False,
+    ids: Optional[list | dict] = None,
+) -> Cube:
+    """Extract a region defined by a shapefile using masking.
 
     Note that this function does not work for shapes crossing the
     prime meridian or poles.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-       input cube.
-    shapefile: str
-        A shapefile defining the region(s) to extract.
-    method: str, optional
+    cube:
+        Input cube.
+    shapefile:
+        A shapefile defining the region(s) to extract. Also accepts the
+        following strings to load special shapefiles:
+
+        * ``'ar6'``:  IPCC WG1 reference regions (v4) used in Assessment Report
+          6 (https://doi.org/10.5281/zenodo.5176260). Should be used in
+          combination with a :obj:`dict` for the argument `ids`, e.g.,
+          ``ids={'Acronym': ['GIC', 'WNA']}``.
+    method:
         Select all points contained by the shape or select a single
-        representative point. Choose either 'contains' or 'representative'.
-        If 'contains' is used, but not a single grid point is contained by the
-        shape, a representative point will selected.
-    crop: bool, optional
-        Crop the resulting cube using `extract_region()`. Note that data on
-        irregular grids will not be cropped.
-    decomposed: bool, optional
-        Whether or not to retain the sub shapes of the shapefile in the output.
-        If this is set to True, the output cube has a dimension for the sub
-        shapes.
-    ids: list(str), optional
-        List of shapes to be read from the file. The ids are assigned from
-        the attributes 'name' or 'id' (in that priority order) if present in
-        the file or correspond to the reading order if not.
+        representative point. Choose either `'contains'` or `'representative'`.
+        If `'contains'` is used, but not a single grid point is contained by
+        the shape, a representative point will be selected.
+    crop:
+        In addition to masking, crop the resulting cube using
+        :func:`~esmvalcore.preprocessor.extract_region`. Data on irregular
+        grids will not be cropped.
+    decomposed:
+        If set to `True`, the output cube will have an additional dimension
+        `shape_id` describing the requested regions.
+    ids:
+        Shapes to be read from the shapefile. Can be given as:
+
+        * :obj:`list`: IDs are assigned from the attributes `name`, `NAME`,
+          `Name`, `id`, or `ID` (in that priority order; the first one
+          available is used). If none of these attributes are available in the
+          shapefile, assume that the given `ids` correspond to the reading
+          order of the individual shapes, e.g., ``ids=[0, 2]`` corresponds to
+          the first and third shape read from the shapefile. Note: An empty
+          list is interpreted as `ids=None`.
+        * :obj:`dict`: IDs (dictionary value; :obj:`list` of :obj:`str`) are
+          assigned from attribute given as dictionary key (:obj:`str`). Only
+          dictionaries with length 1 are supported.
+          Example: ``ids={'Acronym': ['GIC', 'WNA']}`` for ``shapefile='ar6'``.
+        * `None`: select all available shapes from the shapefile.
 
     Returns
     -------
@@ -614,13 +833,14 @@ def extract_shape(cube,
 
     See Also
     --------
-    extract_region : Extract a region from a cube.
+    extract_region: Extract a region from a cube.
+
     """
+    shapefile = _update_shapefile_path(shapefile)
     with fiona.open(shapefile) as geometries:
 
-        # get parameters specific to the shapefile (NE used case
-        # eg longitudes [-180, 180] or latitude missing
-        # or overflowing edges)
+        # Get parameters specific to the shapefile (NE used case e.g.
+        # longitudes [-180, 180] or latitude missing or overflowing edges)
         cmor_coords = True
         pad_north_pole = False
         pad_hawaii = False
@@ -631,40 +851,60 @@ def extract_shape(cube,
         if geometries.bounds[0] > -180. and geometries.bounds[0] < 179.:
             pad_hawaii = True
 
+        requested_geometries = _get_requested_geometries(
+            geometries, ids, shapefile
+        )
+
+        # Crop cube if desired
         if crop:
             lon_min, lat_min, lon_max, lat_max = _get_bounds(
-                geometries=geometries,
-                ids=ids,
+                requested_geometries
             )
-            cube = _crop_cube(cube,
-                              start_longitude=lon_min,
-                              start_latitude=lat_min,
-                              end_longitude=lon_max,
-                              end_latitude=lat_max,
-                              cmor_coords=cmor_coords)
+            cube = _crop_cube(
+                cube,
+                start_longitude=lon_min,
+                start_latitude=lat_min,
+                end_longitude=lon_max,
+                end_latitude=lat_max,
+                cmor_coords=cmor_coords,
+            )
 
-        lon, lat = _correct_coords_from_shapefile(cube, cmor_coords,
-                                                  pad_north_pole, pad_hawaii)
+        lon, lat = _correct_coords_from_shapefile(
+            cube,
+            cmor_coords,
+            pad_north_pole,
+            pad_hawaii,
+        )
 
-        selections = _get_masks_from_geometries(geometries,
-                                                lon,
-                                                lat,
-                                                method=method,
-                                                decomposed=decomposed,
-                                                ids=ids)
+        masks = _get_masks_from_geometries(
+            requested_geometries,
+            lon,
+            lat,
+            method=method,
+            decomposed=decomposed,
+        )
 
-    return _mask_cube(cube, selections)
+    # Mask input cube based on requested regions
+    result = _mask_cube(cube, masks)
+
+    # Remove dummy scalar coordinate if final cube is not decomposed
+    if not decomposed:
+        result.remove_coord('shape_id')
+
+    return result
 
 
-def _mask_cube(cube, selections):
-    cubelist = iris.cube.CubeList()
-    for id_, select in selections.items():
+def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
+    """Mask input cube."""
+    cubelist = CubeList()
+    for id_, mask in masks.items():
         _cube = cube.copy()
-        remove_fx_variables(_cube)
+        remove_supplementary_variables(_cube)
         _cube.add_aux_coord(
-            iris.coords.AuxCoord(id_, units='no_unit', long_name="shape_id"))
-        select = da.broadcast_to(select, _cube.shape)
-        _cube.data = da.ma.masked_where(~select, _cube.core_data())
+            AuxCoord(id_, units='no_unit', long_name='shape_id')
+        )
+        mask = da.broadcast_to(mask, _cube.shape)
+        _cube.data = da.ma.masked_where(~mask, _cube.core_data())
         cubelist.append(_cube)
     result = fix_coordinate_ordering(cubelist.merge_cube())
     if cube.cell_measures():

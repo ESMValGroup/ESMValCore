@@ -7,8 +7,8 @@ import pytest
 import yaml
 
 import esmvalcore._task
-from esmvalcore._config._diagnostics import TagsManager
 from esmvalcore._task import DiagnosticError, write_ncl_settings
+from esmvalcore.config._diagnostics import TagsManager
 
 
 def test_write_ncl_settings(tmp_path):
@@ -20,7 +20,7 @@ def test_write_ncl_settings(tmp_path):
     }
     file_name = tmp_path / "settings"
     write_ncl_settings(settings, file_name)
-    with open(file_name, 'r') as file:
+    with open(file_name, 'r', encoding='utf-8') as file:
         lines = file.readlines()
         assert 'var_name = "tas"\n' in lines
         assert 'if (isvar("profile_diagnostic")) then\n' not in lines
@@ -32,7 +32,7 @@ def test_write_ncl_settings(tmp_path):
     }
     file_name = tmp_path / "settings"
     write_ncl_settings(settings, file_name)
-    with open(file_name, 'r') as file:
+    with open(file_name, 'r', encoding='utf-8') as file:
         lines = file.readlines()
         assert 'var_name = "tas"\n' in lines
         assert 'profile_diagnostic' not in lines
@@ -45,7 +45,7 @@ def test_initialize_env(ext, tmp_path, monkeypatch):
                         lambda self: None)
 
     esmvaltool_path = tmp_path / 'esmvaltool'
-    monkeypatch.setattr(esmvalcore._config.DIAGNOSTICS, 'path',
+    monkeypatch.setattr(esmvalcore.config._diagnostics.DIAGNOSTICS, 'path',
                         esmvaltool_path)
 
     diagnostics_path = esmvaltool_path / 'diag_scripts'

@@ -1,21 +1,19 @@
 """API for handing recipe output."""
 import base64
 import logging
-import os
-from collections.abc import Mapping
+import os.path
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Optional, Tuple, Type
 
 import iris
 
-from .config import Session
+from ..config._config import TASKSEP
 from .recipe_info import RecipeInfo
 from .recipe_metadata import Contributor, Reference
 from .templates import get_template
 
 logger = logging.getLogger(__name__)
-
-TASKSEP = os.sep
 
 
 class TaskOutput:
@@ -121,9 +119,16 @@ class RecipeOutput(Mapping):
         Dictionary with recipe output grouped by diagnostic.
     info : RecipeInfo
         The recipe used to create the output.
-    session : Session
+    session : esmvalcore.config.Session
         The session used to run the recipe.
     """
+
+    FILTER_ATTRS: list = [
+        "realms",
+        "plot_type",  # Used by several diagnostics
+        "plot_types",
+        "long_names",
+    ]
 
     def __init__(self, task_output: dict, session=None, info=None):
         self._raw_task_output = task_output
@@ -143,6 +148,7 @@ class RecipeOutput(Mapping):
             diagnostics[name].append(task)
 
         # Create diagnostic output
+        filters: dict = {}
         for name, tasks in diagnostics.items():
             diagnostic_info = info.data['diagnostics'][name]
             self.diagnostics[name] = DiagnosticOutput(
@@ -151,6 +157,36 @@ class RecipeOutput(Mapping):
                 title=diagnostic_info.get('title'),
                 description=diagnostic_info.get('description'),
             )
+
+            # Add data to filters
+            for task in tasks:
+                for file in task.files:
+                    RecipeOutput._add_to_filters(filters, file.attributes)
+
+        # Sort at the end because sets are unordered
+        self.filters = RecipeOutput._sort_filters(filters)
+
+    @classmethod
+    def _add_to_filters(cls, filters, attributes):
+        """Add valid values to the HTML output filters."""
+        for attr in RecipeOutput.FILTER_ATTRS:
+            if attr not in attributes:
+                continue
+            values = attributes[attr]
+            # `set()` to avoid duplicates
+            attr_list = filters.get(attr, set())
+            if (isinstance(values, str) or not isinstance(values, Sequence)):
+                attr_list.add(values)
+            else:
+                attr_list.update(values)
+            filters[attr] = attr_list
+
+    @classmethod
+    def _sort_filters(cls, filters):
+        """Sort the HTML output filters."""
+        for _filter, _attrs in filters.items():
+            filters[_filter] = sorted(_attrs)
+        return filters
 
     def __repr__(self):
         """Return canonical string representation."""
@@ -175,10 +211,7 @@ class RecipeOutput(Mapping):
         """Construct instance from `_recipe.Recipe` output.
 
         The core recipe format is not directly compatible with the API. This
-        constructor does the following:
-
-        1. Convert `config-user` dict to an instance of :obj:`Session`
-        2. Converts the raw recipe dict to :obj:`RecipeInfo`
+        constructor converts the raw recipe dict to :obj:`RecipeInfo`
 
         Parameters
         ----------
@@ -187,10 +220,9 @@ class RecipeOutput(Mapping):
         """
         task_output = recipe_output['task_output']
         recipe_data = recipe_output['recipe_data']
-        recipe_config = recipe_output['recipe_config']
+        session = recipe_output['session']
         recipe_filename = recipe_output['recipe_filename']
 
-        session = Session.from_config_user(recipe_config)
         info = RecipeInfo(recipe_data, filename=recipe_filename)
         info.resolve()
 
@@ -206,7 +238,7 @@ class RecipeOutput(Mapping):
         template = get_template('recipe_output_page.j2')
         html_dump = self.render(template=template)
 
-        with open(filename, 'w') as file:
+        with open(filename, 'w', encoding='utf-8') as file:
             file.write(html_dump)
 
         logger.info("Wrote recipe output to:\nfile://%s", filename)
@@ -224,17 +256,19 @@ class RecipeOutput(Mapping):
             diagnostics=self.diagnostics.values(),
             session=self.session,
             info=self.info,
+            filters=self.filters,
+            relpath=os.path.relpath,
         )
 
         return rendered
 
     def read_main_log(self) -> str:
         """Read log file."""
-        return self.session.main_log.read_text()
+        return self.session.main_log.read_text(encoding='utf-8')
 
     def read_main_log_debug(self) -> str:
         """Read debug log file."""
-        return self.session.main_log_debug.read_text()
+        return self.session.main_log_debug.read_text(encoding='utf-8')
 
 
 class OutputFile():
@@ -253,7 +287,7 @@ class OutputFile():
 
     kind: Optional[str] = None
 
-    def __init__(self, path: str, attributes: dict = None):
+    def __init__(self, path: str, attributes: Optional[dict] = None):
         if not attributes:
             attributes = {}
 
@@ -289,7 +323,7 @@ class OutputFile():
             self._references = tuple(Reference.from_tag(tag) for tag in tags)
         return self._references
 
-    def _get_derived_path(self, append: str, suffix: str = None):
+    def _get_derived_path(self, append: str, suffix: Optional[str] = None):
         """Return path of related files.
 
         Parameters
@@ -323,7 +357,11 @@ class OutputFile():
         return self._get_derived_path('_provenance', '.xml')
 
     @classmethod
-    def create(cls, path: str, attributes: dict = None) -> 'OutputFile':
+    def create(
+        cls,
+        path: str,
+        attributes: Optional[dict] = None,
+    ) -> 'OutputFile':
         """Construct new instances of OutputFile.
 
         Chooses a derived class if suitable.

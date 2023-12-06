@@ -1,5 +1,702 @@
+.. _changelog:
+
 Changelog
 =========
+
+.. _changelog-v2-10-0:
+
+v2.10.0
+-------
+Highlights
+
+TODO: add highlights
+
+This release includes
+
+Backwards incompatible changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Remove the deprecated option ``use_legacy_supplementaries`` (`#2202 <https://github.com/ESMValGroup/ESMValCore/pull/2202>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+   - The recommended upgrade procedure is to remove ``use_legacy_supplementaries`` from config-user.yml
+     (if it was there) and remove any mention of ``fx_variables`` from the recipe. If automatically defining
+     the required supplementary variables does not work, define them in the variable or
+     (``additional_``) ``datasets`` section as described in :ref:`supplementary_variables`.
+
+-  Use smarter (units-aware) weights (`#2139 <https://github.com/ESMValGroup/ESMValCore/pull/2139>`__) `Manuel Schlund <https://github.com/schlunma>`__
+   
+   - Some preprocessors handle units better. For details, see the pull request.
+
+-  Removed deprecated configuration option ``offline`` (`#2213 <https://github.com/ESMValGroup/ESMValCore/pull/2213>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+   - In :ref:`changelog-v2-8-0`, we replaced the old ``offline`` configuration option. From this version on, it stops working.
+     Please refer to :ref:`changelog-v2-8-0` for upgrade instructions.
+
+-  Fix issue with CORDEX datasets requiring different dataset tags for downloads and fixes (`#2066 <https://github.com/ESMValGroup/ESMValCore/pull/2066>`__) `Joakim Löw <https://github.com/ljoakim>`__
+   
+   - Due to the different facets for CORDEX datasets, there was an inconsistency in the fixing mechanism.
+     This change requires changes to existing recipes that use CORDEX datasets. Please refer to the pull request for detailed update instructions.
+
+-  Added new operators for statistics preprocessor (e.g., ``'percentile'``) and allowed passing additional arguments (`#2191 <https://github.com/ESMValGroup/ESMValCore/pull/2191>`__) `Manuel Schlund <https://github.com/schlunma>`__
+   
+   - This harmonizes the operators for all statistics preprocessors. From this version, the new names can be used; the old arguments will stop working from
+     version 2.12.0. Please refer to :ref:`stat_preprocs` for a detailed description.
+
+-  For the following changes, no user change is necessary
+  
+   -  Remove deprecated way of calling :func:`~esmvalcore.cmor.table.read_cmor_tables` (`#2201 <https://github.com/ESMValGroup/ESMValCore/pull/2201>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+   -  Remove deprecated callback argument from preprocessor ``load`` function (`#2207 <https://github.com/ESMValGroup/ESMValCore/pull/2207>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+   -  Remove deprecated preprocessor function `cleanup` (`#2215 <https://github.com/ESMValGroup/ESMValCore/pull/2215>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+
+Deprecations
+~~~~~~~~~~~~
+
+-  Clearly separate fixes and CMOR checks (`#2157 <https://github.com/ESMValGroup/ESMValCore/pull/2157>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+Bug fixes
+~~~~~~~~~
+
+-  Re-add correctly region-extracted cell measures and ancillary variables after :ref:`extract_region` (`#2166 <https://github.com/ESMValGroup/ESMValCore/pull/2166>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__, `Manuel Schlund <https://github.com/schlunma>`__
+-  Fix sorting of datasets
+
+   -  Fix sorting of ensemble members in :func:`~esmvalcore.dataset.datasets_to_recipe` (`#2095 <https://github.com/ESMValGroup/ESMValCore/pull/2095>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+   -  Fix a problem with sorting datasets that have a mix of facet types (`#2238 <https://github.com/ESMValGroup/ESMValCore/pull/2238>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+   -  Avoid a crash if dataset has supplementary variables (`#2198 <https://github.com/ESMValGroup/ESMValCore/pull/2198>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+CMOR standard
+~~~~~~~~~~~~~
+
+-  ERA5 on-the-fly CMORizer: changed sign of variables ``evspsbl`` and ``evspsblpot`` (`#2115 <https://github.com/ESMValGroup/ESMValCore/pull/2115>`__) `katjaweigel <https://github.com/katjaweigel>`__
+-  Add ``ch4`` surface custom cmor table entry (`#2168 <https://github.com/ESMValGroup/ESMValCore/pull/2168>`__) `Birgit Hassler <https://github.com/hb326>`__
+-  Add CMIP3 institutes names used at NCI (`#2152 <https://github.com/ESMValGroup/ESMValCore/pull/2152>`__) `Romain Beucher <https://github.com/rbeucher>`__
+-  Added :func:`~esmvalcore.cmor.fixes.get_time_bounds` and :func:`~esmvalcore.cmor.fixes.get_next_month` to public API (`#2214 <https://github.com/ESMValGroup/ESMValCore/pull/2214>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Improve concatenation checks
+
+   -  Relax concatenation checks for ``--check_level=relax`` and ``--check_level=ignore`` (`#2144 <https://github.com/ESMValGroup/ESMValCore/pull/2144>`__) `sloosvel <https://github.com/sloosvel>`__
+   -  Fix ``concatenate`` preprocessor function (`#2240 <https://github.com/ESMValGroup/ESMValCore/pull/2240>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+   -  Fix time overlap handling in concatenation (`#2247 <https://github.com/ESMValGroup/ESMValCore/pull/2247>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
+
+Computational performance improvements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Make :ref:`threshold_masking` preprocessors lazy  (`#2169 <https://github.com/ESMValGroup/ESMValCore/pull/2169>`__) `Jörg Benke <https://github.com/joergbenke>`__
+
+   -  Restored usage of numpy in `_mask_with_shp` (`#2209 <https://github.com/ESMValGroup/ESMValCore/pull/2209>`__) `Jörg Benke <https://github.com/joergbenke>`__
+-  Call coord.core_bounds() instead of coord.bounds in ``check.py`` (`#2146 <https://github.com/ESMValGroup/ESMValCore/pull/2146>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Rechunk between preprocessor steps (`#2205 <https://github.com/ESMValGroup/ESMValCore/pull/2205>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Reduce the size of the dask graph created by the ``anomalies`` preprocessor function (`#2200 <https://github.com/ESMValGroup/ESMValCore/pull/2200>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Documentation
+~~~~~~~~~~~~~
+
+-  Add reference to release v2.9.0 in the changelog (`#2130 <https://github.com/ESMValGroup/ESMValCore/pull/2130>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Add merge instructions to release instructions (`#2131 <https://github.com/ESMValGroup/ESMValCore/pull/2131>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
+-  Update `mamba` before building environment during Readthedocs build (`#2149 <https://github.com/ESMValGroup/ESMValCore/pull/2149>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Ensure compatible zstandard and zstd versions for .conda support (`#2204 <https://github.com/ESMValGroup/ESMValCore/pull/2204>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
+-  Remove outdated documentation (`#2210 <https://github.com/ESMValGroup/ESMValCore/pull/2210>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Remove meercode badge from README because their API is broken (`#2224 <https://github.com/ESMValGroup/ESMValCore/pull/2224>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Correct usage help text of version command (`#2232 <https://github.com/ESMValGroup/ESMValCore/pull/2232>`__) `James Frost <https://github.com/jfrost-mo>`__
+-  Add ``navigation_with_keys: False`` to ``html_theme_options`` in Readthedocs ``conf.py`` (`#2245 <https://github.com/ESMValGroup/ESMValCore/pull/2245>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Replace squarey badge with roundy shield for Anaconda sticker in README (`#2233 <https://github.com/ESMValGroup/ESMValCore/pull/2233>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+
+Fixes for datasets
+~~~~~~~~~~~~~~~~~~
+
+-  Updated doc about fixes and added type hints to fix functions (`#2160 <https://github.com/ESMValGroup/ESMValCore/pull/2160>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+Installation
+~~~~~~~~~~~~
+
+-  Clean-up how pins are written in conda environment file (`#2125 <https://github.com/ESMValGroup/ESMValCore/pull/2125>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Use importlib.metadata instead of deprecated pkg_resources (`#2096 <https://github.com/ESMValGroup/ESMValCore/pull/2096>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Pin shapely to >=2.0 (`#2075 <https://github.com/ESMValGroup/ESMValCore/pull/2075>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+
+Preprocessor
+~~~~~~~~~~~~
+
+-  Improve preprocessor output sorting code (`#2111 <https://github.com/ESMValGroup/ESMValCore/pull/2111>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Preprocess datasets in the same order as they are listed in the recipe (`#2103 <https://github.com/ESMValGroup/ESMValCore/pull/2103>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+-  [Github Actions] Compress all bash shell setters into one default option per workflow (`#2126 <https://github.com/ESMValGroup/ESMValCore/pull/2126>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  [Github Actions] Fix Monitor Tests Github Action (`#2135 <https://github.com/ESMValGroup/ESMValCore/pull/2135>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  [condalock] update conda lock file (`#2141 <https://github.com/ESMValGroup/ESMValCore/pull/2141>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  [Condalock] make sure mamba/conda are at latest version by forcing a pinned mamba install (`#2136 <https://github.com/ESMValGroup/ESMValCore/pull/2136>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Update code coverage orbs (`#2206 <https://github.com/ESMValGroup/ESMValCore/pull/2206>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Revisit the comment-triggered Github Actions test (`#2243 <https://github.com/ESMValGroup/ESMValCore/pull/2243>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Remove workflow that runs Github Actions tests from PR comment (`#2244 <https://github.com/ESMValGroup/ESMValCore/pull/2244>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+
+Improvements
+~~~~~~~~~~~~
+
+-  Merge v2.9.x into main (`#2128 <https://github.com/ESMValGroup/ESMValCore/pull/2128>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fix typo in citation file (`#2182 <https://github.com/ESMValGroup/ESMValCore/pull/2182>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Cleaned and extended function that extracts datetimes from paths (`#2181 <https://github.com/ESMValGroup/ESMValCore/pull/2181>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Add file encoding (and some read modes) at open file step (`#2219 <https://github.com/ESMValGroup/ESMValCore/pull/2219>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Check type of argument passed to :func:`~esmvalcore.cmor.table.read_cmor_tables` (`#2217 <https://github.com/ESMValGroup/ESMValCore/pull/2217>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Dynamic HTML output for monitoring (`#2062 <https://github.com/ESMValGroup/ESMValCore/pull/2062>`__) `Brei Soliño <https://github.com/bsolino>`__
+
+
+.. _changelog-v2-9-0:
+
+
+v2.9.0
+------
+Highlights
+~~~~~~~~~~
+It is now possible to use the
+`Dask distributed scheduler <https://docs.dask.org/en/latest/deploying.html>`__,
+which can
+`significantly reduce the run-time of recipes <https://github.com/ESMValGroup/ESMValCore/pull/2049#pullrequestreview-1446279391>`__.
+Configuration examples and advice are available in
+:ref:`our documentation <config-dask>`.
+More work on improving the computational performance is planned, so please share
+your experiences, good and bad, with this new feature in
+`ESMValGroup/ESMValCore#1763 <https://github.com/ESMValGroup/ESMValCore/discussions/1763>`__.
+
+This release includes
+
+Backwards incompatible changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Remove deprecated configuration options (`#2056 <https://github.com/ESMValGroup/ESMValCore/pull/2056>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+   - The module ``esmvalcore.experimental.config`` has been removed.
+     To upgrade, import the module from :mod:`esmvalcore.config` instead.
+
+   - The module ``esmvalcore._config`` has been removed.
+     To upgrade, use :mod:`esmvalcore.config` instead.
+
+   - The methods ``esmvalcore.config.Session.to_config_user`` and ``esmvalcore.config.Session.from_config_user`` have been removed.
+     To upgrade, use :obj:`esmvalcore.config.Session` to access the configuration values directly.
+
+Bug fixes
+~~~~~~~~~
+
+-  Respect ``ignore_warnings`` settings from the :ref:`project configuration <filterwarnings_config-developer>` in :func:`esmvalcore.dataset.Dataset.load` (`#2046 <https://github.com/ESMValGroup/ESMValCore/pull/2046>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fixed usage of custom location for :ref:`custom CMOR tables <custom_cmor_tables>` (`#2052 <https://github.com/ESMValGroup/ESMValCore/pull/2052>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fix issue with writing index.html when :ref:`running a recipe <running>` with ``--resume-from`` (`#2055 <https://github.com/ESMValGroup/ESMValCore/pull/2055>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Fixed bug in ICON CMORizer that lead to shifted time coordinates (`#2038 <https://github.com/ESMValGroup/ESMValCore/pull/2038>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Include ``-`` in allowed characters for bibtex references (`#2097 <https://github.com/ESMValGroup/ESMValCore/pull/2097>`__) `Alistair Sellar <https://github.com/alistairsellar>`__
+-  Do not raise an exception if the requested version of a file is not available for all matching files on ESGF (`#2105 <https://github.com/ESMValGroup/ESMValCore/pull/2105>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Computational performance improvements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Add support for :ref:`configuring Dask distributed <config-dask>` (`#2049 <https://github.com/ESMValGroup/ESMValCore/pull/2049>`__, `#2122 <https://github.com/ESMValGroup/ESMValCore/pull/2122>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Make :func:`esmvalcore.preprocessor.extract_levels` lazy (`#1761 <https://github.com/ESMValGroup/ESMValCore/pull/1761>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Lazy implementation of :func:`esmvalcore.preprocessor.multi_model_statistics` and :func:`esmvalcore.preprocessor.ensemble_statistics` (`#968 <https://github.com/ESMValGroup/ESMValCore/pull/968>`__ and `#2087 <https://github.com/ESMValGroup/ESMValCore/pull/2087>`__) `Peter Kalverla <https://github.com/Peter9192>`__
+-  Avoid realizing data in preprocessor function :func:`esmvalcore.preprocessor.concatenate` when cubes overlap (`#2109 <https://github.com/ESMValGroup/ESMValCore/pull/2109>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Documentation
+~~~~~~~~~~~~~
+
+-  Remove unneeded sphinxcontrib extension (`#2047 <https://github.com/ESMValGroup/ESMValCore/pull/2047>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Show ESMValTool logo on `PyPI webpage <https://pypi.org/project/ESMValCore/>`__ (`#2065 <https://github.com/ESMValGroup/ESMValCore/pull/2065>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Fix gitter badge in README (`#2118 <https://github.com/ESMValGroup/ESMValCore/pull/2118>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Add changelog for v2.9.0 (`#2088 <https://github.com/ESMValGroup/ESMValCore/pull/2088>`__ and `#2123 <https://github.com/ESMValGroup/ESMValCore/pull/2123>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Fixes for datasets
+~~~~~~~~~~~~~~~~~~
+
+-  Pass the :obj:`esmvalcore.config.Session` to fixes (`#1988 <https://github.com/ESMValGroup/ESMValCore/pull/1988>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  ICON: Allowed specifying vertical grid information in recipe (`#2067 <https://github.com/ESMValGroup/ESMValCore/pull/2067>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Allow specifying ``raw_units`` for CESM2, EMAC, and ICON CMORizers (`#2043 <https://github.com/ESMValGroup/ESMValCore/pull/2043>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  ICON: allow specifying horizontal grid file in recipe/extra facets (`#2078 <https://github.com/ESMValGroup/ESMValCore/pull/2078>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fix tas/tos CMIP6: FIO, KACE, MIROC, IITM (`#2061 <https://github.com/ESMValGroup/ESMValCore/pull/2061>`__) `Pep Cos <https://github.com/pepcos>`__
+-  Add fix for EC-Earth3-Veg tos calendar (`#2100 <https://github.com/ESMValGroup/ESMValCore/pull/2100>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Correct GISS-E2-1-G ``tos`` units (`#2099 <https://github.com/ESMValGroup/ESMValCore/pull/2099>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Installation
+~~~~~~~~~~~~
+
+-  Drop support for Python 3.8 (`#2053 <https://github.com/ESMValGroup/ESMValCore/pull/2053>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Add python 3.11 to Github Actions package (conda and PyPI) installation tests (`#2083 <https://github.com/ESMValGroup/ESMValCore/pull/2083>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Remove ``with_mypy`` or ``with-mypy`` optional tool for prospector (`#2108 <https://github.com/ESMValGroup/ESMValCore/pull/2108>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+
+Preprocessor
+~~~~~~~~~~~~
+
+-  Added ``period='hourly'`` for :func:`esmvalcore.preprocessor.climate_statistics` and :func:`esmvalcore.preprocessor.anomalies` (`#2068 <https://github.com/ESMValGroup/ESMValCore/pull/2068>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Support IPCC AR6 regions in :func:`esmvalcore.preprocessor.extract_shape` (`#2008 <https://github.com/ESMValGroup/ESMValCore/pull/2008>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+
+.. _changelog-v2-8-1:
+
+v2.8.1
+------
+Highlights
+~~~~~~~~~~
+This release adds support for Python 3.11 and includes several bugfixes.
+
+This release includes:
+
+Bug fixes
+~~~~~~~~~
+
+-  Pin numpy !=1.24.3 (`#2011 <https://github.com/ESMValGroup/ESMValCore/pull/2011>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Fix a bug in recording provenance for the ``mask_multimodel`` preprocessor (`#1984 <https://github.com/ESMValGroup/ESMValCore/pull/1984>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fix ICON hourly data rounding issues (`#2022 <https://github.com/ESMValGroup/ESMValCore/pull/2022>`__) `Julian Bauer <https://github.com/BauerJul>`__
+-  Use the default SSL context when using the ``extract_location`` preprocessor (`#2023 <https://github.com/ESMValGroup/ESMValCore/pull/2023>`__) `Emma Hogan <https://github.com/ehogan>`__
+-  Make time-related CMOR fixes work with time dimensions `time1`, `time2`, `time3` (`#1971 <https://github.com/ESMValGroup/ESMValCore/pull/1971>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Always create a cache directory for storing ICON grid files (`#2030 <https://github.com/ESMValGroup/ESMValCore/pull/2030>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fixed altitude <--> pressure level conversion for masked arrays in the ``extract_levels`` preprocessor (`#1999 <https://github.com/ESMValGroup/ESMValCore/pull/1999>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Allowed ignoring of scalar time coordinates in the ``multi_model_statistics`` preprocessor (`#1961 <https://github.com/ESMValGroup/ESMValCore/pull/1961>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+Fixes for datasets
+~~~~~~~~~~~~~~~~~~
+
+-  Add support for hourly ICON data (`#1990 <https://github.com/ESMValGroup/ESMValCore/pull/1990>`__) `Julian Bauer <https://github.com/BauerJul>`__
+-  Fix areacello in BCC-CSM2-MR (`#1993 <https://github.com/ESMValGroup/ESMValCore/pull/1993>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+
+Installation
+~~~~~~~~~~~~
+
+-  Add support for Python=3.11 (`#1832 <https://github.com/ESMValGroup/ESMValCore/pull/1832>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Modernize conda lock file creation workflow with mamba, Mambaforge etc (`#2027 <https://github.com/ESMValGroup/ESMValCore/pull/2027>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Pin `libnetcdf!=4.9.1` (`#2072 <https://github.com/ESMValGroup/ESMValCore/pull/2072>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+
+Documentation
+~~~~~~~~~~~~~
+-  Add changelog for v2.8.1 (`#2079 <https://github.com/ESMValGroup/ESMValCore/pull/2079>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+-  Use mocked `geopy.geocoders.Nominatim` to avoid `ReadTimeoutError` (`#2005 <https://github.com/ESMValGroup/ESMValCore/pull/2005>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Update pre-commit hooks (`#2020 <https://github.com/ESMValGroup/ESMValCore/pull/2020>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+
+.. _changelog-v2-8-0:
+
+
+v2.8.0
+------
+Highlights
+~~~~~~~~~~
+
+-  ESMValCore now supports wildcards in recipes and offers improved support for
+   ancillary variables and dataset versioning thanks to contributions by
+   `Bouwe Andela <https://github.com/bouweandela>`__. For details, see
+   :ref:`Automatically populating a recipe with all available datasets <dataset_wildcards>`
+   and :ref:`Defining supplementary variables <supplementary_variables>`.
+-  Support for CORDEX datasets in a rotated pole coordinate system has been
+   added by `sloosvel <https://github.com/sloosvel>`__.
+-  Native :ref:`ICON <read_icon>` output is now made UGRID-compliant
+   on-the-fly to unlock the use of more sophisticated regridding algorithms,
+   thanks to `Manuel Schlund <https://github.com/schlunma>`__.
+-  The Python API has been extended with the addition of three
+   modules: :mod:`esmvalcore.config`, :mod:`esmvalcore.dataset`, and
+   :mod:`esmvalcore.local`, all these features courtesy of
+   `Bouwe Andela <https://github.com/bouweandela>`__. For details, see our new
+   example :doc:`example-notebooks`.
+-  The preprocessor :func:`~esmvalcore.preprocessor.multi_model_statistics`
+   has been extended to support more use-cases thanks to contributions by
+   `Manuel Schlund <https://github.com/schlunma>`__. For details, see
+   :ref:`Multi-model statistics <multi-model statistics>`.
+
+This release includes:
+
+Backwards incompatible changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Please read the descriptions of the linked pull requests for detailed upgrade instructions.
+
+-  The algorithm for automatically defining the ancillary variables and cell
+   measures has been improved
+   (`#1609 <https://github.com/ESMValGroup/ESMValCore/pull/1609>`_)
+   `Bouwe Andela <https://github.com/bouweandela>`__.
+   If this does not work as expected, more examples of how to adapt your recipes
+   are given
+   `here <https://github.com/ESMValGroup/ESMValCore/pull/1609#Backward-incompatible-changes>`__
+   and in the corresponding sections of the
+   :ref:`recipe documentation <supplementary_variables>` and the
+   :ref:`preprocessor documentation <preprocessors_using_supplementary_variables>`.
+-  Remove deprecated features scheduled for removal in v2.8.0 or earlier
+   (`#1826 <https://github.com/ESMValGroup/ESMValCore/pull/1826>`__)
+   `Manuel Schlund <https://github.com/schlunma>`__.
+   Removed ``esmvalcore.iris_helpers.var_name_constraint`` (has been deprecated
+   in v2.6.0; please use :class:`iris.NameConstraint` with the keyword argument
+   ``var_name`` instead) and the option ``always_use_ne_mask`` for
+   :func:`esmvalcore.preprocessor.mask_landsea` (has been deprecated in v2.5.0;
+   the same behavior can now be achieved by specifying ``supplementary_variables``.
+-  No files will be found if a non-existent version of a dataset is specified
+   (`#1835 <https://github.com/ESMValGroup/ESMValCore/pull/1835>`_)
+   `Bouwe Andela <https://github.com/bouweandela>`__. If a ``version`` of a
+   dataset is specified in the recipe, the tool will now search for exactly that
+   version, instead of simply using the latest version. Therefore, it is
+   necessary to make sure that the version number in the directory tree matches
+   with the version number in the recipe to find the files.
+-  The default filename template for obs4MIPs has been updated to better match
+   filenames used in this project in
+   (`#1866 <https://github.com/ESMValGroup/ESMValCore/pull/1866>`__)
+   `Bouwe Andela <https://github.com/bouweandela>`__. This may cause issues
+   if you are storing all the files for obs4MIPs in a directory with no
+   subdirectories per dataset.
+
+Deprecations
+~~~~~~~~~~~~
+Please read the descriptions of the linked pull requests for detailed upgrade instructions.
+
+-  Various configuration related options that are now available through
+   :mod:`esmvalcore.config` have been deprecated (`#1769 <https://github.com/ESMValGroup/ESMValCore/pull/1769>`_) `Bouwe Andela <https://github.com/bouweandela>`__.
+-  The ``fx_variables`` preprocessor argument and related features have been
+   deprecated (`#1609`_)
+   `Bouwe Andela <https://github.com/bouweandela>`__.
+   See `here <https://github.com/ESMValGroup/ESMValCore/pull/1609#Deprecations>`__
+   for more information.
+-  Combined ``offline`` and ``always_search_esgf`` into a single option ``search_esgf``
+   (`#1935 <https://github.com/ESMValGroup/ESMValCore/pull/1935>`_)
+   `Manuel Schlund <https://github.com/schlunma>`__. The configuration
+   option/command line argument ``offline`` has been deprecated in favor of
+   ``search_esgf``. The previous ``offline: true`` is now ``search_esgf: never``
+   (the default); the previous ``offline: false`` is now
+   ``search_esgf: when_missing``. More details on how to adapt your workflow
+   regarding these new options are given in `#1935`_ and the
+   `documentation <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html?highlight=search_esgf#user-configuration-file>`__.
+-  :func:`esmvalcore.preprocessor.cleanup` has been deprecated (`#1949 <https://github.com/ESMValGroup/ESMValCore/pull/1949>`_)
+   `Manuel Schlund <https://github.com/schlunma>`__. Please do not use this
+   anymore in the recipe (it is not necessary).
+
+Python API
+~~~~~~~~~~
+
+-  Support searching ESGF for a specific version of a file and add :obj:`esmvalcore.esgf.ESGFFile.facets` (`#1822 <https://github.com/ESMValGroup/ESMValCore/pull/1822>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Fix issues with searching for files on ESGF (`#1863 <https://github.com/ESMValGroup/ESMValCore/pull/1863>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Move the :mod:`esmvalcore.experimental.config` module to  :mod:`esmvalcore.config` (`#1769`_) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Add :mod:`esmvalcore.local`, a module to search data on the local filesystem (`#1835`_) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Add :mod:`esmvalcore.dataset` module (`#1877 <https://github.com/ESMValGroup/ESMValCore/pull/1877>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Bug fixes
+~~~~~~~~~
+
+-  Import from :mod:`esmvalcore.config` in the :mod:`esmvalcore.experimental` module (`#1816 <https://github.com/ESMValGroup/ESMValCore/pull/1816>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Added scalar coords of input cubes to output of esmpy_regrid (`#1811 <https://github.com/ESMValGroup/ESMValCore/pull/1811>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fix severe bug in :func:`esmvalcore.preprocessor.mask_fillvalues` (`#1823 <https://github.com/ESMValGroup/ESMValCore/pull/1823>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fix LWP of ICON on-the-fly CMORizer (`#1839 <https://github.com/ESMValGroup/ESMValCore/pull/1839>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fixed issue in irregular regridding regarding scalar coordinates (`#1845 <https://github.com/ESMValGroup/ESMValCore/pull/1845>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Update product attributes and `metadata.yml` with cube metadata before saving files (`#1837 <https://github.com/ESMValGroup/ESMValCore/pull/1837>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Remove an extra space character from a filename (`#1883 <https://github.com/ESMValGroup/ESMValCore/pull/1883>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Improve resilience of ESGF search (`#1869 <https://github.com/ESMValGroup/ESMValCore/pull/1869>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Fix issue with no files found if timerange start/end differs in length (`#1880 <https://github.com/ESMValGroup/ESMValCore/pull/1880>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Add `driver` and `sub_experiment` tags to generate dataset aliases (`#1886 <https://github.com/ESMValGroup/ESMValCore/pull/1886>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Fixed time points of native CESM2 output (`#1772 <https://github.com/ESMValGroup/ESMValCore/pull/1772>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fix type hints for Python versions < 3.10 (`#1897 <https://github.com/ESMValGroup/ESMValCore/pull/1897>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Fixed `set_range_in_0_360` for dask arrays (`#1919 <https://github.com/ESMValGroup/ESMValCore/pull/1919>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Made equalized attributes in concatenated cubes consistent across runs (`#1783 <https://github.com/ESMValGroup/ESMValCore/pull/1783>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fix issue with reading dates from files (`#1936 <https://github.com/ESMValGroup/ESMValCore/pull/1936>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Add institute name used on ESGF for CMIP5 CanAM4, CanCM4, and CanESM2 (`#1937 <https://github.com/ESMValGroup/ESMValCore/pull/1937>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Fix issue where data was not loaded and saved (`#1962 <https://github.com/ESMValGroup/ESMValCore/pull/1962>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Fix type hints for Python 3.8 (`#1795 <https://github.com/ESMValGroup/ESMValCore/pull/1795>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Update the institute facet of the CSIRO-Mk3L-1-2 model (`#1966 <https://github.com/ESMValGroup/ESMValCore/pull/1966>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Fixed race condition that may result in errors in :func:`esmvalcore.preprocessor.cleanup` (`#1949`_) `Manuel Schlund <https://github.com/schlunma>`__
+-  Update notebook so it uses supplementaries instead of ancillaries (`#1945 <https://github.com/ESMValGroup/ESMValCore/pull/1945>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Documentation
+~~~~~~~~~~~~~
+
+-  Fix anaconda badge in README (`#1759 <https://github.com/ESMValGroup/ESMValCore/pull/1759>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Fix mistake in the documentation of :obj:`esmvalcore.esgf.find_files` (`#1784 <https://github.com/ESMValGroup/ESMValCore/pull/1784>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Support linking to "stable" ESMValTool version on readthedocs (`#1608 <https://github.com/ESMValGroup/ESMValCore/pull/1608>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Updated ICON doc with information on usage of extract_levels preprocessor (`#1903 <https://github.com/ESMValGroup/ESMValCore/pull/1903>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Add changelog for latest released version v2.7.1 (`#1905 <https://github.com/ESMValGroup/ESMValCore/pull/1905>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Update `preprocessor.rst` due to renaming of NCEP dataset to NCEP-NCAR-R1 (`#1908 <https://github.com/ESMValGroup/ESMValCore/pull/1908>`__) `Birgit Hassler <https://github.com/hb326>`__
+-  Replace timerange nested lists in docs with overview table (`#1940 <https://github.com/ESMValGroup/ESMValCore/pull/1940>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
+-  Updated section "backward compatibility" in `contributing.rst` (`#1918 <https://github.com/ESMValGroup/ESMValCore/pull/1918>`__) `Axel Lauer <https://github.com/axel-lauer>`__
+-  Add link to ESMValTool release procedure steps (`#1957 <https://github.com/ESMValGroup/ESMValCore/pull/1957>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Synchronize documentation table of contents with ESMValTool (`#1958 <https://github.com/ESMValGroup/ESMValCore/pull/1958>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Improvements
+~~~~~~~~~~~~
+
+-  Support wildcards in the recipe and improve support for ancillary variables and dataset versioning (`#1609`_) `Bouwe Andela <https://github.com/bouweandela>`__. More details on how to adapt your recipes are given in the corresponding pull request description and in the corresponding sections of the `recipe documentation <https://docs.esmvaltool.org/projects/esmvalcore/en/latest/recipe/overview.html#defining-supplementary-variables-ancillary-variables-and-cell-measures>`__ and the `preprocessor documentation <https://docs.esmvaltool.org/projects/esmvalcore/en/latest/recipe/preprocessor.html#preprocessors-using-supplementary-variables>`__.
+-  Create a session directory with suffix "-1", "-2", etc if it already exists (`#1818 <https://github.com/ESMValGroup/ESMValCore/pull/1818>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Message for users when they use esmvaltool executable from esmvalcore only (`#1831 <https://github.com/ESMValGroup/ESMValCore/pull/1831>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Order recipe output in index.html (`#1899 <https://github.com/ESMValGroup/ESMValCore/pull/1899>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Improve reading facets from ESGF search results (`#1920 <https://github.com/ESMValGroup/ESMValCore/pull/1920>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Fixes for datasets
+~~~~~~~~~~~~~~~~~~
+
+-  Fix rotated coordinate grids and `tas` and `pr` for CORDEX datasets (`#1765 <https://github.com/ESMValGroup/ESMValCore/pull/1765>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Made ICON output UGRID-compliant (on-the-fly) (`#1664 <https://github.com/ESMValGroup/ESMValCore/pull/1664>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fix automatic download of ICON grid file and make ICON UGRIDization optional (`default: true`) (`#1922 <https://github.com/ESMValGroup/ESMValCore/pull/1922>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Add siconc fixes for EC-Earth3-Veg and EC-Earth3-Veg-LR models (`#1771 <https://github.com/ESMValGroup/ESMValCore/pull/1771>`__) `Evgenia Galytska <https://github.com/egalytska>`__
+-  Fix siconc in KIOST-ESM (`#1829 <https://github.com/ESMValGroup/ESMValCore/pull/1829>`__) `Lisa Bock <https://github.com/LisaBock>`__
+-  Extension of ERA5 CMORizer (variable cl) (`#1850 <https://github.com/ESMValGroup/ESMValCore/pull/1850>`__) `Axel Lauer <https://github.com/axel-lauer>`__
+-  Add standard variable names for EMAC (`#1853 <https://github.com/ESMValGroup/ESMValCore/pull/1853>`__) `FranziskaWinterstein <https://github.com/FranziskaWinterstein>`__
+-  Fix for FGOALS-f3-L clt (`#1928 <https://github.com/ESMValGroup/ESMValCore/pull/1928>`__) `Lisa Bock <https://github.com/LisaBock>`__
+
+Installation
+~~~~~~~~~~~~
+
+-  Add all deps to the conda-forge environment and suppress installing and reinstalling deps with pip at readthedocs builds (`#1786 <https://github.com/ESMValGroup/ESMValCore/pull/1786>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Pin netCDF4<1.6.1 (`#1805 <https://github.com/ESMValGroup/ESMValCore/pull/1805>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Unpin NetCF4 (`#1814 <https://github.com/ESMValGroup/ESMValCore/pull/1814>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Unpin flake8 (`#1820 <https://github.com/ESMValGroup/ESMValCore/pull/1820>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Add iris-esmf-regrid as a dependency (`#1809 <https://github.com/ESMValGroup/ESMValCore/pull/1809>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Pin esmpy<8.4 (`#1871 <https://github.com/ESMValGroup/ESMValCore/pull/1871>`__) `Klaus Zimmermann <https://github.com/zklaus>`__
+-  Update esmpy import for ESMF v8.4.0 (`#1876 <https://github.com/ESMValGroup/ESMValCore/pull/1876>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Preprocessor
+~~~~~~~~~~~~
+-  Allow :func:`esmvalcore.preprocessor.multi_model_statistics` on cubes with arbitrary dimensions  (`#1808 <https://github.com/ESMValGroup/ESMValCore/pull/1808>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Smarter removal of coordinate metadata in :func:`esmvalcore.preprocessor.multi_model_statistics` preprocessor (`#1813 <https://github.com/ESMValGroup/ESMValCore/pull/1813>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Allowed usage of :func:`esmvalcore.preprocessor.multi_model_statistics` on single cubes/products (`#1849 <https://github.com/ESMValGroup/ESMValCore/pull/1849>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Allowed usage of :func:`esmvalcore.preprocessor.multi_model_statistics` on cubes with identical ``name()`` and ``units`` (but e.g. different long_name) (`#1921 <https://github.com/ESMValGroup/ESMValCore/pull/1921>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Allowed ignoring scalar coordinates in :func:`esmvalcore.preprocessor.multi_model_statistics` (`#1934 <https://github.com/ESMValGroup/ESMValCore/pull/1934>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Refactored :func:`esmvalcore.preprocessor.regrid` and removed unnecessary code not needed anymore due to new iris version (`#1898 <https://github.com/ESMValGroup/ESMValCore/pull/1898>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Do not realise coordinates during CMOR check (`#1912 <https://github.com/ESMValGroup/ESMValCore/pull/1912>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Make :func:`esmvalcore.preprocessor.extract_volume` work with closed and mixed intervals and allow nearest value selection (`#1930 <https://github.com/ESMValGroup/ESMValCore/pull/1930>`__) `sloosvel <https://github.com/sloosvel>`__
+
+Release
+~~~~~~~
+-  Changelog for `v2.8.0rc1` (`#1952 <https://github.com/ESMValGroup/ESMValCore/pull/1952>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Increase version number for ESMValCore `v2.8.0rc1` (`#1955 <https://github.com/ESMValGroup/ESMValCore/pull/1955>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Changelog for `v2.8.0rc2` (`#1959 <https://github.com/ESMValGroup/ESMValCore/pull/1959>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Increase version number for ESMValCore `v2.8.0rc2` (`#1973 <https://github.com/ESMValGroup/ESMValCore/pull/1973>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Changelog for `v2.8.0` (`#1978 <https://github.com/ESMValGroup/ESMValCore/pull/1978>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Increase version number for ESMValCore `v2.8.0` (`#1983 <https://github.com/ESMValGroup/ESMValCore/pull/1983>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+-  Set implicit optional to true in `mypy` config to avert side effects and test fails from new mypy version (`#1790 <https://github.com/ESMValGroup/ESMValCore/pull/1790>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Remove duplicate `implicit_optional = True` line in ``setup.cfg`` (`#1791 <https://github.com/ESMValGroup/ESMValCore/pull/1791>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Fix failing test due to missing sample data (`#1797 <https://github.com/ESMValGroup/ESMValCore/pull/1797>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Remove outdated cmor_table facet from data finder tests (`#1798 <https://github.com/ESMValGroup/ESMValCore/pull/1798>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Modernize tests for :func:`esmvalcore.preprocessor.save` (`#1799 <https://github.com/ESMValGroup/ESMValCore/pull/1799>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  No more sequential tests since SegFaults were not noticed anymore (`#1819 <https://github.com/ESMValGroup/ESMValCore/pull/1819>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Update pre-commit configuration (`#1821 <https://github.com/ESMValGroup/ESMValCore/pull/1821>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Updated URL of ICON grid file used for testing (`#1914 <https://github.com/ESMValGroup/ESMValCore/pull/1914>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+Variable Derivation
+~~~~~~~~~~~~~~~~~~~
+
+-  Add derivation of sea ice extent (`#1695 <https://github.com/ESMValGroup/ESMValCore/pull/1695>`__) `sloosvel <https://github.com/sloosvel>`__
+
+
+.. _changelog-v2-7-1:
+
+
+v2.7.1
+------
+Highlights
+~~~~~~~~~~
+
+This is a bugfix release where we unpin `cf-units` to allow the latest `iris=3.4.0` to be installed. It also includes an update to the default configuration used when searching the ESGF for files, to account for a recent change of the CEDA ESGF index node hostname. The changelog contains only changes that were made to the ``main`` branch.
+
+Installation
+~~~~~~~~~~~~
+
+- Set the version number on the development branches to one minor version more than the previous release (`#1854 <https://github.com/ESMValGroup/ESMValCore/pull/1854>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+- Unpin cf-units (`#1770 <https://github.com/ESMValGroup/ESMValCore/pull/1770>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Bug fixes
+~~~~~~~~~
+
+- Improve error handling if an esgf index node is offline (`#1834 <https://github.com/ESMValGroup/ESMValCore/pull/1834>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+- Removed unnecessary test that fails with iris 3.4.0 (`#1846 <https://github.com/ESMValGroup/ESMValCore/pull/1846>`__) `Manuel Schlund <https://github.com/schlunma>`__
+- Update CEDA ESGF index node hostname (`#1838 <https://github.com/ESMValGroup/ESMValCore/pull/1838>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+
+
+.. _changelog-v2-7-0:
+
+
+v2.7.0
+------
+Highlights
+~~~~~~~~~~
+
+-  We have a new preprocessor function called `'rolling_window_statistics' <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/recipe/preprocessor.html#rolling-window-statistics>`__ implemented by `Liza Malinina <https://github.com/malininae>`__
+-  We have improved the support for native models, refactored native model fixes by adding common base class `NativeDatasetFix`, changed default DRS for reading native ICON output, and added tests for input/output filenames for `ICON <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/find_data.html#icon>`__ and `EMAC <https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/find_data.html#emac>`__ on-the-fly CMORizer, all these features courtesy of `Manuel Schlund <https://github.com/schlunma>`__
+-  Performance of preprocessor functions that use time dimensions has been sped up by **two orders of magnitude** thanks to contributions by `Bouwe Andela <https://github.com/bouweandela>`__
+
+This release includes:
+
+Backwards incompatible changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Change default DRS for reading native ICON output (`#1705 <https://github.com/ESMValGroup/ESMValCore/pull/1705>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+Bug fixes
+~~~~~~~~~
+
+-  Add support for regions stored as MultiPolygon to extract_shape preprocessor (`#1670 <https://github.com/ESMValGroup/ESMValCore/pull/1670>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Fixed type annotations for Python 3.8 (`#1700 <https://github.com/ESMValGroup/ESMValCore/pull/1700>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Core `_io.concatenate()` may fail due to case when one of the cubes is scalar - this fixes that (`#1715 <https://github.com/ESMValGroup/ESMValCore/pull/1715>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Pick up esmvalcore badge instead of esmvaltool one in README (`#1749 <https://github.com/ESMValGroup/ESMValCore/pull/1749>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Restore support for scalar cubes to time selection preprocessor functions (`#1750 <https://github.com/ESMValGroup/ESMValCore/pull/1750>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Fix calculation of precipitation flux in EMAC on-the-fly CMORizer (`#1755 <https://github.com/ESMValGroup/ESMValCore/pull/1755>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+Deprecations
+~~~~~~~~~~~~
+
+-  Remove deprecation warning for regrid schemes already deprecated for v2.7.0 (`#1753 <https://github.com/ESMValGroup/ESMValCore/pull/1753>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+
+Documentation
+~~~~~~~~~~~~~
+
+-  Add Met Office Installation Method (`#1692 <https://github.com/ESMValGroup/ESMValCore/pull/1692>`__) `mo-tgeddes <https://github.com/mo-tgeddes>`__
+-  Add MO-paths to config file (`#1709 <https://github.com/ESMValGroup/ESMValCore/pull/1709>`__) `mo-tgeddes <https://github.com/mo-tgeddes>`__
+-  Update MO obs4MIPs paths in the user configuration file (`#1734 <https://github.com/ESMValGroup/ESMValCore/pull/1734>`__) `mo-tgeddes <https://github.com/mo-tgeddes>`__
+-  Update `Making a release` section of the documentation (`#1689 <https://github.com/ESMValGroup/ESMValCore/pull/1689>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Added changelog for v2.7.0 (`#1746 <https://github.com/ESMValGroup/ESMValCore/pull/1746>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  update CITATION.cff file with 2.7.0 release info (`#1757 <https://github.com/ESMValGroup/ESMValCore/pull/1757>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+
+Improvements
+~~~~~~~~~~~~
+
+-  New preprocessor function 'rolling_window_statistics' (`#1702 <https://github.com/ESMValGroup/ESMValCore/pull/1702>`__) `Liza Malinina <https://github.com/malininae>`__
+-  Remove `pytest_flake8` plugin and use `flake8` instead (`#1722 <https://github.com/ESMValGroup/ESMValCore/pull/1722>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Added CESM2 CMORizer (`#1678 <https://github.com/ESMValGroup/ESMValCore/pull/1678>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Speed up functions that use time dimension (`#1713 <https://github.com/ESMValGroup/ESMValCore/pull/1713>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Modernize and minimize pylint configuration (`#1726 <https://github.com/ESMValGroup/ESMValCore/pull/1726>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Fixes for datasets
+~~~~~~~~~~~~~~~~~~
+
+-  Refactored native model fixes by adding common base class `NativeDatasetFix` (`#1694 <https://github.com/ESMValGroup/ESMValCore/pull/1694>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+Installation
+~~~~~~~~~~~~
+
+-  Pin `netCDF4 != 1.6.1` since that seems to throw a flurry of Segmentation Faults (`#1724 <https://github.com/ESMValGroup/ESMValCore/pull/1724>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+-  Pin `flake8<5.0.0` since Circle CI tests are failing copiously (`#1698 <https://github.com/ESMValGroup/ESMValCore/pull/1698>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Added tests for input/output filenames for ICON and EMAC on-the-fly CMORizer (`#1718 <https://github.com/ESMValGroup/ESMValCore/pull/1718>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Fix failed tests for Python<3.10 resulting from typing (`#1748 <https://github.com/ESMValGroup/ESMValCore/pull/1748>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+.. _changelog-v2-6-0:
+
+v2.6.0
+------
+
+Highlights
+~~~~~~~~~~
+
+- A new set of CMOR fixes is now available in order to load native EMAC model output and CMORize it on the fly. For details, see :ref:`Supported native models: EMAC <read_emac>`.
+- The version number of ESMValCore is now automatically generated using `setuptools_scm <https://github.com/pypa/setuptools_scm/#default-versioning-scheme>`__, which extracts Python package versions from git metadata.
+
+This release includes
+
+Deprecations
+~~~~~~~~~~~~
+
+-  Deprecate the function `esmvalcore.var_name_constraint` (`#1592 <https://github.com/ESMValGroup/ESMValCore/pull/1592>`__) `Manuel Schlund <https://github.com/schlunma>`__. This function is scheduled for removal in v2.8.0. Please use :class:`iris.NameConstraint` with the keyword argument `var_name` instead: this is an exact replacement.
+
+Bug fixes
+~~~~~~~~~
+
+-  Added `start_year` and `end_year` attributes to derived variables (`#1547 <https://github.com/ESMValGroup/ESMValCore/pull/1547>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Show all results on recipe results webpage (`#1560 <https://github.com/ESMValGroup/ESMValCore/pull/1560>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Regridding regular grids with similar coordinates  (`#1567 <https://github.com/ESMValGroup/ESMValCore/pull/1567>`__) `Tomas Lovato <https://github.com/tomaslovato>`__
+-  Fix timerange wildcard search when deriving variables or downloading files (`#1562 <https://github.com/ESMValGroup/ESMValCore/pull/1562>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Fix `force_derivation` bug (`#1627 <https://github.com/ESMValGroup/ESMValCore/pull/1627>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Correct `build-and-deploy-on-pypi` action (`#1634 <https://github.com/ESMValGroup/ESMValCore/pull/1634>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Apply `clip_timerange` to time dependent fx variables (`#1603 <https://github.com/ESMValGroup/ESMValCore/pull/1603>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Correctly handle requests.exceptions.ConnectTimeout when an ESGF index node is offline (`#1638 <https://github.com/ESMValGroup/ESMValCore/pull/1638>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+CMOR standard
+~~~~~~~~~~~~~
+
+-  Added custom CMOR tables used for EMAC CMORizer (`#1599 <https://github.com/ESMValGroup/ESMValCore/pull/1599>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Extended ICON CMORizer (`#1549 <https://github.com/ESMValGroup/ESMValCore/pull/1549>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Add CMOR check exception for a basin coord named sector (`#1612 <https://github.com/ESMValGroup/ESMValCore/pull/1612>`__) `David Hohn <https://github.com/dhohn>`__
+-  Custom user-defined location for custom CMOR tables (`#1625 <https://github.com/ESMValGroup/ESMValCore/pull/1625>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+Containerization
+~~~~~~~~~~~~~~~~
+
+-  Remove update command in Dockerfile (`#1630 <https://github.com/ESMValGroup/ESMValCore/pull/1630>`__) `sloosvel <https://github.com/sloosvel>`__
+
+Community
+~~~~~~~~~
+
+-  Add David Hohn to contributors' list (`#1586 <https://github.com/ESMValGroup/ESMValCore/pull/1586>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+
+Documentation
+~~~~~~~~~~~~~
+
+-  [Github Actions Docs] Full explanation on how to use the GA test triggered by PR comment and added docs link for GA hosted runners  (`#1553 <https://github.com/ESMValGroup/ESMValCore/pull/1553>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Update the command for building the documentation (`#1556 <https://github.com/ESMValGroup/ESMValCore/pull/1556>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Update documentation on running the tool (`#1400 <https://github.com/ESMValGroup/ESMValCore/pull/1400>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Add support for DKRZ-Levante (`#1558 <https://github.com/ESMValGroup/ESMValCore/pull/1558>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Improved documentation on native dataset support (`#1559 <https://github.com/ESMValGroup/ESMValCore/pull/1559>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Tweak `extract_point` preprocessor: explain what it returns if one point coord outside cube and add explicit test  (`#1584 <https://github.com/ESMValGroup/ESMValCore/pull/1584>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Update CircleCI, readthedocs, and Docker configuration (`#1588 <https://github.com/ESMValGroup/ESMValCore/pull/1588>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Remove support for Mistral in `config-user.yml` (`#1620 <https://github.com/ESMValGroup/ESMValCore/pull/1620>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Add changelog for v2.6.0rc1 (`#1633 <https://github.com/ESMValGroup/ESMValCore/pull/1633>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Add a note on transferring permissions to the release manager (`#1645 <https://github.com/ESMValGroup/ESMValCore/pull/1645>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Add documentation on building and uploading Docker images (`#1644 <https://github.com/ESMValGroup/ESMValCore/pull/1644>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Update documentation on ESMValTool module at DKRZ (`#1647 <https://github.com/ESMValGroup/ESMValCore/pull/1647>`__) `Rémi Kazeroni <https://github.com/remi-kazeroni>`__
+-  Expanded information on deprecations in changelog (`#1658 <https://github.com/ESMValGroup/ESMValCore/pull/1658>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+Improvements
+~~~~~~~~~~~~
+
+-  Removed trailing whitespace in custom CMOR tables (`#1564 <https://github.com/ESMValGroup/ESMValCore/pull/1564>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Try searching multiple ESGF index nodes (`#1561 <https://github.com/ESMValGroup/ESMValCore/pull/1561>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Add CMIP6 `amoc` derivation case and add a test (`#1577 <https://github.com/ESMValGroup/ESMValCore/pull/1577>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Added EMAC CMORizer (`#1554 <https://github.com/ESMValGroup/ESMValCore/pull/1554>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Improve performance of `volume_statistics` (`#1545 <https://github.com/ESMValGroup/ESMValCore/pull/1545>`__) `sloosvel <https://github.com/sloosvel>`__
+
+Fixes for datasets
+~~~~~~~~~~~~~~~~~~
+
+-  Fixes of ocean variables in multiple CMIP6 datasets (`#1566 <https://github.com/ESMValGroup/ESMValCore/pull/1566>`__) `Tomas Lovato <https://github.com/tomaslovato>`__
+-  Ensure lat/lon bounds in FGOALS-l3 atmos variables are contiguous (`#1571 <https://github.com/ESMValGroup/ESMValCore/pull/1571>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Added `AllVars` fix for CMIP6's ICON-ESM-LR (`#1582 <https://github.com/ESMValGroup/ESMValCore/pull/1582>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+Installation
+~~~~~~~~~~~~
+
+-  Removed `package/meta.yml` (`#1540 <https://github.com/ESMValGroup/ESMValCore/pull/1540>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Pinned iris>=3.2.1 (`#1552 <https://github.com/ESMValGroup/ESMValCore/pull/1552>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Use setuptools-scm to automatically generate the version number (`#1578 <https://github.com/ESMValGroup/ESMValCore/pull/1578>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Pin cf-units to lower than 3.1.0 to temporarily avoid changes within new version related to calendars (`#1659 <https://github.com/ESMValGroup/ESMValCore/pull/1659>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+
+Preprocessor
+~~~~~~~~~~~~
+
+-  Allowed special case for unit conversion of precipitation (`kg m-2 s-1` <--> `mm day-1`) (`#1574 <https://github.com/ESMValGroup/ESMValCore/pull/1574>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Add general `extract_coordinate_points` preprocessor (`#1581 <https://github.com/ESMValGroup/ESMValCore/pull/1581>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Add preprocessor `accumulate_coordinate` (`#1281 <https://github.com/ESMValGroup/ESMValCore/pull/1281>`__) `Javier Vegas-Regidor <https://github.com/jvegreg>`__
+-  Add `axis_statistics` and improve `depth_integration` (`#1589 <https://github.com/ESMValGroup/ESMValCore/pull/1589>`__) `sloosvel <https://github.com/sloosvel>`__
+
+Release
+~~~~~~~
+
+-  Increase version number for ESMValCore v2.6.0rc1 (`#1632 <https://github.com/ESMValGroup/ESMValCore/pull/1632>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Update changelog and version for 2.6rc3 (`#1646 <https://github.com/ESMValGroup/ESMValCore/pull/1646>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Add changelog for rc4 (`#1662 <https://github.com/ESMValGroup/ESMValCore/pull/1662>`__) `sloosvel <https://github.com/sloosvel>`__
+
+
+Automatic testing
+~~~~~~~~~~~~~~~~~
+
+-  Refresh CircleCI cache weekly (`#1597 <https://github.com/ESMValGroup/ESMValCore/pull/1597>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Use correct cache restore key on CircleCI (`#1598 <https://github.com/ESMValGroup/ESMValCore/pull/1598>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Install git and ssh before checking out code on CircleCI (`#1601 <https://github.com/ESMValGroup/ESMValCore/pull/1601>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+-  Fetch all history in Github Action tests (`#1622 <https://github.com/ESMValGroup/ESMValCore/pull/1622>`__) `sloosvel <https://github.com/sloosvel>`__
+-  Test Github Actions dashboard badge from meercode.io (`#1640 <https://github.com/ESMValGroup/ESMValCore/pull/1640>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Improve esmvalcore.esgf unit test (`#1650 <https://github.com/ESMValGroup/ESMValCore/pull/1650>`__) `Bouwe Andela <https://github.com/bouweandela>`__
+
+Variable Derivation
+~~~~~~~~~~~~~~~~~~~
+
+-  Added derivation of `hfns` (`#1594 <https://github.com/ESMValGroup/ESMValCore/pull/1594>`__) `Manuel Schlund <https://github.com/schlunma>`__
 
 .. _changelog-v2-5-0:
 
@@ -11,7 +708,7 @@ Highlights
 
 -  The new preprocessor :func:`~esmvalcore.preprocessor.extract_location` can extract arbitrary locations on the Earth using the `geopy <https://pypi.org/project/geopy/>`__ package that connects to OpenStreetMap. For details, see :ref:`Extract location <extract_location>`.
 -  Time ranges can now be extracted using the `ISO 8601 format <https://en.wikipedia.org/wiki/ISO_8601>`_. In addition, wildcards are allowed, which makes the time selection much more flexible. For details, see :ref:`Recipe section: Datasets <Datasets>`.
--  The new preprocessor :func:`~esmvalcore.preprocessor.ensemble_statistics` can calculate arbitrary statitics over all ensemble members of a simulation. In addition, the preprocessor :func:`~esmvalcore.preprocessor.multi_model_statistics` now accepts the keyword ``groupy``, which allows the calculation of multi-model statistics over arbitrary multi-model ensembles. For details, see :ref:`Ensemble statistics <ensemble statistics>` and :ref:`Multi-model statistics <multi-model statistics>`.
+-  The new preprocessor :func:`~esmvalcore.preprocessor.ensemble_statistics` can calculate arbitrary statistics over all ensemble members of a simulation. In addition, the preprocessor :func:`~esmvalcore.preprocessor.multi_model_statistics` now accepts the keyword ``groupy``, which allows the calculation of multi-model statistics over arbitrary multi-model ensembles. For details, see :ref:`Ensemble statistics <ensemble statistics>` and :ref:`Multi-model statistics <multi-model statistics>`.
 
 This release includes
 
@@ -106,7 +803,7 @@ Automatic testing
 -  Switch to Mambaforge in Github Actions tests (`#1438 <https://github.com/ESMValGroup/ESMValCore/pull/1438>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Turn off conda lock file creation on any push on `main` branch from Github Action test (`#1489 <https://github.com/ESMValGroup/ESMValCore/pull/1489>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Add DRS path test for IPSLCM files (`#1490 <https://github.com/ESMValGroup/ESMValCore/pull/1490>`__) `Stéphane Sénési <https://github.com/senesis>`__
--  Add a test module that runs tests of `iris` I/O everytime we notice serious bugs there (`#1510 <https://github.com/ESMValGroup/ESMValCore/pull/1510>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Add a test module that runs tests of `iris` I/O every time we notice serious bugs there (`#1510 <https://github.com/ESMValGroup/ESMValCore/pull/1510>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  [Github Actions] Trigger Github Actions tests (`run-tests.yml` workflow) from a comment in a PR (`#1520 <https://github.com/ESMValGroup/ESMValCore/pull/1520>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Update Linux condalock file (various pull requests) github-actions[bot]
 
@@ -396,7 +1093,7 @@ Automatic testing
 -  Report coverage for tests that run on any pull request (`#994 <https://github.com/ESMValGroup/ESMValCore/pull/994>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Install ESMValTool sample data from PyPI (`#998 <https://github.com/ESMValGroup/ESMValCore/pull/998>`__) `Javier Vegas-Regidor <https://github.com/jvegasbsc>`__
 -  Fix tests for multi-processing with spawn method (i.e. macOSX with Python>3.8) (`#1003 <https://github.com/ESMValGroup/ESMValCore/pull/1003>`__) `Barbara Vreede <https://github.com/bvreede>`__
--  Switch to running the Github Action test workflow every 3 hours in single thread mode to observe if Sementation Faults occur (`#1022 <https://github.com/ESMValGroup/ESMValCore/pull/1022>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Switch to running the Github Action test workflow every 3 hours in single thread mode to observe if Segmentation Faults occur (`#1022 <https://github.com/ESMValGroup/ESMValCore/pull/1022>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Revert to original Github Actions test workflow removing the 3-hourly test run with -n 1 (`#1025 <https://github.com/ESMValGroup/ESMValCore/pull/1025>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Avoid stale cache for multimodel statistics regression tests (`#1030 <https://github.com/ESMValGroup/ESMValCore/pull/1030>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Add newer Python versions in OSX to Github Actions (`#1035 <https://github.com/ESMValGroup/ESMValCore/pull/1035>`__) `Barbara Vreede <https://github.com/bvreede>`__

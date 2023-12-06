@@ -90,11 +90,15 @@ MASK_REGRIDDING_MASK_VALUE = {
             MASK_REGRIDDING_MASK_VALUE)
 @mock.patch('esmvalcore.preprocessor._regrid_esmpy.ESMF_REGRID_METHODS',
             ESMF_REGRID_METHODS)
-@mock.patch('ESMF.Manager', mock.Mock)
-@mock.patch('ESMF.GridItem', MockGridItem)
-@mock.patch('ESMF.RegridMethod', MockRegridMethod)
-@mock.patch('ESMF.StaggerLoc', MockStaggerLoc)
-@mock.patch('ESMF.UnmappedAction', MockUnmappedAction)
+@mock.patch('esmvalcore.preprocessor._regrid_esmpy.esmpy.Manager', mock.Mock)
+@mock.patch('esmvalcore.preprocessor._regrid_esmpy.esmpy.GridItem',
+            MockGridItem)
+@mock.patch('esmvalcore.preprocessor._regrid_esmpy.esmpy.RegridMethod',
+            MockRegridMethod)
+@mock.patch('esmvalcore.preprocessor._regrid_esmpy.esmpy.StaggerLoc',
+            MockStaggerLoc)
+@mock.patch('esmvalcore.preprocessor._regrid_esmpy.esmpy.UnmappedAction',
+            MockUnmappedAction)
 class TestHelpers(tests.Test):
     """Unit tests for helper functions."""
 
@@ -196,6 +200,10 @@ class TestHelpers(tests.Test):
                                points=depth_points,
                                bounds=depth_bounds,
                                has_bounds=mock.Mock(return_value=True))
+        self.scalar_coord = mock.Mock(iris.coords.AuxCoord,
+                                      long_name='scalar_coord',
+                                      ndim=1,
+                                      shape=(1, ))
         data_shape = lon_2d_points.shape
         raw_data = np.arange(np.prod(data_shape)).reshape(data_shape)
         mask = np.zeros(data_shape)
@@ -225,13 +233,15 @@ class TestHelpers(tests.Test):
         self.coords = {
             'latitude': self.lat_2d,
             'longitude': self.lon_2d,
-            'depth': self.depth
+            'depth': self.depth,
+            'scalar_coord': self.scalar_coord,
         }
         self.coord_dims = {
             'latitude': (0, 1),
             'longitude': (0, 1),
             self.lat_2d: (0, 1),
             self.lon_2d: (0, 1),
+            'scalar_coord': (),
         }
 
         def coord(name=None, axis=None):
@@ -240,10 +250,12 @@ class TestHelpers(tests.Test):
                 raise CoordinateNotFoundError()
             return self.coords[name]
 
-        def coords(dim_coords=None):
+        def coords(dim_coords=None, dimensions=None):
             """Return coordinates for mock cube."""
             if dim_coords:
                 return []
+            if dimensions == ():
+                return [self.scalar_coord]
             return list(self.coords.values())
 
         self.cube = mock.Mock(
@@ -280,6 +292,12 @@ class TestHelpers(tests.Test):
                 return self.coords['depth']
             return self.coords[name]
 
+        def coords_3d(dimensions=None):
+            """Return coordinates for mock cube."""
+            if dimensions == ():
+                return []
+            return [self.lat_2d, self.lon_2d, self.depth]
+
         self.cube_3d = mock.Mock(
             spec=iris.cube.Cube,
             dtype=np.float32,
@@ -294,6 +312,7 @@ class TestHelpers(tests.Test):
             data=self.data_3d,
             coord=coord_3d,
             coord_dims=lambda name: self.coord_dims_3d[name],
+            coords=coords_3d,
         )
         self.cube.__getitem__ = mock.Mock(return_value=self.cube)
 
@@ -371,7 +390,8 @@ class TestHelpers(tests.Test):
             mock.call(0, staggerloc=mock.sentinel.sl_corner),
             mock.call(1, staggerloc=mock.sentinel.sl_corner),
         ]
-        with mock.patch('ESMF.Grid', MockGrid) as mg:
+        with mock.patch('esmvalcore.preprocessor._regrid_esmpy.esmpy.Grid',
+                        MockGrid) as mg:
             mg.get_coords.reset_mock()
             mg.add_coords.reset_mock()
             mg.add_item.reset_mock()
@@ -394,7 +414,8 @@ class TestHelpers(tests.Test):
             mock.call(0, staggerloc=mock.sentinel.sl_corner),
             mock.call(1, staggerloc=mock.sentinel.sl_corner),
         ]
-        with mock.patch('ESMF.Grid', MockGrid) as mg:
+        with mock.patch('esmvalcore.preprocessor._regrid_esmpy.esmpy.Grid',
+                        MockGrid) as mg:
             mg.get_coords.reset_mock()
             mg.add_coords.reset_mock()
             mg.add_item.reset_mock()
@@ -440,8 +461,8 @@ class TestHelpers(tests.Test):
         is_circ = is_lon_circular(self.lon_2d_non_circular)
         self.assertFalse(is_circ)
 
-    @mock.patch('ESMF.Grid', MockGrid)
-    @mock.patch('ESMF.Field')
+    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.esmpy.Grid', MockGrid)
+    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.esmpy.Field')
     @pytest.mark.skipif(sys.version_info.major == 3
                         and sys.version_info.minor == 9,
                         reason="bug in mock.py for Python 3.9.0 and 3.9.1")
@@ -463,7 +484,7 @@ class TestHelpers(tests.Test):
 
     @mock.patch('esmvalcore.preprocessor._regrid_esmpy.cube_to_empty_field',
                 mock_cube_to_empty_field)
-    @mock.patch('ESMF.Regrid')
+    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.esmpy.Regrid')
     def test_build_regridder_2d_masked_data(self, mock_regrid):
         """Test building of 2d regridder for masked data."""
         mock_regrid.return_value = mock.Mock(return_value=mock.Mock(
@@ -503,7 +524,7 @@ class TestHelpers(tests.Test):
 
     @mock.patch('esmvalcore.preprocessor._regrid_esmpy.cube_to_empty_field',
                 mock_cube_to_empty_field)
-    @mock.patch('ESMF.Regrid')
+    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.esmpy.Regrid')
     def test_regridder_2d_unmasked_data(self, mock_regrid):
         """Test regridder for unmasked 2d data."""
         field_regridder = mock.Mock(return_value=mock.Mock(data=self.data.T))
@@ -518,7 +539,7 @@ class TestHelpers(tests.Test):
 
     @mock.patch('esmvalcore.preprocessor._regrid_esmpy.cube_to_empty_field',
                 mock_cube_to_empty_field)
-    @mock.patch('ESMF.Regrid')
+    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.esmpy.Regrid')
     def test_regridder_2d_masked_data(self, mock_regrid):
         """Test regridder for masked 2d data."""
         field_regridder = mock.Mock(return_value=mock.Mock(data=self.data.T))
@@ -636,7 +657,7 @@ class TestHelpers(tests.Test):
             attributes=src.attributes,
             cell_methods=src.cell_methods,
             dim_coords_and_dims=[],
-            aux_coords_and_dims=[],
+            aux_coords_and_dims=[(self.scalar_coord, ())],
         )
 
     @mock.patch('esmvalcore.preprocessor._regrid_esmpy.map_slices')

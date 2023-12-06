@@ -2,22 +2,75 @@
 name: esmvaltool
 channels:
   - conda-forge
+  - nodefaults
 
 dependencies:
   - cartopy
-  - cf-units>=3.0.0
+  - cf-units
   - cftime
   - compilers
-  # 1.8.18/py39, they seem weary to build manylinux wheels
-  # and pypi ver built with older gdal
+  - dask
+  - dask-jobqueue
+  - distributed
+  - esgf-pyclient >=0.3.1
+  - esmpy !=8.1.0
+  - filelock
   - fiona
-  - esmpy!=8.1.0  # see github.com/ESMValGroup/ESMValCore/issues/1208
+  - fire
   - geopy
-  - iris>=3.2.1
+  - humanfriendly
+  - importlib_metadata  # required for Python < 3.10
+  - iris >=3.6.0
+  - iris-esmf-regrid >=0.7.0
+  - isodate
+  - jinja2
+  - libnetcdf !=4.9.1  # to avoid hdf5 warnings
+  - nc-time-axis
   - nested-lookup
+  - netcdf4
+  - numpy !=1.24.3
+  - packaging
   - pandas
   - pillow
-  - pip!=21.3
-  - python>=3.8
-  - python-stratify
-  - scipy>=1.6
+  - pip !=21.3
+  - prov
+  - psutil
+  - py-cordex
+  - pybtex
+  - python >=3.9
+  - python-stratify >=0.3
+  - pyyaml
+  - requests
+  - scipy >=1.6
+  - shapely >=2.0.0
+  - yamale
+  # Python packages needed for building docs
+  - autodocsumm >=0.2.2
+  - ipython
+  - nbsphinx
+  - sphinx >=6.1.3
+  - pydata-sphinx-theme
+  # Python packages needed for testing
+  - flake8
+  - mypy >=0.990
+  - pytest >=3.9,!=6.0.0rc1,!=6.0.0
+  - pytest-cov >=2.10.1
+  - pytest-env
+  - pytest-html !=2.1.0
+  - pytest-metadata >=1.5.1
+  - pytest-mypy
+  - pytest-mock
+  - pytest-xdist
+  # Not on conda-forge - ESMValTool_sample_data==0.0.3
+  # Still for testing, MyPy library stubs
+  - types-requests
+  - types-PyYAML
+  # Python packages needed for installing in development mode
+  - codespell
+  - docformatter
+  - isort
+  - pre-commit
+  - prospector >=1.9.0
+  # Not on conda forge - vprof
+  - yamllint
+  - yapf

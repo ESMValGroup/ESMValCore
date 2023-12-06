@@ -9,10 +9,9 @@ from typing import Dict, Optional
 
 import yaml
 
-from esmvalcore._recipe import Recipe as RecipeEngine
-from esmvalcore.experimental.config import Session
+from esmvalcore._recipe.recipe import Recipe as RecipeEngine
+from esmvalcore.config import CFG, Session, _dask
 
-from . import CFG
 from ._logging import log_to_dir
 from .recipe_info import RecipeInfo
 from .recipe_output import RecipeOutput
@@ -71,7 +70,8 @@ class Recipe():
     def data(self) -> dict:
         """Return dictionary representation of the recipe."""
         if self._data is None:
-            self._data = yaml.safe_load(open(self.path, 'r'))
+            with open(self.path, 'r', encoding='utf-8') as yaml_file:
+                self._data = yaml.safe_load(yaml_file)
         return self._data
 
     def _load(self, session: Session) -> RecipeEngine:
@@ -92,15 +92,17 @@ class Recipe():
         recipe : :obj:`esmvalcore._recipe.Recipe`
             Return an instance of the Recipe
         """
-        config_user = session.to_config_user()
-
-        logger.info(pprint.pformat(config_user))
+        logger.info(pprint.pformat(session))
 
         return RecipeEngine(raw_recipe=self.data,
-                            config_user=config_user,
+                            session=session,
                             recipe_file=self.path)
 
-    def run(self, task: str = None, session: Session = None):
+    def run(
+        self,
+        task: Optional[str] = None,
+        session: Optional[Session] = None,
+    ):
         """Run the recipe.
 
         This function loads the recipe into the ESMValCore recipe format
@@ -131,6 +133,7 @@ class Recipe():
             session['diagnostics'] = task
 
         with log_to_dir(session.run_dir):
+            _dask.check_distributed_config()
             self._engine = self._load(session=session)
             self._engine.run()
 

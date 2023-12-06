@@ -3,6 +3,7 @@ import iris
 import pytest
 
 from esmvalcore.cmor._fixes.cmip6.awi_esm_1_1_lr import AllVars
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 
 
@@ -15,7 +16,7 @@ def sample_cubes():
 
 def test_get_tas_fix():
     fix = Fix.get_fixes('CMIP6', 'AWI-ESM-1-1-LR', 'Amon', 'tas')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_allvars_fix_metadata(sample_cubes):

@@ -2,6 +2,7 @@
 import copy
 import logging
 import os
+from functools import total_ordering
 
 from netCDF4 import Dataset
 from PIL import Image
@@ -98,12 +99,13 @@ def get_task_provenance(task, recipe_entity):
     return activity
 
 
+@total_ordering
 class TrackedFile:
     """File with provenance tracking."""
 
     def __init__(self,
                  filename,
-                 attributes,
+                 attributes=None,
                  ancestors=None,
                  prov_filename=None):
         """Create an instance of a file with provenance tracking.
@@ -113,7 +115,8 @@ class TrackedFile:
         filename: str
             Path to the file on disk.
         attributes: dict
-            Dictionary with facets describing the file.
+            Dictionary with facets describing the file. If set to None, this
+            will be read from the file when provenance is initialized.
         ancestors: :obj:`list` of :obj:`TrackedFile`
             Ancestor files.
         prov_filename: str
@@ -140,6 +143,18 @@ class TrackedFile:
     def __repr__(self):
         """Return representation string (e.g., used by ``pformat``)."""
         return f"{self.__class__.__name__}: {self.filename}"
+
+    def __eq__(self, other):
+        """Check if `other` equals `self`."""
+        return hasattr(other, 'filename') and self.filename == other.filename
+
+    def __lt__(self, other):
+        """Check if `other` should be sorted before `self`."""
+        return hasattr(other, 'filename') and self.filename < other.filename
+
+    def __hash__(self):
+        """Return a unique hash for the file."""
+        return hash(self.filename)
 
     def copy_provenance(self):
         """Create a copy with identical provenance information."""
@@ -189,12 +204,18 @@ class TrackedFile:
 
     def _initialize_entity(self):
         """Initialize the entity representing the file."""
+        if self.attributes is None:
+            self.attributes = {}
+            with Dataset(self.filename, 'r') as dataset:
+                for attr in dataset.ncattrs():
+                    self.attributes[attr] = dataset.getncattr(attr)
+
         attributes = {
             'attribute:' + str(k).replace(' ', '_'): str(v)
             for k, v in self.attributes.items()
             if k not in ('authors', 'projects')
         }
-        self.entity = self.provenance.entity('file:' + self.filename,
+        self.entity = self.provenance.entity(f'file:{self.filename}',
                                              attributes)
 
         attribute_to_authors(self.entity, self.attributes.get('authors', []))
