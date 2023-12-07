@@ -1434,30 +1434,43 @@ def _transform_to_lst_eager(
     data: np.ndarray,
     *,
     time_index: np.ndarray,
+    mask: np.ndarray,
+    time_dim: int,
+    lon_dim: int,
+    **__,
 ) -> np.ndarray:
     """Transform array with UTC coord to local solar time (LST) coord.
 
     Note
     ----
-    This function is NOT lazy and should be used within
-    :func:`dask.array.apply_gufunc`.
+    This function is the eager version of `_transform_to_lst_lazy`.
 
-    `data` is assumed to have shape (..., time, lon). This is ensured by
-    :func:`dask.array.apply_gufunc` when called with appropriate `axes` keyword
-    argument.
+    `data` needs to be at least 2D. `time_dim` and `lon_dim` correspond to the
+    dimensions that describe time and longitude dimensions in `data`,
+    respectively.
 
     `time_index` is an `advanced index
     <https://numpy.org/doc/stable/user/basics.indexing.html#advanced-indexing>`__
     for the time dimension of `data` with shape (time, lon). It is used to
     reorder the data along the time axis based on the longitude axis.
 
+    `mask` is 2D with shape (time, lon) that will be applied to the final data.
+
     """
     # Apart from the time index, all other dimensions will stay the same; this
     # is ensured with np.ogrid
     idx = np.ogrid[tuple(slice(0, d) for d in data.shape)]
-    idx[-2] = np.broadcast_to(time_index, data.shape)  # '-2' is always time
+    time_index = broadcast_to_shape(
+        time_index, data.shape, (time_dim, lon_dim)
+    )
+    idx[time_dim] = time_index
     new_data = data[tuple(idx)]
-    return new_data
+
+    # Apply properly broadcasted mask
+    mask = broadcast_to_shape(mask, new_data.shape, (time_dim, lon_dim))
+    new_mask = mask | np.ma.getmaskarray(new_data)
+
+    return np.ma.masked_array(new_data, mask=new_mask)
 
 
 def _transform_to_lst_lazy(
@@ -1488,23 +1501,53 @@ def _transform_to_lst_lazy(
     `mask` is 2D with shape (time, lon) that will be applied to the final data.
 
     """
-    new_data = da.apply_gufunc(
+    _transform_chunk_to_lst = partial(
         _transform_to_lst_eager,
+        time_index=time_index,
+        mask=mask,
+        time_dim=-2,  # this is ensured by da.apply_gufunc
+        lon_dim=-1,  # this is ensured by da.apply_gufunc
+    )
+    new_data = da.apply_gufunc(
+        _transform_chunk_to_lst,
         '(t,y)->(t,y)',
         data,
         axes=[(time_dim, lon_dim), (time_dim, lon_dim)],
         output_dtypes=output_dtypes,
+    )
+    return new_data
+
+
+def _transform_arr_to_lst(
+    data: np.ndarray | da.core.Array,
+    *,
+    time_index: np.ndarray,
+    mask: np.ndarray,
+    time_dim: int,
+    lon_dim: int,
+    output_dtypes: DTypeLike,
+) -> np.ndarray | da.core.Array:
+    """Transform array with UTC coord to local solar time (LST) coord.
+
+    Note
+    ----
+    This function either calls `_transform_to_lst_eager` or
+    `_transform_to_lst_lazy` depending on the type of input data.
+
+    """
+    if isinstance(data, np.ndarray):
+        func = _transform_to_lst_eager  # type: ignore
+    else:
+        func = _transform_to_lst_lazy  # type: ignore
+    new_data = func(
+        data,  # type: ignore
         time_index=time_index,
+        mask=mask,
+        time_dim=time_dim,
+        lon_dim=lon_dim,
+        output_dtypes=output_dtypes,
     )
-
-    # Apply properly broadcasted mask
-    new_mask = broadcast_to_shape(
-        da.from_array(mask), new_data.shape, (time_dim, lon_dim)
-    )
-    new_mask = new_mask.rechunk(new_data.chunksize)
-    new_mask |= da.ma.getmaskarray(new_data)
-
-    return da.ma.masked_array(new_data, mask=new_mask)
+    return new_data
 
 
 def _transform_cube_to_lst(cube: Cube) -> Cube:
@@ -1525,12 +1568,12 @@ def _transform_cube_to_lst(cube: Cube) -> Cube:
     # Transform cube data
     (time_index, mask) = _get_time_index_and_mask(time_coord, lon_coord)
     _transform_arr = partial(
-        _transform_to_lst_lazy,
+        _transform_arr_to_lst,
         time_index=time_index,
         mask=mask,
     )
     cube.data = _transform_arr(
-        cube.lazy_data(),
+        cube.core_data(),
         time_dim=time_dim,
         lon_dim=lon_dim,
         output_dtypes=cube.dtype,
@@ -1543,14 +1586,14 @@ def _transform_cube_to_lst(cube: Cube) -> Cube:
             time_dim_ = dims.index(time_dim)
             lon_dim_ = dims.index(lon_dim)
             coord.points = _transform_arr(
-                coord.lazy_points(),
+                coord.core_points(),
                 time_dim=time_dim_,
                 lon_dim=lon_dim_,
                 output_dtypes=coord.dtype,
             )
-            if coord.lazy_bounds() is not None:
+            if coord.core_bounds() is not None:
                 coord.bounds = _transform_arr(
-                    coord.lazy_bounds(),
+                    coord.core_bounds(),
                     time_dim=time_dim_,
                     lon_dim=lon_dim_,
                     output_dtypes=coord.bounds_dtype,
@@ -1563,7 +1606,7 @@ def _transform_cube_to_lst(cube: Cube) -> Cube:
             time_dim_ = dims.index(time_dim)
             lon_dim_ = dims.index(lon_dim)
             cell_measure.data = _transform_arr(
-                cell_measure.lazy_data(),
+                cell_measure.core_data(),
                 time_dim=time_dim_,
                 lon_dim=lon_dim_,
                 output_dtypes=cell_measure.dtype,
@@ -1576,7 +1619,7 @@ def _transform_cube_to_lst(cube: Cube) -> Cube:
             time_dim_ = dims.index(time_dim)
             lon_dim_ = dims.index(lon_dim)
             anc_var.data = _transform_arr(
-                anc_var.lazy_data(),
+                anc_var.core_data(),
                 time_dim=time_dim_,
                 lon_dim=lon_dim_,
                 output_dtypes=anc_var.dtype,

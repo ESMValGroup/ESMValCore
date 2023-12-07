@@ -81,7 +81,6 @@ def test_statistical_operators(
 @pytest.fixture
 def realistic_4d_cube():
     """Create realistic 4D cube."""
-    # DimCoords
     time = DimCoord(
         [11.0, 12.0],
         standard_name='time',
@@ -93,24 +92,23 @@ def realistic_4d_cube():
         [0.0, 20.0, 345.0], standard_name='longitude', units='degrees'
     )
 
-    # AuxCoords
     aux_2d_data = np.arange(2 * 3).reshape(2, 3)
     aux_2d_bounds = np.stack(
         (aux_2d_data - 1, aux_2d_data, aux_2d_data + 1), axis=-1
     )
-    aux_2d = AuxCoord(aux_2d_data, bounds=aux_2d_bounds, var_name='aux_2d')
+    aux_2d = AuxCoord(aux_2d_data, var_name='aux_2d')
+    aux_2d_with_bnds = AuxCoord(
+        aux_2d_data, bounds=aux_2d_bounds, var_name='aux_2d_with_bnds'
+    )
     aux_time = AuxCoord(['Jan', 'Jan'], var_name='aux_time')
     aux_lon = AuxCoord([0, 1, 2], var_name='aux_lon')
 
-    # CellMeasures
     cell_area = CellMeasure(
         np.arange(2 * 2 * 3).reshape(2, 2, 3) + 10,
         standard_name='cell_area',
         units='m2',
         measure='area',
     )
-
-    # AncillaryVariables
     type_var = AncillaryVariable(
         [['sea', 'land', 'lake'], ['lake', 'sea', 'land']],
         var_name='type',
@@ -119,7 +117,7 @@ def realistic_4d_cube():
 
     cube = Cube(
         np.ma.masked_inside(
-            np.arange(2 * 1 * 2 * 3).reshape(2, 1, 2, 3), 2, 3
+            np.arange(2 * 1 * 2 * 3).reshape(2, 1, 2, 3), 1, 3
         ),
         var_name='ta',
         standard_name='air_temperature',
@@ -127,7 +125,12 @@ def realistic_4d_cube():
         units='K',
         cell_methods=[CellMethod('mean', 'time')],
         dim_coords_and_dims=[(time, 0), (plev, 1), (lat, 2), (lon, 3)],
-        aux_coords_and_dims=[(aux_2d, (0, 3)), (aux_time, 0), (aux_lon, 3)],
+        aux_coords_and_dims=[
+            (aux_2d, (0, 3)),
+            (aux_2d_with_bnds, (0, 3)),
+            (aux_time, 0),
+            (aux_lon, 3),
+        ],
         cell_measures_and_dims=[(cell_area, (0, 2, 3))],
         ancillary_variables_and_dims=[(type_var, (0, 3))],
         attributes={'test': 1},
@@ -169,14 +172,24 @@ def test_local_solar_time_regular(realistic_4d_cube):
     assert (
         result.coord('aux_2d').metadata == input_cube.coord('aux_2d').metadata
     )
-    assert result.coord('aux_2d').has_lazy_points()
-    assert result.coord('aux_2d').has_lazy_bounds()
+    assert not result.coord('aux_2d').has_lazy_points()
     assert_array_equal(
         result.coord('aux_2d').points,
         np.ma.masked_equal([[0, 99, 5], [3, 1, 99]], 99),
     )
+    assert not result.coord('aux_2d').has_bounds()
+    assert (
+        result.coord('aux_2d_with_bnds').metadata ==
+        input_cube.coord('aux_2d_with_bnds').metadata
+    )
+    assert not result.coord('aux_2d_with_bnds').has_lazy_points()
     assert_array_equal(
-        result.coord('aux_2d').bounds,
+        result.coord('aux_2d_with_bnds').points,
+        np.ma.masked_equal([[0, 99, 5], [3, 1, 99]], 99),
+    )
+    assert not result.coord('aux_2d_with_bnds').has_lazy_bounds()
+    assert_array_equal(
+        result.coord('aux_2d_with_bnds').bounds,
         np.ma.masked_equal(
             [
                 [[-1, 0, 1], [99, 99, 99], [4, 5, 6]],
@@ -190,7 +203,7 @@ def test_local_solar_time_regular(realistic_4d_cube):
         result.cell_measure('cell_area').metadata ==
         input_cube.cell_measure('cell_area').metadata
     )
-    assert result.cell_measure('cell_area').has_lazy_data()
+    assert not result.cell_measure('cell_area').has_lazy_data()
     assert_array_equal(
         result.cell_measure('cell_area').data,
         np.ma.masked_equal(
@@ -201,12 +214,11 @@ def test_local_solar_time_regular(realistic_4d_cube):
             99,
         ),
     )
-
     assert (
         result.ancillary_variable('type').metadata ==
         input_cube.ancillary_variable('type').metadata
     )
-    assert result.ancillary_variable('type').has_lazy_data()
+    assert not result.ancillary_variable('type').has_lazy_data()
     assert_array_equal(
         result.ancillary_variable('type').data,
         np.ma.masked_equal(
@@ -214,23 +226,98 @@ def test_local_solar_time_regular(realistic_4d_cube):
         ),
     )
 
-    assert result.has_lazy_data()
+    assert not result.has_lazy_data()
     assert_array_equal(
         result.data,
         np.ma.masked_equal(
             [
                 [[[0, 99, 8], [99, 99, 11]]],
-                [[[6, 1, 99], [9, 4, 99]]],
+                [[[6, 99, 99], [9, 4, 99]]],
             ],
             99,
         ),
     )
 
 
+def test_local_solar_time_1_time_step(realistic_4d_cube):
+    """Test ``local_solar_time``."""
+    input_cube = realistic_4d_cube[[0]]
+
+    result = local_solar_time(input_cube)
+
+    assert input_cube == realistic_4d_cube[[0]]
+
+    assert result.metadata == input_cube.metadata
+    assert result.shape == input_cube.shape
+    assert result.coord('time') != input_cube.coord('time')
+    assert result.coord('air_pressure') == input_cube.coord('air_pressure')
+    assert result.coord('latitude') == input_cube.coord('latitude')
+    assert result.coord('longitude') == input_cube.coord('longitude')
+
+    assert result.coord('time').standard_name == 'time'
+    assert result.coord('time').var_name is None
+    assert result.coord('time').long_name == 'Local Solar Time'
+    assert result.coord('time').units == Unit(
+        'hours since 1850-01-01', calendar='360_day'
+    )
+    assert result.coord('time').attributes == {}
+    np.testing.assert_allclose(result.coord('time').points, [8651.0])
+    np.testing.assert_allclose(result.coord('time').bounds, [[8650.5, 8651.5]])
+
+    assert result.coord('aux_time') == input_cube.coord('aux_time')
+    assert result.coord('aux_lon') == input_cube.coord('aux_lon')
+    assert (
+        result.coord('aux_2d').metadata == input_cube.coord('aux_2d').metadata
+    )
+    assert not result.coord('aux_2d').has_lazy_points()
+    assert_array_equal(
+        result.coord('aux_2d').points, np.ma.masked_equal([[0, 99, 99]], 99)
+    )
+    assert not result.coord('aux_2d').has_bounds()
+    assert (
+        result.coord('aux_2d_with_bnds').metadata ==
+        input_cube.coord('aux_2d_with_bnds').metadata
+    )
+    assert not result.coord('aux_2d_with_bnds').has_lazy_points()
+    assert_array_equal(
+        result.coord('aux_2d_with_bnds').points,
+        np.ma.masked_equal([[0, 99, 99]], 99),
+    )
+    assert not result.coord('aux_2d_with_bnds').has_lazy_bounds()
+    assert_array_equal(
+        result.coord('aux_2d_with_bnds').bounds,
+        np.ma.masked_equal([[[-1, 0, 1], [99, 99, 99], [99, 99, 99]]], 99),
+    )
+
+    assert (
+        result.cell_measure('cell_area').metadata ==
+        input_cube.cell_measure('cell_area').metadata
+    )
+    assert not result.cell_measure('cell_area').has_lazy_data()
+    assert_array_equal(
+        result.cell_measure('cell_area').data,
+        np.ma.masked_equal([[[10, 99, 99], [13, 99, 99]]], 99),
+    )
+    assert (
+        result.ancillary_variable('type').metadata ==
+        input_cube.ancillary_variable('type').metadata
+    )
+    assert not result.ancillary_variable('type').has_lazy_data()
+    assert_array_equal(
+        result.ancillary_variable('type').data,
+        np.ma.masked_equal([['sea', 'miss', 'miss']], 'miss'),
+    )
+
+    assert not result.has_lazy_data()
+    assert_array_equal(
+        result.data,
+        np.ma.masked_equal([[[[0, 99, 99], [99, 99, 99]]]], 99),
+    )
+
+
 @pytest.fixture
 def realistic_unstructured_cube():
     """Create realistic unstructured cube."""
-    # DimCoords
     time = DimCoord(
         [0.0, 6.0, 12.0, 18.0, 24.0],
         bounds=[
@@ -241,6 +328,7 @@ def realistic_unstructured_cube():
         long_name='time',
         units=Unit('hours since 1851-01-01'),
     )
+
     lat = AuxCoord(
         [0.0, 0.0, 0.0, 0.0],
         var_name='lat',
@@ -255,11 +343,22 @@ def realistic_unstructured_cube():
         long_name='longitude',
         units='rad',
     )
-    aux_2d = AuxCoord(
-        da.ma.masked_inside(da.arange(4 * 5).reshape(4, 5), 3, 10),
-        var_name='aux_2d',
+    aux_2d_data = da.ma.masked_inside(da.arange(4 * 5).reshape(4, 5), 3, 10)
+    aux_2d_bounds = da.stack((aux_2d_data - 1, aux_2d_data + 1), axis=-1)
+    aux_2d = AuxCoord(aux_2d_data, var_name='aux_2d')
+    aux_2d_with_bnds = AuxCoord(
+        aux_2d_data, bounds=aux_2d_bounds, var_name='aux_2d_with_bnds'
     )
     aux_0d = AuxCoord([0], var_name='aux_0d')
+
+    cell_measure_2d = CellMeasure(
+        da.ma.masked_inside(da.arange(4 * 5).reshape(4, 5), 3, 10),
+        var_name='cell_measure',
+    )
+    anc_var_2d = AncillaryVariable(
+        da.ma.masked_inside(da.arange(4 * 5).reshape(4, 5), 3, 10),
+        var_name='anc_var',
+    )
 
     cube = Cube(
         da.arange(4 * 5).reshape(4, 5),
@@ -269,8 +368,14 @@ def realistic_unstructured_cube():
         units='K',
         dim_coords_and_dims=[(time, 1)],
         aux_coords_and_dims=[
-            (lat, 0), (lon, 0), (aux_2d, (0, 1)), (aux_0d, ())
+            (lat, 0),
+            (lon, 0),
+            (aux_2d, (0, 1)),
+            (aux_2d_with_bnds, (0, 1)),
+            (aux_0d, ()),
         ],
+        cell_measures_and_dims=[(cell_measure_2d, (0, 1))],
+        ancillary_variables_and_dims=[(anc_var_2d, (0, 1))],
     )
     return cube
 
@@ -325,7 +430,72 @@ def test_local_solar_time_unstructured(realistic_unstructured_cube):
             99,
         ),
     )
-    assert result.coord('aux_2d').bounds is None
+    assert not result.coord('aux_2d').has_bounds()
+    assert (
+        result.coord('aux_2d_with_bnds').metadata ==
+        input_cube.coord('aux_2d_with_bnds').metadata
+    )
+    assert result.coord('aux_2d_with_bnds').has_lazy_points()
+    assert_array_equal(
+        result.coord('aux_2d_with_bnds').points,
+        np.ma.masked_equal(
+            [
+                [0, 1, 2, 99, 99],
+                [99, 99, 99, 99, 99],
+                [11, 12, 13, 14, 99],
+                [99, 99, 15, 16, 17],
+            ],
+            99,
+        ),
+    )
+    assert result.coord('aux_2d_with_bnds').has_lazy_bounds()
+    assert_array_equal(
+        result.coord('aux_2d_with_bnds').bounds,
+        np.ma.masked_equal(
+            [
+                [[-1, 1], [0, 2], [1, 3], [99, 99], [99, 99]],
+                [[99, 99], [99, 99], [99, 99], [99, 99], [99, 99]],
+                [[10, 12], [11, 13], [12, 14], [13, 15], [99, 99]],
+                [[99, 99], [99, 99], [14, 16], [15, 17], [16, 18]],
+            ],
+            99,
+        ),
+    )
+
+    assert (
+        result.cell_measure('cell_measure').metadata ==
+        input_cube.cell_measure('cell_measure').metadata
+    )
+    assert result.cell_measure('cell_measure').has_lazy_data()
+    assert_array_equal(
+        result.cell_measure('cell_measure').data,
+        np.ma.masked_equal(
+            [
+                [0, 1, 2, 99, 99],
+                [99, 99, 99, 99, 99],
+                [11, 12, 13, 14, 99],
+                [99, 99, 15, 16, 17],
+            ],
+            99,
+        ),
+    )
+    assert (
+        result.ancillary_variable('anc_var').metadata ==
+        input_cube.ancillary_variable('anc_var').metadata
+    )
+    assert result.ancillary_variable('anc_var').has_lazy_data()
+    assert_array_equal(
+        result.ancillary_variable('anc_var').data,
+        np.ma.masked_equal(
+            [
+                [0, 1, 2, 99, 99],
+                [99, 99, 99, 99, 99],
+                [11, 12, 13, 14, 99],
+                [99, 99, 15, 16, 17],
+            ],
+            99,
+        ),
+    )
 
     assert result.has_lazy_data()
     assert_array_equal(
@@ -340,16 +510,6 @@ def test_local_solar_time_unstructured(realistic_unstructured_cube):
             99,
         ),
     )
-
-
-def test_local_solar_time_1_time_step(realistic_4d_cube):
-    """Test ``local_solar_time``."""
-    cube_1_time_step = realistic_4d_cube[[0]]
-
-    result = local_solar_time(realistic_4d_cube)
-    result_1_time_step = local_solar_time(cube_1_time_step)
-
-    assert result_1_time_step == result[[0]]
 
 
 def test_local_solar_time_no_time_fail(realistic_4d_cube):
