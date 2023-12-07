@@ -201,7 +201,6 @@ def read_description(filename):
 
 setup(
     name='ESMValCore',
-    version='2.11.0',  # remove this ASAP after Test PyPI upload
     author=read_authors('.zenodo.json'),
     description=read_description('.zenodo.json'),
     long_description=Path('README.md').read_text(encoding='utf-8'),
