@@ -1591,7 +1591,7 @@ def _transform_cube_to_lst(cube: Cube) -> Cube:
                 lon_dim=lon_dim_,
                 output_dtypes=coord.dtype,
             )
-            if coord.core_bounds() is not None:
+            if coord.has_bounds():
                 coord.bounds = _transform_arr(
                     coord.core_bounds(),
                     time_dim=time_dim_,
