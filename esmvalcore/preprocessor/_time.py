@@ -1308,7 +1308,7 @@ def _lin_pad(array: np.ndarray, delta: float, pad_with: int) -> np.ndarray:
 
 
 def _guess_time_bounds(time_coord: DimCoord) -> None:
-    """Guess coordinates of time coordinate in-place."""
+    """Guess bounds of time coordinate in-place."""
     if time_coord.has_bounds():
         return
     try:
