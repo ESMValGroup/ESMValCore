@@ -41,7 +41,7 @@ jobs:
           --binary
           --out-dir dist/
           .
-      - name: Publish distribution 📦 to Test PyP
+      - name: Publish distribution 📦 to Test PyI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
