@@ -274,59 +274,33 @@ def cube_3d():
     )
 
 
-def assert_all_chunked(cube):
-    """Assert that all arrays of cube are chunked."""
-    assert cube.core_data().chunksize == (3, 3, 2)
-    assert cube.coord('aux_x').core_points().chunksize == (3,)
-    assert cube.coord('aux_z').core_points().chunksize == (1,)
-    assert cube.coord('xy').core_points().chunksize == (3, 3)
-    assert cube.coord('xz').core_points().chunksize == (3, 2)
-    assert cube.coord('yz').core_points().chunksize == (3, 2)
-    assert cube.coord('xyz').core_points().chunksize == (3, 3, 2)
-    assert cube.coord('aux_x').core_bounds().chunksize == (3, 2)
-    assert cube.coord('aux_z').core_bounds() is None
-    assert cube.coord('xy').core_bounds() is None
-    assert cube.coord('xz').core_bounds() is None
-    assert cube.coord('yz').core_bounds() is None
-    assert cube.coord('xyz').core_bounds().chunksize == (3, 3, 2, 2)
-    assert cube.cell_measure('cell_measure').core_data().chunksize == (3, 2)
-    assert cube.ancillary_variable('anc_var').core_data().chunksize == (3, 2)
-
-
-@pytest.mark.parametrize('only_lazy', [True, False])
-def test_rechunk_cube(cube_3d, only_lazy):
+def test_rechunk_cube_fully_lazy(cube_3d):
     """Test ``rechunk_cube``."""
     input_cube = cube_3d.copy()
 
     x_coord = input_cube.coord('x')
-    result = rechunk_cube(
-        input_cube, [x_coord, 'y'], remaining_dims=2, only_lazy=only_lazy)
+    result = rechunk_cube(input_cube, [x_coord, 'y'], remaining_dims=2)
 
     assert input_cube == cube_3d
     assert result == cube_3d
-    assert_all_chunked(result)
+    assert result.core_data().chunksize == (3, 3, 2)
+    assert result.coord('aux_x').core_points().chunksize == (3,)
+    assert result.coord('aux_z').core_points().chunksize == (1,)
+    assert result.coord('xy').core_points().chunksize == (3, 3)
+    assert result.coord('xz').core_points().chunksize == (3, 2)
+    assert result.coord('yz').core_points().chunksize == (3, 2)
+    assert result.coord('xyz').core_points().chunksize == (3, 3, 2)
+    assert result.coord('aux_x').core_bounds().chunksize == (3, 2)
+    assert result.coord('aux_z').core_bounds() is None
+    assert result.coord('xy').core_bounds() is None
+    assert result.coord('xz').core_bounds() is None
+    assert result.coord('yz').core_bounds() is None
+    assert result.coord('xyz').core_bounds().chunksize == (3, 3, 2, 2)
+    assert result.cell_measure('cell_measure').core_data().chunksize == (3, 2)
+    assert result.ancillary_variable('anc_var').core_data().chunksize == (3, 2)
 
 
-def test_rechunk_cube_force_lazy(cube_3d):
-    """Test ``rechunk_cube``."""
-    input_cube = cube_3d.copy()
-
-    # Realize some arrays
-    input_cube.data
-    input_cube.coord('xyz').points
-    input_cube.coord('xyz').bounds
-    input_cube.cell_measure('cell_measure').data
-
-    result = rechunk_cube(
-        input_cube, ['x', 'y'], remaining_dims=2, only_lazy=False
-    )
-
-    assert input_cube == cube_3d
-    assert result == cube_3d
-    assert_all_chunked(result)
-
-
-def test_rechunk_cube_only_lazy(cube_3d):
+def test_rechunk_cube_partly_lazy(cube_3d):
     """Test ``rechunk_cube``."""
     input_cube = cube_3d.copy()
 
