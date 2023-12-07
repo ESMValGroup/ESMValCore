@@ -174,10 +174,57 @@ def _rechunk(
     return array.rechunk(new_chunks)
 
 
+def _rechunk_dim_metadata(
+    cube: Cube,
+    complete_dims: Iterable[int],
+    remaining_dims: int | Literal['auto'] = 'auto',
+    only_lazy: bool = True,
+) -> None:
+    """Rechunk dimensional metadata of a cube (in-place)."""
+    # Non-dimensional coords that span complete_dims
+    # Note: dimensional coords are always realized (i.e., numpy arrays), so no
+    # chunking is necessary
+    for coord in cube.coords(dim_coords=False):
+        dims = cube.coord_dims(coord)
+        complete_dims_ = [dims.index(d) for d in complete_dims if d in dims]
+        if complete_dims_:
+            if not (only_lazy and not coord.has_lazy_points()):
+                coord.points = _rechunk(
+                    coord.lazy_points(), complete_dims_, remaining_dims
+                )
+            rechunk_bounds = (
+                coord.has_bounds() and
+                not (only_lazy and not coord.has_lazy_bounds())
+            )
+            if rechunk_bounds:
+                coord.bounds = _rechunk(
+                    coord.lazy_bounds(), complete_dims_, remaining_dims
+                )
+
+    # Rechunk cell measures that span complete_dims
+    for measure in cube.cell_measures():
+        dims = cube.cell_measure_dims(measure)
+        complete_dims_ = [dims.index(d) for d in complete_dims if d in dims]
+        if complete_dims_ and not (only_lazy and not measure.has_lazy_data()):
+            measure.data = _rechunk(
+                measure.lazy_data(), complete_dims_, remaining_dims
+            )
+
+    # Rechunk ancillary variables that span complete_dims
+    for anc_var in cube.ancillary_variables():
+        dims = cube.ancillary_variable_dims(anc_var)
+        complete_dims_ = [dims.index(d) for d in complete_dims if d in dims]
+        if complete_dims_ and not (only_lazy and not anc_var.has_lazy_data()):
+            anc_var.data = _rechunk(
+                anc_var.lazy_data(), complete_dims_, remaining_dims
+            )
+
+
 def rechunk_cube(
     cube: Cube,
     complete_coords: Iterable[Coord | str],
     remaining_dims: int | Literal['auto'] = 'auto',
+    only_lazy: bool = True,
 ) -> Cube:
     """Rechunk cube so that it is not chunked along given dimensions.
 
@@ -194,14 +241,17 @@ def rechunk_cube(
         chunked. The given coordinates must span exactly 1 dimension.
     remaining_dims:
         Chunksize of the remaining dimensions.
+    only_lazy:
+        If ``True``, numpy arrays are not changed. If ``False``, transforms
+        numpy arrays into dask arrays and chunks them accordingly.
 
     Returns
     -------
     Cube
-        Rechunked cube.
+        Rechunked cube. This will always be a copy of the input cube.
 
     """
-    cube = cube[...]  # do not modify input cube
+    cube = cube.copy()  # do not modify input cube
 
     # Make sure that complete_coords span exactly 1 dimension
     complete_dims = []
@@ -216,37 +266,15 @@ def rechunk_cube(
         complete_dims.append(dims[0])
 
     # Rechunk data
-    cube.data = _rechunk(cube.lazy_data(), complete_dims, remaining_dims)
+    if not (only_lazy and not cube.has_lazy_data()):
+        cube.data = _rechunk(cube.lazy_data(), complete_dims, remaining_dims)
 
-    # Rechunk non-dim coords that span complete_dims
-    for coord in cube.coords(dim_coords=False):
-        dims = cube.coord_dims(coord)
-        complete_dims_ = [dims.index(d) for d in complete_dims if d in dims]
-        if complete_dims_:
-            coord.points = _rechunk(
-                coord.lazy_points(), complete_dims_, remaining_dims
-            )
-            if coord.lazy_bounds() is not None:
-                coord.bounds = _rechunk(
-                    coord.lazy_bounds(), complete_dims_, remaining_dims
-                )
-
-    # Rechunk cell measures that span complete_dims
-    for measure in cube.cell_measures():
-        dims = cube.cell_measure_dims(measure)
-        complete_dims_ = [dims.index(d) for d in complete_dims if d in dims]
-        if complete_dims_:
-            measure.data = _rechunk(
-                measure.lazy_data(), complete_dims_, remaining_dims
-            )
-
-    # Rechunk ancillary variables that span complete_dims
-    for anc_var in cube.ancillary_variables():
-        dims = cube.ancillary_variable_dims(anc_var)
-        complete_dims_ = [dims.index(d) for d in complete_dims if d in dims]
-        if complete_dims_:
-            anc_var.data = _rechunk(
-                anc_var.lazy_data(), complete_dims_, remaining_dims
-            )
+    # Rechunk dimensional metadata
+    _rechunk_dim_metadata(
+        cube,
+        complete_dims,
+        remaining_dims=remaining_dims,
+        only_lazy=only_lazy,
+    )
 
     return cube
