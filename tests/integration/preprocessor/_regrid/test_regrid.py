@@ -58,7 +58,6 @@ class Test:
         self.tgt_grid_for_unstructured = iris.cube.Cube(
             data, dim_coords_and_dims=coords_spec)
 
-        # Replace 1d spatial coords with 2d spatial coords.
         lons = self.cube.coord('longitude')
         lats = self.cube.coord('latitude')
         x, y = np.meshgrid(lons.points, lats.points)
@@ -95,6 +94,18 @@ class Test:
             aux_coords_and_dims=[(lats, 1), (lons, 1)],
         )
         self.unstructured_grid_cube.metadata = self.cube.metadata
+
+        # Setup irregular cube and grid
+        lons_2d = iris.coords.AuxCoord(
+            [[0, 1]], standard_name='longitude', units='degrees_east'
+        )
+        lats_2d = iris.coords.AuxCoord(
+            [[0, 1]], standard_name='latitude', units='degrees_north'
+        )
+        self.irregular_grid = iris.cube.Cube(
+            [[1, 1]],
+            aux_coords_and_dims=[(lats_2d, (0, 1)), (lons_2d, (0, 1))],
+        )
 
     def test_regrid__linear(self):
         result = regrid(self.cube, self.grid_for_linear, 'linear')
@@ -314,6 +325,18 @@ class Test:
         with pytest.raises(ValueError, match=msg):
             regrid(
                 self.unstructured_grid_cube,
+                self.tgt_grid_for_unstructured,
+                'invalid',
+            )
+
+    def test_invalid_scheme_for_irregular_grid(self):
+        """Test invalid scheme for irregular cube."""
+        msg = (
+            "Regridding scheme 'invalid' does not support irregular data, "
+        )
+        with pytest.raises(ValueError, match=msg):
+            regrid(
+                self.irregular_grid,
                 self.tgt_grid_for_unstructured,
                 'invalid',
             )

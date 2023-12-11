@@ -15,7 +15,6 @@ from esmvalcore.preprocessor import regrid
 from esmvalcore.preprocessor._regrid import (
     _CACHE,
     HORIZONTAL_SCHEMES_REGULAR,
-    _attempt_irregular_regridding,
     _horizontal_grid_is_close,
     _rechunk,
 )
@@ -371,12 +370,6 @@ def test_no_rechunk_unsupported_grid():
     result = _rechunk(cube, tgt_grid)
     assert result is cube
     assert result.core_data().chunks == expected_chunks
-
-
-def test_attempt_irregular_regridding():
-    """Test `_attempt_irregular_regridding`."""
-    result = _attempt_irregular_regridding(iris.cube.Cube(0), 'linear')
-    assert result is False
 
 
 if __name__ == '__main__':

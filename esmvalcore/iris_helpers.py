@@ -159,6 +159,30 @@ def merge_cube_attributes(
         cube.attributes = final_attributes
 
 
+def has_irregular_grid(cube: Cube) -> bool:
+    """Check if a cube has an irregular grid.
+
+    Parameters
+    ----------
+    cube:
+        Cube to be checked.
+
+    Returns
+    -------
+    bool
+        ``True`` if input cube has an irregular grid, else ``False``.
+
+    """
+    try:
+        lat = cube.coord('latitude')
+        lon = cube.coord('longitude')
+    except CoordinateNotFoundError:
+        return False
+    if lat.ndim == 2 and lon.ndim == 2:
+        return True
+    return False
+
+
 def has_unstructured_grid(cube: Cube) -> bool:
     """Check if a cube has an unstructured grid.
 

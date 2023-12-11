@@ -28,7 +28,7 @@ from esmvalcore.cmor._fixes.shared import (
 )
 from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
-from esmvalcore.iris_helpers import has_unstructured_grid
+from esmvalcore.iris_helpers import has_irregular_grid, has_unstructured_grid
 from esmvalcore.preprocessor._other import get_array_module
 from esmvalcore.preprocessor._supplementary_vars import (
     add_ancillary_variable,
@@ -528,15 +528,14 @@ def _get_target_grid_cube(
 
 def _attempt_irregular_regridding(cube: Cube, scheme: str) -> bool:
     """Check if irregular regridding with ESMF should be used."""
-    if isinstance(scheme, str) and scheme in HORIZONTAL_SCHEMES_IRREGULAR:
-        try:
-            lat_dim = cube.coord('latitude').ndim
-            lon_dim = cube.coord('longitude').ndim
-            if lat_dim == lon_dim == 2:
-                return True
-        except iris.exceptions.CoordinateNotFoundError:
-            pass
-    return False
+    if not has_irregular_grid(cube):
+        return False
+    if scheme not in HORIZONTAL_SCHEMES_IRREGULAR:
+        raise ValueError(
+            f"Regridding scheme '{scheme}' does not support irregular data, "
+            f"expected one of {list(HORIZONTAL_SCHEMES_IRREGULAR)}"
+        )
+    return True
 
 
 def _attempt_unstructured_regridding(cube: Cube, scheme: str) -> bool:
