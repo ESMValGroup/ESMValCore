@@ -235,11 +235,15 @@ class RecipeOutput(Mapping):
         if 'SSH_CONNECTION' not in os.environ:
             return
         server_ip = os.environ['SSH_CONNECTION'].split()[2]
-        server = f'{getpass.getuser()}@{server_ip}'
+        server_ip_env = '${server}'
+        server = f'{getpass.getuser()}@{server_ip_env}'
         port = '31415'
+        port_env = '${port}'
         command = (
-            f'ssh -t -L {port}:localhost:{port} {server} {sys.executable} -m '
-            f'http.server {port} -d {self.session.session_dir}'
+            f'server={server_ip} && port={port} && '
+            f'ssh -t -L {port_env}:localhost:{port_env} {server} '
+            f'{sys.executable} -m http.server {port_env} -d '
+            f'{self.session.session_dir}'
         )
         logger.info(
             "It looks like you are connected to a remote machine via SSH. To "
