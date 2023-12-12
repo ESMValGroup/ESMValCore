@@ -86,7 +86,7 @@ def convert_units(cube, units):
     * ``precipitation_flux`` (``kg m-2 s-1``) --
       ``lwe_precipitation_rate`` (``mm day-1``)
     * ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``m``) --
-      ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``1e5 DU``)
+      ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``DU``)
 
     Names in the list correspond to ``standard_names`` of the input data.
     Conversions are allowed from each quantity to any other quantity given in a
