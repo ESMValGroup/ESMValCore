@@ -1,5 +1,6 @@
 """Unit tests for the :func:`esmvalcore.preprocessor._area` module."""
 import unittest
+import warnings
 from pathlib import Path
 
 import fiona
@@ -1365,13 +1366,14 @@ def test_meridional_statistics(make_testcube):
 def test_meridional_statistics_divide_by_max(make_testcube):
     """Test ``meridional_statistics``."""
     make_testcube.data = np.ones(make_testcube.shape, dtype=np.float32)
-    make_testcube.data[:, 0] = 0.0
+    make_testcube.data[0, 0] = 0.25
     make_testcube.data[0, 1] = 2.0
     make_testcube.units = 'K'
     input_data = make_testcube.copy()
 
-    msg = "Division by zero encountered during cube normalization"
-    with pytest.warns(RuntimeWarning, match=msg):
+    # Make sure that no warnings are raised
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
         res = meridional_statistics(
             input_data, 'max', normalize_with_stats='divide'
         )
@@ -1380,11 +1382,11 @@ def test_meridional_statistics_divide_by_max(make_testcube):
     assert res.shape == input_data.shape
     expected = np.ma.masked_invalid(
         [
-            [np.nan, 1.0, 1.0, 1.0, 1.0],
-            [np.nan, 0.5, 1.0, 1.0, 1.0],
-            [np.nan, 0.5, 1.0, 1.0, 1.0],
-            [np.nan, 0.5, 1.0, 1.0, 1.0],
-            [np.nan, 0.5, 1.0, 1.0, 1.0],
+            [0.25, 1.0, 1.0, 1.0, 1.0],
+            [1.0, 0.5, 1.0, 1.0, 1.0],
+            [1.0, 0.5, 1.0, 1.0, 1.0],
+            [1.0, 0.5, 1.0, 1.0, 1.0],
+            [1.0, 0.5, 1.0, 1.0, 1.0],
         ],
     )
     tests.assert_array_equal(res.data, expected)
