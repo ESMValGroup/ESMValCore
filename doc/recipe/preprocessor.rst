@@ -2073,9 +2073,6 @@ See also :func:`esmvalcore.preprocessor.extract_volume`.
 This function calculates the volume-weighted average across three dimensions,
 but maintains the time dimension.
 
-This function takes the argument: `operator`, which defines the operation to
-apply over the volume.
-At the moment, only `mean` is supported.
 By default, the `mean` operation is weighted by the grid cell volumes.
 
 For weighted statistics, this function requires a cell volume `cell measure`_,
@@ -2085,6 +2082,18 @@ The required supplementary variable ``volcello`` can be attached to the main
 dataset as described in :ref:`supplementary_variables`.
 
 No depth coordinate is required as this is determined by Iris.
+
+Parameters:
+    * `operator`: Operation to apply.
+      At the moment, only `mean` is supported.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize_with_stats`: If given, do not return the statistics cube
+      itself, but rather, the input cube, normalized with the statistics cube.
+      Can either be `subtract` (statistics cube is subtracted from the input
+      cube) or `divide` (input cube is divided by the statistics cube).
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 
@@ -2101,6 +2110,10 @@ Takes arguments:
       Possible values for the axis are `x`, `y`, `z`, `t`.
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize_with_stats`: If given, do not return the statistics cube
+      itself, but rather, the input cube, normalized with the statistics cube.
+      Can either be `subtract` (statistics cube is subtracted from the input
+      cube) or `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
       arguments.
       See :ref:`stat_preprocs` for more details.
