@@ -1905,7 +1905,7 @@ Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
     * `normalize_with_stats`: If given, do not return the statistics cube
-      itself, but rather the input cube normalized with the statistics cube.
+      itself, but rather, the input cube, normalized with the statistics cube.
       Can either be `subtract` (statistics cube is subtracted from the input
       cube) or `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
@@ -1926,7 +1926,7 @@ Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
     * `normalize_with_stats`: If given, do not return the statistics cube
-      itself, but rather the input cube normalized with the statistics cube.
+      itself, but rather, the input cube, normalized with the statistics cube.
       Can either be `subtract` (statistics cube is subtracted from the input
       cube) or `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
