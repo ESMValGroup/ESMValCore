@@ -207,8 +207,8 @@ def zonal_statistics(
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
     normalize_with_stats:
-        If given, do not return the statistics cube itself, but rather the
-        input cube normalized with the statistics cube. Can either be
+        If given, do not return the statistics cube itself, but rather, the
+        input cube, normalized with the statistics cube. Can either be
         `subtract` (statistics cube is subtracted from the input cube) or
         `divide` (input cube is divided by the statistics cube).
     **operator_kwargs:
@@ -259,8 +259,8 @@ def meridional_statistics(
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
     normalize_with_stats:
-        If given, do not return the statistics cube itself, but rather the
-        input cube normalized with the statistics cube. Can either be
+        If given, do not return the statistics cube itself, but rather, the
+        input cube, normalized with the statistics cube. Can either be
         `subtract` (statistics cube is subtracted from the input cube) or
         `divide` (input cube is divided by the statistics cube).
     **operator_kwargs:
@@ -399,8 +399,8 @@ def area_statistics(
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
     normalize_with_stats:
-        If given, do not return the statistics cube itself, but rather the
-        input cube normalized with the statistics cube. Can either be
+        If given, do not return the statistics cube itself, but rather, the
+        input cube, normalized with the statistics cube. Can either be
         `subtract` (statistics cube is subtracted from the input cube) or
         `divide` (input cube is divided by the statistics cube).
     **operator_kwargs:
