@@ -1912,7 +1912,7 @@ Parameters:
       arguments.
       See :ref:`stat_preprocs` for more details.
 
-See also :func:`esmvalcore.preprocessor.zonal_means`.
+See also :func:`esmvalcore.preprocessor.zonal_statistics`.
 
 
 ``meridional_statistics``
@@ -1933,7 +1933,7 @@ Parameters:
       arguments.
       See :ref:`stat_preprocs` for more details.
 
-See also :func:`esmvalcore.preprocessor.meridional_means`.
+See also :func:`esmvalcore.preprocessor.meridional_statistics`.
 
 
 .. _area_statistics:
