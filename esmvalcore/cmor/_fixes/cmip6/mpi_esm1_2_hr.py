@@ -48,7 +48,7 @@ class Tas(Fix):
 
 
 class Tasmax(Tas):
-    """Fixes for tasmax"""
+    """Fixes for tasmax."""
 
 
 class Ta(Fix):
@@ -107,8 +107,8 @@ class SfcWind(Fix):
 
 
 class Uas(SfcWind):
-    """Fixes for uas"""
+    """Fixes for uas."""
 
 
 class Vas(SfcWind):
-    """Fixes for vas"""
+    """Fixes for vas."""
