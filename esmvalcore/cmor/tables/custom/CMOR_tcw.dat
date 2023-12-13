@@ -15,7 +15,7 @@ long_name:         Mass Fraction of Cloud Total Water (liquid + ice)
 ! Additional variable information:
 !----------------------------------
 dimensions:        longitude latitude plevs time
-out_name:          tcp
+out_name:          tcw
 type:              real
 !----------------------------------
 !
