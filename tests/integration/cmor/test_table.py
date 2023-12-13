@@ -411,32 +411,23 @@ class TestCustomInfo(unittest.TestCase):
             'tables',
             'custom',
         )
-        expected_coordinate_file = os.path.join(
-            os.path.dirname(esmvalcore.cmor.__file__),
-            'tables',
-            'custom',
-            'CMOR_coordinates.dat',
-        )
         self.assertEqual(custom_info._cmor_folder, expected_cmor_folder)
-        self.assertEqual(custom_info._coordinates_file,
-                         expected_coordinate_file)
+        self.assertTrue(custom_info.tables['custom'])
+        self.assertTrue(custom_info.coords)
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
         cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
+        default_cmor_tables_path = os.path.join(cmor_path, 'tables', 'custom')
         cmor_tables_path = os.path.join(cmor_path, 'tables', 'cmip5')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
-        custom_info = CustomInfo(cmor_tables_path)
-        self.assertEqual(custom_info._cmor_folder, cmor_tables_path)
 
-        expected_coordinate_file = os.path.join(
-            os.path.dirname(esmvalcore.cmor.__file__),
-            'tables',
-            'custom',
-            'CMOR_coordinates.dat',
-        )
-        self.assertEqual(custom_info._coordinates_file,
-                         expected_coordinate_file)
+        custom_info = CustomInfo(cmor_tables_path)
+
+        self.assertEqual(custom_info._cmor_folder, default_cmor_tables_path)
+        self.assertEqual(custom_info._custom_cmor_folder, cmor_tables_path)
+        self.assertTrue(custom_info.tables['custom'])
+        self.assertTrue(custom_info.coords)
 
     def test_custom_tables_invalid_location(self):
         """Test constructor with invalid custom tables location."""
