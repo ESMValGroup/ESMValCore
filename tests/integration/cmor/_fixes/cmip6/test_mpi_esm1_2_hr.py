@@ -1,13 +1,19 @@
 """Test fixes for MPI-ESM1-2-HR."""
 import iris
 import pytest
+from cf_units import Unit
 
-from esmvalcore.cmor._fixes.cmip6.mpi_esm1_2_hr import AllVars, Cl, Cli, Clw
-from esmvalcore.cmor._fixes.cmip6.mpi_esm1_2_hr import SfcWind, Tas
+from esmvalcore.cmor._fixes.cmip6.mpi_esm1_2_hr import (
+    AllVars,
+    Cl,
+    Cli,
+    Clw,
+    SfcWind,
+    Tas,
+)
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
 from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor.table import get_var_info
-from cf_units import Unit
 
 
 def test_get_allvars_fix():
