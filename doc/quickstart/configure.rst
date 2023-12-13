@@ -699,8 +699,8 @@ Custom CMOR tables
 
 As mentioned in the previous section, the CMOR tables of projects that use
 ``cmor_strict: false`` will be extended with custom CMOR tables.
-For derived variables (the ones with ``derive: true`` in the recipe), the custom CMOR tables
-will always be considered.
+For derived variables (the ones with ``derive: true`` in the recipe), the
+custom CMOR tables will always be considered.
 By default, these custom tables are loaded from `esmvalcore/cmor/tables/custom
 <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
 However, by using the special project ``custom`` in the

@@ -425,7 +425,7 @@ class TestCustomInfo(unittest.TestCase):
         custom_info = CustomInfo(cmor_tables_path)
 
         self.assertEqual(custom_info._cmor_folder, default_cmor_tables_path)
-        self.assertEqual(custom_info._custom_cmor_folder, cmor_tables_path)
+        self.assertEqual(custom_info._user_table_folder, cmor_tables_path)
         self.assertTrue(custom_info.tables['custom'])
         self.assertTrue(custom_info.coords)
 

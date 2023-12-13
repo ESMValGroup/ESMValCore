@@ -45,7 +45,7 @@ def test_read_cmor_tables():
     project = 'custom'
     table = CMOR_TABLES[project]
     assert Path(table._cmor_folder) == table_path / 'custom'
-    assert table._custom_cmor_folder is None
+    assert table._user_table_folder is None
     assert table.coords
     assert table.tables['custom']
 
@@ -156,7 +156,7 @@ def test_read_custom_cmor_tables(tmp_path):
         custom_table._cmor_folder ==
         str(Path(root).parent / 'tables' / 'custom')
     )
-    assert custom_table._custom_cmor_folder == str(tmp_path)
+    assert custom_table._user_table_folder == str(tmp_path)
 
     # Make sure that default tables have been read
     assert 'alb' in custom_table.tables['custom']

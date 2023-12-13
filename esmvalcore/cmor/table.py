@@ -1011,15 +1011,15 @@ class CustomInfo(CMIP5Info):
         # Second, if given, update default tables with user-defined custom
         # tables
         if cmor_tables_path is not None:
-            self._custom_cmor_folder = self._get_cmor_path(cmor_tables_path)
-            if not os.path.isdir(self._custom_cmor_folder):
+            self._user_table_folder = self._get_cmor_path(cmor_tables_path)
+            if not os.path.isdir(self._user_table_folder):
                 raise ValueError(
-                    f"Custom CMOR tables path {self._custom_cmor_folder} is "
+                    f"Custom CMOR tables path {self._user_table_folder} is "
                     f"not a directory"
                 )
-            self._read_table_dir(self._custom_cmor_folder)
+            self._read_table_dir(self._user_table_folder)
         else:
-            self._custom_cmor_folder = None
+            self._user_table_folder = None
 
     def _read_table_dir(self, table_dir: str) -> None:
         """Read CMOR tables from directory."""
