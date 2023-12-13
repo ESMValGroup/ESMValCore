@@ -254,8 +254,9 @@ class RecipeOutput(Mapping):
         )
         logger.info(
             "If the port %s is already in use, you can replace it with any "
-            "other free one (e.g, 12789). If you are connected through a jump "
-            "host, replace the server IP address %s with your SSH server name",
+            "other free one (e.g., 12789). If you are connected through a "
+            "jump host, replace the server IP address %s with your SSH server "
+            "name",
             port,
             server_ip,
         )
