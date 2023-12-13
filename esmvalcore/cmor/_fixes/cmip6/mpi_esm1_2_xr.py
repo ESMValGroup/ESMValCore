@@ -43,4 +43,3 @@ class Uas(BaseSfcWind):
 
 class Vas(BaseSfcWind):
     """Fixes for vas."""
-
