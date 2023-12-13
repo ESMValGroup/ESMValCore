@@ -299,8 +299,8 @@ class InfoBase():
         # cmor_strict=False
         var_info = self._look_in_all_tables(alt_names_list)
 
-        # If that didn' work either, look in default table if cmor_strict=False
-        # or derived=True
+        # If that didn't work either, look in default table if
+        # cmor_strict=False or derived=True
         if not var_info:
             var_info = self._look_in_default(derived, alt_names_list,
                                              table_name)
