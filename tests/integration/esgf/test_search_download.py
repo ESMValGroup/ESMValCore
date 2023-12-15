@@ -116,7 +116,7 @@ def test_mock_search(variable, mocker):
         # Skip cases where the raw search results were too large to save.
         pytest.skip(f"Raw search results in {raw_results} not available.")
 
-    with raw_results.open('r') as file:
+    with raw_results.open('r', encoding='utf-8') as file:
         search_results = [
             FileResult(json=j, context=None) for j in json.load(file)
         ]

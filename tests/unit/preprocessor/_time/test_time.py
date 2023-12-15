@@ -6,6 +6,7 @@ import unittest
 from datetime import datetime
 from typing import List, Tuple
 
+import dask.array as da
 import iris
 import iris.coord_categorisation
 import iris.coords
@@ -550,6 +551,8 @@ class TestClimatology(tests.Test):
         expected = np.array([1.], dtype=np.float32)
         assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-2 s-1')
+        self.assertFalse(cube.coords('_time_weights_'))
+        self.assertFalse(result.coords('_time_weights_'))
 
     def test_time_mean_uneven(self):
         """Test for time average of a 1D field with uneven time boundaries."""
@@ -1658,8 +1661,9 @@ def make_map_data(number_years=2):
         standard_name='longitude',
     )
     data = np.array([[0, 1], [1, 0]]) * times[:, None, None]
+    chunks = (int(data.shape[0] / 2), 1, 2)
     cube = iris.cube.Cube(
-        data,
+        da.asarray(data, chunks=chunks),
         dim_coords_and_dims=[(time, 0), (lat, 1), (lon, 2)],
     )
     return cube
@@ -2154,6 +2158,66 @@ class TestResampleTime(tests.Test):
 
         with pytest.raises(ValueError):
             resample_time(cube, day=16)
+
+
+@pytest.fixture
+def easy_2d_cube():
+    """Create easy 2D cube to test statistical operators."""
+    time = iris.coords.DimCoord(
+        [2.0, 3.0],
+        bounds=[[-0.5, 2.5], [2.5, 3.5]],
+        standard_name='time',
+        units='days since 2000-01-01',
+    )
+    lat = iris.coords.DimCoord(
+        [0.0, 1.0], standard_name='latitude', units='degrees'
+    )
+    cube = Cube(
+        np.arange(4, dtype=np.float32).reshape(2, 2),
+        standard_name='air_temperature',
+        units='K',
+        dim_coords_and_dims=[(time, 0), (lat, 1)],
+    )
+    return cube
+
+
+@pytest.mark.parametrize(
+    'operator,kwargs,expected_data,expected_units',
+    [
+        ('gmean', {}, [0.0, 1.7320509], 'K'),
+        ('hmean', {}, [0.0, 1.5], 'K'),
+        ('max', {}, [2.0, 3.0], 'K'),
+        ('mean', {}, [0.5, 1.5], 'K'),
+        ('mean', {'weights': False}, [1.0, 2.0], 'K'),
+        ('median', {}, [1.0, 2.0], 'K'),
+        ('min', {}, [0.0, 1.0], 'K'),
+        ('peak', {}, [2.0, 3.0], 'K'),
+        ('percentile', {'percent': 0.0}, [0.0, 1.0], 'K'),
+        ('rms', {}, [1.0, 1.7320509], 'K'),
+        ('rms', {'weights': False}, [1.414214, 2.236068], 'K'),
+        ('std_dev', {}, [1.414214, 1.414214], 'K'),
+        ('std_dev', {'ddof': 0}, [1.0, 1.0], 'K'),
+        ('sum', {}, [2.0, 6.0], 'K day'),
+        ('sum', {'weights': False}, [2.0, 4.0], 'K'),
+        ('variance', {}, [2.0, 2.0], 'K2'),
+        ('variance', {'ddof': 0}, [1.0, 1.0], 'K2'),
+        ('wpercentile', {'percent': 50.0}, [0.5, 1.5], 'K'),
+    ]
+)
+def test_statistical_operators(
+    operator, kwargs, expected_data, expected_units, easy_2d_cube
+):
+    """Test ``climate_statistics`` with different operators."""
+    res = climate_statistics(easy_2d_cube, operator, **kwargs)
+
+    assert res.var_name == easy_2d_cube.var_name
+    assert res.long_name == easy_2d_cube.long_name
+    assert res.standard_name == easy_2d_cube.standard_name
+    assert res.attributes == easy_2d_cube.attributes
+    assert res.units == expected_units
+    assert res.coord('latitude') == easy_2d_cube.coord('latitude')
+    assert res.coord('time').shape == (1, )
+    np.testing.assert_allclose(res.data, expected_data, atol=1e-6, rtol=1e-6)
 
 
 if __name__ == '__main__':

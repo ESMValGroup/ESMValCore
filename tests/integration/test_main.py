@@ -81,7 +81,7 @@ def test_empty_run(tmp_path):
     Config.get_config_user(path=tmp_path)
     log_dir = f'{tmp_path}/esmvaltool_output'
     config_file = f"{tmp_path}/config-user.yml"
-    with open(config_file, 'r+') as file:
+    with open(config_file, 'r+', encoding='utf-8') as file:
         config = yaml.safe_load(file)
         config['output_dir'] = log_dir
         yaml.safe_dump(config, file, sort_keys=False)
@@ -116,12 +116,6 @@ def test_run_with_max_years():
 @patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
 def test_run_with_max_datasets():
     with arguments('esmvaltool', 'run', 'recipe.yml', '--max_datasets=2'):
-        run()
-
-
-@patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
-def test_run_with_offline():
-    with arguments('esmvaltool', 'run', 'recipe.yml', '--offline'):
         run()
 
 

@@ -3,6 +3,8 @@
 import os
 import unittest
 
+import pytest
+
 import esmvalcore.cmor
 from esmvalcore.cmor.table import (
     CMIP3Info,
@@ -10,6 +12,7 @@ from esmvalcore.cmor.table import (
     CMIP6Info,
     CustomInfo,
     _update_cmor_facets,
+    get_var_info,
 )
 
 
@@ -408,32 +411,23 @@ class TestCustomInfo(unittest.TestCase):
             'tables',
             'custom',
         )
-        expected_coordinate_file = os.path.join(
-            os.path.dirname(esmvalcore.cmor.__file__),
-            'tables',
-            'custom',
-            'CMOR_coordinates.dat',
-        )
         self.assertEqual(custom_info._cmor_folder, expected_cmor_folder)
-        self.assertEqual(custom_info._coordinates_file,
-                         expected_coordinate_file)
+        self.assertTrue(custom_info.tables['custom'])
+        self.assertTrue(custom_info.coords)
 
     def test_custom_tables_location(self):
         """Test constructor with custom tables location."""
         cmor_path = os.path.dirname(os.path.realpath(esmvalcore.cmor.__file__))
+        default_cmor_tables_path = os.path.join(cmor_path, 'tables', 'custom')
         cmor_tables_path = os.path.join(cmor_path, 'tables', 'cmip5')
         cmor_tables_path = os.path.abspath(cmor_tables_path)
-        custom_info = CustomInfo(cmor_tables_path)
-        self.assertEqual(custom_info._cmor_folder, cmor_tables_path)
 
-        expected_coordinate_file = os.path.join(
-            os.path.dirname(esmvalcore.cmor.__file__),
-            'tables',
-            'custom',
-            'CMOR_coordinates.dat',
-        )
-        self.assertEqual(custom_info._coordinates_file,
-                         expected_coordinate_file)
+        custom_info = CustomInfo(cmor_tables_path)
+
+        self.assertEqual(custom_info._cmor_folder, default_cmor_tables_path)
+        self.assertEqual(custom_info._user_table_folder, cmor_tables_path)
+        self.assertTrue(custom_info.tables['custom'])
+        self.assertTrue(custom_info.coords)
 
     def test_custom_tables_invalid_location(self):
         """Test constructor with invalid custom tables location."""
@@ -485,3 +479,41 @@ class TestCustomInfo(unittest.TestCase):
         self.assertEqual(var.long_name,
                          'Atmosphere CH4 surface')
         self.assertEqual(var.units, '1e-09')
+
+
+@pytest.mark.parametrize(
+    'project,mip,short_name,frequency',
+    [
+        ('CMIP5', 'Amon', 'tas', 'mon'),
+        ('CMIP5', 'day', 'tas', 'day'),
+        ('CMIP6', 'Amon', 'tas', 'mon'),
+        ('CMIP6', 'day', 'tas', 'day'),
+        ('CORDEX', '3hr', 'tas', '3hr'),
+    ]
+)
+def test_get_var_info(project, mip, short_name, frequency):
+    """Test ``get_var_info``."""
+    var_info = get_var_info(project, mip, short_name)
+
+    assert var_info.short_name == short_name
+    assert var_info.frequency == frequency
+
+
+@pytest.mark.parametrize(
+    'mip,short_name',
+    [
+        ('INVALID_MIP', 'tas'),
+        ('Amon', 'INVALID_VAR'),
+    ]
+)
+def test_get_var_info_invalid_mip_short_name(mip, short_name):
+    """Test ``get_var_info``."""
+    var_info = get_var_info('CMIP6', mip, short_name)
+
+    assert var_info is None
+
+
+def test_get_var_info_invalid_project():
+    """Test ``get_var_info``."""
+    with pytest.raises(KeyError):
+        get_var_info('INVALID_PROJECT', 'Amon', 'tas')
