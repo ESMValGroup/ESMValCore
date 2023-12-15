@@ -157,3 +157,28 @@ def merge_cube_attributes(
     # Step 3: modify the cubes in-place
     for cube in cubes:
         cube.attributes = final_attributes
+
+
+def has_unstructured_grid(cube: Cube) -> bool:
+    """Check if a cube has an unstructured grid.
+
+    Parameters
+    ----------
+    cube:
+        Cube to be checked.
+
+    Returns
+    -------
+    bool
+        ``True`` if input cube has an unstructured grid, else ``False``.
+
+    """
+    if not cube.coords('latitude') or not cube.coords('longitude'):
+        return False
+    lat = cube.coord('latitude')
+    lon = cube.coord('longitude')
+    if lat.ndim != 1 or lon.ndim != 1:
+        return False
+    if cube.coord_dims(lat) != cube.coord_dims(lon):
+        return False
+    return True
