@@ -130,6 +130,7 @@ Installation
 -  Clean-up how pins are written in conda environment file (`#2125 <https://github.com/ESMValGroup/ESMValCore/pull/2125>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
 -  Use importlib.metadata instead of deprecated pkg_resources (`#2096 <https://github.com/ESMValGroup/ESMValCore/pull/2096>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 -  Pin shapely to >=2.0 (`#2075 <https://github.com/ESMValGroup/ESMValCore/pull/2075>`__) `Valeriu Predoi <https://github.com/valeriupredoi>`__
+-  Pin Python to <3.12 in conda environment (`#2272 <https://github.com/ESMValGroup/ESMValCore/pull/2272>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
 Preprocessor
 ~~~~~~~~~~~~
