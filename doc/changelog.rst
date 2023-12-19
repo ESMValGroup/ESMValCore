@@ -54,11 +54,6 @@ Backwards incompatible changes
    - Due to the different facets for CORDEX datasets, there was an inconsistency in the fixing mechanism.
      This change requires changes to existing recipes that use CORDEX datasets. Please refer to the pull request for detailed update instructions.
 
--  Added new operators for statistics preprocessor (e.g., ``'percentile'``) and allowed passing additional arguments (`#2191 <https://github.com/ESMValGroup/ESMValCore/pull/2191>`__) `Manuel Schlund <https://github.com/schlunma>`__
-
-   - This harmonizes the operators for all statistics preprocessors. From this version, the new names can be used; the old arguments will stop working from
-     version 2.12.0. Please refer to :ref:`stat_preprocs` for a detailed description.
-
 -  For the following changes, no user change is necessary
 
    -  Remove deprecated way of calling :func:`~esmvalcore.cmor.table.read_cmor_tables` (`#2201 <https://github.com/ESMValGroup/ESMValCore/pull/2201>`__) `Bouwe Andela <https://github.com/bouweandela>`__
@@ -67,11 +62,14 @@ Backwards incompatible changes
 
    -  Remove deprecated preprocessor function `cleanup` (`#2215 <https://github.com/ESMValGroup/ESMValCore/pull/2215>`__) `Bouwe Andela <https://github.com/bouweandela>`__
 
-
 Deprecations
 ~~~~~~~~~~~~
 
 -  Clearly separate fixes and CMOR checks (`#2157 <https://github.com/ESMValGroup/ESMValCore/pull/2157>`__) `Manuel Schlund <https://github.com/schlunma>`__
+-  Added new operators for statistics preprocessor (e.g., ``'percentile'``) and allowed passing additional arguments (`#2191 <https://github.com/ESMValGroup/ESMValCore/pull/2191>`__) `Manuel Schlund <https://github.com/schlunma>`__
+
+   - This harmonizes the operators for all statistics preprocessors. From this version, the new names can be used; the old arguments will stop working from
+     version 2.12.0. Please refer to :ref:`stat_preprocs` for a detailed description.
 
 Bug fixes
 ~~~~~~~~~
