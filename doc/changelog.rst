@@ -21,12 +21,12 @@ Highlights
    -  Automatic rechunking between preprocessor steps to keep the
       `graph size smaller <https://docs.dask.org/en/latest/best-practices.html#avoid-very-large-graphs>`_
       and the `chunk size optimal <https://blog.dask.org/2021/11/02/choosing-dask-chunk-sizes>`__.
-   -  Reduce the size of the dask graph created by :func:`esmvalcore.preprocessor.anomalies`
+   -  Reduce the size of the dask graph created by :func:`esmvalcore.preprocessor.anomalies`.
    -  Preprocessors :func:`esmvalcore.preprocessor.mask_above_threshold`,
       :func:`esmvalcore.preprocessor.mask_below_threshold`,
       :func:`esmvalcore.preprocessor.mask_inside_range`,
-      :func:`esmvalcore.preprocessor.mask_outside_range` are now lazy
-   -  Lazy coordinates bounds are no longer loaded into memory by the CMOR checks and fixes
+      :func:`esmvalcore.preprocessor.mask_outside_range` are now lazy.
+   -  Lazy coordinates bounds are no longer loaded into memory by the CMOR checks and fixes.
 
 This release includes
 
