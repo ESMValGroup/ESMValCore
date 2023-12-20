@@ -1237,7 +1237,7 @@ Automatic testing
 -  Add test for latest version resolver (:pull:`874`) by :user:`stefsmeets`
 -  Update codacy coverage reporter to fix coverage (:pull:`905`) by :user:`nielsdrost`
 -  Avoid hardcoded year in tests and add improvement to plev test case (:pull:`921`) by :user:`bouweandela`
--  Pin scipy to less than 1.6.0 until ESMValGroup/ESMValCore/issues/927 gets resolved (:pull:`928`) by :user:`valeriupredoi`
+-  Pin scipy to less than 1.6.0 until :issue:`927` gets resolved (:pull:`928`) by :user:`valeriupredoi`
 -  Github Actions: change time when conda install test runs (:pull:`930`) by :user:`valeriupredoi`
 -  Remove redundant test line from test_utils.py (:pull:`935`) by :user:`valeriupredoi`
 -  Removed netCDF4 package from integration tests of fixes (:pull:`938`) by :user:`schlunma`
