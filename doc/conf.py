@@ -60,6 +60,7 @@ extensions = [
     'nbsphinx',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
+    'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
@@ -448,6 +449,36 @@ intersphinx_mapping = {
     'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/latest/', None),
     'python': ('https://docs.python.org/3/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+}
+
+# -- Extlinks extension -------------------------------------------------------
+# See https://www.sphinx-doc.org/en/master/usage/extensions/extlinks.html
+
+extlinks = {
+    "discussion": (
+        "https://github.com/ESMValGroup/ESMValCore/discussions/%s",
+        "Discussion #%s",
+    ),
+    "issue": (
+        "https://github.com/ESMValGroup/ESMValCore/issues/%s",
+        "Issue #%s",
+    ),
+    "pull": (
+        "https://github.com/ESMValGroup/ESMValCore/pull/%s",
+        "Pull request #%s",
+    ),
+    "release": (
+        "https://github.com/ESMValGroup/ESMValCore/releases/tag/%s",
+        "ESMValCore %s",
+    ),
+    "team": (
+        "https://github.com/orgs/ESMValGroup/teams/%s",
+        "@ESMValGroup/%s",
+    ),
+    "user": (
+        "https://github.com/%s",
+        "@%s",
+    ),
 }
 
 # -- Custom Document processing ----------------------------------------------
