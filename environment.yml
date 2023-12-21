@@ -20,7 +20,7 @@ dependencies:
   - geopy
   - humanfriendly
   - importlib_metadata  # required for Python < 3.10
-  - iris >=3.6.0
+  - iris >=3.6.1
   - iris-esmf-regrid >=0.7.0
   - isodate
   - jinja2
@@ -37,7 +37,7 @@ dependencies:
   - psutil
   - py-cordex
   - pybtex
-  - python >=3.9
+  - python >=3.9,<3.12
   - python-stratify >=0.3
   - pyyaml
   - requests
