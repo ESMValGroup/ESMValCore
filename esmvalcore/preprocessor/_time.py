@@ -1332,7 +1332,7 @@ def _get_lst_offset(lon_coord: Coord) -> np.ndarray:
     lon_coord = lon_coord.copy()
     lon_coord.convert_units('degrees')
     shifted_lon = (lon_coord.points + 180.0) % 360 - 180.0
-    return shifted_lon / 180.0 * 12.0
+    return 12.0 * (shifted_lon / 180.0)
 
 
 def _get_lsts(time_coord: DimCoord, lon_coord: Coord) -> np.ndarray:
@@ -1677,14 +1677,16 @@ def local_solar_time(cube: Cube) -> Cube:
     is 1 hour). If time bounds are not given or cannot be approximated (only
     one time step is given), a bin size of 1 hour is assumed.
 
-    LST is approximated as `UTC_time + longitude/180*12`, where `longitude` is
+    LST is approximated as `UTC_time + 12*longitude/180`, where `longitude` is
     assumed to be in [-180, 180] (this function automatically calculates the
     correct format for the longitude). This is only an approximation since the
     exact LST also depends on the day of year due to the eccentricity of
     Earth's orbit (see `equation of time
     <https://en.wikipedia.org/wiki/Equation_of_time>`__). However, since the
     corresponding error is ~15 min at most, this is ignored here, as most
-    climate model data has a courser temporal resolution.
+    climate model data has a courser temporal resolution and the time scale for
+    diurnal evolution of meteorological phenomena is usually in the order of
+    hours, not minutes.
 
     Parameters
     ----------

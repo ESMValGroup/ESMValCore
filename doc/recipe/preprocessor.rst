@@ -1676,9 +1676,11 @@ can directly compare diurnal cycles across the globe.
 LST is mainly determined by the longitude of a location, but due to the
 eccentricity of Earth's orbit, it also depends on the day of year (see
 `equation of time <https://en.wikipedia.org/wiki/Equation_of_time>`__).
-However, since this correction is at most ~15 min, which is usually smaller
-than the highest frequency output of CMIP6 models (1 hr), we ignore that here,
-and use the **mean** LST, which solely depends on longitude:
+However, this correction is at most ~15 min, which is usually smaller than the
+highest frequency output of CMIP6 models (1 hr) and smaller than the time scale
+for diurnal evolution of meteorological phenomena (which is in the order of
+hours, not minutes).
+Thus, instead, we use the **mean** LST, which solely depends on longitude:
 
 .. math::
 
