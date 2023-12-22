@@ -243,8 +243,7 @@ Extensive documentation on setting up Dask Clusters is available
 
   If not all preprocessor functions support lazy data, computational
   performance may be best with the default scheduler.
-  See `issue #674 <https://github.com/ESMValGroup/ESMValCore/issues/674>`_ for
-  progress on making all preprocessor functions lazy.
+  See :issue:`674` for progress on making all preprocessor functions lazy.
 
 **Example configurations**
 
