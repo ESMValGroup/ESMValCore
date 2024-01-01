@@ -144,7 +144,7 @@ https://conda.anaconda.org/conda-forge/linux-64/xorg-libx11-1.8.7-h8ee46fc_0.con
 https://conda.anaconda.org/conda-forge/noarch/alabaster-0.7.13-pyhd8ed1ab_0.conda#06006184e203b61d3525f90de394471e
 https://conda.anaconda.org/conda-forge/noarch/antlr-python-runtime-4.11.1-pyhd8ed1ab_0.tar.bz2#15109c4977d39ad7aa3423f57243e286
 https://conda.anaconda.org/conda-forge/linux-64/atk-1.0-2.38.0-hd4edc92_1.tar.bz2#6c72ec3e660a51736913ef6ea68c454b
-https://conda.anaconda.org/conda-forge/noarch/attrs-23.1.0-pyh71513ae_1.conda#3edfead7cedd1ab4400a6c588f3e75f8
+https://conda.anaconda.org/conda-forge/noarch/attrs-23.2.0-pyh71513ae_0.conda#5e4c0743c70186509d1412e03c2d8dfa
 https://conda.anaconda.org/conda-forge/linux-64/aws-c-event-stream-0.3.2-h0bcb0bb_8.conda#21dafb60b5854f82b196f32e5857dec6
 https://conda.anaconda.org/conda-forge/linux-64/aws-c-http-0.7.15-hd268abd_0.conda#7fe29e473e2d4491610ccb51285218c9
 https://conda.anaconda.org/conda-forge/linux-64/backports.zoneinfo-0.2.1-py311h38be061_8.conda#5384590f14dfe6ccd02811236afc9f8e
@@ -312,7 +312,7 @@ https://conda.anaconda.org/conda-forge/linux-64/postgresql-16.1-h8972f4a_7.conda
 https://conda.anaconda.org/conda-forge/linux-64/proj-9.3.0-h1d62c97_2.conda#b5e57a0c643da391bef850922963eece
 https://conda.anaconda.org/conda-forge/noarch/prompt-toolkit-3.0.42-pyha770c72_0.conda#0bf64bf10eee21f46ac83c161917fa86
 https://conda.anaconda.org/conda-forge/noarch/pydocstyle-6.3.0-pyhd8ed1ab_0.conda#7e23a61a7fbaedfef6eb0e1ac775c8e5
-https://conda.anaconda.org/conda-forge/noarch/pytest-7.4.3-pyhd8ed1ab_0.conda#5bdca0aca30b0ee62bb84854e027eae0
+https://conda.anaconda.org/conda-forge/noarch/pytest-7.4.4-pyhd8ed1ab_0.conda#a9d145de8c5f064b5fa68fb34725d9f4
 https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.8.2-pyhd8ed1ab_0.tar.bz2#dd999d1cc9f79e67dbb855c8924c7984
 https://conda.anaconda.org/conda-forge/noarch/referencing-0.32.0-pyhd8ed1ab_0.conda#a7b5a535cd614e384594530aee7e6061
 https://conda.anaconda.org/conda-forge/noarch/tinycss2-1.2.1-pyhd8ed1ab_0.tar.bz2#7234c9eefff659501cd2fe0d2ede4d48
@@ -353,7 +353,7 @@ https://conda.anaconda.org/conda-forge/noarch/requests-2.31.0-pyhd8ed1ab_0.conda
 https://conda.anaconda.org/conda-forge/noarch/requirements-detector-1.2.2-pyhd8ed1ab_0.conda#6626918380d99292df110f3c91b6e5ec
 https://conda.anaconda.org/conda-forge/noarch/stack_data-0.6.2-pyhd8ed1ab_0.conda#e7df0fdd404616638df5ece6e69ba7af
 https://conda.anaconda.org/conda-forge/linux-64/tiledb-2.18.2-h8c794c1_0.conda#e824b951c15a74d0a2d3e42676370791
-https://conda.anaconda.org/conda-forge/noarch/types-requests-2.31.0.10-pyhd8ed1ab_0.conda#84dca7318667fa091bbfd8724d22ea99
+https://conda.anaconda.org/conda-forge/noarch/types-requests-2.31.0.20231231-pyhd8ed1ab_0.conda#d13ef563501307d609a579871cccab0b
 https://conda.anaconda.org/conda-forge/linux-64/ukkonen-1.0.1-py311h9547e67_4.conda#586da7df03b68640de14dc3e8bcbf76f
 https://conda.anaconda.org/conda-forge/noarch/yapf-0.40.1-pyhd8ed1ab_0.conda#f269942e802d5e148632143d4c37acc9
 https://conda.anaconda.org/conda-forge/linux-64/aws-crt-cpp-0.25.0-hfa7cc67_4.conda#04ad4d642e8a2db8f0370b40f35c430f
