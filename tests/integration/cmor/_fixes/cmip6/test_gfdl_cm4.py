@@ -10,11 +10,14 @@ from esmvalcore.cmor._fixes.cmip6.gfdl_cm4 import (
     Fgco2,
     Omon,
     Siconc,
+    Tas,
+    Uas,
 )
 from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
+from cf_units import Unit
 
 
 def test_get_cl_fix():
@@ -116,3 +119,103 @@ def test_get_siconc_fix():
 def test_siconc_fix():
     """Test fix for ``siconc``."""
     assert Siconc is SiconcFixScalarCoord
+
+
+@pytest.fixture
+def tas_cubes():
+    correct_lat_coord = iris.coords.DimCoord([0.0],
+                                             var_name='lat',
+                                             standard_name='latitude')
+    wrong_lat_coord = iris.coords.DimCoord([0.0],
+                                           var_name='latitudeCoord',
+                                           standard_name='latitude')
+    correct_lon_coord = iris.coords.DimCoord([0.0],
+                                             var_name='lon',
+                                             standard_name='longitude')
+    wrong_lon_coord = iris.coords.DimCoord([0.0],
+                                           var_name='longitudeCoord',
+                                           standard_name='longitude')
+    correct_cube = iris.cube.Cube([[10.0]],
+                                  var_name='tas',
+                                  dim_coords_and_dims=[(correct_lat_coord, 0),
+                                                       (correct_lon_coord, 1)])
+    wrong_cube = iris.cube.Cube([[10.0]],
+                                var_name='ta',
+                                dim_coords_and_dims=[(wrong_lat_coord, 0),
+                                                     (wrong_lon_coord, 1)])
+    scalar_cube = iris.cube.Cube(0.0, var_name='ps')
+    return iris.cube.CubeList([correct_cube, wrong_cube, scalar_cube])
+
+
+def test_get_tas_fix():
+    fixes = Fix.get_fixes('CMIP6', 'GFDL-CM4', 'day', 'tas')
+    assert Tas(None) in fixes
+
+
+def test_tas_fix_metadata(tas_cubes):
+    for cube in tas_cubes:
+        with pytest.raises(iris.exceptions.CoordinateNotFoundError):
+            cube.coord('height')
+    height_coord = iris.coords.AuxCoord(2.0,
+                                        var_name='height',
+                                        standard_name='height',
+                                        long_name='height',
+                                        units=Unit('m'),
+                                        attributes={'positive': 'up'})
+    vardef = get_var_info('CMIP6', 'day', 'tas')
+    fix = Tas(vardef)
+
+    out_cubes = fix.fix_metadata(tas_cubes)
+    assert out_cubes[0].var_name == 'tas'
+    coord = out_cubes[0].coord('height')
+    assert coord == height_coord
+
+
+@pytest.fixture
+def uas_cubes():
+    correct_lat_coord = iris.coords.DimCoord([0.0],
+                                             var_name='lat',
+                                             standard_name='latitude')
+    wrong_lat_coord = iris.coords.DimCoord([0.0],
+                                           var_name='latitudeCoord',
+                                           standard_name='latitude')
+    correct_lon_coord = iris.coords.DimCoord([0.0],
+                                             var_name='lon',
+                                             standard_name='longitude')
+    wrong_lon_coord = iris.coords.DimCoord([0.0],
+                                           var_name='longitudeCoord',
+                                           standard_name='longitude')
+    correct_cube = iris.cube.Cube([[10.0]],
+                                  var_name='tas',
+                                  dim_coords_and_dims=[(correct_lat_coord, 0),
+                                                       (correct_lon_coord, 1)])
+    wrong_cube = iris.cube.Cube([[10.0]],
+                                var_name='ta',
+                                dim_coords_and_dims=[(wrong_lat_coord, 0),
+                                                     (wrong_lon_coord, 1)])
+    scalar_cube = iris.cube.Cube(0.0, var_name='ps')
+    return iris.cube.CubeList([correct_cube, wrong_cube, scalar_cube])
+
+
+def test_get_uas_fix():
+    fixes = Fix.get_fixes('CMIP6', 'GFDL-CM4', 'day', 'uas')
+    assert Uas(None) in fixes
+
+
+def test_uas_fix_metadata(uas_cubes):
+    for cube in uas_cubes:
+        with pytest.raises(iris.exceptions.CoordinateNotFoundError):
+            cube.coord('height')
+    height_coord = iris.coords.AuxCoord(2.0,
+                                        var_name='height',
+                                        standard_name='height',
+                                        long_name='height',
+                                        units=Unit('m'),
+                                        attributes={'positive': 'up'})
+    vardef = get_var_info('CMIP6', 'day', 'uas')
+    fix = Uas(vardef)
+
+    out_cubes = fix.fix_metadata(uas_cubes)
+    assert out_cubes[0].var_name == 'uas'
+    coord = out_cubes[0].coord('height')
+    assert coord == height_coord
