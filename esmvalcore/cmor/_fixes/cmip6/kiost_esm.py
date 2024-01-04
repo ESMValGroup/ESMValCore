@@ -36,11 +36,11 @@ class Huss(Tas):
 
 
 class Tasmin(Tas):
-    """Fixes for tasmin"""
+    """Fixes for tasmin."""
 
 
 class Tasmax(Tas):
-    """Fixes for tasmax"""
+    """Fixes for tasmax."""
 
 
 class SfcWind(Fix):
