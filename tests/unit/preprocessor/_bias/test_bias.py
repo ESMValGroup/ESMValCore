@@ -1,12 +1,14 @@
 """Unit tests for :mod:`esmvalcore.preprocessor._bias`."""
 
+import dask.array as da
 import iris
 import iris.cube
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris.cube import Cube, CubeList
 
-from esmvalcore.preprocessor._bias import bias
+from esmvalcore.preprocessor._bias import bias, distance_metric
 from tests import PreprocessorFile
 
 
@@ -259,3 +261,225 @@ def test_keep_reference_dataset(regular_cubes, ref_cubes):
     assert out_cube.units == 'K'
     assert out_cube.dim_coords == ref_cubes[0].dim_coords
     assert out_cube.aux_coords == ref_cubes[0].aux_coords
+
+
+def test_rmse(regular_cubes, ref_cubes):
+    """Test calculation of RMSE."""
+    ref_product = PreprocessorFile(
+        ref_cubes, 'REF', {'reference_for_metric': True}
+    )
+    products = {
+        PreprocessorFile(regular_cubes, 'A', {'dataset': 'a'}),
+        PreprocessorFile(regular_cubes, 'B', {'dataset': 'b'}),
+        ref_product,
+    }
+
+    out_products = distance_metric(products, 'rmse')
+
+    assert isinstance(out_products, set)
+    out_dict = products_set_to_dict(out_products)
+    assert len(out_dict) == 3
+    expected_attrs = {
+        'standard_name': None,
+        'long_name': 'RMSE',
+        'short_name': 'rmse_tas',
+        'units': 'K',
+    }
+
+    product_a = out_dict['A']
+    assert product_a.filename == 'A'
+    assert product_a.attributes == {'dataset': 'a', **expected_attrs}
+    assert len(product_a.cubes) == 1
+    out_cube = product_a.cubes[0]
+    assert out_cube.shape == ()
+    assert_array_equal(out_cube.data, np.array(2.34520788, dtype=np.float32))
+    assert out_cube.var_name == 'rmse_tas'
+    assert out_cube.long_name == 'RMSE'
+    assert out_cube.standard_name is None
+    assert out_cube.units == 'K'
+    product_a.wasderivedfrom.assert_called_once()
+    assert product_a.mock_ancestors == {ref_product}
+
+    product_b = out_dict['B']
+    assert product_b.filename == 'B'
+    assert product_b.attributes == {'dataset': 'b', **expected_attrs}
+    assert len(product_b.cubes) == 1
+    out_cube = product_b.cubes[0]
+    assert out_cube.shape == ()
+    assert_array_equal(out_cube.data, np.array(2.34520788, dtype=np.float32))
+    assert out_cube.var_name == 'rmse_tas'
+    assert out_cube.long_name == 'RMSE'
+    assert out_cube.standard_name is None
+    assert out_cube.units == 'K'
+    product_b.wasderivedfrom.assert_called_once()
+    assert product_b.mock_ancestors == {ref_product}
+
+    product_ref = out_dict['REF']
+    assert product_ref.filename == 'REF'
+    assert product_ref.attributes == {
+        'reference_for_metric': True, **expected_attrs
+    }
+    assert len(product_ref.cubes) == 1
+    out_cube = product_ref.cubes[0]
+    assert out_cube.shape == ()
+    assert_array_equal(out_cube.data, 0.0)
+    assert out_cube.var_name == 'rmse_tas'
+    assert out_cube.long_name == 'RMSE'
+    assert out_cube.standard_name is None
+    assert out_cube.units == 'K'
+    product_ref.wasderivedfrom.assert_not_called()
+    assert product_ref.mock_ancestors == set()
+
+
+def test_rmse_lazy(regular_cubes, ref_cubes):
+    """Test calculation of RMSE."""
+    regular_cubes[0].data = da.array(regular_cubes[0].data)
+    ref_cubes[0].data = da.array(ref_cubes[0].data)
+    ref_product = PreprocessorFile(
+        ref_cubes, 'REF', {'reference_for_metric': True}
+    )
+    products = {
+        PreprocessorFile(regular_cubes, 'A', {'dataset': 'a'}),
+        ref_product,
+    }
+
+    out_products = distance_metric(
+        products,
+        'rmse',
+        coords=['latitude', 'longitude'],
+        keep_reference_dataset=False,
+    )
+
+    assert isinstance(out_products, set)
+    out_dict = products_set_to_dict(out_products)
+    assert len(out_dict) == 1
+
+    product_a = out_dict['A']
+    assert product_a.filename == 'A'
+    assert product_a.attributes == {
+        'dataset': 'a',
+        'standard_name': None,
+        'long_name': 'RMSE',
+        'short_name': 'rmse_tas',
+        'units': 'K',
+    }
+    assert len(product_a.cubes) == 1
+    out_cube = product_a.cubes[0]
+    assert out_cube.shape == (2,)
+    assert out_cube.has_lazy_data()
+    assert_array_equal(
+        out_cube.data, np.array([1.224744871, 3.082207001], dtype=np.float32),
+    )
+    assert out_cube.coord('time') == regular_cubes[0].coord('time')
+    assert out_cube.var_name == 'rmse_tas'
+    assert out_cube.long_name == 'RMSE'
+    assert out_cube.standard_name is None
+    assert out_cube.units == 'K'
+    product_a.wasderivedfrom.assert_called_once()
+    assert product_a.mock_ancestors == {ref_product}
+
+
+def test_rmse_cubes(regular_cubes, ref_cubes):
+    """Test calculation of RMSE with cubes."""
+    out_cubes = distance_metric(regular_cubes, 'rmse', ref_cube=ref_cubes[0])
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    assert out_cube.shape == ()
+    assert_array_equal(out_cube.data, np.array(2.34520788, dtype=np.float32))
+    assert out_cube.var_name == 'rmse_tas'
+    assert out_cube.long_name == 'RMSE'
+    assert out_cube.standard_name is None
+    assert out_cube.units == 'K'
+
+
+def test_no_reference_for_metric(regular_cubes, ref_cubes):
+    """Test fail when no reference_for_metric is given."""
+    products = {
+        PreprocessorFile(regular_cubes, 'A', {}),
+        PreprocessorFile(regular_cubes, 'B', {}),
+        PreprocessorFile(ref_cubes, 'REF', {}),
+    }
+    msg = (
+        "Expected exactly 1 dataset with 'reference_for_metric: true', found 0"
+    )
+    with pytest.raises(ValueError, match=msg):
+        distance_metric(products, 'rmse')
+
+
+def test_two_reference_for_metric(regular_cubes, ref_cubes):
+    """Test fail when two reference_for_metric is given."""
+    products = {
+        PreprocessorFile(regular_cubes, 'A', {'reference_for_metric': False}),
+        PreprocessorFile(ref_cubes, 'REF1', {'reference_for_metric': True}),
+        PreprocessorFile(ref_cubes, 'REF2', {'reference_for_metric': True}),
+    }
+    msg = (
+        "Expected exactly 1 dataset with 'reference_for_metric: true', found 2"
+    )
+    with pytest.raises(ValueError, match=msg):
+        distance_metric(products, 'rmse')
+
+
+def test_invalid_metric(regular_cubes, ref_cubes):
+    """Test fail when invalid metric is given."""
+    products = {
+        PreprocessorFile(regular_cubes, 'A', {}),
+        PreprocessorFile(regular_cubes, 'B', {}),
+        PreprocessorFile(ref_cubes, 'REF', {'reference_for_metric': True}),
+    }
+    msg = (
+        r"Expected one of \['rmse', 'pearsonr'\] for metric, got 'invalid'"
+    )
+    with pytest.raises(ValueError, match=msg):
+        distance_metric(products, 'invalid')
+
+
+@pytest.mark.parametrize('metric', ['rmse', 'pearsonr'])
+def test_distance_metric_ref_cube_non_cubes(regular_cubes, metric):
+    """Test distance metric with ref_cube=None with with cubes."""
+    msg = "`ref_cube` cannot be `None` when `products` is an iterable of Cubes"
+    with pytest.raises(ValueError, match=msg):
+        distance_metric(regular_cubes, metric)
+
+
+@pytest.mark.parametrize('metric', ['rmse', 'pearsonr'])
+def test_distance_metric_no_named_dimensions(metric):
+    """Test distance metric with ref_cube=None with with cubes."""
+    ref_cube = Cube([0, 1])
+    cubes = CubeList([ref_cube])
+    msg = (
+        "If coords=None is specified, the cube .* must not have unnamed "
+        "dimensions"
+    )
+    with pytest.raises(ValueError, match=msg):
+        distance_metric(cubes, metric, ref_cube=ref_cube)
+
+
+@pytest.mark.parametrize('metric', ['rmse', 'pearsonr'])
+def test_distance_metric_non_matching_shapes(regular_cubes, metric):
+    """Test distance metric with ref_cube=None with with cubes."""
+    ref_cube = Cube(0)
+    msg = (
+        r"Expected identical shapes of cube and reference cube for distance "
+        r"metric calculation, got \(2, 2, 2\) and \(\), respectively"
+    )
+    with pytest.raises(ValueError, match=msg):
+        distance_metric(regular_cubes, metric, ref_cube=ref_cube)
+
+
+@pytest.mark.parametrize('metric', ['rmse', 'pearsonr'])
+def test_distance_metric_non_matching_dims(regular_cubes, metric):
+    """Test distance metric with ref_cube=None with with cubes."""
+    ref_cube = regular_cubes[0].copy()
+    ref_cube.remove_coord('time')
+    new_coord = iris.coords.DimCoord([0.0, 1.0], var_name='not_time')
+    ref_cube.add_dim_coord(new_coord, 0)
+    msg = (
+        "Cannot calculate distance metric between cube and reference cube: "
+        "Insufficient matching coordinate metadata to resolve cubes"
+    )
+    with pytest.raises(ValueError, match=msg):
+        distance_metric(regular_cubes, metric, ref_cube=ref_cube)
