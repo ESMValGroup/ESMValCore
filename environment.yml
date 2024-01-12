@@ -70,7 +70,7 @@ dependencies:
   - docformatter
   - isort
   - pre-commit
-  - prospector >=1.9.0
+  # - prospector >=1.9.0
   # Not on conda forge - vprof
   - yamllint
   - yapf
