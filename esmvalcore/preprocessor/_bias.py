@@ -322,11 +322,9 @@ def _calculate_metric(
     # Get result cube with correct dimensional metadata by using dummy
     # operation (max)
     res_cube = cube.collapsed(coords, iris.analysis.MAX)
-    res_cube.cell_methods = [
-        *res_cube.cell_methods[:-1], CellMethod(metric, coords)
-    ]
     res_cube.data = res_data
     res_cube.metadata = res_metadata
+    res_cube.cell_methods = [*cube.cell_methods, CellMethod(metric, coords)]
 
     return res_cube
 

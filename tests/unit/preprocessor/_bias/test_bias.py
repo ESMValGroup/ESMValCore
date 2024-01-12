@@ -6,6 +6,7 @@ import iris.cube
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris.coords import CellMethod
 from iris.cube import Cube, CubeList
 
 from esmvalcore.preprocessor._bias import bias, distance_metric
@@ -297,6 +298,9 @@ def test_rmse(regular_cubes, ref_cubes):
     assert out_cube.long_name == 'RMSE'
     assert out_cube.standard_name is None
     assert out_cube.units == 'K'
+    assert out_cube.cell_methods == (
+        CellMethod('rmse', ['time', 'latitude', 'longitude']),
+    )
     product_a.wasderivedfrom.assert_called_once()
     assert product_a.mock_ancestors == {ref_product}
 
@@ -311,6 +315,9 @@ def test_rmse(regular_cubes, ref_cubes):
     assert out_cube.long_name == 'RMSE'
     assert out_cube.standard_name is None
     assert out_cube.units == 'K'
+    assert out_cube.cell_methods == (
+        CellMethod('rmse', ['time', 'latitude', 'longitude']),
+    )
     product_b.wasderivedfrom.assert_called_once()
     assert product_b.mock_ancestors == {ref_product}
 
@@ -327,6 +334,9 @@ def test_rmse(regular_cubes, ref_cubes):
     assert out_cube.long_name == 'RMSE'
     assert out_cube.standard_name is None
     assert out_cube.units == 'K'
+    assert out_cube.cell_methods == (
+        CellMethod('rmse', ['time', 'latitude', 'longitude']),
+    )
     product_ref.wasderivedfrom.assert_not_called()
     assert product_ref.mock_ancestors == set()
 
@@ -375,6 +385,9 @@ def test_rmse_lazy(regular_cubes, ref_cubes):
     assert out_cube.long_name == 'RMSE'
     assert out_cube.standard_name is None
     assert out_cube.units == 'K'
+    assert out_cube.cell_methods == (
+        CellMethod('rmse', ['latitude', 'longitude']),
+    )
     product_a.wasderivedfrom.assert_called_once()
     assert product_a.mock_ancestors == {ref_product}
 
