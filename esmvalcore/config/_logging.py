@@ -87,7 +87,7 @@ def configure_logging(
 
     cfg_file = Path(cfg_file).absolute()
 
-    with open(cfg_file) as file_handler:
+    with open(cfg_file, 'r', encoding='utf-8') as file_handler:
         cfg = yaml.safe_load(file_handler)
 
     if output_dir is None:

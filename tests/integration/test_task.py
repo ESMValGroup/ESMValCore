@@ -216,7 +216,7 @@ def _get_single_diagnostic_task(tmp_path, diag_script, write_diag=True):
     diag_run_dir = diag_output_dir / 'run_dir'
     diag_settings = {'run_dir': diag_run_dir, 'profile_diagnostic': False}
     if write_diag:
-        with open(diag_script, "w") as fil:
+        with open(diag_script, "w", encoding='utf-8') as fil:
             fil.write("import os\n\nprint(os.getcwd())")
 
     task = DiagnosticTask(
@@ -273,7 +273,7 @@ def _get_diagnostic_tasks(tmp_path, diagnostic_text, extension):
         'exit_on_ncl_warning': False
     }
 
-    with open(diag_script, "w") as fil:
+    with open(diag_script, "w", encoding='utf-8') as fil:
         fil.write(diagnostic_text)
 
     task = DiagnosticTask(

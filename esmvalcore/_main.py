@@ -29,10 +29,15 @@ http://docs.esmvaltool.org. Have fun!
 # pylint: disable=import-outside-toplevel
 import logging
 import os
+import sys
 from pathlib import Path
 
+if (sys.version_info.major, sys.version_info.minor) < (3, 10):
+    from importlib_metadata import entry_points
+else:
+    from importlib.metadata import entry_points  # type: ignore
+
 import fire
-from pkg_resources import iter_entry_points
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -59,10 +64,10 @@ def parse_resume(resume, recipe):
         resume[i] = Path(os.path.expandvars(resume_dir)).expanduser()
 
     # Sanity check resume directories:
-    current_recipe = recipe.read_text()
+    current_recipe = recipe.read_text(encoding='utf-8')
     for resume_dir in resume:
         resume_recipe = resume_dir / 'run' / recipe.name
-        if current_recipe != resume_recipe.read_text():
+        if current_recipe != resume_recipe.read_text(encoding='utf-8'):
             raise ValueError(f'Only identical recipes can be resumed, but '
                              f'{resume_recipe} is different from {recipe}')
     return resume
@@ -299,12 +304,13 @@ class ESMValTool():
         self.config = Config()
         self.recipes = Recipes()
         self._extra_packages = {}
-        if not list(iter_entry_points('esmvaltool_commands')):
+        esmvaltool_commands = entry_points(group='esmvaltool_commands')
+        if not esmvaltool_commands:
             print("Running esmvaltool executable from ESMValCore. "
                   "No other command line utilities are available "
                   "until ESMValTool is installed.")
-        for entry_point in iter_entry_points('esmvaltool_commands'):
-            self._extra_packages[entry_point.dist.project_name] = \
+        for entry_point in esmvaltool_commands:
+            self._extra_packages[entry_point.dist.name] = \
                 entry_point.dist.version
             if hasattr(self, entry_point.name):
                 logger.error('Registered command %s already exists',
@@ -313,7 +319,7 @@ class ESMValTool():
             self.__setattr__(entry_point.name, entry_point.load()())
 
     def version(self):
-        """Show versions of all packages that conform ESMValTool.
+        """Show versions of all packages that form ESMValTool.
 
         In particular, this command will show the version ESMValCore and
         any other package that adds a subcommand to 'esmvaltool'
@@ -331,7 +337,6 @@ class ESMValTool():
             max_datasets=None,
             max_years=None,
             skip_nonexistent=None,
-            offline=None,
             search_esgf=None,
             diagnostics=None,
             check_level=None,
@@ -359,15 +364,6 @@ class ESMValTool():
             Maximum number of years to use.
         skip_nonexistent: bool, optional
             If True, the run will not fail if some datasets are not available.
-        offline: bool, optional
-            If True, the tool will not download missing data from ESGF.
-
-            .. deprecated:: 2.8.0
-                This option has been deprecated in ESMValCore version 2.8.0 and
-                is scheduled for removal in version 2.10.0. Please use the
-                options `search_esgf=never` (for `offline=True`) or
-                `search_esgf=when_missing` (for `offline=False`). These are
-                exact replacements.
         search_esgf: str, optional
             If `never`, disable automatic download of data from the ESGF. If
             `when_missing`, enable the automatic download of files that are not
@@ -399,8 +395,6 @@ class ESMValTool():
             session['max_datasets'] = max_datasets
         if max_years is not None:
             session['max_years'] = max_years
-        if offline is not None:
-            session['offline'] = offline
         if search_esgf is not None:
             session['search_esgf'] = search_esgf
         if skip_nonexistent is not None:

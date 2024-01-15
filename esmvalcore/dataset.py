@@ -677,19 +677,15 @@ class Dataset:
         iris.cube.Cube
             An :mod:`iris` cube with the data corresponding the the dataset.
         """
-        return self._load_with_callback(callback='default')
-
-    def _load_with_callback(self, callback):
-        # TODO: Remove the callback argument for v2.10.0.
         input_files = list(self.files)
         for supplementary_dataset in self.supplementaries:
             input_files.extend(supplementary_dataset.files)
         esgf.download(input_files, self.session['download_dir'])
 
-        cube = self._load(callback)
+        cube = self._load()
         supplementary_cubes = []
         for supplementary_dataset in self.supplementaries:
-            supplementary_cube = supplementary_dataset._load(callback)
+            supplementary_cube = supplementary_dataset._load()
             supplementary_cubes.append(supplementary_cube)
 
         output_file = _get_output_file(self.facets, self.session.preproc_dir)
@@ -704,7 +700,7 @@ class Dataset:
 
         return cubes[0]
 
-    def _load(self, callback) -> Cube:
+    def _load(self) -> Cube:
         """Load self.files into an iris cube and return it."""
         if not self.files:
             lines = [
@@ -731,7 +727,6 @@ class Dataset:
             **self.facets,
         }
         settings['load'] = {
-            'callback': callback,
             'ignore_warnings': get_ignored_warnings(
                 self.facets['project'], 'load'
             ),
@@ -741,7 +736,9 @@ class Dataset:
             'session': self.session,
             **self.facets,
         }
-        settings['concatenate'] = {}
+        settings['concatenate'] = {
+            'check_level': self.session['check_level']
+        }
         settings['cmor_check_metadata'] = {
             'check_level': self.session['check_level'],
             'cmor_table': self.facets['project'],
@@ -862,7 +859,7 @@ class Dataset:
             dataset.facets.pop('timerange')
             dataset.supplementaries = []
             check.data_availability(dataset)
-            intervals = [_get_start_end_date(f.name) for f in dataset.files]
+            intervals = [_get_start_end_date(f) for f in dataset.files]
 
             min_date = min(interval[0] for interval in intervals)
             max_date = max(interval[1] for interval in intervals)

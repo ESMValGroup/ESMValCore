@@ -550,18 +550,6 @@ and the result of the tests ran by GitHub Actions can be viewed on the
 of the repository (to learn more about the Github-hosted runners, please have a look
 the `documentation <https://docs.github.com/en/actions/using-github-hosted-runners>`__).
 
-When opening a pull request, if you wish to run the Github Actions `Test <https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml>`__ test,
-you can activate it via a simple comment containing the @runGAtests tag
-(e.g. "@runGAtests" or "@runGAtests please run" - in effect, tagging the runGAtests
-bot that will start the test automatically). This is useful
-to check if a certain feature that you included in the Pull Request, and can be tested
-for via the test suite, works across the supported Python versions, and both on Linux and OSX.
-The test is currently deactivated, so before triggering the test via comment, make sure you activate
-the test in the main `Actions page <https://github.com/ESMValGroup/ESMValCore/actions>`__
-(click on Test via PR Comment and activate it); also and be sure to deactivate it afterwards
-(the Github API still needs a bit more development, and currently it triggers
-the test for **each comment** irrespective of PR, that's why this needs to be activated/decativated).
-
 The configuration of the tests run by CircleCI can be found in the directory
 `.circleci <https://github.com/ESMValGroup/ESMValCore/blob/main/.circleci>`__,
 while the configuration of the tests run by GitHub Actions can be found in the
@@ -833,7 +821,37 @@ and create the new release from the release branch (i.e. not from ``main``).
 
 Create a tag and tick the `This is a pre-release` box if working with a release candidate.
 
-6. Create and upload the PyPI package
+6. Mark the release in the main branch
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When the (pre-)release is tagged, it is time to merge the release branch back into `main`.
+We do this for two reasons, namely, one, to mark the point up to which commits in `main`
+have been considered for inclusion into the present release, and, two, to inform
+setuptools-scm about the version number so that it creates the correct version number in
+`main`.
+However, unlike in a normal merge, we do not want to integrate any of the changes from the
+release branch into main.
+This is because all changes that should be in both branches, i.e. bug fixes, originate from
+`main` anyway and the only other changes in the release branch relate to the release itself.
+To take this into account, we perform the merge in this case on the command line using `the
+ours merge strategy <https://git-scm.com/docs/merge-strategies#Documentation/merge-strategies.txt-ours-1>`__
+(``git merge -s ours``), not to be confused with the ``ours`` option to the ort merge strategy
+(``git merge -X ours``).
+For details about merge strategies, see the above-linked page.
+To execute the merge use following sequence of steps
+
+.. code-block:: bash
+
+   git fetch
+   git checkout main
+   git pull
+   git merge -s ours v2.1.x
+   git push
+
+Note that the release branch remains intact and you should continue any work on the release
+on that branch.
+
+7. Create and upload the PyPI package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The package is automatically uploaded to the
@@ -864,7 +882,7 @@ Follow these steps to create a new Python package:
 You can read more about this in
 `Packaging Python Projects <https://packaging.python.org/tutorials/packaging-projects/>`__.
 
-7. Create the Conda package
+8. Create the Conda package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``esmvalcore`` package is published on the `conda-forge conda channel
@@ -893,7 +911,7 @@ conda-forge some time later.
 Contact the feedstock maintainers if you want to become a maintainer yourself.
 
 
-8. Check the Docker images
+9. Check the Docker images
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There are two main Docker container images available for ESMValCore on

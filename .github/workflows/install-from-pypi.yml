@@ -29,6 +29,11 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
+# Required shell entrypoint to have properly configured bash shell
+defaults:
+  run:
+    shell: bash -l {0}
+
 jobs:
   linux:
     runs-on: "ubuntu-latest"
@@ -49,19 +54,15 @@ jobs:
           miniforge-version: "latest"
           miniforge-variant: Mambaforge
           use-mamba: true
-      - shell: bash -l {0}
-        run: mkdir -p pip_install_linux_artifacts_python_${{ matrix.python-version }}
+      - run: mkdir -p pip_install_linux_artifacts_python_${{ matrix.python-version }}
       - name: Record versions
-        shell: bash -l {0}
         run: |
           mamba --version 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/conda_version.txt
           python -V 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
           pip -V 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/pip_version.txt
       - name: Install
-        shell: bash -l {0}
         run: pip install esmvalcore 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/install.txt
       - name: Verify installation
-        shell: bash -l {0}
         run: |
           esmvaltool --help
           esmvaltool version 2>&1 | tee pip_install_linux_artifacts_python_${{ matrix.python-version }}/version.txt
@@ -89,19 +90,15 @@ jobs:
           miniforge-version: "latest"
           miniforge-variant: Mambaforge
           use-mamba: true
-      - shell: bash -l {0}
-        run: mkdir -p pip_install_osx_artifacts_python_${{ matrix.python-version }}
+      - run: mkdir -p pip_install_osx_artifacts_python_${{ matrix.python-version }}
       - name: Record versions
-        shell: bash -l {0}
         run: |
           mamba --version 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/conda_version.txt
           python -V 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
           pip -V 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/pip_version.txt
       - name: Install
-        shell: bash -l {0}
         run: pip install esmvalcore 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/install.txt
       - name: Verify installation
-        shell: bash -l {0}
         run: |
           esmvaltool --help
           esmvaltool version 2>&1 | tee pip_install_osx_artifacts_python_${{ matrix.python-version }}/version.txt

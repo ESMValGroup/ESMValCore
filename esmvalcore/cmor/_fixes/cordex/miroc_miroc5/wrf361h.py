@@ -1,4 +1,4 @@
-"""Fixes for rcm UHOH-WRF361H driven by MIROC-MIROC5."""
+"""Fixes for rcm WRF361H driven by MIROC-MIROC5."""
 import iris
 from esmvalcore.cmor.fix import Fix
 

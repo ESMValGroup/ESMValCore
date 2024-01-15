@@ -39,7 +39,7 @@ REQUIREMENTS = {
         'fire',
         'geopy',
         'humanfriendly',
-        "importlib_resources;python_version<'3.9'",
+        "importlib_metadata;python_version<'3.10'",
         'isodate',
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
@@ -56,7 +56,9 @@ REQUIREMENTS = {
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        'scitools-iris>=3.6.0',
+        # See the following issue for info on the iris pin below:
+        # https://github.com/ESMValGroup/ESMValTool/issues/3239#issuecomment-1613298587
+        'scitools-iris>=3.6.1',
         'shapely>=2.0.0',
         'stratify>=0.3',
         'yamale',
@@ -76,7 +78,6 @@ REQUIREMENTS = {
         # MyPy library stubs
         'mypy>=0.990',
         'types-requests',
-        'types-pkg_resources',
         'types-PyYAML',
     ],
     # Documentation dependencies
@@ -182,7 +183,7 @@ class RunLinter(CustomCommand):
 
 def read_authors(filename):
     """Read the list of authors from .zenodo.json file."""
-    with Path(filename).open() as file:
+    with Path(filename).open(encoding='utf-8') as file:
         info = json.load(file)
         authors = []
         for author in info['creators']:
@@ -193,7 +194,7 @@ def read_authors(filename):
 
 def read_description(filename):
     """Read the description from .zenodo.json file."""
-    with Path(filename).open() as file:
+    with Path(filename).open(encoding='utf-8') as file:
         info = json.load(file)
         return info['description']
 
@@ -202,7 +203,7 @@ setup(
     name='ESMValCore',
     author=read_authors('.zenodo.json'),
     description=read_description('.zenodo.json'),
-    long_description=Path('README.md').read_text(),
+    long_description=Path('README.md').read_text(encoding='utf-8'),
     long_description_content_type='text/markdown',
     url='https://www.esmvaltool.org',
     download_url='https://github.com/ESMValGroup/ESMValCore',
