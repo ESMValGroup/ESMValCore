@@ -65,7 +65,7 @@ REQUIREMENTS = {
     ],
     # Test dependencies
     'test': [
-        'flake8',
+        'flake8>=7.0.0',  # not to pick up E231
         'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
         'pytest-cov>=2.10.1',
         'pytest-env',
@@ -95,7 +95,7 @@ REQUIREMENTS = {
         'docformatter',
         'isort',
         'pre-commit',
-        'prospector[with_pyroma]>=1.9.0',
+        # 'prospector[with_pyroma]>=1.9.0',
         'vprof',
         'yamllint',
         'yapf',
