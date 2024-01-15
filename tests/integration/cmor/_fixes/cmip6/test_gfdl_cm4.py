@@ -185,12 +185,12 @@ def uas_cubes():
     wrong_lon_coord = iris.coords.DimCoord([0.0],
                                            var_name='longitudeCoord',
                                            standard_name='longitude')
-    correct_cube = iris.cube.Cube([[10.0]],
-                                  var_name='tas',
+    correct_cube = iris.cube.Cube([[2.0]],
+                                  var_name='uas',
                                   dim_coords_and_dims=[(correct_lat_coord, 0),
                                                        (correct_lon_coord, 1)])
-    wrong_cube = iris.cube.Cube([[10.0]],
-                                var_name='ta',
+    wrong_cube = iris.cube.Cube([[2.0]],
+                                var_name='ua',
                                 dim_coords_and_dims=[(wrong_lat_coord, 0),
                                                      (wrong_lon_coord, 1)])
     scalar_cube = iris.cube.Cube(0.0, var_name='ps')
