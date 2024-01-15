@@ -1070,7 +1070,9 @@ def extract_levels(
             set(levels).issubset(set(src_levels.points)):
         # If all target levels exist in the source cube, simply extract them.
         name = src_levels.name()
-        coord_values = {name: lambda cell: cell.point in set(levels)}
+        coord_values = {
+            name: lambda cell: cell.point in set(levels)  # type: ignore
+        }
         constraint = iris.Constraint(coord_values=coord_values)
         result = cube.extract(constraint)
         # Ensure the constraint did not fail.
