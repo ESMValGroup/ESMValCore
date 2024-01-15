@@ -265,6 +265,8 @@ def _spec_to_latlonvals(*, start_latitude: float, end_latitude: float,
     def get_points(start, stop, step):
         """Calculate grid points."""
         # use Decimal to avoid floating point errors
+        #I still experienced floating point errors. 
+        #num = round(Decimal(stop - start) / Decimal(str(step)))
         num = int(Decimal(stop - start) // Decimal(str(step)))
         stop = start + num * step
         return np.linspace(start, stop, num + 1)
