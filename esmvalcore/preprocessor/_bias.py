@@ -30,8 +30,8 @@ def bias(
 
     The reference dataset needs to be broadcastable to all input `products`.
     This supports iris' rich broadcasting abilities (see
-    `https://scitools-iris.readthedocs.io/en/stable/userguide/cube_maths.
-    html#calculating-a-cube-anomaly`__). To ensure this, the preprocessors
+    `<https://scitools-iris.readthedocs.io/en/stable/userguide/cube_maths.
+    html#calculating-a-cube-anomaly>`__). To ensure this, the preprocessors
     :func:`esmvalcore.preprocessor.regrid` and/or
     :func:`esmvalcore.preprocessor.regrid_time` might be helpful.
 
