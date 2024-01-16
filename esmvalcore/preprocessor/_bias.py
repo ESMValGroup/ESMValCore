@@ -31,7 +31,7 @@ def bias(
     The reference dataset needs to be broadcastable to all input `products`.
     This supports `iris' rich broadcasting abilities
     <https://scitools-iris.readthedocs.io/en/stable/userguide/cube_maths.
-    html#calculating-a-cube-anomaly>`__). To ensure this, the preprocessors
+    html#calculating-a-cube-anomaly>`__. To ensure this, the preprocessors
     :func:`esmvalcore.preprocessor.regrid` and/or
     :func:`esmvalcore.preprocessor.regrid_time` might be helpful.
 
@@ -72,7 +72,7 @@ def bias(
 
     Returns
     -------
-    set of esmvalcore.preprocessor.PreprocessorFile or iris.cube.CubeList
+    set[PreprocessorFile] | CubeList
         Output datasets/cubes. Will be a :obj:`set` of
         :class:`~esmvalcore.preprocessor.PreprocessorFile` objects if
         `products` is also one, a :class:`~iris.cube.CubeList` otherwise.
@@ -80,10 +80,11 @@ def bias(
     Raises
     ------
     ValueError
-        Not exactly one input datasets contains the facet ``reference_for_bias:
-        true`` if ``ref_cube=None`; ``ref_cube=None`` and the input products
-        are given as iterable of :class:`~iris.cube.Cube` objects;
-        ``bias_type`` is not one of ``'absolute'`` or ``'relative'``.
+        Not exactly one input datasets contains the facet
+        ``reference_for_bias: true`` if ``ref_cube=None``; ``ref_cube=None``
+        and the input products are given as iterable of
+        :class:`~iris.cube.Cube` objects; ``bias_type`` is not one of
+        ``'absolute'`` or ``'relative'``.
 
     """
     ref_product = None
