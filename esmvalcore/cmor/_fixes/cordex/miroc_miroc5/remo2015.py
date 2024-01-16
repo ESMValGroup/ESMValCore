@@ -1,7 +1,5 @@
-"""Fixes for rcm SMHI-RCA4 driven by ICHEC-EC-EARTH."""
+"""Fixes for rcm REMO2015 driven by MIROC-MIROC5."""
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import (
     TimeLongName as BaseFix)
 
 Pr = BaseFix
-
-Tas = BaseFix

@@ -551,6 +551,8 @@ class TestClimatology(tests.Test):
         expected = np.array([1.], dtype=np.float32)
         assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-2 s-1')
+        self.assertFalse(cube.coords('_time_weights_'))
+        self.assertFalse(result.coords('_time_weights_'))
 
     def test_time_mean_uneven(self):
         """Test for time average of a 1D field with uneven time boundaries."""
@@ -1516,7 +1518,7 @@ class TestTimeseriesFilter(tests.Test):
                               filter_stats='sum')
 
     def test_timeseries_filter_implemented(self):
-        """Test a not implemnted filter."""
+        """Test a not implemented filter."""
         with self.assertRaises(NotImplementedError):
             timeseries_filter(self.cube,
                               7,

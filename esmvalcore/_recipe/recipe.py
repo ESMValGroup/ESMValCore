@@ -19,10 +19,7 @@ from esmvalcore._task import DiagnosticTask, ResumeTask, TaskSet
 from esmvalcore.config._config import TASKSEP
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.dataset import Dataset
-from esmvalcore.exceptions import (
-    InputFilesNotFound,
-    RecipeError,
-)
+from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import (
     _dates_to_timerange,
     _get_multiproduct_filename,
@@ -39,6 +36,7 @@ from esmvalcore.preprocessor import (
     PreprocessorFile,
 )
 from esmvalcore.preprocessor._area import _update_shapefile_path
+from esmvalcore.preprocessor._multimodel import _get_stat_identifier
 from esmvalcore.preprocessor._other import _group_products
 from esmvalcore.preprocessor._regrid import (
     _spec_to_latlonvals,
@@ -416,9 +414,11 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
     for identifier, products in _group_products(products, by_key=grouping):
         common_attributes = _get_common_attributes(products, settings)
 
-        for statistic in settings.get('statistics', []):
+        statistics = settings.get('statistics', [])
+        for statistic in statistics:
             statistic_attributes = dict(common_attributes)
-            statistic_attributes[step] = _get_tag(step, identifier, statistic)
+            stat_id = _get_stat_identifier(statistic)
+            statistic_attributes[step] = _get_tag(step, identifier, stat_id)
             statistic_attributes.setdefault('alias',
                                             statistic_attributes[step])
             statistic_attributes.setdefault('dataset',
@@ -432,7 +432,7 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
             )  # Note that ancestors is set when running the preprocessor func.
             output_products.add(statistic_product)
             relevant_settings['output_products'][identifier][
-                statistic] = statistic_product
+                stat_id] = statistic_product
 
     return output_products, relevant_settings
 
@@ -637,6 +637,7 @@ def _update_preproc_functions(settings, dataset, datasets, missing_vars):
     _update_regrid_time(dataset, settings)
     if dataset.facets.get('frequency') == 'fx':
         check.check_for_temporal_preprocs(settings)
+    check.statistics_preprocessors(settings)
     check.bias_type(settings)
 
 

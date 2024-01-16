@@ -107,7 +107,9 @@ def add_plev_from_altitude(cube):
             )
         pressure_coord = iris.coords.AuxCoord(pressure_points,
                                               bounds=pressure_bounds,
+                                              var_name='plev',
                                               standard_name='air_pressure',
+                                              long_name='pressure',
                                               units='Pa')
         cube.add_aux_coord(pressure_coord, cube.coord_dims(height_coord))
         return
@@ -145,7 +147,9 @@ def add_altitude_from_plev(cube):
             )
         altitude_coord = iris.coords.AuxCoord(altitude_points,
                                               bounds=altitude_bounds,
+                                              var_name='alt',
                                               standard_name='altitude',
+                                              long_name='altitude',
                                               units='m')
         cube.add_aux_coord(altitude_coord, cube.coord_dims(plev_coord))
         return
