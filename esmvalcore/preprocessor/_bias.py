@@ -148,9 +148,9 @@ def _get_ref(products, ref_tag: str) -> tuple[Cube, PreprocessorFile]:
             ref_products.append(product)
     if len(ref_products) != 1:
         raise ValueError(
-                f"Expected exactly 1 dataset with '{ref_tag}: true', found "
-                f"{len(ref_products):d}"
-            )
+            f"Expected exactly 1 dataset with '{ref_tag}: true', found "
+            f"{len(ref_products):d}"
+        )
     ref_product = ref_products[0]
 
     # Extract reference cube
