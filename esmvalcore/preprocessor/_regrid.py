@@ -834,16 +834,19 @@ def is_lazy_masked_data(array):
         da.utils.meta_from_array(array), np.ma.MaskedArray)
 
 
-def broadcast_to_shape(array, shape, chunks, dim_map):
+def broadcast_to_shape(array, shape, dim_map, chunks=None):
     """Copy of `iris.util.broadcast_to_shape` that allows specifying chunks."""
     if isinstance(array, da.Array):
-        chunks = list(chunks)
-        for src_idx, tgt_idx in enumerate(dim_map):
-            # Only use the specified chunks along new dimensions.
-            chunks[tgt_idx] = array.chunks[src_idx]
-        broadcast_to = partial(da.broadcast_to, chunks=chunks)
+        if chunks is not None:
+            chunks = list(chunks)
+            for src_idx, tgt_idx in enumerate(dim_map):
+                # Only use the specified chunks along new dimensions or on
+                # dimensions that have size 1 in the source array.
+                if array.shape[src_idx] != 1:
+                    chunks[tgt_idx] = array.chunks[src_idx]
+        broadcast = partial(da.broadcast_to, shape=shape, chunks=chunks)
     else:
-        broadcast_to = np.broadcast_to
+        broadcast = partial(np.broadcast_to, shape=shape)
 
     n_orig_dims = len(array.shape)
     n_new_dims = len(shape) - n_orig_dims
@@ -851,7 +854,7 @@ def broadcast_to_shape(array, shape, chunks, dim_map):
 
     # Get dims in required order.
     array = np.moveaxis(array, range(n_orig_dims), dim_map)
-    new_array = broadcast_to(array, shape)
+    new_array = broadcast(array)
 
     if np.ma.isMA(array):
         # broadcast_to strips masks so we need to handle them explicitly.
@@ -859,13 +862,13 @@ def broadcast_to_shape(array, shape, chunks, dim_map):
         if mask is np.ma.nomask:
             new_mask = np.ma.nomask
         else:
-            new_mask = np.broadcast_to(mask, shape)
+            new_mask = broadcast(mask)
         new_array = np.ma.array(new_array, mask=new_mask)
 
     elif is_lazy_masked_data(array):
         # broadcast_to strips masks so we need to handle them explicitly.
         mask = da.ma.getmaskarray(array)
-        new_mask = broadcast_to(mask, shape)
+        new_mask = broadcast(mask)
         new_array = da.ma.masked_array(new_array, new_mask)
 
     return new_array
