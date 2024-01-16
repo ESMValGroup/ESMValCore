@@ -2382,9 +2382,9 @@ The bias module contains the following preprocessor functions:
 ``bias``
 --------
 
-This function calculates biases with respect to a given reference dataset. For
-this, exactly one input dataset needs to be declared as ``reference_for_bias:
-true`` in the recipe, e.g.,
+This function calculates biases with respect to a given reference dataset.
+For this, exactly one input dataset needs to be declared as
+``reference_for_bias: true`` in the recipe, e.g.,
 
 .. code-block:: yaml
 
@@ -2396,16 +2396,19 @@ true`` in the recipe, e.g.,
        reference_for_bias: true}
 
 In the example above, ERA-Interim is used as reference dataset for the bias
-calculation. For this preprocessor, all input datasets need to have identical
-dimensional coordinates. This can for example be ensured with the preprocessors
-:func:`esmvalcore.preprocessor.regrid` and/or
-:func:`esmvalcore.preprocessor.regrid_time`.
+calculation.
+The reference dataset needs to be broadcastable to all input `products`.
+This supports `iris' rich broadcasting abilities
+<https://scitools-iris.readthedocs.io/en/stable/userguide/cube_maths.
+html#calculating-a-cube-anomaly>`__).
+To ensure this, the preprocessors :func:`esmvalcore.preprocessor.regrid` and/or
+:func:`esmvalcore.preprocessor.regrid_time` might be helpful.
 
 The ``bias`` preprocessor supports 4 optional arguments in the recipe:
 
 * ``bias_type`` (:obj:`str`, default: ``'absolute'``): Bias type that is
   calculated. Can be ``'absolute'`` (i.e., calculate bias for dataset
-  :math:`X` and reference :math:`R` as :math:`X - R`) or ``relative`` (i.e,
+  :math:`X` and reference :math:`R` as :math:`X - R`) or ``relative`` (i.e.,
   calculate bias as :math:`\frac{X - R}{R}`).
 * ``denominator_mask_threshold`` (:obj:`float`, default: ``1e-3``):
   Threshold to mask values close to zero in the denominator (i.e., the
