@@ -390,11 +390,11 @@ def bias_type(settings: dict) -> None:
     if 'bias' not in settings:
         return
     valid_options = ('absolute', 'relative')
-    bias_type = settings['bias'].get('bias_type', 'absolute')
-    if bias_type not in valid_options:
+    user_bias_type = settings['bias'].get('bias_type', 'absolute')
+    if user_bias_type not in valid_options:
         raise RecipeError(
             f"Expected one of {valid_options} for `bias_type`, got "
-            f"'{bias_type}'"
+            f"'{user_bias_type}'"
         )
 
 

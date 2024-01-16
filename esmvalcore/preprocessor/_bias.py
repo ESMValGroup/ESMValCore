@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Literal, Optional
 
 import dask.array as da
 from iris.cube import Cube, CubeList
@@ -16,27 +16,32 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+BiasType = Literal['absolute', 'relative']
+
+
 def bias(
     products: set[PreprocessorFile] | Iterable[Cube],
     ref_cube: Optional[Cube] = None,
-    bias_type: str = 'absolute',
+    bias_type: BiasType = 'absolute',
     denominator_mask_threshold: float = 1e-3,
     keep_reference_dataset: bool = False,
 ) -> set[PreprocessorFile] | CubeList:
-    """Calculate biases.
+    """Calculate biases relative to a reference dataset.
 
-    All input datasets need to have identical dimensional coordinates. This can
-    for example be ensured with the preprocessors
+    The reference dataset needs to be broadcastable to all input `products`.
+    This supports iris' rich broadcasting abilities (see
+    `https://scitools-iris.readthedocs.io/en/stable/userguide/cube_maths.
+    html#calculating-a-cube-anomaly`__). To ensure this, the preprocessors
     :func:`esmvalcore.preprocessor.regrid` and/or
-    :func:`esmvalcore.preprocessor.regrid_time`.
+    :func:`esmvalcore.preprocessor.regrid_time` might be helpful.
 
     Notes
     -----
-    This preprocessor requires a reference dataset, which can be specified with
-    the `ref_cube` argument. If `ref_cube` is ``None``, exactly one input
-    dataset in the `products` set needs to have the facet ``reference_for_bias:
-    true`` defined in the recipe. Please do **not** specify the option
-    `ref_cube` when using this preprocessor function in a recipe.
+    The reference dataset can be specified with the `ref_cube` argument. If
+    `ref_cube` is ``None``, exactly one input dataset in the `products` set
+    needs to have the facet ``reference_for_bias: true`` defined in the recipe.
+    Please do **not** specify the option `ref_cube` when using this
+    preprocessor function in a recipe.
 
     Parameters
     ----------
@@ -63,8 +68,7 @@ def bias(
         results.
     keep_reference_dataset:
         If ``True``, keep the reference dataset in the output. If ``False``,
-        drop the reference dataset. Ignored if `products` is given as iterable
-        of :class:`~iris.cube.Cube` objects.
+        drop the reference dataset. Ignored if `ref_cube` is given.
 
     Returns
     -------
@@ -82,7 +86,7 @@ def bias(
         ``bias_type`` is not one of ``'absolute'`` or ``'relative'``.
 
     """
-    reference_product = None
+    ref_product = None
     all_cubes_given = all(isinstance(p, Cube) for p in products)
 
     # Get reference cube if not explicitly given
@@ -92,32 +96,18 @@ def bias(
                 "`ref_cube` cannot be `None` when `products` is an iterable "
                 "of Cubes"
             )
-        reference_products = []
-        for product in products:
-            if product.attributes.get('reference_for_bias', False):
-                reference_products.append(product)
-        if len(reference_products) != 1:
-            raise ValueError(
-                f"Expected exactly 1 dataset with 'reference_for_bias: true', "
-                f"found {len(reference_products):d}"
-            )
-        reference_product = reference_products[0]
-
-        # Extract reference cube
-        # Note: For technical reasons, product objects contain the member
-        # ``cubes``, which is a list of cubes. However, this is expected to be
-        # a list with exactly one element due to the call of concatenate
-        # earlier in the preprocessing chain of ESMValTool. To make sure that
-        # this preprocessor can also be used outside the ESMValTool
-        # preprocessing chain, an additional concatenate call is added here.
-        ref_cube = concatenate(reference_product.cubes)
+        (ref_cube, ref_product) = _get_ref(products, 'reference_for_bias')
+    else:
+        ref_product = None
 
     # Mask reference cube appropriately for relative biases
     if bias_type == 'relative':
         ref_cube = ref_cube.copy()
-        ref_cube.data = da.ma.masked_inside(ref_cube.core_data(),
-                                            -denominator_mask_threshold,
-                                            denominator_mask_threshold)
+        ref_cube.data = da.ma.masked_inside(
+            ref_cube.core_data(),
+            -denominator_mask_threshold,
+            denominator_mask_threshold,
+        )
 
     # If input is an Iterable of Cube objects, calculate bias for each element
     if all_cubes_given:
@@ -128,7 +118,7 @@ def bias(
     # metadata and provenance information accordingly
     output_products = set()
     for product in products:
-        if product == reference_product:
+        if product == ref_product:
             continue
         cube = concatenate(product.cubes)
 
@@ -137,19 +127,45 @@ def bias(
 
         # Adapt metadata and provenance information
         product.attributes['units'] = str(cube.units)
-        product.wasderivedfrom(reference_product)
+        if ref_product is not None:
+            product.wasderivedfrom(ref_product)
 
         product.cubes = CubeList([cube])
         output_products.add(product)
 
     # Add reference dataset to output if desired
-    if keep_reference_dataset:
-        output_products.add(reference_product)
+    if keep_reference_dataset and ref_product is not None:
+        output_products.add(ref_product)
 
     return output_products
 
 
-def _calculate_bias(cube: Cube, ref_cube: Cube, bias_type: str) -> Cube:
+def _get_ref(products, ref_tag: str) -> tuple[Cube, PreprocessorFile]:
+    """Get reference cube and product."""
+    ref_products = []
+    for product in products:
+        if product.attributes.get(ref_tag, False):
+            ref_products.append(product)
+    if len(ref_products) != 1:
+        raise ValueError(
+                f"Expected exactly 1 dataset with '{ref_tag}: true', found "
+                f"{len(ref_products):d}"
+            )
+    ref_product = ref_products[0]
+
+    # Extract reference cube
+    # Note: For technical reasons, product objects contain the member
+    # ``cubes``, which is a list of cubes. However, this is expected to be a
+    # list with exactly one element due to the call of concatenate earlier in
+    # the preprocessing chain of ESMValTool. To make sure that this
+    # preprocessor can also be used outside the ESMValTool preprocessing chain,
+    # an additional concatenate call is added here.
+    ref_cube = concatenate(ref_product.cubes)
+
+    return (ref_cube, ref_product)
+
+
+def _calculate_bias(cube: Cube, ref_cube: Cube, bias_type: BiasType) -> Cube:
     """Calculate bias for a single cube relative to a reference cube."""
     cube_metadata = cube.metadata
 
