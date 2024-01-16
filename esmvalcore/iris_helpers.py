@@ -1,11 +1,14 @@
 """Auxiliary functions for :mod:`iris`."""
-from typing import Dict, List, Sequence
+from __future__ import annotations
+
+from typing import Dict, Iterable, List, Literal, Sequence
 
 import dask.array as da
 import iris
 import iris.cube
 import iris.util
 import numpy as np
+from iris.coords import Coord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 
@@ -157,6 +160,114 @@ def merge_cube_attributes(
     # Step 3: modify the cubes in-place
     for cube in cubes:
         cube.attributes = final_attributes
+
+
+def _rechunk(
+    array: da.core.Array,
+    complete_dims: list[int],
+    remaining_dims: int | Literal['auto'],
+) -> da.core.Array:
+    """Rechunk a given array so that it is not chunked along given dims."""
+    new_chunks: list[str | int] = [remaining_dims] * array.ndim
+    for dim in complete_dims:
+        new_chunks[dim] = -1
+    return array.rechunk(new_chunks)
+
+
+def _rechunk_dim_metadata(
+    cube: Cube,
+    complete_dims: Iterable[int],
+    remaining_dims: int | Literal['auto'] = 'auto',
+) -> None:
+    """Rechunk dimensional metadata of a cube (in-place)."""
+    # Non-dimensional coords that span complete_dims
+    # Note: dimensional coords are always realized (i.e., numpy arrays), so no
+    # chunking is necessary
+    for coord in cube.coords(dim_coords=False):
+        dims = cube.coord_dims(coord)
+        complete_dims_ = [dims.index(d) for d in complete_dims if d in dims]
+        if complete_dims_:
+            if coord.has_lazy_points():
+                coord.points = _rechunk(
+                    coord.lazy_points(), complete_dims_, remaining_dims
+                )
+            if coord.has_bounds() and coord.has_lazy_bounds():
+                coord.bounds = _rechunk(
+                    coord.lazy_bounds(), complete_dims_, remaining_dims
+                )
+
+    # Rechunk cell measures that span complete_dims
+    for measure in cube.cell_measures():
+        dims = cube.cell_measure_dims(measure)
+        complete_dims_ = [dims.index(d) for d in complete_dims if d in dims]
+        if complete_dims_ and measure.has_lazy_data():
+            measure.data = _rechunk(
+                measure.lazy_data(), complete_dims_, remaining_dims
+            )
+
+    # Rechunk ancillary variables that span complete_dims
+    for anc_var in cube.ancillary_variables():
+        dims = cube.ancillary_variable_dims(anc_var)
+        complete_dims_ = [dims.index(d) for d in complete_dims if d in dims]
+        if complete_dims_ and anc_var.has_lazy_data():
+            anc_var.data = _rechunk(
+                anc_var.lazy_data(), complete_dims_, remaining_dims
+            )
+
+
+def rechunk_cube(
+    cube: Cube,
+    complete_coords: Iterable[Coord | str],
+    remaining_dims: int | Literal['auto'] = 'auto',
+) -> Cube:
+    """Rechunk cube so that it is not chunked along given dimensions.
+
+    This will rechunk the cube's data, but also all non-dimensional
+    coordinates, cell measures, and ancillary variables that span at least one
+    of the given dimensions.
+
+    Note
+    ----
+    This will only rechunk `dask` arrays. `numpy` arrays are not changed.
+
+    Parameters
+    ----------
+    cube:
+        Input cube.
+    complete_coords:
+        (Names of) coordinates along which the output cubes should not be
+        chunked. The given coordinates must span exactly 1 dimension.
+    remaining_dims:
+        Chunksize of the remaining dimensions.
+
+    Returns
+    -------
+    Cube
+        Rechunked cube. This will always be a copy of the input cube.
+
+    """
+    cube = cube.copy()  # do not modify input cube
+
+    # Make sure that complete_coords span exactly 1 dimension
+    complete_dims = []
+    for coord in complete_coords:
+        coord = cube.coord(coord)
+        dims = cube.coord_dims(coord)
+        if len(dims) != 1:
+            raise CoordinateMultiDimError(
+                f"Complete coordinates must be 1D coordinates, got "
+                f"{len(dims):d}D coordinate '{coord.name()}'"
+            )
+        complete_dims.append(dims[0])
+
+    # Rechunk data
+    if cube.has_lazy_data():
+        cube.data = _rechunk(cube.lazy_data(), complete_dims, remaining_dims)
+
+    # Rechunk dimensional metadata
+    _rechunk_dim_metadata(cube, complete_dims, remaining_dims=remaining_dims)
+
+    return cube
 
 
 def has_irregular_grid(cube: Cube) -> bool:
