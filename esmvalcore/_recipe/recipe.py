@@ -257,11 +257,11 @@ def _schedule_for_download(datasets):
             _add_to_download_list(supplementary_ds)
 
 
-def _log_all_files(datasets: Iterable[Dataset]) -> None:
+def _log_input_files(datasets: Iterable[Dataset]) -> None:
     """Show list of files in log (including supplementaries)."""
     for dataset in datasets:
         # Only log supplementary variables if present
-        supplemantary_files_str = ""
+        supplementary_files_str = ""
         if dataset.supplementaries:
             for sup_ds in dataset.supplementaries:
                 supplementary_files_str += (
@@ -274,7 +274,7 @@ def _log_all_files(datasets: Iterable[Dataset]) -> None:
             dataset.facets['short_name'],
             dataset.facets['alias'].replace('_', ' '),  # type: ignore
             _get_files_str(dataset),
-            supplemantary_files_str
+            supplementary_files_str
         )
 
 
@@ -534,7 +534,7 @@ def _get_preprocessor_products(
         _set_version(dataset, input_datasets)
         USED_DATASETS.append(dataset)
         _schedule_for_download(input_datasets)
-        _log_all_files(input_datasets)
+        _log_input_files(input_datasets)
         logger.info("Found input files for %s", dataset.summary(shorten=True))
 
         filename = _get_output_file(
