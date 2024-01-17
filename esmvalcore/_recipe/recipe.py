@@ -264,7 +264,7 @@ def _log_all_files(datasets: Iterable[Dataset]) -> None:
         supplemantary_files_str = ""
         if dataset.supplementaries:
             for sup_ds in dataset.supplementaries:
-                supplemantary_files_str += (
+                supplementary_files_str += (
                     f"\nwith files for supplementary variable "
                     f"{sup_ds['short_name']}:\n{_get_files_str(sup_ds)}"
                 )
@@ -280,13 +280,10 @@ def _log_all_files(datasets: Iterable[Dataset]) -> None:
 
 def _get_files_str(dataset: Dataset) -> str:
     """Get nice string representation of all files of a dataset."""
-    files_str = (
-        '\n'.join(
-            f'  {f}' if f.exists()  # type: ignore
-            else f'  {f} (will be downloaded)' for f in list(dataset.files)
-        )
+    return '\n'.join(
+        f'  {f}' if f.exists()  # type: ignore
+        else f'  {f} (will be downloaded)' for f in dataset.files
     )
-    return files_str
 
 
 def _check_input_files(input_datasets: Iterable[Dataset]) -> set[str]:
