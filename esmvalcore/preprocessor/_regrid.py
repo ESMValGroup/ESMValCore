@@ -11,6 +11,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Dict
 
+import cartopy.crs as ccrs
 import dask.array as da
 import iris
 import numpy as np
@@ -460,8 +461,65 @@ def extract_point(cube, latitude, longitude, scheme):
         raise ValueError(msg)
 
     point = [('latitude', latitude), ('longitude', longitude)]
-    cube = cube.interpolate(point, scheme=scheme)
+    cube = get_pt(cube, point, scheme)
     return cube
+
+
+def get_pt(cube, point, scheme):
+    """Extract data at a single point from cubes.
+
+    Works for cubes with any coordinate system or
+    none (if lat-lon only)
+
+    Parameters
+    ----------
+    cube : cube
+        The source cube to extract a point from.
+
+    point : list containing two tuples - one for
+            latitude and one for longitude e.g
+            [('latitude', latitude), ('longitude', longitude)]
+
+    scheme : str
+        The interpolation scheme. 'linear' or 'nearest'. No default.
+
+    Returns
+    -------
+    :py:class:`~iris.cube.Cube`
+        Returns a cube with the extracted point(s)
+
+    Raises
+    ------
+    ValueError
+        if cube doesn't have a coordinate system and isn't on a lat-lon grid
+    """
+    x_coord = cube.coord(axis='X', dim_coords=True)
+    y_coord = cube.coord(axis='Y', dim_coords=True)
+
+    # check if it is lon-lat and if so just use interpolate
+    # as it is (reproduce previous code)
+    if x_coord.name() == 'longitude' and y_coord.name() == 'latitude':
+        return cube.interpolate(point, scheme=scheme)
+
+    if cube.coord_system() is None:
+        raise ValueError('If no coordinate system on cube then ' +
+                         'can only interpolate lat-lon grids')
+
+    # convert the target point(s) to lat lon and do the interpolation
+    ll_cs = ccrs.Geodetic()
+    myccrs = cube.coord_system().as_cartopy_crs()
+    xpoints = np.array(point[1][1])
+    ypoints = np.array(point[0][1])
+    # repeat length 1 arrays to be the right shape
+    if xpoints.size == 1 and ypoints.size > 1:
+        xpoints = np.repeat(xpoints, ypoints.size)
+    if ypoints.size == 1 and xpoints.size > 1:
+        ypoints = np.repeat(ypoints, xpoints.size)
+
+    trpoints = myccrs.transform_points(ll_cs, xpoints, ypoints)
+    trpoints = [(y_coord.name(), trpoints[:, 1]),
+                (x_coord.name(), trpoints[:, 0])]
+    return cube.interpolate(trpoints, scheme=scheme)
 
 
 def is_dataset(dataset):
@@ -561,7 +619,6 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
             target: 1x1
             scheme:
               reference: esmf_regrid.schemes:ESMFAreaWeighted
-
     """
     if is_dataset(target_grid):
         target_grid = target_grid.copy()
