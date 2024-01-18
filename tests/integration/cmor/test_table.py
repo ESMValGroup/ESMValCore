@@ -105,6 +105,11 @@ class TestCMIP6Info(unittest.TestCase):
         var = self.variables_info.get_variable('SImon', 'sic')
         self.assertEqual(var.short_name, 'siconc')
 
+    def test_get_variable_derived(self):
+        """Test that derived variable are looked up from other MIP tables."""
+        var = self.variables_info.get_variable('3hr', 'sfcWind', derived=True)
+        self.assertEqual(var.short_name, 'sfcWind')
+
     def test_get_variable_from_custom(self):
         """Get a variable from default."""
         self.variables_info.strict = False

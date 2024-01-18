@@ -683,7 +683,8 @@ related to CMOR table settings available:
   extended with variables from the :ref:`custom_cmor_tables` (by default loaded
   from the ``esmvalcore/cmor/tables/custom`` directory) and it is possible to
   use variables with a ``mip`` which is different from the MIP table in which
-  they are defined.
+  they are defined. Note that this option is always enabled for
+  :ref:`derived <Variable derivation>` variables.
 * ``cmor_path``: path to the CMOR table.
   Relative paths are with respect to `esmvalcore/cmor/tables`_.
   Defaults to the value provided in ``cmor_type`` written in lower case.

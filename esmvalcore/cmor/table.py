@@ -296,8 +296,8 @@ class InfoBase():
                     pass
 
         # If that didn't work, look in all tables (i.e., other MIPs) if
-        # cmor_strict=False
-        var_info = self._look_in_all_tables(alt_names_list)
+        # cmor_strict=False or derived=True
+        var_info = self._look_in_all_tables(derived, alt_names_list)
 
         # If that didn' work either, look in default table if cmor_strict=False
         # or derived=True
@@ -324,10 +324,10 @@ class InfoBase():
                     break
         return var_info
 
-    def _look_in_all_tables(self, alt_names_list):
+    def _look_in_all_tables(self, derived, alt_names_list):
         """Look for variable in all tables."""
         var_info = None
-        if not self.strict:
+        if (not self.strict or derived):
             for alt_names in alt_names_list:
                 var_info = self._look_all_tables(alt_names)
                 if var_info:
