@@ -201,13 +201,15 @@ the ozone 3D field. In this case, a derivation function is provided to
 vertically integrate the ozone and obtain total column ozone for direct
 comparison with the observations.
 
-To contribute a new derived variable, it is also necessary to define a name for
-it and to provide the corresponding CMOR table. This is to guarantee the proper
-metadata definition is attached to the derived data. Such custom CMOR tables
-are collected as part of the `ESMValCore package
-<https://github.com/ESMValGroup/ESMValCore>`_. By default, the variable
-derivation will be applied only if the variable is not already available in the
-input data, but the derivation can be forced by setting the appropriate flag.
+The tool will also look in other ``mip`` tables for the same ``project`` to find
+the definition of derived variables. To contribute a completely new derived
+variable, it is necessary to define a name for it and to provide the
+corresponding CMOR table. This is to guarantee the proper metadata definition
+is attached to the derived data. Such custom CMOR tables are collected as part
+of the `ESMValCore package <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
+By default, the variable derivation will be applied only if the variable is not
+already available in the input data, but the derivation can be forced by
+setting the ``force_derivation`` flag.
 
 .. code-block:: yaml
 
