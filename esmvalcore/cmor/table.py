@@ -262,7 +262,7 @@ class InfoBase():
         self,
         table_name: str,
         short_name: str,
-        derived: Optional[bool] = False,
+        derived: bool = False,
     ) -> VariableInfo | None:
         """Search and return the variable information.
 
@@ -299,8 +299,8 @@ class InfoBase():
         # cmor_strict=False or derived=True
         var_info = self._look_in_all_tables(derived, alt_names_list)
 
-        # If that didn' work either, look in default table if cmor_strict=False
-        # or derived=True
+        # If that didn't work either, look in default table if
+        # cmor_strict=False or derived=True
         if not var_info:
             var_info = self._look_in_default(derived, alt_names_list,
                                              table_name)
@@ -988,51 +988,52 @@ class CustomInfo(CMIP5Info):
 
     Parameters
     ----------
-    cmor_tables_path: str or None
+    cmor_tables_path:
         Full path to the table or name for the table if it is present in
-        ESMValTool repository
+        ESMValTool repository. If ``None``, use default tables from
+        `esmvalcore/cmor/tables/custom`.
+
     """
 
-    def __init__(self, cmor_tables_path=None):
-        cwd = os.path.dirname(os.path.realpath(__file__))
-        default_cmor_folder = os.path.join(cwd, 'tables', 'custom')
-
-        # Get custom location of CMOR tables if possible
-        if cmor_tables_path is None:
-            self._cmor_folder = default_cmor_folder
-        else:
-            self._cmor_folder = self._get_cmor_path(cmor_tables_path)
-        if not os.path.isdir(self._cmor_folder):
-            raise ValueError(f"Custom CMOR tables path {self._cmor_folder} is "
-                             f"not a directory")
-
+    def __init__(self, cmor_tables_path: Optional[str | Path] = None) -> None:
+        """Initialize class member."""
+        self.coords = {}
         self.tables = {}
-        self.var_to_freq = {}
+        self.var_to_freq: dict[str, dict] = {}
         table = TableInfo()
         table.name = 'custom'
         self.tables[table.name] = table
 
-        # Try to read coordinates from custom location, use default location if
-        # not possible
-        coordinates_file = os.path.join(
-            self._cmor_folder,
-            'CMOR_coordinates.dat',
-        )
-        if os.path.isfile(coordinates_file):
-            self._coordinates_file = coordinates_file
-        else:
-            self._coordinates_file = os.path.join(
-                default_cmor_folder,
-                'CMOR_coordinates.dat',
-            )
+        # First, read default custom tables from repository
+        self._cmor_folder = self._get_cmor_path('custom')
+        self._read_table_dir(self._cmor_folder)
 
-        self.coords = {}
-        self._read_table_file(self._coordinates_file, self.tables['custom'])
-        for dat_file in glob.glob(os.path.join(self._cmor_folder, '*.dat')):
-            if dat_file == self._coordinates_file:
+        # Second, if given, update default tables with user-defined custom
+        # tables
+        if cmor_tables_path is not None:
+            self._user_table_folder = self._get_cmor_path(cmor_tables_path)
+            if not os.path.isdir(self._user_table_folder):
+                raise ValueError(
+                    f"Custom CMOR tables path {self._user_table_folder} is "
+                    f"not a directory"
+                )
+            self._read_table_dir(self._user_table_folder)
+        else:
+            self._user_table_folder = None
+
+    def _read_table_dir(self, table_dir: str) -> None:
+        """Read CMOR tables from directory."""
+        # If present, read coordinates
+        coordinates_file = os.path.join(table_dir, 'CMOR_coordinates.dat')
+        if os.path.isfile(coordinates_file):
+            self._read_table_file(coordinates_file)
+
+        # Read other variables
+        for dat_file in glob.glob(os.path.join(table_dir, '*.dat')):
+            if dat_file == coordinates_file:
                 continue
             try:
-                self._read_table_file(dat_file, self.tables['custom'])
+                self._read_table_file(dat_file)
             except Exception:
                 msg = f"Exception raised when loading {dat_file}"
                 # Logger may not be ready at this stage
@@ -1042,29 +1043,40 @@ class CustomInfo(CMIP5Info):
                     print(msg)
                 raise
 
-    def get_variable(self, table, short_name, derived=False):
+    def get_variable(
+        self,
+        table: str,
+        short_name: str,
+        derived: bool = False
+    ) -> VariableInfo | None:
         """Search and return the variable info.
 
         Parameters
         ----------
-        table: str
-            Table name
-        short_name: str
-            Variable's short name
-        derived: bool, optional
+        table:
+            Table name. Ignored for custom tables.
+        short_name:
+            Variable's short name.
+        derived:
             Variable is derived. Info retrieval for derived variables always
-            look on the default tables if variable is not find in the
-            requested table
+            looks on the default tables if variable is not found in the
+            requested table. Ignored for custom tables.
 
         Returns
         -------
-        VariableInfo
-            Return the VariableInfo object for the requested variable if
-            found, returns None if not
+        VariableInfo | None
+            `VariableInfo` object for the requested variable if found, returns
+            None if not.
+
         """
         return self.tables['custom'].get(short_name, None)
 
-    def _read_table_file(self, table_file, table=None):
+    def _read_table_file(
+        self,
+        table_file: str,
+        _: Optional[TableInfo] = None,
+    ) -> None:
+        """Read a single table file."""
         with open(table_file, 'r', encoding='utf-8') as self._current_table:
             self._read_line()
             while True:
@@ -1079,7 +1091,9 @@ class CustomInfo(CMIP5Info):
                     self.coords[value] = self._read_coordinate(value)
                     continue
                 elif key == 'variable_entry':
-                    table[value] = self._read_variable(value, '')
+                    self.tables['custom'][value] = self._read_variable(
+                        value, ''
+                    )
                     continue
                 if not self._read_line():
                     return
