@@ -159,7 +159,7 @@ jobs:
     working_directory: /esmvaltool
     docker:
       - image: condaforge/mambaforge
-    resource_class: small
+    resource_class: medium
     steps:
       - run:
           command: |
