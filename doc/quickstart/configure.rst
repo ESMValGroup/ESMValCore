@@ -243,8 +243,7 @@ Extensive documentation on setting up Dask Clusters is available
 
   If not all preprocessor functions support lazy data, computational
   performance may be best with the default scheduler.
-  See `issue #674 <https://github.com/ESMValGroup/ESMValCore/issues/674>`_ for
-  progress on making all preprocessor functions lazy.
+  See :issue:`674` for progress on making all preprocessor functions lazy.
 
 **Example configurations**
 
@@ -684,7 +683,8 @@ related to CMOR table settings available:
   extended with variables from the :ref:`custom_cmor_tables` (by default loaded
   from the ``esmvalcore/cmor/tables/custom`` directory) and it is possible to
   use variables with a ``mip`` which is different from the MIP table in which
-  they are defined.
+  they are defined. Note that this option is always enabled for
+  :ref:`derived <Variable derivation>` variables.
 * ``cmor_path``: path to the CMOR table.
   Relative paths are with respect to `esmvalcore/cmor/tables`_.
   Defaults to the value provided in ``cmor_type`` written in lower case.
@@ -699,11 +699,18 @@ Custom CMOR tables
 
 As mentioned in the previous section, the CMOR tables of projects that use
 ``cmor_strict: false`` will be extended with custom CMOR tables.
-By default, these are loaded from `esmvalcore/cmor/tables/custom
+For derived variables (the ones with ``derive: true`` in the recipe), the
+custom CMOR tables will always be considered.
+By default, these custom tables are loaded from `esmvalcore/cmor/tables/custom
 <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
 However, by using the special project ``custom`` in the
 ``config-developer.yml`` file with the option ``cmor_path``, a custom location
-for these custom CMOR tables can be specified:
+for these custom CMOR tables can be specified.
+In this case, the default custom tables are extended with those entries from
+the custom location (in case of duplication, the custom location tables take
+precedence).
+
+Example:
 
 .. code-block:: yaml
 
@@ -743,11 +750,10 @@ Example for the file ``CMOR_asr.dat``:
    !----------------------------------
    !
 
-It is also possible to use a special coordinates file ``CMOR_coordinates.dat``.
-If this is not present in the custom directory, the one from the default
-directory (`esmvalcore/cmor/tables/custom/CMOR_coordinates.dat
-<https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom/CMOR_coordinates.dat>`_)
-is used.
+It is also possible to use a special coordinates file ``CMOR_coordinates.dat``,
+which will extend the entries from the default one
+(`esmvalcore/cmor/tables/custom/CMOR_coordinates.dat
+<https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom/CMOR_coordinates.dat>`_).
 
 
 .. _filterwarnings_config-developer:

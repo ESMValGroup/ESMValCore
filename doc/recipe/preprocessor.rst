@@ -201,13 +201,15 @@ the ozone 3D field. In this case, a derivation function is provided to
 vertically integrate the ozone and obtain total column ozone for direct
 comparison with the observations.
 
-To contribute a new derived variable, it is also necessary to define a name for
-it and to provide the corresponding CMOR table. This is to guarantee the proper
-metadata definition is attached to the derived data. Such custom CMOR tables
-are collected as part of the `ESMValCore package
-<https://github.com/ESMValGroup/ESMValCore>`_. By default, the variable
-derivation will be applied only if the variable is not already available in the
-input data, but the derivation can be forced by setting the appropriate flag.
+The tool will also look in other ``mip`` tables for the same ``project`` to find
+the definition of derived variables. To contribute a completely new derived
+variable, it is necessary to define a name for it and to provide the
+corresponding CMOR table. This is to guarantee the proper metadata definition
+is attached to the derived data. Such custom CMOR tables are collected as part
+of the `ESMValCore package <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
+By default, the variable derivation will be applied only if the variable is not
+already available in the input data, but the derivation can be forced by
+setting the ``force_derivation`` flag.
 
 .. code-block:: yaml
 
@@ -1219,6 +1221,7 @@ The ``_time.py`` module contains the following preprocessor functions:
 * regrid_time_: Aligns the time axis of each dataset to have common time
   points and calendars.
 * timeseries_filter_: Allows application of a filter to the time-series data.
+* local_solar_time_: Convert cube with UTC time to local solar time.
 
 Statistics functions are applied by default in the order they appear in the
 list. For example, the following example applied to hourly data will retrieve
@@ -1652,6 +1655,55 @@ Examples:
                 filter_stats: mean    # 3-monthly mean lowpass filter
 
 See also :func:`esmvalcore.preprocessor.timeseries_filter`.
+
+.. _local_solar_time:
+
+``local_solar_time``
+--------------------
+
+Many variables in the Earth system show a strong diurnal cycle.
+The reason for that is of course Earth's rotation around its own axis, which
+leads to a diurnal cycle of the incoming solar radiation.
+While UTC time is a very good absolute time measure, it is not really suited to
+analyze diurnal cycles over larger regions.
+For example, diurnal cycles over Russia and the USA are phase-shifted by ~180°
+= 12 hr in UTC time.
+
+This is where the `local solar time (LST)
+<https://en.wikipedia.org/wiki/Solar_time>`__ comes into play:
+For a given location, 12:00 noon LST is defined as the moment when the sun
+reaches its highest point in the sky.
+By using this definition based on the origin of the diurnal cycle (the sun), we
+can directly compare diurnal cycles across the globe.
+LST is mainly determined by the longitude of a location, but due to the
+eccentricity of Earth's orbit, it also depends on the day of year (see
+`equation of time <https://en.wikipedia.org/wiki/Equation_of_time>`__).
+However, this correction is at most ~15 min, which is usually smaller than the
+highest frequency output of CMIP6 models (1 hr) and smaller than the time scale
+for diurnal evolution of meteorological phenomena (which is in the order of
+hours, not minutes).
+Thus, instead, we use the **mean** LST, which solely depends on longitude:
+
+.. math::
+
+  LST = UTC + 12 \cdot \frac{lon}{180°}
+
+where the times are given in hours and `lon` in degrees in the interval [-180,
+180].
+To transform data from UTC to LST, this preprocessor shifts data along the time
+axis based on the longitude.
+
+This preprocessor does not need any additional parameters.
+
+Example:
+
+.. code-block:: yaml
+
+  calculate_local_solar_time:
+    local_solar_time:
+
+See also :func:`esmvalcore.preprocessor.local_solar_time`.
+
 
 .. _area operations:
 
