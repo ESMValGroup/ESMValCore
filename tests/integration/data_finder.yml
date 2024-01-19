@@ -514,7 +514,7 @@ get_input_filelist:
       timerange: '1980/2002'
     available_files:
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
-      - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
+      - MOHC/HadGEM2-ES/historical/mon/atmo1/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20110329/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_198412-200511.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_193412-195911.nc
       - MOHC/HadGEM2-ES/historical/mon/atmos/Amon/r1i1p1/v20120928/ta/ta_Amon_HadGEM2-ES_historical_r1i1p1_195912-198411.nc
@@ -608,18 +608,23 @@ get_input_filelist:
       mip: Amon
       exp: historical
       grid: gn
-      ensemble: r1i1p1f3
+      ensemble: r1i1p1f1
       timerange: '1999/2000'
       diagnostic: test_diag
       preprocessor: test_preproc
     available_files:
-      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f3/Amon/ta/gn/v20190624/ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f3_gn_195001-201412.nc
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/tas/gn/v20200101/tas_Amon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn_190001-194912.nc
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/v20200101/ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn_190001-194912.nc
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/v20200101/ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn_195001-199912.nc
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/v20200101/ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn_200001-201412.nc
     dirs:
-      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f3/Amon/ta/gn/*/
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/*/
+      - CMIP/NERC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/*/
     file_patterns:
-      - ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f3_gn*.nc
+      - ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn*.nc
     found_files:
-      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f3/Amon/ta/gn/v20190624/ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f3_gn_195001-201412.nc
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/v20200101/ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn_195001-199912.nc
+      - CMIP/MOHC/HadGEM3-GC31-LL/historical/r1i1p1f1/Amon/ta/gn/v20200101/ta_Amon_HadGEM3-GC31-LL_historical_r1i1p1f1_gn_200001-201412.nc
 
   - drs: default
     variable:
