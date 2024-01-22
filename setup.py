@@ -47,7 +47,7 @@ REQUIREMENTS = {
         'netCDF4',
         'numpy!=1.24.3',
         'packaging',
-        'pandas!=2.2.0',
+        'pandas!=2.2.0',  # github.com/ESMValGroup/ESMValCore/pull/2305
         'pillow',
         'prov',
         'psutil',
