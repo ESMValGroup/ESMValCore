@@ -47,7 +47,7 @@ REQUIREMENTS = {
         'netCDF4',
         'numpy!=1.24.3',
         'packaging',
-        'pandas',
+        'pandas!=2.2.0',
         'pillow',
         'prov',
         'psutil',
