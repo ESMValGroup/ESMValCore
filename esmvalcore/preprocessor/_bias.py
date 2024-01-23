@@ -94,8 +94,8 @@ def bias(
     if ref_cube is None:
         if all_cubes_given:
             raise ValueError(
-                "`ref_cube` cannot be `None` when `products` is an iterable "
-                "of Cubes"
+                "A list of Cubes is given to this preprocessor; please "
+                "specify a `ref_cube`"
             )
         (ref_cube, ref_product) = _get_ref(products, 'reference_for_bias')
     else:
