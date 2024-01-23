@@ -62,7 +62,7 @@ def test_load_from_file(monkeypatch):
     monkeypatch.setattr(
         _config_object,
         'USER_CONFIG',
-        _config_object.DEFAULT_CONFIG,
+        _config_object.CONFIG_DEFAULTS,
     )
     config = Config()
     assert not config

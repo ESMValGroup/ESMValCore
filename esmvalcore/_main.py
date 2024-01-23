@@ -381,11 +381,13 @@ class ESMValTool():
             default (fail if there are any errors),
             strict (fail if there are any warnings).
         """
+        # Make sure that desired user configuration file is loaded
+        if config_file is not None:
+            os.environ['ESMVALTOOL_USER_CONFIG'] = config_file
         from .config import CFG
 
         recipe = self._get_recipe(recipe)
 
-        CFG.load_from_file(config_file)
         session = CFG.start_session(recipe.stem)
         if check_level is not None:
             session['check_level'] = check_level

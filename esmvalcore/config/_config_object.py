@@ -1,6 +1,7 @@
 """Importable config object."""
 
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
 from types import MappingProxyType
@@ -93,28 +94,36 @@ class Config(ValidatedConfig):
 
         return new
 
+    @staticmethod
+    def _get_config_user_path(
+        filename: Optional[Union[os.PathLike, str]] = None
+    ) -> Path:
+        """Get full path to config user file."""
+        if filename is None:
+            filename = DEFAULT_USER_CONFIG
+        path = Path(filename).expanduser()
+        if not path.exists():
+            try_path = DEFAULT_USER_CONFIG_DIR / filename
+            if try_path.exists():
+                path = try_path
+            else:
+                raise FileNotFoundError(
+                    f'Cannot find: `{filename}` locally or in `{try_path}`'
+                )
+        return path
+
     def load_from_file(
         self,
         filename: Optional[Union[os.PathLike, str]] = None,
     ) -> None:
         """Load user configuration from the given file."""
-        if filename is None:
-            filename = USER_CONFIG
-        path = Path(filename).expanduser()
-        if not path.exists():
-            try_path = USER_CONFIG_DIR / filename
-            if try_path.exists():
-                path = try_path
-            else:
-                raise FileNotFoundError(f'Cannot find: `{filename}`'
-                                        f'locally or in `{try_path}`')
-
+        path = self._get_config_user_path(filename)
         self.clear()
         self.update(Config._load_user_config(path))
 
     def reload(self):
         """Reload the config file."""
-        filename = self.get('config_file', DEFAULT_CONFIG)
+        filename = self.get('config_file', CONFIG_DEFAULTS)
         self.load_from_file(filename)
 
     def start_session(self, name: str):
@@ -201,7 +210,7 @@ class Session(ValidatedConfig):
     @property
     def config_dir(self):
         """Return user config directory."""
-        return USER_CONFIG_DIR
+        return Path(self['config_file']).parent
 
     @property
     def main_log(self):
@@ -231,12 +240,53 @@ def _read_config_file(config_file):
     return cfg
 
 
-DEFAULT_CONFIG_DIR = Path(esmvalcore.__file__).parent
-DEFAULT_CONFIG = DEFAULT_CONFIG_DIR / 'config-user.yml'
+def _get_user_config_location() -> Path:
+    """Get location of configuration file.
 
-USER_CONFIG_DIR = Path.home() / '.esmvaltool'
-USER_CONFIG = USER_CONFIG_DIR / 'config-user.yml'
+    This searches the CLI arguments for `--config-file` or `--config_file` and
+    uses the specified location if possible. Otherwise, the default location
+    `~/.esmvaltool/config-user.yml` is used.
 
-# initialize placeholders
-CFG_DEFAULT = MappingProxyType(Config._load_default_config(DEFAULT_CONFIG))
+    Note
+    ----
+    This hack of directly parsing the CLI arguments here ensures that the
+    correct user configuration file is used. This will always work, regardless
+    of when this module has been imported in the code.
+
+    """
+    for arg in sys.argv:
+        for opt in ('--config-file', '--config_file'):
+            if opt in arg:
+                # Parse '--config-file=/file.yml' or '--config_file=/file.yml'
+                partition = arg.partition('=')
+                if partition[2]:
+                    return Config._get_config_user_path(partition[2])
+
+                # Parse '--config-file /file.yml' or '--config_file /file.yml'
+                config_idx = sys.argv.index(opt)
+                return Config._get_config_user_path(sys.argv[config_idx + 1])
+
+    # If no custom user configuration file has been given, return default user
+    # configuration file location
+    os.environ['AAAAAAAAAAAAAAAAAAAAA'] = '111'
+    return DEFAULT_USER_CONFIG
+
+
+# Default values for configuration options (some are also set in
+# _load_default_config)
+CONFIG_DEFAULTS = Path(esmvalcore.__file__).parent / 'config-user.yml'
+
+# The default path for the user configuration file is always ~/.esmvaltool. For
+# example, this is used if a relative path for the user configuration file is
+# specified.
+DEFAULT_USER_CONFIG_DIR = Path.home() / '.esmvaltool'
+DEFAULT_USER_CONFIG = DEFAULT_USER_CONFIG_DIR / 'config-user.yml'
+
+# By default, read user configuration file at  ~/.esmvaltool/config-user.yml.
+# If a custom user configuration file has been specified with the CLI arguments
+# --config-file or --config_file, use that one instead.
+USER_CONFIG = _get_user_config_location()
+
+# Initialize configuration objects
+CFG_DEFAULT = MappingProxyType(Config._load_default_config(CONFIG_DEFAULTS))
 CFG = Config._load_user_config(USER_CONFIG, raise_exception=False)
