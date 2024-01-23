@@ -16,7 +16,7 @@ def test_load_save_task(tmp_path):
     iris.save(cube, in_file)
     dataset = Dataset(short_name='tas')
     dataset.files = [in_file]
-    dataset._load_with_callback = lambda _: cube.copy()
+    dataset.load = lambda: cube.copy()
 
     # Create task
     task = PreprocessingTask([
@@ -57,11 +57,11 @@ def test_load_save_and_other_task(tmp_path, monkeypatch):
 
     dataset1 = Dataset(short_name='tas', dataset='dataset1')
     dataset1.files = [file1]
-    dataset1._load_with_callback = lambda _: in_cube.copy()
+    dataset1.load = lambda: in_cube.copy()
 
     dataset2 = Dataset(short_name='tas', dataset='dataset1')
     dataset2.files = [file2]
-    dataset2._load_with_callback = lambda _: in_cube.copy()
+    dataset2.load = lambda: in_cube.copy()
 
     # Create some mock preprocessor functions and patch
     # `esmvalcore.preprocessor` so it uses them.

@@ -6,6 +6,7 @@ import unittest
 from datetime import datetime
 from typing import List, Tuple
 
+import dask.array as da
 import iris
 import iris.coord_categorisation
 import iris.coords
@@ -550,6 +551,8 @@ class TestClimatology(tests.Test):
         expected = np.array([1.], dtype=np.float32)
         assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-2 s-1')
+        self.assertFalse(cube.coords('_time_weights_'))
+        self.assertFalse(result.coords('_time_weights_'))
 
     def test_time_mean_uneven(self):
         """Test for time average of a 1D field with uneven time boundaries."""
@@ -1515,7 +1518,7 @@ class TestTimeseriesFilter(tests.Test):
                               filter_stats='sum')
 
     def test_timeseries_filter_implemented(self):
-        """Test a not implemnted filter."""
+        """Test a not implemented filter."""
         with self.assertRaises(NotImplementedError):
             timeseries_filter(self.cube,
                               7,
@@ -1658,8 +1661,9 @@ def make_map_data(number_years=2):
         standard_name='longitude',
     )
     data = np.array([[0, 1], [1, 0]]) * times[:, None, None]
+    chunks = (int(data.shape[0] / 2), 1, 2)
     cube = iris.cube.Cube(
-        data,
+        da.asarray(data, chunks=chunks),
         dim_coords_and_dims=[(time, 0), (lat, 1), (lon, 2)],
     )
     return cube

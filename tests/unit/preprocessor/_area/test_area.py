@@ -23,6 +23,8 @@ from esmvalcore.preprocessor._area import (
     extract_named_regions,
     extract_region,
     extract_shape,
+    meridional_statistics,
+    zonal_statistics,
 )
 from esmvalcore.preprocessor._shared import guess_bounds
 
@@ -92,10 +94,15 @@ class Test(tests.Test):
 
     def test_area_statistics_mean(self):
         """Test for area average of a 2D field."""
+        self.assertFalse(self.grid.cell_measures('cell_area'))
+
         result = area_statistics(self.grid, 'mean')
+
         expected = np.ma.array([1., 1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-2 s-1')
+        self.assertFalse(self.grid.cell_measures('cell_area'))
+        self.assertFalse(result.cell_measures('cell_area'))
 
     def test_area_statistics_cell_measure_mean(self):
         """Test for area average of a 2D field.
@@ -107,6 +114,8 @@ class Test(tests.Test):
         expected = np.ma.array([1., 1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-2 s-1')
+        self.assertTrue(self.grid.cell_measures('cell_area'))
+        self.assertFalse(result.cell_measures('cell_area'))
 
     def test_area_statistics_min(self):
         """Test for area average of a 2D field."""
@@ -761,7 +770,7 @@ def test_crop_cube_with_ne_file(ne_ocean_shapefile):
         result = _crop_cube(cube, *geometries.bounds, cmor_coords=False)
         result = (result.coord("latitude").points[-1],
                   result.coord("longitude").points[-1])
-        expected = (89., 359.)
+        expected = (89., 179.)
         np.testing.assert_allclose(result, expected)
 
 
@@ -1249,6 +1258,38 @@ def test_update_shapefile_path_rel(
             assert shapefile_out == tmp_path / shapefile
         else:
             assert shapefile_out == ar6_shapefile
+
+
+def test_zonal_statistics(make_testcube):
+    """Test ``zonal_statistics``."""
+    res = zonal_statistics(make_testcube, 'sum')
+    assert res.coord('latitude') == make_testcube.coord('latitude')
+    np.testing.assert_allclose(res.coord('longitude').points, [2.5])
+    np.testing.assert_allclose(res.coord('longitude').bounds, [[0.0, 5.0]])
+    np.testing.assert_allclose(res.data, [5.0, 5.0, 5.0, 5.0, 5.0])
+    assert res.dtype == np.float32
+
+
+def test_zonal_statistics_2d_lon_fail(irreg_extract_shape_cube):
+    """Test ``zonal_statistics``."""
+    with pytest.raises(ValueError):
+        zonal_statistics(irreg_extract_shape_cube, 'sum')
+
+
+def test_meridional_statistics(make_testcube):
+    """Test ``zonal_statistics``."""
+    res = meridional_statistics(make_testcube, 'sum')
+    assert res.coord('longitude') == make_testcube.coord('longitude')
+    np.testing.assert_allclose(res.coord('latitude').points, [2.5])
+    np.testing.assert_allclose(res.coord('latitude').bounds, [[0.0, 5.0]])
+    np.testing.assert_allclose(res.data, [5.0, 5.0, 5.0, 5.0, 5.0])
+    assert res.dtype == np.float32
+
+
+def test_meridional_statistics_2d_lon_fail(irreg_extract_shape_cube):
+    """Test ``meridional_statistics``."""
+    with pytest.raises(ValueError):
+        meridional_statistics(irreg_extract_shape_cube, 'sum')
 
 
 if __name__ == '__main__':
