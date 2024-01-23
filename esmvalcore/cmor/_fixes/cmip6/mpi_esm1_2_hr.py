@@ -106,6 +106,10 @@ class SfcWind(Fix):
         return cubes
 
 
+class SfcWindmax(SfcWind):
+    """Fixes for sfcWindmax."""
+
+
 class Uas(SfcWind):
     """Fixes for uas."""
 
