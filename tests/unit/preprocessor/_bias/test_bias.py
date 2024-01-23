@@ -325,6 +325,9 @@ def test_invalid_bias_type(regular_cubes, ref_cubes):
 
 def test_ref_cube_non_cubes(regular_cubes):
     """Test ref_cube=None with with cubes."""
-    msg = "`ref_cube` cannot be `None` when `products` is an iterable of Cubes"
+    msg = (
+        "A list of Cubes is given to this preprocessor; please specify a "
+        "`ref_cube`"
+    )
     with pytest.raises(ValueError, match=msg):
         bias(regular_cubes)
