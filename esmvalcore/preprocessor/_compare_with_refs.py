@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterable
+from functools import partial
 from typing import TYPE_CHECKING, Literal, Optional
 
 import dask.array as da
@@ -11,8 +12,13 @@ import numpy as np
 from iris.common.metadata import CubeMetadata
 from iris.coords import CellMethod, Coord
 from iris.cube import Cube, CubeList
+from iris.exceptions import CoordinateNotFoundError
+from iris.util import broadcast_to_shape
 
+from esmvalcore.preprocessor._area import _try_adding_calculated_cell_area
 from esmvalcore.preprocessor._io import concatenate
+from esmvalcore.preprocessor._other import get_array_module
+from esmvalcore.preprocessor._time import get_time_weights
 
 if TYPE_CHECKING:
     from esmvalcore.preprocessor import PreprocessorFile
@@ -192,7 +198,12 @@ def _calculate_bias(cube: Cube, ref_cube: Cube, bias_type: BiasType) -> Cube:
     return cube
 
 
-MetricType = Literal['rmse', 'pearsonr']
+MetricType = Literal[
+    'weighted_rmse',
+    'rmse',
+    'weighted_pearsonr',
+    'pearsonr',
+]
 
 
 def distance_metric(
@@ -224,9 +235,24 @@ def distance_metric(
         Input datasets/cubes for which the distance metric is calculated
         relative to a reference dataset/cube.
     metric:
-        Distance metric that is calculated. Must be one of ``'rmse'``
-        (calculates the root mean square error) ``'pearsonr'`` (calculates the
-        Pearson correlation coefficient).
+        Distance metric that is calculated. Must be one of ``'weighted_rmse'``
+        (weighted root mean square error), ``'rmse'`` (unweighted root mean
+        square error), ``'weighted_pearsonr'`` (weighted Pearson correlation
+        coefficient), ``'pearsonr'`` (unweighted Pearson correlation
+        coefficient).
+
+        .. note::
+            Metrics starting with `weighted_` will calculate weighted distance
+            metrics if possible. Currently, the following `coords` (or any
+            combinations that include them) will trigger weighting: `time`
+            (will use lengths of time intervals as weights) and `latitude`
+            (will use cell area weights). Time weights are always calculated
+            from the input data. Area weights can be given as supplementary
+            variables to the recipe (`areacella` or `areacello`, see
+            :ref:`supplementary_variables`) or calculated from the input data
+            (this only works for regular grids). By default, **NO**
+            supplementary variables will be used; they need to be explicitly
+            requested.
     ref_cube:
         Cube which is used as reference for the distance metric calculation. If
         ``None``, `products` needs to be a :obj:`set` of
@@ -254,8 +280,11 @@ def distance_metric(
         not exactly one input datasets contains the facet
         ``reference_for_metric: true`` if ``ref_cube=None`; ``ref_cube=None``
         and the input products are given as iterable of
-        :class:`~iris.cube.Cube` objects; ``metric`` is not one of ``'rmse'``
-        or ``'pearsonr'``.
+        :class:`~iris.cube.Cube` objects; an invalid ``metric`` has been given.
+    iris.exceptions.CoordinateNotFoundError
+        `longitude` is not found in cube if a weighted metric shall be
+        calculated, `latitude` is in `coords`, and no `cell_area` is given
+        as:ref:`supplementary_variables`.
 
     """
     reference_product = None
@@ -265,8 +294,8 @@ def distance_metric(
     if ref_cube is None:
         if all_cubes_given:
             raise ValueError(
-                "`ref_cube` cannot be `None` when `products` is an iterable "
-                "of Cubes"
+                "A list of Cubes is given to this preprocessor; please "
+                "specify a `ref_cube`"
             )
         reference_products = []
         for product in products:
@@ -374,8 +403,10 @@ def _calculate_metric(
     # possible since some operations (e.g., sqrt()) are not available for cubes
     coords = _get_coords(cube, coords)
     metrics_funcs = {
-        'rmse': _calculate_rmse,
-        'pearsonr': _calculate_pearsonr,
+        'weighted_rmse': partial(_calculate_rmse, weighted=True),
+        'rmse': partial(_calculate_rmse, weighted=False),
+        'weighted_pearsonr': partial(_calculate_pearsonr, weighted=True),
+        'pearsonr': partial(_calculate_pearsonr, weighted=False),
     }
     if metric not in metrics_funcs:
         raise ValueError(
@@ -392,19 +423,58 @@ def _calculate_metric(
 
     return res_cube
 
+def _get_weights(
+    cube: Cube,
+    coords: Iterable[Coord] | Iterable[str],
+) -> da.Array:
+    """Calculate weights for weighted distance metrics."""
+    weights = da.ones(cube.shape, dtype=cube.dtype)
+
+    # Time weights: lengths of time interval
+    if 'time' in coords:
+        weights *= broadcast_to_shape(
+            da.array(get_time_weights(cube)),
+            cube.shape,
+            cube.coord_dims('time'),
+        )
+
+    # Latitude weights: cell areas
+    if 'latitude' in coords:
+        cube = cube.copy()  # avoid overwriting input cube
+        if (
+                not cube.cell_measures('cell_area') and
+                not cube.coord('longitude')
+        ):
+            raise CoordinateNotFoundError(
+                f"Cube {cube.summary(shorten=True)} need a 'longitude' "
+                f"coordinate to calculate weighted distance metric over "
+                f"coordinates {coords} (alternatively, a `cell_area` can be "
+                f"given to the cube)"
+            )
+        _try_adding_calculated_cell_area(cube)
+        weights *= broadcast_to_shape(
+            cube.cell_measure('cell_area').core_data(),
+            cube.shape,
+            cube.cell_measure_dims('cell_area'),
+        )
+
+    return weights
+
 
 def _calculate_rmse(
     cube: Cube,
     ref_cube: Cube,
     coords: Iterable[Coord] | Iterable[str],
+    *,
+    weighted: bool,
 ) -> tuple[np.ndarray | da.Array, CubeMetadata]:
     """Calculate root mean square error."""
     # Data
     axis = _get_all_coord_dims(cube, coords)
+    weights = _get_weights(cube, coords) if weighted else None
     squared_error = (cube.core_data() - ref_cube.core_data())**2
-    rmse = np.sqrt(  # handles dask arrays properly through numpy dispatch
-        np.mean(squared_error, axis=axis)
-    )
+    npx = get_array_module(squared_error)
+    rmse = npx.sqrt(npx.ma.average(squared_error, axis=axis, weights=weights))
 
     # Metadata
     metadata = CubeMetadata(
@@ -423,6 +493,8 @@ def _calculate_pearsonr(
     cube: Cube,
     ref_cube: Cube,
     coords: Iterable[Coord] | Iterable[str],
+    *,
+    weighted: bool,
 ) -> tuple[np.ndarray | da.Array, CubeMetadata]:
     """Calculate Pearson correlation coefficient."""
     # TODO: change!!!

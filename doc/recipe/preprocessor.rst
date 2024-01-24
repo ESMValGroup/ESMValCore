@@ -91,13 +91,13 @@ supported too if proper keyword arguments are specified:
 .. _supported_stat_operator:
 
 ============================== ================================================= =====================================
-`operator`                     Corresponding :class:`~iris.analysis.Aggregator`  Weighted? [1]_
+`operator`                     Corresponding :class:`~iris.analysis.Aggregator`  Weighted? [#f1]_
 ============================== ================================================= =====================================
 ``gmean``                      :const:`iris.analysis.GMEAN`                      no
 ``hmean``                      :const:`iris.analysis.HMEAN`                      no
 ``max``                        :const:`iris.analysis.MAX`                        no
 ``mean``                       :const:`iris.analysis.MEAN`                       yes
-``median``                     :const:`iris.analysis.MEDIAN` [2]_                no
+``median``                     :const:`iris.analysis.MEDIAN` [#f2]_                no
 ``min``                        :const:`iris.analysis.MIN`                        no
 ``peak``                       :const:`iris.analysis.PEAK`                       no
 ``percentile``                 :const:`iris.analysis.PERCENTILE`                 no
@@ -108,7 +108,7 @@ supported too if proper keyword arguments are specified:
 ``wpercentile``                :const:`iris.analysis.WPERCENTILE`                yes
 ============================== ================================================= =====================================
 
-.. [1] The following preprocessor support weighted statistics by default:
+.. [#f1] The following preprocessor support weighted statistics by default:
     :func:`~esmvalcore.preprocessor.area_statistics`: weighted by grid cell
     areas (see also :ref:`preprocessors_using_supplementary_variables`);
     :func:`~esmvalcore.preprocessor.climate_statistics`: weighted by lengths of
@@ -117,7 +117,7 @@ supported too if proper keyword arguments are specified:
     :ref:`preprocessors_using_supplementary_variables`);
     :func:`~esmvalcore.preprocessor.axis_statistics`: weighted by
     corresponding coordinate bounds.
-.. [2] :const:`iris.analysis.MEDIAN` is not lazy, but much faster than
+.. [#f2] :const:`iris.analysis.MEDIAN` is not lazy, but much faster than
     :const:`iris.analysis.PERCENTILE`. For a lazy median, use ``percentile``
     with the keyword argument ``percent: 50``.
 
@@ -301,23 +301,27 @@ or
 to perform their computations.
 In ESMValCore we call both types of variables "supplementary variables".
 
-============================================================== ============================== =====================================
-Preprocessor                                                   Variable short name            Variable standard name
-============================================================== ============================== =====================================
-:ref:`area_statistics<area_statistics>`                        ``areacella``, ``areacello``   cell_area
-:ref:`mask_landsea<land/sea/ice masking>`                      ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
-:ref:`mask_landseaice<ice masking>`                            ``sftgif``                     land_ice_area_fraction
-:ref:`volume_statistics<volume_statistics>`                    ``volcello``                   ocean_volume
-:ref:`weighting_landsea_fraction<land/sea fraction weighting>` ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
-============================================================== ============================== =====================================
+===================================================================== ============================== =====================================
+Preprocessor                                                          Variable short name            Variable standard name
+===================================================================== ============================== =====================================
+:ref:`area_statistics<area_statistics>` [#f4]                         ``areacella``, ``areacello``   cell_area
+:ref:`mask_landsea<land/sea/ice masking>` [#f4]                       ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
+:ref:`mask_landseaice<ice masking>` [#f3]                             ``sftgif``                     land_ice_area_fraction
+:ref:`volume_statistics<volume_statistics>` [#f4]                     ``volcello``                   ocean_volume
+:ref:`weighting_landsea_fraction<land/sea fraction weighting>` [#f3]  ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
+===================================================================== ============================== =====================================
+
+.. [#f3] This preprocessor requires at least one of the mentioned supplementary
+    variables. If none is defined in the recipe, automatically look for them.
+    If none is found, an error will be raised.
+.. [#f4] This preprocessor prefers at least one of the mentioned supplementary
+    variables. If none is defined in the recipe, automatically look for them.
+    If none is found, a warning will be raised (but no error).
+.. [#f5] This preprocessor optionally takes one of the mentioned supplementary
+    variables. If none is defined in the recipe, none is added.
 
 Only one of the listed variables is required. Supplementary variables can be
 defined in the recipe as described in :ref:`supplementary_variables`.
-In some cases, preprocessor functions may work without supplementary variables,
-this is documented case by case in the preprocessor function definition.
-If a preprocessor function requiring supplementary variables is used
-without specifying these in the recipe, these will be automatically
-added.
 If the automatic selection does not give the desired result, specify the
 supplementary variables in the recipe as described in
 :ref:`supplementary_variables`.
