@@ -74,7 +74,16 @@ def _map_on_filled(function, array):
     array = num_module.ma.filled(array, fill_value)
 
     # Apply function and return masked array
-    array = function(array)
+    if isinstance(array, da.Array):
+        array = da.map_blocks(
+            function,
+            array,
+            dtype=array.dtype,
+            enforce_ndim=True,
+            meta=da.utils.meta_from_array(array),
+        )
+    else:
+        array = function(array)
     return num_module.ma.masked_array(array, mask=mask)
 
 

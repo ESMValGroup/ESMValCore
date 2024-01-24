@@ -886,10 +886,6 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
     else:
         src_points = src_levels.core_points()
 
-    # Make the target levels lazy if the input data is lazy.
-    if cube.has_lazy_data() and isinstance(src_points, da.Array):
-        levels = da.asarray(levels)
-
     # Broadcast the source cube vertical coordinate to fully describe the
     # spatial extent that will be interpolated.
     src_levels_broadcast = broadcast_to_shape(
@@ -898,6 +894,10 @@ def _vertical_interpolate(cube, src_levels, levels, interpolation,
         chunks=cube.lazy_data().chunks if cube.has_lazy_data() else None,
         dim_map=cube.coord_dims(src_levels),
     )
+
+    # Make the target levels lazy if the input data is lazy.
+    if cube.has_lazy_data() and isinstance(src_points, da.Array):
+        levels = da.asarray(levels)
 
     # force mask onto data as nan's
     npx = get_array_module(cube.core_data())
@@ -981,6 +981,36 @@ def parse_vertical_scheme(scheme):
     return scheme, extrap_scheme
 
 
+def _rechunk_aux_factory_dependencies(
+    cube: iris.cube.Cube,
+    coord_name: str,
+) -> iris.cube.Cube:
+    """Rechunk coordinate aux factory dependencies.
+
+    This ensures that the resulting coordinate has reasonably sized
+    chunks that are aligned with the cube data for optimal computational
+    performance.
+    """
+    # Workaround for https://github.com/SciTools/iris/issues/5457
+    try:
+        factory = cube.aux_factory(coord_name)
+    except iris.exceptions.CoordinateNotFoundError:
+        return cube
+
+    cube = cube.copy()
+    cube_chunks = cube.lazy_data().chunks
+    for coord in factory.dependencies.values():
+        coord_dims = cube.coord_dims(coord)
+        if coord_dims is not None:
+            coord = coord.copy()
+            chunks = tuple(cube_chunks[i] for i in coord_dims)
+            coord.points = coord.lazy_points().rechunk(chunks)
+            if coord.has_bounds():
+                coord.bounds = coord.lazy_bounds().rechunk(chunks + (None, ))
+            cube.replace_coord(coord)
+    return cube
+
+
 def extract_levels(
     cube: iris.cube.Cube,
     levels: Union[np.typing.ArrayLike, da.Array],
@@ -1041,21 +1071,27 @@ def extract_levels(
     if not isinstance(levels, da.Array):
         levels = np.array(levels, ndmin=1)
 
-    # Get the source cube vertical coordinate, if available.
-    if coordinate:
-        coord_names = [coord.name() for coord in cube.coords()]
-        if coordinate not in coord_names:
-            # Try to calculate air_pressure from altitude coordinate or
-            # vice versa using US standard atmosphere for conversion.
-            if coordinate == 'air_pressure' and 'altitude' in coord_names:
-                # Calculate pressure level coordinate from altitude.
-                add_plev_from_altitude(cube)
-            if coordinate == 'altitude' and 'air_pressure' in coord_names:
-                # Calculate altitude coordinate from pressure levels.
-                add_altitude_from_plev(cube)
-        src_levels = cube.coord(coordinate)
+    # Try to determine the name of the vertical coordinate automatically
+    if coordinate is None:
+        coordinate = cube.coord(axis='z', dim_coords=True).name()
+
+    # Add extra coordinates
+    coord_names = [coord.name() for coord in cube.coords()]
+    if coordinate in coord_names:
+        cube = _rechunk_aux_factory_dependencies(cube, coordinate)
     else:
-        src_levels = cube.coord(axis='z', dim_coords=True)
+        # Try to calculate air_pressure from altitude coordinate or
+        # vice versa using US standard atmosphere for conversion.
+        if coordinate == 'air_pressure' and 'altitude' in coord_names:
+            # Calculate pressure level coordinate from altitude.
+            cube = _rechunk_aux_factory_dependencies(cube, 'altitude')
+            add_plev_from_altitude(cube)
+        if coordinate == 'altitude' and 'air_pressure' in coord_names:
+            # Calculate altitude coordinate from pressure levels.
+            cube = _rechunk_aux_factory_dependencies(cube, 'air_pressure')
+            add_altitude_from_plev(cube)
+
+    src_levels = cube.coord(coordinate)
 
     if (src_levels.shape == levels.shape and np.allclose(
             src_levels.core_points(),
