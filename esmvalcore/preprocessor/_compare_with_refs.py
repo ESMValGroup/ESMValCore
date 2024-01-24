@@ -423,6 +423,7 @@ def _calculate_metric(
 
     return res_cube
 
+
 def _get_weights(
     cube: Cube,
     coords: Iterable[Coord] | Iterable[str],
