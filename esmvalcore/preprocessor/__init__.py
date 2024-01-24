@@ -22,7 +22,7 @@ from ._area import (
     meridional_statistics,
     zonal_statistics,
 )
-from ._bias import bias, distance_metric
+from ._compare_with_refs import bias, distance_metric
 from ._cycles import amplitude
 from ._derive import derive
 from ._detrend import detrend
@@ -179,7 +179,7 @@ __all__ = [
     'ensemble_statistics',
     # Multi model statistics
     'multi_model_statistics',
-    # Bias/metrics calculation
+    # Comparison with reference datasets
     'bias',
     'distance_metric',
     # Remove supplementary variables from cube

@@ -1,4 +1,4 @@
-"""Unit tests for :mod:`esmvalcore.preprocessor._bias`."""
+"""Unit tests for :mod:`esmvalcore.preprocessor._compare_with_refs`."""
 
 import dask.array as da
 import iris
@@ -8,7 +8,7 @@ from cf_units import Unit
 from iris.coords import CellMethod
 from iris.cube import Cube, CubeList
 
-from esmvalcore.preprocessor._bias import bias, distance_metric
+from esmvalcore.preprocessor._compare_with_refs import bias, distance_metric
 from tests import PreprocessorFile
 
 

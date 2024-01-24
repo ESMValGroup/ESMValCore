@@ -1,4 +1,4 @@
-"""Preprocessor functions to calculate biases from data."""
+"""Preprocessor functions for comparisons of data with reference datasets."""
 from __future__ import annotations
 
 import logging
@@ -296,7 +296,7 @@ def distance_metric(
         ]
         return CubeList(cubes)
 
-    # Otherwise, iterate over all input products, calculate bias and adapt
+    # Otherwise, iterate over all input products, calculate metric and adapt
     # metadata and provenance information accordingly
     output_products = set()
     for product in products:
