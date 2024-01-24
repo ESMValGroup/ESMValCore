@@ -385,6 +385,19 @@ def differing_timeranges(timeranges, required_vars):
             "Set `timerange` to a common value.")
 
 
+def bias_type(settings: dict) -> None:
+    """Check that bias_type for bias preprocessor is valid."""
+    if 'bias' not in settings:
+        return
+    valid_options = ('absolute', 'relative')
+    user_bias_type = settings['bias'].get('bias_type', 'absolute')
+    if user_bias_type not in valid_options:
+        raise RecipeError(
+            f"Expected one of {valid_options} for `bias_type`, got "
+            f"'{user_bias_type}'"
+        )
+
+
 def reference_for_bias_preproc(products):
     """Check that exactly one reference dataset for bias preproc is given."""
     step = 'bias'

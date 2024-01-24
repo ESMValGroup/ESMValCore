@@ -201,13 +201,15 @@ the ozone 3D field. In this case, a derivation function is provided to
 vertically integrate the ozone and obtain total column ozone for direct
 comparison with the observations.
 
-To contribute a new derived variable, it is also necessary to define a name for
-it and to provide the corresponding CMOR table. This is to guarantee the proper
-metadata definition is attached to the derived data. Such custom CMOR tables
-are collected as part of the `ESMValCore package
-<https://github.com/ESMValGroup/ESMValCore>`_. By default, the variable
-derivation will be applied only if the variable is not already available in the
-input data, but the derivation can be forced by setting the appropriate flag.
+The tool will also look in other ``mip`` tables for the same ``project`` to find
+the definition of derived variables. To contribute a completely new derived
+variable, it is necessary to define a name for it and to provide the
+corresponding CMOR table. This is to guarantee the proper metadata definition
+is attached to the derived data. Such custom CMOR tables are collected as part
+of the `ESMValCore package <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
+By default, the variable derivation will be applied only if the variable is not
+already available in the input data, but the derivation can be forced by
+setting the ``force_derivation`` flag.
 
 .. code-block:: yaml
 
@@ -2333,6 +2335,8 @@ Currently, the following special conversions are supported:
 
 * ``precipitation_flux`` (``kg m-2 s-1``) --
   ``lwe_precipitation_rate`` (``mm day-1``)
+* ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``m``) --
+  ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``DU``)
 
 .. hint::
    Names in the list correspond to ``standard_names`` of the input data.
@@ -2382,9 +2386,9 @@ The bias module contains the following preprocessor functions:
 ``bias``
 --------
 
-This function calculates biases with respect to a given reference dataset. For
-this, exactly one input dataset needs to be declared as ``reference_for_bias:
-true`` in the recipe, e.g.,
+This function calculates biases with respect to a given reference dataset.
+For this, exactly one input dataset needs to be declared as
+``reference_for_bias: true`` in the recipe, e.g.,
 
 .. code-block:: yaml
 
@@ -2396,34 +2400,37 @@ true`` in the recipe, e.g.,
        reference_for_bias: true}
 
 In the example above, ERA-Interim is used as reference dataset for the bias
-calculation. For this preprocessor, all input datasets need to have identical
-dimensional coordinates. This can for example be ensured with the preprocessors
-:func:`esmvalcore.preprocessor.regrid` and/or
-:func:`esmvalcore.preprocessor.regrid_time`.
+calculation.
+The reference dataset needs to be broadcastable to all other datasets.
+This supports `iris' rich broadcasting abilities
+<https://scitools-iris.readthedocs.io/en/stable/userguide/cube_maths.
+html#calculating-a-cube-anomaly>`__.
+To ensure this, the preprocessors :func:`esmvalcore.preprocessor.regrid` and/or
+:func:`esmvalcore.preprocessor.regrid_time` might be helpful.
 
-The ``bias`` preprocessor supports 4 optional arguments:
+The ``bias`` preprocessor supports 4 optional arguments in the recipe:
 
-   * ``bias_type`` (:obj:`str`, default: ``'absolute'``): Bias type that is
-     calculated. Can be ``'absolute'`` (i.e., calculate bias for dataset
-     :math:`X` and reference :math:`R` as :math:`X - R`) or ``relative`` (i.e,
-     calculate bias as :math:`\frac{X - R}{R}`).
-   * ``denominator_mask_threshold`` (:obj:`float`, default: ``1e-3``):
-     Threshold to mask values close to zero in the denominator (i.e., the
-     reference dataset) during the calculation of relative biases. All values
-     in the reference dataset with absolute value less than the given threshold
-     are masked out. This setting is ignored when ``bias_type`` is set to
-     ``'absolute'``. Please note that for some variables with very small
-     absolute values (e.g., carbon cycle fluxes, which are usually :math:`<
-     10^{-6}` kg m :math:`^{-2}` s :math:`^{-1}`) it is absolutely essential to
-     change the default value in order to get reasonable results.
-   * ``keep_reference_dataset`` (:obj:`bool`, default: ``False``): If
-     ``True``, keep the reference dataset in the output. If ``False``, drop the
-     reference dataset.
-   * ``exclude`` (:obj:`list` of :obj:`str`): Exclude specific datasets from
-     this preprocessor. Note that this option is only available in the recipe,
-     not when using :func:`esmvalcore.preprocessor.bias` directly (e.g., in
-     another python script). If the reference dataset has been excluded, an
-     error is raised.
+* ``bias_type`` (:obj:`str`, default: ``'absolute'``): Bias type that is
+  calculated. Can be ``'absolute'`` (i.e., calculate bias for dataset
+  :math:`X` and reference :math:`R` as :math:`X - R`) or ``relative`` (i.e.,
+  calculate bias as :math:`\frac{X - R}{R}`).
+* ``denominator_mask_threshold`` (:obj:`float`, default: ``1e-3``):
+  Threshold to mask values close to zero in the denominator (i.e., the
+  reference dataset) during the calculation of relative biases. All values
+  in the reference dataset with absolute value less than the given threshold
+  are masked out. This setting is ignored when ``bias_type`` is set to
+  ``'absolute'``. Please note that for some variables with very small
+  absolute values (e.g., carbon cycle fluxes, which are usually :math:`<
+  10^{-6}` kg m :math:`^{-2}` s :math:`^{-1}`) it is absolutely essential to
+  change the default value in order to get reasonable results.
+* ``keep_reference_dataset`` (:obj:`bool`, default: ``False``): If
+  ``True``, keep the reference dataset in the output. If ``False``, drop the
+  reference dataset.
+* ``exclude`` (:obj:`list` of :obj:`str`): Exclude specific datasets from
+  this preprocessor. Note that this option is only available in the recipe,
+  not when using :func:`esmvalcore.preprocessor.bias` directly (e.g., in
+  another python script). If the reference dataset has been excluded, an
+  error is raised.
 
 Example:
 

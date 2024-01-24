@@ -2767,3 +2767,110 @@ def test_invalid_stat_preproc(tmp_path, patched_datafinder, session):
     msg = "Unknown preprocessor function"
     with pytest.raises(ValueError, match=msg):
         get_recipe(tmp_path, content, session)
+
+
+def test_bias_no_ref(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_bias:
+            bias:
+              bias_type: relative
+              denominator_mask_threshold: 5
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_bias
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+                  - {dataset: CESM2}
+
+            scripts: null
+        """)
+    msg = (
+        "Expected exactly 1 dataset with 'reference_for_bias: true' in "
+        "products"
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert msg in exc.value.failed_tasks[0].message
+    assert "found 0" in exc.value.failed_tasks[0].message
+
+
+def test_bias_two_refs(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_bias:
+            bias:
+              bias_type: relative
+              denominator_mask_threshold: 5
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_bias
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5, reference_for_bias: true}
+                  - {dataset: CESM2, reference_for_bias: true}
+
+            scripts: null
+        """)
+    msg = (
+        "Expected exactly 1 dataset with 'reference_for_bias: true' in "
+        "products"
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert msg in exc.value.failed_tasks[0].message
+    assert "found 2" in exc.value.failed_tasks[0].message
+
+
+def test_inlvaid_bias_type(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_bias:
+            bias:
+              bias_type: INVALID
+              denominator_mask_threshold: 5
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_bias
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+                  - {dataset: CESM2, reference_for_bias: true}
+
+            scripts: null
+        """)
+    msg = (
+        "Expected one of ('absolute', 'relative') for `bias_type`, got "
+        "'INVALID'"
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert exc.value.failed_tasks[0].message == msg
