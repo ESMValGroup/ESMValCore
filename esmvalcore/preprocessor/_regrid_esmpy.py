@@ -40,7 +40,7 @@ MASK_REGRIDDING_MASK_VALUE = {
 # }
 
 
-class _ESMPyRegridder:
+class ESMPyRegridder:
     """General ESMPy regridder.
 
     Parameters
@@ -122,7 +122,7 @@ class _ESMPyScheme:
             f'{self.__class__.__name__}(mask_threshold={self.mask_threshold})'
         )
 
-    def regridder(self, src_cube: Cube, tgt_cube: Cube) -> _ESMPyRegridder:
+    def regridder(self, src_cube: Cube, tgt_cube: Cube) -> ESMPyRegridder:
         """Get regridder.
 
         Parameters
@@ -138,7 +138,7 @@ class _ESMPyScheme:
             Regridder instance.
 
         """
-        return _ESMPyRegridder(
+        return ESMPyRegridder(
             src_cube,
             tgt_cube,
             method=self._METHOD,

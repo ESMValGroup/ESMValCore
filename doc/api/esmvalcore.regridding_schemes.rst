@@ -20,3 +20,4 @@ Example:
    regridded_cube = cube.regrid(target_grid, ESMPyAreaWeighted())
 
 .. automodule:: esmvalcore.preprocessor.regrid_schemes
+   :no-show-inheritance:
