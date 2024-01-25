@@ -147,19 +147,37 @@ class _ESMPyScheme:
 
 
 class ESMPyAreaWeighted(_ESMPyScheme):
-    """ESMPy area-weighted regridding scheme."""
+    """ESMPy area-weighted regridding scheme.
+
+    This class can be used in :meth:`iris.cube.Cube.regrid`.
+
+    Does not support lazy regridding.
+
+    """
 
     _METHOD = 'area_weighted'
 
 
 class ESMPyLinear(_ESMPyScheme):
-    """ESMPy bilinear regridding scheme."""
+    """ESMPy bilinear regridding scheme.
+
+    This class can be used in :meth:`iris.cube.Cube.regrid`.
+
+    Does not support lazy regridding.
+
+    """
 
     _METHOD = 'linear'
 
 
 class ESMPyNearest(_ESMPyScheme):
-    """ESMPy nearest-neighbor regridding scheme."""
+    """ESMPy nearest-neighbor regridding scheme.
+
+    This class can be used in :meth:`iris.cube.Cube.regrid`.
+
+    Does not support lazy regridding.
+
+    """
 
     _METHOD = 'nearest'
 

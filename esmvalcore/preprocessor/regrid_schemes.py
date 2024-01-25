@@ -79,6 +79,8 @@ class GenericFuncScheme:
 
     This class can be used in :meth:`iris.cube.Cube.regrid`.
 
+    Does support lazy regridding if `func` does.
+
     Parameters
     ----------
     func:

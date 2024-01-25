@@ -11,7 +11,13 @@ logger = logging.getLogger(__name__)
 
 
 class UnstructuredNearest(IrisUnstructuredNearest):
-    """Unstructured nearest-neighbor regridding scheme."""
+    """Unstructured nearest-neighbor regridding scheme.
+
+    This class is a wrapper around :class:`iris.analysis.UnstructuredNearest`
+    that removes any additional X or Y coordinates prior to regridding if
+    necessary. It can be used in :meth:`iris.cube.Cube.regrid`.
+
+    """
 
     def regridder(
         self,
