@@ -509,7 +509,6 @@ def test_distance_metric_lazy(
     assert out_cube.shape == (2,)
     assert out_cube.dtype == np.float32
     assert out_cube.has_lazy_data()
-    print(out_cube.data)
     assert_array_equal(
         out_cube.data, np.array(data, dtype=np.float32),
     )
