@@ -21,7 +21,11 @@ logger = logging.getLogger(__name__)
 
 
 class IconFix(NativeDatasetFix):
-    """Base class for all ICON fixes."""
+    """Base class for all ICON fixes.
+
+    This includes code necessary to handle ICON's horizontal and vertical grid.
+
+    """
 
     CACHE_DIR = Path.home() / '.esmvaltool' / 'cache'
     CACHE_VALIDITY = 7 * 24 * 60 * 60  # [s]; = 1 week
@@ -401,7 +405,7 @@ class IconFix(NativeDatasetFix):
         else:
             (_, grid_name) = self._get_grid_url(cube)
 
-        # Re-use mesh if possible
+        # Reuse mesh if possible
         if grid_name in self._meshes:
             logger.debug("Reusing ICON mesh for grid %s", grid_name)
         else:
@@ -453,3 +457,12 @@ class IconFix(NativeDatasetFix):
         lon_coord.points = (lon_coord.points + 360.0) % 360.0
         if lon_coord.bounds is not None:
             lon_coord.bounds = (lon_coord.bounds + 360.0) % 360.0
+
+
+class NegateData(IconFix):
+    """Base fix to negate data."""
+
+    def fix_data(self, cube):
+        """Fix data."""
+        cube.data = -cube.core_data()
+        return cube

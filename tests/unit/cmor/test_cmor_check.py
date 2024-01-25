@@ -649,8 +649,8 @@ class TestCMORCheck(unittest.TestCase):
         self.cube.add_aux_coord(new_plev_coord, (2, 3))
         checker = CMORCheck(self.cube, self.var_info)
         checker.check_metadata()
-        self.assertFalse(checker.has_debug_messages())
-        self.assertTrue(checker.has_warnings())
+        self.assertTrue(checker.has_debug_messages())
+        self.assertFalse(checker.has_warnings())
 
     def test_non_increasing(self):
         """Fail in metadata if increasing coordinate is decreasing."""

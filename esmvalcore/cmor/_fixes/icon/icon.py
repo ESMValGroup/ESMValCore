@@ -1,6 +1,6 @@
-"""On-the-fly CMORizer for ICON."""
-
+"""CMOR-like reformatting of ICON-A (ECHAM physics)."""
 import logging
+import warnings
 from datetime import datetime, timedelta
 
 import dask.array as da
@@ -197,6 +197,10 @@ class AllVars(IconFix):
             else:
                 phalf = None
             plev_coord = self._get_z_coord(cubes, 'pfull', bounds_name=phalf)
+            self.fix_plev_metadata(cube, plev_coord)
+            cube.add_aux_coord(plev_coord, np.arange(cube.ndim))
+        elif cubes.extract(NameConstraint(var_name='pres')):
+            plev_coord = self._get_z_coord(cubes, 'pres')
             self.fix_plev_metadata(cube, plev_coord)
             cube.add_aux_coord(plev_coord, np.arange(cube.ndim))
 
@@ -493,7 +497,15 @@ class AllVars(IconFix):
         # this results in times that are off by 1s (e.g., 13:59:59 instead of
         # 14:00:00).
         rounded_datetimes = (year_month_day + day_float).round('s')
-        new_datetimes = np.array(rounded_datetimes.dt.to_pydatetime())
+        with warnings.catch_warnings():
+            # We already fixed the deprecated code as recommended in the
+            # warnings, but it is still showing up -> ignore it
+            warnings.filterwarnings(
+                'ignore',
+                message="The behavior of DatetimeProperties.to_pydatetime .*",
+                category=FutureWarning,
+            )
+            new_datetimes = np.array(rounded_datetimes.dt.to_pydatetime())
         new_dt_points = date2num(np.array(new_datetimes), new_t_units)
 
         # Modify time coordinate in place
