@@ -3,9 +3,8 @@ import logging
 
 from scipy import constants
 
-from .icon import AllVars as IconAllVars
 from ._base_fixes import IconFix, NegateData
-
+from .icon import AllVars as IconAllVars
 
 logger = logging.getLogger(__name__)
 
