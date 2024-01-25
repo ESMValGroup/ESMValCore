@@ -348,8 +348,10 @@ def test_ref_cube_non_cubes(regular_cubes):
 
 
 TEST_DISTANCE_METRICS = [
-    ('weighted_rmse', 2.0, 'RMSE', 'rmse_tas', 'K'),
-    ('rmse', 2.34520788, 'RMSE', 'rmse_tas', 'K'),
+    ('weighted_rmse', 2.0, 0.0, 'RMSE', 'rmse_tas', 'K'),
+    ('rmse', 2.34520788, 0.0, 'RMSE', 'rmse_tas', 'K'),
+    ('weighted_pearsonr', np.nan, 1.0, "Pearson's r", 'pearsonr_tas', '1'),
+    ('pearsonr', 0.57735026, 1.0, "Pearson's r", 'pearsonr_tas', '1'),
 ]
 AREA_WEIGHTS = CellMeasure(
     np.array([0.0, 0.0, 2.0, 0.0]).reshape(2, 2),
@@ -359,10 +361,17 @@ AREA_WEIGHTS = CellMeasure(
 
 
 @pytest.mark.parametrize(
-    'metric,data,long_name,var_name,units', TEST_DISTANCE_METRICS
+    'metric,data,ref_data,long_name,var_name,units', TEST_DISTANCE_METRICS
 )
 def test_distance_metric(
-    regular_cubes, ref_cubes, metric, data, long_name, var_name, units
+    regular_cubes,
+    ref_cubes,
+    metric,
+    data,
+    ref_data,
+    long_name,
+    var_name,
+    units,
 ):
     """Test `distance_metric`."""
     regular_cubes[0].add_cell_measure(AREA_WEIGHTS, (1, 2))
@@ -432,7 +441,7 @@ def test_distance_metric(
     out_cube = product_ref.cubes[0]
     assert out_cube.shape == ()
     assert out_cube.dtype == np.float32
-    assert_array_equal(out_cube.data, 0.0)
+    assert_array_equal(out_cube.data, ref_data)
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
     assert out_cube.standard_name is None
@@ -447,6 +456,14 @@ def test_distance_metric(
 TEST_DISTANCE_METRICS_LAZY = [
     ('weighted_rmse', [1.2278657, 3.0784798], 'RMSE', 'rmse_tas', 'K'),
     ('rmse', [1.224744871, 3.082207001], 'RMSE', 'rmse_tas', 'K'),
+    (
+        'weighted_pearsonr',
+        [np.nan, 0.7745946],
+        "Pearson's r",
+        'pearsonr_tas',
+        '1',
+    ),
+    ('pearsonr', [np.nan, 0.77459663], "Pearson's r", 'pearsonr_tas', '1'),
 ]
 
 
@@ -492,6 +509,7 @@ def test_distance_metric_lazy(
     assert out_cube.shape == (2,)
     assert out_cube.dtype == np.float32
     assert out_cube.has_lazy_data()
+    print(out_cube.data)
     assert_array_equal(
         out_cube.data, np.array(data, dtype=np.float32),
     )
@@ -508,10 +526,10 @@ def test_distance_metric_lazy(
 
 
 @pytest.mark.parametrize(
-    'metric,data,long_name,var_name,units', TEST_DISTANCE_METRICS
+    'metric,data,_,long_name,var_name,units', TEST_DISTANCE_METRICS
 )
 def test_distance_metric_cubes(
-    regular_cubes, ref_cubes, metric, data, long_name, var_name, units
+    regular_cubes, ref_cubes, metric, data, _, long_name, var_name, units
 ):
     """Test `distance_metric` with cubes."""
     regular_cubes[0].add_cell_measure(AREA_WEIGHTS, (1, 2))
@@ -535,10 +553,10 @@ def test_distance_metric_cubes(
 
 @pytest.mark.parametrize('lazy', [True, False])
 @pytest.mark.parametrize(
-    'metric,data,long_name,var_name,units', TEST_DISTANCE_METRICS
+    'metric,data,_,long_name,var_name,units', TEST_DISTANCE_METRICS
 )
 def test_distance_metric_masked_data(
-    regular_cubes, ref_cubes, metric, data, long_name, var_name, units, lazy
+    regular_cubes, ref_cubes, metric, data, _, long_name, var_name, units, lazy
 ):
     """Test `distance_metric` with masked data."""
     # Test cube
@@ -589,7 +607,13 @@ def test_distance_metric_masked_data(
         assert out_cube.has_lazy_data()
     else:
         assert not out_cube.has_lazy_data()
-    assert_array_equal(out_cube.data, np.array(data, dtype=np.float32))
+
+    # Mask handling differs for dask and numpy
+    if np.isnan(data) and not lazy:
+        expected_data = np.ma.masked_invalid(data)
+    else:
+        expected_data = np.array(data, dtype=np.float32)
+    assert_array_equal(out_cube.data, expected_data)
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
     assert out_cube.standard_name is None
@@ -652,7 +676,7 @@ def test_invalid_metric(regular_cubes, ref_cubes):
         distance_metric(products, 'invalid')
 
 
-@pytest.mark.parametrize('metric', ['rmse', 'pearsonr'])
+@pytest.mark.parametrize('metric', TEST_METRICS)
 def test_distance_metric_ref_cube_non_cubes(regular_cubes, metric):
     """Test distance metric with ref_cube=None with with cubes."""
     msg = (
@@ -695,10 +719,7 @@ def test_distance_metric_non_matching_dims(regular_cubes, metric):
     ref_cube.remove_coord('time')
     new_coord = iris.coords.DimCoord([0.0, 1.0], var_name='not_time')
     ref_cube.add_dim_coord(new_coord, 0)
-    msg = (
-        "Cannot calculate distance metric between cube and reference cube: "
-        "Insufficient matching coordinate metadata to resolve cubes"
-    )
+    msg = "Cannot calculate distance metric between cube and reference cube"
     with pytest.raises(ValueError, match=msg):
         distance_metric(regular_cubes, metric, ref_cube=ref_cube)
 

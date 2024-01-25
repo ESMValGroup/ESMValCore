@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Literal, Optional
 
 import dask.array as da
 import iris.analysis
+import iris.analysis.stats
 import numpy as np
 from iris.common.metadata import CubeMetadata
 from iris.coords import CellMethod, Coord
@@ -420,9 +421,8 @@ def _calculate_metric(
         cube + ref_cube  # dummy operation to check if cubes are compatible
     except Exception as exc:
         raise ValueError(
-            f"Cannot calculate distance metric between cube and reference "
-            f"cube: {str(exc)}"
-        )
+            "Cannot calculate distance metric between cube and reference cube "
+        ) from exc
 
     # Perform the actual calculation of the distance metric
     # Note: we work on arrays here instead of cube to stay as flexible as
@@ -530,7 +530,18 @@ def _calculate_pearsonr(
 ) -> tuple[np.ndarray | da.Array, CubeMetadata]:
     """Calculate Pearson correlation coefficient."""
     weights = _get_weights(cube, coords) if weighted else None
-    # TODO: change!!!
-    data = cube.collapsed(coords, iris.analysis.MEAN).core_data()
-    metadata = cube.metadata
-    return (data, metadata)
+    res_cube = iris.analysis.stats.pearsonr(
+        cube, ref_cube, corr_coords=coords, weights=weights, **kwargs
+    )
+    metadata = CubeMetadata(
+        None,
+        (
+            "Pearson's r" if cube.long_name is None
+            else f"Pearson's r of {cube.long_name}"
+        ),
+        'pearsonr' if cube.var_name is None else f'pearsonr_{cube.var_name}',
+        '1',
+        cube.attributes,
+        cube.cell_methods,
+    )
+    return (res_cube.core_data(), metadata)
