@@ -770,7 +770,7 @@ def test_crop_cube_with_ne_file(ne_ocean_shapefile):
         result = _crop_cube(cube, *geometries.bounds, cmor_coords=False)
         result = (result.coord("latitude").points[-1],
                   result.coord("longitude").points[-1])
-        expected = (89., 359.)
+        expected = (89., 179.)
         np.testing.assert_allclose(result, expected)
 
 
