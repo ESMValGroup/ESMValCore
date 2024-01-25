@@ -13,7 +13,6 @@ import pytest
 import tests
 from esmvalcore.preprocessor import regrid
 from esmvalcore.preprocessor._regrid import (
-    _CACHE,
     HORIZONTAL_SCHEMES_REGULAR,
     _horizontal_grid_is_close,
     _rechunk,
@@ -27,8 +26,6 @@ class Test(tests.Test):
 
         if spec:
             spec = tgt_grid
-            self.assertIn(spec, _CACHE)
-            self.assertEqual(_CACHE[spec], self.tgt_grid)
             self.coord_system.asset_called_once()
             expected_calls = [
                 mock.call(axis='x', dim_coords=True),
@@ -112,11 +109,6 @@ class Test(tests.Test):
             self._check(self.tgt_grid, scheme)
 
     def test_regrid__cell_specification(self):
-        # Clear cache before and after the test to avoid poisoning
-        # the cache with Mocked cubes
-        # https://github.com/ESMValGroup/ESMValCore/issues/953
-        _CACHE.clear()
-
         specs = ['1x1', '2x2', '3x3', '4x4', '5x5']
         scheme = 'linear'
         for spec in specs:
@@ -124,9 +116,6 @@ class Test(tests.Test):
             self.assertEqual(result, self.regridded_cube)
             self.assertEqual(result.data, mock.sentinel.data)
             self._check(spec, scheme, spec=True)
-        self.assertEqual(set(_CACHE.keys()), set(specs))
-
-        _CACHE.clear()
 
     def test_regrid_generic_missing_reference(self):
         emsg = "No reference specified for generic regridding."

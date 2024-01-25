@@ -1,6 +1,7 @@
 """Horizontal and vertical regridding module."""
 from __future__ import annotations
 
+import functools
 import importlib
 import inspect
 import logging
@@ -11,7 +12,7 @@ import warnings
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 import dask.array as da
 import iris
@@ -66,9 +67,6 @@ _LAT_RANGE = _LAT_MAX - _LAT_MIN
 _LON_MIN = 0.0
 _LON_MAX = 360.0
 _LON_RANGE = _LON_MAX - _LON_MIN
-
-# A cached stock of standard horizontal target grids.
-_CACHE: Dict[str, Cube] = {}
 
 # Supported point interpolation schemes.
 POINT_INTERPOLATION_SCHEMES = {
@@ -189,6 +187,7 @@ def _generate_cube_from_dimcoords(latdata, londata, circular: bool = False):
     return cube
 
 
+@functools.lru_cache
 def _global_stock_cube(spec, lat_offset=True, lon_offset=True):
     """Create a stock cube.
 
@@ -503,9 +502,8 @@ def _get_target_grid_cube(
     elif isinstance(target_grid, str):
         # Generate a target grid from the provided cell-specification,
         # and cache the resulting stock cube for later use.
-        target_grid_cube = _CACHE.setdefault(
-            target_grid,
-            _global_stock_cube(target_grid, lat_offset, lon_offset),
+        target_grid_cube = _global_stock_cube(
+            target_grid, lat_offset, lon_offset
         )
         # Align the target grid coordinate system to the source
         # coordinate system.
