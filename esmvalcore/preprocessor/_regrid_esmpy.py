@@ -264,7 +264,7 @@ def is_lon_circular(lon):
         else:
             raise NotImplementedError('AuxCoord longitude is higher '
                                       'dimensional than 2d. Giving up.')
-        circular = np.alltrue(abs(seam) % 360. < 1.e-3)
+        circular = np.all(abs(seam) % 360. < 1.e-3)
     else:
         raise ValueError('longitude is neither DimCoord nor AuxCoord. '
                          'Giving up.')
