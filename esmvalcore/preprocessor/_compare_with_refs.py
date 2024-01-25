@@ -114,7 +114,8 @@ def bias(
     # Mask reference cube appropriately for relative biases
     if bias_type == 'relative':
         ref_cube = ref_cube.copy()
-        ref_cube.data = da.ma.masked_inside(
+        npx = get_array_module(ref_cube.core_data())
+        ref_cube.data = npx.ma.masked_inside(
             ref_cube.core_data(),
             -denominator_mask_threshold,
             denominator_mask_threshold,
@@ -417,7 +418,7 @@ def _calculate_metric(
     # Get result cube with correct dimensional metadata by using dummy
     # operation (max)
     res_cube = cube.collapsed(coords, iris.analysis.MAX)
-    res_cube.data = res_data
+    res_cube.data = res_data.astype(cube.dtype)
     res_cube.metadata = res_metadata
     res_cube.cell_methods = [*cube.cell_methods, CellMethod(metric, coords)]
 
@@ -429,12 +430,13 @@ def _get_weights(
     coords: Iterable[Coord] | Iterable[str],
 ) -> da.Array:
     """Calculate weights for weighted distance metrics."""
-    weights = da.ones(cube.shape, dtype=cube.dtype)
+    npx = get_array_module(cube.core_data())
+    weights = npx.ones(cube.shape, dtype=cube.dtype)
 
     # Time weights: lengths of time interval
     if 'time' in coords:
         weights *= broadcast_to_shape(
-            da.array(get_time_weights(cube)),
+            npx.array(get_time_weights(cube)),
             cube.shape,
             cube.coord_dims('time'),
         )
@@ -444,13 +446,14 @@ def _get_weights(
         cube = cube.copy()  # avoid overwriting input cube
         if (
                 not cube.cell_measures('cell_area') and
-                not cube.coord('longitude')
+                not cube.coords('longitude')
         ):
             raise CoordinateNotFoundError(
-                f"Cube {cube.summary(shorten=True)} need a 'longitude' "
-                f"coordinate to calculate weighted distance metric over "
-                f"coordinates {coords} (alternatively, a `cell_area` can be "
-                f"given to the cube)"
+                f"Cube {cube.summary(shorten=True)} needs a `longitude` "
+                f"coordinate to calculate cell area weights for weighted "
+                f"distance metric over coordinates {coords} (alternatively, "
+                f"a `cell_area` can be given to the cube as supplementary "
+                f"variable)"
             )
         _try_adding_calculated_cell_area(cube)
         weights *= broadcast_to_shape(
@@ -498,7 +501,9 @@ def _calculate_pearsonr(
     weighted: bool,
 ) -> tuple[np.ndarray | da.Array, CubeMetadata]:
     """Calculate Pearson correlation coefficient."""
+    axis = _get_all_coord_dims(cube, coords)
+    weights = _get_weights(cube, coords) if weighted else None
     # TODO: change!!!
-    data = cube.collapsed(coords, iris.analysis.MEAN)
+    data = cube.collapsed(coords, iris.analysis.MEAN).core_data()
     metadata = cube.metadata
     return (data, metadata)

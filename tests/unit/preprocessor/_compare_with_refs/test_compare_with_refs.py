@@ -1,5 +1,7 @@
 """Unit tests for :mod:`esmvalcore.preprocessor._compare_with_refs`."""
 
+import contextlib
+
 import dask.array as da
 import iris
 import numpy as np
@@ -7,6 +9,7 @@ import pytest
 from cf_units import Unit
 from iris.coords import CellMeasure, CellMethod
 from iris.cube import Cube, CubeList
+from iris.exceptions import CoordinateNotFoundError
 
 from esmvalcore.preprocessor._compare_with_refs import bias, distance_metric
 from tests import PreprocessorFile
@@ -97,6 +100,7 @@ def test_bias_products(regular_cubes, ref_cubes, bias_type, data, units):
     assert product_a.attributes == {'units': units, 'dataset': 'a'}
     assert len(product_a.cubes) == 1
     out_cube = product_a.cubes[0]
+    assert out_cube.dtype == np.float32
     assert_array_equal(out_cube.data, data)
     assert out_cube.var_name == 'tas'
     assert out_cube.standard_name == 'air_temperature'
@@ -111,6 +115,7 @@ def test_bias_products(regular_cubes, ref_cubes, bias_type, data, units):
     assert product_b.attributes == {'units': units, 'dataset': 'b'}
     assert len(product_b.cubes) == 1
     out_cube = product_b.cubes[0]
+    assert out_cube.dtype == np.float32
     assert_array_equal(out_cube.data, data)
     assert out_cube.var_name == 'tas'
     assert out_cube.standard_name == 'air_temperature'
@@ -131,6 +136,7 @@ def test_bias_cubes(regular_cubes, ref_cubes, bias_type, data, units):
     assert len(out_cubes) == 1
     out_cube = out_cubes[0]
 
+    assert out_cube.dtype == np.float32
     assert_array_equal(out_cube.data, data)
     assert out_cube.var_name == 'tas'
     assert out_cube.standard_name == 'air_temperature'
@@ -157,6 +163,7 @@ def test_bias_cubes_broadcastable(
     assert len(out_cubes) == 1
     out_cube = out_cubes[0]
 
+    assert out_cube.dtype == np.float32
     assert_array_equal(out_cube.data, data)
     assert out_cube.var_name == 'tas'
     assert out_cube.standard_name == 'air_temperature'
@@ -186,6 +193,7 @@ def test_denominator_mask_threshold_products(regular_cubes, ref_cubes):
     assert product_a.attributes == {'units': '1', 'dataset': 'a'}
     assert len(product_a.cubes) == 1
     out_cube = product_a.cubes[0]
+    assert out_cube.dtype == np.float32
     expected_data = np.ma.masked_equal([[[42.0, 42.0],
                                          [42.0, 42.0]],
                                         [[42.0, 42.0],
@@ -213,7 +221,7 @@ def test_denominator_mask_threshold_cubes(regular_cubes, ref_cubes):
     assert isinstance(out_cubes, CubeList)
     assert len(out_cubes) == 1
     out_cube = out_cubes[0]
-
+    assert out_cube.dtype == np.float32
     expected_data = np.ma.masked_equal([[[42.0, 42.0],
                                          [42.0, 42.0]],
                                         [[42.0, 42.0],
@@ -246,6 +254,7 @@ def test_keep_reference_dataset(regular_cubes, ref_cubes, bias_type):
     assert product_ref.attributes == {'reference_for_bias': True}
     assert len(product_ref.cubes) == 1
     out_cube = product_ref.cubes[0]
+    assert out_cube.dtype == np.float32
     expected_data = [[[2.0, 2.0], [2.0, 2.0]], [[2.0, 2.0], [2.0, 4.0]]]
     assert_array_equal(out_cube.data, expected_data)
     assert out_cube.var_name == 'tas'
@@ -280,6 +289,7 @@ def test_bias_products_and_ref_cube(
     assert product_a.attributes == {'units': units, 'dataset': 'a'}
     assert len(product_a.cubes) == 1
     out_cube = product_a.cubes[0]
+    assert out_cube.dtype == np.float32
     assert_array_equal(out_cube.data, data)
     assert out_cube.var_name == 'tas'
     assert out_cube.standard_name == 'air_temperature'
@@ -383,6 +393,7 @@ def test_distance_metric(
     assert len(product_a.cubes) == 1
     out_cube = product_a.cubes[0]
     assert out_cube.shape == ()
+    assert out_cube.dtype == np.float32
     assert_array_equal(out_cube.data, np.array(data, dtype=np.float32))
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
@@ -400,6 +411,7 @@ def test_distance_metric(
     assert len(product_b.cubes) == 1
     out_cube = product_b.cubes[0]
     assert out_cube.shape == ()
+    assert out_cube.dtype == np.float32
     assert_array_equal(out_cube.data, np.array(data, dtype=np.float32))
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
@@ -419,6 +431,7 @@ def test_distance_metric(
     assert len(product_ref.cubes) == 1
     out_cube = product_ref.cubes[0]
     assert out_cube.shape == ()
+    assert out_cube.dtype == np.float32
     assert_array_equal(out_cube.data, 0.0)
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
@@ -477,6 +490,7 @@ def test_distance_metric_lazy(
     assert len(product_a.cubes) == 1
     out_cube = product_a.cubes[0]
     assert out_cube.shape == (2,)
+    assert out_cube.dtype == np.float32
     assert out_cube.has_lazy_data()
     assert_array_equal(
         out_cube.data, np.array(data, dtype=np.float32),
@@ -508,6 +522,73 @@ def test_distance_metric_cubes(
     out_cube = out_cubes[0]
 
     assert out_cube.shape == ()
+    assert out_cube.dtype == np.float32
+    assert_array_equal(out_cube.data, np.array(data, dtype=np.float32))
+    assert out_cube.var_name == var_name
+    assert out_cube.long_name == long_name
+    assert out_cube.standard_name is None
+    assert out_cube.units == units
+    assert out_cube.cell_methods == (
+        CellMethod(metric, ['time', 'latitude', 'longitude']),
+    )
+
+
+@pytest.mark.parametrize('lazy', [True, False])
+@pytest.mark.parametrize(
+    'metric,data,long_name,var_name,units', TEST_DISTANCE_METRICS
+)
+def test_distance_metric_masked_data(
+    regular_cubes, ref_cubes, metric, data, long_name, var_name, units, lazy
+):
+    """Test `distance_metric` with masked data."""
+    # Test cube
+    time_units = Unit('days since 1850-01-01 00:00:00')
+    times = iris.coords.DimCoord([3.0, 7.0, 9.0],
+                                 bounds=[[0.0, 6.0], [6.0, 8.0], [8.0, 10.0]],
+                                 standard_name='time',
+                                 var_name='time', long_name='time',
+                                 units=time_units)
+    lats = regular_cubes[0].coord('latitude')
+    lons = regular_cubes[0].coord('longitude')
+    coord_specs = [(times, 0), (lats, 1), (lons, 2)]
+    cube_data = np.pad(
+        regular_cubes[0].data,
+        ((0, 1), (0, 0), (0, 0)),
+        'constant',
+        constant_values=np.nan,
+    )
+    cube = Cube(
+        np.ma.masked_invalid(cube_data), dim_coords_and_dims=coord_specs
+    )
+    cube.metadata = regular_cubes[0].metadata
+    cube.add_cell_measure(AREA_WEIGHTS, (1, 2))
+
+    # Ref cube
+    ref_cube = cube.copy()
+    ref_data = np.pad(
+        ref_cubes[0].data,
+        ((0, 1), (0, 0), (0, 0)),
+        'constant',
+        constant_values=np.nan,
+    )
+    ref_cube.data = np.ma.masked_invalid(ref_data)
+    ref_cube.metadata = ref_cubes[0].metadata
+
+    if lazy:
+        cube.data = da.array(cube.data)
+        ref_cube.data = da.array(ref_cube.data)
+
+    out_cubes = distance_metric([cube], metric, ref_cube=ref_cube)
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    assert out_cube.shape == ()
+    if lazy:
+        assert out_cube.has_lazy_data()
+    else:
+        assert not out_cube.has_lazy_data()
     assert_array_equal(out_cube.data, np.array(data, dtype=np.float32))
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
@@ -620,3 +701,35 @@ def test_distance_metric_non_matching_dims(regular_cubes, metric):
     )
     with pytest.raises(ValueError, match=msg):
         distance_metric(regular_cubes, metric, ref_cube=ref_cube)
+
+
+@pytest.mark.parametrize(
+    'metric,error',
+    [
+        ('weighted_rmse', True),
+        ('rmse', False),
+        ('weighted_pearsonr', True),
+        ('pearsonr', False),
+    ]
+)
+def test_distance_metric_no_lon_for_area_weights(regular_cubes, metric, error):
+    """Test distance metric with cubes that have no longitude."""
+    regular_cubes[0].remove_coord('longitude')
+    ref_cube = regular_cubes[0].copy()
+    msg = (
+        r"Cube .* needs a `longitude` coordinate to calculate cell area "
+        r"weights for weighted distance metric over coordinates \['time', "
+        r"'latitude'\] \(alternatively, a `cell_area` can be given to the "
+        r"cube as supplementary variable\)"
+    )
+    if error:
+        context = pytest.raises(CoordinateNotFoundError, match=msg)
+    else:
+        context = contextlib.nullcontext()
+    with context:
+        distance_metric(
+            regular_cubes,
+            metric,
+            ref_cube=ref_cube,
+            coords=['time', 'latitude']
+        )
