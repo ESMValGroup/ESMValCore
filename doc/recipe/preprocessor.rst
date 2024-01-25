@@ -27,7 +27,7 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Detrend`
 * :ref:`Rolling window statistics`
 * :ref:`Unit conversion`
-* :ref:`Comparison with reference dataset`
+* :ref:`comparison_with_ref`
 * :ref:`Other`
 
 See :ref:`preprocessor_functions` for implementation details and the exact default order.
@@ -2378,7 +2378,7 @@ the time units in the variable.
 See also :func:`esmvalcore.preprocessor.accumulate_coordinate.`
 
 
-.. _comparison_with_refs:
+.. _comparison_with_ref:
 
 Comparison with reference dataset
 =================================
@@ -2512,12 +2512,13 @@ recipe:
   :func:`esmvalcore.preprocessor.distance_metric` directly (e.g., in another
   python script).
   If the reference dataset has been excluded, an error is raised.
-* Other parameters are directly used for the metric calculation:
+* Other parameters are directly used for the metric calculation.
   The following keyword arguments are supported:
 
-  - `weighted_rmse` and `rmse`: none.
-  - `weighted_pearsonr` and `pearsonr`:
-    - ``mdtol`` (:obj:`float`, default: 1.0): Tolerance of missing data.
+  * `weighted_rmse` and `rmse`: none.
+  * `weighted_pearsonr` and `pearsonr`:
+
+    * ``mdtol`` (:obj:`float`, default: 1.0): Tolerance of missing data.
       The missing data fraction is calculated based on the number of grid cells
       masked in both cubes.
       If this fraction exceed ``mdtol``, the returned value in the
@@ -2525,7 +2526,7 @@ recipe:
       ``mdtol=0`` means no missing data is tolerated while ``mdtol=1`` means
       the resulting element will be masked if and only if all contributing
       elements are masked in both cubes.
-    - ``common_mask`` (:obj:`bool`, default: ``False``): If ``True``, applies a
+    * ``common_mask`` (:obj:`bool`, default: ``False``): If ``True``, applies a
       common mask to both cubes so only cells which are unmasked in both cubes
       contribute to the calculation.
       If ``False``, the variance for each cube is calculated from all available
