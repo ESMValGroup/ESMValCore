@@ -322,7 +322,9 @@ class Test(tests.Test):
 def test_rechunk_aux_factory_dependencies():
 
     delta = iris.coords.AuxCoord(
-        np.array([0.0, 1.0, 2.0], dtype=np.float64),
+        points=np.array([0.0, 1.0, 2.0], dtype=np.float64),
+        bounds=np.array([[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]],
+                        dtype=np.float64),
         long_name="level_pressure",
         units="Pa",
     )
