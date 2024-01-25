@@ -9,15 +9,13 @@ from iris import NameConstraint
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
+import esmvalcore.cmor._fixes.emac.emac
 from esmvalcore.cmor._fixes.emac.emac import (
     AllVars,
-    Cl,
-    Clt,
     Clwvi,
     Evspsbl,
     Hfls,
     Hfss,
-    Hurs,
     MP_BC_tot,
     MP_DU_tot,
     MP_SO4mm_tot,
@@ -34,15 +32,15 @@ from esmvalcore.cmor._fixes.emac.emac import (
     Rsut,
     Rsutcs,
     Rtmt,
-    Siconc,
-    Siconca,
     Sithick,
     Toz,
     Zg,
 )
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
-from esmvalcore.cmor.table import get_var_info
+from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config._config import get_extra_facets
+from esmvalcore.dataset import Dataset
 
 
 @pytest.fixture
@@ -182,12 +180,37 @@ def cubes_3d():
     return cubes
 
 
-def get_allvars_fix(mip, short_name):
-    """Get member of fix class."""
-    vardef = get_var_info('EMAC', mip, short_name)
-    extra_facets = get_extra_facets('EMAC', 'EMAC', mip, short_name, ())
-    fix = AllVars(vardef, extra_facets=extra_facets)
+def _get_fix(mip, short_name, fix_name):
+    """Load a fix from the esmvalcore.cmor._fixes.emac.emac module."""
+    dataset = Dataset(
+        project='EMAC',
+        dataset='EMAC',
+        mip=mip,
+        short_name=short_name,
+    )
+    extra_facets = get_extra_facets(dataset, ())
+    vardef = get_var_info(project='EMAC', mip=mip, short_name=short_name)
+    cls = getattr(esmvalcore.cmor._fixes.emac.emac, fix_name)
+    fix = cls(vardef, extra_facets=extra_facets)
     return fix
+
+
+def get_fix(mip, short_name):
+    fix_name = short_name[0].upper() + short_name[1:]
+    return _get_fix(mip, short_name, fix_name)
+
+
+def get_allvars_fix(mip, short_name):
+    return _get_fix(mip, short_name, 'AllVars')
+
+
+def fix_metadata(cubes, mip, short_name):
+    """Fix metadata of cubes."""
+    fix = get_fix(mip, short_name)
+    cubes = fix.fix_metadata(cubes)
+    fix = get_allvars_fix(mip, short_name)
+    cubes = fix.fix_metadata(cubes)
+    return cubes
 
 
 def check_tas_metadata(cubes):
@@ -535,23 +558,27 @@ def test_var_not_available_get_cube():
 # Test with single-dimension cubes
 
 
-def test_only_time():
+def test_only_time(monkeypatch):
     """Test fix."""
+    fix = get_allvars_fix('Amon', 'ta')
     # We know that ta has dimensions time, plev19, latitude, longitude, but the
     # EMAC CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
-    vardef = get_var_info('EMAC', 'Amon', 'ta')
-    original_dimensions = vardef.dimensions
-    vardef.dimensions = ['time']
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'ta', ())
-    fix = AllVars(vardef, extra_facets=extra_facets)
+    coord_info = CoordinateInfo('time')
+    coord_info.standard_name = 'time'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'time': coord_info})
 
     # Create cube with only a single dimension
-    time_coord = DimCoord([0.0, 1.0], var_name='time', standard_name='time',
-                          long_name='time', units='days since 1850-01-01')
+    time_coord = DimCoord([0.0, 1.0],
+                          var_name='time',
+                          standard_name='time',
+                          long_name='time',
+                          units='days since 1850-01-01')
     cubes = CubeList([
-        Cube([1, 1], var_name='tm1_p19_ave', units='K',
+        Cube([1, 1],
+             var_name='tm1_p19_ave',
+             units='K',
              dim_coords_and_dims=[(time_coord, 0)]),
     ])
     fixed_cubes = fix.fix_metadata(cubes)
@@ -576,27 +603,27 @@ def test_only_time():
     np.testing.assert_allclose(new_time_coord.bounds,
                                [[-0.5, 0.5], [0.5, 1.5]])
 
-    # Restore original dimensions of ta
-    vardef.dimensions = original_dimensions
 
-
-def test_only_plev():
+def test_only_plev(monkeypatch):
     """Test fix."""
+    fix = get_allvars_fix('Amon', 'ta')
     # We know that ta has dimensions time, plev19, latitude, longitude, but the
     # EMAC CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
-    vardef = get_var_info('EMAC', 'Amon', 'ta')
-    original_dimensions = vardef.dimensions
-    vardef.dimensions = ['plev19']
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'ta', ())
-    fix = AllVars(vardef, extra_facets=extra_facets)
+    coord_info = CoordinateInfo('plev19')
+    coord_info.standard_name = 'air_pressure'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'plev19': coord_info})
 
     # Create cube with only a single dimension
-    plev_coord = DimCoord([1000.0, 900.0], var_name='plev',
-                          standard_name='air_pressure', units='hPa')
+    plev_coord = DimCoord([1000.0, 900.0],
+                          var_name='plev',
+                          standard_name='air_pressure',
+                          units='hPa')
     cubes = CubeList([
-        Cube([1, 1], var_name='tm1_p19_ave', units='K',
+        Cube([1, 1],
+             var_name='tm1_p19_ave',
+             units='K',
              dim_coords_and_dims=[(plev_coord, 0)]),
     ])
     fixed_cubes = fix.fix_metadata(cubes)
@@ -621,27 +648,27 @@ def test_only_plev():
     np.testing.assert_allclose(new_plev_coord.points, [100000.0, 90000.0])
     assert new_plev_coord.bounds is None
 
-    # Restore original dimensions of ta
-    vardef.dimensions = original_dimensions
 
-
-def test_only_latitude():
+def test_only_latitude(monkeypatch):
     """Test fix."""
+    fix = get_allvars_fix('Amon', 'ta')
     # We know that ta has dimensions time, plev19, latitude, longitude, but the
     # EMAC CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
-    vardef = get_var_info('EMAC', 'Amon', 'ta')
-    original_dimensions = vardef.dimensions
-    vardef.dimensions = ['latitude']
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'ta', ())
-    fix = AllVars(vardef, extra_facets=extra_facets)
+    coord_info = CoordinateInfo('latitude')
+    coord_info.standard_name = 'latitude'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'latitude': coord_info})
 
     # Create cube with only a single dimension
-    lat_coord = DimCoord([0.0, 10.0], var_name='lat', standard_name='latitude',
+    lat_coord = DimCoord([0.0, 10.0],
+                         var_name='lat',
+                         standard_name='latitude',
                          units='degrees')
     cubes = CubeList([
-        Cube([1, 1], var_name='tm1_p19_ave', units='K',
+        Cube([1, 1],
+             var_name='tm1_p19_ave',
+             units='K',
              dim_coords_and_dims=[(lat_coord, 0)]),
     ])
     fixed_cubes = fix.fix_metadata(cubes)
@@ -666,27 +693,27 @@ def test_only_latitude():
     np.testing.assert_allclose(new_lat_coord.bounds,
                                [[-5.0, 5.0], [5.0, 15.0]])
 
-    # Restore original dimensions of ta
-    vardef.dimensions = original_dimensions
 
-
-def test_only_longitude():
+def test_only_longitude(monkeypatch):
     """Test fix."""
+    fix = get_allvars_fix('Amon', 'ta')
     # We know that ta has dimensions time, plev19, latitude, longitude, but the
     # EMAC CMORizer is designed to check for the presence of each dimension
     # individually. To test this, remove all but one dimension of ta to create
     # an artificial, but realistic test case.
-    vardef = get_var_info('EMAC', 'Amon', 'ta')
-    original_dimensions = vardef.dimensions
-    vardef.dimensions = ['longitude']
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'ta', ())
-    fix = AllVars(vardef, extra_facets=extra_facets)
+    coord_info = CoordinateInfo('longitude')
+    coord_info.standard_name = 'longitude'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'longitude': coord_info})
 
     # Create cube with only a single dimension
-    lon_coord = DimCoord([0.0, 180.0], var_name='lon',
-                         standard_name='longitude', units='degrees')
+    lon_coord = DimCoord([0.0, 180.0],
+                         var_name='lon',
+                         standard_name='longitude',
+                         units='degrees')
     cubes = CubeList([
-        Cube([1, 1], var_name='tm1_p19_ave', units='K',
+        Cube([1, 1],
+             var_name='tm1_p19_ave',
+             units='K',
              dim_coords_and_dims=[(lon_coord, 0)]),
     ])
     fixed_cubes = fix.fix_metadata(cubes)
@@ -710,9 +737,6 @@ def test_only_longitude():
     np.testing.assert_allclose(new_lon_coord.points, [0.0, 180.0])
     np.testing.assert_allclose(new_lon_coord.bounds,
                                [[-90.0, 90.0], [90.0, 270.0]])
-
-    # Restore original dimensions of ta
-    vardef.dimensions = original_dimensions
 
 
 # Tests with sample data
@@ -744,15 +768,13 @@ def test_sample_data_tas(test_data_path, tmp_path):
     )
 
 
-def test_sample_data_ta_plev(test_data_path, tmp_path):
+def test_sample_data_ta_plev(test_data_path, tmp_path, monkeypatch):
     """Test fix."""
+    fix = get_allvars_fix('Amon', 'ta')
     # Note: raw_name needs to be modified since the sample file only contains
     # plev39, while Amon's ta needs plev19 by default
-    vardef = get_var_info('EMAC', 'Amon', 'ta')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'ta', ())
-    original_raw_name = extra_facets['raw_name']
-    extra_facets['raw_name'] = ['tm1_p39_cav', 'tm1_p39_ave']
-    fix = AllVars(vardef, extra_facets=extra_facets)
+    monkeypatch.setitem(fix.extra_facets, 'raw_name',
+                        ['tm1_p39_cav', 'tm1_p39_ave'])
 
     filepath = test_data_path / 'emac.nc'
     fixed_path = fix.fix_file(filepath, tmp_path)
@@ -774,8 +796,6 @@ def test_sample_data_ta_plev(test_data_path, tmp_path):
         [204.34882, 209.85188, 215.6242, 223.81247, 232.94002],
         rtol=1e-5,
     )
-
-    fix.extra_facets['raw_name'] = original_raw_name
 
 
 def test_sample_data_ta_alevel(test_data_path, tmp_path):
@@ -815,7 +835,7 @@ def test_sample_data_ta_alevel(test_data_path, tmp_path):
 def test_get_awhea_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Omon', 'awhea')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_awhea_fix(cubes_2d):
@@ -840,7 +860,7 @@ def test_awhea_fix(cubes_2d):
 def test_get_clivi_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'clivi')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_clivi_fix(cubes_2d):
@@ -864,19 +884,14 @@ def test_clivi_fix(cubes_2d):
 def test_get_clt_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'clt')
-    assert fix == [Clt(None), AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_clt_fix(cubes_2d):
     """Test fix."""
     cubes_2d[0].var_name = 'aclcov_cav'
-    vardef = get_var_info('EMAC', 'Amon', 'clt')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'clt', ())
-    fix = Clt(vardef, extra_facets=extra_facets)
-    fixed_cubes = fix.fix_metadata(cubes_2d)
-
     fix = get_allvars_fix('Amon', 'clt')
-    fixed_cubes = fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix.fix_metadata(cubes_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -892,7 +907,7 @@ def test_clt_fix(cubes_2d):
 def test_get_clwvi_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'clwvi')
-    assert fix == [Clwvi(None), AllVars(None)]
+    assert fix == [Clwvi(None), AllVars(None), GenericFix(None)]
 
 
 def test_clwvi_fix(cubes_2d):
@@ -901,13 +916,8 @@ def test_clwvi_fix(cubes_2d):
     cubes_2d[1].var_name = 'xivi_cav'
     cubes_2d[0].units = 'kg m-2'
     cubes_2d[1].units = 'kg m-2'
-    vardef = get_var_info('EMAC', 'Amon', 'clwvi')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'clwvi', ())
-    fix = Clwvi(vardef, extra_facets=extra_facets)
-    fixed_cubes = fix.fix_metadata(cubes_2d)
 
-    fix = get_allvars_fix('Amon', 'clwvi')
-    fixed_cubes = fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix_metadata(cubes_2d, 'Amon', 'clwvi')
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -924,7 +934,7 @@ def test_clwvi_fix(cubes_2d):
 def test_get_co2mass_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'co2mass')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_co2mass_fix(cubes_1d):
@@ -948,7 +958,7 @@ def test_co2mass_fix(cubes_1d):
 def test_get_evspsbl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'evspsbl')
-    assert fix == [Evspsbl(None), AllVars(None)]
+    assert fix == [Evspsbl(None), AllVars(None), GenericFix(None)]
 
 
 def test_evspsbl_fix(cubes_2d):
@@ -961,9 +971,7 @@ def test_evspsbl_fix(cubes_2d):
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
 
-    vardef = get_var_info('EMAC', 'Amon', 'evspsbl')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'evspsbl', ())
-    fix = Evspsbl(vardef, extra_facets=extra_facets)
+    fix = get_fix('Amon', 'evspsbl')
     cube = fix.fix_data(cube)
 
     assert cube.var_name == 'evspsbl'
@@ -979,7 +987,7 @@ def test_evspsbl_fix(cubes_2d):
 def test_get_hfls_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'hfls')
-    assert fix == [Hfls(None), AllVars(None)]
+    assert fix == [Hfls(None), AllVars(None), GenericFix(None)]
 
 
 def test_hfls_fix(cubes_2d):
@@ -992,9 +1000,7 @@ def test_hfls_fix(cubes_2d):
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
 
-    vardef = get_var_info('EMAC', 'Amon', 'hfls')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'hfls', ())
-    fix = Hfls(vardef, extra_facets=extra_facets)
+    fix = get_fix('Amon', 'hfls')
     cube = fix.fix_data(cube)
 
     assert cube.var_name == 'hfls'
@@ -1009,7 +1015,7 @@ def test_hfls_fix(cubes_2d):
 def test_get_hfss_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'hfss')
-    assert fix == [Hfss(None), AllVars(None)]
+    assert fix == [Hfss(None), AllVars(None), GenericFix(None)]
 
 
 def test_hfss_fix(cubes_2d):
@@ -1022,9 +1028,7 @@ def test_hfss_fix(cubes_2d):
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
 
-    vardef = get_var_info('EMAC', 'Amon', 'hfss')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'hfss', ())
-    fix = Hfss(vardef, extra_facets=extra_facets)
+    fix = get_fix('Amon', 'hfss')
     cube = fix.fix_data(cube)
 
     assert cube.var_name == 'hfss'
@@ -1039,19 +1043,14 @@ def test_hfss_fix(cubes_2d):
 def test_get_hurs_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'hurs')
-    assert fix == [Hurs(None), AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_hurs_fix(cubes_2d):
     """Test fix."""
     cubes_2d[0].var_name = 'rh_2m_cav'
-    vardef = get_var_info('EMAC', 'Amon', 'hurs')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'hurs', ())
-    fix = Hurs(vardef, extra_facets=extra_facets)
-    fixed_cubes = fix.fix_metadata(cubes_2d)
-
     fix = get_allvars_fix('Amon', 'hurs')
-    fixed_cubes = fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix.fix_metadata(cubes_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -1067,19 +1066,13 @@ def test_hurs_fix(cubes_2d):
 def test_get_od550aer_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'od550aer')
-    assert fix == [Od550aer(None), AllVars(None)]
+    assert fix == [Od550aer(None), AllVars(None), GenericFix(None)]
 
 
 def test_od550aer_fix(cubes_3d):
     """Test fix."""
     cubes_3d[0].var_name = 'aot_opt_TOT_550_total_cav'
-    vardef = get_var_info('EMAC', 'Amon', 'od550aer')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'od550aer', ())
-    fix = Od550aer(vardef, extra_facets=extra_facets)
-    fixed_cubes = fix.fix_metadata(cubes_3d)
-
-    allvars_fix = get_allvars_fix('Amon', 'od550aer')
-    fixed_cubes = allvars_fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix_metadata(cubes_3d, 'Amon', 'od550aer')
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -1098,7 +1091,7 @@ def test_od550aer_fix(cubes_3d):
 def test_get_pr_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'pr')
-    assert fix == [Pr(None), AllVars(None)]
+    assert fix == [Pr(None), AllVars(None), GenericFix(None)]
 
 
 def test_pr_fix(cubes_2d):
@@ -1107,13 +1100,8 @@ def test_pr_fix(cubes_2d):
     cubes_2d[1].var_name = 'aprc_cav'
     cubes_2d[0].units = 'kg m-2 s-1'
     cubes_2d[1].units = 'kg m-2 s-1'
-    vardef = get_var_info('EMAC', 'Amon', 'pr')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'pr', ())
-    fix = Pr(vardef, extra_facets=extra_facets)
-    fixed_cubes = fix.fix_metadata(cubes_2d)
 
-    fix = get_allvars_fix('Amon', 'pr')
-    fixed_cubes = fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix_metadata(cubes_2d, 'Amon', 'pr')
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -1129,7 +1117,7 @@ def test_pr_fix(cubes_2d):
 def test_get_prc_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'prc')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_prc_fix(cubes_2d):
@@ -1153,7 +1141,7 @@ def test_prc_fix(cubes_2d):
 def test_get_prl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'prl')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_prl_fix(cubes_2d):
@@ -1177,7 +1165,7 @@ def test_prl_fix(cubes_2d):
 def test_get_prsn_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'prsn')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_prsn_fix(cubes_2d):
@@ -1201,7 +1189,7 @@ def test_prsn_fix(cubes_2d):
 def test_get_prw_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'prw')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_prw_fix(cubes_2d):
@@ -1225,7 +1213,7 @@ def test_prw_fix(cubes_2d):
 def test_get_ps_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'ps')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_ps_fix(cubes_2d):
@@ -1249,7 +1237,7 @@ def test_ps_fix(cubes_2d):
 def test_get_psl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'psl')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_psl_fix(cubes_2d):
@@ -1273,7 +1261,7 @@ def test_psl_fix(cubes_2d):
 def test_get_rlds_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rlds')
-    assert fix == [Rlds(None), AllVars(None)]
+    assert fix == [Rlds(None), AllVars(None), GenericFix(None)]
 
 
 def test_rlds_fix(cubes_2d):
@@ -1282,13 +1270,7 @@ def test_rlds_fix(cubes_2d):
     cubes_2d[1].var_name = 'tradsu_cav'
     cubes_2d[0].units = 'W m-2'
     cubes_2d[1].units = 'W m-2'
-    vardef = get_var_info('EMAC', 'Amon', 'rlds')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rlds', ())
-    fix = Rlds(vardef, extra_facets=extra_facets)
-    fixed_cubes = fix.fix_metadata(cubes_2d)
-
-    fix = get_allvars_fix('Amon', 'rlds')
-    fixed_cubes = fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix_metadata(cubes_2d, 'Amon', 'rlds')
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -1304,7 +1286,7 @@ def test_rlds_fix(cubes_2d):
 def test_get_rlus_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rlus')
-    assert fix == [Rlus(None), AllVars(None)]
+    assert fix == [Rlus(None), AllVars(None), GenericFix(None)]
 
 
 def test_rlus_fix(cubes_2d):
@@ -1317,9 +1299,7 @@ def test_rlus_fix(cubes_2d):
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
 
-    vardef = get_var_info('EMAC', 'Amon', 'rlus')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rlus', ())
-    fix = Rlus(vardef, extra_facets=extra_facets)
+    fix = get_fix('Amon', 'rlus')
     cube = fix.fix_data(cube)
 
     assert cube.var_name == 'rlus'
@@ -1334,7 +1314,7 @@ def test_rlus_fix(cubes_2d):
 def test_get_rlut_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rlut')
-    assert fix == [Rlut(None), AllVars(None)]
+    assert fix == [Rlut(None), AllVars(None), GenericFix(None)]
 
 
 def test_rlut_fix(cubes_2d):
@@ -1347,9 +1327,7 @@ def test_rlut_fix(cubes_2d):
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
 
-    vardef = get_var_info('EMAC', 'Amon', 'rlut')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rlut', ())
-    fix = Rlut(vardef, extra_facets=extra_facets)
+    fix = get_fix('Amon', 'rlut')
     cube = fix.fix_data(cube)
 
     assert cube.var_name == 'rlut'
@@ -1364,7 +1342,7 @@ def test_rlut_fix(cubes_2d):
 def test_get_rlutcs_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rlutcs')
-    assert fix == [Rlutcs(None), AllVars(None)]
+    assert fix == [Rlutcs(None), AllVars(None), GenericFix(None)]
 
 
 def test_rlutcs_fix(cubes_2d):
@@ -1377,9 +1355,7 @@ def test_rlutcs_fix(cubes_2d):
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
 
-    vardef = get_var_info('EMAC', 'Amon', 'rlutcs')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rlutcs', ())
-    fix = Rlutcs(vardef, extra_facets=extra_facets)
+    fix = get_fix('Amon', 'rlutcs')
     cube = fix.fix_data(cube)
 
     assert cube.var_name == 'rlutcs'
@@ -1395,7 +1371,7 @@ def test_rlutcs_fix(cubes_2d):
 def test_get_rsds_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rsds')
-    assert fix == [Rsds(None), AllVars(None)]
+    assert fix == [Rsds(None), AllVars(None), GenericFix(None)]
 
 
 def test_rsds_fix(cubes_2d):
@@ -1404,13 +1380,7 @@ def test_rsds_fix(cubes_2d):
     cubes_2d[1].var_name = 'sradsu_cav'
     cubes_2d[0].units = 'W m-2'
     cubes_2d[1].units = 'W m-2'
-    vardef = get_var_info('EMAC', 'Amon', 'rsds')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rsds', ())
-    fix = Rsds(vardef, extra_facets=extra_facets)
-    fixed_cubes = fix.fix_metadata(cubes_2d)
-
-    fix = get_allvars_fix('Amon', 'rsds')
-    fixed_cubes = fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix_metadata(cubes_2d, 'Amon', 'rsds')
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -1426,7 +1396,7 @@ def test_rsds_fix(cubes_2d):
 def test_get_rsdt_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rsdt')
-    assert fix == [Rsdt(None), AllVars(None)]
+    assert fix == [Rsdt(None), AllVars(None), GenericFix(None)]
 
 
 def test_rsdt_fix(cubes_2d):
@@ -1435,13 +1405,7 @@ def test_rsdt_fix(cubes_2d):
     cubes_2d[1].var_name = 'srad0u_cav'
     cubes_2d[0].units = 'W m-2'
     cubes_2d[1].units = 'W m-2'
-    vardef = get_var_info('EMAC', 'Amon', 'rsdt')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rsdt', ())
-    fix = Rsdt(vardef, extra_facets=extra_facets)
-    fixed_cubes = fix.fix_metadata(cubes_2d)
-
-    fix = get_allvars_fix('Amon', 'rsdt')
-    fixed_cubes = fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix_metadata(cubes_2d, 'Amon', 'rsdt')
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -1457,7 +1421,7 @@ def test_rsdt_fix(cubes_2d):
 def test_get_rsus_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rsus')
-    assert fix == [Rsus(None), AllVars(None)]
+    assert fix == [Rsus(None), AllVars(None), GenericFix(None)]
 
 
 def test_rsus_fix(cubes_2d):
@@ -1470,9 +1434,7 @@ def test_rsus_fix(cubes_2d):
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
 
-    vardef = get_var_info('EMAC', 'Amon', 'rsus')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rsus', ())
-    fix = Rsus(vardef, extra_facets=extra_facets)
+    fix = get_fix('Amon', 'rsus')
     cube = fix.fix_data(cube)
 
     assert cube.var_name == 'rsus'
@@ -1487,7 +1449,7 @@ def test_rsus_fix(cubes_2d):
 def test_get_rsut_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rsut')
-    assert fix == [Rsut(None), AllVars(None)]
+    assert fix == [Rsut(None), AllVars(None), GenericFix(None)]
 
 
 def test_rsut_fix(cubes_2d):
@@ -1500,9 +1462,7 @@ def test_rsut_fix(cubes_2d):
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
 
-    vardef = get_var_info('EMAC', 'Amon', 'rsut')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rsut', ())
-    fix = Rsut(vardef, extra_facets=extra_facets)
+    fix = get_fix('Amon', 'rsut')
     cube = fix.fix_data(cube)
 
     assert cube.var_name == 'rsut'
@@ -1517,7 +1477,7 @@ def test_rsut_fix(cubes_2d):
 def test_get_rsutcs_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rsutcs')
-    assert fix == [Rsutcs(None), AllVars(None)]
+    assert fix == [Rsutcs(None), AllVars(None), GenericFix(None)]
 
 
 def test_rsutcs_fix(cubes_2d):
@@ -1530,9 +1490,7 @@ def test_rsutcs_fix(cubes_2d):
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
 
-    vardef = get_var_info('EMAC', 'Amon', 'rsutcs')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rsutcs', ())
-    fix = Rsutcs(vardef, extra_facets=extra_facets)
+    fix = get_fix('Amon', 'rsutcs')
     cube = fix.fix_data(cube)
 
     assert cube.var_name == 'rsutcs'
@@ -1548,7 +1506,7 @@ def test_rsutcs_fix(cubes_2d):
 def test_get_rtmt_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'rtmt')
-    assert fix == [Rtmt(None), AllVars(None)]
+    assert fix == [Rtmt(None), AllVars(None), GenericFix(None)]
 
 
 def test_rtmt_fix(cubes_2d):
@@ -1557,13 +1515,7 @@ def test_rtmt_fix(cubes_2d):
     cubes_2d[1].var_name = 'flxstop_cav'
     cubes_2d[0].units = 'W m-2'
     cubes_2d[1].units = 'W m-2'
-    vardef = get_var_info('EMAC', 'Amon', 'rtmt')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'rtmt', ())
-    fix = Rtmt(vardef, extra_facets=extra_facets)
-    fixed_cubes = fix.fix_metadata(cubes_2d)
-
-    fix = get_allvars_fix('Amon', 'rtmt')
-    fixed_cubes = fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix_metadata(cubes_2d, 'Amon', 'rtmt')
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -1580,7 +1532,7 @@ def test_rtmt_fix(cubes_2d):
 def test_get_sfcWind_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'sfcWind')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_sfcWind_fix(cubes_2d):  # noqa: N802
@@ -1606,19 +1558,14 @@ def test_sfcWind_fix(cubes_2d):  # noqa: N802
 def test_get_siconc_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'SImon', 'siconc')
-    assert fix == [Siconc(None), AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_siconc_fix(cubes_2d):
     """Test fix."""
     cubes_2d[0].var_name = 'seaice_cav'
-    vardef = get_var_info('EMAC', 'SImon', 'siconc')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'SImon', 'siconc', ())
-    fix = Siconc(vardef, extra_facets=extra_facets)
-    fixed_cubes = fix.fix_metadata(cubes_2d)
-
     fix = get_allvars_fix('SImon', 'siconc')
-    fixed_cubes = fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix.fix_metadata(cubes_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -1636,19 +1583,14 @@ def test_siconc_fix(cubes_2d):
 def test_get_siconca_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'SImon', 'siconca')
-    assert fix == [Siconca(None), AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_siconca_fix(cubes_2d):
     """Test fix."""
     cubes_2d[0].var_name = 'seaice_cav'
-    vardef = get_var_info('EMAC', 'SImon', 'siconca')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'SImon', 'siconca', ())
-    fix = Siconca(vardef, extra_facets=extra_facets)
-    fixed_cubes = fix.fix_metadata(cubes_2d)
-
     fix = get_allvars_fix('SImon', 'siconca')
-    fixed_cubes = fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix.fix_metadata(cubes_2d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -1666,7 +1608,7 @@ def test_siconca_fix(cubes_2d):
 def test_get_sithick_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'SImon', 'sithick')
-    assert fix == [Sithick(None), AllVars(None)]
+    assert fix == [Sithick(None), AllVars(None), GenericFix(None)]
 
 
 def test_sithick_fix(cubes_2d):
@@ -1679,9 +1621,7 @@ def test_sithick_fix(cubes_2d):
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
 
-    vardef = get_var_info('EMAC', 'SImon', 'sithick')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'SImon', 'sithick', ())
-    fix = Sithick(vardef, extra_facets=extra_facets)
+    fix = get_fix('SImon', 'sithick')
     cube = fix.fix_data(cube)
 
     assert cube.var_name == 'sithick'
@@ -1703,7 +1643,7 @@ def test_sithick_fix(cubes_2d):
 def test_get_tas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'tas')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_tas_fix(cubes_2d):
@@ -1729,7 +1669,7 @@ def test_tas_fix(cubes_2d):
 def test_get_tasmax_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'tasmax')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_tasmax_fix(cubes_2d):
@@ -1755,7 +1695,7 @@ def test_tasmax_fix(cubes_2d):
 def test_get_tasmin_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'tasmin')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_tasmin_fix(cubes_2d):
@@ -1781,7 +1721,7 @@ def test_tasmin_fix(cubes_2d):
 def test_get_tauu_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'tauu')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_tauu_fix(cubes_2d):
@@ -1805,7 +1745,7 @@ def test_tauu_fix(cubes_2d):
 def test_get_tauv_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'tauv')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_tauv_fix(cubes_2d):
@@ -1829,7 +1769,7 @@ def test_tauv_fix(cubes_2d):
 def test_get_tos_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Omon', 'tos')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_tos_fix(cubes_2d):
@@ -1853,20 +1793,14 @@ def test_tos_fix(cubes_2d):
 def test_get_toz_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'AERmon', 'toz')
-    assert fix == [Toz(None), AllVars(None)]
+    assert fix == [Toz(None), AllVars(None), GenericFix(None)]
 
 
 def test_toz_fix(cubes_2d):
     """Test fix."""
     cubes_2d[0].var_name = 'toz'
     cubes_2d[0].units = 'DU'
-    vardef = get_var_info('EMAC', 'AERmon', 'toz')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'AERmon', 'toz', ())
-    fix = Toz(vardef, extra_facets=extra_facets)
-    fixed_cubes = fix.fix_metadata(cubes_2d)
-
-    fix = get_allvars_fix('AERmon', 'toz')
-    fixed_cubes = fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix_metadata(cubes_2d, 'AERmon', 'toz')
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -1883,7 +1817,7 @@ def test_toz_fix(cubes_2d):
 def test_get_ts_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'ts')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_ts_fix(cubes_2d):
@@ -1907,7 +1841,7 @@ def test_ts_fix(cubes_2d):
 def test_get_uas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'uas')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_uas_fix(cubes_2d):
@@ -1933,7 +1867,7 @@ def test_uas_fix(cubes_2d):
 def test_get_vas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'vas')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_vas_fix(cubes_2d):
@@ -1962,7 +1896,7 @@ def test_vas_fix(cubes_2d):
 def test_get_MP_BC_tot_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_BC_tot')
-    assert fix == [MP_BC_tot(None), AllVars(None)]
+    assert fix == [MP_BC_tot(None), AllVars(None), GenericFix(None)]
 
 
 def test_MP_BC_tot_fix(cubes_1d):  # noqa: N802
@@ -1975,14 +1909,7 @@ def test_MP_BC_tot_fix(cubes_1d):  # noqa: N802
     cubes_1d[1].units = 'kg'
     cubes_1d[2].units = 'kg'
     cubes_1d[3].units = 'kg'
-    vardef = get_var_info('EMAC', 'TRAC10hr', 'MP_BC_tot')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'TRAC10hr', 'MP_BC_tot',
-                                    ())
-    fix = MP_BC_tot(vardef, extra_facets=extra_facets)
-    fixed_cubes = fix.fix_metadata(cubes_1d)
-
-    fix = get_allvars_fix('TRAC10hr', 'MP_BC_tot')
-    fixed_cubes = fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix_metadata(cubes_1d, 'TRAC10hr', 'MP_BC_tot')
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -1999,7 +1926,7 @@ def test_MP_BC_tot_fix(cubes_1d):  # noqa: N802
 def test_get_MP_CFCl3_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_CFCl3')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_MP_CFCl3_fix(cubes_1d):  # noqa: N802
@@ -2023,7 +1950,7 @@ def test_MP_CFCl3_fix(cubes_1d):  # noqa: N802
 def test_get_MP_ClOX_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_ClOX')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_MP_ClOX_fix(cubes_1d):  # noqa: N802
@@ -2047,7 +1974,7 @@ def test_MP_ClOX_fix(cubes_1d):  # noqa: N802
 def test_get_MP_CH4_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_CH4')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_MP_CH4_fix(cubes_1d):  # noqa: N802
@@ -2071,7 +1998,7 @@ def test_MP_CH4_fix(cubes_1d):  # noqa: N802
 def test_get_MP_CO_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_CO')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_MP_CO_fix(cubes_1d):  # noqa: N802
@@ -2095,7 +2022,7 @@ def test_MP_CO_fix(cubes_1d):  # noqa: N802
 def test_get_MP_CO2_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_CO2')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_MP_CO2_fix(cubes_1d):  # noqa: N802
@@ -2119,7 +2046,7 @@ def test_MP_CO2_fix(cubes_1d):  # noqa: N802
 def test_get_MP_DU_tot_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_DU_tot')
-    assert fix == [MP_DU_tot(None), AllVars(None)]
+    assert fix == [MP_DU_tot(None), AllVars(None), GenericFix(None)]
 
 
 def test_MP_DU_tot_fix(cubes_1d):  # noqa: N802
@@ -2132,14 +2059,8 @@ def test_MP_DU_tot_fix(cubes_1d):  # noqa: N802
     cubes_1d[1].units = 'kg'
     cubes_1d[2].units = 'kg'
     cubes_1d[3].units = 'kg'
-    vardef = get_var_info('EMAC', 'TRAC10hr', 'MP_DU_tot')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'TRAC10hr', 'MP_DU_tot',
-                                    ())
-    fix = MP_DU_tot(vardef, extra_facets=extra_facets)
-    fixed_cubes = fix.fix_metadata(cubes_1d)
 
-    fix = get_allvars_fix('TRAC10hr', 'MP_DU_tot')
-    fixed_cubes = fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix_metadata(cubes_1d, 'TRAC10hr', 'MP_DU_tot')
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -2156,7 +2077,7 @@ def test_MP_DU_tot_fix(cubes_1d):  # noqa: N802
 def test_get_MP_N2O_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_N2O')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_MP_N2O_fix(cubes_1d):  # noqa: N802
@@ -2180,7 +2101,7 @@ def test_MP_N2O_fix(cubes_1d):  # noqa: N802
 def test_get_MP_NH3_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_NH3')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_MP_NH3_fix(cubes_1d):  # noqa: N802
@@ -2204,7 +2125,7 @@ def test_MP_NH3_fix(cubes_1d):  # noqa: N802
 def test_get_MP_NO_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_NO')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_MP_NO_fix(cubes_1d):  # noqa: N802
@@ -2228,7 +2149,7 @@ def test_MP_NO_fix(cubes_1d):  # noqa: N802
 def test_get_MP_NO2_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_NO2')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_MP_NO2_fix(cubes_1d):  # noqa: N802
@@ -2252,7 +2173,7 @@ def test_MP_NO2_fix(cubes_1d):  # noqa: N802
 def test_get_MP_NOX_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_NOX')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_MP_NOX_fix(cubes_1d):  # noqa: N802
@@ -2276,7 +2197,7 @@ def test_MP_NOX_fix(cubes_1d):  # noqa: N802
 def test_get_MP_O3_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_O3')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_MP_O3_fix(cubes_1d):  # noqa: N802
@@ -2300,7 +2221,7 @@ def test_MP_O3_fix(cubes_1d):  # noqa: N802
 def test_get_MP_OH_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_OH')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_MP_OH_fix(cubes_1d):  # noqa: N802
@@ -2324,7 +2245,7 @@ def test_MP_OH_fix(cubes_1d):  # noqa: N802
 def test_get_MP_S_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_S')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_MP_S_fix(cubes_1d):  # noqa: N802
@@ -2348,7 +2269,7 @@ def test_MP_S_fix(cubes_1d):  # noqa: N802
 def test_get_MP_SO2_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_SO2')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_MP_SO2_fix(cubes_1d):  # noqa: N802
@@ -2372,7 +2293,7 @@ def test_MP_SO2_fix(cubes_1d):  # noqa: N802
 def test_get_MP_SO4mm_tot_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_SO4mm_tot')
-    assert fix == [MP_SO4mm_tot(None), AllVars(None)]
+    assert fix == [MP_SO4mm_tot(None), AllVars(None), GenericFix(None)]
 
 
 def test_MP_SO4mm_tot_fix(cubes_1d):  # noqa: N802
@@ -2385,14 +2306,8 @@ def test_MP_SO4mm_tot_fix(cubes_1d):  # noqa: N802
     cubes_1d[1].units = 'kg'
     cubes_1d[2].units = 'kg'
     cubes_1d[3].units = 'kg'
-    vardef = get_var_info('EMAC', 'TRAC10hr', 'MP_SO4mm_tot')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'TRAC10hr', 'MP_SO4mm_tot',
-                                    ())
-    fix = MP_SO4mm_tot(vardef, extra_facets=extra_facets)
-    fixed_cubes = fix.fix_metadata(cubes_1d)
 
-    fix = get_allvars_fix('TRAC10hr', 'MP_SO4mm_tot')
-    fixed_cubes = fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix_metadata(cubes_1d, 'TRAC10hr', 'MP_SO4mm_tot')
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -2409,7 +2324,7 @@ def test_MP_SO4mm_tot_fix(cubes_1d):  # noqa: N802
 def test_get_MP_SS_tot_fix():  # noqa: N802
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'TRAC10hr', 'MP_SS_tot')
-    assert fix == [MP_SS_tot(None), AllVars(None)]
+    assert fix == [MP_SS_tot(None), AllVars(None), GenericFix(None)]
 
 
 def test_MP_SS_tot_fix(cubes_1d):  # noqa: N802
@@ -2420,14 +2335,8 @@ def test_MP_SS_tot_fix(cubes_1d):  # noqa: N802
     cubes_1d[0].units = 'kg'
     cubes_1d[1].units = 'kg'
     cubes_1d[2].units = 'kg'
-    vardef = get_var_info('EMAC', 'TRAC10hr', 'MP_SS_tot')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'TRAC10hr', 'MP_SS_tot',
-                                    ())
-    fix = MP_SS_tot(vardef, extra_facets=extra_facets)
-    fixed_cubes = fix.fix_metadata(cubes_1d)
 
-    fix = get_allvars_fix('TRAC10hr', 'MP_SS_tot')
-    fixed_cubes = fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix_metadata(cubes_1d, 'TRAC10hr', 'MP_SS_tot')
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -2447,19 +2356,14 @@ def test_MP_SS_tot_fix(cubes_1d):  # noqa: N802
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'cl')
-    assert fix == [Cl(None), AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_cl_fix(cubes_3d):
     """Test fix."""
     cubes_3d[0].var_name = 'aclcac_cav'
-    vardef = get_var_info('EMAC', 'Amon', 'cl')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'cl', ())
-    fix = Cl(vardef, extra_facets=extra_facets)
-    fixed_cubes = fix.fix_metadata(cubes_3d)
-
     fix = get_allvars_fix('Amon', 'cl')
-    fixed_cubes = fix.fix_metadata(fixed_cubes)
+    fixed_cubes = fix.fix_metadata(cubes_3d)
 
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
@@ -2477,7 +2381,7 @@ def test_cl_fix(cubes_3d):
 def test_get_cli_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'cli')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_cli_fix(cubes_3d):
@@ -2503,7 +2407,7 @@ def test_cli_fix(cubes_3d):
 def test_get_clw_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'clw')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_clw_fix(cubes_3d):
@@ -2529,7 +2433,7 @@ def test_clw_fix(cubes_3d):
 def test_get_hur_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'hur')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_hur_fix(cubes_3d):
@@ -2556,7 +2460,7 @@ def test_hur_fix(cubes_3d):
 def test_get_hus_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'hus')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_hus_fix(cubes_3d):
@@ -2583,7 +2487,7 @@ def test_hus_fix(cubes_3d):
 def test_get_ta_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'ta')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_ta_fix(cubes_3d):
@@ -2610,7 +2514,7 @@ def test_ta_fix(cubes_3d):
 def test_get_ua_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'ua')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_ua_fix(cubes_3d):
@@ -2637,7 +2541,7 @@ def test_ua_fix(cubes_3d):
 def test_get_va_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'va')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_va_fix(cubes_3d):
@@ -2664,16 +2568,14 @@ def test_va_fix(cubes_3d):
 def test_get_zg_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'zg')
-    assert fix == [Zg(None), AllVars(None)]
+    assert fix == [Zg(None), AllVars(None), GenericFix(None)]
 
 
 def test_zg_fix(cubes_3d):
     """Test fix."""
     cubes_3d[0].var_name = 'geopot_p19_cav'
     cubes_3d[0].units = 'm2 s-2'
-    vardef = get_var_info('EMAC', 'Amon', 'zg')
-    extra_facets = get_extra_facets('EMAC', 'EMAC', 'Amon', 'zg', ())
-    fix = Zg(vardef, extra_facets=extra_facets)
+    fix = get_fix('Amon', 'zg')
     fixed_cubes = fix.fix_metadata(cubes_3d)
 
     fix = get_allvars_fix('Amon', 'zg')

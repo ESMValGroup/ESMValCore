@@ -60,6 +60,17 @@ called by the preprocessor functions
 :py:func:`esmvalcore.preprocessor.fix_metadata`, and
 :py:func:`esmvalcore.preprocessor.fix_data`.
 
+The :class:`~esmvalcore.cmor._fixes.fix.Fix` class provides the following
+attributes:
+
+- :attr:`Fix.vardef`: :class:`~esmvalcore.cmor.table.VariableInfo` object that
+  corresponds to the variable fixed by the fix.
+- :attr:`Fix.extra_facets`: :obj:`dict` that contains all facets of the
+  corresponding dataset fixed by the fix (see
+  :attr:`esmvalcore.dataset.Dataset.facets`).
+- :attr:`Fix.session`: :class:`~esmvalcore.config.Session` object that includes
+  configuration and directory information.
+
 Fixing a dataset
 ================
 
@@ -115,12 +126,12 @@ Then we have to create the class for the fix deriving from
 Next we must choose the method to use between the ones offered by the
 Fix class:
 
-- ``fix_file`` : should be used only to fix errors that prevent data loading.
+- ``fix_file``: should be used only to fix errors that prevent data loading.
   As a rule of thumb, you should only use it if the execution halts before
   reaching the checks.
 
-- ``fix_metadata`` : you want to change something in the cube that is not
-  the data (e.g variable or coordinate names, data units).
+- ``fix_metadata``: you want to change something in the cube that is not
+  the data (e.g., variable or coordinate names, data units).
 
 - ``fix_data``: you need to fix the data. Beware: coordinates data values are
   part of the metadata.
@@ -242,6 +253,7 @@ with the actual data units.
 .. code-block:: python
 
     def fix_metadata(self, cubes):
+        cube = self.get_cube_from_list(cubes)
         cube.units = 'real_units'
 
 
@@ -256,6 +268,7 @@ For example:
 .. code-block:: python
 
     def fix_metadata(self, cubes):
+        cube = self.get_cube_from_list(cubes)
         cube.units = self.vardef.units
 
 To learn more about what is available in these definitions, see:
@@ -278,7 +291,7 @@ missing coordinate you can create a fix for this model:
 .. code-block:: python
 
     def fix_metadata(self, cubes):
-        coord_cube = cubes.extract_strict('COORDINATE_NAME')
+        coord_cube = cubes.extract_cube('COORDINATE_NAME')
         # Usually this will correspond to an auxiliary coordinate
         # because the most common error is to forget adding it to the
         # coordinates attribute
@@ -291,9 +304,9 @@ missing coordinate you can create a fix for this model:
         }
 
         # It may also have bounds as another cube
-        coord.bounds = cubes.extract_strict('BOUNDS_NAME').data
+        coord.bounds = cubes.extract_cube('BOUNDS_NAME').data
 
-        data_cube = cubes.extract_strict('VAR_NAME')
+        data_cube = cubes.extract_cube('VAR_NAME')
         data_cube.add_aux_coord(coord, DIMENSIONS_INDEX_TUPLE)
         return [data_cube]
 
@@ -377,7 +390,7 @@ To allow ESMValCore to locate the data files, use the following steps:
         native6:
           ...
           input_dir:
-            default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
+            default: 'Tier{tier}/{dataset}/{version}/{frequency}/{short_name}'
             MY_DATA_ORG: '{dataset}/{exp}/{simulation}/{version}/{type}'
           input_file:
             default: '*.nc'

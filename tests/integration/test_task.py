@@ -1,6 +1,7 @@
 import multiprocessing
 import os
 import shutil
+from contextlib import contextmanager
 from functools import partial
 from multiprocessing.pool import ThreadPool
 
@@ -13,6 +14,7 @@ from esmvalcore._task import (
     DiagnosticTask,
     TaskSet,
     _py2ncl,
+    _run_task,
 )
 from esmvalcore.config._diagnostics import DIAGNOSTICS
 
@@ -61,6 +63,16 @@ def example_tasks(tmp_path):
     return tasks
 
 
+def get_distributed_client_mock(client):
+    """Mock `get_distributed_client` to avoid starting a Dask cluster."""
+
+    @contextmanager
+    def get_distributed_client():
+        yield client
+
+    return get_distributed_client
+
+
 @pytest.mark.parametrize(['mpmethod', 'max_parallel_tasks'], [
     ('fork', 1),
     ('fork', 2),
@@ -68,9 +80,13 @@ def example_tasks(tmp_path):
     ('fork', None),
     ('spawn', 2),
 ])
-def test_run_tasks(monkeypatch, tmp_path, max_parallel_tasks, example_tasks,
-                   mpmethod):
+def test_run_tasks(monkeypatch, max_parallel_tasks, example_tasks, mpmethod):
     """Check that tasks are run correctly."""
+    monkeypatch.setattr(
+        esmvalcore._task,
+        'get_distributed_client',
+        get_distributed_client_mock(None),
+    )
     monkeypatch.setattr(esmvalcore._task, 'Pool',
                         multiprocessing.get_context(mpmethod).Pool)
     example_tasks.run(max_parallel_tasks=max_parallel_tasks)
@@ -80,9 +96,43 @@ def test_run_tasks(monkeypatch, tmp_path, max_parallel_tasks, example_tasks,
         assert task.output_files
 
 
+def test_diag_task_updated_with_address(monkeypatch, mocker, tmp_path):
+    """Test that the scheduler address is passed to the diagnostic tasks."""
+    # Set up mock Dask distributed client
+    client = mocker.Mock()
+    monkeypatch.setattr(
+        esmvalcore._task,
+        'get_distributed_client',
+        get_distributed_client_mock(client),
+    )
+
+    # Create a task
+    mocker.patch.object(DiagnosticTask, '_initialize_cmd')
+    task = DiagnosticTask(
+        script='test.py',
+        settings={'run_dir': tmp_path / 'run'},
+        output_dir=tmp_path / 'work',
+    )
+
+    # Create a taskset
+    mocker.patch.object(TaskSet, '_run_sequential')
+    tasks = TaskSet()
+    tasks.add(task)
+    tasks.run(max_parallel_tasks=1)
+
+    # Check that the scheduler address was added to the
+    # diagnostic task settings.
+    assert 'scheduler_address' in task.settings
+    assert task.settings['scheduler_address'] is client.scheduler.address
+
+
 @pytest.mark.parametrize('runner', [
     TaskSet._run_sequential,
-    partial(TaskSet._run_parallel, max_parallel_tasks=1),
+    partial(
+        TaskSet._run_parallel,
+        scheduler_address=None,
+        max_parallel_tasks=1,
+    ),
 ])
 def test_runner_uses_priority(monkeypatch, runner, example_tasks):
     """Check that the runner tries to respect task priority."""
@@ -100,6 +150,22 @@ def test_runner_uses_priority(monkeypatch, runner, example_tasks):
     print(order)
     assert len(order) == 12
     assert order == sorted(order)
+
+
+@pytest.mark.parametrize('address', [None, 'localhost:1234'])
+def test_run_task(mocker, address):
+    # Set up mock Dask distributed client
+    mocker.patch.object(esmvalcore._task, 'Client')
+
+    task = mocker.create_autospec(DiagnosticTask, instance=True)
+    task.products = mocker.Mock()
+    output_files, products = _run_task(task, scheduler_address=address)
+    assert output_files == task.run.return_value
+    assert products == task.products
+    if address is None:
+        esmvalcore._task.Client.assert_not_called()
+    else:
+        esmvalcore._task.Client.assert_called_once_with(address)
 
 
 def test_py2ncl():
@@ -150,7 +216,7 @@ def _get_single_diagnostic_task(tmp_path, diag_script, write_diag=True):
     diag_run_dir = diag_output_dir / 'run_dir'
     diag_settings = {'run_dir': diag_run_dir, 'profile_diagnostic': False}
     if write_diag:
-        with open(diag_script, "w") as fil:
+        with open(diag_script, "w", encoding='utf-8') as fil:
             fil.write("import os\n\nprint(os.getcwd())")
 
     task = DiagnosticTask(
@@ -207,7 +273,7 @@ def _get_diagnostic_tasks(tmp_path, diagnostic_text, extension):
         'exit_on_ncl_warning': False
     }
 
-    with open(diag_script, "w") as fil:
+    with open(diag_script, "w", encoding='utf-8') as fil:
         fil.write(diagnostic_text)
 
     task = DiagnosticTask(

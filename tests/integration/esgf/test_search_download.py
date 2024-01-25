@@ -15,6 +15,7 @@ VARIABLES = [{
     'frequency': 'mon',
     'project': 'CMIP3',
     'short_name': 'tas',
+    'version': 'v1',
 }, {
     'dataset': 'inmcm4',
     'ensemble': 'r1i1p1',
@@ -22,6 +23,7 @@ VARIABLES = [{
     'mip': 'Amon',
     'project': 'CMIP5',
     'short_name': 'tas',
+    'version': 'v20130207',
 }, {
     'dataset': 'FIO-ESM',
     'ensemble': 'r1i1p1',
@@ -36,8 +38,7 @@ VARIABLES = [{
     'mip': 'Amon',
     'project': 'CMIP5',
     'short_name': 'tas',
-    'start_year': 2080,
-    'end_year': 2100,
+    'timerange': '2080/2100',
 }, {
     'dataset': 'EC-EARTH',
     'ensemble': 'r1i1p1',
@@ -45,7 +46,7 @@ VARIABLES = [{
     'mip': 'Amon',
     'project': 'CMIP5',
     'short_name': 'tas',
-    'start_year': 1990,
+    'start_year': 1990,  # test legacy way of specifying timerange
     'end_year': 1999,
 }, {
     'dataset': 'AWI-ESM-1-1-LR',
@@ -55,8 +56,17 @@ VARIABLES = [{
     'mip': 'Amon',
     'project': 'CMIP6',
     'short_name': 'tas',
-    'start_year': 2000,
-    'end_year': 2001,
+    'timerange': '2000/2001',
+    'version': 'v20200212',
+}, {
+    'dataset': 'CESM2',
+    'ensemble': 'r4i1p1f1',
+    'exp': 'historical',
+    'grid': 'gn',
+    'mip': 'Amon',
+    'project': 'CMIP6',
+    'short_name': 'tas',
+    'timerange': '2000/2001',
 }, {
     'dataset': 'RACMO22E',
     'driver': 'MOHC-HadGEM2-ES',
@@ -66,13 +76,18 @@ VARIABLES = [{
     'frequency': 'mon',
     'project': 'CORDEX',
     'short_name': 'tas',
-    'start_year': 1950,
-    'end_year': 1952,
+    'timerange': '1950/1952',
+    'version': 'v20160620',
 }, {
     'dataset': 'CERES-EBAF',
     'frequency': 'mon',
     'project': 'obs4MIPs',
     'short_name': 'rsutcs',
+    'version': 'v20160610',
+}, {
+    'dataset': 'GPCP-V2.3',
+    'project': 'obs4MIPs',
+    'short_name': 'pr',
 }]
 
 
@@ -84,7 +99,6 @@ def get_mock_connection(facets, results):
 
     class MockConnection:
         def new_context(self, *args, **kwargs):
-            assert kwargs.pop('latest')
             assert kwargs == facets
             return MockFileSearchContext()
 
@@ -102,7 +116,7 @@ def test_mock_search(variable, mocker):
         # Skip cases where the raw search results were too large to save.
         pytest.skip(f"Raw search results in {raw_results} not available.")
 
-    with raw_results.open('r') as file:
+    with raw_results.open('r', encoding='utf-8') as file:
         search_results = [
             FileResult(json=j, context=None) for j in json.load(file)
         ]
@@ -114,14 +128,40 @@ def test_mock_search(variable, mocker):
 
     files = find_files(**variable)
 
-    with open(data_path / 'expected.yml') as file:
-        expected_files = yaml.safe_load(file)[json_file]
+    expected_results_file = data_path / 'expected.yml'
+    if expected_results_file.exists():
+        with expected_results_file.open(encoding='utf-8') as file:
+            expected_results = yaml.safe_load(file)
+    else:
+        expected_results = {}
+    print(expected_results)
+    if json_file in expected_results:
+        expected_files = expected_results[json_file]
+    else:
+        expected_results[json_file] = [
+            {
+                'checksums': file._checksums,
+                'dataset': file.dataset,
+                'facets': file.facets,
+                'local_file': str(file.local_file(Path())),
+                'name': file.name,
+                'size': file.size,
+                'urls': file.urls,
+            }
+            for file in files
+        ]
+        with expected_results_file.open('w', encoding='utf-8') as file:
+            yaml.safe_dump(expected_results, file)
+
+        assert False, 'Wrote expected results, please check.'
 
     assert len(files) == len(expected_files)
     for found_file, expected in zip(files, expected_files):
         assert found_file.name == expected['name']
+        assert found_file.local_file(Path()) == Path(expected['local_file'])
         assert found_file.dataset == expected['dataset']
         assert found_file.size == expected['size']
+        assert found_file.facets == expected['facets']
         assert found_file.urls == expected['urls']
         assert found_file._checksums == [
             tuple(c) for c in expected['checksums']
@@ -177,6 +217,9 @@ def test_real_search_many():
             'r1i1p1f1_gn_200101-200112.nc',
         ],
         [
+            'tas_Amon_CESM2_historical_r4i1p1f1_gn_185001-201412.nc',
+        ],
+        [
             'tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1'
             '_KNMI-RACMO22E_v2_mon_195001-195012.nc',
             'tas_EUR-11_MOHC-HadGEM2-ES_historical_r1i1p1'
@@ -184,6 +227,9 @@ def test_real_search_many():
         ],
         [
             'rsutcs_CERES-EBAF_L3B_Ed2-8_200003-201404.nc',
+        ],
+        [
+            'pr_GPCP-SG_L3_v2.3_197901-201710.nc',
         ],
     ]
     expected_datasets = [
@@ -209,7 +255,7 @@ def test_real_search_many():
         ],
         [
             'cmip5.output1.ICHEC.EC-EARTH.historical.mon.atmos.Amon.r1i1p1'
-            '.v20121115',
+            '.v20131231',
         ],
         [
             'CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.historical.r1i1p1f1.Amon.tas.gn'
@@ -218,13 +264,18 @@ def test_real_search_many():
             '.v20200212',
         ],
         [
+            'CMIP6.CMIP.NCAR.CESM2.historical.r4i1p1f1.Amon.tas.gn.v20190308',
+        ],
+        [
             'cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1'
             '.RACMO22E.v2.mon.tas.v20160620',
             'cordex.output.EUR-11.KNMI.MOHC-HadGEM2-ES.historical.r1i1p1'
             '.RACMO22E.v2.mon.tas.v20160620',
-        ], [
+        ],
+        [
             'obs4MIPs.CERES-EBAF.v20160610',
-        ]
+        ],
+        ['obs4MIPs.GPCP-V2.3.v20180519'],
     ]
 
     for variable, files, datasets in zip(VARIABLES, expected_files,
@@ -238,6 +289,15 @@ def test_real_search_many():
         print(found_datasets)
         print(datasets)
         assert found_datasets == datasets
+        print(result[0].facets)
+        for file in result:
+            for key, value in variable.items():
+                if key in ('start_year', 'end_year', 'timerange'):
+                    continue
+                if isinstance(value, list):
+                    assert file.facets.get(key) in value
+                else:
+                    assert file.facets.get(key) == value
 
 
 @pytest.mark.skip(reason="This will actually download the data")

@@ -31,11 +31,12 @@ CMIP6:
   cmor_strict: true
   input_dir:
     default: '/'
-    BADC: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
-    DKRZ: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
-    ESGF: '{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
+    BADC: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
+    DKRZ: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
+    ESGF: '{project}/{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
     ETHZ: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/{grid}/'
-    SYNDA: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{latestversion}'
+    SYNDA: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
+    NCI: '{activity}/{institute}/{dataset}/{exp}/{ensemble}/{mip}/{short_name}/{grid}/{version}'
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}_{grid}*.nc'
   output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}_{grid}'
   cmor_type: 'CMIP6'
@@ -44,15 +45,16 @@ CMIP5:
   cmor_strict: true
   input_dir:
     default: '/'
-    BADC: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}/{short_name}'
+    BADC: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}/{short_name}'
+    NCI: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}/{short_name}'
     BSC: '{type}/{project}/{exp}/{dataset.lower}'
     CP4CDS: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{short_name}/latest/'
-    DKRZ: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}/{short_name}'
+    DKRZ: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}/{short_name}'
     ETHZ: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
-    ESGF: '{project.lower}/{product}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}'
+    ESGF: '{project.lower}/{product}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}'
     RCAST: '{exp}/{mip}/{short_name}/{dataset}/{ensemble}/'
     SMHI: '{dataset}/{ensemble}/{exp}/{frequency}'
-    SYNDA: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{latestversion}'
+    SYNDA: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{mip}/{ensemble}/{version}'
   input_file: '{short_name}_{mip}_{dataset}_{exp}_{ensemble}*.nc'
   output_file: '{project}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
 
@@ -60,10 +62,11 @@ CMIP3:
   cmor_strict: true
   input_dir:
     default: '/'
-    BADC: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{short_name}/{ensemble}/{latestversion}'
+    BADC: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{short_name}/{ensemble}/{version}'
     DKRZ: '{exp}/{modeling_realm}/{frequency}/{short_name}/{dataset}/{ensemble}'
-    ESGF: '{project.lower}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{latestversion}'
+    ESGF: '{project.lower}/{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{version}'
     IPSL: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{version}/{short_name}'
+    NCI: '{institute}/{dataset}/{exp}/{frequency}/{modeling_realm}/{ensemble}/{short_name}/{latestversion}'
   input_file: '{short_name}_*.nc'
   output_file: '{project}_{institute}_{dataset}_{mip}_{exp}_{ensemble}_{short_name}'
   cmor_type: 'CMIP3'
@@ -95,7 +98,7 @@ OBS6:
 native6:
   cmor_strict: false
   input_dir:
-    default: 'Tier{tier}/{dataset}/{latestversion}/{frequency}/{short_name}'
+    default: 'Tier{tier}/{dataset}/{version}/{frequency}/{short_name}'
   input_file:
     default: '*.nc'
   output_file: '{project}_{dataset}_{type}_{version}_{mip}_{short_name}'
@@ -106,12 +109,12 @@ obs4MIPs:
   cmor_strict: false
   input_dir:
     default: 'Tier{tier}/{dataset}'
-    ESGF: '{project}/{dataset}/{latestversion}'
+    ESGF: '{project}/{dataset}/{version}'
     RCAST: '/'
     IPSL: '{realm}/{short_name}/{freq}/{grid}/{institute}/{dataset}/{latest_version}'
   input_file:
-    default: '{short_name}_{dataset}_{level}_{version}_*.nc'
-    ESGF: '{short_name}_{dataset}*.nc'
+    default: '{short_name}_*.nc'
+    ESGF: '{short_name}_*.nc'
   output_file: '{project}_{dataset}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_path: 'obs4mips'
@@ -145,11 +148,13 @@ EMAC:
 CORDEX:
   input_dir:
     default: '/'
-    spec: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{mip}/{short_name}'
-    BADC: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{mip}/{short_name}/{latestversion}'
-    ESGF: '{project.lower}/output/{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{frequency}/{short_name}/{latestversion}'
-  input_file: '{short_name}_{domain}_{driver}_{exp}_{ensemble}_{dataset}_{rcm_version}_{mip}*.nc'
-  output_file: '{project}_{dataset}_{rcm_version}_{driver}_{domain}_{mip}_{exp}_{ensemble}_{short_name}'
+    spec: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{institute}-{dataset}/{rcm_version}/{mip}/{short_name}'
+    BADC: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{institute}-{dataset}/{rcm_version}/{mip}/{short_name}/{version}'
+    DKRZ: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{institute}-{dataset}/{rcm_version}/{mip}/{short_name}/{version}'
+    ESGF: '{project.lower}/output/{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{frequency}/{short_name}/{version}'
+    SYNDA: '{domain}/{institute}/{driver}/{exp}/{ensemble}/{dataset}/{rcm_version}/{frequency}/{short_name}/{version}'
+  input_file: '{short_name}_{domain}_{driver}_{exp}_{ensemble}_{institute}-{dataset}_{rcm_version}_{mip}*.nc'
+  output_file: '{project}_{institute}_{dataset}_{rcm_version}_{driver}_{domain}_{mip}_{exp}_{ensemble}_{short_name}'
   cmor_type: 'CMIP5'
   cmor_path: 'cordex'
 

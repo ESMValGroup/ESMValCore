@@ -1,11 +1,24 @@
+import warnings
 from pathlib import Path
 
 import esmvalcore
-from esmvalcore._config import read_config_user_file
+from esmvalcore.config import CFG, Config
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 
-def test_read_config_user():
+def test_no_deprecation_default_cfg():
+    """Test that default config does not raise any deprecation warnings."""
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', category=ESMValCoreDeprecationWarning)
+        CFG.reload()
+        CFG.start_session('my_session')
+
+
+def test_no_deprecation_user_cfg():
+    """Test that user config does not raise any deprecation warnings."""
     config_file = Path(esmvalcore.__file__).parent / 'config-user.yml'
-    cfg = read_config_user_file(config_file, 'recipe_test', {'offline': False})
-    assert len(cfg) > 1
-    assert cfg['offline'] is False
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', category=ESMValCoreDeprecationWarning)
+        cfg = Config(CFG.copy())
+        cfg.load_from_file(config_file)
+        cfg.start_session('my_session')

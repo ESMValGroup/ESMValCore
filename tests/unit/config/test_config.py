@@ -10,8 +10,10 @@ from esmvalcore.config._config import (
     _deep_update,
     _load_extra_facets,
     get_extra_facets,
+    get_ignored_warnings,
     importlib_files,
 )
+from esmvalcore.dataset import Dataset
 from esmvalcore.exceptions import RecipeError
 
 TEST_DEEP_UPDATE = [
@@ -68,53 +70,53 @@ def test_load_extra_facets(project, extra_facets_dir, expected):
 
 
 def test_get_extra_facets(tmp_path):
-
-    variable = {
-        'project': 'test_project',
-        'mip': 'test_mip',
-        'dataset': 'test_dataset',
-        'short_name': 'test_short_name',
-    }
-    extra_facets_file = tmp_path / f"{variable['project']}-test.yml"
+    dataset = Dataset(
+        **{
+            'project': 'test_project',
+            'mip': 'test_mip',
+            'dataset': 'test_dataset',
+            'short_name': 'test_short_name',
+        })
+    extra_facets_file = tmp_path / f"{dataset['project']}-test.yml"
     extra_facets_file.write_text(
         textwrap.dedent("""
             {dataset}:
               {mip}:
                 {short_name}:
                   key: value
-            """).strip().format(**variable))
+            """).strip().format(**dataset.facets))
 
-    extra_facets = get_extra_facets(**variable, extra_facets_dir=(tmp_path, ))
+    extra_facets = get_extra_facets(dataset, extra_facets_dir=(tmp_path, ))
 
     assert extra_facets == {'key': 'value'}
 
 
 def test_get_extra_facets_cmip3():
-
-    variable = {
+    dataset = Dataset(**{
         'project': 'CMIP3',
         'mip': 'A1',
         'short_name': 'tas',
         'dataset': 'CM3',
-    }
-    extra_facets = get_extra_facets(**variable, extra_facets_dir=tuple())
+    })
+    extra_facets = get_extra_facets(dataset, extra_facets_dir=tuple())
 
-    assert extra_facets == {'institute': ['CNRM', 'INM']}
+    assert extra_facets == {'institute': ['CNRM', 'INM', 'CNRM_CERFACS']}
 
 
 def test_get_extra_facets_cmip5():
-
-    variable = {
-        'project': 'CMIP5',
-        'mip': 'Amon',
-        'short_name': 'tas',
-        'dataset': 'ACCESS1-0',
-    }
-    extra_facets = get_extra_facets(**variable, extra_facets_dir=tuple())
+    dataset = Dataset(
+        **{
+            'project': 'CMIP5',
+            'mip': 'Amon',
+            'short_name': 'tas',
+            'dataset': 'ACCESS1-0',
+        })
+    extra_facets = get_extra_facets(dataset, extra_facets_dir=tuple())
 
     assert extra_facets == {
-        'institute': ['CSIRO-BOM'], 'product': ['output1', 'output2']
-        }
+        'institute': ['CSIRO-BOM'],
+        'product': ['output1', 'output2']
+    }
 
 
 def test_get_project_config(mocker):
@@ -171,7 +173,6 @@ def test_load_default_config(monkeypatch, default_config):
         'max_datasets': None,
         'max_parallel_tasks': None,
         'max_years': None,
-        'offline': True,
         'output_dir': Path.home() / 'esmvaltool_output',
         'output_file_type': 'png',
         'profile_diagnostic': False,
@@ -181,6 +182,7 @@ def test_load_default_config(monkeypatch, default_config):
             'default': [Path.home() / 'climate_data']
         },
         'run_diagnostic': True,
+        'search_esgf': 'never',
         'skip_nonexistent': False,
         'save_intermediary_cubes': False,
     }
@@ -235,10 +237,43 @@ def test_project_obs4mips_case_correction(tmp_path, monkeypatch, mocker):
     cfg_dev = {
         'obs4mips': project_cfg,
     }
-    with cfg_file.open('w') as file:
+    with cfg_file.open('w', encoding='utf-8') as file:
         yaml.safe_dump(cfg_dev, file)
 
     _config.load_config_developer(cfg_file)
 
     assert 'obs4mips' not in _config.CFG
     assert _config.CFG['obs4MIPs'] == project_cfg
+
+
+def test_load_config_developer_custom(tmp_path, monkeypatch, mocker):
+    monkeypatch.setattr(_config, 'CFG', {})
+    mocker.patch.object(_config, 'read_cmor_tables', autospec=True)
+    cfg_file = tmp_path / 'config-developer.yml'
+    cfg_dev = {'custom': {'cmor_path': '/path/to/tables'}}
+    with cfg_file.open('w', encoding='utf-8') as file:
+        yaml.safe_dump(cfg_dev, file)
+
+    _config.load_config_developer(cfg_file)
+
+    assert 'custom' in _config.CFG
+
+
+@pytest.mark.parametrize(
+    'project,step',
+    [
+        ('invalid_project', 'load'),
+        ('CMIP6', 'load'),
+        ('EMAC', 'save'),
+    ],
+)
+def test_get_ignored_warnings_none(project, step):
+    """Test ``get_ignored_warnings``."""
+    assert get_ignored_warnings(project, step) is None
+
+
+def test_get_ignored_warnings_emac():
+    """Test ``get_ignored_warnings``."""
+    ignored_warnings = get_ignored_warnings('EMAC', 'load')
+    assert isinstance(ignored_warnings, list)
+    assert ignored_warnings

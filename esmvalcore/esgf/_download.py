@@ -8,6 +8,7 @@ import itertools
 import logging
 import os
 import random
+import re
 import shutil
 from pathlib import Path
 from statistics import median
@@ -18,6 +19,9 @@ import requests
 import yaml
 from humanfriendly import format_size, format_timespan
 
+from esmvalcore.typing import Facets
+
+from ..local import LocalFile
 from ._logon import get_credentials
 from .facets import DATASET_MAP, FACETS
 
@@ -48,7 +52,7 @@ def compute_speed(size, duration):
 def load_speeds():
     """Load average download speeds from HOSTS_FILE."""
     try:
-        content = HOSTS_FILE.read_text()
+        content = HOSTS_FILE.read_text(encoding='utf-8')
     except FileNotFoundError:
         content = '{}'
     speeds = yaml.safe_load(content)
@@ -90,7 +94,7 @@ def atomic_write(filename):
     filename.parent.mkdir(parents=True, exist_ok=True)
     with NamedTemporaryFile(prefix=f"{filename}.") as file:
         tmp_file = file.name
-    with open(tmp_file, 'w') as file:
+    with open(tmp_file, 'w', encoding='utf-8') as file:
         yield file
     shutil.move(tmp_file, filename)
 
@@ -111,8 +115,7 @@ def get_preferred_hosts():
 
     # Hosts from which no data has been downloaded yet get median speed; if no
     # host with non-zero entries is found assign a value of 0.0
-    speeds_list = [speeds[h][SPEED] for h in speeds if
-                   speeds[h][SPEED] != 0.0]
+    speeds_list = [speeds[h][SPEED] for h in speeds if speeds[h][SPEED] != 0.0]
     if not speeds_list:
         median_speed = 0.0
     else:
@@ -178,14 +181,16 @@ class ESGFFile:
 
     Attributes
     ----------
-    urls : :class:`list` of :class:`str`
-        The URLs where the file can be downloaded.
     dataset : str
         The name of the dataset that the file is part of.
+    facets : dict[str,str]
+        Facets describing the file.
     name : str
         The name of the file.
     size : int
         The size of the file in bytes.
+    urls : list[str]
+        The URLs where the file can be downloaded.
     """
 
     def __init__(self, results):
@@ -193,6 +198,7 @@ class ESGFFile:
         self.name = str(Path(results[0].filename).with_suffix('.nc'))
         self.size = results[0].size
         self.dataset = self._get_dataset_id(results)
+        self.facets = self._get_facets(results)
         self.urls = []
         self._checksums = []
         for result in results:
@@ -219,15 +225,111 @@ class ESGFFile:
             # cmip5.output1.ICHEC.EC-EARTH.historical
             # .mon.atmos.Amon.r1i1p1.v20121115
             variable = file.name.split('_')[0]
-            if 'variable' in facets and facets['variable'] == variable:
+            if 'variable' not in facets or facets['variable'] == variable:
                 files.append(file)
             else:
                 logger.debug(
                     "Ignoring file(s) %s containing wrong variable '%s' in"
                     " found in search for variable '%s'", file.urls, variable,
-                    facets['variable'])
+                    facets.get('variable', facets.get('variable_id', '?')))
 
         return files
+
+    def _get_facets(self, results):
+        """Read the facets.
+
+        This works by first reading the facets from the json response of
+        the first search result. Next, an alternative set of facets is
+        read from the `dataset_id` and filename and used to correct any
+        wrong facets values.
+        """
+        project = results[0].json['project'][0]
+
+        # Read the facets from the metadata
+        facets = {
+            our_facet: results[0].json[their_facet]
+            for our_facet, their_facet in FACETS[project].items()
+            if their_facet in results[0].json
+        }
+        facets = {
+            facet:
+            value[0] if isinstance(value, list) and len(value) == 1 else value
+            for facet, value in facets.items()
+        }
+        facets['project'] = project
+        if 'dataset' in facets:
+            reverse_dataset_map = {
+                v: k
+                for k, v in DATASET_MAP.get(project, {}).items()
+            }
+            facets['dataset'] = reverse_dataset_map.get(
+                facets['dataset'], facets['dataset'])
+
+        # Update the facets with information from the dataset_id and filename
+        more_reliable_facets = self._get_facets_from_dataset_id(results)
+        for facet, value in more_reliable_facets.items():
+            if facet not in facets or facets[facet] != value:
+                logger.debug(
+                    "Correcting facet '%s' from '%s' to '%s' for %s.%s", facet,
+                    facets.get(facet), value, self.dataset, self.name)
+                facets[facet] = value
+        return facets
+
+    @staticmethod
+    def _get_facets_from_dataset_id(results) -> Facets:
+        """Read the facets from the `dataset_id`."""
+        # This reads the facets from the dataset_id because the facets
+        # provided by ESGF are unreliable.
+        #
+        # Example dataset_id_template_ values:
+        # CMIP3: '%(project)s.%(institute)s.%(model)s.%(experiment)s.
+        #         %(time_frequency)s.%(realm)s.%(ensemble)s.%(variable)s'
+        # CMIP5: 'cmip5.%(product)s.%(valid_institute)s.%(model)s.
+        #         %(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.
+        #         %(ensemble)s'
+        # CMIP6: '%(mip_era)s.%(activity_drs)s.%(institution_id)s.
+        #         %(source_id)s.%(experiment_id)s.%(member_id)s.%(table_id)s.
+        #         %(variable_id)s.%(grid_label)s'
+        # CORDEX: 'cordex.%(product)s.%(domain)s.%(institute)s.
+        #          %(driving_model)s.%(experiment)s.%(ensemble)s.%(rcm_name)s.
+        #          %(rcm_version)s.%(time_frequency)s.%(variable)s'
+        # obs4MIPs: '%(project)s.%(institute)s.%(source_id)s.%(realm)s.
+        #            %(time_frequency)s'
+        project = results[0].json['project'][0]
+
+        # Read the keys from `dataset_id_template_` and translate to our keys
+        template = results[0].json['dataset_id_template_'][0]
+        keys = re.findall(r"%\((.*?)\)s", template)
+        reverse_facet_map = {v: k for k, v in FACETS[project].items()}
+        reverse_facet_map['realm'] = 'modeling_realm'
+        reverse_facet_map['mip_era'] = 'project'  # CMIP6 oddity
+        reverse_facet_map['variable_id'] = 'short_name'  # CMIP6 oddity
+        reverse_facet_map['valid_institute'] = 'institute'  # CMIP5 oddity
+        keys = [reverse_facet_map.get(k, k) for k in keys]
+        keys.append('version')
+        if keys[0] == 'project':
+            # The project is sometimes hardcoded all lowercase in the template
+            keys = keys[1:]
+        # Read values from dataset_id
+        # Pick the first dataset_id if there are differences in case
+        dataset_id = sorted(r.json['dataset_id'].split('|')[0]
+                            for r in results)[0]
+        values = dataset_id.split('.')[1:]
+        facets = {}
+        if len(keys) == len(values):
+            for idx, key in enumerate(keys):
+                facets[key] = values[idx]
+        else:
+            logger.debug(
+                "Wrong dataset_id_template_ %s or facet values containing '.' "
+                "for dataset %s", template, dataset_id)
+            facets['version'] = dataset_id.split('.')[-1]
+
+        # The dataset_id does not contain the short_name for all projects,
+        # so get it from the filename:
+        facets['short_name'] = results[0].json['title'].split('_')[0]
+
+        return facets
 
     @staticmethod
     def _get_dataset_id(results):
@@ -248,15 +350,26 @@ class ESGFFile:
         dataset_name = DATASET_MAP[project].get(dataset_name, dataset_name)
         return f"{project}.{dataset_name}.{version}"
 
+    def _get_relative_path(self) -> Path:
+        """Get the subdirectories."""
+        if self.facets['project'] == 'obs4MIPs':
+            # Avoid errors due to a to a `.` in the dataset name
+            facets = ['project', 'dataset', 'version']
+            path = Path(*[self.facets[f] for f in facets])
+        else:
+            path = Path(*self.dataset.split('.'))
+        return path / self.name
+
     def __repr__(self):
         """Represent the file as a string."""
         hosts = [urlparse(u).hostname for u in self.urls]
-        return (f"ESGFFile:{self.dataset.replace('.', '/')}/{self.name}"
+        return (f"ESGFFile:{self._get_relative_path()}"
                 f" on hosts {hosts}")
 
     def __eq__(self, other):
         """Compare `self` to `other`."""
-        return (self.dataset, self.name) == (other.dataset, other.name)
+        return (isinstance(other, self.__class__)
+                and (self.dataset, self.name) == (other.dataset, other.name))
 
     def __lt__(self, other):
         """Compare `self` to `other`."""
@@ -276,14 +389,12 @@ class ESGFFile:
 
         Returns
         -------
-        Path
+        LocalFile
             The path where the file will be located after download.
         """
-        return Path(
-            dest_folder,
-            *self.dataset.split('.'),
-            self.name,
-        ).absolute()
+        file = LocalFile(dest_folder, self._get_relative_path())
+        file.facets = self.facets
+        return file
 
     def download(self, dest_folder):
         """Download the file.
@@ -300,7 +411,7 @@ class ESGFFile:
 
         Returns
         -------
-        Path
+        LocalFile
             The path where the file will be located after download.
         """
         local_file = self.local_file(dest_folder)
@@ -389,7 +500,9 @@ def get_download_message(files):
     lines = []
     for file in files:
         total_size += file.size
-        lines.append(f"{format_size(file.size)}" "\t" f"{file}")
+        lines.append(f"{format_size(file.size)}"
+                     "\t"
+                     f"{file}")
 
     lines.insert(0, "Will download the following files:")
     lines.insert(0, f"Will download {format_size(total_size)}")
@@ -414,9 +527,13 @@ def download(files, dest_folder, n_jobs=4):
     DownloadError:
         Raised if one or more files failed to download.
     """
+    files = [
+        file for file in files if isinstance(file, ESGFFile)
+        and not file.local_file(dest_folder).exists()
+    ]
     if not files:
-        logger.info("All required data is available locally,"
-                    " not downloading anything.")
+        logger.debug("All required data is available locally,"
+                     " not downloading anything.")
         return
 
     files = sorted(files)

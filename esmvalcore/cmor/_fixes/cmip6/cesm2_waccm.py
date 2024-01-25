@@ -1,17 +1,17 @@
 """Fixes for CESM2-WACCM model."""
 from netCDF4 import Dataset
 
+from ..common import SiconcFixScalarCoord
 from .cesm2 import Cl as BaseCl
 from .cesm2 import Fgco2 as BaseFgco2
 from .cesm2 import Omon as BaseOmon
 from .cesm2 import Tas as BaseTas
-from ..common import SiconcFixScalarCoord
 
 
 class Cl(BaseCl):
     """Fixes for cl."""
 
-    def fix_file(self, filepath, output_dir):
+    def fix_file(self, filepath, output_dir, add_unique_suffix=False):
         """Fix hybrid pressure coordinate.
 
         Adds missing ``formula_terms`` attribute to file.
@@ -27,8 +27,10 @@ class Cl(BaseCl):
         ----------
         filepath : str
             Path to the original file.
-        output_dir : str
-            Path of the directory where the fixed file is saved to.
+        output_dir: Path
+            Output directory for fixed files.
+        add_unique_suffix: bool, optional (default: False)
+            Adds a unique suffix to `output_dir` for thread safety.
 
         Returns
         -------
@@ -36,7 +38,9 @@ class Cl(BaseCl):
             Path to the fixed file.
 
         """
-        new_path = self._fix_formula_terms(filepath, output_dir)
+        new_path = self._fix_formula_terms(
+            filepath, output_dir, add_unique_suffix=add_unique_suffix
+        )
         dataset = Dataset(new_path, mode='a')
         dataset.variables['a_bnds'][:] = dataset.variables['a_bnds'][:, ::-1]
         dataset.variables['b_bnds'][:] = dataset.variables['b_bnds'][:, ::-1]

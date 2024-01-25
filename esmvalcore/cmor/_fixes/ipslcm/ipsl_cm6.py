@@ -16,7 +16,7 @@ VARNAME_KEY = "ipsl_varname"
 class AllVars(Fix):
     """Fixes for all IPSLCM variables."""
 
-    def fix_file(self, filepath, output_dir):
+    def fix_file(self, filepath, output_dir, add_unique_suffix=False):
         """Select IPSLCM variable in filepath.
 
         This is done only if input file is a multi-variable one. This
@@ -31,8 +31,8 @@ class AllVars(Fix):
         However, we take care of ESMValTool policy re. dependencies licence
 
         """
-        if "_" + self.extra_facets.get("group",
-                                       "non-sense") + ".nc" not in filepath:
+        if "_" + self.extra_facets.get(
+                "group", "non-sense") + ".nc" not in str(filepath):
             # No need to filter the file
             logger.debug("Not filtering for %s", filepath)
             return filepath
@@ -47,11 +47,13 @@ class AllVars(Fix):
 
         # Proceed with CDO selvar
         varname = self.extra_facets.get(VARNAME_KEY, self.vardef.short_name)
-        alt_filepath = filepath.replace(".nc", "_cdo_selected.nc")
-        outfile = self.get_fixed_filepath(output_dir, alt_filepath)
+        alt_filepath = str(filepath).replace(".nc", "_cdo_selected.nc")
+        outfile = self.get_fixed_filepath(
+            output_dir, alt_filepath, add_unique_suffix=add_unique_suffix
+        )
         tim1 = time.time()
         logger.debug("Using CDO for selecting %s in %s", varname, filepath)
-        command = ["cdo", "-selvar,%s" % varname, filepath, outfile]
+        command = ["cdo", "-selvar,%s" % varname, str(filepath), str(outfile)]
         subprocess.run(command, check=True)
         logger.debug("CDO selection done in %.2f seconds", time.time() - tim1)
         return outfile

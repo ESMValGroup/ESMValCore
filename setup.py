@@ -28,38 +28,44 @@ REQUIREMENTS = {
     # Use with pip install . to install from source
     'install': [
         'cartopy',
-        # see https://github.com/SciTools/cf-units/issues/218
-        'cf-units>=3.0.0,<3.1.0,!=3.0.1.post0',  # ESMValCore/issues/1655
-        'dask[array]',
+        'cf-units',
+        'dask[array,distributed]',
+        'dask-jobqueue',
         'esgf-pyclient>=0.3.1',
-        'esmpy!=8.1.0',  # see github.com/ESMValGroup/ESMValCore/issues/1208
+        'esmf-regrid',
+        'esmpy!=8.1.0',
+        'filelock',
         'fiona',
         'fire',
         'geopy',
         'humanfriendly',
-        "importlib_resources;python_version<'3.9'",
+        "importlib_metadata;python_version<'3.10'",
         'isodate',
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
         'nested-lookup',
-        'netCDF4!=1.6.1',  # github.com/ESMValGroup/ESMValCore/issues/1723
-        'numpy',
-        'pandas',
+        'netCDF4',
+        'numpy!=1.24.3',
+        'packaging',
+        'pandas!=2.2.0',  # github.com/ESMValGroup/ESMValCore/pull/2305
         'pillow',
         'prov',
         'psutil',
+        'py-cordex',
         'pybtex',
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        'scitools-iris>=3.2.1',
-        'shapely[vectorized]',
-        'stratify',
+        # See the following issue for info on the iris pin below:
+        # https://github.com/ESMValGroup/ESMValTool/issues/3239#issuecomment-1613298587
+        'scitools-iris>=3.6.1',
+        'shapely>=2.0.0',
+        'stratify>=0.3',
         'yamale',
     ],
     # Test dependencies
     'test': [
-        'flake8<5.0',  # github.com/ESMValGroup/ESMValCore/issues/1696
+        'flake8',
         'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
         'pytest-cov>=2.10.1',
         'pytest-env',
@@ -72,14 +78,15 @@ REQUIREMENTS = {
         # MyPy library stubs
         'mypy>=0.990',
         'types-requests',
-        'types-pkg_resources',
         'types-PyYAML',
     ],
     # Documentation dependencies
     'doc': [
         'autodocsumm>=0.2.2',
-        'sphinx>5',
-        'sphinx_rtd_theme',
+        'ipython',
+        'nbsphinx',
+        'sphinx>=6.1.3',
+        'pydata_sphinx_theme',
     ],
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
@@ -88,7 +95,7 @@ REQUIREMENTS = {
         'docformatter',
         'isort',
         'pre-commit',
-        'prospector[with_pyroma,with_mypy]!=1.1.6.3,!=1.1.6.4',
+        'prospector[with_pyroma]>=1.9.0',
         'vprof',
         'yamllint',
         'yapf',
@@ -176,7 +183,7 @@ class RunLinter(CustomCommand):
 
 def read_authors(filename):
     """Read the list of authors from .zenodo.json file."""
-    with Path(filename).open() as file:
+    with Path(filename).open(encoding='utf-8') as file:
         info = json.load(file)
         authors = []
         for author in info['creators']:
@@ -187,7 +194,7 @@ def read_authors(filename):
 
 def read_description(filename):
     """Read the description from .zenodo.json file."""
-    with Path(filename).open() as file:
+    with Path(filename).open(encoding='utf-8') as file:
         info = json.load(file)
         return info['description']
 
@@ -196,7 +203,7 @@ setup(
     name='ESMValCore',
     author=read_authors('.zenodo.json'),
     description=read_description('.zenodo.json'),
-    long_description=Path('README.md').read_text(),
+    long_description=Path('README.md').read_text(encoding='utf-8'),
     long_description_content_type='text/markdown',
     url='https://www.esmvaltool.org',
     download_url='https://github.com/ESMValGroup/ESMValCore',
@@ -210,9 +217,9 @@ setup(
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Atmospheric Science',
         'Topic :: Scientific/Engineering :: GIS',

@@ -55,6 +55,12 @@ OUR_FACETS = (
         'project': 'obs4MIPs',
         'short_name': 'rsutcs',
     },
+    {
+        'dataset': 'CERES-EBAF',
+        'frequency': '*',
+        'project': 'obs4MIPs',
+        'short_name': 'rsutcs',
+    },
 )
 
 ESGF_FACETS = (
@@ -77,7 +83,7 @@ ESGF_FACETS = (
     {
         'project': 'CMIP6',
         'source_id': 'AWI-ESM-1-1-LR',
-        'variant_label': 'r1i1p1f1',
+        'member_id': 'r1i1p1f1',
         'experiment_id': 'historical',
         'grid_label': 'gn',
         'table_id': 'Amon',
@@ -97,6 +103,11 @@ ESGF_FACETS = (
         'project': 'obs4MIPs',
         'source_id': 'CERES-EBAF',
         'time_frequency': 'mon',
+        'variable': 'rsutcs',
+    },
+    {
+        'project': 'obs4MIPs',
+        'source_id': 'CERES-EBAF',
         'variable': 'rsutcs',
     },
 )
@@ -147,6 +158,11 @@ def test_esgf_search_files(mocker):
     # Set up some fake FileResults
     dataset_id = ('cmip5.output1.INM.inmcm4.historical'
                   '.mon.atmos.Amon.r1i1p1.v20130207')
+    dataset_id_template = (
+        'cmip5.%(product)s.%(valid_institute)s.%(model)s.'
+        '%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.'
+        '%(ensemble)s'
+    )
     filename0 = 'tas_Amon_inmcm4_historical_r1i1p1_185001-189912.nc'
     filename1 = 'tas_Amon_inmcm4_historical_r1i1p1_190001-200512.nc'
 
@@ -165,6 +181,7 @@ def test_esgf_search_files(mocker):
             'checksum': ['123'],
             'checksum_type': ['SHA256'],
             'dataset_id': dataset_id + '|aims3.llnl.gov',
+            'dataset_id_template_': [dataset_id_template],
             'project': ['CMIP5'],
             'size': 100,
             'title': filename0,
@@ -176,6 +193,7 @@ def test_esgf_search_files(mocker):
     file_aims1 = FileResult(
         {
             'dataset_id': dataset_id + '|aims3.llnl.gov',
+            'dataset_id_template_': [dataset_id_template],
             'project': ['CMIP5'],
             'size': 200,
             'title': filename1,
@@ -189,6 +207,7 @@ def test_esgf_search_files(mocker):
             'checksum': ['456'],
             'checksum_type': ['MD5'],
             'dataset_id': dataset_id + '|esgf2.dkrz.de',
+            'dataset_id_template_': [dataset_id_template],
             'project': ['CMIP5'],
             'size': 100,
             'title': filename0,
@@ -213,7 +232,6 @@ def test_esgf_search_files(mocker):
     connection.new_context.assert_called_with(
         pyesgf.search.context.FileSearchContext,
         **facets,
-        latest=True,
     )
     context.search.assert_called_with(
         batch_size=500,
@@ -245,7 +263,7 @@ def test_esgf_search_files(mocker):
 
 def test_esgf_search_uses_second_index_node(mocker):
     """Test that the second index node is used if the first is offline."""
-    search_result = mocker.sentinel.search_result
+    search_result = [mocker.sentinel.search_result]
     search_results = [
         requests.exceptions.ReadTimeout("Timeout error message"),
         search_result,
@@ -279,9 +297,30 @@ def test_esgf_search_fails(mocker):
     assert str(excinfo.value) == error_message
 
 
-def test_select_by_time():
+def test_select_latest_versions_filenotfound(mocker):
+    """Test `select_latest_versions` raises FileNotFoundError."""
+    file = mocker.create_autospec(ESGFFile, instance=True)
+    file.name = 'ta.nc'
+    file.dataset = 'CMIP6.MODEL.v1'
+    file.facets = {'version': 'v1'}
+    file.__repr__ = lambda _: 'ESGFFile:CMIP6/MODEL/v1/ta.nc'
+    result = _search.select_latest_versions(files=[file], versions='v2')
+    assert result == []
+
+
+@pytest.mark.parametrize('timerange,selection', [
+    ('1851/1852', slice(1, 3)),
+    ('1851/P1Y', slice(1, 3)),
+    ('*', slice(None)),
+])
+def test_select_by_time(timerange, selection):
     dataset_id = ('CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.historical'
                   '.r1i1p1f1.Amon.tas.gn.v20200212')
+    dataset_id_template = (
+        '%(mip_era)s.%(activity_drs)s.%(institution_id)s.'
+        '%(source_id)s.%(experiment_id)s.%(member_id)s.%(table_id)s.'
+        '%(variable_id)s.%(grid_label)s'
+    )
     filenames = [
         'tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_185001-185012.nc',
         'tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_185101-185112.nc',
@@ -293,6 +332,7 @@ def test_select_by_time():
             json={
                 'title': filename,
                 'dataset_id': dataset_id + '|xyz.com',
+                'dataset_id_template_': [dataset_id_template],
                 'project': ['CMIP5'],
                 'size': 100,
             },
@@ -301,20 +341,25 @@ def test_select_by_time():
     ]
     files = [ESGFFile([r]) for r in results]
 
-    result = _search.select_by_time(files, '1851/1852')
-    reference = files[1:3]
+    result = _search.select_by_time(files, timerange)
+    reference = files[selection]
     assert sorted(result) == sorted(reference)
 
 
 def test_select_by_time_nodate():
     dataset_id = (
         'cmip3.MIROC.miroc3_2_hires.historical.mon.atmos.run1.tas.v1')
+    dataset_id_template = (
+        '%(project)s.%(institute)s.%(model)s.%(experiment)s.'
+        '%(time_frequency)s.%(realm)s.%(ensemble)s.%(variable)s'
+    )
     filenames = ['tas_A1.nc']
     results = [
         FileResult(
             json={
                 'title': filename,
                 'dataset_id': dataset_id + '|xyz.com',
+                'dataset_id_template_': [dataset_id_template],
                 'project': ['CMIP5'],
                 'size': 100,
             },
@@ -327,32 +372,29 @@ def test_select_by_time_nodate():
     assert result == files
 
 
-def test_select_by_time_period():
-
-    dataset_id = ('CMIP6.CMIP.AWI.AWI-ESM-1-1-LR.historical'
-                  '.r1i1p1f1.Amon.tas.gn.v20200212')
-    filenames = [
-        'tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_185001-185012.nc',
-        'tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_185101-185112.nc',
-        'tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_185201-185212.nc',
-        'tas_Amon_AWI-ESM-1-1-LR_historical_r1i1p1f1_gn_185301-185312.nc',
-    ]
+def test_invalid_dataset_id_template():
+    dataset_id = (
+        'obs4MIPs.IUP.XCH4_CRDP3.xch4.mon.v100')
+    dataset_id_template = (
+        '%(project)s.%(institute)s.%(source_id)s.%(time_frequency)s'
+    )
+    filenames = ['xch4_ghgcci_l3_v100_200301_201412.nc']
     results = [
         FileResult(
             json={
                 'title': filename,
-                'dataset_id': dataset_id + '|xyz.com',
-                'project': ['CMIP5'],
+                'dataset_id': dataset_id + '|esgf.ceda.ac.uk',
+                'dataset_id_template_': [dataset_id_template],
+                'project': ['obs4MIPs'],
                 'size': 100,
+                'source_id': 'XCH4_CRDP3',
             },
             context=None,
         ) for filename in filenames
     ]
-    files = [ESGFFile([r]) for r in results]
+    file = ESGFFile(results)
 
-    result = _search.select_by_time(files, '1851/P1Y')
-    reference = files[1:3]
-    assert sorted(result) == sorted(reference)
+    assert file.name == filenames[0]
 
 
 def test_search_unknown_project():

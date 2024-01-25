@@ -38,7 +38,7 @@ class AllVars(NativeDatasetFix):
 
         # Fix time, latitude, and longitude coordinates
         # Note: 3D variables are currently not supported
-        self.fix_regular_time(cube)
+        self._fix_time(cube)
         self.fix_regular_lat(cube)
         self.fix_regular_lon(cube)
 
@@ -49,3 +49,35 @@ class AllVars(NativeDatasetFix):
         self.fix_var_metadata(cube)
 
         return CubeList([cube])
+
+    def _fix_time(self, cube):
+        """Fix time coordinate of cube.
+
+        For monthly data that does not correspond to point measurements, move
+        time points to center of time period given by time bounds (currently
+        the points are located at the end of the interval).
+
+        Example of monthly time coordinate before this fix (Jan. & Feb. 2000):
+            Points: ``[2000-02-01, 2000-03-01]``
+            Bounds: ``[[2000-01-01, 2000-02-01], [2000-02-01, 2000-03-01]]``
+
+        Example of monthly time coordinate after this fix (Jan. & Feb. 2000):
+            Points: ``[2000-01-15, 2000-02-14]``
+            Bounds: ``[[2000-01-01, 2000-02-01], [2000-02-01, 2000-03-01]]``
+
+        """
+        # Only modify time points if data contains a time dimension, is monthly
+        # data, and does not describe point measurements.
+        if not self.vardef.has_coord_with_standard_name('time'):
+            return
+        if self.extra_facets['frequency'] != 'mon':
+            return
+        for cell_method in cube.cell_methods:
+            if 'point' in cell_method.method:
+                return
+
+        # Fix time coordinate
+        time_coord = cube.coord('time')
+        if time_coord.bounds is not None:
+            time_coord.points = time_coord.bounds.mean(axis=-1)
+        self.fix_regular_time(cube, coord=time_coord)

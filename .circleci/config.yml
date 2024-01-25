@@ -2,8 +2,8 @@
 version: 2.1
 
 orbs:
-  coverage-reporter: codacy/coverage-reporter@11.4.1
-  codecov: codecov/codecov@1.2.3
+  coverage-reporter: codacy/coverage-reporter@13.13.7
+  codecov: codecov/codecov@3.2.5
 
 commands:
   check_changes:
@@ -25,20 +25,14 @@ commands:
       - run:
           name: Run tests
           command: |
+            mkdir -p test-reports
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
             flake8 -j 4
-            pytest -n 4 -m "not sequential" --junitxml=report-1.xml
-            pytest -n 0 -m "sequential" --cov-append --junitxml=report-2.xml
+            pytest -n 4 --junitxml=test-reports/report.xml
             esmvaltool version
-      - run:
-          name: Merge test reports
-          command: |
-            pip install junitparser
-            mkdir -p test-reports
-            junitparser merge report-*.xml test-reports/report.xml
       - store_test_results:
-          path: test-reports/
+          path: test-reports/report.xml
       - store_artifacts:
           path: /logs
       - run:
@@ -130,6 +124,9 @@ jobs:
             - /root/.cache/pip
             - .mypy_cache
             - .pytest_cache
+      - run:
+          name: Install gpg (required by codecov orb)
+          command: apt update && apt install -y gpg
       - codecov/upload:
           when: always
           file: 'test-reports/coverage.xml'
@@ -162,7 +159,7 @@ jobs:
     working_directory: /esmvaltool
     docker:
       - image: condaforge/mambaforge
-    resource_class: small
+    resource_class: medium
     steps:
       - run:
           command: |
@@ -172,7 +169,7 @@ jobs:
             mkdir /logs
             # conda update -y conda > /logs/conda.txt 2>&1
             # Create and activate conda environment
-            mamba create -y --name esmvaltool 'python=3.10'
+            mamba create -y --name esmvaltool 'python=3.11'
             set +x; conda activate esmvaltool; set -x
             # Install
             mamba install -y esmvalcore
@@ -185,7 +182,7 @@ jobs:
     # Test building documentation
     docker:
       - image: condaforge/mambaforge
-    resource_class: small
+    resource_class: medium
     steps:
       - checkout
       - run:

@@ -13,12 +13,12 @@ name: Install from Source
 
 # runs on a push on main and at the end of every day
 on:
-  # triggering on push without branch name will run tests everytime
+  # triggering on push without branch name will run tests every time
   # there is a push on any branch
   # turn it on only if needed
   push:
     branches:
-    - main
+      - main
   # run the test only if the PR is to main
   # turn it on if required
   #pull_request:
@@ -27,12 +27,17 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
+# Required shell entrypoint to have properly configured bash shell
+defaults:
+  run:
+    shell: bash -l {0}
+
 jobs:
   linux:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.9", "3.10", "3.11"]
       fail-fast: false
     name: Linux Python ${{ matrix.python-version }}
     steps:
@@ -47,18 +52,14 @@ jobs:
           miniforge-version: "latest"
           miniforge-variant: Mambaforge
           use-mamba: true
-      - shell: bash -l {0}
-        run: mkdir -p source_install_linux_artifacts_python_${{ matrix.python-version }}
+      - run: mkdir -p source_install_linux_artifacts_python_${{ matrix.python-version }}
       - name: Record versions
-        shell: bash -l {0}
         run: |
           mamba --version 2>&1 | tee source_install_linux_artifacts_python_${{ matrix.python-version }}/conda_version.txt
           python -V 2>&1 | tee source_install_linux_artifacts_python_${{ matrix.python-version }}/python_version.txt
       - name: Install
-        shell: bash -l {0}
         run: pip install -e .[develop] 2>&1 | tee source_install_linux_artifacts_python_${{ matrix.python-version }}/install.txt
       - name: Verify installation
-        shell: bash -l {0}
         run: |
           esmvaltool --help
           esmvaltool version 2>&1 | tee source_install_linux_artifacts_python_${{ matrix.python-version }}/version.txt
@@ -73,7 +74,7 @@ jobs:
     runs-on: "macos-latest"
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.9", "3.10", "3.11"]
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
@@ -88,18 +89,14 @@ jobs:
           miniforge-version: "latest"
           miniforge-variant: Mambaforge
           use-mamba: true
-      - shell: bash -l {0}
-        run: mkdir -p source_install_osx_artifacts_python_${{ matrix.python-version }}
+      - run: mkdir -p source_install_osx_artifacts_python_${{ matrix.python-version }}
       - name: Record versions
-        shell: bash -l {0}
         run: |
           mamba --version 2>&1 | tee source_install_osx_artifacts_python_${{ matrix.python-version }}/conda_version.txt
           python -V 2>&1 | tee source_install_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
       - name: Install
-        shell: bash -l {0}
         run: pip install -e .[develop] 2>&1 | tee source_install_osx_artifacts_python_${{ matrix.python-version }}/install.txt
       - name: Verify installation
-        shell: bash -l {0}
         run: |
           esmvaltool --help
           esmvaltool version 2>&1 | tee source_install_osx_artifacts_python_${{ matrix.python-version }}/version.txt

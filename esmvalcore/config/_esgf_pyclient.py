@@ -110,7 +110,7 @@ def read_config_file():
         if mode & stat.S_IRWXG or mode & stat.S_IRWXO:
             logger.warning("Correcting unsafe permissions on %s", CONFIG_FILE)
             os.chmod(CONFIG_FILE, stat.S_IRUSR | stat.S_IWUSR)
-        with CONFIG_FILE.open() as file:
+        with CONFIG_FILE.open(encoding='utf-8') as file:
             cfg = yaml.safe_load(file)
     else:
         logger.info(
@@ -143,7 +143,7 @@ def load_esgf_pyclient_config():
             # List of available index nodes: https://esgf.llnl.gov/nodes.html
             # Be careful about the url, not all search urls have CMIP3 data?
             'urls': [
-                'https://esgf-index1.ceda.ac.uk/esg-search',
+                'https://esgf.ceda.ac.uk/esg-search',
                 'https://esgf-node.llnl.gov/esg-search',
                 'https://esgf-data.dkrz.de/esg-search',
                 'https://esgf-node.ipsl.upmc.fr/esg-search',
