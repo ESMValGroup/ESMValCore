@@ -134,7 +134,7 @@ class _ESMPyScheme:
 
         Returns
         -------
-        _ESMPyRegridder
+        ESMPyRegridder
             Regridder instance.
 
         """
