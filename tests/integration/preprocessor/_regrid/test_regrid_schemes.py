@@ -5,7 +5,7 @@ from iris.cube import Cube
 
 from esmvalcore.preprocessor.regrid_schemes import (
     GenericFuncScheme,
-    _GenericRegridder,
+    GenericRegridder,
 )
 
 
@@ -39,7 +39,7 @@ def test_generic_func_scheme_regridder(generic_func_scheme, mocker):
         mocker.sentinel.src_cube,
         mocker.sentinel.tgt_cube,
     )
-    assert isinstance(regridder, _GenericRegridder)
+    assert isinstance(regridder, GenericRegridder)
     assert regridder.src_cube == mocker.sentinel.src_cube
     assert regridder.tgt_cube == mocker.sentinel.tgt_cube
     assert regridder.func == set_data_to_const

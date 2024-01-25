@@ -10,6 +10,7 @@ from esmvalcore.preprocessor._regrid_esmpy import (
     ESMPyAreaWeighted,
     ESMPyLinear,
     ESMPyNearest,
+    ESMPyRegridder,
 )
 from esmvalcore.preprocessor._regrid_unstructured import UnstructuredNearest
 
@@ -20,15 +21,15 @@ __all__ = [
     'ESMPyAreaWeighted',
     'ESMPyLinear',
     'ESMPyNearest',
+    'ESMPyRegridder',
     'GenericFuncScheme',
+    'GenericRegridder',
     'UnstructuredNearest',
 ]
 
 
-class _GenericRegridder:
+class GenericRegridder:
     r"""Generic function regridder.
-
-    This class can be used in :meth:`iris.cube.Cube.regrid`.
 
     Parameters
     ----------
@@ -101,7 +102,7 @@ class GenericFuncScheme:
         kwargs = ', '.join(f"{k}={v}" for (k, v) in self.kwargs.items())
         return f'GenericFuncScheme({self.func.__name__}, {kwargs})'
 
-    def regridder(self, src_cube: Cube, tgt_cube: Cube) -> _GenericRegridder:
+    def regridder(self, src_cube: Cube, tgt_cube: Cube) -> GenericRegridder:
         """Get regridder.
 
         Parameters
@@ -113,8 +114,8 @@ class GenericFuncScheme:
 
         Returns
         -------
-        _GenericRegridder
+        GenericRegridder
             Regridder instance.
 
         """
-        return _GenericRegridder(src_cube, tgt_cube, self.func, **self.kwargs)
+        return GenericRegridder(src_cube, tgt_cube, self.func, **self.kwargs)
