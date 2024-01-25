@@ -749,8 +749,12 @@ def regrid(
     # -> Return source cube with target coordinates
     if _horizontal_grid_is_close(cube, target_grid_cube):
         for coord in ['latitude', 'longitude']:
-            cube.coord(coord).points = target_grid_cube.coord(coord).points
-            cube.coord(coord).bounds = target_grid_cube.coord(coord).bounds
+            cube.coord(coord).points = (
+                target_grid_cube.coord(coord).core_points()
+            )
+            cube.coord(coord).bounds = (
+                target_grid_cube.coord(coord).core_bounds()
+            )
         return cube
 
     # Load scheme, rechunk and regrid
