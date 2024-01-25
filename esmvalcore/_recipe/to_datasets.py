@@ -358,7 +358,6 @@ def _get_datasets_for_variable(
         for template1 in template0.from_ranges():
             for supplementary_facets in supplementaries:
                 template1.add_supplementary(**supplementary_facets)
-            print(supplementary_facets)
             for supplementary_ds in template1.supplementaries:
                 supplementary_ds.facets.pop('preprocessor', None)
             for dataset in _dataset_from_files(template1):
@@ -368,7 +367,6 @@ def _get_datasets_for_variable(
                 logger.debug("Found %s", dataset.summary(shorten=True))
                 datasets.append(dataset)
                 idx += 1
-            print(dataset)
 
     return datasets
 
