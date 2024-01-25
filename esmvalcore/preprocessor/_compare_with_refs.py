@@ -62,7 +62,8 @@ def bias(
         Cube which is used as reference for the bias calculation. If ``None``,
         `products` needs to be a :obj:`set` of
         `~esmvalcore.preprocessor.PreprocessorFile` objects and exactly one
-        dataset in `products` needs the facet ``reference_for_bias: true``.
+        dataset in `products` needs the facet ``reference_for_bias: true``. Do
+        not specify this argument in a recipe.
     bias_type:
         Bias type that is calculated. Must be one of ``'absolute'`` (dataset -
         ref) or ``'relative'`` ((dataset - ref) / ref).
@@ -213,6 +214,7 @@ def distance_metric(
     ref_cube: Optional[Cube] = None,
     coords: Iterable[Coord] | Iterable[str] | None = None,
     keep_reference_dataset: bool = True,
+    **kwargs,
 ) -> set[PreprocessorFile] | CubeList:
     """Calculate distance metrics.
 
@@ -253,12 +255,13 @@ def distance_metric(
             :ref:`supplementary_variables`) or calculated from the input data
             (this only works for regular grids). By default, **NO**
             supplementary variables will be used; they need to be explicitly
-            requested.
+            requested in the recipe.
     ref_cube:
         Cube which is used as reference for the distance metric calculation. If
         ``None``, `products` needs to be a :obj:`set` of
-        `~esmvalcore.preprocessor.PreprocessorFile` objects and exactly one
-        dataset in `products` needs the facet ``reference_for_metric: true``.
+        :class:`~esmvalcore.preprocessor.PreprocessorFile` objects and exactly
+        one dataset in `products` needs the facet ``reference_for_metric:
+        true``. Do not specify this argument in a recipe.
     coords:
         Coordinates over which the distance metric is calculated. If ``None``,
         calculate the metric over all coordinates, which results in a scalar
@@ -266,6 +269,26 @@ def distance_metric(
     keep_reference_dataset:
         If ``True``, also calculate the distance of the reference dataset with
         itself. If ``False``, drop the reference dataset.
+    **kwargs:
+        Additional options for the metric calculation. The following keyword
+        arguments are supported:
+
+        - `weighted_rmse` and `rmse`: none.
+        - `weighted_pearsonr` and `pearsonr`:
+          - ``mdtol`` (:obj:`float`, default=1.0): Tolerance of missing data.
+            The missing data fraction is calculated based on the number of grid
+            cells masked in both cubes.
+            If this fraction exceed ``mdtol``, the returned value in the
+            corresponding cell is masked.
+            ``mdtol=0`` means no missing data is tolerated while ``mdtol=1``
+            means the resulting element will be masked if and only if all
+            contributing elements are masked in both cubes.
+          - ``common_mask`` (:obj:`bool`, default=``False``): If ``True``,
+            applies a common mask to both cubes so only cells which are
+            unmasked in both cubes contribute to the calculation.
+            If ``False``, the variance for each cube is calculated from all
+            available cells.
+
 
     Returns
     -------
@@ -285,7 +308,7 @@ def distance_metric(
     iris.exceptions.CoordinateNotFoundError
         `longitude` is not found in cube if a weighted metric shall be
         calculated, `latitude` is in `coords`, and no `cell_area` is given
-        as:ref:`supplementary_variables`.
+        as :ref:`supplementary_variables`.
 
     """
     reference_product = None
@@ -322,7 +345,8 @@ def distance_metric(
     # each element
     if all_cubes_given:
         cubes = [
-            _calculate_metric(c, ref_cube, metric, coords) for c in products
+            _calculate_metric(c, ref_cube, metric, coords, **kwargs)
+            for c in products
         ]
         return CubeList(cubes)
 
@@ -335,7 +359,7 @@ def distance_metric(
         cube = concatenate(product.cubes)
 
         # Calculate distance metric
-        cube = _calculate_metric(cube, ref_cube, metric, coords)
+        cube = _calculate_metric(cube, ref_cube, metric, coords, **kwargs)
 
         # Adapt metadata and provenance information
         product.attributes['standard_name'] = cube.standard_name
@@ -382,6 +406,7 @@ def _calculate_metric(
     ref_cube: Cube,
     metric: MetricType,
     coords: Iterable[Coord] | Iterable[str] | None,
+    **kwargs,
 ) -> Cube:
     """Calculate metric for a single cube relative to a reference cube."""
     # Make sure that dimensional metadata of data and ref data is compatible
@@ -404,10 +429,12 @@ def _calculate_metric(
     # possible since some operations (e.g., sqrt()) are not available for cubes
     coords = _get_coords(cube, coords)
     metrics_funcs = {
-        'weighted_rmse': partial(_calculate_rmse, weighted=True),
-        'rmse': partial(_calculate_rmse, weighted=False),
-        'weighted_pearsonr': partial(_calculate_pearsonr, weighted=True),
-        'pearsonr': partial(_calculate_pearsonr, weighted=False),
+        'weighted_rmse': partial(_calculate_rmse, weighted=True, **kwargs),
+        'rmse': partial(_calculate_rmse, weighted=False, **kwargs),
+        'weighted_pearsonr': partial(
+            _calculate_pearsonr, weighted=True, **kwargs
+        ),
+        'pearsonr': partial(_calculate_pearsonr, weighted=False, **kwargs),
     }
     if metric not in metrics_funcs:
         raise ValueError(
@@ -499,9 +526,9 @@ def _calculate_pearsonr(
     coords: Iterable[Coord] | Iterable[str],
     *,
     weighted: bool,
+    **kwargs,
 ) -> tuple[np.ndarray | da.Array, CubeMetadata]:
     """Calculate Pearson correlation coefficient."""
-    axis = _get_all_coord_dims(cube, coords)
     weights = _get_weights(cube, coords) if weighted else None
     # TODO: change!!!
     data = cube.collapsed(coords, iris.analysis.MEAN).core_data()

@@ -27,7 +27,7 @@ roughly following the default order in which preprocessor functions are applied:
 * :ref:`Detrend`
 * :ref:`Rolling window statistics`
 * :ref:`Unit conversion`
-* :ref:`Bias`
+* :ref:`Comparison with reference dataset`
 * :ref:`Other`
 
 See :ref:`preprocessor_functions` for implementation details and the exact default order.
@@ -304,11 +304,12 @@ In ESMValCore we call both types of variables "supplementary variables".
 ===================================================================== ============================== =====================================
 Preprocessor                                                          Variable short name            Variable standard name
 ===================================================================== ============================== =====================================
-:ref:`area_statistics<area_statistics>` [#f4]                         ``areacella``, ``areacello``   cell_area
-:ref:`mask_landsea<land/sea/ice masking>` [#f4]                       ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
-:ref:`mask_landseaice<ice masking>` [#f3]                             ``sftgif``                     land_ice_area_fraction
-:ref:`volume_statistics<volume_statistics>` [#f4]                     ``volcello``                   ocean_volume
-:ref:`weighting_landsea_fraction<land/sea fraction weighting>` [#f3]  ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
+:ref:`area_statistics<area_statistics>` [#f4]_                        ``areacella``, ``areacello``   cell_area
+:ref:`mask_landsea<land/sea/ice masking>` [#f4]_                      ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
+:ref:`mask_landseaice<ice masking>` [#f3]_                            ``sftgif``                     land_ice_area_fraction
+:ref:`volume_statistics<volume_statistics>` [#f4]_                    ``volcello``                   ocean_volume
+:ref:`weighting_landsea_fraction<land/sea fraction weighting>` [#f3]_ ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
+:ref:`distance_metric<distance_metric>` [#f5]_                        ``areacella``, ``areacello``   cell_area
 ===================================================================== ============================== =====================================
 
 .. [#f3] This preprocessor requires at least one of the mentioned supplementary
@@ -2377,15 +2378,17 @@ the time units in the variable.
 See also :func:`esmvalcore.preprocessor.accumulate_coordinate.`
 
 
-.. _bias:
+.. _comparison_with_refs:
 
-Bias
-====
+Comparison with reference dataset
+=================================
 
-The bias module contains the following preprocessor functions:
+This module contains the following preprocessor functions:
 
 * ``bias``: Calculate absolute or relative biases with respect to a reference
-  dataset
+  dataset.
+* ``distance_metric``: Calculate absolute or relative biases with respect to a
+  reference dataset.
 
 ``bias``
 --------
@@ -2449,6 +2452,99 @@ Example:
           exclude: [CanESM2]
 
 See also :func:`esmvalcore.preprocessor.bias`.
+
+.. _distance_metric:
+
+``distance_metric``
+-------------------
+
+This function calculates a distance metric with respect to a given reference
+dataset.
+For this, exactly one input dataset needs to be declared as
+``reference_for_metric: true`` in the recipe, e.g.,
+
+.. code-block:: yaml
+
+  datasets:
+    - {dataset: CanESM5, project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: CESM2,   project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: MIROC6,  project: CMIP6, ensemble: r1i1p1f1, grid: gn}
+    - {dataset: ERA-Interim, project: OBS6, tier: 3, type: reanaly, version: 1,
+       reference_for_metric: true}
+
+In the example above, ERA-Interim is used as reference dataset for the distance
+metric calculation.
+All datasets need to have the same shape and coordinates.
+To ensure this, the preprocessors :func:`esmvalcore.preprocessor.regrid` and/or
+:func:`esmvalcore.preprocessor.regrid_time` might be helpful.
+
+The ``distance_metric`` preprocessor supports the following arguments in the
+recipe:
+
+* ``metric`` (:obj:`str`): Distance metric that is calculated.
+  Must be one of ``'weighted_rmse'`` (weighted root mean square error),
+  ``'rmse'`` (unweighted root mean square error), ``'weighted_pearsonr'``
+  (weighted Pearson correlation coefficient), ``'pearsonr'`` (unweighted
+  Pearson correlation coefficient).
+
+  .. note::
+    Metrics starting with `weighted_` will calculate weighted distance metrics
+    if possible.
+    Currently, the following `coords` (or any combinations that include them)
+    will trigger weighting: `time` (will use lengths of time intervals as
+    weights) and `latitude` (will use cell area weights).
+    Time weights are always calculated from the input data.
+    Area weights can be given as supplementary variables to the recipe
+    (`areacella` or `areacello`, see :ref:`supplementary_variables`) or
+    calculated from the input data (this only works for regular grids).
+    By default, **NO** supplementary variables will be used; they need to be
+    explicitly requested in the recipe.
+* ``coords`` (:obj:`list` of :obj:`str`, default: ``None``): Coordinates over
+  which the distance metric is calculated.
+  If ``None``, calculate the metric over all coordinates, which results in a
+  scalar cube.
+* ``keep_reference_dataset`` (:obj:`bool`, default: ``True``): If ``True``,
+  also calculate the distance of the reference dataset with itself.
+  If ``False``, drop the reference dataset.
+* ``exclude`` (:obj:`list` of :obj:`str`): Exclude specific datasets from
+  this preprocessor.
+  Note that this option is only available in the recipe, not when using
+  :func:`esmvalcore.preprocessor.distance_metric` directly (e.g., in another
+  python script).
+  If the reference dataset has been excluded, an error is raised.
+* Other parameters are directly used for the metric calculation:
+  The following keyword arguments are supported:
+
+  - `weighted_rmse` and `rmse`: none.
+  - `weighted_pearsonr` and `pearsonr`:
+    - ``mdtol`` (:obj:`float`, default=1.0): Tolerance of missing data.
+      The missing data fraction is calculated based on the number of grid cells
+      masked in both cubes.
+      If this fraction exceed ``mdtol``, the returned value in the
+      corresponding cell is masked.
+      ``mdtol=0`` means no missing data is tolerated while ``mdtol=1`` means
+      the resulting element will be masked if and only if all contributing
+      elements are masked in both cubes.
+    - ``common_mask`` (:obj:`bool`, default=``False``): If ``True``, applies a
+      common mask to both cubes so only cells which are unmasked in both cubes
+      contribute to the calculation.
+      If ``False``, the variance for each cube is calculated from all available
+      cells.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_pearsonr:
+        distance_metric:
+          metric: weighted_pearsonr
+          coords: [latitude, longitude]
+          keep_reference_dataset: true
+          exclude: [CanESM2]
+          common_mask: true
+
+See also :func:`esmvalcore.preprocessor.distance_metric`.
 
 
 .. _Memory use:

@@ -445,7 +445,7 @@ def test_distance_metric(
 
 
 TEST_DISTANCE_METRICS_LAZY = [
-    # ('weighted_rmse', 2.0, 'RMSE', 'rmse_tas', 'K'),
+    ('weighted_rmse', [1.2278657, 3.0784798], 'RMSE', 'rmse_tas', 'K'),
     ('rmse', [1.224744871, 3.082207001], 'RMSE', 'rmse_tas', 'K'),
 ]
 
