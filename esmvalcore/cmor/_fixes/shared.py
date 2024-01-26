@@ -447,10 +447,10 @@ def get_time_bounds(time: Coord, freq: str) -> np.ndarray:
 
     For monthly data, use the first day of the current month and the first day
     of the next month. For yearly data, use 1 January of the current year and 1
-    January of the next year. For decadal data, use 1 January 5 years ago/after
-    from the current year. For other frequencies (daily or `n`-hourly, where
-    `n` is a divisor of 24), half of the frequency is subtracted/added from the
-    current point in time to get the bounds.
+    January of the next year. For decadal data, use 1 January 5 years
+    before/after the current year. For other frequencies (daily or `n`-hourly,
+    where `n` is a divisor of 24), half of the frequency is subtracted/added
+    from the current point in time to get the bounds.
 
     Parameters
     ----------

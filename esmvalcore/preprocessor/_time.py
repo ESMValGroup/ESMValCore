@@ -1002,7 +1002,7 @@ def regrid_time(
 
     * Decadal data (e.g., ``frequency='dec'``): 1 January 00:00:00 for the
       given year. Example: 1 January 2005 00:00:00 for given year 2005 (decade
-      2000-2009).
+      2000-2010).
     * Yearly data (e.g., ``frequency='yr'``): 1 July 00:00:00 for each year.
       Example: 1 July 1993 00:00:00 for the year 1993.
     * Monthly data (e.g., ``frequency='mon'``): 15th day 00:00:00 for each
@@ -1016,9 +1016,10 @@ def regrid_time(
       09:00:00-10:00:00 (hourly data).
 
     The corresponding time bounds will be set according to the rules described
-    in :func:`esmvalcore.cmor.fixes.get_time_bounds`. The data type will be set
-    to `float64` (CMOR default for coordinates). Potential auxiliary time
-    coordinates (e.g., `day_of_year`) are also changed if present.
+    in :func:`esmvalcore.cmor.fixes.get_time_bounds`. The data type of the new
+    time coordinate will be set to `float64` (CMOR default for coordinates).
+    Potential auxiliary time coordinates (e.g., `day_of_year`) are also changed
+    if present.
 
     This function does not alter the data in any way.
 

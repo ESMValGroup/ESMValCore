@@ -1615,7 +1615,7 @@ This function aligns the time points and bounds of an input dataset according
 to the following rules:
 
 * Decadal data: 1 January 00:00:00 for the given year.
-  Example: 1 January 2005 00:00:00 for given year 2005 (decade 2000-2009).
+  Example: 1 January 2005 00:00:00 for given year 2005 (decade 2000-2010).
 * Yearly data: 1 July 00:00:00 for each year.
   Example: 1 July 1993 00:00:00 for the year 1993.
 * Monthly data: 15th day 00:00:00 for each month.
@@ -1627,13 +1627,15 @@ to the following rules:
   for interval 15:00:00-18:00:00 (3-hourly data), or 09:30:00 for interval
   09:00:00-10:00:00 (hourly data).
 
-The frequency of the input data is determined from the CMOR table of the
-corresponding variable.
+The frequency of the input data is automatically determined from the CMOR table
+of the corresponding variable, but can be overwritten in the recipe if
+necessary.
 This function does not alter the data in any way.
 
 .. note::
 
-  By default, this will not change the calendar of the input time coordinate.
+  By default, this preprocessor will not change the calendar of the input time
+  coordinate.
   For decadal, yearly, and monthly data, it is possible to change the calendar
   using the optional `calendar` argument.
   Be aware that changing the calendar might introduce (small) errors to your
@@ -1641,6 +1643,9 @@ This function does not alter the data in any way.
   length).
 
 Parameters:
+    * `frequency`: Data frequency.
+      If not given, use the one from the CMOR tables of the corresponding
+      variable.
     * `calendar`: If given, transform the calendar to the one specified
       (examples: `standard`, `365_day`, etc.).
       This only works for decadal, yearly and monthly data, and will raise an
