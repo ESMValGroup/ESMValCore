@@ -1218,8 +1218,7 @@ The ``_time.py`` module contains the following preprocessor functions:
 * resample_time_: Resample data
 * resample_hours_: Convert between N-hourly frequencies by resampling
 * anomalies_: Compute (standardized) anomalies
-* regrid_time_: Aligns the time axis of each dataset to have common time
-  points and calendars.
+* regrid_time_: Aligns the time coordinate of each dataset.
 * timeseries_filter_: Allows application of a filter to the time-series data.
 * local_solar_time_: Convert cube with UTC time to local solar time.
 
@@ -1612,13 +1611,54 @@ See also :func:`esmvalcore.preprocessor.anomalies`.
 ``regrid_time``
 ---------------
 
-This function aligns the time points of each component dataset so that the Iris
-cubes from different datasets can be subtracted. The operation makes the
-datasets time points common; it also resets the time
-bounds and auxiliary coordinates to reflect the artificially shifted time
-points. Current implementation for monthly and daily data; the ``frequency`` is
-set automatically from the variable CMOR table unless a custom ``frequency`` is
-set manually by the user in recipe.
+This function aligns the time points and bounds of an input dataset according
+to the following rules:
+
+* Decadal data: 1 January 00:00:00 for the given year.
+  Example: 1 January 2005 00:00:00 for given year 2005 (decade 2000-2009).
+* Yearly data: 1 July 00:00:00 for each year.
+  Example: 1 July 1993 00:00:00 for the year 1993.
+* Monthly data: 15th day 00:00:00 for each month.
+  Example: 15 October 1993 00:00:00 for the month October 1993.
+* Daily data: 12:00:00 for each day.
+  Example: 14 March 1996 12:00:00 for the day 14 March 1996.
+* `n`-hourly data where `n` is a divisor of 24: center of each time interval.
+  Example: 03:00:00 for interval 00:00:00-06:00:00 (6-hourly data), 16:30:00
+  for interval 15:00:00-18:00:00 (3-hourly data), or 09:30:00 for interval
+  09:00:00-10:00:00 (hourly data).
+
+The frequency of the input data is determined from the CMOR table of the
+corresponding variable.
+This function does not alter the data in any way.
+
+.. note::
+
+  By default, this will not change the calendar of the input time coordinate.
+  For decadal, yearly, and monthly data, it is possible to change the calendar
+  using the optional `calendar` argument.
+  Be aware that changing the calendar might introduce (small) errors to your
+  data, especially for extensive quantities (those that depend on the period
+  length).
+
+Parameters:
+    * `calendar`: If given, transform the calendar to the one specified
+      (examples: `standard`, `365_day`, etc.).
+      This only works for decadal, yearly and monthly data, and will raise an
+      error for other frequencies.
+      If not set, the calendar will not be changed.
+    * `units` (default: `days since 1850-01-01 00:00:00`): Reference time units
+      used if the calendar of the data is changed.
+      Ignored if `calendar` is not set.
+
+Examples:
+
+Change the input calendar to `standard` and use custom units:
+
+.. code-block:: yaml
+
+  regrid_time:
+    calendar: standard
+    units: days since 2000-01-01
 
 See also :func:`esmvalcore.preprocessor.regrid_time`.
 
