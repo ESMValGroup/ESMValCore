@@ -1357,6 +1357,14 @@ def test_regrid_time_invalid_freq_for_calendar(cube_1d_time, freq):
         regrid_time(cube_1d_time, freq, calendar='365_day')
 
 
+@pytest.mark.parametrize('freq', ['5hr', '7hrPt', '9hrCM', '10hr'])
+def test_regrid_time_hour_no_divisor_of_24(cube_1d_time, freq):
+    """Test ``regrid_time``."""
+    msg = f"For `n`-hourly data, `n` must be a divisor of 24, got '{freq}'"
+    with pytest.raises(NotImplementedError, match=msg):
+        regrid_time(cube_1d_time, freq)
+
+
 class TestTimeseriesFilter(tests.Test):
     """Tests for timeseries filter."""
     def setUp(self):
