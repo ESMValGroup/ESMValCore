@@ -1124,28 +1124,29 @@ def regrid_time(
 
 def _get_new_dates(frequency: str, coord: Coord) -> list[datetime.datetime]:
     """Get transformed dates."""
-    years = [p.year for p in coord.units.num2date(coord.points)]
-    months = [p.month for p in coord.units.num2date(coord.points)]
-    days = [p.day for p in coord.units.num2date(coord.points)]
+    dates = coord.units.num2date(coord.points)
 
+    # Decadal data
     if 'dec' in frequency:
-        dates = [datetime.datetime(year, 1, 1, 0, 0, 0) for year in years]
+        dates = [datetime.datetime(d.year, 1, 1, 0, 0, 0) for d in dates]
 
+    # Yearly data
     elif 'yr' in frequency:
-        dates = [datetime.datetime(year, 7, 1, 0, 0, 0) for year in years]
+        dates = [datetime.datetime(d.year, 7, 1, 0, 0, 0) for d in dates]
 
+    # Monthly data
     elif 'mon' in frequency:
         dates = [
-            datetime.datetime(year, month, 15, 0, 0, 0)
-            for (year, month) in zip(years, months)
+            datetime.datetime(d.year, d.month, 15, 0, 0, 0) for d in dates
         ]
 
+    # Daily data
     elif 'day' in frequency:
         dates = [
-            datetime.datetime(year, month, day, 12, 0, 0)
-            for (year, month, day) in zip(years, months, days)
+            datetime.datetime(d.year, d.month, d.day, 12, 0, 0) for d in dates
         ]
 
+    # Subdaily data
     elif 'hr' in frequency:
         (n_hours_str, _, _) = frequency.partition('hr')
         if not n_hours_str:
@@ -1157,12 +1158,12 @@ def _get_new_dates(frequency: str, coord: Coord) -> list[datetime.datetime]:
                 f"For `n`-hourly data, `n` must be a divisor of 24, got "
                 f"'{frequency}'"
             )
-        hours = [p.hour for p in coord.units.num2date(coord.points)]
         half_interval = datetime.timedelta(hours=n_hours / 2.0)
         dates = [
-            datetime.datetime(year, month, day, hour - hour % n_hours, 0, 0) +
-            half_interval
-            for (year, month, day, hour) in zip(years, months, days, hours)
+            datetime.datetime(
+                d.year, d.month, d.day, d.hour - d.hour % n_hours, 0, 0
+            ) + half_interval
+            for d in dates
         ]
     else:
         raise NotImplementedError(f"Frequency '{frequency}' is not supported")
