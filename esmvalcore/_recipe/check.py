@@ -100,7 +100,12 @@ def duplicate_datasets(
         checked_datasets_.append(dataset)
 
 
-def variable(var: dict[str, Any], required_keys: Iterable[str]):
+def variable(
+    var: dict[str, Any],
+    required_keys: Iterable[str],
+    diagnostic: str,
+    variable_group: str
+) -> None:
     """Check variables as derived from recipe."""
     required = set(required_keys)
     missing = required - set(var)
@@ -108,8 +113,8 @@ def variable(var: dict[str, Any], required_keys: Iterable[str]):
         raise RecipeError(
             f"Missing keys {missing} in\n"
             f"{pformat(var)}\n"
-            "for variable {var['variable_group']} in diagnostic "
-            f"{var['diagnostic']}")
+            f"for variable {variable_group} in diagnostic "
+            f"{diagnostic}")
 
 
 def _log_data_availability_errors(dataset):
