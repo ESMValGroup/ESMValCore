@@ -1,4 +1,5 @@
 """Horizontal and vertical regridding module."""
+from __future__ import annotations
 
 import importlib
 import inspect
@@ -10,7 +11,7 @@ from copy import deepcopy
 from decimal import Decimal
 from functools import partial
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 
 import dask.array as da
 import iris
@@ -1013,7 +1014,7 @@ def _rechunk_aux_factory_dependencies(
 
 def extract_levels(
     cube: iris.cube.Cube,
-    levels: Union[np.typing.ArrayLike, da.Array],
+    levels: np.typing.ArrayLike | da.Array,
     scheme: str,
     coordinate: Optional[str] = None,
     rtol: float = 1e-7,
