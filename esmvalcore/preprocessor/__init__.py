@@ -8,6 +8,8 @@ from pathlib import Path
 from pprint import pformat
 from typing import Any, Iterable
 
+import dask
+from dask.graph_manipulation import bind
 from iris.cube import Cube
 
 from .._provenance import TrackedFile
@@ -27,6 +29,7 @@ from ._cycles import amplitude
 from ._derive import derive
 from ._detrend import detrend
 from ._io import (
+    LazyFile,
     _get_debug_filename,
     _sort_products,
     concatenate,
@@ -222,6 +225,10 @@ MULTI_MODEL_FUNCTIONS = {
 }
 
 
+def _delayed(func):
+    return dask.delayed(func, pure=False, traverse=False)
+
+
 def _get_itype(step):
     """Get the input type of a preprocessor function."""
     function = globals()[step]
@@ -360,7 +367,8 @@ def preprocess(
 ):
     """Run preprocessor."""
     logger.debug("Running preprocessor step %s", step)
-    function = globals()[step]
+    import esmvalcore.preprocessor
+    function = getattr(esmvalcore.preprocessor, step)
     itype = _get_itype(step)
 
     for item in items:
@@ -378,7 +386,7 @@ def preprocess(
 
     items = []
     for item in result:
-        if isinstance(item, (PreprocessorFile, Cube, str, Path)):
+        if isinstance(item, (PreprocessorFile, Cube, str, Path, LazyFile)):
             items.append(item)
         else:
             items.extend(item)
@@ -405,6 +413,11 @@ def get_step_blocks(steps, order):
             prev_step_type = step_type
             block.append(step)
     return blocks
+
+
+@_delayed
+def _lazy_get_first(elems):
+    return elems[0]
 
 
 class PreprocessorFile(TrackedFile):
@@ -464,17 +477,20 @@ class PreprocessorFile(TrackedFile):
             raise ValueError(
                 f"PreprocessorFile {self} has no settings for step {step}"
             )
-        self.cubes = preprocess(self.cubes, step,
-                                input_files=self._input_files,
-                                output_file=self.filename,
-                                debug=debug,
-                                **self.settings[step])
+        self.cubes = _delayed(preprocess)(
+            self.cubes,
+            step,
+            input_files=self._input_files,
+            output_file=self.filename,
+            debug=debug,
+            **self.settings[step],
+        )
 
     @property
     def cubes(self):
         """Cubes."""
         if self._cubes is None:
-            self._cubes = [ds.load() for ds in self.datasets]
+            self._cubes = [_delayed(ds.load)() for ds in self.datasets]
         return self._cubes
 
     @cubes.setter
@@ -483,24 +499,29 @@ class PreprocessorFile(TrackedFile):
 
     def save(self):
         """Save cubes to disk."""
-        preprocess(self._cubes,
-                   'save',
-                   input_files=self._input_files,
-                   **self.settings['save'])
+        return _lazy_get_first(
+            _delayed(preprocess)(
+                self._cubes,
+                'save',
+                input_files=self._input_files,
+                **self.settings['save'],
+            ),
+        )
 
     def close(self):
         """Close the file."""
         if self._cubes is not None:
-            self._update_attributes()
-            self.save()
+            self.cubes = self._update_attributes(self._cubes)
+            lazy_file = self.save()
+            lazy_provenance = bind(_delayed(self.save_provenance)(), lazy_file)
             self._cubes = None
-            self.save_provenance()
+            return lazy_file, lazy_provenance
+        raise ValueError(f"{self.filename} has already been closed.")
 
-    def _update_attributes(self):
+    @_delayed
+    def _update_attributes(self, cubes):
         """Update product attributes from cube metadata."""
-        if not self._cubes:
-            return
-        ref_cube = self._cubes[0]
+        ref_cube = cubes[0]
 
         # Names
         names = {
@@ -518,6 +539,7 @@ class PreprocessorFile(TrackedFile):
         # Frequency
         if 'frequency' in ref_cube.attributes:
             self.attributes['frequency'] = ref_cube.attributes['frequency']
+        return cubes
 
     @property
     def is_closed(self):
@@ -556,13 +578,24 @@ class PreprocessorFile(TrackedFile):
         return '_'.join(identifier)
 
 
-def _apply_multimodel(products, step, debug):
+def _apply_multimodel(
+    products: list[PreprocessorFile],
+    step: str,
+    debug: bool,
+):
     """Apply multi model step to products."""
     settings, exclude = _get_multi_model_settings(products, step)
 
+    include = products - exclude
     logger.debug("Applying %s to\n%s", step,
-                 '\n'.join(str(p) for p in products - exclude))
-    result = preprocess(products - exclude, step, **settings)
+                 '\n'.join(str(p) for p in include))
+    # TODO: make this delayed by computing the number of outputs beforeforehand
+    mapping = dask.compute(
+        {p.filename: p.cubes
+         for p in _sort_products(include)})[0]
+    for product in products:
+        product.cubes = mapping[product.filename]
+    result = preprocess(include, step, **settings)
     products = set(result) | exclude
 
     if debug:
@@ -589,6 +622,7 @@ class PreprocessingTask(BaseTask):
         """Initialize."""
         _check_multi_model_settings(products)
         super().__init__(name=name, products=products)
+        self.lazy_files: list[LazyFile] = []
         self.order = list(order)
         self.debug = debug
         self.write_ncl_interface = write_ncl_interface
@@ -645,6 +679,7 @@ class PreprocessingTask(BaseTask):
         blocks = get_step_blocks(steps, self.order)
 
         saved = set()
+        lazy_provenance = []
         for block in blocks:
             logger.debug("Running block %s", block)
             if block[0] in MULTI_MODEL_FUNCTIONS:
@@ -659,16 +694,27 @@ class PreprocessingTask(BaseTask):
                             product.apply(step, self.debug)
                     if block == blocks[-1]:
                         product.cubes  # pylint: disable=pointless-statement
-                        product.close()
+                        file, provenance = product.close()
+                        self.lazy_files.append(file)
+                        lazy_provenance.append(provenance)
                         saved.add(product.filename)
 
         for product in self.products:
             if product.filename not in saved:
                 product.cubes  # pylint: disable=pointless-statement
-                product.close()
+                file, provenance = product.close()
+                self.lazy_files.append(file)
+                lazy_provenance.append(provenance)
+                saved.add(product.filename)
 
-        metadata_files = write_metadata(self.products,
-                                        self.write_ncl_interface)
+        metadata_files = bind(
+            _delayed(write_metadata)(self.products, self.write_ncl_interface),
+            [
+                self.lazy_files,
+                lazy_provenance,
+            ],
+        )
+
         return metadata_files
 
     def __str__(self):

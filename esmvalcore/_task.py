@@ -17,6 +17,7 @@ from pathlib import Path, PosixPath
 from shutil import which
 from typing import Optional
 
+import dask
 import psutil
 import yaml
 from distributed import Client
@@ -712,6 +713,10 @@ class TaskSet(set):
                 independent_tasks.add(task)
         return independent_tasks
 
+    @staticmethod
+    def _is_preprocessing_task(task):
+        return hasattr(task, 'lazy_files')
+
     def run(self, max_parallel_tasks: Optional[int] = None) -> None:
         """Run tasks.
 
@@ -732,6 +737,23 @@ class TaskSet(set):
                         # Python script.
                         task.settings['scheduler_address'] = address
 
+            # Run preprocessor metadata computations
+            preprocessing_tasks = [
+                t for t in self.flatten() if self._is_preprocessing_task(t)
+            ]
+            for task, (output_files, lazy_files) in zip(
+                    preprocessing_tasks,
+                    dask.compute(*[(t.run(), t.lazy_files)
+                                   for t in preprocessing_tasks]),
+            ):
+                task.output_files = output_files
+                task.lazy_files = lazy_files
+
+            # Fill preprocessor files with data
+            dask.compute(f.delayed for t in preprocessing_tasks
+                         for f in t.lazy_files)
+
+            # Then run remaining tasks
             if max_parallel_tasks == 1:
                 self._run_sequential()
             else:
@@ -741,7 +763,6 @@ class TaskSet(set):
         """Run tasks sequentially."""
         n_tasks = len(self.flatten())
         logger.info("Running %s tasks sequentially", n_tasks)
-
         tasks = self.get_independent()
         for task in sorted(tasks, key=lambda t: t.priority):
             task.run()

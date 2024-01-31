@@ -6,7 +6,7 @@ import logging
 import os
 from itertools import groupby
 from pathlib import Path
-from typing import Optional, NamedTuple
+from typing import NamedTuple, Optional
 from warnings import catch_warnings, filterwarnings
 
 import cftime
@@ -389,6 +389,16 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     return result
 
 
+class LazyFile:
+
+    def __init__(self, filename: Path, delayed):
+        self.path = filename
+        self.delayed = delayed
+
+    def __repr__(self):
+        return f"LazyFile('{self.path}', {self.delayed})"
+
+
 def save(cubes,
          filename,
          optimize_access='',
@@ -433,13 +443,15 @@ def save(cubes,
     if not cubes:
         raise ValueError(f"Cannot save empty cubes '{cubes}'")
 
+    if hasattr(iris.FUTURE, 'save_split_attrs'):
+        iris.FUTURE.save_split_attrs = True
+
     # Rename some arguments
     kwargs['target'] = filename
     kwargs['zlib'] = compress
 
     dirname = os.path.dirname(filename)
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
+    os.makedirs(dirname, exist_ok=True)
 
     if (os.path.exists(filename)
             and all(cube.has_lazy_data() for cube in cubes)):
@@ -476,9 +488,12 @@ def save(cubes,
             logger.debug('Changing var_name from %s to %s', cube.var_name,
                          alias)
             cube.var_name = alias
-    iris.save(cubes, **kwargs)
+    kwargs['compute'] = False
 
-    return filename
+    delayed = iris.save(cubes, **kwargs)
+    result = LazyFile(filename, delayed)
+
+    return result
 
 
 def _get_debug_filename(filename, step):
