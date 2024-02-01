@@ -523,6 +523,7 @@ def write_metadata(products, write_ncl=False):
     output_files = []
     for output_dir, prods in groupby(products,
                                      lambda p: os.path.dirname(p.filename)):
+        os.makedirs(output_dir, exist_ok=True)
         sorted_products = _sort_products(prods)
         metadata = {}
         for product in sorted_products:

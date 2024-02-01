@@ -677,6 +677,23 @@ def _get_stat_identifier(statistic: str | dict) -> str:
     return operator
 
 
+def multi_model_statistics_outputs(
+    products: set[PreprocessorFile],
+    span: str,
+    statistics: list[str],
+    output_products=None,
+    groupby: Optional[tuple] = None,
+    keep_input_datasets: bool = True,
+    ignore_scalar_coords: bool = False,
+) -> set[PreprocessorFile]:
+    outputs = set()
+    for group, _ in _group_products(products, by_key=groupby):
+        outputs |= set(output_products[group].values())
+    if keep_input_datasets:
+        outputs |= products
+    return outputs
+
+
 def multi_model_statistics(
     products: set[PreprocessorFile] | Iterable[Cube],
     span: str,
@@ -817,6 +834,25 @@ def multi_model_statistics(
         f"Input type for multi_model_statistics not understood. Expected "
         f"iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
         f"got {products}"
+    )
+
+
+def ensemble_statistics_outputs(
+    products: set[PreprocessorFile],
+    statistics: list[str],
+    output_products,
+    span: str = 'overlap',
+    ignore_scalar_coords: bool = False,
+) -> set[PreprocessorFile]:
+    ensemble_grouping = ('project', 'dataset', 'exp', 'sub_experiment')
+    return multi_model_statistics_outputs(
+        products=products,
+        span=span,
+        statistics=statistics,
+        output_products=output_products,
+        groupby=ensemble_grouping,
+        keep_input_datasets=False,
+        ignore_scalar_coords=ignore_scalar_coords,
     )
 
 

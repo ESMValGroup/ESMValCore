@@ -743,7 +743,7 @@ class TaskSet(set):
             preprocessing_tasks = [
                 t for t in self.flatten() if self._is_preprocessing_task(t)
             ]
-            work = [(t.run(), t.lazy_files) for t in preprocessing_tasks]
+            work = [(t._run(None), t.lazy_files) for t in preprocessing_tasks]
             if client is None:
                 with ProgressBar():
                     result = dask.compute(*work)

@@ -19,6 +19,20 @@ logger = logging.getLogger(__name__)
 BiasType = Literal['absolute', 'relative']
 
 
+def bias_outputs(
+    products: set[PreprocessorFile] | Iterable[Cube],
+    ref_cube: Optional[Cube] = None,
+    bias_type: BiasType = 'absolute',
+    denominator_mask_threshold: float = 1e-3,
+    keep_reference_dataset: bool = False,
+) -> set[PreprocessorFile]:
+    outputs = set(products)
+    if not keep_reference_dataset:
+        _, ref_product = _get_ref(products, 'reference_for_bias')
+        outputs.remove(ref_product)
+    return outputs
+
+
 def bias(
     products: set[PreprocessorFile] | Iterable[Cube],
     ref_cube: Optional[Cube] = None,
