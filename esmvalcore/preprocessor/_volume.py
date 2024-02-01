@@ -14,9 +14,8 @@ import iris
 import numpy as np
 from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube
-from iris.exceptions import CoordinateMultiDimError
 
-from ._area import compute_area_weights
+from ._area import _try_adding_calculated_cell_area
 from ._shared import get_iris_aggregator, update_weights_kwargs
 from ._supplementary_vars import register_supplementaries
 
@@ -104,9 +103,10 @@ def calculate_volume(cube: Cube) -> da.core.Array:
 
     Note
     ----
-    This only works if the grid cell areas can be calculated (i.e., latitude
-    and longitude are 1D) and if the depth coordinate is 1D or 4D with first
-    dimension 1.
+    It gets the cell_area from the cube if it is available. If not, it
+    calculates it from the grid. This only works if the grid cell areas can
+    be calculated (i.e., latitude and longitude are 1D) and if the depth
+    coordinate is 1D or 4D with first dimension 1.
 
     Parameters
     ----------
@@ -126,16 +126,13 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     # Calculate Z-direction thickness
     thickness = depth.bounds[..., 1] - depth.bounds[..., 0]
 
-    # Try to calculate grid cell area
-    try:
-        area = da.array(compute_area_weights(cube))
-    except CoordinateMultiDimError:
-        logger.error(
-            "Supplementary variables are needed to calculate grid cell "
-            "areas for irregular grid of cube %s",
-            cube.summary(shorten=True),
-        )
-        raise
+    # Get or calculate the horizontal areas of the cube
+    has_cell_measure = bool(cube.cell_measures('cell_area'))
+    _try_adding_calculated_cell_area(cube)
+    area = cube.cell_measure('cell_area').lazy_data()
+    # Make sure input cube has not been modified
+    if not has_cell_measure:
+        cube.remove_cell_measure('cell_area')
 
     # Try to calculate grid cell volume as area * thickness
     if thickness.ndim == 1 and z_dim == 1:
