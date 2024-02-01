@@ -50,7 +50,8 @@ class ESMPyRegridder:
     tgt_cube:
         Cube defining the target grid.
     method:
-        Regridding algorithm.
+        Regridding algorithm. Must be one of `linear`, `area_weighted`,
+        `nearest`.
     mask_threshold:
         Threshold used to regrid mask of input cube.
 
