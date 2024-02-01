@@ -10,7 +10,7 @@ import iris.util
 import numpy as np
 from iris.coords import Coord
 from iris.cube import Cube
-from iris.exceptions import CoordinateMultiDimError
+from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 
 from esmvalcore.typing import NetCDFAttr
 
@@ -268,3 +268,53 @@ def rechunk_cube(
     _rechunk_dim_metadata(cube, complete_dims, remaining_dims=remaining_dims)
 
     return cube
+
+
+def has_irregular_grid(cube: Cube) -> bool:
+    """Check if a cube has an irregular grid.
+
+    Parameters
+    ----------
+    cube:
+        Cube to be checked.
+
+    Returns
+    -------
+    bool
+        ``True`` if input cube has an irregular grid, else ``False``.
+
+    """
+    try:
+        lat = cube.coord('latitude')
+        lon = cube.coord('longitude')
+    except CoordinateNotFoundError:
+        return False
+    if lat.ndim == 2 and lon.ndim == 2:
+        return True
+    return False
+
+
+def has_unstructured_grid(cube: Cube) -> bool:
+    """Check if a cube has an unstructured grid.
+
+    Parameters
+    ----------
+    cube:
+        Cube to be checked.
+
+    Returns
+    -------
+    bool
+        ``True`` if input cube has an unstructured grid, else ``False``.
+
+    """
+    try:
+        lat = cube.coord('latitude')
+        lon = cube.coord('longitude')
+    except CoordinateNotFoundError:
+        return False
+    if lat.ndim != 1 or lon.ndim != 1:
+        return False
+    if cube.coord_dims(lat) != cube.coord_dims(lon):
+        return False
+    return True
