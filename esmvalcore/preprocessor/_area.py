@@ -281,11 +281,9 @@ def meridional_statistics(
             "Meridional statistics on irregular grids not yet implemented"
         )
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    stat_cube = cube.collapsed('latitude', agg, **agg_kwargs)
+    result = cube.collapsed('latitude', agg, **agg_kwargs)
     if normalize_with_stats is not None:
-        result = get_normalized_cube(cube, stat_cube, normalize_with_stats)
-    else:
-        result = stat_cube
+        result = get_normalized_cube(cube, result, normalize_with_stats)
     result.data = result.core_data().astype(np.float32, casting='same_kind')
     return result
 
@@ -425,11 +423,9 @@ def area_statistics(
         agg, agg_kwargs, 'cell_area', cube, _try_adding_calculated_cell_area
     )
 
-    stat_cube = cube.collapsed(['latitude', 'longitude'], agg, **agg_kwargs)
+    result = cube.collapsed(['latitude', 'longitude'], agg, **agg_kwargs)
     if normalize_with_stats is not None:
-        result = get_normalized_cube(cube, stat_cube, normalize_with_stats)
-    else:
-        result = stat_cube
+        result = get_normalized_cube(cube, result, normalize_with_stats)
 
     # Make sure to preserve dtype
     new_dtype = result.dtype

@@ -237,15 +237,13 @@ def volume_statistics(
         _try_adding_calculated_ocean_volume,
     )
 
-    stat_cube = cube.collapsed(
+    result = cube.collapsed(
         [cube.coord(axis='Z'), cube.coord(axis='Y'), cube.coord(axis='X')],
         agg,
         **agg_kwargs,
     )
     if normalize_with_stats is not None:
-        result = get_normalized_cube(cube, stat_cube, normalize_with_stats)
-    else:
-        result = stat_cube
+        result = get_normalized_cube(cube, result, normalize_with_stats)
 
     # Make sure input cube has not been modified
     if not has_cell_measure and cube.cell_measures('ocean_volume'):
@@ -338,12 +336,10 @@ def axis_statistics(
             category=UserWarning,
             module='iris',
         )
-        stat_cube = cube.collapsed(coord, agg, **agg_kwargs)
+        result = cube.collapsed(coord, agg, **agg_kwargs)
 
     if normalize_with_stats is not None:
-        result = get_normalized_cube(cube, stat_cube, normalize_with_stats)
-    else:
-        result = stat_cube
+        result = get_normalized_cube(cube, result, normalize_with_stats)
 
     # Make sure input and output cubes do not have auxiliary coordinate
     if cube.coords('_axis_statistics_weights_'):
