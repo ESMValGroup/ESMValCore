@@ -1,6 +1,5 @@
 """Unit tests for the :func:`esmvalcore.preprocessor._area` module."""
 import unittest
-import warnings
 from pathlib import Path
 
 import fiona
@@ -1315,9 +1314,7 @@ def test_zonal_statistics_divide_by_min(make_testcube):
     make_testcube.units = 'K'
     input_data = make_testcube.copy()
 
-    msg = "Division by zero encountered during cube normalization"
-    with pytest.warns(RuntimeWarning, match=msg):
-        res = zonal_statistics(input_data, 'min', normalize='divide')
+    res = zonal_statistics(input_data, 'min', normalize='divide')
 
     assert input_data == make_testcube
     assert res.shape == input_data.shape
@@ -1365,10 +1362,7 @@ def test_meridional_statistics_divide_by_max(make_testcube):
     make_testcube.units = 'K'
     input_data = make_testcube.copy()
 
-    # Make sure that no warnings are raised
-    with warnings.catch_warnings():
-        warnings.simplefilter('error')
-        res = meridional_statistics(input_data, 'max', normalize='divide')
+    res = meridional_statistics(input_data, 'max', normalize='divide')
 
     assert input_data == make_testcube
     assert res.shape == input_data.shape

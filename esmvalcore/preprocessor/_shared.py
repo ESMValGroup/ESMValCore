@@ -217,21 +217,7 @@ def get_normalized_cube(
         normalized_cube = cube - statistics_cube
 
     elif normalize == 'divide':
-        # Raise proper zero-division warning if necessary
-        if (statistics_cube.core_data() == 0.0).any():
-            warnings.warn(
-                "Division by zero encountered during cube normalization with "
-                "operation 'divide', these values will be masked",
-                RuntimeWarning,
-            )
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore',
-                message="invalid value encountered in divide",
-                category=RuntimeWarning,
-                module='iris',
-            )
-            normalized_cube = cube / statistics_cube
+        normalized_cube = cube / statistics_cube
 
         # Iris sometimes masks zero-divisions, sometimes not
         # (https://github.com/SciTools/iris/issues/5523). Make sure to

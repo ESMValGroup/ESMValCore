@@ -1,7 +1,6 @@
 """Unit test for :func:`esmvalcore.preprocessor._volume`."""
 
 import unittest
-import warnings
 
 import iris
 import iris.fileformats
@@ -413,12 +412,7 @@ class Test(tests.Test):
                                           measure='volume')
         self.grid_4d.add_cell_measure(measure, range(0, measure.ndim))
 
-        # Make sure that no warnings are raised
-        with warnings.catch_warnings():
-            warnings.simplefilter('error')
-            result = volume_statistics(
-                self.grid_4d, 'mean', normalize='divide'
-            )
+        result = volume_statistics(self.grid_4d, 'mean', normalize='divide')
 
         expected = np.ma.ones((2, 3, 2, 2))
         self.assert_array_equal(result.data, expected)
