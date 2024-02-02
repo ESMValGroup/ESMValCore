@@ -16,10 +16,12 @@ def unstructured_grid_cube():
         [0.0, 1.0], standard_name='time', units='days since 1950-01-01'
     )
     lat = AuxCoord(
-        [-1.0, -1.0, 1.0, 1.0], standard_name='latitude', units='degrees_north'
+        [-50.0, -50.0, 20.0, 20.0],
+        standard_name='latitude',
+        units='degrees_north',
     )
     lon = AuxCoord(
-        [179.0, 180.0, 180.0, 179.0],
+        [70.0, 250.0, 250.0, 70.0],
         standard_name='longitude',
         units='degrees_east',
     )
@@ -56,7 +58,7 @@ class TestUnstructuredNearest:
         np.testing.assert_allclose(
             result.data,
             [[[0.0, 1.0, 1.0],
-              [0.0, 2.0, 1.0],
+              [3.0, 2.0, 2.0],
               [3.0, 2.0, 2.0]],
              [[0.0, 0.0, 0.0],
               [0.0, 0.0, 0.0],
@@ -89,7 +91,7 @@ class TestUnstructuredNearest:
         np.testing.assert_allclose(
             result.data,
             [[[0.0, 1.0, 1.0],
-              [0.0, 2.0, 1.0],
+              [3.0, 2.0, 2.0],
               [3.0, 2.0, 2.0]],
              [[0.0, 0.0, 0.0],
               [0.0, 0.0, 0.0],
