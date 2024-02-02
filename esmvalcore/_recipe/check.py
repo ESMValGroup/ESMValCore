@@ -113,8 +113,8 @@ def variable(
         raise RecipeError(
             f"Missing keys {missing} in\n"
             f"{pformat(var)}\n"
-            f"for variable {variable_group} in diagnostic "
-            f"{diagnostic}")
+            f"for variable '{variable_group}' in diagnostic "
+            f"'{diagnostic}'")
 
 
 def _log_data_availability_errors(dataset):
