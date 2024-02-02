@@ -833,10 +833,10 @@ def ensemble_statistics(
 ) -> dict | set:
     """Compute ensemble statistics.
 
-    An ensemble grouping is performed on the input products. The statistics are
-    then computed calling
-    :func:`esmvalcore.preprocessor.multi_model_statistics` with appropriaate
-    groups.
+    An ensemble grouping is performed on the input products (using the
+    `ensemble` facet of input datasets). The statistics are then computed
+    calling :func:`esmvalcore.preprocessor.multi_model_statistics` with
+    appropriate groups.
 
     Parameters
     ----------
