@@ -186,7 +186,7 @@ def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
 def volume_statistics(
     cube: Cube,
     operator: str,
-    normalize_with_stats: Optional[Literal['subtract', 'divide']] = None,
+    normalize: Optional[Literal['subtract', 'divide']] = None,
     **operator_kwargs,
 ) -> Cube:
     """Apply a statistical operation over a volume.
@@ -206,7 +206,7 @@ def volume_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Currently, only `mean` is
         allowed.
-    normalize_with_stats:
+    normalize:
         If given, do not return the statistics cube itself, but rather, the
         input cube, normalized with the statistics cube. Can either be
         `subtract` (statistics cube is subtracted from the input cube) or
@@ -242,8 +242,8 @@ def volume_statistics(
         agg,
         **agg_kwargs,
     )
-    if normalize_with_stats is not None:
-        result = get_normalized_cube(cube, result, normalize_with_stats)
+    if normalize is not None:
+        result = get_normalized_cube(cube, result, normalize)
 
     # Make sure input cube has not been modified
     if not has_cell_measure and cube.cell_measures('ocean_volume'):
@@ -256,7 +256,7 @@ def axis_statistics(
     cube: Cube,
     axis: str,
     operator: str,
-    normalize_with_stats: Optional[Literal['subtract', 'divide']] = None,
+    normalize: Optional[Literal['subtract', 'divide']] = None,
     **operator_kwargs,
 ) -> Cube:
     """Perform statistics along a given axis.
@@ -280,7 +280,7 @@ def axis_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
-    normalize_with_stats:
+    normalize:
         If given, do not return the statistics cube itself, but rather, the
         input cube, normalized with the statistics cube. Can either be
         `subtract` (statistics cube is subtracted from the input cube) or
@@ -338,8 +338,8 @@ def axis_statistics(
         )
         result = cube.collapsed(coord, agg, **agg_kwargs)
 
-    if normalize_with_stats is not None:
-        result = get_normalized_cube(cube, result, normalize_with_stats)
+    if normalize is not None:
+        result = get_normalized_cube(cube, result, normalize)
 
     # Make sure input and output cubes do not have auxiliary coordinate
     if cube.coords('_axis_statistics_weights_'):
