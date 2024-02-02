@@ -17,6 +17,12 @@ from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import _get_start_end_year, _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
 from esmvalcore.preprocessor._multimodel import _get_operator_and_kwargs
+from esmvalcore.preprocessor._regrid import (
+    HORIZONTAL_SCHEMES_IRREGULAR,
+    HORIZONTAL_SCHEMES_REGULAR,
+    HORIZONTAL_SCHEMES_UNSTRUCTURED,
+    _load_generic_scheme,
+)
 from esmvalcore.preprocessor._shared import get_iris_aggregator
 from esmvalcore.preprocessor._supplementary_vars import (
     PREPROCESSOR_SUPPLEMENTARIES,
@@ -385,6 +391,19 @@ def differing_timeranges(timeranges, required_vars):
             "Set `timerange` to a common value.")
 
 
+def bias_type(settings: dict) -> None:
+    """Check that bias_type for bias preprocessor is valid."""
+    if 'bias' not in settings:
+        return
+    valid_options = ('absolute', 'relative')
+    user_bias_type = settings['bias'].get('bias_type', 'absolute')
+    if user_bias_type not in valid_options:
+        raise RecipeError(
+            f"Expected one of {valid_options} for `bias_type`, got "
+            f"'{user_bias_type}'"
+        )
+
+
 def reference_for_bias_preproc(products):
     """Check that exactly one reference dataset for bias preproc is given."""
     step = 'bias'
@@ -472,4 +491,44 @@ def _check_mm_stat(step, step_settings):
         except ValueError as exc:
             raise RecipeError(
                 f"Invalid options for {step}: {exc}"
+            )
+
+
+def regridding_schemes(settings: dict):
+    """Check :obj:`str` regridding schemes."""
+    if 'regrid' not in settings:
+        return
+
+    # Note: If 'scheme' is missing, this will be detected in
+    # PreprocessorFile.check() later
+    scheme = settings['regrid'].get('scheme')
+
+    # Check built-in regridding schemes (given as str)
+    if isinstance(scheme, str):
+        scheme = settings['regrid']['scheme']
+        allowed_regridding_schemes = list(
+            set(
+                list(HORIZONTAL_SCHEMES_IRREGULAR) +
+                list(HORIZONTAL_SCHEMES_REGULAR) +
+                list(HORIZONTAL_SCHEMES_UNSTRUCTURED)
+            )
+        )
+        if scheme not in allowed_regridding_schemes:
+            raise RecipeError(
+                f"Got invalid built-in regridding scheme '{scheme}', expected "
+                f"one of {allowed_regridding_schemes} or a generic scheme "
+                f"(see https://docs.esmvaltool.org/projects/ESMValCore/en/"
+                f"latest/recipe/preprocessor.html#generic-regridding-schemes)."
+            )
+
+    # Check generic regridding schemes (given as dict)
+    if isinstance(scheme, dict):
+        try:
+            _load_generic_scheme(scheme)
+        except ValueError as exc:
+            raise RecipeError(
+                f"Failed to load generic regridding scheme: {str(exc)} See "
+                f"https://docs.esmvaltool.org/projects/ESMValCore/en/latest"
+                f"/recipe/preprocessor.html#generic-regridding-schemes for "
+                f"details."
             )

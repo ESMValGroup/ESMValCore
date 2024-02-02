@@ -89,7 +89,6 @@ def extract_region(
             latitude=(start_latitude, end_latitude),
             ignore_bounds=True,
         )
-        region_subset = region_subset.intersection(longitude=(0., 360.))
     else:
         region_subset = _extract_irregular_region(
             cube,
