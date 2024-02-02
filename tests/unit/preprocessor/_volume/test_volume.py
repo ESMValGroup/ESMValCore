@@ -179,7 +179,7 @@ class Test(tests.Test):
         data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
         self.grid_4d.data = data
         result = axis_statistics(
-            self.grid_4d, 'z', 'mean', normalize_with_stats='subtract'
+            self.grid_4d, 'z', 'mean', normalize='subtract'
         )
         bounds = self.grid_4d.coord(axis='z').bounds
         weights = (bounds[:, 1] - bounds[:, 0])
@@ -195,9 +195,7 @@ class Test(tests.Test):
         """Test axis statistics with operator sum."""
         data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
         self.grid_4d.data = data
-        result = axis_statistics(
-            self.grid_4d, 'z', 'min', normalize_with_stats='divide'
-        )
+        result = axis_statistics(self.grid_4d, 'z', 'min', normalize='divide')
         expected = data / np.min(data, axis=1, keepdims=True)
         self.assert_array_equal(result.data, expected)
         self.assertEqual(result.units, '1')
@@ -395,9 +393,7 @@ class Test(tests.Test):
         """Test to take the volume weighted average of a (2,3,2,2) cube."""
         self.assertFalse(self.grid_4d.cell_measures('ocean_volume'))
 
-        result = volume_statistics(
-            self.grid_4d, 'mean', normalize_with_stats='subtract'
-        )
+        result = volume_statistics(self.grid_4d, 'mean', normalize='subtract')
 
         expected = np.ma.zeros((2, 3, 2, 2))
         self.assert_array_equal(result.data, expected)
@@ -421,7 +417,7 @@ class Test(tests.Test):
         with warnings.catch_warnings():
             warnings.simplefilter('error')
             result = volume_statistics(
-                self.grid_4d, 'mean', normalize_with_stats='divide'
+                self.grid_4d, 'mean', normalize='divide'
             )
 
         expected = np.ma.ones((2, 3, 2, 2))

@@ -1962,10 +1962,10 @@ along the longitude coordinate.
 Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
-    * `normalize_with_stats`: If given, do not return the statistics cube
-      itself, but rather, the input cube, normalized with the statistics cube.
-      Can either be `subtract` (statistics cube is subtracted from the input
-      cube) or `divide` (input cube is divided by the statistics cube).
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube.  Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
       arguments.
       See :ref:`stat_preprocs` for more details.
@@ -1983,10 +1983,10 @@ argument:
 Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
-    * `normalize_with_stats`: If given, do not return the statistics cube
-      itself, but rather, the input cube, normalized with the statistics cube.
-      Can either be `subtract` (statistics cube is subtracted from the input
-      cube) or `divide` (input cube is divided by the statistics cube).
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube.  Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
       arguments.
       See :ref:`stat_preprocs` for more details.
@@ -2020,10 +2020,10 @@ dataset as described in :ref:`supplementary_variables`.
 Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
-    * `normalize_with_stats`: If given, do not return the statistics cube
-      itself, but rather, the input cube, normalized with the statistics cube.
-      Can either be `subtract` (statistics cube is subtracted from the input
-      cube) or `divide` (input cube is divided by the statistics cube).
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube.  Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
       arguments.
       See :ref:`stat_preprocs` for more details.
@@ -2042,7 +2042,7 @@ Examples:
 
     area_statistics:
       operator: mean
-      normalize_with_stats: subtract
+      normalize: subtract
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
 
@@ -2145,10 +2145,10 @@ Parameters:
     * `operator`: Operation to apply.
       At the moment, only `mean` is supported.
       See :ref:`stat_preprocs` for more details on supported statistics.
-    * `normalize_with_stats`: If given, do not return the statistics cube
-      itself, but rather, the input cube, normalized with the statistics cube.
-      Can either be `subtract` (statistics cube is subtracted from the input
-      cube) or `divide` (input cube is divided by the statistics cube).
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube.  Can either be
+      `subtract` (statistics cube is subtracted from the input cube) or `divide`
+      (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
       arguments.
       See :ref:`stat_preprocs` for more details.
@@ -2168,10 +2168,10 @@ Takes arguments:
       Possible values for the axis are `x`, `y`, `z`, `t`.
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
-    * `normalize_with_stats`: If given, do not return the statistics cube
-      itself, but rather, the input cube, normalized with the statistics cube.
-      Can either be `subtract` (statistics cube is subtracted from the input
-      cube) or `divide` (input cube is divided by the statistics cube).
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube.  Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
       arguments.
       See :ref:`stat_preprocs` for more details.

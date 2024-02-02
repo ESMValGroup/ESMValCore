@@ -187,7 +187,7 @@ def update_weights_kwargs(
 def get_normalized_cube(
     cube: Cube,
     statistics_cube: Cube,
-    normalize_with_stats: Literal['subtract', 'divide'],
+    normalize: Literal['subtract', 'divide'],
 ) -> Cube:
     """Get cube normalized with statistics cube.
 
@@ -202,7 +202,7 @@ def get_normalized_cube(
         https://scitools-iris.readthedocs.io/en/latest/userguide/cube_maths.
         html#calculating-a-cube-anomaly). This is usually ensure by using
         :meth:`iris.cube.Cube.collapsed` to calculate the statistics cube.
-    normalize_with_stats:
+    normalize:
         Normalization operation. Can either be `subtract` (statistics cube is
         subtracted from the input cube) or `divide` (input cube is divided by
         the statistics cube).
@@ -213,10 +213,10 @@ def get_normalized_cube(
         Input cube normalized with statistics cube.
 
     """
-    if normalize_with_stats == 'subtract':
+    if normalize == 'subtract':
         normalized_cube = cube - statistics_cube
 
-    elif normalize_with_stats == 'divide':
+    elif normalize == 'divide':
         # Raise proper zero-division warning if necessary
         if (statistics_cube.core_data() == 0.0).any():
             warnings.warn(
@@ -242,8 +242,8 @@ def get_normalized_cube(
 
     else:
         raise ValueError(
-            f"Expected 'subtract' or 'divide' for `normalize_with_stats`, got "
-            f"'{normalize_with_stats}'"
+            f"Expected 'subtract' or 'divide' for `normalize`, got "
+            f"'{normalize}'"
         )
 
     # Keep old metadata except for units

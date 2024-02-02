@@ -194,9 +194,7 @@ class Test(tests.Test):
         input_data = self.grid.copy()
         self.assertFalse(input_data.cell_measures('cell_area'))
 
-        result = area_statistics(
-            input_data, 'mean', normalize_with_stats='subtract'
-        )
+        result = area_statistics(input_data, 'mean', normalize='subtract')
 
         self.assertEqual(input_data, self.grid)
         self.assertEqual(result.shape, input_data.shape)
@@ -215,9 +213,7 @@ class Test(tests.Test):
         self._add_cell_measure_to_grid()
         input_data = self.grid.copy()
 
-        result = area_statistics(
-            input_data, 'mean', normalize_with_stats='subtract'
-        )
+        result = area_statistics(input_data, 'mean', normalize='subtract')
 
         self.assertEqual(input_data, self.grid)
         self.assertEqual(result.shape, input_data.shape)
@@ -1321,9 +1317,7 @@ def test_zonal_statistics_divide_by_min(make_testcube):
 
     msg = "Division by zero encountered during cube normalization"
     with pytest.warns(RuntimeWarning, match=msg):
-        res = zonal_statistics(
-            input_data, 'min', normalize_with_stats='divide'
-        )
+        res = zonal_statistics(input_data, 'min', normalize='divide')
 
     assert input_data == make_testcube
     assert res.shape == input_data.shape
@@ -1374,9 +1368,7 @@ def test_meridional_statistics_divide_by_max(make_testcube):
     # Make sure that no warnings are raised
     with warnings.catch_warnings():
         warnings.simplefilter('error')
-        res = meridional_statistics(
-            input_data, 'max', normalize_with_stats='divide'
-        )
+        res = meridional_statistics(input_data, 'max', normalize='divide')
 
     assert input_data == make_testcube
     assert res.shape == input_data.shape
@@ -1408,9 +1400,9 @@ def test_meridional_statistics_2d_lon_fail(irreg_extract_shape_cube):
 
 def test_meridional_statistics_invalid_norm_fail(make_testcube):
     """Test ``meridional_statistics``."""
-    msg = "Expected 'subtract' or 'divide' for `normalize_with_stats`"
+    msg = "Expected 'subtract' or 'divide' for `normalize`"
     with pytest.raises(ValueError, match=msg):
-        meridional_statistics(make_testcube, 'sum', normalize_with_stats='x')
+        meridional_statistics(make_testcube, 'sum', normalize='x')
 
 
 if __name__ == '__main__':

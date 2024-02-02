@@ -192,7 +192,7 @@ def _extract_irregular_region(cube, start_longitude, end_longitude,
 def zonal_statistics(
     cube: Cube,
     operator: str,
-    normalize_with_stats: Optional[Literal['subtract', 'divide']] = None,
+    normalize: Optional[Literal['subtract', 'divide']] = None,
     **operator_kwargs
 ) -> Cube:
     """Compute zonal statistics.
@@ -205,7 +205,7 @@ def zonal_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
-    normalize_with_stats:
+    normalize:
         If given, do not return the statistics cube itself, but rather, the
         input cube, normalized with the statistics cube. Can either be
         `subtract` (statistics cube is subtracted from the input cube) or
@@ -218,7 +218,7 @@ def zonal_statistics(
     -------
     iris.cube.Cube
         Zonal statistics cube or input cube normalized by statistics cube (see
-        `normalize_with_stats`).
+        `normalize`).
 
     Raises
     ------
@@ -233,8 +233,8 @@ def zonal_statistics(
         )
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     result = cube.collapsed('longitude', agg, **agg_kwargs)
-    if normalize_with_stats is not None:
-        result = get_normalized_cube(cube, result, normalize_with_stats)
+    if normalize is not None:
+        result = get_normalized_cube(cube, result, normalize)
     result.data = result.core_data().astype(np.float32, casting='same_kind')
     return result
 
@@ -242,7 +242,7 @@ def zonal_statistics(
 def meridional_statistics(
     cube: Cube,
     operator: str,
-    normalize_with_stats: Optional[Literal['subtract', 'divide']] = None,
+    normalize: Optional[Literal['subtract', 'divide']] = None,
     **operator_kwargs,
 ) -> Cube:
     """Compute meridional statistics.
@@ -255,7 +255,7 @@ def meridional_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
-    normalize_with_stats:
+    normalize:
         If given, do not return the statistics cube itself, but rather, the
         input cube, normalized with the statistics cube. Can either be
         `subtract` (statistics cube is subtracted from the input cube) or
@@ -282,8 +282,8 @@ def meridional_statistics(
         )
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     result = cube.collapsed('latitude', agg, **agg_kwargs)
-    if normalize_with_stats is not None:
-        result = get_normalized_cube(cube, result, normalize_with_stats)
+    if normalize is not None:
+        result = get_normalized_cube(cube, result, normalize)
     result.data = result.core_data().astype(np.float32, casting='same_kind')
     return result
 
@@ -370,7 +370,7 @@ def _try_adding_calculated_cell_area(cube: Cube) -> None:
 def area_statistics(
     cube: Cube,
     operator: str,
-    normalize_with_stats: Optional[Literal['subtract', 'divide']] = None,
+    normalize: Optional[Literal['subtract', 'divide']] = None,
     **operator_kwargs,
 ) -> Cube:
     """Apply a statistical operator in the horizontal plane.
@@ -393,7 +393,7 @@ def area_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
-    normalize_with_stats:
+    normalize:
         If given, do not return the statistics cube itself, but rather, the
         input cube, normalized with the statistics cube. Can either be
         `subtract` (statistics cube is subtracted from the input cube) or
@@ -424,8 +424,8 @@ def area_statistics(
     )
 
     result = cube.collapsed(['latitude', 'longitude'], agg, **agg_kwargs)
-    if normalize_with_stats is not None:
-        result = get_normalized_cube(cube, result, normalize_with_stats)
+    if normalize is not None:
+        result = get_normalized_cube(cube, result, normalize)
 
     # Make sure to preserve dtype
     new_dtype = result.dtype
