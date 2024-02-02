@@ -232,11 +232,9 @@ def zonal_statistics(
             "Zonal statistics on irregular grids not yet implemented"
         )
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    stat_cube = cube.collapsed('longitude', agg, **agg_kwargs)
+    result = cube.collapsed('longitude', agg, **agg_kwargs)
     if normalize_with_stats is not None:
-        result = get_normalized_cube(cube, stat_cube, normalize_with_stats)
-    else:
-        result = stat_cube
+        result = get_normalized_cube(cube, result, normalize_with_stats)
     result.data = result.core_data().astype(np.float32, casting='same_kind')
     return result
 
