@@ -15,6 +15,7 @@ from iris.cube import Cube
 
 from .._provenance import TrackedFile
 from .._task import BaseTask
+from .._version import __version__
 from ..cmor.check import cmor_check_data, cmor_check_metadata
 from ..cmor.fix import fix_data, fix_file, fix_metadata
 from ._area import (
@@ -515,6 +516,9 @@ class PreprocessorFile(TrackedFile):
 
     def save(self):
         """Save cubes to disk."""
+        version = f"Created with ESMValCore v{__version__}"
+        for cube in self._cubes:
+            cube.attributes['software'] = version
         return preprocess(
             self._cubes,
             'save',
@@ -565,6 +569,9 @@ class PreprocessorFile(TrackedFile):
             for k, v in self.settings.items()
         }
         self.entity.add_attributes(settings)
+
+    def _include_provenance(self):
+        """This is already done when saving the cube(s) to file."""
 
     def group(self, keys: list) -> str:
         """Generate group keyword.
