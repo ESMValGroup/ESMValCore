@@ -5,6 +5,7 @@ import copy
 import functools
 import inspect
 import logging
+import time
 from importlib import import_module
 from pathlib import Path
 from pprint import pformat
@@ -234,9 +235,10 @@ def _get_multimodel_products(function_name: str) -> Callable:
     output_products_fn_name = f"{function_name}_outputs"
     try:
         return getattr(module, output_products_fn_name)
-    except AttributeError:
-        raise NotImplementedError("Please implement the function "
-                                  f"{module_name}.{output_products_fn_name}")
+    except AttributeError as exc:
+        raise NotImplementedError(
+            "Please implement the function "
+            f"{module_name}.{output_products_fn_name}") from exc
 
 
 MULTI_MODEL_FUNCTIONS_OUT_PRODUCTS = {
@@ -571,7 +573,7 @@ class PreprocessorFile(TrackedFile):
         self.entity.add_attributes(settings)
 
     def _include_provenance(self):
-        """This is already done when saving the cube(s) to file."""
+        """Do nothing; already done when saving the cube(s) to file."""
 
     def group(self, keys: list) -> str:
         """Generate group keyword.
@@ -716,7 +718,11 @@ class PreprocessingTask(BaseTask):
 
     def _run(self, _):
         """Run the preprocessor."""
+        start = time.perf_counter()
         self._initialize_product_provenance()
+        logger.info("Initializing provenance of task %s took %.0f seconds",
+                    self.name, time.perf_counter() - start)
+        start = time.perf_counter()
         products = list(self.products)
 
         steps = {step for product in products for step in product.settings}
@@ -746,7 +752,9 @@ class PreprocessingTask(BaseTask):
             products,
             self.write_ncl_interface,
         )
-
+        logger.info(
+            "Building metadata task graph for task %s took %.0f seconds",
+            self.name, time.perf_counter() - start)
         return metadata_files
 
     def __str__(self):
