@@ -743,7 +743,8 @@ class TaskSet(set):
             preprocessing_tasks = [
                 t for t in self.flatten() if self._is_preprocessing_task(t)
             ]
-            work = [(t._run(None), t.lazy_files) for t in preprocessing_tasks]
+            work = [(t._run(None), t.products, t.lazy_files)
+                    for t in preprocessing_tasks]
             if client is None:
                 with ProgressBar():
                     result = dask.compute(*work)
@@ -751,11 +752,12 @@ class TaskSet(set):
                 work = dask.persist(*work)
                 progress(work)
                 result = dask.compute(*work)
-            for task, (output_files, lazy_files) in zip(
+            for task, (output_files, products, lazy_files) in zip(
                     preprocessing_tasks,
                     result,
             ):
                 task.output_files = output_files
+                task.products = products
                 task.lazy_files = lazy_files
 
             # Fill preprocessor files with data

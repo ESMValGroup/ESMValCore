@@ -741,7 +741,7 @@ class PreprocessingTask(BaseTask):
                 ]
 
         self.lazy_files = [_delayed(_save)(product) for product in products]
-
+        self.products = products
         metadata_files = _delayed(write_metadata)(
             products,
             self.write_ncl_interface,
