@@ -1962,11 +1962,15 @@ along the longitude coordinate.
 Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube. Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
       arguments.
       See :ref:`stat_preprocs` for more details.
 
-See also :func:`esmvalcore.preprocessor.zonal_means`.
+See also :func:`esmvalcore.preprocessor.zonal_statistics`.
 
 
 ``meridional_statistics``
@@ -1979,21 +1983,21 @@ argument:
 Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube. Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
       arguments.
       See :ref:`stat_preprocs` for more details.
 
-See also :func:`esmvalcore.preprocessor.meridional_means`.
+See also :func:`esmvalcore.preprocessor.meridional_statistics`.
 
 
 .. _area_statistics:
 
 ``area_statistics``
 -------------------
-
-This function calculates statistics over a region.
-It takes one argument, ``operator``, which is the name of the operation to
-apply.
 
 This function can be used to apply several different operations in the
 horizontal plane: for example, mean, sum, standard deviation, median, variance,
@@ -2012,6 +2016,33 @@ coordinates so the cell areas can be computed internally.
 The required supplementary variable, either ``areacella`` for atmospheric
 variables or ``areacello`` for ocean variables, can be attached to the main
 dataset as described in :ref:`supplementary_variables`.
+
+Parameters:
+    * `operator`: Operation to apply.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube. Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
+
+Examples:
+* Calculate global mean:
+
+  .. code-block:: yaml
+
+    area_statistics:
+      operator: mean
+
+* Subtract global mean from dataset:
+
+  .. code-block:: yaml
+
+    area_statistics:
+      operator: mean
+      normalize: subtract
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
 
@@ -2100,9 +2131,6 @@ See also :func:`esmvalcore.preprocessor.extract_volume`.
 This function calculates the volume-weighted average across three dimensions,
 but maintains the time dimension.
 
-This function takes the argument: `operator`, which defines the operation to
-apply over the volume.
-At the moment, only `mean` is supported.
 By default, the `mean` operation is weighted by the grid cell volumes.
 
 For weighted statistics, this function requires a cell volume `cell measure`_,
@@ -2112,6 +2140,18 @@ The required supplementary variable ``volcello`` can be attached to the main
 dataset as described in :ref:`supplementary_variables`.
 
 No depth coordinate is required as this is determined by Iris.
+
+Parameters:
+    * `operator`: Operation to apply.
+      At the moment, only `mean` is supported.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube. Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 
@@ -2128,6 +2168,10 @@ Takes arguments:
       Possible values for the axis are `x`, `y`, `z`, `t`.
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube. Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
       arguments.
       See :ref:`stat_preprocs` for more details.
