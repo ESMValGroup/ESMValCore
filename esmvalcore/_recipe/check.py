@@ -506,6 +506,13 @@ def regridding_schemes(settings: dict):
     # Check built-in regridding schemes (given as str)
     if isinstance(scheme, str):
         scheme = settings['regrid']['scheme']
+
+        # Also allow deprecated 'linear_extrapolate' scheme (the corresponding
+        # deprecation warning will be raised in the regrid() preprocessor)
+        # TODO: Remove in v2.13.0
+        if scheme == 'linear_extrapolate':
+            return
+
         allowed_regridding_schemes = list(
             set(
                 list(HORIZONTAL_SCHEMES_IRREGULAR) +
