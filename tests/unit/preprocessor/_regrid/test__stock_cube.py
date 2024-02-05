@@ -85,6 +85,10 @@ class Test(tests.Test):
             'iris.coords.DimCoord', return_value=self.mock_coord)
         self.mocks = [self.mock_Cube, self.mock_coord, self.mock_DimCoord]
 
+    def tearDown(self) -> None:
+        _global_stock_cube.cache_clear()
+        return super().tearDown()
+
     def test_invalid_cell_spec__alpha(self):
         emsg = 'Invalid MxN cell specification'
         with self.assertRaisesRegex(ValueError, emsg):
