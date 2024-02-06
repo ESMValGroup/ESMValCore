@@ -173,6 +173,34 @@ class Test(tests.Test):
         self.assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-2')
 
+    def test_axis_statistics_subtract_mean(self):
+        """Test axis statistics with operator mean."""
+        data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
+        self.grid_4d.data = data
+        result = axis_statistics(
+            self.grid_4d, 'z', 'mean', normalize='subtract'
+        )
+        bounds = self.grid_4d.coord(axis='z').bounds
+        weights = (bounds[:, 1] - bounds[:, 0])
+        expected = (
+            data - np.average(data, axis=1, weights=weights, keepdims=True)
+        )
+        self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-3')
+        self.assertFalse(self.grid_4d.coords('_axis_statistics_weights_'))
+        self.assertFalse(result.coords('_axis_statistics_weights_'))
+
+    def test_axis_statistics_divide_min(self):
+        """Test axis statistics with operator sum."""
+        data = np.ma.arange(1, 25).reshape(2, 3, 2, 2)
+        self.grid_4d.data = data
+        result = axis_statistics(self.grid_4d, 'z', 'min', normalize='divide')
+        expected = data / np.min(data, axis=1, keepdims=True)
+        self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, '1')
+        self.assertFalse(self.grid_4d.coords('_axis_statistics_weights_'))
+        self.assertFalse(result.coords('_axis_statistics_weights_'))
+
     def test_wrong_axis_statistics_fail(self):
         """Test raises error when axis is not found in cube."""
         with self.assertRaises(ValueError) as err:
@@ -359,6 +387,36 @@ class Test(tests.Test):
         expected = np.ma.array([1., 1], mask=[True, False])
         self.assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-3')
+
+    def test_volume_statistics_subtract_mean(self):
+        """Test to take the volume weighted average of a (2,3,2,2) cube."""
+        self.assertFalse(self.grid_4d.cell_measures('ocean_volume'))
+
+        result = volume_statistics(self.grid_4d, 'mean', normalize='subtract')
+
+        expected = np.ma.zeros((2, 3, 2, 2))
+        self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-3')
+        self.assertFalse(self.grid_4d.cell_measures('ocean_volume'))
+        self.assertFalse(result.cell_measures('ocean_volume'))
+
+    def test_volume_statistics_cell_measure_divide_mean(self):
+        """Test to take the volume weighted average of a (2,3,2,2) cube.
+
+        The volume measure is pre-loaded in the cube.
+        """
+        grid_volume = calculate_volume(self.grid_4d)
+        measure = iris.coords.CellMeasure(grid_volume,
+                                          standard_name='ocean_volume',
+                                          units='m3',
+                                          measure='volume')
+        self.grid_4d.add_cell_measure(measure, range(0, measure.ndim))
+
+        result = volume_statistics(self.grid_4d, 'mean', normalize='divide')
+
+        expected = np.ma.ones((2, 3, 2, 2))
+        self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, '1')
 
     def test_volume_statistics_weights(self):
         """Test to take the volume weighted average of a (2,3,2,2) cube.

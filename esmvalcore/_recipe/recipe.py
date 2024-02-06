@@ -654,6 +654,7 @@ def _update_preproc_functions(settings, dataset, datasets, missing_vars):
     if dataset.facets.get('frequency') == 'fx':
         check.check_for_temporal_preprocs(settings)
     check.statistics_preprocessors(settings)
+    check.regridding_schemes(settings)
     check.bias_type(settings)
 
 
