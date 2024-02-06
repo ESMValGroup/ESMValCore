@@ -632,7 +632,7 @@ def test_fix_ocean_depth_coord():
 def time_coord():
     """Time coordinate."""
     time_coord = AuxCoord(
-        [15, 350],
+        [15.0, 350.0],
         standard_name='time',
         units='days since 1850-01-01'
     )
@@ -666,7 +666,6 @@ def time_coord():
 def test_get_time_bounds(time_coord, freq, expected_bounds):
     """Test ``get_time_bounds`."""
     bounds = get_time_bounds(time_coord, freq)
-    print(bounds)
     np.testing.assert_allclose(bounds, expected_bounds)
 
 

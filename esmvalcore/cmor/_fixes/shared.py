@@ -485,8 +485,8 @@ def get_time_bounds(time: Coord, freq: str) -> np.ndarray:
             min_bound = datetime(date.year, date.month, 1, 0, 0)
             max_bound = datetime(next_year, next_month, 1, 0, 0)
         elif 'day' in freq:
-            min_bound = date - timedelta(hours=12)
-            max_bound = date + timedelta(hours=12)
+            min_bound = date - timedelta(hours=12.0)
+            max_bound = date + timedelta(hours=12.0)
         elif 'hr' in freq:
             (n_hours_str, _, _) = freq.partition('hr')
             if not n_hours_str:
