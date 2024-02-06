@@ -2535,7 +2535,8 @@ recipe:
   Must be one of ``'weighted_rmse'`` (weighted root mean square error),
   ``'rmse'`` (unweighted root mean square error), ``'weighted_pearsonr'``
   (weighted Pearson correlation coefficient), ``'pearsonr'`` (unweighted
-  Pearson correlation coefficient).
+  Pearson correlation coefficient, ``'emd'`` (Earth mover's distance, also
+  known as first Wasserstein metric W<sub>1</sub>).
 
   .. note::
     Metrics starting with `weighted_` will calculate weighted distance metrics
@@ -2569,6 +2570,8 @@ recipe:
   * `weighted_pearsonr` and `pearsonr`: ``mdtol``, ``common_mask`` (all keyword
     arguments are passed to :func:`iris.analysis.stats.pearsonr`, see that link
     for more details on these arguments).
+  * `emd`: ``nbins`` = number of bins used to create discrete probability
+    mass function of data before calculating the EMD (:obj:`int`, default: 30).
 
 Example:
 

@@ -6,6 +6,7 @@ from collections.abc import Iterable
 from functools import partial
 from typing import TYPE_CHECKING, Literal, Optional
 
+import dask
 import dask.array as da
 import iris.analysis
 import iris.analysis.stats
@@ -15,6 +16,7 @@ from iris.coords import CellMethod, Coord
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateNotFoundError
 from iris.util import broadcast_to_shape
+from scipy.stats import wasserstein_distance
 
 from esmvalcore.preprocessor._area import _try_adding_calculated_cell_area
 from esmvalcore.preprocessor._io import concatenate
@@ -206,6 +208,7 @@ MetricType = Literal[
     'rmse',
     'weighted_pearsonr',
     'pearsonr',
+    'emd',
 ]
 
 
@@ -243,7 +246,8 @@ def distance_metric(
         (weighted root mean square error), ``'rmse'`` (unweighted root mean
         square error), ``'weighted_pearsonr'`` (weighted Pearson correlation
         coefficient), ``'pearsonr'`` (unweighted Pearson correlation
-        coefficient).
+        coefficient), ``'emd'`` (Earth mover's distance, also known as first
+        Wasserstein metric W<sub>1</sub>).
 
         .. note::
             Metrics starting with `weighted_` will calculate weighted distance
@@ -278,6 +282,9 @@ def distance_metric(
         * `weighted_pearsonr` and `pearsonr`: ``mdtol``, ``common_mask`` (all
           keyword arguments are passed to :func:`iris.analysis.stats.pearsonr`,
           see that link for more details on these arguments).
+        * `emd`: ``nbins`` = number of bins used to create discrete probability
+          mass function of data before calculating the EMD (:obj:`int`,
+          default: 30).
 
     Returns
     -------
@@ -423,6 +430,7 @@ def _calculate_metric(
             _calculate_pearsonr, weighted=True, **kwargs
         ),
         'pearsonr': partial(_calculate_pearsonr, weighted=False, **kwargs),
+        'emd': partial(_calculate_emd, **kwargs),
     }
     if metric not in metrics_funcs:
         raise ValueError(
@@ -517,10 +525,13 @@ def _calculate_pearsonr(
     **kwargs,
 ) -> tuple[np.ndarray | da.Array, CubeMetadata]:
     """Calculate Pearson correlation coefficient."""
+    # Data
     weights = _get_weights(cube, coords) if weighted else None
     res_cube = iris.analysis.stats.pearsonr(
         cube, ref_cube, corr_coords=coords, weights=weights, **kwargs
     )
+
+    # Metadata
     metadata = CubeMetadata(
         None,
         (
@@ -532,4 +543,114 @@ def _calculate_pearsonr(
         cube.attributes,
         cube.cell_methods,
     )
+
     return (res_cube.core_data(), metadata)
+
+
+def _calculate_emd(
+    cube: Cube,
+    ref_cube: Cube,
+    coords: Iterable[Coord] | Iterable[str],
+    *,
+    n_bins: int = 30,
+) -> tuple[np.ndarray | da.Array, CubeMetadata]:
+    """Calculate Earth mover's distance."""
+    # Data
+    axis = _get_all_coord_dims(cube, coords)
+    (bins, bin_centers) = _get_bins(cube, ref_cube, n_bins)
+
+    emd = _calculate_emd_eager(
+        cube.data,
+        ref_cube.data,
+        axis=axis,
+        bins=bins,
+        bin_centers=bin_centers,
+    )
+
+    # Metadata
+    metadata = CubeMetadata(
+        None,
+        'EMD' if cube.long_name is None else f'EMD of {cube.long_name}',
+        'emd' if cube.var_name is None else f'emd_{cube.var_name}',
+        '1',
+        cube.attributes,
+        cube.cell_methods,
+    )
+
+    return (emd, metadata)
+
+
+def _get_bins(
+    cube: Cube,
+    ref_cube: Cube,
+    n_bins: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Get bins for discretization of data."""
+    all_data = da.stack([cube.core_data(), ref_cube.core_data()])
+    (min_, max_) = dask.compute(all_data.min(), all_data.max())
+    small_value = (max_ - min_) * 0.01 / n_bins
+    bins = np.linspace(min_ - small_value, max_ + small_value, n_bins + 1)
+    bin_centers = np.convolve(bins, np.ones(2), 'valid') / 2.0
+    return (bins, bin_centers)
+
+
+def _calculate_emd_eager(
+    data: np.ndarray,
+    ref_data: np.ndarray,
+    *,
+    axis: Optional[int | tuple[int, ...]],
+    bins: np.ndarray,
+    bin_centers: np.ndarray,
+) -> np.ndarray:
+    """Calculate Earth mover's distance along axis (eager version)."""
+    pmf = _get_pmf(data, axis, bins)
+    ref_pmf = _get_pmf(ref_data, axis, bins)
+
+    # Get vectorized version of scipy.stats.wasserstein_distance and calculate
+    # EMD metric (= Wasserstein distance)
+    v_wasserstein_distance = np.vectorize(
+        wasserstein_distance, signature='(n),(n),(n),(n)->()'
+    )
+    emd = v_wasserstein_distance(bin_centers, bin_centers, pmf, ref_pmf)
+
+    return emd
+
+
+def _get_pmf(
+    data: np.ndarray,
+    axis: Optional[int | tuple[int, ...]],
+    bins: np.ndarray,
+) -> np.ndarray:
+    """Get probaility mass function (PMF) of data along axis.
+
+    This will return an array of shape `(x1, x2, ..., n_bins)` where `xi` are
+    the dimensions of `data` not appearing in `axis` and `n_bins` is the number
+    of bins.
+
+    """
+    if axis is None:
+        axis = tuple(range(data.ndim))
+    elif isinstance(axis, int):
+        axis = tuple([axis])
+
+    # Create array with shape (x1, x2, ..., y) where the `xi` are the
+    # dimensions of `data` not in `axis` and `y` is the product of the
+    # remaining dimensions
+    remaining_dims = tuple(a for a in range(data.ndim) if a not in axis)
+    shape_rem_dims = tuple(data.shape[a] for a in remaining_dims)
+    reshaped_data = data.reshape(*shape_rem_dims, -1)
+
+    # Use vectorized version of np.histogram to get PMF (which has been
+    # normalized by number of samples that entered the histogram calculation,
+    # i.e., `y` from above)
+    def _get_hist_values(*args, **kwargs):
+        return np.histogram(*args, **kwargs)[0]
+
+    v_histogram = np.vectorize(
+        _get_hist_values, excluded=('bins', 'range'), signature='(n)->(m)'
+    )
+    pmf = v_histogram(
+        reshaped_data, bins=bins, range=(bins[0], bins[-1])
+    ) / reshaped_data.shape[-1]
+
+    return pmf
