@@ -680,7 +680,7 @@ def _get_stat_identifier(statistic: str | dict) -> str:
 def multi_model_statistics(
     products: set[PreprocessorFile] | Iterable[Cube],
     span: str,
-    statistics: list[str],
+    statistics: list[str | dict],
     output_products=None,
     groupby: Optional[tuple] = None,
     keep_input_datasets: bool = True,
@@ -699,10 +699,11 @@ def multi_model_statistics(
     There are two options to combine time coordinates of different lengths, see
     the ``span`` argument.
 
-    Uses the statistical operators in :py:mod:`iris.analysis`, including
-    ``mean``, ``median``, ``min``, ``max``, and ``std``. Percentiles are also
-    supported and can be specified like ``pXX.YY`` (for percentile ``XX.YY``;
-    decimal part optional).
+    Desired statistics need to be given as a list, e.g., ``statistics: ['mean',
+    'median']``. For some statistics like percentiles, it is also possible to
+    pass additional keyword arguments, for example ``statistics: [{'operator':
+    'mean', 'percent': 20}]``. A full list of supported statistics is available
+    in the section on :ref:`stat_preprocs`.
 
     This function can handle cubes with differing metadata:
 
@@ -755,8 +756,11 @@ def multi_model_statistics(
         missing data. This option is ignored if input cubes do not have time
         dimensions.
     statistics:
-        Statistical metrics to be computed, e.g. [``mean``, ``max``]. Allowed
-        options are given in :ref:`this table <supported_stat_operator>`.
+        Statistical operations to be computed, e.g., ``['mean', 'median']``.
+        For some statistics like percentiles, it is also possible to pass
+        additional keyword arguments, e.g., ``[{'operator': 'mean', 'percent':
+        20}]``. All supported options are are given in :ref:`this table
+        <supported_stat_operator>`.
     output_products: dict
         For internal use only. A dict with statistics names as keys and
         preprocessorfiles as values. If products are passed as input, the
@@ -822,26 +826,28 @@ def multi_model_statistics(
 
 def ensemble_statistics(
     products: set[PreprocessorFile] | Iterable[Cube],
-    statistics: list[str],
+    statistics: list[str | dict],
     output_products,
     span: str = 'overlap',
     ignore_scalar_coords: bool = False,
 ) -> dict | set:
-    """Entry point for ensemble statistics.
+    """Compute ensemble statistics.
 
-    An ensemble grouping is performed on the input products.
-    The statistics are then computed calling
-    the :func:`esmvalcore.preprocessor.multi_model_statistics` module,
-    taking the grouped products as an input.
+    An ensemble grouping is performed on the input products (using the
+    `ensemble` facet of input datasets). The statistics are then computed
+    calling :func:`esmvalcore.preprocessor.multi_model_statistics` with
+    appropriate groups.
 
     Parameters
     ----------
     products:
         Cubes (or products) over which the statistics will be computed.
     statistics:
-        Statistical metrics to be computed, e.g. [``mean``, ``max``]. Choose
-        from the operators listed in the iris.analysis package. Percentiles can
-        be specified like ``pXX.YY``.
+        Statistical operations to be computed, e.g., ``['mean', 'median']``.
+        For some statistics like percentiles, it is also possible to pass
+        additional keyword arguments, e.g., ``[{'operator': 'mean', 'percent':
+        20}]``. All supported options are are given in :ref:`this table
+        <supported_stat_operator>`.
     output_products: dict
         For internal use only. A dict with statistics names as keys and
         preprocessorfiles as values. If products are passed as input, the
