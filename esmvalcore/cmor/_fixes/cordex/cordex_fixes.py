@@ -100,7 +100,7 @@ class CLMcomCCLM4817(Fix):
                 if coord.dtype in ['>f8', '>f4']:
                     coord.points = coord.core_points().astype(
                         np.float64, casting='same_kind')
-                    if coord.bounds is not None:
+                    if coord.has_bounds():
                         coord.bounds = coord.core_bounds().astype(
                             np.float64, casting='same_kind')
         return cubes
