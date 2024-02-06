@@ -1183,6 +1183,7 @@ def cube_1d_time():
         ('monPt', None, (2024, 1, 15), [(2024, 1, 1), (2024, 2, 1)]),
         ('monPt', '365_day', (2024, 1, 15), [(2024, 1, 1), (2024, 2, 1)]),
         ('day', None, (2024, 1, 26, 12), [(2024, 1, 26), (2024, 1, 27)]),
+        ('24hr', None, (2024, 1, 26, 12), [(2024, 1, 26), (2024, 1, 27)]),
         ('12hr', None, (2024, 1, 26, 18), [(2024, 1, 26, 12), (2024, 1, 27)]),
         (
             '8hr',
@@ -1231,6 +1232,12 @@ def cube_1d_time():
             None,
             (2024, 1, 26, 13, 30),
             [(2024, 1, 26, 12), (2024, 1, 26, 15)],
+        ),
+        (
+            '2hr',
+            None,
+            (2024, 1, 26, 15),
+            [(2024, 1, 26, 14), (2024, 1, 26, 16)],
         ),
         (
             '1hr',
@@ -1357,7 +1364,7 @@ def test_regrid_time_invalid_freq_for_calendar(cube_1d_time, freq):
         regrid_time(cube_1d_time, freq, calendar='365_day')
 
 
-@pytest.mark.parametrize('freq', ['5hr', '7hrPt', '9hrCM', '10hr'])
+@pytest.mark.parametrize('freq', ['5hr', '7hrPt', '9hrCM', '10hr', '21hrPt'])
 def test_regrid_time_hour_no_divisor_of_24(cube_1d_time, freq):
     """Test ``regrid_time``."""
     msg = f"For `n`-hourly data, `n` must be a divisor of 24, got '{freq}'"
