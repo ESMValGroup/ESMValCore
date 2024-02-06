@@ -2566,21 +2566,9 @@ recipe:
   The following keyword arguments are supported:
 
   * `weighted_rmse` and `rmse`: none.
-  * `weighted_pearsonr` and `pearsonr`:
-
-    * ``mdtol`` (:obj:`float`, default: 1.0): Tolerance of missing data.
-      The missing data fraction is calculated based on the number of grid cells
-      masked in both cubes.
-      If this fraction exceed ``mdtol``, the returned value in the
-      corresponding cell is masked.
-      ``mdtol=0`` means no missing data is tolerated while ``mdtol=1`` means
-      the resulting element will be masked if and only if all contributing
-      elements are masked in both cubes.
-    * ``common_mask`` (:obj:`bool`, default: ``False``): If ``True``, applies a
-      common mask to both cubes so only cells which are unmasked in both cubes
-      contribute to the calculation.
-      If ``False``, the variance for each cube is calculated from all available
-      cells.
+  * `weighted_pearsonr` and `pearsonr`: ``mdtol``, ``common_mask`` (all keyword
+    arguments are passed to :func:`iris.analysis.stats.pearsonr`, see that link
+    for more details on these arguments).
 
 Example:
 
