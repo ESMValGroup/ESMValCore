@@ -165,7 +165,6 @@ def get_recipe(tempdir: Path, content: str, session: Session):
     return recipe
 
 
-@pytest.mark.xfail(reason="rased by yamale.validate before")
 def test_recipe_missing_scripts(tmp_path, session):
     content = dedent("""
         datasets:
@@ -214,7 +213,6 @@ def test_recipe_duplicate_var_script_name(tmp_path, session):
     assert str(exc.value) == exc_message
 
 
-@pytest.mark.xfail(reason="rased by yamale.validate before")
 def test_recipe_no_script(tmp_path, session):
     content = dedent("""
         datasets:
