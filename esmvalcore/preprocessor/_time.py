@@ -1126,27 +1126,18 @@ def _get_new_dates(frequency: str, coord: Coord) -> list[datetime.datetime]:
     """Get transformed dates."""
     dates = coord.units.num2date(coord.points)
 
-    # Decadal data
     if 'dec' in frequency:
         dates = [datetime.datetime(d.year, 1, 1, 0, 0, 0) for d in dates]
-
-    # Yearly data
     elif 'yr' in frequency:
         dates = [datetime.datetime(d.year, 7, 1, 0, 0, 0) for d in dates]
-
-    # Monthly data
     elif 'mon' in frequency:
         dates = [
             datetime.datetime(d.year, d.month, 15, 0, 0, 0) for d in dates
         ]
-
-    # Daily data
     elif 'day' in frequency:
         dates = [
             datetime.datetime(d.year, d.month, d.day, 12, 0, 0) for d in dates
         ]
-
-    # Subdaily data
     elif 'hr' in frequency:
         (n_hours_str, _, _) = frequency.partition('hr')
         if not n_hours_str:

@@ -1,7 +1,7 @@
 """Shared functions for fixes."""
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import lru_cache
 
 import dask.array as da
@@ -452,11 +452,6 @@ def get_time_bounds(time: Coord, freq: str) -> np.ndarray:
     where `n` is a divisor of 24), half of the frequency is subtracted/added
     from the current point in time to get the bounds.
 
-    Note
-    ----
-    This assumes a time coordinate of the form `days since ...` (not checked
-    during run time).
-
     Parameters
     ----------
     time:
@@ -477,28 +472,21 @@ def get_time_bounds(time: Coord, freq: str) -> np.ndarray:
     """
     bounds = []
     dates = time.units.num2date(time.points)
-    for step, date in enumerate(dates):
-        month = date.month
-        year = date.year
+
+    for date in dates:
         if 'dec' in freq:
-            min_bound = date2num(datetime(year - 5, 1, 1, 0, 0),
-                                 time.units, time.dtype)
-            max_bound = date2num(datetime(year + 5, 1, 1, 0, 0),
-                                 time.units, time.dtype)
+            min_bound = datetime(date.year - 5, 1, 1, 0, 0)
+            max_bound = datetime(date.year + 5, 1, 1, 0, 0)
         elif 'yr' in freq:
-            min_bound = date2num(datetime(year, 1, 1, 0, 0),
-                                 time.units, time.dtype)
-            max_bound = date2num(datetime(year + 1, 1, 1, 0, 0),
-                                 time.units, time.dtype)
+            min_bound = datetime(date.year, 1, 1, 0, 0)
+            max_bound = datetime(date.year + 1, 1, 1, 0, 0)
         elif 'mon' in freq or freq == 'mo':
-            next_month, next_year = get_next_month(month, year)
-            min_bound = date2num(datetime(year, month, 1, 0, 0),
-                                 time.units, time.dtype)
-            max_bound = date2num(datetime(next_year, next_month, 1, 0, 0),
-                                 time.units, time.dtype)
+            next_month, next_year = get_next_month(date.month, date.year)
+            min_bound = datetime(date.year, date.month, 1, 0, 0)
+            max_bound = datetime(next_year, next_month, 1, 0, 0)
         elif 'day' in freq:
-            min_bound = time.points[step] - 0.5
-            max_bound = time.points[step] + 0.5
+            min_bound = date - timedelta(hours=12)
+            max_bound = date + timedelta(hours=12)
         elif 'hr' in freq:
             (n_hours_str, _, _) = freq.partition('hr')
             if not n_hours_str:
@@ -510,13 +498,12 @@ def get_time_bounds(time: Coord, freq: str) -> np.ndarray:
                     f"For `n`-hourly data, `n` must be a divisor of 24, got "
                     f"'{freq}'"
                 )
-            delta = n_hours / 48.0  # = n_hours / 2 / 24
-            min_bound = time.points[step] - delta
-            max_bound = time.points[step] + delta
+            min_bound = date - timedelta(hours=n_hours / 2.0)
+            max_bound = date + timedelta(hours=n_hours / 2.0)
         else:
             raise NotImplementedError(
                 f"Cannot guess time bounds for frequency '{freq}'"
             )
         bounds.append([min_bound, max_bound])
 
-    return np.array(bounds)
+    return date2num(np.array(bounds), time.units, time.dtype)
