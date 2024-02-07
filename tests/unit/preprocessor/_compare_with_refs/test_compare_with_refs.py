@@ -669,7 +669,7 @@ def test_invalid_metric(regular_cubes, ref_cubes):
     }
     msg = (
         r"Expected one of \['weighted_rmse', 'rmse', 'weighted_pearsonr', "
-        r"'pearsonr'\] for metric, got 'invalid'"
+        r"'pearsonr', 'emd'\] for metric, got 'invalid'"
     )
     with pytest.raises(ValueError, match=msg):
         distance_metric(products, 'invalid')
