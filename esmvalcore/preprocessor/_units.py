@@ -162,9 +162,9 @@ def accumulate_coordinate(
         raise NotImplementedError(
             f'Multidimensional coordinate {coord} not supported.')
 
-    xp = da if coord.has_lazy_bounds() else np
+    array_module = da if coord.has_lazy_bounds() else np
     factor = iris.coords.AuxCoord(
-        xp.diff(coord.core_bounds())[..., -1],
+        array_module.diff(coord.core_bounds())[..., -1],
         var_name=coord.var_name,
         long_name=coord.long_name,
         units=coord.units,
