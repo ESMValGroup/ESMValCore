@@ -251,7 +251,10 @@ def distance_metric(
         * ``'weighted_pearsonr'``: Weighted Pearson correlation coefficient.
         * ``'pearsonr'``: Unweighted Pearson correlation coefficient.
         * ``'emd'``: Earth mover's distance, also known as first Wasserstein
-          metric `W`$_1$.
+          metric `W`\ :sub:`1`.
+
+        A detailed description of these metrics can be found :ref:`here
+        <list_of_distance_metrics>`.
 
         .. note::
             Metrics starting with `weighted_` will calculate weighted distance

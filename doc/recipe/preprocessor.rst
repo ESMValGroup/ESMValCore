@@ -2531,15 +2531,59 @@ To ensure this, the preprocessors :func:`esmvalcore.preprocessor.regrid` and/or
 The ``distance_metric`` preprocessor supports the following arguments in the
 recipe:
 
+.. _list_of_distance_metrics:
+
 * ``metric`` (:obj:`str`): Distance metric that is calculated.
   Must be one of
 
-  * ``'weighted_rmse'``: Weighted root mean square error.
-  * ``'rmse'``: Unweighted root mean square error.
-  * ``'weighted_pearsonr'``: Weighted Pearson correlation coefficient.
-  * ``'pearsonr'``: Unweighted Pearson correlation coefficient.
-  * ``'emd'``: Earth mover's distance, also known as first Wasserstein metric
-    `W`$_1$.
+  * ``'weighted_rmse'``: `Weighted root mean square error`_.
+
+  .. math::
+
+    WRMSE = \sqrt{\sum_{i=1}^N w_i \left( x_i - r_i \right)^2}
+
+  * ``'rmse'``: `Unweighted root mean square error`_.
+
+  .. math::
+
+    RMSE = \sqrt{\frac{1}{N} \sum_{i=1}^N \left( x_i - r_i \right)^2}
+
+  * ``'weighted_pearsonr'``: `Weighted Pearson correlation coefficient`_.
+
+  .. math::
+
+    r = \frac{
+      \sum_{i=1}^N
+      w_i \left( x_i - \bar{x} \right) \left( r_i - \bar{r} \right)
+    }{
+      \sqrt{\sum_{i=1}^N w_i \left( x_i - \bar{x} \right)^2}
+      \sqrt{\sum_{i=1}^N w_i \left( r_i - \bar{r} \right)^2}
+    }
+
+  * ``'pearsonr'``: `Unweighted Pearson correlation coefficient`_.
+
+  .. math::
+
+    r = \frac{
+      \sum_{i=1}^N
+      \left( x_i - \bar{x} \right) \left( r_i - \bar{r} \right)
+    }{
+      \sqrt{\sum_{i=1}^N \left( x_i - \bar{x} \right)^2}
+      \sqrt{\sum_{i=1}^N \left( r_i - \bar{r} \right)^2}
+    }
+
+  * ``'emd'``: `Earth mover's distance`_, also known as first Wasserstein
+    metric `W`\ :sub:`1`.
+
+  .. math::
+
+    W_1 = ...
+
+  Here, `x`\ :sub:`i` and `r`\ :sub:`i` are samples of a variable of interest
+  and a corresponding reference, respectively (a bar over a variable denotes
+  its arithmetic/weighted mean [the latter for weighted metrics]). `w`\
+  :sub:`i` are weights that sum to one (see note below) and `N` is the total
+  number of samples.
 
   .. note::
     Metrics starting with `weighted_` will calculate weighted distance metrics
@@ -2591,6 +2635,17 @@ Example:
           common_mask: true
 
 See also :func:`esmvalcore.preprocessor.distance_metric`.
+
+.. _Weighted root mean square error: https://en.wikipedia.org/wiki/
+  Root-mean-square_deviation
+.. _Unweighted root mean square error: https://en.wikipedia.org/wiki/
+  Root-mean-square_deviation
+.. _Unweighted Pearson correlation coefficient: https://en.wikipedia.org/
+  wiki/Pearson_correlation_coefficient
+.. _Weighted Pearson correlation coefficient: https://en.wikipedia.org/
+  wiki/Pearson_correlation_coefficient
+.. _Earth mover's distance: https://en.wikipedia.org/wiki/
+  Earth_mover%27s_distance
 
 
 .. _Memory use:
