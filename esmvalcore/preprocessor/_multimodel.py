@@ -758,8 +758,8 @@ def multi_model_statistics(
     statistics:
         Statistical operations to be computed, e.g., ``['mean', 'median']``.
         For some statistics like percentiles, it is also possible to pass
-        additional keyword arguments, e.g., ``[{'operator': 'percentile', 
-        'percent': 20}]``. All supported options are are given in 
+        additional keyword arguments, e.g., ``[{'operator': 'percentile',
+        'percent': 20}]``. All supported options are are given in
         :ref:`this table <supported_stat_operator>`.
     output_products: dict
         For internal use only. A dict with statistics names as keys and
@@ -845,8 +845,8 @@ def ensemble_statistics(
     statistics:
         Statistical operations to be computed, e.g., ``['mean', 'median']``.
         For some statistics like percentiles, it is also possible to pass
-        additional keyword arguments, e.g., ``[{'operator': 'percentile', 
-        'percent': 20}]``. All supported options are are given in 
+        additional keyword arguments, e.g., ``[{'operator': 'percentile',
+        'percent': 20}]``. All supported options are are given in
         :ref:`this table <supported_stat_operator>`.
     output_products: dict
         For internal use only. A dict with statistics names as keys and
