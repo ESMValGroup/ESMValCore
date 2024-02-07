@@ -702,7 +702,7 @@ def multi_model_statistics(
     Desired statistics need to be given as a list, e.g., ``statistics: ['mean',
     'median']``. For some statistics like percentiles, it is also possible to
     pass additional keyword arguments, for example ``statistics: [{'operator':
-    'mean', 'percent': 20}]``. A full list of supported statistics is available
+    'percentile', 'percent': 20}]``. A full list of supported statistics is available
     in the section on :ref:`stat_preprocs`.
 
     This function can handle cubes with differing metadata:
@@ -758,7 +758,7 @@ def multi_model_statistics(
     statistics:
         Statistical operations to be computed, e.g., ``['mean', 'median']``.
         For some statistics like percentiles, it is also possible to pass
-        additional keyword arguments, e.g., ``[{'operator': 'mean', 'percent':
+        additional keyword arguments, e.g., ``[{'operator': 'percentile', 'percent':
         20}]``. All supported options are are given in :ref:`this table
         <supported_stat_operator>`.
     output_products: dict
@@ -845,7 +845,7 @@ def ensemble_statistics(
     statistics:
         Statistical operations to be computed, e.g., ``['mean', 'median']``.
         For some statistics like percentiles, it is also possible to pass
-        additional keyword arguments, e.g., ``[{'operator': 'mean', 'percent':
+        additional keyword arguments, e.g., ``[{'operator': 'percentile', 'percent':
         20}]``. All supported options are are given in :ref:`this table
         <supported_stat_operator>`.
     output_products: dict
