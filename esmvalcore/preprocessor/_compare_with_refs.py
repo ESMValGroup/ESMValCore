@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import string
 from collections.abc import Iterable
 from functools import partial
 from typing import TYPE_CHECKING, Literal, Optional
@@ -18,6 +19,7 @@ from iris.exceptions import CoordinateNotFoundError
 from iris.util import broadcast_to_shape
 from scipy.stats import wasserstein_distance
 
+from esmvalcore.iris_helpers import rechunk_cube
 from esmvalcore.preprocessor._area import _try_adding_calculated_cell_area
 from esmvalcore.preprocessor._io import concatenate
 from esmvalcore.preprocessor._other import get_array_module
@@ -242,12 +244,14 @@ def distance_metric(
         Input datasets/cubes for which the distance metric is calculated
         relative to a reference dataset/cube.
     metric:
-        Distance metric that is calculated. Must be one of ``'weighted_rmse'``
-        (weighted root mean square error), ``'rmse'`` (unweighted root mean
-        square error), ``'weighted_pearsonr'`` (weighted Pearson correlation
-        coefficient), ``'pearsonr'`` (unweighted Pearson correlation
-        coefficient), ``'emd'`` (Earth mover's distance, also known as first
-        Wasserstein metric W<sub>1</sub>).
+        Distance metric that is calculated. Must be one of
+
+        * ``'weighted_rmse'``: Weighted root mean square error.
+        * ``'rmse'``: Unweighted root mean square error.
+        * ``'weighted_pearsonr'``: Weighted Pearson correlation coefficient.
+        * ``'pearsonr'``: Unweighted Pearson correlation coefficient.
+        * ``'emd'``: Earth mover's distance, also known as first Wasserstein
+          metric `W`$_1$.
 
         .. note::
             Metrics starting with `weighted_` will calculate weighted distance
@@ -282,9 +286,9 @@ def distance_metric(
         * `weighted_pearsonr` and `pearsonr`: ``mdtol``, ``common_mask`` (all
           keyword arguments are passed to :func:`iris.analysis.stats.pearsonr`,
           see that link for more details on these arguments).
-        * `emd`: ``nbins`` = number of bins used to create discrete probability
-          mass function of data before calculating the EMD (:obj:`int`,
-          default: 30).
+        * `emd`: ``n_bins`` = number of bins used to create discrete
+          probability mass function of data before calculating the EMD
+          (:obj:`int`, default: 100).
 
     Returns
     -------
@@ -552,20 +556,26 @@ def _calculate_emd(
     ref_cube: Cube,
     coords: Iterable[Coord] | Iterable[str],
     *,
-    n_bins: int = 30,
+    n_bins: int = 100,
 ) -> tuple[np.ndarray | da.Array, CubeMetadata]:
     """Calculate Earth mover's distance."""
+    # Make sure that data is not chunked along `coords`
+    cube = rechunk_cube(cube, coords)
+    ref_cube = rechunk_cube(ref_cube, coords)
+
     # Data
-    axis = _get_all_coord_dims(cube, coords)
+    axes = _get_all_coord_dims(cube, coords)
     (bins, bin_centers) = _get_bins(cube, ref_cube, n_bins)
 
-    emd = _calculate_emd_eager(
-        cube.data,
-        ref_cube.data,
-        axis=axis,
-        bins=bins,
-        bin_centers=bin_centers,
-    )
+    if cube.has_lazy_data() and ref_cube.has_lazy_data():
+        func = partial(
+            _calculate_emd_lazy, axes=axes, bins=bins, bin_centers=bin_centers
+        )
+    else:
+        func = partial(
+            _calculate_emd_eager, axes=axes, bins=bins, bin_centers=bin_centers
+        )
+    emd = func(cube.core_data(), ref_cube.core_data())
 
     # Metadata
     metadata = CubeMetadata(
@@ -594,63 +604,106 @@ def _get_bins(
     return (bins, bin_centers)
 
 
-def _calculate_emd_eager(
-    data: np.ndarray,
-    ref_data: np.ndarray,
+def _calculate_emd_lazy(
+    data: da.Array,
+    ref_data: da.Array,
     *,
-    axis: Optional[int | tuple[int, ...]],
+    axes: tuple[int, ...],
     bins: np.ndarray,
     bin_centers: np.ndarray,
 ) -> np.ndarray:
-    """Calculate Earth mover's distance along axis (eager version)."""
-    pmf = _get_pmf(data, axis, bins)
-    ref_pmf = _get_pmf(ref_data, axis, bins)
+    """Calculate Earth mover's distance along axes (eager version)."""
+    n_axes = len(axes)
 
-    # Get vectorized version of scipy.stats.wasserstein_distance and calculate
-    # EMD metric (= Wasserstein distance)
-    v_wasserstein_distance = np.vectorize(
-        wasserstein_distance, signature='(n),(n),(n),(n)->()'
+    # da.apply_gufunc transposes the input array so that the axes given by the
+    # `axes` argument to this function are the rightmost dimensions. Thus, we
+    # need to use `axes=(ndim-n_axes, ..., ndim-2, ndim-1)` for
+    # _calculate_emd_eager here.
+    axes_in_chunk = tuple(range(data.ndim - n_axes,  data.ndim))
+
+    # The call signature depends also on the number of axes in `axes`, and will
+    # be (a,b,...)->()
+    input_signature = f"({','.join(list(string.ascii_lowercase)[:len(axes)])})"
+    signature = f"{input_signature},{input_signature}->()"
+
+    _calculate_emd_for_chunk = partial(
+        _calculate_emd_eager,
+        axes=axes_in_chunk,
+        bins=bins,
+        bin_centers=bin_centers,
     )
-    emd = v_wasserstein_distance(bin_centers, bin_centers, pmf, ref_pmf)
+    emd = da.apply_gufunc(
+        _calculate_emd_for_chunk,
+        signature,
+        data,
+        ref_data,
+        axes=[axes, axes, ()],
+        output_dtypes=data.dtype,
+    )
 
     return emd
 
 
+def _calculate_emd_eager(
+    data: np.ndarray,
+    ref_data: np.ndarray,
+    *,
+    axes: tuple[int, ...],
+    bins: np.ndarray,
+    bin_centers: np.ndarray,
+) -> np.ndarray:
+    """Calculate Earth mover's distance along axes (eager version)."""
+    pmf = _get_pmf(data, axes, bins)
+    ref_pmf = _get_pmf(ref_data, axes, bins)
+
+    # Get vectorized version of scipy.stats.wasserstein_distance that also
+    # handles masks properly and calculate EMD metric (= First Wasserstein
+    # distance)
+    def calc_emd(arr, ref_arr):
+        if np.ma.is_masked(arr) or np.ma.is_masked(ref_arr):
+            return np.nan
+        return wasserstein_distance(bin_centers, bin_centers, arr, ref_arr)
+
+    v_calc_emd = np.vectorize(calc_emd, signature='(n),(n)->()')
+    emd = v_calc_emd(pmf, ref_pmf)
+
+    return np.ma.masked_invalid(emd)
+
+
 def _get_pmf(
     data: np.ndarray,
-    axis: Optional[int | tuple[int, ...]],
+    axes: tuple[int, ...],
     bins: np.ndarray,
 ) -> np.ndarray:
-    """Get probaility mass function (PMF) of data along axis.
+    """Get probaility mass function (PMF) of data along axes.
 
     This will return an array of shape `(x1, x2, ..., n_bins)` where `xi` are
-    the dimensions of `data` not appearing in `axis` and `n_bins` is the number
+    the dimensions of `data` not appearing in `axes` and `n_bins` is the number
     of bins.
 
     """
-    if axis is None:
-        axis = tuple(range(data.ndim))
-    elif isinstance(axis, int):
-        axis = tuple([axis])
-
     # Create array with shape (x1, x2, ..., y) where the `xi` are the
-    # dimensions of `data` not in `axis` and `y` is the product of the
+    # dimensions of `data` not in `axes` and `y` is the product of the
     # remaining dimensions
-    remaining_dims = tuple(a for a in range(data.ndim) if a not in axis)
+    remaining_dims = tuple(a for a in range(data.ndim) if a not in axes)
     shape_rem_dims = tuple(data.shape[a] for a in remaining_dims)
     reshaped_data = data.reshape(*shape_rem_dims, -1)
 
     # Use vectorized version of np.histogram to get PMF (which has been
-    # normalized by number of samples that entered the histogram calculation,
-    # i.e., `y` from above)
-    def _get_hist_values(*args, **kwargs):
-        return np.histogram(*args, **kwargs)[0]
+    # normalized by number of samples that entered the histogram calculation)
+    def _get_hist_values(arr):
+        mask = np.ma.getmaskarray(arr)
+        arr = arr[~mask]
+        return np.histogram(arr, bins=bins, range=(bins[0], bins[-1]))[0]
 
-    v_histogram = np.vectorize(
-        _get_hist_values, excluded=('bins', 'range'), signature='(n)->(m)'
-    )
-    pmf = v_histogram(
-        reshaped_data, bins=bins, range=(bins[0], bins[-1])
-    ) / reshaped_data.shape[-1]
+    v_histogram = np.vectorize(_get_hist_values, signature='(n)->(m)')
+    pmf = v_histogram(reshaped_data)
+
+    # Mask points where all input data was masked (these are the ones where the
+    # PMF sums to 0) and normalize
+    norm = pmf.sum(axis=-1, keepdims=True)
+    mask = np.isclose(norm, 0.0)
+    mask_broadcast = np.broadcast_to(mask, pmf.shape)
+    pmf = np.ma.array(pmf, mask=mask_broadcast) / np.ma.array(norm, mask=mask)
 
     return pmf
