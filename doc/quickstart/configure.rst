@@ -382,8 +382,8 @@ corresponding command line arguments ``--search_esgf=when_missing`` or
    tool by pressing the ``Ctrl`` and ``C`` keys on your keyboard simultaneously
    several times, edit the recipe so it contains fewer datasets and try again.
 
-For downloading some files (e.g. those produced by the CORDEX project),
-you need to log in to be able to download the data.
+For downloading some files, you may need to log in to be able to download the
+data.
 
 See the
 `ESGF user guide <https://esgf.github.io/esgf-user-support/user_guide.html>`_
