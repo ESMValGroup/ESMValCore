@@ -397,7 +397,7 @@ def _check_literal(
     *,
     step: str,
     option: str,
-    allowed_values: Iterable[str],
+    allowed_values: tuple[str],
 ) -> None:
     """Check that an option for a preprocessor has a valid value."""
     if step not in settings:
@@ -448,8 +448,9 @@ def _check_ref_attributes(products: set, *, step: str, attr_name: str) -> None:
         if not reference_products:
             ref_products_str = ". "
         else:
-            ref_products_str = [p.filename for p in reference_products]
-            ref_products_str = f":\n{pformat(ref_products_str)}.\n"
+            ref_products_str = (
+                f":\n{pformat([p.filename for p in reference_products])}.\n"
+            )
         raise RecipeError(
             f"Expected exactly 1 dataset with '{attr_name}: true' in "
             f"products\n{pformat(products_str)},\nfound "
