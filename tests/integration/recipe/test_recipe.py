@@ -2841,7 +2841,7 @@ def test_bias_two_refs(tmp_path, patched_datafinder, session):
     assert "found 2" in exc.value.failed_tasks[0].message
 
 
-def test_inlvaid_bias_type(tmp_path, patched_datafinder, session):
+def test_invalid_bias_type(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           test_bias:
@@ -2991,3 +2991,107 @@ def test_deprecated_regridding_scheme(tmp_path, patched_datafinder, session):
             scripts: null
         """)
     get_recipe(tmp_path, content, session)
+
+
+def test_distance_metric_no_ref(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_distance_metric:
+            distance_metric:
+              metric: emd
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_distance_metric
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+                  - {dataset: CESM2}
+
+            scripts: null
+        """)
+    msg = (
+        "Expected exactly 1 dataset with 'reference_for_metric: true' in "
+        "products"
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert msg in exc.value.failed_tasks[0].message
+    assert "found 0" in exc.value.failed_tasks[0].message
+
+
+def test_distance_metric_two_refs(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_distance_metric:
+            distance_metric:
+              metric: emd
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_distance_metric
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5, reference_for_metric: true}
+                  - {dataset: CESM2, reference_for_metric: true}
+
+            scripts: null
+        """)
+    msg = (
+        "Expected exactly 1 dataset with 'reference_for_metric: true' in "
+        "products"
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert msg in exc.value.failed_tasks[0].message
+    assert "found 2" in exc.value.failed_tasks[0].message
+
+
+def test_invalid_metric(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_distance_metric:
+            distance_metric:
+              metric: INVALID
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_distance_metric
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+                  - {dataset: CESM2, reference_for_metric: true}
+
+            scripts: null
+        """)
+    msg = (
+        "Expected one of ('weighted_rmse', 'rmse', 'weighted_pearsonr', "
+        "'pearsonr', 'emd') for `metric`, got 'INVALID'"
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert exc.value.failed_tasks[0].message == msg
