@@ -2574,16 +2574,33 @@ recipe:
 
   * ``'emd'``: `Earth mover's distance`_, also known as first Wasserstein
     metric `W`\ :sub:`1`.
+    The Wasserstein metric measures distances between two probability
+    distributions.
+    Here, we first create discrete probability distributions of the input data
+    through binning, which are then used as input for the Wasserstein metric.
+    The metric is also known as `Earth mover's distance` since, intuitively, it
+    can be seen as the minimum "cost" of turning one pile of earth into another
+    one (pile of earth = probability distribution).
+    This is also known as `optimal transport` problem.
+    Formally, this can be described with a joint probability distribution (or
+    `optimal transport matrix`) γ (whose marginals are the input distributions)
+    that minimizes the "transportation cost":
 
   .. math::
 
-    W_1 = ...
+    W_1 = \min_{\gamma \in \mathbb{R}^{n \times n}_{+}} \sum_{i,j}^{n}
+    \gamma_{ij} \lvert X_i - R_i \rvert \\
+    \textrm{with} ~~ \gamma 1 = p(X);~ \gamma^T 1 = p(R);~ \gamma \ge 0
 
   Here, `x`\ :sub:`i` and `r`\ :sub:`i` are samples of a variable of interest
   and a corresponding reference, respectively (a bar over a variable denotes
-  its arithmetic/weighted mean [the latter for weighted metrics]). `w`\
-  :sub:`i` are weights that sum to one (see note below) and `N` is the total
-  number of samples.
+  its arithmetic/weighted mean [the latter for weighted metrics]).
+  Capital letters (`X`\ :sub:`i` and `R`\ :sub:`i`) refer to bin centers of a
+  discrete probability distribution with values `p`\ (`X`\ :sub:`i`) or `p`\
+  (`R`\ :sub:`i`) and a number of bins `n` (see the argument ``n_bins`` below)
+  that has been derived for the variables `x` and `r` through binning.
+  `w`\ :sub:`i` are weights that sum to one (see note below) and `N` is the
+  total number of samples.
 
   .. note::
     Metrics starting with `weighted_` will calculate weighted distance metrics
@@ -2618,8 +2635,7 @@ recipe:
     arguments are passed to :func:`iris.analysis.stats.pearsonr`, see that link
     for more details on these arguments).
   * `emd`: ``n_bins`` = number of bins used to create discrete probability
-    mass function of data before calculating the EMD (:obj:`int`, default:
-    100).
+    distribution of data before calculating the EMD (:obj:`int`, default: 100).
 
 Example:
 
@@ -2644,8 +2660,8 @@ See also :func:`esmvalcore.preprocessor.distance_metric`.
   wiki/Pearson_correlation_coefficient
 .. _Weighted Pearson correlation coefficient: https://en.wikipedia.org/
   wiki/Pearson_correlation_coefficient
-.. _Earth mover's distance: https://en.wikipedia.org/wiki/
-  Earth_mover%27s_distance
+.. _Earth mover's distance: https://pythonot.github.io/
+  quickstart.html#computing-wasserstein-distance
 
 
 .. _Memory use:

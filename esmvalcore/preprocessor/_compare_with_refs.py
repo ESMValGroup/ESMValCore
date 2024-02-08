@@ -222,7 +222,7 @@ def distance_metric(
     keep_reference_dataset: bool = True,
     **kwargs,
 ) -> set[PreprocessorFile] | CubeList:
-    """Calculate distance metrics.
+    r"""Calculate distance metrics.
 
     All input datasets need to have identical dimensional coordinates. This can
     for example be ensured with the preprocessors
@@ -290,7 +290,7 @@ def distance_metric(
           keyword arguments are passed to :func:`iris.analysis.stats.pearsonr`,
           see that link for more details on these arguments).
         * `emd`: ``n_bins`` = number of bins used to create discrete
-          probability mass function of data before calculating the EMD
+          probability distribition of data before calculating the EMD
           (:obj:`int`, default: 100).
 
     Returns
