@@ -6,7 +6,7 @@ import logging
 import os
 from itertools import groupby
 from pathlib import Path
-from typing import Optional, NamedTuple
+from typing import NamedTuple, Optional
 from warnings import catch_warnings, filterwarnings
 
 import cftime

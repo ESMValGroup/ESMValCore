@@ -2874,3 +2874,120 @@ def test_inlvaid_bias_type(tmp_path, patched_datafinder, session):
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == INITIALIZATION_ERROR_MSG
     assert exc.value.failed_tasks[0].message == msg
+
+
+def test_invalid_builtin_regridding_scheme(
+        tmp_path, patched_datafinder, session
+):
+    content = dedent("""
+        preprocessors:
+          test:
+            regrid:
+              scheme: INVALID
+              target_grid: 2x2
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - {project: CMIP5, dataset: CanESM2, exp: amip,
+                     ensemble: r1i1p1}
+            scripts: null
+        """)
+    msg = (
+        "Got invalid built-in regridding scheme 'INVALID', expected one of "
+    )
+    with pytest.raises(RecipeError) as rec_err_exp:
+        get_recipe(tmp_path, content, session)
+    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
+    assert msg in str(rec_err_exp.value.failed_tasks[0].message)
+
+
+def test_generic_regridding_scheme_no_ref(
+        tmp_path, patched_datafinder, session
+):
+    content = dedent("""
+        preprocessors:
+          test:
+            regrid:
+              scheme:
+                no_reference: given
+              target_grid: 2x2
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - {project: CMIP5, dataset: CanESM2, exp: amip,
+                     ensemble: r1i1p1}
+            scripts: null
+        """)
+    msg = (
+        "Failed to load generic regridding scheme: No reference specified for "
+        "generic regridding. See "
+    )
+    with pytest.raises(RecipeError) as rec_err_exp:
+        get_recipe(tmp_path, content, session)
+    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
+    assert msg in str(rec_err_exp.value.failed_tasks[0].message)
+
+
+def test_invalid_generic_regridding_scheme(
+        tmp_path, patched_datafinder, session
+):
+    content = dedent("""
+        preprocessors:
+          test:
+            regrid:
+              scheme:
+                reference: invalid.module:and.function
+              target_grid: 2x2
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - {project: CMIP5, dataset: CanESM2, exp: amip,
+                     ensemble: r1i1p1}
+            scripts: null
+        """)
+    msg = (
+        "Failed to load generic regridding scheme: Could not import specified "
+        "generic regridding module 'invalid.module'. Please double check "
+        "spelling and that the required module is installed. "
+    )
+    with pytest.raises(RecipeError) as rec_err_exp:
+        get_recipe(tmp_path, content, session)
+    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
+    assert msg in str(rec_err_exp.value.failed_tasks[0].message)
+
+
+def test_deprecated_regridding_scheme(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test:
+            regrid:
+              scheme: linear_extrapolate
+              target_grid: 2x2
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - {project: CMIP5, dataset: CanESM2, exp: amip,
+                     ensemble: r1i1p1}
+            scripts: null
+        """)
+    get_recipe(tmp_path, content, session)
