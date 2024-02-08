@@ -623,6 +623,47 @@ def test_distance_metric_masked_data(
     )
 
 
+@pytest.mark.parametrize('lazy', [True, False])
+@pytest.mark.parametrize(
+    'metric,_,__,long_name,var_name,units', TEST_DISTANCE_METRICS
+)
+def test_distance_metric_fully_masked_data(
+    regular_cubes, ref_cubes, metric, _, __, long_name, var_name, units, lazy
+):
+    """Test `distance_metric` with fully_masked data."""
+    cube = regular_cubes[0]
+    cube.data = np.ma.masked_invalid(np.full(cube.shape, np.nan))
+    cube.add_cell_measure(AREA_WEIGHTS, (1, 2))
+    ref_cube = ref_cubes[0]
+
+    if lazy:
+        cube.data = da.array(cube.data)
+        ref_cube.data = da.array(ref_cube.data)
+
+    out_cubes = distance_metric([cube], metric, ref_cube=ref_cube)
+
+    assert isinstance(out_cubes, CubeList)
+    assert len(out_cubes) == 1
+    out_cube = out_cubes[0]
+
+    assert out_cube.shape == ()
+    if lazy:
+        assert out_cube.has_lazy_data()
+    else:
+        assert not out_cube.has_lazy_data()
+    assert out_cube.dtype == np.float64
+
+    expected_data = np.ma.masked_invalid(np.nan)
+    assert_allclose(out_cube.data, expected_data)
+    assert out_cube.var_name == var_name
+    assert out_cube.long_name == long_name
+    assert out_cube.standard_name is None
+    assert out_cube.units == units
+    assert out_cube.cell_methods == (
+        CellMethod(metric, ['time', 'latitude', 'longitude']),
+    )
+
+
 TEST_METRICS = [
     'weighted_rmse',
     'rmse',
