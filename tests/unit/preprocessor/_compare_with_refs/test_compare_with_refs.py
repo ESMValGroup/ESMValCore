@@ -15,15 +15,15 @@ from esmvalcore.preprocessor._compare_with_refs import bias, distance_metric
 from tests import PreprocessorFile
 
 
-def assert_array_equal(array_1, array_2):
-    """Assert that (masked) array 1 equals (masked) array 2."""
+def assert_allclose(array_1, array_2):
+    """Assert that (masked) array 1 is close to (masked) array 2."""
     if np.ma.is_masked(array_1) or np.ma.is_masked(array_2):
         np.testing.assert_array_equal(np.ma.getmaskarray(array_1),
                                       np.ma.getmaskarray(array_2))
         mask = np.ma.getmaskarray(array_1)
-        np.testing.assert_array_equal(array_1[~mask], array_2[~mask])
+        np.testing.assert_allclose(array_1[~mask], array_2[~mask])
     else:
-        np.testing.assert_array_equal(array_1, array_2)
+        np.testing.assert_allclose(array_1, array_2)
 
 
 def products_set_to_dict(products):
@@ -101,7 +101,7 @@ def test_bias_products(regular_cubes, ref_cubes, bias_type, data, units):
     assert len(product_a.cubes) == 1
     out_cube = product_a.cubes[0]
     assert out_cube.dtype == np.float32
-    assert_array_equal(out_cube.data, data)
+    assert_allclose(out_cube.data, data)
     assert out_cube.var_name == 'tas'
     assert out_cube.standard_name == 'air_temperature'
     assert out_cube.units == units
@@ -116,7 +116,7 @@ def test_bias_products(regular_cubes, ref_cubes, bias_type, data, units):
     assert len(product_b.cubes) == 1
     out_cube = product_b.cubes[0]
     assert out_cube.dtype == np.float32
-    assert_array_equal(out_cube.data, data)
+    assert_allclose(out_cube.data, data)
     assert out_cube.var_name == 'tas'
     assert out_cube.standard_name == 'air_temperature'
     assert out_cube.units == units
@@ -137,7 +137,7 @@ def test_bias_cubes(regular_cubes, ref_cubes, bias_type, data, units):
     out_cube = out_cubes[0]
 
     assert out_cube.dtype == np.float32
-    assert_array_equal(out_cube.data, data)
+    assert_allclose(out_cube.data, data)
     assert out_cube.var_name == 'tas'
     assert out_cube.standard_name == 'air_temperature'
     assert out_cube.units == units
@@ -164,7 +164,7 @@ def test_bias_cubes_broadcastable(
     out_cube = out_cubes[0]
 
     assert out_cube.dtype == np.float32
-    assert_array_equal(out_cube.data, data)
+    assert_allclose(out_cube.data, data)
     assert out_cube.var_name == 'tas'
     assert out_cube.standard_name == 'air_temperature'
     assert out_cube.units == units
@@ -198,7 +198,7 @@ def test_denominator_mask_threshold_products(regular_cubes, ref_cubes):
                                          [42.0, 42.0]],
                                         [[42.0, 42.0],
                                          [42.0, 0.75]]], 42.0)
-    assert_array_equal(out_cube.data, expected_data)
+    assert_allclose(out_cube.data, expected_data)
     assert out_cube.var_name == 'tas'
     assert out_cube.standard_name == 'air_temperature'
     assert out_cube.units == '1'
@@ -226,7 +226,7 @@ def test_denominator_mask_threshold_cubes(regular_cubes, ref_cubes):
                                          [42.0, 42.0]],
                                         [[42.0, 42.0],
                                          [42.0, 0.75]]], 42.0)
-    assert_array_equal(out_cube.data, expected_data)
+    assert_allclose(out_cube.data, expected_data)
     assert out_cube.var_name == 'tas'
     assert out_cube.standard_name == 'air_temperature'
     assert out_cube.units == '1'
@@ -256,7 +256,7 @@ def test_keep_reference_dataset(regular_cubes, ref_cubes, bias_type):
     out_cube = product_ref.cubes[0]
     assert out_cube.dtype == np.float32
     expected_data = [[[2.0, 2.0], [2.0, 2.0]], [[2.0, 2.0], [2.0, 4.0]]]
-    assert_array_equal(out_cube.data, expected_data)
+    assert_allclose(out_cube.data, expected_data)
     assert out_cube.var_name == 'tas'
     assert out_cube.standard_name == 'air_temperature'
     assert out_cube.units == 'K'
@@ -290,7 +290,7 @@ def test_bias_products_and_ref_cube(
     assert len(product_a.cubes) == 1
     out_cube = product_a.cubes[0]
     assert out_cube.dtype == np.float32
-    assert_array_equal(out_cube.data, data)
+    assert_allclose(out_cube.data, data)
     assert out_cube.var_name == 'tas'
     assert out_cube.standard_name == 'air_temperature'
     assert out_cube.units == units
@@ -352,6 +352,7 @@ TEST_DISTANCE_METRICS = [
     ('rmse', 2.34520788, 0.0, 'RMSE', 'rmse_tas', 'K'),
     ('weighted_pearsonr', np.nan, 1.0, "Pearson's r", 'pearsonr_tas', '1'),
     ('pearsonr', 0.57735026, 1.0, "Pearson's r", 'pearsonr_tas', '1'),
+    ('emd', 1.9866472482681274, 0.0, 'EMD', 'emd_tas', '1'),
 ]
 AREA_WEIGHTS = CellMeasure(
     np.array([0.0, 0.0, 2.0, 0.0]).reshape(2, 2),
@@ -403,7 +404,7 @@ def test_distance_metric(
     out_cube = product_a.cubes[0]
     assert out_cube.shape == ()
     assert out_cube.dtype == np.float32
-    assert_array_equal(out_cube.data, np.array(data, dtype=np.float32))
+    assert_allclose(out_cube.data, np.array(data, dtype=np.float32))
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
     assert out_cube.standard_name is None
@@ -421,7 +422,7 @@ def test_distance_metric(
     out_cube = product_b.cubes[0]
     assert out_cube.shape == ()
     assert out_cube.dtype == np.float32
-    assert_array_equal(out_cube.data, np.array(data, dtype=np.float32))
+    assert_allclose(out_cube.data, np.array(data, dtype=np.float32))
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
     assert out_cube.standard_name is None
@@ -441,7 +442,7 @@ def test_distance_metric(
     out_cube = product_ref.cubes[0]
     assert out_cube.shape == ()
     assert out_cube.dtype == np.float32
-    assert_array_equal(out_cube.data, ref_data)
+    assert_allclose(out_cube.data, ref_data)
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
     assert out_cube.standard_name is None
@@ -464,6 +465,7 @@ TEST_DISTANCE_METRICS_LAZY = [
         '1',
     ),
     ('pearsonr', [np.nan, 0.77459663], "Pearson's r", 'pearsonr_tas', '1'),
+    ('emd', [0.980196, 2.9930985], 'EMD', 'emd_tas', '1'),
 ]
 
 
@@ -509,9 +511,8 @@ def test_distance_metric_lazy(
     assert out_cube.shape == (2,)
     assert out_cube.dtype == np.float32
     assert out_cube.has_lazy_data()
-    assert_array_equal(
-        out_cube.data, np.array(data, dtype=np.float32),
-    )
+    print(out_cube.data)
+    assert_allclose(out_cube.data, np.array(data, dtype=np.float32))
     assert out_cube.coord('time') == regular_cubes[0].coord('time')
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
@@ -540,7 +541,7 @@ def test_distance_metric_cubes(
 
     assert out_cube.shape == ()
     assert out_cube.dtype == np.float32
-    assert_array_equal(out_cube.data, np.array(data, dtype=np.float32))
+    assert_allclose(out_cube.data, np.array(data, dtype=np.float32))
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
     assert out_cube.standard_name is None
@@ -606,13 +607,14 @@ def test_distance_metric_masked_data(
         assert out_cube.has_lazy_data()
     else:
         assert not out_cube.has_lazy_data()
+    assert out_cube.dtype == np.float32
 
     # Mask handling differs for dask and numpy
     if np.isnan(data) and not lazy:
         expected_data = np.ma.masked_invalid(data)
     else:
         expected_data = np.array(data, dtype=np.float32)
-    assert_array_equal(out_cube.data, expected_data)
+    assert_allclose(out_cube.data, expected_data)
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
     assert out_cube.standard_name is None
@@ -627,6 +629,7 @@ TEST_METRICS = [
     'rmse',
     'weighted_pearsonr',
     'pearsonr',
+    'emd',
 ]
 
 
@@ -730,6 +733,7 @@ def test_distance_metric_non_matching_dims(regular_cubes, metric):
         ('rmse', False),
         ('weighted_pearsonr', True),
         ('pearsonr', False),
+        ('emd', False),
     ]
 )
 def test_distance_metric_no_lon_for_area_weights(regular_cubes, metric, error):
