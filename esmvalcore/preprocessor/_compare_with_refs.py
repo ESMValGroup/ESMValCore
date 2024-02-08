@@ -398,10 +398,12 @@ def _get_all_coord_dims(
     cube: Cube,
     coords: Iterable[Coord] | Iterable[str],
 ) -> tuple[int, ...]:
+    """Get sorted list of all coordinate dimensions from coordinates."""
     all_coord_dims = []
     for coord in coords:
         all_coord_dims.extend(cube.coord_dims(coord))
-    return tuple(set(all_coord_dims))
+    sorted_all_coord_dims = sorted(list(set(all_coord_dims)))
+    return tuple(sorted_all_coord_dims)
 
 
 def _calculate_metric(
@@ -685,28 +687,28 @@ def _get_pmf(
     of bins.
 
     """
-    # Create array with shape (x1, x2, ..., y) where the `xi` are the
-    # dimensions of `data` not in `axes` and `y` is the product of the
-    # remaining dimensions
+    # Create array with shape (x1, x2, ..., y) where `y` is the product of all
+    # dimensions in `axes` and the `xi` are the remaining dimensions
     remaining_dims = tuple(a for a in range(data.ndim) if a not in axes)
+    reshaped_data = np.transpose(data, axes=(*remaining_dims, *axes))
     shape_rem_dims = tuple(data.shape[a] for a in remaining_dims)
-    reshaped_data = data.reshape(*shape_rem_dims, -1)
+    reshaped_data = reshaped_data.reshape(*shape_rem_dims, -1)
 
-    # Use vectorized version of np.histogram to get PMF (which has been
-    # normalized by number of samples that entered the histogram calculation)
+    # Apply vectorized version of np.histogram
     def _get_hist_values(arr):
         mask = np.ma.getmaskarray(arr)
         arr = arr[~mask]
         return np.histogram(arr, bins=bins, range=(bins[0], bins[-1]))[0]
 
     v_histogram = np.vectorize(_get_hist_values, signature='(n)->(m)')
-    pmf = v_histogram(reshaped_data)
+    hist = v_histogram(reshaped_data)
 
-    # Mask points where all input data was masked (these are the ones where the
-    # PMF sums to 0) and normalize
-    norm = pmf.sum(axis=-1, keepdims=True)
+    # Mask points where all input data were masked (these are the ones where
+    # the histograms sums to 0) and normalize histrogram by number of samples
+    # that entered the calculation to get PMF
+    norm = hist.sum(axis=-1, keepdims=True)
     mask = np.isclose(norm, 0.0)
-    mask_broadcast = np.broadcast_to(mask, pmf.shape)
-    pmf = np.ma.array(pmf, mask=mask_broadcast) / np.ma.array(norm, mask=mask)
+    mask_broadcast = np.broadcast_to(mask, hist.shape)
+    pmf = np.ma.array(hist, mask=mask_broadcast) / np.ma.array(norm, mask=mask)
 
     return pmf
