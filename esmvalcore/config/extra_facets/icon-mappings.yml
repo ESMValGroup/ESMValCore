@@ -84,7 +84,7 @@ ICON-Seamless:
     #   longitude: grid_longitude
     #   raw_name: cell_area
 
-    # # 2D dynamical/meteorological variables
+    # 2D dynamical/meteorological variables
     clivi: {raw_name: tqi_dia, var_type: atm_2d_ml}
     clt: {raw_name: clct, var_type: atm_2d_ml}
     # clwvi: {var_type: atm_2d_ml}
@@ -122,14 +122,14 @@ ICON-Seamless:
     # uas: {var_type: atm_2d_ml}
     # vas: {var_type: atm_2d_ml}
 
-    # # 3D dynamical/meteorological variables
-    # cl: {var_type: atm_3d_ml}
-    # cli: {var_type: atm_3d_ml}
-    # clw: {var_type: atm_3d_ml}
-    # hur: {raw_units: '1', var_type: atm_3d_ml}
-    # hus: {var_type: atm_3d_ml}
+    # 3D dynamical/meteorological variables
+    cl: {raw_name: clc, var_type: atm_3d_ml}
+    cli: {raw_name: tot_qc_dia, var_type: atm_3d_ml}
+    clw: {raw_name: tot_qi_dia, var_type: atm_3d_ml}
+    hur: {raw_name: rh, var_type: atm_3d_ml}
+    hus: {raw_name: qv, var_type: atm_3d_ml}
     ta: {raw_name: temp, var_type: atm_3d_ml}
-    # ua: {var_type: atm_3d_ml}
-    # va: {var_type: atm_3d_ml}
+    ua: {raw_name: u, var_type: atm_3d_ml}
+    va: {raw_name: v, var_type: atm_3d_ml}
     # wap: {var_type: atm_3d_ml}
-    # zg: {var_type: atm_3d_ml}
+    zg: {raw_name: geopot, var_type: atm_3d_ml}
