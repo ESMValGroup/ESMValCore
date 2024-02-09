@@ -351,11 +351,15 @@ class DiagnosticTask(BaseTask):
         """Create an executable command from script."""
         diagnostics_root = DIAGNOSTICS.scripts
         script = self.script
-        script_file = (diagnostics_root / Path(script).expanduser()).absolute()
 
+        # Check if local diagnostic path exists
+        script_file = Path(script).expanduser().absolute()
         err_msg = f"Cannot execute script '{script}' ({script_file})"
         if not script_file.is_file():
-            raise DiagnosticError(f"{err_msg}: file does not exist.")
+            # Try diagnostics_root
+            script_file = (diagnostics_root / Path(script).expanduser()).absolute()
+            if not script_file.is_file():
+                raise DiagnosticError(f"{err_msg}: file does not exist.")
 
         cmd = []
 
