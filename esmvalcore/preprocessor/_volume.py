@@ -105,8 +105,7 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     ----
     It gets the cell_area from the cube if it is available. If not, it
     calculates it from the grid. This only works if the grid cell areas can
-    be calculated (i.e., latitude and longitude are 1D) and if the depth
-    coordinate is 1D or 4D with first dimension 1.
+    be calculated (i.e., latitude and longitude are 1D).
 
     Parameters
     ----------
@@ -121,30 +120,37 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     """
     # Load depth field and figure out which dim is which
     depth = cube.coord(axis='z')
-    z_dim = cube.coord_dims(depth)[0]
+    if not depth.has_bounds():
+        # Some data has no bounds for z-axis (failling fix or cmorization?)
+        depth.guess_bounds()
+    z_dim = cube.coord_dims(depth)
 
     # Calculate Z-direction thickness
-    thickness = depth.bounds[..., 1] - depth.bounds[..., 0]
+    thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
 
     # Get or calculate the horizontal areas of the cube
     has_cell_measure = bool(cube.cell_measures('cell_area'))
     _try_adding_calculated_cell_area(cube)
-    area = cube.cell_measure('cell_area').lazy_data()
+    area = cube.cell_measure('cell_area')
+    area_dim = cube.cell_measure_dims(area)
+
     # Make sure input cube has not been modified
     if not has_cell_measure:
         cube.remove_cell_measure('cell_area')
 
-    # Try to calculate grid cell volume as area * thickness
-    if thickness.ndim == 1 and z_dim == 1:
-        grid_volume = area * thickness[None, :, None, None]
-    elif thickness.ndim == 4 and z_dim == 1:
-        grid_volume = area * thickness[:, :]
-    else:
-        raise ValueError(
-            f"Supplementary variables are needed to calculate grid cell "
-            f"volumes for cubes with {thickness.ndim:d}D depth coordinate, "
-            f"got cube {cube.summary(shorten=True)}"
-        )
+    # Get slices to make area and thickness match with the same number
+    # of dimensions as the cube
+    z_slice = tuple(
+        slice(None) if i in z_dim else None
+        for i in range(cube.ndim)
+    )
+    area_slice = tuple(
+        slice(None) if i in area_dim else None
+        for i in range(cube.ndim)
+    )
+
+    # Calculate grid cell volume as area * thickness
+    grid_volume = area.lazy_data()[area_slice] * thickness[z_slice]
 
     return grid_volume
 
@@ -163,13 +169,17 @@ def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
 
     grid_volume = calculate_volume(cube)
 
+    # add measure only in the dimensions that have lenght > 1
+    data_dims = [i for i, n in enumerate(grid_volume.shape) if n > 1]
+    grid_volume = grid_volume.squeeze()
+
     cell_measure = CellMeasure(
         grid_volume,
         standard_name='ocean_volume',
         units='m3',
         measure='volume',
     )
-    cube.add_cell_measure(cell_measure, np.arange(cube.ndim))
+    cube.add_cell_measure(cell_measure, data_dims)
 
 
 @register_supplementaries(
