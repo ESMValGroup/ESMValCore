@@ -101,7 +101,7 @@ class Config(ValidatedConfig):
         """Get full path to config user file."""
         if filename is None:
             filename = DEFAULT_USER_CONFIG
-        path = Path(filename).expanduser()
+        path = Path(filename).expanduser().absolute()
         if not path.exists():
             try_path = DEFAULT_USER_CONFIG_DIR / filename
             if try_path.exists():
@@ -241,35 +241,58 @@ def _read_config_file(config_file):
 
 
 def _get_user_config_location() -> Path:
-    """Get location of configuration file.
+    """Get location of user configuration file.
 
-    This searches the CLI arguments for `--config-file` or `--config_file` and
-    uses the specified location if possible. Otherwise, the default location
-    `~/.esmvaltool/config-user.yml` is used.
+    Try to get user configuration file from the following locations (sorted by
+    descending priority):
+
+    1. Command line arguments `--config-file` or `--config_file`. If the
+       specified file does not exist, raise an error here.
+    2. `config-user.yml` within ESMValTool configuration directory given by
+       `ESMVALTOOL_CONFIG` environment variable. If file does not exist, ignore
+       it (use default configuration settings).
+    3. `config-user.yml` within default ESMValTool configuration directory
+       `~/.esmvaltool`. If file does not exist, ignore it (use default
+       configuration settings).
 
     Note
     ----
-    This hack of directly parsing the CLI arguments here ensures that the
-    correct user configuration file is used. This will always work, regardless
-    of when this module has been imported in the code.
+    The hack of directly parsing the CLI arguments here (instead of using the
+    fire module) ensures that the correct user configuration file is used. This
+    will always work, regardless of when this module has been imported in the
+    code.
 
     """
+    config_user = None
+
+    # (1) Try to get config user file from CLI arguments (if file specified,
+    # raise error if it does not exist)
     for arg in sys.argv:
         for opt in ('--config-file', '--config_file'):
             if opt in arg:
                 # Parse '--config-file=/file.yml' or '--config_file=/file.yml'
                 partition = arg.partition('=')
                 if partition[2]:
-                    return Config._get_config_user_path(partition[2])
+                    config_user_str = partition[2]
+                else:
+                    config_idx = sys.argv.index(opt)
+                    config_user_str = sys.argv[config_idx + 1]
 
-                # Parse '--config-file /file.yml' or '--config_file /file.yml'
-                config_idx = sys.argv.index(opt)
-                return Config._get_config_user_path(sys.argv[config_idx + 1])
+                # The following will raise an error if the file does not exist
+                config_user = Config._get_config_user_path(config_user_str)
+                break
 
-    # If no custom user configuration file has been given, return default user
-    # configuration file location
-    os.environ['AAAAAAAAAAAAAAAAAAAAA'] = '111'
-    return DEFAULT_USER_CONFIG
+    # (2) Environment variable (if specified but file does not exist, do not
+    # raise an error)
+    if config_user is None and 'ESMVALTOOL_CONFIG' in os.environ:
+        dir = Path(os.environ['ESMVALTOOL_CONFIG']).expanduser().absolute()
+        config_user = dir / 'config-user.yml'
+
+    # (3) Default location (do not raise an error if file does not exist)
+    if config_user is None:
+        config_user = DEFAULT_USER_CONFIG
+
+    return config_user
 
 
 # Default values for configuration options (some are also set in
@@ -282,10 +305,11 @@ CONFIG_DEFAULTS = Path(esmvalcore.__file__).parent / 'config-user.yml'
 DEFAULT_USER_CONFIG_DIR = Path.home() / '.esmvaltool'
 DEFAULT_USER_CONFIG = DEFAULT_USER_CONFIG_DIR / 'config-user.yml'
 
-# By default, read user configuration file at  ~/.esmvaltool/config-user.yml.
-# If a custom user configuration file has been specified with the CLI arguments
-# --config-file or --config_file, use that one instead.
+# Get user configuration file path (either from CLI arguments, environment
+# variable, or default location). Afterwards, populate environment variable so
+# that subprocesses can also use correct environment variable.
 USER_CONFIG = _get_user_config_location()
+os.environ['ESMVALTOOL_CONFIG'] = str(USER_CONFIG.parent)
 
 # Initialize configuration objects
 CFG_DEFAULT = MappingProxyType(Config._load_default_config(CONFIG_DEFAULTS))
