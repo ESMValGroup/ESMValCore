@@ -358,8 +358,8 @@ class DiagnosticTask(BaseTask):
         if not script_file.is_file():
             # Try diagnostics_root
             script_file = (diagnostics_root / Path(script).expanduser()).absolute()
-            if not script_file.is_file():
-                raise DiagnosticError(f"{err_msg}: file does not exist.")
+        if not script_file.is_file():
+            raise DiagnosticError(f"{err_msg}: file does not exist.")
 
         cmd = []
 
