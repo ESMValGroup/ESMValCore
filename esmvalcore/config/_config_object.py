@@ -1,7 +1,6 @@
 """Importable config object."""
 
 import os
-import warnings
 from datetime import datetime
 from pathlib import Path
 from types import MappingProxyType
@@ -11,7 +10,6 @@ import yaml
 
 import esmvalcore
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 from ._config_validators import (
     _deprecated_options_defaults,
@@ -159,6 +157,7 @@ class Session(ValidatedConfig):
     relative_run_dir = Path('run')
     relative_main_log = Path('run', 'main_log.txt')
     relative_main_log_debug = Path('run', 'main_log_debug.txt')
+    _relative_fixed_file_dir = Path('preproc', 'fixed_files')
 
     def __init__(self, config: dict, name: str = 'session'):
         super().__init__(config)
@@ -214,58 +213,10 @@ class Session(ValidatedConfig):
         """Return main log debug file."""
         return self.session_dir / self.relative_main_log_debug
 
-    def to_config_user(self) -> dict:
-        """Turn the `Session` object into a recipe-compatible dict.
-
-        Deprecated since v2.8.0, scheduled for removal in v2.9.0.
-
-        This dict is compatible with the `config-user` argument in
-        :obj:`esmvalcore._recipe.Recipe`.
-        """
-        warnings.warn(
-            "The `esmvalcore.[experimental.]config.Session.to_config_user` "
-            "method has been deprecated in ESMValCore version 2.8.0 and is "
-            "scheduled for removal in version 2.9.0. ",
-            ESMValCoreDeprecationWarning,
-        )
-        dct = self._deprecated_defaults.copy()
-        dct.update(self)
-        dct['run_dir'] = self.run_dir
-        dct['work_dir'] = self.work_dir
-        dct['preproc_dir'] = self.preproc_dir
-        dct['plot_dir'] = self.plot_dir
-        dct['output_dir'] = self.session_dir
-        return dct
-
-    @classmethod
-    def from_config_user(cls, config_user: dict) -> 'Session':
-        """Convert `config-user` dict to API-compatible `Session` object.
-
-        Deprecated since v2.8.0, scheduled for removal in v2.9.0.
-
-        For example, `_recipe.Recipe._cfg`.
-        """
-        warnings.warn(
-            "The `esmvalcore.[experimental.]config.Session.from_config_user` "
-            "method has been deprecated in ESMValCore version 2.8.0 and is "
-            "scheduled for removal in version 2.9.0. ",
-            ESMValCoreDeprecationWarning,
-        )
-        dct = config_user.copy()
-        dct.pop('run_dir')
-        dct.pop('work_dir')
-        dct.pop('preproc_dir')
-        dct.pop('plot_dir')
-
-        session = cls(dct)
-
-        output_dir = Path(dct['output_dir']).parent
-        session_name = Path(dct['output_dir']).name
-
-        session['output_dir'] = output_dir
-        session.session_name = session_name
-
-        return session
+    @property
+    def _fixed_file_dir(self):
+        """Return fixed file directory."""
+        return self.session_dir / self._relative_fixed_file_dir
 
 
 def _read_config_file(config_file):
@@ -274,7 +225,7 @@ def _read_config_file(config_file):
     if not config_file.exists():
         raise IOError(f'Config file `{config_file}` does not exist.')
 
-    with open(config_file, 'r') as file:
+    with open(config_file, 'r', encoding='utf-8') as file:
         cfg = yaml.safe_load(file)
 
     return cfg

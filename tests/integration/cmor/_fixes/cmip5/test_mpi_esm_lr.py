@@ -6,13 +6,14 @@ from iris.cube import Cube
 
 from esmvalcore.cmor._fixes.cmip5.mpi_esm_lr import Cl, Pctisccp
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP5', 'MPI-ESM-LR', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    assert fix == [Cl(None), GenericFix(None)]
 
 
 def test_cl_fix():
@@ -32,7 +33,7 @@ class TestPctisccp2(unittest.TestCase):
         """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'MPI-ESM-LR', 'Amon', 'pctisccp'),
-            [Pctisccp(None)])
+            [Pctisccp(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""

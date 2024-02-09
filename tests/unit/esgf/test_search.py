@@ -304,8 +304,8 @@ def test_select_latest_versions_filenotfound(mocker):
     file.dataset = 'CMIP6.MODEL.v1'
     file.facets = {'version': 'v1'}
     file.__repr__ = lambda _: 'ESGFFile:CMIP6/MODEL/v1/ta.nc'
-    with pytest.raises(FileNotFoundError):
-        _search.select_latest_versions(files=[file], versions='v2')
+    result = _search.select_latest_versions(files=[file], versions='v2')
+    assert result == []
 
 
 @pytest.mark.parametrize('timerange,selection', [

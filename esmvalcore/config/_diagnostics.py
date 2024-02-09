@@ -83,7 +83,7 @@ class TagsManager(dict):
         """Load the reference tags used for provenance recording."""
         if os.path.exists(filename):
             logger.debug("Loading tags from %s", filename)
-            with open(filename) as file:
+            with open(filename, 'r', encoding='utf-8') as file:
                 tags = cls(yaml.safe_load(file))
                 tags.source_file = filename
                 return tags

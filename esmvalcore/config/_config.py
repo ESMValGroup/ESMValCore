@@ -1,28 +1,25 @@
 """Functions dealing with config-user.yml / config-developer.yml."""
+from __future__ import annotations
+
 import collections.abc
 import fnmatch
 import logging
 import os
-import sys
 from functools import lru_cache
+from importlib.resources import files as importlib_files
 from pathlib import Path
 
 import yaml
 
 from esmvalcore.cmor.table import CMOR_TABLES, read_cmor_tables
 from esmvalcore.exceptions import RecipeError
+from esmvalcore.typing import FacetValue
 
 logger = logging.getLogger(__name__)
 
 TASKSEP = os.sep
 
 CFG = {}
-
-if sys.version_info[:2] >= (3, 9):
-    # pylint: disable=no-name-in-module
-    from importlib.resources import files as importlib_files
-else:
-    from importlib_resources import files as importlib_files
 
 
 def _deep_update(dictionary, update):
@@ -46,7 +43,7 @@ def _load_extra_facets(project, extra_facets_dir):
         config_file_paths = config_path.glob(f"{project.lower()}-*.yml")
         for config_file_path in sorted(config_file_paths):
             logger.debug("Loading extra facets from %s", config_file_path)
-            with config_file_path.open() as config_file:
+            with config_file_path.open(encoding='utf-8') as config_file:
                 config_piece = yaml.safe_load(config_file)
             if config_piece:
                 _deep_update(config, config_piece)
@@ -100,7 +97,7 @@ def load_config_developer(cfg_file):
         cfg['obs4MIPs'] = cfg.pop('obs4mips')
 
     for project, settings in cfg.items():
-        for site, drs in settings['input_dir'].items():
+        for site, drs in settings.get('input_dir', {}).items():
             # Since v2.8, 'version' can be used instead of 'latestversion'
             if isinstance(drs, list):
                 drs = [d.replace('{latestversion}', '{version}') for d in drs]
@@ -139,3 +136,15 @@ def get_activity(variable):
         return CMOR_TABLES[project].activities[exp][0]
     except (KeyError, AttributeError):
         return None
+
+
+def get_ignored_warnings(project: FacetValue, step: str) -> None | list:
+    """Get ignored warnings for a given preprocessing step."""
+    if project not in CFG:
+        return None
+    project_cfg = CFG[project]
+    if 'ignore_warnings' not in project_cfg:
+        return None
+    if step not in project_cfg['ignore_warnings']:
+        return None
+    return project_cfg['ignore_warnings'][step]

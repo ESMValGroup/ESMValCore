@@ -72,7 +72,7 @@ class RecipeInfo():
     @classmethod
     def from_yaml(cls, path: str):
         """Return instance of 'RecipeInfo' from a recipe in yaml format."""
-        data = yaml.safe_load(open(path, 'r'))
+        data = yaml.safe_load(Path(path).read_text(encoding='utf-8'))
         return cls(data, filename=path)
 
     @property

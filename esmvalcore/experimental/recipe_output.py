@@ -1,7 +1,8 @@
 """API for handing recipe output."""
 import base64
 import logging
-from collections.abc import Mapping
+import os.path
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Optional, Tuple, Type
 
@@ -122,6 +123,13 @@ class RecipeOutput(Mapping):
         The session used to run the recipe.
     """
 
+    FILTER_ATTRS: list = [
+        "realms",
+        "plot_type",  # Used by several diagnostics
+        "plot_types",
+        "long_names",
+    ]
+
     def __init__(self, task_output: dict, session=None, info=None):
         self._raw_task_output = task_output
         self._task_output = {}
@@ -140,6 +148,7 @@ class RecipeOutput(Mapping):
             diagnostics[name].append(task)
 
         # Create diagnostic output
+        filters: dict = {}
         for name, tasks in diagnostics.items():
             diagnostic_info = info.data['diagnostics'][name]
             self.diagnostics[name] = DiagnosticOutput(
@@ -148,6 +157,36 @@ class RecipeOutput(Mapping):
                 title=diagnostic_info.get('title'),
                 description=diagnostic_info.get('description'),
             )
+
+            # Add data to filters
+            for task in tasks:
+                for file in task.files:
+                    RecipeOutput._add_to_filters(filters, file.attributes)
+
+        # Sort at the end because sets are unordered
+        self.filters = RecipeOutput._sort_filters(filters)
+
+    @classmethod
+    def _add_to_filters(cls, filters, attributes):
+        """Add valid values to the HTML output filters."""
+        for attr in RecipeOutput.FILTER_ATTRS:
+            if attr not in attributes:
+                continue
+            values = attributes[attr]
+            # `set()` to avoid duplicates
+            attr_list = filters.get(attr, set())
+            if (isinstance(values, str) or not isinstance(values, Sequence)):
+                attr_list.add(values)
+            else:
+                attr_list.update(values)
+            filters[attr] = attr_list
+
+    @classmethod
+    def _sort_filters(cls, filters):
+        """Sort the HTML output filters."""
+        for _filter, _attrs in filters.items():
+            filters[_filter] = sorted(_attrs)
+        return filters
 
     def __repr__(self):
         """Return canonical string representation."""
@@ -199,7 +238,7 @@ class RecipeOutput(Mapping):
         template = get_template('recipe_output_page.j2')
         html_dump = self.render(template=template)
 
-        with open(filename, 'w') as file:
+        with open(filename, 'w', encoding='utf-8') as file:
             file.write(html_dump)
 
         logger.info("Wrote recipe output to:\nfile://%s", filename)
@@ -217,17 +256,19 @@ class RecipeOutput(Mapping):
             diagnostics=self.diagnostics.values(),
             session=self.session,
             info=self.info,
+            filters=self.filters,
+            relpath=os.path.relpath,
         )
 
         return rendered
 
     def read_main_log(self) -> str:
         """Read log file."""
-        return self.session.main_log.read_text()
+        return self.session.main_log.read_text(encoding='utf-8')
 
     def read_main_log_debug(self) -> str:
         """Read debug log file."""
-        return self.session.main_log_debug.read_text()
+        return self.session.main_log_debug.read_text(encoding='utf-8')
 
 
 class OutputFile():
@@ -319,8 +360,7 @@ class OutputFile():
     def create(
         cls,
         path: str,
-        attributes:
-        Optional[dict] = None,
+        attributes: Optional[dict] = None,
     ) -> 'OutputFile':
         """Construct new instances of OutputFile.
 

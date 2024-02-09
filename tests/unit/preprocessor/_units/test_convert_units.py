@@ -44,6 +44,40 @@ class TestConvertUnits(tests.Test):
         self.assertEqual(result.units, expected_units)
         self.assert_array_equal(result.data, expected_data)
 
+    def test_convert_ozone_content_m_to_du(self):
+        """Test special conversion of ozone_content."""
+        self.arr.standard_name = (
+            'equivalent_thickness_at_stp_of_atmosphere_ozone_content'
+        )
+        self.arr.units = 'm'
+        result = convert_units(self.arr, 'DU')
+        self.assertEqual(
+            result.standard_name,
+            'equivalent_thickness_at_stp_of_atmosphere_ozone_content',
+        )
+        self.assertEqual(result.units, 'DU')
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 1e5], [2e5, 3e5]],
+        )
+
+    def test_convert_ozone_content_du_to_m(self):
+        """Test special conversion of ozone_content."""
+        self.arr.standard_name = (
+            'equivalent_thickness_at_stp_of_atmosphere_ozone_content'
+        )
+        self.arr.units = 'DU'
+        result = convert_units(self.arr, 'mm')
+        self.assertEqual(
+            result.standard_name,
+            'equivalent_thickness_at_stp_of_atmosphere_ozone_content',
+        )
+        self.assertEqual(result.units, 'mm')
+        np.testing.assert_allclose(
+            result.data,
+            [[0.0, 1e-2], [2e-2, 3e-2]],
+        )
+
     def test_convert_precipitation_flux(self):
         """Test special conversion of precipitation_flux."""
         self.arr.standard_name = 'precipitation_flux'

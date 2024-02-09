@@ -10,7 +10,6 @@ The API is under development, so use at your own risk!
 .. toctree::
    :maxdepth: 1
 
-   esmvalcore.experimental.config
    esmvalcore.experimental.recipe
    esmvalcore.experimental.recipe_output
    esmvalcore.experimental.recipe_metadata

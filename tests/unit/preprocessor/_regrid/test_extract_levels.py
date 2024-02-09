@@ -1,6 +1,4 @@
 """Unit tests for :func:`esmvalcore.preprocessor.regrid.extract_levels`."""
-import os
-import tempfile
 import unittest
 from unittest import mock
 
@@ -35,8 +33,6 @@ class Test(tests.Test):
         self.schemes = [
             'linear', 'nearest', 'linear_extrapolate', 'nearest_extrapolate',
         ]
-        descriptor, self.filename = tempfile.mkstemp('.nc')
-        os.close(descriptor)
 
     def test_invalid_scheme__unknown(self):
         levels = mock.sentinel.levels
@@ -160,7 +156,7 @@ class Test(tests.Test):
         # Check the _create_cube args ...
         self.assertEqual(len(args), 4)
         self.assertEqual(args[0], self.cube)
-        self.assert_array_equal(args[1], new_data)
+        self.assert_array_equal(args[1], np.ma.array(new_data))
         self.assert_array_equal(args[2],
                                 self.cube.coord(axis='z', dim_coords=True))
         self.assert_array_equal(args[3], levels)
@@ -281,15 +277,8 @@ class Test(tests.Test):
         masked = ma.empty(self.shape)
         masked.mask = mask
         cube = _make_cube(masked, dtype=self.dtype)
-        # save cube to test the lazy data interpolation too
-        iris.save(cube, self.filename)
         with mock.patch('stratify.interpolate',
                         return_value=new_data) as mocker:
-            # first test lazy
-            loaded_cube = iris.load_cube(self.filename)
-            result_from_lazy = extract_levels(loaded_cube, levels, scheme)
-            self.assertEqual(result_from_lazy, self.created_cube)
-            # then test realized
             result = extract_levels(cube, levels, scheme)
             self.assertEqual(result, self.created_cube)
             args, kwargs = mocker.call_args
@@ -300,7 +289,7 @@ class Test(tests.Test):
             src_levels_broadcast = np.broadcast_to(pts.reshape(self.z, 1, 1),
                                                    cube.shape)
             self.assert_array_equal(args[1], src_levels_broadcast)
-            self.assert_array_equal(args[2], cube.data)
+            self.assert_array_equal(args[2], np.ma.filled(masked, np.nan))
             # Check the stratify.interpolate kwargs ...
             self.assertEqual(
                 kwargs, dict(axis=0, interpolation=scheme,

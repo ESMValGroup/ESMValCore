@@ -145,3 +145,20 @@ def test_close():
     product.save.assert_called_once_with()
     product.save_provenance.assert_called_once_with()
     assert product._cubes is None
+
+
+@mock.patch('esmvalcore.preprocessor.preprocess', autospec=True)
+def test_save(mock_preprocess):
+    """Test ``save``."""
+    product = mock.create_autospec(PreprocessorFile, instance=True)
+    product.settings = {'save': {}}
+    product._cubes = mock.sentinel.cubes
+    product._input_files = mock.sentinel.input_files
+
+    PreprocessorFile.save(product)
+
+    assert mock_preprocess.mock_calls == [
+        mock.call(
+            mock.sentinel.cubes, 'save', input_files=mock.sentinel.input_files
+        ),
+    ]

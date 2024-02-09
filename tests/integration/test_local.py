@@ -10,7 +10,9 @@ from esmvalcore.config import CFG
 from esmvalcore.local import LocalFile, _get_output_file, find_files
 
 # Load test configuration
-with open(os.path.join(os.path.dirname(__file__), 'data_finder.yml')) as file:
+with open(os.path.join(os.path.dirname(__file__),
+                       'data_finder.yml'),
+          encoding='utf-8') as file:
     CONFIG = yaml.safe_load(file)
 
 
@@ -40,7 +42,7 @@ def create_file(filename):
     if not os.path.exists(dirname):
         os.makedirs(dirname)
 
-    with open(filename, 'a'):
+    with open(filename, 'a', encoding='utf-8'):
         pass
 
 

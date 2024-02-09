@@ -5,13 +5,13 @@ import pytest
 
 from esmvalcore.cmor._fixes.cmip6.sam0_unicon import Cl, Cli, Clw, Nbp
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
-from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix, GenericFix
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'SAM0-UNICON', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    assert fix == [Cl(None), GenericFix(None)]
 
 
 def test_cl_fix():
@@ -22,7 +22,7 @@ def test_cl_fix():
 def test_get_cli_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'SAM0-UNICON', 'Amon', 'cli')
-    assert fix == [Cli(None)]
+    assert fix == [Cli(None), GenericFix(None)]
 
 
 def test_cli_fix():
@@ -33,7 +33,7 @@ def test_cli_fix():
 def test_get_clw_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'SAM0-UNICON', 'Amon', 'clw')
-    assert fix == [Clw(None)]
+    assert fix == [Clw(None), GenericFix(None)]
 
 
 def test_clw_fix():
@@ -44,7 +44,7 @@ def test_clw_fix():
 def test_get_nbp_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'SAM0-UNICON', 'Lmon', 'nbp')
-    assert fix == [Nbp(None)]
+    assert fix == [Nbp(None), GenericFix(None)]
 
 
 @pytest.fixture

@@ -11,6 +11,18 @@ from esmvalcore.preprocessor._regrid import (
     regrid,
 )
 
+
+@pytest.fixture(autouse=True)
+def clear_lru_cache():
+    """Make sure to clear LRU cache for ``_global_stock_cube``.
+
+    See https://github.com/ESMValGroup/ESMValCore/issues/2320.
+
+    """
+    yield  # execute tests
+    _global_stock_cube.cache_clear()
+
+
 SPEC_KEYS = ('start_longitude', 'end_longitude', 'step_longitude',
              'start_latitude', 'end_latitude', 'step_latitude')
 PASSING_SPECS = tuple(

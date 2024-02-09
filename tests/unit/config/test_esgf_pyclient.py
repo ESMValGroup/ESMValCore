@@ -92,7 +92,7 @@ def test_read_config_file(monkeypatch, tmp_path):
             'interactive': True
         },
     }
-    with cfg_file.open('w') as file:
+    with cfg_file.open('w', encoding='utf-8') as file:
         yaml.safe_dump(reference, file)
 
     cfg = _esgf_pyclient.read_config_file()
@@ -113,7 +113,7 @@ def test_read_v25_config_file(monkeypatch, tmp_path):
             'url': 'https://some.host/path'
         },
     }
-    with cfg_file.open('w') as file:
+    with cfg_file.open('w', encoding='utf-8') as file:
         yaml.safe_dump(cfg_file_content, file)
 
     reference = {

@@ -85,5 +85,6 @@ class PreprocessorFile(mock.Mock):
             self.settings = settings
         self.mock_ancestors = set()
         self.wasderivedfrom = mock.Mock(side_effect=self.mock_ancestors.add)
+        self.copy_provenance = mock.Mock(return_value=self)
 
     group = PreprocessorFileBase.group

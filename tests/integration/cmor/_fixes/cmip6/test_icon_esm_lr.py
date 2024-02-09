@@ -4,6 +4,7 @@ from iris.coords import AuxCoord
 from iris.cube import Cube, CubeList
 
 from esmvalcore.cmor._fixes.cmip6.icon_esm_lr import AllVars
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 
 
@@ -34,7 +35,7 @@ def cubes():
 def test_get_allvars_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'ICON-ESM-LR', 'Amon', 'tas')
-    assert fix == [AllVars(None)]
+    assert fix == [AllVars(None), GenericFix(None)]
 
 
 def test_allvars_fix_metadata_lat_lon(cubes):

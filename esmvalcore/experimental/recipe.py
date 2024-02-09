@@ -10,7 +10,7 @@ from typing import Dict, Optional
 import yaml
 
 from esmvalcore._recipe.recipe import Recipe as RecipeEngine
-from esmvalcore.config import CFG, Session
+from esmvalcore.config import CFG, Session, _dask
 
 from ._logging import log_to_dir
 from .recipe_info import RecipeInfo
@@ -70,7 +70,8 @@ class Recipe():
     def data(self) -> dict:
         """Return dictionary representation of the recipe."""
         if self._data is None:
-            self._data = yaml.safe_load(open(self.path, 'r'))
+            with open(self.path, 'r', encoding='utf-8') as yaml_file:
+                self._data = yaml.safe_load(yaml_file)
         return self._data
 
     def _load(self, session: Session) -> RecipeEngine:
@@ -132,6 +133,7 @@ class Recipe():
             session['diagnostics'] = task
 
         with log_to_dir(session.run_dir):
+            _dask.check_distributed_config()
             self._engine = self._load(session=session)
             self._engine.run()
 

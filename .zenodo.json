@@ -177,6 +177,19 @@
             "affiliation": "DLR, Germany",
             "name": "Kazeroni, Rémi",
             "orcid": "0000-0001-7205-9528"
+        },
+        {
+            "affiliation": "DLR, Germany",
+            "name": "Bauer, Julian"
+        },
+        {
+            "affiliation": "ACCESS-NRI, Australia",
+            "name": "Beucher, Romain",
+            "orcid": "0000-0003-3891-5444"
+        },
+        {
+            "affiliation": "Forschungszentrum Juelich, Germany",
+            "name": "Benke, Joerg"
         }
     ],
     "description": "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.",

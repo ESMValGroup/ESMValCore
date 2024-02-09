@@ -1,14 +1,19 @@
 """Shared functions for fixes."""
 import logging
 import os
+from datetime import datetime
 from functools import lru_cache
 
 import dask.array as da
 import iris
+import numpy as np
 import pandas as pd
 from cf_units import Unit
 from iris import NameConstraint
+from iris.coords import Coord
 from scipy.interpolate import interp1d
+
+from esmvalcore.iris_helpers import date2num
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +51,33 @@ def add_aux_coords_from_cubes(cube, cubes, coord_dict):
         cubes.remove(coord_cube)
 
 
+def _map_on_filled(function, array):
+    """Map function on filled array."""
+    if array.size == 0:
+        return array
+
+    # We support dask and numpy arrays
+    # Note: numpy's dispatch mechanism does not work here because of the usage
+    # of `np.ma.filled` and `np.ma.masked_array`.
+    if isinstance(array, da.core.Array):
+        num_module = da
+    else:
+        num_module = np
+
+    mask = num_module.ma.getmaskarray(array)
+
+    # Fill masked values with dummy value (simply use first value in array for
+    # this to preserve dtype; these entries get re-masked later so the actual
+    # value does not matter). Note: `array.fill_value` is not defined for dask
+    # arrays, and `ma.filled` also works for regular (non-masked) arrays.
+    fill_value = num_module.ravel(array)[0]
+    array = num_module.ma.filled(array, fill_value)
+
+    # Apply function and return masked array
+    array = function(array)
+    return num_module.ma.masked_array(array, mask=mask)
+
+
 def add_plev_from_altitude(cube):
     """Add pressure level coordinate from altitude coordinate.
 
@@ -64,14 +96,20 @@ def add_plev_from_altitude(cube):
         if height_coord.units != 'm':
             height_coord.convert_units('m')
         altitude_to_pressure = get_altitude_to_pressure_func()
-        pressure_points = altitude_to_pressure(height_coord.core_points())
+        pressure_points = _map_on_filled(
+            altitude_to_pressure, height_coord.core_points()
+        )
         if height_coord.core_bounds() is None:
             pressure_bounds = None
         else:
-            pressure_bounds = altitude_to_pressure(height_coord.core_bounds())
+            pressure_bounds = _map_on_filled(
+                altitude_to_pressure, height_coord.core_bounds()
+            )
         pressure_coord = iris.coords.AuxCoord(pressure_points,
                                               bounds=pressure_bounds,
+                                              var_name='plev',
                                               standard_name='air_pressure',
+                                              long_name='pressure',
                                               units='Pa')
         cube.add_aux_coord(pressure_coord, cube.coord_dims(height_coord))
         return
@@ -98,14 +136,20 @@ def add_altitude_from_plev(cube):
         if plev_coord.units != 'Pa':
             plev_coord.convert_units('Pa')
         pressure_to_altitude = get_pressure_to_altitude_func()
-        altitude_points = pressure_to_altitude(plev_coord.core_points())
+        altitude_points = _map_on_filled(
+            pressure_to_altitude, plev_coord.core_points()
+        )
         if plev_coord.core_bounds() is None:
             altitude_bounds = None
         else:
-            altitude_bounds = pressure_to_altitude(plev_coord.core_bounds())
+            altitude_bounds = _map_on_filled(
+                pressure_to_altitude, plev_coord.core_bounds()
+            )
         altitude_coord = iris.coords.AuxCoord(altitude_points,
                                               bounds=altitude_bounds,
+                                              var_name='alt',
                                               standard_name='altitude',
+                                              long_name='altitude',
                                               units='m')
         cube.add_aux_coord(altitude_coord, cube.coord_dims(plev_coord))
         return
@@ -375,3 +419,92 @@ def fix_ocean_depth_coord(cube):
     depth_coord.units = 'm'
     depth_coord.long_name = 'ocean depth coordinate'
     depth_coord.attributes = {'positive': 'down'}
+
+
+def get_next_month(month: int, year: int) -> tuple[int, int]:
+    """Get next month and year.
+
+    Parameters
+    ----------
+    month:
+        Current month.
+    year:
+        Current year.
+
+    Returns
+    -------
+    tuple[int, int]
+        Next month and next year.
+
+    """
+    if month != 12:
+        return month + 1, year
+    return 1, year + 1
+
+
+def get_time_bounds(time: Coord, freq: str) -> np.ndarray:
+    """Get bounds for time coordinate.
+
+    For monthly data, use the first day of the current month and the first day
+    of the next month. For yearly or decadal data, use 1 January of the current
+    year and 1 January of the next year or 10 years from the current year. For
+    other frequencies (daily, 6-hourly, 3-hourly, hourly), half of the
+    frequency is subtracted/added from the current point in time to get the
+    bounds.
+
+    Parameters
+    ----------
+    time:
+        Time coordinate.
+    freq:
+        Frequency.
+
+    Returns
+    -------
+    np.ndarray
+        Time bounds
+
+    Raises
+    ------
+    NotImplementedError
+        Non-supported frequency is given.
+
+    """
+    bounds = []
+    dates = time.units.num2date(time.points)
+    for step, date in enumerate(dates):
+        month = date.month
+        year = date.year
+        if freq in ['mon', 'mo']:
+            next_month, next_year = get_next_month(month, year)
+            min_bound = date2num(datetime(year, month, 1, 0, 0),
+                                 time.units, time.dtype)
+            max_bound = date2num(datetime(next_year, next_month, 1, 0, 0),
+                                 time.units, time.dtype)
+        elif freq == 'yr':
+            min_bound = date2num(datetime(year, 1, 1, 0, 0),
+                                 time.units, time.dtype)
+            max_bound = date2num(datetime(year + 1, 1, 1, 0, 0),
+                                 time.units, time.dtype)
+        elif freq == 'dec':
+            min_bound = date2num(datetime(year, 1, 1, 0, 0),
+                                 time.units, time.dtype)
+            max_bound = date2num(datetime(year + 10, 1, 1, 0, 0),
+                                 time.units, time.dtype)
+        else:
+            delta = {
+                'day': 12.0 / 24,
+                '6hr': 3.0 / 24,
+                '3hr': 1.5 / 24,
+                '1hr': 0.5 / 24,
+            }
+            if freq not in delta:
+                raise NotImplementedError(
+                    f"Cannot guess time bounds for frequency '{freq}'"
+                )
+            point = time.points[step]
+            min_bound = point - delta[freq]
+            max_bound = point + delta[freq]
+        bounds.append([min_bound, max_bound])
+
+    return np.array(bounds)

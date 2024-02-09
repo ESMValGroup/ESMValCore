@@ -47,8 +47,8 @@ ICON:
     rsuscs: {var_type: atm_2d_ml}
     rsut: {var_type: atm_2d_ml}
     rsutcs: {var_type: atm_2d_ml}
-    siconc: {raw_name: sic, var_type: atm_2d_ml}
-    siconca: {raw_name: sic, var_type: atm_2d_ml}
+    siconc: {raw_name: sic, raw_units: '1', var_type: atm_2d_ml}
+    siconca: {raw_name: sic, raw_units: '1', var_type: atm_2d_ml}
     tas: {var_type: atm_2d_ml}
     tasmax: {var_type: atm_2d_ml}
     tasmin: {var_type: atm_2d_ml}
@@ -62,7 +62,7 @@ ICON:
     cl: {var_type: atm_3d_ml}
     cli: {var_type: atm_3d_ml}
     clw: {var_type: atm_3d_ml}
-    hur: {var_type: atm_3d_ml}
+    hur: {raw_units: '1', var_type: atm_3d_ml}
     hus: {var_type: atm_3d_ml}
     ta: {var_type: atm_3d_ml}
     ua: {var_type: atm_3d_ml}

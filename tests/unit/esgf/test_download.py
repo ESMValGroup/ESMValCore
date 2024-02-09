@@ -25,7 +25,7 @@ def test_log_speed(monkeypatch, tmp_path):
                         200 * megabyte, 16)
     _download.log_speed('http://otherhost.org/other_file.nc', 4 * megabyte, 1)
 
-    with hosts_file.open('r') as file:
+    with hosts_file.open('r', encoding='utf-8') as file:
         result = yaml.safe_load(file)
 
     expected = {
@@ -53,7 +53,7 @@ def test_error(monkeypatch, tmp_path):
     _download.log_speed('http://somehost.org/some_file.nc', 3 * megabyte, 2)
     _download.log_error('http://somehost.org/some_file.nc')
 
-    with hosts_file.open('r') as file:
+    with hosts_file.open('r', encoding='utf-8') as file:
         result = yaml.safe_load(file)
 
     expected = {

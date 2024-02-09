@@ -28,7 +28,7 @@ from ._derive import derive
 from ._detrend import detrend
 from ._io import (
     _get_debug_filename,
-    cleanup,
+    _sort_products,
     concatenate,
     load,
     save,
@@ -56,9 +56,7 @@ from ._regrid import (
 )
 from ._rolling_window import rolling_window_statistics
 from ._supplementary_vars import (
-    add_fx_variables,
     add_supplementary_variables,
-    remove_fx_variables,
     remove_supplementary_variables,
 )
 from ._time import (
@@ -72,6 +70,7 @@ from ._time import (
     extract_season,
     extract_time,
     hourly_statistics,
+    local_solar_time,
     monthly_statistics,
     regrid_time,
     resample_hours,
@@ -109,7 +108,6 @@ __all__ = [
     'fix_data',
     'cmor_check_data',
     # Attach ancillary variables and cell measures
-    'add_fx_variables',
     'add_supplementary_variables',
     # Derive variable
     'derive',
@@ -151,8 +149,6 @@ __all__ = [
     'extract_volume',
     'extract_trajectory',
     'extract_transect',
-    # 'average_zone': average_zone,
-    # 'cross_section': cross_section,
     'detrend',
     'extract_named_regions',
     'axis_statistics',
@@ -160,8 +156,7 @@ __all__ = [
     'area_statistics',
     'volume_statistics',
     # Time operations
-    # 'annual_cycle': annual_cycle,
-    # 'diurnal_cycle': diurnal_cycle,
+    'local_solar_time',
     'amplitude',
     'zonal_statistics',
     'meridional_statistics',
@@ -188,10 +183,8 @@ __all__ = [
     'bias',
     # Remove supplementary variables from cube
     'remove_supplementary_variables',
-    'remove_fx_variables',
     # Save to file
     'save',
-    'cleanup',
 ]
 
 TIME_PREPROCESSORS = [
@@ -370,6 +363,10 @@ def preprocess(
     function = globals()[step]
     itype = _get_itype(step)
 
+    for item in items:
+        if isinstance(item, Cube) and item.has_lazy_data():
+            item.data = item.core_data().rechunk()
+
     result = []
     if itype.endswith('s'):
         result.append(_run_preproc_function(function, items, settings,
@@ -477,10 +474,7 @@ class PreprocessorFile(TrackedFile):
     def cubes(self):
         """Cubes."""
         if self._cubes is None:
-            callback = self.settings.get('load', {}).get('callback')
-            self._cubes = [
-                ds._load_with_callback(callback) for ds in self.datasets
-            ]
+            self._cubes = [ds.load() for ds in self.datasets]
         return self._cubes
 
     @cubes.setter
@@ -493,10 +487,6 @@ class PreprocessorFile(TrackedFile):
                    'save',
                    input_files=self._input_files,
                    **self.settings['save'])
-        preprocess([],
-                   'cleanup',
-                   input_files=self._input_files,
-                   **self.settings.get('cleanup', {}))
 
     def close(self):
         """Close the file."""
@@ -653,12 +643,8 @@ class PreprocessingTask(BaseTask):
             for product in self.products for step in product.settings
         }
         blocks = get_step_blocks(steps, self.order)
-        if not blocks:
-            # If no preprocessing is configured, just load the data and save.
-            for product in self.products:
-                product.cubes  # pylint: disable=pointless-statement
-                product.close()
 
+        saved = set()
         for block in blocks:
             logger.debug("Running block %s", block)
             if block[0] in MULTI_MODEL_FUNCTIONS:
@@ -666,7 +652,7 @@ class PreprocessingTask(BaseTask):
                     self.products = _apply_multimodel(self.products, step,
                                                       self.debug)
             else:
-                for product in self.products:
+                for product in _sort_products(self.products):
                     logger.debug("Applying single-model steps to %s", product)
                     for step in block:
                         if step in product.settings:
@@ -674,9 +660,13 @@ class PreprocessingTask(BaseTask):
                     if block == blocks[-1]:
                         product.cubes  # pylint: disable=pointless-statement
                         product.close()
+                        saved.add(product.filename)
 
         for product in self.products:
-            product.close()
+            if product.filename not in saved:
+                product.cubes  # pylint: disable=pointless-statement
+                product.close()
+
         metadata_files = write_metadata(self.products,
                                         self.write_ncl_interface)
         return metadata_files

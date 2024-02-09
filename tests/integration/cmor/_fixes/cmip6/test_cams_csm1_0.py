@@ -1,13 +1,13 @@
 """Test fixes for CAMS-CSM1-0."""
 from esmvalcore.cmor._fixes.cmip6.cams_csm1_0 import Cl, Cli, Clw
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
-from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix, GenericFix
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CAMS-CSM1-0', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    assert fix == [Cl(None), GenericFix(None)]
 
 
 def test_cl_fix():
@@ -18,7 +18,7 @@ def test_cl_fix():
 def test_get_cli_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CAMS-CSM1-0', 'Amon', 'cli')
-    assert fix == [Cli(None)]
+    assert fix == [Cli(None), GenericFix(None)]
 
 
 def test_cli_fix():
@@ -29,7 +29,7 @@ def test_cli_fix():
 def test_get_clw_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'CAMS-CSM1-0', 'Amon', 'clw')
-    assert fix == [Clw(None)]
+    assert fix == [Clw(None), GenericFix(None)]
 
 
 def test_clw_fix():

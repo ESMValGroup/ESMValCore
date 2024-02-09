@@ -52,7 +52,7 @@ def compute_speed(size, duration):
 def load_speeds():
     """Load average download speeds from HOSTS_FILE."""
     try:
-        content = HOSTS_FILE.read_text()
+        content = HOSTS_FILE.read_text(encoding='utf-8')
     except FileNotFoundError:
         content = '{}'
     speeds = yaml.safe_load(content)
@@ -94,7 +94,7 @@ def atomic_write(filename):
     filename.parent.mkdir(parents=True, exist_ok=True)
     with NamedTemporaryFile(prefix=f"{filename}.") as file:
         tmp_file = file.name
-    with open(tmp_file, 'w') as file:
+    with open(tmp_file, 'w', encoding='utf-8') as file:
         yield file
     shutil.move(tmp_file, filename)
 

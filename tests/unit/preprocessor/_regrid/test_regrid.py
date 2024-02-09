@@ -4,6 +4,8 @@ function."""
 import unittest
 from unittest import mock
 
+import dask
+import dask.array as da
 import iris
 import numpy as np
 import pytest
@@ -11,20 +13,19 @@ import pytest
 import tests
 from esmvalcore.preprocessor import regrid
 from esmvalcore.preprocessor._regrid import (
-    _CACHE,
-    HORIZONTAL_SCHEMES,
+    HORIZONTAL_SCHEMES_REGULAR,
     _horizontal_grid_is_close,
+    _rechunk,
 )
 
 
 class Test(tests.Test):
+
     def _check(self, tgt_grid, scheme, spec=False):
-        expected_scheme = HORIZONTAL_SCHEMES[scheme]
+        expected_scheme = HORIZONTAL_SCHEMES_REGULAR[scheme]
 
         if spec:
             spec = tgt_grid
-            self.assertIn(spec, _CACHE)
-            self.assertEqual(_CACHE[spec], self.tgt_grid)
             self.coord_system.asset_called_once()
             expected_calls = [
                 mock.call(axis='x', dim_coords=True),
@@ -33,14 +34,6 @@ class Test(tests.Test):
             self.assertEqual(self.tgt_grid_coord.mock_calls, expected_calls)
             self.regrid.assert_called_once_with(self.tgt_grid, expected_scheme)
         else:
-            if scheme == 'unstructured_nearest':
-                expected_calls = [
-                    mock.call(axis='x', dim_coords=True),
-                    mock.call(axis='y', dim_coords=True)
-                ]
-                self.assertEqual(self.coords.mock_calls, expected_calls)
-                expected_calls = [mock.call(self.coord), mock.call(self.coord)]
-                self.assertEqual(self.remove_coord.mock_calls, expected_calls)
             self.regrid.assert_called_once_with(tgt_grid, expected_scheme)
 
         # Reset the mocks to enable multiple calls per test-case.
@@ -65,13 +58,11 @@ class Test(tests.Test):
             regrid=self.regrid,
             dtype=float,
         )
+        self.src_cube.ndim = 1
         self.tgt_grid_coord = mock.Mock()
-        self.tgt_grid = mock.Mock(
-            spec=iris.cube.Cube, coord=self.tgt_grid_coord)
-        self.regrid_schemes = [
-            'linear', 'linear_extrapolate', 'nearest', 'area_weighted',
-            'unstructured_nearest'
-        ]
+        self.tgt_grid = mock.Mock(spec=iris.cube.Cube,
+                                  coord=self.tgt_grid_coord)
+        self.regrid_schemes = ['linear', 'nearest', 'area_weighted']
 
         def _mock_horizontal_grid_is_close(src, tgt):
             return False
@@ -102,13 +93,13 @@ class Test(tests.Test):
             regrid(self.src_cube, dummy, scheme)
 
     def test_invalid_scheme__unknown(self):
-        emsg = 'Unknown regridding scheme'
+        emsg = "Got invalid regridding scheme string 'wibble'"
         with self.assertRaisesRegex(ValueError, emsg):
             regrid(self.src_cube, self.src_cube, 'wibble')
 
     def test_horizontal_schemes(self):
-        self.assertEqual(
-            set(HORIZONTAL_SCHEMES.keys()), set(self.regrid_schemes))
+        self.assertEqual(set(HORIZONTAL_SCHEMES_REGULAR.keys()),
+                         set(self.regrid_schemes))
 
     def test_regrid__horizontal_schemes(self):
         for scheme in self.regrid_schemes:
@@ -118,11 +109,6 @@ class Test(tests.Test):
             self._check(self.tgt_grid, scheme)
 
     def test_regrid__cell_specification(self):
-        # Clear cache before and after the test to avoid poisoning
-        # the cache with Mocked cubes
-        # https://github.com/ESMValGroup/ESMValCore/issues/953
-        _CACHE.clear()
-
         specs = ['1x1', '2x2', '3x3', '4x4', '5x5']
         scheme = 'linear'
         for spec in specs:
@@ -130,9 +116,6 @@ class Test(tests.Test):
             self.assertEqual(result, self.regridded_cube)
             self.assertEqual(result.data, mock.sentinel.data)
             self._check(spec, scheme, spec=True)
-        self.assertEqual(set(_CACHE.keys()), set(specs))
-
-        _CACHE.clear()
 
     def test_regrid_generic_missing_reference(self):
         emsg = "No reference specified for generic regridding."
@@ -150,12 +133,12 @@ class Test(tests.Test):
     third_party_regridder = mock.Mock()
 
     def test_regrid_generic_third_party(self):
-        regrid(self.src_cube, '1x1',
-               {"reference":
-                "tests.unit.preprocessor._regrid.test_regrid:"
+        regrid(
+            self.src_cube, '1x1', {
+                "reference": "tests.unit.preprocessor._regrid.test_regrid:"
                 "Test.third_party_regridder",
                 "method": "good",
-                })
+            })
         self.third_party_regridder.assert_called_once_with(method="good")
 
 
@@ -260,6 +243,122 @@ def test_regrid_is_skipped_if_grids_are_the_same():
     # regridding to a different spec returns a different cube
     expected_different_cube = regrid(cube, target_grid='5x5', scheme=scheme)
     assert expected_different_cube is not cube
+
+
+def make_test_cube(shape):
+    data = da.empty(shape, dtype=np.float32)
+    cube = iris.cube.Cube(data)
+    if len(shape) > 2:
+        cube.add_dim_coord(
+            iris.coords.DimCoord(
+                np.arange(shape[0]),
+                standard_name='time',
+            ),
+            0,
+        )
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.linspace(-90., 90., shape[-2], endpoint=True),
+            standard_name='latitude',
+        ),
+        len(shape) - 2,
+    )
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.linspace(0., 360., shape[-1]),
+            standard_name='longitude',
+        ),
+        len(shape) - 1,
+    )
+    return cube
+
+
+def test_rechunk_on_increased_grid():
+    """Test that an increase in grid size rechunks."""
+    with dask.config.set({'array.chunk-size': '128 M'}):
+
+        time_dim = 246
+        src_grid_dims = (91, 180)
+        data = da.empty((time_dim, ) + src_grid_dims, dtype=np.float32)
+
+        tgt_grid_dims = (2, 361, 720)
+        tgt_grid = make_test_cube(tgt_grid_dims)
+        result = _rechunk(iris.cube.Cube(data), tgt_grid)
+
+        assert result.core_data().chunks == ((123, 123), (91, ), (180, ))
+
+
+def test_no_rechunk_on_decreased_grid():
+    """Test that a decrease in grid size does not rechunk."""
+    with dask.config.set({'array.chunk-size': '128 M'}):
+
+        time_dim = 200
+        src_grid_dims = (361, 720)
+        data = da.empty((time_dim, ) + src_grid_dims, dtype=np.float32)
+
+        tgt_grid_dims = (91, 180)
+        tgt_grid = make_test_cube(tgt_grid_dims)
+
+        result = _rechunk(iris.cube.Cube(data), tgt_grid)
+
+        assert result.core_data().chunks == data.chunks
+
+
+def test_no_rechunk_2d():
+    """Test that a 2D cube is not rechunked."""
+    with dask.config.set({'array.chunk-size': '64 MiB'}):
+
+        src_grid_dims = (361, 720)
+        data = da.empty(src_grid_dims, dtype=np.float32)
+
+        tgt_grid_dims = (3601, 7200)
+        tgt_grid = da.empty(tgt_grid_dims, dtype=np.float32)
+
+        result = _rechunk(iris.cube.Cube(data), iris.cube.Cube(tgt_grid))
+
+        assert result.core_data().chunks == data.chunks
+
+
+def test_no_rechunk_non_lazy():
+    """Test that a cube with non-lazy data does not crash."""
+    cube = iris.cube.Cube(np.arange(2 * 4).reshape([1, 2, 4]))
+    tgt_cube = iris.cube.Cube(np.arange(4 * 8).reshape([4, 8]))
+    result = _rechunk(cube, tgt_cube)
+    assert result.data is cube.data
+
+
+def test_no_rechunk_unsupported_grid():
+    """Test that 2D target coordinates are ignored.
+
+    Because they are not supported at the moment. This could be
+    implemented at a later stage if needed.
+    """
+    cube = iris.cube.Cube(da.arange(2 * 4).reshape([1, 2, 4]))
+    tgt_grid_dims = (5, 10)
+    tgt_data = da.empty(tgt_grid_dims, dtype=np.float32)
+    tgt_grid = iris.cube.Cube(tgt_data)
+    lat_points = np.linspace(-90., 90., tgt_grid_dims[0], endpoint=True)
+    lon_points = np.linspace(0., 360., tgt_grid_dims[1])
+
+    tgt_grid.add_aux_coord(
+        iris.coords.AuxCoord(
+            np.broadcast_to(lat_points.reshape(-1, 1), tgt_grid_dims),
+            standard_name='latitude',
+        ),
+        (0, 1),
+    )
+    tgt_grid.add_aux_coord(
+        iris.coords.AuxCoord(
+            np.broadcast_to(lon_points.reshape(1, -1), tgt_grid_dims),
+            standard_name='longitude',
+        ),
+        (0, 1),
+    )
+
+    expected_chunks = cube.core_data().chunks
+    result = _rechunk(cube, tgt_grid)
+    assert result is cube
+    assert result.core_data().chunks == expected_chunks
 
 
 if __name__ == '__main__':

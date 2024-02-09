@@ -47,6 +47,33 @@ def test_repr_supplementary():
         """).strip()
 
 
+@pytest.mark.parametrize(
+    "separator,join_lists,output",
+    [
+        ('_', False, "1_d_dom_a_('e1', 'e2')_['ens2', 'ens1']_g1_v1"),
+        ('_', True, "1_d_dom_a_e1-e2_ens2-ens1_g1_v1"),
+        (' ', False, "1 d dom a ('e1', 'e2') ['ens2', 'ens1'] g1 v1"),
+        (' ', True, "1 d dom a e1-e2 ens2-ens1 g1 v1"),
+    ]
+)
+def test_get_joined_summary_facet(separator, join_lists, output):
+    ds = Dataset(
+        test='this should not appear',
+        rcm_version='1',
+        driver='d',
+        domain='dom',
+        activity='a',
+        exp=('e1', 'e2'),
+        ensemble=['ens2', 'ens1'],
+        grid='g1',
+        version='v1',
+    )
+    joined_str = ds._get_joined_summary_facets(
+        separator, join_lists=join_lists
+    )
+    assert joined_str == output
+
+
 def test_short_summary():
     ds = Dataset(
         project='CMIP6',
@@ -425,8 +452,6 @@ def test_from_recipe_with_supplementary(session, tmp_path):
 
 
 def test_from_recipe_with_skip_supplementary(session, tmp_path):
-    session['use_legacy_supplementaries'] = False
-
     recipe_txt = textwrap.dedent("""
 
     datasets:
@@ -474,7 +499,6 @@ def test_from_recipe_with_skip_supplementary(session, tmp_path):
 
 def test_from_recipe_with_automatic_supplementary(session, tmp_path,
                                                   monkeypatch):
-    session['use_legacy_supplementaries'] = False
 
     def _find_files(self):
         if self.facets['short_name'] == 'areacello':
@@ -1138,6 +1162,24 @@ def test_remove_not_found_supplementaries():
     assert len(dataset.supplementaries) == 0
 
 
+def test_concatenating_historical_and_future_exps(mocker):
+    mocker.patch.object(Dataset, 'files', True)
+    dataset = Dataset(
+        dataset='dataset1',
+        short_name='tas',
+        mip='Amon',
+        frequency='mon',
+        project='CMIP6',
+        exp=['historical', 'ssp585'],
+    )
+    dataset.add_supplementary(short_name='areacella', mip='fx', frequency='fx')
+    dataset._fix_fx_exp()
+
+    assert len(dataset.supplementaries) == 1
+    assert dataset.facets['exp'] == ['historical', 'ssp585']
+    assert dataset.supplementaries[0].facets['exp'] == 'historical'
+
+
 def test_from_recipe_with_glob(tmp_path, session, mocker):
     recipe_txt = textwrap.dedent("""
 
@@ -1613,7 +1655,11 @@ def test_load(mocker, session):
     )
     dataset.session = session
     output_file = Path('/path/to/output.nc')
-    fix_dir = Path('/path/to/output_fixed')
+    fix_dir_prefix = Path(
+        session.preproc_dir,
+        'fixed_files',
+        'chl_Oyr_CMIP5_CanESM2_historical_r1i1p1_',
+    )
     _get_output_file = mocker.patch.object(
         esmvalcore.dataset,
         '_get_output_file',
@@ -1653,21 +1699,24 @@ def test_load(mocker, session):
 
     load_args = {
         'load': {
-            'callback': 'default'
+            'ignore_warnings': None,
         },
         'fix_file': {
+            'add_unique_suffix': True,
+            'session': session,
             'dataset': 'CanESM2',
             'ensemble': 'r1i1p1',
             'exp': 'historical',
             'frequency': 'yr',
             'mip': 'Oyr',
-            'output_dir': fix_dir,
+            'output_dir': fix_dir_prefix,
             'project': 'CMIP5',
             'short_name': 'chl',
             'timerange': '2000/2005',
         },
         'fix_metadata': {
             'check_level': CheckLevels.DEFAULT,
+            'session': session,
             'dataset': 'CanESM2',
             'ensemble': 'r1i1p1',
             'exp': 'historical',
@@ -1689,6 +1738,7 @@ def test_load(mocker, session):
         },
         'fix_data': {
             'check_level': CheckLevels.DEFAULT,
+            'session': session,
             'dataset': 'CanESM2',
             'ensemble': 'r1i1p1',
             'exp': 'historical',
@@ -1705,7 +1755,9 @@ def test_load(mocker, session):
             'short_name': 'chl',
             'frequency': 'yr',
         },
-        'concatenate': {},
+        'concatenate': {
+            'check_level': CheckLevels.DEFAULT,
+        },
         'add_supplementary_variables': {
             'supplementary_cubes': [],
         },

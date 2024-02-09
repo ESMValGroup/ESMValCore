@@ -16,7 +16,7 @@ def test_run(tmp_path):
         }
     }
     prev_metadata_file = prev_preproc_dir / 'metadata.yml'
-    with prev_metadata_file.open('w') as file:
+    with prev_metadata_file.open('w', encoding='utf-8') as file:
         yaml.safe_dump(prev_metadata, file)
 
     output_dir = tmp_path / 'recipe_test_20211001_092100'

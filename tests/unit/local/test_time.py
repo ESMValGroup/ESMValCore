@@ -1,7 +1,11 @@
 """Unit tests for time related functions in `esmvalcore.local`."""
+from pathlib import Path
+
 import iris
+import pyesgf
 import pytest
 
+from esmvalcore.esgf import ESGFFile
 from esmvalcore.local import (
     LocalFile,
     _dates_to_timerange,
@@ -10,6 +14,22 @@ from esmvalcore.local import (
     _replace_years_with_timerange,
     _truncate_dates,
 )
+
+
+def _get_esgf_file(path):
+    """Get ESGFFile object."""
+    result = pyesgf.search.results.FileResult(
+        json={
+            'dataset_id': 'CMIP6.ABC.v1|something.org',
+            'dataset_id_template_': ["%(mip_era)s.%(source_id)s"],
+            'project': ['CMIP6'],
+            'size': 10,
+            'title': path,
+        },
+        context=None,
+    )
+    return ESGFFile([result])
+
 
 FILENAME_CASES = [
     ['var_whatever_1980-1981', 1980, 1981],
@@ -31,7 +51,13 @@ FILENAME_CASES = [
         2015, 2015
     ],
     ['pr_A1.186101-200012.nc', 1861, 2000],
-    ['tas_A1.20C3M_1.CCSM.atmm.1990-01_cat_1999-12.nc', None, None],
+    ['tas_A1.20C3M_1.CCSM.atmm.1990-01_cat_1999-12.nc', 1990, 1999],
+    ['E5sf00_1M_1940_032.grb', 1940, 1940],
+    ['E5sf00_1D_1998-04_167.grb', 1998, 1998],
+    ['E5sf00_1H_1986-04-11_167.grb', 1986, 1986],
+    ['E5sf00_1M_1940-1941_032.grb', 1940, 1941],
+    ['E5sf00_1D_1998-01_1999-12_167.grb', 1998, 1999],
+    ['E5sf00_1H_2000-01-01_2001-12-31_167.grb', 2000, 2001],
 ]
 
 FILENAME_DATE_CASES = [
@@ -57,7 +83,13 @@ FILENAME_DATE_CASES = [
         '20150101T000000Z', '20150101T000000Z'
     ],
     ['pr_A1.186101-200012.nc', '186101', '200012'],
-    ['tas_A1.20C3M_1.CCSM.atmm.1990-01_cat_1999-12.nc', None, None],
+    ['tas_A1.20C3M_1.CCSM.atmm.1990-01_cat_1999-12.nc', '199001', '199912'],
+    ['E5sf00_1M_1940_032.grb', '1940', '1940'],
+    ['E5sf00_1D_1998-04_167.grb', '199804', '199804'],
+    ['E5sf00_1H_1986-04-11_167.grb', '19860411', '19860411'],
+    ['E5sf00_1M_1940-1941_032.grb', '1940', '1941'],
+    ['E5sf00_1D_1998-01_1999-12_167.grb', '199801', '199912'],
+    ['E5sf00_1H_2000-01-01_2001-12-31_167.grb', '20000101', '20011231'],
 ]
 
 
@@ -65,15 +97,30 @@ FILENAME_DATE_CASES = [
 def test_get_start_end_year(case):
     """Tests for _get_start_end_year function."""
     filename, case_start, case_end = case
-    filename = LocalFile(filename)
+
+    # If the filename is inconclusive or too difficult we resort to reading the
+    # file, which fails here because the file is not there.
     if case_start is None and case_end is None:
-        # If the filename is inconclusive or too difficult
-        # we resort to reading the file, which fails here
-        # because the file is not there.
         with pytest.raises(ValueError):
             _get_start_end_year(filename)
+        with pytest.raises(ValueError):
+            _get_start_end_year(Path(filename))
+        with pytest.raises(ValueError):
+            _get_start_end_year(LocalFile(filename))
+        with pytest.raises(ValueError):
+            _get_start_end_year(_get_esgf_file(filename))
+
     else:
         start, end = _get_start_end_year(filename)
+        assert case_start == start
+        assert case_end == end
+        start, end = _get_start_end_year(Path(filename))
+        assert case_start == start
+        assert case_end == end
+        start, end = _get_start_end_year(LocalFile(filename))
+        assert case_start == start
+        assert case_end == end
+        start, end = _get_start_end_year(_get_esgf_file(filename))
         assert case_start == start
         assert case_end == end
 
@@ -82,21 +129,36 @@ def test_get_start_end_year(case):
 def test_get_start_end_date(case):
     """Tests for _get_start_end_date function."""
     filename, case_start, case_end = case
-    filename = LocalFile(filename)
+
+    # If the filename is inconclusive or too difficult we resort to reading the
+    # file, which fails here because the file is not there.
     if case_start is None and case_end is None:
-        # If the filename is inconclusive or too difficult
-        # we resort to reading the file, which fails here
-        # because the file is not there.
         with pytest.raises(ValueError):
             _get_start_end_date(filename)
+        with pytest.raises(ValueError):
+            _get_start_end_date(Path(filename))
+        with pytest.raises(ValueError):
+            _get_start_end_date(LocalFile(filename))
+        with pytest.raises(ValueError):
+            _get_start_end_date(_get_esgf_file(filename))
+
     else:
         start, end = _get_start_end_date(filename)
         assert case_start == start
         assert case_end == end
+        start, end = _get_start_end_date(Path(filename))
+        assert case_start == start
+        assert case_end == end
+        start, end = _get_start_end_date(LocalFile(filename))
+        assert case_start == start
+        assert case_end == end
+        start, end = _get_start_end_date(_get_esgf_file(filename))
+        assert case_start == start
+        assert case_end == end
 
 
-def test_read_time_from_cube(monkeypatch, tmp_path):
-    """Try to get time from cube if no date in filename."""
+def test_read_years_from_cube(monkeypatch, tmp_path):
+    """Try to get years from cube if no date in filename."""
     monkeypatch.chdir(tmp_path)
     temp_file = LocalFile('test.nc')
     cube = iris.cube.Cube([0, 0], var_name='var')
@@ -111,7 +173,7 @@ def test_read_time_from_cube(monkeypatch, tmp_path):
 
 
 def test_read_datetime_from_cube(monkeypatch, tmp_path):
-    """Try to get time from cube if no date in filename."""
+    """Try to get datetime from cube if no date in filename."""
     monkeypatch.chdir(tmp_path)
     temp_file = 'test.nc'
     cube = iris.cube.Cube([0, 0], var_name='var')
@@ -133,12 +195,15 @@ def test_raises_if_unable_to_deduce(monkeypatch, tmp_path):
     iris.save(cube, temp_file)
     with pytest.raises(ValueError):
         _get_start_end_date(temp_file)
+    with pytest.raises(ValueError):
+        _get_start_end_year(temp_file)
 
 
 def test_fails_if_no_date_present():
     """Test raises if no date is present."""
-    with pytest.raises((ValueError, OSError)):
+    with pytest.raises((ValueError)):
         _get_start_end_date('var_whatever')
+    with pytest.raises((ValueError)):
         _get_start_end_year('var_whatever')
 
 

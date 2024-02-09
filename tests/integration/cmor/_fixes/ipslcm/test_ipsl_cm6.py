@@ -2,6 +2,7 @@
 import iris
 import pytest
 
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor._fixes.ipslcm.ipsl_cm6 import Tas
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
@@ -11,7 +12,7 @@ from esmvalcore.cmor.table import get_var_info
 def test_get_tas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('IPSLCM', 'IPSL-CM6', 'Amon', 'tas')
-    assert fix == [Tas(None)]
+    assert fix == [Tas(None), GenericFix(None)]
 
 
 @pytest.fixture

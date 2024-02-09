@@ -20,7 +20,7 @@ def test_write_ncl_settings(tmp_path):
     }
     file_name = tmp_path / "settings"
     write_ncl_settings(settings, file_name)
-    with open(file_name, 'r') as file:
+    with open(file_name, 'r', encoding='utf-8') as file:
         lines = file.readlines()
         assert 'var_name = "tas"\n' in lines
         assert 'if (isvar("profile_diagnostic")) then\n' not in lines
@@ -32,7 +32,7 @@ def test_write_ncl_settings(tmp_path):
     }
     file_name = tmp_path / "settings"
     write_ncl_settings(settings, file_name)
-    with open(file_name, 'r') as file:
+    with open(file_name, 'r', encoding='utf-8') as file:
         lines = file.readlines()
         assert 'var_name = "tas"\n' in lines
         assert 'profile_diagnostic' not in lines

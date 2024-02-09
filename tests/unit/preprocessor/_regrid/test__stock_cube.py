@@ -11,9 +11,15 @@ import iris
 import numpy as np
 
 import tests
-from esmvalcore.preprocessor._regrid import (_LAT_MAX, _LAT_MIN, _LAT_RANGE,
-                                             _LON_MAX, _LON_MIN, _LON_RANGE)
-from esmvalcore.preprocessor._regrid import _global_stock_cube
+from esmvalcore.preprocessor._regrid import (
+    _LAT_MAX,
+    _LAT_MIN,
+    _LAT_RANGE,
+    _LON_MAX,
+    _LON_MIN,
+    _LON_RANGE,
+    _global_stock_cube,
+)
 
 
 class Test(tests.Test):
@@ -71,11 +77,17 @@ class Test(tests.Test):
 
     def setUp(self):
         self.Cube = mock.sentinel.Cube
-        self.mock_Cube = self.patch('iris.cube.Cube', return_value=self.Cube)
+        self.mock_Cube = self.patch(
+            'esmvalcore.preprocessor._regrid.Cube', return_value=self.Cube
+        )
         self.mock_coord = mock.Mock(spec=iris.coords.DimCoord)
         self.mock_DimCoord = self.patch(
             'iris.coords.DimCoord', return_value=self.mock_coord)
         self.mocks = [self.mock_Cube, self.mock_coord, self.mock_DimCoord]
+
+    def tearDown(self) -> None:
+        _global_stock_cube.cache_clear()
+        return super().tearDown()
 
     def test_invalid_cell_spec__alpha(self):
         emsg = 'Invalid MxN cell specification'

@@ -68,7 +68,7 @@ class AllVars(NativeDatasetFix):
         """
         # Only modify time points if data contains a time dimension, is monthly
         # data, and does not describe point measurements.
-        if 'time' not in self.vardef.dimensions:
+        if not self.vardef.has_coord_with_standard_name('time'):
             return
         if self.extra_facets['frequency'] != 'mon':
             return

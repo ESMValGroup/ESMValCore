@@ -18,9 +18,16 @@ from ..shared import (
 class Cl(Fix):
     """Fixes for ``cl``."""
 
-    def _fix_formula_terms(self, filepath, output_dir):
+    def _fix_formula_terms(
+        self,
+        filepath,
+        output_dir,
+        add_unique_suffix=False,
+    ):
         """Fix ``formula_terms`` attribute."""
-        new_path = self.get_fixed_filepath(output_dir, filepath)
+        new_path = self.get_fixed_filepath(
+            output_dir, filepath, add_unique_suffix=add_unique_suffix
+        )
         copyfile(filepath, new_path)
         dataset = Dataset(new_path, mode='a')
         dataset.variables['lev'].formula_terms = 'p0: p0 a: a b: b ps: ps'
@@ -29,7 +36,7 @@ class Cl(Fix):
         dataset.close()
         return new_path
 
-    def fix_file(self, filepath, output_dir):
+    def fix_file(self, filepath, output_dir, add_unique_suffix=False):
         """Fix hybrid pressure coordinate.
 
         Adds missing ``formula_terms`` attribute to file.
@@ -45,8 +52,10 @@ class Cl(Fix):
         ----------
         filepath : str
             Path to the original file.
-        output_dir : str
-            Path of the directory where the fixed file is saved to.
+        output_dir: Path
+            Output directory for fixed files.
+        add_unique_suffix: bool, optional (default: False)
+            Adds a unique suffix to `output_dir` for thread safety.
 
         Returns
         -------
@@ -54,7 +63,9 @@ class Cl(Fix):
             Path to the fixed file.
 
         """
-        new_path = self._fix_formula_terms(filepath, output_dir)
+        new_path = self._fix_formula_terms(
+            filepath, output_dir, add_unique_suffix=add_unique_suffix
+        )
         dataset = Dataset(new_path, mode='a')
         dataset.variables['a_bnds'][:] = dataset.variables['a_bnds'][::-1, :]
         dataset.variables['b_bnds'][:] = dataset.variables['b_bnds'][::-1, :]

@@ -22,6 +22,7 @@ from esmvalcore.config import CFG, Session
 from esmvalcore.config._config import (
     get_activity,
     get_extra_facets,
+    get_ignored_warnings,
     get_institutes,
 )
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
@@ -95,6 +96,22 @@ class Dataset:
     facets: :obj:`esmvalcore.typing.Facets`
         Facets describing the dataset.
     """
+
+    _SUMMARY_FACETS = (
+        'short_name',
+        'mip',
+        'project',
+        'dataset',
+        'rcm_version',
+        'driver',
+        'domain',
+        'activity',
+        'exp',
+        'ensemble',
+        'grid',
+        'version',
+    )
+    """Facets used to create a summary of a Dataset instance."""
 
     def __init__(self, **facets: FacetValue):
 
@@ -433,6 +450,24 @@ class Dataset:
             txt.append(f"session: '{self.session.session_name}'")
         return "\n".join(txt)
 
+    def _get_joined_summary_facets(
+        self,
+        separator: str,
+        join_lists: bool = False,
+    ) -> str:
+        """Get string consisting of joined summary facets."""
+        summary_facets_vals = []
+        for key in self._SUMMARY_FACETS:
+            if key not in self.facets:
+                continue
+            val = self.facets[key]
+            if join_lists and isinstance(val, (tuple, list)):
+                val = '-'.join(str(elem) for elem in val)
+            else:
+                val = str(val)
+            summary_facets_vals.append(val)
+        return separator.join(summary_facets_vals)
+
     def summary(self, shorten: bool = False) -> str:
         """Summarize the content of dataset.
 
@@ -449,28 +484,12 @@ class Dataset:
         if not shorten:
             return repr(self)
 
-        keys = (
-            'short_name',
-            'mip',
-            'project',
-            'dataset',
-            'rcm_version',
-            'driver',
-            'domain',
-            'activity',
-            'exp',
-            'ensemble',
-            'grid',
-            'version',
-        )
         title = self.__class__.__name__
-        txt = (
-            f"{title}: " +
-            ", ".join(str(self.facets[k]) for k in keys if k in self.facets))
+        txt = f"{title}: " + self._get_joined_summary_facets(', ')
 
         def supplementary_summary(dataset):
             return ", ".join(
-                str(dataset.facets[k]) for k in keys
+                str(dataset.facets[k]) for k in self._SUMMARY_FACETS
                 if k in dataset.facets and dataset[k] != self.facets.get(k))
 
         if self.supplementaries:
@@ -658,19 +677,15 @@ class Dataset:
         iris.cube.Cube
             An :mod:`iris` cube with the data corresponding the the dataset.
         """
-        return self._load_with_callback(callback='default')
-
-    def _load_with_callback(self, callback):
-        # TODO: Remove the callback argument for v2.10.0.
         input_files = list(self.files)
         for supplementary_dataset in self.supplementaries:
             input_files.extend(supplementary_dataset.files)
         esgf.download(input_files, self.session['download_dir'])
 
-        cube = self._load(callback)
+        cube = self._load()
         supplementary_cubes = []
         for supplementary_dataset in self.supplementaries:
-            supplementary_cube = supplementary_dataset._load(callback)
+            supplementary_cube = supplementary_dataset._load()
             supplementary_cubes.append(supplementary_cube)
 
         output_file = _get_output_file(self.facets, self.session.preproc_dir)
@@ -685,7 +700,7 @@ class Dataset:
 
         return cubes[0]
 
-    def _load(self, callback) -> Cube:
+    def _load(self) -> Cube:
         """Load self.files into an iris cube and return it."""
         if not self.files:
             lines = [
@@ -699,18 +714,31 @@ class Dataset:
             raise InputFilesNotFound(msg)
 
         output_file = _get_output_file(self.facets, self.session.preproc_dir)
+        fix_dir_prefix = Path(
+            self.session._fixed_file_dir,
+            self._get_joined_summary_facets('_', join_lists=True) + '_',
+        )
 
         settings: dict[str, dict[str, Any]] = {}
         settings['fix_file'] = {
-            'output_dir': Path(f"{output_file.with_suffix('')}_fixed"),
+            'output_dir': fix_dir_prefix,
+            'add_unique_suffix': True,
+            'session': self.session,
             **self.facets,
         }
-        settings['load'] = {'callback': callback}
+        settings['load'] = {
+            'ignore_warnings': get_ignored_warnings(
+                self.facets['project'], 'load'
+            ),
+        }
         settings['fix_metadata'] = {
             'check_level': self.session['check_level'],
+            'session': self.session,
             **self.facets,
         }
-        settings['concatenate'] = {}
+        settings['concatenate'] = {
+            'check_level': self.session['check_level']
+        }
         settings['cmor_check_metadata'] = {
             'check_level': self.session['check_level'],
             'cmor_table': self.facets['project'],
@@ -724,6 +752,7 @@ class Dataset:
             }
         settings['fix_data'] = {
             'check_level': self.session['check_level'],
+            'session': self.session,
             **self.facets,
         }
         settings['cmor_check_data'] = {
@@ -830,7 +859,7 @@ class Dataset:
             dataset.facets.pop('timerange')
             dataset.supplementaries = []
             check.data_availability(dataset)
-            intervals = [_get_start_end_date(f.name) for f in dataset.files]
+            intervals = [_get_start_end_date(f) for f in dataset.files]
 
             min_date = min(interval[0] for interval in intervals)
             max_date = max(interval[1] for interval in intervals)

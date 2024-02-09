@@ -4,9 +4,9 @@ Allows for unit conversions.
 """
 import logging
 
-from cf_units import Unit
 import iris
 import numpy as np
+from cf_units import Unit
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +20,10 @@ SPECIAL_CASES = [
     [
         ('precipitation_flux', 'kg m-2 s-1'),
         ('lwe_precipitation_rate', 'mm s-1'),
+    ],
+    [
+        ('equivalent_thickness_at_stp_of_atmosphere_ozone_content', 'm'),
+        ('equivalent_thickness_at_stp_of_atmosphere_ozone_content', '1e5 DU'),
     ],
 ]
 
@@ -41,7 +45,7 @@ def _try_special_conversions(cube, units):
             if (cube.standard_name == std_name and
                     cube.units.is_convertible(special_units)):
                 for (target_std_name, target_units) in special_case:
-                    if target_std_name == std_name:
+                    if target_units == special_units:
                         continue
 
                     # Step 2: find suitable target name and units
@@ -79,8 +83,10 @@ def convert_units(cube, units):
 
     Currently, the following special conversions are supported:
 
-        * ``precipitation_flux`` (``kg m-2 s-1``) --
-          ``lwe_precipitation_rate`` (``mm day-1``)
+    * ``precipitation_flux`` (``kg m-2 s-1``) --
+      ``lwe_precipitation_rate`` (``mm day-1``)
+    * ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``m``) --
+      ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``DU``)
 
     Names in the list correspond to ``standard_names`` of the input data.
     Conversions are allowed from each quantity to any other quantity given in a

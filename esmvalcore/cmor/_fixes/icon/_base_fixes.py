@@ -1,6 +1,7 @@
 """Fix base classes for ICON on-the-fly CMORizer."""
 
 import logging
+import os
 import warnings
 from datetime import datetime
 from pathlib import Path
@@ -178,47 +179,105 @@ class IconFix(NativeDatasetFix):
 
         return (node_lat, node_lon)
 
-    def get_horizontal_grid(self, cube):
-        """Get copy of ICON horizontal grid from global attribute of cube.
+    def _get_path_from_facet(self, facet, description=None):
+        """Try to get path from facet."""
+        if description is None:
+            description = 'File'
+        path = Path(os.path.expandvars(self.extra_facets[facet])).expanduser()
+        if not path.is_file():
+            new_path = self.session['auxiliary_data_dir'] / path
+            if not new_path.is_file():
+                raise FileNotFoundError(
+                    f"{description} '{path}' given by facet '{facet}' does "
+                    f"not exist (specify a valid absolute path or a path "
+                    f"relative to the auxiliary_data_dir "
+                    f"'{self.session['auxiliary_data_dir']}')"
+                )
+            path = new_path
+        return path
+
+    def add_additional_cubes(self, cubes):
+        """Add additional user-defined cubes to list of cubes (in-place).
+
+        An example use case is adding a vertical coordinate (e.g., `zg`) to the
+        dataset if the vertical coordinate data is stored in a separate ICON
+        output file.
+
+        Currently, the following cubes can be added:
+
+        - `zg` (`geometric_height_at_full_level_center`) from facet `zg_file`.
+          This can be used as vertical coordinate.
+        - `zghalf` (`geometric_height_at_half_level_center`) from facet
+          `zghalf_file`. This can be used as bounds for the vertical
+          coordinate.
 
         Note
         ----
-        If necessary, this functions downloads the grid file to a cache
-        directory. The downloaded file is valid for 7 days until it is
-        downloaded again.
+        Files can be specified as absolute or relative (to
+        ``auxiliary_data_dir`` as defined in the :ref:`user configuration
+        file`) paths.
 
         Parameters
         ----------
-        cube: iris.cube.Cube
-            Cube for which the ICON horizontal grid is retrieved. This cube
-            needs to have a global attribute that specifies the download
-            location of the ICON horizontal grid file (see
-            ``self.GRID_FILE_ATTR``).
+        cubes: iris.cube.CubeList
+            Input cubes which will be modified in place.
 
         Returns
         -------
         iris.cube.CubeList
-            Copy of ICON horizontal grid.
+            Modified cubes. The cubes are modified in place; they are just
+            returned out of convenience for easy access.
 
         Raises
         ------
-        ValueError
-            Input cube does not contain the necessary attribute that specifies
-            the download location of the ICON horizontal grid file (see
-            ``self.GRID_FILE_ATTR``).
+        InputFilesNotFound
+            A specified file does not exist.
 
         """
+        facets_to_consider = [
+            'zg_file',
+            'zghalf_file',
+        ]
+        for facet in facets_to_consider:
+            if facet not in self.extra_facets:
+                continue
+            path_to_add = self._get_path_from_facet(facet)
+            logger.debug("Adding cubes from %s", path_to_add)
+            new_cubes = self._load_cubes(path_to_add)
+            cubes.extend(new_cubes)
+
+        return cubes
+
+    def _get_grid_from_facet(self):
+        """Get horizontal grid from user-defined facet `horizontal_grid`."""
+        grid_path = self._get_path_from_facet(
+            'horizontal_grid', 'Horizontal grid file'
+        )
+        grid_name = grid_path.name
+
+        # If already loaded, return the horizontal grid
+        if grid_name in self._horizontal_grids:
+            return self._horizontal_grids[grid_name]
+
+        # Load file
+        self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
+        logger.debug("Loaded ICON grid file from %s", grid_path)
+        return self._horizontal_grids[grid_name]
+
+    def _get_grid_from_cube_attr(self, cube):
+        """Get horizontal grid from `grid_file_uri` attribute of cube."""
         (grid_url, grid_name) = self._get_grid_url(cube)
 
-        # If already loaded, return the horizontal grid (cube)
+        # If already loaded, return the horizontal grid
         if grid_name in self._horizontal_grids:
-            return self._horizontal_grids[grid_name].copy()
+            return self._horizontal_grids[grid_name]
 
         # Check if grid file has recently been downloaded and load it if
         # possible
         # Note: we use a lock here to prevent multiple processes from
         # downloading the file simultaneously and to ensure that other
         # processes wait until the download has finished
+        self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
         lock = FileLock(self.CACHE_DIR / f"{grid_name}.lock")
         with lock:
             grid_path = self.CACHE_DIR / grid_name
@@ -231,7 +290,7 @@ class IconFix(NativeDatasetFix):
                     self._horizontal_grids[grid_name] = self._load_cubes(
                         grid_path
                     )
-                    return self._horizontal_grids[grid_name].copy()
+                    return self._horizontal_grids[grid_name]
                 logger.debug("Existing cached ICON grid file '%s' is outdated",
                              grid_path)
 
@@ -241,7 +300,6 @@ class IconFix(NativeDatasetFix):
                 grid_url,
                 grid_path,
             )
-            self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
             with requests.get(grid_url, stream=True,
                               timeout=self.TIMEOUT) as response:
                 response.raise_for_status()
@@ -255,7 +313,51 @@ class IconFix(NativeDatasetFix):
 
             self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
 
-        return self._horizontal_grids[grid_name].copy()
+        return self._horizontal_grids[grid_name]
+
+    def get_horizontal_grid(self, cube):
+        """Get copy of ICON horizontal grid.
+
+        If given, retrieve grid from `horizontal_grid` facet specified by the
+        user. Otherwise, try to download the file from the location given by
+        the global attribute `grid_file_uri` of the cube.
+
+        Note
+        ----
+        If necessary, this functions downloads the grid file to a cache
+        directory. The downloaded file is valid for 7 days until it is
+        downloaded again.
+
+        Parameters
+        ----------
+        cube: iris.cube.Cube
+            Cube for which the ICON horizontal grid is retrieved. If the facet
+            `horizontal_grid` is not specified by the user, this cube needs to
+            have a global attribute `grid_file_uri` that specifies the download
+            location of the ICON horizontal grid file.
+
+        Returns
+        -------
+        iris.cube.CubeList
+            Copy of ICON horizontal grid.
+
+        Raises
+        ------
+        FileNotFoundError
+            Path specified by `horizontal_grid` facet (absolute or relative to
+            `auxiliary_data_dir`) does not exist.
+        ValueError
+            Input cube does not contain the necessary attribute `grid_file_uri`
+            that specifies the download location of the ICON horizontal grid
+            file.
+
+        """
+        if 'horizontal_grid' in self.extra_facets:
+            grid = self._get_grid_from_facet()
+        else:
+            grid = self._get_grid_from_cube_attr(cube)
+
+        return grid.copy()
 
     def get_mesh(self, cube):
         """Get mesh.
@@ -268,9 +370,10 @@ class IconFix(NativeDatasetFix):
         Parameters
         ----------
         cube: iris.cube.Cube
-            Cube for which the mesh is retrieved. This cube needs to have a
-            global attribute that specifies the download location of the ICON
-            horizontal grid file (see ``self.GRID_FILE_ATTR``).
+            Cube for which the mesh is retrieved. If the facet
+            `horizontal_grid` is not specified by the user, this cube needs to
+            have the global attribute `grid_file_uri` that specifies the
+            download location of the ICON horizontal grid file.
 
         Returns
         -------
@@ -279,17 +382,32 @@ class IconFix(NativeDatasetFix):
 
         Raises
         ------
+        FileNotFoundError
+            Path specified by `horizontal_grid` facet (absolute or relative to
+            `auxiliary_data_dir`) does not exist.
         ValueError
-            Input cube does not contain the necessary attribute that specifies
-            the the ICON horizontal grid file (see ``self.GRID_FILE_ATTR``).
+            Input cube does not contain the necessary attribute `grid_file_uri`
+            that specifies the download location of the ICON horizontal grid
+            file.
 
         """
-        (_, grid_name) = self._get_grid_url(cube)
+        # If specified by the user, use `horizontal_grid` facet to determine
+        # grid name; otherwise, use the `grid_file_uri` attribute of the cube
+        if 'horizontal_grid' in self.extra_facets:
+            grid_path = self._get_path_from_facet(
+                'horizontal_grid', 'Horizontal grid file'
+            )
+            grid_name = grid_path.name
+        else:
+            (_, grid_name) = self._get_grid_url(cube)
+
+        # Re-use mesh if possible
         if grid_name in self._meshes:
             logger.debug("Reusing ICON mesh for grid %s", grid_name)
         else:
             logger.debug("Creating ICON mesh for grid %s", grid_name)
             self._meshes[grid_name] = self._create_mesh(cube)
+
         return self._meshes[grid_name]
 
     @staticmethod
@@ -318,6 +436,14 @@ class IconFix(NativeDatasetFix):
                 category=UserWarning,
                 module='iris',
             )
+            warnings.filterwarnings(
+                'ignore',
+                message="Failed to create 'height' dimension coordinate: The "
+                        "'height' DimCoord bounds array must be strictly "
+                        "monotonic.",
+                category=UserWarning,
+                module='iris',
+            )
             cubes = iris.load(str(path))
         return cubes
 
@@ -327,13 +453,3 @@ class IconFix(NativeDatasetFix):
         lon_coord.points = (lon_coord.points + 360.0) % 360.0
         if lon_coord.bounds is not None:
             lon_coord.bounds = (lon_coord.bounds + 360.0) % 360.0
-
-
-class SetUnitsTo1(IconFix):
-    """Base fix to set units to '1'."""
-
-    def fix_metadata(self, cubes):
-        """Fix metadata."""
-        cube = self.get_cube(cubes)
-        cube.units = '1'
-        return cubes

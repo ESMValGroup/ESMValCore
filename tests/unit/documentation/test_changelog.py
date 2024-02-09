@@ -7,7 +7,7 @@ import re
 def test_duplications_in_changelog():
     changelog_path = os.path.join(os.path.dirname(__file__), '../../..',
                                   'doc/changelog.rst')
-    with open(changelog_path) as changelog:
+    with open(changelog_path, 'r', encoding='utf-8') as changelog:
         changelog = changelog.read()
 
     # Find all pull requests
