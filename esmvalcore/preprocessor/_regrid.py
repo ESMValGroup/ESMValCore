@@ -1,30 +1,50 @@
 """Horizontal and vertical regridding module."""
+from __future__ import annotations
 
+import functools
 import importlib
 import inspect
 import logging
 import os
 import re
 import ssl
+import warnings
 from copy import deepcopy
 from decimal import Decimal
 from pathlib import Path
-from typing import Dict
+from typing import TYPE_CHECKING, Any
 
 import dask.array as da
 import iris
 import numpy as np
 import stratify
 from geopy.geocoders import Nominatim
-from iris.analysis import AreaWeighted, Linear, Nearest, UnstructuredNearest
+from iris.analysis import AreaWeighted, Linear, Nearest
+from iris.cube import Cube
 from iris.util import broadcast_to_shape
 
-from ..cmor._fixes.shared import add_altitude_from_plev, add_plev_from_altitude
-from ..cmor.table import CMOR_TABLES
-from ._other import get_array_module
-from ._regrid_esmpy import ESMF_REGRID_METHODS
-from ._regrid_esmpy import regrid as esmpy_regrid
-from ._supplementary_vars import add_ancillary_variable, add_cell_measure
+from esmvalcore.cmor._fixes.shared import (
+    add_altitude_from_plev,
+    add_plev_from_altitude,
+)
+from esmvalcore.cmor.table import CMOR_TABLES
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+from esmvalcore.iris_helpers import has_irregular_grid, has_unstructured_grid
+from esmvalcore.preprocessor._other import get_array_module
+from esmvalcore.preprocessor._supplementary_vars import (
+    add_ancillary_variable,
+    add_cell_measure,
+)
+from esmvalcore.preprocessor.regrid_schemes import (
+    ESMPyAreaWeighted,
+    ESMPyLinear,
+    ESMPyNearest,
+    GenericFuncScheme,
+    UnstructuredNearest,
+)
+
+if TYPE_CHECKING:
+    from esmvalcore.dataset import Dataset
 
 logger = logging.getLogger(__name__)
 
@@ -48,22 +68,29 @@ _LON_MIN = 0.0
 _LON_MAX = 360.0
 _LON_RANGE = _LON_MAX - _LON_MIN
 
-# A cached stock of standard horizontal target grids.
-_CACHE: Dict[str, iris.cube.Cube] = {}
-
 # Supported point interpolation schemes.
 POINT_INTERPOLATION_SCHEMES = {
     'linear': Linear(extrapolation_mode='mask'),
     'nearest': Nearest(extrapolation_mode='mask'),
 }
 
-# Supported horizontal regridding schemes.
-HORIZONTAL_SCHEMES = {
-    'linear': Linear(extrapolation_mode='mask'),
-    'linear_extrapolate': Linear(extrapolation_mode='extrapolate'),
-    'nearest': Nearest(extrapolation_mode='mask'),
+# Supported horizontal regridding schemes for regular grids
+HORIZONTAL_SCHEMES_REGULAR = {
     'area_weighted': AreaWeighted(),
-    'unstructured_nearest': UnstructuredNearest(),
+    'linear': Linear(extrapolation_mode='mask'),
+    'nearest': Nearest(extrapolation_mode='mask'),
+}
+
+# Supported horizontal regridding schemes for irregular grids
+HORIZONTAL_SCHEMES_IRREGULAR = {
+    'area_weighted': ESMPyAreaWeighted(),
+    'linear': ESMPyLinear(),
+    'nearest': ESMPyNearest(),
+}
+
+# Supported horizontal regridding schemes for unstructured grids
+HORIZONTAL_SCHEMES_UNSTRUCTURED = {
+    'nearest': UnstructuredNearest(),
 }
 
 # Supported vertical interpolation schemes.
@@ -132,7 +159,7 @@ def _generate_cube_from_dimcoords(latdata, londata, circular: bool = False):
 
     Returns
     -------
-    :class:`~iris.cube.Cube`
+    iris.cube.Cube
     """
     lats = iris.coords.DimCoord(latdata,
                                 standard_name='latitude',
@@ -155,11 +182,12 @@ def _generate_cube_from_dimcoords(latdata, londata, circular: bool = False):
     shape = (latdata.size, londata.size)
     dummy = np.empty(shape, dtype=np.dtype('int8'))
     coords_spec = [(lats, 0), (lons, 1)]
-    cube = iris.cube.Cube(dummy, dim_coords_and_dims=coords_spec)
+    cube = Cube(dummy, dim_coords_and_dims=coords_spec)
 
     return cube
 
 
+@functools.lru_cache
 def _global_stock_cube(spec, lat_offset=True, lon_offset=True):
     """Create a stock cube.
 
@@ -185,7 +213,7 @@ def _global_stock_cube(spec, lat_offset=True, lon_offset=True):
 
     Returns
     -------
-    :class:`~iris.cube.Cube`
+    iris.cube.Cube
     """
     dlon, dlat = parse_cell_spec(spec)
     mid_dlon, mid_dlat = dlon / 2, dlat / 2
@@ -280,7 +308,7 @@ def _regional_stock_cube(spec: dict):
 
     Returns
     -------
-    :class:`~iris.cube.Cube`.
+    iris.cube.Cube
     """
     latdata, londata = _spec_to_latlonvals(**spec)
 
@@ -298,19 +326,6 @@ def _regional_stock_cube(spec: dict):
     add_bounds_from_step(cube.coord('longitude'), spec['step_longitude'])
 
     return cube
-
-
-def _attempt_irregular_regridding(cube, scheme):
-    """Check if irregular regridding with ESMF should be used."""
-    if isinstance(scheme, str) and scheme in ESMF_REGRID_METHODS:
-        try:
-            lat_dim = cube.coord('latitude').ndim
-            lon_dim = cube.coord('longitude').ndim
-            if lat_dim == lon_dim == 2:
-                return True
-        except iris.exceptions.CoordinateNotFoundError:
-            pass
-    return False
 
 
 def extract_location(cube, location, scheme):
@@ -415,7 +430,7 @@ def extract_point(cube, latitude, longitude, scheme):
 
     Returns
     -------
-    :py:class:`~iris.cube.Cube`
+    iris.cube.Cube
         Returns a cube with the extracted point(s), and with adjusted
         latitude and longitude coordinates (see above). If desired point
         outside values for at least one coordinate, this cube will have fully
@@ -470,19 +485,180 @@ def is_dataset(dataset):
     return hasattr(dataset, 'facets')
 
 
-def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
+def _get_target_grid_cube(
+    cube: Cube,
+    target_grid: Cube | Dataset | Path | str | dict,
+    lat_offset: bool = True,
+    lon_offset: bool = True,
+) -> Cube:
+    """Get target grid cube."""
+    if is_dataset(target_grid):
+        target_grid = target_grid.copy()  # type: ignore
+        target_grid.supplementaries.clear()  # type: ignore
+        target_grid.files = [target_grid.files[0]]  # type: ignore
+        target_grid_cube = target_grid.load()  # type: ignore
+    elif isinstance(target_grid, (str, Path)) and os.path.isfile(target_grid):
+        target_grid_cube = iris.load_cube(target_grid)
+    elif isinstance(target_grid, str):
+        # Generate a target grid from the provided cell-specification,
+        # and cache the resulting stock cube for later use.
+        target_grid_cube = _global_stock_cube(
+            target_grid, lat_offset, lon_offset
+        )
+        # Align the target grid coordinate system to the source
+        # coordinate system.
+        src_cs = cube.coord_system()
+        xcoord = target_grid_cube.coord(axis='x', dim_coords=True)
+        ycoord = target_grid_cube.coord(axis='y', dim_coords=True)
+        xcoord.coord_system = src_cs
+        ycoord.coord_system = src_cs
+    elif isinstance(target_grid, dict):
+        # Generate a target grid from the provided specification,
+        target_grid_cube = _regional_stock_cube(target_grid)
+    else:
+        target_grid_cube = target_grid
+
+    if not isinstance(target_grid_cube, Cube):
+        raise ValueError(f'Expecting a cube, got {target_grid}.')
+
+    return target_grid_cube
+
+
+def _attempt_irregular_regridding(cube: Cube, scheme: str) -> bool:
+    """Check if irregular regridding with ESMF should be used."""
+    if not has_irregular_grid(cube):
+        return False
+    if scheme not in HORIZONTAL_SCHEMES_IRREGULAR:
+        raise ValueError(
+            f"Regridding scheme '{scheme}' does not support irregular data, "
+            f"expected one of {list(HORIZONTAL_SCHEMES_IRREGULAR)}"
+        )
+    return True
+
+
+def _attempt_unstructured_regridding(cube: Cube, scheme: str) -> bool:
+    """Check if unstructured regridding should be used."""
+    if not has_unstructured_grid(cube):
+        return False
+    if scheme not in HORIZONTAL_SCHEMES_UNSTRUCTURED:
+        raise ValueError(
+            f"Regridding scheme '{scheme}' does not support unstructured "
+            f"data, expected one of {list(HORIZONTAL_SCHEMES_UNSTRUCTURED)}"
+        )
+    return True
+
+
+def _load_scheme(src_cube: Cube, scheme: str | dict):
+    """Return scheme that can be used in :meth:`iris.cube.Cube.regrid`."""
+    loaded_scheme: Any = None
+
+    # Deprecations
+    if scheme == 'unstructured_nearest':
+        msg = (
+            "The regridding scheme `unstructured_nearest` has been deprecated "
+            "in ESMValCore version 2.11.0 and is scheduled for removal in "
+            "version 2.13.0. Please use the scheme `nearest` instead. This is "
+            "an exact replacement for data on unstructured grids. Since "
+            "version 2.11.0, ESMValCore is able to determine the most "
+            "suitable regridding scheme based on the input data."
+        )
+        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        scheme = 'nearest'
+
+    if scheme == 'linear_extrapolate':
+        msg = (
+            "The regridding scheme `linear_extrapolate` has been deprecated "
+            "in ESMValCore version 2.11.0 and is scheduled for removal in "
+            "version 2.13.0. Please use a generic scheme with `reference: "
+            "iris.analysis:Linear` and `extrapolation_mode: extrapolate` "
+            "instead (see https://docs.esmvaltool.org/projects/ESMValCore/en/"
+            "latest/recipe/preprocessor.html#generic-regridding-schemes)."
+            "This is an exact replacement."
+        )
+        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        scheme = 'linear'
+        loaded_scheme = Linear(extrapolation_mode='extrapolate')
+        logger.debug("Loaded regridding scheme %s", loaded_scheme)
+        return loaded_scheme
+
+    # Scheme is a dict -> assume this describes a generic regridding scheme
+    if isinstance(scheme, dict):
+        loaded_scheme = _load_generic_scheme(scheme)
+
+    # Scheme is a str -> load appropriate regridding scheme depending on the
+    # type of input data
+    elif _attempt_irregular_regridding(src_cube, scheme):
+        loaded_scheme = HORIZONTAL_SCHEMES_IRREGULAR[scheme]
+    elif _attempt_unstructured_regridding(src_cube, scheme):
+        loaded_scheme = HORIZONTAL_SCHEMES_UNSTRUCTURED[scheme]
+    else:
+        loaded_scheme = HORIZONTAL_SCHEMES_REGULAR.get(scheme)
+
+    if loaded_scheme is None:
+        raise ValueError(
+            f"Got invalid regridding scheme string '{scheme}', expected one "
+            f"of {list(HORIZONTAL_SCHEMES_REGULAR)}"
+        )
+
+    logger.debug("Loaded regridding scheme %s", loaded_scheme)
+
+    return loaded_scheme
+
+
+def _load_generic_scheme(scheme: dict):
+    """Load generic regridding scheme."""
+    scheme = dict(scheme)  # do not overwrite original scheme
+
+    try:
+        object_ref = scheme.pop("reference")
+    except KeyError as key_err:
+        raise ValueError(
+            "No reference specified for generic regridding."
+        ) from key_err
+    module_name, separator, scheme_name = object_ref.partition(":")
+    try:
+        obj: Any = importlib.import_module(module_name)
+    except ImportError as import_err:
+        raise ValueError(
+            f"Could not import specified generic regridding module "
+            f"'{module_name}'. Please double check spelling and that the "
+            f"required module is installed."
+        ) from import_err
+    if separator:
+        for attr in scheme_name.split('.'):
+            obj = getattr(obj, attr)
+
+    # If `obj` is a function that requires `src_cube` and `grid_cube`, use
+    # GenericFuncScheme
+    scheme_args = inspect.getfullargspec(obj).args
+    if 'src_cube' in scheme_args and 'grid_cube' in scheme_args:
+        loaded_scheme = GenericFuncScheme(obj, **scheme)
+    else:
+        loaded_scheme = obj(**scheme)
+
+    return loaded_scheme
+
+
+def regrid(
+    cube: Cube,
+    target_grid: Cube | Dataset | Path | str | dict,
+    scheme: str | dict,
+    lat_offset: bool = True,
+    lon_offset: bool = True,
+) -> Cube:
     """Perform horizontal regridding.
 
-    Note that the target grid can be a cube (:py:class:`~iris.cube.Cube`),
-    path to a cube (``str``), a grid spec (``str``) in the form
-    of `MxN`, or a ``dict`` specifying the target grid.
+    Note that the target grid can be a :class:`~iris.cube.Cube`, a
+    :class:`~esmvalcore.dataset.Dataset`, a path to a cube
+    (:class:`~pathlib.Path` or :obj:`str`), a grid spec (:obj:`str`) in the
+    form of `MxN`, or a :obj:`dict` specifying the target grid.
 
-    For the latter, the ``target_grid`` should be a ``dict`` with the
+    For the latter, the `target_grid` should be a :obj:`dict` with the
     following keys:
 
     - ``start_longitude``: longitude at the center of the first grid cell.
     - ``end_longitude``: longitude at the center of the last grid cell.
-    - ``step_longitude``: constant longitude distance between grid cell \
+    - ``step_longitude``: constant longitude distance between grid cell
         centers.
     - ``start_latitude``: latitude at the center of the first grid cell.
     - ``end_latitude``: longitude at the center of the last grid cell.
@@ -490,39 +666,40 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
 
     Parameters
     ----------
-    cube : :py:class:`~iris.cube.Cube`
+    cube:
         The source cube to be regridded.
-    target_grid : Cube or str or dict
+    target_grid:
         The (location of a) cube that specifies the target or reference grid
         for the regridding operation.
+        Alternatively, a :class:`~esmvalcore.dataset.Dataset` can be provided.
         Alternatively, a string cell specification may be provided,
         of the form ``MxN``, which specifies the extent of the cell, longitude
         by latitude (degrees) for a global, regular target grid.
         Alternatively, a dictionary with a regional target grid may
         be specified (see above).
-    scheme : str or dict
-        The regridding scheme to perform. If both source and target grid are
-        structured (regular or irregular), can be one of the built-in schemes
-        ``linear``, ``linear_extrapolate``, ``nearest``, ``area_weighted``,
-        ``unstructured_nearest``.
-        Alternatively, a `dict` that specifies generic regridding (see below).
-    lat_offset : bool
-        Offset the grid centers of the latitude coordinate w.r.t. the
-        pole by half a grid step. This argument is ignored if ``target_grid``
-        is a cube or file.
-    lon_offset : bool
+    scheme:
+        The regridding scheme to perform. If the source grid is structured
+        (regular or irregular), can be one of the built-in schemes ``linear``,
+        ``nearest``, ``area_weighted``. If the source grid is unstructured, can
+        be one of the built-in schemes ``nearest``.  Alternatively, a `dict`
+        that specifies generic regridding can be given (see below).
+    lat_offset:
+        Offset the grid centers of the latitude coordinate w.r.t. the pole by
+        half a grid step. This argument is ignored if `target_grid` is a cube
+        or file.
+    lon_offset:
         Offset the grid centers of the longitude coordinate w.r.t. Greenwich
-        meridian by half a grid step.
-        This argument is ignored if ``target_grid`` is a cube or file.
+        meridian by half a grid step. This argument is ignored if
+        `target_grid` is a cube or file.
 
     Returns
     -------
-    :py:class:`~iris.cube.Cube`
+    iris.cube.Cube
         Regridded cube.
 
     See Also
     --------
-    extract_levels : Perform vertical regridding.
+    extract_levels: Perform vertical regridding.
 
     Notes
     -----
@@ -563,105 +740,34 @@ def regrid(cube, target_grid, scheme, lat_offset=True, lon_offset=True):
               reference: esmf_regrid.schemes:ESMFAreaWeighted
 
     """
-    if is_dataset(target_grid):
-        target_grid = target_grid.copy()
-        target_grid.supplementaries.clear()
-        target_grid.files = [target_grid.files[0]]
-        target_grid = target_grid.load()
-    elif isinstance(target_grid, (str, Path)) and os.path.isfile(target_grid):
-        target_grid = iris.load_cube(target_grid)
-    elif isinstance(target_grid, str):
-        # Generate a target grid from the provided cell-specification,
-        # and cache the resulting stock cube for later use.
-        target_grid = _CACHE.setdefault(
-            target_grid,
-            _global_stock_cube(target_grid, lat_offset, lon_offset),
-        )
-        # Align the target grid coordinate system to the source
-        # coordinate system.
-        src_cs = cube.coord_system()
-        xcoord = target_grid.coord(axis='x', dim_coords=True)
-        ycoord = target_grid.coord(axis='y', dim_coords=True)
-        xcoord.coord_system = src_cs
-        ycoord.coord_system = src_cs
-    elif isinstance(target_grid, dict):
-        # Generate a target grid from the provided specification,
-        target_grid = _regional_stock_cube(target_grid)
-
-    if not isinstance(target_grid, iris.cube.Cube):
-        raise ValueError(f'Expecting a cube, got {target_grid}.')
-
-    if isinstance(scheme, dict):
-        scheme = dict(scheme)  # do not overwrite original scheme
-        try:
-            object_ref = scheme.pop("reference")
-        except KeyError as key_err:
-            raise ValueError(
-                "No reference specified for generic regridding.") from key_err
-        module_name, separator, scheme_name = object_ref.partition(":")
-        try:
-            obj = importlib.import_module(module_name)
-        except ImportError as import_err:
-            raise ValueError(
-                "Could not import specified generic regridding module. "
-                "Please double check spelling and that the required module is "
-                "installed.") from import_err
-        if separator:
-            for attr in scheme_name.split('.'):
-                obj = getattr(obj, attr)
-
-        scheme_args = inspect.getfullargspec(obj).args
-        # Add source and target cubes as arguments if required
-        if 'src_cube' in scheme_args:
-            scheme['src_cube'] = cube
-        if 'grid_cube' in scheme_args:
-            scheme['grid_cube'] = target_grid
-
-        loaded_scheme = obj(**scheme)
-    else:
-        loaded_scheme = HORIZONTAL_SCHEMES.get(scheme.lower())
-
-    if loaded_scheme is None:
-        emsg = 'Unknown regridding scheme, got {!r}.'
-        raise ValueError(emsg.format(scheme))
-
-    # Unstructured regridding requires x2 2d spatial coordinates,
-    # so ensure to purge any 1d native spatial dimension coordinates
-    # for the regridder.
-    if scheme == 'unstructured_nearest':
-        for axis in ['x', 'y']:
-            coords = cube.coords(axis=axis, dim_coords=True)
-            if coords:
-                [coord] = coords
-                cube.remove_coord(coord)
+    # Load target grid and select appropriate scheme
+    target_grid_cube = _get_target_grid_cube(
+        cube, target_grid, lat_offset=lat_offset, lon_offset=lon_offset,
+    )
 
     # Horizontal grids from source and target (almost) match
     # -> Return source cube with target coordinates
-    if _horizontal_grid_is_close(cube, target_grid):
+    if _horizontal_grid_is_close(cube, target_grid_cube):
         for coord in ['latitude', 'longitude']:
-            cube.coord(coord).points = target_grid.coord(coord).points
-            cube.coord(coord).bounds = target_grid.coord(coord).bounds
+            cube.coord(coord).points = (
+                target_grid_cube.coord(coord).core_points()
+            )
+            cube.coord(coord).bounds = (
+                target_grid_cube.coord(coord).core_bounds()
+            )
         return cube
 
-    # Horizontal grids from source and target do not match
-    # -> Regrid
-    if _attempt_irregular_regridding(cube, scheme):
-        cube = esmpy_regrid(cube, target_grid, scheme)
-    elif isinstance(loaded_scheme, iris.cube.Cube):
-        # Return regridded cube in cases in which the
-        # scheme is a function f(src_cube, grid_cube) -> Cube
-        cube = loaded_scheme
-    else:
-        cube = _rechunk(cube, target_grid)
-        cube = cube.regrid(target_grid, loaded_scheme)
+    # Load scheme, rechunk and regrid
+    if isinstance(scheme, str):
+        scheme = scheme.lower()
+    loaded_scheme = _load_scheme(cube, scheme)
+    cube = _rechunk(cube, target_grid_cube)
+    cube = cube.regrid(target_grid_cube, loaded_scheme)
 
     return cube
 
 
-def _rechunk(
-    cube: iris.cube.Cube,
-    target_grid: iris.cube.Cube,
-) -> iris.cube.Cube:
+def _rechunk(cube: Cube, target_grid: Cube) -> Cube:
     """Re-chunk cube with optimal chunk sizes for target grid."""
     if not cube.has_lazy_data() or cube.ndim < 3:
         # Only rechunk lazy multidimensional data
@@ -698,29 +804,30 @@ def _rechunk(
     return cube
 
 
-def _horizontal_grid_is_close(cube1, cube2):
+def _horizontal_grid_is_close(cube1: Cube, cube2: Cube) -> bool:
     """Check if two cubes have the same horizontal grid definition.
 
     The result of the function is a boolean answer, if both cubes have the
     same horizontal grid definition. The function checks both longitude and
     latitude, based on extent and resolution.
 
+    Note
+    ----
+    The current implementation checks if the bounds and the grid shapes are the
+    same. Exits on first difference.
+
     Parameters
     ----------
-    cube1 : cube
+    cube1:
         The first of the cubes to be checked.
-    cube2 : cube
+    cube2:
         The second of the cubes to be checked.
 
     Returns
     -------
     bool
+        ``True`` if grids are close; ``False`` if not.
 
-    .. note::
-
-        The current implementation checks if the bounds and the
-        grid shapes are the same.
-        Exits on first difference.
     """
     # Go through the 2 expected horizontal coordinates longitude and latitude.
     for coord in ['latitude', 'longitude']:
@@ -779,7 +886,7 @@ def _create_cube(src_cube, data, src_levels, levels):
     # Construct the resultant cube with the interpolated data
     # and the source cube metadata.
     kwargs = deepcopy(src_cube.metadata)._asdict()
-    result = iris.cube.Cube(data, **kwargs)
+    result = Cube(data, **kwargs)
 
     # Add the appropriate coordinates to the cube, excluding
     # any coordinates that span the z-dimension of interpolation.
@@ -1117,7 +1224,7 @@ def extract_coordinate_points(cube, definition, scheme):
 
     Returns
     -------
-    :py:class:`~iris.cube.Cube`
+    iris.cube.Cube
         Returns a cube with the extracted point(s), and with adjusted
         latitude and longitude coordinates (see above). If desired point
         outside values for at least one coordinate, this cube will have fully
