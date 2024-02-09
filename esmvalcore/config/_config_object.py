@@ -11,6 +11,11 @@ import yaml
 
 import esmvalcore
 from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.exceptions import (
+    ConfigParserError,
+    InvalidConfigParameter,
+    MissingConfigParameter,
+)
 
 from ._config_validators import (
     _deprecated_options_defaults,
@@ -67,9 +72,15 @@ class Config(ValidatedConfig):
                 raise
             mapping = {}
 
-        new.update(CFG_DEFAULT)
-        new.update(mapping)
-        new.check_missing()
+        try:
+            new.update(CFG_DEFAULT)
+            new.update(mapping)
+            new.check_missing()
+        except (InvalidConfigParameter, MissingConfigParameter) as exc:
+            raise ConfigParserError(
+                f"Failed to parse user configuration file {filename}: "
+                f"{str(exc)}"
+            ) from exc
 
         return new
 
@@ -90,7 +101,13 @@ class Config(ValidatedConfig):
         mapping['run_diagnostic'] = True
         mapping['skip_nonexistent'] = False
 
-        new.update(mapping)
+        try:
+            new.update(mapping)
+        except (InvalidConfigParameter, MissingConfigParameter) as exc:
+            raise ConfigParserError(
+                f"Failed to parse user configuration file {filename}: "
+                f"{str(exc)}"
+            ) from exc
 
         return new
 
