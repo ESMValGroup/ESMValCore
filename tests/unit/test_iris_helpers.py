@@ -21,6 +21,8 @@ from iris.exceptions import CoordinateMultiDimError
 from esmvalcore.iris_helpers import (
     add_leading_dim_to_cube,
     date2num,
+    has_irregular_grid,
+    has_unstructured_grid,
     merge_cube_attributes,
     rechunk_cube,
 )
@@ -338,3 +340,156 @@ def test_rechunk_cube_invalid_coord_fail(cube_3d):
     )
     with pytest.raises(CoordinateMultiDimError, match=msg):
         rechunk_cube(cube_3d, ['xy'])
+
+
+@pytest.fixture
+def lat_coord_1d():
+    """1D latitude coordinate."""
+    return DimCoord([0, 1], standard_name='latitude')
+
+
+@pytest.fixture
+def lon_coord_1d():
+    """1D longitude coordinate."""
+    return DimCoord([0, 1], standard_name='longitude')
+
+
+@pytest.fixture
+def lat_coord_2d():
+    """2D latitude coordinate."""
+    return AuxCoord([[0, 1]], standard_name='latitude')
+
+
+@pytest.fixture
+def lon_coord_2d():
+    """2D longitude coordinate."""
+    return AuxCoord([[0, 1]], standard_name='longitude')
+
+
+def test_has_irregular_grid_no_lat_lon():
+    """Test `has_irregular_grid`."""
+    cube = Cube(0)
+    assert has_irregular_grid(cube) is False
+
+
+def test_has_irregular_grid_no_lat(lon_coord_2d):
+    """Test `has_irregular_grid`."""
+    cube = Cube([[0, 1]], aux_coords_and_dims=[(lon_coord_2d, (0, 1))])
+    assert has_irregular_grid(cube) is False
+
+
+def test_has_irregular_grid_no_lon(lat_coord_2d):
+    """Test `has_irregular_grid`."""
+    cube = Cube([[0, 1]], aux_coords_and_dims=[(lat_coord_2d, (0, 1))])
+    assert has_irregular_grid(cube) is False
+
+
+def test_has_irregular_grid_1d_lon(lat_coord_2d, lon_coord_1d):
+    """Test `has_irregular_grid`."""
+    cube = Cube(
+        [[0, 1]],
+        dim_coords_and_dims=[(lon_coord_1d, 1)],
+        aux_coords_and_dims=[(lat_coord_2d, (0, 1))],
+    )
+    assert has_irregular_grid(cube) is False
+
+
+def test_has_irregular_grid_1d_lat(lat_coord_1d, lon_coord_2d):
+    """Test `has_irregular_grid`."""
+    cube = Cube(
+        [[0, 1]],
+        dim_coords_and_dims=[(lat_coord_1d, 1)],
+        aux_coords_and_dims=[(lon_coord_2d, (0, 1))],
+    )
+    assert has_irregular_grid(cube) is False
+
+
+def test_has_irregular_grid_1d_lat_lon(lat_coord_1d, lon_coord_1d):
+    """Test `has_irregular_grid`."""
+    cube = Cube(
+        [0, 1], aux_coords_and_dims=[(lat_coord_1d, 0), (lon_coord_1d, 0)]
+    )
+    assert has_irregular_grid(cube) is False
+
+
+def test_has_irregular_grid_regular_grid(lat_coord_1d, lon_coord_1d):
+    """Test `has_irregular_grid`."""
+    cube = Cube(
+        [[0, 1], [2, 3]],
+        dim_coords_and_dims=[(lat_coord_1d, 0), (lon_coord_1d, 1)],
+    )
+    assert has_irregular_grid(cube) is False
+
+
+def test_has_irregular_grid_true(lat_coord_2d, lon_coord_2d):
+    """Test `has_irregular_grid`."""
+    cube = Cube(
+        [[0, 1]],
+        aux_coords_and_dims=[(lat_coord_2d, (0, 1)), (lon_coord_2d, (0, 1))],
+    )
+    assert has_irregular_grid(cube) is True
+
+
+def test_has_unstructured_grid_no_lat_lon():
+    """Test `has_unstructured_grid`."""
+    cube = Cube(0)
+    assert has_unstructured_grid(cube) is False
+
+
+def test_has_unstructured_grid_no_lat(lon_coord_1d):
+    """Test `has_unstructured_grid`."""
+    cube = Cube([0, 1], dim_coords_and_dims=[(lon_coord_1d, 0)])
+    assert has_unstructured_grid(cube) is False
+
+
+def test_has_unstructured_grid_no_lon(lat_coord_1d):
+    """Test `has_unstructured_grid`."""
+    cube = Cube([0, 1], dim_coords_and_dims=[(lat_coord_1d, 0)])
+    assert has_unstructured_grid(cube) is False
+
+
+def test_has_unstructured_grid_2d_lat(lat_coord_2d, lon_coord_1d):
+    """Test `has_unstructured_grid`."""
+    cube = Cube(
+        [[0, 1]],
+        dim_coords_and_dims=[(lon_coord_1d, 1)],
+        aux_coords_and_dims=[(lat_coord_2d, (0, 1))],
+    )
+    assert has_unstructured_grid(cube) is False
+
+
+def test_has_unstructured_grid_2d_lon(lat_coord_1d, lon_coord_2d):
+    """Test `has_unstructured_grid`."""
+    cube = Cube(
+        [[0, 1]],
+        dim_coords_and_dims=[(lat_coord_1d, 1)],
+        aux_coords_and_dims=[(lon_coord_2d, (0, 1))],
+    )
+    assert has_unstructured_grid(cube) is False
+
+
+def test_has_unstructured_grid_2d_lat_lon(lat_coord_2d, lon_coord_2d):
+    """Test `has_unstructured_grid`."""
+    cube = Cube(
+        [[0, 1]],
+        aux_coords_and_dims=[(lat_coord_2d, (0, 1)), (lon_coord_2d, (0, 1))],
+    )
+    assert has_unstructured_grid(cube) is False
+
+
+def test_has_unstructured_grid_regular_grid(lat_coord_1d, lon_coord_1d):
+    """Test `has_unstructured_grid`."""
+    cube = Cube(
+        [[0, 1], [2, 3]],
+        dim_coords_and_dims=[(lat_coord_1d, 0), (lon_coord_1d, 1)],
+    )
+    assert has_unstructured_grid(cube) is False
+
+
+def test_has_unstructured_grid_true(lat_coord_1d, lon_coord_1d):
+    """Test `has_unstructured_grid`."""
+    cube = Cube(
+        [[0, 1], [2, 3]],
+        aux_coords_and_dims=[(lat_coord_1d, 0), (lon_coord_1d, 0)],
+    )
+    assert has_unstructured_grid(cube) is True
