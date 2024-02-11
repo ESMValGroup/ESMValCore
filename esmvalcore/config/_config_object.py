@@ -131,8 +131,8 @@ class Config(ValidatedConfig):
     ) -> Path:
         """Get path to user configuration file.
 
-        `filename` can be given as absolute path, or as path relative to
-        `~/.esmvaltool`.
+        `filename` can be given as absolute path, or as path relative to the
+        current working directory or `~/.esmvaltool`.
 
         If `filename` is not given, try to get user configuration file from the
         following locations (sorted by descending priority):
