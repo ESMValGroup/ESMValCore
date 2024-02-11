@@ -209,9 +209,13 @@ class Config(ValidatedConfig):
 
         Note
         ----
-        Does not check if file exists.
+        This only works if the script name is `esmvaltool`. Does not check if
+        file exists.
 
         """
+        if Path(sys.argv[0]).name != 'esmvaltool':
+            return None
+
         for arg in sys.argv:
             for opt in ('--config-file', '--config_file'):
                 if opt in arg:
