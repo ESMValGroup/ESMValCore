@@ -68,10 +68,10 @@ class Config(ValidatedConfig):
         new = cls()
         new.update(CFG_DEFAULT)
 
-        config_user_path = Config._get_config_user_path(filename)
+        config_user_path = cls._get_config_user_path(filename)
 
         try:
-            mapping = Config._read_config_file(config_user_path)
+            mapping = cls._read_config_file(config_user_path)
             mapping['config_file'] = config_user_path
         except FileNotFoundError:
             if raise_exception:
@@ -114,7 +114,7 @@ class Config(ValidatedConfig):
 
     @staticmethod
     def _read_config_file(config_user_path: Path) -> dict:
-        """Read config user file and store settings in a dictionary."""
+        """Read configuration file and store settings in a dictionary."""
         if not config_user_path.is_file():
             raise FileNotFoundError(
                 f"Config file '{config_user_path}' does not exist"
@@ -131,16 +131,17 @@ class Config(ValidatedConfig):
     ) -> Path:
         """Get path to user configuration file.
 
-        `filename` can be given as absolute path, or as path relative to the
-        directory specified with `ESMVALTOOL_CONFIG` (if present) or
+        `filename` can be given as absolute path, or as path relative to
         `~/.esmvaltool`.
 
         If `filename` is not given, try to get user configuration file from the
         following locations (sorted by descending priority):
 
-        1. Command line arguments `--config-file` or `--config_file`.
-        2. `config-user.yml` within ESMValTool configuration directory given by
-        `ESMVALTOOL_CONFIG` environment variable.
+        1. Internal `_ESMVALTOOL_USER_CONFIG_FILE_` environment variable
+        (this ensures that any subprocess spawned by the esmvaltool program
+        will use the correct user configuration file).
+        2. Command line arguments `--config-file` or `--config_file` (only if
+        script name is `esmvaltool`).
         3. `config-user.yml` within default ESMValTool configuration directory
         `~/.esmvaltool`.
 
@@ -152,51 +153,46 @@ class Config(ValidatedConfig):
         actually exists, use the method `load_from_file` (this is done when
         using the `esmvaltool` CLI).
 
+        If used within the esmvaltool program, set the
+        _ESMVALTOOL_USER_CONFIG_FILE_ at the end of this method to make sure
+        that subsequent calls of this method (also in suprocesses) use the
+        correct user configuration file.
+
         """
-        config_user: None | os.PathLike | str = None
+        # (1) Try to get user configuration file from `filename` argument (also
+        # test relative to ~/.esmvaltool)
+        config_user = filename
 
-        # (1) Try to get config user file from `filename` argument (also test
-        # relative to ESMVALTOOL_CONFIG or ~/.esmvaltool)
-        if filename is not None:
-            config_user = Config._get_config_path_from_arg(filename)
+        # (2) Try to get user configuration file from internal
+        # _ESMVALTOOL_USER_CONFIG_FILE_ environment variable
+        if (
+                config_user is None and
+                '_ESMVALTOOL_USER_CONFIG_FILE_' in os.environ
+        ):
+            config_user = os.environ['_ESMVALTOOL_USER_CONFIG_FILE_']
 
-        # (2) Try to get config user file from CLI arguments (if file
-        # specified, raise error if it does not exist)
+        # (3) Try to get user configuration file from CLI arguments
         if config_user is None:
             config_user = Config._get_config_path_from_cli()
 
-        # (3) Environment variable (if specified but file does not exist, do
-        # not raise an error)
-        if config_user is None and 'ESMVALTOOL_CONFIG' in os.environ:
-            config_user = Path(
-                os.environ['ESMVALTOOL_CONFIG']
-            ) / 'config-user.yml'
-
-        # (4) Default location (do not raise an error if file does not exist)
+        # (4) Default location
         if config_user is None:
             config_user = Config._DEFAULT_USER_CONFIG_DIR / 'config-user.yml'
 
-        return Path(config_user).expanduser().absolute()
+        config_user = Path(config_user).expanduser()
 
-    @staticmethod
-    def _get_config_path_from_arg(filename: os.PathLike | str) -> None | Path:
-        """Try to get configuration path from argument.
+        # Use path relative to ~/.esmvaltool if necessary
+        if not (config_user.is_file() or config_user.is_absolute()):
+            config_user = Config._DEFAULT_USER_CONFIG_DIR / config_user
+        config_user = config_user.absolute()
 
-        `filename` can be given as absolute path, or as path relative to the
-        directory specified with `ESMVALTOOL_CONFIG` (if present) or
-        `~/.esmvaltool`.
+        # If used within the esmvaltool program, make sure that subsequent
+        # calls of this method (also in suprocesses) use the correct user
+        # configuration file
+        if Path(sys.argv[0]).name == 'esmvaltool':
+            os.environ['_ESMVALTOOL_USER_CONFIG_FILE_'] = str(config_user)
 
-        Note
-        ----
-        Does not check if file exists.
-
-        """
-        filename = Path(filename).expanduser()
-        if filename.is_file():
-            return filename
-        if 'ESMVALTOOL_CONFIG' in os.environ:
-            return Path(os.environ['ESMVALTOOL_CONFIG']) / filename
-        return Config._DEFAULT_USER_CONFIG_DIR / filename
+        return config_user
 
     @staticmethod
     def _get_config_path_from_cli() -> None | str:
