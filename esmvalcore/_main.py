@@ -381,10 +381,14 @@ class ESMValTool():
             default (fail if there are any errors),
             strict (fail if there are any warnings).
         """
-        # Note: --config_file is parsed when loading the esmvalcore.config
-        # module (see https://github.com/ESMValGroup/ESMValCore/issues/2280)
-        config_file
         from .config import CFG
+
+        # At this point, --config-file is already parsed if a valid file has
+        # been given (see
+        # https://github.com/ESMValGroup/ESMValCore/issues/2280), but no error
+        # has been raised if the file does not exist. Thus, reload the file
+        # here with `load_from_file` to make sure a proper error is raised.
+        CFG.load_from_file(config_file)
 
         recipe = self._get_recipe(recipe)
 

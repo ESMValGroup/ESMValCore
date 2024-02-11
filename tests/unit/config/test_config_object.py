@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+import esmvalcore
 from esmvalcore.config import Config, Session, _config_object
 from esmvalcore.exceptions import InvalidConfigParameter
 
@@ -58,11 +59,12 @@ def test_config_init():
 
 def test_load_from_file(monkeypatch):
     default_config_user_file = Path.home() / '.esmvaltool' / 'config-user.yml'
+    default_config_file = Path(esmvalcore.__file__).parent / 'config-user.yml'
     assert _config_object.USER_CONFIG == default_config_user_file
     monkeypatch.setattr(
         _config_object,
         'USER_CONFIG',
-        _config_object.CONFIG_DEFAULTS,
+        default_config_file,
     )
     config = Config()
     assert not config
