@@ -120,10 +120,19 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     """
     # Load depth field and figure out which dim is which
     depth = cube.coord(axis='z')
-    if not depth.has_bounds():
-        # Some data has no bounds for z-axis (failling fix or cmorization?)
-        depth.guess_bounds()
     z_dim = cube.coord_dims(depth)
+    # Assert z has length > 0
+    if not z_dim:
+        raise ValueError("Cannot compute volume with length 0 Z-axis")
+
+    # Guess bounds if missing
+    if not depth.has_bounds():
+        depth.guess_bounds()
+    if depth.core_bounds().shape[-1] != 2:
+        raise ValueError(
+            f"Z axis bounds shape found {depth.core_bounds().shape}. "
+            "Bounds should be 2 in the last dimension to compute the "
+            "thickness.")
 
     # Calculate Z-direction thickness
     thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
@@ -224,6 +233,20 @@ def volume_statistics(
     # TODO: Add other operations.
     if operator != 'mean':
         raise ValueError(f"Volume operator {operator} not recognised.")
+    # get z, y, x coords
+    z_axis = cube.coord(axis='Z')
+    y_axis = cube.coord(axis='Y')
+    x_axis = cube.coord(axis='X')
+
+    # assert z axis only uses 1 dimension more than x, y axis
+    xy_dims = tuple({*cube.coord_dims(y_axis), *cube.coord_dims(x_axis)})
+    xyz_dims = tuple({*cube.coord_dims(z_axis), *xy_dims})
+    if len(xyz_dims) > len(xy_dims) + 1:
+        raise ValueError(
+            f"X and Y axis coordinates depend on {xy_dims} dimensions, "
+            f"while X, Y, and Z axis depends on {xyz_dims} dimensions. "
+            "This may indicate Z axis depending on other dimension than"
+            "space that could provoke invalid aggregation...")
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     agg_kwargs = update_weights_kwargs(
@@ -234,11 +257,7 @@ def volume_statistics(
         _try_adding_calculated_ocean_volume,
     )
 
-    result = cube.collapsed(
-        [cube.coord(axis='Z'), cube.coord(axis='Y'), cube.coord(axis='X')],
-        agg,
-        **agg_kwargs,
-    )
+    result = cube.collapsed([z_axis, y_axis, x_axis], agg, **agg_kwargs)
 
     # Make sure input cube has not been modified
     if not has_cell_measure and cube.cell_measures('ocean_volume'):

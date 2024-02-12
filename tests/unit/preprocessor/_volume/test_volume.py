@@ -65,6 +65,18 @@ class Test(tests.Test):
             units='m',
             attributes={'positive': 'down'},
         )
+        zcoord_3d_invalid_bounds = iris.coords.AuxCoord(
+            np.broadcast_to([[[0.5]], [[5.]], [[50.]]], (3, 2, 2)),
+            long_name='zcoord',
+            bounds=np.broadcast_to(
+                [[[[0., 2.5, 2.5, 3.]]],
+                 [[[2.5, 25., 25., 30.]]],
+                 [[[25., 250., 250., 300.]]]],
+                (3, 2, 2, 4),
+            ),
+            units='m',
+            attributes={'positive': 'down'},
+        )
         lons2 = iris.coords.DimCoord([1.5, 2.5],
                                      standard_name='longitude',
                                      bounds=[[1., 2.], [2., 3.]],
@@ -97,6 +109,13 @@ class Test(tests.Test):
             data2,
             dim_coords_and_dims=[(time, 0), (lats2, 2), (lons2, 3)],
             aux_coords_and_dims=[(zcoord_4d, (0, 1, 2, 3))],
+            units='kg m-3',
+        )
+
+        self.grid_invalid_z_bounds = iris.cube.Cube(
+            data2,
+            dim_coords_and_dims=[(time, 0), (lats2, 2), (lons2, 3)],
+            aux_coords_and_dims=[(zcoord_3d_invalid_bounds, (1, 2, 3))],
             units='kg m-3',
         )
 
@@ -391,43 +410,79 @@ class Test(tests.Test):
         self.grid_4d_z.remove_coord('latitude')
         self.grid_4d_z.add_aux_coord(new_lat_coord, (2, 3))
         with self.assertRaises(CoordinateMultiDimError):
-            volume_statistics(self.grid_4d_z, 'mean')
+            volume_statistics(self.grid_4d_z[0], 'mean')
 
-    def test_volume_statistics_4d_depth_fail(self):
-        # Fails because depth coord dims are (0, ...), but must be (1, ...)
+    def test_volume_statistics_invalid_bounds(self):
+        """Test z-axis bounds is not 2 in last dimension"""
+
+        with self.assertRaises(ValueError) as err:
+            volume_statistics(self.grid_invalid_z_bounds, 'mean')
+        self.assertIn(
+            "Z axis bounds shape found (3, 2, 2, 4). Bounds should be "
+            "2 in the last dimension to compute the thickness.",
+            str(err.exception)
+        )
+
+    def test_volume_statistics_z_axis_time_error(self):
+        # Fails because depth z-axis coord depends on time dimensions
+        # which would aggregate also along that dimension
         with self.assertRaises(ValueError) as err:
             volume_statistics(self.grid_4d_z, 'mean')
         self.assertIn(
-            "Supplementary variables are needed to calculate grid cell "
-            "volumes for cubes with 4D depth coordinate, got cube ",
-            str(err.exception),
+            "X and Y axis coordinates depend on (2, 3) dimensions, "
+            "while X, Y, and Z axis depends on (0, 1, 2, 3) dimensions. "
+            "This may indicate Z axis depending on other dimension than"
+            "space that could provoke invalid aggregation...",
+            str(err.exception)
         )
 
-    def test_volume_statistics_2d_depth_fail(self):
+        # Fails because x axis is missing
+        grid_3d_no_x = self.grid_4d_z[..., 0]
+        with self.assertRaises(ValueError) as err:
+            volume_statistics(grid_3d_no_x, 'mean')
+        self.assertIn(
+            "X and Y axis coordinates depend on (2,) dimensions, "
+            "while X, Y, and Z axis depends on (0, 1, 2) dimensions. "
+            "This may indicate Z axis depending on other dimension than"
+            "space that could provoke invalid aggregation...",
+            str(err.exception)
+        )
+
+    def test_volume_statistics_missing_axis(self):
+        # x axis is missing
+        grid_no_x = self.grid_4d[..., 0]
+        volume_statistics(grid_no_x, 'mean')
+
+        # y axis is missing
+        grid_no_y = self.grid_4d[..., 0, :]
+        volume_statistics(grid_no_y, 'mean')
+
+        # z axis is missing
+        grid_no_z = self.grid_4d[:, 0]
+        with self.assertRaises(ValueError) as err:
+            volume_statistics(grid_no_z, 'mean')
+        self.assertIn("Cannot compute volume with length 0 Z-axis",
+                      str(err.exception))
+
+    def test_volume_statistics_2d_depth(self):
         # Create new 2D depth coord
         new_z_coord = self.grid_4d_z.coord('zcoord')[0, :, :, 0]
         self.grid_4d_z.remove_coord('zcoord')
         self.grid_4d_z.add_aux_coord(new_z_coord, (1, 2))
-        with self.assertRaises(ValueError) as err:
-            volume_statistics(self.grid_4d_z, 'mean')
-        self.assertIn(
-            "Supplementary variables are needed to calculate grid cell "
-            "volumes for cubes with 2D depth coordinate, got cube ",
-            str(err.exception),
-        )
+        result = volume_statistics(self.grid_4d, 'mean')
+        expected = np.ma.array([1., 1.], mask=False)
+        self.assert_array_equal(result.data, expected)
 
     def test_depth_integration_1d(self):
         """Test to take the depth integration of a 3 layer cube."""
         result = depth_integration(self.grid_3d[:, 0, 0])
         expected = np.ones((1, 1)) * 250.
-        print(result.data, expected.data)
         self.assert_array_equal(result.data, expected)
 
     def test_depth_integration_3d(self):
         """Test to take the depth integration of a 3 layer cube."""
         result = depth_integration(self.grid_3d)
         expected = np.ones((2, 2)) * 250.
-        print(result.data, expected.data)
         self.assert_array_equal(result.data, expected)
 
     def test_extract_transect_latitude(self):
