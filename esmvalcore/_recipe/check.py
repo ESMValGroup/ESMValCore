@@ -70,7 +70,7 @@ def diagnostics(diags):
     for name, diagnostic in diags.items():
         if 'scripts' not in diagnostic:
             raise RecipeError(
-                "Missing scripts section in diagnostic {}".format(name))
+                f"Missing scripts section in diagnostic '{name}'.")
         variable_names = tuple(diagnostic.get('variables', {}))
         scripts = diagnostic.get('scripts')
         if scripts is None:
@@ -78,13 +78,13 @@ def diagnostics(diags):
         for script_name, script in scripts.items():
             if script_name in variable_names:
                 raise RecipeError(
-                    "Invalid script name {} encountered in diagnostic {}: "
-                    "scripts cannot have the same name as variables.".format(
-                        script_name, name))
+                    f"Invalid script name '{script_name}' encountered "
+                    f"in diagnostic '{name}': scripts cannot have the "
+                    "same name as variables.")
             if not script.get('script'):
                 raise RecipeError(
-                    "No script defined for script {} in diagnostic {}".format(
-                        script_name, name))
+                    f"No script defined for script '{script_name}' in "
+                    f"diagnostic '{name}'.")
 
 
 def duplicate_datasets(
@@ -95,27 +95,31 @@ def duplicate_datasets(
     """Check for duplicate datasets."""
     if not datasets:
         raise RecipeError(
-            "You have not specified any dataset or additional_dataset groups "
-            f"for variable {variable_group} in diagnostic {diagnostic}.")
+            "You have not specified any dataset or additional_dataset "
+            f"groups for variable '{variable_group}' in diagnostic "
+            f"'{diagnostic}'.")
     checked_datasets_ = []
     for dataset in datasets:
         if dataset in checked_datasets_:
             raise RecipeError(
-                f"Duplicate dataset {dataset} for variable {variable_group} "
-                f"in diagnostic {diagnostic}.")
+                f"Duplicate dataset\n{pformat(dataset)}\nfor variable "
+                f"'{variable_group}' in diagnostic '{diagnostic}'.")
         checked_datasets_.append(dataset)
 
 
-def variable(var: dict[str, Any], required_keys: Iterable[str]):
+def variable(
+    var: dict[str, Any],
+    required_keys: Iterable[str],
+    diagnostic: str,
+    variable_group: str
+) -> None:
     """Check variables as derived from recipe."""
     required = set(required_keys)
     missing = required - set(var)
     if missing:
         raise RecipeError(
-            f"Missing keys {missing} in\n"
-            f"{pformat(var)}\n"
-            "for variable {var['variable_group']} in diagnostic "
-            f"{var['diagnostic']}")
+            f"Missing keys {missing} in\n{pformat(var)}\nfor variable "
+            f"'{variable_group}' in diagnostic '{diagnostic}'.")
 
 
 def _log_data_availability_errors(dataset):
