@@ -161,6 +161,10 @@ class AllVars(Fix):
                 units=Unit(domain[aux_coord].units),
                 bounds=bounds,
             )
+            if aux_coord == 'lon' and new_coord.points.min() < 0.:
+                lon_inds = (new_coord.points < 0.) & (old_coord.points > 0.)
+                old_coord.points[lon_inds] = old_coord.points[lon_inds] - 360.
+
             self._check_grid_differences(old_coord, new_coord)
             aux_coord_dims = (cube.coord(var_name='rlat').cube_dims(cube) +
                               cube.coord(var_name='rlon').cube_dims(cube))
