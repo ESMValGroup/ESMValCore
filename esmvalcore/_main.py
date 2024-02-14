@@ -353,8 +353,10 @@ class ESMValTool():
             Recipe to run, as either the name of an installed recipe or the
             path to a non-installed one.
         config_file: str, optional
-            Configuration file to use. If not provided the file
-            ${HOME}/.esmvaltool/config-user.yml will be used.
+            Configuration file to use. Can be given as absolute or relative
+            path. In the latter case, search in the current working directory
+            and `${HOME}/.esmvaltool` (in that order). If not provided, the
+            file `${HOME}/.esmvaltool/config-user.yml` will be used.
         resume_from: list(str), optional
             Resume one or more previous runs by using preprocessor output files
             from these output directories.

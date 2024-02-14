@@ -131,8 +131,9 @@ class Config(ValidatedConfig):
     ) -> Path:
         """Get path to user configuration file.
 
-        `filename` can be given as absolute path, or as path relative to the
-        current working directory or `~/.esmvaltool`.
+        `filename` can be given as absolute or relative path. In the latter
+        case, search in the current working directory and `~/.esmvaltool` (in
+        that order).
 
         If `filename` is not given, try to get user configuration file from the
         following locations (sorted by descending priority):
@@ -160,8 +161,7 @@ class Config(ValidatedConfig):
         correct user configuration file.
 
         """
-        # (1) Try to get user configuration file from `filename` argument (also
-        # test relative to ~/.esmvaltool)
+        # (1) Try to get user configuration file from `filename` argument
         config_user = filename
 
         # (2) Try to get user configuration file from internal
@@ -182,7 +182,7 @@ class Config(ValidatedConfig):
 
         config_user = Path(config_user).expanduser()
 
-        # Use path relative to ~/.esmvaltool if necessary
+        # Also serach path relative to ~/.esmvaltool if necessary
         if not (config_user.is_file() or config_user.is_absolute()):
             config_user = Config._DEFAULT_USER_CONFIG_DIR / config_user
         config_user = config_user.absolute()
