@@ -1,4 +1,8 @@
+import contextlib
+import os
+import sys
 from collections.abc import MutableMapping
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -6,6 +10,15 @@ import pytest
 import esmvalcore
 from esmvalcore.config import Config, Session
 from esmvalcore.exceptions import InvalidConfigParameter
+from tests.integration.test_main import arguments
+
+
+@contextlib.contextmanager
+def environment(**kwargs):
+    backup = deepcopy(os.environ)
+    os.environ = kwargs
+    yield
+    os.environ = backup
 
 
 def test_config_class():
@@ -85,3 +98,146 @@ def test_session_key_error():
     session = Session({})
     with pytest.raises(KeyError):
         session['invalid_key']
+
+
+TEST_GET_CFG_PATH = [
+    (None, None, None, '~/.esmvaltool/config-user.yml', False),
+    (
+        None,
+        None,
+        ('any_other_module', '--config_file=cli.yml'),
+        '~/.esmvaltool/config-user.yml',
+        False,
+    ),
+    (
+        None,
+        None,
+        ('esmvaltool', 'run', '--max-parallel-tasks=4'),
+        '~/.esmvaltool/config-user.yml',
+        True,
+    ),
+    (
+        None,
+        None,
+        ('esmvaltool', 'run', '--config_file=/cli.yml'),
+        '/cli.yml',
+        True,
+    ),
+    (
+        None,
+        None,
+        ('esmvaltool', 'run', '--config_file=/cli.yml'),
+        '/cli.yml',
+        True,
+    ),
+    (
+        None,
+        None,
+        ('esmvaltool', 'run', '--config-file', '/cli.yml'),
+        '/cli.yml',
+        True,
+    ),
+    (
+        None,
+        None,
+        ('esmvaltool', 'run', '--config-file=/cli.yml'),
+        '/cli.yml',
+        True,
+    ),
+    (
+        None,
+        None,
+        ('esmvaltool', 'run', '--config-file=relative_cli.yml'),
+        '~/.esmvaltool/relative_cli.yml',
+        True,
+    ),
+    (
+        None,
+        None,
+        ('esmvaltool', 'run', '--config-file=existing_cfg.yml'),
+        'existing_cfg.yml',
+        True,
+    ),
+    (
+        None,
+        {'_ESMVALTOOL_USER_CONFIG_FILE_': '/env.yml'},
+        ('esmvaltool', 'run', '--config-file=/cli.yml'),
+        '/env.yml',
+        True,
+    ),
+    (
+        None,
+        {'_ESMVALTOOL_USER_CONFIG_FILE_': '/env.yml'},
+        None,
+        '/env.yml',
+        True,
+    ),
+    (
+        None,
+        {'_ESMVALTOOL_USER_CONFIG_FILE_': 'existing_cfg.yml'},
+        ('esmvaltool', 'run', '--config-file=/cli.yml'),
+        'existing_cfg.yml',
+        True,
+    ),
+    (
+        '/filename.yml',
+        {'_ESMVALTOOL_USER_CONFIG_FILE_': '/env.yml'},
+        ('esmvaltool', 'run', '--config-file=/cli.yml'),
+        '/filename.yml',
+        True,
+    ),
+    (
+        '/filename.yml',
+        None,
+        ('esmvaltool', 'run', '--config-file=/cli.yml'),
+        '/filename.yml',
+        True,
+    ),
+    ('/filename.yml', None, None, '/filename.yml', False),
+    (
+        'filename.yml',
+        None,
+        None,
+        '~/.esmvaltool/filename.yml',
+        False,
+    ),
+    (
+        'existing_cfg.yml',
+        {'_ESMVALTOOL_USER_CONFIG_FILE_': '/env.yml'},
+        ('esmvaltool', 'run', '--config-file=/cli.yml'),
+        'existing_cfg.yml',
+        True,
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    'filename,env,cli_args,output,env_var_set', TEST_GET_CFG_PATH
+)
+def test_get_config_user_path(
+    filename, env, cli_args, output, env_var_set, monkeypatch, tmp_path
+):
+    """Test `Config._get_config_user_path`."""
+    # Create empty test file
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / 'existing_cfg.yml').write_text('')
+
+    if env is None:
+        env = {}
+    if cli_args is None:
+        cli_args = sys.argv
+
+    if output == 'existing_cfg.yml':
+        output = tmp_path / 'existing_cfg.yml'
+    else:
+        output = Path(output).expanduser()
+
+    # with arguments(*cli_args):
+    with environment(**env), arguments(*cli_args):
+        config_path = Config._get_config_user_path(filename)
+        if env_var_set:
+            assert os.environ['_ESMVALTOOL_USER_CONFIG_FILE_'] == str(output)
+        else:
+            assert '_ESMVALTOOL_USER_CONFIG_FILE_' not in os.environ
+    assert isinstance(config_path, Path)
+    assert config_path == output

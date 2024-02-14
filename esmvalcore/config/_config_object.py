@@ -182,7 +182,7 @@ class Config(ValidatedConfig):
 
         config_user = Path(config_user).expanduser()
 
-        # Also serach path relative to ~/.esmvaltool if necessary
+        # Also search path relative to ~/.esmvaltool if necessary
         if not (config_user.is_file() or config_user.is_absolute()):
             config_user = Config._DEFAULT_USER_CONFIG_DIR / config_user
         config_user = config_user.absolute()
