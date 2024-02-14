@@ -1,4 +1,5 @@
 import contextlib
+import importlib
 import os
 import sys
 from collections.abc import MutableMapping
@@ -8,6 +9,7 @@ from pathlib import Path
 import pytest
 
 import esmvalcore
+import esmvalcore.config._config_object
 from esmvalcore.config import Config, Session
 from esmvalcore.exceptions import InvalidConfigParameter
 from tests.integration.test_main import arguments
@@ -241,3 +243,52 @@ def test_get_config_user_path(
             assert '_ESMVALTOOL_USER_CONFIG_FILE_' not in os.environ
     assert isinstance(config_path, Path)
     assert config_path == output
+
+
+@pytest.mark.parametrize(
+    'env,cli_args,output',
+    [
+        (None, None, '~/esmvaltool_output'),
+        (
+            None,
+            ('not_esmvaltool', '--config-file=cli.yml'),
+            '~/esmvaltool_output',
+        ),
+        (None, ('esmvaltool', '--config-file=x.yml'), '~/esmvaltool_output'),
+        (
+            {'_ESMVALTOOL_USER_CONFIG_FILE_': 'y.yml'},
+            None,
+            '~/esmvaltool_output',
+        ),
+        (
+            {'_ESMVALTOOL_USER_CONFIG_FILE_': 'x.yml'},
+            ('esmvaltool', '--config-file=y.yml'),
+            '~/esmvaltool_output',
+        ),
+        (None, ('esmvaltool', '--config-file=cli.yml'), 'cli'),
+        ({'_ESMVALTOOL_USER_CONFIG_FILE_': 'env.yml'}, None, 'env'),
+        (
+            {'_ESMVALTOOL_USER_CONFIG_FILE_': 'env.yml'},
+            ('esmvaltool', '--config-file=cli.yml'),
+            'env',
+        ),
+    ],
+)
+def test_cfg(env, cli_args, output, monkeypatch, tmp_path):
+    """Test `CFG` object."""
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / 'cli.yml').write_text('output_dir: cli')
+    (tmp_path / 'env.yml').write_text('output_dir: env')
+
+    if env is None:
+        env = {}
+    if cli_args is None:
+        cli_args = sys.argv
+    output = Path(output).expanduser().absolute()
+
+    with environment(**env), arguments(*cli_args):
+        importlib.reload(esmvalcore.config._config_object)
+    assert esmvalcore.config._config_object.CFG['output_dir'] == output
+
+    # Restore original CFG
+    importlib.reload(esmvalcore.config._config_object)
