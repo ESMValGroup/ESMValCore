@@ -2,6 +2,8 @@
 
 Allows for unit conversions.
 """
+from __future__ import annotations
+
 import logging
 
 import dask.array as da
@@ -123,7 +125,7 @@ def convert_units(cube, units):
 
 def accumulate_coordinate(
     cube: iris.cube.Cube,
-    coordinate: str,
+    coordinate: str | iris.coords.DimCoord | iris.coords.AuxCoord
 ) -> iris.cube.Cube:
     """Weight data using the bounds from a given coordinate.
 
@@ -132,10 +134,10 @@ def accumulate_coordinate(
 
     Parameters
     ----------
-    cube : iris.cube.Cube
+    cube:
         Data cube for the flux
 
-    coordinate: str
+    coordinate:
         Name of the coordinate that will be used as weights.
 
     Returns
