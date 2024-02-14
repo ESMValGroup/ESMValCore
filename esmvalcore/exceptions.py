@@ -35,10 +35,6 @@ class MissingConfigParameter(UserWarning):
     """Config parameter is missing."""
 
 
-class ConfigParserError(Error):
-    """Config file parsing failed."""
-
-
 class RecipeError(Error):
     """Recipe contains an error."""
 

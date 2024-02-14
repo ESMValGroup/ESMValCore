@@ -12,7 +12,7 @@ import yaml
 
 import esmvalcore
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.exceptions import ConfigParserError, InvalidConfigParameter
+from esmvalcore.exceptions import InvalidConfigParameter
 
 from ._config_validators import (
     _deprecated_options_defaults,
@@ -82,7 +82,7 @@ class Config(ValidatedConfig):
             new.update(mapping)
             new.check_missing()
         except InvalidConfigParameter as exc:
-            raise ConfigParserError(
+            raise InvalidConfigParameter(
                 f"Failed to parse user configuration file {config_user_path}: "
                 f"{str(exc)}"
             ) from exc
