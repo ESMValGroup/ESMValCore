@@ -138,12 +138,13 @@ class Config(ValidatedConfig):
         following locations (sorted by descending priority):
 
         1. Internal `_ESMVALTOOL_USER_CONFIG_FILE_` environment variable
-        (this ensures that any subprocess spawned by the esmvaltool program
-        will use the correct user configuration file).
-        2. Command line arguments `--config-file` or `--config_file` (only if
-        script name is `esmvaltool`).
+           (this ensures that any subprocess spawned by the esmvaltool program
+           will use the correct user configuration file).
+        2. Command line arguments `--config-file` or `--config_file` (both
+           variants are allowed by the fire module), but only if script name is
+           `esmvaltool`.
         3. `config-user.yml` within default ESMValTool configuration directory
-        `~/.esmvaltool`.
+           `~/.esmvaltool`.
 
         Note
         ----

@@ -383,7 +383,7 @@ class ESMValTool():
         """
         from .config import CFG
 
-        # At this point, --config-file is already parsed if a valid file has
+        # At this point, --config_file is already parsed if a valid file has
         # been given (see
         # https://github.com/ESMValGroup/ESMValCore/issues/2280), but no error
         # has been raised if the file does not exist. Thus, reload the file
