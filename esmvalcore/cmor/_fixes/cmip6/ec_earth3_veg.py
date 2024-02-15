@@ -72,7 +72,7 @@ class Tas(Fix):
 
         for cube in cubes:
             latitude = cube.coord('latitude')
-            latitude.points = np.round(latitude.points, 8)
-            latitude.bounds = np.round(latitude.bounds, 8)
+            latitude.points = np.round(latitude.core_points(), 8)
+            latitude.bounds = np.round(latitude.core_bounds(), 8)
 
         return cubes
