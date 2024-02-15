@@ -242,9 +242,8 @@ class Config(ValidatedConfig):
         if 'config_file' not in self:
             raise ValueError(
                 "Cannot reload configuration, option 'config_file' is "
-                "missing; make sure to only initialize this object with "
-                "`Config._load_user_config()` or "
-                "`Config._load_default_config()`"
+                "missing; make sure to only use the `CFG` object from the "
+                "`esmvalcore.config` module"
             )
         self.load_from_file(self['config_file'])
 
