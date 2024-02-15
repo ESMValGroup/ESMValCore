@@ -94,12 +94,14 @@ class Config(ValidatedConfig):
         """Load the default configuration."""
         new = cls()
 
-        config_user_path = Path(esmvalcore.__file__).parent / 'config-user.yml'
-        mapping = cls._read_config_file(config_user_path)
+        package_config_user_path = Path(
+            esmvalcore.__file__
+        ).parent / 'config-user.yml'
+        mapping = cls._read_config_file(package_config_user_path)
 
         # Add defaults that are not available in esmvalcore/config-user.yml
         mapping['check_level'] = CheckLevels.DEFAULT
-        mapping['config_file'] = config_user_path
+        mapping['config_file'] = package_config_user_path
         mapping['diagnostics'] = None
         mapping['extra_facets_dir'] = tuple()
         mapping['max_datasets'] = None
