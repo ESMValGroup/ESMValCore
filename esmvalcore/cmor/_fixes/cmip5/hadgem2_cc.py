@@ -3,8 +3,7 @@ from ..fix import Fix
 from .hadgem2_es import AllVars as BaseAllVars
 
 
-class AllVars(BaseAllVars):
-    """Fix errors common to all vars."""
+AllVars = BaseAllVars
 
 
 class O2(Fix):
