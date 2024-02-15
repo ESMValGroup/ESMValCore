@@ -2596,8 +2596,8 @@ recipe:
   and a corresponding reference, respectively (a bar over a variable denotes
   its arithmetic/weighted mean [the latter for weighted metrics]).
   Capital letters (`X`\ :sub:`i` and `R`\ :sub:`i`) refer to bin centers of a
-  discrete probability distribution with values `p`\ :sub:`X`(`X`\ :sub:`i`) or
-  `p`\ :sub:`X` (`R`\ :sub:`i`) and a number of bins `n` (see the argument
+  discrete probability distribution with values `p`\ :sub:`X`\ (`X`\ :sub:`i`)
+  or `p`\ :sub:`R`\ (`R`\ :sub:`i`) and a number of bins `n` (see the argument
   ``n_bins`` below) that has been derived for the variables `x` and `r` through
   binning.
   `w`\ :sub:`i` are weights that sum to one (see note below) and `N` is the
