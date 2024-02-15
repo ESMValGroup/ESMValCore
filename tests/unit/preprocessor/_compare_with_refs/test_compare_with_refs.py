@@ -532,7 +532,7 @@ def test_distance_metric_cubes(
 ):
     """Test `distance_metric` with cubes."""
     regular_cubes[0].add_cell_measure(AREA_WEIGHTS, (1, 2))
-    out_cubes = distance_metric(regular_cubes, metric, ref_cube=ref_cubes[0])
+    out_cubes = distance_metric(regular_cubes, metric, reference=ref_cubes[0])
 
     assert isinstance(out_cubes, CubeList)
     assert len(out_cubes) == 1
@@ -595,7 +595,7 @@ def test_distance_metric_masked_data(
         cube.data = da.array(cube.data)
         ref_cube.data = da.array(ref_cube.data)
 
-    out_cubes = distance_metric([cube], metric, ref_cube=ref_cube)
+    out_cubes = distance_metric([cube], metric, reference=ref_cube)
 
     assert isinstance(out_cubes, CubeList)
     assert len(out_cubes) == 1
@@ -640,7 +640,7 @@ def test_distance_metric_fully_masked_data(
         cube.data = da.array(cube.data)
         ref_cube.data = da.array(ref_cube.data)
 
-    out_cubes = distance_metric([cube], metric, ref_cube=ref_cube)
+    out_cubes = distance_metric([cube], metric, reference=ref_cube)
 
     assert isinstance(out_cubes, CubeList)
     assert len(out_cubes) == 1
@@ -719,11 +719,11 @@ def test_invalid_metric(regular_cubes, ref_cubes):
 
 
 @pytest.mark.parametrize('metric', TEST_METRICS)
-def test_distance_metric_ref_cube_non_cubes(regular_cubes, metric):
-    """Test distance metric with ref_cube=None with with cubes."""
+def test_distance_metric_reference_non_cubes(regular_cubes, metric):
+    """Test distance metric with reference=None with with cubes."""
     msg = (
         "A list of Cubes is given to this preprocessor; please specify a "
-        "`ref_cube`"
+        "`reference`"
     )
     with pytest.raises(ValueError, match=msg):
         distance_metric(regular_cubes, metric)
@@ -731,7 +731,7 @@ def test_distance_metric_ref_cube_non_cubes(regular_cubes, metric):
 
 @pytest.mark.parametrize('metric', TEST_METRICS)
 def test_distance_metric_no_named_dimensions(metric):
-    """Test distance metric with ref_cube=None with with cubes."""
+    """Test distance metric with reference=None with with cubes."""
     ref_cube = Cube([0, 1])
     cubes = CubeList([ref_cube])
     msg = (
@@ -739,31 +739,31 @@ def test_distance_metric_no_named_dimensions(metric):
         "dimensions"
     )
     with pytest.raises(ValueError, match=msg):
-        distance_metric(cubes, metric, ref_cube=ref_cube)
+        distance_metric(cubes, metric, reference=ref_cube)
 
 
 @pytest.mark.parametrize('metric', TEST_METRICS)
 def test_distance_metric_non_matching_shapes(regular_cubes, metric):
-    """Test distance metric with ref_cube=None with with cubes."""
+    """Test distance metric with cubes of different shapes."""
     ref_cube = Cube(0)
     msg = (
         r"Expected identical shapes of cube and reference cube for distance "
         r"metric calculation, got \(2, 2, 2\) and \(\), respectively"
     )
     with pytest.raises(ValueError, match=msg):
-        distance_metric(regular_cubes, metric, ref_cube=ref_cube)
+        distance_metric(regular_cubes, metric, reference=ref_cube)
 
 
 @pytest.mark.parametrize('metric', TEST_METRICS)
 def test_distance_metric_non_matching_dims(regular_cubes, metric):
-    """Test distance metric with ref_cube=None with with cubes."""
+    """Test distance metric with cubes with difference dimensions."""
     ref_cube = regular_cubes[0].copy()
     ref_cube.remove_coord('time')
     new_coord = iris.coords.DimCoord([0.0, 1.0], var_name='not_time')
     ref_cube.add_dim_coord(new_coord, 0)
     msg = "Cannot calculate distance metric between cube and reference cube"
     with pytest.raises(ValueError, match=msg):
-        distance_metric(regular_cubes, metric, ref_cube=ref_cube)
+        distance_metric(regular_cubes, metric, reference=ref_cube)
 
 
 @pytest.mark.parametrize(
@@ -794,6 +794,6 @@ def test_distance_metric_no_lon_for_area_weights(regular_cubes, metric, error):
         distance_metric(
             regular_cubes,
             metric,
-            ref_cube=ref_cube,
+            reference=ref_cube,
             coords=['time', 'latitude']
         )

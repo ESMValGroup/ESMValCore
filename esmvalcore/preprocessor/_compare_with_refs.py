@@ -217,7 +217,7 @@ MetricType = Literal[
 def distance_metric(
     products: set[PreprocessorFile] | Iterable[Cube],
     metric: MetricType,
-    ref_cube: Optional[Cube] = None,
+    reference: Optional[Cube] = None,
     coords: Iterable[Coord] | Iterable[str] | None = None,
     keep_reference_dataset: bool = True,
     **kwargs,
@@ -232,10 +232,10 @@ def distance_metric(
     Notes
     -----
     This preprocessor requires a reference dataset, which can be specified with
-    the `ref_cube` argument. If `ref_cube` is ``None``, exactly one input
+    the `reference` argument. If `reference` is ``None``, exactly one input
     dataset in the `products` set needs to have the facet
     ``reference_for_metric: true`` defined in the recipe. Please do **not**
-    specify the option `ref_cube` when using this preprocessor function in a
+    specify the option `reference` when using this preprocessor function in a
     recipe.
 
     Parameters
@@ -268,7 +268,7 @@ def distance_metric(
             (this only works for regular grids). By default, **NO**
             supplementary variables will be used; they need to be explicitly
             requested in the recipe.
-    ref_cube:
+    reference:
         Cube which is used as reference for the distance metric calculation. If
         ``None``, `products` needs to be a :obj:`set` of
         :class:`~esmvalcore.preprocessor.PreprocessorFile` objects and exactly
@@ -305,7 +305,7 @@ def distance_metric(
     ValueError
         Shape and coordinates of products and reference data does not match;
         not exactly one input datasets contains the facet
-        ``reference_for_metric: true`` if ``ref_cube=None`; ``ref_cube=None``
+        ``reference_for_metric: true`` if ``reference=None`; ``reference=None``
         and the input products are given as iterable of
         :class:`~iris.cube.Cube` objects; an invalid ``metric`` has been given.
     iris.exceptions.CoordinateNotFoundError
@@ -318,11 +318,11 @@ def distance_metric(
     all_cubes_given = all(isinstance(p, Cube) for p in products)
 
     # Get reference cube if not explicitly given
-    if ref_cube is None:
+    if reference is None:
         if all_cubes_given:
             raise ValueError(
                 "A list of Cubes is given to this preprocessor; please "
-                "specify a `ref_cube`"
+                "specify a `reference`"
             )
         reference_products = []
         for product in products:
@@ -342,13 +342,13 @@ def distance_metric(
         # earlier in the preprocessing chain of ESMValTool. To make sure that
         # this preprocessor can also be used outside the ESMValTool
         # preprocessing chain, an additional concatenate call is added here.
-        ref_cube = concatenate(reference_product.cubes)
+        reference = concatenate(reference_product.cubes)
 
     # If input is an Iterable of Cube objects, calculate distance metric for
     # each element
     if all_cubes_given:
         cubes = [
-            _calculate_metric(c, ref_cube, metric, coords, **kwargs)
+            _calculate_metric(c, reference, metric, coords, **kwargs)
             for c in products
         ]
         return CubeList(cubes)
@@ -362,7 +362,7 @@ def distance_metric(
         cube = concatenate(product.cubes)
 
         # Calculate distance metric
-        cube = _calculate_metric(cube, ref_cube, metric, coords, **kwargs)
+        cube = _calculate_metric(cube, reference, metric, coords, **kwargs)
 
         # Adapt metadata and provenance information
         product.attributes['standard_name'] = cube.standard_name
@@ -408,21 +408,21 @@ def _get_all_coord_dims(
 
 def _calculate_metric(
     cube: Cube,
-    ref_cube: Cube,
+    reference: Cube,
     metric: MetricType,
     coords: Iterable[Coord] | Iterable[str] | None,
     **kwargs,
 ) -> Cube:
     """Calculate metric for a single cube relative to a reference cube."""
     # Make sure that dimensional metadata of data and ref data is compatible
-    if cube.shape != ref_cube.shape:
+    if cube.shape != reference.shape:
         raise ValueError(
             f"Expected identical shapes of cube and reference cube for "
             f"distance metric calculation, got {cube.shape} and "
-            f"{ref_cube.shape}, respectively"
+            f"{reference.shape}, respectively"
         )
     try:
-        cube + ref_cube  # dummy operation to check if cubes are compatible
+        cube + reference  # dummy operation to check if cubes are compatible
     except Exception as exc:
         raise ValueError(
             "Cannot calculate distance metric between cube and reference cube "
@@ -445,7 +445,7 @@ def _calculate_metric(
         raise ValueError(
             f"Expected one of {list(metrics_funcs)} for metric, got '{metric}'"
         )
-    (res_data, res_metadata) = metrics_funcs[metric](cube, ref_cube, coords)
+    (res_data, res_metadata) = metrics_funcs[metric](cube, reference, coords)
 
     # Get result cube with correct dimensional metadata by using dummy
     # operation (max)
@@ -499,7 +499,7 @@ def _get_weights(
 
 def _calculate_rmse(
     cube: Cube,
-    ref_cube: Cube,
+    reference: Cube,
     coords: Iterable[Coord] | Iterable[str],
     *,
     weighted: bool,
@@ -508,7 +508,7 @@ def _calculate_rmse(
     # Data
     axis = _get_all_coord_dims(cube, coords)
     weights = _get_weights(cube, coords) if weighted else None
-    squared_error = (cube.core_data() - ref_cube.core_data())**2
+    squared_error = (cube.core_data() - reference.core_data())**2
     npx = get_array_module(squared_error)
     rmse = npx.sqrt(npx.ma.average(squared_error, axis=axis, weights=weights))
 
@@ -527,7 +527,7 @@ def _calculate_rmse(
 
 def _calculate_pearsonr(
     cube: Cube,
-    ref_cube: Cube,
+    reference: Cube,
     coords: Iterable[Coord] | Iterable[str],
     *,
     weighted: bool,
@@ -537,7 +537,7 @@ def _calculate_pearsonr(
     # Data
     weights = _get_weights(cube, coords) if weighted else None
     res_cube = iris.analysis.stats.pearsonr(
-        cube, ref_cube, corr_coords=coords, weights=weights, **kwargs
+        cube, reference, corr_coords=coords, weights=weights, **kwargs
     )
 
     # Metadata
@@ -558,7 +558,7 @@ def _calculate_pearsonr(
 
 def _calculate_emd(
     cube: Cube,
-    ref_cube: Cube,
+    reference: Cube,
     coords: Iterable[Coord] | Iterable[str],
     *,
     n_bins: int = 100,
@@ -566,13 +566,13 @@ def _calculate_emd(
     """Calculate Earth mover's distance."""
     # Make sure that data is not chunked along `coords`
     cube = rechunk_cube(cube, coords)
-    ref_cube = rechunk_cube(ref_cube, coords)
+    reference = rechunk_cube(reference, coords)
 
     # Data
     axes = _get_all_coord_dims(cube, coords)
-    (bins, bin_centers) = _get_bins(cube, ref_cube, n_bins)
+    (bins, bin_centers) = _get_bins(cube, reference, n_bins)
 
-    if cube.has_lazy_data() and ref_cube.has_lazy_data():
+    if cube.has_lazy_data() and reference.has_lazy_data():
         func = partial(
             _calculate_emd_lazy, axes=axes, bins=bins, bin_centers=bin_centers
         )
@@ -580,7 +580,7 @@ def _calculate_emd(
         func = partial(
             _calculate_emd_eager, axes=axes, bins=bins, bin_centers=bin_centers
         )
-    emd = func(cube.core_data(), ref_cube.core_data())
+    emd = func(cube.core_data(), reference.core_data())
 
     # Metadata
     metadata = CubeMetadata(
@@ -597,11 +597,11 @@ def _calculate_emd(
 
 def _get_bins(
     cube: Cube,
-    ref_cube: Cube,
+    reference: Cube,
     n_bins: int,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Get bins for discretization of data."""
-    all_data = da.stack([cube.core_data(), ref_cube.core_data()])
+    all_data = da.stack([cube.core_data(), reference.core_data()])
     (min_, max_) = dask.compute(all_data.min(), all_data.max())
     small_value = (max_ - min_) * 0.01 / n_bins
     bins = np.linspace(min_ - small_value, max_ + small_value, n_bins + 1)
