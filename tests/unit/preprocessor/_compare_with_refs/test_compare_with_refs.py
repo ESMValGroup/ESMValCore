@@ -275,7 +275,7 @@ def test_bias_products_and_ref_cube(
 
     out_products = bias(
         products,
-        ref_cube=ref_cube,
+        reference=ref_cube,
         bias_type=bias_type,
         keep_reference_dataset=keep_ref,
     )
@@ -337,11 +337,11 @@ def test_invalid_bias_type(regular_cubes, ref_cubes):
         bias(products, bias_type='invalid_bias_type')
 
 
-def test_ref_cube_non_cubes(regular_cubes):
-    """Test ref_cube=None with with cubes."""
+def test_reference_none_cubes(regular_cubes):
+    """Test reference=None with with cubes."""
     msg = (
         "A list of Cubes is given to this preprocessor; please specify a "
-        "`ref_cube`"
+        "`reference`"
     )
     with pytest.raises(ValueError, match=msg):
         bias(regular_cubes)
@@ -719,7 +719,7 @@ def test_invalid_metric(regular_cubes, ref_cubes):
 
 
 @pytest.mark.parametrize('metric', TEST_METRICS)
-def test_distance_metric_reference_non_cubes(regular_cubes, metric):
+def test_distance_metric_reference_none_cubes(regular_cubes, metric):
     """Test distance metric with reference=None with with cubes."""
     msg = (
         "A list of Cubes is given to this preprocessor; please specify a "

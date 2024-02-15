@@ -36,7 +36,7 @@ BiasType = Literal['absolute', 'relative']
 
 def bias(
     products: set[PreprocessorFile] | Iterable[Cube],
-    ref_cube: Optional[Cube] = None,
+    reference: Optional[Cube] = None,
     bias_type: BiasType = 'absolute',
     denominator_mask_threshold: float = 1e-3,
     keep_reference_dataset: bool = False,
@@ -52,10 +52,10 @@ def bias(
 
     Notes
     -----
-    The reference dataset can be specified with the `ref_cube` argument. If
-    `ref_cube` is ``None``, exactly one input dataset in the `products` set
+    The reference dataset can be specified with the `reference` argument. If
+    `reference` is ``None``, exactly one input dataset in the `products` set
     needs to have the facet ``reference_for_bias: true`` defined in the recipe.
-    Please do **not** specify the option `ref_cube` when using this
+    Please do **not** specify the option `reference` when using this
     preprocessor function in a recipe.
 
     Parameters
@@ -63,7 +63,7 @@ def bias(
     products:
         Input datasets/cubes for which the bias is calculated relative to a
         reference dataset/cube.
-    ref_cube:
+    reference:
         Cube which is used as reference for the bias calculation. If ``None``,
         `products` needs to be a :obj:`set` of
         `~esmvalcore.preprocessor.PreprocessorFile` objects and exactly one
@@ -84,7 +84,7 @@ def bias(
         results.
     keep_reference_dataset:
         If ``True``, keep the reference dataset in the output. If ``False``,
-        drop the reference dataset. Ignored if `ref_cube` is given.
+        drop the reference dataset. Ignored if `reference` is given.
 
     Returns
     -------
@@ -96,40 +96,39 @@ def bias(
     Raises
     ------
     ValueError
-        Not exactly one input datasets contains the facet
-        ``reference_for_bias: true`` if ``ref_cube=None``; ``ref_cube=None``
-        and the input products are given as iterable of
-        :class:`~iris.cube.Cube` objects; ``bias_type`` is not one of
-        ``'absolute'`` or ``'relative'``.
+        Not exactly one input datasets contains the facet ``reference_for_bias:
+        true`` if ``reference=None``; ``reference=None`` and the input products
+        are given as iterable of :class:`~iris.cube.Cube` objects;
+        ``bias_type`` is not one of ``'absolute'`` or ``'relative'``.
 
     """
     ref_product = None
     all_cubes_given = all(isinstance(p, Cube) for p in products)
 
     # Get reference cube if not explicitly given
-    if ref_cube is None:
+    if reference is None:
         if all_cubes_given:
             raise ValueError(
                 "A list of Cubes is given to this preprocessor; please "
-                "specify a `ref_cube`"
+                "specify a `reference`"
             )
-        (ref_cube, ref_product) = _get_ref(products, 'reference_for_bias')
+        (reference, ref_product) = _get_ref(products, 'reference_for_bias')
     else:
         ref_product = None
 
     # Mask reference cube appropriately for relative biases
     if bias_type == 'relative':
-        ref_cube = ref_cube.copy()
-        npx = get_array_module(ref_cube.core_data())
-        ref_cube.data = npx.ma.masked_inside(
-            ref_cube.core_data(),
+        reference = reference.copy()
+        npx = get_array_module(reference.core_data())
+        reference.data = npx.ma.masked_inside(
+            reference.core_data(),
             -denominator_mask_threshold,
             denominator_mask_threshold,
         )
 
     # If input is an Iterable of Cube objects, calculate bias for each element
     if all_cubes_given:
-        cubes = [_calculate_bias(c, ref_cube, bias_type) for c in products]
+        cubes = [_calculate_bias(c, reference, bias_type) for c in products]
         return CubeList(cubes)
 
     # Otherwise, iterate over all input products, calculate bias and adapt
@@ -141,7 +140,7 @@ def bias(
         cube = concatenate(product.cubes)
 
         # Calculate bias
-        cube = _calculate_bias(cube, ref_cube, bias_type)
+        cube = _calculate_bias(cube, reference, bias_type)
 
         # Adapt metadata and provenance information
         product.attributes['units'] = str(cube.units)
@@ -178,20 +177,20 @@ def _get_ref(products, ref_tag: str) -> tuple[Cube, PreprocessorFile]:
     # the preprocessing chain of ESMValTool. To make sure that this
     # preprocessor can also be used outside the ESMValTool preprocessing chain,
     # an additional concatenate call is added here.
-    ref_cube = concatenate(ref_product.cubes)
+    reference = concatenate(ref_product.cubes)
 
-    return (ref_cube, ref_product)
+    return (reference, ref_product)
 
 
-def _calculate_bias(cube: Cube, ref_cube: Cube, bias_type: BiasType) -> Cube:
+def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType) -> Cube:
     """Calculate bias for a single cube relative to a reference cube."""
     cube_metadata = cube.metadata
 
     if bias_type == 'absolute':
-        cube = cube - ref_cube
+        cube = cube - reference
         new_units = cube.units
     elif bias_type == 'relative':
-        cube = (cube - ref_cube) / ref_cube
+        cube = (cube - reference) / reference
         new_units = '1'
     else:
         raise ValueError(
