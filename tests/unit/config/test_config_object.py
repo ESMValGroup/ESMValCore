@@ -21,8 +21,7 @@ OUTPUT_DIR = CFG['output_dir']
 def environment(**kwargs):
     """Temporary environment variables."""
     backup = deepcopy(os.environ)
-    for (key, val) in kwargs.items():
-        os.environ[key] = val
+    os.environ = kwargs
     yield
     os.environ = backup
 
