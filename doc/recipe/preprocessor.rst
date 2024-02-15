@@ -2590,15 +2590,16 @@ recipe:
 
     W_1 = \min_{\gamma \in \mathbb{R}^{n \times n}_{+}} \sum_{i,j}^{n}
     \gamma_{ij} \lvert X_i - R_i \rvert \\
-    \textrm{with} ~~ \gamma 1 = p(X);~ \gamma^T 1 = p(R);~ \gamma \ge 0
+    \textrm{with} ~~ \gamma 1 = p_X(X);~ \gamma^T 1 = p_R(R)
 
   Here, `x`\ :sub:`i` and `r`\ :sub:`i` are samples of a variable of interest
   and a corresponding reference, respectively (a bar over a variable denotes
   its arithmetic/weighted mean [the latter for weighted metrics]).
   Capital letters (`X`\ :sub:`i` and `R`\ :sub:`i`) refer to bin centers of a
-  discrete probability distribution with values `p`\ (`X`\ :sub:`i`) or `p`\
-  (`R`\ :sub:`i`) and a number of bins `n` (see the argument ``n_bins`` below)
-  that has been derived for the variables `x` and `r` through binning.
+  discrete probability distribution with values `p`\ :sub:`X`(`X`\ :sub:`i`) or
+  `p`\ :sub:`X` (`R`\ :sub:`i`) and a number of bins `n` (see the argument
+  ``n_bins`` below) that has been derived for the variables `x` and `r` through
+  binning.
   `w`\ :sub:`i` are weights that sum to one (see note below) and `N` is the
   total number of samples.
 
