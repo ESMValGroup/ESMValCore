@@ -227,6 +227,8 @@ class Config(ValidatedConfig):
                     # Parse '--config-file /file.yml' or
                     # '--config_file /file.yml'
                     config_idx = sys.argv.index(opt)
+                    if config_idx == len(sys.argv) - 1:  # no file given
+                        return None
                     return sys.argv[config_idx + 1]
 
         return None

@@ -168,6 +168,13 @@ TEST_GET_CFG_PATH = [
     (
         None,
         None,
+        ('esmvaltool', '--config_file'),
+        '~/.esmvaltool/config-user.yml',
+        True,
+    ),
+    (
+        None,
+        None,
         ('esmvaltool', 'run', '--config_file=/cli.yml'),
         '/cli.yml',
         True,
