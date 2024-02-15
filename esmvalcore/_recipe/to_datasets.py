@@ -244,6 +244,7 @@ def _get_dataset_facets_from_recipe(
     recipe_variable: dict[str, Any],
     recipe_dataset: dict[str, Any],
     profiles: dict[str, Any],
+    diagnostic_name: str,
     session: Session,
 ) -> tuple[Facets, list[Facets]]:
     """Read the facets for a single dataset definition from the recipe."""
@@ -286,6 +287,8 @@ def _get_dataset_facets_from_recipe(
             'dataset',
             'project',
         ),
+        diagnostic=diagnostic_name,
+        variable_group=variable_group
     )
 
     preprocessor = facets.get('preprocessor', 'default')
@@ -329,6 +332,7 @@ def _get_facets_from_recipe(
             recipe_variable=recipe_variable,
             recipe_dataset=recipe_dataset,
             profiles=profiles,
+            diagnostic_name=diagnostic_name,
             session=session,
         )
 
