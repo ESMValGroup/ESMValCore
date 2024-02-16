@@ -3094,12 +3094,36 @@ def test_invalid_generic_regridding_scheme(
     assert msg in str(rec_err_exp.value.failed_tasks[0].message)
 
 
-def test_deprecated_regridding_scheme(tmp_path, patched_datafinder, session):
+def test_deprecated_linear_extrapolate_scheme(tmp_path, patched_datafinder, session):
     content = dedent("""
         preprocessors:
           test:
             regrid:
               scheme: linear_extrapolate
+              target_grid: 2x2
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - {project: CMIP5, dataset: CanESM2, exp: amip,
+                     ensemble: r1i1p1}
+            scripts: null
+        """)
+    get_recipe(tmp_path, content, session)
+
+
+def test_deprecated_unstructured_nearest_scheme(
+    tmp_path, patched_datafinder, session
+):
+    content = dedent("""
+        preprocessors:
+          test:
+            regrid:
+              scheme: unstructured_nearest
               target_grid: 2x2
         diagnostics:
           diagnostic_name:

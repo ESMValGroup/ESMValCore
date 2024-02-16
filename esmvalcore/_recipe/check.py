@@ -511,10 +511,11 @@ def regridding_schemes(settings: dict):
     if isinstance(scheme, str):
         scheme = settings['regrid']['scheme']
 
-        # Also allow deprecated 'linear_extrapolate' scheme (the corresponding
-        # deprecation warning will be raised in the regrid() preprocessor)
+        # Also allow deprecateded 'linear_extrapolate' and
+        # 'unstructured_nearest' schemes (the corresponding deprecation
+        # warnings will be raised in the regrid() preprocessor)
         # TODO: Remove in v2.13.0
-        if scheme == 'linear_extrapolate':
+        if scheme in ('linear_extrapolate', 'unstructured_nearest'):
             return
 
         allowed_regridding_schemes = list(
