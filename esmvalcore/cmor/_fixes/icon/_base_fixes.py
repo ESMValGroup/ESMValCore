@@ -239,7 +239,7 @@ class IconFix(NativeDatasetFix):
             'zghalf_file',
         ]
         for facet in facets_to_consider:
-            if facet not in self.extra_facets:
+            if self.extra_facets.get(facet) is None:
                 continue
             path_to_add = self._get_path_from_facet(facet)
             logger.debug("Adding cubes from %s", path_to_add)
@@ -352,7 +352,7 @@ class IconFix(NativeDatasetFix):
             file.
 
         """
-        if 'horizontal_grid' in self.extra_facets:
+        if self.extra_facets.get('horizontal_grid') is not None:
             grid = self._get_grid_from_facet()
         else:
             grid = self._get_grid_from_cube_attr(cube)
@@ -393,7 +393,7 @@ class IconFix(NativeDatasetFix):
         """
         # If specified by the user, use `horizontal_grid` facet to determine
         # grid name; otherwise, use the `grid_file_uri` attribute of the cube
-        if 'horizontal_grid' in self.extra_facets:
+        if self.extra_facets.get('horizontal_grid') is not None:
             grid_path = self._get_path_from_facet(
                 'horizontal_grid', 'Horizontal grid file'
             )
@@ -401,7 +401,7 @@ class IconFix(NativeDatasetFix):
         else:
             (_, grid_name) = self._get_grid_url(cube)
 
-        # Re-use mesh if possible
+        # Reuse mesh if possible
         if grid_name in self._meshes:
             logger.debug("Reusing ICON mesh for grid %s", grid_name)
         else:
