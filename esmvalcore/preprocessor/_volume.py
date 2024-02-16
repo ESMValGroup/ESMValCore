@@ -128,7 +128,7 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     z_dim = cube.coord_dims(depth)[0]
 
     # Calculate Z-direction thickness
-    thickness = depth.bounds[..., 1] - depth.bounds[..., 0]
+    thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
 
     # Try to calculate grid cell area
     try:

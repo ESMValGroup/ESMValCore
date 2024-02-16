@@ -62,7 +62,7 @@ class Tas(Fix):
         """
         cube = self.get_cube_from_list(cubes)
         try:
-            cube.coord('height')
+            cube.coord('height').attributes.pop('description')
         except iris.exceptions.CoordinateNotFoundError:
             add_scalar_height_coord(cube, 2.0)
         return cubes
