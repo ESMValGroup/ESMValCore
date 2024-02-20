@@ -142,16 +142,12 @@ class Prw(Fix):
 
         """
         for cube in cubes:
-            latitude = cube.coord('latitude')
-            if latitude.bounds is None:
-                latitude.guess_bounds()
-            latitude.bounds = latitude.bounds.astype(np.float64)
-            latitude.bounds = np.round(latitude.bounds, 4)
-            longitude = cube.coord('longitude')
-            if longitude.bounds is None:
-                longitude.guess_bounds()
-            longitude.bounds = longitude.bounds.astype(np.float64)
-            longitude.bounds = np.round(longitude.bounds, 4)
+            for coord_name in ['latitude', 'longitude']:
+                coord = cube.coord(coord_name)
+                if not coord.has_bounds():
+                    coord.guess_bounds()
+                coord.bounds = np.round(coord.core_bounds().astype(np.float64),
+                                        4)
 
         return cubes
 

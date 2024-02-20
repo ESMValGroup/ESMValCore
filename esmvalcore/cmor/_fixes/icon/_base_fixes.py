@@ -454,9 +454,9 @@ class IconFix(NativeDatasetFix):
     @staticmethod
     def _set_range_in_0_360(lon_coord):
         """Convert longitude coordinate to [0, 360]."""
-        lon_coord.points = (lon_coord.points + 360.0) % 360.0
-        if lon_coord.bounds is not None:
-            lon_coord.bounds = (lon_coord.bounds + 360.0) % 360.0
+        lon_coord.points = (lon_coord.core_points() + 360.0) % 360.0
+        if lon_coord.has_bounds():
+            lon_coord.bounds = (lon_coord.core_bounds() + 360.0) % 360.0
 
 
 class NegateData(IconFix):
