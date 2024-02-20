@@ -126,9 +126,7 @@ def mask_landsea(cube, mask_out):
         fx_cube_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
         landsea_mask = _get_fx_mask(fx_cube_data, mask_out,
                                     fx_cube.var_name)
-
         cube.data = _apply_fx_mask(landsea_mask, cube.core_data())
-
         logger.debug("Applying land-sea mask: %s", fx_cube.var_name)
     else:
         if cube.coord('longitude').points.ndim < 2:
@@ -374,7 +372,6 @@ def count_spells(data, threshold, axis, spell_length):
     # if you want overlapping windows set the step to be m*spell_length
     # where m is a float
     ###############################################################
-
     hit_windows = rolling_window(data_hits,
                                  window=spell_length,
                                  step=spell_length,
@@ -615,7 +612,6 @@ def mask_fillvalues(products,
     NotImplementedError
         Implementation missing for data with higher dimensionality than 4.
     """
-
     combined_mask = None
 
     logger.debug("Creating fillvalues mask")
