@@ -52,7 +52,6 @@ def _get_fx_mask(fx_data, fx_option, mask_type):
 def _apply_fx_mask(fx_mask, var_data):
     """Apply the fx data extracted mask on the actual processed data."""
     # Apply mask across
-    # Then apply the mask (with getmaskarray)
     old_mask = da.ma.getmaskarray(var_data)
     mask = old_mask | fx_mask
     var_data = da.ma.masked_array(var_data, mask=mask)
