@@ -519,16 +519,6 @@ class PreprocessorFile(TrackedFile):
         if 'frequency' in ref_cube.attributes:
             self.attributes['frequency'] = ref_cube.attributes['frequency']
 
-        # Years
-        if ref_cube.coords('time'):
-            time = ref_cube.coord('time')
-            self.attributes['start_year'] = time.units.num2date(
-                time.points[0]
-            ).year
-            self.attributes['end_year'] = time.units.num2date(
-                time.points[-1]
-            ).year
-
     @property
     def is_closed(self):
         """Check if the file is closed."""
