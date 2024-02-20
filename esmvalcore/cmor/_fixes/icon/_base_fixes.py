@@ -283,9 +283,7 @@ class IconFix(NativeDatasetFix):
         if grid is None:
             grid = self._get_downloaded_grid(grid_url, grid_name)
 
-        self._horizontal_grids[grid_name] = grid
-
-        return self._horizontal_grids[grid_name]
+        return grid
 
     def _get_grid_from_rootpath(self, grid_name: str) -> CubeList | None:
         """Try to get grid from the ICON rootpath."""
@@ -298,7 +296,8 @@ class IconFix(NativeDatasetFix):
         for grid_path in possible_grid_paths:
             if grid_path.is_file():
                 logger.debug("Using ICON grid file '%s'", grid_path)
-                return self._load_cubes(grid_path)
+                self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
+                return self._horizontal_grids[grid_name]
         return None
 
     def _get_downloaded_grid(self, grid_url: str, grid_name: str) -> CubeList:
@@ -348,9 +347,9 @@ class IconFix(NativeDatasetFix):
                 grid_path,
             )
 
-            grid = self._load_cubes(grid_path)
+            self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
 
-        return grid
+        return self._horizontal_grids[grid_name]
 
     def get_horizontal_grid(self, cube):
         """Get copy of ICON horizontal grid.
