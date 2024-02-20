@@ -13,8 +13,7 @@ import pytest
 import tests
 from esmvalcore.preprocessor import regrid
 from esmvalcore.preprocessor._regrid import (
-    _CACHE,
-    HORIZONTAL_SCHEMES,
+    HORIZONTAL_SCHEMES_REGULAR,
     _horizontal_grid_is_close,
     _rechunk,
 )
@@ -23,12 +22,10 @@ from esmvalcore.preprocessor._regrid import (
 class Test(tests.Test):
 
     def _check(self, tgt_grid, scheme, spec=False):
-        expected_scheme = HORIZONTAL_SCHEMES[scheme]
+        expected_scheme = HORIZONTAL_SCHEMES_REGULAR[scheme]
 
         if spec:
             spec = tgt_grid
-            self.assertIn(spec, _CACHE)
-            self.assertEqual(_CACHE[spec], self.tgt_grid)
             self.coord_system.asset_called_once()
             expected_calls = [
                 mock.call(axis='x', dim_coords=True),
@@ -37,14 +34,6 @@ class Test(tests.Test):
             self.assertEqual(self.tgt_grid_coord.mock_calls, expected_calls)
             self.regrid.assert_called_once_with(self.tgt_grid, expected_scheme)
         else:
-            if scheme == 'unstructured_nearest':
-                expected_calls = [
-                    mock.call(axis='x', dim_coords=True),
-                    mock.call(axis='y', dim_coords=True)
-                ]
-                self.assertEqual(self.coords.mock_calls, expected_calls)
-                expected_calls = [mock.call(self.coord), mock.call(self.coord)]
-                self.assertEqual(self.remove_coord.mock_calls, expected_calls)
             self.regrid.assert_called_once_with(tgt_grid, expected_scheme)
 
         # Reset the mocks to enable multiple calls per test-case.
@@ -73,10 +62,7 @@ class Test(tests.Test):
         self.tgt_grid_coord = mock.Mock()
         self.tgt_grid = mock.Mock(spec=iris.cube.Cube,
                                   coord=self.tgt_grid_coord)
-        self.regrid_schemes = [
-            'linear', 'linear_extrapolate', 'nearest', 'area_weighted',
-            'unstructured_nearest'
-        ]
+        self.regrid_schemes = ['linear', 'nearest', 'area_weighted']
 
         def _mock_horizontal_grid_is_close(src, tgt):
             return False
@@ -107,12 +93,12 @@ class Test(tests.Test):
             regrid(self.src_cube, dummy, scheme)
 
     def test_invalid_scheme__unknown(self):
-        emsg = 'Unknown regridding scheme'
+        emsg = "Got invalid regridding scheme string 'wibble'"
         with self.assertRaisesRegex(ValueError, emsg):
             regrid(self.src_cube, self.src_cube, 'wibble')
 
     def test_horizontal_schemes(self):
-        self.assertEqual(set(HORIZONTAL_SCHEMES.keys()),
+        self.assertEqual(set(HORIZONTAL_SCHEMES_REGULAR.keys()),
                          set(self.regrid_schemes))
 
     def test_regrid__horizontal_schemes(self):
@@ -123,11 +109,6 @@ class Test(tests.Test):
             self._check(self.tgt_grid, scheme)
 
     def test_regrid__cell_specification(self):
-        # Clear cache before and after the test to avoid poisoning
-        # the cache with Mocked cubes
-        # https://github.com/ESMValGroup/ESMValCore/issues/953
-        _CACHE.clear()
-
         specs = ['1x1', '2x2', '3x3', '4x4', '5x5']
         scheme = 'linear'
         for spec in specs:
@@ -135,9 +116,6 @@ class Test(tests.Test):
             self.assertEqual(result, self.regridded_cube)
             self.assertEqual(result.data, mock.sentinel.data)
             self._check(spec, scheme, spec=True)
-        self.assertEqual(set(_CACHE.keys()), set(specs))
-
-        _CACHE.clear()
 
     def test_regrid_generic_missing_reference(self):
         emsg = "No reference specified for generic regridding."

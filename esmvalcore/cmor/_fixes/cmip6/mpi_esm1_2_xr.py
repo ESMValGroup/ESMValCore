@@ -37,6 +37,10 @@ class SfcWind(BaseSfcWind):
     """Fixes for sfcWind."""
 
 
+class SfcWindmax(BaseSfcWind):
+    """Fixes for sfcWindmax."""
+
+
 class Uas(BaseSfcWind):
     """Fixes for uas."""
 

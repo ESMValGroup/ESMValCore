@@ -7,7 +7,6 @@ from typing import Optional
 
 from iris.coords import Coord
 from iris.cube import Cube
-from iris.exceptions import CoordinateNotFoundError
 
 from esmvalcore.cmor.table import CMOR_TABLES, CoordinateInfo, VariableInfo
 
@@ -171,19 +170,6 @@ def _get_simplified_calendar(calendar: str) -> str:
         'gregorian': 'standard',
     }
     return calendar_aliases.get(calendar, calendar)
-
-
-def _is_unstructured_grid(cube: Cube) -> bool:
-    """Check if cube uses unstructured grid."""
-    try:
-        lat = cube.coord('latitude')
-        lon = cube.coord('longitude')
-    except CoordinateNotFoundError:
-        pass
-    else:
-        if lat.ndim == 1 and (cube.coord_dims(lat) == cube.coord_dims(lon)):
-            return True
-    return False
 
 
 def _get_single_cube(
