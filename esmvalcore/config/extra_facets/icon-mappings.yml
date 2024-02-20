@@ -43,10 +43,13 @@ ICON:
     rsds: {var_type: atm_2d_ml}
     rsdscs: {var_type: atm_2d_ml}
     rsdt: {var_type: atm_2d_ml}
+    rsnt: {var_type: atm_2d_ml}
     rsus: {var_type: atm_2d_ml}
     rsuscs: {var_type: atm_2d_ml}
     rsut: {var_type: atm_2d_ml}
     rsutcs: {var_type: atm_2d_ml}
+    rtmt: {var_type: atm_2d_ml}
+    rtnt: {var_type: atm_2d_ml}
     siconc: {raw_name: sic, raw_units: '1', var_type: atm_2d_ml}
     siconca: {raw_name: sic, raw_units: '1', var_type: atm_2d_ml}
     tas: {var_type: atm_2d_ml}
@@ -99,15 +102,18 @@ ICON-Seamless:
     # rlds: {var_type: atm_2d_ml}
     # rldscs: {var_type: atm_2d_ml}
     # rlus: {var_type: atm_2d_ml}
-    # rlut: {var_type: atm_2d_ml}
+    rlut: {raw_name: thb_t, var_type: atm_2d_ml}
     # rlutcs: {var_type: atm_2d_ml}
     # rsds: {var_type: atm_2d_ml}
     # rsdscs: {var_type: atm_2d_ml}
     rsdt: {raw_name: sod_t, var_type: atm_2d_ml}
+    rsnt: {raw_name: sob_t, var_type: atm_2d_ml}
     # rsus: {var_type: atm_2d_ml}
     # rsuscs: {var_type: atm_2d_ml}
     rsut: {raw_name: sou_t, var_type: atm_2d_ml}
     # rsutcs: {var_type: atm_2d_ml}
+    rtmt: {var_type: atm_2d_ml}
+    rtnt: {var_type: atm_2d_ml}
     sfcWind: {raw_name: sp_10m, var_type: atm_2d_ml}
     # sftlf: {raw_name: fr_land, raw_units: '1', var_type: atm_2d_ml}
     siconc: {raw_name: fr_seaice, var_type: atm_2d_ml}
@@ -124,8 +130,8 @@ ICON-Seamless:
 
     # 3D dynamical/meteorological variables
     cl: {raw_name: clc, var_type: atm_3d_ml}
-    cli: {raw_name: tot_qc_dia, var_type: atm_3d_ml}
-    clw: {raw_name: tot_qi_dia, var_type: atm_3d_ml}
+    cli: {raw_name: tot_qi_dia, var_type: atm_3d_ml}
+    clw: {raw_name: tot_qc_dia, var_type: atm_3d_ml}
     hur: {raw_name: rh, var_type: atm_3d_ml}
     hus: {raw_name: qv, var_type: atm_3d_ml}
     ta: {raw_name: temp, var_type: atm_3d_ml}

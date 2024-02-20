@@ -1,6 +1,7 @@
 """CMOR-like reformatting of ICON-Seamless (NWP physics)."""
 import logging
 
+from iris.cube import CubeList
 from scipy import constants
 
 from ._base_fixes import IconFix, NegateData
@@ -29,6 +30,22 @@ Hfls = NegateData
 
 
 Hfss = NegateData
+
+
+Rlut = NegateData
+
+
+class Rtmt(IconFix):
+    """Fixes for ``rtmt``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = (
+            self.get_cube(cubes, var_name='sob_t') +
+            self.get_cube(cubes, var_name='thb_t')
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
 
 
 class Zg(IconFix):
