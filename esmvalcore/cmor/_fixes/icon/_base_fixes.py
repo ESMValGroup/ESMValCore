@@ -1,4 +1,5 @@
 """Fix base classes for ICON on-the-fly CMORizer."""
+from __future__ import annotations
 
 import logging
 import os
@@ -13,9 +14,11 @@ import numpy as np
 import requests
 from filelock import FileLock
 from iris import NameConstraint
+from iris.cube import CubeList
 from iris.experimental.ugrid import Connectivity, Mesh
 
-from ..native_datasets import NativeDatasetFix
+from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
+from esmvalcore.local import _get_rootpath, _replace_tags, _select_drs
 
 logger = logging.getLogger(__name__)
 
@@ -272,11 +275,45 @@ class IconFix(NativeDatasetFix):
         if grid_name in self._horizontal_grids:
             return self._horizontal_grids[grid_name]
 
-        # Check if grid file has recently been downloaded and load it if
-        # possible
-        # Note: we use a lock here to prevent multiple processes from
-        # downloading the file simultaneously and to ensure that other
-        # processes wait until the download has finished
+        # First, check if the grid file is available in the ICON rootpath
+        grid = self._get_grid_from_rootpath(grid_name)
+
+        # Second, if that didn't work, try to download grid (or use cached
+        # version of it if possible)
+        if grid is None:
+            grid = self._get_downloaded_grid(grid_url, grid_name)
+
+        self._horizontal_grids[grid_name] = grid
+
+        return self._horizontal_grids[grid_name]
+
+    def _get_grid_from_rootpath(self, grid_name: str) -> CubeList | None:
+        """Try to get grid from the ICON rootpath."""
+        rootpaths = _get_rootpath('ICON')
+        dirname_template = _select_drs('input_dir', 'ICON')
+        dirname_globs = _replace_tags(dirname_template, self.extra_facets)
+        possible_grid_paths = [
+            r / d / grid_name for r in rootpaths for d in dirname_globs
+        ]
+        for grid_path in possible_grid_paths:
+            if grid_path.is_file():
+                logger.debug("Using ICON grid file '%s'", grid_path)
+                return self._load_cubes(grid_path)
+        return None
+
+    def _get_downloaded_grid(self, grid_url: str, grid_name: str) -> CubeList:
+        """Get downloaded horizontal grid.
+
+        Check if grid file has recently been downloaded. If not, download grid
+        file here.
+
+        Note
+        ----
+        We use a lock here to prevent multiple processes from downloading the
+        file simultaneously and to ensure that other processes wait until the
+        download has finished.
+
+        """
         self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
         lock = FileLock(self.CACHE_DIR / f"{grid_name}.lock")
         with lock:
@@ -311,9 +348,9 @@ class IconFix(NativeDatasetFix):
                 grid_path,
             )
 
-            self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
+            grid = self._load_cubes(grid_path)
 
-        return self._horizontal_grids[grid_name]
+        return grid
 
     def get_horizontal_grid(self, cube):
         """Get copy of ICON horizontal grid.
@@ -427,7 +464,7 @@ class IconFix(NativeDatasetFix):
         return np.int32(np.min(vertex_index.data))
 
     @staticmethod
-    def _load_cubes(path):
+    def _load_cubes(path: Path | str) -> CubeList:
         """Load cubes and ignore certain warnings."""
         with warnings.catch_warnings():
             warnings.filterwarnings(
@@ -444,7 +481,7 @@ class IconFix(NativeDatasetFix):
                 category=UserWarning,
                 module='iris',
             )
-            cubes = iris.load(str(path))
+            cubes = iris.load(path)
         return cubes
 
     @staticmethod
