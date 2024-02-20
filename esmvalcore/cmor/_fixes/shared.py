@@ -359,7 +359,7 @@ def fix_bounds(cube, cubes, coord_var_names):
     """
     for coord_var_name in coord_var_names:
         coord = cube.coord(var_name=coord_var_name)
-        if coord.bounds is not None:
+        if coord.has_bounds():
             continue
         bounds_cube = get_bounds_cube(cubes, coord_var_name)
         cube.coord(var_name=coord_var_name).bounds = bounds_cube.core_data()
@@ -398,10 +398,9 @@ def round_coordinates(cubes, decimals=5, coord_names=None):
         else:
             coords = [cube.coord(c) for c in coord_names if cube.coords(c)]
         for coord in coords:
-            coord.points = da.round(da.asarray(coord.core_points()), decimals)
-            if coord.bounds is not None:
-                coord.bounds = da.round(da.asarray(coord.core_bounds()),
-                                        decimals)
+            coord.points = np.round(coord.core_points(), decimals)
+            if coord.has_bounds():
+                coord.bounds = np.round(coord.core_bounds(), decimals)
     return cubes
 
 

@@ -83,7 +83,7 @@ class ClFixHybridPressureCoord(Fix):
         # This was originally done by iris, but it has to be repeated since
         # a has bounds now
         ap_coord = cube.coord(var_name='ap')
-        if ap_coord.bounds is None:
+        if not ap_coord.has_bounds():
             cube.remove_coord(ap_coord)
             a_coord = cube.coord(var_name='a')
             p0_coord = cube.coord(var_name='p0')

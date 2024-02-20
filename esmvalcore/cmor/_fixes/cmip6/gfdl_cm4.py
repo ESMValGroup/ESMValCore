@@ -62,10 +62,26 @@ class Tas(Fix):
         """
         cube = self.get_cube_from_list(cubes)
         try:
-            cube.coord('height')
+            cube.coord('height').attributes.pop('description')
         except iris.exceptions.CoordinateNotFoundError:
             add_scalar_height_coord(cube, 2.0)
         return cubes
+
+
+class Tasmin(Tas):
+    """Fixes for tasmin."""
+
+
+class Tasmax(Tas):
+    """Fixes for tasmax."""
+
+
+class SfcWind(Tas):
+    """Fixes for sfcWind."""
+
+
+class Hurs(Tas):
+    """Fixes for hurs."""
 
 
 class Uas(Fix):
@@ -90,26 +106,8 @@ class Uas(Fix):
         return cubes
 
 
-class Vas(Fix):
+class Vas(Uas):
     """Fixes for vas."""
-
-    def fix_metadata(self, cubes):
-        """
-        Add height (10m) coordinate.
-
-        Parameters
-        ----------
-        cubes : iris.cube.CubeList
-            Input cubes.
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        cube = self.get_cube_from_list(cubes)
-        add_scalar_height_coord(cube, 10.0)
-        return cubes
 
 
 Omon = BaseOmon

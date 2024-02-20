@@ -2,11 +2,14 @@
 
 Allows for unit conversions.
 """
+from __future__ import annotations
+
 import logging
 
-from cf_units import Unit
+import dask.array as da
 import iris
 import numpy as np
+from cf_units import Unit
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +23,10 @@ SPECIAL_CASES = [
     [
         ('precipitation_flux', 'kg m-2 s-1'),
         ('lwe_precipitation_rate', 'mm s-1'),
+    ],
+    [
+        ('equivalent_thickness_at_stp_of_atmosphere_ozone_content', 'm'),
+        ('equivalent_thickness_at_stp_of_atmosphere_ozone_content', '1e5 DU'),
     ],
 ]
 
@@ -41,7 +48,7 @@ def _try_special_conversions(cube, units):
             if (cube.standard_name == std_name and
                     cube.units.is_convertible(special_units)):
                 for (target_std_name, target_units) in special_case:
-                    if target_std_name == std_name:
+                    if target_units == special_units:
                         continue
 
                     # Step 2: find suitable target name and units
@@ -79,8 +86,10 @@ def convert_units(cube, units):
 
     Currently, the following special conversions are supported:
 
-        * ``precipitation_flux`` (``kg m-2 s-1``) --
-          ``lwe_precipitation_rate`` (``mm day-1``)
+    * ``precipitation_flux`` (``kg m-2 s-1``) --
+      ``lwe_precipitation_rate`` (``mm day-1``)
+    * ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``m``) --
+      ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``DU``)
 
     Names in the list correspond to ``standard_names`` of the input data.
     Conversions are allowed from each quantity to any other quantity given in a
@@ -114,7 +123,10 @@ def convert_units(cube, units):
     return cube
 
 
-def accumulate_coordinate(cube, coordinate):
+def accumulate_coordinate(
+    cube: iris.cube.Cube,
+    coordinate: str | iris.coords.DimCoord | iris.coords.AuxCoord
+) -> iris.cube.Cube:
     """Weight data using the bounds from a given coordinate.
 
     The resulting cube will then have units given by
@@ -122,10 +134,10 @@ def accumulate_coordinate(cube, coordinate):
 
     Parameters
     ----------
-    cube : iris.cube.Cube
+    cube:
         Data cube for the flux
 
-    coordinate: str
+    coordinate:
         Name of the coordinate that will be used as weights.
 
     Returns
@@ -152,8 +164,9 @@ def accumulate_coordinate(cube, coordinate):
         raise NotImplementedError(
             f'Multidimensional coordinate {coord} not supported.')
 
+    array_module = da if coord.has_lazy_bounds() else np
     factor = iris.coords.AuxCoord(
-        np.diff(coord.bounds)[..., -1],
+        array_module.diff(coord.core_bounds())[..., -1],
         var_name=coord.var_name,
         long_name=coord.long_name,
         units=coord.units,

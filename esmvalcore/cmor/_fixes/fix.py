@@ -9,6 +9,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
+import dask
 import numpy as np
 from cf_units import Unit
 from iris.coords import Coord, CoordExtent
@@ -22,10 +23,10 @@ from esmvalcore.cmor._utils import (
     _get_new_generic_level_coord,
     _get_simplified_calendar,
     _get_single_cube,
-    _is_unstructured_grid,
 )
 from esmvalcore.cmor.fixes import get_time_bounds
 from esmvalcore.cmor.table import get_var_info
+from esmvalcore.iris_helpers import has_unstructured_grid
 
 if TYPE_CHECKING:
     from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
@@ -675,18 +676,17 @@ class GenericFix(Fix):
         if not cube_coord.standard_name == 'longitude':
             return (cube, cube_coord)
 
-        # Only apply fixes when values are outside of valid range [0, 360]
-        inside_0_360 = all([
-            cube_coord.core_points().min() >= 0.0,
-            cube_coord.core_points().max() <= 360.0,
-        ])
-        if inside_0_360:
+        points = cube_coord.core_points()
+        min_, max_ = dask.compute(points.min(), points.max())
+
+        # Do not apply fixes when values are inside of valid range [0, 360]
+        if min_ >= 0.0 and max_ <= 360.0:
             return (cube, cube_coord)
 
         # Cannot fix longitudes outside [-360, 720]
-        if np.any(cube_coord.core_points() < -360.0):
+        if min_ < -360.0:
             return (cube, cube_coord)
-        if np.any(cube_coord.core_points() > 720.0):
+        if max_ > 720.0:
             return (cube, cube_coord)
 
         # cube.intersection only works for cells with 0 or 2 bounds
@@ -727,7 +727,7 @@ class GenericFix(Fix):
             return
 
         # Skip guessing bounds for unstructured grids
-        if _is_unstructured_grid(cube) and cube_coord.standard_name in (
+        if has_unstructured_grid(cube) and cube_coord.standard_name in (
                 'latitude', 'longitude'):
             self._debug_msg(
                 cube,
@@ -763,7 +763,7 @@ class GenericFix(Fix):
             return (cube, cube_coord)
         if cube_coord.dtype.kind == 'U':
             return (cube, cube_coord)
-        if _is_unstructured_grid(cube) and cube_coord.standard_name in (
+        if has_unstructured_grid(cube) and cube_coord.standard_name in (
                 'latitude', 'longitude'
         ):
             return (cube, cube_coord)

@@ -121,13 +121,13 @@ ERA5
 - Supported variables: ``cl``, ``clt``, ``evspsbl``, ``evspsblpot``, ``mrro``, ``pr``, ``prsn``, ``ps``, ``psl``, ``ptype``, ``rls``, ``rlds``, ``rsds``, ``rsdt``, ``rss``, ``uas``, ``vas``, ``tas``, ``tasmax``, ``tasmin``, ``tdps``, ``ts``, ``tsn`` (``E1hr``/``Amon``), ``orog`` (``fx``)
 - Tier: 3
 
-.. note:: According to the description of Evapotranspiration and potential Evapotranspiration on the Copernicus page 
+.. note:: According to the description of Evapotranspiration and potential Evapotranspiration on the Copernicus page
   (https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels-monthly-means?tab=overview):
-  "The ECMWF Integrated Forecasting System (IFS) convention is that downward fluxes are positive. 
+  "The ECMWF Integrated Forecasting System (IFS) convention is that downward fluxes are positive.
   Therefore, negative values indicate evaporation and positive values indicate condensation."
-  
+
   In the CMOR table, these fluxes are defined as positive, if they go from the surface into the atmosphere:
-  "Evaporation at surface (also known as evapotranspiration): flux of water into the atmosphere due to conversion 
+  "Evaporation at surface (also known as evapotranspiration): flux of water into the atmosphere due to conversion
   of both liquid and solid phases to vapor (from underlying surface and vegetation)."
   Therefore, the ERA5 (and ERA5-Land) CMORizer switches the signs of ``evspsbl`` and ``evspsblpot`` to be compatible with the CMOR standard used e.g. by the CMIP models.
 
@@ -398,7 +398,7 @@ The UGRID conventions provide a standardized format to store data on
 unstructured grids, which is required by many software packages or tools to
 work correctly.
 An example is the horizontal regridding of native ICON data to a regular grid.
-While the built-in :ref:`unstructured_nearest scheme <built-in regridding
+While the built-in :ref:`nearest scheme <built-in regridding
 schemes>` can handle unstructured grids not in UGRID format, using more complex
 regridding algorithms (for example provided by the
 :doc:`iris-esmf-regrid:index` package through :ref:`generic regridding
@@ -420,7 +420,7 @@ This automatic UGRIDization is enabled by default, but can be switched off with
 the facet ``ugrid: false`` in the recipe or the extra facets (see below).
 This is useful for diagnostics that do not support input data in UGRID format
 (yet) like the :ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>` or
-if you want to use the built-in :ref:`unstructured_nearest scheme <built-in
+if you want to use the built-in :ref:`nearest scheme <built-in
 regridding schemes>` regridding scheme.
 
 For 3D ICON variables, ESMValCore tries to add the pressure level information

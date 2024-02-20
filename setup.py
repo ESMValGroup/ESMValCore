@@ -47,7 +47,7 @@ REQUIREMENTS = {
         'netCDF4',
         'numpy!=1.24.3',
         'packaging',
-        'pandas',
+        'pandas!=2.2.0',  # github.com/ESMValGroup/ESMValCore/pull/2305
         'pillow',
         'prov',
         'psutil',
@@ -58,7 +58,7 @@ REQUIREMENTS = {
         'scipy>=1.6',
         # See the following issue for info on the iris pin below:
         # https://github.com/ESMValGroup/ESMValTool/issues/3239#issuecomment-1613298587
-        'scitools-iris>=3.4.0',
+        'scitools-iris>=3.6.1',
         'shapely>=2.0.0',
         'stratify>=0.3',
         'yamale',
@@ -71,7 +71,7 @@ REQUIREMENTS = {
         'pytest-env',
         'pytest-html!=2.1.0',
         'pytest-metadata>=1.5.1',
-        'pytest-mypy',
+        'pytest-mypy>=0.10.3',  # gh issue/2314
         'pytest-mock',
         'pytest-xdist',
         'ESMValTool_sample_data==0.0.3',
