@@ -492,9 +492,8 @@ class AllVars(IconFix):
         # it to correct units. Note: we also round to next second, otherwise
         # this results in times that are off by 1s (e.g., 13:59:59 instead of
         # 14:00:00).
-        new_datetimes = (year_month_day + day_float).round(
-            'S'
-        ).dt.to_pydatetime()
+        rounded_datetimes = (year_month_day + day_float).round('s')
+        new_datetimes = np.array(rounded_datetimes.dt.to_pydatetime())
         new_dt_points = date2num(np.array(new_datetimes), new_t_units)
 
         # Modify time coordinate in place
