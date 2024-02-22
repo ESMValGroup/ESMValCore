@@ -214,10 +214,11 @@ def volume_statistics(
     cube:
         Input cube. The input cube should have a
         :class:`iris.coords.CellMeasure` named ``'ocean_volume'``, unless it
-        has regular 1D latitude and longitude coordinates so the cell volumes
-        can be computed by using :func:`iris.analysis.cartography.area_weights`
-        to compute the cell areas and multiplying those by the cell thickness,
-        computed from the bounds of the vertical coordinate.
+        has :class:`iris.coords.CellMeasure` named ``'cell_area'`` or
+        has regular 1D latitude and longitude coordinates so the cell areas
+        can be computed using :func:`iris.analysis.cartography.area_weights`.
+        The volume will be computed from the area multiplied by the
+        thickness, computed from the bounds of the vertical coordinate.
     operator:
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Currently, only `mean` is
