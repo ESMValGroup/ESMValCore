@@ -4,11 +4,13 @@ Module that performs a number of masking operations that include:
 masking with ancillary variables, masking with Natural Earth shapefiles
 (land or ocean), masking on thresholds, missing values masking.
 """
+from __future__ import annotations
 
 import logging
 import os
 
 import cartopy.io.shapereader as shpreader
+import dask
 import dask.array as da
 import iris
 import numpy as np
@@ -323,7 +325,14 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
     return cube
 
 
-def count_spells(data, threshold, axis, spell_length):
+def count_spells(
+    data: np.ndarray | da.Array,
+    threshold: float | None,
+    axis: int,
+    spell_length,
+) -> np.ndarray | da.Array:
+    # Copied from:
+    # https://scitools-iris.readthedocs.io/en/stable/generated/gallery/general/plot_custom_aggregation.html
     """Count data occurrences.
 
     Define a function to perform the custom statistical operation.
@@ -338,10 +347,10 @@ def count_spells(data, threshold, axis, spell_length):
 
     Parameters
     ----------
-    data: ndarray
+    data:
         raw data to be compared with value threshold.
 
-    threshold: float
+    threshold:
         threshold point for 'significant' datapoints.
 
     axis: int
@@ -353,15 +362,16 @@ def count_spells(data, threshold, axis, spell_length):
 
     Returns
     -------
-    int
+    :obj:`numpy.ndarray` or :obj:`dask.array.Array`
         Number of counts.
     """
     if axis < 0:
         # just cope with negative axis numbers
         axis += data.ndim
     # Threshold the data to find the 'significant' points.
+    array_module = da if isinstance(data, da.Array) else np
     if not threshold:
-        data_hits = np.ones_like(data, dtype=bool)
+        data_hits = array_module.ones_like(data, dtype=bool)
     else:
         data_hits = data > float(threshold)
 
@@ -371,17 +381,16 @@ def count_spells(data, threshold, axis, spell_length):
     # if you want overlapping windows set the step to be m*spell_length
     # where m is a float
     ###############################################################
-    hit_windows = rolling_window(data_hits,
-                                 window=spell_length,
-                                 step=spell_length,
-                                 axis=axis)
-
+    hit_windows = rolling_window(
+        data_hits,
+        window=spell_length,
+        step=spell_length,
+        axis=axis,
+    )
     # Find the windows "full of True-s" (along the added 'window axis').
-    full_windows = np.all(hit_windows, axis=axis + 1)
-
+    full_windows = array_module.all(hit_windows, axis=axis + 1)
     # Count points fulfilling the condition (along the time axis).
-    spell_point_counts = np.sum(full_windows, axis=axis, dtype=int)
-
+    spell_point_counts = array_module.sum(full_windows, axis=axis, dtype=int)
     return spell_point_counts
 
 
@@ -572,10 +581,12 @@ def mask_multimodel(products):
         f"got {product_types}")
 
 
-def mask_fillvalues(products,
-                    threshold_fraction,
-                    min_value=None,
-                    time_window=1):
+def mask_fillvalues(
+    products,
+    threshold_fraction: float,
+    min_value: float | None = None,
+    time_window: int = 1,
+):
     """Compute and apply a multi-dataset fillvalues mask.
 
     Construct the mask that fills a certain time window with missing values
@@ -590,15 +601,15 @@ def mask_fillvalues(products,
     products: iris.cube.Cube
         data products to be masked.
 
-    threshold_fraction: float
+    threshold_fraction:
         fractional threshold to be used as argument for Aggregator.
         Must be between 0 and 1.
 
-    min_value: float
+    min_value:
         minimum value threshold; default None
         If default, no thresholding applied so the full mask will be selected.
 
-    time_window: float
+    time_window:
         time window to compute missing data counts; default set to 1.
 
     Returns
@@ -613,46 +624,67 @@ def mask_fillvalues(products,
     """
     combined_mask = None
 
-    logger.debug("Creating fillvalues mask")
-    used = set()
+    used = {}
     for product in products:
         for cube in product.cubes:
-            cube.data = np.ma.fix_invalid(cube.data, copy=False)
-            mask = _get_fillvalues_mask(cube, threshold_fraction, min_value,
-                                        time_window)
+            array_module = da if cube.has_lazy_data() else np
+            cube.data = array_module.ma.fix_invalid(cube.core_data())
+            mask = _get_fillvalues_mask(
+                cube,
+                threshold_fraction,
+                min_value,
+                time_window,
+            )
             if combined_mask is None:
-                combined_mask = np.zeros_like(mask)
+                combined_mask = array_module.zeros_like(mask)
             # Select only valid (not all masked) pressure levels
             n_dims = len(mask.shape)
-            if n_dims == 2:
-                valid = ~np.all(mask)
-                if valid:
-                    combined_mask |= mask
-                    used.add(product)
-            elif n_dims == 3:
-                valid = ~np.all(mask, axis=(1, 2))
-                combined_mask[valid] |= mask[valid]
-                if np.any(valid):
-                    used.add(product)
+            if n_dims == 2:  # lat x lon
+                valid = mask.any(keepdims=True)
+            elif n_dims == 3:  # lev x lat x lon
+                valid = mask.any(axis=(1, 2), keepdims=True)
             else:
                 raise NotImplementedError(
                     f"Unable to handle {n_dims} dimensional data"
                 )
+            combined_mask = da.where(valid, combined_mask | mask,
+                                     combined_mask)
+            used[product.filename] = valid.any()
 
-    if np.any(combined_mask):
-        logger.debug("Applying fillvalues mask")
-        used = {p.copy_provenance() for p in used}
-        for product in products:
-            for cube in product.cubes:
+    apply_mask = combined_mask.any()  # type: ignore
+    for product in products:
+        for cube in product.cubes:
+            if cube.has_lazy_data() or isinstance(combined_mask, da.Array):
+                data = cube.lazy_data()
+                mask = da.ma.getmaskarray(data)
+                mask = da.where(apply_mask, mask | combined_mask, mask)
+                cube.data = da.ma.masked_array(data, mask)
+            elif apply_mask:
                 cube.data.mask |= combined_mask
-            for other in used:
-                if other.filename != product.filename:
-                    product.wasderivedfrom(other)
+
+    # Record provenance
+    used, = dask.compute(used)
+    used_filenames = {
+        filename
+        for filename, did_use in used.items() if did_use
+    }
+    used_products = {
+        p.copy_provenance()
+        for p in products if p.filename in used_filenames
+    }
+    for other in used_products:
+        if other.filename != product.filename:
+            product.wasderivedfrom(other)
 
     return products
 
 
-def _get_fillvalues_mask(cube, threshold_fraction, min_value, time_window):
+def _get_fillvalues_mask(
+    cube: iris.cube.Cube,
+    threshold_fraction: float,
+    min_value: float | None,
+    time_window: int,
+) -> np.ndarray | da.Array:
     """Compute the per-model missing values mask.
 
     Construct the mask that fills a certain time window with missing
@@ -662,7 +694,6 @@ def _get_fillvalues_mask(cube, threshold_fraction, min_value, time_window):
     counts the number of valid (unmasked) data points within that
     window; a simple value thresholding is also applied if needed.
     """
-    # basic checks
     if threshold_fraction < 0 or threshold_fraction > 1.0:
         raise ValueError(
             f"Fraction of missing values {threshold_fraction} should be "
@@ -678,19 +709,26 @@ def _get_fillvalues_mask(cube, threshold_fraction, min_value, time_window):
     counts_threshold = int(max_counts_per_time_window * threshold_fraction)
 
     # Make an aggregator
-    spell_count = Aggregator('spell_count',
-                             count_spells,
-                             units_func=lambda units: 1)
+    spell_count = Aggregator(
+        'spell_count',
+        count_spells,
+        units_func=lambda units: 1,
+    )
 
     # Calculate the statistic.
-    counts_windowed_cube = cube.collapsed('time',
-                                          spell_count,
-                                          threshold=min_value,
-                                          spell_length=time_window)
+    counts_windowed_cube = cube.collapsed(
+        'time',
+        spell_count,
+        threshold=min_value,
+        spell_length=time_window,
+    )
 
     # Create mask
-    mask = counts_windowed_cube.data < counts_threshold
-    if np.ma.isMaskedArray(mask):
-        mask = mask.data | mask.mask
+    mask = counts_windowed_cube.core_data() < counts_threshold
+    if isinstance(da.utils.meta_from_array(mask), np.ma.MaskedArray):
+        if isinstance(mask, da.Array):
+            mask = da.ma.getdata(mask) | da.ma.getmaskarray(mask)
+        else:
+            mask = mask.data | mask.mask
 
     return mask
