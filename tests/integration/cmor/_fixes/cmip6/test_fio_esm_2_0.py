@@ -11,6 +11,15 @@ from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
 
+def test_clt_fix():
+    """Test `Clt.fix_data`."""
+    cube = iris.cube.Cube(0.5)
+    fix = Fix.get_fixes('CMIP6', 'FIO-ESM-2-0', 'Amon', 'clt')[0]
+    out_cube = fix.fix_data(cube)
+    np.testing.assert_allclose(out_cube.data, 50.0)
+    assert out_cube.units == '%'
+
+
 def test_get_tas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'FIO-ESM-2-0', 'Amon', 'tas')
