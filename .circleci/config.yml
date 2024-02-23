@@ -2,8 +2,8 @@
 version: 2.1
 
 orbs:
-  coverage-reporter: codacy/coverage-reporter@11.4.1
-  codecov: codecov/codecov@1.2.3
+  coverage-reporter: codacy/coverage-reporter@13.13.7
+  codecov: codecov/codecov@3.2.5
 
 commands:
   check_changes:
@@ -32,7 +32,7 @@ commands:
             pytest -n 4 --junitxml=test-reports/report.xml
             esmvaltool version
       - store_test_results:
-          path: test-reports/
+          path: test-reports/report.xml
       - store_artifacts:
           path: /logs
       - run:
@@ -124,6 +124,9 @@ jobs:
             - /root/.cache/pip
             - .mypy_cache
             - .pytest_cache
+      - run:
+          name: Install gpg (required by codecov orb)
+          command: apt update && apt install -y gpg
       - codecov/upload:
           when: always
           file: 'test-reports/coverage.xml'
@@ -156,7 +159,7 @@ jobs:
     working_directory: /esmvaltool
     docker:
       - image: condaforge/mambaforge
-    resource_class: small
+    resource_class: medium
     steps:
       - run:
           command: |
@@ -179,7 +182,7 @@ jobs:
     # Test building documentation
     docker:
       - image: condaforge/mambaforge
-    resource_class: small
+    resource_class: medium
     steps:
       - checkout
       - run:

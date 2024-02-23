@@ -244,6 +244,7 @@ def _get_dataset_facets_from_recipe(
     recipe_variable: dict[str, Any],
     recipe_dataset: dict[str, Any],
     profiles: dict[str, Any],
+    diagnostic_name: str,
     session: Session,
 ) -> tuple[Facets, list[Facets]]:
     """Read the facets for a single dataset definition from the recipe."""
@@ -286,16 +287,17 @@ def _get_dataset_facets_from_recipe(
             'dataset',
             'project',
         ),
+        diagnostic=diagnostic_name,
+        variable_group=variable_group
     )
 
-    if not session['use_legacy_supplementaries']:
-        preprocessor = facets.get('preprocessor', 'default')
-        settings = profiles.get(preprocessor, {})
-        _append_missing_supplementaries(supplementaries, facets, settings)
-        supplementaries = [
-            facets for facets in supplementaries
-            if not facets.pop('skip', False)
-        ]
+    preprocessor = facets.get('preprocessor', 'default')
+    settings = profiles.get(preprocessor, {})
+    _append_missing_supplementaries(supplementaries, facets, settings)
+    supplementaries = [
+        facets for facets in supplementaries
+        if not facets.pop('skip', False)
+    ]
 
     return facets, supplementaries
 
@@ -330,6 +332,7 @@ def _get_facets_from_recipe(
             recipe_variable=recipe_variable,
             recipe_dataset=recipe_dataset,
             profiles=profiles,
+            diagnostic_name=diagnostic_name,
             session=session,
         )
 
@@ -484,8 +487,12 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
     # idea: add option to specify facets in list of dicts that is value of
     # 'derive' in the recipe and use that instead of get_required?
     for input_facets in required_vars:
-        input_dataset = dataset.copy(**input_facets)
-        _update_cmor_facets(input_dataset.facets, override=True)
+        input_dataset = dataset.copy()
+        keep = {'alias', 'recipe_dataset_index', *dataset.minimal_facets}
+        input_dataset.facets = {
+            k: v for k, v in input_dataset.facets.items() if k in keep
+        }
+        input_dataset.facets.update(input_facets)
         input_dataset.augment_facets()
         _fix_cmip5_fx_ensemble(input_dataset)
         if input_facets.get('optional') and not input_dataset.files:

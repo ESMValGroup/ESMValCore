@@ -1,34 +1,9 @@
-
 """Fix HadGEM2_CC."""
-import numpy as np
-
 from ..fix import Fix
+from .hadgem2_es import AllVars as BaseAllVars
 
 
-class AllVars(Fix):
-    """Fix common errors for all vars."""
-
-    def fix_metadata(self, cubes):
-        """
-        Fix latitude.
-
-        Parameters
-        ----------
-        cube: iris.cube.CubeList
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        for cube in cubes:
-            lats = cube.coords('latitude')
-            if lats:
-                lat = cube.coord('latitude')
-                lat.points = np.clip(lat.points, -90., 90.)
-                lat.bounds = np.clip(lat.bounds, -90., 90.)
-
-        return cubes
+AllVars = BaseAllVars
 
 
 class O2(Fix):

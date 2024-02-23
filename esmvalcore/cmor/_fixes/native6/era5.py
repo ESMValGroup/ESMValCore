@@ -7,16 +7,15 @@ import numpy as np
 
 from esmvalcore.iris_helpers import date2num
 
+from ...table import CMOR_TABLES
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
-from ...table import CMOR_TABLES
 
 logger = logging.getLogger(__name__)
 
 
 def get_frequency(cube):
     """Determine time frequency of input cube."""
-
     try:
         time = cube.coord(axis='T')
     except iris.exceptions.CoordinateNotFoundError:
@@ -111,6 +110,8 @@ class Evspsbl(Fix):
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
             multiply_with_density(cube)
+            # Correct sign to align with CMOR standards
+            cube.data = cube.core_data() * -1.0
 
         return cubes
 
@@ -126,6 +127,8 @@ class Evspsblpot(Fix):
             fix_hourly_time_coordinate(cube)
             fix_accumulated_units(cube)
             multiply_with_density(cube)
+            # Correct sign to align with CMOR standards
+            cube.data = cube.core_data() * -1.0
 
         return cubes
 
@@ -315,6 +318,7 @@ class Tasmax(Fix):
     """Fixes for tasmax."""
 
     def fix_metadata(self, cubes):
+        """Fix metadata."""
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
         return cubes
@@ -324,6 +328,7 @@ class Tasmin(Fix):
     """Fixes for tasmin."""
 
     def fix_metadata(self, cubes):
+        """Fix metadata."""
         for cube in cubes:
             fix_hourly_time_coordinate(cube)
         return cubes
@@ -377,7 +382,7 @@ class AllVars(Fix):
             coord.var_name = coord_def.out_name
             coord.long_name = coord_def.long_name
             coord.points = coord.core_points().astype('float64')
-            if (coord.bounds is None and len(coord.points) > 1
+            if (not coord.has_bounds() and len(coord.core_points()) > 1
                     and coord_def.must_have_bounds == "yes"):
                 coord.guess_bounds()
 

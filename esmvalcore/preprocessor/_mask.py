@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 def _get_fx_mask(fx_data, fx_option, mask_type):
     """Build a percentage-thresholded mask from an fx file."""
-    inmask = np.zeros_like(fx_data, bool)
+    inmask = da.zeros_like(fx_data, bool)
     if mask_type == 'sftlf':
         if fx_option == 'land':
             # Mask land out
@@ -52,11 +52,10 @@ def _get_fx_mask(fx_data, fx_option, mask_type):
 def _apply_fx_mask(fx_mask, var_data):
     """Apply the fx data extracted mask on the actual processed data."""
     # Apply mask across
-    if np.ma.is_masked(var_data):
-        fx_mask |= var_data.mask
-
-    # Build the new masked data
-    var_data = np.ma.array(var_data, mask=fx_mask, fill_value=1e+20)
+    old_mask = da.ma.getmaskarray(var_data)
+    mask = old_mask | fx_mask
+    var_data = da.ma.masked_array(var_data, mask=mask)
+    # maybe fill_value=1e+20
 
     return var_data
 
@@ -104,6 +103,7 @@ def mask_landsea(cube, mask_out):
     """
     # Dict to store the Natural Earth masks
     cwd = os.path.dirname(__file__)
+
     # ne_10m_land is fast; ne_10m_ocean is very slow
     shapefiles = {
         'land': os.path.join(cwd, 'ne_masks/ne_10m_land.shp'),
@@ -125,7 +125,7 @@ def mask_landsea(cube, mask_out):
         fx_cube_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
         landsea_mask = _get_fx_mask(fx_cube_data, mask_out,
                                     fx_cube.var_name)
-        cube.data = _apply_fx_mask(landsea_mask, cube.data)
+        cube.data = _apply_fx_mask(landsea_mask, cube.core_data())
         logger.debug("Applying land-sea mask: %s", fx_cube.var_name)
     else:
         if cube.coord('longitude').points.ndim < 2:
@@ -186,7 +186,7 @@ def mask_landseaice(cube, mask_out):
     if fx_cube:
         fx_cube_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
         landice_mask = _get_fx_mask(fx_cube_data, mask_out, fx_cube.var_name)
-        cube.data = _apply_fx_mask(landice_mask, cube.data)
+        cube.data = _apply_fx_mask(landice_mask, cube.core_data())
         logger.debug("Applying landsea-ice mask: sftgif")
     else:
         msg = "Landsea-ice mask could not be found. Stopping. "
@@ -281,13 +281,10 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
     if region_indices:
         regions = [regions[idx] for idx in region_indices]
 
-    # Create a mask for the data
-    mask = np.zeros(cube.shape, dtype=bool)
-
     # Create a set of x,y points from the cube
     # 1D regular grids
     if cube.coord('longitude').points.ndim < 2:
-        x_p, y_p = np.meshgrid(
+        x_p, y_p = da.meshgrid(
             cube.coord(axis='X').points,
             cube.coord(axis='Y').points)
     # 2D irregular grids; spit an error for now
@@ -298,27 +295,30 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
         raise ValueError(msg)
 
     # Wrap around longitude coordinate to match data
-    x_p_180 = np.where(x_p >= 180., x_p - 360., x_p)
+    x_p_180 = da.where(x_p >= 180., x_p - 360., x_p)
+
     # the NE mask has no points at x = -180 and y = +/-90
     # so we will fool it and apply the mask at (-179, -89, 89) instead
-    x_p_180 = np.where(x_p_180 == -180., x_p_180 + 1., x_p_180)
-    y_p_0 = np.where(y_p == -90., y_p + 1., y_p)
-    y_p_90 = np.where(y_p_0 == 90., y_p_0 - 1., y_p_0)
+    x_p_180 = da.where(x_p_180 == -180., x_p_180 + 1., x_p_180)
 
+    y_p_0 = da.where(y_p == -90., y_p + 1., y_p)
+    y_p_90 = da.where(y_p_0 == 90., y_p_0 - 1., y_p_0)
+
+    mask = None
     for region in regions:
         # Build mask with vectorization
-        if cube.ndim == 2:
+        if mask is None:
             mask = shp_vect.contains(region, x_p_180, y_p_90)
-        elif cube.ndim == 3:
-            mask[:] = shp_vect.contains(region, x_p_180, y_p_90)
-        elif cube.ndim == 4:
-            mask[:, :] = shp_vect.contains(region, x_p_180, y_p_90)
-
-        # Then apply the mask
-        if isinstance(cube.data, np.ma.MaskedArray):
-            cube.data.mask |= mask
         else:
-            cube.data = np.ma.masked_array(cube.data, mask)
+            mask |= shp_vect.contains(region, x_p_180, y_p_90)
+
+    mask = da.array(mask)
+    iris.util.broadcast_to_shape(mask, cube.shape, cube.coord_dims('latitude')
+                                 + cube.coord_dims('longitude'))
+
+    old_mask = da.ma.getmaskarray(cube.core_data())
+    mask = old_mask | mask
+    cube.data = da.ma.masked_array(cube.core_data(), mask=mask)
 
     return cube
 
@@ -364,6 +364,7 @@ def count_spells(data, threshold, axis, spell_length):
         data_hits = np.ones_like(data, dtype=bool)
     else:
         data_hits = data > float(threshold)
+
     # Make an array with data values "windowed" along the time axis.
     ###############################################################
     # WARNING: default step is = window size i.e. no overlapping
@@ -374,10 +375,13 @@ def count_spells(data, threshold, axis, spell_length):
                                  window=spell_length,
                                  step=spell_length,
                                  axis=axis)
+
     # Find the windows "full of True-s" (along the added 'window axis').
     full_windows = np.all(hit_windows, axis=axis + 1)
+
     # Count points fulfilling the condition (along the time axis).
     spell_point_counts = np.sum(full_windows, axis=axis, dtype=int)
+
     return spell_point_counts
 
 
@@ -400,7 +404,8 @@ def mask_above_threshold(cube, threshold):
     iris.cube.Cube
         thresholded cube.
     """
-    cube.data = np.ma.masked_where(cube.data > threshold, cube.data)
+    cube.data = (da.ma.masked_where(cube.core_data() > threshold,
+                                    cube.core_data()))
     return cube
 
 
@@ -422,7 +427,8 @@ def mask_below_threshold(cube, threshold):
     iris.cube.Cube
         thresholded cube.
     """
-    cube.data = np.ma.masked_where(cube.data < threshold, cube.data)
+    cube.data = (da.ma.masked_where(cube.core_data() < threshold,
+                                    cube.core_data()))
     return cube
 
 
@@ -446,7 +452,7 @@ def mask_inside_range(cube, minimum, maximum):
     iris.cube.Cube
         thresholded cube.
     """
-    cube.data = np.ma.masked_inside(cube.data, minimum, maximum)
+    cube.data = da.ma.masked_inside(cube.core_data(), minimum, maximum)
     return cube
 
 
@@ -470,7 +476,7 @@ def mask_outside_range(cube, minimum, maximum):
     iris.cube.Cube
         thresholded cube.
     """
-    cube.data = np.ma.masked_outside(cube.data, minimum, maximum)
+    cube.data = da.ma.masked_outside(cube.core_data(), minimum, maximum)
     return cube
 
 

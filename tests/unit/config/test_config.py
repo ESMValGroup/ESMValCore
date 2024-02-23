@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+import esmvalcore
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config import CFG, _config
 from esmvalcore.config._config import (
@@ -100,7 +101,7 @@ def test_get_extra_facets_cmip3():
     })
     extra_facets = get_extra_facets(dataset, extra_facets_dir=tuple())
 
-    assert extra_facets == {'institute': ['CNRM', 'INM']}
+    assert extra_facets == {'institute': ['CNRM', 'INM', 'CNRM_CERFACS']}
 
 
 def test_get_extra_facets_cmip5():
@@ -193,6 +194,7 @@ def test_load_default_config(monkeypatch, default_config):
         'preproc_dir',
         'run_dir',
         'work_dir',
+        'config_dir',
     }
     # Check that only allowed keys are in it
     assert set(default_cfg) == set(cfg)
@@ -210,6 +212,7 @@ def test_load_default_config(monkeypatch, default_config):
     for path in ('preproc', 'work', 'run'):
         assert getattr(cfg, path + '_dir') == cfg.session_dir / path
     assert cfg.plot_dir == cfg.session_dir / 'plots'
+    assert cfg.config_dir == Path(esmvalcore.__file__).parent
 
     # Check that projects were configured
     assert project_cfg
@@ -237,7 +240,7 @@ def test_project_obs4mips_case_correction(tmp_path, monkeypatch, mocker):
     cfg_dev = {
         'obs4mips': project_cfg,
     }
-    with cfg_file.open('w') as file:
+    with cfg_file.open('w', encoding='utf-8') as file:
         yaml.safe_dump(cfg_dev, file)
 
     _config.load_config_developer(cfg_file)
@@ -251,7 +254,7 @@ def test_load_config_developer_custom(tmp_path, monkeypatch, mocker):
     mocker.patch.object(_config, 'read_cmor_tables', autospec=True)
     cfg_file = tmp_path / 'config-developer.yml'
     cfg_dev = {'custom': {'cmor_path': '/path/to/tables'}}
-    with cfg_file.open('w') as file:
+    with cfg_file.open('w', encoding='utf-8') as file:
         yaml.safe_dump(cfg_dev, file)
 
     _config.load_config_developer(cfg_file)

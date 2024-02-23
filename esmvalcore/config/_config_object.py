@@ -1,15 +1,18 @@
 """Importable config object."""
+from __future__ import annotations
 
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
 from types import MappingProxyType
-from typing import Optional, Union
+from typing import Optional
 
 import yaml
 
 import esmvalcore
 from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.exceptions import InvalidConfigParameter
 
 from ._config_validators import (
     _deprecated_options_defaults,
@@ -27,7 +30,9 @@ class Config(ValidatedConfig):
 
     Do not instantiate this class directly, but use
     :obj:`esmvalcore.config.CFG` instead.
+
     """
+    _DEFAULT_USER_CONFIG_DIR = Path.home() / '.esmvaltool'
 
     _validate = _validators
     _deprecate = _deprecators
@@ -38,49 +43,65 @@ class Config(ValidatedConfig):
     )
 
     @classmethod
-    def _load_user_config(cls,
-                          filename: Union[os.PathLike, str],
-                          raise_exception: bool = True):
+    def _load_user_config(
+        cls,
+        filename: Optional[os.PathLike | str] = None,
+        raise_exception: bool = True,
+    ):
         """Load user configuration from the given file.
 
         The config is cleared and updated in-place.
 
         Parameters
         ----------
-        filename: pathlike
-            Name of the config file, must be yaml format
+        filename:
+            Name of the user configuration file (must be YAML format). If
+            `None`, use the rules given in `Config._get_config_user_path` to
+            determine the path.
         raise_exception : bool
-            Raise an exception if `filename` can not be found (default).
-            Otherwise, silently pass and use the default configuration. This
-            setting is necessary for the case where
-            `.esmvaltool/config-user.yml` has not been defined (i.e. first
-            start).
+            If ``True``, raise an exception if `filename` cannot be found.  If
+            ``False``, silently pass and use the default configuration. This
+            setting is necessary during the loading of this module when no
+            configuration file is given (relevant if used within a script or
+            notebook).
         """
         new = cls()
+        new.update(CFG_DEFAULT)
+
+        config_user_path = cls._get_config_user_path(filename)
 
         try:
-            mapping = _read_config_file(filename)
-            mapping['config_file'] = filename
-        except IOError:
+            mapping = cls._read_config_file(config_user_path)
+            mapping['config_file'] = config_user_path
+        except FileNotFoundError:
             if raise_exception:
                 raise
             mapping = {}
 
-        new.update(CFG_DEFAULT)
-        new.update(mapping)
-        new.check_missing()
+        try:
+            new.update(mapping)
+            new.check_missing()
+        except InvalidConfigParameter as exc:
+            raise InvalidConfigParameter(
+                f"Failed to parse user configuration file {config_user_path}: "
+                f"{str(exc)}"
+            ) from exc
 
         return new
 
     @classmethod
-    def _load_default_config(cls, filename: Union[os.PathLike, str]):
+    def _load_default_config(cls):
         """Load the default configuration."""
         new = cls()
 
-        mapping = _read_config_file(filename)
+        package_config_user_path = Path(
+            esmvalcore.__file__
+        ).parent / 'config-user.yml'
+        mapping = cls._read_config_file(package_config_user_path)
+
         # Add defaults that are not available in esmvalcore/config-user.yml
         mapping['check_level'] = CheckLevels.DEFAULT
-        mapping['config_file'] = filename
+        mapping['config_file'] = package_config_user_path
         mapping['diagnostics'] = None
         mapping['extra_facets_dir'] = tuple()
         mapping['max_datasets'] = None
@@ -93,29 +114,142 @@ class Config(ValidatedConfig):
 
         return new
 
+    @staticmethod
+    def _read_config_file(config_user_path: Path) -> dict:
+        """Read configuration file and store settings in a dictionary."""
+        if not config_user_path.is_file():
+            raise FileNotFoundError(
+                f"Config file '{config_user_path}' does not exist"
+            )
+
+        with open(config_user_path, 'r', encoding='utf-8') as file:
+            cfg = yaml.safe_load(file)
+
+        return cfg
+
+    @staticmethod
+    def _get_config_user_path(
+        filename: Optional[os.PathLike | str] = None
+    ) -> Path:
+        """Get path to user configuration file.
+
+        `filename` can be given as absolute or relative path. In the latter
+        case, search in the current working directory and `~/.esmvaltool` (in
+        that order).
+
+        If `filename` is not given, try to get user configuration file from the
+        following locations (sorted by descending priority):
+
+        1. Internal `_ESMVALTOOL_USER_CONFIG_FILE_` environment variable
+           (this ensures that any subprocess spawned by the esmvaltool program
+           will use the correct user configuration file).
+        2. Command line arguments `--config-file` or `--config_file` (both
+           variants are allowed by the fire module), but only if script name is
+           `esmvaltool`.
+        3. `config-user.yml` within default ESMValTool configuration directory
+           `~/.esmvaltool`.
+
+        Note
+        ----
+        This will NOT check if the returned file actually exists to allow
+        loading the module without any configuration file (this is relevant if
+        the module is used within a script or notebook). To check if the file
+        actually exists, use the method `load_from_file` (this is done when
+        using the `esmvaltool` CLI).
+
+        If used within the esmvaltool program, set the
+        _ESMVALTOOL_USER_CONFIG_FILE_ at the end of this method to make sure
+        that subsequent calls of this method (also in suprocesses) use the
+        correct user configuration file.
+
+        """
+        # (1) Try to get user configuration file from `filename` argument
+        config_user = filename
+
+        # (2) Try to get user configuration file from internal
+        # _ESMVALTOOL_USER_CONFIG_FILE_ environment variable
+        if (
+                config_user is None and
+                '_ESMVALTOOL_USER_CONFIG_FILE_' in os.environ
+        ):
+            config_user = os.environ['_ESMVALTOOL_USER_CONFIG_FILE_']
+
+        # (3) Try to get user configuration file from CLI arguments
+        if config_user is None:
+            config_user = Config._get_config_path_from_cli()
+
+        # (4) Default location
+        if config_user is None:
+            config_user = Config._DEFAULT_USER_CONFIG_DIR / 'config-user.yml'
+
+        config_user = Path(config_user).expanduser()
+
+        # Also search path relative to ~/.esmvaltool if necessary
+        if not (config_user.is_file() or config_user.is_absolute()):
+            config_user = Config._DEFAULT_USER_CONFIG_DIR / config_user
+        config_user = config_user.absolute()
+
+        # If used within the esmvaltool program, make sure that subsequent
+        # calls of this method (also in suprocesses) use the correct user
+        # configuration file
+        if Path(sys.argv[0]).name == 'esmvaltool':
+            os.environ['_ESMVALTOOL_USER_CONFIG_FILE_'] = str(config_user)
+
+        return config_user
+
+    @staticmethod
+    def _get_config_path_from_cli() -> None | str:
+        """Try to get configuration path from CLI arguments.
+
+        The hack of directly parsing the CLI arguments here (instead of using
+        the fire or argparser module) ensures that the correct user
+        configuration file is used. This will always work, regardless of when
+        this module has been imported in the code.
+
+        Note
+        ----
+        This only works if the script name is `esmvaltool`. Does not check if
+        file exists.
+
+        """
+        if Path(sys.argv[0]).name != 'esmvaltool':
+            return None
+
+        for arg in sys.argv:
+            for opt in ('--config-file', '--config_file'):
+                if opt in arg:
+                    # Parse '--config-file=/file.yml' or
+                    # '--config_file=/file.yml'
+                    partition = arg.partition('=')
+                    if partition[2]:
+                        return partition[2]
+
+                    # Parse '--config-file /file.yml' or
+                    # '--config_file /file.yml'
+                    config_idx = sys.argv.index(opt)
+                    if config_idx == len(sys.argv) - 1:  # no file given
+                        return None
+                    return sys.argv[config_idx + 1]
+
+        return None
+
     def load_from_file(
         self,
-        filename: Optional[Union[os.PathLike, str]] = None,
+        filename: Optional[os.PathLike | str] = None,
     ) -> None:
         """Load user configuration from the given file."""
-        if filename is None:
-            filename = USER_CONFIG
-        path = Path(filename).expanduser()
-        if not path.exists():
-            try_path = USER_CONFIG_DIR / filename
-            if try_path.exists():
-                path = try_path
-            else:
-                raise FileNotFoundError(f'Cannot find: `{filename}`'
-                                        f'locally or in `{try_path}`')
-
         self.clear()
-        self.update(Config._load_user_config(path))
+        self.update(Config._load_user_config(filename))
 
     def reload(self):
         """Reload the config file."""
-        filename = self.get('config_file', DEFAULT_CONFIG)
-        self.load_from_file(filename)
+        if 'config_file' not in self:
+            raise ValueError(
+                "Cannot reload configuration, option 'config_file' is "
+                "missing; make sure to only use the `CFG` object from the "
+                "`esmvalcore.config` module"
+            )
+        self.load_from_file(self['config_file'])
 
     def start_session(self, name: str):
         """Start a new session from this configuration object.
@@ -161,7 +295,7 @@ class Session(ValidatedConfig):
 
     def __init__(self, config: dict, name: str = 'session'):
         super().__init__(config)
-        self.session_name: Union[str, None] = None
+        self.session_name: str | None = None
         self.set_session_name(name)
 
     def set_session_name(self, name: str = 'session'):
@@ -201,7 +335,7 @@ class Session(ValidatedConfig):
     @property
     def config_dir(self):
         """Return user config directory."""
-        return USER_CONFIG_DIR
+        return Path(self['config_file']).parent
 
     @property
     def main_log(self):
@@ -219,24 +353,6 @@ class Session(ValidatedConfig):
         return self.session_dir / self._relative_fixed_file_dir
 
 
-def _read_config_file(config_file):
-    """Read config user file and store settings in a dictionary."""
-    config_file = Path(config_file)
-    if not config_file.exists():
-        raise IOError(f'Config file `{config_file}` does not exist.')
-
-    with open(config_file, 'r') as file:
-        cfg = yaml.safe_load(file)
-
-    return cfg
-
-
-DEFAULT_CONFIG_DIR = Path(esmvalcore.__file__).parent
-DEFAULT_CONFIG = DEFAULT_CONFIG_DIR / 'config-user.yml'
-
-USER_CONFIG_DIR = Path.home() / '.esmvaltool'
-USER_CONFIG = USER_CONFIG_DIR / 'config-user.yml'
-
-# initialize placeholders
-CFG_DEFAULT = MappingProxyType(Config._load_default_config(DEFAULT_CONFIG))
-CFG = Config._load_user_config(USER_CONFIG, raise_exception=False)
+# Initialize configuration objects
+CFG_DEFAULT = MappingProxyType(Config._load_default_config())
+CFG = Config._load_user_config(raise_exception=False)

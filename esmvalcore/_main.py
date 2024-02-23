@@ -64,10 +64,10 @@ def parse_resume(resume, recipe):
         resume[i] = Path(os.path.expandvars(resume_dir)).expanduser()
 
     # Sanity check resume directories:
-    current_recipe = recipe.read_text()
+    current_recipe = recipe.read_text(encoding='utf-8')
     for resume_dir in resume:
         resume_recipe = resume_dir / 'run' / recipe.name
-        if current_recipe != resume_recipe.read_text():
+        if current_recipe != resume_recipe.read_text(encoding='utf-8'):
             raise ValueError(f'Only identical recipes can be resumed, but '
                              f'{resume_recipe} is different from {recipe}')
     return resume
@@ -319,7 +319,7 @@ class ESMValTool():
             self.__setattr__(entry_point.name, entry_point.load()())
 
     def version(self):
-        """Show versions of all packages that conform ESMValTool.
+        """Show versions of all packages that form ESMValTool.
 
         In particular, this command will show the version ESMValCore and
         any other package that adds a subcommand to 'esmvaltool'
@@ -337,7 +337,6 @@ class ESMValTool():
             max_datasets=None,
             max_years=None,
             skip_nonexistent=None,
-            offline=None,
             search_esgf=None,
             diagnostics=None,
             check_level=None,
@@ -354,8 +353,10 @@ class ESMValTool():
             Recipe to run, as either the name of an installed recipe or the
             path to a non-installed one.
         config_file: str, optional
-            Configuration file to use. If not provided the file
-            ${HOME}/.esmvaltool/config-user.yml will be used.
+            Configuration file to use. Can be given as absolute or relative
+            path. In the latter case, search in the current working directory
+            and `${HOME}/.esmvaltool` (in that order). If not provided, the
+            file `${HOME}/.esmvaltool/config-user.yml` will be used.
         resume_from: list(str), optional
             Resume one or more previous runs by using preprocessor output files
             from these output directories.
@@ -365,15 +366,6 @@ class ESMValTool():
             Maximum number of years to use.
         skip_nonexistent: bool, optional
             If True, the run will not fail if some datasets are not available.
-        offline: bool, optional
-            If True, the tool will not download missing data from ESGF.
-
-            .. deprecated:: 2.8.0
-                This option has been deprecated in ESMValCore version 2.8.0 and
-                is scheduled for removal in version 2.10.0. Please use the
-                options `search_esgf=never` (for `offline=True`) or
-                `search_esgf=when_missing` (for `offline=False`). These are
-                exact replacements.
         search_esgf: str, optional
             If `never`, disable automatic download of data from the ESGF. If
             `when_missing`, enable the automatic download of files that are not
@@ -393,9 +385,15 @@ class ESMValTool():
         """
         from .config import CFG
 
+        # At this point, --config_file is already parsed if a valid file has
+        # been given (see
+        # https://github.com/ESMValGroup/ESMValCore/issues/2280), but no error
+        # has been raised if the file does not exist. Thus, reload the file
+        # here with `load_from_file` to make sure a proper error is raised.
+        CFG.load_from_file(config_file)
+
         recipe = self._get_recipe(recipe)
 
-        CFG.load_from_file(config_file)
         session = CFG.start_session(recipe.stem)
         if check_level is not None:
             session['check_level'] = check_level
@@ -405,8 +403,6 @@ class ESMValTool():
             session['max_datasets'] = max_datasets
         if max_years is not None:
             session['max_years'] = max_years
-        if offline is not None:
-            session['offline'] = offline
         if search_esgf is not None:
             session['search_esgf'] = search_esgf
         if skip_nonexistent is not None:

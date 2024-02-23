@@ -190,13 +190,27 @@ authors:
     affiliation: "DLR, Germany"
     family-names: Bauer
     given-names: Julian
+  -
+    affiliation: "ACCESS-NRI, Australia"
+    family-names: Beucher
+    given-names: Romain
+    orcid: "https://orcid.org/0000-0003-3891-5444"
+  -
+    affiliation: "Forschungszentrum Juelich (FZJ), Germany"
+    family-names: Benke
+    given-names: Joerg
+  -
+    affiliation: "BSC, Spain"
+    family-names: Martin-Martinez
+    given-names: Eneko
+    orcid: "https://orcid.org/0000-0002-9213-7818"
 
 cff-version: 1.2.0
-date-released: 2023-07-04
+date-released: 2023-12-19
 doi: "10.5281/zenodo.3387139"
 license: "Apache-2.0"
 message: "If you use this software, please cite it using these metadata."
 repository-code: "https://github.com/ESMValGroup/ESMValCore/"
 title: ESMValCore
-version: "v2.9.0"
+version: "v2.10.0"
 ...
