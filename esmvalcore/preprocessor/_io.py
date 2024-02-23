@@ -348,7 +348,9 @@ def _sort_cubes_by_time(cubes):
     return cubes
 
 
-def concatenate(cubes, check_level=CheckLevels.DEFAULT, experiments_first=True):
+def concatenate(cubes,
+                check_level=CheckLevels.DEFAULT,
+                experiments_first=True):
     """Concatenate all cubes after fixing metadata.
 
     Parameters
