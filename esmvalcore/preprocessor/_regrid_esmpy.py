@@ -70,18 +70,6 @@ class ESMPyRegridder:
         self.method = method
         self.mask_threshold = mask_threshold
 
-        # Prepare regridding (this allows reusing the regridder for faster
-        # execution times, see also
-        # https://scitools-iris.readthedocs.io/en/latest/userguide/
-        # interpolation_and_regridding.html#caching-a-regridder)
-        (src_rep, dst_rep) = get_grid_representants(src_cube, tgt_cube)
-        regridder = build_regridder(
-            src_rep, dst_rep, method, mask_threshold=mask_threshold
-        )
-        self.src_rep = src_rep
-        self.dst_rep = dst_rep
-        self.regridder = regridder
-
     def __call__(self, cube: Cube) -> Cube:
         """Perform regridding.
 
@@ -96,7 +84,12 @@ class ESMPyRegridder:
             Regridded cube.
 
         """
-        return map_slices(cube, self.regridder, self.src_rep, self.dst_rep)
+        src_rep, dst_rep = get_grid_representants(cube, self.tgt_cube)
+        regridder = build_regridder(
+            src_rep, dst_rep, self.method, mask_threshold=self.mask_threshold
+        )
+        result = map_slices(cube, regridder, src_rep, dst_rep)
+        return result
 
 
 class _ESMPyScheme:
