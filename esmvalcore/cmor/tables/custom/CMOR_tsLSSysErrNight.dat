@@ -1,0 +1,23 @@
+SOURCE: CMIP5
+!============
+variable_entry:    tsLSSysErrNight
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     
+units:             K
+cell_methods:      time: mean
+cell_measures:     
+long_name:         uncertainty from large-scale systematic errors
+comment:
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        time
+type:              real
+valid_min:         
+valid_max:         
+!----------------------------------
+!
