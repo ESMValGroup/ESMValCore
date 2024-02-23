@@ -372,7 +372,7 @@ def concatenate(cubes,
     ValueError
         Concatenation was not possible.
     """
-    experiment_ids = set([cube.attributes["experiment_id"] for cube in cubes])
+    experiment_ids = {cube.attributes["experiment_id"] for cube in cubes}
     if len(experiment_ids) > 1 and experiments_first:
         cubes = [
             concatenate(cubes=exp_cubes, experiments_first=False)
