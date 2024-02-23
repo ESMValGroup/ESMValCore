@@ -1,8 +1,5 @@
 """Unit tests for the :func:`esmvalcore.preprocessor.regrid.regrid`
 function."""
-
-import unittest
-
 import dask
 import dask.array as da
 import iris
@@ -11,7 +8,11 @@ import pytest
 
 import esmvalcore.preprocessor._regrid
 from esmvalcore.preprocessor import regrid
-from esmvalcore.preprocessor._regrid import _horizontal_grid_is_close, _rechunk
+from esmvalcore.preprocessor._regrid import (
+    _get_regridder,
+    _horizontal_grid_is_close,
+    _rechunk,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -81,11 +82,19 @@ SCHEMES = ['area_weighted', 'linear', 'nearest']
 @pytest.mark.parametrize('scheme', SCHEMES)
 def test_builtin_regridding(scheme, cube_10x10, cube_30x30):
     """Test `regrid.`"""
+    _cached_regridders = esmvalcore.preprocessor._regrid._CACHED_REGRIDDERS
+    assert _cached_regridders == {}
+
     res = regrid(cube_10x10, cube_30x30, scheme)
+
     assert res.coord('latitude') == cube_30x30.coord('latitude')
     assert res.coord('longitude') == cube_30x30.coord('longitude')
     assert res.dtype == np.float32
     assert np.allclose(res.data, 0.0)
+
+    assert len(_cached_regridders) == 1
+    key = (scheme, (18,), (36,), (30,), (30,))
+    assert key in _cached_regridders
 
 
 @pytest.mark.parametrize('scheme', SCHEMES)
@@ -120,6 +129,9 @@ def test_regrid_generic_invalid_reference(cube_10x10, cube_30x30):
 
 def test_regrid_generic_regridding(cube_10x10, cube_30x30):
     """Test `regrid.`"""
+    _cached_regridders = esmvalcore.preprocessor._regrid._CACHED_REGRIDDERS
+    assert _cached_regridders == {}
+
     cube_gen = regrid(
         cube_10x10,
         cube_30x30,
@@ -132,6 +144,18 @@ def test_regrid_generic_regridding(cube_10x10, cube_30x30):
     assert cube_gen.dtype == np.float32
     assert cube_lin.dtype == np.float32
     assert cube_gen == cube_lin
+
+    assert len(_cached_regridders) == 2
+    key_1 = (
+        "{'reference': 'iris.analysis:Linear', 'extrapolation_mode': 'mask'}",
+        (18,),
+        (36,),
+        (30,),
+        (30,),
+    )
+    key_2 = ('linear', (18,), (36,), (30,), (30,))
+    assert key_1 in _cached_regridders
+    assert key_2 in _cached_regridders
 
 
 @pytest.mark.parametrize(
@@ -317,5 +341,30 @@ def test_no_rechunk_unsupported_grid():
     assert result.core_data().chunks == expected_chunks
 
 
-if __name__ == '__main__':
-    unittest.main()
+@pytest.mark.parametrize('scheme', SCHEMES)
+def test_regridding_weights_use_cache(scheme, cube_10x10, cube_30x30, mocker):
+    """Test `regrid.`"""
+    _cached_regridders = esmvalcore.preprocessor._regrid._CACHED_REGRIDDERS
+    assert _cached_regridders == {}
+
+    src_lat = cube_10x10.coord('latitude')
+    src_lon = cube_10x10.coord('longitude')
+    tgt_lat = cube_30x30.coord('latitude')
+    tgt_lon = cube_30x30.coord('longitude')
+    key = (scheme, (18,), (36,), (30,), (30,))
+    _cached_regridders[key] = {}
+    _cached_regridders[key][(src_lat, src_lon, tgt_lat, tgt_lon)] = (
+        mocker.sentinel.regridder
+    )
+    mock_load_scheme = mocker.patch.object(
+        esmvalcore.preprocessor._regrid, '_load_scheme', autospec=True
+    )
+
+    reg = _get_regridder(cube_10x10, cube_30x30, scheme)
+
+    assert reg == mocker.sentinel.regridder
+
+    assert len(_cached_regridders) == 1
+    assert key in _cached_regridders
+
+    mock_load_scheme.assert_not_called()
