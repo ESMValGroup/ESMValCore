@@ -639,6 +639,62 @@ def _load_generic_scheme(scheme: dict):
     return loaded_scheme
 
 
+_CACHED_REGRIDDERS: dict[tuple, dict] = {}
+
+
+def _get_regridder(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
+    """Get regridder to actually perform regridding.
+
+    Note
+    ----
+    If possible, this uses an existing regridder to reduce runtime (see also
+    https://scitools-iris.readthedocs.io/en/latest/userguide/
+    interpolation_and_regridding.html#caching-a-regridder.)
+
+    """
+    # Use existing regridder if possible. This first checks the regridding
+    # scheme name and shapes of source and target coordinates, and only if
+    # these match check coordinates themselves (this is much more expensive).
+    coord_key = _get_coord_key(src_cube, tgt_cube)
+    name_shape_key = _get_name_and_shape_key(src_cube, tgt_cube, scheme)
+    if name_shape_key in _CACHED_REGRIDDERS:
+        # We cannot simply do a test for `coord_key in
+        # _CACHED_REGRIDDERS[shape_key]` below since the hash() of a coordinate
+        # is simply its id() (thus, coordinates loaded from two different files
+        # would never be considered equal)
+        for (key, regridder) in _CACHED_REGRIDDERS[name_shape_key].items():
+            if key == coord_key:
+                return regridder
+
+    # If regridder is not cached yet, return a new one and cache it
+    loaded_scheme = _load_scheme(src_cube, scheme)
+    regridder = loaded_scheme.regridder(src_cube, tgt_cube)
+    _CACHED_REGRIDDERS.setdefault(name_shape_key, {})
+    _CACHED_REGRIDDERS[name_shape_key][coord_key] = regridder
+
+    return regridder
+
+
+def _get_coord_key(src_cube: Cube, tgt_cube: Cube) -> tuple:
+    """Get dict key for shapes."""
+    src_lat = src_cube.coord('latitude')
+    src_lon = src_cube.coord('longitude')
+    tgt_lat = tgt_cube.coord('latitude')
+    tgt_lon = tgt_cube.coord('longitude')
+    return (src_lat, src_lon, tgt_lat, tgt_lon)
+
+
+def _get_name_and_shape_key(
+    src_cube: Cube,
+    tgt_cube: Cube,
+    scheme: str | dict,
+) -> tuple:
+    """Get dict key for shapes."""
+    name = str(scheme)
+    shapes = [c.shape for c in _get_coord_key(src_cube, tgt_cube)]
+    return (name, *shapes)
+
+
 def regrid(
     cube: Cube,
     target_grid: Cube | Dataset | Path | str | dict,
@@ -760,65 +816,13 @@ def regrid(
     # Load scheme and reuse existing regridder if possible
     if isinstance(scheme, str):
         scheme = scheme.lower()
-    loaded_scheme = _load_scheme(cube, scheme)
-    regridder = _get_regridder(cube, target_grid_cube, loaded_scheme)
+    regridder = _get_regridder(cube, target_grid_cube, scheme)
 
     # Rechunk and actually perform the regridding
     cube = _rechunk(cube, target_grid_cube)
     cube = regridder(cube)
 
     return cube
-
-
-_CACHED_REGRIDDERS: dict[tuple, dict] = {}
-
-
-def _get_regridder(src_cube: Cube, tgt_cube: Cube, scheme):
-    """Get regridder to actually perform regridding.
-
-    Note
-    ----
-    If possible, this uses an existing regridder to reduce runtime (see also
-    https://scitools-iris.readthedocs.io/en/latest/userguide/
-    interpolation_and_regridding.html#caching-a-regridder.)
-
-    """
-    coord_key = _get_coord_key(src_cube, tgt_cube)
-    shape_key = _get_shape_key(src_cube, tgt_cube)
-
-    # Use existing regridder if possible. This first checks the shapes of
-    # source and target coordinates, and only if these match check coordinates
-    # themselves (this is much more expensive).
-    if shape_key in _CACHED_REGRIDDERS:
-        # We cannot simply do a test for `coord_key in
-        # _CACHED_REGRIDDERS[shape_key]` below since the hash() of a coordinate
-        # is simply its id() (thus, coordinates loaded from two different files
-        # would never be considered equal)
-        for (key, regridder) in _CACHED_REGRIDDERS[shape_key].items():
-            if key == coord_key:
-                return regridder
-
-    # If regridder is not cached yet, return a new one and cache it
-    regridder = scheme.regridder(src_cube, tgt_cube)
-    _CACHED_REGRIDDERS.setdefault(shape_key, {})
-    _CACHED_REGRIDDERS[shape_key][coord_key] = regridder
-
-    return regridder
-
-
-def _get_coord_key(src_cube: Cube, tgt_cube: Cube) -> tuple:
-    """Get dict key for shapes."""
-    src_lat = src_cube.coord('latitude')
-    src_lon = src_cube.coord('longitude')
-    tgt_lat = tgt_cube.coord('latitude')
-    tgt_lon = tgt_cube.coord('longitude')
-    return (src_lat, src_lon, tgt_lat, tgt_lon)
-
-
-def _get_shape_key(src_cube: Cube, tgt_cube: Cube) -> tuple:
-    """Get dict key for shapes."""
-    shape_key = tuple(c.shape for c in _get_coord_key(src_cube, tgt_cube))
-    return shape_key
 
 
 def _rechunk(cube: Cube, target_grid: Cube) -> Cube:
