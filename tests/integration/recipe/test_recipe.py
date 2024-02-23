@@ -165,6 +165,80 @@ def get_recipe(tempdir: Path, content: str, session: Session):
     return recipe
 
 
+def test_recipe_missing_scripts(tmp_path, session):
+    content = dedent("""
+        datasets:
+          - dataset: bcc-csm1-1
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                timerange: 1999/2002
+        """)
+    exc_message = ("Missing scripts section in diagnostic 'diagnostic_name'.")
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == exc_message
+
+
+def test_recipe_duplicate_var_script_name(tmp_path, session):
+    content = dedent("""
+        datasets:
+          - dataset: bcc-csm1-1
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                start_year: 1999
+                end_year: 2002
+            scripts:
+              ta:
+                script: tmp_path / 'diagnostic.py'
+        """)
+    exc_message = ("Invalid script name 'ta' encountered in diagnostic "
+                   "'diagnostic_name': scripts cannot have the same "
+                   "name as variables.")
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == exc_message
+
+
+def test_recipe_no_script(tmp_path, session):
+    content = dedent("""
+        datasets:
+          - dataset: bcc-csm1-1
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                start_year: 1999
+                end_year: 2002
+            scripts:
+              script_name:
+                argument: 1
+        """)
+    exc_message = ("No script defined for script 'script_name' in "
+                   "diagnostic 'diagnostic_name'.")
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == exc_message
+
+
 def test_recipe_no_datasets(tmp_path, session):
     content = dedent("""
         diagnostics:
@@ -181,7 +255,56 @@ def test_recipe_no_datasets(tmp_path, session):
         """)
     exc_message = ("You have not specified any dataset "
                    "or additional_dataset groups for variable "
-                   "ta in diagnostic diagnostic_name.")
+                   "'ta' in diagnostic 'diagnostic_name'.")
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == exc_message
+
+
+def test_recipe_duplicated_datasets(tmp_path, session):
+    content = dedent("""
+        datasets:
+          - dataset: bcc-csm1-1
+          - dataset: bcc-csm1-1
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                timerange: 1999/2002
+            scripts: null
+        """)
+    exc_message = ("Duplicate dataset\n{'dataset': 'bcc-csm1-1'}\n"
+                   "for variable 'ta' in diagnostic 'diagnostic_name'.")
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == exc_message
+
+
+def test_recipe_var_missing_args(tmp_path, session):
+    content = dedent("""
+        datasets:
+          - dataset: bcc-csm1-1
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                project: CMIP5
+                exp: historical
+                ensemble: r1i1p1
+                timerange: 1999/2002
+            scripts: null
+        """)
+    exc_message = ("Missing keys {'mip'} in\n{'dataset': 'bcc-csm1-1',"
+                   "\n 'ensemble': 'r1i1p1',\n 'exp': 'historical',\n"
+                   " 'project': 'CMIP5',\n 'short_name': 'ta',\n "
+                   "'timerange': '1999/2002'}\nfor variable 'ta' "
+                   "in diagnostic 'diagnostic_name'.")
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == exc_message
@@ -2971,12 +3094,38 @@ def test_invalid_generic_regridding_scheme(
     assert msg in str(rec_err_exp.value.failed_tasks[0].message)
 
 
-def test_deprecated_regridding_scheme(tmp_path, patched_datafinder, session):
+def test_deprecated_linear_extrapolate_scheme(
+    tmp_path, patched_datafinder, session
+):
     content = dedent("""
         preprocessors:
           test:
             regrid:
               scheme: linear_extrapolate
+              target_grid: 2x2
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - {project: CMIP5, dataset: CanESM2, exp: amip,
+                     ensemble: r1i1p1}
+            scripts: null
+        """)
+    get_recipe(tmp_path, content, session)
+
+
+def test_deprecated_unstructured_nearest_scheme(
+    tmp_path, patched_datafinder, session
+):
+    content = dedent("""
+        preprocessors:
+          test:
+            regrid:
+              scheme: unstructured_nearest
               target_grid: 2x2
         diagnostics:
           diagnostic_name:
