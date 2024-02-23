@@ -1161,5 +1161,51 @@ def test_update_shapefile_path_rel(
             assert shapefile_out == ar6_shapefile
 
 
+def test_time_dependent_volcello():
+    coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+    data = np.ma.ones((2, 3, 2, 2))
+
+    time = iris.coords.DimCoord([15, 45],
+                                standard_name='time',
+                                bounds=[[1., 30.], [30., 60.]],
+                                units=Unit('days since 1950-01-01',
+                                calendar='gregorian'))
+
+    zcoord = iris.coords.DimCoord([0.5, 5., 50.],
+                                  long_name='zcoord',
+                                  bounds=[[0., 2.5], [2.5, 25.],
+                                          [25., 250.]],
+                                  units='m',
+                                  attributes={'positive': 'down'})
+    lons = iris.coords.DimCoord([1.5, 2.5],
+                                standard_name='longitude',
+                                bounds=[[1., 2.], [2., 3.]],
+                                units='degrees_east',
+                                coord_system=coord_sys)
+    lats = iris.coords.DimCoord([1.5, 2.5],
+                                standard_name='latitude',
+                                bounds=[[1., 2.], [2., 3.]],
+                                units='degrees_north',
+                                coord_system=coord_sys)
+    coords_spec4 = [(time, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+    cube = iris.cube.Cube(data, dim_coords_and_dims=coords_spec4)
+    volcello = iris.coords.CellMeasure(
+        data,
+        standard_name='ocean_volume',
+        units='m3',
+        measure='volume')
+    cube.add_cell_measure(volcello, range(0, volcello.ndim))
+    cube = extract_shape(
+        cube,
+        'AR6',
+        method='contains',
+        crop=False,
+        decomposed=True,
+        ids={'Acronym': ['EAO', 'WAF']},
+    )
+
+    assert cube.shape == cube.cell_measure('ocean_volume').shape
+
+
 if __name__ == '__main__':
     unittest.main()

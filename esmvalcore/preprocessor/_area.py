@@ -823,6 +823,19 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
     result = fix_coordinate_ordering(cubelist.merge_cube())
     if cube.cell_measures():
         for measure in cube.cell_measures():
+            print(measure.ndim)
+            if measure.ndim > 3:
+                data = measure.core_data()
+                data = da.expand_dims(data, axis= (1,))
+                data = da.broadcast_to(data, result.shape)
+                measure = iris.coords.CellMeasure(
+                    data,
+                    standard_name=measure.standard_name,
+                    units=measure.units,
+                    measure=measure.measure,
+                    var_name=measure.var_name,
+                    attributes=measure.attributes,
+                )
             add_cell_measure(result, measure, measure.measure)
     if cube.ancillary_variables():
         for ancillary_variable in cube.ancillary_variables():
