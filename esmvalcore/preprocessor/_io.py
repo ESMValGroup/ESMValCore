@@ -348,7 +348,7 @@ def _sort_cubes_by_time(cubes):
     return cubes
 
 
-def concatenate(cubes, check_level=CheckLevels.DEFAULT):
+def concatenate(cubes, check_level=CheckLevels.DEFAULT, experiments_first=True):
     """Concatenate all cubes after fixing metadata.
 
     Parameters
@@ -357,6 +357,8 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
         Data cubes to be concatenated
     check_level: CheckLevels
         Level of strictness of the checks in the concatenation.
+    experiments_first: bool
+        first do experiment-wise concatenation, then time-based
 
     Returns
     -------
@@ -368,6 +370,20 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     ValueError
         Concatenation was not possible.
     """
+    experiment_ids = set([cube.attributes["experiment_id"] for cube in cubes])
+    if len(experiment_ids) > 1 and experiments_first:
+        cubes = [
+            concatenate(cubes=exp_cubes, experiments_first=False)
+            for exp_cubes in [
+                [
+                    cube
+                    for cube in cubes
+                    if cube.attributes["experiment_id"] == experiment_id
+                ]
+                for experiment_id in experiment_ids
+            ]
+        ]
+
     if not cubes:
         return cubes
     if len(cubes) == 1:
