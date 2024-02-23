@@ -147,13 +147,11 @@ def _update_target_grid(dataset, datasets, settings):
             _spec_to_latlonvals(**target_grid)
 
 
-def _update_regrid_time(dataset, settings):
+def _update_regrid_time(dataset: Dataset, settings: dict) -> None:
     """Input data frequency automatically for regrid_time preprocessor."""
-    regrid_time = settings.get('regrid_time')
-    if regrid_time is None:
+    if 'regrid_time' not in settings:
         return
-    frequency = settings.get('regrid_time', {}).get('frequency')
-    if not frequency:
+    if 'frequency' not in settings['regrid_time']:
         settings['regrid_time']['frequency'] = dataset.facets['frequency']
 
 
