@@ -214,8 +214,8 @@ def volume_statistics(
     cube:
         Input cube. The input cube should have a
         :class:`iris.coords.CellMeasure` named ``'ocean_volume'``, unless it
-        has :class:`iris.coords.CellMeasure` named ``'cell_area'`` or
-        has regular 1D latitude and longitude coordinates so the cell areas
+        has a :class:`iris.coords.CellMeasure` named ``'cell_area'`` or
+        regular 1D latitude and longitude coordinates so the cell areas
         can be computed using :func:`iris.analysis.cartography.area_weights`.
         The volume will be computed from the area multiplied by the
         thickness, computed from the bounds of the vertical coordinate.
@@ -256,7 +256,7 @@ def volume_statistics(
         raise ValueError(
             f"X and Y axis coordinates depend on {xy_dims} dimensions, "
             f"while X, Y, and Z axis depends on {xyz_dims} dimensions. "
-            "This may indicate Z axis depending on other dimension than"
+            "This may indicate Z axis depending on other dimension than "
             "space that could provoke invalid aggregation...")
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
