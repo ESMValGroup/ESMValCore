@@ -31,6 +31,7 @@ def cubes():
     )
     return iris.cube.CubeList([correct_cube, wrong_cube])
 
+
 def test_get_remo2015_fix():
     fix = Fix.get_fixes(
         'CORDEX',

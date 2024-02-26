@@ -123,14 +123,6 @@ def test_get_wrf381p_fix(short_name):
     assert isinstance(fix[0], Fix)
 
 
-def test_wrf381p_height_fix(cubes):
-    fix = wrf381p.Tas(None)
-    out_cubes = fix.fix_metadata(cubes)
-    assert cubes is out_cubes
-    for cube in out_cubes:
-        assert cube.coord('height').points == 2.0
-
-
 def test_wrf381p_height_fix():
     time_coord = iris.coords.DimCoord([0.0],
                                       var_name='time',
