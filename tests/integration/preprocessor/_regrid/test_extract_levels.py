@@ -1,11 +1,9 @@
-"""
-Integration tests for the :func:`esmvalcore.preprocessor.regrid.extract_levels`
-function.
-
-"""
+"""Integration tests for the
+:func:`esmvalcore.preprocessor.regrid.extract_levels` function."""
 
 import unittest
 
+import dask.array as da
 import iris
 import numpy as np
 
@@ -76,8 +74,20 @@ class Test(tests.Test):
         levels = [0.5, 1.5]
         scheme = 'linear'
         cube = self.cube.copy(self.cube.lazy_data())
-        result = extract_levels(cube, levels, scheme)
+        coord_name = 'multidimensional_vertical_coord'
+        coord_points = (
+            cube.coord('air_pressure').core_points().reshape(3, 1, 1) *
+            np.ones((3, 2, 2)))
+        cube.add_aux_coord(
+            iris.coords.AuxCoord(
+                da.asarray(coord_points),
+                long_name=coord_name,
+            ),
+            [1, 2, 3],
+        )
+        result = extract_levels(cube, levels, scheme, coordinate=coord_name)
         self.assertTrue(result.has_lazy_data())
+        self.assertTrue(cube.coord(coord_name).has_lazy_points())
         expected = np.ma.array([
             [
                 [[2., 3.], [4., 5.]],
