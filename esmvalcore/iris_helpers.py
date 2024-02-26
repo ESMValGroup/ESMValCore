@@ -270,6 +270,32 @@ def rechunk_cube(
     return cube
 
 
+def has_regular_grid(cube: Cube) -> bool:
+    """Check if a cube has a regular grid.
+
+    Parameters
+    ----------
+    cube:
+        Cube to be checked.
+
+    Returns
+    -------
+    bool
+        ``True`` if input cube has an regular grid, else ``False``.
+
+    """
+    try:
+        lat = cube.coord('latitude')
+        lon = cube.coord('longitude')
+    except CoordinateNotFoundError:
+        return False
+    if lat.ndim != 1 or lon.ndim != 1:
+        return False
+    if cube.coord_dims(lat) == cube.coord_dims(lon):
+        return False
+    return True
+
+
 def has_irregular_grid(cube: Cube) -> bool:
     """Check if a cube has an irregular grid.
 
