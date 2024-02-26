@@ -44,3 +44,14 @@ def test_get_rca4_fix(short_name):
         short_name,
         extra_facets={'driver': 'ICHEC-EC-Earth'})
     assert isinstance(fix[0], Fix)
+
+
+@pytest.mark.parametrize('short_name', ['tasmax', 'tasmin', 'tas'])
+def test_get_wrf381p_fix(short_name):
+    fix = Fix.get_fixes(
+        'CORDEX',
+        'WRF381P',
+        'Amon',
+        short_name,
+        extra_facets={'driver': 'ICHEC-EC-Earth'})
+    assert isinstance(fix[0], Fix)

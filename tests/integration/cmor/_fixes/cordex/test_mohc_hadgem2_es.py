@@ -103,3 +103,14 @@ def test_hirham5_fix(cubes):
     for cube in out_cubes:
         assert cube.coord('latitude').attributes == {}
         assert cube.coord('longitude').attributes == {}
+
+
+@pytest.mark.parametrize('short_name', ['tasmax', 'tasmin', 'tas'])
+def test_get_wrf381p_fix(short_name):
+    fix = Fix.get_fixes(
+        'CORDEX',
+        'WRF381P',
+        'Amon',
+        short_name,
+        extra_facets={'driver': 'MOHC-HadGEM2-ES'})
+    assert isinstance(fix[0], Fix)

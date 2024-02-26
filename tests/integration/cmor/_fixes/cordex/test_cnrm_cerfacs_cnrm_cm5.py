@@ -59,3 +59,14 @@ def test_aladin63_height_fix(cubes):
     assert cubes is out_cubes
     for cube in out_cubes:
         assert cube.coord('height').points == 2.0
+
+
+@pytest.mark.parametrize('short_name', ['tasmax', 'tasmin', 'tas'])
+def test_get_wrf381p_fix(short_name):
+    fix = Fix.get_fixes(
+        'CORDEX',
+        'WRF381P',
+        'Amon',
+        short_name,
+        extra_facets={'driver': 'CNRM-CERFACS-CNRM-CM5'})
+    assert isinstance(fix[0], Fix)
