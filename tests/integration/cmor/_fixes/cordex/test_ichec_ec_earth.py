@@ -7,31 +7,6 @@ from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
 
-@pytest.fixture
-def cubes():
-    correct_time_coord = iris.coords.DimCoord([0.0],
-                                              var_name='time',
-                                              standard_name='time',
-                                              long_name='time')
-    correct_height_coord = iris.coords.AuxCoord([2.0],
-                                                var_name='height')
-    wrong_height_coord = iris.coords.AuxCoord([10.0],
-                                              var_name='height')
-    correct_cube = iris.cube.Cube(
-        [10.0],
-        var_name='tas',
-        dim_coords_and_dims=[(correct_time_coord, 0)],
-        aux_coords_and_dims=[(correct_height_coord, ())]
-    )
-    wrong_cube = iris.cube.Cube(
-        [10.0],
-        var_name='tas',
-        dim_coords_and_dims=[(correct_time_coord, 0)],
-        aux_coords_and_dims=[(wrong_height_coord, ())]
-    )
-    return iris.cube.CubeList([correct_cube, wrong_cube])
-
-
 def test_get_remo2015_fix():
     fix = Fix.get_fixes(
         'CORDEX',
