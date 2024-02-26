@@ -35,10 +35,6 @@ def cubes():
                                            standard_name='longitude',
                                            long_name='longitude',
                                            attributes={'wrong': 'attr'})
-    correct_height_coord = iris.coords.AuxCoord([2.0],
-                                                var_name='height')
-    wrong_height_coord = iris.coords.AuxCoord([10.0],
-                                              var_name='height')
     correct_cube = iris.cube.Cube(
         [[[10.0]]],
         var_name='tas',
@@ -46,7 +42,6 @@ def cubes():
             (correct_time_coord, 0),
             (correct_lat_coord, 1),
             (correct_lon_coord, 2)],
-        aux_coords_and_dims=[(correct_height_coord, ())]
     )
     wrong_cube = iris.cube.Cube(
         [[[10.0]]],
@@ -55,7 +50,6 @@ def cubes():
             (wrong_time_coord, 0),
             (wrong_lat_coord, 1),
             (wrong_lon_coord, 2)],
-        aux_coords_and_dims=[(wrong_height_coord, ())]
     )
     return iris.cube.CubeList([correct_cube, wrong_cube])
 
