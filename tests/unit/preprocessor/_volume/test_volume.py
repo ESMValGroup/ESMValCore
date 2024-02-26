@@ -10,6 +10,7 @@ from iris.exceptions import CoordinateMultiDimError
 
 import tests
 from esmvalcore.preprocessor._volume import (
+    _add_axis_stats_weights_coord,
     axis_statistics,
     calculate_volume,
     depth_integration,
@@ -105,6 +106,29 @@ class Test(tests.Test):
         iris.util.guess_coord_axis(self.grid_4d.coord('zcoord'))
         iris.util.guess_coord_axis(self.grid_4d_2.coord('zcoord'))
         iris.util.guess_coord_axis(self.grid_4d_z.coord('zcoord'))
+
+    def test_add_axis_stats_weights_coord(self):
+        """Test _add_axis_stats_weights_coord."""
+        assert not self.grid_4d.coords('_axis_statistics_weights_')
+        coord = self.grid_4d.coord('zcoord')
+        coord_dims = self.grid_4d.coord_dims('zcoord')
+        _add_axis_stats_weights_coord(self.grid_4d, coord, coord_dims)
+        weights_coord = self.grid_4d.coord('_axis_statistics_weights_')
+        assert not weights_coord.has_lazy_points()
+        assert weights_coord.units == 'm'
+        np.testing.assert_allclose(weights_coord.points, [2.5, 22.5, 225.0])
+
+    def test_add_axis_stats_weights_coord_lazy(self):
+        """Test _add_axis_stats_weights_coord."""
+        self.grid_4d.data = self.grid_4d.lazy_data()
+        assert not self.grid_4d.coords('_axis_statistics_weights_')
+        coord = self.grid_4d.coord('zcoord')
+        coord_dims = self.grid_4d.coord_dims('zcoord')
+        _add_axis_stats_weights_coord(self.grid_4d, coord, coord_dims)
+        weights_coord = self.grid_4d.coord('_axis_statistics_weights_')
+        assert weights_coord.has_lazy_points()
+        assert weights_coord.units == 'm'
+        np.testing.assert_allclose(weights_coord.points, [2.5, 22.5, 225.0])
 
     def test_axis_statistics_mean(self):
         """Test axis statistics with operator mean."""
