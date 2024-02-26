@@ -127,7 +127,7 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     z_dim = cube.coord_dims(depth)
     # Assert z has length > 0
     if not z_dim:
-        raise ValueError("Cannot compute volume with length 0 Z-axis")
+        raise ValueError("Cannot compute volume with scalar Z-axis")
 
     # Guess bounds if missing
     if not depth.has_bounds():
