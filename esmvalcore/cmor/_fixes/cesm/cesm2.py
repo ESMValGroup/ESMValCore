@@ -78,6 +78,6 @@ class AllVars(NativeDatasetFix):
 
         # Fix time coordinate
         time_coord = cube.coord('time')
-        if time_coord.bounds is not None:
-            time_coord.points = time_coord.bounds.mean(axis=-1)
+        if time_coord.has_bounds():
+            time_coord.points = time_coord.core_bounds().mean(axis=-1)
         self.fix_regular_time(cube, coord=time_coord)
