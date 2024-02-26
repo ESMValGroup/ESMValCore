@@ -2,8 +2,9 @@
 import iris
 import pytest
 
-from esmvalcore.cmor._fixes.cordex.mohc_hadgem2_es import hirham5
+from esmvalcore.cmor._fixes.cordex.mohc_hadgem2_es import hirham5, wrf381p
 from esmvalcore.cmor.fix import Fix
+from esmvalcore.cmor.table import get_var_info
 
 
 @pytest.fixture
@@ -34,6 +35,10 @@ def cubes():
                                            standard_name='longitude',
                                            long_name='longitude',
                                            attributes={'wrong': 'attr'})
+    correct_height_coord = iris.coords.AuxCoord([2.0],
+                                                var_name='height')
+    wrong_height_coord = iris.coords.AuxCoord([10.0],
+                                              var_name='height')
     correct_cube = iris.cube.Cube(
         [[[10.0]]],
         var_name='tas',
@@ -41,6 +46,7 @@ def cubes():
             (correct_time_coord, 0),
             (correct_lat_coord, 1),
             (correct_lon_coord, 2)],
+        aux_coords_and_dims=[(correct_height_coord, ())]
     )
     wrong_cube = iris.cube.Cube(
         [[[10.0]]],
@@ -49,6 +55,7 @@ def cubes():
             (wrong_time_coord, 0),
             (wrong_lat_coord, 1),
             (wrong_lon_coord, 2)],
+        aux_coords_and_dims=[(wrong_height_coord, ())]
     )
     return iris.cube.CubeList([correct_cube, wrong_cube])
 
@@ -114,3 +121,27 @@ def test_get_wrf381p_fix(short_name):
         short_name,
         extra_facets={'driver': 'MOHC-HadGEM2-ES'})
     assert isinstance(fix[0], Fix)
+
+
+def test_wrf381p_height_fix(cubes):
+    fix = wrf381p.Tas(None)
+    out_cubes = fix.fix_metadata(cubes)
+    assert cubes is out_cubes
+    for cube in out_cubes:
+        assert cube.coord('height').points == 2.0
+
+
+def test_wrf381p_height_fix():
+    time_coord = iris.coords.DimCoord([0.0],
+                                      var_name='time',
+                                      standard_name='time',
+                                      long_name='time')
+    cube = iris.cube.Cube(
+        [10.0],
+        var_name='tas',
+        dim_coords_and_dims=[(time_coord, 0)],
+    )
+    vardef = get_var_info('CMIP6', 'Amon', 'tas')
+    fix = wrf381p.Tas(vardef)
+    out_cubes = fix.fix_metadata([cube])
+    assert out_cubes[0].coord('height').points == 2.0
