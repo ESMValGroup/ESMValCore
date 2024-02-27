@@ -945,6 +945,7 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
                 measure = iris.coords.CellMeasure(
                     data,
                     standard_name=measure.standard_name,
+                    long_name=measure.long_name,
                     units=measure.units,
                     measure=measure.measure,
                     var_name=measure.var_name,
