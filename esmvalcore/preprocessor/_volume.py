@@ -184,7 +184,7 @@ def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
 
 
 @register_supplementaries(
-    variables=['volcello'],
+    variables=['volcello', 'areacello'],
     required='prefer_at_least_one',
 )
 def volume_statistics(
