@@ -938,6 +938,10 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
     result = fix_coordinate_ordering(cubelist.merge_cube())
     if cube.cell_measures():
         for measure in cube.cell_measures():
+            # Cell measures that are time-dependent, with 4 dimension and
+            # an original shape of (time, depth, lat, lon), need to be
+            # broadcasted to the cube's shape
+            # (time, shape_id, depth, lat, lon)
             if measure.ndim > 3:
                 data = measure.core_data()
                 data = da.expand_dims(data, axis=(1,))
