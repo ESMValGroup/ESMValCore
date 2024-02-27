@@ -151,19 +151,11 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     if not has_cell_measure:
         cube.remove_cell_measure('cell_area')
 
-    # Get slices to make area and thickness match with the same number
-    # of dimensions as the cube
-    z_slice = tuple(
-        slice(None) if i in z_dim else None
-        for i in range(cube.ndim)
-    )
-    area_slice = tuple(
-        slice(None) if i in area_dim else None
-        for i in range(cube.ndim)
-    )
-
-    # Calculate grid cell volume as area * thickness
-    grid_volume = area.lazy_data()[area_slice] * thickness[z_slice]
+    area_arr = iris.util.broadcast_to_shape(
+        area.core_data(), cube.shape, area_dim)
+    thickness_arr = iris.util.broadcast_to_shape(
+        thickness, cube.shape, z_dim)
+    grid_volume = area_arr * thickness_arr
 
     return grid_volume
 
@@ -182,17 +174,13 @@ def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
 
     grid_volume = calculate_volume(cube)
 
-    # add measure only in the dimensions that have lenght > 1
-    data_dims = [i for i, n in enumerate(grid_volume.shape) if n > 1]
-    grid_volume = grid_volume.squeeze()
-
     cell_measure = CellMeasure(
         grid_volume,
         standard_name='ocean_volume',
         units='m3',
         measure='volume',
     )
-    cube.add_cell_measure(cell_measure, data_dims)
+    cube.add_cell_measure(cell_measure, np.arange(cube.ndim))
 
 
 @register_supplementaries(
