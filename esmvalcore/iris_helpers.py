@@ -281,7 +281,7 @@ def has_regular_grid(cube: Cube) -> bool:
     Returns
     -------
     bool
-        ``True`` if input cube has an regular grid, else ``False``.
+        ``True`` if input cube has a regular grid, else ``False``.
 
     """
     try:
