@@ -14,6 +14,7 @@ from esmvalcore.preprocessor._regrid_esmpy import (
 )
 from esmvalcore.preprocessor._regrid_unstructured import (
     UnstructuredLinear,
+    UnstructuredLinearRegridder,
     UnstructuredNearest,
 )
 
@@ -28,6 +29,7 @@ __all__ = [
     'GenericFuncScheme',
     'GenericRegridder',
     'UnstructuredLinear',
+    'UnstructuredLinearRegridder',
     'UnstructuredNearest',
 ]
 
