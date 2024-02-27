@@ -8,6 +8,7 @@ import dask.array as da
 import numpy as np
 from iris.analysis import UnstructuredNearest as IrisUnstructuredNearest
 from iris.analysis.trajectory import UnstructuredNearestNeigbourRegridder
+from iris.coords import Coord
 from iris.cube import Cube
 from numpy.typing import DTypeLike
 from scipy.spatial import Delaunay
@@ -103,8 +104,25 @@ class UnstructuredLinearRegridder:
         # Note: we force numpy arrays here (instead of dask) since resulting
         # arrays are only 2D and will be computed anyway later during
         # regridding
+        (self.weights, self.indices) = self._get_weights(
+            src_lat, src_lon, tgt_lat, tgt_lon)
 
-        # (1) Bring points into correct format
+    def _get_weights(
+        self,
+        src_lat: Coord,
+        src_lon: Coord,
+        tgt_lat: Coord,
+        tgt_lon: Coord,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Calculate regridding weights.
+
+        Note
+        ----
+        We force numpy arrays here (instead of dask) since resulting arrays are
+        only 2D and will be computed anyway later during regridding.
+
+        """
+        # Bring points into correct format
         # src_points: (N, 2) where N is the number of source grid points
         # tgt_points: (M, 2) where M is the number of target grid points
         (src_points, tgt_points) = dask.compute(
@@ -122,8 +140,8 @@ class UnstructuredLinearRegridder:
             ),
         )
 
-        # (2) Actual indices and weights calculation using Delaunay
-        # triagulation (partly taken from https://stackoverflow.com/a/20930910)
+        # Actual indices and weights calculation using Delaunay triagulation
+        # (partly taken from https://stackoverflow.com/a/20930910)
         # Array shapes:
         # indices: (M, 3)
         # weights: (M, 3)
@@ -137,8 +155,7 @@ class UnstructuredLinearRegridder:
         extra_idx = simplex == -1
         weights[extra_idx, :] = np.nan  # missing values
 
-        self.indices = indices
-        self.weights = weights
+        return (weights, indices)
 
     def __call__(self, cube: Cube) -> Cube:
         """Perform regridding.
@@ -196,7 +213,7 @@ class UnstructuredLinearRegridder:
         ]
         aux_coords_and_dims = []
         for (aux_coord, dims) in old_aux_coords_and_dims:
-            dims = tuple([d if d < udim else d + 1 for d in dims])
+            dims = tuple(d if d < udim else d + 1 for d in dims)
             aux_coords_and_dims.append((aux_coord, dims))
 
         # Create new cube
