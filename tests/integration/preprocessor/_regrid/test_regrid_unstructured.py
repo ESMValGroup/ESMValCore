@@ -63,6 +63,7 @@ def unstructured_grid_cube_3d():
         standard_name='longitude',
         units='degrees_east',
     )
+    acoord = AuxCoord([0, 0], var_name='aux')
     cube = Cube(
         np.ma.masked_greater(
             np.arange(16, dtype=np.float32).reshape(2, 2, 4), 7.5
@@ -72,7 +73,7 @@ def unstructured_grid_cube_3d():
         long_name='Air Temperature',
         units='K',
         dim_coords_and_dims=[(time, 0), (alt, 1)],
-        aux_coords_and_dims=[(lat, 2), (lon, 2)],
+        aux_coords_and_dims=[(acoord, 1), (lat, 2), (lon, 2)],
     )
     return cube
 
@@ -206,6 +207,7 @@ class TestUnstructuredLinear:
         assert result.coord('altitude') == src_cube.coord('altitude')
         assert result.coord('latitude') == target_grid.coord('latitude')
         assert result.coord('longitude') == target_grid.coord('longitude')
+        assert result.coord('aux') == src_cube.coord('aux')
 
         assert result.shape == (2, 3, 3, 2)
         assert result.has_lazy_data() is lazy

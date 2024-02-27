@@ -134,7 +134,7 @@ class UnstructuredLinearRegridder:
         delta = tgt_points - transform[:, 2]
         bary = np.einsum('njk,nk->nj', transform[:, :2, :], delta)
         weights = np.hstack((bary, 1 - bary.sum(axis=1, keepdims=True)))
-        extra_idx = (simplex == -1)
+        extra_idx = simplex == -1
         weights[extra_idx, :] = np.nan  # missing values
 
         self.indices = indices
@@ -165,6 +165,52 @@ class UnstructuredLinearRegridder:
                 f"The given cube {cube.summary(shorten=True)} is not defined "
                 f"on the same source grid as this regridder"
             )
+
+        # Get regridded data
+        regridded_data = self._get_regridded_data(cube)
+
+        # Get coordinates of regridded cube
+
+        # (1) New dimensional coordinates are the ones from the source cube
+        # (excluding the unstructured grid dimension) plus the (x, y) target
+        # grid dimensions. All dimensions to the right of the unstructured grid
+        # dimension need to be shifted to the right by 1.
+        udim = cube.coord_dims('latitude')[0]
+        dim_coords_and_dims = [
+            (c, cube.coord_dims(c)[0]) for c in cube.coords(dim_coords=True) if
+            udim not in cube.coord_dims(c)
+        ]
+        dim_coords_and_dims = [
+            (c, d) if d < udim else (c, d + 1) for (c, d) in
+            dim_coords_and_dims
+        ]
+        dim_coords_and_dims.append((self.tgt_coords[0], udim))
+        dim_coords_and_dims.append((self.tgt_coords[1], udim + 1))
+
+        # (2) Include all auxiliary coordinates that do not span unstructured
+        # grid dimension (also make sure to shift all dimensions to the right
+        # of the unstructured grid to the right by 1)
+        old_aux_coords_and_dims = [
+            (c, cube.coord_dims(c)) for c in cube.coords(dim_coords=False) if
+            udim not in cube.coord_dims(c)
+        ]
+        aux_coords_and_dims = []
+        for (aux_coord, dims) in old_aux_coords_and_dims:
+            dims = tuple([d if d < udim else d + 1 for d in dims])
+            aux_coords_and_dims.append((aux_coord, dims))
+
+        # Create new cube
+        regridded_cube = Cube(
+            regridded_data,
+            dim_coords_and_dims=dim_coords_and_dims,
+            aux_coords_and_dims=aux_coords_and_dims,
+        )
+        regridded_cube.metadata = cube.metadata
+
+        return regridded_cube
+
+    def _get_regridded_data(self, cube: Cube) -> np.ndarray | da.Array:
+        """Get regridded data."""
         udim = cube.coord_dims('latitude')[0]
 
         # Cube must not be chunked along latitude and longitude dimension
@@ -198,37 +244,7 @@ class UnstructuredLinearRegridder:
         if regridded_data.dtype != cube.dtype:
             regridded_data = regridded_data.astype(cube.dtype)
 
-        # New dimensional coordinates are the ones from the source cube
-        # (excluding the unstructured grid dimension) plus the (x, y) target
-        # grid dimensions. All dimensions to the right of the unstructured grid
-        # dimension need to be shifted to the right by 1.
-        dim_coords_and_dims = [
-            (c, cube.coord_dims(c)[0]) for c in cube.coords(dim_coords=True) if
-            udim not in cube.coord_dims(c)
-        ]
-        dim_coords_and_dims = [
-            (c, d) if d < udim else (c, d + 1) for (c, d) in
-            dim_coords_and_dims
-        ]
-        dim_coords_and_dims.append((self.tgt_coords[0], udim))
-        dim_coords_and_dims.append((self.tgt_coords[1], udim + 1))
-
-        # Include all auxiliary coordinates that do not span unstructured grid
-        # dimension
-        aux_coords_and_dims = [
-            (c, cube.coord_dims(c)) for c in cube.coords(dim_coords=False) if
-            udim not in cube.coord_dims(c)
-        ]
-
-        # Create new cube with correct metadata
-        regridded_cube = Cube(
-            regridded_data,
-            dim_coords_and_dims=dim_coords_and_dims,
-            aux_coords_and_dims=aux_coords_and_dims,
-        )
-        regridded_cube.metadata = cube.metadata
-
-        return regridded_cube
+        return regridded_data
 
     def _interpolate(self, arr: np.ndarray) -> np.ndarray:
         """Interpolate data.
@@ -285,10 +301,6 @@ class UnstructuredLinear:
     grid.
 
     """
-
-    def __init__(self):
-        """Initialize class instance."""
-        pass
 
     def __repr__(self) -> str:
         """Return string representation of class."""
