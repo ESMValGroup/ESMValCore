@@ -903,7 +903,8 @@ Built-in regridding schemes
   `extrapolation_mode='mask'`.
   For source data on an irregular grid, uses
   :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyLinear`.
-  Source data on an unstructured grid is not supported, yet.
+  For source data on an unstructured grid, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.UnstructuredLinear`.
 * ``nearest``: Nearest-neighbor regridding.
   For source data on a regular grid, uses :obj:`~iris.analysis.Nearest` with
   `extrapolation_mode='mask'`.
@@ -915,7 +916,7 @@ Built-in regridding schemes
   For source data on a regular grid, uses :obj:`~iris.analysis.AreaWeighted`.
   For source data on an irregular grid, uses
   :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyAreaWeighted`.
-  Source data on an unstructured grid is not supported, yet.
+  Source data on an unstructured grid is not supported.
 
 See also :func:`esmvalcore.preprocessor.regrid`
 
