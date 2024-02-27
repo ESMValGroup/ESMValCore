@@ -676,7 +676,7 @@ def _get_regridder(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
 
 
 def _get_coord_key(src_cube: Cube, tgt_cube: Cube) -> tuple:
-    """Get dict key for shapes."""
+    """Get dict key from coordinates."""
     src_lat = src_cube.coord('latitude')
     src_lon = src_cube.coord('longitude')
     tgt_lat = tgt_cube.coord('latitude')
@@ -689,7 +689,7 @@ def _get_name_and_shape_key(
     tgt_cube: Cube,
     scheme: str | dict,
 ) -> tuple:
-    """Get dict key for shapes."""
+    """Get dict key from scheme name and coordinate shapes."""
     name = str(scheme)
     shapes = [c.shape for c in _get_coord_key(src_cube, tgt_cube)]
     return (name, *shapes)
