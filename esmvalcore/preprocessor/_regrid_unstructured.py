@@ -123,8 +123,8 @@ class UnstructuredLinearRegridder:
         )
 
         # (2) Actual indices and weights calculation using Delaunay
-        # triagulation(partly taken from https://stackoverflow.com/a/20930910)
-        # Shapes:
+        # triagulation (partly taken from https://stackoverflow.com/a/20930910)
+        # Array shapes:
         # indices: (M, 3)
         # weights: (M, 3)
         tri = Delaunay(np.array(src_points))
@@ -184,13 +184,19 @@ class UnstructuredLinearRegridder:
         regridded_data: np.ndarray | da.Array
         if cube.has_lazy_data():
             regridded_data = self._regrid_lazy(
-                src_data, udim, cube.dtype, self.weights.shape[0]
+                src_data, udim, self.weights.dtype, self.weights.shape[0]
             )
-            regridded_data = regridded_data.reshape(new_shape, limit='128MiB')
+            # TODO: add limit='128 MiB' to reshape once dask bug is solved
+            # see https://github.com/dask/dask/issues/10603
+            regridded_data = regridded_data.reshape(new_shape)
         else:
             regridded_data = self._regrid_eager(src_data, udim)
             regridded_data = regridded_data.reshape(new_shape)
         regridded_data = npx.ma.masked_invalid(regridded_data)
+
+        # Ensure correct dtype
+        if regridded_data.dtype != cube.dtype:
+            regridded_data = regridded_data.astype(cube.dtype)
 
         # New dimensional coordinates are the ones from the source cube
         # (excluding the unstructured grid dimension) plus the (x, y) target
