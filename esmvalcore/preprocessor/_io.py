@@ -349,7 +349,8 @@ def _sort_cubes_by_time(cubes):
     return cubes
 
 
-def _sort_cubes_by_experiment(cubes: list[iris.cube.Cube]) -> list[iris.cube.Cube]:
+def _sort_cubes_by_experiment(cubes: list[iris.cube.Cube])\
+        -> list[iris.cube.Cube]:
     """Sort list of cubes by experiments and do a concatenation first
     This ensures overlapping (branching) experiments are handled correctly
     """
@@ -412,14 +413,14 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     ValueError
         Concatenation was not possible.
     """
-    
+
     if not cubes:
         return cubes
     if len(cubes) == 1:
         return cubes[0]
 
     cubes = _sort_cubes_by_experiment(cubes)
-    
+
     merge_cube_attributes(cubes)
     cubes = _sort_cubes_by_time(cubes)
     _fix_calendars(cubes)
