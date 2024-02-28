@@ -370,18 +370,18 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     """
 
     # first do experiment-wise concatenation, then time-based
-    if all('experiment_id' in cube.attributes for cube in cubes):
+    if all("experiment_id" in cube.attributes for cube in cubes):
         experiment_ids = {cube.attributes["experiment_id"] for cube in cubes}
         if len(cubes) > len(experiment_ids):
             cubes = [
                 concatenate(cubes=exp_cubes, check_level=check_level)
                 for exp_cubes in [
-                        [
-                            cube
-                            for cube in cubes
-                            if cube.attributes["experiment_id"] == experiment_id
-                        ]
-                        for experiment_id in experiment_ids
+                    [
+                        cube
+                        for cube in cubes
+                        if cube.attributes["experiment_id"] == experiment_id
+                    ]
+                    for experiment_id in experiment_ids
                 ]
             ]
 
