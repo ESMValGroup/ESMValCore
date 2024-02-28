@@ -392,8 +392,10 @@ def get_time_weights(cube: Cube) -> np.ndarray | da.core.Array:
 
     Returns
     -------
-    np.ndarray or da.core.Array
-        Array of time weights for averaging.
+    np.ndarray or da.Array
+        Array of time weights for averaging. Returns a
+        :class:`dask.array.Array` if the input cube has lazy data; a
+        :class:`numpy.ndarray` otherwise.
 
     """
     time = cube.coord('time')
@@ -408,7 +410,9 @@ def get_time_weights(cube: Cube) -> np.ndarray | da.core.Array:
         )
 
     # Extract 1D time weights (= lengths of time intervals)
-    time_weights = time.core_bounds()[:, 1] - time.core_bounds()[:, 0]
+    time_weights = time.lazy_bounds()[:, 1] - time.lazy_bounds()[:, 0]
+    if not cube.has_lazy_data():
+        time_weights = time_weights.compute()
     return time_weights
 
 
