@@ -55,6 +55,12 @@ class Test(tests.Test):
                                               [25., 250.]],
                                       units='m',
                                       attributes={'positive': 'down'})
+        scoord = iris.coords.DimCoord([36., 36.5, 37.],
+                                      long_name='ocean_sigma_coordinate',
+                                      bounds=[[35.5, 36.25], [36.25, 36.75],
+                                              [36.75, 37.5]],
+                                      units='kg m-3',
+                                      attributes={'positive': 'down'})
         zcoord_nobounds = iris.coords.DimCoord([0.5, 5., 50.],
                                                long_name='zcoord',
                                                units='m',
@@ -108,6 +114,13 @@ class Test(tests.Test):
         self.grid_4d = iris.cube.Cube(
             data2,
             dim_coords_and_dims=coords_spec4,
+            units='kg m-3',
+        )
+
+        coords_spec4_sigma = [(time, 0), (scoord, 1), (lats2, 2), (lons2, 3)]
+        self.grid_4d_sigma_space = iris.cube.Cube(
+            data2,
+            dim_coords_and_dims=coords_spec4_sigma,
             units='kg m-3',
         )
 
@@ -535,6 +548,17 @@ class Test(tests.Test):
         self.assertIn(
             "Z axis bounds shape found (3, 2, 2, 4). Bounds should be "
             "2 in the last dimension to compute the thickness.",
+            str(err.exception)
+        )
+
+    def test_volume_statistics_invalid_units(self):
+        """Test z-axis units cannot be converted to m"""
+
+        with self.assertRaises(ValueError) as err:
+            volume_statistics(self.grid_4d_sigma_space, 'mean')
+        self.assertIn(
+            "Cannot compute volume using the Z-axis. "
+            "Unable to convert from 'Unit('kg m-3')' to 'Unit('m')'.",
             str(err.exception)
         )
 

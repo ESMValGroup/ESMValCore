@@ -2141,7 +2141,9 @@ The required supplementary variable ``volcello``, or ``areacello`` in its
 absence, can be attached to the main dataset as described in
 :ref:`supplementary_variables`.
 
-No depth coordinate is required as this is determined by Iris.
+No depth coordinate is required as this is determined by Iris. However, to
+compute the volume automatically when ``volcello`` is not provided, the depth
+coordinate units should be convertible to meters.
 
 Parameters:
     * `operator`: Operation to apply.

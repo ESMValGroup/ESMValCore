@@ -104,12 +104,14 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     """Calculate volume from a cube.
 
     This function is used when the 'ocean_volume' cell measure can't be found.
+    The output data will be given in cubic meters (m3).
 
     Note
     ----
     It gets the cell_area from the cube if it is available. If not, it
     calculates it from the grid. This only works if the grid cell areas can
-    be calculated (i.e., latitude and longitude are 1D).
+    be calculated (i.e., latitude and longitude are 1D). The depth coordinate
+    units should be convertible to meters.
 
     Parameters
     ----------
@@ -138,14 +140,28 @@ def calculate_volume(cube: Cube) -> da.core.Array:
             "Bounds should be 2 in the last dimension to compute the "
             "thickness.")
 
+    # Convert units to get the thickness in meters
+    original_units = depth.units
+    try:
+        depth.convert_units('m')
+    except ValueError as err:
+        raise ValueError(
+            f'Cannot compute volume using the Z-axis. {err}') from err
+
     # Calculate Z-direction thickness
     thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
+
+    # Convert units back
+    depth.convert_units(original_units)
 
     # Get or calculate the horizontal areas of the cube
     has_cell_measure = bool(cube.cell_measures('cell_area'))
     _try_adding_calculated_cell_area(cube)
     area = cube.cell_measure('cell_area')
     area_dim = cube.cell_measure_dims(area)
+
+    # Ensure cell area is in square meters as the units
+    area.convert_units('m2')
 
     # Make sure input cube has not been modified
     if not has_cell_measure:
@@ -207,6 +223,8 @@ def volume_statistics(
         can be computed using :func:`iris.analysis.cartography.area_weights`.
         The volume will be computed from the area multiplied by the
         thickness, computed from the bounds of the vertical coordinate.
+        In that case, vertical coordinate units should be convertible to
+        meters.
     operator:
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Currently, only `mean` is
@@ -219,6 +237,11 @@ def volume_statistics(
     **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
+
+    Note
+    ----
+    This preprocessor has been designed for oceanic variables, but it might
+    be applicable to atmospheric data as well.
 
     Returns
     -------
