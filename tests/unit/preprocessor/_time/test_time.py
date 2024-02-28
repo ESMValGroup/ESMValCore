@@ -1881,6 +1881,17 @@ def test_get_time_weights():
     """Test ``get_time_weights`` for complex cube."""
     cube = _make_cube()
     weights = get_time_weights(cube)
+    assert isinstance(weights, np.ndarray)
+    assert weights.shape == (2, )
+    np.testing.assert_allclose(weights, [15.0, 30.0])
+
+
+def test_get_time_weights_lazy():
+    """Test ``get_time_weights`` for complex cube with lazy data."""
+    cube = _make_cube()
+    cube.data = cube.lazy_data()
+    weights = get_time_weights(cube)
+    assert isinstance(weights, da.Array)
     assert weights.shape == (2, )
     np.testing.assert_allclose(weights, [15.0, 30.0])
 
