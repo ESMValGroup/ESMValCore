@@ -127,6 +127,8 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     # Load depth field and figure out which dim is which
     depth = cube.coord(axis='z')
     z_dim = cube.coord_dims(depth)
+    depth = depth.copy()
+
     # Assert z has length > 0
     if not z_dim:
         raise ValueError("Cannot compute volume with scalar Z-axis")
@@ -141,7 +143,6 @@ def calculate_volume(cube: Cube) -> da.core.Array:
             "thickness.")
 
     # Convert units to get the thickness in meters
-    original_units = depth.units
     try:
         depth.convert_units('m')
     except ValueError as err:
@@ -151,13 +152,10 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     # Calculate Z-direction thickness
     thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
 
-    # Convert units back
-    depth.convert_units(original_units)
-
     # Get or calculate the horizontal areas of the cube
     has_cell_measure = bool(cube.cell_measures('cell_area'))
     _try_adding_calculated_cell_area(cube)
-    area = cube.cell_measure('cell_area')
+    area = cube.cell_measure('cell_area').copy()
     area_dim = cube.cell_measure_dims(area)
 
     # Ensure cell area is in square meters as the units
