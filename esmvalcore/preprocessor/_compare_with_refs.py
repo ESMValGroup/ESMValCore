@@ -572,14 +572,16 @@ def _calculate_emd(
     (bins, bin_centers) = _get_bins(cube, reference, n_bins)
 
     if cube.has_lazy_data() and reference.has_lazy_data():
-        func = partial(
-            _calculate_emd_lazy, axes=axes, bins=bins, bin_centers=bin_centers
-        )
+        func = _calculate_emd_lazy  # type: ignore
     else:
-        func = partial(
-            _calculate_emd_eager, axes=axes, bins=bins, bin_centers=bin_centers
-        )
-    emd = func(cube.core_data(), reference.core_data())
+        func = _calculate_emd_eager  # type: ignore
+    emd = func(
+        cube.core_data(),
+        reference.core_data(),
+        bins,
+        bin_centers,
+        along_axes=axes,
+    )
 
     # Metadata
     metadata = CubeMetadata(
@@ -611,38 +613,37 @@ def _get_bins(
 def _calculate_emd_lazy(
     data: da.Array,
     ref_data: da.Array,
-    *,
-    axes: tuple[int, ...],
     bins: np.ndarray,
     bin_centers: np.ndarray,
+    *,
+    along_axes: tuple[int, ...],
 ) -> np.ndarray:
     """Calculate Earth mover's distance along axes (eager version)."""
-    n_axes = len(axes)
+    n_axes = len(along_axes)
 
     # da.apply_gufunc transposes the input array so that the axes given by the
-    # `axes` argument to this function are the rightmost dimensions. Thus, we
-    # need to use `axes=(ndim-n_axes, ..., ndim-2, ndim-1)` for
+    # `axes` argument to da.apply_gufunc are the rightmost dimensions. Thus, we
+    # need to use `along_axes=(ndim-n_axes, ..., ndim-2, ndim-1)` for
     # _calculate_emd_eager here.
     axes_in_chunk = tuple(range(data.ndim - n_axes,  data.ndim))
 
     # The call signature depends also on the number of axes in `axes`, and will
-    # be (a,b,...)->()
-    input_signature = f"({','.join(list(string.ascii_lowercase)[:len(axes)])})"
-    signature = f"{input_signature},{input_signature}->()"
+    # be (a,b,...),(a,b,...),(z),(y)->() where a,b,... are the data dimensions
+    # that are collapsed, z is the number of bin edges, and y the number of bin
+    # centers.
+    input_signature = f"({','.join(list(string.ascii_lowercase)[:n_axes])})"
+    signature = f"{input_signature},{input_signature},(z),(y)->()"
 
-    _calculate_emd_for_chunk = partial(
-        _calculate_emd_eager,
-        axes=axes_in_chunk,
-        bins=bins,
-        bin_centers=bin_centers,
-    )
     emd = da.apply_gufunc(
-        _calculate_emd_for_chunk,
+        _calculate_emd_eager,
         signature,
         data,
         ref_data,
-        axes=[axes, axes, ()],
+        bins,
+        bin_centers,
+        axes=[along_axes, along_axes, (0,), (0,), ()],
         output_dtypes=data.dtype,
+        along_axes=axes_in_chunk,
     )
 
     return emd
@@ -651,14 +652,14 @@ def _calculate_emd_lazy(
 def _calculate_emd_eager(
     data: np.ndarray,
     ref_data: np.ndarray,
-    *,
-    axes: tuple[int, ...],
     bins: np.ndarray,
     bin_centers: np.ndarray,
+    *,
+    along_axes: tuple[int, ...],
 ) -> np.ndarray:
     """Calculate Earth mover's distance along axes (eager version)."""
-    pmf = _get_pmf(data, axes, bins)
-    ref_pmf = _get_pmf(ref_data, axes, bins)
+    pmf = _get_pmf(data, along_axes, bins)
+    ref_pmf = _get_pmf(ref_data, along_axes, bins)
 
     # Get vectorized version of scipy.stats.wasserstein_distance that also
     # handles masks properly and calculate EMD metric (= First Wasserstein
