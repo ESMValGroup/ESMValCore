@@ -279,6 +279,7 @@ _validators = {
     'auxiliary_data_dir': validate_path,
     'compress_netcdf': validate_bool,
     'config_developer_file': validate_config_developer,
+    'dask_config': validate_path,
     'download_dir': validate_path,
     'drs': validate_drs,
     'exit_on_warning': validate_bool,

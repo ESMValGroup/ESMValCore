@@ -394,21 +394,21 @@ class ESMValTool():
 
         recipe = self._get_recipe(recipe)
 
-        session = CFG.start_session(recipe.stem)
         if check_level is not None:
-            session['check_level'] = check_level
+            CFG['check_level'] = check_level
         if diagnostics is not None:
-            session['diagnostics'] = diagnostics
+            CFG['diagnostics'] = diagnostics
         if max_datasets is not None:
-            session['max_datasets'] = max_datasets
+            CFG['max_datasets'] = max_datasets
         if max_years is not None:
-            session['max_years'] = max_years
+            CFG['max_years'] = max_years
         if search_esgf is not None:
-            session['search_esgf'] = search_esgf
+            CFG['search_esgf'] = search_esgf
         if skip_nonexistent is not None:
-            session['skip_nonexistent'] = skip_nonexistent
-        session['resume_from'] = parse_resume(resume_from, recipe)
-        session.update(kwargs)
+            CFG['skip_nonexistent'] = skip_nonexistent
+        CFG['resume_from'] = parse_resume(resume_from, recipe)
+        CFG.update(kwargs)
+        session = CFG.start_session(recipe.stem)
 
         self._run(recipe, session)
         # Print warnings about deprecated configuration options again:
