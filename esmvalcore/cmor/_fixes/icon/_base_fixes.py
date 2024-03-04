@@ -3,18 +3,19 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 import warnings
 from datetime import datetime
 from pathlib import Path
 from shutil import copyfileobj
+from tempfile import NamedTemporaryFile
 from urllib.parse import urlparse
 
 import iris
 import numpy as np
 import requests
-from filelock import FileLock
 from iris import NameConstraint
-from iris.cube import CubeList
+from iris.cube import Cube, CubeList
 from iris.experimental.ugrid import Connectivity, Mesh
 
 from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
@@ -267,7 +268,13 @@ class IconFix(NativeDatasetFix):
         logger.debug("Loaded ICON grid file from %s", grid_path)
         return self._horizontal_grids[grid_name]
 
-    def _get_grid_from_cube_attr(self, cube):
+    @staticmethod
+    def _tmp_local_file(local_file: Path) -> Path:
+        """Return the path to a temporary local file for downloading to."""
+        with NamedTemporaryFile(prefix=f"{local_file}.") as file:
+            return Path(file.name)
+
+    def _get_grid_from_cube_attr(self, cube: Cube) -> Cube:
         """Get horizontal grid from `grid_file_uri` attribute of cube."""
         (grid_url, grid_name) = self._get_grid_url(cube)
 
@@ -283,6 +290,9 @@ class IconFix(NativeDatasetFix):
         if grid is None:
             grid = self._get_downloaded_grid(grid_url, grid_name)
 
+        # Cache grid for later use
+        self._horizontal_grids[grid_name] = grid
+
         return grid
 
     def _get_grid_from_rootpath(self, grid_name: str) -> CubeList | None:
@@ -296,8 +306,7 @@ class IconFix(NativeDatasetFix):
         for grid_path in possible_grid_paths:
             if grid_path.is_file():
                 logger.debug("Using ICON grid file '%s'", grid_path)
-                self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
-                return self._horizontal_grids[grid_name]
+                return self._load_cubes(grid_path)
         return None
 
     def _get_downloaded_grid(self, grid_url: str, grid_name: str) -> CubeList:
@@ -308,48 +317,53 @@ class IconFix(NativeDatasetFix):
 
         Note
         ----
-        We use a lock here to prevent multiple processes from downloading the
-        file simultaneously and to ensure that other processes wait until the
-        download has finished.
+        In order to make this function thread-safe, the downloaded grid file is
+        first save to a temporary location and copied to the actual location
+        later.
 
         """
-        self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        lock = FileLock(self.CACHE_DIR / f"{grid_name}.lock")
-        with lock:
-            grid_path = self.CACHE_DIR / grid_name
-            if grid_path.exists():
-                mtime = grid_path.stat().st_mtime
-                now = datetime.now().timestamp()
-                age = now - mtime
-                if age < self.CACHE_VALIDITY:
-                    logger.debug("Using cached ICON grid file '%s'", grid_path)
-                    self._horizontal_grids[grid_name] = self._load_cubes(
-                        grid_path
-                    )
-                    return self._horizontal_grids[grid_name]
+        grid_path = self.CACHE_DIR / grid_name
+
+        # Check cache
+        valid_cache = False
+        if grid_path.exists():
+            mtime = grid_path.stat().st_mtime
+            now = datetime.now().timestamp()
+            age = now - mtime
+            if age < self.CACHE_VALIDITY:
+                logger.debug("Using cached ICON grid file '%s'", grid_path)
+                valid_cache = True
+            else:
                 logger.debug("Existing cached ICON grid file '%s' is outdated",
                              grid_path)
 
-            # Download file if necessary
+        # File is not present in cache or too old -> download it
+        if not valid_cache:
+            self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            tmp_path = self._tmp_local_file(grid_path)
             logger.debug(
                 "Attempting to download ICON grid file from '%s' to '%s'",
                 grid_url,
-                grid_path,
+                tmp_path,
             )
-            with requests.get(grid_url, stream=True,
-                              timeout=self.TIMEOUT) as response:
+            with requests.get(
+                    grid_url,
+                    stream=True,
+                    timeout=self.TIMEOUT,
+            ) as response:
                 response.raise_for_status()
-                with open(grid_path, 'wb') as file:
+                with tmp_path.open('wb') as file:
                     copyfileobj(response.raw, file)
+            shutil.move(tmp_path, grid_path)
             logger.info(
-                "Successfully downloaded ICON grid file from '%s' to '%s'",
+                "Successfully downloaded ICON grid file from '%s' to '%s' "
+                "and moved it to '%s'",
                 grid_url,
+                tmp_path,
                 grid_path,
             )
 
-            self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
-
-        return self._horizontal_grids[grid_name]
+        return self._load_cubes(grid_path)
 
     def get_horizontal_grid(self, cube):
         """Get copy of ICON horizontal grid.
