@@ -16,6 +16,7 @@ long_name:         Permafrost Ground Temperature
 ! Additional variable information:
 !----------------------------------
 dimensions:        longitude latitude sdepth time
+out_name:          gtd
 type:              real
 !----------------------------------
 !
