@@ -247,7 +247,7 @@ class UnstructuredLinearRegridder:
         regridded_data: np.ndarray | da.Array
         if cube.has_lazy_data():
             regridded_data = self._regrid_lazy(
-                src_data, udim, self.weights.dtype, self.weights.shape[0]
+                src_data, udim, self.weights.dtype
             )
             # TODO: add limit='128 MiB' to reshape once dask bug is solved
             # see https://github.com/dask/dask/issues/10603
@@ -263,45 +263,66 @@ class UnstructuredLinearRegridder:
 
         return regridded_data
 
-    def _interpolate(self, arr: np.ndarray) -> np.ndarray:
-        """Interpolate data.
-
-        Takes input array of shape (N,) (N: number of source points) and
-        returns array of shape (M,) (M: number of target points).
-
-        """
-        return np.einsum('nj,nj->n', np.take(arr, self.indices), self.weights)
-
-    def _regrid_eager(self, arr: np.ndarray, axis: int) -> np.ndarray:
+    def _regrid_eager(self, data: np.ndarray, axis: int) -> np.ndarray:
         """Eager regridding."""
-        v_interpolate = np.vectorize(self._interpolate, signature='(i)->(j)')
+        v_interpolate = np.vectorize(
+            _interpolate, signature='(i),(j,3),(j,3)->(j)'
+        )
 
         # Make sure that interpolation dimension is rightmost dimension and
         # change it back after regridding
-        arr = np.moveaxis(arr, axis, -1)
-        regridded_arr = v_interpolate(arr)
+        data = np.moveaxis(data, axis, -1)
+        regridded_arr = v_interpolate(data, self.indices, self.weights)
         regridded_arr = np.moveaxis(regridded_arr, -1, axis)
 
         return regridded_arr
 
     def _regrid_lazy(
         self,
-        arr: da.Array,
+        data: da.Array,
         axis: int,
         dtype: DTypeLike,
-        target_grid_size: int,
     ) -> da.Array:
         """Lazy regridding."""
         regridded_arr = da.apply_gufunc(
-            self._interpolate,
-            '(i)->(j)',
-            arr,
-            axes=[(axis,), (axis,)],
+            _interpolate,
+            '(i),(j,3),(j,3)->(j)',
+            data,
+            self.indices,
+            self.weights,
+            axes=[(axis,), (0, 1), (0, 1), (axis,)],
             vectorize=True,
             output_dtypes=dtype,
-            output_sizes={'j': target_grid_size},
         )
         return regridded_arr
+
+
+def _interpolate(
+    data: np.ndarray,
+    indices: np.ndarray,
+    weights: np.ndarray,
+) -> np.ndarray:
+    """Interpolate data.
+
+    Parameters
+    ----------
+    data: np.ndarray
+        Data to interpolate. Must be an (N,) array, where N is the number of
+        source grid points.
+    indices: np.ndarray
+        Indices used to index the data. Must be an (M, 3) array, where M is the
+        number of target grid points.
+    weights: np.ndarray
+        Interpolation weights. Must be an (M, 3) array, where M is the number
+        of target grid points.
+
+    Returns
+    -------
+    np.ndarray
+        Interpolated data of shape (M,).
+
+    """
+    return np.einsum('nj,nj->n', np.take(data, indices), weights)
 
 
 class UnstructuredLinear:
