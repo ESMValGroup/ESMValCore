@@ -19,9 +19,6 @@ from ._base_fixes import IconFix, NegateData
 
 logger = logging.getLogger(__name__)
 
-Hfls = NegateData
-Hfss = NegateData
-
 
 class AllVars(IconFix):
     """Fixes for all variables."""
@@ -515,3 +512,9 @@ class Clwvi(IconFix):
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
+
+
+Hfls = NegateData
+
+
+Hfss = NegateData
