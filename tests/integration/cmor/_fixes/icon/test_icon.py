@@ -14,7 +14,7 @@ from iris.cube import Cube, CubeList
 import esmvalcore.cmor._fixes.icon.icon
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor._fixes.icon._base_fixes import IconFix
-from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi
+from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi, Hfls, Hfss
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config import CFG
@@ -145,6 +145,15 @@ def fix_metadata(cubes, mip, short_name, session=None):
     fix = get_allvars_fix(mip, short_name, session=session)
     cubes = fix.fix_metadata(cubes)
     return cubes
+
+
+def fix_data(cube, mip, short_name, session=None):
+    """Fix data of cube."""
+    fix = get_fix(mip, short_name, session=session)
+    cube = fix.fix_data(cube)
+    fix = get_allvars_fix(mip, short_name, session=session)
+    cube = fix.fix_data(cube)
+    return cube
 
 
 def check_ta_metadata(cubes):
@@ -2209,3 +2218,63 @@ def test_fix_height_alt16(bounds, simple_unstructured_cube):
         np.testing.assert_allclose(alt16.bounds, expected_bnds)
     else:
         assert alt16.bounds is None
+
+
+# Test hfls (for extra fix)
+
+
+def test_get_hfls_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'hfls')
+    assert fix == [Hfls(None), AllVars(None), GenericFix(None)]
+
+
+def test_hfls_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = CubeList([cubes_regular_grid[0].copy()])
+    cubes[0].var_name = 'hfls'
+    cubes[0].units = 'W m-2'
+
+    fixed_cubes = fix_metadata(cubes, 'Amon', 'hfls')
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'hfls'
+    assert cube.standard_name == 'surface_upward_latent_heat_flux'
+    assert cube.long_name == 'Surface Upward Latent Heat Flux'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'up'
+
+    fixed_cube = fix_data(cube, 'Amon', 'hfls')
+
+    np.testing.assert_allclose(fixed_cube.data, [[[0.0, -1.0], [-2.0, -3.0]]])
+
+
+# Test hfss (for extra fix)
+
+
+def test_get_hfss_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'hfss')
+    assert fix == [Hfss(None), AllVars(None), GenericFix(None)]
+
+
+def test_hfss_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = CubeList([cubes_regular_grid[0].copy()])
+    cubes[0].var_name = 'hfss'
+    cubes[0].units = 'W m-2'
+
+    fixed_cubes = fix_metadata(cubes, 'Amon', 'hfss')
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'hfss'
+    assert cube.standard_name == 'surface_upward_sensible_heat_flux'
+    assert cube.long_name == 'Surface Upward Sensible Heat Flux'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'up'
+
+    fixed_cube = fix_data(cube, 'Amon', 'hfss')
+
+    np.testing.assert_allclose(fixed_cube.data, [[[0.0, -1.0], [-2.0, -3.0]]])
