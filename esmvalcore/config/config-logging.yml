@@ -37,7 +37,7 @@ handlers:
     formatter: debug
     filename: main_log_debug.txt
     mode: w
-  cmor_check_log:  # Log file that will only contain CMOR checker output
+  cmor_check_and_generic_fix_log:  # Log file that will only contain output from CMOR check and generic fixes
     class: logging.FileHandler
     level: DEBUG
     formatter: brief
@@ -46,4 +46,4 @@ handlers:
     filters: [cmor_check_and_generic_fix_only]
 root:
   level: DEBUG
-  handlers: [console, simple_log_file, debug_log_file, cmor_check_log]
+  handlers: [console, simple_log_file, debug_log_file, cmor_check_and_generic_fix_log]
