@@ -10,24 +10,40 @@ formatters:
     format: '%(levelname)-7s [%(process)d] %(message)s'
   debug:
     format: '%(asctime)s UTC [%(process)d] %(levelname)-7s %(name)s:%(lineno)s %(message)s'
+filters:
+  cmor_check_and_generic_fix_only:
+    (): esmvalcore.config._logging.FilterAllowNames
+    names: [esmvalcore.cmor.check, esmvalcore.cmor._fixes.fix.genericfix]
+  no_cmor_check_and_generic_fix:
+    (): esmvalcore.config._logging.FilterDisallowNames
+    names: [esmvalcore.cmor.check, esmvalcore.cmor._fixes.fix.genericfix]
 handlers:
   console:
     class: logging.StreamHandler
     level: INFO
     formatter: console
     stream: ext://sys.stdout
+    filters: [no_cmor_check_and_generic_fix]
   simple_log_file:
     class: logging.FileHandler
     level: INFO
     formatter: brief
     filename: main_log.txt
     mode: w
+    filters: [no_cmor_check_and_generic_fix]
   debug_log_file:
     class: logging.FileHandler
     level: DEBUG
     formatter: debug
     filename: main_log_debug.txt
     mode: w
+  cmor_check_log:  # Log file that will only contain CMOR checker output
+    class: logging.FileHandler
+    level: DEBUG
+    formatter: brief
+    filename: cmor_log.txt
+    mode: w
+    filters: [cmor_check_and_generic_fix_only]
 root:
   level: DEBUG
-  handlers: [console, simple_log_file, debug_log_file]
+  handlers: [console, simple_log_file, debug_log_file, cmor_check_log]

@@ -4,10 +4,41 @@ import logging
 import logging.config
 import os
 import time
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Optional, Union
 
 import yaml
+
+
+class FilterAllowNames():
+    """Only allow events from logger with specific names."""
+
+    def __init__(self, names: Iterable[str]) -> None:
+        """Initialize filter."""
+        self.names = names
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Filter events."""
+        for name in self.names:
+            if name in record.name:
+                return True
+        return False
+
+
+class FilterDisallowNames():
+    """Do not allow events from logger with specific names."""
+
+    def __init__(self, names: Iterable[str]) -> None:
+        """Initialize filter."""
+        self.names = names
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Filter events."""
+        for name in self.names:
+            if name in record.name:
+                return False
+        return True
 
 
 def _purge_file_handlers(cfg: dict) -> None:
