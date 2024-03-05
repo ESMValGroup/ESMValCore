@@ -462,3 +462,12 @@ class IconFix(NativeDatasetFix):
         lon_coord.points = (lon_coord.core_points() + 360.0) % 360.0
         if lon_coord.has_bounds():
             lon_coord.bounds = (lon_coord.core_bounds() + 360.0) % 360.0
+
+
+class NegateData(IconFix):
+    """Base fix to negate data."""
+
+    def fix_data(self, cube):
+        """Fix data."""
+        cube.data = -cube.core_data()
+        return cube
