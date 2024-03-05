@@ -2,16 +2,17 @@
 
 import logging
 import os
+import shutil
 import warnings
 from datetime import datetime
 from pathlib import Path
 from shutil import copyfileobj
+from tempfile import NamedTemporaryFile
 from urllib.parse import urlparse
 
 import iris
 import numpy as np
 import requests
-from filelock import FileLock
 from iris import NameConstraint
 from iris.experimental.ugrid import Connectivity, Mesh
 
@@ -264,7 +265,13 @@ class IconFix(NativeDatasetFix):
         logger.debug("Loaded ICON grid file from %s", grid_path)
         return self._horizontal_grids[grid_name]
 
-    def _get_grid_from_cube_attr(self, cube):
+    @staticmethod
+    def _tmp_local_file(local_file: Path) -> Path:
+        """Return the path to a temporary local file for downloading to."""
+        with NamedTemporaryFile(prefix=f"{local_file}.") as file:
+            return Path(file.name)
+
+    def _get_grid_from_cube_attr(self, cube: iris.cube.Cube) -> iris.cube.Cube:
         """Get horizontal grid from `grid_file_uri` attribute of cube."""
         (grid_url, grid_name) = self._get_grid_url(cube)
 
@@ -274,44 +281,46 @@ class IconFix(NativeDatasetFix):
 
         # Check if grid file has recently been downloaded and load it if
         # possible
-        # Note: we use a lock here to prevent multiple processes from
-        # downloading the file simultaneously and to ensure that other
-        # processes wait until the download has finished
-        self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        lock = FileLock(self.CACHE_DIR / f"{grid_name}.lock")
-        with lock:
-            grid_path = self.CACHE_DIR / grid_name
-            if grid_path.exists():
-                mtime = grid_path.stat().st_mtime
-                now = datetime.now().timestamp()
-                age = now - mtime
-                if age < self.CACHE_VALIDITY:
-                    logger.debug("Using cached ICON grid file '%s'", grid_path)
-                    self._horizontal_grids[grid_name] = self._load_cubes(
-                        grid_path
-                    )
-                    return self._horizontal_grids[grid_name]
+        grid_path = self.CACHE_DIR / grid_name
+
+        valid_cache = False
+        if grid_path.exists():
+            mtime = grid_path.stat().st_mtime
+            now = datetime.now().timestamp()
+            age = now - mtime
+            if age < self.CACHE_VALIDITY:
+                logger.debug("Using cached ICON grid file '%s'", grid_path)
+                valid_cache = True
+            else:
                 logger.debug("Existing cached ICON grid file '%s' is outdated",
                              grid_path)
 
-            # Download file if necessary
+        if not valid_cache:
+            self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            tmp_path = self._tmp_local_file(grid_path)
             logger.debug(
                 "Attempting to download ICON grid file from '%s' to '%s'",
                 grid_url,
-                grid_path,
+                tmp_path,
             )
-            with requests.get(grid_url, stream=True,
-                              timeout=self.TIMEOUT) as response:
+            with requests.get(
+                    grid_url,
+                    stream=True,
+                    timeout=self.TIMEOUT,
+            ) as response:
                 response.raise_for_status()
-                with open(grid_path, 'wb') as file:
+                with tmp_path.open('wb') as file:
                     copyfileobj(response.raw, file)
+            shutil.move(tmp_path, grid_path)
             logger.info(
-                "Successfully downloaded ICON grid file from '%s' to '%s'",
+                "Successfully downloaded ICON grid file from '%s' to '%s' "
+                "and moved it to '%s'",
                 grid_url,
+                tmp_path,
                 grid_path,
             )
 
-            self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
+        self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
 
         return self._horizontal_grids[grid_name]
 
@@ -450,6 +459,15 @@ class IconFix(NativeDatasetFix):
     @staticmethod
     def _set_range_in_0_360(lon_coord):
         """Convert longitude coordinate to [0, 360]."""
-        lon_coord.points = (lon_coord.points + 360.0) % 360.0
-        if lon_coord.bounds is not None:
-            lon_coord.bounds = (lon_coord.bounds + 360.0) % 360.0
+        lon_coord.points = (lon_coord.core_points() + 360.0) % 360.0
+        if lon_coord.has_bounds():
+            lon_coord.bounds = (lon_coord.core_bounds() + 360.0) % 360.0
+
+
+class NegateData(IconFix):
+    """Base fix to negate data."""
+
+    def fix_data(self, cube):
+        """Fix data."""
+        cube.data = -cube.core_data()
+        return cube

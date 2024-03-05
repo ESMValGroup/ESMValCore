@@ -128,7 +128,7 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     z_dim = cube.coord_dims(depth)[0]
 
     # Calculate Z-direction thickness
-    thickness = depth.bounds[..., 1] - depth.bounds[..., 0]
+    thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
 
     # Try to calculate grid cell area
     try:
@@ -352,8 +352,11 @@ def axis_statistics(
 
 def _add_axis_stats_weights_coord(cube, coord, coord_dims):
     """Add weights for axis_statistics to cube (in-place)."""
+    weights = np.abs(coord.lazy_bounds()[:, 1] - coord.lazy_bounds()[:, 0])
+    if not cube.has_lazy_data():
+        weights = weights.compute()
     weights_coord = AuxCoord(
-        np.abs(coord.core_bounds()[..., 1] - coord.core_bounds()[..., 0]),
+        weights,
         long_name='_axis_statistics_weights_',
         units=coord.units,
     )
