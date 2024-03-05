@@ -14,7 +14,7 @@ from iris.cube import Cube, CubeList
 import esmvalcore.cmor._fixes.icon.icon
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor._fixes.icon._base_fixes import IconFix
-from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi, Hfls
+from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi, Hfls, Hfss
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config import CFG
@@ -2256,7 +2256,7 @@ def test_hfls_fix(cubes_regular_grid):
 def test_get_hfss_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'hfss')
-    assert fix == [Hfls(None), AllVars(None), GenericFix(None)]
+    assert fix == [Hfss(None), AllVars(None), GenericFix(None)]
 
 
 def test_hfss_fix(cubes_regular_grid):
