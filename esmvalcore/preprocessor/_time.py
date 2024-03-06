@@ -1233,7 +1233,7 @@ def resample_hours(cube: Cube, interval: int, offset: int = 0) -> Cube:
                          f'the interval ({interval})')
     time = cube.coord('time')
     cube_period = time.cell(1).point - time.cell(0).point
-    if cube_period.total_seconds() / 3600 >= interval:
+    if cube_period.total_seconds() / 3600 > interval:
         raise ValueError(f"Data period ({cube_period}) should be lower than "
                          f"the interval ({interval})")
     hours = [PartialDateTime(hour=h) for h in range(0 + offset, 24, interval)]
