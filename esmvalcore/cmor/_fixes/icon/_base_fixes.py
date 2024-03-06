@@ -318,7 +318,7 @@ class IconFix(NativeDatasetFix):
         Note
         ----
         In order to make this function thread-safe, the downloaded grid file is
-        first save to a temporary location and copied to the actual location
+        first saved to a temporary location, then copied to the actual location
         later.
 
         """
