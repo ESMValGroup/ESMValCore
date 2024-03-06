@@ -204,6 +204,10 @@ authors:
     family-names: Martin-Martinez
     given-names: Eneko
     orcid: "https://orcid.org/0000-0002-9213-7818"
+  -
+    affiliation: "DLR, Germany"
+    family-names: Cammarano
+    given-names: Diego
 
 cff-version: 1.2.0
 date-released: 2023-12-19
