@@ -388,7 +388,9 @@ This grid file can either be specified as absolute or relative (to
 with the facet ``horizontal_grid`` in the recipe or the extra facets (see
 below), or retrieved automatically from the `grid_file_uri` attribute of the
 input files.
-In the latter case, the file is downloaded once and then cached.
+In the latter case, ESMValCore first searches the input directories specified
+for ICON for a grid file with that name, and if that was not successful, tries
+to download the file and cache it.
 The cached file is valid for 7 days.
 
 ESMValCore can automatically make native ICON data `UGRID
@@ -467,7 +469,7 @@ Key                 Description                      Default value if not specif
 =================== ================================ ===================================
 ``horizontal_grid`` Absolute or relative (to         If not given, use file attribute
                     ``auxiliary_data_dir`` defined   ``grid_file_uri`` to retrieve ICON
-                    in the                           grid file
+                    in the                           grid file (see details above)
                     :ref:`user configuration file`)
                     path to the ICON grid file
 ``latitude``        Standard name of the latitude    ``latitude``

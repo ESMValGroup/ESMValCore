@@ -1,4 +1,5 @@
 """Fix base classes for ICON on-the-fly CMORizer."""
+from __future__ import annotations
 
 import logging
 import os
@@ -14,9 +15,11 @@ import iris
 import numpy as np
 import requests
 from iris import NameConstraint
+from iris.cube import Cube, CubeList
 from iris.experimental.ugrid import Connectivity, Mesh
 
-from ..native_datasets import NativeDatasetFix
+from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
+from esmvalcore.local import _get_rootpath, _replace_tags, _select_drs
 
 logger = logging.getLogger(__name__)
 
@@ -240,7 +243,7 @@ class IconFix(NativeDatasetFix):
             'zghalf_file',
         ]
         for facet in facets_to_consider:
-            if facet not in self.extra_facets:
+            if self.extra_facets.get(facet) is None:
                 continue
             path_to_add = self._get_path_from_facet(facet)
             logger.debug("Adding cubes from %s", path_to_add)
@@ -271,7 +274,7 @@ class IconFix(NativeDatasetFix):
         with NamedTemporaryFile(prefix=f"{local_file}.") as file:
             return Path(file.name)
 
-    def _get_grid_from_cube_attr(self, cube: iris.cube.Cube) -> iris.cube.Cube:
+    def _get_grid_from_cube_attr(self, cube: Cube) -> Cube:
         """Get horizontal grid from `grid_file_uri` attribute of cube."""
         (grid_url, grid_name) = self._get_grid_url(cube)
 
@@ -279,10 +282,50 @@ class IconFix(NativeDatasetFix):
         if grid_name in self._horizontal_grids:
             return self._horizontal_grids[grid_name]
 
-        # Check if grid file has recently been downloaded and load it if
-        # possible
+        # First, check if the grid file is available in the ICON rootpath
+        grid = self._get_grid_from_rootpath(grid_name)
+
+        # Second, if that didn't work, try to download grid (or use cached
+        # version of it if possible)
+        if grid is None:
+            grid = self._get_downloaded_grid(grid_url, grid_name)
+
+        # Cache grid for later use
+        self._horizontal_grids[grid_name] = grid
+
+        return grid
+
+    def _get_grid_from_rootpath(self, grid_name: str) -> CubeList | None:
+        """Try to get grid from the ICON rootpath."""
+        rootpaths = _get_rootpath('ICON')
+        dirname_template = _select_drs('input_dir', 'ICON')
+        dirname_globs = _replace_tags(dirname_template, self.extra_facets)
+        possible_grid_paths = [
+            r / d / grid_name for r in rootpaths for d in dirname_globs
+        ]
+        for grid_path in possible_grid_paths:
+            if grid_path.is_file():
+                logger.debug("Using ICON grid file '%s'", grid_path)
+                cubes = self._load_cubes(grid_path)
+                return cubes
+        return None
+
+    def _get_downloaded_grid(self, grid_url: str, grid_name: str) -> CubeList:
+        """Get downloaded horizontal grid.
+
+        Check if grid file has recently been downloaded. If not, download grid
+        file here.
+
+        Note
+        ----
+        In order to make this function thread-safe, the downloaded grid file is
+        first saved to a temporary location, then copied to the actual location
+        later.
+
+        """
         grid_path = self.CACHE_DIR / grid_name
 
+        # Check cache
         valid_cache = False
         if grid_path.exists():
             mtime = grid_path.stat().st_mtime
@@ -295,6 +338,7 @@ class IconFix(NativeDatasetFix):
                 logger.debug("Existing cached ICON grid file '%s' is outdated",
                              grid_path)
 
+        # File is not present in cache or too old -> download it
         if not valid_cache:
             self.CACHE_DIR.mkdir(parents=True, exist_ok=True)
             tmp_path = self._tmp_local_file(grid_path)
@@ -320,9 +364,8 @@ class IconFix(NativeDatasetFix):
                 grid_path,
             )
 
-        self._horizontal_grids[grid_name] = self._load_cubes(grid_path)
-
-        return self._horizontal_grids[grid_name]
+        cubes = self._load_cubes(grid_path)
+        return cubes
 
     def get_horizontal_grid(self, cube):
         """Get copy of ICON horizontal grid.
@@ -361,7 +404,7 @@ class IconFix(NativeDatasetFix):
             file.
 
         """
-        if 'horizontal_grid' in self.extra_facets:
+        if self.extra_facets.get('horizontal_grid') is not None:
             grid = self._get_grid_from_facet()
         else:
             grid = self._get_grid_from_cube_attr(cube)
@@ -402,7 +445,7 @@ class IconFix(NativeDatasetFix):
         """
         # If specified by the user, use `horizontal_grid` facet to determine
         # grid name; otherwise, use the `grid_file_uri` attribute of the cube
-        if 'horizontal_grid' in self.extra_facets:
+        if self.extra_facets.get('horizontal_grid') is not None:
             grid_path = self._get_path_from_facet(
                 'horizontal_grid', 'Horizontal grid file'
             )
@@ -410,7 +453,7 @@ class IconFix(NativeDatasetFix):
         else:
             (_, grid_name) = self._get_grid_url(cube)
 
-        # Re-use mesh if possible
+        # Reuse mesh if possible
         if grid_name in self._meshes:
             logger.debug("Reusing ICON mesh for grid %s", grid_name)
         else:
@@ -436,7 +479,7 @@ class IconFix(NativeDatasetFix):
         return np.int32(np.min(vertex_index.data))
 
     @staticmethod
-    def _load_cubes(path):
+    def _load_cubes(path: Path | str) -> CubeList:
         """Load cubes and ignore certain warnings."""
         with warnings.catch_warnings():
             warnings.filterwarnings(
@@ -453,7 +496,7 @@ class IconFix(NativeDatasetFix):
                 category=UserWarning,
                 module='iris',
             )
-            cubes = iris.load(str(path))
+            cubes = iris.load(path)
         return cubes
 
     @staticmethod
