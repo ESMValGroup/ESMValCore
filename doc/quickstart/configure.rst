@@ -722,9 +722,9 @@ or as absolute path.
 Other options given for this special table will be ignored.
 
 Custom tables in this directory need to follow the naming convention
-``CMOR_{short_name}.dat`` and need to be given in CMIP5 format.
+``CMOR_{short_name}.dat`` or ``CMOR_{short_name}.dat``, and need to be given in the corresponding CMIP5 or CMIP6 format.
 
-Example for the file ``CMOR_asr.dat``:
+Example for the file ``CMOR_asr.dat`` (CMIP5 format):
 
 .. code-block::
 
@@ -750,7 +750,26 @@ Example for the file ``CMOR_asr.dat``:
    !----------------------------------
    !
 
-It is also possible to use a special coordinates file ``CMOR_coordinates.dat``,
+Example of an entry for a ``.json`` file (CMIP6 format):
+
+.. code-block::
+
+  "variable_entry": {
+    "emilnox": {
+        "frequency": "mon", 
+        "modeling_realm": "atmos", 
+        "standard_name": "tendency_of_atmosphere_moles_of_nox_expressed_as_nitrogen", 
+        "units": "mol s-1", 
+        "cell_methods": "area: time: mean", 
+        "cell_measures": "area: areacella", 
+        "long_name": "Layer-Integrated Lightning Production of NOx", 
+        "comment": "Integrate the NOx production for lightning over model layer. proposed name: tendency_of_atmosphere_mass_content_of_nox_from_lightning", 
+        "dimensions": "longitude latitude Plev39hm time", 
+        "out_name": "emilnox", 
+        "type": "real", 
+    }
+
+It is also possible to use a special coordinates file ``CMOR_coordinates.dat`` or ``CMOR_coordinates.json``,
 which will extend the entries from the default one
 (`esmvalcore/cmor/tables/custom/CMOR_coordinates.dat
 <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom/CMOR_coordinates.dat>`_).
