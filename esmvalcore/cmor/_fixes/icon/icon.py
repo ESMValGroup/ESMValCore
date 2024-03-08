@@ -16,7 +16,7 @@ from iris.cube import CubeList
 
 from esmvalcore.iris_helpers import add_leading_dim_to_cube, date2num
 
-from ._base_fixes import IconFix, NegateData
+from ._base_fixes import IconFix, NegateData, Rtmt
 
 logger = logging.getLogger(__name__)
 
@@ -527,3 +527,6 @@ Hfls = NegateData
 
 
 Hfss = NegateData
+
+
+Rtnt = Rtmt
