@@ -1436,9 +1436,9 @@ def _get_time_index_and_mask(
 
 def _transform_to_lst_eager(
     data: np.ndarray,
-    *,
     time_index: np.ndarray,
     mask: np.ndarray,
+    *,
     time_dim: int,
     lon_dim: int,
     **__,
@@ -1479,9 +1479,9 @@ def _transform_to_lst_eager(
 
 def _transform_to_lst_lazy(
     data: da.core.Array,
-    *,
     time_index: np.ndarray,
     mask: np.ndarray,
+    *,
     time_dim: int,
     lon_dim: int,
     output_dtypes: DTypeLike,
@@ -1505,28 +1505,25 @@ def _transform_to_lst_lazy(
     `mask` is 2D with shape (time, lon) that will be applied to the final data.
 
     """
-    _transform_chunk_to_lst = partial(
+    new_data = da.apply_gufunc(
         _transform_to_lst_eager,
-        time_index=time_index,
-        mask=mask,
+        '(t,x),(t,x),(t,x)->(t,x)',
+        data,
+        time_index,
+        mask,
+        axes=[(time_dim, lon_dim), (0, 1), (0, 1), (time_dim, lon_dim)],
+        output_dtypes=output_dtypes,
         time_dim=-2,  # this is ensured by da.apply_gufunc
         lon_dim=-1,  # this is ensured by da.apply_gufunc
-    )
-    new_data = da.apply_gufunc(
-        _transform_chunk_to_lst,
-        '(t,y)->(t,y)',
-        data,
-        axes=[(time_dim, lon_dim), (time_dim, lon_dim)],
-        output_dtypes=output_dtypes,
     )
     return new_data
 
 
 def _transform_arr_to_lst(
     data: np.ndarray | da.core.Array,
-    *,
     time_index: np.ndarray,
     mask: np.ndarray,
+    *,
     time_dim: int,
     lon_dim: int,
     output_dtypes: DTypeLike,
@@ -1545,8 +1542,8 @@ def _transform_arr_to_lst(
         func = _transform_to_lst_lazy  # type: ignore
     new_data = func(
         data,  # type: ignore
-        time_index=time_index,
-        mask=mask,
+        time_index,
+        mask,
         time_dim=time_dim,
         lon_dim=lon_dim,
         output_dtypes=output_dtypes,
@@ -1571,13 +1568,10 @@ def _transform_cube_to_lst(cube: Cube) -> Cube:
 
     # Transform cube data
     (time_index, mask) = _get_time_index_and_mask(time_coord, lon_coord)
-    _transform_arr = partial(
-        _transform_arr_to_lst,
-        time_index=time_index,
-        mask=mask,
-    )
-    cube.data = _transform_arr(
+    cube.data = _transform_arr_to_lst(
         cube.core_data(),
+        time_index,
+        mask,
         time_dim=time_dim,
         lon_dim=lon_dim,
         output_dtypes=cube.dtype,
@@ -1589,15 +1583,19 @@ def _transform_cube_to_lst(cube: Cube) -> Cube:
         if time_dim in dims and lon_dim in dims:
             time_dim_ = dims.index(time_dim)
             lon_dim_ = dims.index(lon_dim)
-            coord.points = _transform_arr(
+            coord.points = _transform_arr_to_lst(
                 coord.core_points(),
+                time_index,
+                mask,
                 time_dim=time_dim_,
                 lon_dim=lon_dim_,
                 output_dtypes=coord.dtype,
             )
             if coord.has_bounds():
-                coord.bounds = _transform_arr(
+                coord.bounds = _transform_arr_to_lst(
                     coord.core_bounds(),
+                    time_index,
+                    mask,
                     time_dim=time_dim_,
                     lon_dim=lon_dim_,
                     output_dtypes=coord.bounds_dtype,
@@ -1609,8 +1607,10 @@ def _transform_cube_to_lst(cube: Cube) -> Cube:
         if time_dim in dims and lon_dim in dims:
             time_dim_ = dims.index(time_dim)
             lon_dim_ = dims.index(lon_dim)
-            cell_measure.data = _transform_arr(
+            cell_measure.data = _transform_arr_to_lst(
                 cell_measure.core_data(),
+                time_index,
+                mask,
                 time_dim=time_dim_,
                 lon_dim=lon_dim_,
                 output_dtypes=cell_measure.dtype,
@@ -1622,8 +1622,10 @@ def _transform_cube_to_lst(cube: Cube) -> Cube:
         if time_dim in dims and lon_dim in dims:
             time_dim_ = dims.index(time_dim)
             lon_dim_ = dims.index(lon_dim)
-            anc_var.data = _transform_arr(
+            anc_var.data = _transform_arr_to_lst(
                 anc_var.core_data(),
+                time_index,
+                mask,
                 time_dim=time_dim_,
                 lon_dim=lon_dim_,
                 output_dtypes=anc_var.dtype,
