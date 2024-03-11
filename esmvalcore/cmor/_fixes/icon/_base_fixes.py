@@ -514,17 +514,3 @@ class NegateData(IconFix):
         """Fix data."""
         cube.data = -cube.core_data()
         return cube
-
-
-class Rtmt(IconFix):
-    """Fixes for ``rtmt``."""
-
-    def fix_metadata(self, cubes):
-        """Fix metadata."""
-        cube = (
-            self.get_cube(cubes, var_name='rsdt') -
-            self.get_cube(cubes, var_name='rsut') -
-            self.get_cube(cubes, var_name='rlut')
-        )
-        cube.var_name = self.vardef.short_name
-        return CubeList([cube])

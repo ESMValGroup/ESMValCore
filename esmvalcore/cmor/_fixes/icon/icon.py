@@ -16,7 +16,7 @@ from iris.cube import CubeList
 
 from esmvalcore.iris_helpers import add_leading_dim_to_cube, date2num
 
-from ._base_fixes import IconFix, NegateData, Rtmt
+from ._base_fixes import IconFix, NegateData
 
 logger = logging.getLogger(__name__)
 
@@ -518,6 +518,20 @@ class Clwvi(IconFix):
         cube = (
             self.get_cube(cubes, var_name='cllvi') +
             self.get_cube(cubes, var_name='clivi')
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
+class Rtmt(IconFix):
+    """Fixes for ``rtmt``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = (
+            self.get_cube(cubes, var_name='rsdt') -
+            self.get_cube(cubes, var_name='rsut') -
+            self.get_cube(cubes, var_name='rlut')
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
