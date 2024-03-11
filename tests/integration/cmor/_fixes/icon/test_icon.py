@@ -15,7 +15,10 @@ from iris.cube import Cube, CubeList
 import esmvalcore.cmor._fixes.icon.icon
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor._fixes.icon._base_fixes import IconFix
-from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi, Hfls, Hfss, Rtmt, Rtnt
+from esmvalcore.cmor._fixes.icon.icon import (
+                                            AllVars, Clwvi,
+                                            Hfls, Hfss, Rtmt, Rtnt
+                                            )
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config import CFG
@@ -2338,10 +2341,10 @@ def test_rtnt_fix(cubes_regular_grid):
     assert len(fixed_cubes) == 1
     cube = fixed_cubes[0]
     assert cube.var_name == 'rtnt'
-    assert cube.standard_name == None
+    assert cube.standard_name is None
     assert cube.long_name == 'TOA Net downward Total Radiation'
     assert cube.units == 'W m-2'
-    assert cube.attributes['positive'] == 'up'
+    assert cube.attributes['positive'] == 'down'
 
     np.testing.assert_allclose(cube.data, [[[0.0, 2000.0], [4000.0, 6000.0]]])
 
