@@ -12,26 +12,26 @@ import yaml
 
 
 class FilterMultipleNames():
-    """Allow/Disallow events from loggers with specific names."""
+    """Only allow/Disallow events from loggers with specific names."""
 
     def __init__(
         self,
         names: Iterable[str],
-        mode=Literal['allow', 'disallow'],
+        mode: Literal['allow', 'disallow'],
     ) -> None:
         """Initialize filter."""
         self.names = names
         if mode == 'allow':
-            self.startswith_name = True
+            self.starts_with_name = True
         else:
-            self.startswith_name = False
+            self.starts_with_name = False
 
     def filter(self, record: logging.LogRecord) -> bool:
         """Filter events."""
         for name in self.names:
             if record.name.startswith(name):
-                return self.startswith_name
-        return not self.startswith_name
+                return self.starts_with_name
+        return not self.starts_with_name
 
 
 def _purge_file_handlers(cfg: dict) -> None:
