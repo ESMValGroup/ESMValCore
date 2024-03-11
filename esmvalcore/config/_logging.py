@@ -22,16 +22,16 @@ class FilterMultipleNames():
         """Initialize filter."""
         self.names = names
         if mode == 'allow':
-            self.name_in_names = True
+            self.startswith_name = True
         else:
-            self.name_in_names = False
+            self.startswith_name = False
 
     def filter(self, record: logging.LogRecord) -> bool:
         """Filter events."""
         for name in self.names:
-            if name in record.name:
-                return self.name_in_names
-        return not self.name_in_names
+            if record.name.startswith(name):
+                return self.startswith_name
+        return not self.startswith_name
 
 
 def _purge_file_handlers(cfg: dict) -> None:
