@@ -1,4 +1,5 @@
 """Tests for the ICON on-the-fly CMORizer."""
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 from unittest import mock
@@ -14,7 +15,7 @@ from iris.cube import Cube, CubeList
 import esmvalcore.cmor._fixes.icon.icon
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor._fixes.icon._base_fixes import IconFix
-from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi
+from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi, Hfls, Hfss
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config import CFG
@@ -121,6 +122,7 @@ def _get_fix(mip, short_name, fix_name, session=None):
     )
     extra_facets = get_extra_facets(dataset, ())
     extra_facets['frequency'] = 'mon'
+    extra_facets['exp'] = 'amip'
     vardef = get_var_info(project='ICON', mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.icon.icon, fix_name)
     fix = cls(vardef, extra_facets=extra_facets, session=session)
@@ -145,6 +147,15 @@ def fix_metadata(cubes, mip, short_name, session=None):
     fix = get_allvars_fix(mip, short_name, session=session)
     cubes = fix.fix_metadata(cubes)
     return cubes
+
+
+def fix_data(cube, mip, short_name, session=None):
+    """Fix data of cube."""
+    fix = get_fix(mip, short_name, session=session)
+    cube = fix.fix_data(cube)
+    fix = get_allvars_fix(mip, short_name, session=session)
+    cube = fix.fix_data(cube)
+    return cube
 
 
 def check_ta_metadata(cubes):
@@ -1203,6 +1214,33 @@ def test_get_horizontal_grid_from_attr_cached_in_dict(
 
 
 @mock.patch.object(IconFix, '_get_grid_from_facet', autospec=True)
+def test_get_horizontal_grid_from_attr_rootpath(
+    mock_get_grid_from_facet, monkeypatch, tmp_path
+):
+    """Test fix."""
+    rootpath = deepcopy(CFG['rootpath'])
+    rootpath['ICON'] = str(tmp_path)
+    monkeypatch.setitem(CFG, 'rootpath', rootpath)
+    cube = Cube(0, attributes={'grid_file_uri': 'grid.nc'})
+    grid_cube = Cube(0, var_name='test_grid_cube')
+    (tmp_path / 'amip').mkdir(parents=True, exist_ok=True)
+    iris.save(grid_cube, tmp_path / 'amip' / 'grid.nc')
+
+    fix = get_allvars_fix('Amon', 'tas')
+    fix._horizontal_grids['grid_from_facet.nc'] = mock.sentinel.wrong_grid
+
+    grid = fix.get_horizontal_grid(cube)
+    assert len(fix._horizontal_grids) == 2
+    assert 'grid.nc' in fix._horizontal_grids
+    assert 'grid_from_facet.nc' in fix._horizontal_grids  # has not been used
+    assert fix._horizontal_grids['grid.nc'] == grid
+    assert len(grid) == 1
+    assert grid[0].var_name == 'test_grid_cube'
+    assert grid[0].shape == ()
+    mock_get_grid_from_facet.assert_not_called()
+
+
+@mock.patch.object(IconFix, '_get_grid_from_facet', autospec=True)
 @mock.patch('esmvalcore.cmor._fixes.icon._base_fixes.requests', autospec=True)
 def test_get_horizontal_grid_from_attr_cached_in_file(
     mock_requests,
@@ -1223,6 +1261,7 @@ def test_get_horizontal_grid_from_attr_cached_in_file(
     assert isinstance(grid, CubeList)
     assert len(grid) == 1
     assert grid[0].var_name == 'grid'
+    assert grid[0].shape == ()
     assert len(fix._horizontal_grids) == 1
     assert 'grid_file.nc' in fix._horizontal_grids
     assert fix._horizontal_grids['grid_file.nc'] == grid
@@ -2209,3 +2248,63 @@ def test_fix_height_alt16(bounds, simple_unstructured_cube):
         np.testing.assert_allclose(alt16.bounds, expected_bnds)
     else:
         assert alt16.bounds is None
+
+
+# Test hfls (for extra fix)
+
+
+def test_get_hfls_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'hfls')
+    assert fix == [Hfls(None), AllVars(None), GenericFix(None)]
+
+
+def test_hfls_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = CubeList([cubes_regular_grid[0].copy()])
+    cubes[0].var_name = 'hfls'
+    cubes[0].units = 'W m-2'
+
+    fixed_cubes = fix_metadata(cubes, 'Amon', 'hfls')
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'hfls'
+    assert cube.standard_name == 'surface_upward_latent_heat_flux'
+    assert cube.long_name == 'Surface Upward Latent Heat Flux'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'up'
+
+    fixed_cube = fix_data(cube, 'Amon', 'hfls')
+
+    np.testing.assert_allclose(fixed_cube.data, [[[0.0, -1.0], [-2.0, -3.0]]])
+
+
+# Test hfss (for extra fix)
+
+
+def test_get_hfss_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'hfss')
+    assert fix == [Hfss(None), AllVars(None), GenericFix(None)]
+
+
+def test_hfss_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = CubeList([cubes_regular_grid[0].copy()])
+    cubes[0].var_name = 'hfss'
+    cubes[0].units = 'W m-2'
+
+    fixed_cubes = fix_metadata(cubes, 'Amon', 'hfss')
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'hfss'
+    assert cube.standard_name == 'surface_upward_sensible_heat_flux'
+    assert cube.long_name == 'Surface Upward Sensible Heat Flux'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'up'
+
+    fixed_cube = fix_data(cube, 'Amon', 'hfss')
+
+    np.testing.assert_allclose(fixed_cube.data, [[[0.0, -1.0], [-2.0, -3.0]]])
