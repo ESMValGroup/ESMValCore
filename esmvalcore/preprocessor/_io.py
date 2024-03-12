@@ -354,7 +354,6 @@ def _sort_cubes_by_experiment(cubes: list[iris.cube.Cube])\
     """Sort list of cubes by experiments and do a concatenation first
     This ensures overlapping (branching) experiments are handled correctly
     """
-
     # get the possible facet names in CMIP3, 5, 6 for exp
     # currently these are 'experiment', 'experiment_id'
     exp_facet_names = {
