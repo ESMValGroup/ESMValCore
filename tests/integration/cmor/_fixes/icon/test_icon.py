@@ -16,9 +16,13 @@ import esmvalcore.cmor._fixes.icon.icon
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor._fixes.icon._base_fixes import IconFix
 from esmvalcore.cmor._fixes.icon.icon import (
-                                            AllVars, Clwvi,
-                                            Hfls, Hfss, Rtmt, Rtnt
-                                            )
+    AllVars,
+    Clwvi,
+    Hfls,
+    Hfss,
+    Rtmt,
+    Rtnt,
+)
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config import CFG
