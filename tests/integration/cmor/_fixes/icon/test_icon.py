@@ -15,7 +15,14 @@ from iris.cube import Cube, CubeList
 import esmvalcore.cmor._fixes.icon.icon
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor._fixes.icon._base_fixes import IconFix
-from esmvalcore.cmor._fixes.icon.icon import AllVars, Clwvi, Hfls, Hfss
+from esmvalcore.cmor._fixes.icon.icon import (
+    AllVars,
+    Clwvi,
+    Hfls,
+    Hfss,
+    Rtmt,
+    Rtnt,
+)
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config import CFG
@@ -2308,3 +2315,76 @@ def test_hfss_fix(cubes_regular_grid):
     fixed_cube = fix_data(cube, 'Amon', 'hfss')
 
     np.testing.assert_allclose(fixed_cube.data, [[[0.0, -1.0], [-2.0, -3.0]]])
+
+
+# Test rtnt (for extra fix)
+
+
+def test_get_rtnt_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'rtnt')
+    assert fix == [Rtnt(None), AllVars(None), GenericFix(None)]
+
+
+def test_rtnt_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = CubeList([
+        cubes_regular_grid[0].copy(),
+        cubes_regular_grid[0].copy(),
+        cubes_regular_grid[0].copy()
+    ])
+    cubes[0].var_name = 'rsdt'
+    cubes[1].var_name = 'rsut'
+    cubes[2].var_name = 'rlut'
+    cubes[0].units = 'W m-2'
+    cubes[1].units = 'W m-2'
+    cubes[2].units = 'W m-2'
+
+    fixed_cubes = fix_metadata(cubes, 'Amon', 'rtnt')
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'rtnt'
+    assert cube.standard_name is None
+    assert cube.long_name == 'TOA Net downward Total Radiation'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'down'
+
+    np.testing.assert_allclose(cube.data, [[[0.0, -1.0], [-2.0, -3.0]]])
+
+
+# Test rtmt (for extra fix)
+
+
+def test_get_rtmt_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('ICON', 'ICON', 'Amon', 'rtmt')
+    assert fix == [Rtmt(None), AllVars(None), GenericFix(None)]
+
+
+def test_rtmt_fix(cubes_regular_grid):
+    """Test fix."""
+    cubes = CubeList([
+        cubes_regular_grid[0].copy(),
+        cubes_regular_grid[0].copy(),
+        cubes_regular_grid[0].copy()
+    ])
+    cubes[0].var_name = 'rsdt'
+    cubes[1].var_name = 'rsut'
+    cubes[2].var_name = 'rlut'
+    cubes[0].units = 'W m-2'
+    cubes[1].units = 'W m-2'
+    cubes[2].units = 'W m-2'
+
+    fixed_cubes = fix_metadata(cubes, 'Amon', 'rtmt')
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'rtmt'
+    assert cube.standard_name == ('net_downward_radiative_flux_at_top_of'
+                                  '_atmosphere_model')
+    assert cube.long_name == 'Net Downward Radiative Flux at Top of Model'
+    assert cube.units == 'W m-2'
+    assert cube.attributes['positive'] == 'down'
+
+    np.testing.assert_allclose(cube.data, [[[0.0, -1.0], [-2.0, -3.0]]])
