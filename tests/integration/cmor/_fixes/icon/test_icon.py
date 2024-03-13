@@ -2346,7 +2346,7 @@ def test_rtnt_fix(cubes_regular_grid):
     assert cube.units == 'W m-2'
     assert cube.attributes['positive'] == 'down'
 
-    np.testing.assert_allclose(cube.data, [[[0.0, 2000.0], [4000.0, 6000.0]]])
+    np.testing.assert_allclose(cube.data, [[[0.0, -1.0], [-2.0, -3.0]]])
 
 
 # Test rtmt (for extra fix)
@@ -2383,4 +2383,4 @@ def test_rtmt_fix(cubes_regular_grid):
     assert cube.units == 'W m-2'
     assert cube.attributes['positive'] == 'down'
 
-    np.testing.assert_allclose(cube.data, [[[0.0, 2000.0], [4000.0, 6000.0]]])
+    np.testing.assert_allclose(cube.data, [[[0.0, -1.0], [-2.0, -3.0]]])
