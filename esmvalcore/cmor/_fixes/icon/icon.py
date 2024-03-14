@@ -15,7 +15,7 @@ from iris.cube import CubeList
 
 from esmvalcore.iris_helpers import add_leading_dim_to_cube, date2num
 
-from ._base_fixes import IconFix
+from ._base_fixes import IconFix, NegateData
 
 logger = logging.getLogger(__name__)
 
@@ -499,7 +499,7 @@ class AllVars(IconFix):
         rounded_datetimes = (year_month_day + day_float).round('s')
         with warnings.catch_warnings():
             # We already fixed the deprecated code as recommended in the
-            # warnings, but it is still showing up -> ignore it
+            # warning, but it still shows up -> ignore it
             warnings.filterwarnings(
                 'ignore',
                 message="The behavior of DatetimeProperties.to_pydatetime .*",
@@ -524,3 +524,26 @@ class Clwvi(IconFix):
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
+
+
+class Rtmt(IconFix):
+    """Fixes for ``rtmt``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = (
+            self.get_cube(cubes, var_name='rsdt') -
+            self.get_cube(cubes, var_name='rsut') -
+            self.get_cube(cubes, var_name='rlut')
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
+Hfls = NegateData
+
+
+Hfss = NegateData
+
+
+Rtnt = Rtmt
