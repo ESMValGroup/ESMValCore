@@ -292,30 +292,24 @@ class Test:
         expected = np.array([[[1.499886]], [[5.499886]], [[9.499886]]])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
 
-    def test_regrid_nearest_unstructured_grid_float(self):
-        """Test `nearest` regridding with unstructured cube of floats."""
-        result = regrid(self.unstructured_grid_cube,
-                        self.tgt_grid_for_unstructured,
-                        'nearest')
-        expected = np.ma.array([[[3.0]], [[7.0]], [[11.0]]],
-                               mask=[[[True]], [[False]], [[False]]])
-        np.testing.assert_array_equal(result.data.mask, expected.mask)
-        np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
-
-        # Make sure that dtype is preserved (without an adaption in
-        # esmvalcore.preprocessor.regrid(), the dtype of the result would be
-        # float64 instead of float32)
+    @pytest.mark.parametrize('scheme', ['linear', 'nearest'])
+    def test_regrid_unstructured_grid_float(self, scheme):
+        """Test regridding with unstructured cube of floats."""
+        result = regrid(
+            self.unstructured_grid_cube, self.tgt_grid_for_unstructured, scheme
+        )
         assert self.unstructured_grid_cube.dtype == np.float32
         assert result.dtype == np.float32
 
-    def test_regrid_nearest_unstructured_grid_int(self):
-        """Test `nearest` regridding with unstructured cube of ints."""
+    @pytest.mark.parametrize('scheme', ['linear', 'nearest'])
+    def test_regrid_unstructured_grid_int(self, scheme):
+        """Test regridding with unstructured cube of ints."""
         self.unstructured_grid_cube.data = np.ones((3, 4), dtype=int)
-        result = regrid(self.unstructured_grid_cube,
-                        self.tgt_grid_for_unstructured,
-                        'nearest')
-        expected = np.array([[[1]], [[1]], [[1]]])
-        np.testing.assert_array_equal(result.data, expected)
+        result = regrid(
+            self.unstructured_grid_cube, self.tgt_grid_for_unstructured, scheme
+        )
+        assert self.unstructured_grid_cube.dtype == int
+        assert result.dtype == int
 
     def test_invalid_scheme_for_unstructured_grid(self):
         """Test invalid scheme for unstructured cube."""

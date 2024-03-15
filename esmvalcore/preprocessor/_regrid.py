@@ -40,6 +40,7 @@ from esmvalcore.preprocessor.regrid_schemes import (
     ESMPyLinear,
     ESMPyNearest,
     GenericFuncScheme,
+    UnstructuredLinear,
     UnstructuredNearest,
 )
 
@@ -90,6 +91,7 @@ HORIZONTAL_SCHEMES_IRREGULAR = {
 
 # Supported horizontal regridding schemes for unstructured grids
 HORIZONTAL_SCHEMES_UNSTRUCTURED = {
+    'linear': UnstructuredLinear(),
     'nearest': UnstructuredNearest(),
 }
 
