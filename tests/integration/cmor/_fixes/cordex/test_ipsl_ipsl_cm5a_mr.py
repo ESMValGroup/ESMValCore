@@ -7,7 +7,9 @@ from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 
 
-@pytest.mark.parametrize('short_name', ['tasmax', 'tasmin', 'tas'])
+@pytest.mark.parametrize(
+    'short_name',
+    ['tasmax', 'tasmin', 'tas', 'hurs', 'huss'])
 def test_get_wrf381p_fix(short_name):
     fix = Fix.get_fixes(
         'CORDEX',

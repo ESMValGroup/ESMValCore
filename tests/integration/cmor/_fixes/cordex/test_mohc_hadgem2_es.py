@@ -106,7 +106,9 @@ def test_hirham5_fix(cubes):
         assert cube.coord('longitude').attributes == {}
 
 
-@pytest.mark.parametrize('short_name', ['tasmax', 'tasmin', 'tas'])
+@pytest.mark.parametrize(
+    'short_name',
+    ['tasmax', 'tasmin', 'tas', 'hurs', 'huss'])
 def test_get_wrf381p_fix(short_name):
     fix = Fix.get_fixes(
         'CORDEX',

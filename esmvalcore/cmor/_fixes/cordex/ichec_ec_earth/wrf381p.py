@@ -24,9 +24,13 @@ class Tas(Fix):
         return cubes
 
 
-class Tasmin(Tas):
-    """Fixes for tasmin."""
+Tasmin = Tas
 
 
-class Tasmax(Tas):
-    """Fixes for tasmax."""
+Tasmax = Tas
+
+
+Hurs = Tas
+
+
+Huss = Tas
