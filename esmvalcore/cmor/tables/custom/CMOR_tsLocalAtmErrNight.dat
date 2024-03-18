@@ -6,11 +6,12 @@ modeling_realm:    atmos
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
-standard_name:     
+standard_name:
+var_name:          tsLocalAtmErrNight      
 units:             K
 cell_methods:      time: mean
 cell_measures:     
-long_name:         uncertainty from locally correlated errors on atmospheric scales
+long_name:         uncertainty from locally correlated errors on atmospheric scales night time
 comment:
 !----------------------------------
 ! Additional variable information:

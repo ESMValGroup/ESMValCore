@@ -1,16 +1,17 @@
 SOURCE: CMIP5
 !============
-variable_entry:    tsUnCorErrDay
+variable_entry:    tsUnCorErrDay  
 !============
 modeling_realm:    atmos
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
-standard_name:     
+standard_name:
+var_name:          tsUnCorErrDay
 units:             K
 cell_methods:      time: mean
 cell_measures:     
-long_name:         uncertainty from uncorrelated errors
+long_name:         uncertainty from uncorrelated errors daytime
 comment:
 !----------------------------------
 ! Additional variable information:

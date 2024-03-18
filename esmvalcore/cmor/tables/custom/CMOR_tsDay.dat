@@ -6,7 +6,8 @@ modeling_realm:    atmos
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
-standard_name:     surface_temperature
+standard_name:    
+var_name:          tsDay
 units:             K
 cell_methods:      time: mean
 cell_measures:     

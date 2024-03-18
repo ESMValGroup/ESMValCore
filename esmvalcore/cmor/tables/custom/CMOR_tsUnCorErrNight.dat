@@ -6,11 +6,12 @@ modeling_realm:    atmos
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
-standard_name:     
+standard_name:
+var_name:          tsUnCorErrNight     
 units:             K
 cell_methods:      time: mean
 cell_measures:     
-long_name:         uncertainty from uncorrelated errors
+long_name:         uncertainty from uncorrelated errors night time
 comment:
 !----------------------------------
 ! Additional variable information:
