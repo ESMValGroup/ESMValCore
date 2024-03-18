@@ -722,7 +722,7 @@ or as absolute path.
 Other options given for this special table will be ignored.
 
 Custom tables in this directory need to follow the naming convention
-``CMOR_{short_name}.dat`` or ``CMOR_{short_name}.dat``, and need to be given in the corresponding CMIP5 or CMIP6 format.
+``CMOR_{short_name}.dat`` or ``CMOR_{short_name}.json``, and need to be given in the corresponding CMIP5 or CMIP6 format.
 
 Example for the file ``CMOR_asr.dat`` (CMIP5 format):
 
