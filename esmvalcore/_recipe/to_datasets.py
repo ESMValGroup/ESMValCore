@@ -450,9 +450,10 @@ def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
             result.append(new_ds)
         else:
             logger.debug(
-                f"Not all necessary input variables to derive "
-                f"'{dataset['short_name']}' are available for dataset "
-                f"{updated_facets}"
+                "Not all necessary input variables to derive '%s' are "
+                "available for dataset %s",
+                dataset['short_name'],
+                updated_facets,
             )
 
     if errors:
