@@ -474,7 +474,6 @@ def _report_unexpanded_globs(
     )
 
     # Set supplementaries to [] to avoid searching for supplementary files
-    expanded_ds = expanded_ds.copy()
     expanded_ds.supplementaries = []
 
     if expanded_ds.files:
