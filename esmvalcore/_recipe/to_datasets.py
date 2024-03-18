@@ -479,11 +479,11 @@ def _report_unexpanded_globs(
 
     if expanded_ds.files:
         if any(isinstance(f, LocalFile) for f in expanded_ds.files):
-            paths_msg = "paths to "
+            paths_msg = "paths to the "
         else:
             paths_msg = ""
         msg = (
-            f"{msg}\nDo the {paths_msg}the files:\n" +
+            f"{msg}\nDo the {paths_msg}files:\n" +
             "\n".join(
                 f"{f} with facets: {f.facets}" for f in expanded_ds.files
             ) +
