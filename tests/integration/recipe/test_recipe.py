@@ -16,7 +16,7 @@ import esmvalcore
 import esmvalcore._task
 from esmvalcore._recipe.recipe import (
     _get_input_datasets,
-    _representative_dataset,
+    _representative_datasets,
     read_recipe_file,
 )
 from esmvalcore._task import DiagnosticTask
@@ -2360,7 +2360,9 @@ def test_representative_dataset_regular_var(patched_datafinder, session):
     }
     dataset = Dataset(**variable)
     dataset.session = session
-    filename = _representative_dataset(dataset).files[0]
+    datasets = _representative_datasets(dataset)
+    assert len(datasets) == 1
+    filename = datasets[0].files[0]
     path = Path(filename)
     assert path.name == 'atm_amip-rad_R2B4_r1i1p1f1_atm_2d_ml_1990_1999.nc'
 
@@ -2384,11 +2386,9 @@ def test_representative_dataset_derived_var(patched_datafinder, session,
     }
     dataset = Dataset(**variable)
     dataset.session = session
-    representative_dataset = _representative_dataset(dataset)
+    representative_datasets = _representative_datasets(dataset)
 
-    expect_required_var = {
-        # Added by get_required
-        'short_name': 'rsdscs',
+    expected_facets = {
         # Already present in variable
         'dataset': 'ICON',
         'derive': True,
@@ -2399,22 +2399,40 @@ def test_representative_dataset_derived_var(patched_datafinder, session,
         'project': 'ICON',
         'timerange': '1990/2000',
         # Added by _add_cmor_info
-        'long_name': 'Surface Downwelling Clear-Sky Shortwave Radiation',
         'modeling_realm': ['atmos'],
-        'original_short_name': 'rsdscs',
-        'standard_name':
-        'surface_downwelling_shortwave_flux_in_air_assuming_clear_sky',
         'units': 'W m-2',
         # Added by _add_extra_facets
         'var_type': 'atm_2d_ml',
     }
     if force_derivation:
-        expected_dataset = Dataset(**expect_required_var)
-        expected_dataset.session = session
+        expected_datasets = [
+            Dataset(
+                short_name='rsdscs',
+                long_name='Surface Downwelling Clear-Sky Shortwave Radiation',
+                original_short_name='rsdscs',
+                standard_name=(
+                    'surface_downwelling_shortwave_flux_in_air_assuming_clear_'
+                    'sky'
+                ),
+                **expected_facets,
+            ),
+            Dataset(
+                short_name='rsuscs',
+                long_name='Surface Upwelling Clear-Sky Shortwave Radiation',
+                original_short_name='rsuscs',
+                standard_name=(
+                    'surface_upwelling_shortwave_flux_in_air_assuming_clear_'
+                    'sky'
+                ),
+                **expected_facets,
+            ),
+        ]
     else:
-        expected_dataset = dataset
+        expected_datasets = [dataset]
+    for dataset in expected_datasets:
+        dataset.session = session
 
-    assert representative_dataset == expected_dataset
+    assert representative_datasets == expected_datasets
 
 
 def test_get_derive_input_variables(patched_datafinder, session):

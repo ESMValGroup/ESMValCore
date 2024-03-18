@@ -404,58 +404,103 @@ def datasets_from_recipe(
 def _dataset_from_files(dataset: Dataset) -> list[Dataset]:
     """Replace facet values of '*' based on available files."""
     result: list[Dataset] = []
-    errors = []
+    errors: list[str] = []
 
     if any(_isglob(f) for f in dataset.facets.values()):
         logger.debug(
             "Expanding dataset globs for dataset %s, "
             "this may take a while..", dataset.summary(shorten=True))
 
-    repr_dataset = _representative_dataset(dataset)
-    for repr_ds in repr_dataset.from_files():
-        updated_facets = {}
-        failed = {}
-        for key, value in dataset.facets.items():
-            if _isglob(value):
-                if key in repr_ds.facets and not _isglob(repr_ds[key]):
-                    updated_facets[key] = repr_ds.facets[key]
-                else:
-                    failed[key] = value
+    representative_datasets = _representative_datasets(dataset)
 
-        if failed:
-            msg = ("Unable to replace " +
-                   ", ".join(f"{k}={v}" for k, v in failed.items()) +
-                   f" by a value for\n{dataset}")
-            # Set supplementaries to [] to avoid searching for supplementary
-            # files.
-            repr_ds.supplementaries = []
-            if repr_ds.files:
-                paths_msg = "paths to " if any(
-                    isinstance(f, LocalFile) for f in repr_ds.files) else ""
-                msg = (f"{msg}\nDo the {paths_msg}the files:\n" +
-                       "\n".join(f"{f} with facets: {f.facets}"
-                                 for f in repr_ds.files) +
-                       "\nprovide the missing facet values?")
-            else:
-                timerange = repr_ds.facets.get('timerange')
-                patterns = repr_ds._file_globs
-                msg = (
-                    f"{msg}\nNo files found matching:\n" +
-                    "\n".join(str(p) for p in patterns) +  # type:ignore
-                    (f"\nwithin the requested timerange {timerange}."
-                     if timerange else ""))
-            errors.append(msg)
-            continue
+    # For derived variables, representative_datasets might contain more than
+    # one element
+    all_datasets: list[list[tuple[dict, Dataset]]] = []
+    for representative_dataset in representative_datasets:
+        all_datasets.append([])
+        for expanded_ds in representative_dataset.from_files():
+            updated_facets = {}
+            unexpanded_globs = {}
+            for key, value in dataset.facets.items():
+                if _isglob(value):
+                    if (key in expanded_ds.facets and
+                            not _isglob(expanded_ds[key])):
+                        updated_facets[key] = expanded_ds.facets[key]
+                    else:
+                        unexpanded_globs[key] = value
 
-        new_ds = dataset.copy()
-        new_ds.facets.update(updated_facets)
-        new_ds.supplementaries = repr_ds.supplementaries
-        result.append(new_ds)
+            if unexpanded_globs:
+                msg = _report_unexpanded_globs(
+                    dataset, expanded_ds, unexpanded_globs
+                )
+                errors.append(msg)
+                continue
+
+            new_ds = dataset.copy()
+            new_ds.facets.update(updated_facets)
+            new_ds.supplementaries = expanded_ds.supplementaries
+
+            all_datasets[-1].append((updated_facets, new_ds))
+
+    # If globs have been expanded, only consider those datasets that contain
+    # all necessary input variables if derivation is necessary
+    for (updated_facets, new_ds) in all_datasets[0]:
+        other_facets = [[d[0] for d in ds] for ds in all_datasets[1:]]
+        if all(updated_facets in facets for facets in other_facets):
+            result.append(new_ds)
+        else:
+            logger.debug(
+                f"Not all necessary input variables to derive "
+                f"'{dataset['short_name']}' are available for dataset "
+                f"{updated_facets}"
+            )
 
     if errors:
         raise RecipeError("\n".join(errors))
 
     return result
+
+
+def _report_unexpanded_globs(
+    unexpanded_ds: Dataset,
+    expanded_ds: Dataset,
+    unexpanded_globs: dict,
+) -> str:
+    """Get error message for unexpanded globs."""
+    msg = (
+        "Unable to replace " +
+        ", ".join(f"{k}={v}" for k, v in unexpanded_globs.items()) +
+        f" by a value for\n{unexpanded_ds}"
+    )
+
+    # Set supplementaries to [] to avoid searching for supplementary files
+    expanded_ds = expanded_ds.copy()
+    expanded_ds.supplementaries = []
+
+    if expanded_ds.files:
+        if any(isinstance(f, LocalFile) for f in expanded_ds.files):
+            paths_msg = "paths to "
+        else:
+            paths_msg = ""
+        msg = (
+            f"{msg}\nDo the {paths_msg}the files:\n" +
+            "\n".join(
+                f"{f} with facets: {f.facets}" for f in expanded_ds.files
+            ) +
+            "\nprovide the missing facet values?"
+        )
+    else:
+        timerange = expanded_ds.facets.get('timerange')
+        patterns = expanded_ds._file_globs
+        msg = (
+            f"{msg}\nNo files found matching:\n" +
+            "\n".join(str(p) for p in patterns) + (  # type:ignore
+                f"\nwithin the requested timerange {timerange}."
+                if timerange else ""
+            )
+        )
+
+    return msg
 
 
 def _derive_needed(dataset: Dataset) -> bool:
@@ -512,11 +557,11 @@ def _get_input_datasets(dataset: Dataset) -> list[Dataset]:
     return datasets
 
 
-def _representative_dataset(dataset: Dataset) -> Dataset:
-    """Find a representative dataset that has files available."""
+def _representative_datasets(dataset: Dataset) -> list[Dataset]:
+    """Find representative datasets for all input variables."""
     copy = dataset.copy()
     copy.supplementaries = []
-    datasets = _get_input_datasets(copy)
-    representative_dataset = datasets[0]
-    representative_dataset.supplementaries = dataset.supplementaries
-    return representative_dataset
+    representative_datasets = _get_input_datasets(copy)
+    for representative_dataset in representative_datasets:
+        representative_dataset.supplementaries = dataset.supplementaries
+    return representative_datasets
