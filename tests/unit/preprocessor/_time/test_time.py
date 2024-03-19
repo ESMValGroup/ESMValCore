@@ -2082,8 +2082,9 @@ class TestResampleHours(tests.Test):
         times = np.arange(0, 48, 12)
         cube = self._create_cube(data, times)
 
-        with self.assertRaises(ValueError):
-            resample_hours(cube, interval=12)
+        result = resample_hours(cube, interval=12)
+        expected = np.arange(0, 48, 12)
+        assert_array_equal(result.data, expected)
 
     def test_resample_nodata(self):
         """Test average of a 1D field."""
