@@ -133,7 +133,7 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
 
     Do not return files for:
     - fx files
-    - Variable rsut for model AAA
+    - Variable rsutcs for model AAA
 
     Otherwise, return files just like `patched_datafinder`.
 
@@ -152,7 +152,7 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
             files = []
         returned_files = []
         for file in files:
-            if not ('AAA' in file.name and 'rsut' in file.name):
+            if not ('AAA' in file.name and 'rsutcs' in file.name):
                 returned_files.append(file)
         if debug:
             return returned_files, file_globs
