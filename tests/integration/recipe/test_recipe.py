@@ -1490,8 +1490,8 @@ def test_alias_generation(tmp_path, patched_datafinder, session):
                   - {dataset: EC-EARTH,  ensemble: r1i1p1}
                   - {dataset: EC-EARTH,  ensemble: r2i1p1}
                   - {dataset: EC-EARTH,  ensemble: r3i1p1, alias: my_alias}
-                  - {dataset: FGOALS-g3, sub_experiment: s1960, ensemble: r1}
-                  - {dataset: FGOALS-g3, sub_experiment: s1961, ensemble: r1}
+                  - {dataset: FGOALS-g3, sub_experiment: s1960, ensemble: r1, institute: CAS}
+                  - {dataset: FGOALS-g3, sub_experiment: s1961, ensemble: r1, institute: CAS}
                   - {project: OBS, dataset: ERA-Interim,  version: 1}
                   - {project: OBS, dataset: ERA-Interim,  version: 2}
                   - {project: CMIP6, activity: CMP, dataset: GF3, ensemble: r1, institute: fake}
@@ -3158,3 +3158,29 @@ def test_deprecated_unstructured_nearest_scheme(
             scripts: null
         """)
     get_recipe(tmp_path, content, session)
+
+
+def test_wildcard_derived_var(
+    tmp_path, patched_failing_datafinder, session
+):
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              swcre:
+                mip: Amon
+                derive: true
+                force_derivation: true
+                timerange: '2000/2010'
+                additional_datasets:
+                  - {project: CMIP5, dataset: '*', institute: '*', exp: amip,
+                     ensemble: r1i1p1}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.datasets) == 1
+    dataset = recipe.datasets[0]
+    assert dataset.facets['dataset'] == 'BBB'
+    assert dataset.facets['institute'] == 'B'
+    assert dataset.facets['short_name'] == 'swcre'
