@@ -20,6 +20,7 @@ from iris.cube import CubeList
 
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.iris_helpers import merge_cube_attributes
+from esmvalcore.esgf.facets import FACETS
 
 from .._task import write_ncl_settings
 
@@ -348,6 +349,49 @@ def _sort_cubes_by_time(cubes):
     return cubes
 
 
+def _sort_cubes_by_experiment(cubes: list[iris.cube.Cube])\
+        -> list[iris.cube.Cube]:
+    """Sort list of cubes by experiments and do a concatenation first
+    This ensures overlapping (branching) experiments are handled correctly
+    """
+    # get the possible facet names in CMIP3, 5, 6 for exp
+    # currently these are 'experiment', 'experiment_id'
+    exp_facet_names = {
+        project["exp"] for project in FACETS.values() if "exp" in project
+    }
+
+    # check whether either one is available in all cubes
+    if any(
+        all((exp_facet_name in cube.attributes) for cube in cubes)
+        for exp_facet_name in exp_facet_names
+    ):
+        # get the actual name for this case
+        exp_facet_name = [
+            exp_facet_name
+            for exp_facet_name in exp_facet_names
+            if (exp_facet_name in cubes[0].attributes)
+        ][0]
+
+        # unique experiment_ids
+        experiment_ids = {cube.attributes[exp_facet_name] for cube in cubes}
+
+        # first do experiment-wise concatenation, then time-based
+        if len(experiment_ids) > 1 and len(cubes) > len(experiment_ids):
+            cubes = [
+                concatenate(cubes=exp_cubes)
+                for exp_cubes in [
+                    [
+                        cube
+                        for cube in cubes
+                        if cube.attributes[exp_facet_name] == experiment_id
+                    ]
+                    for experiment_id in experiment_ids
+                ]
+            ]
+
+    return cubes
+
+
 def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     """Concatenate all cubes after fixing metadata.
 
@@ -368,10 +412,13 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     ValueError
         Concatenation was not possible.
     """
+
     if not cubes:
         return cubes
     if len(cubes) == 1:
         return cubes[0]
+
+    cubes = _sort_cubes_by_experiment(cubes)
 
     merge_cube_attributes(cubes)
     cubes = _sort_cubes_by_time(cubes)
