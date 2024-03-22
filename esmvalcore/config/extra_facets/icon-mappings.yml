@@ -24,13 +24,16 @@ ICON:
       raw_name: cell_area
 
     # 2D dynamical/meteorological variables
+    asr: {var_type: atm_2d_ml}
     clivi: {var_type: atm_2d_ml}
     clt: {var_type: atm_2d_ml}
     clwvi: {var_type: atm_2d_ml}
     evspsbl: {var_type: atm_2d_ml}
     hfls: {var_type: atm_2d_ml}
     hfss: {var_type: atm_2d_ml}
+    lwcre: {var_type: atm_2d_ml}
     lwp: {raw_name: cllvi, var_type: atm_2d_ml}
+    netcre: {var_type: atm_2d_ml}
     pr: {var_type: atm_2d_ml}
     prw: {var_type: atm_2d_ml}
     ps: {var_type: atm_2d_ml}
@@ -43,12 +46,16 @@ ICON:
     rsds: {var_type: atm_2d_ml}
     rsdscs: {var_type: atm_2d_ml}
     rsdt: {var_type: atm_2d_ml}
+    rsnt: {var_type: atm_2d_ml}
     rsus: {var_type: atm_2d_ml}
     rsuscs: {var_type: atm_2d_ml}
     rsut: {var_type: atm_2d_ml}
     rsutcs: {var_type: atm_2d_ml}
+    rtmt: {var_type: atm_2d_ml}
+    rtnt: {var_type: atm_2d_ml}
     siconc: {raw_name: sic, raw_units: '1', var_type: atm_2d_ml}
     siconca: {raw_name: sic, raw_units: '1', var_type: atm_2d_ml}
+    swcre: {var_type: atm_2d_ml}
     tas: {var_type: atm_2d_ml}
     tasmax: {var_type: atm_2d_ml}
     tasmin: {var_type: atm_2d_ml}
@@ -68,3 +75,4 @@ ICON:
     ua: {var_type: atm_3d_ml}
     va: {var_type: atm_3d_ml}
     wap: {var_type: atm_3d_ml}
+    zg: {var_type: atm_3d_ml}
