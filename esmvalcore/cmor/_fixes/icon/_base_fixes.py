@@ -487,7 +487,13 @@ class IconFix(NativeDatasetFix):
                 message="Ignoring netCDF variable .* invalid units .*",
                 category=UserWarning,
                 module='iris',
-            )
+            )  # iris < 3.8
+            warnings.filterwarnings(
+                'ignore',
+                message="Ignoring invalid units .* on netCDF variable .*",
+                category=UserWarning,
+                module='iris',
+            )  # iris >= 3.8
             warnings.filterwarnings(
                 'ignore',
                 message="Failed to create 'height' dimension coordinate: The "
