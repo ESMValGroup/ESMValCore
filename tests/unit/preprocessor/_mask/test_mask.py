@@ -5,6 +5,7 @@ import unittest
 import numpy as np
 
 import iris
+import iris.fileformats
 import tests
 from cf_units import Unit
 from esmvalcore.preprocessor._mask import (_apply_fx_mask,
