@@ -37,7 +37,7 @@ dependencies:
   - psutil
   - py-cordex
   - pybtex
-  - python >=3.9,<3.12
+  - python >=3.9
   - python-stratify >=0.3
   - pyyaml
   - requests
@@ -51,7 +51,7 @@ dependencies:
   - sphinx >=6.1.3
   - pydata-sphinx-theme
   # Python packages needed for testing
-  - flake8
+  - flake8 >=7.0.0  # not to pick up E231
   - mypy >=0.990
   - pytest >=3.9,!=6.0.0rc1,!=6.0.0
   - pytest-cov >=2.10.1
@@ -69,7 +69,7 @@ dependencies:
   - docformatter
   - isort
   - pre-commit
-  - prospector >=1.9.0
+  # - prospector >=1.9.0
   # Not on conda forge - vprof
   - yamllint
   - yapf
