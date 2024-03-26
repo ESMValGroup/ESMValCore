@@ -180,7 +180,7 @@ class AllVars(EmacFix):
         for coord in (ap_coord, b_coord, ps_coord):
             coord.points = coord.core_points().astype(
                 float, casting='same_kind')
-            if coord.bounds is not None:
+            if coord.has_bounds():
                 coord.bounds = coord.core_bounds().astype(
                     float, casting='same_kind')
 

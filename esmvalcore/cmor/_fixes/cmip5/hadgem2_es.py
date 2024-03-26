@@ -25,10 +25,10 @@ class AllVars(Fix):
             lats = cube.coords('latitude')
             if lats:
                 lat = cube.coord('latitude')
-                lat.points = np.clip(lat.points, -90., 90.)
+                lat.points = np.clip(lat.core_points(), -90., 90.)
                 if not lat.has_bounds():
                     lat.guess_bounds()
-                lat.bounds = np.clip(lat.bounds, -90., 90.)
+                lat.bounds = np.clip(lat.core_bounds(), -90., 90.)
 
         return cubes
 

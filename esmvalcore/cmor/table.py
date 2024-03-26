@@ -36,7 +36,7 @@ _CMOR_KEYS = (
 )
 
 
-def _update_cmor_facets(facets, override=False):
+def _update_cmor_facets(facets):
     """Update `facets` with information from CMOR table."""
     project = facets['project']
     mip = facets['mip']
@@ -53,7 +53,7 @@ def _update_cmor_facets(facets, override=False):
             f"'{short_name}' with mip '{mip}'")
     facets['original_short_name'] = table_entry.short_name
     for key in _CMOR_KEYS:
-        if key not in facets or override:
+        if key not in facets:
             value = getattr(table_entry, key, None)
             if value is not None:
                 facets[key] = value
@@ -296,8 +296,8 @@ class InfoBase():
                     pass
 
         # If that didn't work, look in all tables (i.e., other MIPs) if
-        # cmor_strict=False
-        var_info = self._look_in_all_tables(alt_names_list)
+        # cmor_strict=False or derived=True
+        var_info = self._look_in_all_tables(derived, alt_names_list)
 
         # If that didn't work either, look in default table if
         # cmor_strict=False or derived=True
@@ -324,10 +324,10 @@ class InfoBase():
                     break
         return var_info
 
-    def _look_in_all_tables(self, alt_names_list):
+    def _look_in_all_tables(self, derived, alt_names_list):
         """Look for variable in all tables."""
         var_info = None
-        if not self.strict:
+        if (not self.strict or derived):
             for alt_names in alt_names_list:
                 var_info = self._look_all_tables(alt_names)
                 if var_info:

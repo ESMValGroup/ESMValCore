@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 import warnings
-from typing import Iterable, Sequence
+from typing import Iterable, Literal, Optional, Sequence
 
 import dask.array as da
 import iris
@@ -17,7 +17,11 @@ from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError
 
 from ._area import compute_area_weights
-from ._shared import get_iris_aggregator, update_weights_kwargs
+from ._shared import (
+    get_iris_aggregator,
+    get_normalized_cube,
+    update_weights_kwargs,
+)
 from ._supplementary_vars import register_supplementaries
 
 logger = logging.getLogger(__name__)
@@ -124,7 +128,7 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     z_dim = cube.coord_dims(depth)[0]
 
     # Calculate Z-direction thickness
-    thickness = depth.bounds[..., 1] - depth.bounds[..., 0]
+    thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
 
     # Try to calculate grid cell area
     try:
@@ -182,6 +186,7 @@ def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
 def volume_statistics(
     cube: Cube,
     operator: str,
+    normalize: Optional[Literal['subtract', 'divide']] = None,
     **operator_kwargs,
 ) -> Cube:
     """Apply a statistical operation over a volume.
@@ -201,6 +206,11 @@ def volume_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Currently, only `mean` is
         allowed.
+    normalize:
+        If given, do not return the statistics cube itself, but rather, the
+        input cube, normalized with the statistics cube. Can either be
+        `subtract` (statistics cube is subtracted from the input cube) or
+        `divide` (input cube is divided by the statistics cube).
     **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
@@ -232,6 +242,8 @@ def volume_statistics(
         agg,
         **agg_kwargs,
     )
+    if normalize is not None:
+        result = get_normalized_cube(cube, result, normalize)
 
     # Make sure input cube has not been modified
     if not has_cell_measure and cube.cell_measures('ocean_volume'):
@@ -244,6 +256,7 @@ def axis_statistics(
     cube: Cube,
     axis: str,
     operator: str,
+    normalize: Optional[Literal['subtract', 'divide']] = None,
     **operator_kwargs,
 ) -> Cube:
     """Perform statistics along a given axis.
@@ -267,6 +280,11 @@ def axis_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
+    normalize:
+        If given, do not return the statistics cube itself, but rather, the
+        input cube, normalized with the statistics cube. Can either be
+        `subtract` (statistics cube is subtracted from the input cube) or
+        `divide` (input cube is divided by the statistics cube).
     **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
@@ -320,6 +338,9 @@ def axis_statistics(
         )
         result = cube.collapsed(coord, agg, **agg_kwargs)
 
+    if normalize is not None:
+        result = get_normalized_cube(cube, result, normalize)
+
     # Make sure input and output cubes do not have auxiliary coordinate
     if cube.coords('_axis_statistics_weights_'):
         cube.remove_coord('_axis_statistics_weights_')
@@ -331,8 +352,11 @@ def axis_statistics(
 
 def _add_axis_stats_weights_coord(cube, coord, coord_dims):
     """Add weights for axis_statistics to cube (in-place)."""
+    weights = np.abs(coord.lazy_bounds()[:, 1] - coord.lazy_bounds()[:, 0])
+    if not cube.has_lazy_data():
+        weights = weights.compute()
     weights_coord = AuxCoord(
-        np.abs(coord.core_bounds()[..., 1] - coord.core_bounds()[..., 0]),
+        weights,
         long_name='_axis_statistics_weights_',
         units=coord.units,
     )

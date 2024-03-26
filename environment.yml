@@ -30,7 +30,7 @@ dependencies:
   - netcdf4
   - numpy !=1.24.3
   - packaging
-  - pandas
+  - pandas !=2.2.0,!=2.2.1  # github.com/ESMValGroup/ESMValCore/pull/2305 and #2349
   - pillow
   - pip !=21.3
   - prov
@@ -58,7 +58,6 @@ dependencies:
   - pytest-env
   - pytest-html !=2.1.0
   - pytest-metadata >=1.5.1
-  - pytest-mypy
   - pytest-mock
   - pytest-xdist
   # Not on conda-forge - ESMValTool_sample_data==0.0.3

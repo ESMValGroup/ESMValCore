@@ -201,13 +201,15 @@ the ozone 3D field. In this case, a derivation function is provided to
 vertically integrate the ozone and obtain total column ozone for direct
 comparison with the observations.
 
-To contribute a new derived variable, it is also necessary to define a name for
-it and to provide the corresponding CMOR table. This is to guarantee the proper
-metadata definition is attached to the derived data. Such custom CMOR tables
-are collected as part of the `ESMValCore package
-<https://github.com/ESMValGroup/ESMValCore>`_. By default, the variable
-derivation will be applied only if the variable is not already available in the
-input data, but the derivation can be forced by setting the appropriate flag.
+The tool will also look in other ``mip`` tables for the same ``project`` to find
+the definition of derived variables. To contribute a completely new derived
+variable, it is necessary to define a name for it and to provide the
+corresponding CMOR table. This is to guarantee the proper metadata definition
+is attached to the derived data. Such custom CMOR tables are collected as part
+of the `ESMValCore package <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
+By default, the variable derivation will be applied only if the variable is not
+already available in the input data, but the derivation can be forced by
+setting the ``force_derivation`` flag.
 
 .. code-block:: yaml
 
@@ -896,43 +898,27 @@ third party regridding schemes designed for use with :doc:`Iris
 Built-in regridding schemes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The schemes used for the interpolation and extrapolation operations needed by
-the horizontal regridding functionality directly map to their corresponding
-implementations in :mod:`iris`:
-
-* ``linear``: Linear interpolation without extrapolation, i.e., extrapolation
-  points will be masked even if the source data is not a masked array (uses
-  ``Linear(extrapolation_mode='mask')``, see :obj:`iris.analysis.Linear`).
-* ``linear_extrapolate``: Linear interpolation with extrapolation, i.e.,
-  extrapolation points will be calculated by extending the gradient of the
-  closest two points (uses ``Linear(extrapolation_mode='extrapolate')``, see
-  :obj:`iris.analysis.Linear`).
-* ``nearest``: Nearest-neighbour interpolation without extrapolation, i.e.,
-  extrapolation points will be masked even if the source data is not a masked
-  array (uses ``Nearest(extrapolation_mode='mask')``, see
-  :obj:`iris.analysis.Nearest`).
-* ``area_weighted``: Area-weighted regridding (uses ``AreaWeighted()``, see
-  :obj:`iris.analysis.AreaWeighted`).
-* ``unstructured_nearest``: Nearest-neighbour interpolation for unstructured
-  grids (uses ``UnstructuredNearest()``, see
-  :obj:`iris.analysis.UnstructuredNearest`).
+* ``linear``: Bilinear regridding.
+  For source data on a regular grid, uses :obj:`~iris.analysis.Linear` with
+  `extrapolation_mode='mask'`.
+  For source data on an irregular grid, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyLinear`.
+  Source data on an unstructured grid is not supported, yet.
+* ``nearest``: Nearest-neighbor regridding.
+  For source data on a regular grid, uses :obj:`~iris.analysis.Nearest` with
+  `extrapolation_mode='mask'`.
+  For source data on an irregular grid, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyNearest`.
+  For source data on an unstructured grid, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.UnstructuredNearest`.
+* ``area_weighted``: First-order conservative (area-weighted) regridding.
+  For source data on a regular grid, uses :obj:`~iris.analysis.AreaWeighted`.
+  For source data on an irregular grid, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyAreaWeighted`.
+  Source data on an unstructured grid is not supported, yet.
 
 See also :func:`esmvalcore.preprocessor.regrid`
 
-.. note::
-
-   Controlling the extrapolation mode allows us to avoid situations where
-   extrapolating values makes little physical sense (e.g. extrapolating beyond
-   the last data point).
-
-.. note::
-
-   The regridding mechanism is (at the moment) done with fully realized data in
-   memory, so depending on how fine the target grid is, it may use a rather
-   large amount of memory. Empirically target grids of up to ``0.5x0.5``
-   degrees should not produce any memory-related issues, but be advised that
-   for resolutions of ``< 0.5`` degrees the regridding becomes very slow and
-   will use a lot of memory.
 
 .. _generic regridding schemes:
 
@@ -968,6 +954,28 @@ tolerance.
           scheme:
             reference: iris.analysis:AreaWeighted
             mdtol: 0.7
+
+Another example is bilinear regridding with extrapolation.
+This can be achieved with the :class:`iris.analysis.Linear` scheme and the
+``extrapolation_mode`` keyword.
+Extrapolation points will be calculated by extending the gradient of the
+closest two points.
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 2.5x2.5
+          scheme:
+            reference: iris.analysis:Linear
+            extrapolation_mode: extrapolate
+
+.. note::
+
+   Controlling the extrapolation mode allows us to avoid situations where
+   extrapolating values makes little physical sense (e.g. extrapolating beyond
+   the last data point).
 
 The value of the ``reference`` key has two parts that are separated by a
 ``:`` with no surrounding spaces. The first part is an importable Python
@@ -1954,11 +1962,15 @@ along the longitude coordinate.
 Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube. Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
       arguments.
       See :ref:`stat_preprocs` for more details.
 
-See also :func:`esmvalcore.preprocessor.zonal_means`.
+See also :func:`esmvalcore.preprocessor.zonal_statistics`.
 
 
 ``meridional_statistics``
@@ -1971,21 +1983,21 @@ argument:
 Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube. Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
       arguments.
       See :ref:`stat_preprocs` for more details.
 
-See also :func:`esmvalcore.preprocessor.meridional_means`.
+See also :func:`esmvalcore.preprocessor.meridional_statistics`.
 
 
 .. _area_statistics:
 
 ``area_statistics``
 -------------------
-
-This function calculates statistics over a region.
-It takes one argument, ``operator``, which is the name of the operation to
-apply.
 
 This function can be used to apply several different operations in the
 horizontal plane: for example, mean, sum, standard deviation, median, variance,
@@ -2004,6 +2016,33 @@ coordinates so the cell areas can be computed internally.
 The required supplementary variable, either ``areacella`` for atmospheric
 variables or ``areacello`` for ocean variables, can be attached to the main
 dataset as described in :ref:`supplementary_variables`.
+
+Parameters:
+    * `operator`: Operation to apply.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube. Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
+
+Examples:
+* Calculate global mean:
+
+  .. code-block:: yaml
+
+    area_statistics:
+      operator: mean
+
+* Subtract global mean from dataset:
+
+  .. code-block:: yaml
+
+    area_statistics:
+      operator: mean
+      normalize: subtract
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
 
@@ -2092,9 +2131,6 @@ See also :func:`esmvalcore.preprocessor.extract_volume`.
 This function calculates the volume-weighted average across three dimensions,
 but maintains the time dimension.
 
-This function takes the argument: `operator`, which defines the operation to
-apply over the volume.
-At the moment, only `mean` is supported.
 By default, the `mean` operation is weighted by the grid cell volumes.
 
 For weighted statistics, this function requires a cell volume `cell measure`_,
@@ -2104,6 +2140,18 @@ The required supplementary variable ``volcello`` can be attached to the main
 dataset as described in :ref:`supplementary_variables`.
 
 No depth coordinate is required as this is determined by Iris.
+
+Parameters:
+    * `operator`: Operation to apply.
+      At the moment, only `mean` is supported.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube. Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 
@@ -2120,6 +2168,10 @@ Takes arguments:
       Possible values for the axis are `x`, `y`, `z`, `t`.
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube. Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
       arguments.
       See :ref:`stat_preprocs` for more details.
@@ -2333,6 +2385,8 @@ Currently, the following special conversions are supported:
 
 * ``precipitation_flux`` (``kg m-2 s-1``) --
   ``lwe_precipitation_rate`` (``mm day-1``)
+* ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``m``) --
+  ``equivalent_thickness_at_stp_of_atmosphere_ozone_content`` (``DU``)
 
 .. hint::
    Names in the list correspond to ``standard_names`` of the input data.
@@ -2382,9 +2436,9 @@ The bias module contains the following preprocessor functions:
 ``bias``
 --------
 
-This function calculates biases with respect to a given reference dataset. For
-this, exactly one input dataset needs to be declared as ``reference_for_bias:
-true`` in the recipe, e.g.,
+This function calculates biases with respect to a given reference dataset.
+For this, exactly one input dataset needs to be declared as
+``reference_for_bias: true`` in the recipe, e.g.,
 
 .. code-block:: yaml
 
@@ -2396,34 +2450,37 @@ true`` in the recipe, e.g.,
        reference_for_bias: true}
 
 In the example above, ERA-Interim is used as reference dataset for the bias
-calculation. For this preprocessor, all input datasets need to have identical
-dimensional coordinates. This can for example be ensured with the preprocessors
-:func:`esmvalcore.preprocessor.regrid` and/or
-:func:`esmvalcore.preprocessor.regrid_time`.
+calculation.
+The reference dataset needs to be broadcastable to all other datasets.
+This supports `iris' rich broadcasting abilities
+<https://scitools-iris.readthedocs.io/en/stable/userguide/cube_maths.
+html#calculating-a-cube-anomaly>`__.
+To ensure this, the preprocessors :func:`esmvalcore.preprocessor.regrid` and/or
+:func:`esmvalcore.preprocessor.regrid_time` might be helpful.
 
-The ``bias`` preprocessor supports 4 optional arguments:
+The ``bias`` preprocessor supports 4 optional arguments in the recipe:
 
-   * ``bias_type`` (:obj:`str`, default: ``'absolute'``): Bias type that is
-     calculated. Can be ``'absolute'`` (i.e., calculate bias for dataset
-     :math:`X` and reference :math:`R` as :math:`X - R`) or ``relative`` (i.e,
-     calculate bias as :math:`\frac{X - R}{R}`).
-   * ``denominator_mask_threshold`` (:obj:`float`, default: ``1e-3``):
-     Threshold to mask values close to zero in the denominator (i.e., the
-     reference dataset) during the calculation of relative biases. All values
-     in the reference dataset with absolute value less than the given threshold
-     are masked out. This setting is ignored when ``bias_type`` is set to
-     ``'absolute'``. Please note that for some variables with very small
-     absolute values (e.g., carbon cycle fluxes, which are usually :math:`<
-     10^{-6}` kg m :math:`^{-2}` s :math:`^{-1}`) it is absolutely essential to
-     change the default value in order to get reasonable results.
-   * ``keep_reference_dataset`` (:obj:`bool`, default: ``False``): If
-     ``True``, keep the reference dataset in the output. If ``False``, drop the
-     reference dataset.
-   * ``exclude`` (:obj:`list` of :obj:`str`): Exclude specific datasets from
-     this preprocessor. Note that this option is only available in the recipe,
-     not when using :func:`esmvalcore.preprocessor.bias` directly (e.g., in
-     another python script). If the reference dataset has been excluded, an
-     error is raised.
+* ``bias_type`` (:obj:`str`, default: ``'absolute'``): Bias type that is
+  calculated. Can be ``'absolute'`` (i.e., calculate bias for dataset
+  :math:`X` and reference :math:`R` as :math:`X - R`) or ``relative`` (i.e.,
+  calculate bias as :math:`\frac{X - R}{R}`).
+* ``denominator_mask_threshold`` (:obj:`float`, default: ``1e-3``):
+  Threshold to mask values close to zero in the denominator (i.e., the
+  reference dataset) during the calculation of relative biases. All values
+  in the reference dataset with absolute value less than the given threshold
+  are masked out. This setting is ignored when ``bias_type`` is set to
+  ``'absolute'``. Please note that for some variables with very small
+  absolute values (e.g., carbon cycle fluxes, which are usually :math:`<
+  10^{-6}` kg m :math:`^{-2}` s :math:`^{-1}`) it is absolutely essential to
+  change the default value in order to get reasonable results.
+* ``keep_reference_dataset`` (:obj:`bool`, default: ``False``): If
+  ``True``, keep the reference dataset in the output. If ``False``, drop the
+  reference dataset.
+* ``exclude`` (:obj:`list` of :obj:`str`): Exclude specific datasets from
+  this preprocessor. Note that this option is only available in the recipe,
+  not when using :func:`esmvalcore.preprocessor.bias` directly (e.g., in
+  another python script). If the reference dataset has been excluded, an
+  error is raised.
 
 Example:
 

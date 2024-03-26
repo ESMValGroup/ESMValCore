@@ -28,18 +28,12 @@ class Tos(Fix):
         iris.cube.CubeList
         """
         for cube in cubes:
-            latitude = cube.coord('latitude')
-            if latitude.bounds is None:
-                latitude.guess_bounds()
-            latitude.points = latitude.points.astype(np.float32).astype(
-                np.float64)
-            latitude.bounds = latitude.bounds.astype(np.float32).astype(
-                np.float64)
-            longitude = cube.coord('longitude')
-            if longitude.bounds is None:
-                longitude.guess_bounds()
-            longitude.points = longitude.points.astype(np.float32).astype(
-                np.float64)
-            longitude.bounds = longitude.bounds.astype(np.float32).astype(
-                np.float64)
+            for coord_name in ['latitude', 'longitude']:
+                coord = cube.coord(coord_name)
+                coord.points = coord.core_points().astype(np.float32).astype(
+                    np.float64)
+                if not coord.has_bounds():
+                    coord.guess_bounds()
+                coord.bounds = coord.core_bounds().astype(np.float32).astype(
+                    np.float64)
         return cubes

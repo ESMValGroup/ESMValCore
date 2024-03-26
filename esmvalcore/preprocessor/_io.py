@@ -6,7 +6,7 @@ import logging
 import os
 from itertools import groupby
 from pathlib import Path
-from typing import Optional, NamedTuple
+from typing import NamedTuple, Optional
 from warnings import catch_warnings, filterwarnings
 
 import cftime
@@ -161,7 +161,12 @@ def load(
         'message': "Ignoring netCDF variable '.*' invalid units '.*'",
         'category': UserWarning,
         'module': 'iris',
-    })
+    })  # iris < 3.8
+    ignore_warnings.append({
+        'message': "Ignoring invalid units .* on netCDF variable .*",
+        'category': UserWarning,
+        'module': 'iris',
+    })  # iris >= 3.8
 
     # Filter warnings
     with catch_warnings():

@@ -7,7 +7,7 @@ Unit tests for the
 import unittest
 from unittest import mock
 
-import iris
+from iris.tests.stock import lat_lon_cube
 
 import tests
 from esmvalcore.preprocessor import extract_point
@@ -15,24 +15,13 @@ from esmvalcore.preprocessor._regrid import POINT_INTERPOLATION_SCHEMES
 
 
 class Test(tests.Test):
-    def setUp(self):
-        self.coord_system = mock.Mock(return_value=None)
-        self.coord = mock.sentinel.coord
-        self.coords = mock.Mock(return_value=[self.coord])
-        self.remove_coord = mock.Mock()
-        self.point_cube = mock.sentinel.point_cube
-        self.interpolate = mock.Mock(return_value=self.point_cube)
-        self.src_cube = mock.Mock(
-            spec=iris.cube.Cube,
-            coord_system=self.coord_system,
-            coords=self.coords,
-            remove_coord=self.remove_coord,
-            interpolate=self.interpolate)
-        self.schemes = ['linear', 'nearest']
 
-        self.mocks = [
-            self.coord_system, self.coords, self.interpolate, self.src_cube
-        ]
+    def setUp(self):
+        # Use an Iris test cube with coordinates that have a coordinate
+        # system, see the following issue for more details:
+        # https://github.com/ESMValGroup/ESMValCore/issues/2177.
+        self.src_cube = lat_lon_cube()
+        self.schemes = ["linear", "nearest"]
 
     def test_invalid_scheme__unknown(self):
         dummy = mock.sentinel.dummy
@@ -41,20 +30,30 @@ class Test(tests.Test):
             extract_point(dummy, dummy, dummy, 'non-existent')
 
     def test_interpolation_schemes(self):
-        self.assertEqual(
-            set(POINT_INTERPOLATION_SCHEMES.keys()), set(self.schemes))
+        self.assertEqual(set(POINT_INTERPOLATION_SCHEMES.keys()),
+                         set(self.schemes))
 
     def test_extract_point_interpolation_schemes(self):
-        dummy = mock.sentinel.dummy
+        latitude = -90.
+        longitude = 0.
         for scheme in self.schemes:
-            result = extract_point(self.src_cube, dummy, dummy, scheme)
-            self.assertEqual(result, self.point_cube)
+            result = extract_point(self.src_cube, latitude, longitude, scheme)
+            self._assert_coords(result, latitude, longitude)
 
     def test_extract_point(self):
-        dummy = mock.sentinel.dummy
-        scheme = 'linear'
-        result = extract_point(self.src_cube, dummy, dummy, scheme)
-        self.assertEqual(result, self.point_cube)
+        latitude = 90.
+        longitude = -180.
+        for scheme in self.schemes:
+            result = extract_point(self.src_cube, latitude, longitude, scheme)
+            self._assert_coords(result, latitude, longitude)
+
+    def _assert_coords(self, cube, ref_lat, ref_lon):
+        lat_points = cube.coord("latitude").points
+        lon_points = cube.coord("longitude").points
+        self.assertEqual(len(lat_points), 1)
+        self.assertEqual(len(lon_points), 1)
+        self.assertEqual(lat_points[0], ref_lat)
+        self.assertEqual(lon_points[0], ref_lon)
 
 
 if __name__ == '__main__':
