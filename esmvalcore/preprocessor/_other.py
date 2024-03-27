@@ -273,13 +273,11 @@ def _calculate_histogram_lazy(
         axes_in_chunk = tuple(range(data.ndim - n_axes,  data.ndim))
 
         # The call signature depends also on the number of axes in `axes`, and
-        # will be (a,b,...),(a,b,...),(z),(y)->() where a,b,... are the data
-        # dimensions that are collapsed, z is the number of bin edges, and y
-        # the number of bin centers.
-        input_signature = f"({','.join(list(string.ascii_lowercase)[:n_axes])})"
+        # will be (a,b,...)->(nbins) where a,b,... are the data dimensions that
+        # are collapsed, and nbins the number of bin centers
         hist = da.apply_gufunc(
             _calculate_histogram_eager,
-            f"{input_signature}->(nbins)",
+            f"({','.join(list(string.ascii_lowercase)[:n_axes])})->(nbins)",
             data,
             axes=[along_axes, (0,)],
             output_sizes={'nbins': len(bin_edges) - 1},
