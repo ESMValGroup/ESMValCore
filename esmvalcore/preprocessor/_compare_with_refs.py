@@ -588,7 +588,7 @@ def _calculate_emd(
         None,
         'EMD' if cube.long_name is None else f'EMD of {cube.long_name}',
         'emd' if cube.var_name is None else f'emd_{cube.var_name}',
-        '1',
+        cube.units,
         cube.attributes,
         cube.cell_methods,
     )

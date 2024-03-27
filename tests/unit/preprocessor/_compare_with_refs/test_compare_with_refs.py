@@ -56,20 +56,22 @@ def get_3d_cube(data, **cube_kwargs):
 
 @pytest.fixture
 def regular_cubes():
-    """Regular cube."""
+    """Regular cubes."""
     cube_data = np.arange(8.0).reshape(2, 2, 2)
-    cube = get_3d_cube(cube_data, standard_name='air_temperature',
-                       var_name='tas', units='K')
+    cube = get_3d_cube(
+        cube_data, standard_name='air_temperature', var_name='tas', units='K'
+    )
     return CubeList([cube])
 
 
 @pytest.fixture
 def ref_cubes():
-    """Reference cube."""
+    """Reference cubes."""
     cube_data = np.full((2, 2, 2), 2.0)
     cube_data[1, 1, 1] = 4.0
-    cube = get_3d_cube(cube_data, standard_name='air_temperature',
-                       var_name='tas', units='K')
+    cube = get_3d_cube(
+        cube_data, standard_name='air_temperature', var_name='tas', units='K'
+    )
     return CubeList([cube])
 
 
@@ -352,7 +354,7 @@ TEST_DISTANCE_METRICS = [
     ('rmse', 2.34520788, 0.0, 'RMSE', 'rmse_tas', 'K'),
     ('weighted_pearsonr', np.nan, 1.0, "Pearson's r", 'pearsonr_tas', '1'),
     ('pearsonr', 0.57735026, 1.0, "Pearson's r", 'pearsonr_tas', '1'),
-    ('emd', 1.9866472482681274, 0.0, 'EMD', 'emd_tas', '1'),
+    ('emd', 1.9866472482681274, 0.0, 'EMD', 'emd_tas', 'K'),
 ]
 AREA_WEIGHTS = CellMeasure(
     np.array([0.0, 0.0, 2.0, 0.0]).reshape(2, 2),
@@ -465,7 +467,7 @@ TEST_DISTANCE_METRICS_LAZY = [
         '1',
     ),
     ('pearsonr', [np.nan, 0.77459663], "Pearson's r", 'pearsonr_tas', '1'),
-    ('emd', [0.980196, 2.9930985], 'EMD', 'emd_tas', '1'),
+    ('emd', [0.980196, 2.9930985], 'EMD', 'emd_tas', 'K'),
 ]
 
 
