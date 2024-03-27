@@ -22,7 +22,11 @@ from scipy.stats import wasserstein_distance
 from esmvalcore.iris_helpers import rechunk_cube
 from esmvalcore.preprocessor._area import _try_adding_calculated_cell_area
 from esmvalcore.preprocessor._io import concatenate
-from esmvalcore.preprocessor._other import get_array_module
+from esmvalcore.preprocessor._other import (
+    get_all_coord_dims,
+    get_all_coords,
+    get_array_module,
+)
 from esmvalcore.preprocessor._time import get_time_weights
 
 if TYPE_CHECKING:
@@ -377,34 +381,6 @@ def distance_metric(
     return output_products
 
 
-def _get_coords(
-    cube: Cube,
-    coords: Iterable[Coord] | Iterable[str] | None,
-) -> Iterable[Coord] | Iterable[str]:
-    """Get coordinates over which distance metric is calculated."""
-    if coords is None:
-        coords = [c.name() for c in cube.dim_coords]
-        if len(coords) != cube.ndim:
-            raise ValueError(
-                f"If coords=None is specified, the cube "
-                f"{cube.summary(shorten=True)} must not have unnamed "
-                f"dimensions"
-            )
-    return coords
-
-
-def _get_all_coord_dims(
-    cube: Cube,
-    coords: Iterable[Coord] | Iterable[str],
-) -> tuple[int, ...]:
-    """Get sorted list of all coordinate dimensions from coordinates."""
-    all_coord_dims = []
-    for coord in coords:
-        all_coord_dims.extend(cube.coord_dims(coord))
-    sorted_all_coord_dims = sorted(list(set(all_coord_dims)))
-    return tuple(sorted_all_coord_dims)
-
-
 def _calculate_metric(
     cube: Cube,
     reference: Cube,
@@ -430,7 +406,7 @@ def _calculate_metric(
     # Perform the actual calculation of the distance metric
     # Note: we work on arrays here instead of cube to stay as flexible as
     # possible since some operations (e.g., sqrt()) are not available for cubes
-    coords = _get_coords(cube, coords)
+    coords = get_all_coords(cube, coords)
     metrics_funcs = {
         'weighted_rmse': partial(_calculate_rmse, weighted=True, **kwargs),
         'rmse': partial(_calculate_rmse, weighted=False, **kwargs),
@@ -459,7 +435,7 @@ def _calculate_metric(
 def _get_weights(
     cube: Cube,
     coords: Iterable[Coord] | Iterable[str],
-) -> da.Array:
+) -> np.ndarray | da.Array:
     """Calculate weights for weighted distance metrics."""
     npx = get_array_module(cube.core_data())
     weights = npx.ones(cube.shape, dtype=cube.dtype)
@@ -505,7 +481,7 @@ def _calculate_rmse(
 ) -> tuple[np.ndarray | da.Array, CubeMetadata]:
     """Calculate root mean square error."""
     # Data
-    axis = _get_all_coord_dims(cube, coords)
+    axis = get_all_coord_dims(cube, coords)
     weights = _get_weights(cube, coords) if weighted else None
     squared_error = (cube.core_data() - reference.core_data())**2
     npx = get_array_module(squared_error)
@@ -568,7 +544,7 @@ def _calculate_emd(
     reference = rechunk_cube(reference, coords)
 
     # Data
-    axes = _get_all_coord_dims(cube, coords)
+    axes = get_all_coord_dims(cube, coords)
     (bins, bin_centers) = _get_bins(cube, reference, n_bins)
 
     if cube.has_lazy_data() and reference.has_lazy_data():
@@ -617,8 +593,8 @@ def _calculate_emd_lazy(
     bin_centers: np.ndarray,
     *,
     along_axes: tuple[int, ...],
-) -> np.ndarray:
-    """Calculate Earth mover's distance along axes (eager version)."""
+) -> da.Array:
+    """Calculate Earth mover's distance along axes (lazy version)."""
     n_axes = len(along_axes)
 
     # da.apply_gufunc transposes the input array so that the axes given by the
@@ -680,7 +656,7 @@ def _get_pmf(
     axes: tuple[int, ...],
     bins: np.ndarray,
 ) -> np.ndarray:
-    """Get probaility mass function (PMF) of data along axes.
+    """Get probability mass function (PMF) of data along axes.
 
     This will return an array of shape `(x1, x2, ..., n_bins)` where `xi` are
     the dimensions of `data` not appearing in `axes` and `n_bins` is the number
