@@ -38,6 +38,7 @@ else:
     from importlib.metadata import entry_points  # type: ignore
 
 import fire
+from esmvaltool.utils.testing.regression import compare
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -413,6 +414,36 @@ class ESMValTool():
         self._run(recipe, session)
         # Print warnings about deprecated configuration options again:
         CFG.reload()
+
+
+    def compare(self,
+                reference,
+                current,
+                verbose=False):
+        """Compare results from two runs of esmvaltool.
+
+        `esmvaltool compare` compares the results from two runs of esmvaltool. 
+        Returns 0 if results were successfully compared and identical, 1
+        otherwise.
+
+        Parameters
+        ----------
+        reference : str
+            Directory containing results obtained with reference version.
+        current : str
+            Directory containing results obtained with current version.
+        verbose : bool, optional
+            Display more information on differences.
+
+        """
+
+        reference = Path(reference)
+        current = Path(current)
+
+        same = compare.compare(reference, current, verbose)
+
+        sys.exit(not(same))
+
 
     @staticmethod
     def _create_session_dir(session):
