@@ -415,14 +415,13 @@ class ESMValTool():
         # Print warnings about deprecated configuration options again:
         CFG.reload()
 
-
     def compare(self,
                 reference,
                 current,
                 verbose=False):
         """Compare results from two runs of esmvaltool.
 
-        `esmvaltool compare` compares the results from two runs of esmvaltool. 
+        `esmvaltool compare` compares the results from two runs of esmvaltool.
         Returns 0 if results were successfully compared and identical, 1
         otherwise.
 
@@ -442,8 +441,7 @@ class ESMValTool():
 
         same = compare.compare(reference, current, verbose)
 
-        sys.exit(not(same))
-
+        sys.exit(not same)
 
     @staticmethod
     def _create_session_dir(session):
