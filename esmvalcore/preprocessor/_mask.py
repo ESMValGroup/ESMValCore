@@ -528,6 +528,10 @@ def _multimodel_mask_products(products, shape):
     return products
 
 
+def mask_multimodel_outputs(products) -> set:
+    return set(products)
+
+
 def mask_multimodel(products):
     """Apply common mask to all datasets (using logical OR).
 
@@ -570,6 +574,15 @@ def mask_multimodel(products):
         f"Input type for mask_multimodel not understood. Expected "
         f"iris.cube.Cube or esmvalcore.preprocessor.PreprocessorFile, "
         f"got {product_types}")
+
+
+def mask_fillvalues_outputs(
+    products,
+    threshold_fraction,
+    min_value=None,
+    time_window=1,
+) -> set:
+    return set(products)
 
 
 def mask_fillvalues(products,

@@ -17,9 +17,11 @@ from pathlib import Path, PosixPath
 from shutil import which
 from typing import Optional
 
+import dask
 import psutil
 import yaml
-from distributed import Client
+from dask.diagnostics import ProgressBar
+from distributed import Client, progress
 
 from ._citation import _write_citation_files
 from ._provenance import TrackedFile, get_task_provenance
@@ -712,6 +714,10 @@ class TaskSet(set):
                 independent_tasks.add(task)
         return independent_tasks
 
+    @staticmethod
+    def _is_preprocessing_task(task):
+        return hasattr(task, 'lazy_files')
+
     def run(self, max_parallel_tasks: Optional[int] = None) -> None:
         """Run tasks.
 
@@ -732,6 +738,42 @@ class TaskSet(set):
                         # Python script.
                         task.settings['scheduler_address'] = address
 
+            # Run preprocessor metadata computations
+            logger.info("Running preprocessor metadata computations")
+            preprocessing_tasks = [
+                t for t in self.flatten() if self._is_preprocessing_task(t)
+            ]
+            work = [(t._run(None), t.products, t.lazy_files)
+                    for t in preprocessing_tasks]
+            if client is None:
+                with ProgressBar():
+                    result = dask.compute(*work)
+            else:
+                work = dask.persist(*work)
+                progress(work)
+                result = dask.compute(*work)
+            for task, (output_files, products, lazy_files) in zip(
+                    preprocessing_tasks,
+                    result,
+            ):
+                task.output_files = output_files
+                task.products = products
+                task.lazy_files = lazy_files
+
+            # Fill preprocessor files with data
+            logger.info("Running preprocessor data computations")
+            work = [
+                f.delayed for t in preprocessing_tasks for f in t.lazy_files
+            ]
+            if client is None:
+                with ProgressBar():
+                    dask.compute(work)
+            else:
+                work = dask.persist(work)
+                progress(work)
+                dask.compute(work)
+
+            # Then run remaining tasks
             if max_parallel_tasks == 1:
                 self._run_sequential()
             else:
@@ -739,7 +781,8 @@ class TaskSet(set):
 
     def _run_sequential(self) -> None:
         """Run tasks sequentially."""
-        n_tasks = len(self.flatten())
+        n_tasks = len(
+            [t for t in self.flatten() if not self._is_preprocessing_task(t)])
         logger.info("Running %s tasks sequentially", n_tasks)
 
         tasks = self.get_independent()
@@ -748,7 +791,10 @@ class TaskSet(set):
 
     def _run_parallel(self, scheduler_address, max_parallel_tasks):
         """Run tasks in parallel."""
-        scheduled = self.flatten()
+        scheduled = {
+            t
+            for t in self.flatten() if not self._is_preprocessing_task(t)
+        }
         running = {}
 
         n_tasks = n_scheduled = len(scheduled)
