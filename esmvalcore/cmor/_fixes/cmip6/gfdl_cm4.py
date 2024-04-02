@@ -76,10 +76,6 @@ class Tasmax(Tas):
     """Fixes for tasmax."""
 
 
-class SfcWind(Tas):
-    """Fixes for sfcWind."""
-
-
 class Hurs(Tas):
     """Fixes for hurs."""
 
@@ -108,6 +104,10 @@ class Uas(Fix):
 
 class Vas(Uas):
     """Fixes for vas."""
+
+
+class SfcWind(Uas):
+    """Fixes for sfcWind."""
 
 
 Omon = BaseOmon
