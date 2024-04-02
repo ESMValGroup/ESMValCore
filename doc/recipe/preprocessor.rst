@@ -177,12 +177,12 @@ Calculate the global non-weighted root mean square:
     global_mean:
       area_statistics:
         operator: rms
-        weighted: false
+        weights: false
 
 .. warning::
 
   The disabling of weights by specifying the keyword argument ``weights:
-  False`` needs to be used with great care; from a scientific standpoint, we
+  false`` needs to be used with great care; from a scientific standpoint, we
   strongly recommend to **not** use it!
 
 
