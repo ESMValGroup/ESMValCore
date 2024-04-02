@@ -1,6 +1,7 @@
 """On-the-fly CMORizer for ICON."""
 
 import logging
+import warnings
 from datetime import datetime, timedelta
 
 import dask.array as da
@@ -15,7 +16,7 @@ from iris.cube import CubeList
 
 from esmvalcore.iris_helpers import add_leading_dim_to_cube, date2num
 
-from ._base_fixes import IconFix
+from ._base_fixes import IconFix, NegateData
 
 logger = logging.getLogger(__name__)
 
@@ -493,7 +494,15 @@ class AllVars(IconFix):
         # this results in times that are off by 1s (e.g., 13:59:59 instead of
         # 14:00:00).
         rounded_datetimes = (year_month_day + day_float).round('s')
-        new_datetimes = np.array(rounded_datetimes.dt.to_pydatetime())
+        with warnings.catch_warnings():
+            # We already fixed the deprecated code as recommended in the
+            # warning, but it still shows up -> ignore it
+            warnings.filterwarnings(
+                'ignore',
+                message="The behavior of DatetimeProperties.to_pydatetime .*",
+                category=FutureWarning,
+            )
+            new_datetimes = np.array(rounded_datetimes.dt.to_pydatetime())
         new_dt_points = date2num(np.array(new_datetimes), new_t_units)
 
         # Modify time coordinate in place
@@ -512,3 +521,26 @@ class Clwvi(IconFix):
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
+
+
+class Rtmt(IconFix):
+    """Fixes for ``rtmt``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = (
+            self.get_cube(cubes, var_name='rsdt') -
+            self.get_cube(cubes, var_name='rsut') -
+            self.get_cube(cubes, var_name='rlut')
+        )
+        cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
+Hfls = NegateData
+
+
+Hfss = NegateData
+
+
+Rtnt = Rtmt

@@ -200,6 +200,10 @@
             "affiliation": "BSC, Spain",
             "name": "Martin-Martinez, Eneko",
             "orcid": "0000-0002-9213-7818"
+        },
+        {
+            "affiliation": "DLR, Germany",
+            "name": "Cammarano, Diego"
         }
     ],
     "description": "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.",
