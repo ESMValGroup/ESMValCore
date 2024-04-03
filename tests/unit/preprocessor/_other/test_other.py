@@ -109,6 +109,31 @@ def cube():
     return cube
 
 
+def assert_metadata_all_coords(cube, normalization=None):
+    """Assert correct metadata."""
+    assert cube.standard_name is None
+    assert cube.var_name == 'histogram_tas'
+    assert cube.long_name == 'Histogram'
+    if normalization == 'integral':
+        assert cube.units == 'K-1'
+    else:
+        assert cube.units == '1'
+    assert cube.cell_methods == (
+        CellMethod('histogram', ('time', 'latitude', 'longitude')),
+    )
+    if normalization is None:
+        assert cube.attributes == {'normalization': 'none'}
+    else:
+        assert cube.attributes == {'normalization': normalization}
+    assert cube.coords('air_temperature')
+    bin_coord = cube.coord('air_temperature')
+    assert bin_coord.standard_name == 'air_temperature'
+    assert bin_coord.var_name == 'tas'
+    assert bin_coord.long_name is None
+    assert bin_coord.units == 'K'
+    assert bin_coord.attributes == {}
+
+
 @pytest.mark.parametrize('lazy', [False, True])
 def test_histogram_defaults(cube, lazy):
     """Test `histogram`."""
@@ -118,25 +143,18 @@ def test_histogram_defaults(cube, lazy):
 
     result = histogram(input_cube)
 
+    assert_metadata_all_coords(result)
     assert input_cube == cube
     assert result.shape == (10,)
     if lazy:
         assert result.has_lazy_data()
     else:
         assert not result.has_lazy_data()
+    assert result.dtype == np.float32
     np.testing.assert_allclose(
         result.data, [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0]
     )
-    assert result.dtype == np.float32
-    assert result.standard_name is None
-    assert result.var_name == 'histogram_tas'
-    assert result.long_name == 'Histogram'
-    assert result.units == '1'
-    assert result.cell_methods == (
-        CellMethod('histogram', ('time', 'latitude', 'longitude')),
-    )
-    assert result.attributes == {'normalization': 'none'}
-    assert result.coords('air_temperature')
+    np.testing.assert_allclose(result.data.mask, [False] * 10)
     bin_coord = result.coord('air_temperature')
     bin_coord.shape == (10,)
     bin_coord.dtype == np.float64
@@ -160,11 +178,66 @@ def test_histogram_defaults(cube, lazy):
             [6.3, 7.0],
         ],
     )
-    assert bin_coord.standard_name == 'air_temperature'
-    assert bin_coord.var_name == 'tas'
-    assert bin_coord.long_name is None
-    assert bin_coord.units == 'K'
-    assert bin_coord.attributes == {}
+
+
+@pytest.mark.parametrize('normalization', [None, 'sum', 'integral'])
+@pytest.mark.parametrize('lazy', [False, True])
+def test_histogram_fully_masked(cube, lazy, normalization):
+    """Test `histogram`."""
+    cube.data = np.ma.masked_all((2, 2, 2), dtype=np.float32)
+    if lazy:
+        cube.data = cube.lazy_data()
+
+    result = histogram(cube, bin_range=(0, 10), normalization=normalization)
+
+    assert_metadata_all_coords(result, normalization=normalization)
+    assert result.shape == (10,)
+    if lazy:
+        assert result.has_lazy_data()
+    else:
+        assert not result.has_lazy_data()
+    assert result.dtype == np.float32
+    print(result.data)
+    np.testing.assert_allclose(result.data, np.ma.masked_all(10,))
+    np.testing.assert_equal(result.data.mask, [True] * 10)
+    bin_coord = result.coord('air_temperature')
+    bin_coord.shape == (10,)
+    bin_coord.dtype == np.float64
+    bin_coord.bounds_dtype == np.float64
+    np.testing.assert_allclose(
+        bin_coord.points,
+        [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5],
+    )
+    np.testing.assert_allclose(
+        bin_coord.bounds,
+        [
+            [0.0, 1.0],
+            [1.0, 2.0],
+            [2.0, 3.0],
+            [3.0, 4.0],
+            [4.0, 5.0],
+            [5.0, 6.0],
+            [6.0, 7.0],
+            [7.0, 8.0],
+            [8.0, 9.0],
+            [9.0, 10.0],
+        ],
+    )
+
+
+@pytest.mark.parametrize('lazy', [False, True])
+def test_histogram_fully_masked_no_bin_range(cube, lazy):
+    """Test `histogram`."""
+    cube.data = np.ma.masked_all((2, 2, 2), dtype=np.float32)
+    if lazy:
+        cube.data = cube.lazy_data()
+
+    msg = (
+        r"Cannot calculate histogram for bin_range=\(masked, masked\) \(or "
+        r"for fully masked data when `bin_range` is not given\)"
+    )
+    with pytest.raises(ValueError, match=msg):
+        histogram(cube)
 
 
 if __name__ == '__main__':

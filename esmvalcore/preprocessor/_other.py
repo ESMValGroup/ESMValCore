@@ -180,7 +180,8 @@ def histogram(
     TypeError
         Invalid `bin` type given
     ValueError
-        Invalid `normalization` given.
+        Invalid `normalization` or `bin_range` given or `bin_range` is ``None``
+        and data is fully masked.
 
     """
     # Check arguments
@@ -204,6 +205,12 @@ def histogram(
         )
     else:
         bin_edges = np.array(bins, dtype=np.float64)
+    finite_bin_range = [bool(np.isfinite(r)) for r in bin_range]
+    if not all(finite_bin_range):
+        raise ValueError(
+            f"Cannot calculate histogram for bin_range={bin_range} (or for "
+            f"fully masked data when `bin_range` is not given)"
+        )
 
     # If histogram is calculated over all coordinates, we can use
     # dask.array.histogram and do not need to worry about chunks; otherwise,
@@ -250,17 +257,19 @@ def _calculate_histogram_lazy(
     """
     n_axes = len(along_axes)
 
-    # If histogram is calculated over all axes, use the efficient da.histogram
-    # function
+    # (1) If histogram is calculated over all axes, use the efficient
+    # da.histogram function
     if n_axes == data.ndim:
         data = data.ravel()
         data = data[~da.ma.getmaskarray(data)]
         hist = da.histogram(data, bins=bin_edges, range=bin_range)[0]
+        hist_sum = hist.sum()
+        hist = da.ma.masked_array(hist, mask=da.allclose(hist_sum, 0.0))
         if normalization == 'sum':
-            hist = hist / hist.sum()
+            hist = hist / hist_sum
         elif normalization == 'integral':
             diffs = np.array(np.diff(bin_edges), dtype=data.dtype)
-            hist = hist / hist.sum() / diffs
+            hist = hist / hist_sum / diffs
         hist = da.ma.masked_invalid(hist)
 
     # (2) Otherwise, use da.apply_gufunc with the eager version
@@ -382,7 +391,7 @@ def _get_histogram_cube(
     if normalization == 'integral':
         hist_cube.units = cube.units**-1
         hist_cube.attributes['normalization'] = 'integral'
-    if normalization == 'sum':
+    elif normalization == 'sum':
         hist_cube.units = '1'
         hist_cube.attributes['normalization'] = 'sum'
     else:
