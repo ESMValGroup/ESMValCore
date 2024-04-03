@@ -103,13 +103,14 @@ def cube():
     cube_data = np.ma.masked_inside(
         np.arange(8.0, dtype=np.float32).reshape(2, 2, 2), 1.5, 3.5
     )
+    cube_data = np.swapaxes(cube_data, 0, -1)
     cube = get_3d_cube(
         cube_data, standard_name='air_temperature', var_name='tas', units='K'
     )
     return cube
 
 
-def assert_metadata_all_coords(cube, normalization=None):
+def assert_metadata(cube, normalization=None):
     """Assert correct metadata."""
     assert cube.standard_name is None
     assert cube.var_name == 'histogram_tas'
@@ -118,9 +119,6 @@ def assert_metadata_all_coords(cube, normalization=None):
         assert cube.units == 'K-1'
     else:
         assert cube.units == '1'
-    assert cube.cell_methods == (
-        CellMethod('histogram', ('time', 'latitude', 'longitude')),
-    )
     if normalization is None:
         assert cube.attributes == {'normalization': 'none'}
     else:
@@ -143,8 +141,11 @@ def test_histogram_defaults(cube, lazy):
 
     result = histogram(input_cube)
 
-    assert_metadata_all_coords(result)
     assert input_cube == cube
+    assert_metadata(result)
+    assert result.cell_methods == (
+        CellMethod('histogram', ('time', 'latitude', 'longitude')),
+    )
     assert result.shape == (10,)
     if lazy:
         assert result.has_lazy_data()
@@ -182,6 +183,60 @@ def test_histogram_defaults(cube, lazy):
 
 @pytest.mark.parametrize('normalization', [None, 'sum', 'integral'])
 @pytest.mark.parametrize('lazy', [False, True])
+def test_histogram_over_time(cube, lazy, normalization):
+    """Test `histogram`."""
+    if lazy:
+        cube.data = cube.lazy_data()
+    input_cube = cube.copy()
+
+    result = histogram(
+        input_cube,
+        coords=['time'],
+        bins=[4.5, 6.5, 8.5, 10.5],
+        bin_range=(4.5, 10.5),
+        normalization=normalization,
+    )
+
+    assert input_cube == cube
+    assert_metadata(result, normalization=normalization)
+    assert result.cell_methods == (CellMethod('histogram', ('time',)),)
+    assert result.shape == (2, 2, 3)
+    if lazy:
+        assert result.has_lazy_data()
+    else:
+        assert not result.has_lazy_data()
+    assert result.dtype == np.float32
+    print(cube.data)
+    print(result.data)
+    if normalization == 'integral':
+        expected_data = np.ma.masked_invalid([
+            [[np.nan, np.nan, np.nan], [0.5, 0.0, 0.0]],
+            [[np.nan, np.nan, np.nan], [0.25, 0.25, 0.0]],
+        ])
+    elif normalization == 'sum':
+        expected_data = np.ma.masked_invalid([
+            [[np.nan, np.nan, np.nan], [1.0, 0.0, 0.0]],
+            [[np.nan, np.nan, np.nan], [0.5, 0.5, 0.0]],
+        ])
+    else:
+        expected_data = np.ma.masked_invalid([
+            [[np.nan, np.nan, np.nan], [1.0, 0.0, 0.0]],
+            [[np.nan, np.nan, np.nan], [1.0, 1.0, 0.0]],
+        ])
+    np.testing.assert_allclose(result.data, expected_data)
+    np.testing.assert_allclose(result.data.mask, expected_data.mask)
+    bin_coord = result.coord('air_temperature')
+    bin_coord.shape == (10,)
+    bin_coord.dtype == np.float64
+    bin_coord.bounds_dtype == np.float64
+    np.testing.assert_allclose(bin_coord.points, [5.5, 7.5, 9.5])
+    np.testing.assert_allclose(
+        bin_coord.bounds, [[4.5, 6.5], [6.5, 8.5], [8.5, 10.5]],
+    )
+
+
+@pytest.mark.parametrize('normalization', [None, 'sum', 'integral'])
+@pytest.mark.parametrize('lazy', [False, True])
 def test_histogram_fully_masked(cube, lazy, normalization):
     """Test `histogram`."""
     cube.data = np.ma.masked_all((2, 2, 2), dtype=np.float32)
@@ -190,14 +245,16 @@ def test_histogram_fully_masked(cube, lazy, normalization):
 
     result = histogram(cube, bin_range=(0, 10), normalization=normalization)
 
-    assert_metadata_all_coords(result, normalization=normalization)
+    assert_metadata(result, normalization=normalization)
+    assert result.cell_methods == (
+        CellMethod('histogram', ('time', 'latitude', 'longitude')),
+    )
     assert result.shape == (10,)
     if lazy:
         assert result.has_lazy_data()
     else:
         assert not result.has_lazy_data()
     assert result.dtype == np.float32
-    print(result.data)
     np.testing.assert_allclose(result.data, np.ma.masked_all(10,))
     np.testing.assert_equal(result.data.mask, [True] * 10)
     bin_coord = result.coord('air_temperature')

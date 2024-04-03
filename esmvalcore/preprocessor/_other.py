@@ -288,7 +288,7 @@ def _calculate_histogram_lazy(
             _calculate_histogram_eager,
             f"({','.join(list(string.ascii_lowercase)[:n_axes])})->(nbins)",
             data,
-            axes=[along_axes, (0,)],
+            axes=[along_axes, (-1,)],
             output_sizes={'nbins': len(bin_edges) - 1},
             along_axes=axes_in_chunk,
             bin_edges=bin_edges,
