@@ -351,8 +351,9 @@ def _get_histogram_cube(
     bin_coord = DimCoord(
         bin_centers,
         bounds=np.stack((bin_edges[:-1], bin_edges[1:]), axis=-1),
-        var_name='bin',
-        long_name='Histogram Bin',
+        standard_name=cube.standard_name,
+        var_name=cube.var_name,
+        long_name=cube.long_name,
         units=cube.units,
     )
 
@@ -369,6 +370,7 @@ def _get_histogram_cube(
     hist_cube.transpose(new_order)
 
     # Adapt other metadata
+    hist_cube.standard_name = None
     hist_cube.var_name = (
         'histogram' if hist_cube.var_name is None else
         f'histogram_{hist_cube.var_name}'
@@ -379,9 +381,12 @@ def _get_histogram_cube(
     )
     if normalization == 'integral':
         hist_cube.units = cube.units**-1
+        hist_cube.attributes['normalization'] = 'integral'
+    if normalization == 'sum':
+        hist_cube.units = '1'
+        hist_cube.attributes['normalization'] = 'sum'
     else:
         hist_cube.units = '1'
-        new_units = '1'
-    hist_cube.units = new_units
+        hist_cube.attributes['normalization'] = 'none'
 
     return hist_cube

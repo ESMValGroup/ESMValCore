@@ -128,15 +128,16 @@ def test_histogram_defaults(cube, lazy):
         result.data, [1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0]
     )
     assert result.dtype == np.float32
+    assert result.standard_name is None
     assert result.var_name == 'histogram_tas'
     assert result.long_name == 'Histogram'
-    assert result.standard_name == 'air_temperature'
     assert result.units == '1'
     assert result.cell_methods == (
         CellMethod('histogram', ('time', 'latitude', 'longitude')),
     )
-    assert result.coords('Histogram Bin')
-    bin_coord = result.coord('Histogram Bin')
+    assert result.attributes == {'normalization': 'none'}
+    assert result.coords('air_temperature')
+    bin_coord = result.coord('air_temperature')
     bin_coord.shape == (10,)
     bin_coord.dtype == np.float64
     bin_coord.bounds_dtype == np.float64
@@ -159,9 +160,9 @@ def test_histogram_defaults(cube, lazy):
             [6.3, 7.0],
         ],
     )
-    assert bin_coord.var_name == 'bin'
-    assert bin_coord.long_name == 'Histogram Bin'
-    assert bin_coord.standard_name is None
+    assert bin_coord.standard_name == 'air_temperature'
+    assert bin_coord.var_name == 'tas'
+    assert bin_coord.long_name is None
     assert bin_coord.units == 'K'
     assert bin_coord.attributes == {}
 
