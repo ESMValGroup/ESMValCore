@@ -310,6 +310,7 @@ Preprocessor                                                          Variable s
 :ref:`volume_statistics<volume_statistics>` [#f4]_                    ``volcello``, ``areacello``    ocean_volume, cell_area
 :ref:`weighting_landsea_fraction<land/sea fraction weighting>` [#f3]_ ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
 :ref:`distance_metric<distance_metric>` [#f5]_                        ``areacella``, ``areacello``   cell_area
+:ref:`histogram<histogram>` [#f5]_                                    ``areacella``, ``areacello``   cell_area
 ===================================================================== ============================== =====================================
 
 .. [#f3] This preprocessor requires at least one of the mentioned supplementary
@@ -2734,3 +2735,74 @@ The example below shows how to set all values below zero to zero.
       clip:
         minimum: 0
         maximum: null
+
+.. _histogram:
+
+``histogram``
+-------------------
+
+This function calculates histograms.
+
+The ``histogram`` preprocessor supports the following arguments in the
+recipe:
+
+* ``coords`` (:obj:`list` of :obj:`str`, default: ``None``): Coordinates over
+  which the histogram is calculated.
+  If ``None``, calculate the histogram over all coordinates.
+  The shape of the output cube will be `(x1, x2, ..., n_bins)`, where `xi` are
+  the dimensions of the input cube not appearing in `coords` and `n_bins` is
+  the number of bins.
+* ``bins`` (:obj:`int` or sequence of :obj:`float`, default: 10): If `bins` is
+  an :obj:`int`, it defines the number of equal-width bins in the given
+  `bin_range`.
+  If `bins` is a sequence, it defines a monotonically increasing array of bin
+  edges, including the rightmost edge, allowing for non-uniform bin widths.
+  also calculate the distance of the reference dataset with itself.
+* ``bin_range`` (:obj:`tuple` of :obj:`float` or ``None``, default: ``None``):
+  The lower and upper range of the bins.
+  If ``None``, `bin_range` is simply (``cube.core_data().min(),
+  cube.core_data().max()``).
+  Values outside the range are ignored.
+  The first element of the range must be less than or equal to the second.
+  `bin_range` affects the automatic bin computation as well if `bins` is an
+  :obj:`int` (see description for `bins` above).
+* ``weights`` (array-like, :obj:`bool`, or ``None``, default: ``None``):
+  Weights for the histogram calculation.
+  Each value in the input data only contributes its associated weight towards
+  the bin count (instead of 1).
+  Weights are normalized before entering the calculation if `normalization` is
+  ``'integral'`` or ``'sum'``.
+  Can be an array of the same shape as the input data, ``False`` or ``None``
+  (no weighting), or ``True``.
+  In the latter case, weighting will depend on `coords`, and the following
+  coordinates will trigger weighting: `time` (will use lengths of time
+  intervals as weights) and `latitude` (will use cell area weights).
+  Time weights are always calculated from the input data.
+  Area weights can be given as supplementary variables to the recipe
+  (`areacella` or `areacello`, see :ref:`supplementary_variables`) or
+  calculated from the input data (this only works for regular grids).
+  By default, **NO** supplementary variables will be used; they need to be
+  explicitly requested in the recipe.
+* ``normalization`` (``None``, ``'sum'``, or ``'integral'``, default:
+  ``None``): If ``None``, the result will contain the number of samples in each
+  bin.
+  If ``'integral'``, the result is the value of the probability `density`
+  function at the bin, normalized such that the integral over the range is 1.
+  If ``'sum'``, the result is the value of the probability `mass` function at
+  the bin, normalized such that the sum over the range is 1.
+  Normalization will be applied across `coords`, not the entire cube.
+
+Example:
+
+.. code-block:: yaml
+
+    preprocessors:
+      preproc_histogram:
+        histogram:
+          coords: [latitude, longitude]
+          bins: 12
+          bin_range: [100.0, 150.0]
+          weights: true
+          normalization: sum
+
+See also :func:`esmvalcore.preprocessor.histogram`.
