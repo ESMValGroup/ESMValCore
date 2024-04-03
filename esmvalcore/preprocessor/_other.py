@@ -13,8 +13,12 @@ import iris.analysis
 import numpy as np
 from iris.coords import CellMethod, Coord, DimCoord
 from iris.cube import Cube
+from iris.exceptions import CoordinateNotFoundError
+from iris.util import broadcast_to_shape
 
 from esmvalcore.iris_helpers import add_leading_dim_to_cube, rechunk_cube
+from esmvalcore.preprocessor._area import _try_adding_calculated_cell_area
+from esmvalcore.preprocessor._time import get_time_weights
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +127,46 @@ def get_all_coord_dims(
         all_coord_dims.extend(cube.coord_dims(coord))
     sorted_all_coord_dims = sorted(list(set(all_coord_dims)))
     return tuple(sorted_all_coord_dims)
+
+
+def get_weights(
+    cube: Cube,
+    coords: Iterable[Coord] | Iterable[str],
+) -> np.ndarray | da.Array:
+    """Calculate suitable weights for given coordinates."""
+    npx = get_array_module(cube.core_data())
+    weights = npx.ones(cube.shape, dtype=cube.dtype)
+
+    # Time weights: lengths of time interval
+    if 'time' in coords:
+        weights *= broadcast_to_shape(
+            npx.array(get_time_weights(cube)),
+            cube.shape,
+            cube.coord_dims('time'),
+        )
+
+    # Latitude weights: cell areas
+    if 'latitude' in coords:
+        cube = cube.copy()  # avoid overwriting input cube
+        if (
+                not cube.cell_measures('cell_area') and
+                not cube.coords('longitude')
+        ):
+            raise CoordinateNotFoundError(
+                f"Cube {cube.summary(shorten=True)} needs a `longitude` "
+                f"coordinate to calculate cell area weights for weighted "
+                f"distance metric over coordinates {coords} (alternatively, "
+                f"a `cell_area` can be given to the cube as supplementary "
+                f"variable)"
+            )
+        _try_adding_calculated_cell_area(cube)
+        weights *= broadcast_to_shape(
+            cube.cell_measure('cell_area').core_data(),
+            cube.shape,
+            cube.cell_measure_dims('cell_area'),
+        )
+
+    return weights
 
 
 def histogram(

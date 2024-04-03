@@ -15,19 +15,16 @@ import numpy as np
 from iris.common.metadata import CubeMetadata
 from iris.coords import CellMethod, Coord
 from iris.cube import Cube, CubeList
-from iris.exceptions import CoordinateNotFoundError
-from iris.util import broadcast_to_shape
 from scipy.stats import wasserstein_distance
 
 from esmvalcore.iris_helpers import rechunk_cube
-from esmvalcore.preprocessor._area import _try_adding_calculated_cell_area
 from esmvalcore.preprocessor._io import concatenate
 from esmvalcore.preprocessor._other import (
     get_all_coord_dims,
     get_all_coords,
     get_array_module,
+    get_weights,
 )
-from esmvalcore.preprocessor._time import get_time_weights
 
 if TYPE_CHECKING:
     from esmvalcore.preprocessor import PreprocessorFile
@@ -432,46 +429,6 @@ def _calculate_metric(
     return res_cube
 
 
-def _get_weights(
-    cube: Cube,
-    coords: Iterable[Coord] | Iterable[str],
-) -> np.ndarray | da.Array:
-    """Calculate weights for weighted distance metrics."""
-    npx = get_array_module(cube.core_data())
-    weights = npx.ones(cube.shape, dtype=cube.dtype)
-
-    # Time weights: lengths of time interval
-    if 'time' in coords:
-        weights *= broadcast_to_shape(
-            npx.array(get_time_weights(cube)),
-            cube.shape,
-            cube.coord_dims('time'),
-        )
-
-    # Latitude weights: cell areas
-    if 'latitude' in coords:
-        cube = cube.copy()  # avoid overwriting input cube
-        if (
-                not cube.cell_measures('cell_area') and
-                not cube.coords('longitude')
-        ):
-            raise CoordinateNotFoundError(
-                f"Cube {cube.summary(shorten=True)} needs a `longitude` "
-                f"coordinate to calculate cell area weights for weighted "
-                f"distance metric over coordinates {coords} (alternatively, "
-                f"a `cell_area` can be given to the cube as supplementary "
-                f"variable)"
-            )
-        _try_adding_calculated_cell_area(cube)
-        weights *= broadcast_to_shape(
-            cube.cell_measure('cell_area').core_data(),
-            cube.shape,
-            cube.cell_measure_dims('cell_area'),
-        )
-
-    return weights
-
-
 def _calculate_rmse(
     cube: Cube,
     reference: Cube,
@@ -482,7 +439,7 @@ def _calculate_rmse(
     """Calculate root mean square error."""
     # Data
     axis = get_all_coord_dims(cube, coords)
-    weights = _get_weights(cube, coords) if weighted else None
+    weights = get_weights(cube, coords) if weighted else None
     squared_error = (cube.core_data() - reference.core_data())**2
     npx = get_array_module(squared_error)
     rmse = npx.sqrt(npx.ma.average(squared_error, axis=axis, weights=weights))
@@ -510,7 +467,7 @@ def _calculate_pearsonr(
 ) -> tuple[np.ndarray | da.Array, CubeMetadata]:
     """Calculate Pearson correlation coefficient."""
     # Data
-    weights = _get_weights(cube, coords) if weighted else None
+    weights = get_weights(cube, coords) if weighted else None
     res_cube = iris.analysis.stats.pearsonr(
         cube, reference, corr_coords=coords, weights=weights, **kwargs
     )
