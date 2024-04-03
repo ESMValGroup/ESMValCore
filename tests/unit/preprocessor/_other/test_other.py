@@ -182,8 +182,9 @@ def test_histogram_defaults(cube, lazy):
 
 
 @pytest.mark.parametrize('normalization', [None, 'sum', 'integral'])
+@pytest.mark.parametrize('weights', [False, None])
 @pytest.mark.parametrize('lazy', [False, True])
-def test_histogram_over_time(cube, lazy, normalization):
+def test_histogram_over_time(cube, lazy, weights, normalization):
     """Test `histogram`."""
     if lazy:
         cube.data = cube.lazy_data()
@@ -194,11 +195,14 @@ def test_histogram_over_time(cube, lazy, normalization):
         coords=['time'],
         bins=[4.5, 6.5, 8.5, 10.5],
         bin_range=(4.5, 10.5),
+        weights=weights,
         normalization=normalization,
     )
 
     assert input_cube == cube
     assert_metadata(result, normalization=normalization)
+    assert result.coord('latitude') == input_cube.coord('latitude')
+    assert result.coord('longitude') == input_cube.coord('longitude')
     assert result.cell_methods == (CellMethod('histogram', ('time',)),)
     assert result.shape == (2, 2, 3)
     if lazy:
@@ -206,8 +210,6 @@ def test_histogram_over_time(cube, lazy, normalization):
     else:
         assert not result.has_lazy_data()
     assert result.dtype == np.float32
-    print(cube.data)
-    print(result.data)
     if normalization == 'integral':
         expected_data = np.ma.masked_invalid([
             [[np.nan, np.nan, np.nan], [0.5, 0.0, 0.0]],
@@ -279,6 +281,60 @@ def test_histogram_fully_masked(cube, lazy, normalization):
             [8.0, 9.0],
             [9.0, 10.0],
         ],
+    )
+
+
+@pytest.mark.parametrize('normalization', [None, 'sum', 'integral'])
+@pytest.mark.parametrize('weights', [True])
+@pytest.mark.parametrize('lazy', [False, True])
+def test_histogram_weights(cube, lazy, weights, normalization):
+    """Test `histogram`."""
+    if lazy:
+        cube.data = cube.lazy_data()
+    input_cube = cube.copy()
+
+    result = histogram(
+        input_cube,
+        coords=['time', 'longitude'],
+        bins=[0.0, 2.0, 4.0, 8.0],
+        weights=weights,
+        normalization=normalization,
+    )
+
+    assert input_cube == cube
+    assert_metadata(result, normalization=normalization)
+    assert result.coord('latitude') == input_cube.coord('latitude')
+    assert result.cell_methods == (
+        CellMethod('histogram', ('time', 'longitude')),
+    )
+    assert result.shape == (2, 3)
+    if lazy:
+        assert result.has_lazy_data()
+    else:
+        assert not result.has_lazy_data()
+    assert result.dtype == np.float32
+    print(result.data)
+    if normalization == 'integral':
+        expected_data = np.ma.masked_invalid(
+            [[0.25, 0.0, 0.125], [0.0, 0.0, 0.25]]
+        )
+    elif normalization == 'sum':
+        expected_data = np.ma.masked_invalid(
+            [[0.5, 0.0, 0.5], [0.0, 0.0, 1.0]]
+        )
+    else:
+        expected_data = np.ma.masked_invalid(
+            [[8.0, 0.0, 8.0], [0.0, 0.0, 8.0]]
+        )
+    np.testing.assert_allclose(result.data, expected_data)
+    np.testing.assert_allclose(result.data.mask, expected_data.mask)
+    bin_coord = result.coord('air_temperature')
+    bin_coord.shape == (10,)
+    bin_coord.dtype == np.float64
+    bin_coord.bounds_dtype == np.float64
+    np.testing.assert_allclose(bin_coord.points, [1.0, 3.0, 6.0])
+    np.testing.assert_allclose(
+        bin_coord.bounds, [[0.0, 2.0], [2.0, 4.0], [4.0, 8.0]],
     )
 
 

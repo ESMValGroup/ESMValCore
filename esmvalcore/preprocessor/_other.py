@@ -135,7 +135,7 @@ def get_weights(
 ) -> np.ndarray | da.Array:
     """Calculate suitable weights for given coordinates."""
     npx = get_array_module(cube.core_data())
-    weights = npx.ones(cube.shape, dtype=cube.dtype)
+    weights = npx.ones_like(cube.core_data())
 
     # Time weights: lengths of time interval
     if 'time' in coords:
@@ -174,6 +174,7 @@ def histogram(
     coords: Iterable[Coord] | Iterable[str] | None = None,
     bins: int | Sequence[float] = 10,
     bin_range: tuple[float, float] | None = None,
+    weights: np.ndarray | da.Array | bool | None = None,
     normalization: Literal['sum', 'integral'] | None = None,
 ) -> Cube:
     """Calculate histogram.
@@ -197,12 +198,27 @@ def histogram(
         monotonically increasing array of bin edges, including the rightmost
         edge, allowing for non-uniform bin widths.
     bin_range:
-        The lower and upper range of the bins. If not provided, `bin_range` is
+        The lower and upper range of the bins. If ``None``, `bin_range` is
         simply (``cube.core_data().min(), cube.core_data().max()``). Values
         outside the range are ignored. The first element of the range must be
         less than or equal to the second. `bin_range` affects the automatic bin
         computation as well if `bins` is an :obj:`int` (see description for
         `bins` above).
+    weights:
+        Weights for the histogram calculation. Each value in the input data
+        only contributes its associated weight towards the bin count (instead
+        of 1). Weights are normalized before entering the calculation if
+        `normalization` is ``'integral'`` or ``'sum'``. Can be an array of the
+        same shape as the input data, ``False`` or ``None`` (no weighting), or
+        ``True``. In the latter case, weighting will depend on `coords`, and
+        the following coordinates will trigger weighting: `time` (will use
+        lengths of time intervals as weights) and `latitude` (will use cell
+        area weights). Time weights are always calculated from the input data.
+        Area weights can be given as supplementary variables to the recipe
+        (`areacella` or `areacello`, see :ref:`supplementary_variables`) or
+        calculated from the input data (this only works for regular grids). By
+        default, **NO** supplementary variables will be used; they need to be
+        explicitly requested in the recipe.
     normalization:
         If ``None``, the result will contain the number of samples in each bin.
         If ``'integral'``, the result is the value of the probability `density`
@@ -226,6 +242,10 @@ def histogram(
     ValueError
         Invalid `normalization` or `bin_range` given or `bin_range` is ``None``
         and data is fully masked.
+    iris.exceptions.CoordinateNotFoundError
+        ``longitude` is not found in cube if `weights=True`, `latitude` is in
+        `coords`, and no `cell_area` is given as
+        :ref:`supplementary_variables`.
 
     """
     # Check arguments
@@ -256,13 +276,24 @@ def histogram(
             f"fully masked data when `bin_range` is not given)"
         )
 
+    # Get (normalized) weights
+    coords = get_all_coords(cube, coords)
+    axes = get_all_coord_dims(cube, coords)
+    npx = get_array_module(cube.core_data())
+    if not weights:
+        weights = npx.ones_like(cube.core_data())
+    elif weights is True:
+        weights = get_weights(cube, coords)
+    if normalization is not None:
+        weights = weights / npx.sum(weights, axis=axes, keepdims=True)
+
     # If histogram is calculated over all coordinates, we can use
     # dask.array.histogram and do not need to worry about chunks; otherwise,
     # make sure that the cube is not chunked along the given coordinates
-    coords = get_all_coords(cube, coords)
-    axes = get_all_coord_dims(cube, coords)
-    if cube.has_lazy_data() and len(axes) == cube.ndim:
+    if cube.has_lazy_data() and len(axes) != cube.ndim:
         cube = rechunk_cube(cube, coords)
+    if isinstance(weights, da.Array):
+        weights = weights.rechunk(cube.lazy_data().chunks)
 
     # Calculate histogram
     if cube.has_lazy_data():
@@ -271,6 +302,7 @@ def histogram(
         func = _calculate_histogram_eager  # type: ignore
     hist_data = func(
         cube.core_data(),
+        weights,  # type: ignore
         along_axes=axes,
         bin_edges=bin_edges,
         bin_range=bin_range,
@@ -286,6 +318,7 @@ def histogram(
 
 def _calculate_histogram_lazy(
     data: da.Array,
+    weights: da.Array,
     *,
     along_axes: tuple[int, ...],
     bin_edges: np.ndarray,
@@ -305,8 +338,13 @@ def _calculate_histogram_lazy(
     # da.histogram function
     if n_axes == data.ndim:
         data = data.ravel()
-        data = data[~da.ma.getmaskarray(data)]
-        hist = da.histogram(data, bins=bin_edges, range=bin_range)[0]
+        weights = weights.ravel()
+        mask = da.ma.getmaskarray(data)
+        data = data[~mask]
+        weights = weights[~mask]
+        hist = da.histogram(
+            data, bins=bin_edges, range=bin_range, weights=weights
+        )[0]
         hist_sum = hist.sum()
         hist = da.ma.masked_array(hist, mask=da.allclose(hist_sum, 0.0))
         if normalization == 'sum':
@@ -328,11 +366,13 @@ def _calculate_histogram_lazy(
         # The call signature depends also on the number of axes in `axes`, and
         # will be (a,b,...)->(nbins) where a,b,... are the data dimensions that
         # are collapsed, and nbins the number of bin centers
+        in_signature = f"({','.join(list(string.ascii_lowercase)[:n_axes])})"
         hist = da.apply_gufunc(
             _calculate_histogram_eager,
-            f"({','.join(list(string.ascii_lowercase)[:n_axes])})->(nbins)",
+            f"{in_signature},{in_signature}->(nbins)",
             data,
-            axes=[along_axes, (-1,)],
+            weights,
+            axes=[along_axes, along_axes, (-1,)],
             output_sizes={'nbins': len(bin_edges) - 1},
             along_axes=axes_in_chunk,
             bin_edges=bin_edges,
@@ -345,6 +385,7 @@ def _calculate_histogram_lazy(
 
 def _calculate_histogram_eager(
     data: np.ndarray,
+    weights: np.ndarray,
     *,
     along_axes: tuple[int, ...],
     bin_edges: np.ndarray,
@@ -362,17 +403,24 @@ def _calculate_histogram_eager(
     # dimensions in `axes` and the `xi` are the remaining dimensions
     remaining_dims = tuple(a for a in range(data.ndim) if a not in along_axes)
     reshaped_data = np.transpose(data, axes=(*remaining_dims, *along_axes))
+    reshaped_weights = np.transpose(
+        weights, axes=(*remaining_dims, *along_axes)
+    )
     shape_rem_dims = tuple(data.shape[a] for a in remaining_dims)
     reshaped_data = reshaped_data.reshape(*shape_rem_dims, -1)
+    reshaped_weights = reshaped_weights.reshape(*shape_rem_dims, -1)
 
     # Apply vectorized version of np.histogram
-    def _get_hist_values(arr):
+    def _get_hist_values(arr, weights):
         mask = np.ma.getmaskarray(arr)
         arr = arr[~mask]
-        return np.histogram(arr, bins=bin_edges, range=bin_range)[0]
+        weights = weights[~mask]
+        return np.histogram(
+            arr, bins=bin_edges, range=bin_range, weights=weights
+        )[0]
 
-    v_histogram = np.vectorize(_get_hist_values, signature='(n)->(m)')
-    hist = v_histogram(reshaped_data)
+    v_histogram = np.vectorize(_get_hist_values, signature='(n),(n)->(m)')
+    hist = v_histogram(reshaped_data, reshaped_weights)
 
     # Mask points where all input data were masked (these are the ones where
     # the histograms sums to 0)
