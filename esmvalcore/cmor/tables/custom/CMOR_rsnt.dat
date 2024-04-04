@@ -17,6 +17,6 @@ comment:           at the top of the atmosphere (to be compared with satellite m
 !----------------------------------
 dimensions:        longitude latitude time
 type:              real
-positive:          up
+positive:          down
 !----------------------------------
 !
