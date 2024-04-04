@@ -4,7 +4,6 @@ version: 2.1
 orbs:
   coverage-reporter: codacy/coverage-reporter@13.16.5
   codecov: codecov/codecov@3.2.5
-  skip: true
 
 commands:
   check_changes:
