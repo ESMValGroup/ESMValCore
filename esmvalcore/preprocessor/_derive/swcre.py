@@ -30,5 +30,7 @@ class DerivedVariable(DerivedVariableBase):
             Constraint(name='toa_outgoing_shortwave_flux_assuming_clear_sky'))
 
         swcre_cube = rsutcs_cube - rsut_cube
+        swcre_cube.units = rsut_cube.units
+        swcre_cube.attributes['positive'] = 'down'
 
         return swcre_cube
