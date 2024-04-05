@@ -177,12 +177,12 @@ Calculate the global non-weighted root mean square:
     global_mean:
       area_statistics:
         operator: rms
-        weighted: false
+        weights: false
 
 .. warning::
 
   The disabling of weights by specifying the keyword argument ``weights:
-  False`` needs to be used with great care; from a scientific standpoint, we
+  false`` needs to be used with great care; from a scientific standpoint, we
   strongly recommend to **not** use it!
 
 
@@ -307,7 +307,7 @@ Preprocessor                                                   Variable short na
 :ref:`area_statistics<area_statistics>`                        ``areacella``, ``areacello``   cell_area
 :ref:`mask_landsea<land/sea/ice masking>`                      ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
 :ref:`mask_landseaice<ice masking>`                            ``sftgif``                     land_ice_area_fraction
-:ref:`volume_statistics<volume_statistics>`                    ``volcello``                   ocean_volume
+:ref:`volume_statistics<volume_statistics>`                    ``volcello``, ``areacello``    ocean_volume, cell_area
 :ref:`weighting_landsea_fraction<land/sea fraction weighting>` ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
 ============================================================== ============================== =====================================
 
@@ -2138,12 +2138,16 @@ but maintains the time dimension.
 By default, the `mean` operation is weighted by the grid cell volumes.
 
 For weighted statistics, this function requires a cell volume `cell measure`_,
-unless the coordinates of the input data are regular 1D latitude and longitude
-coordinates so the cell volumes can be computed internally.
-The required supplementary variable ``volcello`` can be attached to the main
-dataset as described in :ref:`supplementary_variables`.
+unless it has a cell_area `cell measure`_ or the coordinates of the input data
+are regular 1D latitude and longitude coordinates so the cell volumes can be
+computed internally.
+The required supplementary variable ``volcello``, or ``areacello`` in its
+absence, can be attached to the main dataset as described in
+:ref:`supplementary_variables`.
 
-No depth coordinate is required as this is determined by Iris.
+No depth coordinate is required as this is determined by Iris. However, to
+compute the volume automatically when ``volcello`` is not provided, the depth
+coordinate units should be convertible to meters.
 
 Parameters:
     * `operator`: Operation to apply.
