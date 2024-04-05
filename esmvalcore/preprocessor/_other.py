@@ -258,44 +258,17 @@ def histogram(
             f"'{normalization}'"
         )
 
-    # Calculate bin edges
-    if bin_range is None:
-        bin_range = dask.compute(
-            cube.core_data().min(), cube.core_data().max()
-        )
-    if isinstance(bins, int):
-        bin_edges = np.linspace(
-            bin_range[0], bin_range[1], bins + 1, dtype=np.float64
-        )
-    else:
-        bin_edges = np.array(bins, dtype=np.float64)
-    finite_bin_range = [bool(np.isfinite(r)) for r in bin_range]
-    if not all(finite_bin_range):
-        raise ValueError(
-            f"Cannot calculate histogram for bin_range={bin_range} (or for "
-            f"fully masked data when `bin_range` is not given)"
-        )
-
-    # Get (normalized) weights
-    coords = get_all_coords(cube, coords)
-    axes = get_all_coord_dims(cube, coords)
-    npx = get_array_module(cube.core_data())
-    if weights is None or weights is False:
-        weights = npx.ones_like(cube.core_data())
-    elif weights is True:
-        weights = get_weights(cube, coords)
-    if normalization is not None:
-        weights = weights / npx.sum(weights, axis=axes, keepdims=True)
-
     # If histogram is calculated over all coordinates, we can use
     # dask.array.histogram and do not need to worry about chunks; otherwise,
     # make sure that the cube is not chunked along the given coordinates
+    coords = get_all_coords(cube, coords)
+    axes = get_all_coord_dims(cube, coords)
     if cube.has_lazy_data() and len(axes) != cube.ndim:
         cube = rechunk_cube(cube, coords)
-    if isinstance(weights, da.Array):
-        weights = weights.rechunk(cube.lazy_data().chunks)
 
     # Calculate histogram
+    weights = _get_histogram_weights(cube, coords, weights, normalization)
+    (bin_range, bin_edges) = _get_bins(cube, bins, bin_range)
     if cube.has_lazy_data():
         func = _calculate_histogram_lazy  # type: ignore
     else:
@@ -316,6 +289,63 @@ def histogram(
     )
 
     return hist_cube
+
+
+def _get_bins(
+    cube: Cube,
+    bins: int | Sequence[float],
+    bin_range: tuple[float, float] | None,
+) -> tuple[tuple[float, float], np.ndarray]:
+    """Calculate bin range and edges."""
+    if bin_range is None:
+        bin_range = dask.compute(
+            cube.core_data().min(), cube.core_data().max()
+        )
+    if isinstance(bins, int):
+        bin_edges = np.linspace(
+            bin_range[0], bin_range[1], bins + 1, dtype=np.float64
+        )
+    else:
+        bin_edges = np.array(bins, dtype=np.float64)
+
+    finite_bin_range = [bool(np.isfinite(r)) for r in bin_range]
+    if not all(finite_bin_range):
+        raise ValueError(
+            f"Cannot calculate histogram for bin_range={bin_range} (or for "
+            f"fully masked data when `bin_range` is not given)"
+        )
+
+    return (bin_range, bin_edges)
+
+
+def _get_histogram_weights(
+    cube: Cube,
+    coords: Iterable[Coord] | Iterable[str],
+    weights: np.ndarray | da.Array | bool | None,
+    normalization: Literal['sum', 'integral'] | None,
+) -> np.ndarray | da.Array:
+    """Get histogram weights."""
+    axes = get_all_coord_dims(cube, coords)
+    npx = get_array_module(cube.core_data())
+
+    weights_array: np.ndarray | da.Array
+    if weights is None or weights is False:
+        weights_array = npx.ones_like(cube.core_data())
+    elif weights is True:
+        weights_array = get_weights(cube, coords)
+    else:
+        weights_array = weights
+
+    if normalization is not None:
+        norm = npx.sum(weights_array, axis=axes, keepdims=True)
+        weights_array = weights_array / norm
+
+    # For lazy arrays, make sure that the chunks of the cube data and weights
+    # match
+    if isinstance(weights_array, da.Array):
+        weights_array = weights_array.rechunk(cube.lazy_data().chunks)
+
+    return weights_array
 
 
 def _calculate_histogram_lazy(
@@ -493,7 +523,7 @@ def _get_histogram_cube(
         long_name=long_name,
         var_name=var_name,
         units=units,
-        attributes = cube.attributes,
+        attributes=cube.attributes,
         cell_methods=cell_methods,
         dim_coords_and_dims=dim_spec,
         aux_coords_and_dims=[(a, cube.coord_dims(a)) for a in cube.aux_coords],
