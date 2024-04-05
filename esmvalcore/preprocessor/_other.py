@@ -11,12 +11,12 @@ import dask
 import dask.array as da
 import iris.analysis
 import numpy as np
-from iris.coords import CellMethod, Coord, DimCoord
+from iris.coords import Coord, DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateNotFoundError
 from iris.util import broadcast_to_shape
 
-from esmvalcore.iris_helpers import add_leading_dim_to_cube, rechunk_cube
+from esmvalcore.iris_helpers import rechunk_cube
 from esmvalcore.preprocessor._area import _try_adding_calculated_cell_area
 from esmvalcore.preprocessor._time import get_time_weights
 
@@ -280,7 +280,7 @@ def histogram(
     coords = get_all_coords(cube, coords)
     axes = get_all_coord_dims(cube, coords)
     npx = get_array_module(cube.core_data())
-    if not weights:
+    if weights is None or weights is False:
         weights = npx.ones_like(cube.core_data())
     elif weights is True:
         weights = get_weights(cube, coords)
@@ -308,10 +308,12 @@ def histogram(
         bin_range=bin_range,
         normalization=normalization,
     )
+    hist_data = hist_data.astype(cube.dtype)
 
-    # Get final cube with correct metadata and data
-    hist_cube = _get_histogram_cube(cube, coords, bin_edges, normalization)
-    hist_cube.data = hist_data.astype(cube.dtype)
+    # Get final cube
+    hist_cube = _get_histogram_cube(
+        cube, hist_data, coords, bin_edges, normalization
+    )
 
     return hist_cube
 
@@ -441,6 +443,7 @@ def _calculate_histogram_eager(
 
 def _get_histogram_cube(
     cube: Cube,
+    data: np.ndarray | da.Array,
     coords: Iterable[Coord] | Iterable[str],
     bin_edges: np.ndarray,
     normalization: Literal['sum', 'integral'] | None,
@@ -453,41 +456,55 @@ def _get_histogram_cube(
         bin_centers,
         bounds=np.stack((bin_edges[:-1], bin_edges[1:]), axis=-1),
         standard_name=cube.standard_name,
-        var_name=cube.var_name,
         long_name=cube.long_name,
+        var_name=cube.var_name,
         units=cube.units,
     )
 
     # Get result cube with correct dimensional metadata by using dummy
     # operation (max)
-    hist_cube = cube.collapsed(coords, iris.analysis.MAX)
-    hist_cube.cell_methods = [
-        *cube.cell_methods, CellMethod('histogram', coords)
-    ]
-    hist_cube = add_leading_dim_to_cube(hist_cube, bin_coord)
-    new_order = list(range(hist_cube.ndim))
-    new_order[0] = hist_cube.ndim - 1
-    new_order[-1] = 0
-    hist_cube.transpose(new_order)
+    cell_methods = cube.cell_methods
+    cube = cube.collapsed(coords, iris.analysis.MAX)
 
-    # Adapt other metadata
-    hist_cube.standard_name = None
-    hist_cube.var_name = (
-        'histogram' if hist_cube.var_name is None else
-        f'histogram_{hist_cube.var_name}'
+    # Get histogram cube
+    long_name_suffix = (
+        '' if cube.long_name is None else f' of {cube.long_name}'
     )
-    hist_cube.long_name = (
-        'Histogram' if hist_cube.long_name is None else
-        f'Histogram of {hist_cube.long_name}'
+    var_name_suffix = '' if cube.var_name is None else f'_{cube.var_name}'
+    dim_spec = (
+        [(d, cube.coord_dims(d)) for d in cube.dim_coords] +
+        [(bin_coord, cube.ndim)]
     )
-    if normalization == 'integral':
-        hist_cube.units = cube.units**-1
-        hist_cube.attributes['normalization'] = 'integral'
-    elif normalization == 'sum':
-        hist_cube.units = '1'
-        hist_cube.attributes['normalization'] = 'sum'
+    if normalization == 'sum':
+        long_name = f"Relative Frequency{long_name_suffix}"
+        var_name = f"relative_frequency{var_name_suffix}"
+        units = '1'
+    elif normalization == 'integral':
+        long_name = f"Density{long_name_suffix}"
+        var_name = f"density{var_name_suffix}"
+        units = cube.units**-1
     else:
-        hist_cube.units = '1'
-        hist_cube.attributes['normalization'] = 'none'
+        long_name = f"Frequency{long_name_suffix}"
+        var_name = f"frequency{var_name_suffix}"
+        units = '1'
+    hist_cube = Cube(
+        data,
+        standard_name=None,
+        long_name=long_name,
+        var_name=var_name,
+        units=units,
+        attributes = cube.attributes,
+        cell_methods=cell_methods,
+        dim_coords_and_dims=dim_spec,
+        aux_coords_and_dims=[(a, cube.coord_dims(a)) for a in cube.aux_coords],
+        aux_factories=cube.aux_factories,
+        ancillary_variables_and_dims=[
+            (a, cube.ancillary_variable_dims(a)) for a in
+            cube.ancillary_variables()
+        ],
+        cell_measures_and_dims=[
+            (c, cube.cell_measure_dims(c)) for c in cube.cell_measures()
+        ],
+    )
 
     return hist_cube

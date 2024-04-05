@@ -8,7 +8,14 @@ import iris.coords
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.coords import CellMethod
+from iris.aux_factory import AtmosphereSigmaFactory
+from iris.coords import (
+    AncillaryVariable,
+    AuxCoord,
+    CellMeasure,
+    CellMethod,
+    DimCoord,
+)
 from iris.cube import Cube
 from numpy.testing import assert_array_equal
 
@@ -113,16 +120,20 @@ def cube():
 def assert_metadata(cube, normalization=None):
     """Assert correct metadata."""
     assert cube.standard_name is None
-    assert cube.var_name == 'histogram_tas'
-    assert cube.long_name == 'Histogram'
-    if normalization == 'integral':
+    if normalization == 'sum':
+        assert cube.long_name == 'Relative Frequency'
+        assert cube.var_name == 'relative_frequency_tas'
+        assert cube.units == '1'
+    elif normalization == 'integral':
+        assert cube.long_name == 'Density'
+        assert cube.var_name == 'density_tas'
         assert cube.units == 'K-1'
     else:
+        assert cube.long_name == 'Frequency'
+        assert cube.var_name == 'frequency_tas'
         assert cube.units == '1'
-    if normalization is None:
-        assert cube.attributes == {'normalization': 'none'}
-    else:
-        assert cube.attributes == {'normalization': normalization}
+    assert cube.attributes == {}
+    assert cube.cell_methods == ()
     assert cube.coords('air_temperature')
     bin_coord = cube.coord('air_temperature')
     assert bin_coord.standard_name == 'air_temperature'
@@ -143,9 +154,6 @@ def test_histogram_defaults(cube, lazy):
 
     assert input_cube == cube
     assert_metadata(result)
-    assert result.cell_methods == (
-        CellMethod('histogram', ('time', 'latitude', 'longitude')),
-    )
     assert result.shape == (10,)
     if lazy:
         assert result.has_lazy_data()
@@ -203,7 +211,6 @@ def test_histogram_over_time(cube, lazy, weights, normalization):
     assert_metadata(result, normalization=normalization)
     assert result.coord('latitude') == input_cube.coord('latitude')
     assert result.coord('longitude') == input_cube.coord('longitude')
-    assert result.cell_methods == (CellMethod('histogram', ('time',)),)
     assert result.shape == (2, 2, 3)
     if lazy:
         assert result.has_lazy_data()
@@ -248,9 +255,6 @@ def test_histogram_fully_masked(cube, lazy, normalization):
     result = histogram(cube, bin_range=(0, 10), normalization=normalization)
 
     assert_metadata(result, normalization=normalization)
-    assert result.cell_methods == (
-        CellMethod('histogram', ('time', 'latitude', 'longitude')),
-    )
     assert result.shape == (10,)
     if lazy:
         assert result.has_lazy_data()
@@ -285,7 +289,14 @@ def test_histogram_fully_masked(cube, lazy, normalization):
 
 
 @pytest.mark.parametrize('normalization', [None, 'sum', 'integral'])
-@pytest.mark.parametrize('weights', [True])
+@pytest.mark.parametrize(
+    'weights',
+    [
+        True,
+        np.array([[[6, 6], [6, 6]], [[2, 2], [2, 2]]]),
+        da.array([[[6, 6], [6, 6]], [[2, 2], [2, 2]]]),
+    ]
+)
 @pytest.mark.parametrize('lazy', [False, True])
 def test_histogram_weights(cube, lazy, weights, normalization):
     """Test `histogram`."""
@@ -304,16 +315,12 @@ def test_histogram_weights(cube, lazy, weights, normalization):
     assert input_cube == cube
     assert_metadata(result, normalization=normalization)
     assert result.coord('latitude') == input_cube.coord('latitude')
-    assert result.cell_methods == (
-        CellMethod('histogram', ('time', 'longitude')),
-    )
     assert result.shape == (2, 3)
     if lazy:
         assert result.has_lazy_data()
     else:
         assert not result.has_lazy_data()
     assert result.dtype == np.float32
-    print(result.data)
     if normalization == 'integral':
         expected_data = np.ma.masked_invalid(
             [[0.25, 0.0, 0.125], [0.0, 0.0, 0.25]]
@@ -351,6 +358,103 @@ def test_histogram_fully_masked_no_bin_range(cube, lazy):
     )
     with pytest.raises(ValueError, match=msg):
         histogram(cube)
+
+
+@pytest.fixture
+def cube_with_rich_metadata():
+    """Cube with rich metadata."""
+    time = DimCoord([0], bounds=[[-1, 1]], var_name='time', units='s')
+    sigma = DimCoord([0], var_name='sigma', units='1')
+    lat = DimCoord([0], var_name='lat', units='degrees')
+    lon = DimCoord([0], var_name='lon', units='degrees')
+    ptop = AuxCoord(0, var_name='ptop', units='Pa')
+    psur = AuxCoord([[0]], var_name='ps', units='Pa')
+    sigma_factory = AtmosphereSigmaFactory(ptop, sigma, psur)
+    cell_area = CellMeasure([[1]], var_name='area', units='m2', measure='area')
+    anc = AncillaryVariable([0], var_name='anc')
+    cube = Cube(
+        np.ones((1, 1, 1, 1), dtype=np.float32),
+        standard_name=None,
+        long_name='Air Temperature',
+        var_name=None,
+        units='K',
+        attributes={'test': '1'},
+        cell_methods=(CellMethod('point', 'sigma'),),
+        dim_coords_and_dims=[(time, 0), (sigma, 1), (lat, 2), (lon, 3)],
+        aux_coords_and_dims=[(ptop, ()), (psur, (2, 3))],
+        aux_factories=[sigma_factory],
+        ancillary_variables_and_dims=[(anc, 1)],
+        cell_measures_and_dims=[(cell_area, (2, 3))],
+    )
+    return cube
+
+
+@pytest.mark.parametrize('normalization', [None, 'sum', 'integral'])
+@pytest.mark.parametrize('weights', [True, False, None])
+@pytest.mark.parametrize('lazy', [False, True])
+def test_histogram_metadata(
+    cube_with_rich_metadata, lazy, weights, normalization
+):
+    """Test `histogram`."""
+    if lazy:
+        cube_with_rich_metadata.data = cube_with_rich_metadata.lazy_data()
+    input_cube = cube_with_rich_metadata.copy()
+
+    result = histogram(
+        input_cube,
+        coords=['time'],
+        bins=[0.0, 1.0, 2.0],
+        bin_range=(0.0, 2.0),
+        weights=weights,
+        normalization=normalization,
+    )
+
+    assert input_cube == cube_with_rich_metadata
+    assert result.shape == (1, 1, 1, 2)
+
+    assert result.standard_name is None
+    if normalization == 'sum':
+        assert result.long_name == 'Relative Frequency of Air Temperature'
+        assert result.var_name == 'relative_frequency'
+        assert result.units == '1'
+    elif normalization == 'integral':
+        assert result.long_name == 'Density of Air Temperature'
+        assert result.var_name == 'density'
+        assert result.units == 'K-1'
+    else:
+        assert result.long_name == 'Frequency of Air Temperature'
+        assert result.var_name == 'frequency'
+        assert result.units == '1'
+    assert result.attributes == {'test': '1'}
+    assert result.cell_methods == (CellMethod('point', 'sigma'),)
+
+    assert not result.coords('time', dim_coords=True)
+    for dim_coord in ('sigma', 'lat', 'lon'):
+        assert (
+            result.coord(dim_coord, dim_coords=True) ==
+            input_cube.coord(dim_coord, dim_coords=True)
+        )
+        assert (
+            result.coord_dims(dim_coord) ==
+            (input_cube.coord_dims(dim_coord)[0] - 1,)
+        )
+    assert result.coords('Air Temperature', dim_coords=True)
+    bin_coord = result.coord('Air Temperature')
+    assert result.coord_dims(bin_coord) == (3,)
+    assert bin_coord.standard_name is None
+    assert bin_coord.long_name == 'Air Temperature'
+    assert bin_coord.var_name is None
+    assert bin_coord.units == 'K'
+    assert bin_coord.attributes == {}
+
+    assert result.coords('time', dim_coords=False)
+    assert result.coord_dims('time') == ()
+    assert result.coord('ptop') == input_cube.coord('ptop')
+    assert result.coord('ps') == input_cube.coord('ps')
+    assert len(result.aux_factories) == 1
+    assert isinstance(result.aux_factories[0], AtmosphereSigmaFactory)
+    assert result.ancillary_variables() == input_cube.ancillary_variables()
+    assert result.cell_measures() == input_cube.cell_measures()
 
 
 if __name__ == '__main__':
