@@ -250,7 +250,10 @@ def histogram(
     """
     # Check arguments
     if isinstance(bins, str):
-        raise TypeError("bins cannot be a str, must be int or Sequence of int")
+        raise TypeError(
+            f"bins cannot be a str (got '{bins}'), must be int or Sequence of "
+            f"int"
+        )
     allowed_norms = (None, 'sum', 'integral')
     if normalization is not None and normalization not in allowed_norms:
         raise ValueError(
@@ -443,12 +446,12 @@ def _calculate_histogram_eager(
     reshaped_weights = reshaped_weights.reshape(*shape_rem_dims, -1)
 
     # Apply vectorized version of np.histogram
-    def _get_hist_values(arr, weights):
+    def _get_hist_values(arr, wgts):
         mask = np.ma.getmaskarray(arr)
         arr = arr[~mask]
-        weights = weights[~mask]
+        wgts = wgts[~mask]
         return np.histogram(
-            arr, bins=bin_edges, range=bin_range, weights=weights
+            arr, bins=bin_edges, range=bin_range, weights=wgts
         )[0]
 
     v_histogram = np.vectorize(_get_hist_values, signature='(n),(n)->(m)')
@@ -458,15 +461,17 @@ def _calculate_histogram_eager(
     # the histograms sums to 0)
     hist_sum = hist.sum(axis=-1, keepdims=True)
     mask = np.isclose(hist_sum, 0.0)
-    mask_broadcast = np.broadcast_to(mask, hist.shape)
-    hist = np.ma.array(hist, mask=mask_broadcast)
+    hist = np.ma.array(hist, mask=np.broadcast_to(mask, hist.shape))
 
     # Apply normalization
     if normalization == 'sum':
         hist = hist / np.ma.array(hist_sum, mask=mask)
     elif normalization == 'integral':
-        diffs = np.ma.array(np.diff(bin_edges), dtype=data.dtype)
-        hist = hist / np.ma.array(hist_sum, mask=mask) / diffs
+        hist = (
+            hist /
+            np.ma.array(hist_sum, mask=mask) /
+            np.ma.array(np.diff(bin_edges), dtype=data.dtype)
+        )
 
     return hist
 

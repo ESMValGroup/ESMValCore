@@ -345,21 +345,6 @@ def test_histogram_weights(cube, lazy, weights, normalization):
     )
 
 
-@pytest.mark.parametrize('lazy', [False, True])
-def test_histogram_fully_masked_no_bin_range(cube, lazy):
-    """Test `histogram`."""
-    cube.data = np.ma.masked_all((2, 2, 2), dtype=np.float32)
-    if lazy:
-        cube.data = cube.lazy_data()
-
-    msg = (
-        r"Cannot calculate histogram for bin_range=\(masked, masked\) \(or "
-        r"for fully masked data when `bin_range` is not given\)"
-    )
-    with pytest.raises(ValueError, match=msg):
-        histogram(cube)
-
-
 @pytest.fixture
 def cube_with_rich_metadata():
     """Cube with rich metadata."""
@@ -455,6 +440,40 @@ def test_histogram_metadata(
     assert isinstance(result.aux_factories[0], AtmosphereSigmaFactory)
     assert result.ancillary_variables() == input_cube.ancillary_variables()
     assert result.cell_measures() == input_cube.cell_measures()
+
+
+@pytest.mark.parametrize('lazy', [False, True])
+def test_histogram_fully_masked_no_bin_range(cube, lazy):
+    """Test `histogram`."""
+    cube.data = np.ma.masked_all((2, 2, 2), dtype=np.float32)
+    if lazy:
+        cube.data = cube.lazy_data()
+
+    msg = (
+        r"Cannot calculate histogram for bin_range=\(masked, masked\) \(or "
+        r"for fully masked data when `bin_range` is not given\)"
+    )
+    with pytest.raises(ValueError, match=msg):
+        histogram(cube)
+
+
+def test_histogram_invalid_bins(cube):
+    """Test `histogram`."""
+    msg = (
+        r"bins cannot be a str \(got 'auto'\), must be int or Sequence of int"
+    )
+    with pytest.raises(TypeError, match=msg):
+        histogram(cube, bins='auto')
+
+
+def test_histogram_invalid_normalization(cube):
+    """Test `histogram`."""
+    msg = (
+        r"Expected one of \(None, 'sum', 'integral'\) for normalization, got "
+        r"'invalid'"
+    )
+    with pytest.raises(ValueError, match=msg):
+        histogram(cube, normalization='invalid')
 
 
 if __name__ == '__main__':
