@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-import string
 from collections.abc import Iterable
 from functools import partial
 from typing import TYPE_CHECKING, Literal, Optional
@@ -24,6 +23,7 @@ from esmvalcore.preprocessor._other import (
     get_all_coords,
     get_array_module,
     get_weights,
+    histogram,
 )
 
 if TYPE_CHECKING:
@@ -496,25 +496,44 @@ def _calculate_emd(
     n_bins: int = 100,
 ) -> tuple[np.ndarray | da.Array, CubeMetadata]:
     """Calculate Earth mover's distance."""
+    # Get probability mass functions (using histogram preprocessor)
+    all_data = da.stack([cube.core_data(), reference.core_data()])
+    bin_range = dask.compute(all_data.min(), all_data.max())
+    pmf = histogram(
+        cube,
+        coords=coords,
+        bins=n_bins,
+        bin_range=bin_range,
+        normalization='sum',
+    )
+    pmf_ref = histogram(
+        reference,
+        coords=coords,
+        bins=n_bins,
+        bin_range=bin_range,
+        normalization='sum',
+    )
+    bin_centers = pmf.coord(cube.name()).points
+
     # Make sure that data is not chunked along `coords`
-    cube = rechunk_cube(cube, coords)
-    reference = rechunk_cube(reference, coords)
+    pmf = rechunk_cube(pmf, [cube.name()])
+    pmf_ref = rechunk_cube(pmf_ref, [reference.name()])
 
     # Data
-    axes = get_all_coord_dims(cube, coords)
-    (bins, bin_centers) = _get_bins(cube, reference, n_bins)
-
     if cube.has_lazy_data() and reference.has_lazy_data():
-        func = _calculate_emd_lazy  # type: ignore
+        emd = da.apply_gufunc(
+            _get_emd,
+            '(i),(i),(i)->()',
+            pmf.lazy_data(),
+            pmf_ref.lazy_data(),
+            bin_centers,
+            axes=[(-1,), (-1,), (-1,), ()],
+            output_dtypes=pmf.dtype,
+            vectorize=True,
+        )
     else:
-        func = _calculate_emd_eager  # type: ignore
-    emd = func(
-        cube.core_data(),
-        reference.core_data(),
-        bins,
-        bin_centers,
-        along_axes=axes,
-    )
+        v_get_emd = np.vectorize(_get_emd, signature='(n),(n),(n)->()')
+        emd = v_get_emd(pmf.data, pmf_ref.data, bin_centers)
 
     # Metadata
     metadata = CubeMetadata(
@@ -529,119 +548,8 @@ def _calculate_emd(
     return (emd, metadata)
 
 
-def _get_bins(
-    cube: Cube,
-    reference: Cube,
-    n_bins: int,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Get bins for discretization of data."""
-    all_data = da.stack([cube.core_data(), reference.core_data()])
-    (min_, max_) = dask.compute(all_data.min(), all_data.max())
-    small_value = (max_ - min_) * 0.01 / n_bins
-    bins = np.linspace(min_ - small_value, max_ + small_value, n_bins + 1)
-    bin_centers = np.convolve(bins, np.ones(2), 'valid') / 2.0
-    return (bins, bin_centers)
-
-
-def _calculate_emd_lazy(
-    data: da.Array,
-    ref_data: da.Array,
-    bins: np.ndarray,
-    bin_centers: np.ndarray,
-    *,
-    along_axes: tuple[int, ...],
-) -> da.Array:
-    """Calculate Earth mover's distance along axes (lazy version)."""
-    n_axes = len(along_axes)
-
-    # da.apply_gufunc transposes the input array so that the axes given by the
-    # `axes` argument to da.apply_gufunc are the rightmost dimensions. Thus, we
-    # need to use `along_axes=(ndim-n_axes, ..., ndim-2, ndim-1)` for
-    # _calculate_emd_eager here.
-    axes_in_chunk = tuple(range(data.ndim - n_axes,  data.ndim))
-
-    # The call signature depends also on the number of axes in `axes`, and will
-    # be (a,b,...),(a,b,...),(z),(y)->() where a,b,... are the data dimensions
-    # that are collapsed, z is the number of bin edges, and y the number of bin
-    # centers.
-    input_signature = f"({','.join(list(string.ascii_lowercase)[:n_axes])})"
-    signature = f"{input_signature},{input_signature},(z),(y)->()"
-
-    emd = da.apply_gufunc(
-        _calculate_emd_eager,
-        signature,
-        data,
-        ref_data,
-        bins,
-        bin_centers,
-        axes=[along_axes, along_axes, (0,), (0,), ()],
-        output_dtypes=data.dtype,
-        along_axes=axes_in_chunk,
-    )
-
-    return emd
-
-
-def _calculate_emd_eager(
-    data: np.ndarray,
-    ref_data: np.ndarray,
-    bins: np.ndarray,
-    bin_centers: np.ndarray,
-    *,
-    along_axes: tuple[int, ...],
-) -> np.ndarray:
-    """Calculate Earth mover's distance along axes (eager version)."""
-    pmf = _get_pmf(data, along_axes, bins)
-    ref_pmf = _get_pmf(ref_data, along_axes, bins)
-
-    # Get vectorized version of scipy.stats.wasserstein_distance that also
-    # handles masks properly and calculate EMD metric (= First Wasserstein
-    # distance)
-    def calc_emd(arr, ref_arr):
-        if np.ma.is_masked(arr) or np.ma.is_masked(ref_arr):
-            return np.nan
-        return wasserstein_distance(bin_centers, bin_centers, arr, ref_arr)
-
-    v_calc_emd = np.vectorize(calc_emd, signature='(n),(n)->()')
-    emd = v_calc_emd(pmf, ref_pmf)
-
-    return np.ma.masked_invalid(emd)
-
-
-def _get_pmf(
-    data: np.ndarray,
-    axes: tuple[int, ...],
-    bins: np.ndarray,
-) -> np.ndarray:
-    """Get probability mass function (PMF) of data along axes.
-
-    This will return an array of shape `(x1, x2, ..., n_bins)` where `xi` are
-    the dimensions of `data` not appearing in `axes` and `n_bins` is the number
-    of bins.
-
-    """
-    # Create array with shape (x1, x2, ..., y) where `y` is the product of all
-    # dimensions in `axes` and the `xi` are the remaining dimensions
-    remaining_dims = tuple(a for a in range(data.ndim) if a not in axes)
-    reshaped_data = np.transpose(data, axes=(*remaining_dims, *axes))
-    shape_rem_dims = tuple(data.shape[a] for a in remaining_dims)
-    reshaped_data = reshaped_data.reshape(*shape_rem_dims, -1)
-
-    # Apply vectorized version of np.histogram
-    def _get_hist_values(arr):
-        mask = np.ma.getmaskarray(arr)
-        arr = arr[~mask]
-        return np.histogram(arr, bins=bins, range=(bins[0], bins[-1]))[0]
-
-    v_histogram = np.vectorize(_get_hist_values, signature='(n)->(m)')
-    hist = v_histogram(reshaped_data)
-
-    # Mask points where all input data were masked (these are the ones where
-    # the histograms sums to 0) and normalize histrogram by number of samples
-    # that entered the calculation to get PMF
-    norm = hist.sum(axis=-1, keepdims=True)
-    mask = np.isclose(norm, 0.0)
-    mask_broadcast = np.broadcast_to(mask, hist.shape)
-    pmf = np.ma.array(hist, mask=mask_broadcast) / np.ma.array(norm, mask=mask)
-
-    return pmf
+def _get_emd(arr, ref_arr, bin_centers):
+    """Calculate Earth mover's distance (non-lazy)."""
+    if np.ma.is_masked(arr) or np.ma.is_masked(ref_arr):
+        return np.ma.masked  # this is safe because PMFs will be masked arrays
+    return wasserstein_distance(bin_centers, bin_centers, arr, ref_arr)

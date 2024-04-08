@@ -18,10 +18,10 @@ from tests import PreprocessorFile
 def assert_allclose(array_1, array_2):
     """Assert that (masked) array 1 is close to (masked) array 2."""
     if np.ma.is_masked(array_1) or np.ma.is_masked(array_2):
-        np.testing.assert_array_equal(np.ma.getmaskarray(array_1),
-                                      np.ma.getmaskarray(array_2))
-        mask = np.ma.getmaskarray(array_1)
-        np.testing.assert_allclose(array_1[~mask], array_2[~mask])
+        mask_1 = np.ma.getmaskarray(array_1)
+        mask_2 = np.ma.getmaskarray(array_2)
+        np.testing.assert_equal(mask_1, mask_2)
+        np.testing.assert_allclose(array_1[~mask_1], array_2[~mask_2])
     else:
         np.testing.assert_allclose(array_1, array_2)
 
@@ -354,7 +354,7 @@ TEST_DISTANCE_METRICS = [
     ('rmse', 2.34520788, 0.0, 'RMSE', 'rmse_tas', 'K'),
     ('weighted_pearsonr', np.nan, 1.0, "Pearson's r", 'pearsonr_tas', '1'),
     ('pearsonr', 0.57735026, 1.0, "Pearson's r", 'pearsonr_tas', '1'),
-    ('emd', 1.9866472482681274, 0.0, 'EMD', 'emd_tas', 'K'),
+    ('emd', 1.98625, 0.0, 'EMD', 'emd_tas', 'K'),
 ]
 AREA_WEIGHTS = CellMeasure(
     np.array([0.0, 0.0, 2.0, 0.0]).reshape(2, 2),
@@ -467,7 +467,7 @@ TEST_DISTANCE_METRICS_LAZY = [
         '1',
     ),
     ('pearsonr', [np.nan, 0.77459663], "Pearson's r", 'pearsonr_tas', '1'),
-    ('emd', [0.980196, 2.9930985], 'EMD', 'emd_tas', 'K'),
+    ('emd', [0.98, 2.9925], 'EMD', 'emd_tas', 'K'),
 ]
 
 
@@ -655,7 +655,7 @@ def test_distance_metric_fully_masked_data(
         assert not out_cube.has_lazy_data()
     assert out_cube.dtype == np.float64
 
-    expected_data = np.ma.masked_invalid(np.nan)
+    expected_data = np.ma.masked_all(())
     assert_allclose(out_cube.data, expected_data)
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
