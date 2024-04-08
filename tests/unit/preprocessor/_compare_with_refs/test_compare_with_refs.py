@@ -350,11 +350,12 @@ def test_reference_none_cubes(regular_cubes):
 
 
 TEST_DISTANCE_METRICS = [
-    ('weighted_rmse', 2.0, 0.0, 'RMSE', 'rmse_tas', 'K'),
     ('rmse', 2.34520788, 0.0, 'RMSE', 'rmse_tas', 'K'),
-    ('weighted_pearsonr', np.nan, 1.0, "Pearson's r", 'pearsonr_tas', '1'),
+    ('weighted_rmse', 2.0, 0.0, 'RMSE', 'rmse_tas', 'K'),
     ('pearsonr', 0.57735026, 1.0, "Pearson's r", 'pearsonr_tas', '1'),
+    ('weighted_pearsonr', np.nan, 1.0, "Pearson's r", 'pearsonr_tas', '1'),
     ('emd', 1.98625, 0.0, 'EMD', 'emd_tas', 'K'),
+    ('weighted_emd', 0.9975, 0.0, 'EMD', 'emd_tas', 'K'),
 ]
 AREA_WEIGHTS = CellMeasure(
     np.array([0.0, 0.0, 2.0, 0.0]).reshape(2, 2),
@@ -457,8 +458,9 @@ def test_distance_metric(
 
 
 TEST_DISTANCE_METRICS_LAZY = [
-    ('weighted_rmse', [1.2278657, 3.0784798], 'RMSE', 'rmse_tas', 'K'),
     ('rmse', [1.224744871, 3.082207001], 'RMSE', 'rmse_tas', 'K'),
+    ('weighted_rmse', [1.2278657, 3.0784798], 'RMSE', 'rmse_tas', 'K'),
+    ('pearsonr', [np.nan, 0.77459663], "Pearson's r", 'pearsonr_tas', '1'),
     (
         'weighted_pearsonr',
         [np.nan, 0.7745946],
@@ -466,8 +468,8 @@ TEST_DISTANCE_METRICS_LAZY = [
         'pearsonr_tas',
         '1',
     ),
-    ('pearsonr', [np.nan, 0.77459663], "Pearson's r", 'pearsonr_tas', '1'),
     ('emd', [0.98, 2.9925], 'EMD', 'emd_tas', 'K'),
+    ('weighted_emd', [0.9837506, 2.9888833], 'EMD', 'emd_tas', 'K'),
 ]
 
 
@@ -667,11 +669,12 @@ def test_distance_metric_fully_masked_data(
 
 
 TEST_METRICS = [
-    'weighted_rmse',
     'rmse',
-    'weighted_pearsonr',
+    'weighted_rmse',
     'pearsonr',
+    'weighted_pearsonr',
     'emd',
+    'weighted_emd',
 ]
 
 
@@ -713,8 +716,9 @@ def test_invalid_metric(regular_cubes, ref_cubes):
         PreprocessorFile(ref_cubes, 'REF', {'reference_for_metric': True}),
     }
     msg = (
-        r"Expected one of \['weighted_rmse', 'rmse', 'weighted_pearsonr', "
-        r"'pearsonr', 'emd'\] for metric, got 'invalid'"
+        r"Expected one of \['rmse', 'weighted_rmse', 'pearsonr', "
+        r"'weighted_pearsonr', 'emd', 'weighted_emd'\] for metric, got "
+        r"'invalid'"
     )
     with pytest.raises(ValueError, match=msg):
         distance_metric(products, 'invalid')
@@ -771,11 +775,12 @@ def test_distance_metric_non_matching_dims(regular_cubes, metric):
 @pytest.mark.parametrize(
     'metric,error',
     [
-        ('weighted_rmse', True),
         ('rmse', False),
-        ('weighted_pearsonr', True),
+        ('weighted_rmse', True),
         ('pearsonr', False),
+        ('weighted_pearsonr', True),
         ('emd', False),
+        ('weighted_emd', True),
     ]
 )
 def test_distance_metric_no_lon_for_area_weights(regular_cubes, metric, error):

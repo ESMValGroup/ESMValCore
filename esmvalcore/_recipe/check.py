@@ -427,11 +427,12 @@ metric_type = partial(
     step='distance_metric',
     option='metric',
     allowed_values=(
-        'weighted_rmse',
         'rmse',
-        'weighted_pearsonr',
+        'weighted_rmse',
         'pearsonr',
+        'weighted_pearsonr',
         'emd',
+        'weighted_emd',
     ),
 )
 

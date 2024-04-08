@@ -206,11 +206,12 @@ def _calculate_bias(cube: Cube, reference: Cube, bias_type: BiasType) -> Cube:
 
 
 MetricType = Literal[
-    'weighted_rmse',
     'rmse',
-    'weighted_pearsonr',
+    'weighted_rmse',
     'pearsonr',
+    'weighted_pearsonr',
     'emd',
+    'weighted_emd',
 ]
 
 
@@ -246,12 +247,15 @@ def distance_metric(
     metric:
         Distance metric that is calculated. Must be one of
 
-        * ``'weighted_rmse'``: Weighted root mean square error.
-        * ``'rmse'``: Unweighted root mean square error.
-        * ``'weighted_pearsonr'``: Weighted Pearson correlation coefficient.
-        * ``'pearsonr'``: Unweighted Pearson correlation coefficient.
-        * ``'emd'``: Earth mover's distance, also known as first Wasserstein
-          metric `W`\ :sub:`1`.
+        * ``'rmse'``: Unweighted root mean square error
+        * ``'weighted_rmse'``: Weighted root mean square error
+        * ``'pearsonr'``: Unweighted Pearson correlation coefficient
+        * ``'weighted_pearsonr'``: Weighted Pearson correlation coefficient
+        * ``'emd'``: Unweighted Earth mover's distance
+        * ``'weighted_emd'``: Weighted Earth mover's distance
+
+        The Earth mover's distance is also known as first Wasserstein metric
+        `W`\ :sub:`1`.
 
         A detailed description of these metrics can be found :ref:`here
         <list_of_distance_metrics>`.
@@ -285,12 +289,12 @@ def distance_metric(
         Additional options for the metric calculation. The following keyword
         arguments are supported:
 
-        * `weighted_rmse` and `rmse`: none.
-        * `weighted_pearsonr` and `pearsonr`: ``mdtol``, ``common_mask`` (all
+        * `rmse` and `weighted_rmse`: none.
+        * `pearsonr` and `weighted_pearsonr`: ``mdtol``, ``common_mask`` (all
           keyword arguments are passed to :func:`iris.analysis.stats.pearsonr`,
           see that link for more details on these arguments).
-        * `emd`: ``n_bins`` = number of bins used to create discrete
-          probability distribition of data before calculating the EMD
+        * `emd` and `weighted_emd`: ``n_bins`` = number of bins used to create
+          discrete probability distribition of data before calculating the EMD
           (:obj:`int`, default: 100).
 
     Returns
@@ -405,13 +409,14 @@ def _calculate_metric(
     # possible since some operations (e.g., sqrt()) are not available for cubes
     coords = get_all_coords(cube, coords)
     metrics_funcs = {
-        'weighted_rmse': partial(_calculate_rmse, weighted=True, **kwargs),
         'rmse': partial(_calculate_rmse, weighted=False, **kwargs),
+        'weighted_rmse': partial(_calculate_rmse, weighted=True, **kwargs),
+        'pearsonr': partial(_calculate_pearsonr, weighted=False, **kwargs),
         'weighted_pearsonr': partial(
             _calculate_pearsonr, weighted=True, **kwargs
         ),
-        'pearsonr': partial(_calculate_pearsonr, weighted=False, **kwargs),
-        'emd': partial(_calculate_emd, **kwargs),
+        'emd': partial(_calculate_emd, weighted=False, **kwargs),
+        'weighted_emd': partial(_calculate_emd, weighted=True, **kwargs),
     }
     if metric not in metrics_funcs:
         raise ValueError(
@@ -494,8 +499,11 @@ def _calculate_emd(
     coords: Iterable[Coord] | Iterable[str],
     *,
     n_bins: int = 100,
+    weighted: bool,
 ) -> tuple[np.ndarray | da.Array, CubeMetadata]:
     """Calculate Earth mover's distance."""
+    weights = get_weights(cube, coords) if weighted else None
+
     # Get probability mass functions (using histogram preprocessor)
     all_data = da.stack([cube.core_data(), reference.core_data()])
     bin_range = dask.compute(all_data.min(), all_data.max())
@@ -504,6 +512,7 @@ def _calculate_emd(
         coords=coords,
         bins=n_bins,
         bin_range=bin_range,
+        weights=weights,
         normalization='sum',
     )
     pmf_ref = histogram(
@@ -511,6 +520,7 @@ def _calculate_emd(
         coords=coords,
         bins=n_bins,
         bin_range=bin_range,
+        weights=weights,
         normalization='sum',
     )
     bin_centers = pmf.coord(cube.name()).points

@@ -2541,29 +2541,17 @@ recipe:
 * ``metric`` (:obj:`str`): Distance metric that is calculated.
   Must be one of
 
-  * ``'weighted_rmse'``: `Weighted root mean square error`_.
-
-  .. math::
-
-    WRMSE = \sqrt{\sum_{i=1}^N w_i \left( x_i - r_i \right)^2}
-
   * ``'rmse'``: `Unweighted root mean square error`_.
 
   .. math::
 
     RMSE = \sqrt{\frac{1}{N} \sum_{i=1}^N \left( x_i - r_i \right)^2}
 
-  * ``'weighted_pearsonr'``: `Weighted Pearson correlation coefficient`_.
+  * ``'weighted_rmse'``: `Weighted root mean square error`_.
 
   .. math::
 
-    r = \frac{
-      \sum_{i=1}^N
-      w_i \left( x_i - \bar{x} \right) \left( r_i - \bar{r} \right)
-    }{
-      \sqrt{\sum_{i=1}^N w_i \left( x_i - \bar{x} \right)^2}
-      \sqrt{\sum_{i=1}^N w_i \left( r_i - \bar{r} \right)^2}
-    }
+    WRMSE = \sqrt{\sum_{i=1}^N w_i \left( x_i - r_i \right)^2}
 
   * ``'pearsonr'``: `Unweighted Pearson correlation coefficient`_.
 
@@ -2577,11 +2565,23 @@ recipe:
       \sqrt{\sum_{i=1}^N \left( r_i - \bar{r} \right)^2}
     }
 
-  * ``'emd'``: `Earth mover's distance`_, also known as first Wasserstein
-    metric `W`\ :sub:`1`.
-    The Wasserstein metric measures distances between two probability
-    distributions.
-    Here, we first create discrete probability distributions of the input data
+  * ``'weighted_pearsonr'``: `Weighted Pearson correlation coefficient`_.
+
+  .. math::
+
+    r = \frac{
+      \sum_{i=1}^N
+      w_i \left( x_i - \bar{x} \right) \left( r_i - \bar{r} \right)
+    }{
+      \sqrt{\sum_{i=1}^N w_i \left( x_i - \bar{x} \right)^2}
+      \sqrt{\sum_{i=1}^N w_i \left( r_i - \bar{r} \right)^2}
+    }
+
+
+  * ``'emd'``: `Unweighted Earth mover's distance`_ (EMD).
+    The EMD is also known as first Wasserstein metric `W`\ :sub:`1`, which is a
+    metric that measures distances between two probability distributions.
+    For this, discrete probability distributions of the input data are created
     through binning, which are then used as input for the Wasserstein metric.
     The metric is also known as `Earth mover's distance` since, intuitively, it
     can be seen as the minimum "cost" of turning one pile of earth into another
@@ -2596,6 +2596,12 @@ recipe:
     W_1 = \min_{\gamma \in \mathbb{R}^{n \times n}_{+}} \sum_{i,j}^{n}
     \gamma_{ij} \lvert X_i - R_i \rvert \\
     \textrm{with} ~~ \gamma 1 = p_X(X);~ \gamma^T 1 = p_R(R)
+
+  * ``'weighted_emd'``: `Weighted Earth mover's distance`_.
+    Similar to the unweighted EMD (see above), but here weights are considered
+    when calculating the probability distributions (i.e., instead of 1, each
+    element contributes a given weight in the bin count; see also `weights`
+    argument of :func:`numpy.histogram`).
 
   Here, `x`\ :sub:`i` and `r`\ :sub:`i` are samples of a variable of interest
   and a corresponding reference, respectively (a bar over a variable denotes
@@ -2636,12 +2642,13 @@ recipe:
 * Other parameters are directly used for the metric calculation.
   The following keyword arguments are supported:
 
-  * `weighted_rmse` and `rmse`: none.
-  * `weighted_pearsonr` and `pearsonr`: ``mdtol``, ``common_mask`` (all keyword
+  * `rmse` and `weighted_rmse`: none.
+  * `pearsonr` and `weighted_pearsonr`: ``mdtol``, ``common_mask`` (all keyword
     arguments are passed to :func:`iris.analysis.stats.pearsonr`, see that link
     for more details on these arguments).
-  * `emd`: ``n_bins`` = number of bins used to create discrete probability
-    distribution of data before calculating the EMD (:obj:`int`, default: 100).
+  * `emd` and `weighted_emd`: ``n_bins`` = number of bins used to create
+    discrete probability distribution of data before calculating the EMD
+    (:obj:`int`, default: 100).
 
 Example:
 
@@ -2658,15 +2665,17 @@ Example:
 
 See also :func:`esmvalcore.preprocessor.distance_metric`.
 
-.. _Weighted root mean square error: https://en.wikipedia.org/wiki/
-  Root-mean-square_deviation
 .. _Unweighted root mean square error: https://en.wikipedia.org/wiki/
+  Root-mean-square_deviation
+.. _Weighted root mean square error: https://en.wikipedia.org/wiki/
   Root-mean-square_deviation
 .. _Unweighted Pearson correlation coefficient: https://en.wikipedia.org/
   wiki/Pearson_correlation_coefficient
 .. _Weighted Pearson correlation coefficient: https://en.wikipedia.org/
   wiki/Pearson_correlation_coefficient
-.. _Earth mover's distance: https://pythonot.github.io/
+.. _Unweighted Earth mover's distance: https://pythonot.github.io/
+  quickstart.html#computing-wasserstein-distance
+.. _Weighted Earth mover's distance: https://pythonot.github.io/
   quickstart.html#computing-wasserstein-distance
 
 

@@ -3281,8 +3281,9 @@ def test_invalid_metric(tmp_path, patched_datafinder, session):
             scripts: null
         """)
     msg = (
-        "Expected one of ('weighted_rmse', 'rmse', 'weighted_pearsonr', "
-        "'pearsonr', 'emd') for `metric`, got 'INVALID'"
+        "Expected one of ('rmse', 'weighted_rmse', 'pearsonr', "
+        "'weighted_pearsonr', 'emd', 'weighted_emd') for `metric`, got "
+        "'INVALID'"
     )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
