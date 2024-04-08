@@ -100,7 +100,7 @@ class AllVars(Fix):
                                            calendar='gregorian')
                 if cube.coord('time').units != expected_time_units:
                     continue
-                if cube.coord('time').bounds is None:
+                if not cube.coord('time').has_bounds():
                     continue
 
                 # Only apply fix if there is a year < 1 in the first element

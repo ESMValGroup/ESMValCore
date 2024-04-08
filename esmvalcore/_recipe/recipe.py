@@ -50,7 +50,7 @@ from .from_datasets import datasets_to_recipe
 from .to_datasets import (
     _derive_needed,
     _get_input_datasets,
-    _representative_dataset,
+    _representative_datasets,
 )
 
 logger = logging.getLogger(__name__)
@@ -116,7 +116,7 @@ def _update_target_levels(dataset, datasets, settings):
             del settings['extract_levels']
         else:
             target_ds = _select_dataset(dataset_name, datasets)
-            representative_ds = _representative_dataset(target_ds)
+            representative_ds = _representative_datasets(target_ds)[0]
             check.data_availability(representative_ds)
             settings['extract_levels']['levels'] = get_reference_levels(
                 representative_ds)
@@ -133,8 +133,8 @@ def _update_target_grid(dataset, datasets, settings):
     if dataset.facets['dataset'] == grid:
         del settings['regrid']
     elif any(grid == d.facets['dataset'] for d in datasets):
-        representative_ds = _representative_dataset(
-            _select_dataset(grid, datasets))
+        representative_ds = _representative_datasets(
+            _select_dataset(grid, datasets))[0]
         check.data_availability(representative_ds)
         settings['regrid']['target_grid'] = representative_ds
     else:
@@ -656,6 +656,7 @@ def _update_preproc_functions(settings, dataset, datasets, missing_vars):
     if dataset.facets.get('frequency') == 'fx':
         check.check_for_temporal_preprocs(settings)
     check.statistics_preprocessors(settings)
+    check.regridding_schemes(settings)
     check.bias_type(settings)
 
 

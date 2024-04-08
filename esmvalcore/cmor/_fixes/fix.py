@@ -23,10 +23,10 @@ from esmvalcore.cmor._utils import (
     _get_new_generic_level_coord,
     _get_simplified_calendar,
     _get_single_cube,
-    _is_unstructured_grid,
 )
 from esmvalcore.cmor.fixes import get_time_bounds
 from esmvalcore.cmor.table import get_var_info
+from esmvalcore.iris_helpers import has_unstructured_grid
 
 if TYPE_CHECKING:
     from esmvalcore.cmor.table import CoordinateInfo, VariableInfo
@@ -727,7 +727,7 @@ class GenericFix(Fix):
             return
 
         # Skip guessing bounds for unstructured grids
-        if _is_unstructured_grid(cube) and cube_coord.standard_name in (
+        if has_unstructured_grid(cube) and cube_coord.standard_name in (
                 'latitude', 'longitude'):
             self._debug_msg(
                 cube,
@@ -763,7 +763,7 @@ class GenericFix(Fix):
             return (cube, cube_coord)
         if cube_coord.dtype.kind == 'U':
             return (cube, cube_coord)
-        if _is_unstructured_grid(cube) and cube_coord.standard_name in (
+        if has_unstructured_grid(cube) and cube_coord.standard_name in (
                 'latitude', 'longitude'
         ):
             return (cube, cube_coord)

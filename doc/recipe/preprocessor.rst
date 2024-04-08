@@ -177,12 +177,12 @@ Calculate the global non-weighted root mean square:
     global_mean:
       area_statistics:
         operator: rms
-        weighted: false
+        weights: false
 
 .. warning::
 
   The disabling of weights by specifying the keyword argument ``weights:
-  False`` needs to be used with great care; from a scientific standpoint, we
+  false`` needs to be used with great care; from a scientific standpoint, we
   strongly recommend to **not** use it!
 
 
@@ -307,7 +307,7 @@ Preprocessor                                                   Variable short na
 :ref:`area_statistics<area_statistics>`                        ``areacella``, ``areacello``   cell_area
 :ref:`mask_landsea<land/sea/ice masking>`                      ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
 :ref:`mask_landseaice<ice masking>`                            ``sftgif``                     land_ice_area_fraction
-:ref:`volume_statistics<volume_statistics>`                    ``volcello``                   ocean_volume
+:ref:`volume_statistics<volume_statistics>`                    ``volcello``, ``areacello``    ocean_volume, cell_area
 :ref:`weighting_landsea_fraction<land/sea fraction weighting>` ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
 ============================================================== ============================== =====================================
 
@@ -898,43 +898,27 @@ third party regridding schemes designed for use with :doc:`Iris
 Built-in regridding schemes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The schemes used for the interpolation and extrapolation operations needed by
-the horizontal regridding functionality directly map to their corresponding
-implementations in :mod:`iris`:
-
-* ``linear``: Linear interpolation without extrapolation, i.e., extrapolation
-  points will be masked even if the source data is not a masked array (uses
-  ``Linear(extrapolation_mode='mask')``, see :obj:`iris.analysis.Linear`).
-* ``linear_extrapolate``: Linear interpolation with extrapolation, i.e.,
-  extrapolation points will be calculated by extending the gradient of the
-  closest two points (uses ``Linear(extrapolation_mode='extrapolate')``, see
-  :obj:`iris.analysis.Linear`).
-* ``nearest``: Nearest-neighbour interpolation without extrapolation, i.e.,
-  extrapolation points will be masked even if the source data is not a masked
-  array (uses ``Nearest(extrapolation_mode='mask')``, see
-  :obj:`iris.analysis.Nearest`).
-* ``area_weighted``: Area-weighted regridding (uses ``AreaWeighted()``, see
-  :obj:`iris.analysis.AreaWeighted`).
-* ``unstructured_nearest``: Nearest-neighbour interpolation for unstructured
-  grids (uses ``UnstructuredNearest()``, see
-  :obj:`iris.analysis.UnstructuredNearest`).
+* ``linear``: Bilinear regridding.
+  For source data on a regular grid, uses :obj:`~iris.analysis.Linear` with
+  `extrapolation_mode='mask'`.
+  For source data on an irregular grid, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyLinear`.
+  Source data on an unstructured grid is not supported, yet.
+* ``nearest``: Nearest-neighbor regridding.
+  For source data on a regular grid, uses :obj:`~iris.analysis.Nearest` with
+  `extrapolation_mode='mask'`.
+  For source data on an irregular grid, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyNearest`.
+  For source data on an unstructured grid, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.UnstructuredNearest`.
+* ``area_weighted``: First-order conservative (area-weighted) regridding.
+  For source data on a regular grid, uses :obj:`~iris.analysis.AreaWeighted`.
+  For source data on an irregular grid, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyAreaWeighted`.
+  Source data on an unstructured grid is not supported, yet.
 
 See also :func:`esmvalcore.preprocessor.regrid`
 
-.. note::
-
-   Controlling the extrapolation mode allows us to avoid situations where
-   extrapolating values makes little physical sense (e.g. extrapolating beyond
-   the last data point).
-
-.. note::
-
-   The regridding mechanism is (at the moment) done with fully realized data in
-   memory, so depending on how fine the target grid is, it may use a rather
-   large amount of memory. Empirically target grids of up to ``0.5x0.5``
-   degrees should not produce any memory-related issues, but be advised that
-   for resolutions of ``< 0.5`` degrees the regridding becomes very slow and
-   will use a lot of memory.
 
 .. _generic regridding schemes:
 
@@ -970,6 +954,28 @@ tolerance.
           scheme:
             reference: iris.analysis:AreaWeighted
             mdtol: 0.7
+
+Another example is bilinear regridding with extrapolation.
+This can be achieved with the :class:`iris.analysis.Linear` scheme and the
+``extrapolation_mode`` keyword.
+Extrapolation points will be calculated by extending the gradient of the
+closest two points.
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 2.5x2.5
+          scheme:
+            reference: iris.analysis:Linear
+            extrapolation_mode: extrapolate
+
+.. note::
+
+   Controlling the extrapolation mode allows us to avoid situations where
+   extrapolating values makes little physical sense (e.g. extrapolating beyond
+   the last data point).
 
 The value of the ``reference`` key has two parts that are separated by a
 ``:`` with no surrounding spaces. The first part is an importable Python
@@ -1956,11 +1962,15 @@ along the longitude coordinate.
 Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube. Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
       arguments.
       See :ref:`stat_preprocs` for more details.
 
-See also :func:`esmvalcore.preprocessor.zonal_means`.
+See also :func:`esmvalcore.preprocessor.zonal_statistics`.
 
 
 ``meridional_statistics``
@@ -1973,21 +1983,21 @@ argument:
 Parameters:
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube. Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
       arguments.
       See :ref:`stat_preprocs` for more details.
 
-See also :func:`esmvalcore.preprocessor.meridional_means`.
+See also :func:`esmvalcore.preprocessor.meridional_statistics`.
 
 
 .. _area_statistics:
 
 ``area_statistics``
 -------------------
-
-This function calculates statistics over a region.
-It takes one argument, ``operator``, which is the name of the operation to
-apply.
 
 This function can be used to apply several different operations in the
 horizontal plane: for example, mean, sum, standard deviation, median, variance,
@@ -2006,6 +2016,33 @@ coordinates so the cell areas can be computed internally.
 The required supplementary variable, either ``areacella`` for atmospheric
 variables or ``areacello`` for ocean variables, can be attached to the main
 dataset as described in :ref:`supplementary_variables`.
+
+Parameters:
+    * `operator`: Operation to apply.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube. Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
+
+Examples:
+* Calculate global mean:
+
+  .. code-block:: yaml
+
+    area_statistics:
+      operator: mean
+
+* Subtract global mean from dataset:
+
+  .. code-block:: yaml
+
+    area_statistics:
+      operator: mean
+      normalize: subtract
 
 See also :func:`esmvalcore.preprocessor.area_statistics`.
 
@@ -2094,18 +2131,31 @@ See also :func:`esmvalcore.preprocessor.extract_volume`.
 This function calculates the volume-weighted average across three dimensions,
 but maintains the time dimension.
 
-This function takes the argument: `operator`, which defines the operation to
-apply over the volume.
-At the moment, only `mean` is supported.
 By default, the `mean` operation is weighted by the grid cell volumes.
 
 For weighted statistics, this function requires a cell volume `cell measure`_,
-unless the coordinates of the input data are regular 1D latitude and longitude
-coordinates so the cell volumes can be computed internally.
-The required supplementary variable ``volcello`` can be attached to the main
-dataset as described in :ref:`supplementary_variables`.
+unless it has a cell_area `cell measure`_ or the coordinates of the input data
+are regular 1D latitude and longitude coordinates so the cell volumes can be
+computed internally.
+The required supplementary variable ``volcello``, or ``areacello`` in its
+absence, can be attached to the main dataset as described in
+:ref:`supplementary_variables`.
 
-No depth coordinate is required as this is determined by Iris.
+No depth coordinate is required as this is determined by Iris. However, to
+compute the volume automatically when ``volcello`` is not provided, the depth
+coordinate units should be convertible to meters.
+
+Parameters:
+    * `operator`: Operation to apply.
+      At the moment, only `mean` is supported.
+      See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube. Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
+    * Other parameters are directly passed to the `operator` as keyword
+      arguments.
+      See :ref:`stat_preprocs` for more details.
 
 See also :func:`esmvalcore.preprocessor.volume_statistics`.
 
@@ -2122,6 +2172,10 @@ Takes arguments:
       Possible values for the axis are `x`, `y`, `z`, `t`.
     * `operator`: Operation to apply.
       See :ref:`stat_preprocs` for more details on supported statistics.
+    * `normalize`: If given, do not return the statistics cube itself, but
+      rather, the input cube, normalized with the statistics cube. Can either
+      be `subtract` (statistics cube is subtracted from the input cube) or
+      `divide` (input cube is divided by the statistics cube).
     * Other parameters are directly passed to the `operator` as keyword
       arguments.
       See :ref:`stat_preprocs` for more details.

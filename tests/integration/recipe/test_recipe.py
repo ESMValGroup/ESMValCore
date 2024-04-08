@@ -16,7 +16,7 @@ import esmvalcore
 import esmvalcore._task
 from esmvalcore._recipe.recipe import (
     _get_input_datasets,
-    _representative_dataset,
+    _representative_datasets,
     read_recipe_file,
 )
 from esmvalcore._task import DiagnosticTask
@@ -165,6 +165,80 @@ def get_recipe(tempdir: Path, content: str, session: Session):
     return recipe
 
 
+def test_recipe_missing_scripts(tmp_path, session):
+    content = dedent("""
+        datasets:
+          - dataset: bcc-csm1-1
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                timerange: 1999/2002
+        """)
+    exc_message = ("Missing scripts section in diagnostic 'diagnostic_name'.")
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == exc_message
+
+
+def test_recipe_duplicate_var_script_name(tmp_path, session):
+    content = dedent("""
+        datasets:
+          - dataset: bcc-csm1-1
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                start_year: 1999
+                end_year: 2002
+            scripts:
+              ta:
+                script: tmp_path / 'diagnostic.py'
+        """)
+    exc_message = ("Invalid script name 'ta' encountered in diagnostic "
+                   "'diagnostic_name': scripts cannot have the same "
+                   "name as variables.")
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == exc_message
+
+
+def test_recipe_no_script(tmp_path, session):
+    content = dedent("""
+        datasets:
+          - dataset: bcc-csm1-1
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                start_year: 1999
+                end_year: 2002
+            scripts:
+              script_name:
+                argument: 1
+        """)
+    exc_message = ("No script defined for script 'script_name' in "
+                   "diagnostic 'diagnostic_name'.")
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == exc_message
+
+
 def test_recipe_no_datasets(tmp_path, session):
     content = dedent("""
         diagnostics:
@@ -181,7 +255,56 @@ def test_recipe_no_datasets(tmp_path, session):
         """)
     exc_message = ("You have not specified any dataset "
                    "or additional_dataset groups for variable "
-                   "ta in diagnostic diagnostic_name.")
+                   "'ta' in diagnostic 'diagnostic_name'.")
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == exc_message
+
+
+def test_recipe_duplicated_datasets(tmp_path, session):
+    content = dedent("""
+        datasets:
+          - dataset: bcc-csm1-1
+          - dataset: bcc-csm1-1
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                project: CMIP5
+                mip: Amon
+                exp: historical
+                ensemble: r1i1p1
+                timerange: 1999/2002
+            scripts: null
+        """)
+    exc_message = ("Duplicate dataset\n{'dataset': 'bcc-csm1-1'}\n"
+                   "for variable 'ta' in diagnostic 'diagnostic_name'.")
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == exc_message
+
+
+def test_recipe_var_missing_args(tmp_path, session):
+    content = dedent("""
+        datasets:
+          - dataset: bcc-csm1-1
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                project: CMIP5
+                exp: historical
+                ensemble: r1i1p1
+                timerange: 1999/2002
+            scripts: null
+        """)
+    exc_message = ("Missing keys {'mip'} in\n{'dataset': 'bcc-csm1-1',"
+                   "\n 'ensemble': 'r1i1p1',\n 'exp': 'historical',\n"
+                   " 'project': 'CMIP5',\n 'short_name': 'ta',\n "
+                   "'timerange': '1999/2002'}\nfor variable 'ta' "
+                   "in diagnostic 'diagnostic_name'.")
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == exc_message
@@ -1367,8 +1490,8 @@ def test_alias_generation(tmp_path, patched_datafinder, session):
                   - {dataset: EC-EARTH,  ensemble: r1i1p1}
                   - {dataset: EC-EARTH,  ensemble: r2i1p1}
                   - {dataset: EC-EARTH,  ensemble: r3i1p1, alias: my_alias}
-                  - {dataset: FGOALS-g3, sub_experiment: s1960, ensemble: r1}
-                  - {dataset: FGOALS-g3, sub_experiment: s1961, ensemble: r1}
+                  - {dataset: FGOALS-g3, sub_experiment: s1960, ensemble: r1, institute: CAS}
+                  - {dataset: FGOALS-g3, sub_experiment: s1961, ensemble: r1, institute: CAS}
                   - {project: OBS, dataset: ERA-Interim,  version: 1}
                   - {project: OBS, dataset: ERA-Interim,  version: 2}
                   - {project: CMIP6, activity: CMP, dataset: GF3, ensemble: r1, institute: fake}
@@ -2237,7 +2360,9 @@ def test_representative_dataset_regular_var(patched_datafinder, session):
     }
     dataset = Dataset(**variable)
     dataset.session = session
-    filename = _representative_dataset(dataset).files[0]
+    datasets = _representative_datasets(dataset)
+    assert len(datasets) == 1
+    filename = datasets[0].files[0]
     path = Path(filename)
     assert path.name == 'atm_amip-rad_R2B4_r1i1p1f1_atm_2d_ml_1990_1999.nc'
 
@@ -2261,11 +2386,9 @@ def test_representative_dataset_derived_var(patched_datafinder, session,
     }
     dataset = Dataset(**variable)
     dataset.session = session
-    representative_dataset = _representative_dataset(dataset)
+    representative_datasets = _representative_datasets(dataset)
 
-    expect_required_var = {
-        # Added by get_required
-        'short_name': 'rsdscs',
+    expected_facets = {
         # Already present in variable
         'dataset': 'ICON',
         'derive': True,
@@ -2276,22 +2399,40 @@ def test_representative_dataset_derived_var(patched_datafinder, session,
         'project': 'ICON',
         'timerange': '1990/2000',
         # Added by _add_cmor_info
-        'long_name': 'Surface Downwelling Clear-Sky Shortwave Radiation',
         'modeling_realm': ['atmos'],
-        'original_short_name': 'rsdscs',
-        'standard_name':
-        'surface_downwelling_shortwave_flux_in_air_assuming_clear_sky',
         'units': 'W m-2',
         # Added by _add_extra_facets
         'var_type': 'atm_2d_ml',
     }
     if force_derivation:
-        expected_dataset = Dataset(**expect_required_var)
-        expected_dataset.session = session
+        expected_datasets = [
+            Dataset(
+                short_name='rsdscs',
+                long_name='Surface Downwelling Clear-Sky Shortwave Radiation',
+                original_short_name='rsdscs',
+                standard_name=(
+                    'surface_downwelling_shortwave_flux_in_air_assuming_clear_'
+                    'sky'
+                ),
+                **expected_facets,
+            ),
+            Dataset(
+                short_name='rsuscs',
+                long_name='Surface Upwelling Clear-Sky Shortwave Radiation',
+                original_short_name='rsuscs',
+                standard_name=(
+                    'surface_upwelling_shortwave_flux_in_air_assuming_clear_'
+                    'sky'
+                ),
+                **expected_facets,
+            ),
+        ]
     else:
-        expected_dataset = dataset
+        expected_datasets = [dataset]
+    for dataset in expected_datasets:
+        dataset.session = session
 
-    assert representative_dataset == expected_dataset
+    assert representative_datasets == expected_datasets
 
 
 def test_get_derive_input_variables(patched_datafinder, session):
@@ -2874,3 +3015,172 @@ def test_inlvaid_bias_type(tmp_path, patched_datafinder, session):
         get_recipe(tmp_path, content, session)
     assert str(exc.value) == INITIALIZATION_ERROR_MSG
     assert exc.value.failed_tasks[0].message == msg
+
+
+def test_invalid_builtin_regridding_scheme(
+        tmp_path, patched_datafinder, session
+):
+    content = dedent("""
+        preprocessors:
+          test:
+            regrid:
+              scheme: INVALID
+              target_grid: 2x2
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - {project: CMIP5, dataset: CanESM2, exp: amip,
+                     ensemble: r1i1p1}
+            scripts: null
+        """)
+    msg = (
+        "Got invalid built-in regridding scheme 'INVALID', expected one of "
+    )
+    with pytest.raises(RecipeError) as rec_err_exp:
+        get_recipe(tmp_path, content, session)
+    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
+    assert msg in str(rec_err_exp.value.failed_tasks[0].message)
+
+
+def test_generic_regridding_scheme_no_ref(
+        tmp_path, patched_datafinder, session
+):
+    content = dedent("""
+        preprocessors:
+          test:
+            regrid:
+              scheme:
+                no_reference: given
+              target_grid: 2x2
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - {project: CMIP5, dataset: CanESM2, exp: amip,
+                     ensemble: r1i1p1}
+            scripts: null
+        """)
+    msg = (
+        "Failed to load generic regridding scheme: No reference specified for "
+        "generic regridding. See "
+    )
+    with pytest.raises(RecipeError) as rec_err_exp:
+        get_recipe(tmp_path, content, session)
+    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
+    assert msg in str(rec_err_exp.value.failed_tasks[0].message)
+
+
+def test_invalid_generic_regridding_scheme(
+        tmp_path, patched_datafinder, session
+):
+    content = dedent("""
+        preprocessors:
+          test:
+            regrid:
+              scheme:
+                reference: invalid.module:and.function
+              target_grid: 2x2
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - {project: CMIP5, dataset: CanESM2, exp: amip,
+                     ensemble: r1i1p1}
+            scripts: null
+        """)
+    msg = (
+        "Failed to load generic regridding scheme: Could not import specified "
+        "generic regridding module 'invalid.module'. Please double check "
+        "spelling and that the required module is installed. "
+    )
+    with pytest.raises(RecipeError) as rec_err_exp:
+        get_recipe(tmp_path, content, session)
+    assert str(rec_err_exp.value) == INITIALIZATION_ERROR_MSG
+    assert msg in str(rec_err_exp.value.failed_tasks[0].message)
+
+
+def test_deprecated_linear_extrapolate_scheme(
+    tmp_path, patched_datafinder, session
+):
+    content = dedent("""
+        preprocessors:
+          test:
+            regrid:
+              scheme: linear_extrapolate
+              target_grid: 2x2
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - {project: CMIP5, dataset: CanESM2, exp: amip,
+                     ensemble: r1i1p1}
+            scripts: null
+        """)
+    get_recipe(tmp_path, content, session)
+
+
+def test_deprecated_unstructured_nearest_scheme(
+    tmp_path, patched_datafinder, session
+):
+    content = dedent("""
+        preprocessors:
+          test:
+            regrid:
+              scheme: unstructured_nearest
+              target_grid: 2x2
+        diagnostics:
+          diagnostic_name:
+            variables:
+              tas:
+                mip: Amon
+                preprocessor: test
+                timerange: '2000/2010'
+                additional_datasets:
+                  - {project: CMIP5, dataset: CanESM2, exp: amip,
+                     ensemble: r1i1p1}
+            scripts: null
+        """)
+    get_recipe(tmp_path, content, session)
+
+
+def test_wildcard_derived_var(
+    tmp_path, patched_failing_datafinder, session
+):
+    content = dedent("""
+        diagnostics:
+          diagnostic_name:
+            variables:
+              swcre:
+                mip: Amon
+                derive: true
+                force_derivation: true
+                timerange: '2000/2010'
+                additional_datasets:
+                  - {project: CMIP5, dataset: '*', institute: '*', exp: amip,
+                     ensemble: r1i1p1}
+            scripts: null
+        """)
+    recipe = get_recipe(tmp_path, content, session)
+
+    assert len(recipe.datasets) == 1
+    dataset = recipe.datasets[0]
+    assert dataset.facets['dataset'] == 'BBB'
+    assert dataset.facets['institute'] == 'B'
+    assert dataset.facets['short_name'] == 'swcre'

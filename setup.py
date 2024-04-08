@@ -47,7 +47,7 @@ REQUIREMENTS = {
         'netCDF4',
         'numpy!=1.24.3',
         'packaging',
-        'pandas!=2.2.0',  # github.com/ESMValGroup/ESMValCore/pull/2305
+        'pandas!=2.2.0,!=2.2.1',  # GH ESMValCore #2305 #2349
         'pillow',
         'prov',
         'psutil',
@@ -71,7 +71,7 @@ REQUIREMENTS = {
         'pytest-env',
         'pytest-html!=2.1.0',
         'pytest-metadata>=1.5.1',
-        'pytest-mypy',
+        'pytest-mypy>=0.10.3',  # gh issue/2314
         'pytest-mock',
         'pytest-xdist',
         'ESMValTool_sample_data==0.0.3',
