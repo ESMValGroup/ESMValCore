@@ -1,8 +1,6 @@
 """Integration tests for :func:`esmvalcore.preprocessor._io.concatenate`."""
 
 import unittest
-import warnings
-from unittest.mock import call
 
 import numpy as np
 import pytest
@@ -166,114 +164,6 @@ def real_hybrid_pressure_cube():
 def real_hybrid_pressure_cube_list():
     """Return real list of cubes with hybrid pressure coordinate."""
     return get_hybrid_pressure_cube_list()
-
-
-def check_if_fix_aux_factories_is_necessary():
-    """Check if _fix_aux_factories() is necessary (i.e. iris bug is fixed)."""
-    cubes = get_hybrid_pressure_cube_list()
-    cube = cubes.concatenate_cube()
-    coords = [coord.name() for coord in cube.coords()]
-    msg = ("Apparently concatenation of cubes that have a derived variable "
-           "is now possible in iris (i.e. issue #2478 has been fixed). Thus, "
-           "this test and ALL appearances of the function "
-           "'_fix_aux_factories' can safely be removed!")
-    if 'air_pressure' in coords:
-        warnings.warn(msg)
-
-
-def test_fix_aux_factories_empty_cube(mock_empty_cube):
-    """Test fixing with empty cube."""
-    check_if_fix_aux_factories_is_necessary()
-    _io._fix_aux_factories(mock_empty_cube)
-    assert mock_empty_cube.mock_calls == [call.coords()]
-
-
-def test_fix_aux_factories_atmosphere_sigma(mock_atmosphere_sigma_cube):
-    """Test fixing of atmosphere sigma coordinate."""
-    check_if_fix_aux_factories_is_necessary()
-
-    # Test with aux_factory object
-    _io._fix_aux_factories(mock_atmosphere_sigma_cube)
-    mock_atmosphere_sigma_cube.coords.assert_called_once_with()
-    mock_atmosphere_sigma_cube.coord.assert_has_calls(
-        [call(var_name='ptop'),
-         call(var_name='lev'),
-         call(var_name='ps')])
-    mock_atmosphere_sigma_cube.add_aux_factory.assert_not_called()
-
-    # Test without aux_factory object
-    mock_atmosphere_sigma_cube.reset_mock()
-    mock_atmosphere_sigma_cube.aux_factories = ['dummy']
-    _io._fix_aux_factories(mock_atmosphere_sigma_cube)
-    mock_atmosphere_sigma_cube.coords.assert_called_once_with()
-    mock_atmosphere_sigma_cube.coord.assert_has_calls(
-        [call(var_name='ptop'),
-         call(var_name='lev'),
-         call(var_name='ps')])
-    mock_atmosphere_sigma_cube.add_aux_factory.assert_called_once()
-
-
-def test_fix_aux_factories_hybrid_height(mock_hybrid_height_cube):
-    """Test fixing of hybrid height coordinate."""
-    check_if_fix_aux_factories_is_necessary()
-
-    # Test with aux_factory object
-    _io._fix_aux_factories(mock_hybrid_height_cube)
-    mock_hybrid_height_cube.coords.assert_called_once_with()
-    mock_hybrid_height_cube.coord.assert_has_calls(
-        [call(var_name='lev'),
-         call(var_name='b'),
-         call(var_name='orog')])
-    mock_hybrid_height_cube.add_aux_factory.assert_not_called()
-
-    # Test without aux_factory object
-    mock_hybrid_height_cube.reset_mock()
-    mock_hybrid_height_cube.aux_factories = ['dummy']
-    _io._fix_aux_factories(mock_hybrid_height_cube)
-    mock_hybrid_height_cube.coords.assert_called_once_with()
-    mock_hybrid_height_cube.coord.assert_has_calls(
-        [call(var_name='lev'),
-         call(var_name='b'),
-         call(var_name='orog')])
-    mock_hybrid_height_cube.add_aux_factory.assert_called_once()
-
-
-def test_fix_aux_factories_hybrid_pressure(mock_hybrid_pressure_cube):
-    """Test fixing of hybrid pressure coordinate."""
-    check_if_fix_aux_factories_is_necessary()
-
-    # Test with aux_factory object
-    _io._fix_aux_factories(mock_hybrid_pressure_cube)
-    mock_hybrid_pressure_cube.coords.assert_called_once_with()
-    mock_hybrid_pressure_cube.coord.assert_has_calls(
-        [call(var_name='ap'),
-         call(var_name='b'),
-         call(var_name='ps')])
-    mock_hybrid_pressure_cube.add_aux_factory.assert_not_called()
-
-    # Test without aux_factory object
-    mock_hybrid_pressure_cube.reset_mock()
-    mock_hybrid_pressure_cube.aux_factories = ['dummy']
-    _io._fix_aux_factories(mock_hybrid_pressure_cube)
-    mock_hybrid_pressure_cube.coords.assert_called_once_with()
-    mock_hybrid_pressure_cube.coord.assert_has_calls(
-        [call(var_name='ap'),
-         call(var_name='b'),
-         call(var_name='ps')])
-    mock_hybrid_pressure_cube.add_aux_factory.assert_called_once()
-
-
-def test_fix_aux_factories_real_cube(real_hybrid_pressure_cube):
-    """Test fixing of hybrid pressure coordinate on real cube."""
-    check_if_fix_aux_factories_is_necessary()
-    assert not real_hybrid_pressure_cube.coords('air_pressure')
-    _io._fix_aux_factories(real_hybrid_pressure_cube)
-    air_pressure_coord = real_hybrid_pressure_cube.coord('air_pressure')
-    expected_coord = AuxCoord([[[[1.0]]]],
-                              bounds=[[[[[-50000., 150002.]]]]],
-                              standard_name='air_pressure',
-                              units='Pa')
-    assert air_pressure_coord == expected_coord
 
 
 def test_concatenation_with_aux_factory(real_hybrid_pressure_cube_list):
