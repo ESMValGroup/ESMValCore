@@ -458,8 +458,7 @@ class ESMValTool():
 
         if 'WARNING' in session.cmor_log.read_text(encoding='utf-8'):
             logger.warning(
-                "At least one of the input files is not (fully) "
-                "CMOR-compatible, see %s for details",
+                "Input data is not (fully) CMOR-compliant, see %s for details",
                 session.cmor_log,
             )
 
