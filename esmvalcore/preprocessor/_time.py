@@ -21,6 +21,7 @@ import iris.util
 import isodate
 import numpy as np
 from cf_units import Unit
+from cftime import datetime as cf_datetime
 from iris.coords import AuxCoord, Coord, DimCoord
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
@@ -1249,7 +1250,12 @@ def timeseries_filter(
     return cube
 
 
-def resample_hours(cube: Cube, interval: int, offset: int = 0) -> Cube:
+def resample_hours(
+    cube: Cube,
+    interval: int,
+    offset: int = 0,
+    interpolate: bool = False,
+) -> Cube:
     """Convert x-hourly data to y-hourly by eliminating extra timesteps.
 
     Convert x-hourly data to y-hourly (y > x) by eliminating the extra
@@ -1298,15 +1304,28 @@ def resample_hours(cube: Cube, interval: int, offset: int = 0) -> Cube:
     if cube_period.total_seconds() / 3600 > interval:
         raise ValueError(f"Data period ({cube_period}) should be lower than "
                          f"the interval ({interval})")
-    hours = [PartialDateTime(hour=h) for h in range(0 + offset, 24, interval)]
     dates = time.units.num2date(time.points)
-    select = np.zeros(len(dates), dtype=bool)
-    for hour in hours:
-        select |= dates == hour
-    cube = _select_timeslice(cube, select)
-    if cube is None:
-        raise ValueError(
-            f"Time coordinate {dates} does not contain {hours} for {cube}")
+
+    # Interpolate input time to requested hours if desired
+    if interpolate:
+        new_dates = sorted([
+            cf_datetime(y, m, d, h, calendar=time.units.calendar)
+            for h in range(0 + offset, 24, interval)
+            for (y, m, d) in {(d.year, d.month, d.day) for d in dates}
+        ])
+        cube = cube.interpolate([('time', new_dates)], iris.analysis.Linear())
+    else:
+        hours = [
+            PartialDateTime(hour=h) for h in range(0 + offset, 24, interval)
+        ]
+        dates = time.units.num2date(time.points)
+        select = np.zeros(len(dates), dtype=bool)
+        for hour in hours:
+            select |= dates == hour
+        cube = _select_timeslice(cube, select)
+        if cube is None:
+            raise ValueError(
+                f"Time coordinate {dates} does not contain {hours} for {cube}")
 
     return cube
 
