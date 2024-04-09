@@ -5,11 +5,7 @@ import unittest
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.aux_factory import (
-    AtmosphereSigmaFactory,
-    HybridHeightFactory,
-    HybridPressureFactory,
-)
+from iris.aux_factory import HybridPressureFactory
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
@@ -60,98 +56,6 @@ def get_time_coord(time_point):
                     var_name='time',
                     standard_name='time',
                     units='days since 6453-2-1')
-
-
-@pytest.fixture
-def mock_empty_cube():
-    """Return mocked cube with irrelevant coordinates."""
-    cube = unittest.mock.create_autospec(Cube, spec_set=True, instance=True)
-    a_coord = AuxCoord(0.0, var_name='a')
-    b_coord = AuxCoord(0.0, var_name='b')
-    cube.coords.return_value = [a_coord, b_coord]
-    return cube
-
-
-@pytest.fixture
-def mock_atmosphere_sigma_cube():
-    """Return mocked cube with atmosphere sigma coordinate."""
-    cube = unittest.mock.create_autospec(Cube, spec_set=True, instance=True)
-    ptop_coord = AuxCoord([1.0], var_name='ptop', units='Pa')
-    lev_coord = AuxCoord([0.0],
-                         bounds=[[-0.5, 1.5]],
-                         var_name='lev',
-                         units='1')
-    ps_coord = AuxCoord([[[100000]]], var_name='ps', units='Pa')
-    cube.coord.side_effect = [
-        ptop_coord, lev_coord, ps_coord, ptop_coord, lev_coord, ps_coord
-    ]
-    cube.coords.return_value = [
-        ptop_coord,
-        lev_coord,
-        ps_coord,
-        AuxCoord(0.0, standard_name='atmosphere_sigma_coordinate'),
-    ]
-    aux_factory = AtmosphereSigmaFactory(
-        pressure_at_top=ptop_coord,
-        sigma=lev_coord,
-        surface_air_pressure=ps_coord,
-    )
-    cube.aux_factories = ['dummy', aux_factory]
-    return cube
-
-
-@pytest.fixture
-def mock_hybrid_height_cube():
-    """Return mocked cube with hybrid height coordinate."""
-    cube = unittest.mock.create_autospec(Cube, spec_set=True, instance=True)
-    lev_coord = AuxCoord([1.0], bounds=[[0.0, 2.0]], var_name='lev', units='m')
-    b_coord = AuxCoord([0.0], bounds=[[-0.5, 1.5]], var_name='b')
-    orog_coord = AuxCoord([[[100000]]], var_name='orog', units='m')
-    cube.coord.side_effect = [
-        lev_coord, b_coord, orog_coord, lev_coord, b_coord, orog_coord
-    ]
-    cube.coords.return_value = [
-        lev_coord,
-        b_coord,
-        orog_coord,
-        AuxCoord(0.0, standard_name='atmosphere_hybrid_height_coordinate'),
-    ]
-    aux_factory = HybridHeightFactory(
-        delta=lev_coord,
-        sigma=b_coord,
-        orography=orog_coord,
-    )
-    cube.aux_factories = ['dummy', aux_factory]
-    return cube
-
-
-@pytest.fixture
-def mock_hybrid_pressure_cube():
-    """Return mocked cube with hybrid pressure coordinate."""
-    cube = unittest.mock.create_autospec(Cube, spec_set=True, instance=True)
-    ap_coord = AuxCoord([1.0], bounds=[[0.0, 2.0]], var_name='ap', units='Pa')
-    b_coord = AuxCoord([0.0],
-                       bounds=[[-0.5, 1.5]],
-                       var_name='b',
-                       units=Unit('1'))
-    ps_coord = AuxCoord([[[100000]]], var_name='ps', units='Pa')
-    cube.coord.side_effect = [
-        ap_coord, b_coord, ps_coord, ap_coord, b_coord, ps_coord
-    ]
-    cube.coords.return_value = [
-        ap_coord,
-        b_coord,
-        ps_coord,
-        AuxCoord(0.0,
-                 standard_name='atmosphere_hybrid_sigma_pressure_coordinate'),
-    ]
-    aux_factory = HybridPressureFactory(
-        delta=ap_coord,
-        sigma=b_coord,
-        surface_air_pressure=ps_coord,
-    )
-    cube.aux_factories = ['dummy', aux_factory]
-    return cube
 
 
 @pytest.fixture
