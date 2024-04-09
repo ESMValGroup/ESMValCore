@@ -304,6 +304,10 @@ class RecipeOutput(Mapping):
         """Read debug log file."""
         return self.session.main_log_debug.read_text(encoding='utf-8')
 
+    def read_cmor_log(self) -> str:
+        """Read CMOR log file."""
+        return self.session.cmor_log.read_text(encoding='utf-8')
+
 
 class OutputFile():
     """Base container for recipe output files.

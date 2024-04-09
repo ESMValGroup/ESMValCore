@@ -291,6 +291,7 @@ class Session(ValidatedConfig):
     relative_run_dir = Path('run')
     relative_main_log = Path('run', 'main_log.txt')
     relative_main_log_debug = Path('run', 'main_log_debug.txt')
+    relative_cmor_log = Path('run', 'cmor_log.txt')
     _relative_fixed_file_dir = Path('preproc', 'fixed_files')
 
     def __init__(self, config: dict, name: str = 'session'):
@@ -346,6 +347,11 @@ class Session(ValidatedConfig):
     def main_log_debug(self):
         """Return main log debug file."""
         return self.session_dir / self.relative_main_log_debug
+
+    @property
+    def cmor_log(self):
+        """Return main log file."""
+        return self.session_dir / self.relative_cmor_log
 
     @property
     def _fixed_file_dir(self):

@@ -455,6 +455,14 @@ class ESMValTool():
             process_recipe(recipe_file=recipe, session=session)
 
         self._clean_preproc(session)
+
+        if 'WARNING' in session.cmor_log.read_text(encoding='utf-8'):
+            logger.warning(
+                "At least one of the input files is not (fully) "
+                "CMOR-compatible, see %s for details",
+                session.cmor_log,
+            )
+
         logger.info("Run was successful")
 
     @staticmethod
