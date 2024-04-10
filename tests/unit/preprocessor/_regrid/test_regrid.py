@@ -47,8 +47,7 @@ class Test(tests.Test):
         self.remove_coord = mock.Mock()
         self.regridded_cube = mock.Mock()
         self.regridded_cube.data = mock.sentinel.data
-        self.regridded_cube_data = mock.Mock()
-        self.regridded_cube.core_data.return_value = self.regridded_cube_data
+        self.regridded_cube.astype.return_value = self.regridded_cube
         self.regrid = mock.Mock(return_value=self.regridded_cube)
         self.src_cube = mock.Mock(
             spec=iris.cube.Cube,

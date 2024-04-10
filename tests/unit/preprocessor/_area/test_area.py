@@ -639,7 +639,7 @@ def test_area_statistics_sum_unstructured_grid_fail():
 def make_testcube():
     """Create a test cube on a Cartesian grid."""
     coord_sys = iris.coord_systems.GeogCS(EARTH_RADIUS)
-    data = np.ones((5, 5))
+    data = np.ones((5, 5), dtype=np.float32)
     lons = iris.coords.DimCoord(
         [i + .5 for i in range(5)],
         standard_name='longitude',
