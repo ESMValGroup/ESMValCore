@@ -41,7 +41,7 @@ handlers:
     mode: w
   cmor_log:  # only contains output from CMOR check and generic fixes
     class: logging.FileHandler
-    level: DEBUG
+    level: INFO
     formatter: brief
     filename: cmor_log.txt
     mode: w

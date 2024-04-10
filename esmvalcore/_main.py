@@ -456,7 +456,7 @@ class ESMValTool():
 
         self._clean_preproc(session)
 
-        if 'WARNING' in session.cmor_log.read_text(encoding='utf-8'):
+        if session.cmor_log.read_text(encoding='utf-8'):
             logger.warning(
                 "Input data is not (fully) CMOR-compliant, see %s for details",
                 session.cmor_log,
