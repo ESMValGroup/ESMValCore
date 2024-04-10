@@ -255,7 +255,7 @@ def adapt_float_dtype(data: DataType, dtype: DTypeLike) -> DataType:
 
 
 def preserve_float_dtype(func: Callable) -> Callable:
-    """Preserve object's float dtype (all other dtypes are left unchanged).
+    """Preserve object's float dtype (all other dtypes are allowed to change).
 
     This can be used as a decorator for preprocessor functions to ensure that
     floating dtypes are preserved. For example, input of type float32 will
