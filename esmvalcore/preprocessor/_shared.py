@@ -9,6 +9,7 @@ import logging
 import re
 import warnings
 from collections.abc import Callable
+from functools import wraps
 from typing import Any, Literal, Optional
 
 import dask.array as da
@@ -264,6 +265,7 @@ def preserve_float_dtype(func: Callable) -> Callable:
 
     """
 
+    @wraps(func)
     def inner(data: DataType, *args: Any, **kwargs: Any) -> DataType:
         dtype = data.dtype
         result = func(data, *args, **kwargs)

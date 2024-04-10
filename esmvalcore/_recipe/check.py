@@ -1,10 +1,10 @@
 """Module with functions to check a recipe."""
 from __future__ import annotations
 
+import inspect
 import logging
 import os
 import subprocess
-from inspect import getfullargspec
 from pprint import pformat
 from shutil import which
 from typing import Any, Iterable
@@ -470,7 +470,11 @@ def _check_regular_stat(step, step_settings):
         return
 
     # Ignore other preprocessor arguments, e.g., 'hours' for hourly_statistics
-    other_args = getfullargspec(preproc_func).args[1:]
+    other_args = [
+        n for (n, p) in inspect.signature(preproc_func).parameters.items() if
+        p.kind == inspect.Parameter.POSITIONAL_ONLY or
+        p.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
+    ][1:]
     operator_kwargs = {
         k: v for (k, v) in step_settings.items() if k not in other_args
     }

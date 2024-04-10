@@ -225,7 +225,7 @@ MULTI_MODEL_FUNCTIONS = {
 def _get_itype(step):
     """Get the input type of a preprocessor function."""
     function = globals()[step]
-    itype = inspect.getfullargspec(function).args[0]
+    itype = list(inspect.signature(function).parameters)[0]
     return itype
 
 
@@ -238,31 +238,50 @@ def check_preprocessor_settings(settings):
                 f"{', '.join(DEFAULT_ORDER)}"
             )
 
-        function = function = globals()[step]
-        argspec = inspect.getfullargspec(function)
-        args = argspec.args[1:]
-        if not (argspec.varargs or argspec.varkw):
-            # Check for invalid arguments
+        function = globals()[step]
+
+        # Note: below, we do not use inspect.getfullargspec since this does not
+        # work with decorated functions. On the other hand, inspect.signature
+        # behaves correctly with properly decorated functions (those that use
+        # functools.wraps).
+        signature = inspect.signature(function)
+        args = [
+            n for (n, p) in signature.parameters.items() if
+            p.kind == inspect.Parameter.POSITIONAL_ONLY or
+            p.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
+        ][1:]
+
+        # Check for invalid arguments (only possible if no *args or **kwargs
+        # allowed)
+        var_kinds = [p.kind for p in signature.parameters.values()]
+        check_args = not any([
+            inspect.Parameter.VAR_POSITIONAL in var_kinds,
+            inspect.Parameter.VAR_KEYWORD in var_kinds,
+        ])
+        if check_args:
             invalid_args = set(settings[step]) - set(args)
             if invalid_args:
                 raise ValueError(
-                    f"Invalid argument(s): {', '.join(invalid_args)} "
+                    f"Invalid argument(s) [{', '.join(invalid_args)}] "
                     f"encountered for preprocessor function {step}. \n"
                     f"Valid arguments are: [{', '.join(args)}]"
                 )
 
         # Check for missing arguments
-        defaults = argspec.defaults
-        end = None if defaults is None else -len(defaults)
+        defaults = [
+            p.default for p in signature.parameters.values()
+            if p.default is not inspect.Parameter.empty
+        ]
+        end = None if not defaults else -len(defaults)
         missing_args = set(args[:end]) - set(settings[step])
         if missing_args:
             raise ValueError(
                 f"Missing required argument(s) {missing_args} for "
                 f"preprocessor function {step}"
             )
+
         # Final sanity check in case the above fails to catch a mistake
         try:
-            signature = inspect.Signature.from_callable(function)
             signature.bind(None, **settings[step])
         except TypeError:
             logger.error(
