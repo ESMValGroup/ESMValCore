@@ -350,7 +350,7 @@ class Session(ValidatedConfig):
 
     @property
     def cmor_log(self):
-        """Return main log file."""
+        """Return CMOR log file."""
         return self.session_dir / self.relative_cmor_log
 
     @property
