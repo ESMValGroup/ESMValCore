@@ -3,6 +3,8 @@ Shared functions for preprocessor.
 
 Utility functions that can be used for multiple preprocessor steps
 """
+from __future__ import annotations
+
 import logging
 import re
 import warnings
@@ -14,8 +16,10 @@ import iris.analysis
 import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube
+from numpy.typing import DTypeLike
 
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+from esmvalcore.typing import DataType
 
 logger = logging.getLogger(__name__)
 
@@ -238,3 +242,32 @@ def get_normalized_cube(
     normalized_cube.units = new_units
 
     return normalized_cube
+
+
+def adapt_float_dtype(data: DataType, dtype: DTypeLike) -> DataType:
+    """Adapt float dtype of data (all other dtypes are left unchanged)."""
+    if np.issubdtype(dtype, np.floating) and data.dtype != dtype:
+        if isinstance(data, Cube):
+            data.data = data.core_data().astype(dtype)
+        else:
+            data = data.astype(dtype)
+    return data
+
+
+def preserve_float_dtype(func: Callable) -> Callable:
+    """Preserve object's float dtype (all other dtypes are left unchanged).
+
+    This can be used as a decorator for preprocessor functions to ensure that
+    floating dtypes are preserved. For example, input of type float32 will
+    always give output of type float32, but input of type int will be allowed
+    to given output with any type.
+
+    """
+
+    def inner(data: DataType, *args: Any, **kwargs: Any) -> DataType:
+        dtype = data.dtype
+        result = func(data, *args, **kwargs)
+        result = adapt_float_dtype(result, dtype)
+        return result
+
+    return inner
