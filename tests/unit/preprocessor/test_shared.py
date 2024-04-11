@@ -225,7 +225,7 @@ def test_preserve_float_dtype(data, dtype):
     """Test `preserve_float_dtype`."""
     input_data = data.copy()
 
-    result = _dummy_func(data, 2.0)
+    result = _dummy_func(input_data, 2.0)
 
     assert input_data.dtype == data.dtype
     assert result.dtype == dtype
