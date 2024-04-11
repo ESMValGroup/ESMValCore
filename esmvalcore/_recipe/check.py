@@ -472,8 +472,10 @@ def _check_regular_stat(step, step_settings):
     # Ignore other preprocessor arguments, e.g., 'hours' for hourly_statistics
     other_args = [
         n for (n, p) in inspect.signature(preproc_func).parameters.items() if
-        p.kind == inspect.Parameter.POSITIONAL_ONLY or
-        p.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
+        p.kind in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+        )
     ][1:]
     operator_kwargs = {
         k: v for (k, v) in step_settings.items() if k not in other_args

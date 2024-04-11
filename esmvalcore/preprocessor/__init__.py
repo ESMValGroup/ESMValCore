@@ -247,8 +247,10 @@ def check_preprocessor_settings(settings):
         signature = inspect.signature(function)
         args = [
             n for (n, p) in signature.parameters.items() if
-            p.kind == inspect.Parameter.POSITIONAL_ONLY or
-            p.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD
+            p.kind in (
+                inspect.Parameter.POSITIONAL_ONLY,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            )
         ][1:]
 
         # Check for invalid arguments (only possible if no *args or **kwargs
