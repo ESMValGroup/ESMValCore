@@ -500,8 +500,7 @@ def _get_target_grid_cube(
     elif isinstance(target_grid, (str, Path)) and os.path.isfile(target_grid):
         target_grid_cube = iris.load_cube(target_grid)
     elif isinstance(target_grid, str):
-        # Generate a target grid from the provided cell-specification,
-        # and cache the resulting stock cube for later use.
+        # Generate a target grid from the provided cell-specification
         target_grid_cube = _global_stock_cube(
             target_grid, lat_offset, lon_offset
         )
@@ -642,7 +641,12 @@ def _load_generic_scheme(scheme: dict):
 _CACHED_REGRIDDERS: dict[tuple, dict] = {}
 
 
-def _get_regridder(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
+def _get_regridder(
+    src_cube: Cube,
+    tgt_cube: Cube,
+    scheme: str | dict,
+    cache_weights: bool,
+):
     """Get regridder to actually perform regridding.
 
     Note
@@ -652,25 +656,33 @@ def _get_regridder(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
     interpolation_and_regridding.html#caching-a-regridder.)
 
     """
-    # Use existing regridder if possible. This first checks the regridding
-    # scheme name and shapes of source and target coordinates, and only if
-    # these match check coordinates themselves (this is much more expensive).
-    coord_key = _get_coord_key(src_cube, tgt_cube)
-    name_shape_key = _get_name_and_shape_key(src_cube, tgt_cube, scheme)
-    if name_shape_key in _CACHED_REGRIDDERS:
-        # We cannot simply do a test for `coord_key in
-        # _CACHED_REGRIDDERS[shape_key]` below since the hash() of a coordinate
-        # is simply its id() (thus, coordinates loaded from two different files
-        # would never be considered equal)
-        for (key, regridder) in _CACHED_REGRIDDERS[name_shape_key].items():
-            if key == coord_key:
-                return regridder
+    # (1) Weights caching enabled
+    if cache_weights:
+        # To search for a matching regridder in the cache, first check the
+        # regridding scheme name and shapes of source and target coordinates.
+        # Only if these match, check coordinates themselves (this is much more
+        # expensive).
+        coord_key = _get_coord_key(src_cube, tgt_cube)
+        name_shape_key = _get_name_and_shape_key(src_cube, tgt_cube, scheme)
+        if name_shape_key in _CACHED_REGRIDDERS:
+            # We cannot simply do a test for `coord_key in
+            # _CACHED_REGRIDDERS[shape_key]` below since the hash() of a
+            # coordinate is simply its id() (thus, coordinates loaded from two
+            # different files would never be considered equal)
+            for (key, regridder) in _CACHED_REGRIDDERS[name_shape_key].items():
+                if key == coord_key:
+                    return regridder
 
-    # If regridder is not cached yet, return a new one and cache it
-    loaded_scheme = _load_scheme(src_cube, scheme)
-    regridder = loaded_scheme.regridder(src_cube, tgt_cube)
-    _CACHED_REGRIDDERS.setdefault(name_shape_key, {})
-    _CACHED_REGRIDDERS[name_shape_key][coord_key] = regridder
+        # Regridder is not in cached -> return a new one and cache it
+        loaded_scheme = _load_scheme(src_cube, scheme)
+        regridder = loaded_scheme.regridder(src_cube, tgt_cube)
+        _CACHED_REGRIDDERS.setdefault(name_shape_key, {})
+        _CACHED_REGRIDDERS[name_shape_key][coord_key] = regridder
+
+    # (2) Weights caching disabled
+    else:
+        loaded_scheme = _load_scheme(src_cube, scheme)
+        regridder = loaded_scheme.regridder(src_cube, tgt_cube)
 
     return regridder
 
@@ -701,6 +713,7 @@ def regrid(
     scheme: str | dict,
     lat_offset: bool = True,
     lon_offset: bool = True,
+    cache_weights: bool = False,
 ) -> Cube:
     """Perform horizontal regridding.
 
@@ -747,6 +760,13 @@ def regrid(
         Offset the grid centers of the longitude coordinate w.r.t. Greenwich
         meridian by half a grid step. This argument is ignored if
         `target_grid` is a cube or file.
+    cache_weights:
+        If ``True``, cache regridding weights for later usage. This can speed
+        up the regridding of different datasets with similar source and target
+        grids massively, but may take up a lot of memory for extremely
+        high-resolution data. This option is ignored for schemes that do not
+        support weights caching. A list of supported schemes is available in
+        the section on :ref:`regridding_schemes`.
 
     Returns
     -------
@@ -816,7 +836,7 @@ def regrid(
     # Load scheme and reuse existing regridder if possible
     if isinstance(scheme, str):
         scheme = scheme.lower()
-    regridder = _get_regridder(cube, target_grid_cube, scheme)
+    regridder = _get_regridder(cube, target_grid_cube, scheme, cache_weights)
 
     # Rechunk and actually perform the regridding
     cube = _rechunk(cube, target_grid_cube)

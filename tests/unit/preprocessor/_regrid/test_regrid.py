@@ -79,22 +79,26 @@ def cube_30x30():
 SCHEMES = ['area_weighted', 'linear', 'nearest']
 
 
+@pytest.mark.parametrize('cache_weights', [True, False])
 @pytest.mark.parametrize('scheme', SCHEMES)
-def test_builtin_regridding(scheme, cube_10x10, cube_30x30):
+def test_builtin_regridding(scheme, cache_weights, cube_10x10, cube_30x30):
     """Test `regrid.`"""
     _cached_regridders = esmvalcore.preprocessor._regrid._CACHED_REGRIDDERS
     assert _cached_regridders == {}
 
-    res = regrid(cube_10x10, cube_30x30, scheme)
+    res = regrid(cube_10x10, cube_30x30, scheme, cache_weights=cache_weights)
 
     assert res.coord('latitude') == cube_30x30.coord('latitude')
     assert res.coord('longitude') == cube_30x30.coord('longitude')
     assert res.dtype == np.float32
     assert np.allclose(res.data, 0.0)
 
-    assert len(_cached_regridders) == 1
-    key = (scheme, (18,), (36,), (30,), (30,))
-    assert key in _cached_regridders
+    if cache_weights:
+        assert len(_cached_regridders) == 1
+        key = (scheme, (18,), (36,), (30,), (30,))
+        assert key in _cached_regridders
+    else:
+        assert not _cached_regridders
 
 
 @pytest.mark.parametrize('scheme', SCHEMES)
@@ -127,7 +131,8 @@ def test_regrid_generic_invalid_reference(cube_10x10, cube_30x30):
         regrid(cube_10x10, cube_30x30, {'reference': 'this.does:not.exist'})
 
 
-def test_regrid_generic_regridding(cube_10x10, cube_30x30):
+@pytest.mark.parametrize('cache_weights', [True, False])
+def test_regrid_generic_regridding(cache_weights, cube_10x10, cube_30x30):
     """Test `regrid.`"""
     _cached_regridders = esmvalcore.preprocessor._regrid._CACHED_REGRIDDERS
     assert _cached_regridders == {}
@@ -139,23 +144,30 @@ def test_regrid_generic_regridding(cube_10x10, cube_30x30):
             'reference': 'iris.analysis:Linear',
             'extrapolation_mode': 'mask',
         },
+        cache_weights=cache_weights,
     )
-    cube_lin = regrid(cube_10x10, cube_30x30, 'linear')
+    cube_lin = regrid(
+        cube_10x10, cube_30x30, 'linear', cache_weights=cache_weights
+    )
     assert cube_gen.dtype == np.float32
     assert cube_lin.dtype == np.float32
     assert cube_gen == cube_lin
 
-    assert len(_cached_regridders) == 2
-    key_1 = (
-        "{'reference': 'iris.analysis:Linear', 'extrapolation_mode': 'mask'}",
-        (18,),
-        (36,),
-        (30,),
-        (30,),
-    )
-    key_2 = ('linear', (18,), (36,), (30,), (30,))
-    assert key_1 in _cached_regridders
-    assert key_2 in _cached_regridders
+    if cache_weights:
+        assert len(_cached_regridders) == 2
+        key_1 = (
+            "{'reference': 'iris.analysis:Linear', 'extrapolation_mode': "
+            "'mask'}",
+            (18,),
+            (36,),
+            (30,),
+            (30,),
+        )
+        key_2 = ('linear', (18,), (36,), (30,), (30,))
+        assert key_1 in _cached_regridders
+        assert key_2 in _cached_regridders
+    else:
+        assert not _cached_regridders
 
 
 @pytest.mark.parametrize(
@@ -360,7 +372,7 @@ def test_regridding_weights_use_cache(scheme, cube_10x10, cube_30x30, mocker):
         esmvalcore.preprocessor._regrid, '_load_scheme', autospec=True
     )
 
-    reg = _get_regridder(cube_10x10, cube_30x30, scheme)
+    reg = _get_regridder(cube_10x10, cube_30x30, scheme, cache_weights=True)
 
     assert reg == mocker.sentinel.regridder
 

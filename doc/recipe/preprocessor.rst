@@ -881,6 +881,8 @@ The arguments are defined below:
   Otherwise, it cuts off at the previous value.
 * ``step_longitude``: Longitude distance between the centers of two neighbouring cells.
 
+.. _regridding_schemes:
+
 Regridding (interpolation, extrapolation) schemes
 -------------------------------------------------
 
@@ -889,10 +891,26 @@ ESMValCore has a number of built-in regridding schemes, which are presented in
 third party regridding schemes designed for use with :doc:`Iris
 <iris:index>`. This is explained in :ref:`generic regridding schemes`.
 
-Whenever possible, regridding weights are cached to reduce run times (see `here
+If desired, regridding weights can be cached to reduce run times (see `here
 <https://scitools-iris.readthedocs.io/en/latest/userguide/interpolation_and_regridding.html#caching-a-regridder>`__
 for technical details on this).
-An overview of regridding schemes that support weights caching is given `here
+This can speed up the regridding of different datasets with similar source and
+target grids massively, but may take up a lot of memory for extremely
+high-resolution data.
+By default, this feature is disabled; to enable it, use the option
+``cache_weights: true`` in the preprocessor definition:
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 0.1x0.1
+          scheme: linear
+          cache_weights: true
+
+Not all regridding schemes support weights caching. An overview of those that
+do is given `here
 <https://scitools-iris.readthedocs.io/en/latest/further_topics/which_regridder_to_use.html#which-regridder-to-use>`__
 and in the docstrings :ref:`here <regridding_schemes>`.
 
