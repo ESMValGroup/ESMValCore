@@ -765,8 +765,9 @@ def regrid(
         up the regridding of different datasets with similar source and target
         grids massively, but may take up a lot of memory for extremely
         high-resolution data. This option is ignored for schemes that do not
-        support weights caching. A list of supported schemes is available in
-        the section on :ref:`regridding_schemes`.
+        support weights caching. More details on this are given in the section
+        on :ref:`caching_regridding_weights`. To clear the cache, use
+        :func:`esmvalcore.preprocessor.regrid.cache_clear`.
 
     Returns
     -------
@@ -843,6 +844,10 @@ def regrid(
     cube = regridder(cube)
 
     return cube
+
+
+regrid.cache_clear = lambda: _CACHED_REGRIDDERS.clear()  # type: ignore
+"""Clear cached regridding weights."""
 
 
 def _rechunk(cube: Cube, target_grid: Cube) -> Cube:

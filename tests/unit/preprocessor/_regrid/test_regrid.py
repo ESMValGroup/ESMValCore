@@ -380,3 +380,13 @@ def test_regridding_weights_use_cache(scheme, cube_10x10, cube_30x30, mocker):
     assert key in _cached_regridders
 
     mock_load_scheme.assert_not_called()
+
+
+def test_clear_regridding_weights_cache():
+    """Test `regrid.cache_clear().`"""
+    _cached_regridders = esmvalcore.preprocessor._regrid._CACHED_REGRIDDERS
+    _cached_regridders['test'] = 'test'
+
+    regrid.cache_clear()
+
+    assert _cached_regridders == {}
