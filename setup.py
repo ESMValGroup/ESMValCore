@@ -45,7 +45,7 @@ REQUIREMENTS = {
         'nc-time-axis',  # needed by iris.plot
         'nested-lookup',
         'netCDF4',
-        'numpy!=1.24.3',
+        # 'numpy!=1.24.3',  # install 2.0.0rc1 from conda-forge/dev
         'packaging',
         'pandas!=2.2.0,!=2.2.1',  # GH ESMValCore #2305 #2349
         'pillow',
