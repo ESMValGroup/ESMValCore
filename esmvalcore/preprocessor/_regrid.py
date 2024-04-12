@@ -846,8 +846,12 @@ def regrid(
     return cube
 
 
-regrid.cache_clear = lambda: _CACHED_REGRIDDERS.clear()  # type: ignore
-"""Clear cached regridding weights."""
+def _cache_clear():
+    """Clear regridding weights cache."""
+    _CACHED_REGRIDDERS.clear()
+
+
+regrid.cache_clear = _cache_clear  # type: ignore
 
 
 def _rechunk(cube: Cube, target_grid: Cube) -> Cube:
