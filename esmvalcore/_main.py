@@ -27,6 +27,7 @@ For further help, please read the documentation at
 http://docs.esmvaltool.org. Have fun!
 """  # noqa: line-too-long pylint: disable=line-too-long
 # pylint: disable=import-outside-toplevel
+from esmvaltool.utils.testing.regression import compare
 import logging
 import os
 import sys
@@ -38,7 +39,6 @@ else:
     from importlib.metadata import entry_points  # type: ignore
 
 import fire
-from esmvaltool.utils.testing.regression import compare
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -435,7 +435,6 @@ class ESMValTool():
             Display more information on differences.
 
         """
-
         reference = Path(reference)
         current = Path(current)
 
