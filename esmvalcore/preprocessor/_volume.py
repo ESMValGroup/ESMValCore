@@ -14,9 +14,8 @@ import iris
 import numpy as np
 from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube
-from iris.exceptions import CoordinateMultiDimError
 
-from ._area import compute_area_weights
+from ._area import _try_adding_calculated_cell_area
 from ._shared import (
     get_iris_aggregator,
     get_normalized_cube,
@@ -105,12 +104,14 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     """Calculate volume from a cube.
 
     This function is used when the 'ocean_volume' cell measure can't be found.
+    The output data will be given in cubic meters (m3).
 
     Note
     ----
-    This only works if the grid cell areas can be calculated (i.e., latitude
-    and longitude are 1D) and if the depth coordinate is 1D or 4D with first
-    dimension 1.
+    It gets the cell_area from the cube if it is available. If not, it
+    calculates it from the grid. This only works if the grid cell areas can
+    be calculated (i.e., latitude and longitude are 1D). The depth coordinate
+    units should be convertible to meters.
 
     Parameters
     ----------
@@ -125,33 +126,50 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     """
     # Load depth field and figure out which dim is which
     depth = cube.coord(axis='z')
-    z_dim = cube.coord_dims(depth)[0]
+    z_dim = cube.coord_dims(depth)
+    depth = depth.copy()
+
+    # Assert z has length > 0
+    if not z_dim:
+        raise ValueError("Cannot compute volume with scalar Z-axis")
+
+    # Guess bounds if missing
+    if not depth.has_bounds():
+        depth.guess_bounds()
+    if depth.core_bounds().shape[-1] != 2:
+        raise ValueError(
+            f"Z axis bounds shape found {depth.core_bounds().shape}. "
+            "Bounds should be 2 in the last dimension to compute the "
+            "thickness.")
+
+    # Convert units to get the thickness in meters
+    try:
+        depth.convert_units('m')
+    except ValueError as err:
+        raise ValueError(
+            f'Cannot compute volume using the Z-axis. {err}') from err
 
     # Calculate Z-direction thickness
     thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
 
-    # Try to calculate grid cell area
-    try:
-        area = da.array(compute_area_weights(cube))
-    except CoordinateMultiDimError:
-        logger.error(
-            "Supplementary variables are needed to calculate grid cell "
-            "areas for irregular grid of cube %s",
-            cube.summary(shorten=True),
-        )
-        raise
+    # Get or calculate the horizontal areas of the cube
+    has_cell_measure = bool(cube.cell_measures('cell_area'))
+    _try_adding_calculated_cell_area(cube)
+    area = cube.cell_measure('cell_area').copy()
+    area_dim = cube.cell_measure_dims(area)
 
-    # Try to calculate grid cell volume as area * thickness
-    if thickness.ndim == 1 and z_dim == 1:
-        grid_volume = area * thickness[None, :, None, None]
-    elif thickness.ndim == 4 and z_dim == 1:
-        grid_volume = area * thickness[:, :]
-    else:
-        raise ValueError(
-            f"Supplementary variables are needed to calculate grid cell "
-            f"volumes for cubes with {thickness.ndim:d}D depth coordinate, "
-            f"got cube {cube.summary(shorten=True)}"
-        )
+    # Ensure cell area is in square meters as the units
+    area.convert_units('m2')
+
+    # Make sure input cube has not been modified
+    if not has_cell_measure:
+        cube.remove_cell_measure('cell_area')
+
+    area_arr = iris.util.broadcast_to_shape(
+        area.core_data(), cube.shape, area_dim)
+    thickness_arr = iris.util.broadcast_to_shape(
+        thickness, cube.shape, z_dim)
+    grid_volume = area_arr * thickness_arr
 
     return grid_volume
 
@@ -180,7 +198,7 @@ def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
 
 
 @register_supplementaries(
-    variables=['volcello'],
+    variables=['volcello', 'areacello'],
     required='prefer_at_least_one',
 )
 def volume_statistics(
@@ -198,10 +216,13 @@ def volume_statistics(
     cube:
         Input cube. The input cube should have a
         :class:`iris.coords.CellMeasure` named ``'ocean_volume'``, unless it
-        has regular 1D latitude and longitude coordinates so the cell volumes
-        can be computed by using :func:`iris.analysis.cartography.area_weights`
-        to compute the cell areas and multiplying those by the cell thickness,
-        computed from the bounds of the vertical coordinate.
+        has a :class:`iris.coords.CellMeasure` named ``'cell_area'`` or
+        regular 1D latitude and longitude coordinates so the cell areas
+        can be computed using :func:`iris.analysis.cartography.area_weights`.
+        The volume will be computed from the area multiplied by the
+        thickness, computed from the bounds of the vertical coordinate.
+        In that case, vertical coordinate units should be convertible to
+        meters.
     operator:
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Currently, only `mean` is
@@ -215,6 +236,11 @@ def volume_statistics(
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
 
+    Note
+    ----
+    This preprocessor has been designed for oceanic variables, but it might
+    be applicable to atmospheric data as well.
+
     Returns
     -------
     iris.cube.Cube
@@ -227,6 +253,20 @@ def volume_statistics(
     # TODO: Add other operations.
     if operator != 'mean':
         raise ValueError(f"Volume operator {operator} not recognised.")
+    # get z, y, x coords
+    z_axis = cube.coord(axis='Z')
+    y_axis = cube.coord(axis='Y')
+    x_axis = cube.coord(axis='X')
+
+    # assert z axis only uses 1 dimension more than x, y axis
+    xy_dims = tuple({*cube.coord_dims(y_axis), *cube.coord_dims(x_axis)})
+    xyz_dims = tuple({*cube.coord_dims(z_axis), *xy_dims})
+    if len(xyz_dims) > len(xy_dims) + 1:
+        raise ValueError(
+            f"X and Y axis coordinates depend on {xy_dims} dimensions, "
+            f"while X, Y, and Z axis depends on {xyz_dims} dimensions. "
+            "This may indicate Z axis depending on other dimension than "
+            "space that could provoke invalid aggregation...")
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     agg_kwargs = update_weights_kwargs(
@@ -237,11 +277,7 @@ def volume_statistics(
         _try_adding_calculated_ocean_volume,
     )
 
-    result = cube.collapsed(
-        [cube.coord(axis='Z'), cube.coord(axis='Y'), cube.coord(axis='X')],
-        agg,
-        **agg_kwargs,
-    )
+    result = cube.collapsed([z_axis, y_axis, x_axis], agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
 
@@ -352,8 +388,11 @@ def axis_statistics(
 
 def _add_axis_stats_weights_coord(cube, coord, coord_dims):
     """Add weights for axis_statistics to cube (in-place)."""
+    weights = np.abs(coord.lazy_bounds()[:, 1] - coord.lazy_bounds()[:, 0])
+    if not cube.has_lazy_data():
+        weights = weights.compute()
     weights_coord = AuxCoord(
-        np.abs(coord.core_bounds()[..., 1] - coord.core_bounds()[..., 0]),
+        weights,
         long_name='_axis_statistics_weights_',
         units=coord.units,
     )
