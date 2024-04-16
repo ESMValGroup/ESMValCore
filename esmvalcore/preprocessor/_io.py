@@ -36,55 +36,6 @@ VARIABLE_KEYS = {
 }
 
 
-def _fix_aux_factories(cube):
-    """Fix :class:`iris.aux_factory.AuxCoordFactory` after concatenation.
-
-    Necessary because of bug in :mod:`iris` (see issue #2478).
-    """
-    coord_names = [coord.name() for coord in cube.coords()]
-
-    # Hybrid sigma pressure coordinate
-    # TODO possibly add support for other hybrid coordinates
-    if 'atmosphere_hybrid_sigma_pressure_coordinate' in coord_names:
-        new_aux_factory = iris.aux_factory.HybridPressureFactory(
-            delta=cube.coord(var_name='ap'),
-            sigma=cube.coord(var_name='b'),
-            surface_air_pressure=cube.coord(var_name='ps'),
-        )
-        for aux_factory in cube.aux_factories:
-            if isinstance(aux_factory, iris.aux_factory.HybridPressureFactory):
-                break
-        else:
-            cube.add_aux_factory(new_aux_factory)
-
-    # Hybrid sigma height coordinate
-    if 'atmosphere_hybrid_height_coordinate' in coord_names:
-        new_aux_factory = iris.aux_factory.HybridHeightFactory(
-            delta=cube.coord(var_name='lev'),
-            sigma=cube.coord(var_name='b'),
-            orography=cube.coord(var_name='orog'),
-        )
-        for aux_factory in cube.aux_factories:
-            if isinstance(aux_factory, iris.aux_factory.HybridHeightFactory):
-                break
-        else:
-            cube.add_aux_factory(new_aux_factory)
-
-    # Atmosphere sigma coordinate
-    if 'atmosphere_sigma_coordinate' in coord_names:
-        new_aux_factory = iris.aux_factory.AtmosphereSigmaFactory(
-            pressure_at_top=cube.coord(var_name='ptop'),
-            sigma=cube.coord(var_name='lev'),
-            surface_air_pressure=cube.coord(var_name='ps'),
-        )
-        for aux_factory in cube.aux_factories:
-            if isinstance(aux_factory,
-                          iris.aux_factory.AtmosphereSigmaFactory):
-                break
-        else:
-            cube.add_aux_factory(new_aux_factory)
-
-
 def _get_attr_from_field_coord(ncfield, coord_name, attr):
     if coord_name is not None:
         attrs = ncfield.cf_group[coord_name].cf_attrs()
@@ -161,7 +112,12 @@ def load(
         'message': "Ignoring netCDF variable '.*' invalid units '.*'",
         'category': UserWarning,
         'module': 'iris',
-    })
+    })  # iris < 3.8
+    ignore_warnings.append({
+        'message': "Ignoring invalid units .* on netCDF variable .*",
+        'category': UserWarning,
+        'module': 'iris',
+    })  # iris >= 3.8
 
     # Filter warnings
     with catch_warnings():
@@ -383,8 +339,6 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
         result = result[0]
     else:
         _get_concatenation_error(result)
-
-    _fix_aux_factories(result)
 
     return result
 
