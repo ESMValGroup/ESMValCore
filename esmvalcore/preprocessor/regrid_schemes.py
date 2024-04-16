@@ -37,6 +37,9 @@ __all__ = [
 class GenericRegridder:
     r"""Generic function regridder.
 
+    Does support lazy regridding if `func` does. Does not support weights
+    caching.
+
     Parameters
     ----------
     src_cube:
