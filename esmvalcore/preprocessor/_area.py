@@ -337,7 +337,7 @@ def _get_area_weights(cube: Cube) -> np.ndarray | da.Array:
         da.array(weights_2d),
         cube.shape,
         lat_lon_dims,
-        chunks=cube.lazy_data().chunksize,
+        chunks=cube.lazy_data().chunks,
     )
     return weights
 
