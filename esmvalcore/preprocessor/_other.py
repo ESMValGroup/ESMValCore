@@ -243,7 +243,7 @@ def histogram(
         Invalid `normalization` or `bin_range` given or `bin_range` is ``None``
         and data is fully masked.
     iris.exceptions.CoordinateNotFoundError
-        ``longitude` is not found in cube if `weights=True`, `latitude` is in
+        `longitude` is not found in cube if `weights=True`, `latitude` is in
         `coords`, and no `cell_area` is given as
         :ref:`supplementary_variables`.
 
