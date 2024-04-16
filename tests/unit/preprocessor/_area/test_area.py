@@ -1456,6 +1456,7 @@ def test_get_area_weights(lazy):
     weights = _get_area_weights(cube)
     if lazy:
         assert isinstance(weights, da.Array)
+        assert weights.chunks == cube.lazy_data().chunks
     else:
         assert isinstance(weights, np.ndarray)
     np.testing.assert_allclose(
