@@ -515,7 +515,10 @@ def test_distance_metric_lazy(
     assert out_cube.shape == (2,)
     assert out_cube.dtype == np.float32
     assert out_cube.has_lazy_data()
-    assert_allclose(out_cube.data, np.array(data, dtype=np.float32))
+    assert_allclose(
+        out_cube.data,
+        np.ma.masked_invalid(np.array(data, dtype=np.float32)),
+    )
     assert out_cube.coord('time') == regular_cubes[0].coord('time')
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name

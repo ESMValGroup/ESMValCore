@@ -292,7 +292,9 @@ def distance_metric(
         * `rmse` and `weighted_rmse`: none.
         * `pearsonr` and `weighted_pearsonr`: ``mdtol``, ``common_mask`` (all
           keyword arguments are passed to :func:`iris.analysis.stats.pearsonr`,
-          see that link for more details on these arguments).
+          see that link for more details on these arguments). Note: in contrast
+          to :func:`~iris.analysis.stats.pearsonr`, ``common_mask=True`` by
+          default).
         * `emd` and `weighted_emd`: ``n_bins`` = number of bins used to create
           discrete probability distribition of data before calculating the EMD
           (:obj:`int`, default: 100).
@@ -471,6 +473,10 @@ def _calculate_pearsonr(
     **kwargs,
 ) -> tuple[np.ndarray | da.Array, CubeMetadata]:
     """Calculate Pearson correlation coefficient."""
+    # Here, we want to use common_mask=True in iris.analysis.stats.pearsonr
+    # (iris' default is common_mask=False)
+    kwargs.setdefault('common_mask', True)
+
     # Data
     weights = get_weights(cube, coords) if weighted else None
     res_cube = iris.analysis.stats.pearsonr(
