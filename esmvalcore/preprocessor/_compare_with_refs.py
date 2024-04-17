@@ -294,7 +294,7 @@ def distance_metric(
           keyword arguments are passed to :func:`iris.analysis.stats.pearsonr`,
           see that link for more details on these arguments). Note: in contrast
           to :func:`~iris.analysis.stats.pearsonr`, ``common_mask=True`` by
-          default).
+          default.
         * `emd` and `weighted_emd`: ``n_bins`` = number of bins used to create
           discrete probability distribition of data before calculating the EMD
           (:obj:`int`, default: 100).
