@@ -895,7 +895,7 @@ Grid types
 In ESMValCore, we distinguish between three grid types (note that these might
 differ from other definitions):
 
-* **Regular grid**: A rectiliner grid with 1D latitude and 1D longitude
+* **Regular grid**: A rectilinear grid with 1D latitude and 1D longitude
   coordinates which are orthogonal to each other.
 * **Irregular grid**: A general curvilinear grid with 2D latitude and 2D
   longitude coordinates with common dimensions.
