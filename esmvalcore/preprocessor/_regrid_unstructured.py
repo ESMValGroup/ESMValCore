@@ -99,6 +99,8 @@ class UnstructuredLinearRegridder:
         tgt_lon = tgt_cube.coord('longitude').copy()
         self.src_coords = [src_lat, src_lon]
         self.tgt_coords = [tgt_lat, tgt_lon]
+        self.tgt_n_lat = tgt_lat.core_points().size
+        self.tgt_n_lon = tgt_lon.core_points().size
 
         # Calculate regridding weights
         # Note: we force numpy arrays here (instead of dask) since resulting
@@ -183,9 +185,6 @@ class UnstructuredLinearRegridder:
                 f"on the same source grid as this regridder"
             )
 
-        # Get regridded data
-        regridded_data = self._get_regridded_data(cube)
-
         # Get coordinates of regridded cube
 
         # (1) New dimensional coordinates are the ones from the source cube
@@ -216,7 +215,8 @@ class UnstructuredLinearRegridder:
             dims = tuple(d if d < udim else d + 1 for d in dims)
             aux_coords_and_dims.append((aux_coord, dims))
 
-        # Create new cube
+        # Create new cube with regridded data
+        regridded_data = self._get_regridded_data(cube)
         regridded_cube = Cube(
             regridded_data,
             dim_coords_and_dims=dim_coords_and_dims,
@@ -238,26 +238,18 @@ class UnstructuredLinearRegridder:
         npx = da if cube.has_lazy_data() else np
         src_data = npx.ma.filled(cube.core_data(), np.nan)
 
-        shape = [s for (d, s) in enumerate(cube.shape) if d != udim]
-        shape.insert(udim, self.tgt_coords[0].core_points().size)
-        shape.insert(udim + 1, self.tgt_coords[1].core_points().size)
-        new_shape = tuple(shape)
-
         # Perform actual regridding and assign correct mask
         regridded_data: np.ndarray | da.Array
         if cube.has_lazy_data():
             regridded_data = self._regrid_lazy(
                 src_data, udim, self.weights.dtype
             )
-            # TODO: add limit='128 MiB' to reshape once dask bug is solved
-            # see https://github.com/dask/dask/issues/10603
-            regridded_data = regridded_data.reshape(new_shape)
         else:
             regridded_data = self._regrid_eager(src_data, udim)
-            regridded_data = regridded_data.reshape(new_shape)
         regridded_data = npx.ma.masked_invalid(regridded_data)
 
         # Ensure correct dtype
+        # TODO: preserve ints
         if regridded_data.dtype != cube.dtype:
             regridded_data = regridded_data.astype(cube.dtype)
 
@@ -266,14 +258,15 @@ class UnstructuredLinearRegridder:
     def _regrid_eager(self, data: np.ndarray, axis: int) -> np.ndarray:
         """Eager regridding."""
         v_interpolate = np.vectorize(
-            _interpolate, signature='(i),(j,3),(j,3)->(j)'
+            self._interpolate, signature='(i)->(lat,lon)'
         )
 
         # Make sure that interpolation dimension is rightmost dimension and
         # change it back after regridding
         data = np.moveaxis(data, axis, -1)
-        regridded_arr = v_interpolate(data, self.indices, self.weights)
-        regridded_arr = np.moveaxis(regridded_arr, -1, axis)
+        regridded_arr = v_interpolate(data)
+        regridded_arr = np.moveaxis(regridded_arr, -2, axis)
+        regridded_arr = np.moveaxis(regridded_arr, -1, axis + 1)
 
         return regridded_arr
 
@@ -285,44 +278,33 @@ class UnstructuredLinearRegridder:
     ) -> da.Array:
         """Lazy regridding."""
         regridded_arr = da.apply_gufunc(
-            _interpolate,
-            '(i),(j,3),(j,3)->(j)',
+            self._interpolate,
+            '(i)->(lat,lon)',
             data,
-            self.indices,
-            self.weights,
-            axes=[(axis,), (0, 1), (0, 1), (axis,)],
+            axes=[(axis,), (axis, axis + 1)],
             vectorize=True,
             output_dtypes=dtype,
+            output_sizes={'lat': self.tgt_n_lat, 'lon': self.tgt_n_lon},
         )
         return regridded_arr
 
+    def _interpolate(self, data: np.ndarray) -> np.ndarray:
+        """Interpolate data.
 
-def _interpolate(
-    data: np.ndarray,
-    indices: np.ndarray,
-    weights: np.ndarray,
-) -> np.ndarray:
-    """Interpolate data.
+        Note
+        ----
+        Data to interpolate must be an (N,) array, where N is the number of
+        source grid points. Indices used to index the data ust be an (M, 3)
+        array, where M is the number of target grid points. Interpolation
+        weights must be an (M, 3) array, where M is the number of target grid
+        points. The returned array is of shape (lat, lon), where `lat` is the
+        number of latitudes in the target grid, and `lon` the number of
+        longitudes in the target grid such that lat x lon = M.
 
-    Parameters
-    ----------
-    data: np.ndarray
-        Data to interpolate. Must be an (N,) array, where N is the number of
-        source grid points.
-    indices: np.ndarray
-        Indices used to index the data. Must be an (M, 3) array, where M is the
-        number of target grid points.
-    weights: np.ndarray
-        Interpolation weights. Must be an (M, 3) array, where M is the number
-        of target grid points.
-
-    Returns
-    -------
-    np.ndarray
-        Interpolated data of shape (M,).
-
-    """
-    return np.einsum('nj,nj->n', np.take(data, indices), weights)
+        """
+        arr = np.einsum('nj,nj->n', np.take(data, self.indices), self.weights)
+        arr = arr.reshape(self.tgt_n_lat, self.tgt_n_lon)
+        return arr
 
 
 class UnstructuredLinear:
