@@ -20,6 +20,7 @@ from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 
+from esmvalcore.preprocessor._regrid import broadcast_to_shape
 from esmvalcore.preprocessor._shared import (
     get_iris_aggregator,
     get_normalized_cube,
@@ -297,11 +298,47 @@ def compute_area_weights(cube):
             category=UserWarning,
             module='iris.analysis.cartography',
         )
-        weights = iris.analysis.cartography.area_weights(cube)
+        # TODO: replace the following line with
+        # weights = iris.analysis.cartography.area_weights(
+        #     cube, compute=not cube.has_lazy_data()
+        # )
+        # once https://github.com/SciTools/iris/pull/5658 is available
+        weights = _get_area_weights(cube)
+
         for warning in caught_warnings:
             logger.debug(
                 "%s while computing area weights of the following cube:\n%s",
                 warning.message, cube)
+    return weights
+
+
+def _get_area_weights(cube: Cube) -> np.ndarray | da.Array:
+    """Get area weights.
+
+    For non-lazy data, simply use the according iris function. For lazy data,
+    calculate area weights for a single lat-lon slice and broadcast it to the
+    correct shape.
+
+    Note
+    ----
+    This is a temporary workaround to get lazy area weights. Can be removed
+    once https://github.com/SciTools/iris/pull/5658 is available.
+
+    """
+    if not cube.has_lazy_data():
+        return iris.analysis.cartography.area_weights(cube)
+
+    lat_lon_dims = sorted(
+        tuple(set(cube.coord_dims('latitude') + cube.coord_dims('longitude')))
+    )
+    lat_lon_slice = next(cube.slices(['latitude', 'longitude'], ordered=False))
+    weights_2d = iris.analysis.cartography.area_weights(lat_lon_slice)
+    weights = broadcast_to_shape(
+        da.array(weights_2d),
+        cube.shape,
+        lat_lon_dims,
+        chunks=cube.lazy_data().chunks,
+    )
     return weights
 
 
