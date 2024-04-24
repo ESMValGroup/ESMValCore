@@ -2,6 +2,7 @@
 import unittest
 from pathlib import Path
 
+import dask.array as da
 import fiona
 import iris
 import numpy as np
@@ -17,6 +18,7 @@ import esmvalcore.preprocessor
 import tests
 from esmvalcore.preprocessor._area import (
     _crop_cube,
+    _get_area_weights,
     _get_requested_geometries,
     _update_shapefile_path,
     area_statistics,
@@ -1443,6 +1445,23 @@ def test_time_dependent_volcello():
     )
 
     assert cube.shape == cube.cell_measure('ocean_volume').shape
+
+
+@pytest.mark.parametrize('lazy', [True, False])
+def test_get_area_weights(lazy):
+    """Test _get_area_weights."""
+    cube = _create_sample_full_cube()
+    if lazy:
+        cube.data = cube.lazy_data()
+    weights = _get_area_weights(cube)
+    if lazy:
+        assert isinstance(weights, da.Array)
+        assert weights.chunks == cube.lazy_data().chunks
+    else:
+        assert isinstance(weights, np.ndarray)
+    np.testing.assert_allclose(
+        weights, iris.analysis.cartography.area_weights(cube)
+    )
 
 
 if __name__ == '__main__':
