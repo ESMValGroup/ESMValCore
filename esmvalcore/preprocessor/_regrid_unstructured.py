@@ -294,11 +294,11 @@ class UnstructuredLinearRegridder:
         Note
         ----
         Data to interpolate must be an (N,) array, where N is the number of
-        source grid points. Indices used to index the data ust be an (M, 3)
+        source grid points. Indices used to index the data must be an (M, 3)
         array, where M is the number of target grid points. Interpolation
         weights must be an (M, 3) array, where M is the number of target grid
-        points. The returned array is of shape (lat, lon), where `lat` is the
-        number of latitudes in the target grid, and `lon` the number of
+        points. The returned array is of shape (lat, lon), where lat is the
+        number of latitudes in the target grid, and lon the number of
         longitudes in the target grid such that lat x lon = M.
 
         """
