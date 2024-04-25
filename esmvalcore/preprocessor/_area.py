@@ -25,6 +25,7 @@ from esmvalcore.preprocessor._shared import (
     get_iris_aggregator,
     get_normalized_cube,
     guess_bounds,
+    preserve_float_dtype,
     update_weights_kwargs,
 )
 from esmvalcore.preprocessor._supplementary_vars import (
@@ -190,6 +191,7 @@ def _extract_irregular_region(cube, start_longitude, end_longitude,
     return cube
 
 
+@preserve_float_dtype
 def zonal_statistics(
     cube: Cube,
     operator: str,
@@ -236,10 +238,10 @@ def zonal_statistics(
     result = cube.collapsed('longitude', agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
-    result.data = result.core_data().astype(np.float32, casting='same_kind')
     return result
 
 
+@preserve_float_dtype
 def meridional_statistics(
     cube: Cube,
     operator: str,
@@ -285,7 +287,6 @@ def meridional_statistics(
     result = cube.collapsed('latitude', agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
-    result.data = result.core_data().astype(np.float32, casting='same_kind')
     return result
 
 
@@ -404,6 +405,7 @@ def _try_adding_calculated_cell_area(cube: Cube) -> None:
     variables=['areacella', 'areacello'],
     required='prefer_at_least_one',
 )
+@preserve_float_dtype
 def area_statistics(
     cube: Cube,
     operator: str,
@@ -451,7 +453,6 @@ def area_statistics(
         `cell_area` is not available.
 
     """
-    original_dtype = cube.dtype
     has_cell_measure = bool(cube.cell_measures('cell_area'))
 
     # Get aggregator and correct kwargs (incl. weights)
@@ -463,16 +464,6 @@ def area_statistics(
     result = cube.collapsed(['latitude', 'longitude'], agg, **agg_kwargs)
     if normalize is not None:
         result = get_normalized_cube(cube, result, normalize)
-
-    # Make sure to preserve dtype
-    new_dtype = result.dtype
-    if original_dtype != new_dtype:
-        logger.debug(
-            "area_statistics changed dtype from %s to %s, changing back",
-            original_dtype,
-            new_dtype,
-        )
-        result.data = result.core_data().astype(original_dtype)
 
     # Make sure input cube has not been modified
     if not has_cell_measure and cube.cell_measures('cell_area'):
