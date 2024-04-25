@@ -411,3 +411,28 @@ def test_append_missing_supplementaries():
 
     short_names = {f['short_name'] for f in supplementaries}
     assert short_names == {'areacella', 'sftlf'}
+
+
+def test_report_unexpanded_globs(mocker):
+    dataset = Dataset(
+        alias='CMIP5',
+        dataset='*',
+        diagnostic='diagnostic1',
+        ensemble='r1i1p1',
+        exp='historical',
+        mip='Amon',
+        preprocessor='preprocessor1',
+        project='CMIP5',
+        recipe_dataset_index=1,
+        short_name='ta',
+        variable_group='ta850',
+    )
+    file = mocker.Mock(facets={'dataset': '*'})
+    dataset.files = [file]
+    unexpanded_globs = {'dataset': '*'}
+
+    msg = to_datasets._report_unexpanded_globs(
+        dataset, dataset, unexpanded_globs
+    )
+
+    assert 'paths to the' not in msg

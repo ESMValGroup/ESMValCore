@@ -62,7 +62,7 @@ class Tas(Fix):
         """
         cube = self.get_cube_from_list(cubes)
         try:
-            cube.coord('height')
+            cube.coord('height').attributes.pop('description')
         except iris.exceptions.CoordinateNotFoundError:
             add_scalar_height_coord(cube, 2.0)
         return cubes
@@ -74,10 +74,6 @@ class Tasmin(Tas):
 
 class Tasmax(Tas):
     """Fixes for tasmax."""
-
-
-class SfcWind(Tas):
-    """Fixes for sfcWind."""
 
 
 class Hurs(Tas):
@@ -108,6 +104,10 @@ class Uas(Fix):
 
 class Vas(Uas):
     """Fixes for vas."""
+
+
+class SfcWind(Uas):
+    """Fixes for sfcWind."""
 
 
 Omon = BaseOmon

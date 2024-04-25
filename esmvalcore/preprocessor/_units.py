@@ -2,8 +2,11 @@
 
 Allows for unit conversions.
 """
+from __future__ import annotations
+
 import logging
 
+import dask.array as da
 import iris
 import numpy as np
 from cf_units import Unit
@@ -120,7 +123,10 @@ def convert_units(cube, units):
     return cube
 
 
-def accumulate_coordinate(cube, coordinate):
+def accumulate_coordinate(
+    cube: iris.cube.Cube,
+    coordinate: str | iris.coords.DimCoord | iris.coords.AuxCoord
+) -> iris.cube.Cube:
     """Weight data using the bounds from a given coordinate.
 
     The resulting cube will then have units given by
@@ -128,10 +134,10 @@ def accumulate_coordinate(cube, coordinate):
 
     Parameters
     ----------
-    cube : iris.cube.Cube
+    cube:
         Data cube for the flux
 
-    coordinate: str
+    coordinate:
         Name of the coordinate that will be used as weights.
 
     Returns
@@ -158,8 +164,9 @@ def accumulate_coordinate(cube, coordinate):
         raise NotImplementedError(
             f'Multidimensional coordinate {coord} not supported.')
 
+    array_module = da if coord.has_lazy_bounds() else np
     factor = iris.coords.AuxCoord(
-        np.diff(coord.bounds)[..., -1],
+        array_module.diff(coord.core_bounds())[..., -1],
         var_name=coord.var_name,
         long_name=coord.long_name,
         units=coord.units,

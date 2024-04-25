@@ -11,8 +11,9 @@ import ssl
 import warnings
 from copy import deepcopy
 from decimal import Decimal
+from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 import dask.array as da
 import iris
@@ -21,7 +22,6 @@ import stratify
 from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest
 from iris.cube import Cube
-from iris.util import broadcast_to_shape
 
 from esmvalcore.cmor._fixes.shared import (
     add_altitude_from_plev,
@@ -31,6 +31,7 @@ from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import has_irregular_grid, has_unstructured_grid
 from esmvalcore.preprocessor._other import get_array_module
+from esmvalcore.preprocessor._shared import preserve_float_dtype
 from esmvalcore.preprocessor._supplementary_vars import (
     add_ancillary_variable,
     add_cell_measure,
@@ -500,8 +501,7 @@ def _get_target_grid_cube(
     elif isinstance(target_grid, (str, Path)) and os.path.isfile(target_grid):
         target_grid_cube = iris.load_cube(target_grid)
     elif isinstance(target_grid, str):
-        # Generate a target grid from the provided cell-specification,
-        # and cache the resulting stock cube for later use.
+        # Generate a target grid from the provided cell-specification
         target_grid_cube = _global_stock_cube(
             target_grid, lat_offset, lon_offset
         )
@@ -639,12 +639,83 @@ def _load_generic_scheme(scheme: dict):
     return loaded_scheme
 
 
+_CACHED_REGRIDDERS: dict[tuple, dict] = {}
+
+
+def _get_regridder(
+    src_cube: Cube,
+    tgt_cube: Cube,
+    scheme: str | dict,
+    cache_weights: bool,
+):
+    """Get regridder to actually perform regridding.
+
+    Note
+    ----
+    If possible, this uses an existing regridder to reduce runtime (see also
+    https://scitools-iris.readthedocs.io/en/latest/userguide/
+    interpolation_and_regridding.html#caching-a-regridder.)
+
+    """
+    # (1) Weights caching enabled
+    if cache_weights:
+        # To search for a matching regridder in the cache, first check the
+        # regridding scheme name and shapes of source and target coordinates.
+        # Only if these match, check coordinates themselves (this is much more
+        # expensive).
+        coord_key = _get_coord_key(src_cube, tgt_cube)
+        name_shape_key = _get_name_and_shape_key(src_cube, tgt_cube, scheme)
+        if name_shape_key in _CACHED_REGRIDDERS:
+            # We cannot simply do a test for `coord_key in
+            # _CACHED_REGRIDDERS[shape_key]` below since the hash() of a
+            # coordinate is simply its id() (thus, coordinates loaded from two
+            # different files would never be considered equal)
+            for (key, regridder) in _CACHED_REGRIDDERS[name_shape_key].items():
+                if key == coord_key:
+                    return regridder
+
+        # Regridder is not in cached -> return a new one and cache it
+        loaded_scheme = _load_scheme(src_cube, scheme)
+        regridder = loaded_scheme.regridder(src_cube, tgt_cube)
+        _CACHED_REGRIDDERS.setdefault(name_shape_key, {})
+        _CACHED_REGRIDDERS[name_shape_key][coord_key] = regridder
+
+    # (2) Weights caching disabled
+    else:
+        loaded_scheme = _load_scheme(src_cube, scheme)
+        regridder = loaded_scheme.regridder(src_cube, tgt_cube)
+
+    return regridder
+
+
+def _get_coord_key(src_cube: Cube, tgt_cube: Cube) -> tuple:
+    """Get dict key from coordinates."""
+    src_lat = src_cube.coord('latitude')
+    src_lon = src_cube.coord('longitude')
+    tgt_lat = tgt_cube.coord('latitude')
+    tgt_lon = tgt_cube.coord('longitude')
+    return (src_lat, src_lon, tgt_lat, tgt_lon)
+
+
+def _get_name_and_shape_key(
+    src_cube: Cube,
+    tgt_cube: Cube,
+    scheme: str | dict,
+) -> tuple:
+    """Get dict key from scheme name and coordinate shapes."""
+    name = str(scheme)
+    shapes = [c.shape for c in _get_coord_key(src_cube, tgt_cube)]
+    return (name, *shapes)
+
+
+@preserve_float_dtype
 def regrid(
     cube: Cube,
     target_grid: Cube | Dataset | Path | str | dict,
     scheme: str | dict,
     lat_offset: bool = True,
     lon_offset: bool = True,
+    cache_weights: bool = False,
 ) -> Cube:
     """Perform horizontal regridding.
 
@@ -691,6 +762,14 @@ def regrid(
         Offset the grid centers of the longitude coordinate w.r.t. Greenwich
         meridian by half a grid step. This argument is ignored if
         `target_grid` is a cube or file.
+    cache_weights:
+        If ``True``, cache regridding weights for later usage. This can speed
+        up the regridding of different datasets with similar source and target
+        grids massively, but may take up a lot of memory for extremely
+        high-resolution data. This option is ignored for schemes that do not
+        support weights caching. More details on this are given in the section
+        on :ref:`caching_regridding_weights`. To clear the cache, use
+        :func:`esmvalcore.preprocessor.regrid.cache_clear`.
 
     Returns
     -------
@@ -757,14 +836,24 @@ def regrid(
             )
         return cube
 
-    # Load scheme, rechunk and regrid
+    # Load scheme and reuse existing regridder if possible
     if isinstance(scheme, str):
         scheme = scheme.lower()
-    loaded_scheme = _load_scheme(cube, scheme)
+    regridder = _get_regridder(cube, target_grid_cube, scheme, cache_weights)
+
+    # Rechunk and actually perform the regridding
     cube = _rechunk(cube, target_grid_cube)
-    cube = cube.regrid(target_grid_cube, loaded_scheme)
+    cube = regridder(cube)
 
     return cube
+
+
+def _cache_clear():
+    """Clear regridding weights cache."""
+    _CACHED_REGRIDDERS.clear()
+
+
+regrid.cache_clear = _cache_clear  # type: ignore
 
 
 def _rechunk(cube: Cube, target_grid: Cube) -> Cube:
@@ -935,28 +1024,90 @@ def _create_cube(src_cube, data, src_levels, levels):
     return result
 
 
+def is_lazy_masked_data(array):
+    """Similar to `iris._lazy_data.is_lazy_masked_data`."""
+    return isinstance(array, da.Array) and isinstance(
+        da.utils.meta_from_array(array), np.ma.MaskedArray)
+
+
+def broadcast_to_shape(array, shape, dim_map, chunks=None):
+    """Copy of `iris.util.broadcast_to_shape` that allows specifying chunks."""
+    if isinstance(array, da.Array):
+        if chunks is not None:
+            chunks = list(chunks)
+            for src_idx, tgt_idx in enumerate(dim_map):
+                # Only use the specified chunks along new dimensions or on
+                # dimensions that have size 1 in the source array.
+                if array.shape[src_idx] != 1:
+                    chunks[tgt_idx] = array.chunks[src_idx]
+        broadcast = partial(da.broadcast_to, shape=shape, chunks=chunks)
+    else:
+        broadcast = partial(np.broadcast_to, shape=shape)
+
+    n_orig_dims = len(array.shape)
+    n_new_dims = len(shape) - n_orig_dims
+    array = array.reshape(array.shape + (1,) * n_new_dims)
+
+    # Get dims in required order.
+    array = np.moveaxis(array, range(n_orig_dims), dim_map)
+    new_array = broadcast(array)
+
+    if np.ma.isMA(array):
+        # broadcast_to strips masks so we need to handle them explicitly.
+        mask = np.ma.getmask(array)
+        if mask is np.ma.nomask:
+            new_mask = np.ma.nomask
+        else:
+            new_mask = broadcast(mask)
+        new_array = np.ma.array(new_array, mask=new_mask)
+
+    elif is_lazy_masked_data(array):
+        # broadcast_to strips masks so we need to handle them explicitly.
+        mask = da.ma.getmaskarray(array)
+        new_mask = broadcast(mask)
+        new_array = da.ma.masked_array(new_array, new_mask)
+
+    return new_array
+
+
 def _vertical_interpolate(cube, src_levels, levels, interpolation,
                           extrapolation):
     """Perform vertical interpolation."""
     # Determine the source levels and axis for vertical interpolation.
     z_axis, = cube.coord_dims(cube.coord(axis='z', dim_coords=True))
 
-    # Broadcast the 1d source cube vertical coordinate to fully
-    # describe the spatial extent that will be interpolated.
-    src_levels_broadcast = broadcast_to_shape(src_levels.points, cube.shape,
-                                              cube.coord_dims(src_levels))
+    if cube.has_lazy_data():
+        # Make source levels lazy if cube has lazy data.
+        src_points = src_levels.lazy_points()
+    else:
+        src_points = src_levels.core_points()
+
+    # Broadcast the source cube vertical coordinate to fully describe the
+    # spatial extent that will be interpolated.
+    src_levels_broadcast = broadcast_to_shape(
+        src_points,
+        shape=cube.shape,
+        chunks=cube.lazy_data().chunks if cube.has_lazy_data() else None,
+        dim_map=cube.coord_dims(src_levels),
+    )
+
+    # Make the target levels lazy if the input data is lazy.
+    if cube.has_lazy_data() and isinstance(src_points, da.Array):
+        levels = da.asarray(levels)
 
     # force mask onto data as nan's
     npx = get_array_module(cube.core_data())
     data = npx.ma.filled(cube.core_data(), np.nan)
 
-    # Now perform the actual vertical interpolation.
-    new_data = stratify.interpolate(levels,
-                                    src_levels_broadcast,
-                                    data,
-                                    axis=z_axis,
-                                    interpolation=interpolation,
-                                    extrapolation=extrapolation)
+    # Perform vertical interpolation.
+    new_data = stratify.interpolate(
+        levels,
+        src_levels_broadcast,
+        data,
+        axis=z_axis,
+        interpolation=interpolation,
+        extrapolation=extrapolation,
+    )
 
     # Calculate the mask based on the any NaN values in the interpolated data.
     new_data = npx.ma.masked_where(npx.isnan(new_data), new_data)
@@ -1026,42 +1177,75 @@ def parse_vertical_scheme(scheme):
     return scheme, extrap_scheme
 
 
-def extract_levels(cube,
-                   levels,
-                   scheme,
-                   coordinate=None,
-                   rtol=1e-7,
-                   atol=None):
+def _rechunk_aux_factory_dependencies(
+    cube: iris.cube.Cube,
+    coord_name: str,
+) -> iris.cube.Cube:
+    """Rechunk coordinate aux factory dependencies.
+
+    This ensures that the resulting coordinate has reasonably sized
+    chunks that are aligned with the cube data for optimal computational
+    performance.
+    """
+    # Workaround for https://github.com/SciTools/iris/issues/5457
+    try:
+        factory = cube.aux_factory(coord_name)
+    except iris.exceptions.CoordinateNotFoundError:
+        return cube
+
+    cube = cube.copy()
+    cube_chunks = cube.lazy_data().chunks
+    for coord in factory.dependencies.values():
+        coord_dims = cube.coord_dims(coord)
+        if coord_dims is not None:
+            coord = coord.copy()
+            chunks = tuple(cube_chunks[i] for i in coord_dims)
+            coord.points = coord.lazy_points().rechunk(chunks)
+            if coord.has_bounds():
+                coord.bounds = coord.lazy_bounds().rechunk(chunks + (None, ))
+            cube.replace_coord(coord)
+    return cube
+
+
+@preserve_float_dtype
+def extract_levels(
+    cube: iris.cube.Cube,
+    levels: np.typing.ArrayLike | da.Array,
+    scheme: str,
+    coordinate: Optional[str] = None,
+    rtol: float = 1e-7,
+    atol: Optional[float] = None,
+):
     """Perform vertical interpolation.
 
     Parameters
     ----------
-    cube : iris.cube.Cube
+    cube:
         The source cube to be vertically interpolated.
-    levels : ArrayLike
+    levels:
         One or more target levels for the vertical interpolation. Assumed
         to be in the same S.I. units of the source cube vertical dimension
         coordinate. If the requested levels are sufficiently close to the
         levels of the cube, cube slicing will take place instead of
         interpolation.
-    scheme : str
+    scheme:
         The vertical interpolation scheme to use. Choose from
         'linear',
         'nearest',
         'linear_extrapolate',
         'nearest_extrapolate'.
-    coordinate :  optional str
+    coordinate:
         The coordinate to interpolate. If specified, pressure levels
         (if present) can be converted to height levels and vice versa using
         the US standard atmosphere. E.g. 'coordinate = altitude' will convert
         existing pressure levels (air_pressure) to height levels (altitude);
         'coordinate = air_pressure' will convert existing height levels
         (altitude) to pressure levels (air_pressure).
-    rtol : float
+    rtol:
         Relative tolerance for comparing the levels in `cube` to the requested
         levels. If the levels are sufficiently close, the requested levels
         will be assigned to the cube and no interpolation will take place.
-    atol : float
+    atol:
         Absolute tolerance for comparing the levels in `cube` to the requested
         levels. If the levels are sufficiently close, the requested levels
         will be assigned to the cube and no interpolation will take place.
@@ -1081,29 +1265,37 @@ def extract_levels(cube,
     interpolation, extrapolation = parse_vertical_scheme(scheme)
 
     # Ensure we have a non-scalar array of levels.
-    levels = np.array(levels, ndmin=1)
+    if not isinstance(levels, da.Array):
+        levels = np.array(levels, ndmin=1)
 
-    # Get the source cube vertical coordinate, if available.
-    if coordinate:
-        coord_names = [coord.name() for coord in cube.coords()]
-        if coordinate not in coord_names:
-            # Try to calculate air_pressure from altitude coordinate or
-            # vice versa using US standard atmosphere for conversion.
-            if coordinate == 'air_pressure' and 'altitude' in coord_names:
-                # Calculate pressure level coordinate from altitude.
-                add_plev_from_altitude(cube)
-            if coordinate == 'altitude' and 'air_pressure' in coord_names:
-                # Calculate altitude coordinate from pressure levels.
-                add_altitude_from_plev(cube)
-        src_levels = cube.coord(coordinate)
+    # Try to determine the name of the vertical coordinate automatically
+    if coordinate is None:
+        coordinate = cube.coord(axis='z', dim_coords=True).name()
+
+    # Add extra coordinates
+    coord_names = [coord.name() for coord in cube.coords()]
+    if coordinate in coord_names:
+        cube = _rechunk_aux_factory_dependencies(cube, coordinate)
     else:
-        src_levels = cube.coord(axis='z', dim_coords=True)
+        # Try to calculate air_pressure from altitude coordinate or
+        # vice versa using US standard atmosphere for conversion.
+        if coordinate == 'air_pressure' and 'altitude' in coord_names:
+            # Calculate pressure level coordinate from altitude.
+            cube = _rechunk_aux_factory_dependencies(cube, 'altitude')
+            add_plev_from_altitude(cube)
+        if coordinate == 'altitude' and 'air_pressure' in coord_names:
+            # Calculate altitude coordinate from pressure levels.
+            cube = _rechunk_aux_factory_dependencies(cube, 'air_pressure')
+            add_altitude_from_plev(cube)
+
+    src_levels = cube.coord(coordinate)
 
     if (src_levels.shape == levels.shape and np.allclose(
-            src_levels.points,
+            src_levels.core_points(),
             levels,
             rtol=rtol,
-            atol=1e-7 * np.mean(src_levels.points) if atol is None else atol,
+            atol=1e-7 *
+            np.mean(src_levels.core_points()) if atol is None else atol,
     )):
         # Only perform vertical extraction/interpolation if the source
         # and target levels are not "similar" enough.
@@ -1114,7 +1306,9 @@ def extract_levels(cube,
             set(levels).issubset(set(src_levels.points)):
         # If all target levels exist in the source cube, simply extract them.
         name = src_levels.name()
-        coord_values = {name: lambda cell: cell.point in set(levels)}
+        coord_values = {
+            name: lambda cell: cell.point in set(levels)  # type: ignore
+        }
         constraint = iris.Constraint(coord_values=coord_values)
         result = cube.extract(constraint)
         # Ensure the constraint did not fail.
@@ -1204,6 +1398,7 @@ def get_reference_levels(dataset):
     return coord.points.tolist()
 
 
+@preserve_float_dtype
 def extract_coordinate_points(cube, definition, scheme):
     """Extract points from any coordinate with interpolation.
 

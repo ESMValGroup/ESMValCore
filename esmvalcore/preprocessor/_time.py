@@ -32,6 +32,7 @@ from esmvalcore.cmor.fixes import get_next_month, get_time_bounds
 from esmvalcore.iris_helpers import date2num, rechunk_cube
 from esmvalcore.preprocessor._shared import (
     get_iris_aggregator,
+    preserve_float_dtype,
     update_weights_kwargs,
 )
 
@@ -392,8 +393,10 @@ def get_time_weights(cube: Cube) -> np.ndarray | da.core.Array:
 
     Returns
     -------
-    np.ndarray or da.core.Array
-        Array of time weights for averaging.
+    np.ndarray or da.Array
+        Array of time weights for averaging. Returns a
+        :class:`dask.array.Array` if the input cube has lazy data; a
+        :class:`numpy.ndarray` otherwise.
 
     """
     time = cube.coord('time')
@@ -408,7 +411,9 @@ def get_time_weights(cube: Cube) -> np.ndarray | da.core.Array:
         )
 
     # Extract 1D time weights (= lengths of time intervals)
-    time_weights = time.core_bounds()[:, 1] - time.core_bounds()[:, 0]
+    time_weights = time.lazy_bounds()[:, 1] - time.lazy_bounds()[:, 0]
+    if not cube.has_lazy_data():
+        time_weights = time_weights.compute()
     return time_weights
 
 
@@ -442,6 +447,7 @@ def _aggregate_time_fx(result_cube, source_cube):
                                                    ancillary_dims)
 
 
+@preserve_float_dtype
 def hourly_statistics(
     cube: Cube,
     hours: int,
@@ -497,6 +503,7 @@ def hourly_statistics(
     return result
 
 
+@preserve_float_dtype
 def daily_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -537,6 +544,7 @@ def daily_statistics(
     return result
 
 
+@preserve_float_dtype
 def monthly_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -575,6 +583,7 @@ def monthly_statistics(
     return result
 
 
+@preserve_float_dtype
 def seasonal_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -669,6 +678,7 @@ def seasonal_statistics(
     return result
 
 
+@preserve_float_dtype
 def annual_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -710,6 +720,7 @@ def annual_statistics(
     return result
 
 
+@preserve_float_dtype
 def decadal_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -758,6 +769,7 @@ def decadal_statistics(
     return result
 
 
+@preserve_float_dtype
 def climate_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -800,7 +812,6 @@ def climate_statistics(
     iris.cube.Cube
         Climate statistics cube.
     """
-    original_dtype = cube.dtype
     period = period.lower()
 
     # Use Cube.collapsed when full period is requested
@@ -842,14 +853,6 @@ def climate_statistics(
                 clim_cube.slices_over(clim_coord.name())).merge_cube()
         cube.remove_coord(clim_coord)
 
-    # Make sure that original dtype is preserved
-    new_dtype = clim_cube.dtype
-    if original_dtype != new_dtype:
-        logger.debug(
-            "climate_statistics changed dtype from "
-            "%s to %s, changing back", original_dtype, new_dtype)
-        clim_cube.data = clim_cube.core_data().astype(original_dtype)
-
     return clim_cube
 
 
@@ -863,6 +866,7 @@ def _add_time_weights_coord(cube):
     cube.add_aux_coord(time_weights_coord, cube.coord_dims('time'))
 
 
+@preserve_float_dtype
 def anomalies(
     cube: Cube,
     period: str,
@@ -1100,6 +1104,7 @@ def low_pass_weights(window, cutoff):
     return weights[1:-1]
 
 
+@preserve_float_dtype
 def timeseries_filter(
     cube: Cube,
     window: int,
@@ -1229,7 +1234,7 @@ def resample_hours(cube: Cube, interval: int, offset: int = 0) -> Cube:
                          f'the interval ({interval})')
     time = cube.coord('time')
     cube_period = time.cell(1).point - time.cell(0).point
-    if cube_period.total_seconds() / 3600 >= interval:
+    if cube_period.total_seconds() / 3600 > interval:
         raise ValueError(f"Data period ({cube_period}) should be lower than "
                          f"the interval ({interval})")
     hours = [PartialDateTime(hour=h) for h in range(0 + offset, 24, interval)]
@@ -1432,9 +1437,9 @@ def _get_time_index_and_mask(
 
 def _transform_to_lst_eager(
     data: np.ndarray,
-    *,
     time_index: np.ndarray,
     mask: np.ndarray,
+    *,
     time_dim: int,
     lon_dim: int,
     **__,
@@ -1475,9 +1480,9 @@ def _transform_to_lst_eager(
 
 def _transform_to_lst_lazy(
     data: da.core.Array,
-    *,
     time_index: np.ndarray,
     mask: np.ndarray,
+    *,
     time_dim: int,
     lon_dim: int,
     output_dtypes: DTypeLike,
@@ -1501,28 +1506,25 @@ def _transform_to_lst_lazy(
     `mask` is 2D with shape (time, lon) that will be applied to the final data.
 
     """
-    _transform_chunk_to_lst = partial(
+    new_data = da.apply_gufunc(
         _transform_to_lst_eager,
-        time_index=time_index,
-        mask=mask,
+        '(t,x),(t,x),(t,x)->(t,x)',
+        data,
+        time_index,
+        mask,
+        axes=[(time_dim, lon_dim), (0, 1), (0, 1), (time_dim, lon_dim)],
+        output_dtypes=output_dtypes,
         time_dim=-2,  # this is ensured by da.apply_gufunc
         lon_dim=-1,  # this is ensured by da.apply_gufunc
-    )
-    new_data = da.apply_gufunc(
-        _transform_chunk_to_lst,
-        '(t,y)->(t,y)',
-        data,
-        axes=[(time_dim, lon_dim), (time_dim, lon_dim)],
-        output_dtypes=output_dtypes,
     )
     return new_data
 
 
 def _transform_arr_to_lst(
     data: np.ndarray | da.core.Array,
-    *,
     time_index: np.ndarray,
     mask: np.ndarray,
+    *,
     time_dim: int,
     lon_dim: int,
     output_dtypes: DTypeLike,
@@ -1541,8 +1543,8 @@ def _transform_arr_to_lst(
         func = _transform_to_lst_lazy  # type: ignore
     new_data = func(
         data,  # type: ignore
-        time_index=time_index,
-        mask=mask,
+        time_index,
+        mask,
         time_dim=time_dim,
         lon_dim=lon_dim,
         output_dtypes=output_dtypes,
@@ -1567,13 +1569,10 @@ def _transform_cube_to_lst(cube: Cube) -> Cube:
 
     # Transform cube data
     (time_index, mask) = _get_time_index_and_mask(time_coord, lon_coord)
-    _transform_arr = partial(
-        _transform_arr_to_lst,
-        time_index=time_index,
-        mask=mask,
-    )
-    cube.data = _transform_arr(
+    cube.data = _transform_arr_to_lst(
         cube.core_data(),
+        time_index,
+        mask,
         time_dim=time_dim,
         lon_dim=lon_dim,
         output_dtypes=cube.dtype,
@@ -1585,15 +1584,19 @@ def _transform_cube_to_lst(cube: Cube) -> Cube:
         if time_dim in dims and lon_dim in dims:
             time_dim_ = dims.index(time_dim)
             lon_dim_ = dims.index(lon_dim)
-            coord.points = _transform_arr(
+            coord.points = _transform_arr_to_lst(
                 coord.core_points(),
+                time_index,
+                mask,
                 time_dim=time_dim_,
                 lon_dim=lon_dim_,
                 output_dtypes=coord.dtype,
             )
             if coord.has_bounds():
-                coord.bounds = _transform_arr(
+                coord.bounds = _transform_arr_to_lst(
                     coord.core_bounds(),
+                    time_index,
+                    mask,
                     time_dim=time_dim_,
                     lon_dim=lon_dim_,
                     output_dtypes=coord.bounds_dtype,
@@ -1605,8 +1608,10 @@ def _transform_cube_to_lst(cube: Cube) -> Cube:
         if time_dim in dims and lon_dim in dims:
             time_dim_ = dims.index(time_dim)
             lon_dim_ = dims.index(lon_dim)
-            cell_measure.data = _transform_arr(
+            cell_measure.data = _transform_arr_to_lst(
                 cell_measure.core_data(),
+                time_index,
+                mask,
                 time_dim=time_dim_,
                 lon_dim=lon_dim_,
                 output_dtypes=cell_measure.dtype,
@@ -1618,8 +1623,10 @@ def _transform_cube_to_lst(cube: Cube) -> Cube:
         if time_dim in dims and lon_dim in dims:
             time_dim_ = dims.index(time_dim)
             lon_dim_ = dims.index(lon_dim)
-            anc_var.data = _transform_arr(
+            anc_var.data = _transform_arr_to_lst(
                 anc_var.core_data(),
+                time_index,
+                mask,
                 time_dim=time_dim_,
                 lon_dim=lon_dim_,
                 output_dtypes=anc_var.dtype,
@@ -1652,6 +1659,7 @@ def _check_cube_coords(cube):
         )
 
 
+@preserve_float_dtype
 def local_solar_time(cube: Cube) -> Cube:
     """Convert UTC time coordinate to local solar time (LST).
 

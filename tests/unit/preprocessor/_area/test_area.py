@@ -2,6 +2,7 @@
 import unittest
 from pathlib import Path
 
+import dask.array as da
 import fiona
 import iris
 import numpy as np
@@ -17,6 +18,7 @@ import esmvalcore.preprocessor
 import tests
 from esmvalcore.preprocessor._area import (
     _crop_cube,
+    _get_area_weights,
     _get_requested_geometries,
     _update_shapefile_path,
     area_statistics,
@@ -639,7 +641,7 @@ def test_area_statistics_sum_unstructured_grid_fail():
 def make_testcube():
     """Create a test cube on a Cartesian grid."""
     coord_sys = iris.coord_systems.GeogCS(EARTH_RADIUS)
-    data = np.ones((5, 5))
+    data = np.ones((5, 5), dtype=np.float32)
     lons = iris.coords.DimCoord(
         [i + .5 for i in range(5)],
         standard_name='longitude',
@@ -1397,6 +1399,69 @@ def test_meridional_statistics_invalid_norm_fail(make_testcube):
     msg = "Expected 'subtract' or 'divide' for `normalize`"
     with pytest.raises(ValueError, match=msg):
         meridional_statistics(make_testcube, 'sum', normalize='x')
+
+
+def test_time_dependent_volcello():
+    coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+    data = np.ma.ones((2, 3, 2, 2))
+
+    time = iris.coords.DimCoord([15, 45],
+                                standard_name='time',
+                                bounds=[[1., 30.], [30., 60.]],
+                                units=Unit('days since 1950-01-01',
+                                calendar='gregorian'))
+
+    zcoord = iris.coords.DimCoord([0.5, 5., 50.],
+                                  long_name='zcoord',
+                                  bounds=[[0., 2.5], [2.5, 25.],
+                                          [25., 250.]],
+                                  units='m',
+                                  attributes={'positive': 'down'})
+    lons = iris.coords.DimCoord([1.5, 2.5],
+                                standard_name='longitude',
+                                bounds=[[1., 2.], [2., 3.]],
+                                units='degrees_east',
+                                coord_system=coord_sys)
+    lats = iris.coords.DimCoord([1.5, 2.5],
+                                standard_name='latitude',
+                                bounds=[[1., 2.], [2., 3.]],
+                                units='degrees_north',
+                                coord_system=coord_sys)
+    coords_spec4 = [(time, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+    cube = iris.cube.Cube(data, dim_coords_and_dims=coords_spec4)
+    volcello = iris.coords.CellMeasure(
+        data,
+        standard_name='ocean_volume',
+        units='m3',
+        measure='volume')
+    cube.add_cell_measure(volcello, range(0, volcello.ndim))
+    cube = extract_shape(
+        cube,
+        'AR6',
+        method='contains',
+        crop=False,
+        decomposed=True,
+        ids={'Acronym': ['EAO', 'WAF']},
+    )
+
+    assert cube.shape == cube.cell_measure('ocean_volume').shape
+
+
+@pytest.mark.parametrize('lazy', [True, False])
+def test_get_area_weights(lazy):
+    """Test _get_area_weights."""
+    cube = _create_sample_full_cube()
+    if lazy:
+        cube.data = cube.lazy_data()
+    weights = _get_area_weights(cube)
+    if lazy:
+        assert isinstance(weights, da.Array)
+        assert weights.chunks == cube.lazy_data().chunks
+    else:
+        assert isinstance(weights, np.ndarray)
+    np.testing.assert_allclose(
+        weights, iris.analysis.cartography.area_weights(cube)
+    )
 
 
 if __name__ == '__main__':

@@ -113,7 +113,7 @@ class Pr(Fix):
 
             coord = cube.coord(axis=coord_def.axis)
 
-            if coord.bounds is None:
+            if not coord.has_bounds():
                 coord.guess_bounds()
 
     def _fix_names(self, cube):

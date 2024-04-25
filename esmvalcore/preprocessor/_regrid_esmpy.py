@@ -43,6 +43,8 @@ MASK_REGRIDDING_MASK_VALUE = {
 class ESMPyRegridder:
     """General ESMPy regridder.
 
+    Does not support lazy regridding nor weights caching.
+
     Parameters
     ----------
     src_cube:

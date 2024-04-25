@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+import esmvalcore
 from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config import CFG, _config
 from esmvalcore.config._config import (
@@ -193,6 +194,7 @@ def test_load_default_config(monkeypatch, default_config):
         'preproc_dir',
         'run_dir',
         'work_dir',
+        'config_dir',
     }
     # Check that only allowed keys are in it
     assert set(default_cfg) == set(cfg)
@@ -210,6 +212,7 @@ def test_load_default_config(monkeypatch, default_config):
     for path in ('preproc', 'work', 'run'):
         assert getattr(cfg, path + '_dir') == cfg.session_dir / path
     assert cfg.plot_dir == cfg.session_dir / 'plots'
+    assert cfg.config_dir == Path(esmvalcore.__file__).parent
 
     # Check that projects were configured
     assert project_cfg

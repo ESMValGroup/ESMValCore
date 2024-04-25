@@ -29,7 +29,7 @@ class DerivedVariable(DerivedVariableBase):
         """
         mrsos_cube = cubes.extract_cube(NameConstraint(var_name='mrsos'))
 
-        depth = mrsos_cube.coord('depth').bounds.astype(np.float32)
+        depth = mrsos_cube.coord('depth').core_bounds().astype(np.float64)
         layer_thickness = depth[..., 1] - depth[..., 0]
 
         sm_cube = mrsos_cube / layer_thickness / 998.2

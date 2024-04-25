@@ -100,7 +100,7 @@ class CLMcomCCLM4817(Fix):
                 if coord.dtype in ['>f8', '>f4']:
                     coord.points = coord.core_points().astype(
                         np.float64, casting='same_kind')
-                    if coord.bounds is not None:
+                    if coord.has_bounds():
                         coord.bounds = coord.core_bounds().astype(
                             np.float64, casting='same_kind')
         return cubes
@@ -161,6 +161,10 @@ class AllVars(Fix):
                 units=Unit(domain[aux_coord].units),
                 bounds=bounds,
             )
+            if aux_coord == 'lon' and new_coord.points.min() < 0.:
+                lon_inds = (new_coord.points < 0.) & (old_coord.points > 0.)
+                old_coord.points[lon_inds] = old_coord.points[lon_inds] - 360.
+
             self._check_grid_differences(old_coord, new_coord)
             aux_coord_dims = (cube.coord(var_name='rlat').cube_dims(cube) +
                               cube.coord(var_name='rlon').cube_dims(cube))

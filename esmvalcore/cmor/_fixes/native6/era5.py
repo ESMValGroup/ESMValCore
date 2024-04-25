@@ -7,9 +7,9 @@ import numpy as np
 
 from esmvalcore.iris_helpers import date2num
 
+from ...table import CMOR_TABLES
 from ..fix import Fix
 from ..shared import add_scalar_height_coord
-from ...table import CMOR_TABLES
 
 logger = logging.getLogger(__name__)
 
@@ -382,7 +382,7 @@ class AllVars(Fix):
             coord.var_name = coord_def.out_name
             coord.long_name = coord_def.long_name
             coord.points = coord.core_points().astype('float64')
-            if (coord.bounds is None and len(coord.points) > 1
+            if (not coord.has_bounds() and len(coord.core_points()) > 1
                     and coord_def.must_have_bounds == "yes"):
                 coord.guess_bounds()
 

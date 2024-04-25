@@ -3,10 +3,13 @@ Shared functions for preprocessor.
 
 Utility functions that can be used for multiple preprocessor steps
 """
+from __future__ import annotations
+
 import logging
 import re
 import warnings
 from collections.abc import Callable
+from functools import wraps
 from typing import Any, Literal, Optional
 
 import dask.array as da
@@ -16,6 +19,7 @@ from iris.coords import DimCoord
 from iris.cube import Cube
 
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+from esmvalcore.typing import DataType
 
 logger = logging.getLogger(__name__)
 
@@ -238,3 +242,27 @@ def get_normalized_cube(
     normalized_cube.units = new_units
 
     return normalized_cube
+
+
+def preserve_float_dtype(func: Callable) -> Callable:
+    """Preserve object's float dtype (all other dtypes are allowed to change).
+
+    This can be used as a decorator for preprocessor functions to ensure that
+    floating dtypes are preserved. For example, input of type float32 will
+    always give output of type float32, but input of type int will be allowed
+    to give output with any type.
+
+    """
+
+    @wraps(func)
+    def wrapper(data: DataType, *args: Any, **kwargs: Any) -> DataType:
+        dtype = data.dtype
+        result = func(data, *args, **kwargs)
+        if np.issubdtype(dtype, np.floating) and result.dtype != dtype:
+            if isinstance(result, Cube):
+                result.data = result.core_data().astype(dtype)
+            else:
+                result = result.astype(dtype)
+        return result
+
+    return wrapper

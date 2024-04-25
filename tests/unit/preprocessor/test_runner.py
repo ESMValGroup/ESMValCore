@@ -33,14 +33,16 @@ def test_preprocess_debug(mocker, debug):
     input_files = [Path('/path/to/input.nc')]
     output_file = Path('/path/to/output.nc')
 
-    mocker.patch.object(
-        esmvalcore.preprocessor,
-        'annual_statistics',
-        create_autospec=True,
-        __name__='annual_statistics',
+    mock_annual_statistics = mocker.create_autospec(
+        esmvalcore.preprocessor.annual_statistics,
         return_value=out_cube,
     )
-    mocker.patch.object(esmvalcore.preprocessor, 'save', create_autospec=True)
+    mock_save = mocker.create_autospec(esmvalcore.preprocessor.save)
+    mocker.patch(
+        'esmvalcore.preprocessor.annual_statistics',
+        new=mock_annual_statistics
+    )
+    mocker.patch('esmvalcore.preprocessor.save', new=mock_save)
 
     esmvalcore.preprocessor.preprocess(
         items,

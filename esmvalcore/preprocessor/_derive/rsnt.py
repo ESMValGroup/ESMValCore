@@ -30,5 +30,7 @@ class DerivedVariable(DerivedVariableBase):
             Constraint(name='toa_outgoing_shortwave_flux'))
 
         rsnt_cube = rsdt_cube - rsut_cube
+        rsnt_cube.units = rsdt_cube.units
+        rsnt_cube.attributes['positive'] = 'down'
 
         return rsnt_cube

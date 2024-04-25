@@ -177,12 +177,12 @@ Calculate the global non-weighted root mean square:
     global_mean:
       area_statistics:
         operator: rms
-        weighted: false
+        weights: false
 
 .. warning::
 
   The disabling of weights by specifying the keyword argument ``weights:
-  False`` needs to be used with great care; from a scientific standpoint, we
+  false`` needs to be used with great care; from a scientific standpoint, we
   strongly recommend to **not** use it!
 
 
@@ -307,7 +307,7 @@ Preprocessor                                                   Variable short na
 :ref:`area_statistics<area_statistics>`                        ``areacella``, ``areacello``   cell_area
 :ref:`mask_landsea<land/sea/ice masking>`                      ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
 :ref:`mask_landseaice<ice masking>`                            ``sftgif``                     land_ice_area_fraction
-:ref:`volume_statistics<volume_statistics>`                    ``volcello``                   ocean_volume
+:ref:`volume_statistics<volume_statistics>`                    ``volcello``, ``areacello``    ocean_volume, cell_area
 :ref:`weighting_landsea_fraction<land/sea fraction weighting>` ``sftlf``, ``sftof``           land_area_fraction, sea_area_fraction
 ============================================================== ============================== =====================================
 
@@ -780,10 +780,6 @@ regridding is based on the horizontal grid of another cube (the reference
 grid). If the horizontal grids of a cube and its reference grid are sufficiently
 the same, regridding is automatically and silently skipped for performance reasons.
 
-The underlying regridding mechanism in ESMValCore uses
-:obj:`iris.cube.Cube.regrid`
-from Iris.
-
 The use of the horizontal regridding functionality is flexible depending on
 what type of reference grid and what interpolation scheme is preferred. Below
 we show a few examples.
@@ -821,7 +817,7 @@ cell specification is oftentimes used when operating on localized data.
           target_grid: 2.5x2.5
           scheme: nearest
 
-In this case the ``NearestNeighbour`` interpolation scheme is used (see below
+In this case the nearest-neighbor interpolation scheme is used (see below
 for scheme definitions).
 
 When using a ``MxN`` type of grid it is possible to offset the grid cell
@@ -916,9 +912,6 @@ Built-in regridding schemes
   For source data on an irregular grid, uses
   :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyAreaWeighted`.
   Source data on an unstructured grid is not supported, yet.
-
-See also :func:`esmvalcore.preprocessor.regrid`
-
 
 .. _generic regridding schemes:
 
@@ -1016,6 +1009,37 @@ scheme available in :doc:`iris-esmf-regrid:index`:
         scheme:
           reference: esmf_regrid.schemes:regrid_rectilinear_to_rectilinear
           mdtol: 0.7
+
+.. _caching_regridding_weights:
+
+Reusing regridding weights
+--------------------------
+
+If desired, regridding weights can be cached to reduce run times (see `here
+<https://scitools-iris.readthedocs.io/en/latest/userguide/interpolation_and_regridding.html#caching-a-regridder>`__
+for technical details on this).
+This can speed up the regridding of different datasets with similar source and
+target grids massively, but may take up a lot of memory for extremely
+high-resolution data.
+By default, this feature is disabled; to enable it, use the option
+``cache_weights: true`` in the preprocessor definition:
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 0.1x0.1
+          scheme: linear
+          cache_weights: true
+
+Not all regridding schemes support weights caching. An overview of those that
+do is given `here
+<https://scitools-iris.readthedocs.io/en/latest/further_topics/which_regridder_to_use.html#which-regridder-to-use>`__
+and in the docstrings :ref:`here <regridding_schemes>`.
+
+See also :func:`esmvalcore.preprocessor.regrid`
+
 
 .. _ensemble statistics:
 
@@ -2134,12 +2158,16 @@ but maintains the time dimension.
 By default, the `mean` operation is weighted by the grid cell volumes.
 
 For weighted statistics, this function requires a cell volume `cell measure`_,
-unless the coordinates of the input data are regular 1D latitude and longitude
-coordinates so the cell volumes can be computed internally.
-The required supplementary variable ``volcello`` can be attached to the main
-dataset as described in :ref:`supplementary_variables`.
+unless it has a cell_area `cell measure`_ or the coordinates of the input data
+are regular 1D latitude and longitude coordinates so the cell volumes can be
+computed internally.
+The required supplementary variable ``volcello``, or ``areacello`` in its
+absence, can be attached to the main dataset as described in
+:ref:`supplementary_variables`.
 
-No depth coordinate is required as this is determined by Iris.
+No depth coordinate is required as this is determined by Iris. However, to
+compute the volume automatically when ``volcello`` is not provided, the depth
+coordinate units should be convertible to meters.
 
 Parameters:
     * `operator`: Operation to apply.
