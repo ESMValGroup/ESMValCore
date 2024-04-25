@@ -60,28 +60,3 @@ class Pr(Fix):
         if float(cube.core_data()[:10].mean()) < 1.e-5:
             cube.data = cube.core_data() * 1000.
         return cube
-
-
-class Clt(Fix):
-    """Fixes for cl."""
-
-    def fix_data(self, cube):
-        """
-        Fix data.
-
-        Fixes discrepancy between declared units and real units.
-
-        Parameters
-        ----------
-        cube: iris.cube.Cube
-            Input cube.
-
-        Returns
-        -------
-        iris.cube.Cube
-
-        """
-        metadata = cube.metadata
-        cube *= 100
-        cube.metadata = metadata
-        return cube

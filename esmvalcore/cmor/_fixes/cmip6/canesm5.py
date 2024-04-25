@@ -1,40 +1,7 @@
 """Fixes for CanESM5 model."""
 import dask.array as da
 
-from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
-
-
-class Cl(ClFixHybridPressureCoord):
-    """Fixes for cl."""
-
-    def fix_metadata(self, cubes):
-        """Fix metadata.
-
-        Fix standard_name of surface air pressure coordinate.
-
-        Parameters
-        ----------
-        cubes: iris.cube.CubeList
-            Input cubes.
-
-        Returns
-        -------
-        iris.cube.CubeList
-
-        """
-        for cube in cubes:
-            if cube.coords(var_name='ps'):
-                cube.coord(var_name='ps').standard_name = (
-                    'surface_air_pressure')
-
-        return super().fix_metadata(cubes)
-
-
-Cli = Cl
-
-
-Clw = Cl
 
 
 class Co2(Fix):
