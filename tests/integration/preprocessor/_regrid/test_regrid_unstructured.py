@@ -24,7 +24,7 @@ def unstructured_grid_cube_2d():
         units='degrees_north',
     )
     lon = AuxCoord(
-        [70.0, 250.0, 250.0, 70.0],
+        [71.0, 250.0, 250.0, 71.0],
         standard_name='longitude',
         units='degrees_east',
     )
@@ -59,7 +59,7 @@ def unstructured_grid_cube_3d():
         units='degrees_north',
     )
     lon = AuxCoord(
-        [70.0, 250.0, 250.0, 70.0],
+        [71.0, 250.0, 250.0, 71.0],
         standard_name='longitude',
         units='degrees_east',
     )
@@ -147,13 +147,21 @@ class TestUnstructuredNearest:
 class TestUnstructuredLinear:
     """Test ``UnstructuredLinear``."""
 
+    @pytest.mark.parametrize('units', [None, 'rad'])
     @pytest.mark.parametrize('lazy', [True, False])
-    def test_regridding(self, lazy, unstructured_grid_cube_2d, target_grid):
+    def test_regridding(
+        self, lazy, units, unstructured_grid_cube_2d, target_grid,
+    ):
         """Test regridding."""
         if lazy:
             unstructured_grid_cube_2d.data = (
                 unstructured_grid_cube_2d.lazy_data()
             )
+        if units:
+            unstructured_grid_cube_2d.coord('latitude').convert_units(units)
+            unstructured_grid_cube_2d.coord('longitude').convert_units(units)
+            target_grid.coord('latitude').convert_units(units)
+            target_grid.coord('longitude').convert_units(units)
         src_cube = unstructured_grid_cube_2d.copy()
 
         result = src_cube.regrid(target_grid, UnstructuredLinear())
@@ -174,7 +182,7 @@ class TestUnstructuredLinear:
         expected_data = np.ma.masked_invalid(
             [[
                 [np.nan, np.nan, np.nan],
-                [2.1984126567840576, 2.1031746864318848, 1.992063522338867],
+                [2.0820837020874023, 2.105347156524658, 1.4380426406860352],
                 [np.nan, np.nan, np.nan],
             ], [
                 [np.nan, np.nan, np.nan],
@@ -185,9 +193,10 @@ class TestUnstructuredLinear:
         np.testing.assert_allclose(result.data, expected_data)
         np.testing.assert_array_equal(result.data.mask, expected_data.mask)
 
+    @pytest.mark.parametrize('units', [None, 'rad'])
     @pytest.mark.parametrize('lazy', [True, False])
     def test_regridding_mask_and_transposed(
-        self, lazy, unstructured_grid_cube_3d, target_grid
+        self, units, lazy, unstructured_grid_cube_3d, target_grid
     ):
         """Test regridding."""
         # Test that regridding also works if lat/lon are not rightmost
@@ -197,6 +206,11 @@ class TestUnstructuredLinear:
             unstructured_grid_cube_3d.data = (
                 unstructured_grid_cube_3d.lazy_data()
             )
+        if units:
+            unstructured_grid_cube_3d.coord('latitude').convert_units(units)
+            unstructured_grid_cube_3d.coord('longitude').convert_units(units)
+            target_grid.coord('latitude').convert_units(units)
+            target_grid.coord('longitude').convert_units(units)
         src_cube = unstructured_grid_cube_3d.copy()
 
         result = src_cube.regrid(target_grid, UnstructuredLinear())
@@ -216,10 +230,11 @@ class TestUnstructuredLinear:
 
         expected_data = np.ma.masked_all((2, 3, 3, 2), dtype=np.float32)
         expected_data[0, 1, :, :] = [
-            [2.1984126567840576, 6.198412895202637],
-            [2.1031746864318848, 6.103174686431885],
-            [1.9920635223388672, 5.992063522338867],
+            [2.0820837020874023, 6.082083702087402],
+            [2.105347156524658, 6.105347156524658],
+            [1.4380426406860352, 5.438042640686035],
         ]
+        print(result.data)
         np.testing.assert_allclose(result.data, expected_data)
         np.testing.assert_array_equal(result.data.mask, expected_data.mask)
 
@@ -240,10 +255,22 @@ class TestUnstructuredLinear:
         with pytest.raises(ValueError, match=msg):
             src_cube.regrid(src_cube, UnstructuredLinear())
 
+    @pytest.mark.parametrize('units', [None, 'rad'])
     def test_regridder_same_grid(
-        self, unstructured_grid_cube_2d, unstructured_grid_cube_3d, target_grid
+        self,
+        units,
+        unstructured_grid_cube_2d,
+        unstructured_grid_cube_3d,
+        target_grid,
     ):
         """Test regridding."""
+        if units:
+            unstructured_grid_cube_2d.coord('latitude').convert_units(units)
+            unstructured_grid_cube_2d.coord('longitude').convert_units(units)
+            unstructured_grid_cube_3d.coord('latitude').convert_units(units)
+            unstructured_grid_cube_3d.coord('longitude').convert_units(units)
+            target_grid.coord('latitude').convert_units(units)
+            target_grid.coord('longitude').convert_units(units)
         cube = unstructured_grid_cube_3d.copy()
         regridder = UnstructuredLinear().regridder(
             unstructured_grid_cube_2d, target_grid
