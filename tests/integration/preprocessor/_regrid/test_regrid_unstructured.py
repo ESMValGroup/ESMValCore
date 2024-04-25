@@ -170,19 +170,20 @@ class TestUnstructuredLinear:
         assert result.shape == (2, 3, 3)
         assert result.has_lazy_data() is lazy
         assert result.dtype == np.float32
+        print(result.data)
         expected_data = np.ma.masked_invalid(
             [[
                 [np.nan, np.nan, np.nan],
-                [np.nan, 2.1031746031746033, np.nan],
+                [2.1984126567840576, 2.1031746864318848, 1.992063522338867],
                 [np.nan, np.nan, np.nan],
             ], [
                 [np.nan, np.nan, np.nan],
-                [np.nan, 0.0, np.nan],
+                [0.0, 0.0, 0.0],
                 [np.nan, np.nan, np.nan],
             ]]
         )
         np.testing.assert_allclose(result.data, expected_data)
-        np.testing.assert_allclose(result.data.mask, expected_data.mask)
+        np.testing.assert_array_equal(result.data.mask, expected_data.mask)
 
     @pytest.mark.parametrize('lazy', [True, False])
     def test_regridding_mask_and_transposed(
@@ -213,10 +214,14 @@ class TestUnstructuredLinear:
         assert result.has_lazy_data() is lazy
         assert result.dtype == np.float32
 
-        expected_data = np.ma.masked_invalid(np.full((2, 3, 3, 2), np.nan))
-        expected_data[0, 1, 1, :] = [2.1031746864318848, 6.103174686431885]
+        expected_data = np.ma.masked_all((2, 3, 3, 2), dtype=np.float32)
+        expected_data[0, 1, :, :] = [
+            [2.1984126567840576, 6.198412895202637],
+            [2.1031746864318848, 6.103174686431885],
+            [1.9920635223388672, 5.992063522338867],
+        ]
         np.testing.assert_allclose(result.data, expected_data)
-        np.testing.assert_allclose(result.data.mask, expected_data.mask)
+        np.testing.assert_array_equal(result.data.mask, expected_data.mask)
 
     def test_scheme_repr(self):
         """Test regridding."""

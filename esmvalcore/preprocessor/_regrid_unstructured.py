@@ -11,7 +11,7 @@ from iris.analysis.trajectory import UnstructuredNearestNeigbourRegridder
 from iris.coords import Coord
 from iris.cube import Cube
 from numpy.typing import DTypeLike
-from scipy.spatial import Delaunay
+from scipy.spatial import ConvexHull, Delaunay
 
 from esmvalcore.iris_helpers import (
     has_regular_grid,
@@ -102,28 +102,42 @@ class UnstructuredLinearRegridder:
         self.tgt_n_lat = tgt_lat.core_points().size
         self.tgt_n_lon = tgt_lon.core_points().size
 
-        # Calculate regridding weights
-        # Note: we force numpy arrays here (instead of dask) since resulting
-        # arrays are only 2D and will be computed anyway later during
-        # regridding
-        (self.weights, self.indices) = self._get_weights(
+        # Calculate regridding weights and indices
+        (self._weights, self._indices,
+         self._convex_hull_idx) = self._get_weights_and_idx(
             src_lat, src_lon, tgt_lat, tgt_lon)
 
-    def _get_weights(
+    def _get_weights_and_idx(
         self,
         src_lat: Coord,
         src_lon: Coord,
         tgt_lat: Coord,
         tgt_lon: Coord,
-    ) -> tuple[np.ndarray, np.ndarray]:
-        """Calculate regridding weights.
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Get regridding weights and indices.
 
         Note
         ----
-        We force numpy arrays here (instead of dask) since resulting arrays are
-        only 2D and will be computed anyway later during regridding.
+        To consider the periodic boundary conditions of a sphere, the source
+        points are expanded first with all points on their convex hull wrapped
+        around by -360° and +360° before the weights calculation. This needs to
+        be considered in the interpolation (see self._interpolate)!
+
+        The output arrays will be numpy arrays here (instead of dask) since
+        resulting arrays are only 2D and will be computed anyway later during
+        regridding.
 
         """
+        # Make sure that source and target grid have identical units
+        src_lat = src_lat.copy()
+        src_lon = src_lon.copy()
+        tgt_lat = tgt_lat.copy()
+        tgt_lon = tgt_lon.copy()
+        src_lat.convert_units('degrees')
+        src_lon.convert_units('degrees')
+        tgt_lat.convert_units('degrees')
+        tgt_lon.convert_units('degrees')
+
         # Bring points into correct format
         # src_points: (N, 2) where N is the number of source grid points
         # tgt_points: (M, 2) where M is the number of target grid points
@@ -141,23 +155,28 @@ class UnstructuredLinearRegridder:
                 axis=-1,
             ),
         )
+        src_points = np.array(src_points)  # cannot be masked array
+        tgt_points = np.array(tgt_points)  # cannot be masked array
 
-        # Actual indices and weights calculation using Delaunay triagulation
-        # (partly taken from https://stackoverflow.com/a/20930910)
-        # Array shapes:
-        # indices: (M, 3)
-        # weights: (M, 3)
-        tri = Delaunay(np.array(src_points))
-        simplex = tri.find_simplex(np.array(tgt_points))
-        indices = np.take(tri.simplices, simplex, axis=0)
-        transform = np.take(tri.transform, simplex, axis=0)
-        delta = tgt_points - transform[:, 2]
-        bary = np.einsum('njk,nk->nj', transform[:, :2, :], delta)
-        weights = np.hstack((bary, 1 - bary.sum(axis=1, keepdims=True)))
-        extra_idx = simplex == -1
-        weights[extra_idx, :] = np.nan  # missing values
+        # Calculate convex hull of source points to consider periodic boundary
+        # conditions
+        hull = ConvexHull(src_points)
+        n_hull = len(hull.vertices)
 
-        return (weights, indices)
+        # Wrap around points on convex hull by -360° and +360° and add them to
+        # list of source points
+        src_points_with_convex_hull = self._add_convex_hull_twice(
+            src_points, hull.vertices
+        )
+        src_points_with_convex_hull[-2 * n_hull:-n_hull, 1] -= 360.0
+        src_points_with_convex_hull[-n_hull:, 1] += 360.0
+
+        # Actual weights calculation
+        (weights, indices) = self._calculate_weights(
+            src_points_with_convex_hull, tgt_points
+        )
+
+        return (weights, indices, hull.vertices)
 
     def __call__(self, cube: Cube) -> Cube:
         """Perform regridding.
@@ -242,7 +261,7 @@ class UnstructuredLinearRegridder:
         regridded_data: np.ndarray | da.Array
         if cube.has_lazy_data():
             regridded_data = self._regrid_lazy(
-                src_data, udim, self.weights.dtype
+                src_data, udim, self._weights.dtype
             )
         else:
             regridded_data = self._regrid_eager(src_data, udim)
@@ -291,20 +310,59 @@ class UnstructuredLinearRegridder:
     def _interpolate(self, data: np.ndarray) -> np.ndarray:
         """Interpolate data.
 
+        Data to interpolate must be an (N,) array, where N is the number of
+        source grid points. Indices used to index the data and interpolation
+        weights must be (M, 3) arrays, where M is the number of target grid
+        points.
+
+        The returned array is of shape (lat, lon), where lat is the number of
+        latitudes in the target grid, and lon the number of longitudes in the
+        target grid such that lat x lon = M.
+
         Note
         ----
-        Data to interpolate must be an (N,) array, where N is the number of
-        source grid points. Indices used to index the data must be an (M, 3)
-        array, where M is the number of target grid points. Interpolation
-        weights must be an (M, 3) array, where M is the number of target grid
-        points. The returned array is of shape (lat, lon), where lat is the
-        number of latitudes in the target grid, and lon the number of
-        longitudes in the target grid such that lat x lon = M.
+        Before the interpolation, the input is extended by the data on the
+        convex hull to consider the periodic boundary conditions of a sphere
+        (this has also been done for the weights calculation).
 
         """
-        arr = np.einsum('nj,nj->n', np.take(data, self.indices), self.weights)
-        arr = arr.reshape(self.tgt_n_lat, self.tgt_n_lon)
-        return arr
+        data = self._add_convex_hull_twice(data, self._convex_hull_idx)
+        interp_data = np.einsum(
+            'nj,nj->n', np.take(data, self._indices), self._weights
+        )
+        interp_data = interp_data.reshape(self.tgt_n_lat, self.tgt_n_lon)
+        return interp_data
+
+    @staticmethod
+    def _add_convex_hull_twice(arr: np.ndarray, idx: np.ndarray) -> np.ndarray:
+        """Expand array with convex hull values (given by indices) twice."""
+        convex_hull = arr[idx]
+        return np.concatenate((arr, convex_hull, convex_hull))
+
+    @staticmethod
+    def _calculate_weights(
+        src_points: np.ndarray,
+        tgt_points: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Calculate regridding weights using Delaunay triagulation.
+
+        Partly taken from https://stackoverflow.com/a/20930910.
+
+        Output shapes (M: number of target grid points)
+        - weights: (M, 3)
+        - indices: (M, 3)
+
+        """
+        tri = Delaunay(src_points)
+        simplex = tri.find_simplex(tgt_points)
+        indices = np.take(tri.simplices, simplex, axis=0)
+        transform = np.take(tri.transform, simplex, axis=0)
+        delta = tgt_points - transform[:, 2]
+        bary = np.einsum('njk,nk->nj', transform[:, :2, :], delta)
+        weights = np.hstack((bary, 1 - bary.sum(axis=1, keepdims=True)))
+        extra_idx = simplex == -1
+        weights[extra_idx, :] = np.nan  # missing values
+        return (weights, indices)
 
 
 class UnstructuredLinear:
