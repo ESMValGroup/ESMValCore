@@ -4,6 +4,7 @@ from copy import deepcopy
 from itertools import permutations
 from unittest import mock
 
+import dask.array as da
 import numpy as np
 import pytest
 from cf_units import Unit
@@ -20,8 +21,10 @@ from iris.exceptions import CoordinateMultiDimError
 from esmvalcore.iris_helpers import (
     add_leading_dim_to_cube,
     date2num,
+    has_irregular_grid,
     has_unstructured_grid,
     merge_cube_attributes,
+    rechunk_cube,
 )
 
 
@@ -224,6 +227,122 @@ def test_merge_cube_attributes_1_cube():
 
 
 @pytest.fixture
+def cube_3d():
+    """3D sample cube."""
+    # DimCoords
+    x = DimCoord([0, 1, 2], var_name='x')
+    y = DimCoord([0, 1, 2], var_name='y')
+    z = DimCoord([0, 1, 2, 3], var_name='z')
+
+    # AuxCoords
+    aux_x = AuxCoord(
+        da.ones(3, chunks=1),
+        bounds=da.ones((3, 3), chunks=(1, 1)),
+        var_name='aux_x',
+    )
+    aux_z = AuxCoord(da.ones(4, chunks=1), var_name='aux_z')
+    aux_xy = AuxCoord(da.ones((3, 3), chunks=(1, 1)), var_name='xy')
+    aux_xz = AuxCoord(da.ones((3, 4), chunks=(1, 1)), var_name='xz')
+    aux_yz = AuxCoord(da.ones((3, 4), chunks=(1, 1)), var_name='yz')
+    aux_xyz = AuxCoord(
+        da.ones((3, 3, 4), chunks=(1, 1, 1)),
+        bounds=da.ones((3, 3, 4, 3), chunks=(1, 1, 1, 1)),
+        var_name='xyz',
+    )
+    aux_coords_and_dims = [
+        (aux_x, 0),
+        (aux_z, 2),
+        (aux_xy, (0, 1)),
+        (aux_xz, (0, 2)),
+        (aux_yz, (1, 2)),
+        (aux_xyz, (0, 1, 2)),
+    ]
+
+    # CellMeasures and AncillaryVariables
+    cell_measure = CellMeasure(
+        da.ones((3, 4), chunks=(1, 1)), var_name='cell_measure'
+    )
+    anc_var = AncillaryVariable(
+        da.ones((3, 4), chunks=(1, 1)), var_name='anc_var'
+    )
+
+    return Cube(
+        da.ones((3, 3, 4), chunks=(1, 1, 1)),
+        var_name='cube',
+        dim_coords_and_dims=[(x, 0), (y, 1), (z, 2)],
+        aux_coords_and_dims=aux_coords_and_dims,
+        cell_measures_and_dims=[(cell_measure, (1, 2))],
+        ancillary_variables_and_dims=[(anc_var, (0, 2))],
+    )
+
+
+def test_rechunk_cube_fully_lazy(cube_3d):
+    """Test ``rechunk_cube``."""
+    input_cube = cube_3d.copy()
+
+    x_coord = input_cube.coord('x')
+    result = rechunk_cube(input_cube, [x_coord, 'y'], remaining_dims=2)
+
+    assert input_cube == cube_3d
+    assert result == cube_3d
+    assert result.core_data().chunksize == (3, 3, 2)
+    assert result.coord('aux_x').core_points().chunksize == (3,)
+    assert result.coord('aux_z').core_points().chunksize == (1,)
+    assert result.coord('xy').core_points().chunksize == (3, 3)
+    assert result.coord('xz').core_points().chunksize == (3, 2)
+    assert result.coord('yz').core_points().chunksize == (3, 2)
+    assert result.coord('xyz').core_points().chunksize == (3, 3, 2)
+    assert result.coord('aux_x').core_bounds().chunksize == (3, 2)
+    assert result.coord('aux_z').core_bounds() is None
+    assert result.coord('xy').core_bounds() is None
+    assert result.coord('xz').core_bounds() is None
+    assert result.coord('yz').core_bounds() is None
+    assert result.coord('xyz').core_bounds().chunksize == (3, 3, 2, 2)
+    assert result.cell_measure('cell_measure').core_data().chunksize == (3, 2)
+    assert result.ancillary_variable('anc_var').core_data().chunksize == (3, 2)
+
+
+def test_rechunk_cube_partly_lazy(cube_3d):
+    """Test ``rechunk_cube``."""
+    input_cube = cube_3d.copy()
+
+    # Realize some arrays
+    input_cube.data
+    input_cube.coord('xyz').points
+    input_cube.coord('xyz').bounds
+    input_cube.cell_measure('cell_measure').data
+
+    result = rechunk_cube(input_cube, ['x', 'y'], remaining_dims=2)
+
+    assert input_cube == cube_3d
+    assert result == cube_3d
+    assert not result.has_lazy_data()
+    assert result.coord('aux_x').core_points().chunksize == (3,)
+    assert result.coord('aux_z').core_points().chunksize == (1,)
+    assert result.coord('xy').core_points().chunksize == (3, 3)
+    assert result.coord('xz').core_points().chunksize == (3, 2)
+    assert result.coord('yz').core_points().chunksize == (3, 2)
+    assert not result.coord('xyz').has_lazy_points()
+    assert result.coord('aux_x').core_bounds().chunksize == (3, 2)
+    assert result.coord('aux_z').core_bounds() is None
+    assert result.coord('xy').core_bounds() is None
+    assert result.coord('xz').core_bounds() is None
+    assert result.coord('yz').core_bounds() is None
+    assert not result.coord('xyz').has_lazy_bounds()
+    assert not result.cell_measure('cell_measure').has_lazy_data()
+    assert result.ancillary_variable('anc_var').core_data().chunksize == (3, 2)
+
+
+def test_rechunk_cube_invalid_coord_fail(cube_3d):
+    """Test ``rechunk_cube``."""
+    msg = (
+        "Complete coordinates must be 1D coordinates, got 2D coordinate 'xy'"
+    )
+    with pytest.raises(CoordinateMultiDimError, match=msg):
+        rechunk_cube(cube_3d, ['xy'])
+
+
+@pytest.fixture
 def lat_coord_1d():
     """1D latitude coordinate."""
     return DimCoord([0, 1], standard_name='latitude')
@@ -245,6 +364,70 @@ def lat_coord_2d():
 def lon_coord_2d():
     """2D longitude coordinate."""
     return AuxCoord([[0, 1]], standard_name='longitude')
+
+
+def test_has_irregular_grid_no_lat_lon():
+    """Test `has_irregular_grid`."""
+    cube = Cube(0)
+    assert has_irregular_grid(cube) is False
+
+
+def test_has_irregular_grid_no_lat(lon_coord_2d):
+    """Test `has_irregular_grid`."""
+    cube = Cube([[0, 1]], aux_coords_and_dims=[(lon_coord_2d, (0, 1))])
+    assert has_irregular_grid(cube) is False
+
+
+def test_has_irregular_grid_no_lon(lat_coord_2d):
+    """Test `has_irregular_grid`."""
+    cube = Cube([[0, 1]], aux_coords_and_dims=[(lat_coord_2d, (0, 1))])
+    assert has_irregular_grid(cube) is False
+
+
+def test_has_irregular_grid_1d_lon(lat_coord_2d, lon_coord_1d):
+    """Test `has_irregular_grid`."""
+    cube = Cube(
+        [[0, 1]],
+        dim_coords_and_dims=[(lon_coord_1d, 1)],
+        aux_coords_and_dims=[(lat_coord_2d, (0, 1))],
+    )
+    assert has_irregular_grid(cube) is False
+
+
+def test_has_irregular_grid_1d_lat(lat_coord_1d, lon_coord_2d):
+    """Test `has_irregular_grid`."""
+    cube = Cube(
+        [[0, 1]],
+        dim_coords_and_dims=[(lat_coord_1d, 1)],
+        aux_coords_and_dims=[(lon_coord_2d, (0, 1))],
+    )
+    assert has_irregular_grid(cube) is False
+
+
+def test_has_irregular_grid_1d_lat_lon(lat_coord_1d, lon_coord_1d):
+    """Test `has_irregular_grid`."""
+    cube = Cube(
+        [0, 1], aux_coords_and_dims=[(lat_coord_1d, 0), (lon_coord_1d, 0)]
+    )
+    assert has_irregular_grid(cube) is False
+
+
+def test_has_irregular_grid_regular_grid(lat_coord_1d, lon_coord_1d):
+    """Test `has_irregular_grid`."""
+    cube = Cube(
+        [[0, 1], [2, 3]],
+        dim_coords_and_dims=[(lat_coord_1d, 0), (lon_coord_1d, 1)],
+    )
+    assert has_irregular_grid(cube) is False
+
+
+def test_has_irregular_grid_true(lat_coord_2d, lon_coord_2d):
+    """Test `has_irregular_grid`."""
+    cube = Cube(
+        [[0, 1]],
+        aux_coords_and_dims=[(lat_coord_2d, (0, 1)), (lon_coord_2d, (0, 1))],
+    )
+    assert has_irregular_grid(cube) is True
 
 
 def test_has_unstructured_grid_no_lat_lon():
