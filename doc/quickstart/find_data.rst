@@ -477,7 +477,9 @@ This grid file can either be specified as absolute or relative (to
 with the facet ``horizontal_grid`` in the recipe or the extra facets (see
 below), or retrieved automatically from the `grid_file_uri` attribute of the
 input files.
-In the latter case, the file is downloaded once and then cached.
+In the latter case, ESMValCore first searches the input directories specified
+for ICON for a grid file with that name, and if that was not successful, tries
+to download the file and cache it.
 The cached file is valid for 7 days.
 
 ESMValCore can automatically make native ICON data `UGRID
@@ -487,7 +489,7 @@ The UGRID conventions provide a standardized format to store data on
 unstructured grids, which is required by many software packages or tools to
 work correctly.
 An example is the horizontal regridding of native ICON data to a regular grid.
-While the built-in :ref:`unstructured_nearest scheme <built-in regridding
+While the built-in :ref:`nearest scheme <built-in regridding
 schemes>` can handle unstructured grids not in UGRID format, using more complex
 regridding algorithms (for example provided by the
 :doc:`iris-esmf-regrid:index` package through :ref:`generic regridding
@@ -509,7 +511,7 @@ This automatic UGRIDization is enabled by default, but can be switched off with
 the facet ``ugrid: false`` in the recipe or the extra facets (see below).
 This is useful for diagnostics that do not support input data in UGRID format
 (yet) like the :ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>` or
-if you want to use the built-in :ref:`unstructured_nearest scheme <built-in
+if you want to use the built-in :ref:`nearest scheme <built-in
 regridding schemes>` regridding scheme.
 
 For 3D ICON variables, ESMValCore tries to add the pressure level information
@@ -556,7 +558,7 @@ Key                 Description                      Default value if not specif
 =================== ================================ ===================================
 ``horizontal_grid`` Absolute or relative (to         If not given, use file attribute
                     ``auxiliary_data_dir`` defined   ``grid_file_uri`` to retrieve ICON
-                    in the                           grid file
+                    in the                           grid file (see details above)
                     :ref:`user configuration file`)
                     path to the ICON grid file
 ``latitude``        Standard name of the latitude    ``latitude``

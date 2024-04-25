@@ -10,7 +10,6 @@ from esmvalcore.cmor._fixes.fix import Fix
 from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
 from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.iris_helpers import date2num, has_unstructured_grid
-from esmvalcore.preprocessor._regrid import _bilinear_unstructured_regrid
 
 logger = logging.getLogger(__name__)
 
@@ -505,7 +504,7 @@ class AllVars(Fix):
             coord.var_name = coord_def.out_name
             coord.long_name = coord_def.long_name
             coord.points = coord.core_points().astype('float64')
-            if (coord.bounds is None and len(coord.points) > 1
+            if (not coord.has_bounds() and len(coord.core_points()) > 1
                     and coord_def.must_have_bounds == "yes"):
                 # Do not guess bounds for lat and lon on unstructured grids
                 if not (coord.name() in ('latitude', 'longitude') and
@@ -556,20 +555,8 @@ class AllVars(Fix):
             if self.vardef.standard_name:
                 cube.standard_name = self.vardef.standard_name
             cube.long_name = self.vardef.long_name
-
-            # If desired, regrid native ERA5 data in GRIB format (which is on a
-            # reduced Gaussian grid, i.e., unstructured grid)
-            if (
-                    self.extra_facets.get('regrid', False) is not False and
-                    has_unstructured_grid(cube)
-            ):
-                cube = _bilinear_unstructured_regrid(
-                    cube, **self.extra_facets['regrid']
-                )
-
             cube = self._fix_coordinates(cube)
             self._fix_units(cube)
-
             cube.data = cube.core_data().astype('float32')
             year = datetime.datetime.now().year
             cube.attributes['comment'] = (

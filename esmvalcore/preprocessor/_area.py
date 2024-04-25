@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Optional
+from typing import TYPE_CHECKING, Iterable, Literal, Optional
 
 import fiona
 import iris
@@ -20,8 +20,15 @@ from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 
-from ._shared import get_iris_aggregator, guess_bounds, update_weights_kwargs
-from ._supplementary_vars import (
+from esmvalcore.preprocessor._regrid import broadcast_to_shape
+from esmvalcore.preprocessor._shared import (
+    get_iris_aggregator,
+    get_normalized_cube,
+    guess_bounds,
+    preserve_float_dtype,
+    update_weights_kwargs,
+)
+from esmvalcore.preprocessor._supplementary_vars import (
     add_ancillary_variable,
     add_cell_measure,
     register_supplementaries,
@@ -84,7 +91,6 @@ def extract_region(
             latitude=(start_latitude, end_latitude),
             ignore_bounds=True,
         )
-        region_subset = region_subset.intersection(longitude=(0., 360.))
     else:
         region_subset = _extract_irregular_region(
             cube,
@@ -185,9 +191,11 @@ def _extract_irregular_region(cube, start_longitude, end_longitude,
     return cube
 
 
+@preserve_float_dtype
 def zonal_statistics(
     cube: Cube,
     operator: str,
+    normalize: Optional[Literal['subtract', 'divide']] = None,
     **operator_kwargs
 ) -> Cube:
     """Compute zonal statistics.
@@ -200,6 +208,11 @@ def zonal_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
+    normalize:
+        If given, do not return the statistics cube itself, but rather, the
+        input cube, normalized with the statistics cube. Can either be
+        `subtract` (statistics cube is subtracted from the input cube) or
+        `divide` (input cube is divided by the statistics cube).
     **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
@@ -207,7 +220,8 @@ def zonal_statistics(
     Returns
     -------
     iris.cube.Cube
-        Zonal statistics cube.
+        Zonal statistics cube or input cube normalized by statistics cube (see
+        `normalize`).
 
     Raises
     ------
@@ -221,14 +235,17 @@ def zonal_statistics(
             "Zonal statistics on irregular grids not yet implemented"
         )
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    cube = cube.collapsed('longitude', agg, **agg_kwargs)
-    cube.data = cube.core_data().astype(np.float32, casting='same_kind')
-    return cube
+    result = cube.collapsed('longitude', agg, **agg_kwargs)
+    if normalize is not None:
+        result = get_normalized_cube(cube, result, normalize)
+    return result
 
 
+@preserve_float_dtype
 def meridional_statistics(
     cube: Cube,
     operator: str,
+    normalize: Optional[Literal['subtract', 'divide']] = None,
     **operator_kwargs,
 ) -> Cube:
     """Compute meridional statistics.
@@ -241,6 +258,11 @@ def meridional_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
+    normalize:
+        If given, do not return the statistics cube itself, but rather, the
+        input cube, normalized with the statistics cube. Can either be
+        `subtract` (statistics cube is subtracted from the input cube) or
+        `divide` (input cube is divided by the statistics cube).
     **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
@@ -262,9 +284,10 @@ def meridional_statistics(
             "Meridional statistics on irregular grids not yet implemented"
         )
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
-    cube = cube.collapsed('latitude', agg, **agg_kwargs)
-    cube.data = cube.core_data().astype(np.float32, casting='same_kind')
-    return cube
+    result = cube.collapsed('latitude', agg, **agg_kwargs)
+    if normalize is not None:
+        result = get_normalized_cube(cube, result, normalize)
+    return result
 
 
 def compute_area_weights(cube):
@@ -276,11 +299,47 @@ def compute_area_weights(cube):
             category=UserWarning,
             module='iris.analysis.cartography',
         )
-        weights = iris.analysis.cartography.area_weights(cube)
+        # TODO: replace the following line with
+        # weights = iris.analysis.cartography.area_weights(
+        #     cube, compute=not cube.has_lazy_data()
+        # )
+        # once https://github.com/SciTools/iris/pull/5658 is available
+        weights = _get_area_weights(cube)
+
         for warning in caught_warnings:
             logger.debug(
                 "%s while computing area weights of the following cube:\n%s",
                 warning.message, cube)
+    return weights
+
+
+def _get_area_weights(cube: Cube) -> np.ndarray | da.Array:
+    """Get area weights.
+
+    For non-lazy data, simply use the according iris function. For lazy data,
+    calculate area weights for a single lat-lon slice and broadcast it to the
+    correct shape.
+
+    Note
+    ----
+    This is a temporary workaround to get lazy area weights. Can be removed
+    once https://github.com/SciTools/iris/pull/5658 is available.
+
+    """
+    if not cube.has_lazy_data():
+        return iris.analysis.cartography.area_weights(cube)
+
+    lat_lon_dims = sorted(
+        tuple(set(cube.coord_dims('latitude') + cube.coord_dims('longitude')))
+    )
+    lat_lon_slice = next(cube.slices(['latitude', 'longitude'], ordered=False))
+    weights_2d = iris.analysis.cartography.area_weights(lat_lon_slice)
+    weights = broadcast_to_shape(
+        da.array(weights_2d),
+        cube.shape,
+        lat_lon_dims,
+        chunks=cube.lazy_data().chunks,
+    )
     return weights
 
 
@@ -346,9 +405,11 @@ def _try_adding_calculated_cell_area(cube: Cube) -> None:
     variables=['areacella', 'areacello'],
     required='prefer_at_least_one',
 )
+@preserve_float_dtype
 def area_statistics(
     cube: Cube,
     operator: str,
+    normalize: Optional[Literal['subtract', 'divide']] = None,
     **operator_kwargs,
 ) -> Cube:
     """Apply a statistical operator in the horizontal plane.
@@ -371,6 +432,11 @@ def area_statistics(
         The operation. Used to determine the :class:`iris.analysis.Aggregator`
         object used to calculate the statistics. Allowed options are given in
         :ref:`this table <supported_stat_operator>`.
+    normalize:
+        If given, do not return the statistics cube itself, but rather, the
+        input cube, normalized with the statistics cube. Can either be
+        `subtract` (statistics cube is subtracted from the input cube) or
+        `divide` (input cube is divided by the statistics cube).
     **operator_kwargs:
         Optional keyword arguments for the :class:`iris.analysis.Aggregator`
         object defined by `operator`.
@@ -387,7 +453,6 @@ def area_statistics(
         `cell_area` is not available.
 
     """
-    original_dtype = cube.dtype
     has_cell_measure = bool(cube.cell_measures('cell_area'))
 
     # Get aggregator and correct kwargs (incl. weights)
@@ -397,16 +462,8 @@ def area_statistics(
     )
 
     result = cube.collapsed(['latitude', 'longitude'], agg, **agg_kwargs)
-
-    # Make sure to preserve dtype
-    new_dtype = result.dtype
-    if original_dtype != new_dtype:
-        logger.debug(
-            "area_statistics changed dtype from %s to %s, changing back",
-            original_dtype,
-            new_dtype,
-        )
-        result.data = result.core_data().astype(original_dtype)
+    if normalize is not None:
+        result = get_normalized_cube(cube, result, normalize)
 
     # Make sure input cube has not been modified
     if not has_cell_measure and cube.cell_measures('cell_area'):
@@ -909,6 +966,23 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
     result = fix_coordinate_ordering(cubelist.merge_cube())
     if cube.cell_measures():
         for measure in cube.cell_measures():
+            # Cell measures that are time-dependent, with 4 dimension and
+            # an original shape of (time, depth, lat, lon), need to be
+            # broadcasted to the cube with 5 dimensions and shape
+            # (time, shape_id, depth, lat, lon)
+            if measure.ndim > 3 and result.ndim > 4:
+                data = measure.core_data()
+                data = da.expand_dims(data, axis=(1,))
+                data = da.broadcast_to(data, result.shape)
+                measure = iris.coords.CellMeasure(
+                    data,
+                    standard_name=measure.standard_name,
+                    long_name=measure.long_name,
+                    units=measure.units,
+                    measure=measure.measure,
+                    var_name=measure.var_name,
+                    attributes=measure.attributes,
+                )
             add_cell_measure(result, measure, measure.measure)
     if cube.ancillary_variables():
         for ancillary_variable in cube.ancillary_variables():

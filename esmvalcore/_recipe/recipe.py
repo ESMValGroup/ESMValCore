@@ -50,7 +50,7 @@ from .from_datasets import datasets_to_recipe
 from .to_datasets import (
     _derive_needed,
     _get_input_datasets,
-    _representative_dataset,
+    _representative_datasets,
 )
 
 logger = logging.getLogger(__name__)
@@ -116,7 +116,7 @@ def _update_target_levels(dataset, datasets, settings):
             del settings['extract_levels']
         else:
             target_ds = _select_dataset(dataset_name, datasets)
-            representative_ds = _representative_dataset(target_ds)
+            representative_ds = _representative_datasets(target_ds)[0]
             check.data_availability(representative_ds)
             settings['extract_levels']['levels'] = get_reference_levels(
                 representative_ds)
@@ -133,8 +133,8 @@ def _update_target_grid(dataset, datasets, settings):
     if dataset.facets['dataset'] == grid:
         del settings['regrid']
     elif any(grid == d.facets['dataset'] for d in datasets):
-        representative_ds = _representative_dataset(
-            _select_dataset(grid, datasets))
+        representative_ds = _representative_datasets(
+            _select_dataset(grid, datasets))[0]
         check.data_availability(representative_ds)
         settings['regrid']['target_grid'] = representative_ds
     else:
@@ -250,23 +250,40 @@ def _add_to_download_list(dataset):
 
 
 def _schedule_for_download(datasets):
-    """Schedule files for download and show the list of files in the log."""
+    """Schedule files for download."""
     for dataset in datasets:
         _add_to_download_list(dataset)
         for supplementary_ds in dataset.supplementaries:
             _add_to_download_list(supplementary_ds)
 
-        files = list(dataset.files)
-        for supplementary_ds in dataset.supplementaries:
-            files.extend(supplementary_ds.files)
+
+def _log_input_files(datasets: Iterable[Dataset]) -> None:
+    """Show list of files in log (including supplementaries)."""
+    for dataset in datasets:
+        # Only log supplementary variables if present
+        supplementary_files_str = ""
+        if dataset.supplementaries:
+            for sup_ds in dataset.supplementaries:
+                supplementary_files_str += (
+                    f"\nwith files for supplementary variable "
+                    f"{sup_ds['short_name']}:\n{_get_files_str(sup_ds)}"
+                )
 
         logger.debug(
-            "Using input files for variable %s of dataset %s:\n%s",
+            "Using input files for variable %s of dataset %s:\n%s%s",
             dataset.facets['short_name'],
-            dataset.facets['alias'].replace('_', ' '),
-            '\n'.join(f'{f} (will be downloaded)' if not f.exists() else str(f)
-                      for f in files),
+            dataset.facets['alias'].replace('_', ' '),  # type: ignore
+            _get_files_str(dataset),
+            supplementary_files_str
         )
+
+
+def _get_files_str(dataset: Dataset) -> str:
+    """Get nice string representation of all files of a dataset."""
+    return '\n'.join(
+        f'  {f}' if f.exists()  # type: ignore
+        else f'  {f} (will be downloaded)' for f in dataset.files
+    )
 
 
 def _check_input_files(input_datasets: Iterable[Dataset]) -> set[str]:
@@ -517,6 +534,7 @@ def _get_preprocessor_products(
         _set_version(dataset, input_datasets)
         USED_DATASETS.append(dataset)
         _schedule_for_download(input_datasets)
+        _log_input_files(input_datasets)
         logger.info("Found input files for %s", dataset.summary(shorten=True))
 
         filename = _get_output_file(
@@ -638,6 +656,8 @@ def _update_preproc_functions(settings, dataset, datasets, missing_vars):
     if dataset.facets.get('frequency') == 'fx':
         check.check_for_temporal_preprocs(settings)
     check.statistics_preprocessors(settings)
+    check.regridding_schemes(settings)
+    check.bias_type(settings)
 
 
 def _get_preprocessor_task(datasets, profiles, task_name):

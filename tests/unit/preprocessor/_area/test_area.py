@@ -2,6 +2,7 @@
 import unittest
 from pathlib import Path
 
+import dask.array as da
 import fiona
 import iris
 import numpy as np
@@ -17,6 +18,7 @@ import esmvalcore.preprocessor
 import tests
 from esmvalcore.preprocessor._area import (
     _crop_cube,
+    _get_area_weights,
     _get_requested_geometries,
     _update_shapefile_path,
     area_statistics,
@@ -187,6 +189,41 @@ class Test(tests.Test):
         expected = np.ma.array([1., 1.], dtype=np.float32)
         self.assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-2 s-1')
+
+    def test_area_statistics_subtract_mean(self):
+        """Test for area average of a 2D field."""
+        input_data = self.grid.copy()
+        self.assertFalse(input_data.cell_measures('cell_area'))
+
+        result = area_statistics(input_data, 'mean', normalize='subtract')
+
+        self.assertEqual(input_data, self.grid)
+        self.assertEqual(result.shape, input_data.shape)
+        expected = np.ma.zeros((2, 5, 5), dtype=np.float32)
+        self.assert_array_equal(result.data, expected)
+        self.assertFalse(result.cell_measures('cell_area'))
+        self.assertEqual(result.metadata, self.grid.metadata)
+        for coord in self.grid.coords():
+            self.assertEqual(result.coord(coord.name()), coord)
+
+    def test_area_statistics_cell_measure_subtract_mean(self):
+        """Test for area average of a 2D field.
+
+        The area measure is pre-loaded in the cube.
+        """
+        self._add_cell_measure_to_grid()
+        input_data = self.grid.copy()
+
+        result = area_statistics(input_data, 'mean', normalize='subtract')
+
+        self.assertEqual(input_data, self.grid)
+        self.assertEqual(result.shape, input_data.shape)
+        expected = np.ma.zeros((2, 5, 5), dtype=np.float32)
+        self.assert_array_equal(result.data, expected)
+        self.assertFalse(result.cell_measures('cell_area'))
+        self.assertEqual(result.metadata, self.grid.metadata)
+        for coord in self.grid.coords():
+            self.assertEqual(result.coord(coord.name()), coord)
 
     def test_extract_region(self):
         """Test for extracting a region from a 2D field."""
@@ -604,7 +641,7 @@ def test_area_statistics_sum_unstructured_grid_fail():
 def make_testcube():
     """Create a test cube on a Cartesian grid."""
     coord_sys = iris.coord_systems.GeogCS(EARTH_RADIUS)
-    data = np.ones((5, 5))
+    data = np.ones((5, 5), dtype=np.float32)
     lons = iris.coords.DimCoord(
         [i + .5 for i in range(5)],
         standard_name='longitude',
@@ -770,7 +807,7 @@ def test_crop_cube_with_ne_file(ne_ocean_shapefile):
         result = _crop_cube(cube, *geometries.bounds, cmor_coords=False)
         result = (result.coord("latitude").points[-1],
                   result.coord("longitude").points[-1])
-        expected = (89., 359.)
+        expected = (89., 179.)
         np.testing.assert_allclose(result, expected)
 
 
@@ -1270,6 +1307,39 @@ def test_zonal_statistics(make_testcube):
     assert res.dtype == np.float32
 
 
+def test_zonal_statistics_divide_by_min(make_testcube):
+    """Test ``zonal_statistics``."""
+    make_testcube.data = np.ones(make_testcube.shape, dtype=np.float32)
+    make_testcube.data[0, 0] = 0.0
+    make_testcube.data[1, 0] = -1.0
+    make_testcube.data[2, 0] = -0.5
+    make_testcube.units = 'K'
+    input_data = make_testcube.copy()
+
+    res = zonal_statistics(input_data, 'min', normalize='divide')
+
+    assert input_data == make_testcube
+    assert res.shape == input_data.shape
+    expected = np.ma.masked_invalid(
+        [
+            [np.nan, np.nan, np.nan, np.nan, np.nan],
+            [1.0, -1.0, -1.0, -1.0, -1.0],
+            [1.0, -2.0, -2.0, -2.0, -2.0],
+            [1.0, 1.0, 1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0, 1.0, 1.0],
+        ],
+    )
+    tests.assert_array_equal(res.data, expected)
+    assert res.dtype == np.float32
+
+    assert res.standard_name == input_data.standard_name
+    assert res.var_name == input_data.var_name
+    assert res.long_name == input_data.long_name
+    assert res.cell_methods == input_data.cell_methods
+    assert res.attributes == input_data.attributes
+    assert res.units == '1'
+
+
 def test_zonal_statistics_2d_lon_fail(irreg_extract_shape_cube):
     """Test ``zonal_statistics``."""
     with pytest.raises(ValueError):
@@ -1286,10 +1356,112 @@ def test_meridional_statistics(make_testcube):
     assert res.dtype == np.float32
 
 
+def test_meridional_statistics_divide_by_max(make_testcube):
+    """Test ``meridional_statistics``."""
+    make_testcube.data = np.ones(make_testcube.shape, dtype=np.float32)
+    make_testcube.data[0, 0] = 0.25
+    make_testcube.data[0, 1] = 2.0
+    make_testcube.units = 'K'
+    input_data = make_testcube.copy()
+
+    res = meridional_statistics(input_data, 'max', normalize='divide')
+
+    assert input_data == make_testcube
+    assert res.shape == input_data.shape
+    expected = np.ma.masked_invalid(
+        [
+            [0.25, 1.0, 1.0, 1.0, 1.0],
+            [1.0, 0.5, 1.0, 1.0, 1.0],
+            [1.0, 0.5, 1.0, 1.0, 1.0],
+            [1.0, 0.5, 1.0, 1.0, 1.0],
+            [1.0, 0.5, 1.0, 1.0, 1.0],
+        ],
+    )
+    tests.assert_array_equal(res.data, expected)
+    assert res.dtype == np.float32
+
+    assert res.standard_name == input_data.standard_name
+    assert res.var_name == input_data.var_name
+    assert res.long_name == input_data.long_name
+    assert res.cell_methods == input_data.cell_methods
+    assert res.attributes == input_data.attributes
+    assert res.units == '1'
+
+
 def test_meridional_statistics_2d_lon_fail(irreg_extract_shape_cube):
     """Test ``meridional_statistics``."""
     with pytest.raises(ValueError):
         meridional_statistics(irreg_extract_shape_cube, 'sum')
+
+
+def test_meridional_statistics_invalid_norm_fail(make_testcube):
+    """Test ``meridional_statistics``."""
+    msg = "Expected 'subtract' or 'divide' for `normalize`"
+    with pytest.raises(ValueError, match=msg):
+        meridional_statistics(make_testcube, 'sum', normalize='x')
+
+
+def test_time_dependent_volcello():
+    coord_sys = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
+    data = np.ma.ones((2, 3, 2, 2))
+
+    time = iris.coords.DimCoord([15, 45],
+                                standard_name='time',
+                                bounds=[[1., 30.], [30., 60.]],
+                                units=Unit('days since 1950-01-01',
+                                calendar='gregorian'))
+
+    zcoord = iris.coords.DimCoord([0.5, 5., 50.],
+                                  long_name='zcoord',
+                                  bounds=[[0., 2.5], [2.5, 25.],
+                                          [25., 250.]],
+                                  units='m',
+                                  attributes={'positive': 'down'})
+    lons = iris.coords.DimCoord([1.5, 2.5],
+                                standard_name='longitude',
+                                bounds=[[1., 2.], [2., 3.]],
+                                units='degrees_east',
+                                coord_system=coord_sys)
+    lats = iris.coords.DimCoord([1.5, 2.5],
+                                standard_name='latitude',
+                                bounds=[[1., 2.], [2., 3.]],
+                                units='degrees_north',
+                                coord_system=coord_sys)
+    coords_spec4 = [(time, 0), (zcoord, 1), (lats, 2), (lons, 3)]
+    cube = iris.cube.Cube(data, dim_coords_and_dims=coords_spec4)
+    volcello = iris.coords.CellMeasure(
+        data,
+        standard_name='ocean_volume',
+        units='m3',
+        measure='volume')
+    cube.add_cell_measure(volcello, range(0, volcello.ndim))
+    cube = extract_shape(
+        cube,
+        'AR6',
+        method='contains',
+        crop=False,
+        decomposed=True,
+        ids={'Acronym': ['EAO', 'WAF']},
+    )
+
+    assert cube.shape == cube.cell_measure('ocean_volume').shape
+
+
+@pytest.mark.parametrize('lazy', [True, False])
+def test_get_area_weights(lazy):
+    """Test _get_area_weights."""
+    cube = _create_sample_full_cube()
+    if lazy:
+        cube.data = cube.lazy_data()
+    weights = _get_area_weights(cube)
+    if lazy:
+        assert isinstance(weights, da.Array)
+        assert weights.chunks == cube.lazy_data().chunks
+    else:
+        assert isinstance(weights, np.ndarray)
+    np.testing.assert_allclose(
+        weights, iris.analysis.cartography.area_weights(cube)
+    )
 
 
 if __name__ == '__main__':

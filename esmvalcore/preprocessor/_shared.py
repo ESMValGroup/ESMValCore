@@ -3,18 +3,23 @@ Shared functions for preprocessor.
 
 Utility functions that can be used for multiple preprocessor steps
 """
+from __future__ import annotations
+
 import logging
 import re
 import warnings
 from collections.abc import Callable
-from typing import Any, Optional
+from functools import wraps
+from typing import Any, Literal, Optional
 
+import dask.array as da
 import iris.analysis
 import numpy as np
 from iris.coords import DimCoord
 from iris.cube import Cube
 
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+from esmvalcore.typing import DataType
 
 logger = logging.getLogger(__name__)
 
@@ -181,3 +186,83 @@ def update_weights_kwargs(
     else:
         kwargs.pop('weights', None)
     return kwargs
+
+
+def get_normalized_cube(
+    cube: Cube,
+    statistics_cube: Cube,
+    normalize: Literal['subtract', 'divide'],
+) -> Cube:
+    """Get cube normalized with statistics cube.
+
+    Parameters
+    ----------
+    cube:
+        Input cube that will be normalized.
+    statistics_cube:
+        Cube that is used to normalize the input cube. Needs to be
+        broadcastable to the input cube's shape according to iris' rich
+        broadcasting rules enabled by the use of named dimensions (see also
+        https://scitools-iris.readthedocs.io/en/latest/userguide/cube_maths.
+        html#calculating-a-cube-anomaly). This is usually ensure by using
+        :meth:`iris.cube.Cube.collapsed` to calculate the statistics cube.
+    normalize:
+        Normalization operation. Can either be `subtract` (statistics cube is
+        subtracted from the input cube) or `divide` (input cube is divided by
+        the statistics cube).
+
+    Returns
+    -------
+    Cube
+        Input cube normalized with statistics cube.
+
+    """
+    if normalize == 'subtract':
+        normalized_cube = cube - statistics_cube
+
+    elif normalize == 'divide':
+        normalized_cube = cube / statistics_cube
+
+        # Iris sometimes masks zero-divisions, sometimes not
+        # (https://github.com/SciTools/iris/issues/5523). Make sure to
+        # consistently mask them here.
+        normalized_cube.data = da.ma.masked_invalid(
+            normalized_cube.core_data()
+        )
+
+    else:
+        raise ValueError(
+            f"Expected 'subtract' or 'divide' for `normalize`, got "
+            f"'{normalize}'"
+        )
+
+    # Keep old metadata except for units
+    new_units = normalized_cube.units
+    normalized_cube.metadata = cube.metadata
+    normalized_cube.units = new_units
+
+    return normalized_cube
+
+
+def preserve_float_dtype(func: Callable) -> Callable:
+    """Preserve object's float dtype (all other dtypes are allowed to change).
+
+    This can be used as a decorator for preprocessor functions to ensure that
+    floating dtypes are preserved. For example, input of type float32 will
+    always give output of type float32, but input of type int will be allowed
+    to give output with any type.
+
+    """
+
+    @wraps(func)
+    def wrapper(data: DataType, *args: Any, **kwargs: Any) -> DataType:
+        dtype = data.dtype
+        result = func(data, *args, **kwargs)
+        if np.issubdtype(dtype, np.floating) and result.dtype != dtype:
+            if isinstance(result, Cube):
+                result.data = result.core_data().astype(dtype)
+            else:
+                result = result.astype(dtype)
+        return result
+
+    return wrapper

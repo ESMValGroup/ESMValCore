@@ -1,13 +1,18 @@
 """Unit tests for `esmvalcore.preprocessor._shared`."""
+import inspect
 import warnings
 
+import dask.array as da
 import iris.analysis
+import numpy as np
 import pytest
+from iris.cube import Cube
 
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.preprocessor._shared import (
     aggregator_accept_weights,
     get_iris_aggregator,
+    preserve_float_dtype,
 )
 
 
@@ -182,3 +187,52 @@ def test_get_iris_aggregator_missing_kwarg():
 def test_aggregator_accept_weights(aggregator, result):
     """Test ``aggregator_accept_weights``."""
     assert aggregator_accept_weights(aggregator) == result
+
+
+@preserve_float_dtype
+def _dummy_func(obj, arg, kwarg=2.0):
+    """Dummy function to test `preserve_float_dtype`."""
+    obj = obj * arg * kwarg
+    if isinstance(obj, Cube):
+        obj.data = obj.core_data().astype(np.float64)
+    else:
+        obj = obj.astype(np.float64)
+    return obj
+
+
+@pytest.mark.parametrize(
+    'data,dtype',
+    [
+        (np.array([1.0], dtype=np.float64), np.float64),
+        (np.array([1.0], dtype=np.float32), np.float32),
+        (np.array([1], dtype=np.int64), np.float64),
+        (np.array([1], dtype=np.int32), np.float64),
+        (da.array([1.0], dtype=np.float64), np.float64),
+        (da.array([1.0], dtype=np.float32), np.float32),
+        (da.array([1], dtype=np.int64), np.float64),
+        (da.array([1], dtype=np.int32), np.float64),
+        (Cube(np.array([1.0], dtype=np.float64)), np.float64),
+        (Cube(np.array([1.0], dtype=np.float32)), np.float32),
+        (Cube(np.array([1], dtype=np.int64)), np.float64),
+        (Cube(np.array([1], dtype=np.int32)), np.float64),
+        (Cube(da.array([1.0], dtype=np.float64)), np.float64),
+        (Cube(da.array([1.0], dtype=np.float32)), np.float32),
+        (Cube(da.array([1], dtype=np.int64)), np.float64),
+        (Cube(da.array([1], dtype=np.int32)), np.float64),
+    ],
+)
+def test_preserve_float_dtype(data, dtype):
+    """Test `preserve_float_dtype`."""
+    input_data = data.copy()
+
+    result = _dummy_func(input_data, 2.0)
+
+    assert input_data.dtype == data.dtype
+    assert result.dtype == dtype
+    assert isinstance(result, type(data))
+    if isinstance(data, Cube):
+        assert result.has_lazy_data() == data.has_lazy_data()
+
+    assert _dummy_func.__name__ == '_dummy_func'
+    signature = inspect.signature(_dummy_func)
+    assert list(signature.parameters) == ['obj', 'arg', 'kwarg']

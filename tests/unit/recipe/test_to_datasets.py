@@ -277,6 +277,30 @@ def test_merge_supplementaries_missing_short_name_fails(session):
         Dataset.from_recipe(recipe_txt, session)
 
 
+def test_get_input_datasets_derive(session):
+    dataset = Dataset(
+        dataset='ERA5',
+        project='native6',
+        mip='E1hr',
+        short_name='rlus',
+        alias='ERA5',
+        derive=True,
+        force_derivation=True,
+        frequency='1hr',
+        recipe_dataset_index=0,
+        tier='3',
+        type='reanaly',
+        version='v1',
+    )
+    rlds, rlns = to_datasets._get_input_datasets(dataset)
+    assert rlds['short_name'] == 'rlds'
+    assert rlds['long_name'] == 'Surface Downwelling Longwave Radiation'
+    assert rlds['frequency'] == '1hr'
+    assert rlns['short_name'] == 'rlns'
+    assert rlns['long_name'] == 'Surface Net downward Longwave Radiation'
+    assert rlns['frequency'] == '1hr'
+
+
 def test_max_years(session):
     recipe_txt = textwrap.dedent("""
     diagnostics:
@@ -300,6 +324,7 @@ def test_max_years(session):
 
 @pytest.mark.parametrize('found_files', [True, False])
 def test_dataset_from_files_fails(monkeypatch, found_files):
+
     def from_files(_):
         file = LocalFile('/path/to/file')
         file.facets = {'facets1': 'value1'}
@@ -323,6 +348,7 @@ def test_dataset_from_files_fails(monkeypatch, found_files):
 
 
 def test_fix_cmip5_fx_ensemble(monkeypatch):
+
     def find_files(self):
         if self.facets['ensemble'] == 'r0i0p0':
             self._files = ['file1.nc']
@@ -343,6 +369,7 @@ def test_fix_cmip5_fx_ensemble(monkeypatch):
 
 
 def test_get_supplementary_short_names(monkeypatch):
+
     def _update_cmor_facets(facets):
         facets['modeling_realm'] = 'atmos'
 
@@ -384,3 +411,28 @@ def test_append_missing_supplementaries():
 
     short_names = {f['short_name'] for f in supplementaries}
     assert short_names == {'areacella', 'sftlf'}
+
+
+def test_report_unexpanded_globs(mocker):
+    dataset = Dataset(
+        alias='CMIP5',
+        dataset='*',
+        diagnostic='diagnostic1',
+        ensemble='r1i1p1',
+        exp='historical',
+        mip='Amon',
+        preprocessor='preprocessor1',
+        project='CMIP5',
+        recipe_dataset_index=1,
+        short_name='ta',
+        variable_group='ta850',
+    )
+    file = mocker.Mock(facets={'dataset': '*'})
+    dataset.files = [file]
+    unexpanded_globs = {'dataset': '*'}
+
+    msg = to_datasets._report_unexpanded_globs(
+        dataset, dataset, unexpanded_globs
+    )
+
+    assert 'paths to the' not in msg
