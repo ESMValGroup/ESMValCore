@@ -18,6 +18,7 @@ from esmvalcore.iris_helpers import (
     has_unstructured_grid,
     rechunk_cube,
 )
+from esmvalcore.preprocessor._shared import preserve_float_dtype
 
 logger = logging.getLogger(__name__)
 
@@ -235,7 +236,7 @@ class UnstructuredLinearRegridder:
             aux_coords_and_dims.append((aux_coord, dims))
 
         # Create new cube with regridded data
-        regridded_data = self._get_regridded_data(cube)
+        regridded_data = preserve_float_dtype(self._get_regridded_data)(cube)
         regridded_cube = Cube(
             regridded_data,
             dim_coords_and_dims=dim_coords_and_dims,
@@ -266,11 +267,6 @@ class UnstructuredLinearRegridder:
         else:
             regridded_data = self._regrid_eager(src_data, udim)
         regridded_data = npx.ma.masked_invalid(regridded_data)
-
-        # Ensure correct dtype
-        # TODO: preserve ints
-        if regridded_data.dtype != cube.dtype:
-            regridded_data = regridded_data.astype(cube.dtype)
 
         return regridded_data
 
