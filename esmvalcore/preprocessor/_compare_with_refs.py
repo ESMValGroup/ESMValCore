@@ -18,12 +18,12 @@ from scipy.stats import wasserstein_distance
 
 from esmvalcore.iris_helpers import rechunk_cube
 from esmvalcore.preprocessor._io import concatenate
-from esmvalcore.preprocessor._other import (
+from esmvalcore.preprocessor._other import histogram
+from esmvalcore.preprocessor._shared import (
     get_all_coord_dims,
     get_all_coords,
     get_array_module,
     get_weights,
-    histogram,
 )
 
 if TYPE_CHECKING:

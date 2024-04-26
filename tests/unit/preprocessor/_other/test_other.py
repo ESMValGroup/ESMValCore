@@ -19,13 +19,7 @@ from iris.coords import (
 from iris.cube import Cube
 from numpy.testing import assert_array_equal
 
-from esmvalcore.preprocessor import PreprocessorFile
-from esmvalcore.preprocessor._other import (
-    _group_products,
-    clip,
-    get_array_module,
-    histogram,
-)
+from esmvalcore.preprocessor._other import clip, histogram
 from tests.unit.preprocessor._compare_with_refs.test_compare_with_refs import (
     get_3d_cube,
 )
@@ -61,47 +55,6 @@ class TestOther(unittest.TestCase):
         # Maximum lower than minimum
         with self.assertRaises(ValueError):
             clip(cube, 10, 8)
-
-
-def test_group_products_string_list():
-    products = [
-        PreprocessorFile(
-            filename='A_B.nc',
-            attributes={
-                'project': 'A',
-                'dataset': 'B',
-            },
-        ),
-        PreprocessorFile(
-            filename='A_C.nc',
-            attributes={
-                'project': 'A',
-                'dataset': 'C',
-            }
-        ),
-    ]
-    grouped_by_string = _group_products(products, 'project')
-    grouped_by_list = _group_products(products, ['project'])
-
-    assert grouped_by_list == grouped_by_string
-
-
-def test_get_array_module_da():
-
-    npx = get_array_module(da.array([1, 2]))
-    assert npx is da
-
-
-def test_get_array_module_np():
-
-    npx = get_array_module(np.array([1, 2]))
-    assert npx is np
-
-
-def test_get_array_module_mixed():
-
-    npx = get_array_module(da.array([1]), np.array([1]))
-    assert npx is da
 
 
 @pytest.fixture

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import logging
 import string
-from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from typing import Literal
 
@@ -13,12 +12,14 @@ import iris.analysis
 import numpy as np
 from iris.coords import Coord, DimCoord
 from iris.cube import Cube
-from iris.exceptions import CoordinateNotFoundError
-from iris.util import broadcast_to_shape
 
 from esmvalcore.iris_helpers import rechunk_cube
-from esmvalcore.preprocessor._area import _try_adding_calculated_cell_area
-from esmvalcore.preprocessor._time import get_time_weights
+from esmvalcore.preprocessor._shared import (
+    get_all_coord_dims,
+    get_all_coords,
+    get_array_module,
+    get_weights,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -51,122 +52,6 @@ def clip(cube, minimum=None, maximum=None):
             raise ValueError("Maximum should be equal or larger than minimum.")
     cube.data = da.clip(cube.core_data(), minimum, maximum)
     return cube
-
-
-def _groupby(iterable, keyfunc):
-    """Group iterable by key function.
-
-    The items are grouped by the value that is returned by the `keyfunc`
-
-    Parameters
-    ----------
-    iterable : list, tuple or iterable
-        List of items to group
-    keyfunc : callable
-        Used to determine the group of each item. These become the keys
-        of the returned dictionary
-
-    Returns
-    -------
-    dict
-        Returns a dictionary with the grouped values.
-    """
-    grouped = defaultdict(set)
-    for item in iterable:
-        key = keyfunc(item)
-        grouped[key].add(item)
-
-    return grouped
-
-
-def _group_products(products, by_key):
-    """Group products by the given list of attributes."""
-    def grouper(product):
-        return product.group(by_key)
-
-    grouped = _groupby(products, keyfunc=grouper)
-    return grouped.items()
-
-
-def get_array_module(*args):
-    """Return the best matching array module.
-
-    If at least one of the arguments is a :class:`dask.array.Array` object,
-    the :mod:`dask.array` module is returned. In all other cases the
-    :mod:`numpy` module is returned.
-    """
-    for arg in args:
-        if isinstance(arg, da.Array):
-            return da
-    return np
-
-
-def get_all_coords(
-    cube: Cube,
-    coords: Iterable[Coord] | Iterable[str] | None,
-) -> Iterable[Coord] | Iterable[str]:
-    """Get all desired coordinates in a cube."""
-    if coords is None:
-        coords = [c.name() for c in cube.dim_coords]
-        if len(coords) != cube.ndim:
-            raise ValueError(
-                f"If coords=None is specified, the cube "
-                f"{cube.summary(shorten=True)} must not have unnamed "
-                f"dimensions"
-            )
-    return coords
-
-
-def get_all_coord_dims(
-    cube: Cube,
-    coords: Iterable[Coord] | Iterable[str],
-) -> tuple[int, ...]:
-    """Get sorted list of all coordinate dimensions from coordinates."""
-    all_coord_dims = []
-    for coord in coords:
-        all_coord_dims.extend(cube.coord_dims(coord))
-    sorted_all_coord_dims = sorted(list(set(all_coord_dims)))
-    return tuple(sorted_all_coord_dims)
-
-
-def get_weights(
-    cube: Cube,
-    coords: Iterable[Coord] | Iterable[str],
-) -> np.ndarray | da.Array:
-    """Calculate suitable weights for given coordinates."""
-    npx = get_array_module(cube.core_data())
-    weights = npx.ones_like(cube.core_data())
-
-    # Time weights: lengths of time interval
-    if 'time' in coords:
-        weights *= broadcast_to_shape(
-            npx.array(get_time_weights(cube)),
-            cube.shape,
-            cube.coord_dims('time'),
-        )
-
-    # Latitude weights: cell areas
-    if 'latitude' in coords:
-        cube = cube.copy()  # avoid overwriting input cube
-        if (
-                not cube.cell_measures('cell_area') and
-                not cube.coords('longitude')
-        ):
-            raise CoordinateNotFoundError(
-                f"Cube {cube.summary(shorten=True)} needs a `longitude` "
-                f"coordinate to calculate cell area weights for weighted "
-                f"distance metric over coordinates {coords} (alternatively, "
-                f"a `cell_area` can be given to the cube as supplementary "
-                f"variable)"
-            )
-        _try_adding_calculated_cell_area(cube)
-        weights *= broadcast_to_shape(
-            cube.cell_measure('cell_area').core_data(),
-            cube.shape,
-            cube.cell_measure_dims('cell_area'),
-        )
-
-    return weights
 
 
 def histogram(

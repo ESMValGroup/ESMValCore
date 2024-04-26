@@ -32,6 +32,7 @@ from esmvalcore.cmor.fixes import get_next_month, get_time_bounds
 from esmvalcore.iris_helpers import date2num, rechunk_cube
 from esmvalcore.preprocessor._shared import (
     get_iris_aggregator,
+    get_time_weights,
     preserve_float_dtype,
     update_weights_kwargs,
 )
@@ -381,40 +382,6 @@ def extract_month(cube: Cube, month: int) -> Cube:
     if result is None:
         raise ValueError(f'Month {month!r} not present in cube {cube}')
     return result
-
-
-def get_time_weights(cube: Cube) -> np.ndarray | da.core.Array:
-    """Compute the weighting of the time axis.
-
-    Parameters
-    ----------
-    cube:
-        Input cube.
-
-    Returns
-    -------
-    np.ndarray or da.Array
-        Array of time weights for averaging. Returns a
-        :class:`dask.array.Array` if the input cube has lazy data; a
-        :class:`numpy.ndarray` otherwise.
-
-    """
-    time = cube.coord('time')
-    coord_dims = cube.coord_dims('time')
-
-    # Multidimensional time coordinates are not supported: In this case,
-    # weights cannot be simply calculated as difference between the bounds
-    if len(coord_dims) > 1:
-        raise ValueError(
-            f"Weighted statistical operations are not supported for "
-            f"{len(coord_dims):d}D time coordinates, expected 0D or 1D"
-        )
-
-    # Extract 1D time weights (= lengths of time intervals)
-    time_weights = time.lazy_bounds()[:, 1] - time.lazy_bounds()[:, 0]
-    if not cube.has_lazy_data():
-        time_weights = time_weights.compute()
-    return time_weights
 
 
 def _aggregate_time_fx(result_cube, source_cube):

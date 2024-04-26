@@ -37,13 +37,13 @@ from esmvalcore.preprocessor import (
 )
 from esmvalcore.preprocessor._area import _update_shapefile_path
 from esmvalcore.preprocessor._multimodel import _get_stat_identifier
-from esmvalcore.preprocessor._other import _group_products
 from esmvalcore.preprocessor._regrid import (
     _spec_to_latlonvals,
     get_cmor_levels,
     get_reference_levels,
     parse_cell_spec,
 )
+from esmvalcore.preprocessor._shared import _group_products
 
 from . import check
 from .from_datasets import datasets_to_recipe
