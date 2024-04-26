@@ -889,6 +889,19 @@ ESMValCore has a number of built-in regridding schemes, which are presented in
 third party regridding schemes designed for use with :doc:`Iris
 <iris:index>`. This is explained in :ref:`generic regridding schemes`.
 
+Grid types
+~~~~~~~~~~
+
+In ESMValCore, we distinguish between three grid types (note that these might
+differ from other definitions):
+
+* **Regular grid**: A rectilinear grid with 1D latitude and 1D longitude
+  coordinates which are orthogonal to each other.
+* **Irregular grid**: A general curvilinear grid with 2D latitude and 2D
+  longitude coordinates with common dimensions.
+* **Unstructured grid**: A grid with 1D latitude and 1D longitude coordinates
+  with common dimensions (i.e., a simple list of points).
+
 .. _built-in regridding schemes:
 
 Built-in regridding schemes
@@ -899,7 +912,8 @@ Built-in regridding schemes
   `extrapolation_mode='mask'`.
   For source data on an irregular grid, uses
   :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyLinear`.
-  Source data on an unstructured grid is not supported, yet.
+  For source data on an unstructured grid, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.UnstructuredLinear`.
 * ``nearest``: Nearest-neighbor regridding.
   For source data on a regular grid, uses :obj:`~iris.analysis.Nearest` with
   `extrapolation_mode='mask'`.
@@ -911,7 +925,7 @@ Built-in regridding schemes
   For source data on a regular grid, uses :obj:`~iris.analysis.AreaWeighted`.
   For source data on an irregular grid, uses
   :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyAreaWeighted`.
-  Source data on an unstructured grid is not supported, yet.
+  Source data on an unstructured grid is not supported.
 
 .. _generic regridding schemes:
 
@@ -924,9 +938,9 @@ to transform a source cube with a given grid into the grid defined by a given
 target cube. Iris itself provides a number of useful schemes, but they are
 largely limited to work with simple, regular grids. Other schemes can be
 provided independently. This is interesting when special regridding-needs arise
-or when more involved grids and meshes need to be considered. Furthermore, it
-may be desirable to have finer control over the parameters of the scheme than
-is afforded by the built-in schemes described above.
+or when more involved grids need to be considered. Furthermore, it may be
+desirable to have finer control over the parameters of the scheme than is
+afforded by the built-in schemes described above.
 
 To facilitate this, the :func:`~esmvalcore.preprocessor.regrid` preprocessor
 allows the use of any scheme designed for Iris. The scheme must be installed
@@ -976,11 +990,11 @@ module, the second refers to the scheme, i.e. some callable that will be called
 with the remaining entries of the ``scheme`` dictionary passed as keyword
 arguments.
 
-One package that aims to capitalize on the :ref:`support for unstructured
-meshes introduced in Iris 3.2 <iris:ugrid>` is
-:doc:`iris-esmf-regrid:index`. It aims to provide lazy regridding for
-structured regular and irregular grids, as well as unstructured meshes. An
-example of its usage in a preprocessor is:
+One package that aims to capitalize on the :ref:`support for unstructured grids
+introduced in Iris 3.2 <iris:ugrid>` is :doc:`iris-esmf-regrid:index`.
+It aims to provide lazy regridding for structured regular and irregular grids,
+as well as unstructured grids.
+An example of its usage in a preprocessor is:
 
 .. code-block:: yaml
 
