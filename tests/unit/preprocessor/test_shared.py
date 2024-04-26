@@ -7,6 +7,7 @@ import iris.analysis
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris.coords import AuxCoord
 from iris.cube import Cube
 
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
@@ -18,6 +19,7 @@ from esmvalcore.preprocessor._shared import (
     get_array_module,
     get_iris_aggregator,
     preserve_float_dtype,
+    try_adding_calculated_cell_area,
 )
 
 
@@ -330,3 +332,18 @@ def test_group_products_string_list():
     grouped_by_list = _group_products(products, ['project'])
 
     assert grouped_by_list == grouped_by_string
+
+
+def test_try_adding_calculated_cell_area():
+    """Test ``try_adding_calculated_cell_area``."""
+    cube = _create_sample_full_cube()
+    cube.coord('latitude').rename('grid_latitude')
+    cube.coord('longitude').rename('grid_longitude')
+    lat = AuxCoord(np.zeros((180, 360)), standard_name='latitude')
+    lon = AuxCoord(np.zeros((180, 360)), standard_name='longitude')
+    cube.add_aux_coord(lat, (1, 2))
+    cube.add_aux_coord(lon, (1, 2))
+
+    try_adding_calculated_cell_area(cube)
+
+    assert cube.cell_measures('cell_area')
