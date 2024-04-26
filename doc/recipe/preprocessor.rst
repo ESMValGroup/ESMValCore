@@ -1248,7 +1248,7 @@ The ``_time.py`` module contains the following preprocessor functions:
 * resample_time_: Resample data
 * resample_hours_: Convert between N-hourly frequencies by resampling
 * anomalies_: Compute (standardized) anomalies
-* regrid_time_: Aligns the time coordinate of each dataset.
+* regrid_time_: Aligns the time coordinate of each dataset, against a standardized time axis.
 * timeseries_filter_: Allows application of a filter to the time-series data.
 * local_solar_time_: Convert cube with UTC time to local solar time.
 
