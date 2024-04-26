@@ -247,8 +247,9 @@ class RecipeOutput(Mapping):
         )
         logger.info(
             "It looks like you are connected to a remote machine via SSH. To "
-            "show the output html file, you can try the following command:"
-            "\n%s\nThen visit http://localhost:%s in your browser",
+            "show the output html file, you can try the following command on "
+            "your local machine:\n%s\nThen visit http://localhost:%s in your "
+            "browser",
             command,
             port,
         )

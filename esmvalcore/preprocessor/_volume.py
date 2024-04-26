@@ -19,6 +19,7 @@ from ._area import _try_adding_calculated_cell_area
 from ._shared import (
     get_iris_aggregator,
     get_normalized_cube,
+    preserve_float_dtype,
     update_weights_kwargs,
 )
 from ._supplementary_vars import register_supplementaries
@@ -201,6 +202,7 @@ def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
     variables=['volcello', 'areacello'],
     required='prefer_at_least_one',
 )
+@preserve_float_dtype
 def volume_statistics(
     cube: Cube,
     operator: str,
@@ -288,6 +290,7 @@ def volume_statistics(
     return result
 
 
+@preserve_float_dtype
 def axis_statistics(
     cube: Cube,
     axis: str,

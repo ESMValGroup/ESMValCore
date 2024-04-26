@@ -32,6 +32,7 @@ from esmvalcore.cmor.fixes import get_next_month, get_time_bounds
 from esmvalcore.iris_helpers import date2num, rechunk_cube
 from esmvalcore.preprocessor._shared import (
     get_iris_aggregator,
+    preserve_float_dtype,
     update_weights_kwargs,
 )
 
@@ -446,6 +447,7 @@ def _aggregate_time_fx(result_cube, source_cube):
                                                    ancillary_dims)
 
 
+@preserve_float_dtype
 def hourly_statistics(
     cube: Cube,
     hours: int,
@@ -501,6 +503,7 @@ def hourly_statistics(
     return result
 
 
+@preserve_float_dtype
 def daily_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -541,6 +544,7 @@ def daily_statistics(
     return result
 
 
+@preserve_float_dtype
 def monthly_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -579,6 +583,7 @@ def monthly_statistics(
     return result
 
 
+@preserve_float_dtype
 def seasonal_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -673,6 +678,7 @@ def seasonal_statistics(
     return result
 
 
+@preserve_float_dtype
 def annual_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -714,6 +720,7 @@ def annual_statistics(
     return result
 
 
+@preserve_float_dtype
 def decadal_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -762,6 +769,7 @@ def decadal_statistics(
     return result
 
 
+@preserve_float_dtype
 def climate_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -804,7 +812,6 @@ def climate_statistics(
     iris.cube.Cube
         Climate statistics cube.
     """
-    original_dtype = cube.dtype
     period = period.lower()
 
     # Use Cube.collapsed when full period is requested
@@ -846,14 +853,6 @@ def climate_statistics(
                 clim_cube.slices_over(clim_coord.name())).merge_cube()
         cube.remove_coord(clim_coord)
 
-    # Make sure that original dtype is preserved
-    new_dtype = clim_cube.dtype
-    if original_dtype != new_dtype:
-        logger.debug(
-            "climate_statistics changed dtype from "
-            "%s to %s, changing back", original_dtype, new_dtype)
-        clim_cube.data = clim_cube.core_data().astype(original_dtype)
-
     return clim_cube
 
 
@@ -867,6 +866,7 @@ def _add_time_weights_coord(cube):
     cube.add_aux_coord(time_weights_coord, cube.coord_dims('time'))
 
 
+@preserve_float_dtype
 def anomalies(
     cube: Cube,
     period: str,
@@ -1198,6 +1198,7 @@ def low_pass_weights(window, cutoff):
     return weights[1:-1]
 
 
+@preserve_float_dtype
 def timeseries_filter(
     cube: Cube,
     window: int,
@@ -1752,6 +1753,7 @@ def _check_cube_coords(cube):
         )
 
 
+@preserve_float_dtype
 def local_solar_time(cube: Cube) -> Cube:
     """Convert UTC time coordinate to local solar time (LST).
 

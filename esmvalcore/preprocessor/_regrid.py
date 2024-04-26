@@ -31,6 +31,7 @@ from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import has_irregular_grid, has_unstructured_grid
 from esmvalcore.preprocessor._other import get_array_module
+from esmvalcore.preprocessor._shared import preserve_float_dtype
 from esmvalcore.preprocessor._supplementary_vars import (
     add_ancillary_variable,
     add_cell_measure,
@@ -707,6 +708,7 @@ def _get_name_and_shape_key(
     return (name, *shapes)
 
 
+@preserve_float_dtype
 def regrid(
     cube: Cube,
     target_grid: Cube | Dataset | Path | str | dict,
@@ -1205,6 +1207,7 @@ def _rechunk_aux_factory_dependencies(
     return cube
 
 
+@preserve_float_dtype
 def extract_levels(
     cube: iris.cube.Cube,
     levels: np.typing.ArrayLike | da.Array,
@@ -1395,6 +1398,7 @@ def get_reference_levels(dataset):
     return coord.points.tolist()
 
 
+@preserve_float_dtype
 def extract_coordinate_points(cube, definition, scheme):
     """Extract points from any coordinate with interpolation.
 
