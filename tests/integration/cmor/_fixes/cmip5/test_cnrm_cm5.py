@@ -4,8 +4,9 @@ import unittest
 from cf_units import Unit
 from iris.cube import Cube
 
-from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor._fixes.cmip5.cnrm_cm5 import Msftmyz, Msftmyzba
+from esmvalcore.cmor._fixes.fix import GenericFix
+from esmvalcore.cmor.fix import Fix
 
 
 class TestMsftmyz(unittest.TestCase):
@@ -19,7 +20,7 @@ class TestMsftmyz(unittest.TestCase):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'CNRM-CM5', 'Amon', 'msftmyz'),
-            [Msftmyz(None)])
+            [Msftmyz(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""
@@ -39,7 +40,7 @@ class TestMsftmyzba(unittest.TestCase):
         """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'CNRM-CM5', 'Amon', 'msftmyzba'),
-            [Msftmyzba(None)])
+            [Msftmyzba(None), GenericFix(None)])
 
     def test_fix_data(self):
         """Test data fix."""

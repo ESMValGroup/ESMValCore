@@ -1,35 +1,33 @@
 """Integration tests for :func:`esmvalcore.preprocessor._io.concatenate`."""
 
 import unittest
-import warnings
-from unittest.mock import call
 
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.aux_factory import (
-    AtmosphereSigmaFactory,
-    HybridHeightFactory,
-    HybridPressureFactory,
-)
+from iris.aux_factory import HybridPressureFactory
 from iris.coords import AuxCoord, DimCoord
 from iris.cube import Cube, CubeList
 
+from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.preprocessor import _io
 
 
 def get_hybrid_pressure_cube():
     """Return cube with hybrid pressure coordinate."""
     ap_coord = AuxCoord([1.0], bounds=[[0.0, 2.0]], var_name='ap', units='Pa')
-    b_coord = AuxCoord([0.0], bounds=[[-0.5, 1.5]],
-                       var_name='b', units=Unit('1'))
+    b_coord = AuxCoord([0.0],
+                       bounds=[[-0.5, 1.5]],
+                       var_name='b',
+                       units=Unit('1'))
     ps_coord = AuxCoord([[[100000]]], var_name='ps', units='Pa')
     x_coord = AuxCoord(
         0.0,
         var_name='x',
         standard_name='atmosphere_hybrid_sigma_pressure_coordinate',
     )
-    cube = Cube([[[[0.0]]]], var_name='x',
+    cube = Cube([[[[0.0]]]],
+                var_name='x',
                 aux_coords_and_dims=[(ap_coord, 1), (b_coord, 1),
                                      (ps_coord, (0, 2, 3)), (x_coord, ())])
     return cube
@@ -54,93 +52,10 @@ def get_hybrid_pressure_cube_list():
 
 def get_time_coord(time_point):
     """Time coordinate."""
-    return DimCoord([time_point], var_name='time', standard_name='time',
+    return DimCoord([time_point],
+                    var_name='time',
+                    standard_name='time',
                     units='days since 6453-2-1')
-
-
-@pytest.fixture
-def mock_empty_cube():
-    """Return mocked cube with irrelevant coordinates."""
-    cube = unittest.mock.create_autospec(Cube, spec_set=True, instance=True)
-    a_coord = AuxCoord(0.0, var_name='a')
-    b_coord = AuxCoord(0.0, var_name='b')
-    cube.coords.return_value = [a_coord, b_coord]
-    return cube
-
-
-@pytest.fixture
-def mock_atmosphere_sigma_cube():
-    """Return mocked cube with atmosphere sigma coordinate."""
-    cube = unittest.mock.create_autospec(Cube, spec_set=True, instance=True)
-    ptop_coord = AuxCoord([1.0], var_name='ptop', units='Pa')
-    lev_coord = AuxCoord([0.0], bounds=[[-0.5, 1.5]], var_name='lev',
-                         units='1')
-    ps_coord = AuxCoord([[[100000]]], var_name='ps', units='Pa')
-    cube.coord.side_effect = [ptop_coord, lev_coord, ps_coord,
-                              ptop_coord, lev_coord, ps_coord]
-    cube.coords.return_value = [
-        ptop_coord,
-        lev_coord,
-        ps_coord,
-        AuxCoord(0.0, standard_name='atmosphere_sigma_coordinate'),
-    ]
-    aux_factory = AtmosphereSigmaFactory(
-        pressure_at_top=ptop_coord,
-        sigma=lev_coord,
-        surface_air_pressure=ps_coord,
-    )
-    cube.aux_factories = ['dummy', aux_factory]
-    return cube
-
-
-@pytest.fixture
-def mock_hybrid_height_cube():
-    """Return mocked cube with hybrid height coordinate."""
-    cube = unittest.mock.create_autospec(Cube, spec_set=True, instance=True)
-    lev_coord = AuxCoord([1.0], bounds=[[0.0, 2.0]], var_name='lev', units='m')
-    b_coord = AuxCoord([0.0], bounds=[[-0.5, 1.5]], var_name='b')
-    orog_coord = AuxCoord([[[100000]]], var_name='orog', units='m')
-    cube.coord.side_effect = [lev_coord, b_coord, orog_coord,
-                              lev_coord, b_coord, orog_coord]
-    cube.coords.return_value = [
-        lev_coord,
-        b_coord,
-        orog_coord,
-        AuxCoord(0.0, standard_name='atmosphere_hybrid_height_coordinate'),
-    ]
-    aux_factory = HybridHeightFactory(
-        delta=lev_coord,
-        sigma=b_coord,
-        orography=orog_coord,
-    )
-    cube.aux_factories = ['dummy', aux_factory]
-    return cube
-
-
-@pytest.fixture
-def mock_hybrid_pressure_cube():
-    """Return mocked cube with hybrid pressure coordinate."""
-    cube = unittest.mock.create_autospec(Cube, spec_set=True, instance=True)
-    ap_coord = AuxCoord([1.0], bounds=[[0.0, 2.0]], var_name='ap', units='Pa')
-    b_coord = AuxCoord([0.0], bounds=[[-0.5, 1.5]],
-                       var_name='b', units=Unit('1'))
-    ps_coord = AuxCoord([[[100000]]], var_name='ps', units='Pa')
-    cube.coord.side_effect = [ap_coord, b_coord, ps_coord,
-                              ap_coord, b_coord, ps_coord]
-    cube.coords.return_value = [
-        ap_coord,
-        b_coord,
-        ps_coord,
-        AuxCoord(0.0,
-                 standard_name='atmosphere_hybrid_sigma_pressure_coordinate'),
-    ]
-    aux_factory = HybridPressureFactory(
-        delta=ap_coord,
-        sigma=b_coord,
-        surface_air_pressure=ps_coord,
-    )
-    cube.aux_factories = ['dummy', aux_factory]
-    return cube
 
 
 @pytest.fixture
@@ -155,106 +70,6 @@ def real_hybrid_pressure_cube_list():
     return get_hybrid_pressure_cube_list()
 
 
-def check_if_fix_aux_factories_is_necessary():
-    """Check if _fix_aux_factories() is necessary (i.e. iris bug is fixed)."""
-    cubes = get_hybrid_pressure_cube_list()
-    cube = cubes.concatenate_cube()
-    coords = [coord.name() for coord in cube.coords()]
-    msg = ("Apparently concatenation of cubes that have a derived variable "
-           "is now possible in iris (i.e. issue #2478 has been fixed). Thus, "
-           "this test and ALL appearances of the function "
-           "'_fix_aux_factories' can safely be removed!")
-    if 'air_pressure' in coords:
-        warnings.warn(msg)
-
-
-def test_fix_aux_factories_empty_cube(mock_empty_cube):
-    """Test fixing with empty cube."""
-    check_if_fix_aux_factories_is_necessary()
-    _io._fix_aux_factories(mock_empty_cube)
-    assert mock_empty_cube.mock_calls == [call.coords()]
-
-
-def test_fix_aux_factories_atmosphere_sigma(mock_atmosphere_sigma_cube):
-    """Test fixing of atmosphere sigma coordinate."""
-    check_if_fix_aux_factories_is_necessary()
-
-    # Test with aux_factory object
-    _io._fix_aux_factories(mock_atmosphere_sigma_cube)
-    mock_atmosphere_sigma_cube.coords.assert_called_once_with()
-    mock_atmosphere_sigma_cube.coord.assert_has_calls([call(var_name='ptop'),
-                                                       call(var_name='lev'),
-                                                       call(var_name='ps')])
-    mock_atmosphere_sigma_cube.add_aux_factory.assert_not_called()
-
-    # Test without aux_factory object
-    mock_atmosphere_sigma_cube.reset_mock()
-    mock_atmosphere_sigma_cube.aux_factories = ['dummy']
-    _io._fix_aux_factories(mock_atmosphere_sigma_cube)
-    mock_atmosphere_sigma_cube.coords.assert_called_once_with()
-    mock_atmosphere_sigma_cube.coord.assert_has_calls([call(var_name='ptop'),
-                                                       call(var_name='lev'),
-                                                       call(var_name='ps')])
-    mock_atmosphere_sigma_cube.add_aux_factory.assert_called_once()
-
-
-def test_fix_aux_factories_hybrid_height(mock_hybrid_height_cube):
-    """Test fixing of hybrid height coordinate."""
-    check_if_fix_aux_factories_is_necessary()
-
-    # Test with aux_factory object
-    _io._fix_aux_factories(mock_hybrid_height_cube)
-    mock_hybrid_height_cube.coords.assert_called_once_with()
-    mock_hybrid_height_cube.coord.assert_has_calls([call(var_name='lev'),
-                                                    call(var_name='b'),
-                                                    call(var_name='orog')])
-    mock_hybrid_height_cube.add_aux_factory.assert_not_called()
-
-    # Test without aux_factory object
-    mock_hybrid_height_cube.reset_mock()
-    mock_hybrid_height_cube.aux_factories = ['dummy']
-    _io._fix_aux_factories(mock_hybrid_height_cube)
-    mock_hybrid_height_cube.coords.assert_called_once_with()
-    mock_hybrid_height_cube.coord.assert_has_calls([call(var_name='lev'),
-                                                    call(var_name='b'),
-                                                    call(var_name='orog')])
-    mock_hybrid_height_cube.add_aux_factory.assert_called_once()
-
-
-def test_fix_aux_factories_hybrid_pressure(mock_hybrid_pressure_cube):
-    """Test fixing of hybrid pressure coordinate."""
-    check_if_fix_aux_factories_is_necessary()
-
-    # Test with aux_factory object
-    _io._fix_aux_factories(mock_hybrid_pressure_cube)
-    mock_hybrid_pressure_cube.coords.assert_called_once_with()
-    mock_hybrid_pressure_cube.coord.assert_has_calls([call(var_name='ap'),
-                                                      call(var_name='b'),
-                                                      call(var_name='ps')])
-    mock_hybrid_pressure_cube.add_aux_factory.assert_not_called()
-
-    # Test without aux_factory object
-    mock_hybrid_pressure_cube.reset_mock()
-    mock_hybrid_pressure_cube.aux_factories = ['dummy']
-    _io._fix_aux_factories(mock_hybrid_pressure_cube)
-    mock_hybrid_pressure_cube.coords.assert_called_once_with()
-    mock_hybrid_pressure_cube.coord.assert_has_calls([call(var_name='ap'),
-                                                      call(var_name='b'),
-                                                      call(var_name='ps')])
-    mock_hybrid_pressure_cube.add_aux_factory.assert_called_once()
-
-
-def test_fix_aux_factories_real_cube(real_hybrid_pressure_cube):
-    """Test fixing of hybrid pressure coordinate on real cube."""
-    check_if_fix_aux_factories_is_necessary()
-    assert not real_hybrid_pressure_cube.coords('air_pressure')
-    _io._fix_aux_factories(real_hybrid_pressure_cube)
-    air_pressure_coord = real_hybrid_pressure_cube.coord('air_pressure')
-    expected_coord = AuxCoord([[[[1.0]]]], bounds=[[[[[-50000., 150002.]]]]],
-                              standard_name='air_pressure', units='Pa')
-    assert air_pressure_coord == expected_coord
-
-
 def test_concatenation_with_aux_factory(real_hybrid_pressure_cube_list):
     """Test actual concatenation of a cube with a derived coordinate."""
     concatenated = _io.concatenate(real_hybrid_pressure_cube_list)
@@ -266,6 +81,18 @@ def test_concatenation_with_aux_factory(real_hybrid_pressure_cube_list):
         units='Pa',
     )
     assert air_pressure_coord == expected_coord
+
+
+@pytest.mark.parametrize('check_level',
+                         [CheckLevels.RELAXED, CheckLevels.IGNORE])
+def test_relax_concatenation(check_level, caplog):
+    caplog.set_level('DEBUG')
+    cubes = get_hybrid_pressure_cube_list()
+    _io.concatenate(cubes, check_level)
+    msg = ('Concatenation will be performed without checking '
+           'auxiliary coordinates, cell measures, ancillaries '
+           'and derived coordinates present in the cubes.')
+    assert msg in caplog.text
 
 
 class TestConcatenate(unittest.TestCase):
@@ -306,7 +133,7 @@ class TestConcatenate(unittest.TestCase):
         np.testing.assert_array_equal(
             concatenated.coord('time').points, np.array([1, 2]))
 
-    def test_concatenate_with_overlap(self):
+    def test_concatenate_with_overlap(self, ):
         """Test concatenation of time overalapping cubes."""
         self._add_cube([6.5, 7.5], [6., 7.])
         concatenated = _io.concatenate(self.raw_cubes)
@@ -439,8 +266,25 @@ class TestConcatenate(unittest.TestCase):
             concatenated.coord('time').points, np.array([1, 2, 3, 4, 5, 6]))
         self.assertEqual(
             concatenated.attributes,
-            {'equal_attr': 1, 'different_attr': '1 2 3'},
+            {
+                'equal_attr': 1,
+                'different_attr': '1 2 3'
+            },
         )
+
+    def test_convert_calendar_concatenate_with_overlap(self):
+        """Test compatible calendars get converted."""
+        time_coord = DimCoord([4., 5.],
+                              var_name='time',
+                              standard_name='time',
+                              units=Unit('days since 1950-01-01',
+                                         calendar='proleptic_gregorian'))
+        self.raw_cubes.append(
+            Cube([33., 55.],
+                 var_name='sample',
+                 dim_coords_and_dims=((time_coord, 0), )))
+        concatenated = _io.concatenate(self.raw_cubes)
+        assert concatenated.coord('time').units.calendar == 'standard'
 
     def test_fail_on_calendar_concatenate_with_overlap(self):
         """Test fail of concatenation with overlap."""
@@ -453,41 +297,8 @@ class TestConcatenate(unittest.TestCase):
             Cube([33., 55.],
                  var_name='sample',
                  dim_coords_and_dims=((time_coord, 0), )))
-        with self.assertRaises((TypeError, ValueError)):
+        with self.assertRaises(TypeError):
             _io.concatenate(self.raw_cubes)
-
-    def test_fail_on_units_concatenate_with_overlap(self):
-        """Test fail of concatenation with overlap."""
-        time_coord_1 = DimCoord([3., 7000.],
-                                var_name='time',
-                                standard_name='time',
-                                units=Unit('days since 1950-01-01',
-                                           calendar='360_day'))
-        time_coord_2 = DimCoord([3., 9000.],
-                                var_name='time',
-                                standard_name='time',
-                                units=Unit('days since 1950-01-01',
-                                           calendar='360_day'))
-        time_coord_3 = DimCoord([3., 9000.],
-                                var_name='time',
-                                standard_name='time',
-                                units=Unit('days since 1850-01-01',
-                                           calendar='360_day'))
-        raw_cubes = []
-        raw_cubes.append(
-            Cube([33., 55.],
-                 var_name='sample',
-                 dim_coords_and_dims=((time_coord_1, 0), )))
-        raw_cubes.append(
-            Cube([33., 55.],
-                 var_name='sample',
-                 dim_coords_and_dims=((time_coord_2, 0), )))
-        raw_cubes.append(
-            Cube([33., 55.],
-                 var_name='sample',
-                 dim_coords_and_dims=((time_coord_3, 0), )))
-        with self.assertRaises(ValueError):
-            _io.concatenate(raw_cubes)
 
     def test_fail_metadata_differs(self):
         """Test exception raised if two cubes have different metadata."""

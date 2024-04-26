@@ -84,6 +84,7 @@ def test_run(mocker, session, search_esgf):
     session['config_file'] = '/path/to/config-user.yml'
     session['remove_preproc_dir'] = True
     session['save_intermediary_cubes'] = False
+    session.cmor_log.read_text.return_value = 'WARNING: attribute not present'
 
     recipe = Path('/recipe_dir/recipe_test.yml')
 
@@ -178,18 +179,18 @@ def test_do_not_clean_preproc_dir(session):
     assert session._fixed_file_dir.exists()
 
 
-@mock.patch('esmvalcore._main.iter_entry_points')
+@mock.patch('esmvalcore._main.entry_points')
 def test_header(mock_entry_points, caplog):
 
     entry_point = mock.Mock()
-    entry_point.dist.project_name = 'MyEntry'
+    entry_point.dist.name = 'MyEntry'
     entry_point.dist.version = 'v42.42.42'
     entry_point.name = 'Entry name'
     mock_entry_points.return_value = [entry_point]
     with caplog.at_level(logging.INFO):
         ESMValTool()._log_header(
             'path_to_config_file',
-            ['path_to_log_file1', 'path_to_log_file2']
+            ['path_to_log_file1', 'path_to_log_file2'],
         )
 
     assert len(caplog.messages) == 8
@@ -218,8 +219,10 @@ def test_get_recipe(is_file):
 @mock.patch('os.path.isfile')
 @mock.patch('esmvalcore.config._diagnostics.DIAGNOSTICS')
 def test_get_installed_recipe(diagnostics, is_file):
+
     def encountered(path):
         return Path(path) == Path('/install_folder/recipe.yaml')
+
     is_file.side_effect = encountered
     diagnostics.recipes = Path('/install_folder')
     recipe = ESMValTool()._get_recipe('recipe.yaml')

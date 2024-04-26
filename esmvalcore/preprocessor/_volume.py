@@ -3,25 +3,37 @@
 Allows for selecting data subsets using certain volume bounds; selecting
 depth or height regions; constructing volumetric averages;
 """
+from __future__ import annotations
+
 import logging
+import warnings
+from typing import Iterable, Literal, Optional, Sequence
 
 import dask.array as da
 import iris
 import numpy as np
+from iris.coords import AuxCoord, CellMeasure
+from iris.cube import Cube
 
-from ._shared import get_iris_analysis_operation, operator_accept_weights
+from ._area import _try_adding_calculated_cell_area
+from ._shared import (
+    get_iris_aggregator,
+    get_normalized_cube,
+    preserve_float_dtype,
+    update_weights_kwargs,
+)
 from ._supplementary_vars import register_supplementaries
 
 logger = logging.getLogger(__name__)
 
 
 def extract_volume(
-    cube,
-    z_min,
-    z_max,
-    interval_bounds='open',
-    nearest_value=False
-):
+    cube: Cube,
+    z_min: float,
+    z_max: float,
+    interval_bounds: str = 'open',
+    nearest_value: bool = False,
+) -> Cube:
     """Subset a cube based on a range of values in the z-coordinate.
 
     Function that subsets a cube on a box of (z_min, z_max),
@@ -37,21 +49,23 @@ def extract_volume(
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-    z_min: float
-        minimum depth to extract.
-    z_max: float
-        maximum depth to extract.
-    interval_bounds: str
-        sets left bound of the interval to either 'open', 'closed',
+    cube:
+        Input cube.
+    z_min:
+        Minimum depth to extract.
+    z_max:
+        Maximum depth to extract.
+    interval_bounds:
+        Sets left bound of the interval to either 'open', 'closed',
         'left_closed' or 'right_closed'.
-    nearest_value: bool
-        extracts considering the nearest value of z-coord to z_min and z_max.
+    nearest_value:
+        Extracts considering the nearest value of z-coord to z_min and z_max.
+
     Returns
     -------
     iris.cube.Cube
         z-coord extracted cube.
+
     """
     if z_min > z_max:
         # minimum is below maximum, so switch them around
@@ -87,10 +101,18 @@ def extract_volume(
     return cube.extract(z_constraint)
 
 
-def calculate_volume(cube):
+def calculate_volume(cube: Cube) -> da.core.Array:
     """Calculate volume from a cube.
 
-    This function is used when the volume ancillary variables can't be found.
+    This function is used when the 'ocean_volume' cell measure can't be found.
+    The output data will be given in cubic meters (m3).
+
+    Note
+    ----
+    It gets the cell_area from the cube if it is available. If not, it
+    calculates it from the grid. This only works if the grid cell areas can
+    be calculated (i.e., latitude and longitude are 1D). The depth coordinate
+    units should be convertible to meters.
 
     Parameters
     ----------
@@ -99,167 +121,316 @@ def calculate_volume(cube):
 
     Returns
     -------
-    float
-        grid volume.
+    dask.array.core.Array
+        Grid volumes.
+
     """
-    # ####
-    # Load depth field and figure out which dim is which.
+    # Load depth field and figure out which dim is which
     depth = cube.coord(axis='z')
-    z_dim = cube.coord_dims(cube.coord(axis='z'))[0]
+    z_dim = cube.coord_dims(depth)
+    depth = depth.copy()
 
-    # ####
-    # Load z direction thickness
-    thickness = depth.bounds[..., 1] - depth.bounds[..., 0]
+    # Assert z has length > 0
+    if not z_dim:
+        raise ValueError("Cannot compute volume with scalar Z-axis")
 
-    # ####
-    # Calculate grid volume:
-    area = da.array(iris.analysis.cartography.area_weights(cube))
-    if thickness.ndim == 1 and z_dim == 1:
-        grid_volume = area * thickness[None, :, None, None]
-    if thickness.ndim == 4 and z_dim == 1:
-        grid_volume = area * thickness[:, :]
+    # Guess bounds if missing
+    if not depth.has_bounds():
+        depth.guess_bounds()
+    if depth.core_bounds().shape[-1] != 2:
+        raise ValueError(
+            f"Z axis bounds shape found {depth.core_bounds().shape}. "
+            "Bounds should be 2 in the last dimension to compute the "
+            "thickness.")
+
+    # Convert units to get the thickness in meters
+    try:
+        depth.convert_units('m')
+    except ValueError as err:
+        raise ValueError(
+            f'Cannot compute volume using the Z-axis. {err}') from err
+
+    # Calculate Z-direction thickness
+    thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
+
+    # Get or calculate the horizontal areas of the cube
+    has_cell_measure = bool(cube.cell_measures('cell_area'))
+    _try_adding_calculated_cell_area(cube)
+    area = cube.cell_measure('cell_area').copy()
+    area_dim = cube.cell_measure_dims(area)
+
+    # Ensure cell area is in square meters as the units
+    area.convert_units('m2')
+
+    # Make sure input cube has not been modified
+    if not has_cell_measure:
+        cube.remove_cell_measure('cell_area')
+
+    area_arr = iris.util.broadcast_to_shape(
+        area.core_data(), cube.shape, area_dim)
+    thickness_arr = iris.util.broadcast_to_shape(
+        thickness, cube.shape, z_dim)
+    grid_volume = area_arr * thickness_arr
 
     return grid_volume
 
 
+def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
+    """Try to add calculated cell measure 'ocean_volume' to cube (in-place)."""
+    if cube.cell_measures('ocean_volume'):
+        return
+
+    logger.debug(
+        "Found no cell measure 'ocean_volume' in cube %s. Check availability "
+        "of supplementary variables",
+        cube.summary(shorten=True),
+    )
+    logger.debug("Attempting to calculate grid cell volume")
+
+    grid_volume = calculate_volume(cube)
+
+    cell_measure = CellMeasure(
+        grid_volume,
+        standard_name='ocean_volume',
+        units='m3',
+        measure='volume',
+    )
+    cube.add_cell_measure(cell_measure, np.arange(cube.ndim))
+
+
 @register_supplementaries(
-    variables=['volcello'],
+    variables=['volcello', 'areacello'],
     required='prefer_at_least_one',
 )
-def volume_statistics(cube, operator):
+@preserve_float_dtype
+def volume_statistics(
+    cube: Cube,
+    operator: str,
+    normalize: Optional[Literal['subtract', 'divide']] = None,
+    **operator_kwargs,
+) -> Cube:
     """Apply a statistical operation over a volume.
 
     The volume average is weighted according to the cell volume.
 
     Parameters
     ----------
-    cube: iris.cube.Cube
+    cube:
         Input cube. The input cube should have a
-        :class:`iris.coords.CellMeasure` with standard name ``'ocean_volume'``,
-        unless it has regular 1D latitude and longitude coordinates so the cell
-        volumes can be computed by using
-        :func:`iris.analysis.cartography.area_weights` to compute the cell
-        areas and multiplying those by the cell thickness, computed from the
-        bounds of the vertical coordinate.
-    operator: str
-        The operation to apply to the cube, options are: 'mean'.
+        :class:`iris.coords.CellMeasure` named ``'ocean_volume'``, unless it
+        has a :class:`iris.coords.CellMeasure` named ``'cell_area'`` or
+        regular 1D latitude and longitude coordinates so the cell areas
+        can be computed using :func:`iris.analysis.cartography.area_weights`.
+        The volume will be computed from the area multiplied by the
+        thickness, computed from the bounds of the vertical coordinate.
+        In that case, vertical coordinate units should be convertible to
+        meters.
+    operator:
+        The operation. Used to determine the :class:`iris.analysis.Aggregator`
+        object used to calculate the statistics. Currently, only `mean` is
+        allowed.
+    normalize:
+        If given, do not return the statistics cube itself, but rather, the
+        input cube, normalized with the statistics cube. Can either be
+        `subtract` (statistics cube is subtracted from the input cube) or
+        `divide` (input cube is divided by the statistics cube).
+    **operator_kwargs:
+        Optional keyword arguments for the :class:`iris.analysis.Aggregator`
+        object defined by `operator`.
+
+    Note
+    ----
+    This preprocessor has been designed for oceanic variables, but it might
+    be applicable to atmospheric data as well.
 
     Returns
     -------
     iris.cube.Cube
-        collapsed cube.
+        Collapsed cube.
 
-    Raises
-    ------
-    ValueError
-        if input cube shape differs from grid volume cube shape.
     """
+    has_cell_measure = bool(cube.cell_measures('ocean_volume'))
+
     # TODO: Test sigma coordinates.
     # TODO: Add other operations.
-
     if operator != 'mean':
-        raise ValueError(f'Volume operator {operator} not recognised.')
+        raise ValueError(f"Volume operator {operator} not recognised.")
+    # get z, y, x coords
+    z_axis = cube.coord(axis='Z')
+    y_axis = cube.coord(axis='Y')
+    x_axis = cube.coord(axis='X')
 
-    try:
-        grid_volume = cube.cell_measure('ocean_volume').core_data()
-    except iris.exceptions.CellMeasureNotFoundError:
-        logger.debug('Cell measure "ocean_volume" not found in cube. '
-                     'Check fx_file availability.')
-        logger.debug('Attempting to calculate grid cell volume...')
-        grid_volume = calculate_volume(cube)
-    else:
-        grid_volume = da.broadcast_to(grid_volume, cube.shape)
+    # assert z axis only uses 1 dimension more than x, y axis
+    xy_dims = tuple({*cube.coord_dims(y_axis), *cube.coord_dims(x_axis)})
+    xyz_dims = tuple({*cube.coord_dims(z_axis), *xy_dims})
+    if len(xyz_dims) > len(xy_dims) + 1:
+        raise ValueError(
+            f"X and Y axis coordinates depend on {xy_dims} dimensions, "
+            f"while X, Y, and Z axis depends on {xyz_dims} dimensions. "
+            "This may indicate Z axis depending on other dimension than "
+            "space that could provoke invalid aggregation...")
 
-    if cube.data.shape != grid_volume.shape:
-        raise ValueError('Cube shape ({}) doesn`t match grid volume shape '
-                         f'({cube.shape, grid_volume.shape})')
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
+    agg_kwargs = update_weights_kwargs(
+        agg,
+        agg_kwargs,
+        'ocean_volume',
+        cube,
+        _try_adding_calculated_ocean_volume,
+    )
 
-    masked_volume = da.ma.masked_where(da.ma.getmaskarray(cube.lazy_data()),
-                                       grid_volume)
-    result = cube.collapsed(
-        [cube.coord(axis='Z'),
-         cube.coord(axis='Y'),
-         cube.coord(axis='X')],
-        iris.analysis.MEAN,
-        weights=masked_volume)
+    result = cube.collapsed([z_axis, y_axis, x_axis], agg, **agg_kwargs)
+    if normalize is not None:
+        result = get_normalized_cube(cube, result, normalize)
+
+    # Make sure input cube has not been modified
+    if not has_cell_measure and cube.cell_measures('ocean_volume'):
+        cube.remove_cell_measure('ocean_volume')
 
     return result
 
 
-def axis_statistics(cube, axis, operator):
+@preserve_float_dtype
+def axis_statistics(
+    cube: Cube,
+    axis: str,
+    operator: str,
+    normalize: Optional[Literal['subtract', 'divide']] = None,
+    **operator_kwargs,
+) -> Cube:
     """Perform statistics along a given axis.
 
-    Operates over an axis direction. If weights are required,
-    they are computed using the coordinate bounds.
+    Operates over an axis direction.
+
+    Note
+    ----
+    The `mean`, `sum` and `rms` operations are weighted by the corresponding
+    coordinate bounds by default. For `sum`, the units of the resulting cube
+    will be multiplied by corresponding coordinate units.
 
     Arguments
     ---------
-    cube: iris.cube.Cube
+    cube:
         Input cube.
-    axis: str
-        Direction over where to apply the operator. Possible values
-        are 'x', 'y', 'z', 't'.
-    operator: str
-        Statistics to perform. Available operators are:
-        'mean', 'median', 'std_dev', 'sum', 'variance',
-        'min', 'max', 'rms'.
+    axis:
+        Direction over where to apply the operator. Possible values are `x`,
+        `y`, `z`, `t`.
+    operator:
+        The operation. Used to determine the :class:`iris.analysis.Aggregator`
+        object used to calculate the statistics. Allowed options are given in
+        :ref:`this table <supported_stat_operator>`.
+    normalize:
+        If given, do not return the statistics cube itself, but rather, the
+        input cube, normalized with the statistics cube. Can either be
+        `subtract` (statistics cube is subtracted from the input cube) or
+        `divide` (input cube is divided by the statistics cube).
+    **operator_kwargs:
+        Optional keyword arguments for the :class:`iris.analysis.Aggregator`
+        object defined by `operator`.
 
     Returns
     -------
     iris.cube.Cube
-        collapsed cube.
+        Collapsed cube.
+
     """
+    (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
+
+    # Check if a coordinate for the desired axis exists
     try:
         coord = cube.coord(axis=axis)
     except iris.exceptions.CoordinateNotFoundError as err:
-        raise ValueError(f'Axis {axis} not found in cube '
-                         f'{cube.summary(shorten=True)}') from err
+        raise ValueError(
+            f"Axis {axis} not found in cube {cube.summary(shorten=True)}"
+        ) from err
+
+    # Multidimensional coordinates are currently not supported
     coord_dims = cube.coord_dims(coord)
     if len(coord_dims) > 1:
-        raise NotImplementedError('axis_statistics not implemented for '
-                                  'multidimensional coordinates.')
-    operation = get_iris_analysis_operation(operator)
-    if operator_accept_weights(operator):
-        coord_dim = coord_dims[0]
-        expand = list(range(cube.ndim))
-        expand.remove(coord_dim)
-        bounds = coord.core_bounds()
-        weights = np.abs(bounds[..., 1] - bounds[..., 0])
-        weights = np.expand_dims(weights, expand)
-        weights = da.broadcast_to(weights, cube.shape)
-        result = cube.collapsed(coord, operation, weights=weights)
-    else:
-        result = cube.collapsed(coord, operation)
+        raise NotImplementedError(
+            "axis_statistics not implemented for multidimensional "
+            "coordinates."
+        )
+
+    # For weighted operations, create a dummy weights coordinate using the
+    # bounds of the original coordinate (this handles units properly, e.g., for
+    # sums)
+    agg_kwargs = update_weights_kwargs(
+        agg,
+        agg_kwargs,
+        '_axis_statistics_weights_',
+        cube,
+        _add_axis_stats_weights_coord,
+        coord=coord,
+        coord_dims=coord_dims,
+    )
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore',
+            message=(
+                "Cannot check if coordinate is contiguous: Invalid "
+                "operation for '_axis_statistics_weights_'"
+            ),
+            category=UserWarning,
+            module='iris',
+        )
+        result = cube.collapsed(coord, agg, **agg_kwargs)
+
+    if normalize is not None:
+        result = get_normalized_cube(cube, result, normalize)
+
+    # Make sure input and output cubes do not have auxiliary coordinate
+    if cube.coords('_axis_statistics_weights_'):
+        cube.remove_coord('_axis_statistics_weights_')
+    if result.coords('_axis_statistics_weights_'):
+        result.remove_coord('_axis_statistics_weights_')
 
     return result
 
 
-def depth_integration(cube):
+def _add_axis_stats_weights_coord(cube, coord, coord_dims):
+    """Add weights for axis_statistics to cube (in-place)."""
+    weights = np.abs(coord.lazy_bounds()[:, 1] - coord.lazy_bounds()[:, 0])
+    if not cube.has_lazy_data():
+        weights = weights.compute()
+    weights_coord = AuxCoord(
+        weights,
+        long_name='_axis_statistics_weights_',
+        units=coord.units,
+    )
+    cube.add_aux_coord(weights_coord, coord_dims)
+
+
+def depth_integration(cube: Cube) -> Cube:
     """Determine the total sum over the vertical component.
 
-    Requires a 3D cube. The z-coordinate
-    integration is calculated by taking the sum in the z direction of the
-    cell contents multiplied by the cell thickness.
+    Requires a 3D cube. The z-coordinate integration is calculated by taking
+    the sum in the z direction of the cell contents multiplied by the cell
+    thickness. The units of the resulting cube are multiplied by the
+    z-coordinate units.
 
     Arguments
     ---------
-    cube: iris.cube.Cube
-        input cube.
+    cube:
+        Input cube.
 
     Returns
     -------
     iris.cube.Cube
-        collapsed cube.
+        Collapsed cube.
+
     """
     result = axis_statistics(cube, axis='z', operator='sum')
     result.rename('Depth_integrated_' + str(cube.name()))
-    # result.units = Unit('m') * result.units # This doesn't work:
-    # TODO: Change units on cube to reflect 2D concentration (not 3D)
-    # Waiting for news from iris community.
     return result
 
 
-def extract_transect(cube, latitude=None, longitude=None):
+def extract_transect(
+    cube: Cube,
+    latitude: None | float | Iterable[float] = None,
+    longitude: None | float | Iterable[float] = None,
+) -> Cube:
     """Extract data along a line of constant latitude or longitude.
 
     Both arguments, latitude and longitude, are treated identically.
@@ -283,29 +454,30 @@ def extract_transect(cube, latitude=None, longitude=None):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-    latitude: None, float or [float, float], optional
-        transect latiude or range.
-    longitude:  None, float or [float, float], optional
-        transect longitude or range.
+    cube:
+        Input cube.
+    latitude: optional
+        Transect latitude or range.
+    longitude:  optional
+        Transect longitude or range.
 
     Returns
     -------
     iris.cube.Cube
-        collapsed cube.
+        Collapsed cube.
 
     Raises
     ------
     ValueError
-        slice extraction not implemented for irregular grids.
+        Slice extraction not implemented for irregular grids.
     ValueError
-        latitude and longitude are both floats or lists; not allowed
-        to slice on both axes at the same time.
+        Latitude and longitude are both floats or lists; not allowed to slice
+        on both axes at the same time.
+
     """
     # ###
     coord_dim2 = False
-    second_coord_range = False
+    second_coord_range: None | list = None
     lats = cube.coord('latitude')
     lons = cube.coord('longitude')
 
@@ -343,13 +515,18 @@ def extract_transect(cube, latitude=None, longitude=None):
     slices = [slice(None) for i in cube.shape]
     slices[coord_dim] = coord_index
 
-    if second_coord_range:
+    if second_coord_range is not None:
         slices[coord_dim2] = slice(second_coord_range[0],
                                    second_coord_range[1])
     return cube[tuple(slices)]
 
 
-def extract_trajectory(cube, latitudes, longitudes, number_points=2):
+def extract_trajectory(
+    cube: Cube,
+    latitudes: Sequence[float],
+    longitudes: Sequence[float],
+    number_points: int = 2,
+) -> Cube:
     """Extract data along a trajectory.
 
     latitudes and longitudes are the pairs of coordinates for two points.
@@ -369,24 +546,25 @@ def extract_trajectory(cube, latitudes, longitudes, number_points=2):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        input cube.
-    latitudes: list
-        list of latitude coordinates (floats).
-    longitudes: list
-        list of longitude coordinates (floats).
-    number_points: int
-        number of points to extrapolate (optional).
+    cube:
+        Input cube.
+    latitudes:
+        Latitude coordinates.
+    longitudes:
+        Longitude coordinates.
+    number_points: optional
+        Number of points to extrapolate.
 
     Returns
     -------
     iris.cube.Cube
-        collapsed cube.
+        Collapsed cube.
 
     Raises
     ------
     ValueError
-        if latitude and longitude have different dimensions.
+        Latitude and longitude have different dimensions.
+
     """
     from iris.analysis.trajectory import interpolate
 

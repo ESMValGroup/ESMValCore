@@ -1,9 +1,9 @@
 """Module with functions to check a recipe."""
 from __future__ import annotations
 
+import inspect
 import logging
 import os
-import re
 import subprocess
 from pprint import pformat
 from shutil import which
@@ -12,10 +12,18 @@ from typing import Any, Iterable
 import isodate
 import yamale
 
+import esmvalcore.preprocessor
 from esmvalcore.exceptions import InputFilesNotFound, RecipeError
 from esmvalcore.local import _get_start_end_year, _parse_period
 from esmvalcore.preprocessor import TIME_PREPROCESSORS, PreprocessingTask
-from esmvalcore.preprocessor._multimodel import STATISTIC_MAPPING
+from esmvalcore.preprocessor._multimodel import _get_operator_and_kwargs
+from esmvalcore.preprocessor._regrid import (
+    HORIZONTAL_SCHEMES_IRREGULAR,
+    HORIZONTAL_SCHEMES_REGULAR,
+    HORIZONTAL_SCHEMES_UNSTRUCTURED,
+    _load_generic_scheme,
+)
+from esmvalcore.preprocessor._shared import get_iris_aggregator
 from esmvalcore.preprocessor._supplementary_vars import (
     PREPROCESSOR_SUPPLEMENTARIES,
 )
@@ -62,7 +70,7 @@ def diagnostics(diags):
     for name, diagnostic in diags.items():
         if 'scripts' not in diagnostic:
             raise RecipeError(
-                "Missing scripts section in diagnostic {}".format(name))
+                f"Missing scripts section in diagnostic '{name}'.")
         variable_names = tuple(diagnostic.get('variables', {}))
         scripts = diagnostic.get('scripts')
         if scripts is None:
@@ -70,13 +78,13 @@ def diagnostics(diags):
         for script_name, script in scripts.items():
             if script_name in variable_names:
                 raise RecipeError(
-                    "Invalid script name {} encountered in diagnostic {}: "
-                    "scripts cannot have the same name as variables.".format(
-                        script_name, name))
+                    f"Invalid script name '{script_name}' encountered "
+                    f"in diagnostic '{name}': scripts cannot have the "
+                    "same name as variables.")
             if not script.get('script'):
                 raise RecipeError(
-                    "No script defined for script {} in diagnostic {}".format(
-                        script_name, name))
+                    f"No script defined for script '{script_name}' in "
+                    f"diagnostic '{name}'.")
 
 
 def duplicate_datasets(
@@ -87,27 +95,31 @@ def duplicate_datasets(
     """Check for duplicate datasets."""
     if not datasets:
         raise RecipeError(
-            "You have not specified any dataset or additional_dataset groups "
-            f"for variable {variable_group} in diagnostic {diagnostic}.")
+            "You have not specified any dataset or additional_dataset "
+            f"groups for variable '{variable_group}' in diagnostic "
+            f"'{diagnostic}'.")
     checked_datasets_ = []
     for dataset in datasets:
         if dataset in checked_datasets_:
             raise RecipeError(
-                f"Duplicate dataset {dataset} for variable {variable_group} "
-                f"in diagnostic {diagnostic}.")
+                f"Duplicate dataset\n{pformat(dataset)}\nfor variable "
+                f"'{variable_group}' in diagnostic '{diagnostic}'.")
         checked_datasets_.append(dataset)
 
 
-def variable(var: dict[str, Any], required_keys: Iterable[str]):
+def variable(
+    var: dict[str, Any],
+    required_keys: Iterable[str],
+    diagnostic: str,
+    variable_group: str
+) -> None:
     """Check variables as derived from recipe."""
     required = set(required_keys)
     missing = required - set(var)
     if missing:
         raise RecipeError(
-            f"Missing keys {missing} in\n"
-            f"{pformat(var)}\n"
-            "for variable {var['variable_group']} in diagnostic "
-            f"{var['diagnostic']}")
+            f"Missing keys {missing} in\n{pformat(var)}\nfor variable "
+            f"'{variable_group}' in diagnostic '{diagnostic}'.")
 
 
 def _log_data_availability_errors(dataset):
@@ -256,20 +268,6 @@ def extract_shape(settings):
                 "{}".format(', '.join(f"'{k}'".lower() for k in valid[key])))
 
 
-def _verify_statistics(statistics, step):
-    """Raise error if multi-model statistics cannot be verified."""
-    valid_names = ['std'] + list(STATISTIC_MAPPING.keys())
-    valid_patterns = [r"^(p\d{1,2})(\.\d*)?$"]
-
-    for statistic in statistics:
-        if not (statistic in valid_names
-                or re.match(r'|'.join(valid_patterns), statistic)):
-            raise RecipeError(
-                "Invalid value encountered for `statistic` in preprocessor "
-                f"{step}. Valid values are {valid_names} "
-                f"or patterns matching {valid_patterns}. Got '{statistic}'.")
-
-
 def _verify_span_value(span):
     """Raise error if span argument cannot be verified."""
     valid_names = ('overlap', 'full')
@@ -305,26 +303,8 @@ def _verify_ignore_scalar_coords(ignore_scalar_coords):
             f"{ignore_scalar_coords}.")
 
 
-def _verify_arguments(given, expected):
-    """Raise error if arguments cannot be verified."""
-    for key in given:
-        if key not in expected:
-            raise RecipeError(
-                f"Unexpected keyword argument encountered: {key}. Valid "
-                f"keywords are: {expected}.")
-
-
 def multimodel_statistics_preproc(settings):
     """Check that the multi-model settings are valid."""
-    valid_keys = [
-        'groupby',
-        'ignore_scalar_coords',
-        'keep_input_datasets',
-        'span',
-        'statistics',
-    ]
-    _verify_arguments(settings.keys(), valid_keys)
-
     span = settings.get('span', None)  # optional, default: overlap
     if span:
         _verify_span_value(span)
@@ -332,10 +312,6 @@ def multimodel_statistics_preproc(settings):
     groupby = settings.get('groupby', None)  # optional, default: None
     if groupby:
         _verify_groupby(groupby)
-
-    statistics = settings.get('statistics', None)  # required
-    if statistics:
-        _verify_statistics(statistics, 'multi_model_statistics')
 
     keep_input_datasets = settings.get('keep_input_datasets', True)
     _verify_keep_input_datasets(keep_input_datasets)
@@ -346,20 +322,9 @@ def multimodel_statistics_preproc(settings):
 
 def ensemble_statistics_preproc(settings):
     """Check that the ensemble settings are valid."""
-    valid_keys = [
-        'ignore_scalar_coords',
-        'span',
-        'statistics',
-    ]
-    _verify_arguments(settings.keys(), valid_keys)
-
     span = settings.get('span', 'overlap')  # optional, default: overlap
     if span:
         _verify_span_value(span)
-
-    statistics = settings.get('statistics', None)
-    if statistics:
-        _verify_statistics(statistics, 'ensemble_statistics')
 
     ignore_scalar_coords = settings.get('ignore_scalar_coords', False)
     _verify_ignore_scalar_coords(ignore_scalar_coords)
@@ -430,6 +395,19 @@ def differing_timeranges(timeranges, required_vars):
             "Set `timerange` to a common value.")
 
 
+def bias_type(settings: dict) -> None:
+    """Check that bias_type for bias preprocessor is valid."""
+    if 'bias' not in settings:
+        return
+    valid_options = ('absolute', 'relative')
+    user_bias_type = settings['bias'].get('bias_type', 'absolute')
+    if user_bias_type not in valid_options:
+        raise RecipeError(
+            f"Expected one of {valid_options} for `bias_type`, got "
+            f"'{user_bias_type}'"
+        )
+
+
 def reference_for_bias_preproc(products):
     """Check that exactly one reference dataset for bias preproc is given."""
     step = 'bias'
@@ -456,3 +434,118 @@ def reference_for_bias_preproc(products):
             f"{len(reference_products):d}{ref_products_str}Please also "
             f"ensure that the reference dataset is not excluded with the "
             f"'exclude' option")
+
+
+def statistics_preprocessors(settings: dict) -> None:
+    """Check options of statistics preprocessors."""
+    mm_stats = (
+        'multi_model_statistics',
+        'ensemble_statistics',
+    )
+    for (step, step_settings) in settings.items():
+
+        # For multi-model statistics, we need to check each entry of statistics
+        if step in mm_stats:
+            _check_mm_stat(step, step_settings)
+
+        # For other statistics, check optional kwargs for operator
+        elif '_statistics' in step:
+            _check_regular_stat(step, step_settings)
+
+
+def _check_regular_stat(step, step_settings):
+    """Check regular statistics (non-multi-model statistics) step."""
+    step_settings = dict(step_settings)
+
+    # Some preprocessors like climate_statistics use default 'mean' for
+    # operator. If 'operator' is missing for those preprocessors with no
+    # default, this will be detected in PreprocessorFile.check() later.
+    operator = step_settings.pop('operator', 'mean')
+
+    # If preprocessor does not exist, do nothing here; this will be detected in
+    # PreprocessorFile.check() later.
+    try:
+        preproc_func = getattr(esmvalcore.preprocessor, step)
+    except AttributeError:
+        return
+
+    # Ignore other preprocessor arguments, e.g., 'hours' for hourly_statistics
+    other_args = [
+        n for (n, p) in inspect.signature(preproc_func).parameters.items() if
+        p.kind in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+        )
+    ][1:]
+    operator_kwargs = {
+        k: v for (k, v) in step_settings.items() if k not in other_args
+    }
+    try:
+        get_iris_aggregator(operator, **operator_kwargs)
+    except ValueError as exc:
+        raise RecipeError(
+            f"Invalid options for {step}: {exc}"
+        )
+
+
+def _check_mm_stat(step, step_settings):
+    """Check multi-model statistic step."""
+    statistics = step_settings.get('statistics', [])
+    for stat in statistics:
+        try:
+            (operator, kwargs) = _get_operator_and_kwargs(stat)
+        except ValueError as exc:
+            raise RecipeError(str(exc))
+        try:
+            get_iris_aggregator(operator, **kwargs)
+        except ValueError as exc:
+            raise RecipeError(
+                f"Invalid options for {step}: {exc}"
+            )
+
+
+def regridding_schemes(settings: dict):
+    """Check :obj:`str` regridding schemes."""
+    if 'regrid' not in settings:
+        return
+
+    # Note: If 'scheme' is missing, this will be detected in
+    # PreprocessorFile.check() later
+    scheme = settings['regrid'].get('scheme')
+
+    # Check built-in regridding schemes (given as str)
+    if isinstance(scheme, str):
+        scheme = settings['regrid']['scheme']
+
+        # Also allow deprecated 'linear_extrapolate' and 'unstructured_nearest'
+        # schemes (the corresponding deprecation warnings will be raised in the
+        # regrid() preprocessor) TODO: Remove in v2.13.0
+        if scheme in ('linear_extrapolate', 'unstructured_nearest'):
+            return
+
+        allowed_regridding_schemes = list(
+            set(
+                list(HORIZONTAL_SCHEMES_IRREGULAR) +
+                list(HORIZONTAL_SCHEMES_REGULAR) +
+                list(HORIZONTAL_SCHEMES_UNSTRUCTURED)
+            )
+        )
+        if scheme not in allowed_regridding_schemes:
+            raise RecipeError(
+                f"Got invalid built-in regridding scheme '{scheme}', expected "
+                f"one of {allowed_regridding_schemes} or a generic scheme "
+                f"(see https://docs.esmvaltool.org/projects/ESMValCore/en/"
+                f"latest/recipe/preprocessor.html#generic-regridding-schemes)."
+            )
+
+    # Check generic regridding schemes (given as dict)
+    if isinstance(scheme, dict):
+        try:
+            _load_generic_scheme(scheme)
+        except ValueError as exc:
+            raise RecipeError(
+                f"Failed to load generic regridding scheme: {str(exc)} See "
+                f"https://docs.esmvaltool.org/projects/ESMValCore/en/latest"
+                f"/recipe/preprocessor.html#generic-regridding-schemes for "
+                f"details."
+            )

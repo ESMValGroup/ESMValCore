@@ -19,8 +19,8 @@ dependencies:
   - fire
   - geopy
   - humanfriendly
-  - importlib_resources
-  - iris >=3.6.0
+  - importlib_metadata  # required for Python < 3.10
+  - iris >=3.6.1
   - iris-esmf-regrid >=0.7.0
   - isodate
   - jinja2
@@ -30,14 +30,14 @@ dependencies:
   - netcdf4
   - numpy !=1.24.3
   - packaging
-  - pandas
+  - pandas !=2.2.0,!=2.2.1,!=2.2.2  # github.com/ESMValGroup/ESMValCore/pull/2305 and #2349
   - pillow
   - pip !=21.3
   - prov
   - psutil
   - py-cordex
   - pybtex
-  - python >=3.9
+  - python >=3.9,<3.12
   - python-stratify >=0.3
   - pyyaml
   - requests
@@ -58,13 +58,11 @@ dependencies:
   - pytest-env
   - pytest-html !=2.1.0
   - pytest-metadata >=1.5.1
-  - pytest-mypy
   - pytest-mock
   - pytest-xdist
   # Not on conda-forge - ESMValTool_sample_data==0.0.3
   # Still for testing, MyPy library stubs
   - types-requests
-  - types-pkg_resources
   - types-PyYAML
   # Python packages needed for installing in development mode
   - codespell

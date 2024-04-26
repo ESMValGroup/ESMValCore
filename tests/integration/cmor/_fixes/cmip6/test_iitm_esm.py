@@ -6,6 +6,7 @@ from cf_units import Unit
 
 from esmvalcore.cmor._fixes.cmip6.iitm_esm import AllVars, Tos
 from esmvalcore.cmor._fixes.common import OceanFixGrid
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 
 
@@ -16,7 +17,7 @@ def test_get_tos_fix():
                         'Omon',
                         'tos',
                         extra_facets={"frequency": "mon"})
-    assert fix == [Tos(None), AllVars(None)]
+    assert fix == [Tos(None), AllVars(None), GenericFix(None)]
 
 
 def test_tos_fix():

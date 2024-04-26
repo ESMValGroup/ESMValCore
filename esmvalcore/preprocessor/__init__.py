@@ -29,7 +29,6 @@ from ._detrend import detrend
 from ._io import (
     _get_debug_filename,
     _sort_products,
-    cleanup,
     concatenate,
     load,
     save,
@@ -57,9 +56,7 @@ from ._regrid import (
 )
 from ._rolling_window import rolling_window_statistics
 from ._supplementary_vars import (
-    add_fx_variables,
     add_supplementary_variables,
-    remove_fx_variables,
     remove_supplementary_variables,
 )
 from ._time import (
@@ -73,6 +70,7 @@ from ._time import (
     extract_season,
     extract_time,
     hourly_statistics,
+    local_solar_time,
     monthly_statistics,
     regrid_time,
     resample_hours,
@@ -110,7 +108,6 @@ __all__ = [
     'fix_data',
     'cmor_check_data',
     # Attach ancillary variables and cell measures
-    'add_fx_variables',
     'add_supplementary_variables',
     # Derive variable
     'derive',
@@ -152,8 +149,6 @@ __all__ = [
     'extract_volume',
     'extract_trajectory',
     'extract_transect',
-    # 'average_zone': average_zone,
-    # 'cross_section': cross_section,
     'detrend',
     'extract_named_regions',
     'axis_statistics',
@@ -161,8 +156,7 @@ __all__ = [
     'area_statistics',
     'volume_statistics',
     # Time operations
-    # 'annual_cycle': annual_cycle,
-    # 'diurnal_cycle': diurnal_cycle,
+    'local_solar_time',
     'amplitude',
     'zonal_statistics',
     'meridional_statistics',
@@ -189,10 +183,8 @@ __all__ = [
     'bias',
     # Remove supplementary variables from cube
     'remove_supplementary_variables',
-    'remove_fx_variables',
     # Save to file
     'save',
-    'cleanup',
 ]
 
 TIME_PREPROCESSORS = [
@@ -233,7 +225,7 @@ MULTI_MODEL_FUNCTIONS = {
 def _get_itype(step):
     """Get the input type of a preprocessor function."""
     function = globals()[step]
-    itype = inspect.getfullargspec(function).args[0]
+    itype = list(inspect.signature(function).parameters)[0]
     return itype
 
 
@@ -246,31 +238,52 @@ def check_preprocessor_settings(settings):
                 f"{', '.join(DEFAULT_ORDER)}"
             )
 
-        function = function = globals()[step]
-        argspec = inspect.getfullargspec(function)
-        args = argspec.args[1:]
-        if not (argspec.varargs or argspec.varkw):
-            # Check for invalid arguments
+        function = globals()[step]
+
+        # Note: below, we do not use inspect.getfullargspec since this does not
+        # work with decorated functions. On the other hand, inspect.signature
+        # behaves correctly with properly decorated functions (those that use
+        # functools.wraps).
+        signature = inspect.signature(function)
+        args = [
+            n for (n, p) in signature.parameters.items() if
+            p.kind in (
+                inspect.Parameter.POSITIONAL_ONLY,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            )
+        ][1:]
+
+        # Check for invalid arguments (only possible if no *args or **kwargs
+        # allowed)
+        var_kinds = [p.kind for p in signature.parameters.values()]
+        check_args = not any([
+            inspect.Parameter.VAR_POSITIONAL in var_kinds,
+            inspect.Parameter.VAR_KEYWORD in var_kinds,
+        ])
+        if check_args:
             invalid_args = set(settings[step]) - set(args)
             if invalid_args:
                 raise ValueError(
-                    f"Invalid argument(s): {', '.join(invalid_args)} "
+                    f"Invalid argument(s) [{', '.join(invalid_args)}] "
                     f"encountered for preprocessor function {step}. \n"
                     f"Valid arguments are: [{', '.join(args)}]"
                 )
 
         # Check for missing arguments
-        defaults = argspec.defaults
-        end = None if defaults is None else -len(defaults)
+        defaults = [
+            p.default for p in signature.parameters.values()
+            if p.default is not inspect.Parameter.empty
+        ]
+        end = None if not defaults else -len(defaults)
         missing_args = set(args[:end]) - set(settings[step])
         if missing_args:
             raise ValueError(
                 f"Missing required argument(s) {missing_args} for "
                 f"preprocessor function {step}"
             )
+
         # Final sanity check in case the above fails to catch a mistake
         try:
-            signature = inspect.Signature.from_callable(function)
             signature.bind(None, **settings[step])
         except TypeError:
             logger.error(
@@ -370,6 +383,10 @@ def preprocess(
     logger.debug("Running preprocessor step %s", step)
     function = globals()[step]
     itype = _get_itype(step)
+
+    for item in items:
+        if isinstance(item, Cube) and item.has_lazy_data():
+            item.data = item.core_data().rechunk()
 
     result = []
     if itype.endswith('s'):
@@ -478,10 +495,7 @@ class PreprocessorFile(TrackedFile):
     def cubes(self):
         """Cubes."""
         if self._cubes is None:
-            callback = self.settings.get('load', {}).get('callback')
-            self._cubes = [
-                ds._load_with_callback(callback) for ds in self.datasets
-            ]
+            self._cubes = [ds.load() for ds in self.datasets]
         return self._cubes
 
     @cubes.setter
@@ -494,11 +508,6 @@ class PreprocessorFile(TrackedFile):
                    'save',
                    input_files=self._input_files,
                    **self.settings['save'])
-        if 'cleanup' in self.settings:
-            preprocess([],
-                       'cleanup',
-                       input_files=self._input_files,
-                       **self.settings['cleanup'])
 
     def close(self):
         """Close the file."""

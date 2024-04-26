@@ -50,5 +50,4 @@ repos:
       - id: mypy
         additional_dependencies:
           - 'types-PyYAML'
-          - 'types-pkg_resources'
           - 'types-requests'
