@@ -24,6 +24,7 @@ from esmvalcore.preprocessor._shared import (
     get_all_coords,
     get_array_module,
     get_weights,
+    preserve_float_dtype,
 )
 
 if TYPE_CHECKING:
@@ -384,6 +385,7 @@ def distance_metric(
     return output_products
 
 
+@preserve_float_dtype
 def _calculate_metric(
     cube: Cube,
     reference: Cube,
@@ -429,7 +431,7 @@ def _calculate_metric(
     # Get result cube with correct dimensional metadata by using dummy
     # operation (max)
     res_cube = cube.collapsed(coords, iris.analysis.MAX)
-    res_cube.data = res_data.astype(cube.dtype)
+    res_cube.data = res_data
     res_cube.metadata = res_metadata
     res_cube.cell_methods = [*cube.cell_methods, CellMethod(metric, coords)]
 

@@ -19,6 +19,7 @@ from esmvalcore.preprocessor._shared import (
     get_all_coords,
     get_array_module,
     get_weights,
+    preserve_float_dtype,
 )
 
 logger = logging.getLogger(__name__)
@@ -54,6 +55,7 @@ def clip(cube, minimum=None, maximum=None):
     return cube
 
 
+@preserve_float_dtype
 def histogram(
     cube: Cube,
     coords: Iterable[Coord] | Iterable[str] | None = None,
@@ -169,7 +171,6 @@ def histogram(
         bin_range=bin_range,
         normalization=normalization,
     )
-    hist_data = hist_data.astype(cube.dtype)
 
     # Get final cube
     hist_cube = _get_histogram_cube(
