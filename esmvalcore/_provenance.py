@@ -53,7 +53,7 @@ def attribute_to_authors(entity, authors):
 
 
 def attribute_to_projects(entity, projects):
-    """Attribute entity to projecs."""
+    """Attribute entity to projects."""
     namespace = 'project'
     create_namespace(entity.bundle, namespace)
 
@@ -193,7 +193,7 @@ class TrackedFile:
         self._initialize_ancestors(activity)
 
     def _initialize_namespaces(self):
-        """Inialize the namespaces."""
+        """Initialize the namespaces."""
         for namespace in ('file', 'attribute', 'preprocessor', 'task'):
             create_namespace(self.provenance, namespace)
 

@@ -35,6 +35,8 @@ VARIABLE_KEYS = {
     'alternative_dataset',
 }
 
+iris.FUTURE.save_split_attrs = True
+
 
 def _get_attr_from_field_coord(ncfield, coord_name, attr):
     if coord_name is not None:
