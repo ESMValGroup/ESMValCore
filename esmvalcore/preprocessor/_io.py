@@ -432,7 +432,19 @@ def save(cubes,
             logger.debug('Changing var_name from %s to %s', cube.var_name,
                          alias)
             cube.var_name = alias
-    iris.save(cubes, **kwargs)
+
+    # Ignore some warnings when saving
+    with catch_warnings():
+        filterwarnings(
+            'ignore',
+            message=(
+                ".* is being added as CF data variable attribute, but .* "
+                "should only be a CF global attribute"
+            ),
+            category=UserWarning,
+            module='iris',
+        )
+        iris.save(cubes, **kwargs)
 
     return filename
 
