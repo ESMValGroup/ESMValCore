@@ -97,7 +97,8 @@ def create_test_file(filename, tracking_id=None):
     attributes = {}
     if tracking_id is not None:
         attributes['tracking_id'] = tracking_id
-    cube = iris.cube.Cube([], attributes=attributes)
+    cube = iris.cube.Cube([])
+    cube.attributes.globals = attributes
 
     iris.save(cube, filename)
 
