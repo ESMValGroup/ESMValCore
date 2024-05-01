@@ -632,7 +632,7 @@ def test_fix_ocean_depth_coord():
 def time_coord():
     """Time coordinate."""
     time_coord = AuxCoord(
-        [15, 350],
+        [15.0, 350.0],
         standard_name='time',
         units='days since 1850-01-01'
     )
@@ -644,12 +644,23 @@ def time_coord():
     [
         ('mon', [[0, 31], [334, 365]]),
         ('mo', [[0, 31], [334, 365]]),
+        ('monC', [[0, 31], [334, 365]]),
         ('yr', [[0, 365], [0, 365]]),
-        ('dec', [[0, 3652], [0, 3652]]),
+        ('yrPt', [[0, 365], [0, 365]]),
+        ('dec', [[-1826, 1826], [-1826, 1826]]),
         ('day', [[14.5, 15.5], [349.5, 350.5]]),
+        ('24hr', [[14.5, 15.5], [349.5, 350.5]]),
+        ('12hr', [[14.75, 15.25], [349.75, 350.25]]),
+        ('8hr', [[14.83333333, 15.16666667], [349.83333333, 350.16666667]]),
         ('6hr', [[14.875, 15.125], [349.875, 350.125]]),
+        ('6hrCM', [[14.875, 15.125], [349.875, 350.125]]),
+        ('4hr', [[14.91666667, 15.08333333], [349.91666667, 350.08333333]]),
         ('3hr', [[14.9375, 15.0625], [349.9375, 350.0625]]),
+        ('3hrPt', [[14.9375, 15.0625], [349.9375, 350.0625]]),
+        ('2hr', [[14.95833333, 15.04166667], [349.95833333, 350.04166667]]),
         ('1hr', [[14.97916666, 15.020833333], [349.97916666, 350.020833333]]),
+        ('1hrC', [[14.97916666, 15.020833333], [349.97916666, 350.020833333]]),
+        ('hr', [[14.97916666, 15.020833333], [349.97916666, 350.020833333]]),
     ]
 )
 def test_get_time_bounds(time_coord, freq, expected_bounds):
@@ -660,5 +671,14 @@ def test_get_time_bounds(time_coord, freq, expected_bounds):
 
 def test_get_time_bounds_invalid_freq_fail(time_coord):
     """Test ``get_time_bounds`."""
-    with pytest.raises(NotImplementedError):
+    msg = "Cannot guess time bounds for frequency 'invalid_freq'"
+    with pytest.raises(NotImplementedError, match=msg):
         get_time_bounds(time_coord, 'invalid_freq')
+
+
+@pytest.mark.parametrize('freq', ['5hr', '7hrPt', '9hrCM', '10hr', '21hrPt'])
+def test_get_time_bounds_invalid_hr_fail(time_coord, freq):
+    """Test ``get_time_bounds`."""
+    msg = f"For `n`-hourly data, `n` must be a divisor of 24, got '{freq}'"
+    with pytest.raises(NotImplementedError, match=msg):
+        get_time_bounds(time_coord, freq)

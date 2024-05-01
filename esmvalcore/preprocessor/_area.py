@@ -20,6 +20,7 @@ from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
 
+from esmvalcore.iris_helpers import has_regular_grid
 from esmvalcore.preprocessor._regrid import broadcast_to_shape
 from esmvalcore.preprocessor._shared import (
     get_iris_aggregator,
@@ -355,20 +356,15 @@ def _try_adding_calculated_cell_area(cube: Cube) -> None:
     )
     logger.debug("Attempting to calculate grid cell area")
 
-    regular_grid = all([
-        cube.coord('latitude').points.ndim == 1,
-        cube.coord('longitude').points.ndim == 1,
-        cube.coord_dims('latitude') != cube.coord_dims('longitude'),
-    ])
     rotated_pole_grid = all([
-        cube.coord('latitude').points.ndim == 2,
-        cube.coord('longitude').points.ndim == 2,
+        cube.coord('latitude').core_points().ndim == 2,
+        cube.coord('longitude').core_points().ndim == 2,
         cube.coords('grid_latitude'),
         cube.coords('grid_longitude'),
     ])
 
     # For regular grids, calculate grid cell areas with iris function
-    if regular_grid:
+    if has_regular_grid(cube):
         cube = guess_bounds(cube, ['latitude', 'longitude'])
         logger.debug("Calculating grid cell areas for regular grid")
         cell_areas = compute_area_weights(cube)
