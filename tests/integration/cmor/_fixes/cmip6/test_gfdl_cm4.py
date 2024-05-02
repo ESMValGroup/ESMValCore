@@ -134,7 +134,7 @@ def test_sos_fix():
     assert Sos is OceanFixGrid
 
 
-def test_get_Tos_fix():
+def test_get_tos_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'GFDL-CM4', 'Omon', 'tos')
     assert fix == [Tos(None), Omon(None), GenericFix(None)]
