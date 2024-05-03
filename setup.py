@@ -33,7 +33,7 @@ REQUIREMENTS = {
         'dask-jobqueue',
         'esgf-pyclient>=0.3.1',
         'esmf-regrid',
-        'esmpy!=8.1.0',
+        'esmpy!=8.1.0,<8.6.0',  # see environment.yml for motivation
         'filelock',
         'fiona',
         'fire',
