@@ -2851,7 +2851,6 @@ recipe:
   `bin_range`.
   If `bins` is a sequence, it defines a monotonically increasing array of bin
   edges, including the rightmost edge, allowing for non-uniform bin widths.
-  also calculate the distance of the reference dataset with itself.
 * ``bin_range`` (:obj:`tuple` of :obj:`float` or ``None``, default: ``None``):
   The lower and upper range of the bins.
   If ``None``, `bin_range` is simply (``cube.core_data().min(),
