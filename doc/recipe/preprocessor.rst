@@ -2663,7 +2663,7 @@ recipe:
 
   * ``'emd'``: `Unweighted Earth mover's distance`_ (EMD).
     The EMD is also known as first Wasserstein metric `W`\ :sub:`1`, which is a
-    metric that measures distances between two probability distributions.
+    metric that measures distance between two probability distributions.
     For this, discrete probability distributions of the input data are created
     through binning, which are then used as input for the Wasserstein metric.
     The metric is also known as `Earth mover's distance` since, intuitively, it
@@ -2683,7 +2683,7 @@ recipe:
   * ``'weighted_emd'``: `Weighted Earth mover's distance`_.
     Similar to the unweighted EMD (see above), but here weights are considered
     when calculating the probability distributions (i.e., instead of 1, each
-    element contributes a given weight in the bin count; see also `weights`
+    element provides a weight in the bin count; see also `weights`
     argument of :func:`numpy.histogram`).
 
   Here, `x`\ :sub:`i` and `r`\ :sub:`i` are samples of a variable of interest
@@ -2871,7 +2871,7 @@ recipe:
   coordinates will trigger weighting: `time` (will use lengths of time
   intervals as weights) and `latitude` (will use cell area weights).
   Time weights are always calculated from the input data.
-  Area weights can be given as supplementary variables to the recipe
+  Area weights can be given as supplementary variables in the recipe
   (`areacella` or `areacello`, see :ref:`supplementary_variables`) or
   calculated from the input data (this only works for regular grids).
   By default, **NO** supplementary variables will be used; they need to be
@@ -2882,7 +2882,7 @@ recipe:
   If ``'integral'``, the result is the value of the probability `density`
   function at the bin, normalized such that the integral over the range is 1.
   If ``'sum'``, the result is the value of the probability `mass` function at
-  the bin, normalized such that the sum over the range is 1.
+  the bin, normalized such that the sum over the whole range is 1.
   Normalization will be applied across `coords`, not the entire cube.
 
 Example:
