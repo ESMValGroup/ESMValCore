@@ -10,10 +10,12 @@ from esmvalcore.cmor._fixes.cmip6.gfdl_cm4 import (
     Fgco2,
     Omon,
     Siconc,
+    Sos,
     Tas,
+    Tos,
     Uas,
 )
-from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord
+from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord, OceanFixGrid
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
@@ -119,6 +121,28 @@ def test_get_siconc_fix():
 def test_siconc_fix():
     """Test fix for ``siconc``."""
     assert Siconc is SiconcFixScalarCoord
+
+
+def test_get_sos_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'GFDL-CM4', 'Omon', 'sos')
+    assert fix == [Sos(None), Omon(None), GenericFix(None)]
+
+
+def test_sos_fix():
+    """Test fix for ``sos``."""
+    assert Sos is OceanFixGrid
+
+
+def test_get_tos_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'GFDL-CM4', 'Omon', 'tos')
+    assert fix == [Tos(None), Omon(None), GenericFix(None)]
+
+
+def test_tos_fix():
+    """Test fix for ``tos``."""
+    assert Tos is OceanFixGrid
 
 
 @pytest.fixture

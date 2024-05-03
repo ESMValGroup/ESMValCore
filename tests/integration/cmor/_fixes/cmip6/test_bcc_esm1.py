@@ -4,6 +4,7 @@ from esmvalcore.cmor._fixes.cmip6.bcc_esm1 import (
     Cli,
     Clw,
     Siconc,
+    So,
     Sos,
     Tos,
 )
@@ -56,6 +57,17 @@ def test_get_siconc_fix():
 def test_siconc_fix():
     """Test fix for ``siconc``."""
     assert Siconc is OceanFixGrid
+
+
+def test_get_so_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'Omon', 'so')
+    assert fix == [So(None), GenericFix(None)]
+
+
+def test_so_fix():
+    """Test fix for ``so``."""
+    assert So is OceanFixGrid
 
 
 def test_get_sos_fix():

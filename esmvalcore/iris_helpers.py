@@ -270,8 +270,40 @@ def rechunk_cube(
     return cube
 
 
+def has_regular_grid(cube: Cube) -> bool:
+    """Check if a cube has a regular grid.
+
+    "Regular" refers to a rectilinear grid with 1D latitude and 1D longitude
+    coordinates orthogonal to each other.
+
+    Parameters
+    ----------
+    cube:
+        Cube to be checked.
+
+    Returns
+    -------
+    bool
+        ``True`` if input cube has a regular grid, else ``False``.
+
+    """
+    try:
+        lat = cube.coord('latitude')
+        lon = cube.coord('longitude')
+    except CoordinateNotFoundError:
+        return False
+    if lat.ndim != 1 or lon.ndim != 1:
+        return False
+    if cube.coord_dims(lat) == cube.coord_dims(lon):
+        return False
+    return True
+
+
 def has_irregular_grid(cube: Cube) -> bool:
     """Check if a cube has an irregular grid.
+
+    "Irregular" refers to a general curvilinear grid with 2D latitude and 2D
+    longitude coordinates with common dimensions.
 
     Parameters
     ----------
@@ -296,6 +328,9 @@ def has_irregular_grid(cube: Cube) -> bool:
 
 def has_unstructured_grid(cube: Cube) -> bool:
     """Check if a cube has an unstructured grid.
+
+    "Unstructured" refers to a grid with 1D latitude and 1D longitude
+    coordinates with common dimensions (i.e., a simple list of points).
 
     Parameters
     ----------

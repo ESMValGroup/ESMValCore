@@ -780,10 +780,6 @@ regridding is based on the horizontal grid of another cube (the reference
 grid). If the horizontal grids of a cube and its reference grid are sufficiently
 the same, regridding is automatically and silently skipped for performance reasons.
 
-The underlying regridding mechanism in ESMValCore uses
-:obj:`iris.cube.Cube.regrid`
-from Iris.
-
 The use of the horizontal regridding functionality is flexible depending on
 what type of reference grid and what interpolation scheme is preferred. Below
 we show a few examples.
@@ -821,7 +817,7 @@ cell specification is oftentimes used when operating on localized data.
           target_grid: 2.5x2.5
           scheme: nearest
 
-In this case the ``NearestNeighbour`` interpolation scheme is used (see below
+In this case the nearest-neighbor interpolation scheme is used (see below
 for scheme definitions).
 
 When using a ``MxN`` type of grid it is possible to offset the grid cell
@@ -893,6 +889,19 @@ ESMValCore has a number of built-in regridding schemes, which are presented in
 third party regridding schemes designed for use with :doc:`Iris
 <iris:index>`. This is explained in :ref:`generic regridding schemes`.
 
+Grid types
+~~~~~~~~~~
+
+In ESMValCore, we distinguish between three grid types (note that these might
+differ from other definitions):
+
+* **Regular grid**: A rectilinear grid with 1D latitude and 1D longitude
+  coordinates which are orthogonal to each other.
+* **Irregular grid**: A general curvilinear grid with 2D latitude and 2D
+  longitude coordinates with common dimensions.
+* **Unstructured grid**: A grid with 1D latitude and 1D longitude coordinates
+  with common dimensions (i.e., a simple list of points).
+
 .. _built-in regridding schemes:
 
 Built-in regridding schemes
@@ -903,7 +912,8 @@ Built-in regridding schemes
   `extrapolation_mode='mask'`.
   For source data on an irregular grid, uses
   :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyLinear`.
-  Source data on an unstructured grid is not supported, yet.
+  For source data on an unstructured grid, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.UnstructuredLinear`.
 * ``nearest``: Nearest-neighbor regridding.
   For source data on a regular grid, uses :obj:`~iris.analysis.Nearest` with
   `extrapolation_mode='mask'`.
@@ -915,10 +925,7 @@ Built-in regridding schemes
   For source data on a regular grid, uses :obj:`~iris.analysis.AreaWeighted`.
   For source data on an irregular grid, uses
   :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyAreaWeighted`.
-  Source data on an unstructured grid is not supported, yet.
-
-See also :func:`esmvalcore.preprocessor.regrid`
-
+  Source data on an unstructured grid is not supported.
 
 .. _generic regridding schemes:
 
@@ -931,9 +938,9 @@ to transform a source cube with a given grid into the grid defined by a given
 target cube. Iris itself provides a number of useful schemes, but they are
 largely limited to work with simple, regular grids. Other schemes can be
 provided independently. This is interesting when special regridding-needs arise
-or when more involved grids and meshes need to be considered. Furthermore, it
-may be desirable to have finer control over the parameters of the scheme than
-is afforded by the built-in schemes described above.
+or when more involved grids need to be considered. Furthermore, it may be
+desirable to have finer control over the parameters of the scheme than is
+afforded by the built-in schemes described above.
 
 To facilitate this, the :func:`~esmvalcore.preprocessor.regrid` preprocessor
 allows the use of any scheme designed for Iris. The scheme must be installed
@@ -983,11 +990,11 @@ module, the second refers to the scheme, i.e. some callable that will be called
 with the remaining entries of the ``scheme`` dictionary passed as keyword
 arguments.
 
-One package that aims to capitalize on the :ref:`support for unstructured
-meshes introduced in Iris 3.2 <iris:ugrid>` is
-:doc:`iris-esmf-regrid:index`. It aims to provide lazy regridding for
-structured regular and irregular grids, as well as unstructured meshes. An
-example of its usage in a preprocessor is:
+One package that aims to capitalize on the :ref:`support for unstructured grids
+introduced in Iris 3.2 <iris:ugrid>` is :doc:`iris-esmf-regrid:index`.
+It aims to provide lazy regridding for structured regular and irregular grids,
+as well as unstructured grids.
+An example of its usage in a preprocessor is:
 
 .. code-block:: yaml
 
@@ -1016,6 +1023,37 @@ scheme available in :doc:`iris-esmf-regrid:index`:
         scheme:
           reference: esmf_regrid.schemes:regrid_rectilinear_to_rectilinear
           mdtol: 0.7
+
+.. _caching_regridding_weights:
+
+Reusing regridding weights
+--------------------------
+
+If desired, regridding weights can be cached to reduce run times (see `here
+<https://scitools-iris.readthedocs.io/en/latest/userguide/interpolation_and_regridding.html#caching-a-regridder>`__
+for technical details on this).
+This can speed up the regridding of different datasets with similar source and
+target grids massively, but may take up a lot of memory for extremely
+high-resolution data.
+By default, this feature is disabled; to enable it, use the option
+``cache_weights: true`` in the preprocessor definition:
+
+.. code-block:: yaml
+
+    preprocessors:
+      regrid_preprocessor:
+        regrid:
+          target_grid: 0.1x0.1
+          scheme: linear
+          cache_weights: true
+
+Not all regridding schemes support weights caching. An overview of those that
+do is given `here
+<https://scitools-iris.readthedocs.io/en/latest/further_topics/which_regridder_to_use.html#which-regridder-to-use>`__
+and in the docstrings :ref:`here <regridding_schemes>`.
+
+See also :func:`esmvalcore.preprocessor.regrid`
+
 
 .. _ensemble statistics:
 
@@ -1224,8 +1262,7 @@ The ``_time.py`` module contains the following preprocessor functions:
 * resample_time_: Resample data
 * resample_hours_: Convert between N-hourly frequencies by resampling
 * anomalies_: Compute (standardized) anomalies
-* regrid_time_: Aligns the time axis of each dataset to have common time
-  points and calendars.
+* regrid_time_: Aligns the time coordinate of each dataset, against a standardized time axis.
 * timeseries_filter_: Allows application of a filter to the time-series data.
 * local_solar_time_: Convert cube with UTC time to local solar time.
 
@@ -1618,13 +1655,59 @@ See also :func:`esmvalcore.preprocessor.anomalies`.
 ``regrid_time``
 ---------------
 
-This function aligns the time points of each component dataset so that the Iris
-cubes from different datasets can be subtracted. The operation makes the
-datasets time points common; it also resets the time
-bounds and auxiliary coordinates to reflect the artificially shifted time
-points. Current implementation for monthly and daily data; the ``frequency`` is
-set automatically from the variable CMOR table unless a custom ``frequency`` is
-set manually by the user in recipe.
+This function aligns the time points and bounds of an input dataset according
+to the following rules:
+
+* Decadal data: 1 January 00:00:00 for the given year.
+  Example: 1 January 2005 00:00:00 for given year 2005 (decade 2000-2010).
+* Yearly data: 1 July 00:00:00 for each year.
+  Example: 1 July 1993 00:00:00 for the year 1993.
+* Monthly data: 15th day 00:00:00 for each month.
+  Example: 15 October 1993 00:00:00 for the month October 1993.
+* Daily data: 12:00:00 for each day.
+  Example: 14 March 1996 12:00:00 for the day 14 March 1996.
+* `n`-hourly data where `n` is a divisor of 24: center of each time interval.
+  Example: 03:00:00 for interval 00:00:00-06:00:00 (6-hourly data), 16:30:00
+  for interval 15:00:00-18:00:00 (3-hourly data), or 09:30:00 for interval
+  09:00:00-10:00:00 (hourly data).
+
+The frequency of the input data is automatically determined from the CMOR table
+of the corresponding variable, but can be overwritten in the recipe if
+necessary.
+This function does not alter the data in any way.
+
+.. note::
+
+  By default, this preprocessor will not change the calendar of the input time
+  coordinate.
+  For decadal, yearly, and monthly data, it is possible to change the calendar
+  using the optional `calendar` argument.
+  Be aware that changing the calendar might introduce (small) errors to your
+  data, especially for extensive quantities (those that depend on the period
+  length).
+
+Parameters:
+    * `frequency`: Data frequency.
+      If not given, use the one from the CMOR tables of the corresponding
+      variable.
+    * `calendar`: If given, transform the calendar to the one specified
+      (examples: `standard`, `365_day`, etc.).
+      This only works for decadal, yearly and monthly data, and will raise an
+      error for other frequencies.
+      If not set, the calendar will not be changed.
+    * `units` (default: `days since 1850-01-01 00:00:00`): Reference time units
+      used if the calendar of the data is changed.
+      Ignored if `calendar` is not set.
+
+Examples:
+
+Change the input calendar to `standard` and use custom units:
+
+.. code-block:: yaml
+
+  regrid_time:
+    calendar: standard
+    units: days since 2000-01-01
 
 See also :func:`esmvalcore.preprocessor.regrid_time`.
 
