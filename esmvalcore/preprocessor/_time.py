@@ -412,7 +412,12 @@ def get_time_weights(cube: Cube) -> np.ndarray | da.core.Array:
 
     # Extract 1D time weights (= lengths of time intervals)
     time_weights = time.lazy_bounds()[:, 1] - time.lazy_bounds()[:, 0]
-    if not cube.has_lazy_data():
+    if cube.has_lazy_data():
+        # Align the weight chunks with the data chunks to avoid excessively
+        # large chunks as a result of broadcasting.
+        time_chunks = cube.lazy_data().chunks[coord_dims[0]]
+        time_weights = time_weights.rechunk(time_chunks)
+    else:
         time_weights = time_weights.compute()
     return time_weights
 
