@@ -21,7 +21,7 @@ dependencies:
   - geopy
   - humanfriendly
   - importlib_metadata  # required for Python < 3.10
-  - iris >=3.6.1
+  - iris >3.8.0
   - iris-esmf-regrid >=0.7.0
   - isodate
   - jinja2
@@ -31,7 +31,7 @@ dependencies:
   - netcdf4
   # - numpy==2.0.0rc1  # !=1.24.3
   - packaging
-  - pandas !=2.2.0,!=2.2.1  # github.com/ESMValGroup/ESMValCore/pull/2305 and #2349
+  - pandas !=2.2.0,!=2.2.1,!=2.2.2  # github.com/ESMValGroup/ESMValCore/pull/2305 and #2349
   - pillow
   - pip !=21.3
   - prov

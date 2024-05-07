@@ -47,7 +47,7 @@ REQUIREMENTS = {
         'netCDF4',
         # 'numpy!=1.24.3',  # install 2.0.0rc1 from conda-forge/label/numpy_dev
         'packaging',
-        'pandas!=2.2.0,!=2.2.1',  # GH ESMValCore #2305 #2349
+        'pandas!=2.2.0,!=2.2.1,!=2.2.2',  # GH #2305 #2349 etc
         'pillow',
         'prov',
         'psutil',
@@ -57,8 +57,8 @@ REQUIREMENTS = {
         'requests',
         'scipy>=1.6',
         # See the following issue for info on the iris pin below:
-        # https://github.com/ESMValGroup/ESMValTool/issues/3239#issuecomment-1613298587
-        'scitools-iris>=3.6.1',
+        # https://github.com/ESMValGroup/ESMValCore/issues/2407
+        'scitools-iris>3.8.0',
         'shapely>=2.0.0',
         'stratify>=0.3',
         'yamale',
