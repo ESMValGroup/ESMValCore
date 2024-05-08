@@ -46,7 +46,7 @@ jobs:
     name: Linux Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: esmvalcore
           environment-file: environment.yml
@@ -82,7 +82,7 @@ jobs:
     name: OSX Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v4
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           activate-environment: esmvalcore
           environment-file: environment.yml
