@@ -11,7 +11,6 @@ import ssl
 import warnings
 from copy import deepcopy
 from decimal import Decimal
-from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -30,8 +29,11 @@ from esmvalcore.cmor._fixes.shared import (
 from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import has_irregular_grid, has_unstructured_grid
-from esmvalcore.preprocessor._other import get_array_module
-from esmvalcore.preprocessor._shared import preserve_float_dtype
+from esmvalcore.preprocessor._shared import (
+    broadcast_to_shape,
+    get_array_module,
+    preserve_float_dtype,
+)
 from esmvalcore.preprocessor._supplementary_vars import (
     add_ancillary_variable,
     add_cell_measure,
@@ -1031,52 +1033,6 @@ def _create_cube(src_cube, data, src_levels, levels):
         result = result[tuple(slicer)]
 
     return result
-
-
-def is_lazy_masked_data(array):
-    """Similar to `iris._lazy_data.is_lazy_masked_data`."""
-    return isinstance(array, da.Array) and isinstance(
-        da.utils.meta_from_array(array), np.ma.MaskedArray)
-
-
-def broadcast_to_shape(array, shape, dim_map, chunks=None):
-    """Copy of `iris.util.broadcast_to_shape` that allows specifying chunks."""
-    if isinstance(array, da.Array):
-        if chunks is not None:
-            chunks = list(chunks)
-            for src_idx, tgt_idx in enumerate(dim_map):
-                # Only use the specified chunks along new dimensions or on
-                # dimensions that have size 1 in the source array.
-                if array.shape[src_idx] != 1:
-                    chunks[tgt_idx] = array.chunks[src_idx]
-        broadcast = partial(da.broadcast_to, shape=shape, chunks=chunks)
-    else:
-        broadcast = partial(np.broadcast_to, shape=shape)
-
-    n_orig_dims = len(array.shape)
-    n_new_dims = len(shape) - n_orig_dims
-    array = array.reshape(array.shape + (1,) * n_new_dims)
-
-    # Get dims in required order.
-    array = np.moveaxis(array, range(n_orig_dims), dim_map)
-    new_array = broadcast(array)
-
-    if np.ma.isMA(array):
-        # broadcast_to strips masks so we need to handle them explicitly.
-        mask = np.ma.getmask(array)
-        if mask is np.ma.nomask:
-            new_mask = np.ma.nomask
-        else:
-            new_mask = broadcast(mask)
-        new_array = np.ma.array(new_array, mask=new_mask)
-
-    elif is_lazy_masked_data(array):
-        # broadcast_to strips masks so we need to handle them explicitly.
-        mask = da.ma.getmaskarray(array)
-        new_mask = broadcast(mask)
-        new_array = da.ma.masked_array(new_array, new_mask)
-
-    return new_array
 
 
 def _vertical_interpolate(cube, src_levels, levels, interpolation,

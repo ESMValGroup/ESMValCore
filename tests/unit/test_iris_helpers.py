@@ -303,7 +303,8 @@ def test_rechunk_cube_fully_lazy(cube_3d):
     assert result.ancillary_variable('anc_var').core_data().chunksize == (3, 2)
 
 
-def test_rechunk_cube_partly_lazy(cube_3d):
+@pytest.mark.parametrize('complete_dims', [['x', 'y'], ['xy']])
+def test_rechunk_cube_partly_lazy(cube_3d, complete_dims):
     """Test ``rechunk_cube``."""
     input_cube = cube_3d.copy()
 
@@ -313,7 +314,7 @@ def test_rechunk_cube_partly_lazy(cube_3d):
     input_cube.coord('xyz').bounds
     input_cube.cell_measure('cell_measure').data
 
-    result = rechunk_cube(input_cube, ['x', 'y'], remaining_dims=2)
+    result = rechunk_cube(input_cube, complete_dims, remaining_dims=2)
 
     assert input_cube == cube_3d
     assert result == cube_3d
@@ -332,15 +333,6 @@ def test_rechunk_cube_partly_lazy(cube_3d):
     assert not result.coord('xyz').has_lazy_bounds()
     assert not result.cell_measure('cell_measure').has_lazy_data()
     assert result.ancillary_variable('anc_var').core_data().chunksize == (3, 2)
-
-
-def test_rechunk_cube_invalid_coord_fail(cube_3d):
-    """Test ``rechunk_cube``."""
-    msg = (
-        "Complete coordinates must be 1D coordinates, got 2D coordinate 'xy'"
-    )
-    with pytest.raises(CoordinateMultiDimError, match=msg):
-        rechunk_cube(cube_3d, ['xy'])
 
 
 @pytest.fixture
