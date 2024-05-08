@@ -13,14 +13,14 @@ dependencies:
   - dask-jobqueue
   - distributed
   - esgf-pyclient >=0.3.1
-  - esmpy !=8.1.0
+  - esmpy !=8.1.0,<8.6.0  # https://github.com/SciTools-incubator/iris-esmf-regrid/pull/342#issuecomment-2092921514
   - filelock
   - fiona
   - fire
   - geopy
   - humanfriendly
   - importlib_metadata  # required for Python < 3.10
-  - iris >=3.8.0
+  - iris >3.8.0
   - iris-esmf-regrid >=0.7.0
   - isodate
   - jinja2
