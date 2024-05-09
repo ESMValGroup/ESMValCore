@@ -74,7 +74,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
-        architecture: ["x86"]
+        architecture: ["x64"]
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
