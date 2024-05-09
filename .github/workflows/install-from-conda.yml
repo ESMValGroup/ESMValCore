@@ -76,11 +76,13 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
+        architecture: ["x64"]  # need to force Intel, arm64 builds have issues
       fail-fast: false
     name: OSX Python ${{ matrix.python-version }}
     steps:
       - uses: conda-incubator/setup-miniconda@v3
         with:
+          architecture: ${{ matrix.architecture }}
           python-version: ${{ matrix.python-version }}
           miniforge-version: "latest"
           miniforge-variant: Mambaforge
