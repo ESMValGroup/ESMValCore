@@ -132,7 +132,7 @@ Automatic testing
 -  Xfail `tests/integration/cmor/_fixes/test_common.py::test_cl_hybrid_height_coord_fix_metadata` while Iris folk fix behaviour (:pull:`2363`) by :user:`valeriupredoi`
 -  Update codacy reporter orb to latest version (:pull:`2388`) by :user:`valeriupredoi`
 -  Add calls to `conda list` in Github Action test workflows to inspect environment (:pull:`2391`) by :user:`valeriupredoi`
--  Pin blithering pandas yet again :panda_face: `test_icon` fails again with pandas=2.2.2 (:pull:`2394`) by :user:`valeriupredoi`
+-  Pin pandas yet again `test_icon` fails again with pandas=2.2.2 (:pull:`2394`) by :user:`valeriupredoi`
 -  Fixed units of cl test data (necessary since iris>=3.8.0) (:pull:`2403`) by :user:`schlunma`
 
 Ux
