@@ -75,6 +75,7 @@ jobs:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
       fail-fast: false
+      architecture: ["x86"]
     name: OSX Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v4
@@ -82,6 +83,7 @@ jobs:
           fetch-depth: 0
       - uses: conda-incubator/setup-miniconda@v3
         with:
+          architecture: ${{ matrix.architecture }}
           activate-environment: esmvalcore
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
