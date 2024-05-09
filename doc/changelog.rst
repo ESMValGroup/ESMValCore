@@ -86,6 +86,7 @@ Installation
 -  Updated iris pin to `iris>=3.6.1` (:pull:`2286`) by :user:`schlunma`
 -  Pin pandas yet again avoid new `2.2.1` as well (:pull:`2353`) by :user:`valeriupredoi`
 -  Pin esmpy <8.6.0 (:pull:`2402`) by :user:`valeriupredoi`
+-  Update Iris pin to avoid using versions with memory issues (:pull:`2408`) by :user:`chrisbillowsMO`
 
 Iris
 ~~~~
@@ -148,7 +149,6 @@ Improvements
 -  Show files of supplementary variables explicitly in log (:pull:`2303`) by :user:`schlunma`
 -  Do not read `~/.esmvaltool/config-user.yml` if `--config-file` is used (:pull:`2309`) by :user:`schlunma`
 -  Support loading ICON grid from ICON rootpath (:pull:`2337`) by :user:`schlunma`
--  Update Iris pin to avoid using versions with memory issues (:pull:`2408`) by :user:`chrisbillowsMO`
 
 .. _changelog-v2-10-0:
 
