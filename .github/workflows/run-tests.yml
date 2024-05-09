@@ -75,7 +75,7 @@ jobs:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
       fail-fast: false
-      architecture: ["x86"]
+      architecture: ["x64"]
     name: OSX Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v4
