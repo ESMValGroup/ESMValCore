@@ -236,7 +236,7 @@ def rechunk_cube(
         Input cube.
     complete_coords:
         (Names of) coordinates along which the output cubes should not be
-        chunked. The given coordinates must span exactly 1 dimension.
+        chunked.
     remaining_dims:
         Chunksize of the remaining dimensions.
 
@@ -248,17 +248,11 @@ def rechunk_cube(
     """
     cube = cube.copy()  # do not modify input cube
 
-    # Make sure that complete_coords span exactly 1 dimension
     complete_dims = []
     for coord in complete_coords:
         coord = cube.coord(coord)
-        dims = cube.coord_dims(coord)
-        if len(dims) != 1:
-            raise CoordinateMultiDimError(
-                f"Complete coordinates must be 1D coordinates, got "
-                f"{len(dims):d}D coordinate '{coord.name()}'"
-            )
-        complete_dims.append(dims[0])
+        complete_dims.extend(cube.coord_dims(coord))
+    complete_dims = list(set(complete_dims))
 
     # Rechunk data
     if cube.has_lazy_data():
