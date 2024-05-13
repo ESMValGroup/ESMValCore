@@ -49,8 +49,10 @@ Computational performance improvements
 
 -  More lazy fixes and preprocessing functions (:pull:`2325`) by :user:`bouweandela`
 -  Made preprocessors mask_landsea, mask_landseaice and mask_glaciated lazy  (:pull:`2268`) by :user:`joergbenke`
+-  More lazy :func:`esmvalcore.preprocessor.extract_levels` preprocessor function (:pull:`2120`) by :user:`bouweandela`
 -  Use lazy weights for :func:`esmvalcore.preprocessor.climate_statistics` and :func:`esmvalcore.preprocessor.axis_statistics` (:pull:`2346`) by :user:`schlunma`
 -  Fixed potential memory leak in :func:`esmvalcore.preprocessor.local_solar_time` (:pull:`2356`) by :user:`schlunma`
+-  Cache regridding weights if possible (:pull:`2344`) by :user:`schlunma`
 -  Implement lazy area weights (:pull:`2354`) by :user:`schlunma`
 -  Avoid large chunks in :func:`esmvalcore.preprocessor.climate_statistics` preprocessor function with `period='full'` (:pull:`2404`) by :user:`bouweandela`
 
@@ -95,13 +97,11 @@ Preprocessor
 -  Added special unit conversion m -> DU for total column ozone (toz) (:pull:`2270`) by :user:`schlunma`
 -  Allow cubes as input for :func:`esmvalcore.preprocessor.bias` preprocessor (:pull:`2183`) by :user:`schlunma`
 -  Add normalization with statistics to many statistics preprocessors (:pull:`2189`) by :user:`schlunma`
--  More lazy :func:`esmvalcore.preprocessor.extract_levels` preprocessor function (:pull:`2120`) by :user:`bouweandela`
 -  Adding sfcWind derivation from uas and vas  (:pull:`2242`) by :user:`malininae`
 -  Update interval check in resample_hours (:pull:`2362`) by :user:`axel-lauer`
 -  Broadcast properly ``cell_measures`` when using :func:`esmvalcore.preprocessor.extract_shape` with ``decomposed: True`` (:pull:`2348`) by :user:`sloosvel`
 -  Compute volume from ``cell_area`` if available (:pull:`2318`) by :user:`enekomartinmartinez`
 -  Do not expand wildcards for datasets of derived variables where not all input variables are available (:pull:`2374`) by :user:`schlunma`
--  Cache regridding weights if possible (:pull:`2344`) by :user:`schlunma`
 -  Modernize :func:`esmvalcore.preprocessor.regrid_time` and allow setting a common calendar for decadal, yearly, and monthly data (:pull:`2311`) by :user:`schlunma`
 -  Added unstructured linear regridding (:pull:`2350`) by :user:`schlunma`
 -  Add preprocessors :func:`esmvalcore.preprocessor.distance_metrics` and :func:`esmvalcore.preprocessor.histogram` (:pull:`2299`) by :user:`schlunma`
