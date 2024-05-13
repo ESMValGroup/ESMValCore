@@ -58,7 +58,6 @@ Computational performance improvements
 Documentation
 ~~~~~~~~~~~~~
 
--  Add highlights to the v2.10 changelog (:pull:`2282`) by :user:`bouweandela`
 -  Use short links in changelog (:pull:`2287`) by :user:`bouweandela`
 -  National Computing Infrastructure (NCI), Site specific configuration (:pull:`2281`) by :user:`rbeucher`
 -  Update `multi_model_statistics` doc with latest changes (new operators, etc.) (:pull:`2321`) by :user:`schlunma`
@@ -85,16 +84,8 @@ Installation
 
 -  Updated iris pin to `iris>=3.6.1` (:pull:`2286`) by :user:`schlunma`
 -  Pin pandas yet again avoid new `2.2.1` as well (:pull:`2353`) by :user:`valeriupredoi`
--  Pin esmpy <8.6.0 (:pull:`2402`) by :user:`valeriupredoi`
 -  Update Iris pin to avoid using versions with memory issues (:pull:`2408`) by :user:`chrisbillowsMO`
-
-Iris
-~~~~
-
--  Handle warnings about invalid units for iris>=3.8 (:pull:`2378`) by :user:`schlunma`
--  Remove custom fix for concatenation of aux factories now that bug in iris is solved (:pull:`2392`) by :user:`schlunma`
--  Use `iris.FUTURE.save_split_attrs = True` to remove iris warning (:pull:`2398`) by :user:`schlunma`
--  Ignored iris warnings about global attributes (:pull:`2400`) by :user:`schlunma`
+-  Pin esmpy <8.6.0 (:pull:`2402`) by :user:`valeriupredoi`
 
 Preprocessor
 ~~~~~~~~~~~~
@@ -128,22 +119,22 @@ Automatic testing
 -  Xfail `tests/integration/cmor/_fixes/test_common.py::test_cl_hybrid_height_coord_fix_metadata` while Iris folk fix behaviour (:pull:`2363`) by :user:`valeriupredoi`
 -  Update codacy reporter orb to latest version (:pull:`2388`) by :user:`valeriupredoi`
 -  Add calls to `conda list` in Github Action test workflows to inspect environment (:pull:`2391`) by :user:`valeriupredoi`
--  Pin pandas yet again `test_icon` fails again with pandas=2.2.2 (:pull:`2394`) by :user:`valeriupredoi`
+-  Pin pandas yet again :panda_face: `test_icon` fails again with pandas=2.2.2 (:pull:`2394`) by :user:`valeriupredoi`
 -  Fixed units of cl test data (necessary since iris>=3.8.0) (:pull:`2403`) by :user:`schlunma`
-
-Ux
-~~
-
--  Remove warning about logging in to ESGF (:pull:`2326`) by :user:`bouweandela`
--  Added note on how to access `index.html` on remote server (:pull:`2276`) by :user:`schlunma`
 
 Improvements
 ~~~~~~~~~~~~
 
 -  Merge v2.10.x into main (:pull:`2283`) by :user:`schlunma`
 -  Show files of supplementary variables explicitly in log (:pull:`2303`) by :user:`schlunma`
+-  Remove warning about logging in to ESGF (:pull:`2326`) by :user:`bouweandela`
 -  Do not read `~/.esmvaltool/config-user.yml` if `--config-file` is used (:pull:`2309`) by :user:`schlunma`
 -  Support loading ICON grid from ICON rootpath (:pull:`2337`) by :user:`schlunma`
+-  Handle warnings about invalid units for iris>=3.8 (:pull:`2378`) by :user:`schlunma`
+-  Added note on how to access `index.html` on remote server (:pull:`2276`) by :user:`schlunma`
+-  Remove custom fix for concatenation of aux factories now that bug in iris is solved (:pull:`2392`) by :user:`schlunma`
+-  Use `iris.FUTURE.save_split_attrs = True` to remove iris warning (:pull:`2398`) by :user:`schlunma`
+-  Ignored iris warnings about global attributes (:pull:`2400`) by :user:`schlunma`
 
 .. _changelog-v2-10-0:
 
