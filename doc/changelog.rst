@@ -30,7 +30,6 @@ Deprecations
 Bug fixes
 ~~~~~~~~~
 
--  Fixing missing height 2m coordinates in GFDL-CM4 and KIOST-ESM (:pull:`2294`) by :user:`Karen-A-Garcia`
 -  Do not overwrite facets from recipe with CMOR table facets for derived variables (:pull:`2255`) by :user:`bouweandela`
 -  Fix error message in variable definition check (:pull:`2313`) by :user:`enekomartinmartinez`
 -  Unify dtype handling of preprocessors (:pull:`2393`) by :user:`schlunma`
@@ -68,6 +67,7 @@ Documentation
 Fixes for datasets
 ~~~~~~~~~~~~~~~~~~
 
+-  Fixing missing height 2m coordinates in GFDL-CM4 and KIOST-ESM (:pull:`2294`) by :user:`Karen-A-Garcia`
 -  Added fix for wrong units of `clt` for CIESM and FIO-ESM-2-0 (:pull:`2330`) by :user:`schlunma`
 -  Cmip6 gfdl_cm4: fix tas height fix to work for concatenated scenarios (:pull:`2332`) by :user:`mwjury`
 -  Cordex GERICS REMO2015  lon differences above 10e-4 (:pull:`2334`) by :user:`mwjury`
