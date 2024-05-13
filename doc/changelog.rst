@@ -125,7 +125,6 @@ Automatic testing
 Improvements
 ~~~~~~~~~~~~
 
--  Merge v2.10.x into main (:pull:`2283`) by :user:`schlunma`
 -  Show files of supplementary variables explicitly in log (:pull:`2303`) by :user:`schlunma`
 -  Remove warning about logging in to ESGF (:pull:`2326`) by :user:`bouweandela`
 -  Do not read ``~/.esmvaltool/config-user.yml`` if ``--config-file`` is used (:pull:`2309`) by :user:`schlunma`
