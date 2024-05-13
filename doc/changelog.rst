@@ -115,11 +115,6 @@ Preprocessor
 -  Added unstructured linear regridding (:pull:`2350`) by :user:`schlunma`
 -  Add preprocessors `distance_metrics` and `histogram` (:pull:`2299`) by :user:`schlunma`
 
-Release
-~~~~~~~
-
--  Increase the version number for 2.11.0 release (:pull:`2410`) by :user:`chrisbillowsMO`
-
 Automatic testing
 ~~~~~~~~~~~~~~~~~
 
