@@ -48,7 +48,7 @@ Computational performance improvements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  More lazy fixes and preprocessing functions (:pull:`2325`) by :user:`bouweandela`
--  Made preprocessors mask_landsea, mask_landseaice and mask_glaciated lazy  (:pull:`2268`) by :user:`joergbenke`
+-  Made preprocessors :func:`esmvalcore.preprocessor.mask_landsea`, :func:`esmvalcore.preprocessor.mask_landseaice` and :func:`esmvalcore.preprocessor.mask_glaciated` lazy  (:pull:`2268`) by :user:`joergbenke`
 -  More lazy :func:`esmvalcore.preprocessor.extract_levels` preprocessor function (:pull:`2120`) by :user:`bouweandela`
 -  Use lazy weights for :func:`esmvalcore.preprocessor.climate_statistics` and :func:`esmvalcore.preprocessor.axis_statistics` (:pull:`2346`) by :user:`schlunma`
 -  Fixed potential memory leak in :func:`esmvalcore.preprocessor.local_solar_time` (:pull:`2356`) by :user:`schlunma`
