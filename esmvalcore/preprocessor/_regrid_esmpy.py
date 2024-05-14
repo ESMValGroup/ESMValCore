@@ -67,6 +67,9 @@ class ESMPyRegridder:
         mask_threshold: float = 0.99,
     ):
         """Initialize class instance."""
+        # These regridders are not lazy, so load source and target data once.
+        src_cube.data  # pylint: disable=pointless-statement
+        tgt_cube.data  # pylint: disable=pointless-statement
         self.src_cube = src_cube
         self.tgt_cube = tgt_cube
         self.method = method
@@ -86,6 +89,8 @@ class ESMPyRegridder:
             Regridded cube.
 
         """
+        # These regridders are not lazy, so load source data once.
+        cube.data  # pylint: disable=pointless-statement
         src_rep, dst_rep = get_grid_representants(cube, self.tgt_cube)
         regridder = build_regridder(
             src_rep, dst_rep, self.method, mask_threshold=self.mask_threshold

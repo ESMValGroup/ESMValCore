@@ -37,13 +37,13 @@ from esmvalcore.preprocessor import (
 )
 from esmvalcore.preprocessor._area import _update_shapefile_path
 from esmvalcore.preprocessor._multimodel import _get_stat_identifier
-from esmvalcore.preprocessor._other import _group_products
 from esmvalcore.preprocessor._regrid import (
     _spec_to_latlonvals,
     get_cmor_levels,
     get_reference_levels,
     parse_cell_spec,
 )
+from esmvalcore.preprocessor._shared import _group_products
 
 from . import check
 from .from_datasets import datasets_to_recipe
@@ -555,6 +555,7 @@ def _get_preprocessor_products(
             f'{separator.join(sorted(missing_vars))}')
 
     check.reference_for_bias_preproc(products)
+    check.reference_for_distance_metric_preproc(products)
 
     _configure_multi_product_preprocessor(
         products=products,
@@ -656,6 +657,7 @@ def _update_preproc_functions(settings, dataset, datasets, missing_vars):
     check.statistics_preprocessors(settings)
     check.regridding_schemes(settings)
     check.bias_type(settings)
+    check.metric_type(settings)
 
 
 def _get_preprocessor_task(datasets, profiles, task_name):

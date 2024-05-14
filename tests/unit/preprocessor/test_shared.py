@@ -6,13 +6,20 @@ import dask.array as da
 import iris.analysis
 import numpy as np
 import pytest
+from cf_units import Unit
+from iris.coords import AuxCoord
 from iris.cube import Cube
 
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+from esmvalcore.preprocessor import PreprocessorFile
 from esmvalcore.preprocessor._shared import (
+    _get_area_weights,
+    _group_products,
     aggregator_accept_weights,
+    get_array_module,
     get_iris_aggregator,
     preserve_float_dtype,
+    try_adding_calculated_cell_area,
 )
 
 
@@ -236,3 +243,107 @@ def test_preserve_float_dtype(data, dtype):
     assert _dummy_func.__name__ == '_dummy_func'
     signature = inspect.signature(_dummy_func)
     assert list(signature.parameters) == ['obj', 'arg', 'kwarg']
+
+
+def test_get_array_module_da():
+    npx = get_array_module(da.array([1, 2]))
+    assert npx is da
+
+
+def test_get_array_module_np():
+    npx = get_array_module(np.array([1, 2]))
+    assert npx is np
+
+
+def test_get_array_module_mixed():
+    npx = get_array_module(da.array([1]), np.array([1]))
+    assert npx is da
+
+
+def _create_sample_full_cube():
+    cube = Cube(np.zeros((4, 180, 360)), var_name='co2', units='J')
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.array([10., 40., 70., 110.]),
+            standard_name='time',
+            units=Unit('days since 1950-01-01 00:00:00', calendar='gregorian'),
+        ),
+        0,
+    )
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.arange(-90., 90., 1.),
+            standard_name='latitude',
+            units='degrees',
+        ),
+        1,
+    )
+    cube.add_dim_coord(
+        iris.coords.DimCoord(
+            np.arange(0., 360., 1.),
+            standard_name='longitude',
+            units='degrees',
+        ),
+        2,
+    )
+
+    cube.coord("time").guess_bounds()
+    cube.coord("longitude").guess_bounds()
+    cube.coord("latitude").guess_bounds()
+
+    return cube
+
+
+@pytest.mark.parametrize('lazy', [True, False])
+def test_get_area_weights(lazy):
+    """Test _get_area_weights."""
+    cube = _create_sample_full_cube()
+    if lazy:
+        cube.data = cube.lazy_data()
+    weights = _get_area_weights(cube)
+    if lazy:
+        assert isinstance(weights, da.Array)
+        assert weights.chunks == cube.lazy_data().chunks
+    else:
+        assert isinstance(weights, np.ndarray)
+    np.testing.assert_allclose(
+        weights, iris.analysis.cartography.area_weights(cube)
+    )
+
+
+def test_group_products_string_list():
+    products = [
+        PreprocessorFile(
+            filename='A_B.nc',
+            attributes={
+                'project': 'A',
+                'dataset': 'B',
+            },
+        ),
+        PreprocessorFile(
+            filename='A_C.nc',
+            attributes={
+                'project': 'A',
+                'dataset': 'C',
+            }
+        ),
+    ]
+    grouped_by_string = _group_products(products, 'project')
+    grouped_by_list = _group_products(products, ['project'])
+
+    assert grouped_by_list == grouped_by_string
+
+
+def test_try_adding_calculated_cell_area():
+    """Test ``try_adding_calculated_cell_area``."""
+    cube = _create_sample_full_cube()
+    cube.coord('latitude').rename('grid_latitude')
+    cube.coord('longitude').rename('grid_longitude')
+    lat = AuxCoord(np.zeros((180, 360)), standard_name='latitude')
+    lon = AuxCoord(np.zeros((180, 360)), standard_name='longitude')
+    cube.add_aux_coord(lat, (1, 2))
+    cube.add_aux_coord(lon, (1, 2))
+
+    try_adding_calculated_cell_area(cube)
+
+    assert cube.cell_measures('cell_area')

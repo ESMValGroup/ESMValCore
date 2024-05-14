@@ -26,12 +26,13 @@ from iris.exceptions import MergeError
 from iris.util import equalise_attributes, new_axis
 
 from esmvalcore.iris_helpers import date2num
+from esmvalcore.preprocessor._shared import (
+    _group_products,
+    get_iris_aggregator,
+)
 from esmvalcore.preprocessor._supplementary_vars import (
     remove_supplementary_variables,
 )
-
-from ._other import _group_products
-from ._shared import get_iris_aggregator
 
 if TYPE_CHECKING:
     from esmvalcore.preprocessor import PreprocessorFile

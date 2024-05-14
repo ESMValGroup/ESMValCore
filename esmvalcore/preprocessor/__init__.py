@@ -22,7 +22,7 @@ from ._area import (
     meridional_statistics,
     zonal_statistics,
 )
-from ._bias import bias
+from ._compare_with_refs import bias, distance_metric
 from ._cycles import amplitude
 from ._derive import derive
 from ._detrend import detrend
@@ -46,7 +46,7 @@ from ._mask import (
     mask_outside_range,
 )
 from ._multimodel import ensemble_statistics, multi_model_statistics
-from ._other import clip
+from ._other import clip, histogram
 from ._regrid import (
     extract_coordinate_points,
     extract_levels,
@@ -175,12 +175,15 @@ __all__ = [
     'linear_trend_stderr',
     # Convert units
     'convert_units',
+    # Histograms
+    'histogram',
     # Ensemble statistics
     'ensemble_statistics',
     # Multi model statistics
     'multi_model_statistics',
-    # Bias calculation
+    # Comparison with reference datasets
     'bias',
+    'distance_metric',
     # Remove supplementary variables from cube
     'remove_supplementary_variables',
     # Save to file
@@ -215,6 +218,7 @@ FINAL_STEPS = DEFAULT_ORDER[DEFAULT_ORDER.index(
 
 MULTI_MODEL_FUNCTIONS = {
     'bias',
+    'distance_metric',
     'ensemble_statistics',
     'multi_model_statistics',
     'mask_multimodel',
