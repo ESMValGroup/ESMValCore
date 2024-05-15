@@ -8,7 +8,6 @@ dependencies:
   - cartopy
   - cf-units
   - cftime
-  - compilers
   - dask
   - dask-jobqueue
   - distributed
