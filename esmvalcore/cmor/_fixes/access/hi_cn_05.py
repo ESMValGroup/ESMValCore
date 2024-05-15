@@ -130,6 +130,11 @@ class pr(NativeDatasetFix):
     # def fix_coord_system(self,cube):
     #     cube.coords('latitude')[0].coord_system=
 
+    def fix_coord_system(self):
+        for dim in self.cube.dim_coords:
+            if dim.coord_system!=None:
+                self.cube.coord(dim.standard_name).coord_system=None
+
     def fix_metadata(self, cubes):
 
         master_map_path='./master_map.csv'
@@ -149,6 +154,8 @@ class pr(NativeDatasetFix):
         self.fix_var_name()
 
         self.fix_long_name()
+
+        self.fix_coord_system()
 
         cube_checked= cmor_check(cube=cube,cmor_table='CMIP6',mip='Amon',short_name='pr',check_level=1)
 
