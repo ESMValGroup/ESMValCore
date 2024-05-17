@@ -2677,8 +2677,8 @@ recipe:
   .. math::
 
     W_1 = \min_{\gamma \in \mathbb{R}^{n \times n}_{+}} \sum_{i,j}^{n}
-    \gamma_{ij} \lvert X_i - R_i \rvert \\
-    \textrm{with} ~~ \gamma 1 = p_X(X);~ \gamma^T 1 = p_R(R)
+    \gamma_{ij} \lvert X_i - R_i \rvert \\ \textrm{with} ~~ \sum_{j}^{n}
+    \gamma_{ij} = p_X(X_i);~ \sum_{i}^{n} \gamma_{ij} = p_R(R_j)
 
   * ``'weighted_emd'``: `Weighted Earth mover's distance`_.
     Similar to the unweighted EMD (see above), but here weights are considered
