@@ -20,6 +20,7 @@ import iris.util
 from iris import NameConstraint
 from iris.aux_factory import HybridPressureFactory
 from iris.cube import CubeList
+from iris.util import promote_aux_coord_to_dim_coord
 from netCDF4 import Dataset
 from scipy import constants
 
@@ -93,11 +94,12 @@ class AllVars(EmacFix):
             return
 
         # Sometimes EMAC has invalid time bounds which lead to time being an
-        # auxiliary coordinate -> fix this
+        # auxiliary coordinate -> fix this by assigning proper bounds
         if not cube.coords('time', dim_coords=True):
             time = cube.coord('time')
             time.bounds = None
             self.guess_coord_bounds(time)
+            promote_aux_coord_to_dim_coord(cube, time)
 
         self.fix_regular_time(cube)
 
