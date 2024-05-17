@@ -21,6 +21,7 @@ import iris.util
 from iris import NameConstraint
 from iris.aux_factory import HybridPressureFactory
 from iris.cube import CubeList
+from iris.util import promote_aux_coord_to_dim_coord
 from netCDF4 import Dataset
 from scipy import constants
 
@@ -70,7 +71,7 @@ class AllVars(EmacFix):
         cube = self.get_cube(cubes)
 
         # Fix time, latitude, and longitude coordinates
-        self.fix_regular_time(cube)
+        self._fix_time(cube)
         self.fix_regular_lat(cube)
         self.fix_regular_lon(cube)
 
@@ -89,6 +90,21 @@ class AllVars(EmacFix):
         self.fix_var_metadata(cube)
 
         return CubeList([cube])
+
+    def _fix_time(self, cube):
+        """Fix regular time coordinate of cube."""
+        if not self.vardef.has_coord_with_standard_name('time'):
+            return
+
+        # Sometimes EMAC has invalid time bounds which lead to time being an
+        # auxiliary coordinate -> fix this by assigning proper bounds
+        if not cube.coords('time', dim_coords=True):
+            time = cube.coord('time')
+            time.bounds = None
+            self.guess_coord_bounds(time)
+            promote_aux_coord_to_dim_coord(cube, time)
+
+        self.fix_regular_time(cube)
 
     def _fix_plev(self, cube):
         """Fix regular pressure level coordinate of cube."""
