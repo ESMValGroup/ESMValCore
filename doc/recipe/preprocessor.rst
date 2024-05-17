@@ -2694,6 +2694,9 @@ recipe:
   or `p`\ :sub:`R`\ (`R`\ :sub:`i`) and a number of bins `n` (see the argument
   ``n_bins`` below) that has been derived for the variables `x` and `r` through
   binning.
+  The bins range from the minimum to the maximum value calculated over both the
+  variable of interest and the reference; thus, `X`\ :sub:`i` = `R`\ :sub:`i`)
+  for all `i`.
   `w`\ :sub:`i` are weights that sum to one (see note below) and `N` is the
   total number of samples.
 
