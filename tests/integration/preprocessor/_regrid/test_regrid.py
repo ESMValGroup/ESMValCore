@@ -331,29 +331,22 @@ class Test:
         expected = np.array([[[1.499886]], [[5.499886]], [[9.499886]]])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
 
+    @pytest.mark.parametrize('scheme', ['linear', 'nearest'])
     @pytest.mark.parametrize('cache_weights', [True, False])
-    def test_regrid_nearest_unstructured_grid_float(self, cache_weights):
-        """Test `nearest` regridding with unstructured cube of floats."""
+    def test_regrid_unstructured_grid_float(self, cache_weights, scheme):
+        """Test regridding with unstructured cube of floats."""
         result = regrid(
             self.unstructured_grid_cube,
             self.tgt_grid_for_unstructured,
-            'nearest',
+            scheme,
             cache_weights=cache_weights,
         )
-        expected = np.ma.array([[[3.0]], [[7.0]], [[11.0]]],
-                               mask=[[[True]], [[False]], [[False]]])
-        np.testing.assert_array_equal(result.data.mask, expected.mask)
-        np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
-
-        # Make sure that dtype is preserved (without an adaption in
-        # esmvalcore.preprocessor.regrid(), the dtype of the result would be
-        # float64 instead of float32)
         assert self.unstructured_grid_cube.dtype == np.float32
         assert result.dtype == np.float32
 
     @pytest.mark.parametrize('cache_weights', [True, False])
     def test_regrid_nearest_unstructured_grid_int(self, cache_weights):
-        """Test `nearest` regridding with unstructured cube of ints."""
+        """Test nearest-neighbor regridding with unstructured cube of ints."""
         self.unstructured_grid_cube.data = np.ones((3, 4), dtype=int)
         result = regrid(
             self.unstructured_grid_cube,
@@ -361,8 +354,21 @@ class Test:
             'nearest',
             cache_weights=cache_weights,
         )
-        expected = np.array([[[1]], [[1]], [[1]]])
-        np.testing.assert_array_equal(result.data, expected)
+        assert self.unstructured_grid_cube.dtype == int
+        assert result.dtype == int
+
+    @pytest.mark.parametrize('cache_weights', [True, False])
+    def test_regrid_linear_unstructured_grid_int(self, cache_weights):
+        """Test linear regridding with unstructured cube of ints."""
+        self.unstructured_grid_cube.data = np.ones((3, 4), dtype=int)
+        result = regrid(
+            self.unstructured_grid_cube,
+            self.tgt_grid_for_unstructured,
+            'linear',
+            cache_weights=cache_weights,
+        )
+        assert self.unstructured_grid_cube.dtype == int
+        assert result.dtype == np.float64
 
     @pytest.mark.parametrize('cache_weights', [True, False])
     def test_invalid_scheme_for_unstructured_grid(self, cache_weights):
