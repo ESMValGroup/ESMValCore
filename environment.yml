@@ -8,19 +8,18 @@ dependencies:
   - cartopy
   - cf-units
   - cftime
-  - compilers
   - dask
   - dask-jobqueue
   - distributed
   - esgf-pyclient >=0.3.1
-  - esmpy !=8.1.0
+  - esmpy !=8.1.0,<8.6.0  # https://github.com/SciTools-incubator/iris-esmf-regrid/pull/342#issuecomment-2092921514
   - filelock
   - fiona
   - fire
   - geopy
   - humanfriendly
   - importlib_metadata  # required for Python < 3.10
-  - iris >=3.6.1
+  - iris >3.8.0
   - iris-esmf-regrid >=0.7.0
   - isodate
   - jinja2
@@ -28,9 +27,9 @@ dependencies:
   - nc-time-axis
   - nested-lookup
   - netcdf4
-  - numpy !=1.24.3
+  - numpy !=1.24.3,<2.0.0  # avoid pulling 2.0.0rcX
   - packaging
-  - pandas !=2.2.0,!=2.2.1  # github.com/ESMValGroup/ESMValCore/pull/2305 and #2349
+  - pandas !=2.2.0,!=2.2.1,!=2.2.2  # github.com/ESMValGroup/ESMValCore/pull/2305 and #2349
   - pillow
   - pip !=21.3
   - prov

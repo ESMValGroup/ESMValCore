@@ -1,7 +1,7 @@
 """Shared functions for fixes."""
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import lru_cache
 
 import dask.array as da
@@ -474,12 +474,12 @@ def get_next_month(month: int, year: int) -> tuple[int, int]:
 def get_time_bounds(time: Coord, freq: str) -> np.ndarray:
     """Get bounds for time coordinate.
 
-    For monthly data, use the first day of the current month and the first day
-    of the next month. For yearly or decadal data, use 1 January of the current
-    year and 1 January of the next year or 10 years from the current year. For
-    other frequencies (daily, 6-hourly, 3-hourly, hourly), half of the
-    frequency is subtracted/added from the current point in time to get the
-    bounds.
+    For decadal data, use 1 January 5 years before/after the current year. For
+    yearly data, use 1 January of the current year and 1 January of the next
+    year. For monthly data, use the first day of the current month and the
+    first day of the next month. For other frequencies (daily or `n`-hourly,
+    where `n` is a divisor of 24), half of the frequency is subtracted/added
+    from the current point in time to get the bounds.
 
     Parameters
     ----------
@@ -501,39 +501,38 @@ def get_time_bounds(time: Coord, freq: str) -> np.ndarray:
     """
     bounds = []
     dates = time.units.num2date(time.points)
-    for step, date in enumerate(dates):
-        month = date.month
-        year = date.year
-        if freq in ['mon', 'mo']:
-            next_month, next_year = get_next_month(month, year)
-            min_bound = date2num(datetime(year, month, 1, 0, 0),
-                                 time.units, time.dtype)
-            max_bound = date2num(datetime(next_year, next_month, 1, 0, 0),
-                                 time.units, time.dtype)
-        elif freq == 'yr':
-            min_bound = date2num(datetime(year, 1, 1, 0, 0),
-                                 time.units, time.dtype)
-            max_bound = date2num(datetime(year + 1, 1, 1, 0, 0),
-                                 time.units, time.dtype)
-        elif freq == 'dec':
-            min_bound = date2num(datetime(year, 1, 1, 0, 0),
-                                 time.units, time.dtype)
-            max_bound = date2num(datetime(year + 10, 1, 1, 0, 0),
-                                 time.units, time.dtype)
-        else:
-            delta = {
-                'day': 12.0 / 24,
-                '6hr': 3.0 / 24,
-                '3hr': 1.5 / 24,
-                '1hr': 0.5 / 24,
-            }
-            if freq not in delta:
+
+    for date in dates:
+        if 'dec' in freq:
+            min_bound = datetime(date.year - 5, 1, 1, 0, 0)
+            max_bound = datetime(date.year + 5, 1, 1, 0, 0)
+        elif 'yr' in freq:
+            min_bound = datetime(date.year, 1, 1, 0, 0)
+            max_bound = datetime(date.year + 1, 1, 1, 0, 0)
+        elif 'mon' in freq or freq == 'mo':
+            next_month, next_year = get_next_month(date.month, date.year)
+            min_bound = datetime(date.year, date.month, 1, 0, 0)
+            max_bound = datetime(next_year, next_month, 1, 0, 0)
+        elif 'day' in freq:
+            min_bound = date - timedelta(hours=12.0)
+            max_bound = date + timedelta(hours=12.0)
+        elif 'hr' in freq:
+            (n_hours_str, _, _) = freq.partition('hr')
+            if not n_hours_str:
+                n_hours = 1
+            else:
+                n_hours = int(n_hours_str)
+            if 24 % n_hours:
                 raise NotImplementedError(
-                    f"Cannot guess time bounds for frequency '{freq}'"
+                    f"For `n`-hourly data, `n` must be a divisor of 24, got "
+                    f"'{freq}'"
                 )
-            point = time.points[step]
-            min_bound = point - delta[freq]
-            max_bound = point + delta[freq]
+            min_bound = date - timedelta(hours=n_hours / 2.0)
+            max_bound = date + timedelta(hours=n_hours / 2.0)
+        else:
+            raise NotImplementedError(
+                f"Cannot guess time bounds for frequency '{freq}'"
+            )
         bounds.append([min_bound, max_bound])
 
-    return np.array(bounds)
+    return date2num(np.array(bounds), time.units, time.dtype)

@@ -94,6 +94,8 @@ jobs:
         run: |
           mamba --version 2>&1 | tee source_install_osx_artifacts_python_${{ matrix.python-version }}/conda_version.txt
           python -V 2>&1 | tee source_install_osx_artifacts_python_${{ matrix.python-version }}/python_version.txt
+      - name: Force install x64 git
+        run: mamba install -c conda-forge git
       - name: Install
         run: pip install -e .[develop] 2>&1 | tee source_install_osx_artifacts_python_${{ matrix.python-version }}/install.txt
       - name: Verify installation
