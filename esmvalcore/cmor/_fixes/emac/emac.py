@@ -101,7 +101,7 @@ class AllVars(EmacFix):
         if not cube.coords('time', dim_coords=True):
             time = cube.coord('time')
             time.bounds = None
-            self.guess_coord_bounds(time)
+            self.guess_coord_bounds(cube, time)
             promote_aux_coord_to_dim_coord(cube, time)
 
         self.fix_regular_time(cube)
