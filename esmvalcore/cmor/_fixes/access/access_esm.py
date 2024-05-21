@@ -1,3 +1,12 @@
+'''On-the-fly CMORizer for ACCESS-ESM.
+
+Note
+----
+This is the first version of ACCESS-ESM CMORizer in for ESMValCore
+Currently, only two variables (`tas`,`pr`) is fully supported.
+
+
+'''
 import logging
 
 import csv
