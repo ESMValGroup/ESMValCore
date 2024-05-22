@@ -17,7 +17,7 @@ from ..native_datasets import NativeDatasetFix
 logger = logging.getLogger(__name__)
 
 
-class tas(NativeDatasetFix):
+class Tas(NativeDatasetFix):
     """Fix variable(tas) only."""
 
     def __init__(self, vardef, extra_facets, session, frequency):
@@ -84,7 +84,7 @@ class tas(NativeDatasetFix):
         return CubeList([cube_checked])
 
 
-class pr(NativeDatasetFix):
+class Pr(NativeDatasetFix):
     """Fix variable(pr) only."""
 
     def __init__(self, vardef, extra_facets, session, frequency):
