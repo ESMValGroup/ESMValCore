@@ -88,7 +88,6 @@ class Pr(NativeDatasetFix):
 
     def __init__(self, vardef, extra_facets, session, frequency):
         """Initialise some class variable Heritage from native_dataset."""
-
         super().__init__(vardef, extra_facets, session, frequency)
 
         self.cube = None
@@ -123,7 +122,6 @@ class Pr(NativeDatasetFix):
         -------
         iris.cube.CubeList
         """
-
         original_short_name = 'fld_s05i216'
 
         cube = self.get_cube(cubes, var_name=original_short_name)
