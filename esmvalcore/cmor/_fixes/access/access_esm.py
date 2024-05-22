@@ -49,7 +49,9 @@ class Tas(NativeDatasetFix):
                 self.cube.coord(dim.standard_name).coord_system = None
 
     def fix_metadata(self, cubes):
-        """Fix name of coordinate(height), long name and variable name of
+        """Main function of the cmoriser
+        
+        Fix name of coordinate(height), long name and variable name of
         variable(tas).
 
         Parameters
@@ -109,7 +111,9 @@ class Pr(NativeDatasetFix):
                 self.cube.coord(dim.standard_name).coord_system = None
 
     def fix_metadata(self, cubes):
-        """Fix name of coordinate(height), long name and variable name of
+        """Main function of the cmoriser
+        
+        Fix name of coordinate(height), long name and variable name of
         variable(tas).
 
         Parameters
