@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 class Tas(NativeDatasetFix):
     """Fix variable(tas) only."""
-    
+
     def __init__(self, vardef, extra_facets, session, frequency):
         """Initialise some class variable Heritage from native_dataset."""
         super().__init__(vardef, extra_facets, session, frequency)
@@ -44,7 +44,7 @@ class Tas(NativeDatasetFix):
     def fix_coord_system(self):
         """Delete coord_system to make it cna be merged with other cmip dataset
         by iris.CubeList.merge_dube."""
-        
+
         for dim in self.cube.dim_coords:
             if dim.coord_system is not None:
                 self.cube.coord(dim.standard_name).coord_system = None
