@@ -238,6 +238,7 @@ drs:
 #  CMIP6: /project/champ/data/CMIP6
 #  CORDEX: /project/champ/data/cordex/output
 #  OBS: /data/users/esmval/ESMValTool/obs
+#  OBS6: /data/users/esmval/ESMValTool/obs
 #  obs4MIPs: /data/users/esmval/ESMValTool/obs
 #  ana4mips: /project/champ/data/ana4MIPs
 #  native6: /data/users/esmval/ESMValTool/rawobs
