@@ -248,6 +248,7 @@ drs:
 #  CMIP6: BADC
 #  CORDEX: BADC
 #  OBS: default
+#  OBS6: default
 #  obs4MIPs: default
 #  ana4mips: BADC
 #  native6: default
