@@ -8,7 +8,6 @@ dependencies:
   - cartopy
   - cf-units
   - cftime
-  - csv
   - compilers
   - dask
   - dask-jobqueue
@@ -30,7 +29,6 @@ dependencies:
   - nested-lookup
   - netcdf4
   - numpy !=1.24.3
-  - os
   - packaging
   - pandas !=2.2.0,!=2.2.1  # github.com/ESMValGroup/ESMValCore/pull/2305 and #2349
   - pillow
