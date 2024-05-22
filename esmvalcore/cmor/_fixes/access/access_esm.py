@@ -42,7 +42,8 @@ class Tas(NativeDatasetFix):
         self.cube.var_name = 'tas'
 
     def fix_coord_system(self):
-        """Delete coord_system to make it can be merged with other cmip dataset."""
+        """Delete coord_system to make it can be merged with other cmip
+        dataset."""
         for dim in self.cube.dim_coords:
             if dim.coord_system is not None:
                 self.cube.coord(dim.standard_name).coord_system = None
@@ -101,7 +102,8 @@ class Pr(NativeDatasetFix):
         self.cube.long_name = 'Precipitation'
 
     def fix_coord_system(self):
-        """Delete coord_system to make it can be merged with other cmip dataset."""
+        """Delete coord_system to make it can be merged with other cmip
+        dataset."""
         for dim in self.cube.dim_coords:
             if dim.coord_system is not None:
                 self.cube.coord(dim.standard_name).coord_system = None
