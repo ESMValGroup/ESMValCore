@@ -240,6 +240,8 @@ drs:
 #  OBS: /data/users/esmval/ESMValTool/temporary/obs/
 #  obs4MIPs: /data/users/esmval/ESMValTool/temporary/obs/
 #  ana4mips: /project/champ/data/ana4MIPs
+#  native6: /data/users/esmval/ESMValTool/rawobs
+#  RAWOBS: /data/users/esmval/ESMValTool/rawobs
 #drs:
 #  CMIP5: BADC
 #  CMIP6: BADC
@@ -247,6 +249,7 @@ drs:
 #  OBS: default
 #  obs4MIPs: default
 #  ana4mips: BADC
+#  native6: default
 
 # Site-specific entries: NCI
 # Uncomment the lines below to locate data at NCI.
