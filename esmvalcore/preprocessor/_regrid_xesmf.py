@@ -56,12 +56,10 @@ class xESMFRegridder:  # noqa
             for k, v in kwargs.items() if k in call_arg_names
         }
 
+        src_cube = src_cube.copy(da.ma.filled(src_cube.core_data(), np.nan))
+        tgt_cube = tgt_cube.copy(da.ma.filled(tgt_cube.core_data(), np.nan))
         src_ds = ncdata.iris_xarray.cubes_to_xarray([src_cube])
         tgt_ds = ncdata.iris_xarray.cubes_to_xarray([tgt_cube])
-        for var in src_ds.values():
-            var.data = da.ma.filled(var.data, np.nan)
-        for var in tgt_ds.values():
-            var.data = da.ma.filled(var.data, np.nan)
 
         self._regridder = xesmf.Regridder(src_ds, tgt_ds, **self.kwargs)
 
@@ -87,20 +85,20 @@ class xESMFRegridder:  # noqa
         """
         import ncdata.iris_xarray
 
-        src_ds = ncdata.iris_xarray.cubes_to_xarray([src_cube])
-        for var in src_ds.values():
-            var.data = da.ma.filled(var.data, np.nan)
-
         call_args = dict(self.default_call_kwargs)
         call_args.update(kwargs)
+
+        src_cube = src_cube.copy(da.ma.filled(src_cube.core_data(), np.nan))
+        src_ds = ncdata.iris_xarray.cubes_to_xarray([src_cube])
+
         tgt_ds = self._regridder(src_ds, **call_args)
-        for var in tgt_ds.values():
-            var.data = da.ma.masked_where(da.isnan(var.data), var.data)
 
         cube = ncdata.iris_xarray.cubes_from_xarray(
             tgt_ds,
             iris_load_kwargs={'constraints': src_cube.standard_name},
         )[0]
+        cube.data = da.ma.masked_where(da.isnan(cube.core_data()),
+                                       cube.core_data())
         return cube
 
 
