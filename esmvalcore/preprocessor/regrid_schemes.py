@@ -17,9 +17,9 @@ from esmvalcore.preprocessor._regrid_unstructured import (
     UnstructuredLinearRegridder,
     UnstructuredNearest,
 )
+from esmvalcore.preprocessor._regrid_xesmf import xESMF, xESMFRegridder
 
 logger = logging.getLogger(__name__)
-
 
 __all__ = [
     'ESMPyAreaWeighted',
@@ -31,6 +31,8 @@ __all__ = [
     'UnstructuredLinear',
     'UnstructuredLinearRegridder',
     'UnstructuredNearest',
+    'xESMF',
+    'xESMFRegridder',
 ]
 
 
@@ -51,7 +53,6 @@ class GenericRegridder:
         Cube, \*\*kwargs) -> Cube.
     **kwargs:
         Keyword arguments for the generic regridding function.
-
     """
 
     def __init__(
@@ -79,7 +80,6 @@ class GenericRegridder:
         -------
         Cube
             Regridded cube.
-
         """
         return self.func(cube, self.tgt_cube, **self.kwargs)
 
@@ -98,7 +98,6 @@ class GenericFuncScheme:
         Cube, \*\*kwargs) -> Cube.
     **kwargs:
         Keyword arguments for the generic regridding function.
-
     """
 
     def __init__(self, func: Callable, **kwargs):
@@ -125,6 +124,5 @@ class GenericFuncScheme:
         -------
         GenericRegridder
             Regridder instance.
-
         """
         return GenericRegridder(src_cube, tgt_cube, self.func, **self.kwargs)

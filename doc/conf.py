@@ -445,10 +445,12 @@ intersphinx_mapping = {
     'iris-esmf-regrid': ('https://iris-esmf-regrid.readthedocs.io/en/latest',
                          None),
     'matplotlib': ('https://matplotlib.org/stable/', None),
+    'ncdata': ('https://ncdata.readthedocs.io/en/latest/', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
     'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/latest/', None),
     'python': ('https://docs.python.org/3/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+    'xesmf': ('https://xesmf.readthedocs.io/en/stable/', None),
 }
 
 # -- Extlinks extension -------------------------------------------------------
