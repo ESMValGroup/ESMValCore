@@ -13,7 +13,7 @@ import numpy as np
 class xESMFRegridder:  # noqa
     """xESMF regridding function.
 
-    This is a wrapper around :class:`xesmf.Regrid` so it can be used in
+    This is a wrapper around :class:`xesmf.Regridder` so it can be used in
     :meth:`iris.cube.Cube.regrid`.
 
     Supports lazy regridding.
@@ -25,15 +25,15 @@ class xESMFRegridder:  # noqa
     tgt_cube:
         Cube describing the target grid.
     **kwargs:
-        Any keyword argument to :class:`xesmf.Regrid` or
-        :meth:`xesmf.Regrid.__call__` can be provided.
+        Any keyword argument to :class:`xesmf.Regridder` or
+        :meth:`xesmf.Regridder.__call__` can be provided.
 
     Attributes
     ----------
     kwargs:
-        Keyword arguments to :class:`xesmf.Regrid`.
+        Keyword arguments to :class:`xesmf.Regridder`.
     default_call_kwargs:
-        Default keyword arguments to :meth:`xesmf.Regrid.__call__`.
+        Default keyword arguments to :meth:`xesmf.Regridder.__call__`.
     """
 
     def __init__(
@@ -46,8 +46,7 @@ class xESMFRegridder:  # noqa
         import xesmf
 
         call_arg_names = list(
-            inspect.signature(xesmf.Regridder.__call__).parameters
-        )[2:]
+            inspect.signature(xesmf.Regridder.__call__).parameters)[2:]
         self.kwargs = {
             k: v
             for k, v in kwargs.items() if k not in call_arg_names
@@ -79,7 +78,7 @@ class xESMFRegridder:  # noqa
         src_cube:
             The cube to regrid.
         **kwargs:
-            Keyword arguments to :meth:`xesmf.Regrid.__call__`.
+            Keyword arguments to :meth:`xesmf.Regridder.__call__`.
 
         Returns
         -------
@@ -108,21 +107,21 @@ class xESMFRegridder:  # noqa
 class xESMF:  # noqa
     """xESMF regridding scheme.
 
-    This is a wrapper around :class:`xesmf.Regrid` so it can be used in
+    This is a wrapper around :class:`xesmf.Regridder` so it can be used in
     :meth:`iris.cube.Cube.regrid`. Ut uses the :mod:`ncdata` package to
     convert the :class:`iris.cube.Cube` to an :class:`xarray.Dataset` before
     regridding and back after regridding.
 
     Supports lazy regridding.
 
-    Masks are converted to :obj:`np.nan` before regridding and converted
+    Masks are converted to :obj:`numpy.nan` before regridding and converted
     back to masks after regridding.
 
     Parameters
     ----------
     **kwargs:
-        Any keyword argument to :class:`xesmf.Regrid` or
-        :meth:`xesmf.Regrid.__call__` can be provided. By default,
+        Any keyword argument to :class:`xesmf.Regridder` or
+        :meth:`xesmf.Regridder.__call__` can be provided. By default,
         the arguments ``ignore_degenerate=True``, ``keep_attrs=True``,
         ``skipna=True``, an ``unmapped_to_nan=True`` will be used.
 
