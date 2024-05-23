@@ -13,8 +13,8 @@ import numpy as np
 class xESMFRegridder:  # noqa
     """xESMF regridding function.
 
-    This is a wrapper around :class:`xesmf.Regridder` so it can be used in
-    :meth:`iris.cube.Cube.regrid`.
+    This is a wrapper around :class:`xesmf.frontend.Regridder` so it can be
+    used in :meth:`iris.cube.Cube.regrid`.
 
     Supports lazy regridding.
 
@@ -25,15 +25,15 @@ class xESMFRegridder:  # noqa
     tgt_cube:
         Cube describing the target grid.
     **kwargs:
-        Any keyword argument to :class:`xesmf.Regridder` or
-        :meth:`xesmf.Regridder.__call__` can be provided.
+        Any keyword argument to :class:`xesmf.frontend.Regridder` or
+        :meth:`xesmf.frontend.Regridder.__call__` can be provided.
 
     Attributes
     ----------
     kwargs:
-        Keyword arguments to :class:`xesmf.Regridder`.
+        Keyword arguments to :class:`xesmf.frontend.Regridder`.
     default_call_kwargs:
-        Default keyword arguments to :meth:`xesmf.Regridder.__call__`.
+        Default keyword arguments to :meth:`xesmf.frontend.Regridder.__call__`.
     """
 
     def __init__(
@@ -78,7 +78,7 @@ class xESMFRegridder:  # noqa
         src_cube:
             The cube to regrid.
         **kwargs:
-            Keyword arguments to :meth:`xesmf.Regridder.__call__`.
+            Keyword arguments to :meth:`xesmf.frontend.Regridder.__call__`.
 
         Returns
         -------
@@ -107,8 +107,8 @@ class xESMFRegridder:  # noqa
 class xESMF:  # noqa
     """xESMF regridding scheme.
 
-    This is a wrapper around :class:`xesmf.Regridder` so it can be used in
-    :meth:`iris.cube.Cube.regrid`. Ut uses the :mod:`ncdata` package to
+    This is a wrapper around :class:`xesmf.frontend.Regridder` so it can be
+    used in :meth:`iris.cube.Cube.regrid`. It uses the :mod:`ncdata` package to
     convert the :class:`iris.cube.Cube` to an :class:`xarray.Dataset` before
     regridding and back after regridding.
 
@@ -120,10 +120,10 @@ class xESMF:  # noqa
     Parameters
     ----------
     **kwargs:
-        Any keyword argument to :class:`xesmf.Regridder` or
-        :meth:`xesmf.Regridder.__call__` can be provided. By default,
+        Any keyword argument to :class:`xesmf.frontend.Regridder` or
+        :meth:`xesmf.frontend.Regridder.__call__` can be provided. By default,
         the arguments ``ignore_degenerate=True``, ``keep_attrs=True``,
-        ``skipna=True``, an ``unmapped_to_nan=True`` will be used.
+        ``skipna=True``, and ``unmapped_to_nan=True`` will be used.
 
     Attributes
     ----------

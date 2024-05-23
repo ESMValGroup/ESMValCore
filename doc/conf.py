@@ -450,6 +450,7 @@ intersphinx_mapping = {
     'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/stable/', None),
     'python': ('https://docs.python.org/3/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+    'xarray': ('https://docs.xarray.dev/en/stable/', None),
     'xesmf': ('https://xesmf.readthedocs.io/en/stable/', None),
 }
 
