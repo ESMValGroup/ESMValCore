@@ -10,7 +10,7 @@ import iris.cube
 import numpy as np
 
 
-class xESMFRegridder:
+class xESMFRegridder:  # noqa
     """xESMF regridding function.
 
     This is a wrapper around :class:`xesmf.Regrid` so it can be used in
@@ -105,7 +105,7 @@ class xESMFRegridder:
         return cube
 
 
-class xESMF:
+class xESMF:  # noqa
     """xESMF regridding scheme.
 
     This is a wrapper around :class:`xesmf.Regrid` so it can be used in
