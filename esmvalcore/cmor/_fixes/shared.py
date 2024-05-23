@@ -179,7 +179,7 @@ def add_model_level(cube):
     """
     z_coord = cube.coord(axis='z', dim_coords=True)
     n_levels = list(z_coord.shape)[0]
-    levels = np.array(range(n_levels+1, 1, -1),
+    levels = np.array(range(n_levels, 0, -1),
                       ndmin=1)
     level_coords = iris.coords.AuxCoord(levels,
                                         bounds=None,
