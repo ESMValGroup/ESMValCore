@@ -380,6 +380,7 @@ def _apply_caps(original, lower, upper):
 def _select_drs(input_type: str, project: str, structure: str) -> list[str]:
     """Select the directory structure of input path."""
     cfg = get_project_config(project)
+    print(cfg)
     input_path_patterns = cfg[input_type]
     if isinstance(input_path_patterns, str):
         return [input_path_patterns]

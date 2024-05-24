@@ -332,3 +332,6 @@ def test_validate_config_developer(tmp_path):
 
     path = validate_config_developer(cfg_dev_file)
     assert path == cfg_dev_file
+
+    # Restore original config-developer file
+    validate_config_developer(None)
