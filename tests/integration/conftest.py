@@ -56,8 +56,8 @@ def _get_files(root_path, facets, tracking_id):
         all_facets = [facets]
 
     # Globs without expanded facets
-    dir_template = _select_drs('input_dir', facets['project'])
-    file_template = _select_drs('input_file', facets['project'])
+    dir_template = _select_drs('input_dir', facets['project'], 'default')
+    file_template = _select_drs('input_file', facets['project'], 'default')
     dir_globs = _replace_tags(dir_template, facets)
     file_globs = _replace_tags(file_template, facets)
     globs = sorted(
@@ -67,8 +67,12 @@ def _get_files(root_path, facets, tracking_id):
     files = []
     for expanded_facets in all_facets:
         filenames = []
-        dir_template = _select_drs('input_dir', expanded_facets['project'])
-        file_template = _select_drs('input_file', expanded_facets['project'])
+        dir_template = _select_drs(
+            'input_dir', expanded_facets['project'], 'default'
+        )
+        file_template = _select_drs(
+            'input_file', expanded_facets['project'], 'default'
+        )
         dir_globs = _replace_tags(dir_template, expanded_facets)
         file_globs = _replace_tags(file_template, expanded_facets)
         filename = (
