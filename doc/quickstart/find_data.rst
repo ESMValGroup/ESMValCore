@@ -183,7 +183,9 @@ The default naming conventions for input directories and files for CESM are
 * input files: ``{case}.{scomp}.{type}.{string}*nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
-default DRS ``drs: default`` in the :ref:`user configuration file`).<https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html>`__.
+default DRS ``drs: default`` in the :ref:`user configuration file`).
+More information about CESM naming conventions are given `here
+<https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html>`__.
 
 .. note::
 
