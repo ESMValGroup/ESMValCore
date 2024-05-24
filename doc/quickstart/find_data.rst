@@ -567,15 +567,15 @@ files must also undergo some data selection.
 ACCESS-ESM
 ^^^^^^^^^^
 
-ESMValTool is able to read native `ACCESS-ESM <https://research.csiro.au/access/about/esm1-5/>`__
+ESMValTool can read native `ACCESS-ESM <https://research.csiro.au/access/about/esm1-5/>`__
 model output.
 
 .. warning::
 
-  This is the first version of ACCESS-ESM CMORizer in for ESMValCore Currently, 
-  only two variables (`tas`,`pr`) is fully supported.
+  This is the first version of ACCESS-ESM CMORizer for ESMValCore Currently, 
+  only two variables (`tas`, and `pr`) are fully supported.
 
-To read ACCESS-ESM native data, user need to manually add the file structure to 
+To read ACCESS-ESM native data, users need to add the directory file structure to 
 `config_developer.yml`.
 
 .. code-block:: yaml
@@ -596,10 +596,9 @@ To read ACCESS-ESM native data, user need to manually add the file structure to
   We only provide one default `input_dir` since this is how ACCESS-ESM native data was 
   stored on NCI. Users can modify this path to match their local file structure.
 
-  Default `input_file` will automatically load all the native ACCESS-ESM data(1850-2014),
-  which will affects the efficiency of the whole process if you only need to evaluate a 
-  small period of time. User can add more specific time range
-  (`{dataset}.{special_attr}-YYYYMM*.nc` e.g.) to avoid time cost in loading useless data.
+  Default `input_file` will automatically load all the native ACCESS-ESM data(1850-2014).
+  If you only need to evaluate a shorter period. Users can add a more specific time range
+  (`{dataset}.{special_attr}-YYYYMM*.nc` e.g.) to avoid the cost of loading unnecessary data.
 
 Thus, example dataset entries could look like this:
 
@@ -610,9 +609,8 @@ Thus, example dataset entries could look like this:
       exp: history, modeling_realm: atm, special_attr: pa, start_year: 1986, end_year: 1986}
 
 
-`dataset` and `dataset_name` are not redundant, `dataset` is for ESMValCore to search for cmoriser,
+`dataset` and `dataset_name` are not redundant, `dataset` is for ESMValCore to search for CMORizer,
 `dataset_name` is to search for data.
-
 
 
 .. _data-retrieval:
