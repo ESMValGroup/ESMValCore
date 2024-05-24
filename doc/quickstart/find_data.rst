@@ -183,9 +183,7 @@ The default naming conventions for input directories and files for CESM are
 * input files: ``{case}.{scomp}.{type}.{string}*nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
-default DRS ``drs: default`` in the :ref:`user configuration file`).
-More information about CESM naming conventions are given `here
-<https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html>`__.
+default DRS ``drs: default`` in the :ref:`user configuration file`).<https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html>`__.
 
 .. note::
 
@@ -563,6 +561,54 @@ attributes alone but requires to use an extra_facets file, which principles are
 explained in :ref:`extra_facets`, and which content is :download:`available here
 </../esmvalcore/config/extra_facets/ipslcm-mappings.yml>`. These multi-variable
 files must also undergo some data selection.
+
+.. _read_access-esm:
+
+ESMValTool is able to read native `ACCESS-ESM <https://research.csiro.au/access/about/esm1-5/>`
+__ model output.
+
+.. warning::
+
+  This is the first version of ACCESS-ESM CMORizer in for ESMValCore Currently, 
+  only two variables (`tas`,`pr`) is fully supported.
+
+To read ACCESS-ESM native data, user need to manually add the file structure to 
+`config_developer.yml`.
+
+.. code-block:: yaml
+
+  ACCESS:
+    cmor_strict: false
+    input_dir:
+      default:
+        - '{institute}/{dataset_name}/{exp}/{modeling_realm}/netCDF'
+    input_file:
+      default: '{dataset}.{special_attr}-*.nc'
+    output_file: '{dataset}.{special_attr}'
+    cmor_type: 'CMIP6'
+    cmor_default_table_prefix: 'CMIP6_'
+
+.. hint::
+
+  We only provide one default `input_dir` since this is how ACCESS-ESM native data was 
+  stored on NCI. Users can modify this path to match their local file structure.
+
+  Default `input_file` will automatically load all the native ACCESS-ESM data(1850-2014),
+  which will affects the efficiency of the whole process if you only need to evaluate a 
+  small period of time. User can add more specific time range
+  (`{dataset}.{special_attr}-YYYYMM*.nc` e.g.) to avoid time cost in loading useless data.
+
+Thus, example dataset entries could look like this:
+
+.. code-block:: yaml
+
+  dataset:
+    - {project: ACCESS, institute: ACCESS-ESM1-5, mip: Amon, dataset:ACCESS_ESM, dataset_name: HI-CN-05, 
+      exp: history, modeling_realm: atm, special_attr: pa, start_year: 1986, end_year: 1986}
+  
+`dataset` and `dataset_name` are not redundant, `dataset` is for ESMValCore to search for cmoriser,
+ `dataset_name` is to search for data.
+
 
 
 .. _data-retrieval:
