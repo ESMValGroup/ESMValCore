@@ -53,7 +53,7 @@ def attribute_to_authors(entity, authors):
 
 
 def attribute_to_projects(entity, projects):
-    """Attribute entity to projecs."""
+    """Attribute entity to projects."""
     namespace = 'project'
     create_namespace(entity.bundle, namespace)
 
@@ -105,7 +105,7 @@ class TrackedFile:
 
     def __init__(self,
                  filename,
-                 attributes,
+                 attributes=None,
                  ancestors=None,
                  prov_filename=None):
         """Create an instance of a file with provenance tracking.
@@ -115,7 +115,8 @@ class TrackedFile:
         filename: str
             Path to the file on disk.
         attributes: dict
-            Dictionary with facets describing the file.
+            Dictionary with facets describing the file. If set to None, this
+            will be read from the file when provenance is initialized.
         ancestors: :obj:`list` of :obj:`TrackedFile`
             Ancestor files.
         prov_filename: str
@@ -192,7 +193,7 @@ class TrackedFile:
         self._initialize_ancestors(activity)
 
     def _initialize_namespaces(self):
-        """Inialize the namespaces."""
+        """Initialize the namespaces."""
         for namespace in ('file', 'attribute', 'preprocessor', 'task'):
             create_namespace(self.provenance, namespace)
 
@@ -203,6 +204,12 @@ class TrackedFile:
 
     def _initialize_entity(self):
         """Initialize the entity representing the file."""
+        if self.attributes is None:
+            self.attributes = {}
+            with Dataset(self.filename, 'r') as dataset:
+                for attr in dataset.ncattrs():
+                    self.attributes[attr] = dataset.getncattr(attr)
+
         attributes = {
             'attribute:' + str(k).replace(' ', '_'): str(v)
             for k, v in self.attributes.items()

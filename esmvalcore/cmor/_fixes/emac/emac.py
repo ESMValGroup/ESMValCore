@@ -24,7 +24,7 @@ from netCDF4 import Dataset
 from scipy import constants
 
 from ..shared import add_aux_coords_from_cubes
-from ._base_fixes import EmacFix, NegateData, SetUnitsTo1
+from ._base_fixes import EmacFix, NegateData
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class AllVars(EmacFix):
         'kg/m**2s': 'kg m-2 s-1',
     }
 
-    def fix_file(self, filepath, output_dir):
+    def fix_file(self, filepath, output_dir, add_unique_suffix=False):
         """Fix file.
 
         Fixes hybrid pressure level coordinate.
@@ -51,7 +51,9 @@ class AllVars(EmacFix):
         """
         if 'alevel' not in self.vardef.dimensions:
             return filepath
-        new_path = self.get_fixed_filepath(output_dir, filepath)
+        new_path = self.get_fixed_filepath(
+            output_dir, filepath, add_unique_suffix=add_unique_suffix
+        )
         copyfile(filepath, new_path)
         with Dataset(new_path, mode='a') as dataset:
             if 'formula_terms' in dataset.variables['lev'].ncattrs():
@@ -70,10 +72,8 @@ class AllVars(EmacFix):
         self.fix_regular_lon(cube)
 
         # Fix regular pressure levels (considers plev19, plev39, etc.)
-        for dim_name in self.vardef.dimensions:
-            if 'plev' in dim_name:
-                self._fix_plev(cube)
-                break
+        if self.vardef.has_coord_with_standard_name('air_pressure'):
+            self._fix_plev(cube)
 
         # Fix hybrid pressure levels
         if 'alevel' in self.vardef.dimensions:
@@ -174,7 +174,7 @@ class AllVars(EmacFix):
         for coord in (ap_coord, b_coord, ps_coord):
             coord.points = coord.core_points().astype(
                 float, casting='same_kind')
-            if coord.bounds is not None:
+            if coord.has_bounds():
                 coord.bounds = coord.core_bounds().astype(
                     float, casting='same_kind')
 
@@ -194,12 +194,6 @@ class AllVars(EmacFix):
         cube.add_aux_factory(pressure_coord_factory)
 
         return cube
-
-
-Cl = SetUnitsTo1
-
-
-Clt = SetUnitsTo1
 
 
 class Clwvi(EmacFix):
@@ -226,10 +220,7 @@ Hfls = NegateData
 Hfss = NegateData
 
 
-Hurs = SetUnitsTo1
-
-
-class Od550aer(SetUnitsTo1):
+class Od550aer(EmacFix):
     """Fixes for ``od550aer``."""
 
     def fix_metadata(self, cubes):
@@ -332,12 +323,6 @@ class Rtmt(EmacFix):
         )
         cube.var_name = self.vardef.short_name
         return CubeList([cube])
-
-
-Siconc = SetUnitsTo1
-
-
-Siconca = SetUnitsTo1
 
 
 class Sithick(EmacFix):

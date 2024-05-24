@@ -29,10 +29,15 @@ http://docs.esmvaltool.org. Have fun!
 # pylint: disable=import-outside-toplevel
 import logging
 import os
+import sys
 from pathlib import Path
 
+if (sys.version_info.major, sys.version_info.minor) < (3, 10):
+    from importlib_metadata import entry_points
+else:
+    from importlib.metadata import entry_points  # type: ignore
+
 import fire
-from pkg_resources import iter_entry_points
 
 # set up logging
 logger = logging.getLogger(__name__)
@@ -59,10 +64,10 @@ def parse_resume(resume, recipe):
         resume[i] = Path(os.path.expandvars(resume_dir)).expanduser()
 
     # Sanity check resume directories:
-    current_recipe = recipe.read_text()
+    current_recipe = recipe.read_text(encoding='utf-8')
     for resume_dir in resume:
         resume_recipe = resume_dir / 'run' / recipe.name
-        if current_recipe != resume_recipe.read_text():
+        if current_recipe != resume_recipe.read_text(encoding='utf-8'):
             raise ValueError(f'Only identical recipes can be resumed, but '
                              f'{resume_recipe} is different from {recipe}')
     return resume
@@ -72,9 +77,9 @@ def process_recipe(recipe_file: Path, session):
     """Process recipe."""
     import datetime
     import shutil
-    import warnings
 
     from esmvalcore._recipe.recipe import read_recipe_file
+    from esmvalcore.config._dask import check_distributed_config
     if not recipe_file.is_file():
         import errno
         raise OSError(errno.ENOENT, "Specified recipe file does not exist",
@@ -104,6 +109,8 @@ def process_recipe(recipe_file: Path, session):
     logger.info("If you experience memory problems, try reducing "
                 "'max_parallel_tasks' in your user configuration file.")
 
+    check_distributed_config()
+
     if session['compress_netcdf']:
         logger.warning(
             "You have enabled NetCDF compression. Accessing .nc files can be "
@@ -117,11 +124,7 @@ def process_recipe(recipe_file: Path, session):
     shutil.copy2(recipe_file, session.run_dir)
 
     # parse recipe
-    with warnings.catch_warnings():
-        # ignore deprecation warning
-        warnings.simplefilter("ignore")
-        config_user = session.to_config_user()
-    recipe = read_recipe_file(recipe_file, config_user)
+    recipe = read_recipe_file(recipe_file, session)
     logger.debug("Recipe summary:\n%s", recipe)
     # run
     recipe.run()
@@ -301,8 +304,13 @@ class ESMValTool():
         self.config = Config()
         self.recipes = Recipes()
         self._extra_packages = {}
-        for entry_point in iter_entry_points('esmvaltool_commands'):
-            self._extra_packages[entry_point.dist.project_name] = \
+        esmvaltool_commands = entry_points(group='esmvaltool_commands')
+        if not esmvaltool_commands:
+            print("Running esmvaltool executable from ESMValCore. "
+                  "No other command line utilities are available "
+                  "until ESMValTool is installed.")
+        for entry_point in esmvaltool_commands:
+            self._extra_packages[entry_point.dist.name] = \
                 entry_point.dist.version
             if hasattr(self, entry_point.name):
                 logger.error('Registered command %s already exists',
@@ -311,7 +319,7 @@ class ESMValTool():
             self.__setattr__(entry_point.name, entry_point.load()())
 
     def version(self):
-        """Show versions of all packages that conform ESMValTool.
+        """Show versions of all packages that form ESMValTool.
 
         In particular, this command will show the version ESMValCore and
         any other package that adds a subcommand to 'esmvaltool'
@@ -329,7 +337,7 @@ class ESMValTool():
             max_datasets=None,
             max_years=None,
             skip_nonexistent=None,
-            offline=None,
+            search_esgf=None,
             diagnostics=None,
             check_level=None,
             **kwargs):
@@ -345,8 +353,10 @@ class ESMValTool():
             Recipe to run, as either the name of an installed recipe or the
             path to a non-installed one.
         config_file: str, optional
-            Configuration file to use. If not provided the file
-            ${HOME}/.esmvaltool/config-user.yml will be used.
+            Configuration file to use. Can be given as absolute or relative
+            path. In the latter case, search in the current working directory
+            and `${HOME}/.esmvaltool` (in that order). If not provided, the
+            file `${HOME}/.esmvaltool/config-user.yml` will be used.
         resume_from: list(str), optional
             Resume one or more previous runs by using preprocessor output files
             from these output directories.
@@ -356,8 +366,12 @@ class ESMValTool():
             Maximum number of years to use.
         skip_nonexistent: bool, optional
             If True, the run will not fail if some datasets are not available.
-        offline: bool, optional
-            If True, the tool will not download missing data from ESGF.
+        search_esgf: str, optional
+            If `never`, disable automatic download of data from the ESGF. If
+            `when_missing`, enable the automatic download of files that are not
+            available locally. If `always`, always check ESGF for the latest
+            version of a file, and only use local files if they correspond to
+            that latest version.
         diagnostics: list(str), optional
             Only run the selected diagnostics from the recipe. To provide more
             than one diagnostic to filter use the syntax 'diag1 diag2/script1'
@@ -371,9 +385,15 @@ class ESMValTool():
         """
         from .config import CFG
 
+        # At this point, --config_file is already parsed if a valid file has
+        # been given (see
+        # https://github.com/ESMValGroup/ESMValCore/issues/2280), but no error
+        # has been raised if the file does not exist. Thus, reload the file
+        # here with `load_from_file` to make sure a proper error is raised.
+        CFG.load_from_file(config_file)
+
         recipe = self._get_recipe(recipe)
 
-        CFG.load_from_file(config_file)
         session = CFG.start_session(recipe.stem)
         if check_level is not None:
             session['check_level'] = check_level
@@ -383,14 +403,16 @@ class ESMValTool():
             session['max_datasets'] = max_datasets
         if max_years is not None:
             session['max_years'] = max_years
-        if offline is not None:
-            session['offline'] = offline
+        if search_esgf is not None:
+            session['search_esgf'] = search_esgf
         if skip_nonexistent is not None:
             session['skip_nonexistent'] = skip_nonexistent
         session['resume_from'] = parse_resume(resume_from, recipe)
         session.update(kwargs)
 
         self._run(recipe, session)
+        # Print warnings about deprecated configuration options again:
+        CFG.reload()
 
     @staticmethod
     def _create_session_dir(session):
@@ -422,7 +444,7 @@ class ESMValTool():
                                       console_log_level=session['log_level'])
         self._log_header(session['config_file'], log_files)
 
-        if not session['offline']:
+        if session['search_esgf'] != 'never':
             from .esgf._logon import logon
             logon()
 
@@ -433,16 +455,41 @@ class ESMValTool():
             process_recipe(recipe_file=recipe, session=session)
 
         self._clean_preproc(session)
+
+        if session.cmor_log.read_text(encoding='utf-8'):
+            logger.warning(
+                "Input data is not (fully) CMOR-compliant, see %s for details",
+                session.cmor_log,
+            )
+
         logger.info("Run was successful")
 
     @staticmethod
     def _clean_preproc(session):
         import shutil
 
-        if session["remove_preproc_dir"] and session.preproc_dir.exists():
-            logger.info("Removing preproc containing preprocessed data")
-            logger.info("If this data is further needed, then")
-            logger.info("set remove_preproc_dir to false in config-user.yml")
+        if (not session['save_intermediary_cubes'] and
+                session._fixed_file_dir.exists()):
+            logger.debug(
+                "Removing `preproc/fixed_files` directory containing fixed "
+                "data"
+            )
+            logger.debug(
+                "If this data is further needed, then set "
+                "`save_intermediary_cubes` to `true` and `remove_preproc_dir` "
+                "to `false` in your user configuration file"
+            )
+            shutil.rmtree(session._fixed_file_dir)
+
+        if session['remove_preproc_dir'] and session.preproc_dir.exists():
+            logger.info(
+                "Removing `preproc` directory containing preprocessed data"
+            )
+            logger.info(
+                "If this data is further needed, then set "
+                "`remove_preproc_dir` to `false` in your user configuration "
+                "file"
+            )
             shutil.rmtree(session.preproc_dir)
 
     @staticmethod

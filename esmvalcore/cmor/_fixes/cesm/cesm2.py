@@ -68,7 +68,7 @@ class AllVars(NativeDatasetFix):
         """
         # Only modify time points if data contains a time dimension, is monthly
         # data, and does not describe point measurements.
-        if 'time' not in self.vardef.dimensions:
+        if not self.vardef.has_coord_with_standard_name('time'):
             return
         if self.extra_facets['frequency'] != 'mon':
             return
@@ -78,6 +78,6 @@ class AllVars(NativeDatasetFix):
 
         # Fix time coordinate
         time_coord = cube.coord('time')
-        if time_coord.bounds is not None:
-            time_coord.points = time_coord.bounds.mean(axis=-1)
+        if time_coord.has_bounds():
+            time_coord.points = time_coord.core_bounds().mean(axis=-1)
         self.fix_regular_time(cube, coord=time_coord)

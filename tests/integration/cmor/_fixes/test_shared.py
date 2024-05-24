@@ -1,4 +1,5 @@
 """Tests for shared functions for fixes."""
+import dask.array as da
 import iris
 import iris.coords
 import iris.cube
@@ -6,8 +7,10 @@ import numpy as np
 import pytest
 from cf_units import Unit
 from iris import NameConstraint
+from iris.coords import AuxCoord
 
 from esmvalcore.cmor._fixes.shared import (
+    _map_on_filled,
     add_altitude_from_plev,
     add_aux_coords_from_cubes,
     add_plev_from_altitude,
@@ -23,6 +26,7 @@ from esmvalcore.cmor._fixes.shared import (
     get_altitude_to_pressure_func,
     get_bounds_cube,
     get_pressure_to_altitude_func,
+    get_time_bounds,
     round_coordinates,
 )
 
@@ -103,18 +107,106 @@ def test_add_aux_coords_from_cubes(coord_dict, output):
         assert "got 2" in str(err.value)
 
 
+def test_map_on_filled_np_empty_array():
+    """Test `_map_on_filled` with empty numpy array."""
+    array_in = np.array([])
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, np.ndarray)
+    assert not np.ma.isMaskedArray(output)
+    np.testing.assert_equal(output, [])
+
+
+def test_map_on_filled_np_no_mask():
+    """Test `_map_on_filled` with non-masked numpy array."""
+    array_in = np.array([1, 2, 3])
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, np.ndarray)
+    assert np.ma.isMaskedArray(output)
+    np.testing.assert_equal(output, [1, 4, 9])
+
+
+def test_map_on_filled_np_mask():
+    """Test `_map_on_filled` with masked numpy array."""
+    array_in = np.ma.masked_equal([999.0, 4.0, 999.0], 999.0)
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, np.ndarray)
+    assert np.ma.isMaskedArray(output)
+    np.testing.assert_allclose(output, [999.0, 16.0, 999.0])
+    np.testing.assert_equal(output.mask, [True, False, True])
+
+
+def test_map_on_filled_np_mask_not_used():
+    """Test `_map_on_filled` with masked numpy array."""
+    array_in = np.ma.masked_equal([2, 4, 5], 10)
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, np.ndarray)
+    assert np.ma.isMaskedArray(output)
+    np.testing.assert_allclose(output, [4, 16, 25])
+    np.testing.assert_equal(output.mask, [False, False, False])
+
+
+def test_map_on_filled_da_empty_array():
+    """Test `_map_on_filled` with empty dask array."""
+    array_in = da.array([])
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, da.core.Array)
+    output = output.compute()
+    assert not np.ma.isMaskedArray(output)
+    np.testing.assert_equal(output, [])
+
+
+def test_map_on_filled_da_no_mask():
+    """Test `_map_on_filled` with non-masked dask array."""
+    array_in = da.arange(3)
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, da.core.Array)
+    output = output.compute()
+    assert np.ma.isMaskedArray(output)
+    np.testing.assert_equal(output, [0, 1, 4])
+
+
+def test_map_on_filled_da_mask():
+    """Test `_map_on_filled` with masked dask array."""
+    array_in = da.ma.masked_equal(da.arange(3) + 3, 3)
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, da.core.Array)
+    output = output.compute()
+    assert np.ma.isMaskedArray(output)
+    np.testing.assert_equal(output, [3, 16, 25])
+    np.testing.assert_equal(output.mask, [True, False, False])
+
+
+def test_map_on_filled_da_mask_not_used():
+    """Test `_map_on_filled` with masked dask array."""
+    array_in = da.ma.masked_equal(da.arange(3), 10)
+    output = _map_on_filled(lambda x: x**2, array_in)
+    assert isinstance(output, da.core.Array)
+    output = output.compute()
+    assert np.ma.isMaskedArray(output)
+    np.testing.assert_allclose(output, [0, 1, 4])
+    np.testing.assert_equal(output.mask, [False, False, False])
+
+
 ALT_COORD = iris.coords.AuxCoord([0.0], bounds=[[-100.0, 500.0]],
-                                 standard_name='altitude', units='m')
-ALT_COORD_NB = iris.coords.AuxCoord([0.0], standard_name='altitude', units='m')
+                                 standard_name='altitude', units='m',
+                                 var_name='alt', long_name='altitude')
+ALT_COORD_MASKED = ALT_COORD.copy(np.ma.masked_equal([0.0], 0.0))
+ALT_COORD_NB = iris.coords.AuxCoord([0.0], standard_name='altitude', units='m',
+                                    var_name='alt', long_name='altitude')
 ALT_COORD_KM = iris.coords.AuxCoord([0.0], bounds=[[-0.1, 0.5]],
                                     var_name='alt', long_name='altitude',
                                     standard_name='altitude', units='km')
 P_COORD = iris.coords.AuxCoord([101325.0], bounds=[[102532.0, 95460.8]],
-                               standard_name='air_pressure', units='Pa')
+                               standard_name='air_pressure', units='Pa',
+                               var_name='plev', long_name='pressure')
+P_COORD_MASKED = P_COORD.copy(np.ma.masked_equal([0.0], 0.0))
 P_COORD_NB = iris.coords.AuxCoord([101325.0], standard_name='air_pressure',
-                                  units='Pa')
+                                  units='Pa', var_name='plev',
+                                  long_name='pressure')
 CUBE_ALT = iris.cube.Cube([1.0], var_name='x',
                           aux_coords_and_dims=[(ALT_COORD, 0)])
+CUBE_ALT_MASKED = iris.cube.Cube([1.0], var_name='x',
+                                 aux_coords_and_dims=[(ALT_COORD_MASKED, 0)])
 CUBE_ALT_NB = iris.cube.Cube([1.0], var_name='x',
                              aux_coords_and_dims=[(ALT_COORD_NB, 0)])
 CUBE_ALT_KM = iris.cube.Cube([1.0], var_name='x',
@@ -123,6 +215,7 @@ CUBE_ALT_KM = iris.cube.Cube([1.0], var_name='x',
 
 TEST_ADD_PLEV_FROM_ALTITUDE = [
     (CUBE_ALT.copy(), P_COORD.copy()),
+    (CUBE_ALT_MASKED.copy(), P_COORD_MASKED.copy()),
     (CUBE_ALT_NB.copy(), P_COORD_NB.copy()),
     (CUBE_ALT_KM.copy(), P_COORD.copy()),
     (iris.cube.Cube(0.0), None),
@@ -142,7 +235,24 @@ def test_add_plev_from_altitude(cube, output):
     assert not cube.coords('air_pressure')
     add_plev_from_altitude(cube)
     air_pressure_coord = cube.coord('air_pressure')
-    assert air_pressure_coord == output
+    metadata_list = [
+        'var_name',
+        'standard_name',
+        'long_name',
+        'units',
+        'attributes',
+    ]
+    for attr in metadata_list:
+        assert getattr(air_pressure_coord, attr) == getattr(output, attr)
+    np.testing.assert_allclose(
+        air_pressure_coord.points, output.points, atol=1e-7
+    )
+    if output.bounds is None:
+        assert air_pressure_coord.bounds is None
+    else:
+        np.testing.assert_allclose(
+            air_pressure_coord.bounds, output.bounds, rtol=1e-3
+        )
     assert cube.coords('altitude')
 
 
@@ -152,6 +262,8 @@ P_COORD_HPA = iris.coords.AuxCoord([1013.25], bounds=[[1025.32, 954.60]],
                                    long_name='pressure', units='hPa')
 CUBE_PLEV = iris.cube.Cube([1.0], var_name='x',
                            aux_coords_and_dims=[(P_COORD, 0)])
+CUBE_PLEV_MASKED = iris.cube.Cube([1.0], var_name='x',
+                                  aux_coords_and_dims=[(P_COORD_MASKED, 0)])
 CUBE_PLEV_NB = iris.cube.Cube([1.0], var_name='x',
                               aux_coords_and_dims=[(P_COORD_NB, 0)])
 CUBE_PLEV_HPA = iris.cube.Cube([1.0], var_name='x',
@@ -160,6 +272,7 @@ CUBE_PLEV_HPA = iris.cube.Cube([1.0], var_name='x',
 
 TEST_ADD_ALTITUDE_FROM_PLEV = [
     (CUBE_PLEV.copy(), ALT_COORD.copy()),
+    (CUBE_PLEV_MASKED.copy(), ALT_COORD_MASKED.copy()),
     (CUBE_PLEV_NB.copy(), ALT_COORD_NB.copy()),
     (CUBE_PLEV_HPA.copy(), ALT_COORD.copy()),
     (iris.cube.Cube(0.0), None),
@@ -513,3 +626,59 @@ def test_fix_ocean_depth_coord():
     assert depth_coord.units == 'm'
     assert depth_coord.long_name == 'ocean depth coordinate'
     assert depth_coord.attributes == {'positive': 'down'}
+
+
+@pytest.fixture
+def time_coord():
+    """Time coordinate."""
+    time_coord = AuxCoord(
+        [15.0, 350.0],
+        standard_name='time',
+        units='days since 1850-01-01'
+    )
+    return time_coord
+
+
+@pytest.mark.parametrize(
+    'freq,expected_bounds',
+    [
+        ('mon', [[0, 31], [334, 365]]),
+        ('mo', [[0, 31], [334, 365]]),
+        ('monC', [[0, 31], [334, 365]]),
+        ('yr', [[0, 365], [0, 365]]),
+        ('yrPt', [[0, 365], [0, 365]]),
+        ('dec', [[-1826, 1826], [-1826, 1826]]),
+        ('day', [[14.5, 15.5], [349.5, 350.5]]),
+        ('24hr', [[14.5, 15.5], [349.5, 350.5]]),
+        ('12hr', [[14.75, 15.25], [349.75, 350.25]]),
+        ('8hr', [[14.83333333, 15.16666667], [349.83333333, 350.16666667]]),
+        ('6hr', [[14.875, 15.125], [349.875, 350.125]]),
+        ('6hrCM', [[14.875, 15.125], [349.875, 350.125]]),
+        ('4hr', [[14.91666667, 15.08333333], [349.91666667, 350.08333333]]),
+        ('3hr', [[14.9375, 15.0625], [349.9375, 350.0625]]),
+        ('3hrPt', [[14.9375, 15.0625], [349.9375, 350.0625]]),
+        ('2hr', [[14.95833333, 15.04166667], [349.95833333, 350.04166667]]),
+        ('1hr', [[14.97916666, 15.020833333], [349.97916666, 350.020833333]]),
+        ('1hrC', [[14.97916666, 15.020833333], [349.97916666, 350.020833333]]),
+        ('hr', [[14.97916666, 15.020833333], [349.97916666, 350.020833333]]),
+    ]
+)
+def test_get_time_bounds(time_coord, freq, expected_bounds):
+    """Test ``get_time_bounds`."""
+    bounds = get_time_bounds(time_coord, freq)
+    np.testing.assert_allclose(bounds, expected_bounds)
+
+
+def test_get_time_bounds_invalid_freq_fail(time_coord):
+    """Test ``get_time_bounds`."""
+    msg = "Cannot guess time bounds for frequency 'invalid_freq'"
+    with pytest.raises(NotImplementedError, match=msg):
+        get_time_bounds(time_coord, 'invalid_freq')
+
+
+@pytest.mark.parametrize('freq', ['5hr', '7hrPt', '9hrCM', '10hr', '21hrPt'])
+def test_get_time_bounds_invalid_hr_fail(time_coord, freq):
+    """Test ``get_time_bounds`."""
+    msg = f"For `n`-hourly data, `n` must be a divisor of 24, got '{freq}'"
+    with pytest.raises(NotImplementedError, match=msg):
+        get_time_bounds(time_coord, freq)

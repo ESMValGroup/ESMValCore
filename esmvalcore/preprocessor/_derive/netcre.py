@@ -43,5 +43,6 @@ class DerivedVariable(DerivedVariableBase):
 
         netcre_cube = lwcre_cube + swcre_cube
         netcre_cube.units = lwcre_cube.units
+        netcre_cube.attributes['positive'] = 'down'
 
         return netcre_cube

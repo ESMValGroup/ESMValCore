@@ -4,10 +4,12 @@ from __future__ import annotations
 import logging
 import os.path
 import warnings
-from collections.abc import Iterable
-from functools import lru_cache
+from collections.abc import Callable, Iterable
+from functools import lru_cache, partial
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Optional, Union
+
+from packaging import version
 
 from esmvalcore import __version__ as current_version
 from esmvalcore.cmor.check import CheckLevels
@@ -16,9 +18,19 @@ from esmvalcore.config._config import (
     importlib_files,
     load_config_developer,
 )
-from esmvalcore.exceptions import ESMValCoreDeprecationWarning
+from esmvalcore.exceptions import (
+    ESMValCoreDeprecationWarning,
+    InvalidConfigParameter,
+)
 
 logger = logging.getLogger(__name__)
+
+
+SEARCH_ESGF_OPTIONS = (
+    'never',  # Never search ESGF for files
+    'when_missing',  # Only search ESGF if no local files are available
+    'always',  # Always search ESGF for files
+)
 
 
 class ValidationError(ValueError):
@@ -35,6 +47,7 @@ def _make_type_validator(cls, *, allow_none=False):
     Return a validator that converts inputs to *cls* or raises (and
     possibly allows ``None`` as well).
     """
+
     def validator(inp):
         looks_like_none = isinstance(inp, str) and (inp.lower() == "none")
         if (allow_none and (inp is None or looks_like_none)):
@@ -68,6 +81,7 @@ def _listify_validator(scalar_validator,
                        docstring=None,
                        return_type=list):
     """Apply the validator to a list."""
+
     def func(inp):
         if isinstance(inp, str):
             try:
@@ -144,6 +158,7 @@ def validate_positive(value):
 
 def _chain_validator(*funcs):
     """Chain a series of validators."""
+
     def chained(value):
         for func in funcs:
             value = func(value)
@@ -156,6 +171,8 @@ validate_string = _make_type_validator(str)
 validate_string_or_none = _make_type_validator(str, allow_none=True)
 validate_stringlist = _listify_validator(validate_string,
                                          docstring='Return a list of strings.')
+
+validate_bool_or_none = partial(validate_bool, allow_none=True)
 validate_int = _make_type_validator(int)
 validate_int_or_none = _make_type_validator(int, allow_none=True)
 validate_float = _make_type_validator(float)
@@ -241,8 +258,20 @@ def validate_check_level(value):
     return value
 
 
+def validate_search_esgf(value):
+    """Validate options for ESGF search."""
+    value = validate_string(value)
+    value = value.lower()
+    if value not in SEARCH_ESGF_OPTIONS:
+        raise ValidationError(
+            f'`{value}` is not a valid option ESGF search option, possible '
+            f'values are {SEARCH_ESGF_OPTIONS}'
+        ) from None
+    return value
+
+
 def validate_diagnostics(
-    diagnostics: Union[Iterable[str], str, None],
+    diagnostics: Union[Iterable[str], str, None]
 ) -> Optional[set[str]]:
     """Validate diagnostic location."""
     if diagnostics is None:
@@ -255,48 +284,17 @@ def validate_diagnostics(
     }
 
 
-def deprecate(func, variable, version: Optional[str] = None):
-    """Wrap function to mark variables to be deprecated.
-
-    This will give a warning if the function will be/has been deprecated.
-
-    Parameters
-    ----------
-    func:
-        Validator function to wrap
-    variable: str
-        Name of the variable to deprecate
-    version: str
-        Version to deprecate the variable in, should be something
-        like '2.2.3'
-    """
-    if not version:
-        version = 'a future version'
-
-    if current_version >= version:
-        warnings.warn(f"`{variable}` has been removed in {version}",
-                      ESMValCoreDeprecationWarning)
-    else:
-        warnings.warn(f"`{variable}` will be removed in {version}.",
-                      ESMValCoreDeprecationWarning,
-                      stacklevel=2)
-
-    return func
-
-
 _validators = {
     # From user config
-    'always_search_esgf': validate_bool,
     'auxiliary_data_dir': validate_path,
     'compress_netcdf': validate_bool,
     'config_developer_file': validate_config_developer,
-    'drs': validate_drs,
     'download_dir': validate_path,
+    'drs': validate_drs,
     'exit_on_warning': validate_bool,
     'extra_facets_dir': validate_pathtuple,
     'log_level': validate_string,
     'max_parallel_tasks': validate_int_or_none,
-    'offline': validate_bool,
     'output_dir': validate_path,
     'output_file_type': validate_string,
     'profile_diagnostic': validate_bool,
@@ -304,14 +302,15 @@ _validators = {
     'rootpath': validate_rootpath,
     'run_diagnostic': validate_bool,
     'save_intermediary_cubes': validate_bool,
+    'search_esgf': validate_search_esgf,
 
     # From CLI
-    "check_level": validate_check_level,
-    "diagnostics": validate_diagnostics,
+    'check_level': validate_check_level,
+    'diagnostics': validate_diagnostics,
     'max_datasets': validate_int_positive_or_none,
     'max_years': validate_int_positive_or_none,
-    "resume_from": validate_pathlist,
-    "skip_nonexistent": validate_bool,
+    'resume_from': validate_pathlist,
+    'skip_nonexistent': validate_bool,
 
     # From recipe
     'write_ncl_interface': validate_bool,
@@ -319,3 +318,39 @@ _validators = {
     # config location
     'config_file': validate_path,
 }
+
+
+# Handle deprecations (using ``ValidatedConfig._deprecate``)
+
+def _handle_deprecation(
+    option: str,
+    deprecated_version: str,
+    remove_version: str,
+    more_info: str,
+) -> None:
+    """Handle deprecated configuration option."""
+    if version.parse(current_version) >= version.parse(remove_version):
+        remove_msg = (
+            f"The configuration option or command line argument `{option}` "
+            f"has been removed in ESMValCore version {remove_version}."
+            f"{more_info}"
+        )
+        raise InvalidConfigParameter(remove_msg)
+
+    deprecation_msg = (
+        f"The configuration option or command line argument `{option}` has "
+        f"been deprecated in ESMValCore version {deprecated_version} and is "
+        f"scheduled for removal in version {remove_version}.{more_info}"
+    )
+    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+
+
+# Example usage: see removed files in
+# https://github.com/ESMValGroup/ESMValCore/pull/2213
+_deprecators: dict[str, Callable] = {}
+
+
+# Default values for deprecated options
+# Example usage: see removed files in
+# https://github.com/ESMValGroup/ESMValCore/pull/2213
+_deprecated_options_defaults: dict[str, Any] = {}

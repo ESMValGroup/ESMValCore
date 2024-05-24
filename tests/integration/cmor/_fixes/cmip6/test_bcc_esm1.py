@@ -4,6 +4,7 @@ from esmvalcore.cmor._fixes.cmip6.bcc_esm1 import (
     Cli,
     Clw,
     Siconc,
+    So,
     Sos,
     Tos,
 )
@@ -11,13 +12,13 @@ from esmvalcore.cmor._fixes.common import (
     ClFixHybridPressureCoord,
     OceanFixGrid,
 )
-from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix, GenericFix
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    assert fix == [Cl(None), GenericFix(None)]
 
 
 def test_cl_fix():
@@ -28,7 +29,7 @@ def test_cl_fix():
 def test_get_cli_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'Amon', 'cli')
-    assert fix == [Cli(None)]
+    assert fix == [Cli(None), GenericFix(None)]
 
 
 def test_cli_fix():
@@ -39,7 +40,7 @@ def test_cli_fix():
 def test_get_clw_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'Amon', 'clw')
-    assert fix == [Clw(None)]
+    assert fix == [Clw(None), GenericFix(None)]
 
 
 def test_clw_fix():
@@ -50,7 +51,7 @@ def test_clw_fix():
 def test_get_siconc_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'SImon', 'siconc')
-    assert fix == [Siconc(None)]
+    assert fix == [Siconc(None), GenericFix(None)]
 
 
 def test_siconc_fix():
@@ -58,10 +59,21 @@ def test_siconc_fix():
     assert Siconc is OceanFixGrid
 
 
+def test_get_so_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'Omon', 'so')
+    assert fix == [So(None), GenericFix(None)]
+
+
+def test_so_fix():
+    """Test fix for ``so``."""
+    assert So is OceanFixGrid
+
+
 def test_get_sos_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'Omon', 'sos')
-    assert fix == [Sos(None)]
+    assert fix == [Sos(None), GenericFix(None)]
 
 
 def test_sos_fix():
@@ -72,7 +84,7 @@ def test_sos_fix():
 def test_get_tos_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('CMIP6', 'BCC-ESM1', 'Omon', 'tos')
-    assert fix == [Tos(None)]
+    assert fix == [Tos(None), GenericFix(None)]
 
 
 def test_tos_fix():

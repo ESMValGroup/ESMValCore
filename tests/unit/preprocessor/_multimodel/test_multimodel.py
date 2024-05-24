@@ -16,7 +16,7 @@ from iris.cube import Cube, CubeList
 import esmvalcore.preprocessor._multimodel as mm
 from esmvalcore.iris_helpers import date2num
 from esmvalcore.preprocessor import multi_model_statistics
-from esmvalcore.preprocessor._ancillary_vars import add_ancillary_variable
+from esmvalcore.preprocessor._supplementary_vars import add_ancillary_variable
 
 SPAN_OPTIONS = ('overlap', 'full')
 
@@ -24,6 +24,16 @@ FREQUENCY_OPTIONS = ('daily', 'monthly', 'yearly')  # hourly
 
 CALENDAR_OPTIONS = ('360_day', '365_day', 'standard', 'proleptic_gregorian',
                     'julian')
+
+EQUAL_NAMES = [
+    ['var_name'],
+    ['standard_name'],
+    ['long_name'],
+    ['var_name', 'standard_name'],
+    ['var_name', 'long_name'],
+    ['standard_name', 'long_name'],
+    ['var_name', 'standard_name', 'long_name'],
+]
 
 
 def assert_array_allclose(this, other):
@@ -206,11 +216,13 @@ def get_cube_for_equal_coords_test(num_cubes):
 
 VALIDATION_DATA_SUCCESS = (
     ('full', 'mean', (5, 5, 3)),
+    ('full', {'operator': 'mean'}, (5, 5, 3)),
     ('full', 'std_dev', (5.656854249492381, 4, 2.8284271247461903)),
     ('full', 'std', (5.656854249492381, 4, 2.8284271247461903)),
     ('full', 'min', (1, 1, 1)),
     ('full', 'max', (9, 9, 5)),
     ('full', 'median', (5, 5, 3)),
+    ('full', {'operator': 'percentile', 'percent': 50.0}, (5, 5, 3)),
     ('full', 'p50', (5, 5, 3)),
     ('full', 'p99.5', (8.96, 8.96, 4.98)),
     ('full', 'peak', (9, 9, 5)),
@@ -220,12 +232,18 @@ VALIDATION_DATA_SUCCESS = (
     ('overlap', 'min', (1, 1)),
     ('overlap', 'max', (9, 9)),
     ('overlap', 'median', (5, 5)),
+    ('overlap', {'operator': 'percentile', 'percent': 50.0}, (5, 5)),
     ('overlap', 'p50', (5, 5)),
     ('overlap', 'p99.5', (8.96, 8.96)),
     ('overlap', 'peak', (9, 9)),
     # test multiple statistics
     ('overlap', ('min', 'max'), ((1, 1), (9, 9))),
+    ('overlap', ('min', {'operator': 'max'}), ((1, 1), (9, 9))),
     ('full', ('min', 'max'), ((1, 1, 1), (9, 9, 5))),
+    ('full', (
+        {'operator': 'percentile', 'percent': 50.0},
+        {'operator': 'percentile', 'percent': 99.5}
+    ), ((5, 5, 3), (8.96, 8.96, 4.98))),
 )
 
 
@@ -310,17 +328,18 @@ def test_multimodel_statistics(frequency, span, statistics, expected):
     """High level test for multicube statistics function."""
     cubes = get_cubes_for_validation_test(frequency)
 
-    if isinstance(statistics, str):
+    if isinstance(statistics, (str, dict)):
         statistics = (statistics, )
         expected = (expected, )
 
     result = multi_model_statistics(cubes, span, statistics)
 
     assert isinstance(result, dict)
-    assert set(result.keys()) == set(statistics)
+    stat_ids = [mm._get_stat_identifier(s) for s in statistics]
+    assert set(result.keys()) == set(stat_ids)
 
-    for i, statistic in enumerate(statistics):
-        result_cube = result[statistic]
+    for i, stat_id in enumerate(stat_ids):
+        result_cube = result[stat_id]
         # make sure that temporary coord has been removed
         with pytest.raises(iris.exceptions.CoordinateNotFoundError):
             result_cube.coord('multi-model')
@@ -330,7 +349,6 @@ def test_multimodel_statistics(frequency, span, statistics, expected):
         assert_array_allclose(result_cube.data, expected_data)
 
 
-@pytest.mark.xfail(reason='Lazy data not (yet) supported.')
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
 def test_lazy_data_consistent_times(span):
     """Test laziness of multimodel statistics with consistent time axis."""
@@ -352,7 +370,6 @@ def test_lazy_data_consistent_times(span):
     assert result_cube.has_lazy_data()
 
 
-@pytest.mark.xfail(reason='Lazy data not (yet) supported.')
 @pytest.mark.parametrize('span', SPAN_OPTIONS)
 def test_lazy_data_inconsistent_times(span):
     """Test laziness of multimodel statistics with inconsistent time axis.
@@ -381,11 +398,36 @@ def test_lazy_data_inconsistent_times(span):
     assert result_cube.has_lazy_data()
 
 
+@pytest.mark.parametrize('span', SPAN_OPTIONS)
+def test_multicube_stats_dict_keys(span):
+    """Test output dict keys of ``_multicube_statistics``."""
+    cubes = (
+        generate_cube_from_dates('monthly', fill_val=1),
+        generate_cube_from_dates('monthly', fill_val=3),
+        generate_cube_from_dates('monthly', fill_val=6),
+    )
+    statistics = [
+        'mean',
+        {'operator': 'sum'},
+        {'operator': 'percentile', 'percent': 50},
+        {'operator': 'percentile', 'percent': 95.0},
+    ]
+
+    result = mm._multicube_statistics(cubes, span=span, statistics=statistics)
+
+    assert isinstance(result, dict)
+    assert len(result) == 4
+    assert 'mean' in result
+    assert 'sum' in result
+    assert 'percentile50' in result
+    assert 'percentile95.0' in result
+
+
 VALIDATION_DATA_FAIL = (
     ('percentile', ValueError),
     ('wpercentile', ValueError),
-    ('count', TypeError),
-    ('proportion', TypeError),
+    ('count', ValueError),
+    ('proportion', ValueError),
 )
 
 
@@ -514,16 +556,24 @@ def test_combine_inconsistent_var_names_fail():
         mm._combine(cubes)
 
 
+def test_combine_differing_scalar_coords_fail():
+    """Test _combine with differing scalar coordinates."""
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(2))
+    scalar_coord_0 = AuxCoord(0.0, standard_name='height', units='m')
+    cubes[0].add_aux_coord(scalar_coord_0, ())
+
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
+    with pytest.raises(ValueError, match=msg):
+        mm._combine(cubes)
+
+
 @pytest.mark.parametrize('scalar_coord', ['p0', 'ptop'])
-def test_combine_with_scalar_coords_to_remove(scalar_coord):
+def test_combine_with_special_scalar_coords_to_remove(scalar_coord):
     """Test _combine with scalar coordinates that should be removed."""
-    num_cubes = 5
-    cubes = []
-
-    for num in range(num_cubes):
-        cube = generate_cube_from_dates('monthly')
-        cubes.append(cube)
-
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(5))
     scalar_coord_0 = AuxCoord(0.0, var_name=scalar_coord)
     scalar_coord_1 = AuxCoord(1.0, var_name=scalar_coord)
     cubes[0].add_aux_coord(scalar_coord_0, ())
@@ -840,6 +890,65 @@ def test_ignore_tas_scalar_height_coord():
     assert result["mean"].coord("height").points == 1.75
 
 
+PRODUCTS = [
+    CubeList(generate_cube_from_dates('monthly') for _ in range(3)),
+    [
+        PreprocessorFile(generate_cube_from_dates('monthly')) for _ in range(3)
+    ],
+]
+SCALAR_COORD = AuxCoord(2.0, standard_name='height', units='m')
+PRODUCTS[0][0].add_aux_coord(SCALAR_COORD, ())
+PRODUCTS[1][0].cubes[0].add_aux_coord(SCALAR_COORD, ())
+PRODUCTS[1] = set(PRODUCTS[1])
+
+
+@pytest.mark.parametrize('products', PRODUCTS)
+def test_ignore_different_scalar_coords(products):
+    """Ignore different scalar coords if desired."""
+    stat = 'mean'
+    output = PreprocessorFile()
+    output_products = {'': {stat: output}}
+    kwargs = {
+        'statistics': [stat],
+        'span': 'full',
+        'output_products': output_products,
+        'keep_input_datasets': False,
+        'ignore_scalar_coords': True,
+    }
+
+    results = mm.multi_model_statistics(products, **kwargs)
+
+    assert len(results) == 1
+    if isinstance(results, dict):  # for cube as input
+        cube = results[stat]
+    else:  # for PreprocessorFile as input
+        result = next(iter(results))
+        assert len(result.cubes) == 1
+        cube = result.cubes[0]
+    assert not cube.coords(dimensions=())
+
+
+@pytest.mark.parametrize('products', PRODUCTS)
+def test_do_not_ignore_different_scalar_coords(products):
+    """Do not ignore different scalar coords if desired."""
+    stat = 'mean'
+    output = PreprocessorFile()
+    output_products = {'': {stat: output}}
+    kwargs = {
+        'statistics': [stat],
+        'span': 'full',
+        'output_products': output_products,
+        'keep_input_datasets': False,
+    }
+
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
+    with pytest.raises(ValueError, match=msg):
+        mm.multi_model_statistics(products, **kwargs)
+
+
 def test_daily_inconsistent_calendars():
     """Determine behaviour for inconsistent calendars.
 
@@ -1032,6 +1141,98 @@ def test_arbitrary_dims_0d(cubes_with_arbitrary_dimensions):
     assert_array_allclose(stat_cube.data, np.ma.array(0.0))
 
 
+@pytest.mark.parametrize('equal_names', EQUAL_NAMES)
+def test_preserve_equal_name_cubes(equal_names):
+    """Test ``multi_model_statistics`` with equal-name cubes."""
+    all_names = ['var_name', 'standard_name', 'long_name']
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(5))
+
+    # Prepare names of input cubes accordingly
+    for (idx, cube) in enumerate(cubes):
+        for name in all_names:
+            if name in equal_names or idx != 0:
+                setattr(cube, name, 'air_pressure')
+            else:  # Different value for first cube if non-equal name
+                setattr(cube, name, None)
+
+    stat_cubes = multi_model_statistics(cubes, span='overlap',
+                                        statistics=['sum'])
+
+    assert len(stat_cubes) == 1
+    stat_cube = stat_cubes['sum']
+    assert_array_allclose(stat_cube.data, np.ma.array([5.0, 5.0, 5.0]))
+
+    for name in all_names:
+        assert getattr(stat_cube, name) == 'air_pressure'
+
+
+@pytest.mark.parametrize('equal_names', EQUAL_NAMES)
+def test_equal_name_different_units_cubes(equal_names):
+    """Test ``multi_model_statistics`` with equal-name non-equal unit cubes."""
+    all_names = ['var_name', 'standard_name', 'long_name']
+    cubes = CubeList(generate_cube_from_dates('monthly') for _ in range(5))
+
+    # Prepare names of input cubes accordingly
+    cubes[0].units = 'kg'
+    for (idx, cube) in enumerate(cubes):
+        for name in all_names:
+            if name in equal_names or idx != 0:
+                setattr(cube, name, 'air_pressure')
+            else:  # Different value for first cube if non-equal name
+                setattr(cube, name, None)
+
+    msg = (
+        "Multi-model statistics failed to merge input cubes into a single "
+        "array"
+    )
+    with pytest.raises(ValueError, match=msg):
+        multi_model_statistics(cubes, span='overlap', statistics=['sum'])
+
+
+def test_equalise_var_metadata():
+    """Test ``_equalise_var_metadata``."""
+    cubes = CubeList(
+        generate_cube_from_dates('monthly', var_name='x') for _ in range(5)
+    )
+
+    # Prepare names of input cubes accordingly
+    cubes[0].units = 'kg'
+    cubes[0].standard_name = 'air_pressure'
+    cubes[0].long_name = 'b'
+    cubes[1].units = 'kg'
+    cubes[1].standard_name = 'air_pressure'
+    cubes[1].long_name = 'a'
+    cubes[1].var_name = 'y'
+    cubes[2].units = 'kg'
+    cubes[3].units = 'm'
+    cubes[3].long_name = 'X'
+    cubes[4].units = 'm'
+    cubes[4].long_name = 'X'
+
+    mm._equalise_var_metadata(cubes)
+
+    assert cubes[0].standard_name == 'air_pressure'
+    assert cubes[0].long_name == 'a'
+    assert cubes[0].var_name == 'x'
+    assert cubes[0].units == 'kg'
+    assert cubes[1].standard_name == 'air_pressure'
+    assert cubes[1].long_name == 'a'
+    assert cubes[1].var_name == 'x'
+    assert cubes[1].units == 'kg'
+    assert cubes[2].standard_name is None
+    assert cubes[2].long_name is None
+    assert cubes[2].var_name == 'x'
+    assert cubes[2].units == 'kg'
+    assert cubes[3].standard_name is None
+    assert cubes[3].long_name == 'X'
+    assert cubes[3].var_name == 'x'
+    assert cubes[3].units == 'm'
+    assert cubes[4].standard_name is None
+    assert cubes[4].long_name == 'X'
+    assert cubes[4].var_name == 'x'
+    assert cubes[4].units == 'm'
+
+
 def test_preserve_equal_coordinates():
     """Test ``multi_model_statistics`` with equal input coordinates."""
     cubes = get_cube_for_equal_coords_test(5)
@@ -1077,18 +1278,7 @@ def test_preserve_non_equal_coordinates():
     assert stat_cube.coord('x').attributes == {}
 
 
-@pytest.mark.parametrize(
-    'equal_names',
-    [
-        ['var_name'],
-        ['standard_name'],
-        ['long_name'],
-        ['var_name', 'standard_name'],
-        ['var_name', 'long_name'],
-        ['standard_name', 'long_name'],
-        ['var_name', 'standard_name', 'long_name'],
-    ]
-)
+@pytest.mark.parametrize('equal_names', EQUAL_NAMES)
 def test_preserve_equal_name_coordinates(equal_names):
     """Test ``multi_model_statistics`` with equal-name coordinates."""
     all_names = ['var_name', 'standard_name', 'long_name']
@@ -1218,7 +1408,15 @@ def test_empty_input_ensemble_statistics():
         )
 
 
-STATS = ['mean', 'median', 'min', 'max', 'p42.314', 'std_dev']
+STATS = [
+    'mean',
+    {'operator': 'median'},
+    'min',
+    'max',
+    'p42.314',
+    {'operator': 'percentile', 'percent': 42.314},
+    'std_dev',
+]
 
 
 @pytest.mark.parametrize('stat', STATS)
@@ -1232,7 +1430,7 @@ STATS = ['mean', 'median', 'min', 'max', 'p42.314', 'std_dev']
 def test_single_input_multi_model_statistics(products, stat):
     """Check that ``multi_model_statistics`` works with a single cube."""
     output = PreprocessorFile()
-    output_products = {'': {stat: output}}
+    output_products = {'': {mm._get_stat_identifier(stat): output}}
     kwargs = {
         'statistics': [stat],
         'span': 'full',
@@ -1245,7 +1443,8 @@ def test_single_input_multi_model_statistics(products, stat):
     assert len(results) == 1
 
     if isinstance(results, dict):  # for cube as input
-        cube = results[stat]
+        stat_id = mm._get_stat_identifier(stat)
+        cube = results[stat_id]
     else:  # for PreprocessorFile as input
         result = next(iter(results))
         assert len(result.cubes) == 1
@@ -1269,6 +1468,8 @@ def test_single_input_multi_model_statistics(products, stat):
 )
 def test_single_input_ensemble_statistics(products, stat):
     """Check that ``ensemble_statistics`` works with a single cube."""
+    stat_id = mm._get_stat_identifier(stat)
+
     cube = generate_cube_from_dates('monthly')
     attributes = {
         'project': 'project',
@@ -1278,7 +1479,7 @@ def test_single_input_ensemble_statistics(products, stat):
     }
     products = {PreprocessorFile(cube, attributes=attributes)}
     output = PreprocessorFile()
-    output_products = {'project_dataset_exp': {stat: output}}
+    output_products = {'project_dataset_exp': {stat_id: output}}
     kwargs = {
         'statistics': [stat],
         'output_products': output_products,
@@ -1297,3 +1498,62 @@ def test_single_input_ensemble_statistics(products, stat):
         )
     else:
         assert_array_allclose(cube.data, np.ma.array([1.0, 1.0, 1.0]))
+
+
+def test_operator_missing_in_stat():
+    """Test no operator in stat dict."""
+    cubes = CubeList([generate_cube_from_dates('monthly')])
+    msg = (
+        "`statistic` given as dictionary, but missing required key `operator`"
+    )
+    with pytest.raises(ValueError) as exc:
+        mm.multi_model_statistics(cubes, 'overlap', [{'no': 'operator'}])
+    assert msg in str(exc)
+
+
+@pytest.mark.parametrize(
+    'statistic,output',
+    [
+        ('mean', ('mean', {})),
+        ({'operator': 'mean'}, ('mean', {})),
+        ({'operator': 'mean', 'weights': False}, ('mean', {'weights': False})),
+        ('percentile', ('percentile', {})),
+        ({'operator': 'percentile', 'percent': 50},
+         ('percentile', {'percent': 50})),
+        ({'operator': 'wpercentile', 'weights': False},
+         ('wpercentile', {'weights': False})),
+        ({'operator': 'wpercentile', 'weights': False, 'percent': 5.0},
+         ('wpercentile', {'weights': False, 'percent': 5.0})),
+    ]
+)
+def test_get_operator_and_kwargs(statistic, output):
+    """Test ``_get_operator_and_kwargs``."""
+    assert mm._get_operator_and_kwargs(statistic) == output
+
+
+@pytest.mark.parametrize('statistic', [{}, {'no': 'op'}])
+def test_get_operator_and_kwargs_operator_missing(statistic):
+    """Test ``_get_operator_and_kwargs``."""
+    msg = (
+        "`statistic` given as dictionary, but missing required key `operator`"
+    )
+    with pytest.raises(ValueError, match=msg):
+        mm._get_operator_and_kwargs(statistic)
+
+
+@pytest.mark.parametrize(
+    'statistic,output',
+    [
+        ('mean', 'mean'),
+        ({'operator': 'mean'}, 'mean'),
+        ({'operator': 'mean', 'weights': False}, 'mean'),
+        ('percentile', 'percentile'),
+        ({'operator': 'percentile', 'percent': 50}, 'percentile50'),
+        ({'operator': 'wpercentile', 'weights': False}, 'wpercentile'),
+        ({'operator': 'wpercentile', 'weights': False, 'percent': 5.0},
+         'wpercentile5.0'),
+    ]
+)
+def test_get_stat_identifier(statistic, output):
+    """Test ``_get_stat_identifier``."""
+    assert mm._get_stat_identifier(statistic) == output

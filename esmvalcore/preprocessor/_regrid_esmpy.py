@@ -11,6 +11,7 @@ except ImportError as exc:
         raise exc
 import iris
 import numpy as np
+from iris.cube import Cube
 
 from ._mapping import get_empty_data, map_slices, ref_to_dims_index
 
@@ -37,6 +38,156 @@ MASK_REGRIDDING_MASK_VALUE = {
 #     'nearest_stod': esmpy.RegridMethod.NEAREST_STOD,
 #     'nearest_dtos': esmpy.RegridMethod.NEAREST_DTOS,
 # }
+
+
+class ESMPyRegridder:
+    """General ESMPy regridder.
+
+    Does not support lazy regridding nor weights caching.
+
+    Parameters
+    ----------
+    src_cube:
+        Cube defining the source grid.
+    tgt_cube:
+        Cube defining the target grid.
+    method:
+        Regridding algorithm. Must be one of `linear`, `area_weighted`,
+        `nearest`.
+    mask_threshold:
+        Threshold used to regrid mask of input cube.
+
+    """
+
+    def __init__(
+        self,
+        src_cube: Cube,
+        tgt_cube: Cube,
+        method: str = 'linear',
+        mask_threshold: float = 0.99,
+    ):
+        """Initialize class instance."""
+        # These regridders are not lazy, so load source and target data once.
+        src_cube.data  # pylint: disable=pointless-statement
+        tgt_cube.data  # pylint: disable=pointless-statement
+        self.src_cube = src_cube
+        self.tgt_cube = tgt_cube
+        self.method = method
+        self.mask_threshold = mask_threshold
+
+    def __call__(self, cube: Cube) -> Cube:
+        """Perform regridding.
+
+        Parameters
+        ----------
+        cube:
+            Cube to be regridded.
+
+        Returns
+        -------
+        Cube
+            Regridded cube.
+
+        """
+        # These regridders are not lazy, so load source data once.
+        cube.data  # pylint: disable=pointless-statement
+        src_rep, dst_rep = get_grid_representants(cube, self.tgt_cube)
+        regridder = build_regridder(
+            src_rep, dst_rep, self.method, mask_threshold=self.mask_threshold
+        )
+        result = map_slices(cube, regridder, src_rep, dst_rep)
+        return result
+
+
+class _ESMPyScheme:
+    """General irregular regridding scheme.
+
+    This class can be used in :meth:`iris.cube.Cube.regrid`.
+
+    Note
+    ----
+    See `ESMPy <http://www.earthsystemmodeling.org/
+    esmf_releases/non_public/ESMF_7_0_0/esmpy_doc/html/
+    RegridMethod.html#ESMF.api.constants.RegridMethod>`__ for more details on
+    this.
+
+    Parameters
+    ----------
+    mask_threshold:
+        Threshold used to regrid mask of source cube.
+
+    """
+
+    _METHOD = ''
+
+    def __init__(self, mask_threshold: float = 0.99):
+        """Initialize class instance."""
+        self.mask_threshold = mask_threshold
+
+    def __repr__(self) -> str:
+        """Return string representation of class."""
+        return (
+            f'{self.__class__.__name__}(mask_threshold={self.mask_threshold})'
+        )
+
+    def regridder(self, src_cube: Cube, tgt_cube: Cube) -> ESMPyRegridder:
+        """Get regridder.
+
+        Parameters
+        ----------
+        src_cube:
+            Cube defining the source grid.
+        tgt_cube:
+            Cube defining the target grid.
+
+        Returns
+        -------
+        ESMPyRegridder
+            Regridder instance.
+
+        """
+        return ESMPyRegridder(
+            src_cube,
+            tgt_cube,
+            method=self._METHOD,
+            mask_threshold=self.mask_threshold,
+        )
+
+
+class ESMPyAreaWeighted(_ESMPyScheme):
+    """ESMPy area-weighted regridding scheme.
+
+    This class can be used in :meth:`iris.cube.Cube.regrid`.
+
+    Does not support lazy regridding.
+
+    """
+
+    _METHOD = 'area_weighted'
+
+
+class ESMPyLinear(_ESMPyScheme):
+    """ESMPy bilinear regridding scheme.
+
+    This class can be used in :meth:`iris.cube.Cube.regrid`.
+
+    Does not support lazy regridding.
+
+    """
+
+    _METHOD = 'linear'
+
+
+class ESMPyNearest(_ESMPyScheme):
+    """ESMPy nearest-neighbor regridding scheme.
+
+    This class can be used in :meth:`iris.cube.Cube.regrid`.
+
+    Does not support lazy regridding.
+
+    """
+
+    _METHOD = 'nearest'
 
 
 def cf_2d_bounds_to_esmpy_corners(bounds, circular):
@@ -121,7 +272,7 @@ def is_lon_circular(lon):
         else:
             raise NotImplementedError('AuxCoord longitude is higher '
                                       'dimensional than 2d. Giving up.')
-        circular = np.alltrue(abs(seam) % 360. < 1.e-3)
+        circular = np.all(abs(seam) % 360. < 1.e-3)
     else:
         raise ValueError('longitude is neither DimCoord nor AuxCoord. '
                          'Giving up.')
@@ -318,37 +469,3 @@ def get_grid_representants(src, dst):
         aux_coords_and_dims=aux_coords_and_dims,
     )
     return src_rep, dst_rep
-
-
-def regrid(src, dst, method='linear'):
-    """
-    Regrid src_cube to the grid defined by dst_cube.
-
-    Regrid the data in src_cube onto the grid defined by dst_cube.
-
-    Parameters
-    ----------
-    src: :class:`iris.cube.Cube`
-        Source data. Must have latitude and longitude coords.
-        These can be 1d or 2d and should have bounds.
-    dst: :class:`iris.cube.Cube`
-        Defines the target grid.
-    method:
-        Selects the regridding method.
-        Can be 'linear', 'area_weighted',
-        or 'nearest'. See ESMPy_.
-
-    Returns
-    -------
-    :class:`iris.cube.Cube`:
-        The regridded cube.
-
-
-    .. _ESMPy: http://www.earthsystemmodeling.org/
-       esmf_releases/non_public/ESMF_7_0_0/esmpy_doc/html/
-       RegridMethod.html#ESMF.api.constants.RegridMethod
-    """
-    src_rep, dst_rep = get_grid_representants(src, dst)
-    regridder = build_regridder(src_rep, dst_rep, method)
-    res = map_slices(src, regridder, src_rep, dst_rep)
-    return res

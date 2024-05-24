@@ -6,14 +6,16 @@ import numpy as np
 import pytest
 from cf_units import Unit
 
+from esmvalcore.cmor._fixes.fix import Fix, GenericFix
 from esmvalcore.cmor._fixes.native6.era5 import (
     AllVars,
     Evspsbl,
     Zg,
     get_frequency,
 )
-from esmvalcore.cmor.fix import Fix, fix_metadata
-from esmvalcore.cmor.table import CMOR_TABLES
+from esmvalcore.cmor.fix import fix_metadata
+from esmvalcore.cmor.table import CMOR_TABLES, get_var_info
+from esmvalcore.preprocessor import cmor_check_metadata
 
 COMMENT = ('Contains modified Copernicus Climate Change Service Information '
            f'{datetime.datetime.now().year}')
@@ -22,13 +24,15 @@ COMMENT = ('Contains modified Copernicus Climate Change Service Information '
 def test_get_evspsbl_fix():
     """Test whether the right fixes are gathered for a single variable."""
     fix = Fix.get_fixes('native6', 'ERA5', 'E1hr', 'evspsbl')
-    assert fix == [Evspsbl(None), AllVars(None)]
+    vardef = get_var_info('native6', 'E1hr', 'evspsbl')
+    assert fix == [Evspsbl(vardef), AllVars(vardef), GenericFix(vardef)]
 
 
 def test_get_zg_fix():
     """Test whether the right fix gets found again, for zg as well."""
     fix = Fix.get_fixes('native6', 'ERA5', 'Amon', 'zg')
-    assert fix == [Zg(None), AllVars(None)]
+    vardef = get_var_info('native6', 'E1hr', 'evspsbl')
+    assert fix == [Zg(vardef), AllVars(vardef), GenericFix(vardef)]
 
 
 def test_get_frequency_hourly():
@@ -300,7 +304,7 @@ def clt_cmor_e1hr():
 def evspsbl_era5_hourly():
     time = _era5_time('hourly')
     cube = iris.cube.Cube(
-        _era5_data('hourly'),
+        _era5_data('hourly') * -1.,
         long_name='total evapotranspiration',
         var_name='e',
         units='unknown',
@@ -337,7 +341,7 @@ def evspsbl_cmor_e1hr():
 def evspsblpot_era5_hourly():
     time = _era5_time('hourly')
     cube = iris.cube.Cube(
-        _era5_data('hourly'),
+        _era5_data('hourly') * -1.,
         long_name='potential evapotranspiration',
         var_name='epot',
         units='unknown',
@@ -995,6 +999,44 @@ def uas_cmor_e1hr():
     return iris.cube.CubeList([cube])
 
 
+def vas_era5_hourly():
+    time = _era5_time('hourly')
+    cube = iris.cube.Cube(
+        _era5_data('hourly'),
+        long_name='10m_v_component_of_wind',
+        var_name='v10',
+        units='m s-1',
+        dim_coords_and_dims=[
+            (time, 0),
+            (_era5_latitude(), 1),
+            (_era5_longitude(), 2),
+        ],
+    )
+    return iris.cube.CubeList([cube])
+
+
+def vas_cmor_e1hr():
+    cmor_table = CMOR_TABLES['native6']
+    vardef = cmor_table.get_variable('E1hr', 'vas')
+    time = _cmor_time('E1hr')
+    data = _cmor_data('E1hr')
+    cube = iris.cube.Cube(
+        data.astype('float32'),
+        long_name=vardef.long_name,
+        var_name=vardef.short_name,
+        standard_name=vardef.standard_name,
+        units=Unit(vardef.units),
+        dim_coords_and_dims=[
+            (time, 0),
+            (_cmor_latitude(), 1),
+            (_cmor_longitude(), 2),
+        ],
+        attributes={'comment': COMMENT},
+    )
+    cube.add_aux_coord(_cmor_aux_height(10.))
+    return iris.cube.CubeList([cube])
+
+
 VARIABLES = [
     pytest.param(a, b, c, d, id=c + '_' + d) for (a, b, c, d) in [
         (cl_era5_monthly(), cl_cmor_amon(), 'cl', 'Amon'),
@@ -1018,6 +1060,7 @@ VARIABLES = [
         (tasmax_era5_hourly(), tasmax_cmor_e1hr(), 'tasmax', 'E1hr'),
         (tasmin_era5_hourly(), tasmin_cmor_e1hr(), 'tasmin', 'E1hr'),
         (uas_era5_hourly(), uas_cmor_e1hr(), 'uas', 'E1hr'),
+        (vas_era5_hourly(), vas_cmor_e1hr(), 'vas', 'E1hr'),
         (zg_era5_monthly(), zg_cmor_amon(), 'zg', 'Amon'),
     ]
 ]
@@ -1027,15 +1070,30 @@ VARIABLES = [
 def test_cmorization(era5_cubes, cmor_cubes, var, mip):
     """Verify that cmorization results in the expected target cube."""
     fixed_cubes = fix_metadata(era5_cubes, var, 'native6', 'era5', mip)
+
     assert len(fixed_cubes) == 1
     fixed_cube = fixed_cubes[0]
     cmor_cube = cmor_cubes[0]
+
+    # Test that CMOR checks are passing
+    fixed_cubes = cmor_check_metadata(fixed_cube, 'native6', mip, var)
+
     if fixed_cube.coords('time'):
         for cube in [fixed_cube, cmor_cube]:
             coord = cube.coord('time')
             coord.points = np.round(coord.points, decimals=7)
             if coord.bounds is not None:
                 coord.bounds = np.round(coord.bounds, decimals=7)
+    print("Test results for variable/MIP: ", var, mip)
     print('cmor_cube:', cmor_cube)
     print('fixed_cube:', fixed_cube)
+    print('cmor_cube data:', cmor_cube.data)
+    print('fixed_cube data:', fixed_cube.data)
+    print("cmor_cube coords:")
+    for coord in cmor_cube.coords():
+        print(coord)
+    print("\n")
+    print("fixed_cube coords:")
+    for coord in fixed_cube.coords():
+        print(coord)
     assert fixed_cube == cmor_cube

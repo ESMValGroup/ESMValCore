@@ -25,7 +25,7 @@ def test_log_speed(monkeypatch, tmp_path):
                         200 * megabyte, 16)
     _download.log_speed('http://otherhost.org/other_file.nc', 4 * megabyte, 1)
 
-    with hosts_file.open('r') as file:
+    with hosts_file.open('r', encoding='utf-8') as file:
         result = yaml.safe_load(file)
 
     expected = {
@@ -53,7 +53,7 @@ def test_error(monkeypatch, tmp_path):
     _download.log_speed('http://somehost.org/some_file.nc', 3 * megabyte, 2)
     _download.log_error('http://somehost.org/some_file.nc')
 
-    with hosts_file.open('r') as file:
+    with hosts_file.open('r', encoding='utf-8') as file:
         result = yaml.safe_load(file)
 
     expected = {
@@ -568,6 +568,7 @@ def test_download(mocker, tmp_path, caplog):
     ]
     for i, file in enumerate(test_files):
         file.__str__.return_value = f'file{i}.nc'
+        file.local_file.return_value.exists.return_value = False
         file.size = 200 * 10**6
         file.__lt__.return_value = False
 
@@ -590,6 +591,7 @@ def test_download_fail(mocker, tmp_path, caplog):
     ]
     for i, file in enumerate(test_files):
         file.__str__.return_value = f'file{i}.nc'
+        file.local_file.return_value.exists.return_value = False
         file.size = 100 * 10**6
         file.__lt__.return_value = False
 
@@ -613,7 +615,7 @@ def test_download_fail(mocker, tmp_path, caplog):
 
 def test_download_noop(caplog):
     """Test downloading no files."""
-    caplog.set_level('INFO')
+    caplog.set_level('DEBUG')
     esmvalcore.esgf.download([], dest_folder='/does/not/exist')
 
     msg = ("All required data is available locally,"

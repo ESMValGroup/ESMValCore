@@ -8,7 +8,7 @@ import re
 from dataclasses import dataclass
 from glob import glob
 from pathlib import Path
-from typing import Any, Union
+from typing import TYPE_CHECKING, Any, Union
 
 import iris
 import isodate
@@ -18,17 +18,19 @@ from .config._config import get_project_config
 from .exceptions import RecipeError
 from .typing import Facets, FacetValue
 
+if TYPE_CHECKING:
+    from .esgf import ESGFFile
+
 logger = logging.getLogger(__name__)
 
 
 def _get_from_pattern(pattern, date_range_pattern, stem, group):
     """Get time, date or datetime from date range patterns in file names."""
-    #
     # Next string allows to test that there is an allowed delimiter (or
     # string start or end) close to date range (or to single date)
     start_point = end_point = None
     context = r"(?:^|[-_]|$)"
-    #
+
     # First check for a block of two potential dates
     date_range_pattern_with_context = context + date_range_pattern + context
     daterange = re.search(date_range_pattern_with_context, stem)
@@ -38,6 +40,7 @@ def _get_from_pattern(pattern, date_range_pattern, stem, group):
         date_range_pattern_with_context = (context + date_range_pattern +
                                            context)
         daterange = re.search(date_range_pattern_with_context, stem)
+
     if daterange:
         start_point = daterange.group(group)
         end_group = '_'.join([group, 'end'])
@@ -60,41 +63,69 @@ def _get_from_pattern(pattern, date_range_pattern, stem, group):
     return start_point, end_point
 
 
-def _get_start_end_date(filename):
+def _get_start_end_date(
+        file: str | Path | LocalFile | ESGFFile) -> tuple[str, str]:
     """Get the start and end dates as a string from a file name.
 
-    Examples of allowed dates : 1980, 198001, 19801231,
-    1980123123, 19801231T23, 19801231T2359, 19801231T235959,
-    19801231T235959Z (ISO 8601).
+    Examples of allowed dates: 1980, 198001, 1980-01, 19801231, 1980-12-31,
+    1980123123, 19801231T23, 19801231T2359, 19801231T235959, 19801231T235959Z
+    (ISO 8601).
 
-    Dates must be surrounded by - or _ or string start or string end
-    (after removing filename suffix).
+    Dates must be surrounded by '-', '_' or '.' (the latter is used by CMIP3
+    data), or string start or string end (after removing filename suffix).
 
-    Look first for two dates separated by - or _, then for one single
-    date, and if they are multiple, for one date at start or end.
+    Look first for two dates separated by '-', '_' or '_cat_' (the latter is
+    used by CMIP3 data), then for one single date, and if there are multiple,
+    for one date at start or end.
+
+    Parameters
+    ----------
+    file:
+        The file to read the start and end data from.
+
+    Returns
+    -------
+    tuple[str, str]
+        The start and end date.
+
+    Raises
+    ------
+    ValueError
+        Start or end date cannot be determined.
     """
-    stem = Path(filename).stem
+    if hasattr(file, 'name'):  # Path, LocalFile, ESGFFile
+        stem = Path(file.name).stem
+    else:  # str
+        stem = Path(file).stem
+
     start_date = end_date = None
-    #
+
+    # Build regex
     time_pattern = (r"(?P<hour>[0-2][0-9]"
                     r"(?P<minute>[0-5][0-9]"
                     r"(?P<second>[0-5][0-9])?)?Z?)")
     date_pattern = (r"(?P<year>[0-9]{4})"
-                    r"(?P<month>[01][0-9]"
-                    r"(?P<day>[0-3][0-9]"
+                    r"(?P<month>-?[01][0-9]"
+                    r"(?P<day>-?[0-3][0-9]"
                     rf"(T?{time_pattern})?)?)?")
     datetime_pattern = (rf"(?P<datetime>{date_pattern})")
-    #
     end_datetime_pattern = datetime_pattern.replace(">", "_end>")
-    date_range_pattern = datetime_pattern + r"[-_]" + end_datetime_pattern
+
+    # Dates can either be delimited by '-', '_', or '_cat_' (the latter for
+    # CMIP3)
+    date_range_pattern = (datetime_pattern + r"[-_](?:cat_)?" +
+                          end_datetime_pattern)
+
+    # Find dates using the regex
     start_date, end_date = _get_from_pattern(datetime_pattern,
                                              date_range_pattern, stem,
                                              'datetime')
 
     # As final resort, try to get the dates from the file contents
-    if (start_date is None or end_date is None) and Path(filename).exists():
-        logger.debug("Must load file %s for daterange ", filename)
-        cubes = iris.load(filename)
+    if ((start_date is None or end_date is None)
+            and isinstance(file, (str, Path)) and Path(file).exists()):
+        logger.debug("Must load file %s for daterange ", file)
+        cubes = iris.load(file)
 
         for cube in cubes:
             logger.debug(cube)
@@ -110,10 +141,25 @@ def _get_start_end_date(filename):
             break
 
     if start_date is None or end_date is None:
-        raise ValueError(f'File {filename} dates do not match a recognized '
-                         'pattern and time can not be read from the file')
+        raise ValueError(
+            f"File {file} datetimes do not match a recognized pattern and "
+            f"time coordinate can not be read from the file")
+
+    # Remove potential '-' characters from datetimes
+    start_date = start_date.replace('-', '')
+    end_date = end_date.replace('-', '')
 
     return start_date, end_date
+
+
+def _get_start_end_year(
+        file: str | Path | LocalFile | ESGFFile) -> tuple[int, int]:
+    """Get the start and end year as int from a file name.
+
+    See :func:`_get_start_end_date`.
+    """
+    (start_date, end_date) = _get_start_end_date(file)
+    return (int(start_date[:4]), int(end_date[:4]))
 
 
 def _dates_to_timerange(start_date, end_date):
@@ -149,8 +195,8 @@ def _dates_to_timerange(start_date, end_date):
     return f'{start_date}/{end_date}'
 
 
-def _get_timerange_from_years(variable):
-    """Build `timerange` tag from tags `start_year` and `end_year`."""
+def _replace_years_with_timerange(variable):
+    """Set `timerange` tag from tags `start_year` and `end_year`."""
     start_year = variable.get('start_year')
     end_year = variable.get('end_year')
     if start_year and end_year:
@@ -163,56 +209,6 @@ def _get_timerange_from_years(variable):
     variable.pop('end_year', None)
 
 
-def _get_start_end_year(filename):
-    """Get the start and end year from a file name.
-
-    Examples of allowed dates : 1980, 198001, 19801231,
-    1980123123, 19801231T23, 19801231T2359, 19801231T235959,
-    19801231T235959Z (ISO 8601).
-
-    Dates must be surrounded by - or _ or string start or string end
-    (after removing filename suffix).
-
-    Look first for two dates separated by - or _, then for one single
-    date, and if they are multiple, for one date at start or end.
-    """
-    stem = Path(filename).stem
-    start_year = end_year = None
-    #
-    time_pattern = (r"(?P<hour>[0-2][0-9]"
-                    r"(?P<minute>[0-5][0-9]"
-                    r"(?P<second>[0-5][0-9])?)?Z?)")
-    date_pattern = (r"(?P<year>[0-9]{4})"
-                    r"(?P<month>[01][0-9]"
-                    r"(?P<day>[0-3][0-9]"
-                    rf"(T?{time_pattern})?)?)?")
-    #
-    end_date_pattern = date_pattern.replace(">", "_end>")
-    date_range_pattern = date_pattern + r"[-_]" + end_date_pattern
-    start_year, end_year = _get_from_pattern(date_pattern, date_range_pattern,
-                                             stem, 'year')
-    # As final resort, try to get the dates from the file contents
-    if (start_year is None or end_year is None) and Path(filename).exists():
-        logger.debug("Must load file %s for daterange ", filename)
-        cubes = iris.load(filename)
-
-        for cube in cubes:
-            logger.debug(cube)
-            try:
-                time = cube.coord('time')
-            except iris.exceptions.CoordinateNotFoundError:
-                continue
-            start_year = time.cell(0).point.year
-            end_year = time.cell(-1).point.year
-            break
-
-    if start_year is None or end_year is None:
-        raise ValueError(f'File {filename} dates do not match a recognized '
-                         'pattern and time can not be read from the file')
-
-    return int(start_year), int(end_year)
-
-
 def _parse_period(timerange):
     """Parse `timerange` values given as duration periods.
 
@@ -223,8 +219,8 @@ def _parse_period(timerange):
     start_date = None
     end_date = None
     time_format = None
-    datetime_format = (
-        isodate.DATE_BAS_COMPLETE + 'T' + isodate.TIME_BAS_COMPLETE)
+    datetime_format = (isodate.DATE_BAS_COMPLETE + 'T' +
+                       isodate.TIME_BAS_COMPLETE)
     if timerange.split('/')[0].startswith('P'):
         try:
             end_date = isodate.parse_datetime(timerange.split('/')[1])
@@ -245,13 +241,13 @@ def _parse_period(timerange):
         end_date = start_date + delta
 
     if time_format == datetime_format:
-        start_date = str(isodate.datetime_isoformat(
-            start_date, format=datetime_format))
-        end_date = str(isodate.datetime_isoformat(
-            end_date, format=datetime_format))
-    elif time_format == isodate.DATE_BAS_COMPLETE:
         start_date = str(
-            isodate.date_isoformat(start_date, format=time_format))
+            isodate.datetime_isoformat(start_date, format=datetime_format))
+        end_date = str(
+            isodate.datetime_isoformat(end_date, format=datetime_format))
+    elif time_format == isodate.DATE_BAS_COMPLETE:
+        start_date = str(isodate.date_isoformat(start_date,
+                                                format=time_format))
         end_date = str(isodate.date_isoformat(end_date, format=time_format))
 
     if start_date is None and end_date is None:
@@ -288,11 +284,11 @@ def _truncate_dates(date, file_date):
 def _select_files(filenames, timerange):
     """Select files containing data between a given timerange.
 
-    If the timerange is given as a period, the file selection
-    occurs taking only the years into account.
+    If the timerange is given as a period, the file selection occurs
+    taking only the years into account.
 
-    Otherwise, the file selection occurs taking into account
-    the time resolution of the file.
+    Otherwise, the file selection occurs taking into account the time
+    resolution of the file.
     """
     if '*' in timerange:
         # TODO: support * combined with a period
@@ -520,18 +516,29 @@ def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
 def _path2facets(path: Path, drs: str) -> dict[str, str]:
     """Extract facets from a path using a DRS like '{facet1}/{facet2}'."""
     keys = []
-    for key in re.findall(r"{(.*?)}", drs):
+    for key in re.findall(r'{(.*?)}[^-]', f'{drs} '):
         key = key.split('.')[0]  # Remove trailing .lower and .upper
         keys.append(key)
     start, end = -len(keys) - 1, -1
     values = path.parts[start:end]
-    facets = {key: values[idx] for idx, key in enumerate(keys)}
+    facets = {
+        key: values[idx]
+        for idx, key in enumerate(keys) if "{" not in key
+    }
+
+    if len(facets) != len(keys):
+        # Extract hyphen separated facet: {facet1}-{facet2},
+        # where facet1 is already known.
+        for idx, key in enumerate(keys):
+            if key not in facets:
+                facet1, facet2 = key.split("}-{")
+                facets[facet2] = values[idx].replace(f'{facets[facet1]}-', '')
+
     return facets
 
 
 def _filter_versions_called_latest(
-    files: list['LocalFile'],
-) -> list['LocalFile']:
+        files: list['LocalFile']) -> list['LocalFile']:
     """Filter out versions called 'latest' if they are duplicates.
 
     On compute clusters it is usual to have a symbolic link to the
