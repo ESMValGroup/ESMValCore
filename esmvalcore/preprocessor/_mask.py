@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import os
+from types import ModuleType
 
 import cartopy.io.shapereader as shpreader
 import dask
@@ -625,9 +626,17 @@ def mask_fillvalues(
     combined_mask = None
 
     used = {}
+    array_module: ModuleType = np
     for product in products:
         for cube in product.cubes:
-            array_module = da if cube.has_lazy_data() else np
+            if cube.has_lazy_data():
+                array_module = da
+                break
+
+    for product in products:
+        for i, cube in enumerate(product.cubes):
+            cube = cube.copy()
+            product.cubes[i] = cube
             cube.data = array_module.ma.fix_invalid(cube.core_data())
             mask = _get_fillvalues_mask(
                 cube,
@@ -647,14 +656,17 @@ def mask_fillvalues(
                 raise NotImplementedError(
                     f"Unable to handle {n_dims} dimensional data"
                 )
-            combined_mask = da.where(valid, combined_mask | mask,
-                                     combined_mask)
+            combined_mask = array_module.where(
+                valid,
+                combined_mask | mask,
+                combined_mask,
+            )
             used[product.filename] = valid.any()
 
     apply_mask = combined_mask.any()  # type: ignore
     for product in products:
         for cube in product.cubes:
-            if cube.has_lazy_data() or isinstance(combined_mask, da.Array):
+            if array_module == da:
                 data = cube.lazy_data()
                 mask = da.ma.getmaskarray(data)
                 mask = da.where(apply_mask, mask | combined_mask, mask)
@@ -712,6 +724,7 @@ def _get_fillvalues_mask(
     spell_count = Aggregator(
         'spell_count',
         count_spells,
+        lazy_func=count_spells,
         units_func=lambda units: 1,
     )
 
