@@ -28,7 +28,7 @@ dependencies:
   - nc-time-axis
   - nested-lookup
   - netcdf4
-  - numpy==2.0.0rc2
+    # - numpy==2.0.0rc2
   - packaging
   - pandas !=2.2.0,!=2.2.1,!=2.2.2  # github.com/ESMValGroup/ESMValCore/pull/2305 and #2349
   - pillow
