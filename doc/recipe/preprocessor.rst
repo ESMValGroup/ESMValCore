@@ -1570,29 +1570,42 @@ resample_hours:
 ``resample_hours``
 ------------------
 
-This function changes the frequency of the data in the cube by extracting the
-timesteps that belongs to the desired frequency. It is important to note that
-it is mainly mean to be used with instantaneous data
+Change the frequency of x-hourly data to y-hourly data by either eliminating
+extra time steps or interpolation.
+This is intended to be used with instantaneous data.
 
 Parameters:
-    * interval: New frequency of the data. Must be a divisor of 24
-    * offset: First desired hour. Default 0. Must be lower than the interval
+    * `interval`: New frequency of the data. Must be a divisor of 24.
+    * `offset`: First hour of the desired output data. Default 0. Must be lower than the `interval`.
+    * `interpolate`: If `interpolate` is ``None`` (default), convert x-hourly data to
+      y-hourly (y > x) by eliminating extra time steps. If `interpolate` is
+      'nearest' or 'linear', use nearest-neighbor or bilinear interpolation to
+      convert general x-hourly data to general y-hourly data.
 
 Examples:
-    * Convert to 12-hourly, by getting timesteps at 0:00 and 12:00:
+
+    * Convert to 12-hourly data by getting time steps at 0:00 and 12:00:
 
         .. code-block:: yaml
 
             resample_hours:
               hours: 12
 
-    * Convert to 12-hourly, by getting timesteps at 6:00 and 18:00:
+    * Convert to 12-hourly data by getting time steps at 6:00 and 18:00:
 
         .. code-block:: yaml
 
             resample_hours:
               hours: 12
-	      offset: 6
+              offset: 6
+
+    * Convert to 3-hourly data using bilinear interpolation:
+
+        .. code-block:: yaml
+
+            resample_hours:
+              hours: 3
+              interpolate: linear
 
 See also :func:`esmvalcore.preprocessor.resample_hours`.
 
