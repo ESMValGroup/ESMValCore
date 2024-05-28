@@ -32,6 +32,7 @@ from esmvalcore.cmor.fixes import get_next_month, get_time_bounds
 from esmvalcore.iris_helpers import date2num, rechunk_cube
 from esmvalcore.preprocessor._shared import (
     get_iris_aggregator,
+    get_time_weights,
     preserve_float_dtype,
     update_weights_kwargs,
 )
@@ -381,40 +382,6 @@ def extract_month(cube: Cube, month: int) -> Cube:
     if result is None:
         raise ValueError(f'Month {month!r} not present in cube {cube}')
     return result
-
-
-def get_time_weights(cube: Cube) -> np.ndarray | da.core.Array:
-    """Compute the weighting of the time axis.
-
-    Parameters
-    ----------
-    cube:
-        Input cube.
-
-    Returns
-    -------
-    np.ndarray or da.Array
-        Array of time weights for averaging. Returns a
-        :class:`dask.array.Array` if the input cube has lazy data; a
-        :class:`numpy.ndarray` otherwise.
-
-    """
-    time = cube.coord('time')
-    coord_dims = cube.coord_dims('time')
-
-    # Multidimensional time coordinates are not supported: In this case,
-    # weights cannot be simply calculated as difference between the bounds
-    if len(coord_dims) > 1:
-        raise ValueError(
-            f"Weighted statistical operations are not supported for "
-            f"{len(coord_dims):d}D time coordinates, expected 0D or 1D"
-        )
-
-    # Extract 1D time weights (= lengths of time intervals)
-    time_weights = time.lazy_bounds()[:, 1] - time.lazy_bounds()[:, 0]
-    if not cube.has_lazy_data():
-        time_weights = time_weights.compute()
-    return time_weights
 
 
 def _aggregate_time_fx(result_cube, source_cube):
@@ -994,82 +961,176 @@ def _get_period_coord(cube, period, seasons):
     raise ValueError(f"Period '{period}' not supported")
 
 
-def regrid_time(cube: Cube, frequency: str) -> Cube:
-    """Align time axis for cubes so they can be subtracted.
+def regrid_time(
+    cube: Cube,
+    frequency: str,
+    calendar: Optional[str] = None,
+    units: str = 'days since 1850-01-01 00:00:00',
+) -> Cube:
+    """Align time coordinate for cubes.
 
-    Operations on time units, time points and auxiliary
-    coordinates so that any cube from cubes can be subtracted from any
-    other cube from cubes. Currently this function supports
-    yearly (frequency=yr), monthly (frequency=mon),
-    daily (frequency=day), 6-hourly (frequency=6hr),
-    3-hourly (frequency=3hr) and hourly (frequency=1hr) data time frequencies.
+    Sets datetimes to common values:
+
+    * Decadal data (e.g., ``frequency='dec'``): 1 January 00:00:00 for the
+      given year. Example: 1 January 2005 00:00:00 for given year 2005 (decade
+      2000-2010).
+    * Yearly data (e.g., ``frequency='yr'``): 1 July 00:00:00 for each year.
+      Example: 1 July 1993 00:00:00 for the year 1993.
+    * Monthly data (e.g., ``frequency='mon'``): 15th day 00:00:00 for each
+      month. Example: 15 October 1993 00:00:00 for the month October 1993.
+    * Daily data (e.g., ``frequency='day'``): 12:00:00 for each day. Example:
+      14 March 1996 12:00:00 for the day 14 March 1996.
+    * `n`-hourly data where `n` is a divisor of 24
+      (e.g., ``frequency='3hr'``): center of each time interval. Example:
+      03:00:00 for interval 00:00:00-06:00:00 (6-hourly data), 16:30:00 for
+      interval 15:00:00-18:00:00 (3-hourly data), or 09:30:00 for interval
+      09:00:00-10:00:00 (hourly data).
+
+    The corresponding time bounds will be set according to the rules described
+    in :func:`esmvalcore.cmor.fixes.get_time_bounds`. The data type of the new
+    time coordinate will be set to `float64` (CMOR default for coordinates).
+    Potential auxiliary time coordinates (e.g., `day_of_year`) are also changed
+    if present.
+
+    This function does not alter the data in any way.
+
+    Note
+    ----
+    By default, this will not change the calendar of the input time coordinate.
+    For decadal, yearly, and monthly data, it is possible to change the
+    calendar using the `calendar` argument. Be aware that changing the calendar
+    might introduce (small) errors to your data, especially for extensive
+    quantities (those that depend on the period length).
 
     Parameters
     ----------
     cube:
-        Input cube.
+        Input cube. This input cube will not be modified.
     frequency:
-        Data frequency: `mon`, `day`, `1hr`, `3hr` or `6hr`.
+        Data frequency. Allowed are
+
+        * Decadal data (`frequency` must include `dec`, e.g., `dec`)
+        * Yearly data (`frequency` must include `yr`, e.g., `yrPt`)
+        * Monthly data (`frequency` must include `mon`, e.g., `monC`)
+        * Daily data (`frequency` must include `day`, e.g., `day`)
+        * `n`-hourly data, where `n` must be a divisor of 24 (`frequency` must
+          include `nhr`, e.g., `6hrPt`)
+    calendar:
+        If given, transform the calendar to the one specified (examples:
+        `standard`, `365_day`, etc.). This only works for decadal, yearly and
+        monthly data, and will raise an error for other frequencies. If not
+        set, the calendar will not be changed.
+    units:
+        Reference time units used if the calendar of the data is changed.
+        Ignored if `calendar` is not set.
 
     Returns
     -------
     iris.cube.Cube
-        Cube with converted time axis and units.
+        Cube with converted time coordinate.
+
+    Raises
+    ------
+    NotImplementedError
+        An invalid `frequency` is given or `calendar` is set for a
+        non-supported frequency.
 
     """
-    # standardize time points
+    # Do not overwrite input cube
+    cube = cube.copy()
     coord = cube.coord('time')
-    time_c = coord.units.num2date(coord.points)
-    if frequency == 'yr':
-        time_cells = [datetime.datetime(t.year, 7, 1, 0, 0, 0) for t in time_c]
-    elif frequency == 'mon':
-        time_cells = [
-            datetime.datetime(t.year, t.month, 15, 0, 0, 0) for t in time_c
-        ]
-    elif frequency == 'day':
-        time_cells = [
-            datetime.datetime(t.year, t.month, t.day, 0, 0, 0) for t in time_c
-        ]
-    elif frequency == '1hr':
-        time_cells = [
-            datetime.datetime(t.year, t.month, t.day, t.hour, 0, 0)
-            for t in time_c
-        ]
-    elif frequency == '3hr':
-        time_cells = [
-            datetime.datetime(
-                t.year, t.month, t.day, t.hour - t.hour % 3, 0, 0)
-            for t in time_c
-        ]
-    elif frequency == '6hr':
-        time_cells = [
-            datetime.datetime(
-                t.year, t.month, t.day, t.hour - t.hour % 6, 0, 0)
-            for t in time_c
-        ]
 
-    coord = cube.coord('time')
-    cube.coord('time').points = date2num(time_cells, coord.units, coord.dtype)
+    # Raise an error if calendar is used for a non-supported frequency
+    if calendar is not None and ('day' in frequency or 'hr' in frequency):
+        raise NotImplementedError(
+            f"Setting a fixed calendar is not supported for frequency "
+            f"'{frequency}'"
+        )
 
-    # uniformize bounds
-    cube.coord('time').bounds = None
-    cube.coord('time').bounds = get_time_bounds(cube.coord('time'), frequency)
+    # Setup new time coordinate
+    new_dates = _get_new_dates(frequency, coord)
+    if calendar is not None:
+        new_coord = DimCoord(
+            coord.points,
+            standard_name='time',
+            long_name='time',
+            var_name='time',
+            units=Unit(units, calendar=calendar),
+        )
+    else:
+        new_coord = coord
+    new_coord.points = date2num(new_dates, new_coord.units, np.float64)
+    new_coord.bounds = get_time_bounds(new_coord, frequency)
 
-    # remove aux coords that will differ
-    reset_aux = ['day_of_month', 'day_of_year']
-    for auxcoord in cube.aux_coords:
-        if auxcoord.long_name in reset_aux:
-            cube.remove_coord(auxcoord)
+    # Replace old time coordinate with new one
+    time_dims = cube.coord_dims(coord)
+    cube.remove_coord(coord)
+    cube.add_dim_coord(new_coord, time_dims)
 
-    # re-add the converted aux coords
-    iris.coord_categorisation.add_day_of_month(cube,
-                                               cube.coord('time'),
-                                               name='day_of_month')
-    iris.coord_categorisation.add_day_of_year(cube,
-                                              cube.coord('time'),
-                                              name='day_of_year')
+    # Adapt auxiliary time coordinates if necessary
+    aux_coord_names = [
+        'day_of_month',
+        'day_of_year',
+        'hour',
+        'month',
+        'month_fullname',
+        'month_number',
+        'season',
+        'season_number',
+        'season_year',
+        'weekday',
+        'weekday_fullname',
+        'weekday_number',
+        'year',
+    ]
+    for coord_name in aux_coord_names:
+        if cube.coords(coord_name):
+            cube.remove_coord(coord_name)
+            getattr(iris.coord_categorisation, f'add_{coord_name}')(
+                cube, new_coord
+            )
 
     return cube
+
+
+def _get_new_dates(frequency: str, coord: Coord) -> list[datetime.datetime]:
+    """Get transformed dates."""
+    dates = coord.units.num2date(coord.points)
+
+    if 'dec' in frequency:
+        dates = [datetime.datetime(d.year, 1, 1, 0, 0, 0) for d in dates]
+    elif 'yr' in frequency:
+        dates = [datetime.datetime(d.year, 7, 1, 0, 0, 0) for d in dates]
+    elif 'mon' in frequency:
+        dates = [
+            datetime.datetime(d.year, d.month, 15, 0, 0, 0) for d in dates
+        ]
+    elif 'day' in frequency:
+        dates = [
+            datetime.datetime(d.year, d.month, d.day, 12, 0, 0) for d in dates
+        ]
+    elif 'hr' in frequency:
+        (n_hours_str, _, _) = frequency.partition('hr')
+        if not n_hours_str:
+            n_hours = 1
+        else:
+            n_hours = int(n_hours_str)
+        if 24 % n_hours:
+            raise NotImplementedError(
+                f"For `n`-hourly data, `n` must be a divisor of 24, got "
+                f"'{frequency}'"
+            )
+        half_interval = datetime.timedelta(hours=n_hours / 2.0)
+        dates = [
+            datetime.datetime(
+                d.year, d.month, d.day, d.hour - d.hour % n_hours, 0, 0
+            ) + half_interval
+            for d in dates
+        ]
+    else:
+        raise NotImplementedError(f"Frequency '{frequency}' is not supported")
+
+    return dates
 
 
 def low_pass_weights(window, cutoff):

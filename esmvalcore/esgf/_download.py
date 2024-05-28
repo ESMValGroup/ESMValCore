@@ -466,7 +466,10 @@ class ESGFFile:
                                 cert=get_credentials())
         response.raise_for_status()
         with tmp_file.open("wb") as file:
-            for chunk in response.iter_content(chunk_size=None):
+            # Specify chunk_size to avoid
+            # https://github.com/psf/requests/issues/5536
+            megabyte = 2**20
+            for chunk in response.iter_content(chunk_size=megabyte):
                 if hasher is not None:
                     hasher.update(chunk)
                 file.write(chunk)
