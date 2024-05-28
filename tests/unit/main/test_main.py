@@ -24,7 +24,7 @@ def test_run_recipe_error(mocker, caplog):
     print(caplog.text)
 
     # Check that the exit status is 1
-    assert exit_.called_once_with(1)
+    exit_.assert_called_once_with(1)
 
     # Check that only the RecipeError is logged above DEBUG level
     errors = [r for r in caplog.records if r.levelname != 'DEBUG']
