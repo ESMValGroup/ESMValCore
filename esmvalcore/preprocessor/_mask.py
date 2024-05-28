@@ -8,10 +8,8 @@ from __future__ import annotations
 
 import logging
 import os
-from types import ModuleType
 
 import cartopy.io.shapereader as shpreader
-import dask
 import dask.array as da
 import iris
 import numpy as np
@@ -625,13 +623,8 @@ def mask_fillvalues(
     """
     combined_mask = None
 
-    used = {}
-    array_module: ModuleType = np
-    for product in products:
-        for cube in product.cubes:
-            if cube.has_lazy_data():
-                array_module = da
-                break
+    array_module = da if any(c.has_lazy_data() for p in products
+                             for c in p.cubes) else np
 
     for product in products:
         for i, cube in enumerate(product.cubes):
@@ -649,9 +642,9 @@ def mask_fillvalues(
             # Select only valid (not all masked) pressure levels
             n_dims = len(mask.shape)
             if n_dims == 2:  # lat x lon
-                valid = mask.any(keepdims=True)
+                valid = ~mask.all(keepdims=True)
             elif n_dims == 3:  # lev x lat x lon
-                valid = mask.any(axis=(1, 2), keepdims=True)
+                valid = ~mask.all(axis=(1, 2), keepdims=True)
             else:
                 raise NotImplementedError(
                     f"Unable to handle {n_dims} dimensional data"
@@ -661,30 +654,22 @@ def mask_fillvalues(
                 combined_mask | mask,
                 combined_mask,
             )
-            used[product.filename] = valid.any()
 
     apply_mask = combined_mask.any()  # type: ignore
     for product in products:
         for cube in product.cubes:
             if array_module == da:
-                data = cube.lazy_data()
-                mask = da.ma.getmaskarray(data)
+                array = cube.lazy_data()
+                data = da.ma.getdata(array)
+                mask = da.ma.getmaskarray(array)
                 mask = da.where(apply_mask, mask | combined_mask, mask)
                 cube.data = da.ma.masked_array(data, mask)
             elif apply_mask:
                 cube.data.mask |= combined_mask
 
     # Record provenance
-    used, = dask.compute(used)
-    used_filenames = {
-        filename
-        for filename, did_use in used.items() if did_use
-    }
-    used_products = {
-        p.copy_provenance()
-        for p in products if p.filename in used_filenames
-    }
-    for other in used_products:
+    input_products = {p.copy_provenance() for p in products}
+    for other in input_products:
         if other.filename != product.filename:
             product.wasderivedfrom(other)
 
