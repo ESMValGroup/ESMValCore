@@ -201,8 +201,8 @@ the user.
 
 .. _config-dask:
 
-Dask distributed configuration
-==============================
+Dask configuration
+==================
 
 The :ref:`preprocessor functions <preprocessor_functions>` and many of the
 :ref:`Python diagnostics in ESMValTool <esmvaltool:recipes>` make use of the
@@ -224,7 +224,10 @@ Therefore it is recommended that you take a moment to configure the
 A Dask scheduler and the 'workers' running the actual computations, are
 collectively called a 'Dask cluster'.
 
-In ESMValCore, the Dask cluster can configured by creating a file called
+Dask distributed configuration
+------------------------------
+
+In ESMValCore, the Dask Distributed cluster can configured by creating a file called
 ``~/.esmvaltool/dask.yml``, where ``~`` is short for your home directory.
 In this file, under the ``client`` keyword, the arguments to
 :obj:`distributed.Client` can be provided.
@@ -242,7 +245,7 @@ Extensive documentation on setting up Dask Clusters is available
 .. note::
 
   If not all preprocessor functions support lazy data, computational
-  performance may be best with the default scheduler.
+  performance may be best with the :ref:`default scheduler <config-dask-default-scheduler>`.
   See :issue:`674` for progress on making all preprocessor functions lazy.
 
 **Example configurations**
@@ -353,6 +356,61 @@ of the threads in a worker can read or write to a NetCDF file at a time.
 Therefore, it may be beneficial to use fewer threads per worker if the
 computation is very simple and the runtime is determined by the
 speed with which the data can be read from and/or written to disk.
+
+.. _config-dask-default-scheduler:
+
+Dask default scheduler configuration
+------------------------------------
+
+The Dask default scheduler can be a good choice for recipes using a small
+amount of data or when running a recipe where not all preprocessor functions
+are lazy yet (see :issue:`674` for the current status). To use the the Dask
+default scheduler, comment out or remove all content of ``~/.esmvaltool/dask.yml``.
+
+To avoid running out of memory, it is important to set the number of workers
+(threads) used by Dask to run its computations to a reasonable number. By
+default the number of CPU cores in the machine will be used, but this may be
+too many on shared machines or laptops with a large number of CPU cores
+compared to the amount of memory they have available.
+
+Typically, Dask requires about 2GB of RAM per worker, but this may be more
+depending on the computation.
+
+To set the number of workers used by the Dask default scheduler, create a file
+called ``~/.config/dask/dask.yml`` and add the following
+content:
+
+.. code:: yaml
+
+  scheduler: threads
+  num_workers: 4  # this example sets the number of workers to 4
+
+
+Note that the file name is arbitrary, only the directory it is in matters, as
+explained in more detail
+`here <https://docs.dask.org/en/stable/configuration.html#specify-configuration>`__.
+See the `Dask documentation <https://docs.dask.org/en/latest/scheduling.html#configuration>`__
+for more information.
+
+Configuring Dask for debugging
+------------------------------
+
+For debugging purposes, it can be useful to disable all parallelism, as this
+will often result in more clear error messages. This can be achieved by
+settings ``max_parallel_tasks: 1`` in config-user.yml,
+commenting out or removing all content of ``~/.esmvaltool/dask.yml``, and
+creating a file called ``~/.config/dask/dask.yml`` with the following
+content:
+
+.. code:: yaml
+
+  scheduler: synchronous
+
+Note that the file name is arbitrary, only the directory it is in matters, as
+explained in more detail
+`here <https://docs.dask.org/en/stable/configuration.html#specify-configuration>`__.
+See the `Dask documentation <https://docs.dask.org/en/latest/scheduling.html#single-thread>`__
+for more information.
 
 .. _config-esgf:
 

@@ -94,6 +94,7 @@ REQUIREMENTS = {
         'codespell',
         'docformatter',
         'isort',
+        'flake8>=7',
         'pre-commit',
         # 'prospector[with_pyroma]>=1.9.0',
         'vprof',
