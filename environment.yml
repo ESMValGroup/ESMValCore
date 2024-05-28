@@ -36,7 +36,7 @@ dependencies:
   - psutil
   - py-cordex
   - pybtex
-  - python >=3.9,<3.12
+  - python >=3.9
   - python-stratify >=0.3
   - pyyaml
   - requests
@@ -50,7 +50,6 @@ dependencies:
   - sphinx >=6.1.3
   - pydata-sphinx-theme
   # Python packages needed for testing
-  - flake8
   - mypy >=0.990
   - pytest >=3.9,!=6.0.0rc1,!=6.0.0
   - pytest-cov >=2.10.1
@@ -58,6 +57,7 @@ dependencies:
   - pytest-html !=2.1.0
   - pytest-metadata >=1.5.1
   - pytest-mock
+  - pytest-mypy
   - pytest-xdist
   # Not on conda-forge - ESMValTool_sample_data==0.0.3
   # Still for testing, MyPy library stubs
@@ -69,6 +69,10 @@ dependencies:
   - isort
   - pre-commit
   - prospector >=1.9.0
+  - pyroma
   # Not on conda forge - vprof
   - yamllint
   - yapf
+  - pip:
+    - flake8>=7
+    - ESMValTool_sample_data
