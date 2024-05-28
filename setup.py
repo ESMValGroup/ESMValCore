@@ -96,7 +96,8 @@ REQUIREMENTS = {
         'isort',
         'flake8>=7',
         'pre-commit',
-        # 'prospector',  # pip installs old v0.12, keep conda-forge one
+        'pylint',
+        'pydocstyle',
         'vprof',
         'yamllint',
         'yapf',

@@ -68,11 +68,11 @@ dependencies:
   - docformatter
   - isort
   - pre-commit
-  - prospector >=1.9.0
-  - pyroma
+  - pylint
+  - flake8 >= 7
+  - pydocstyle
   # Not on conda forge - vprof
   - yamllint
   - yapf
   - pip:
-    - flake8 >=7
     - ESMValTool_sample_data
