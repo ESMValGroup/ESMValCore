@@ -114,7 +114,8 @@ drs:
 # mapping from paths to directory structure names.
 # For single paths and list of paths, the directory structure names can be
 # defined under 'drs'.
-# If no path is defined for a project, the tool will look in the 'default' path.
+# If no path is defined for a project, the tool will look in the 'default'
+# path.
 # If no directory structure name is given, the name 'default' will be used.
 # Directory structures corresponding to the names are defined in the file
 # config-developer.yml.
