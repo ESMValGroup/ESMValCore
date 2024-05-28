@@ -3009,8 +3009,8 @@ def test_invalid_bias_type(tmp_path, patched_datafinder, session):
             scripts: null
         """)
     msg = (
-        "Expected one of ('absolute', 'relative') for `bias_type`, got "
-        "'INVALID'"
+        "Expected one of ('absolute', 'relative') for option `bias_type` of "
+        "preprocessor `bias`, got 'INVALID'"
     )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
@@ -3283,8 +3283,43 @@ def test_invalid_metric(tmp_path, patched_datafinder, session):
         """)
     msg = (
         "Expected one of ('rmse', 'weighted_rmse', 'pearsonr', "
-        "'weighted_pearsonr', 'emd', 'weighted_emd') for `metric`, got "
-        "'INVALID'"
+        "'weighted_pearsonr', 'emd', 'weighted_emd') for option `metric` of "
+        "preprocessor `distance_metric`, got 'INVALID'"
+    )
+    with pytest.raises(RecipeError) as exc:
+        get_recipe(tmp_path, content, session)
+    assert str(exc.value) == INITIALIZATION_ERROR_MSG
+    assert exc.value.failed_tasks[0].message == msg
+
+
+def test_invalid_interpolate(tmp_path, patched_datafinder, session):
+    content = dedent("""
+        preprocessors:
+          test_resample_hours:
+            resample_hours:
+              interval: 1
+              interpolate: INVALID
+
+        diagnostics:
+          diagnostic_name:
+            variables:
+              ta:
+                preprocessor: test_resample_hours
+                project: CMIP6
+                mip: Amon
+                exp: historical
+                timerange: '20000101/20001231'
+                ensemble: r1i1p1f1
+                grid: gn
+                additional_datasets:
+                  - {dataset: CanESM5}
+                  - {dataset: CESM2, reference_for_bias: true}
+
+            scripts: null
+        """)
+    msg = (
+        "Expected one of (None, 'nearest', 'linear') for option `interpolate` "
+        "of preprocessor `resample_hours`, got 'INVALID'"
     )
     with pytest.raises(RecipeError) as exc:
         get_recipe(tmp_path, content, session)
