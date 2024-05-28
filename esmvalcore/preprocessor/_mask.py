@@ -640,12 +640,11 @@ def mask_fillvalues(
             if combined_mask is None:
                 combined_mask = array_module.zeros_like(mask)
             # Select only valid (not all masked) pressure levels
-            n_dims = len(mask.shape)
-            if n_dims in (2, 3):
+            if mask.ndim in (2, 3):
                 valid = ~mask.all(axis=(-2, -1), keepdims=True)
             else:
                 raise NotImplementedError(
-                    f"Unable to handle {n_dims} dimensional data"
+                    f"Unable to handle {mask.ndim} dimensional data"
                 )
             combined_mask = array_module.where(
                 valid,
@@ -653,16 +652,14 @@ def mask_fillvalues(
                 combined_mask,
             )
 
-    apply_mask = combined_mask.any()  # type: ignore
     for product in products:
         for cube in product.cubes:
             if array_module == da:
                 array = cube.lazy_data()
                 data = da.ma.getdata(array)
                 mask = da.ma.getmaskarray(array)
-                mask = da.where(apply_mask, mask | combined_mask, mask)
-                cube.data = da.ma.masked_array(data, mask)
-            elif apply_mask:
+                cube.data = da.ma.masked_array(data, mask | combined_mask)
+            else:
                 cube.data.mask |= combined_mask
 
     # Record provenance
