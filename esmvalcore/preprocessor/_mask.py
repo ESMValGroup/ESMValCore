@@ -641,10 +641,8 @@ def mask_fillvalues(
                 combined_mask = array_module.zeros_like(mask)
             # Select only valid (not all masked) pressure levels
             n_dims = len(mask.shape)
-            if n_dims == 2:  # lat x lon
-                valid = ~mask.all(keepdims=True)
-            elif n_dims == 3:  # lev x lat x lon
-                valid = ~mask.all(axis=(1, 2), keepdims=True)
+            if n_dims in (2, 3):
+                valid = ~mask.all(axis=(-2, -1), keepdims=True)
             else:
                 raise NotImplementedError(
                     f"Unable to handle {n_dims} dimensional data"
