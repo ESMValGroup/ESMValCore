@@ -1576,7 +1576,8 @@ This is intended to be used with instantaneous data.
 
 Parameters:
     * `interval`: New frequency of the data. Must be a divisor of 24.
-    * `offset`: First hour of the desired output data. Default 0. Must be lower than the `interval`.
+    * `offset`: First hour of the desired output data (default: 0). Must be
+      lower than the `interval`.
     * `interpolate`: If `interpolate` is ``None`` (default), convert x-hourly data to
       y-hourly (y > x) by eliminating extra time steps. If `interpolate` is
       'nearest' or 'linear', use nearest-neighbor or bilinear interpolation to
@@ -1584,28 +1585,28 @@ Parameters:
 
 Examples:
 
-    * Convert to 12-hourly data by getting time steps at 0:00 and 12:00:
+* Convert to 12-hourly data by getting time steps at 0:00 and 12:00:
 
-        .. code-block:: yaml
+    .. code-block:: yaml
 
-            resample_hours:
-              hours: 12
+        resample_hours:
+          hours: 12
 
-    * Convert to 12-hourly data by getting time steps at 6:00 and 18:00:
+* Convert to 12-hourly data by getting time steps at 6:00 and 18:00:
 
-        .. code-block:: yaml
+    .. code-block:: yaml
 
-            resample_hours:
-              hours: 12
-              offset: 6
+        resample_hours:
+          hours: 12
+          offset: 6
 
-    * Convert to 3-hourly data using bilinear interpolation:
+* Convert to 3-hourly data using bilinear interpolation:
 
-        .. code-block:: yaml
+    .. code-block:: yaml
 
-            resample_hours:
-              hours: 3
-              interpolate: linear
+        resample_hours:
+          hours: 3
+          interpolate: linear
 
 See also :func:`esmvalcore.preprocessor.resample_hours`.
 
