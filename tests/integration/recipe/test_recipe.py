@@ -2023,7 +2023,7 @@ def test_weighting_landsea_fraction_exclude(tmp_path, patched_datafinder,
                 additional_datasets:
                   - {dataset: CanESM2}
                   - {dataset: GFDL-CM3}
-                  - {dataset: TEST, project: obs4MIPs,
+                  - {dataset: TEST, project: obs4MIPs, tier: 1,
                      supplementary_variables: [{short_name: sftlf, mip: fx}]}
             scripts: null
         """)
