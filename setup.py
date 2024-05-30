@@ -58,7 +58,7 @@ REQUIREMENTS = {
         'scipy>=1.6',
         # See the following issue for info on the iris pin below:
         # https://github.com/ESMValGroup/ESMValCore/issues/2407
-        'scitools-iris>3.9.0',
+        'scitools-iris>=3.9.0',
         'shapely>=2.0.0',
         'stratify>=0.3',
         'yamale',
