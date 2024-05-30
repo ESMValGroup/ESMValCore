@@ -370,7 +370,8 @@ def count_spells(
     # Threshold the data to find the 'significant' points.
     array_module = da if isinstance(data, da.Array) else np
     if not threshold:
-        data_hits = array_module.ones_like(data, dtype=bool)
+        # Keeps the mask of the input data.
+        data_hits = array_module.ma.ones_like(data, dtype=bool)
     else:
         data_hits = data > float(threshold)
 
@@ -621,11 +622,10 @@ def mask_fillvalues(
     NotImplementedError
         Implementation missing for data with higher dimensionality than 4.
     """
-    combined_mask = None
-
     array_module = da if any(c.has_lazy_data() for p in products
                              for c in p.cubes) else np
 
+    combined_mask = None
     for product in products:
         for i, cube in enumerate(product.cubes):
             cube = cube.copy()
@@ -718,10 +718,7 @@ def _get_fillvalues_mask(
 
     # Create mask
     mask = counts_windowed_cube.core_data() < counts_threshold
-    if isinstance(da.utils.meta_from_array(mask), np.ma.MaskedArray):
-        if isinstance(mask, da.Array):
-            mask = da.ma.getdata(mask) | da.ma.getmaskarray(mask)
-        else:
-            mask = mask.data | mask.mask
+    array_module = da if isinstance(mask, da.Array) else np
+    mask = array_module.ma.filled(mask, True)
 
     return mask
