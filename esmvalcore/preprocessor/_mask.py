@@ -654,13 +654,10 @@ def mask_fillvalues(
 
     for product in products:
         for cube in product.cubes:
-            if array_module == da:
-                array = cube.lazy_data()
-                data = da.ma.getdata(array)
-                mask = da.ma.getmaskarray(array)
-                cube.data = da.ma.masked_array(data, mask | combined_mask)
-            else:
-                cube.data.mask |= combined_mask
+            array = cube.core_data()
+            data = array_module.ma.getdata(array)
+            mask = array_module.ma.getmaskarray(array) | combined_mask
+            cube.data = array_module.ma.masked_array(data, mask)
 
     # Record provenance
     input_products = {p.copy_provenance() for p in products}
