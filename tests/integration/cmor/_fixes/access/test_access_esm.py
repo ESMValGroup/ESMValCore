@@ -163,16 +163,6 @@ def test_only_time(monkeypatch, cubes_2d):
     coord_info.standard_name = 'time'
     monkeypatch.setattr(fix.vardef, 'coordinates', {'time': coord_info})
 
-    # Create cube with only a single dimension
-    time_coord = DimCoord([0.0, 1.0],
-                          var_name='time',
-                          standard_name='time',
-                          long_name='time',
-                          units='days since 1850-01-01')
-    # cubes = CubeList([
-    #     Cube([1, 1], var_name='fld_s03i236', units='K',
-    #          dim_coords_and_dims=[(time_coord, 0)]),
-    # ])
     cubes = cubes_2d
     fixed_cubes = fix.fix_metadata(cubes)
 
@@ -209,17 +199,7 @@ def test_only_latitude(monkeypatch, cubes_2d):
     coord_info.standard_name = 'latitude'
     monkeypatch.setattr(fix.vardef, 'coordinates', {'latitude': coord_info})
 
-    # Create cube with only a single dimension
-    lat_coord = DimCoord([0.0, 10.0],
-                         var_name='lat',
-                         standard_name='latitude',
-                         units='degrees')
-    # cubes = CubeList([
-    #     Cube([1, 1], var_name='fld_s03i236', units='K',
-    #          dim_coords_and_dims=[(lat_coord, 0)]),
-    # ])
     cubes = cubes_2d
-
     fixed_cubes = fix.fix_metadata(cubes)
 
     # Check cube metadata
@@ -255,17 +235,7 @@ def test_only_longitude(monkeypatch, cubes_2d):
     coord_info.standard_name = 'longitude'
     monkeypatch.setattr(fix.vardef, 'coordinates', {'longitude': coord_info})
 
-    # Create cube with only a single dimension
-    lon_coord = DimCoord([0.0, 180.0],
-                         var_name='lon',
-                         standard_name='longitude',
-                         units='degrees')
-    # cubes = CubeList([
-    #     Cube([1, 1], var_name='fld_s03i236', units='K',
-    #          dim_coords_and_dims=[(lon_coord, 0)]),
-    # ])
     cubes = cubes_2d
-
     fixed_cubes = fix.fix_metadata(cubes)
 
     # Check cube metadata
@@ -314,23 +284,3 @@ def test_tas_fix(cubes_2d):
     check_heightxm(fixed_cube, 2.0)
 
     assert fixed_cube.shape == (12, 4, 8)
-
-
-# def test_fix_invalid_units(monkeypatch):
-#     """Test fix."""
-#     fix = get_fix('Amon', 'mon', 'tas')
-
-#     # We know that tas has units 'K', but to check if the invalid units
-#     # 'fraction' are correctly handled, we change tas' units to '1'. This is an
-#     # artificial, but realistic test case.
-#     monkeypatch.setattr(fix.vardef, 'units', '1')
-#     cube = Cube(1.0, attributes={'invalid_units': 'fraction'})
-#     fix.fix_var_metadata(cube)
-
-#     assert cube.var_name == 'tas'
-#     assert cube.standard_name == 'air_temperature'
-#     assert cube.long_name == 'Near-Surface Air Temperature'
-#     assert cube.units == '1'
-#     assert 'positive' not in cube.attributes
-
-#     np.testing.assert_allclose(cube.data, 1.0)
