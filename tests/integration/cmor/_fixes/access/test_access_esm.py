@@ -4,7 +4,6 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.coords import DimCoord
 
 import esmvalcore.cmor._fixes.access.access_esm
 from esmvalcore.cmor._fixes.fix import GenericFix
