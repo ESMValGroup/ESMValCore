@@ -16,7 +16,7 @@ from esmvalcore.dataset import Dataset
 @pytest.fixture
 def cubes_2d(test_data_path):
     """2D sample cubes."""
-    nc_path = test_data_path / 'access_esm_native.nc'
+    nc_path = test_data_path / 'access_native.nc'
     return iris.load(str(nc_path))
 
 
