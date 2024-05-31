@@ -4,8 +4,7 @@ import iris
 import numpy as np
 import pytest
 from cf_units import Unit
-from iris.coords import CellMethod, DimCoord
-from iris.cube import Cube, CubeList
+from iris.coords import DimCoord
 
 import esmvalcore.cmor._fixes.access.access_esm
 from esmvalcore.cmor._fixes.fix import GenericFix
@@ -35,19 +34,22 @@ def _get_fix(mip, frequency, short_name, fix_name):
     extra_facets['exp'] = 'amip'
     vardef = get_var_info(project='ACCESS', mip=mip, short_name=short_name)
     cls = getattr(esmvalcore.cmor._fixes.access.access_esm, fix_name)
-    fix = cls(vardef, extra_facets=extra_facets,session={},frequency='')
+    fix = cls(vardef, extra_facets=extra_facets, session={}, frequency='')
     return fix
+
 
 def get_fix(mip, frequency, short_name):
     """Load a variable fix from esmvalcore.cmor._fixes.cesm.cesm."""
     fix_name = short_name[0].upper() + short_name[1:]
     return _get_fix(mip, frequency, short_name, fix_name)
 
+
 def fix_metadata(cubes, mip, frequency, short_name):
     """Fix metadata of cubes."""
     fix = get_fix(mip, frequency, short_name)
     cubes = fix.fix_metadata(cubes)
     return cubes
+
 
 def check_tas_metadata(cubes):
     """Check tas metadata."""
@@ -60,6 +62,7 @@ def check_tas_metadata(cubes):
     assert 'positive' not in cube.attributes
     return cube
 
+
 def check_pr_metadata(cubes):
     """Check tas metadata."""
     assert len(cubes) == 1
@@ -70,6 +73,7 @@ def check_pr_metadata(cubes):
     assert cube.units == 'kg m-2 s-1'
     assert 'positive' not in cube.attributes
     return cube
+
 
 def check_time(cube):
     """Check time coordinate of cube."""
@@ -82,11 +86,14 @@ def check_time(cube):
                               calendar='365_day')
     np.testing.assert_allclose(
         time.points,
-        [7649.5, 7680.5, 7710.0, 7739.5, 7770.0, 7800.5, 7831.0, 7861.5,
-         7892.5, 7923.0, 7953.5, 7984.0],
+        [
+            7649.5, 7680.5, 7710.0, 7739.5, 7770.0, 7800.5, 7831.0, 7861.5,
+            7892.5, 7923.0, 7953.5, 7984.0
+        ],
     )
     assert time.bounds.shape == (12, 2)
     assert time.attributes == {}
+
 
 def check_lat(cube):
     """Check latitude coordinate of cube."""
@@ -98,17 +105,18 @@ def check_lat(cube):
     assert lat.units == 'degrees_north'
     np.testing.assert_allclose(
         lat.points,
-        [59.4444082891668, 19.8757191474409, -19.8757191474409,
-         -59.4444082891668],
+        [
+            59.4444082891668, 19.8757191474409, -19.8757191474409,
+            -59.4444082891668
+        ],
     )
     np.testing.assert_allclose(
         lat.bounds,
-        [[90.0, 39.384861047478],
-         [39.384861047478, 0.0],
-         [0.0, -39.384861047478],
-         [-39.384861047478, -90.0]],
+        [[90.0, 39.384861047478], [39.384861047478, 0.0],
+         [0.0, -39.384861047478], [-39.384861047478, -90.0]],
     )
     assert lat.attributes == {}
+
 
 def check_lon(cube):
     """Check longitude coordinate of cube."""
@@ -128,6 +136,7 @@ def check_lon(cube):
          [157.5, 202.5], [202.5, 247.5], [247.5, 292.5], [292.5, 337.5]],
     )
     assert lon.attributes == {}
+
 
 def check_heightxm(cube, height_value):
     """Check scalar heightxm coordinate of cube."""
@@ -155,8 +164,11 @@ def test_only_time(monkeypatch, cubes_2d):
     monkeypatch.setattr(fix.vardef, 'coordinates', {'time': coord_info})
 
     # Create cube with only a single dimension
-    time_coord = DimCoord([0.0, 1.0], var_name='time', standard_name='time',
-                          long_name='time', units='days since 1850-01-01')
+    time_coord = DimCoord([0.0, 1.0],
+                          var_name='time',
+                          standard_name='time',
+                          long_name='time',
+                          units='days since 1850-01-01')
     # cubes = CubeList([
     #     Cube([1, 1], var_name='fld_s03i236', units='K',
     #          dim_coords_and_dims=[(time_coord, 0)]),
@@ -168,7 +180,7 @@ def test_only_time(monkeypatch, cubes_2d):
     cube = check_tas_metadata(fixed_cubes)
 
     # Check cube data
-    assert cube.shape == (2,)
+    assert cube.shape == (2, )
     np.testing.assert_equal(cube.data, [1, 1])
 
     # Check time metadata
@@ -184,6 +196,7 @@ def test_only_time(monkeypatch, cubes_2d):
     np.testing.assert_allclose(new_time_coord.bounds,
                                [[-0.5, 0.5], [0.5, 1.5]])
 
+
 def test_only_latitude(monkeypatch, cubes_2d):
     """Test fix."""
     fix = get_fix('Amon', 'mon', 'tas')
@@ -197,7 +210,9 @@ def test_only_latitude(monkeypatch, cubes_2d):
     monkeypatch.setattr(fix.vardef, 'coordinates', {'latitude': coord_info})
 
     # Create cube with only a single dimension
-    lat_coord = DimCoord([0.0, 10.0], var_name='lat', standard_name='latitude',
+    lat_coord = DimCoord([0.0, 10.0],
+                         var_name='lat',
+                         standard_name='latitude',
                          units='degrees')
     # cubes = CubeList([
     #     Cube([1, 1], var_name='fld_s03i236', units='K',
@@ -211,7 +226,7 @@ def test_only_latitude(monkeypatch, cubes_2d):
     cube = check_tas_metadata(fixed_cubes)
 
     # Check cube data
-    assert cube.shape == (2,)
+    assert cube.shape == (2, )
     np.testing.assert_equal(cube.data, [1, 1])
 
     # Check latitude metadata
@@ -227,6 +242,7 @@ def test_only_latitude(monkeypatch, cubes_2d):
     np.testing.assert_allclose(new_lat_coord.bounds,
                                [[-5.0, 5.0], [5.0, 15.0]])
 
+
 def test_only_longitude(monkeypatch, cubes_2d):
     """Test fix."""
     fix = get_fix('Amon', 'mon', 'tas')
@@ -240,8 +256,10 @@ def test_only_longitude(monkeypatch, cubes_2d):
     monkeypatch.setattr(fix.vardef, 'coordinates', {'longitude': coord_info})
 
     # Create cube with only a single dimension
-    lon_coord = DimCoord([0.0, 180.0], var_name='lon',
-                         standard_name='longitude', units='degrees')
+    lon_coord = DimCoord([0.0, 180.0],
+                         var_name='lon',
+                         standard_name='longitude',
+                         units='degrees')
     # cubes = CubeList([
     #     Cube([1, 1], var_name='fld_s03i236', units='K',
     #          dim_coords_and_dims=[(lon_coord, 0)]),
@@ -254,7 +272,7 @@ def test_only_longitude(monkeypatch, cubes_2d):
     cube = check_tas_metadata(fixed_cubes)
 
     # Check cube data
-    assert cube.shape == (2,)
+    assert cube.shape == (2, )
     np.testing.assert_equal(cube.data, [1, 1])
 
     # Check longitude metadata
@@ -270,11 +288,15 @@ def test_only_longitude(monkeypatch, cubes_2d):
     np.testing.assert_allclose(new_lon_coord.bounds,
                                [[-90.0, 90.0], [90.0, 270.0]])
 
+
 def test_get_tas_fix():
     """Test getting of fix."""
     fix = Fix.get_fixes('ACCESS', 'ACCESS_ESM', 'Amon', 'tas')
     assert fix == [
-        esmvalcore.cmor._fixes.access.access_esm.Tas(vardef={},extra_facets={},session={},frequency=''),
+        esmvalcore.cmor._fixes.access.access_esm.Tas(vardef={},
+                                                     extra_facets={},
+                                                     session={},
+                                                     frequency=''),
         GenericFix(None),
     ]
 
@@ -292,6 +314,7 @@ def test_tas_fix(cubes_2d):
     check_heightxm(fixed_cube, 2.0)
 
     assert fixed_cube.shape == (12, 4, 8)
+
 
 # def test_fix_invalid_units(monkeypatch):
 #     """Test fix."""
