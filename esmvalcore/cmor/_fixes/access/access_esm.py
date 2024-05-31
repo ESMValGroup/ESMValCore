@@ -28,16 +28,16 @@ class Tas(NativeDatasetFix):
 
         self.current_dir = os.path.dirname(__file__)
 
-    def _fix_height_name(self):
+    def fix_height_name(self):
         """Fix variable name of coordinate 'height'."""
         if self.cube.coord('height').var_name != 'height':
             self.cube.coord('height').var_name = 'height'
 
-    def _fix_long_name(self):
+    def fix_long_name(self):
         """Fix variable long_name."""
         self.cube.long_name = 'Near-Surface Air Temperature'
 
-    def _fix_var_name(self):
+    def fix_var_name(self):
         """Fix variable long_name."""
         self.cube.var_name = 'tas'
 
