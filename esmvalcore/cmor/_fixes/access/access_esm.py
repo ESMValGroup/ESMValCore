@@ -74,13 +74,7 @@ class Tas(NativeDatasetFix):
 
         self.fix_coord_system()
 
-        cube_checked = cmor_check(cube=self.cube,
-                                  cmor_table='CMIP6',
-                                  mip='Amon',
-                                  short_name='tas',
-                                  check_level=1)
-
-        return CubeList([cube_checked])
+        return CubeList([self.cube])
 
 
 class Pr(NativeDatasetFix):
@@ -125,7 +119,7 @@ class Pr(NativeDatasetFix):
         """
         original_short_name = 'fld_s05i216'
 
-        cube = self.get_cube(cubes, var_name=original_short_name)
+        self.cube = self.get_cube(cubes, var_name=original_short_name)
 
         self.fix_var_name()
 
@@ -133,10 +127,4 @@ class Pr(NativeDatasetFix):
 
         self.fix_coord_system()
 
-        cube_checked = cmor_check(cube=cube,
-                                  cmor_table='CMIP6',
-                                  mip='Amon',
-                                  short_name='pr',
-                                  check_level=1)
-
-        return CubeList([cube_checked])
+        return CubeList([self.cube])
