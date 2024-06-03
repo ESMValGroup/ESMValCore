@@ -385,12 +385,14 @@ class ESMValTool():
         """
         from .config import CFG
 
+        # TODO: remove in v2.14.0
         # At this point, --config_file is already parsed if a valid file has
         # been given (see
         # https://github.com/ESMValGroup/ESMValCore/issues/2280), but no error
         # has been raised if the file does not exist. Thus, reload the file
         # here with `load_from_file` to make sure a proper error is raised.
-        CFG.load_from_file(config_file)
+        if config_file is not None:
+            CFG.load_from_file(config_file)
 
         recipe = self._get_recipe(recipe)
 

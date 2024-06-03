@@ -12,7 +12,7 @@ import iris
 import pytest
 
 import esmvalcore._task
-from esmvalcore.config._config_object import CFG_DEFAULT
+from esmvalcore.config._config_object import _CFG_DEFAULT
 from esmvalcore.config._diagnostics import TAGS
 from esmvalcore.exceptions import RecipeError
 from esmvalcore.experimental import CFG, Recipe, get_recipe
@@ -81,7 +81,7 @@ def test_run_recipe(monkeypatch, task, ssh, recipe, tmp_path, caplog):
     monkeypatch.setitem(CFG, 'drs', {'CMIP6': 'SYNDA'})
     session = CFG.start_session(recipe.path.stem)
     session.clear()
-    session.update(CFG_DEFAULT)
+    session.update(_CFG_DEFAULT)
     session['output_dir'] = tmp_path / 'esmvaltool_output'
     session['max_parallel_tasks'] = 1
     session['remove_preproc_dir'] = False

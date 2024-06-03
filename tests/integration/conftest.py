@@ -6,7 +6,7 @@ import pytest
 
 import esmvalcore.local
 from esmvalcore.config import CFG
-from esmvalcore.config._config_object import CFG_DEFAULT
+from esmvalcore.config._config_object import _CFG_DEFAULT
 from esmvalcore.local import (
     LocalFile,
     _replace_tags,
@@ -18,7 +18,7 @@ from esmvalcore.local import (
 @pytest.fixture
 def session(tmp_path: Path, monkeypatch):
     CFG.clear()
-    CFG.update(CFG_DEFAULT)
+    CFG.update(_CFG_DEFAULT)
     monkeypatch.setitem(CFG, 'rootpath', {'default': {tmp_path: 'default'}})
 
     session = CFG.start_session('recipe_test')
