@@ -12,7 +12,7 @@ dependencies:
   - dask-jobqueue
   - distributed
   - esgf-pyclient >=0.3.1
-  - esmpy !=8.1.0,<8.6.0  # https://github.com/SciTools-incubator/iris-esmf-regrid/pull/342#issuecomment-2092921514
+  - esmpy !=8.1.0,>=8.6.0  # github.com/SciTools-incubator/iris-esmf-regrid/pull/342
   - filelock
   - fiona
   - fire
@@ -20,7 +20,7 @@ dependencies:
   - humanfriendly
   - importlib_metadata  # required for Python < 3.10
   - iris >3.8.0
-  - iris-esmf-regrid >=0.7.0
+  - iris-esmf-regrid >=0.10.0  # github.com/SciTools-incubator/iris-esmf-regrid/pull/342
   - isodate
   - jinja2
   - libnetcdf !=4.9.1  # to avoid hdf5 warnings
