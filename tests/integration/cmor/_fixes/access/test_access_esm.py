@@ -3,9 +3,6 @@
 import iris
 import numpy as np
 import pytest
-from cf_units import Unit
-from iris.coords import CellMethod, DimCoord
-from iris.cube import Cube, CubeList
 
 import esmvalcore.cmor._fixes.access.access_esm
 from esmvalcore.cmor._fixes.fix import GenericFix
@@ -168,8 +165,8 @@ def test_only_time(monkeypatch, cubes_2d):
 
     # time_coord = DimCoord([0.0, 1.0], var_name='time', standard_name='time',
     #                       long_name='time', units='days since 1850-01-01')
-    # height_coord= DimCoord([1.5], var_name='height_0', standard_name='height',
-    #                        units='m')
+    # height_coord= DimCoord([1.5], var_name='height_0', 
+    #                       standard_name='height', units='m')
     # cubes = CubeList([
     #     Cube([1, 1], var_name='fld_s03i236', units='K',
     #          dim_coords_and_dims=[(time_coord, 0)]),
