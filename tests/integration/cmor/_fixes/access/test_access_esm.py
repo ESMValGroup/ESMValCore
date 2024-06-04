@@ -15,7 +15,7 @@ from esmvalcore.dataset import Dataset
 @pytest.fixture
 def cubes_2d(test_data_path):
     """2D sample cubes."""
-    nc_path = test_data_path / 'access_test.nc'
+    nc_path = test_data_path / 'access_native.nc'
     return iris.load(str(nc_path))
 
 
@@ -165,7 +165,7 @@ def test_only_time(monkeypatch, cubes_2d):
 
     # time_coord = DimCoord([0.0, 1.0], var_name='time', standard_name='time',
     #                       long_name='time', units='days since 1850-01-01')
-    # height_coord= DimCoord([1.5], var_name='height_0',
+    # height_coord = DimCoord([1.5], var_name='height_0',
     #                       standard_name='height', units='m')
     # cubes = CubeList([
     #     Cube([1, 1], var_name='fld_s03i236', units='K',
