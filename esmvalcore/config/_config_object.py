@@ -6,7 +6,6 @@ import sys
 import warnings
 from datetime import datetime
 from pathlib import Path
-from types import MappingProxyType
 from typing import Optional
 
 import dask.config
@@ -224,7 +223,7 @@ class Config(ValidatedConfig):
                 module='esmvalcore',
             )
             new = cls()
-        new.update(_CFG_DEFAULT)
+        new.update(Config._load_default_config())
 
         config_user_path = cls._get_config_user_path(filename)
 
@@ -545,9 +544,6 @@ class Session(ValidatedConfig):
         """Return fixed file directory."""
         return self.session_dir / self._relative_fixed_file_dir
 
-
-# TODO: remove in v2.14.0
-_CFG_DEFAULT = MappingProxyType(Config._load_default_config())
 
 # Deprecated way of specifying configuration (remove in v2.14.0)
 _DEPRECATIONS = []

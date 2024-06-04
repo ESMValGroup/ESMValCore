@@ -5,8 +5,7 @@ import iris
 import pytest
 
 import esmvalcore.local
-from esmvalcore.config import CFG
-from esmvalcore.config._config_object import _CFG_DEFAULT
+from esmvalcore.config import Config
 from esmvalcore.local import (
     LocalFile,
     _replace_tags,
@@ -16,12 +15,23 @@ from esmvalcore.local import (
 
 
 @pytest.fixture
-def session(tmp_path: Path, monkeypatch):
-    CFG.clear()
-    CFG.update(_CFG_DEFAULT)
-    monkeypatch.setitem(CFG, 'rootpath', {'default': {tmp_path: 'default'}})
+def cfg_default(monkeypatch):
+    path = Path(esmvalcore.__file__).parent / 'config' / 'config_defaults'
+    monkeypatch.setattr(
+        esmvalcore.config._config_object,
+        'CONFIG_DIRS',
+        {'defaults': path},
+    )
+    cfg = Config._from_global_paths()
+    return cfg
 
-    session = CFG.start_session('recipe_test')
+
+@pytest.fixture
+def session(tmp_path: Path, cfg_default, monkeypatch):
+    monkeypatch.setitem(
+        cfg_default, 'rootpath', {'default': {tmp_path: 'default'}}
+    )
+    session = cfg_default.start_session('recipe_test')
     session['output_dir'] = tmp_path / 'esmvaltool_output'
     return session
 
