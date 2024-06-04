@@ -107,7 +107,7 @@ def _get_user_config() -> tuple[str, Path]:
 
 def _get_config_dirs() -> dict[str, Path]:
     """Get all configuration directories."""
-    # Defaults (lowerst priority)
+    # Defaults (lowest priority)
     config_dirs: dict[str, Path] = {
         'defaults': Path(__file__).parent / 'config_defaults',
     }
@@ -261,15 +261,10 @@ class Config(ValidatedConfig):
             )
             new = cls()
 
-        package_config_user_path = (
-            Path(esmvalcore.__file__).parent /
-            'config' /
-            'config_defaults' /
-            'config-user.yml'
-        )
-
-        mapping = cls._read_config_file(package_config_user_path)
-        mapping['config_file'] = package_config_user_path
+        paths = [
+            Path(esmvalcore.__file__).parent / 'config' / 'config_defaults'
+        ]
+        mapping = dask.config.collect(paths=paths, env={})
         new.update(mapping)
 
         return new
@@ -396,6 +391,7 @@ class Config(ValidatedConfig):
 
         return None
 
+    # TODO: remove in v2.14.0
     def load_from_file(
         self,
         filename: Optional[os.PathLike | str] = None,
