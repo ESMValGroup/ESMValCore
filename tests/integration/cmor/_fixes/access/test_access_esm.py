@@ -156,10 +156,6 @@ def test_only_time(monkeypatch, cubes_2d):
     for var in var_list:
         fix = get_fix('Amon', 'mon', var)
 
-        # We know that tas has dimensions time, latitude, longitude, but the CESM2
-        # CMORizer is designed to check for the presence of each dimension
-        # individually. To test this, remove all but one dimension of tas to create
-        # an artificial, but realistic test case.
         coord_info = CoordinateInfo('time')
         coord_info.standard_name = 'time'
         monkeypatch.setattr(fix.vardef, 'coordinates', {'time': coord_info})
@@ -208,10 +204,6 @@ def test_only_latitude(monkeypatch, cubes_2d):
     for var in var_list:
         fix = get_fix('Amon', 'mon', 'tas')
 
-        # We know that tas has dimensions time, latitude, longitude, but the CESM2
-        # CMORizer is designed to check for the presence of each dimension
-        # individually. To test this, remove all but one dimension of tas to create
-        # an artificial, but realistic test case.
         coord_info = CoordinateInfo('latitude')
         coord_info.standard_name = 'latitude'
         monkeypatch.setattr(fix.vardef, 'coordinates', {'latitude': coord_info})
@@ -249,10 +241,6 @@ def test_only_longitude(monkeypatch, cubes_2d):
     for var in var_list:
         fix = get_fix('Amon', 'mon', 'tas')
 
-        # We know that tas has dimensions time, latitude, longitude, but the CESM2
-        # CMORizer is designed to check for the presence of each dimension
-        # individually. To test this, remove all but one dimension of tas to create
-        # an artificial, but realistic test case.
         coord_info = CoordinateInfo('longitude')
         coord_info.standard_name = 'longitude'
         monkeypatch.setattr(fix.vardef, 'coordinates', {'longitude': coord_info})
@@ -296,7 +284,7 @@ def test_get_tas_fix():
     ]
 
 
-def test_get_tas_fix():
+def test_get_pr_fix():
     """Test getting of fix 'pr'."""
     fix = Fix.get_fixes('ACCESS', 'ACCESS_ESM', 'Amon', 'pr')
     assert fix == [
