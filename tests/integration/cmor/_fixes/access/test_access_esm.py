@@ -184,7 +184,7 @@ def test_only_latitude(monkeypatch, cubes_2d):
     var_list = ['tas', 'pr']
 
     for var in var_list:
-        fix = get_fix('Amon', 'mon', 'tas')
+        fix = get_fix('Amon', 'mon', var)
 
         coord_info = CoordinateInfo('latitude')
         coord_info.standard_name = 'latitude'
@@ -216,7 +216,7 @@ def test_only_longitude(monkeypatch, cubes_2d):
     var_list = ['tas', 'pr']
 
     for var in var_list:
-        fix = get_fix('Amon', 'mon', 'tas')
+        fix = get_fix('Amon', 'mon', var)
 
         coord_info = CoordinateInfo('longitude')
         coord_info.standard_name = 'longitude'
