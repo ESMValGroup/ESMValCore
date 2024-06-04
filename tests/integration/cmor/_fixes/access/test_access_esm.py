@@ -151,123 +151,141 @@ def check_heightxm(cube, height_value):
 
 def test_only_time(monkeypatch, cubes_2d):
     """Test fix."""
-    fix = get_fix('Amon', 'mon', 'tas')
+    var_list=['tas','pr']
 
-    # We know that tas has dimensions time, latitude, longitude, but the CESM2
-    # CMORizer is designed to check for the presence of each dimension
-    # individually. To test this, remove all but one dimension of tas to create
-    # an artificial, but realistic test case.
-    coord_info = CoordinateInfo('time')
-    coord_info.standard_name = 'time'
-    monkeypatch.setattr(fix.vardef, 'coordinates', {'time': coord_info})
+    for var in var_list:
+        fix = get_fix('Amon', 'mon', var)
 
-    cubes = cubes_2d
+        # We know that tas has dimensions time, latitude, longitude, but the CESM2
+        # CMORizer is designed to check for the presence of each dimension
+        # individually. To test this, remove all but one dimension of tas to create
+        # an artificial, but realistic test case.
+        coord_info = CoordinateInfo('time')
+        coord_info.standard_name = 'time'
+        monkeypatch.setattr(fix.vardef, 'coordinates', {'time': coord_info})
 
-    # time_coord = DimCoord([0.0, 1.0], var_name='time', standard_name='time',
-    #                       long_name='time', units='days since 1850-01-01')
-    # height_coord = DimCoord([1.5], var_name='height_0',
-    #                       standard_name='height', units='m')
-    # cubes = CubeList([
-    #     Cube([1, 1], var_name='fld_s03i236', units='K',
-    #          dim_coords_and_dims=[(time_coord, 0)]),
-    # ])
-    # cubes[0].add_aux_coord(height_coord)
-    fixed_cubes = fix.fix_metadata(cubes)
+        cubes = cubes_2d
 
-    # Check cube metadata
-    cube = check_tas_metadata(fixed_cubes)
-    # cube = fixed_cubes
-    # Check cube data
-    assert cube.shape == (1, 145, 192)
+        # time_coord = DimCoord([0.0, 1.0], var_name='time', standard_name='time',
+        #                       long_name='time', units='days since 1850-01-01')
+        # height_coord = DimCoord([1.5], var_name='height_0',
+        #                       standard_name='height', units='m')
+        # cubes = CubeList([
+        #     Cube([1, 1], var_name='fld_s03i236', units='K',
+        #          dim_coords_and_dims=[(time_coord, 0)]),
+        # ])
+        # cubes[0].add_aux_coord(height_coord)
+        fixed_cubes = fix.fix_metadata(cubes)
 
-    # Check time metadata
-    assert cube.coords('time')
-    new_time_coord = cube.coord('time', dim_coords=True)
-    assert new_time_coord.var_name == 'time'
-    assert new_time_coord.standard_name == 'time'
-    # assert new_time_coord.long_name == 'time'
-    # assert new_time_coord.units == Unit('days since 1979-01-01',
-    #                           calendar='proleptic_gregorian')
+        # Check cube metadata
+        if var == 'tas':
+            cube = check_tas_metadata(fixed_cubes)
+        elif var == 'pr':
+            cube == check_pr_metadata(fixed_cubes)
+        # cube = fixed_cubes
+        # Check cube data
+        assert cube.shape == (1, 145, 192)
 
-    # # Check time data
-    # np.testing.assert_allclose(new_time_coord.points, [0.0, 1.0])
-    # np.testing.assert_allclose(new_time_coord.bounds,
-    #                            [[-0.5, 0.5], [0.5, 1.5]])
+        # Check time metadata
+        assert cube.coords('time')
+        new_time_coord = cube.coord('time', dim_coords=True)
+        assert new_time_coord.var_name == 'time'
+        assert new_time_coord.standard_name == 'time'
+        # assert new_time_coord.long_name == 'time'
+        # assert new_time_coord.units == Unit('days since 1979-01-01',
+        #                           calendar='proleptic_gregorian')
+
+        # # Check time data
+        # np.testing.assert_allclose(new_time_coord.points, [0.0, 1.0])
+        # np.testing.assert_allclose(new_time_coord.bounds,
+        #                            [[-0.5, 0.5], [0.5, 1.5]])
 
 
 def test_only_latitude(monkeypatch, cubes_2d):
     """Test fix."""
-    fix = get_fix('Amon', 'mon', 'tas')
+    var_list=['tas','pr']
 
-    # We know that tas has dimensions time, latitude, longitude, but the CESM2
-    # CMORizer is designed to check for the presence of each dimension
-    # individually. To test this, remove all but one dimension of tas to create
-    # an artificial, but realistic test case.
-    coord_info = CoordinateInfo('latitude')
-    coord_info.standard_name = 'latitude'
-    monkeypatch.setattr(fix.vardef, 'coordinates', {'latitude': coord_info})
+    for var in var_list:
+        fix = get_fix('Amon', 'mon', 'tas')
 
-    cubes = cubes_2d
-    fixed_cubes = fix.fix_metadata(cubes)
+        # We know that tas has dimensions time, latitude, longitude, but the CESM2
+        # CMORizer is designed to check for the presence of each dimension
+        # individually. To test this, remove all but one dimension of tas to create
+        # an artificial, but realistic test case.
+        coord_info = CoordinateInfo('latitude')
+        coord_info.standard_name = 'latitude'
+        monkeypatch.setattr(fix.vardef, 'coordinates', {'latitude': coord_info})
 
-    # Check cube metadata
-    cube = check_tas_metadata(fixed_cubes)
+        cubes = cubes_2d
+        fixed_cubes = fix.fix_metadata(cubes)
 
-    # Check cube data
-    assert cube.shape == (1, 145, 192)
+        # Check cube metadata
+        if var == 'tas':
+            cube = check_tas_metadata(fixed_cubes)
+        elif var == 'pr':
+            cube = check_pr_metadata(fixed_cubes)
 
-    # Check latitude metadata
-    assert cube.coords('latitude', dim_coords=True)
-    new_lat_coord = cube.coord('latitude')
-    assert new_lat_coord.var_name == 'lat'
-    assert new_lat_coord.standard_name == 'latitude'
-    # assert new_lat_coord.long_name == 'latitude'
-    assert new_lat_coord.units == 'degrees_north'
+        # Check cube data
+        assert cube.shape == (1, 145, 192)
 
-    # Check latitude data
-    # np.testing.assert_allclose(new_lat_coord.points, [0.0, 10.0])
-    # np.testing.assert_allclose(new_lat_coord.bounds,
-    #                            [[-5.0, 5.0], [5.0, 15.0]])
+        # Check latitude metadata
+        assert cube.coords('latitude', dim_coords=True)
+        new_lat_coord = cube.coord('latitude')
+        assert new_lat_coord.var_name == 'lat'
+        assert new_lat_coord.standard_name == 'latitude'
+        # assert new_lat_coord.long_name == 'latitude'
+        assert new_lat_coord.units == 'degrees_north'
+
+        # Check latitude data
+        # np.testing.assert_allclose(new_lat_coord.points, [0.0, 10.0])
+        # np.testing.assert_allclose(new_lat_coord.bounds,
+        #                            [[-5.0, 5.0], [5.0, 15.0]])
 
 
 def test_only_longitude(monkeypatch, cubes_2d):
     """Test fix."""
-    fix = get_fix('Amon', 'mon', 'tas')
+    var_list=['tas','pr']
 
-    # We know that tas has dimensions time, latitude, longitude, but the CESM2
-    # CMORizer is designed to check for the presence of each dimension
-    # individually. To test this, remove all but one dimension of tas to create
-    # an artificial, but realistic test case.
-    coord_info = CoordinateInfo('longitude')
-    coord_info.standard_name = 'longitude'
-    monkeypatch.setattr(fix.vardef, 'coordinates', {'longitude': coord_info})
+    for var in var_list:
+        fix = get_fix('Amon', 'mon', 'tas')
 
-    cubes = cubes_2d
-    fixed_cubes = fix.fix_metadata(cubes)
+        # We know that tas has dimensions time, latitude, longitude, but the CESM2
+        # CMORizer is designed to check for the presence of each dimension
+        # individually. To test this, remove all but one dimension of tas to create
+        # an artificial, but realistic test case.
+        coord_info = CoordinateInfo('longitude')
+        coord_info.standard_name = 'longitude'
+        monkeypatch.setattr(fix.vardef, 'coordinates', {'longitude': coord_info})
 
-    # Check cube metadata
-    cube = check_tas_metadata(fixed_cubes)
+        cubes = cubes_2d
+        fixed_cubes = fix.fix_metadata(cubes)
 
-    # Check cube data
-    assert cube.shape == (1, 145, 192)
-    # np.testing.assert_equal(cube.data, [1, 1])
+        # Check cube metadata
+        if var == 'tas':
+            cube = check_tas_metadata(fixed_cubes)
+        elif var =='pr':
+            cube = check_pr_metadata(fixed_cubes)
 
-    # Check longitude metadata
-    assert cube.coords('longitude', dim_coords=True)
-    new_lon_coord = cube.coord('longitude')
-    assert new_lon_coord.var_name == 'lon'
-    assert new_lon_coord.standard_name == 'longitude'
-    # assert new_lon_coord.long_name == 'longitude'
-    assert new_lon_coord.units == 'degrees_east'
+        # Check cube data
+        assert cube.shape == (1, 145, 192)
+        # np.testing.assert_equal(cube.data, [1, 1])
 
-    # Check longitude data
-    # np.testing.assert_allclose(new_lon_coord.points, [0.0, 180.0])
-    # np.testing.assert_allclose(new_lon_coord.bounds,
-    #                            [[-90.0, 90.0], [90.0, 270.0]])
+        # Check longitude metadata
+        assert cube.coords('longitude', dim_coords=True)
+        new_lon_coord = cube.coord('longitude')
+        assert new_lon_coord.var_name == 'lon'
+        assert new_lon_coord.standard_name == 'longitude'
+        # assert new_lon_coord.long_name == 'longitude'
+        assert new_lon_coord.units == 'degrees_east'
+
+        # Check longitude data
+        # np.testing.assert_allclose(new_lon_coord.points, [0.0, 180.0])
+        # np.testing.assert_allclose(new_lon_coord.bounds,
+        #                            [[-90.0, 90.0], [90.0, 270.0]])
 
 
 def test_get_tas_fix():
-    """Test getting of fix."""
+    """Test getting of fix 'tas'."""
     fix = Fix.get_fixes('ACCESS', 'ACCESS_ESM', 'Amon', 'tas')
     assert fix == [
         esmvalcore.cmor._fixes.access.access_esm.Tas(vardef={},
@@ -278,8 +296,20 @@ def test_get_tas_fix():
     ]
 
 
+def test_get_tas_fix():
+    """Test getting of fix 'pr'."""
+    fix = Fix.get_fixes('ACCESS', 'ACCESS_ESM', 'Amon', 'pr')
+    assert fix == [
+        esmvalcore.cmor._fixes.access.access_esm.Pr(vardef={},
+                                                     extra_facets={},
+                                                     session={},
+                                                     frequency=''),
+        GenericFix(None),
+    ]
+
+
 def test_tas_fix(cubes_2d):
-    """Test fix."""
+    """Test fix 'tas'."""
     fix = get_fix('Amon', 'mon', 'tas')
     fixed_cubes = fix.fix_metadata(cubes_2d)
 
@@ -289,5 +319,19 @@ def test_tas_fix(cubes_2d):
     check_lat(fixed_cube)
     check_lon(fixed_cube)
     check_heightxm(fixed_cube, 1.5)
+
+    assert fixed_cube.shape == (1, 145, 192)
+
+
+def test_pr_fix(cubes_2d):
+    """Test fix 'pr'."""
+    fix = get_fix('Amon', 'mon', 'pr')
+    fixed_cubes = fix.fix_metadata(cubes_2d)
+
+    fixed_cube = check_pr_metadata(fixed_cubes)
+
+    check_time(fixed_cube)
+    check_lat(fixed_cube)
+    check_lon(fixed_cube)
 
     assert fixed_cube.shape == (1, 145, 192)
