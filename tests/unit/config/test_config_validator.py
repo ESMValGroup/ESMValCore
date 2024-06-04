@@ -6,6 +6,7 @@ import yaml
 
 import esmvalcore
 from esmvalcore import __version__ as current_version
+from esmvalcore.config import CFG
 from esmvalcore.config._config_validators import (
     _handle_deprecation,
     _listify_validator,
@@ -335,3 +336,11 @@ def test_validate_config_developer(tmp_path):
 
     # Restore original config-developer file
     validate_config_developer(None)
+
+
+# TODO: remove in v2.14.0
+def test_extra_facets_dir_tuple_deprecated(monkeypatch):
+    """Test extra_facets_dir."""
+    with pytest.warns(ESMValCoreDeprecationWarning):
+        monkeypatch.setitem(CFG, 'extra_facets_dir', ('/extra/facets',))
+    assert CFG['extra_facets_dir'] == [Path('/extra/facets')]

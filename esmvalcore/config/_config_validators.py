@@ -280,6 +280,20 @@ def validate_diagnostics(
     }
 
 
+# TODO: remove in v2.14.0
+def validate_extra_facets_dir(value):
+    """Validate extra_facets_dir."""
+    if isinstance(value, tuple):
+        msg = (
+            "Specifying `extra_facets_dir` as tuple has been deprecated in "
+            "ESMValCore version 2.12.0 and is scheduled for removal in "
+            "version 2.14.0. Please use a list instead."
+        )
+        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        value = list(value)
+    return validate_pathlist(value)
+
+
 _validators = {
     # From user config
     'auxiliary_data_dir': validate_path,
@@ -288,7 +302,7 @@ _validators = {
     'download_dir': validate_path,
     'drs': validate_drs,
     'exit_on_warning': validate_bool,
-    'extra_facets_dir': validate_pathlist,
+    'extra_facets_dir': validate_extra_facets_dir,
     'log_level': validate_string,
     'max_parallel_tasks': validate_int_or_none,
     'output_dir': validate_path,
