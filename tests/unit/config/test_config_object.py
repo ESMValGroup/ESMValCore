@@ -1,5 +1,4 @@
 import os
-import sys
 from collections.abc import MutableMapping
 from copy import deepcopy
 from pathlib import Path
@@ -284,14 +283,10 @@ def test_get_config_user_path(
         for (key, val) in env.items():
             monkeypatch.setenv(key, val)
     if cli_args is None:
-        cli_args = sys.argv
+        cli_args = ['python']
 
     with arguments(*cli_args):
-        print(sys.argv)
-        print(os.environ)
         config_path = Config._get_config_user_path(filename)
-        print(sys.argv)
-        print(os.environ)
         if env_var_set:
             assert os.environ['_ESMVALTOOL_USER_CONFIG_FILE_'] == str(output)
         else:
