@@ -141,7 +141,6 @@ def hybrid_height_coord_fix_metadata(nc_path, short_name, fix):
     assert air_pressure_coord.units == 'Pa'
 
 
-@pytest.mark.xfail(reason="github.com/SciTools/iris/issues/5806")
 def test_cl_hybrid_height_coord_fix_metadata(test_data_path):
     """Test ``fix_metadata`` for ``cl``."""
     vardef = get_var_info('CMIP6', 'Amon', 'cl')

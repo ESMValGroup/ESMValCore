@@ -516,6 +516,7 @@ def test_get_areacella_fix():
 def test_areacella_fix(cubes_grid):
     """Test fix."""
     fix = get_allvars_fix('fx', 'areacella')
+    fix.extra_facets['var_type'] = 'fx'
     fixed_cubes = fix.fix_metadata(cubes_grid)
 
     assert len(fixed_cubes) == 1
@@ -538,6 +539,7 @@ def test_get_areacello_fix():
 def test_areacello_fix(cubes_grid):
     """Test fix."""
     fix = get_allvars_fix('Ofx', 'areacello')
+    fix.extra_facets['var_type'] = 'fx'
     fixed_cubes = fix.fix_metadata(cubes_grid)
 
     assert len(fixed_cubes) == 1

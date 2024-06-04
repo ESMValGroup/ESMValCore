@@ -16,4 +16,7 @@ Tos = OceanFixGrid
 Sos = OceanFixGrid
 
 
+So = OceanFixGrid
+
+
 Siconc = OceanFixGrid

@@ -12,7 +12,11 @@ from esmvalcore.preprocessor._regrid_esmpy import (
     ESMPyNearest,
     ESMPyRegridder,
 )
-from esmvalcore.preprocessor._regrid_unstructured import UnstructuredNearest
+from esmvalcore.preprocessor._regrid_unstructured import (
+    UnstructuredLinear,
+    UnstructuredLinearRegridder,
+    UnstructuredNearest,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +28,17 @@ __all__ = [
     'ESMPyRegridder',
     'GenericFuncScheme',
     'GenericRegridder',
+    'UnstructuredLinear',
+    'UnstructuredLinearRegridder',
     'UnstructuredNearest',
 ]
 
 
 class GenericRegridder:
     r"""Generic function regridder.
+
+    Does support lazy regridding if `func` does. Does not support weights
+    caching.
 
     Parameters
     ----------
