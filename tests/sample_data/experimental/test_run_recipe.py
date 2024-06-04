@@ -77,6 +77,9 @@ def test_run_recipe(
     assert isinstance(recipe, Recipe)
     assert isinstance(recipe._repr_html_(), str)
 
+    sample_data_config = esmvaltool_sample_data.get_rootpaths()
+    monkeypatch.setitem(CFG, 'rootpath', sample_data_config['rootpath'])
+    monkeypatch.setitem(CFG, 'drs', {'CMIP6': 'SYNDA'})
     session = cfg_default.start_session(recipe.path.stem)
     session['output_dir'] = tmp_path / 'esmvaltool_output'
     session['max_parallel_tasks'] = 1
