@@ -280,13 +280,3 @@ drs:
 #  CORDEX: ESGF
 #  obs4MIPs: default
 #  ana4mips: default
-
-# Other options
-check_level: default
-diagnostics: null
-extra_facets_dir: []
-max_datasets: null
-max_years: null
-resume_from: []
-run_diagnostic: true
-skip_nonexistent: false

@@ -12,10 +12,10 @@ from textwrap import dedent
 from unittest.mock import patch
 
 import pytest
-import yaml
 from fire.core import FireExit
 
 from esmvalcore._main import Config, ESMValTool, Recipes, run
+from esmvalcore.config import CFG
 from esmvalcore.exceptions import RecipeError
 
 
@@ -61,7 +61,7 @@ def test_run():
         run()
 
 
-def test_empty_run(tmp_path):
+def test_empty_run(tmp_path, monkeypatch):
     """Test real run with no diags."""
     recipe_file = tmp_path / "recipe.yml"
     content = dedent("""
@@ -80,14 +80,11 @@ def test_empty_run(tmp_path):
     recipe_file.write_text(content)
     Config.get_config_user(path=tmp_path)
     log_dir = f'{tmp_path}/esmvaltool_output'
-    config_file = f"{tmp_path}/config-user.yml"
-    with open(config_file, 'r+', encoding='utf-8') as file:
-        config = yaml.safe_load(file)
-        config['output_dir'] = log_dir
-        yaml.safe_dump(config, file, sort_keys=False)
+
+    monkeypatch.setitem(CFG, 'output_dir', log_dir)
+
     with pytest.raises(RecipeError) as exc:
-        ESMValTool().run(
-            recipe_file, config_file=f"{tmp_path}/config-user.yml")
+        ESMValTool().run(recipe_file)
     assert str(exc.value) == 'The given recipe does not have any diagnostic.'
     log_file = os.path.join(log_dir,
                             os.listdir(log_dir)[0], 'run', 'main_log.txt')
@@ -115,8 +112,7 @@ def test_run_with_config_dir():
 
 @patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
 def test_run_with_max_years():
-    with arguments('esmvaltool', 'run', 'recipe.yml',
-                   '--config_file=config.yml', '--max_years=2'):
+    with arguments('esmvaltool', 'run', 'recipe.yml', '--max_years=2'):
         run()
 
 

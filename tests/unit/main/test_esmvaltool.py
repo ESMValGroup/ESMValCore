@@ -62,14 +62,13 @@ def test_run_command_line_config(mocker, cfg, argument, value):
 
     program = ESMValTool()
     recipe_file = '/path/to/recipe_test.yml'
-    config_file = '/path/to/config-user.yml'
+    config_dir = '/path/to/config/'
 
     mocker.patch.object(program, '_get_recipe', return_value=Path(recipe_file))
     mocker.patch.object(program, '_run')
 
-    program.run(recipe_file, config_file, **{argument: value})
+    program.run(recipe_file, config_dir=config_dir, **{argument: value})
 
-    cfg.load_from_file.assert_called_with(config_file)
     cfg.start_session.assert_called_once_with(Path(recipe_file).stem)
     program._get_recipe.assert_called_with(recipe_file)
     program._run.assert_called_with(program._get_recipe.return_value, session)
