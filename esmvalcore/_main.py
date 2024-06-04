@@ -333,6 +333,7 @@ class ESMValTool():
     def run(self,
             recipe,
             config_file=None,
+            config_dir=None,
             resume_from=None,
             max_datasets=None,
             max_years=None,
@@ -357,6 +358,14 @@ class ESMValTool():
             path. In the latter case, search in the current working directory
             and `${HOME}/.esmvaltool` (in that order). If not provided, the
             file `${HOME}/.esmvaltool/config-user.yml` will be used.
+
+            .. deprecated:: 2.12.0
+                This option has been deprecated in ESMValCore version 2.12.0
+                and is scheduled for removal in version 2.14.0. Please use the
+                option `config_dir` instead.
+        config_dir: str, optional
+            User-defined configuration directory. Can be given as absolute or
+            relative path. If not provided, use `~/.config/esmvaltool`.
         resume_from: list(str), optional
             Resume one or more previous runs by using preprocessor output files
             from these output directories.
@@ -383,7 +392,17 @@ class ESMValTool():
             default (fail if there are any errors),
             strict (fail if there are any warnings).
         """
+        # The command line argument --config-dir is already parsed while
+        # loading the module esmvalcore.config (see
+        # esmvalcore.config._config_object._get_user_config_dir_from_cli). It
+        # is only listed as argument here to get a proper --help message.
+        config_dir  # noqa
+        import warnings
+
         from .config import CFG
+        # TODO: remove in v2.14.0
+        from .config._config_object import _DEPRECATIONS
+        from .exceptions import ESMValCoreDeprecationWarning
 
         # TODO: remove in v2.14.0
         # At this point, --config_file is already parsed if a valid file has
@@ -415,6 +434,8 @@ class ESMValTool():
         self._run(recipe, session)
         # Print warnings about deprecated configuration options again:
         CFG.reload()
+        for msg in _DEPRECATIONS:
+            warnings.warn(msg, ESMValCoreDeprecationWarning)
 
     @staticmethod
     def _create_session_dir(session):
@@ -444,7 +465,7 @@ class ESMValTool():
         from .config._logging import configure_logging
         log_files = configure_logging(output_dir=session.run_dir,
                                       console_log_level=session['log_level'])
-        self._log_header(session['config_file'], log_files)
+        self._log_header(log_files)
 
         if session['search_esgf'] != 'never':
             from .esgf._logon import logon
@@ -504,8 +525,9 @@ class ESMValTool():
         recipe = Path(os.path.expandvars(recipe)).expanduser().absolute()
         return recipe
 
-    def _log_header(self, config_file, log_files):
+    def _log_header(self, log_files):
         from . import __version__
+        from .config._config_object import CONFIG_DIRS
         logger.info(HEADER)
         logger.info('Package versions')
         logger.info('----------------')
@@ -513,7 +535,10 @@ class ESMValTool():
         for project, version in self._extra_packages.items():
             logger.info('%s: %s', project, version)
         logger.info('----------------')
-        logger.info("Using config file %s", config_file)
+        logger.info(
+            "Reading configuration files from:\n%s",
+            "\n".join(f"{v} ({k})" for (k, v) in CONFIG_DIRS.items())
+        )
         logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 
 

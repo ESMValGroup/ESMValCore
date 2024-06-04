@@ -99,10 +99,17 @@ def test_empty_run(tmp_path):
     assert not filled_recipe
 
 
+# TODO: remove in v2.14.0
 @patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
 def test_run_with_config():
     with arguments('esmvaltool', 'run', 'recipe.yml', '--config_file',
                    'config.yml'):
+        run()
+
+
+@patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
+def test_run_with_config_dir():
+    with arguments('esmvaltool', 'run', 'recipe.yml', '--config_dir', 'c'):
         run()
 
 

@@ -81,7 +81,6 @@ def test_run_command_line_config(mocker, cfg, argument, value):
 def test_run(mocker, session, search_esgf):
     session['search_esgf'] = search_esgf
     session['log_level'] = 'default'
-    session['config_file'] = '/path/to/config-user.yml'
     session['remove_preproc_dir'] = True
     session['save_intermediary_cubes'] = False
     session.cmor_log.read_text.return_value = 'WARNING: attribute not present'
@@ -189,7 +188,6 @@ def test_header(mock_entry_points, caplog):
     mock_entry_points.return_value = [entry_point]
     with caplog.at_level(logging.INFO):
         ESMValTool()._log_header(
-            'path_to_config_file',
             ['path_to_log_file1', 'path_to_log_file2'],
         )
 
@@ -200,7 +198,12 @@ def test_header(mock_entry_points, caplog):
     assert caplog.messages[3] == f'ESMValCore: {__version__}'
     assert caplog.messages[4] == 'MyEntry: v42.42.42'
     assert caplog.messages[5] == '----------------'
-    assert caplog.messages[6] == 'Using config file path_to_config_file'
+    assert caplog.messages[6] == (
+        'Reading configuration files from:\n'
+        '/home/manuel/ESMValCore/esmvalcore/config/config_defaults (defaults)'
+        '\n/home/manuel/.config/esmvaltool (default user configuration '
+        'directory)'
+    )
     assert caplog.messages[7] == (
         'Writing program log files to:\n'
         'path_to_log_file1\n'

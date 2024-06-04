@@ -13,7 +13,6 @@ import dask.config
 import yaml
 
 import esmvalcore
-from esmvalcore.cmor.check import CheckLevels
 from esmvalcore.config._config_validators import (
     _deprecated_options_defaults,
     _deprecators,
@@ -111,7 +110,7 @@ def _get_config_dirs() -> dict[str, Path]:
     """Get all configuration directories."""
     # Defaults (lowerst priority)
     config_dirs: dict[str, Path] = {
-        'defaults': Path(__file__).parent / 'config_files',
+        'defaults': Path(__file__).parent / 'config_defaults',
     }
 
     # Environoment variable
@@ -155,21 +154,42 @@ class Config(ValidatedConfig):
         ('rootpath', URL),
     )
 
-    @classmethod
-    def from_paths(cls, paths: list[str | Path]):
-        """Load configuration from list of paths."""
-        config_dict = dask.config.collect(
-            paths=[str(p) for p in paths], env={}
+    def __init__(self, *args, **kwargs):
+        """Initialize class instance."""
+        super().__init__(*args, **kwargs)
+        msg = (
+            "Do not instantiate `Config` objects directly, this will lead "
+            "to unexpected behavior. Use `esmvalcore.config.CFG` instead."
         )
+        warnings.warn(msg, UserWarning)
+
+    def _load_from_global_paths(self):
+        """Load configuration from global paths."""
+        self.clear()
+        paths = [str(p) for p in CONFIG_DIRS.values()]
+        config_dict = dask.config.collect(paths=paths, env={})
         try:
-            config_obj = cls(config_dict)
+            self.update(config_dict)
         except InvalidConfigParameter as exc:
             paths_str = '\n'.join(str(p) for p in paths)
             raise InvalidConfigParameter(
                 f"{str(exc)}\n\nThe following configuration directories have "
                 f"been read:\n{paths_str}"
             )
-        config_obj.check_missing()
+        self.check_missing()
+
+    @classmethod
+    def _from_global_paths(cls):
+        """Get configuration object from global paths."""
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                message="Do not instantiate `Config` objects directly",
+                category=UserWarning,
+                module='esmvalcore',
+            )
+            config_obj = Config()
+        config_obj._load_from_global_paths()
         return config_obj
 
     # TODO: remove in v2.14.0
@@ -196,7 +216,14 @@ class Config(ValidatedConfig):
             configuration file is given (relevant if used within a script or
             notebook).
         """
-        new = cls()
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                message="Do not instantiate `Config` objects directly",
+                category=UserWarning,
+                module='esmvalcore',
+            )
+            new = cls()
         new.update(_CFG_DEFAULT)
 
         config_user_path = cls._get_config_user_path(filename)
@@ -224,23 +251,25 @@ class Config(ValidatedConfig):
     @classmethod
     def _load_default_config(cls):
         """Load the default configuration."""
-        new = cls()
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                message="Do not instantiate `Config` objects directly",
+                category=UserWarning,
+                module='esmvalcore',
+            )
+            new = cls()
 
-        package_config_user_path = Path(
-            esmvalcore.__file__
-        ).parent / 'config-user.yml'
+        package_config_user_path = (
+            Path(esmvalcore.__file__).parent /
+            'config' /
+            'config_defaults' /
+            'config-user.yml'
+        )
         mapping = cls._read_config_file(package_config_user_path)
 
         # Add defaults that are not available in esmvalcore/config-user.yml
-        mapping['check_level'] = CheckLevels.DEFAULT
         mapping['config_file'] = package_config_user_path
-        mapping['diagnostics'] = None
-        mapping['extra_facets_dir'] = tuple()
-        mapping['max_datasets'] = None
-        mapping['max_years'] = None
-        mapping['resume_from'] = []
-        mapping['run_diagnostic'] = True
-        mapping['skip_nonexistent'] = False
 
         new.update(mapping)
 
@@ -373,18 +402,19 @@ class Config(ValidatedConfig):
         filename: Optional[os.PathLike | str] = None,
     ) -> None:
         """Load user configuration from the given file."""
+        msg = (
+            "The method `CFG.load_from_file()` has been deprecated in "
+            "ESMValCore version 2.12.0 and is scheduled for removal in "
+            "version 2.14.0. Please update the `CFG` directly instead using "
+            "`CFG.update()` or `CFG[...] = ...`."
+        )
+        warnings.warn(msg, ESMValCoreDeprecationWarning)
         self.clear()
         self.update(Config._load_user_config(filename))
 
     def reload(self):
-        """Reload the config file."""
-        if 'config_file' not in self:
-            raise ValueError(
-                "Cannot reload configuration, option 'config_file' is "
-                "missing; make sure to only use the `CFG` object from the "
-                "`esmvalcore.config` module"
-            )
-        self.load_from_file(self['config_file'])
+        """Reload the original configuration object."""
+        self._load_from_global_paths()
 
     def start_session(self, name: str):
         """Start a new session from this configuration object.
@@ -398,7 +428,15 @@ class Config(ValidatedConfig):
         -------
         Session
         """
-        return Session(config=self.copy(), name=name)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore',
+                message="Do not instantiate `Session` objects directly",
+                category=UserWarning,
+                module='esmvalcore',
+            )
+            session = Session(config=self.copy(), name=name)
+        return session
 
 
 class Session(ValidatedConfig):
@@ -433,6 +471,12 @@ class Session(ValidatedConfig):
         super().__init__(config)
         self.session_name: str | None = None
         self.set_session_name(name)
+        msg = (
+            "Do not instantiate `Session` objects directly, this will lead "
+            "to unexpected behavior. Use "
+            "`esmvalcore.config.CFG.start_session` instead."
+        )
+        warnings.warn(msg, UserWarning)
 
     def set_session_name(self, name: str = 'session'):
         """Set the name for the session.
@@ -471,6 +515,14 @@ class Session(ValidatedConfig):
     @property
     def config_dir(self):
         """Return user config directory."""
+        msg = (
+            "The attribute `Session.config_dir` has been deprecated in "
+            "ESMValCore version 2.12.0 and is scheduled for removal in "
+            "version 2.14.0."
+        )
+        warnings.warn(msg, ESMValCoreDeprecationWarning)
+        if self.get('config_file') is None:
+            return None
         return Path(self['config_file']).parent
 
     @property
@@ -497,8 +549,8 @@ class Session(ValidatedConfig):
 # TODO: remove in v2.14.0
 _CFG_DEFAULT = MappingProxyType(Config._load_default_config())
 
-# Initialize configuration objects
-CONFIG_DIRS = _get_config_dirs()
+# Deprecated way of specifying configuration (remove in v2.14.0)
+_DEPRECATIONS = []
 _deprecated_config_user_path = Config._get_config_user_path()
 if _deprecated_config_user_path.is_file():
     msg = (
@@ -511,6 +563,14 @@ if _deprecated_config_user_path.is_file():
         f"`--config-dir`) and omit `--config-file`."
     )
     warnings.warn(msg, ESMValCoreDeprecationWarning)
+    _DEPRECATIONS.append(msg)
+    CONFIG_DIRS = {
+        'single configuration file (deprecated)': _deprecated_config_user_path,
+    }
     CFG = Config._load_user_config(raise_exception=False)
+
+# New way of specifying configuration
+# Initialize configuration objects
 else:
-    CFG = Config.from_paths(list(CONFIG_DIRS.values()))
+    CONFIG_DIRS = _get_config_dirs()
+    CFG = Config._from_global_paths()

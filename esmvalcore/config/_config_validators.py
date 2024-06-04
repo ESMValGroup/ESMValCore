@@ -186,10 +186,6 @@ validate_path_or_none = _make_type_validator(validate_path, allow_none=True)
 validate_pathlist = _listify_validator(validate_path,
                                        docstring='Return a list of paths.')
 
-validate_pathtuple = _listify_validator(validate_path,
-                                        docstring='Return a tuple of paths.',
-                                        return_type=tuple)
-
 validate_int_positive = _chain_validator(validate_int, validate_positive)
 validate_int_positive_or_none = _make_type_validator(validate_int_positive,
                                                      allow_none=True)
@@ -292,7 +288,7 @@ _validators = {
     'download_dir': validate_path,
     'drs': validate_drs,
     'exit_on_warning': validate_bool,
-    'extra_facets_dir': validate_pathtuple,
+    'extra_facets_dir': validate_pathlist,
     'log_level': validate_string,
     'max_parallel_tasks': validate_int_or_none,
     'output_dir': validate_path,
@@ -345,12 +341,39 @@ def _handle_deprecation(
     warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
 
 
+def deprecate_config_file(validated_config, value, validated_value):
+    """Deprecate ``config_file`` option.
+
+    Parameters
+    ----------
+    validated_config: ValidatedConfig
+        ``ValidatedConfig`` instance which will be modified in place.
+    value: Any
+        Raw input value for ``config_file`` option.
+    validated_value: Any
+        Validated value for ``config_file`` option.
+
+    """
+    validated_config  # noqa
+    value  # noqa
+    validated_value  # noqa
+    option = 'config_file'
+    deprecated_version = '2.12.0'
+    remove_version = '2.14.0'
+    more_info = " Please use the option `config_dir` instead."
+    _handle_deprecation(option, deprecated_version, remove_version, more_info)
+
+
 # Example usage: see removed files in
 # https://github.com/ESMValGroup/ESMValCore/pull/2213
-_deprecators: dict[str, Callable] = {}
+_deprecators: dict[str, Callable] = {
+    'config_file': deprecate_config_file,
+}
 
 
 # Default values for deprecated options
 # Example usage: see removed files in
 # https://github.com/ESMValGroup/ESMValCore/pull/2213
-_deprecated_options_defaults: dict[str, Any] = {}
+_deprecated_options_defaults: dict[str, Any] = {
+    'config_file': None,
+}
