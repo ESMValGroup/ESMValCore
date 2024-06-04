@@ -179,8 +179,13 @@ def test_do_not_clean_preproc_dir(session):
 
 
 @mock.patch('esmvalcore._main.entry_points')
-def test_header(mock_entry_points, caplog):
-
+def test_header(mock_entry_points, monkeypatch, caplog):
+    path = Path(esmvalcore.__file__).parent / 'config' / 'config_defaults'
+    monkeypatch.setattr(
+        esmvalcore.config._config_object,
+        'CONFIG_DIRS',
+        {'defaults': path},
+    )
     entry_point = mock.Mock()
     entry_point.dist.name = 'MyEntry'
     entry_point.dist.version = 'v42.42.42'
@@ -201,8 +206,6 @@ def test_header(mock_entry_points, caplog):
     assert caplog.messages[6] == (
         'Reading configuration files from:\n'
         '/home/manuel/ESMValCore/esmvalcore/config/config_defaults (defaults)'
-        '\n/home/manuel/.config/esmvaltool (default user configuration '
-        'directory)'
     )
     assert caplog.messages[7] == (
         'Writing program log files to:\n'

@@ -1,4 +1,3 @@
-import contextlib
 import os
 import sys
 from collections.abc import MutableMapping
@@ -10,17 +9,11 @@ import pytest
 import esmvalcore
 import esmvalcore.config._config_object
 from esmvalcore.config import Config, Session
-from esmvalcore.exceptions import InvalidConfigParameter
+from esmvalcore.exceptions import (
+    ESMValCoreDeprecationWarning,
+    InvalidConfigParameter,
+)
 from tests.integration.test_main import arguments
-
-
-@contextlib.contextmanager
-def environment(**kwargs):
-    """Temporary environment variables."""
-    backup = deepcopy(os.environ)
-    os.environ = kwargs
-    yield
-    os.environ = backup
 
 
 def test_config_class():
@@ -72,11 +65,18 @@ def test_config_init():
     assert isinstance(config, MutableMapping)
 
 
+# TODO: remove in v2.14.0
 def test_load_from_file(monkeypatch):
-    default_config_file = Path(esmvalcore.__file__).parent / 'config-user.yml'
+    default_config_file = (
+        Path(esmvalcore.__file__).parent /
+        'config' /
+        'config_defaults' /
+        'config-user.yml'
+    )
     config = Config()
     assert not config
-    config.load_from_file(default_config_file)
+    with pytest.warns(ESMValCoreDeprecationWarning):
+        config.load_from_file(default_config_file)
     assert config
 
 
@@ -114,23 +114,17 @@ def test_config_key_error():
         config['invalid_key']
 
 
-def test_reload():
+def test_reload(cfg_default, monkeypatch):
     """Test `Config.reload`."""
-    cfg_path = Path(esmvalcore.__file__).parent / 'config-user.yml'
-    config = Config(config_file=cfg_path)
-    config.reload()
-    assert config['config_file'] == cfg_path
-
-
-def test_reload_fail():
-    """Test `Config.reload`."""
-    config = Config()
-    msg = (
-        "Cannot reload configuration, option 'config_file' is missing; make "
-        "sure to only use the `CFG` object from the `esmvalcore.config` module"
+    cfg_copy = deepcopy(cfg_default)
+    path = Path(esmvalcore.__file__).parent / 'config' / 'config_defaults'
+    monkeypatch.setattr(
+        esmvalcore.config._config_object,
+        'CONFIG_DIRS',
+        {'defaults': path},
     )
-    with pytest.raises(ValueError, match=msg):
-        config.reload()
+    cfg_default.reload()
+    assert cfg_default == cfg_copy
 
 
 def test_session():
@@ -267,6 +261,7 @@ TEST_GET_CFG_PATH = [
 ]
 
 
+# TODO: remove in v2.14.0
 @pytest.mark.parametrize(
     'filename,env,cli_args,output,env_var_set', TEST_GET_CFG_PATH
 )
@@ -274,22 +269,29 @@ def test_get_config_user_path(
     filename, env, cli_args, output, env_var_set, monkeypatch, tmp_path
 ):
     """Test `Config._get_config_user_path`."""
+    monkeypatch.delenv('_ESMVALTOOL_USER_CONFIG_FILE_', raising=False)
+
     # Create empty test file
     monkeypatch.chdir(tmp_path)
     (tmp_path / 'existing_cfg.yml').write_text('')
-
-    if env is None:
-        env = {}
-    if cli_args is None:
-        cli_args = sys.argv
 
     if output == 'existing_cfg.yml':
         output = tmp_path / 'existing_cfg.yml'
     else:
         output = Path(output).expanduser()
 
-    with environment(**env), arguments(*cli_args):
+    if env is not None:
+        for (key, val) in env.items():
+            monkeypatch.setenv(key, val)
+    if cli_args is None:
+        cli_args = sys.argv
+
+    with arguments(*cli_args):
+        print(sys.argv)
+        print(os.environ)
         config_path = Config._get_config_user_path(filename)
+        print(sys.argv)
+        print(os.environ)
         if env_var_set:
             assert os.environ['_ESMVALTOOL_USER_CONFIG_FILE_'] == str(output)
         else:
@@ -298,6 +300,7 @@ def test_get_config_user_path(
     assert config_path == output
 
 
+# TODO: remove in v2.14.0
 def test_load_user_config_filenotfound():
     """Test `Config._load_user_config`."""
     expected_path = Path.home() / '.esmvaltool' / 'not_existent_file.yml'
@@ -306,6 +309,7 @@ def test_load_user_config_filenotfound():
         Config._load_user_config('not_existent_file.yml')
 
 
+# TODO: remove in v2.14.0
 def test_load_user_config_invalidconfigparameter(monkeypatch, tmp_path):
     """Test `Config._load_user_config`."""
     monkeypatch.chdir(tmp_path)
