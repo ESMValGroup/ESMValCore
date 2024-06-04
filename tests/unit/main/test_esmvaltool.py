@@ -203,8 +203,8 @@ def test_header(mock_entry_points, monkeypatch, caplog):
     assert caplog.messages[4] == 'MyEntry: v42.42.42'
     assert caplog.messages[5] == '----------------'
     assert caplog.messages[6] == (
-        'Reading configuration files from:\n'
-        '/home/manuel/ESMValCore/esmvalcore/config/config_defaults (defaults)'
+        f'Reading configuration files from:\n'
+        f'{Path(esmvalcore.__file__).parent}/config/config_defaults (defaults)'
     )
     assert caplog.messages[7] == (
         'Writing program log files to:\n'
