@@ -170,7 +170,9 @@ class Config(ValidatedConfig):
         try:
             self.update(config_dict)
         except InvalidConfigParameter as exc:
-            paths_str = '\n'.join(str(p) for p in paths)
+            paths_str = '\n'.join(
+                f'{v} ({k})' for (k, v) in CONFIG_DIRS.items()
+            )
             raise InvalidConfigParameter(
                 f"{str(exc)}\n\nThe following configuration directories have "
                 f"been read:\n{paths_str}"
@@ -265,11 +267,9 @@ class Config(ValidatedConfig):
             'config_defaults' /
             'config-user.yml'
         )
+
         mapping = cls._read_config_file(package_config_user_path)
-
-        # Add defaults that are not available in esmvalcore/config-user.yml
         mapping['config_file'] = package_config_user_path
-
         new.update(mapping)
 
         return new
@@ -552,16 +552,17 @@ if _deprecated_config_user_path.is_file():
     msg = (
         f"Usage of the single configuration file "
         f"~/.esmvaltool/config-user.yml or specifying it via CLI argument "
-        f"`--config-file` has been deprecated in ESMValCore version 2.12.0 "
+        f"`--config_file` has been deprecated in ESMValCore version 2.12.0 "
         f"and is scheduled for removal in version 2.14.0. Please run "
         f"`mkdir -p ~/.config/esmvaltool && mv {_deprecated_config_user_path} "
         f"~/.config/esmvaltool` (or alternatively use a custom "
-        f"`--config-dir`) and omit `--config-file`."
+        f"`--config-dir`) and omit `--config_file`."
     )
     warnings.warn(msg, ESMValCoreDeprecationWarning)
     _DEPRECATIONS.append(msg)
     CONFIG_DIRS = {
-        'single configuration file (deprecated)': _deprecated_config_user_path,
+        'defaults': Path(__file__).parent / 'config_defaults',
+        'single configuration file [deprecated]': _deprecated_config_user_path,
     }
     CFG = Config._load_user_config(raise_exception=False)
 

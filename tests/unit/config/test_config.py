@@ -132,9 +132,6 @@ def test_get_project_config(mocker):
         _config.get_project_config('non-existent-project')
 
 
-CONFIG_USER_FILE = importlib_files('esmvalcore') / 'config-user.yml'
-
-
 def test_load_default_config(cfg_default, monkeypatch):
     """Test that the default configuration can be loaded."""
     project_cfg = {}

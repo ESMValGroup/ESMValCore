@@ -557,7 +557,7 @@ class ESMValTool():
         logger.info('----------------')
         logger.info(
             "Reading configuration files from:\n%s",
-            "\n".join(f"{v} ({k})" for (k, v) in CONFIG_DIRS.items())
+            "\n".join(f'{v} ({k})' for (k, v) in CONFIG_DIRS.items())
         )
         logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 

@@ -4,9 +4,14 @@
 
     ESMValCore configuration.
 
-    By default, this will be loaded from the file
-    ``~/.esmvaltool/config-user.yml``. If used within the ``esmvaltool``
-    program, this will respect the ``--config_file`` argument.
+    By default, this will be loaded from YAML files in
+    ``~/.config/esmvaltool``, similar to the way `Dask handles configuration
+    <https://docs.dask.org/en/stable/configuration.html>`__. If used within the
+    ``esmvaltool`` program, the directory given by ``--config_dir`` will be
+    read instead.
+
+    In addition, the environment variable ``ESMVALTOOL_CONFIG_DIR`` is
+    considered (with lower priority than the directories mentioned above).
 
 """
 
