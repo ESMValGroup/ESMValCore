@@ -1,203 +1,254 @@
 .. _config:
 
-*******************
-Configuration files
-*******************
+*************
+Configuration
+*************
 
 Overview
 ========
 
-There are several configuration files in ESMValCore:
-
-* ``config-user.yml``: sets a number of user-specific options like desired
-  graphical output format, root paths to data, etc.;
-* ``config-developer.yml``: sets a number of standardized file-naming and paths
-  to data formatting;
-
-and one configuration file which is distributed with ESMValTool:
-
-* ``config-references.yml``: stores information on diagnostic and recipe authors and
-  scientific journals references;
-
-.. _user configuration file:
-
-User configuration file
-=======================
+In v2.12.0, a large overhaul process of ESMValTool/Core's configuration
+started.
+Its main aim is to simplify the configuration by moving from many different
+configuration files for individual components to one configuration object that
+consists of a single nested dictionary (similar to `Dask's configuration
+<https://docs.dask.org/en/stable/configuration.html>`__).
+This change will not be implemented in one massive pull request but rather in a
+step-by-step procedure.
+Thus, the configuration might appear inconsistent until this overhaul is
+finished.
+A detailed plan for this new configuration is outlined in :issue:`2371`.
 
 
-The ``config-user.yml`` configuration file contains all the global level
-information needed by ESMValCore. It can be reused as many times the user needs
-to before changing any of the options stored in it. This file is essentially
-the gateway between the user and the machine-specific instructions to
-``esmvaltool``. By default, esmvaltool looks for it in the home directory,
-inside the ``.esmvaltool`` folder.
+.. _configure_for_cli:
 
-Users can get a copy of this file with default values by running
+Specify configuration for ``esmvaltool`` command line tool
+==========================================================
 
-.. code-block:: bash
+When running recipes via the :ref:`command line <running>`, configuration
+options can be specified via YAML files and command line arguments.
 
-  esmvaltool config get-config-user --path=${TARGET_FOLDER}
 
-If the option ``--path`` is omitted, the file will be created in
-``${HOME}/.esmvaltool``
+YAML files
+----------
 
-The following shows the default settings from the ``config-user.yml`` file
-with explanations in a commented line above each option. If only certain values
-are allowed for an option, these are listed after ``---``. The option in square
-brackets is the default value, i.e., the one that is used if this option is
-omitted in the file.
+Example:
 
 .. code-block:: yaml
 
-  # Destination directory where all output will be written
-  # Includes log files and performance stats.
   output_dir: ~/esmvaltool_output
-
-  # Auxiliary data directory
-  # Used by some recipes to look for additional datasets.
-  auxiliary_data_dir: ~/auxiliary_data
-
-  # Automatic data download from ESGF --- [never]/when_missing/always
-  # Use automatic download of missing CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs
-  # data from ESGF. ``never`` disables this feature, which is useful if you are
-  # working on a computer without an internet connection, or if you have limited
-  # disk space. ``when_missing`` enables the automatic download for files that
-  # are not available locally. ``always`` will always check ESGF for the latest
-  # version of a file, and will only use local files if they correspond to that
-  # latest version.
-  search_esgf: never
-
-  # Directory for storing downloaded climate data
-  # Make sure to use a directory where you can store multiple GBs of data. Your
-  # home directory on a HPC is usually not suited for this purpose, so please
-  # change the default value in this case!
-  download_dir: ~/climate_data
-
-  # Rootpaths to the data from different projects
-  # This default setting will work if files have been downloaded by ESMValTool
-  # via ``search_esgf``. Lists are also possible. For site-specific entries,
-  # see the default ``config-user.yml`` file that can be installed with the
-  # command ``esmvaltool config get_config_user``. For each project, this can
-  # be either a single path or a list of paths. Comment out these when using a
-  # site-specific path.
+  search_esgf: when_missing
+  download_dir: ~/downloaded_data
+  max_parallel_tasks: 8
   rootpath:
-    default: ~/climate_data
-
-  # Directory structure for input data --- [default]/ESGF/BADC/DKRZ/ETHZ/etc.
-  # This default setting will work if files have been downloaded by ESMValTool
-  # via ``search_esgf``. See ``config-developer.yml`` for definitions. Comment
-  # out/replace as per needed.
+    default: ~/data
+    CMIP6: ~/cmip6_data
+    OBS: ~/obs_data
   drs:
-    CMIP3: ESGF
-    CMIP5: ESGF
     CMIP6: ESGF
-    CORDEX: ESGF
-    obs4MIPs: ESGF
+    OBS: default
 
-  # Run at most this many tasks in parallel --- [null]/1/2/3/4/...
-  # Set to ``null`` to use the number of available CPUs. If you run out of
-  # memory, try setting max_parallel_tasks to ``1`` and check the amount of
-  # memory you need for that by inspecting the file ``run/resource_usage.txt`` in
-  # the output directory. Using the number there you can increase the number of
-  # parallel tasks again to a reasonable number for the amount of memory
-  # available in your system.
-  max_parallel_tasks: null
+These files can live in any of the following locations:
 
-  # Log level of the console --- debug/[info]/warning/error
-  # For much more information printed to screen set log_level to ``debug``.
-  log_level: info
+1. If set, the directory specified with the ``ESMVALTOOL_CONFIG_DIR``
+   environment variable.
+1. The user's configuration directory (by default ``~/.config/esmvaltool`` is
+   used, but this can be changed with the ``--config_dir`` command line
+   argument).
 
-  # Exit on warning --- true/[false]
-  # Only used in NCL diagnostic scripts.
-  exit_on_warning: false
+ESMValCore searches for all YAML files within each of these directories and
+merges them together using :func:`dask.config.collect`.
+Preference follows the order in the list above (i.e., the directory specified
+via the environment variable is preferred over the user's configuration
+directory).
+Within a directory, files are sorted alphabetically, and later files (e.g.,
+``z.yml``) will take precedence over earlier files (e.g., ``a.yml``).
 
-  # Plot file format --- [png]/pdf/ps/eps/epsi
-  output_file_type: png
-
-  # Remove the ``preproc`` directory if the run was successful --- [true]/false
-  # By default this option is set to ``true``, so all preprocessor output files
-  # will be removed after a successful run. Set to ``false`` if you need those files.
-  remove_preproc_dir: true
-
-  # Use netCDF compression --- true/[false]
-  compress_netcdf: false
-
-  # Save intermediary cubes in the preprocessor --- true/[false]
-  # Setting this to ``true`` will save the output cube from each preprocessing
-  # step. These files are numbered according to the preprocessing order.
-  save_intermediary_cubes: false
-
-  # Use a profiling tool for the diagnostic run --- [false]/true
-  # A profiler tells you which functions in your code take most time to run.
-  # For this purpose we use ``vprof``, see below for notes. Only available for
-  # Python diagnostics.
-  profile_diagnostic: false
-
-  # Path to custom ``config-developer.yml`` file
-  # This can be used to customise project configurations. See
-  # ``config-developer.yml`` for an example. Set to ``null`` to use the default.
-  config_developer_file: null
-
-The ``search_esgf`` setting can be used to disable or enable automatic
-downloads from ESGF.
-If ``search_esgf`` is set to ``never``, the tool does not download any data
-from the ESGF.
-If ``search_esgf`` is set to ``when_missing``, the tool will download any CMIP3,
-CMIP5, CMIP6, CORDEX, and obs4MIPs data that is required to run a recipe but
-not available locally and store it in ``download_dir`` using the ``ESGF``
-directory structure defined in the :ref:`config-developer`.
-If ``search_esgf`` is set to ``always``, the tool will first check the ESGF for
-the needed data, regardless of any local data availability; if the data found
-on ESGF is newer than the local data (if any) or the user specifies a version
-of the data that is available only from the ESGF, then that data will be
-downloaded; otherwise, local data will be used.
-
-The ``auxiliary_data_dir`` setting is the path to place any required
-additional auxiliary data files. This is necessary because certain
-Python toolkits, such as cartopy, will attempt to download data files at run
-time, typically geographic data files such as coastlines or land surface maps.
-This can fail if the machine does not have access to the wider internet. This
-location allows the user to specify where to find such files if they can not be
-downloaded at runtime. The example user configuration file already contains two valid
-locations for ``auxiliary_data_dir`` directories on CEDA-JASMIN and DKRZ, and a number
-of such maps and shapefiles (used by current diagnostics) are already there. You will
-need ``esmeval`` group workspace membership to access the JASMIN one (see
-`instructions <https://help.jasmin.ac.uk/article/199-introduction-to-group-workspaces>`_
-how to gain access to the group workspace.
-
-.. warning::
-
-   This setting is not for model or observational datasets, rather it is for
-   extra data files such as shapefiles or other data sources needed by the diagnostics.
-
-The ``profile_diagnostic`` setting triggers profiling of Python diagnostics,
-this will tell you which functions in the diagnostic took most time to run.
-For this purpose we use `vprof <https://github.com/nvdv/vprof>`_.
-For each diagnostic script in the recipe, the profiler writes a ``.json`` file
-that can be used to plot a
-`flame graph <https://queue.acm.org/detail.cfm?id=2927301>`__
-of the profiling information by running
+To get a copy of the default configuration file, you can run
 
 .. code-block:: bash
 
-  vprof --input-file esmvaltool_output/recipe_output/run/diagnostic/script/profile.json
+  esmvaltool config get_config_user --path=/target/file.yml
 
-Note that it is also possible to use vprof to understand other resources used
-while running the diagnostic, including execution time of different code blocks
-and memory usage.
+If the option ``--path`` is omitted, the file will be copied to
+``~/.config/esmvaltool/config-user.yml``.
 
-A detailed explanation of the data finding-related sections of the
-``config-user.yml`` (``rootpath`` and ``drs``) is presented in the
-:ref:`data-retrieval` section. This section relates directly to the data
-finding capabilities of ESMValCore and are very important to be understood by
-the user.
 
-.. note::
+Command line arguments
+----------------------
 
-   You can choose your ``config-user.yml`` file at run time, so you could have several of
-   them available with different purposes. One for a formalised run, another for
-   debugging, etc. You can even provide any config user value as a run flag
-   ``--argument_name argument_value``
+All configuration options can also be given as command line arguments to the
+``esmvaltool`` executable.
+
+Example:
+
+.. code-block:: bash
+
+  esmvaltool run --search_esgf=when_missing --max_parallel_tasks=2 /path/to/recipe.yml
+
+Options given via command line arguments will always take precedence over
+options specified via YAML files.
+
+
+.. _configure_for_api:
+
+Specify/access configuration for Python API
+===========================================
+
+When running recipes with the :ref:`experimental Python API
+<experimental_api>`, configuration options can be specified and accessed via
+the :py:data:`~esmvalcore.config.CFG` object.
+For example:
+
+.. code-block:: python
+
+  >>> from esmvalcore.config import CFG
+  >>> CFG['output_dir'] = '~/esmvaltool_output'
+  >>> CFG['output_dir']
+  PosixPath('/home/user/esmvaltool_output')
+
+This will also consider YAML configuration files in the directory given by
+``ESMVALTOOL_CONFIG_DIR`` (if set; higher priority) and in
+``~/.config/esmvaltool`` (lower priority).
+
+More information about this can be found :ref:`here <api_configuration>`.
+
+
+.. _configuration_options:
+
+Configuration options
+=====================
+
+Note: the following entries use YAML syntax.
+For example, YAML's ``null`` is Python's ``None``, YAML's ``true`` is Python's
+``True``, and YAML's ``false`` is Python's ``False``.
+
++-------------------------------+----------------------------------------+----------------------------------------+
+|Option                         | Description                            | Default value                          |
++===============================+========================================+========================================+
+| ``auxiliary_data_dir``        | Directory where auxiliary data is      | ``~/auxiliary_data``                   |
+|                               | stored [#f1]_                          |                                        |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``check_level``               | Sensitivity of the CMOR check          | ``default``                            |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``compress_netcdf``           | Use netCDF compression                 | ``false``                              |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``config_developer_file``     | Path to custom                         | ``null`` (i.e., use default file)      |
+|                               | ``config-developer.yml`` file (see     |                                        |
+|                               | below)                                 |                                        |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``diagnostics``               | Only run the selected diagnostics from | ``null`` (i.e., run all diagnostics)   |
+|                               | the recipe                             |                                        |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``download_dir``              | Directory where downloaded data will   | ``~/climate_data``                     |
+|                               | be stored                              |                                        |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``drs``                       | Directory structure for input data     |  ``{CMIP3: ESGF, CMIP5: ESGF, CMIP6:   |
+|                               | [#f2]_                                 |  ESGF, CORDEX: ESGF, obs4MIPs: ESGF}`` |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``exit_on_warning``           | Exit on warning (only used in NCL      | ``false``                              |
+|                               | diagnostic scripts)                    |                                        |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``extra_facets_dir``          | Additional custom directory for        | ``[]``                                 |
+|                               | :ref:`extra facets <extra_facets>`     |                                        |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``log_level``                 | Log level of the console (``debug``,   | ``info``                               |
+|                               | ``info``, ``warning``, ``error``)      |                                        |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``max_datasets``              | Maximum number of datasets to use      | ``null`` (i.e., use all datasets given |
+|                               |                                        |  in recipe)                      |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``max_parallel_tasks``        | Maximum number of parallel processes   | ``null`` (i.e., use number of          |
+|                               |                                        |  available CPUs)                       |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``max_years``                 | Maximum number of years to use         | ``null`` (i.e., use all years given in |
+|                               |                                        |  recipe)                      |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``output_dir``                | Directory where all output will be     | ``~/esmvaltool_output``                |
+|                               | written                                |                                        |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``output_file_type``          | Plot file type                         | ``png``                                |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``profile_diagnostic``        | Use a profiling tool for the           | ``false``                              |
+|                               | diagnostic run [#f3]_                  |                                        |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``remove_preproc_dir``        | Remove the ``preproc`` directory if    | ``true``                               |
+|                               |the run was successful                  |                                        |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``resume_from``               | Resume previous run(s) by using        | ``[]``                                 |
+|                               | preprocessor output files from these   |                                        |
+|                               | output directories                     |                                        |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``rootpath``                  | Rootpaths to the data from different   | ``{default: ~/climate_data}``          |
+|                               | projects [#f2]_                        |                                        |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``run_diagnostic``            | Run diagnostic scripts                 | ``true``                               |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``save_intermediary_cubes``   | Save intermediary cubes from the       | ``false``                              |
+|                               | preprocessor                           |                                        |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``search_esgf``               | Automatic data download from ESGF      | ``never``                              |
+|                               | (``never``, ``when_missing``,          |                                        |
+|                               | ``always``) [#f4]_                     |                                        |
++-------------------------------+----------------------------------------+----------------------------------------+
+| ``skip_nonexistent``          | Skip non-existent datasets             | ``false``                              |
++-------------------------------+----------------------------------------+----------------------------------------+
+
+.. [#f1] The ``auxiliary_data_dir`` setting is the path to place any required
+    additional auxiliary data files.
+    This is necessary because certain Python toolkits, such as cartopy, will
+    attempt to download data files at run time, typically geographic data files
+    such as coastlines or land surface maps.
+    This can fail if the machine does not have access to the wider internet.
+    This location allows the user to specify where to find such files if they
+    can not be downloaded at runtime.
+    The example configuration file already contains two valid locations for
+    ``auxiliary_data_dir`` directories on CEDA-JASMIN and DKRZ, and a number of
+    such maps and shapefiles (used by current diagnostics) are already there.
+    You will need ``esmeval`` group workspace membership to access the JASMIN
+    one (see `instructions
+    <https://help.jasmin.ac.uk/article/199-introduction-to-group-workspaces>`_
+    how to gain access to the group workspace.
+
+    .. warning::
+
+       This setting is not for model or observational datasets, rather it is
+       for extra data files such as shapefiles or other data sources needed by
+       the diagnostics.
+.. [#f2] A detailed explanation of the data finding-related sections ``drs``
+    and ``rootpath`` is presented in the :ref:`data-retrieval` section.
+    These sections relate directly to the data finding capabilities of
+    ESMValCore and are very important to be understood by the user.
+.. [#f3] The ``profile_diagnostic`` setting triggers profiling of Python
+    diagnostics, this will tell you which functions in the diagnostic took most
+    time to run.
+    For this purpose we use `vprof <https://github.com/nvdv/vprof>`_.
+    For each diagnostic script in the recipe, the profiler writes a ``.json``
+    file that can be used to plot a `flame graph
+    <https://queue.acm.org/detail.cfm?id=2927301>`__ of the profiling
+    information by running
+
+    .. code-block:: bash
+
+      vprof --input-file esmvaltool_output/recipe_output/run/diagnostic/script/profile.json
+
+    Note that it is also possible to use vprof to understand other resources
+    used while running the diagnostic, including execution time of different
+    code blocks and memory usage.
+.. [#f4] The ``search_esgf`` setting can be used to disable or enable automatic
+   downloads from ESGF.
+   If ``search_esgf`` is set to ``never``, the tool does not download any data
+   from the ESGF.
+   If ``search_esgf`` is set to ``when_missing``, the tool will download any
+   CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs data that is required to run a
+   recipe but not available locally and store it in ``download_dir`` using the
+   ``ESGF`` directory structure defined in the :ref:`config-developer`.
+   If ``search_esgf`` is set to ``always``, the tool will first check the ESGF
+   for the needed data, regardless of any local data availability; if the data
+   found on ESGF is newer than the local data (if any) or the user specifies a
+   version of the data that is available only from the ESGF, then that data
+   will be downloaded; otherwise, local data will be used.
+
 
 .. _config-dask:
 
@@ -397,7 +448,7 @@ Configuring Dask for debugging
 
 For debugging purposes, it can be useful to disable all parallelism, as this
 will often result in more clear error messages. This can be achieved by
-settings ``max_parallel_tasks: 1`` in config-user.yml,
+setting ``max_parallel_tasks: 1`` in the configuration,
 commenting out or removing all content of ``~/.esmvaltool/dask.yml``, and
 creating a file called ``~/.config/dask/dask.yml`` with the following
 content:
@@ -419,12 +470,11 @@ ESGF configuration
 
 The ``esmvaltool run`` command can automatically download the files required
 to run a recipe from ESGF for the projects CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
-The downloaded files will be stored in the ``download_dir`` specified in the
-:ref:`user configuration file`.
-To enable automatic downloads from ESGF, set ``search_esgf: when_missing`` or
-``search_esgf: always`` in the :ref:`user configuration file`, or provide the
-corresponding command line arguments ``--search_esgf=when_missing`` or
-``--search_esgf=always`` when running the recipe.
+The downloaded files will be stored in the directory specified via the
+:ref:`configuration option <configuration_options>` ``download_dir``.
+To enable automatic downloads from ESGF, use the :ref:`configuration options
+<configuration_options>` ``search_esgf: when_missing`` or ``search_esgf:
+always``.
 
 .. note::
 
@@ -649,15 +699,15 @@ Users can get a copy of this file with default values by running
 
 .. code-block:: bash
 
-  esmvaltool config get-config-developer --path=${TARGET_FOLDER}
+  esmvaltool config get_config_developer --path=${TARGET_FOLDER}
 
 If the option ``--path`` is omitted, the file will be created in
-```${HOME}/.esmvaltool``.
+``~/.esmvaltool``.
 
 .. note::
 
-  Remember to change your config-user file if you want to use a custom
-  config-developer.
+  Remember to change the configuration option ``config_developer_file`` if you
+  want to use a custom config developer file.
 
 Example of the CMIP6 project configuration:
 
@@ -1002,16 +1052,15 @@ to support a particular use-case within the ESMValCore project, they will be
 provided in the sub-folder `extra_facets` inside the package
 :mod:`esmvalcore.config`. If they are used from the user side, they can be either
 placed in `~/.esmvaltool/extra_facets` or in any other directory of the users
-choosing. In that case this directory must be added to the `config-user.yml`
-file under the `extra_facets_dir` setting, which can take a single directory or
-a list of directories.
+choosing. In that case, the configuration option ``extra_facets_dir`` must be
+set, which can take a single directory or a list of directories.
 
 The order in which the directories are searched is
 
 1. The internal directory `esmvalcore.config/extra_facets`
 2. The default user directory `~/.esmvaltool/extra_facets`
-3. The custom user directories in the order in which they are given in
-   `config-user.yml`.
+3. The custom user directories given by the configuration option
+   ``extra_facets_dir``
 
 The extra facets files within each of these directories are processed in
 lexicographical order according to their file name.

@@ -2,7 +2,8 @@
 
 .. data:: CFG
 
-    ESMValCore configuration.
+    Global ESMValCore configuration object of type
+    :class:`esmvalcore.config.Config`.
 
     By default, this will be loaded from YAML files in
     ``~/.config/esmvaltool``, similar to the way `Dask handles configuration
@@ -11,7 +12,7 @@
     read instead.
 
     In addition, the environment variable ``ESMVALTOOL_CONFIG_DIR`` is
-    considered (with lower priority than the directories mentioned above).
+    considered (with higher priority than the directories mentioned above).
 
 """
 

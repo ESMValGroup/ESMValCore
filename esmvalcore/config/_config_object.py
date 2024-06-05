@@ -112,15 +112,15 @@ def _get_config_dirs() -> dict[str, Path]:
         'defaults': Path(__file__).parent / 'config_defaults',
     }
 
-    # Environoment variable
+    # User input (medium priority)
+    config_user = _get_user_config()
+    config_dirs[config_user[0]] = config_user[1]
+
+    # Environoment variable (highest priority)
     if 'ESMVALTOOL_CONFIG_DIR' in os.environ:
         config_dirs['ESMVALTOOL_CONFIG_DIR environment variable'] = (
             Path(os.environ['ESMVALTOOL_CONFIG_DIR']).expanduser().absolute()
         )
-
-    # User input (highest priority)
-    config_user = _get_user_config()
-    config_dirs[config_user[0]] = config_user[1]
 
     # Check existence, except for default user configuration dir
     for (source, config_dir) in config_dirs.items():

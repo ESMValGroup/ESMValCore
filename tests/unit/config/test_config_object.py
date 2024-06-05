@@ -79,6 +79,7 @@ def test_load_from_file(monkeypatch):
     assert config
 
 
+# TODO: remove in v2.14.0
 def test_load_from_file_filenotfound(monkeypatch):
     """Test `Config.load_from_file`."""
     config = Config()
@@ -90,6 +91,7 @@ def test_load_from_file_filenotfound(monkeypatch):
         config.load_from_file('not_existent_file.yml')
 
 
+# TODO: remove in v2.14.0
 def test_load_from_file_invalidconfigparameter(monkeypatch, tmp_path):
     """Test `Config.load_from_file`."""
     monkeypatch.chdir(tmp_path)

@@ -110,7 +110,7 @@ def process_recipe(recipe_file: Path, session):
         "If your system hangs during execution, it may not have enough "
         "memory for keeping this number of tasks in memory.")
     logger.info("If you experience memory problems, try reducing "
-                "'max_parallel_tasks' in your user configuration file.")
+                "'max_parallel_tasks' in your configuration.")
 
     check_distributed_config()
 
@@ -531,7 +531,7 @@ class ESMValTool():
             logger.debug(
                 "If this data is further needed, then set "
                 "`save_intermediary_cubes` to `true` and `remove_preproc_dir` "
-                "to `false` in your user configuration file"
+                "to `false` in your configuration"
             )
             shutil.rmtree(session._fixed_file_dir)
 
@@ -541,8 +541,7 @@ class ESMValTool():
             )
             logger.info(
                 "If this data is further needed, then set "
-                "`remove_preproc_dir` to `false` in your user configuration "
-                "file"
+                "`remove_preproc_dir` to `false` in your configuration"
             )
             shutil.rmtree(session.preproc_dir)
 

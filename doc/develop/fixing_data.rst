@@ -375,8 +375,8 @@ To allow ESMValCore to locate the data files, use the following steps:
 
    - If you want to use the ``native6`` project (recommended for datasets whose
      input files can be easily moved to the usual ``native6`` directory
-     structure given by the ``rootpath`` in your :ref:`user configuration
-     file`; this is usually the case for native reanalysis/observational
+     structure given by the :ref:`configuration option <configuration_options>`
+     ``rootpath``; this is usually the case for native reanalysis/observational
      datasets):
 
      The entry ``native6`` of ``config-developer.yml`` should be complemented
@@ -399,17 +399,17 @@ To allow ESMValCore to locate the data files, use the following steps:
 
      To find your native data (e.g., called ``MYDATA``) that is for example
      located in ``{rootpath}/MYDATA/amip/run1/42-0/atm/run1_1979.nc``
-     (``{rootpath}`` is ESMValTool's ``rootpath`` for the project ``native6``
-     defined in your :ref:`user configuration file`), use the following dataset
-     entry in your recipe
+     (``{rootpath}`` is ESMValTool's ``rootpath`` :ref:`configuration option
+     <configuration_options>` for the project ``native6``), use the following
+     dataset entry in your recipe
 
      .. code-block:: yaml
 
         datasets:
           - {project: native6, dataset: MYDATA, exp: amip, simulation: run1, version: 42-0, type: atm}
 
-     and make sure to use the following DRS for the project ``native6`` in your
-     :ref:`user configuration file`:
+     and make sure to use the following :ref:`configuration option
+     <configuration_options>` ``drs``:
 
      .. code-block:: yaml
 
@@ -437,9 +437,9 @@ To allow ESMValCore to locate the data files, use the following steps:
 
      To find your ICON data that is for example located in files like
      ``{rootpath}/amip/amip_atm_2d_ml_20000101T000000Z.nc`` (``{rootpath}`` is
-     ESMValTool ``rootpath`` for the project ``ICON`` defined in your
-     :ref:`user configuration file`), use the following dataset entry in your
-     recipe:
+     ESMValCore's :ref:`configuration option <configuration_options>`
+     ``rootpath`` for the project ``ICON``), use the following dataset entry in
+     your recipe:
 
      .. code-block:: yaml
 

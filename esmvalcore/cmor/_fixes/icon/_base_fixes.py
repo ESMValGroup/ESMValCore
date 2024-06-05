@@ -217,9 +217,8 @@ class IconFix(NativeDatasetFix):
 
         Note
         ----
-        Files can be specified as absolute or relative (to
-        ``auxiliary_data_dir`` as defined in the :ref:`user configuration
-        file`) paths.
+        Files can be specified as absolute or relative (to the configuration
+        option ``auxiliary_data_dir``) paths.
 
         Parameters
         ----------

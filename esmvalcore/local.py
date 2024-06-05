@@ -459,7 +459,7 @@ def _get_data_sources(project: str) -> list[DataSource]:
 
     raise KeyError(
         f"No '{project}' or 'default' path specified under 'rootpath' in "
-        "the user configuration.")
+        "the configuration.")
 
 
 def _get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
