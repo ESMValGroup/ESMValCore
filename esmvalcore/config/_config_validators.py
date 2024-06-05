@@ -199,7 +199,8 @@ def validate_rootpath(value):
         if key == 'obs4mips':
             logger.warning(
                 "Correcting capitalization, project 'obs4mips' should be "
-                "written as 'obs4MIPs' in 'rootpath' in config-user.yml")
+                "written as 'obs4MIPs' in configured 'rootpath'"
+            )
             key = 'obs4MIPs'
         if isinstance(paths, Path):
             paths = str(paths)
@@ -223,7 +224,8 @@ def validate_drs(value):
         if key == 'obs4mips':
             logger.warning(
                 "Correcting capitalization, project 'obs4mips' should be "
-                "written as 'obs4MIPs' in 'drs' in config-user.yml")
+                "written as 'obs4MIPs' in configured 'drs'"
+            )
             key = 'obs4MIPs'
         new_mapping[key] = validate_string(drs)
     return new_mapping

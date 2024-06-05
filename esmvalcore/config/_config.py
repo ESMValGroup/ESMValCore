@@ -1,4 +1,4 @@
-"""Functions dealing with config-user.yml / config-developer.yml."""
+"""Functions dealing with config-developer.yml and extra facets."""
 from __future__ import annotations
 
 import collections.abc

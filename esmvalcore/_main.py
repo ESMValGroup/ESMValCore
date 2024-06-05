@@ -27,10 +27,13 @@ For further help, please read the documentation at
 http://docs.esmvaltool.org. Have fun!
 """  # noqa: line-too-long pylint: disable=line-too-long
 # pylint: disable=import-outside-toplevel
+from __future__ import annotations
+
 import logging
 import os
 import sys
 from pathlib import Path
+from typing import Optional
 
 if (sys.version_info.major, sys.version_info.minor) < (3, 10):
     from importlib_metadata import entry_points
@@ -172,19 +175,23 @@ class Config():
         logger.info('Copy finished.')
 
     @classmethod
-    def get_config_user(cls, overwrite=False, path=None):
-        """Copy default config-user.yml file to a given path.
+    def get_config_user(
+        cls,
+        overwrite: bool = False,
+        path: Optional[str | Path] = None,
+    ) -> None:
+        """Copy default configuration to a given path.
 
-        Copy default config-user.yml file to a given path or, if a path is
-        not provided, install it in the default `${HOME}/.esmvaltool` folder.
+        Copy default configuration to a given path or, if a `path` is not
+        provided, install it in the default `~/.config/esmvaltool/` directory.
 
         Parameters
         ----------
-        overwrite: boolean
+        overwrite:
             Overwrite an existing file.
-        path: str
-            If not provided, the file will be copied to
-            .esmvaltool in the user's home.
+        path:
+            If not provided, the file will be copied ``~/.config/esmvaltool/`.
+
         """
         in_file = (
             Path(__file__).parent /
@@ -201,19 +208,23 @@ class Config():
         cls._copy_config_file(in_file, out_file, overwrite)
 
     @classmethod
-    def get_config_developer(cls, overwrite=False, path=None):
+    def get_config_developer(
+        cls,
+        overwrite: bool = False,
+        path: Optional[str | Path] = None,
+    ) -> None:
         """Copy default config-developer.yml file to a given path.
 
         Copy default config-developer.yml file to a given path or, if a path is
-        not provided, install it in the default `${HOME}/.esmvaltool` folder.
+        not provided, install it in the default `~/.esmvaltool` folder.
 
         Parameters
         ----------
         overwrite: boolean
             Overwrite an existing file.
         path: str
-            If not provided, the file will be copied to
-            .esmvaltool in the user's home.
+            If not provided, the file will be copied to `~/.esmvaltool`.
+
         """
         in_file = Path(__file__).parent / 'config-developer.yml'
         if path is None:
@@ -376,8 +387,8 @@ class ESMValTool():
         config_file: str, optional
             Configuration file to use. Can be given as absolute or relative
             path. In the latter case, search in the current working directory
-            and `${HOME}/.esmvaltool` (in that order). If not provided, the
-            file `${HOME}/.esmvaltool/config-user.yml` will be used.
+            and `~/.esmvaltool` (in that order). If not provided, the file
+            `~/.esmvaltool/config-user.yml` will be used.
 
             .. deprecated:: 2.12.0
                 This option has been deprecated in ESMValCore version 2.12.0
