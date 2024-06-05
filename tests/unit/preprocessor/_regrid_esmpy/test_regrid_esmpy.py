@@ -1,5 +1,4 @@
 """Unit tests for the esmvalcore.preprocessor._regrid_esmpy module."""
-import sys
 from unittest import mock
 
 import cf_units
