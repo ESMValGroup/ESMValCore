@@ -27,114 +27,6 @@ URL = ('https://docs.esmvaltool.org/projects/'
        'ESMValCore/en/latest/quickstart/configure.html')
 
 
-def _get_user_config_dir_from_cli() -> None | str:
-    """Try to get user-defined configuration directory from CLI arguments.
-
-    The hack of directly parsing the CLI arguments here (instead of using the
-    `fire` or `argparser` module) ensures that the correct user configuration
-    file is used. This will always work, regardless of when this module has
-    been imported in the code.
-
-    Note
-    ----
-    If not called within the `esmvaltool` program, always return `None`.
-
-    """
-    if Path(sys.argv[0]).name != 'esmvaltool':
-        return None
-
-    for arg in sys.argv:
-        for opt in ('--config-dir', '--config_dir'):
-            if opt in arg:
-                # Parse '--config-dir=/dir' or '--config_dir=/dir'
-                partition = arg.partition('=')
-                if partition[2]:
-                    return partition[2]
-
-                # Parse '--config-dir /dir' or '--config_dir /dir'
-                config_idx = sys.argv.index(opt)
-                if config_idx == len(sys.argv) - 1:  # no dir given
-                    return None
-                return sys.argv[config_idx + 1]
-
-    return None
-
-
-def _get_user_config() -> tuple[str, Path]:
-    """Get user configuration directory.
-
-    The following directories are considered (sorted by priority):
-
-    1. Internal `_ESMVALTOOL_USER_CONFIG_DIR_` environment variable (this
-       ensures that any subprocess spawned by the esmvaltool program will use
-       the correct user configuration directory).
-    2. Command line arguments `--config-dir` or `--config_dir` (both variants
-       are allowed by the fire module), but only if script name is
-       `esmvaltool`.
-    3. Default directory (`~/.config/esmvaltool`).
-
-    Note
-    ----
-    If this function is used within the esmvaltool program, set the
-    `_ESMVALTOOL_USER_CONFIG_DIR_` at the end of this method to make sure that
-    subsequent calls of this method (also in suprocesses) use the correct user
-    configuration directory.
-
-    """
-    # (1) Internal _ESMVALTOOL_USER_CONFIG_FILE_ environment variable
-    source = '_ESMVALTOOL_USER_CONFIG_DIR_ environment variable'
-    config_dir: None | str | Path = os.getenv('_ESMVALTOOL_USER_CONFIG_DIR_')
-
-    # (2) CLI arguments
-    if config_dir is None:
-        source = 'command line argument'
-        config_dir = _get_user_config_dir_from_cli()
-
-    # (3) Default location
-    if config_dir is None:
-        source = 'default user configuration directory'
-        config_dir = Path.home() / '.config' / 'esmvaltool'
-
-    config_dir = Path(config_dir).expanduser().absolute()
-
-    # If used within the esmvaltool program, make sure that subsequent calls of
-    # this method (also in suprocesses) use the correct user configuration dir
-    if Path(sys.argv[0]).name == 'esmvaltool':
-        os.environ['_ESMVALTOOL_USER_CONFIG_DIR_'] = str(config_dir)
-
-    return (source, config_dir)
-
-
-def _get_config_dirs() -> dict[str, Path]:
-    """Get all configuration directories."""
-    # Defaults (lowest priority)
-    config_dirs: dict[str, Path] = {
-        'defaults': Path(__file__).parent / 'config_defaults',
-    }
-
-    # User input (medium priority)
-    config_user = _get_user_config()
-    config_dirs[config_user[0]] = config_user[1]
-
-    # Environoment variable (highest priority)
-    if 'ESMVALTOOL_CONFIG_DIR' in os.environ:
-        config_dirs['ESMVALTOOL_CONFIG_DIR environment variable'] = (
-            Path(os.environ['ESMVALTOOL_CONFIG_DIR']).expanduser().absolute()
-        )
-
-    # Check existence, except for default user configuration dir
-    for (source, config_dir) in config_dirs.items():
-        if source == 'default user configuration directory':
-            continue
-        if not config_dir.is_dir():
-            raise NotADirectoryError(
-                f"Configuration directory {config_dir} specified via {source} "
-                f"is not a valid directory"
-            )
-
-    return config_dirs
-
-
 class Config(ValidatedConfig):
     """ESMValTool configuration object.
 
@@ -161,37 +53,6 @@ class Config(ValidatedConfig):
             "to unexpected behavior. Use `esmvalcore.config.CFG` instead."
         )
         warnings.warn(msg, UserWarning)
-
-    def _load_from_global_paths(self):
-        """Load configuration from global paths."""
-        self.clear()
-        paths = [str(p) for p in CONFIG_DIRS.values()]
-        config_dict = dask.config.collect(paths=paths, env={})
-        try:
-            self.update(config_dict)
-        except InvalidConfigParameter as exc:
-            paths_str = '\n'.join(
-                f'{v} ({k})' for (k, v) in CONFIG_DIRS.items()
-            )
-            raise InvalidConfigParameter(
-                f"{str(exc)}\n\nThe following configuration directories have "
-                f"been read:\n{paths_str}"
-            )
-        self.check_missing()
-
-    @classmethod
-    def _from_global_paths(cls):
-        """Get configuration object from global paths."""
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                'ignore',
-                message="Do not instantiate `Config` objects directly",
-                category=UserWarning,
-                module='esmvalcore',
-            )
-            config_obj = Config()
-        config_obj._load_from_global_paths()
-        return config_obj
 
     # TODO: remove in v2.14.0
     @classmethod
@@ -409,7 +270,20 @@ class Config(ValidatedConfig):
 
     def reload(self):
         """Reload the original configuration object."""
-        self._load_from_global_paths()
+        self.clear()
+        paths = [str(p) for p in CONFIG_DIRS.values()]
+        config_dict = dask.config.collect(paths=paths, env={})
+        try:
+            self.update(config_dict)
+        except InvalidConfigParameter as exc:
+            paths_str = '\n'.join(
+                f'{v} ({k})' for (k, v) in CONFIG_DIRS.items()
+            )
+            raise InvalidConfigParameter(
+                f"{str(exc)}\n\nThe following configuration directories have "
+                f"been read:\n{paths_str}"
+            )
+        self.check_missing()
 
     def start_session(self, name: str):
         """Start a new session from this configuration object.
@@ -542,11 +416,133 @@ class Session(ValidatedConfig):
         return self.session_dir / self._relative_fixed_file_dir
 
 
+def _get_user_config_dir_from_cli() -> None | str:
+    """Try to get user-defined configuration directory from CLI arguments.
+
+    The hack of directly parsing the CLI arguments here (instead of using the
+    `fire` or `argparser` module) ensures that the correct user configuration
+    file is used. This will always work, regardless of when this module has
+    been imported in the code.
+
+    Note
+    ----
+    If not called within the `esmvaltool` program, always return `None`.
+
+    """
+    if Path(sys.argv[0]).name != 'esmvaltool':
+        return None
+
+    for arg in sys.argv:
+        for opt in ('--config-dir', '--config_dir'):
+            if opt in arg:
+                # Parse '--config-dir=/dir' or '--config_dir=/dir'
+                partition = arg.partition('=')
+                if partition[2]:
+                    return partition[2]
+
+                # Parse '--config-dir /dir' or '--config_dir /dir'
+                config_idx = sys.argv.index(opt)
+                if config_idx == len(sys.argv) - 1:  # no dir given
+                    return None
+                return sys.argv[config_idx + 1]
+
+    return None
+
+
+def _get_user_config() -> tuple[str, Path]:
+    """Get user configuration directory.
+
+    The following directories are considered (sorted by priority):
+
+    1. Internal `_ESMVALTOOL_USER_CONFIG_DIR_` environment variable (this
+       ensures that any subprocess spawned by the esmvaltool program will use
+       the correct user configuration directory).
+    2. Command line arguments `--config-dir` or `--config_dir` (both variants
+       are allowed by the fire module), but only if script name is
+       `esmvaltool`.
+    3. Default directory (`~/.config/esmvaltool`).
+
+    Note
+    ----
+    If this function is used within the esmvaltool program, set the
+    `_ESMVALTOOL_USER_CONFIG_DIR_` at the end of this method to make sure that
+    subsequent calls of this method (also in suprocesses) use the correct user
+    configuration directory.
+
+    """
+    # (1) Internal _ESMVALTOOL_USER_CONFIG_FILE_ environment variable
+    source = '_ESMVALTOOL_USER_CONFIG_DIR_ environment variable'
+    config_dir: None | str | Path = os.getenv('_ESMVALTOOL_USER_CONFIG_DIR_')
+
+    # (2) CLI arguments
+    if config_dir is None:
+        source = 'command line argument'
+        config_dir = _get_user_config_dir_from_cli()
+
+    # (3) Default location
+    if config_dir is None:
+        source = 'default user configuration directory'
+        config_dir = Path.home() / '.config' / 'esmvaltool'
+
+    config_dir = Path(config_dir).expanduser().absolute()
+
+    # If used within the esmvaltool program, make sure that subsequent calls of
+    # this method (also in suprocesses) use the correct user configuration dir
+    if Path(sys.argv[0]).name == 'esmvaltool':
+        os.environ['_ESMVALTOOL_USER_CONFIG_DIR_'] = str(config_dir)
+
+    return (source, config_dir)
+
+
+def _get_config_dirs() -> dict[str, Path]:
+    """Get all configuration directories."""
+    # Defaults (lowest priority)
+    config_dirs: dict[str, Path] = {
+        'defaults': Path(__file__).parent / 'config_defaults',
+    }
+
+    # User input (medium priority)
+    config_user = _get_user_config()
+    config_dirs[config_user[0]] = config_user[1]
+
+    # Environoment variable (highest priority)
+    if 'ESMVALTOOL_CONFIG_DIR' in os.environ:
+        config_dirs['ESMVALTOOL_CONFIG_DIR environment variable'] = (
+            Path(os.environ['ESMVALTOOL_CONFIG_DIR']).expanduser().absolute()
+        )
+
+    # Check existence, except for default user configuration dir
+    for (source, config_dir) in config_dirs.items():
+        if source == 'default user configuration directory':
+            continue
+        if not config_dir.is_dir():
+            raise NotADirectoryError(
+                f"Configuration directory {config_dir} specified via {source} "
+                f"is not a valid directory"
+            )
+
+    return config_dirs
+
+
+def get_global_config():
+    """Get configuration object from global paths."""
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore',
+            message="Do not instantiate `Config` objects directly",
+            category=UserWarning,
+            module='esmvalcore',
+        )
+        config_obj = Config()
+    config_obj.reload()
+    return config_obj
+
+
 # Deprecated way of specifying configuration (remove in v2.14.0)
 _DEPRECATIONS = []
 _deprecated_config_user_path = Config._get_config_user_path()
 if _deprecated_config_user_path.is_file():
-    msg = (
+    deprecation_msg = (
         f"Usage of the single configuration file "
         f"~/.esmvaltool/config-user.yml or specifying it via CLI argument "
         f"`--config_file` has been deprecated in ESMValCore version 2.12.0 "
@@ -555,8 +551,8 @@ if _deprecated_config_user_path.is_file():
         f"~/.config/esmvaltool` (or alternatively use a custom "
         f"`--config-dir`) and omit `--config_file`."
     )
-    warnings.warn(msg, ESMValCoreDeprecationWarning)
-    _DEPRECATIONS.append(msg)
+    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+    _DEPRECATIONS.append(deprecation_msg)
     CONFIG_DIRS = {
         'defaults': Path(__file__).parent / 'config_defaults',
         'single configuration file [deprecated]': _deprecated_config_user_path,
@@ -567,4 +563,4 @@ if _deprecated_config_user_path.is_file():
 # Initialize configuration objects
 else:
     CONFIG_DIRS = _get_config_dirs()
-    CFG = Config._from_global_paths()
+    CFG = get_global_config()

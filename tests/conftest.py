@@ -6,7 +6,7 @@ import pytest
 
 import esmvalcore
 import esmvalcore.config._config_object
-from esmvalcore.config import CFG, Config
+from esmvalcore.config import CFG
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def cfg_default(monkeypatch):
         'CONFIG_DIRS',
         {'defaults': path},
     )
-    cfg = Config._from_global_paths()
+    cfg = esmvalcore.config._config_object.get_global_config()
     return cfg
 
 
