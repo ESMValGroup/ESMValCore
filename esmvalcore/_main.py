@@ -190,7 +190,8 @@ class Config():
         overwrite:
             Overwrite an existing file.
         path:
-            If not provided, the file will be copied ``~/.config/esmvaltool/`.
+            If not provided, the file will be copied to
+            `~/.config/esmvaltool/`.
 
         """
         in_file = (
