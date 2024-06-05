@@ -327,6 +327,7 @@ _validators = {
     # From recipe
     'write_ncl_interface': validate_bool,
 
+    # TODO: remove in v2.14.0
     # config location
     'config_file': validate_path,
 }
@@ -357,6 +358,7 @@ def _handle_deprecation(
     warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
 
 
+# TODO: remove in v2.14.0
 def deprecate_config_file(validated_config, value, validated_value):
     """Deprecate ``config_file`` option.
 

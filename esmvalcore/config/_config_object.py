@@ -507,6 +507,7 @@ class Session(ValidatedConfig):
         """Return run directory."""
         return self.session_dir / self.relative_run_dir
 
+    # TODO: remove in v2.14.0
     @property
     def config_dir(self):
         """Return user config directory."""
