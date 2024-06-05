@@ -1,5 +1,4 @@
 """Recipe parser."""
-from __future__ import annotations
 
 import fnmatch
 import logging

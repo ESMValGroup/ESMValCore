@@ -3,7 +3,6 @@
 Allows for selecting data subsets using certain volume bounds; selecting
 depth or height regions; constructing volumetric averages;
 """
-from __future__ import annotations
 
 import logging
 import warnings

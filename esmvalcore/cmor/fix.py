@@ -4,7 +4,6 @@ All functions in this module will work even if no fixes are available
 for the given dataset. Therefore is recommended to apply them to all
 variables to be sure that all known errors are fixed.
 """
-from __future__ import annotations
 
 import logging
 import warnings

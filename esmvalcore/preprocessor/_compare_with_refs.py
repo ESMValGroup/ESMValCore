@@ -1,5 +1,4 @@
 """Preprocessor functions for comparisons of data with reference datasets."""
-from __future__ import annotations
 
 import logging
 from collections.abc import Iterable

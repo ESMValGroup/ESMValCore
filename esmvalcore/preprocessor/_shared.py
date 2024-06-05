@@ -3,7 +3,6 @@ Shared functions for preprocessor.
 
 Utility functions that can be used for multiple preprocessor steps
 """
-from __future__ import annotations
 
 import logging
 import re

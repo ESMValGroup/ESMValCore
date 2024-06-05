@@ -1,5 +1,4 @@
 """Module for checking iris cubes against their CMOR definitions."""
-from __future__ import annotations
 
 import logging
 import warnings

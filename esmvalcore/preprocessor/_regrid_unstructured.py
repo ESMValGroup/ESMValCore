@@ -1,5 +1,4 @@
 """Unstructured grid regridding."""
-from __future__ import annotations
 
 import logging
 

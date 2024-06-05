@@ -1,5 +1,4 @@
 """Config validation objects."""
-from __future__ import annotations
 
 import pprint
 import warnings

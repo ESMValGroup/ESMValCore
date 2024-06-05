@@ -1,5 +1,4 @@
 """Classes and functions for defining, finding, and loading data."""
-from __future__ import annotations
 
 import logging
 import pprint

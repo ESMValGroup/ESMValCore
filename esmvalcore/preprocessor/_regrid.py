@@ -1,5 +1,4 @@
 """Horizontal and vertical regridding module."""
-from __future__ import annotations
 
 import functools
 import importlib

@@ -3,7 +3,6 @@
 Read variable information from CMOR 2 and CMOR 3 tables and make it
 easily available for the other components of ESMValTool
 """
-from __future__ import annotations
 
 import copy
 import errno

@@ -3,7 +3,6 @@
 Allows for selecting data subsets using certain latitude and longitude
 bounds; selecting geographical regions; constructing area averages; etc.
 """
-from __future__ import annotations
 
 import logging
 import warnings

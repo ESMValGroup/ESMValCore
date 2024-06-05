@@ -1,5 +1,4 @@
 """Module with functions to check a recipe."""
-from __future__ import annotations
 
 import inspect
 import logging

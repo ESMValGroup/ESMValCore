@@ -1,5 +1,4 @@
 """Preprocessor functions that do not fit into any of the categories."""
-from __future__ import annotations
 
 import logging
 import string

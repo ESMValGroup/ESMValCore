@@ -2,7 +2,6 @@
 
 Allows for unit conversions.
 """
-from __future__ import annotations
 
 import logging
 

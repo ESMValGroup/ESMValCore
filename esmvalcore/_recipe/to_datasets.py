@@ -1,5 +1,4 @@
 """Module that contains functions for reading the `Dataset`s from a recipe."""
-from __future__ import annotations
 
 import logging
 from copy import deepcopy
