@@ -1577,7 +1577,7 @@ This is intended to be used with instantaneous data.
 Parameters:
     * `interval`: New frequency of the data. Must be a divisor of 24.
     * `offset`: First hour of the desired output data (default: 0). Must be
-      lower than the `interval`.
+      lower than the value of `interval`.
     * `interpolate`: If `interpolate` is ``None`` (default), convert x-hourly data to
       y-hourly (y > x) by eliminating extra time steps. If `interpolate` is
       'nearest' or 'linear', use nearest-neighbor or bilinear interpolation to
