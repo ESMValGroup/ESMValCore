@@ -3,6 +3,7 @@
 Allows for selecting data subsets using certain time bounds;
 constructing seasonal and area averages.
 """
+from __future__ import annotations
 
 import copy
 import datetime

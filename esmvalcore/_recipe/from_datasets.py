@@ -1,4 +1,5 @@
 """Functions for creating/updating a recipe with `Dataset`s."""
+from __future__ import annotations
 
 import itertools
 import logging

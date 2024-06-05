@@ -1,4 +1,5 @@
 """Functions dealing with config-user.yml / config-developer.yml."""
+from __future__ import annotations
 
 import collections.abc
 import fnmatch

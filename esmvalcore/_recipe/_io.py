@@ -1,4 +1,5 @@
 """Functions for reading recipes."""
+from __future__ import annotations
 
 import os.path
 from pathlib import Path

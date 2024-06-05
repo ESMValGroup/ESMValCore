@@ -1,4 +1,5 @@
 """Contains the base class for dataset fixes."""
+from __future__ import annotations
 
 import importlib
 import inspect

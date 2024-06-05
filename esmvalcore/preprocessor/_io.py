@@ -1,4 +1,5 @@
 """Functions for loading and saving cubes."""
+from __future__ import annotations
 
 import copy
 import logging

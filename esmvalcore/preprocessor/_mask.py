@@ -4,6 +4,7 @@ Module that performs a number of masking operations that include:
 masking with ancillary variables, masking with Natural Earth shapefiles
 (land or ocean), masking on thresholds, missing values masking.
 """
+from __future__ import annotations
 
 import logging
 import os

@@ -7,6 +7,7 @@ Wrapper functions separate esmvalcore internals, operating on products, from
 generalized functions that operate on iris cubes. These wrappers support
 grouped execution by passing a groupby keyword.
 """
+from __future__ import annotations
 
 import logging
 import warnings
