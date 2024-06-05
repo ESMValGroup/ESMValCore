@@ -52,6 +52,7 @@ These files can live in any of the following locations:
 
 1. If set, the directory specified with the ``ESMVALTOOL_CONFIG_DIR``
    environment variable.
+
 1. The user's configuration directory (by default ``~/.config/esmvaltool`` is
    used, but this can be changed with the ``--config_dir`` command line
    argument).
@@ -124,7 +125,7 @@ For example, YAML's ``null`` is Python's ``None``, YAML's ``true`` is Python's
 ``True``, and YAML's ``false`` is Python's ``False``.
 
 +-------------------------------+----------------------------------------+----------------------------------------+
-|Option                         | Description                            | Default value                          |
+| Option                        | Description                            | Default value                          |
 +===============================+========================================+========================================+
 | ``auxiliary_data_dir``        | Directory where auxiliary data is      | ``~/auxiliary_data``                   |
 |                               | stored [#f1]_                          |                                        |
@@ -156,13 +157,13 @@ For example, YAML's ``null`` is Python's ``None``, YAML's ``true`` is Python's
 |                               | ``info``, ``warning``, ``error``)      |                                        |
 +-------------------------------+----------------------------------------+----------------------------------------+
 | ``max_datasets``              | Maximum number of datasets to use      | ``null`` (i.e., use all datasets given |
-|                               |                                        |  in recipe)                      |
+|                               |                                        |  in recipe)                            |
 +-------------------------------+----------------------------------------+----------------------------------------+
 | ``max_parallel_tasks``        | Maximum number of parallel processes   | ``null`` (i.e., use number of          |
 |                               |                                        |  available CPUs)                       |
 +-------------------------------+----------------------------------------+----------------------------------------+
 | ``max_years``                 | Maximum number of years to use         | ``null`` (i.e., use all years given in |
-|                               |                                        |  recipe)                      |
+|                               |                                        |  recipe)                               |
 +-------------------------------+----------------------------------------+----------------------------------------+
 | ``output_dir``                | Directory where all output will be     | ``~/esmvaltool_output``                |
 |                               | written                                |                                        |
@@ -173,7 +174,7 @@ For example, YAML's ``null`` is Python's ``None``, YAML's ``true`` is Python's
 |                               | diagnostic run [#f3]_                  |                                        |
 +-------------------------------+----------------------------------------+----------------------------------------+
 | ``remove_preproc_dir``        | Remove the ``preproc`` directory if    | ``true``                               |
-|                               |the run was successful                  |                                        |
+|                               | the run was successful                 |                                        |
 +-------------------------------+----------------------------------------+----------------------------------------+
 | ``resume_from``               | Resume previous run(s) by using        | ``[]``                                 |
 |                               | preprocessor output files from these   |                                        |
