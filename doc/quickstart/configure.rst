@@ -53,9 +53,8 @@ These files can live in any of the following locations:
 1. If set, the directory specified with the ``ESMVALTOOL_CONFIG_DIR``
    environment variable.
 
-1. The user's configuration directory (by default ``~/.config/esmvaltool`` is
-   used, but this can be changed with the ``--config_dir`` command line
-   argument).
+1. The user's configuration directory (by default ``~/.config/esmvaltool``, but
+   this can be changed with the ``--config_dir`` command line argument).
 
 ESMValCore searches for all YAML files within each of these directories and
 merges them together using :func:`dask.config.collect`.
@@ -131,14 +130,15 @@ For example, YAML's ``null`` is Python's ``None``, YAML's ``true`` is Python's
 |                               | stored [#f1]_                          |                                        |
 +-------------------------------+----------------------------------------+----------------------------------------+
 | ``check_level``               | Sensitivity of the CMOR check          | ``default``                            |
+|                               | (``debug``, ``strict``, ``default``    |                                        |
+|                               | ``relaxed``, ``ignore``)               |                                        |
 +-------------------------------+----------------------------------------+----------------------------------------+
 | ``compress_netcdf``           | Use netCDF compression                 | ``false``                              |
 +-------------------------------+----------------------------------------+----------------------------------------+
-| ``config_developer_file``     | Path to custom                         | ``null`` (i.e., use default file)      |
-|                               | ``config-developer.yml`` file (see     |                                        |
-|                               | below)                                 |                                        |
+| ``config_developer_file``     | Path to custom                         | ``null`` (default file)                |
+|                               | :ref:`config-developer` file           |                                        |
 +-------------------------------+----------------------------------------+----------------------------------------+
-| ``diagnostics``               | Only run the selected diagnostics from | ``null`` (i.e., run all diagnostics)   |
+| ``diagnostics``               | Only run the selected diagnostics from | ``null`` (all diagnostics)             |
 |                               | the recipe                             |                                        |
 +-------------------------------+----------------------------------------+----------------------------------------+
 | ``download_dir``              | Directory where downloaded data will   | ``~/climate_data``                     |
@@ -156,14 +156,11 @@ For example, YAML's ``null`` is Python's ``None``, YAML's ``true`` is Python's
 | ``log_level``                 | Log level of the console (``debug``,   | ``info``                               |
 |                               | ``info``, ``warning``, ``error``)      |                                        |
 +-------------------------------+----------------------------------------+----------------------------------------+
-| ``max_datasets``              | Maximum number of datasets to use      | ``null`` (i.e., use all datasets given |
-|                               |                                        |  in recipe)                            |
+| ``max_datasets``              | Maximum number of datasets to use      | ``null`` (all datasets from recipe)    |
 +-------------------------------+----------------------------------------+----------------------------------------+
-| ``max_parallel_tasks``        | Maximum number of parallel processes   | ``null`` (i.e., use number of          |
-|                               |                                        |  available CPUs)                       |
+| ``max_parallel_tasks``        | Maximum number of parallel processes   | ``null`` (number of available CPUs)    |
 +-------------------------------+----------------------------------------+----------------------------------------+
-| ``max_years``                 | Maximum number of years to use         | ``null`` (i.e., use all years given in |
-|                               |                                        |  recipe)                               |
+| ``max_years``                 | Maximum number of years to use         | ``null`` (all years from recipe)       |
 +-------------------------------+----------------------------------------+----------------------------------------+
 | ``output_dir``                | Directory where all output will be     | ``~/esmvaltool_output``                |
 |                               | written                                |                                        |
@@ -216,7 +213,7 @@ For example, YAML's ``null`` is Python's ``None``, YAML's ``true`` is Python's
        This setting is not for model or observational datasets, rather it is
        for extra data files such as shapefiles or other data sources needed by
        the diagnostics.
-.. [#f2] A detailed explanation of the data finding-related sections ``drs``
+.. [#f2] A detailed explanation of the data finding-related options ``drs``
     and ``rootpath`` is presented in the :ref:`data-retrieval` section.
     These sections relate directly to the data finding capabilities of
     ESMValCore and are very important to be understood by the user.
