@@ -152,7 +152,7 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 |                               | diagnostic scripts)                    |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``extra_facets_dir``          | Additional custom directory for        | :obj:`list` of :obj:`str`   | ``[]``                                 |
-|                               | :ref:`extra facets <extra_facets>`     |                             |                                        |
+|                               | :ref:`extra_facets`                    |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``log_level``                 | Log level of the console (``debug``,   | :obj:`str`                  | ``info``                               |
 |                               | ``info``, ``warning``, ``error``)      |                             |                                        |
