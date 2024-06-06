@@ -79,16 +79,6 @@ def check_time(cube):
     time = cube.coord('time', dim_coords=True)
     assert time.var_name == 'time'
     assert time.standard_name == 'time'
-    # assert time.long_name == 'time'
-    # assert time.units == Unit('days since 1979-01-01',
-    #                           calendar='proleptic_gregorian')
-    # np.testing.assert_allclose(
-    #     time.points,
-    #     [
-    #         7649.5, 7680.5, 7710.0, 7739.5, 7770.0, 7800.5, 7831.0, 7861.5,
-    #         7892.5, 7923.0, 7953.5, 7984.0
-    #     ],
-    # )
     assert time.bounds.shape == (1, 2)
     assert time.attributes == {}
 
@@ -99,20 +89,7 @@ def check_lat(cube):
     lat = cube.coord('latitude', dim_coords=True)
     assert lat.var_name == 'lat'
     assert lat.standard_name == 'latitude'
-    # assert lat.long_name == 'latitude'
     assert lat.units == 'degrees_north'
-    # np.testing.assert_allclose(
-    #     lat.points,
-    #     [
-    #         59.4444082891668, 19.8757191474409, -19.8757191474409,
-    #         -59.4444082891668
-    #     ],
-    # )
-    # np.testing.assert_allclose(
-    #     lat.bounds,
-    #     [[90.0, 39.384861047478], [39.384861047478, 0.0],
-    #      [0.0, -39.384861047478], [-39.384861047478, -90.0]],
-    # )
     assert lat.attributes == {}
 
 
@@ -122,17 +99,7 @@ def check_lon(cube):
     lon = cube.coord('longitude', dim_coords=True)
     assert lon.var_name == 'lon'
     assert lon.standard_name == 'longitude'
-    # assert lon.long_name == 'longitude'
     assert lon.units == 'degrees_east'
-    # np.testing.assert_allclose(
-    #     lon.points,
-    #     [0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0],
-    # )
-    # np.testing.assert_allclose(
-    #     lon.bounds,
-    #     [[-22.5, 22.5], [22.5, 67.5], [67.5, 112.5], [112.5, 157.5],
-    #      [157.5, 202.5], [202.5, 247.5], [247.5, 292.5], [292.5, 337.5]],
-    # )
     assert lon.attributes == {}
 
 
@@ -142,7 +109,6 @@ def check_heightxm(cube, height_value):
     height = cube.coord('height')
     assert height.var_name == 'height'
     assert height.standard_name == 'height'
-    # assert height.long_name == 'height'
     assert height.units == 'm'
     assert height.attributes == {'positive': 'up'}
     np.testing.assert_allclose(height.points, [height_value])
@@ -168,7 +134,7 @@ def test_only_time(monkeypatch, cubes_2d):
             cube = check_tas_metadata(fixed_cubes)
         elif var == 'pr':
             cube == check_pr_metadata(fixed_cubes)
-        # cube = fixed_cubes
+
         # Check cube data
         assert cube.shape == (1, 145, 192)
 
@@ -234,7 +200,6 @@ def test_only_longitude(monkeypatch, cubes_2d):
 
         # Check cube data
         assert cube.shape == (1, 145, 192)
-        # np.testing.assert_equal(cube.data, [1, 1])
 
         # Check longitude metadata
         assert cube.coords('longitude', dim_coords=True)
