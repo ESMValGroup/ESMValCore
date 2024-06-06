@@ -544,6 +544,8 @@ script will receive the preprocessed air temperature data
 script will receive the results of diagnostic_a.py and the preprocessed precipitation
 data (has ancestors ``diagnostic_1/script_a`` and ``diagnostic_2/precip``).
 
+.. _task_priority:
+
 Task priority
 -------------
 Tasks are assigned a priority, with tasks appearing earlier on in the recipe

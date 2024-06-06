@@ -329,9 +329,9 @@ severity. From highest to lowest:
 
 Users can have control about which levels of issues are interpreted as errors,
 and therefore make the checker fail or warnings or debug messages.
-For this purpose there is an optional configuration option `--check_level`
-that can take a number of values, listed below from the lowest level of
-strictness to the highest:
+For this purpose there is an optional :ref:`configuration option
+<config_options>` ``check_level`` that can take a number of values, listed
+below from the lowest level of strictness to the highest:
 
 - ``ignore``: all issues, regardless of severity, will be reported as
   warnings. Checker will never fail. Use this at your own risk.

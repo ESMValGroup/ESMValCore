@@ -28,6 +28,8 @@ A summary of the output is produced in the file:
 ``index.html``
 
 
+.. _preprocessed_datasets:
+
 Preprocessed datasets
 =====================
 
@@ -35,11 +37,13 @@ The preprocessed datasets will be stored to the preproc/ directory.
 Each variable in each diagnostic will have its own the `metadata.yml`_
 interface files saved in the preproc directory.
 
-If the configuration option ``save_intermediary_cubes`` is set to ``true``,
-then the intermediary cubes will also be saved here (default: ``false``).
+If the :ref:`configuration option <config_options>` ``save_intermediary_cubes``
+is set to ``true``, then the intermediary cubes will also be saved here
+(default: ``false``).
 
-If the configuration option ``remove_preproc_dir`` is set to ``true``, then the
-preproc directory will be deleted after the run completes (default: ``true``).
+If the :ref:`configuration option <config_options>` ``remove_preproc_dir`` is
+set to ``true``, then the preproc directory will be deleted after the run
+completes (default: ``true``).
 
 
 Run

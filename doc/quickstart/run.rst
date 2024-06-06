@@ -126,7 +126,7 @@ To run only the preprocessor tasks from a recipe, use
 .. note::
 
     Only preprocessing :ref:`tasks <tasks>` that completed successfully
-    can be re-used with the ``--resume_from`` option.
+    can be reused with the ``--resume_from`` option.
     Preprocessing tasks that completed successfully, contain a file called
     :ref:`metadata.yml <interface_esmvalcore_diagnostic>` in their output
     directory.
