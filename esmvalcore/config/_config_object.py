@@ -488,10 +488,10 @@ def _get_user_config_dir_from_cli() -> None | str:
     return None
 
 
-def _get_user_config() -> tuple[str, Path]:
+def _get_user_config(ignore_internal_env: bool = False) -> tuple[str, Path]:
     """Get user configuration directory.
 
-    The following directories are considered (sorted by priority):
+    The following directories are considered (descending priority):
 
     1. Internal `_ESMVALTOOL_USER_CONFIG_DIR_` environment variable (this
        ensures that any subprocess spawned by the esmvaltool program will use
@@ -509,9 +509,13 @@ def _get_user_config() -> tuple[str, Path]:
     configuration directory.
 
     """
+    source = ''
+    config_dir: None | str | Path = None
+
     # (1) Internal _ESMVALTOOL_USER_CONFIG_FILE_ environment variable
-    source = '_ESMVALTOOL_USER_CONFIG_DIR_ environment variable'
-    config_dir: None | str | Path = os.getenv('_ESMVALTOOL_USER_CONFIG_DIR_')
+    if not ignore_internal_env:
+        source = '_ESMVALTOOL_USER_CONFIG_DIR_ environment variable'
+        config_dir = os.getenv('_ESMVALTOOL_USER_CONFIG_DIR_')
 
     # (2) CLI arguments
     if config_dir is None:
@@ -533,7 +537,7 @@ def _get_user_config() -> tuple[str, Path]:
     return (source, config_dir)
 
 
-def get_config_dirs() -> dict[str, Path]:
+def get_config_dirs(ignore_internal_env: bool = False) -> dict[str, Path]:
     """Get all configuration directories."""
     # Deprecated (remove in v2.14.0)
     _deprecated_config_user_path = Config._get_config_user_path()
@@ -552,10 +556,10 @@ def get_config_dirs() -> dict[str, Path]:
     }
 
     # User input (medium priority)
-    config_user = _get_user_config()
+    config_user = _get_user_config(ignore_internal_env=ignore_internal_env)
     config_dirs[config_user[0]] = config_user[1]
 
-    # Environoment variable (highest priority)
+    # Environment variable (highest priority)
     if 'ESMVALTOOL_CONFIG_DIR' in os.environ:
         config_dirs['ESMVALTOOL_CONFIG_DIR environment variable'] = (
             Path(os.environ['ESMVALTOOL_CONFIG_DIR']).expanduser().absolute()

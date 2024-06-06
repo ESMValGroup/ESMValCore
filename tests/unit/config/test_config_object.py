@@ -471,6 +471,24 @@ def test_get_config_dirs_internal_env(tmp_path, monkeypatch):
     assert config_dirs == expected
 
 
+def test_get_config_dirs_ignore_internal_env(tmp_path, monkeypatch):
+    """Test `_get_config_dirs`."""
+    monkeypatch.setenv('_ESMVALTOOL_USER_CONFIG_DIR_', str(tmp_path))
+    monkeypatch.delenv('ESMVALTOOL_CONFIG_DIR', raising=False)
+
+    config_dirs = esmvalcore.config._config_object.get_config_dirs(
+        ignore_internal_env=True
+    )
+
+    expected = {
+        'defaults':
+        Path(esmvalcore.__file__).parent / 'config' / 'config_defaults',
+        'default user configuration directory':
+        Path('~/.config/esmvaltool').expanduser(),
+    }
+    assert config_dirs == expected
+
+
 def test_get_config_dirs_cli_arg(tmp_path, monkeypatch):
     """Test `_get_config_dirs`."""
     monkeypatch.delenv('_ESMVALTOOL_USER_CONFIG_DIR_', raising=False)

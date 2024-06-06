@@ -491,6 +491,7 @@ class ESMValTool():
     def _log_header(self, log_files):
         from . import __version__
         from .config._config_object import get_config_dirs
+        config_dirs = get_config_dirs(ignore_internal_env=True)
         logger.info(HEADER)
         logger.info('Package versions')
         logger.info('----------------')
@@ -500,7 +501,7 @@ class ESMValTool():
         logger.info('----------------')
         logger.info(
             "Reading configuration files from:\n%s",
-            "\n".join(f'{v} ({k})' for (k, v) in get_config_dirs().items())
+            "\n".join(f'{v} ({k})' for (k, v) in config_dirs.items())
         )
         logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 
