@@ -53,7 +53,7 @@ These files can live in any of the following locations:
 1. If set, the directory specified with the ``ESMVALTOOL_CONFIG_DIR``
    environment variable.
 
-1. The user configuration directory (by default ``~/.config/esmvaltool``, but
+2. The user configuration directory (by default ``~/.config/esmvaltool``, but
    this can be changed with the ``--config_dir`` command line argument).
 
 ESMValCore searches for all YAML files within each of these directories and

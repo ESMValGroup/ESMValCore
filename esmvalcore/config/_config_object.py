@@ -276,12 +276,12 @@ class Config(ValidatedConfig):
         1. If set, the directory specified with the ``ESMVALTOOL_CONFIG_DIR``
            environment variable.
 
-        1. The user configuration directory (by default
+        2. The user configuration directory (by default
            ``~/.config/esmvaltool``, but this can be changed with the
            ``--config_dir`` command line argument when running the
            ``esmvaltool`` command line tool).
 
-        1. Default configuration, see :ref:`config_options`.
+        3. Default configuration, see :ref:`config_options`.
 
         Raises
         ------
