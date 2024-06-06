@@ -146,17 +146,28 @@ def merge_cube_attributes(
             attributes.setdefault(attr, [])
             attributes[attr].append(val)
 
-    # Step 2: if values are not equal, first convert them to strings (so that
+    # Step 2: use the first cube in which an attribute occurs to decide if an
+    # attribute is global or local.
+    final_attributes = iris.cube.CubeAttrsDict()
+    for cube in cubes:
+        for attr, value in cube.attributes.locals.items():
+            if attr not in final_attributes:
+                final_attributes.locals[attr] = value
+        for attr, value in cube.attributes.globals.items():
+            if attr not in final_attributes:
+                final_attributes.globals[attr] = value
+
+    # Step 3: if values are not equal, first convert them to strings (so that
     # set() can be used); then extract unique elements from this list, sort it,
     # and use the delimiter to join all elements to a single string.
-    # Uses the first cube to decide if an attribute is global or local.
-    final_attributes = cubes[0].attributes.copy()
     for (attr, vals) in attributes.items():
         set_of_str = sorted({str(v) for v in vals})
-        if len(set_of_str) > 1:
+        if len(set_of_str) == 1:
+            final_attributes[attr] = vals[0]
+        else:
             final_attributes[attr] = delimiter.join(set_of_str)
 
-    # Step 3: modify the cubes in-place
+    # Step 4: modify the cubes in-place
     for cube in cubes:
         cube.attributes = final_attributes
 
