@@ -151,7 +151,7 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 | ``exit_on_warning``           | Exit on warning (only used in NCL      | :obj:`bool`                 | ``False``                              |
 |                               | diagnostic scripts)                    |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
-| ``extra_facets_dir``          | Additional custom directory for        | :obj:`list` of :obj:`str`    | ``[]``                                 |
+| ``extra_facets_dir``          | Additional custom directory for        | :obj:`list` of :obj:`str`   | ``[]``                                 |
 |                               | :ref:`extra facets <extra_facets>`     |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``log_level``                 | Log level of the console (``debug``,   | :obj:`str`                  | ``info``                               |
@@ -161,7 +161,7 @@ For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
 |                               | :ref:`running`                         |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``max_parallel_tasks``        | Maximum number of parallel processes,  | :obj:`int`                  | ``None`` (number of available CPUs)    |
-|                               | see also :ref:`_task_priority`         |                             |                                        |
+|                               | see also :ref:`task_priority`          |                             |                                        |
 +-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 | ``max_years``                 | Maximum number of years to use, see    | :obj:`int`                  | ``None`` (all years from recipe)       |
 |                               | :ref:`running`                         |                             |                                        |

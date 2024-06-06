@@ -74,9 +74,9 @@ directory at ``~/.config/esmvaltool``.
 If set, the directory specified with the ``ESMVALTOOL_CONFIG_DIR`` environment
 variable will also be read (taking precedence over files in
 ``~/.config/esmvaltool``).
-
-To reload the current configuration object (i.e., restore the original
-configuration options), use:
+Defaults for options that are not specified explicitly are listed :ref:`here
+<config_options>`.
+To reload the current configuration object according to these rules, use:
 
 .. code-block:: python
 
