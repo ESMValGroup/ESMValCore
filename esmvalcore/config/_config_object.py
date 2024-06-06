@@ -269,20 +269,59 @@ class Config(ValidatedConfig):
         self.update(Config._load_user_config(filename))
 
     def reload(self):
-        """Reload the original configuration object."""
+        """Reload the configuration object.
+
+        This considers the following YAML files (descending priority):
+
+        1. If set, the directory specified with the ``ESMVALTOOL_CONFIG_DIR``
+           environment variable.
+
+        1. The user configuration directory (by default
+           ``~/.config/esmvaltool``, but this can be changed with the
+           ``--config_dir`` command line argument when running the
+           ``esmvaltool`` command line tool).
+
+        1. Default configuration, see :ref:`config_options`.
+
+        Raises
+        ------
+        esmvalcore.exceptions.InvalidConfigParameter
+            Invalid configuration option given.
+
+        """
         self.clear()
-        paths = [str(p) for p in CONFIG_DIRS.values()]
+
+        # Deprecated (remove in v2.14.0)
+        _deprecated_config_user_path = Config._get_config_user_path()
+        if _deprecated_config_user_path.is_file():
+            deprecation_msg = (
+                f"Usage of the single configuration file "
+                f"~/.esmvaltool/config-user.yml or specifying it via CLI "
+                f"argument `--config_file` has been deprecated in ESMValCore "
+                f"version 2.12.0 and is scheduled for removal in version "
+                f"2.14.0. Please run `mkdir -p ~/.config/esmvaltool && mv "
+                f"{_deprecated_config_user_path} ~/.config/esmvaltool` (or "
+                f"alternatively use a custom `--config_dir`) and omit "
+                f"`--config_file`."
+            )
+            warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
+            self.update(Config._load_user_config(raise_exception=False))
+            return
+
+        # New since v2.12.0
+        config_dirs = get_config_dirs()
+        paths = [str(p) for p in config_dirs.values()]
         config_dict = dask.config.collect(paths=paths, env={})
         try:
             self.update(config_dict)
         except InvalidConfigParameter as exc:
             paths_str = '\n'.join(
-                f'{v} ({k})' for (k, v) in CONFIG_DIRS.items()
+                f'{v} ({k})' for (k, v) in config_dirs.items()
             )
             raise InvalidConfigParameter(
                 f"{str(exc)}\n\nThe following configuration directories have "
                 f"been read:\n{paths_str}"
-            )
+            ) from exc
         self.check_missing()
 
     def start_session(self, name: str):
@@ -494,10 +533,21 @@ def _get_user_config() -> tuple[str, Path]:
     return (source, config_dir)
 
 
-def _get_config_dirs() -> dict[str, Path]:
+def get_config_dirs() -> dict[str, Path]:
     """Get all configuration directories."""
+    # Deprecated (remove in v2.14.0)
+    _deprecated_config_user_path = Config._get_config_user_path()
+    if _deprecated_config_user_path.is_file():
+        config_dirs = {
+            'defaults': Path(__file__).parent / 'config_defaults',
+            'single configuration file [deprecated]':
+            _deprecated_config_user_path,
+        }
+        return config_dirs
+
+    # New since v2.12.0
     # Defaults (lowest priority)
-    config_dirs: dict[str, Path] = {
+    config_dirs = {
         'defaults': Path(__file__).parent / 'config_defaults',
     }
 
@@ -524,8 +574,8 @@ def _get_config_dirs() -> dict[str, Path]:
     return config_dirs
 
 
-def get_global_config():
-    """Get configuration object from global paths."""
+def get_global_config() -> Config:
+    """Get global configuration object."""
     with warnings.catch_warnings():
         warnings.filterwarnings(
             'ignore',
@@ -538,29 +588,5 @@ def get_global_config():
     return config_obj
 
 
-# Deprecated way of specifying configuration (remove in v2.14.0)
-_DEPRECATIONS = []
-_deprecated_config_user_path = Config._get_config_user_path()
-if _deprecated_config_user_path.is_file():
-    deprecation_msg = (
-        f"Usage of the single configuration file "
-        f"~/.esmvaltool/config-user.yml or specifying it via CLI argument "
-        f"`--config_file` has been deprecated in ESMValCore version 2.12.0 "
-        f"and is scheduled for removal in version 2.14.0. Please run "
-        f"`mkdir -p ~/.config/esmvaltool && mv {_deprecated_config_user_path} "
-        f"~/.config/esmvaltool` (or alternatively use a custom "
-        f"`--config_dir`) and omit `--config_file`."
-    )
-    warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
-    _DEPRECATIONS.append(deprecation_msg)
-    CONFIG_DIRS = {
-        'defaults': Path(__file__).parent / 'config_defaults',
-        'single configuration file [deprecated]': _deprecated_config_user_path,
-    }
-    CFG = Config._load_user_config(raise_exception=False)
-
-# New way of specifying configuration
 # Initialize configuration objects
-else:
-    CONFIG_DIRS = _get_config_dirs()
-    CFG = get_global_config()
+CFG = get_global_config()

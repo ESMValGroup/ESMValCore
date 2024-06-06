@@ -33,8 +33,10 @@ def wrapper(f):
 def arguments(*args):
     backup = sys.argv
     sys.argv = list(args)
-    yield
-    sys.argv = backup
+    try:
+        yield
+    finally:
+        sys.argv = backup
 
 
 def test_setargs():

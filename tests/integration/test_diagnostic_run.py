@@ -180,12 +180,15 @@ def test_diagnostic_run(tmp_path, script_file, script):
     # ensure that tags are cleared
     TAGS.clear()
 
-    write_config_user_file(tmp_path)
+    config_dir = tmp_path / 'config'
+    config_dir.mkdir(parents=True, exist_ok=True)
+    write_config_user_file(config_dir)
+
     with arguments(
             'esmvaltool',
             'run',
             '--config_dir',
-            str(tmp_path),
+            str(config_dir),
             str(recipe_file),
     ):
         run()

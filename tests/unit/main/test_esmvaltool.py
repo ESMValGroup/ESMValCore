@@ -179,12 +179,12 @@ def test_do_not_clean_preproc_dir(session):
 
 
 @mock.patch('esmvalcore._main.entry_points')
-def test_header(mock_entry_points, monkeypatch, caplog):
+def test_header(mock_entry_points, mocker, caplog):
     path = Path(esmvalcore.__file__).parent / 'config' / 'config_defaults'
-    monkeypatch.setattr(
+    mocker.patch.object(
         esmvalcore.config._config_object,
-        'CONFIG_DIRS',
-        {'defaults': path},
+        'get_config_dirs',
+        return_value={'defaults': path},
     )
     entry_point = mock.Mock()
     entry_point.dist.name = 'MyEntry'

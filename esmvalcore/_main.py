@@ -379,12 +379,7 @@ class ESMValTool():
         # remove it here
         kwargs.pop('config_dir', None)
 
-        import warnings
-
         from .config import CFG
-        # TODO: remove in v2.14.0
-        from .config._config_object import _DEPRECATIONS
-        from .exceptions import ESMValCoreDeprecationWarning
 
         # TODO: remove in v2.14.0
         # At this point, --config_file is already parsed if a valid file has
@@ -405,8 +400,6 @@ class ESMValTool():
 
         # Print warnings about deprecated configuration options again:
         CFG.reload()
-        for msg in _DEPRECATIONS:
-            warnings.warn(msg, ESMValCoreDeprecationWarning)
 
     @staticmethod
     def _create_session_dir(session):
@@ -497,7 +490,7 @@ class ESMValTool():
 
     def _log_header(self, log_files):
         from . import __version__
-        from .config._config_object import CONFIG_DIRS
+        from .config._config_object import get_config_dirs
         logger.info(HEADER)
         logger.info('Package versions')
         logger.info('----------------')
@@ -507,7 +500,7 @@ class ESMValTool():
         logger.info('----------------')
         logger.info(
             "Reading configuration files from:\n%s",
-            "\n".join(f'{v} ({k})' for (k, v) in CONFIG_DIRS.items())
+            "\n".join(f'{v} ({k})' for (k, v) in get_config_dirs().items())
         )
         logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 

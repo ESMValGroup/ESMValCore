@@ -10,12 +10,13 @@ from esmvalcore.config import CFG
 
 
 @pytest.fixture
-def cfg_default(monkeypatch):
+def cfg_default(mocker):
+    """Configuration object with defaults."""
     path = Path(esmvalcore.__file__).parent / 'config' / 'config_defaults'
-    monkeypatch.setattr(
+    mocker.patch.object(
         esmvalcore.config._config_object,
-        'CONFIG_DIRS',
-        {'defaults': path},
+        'get_config_dirs',
+        return_value={'defaults': path},
     )
     cfg = esmvalcore.config._config_object.get_global_config()
     return cfg
@@ -23,6 +24,7 @@ def cfg_default(monkeypatch):
 
 @pytest.fixture
 def session(tmp_path: Path, cfg_default, monkeypatch):
+    """Session object with default settings."""
     for key, value in cfg_default.items():
         monkeypatch.setitem(CFG, key, deepcopy(value))
     monkeypatch.setitem(CFG, 'rootpath', {'default': {tmp_path: 'default'}})

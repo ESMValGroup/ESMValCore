@@ -1,6 +1,5 @@
 import os
 from collections.abc import MutableMapping
-from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -115,17 +114,34 @@ def test_config_key_error():
         config['invalid_key']
 
 
-def test_reload(cfg_default, monkeypatch):
+def test_reload(cfg_default, mocker):
     """Test `Config.reload`."""
-    cfg_copy = deepcopy(cfg_default)
     path = Path(esmvalcore.__file__).parent / 'config' / 'config_defaults'
-    monkeypatch.setattr(
+    mocker.patch.object(
         esmvalcore.config._config_object,
-        'CONFIG_DIRS',
-        {'defaults': path},
+        'get_config_dirs',
+        return_value={'defaults': path},
     )
-    cfg_default.reload()
-    assert cfg_default == cfg_copy
+    cfg = Config()
+
+    cfg.reload()
+
+    assert cfg == cfg_default
+
+
+def test_reload_fail(mocker, tmp_path):
+    """Test `Config.reload`."""
+    config_file = tmp_path / 'invalid_config_file.yml'
+    config_file.write_text('invalid_option: 1')
+    mocker.patch.object(
+        esmvalcore.config._config_object,
+        'get_config_dirs',
+        return_value={'path with invalid config': config_file},
+    )
+    cfg = Config()
+
+    with pytest.raises(InvalidConfigParameter):
+        cfg.reload()
 
 
 def test_session():
@@ -427,7 +443,7 @@ def test_get_config_dirs_env(tmp_path, monkeypatch):
     monkeypatch.delenv('_ESMVALTOOL_USER_CONFIG_DIR_', raising=False)
     monkeypatch.setenv('ESMVALTOOL_CONFIG_DIR', str(tmp_path))
 
-    config_dirs = esmvalcore.config._config_object._get_config_dirs()
+    config_dirs = esmvalcore.config._config_object.get_config_dirs()
 
     expected = {
         'defaults':
@@ -444,7 +460,7 @@ def test_get_config_dirs_internal_env(tmp_path, monkeypatch):
     monkeypatch.setenv('_ESMVALTOOL_USER_CONFIG_DIR_', str(tmp_path))
     monkeypatch.setenv('ESMVALTOOL_CONFIG_DIR', str(tmp_path))
 
-    config_dirs = esmvalcore.config._config_object._get_config_dirs()
+    config_dirs = esmvalcore.config._config_object.get_config_dirs()
 
     expected = {
         'defaults':
@@ -461,7 +477,7 @@ def test_get_config_dirs_cli_arg(tmp_path, monkeypatch):
     monkeypatch.delenv('ESMVALTOOL_CONFIG_DIR', raising=False)
 
     with arguments('esmvaltool', 'run', f'--config_dir={tmp_path}'):
-        config_dirs = esmvalcore.config._config_object._get_config_dirs()
+        config_dirs = esmvalcore.config._config_object.get_config_dirs()
 
     expected = {
         'defaults':
@@ -477,7 +493,7 @@ def test_get_config_dirs_invalid_env(monkeypatch):
     monkeypatch.setenv('ESMVALTOOL_CONFIG_DIR', '/not/a/dir')
 
     with pytest.raises(NotADirectoryError):
-        esmvalcore.config._config_object._get_config_dirs()
+        esmvalcore.config._config_object.get_config_dirs()
 
 
 def test_get_config_dirs_invalid_cli_arg(monkeypatch):
@@ -487,4 +503,41 @@ def test_get_config_dirs_invalid_cli_arg(monkeypatch):
 
     with pytest.raises(NotADirectoryError):
         with arguments('esmvaltool', 'run', '--config_dir=/not/a/dir'):
-            esmvalcore.config._config_object._get_config_dirs()
+            esmvalcore.config._config_object.get_config_dirs()
+
+
+# TODO: remove in v2.14.0
+def test_get_global_config_deprecated(mocker, tmp_path):
+    """Test ``get_global_config``."""
+    config_file = tmp_path / 'old_config_user.yml'
+    config_file.write_text('output_dir: /new/output/dir')
+    mocker.patch.object(
+        esmvalcore.config._config_object.Config,
+        '_get_config_user_path',
+        return_value=config_file,
+    )
+    with pytest.warns(ESMValCoreDeprecationWarning):
+        cfg = esmvalcore.config._config_object.get_global_config()
+
+    assert cfg['output_dir'] == Path('/new/output/dir')
+
+
+# TODO: remove in v2.14.0
+def test_get_config_dirs_deprecated(mocker, tmp_path):
+    """Test ``get_config_dirs``."""
+    config_file = tmp_path / 'old_config_user.yml'
+    config_file.write_text('output_dir: /new/output/dir')
+    mocker.patch.object(
+        esmvalcore.config._config_object.Config,
+        '_get_config_user_path',
+        return_value=config_file,
+    )
+
+    config_dirs = esmvalcore.config._config_object.get_config_dirs()
+
+    expected = {
+        'defaults':
+        Path(esmvalcore.__file__).parent / 'config' / 'config_defaults',
+        'single configuration file [deprecated]': config_file,
+    }
+    assert config_dirs == expected
