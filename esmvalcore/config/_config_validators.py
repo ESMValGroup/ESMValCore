@@ -297,31 +297,28 @@ def validate_extra_facets_dir(value):
 
 
 _validators = {
-    # From user config
     'auxiliary_data_dir': validate_path,
+    'check_level': validate_check_level,
     'compress_netcdf': validate_bool,
     'config_developer_file': validate_config_developer,
+    'diagnostics': validate_diagnostics,
     'download_dir': validate_path,
     'drs': validate_drs,
     'exit_on_warning': validate_bool,
     'extra_facets_dir': validate_extra_facets_dir,
     'log_level': validate_string,
+    'max_datasets': validate_int_positive_or_none,
     'max_parallel_tasks': validate_int_or_none,
+    'max_years': validate_int_positive_or_none,
     'output_dir': validate_path,
     'output_file_type': validate_string,
     'profile_diagnostic': validate_bool,
     'remove_preproc_dir': validate_bool,
+    'resume_from': validate_pathlist,
     'rootpath': validate_rootpath,
     'run_diagnostic': validate_bool,
     'save_intermediary_cubes': validate_bool,
     'search_esgf': validate_search_esgf,
-
-    # From CLI
-    'check_level': validate_check_level,
-    'diagnostics': validate_diagnostics,
-    'max_datasets': validate_int_positive_or_none,
-    'max_years': validate_int_positive_or_none,
-    'resume_from': validate_pathlist,
     'skip_nonexistent': validate_bool,
 
     # From recipe
@@ -385,7 +382,7 @@ def deprecate_config_file(validated_config, value, validated_value):
 # Example usage: see removed files in
 # https://github.com/ESMValGroup/ESMValCore/pull/2213
 _deprecators: dict[str, Callable] = {
-    'config_file': deprecate_config_file,
+    'config_file': deprecate_config_file,  # TODO: remove in v2.14.0
 }
 
 
@@ -393,5 +390,5 @@ _deprecators: dict[str, Callable] = {
 # Example usage: see removed files in
 # https://github.com/ESMValGroup/ESMValCore/pull/2213
 _deprecated_options_defaults: dict[str, Any] = {
-    'config_file': None,
+    'config_file': None,  # TODO: remove in v2.14.0
 }
