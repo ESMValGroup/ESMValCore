@@ -96,64 +96,6 @@ def test_empty_run(tmp_path, monkeypatch):
     assert not filled_recipe
 
 
-# TODO: remove in v2.14.0
-@patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
-def test_run_with_config():
-    with arguments('esmvaltool', 'run', 'recipe.yml', '--config_file',
-                   'config.yml'):
-        run()
-
-
-@patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
-def test_run_with_config_dir():
-    with arguments('esmvaltool', 'run', 'recipe.yml', '--config_dir', 'c'):
-        run()
-
-
-@patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
-def test_run_with_max_years():
-    with arguments('esmvaltool', 'run', 'recipe.yml', '--max_years=2'):
-        run()
-
-
-@patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
-def test_run_with_max_datasets():
-    with arguments('esmvaltool', 'run', 'recipe.yml', '--max_datasets=2'):
-        run()
-
-
-@patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
-def test_run_with_search_esgf():
-    with arguments('esmvaltool', 'run', 'recipe.yml', '--search_esgf=always'):
-        run()
-
-
-@patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
-def test_run_with_check_level():
-    with arguments('esmvaltool', 'run', 'recipe.yml', '--check_level=default'):
-        run()
-
-
-@patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
-def test_run_with_skip_nonexistent():
-    with arguments('esmvaltool', 'run', 'recipe.yml',
-                   '--skip_nonexistent=True'):
-        run()
-
-
-@patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
-def test_run_with_diagnostics():
-    with arguments('esmvaltool', 'run', 'recipe.yml', '--diagnostics=[badt]'):
-        run()
-
-
-@patch('esmvalcore._main.ESMValTool.run', new=wrapper(ESMValTool.run))
-def test_run_fails_with_other_params():
-    with arguments('esmvaltool', 'run', 'recipe.yml', '--extra_param=dfa'):
-        with pytest.raises(SystemExit):
-            run()
-
-
 def test_recipes_get(tmp_path, monkeypatch):
     """Test version command."""
     src_recipe = tmp_path / 'recipe.yml'

@@ -22,9 +22,10 @@ def cfg(mocker, tmp_path):
     """Mock `esmvalcore.config.CFG`."""
     session = mocker.MagicMock()
 
-    cfg_dict = {}
+    cfg_dict = {'resume_from': []}
     session.__getitem__.side_effect = cfg_dict.__getitem__
     session.__setitem__.side_effect = cfg_dict.__setitem__
+    session.update.side_effect = cfg_dict.update
 
     output_dir = tmp_path / 'esmvaltool_output'
     session.session_dir = output_dir / 'recipe_test'
