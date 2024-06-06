@@ -409,8 +409,8 @@ def _check_literal(
     user_value = settings[step].get(option, allowed_values[0])
     if user_value not in allowed_values:
         raise RecipeError(
-            f"Expected one of {allowed_values} for `{option}`, got "
-            f"'{user_value}'"
+            f"Expected one of {allowed_values} for option `{option}` of "
+            f"preprocessor `{step}`, got '{user_value}'"
         )
 
 
@@ -434,6 +434,14 @@ metric_type = partial(
         'emd',
         'weighted_emd',
     ),
+)
+
+
+resample_hours = partial(
+    _check_literal,
+    step='resample_hours',
+    option='interpolate',
+    allowed_values=(None, 'nearest', 'linear'),
 )
 
 

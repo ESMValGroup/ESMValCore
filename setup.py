@@ -32,7 +32,7 @@ REQUIREMENTS = {
         'dask[array,distributed]',
         'dask-jobqueue',
         'esgf-pyclient>=0.3.1',
-        'esmf-regrid',
+        'esmf-regrid>=0.10.0',  # iris-esmf-regrid #342
         'esmpy!=8.1.0',  # not on PyPI
         'filelock',
         'fiona',
@@ -56,16 +56,14 @@ REQUIREMENTS = {
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        # See the following issue for info on the iris pin below:
-        # https://github.com/ESMValGroup/ESMValCore/issues/2407
-        'scitools-iris>3.8.0',
+        'scitools-iris>=3.9.0',
         'shapely>=2.0.0',
         'stratify>=0.3',
         'yamale',
     ],
     # Test dependencies
     'test': [
-        'flake8',
+        'flake8>=7.0.0',  # not to pick up E231
         'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
         'pytest-cov>=2.10.1',
         'pytest-env',
@@ -94,8 +92,10 @@ REQUIREMENTS = {
         'codespell',
         'docformatter',
         'isort',
+        'flake8>=7',
         'pre-commit',
-        'prospector[with_pyroma]>=1.9.0',
+        'pylint',
+        'pydocstyle',
         'vprof',
         'yamllint',
         'yapf',
