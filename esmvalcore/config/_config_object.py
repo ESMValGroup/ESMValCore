@@ -549,7 +549,7 @@ if _deprecated_config_user_path.is_file():
         f"and is scheduled for removal in version 2.14.0. Please run "
         f"`mkdir -p ~/.config/esmvaltool && mv {_deprecated_config_user_path} "
         f"~/.config/esmvaltool` (or alternatively use a custom "
-        f"`--config-dir`) and omit `--config_file`."
+        f"`--config_dir`) and omit `--config_file`."
     )
     warnings.warn(deprecation_msg, ESMValCoreDeprecationWarning)
     _DEPRECATIONS.append(deprecation_msg)

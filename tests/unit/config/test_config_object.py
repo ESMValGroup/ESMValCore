@@ -156,7 +156,7 @@ TEST_GET_CFG_PATH = [
     (
         None,
         None,
-        ('esmvaltool', 'run', '--max-parallel-tasks=4'),
+        ('esmvaltool', 'run', '--max_parallel_tasks=4'),
         '~/.esmvaltool/config-user.yml',
         True,
     ),

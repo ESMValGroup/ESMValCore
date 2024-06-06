@@ -131,8 +131,8 @@ See :ref:`CMOR-DRS` for more information on this kind of file organization.
 When (some) files are available locally, the tool will not automatically look
 for more files on ESGF.
 To populate a recipe with all available datasets from ESGF, the
-:ref:`configuration option <configuration_options>` ``search_esgf`` should be
-set to ``always``.
+:ref:`configuration option <config_options>` ``search_esgf`` should be set to
+``always``.
 
 For more control over which datasets are selected, it is recommended to use
 a Python script or `Jupyter notebook <https://jupyter.org/>`_ to compose
@@ -548,7 +548,7 @@ Task priority
 -------------
 Tasks are assigned a priority, with tasks appearing earlier on in the recipe
 getting higher priority. The tasks will be executed sequentially or in parallel,
-depending on the :ref:`configuration option <configuration_options>`
+depending on the :ref:`configuration option <config_options>`
 ``max_parallel_tasks``.
 When there are fewer than ``max_parallel_tasks`` running, tasks will be started
 according to their priority. For obvious reasons, only tasks that are not waiting for

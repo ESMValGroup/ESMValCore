@@ -1892,8 +1892,8 @@ Parameters:
     If the file contains multiple shapes behaviour depends on the
     ``decomposed`` parameter.
     This path can be relative to the directory specified via the
-    :ref:`configuration option <configuration_options>` ``auxiliary_data_dir``
-    or relative to ``esmvalcore/preprocessor/shapefiles`` (in that priority
+    :ref:`configuration option <config_options>` ``auxiliary_data_dir`` or
+    relative to ``esmvalcore/preprocessor/shapefiles`` (in that priority
     order).
     Alternatively, a string (see "Shapefile name" below) can be given to load
     one of the following shapefiles that are shipped with ESMValCore:

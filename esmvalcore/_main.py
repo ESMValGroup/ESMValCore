@@ -424,7 +424,7 @@ class ESMValTool():
             default (fail if there are any errors),
             strict (fail if there are any warnings).
         """
-        # The command line argument --config-dir is already parsed while
+        # The command line argument --config_dir is already parsed while
         # loading the module esmvalcore.config (see
         # esmvalcore.config._config_object._get_user_config_dir_from_cli). It
         # is only listed as argument here to get a proper --help message.

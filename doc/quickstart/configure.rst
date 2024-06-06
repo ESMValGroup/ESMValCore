@@ -20,7 +20,7 @@ finished.
 A detailed plan for this new configuration is outlined in :issue:`2371`.
 
 
-.. _configure_for_cli:
+.. _config_for_cli:
 
 Specify configuration for ``esmvaltool`` command line tool
 ==========================================================
@@ -53,13 +53,13 @@ These files can live in any of the following locations:
 1. If set, the directory specified with the ``ESMVALTOOL_CONFIG_DIR``
    environment variable.
 
-1. The user's configuration directory (by default ``~/.config/esmvaltool``, but
+1. The user configuration directory (by default ``~/.config/esmvaltool``, but
    this can be changed with the ``--config_dir`` command line argument).
 
 ESMValCore searches for all YAML files within each of these directories and
 merges them together using :func:`dask.config.collect`.
 Preference follows the order in the list above (i.e., the directory specified
-via the environment variable is preferred over the user's configuration
+via the environment variable is preferred over the user configuration
 directory).
 Within a directory, files are sorted alphabetically, and later files (e.g.,
 ``z.yml``) will take precedence over earlier files (e.g., ``a.yml``).
@@ -90,7 +90,7 @@ Options given via command line arguments will always take precedence over
 options specified via YAML files.
 
 
-.. _configure_for_api:
+.. _config_for_api:
 
 Specify/access configuration for Python API
 ===========================================
@@ -114,7 +114,7 @@ This will also consider YAML configuration files in the directory given by
 More information about this can be found :ref:`here <api_configuration>`.
 
 
-.. _configuration_options:
+.. _config_options:
 
 Configuration options
 =====================
@@ -469,10 +469,9 @@ ESGF configuration
 The ``esmvaltool run`` command can automatically download the files required
 to run a recipe from ESGF for the projects CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
 The downloaded files will be stored in the directory specified via the
-:ref:`configuration option <configuration_options>` ``download_dir``.
+:ref:`configuration option <config_options>` ``download_dir``.
 To enable automatic downloads from ESGF, use the :ref:`configuration options
-<configuration_options>` ``search_esgf: when_missing`` or ``search_esgf:
-always``.
+<config_options>` ``search_esgf: when_missing`` or ``search_esgf: always``.
 
 .. note::
 

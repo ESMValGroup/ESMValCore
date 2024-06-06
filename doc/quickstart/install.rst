@@ -106,7 +106,7 @@ For example, the following command would run a recipe
    docker run -e HOME -v "$HOME":"$HOME" -v /data:/data esmvalgroup/esmvalcore:stable ~/recipes/recipe_example.yml
 
 with the environmental variable ``$HOME`` available inside the container and the data
-in the directories ``$HOME`` and ``/data``, so these can be used to find the configuration file, recipe, and data.
+in the directories ``$HOME`` and ``/data``, so these can be used to find the configuration, recipe, and data.
 
 It might be useful to define a `bash alias
 <https://opensource.com/article/19/7/bash-aliases>`_

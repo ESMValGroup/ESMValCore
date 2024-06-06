@@ -105,8 +105,8 @@ Supported native reanalysis/observational datasets
 The following native reanalysis/observational datasets are supported under the
 ``native6`` project.
 To use these datasets, put the files containing the data in the directory that
-you have configured for the ``native6`` project in your :ref:`user
-configuration file`, in a subdirectory called
+you have :ref:`configured <config_options>` for the ``rootpath`` of the
+``native6`` project, in a subdirectory called
 ``Tier{tier}/{dataset}/{version}/{frequency}/{short_name}``.
 Replace the items in curly braces by the values used in the variable/dataset
 definition in the :ref:`recipe <recipe_overview>`.
@@ -183,7 +183,7 @@ The default naming conventions for input directories and files for CESM are
 * input files: ``{case}.{scomp}.{type}.{string}*nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
-:ref:`configuration option <configuration_options>` ``drs: default``).
+:ref:`configuration option <config_options>` ``drs: default``).
 More information about CESM naming conventions are given `here
 <https://www.cesm.ucar.edu/models/cesm2/naming_conventions.html>`__.
 
@@ -262,7 +262,7 @@ The default naming conventions for input directories and files for EMAC are
 * input files: ``{exp}*{channel}{postproc_flag}.nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
-:ref:`configuration option <configuration_options>` ``drs: default``).
+:ref:`configuration option <config_options>` ``drs: default``).
 
 Thus, example dataset entries could look like this:
 
@@ -335,7 +335,7 @@ The default naming conventions for input directories and files for ICON are
 * input files: ``{exp}_{var_type}*.nc``
 
 as configured in the :ref:`config-developer file <config-developer>` (using the
-:ref:`configuration option <configuration_options>` ``drs: default``).
+:ref:`configuration option <config_options>` ``drs: default``).
 
 Thus, example dataset entries could look like this:
 
@@ -384,10 +384,9 @@ Usually, ESMValCore will need the corresponding ICON grid file of your
 simulation to work properly (examples: setting latitude/longitude coordinates
 if these are not yet present, UGRIDization [see below], etc.).
 This grid file can either be specified as absolute or relative (to the
-:ref:`configuration option <configuration_options>` ``auxiliary_data_dir`` )
-path with the facet ``horizontal_grid`` in the recipe or the extra facets (see
-below), or retrieved automatically from the `grid_file_uri` attribute of the
-input files.
+:ref:`configuration option <config_options>` ``auxiliary_data_dir``) path with
+the facet ``horizontal_grid`` in the recipe or the extra facets (see below), or
+retrieved automatically from the `grid_file_uri` attribute of the input files.
 In the latter case, ESMValCore first searches the input directories specified
 for ICON for a grid file with that name, and if that was not successful, tries
 to download the file and cache it.
@@ -433,7 +432,7 @@ to specify the location of files that include the corresponding `zg` or
 `zghalf` variables with the facets ``zg_file`` and/or ``zghalf_file`` in the
 recipe or the extra facets.
 The paths to these files can be specified absolute or relative (to the
-:ref:`configuration option <configuration_options>` ``auxiliary_data_dir``).
+:ref:`configuration option <config_options>` ``auxiliary_data_dir``).
 
 .. hint::
 
@@ -582,11 +581,11 @@ retrieval parameters is explained below.
 Enabling automatic downloads from the ESGF
 ------------------------------------------
 To enable automatic downloads from ESGF, use the :ref:`configuration option
-<configuration_options>` ``search_esgf: when_missing`` (use local files
+<config_options>` ``search_esgf: when_missing`` (use local files
 whenever possible) or ``search_esgf: always`` (always search ESGF for latest
 version of files and only use local data if it is the latest version).
 The files will be stored in the directory specified via the :ref:`configuration
-option <configuration_options>` ``download_dir``.
+option <config_options>` ``download_dir``.
 
 Setting the correct root paths
 ------------------------------
@@ -644,7 +643,7 @@ The names of the directories trees that can be used under `drs` are defined in
    versions of the same file because the files typically have the same name
    for different versions.
 
-.. _config-user-rootpath:
+.. _config_option_rootpath:
 
 Explaining ``rootpath:``
 ------------------------

@@ -31,7 +31,7 @@ object:
                          'default': '~/default_inputpath'},
             'save_intermediary_cubes': False)
 
-All configuration parameters are listed :ref:`here <configuration_options>`.
+All configuration parameters are listed :ref:`here <config_options>`.
 
 :py:data:`~esmvalcore.config.CFG` is essentially a python dictionary with a few
 extra functions, similar to :py:data:`matplotlib.rcParams`.

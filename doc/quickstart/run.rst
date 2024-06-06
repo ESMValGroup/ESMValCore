@@ -47,7 +47,7 @@ To work with installed recipes, the ESMValTool package provides the
 ``esmvaltool recipes`` command, see :ref:`esmvaltool:recipes_command`.
 
 By default, ESMValTool searches for :ref:`configuration files
-<configure_for_cli>` in ``~/.config/esmvaltool``.
+<config_for_cli>` in ``~/.config/esmvaltool``.
 If you'd like to use a custom location, you can specify this via the
 ``--config_dir`` command line argument:
 
@@ -55,17 +55,18 @@ If you'd like to use a custom location, you can specify this via the
 
 	esmvaltool run --config_dir /path/to/custom_config recipe_example.yml
 
-It is also possible to explicitly change values from the config file using flags:
+It is also possible to explicitly set configuration options with command line
+arguments:
 
 .. code:: bash
 
 	esmvaltool run --argument_name argument_value recipe_example.yml
 
 To automatically download the files required to run a recipe from ESGF, use the
-:ref:`configuration option <configuration_options>`
-``search_esgf=when_missing`` (use local files whenever possible) or
-``search_esgf=always`` (always search ESGF for latest version of files and only
-use local data if it is the latest version):
+:ref:`configuration option <config_options>` ``search_esgf=when_missing`` (use
+local files whenever possible) or ``search_esgf=always`` (always search ESGF
+for latest version of files and only use local data if it is the latest
+version):
 
 .. code:: bash
 
