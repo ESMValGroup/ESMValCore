@@ -362,73 +362,23 @@ class ESMValTool():
         for project, version in self._extra_packages.items():
             print(f'{project}: {version}')
 
-    def run(self,
-            recipe,
-            config_file=None,
-            config_dir=None,
-            resume_from=None,
-            max_datasets=None,
-            max_years=None,
-            skip_nonexistent=None,
-            search_esgf=None,
-            diagnostics=None,
-            check_level=None,
-            **kwargs):
+    def run(self, recipe, **kwargs):
         """Execute an ESMValTool recipe.
 
         `esmvaltool run` executes the given recipe. To see a list of available
         recipes or create a local copy of any of them, use the
         `esmvaltool recipes` command group.
 
-        Parameters
-        ----------
-        recipe : str
-            Recipe to run, as either the name of an installed recipe or the
-            path to a non-installed one.
-        config_file: str, optional
-            Configuration file to use. Can be given as absolute or relative
-            path. In the latter case, search in the current working directory
-            and `~/.esmvaltool` (in that order). If not provided, the file
-            `~/.esmvaltool/config-user.yml` will be used.
+        A list of possible flags is given here:
+        https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html#configuration-options
 
-            .. deprecated:: 2.12.0
-                This option has been deprecated in ESMValCore version 2.12.0
-                and is scheduled for removal in version 2.14.0. Please use the
-                option `config_dir` instead.
-        config_dir: str, optional
-            User-defined configuration directory. Can be given as absolute or
-            relative path. If not provided, use `~/.config/esmvaltool`.
-        resume_from: list(str), optional
-            Resume one or more previous runs by using preprocessor output files
-            from these output directories.
-        max_datasets: int, optional
-            Maximum number of datasets to use.
-        max_years: int, optional
-            Maximum number of years to use.
-        skip_nonexistent: bool, optional
-            If True, the run will not fail if some datasets are not available.
-        search_esgf: str, optional
-            If `never`, disable automatic download of data from the ESGF. If
-            `when_missing`, enable the automatic download of files that are not
-            available locally. If `always`, always check ESGF for the latest
-            version of a file, and only use local files if they correspond to
-            that latest version.
-        diagnostics: list(str), optional
-            Only run the selected diagnostics from the recipe. To provide more
-            than one diagnostic to filter use the syntax 'diag1 diag2/script1'
-            or '("diag1", "diag2/script1")' and pay attention to the quotes.
-        check_level: str, optional
-            Configure the sensitivity of the CMOR check. Possible values are:
-            `ignore` (all errors will be reported as warnings),
-            `relaxed` (only fail if there are critical errors),
-            default (fail if there are any errors),
-            strict (fail if there are any warnings).
         """
         # The command line argument --config_dir is already parsed while
         # loading the module esmvalcore.config (see
-        # esmvalcore.config._config_object._get_user_config_dir_from_cli). It
-        # is only listed as argument here to get a proper --help message.
-        config_dir  # noqa
+        # esmvalcore.config._config_object._get_user_config_dir_from_cli) ->
+        # remove it here
+        kwargs.pop('config_dir', None)
+
         import warnings
 
         from .config import CFG
@@ -442,28 +392,17 @@ class ESMValTool():
         # https://github.com/ESMValGroup/ESMValCore/issues/2280), but no error
         # has been raised if the file does not exist. Thus, reload the file
         # here with `load_from_file` to make sure a proper error is raised.
-        if config_file is not None:
-            CFG.load_from_file(config_file)
+        if 'config_file' in kwargs:
+            CFG.load_from_file(kwargs['config_file'])
 
         recipe = self._get_recipe(recipe)
 
         session = CFG.start_session(recipe.stem)
-        if check_level is not None:
-            session['check_level'] = check_level
-        if diagnostics is not None:
-            session['diagnostics'] = diagnostics
-        if max_datasets is not None:
-            session['max_datasets'] = max_datasets
-        if max_years is not None:
-            session['max_years'] = max_years
-        if search_esgf is not None:
-            session['search_esgf'] = search_esgf
-        if skip_nonexistent is not None:
-            session['skip_nonexistent'] = skip_nonexistent
-        session['resume_from'] = parse_resume(resume_from, recipe)
         session.update(kwargs)
+        session['resume_from'] = parse_resume(session['resume_from'], recipe)
 
         self._run(recipe, session)
+
         # Print warnings about deprecated configuration options again:
         CFG.reload()
         for msg in _DEPRECATIONS:

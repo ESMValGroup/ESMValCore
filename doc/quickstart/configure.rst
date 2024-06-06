@@ -119,86 +119,86 @@ More information about this can be found :ref:`here <api_configuration>`.
 Configuration options
 =====================
 
-Note: the following entries use YAML syntax.
-For example, YAML's ``null`` is Python's ``None``, YAML's ``true`` is Python's
-``True``, and YAML's ``false`` is Python's ``False``.
+Note: the following entries use Python syntax.
+For example, Python's ``None`` is YAML's ``null``, Python's ``True`` is YAML's
+``true``, and Python's ``False`` is YAML's ``false``.
 
-+-------------------------------+----------------------------------------+----------------------------------------+
-| Option                        | Description                            | Default value                          |
-+===============================+========================================+========================================+
-| ``auxiliary_data_dir``        | Directory where auxiliary data is      | ``~/auxiliary_data``                   |
-|                               | stored [#f1]_                          |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``check_level``               | Sensitivity of the CMOR check          | ``default``                            |
-|                               | (``debug``, ``strict``, ``default``    |                                        |
-|                               | ``relaxed``, ``ignore``), see          |                                        |
-|                               | :ref:`cmor_check_strictness`           |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``compress_netcdf``           | Use netCDF compression                 | ``false``                              |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``config_developer_file``     | Path to custom                         | ``null`` (default file)                |
-|                               | :ref:`config-developer`                |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``diagnostics``               | Only run the selected diagnostics from | ``null`` (all diagnostics)             |
-|                               | the recipe, see :ref:`running`         |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``download_dir``              | Directory where downloaded data will   | ``~/climate_data``                     |
-|                               | be stored [#f4]_                       |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``drs``                       | Directory structure for input data     |  ``{CMIP3: ESGF, CMIP5: ESGF, CMIP6:   |
-|                               | [#f2]_                                 |  ESGF, CORDEX: ESGF, obs4MIPs: ESGF}`` |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``exit_on_warning``           | Exit on warning (only used in NCL      | ``false``                              |
-|                               | diagnostic scripts)                    |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``extra_facets_dir``          | Additional custom directory for        | ``[]``                                 |
-|                               | :ref:`extra facets <extra_facets>`     |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``log_level``                 | Log level of the console (``debug``,   | ``info``                               |
-|                               | ``info``, ``warning``, ``error``)      |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``max_datasets``              | Maximum number of datasets to use, see | ``null`` (all datasets from recipe)    |
-|                               | :ref:`running`                         |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``max_parallel_tasks``        | Maximum number of parallel processes,  | ``null`` (number of available CPUs)    |
-|                               | see also :ref:`_task_priority`         |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``max_years``                 | Maximum number of years to use, see    | ``null`` (all years from recipe)       |
-|                               | :ref:`running`                         |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``output_dir``                | Directory where all output will be     | ``~/esmvaltool_output``                |
-|                               | written, see :ref:`outputdata`         |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``output_file_type``          | Plot file type                         | ``png``                                |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``profile_diagnostic``        | Use a profiling tool for the           | ``false``                              |
-|                               | diagnostic run [#f3]_                  |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``remove_preproc_dir``        | Remove the ``preproc`` directory if    | ``true``                               |
-|                               | the run was successful, see also       |                                        |
-|                               | :ref:`preprocessed_datasets`           |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``resume_from``               | Resume previous run(s) by using        | ``[]``                                 |
-|                               | preprocessor output files from these   |                                        |
-|                               | output directories, see :ref:`running` |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``rootpath``                  | Rootpaths to the data from different   | ``{default: ~/climate_data}``          |
-|                               | projects [#f2]_                        |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``run_diagnostic``            | Run diagnostic scripts, see            | ``true``                               |
-|                               | :ref:`running`                         |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``save_intermediary_cubes``   | Save intermediary cubes from the       | ``false``                              |
-|                               | preprocessor, see also                 |                                        |
-|                               | :ref:`preprocessed_datasets`           |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``search_esgf``               | Automatic data download from ESGF      | ``never``                              |
-|                               | (``never``, ``when_missing``,          |                                        |
-|                               | ``always``) [#f4]_                     |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
-| ``skip_nonexistent``          | Skip non-existent datasets, see        | ``false``                              |
-|                               | :ref:`running`                         |                                        |
-+-------------------------------+----------------------------------------+----------------------------------------+
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| Option                        | Description                            | Type                        | Default value                          |
++===============================+========================================+=============================+========================================+
+| ``auxiliary_data_dir``        | Directory where auxiliary data is      | :obj:`str`                  | ``~/auxiliary_data``                   |
+|                               | stored [#f1]_                          |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``check_level``               | Sensitivity of the CMOR check          | :obj:`str`                  | ``default``                            |
+|                               | (``debug``, ``strict``, ``default``    |                             |                                        |
+|                               | ``relaxed``, ``ignore``), see          |                             |                                        |
+|                               | :ref:`cmor_check_strictness`           |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``compress_netcdf``           | Use netCDF compression                 | :obj:`bool`                 | ``False``                              |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``config_developer_file``     | Path to custom                         | :obj:`str`                  | ``None`` (default file)                |
+|                               | :ref:`config-developer`                |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``diagnostics``               | Only run the selected diagnostics from | :obj:`list` or :obj:`str`   | ``None`` (all diagnostics)             |
+|                               | the recipe, see :ref:`running`         |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``download_dir``              | Directory where downloaded data will   | :obj:`str`                  | ``~/climate_data``                     |
+|                               | be stored [#f4]_                       |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``drs``                       | Directory structure for input data     | :obj:`dict`                 |  ``{CMIP3: ESGF, CMIP5: ESGF, CMIP6:   |
+|                               | [#f2]_                                 |                             |  ESGF, CORDEX: ESGF, obs4MIPs: ESGF}`` |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``exit_on_warning``           | Exit on warning (only used in NCL      | :obj:`bool`                 | ``False``                              |
+|                               | diagnostic scripts)                    |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``extra_facets_dir``          | Additional custom directory for        | :obj:`list` of :obj:`str`    | ``[]``                                 |
+|                               | :ref:`extra facets <extra_facets>`     |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``log_level``                 | Log level of the console (``debug``,   | :obj:`str`                  | ``info``                               |
+|                               | ``info``, ``warning``, ``error``)      |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``max_datasets``              | Maximum number of datasets to use, see | :obj:`int`                  | ``None`` (all datasets from recipe)    |
+|                               | :ref:`running`                         |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``max_parallel_tasks``        | Maximum number of parallel processes,  | :obj:`int`                  | ``None`` (number of available CPUs)    |
+|                               | see also :ref:`_task_priority`         |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``max_years``                 | Maximum number of years to use, see    | :obj:`int`                  | ``None`` (all years from recipe)       |
+|                               | :ref:`running`                         |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``output_dir``                | Directory where all output will be     | :obj:`str`                  | ``~/esmvaltool_output``                |
+|                               | written, see :ref:`outputdata`         |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``output_file_type``          | Plot file type                         | :obj:`str`                  | ``png``                                |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``profile_diagnostic``        | Use a profiling tool for the           | :obj:`bool`                 | ``False``                              |
+|                               | diagnostic run [#f3]_                  |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``remove_preproc_dir``        | Remove the ``preproc`` directory if    | :obj:`bool`                 | ``True``                               |
+|                               | the run was successful, see also       |                             |                                        |
+|                               | :ref:`preprocessed_datasets`           |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``resume_from``               | Resume previous run(s) by using        | :obj:`list` of :obj:`str`   | ``[]``                                 |
+|                               | preprocessor output files from these   |                             |                                        |
+|                               | output directories, see :ref:`running` |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``rootpath``                  | Rootpaths to the data from different   | :obj:`dict`                 | ``{default: ~/climate_data}``          |
+|                               | projects [#f2]_                        |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``run_diagnostic``            | Run diagnostic scripts, see            | :obj:`bool`                 | ``True``                               |
+|                               | :ref:`running`                         |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``save_intermediary_cubes``   | Save intermediary cubes from the       | :obj:`bool`                 | ``False``                              |
+|                               | preprocessor, see also                 |                             |                                        |
+|                               | :ref:`preprocessed_datasets`           |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``search_esgf``               | Automatic data download from ESGF      | :obj:`str`                  | ``never``                              |
+|                               | (``never``, ``when_missing``,          |                             |                                        |
+|                               | ``always``) [#f4]_                     |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
+| ``skip_nonexistent``          | Skip non-existent datasets, see        | :obj:`bool`                 | ``False``                              |
+|                               | :ref:`running`                         |                             |                                        |
++-------------------------------+----------------------------------------+-----------------------------+----------------------------------------+
 
 .. [#f1] The ``auxiliary_data_dir`` setting is the path to place any required
     additional auxiliary data files.
