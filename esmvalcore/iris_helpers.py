@@ -148,13 +148,12 @@ def merge_cube_attributes(
 
     # Step 2: if values are not equal, first convert them to strings (so that
     # set() can be used); then extract unique elements from this list, sort it,
-    # and use the delimiter to join all elements to a single string
-    final_attributes: Dict[str, NetCDFAttr] = {}
+    # and use the delimiter to join all elements to a single string.
+    # Uses the first cube to decide if an attribute is global or local.
+    final_attributes = cubes[0].attributes.copy()
     for (attr, vals) in attributes.items():
         set_of_str = sorted({str(v) for v in vals})
-        if len(set_of_str) == 1:
-            final_attributes[attr] = vals[0]
-        else:
+        if len(set_of_str) > 1:
             final_attributes[attr] = delimiter.join(set_of_str)
 
     # Step 3: modify the cubes in-place
