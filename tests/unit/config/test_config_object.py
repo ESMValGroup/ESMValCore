@@ -160,6 +160,14 @@ def test_session_key_error():
         session['invalid_key']
 
 
+# TODO: remove in v2.14.0
+def test_session_config_dir():
+    session = Session({'config_file': '/path/to/config.yml'})
+    with pytest.warns(ESMValCoreDeprecationWarning):
+        config_dir = session.config_dir
+    assert config_dir == Path('/path/to')
+
+
 TEST_GET_CFG_PATH = [
     (None, None, None, '~/.esmvaltool/config-user.yml', False),
     (
@@ -320,6 +328,12 @@ def test_load_user_config_filenotfound():
     msg = f"Config file '{expected_path}' does not exist"
     with pytest.raises(FileNotFoundError, match=msg):
         Config._load_user_config('not_existent_file.yml')
+
+
+# TODO: remove in v2.14.0
+def test_load_user_config_no_exception():
+    """Test `Config._load_user_config`."""
+    Config._load_user_config('not_existent_file.yml', raise_exception=False)
 
 
 # TODO: remove in v2.14.0
