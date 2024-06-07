@@ -206,6 +206,8 @@ class Config():
             )
         else:
             out_file = Path(path)
+        if not out_file.suffix:  # out_file looks like a directory
+            out_file = out_file / 'config-user.yml'
         cls._copy_config_file(in_file, out_file, overwrite)
 
     @classmethod
@@ -232,6 +234,8 @@ class Config():
             out_file = Path.home() / '.esmvaltool' / 'config-developer.yml'
         else:
             out_file = Path(path)
+        if not out_file.suffix:  # out_file looks like a directory
+            out_file = out_file / 'config-developer.yml'
         cls._copy_config_file(in_file, out_file, overwrite)
 
 

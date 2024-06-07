@@ -8,6 +8,7 @@ import functools
 import os
 import shutil
 import sys
+from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
 
@@ -133,6 +134,53 @@ def test_get_config_developer():
         run()
 
 
+def test_get_config_developer_no_path():
+    """Test version command."""
+    with arguments('esmvaltool', 'config', 'get_config_developer'):
+        run()
+    config_file = Path.home() / '.esmvaltool' / 'config-developer.yml'
+    assert config_file.is_file()
+
+
+def test_get_config_developer_path(tmp_path):
+    """Test version command."""
+    new_path = tmp_path / 'subdir'
+    with arguments('esmvaltool', 'config', 'get_config_developer',
+                   f'--path={new_path}'):
+        run()
+    assert (new_path / 'config-developer.yml').is_file()
+
+
+def test_get_config_developer_overwrite(tmp_path):
+    """Test version command."""
+    config_developer = tmp_path / 'config-developer.yml'
+    config_developer.write_text("old text")
+    with arguments('esmvaltool', 'config', 'get_config_developer',
+                   f'--path={tmp_path}', '--overwrite'):
+        run()
+    assert config_developer.read_text() != "old text"
+
+
+def test_get_config_developer_no_overwrite(tmp_path):
+    """Test version command."""
+    config_developer = tmp_path / 'configuration_file.yml'
+    config_developer.write_text("old text")
+    with arguments('esmvaltool', 'config', 'get_config_developer',
+                   f'--path={config_developer}'):
+        run()
+    assert config_developer.read_text() == "old text"
+
+
+@patch('esmvalcore._main.Config.get_config_developer',
+       new=wrapper(Config.get_config_developer))
+def test_get_config_developer_bad_option_fails():
+    """Test version command."""
+    with arguments('esmvaltool', 'config', 'get_config_developer',
+                   '--bad_option=path'):
+        with pytest.raises(FireExit):
+            run()
+
+
 @patch('esmvalcore._main.Config.get_config_user',
        new=wrapper(Config.get_config_user))
 def test_get_config_user():
@@ -141,21 +189,41 @@ def test_get_config_user():
         run()
 
 
+def test_get_config_user_no_path():
+    """Test version command."""
+    with arguments('esmvaltool', 'config', 'get_config_user'):
+        run()
+    config_file = Path.home() / '.config' / 'esmvaltool' / 'config-user.yml'
+    assert config_file.is_file()
+
+
 def test_get_config_user_path(tmp_path):
     """Test version command."""
+    new_path = tmp_path / 'subdir'
     with arguments('esmvaltool', 'config', 'get_config_user',
-                   f'--path={tmp_path}'):
+                   f'--path={new_path}'):
         run()
-    assert (tmp_path / 'config-user.yml').is_file()
+    assert (new_path / 'config-user.yml').is_file()
 
 
 def test_get_config_user_overwrite(tmp_path):
     """Test version command."""
     config_user = tmp_path / 'config-user.yml'
-    config_user.touch()
+    config_user.write_text("old text")
     with arguments('esmvaltool', 'config', 'get_config_user',
                    f'--path={tmp_path}', '--overwrite'):
         run()
+    assert config_user.read_text() != "old text"
+
+
+def test_get_config_user_no_overwrite(tmp_path):
+    """Test version command."""
+    config_user = tmp_path / 'configuration_file.yml'
+    config_user.write_text("old text")
+    with arguments('esmvaltool', 'config', 'get_config_user',
+                   f'--path={config_user}'):
+        run()
+    assert config_user.read_text() == "old text"
 
 
 @patch('esmvalcore._main.Config.get_config_user',
