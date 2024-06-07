@@ -10,7 +10,7 @@ import os
 
 from iris.cube import CubeList
 
-from ..native_datasets import NativeDatasetFix
+from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
 
 logger = logging.getLogger(__name__)
 
