@@ -1459,31 +1459,8 @@ def unstructured_grid_cubes():
     return CubeList([cube])
 
 
-def test_automatic_regrid(unstructured_grid_cubes):
-    """Test automatic regridding of unstructured data."""
-    fixed_cubes = fix_metadata(
-        unstructured_grid_cubes,
-        'tas',
-        'native6',
-        'era5',
-        'Amon',
-        regrid={'target_grid': '180x90'},
-    )
-
-    assert len(fixed_cubes) == 1
-    fixed_cube = fixed_cubes[0]
-    assert fixed_cube.shape == (2, 2, 2)
-
-    assert fixed_cube.coords('time', dim_coords=True)
-    assert fixed_cube.coord_dims('time') == (0,)
-    assert fixed_cube.coords('latitude', dim_coords=True)
-    assert fixed_cube.coord_dims('latitude') == (1,)
-    assert fixed_cube.coords('longitude', dim_coords=True)
-    assert fixed_cube.coord_dims('longitude') == (2,)
-
-
-def test_no_automatic_regrid(unstructured_grid_cubes):
-    """Test no automatic regridding of unstructured data."""
+def test_unstructured_grid(unstructured_grid_cubes):
+    """Test processing unstructured data."""
     fixed_cubes = fix_metadata(
         unstructured_grid_cubes,
         'tas',
@@ -1511,16 +1488,3 @@ def test_no_automatic_regrid(unstructured_grid_cubes):
     lon = fixed_cube.coord('longitude')
     np.testing.assert_allclose(lon.points, [179, 180, 180, 179])
     assert lon.bounds is None
-
-
-def test_no_automatic_regrid_regular_grid():
-    """Test no automatic regridding of regular grid data."""
-    cubes = era5_2d('monthly')
-    fixed_cubes = fix_metadata(
-        cubes, 'ps', 'native6', 'era5', 'Amon', regrid={'target_grid': '1x1'},
-    )
-
-    assert len(fixed_cubes) == 1
-    fixed_cube = fixed_cubes[0]
-    assert fixed_cube.shape == (3, 3, 3)
-    assert fixed_cube == cmor_2d('Amon', 'ps')[0]
