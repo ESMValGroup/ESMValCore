@@ -1,10 +1,10 @@
 """Derivation of variable `vegFrac`."""
 
 import dask.array as da
-import iris
 from iris import NameConstraint
 
 from .._regrid import regrid
+from .._shared import broadcast_to_shape
 from ._baseclass import DerivedVariableBase
 
 
@@ -15,27 +15,41 @@ class DerivedVariable(DerivedVariableBase):
     def required(project):
         """Declare the variables needed for derivation."""
         required = [
-            {'short_name': 'baresoilFrac'},
-            {'short_name': 'residualFrac'},
-            {'short_name': 'sftlf', 'mip': 'fx'},
+            {
+                'short_name': 'baresoilFrac',
+            },
+            {
+                'short_name': 'residualFrac',
+            },
+            {
+                'short_name': 'sftlf',
+                'mip': 'fx',
+            },
         ]
         return required
 
     @staticmethod
     def calculate(cubes):
         """Compute vegetation fraction from bare soil fraction."""
-        baresoilfrac_cube = cubes.extract_cube(NameConstraint(
-            var_name='baresoilFrac'))
-        residualfrac_cube = cubes.extract_cube(NameConstraint(
-            var_name='residualFrac'))
+        baresoilfrac_cube = cubes.extract_cube(
+            NameConstraint(var_name='baresoilFrac'))
+        residualfrac_cube = cubes.extract_cube(
+            NameConstraint(var_name='residualFrac'))
         sftlf_cube = cubes.extract_cube(NameConstraint(var_name='sftlf'))
 
         # Add time dimension to sftlf
         target_shape_sftlf = (baresoilfrac_cube.shape[0], *sftlf_cube.shape)
-        sftlf_data = iris.util.broadcast_to_shape(sftlf_cube.data,
-                                                  target_shape_sftlf, (1, 2))
+        target_chunks_sftlf = tuple(
+            baresoilfrac_cube.lazy_data().chunks[0],
+            *sftlf_cube.lazy_data().chunks,
+        ) if baresoilfrac_cube.has_lazy_data() else None
+        sftlf_data = broadcast_to_shape(
+            sftlf_cube.core_data(),
+            target_shape_sftlf,
+            dim_map=(1, 2),
+            chunks=target_chunks_sftlf,
+        )
         sftlf_cube = baresoilfrac_cube.copy(sftlf_data)
-        sftlf_cube.data = sftlf_cube.lazy_data()
 
         # Regrid sftlf if necessary and adapt mask
         if sftlf_cube.shape != baresoilfrac_cube.shape:
