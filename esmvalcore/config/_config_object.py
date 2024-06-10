@@ -259,16 +259,16 @@ class Config(ValidatedConfig):
     ) -> None:
         """Load user configuration from the given file.
 
-        Parameters
-        ----------
-        filename:
-            YAML file to load.
-
         .. deprecated:: 2.12.0
             This method has been deprecated in ESMValCore version 2.14.0 and is
             scheduled for removal in version 2.14.0. Please update
             `esmvalcore.config.CFG` directly instead using `CFG.update()` or
             `CFG[...] = ...`.
+
+        Parameters
+        ----------
+        filename:
+            YAML file to load.
 
         """
         msg = (
