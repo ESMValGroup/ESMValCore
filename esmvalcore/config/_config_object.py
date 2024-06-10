@@ -257,12 +257,25 @@ class Config(ValidatedConfig):
         self,
         filename: Optional[os.PathLike | str] = None,
     ) -> None:
-        """Load user configuration from the given file."""
+        """Load user configuration from the given file.
+
+        Parameters
+        ----------
+        filename:
+            YAML file to load.
+
+            .. deprecated:: 2.12.0
+                This method has been deprecated in ESMValCore version 2.14.0
+                and is scheduled for removal in version 2.14.0. Please update
+                `esmvalcore.config.CFG` directly instead using `CFG.update()`
+                or `CFG[...] = ...`.
+
+        """
         msg = (
             "The method `CFG.load_from_file()` has been deprecated in "
             "ESMValCore version 2.12.0 and is scheduled for removal in "
-            "version 2.14.0. Please update the `CFG` directly instead using "
-            "`CFG.update()` or `CFG[...] = ...`."
+            "version 2.14.0. Please update `esmvalcore.config.CFG` directly "
+            "instead using `CFG.update()` or `CFG[...] = ...`."
         )
         warnings.warn(msg, ESMValCoreDeprecationWarning)
         self.clear()
@@ -423,7 +436,13 @@ class Session(ValidatedConfig):
     # TODO: remove in v2.14.0
     @property
     def config_dir(self):
-        """Return user config directory."""
+        """Return user config directory.
+
+        .. deprecated:: 2.12.0
+            This attribute has been deprecated in ESMValCore version 2.12.0 and
+            is scheduled for removal in version 2.14.0.
+
+        """
         msg = (
             "The attribute `Session.config_dir` has been deprecated in "
             "ESMValCore version 2.12.0 and is scheduled for removal in "
