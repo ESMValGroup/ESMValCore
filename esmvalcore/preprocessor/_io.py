@@ -70,7 +70,7 @@ def _delete_attributes(iris_object, atts):
 
 
 def load(
-    file: str | Path,
+    file: str | Path | iris.cube.Cube,
     ignore_warnings: Optional[list[dict]] = None,
 ) -> CubeList:
     """Load iris cubes from string or Path objects.
@@ -78,7 +78,8 @@ def load(
     Parameters
     ----------
     file:
-        File to be loaded. Could be string or POSIX Path object.
+        File to be loaded. If ``file`` is already an Iris Cube, it will be
+        put in a CubeList and returned.
     ignore_warnings:
         Keyword arguments passed to :func:`warnings.filterwarnings` used to
         ignore warnings issued by :func:`iris.load_raw`. Each list element
@@ -94,6 +95,9 @@ def load(
     ValueError
         Cubes are empty.
     """
+    if isinstance(file, iris.cube.Cube):
+        return iris.cube.CubeList([file])
+
     file = Path(file)
     logger.debug("Loading:\n%s", file)
 
