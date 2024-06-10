@@ -1189,28 +1189,26 @@ def test_from_recipe_with_glob(tmp_path, session, mocker):
           tas:
             project: CMIP5
             mip: Amon
+            exp: rcp85
+            ensemble: r1i1p1
             additional_datasets:
-              - {dataset: '*'}
+              - {dataset: '*', institute: '*'}
     """)
     recipe = tmp_path / 'recipe_test.yml'
     recipe.write_text(recipe_txt, encoding='utf-8')
 
     session['drs']['CMIP5'] = 'ESGF'
-
+    CFG['rootpath']['CMIP5'] = [tmp_path]
     filenames = [
-        "cmip5/output1/CSIRO-QCCCE/CSIRO-Mk3-6-0/rcp85/mon/atmos/Amon/r4i1p1/"
-        "v20120323/tas_Amon_CSIRO-Mk3-6-0_rcp85_r4i1p1_200601-210012.nc",
-        "cmip5/output1/NIMR-KMA/HadGEM2-AO/historical/mon/atmos/Amon/r1i1p1/"
-        "v20130815/tas_Amon_HadGEM2-AO_historical_r1i1p1_186001-200512.nc",
+        "cmip5/output1/CSIRO-QCCCE/CSIRO-Mk3-6-0/rcp85/mon/atmos/Amon/r1i1p1/"
+        "v20120323/tas_Amon_CSIRO-Mk3-6-0_rcp85_r1i1p1_200601-210012.nc",
+        "cmip5/output1/NIMR-KMA/HadGEM2-AO/rcp85/mon/atmos/Amon/r1i1p1/"
+        "v20130815/tas_Amon_HadGEM2-AO_rcp85_r1i1p1_186001-200512.nc",
     ]
-
-    mocker.patch.object(
-        esmvalcore.local,
-        '_get_input_filelist',
-        autospec=True,
-        spec_set=True,
-        return_value=(filenames, []),
-    )
+    for filename in filenames:
+        path = tmp_path / filename
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('')
 
     definitions = [
         {
@@ -1222,6 +1220,9 @@ def test_from_recipe_with_glob(tmp_path, session, mocker):
             'short_name': 'tas',
             'alias': 'CSIRO-Mk3-6-0',
             'recipe_dataset_index': 0,
+            'exp': 'rcp85',
+            'ensemble': 'r1i1p1',
+            'institute': 'CSIRO-QCCCE',
         },
         {
             'diagnostic': 'diagnostic1',
@@ -1232,6 +1233,9 @@ def test_from_recipe_with_glob(tmp_path, session, mocker):
             'short_name': 'tas',
             'alias': 'HadGEM2-AO',
             'recipe_dataset_index': 1,
+            'exp': 'rcp85',
+            'ensemble': 'r1i1p1',
+            'institute': 'NIMR-KMA',
         },
     ]
     expected = []

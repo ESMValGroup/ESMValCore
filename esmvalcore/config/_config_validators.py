@@ -205,7 +205,17 @@ def validate_rootpath(value):
                 "Correcting capitalization, project 'obs4mips' should be "
                 "written as 'obs4MIPs' in 'rootpath' in config-user.yml")
             key = 'obs4MIPs'
-        new_mapping[key] = validate_pathlist(paths)
+        if isinstance(paths, Path):
+            paths = str(paths)
+        if isinstance(paths, (str, list)):
+            new_mapping[key] = validate_pathlist(paths)
+        else:
+            validate_dict(paths)
+            new_mapping[key] = {
+                validate_path(path): validate_string(drs)
+                for path, drs in paths.items()
+            }
+
     return new_mapping
 
 

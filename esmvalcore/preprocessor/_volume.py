@@ -16,6 +16,7 @@ from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube
 
 from ._shared import (
+    broadcast_to_shape,
     get_iris_aggregator,
     get_normalized_cube,
     preserve_float_dtype,
@@ -152,6 +153,8 @@ def calculate_volume(cube: Cube) -> da.core.Array:
 
     # Calculate Z-direction thickness
     thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
+    if cube.has_lazy_data():
+        thickness = da.array(thickness)
 
     # Get or calculate the horizontal areas of the cube
     has_cell_measure = bool(cube.cell_measures('cell_area'))
@@ -166,10 +169,11 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     if not has_cell_measure:
         cube.remove_cell_measure('cell_area')
 
-    area_arr = iris.util.broadcast_to_shape(
-        area.core_data(), cube.shape, area_dim)
-    thickness_arr = iris.util.broadcast_to_shape(
-        thickness, cube.shape, z_dim)
+    chunks = cube.core_data().chunks if cube.has_lazy_data() else None
+    area_arr = broadcast_to_shape(
+        area.core_data(), cube.shape, area_dim, chunks=chunks)
+    thickness_arr = broadcast_to_shape(
+        thickness, cube.shape, z_dim, chunks=chunks)
     grid_volume = area_arr * thickness_arr
 
     return grid_volume

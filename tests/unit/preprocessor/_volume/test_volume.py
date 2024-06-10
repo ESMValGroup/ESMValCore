@@ -2,6 +2,7 @@
 
 import unittest
 
+import dask.array as da
 import iris
 import iris.fileformats
 import numpy as np
@@ -117,6 +118,10 @@ class Test(tests.Test):
             dim_coords_and_dims=coords_spec4,
             units='kg m-3',
         )
+
+        self.grid_4d_lazy = self.grid_4d.copy()
+        self.grid_4d_lazy.data = self.grid_4d_lazy.lazy_data().rechunk(
+            (1, 2, None, None))
 
         coords_spec4_sigma = [(time, 0), (scoord, 1), (lats2, 2), (lons2, 3)]
         self.grid_4d_sigma_space = iris.cube.Cube(
@@ -442,6 +447,18 @@ class Test(tests.Test):
         self.assertFalse(self.grid_4d.cell_measures('ocean_volume'))
         self.assertFalse(result.cell_measures('ocean_volume'))
 
+    def test_calculate_volume_lazy(self):
+        """Test that calculate_volume returns a lazy volume
+
+        The volume chunks should match those of the input cube for
+        computational efficiency.
+        """
+        chunks = self.grid_4d_lazy.core_data().chunks
+        volume = calculate_volume(self.grid_4d_lazy)
+        assert self.grid_4d_lazy.has_lazy_data()
+        assert isinstance(volume, da.Array)
+        assert volume.chunks == chunks
+
     def test_volume_statistics_cell_measure(self):
         """Test to take the volume weighted average of a (2,3,2,2) cube.
 
@@ -454,6 +471,23 @@ class Test(tests.Test):
                                           measure='volume')
         self.grid_4d.add_cell_measure(measure, range(0, measure.ndim))
         result = volume_statistics(self.grid_4d, 'mean')
+        expected = np.ma.array([1., 1.], mask=False)
+        self.assert_array_equal(result.data, expected)
+        self.assertEqual(result.units, 'kg m-3')
+
+    def test_volume_statistics_cell_measure_lazy(self):
+        """Test to take the volume weighted average of a lazy (2,3,2,2) cube.
+
+        The volume measure is pre-loaded in the cube.
+        """
+        grid_volume = calculate_volume(self.grid_4d_lazy)
+        measure = iris.coords.CellMeasure(grid_volume,
+                                          standard_name='ocean_volume',
+                                          units='m3',
+                                          measure='volume')
+        self.grid_4d_lazy.add_cell_measure(measure, range(0, measure.ndim))
+        result = volume_statistics(self.grid_4d_lazy, 'mean')
+        assert result.has_lazy_data()
         expected = np.ma.array([1., 1.], mask=False)
         self.assert_array_equal(result.data, expected)
         self.assertEqual(result.units, 'kg m-3')

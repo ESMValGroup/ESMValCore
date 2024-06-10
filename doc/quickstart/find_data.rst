@@ -7,7 +7,7 @@ Input data
 Overview
 ========
 Data discovery and retrieval is the first step in any evaluation process;
-ESMValTool uses a `semi-automated` data finding mechanism with inputs from both
+ESMValCore uses a `semi-automated` data finding mechanism with inputs from both
 the user configuration file and the recipe file: this means that the user will
 have to provide the tool with a set of parameters related to the data needed
 and once these parameters have been provided, the tool will automatically find
@@ -31,7 +31,7 @@ standard for naming files and structured paths; the `DRS
 <https://www.ecmwf.int/sites/default/files/elibrary/2014/13713-data-reference-syntax-governing-standards-within-climate-research-data-archived-esgf.pdf>`_
 ensures that files and paths to them are named according to a
 standardized convention. Examples of this convention, also used by
-ESMValTool for file discovery and data retrieval, include:
+ESMValCore for file discovery and data retrieval, include:
 
 * CMIP6 file: ``{variable_short_name}_{mip}_{dataset_name}_{experiment}_{ensemble}_{grid}_{start-date}-{end-date}.nc``
 * CMIP5 file: ``{variable_short_name}_{mip}_{dataset_name}_{experiment}_{ensemble}_{start-date}-{end-date}.nc``
@@ -44,7 +44,7 @@ ESGF data nodes, these paths differ slightly, for example:
   {variable_short_name}/{grid}``;
 * CMIP6 path for ETHZ: ``ROOT-ETHZ/{experiment}/{mip}/{variable_short_name}/{dataset_name}/{ensemble}/{grid}``
 
-From the ESMValTool user perspective the number of data input parameters is
+From the ESMValCore user perspective the number of data input parameters is
 optimized to allow for ease of use. We detail this procedure in the next
 section.
 
@@ -163,7 +163,7 @@ dedicated projects instead of the project ``native6``.
 CESM
 ^^^^
 
-ESMValTool is able to read native `CESM <https://www.cesm.ucar.edu/>`__ model
+ESMValCore is able to read native `CESM <https://www.cesm.ucar.edu/>`__ model
 output.
 
 .. warning::
@@ -252,7 +252,7 @@ Key                  Description                            Default value if not
 EMAC
 ^^^^
 
-ESMValTool is able to read native `EMAC
+ESMValCore is able to read native `EMAC
 <https://www.dlr.de/pa/en/desktopdefault.aspx/tabid-8859/15306_read-37415/>`_
 model output.
 
@@ -274,7 +274,7 @@ Thus, example dataset entries could look like this:
     - {project: EMAC, dataset: EMAC, exp: historical, mip: Amon, short_name: ta, raw_name: tm1_p39_cav, start_year: 2000, end_year: 2014}
 
 Please note the duplication of the name ``EMAC`` in ``project`` and
-``dataset``, which is necessary to comply with ESMValTool's data finding and
+``dataset``, which is necessary to comply with ESMValCore's data finding and
 CMORizing functionalities.
 A variable-specific default for the facet ``channel`` is given in the extra
 facets (see next paragraph) for many variables, but this can be overwritten in
@@ -285,7 +285,7 @@ facets<extra_facets>`.
 By default, the file :download:`emac-mappings.yml
 </../esmvalcore/config/extra_facets/emac-mappings.yml>` is used for that
 purpose.
-For some variables, extra facets are necessary; otherwise ESMValTool cannot
+For some variables, extra facets are necessary; otherwise ESMValCore cannot
 read them properly.
 Supported keys for extra facets are:
 
@@ -326,7 +326,7 @@ Key                  Description                            Default value if not
 ICON
 ^^^^
 
-ESMValTool is able to read native `ICON
+ESMValCore is able to read native `ICON
 <https://code.mpimet.mpg.de/projects/iconpublic>`_ model output.
 
 The default naming conventions for input directories and files for ICON are
@@ -349,7 +349,7 @@ Thus, example dataset entries could look like this:
        end_year: 2014}
 
 Please note the duplication of the name ``ICON`` in ``project`` and
-``dataset``, which is necessary to comply with ESMValTool's data finding and
+``dataset``, which is necessary to comply with ESMValCore's data finding and
 CMORizing functionalities.
 A variable-specific default for the facet ``var_type`` is given in the extra
 facets (see below) for many variables, but this can be overwritten in the
@@ -460,7 +460,7 @@ facets<extra_facets>`.
 By default, the file :download:`icon-mappings.yml
 </../esmvalcore/config/extra_facets/icon-mappings.yml>` is used for that
 purpose.
-For some variables, extra facets are necessary; otherwise ESMValTool cannot
+For some variables, extra facets are necessary; otherwise ESMValCore cannot
 read them properly.
 Supported keys for extra facets are:
 
@@ -569,7 +569,7 @@ files must also undergo some data selection.
 
 Data retrieval
 ==============
-Data retrieval in ESMValTool has two main aspects from the user's point of
+Data retrieval in ESMValCore has two main aspects from the user's point of
 view:
 
 * data can be found by the tool, subject to availability on disk or `ESGF <https://esgf.llnl.gov/>`_;
@@ -577,7 +577,7 @@ view:
 
 The first point is self-explanatory: if the user runs the tool on a machine
 that has access to a data repository or multiple data repositories, then
-ESMValTool will look for and find the available data requested by the user.
+ESMValCore will look for and find the available data requested by the user.
 If the files are not found locally, the tool can search the ESGF_ and download
 the missing files, provided that they are available.
 
@@ -598,7 +598,7 @@ the :ref:`user configuration file`.
 
 Setting the correct root paths
 ------------------------------
-The first step towards providing ESMValTool the correct set of parameters for
+The first step towards providing ESMValCore the correct set of parameters for
 data retrieval is setting the root paths to the data. This is done in the user
 configuration file ``config-user.yml``. The two sections where the user will
 set the paths are ``rootpath`` and ``drs``. ``rootpath`` contains pointers to
@@ -608,24 +608,11 @@ first discuss the ``drs`` parameter: as we've seen in the previous section, the
 DRS as a standard is used for both file naming conventions and for directory
 structures.
 
-Synda
------
-
-If the `synda install <https://prodiguer.github.io/synda/sdt/user_guide.html#synda-install>`_ command is used to download data,
-it maintains the directory structure as on ESGF. To find data downloaded by
-synda, use the ``SYNDA`` ``drs`` parameter.
-
-.. code-block:: yaml
-
- drs:
-   CMIP6: SYNDA
-   CMIP5: SYNDA
-
 .. _config-user-drs:
 
 Explaining ``config-user/drs: CMIP5:`` or ``config-user/drs: CMIP6:``
 ---------------------------------------------------------------------
-Whereas ESMValTool will **always** use the CMOR standard for file naming (please
+Whereas ESMValCore will by default use the CMOR standard for file naming (please
 refer above), by setting the ``drs`` parameter the user tells the tool what
 type of root paths they need the data from, e.g.:
 
@@ -655,10 +642,17 @@ is another way to retrieve data from a ``ROOT`` directory that has no DRS-like
 structure; ``default`` indicates that the data lies in a directory that
 contains all the files without any structure.
 
+The names of the directories trees that can be used under `drs` are defined in
+:ref:`config-developer`.
+
 .. note::
-   When using ``CMIP6: default`` or ``CMIP5: default`` it is important to
-   remember that all the needed files must be in the same top-level directory
-   set by ``default`` (see below how to set ``default``).
+   When using ``CMIP6: default`` or ``CMIP5: default``, all the needed files
+   must be in the same top-level directory specified under ``rootpath``.
+   However, it is not recommended to use this, as it makes it impossible for
+   the tool to read the facets from the directory tree.
+   Moreover, this way of organizing data makes it impossible to store multiple
+   versions of the same file because the files typically have the same name
+   for different versions.
 
 .. _config-user-rootpath:
 
@@ -668,27 +662,37 @@ Explaining ``config-user/rootpath:``
 ``rootpath`` identifies the root directory for different data types (``ROOT`` as we used it above):
 
 * ``CMIP`` e.g. ``CMIP5`` or ``CMIP6``: this is the `root` path(s) to where the
-  CMIP files are stored; it can be a single path or a list of paths; it can
+  CMIP files are stored; it can be a single path, a list of paths, or a mapping
+  with paths as keys and `drs` names as values; it can
   point to an ESGF node or it can point to a user private repository. Example
-  for a CMIP5 root path pointing to the ESGF node on CEDA-Jasmin (formerly
+  for a CMIP5 root path pointing to the ESGF node mounted on CEDA-Jasmin (formerly
   known as BADC):
 
   .. code-block:: yaml
 
-    CMIP5: /badc/cmip5/data/cmip5/output1
+    rootpath:
+      CMIP5: /badc/cmip5/data/cmip5/output1
 
   Example for a CMIP6 root path pointing to the ESGF node on CEDA-Jasmin:
 
   .. code-block:: yaml
 
-    CMIP6: /badc/cmip6/data/CMIP6/CMIP
+    rootpath:
+      CMIP6: /badc/cmip6/data/CMIP6
 
   Example for a mix of CMIP6 root path pointing to the ESGF node on CEDA-Jasmin
   and a user-specific data repository for extra data:
 
   .. code-block:: yaml
 
-    CMIP6: [/badc/cmip6/data/CMIP6/CMIP, /home/users/johndoe/cmip_data]
+    rootpath:
+      CMIP6:
+        /badc/cmip6/data/CMIP6: BADC
+        ~/climate_data: ESGF
+
+  Note that this notation combines the ``rootpath`` and ``drs`` settings, so it
+  is not necessary to specify the directory structure in under ``drs`` in this
+  case.
 
 * ``OBS``: this is the `root` path(s) to where the observational datasets are
   stored; again, this could be a single path or a list of paths, just like for
@@ -697,7 +701,8 @@ Explaining ``config-user/rootpath:``
 
   .. code-block:: yaml
 
-    OBS: /gws/nopw/j04/esmeval/obsdata-v2
+    rootpath:
+      OBS: /gws/nopw/j04/esmeval/obsdata-v2
 
 * ``default``: this is the `root` path(s) where the tool will look for data
   from projects that do not have their own rootpath set.
@@ -705,9 +710,22 @@ Explaining ``config-user/rootpath:``
 * ``RAWOBS``: this is the `root` path(s) to where the raw observational data
   files are stored; this is used by ``esmvaltool data format``.
 
+Synda
+-----
+
+If the `synda install <https://prodiguer.github.io/synda/sdt/user_guide.html#synda-install>`_ command is used to download data,
+it maintains the directory structure as on ESGF. To find data downloaded by
+synda, use the ``SYNDA`` ``drs`` parameter.
+
+.. code-block:: yaml
+
+ drs:
+   CMIP6: SYNDA
+   CMIP5: SYNDA
+
 Dataset definitions in ``recipe``
 ---------------------------------
-Once the correct paths have been established, ESMValTool collects the
+Once the correct paths have been established, ESMValCore collects the
 information on the specific datasets that are needed for the analysis. This
 information, together with the CMOR convention for naming files (see CMOR-DRS_)
 will allow the tool to search and find the right files. The specific

@@ -512,9 +512,8 @@ def _get_target_grid_cube(
         target_grid_cube = iris.load_cube(target_grid)
     elif isinstance(target_grid, str):
         # Generate a target grid from the provided cell-specification
-        target_grid_cube = _global_stock_cube(
-            target_grid, lat_offset, lon_offset
-        )
+        target_grid_cube = _global_stock_cube(target_grid, lat_offset,
+                                              lon_offset)
         # Align the target grid coordinate system to the source
         # coordinate system.
         src_cs = cube.coord_system()
@@ -541,8 +540,7 @@ def _attempt_irregular_regridding(cube: Cube, scheme: str) -> bool:
     if scheme not in HORIZONTAL_SCHEMES_IRREGULAR:
         raise ValueError(
             f"Regridding scheme '{scheme}' does not support irregular data, "
-            f"expected one of {list(HORIZONTAL_SCHEMES_IRREGULAR)}"
-        )
+            f"expected one of {list(HORIZONTAL_SCHEMES_IRREGULAR)}")
     return True
 
 
@@ -553,8 +551,7 @@ def _attempt_unstructured_regridding(cube: Cube, scheme: str) -> bool:
     if scheme not in HORIZONTAL_SCHEMES_UNSTRUCTURED:
         raise ValueError(
             f"Regridding scheme '{scheme}' does not support unstructured "
-            f"data, expected one of {list(HORIZONTAL_SCHEMES_UNSTRUCTURED)}"
-        )
+            f"data, expected one of {list(HORIZONTAL_SCHEMES_UNSTRUCTURED)}")
     return True
 
 
@@ -570,8 +567,7 @@ def _load_scheme(src_cube: Cube, scheme: str | dict):
             "version 2.13.0. Please use the scheme `nearest` instead. This is "
             "an exact replacement for data on unstructured grids. Since "
             "version 2.11.0, ESMValCore is able to determine the most "
-            "suitable regridding scheme based on the input data."
-        )
+            "suitable regridding scheme based on the input data.")
         warnings.warn(msg, ESMValCoreDeprecationWarning)
         scheme = 'nearest'
 
@@ -583,8 +579,7 @@ def _load_scheme(src_cube: Cube, scheme: str | dict):
             "iris.analysis:Linear` and `extrapolation_mode: extrapolate` "
             "instead (see https://docs.esmvaltool.org/projects/ESMValCore/en/"
             "latest/recipe/preprocessor.html#generic-regridding-schemes)."
-            "This is an exact replacement."
-        )
+            "This is an exact replacement.")
         warnings.warn(msg, ESMValCoreDeprecationWarning)
         scheme = 'linear'
         loaded_scheme = Linear(extrapolation_mode='extrapolate')
@@ -607,8 +602,7 @@ def _load_scheme(src_cube: Cube, scheme: str | dict):
     if loaded_scheme is None:
         raise ValueError(
             f"Got invalid regridding scheme string '{scheme}', expected one "
-            f"of {list(HORIZONTAL_SCHEMES_REGULAR)}"
-        )
+            f"of {list(HORIZONTAL_SCHEMES_REGULAR)}")
 
     logger.debug("Loaded regridding scheme %s", loaded_scheme)
 
@@ -623,8 +617,7 @@ def _load_generic_scheme(scheme: dict):
         object_ref = scheme.pop("reference")
     except KeyError as key_err:
         raise ValueError(
-            "No reference specified for generic regridding."
-        ) from key_err
+            "No reference specified for generic regridding.") from key_err
     module_name, separator, scheme_name = object_ref.partition(":")
     try:
         obj: Any = importlib.import_module(module_name)
@@ -632,8 +625,7 @@ def _load_generic_scheme(scheme: dict):
         raise ValueError(
             f"Could not import specified generic regridding module "
             f"'{module_name}'. Please double check spelling and that the "
-            f"required module is installed."
-        ) from import_err
+            f"required module is installed.") from import_err
     if separator:
         for attr in scheme_name.split('.'):
             obj = getattr(obj, attr)
@@ -665,7 +657,6 @@ def _get_regridder(
     If possible, this uses an existing regridder to reduce runtime (see also
     https://scitools-iris.readthedocs.io/en/latest/userguide/
     interpolation_and_regridding.html#caching-a-regridder.)
-
     """
     # (1) Weights caching enabled
     if cache_weights:
@@ -828,11 +819,13 @@ def regrid(
             target: 1x1
             scheme:
               reference: esmf_regrid.schemes:ESMFAreaWeighted
-
     """
     # Load target grid and select appropriate scheme
     target_grid_cube = _get_target_grid_cube(
-        cube, target_grid, lat_offset=lat_offset, lon_offset=lon_offset,
+        cube,
+        target_grid,
+        lat_offset=lat_offset,
+        lon_offset=lon_offset,
     )
 
     # Horizontal grids from source and target (almost) match
@@ -840,11 +833,9 @@ def regrid(
     if _horizontal_grid_is_close(cube, target_grid_cube):
         for coord in ['latitude', 'longitude']:
             cube.coord(coord).points = (
-                target_grid_cube.coord(coord).core_points()
-            )
+                target_grid_cube.coord(coord).core_points())
             cube.coord(coord).bounds = (
-                target_grid_cube.coord(coord).core_bounds()
-            )
+                target_grid_cube.coord(coord).core_bounds())
         return cube
 
     # Load scheme and reuse existing regridder if possible
@@ -927,7 +918,6 @@ def _horizontal_grid_is_close(cube1: Cube, cube2: Cube) -> bool:
     -------
     bool
         ``True`` if grids are close; ``False`` if not.
-
     """
     # Go through the 2 expected horizontal coordinates longitude and latitude.
     for coord in ['latitude', 'longitude']:
@@ -1162,7 +1152,7 @@ def _rechunk_aux_factory_dependencies(
     cube_chunks = cube.lazy_data().chunks
     for coord in factory.dependencies.values():
         coord_dims = cube.coord_dims(coord)
-        if coord_dims is not None:
+        if coord_dims:
             coord = coord.copy()
             chunks = tuple(cube_chunks[i] for i in coord_dims)
             coord.points = coord.lazy_points().rechunk(chunks)

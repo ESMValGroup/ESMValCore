@@ -91,8 +91,8 @@ def test_find_files(monkeypatch, root, cfg):
     ref_globs = [
         Path(root, d, f) for d in cfg['dirs'] for f in cfg['file_patterns']
     ]
-    assert sorted([Path(f) for f in input_filelist]) == sorted(ref_files)
-    assert sorted([Path(g) for g in globs]) == sorted(ref_globs)
+    assert [Path(f) for f in input_filelist] == sorted(ref_files)
+    assert [Path(g) for g in globs] == sorted(ref_globs)
 
 
 def test_find_files_with_facets(monkeypatch, root):

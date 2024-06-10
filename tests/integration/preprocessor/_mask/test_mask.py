@@ -182,13 +182,17 @@ class Test:
         np.ma.set_fill_value(expected, 1e+20)
         assert_array_equal(result_ice.data, expected)
 
-    def test_mask_fillvalues(self, mocker):
+    @pytest.mark.parametrize('lazy', [True, False])
+    def test_mask_fillvalues(self, mocker, lazy):
         """Test the fillvalues mask: func mask_fillvalues."""
         data_1 = data_2 = self.mock_data
         data_2.mask = np.ones((4, 3, 3), bool)
         coords_spec = [(self.times, 0), (self.lats, 1), (self.lons, 2)]
         cube_1 = iris.cube.Cube(data_1, dim_coords_and_dims=coords_spec)
         cube_2 = iris.cube.Cube(data_2, dim_coords_and_dims=coords_spec)
+        if lazy:
+            cube_1.data = cube_1.lazy_data().rechunk((2, None, None))
+            cube_2.data = cube_2.lazy_data()
         filename_1 = 'file1.nc'
         filename_2 = 'file2.nc'
         product_1 = mocker.create_autospec(
@@ -215,10 +219,17 @@ class Test:
                 result_1 = product.cubes[0]
             if product.filename == filename_2:
                 result_2 = product.cubes[0]
+
+        assert cube_1.has_lazy_data() == lazy
+        assert cube_2.has_lazy_data() == lazy
+        assert result_1.has_lazy_data() == lazy
+        assert result_2.has_lazy_data() == lazy
+
         assert_array_equal(result_2.data.mask, data_2.mask)
         assert_array_equal(result_1.data, data_1)
 
-    def test_mask_fillvalues_zero_threshold(self, mocker):
+    @pytest.mark.parametrize('lazy', [True, False])
+    def test_mask_fillvalues_zero_threshold(self, mocker, lazy):
         """Test the fillvalues mask: func mask_fillvalues for 0-threshold."""
         data_1 = self.mock_data
         data_2 = self.mock_data[0:3]
@@ -232,6 +243,10 @@ class Test:
         coords_spec2 = [(self.time2, 0), (self.lats, 1), (self.lons, 2)]
         cube_1 = iris.cube.Cube(data_1, dim_coords_and_dims=coords_spec)
         cube_2 = iris.cube.Cube(data_2, dim_coords_and_dims=coords_spec2)
+        if lazy:
+            cube_1.data = cube_1.lazy_data().rechunk((2, None, None))
+            cube_2.data = cube_2.lazy_data()
+
         filename_1 = Path('file1.nc')
         filename_2 = Path('file2.nc')
         product_1 = mocker.create_autospec(
@@ -255,6 +270,12 @@ class Test:
                 result_1 = product.cubes[0]
             if product.filename == filename_2:
                 result_2 = product.cubes[0]
+
+        assert cube_1.has_lazy_data() == lazy
+        assert cube_2.has_lazy_data() == lazy
+        assert result_1.has_lazy_data() == lazy
+        assert result_2.has_lazy_data() == lazy
+
         # identical masks
         assert_array_equal(
             result_2.data[0, ...].mask,
@@ -265,7 +286,8 @@ class Test:
         assert_array_equal(result_1[1:2].data.mask, cumulative_mask)
         assert_array_equal(result_2[2:3].data.mask, cumulative_mask)
 
-    def test_mask_fillvalues_min_value_none(self, mocker):
+    @pytest.mark.parametrize('lazy', [True, False])
+    def test_mask_fillvalues_min_value_none(self, mocker, lazy):
         """Test ``mask_fillvalues`` for min_value=None."""
         # We use non-masked data here and explicitly set some values to 0 here
         # since this caused problems in the past, see
@@ -278,6 +300,10 @@ class Test:
         coords_spec2 = [(self.time2, 0), (self.lats, 1), (self.lons, 2)]
         cube_1 = iris.cube.Cube(data_1, dim_coords_and_dims=coords_spec)
         cube_2 = iris.cube.Cube(data_2, dim_coords_and_dims=coords_spec2)
+        if lazy:
+            cube_1.data = cube_1.lazy_data().rechunk((2, None, None))
+            cube_2.data = cube_2.lazy_data()
+
         filename_1 = Path('file1.nc')
         filename_2 = Path('file2.nc')
 
@@ -303,10 +329,13 @@ class Test:
             min_value=None,
         )
 
+        assert cube_1.has_lazy_data() == lazy
+        assert cube_2.has_lazy_data() == lazy
         assert len(results) == 2
         for product in results:
             if product.filename in (filename_1, filename_2):
                 assert len(product.cubes) == 1
+                assert product.cubes[0].has_lazy_data() == lazy
                 assert not np.ma.is_masked(product.cubes[0].data)
             else:
                 assert False, f"Invalid filename: {product.filename}"
