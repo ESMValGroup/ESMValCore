@@ -84,6 +84,7 @@ def test_run(mocker, session, search_esgf):
     session['config_file'] = '/path/to/config-user.yml'
     session['remove_preproc_dir'] = True
     session['save_intermediary_cubes'] = False
+    session.cmor_log.read_text.return_value = 'WARNING: attribute not present'
 
     recipe = Path('/recipe_dir/recipe_test.yml')
 

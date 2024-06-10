@@ -713,6 +713,31 @@ class TestHelpers(tests.Test):
                                                 mock.sentinel.regridder,
                                                 self.cube_3d, self.cube)
 
+    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.map_slices')
+    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.build_regridder')
+    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.get_grid_representants',
+                mock.Mock(side_effect=identity))
+    def test_data_realized_once(self, mock_build_regridder, mock_map_slices):
+        """Test that the regridder realizes the data only once."""
+        src_cube = mock.MagicMock()
+        src_data = mock.PropertyMock()
+        type(src_cube).data = src_data
+        tgt_cube1 = mock.MagicMock()
+        tgt_data1 = mock.PropertyMock()
+        type(tgt_cube1).data = tgt_data1
+        # Check that constructing the regridder realizes the source and
+        # target data.
+        regridder = ESMPyAreaWeighted().regridder(src_cube, tgt_cube1)
+        src_data.assert_called_with()
+        tgt_data1.assert_called_with()
+        tgt_cube2 = mock.MagicMock()
+        tgt_data2 = mock.PropertyMock()
+        # Check that calling the regridder with another cube also realizes
+        # target data.
+        type(tgt_cube2).data = tgt_data2
+        regridder(tgt_cube2)
+        tgt_data2.assert_called_with()
+
 
 @pytest.mark.parametrize(
     'scheme,output',

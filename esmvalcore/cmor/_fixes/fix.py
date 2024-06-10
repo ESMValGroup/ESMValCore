@@ -33,6 +33,7 @@ if TYPE_CHECKING:
     from esmvalcore.config import Session
 
 logger = logging.getLogger(__name__)
+generic_fix_logger = logging.getLogger(f'{__name__}.genericfix')
 
 
 class Fix:
@@ -397,12 +398,12 @@ class GenericFix(Fix):
     def _debug_msg(self, cube: Cube, msg: str, *args) -> None:
         """Print debug message."""
         msg += self._msg_suffix(cube)
-        logger.debug(msg, *args)
+        generic_fix_logger.debug(msg, *args)
 
     def _warning_msg(self, cube: Cube, msg: str, *args) -> None:
         """Print debug message."""
         msg += self._msg_suffix(cube)
-        logger.warning(msg, *args)
+        generic_fix_logger.warning(msg, *args)
 
     @staticmethod
     def _set_range_in_0_360(array: np.ndarray) -> np.ndarray:
