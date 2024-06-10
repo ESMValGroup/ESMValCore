@@ -18,6 +18,7 @@ class Sic(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Cube to fix.
 
         Returns
         -------
@@ -40,6 +41,7 @@ class Sftlf(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Cube to fix.
 
         Returns
         -------
@@ -62,6 +64,7 @@ class Tos(Fix):
         Parameters
         ----------
         cube: iris.cube.Cube
+            Cube to fix.
 
         Returns
         -------
@@ -86,7 +89,6 @@ class Tas(Fix):
         -------
         iris.cube.CubeList
         """
-
         for cube in cubes:
             if not cube.coords(var_name='height'):
                 add_scalar_height_coord(cube)
