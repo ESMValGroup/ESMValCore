@@ -1,4 +1,5 @@
 """Fixes for FGOALS-g3 model."""
+import dask.array as da
 import iris
 
 from ..common import OceanFixGrid
@@ -32,13 +33,13 @@ class Tos(OceanFixGrid):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
-        cube.coord('latitude').points[
-            cube.coord('latitude').points > 1000.0] = 0.0
-        cube.coord('longitude').points[
-            cube.coord('longitude').points > 1000.0] = 0.0
+        for coord_name in ['latitude', 'longitude']:
+            coord = cube.coord(coord_name)
+            bad_indices = coord.core_points() > 1000.0
+            coord.points = da.ma.where(bad_indices, 0.0, coord.core_points())
+
         return super().fix_metadata(cubes)
 
 
@@ -51,7 +52,7 @@ class Mrsos(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata.
 
-        FGOALS-g3 mrsos data contains error in co-ordinate bounds.
+        FGOALS-g3 mrsos data contains error in coordinate bounds.
 
         Parameters
         ----------
