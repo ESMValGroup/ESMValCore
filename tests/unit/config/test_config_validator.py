@@ -21,6 +21,7 @@ from esmvalcore.config._config_validators import (
     validate_path,
     validate_path_or_none,
     validate_positive,
+    validate_rootpath,
     validate_search_esgf,
     validate_string,
     validate_string_or_none,
@@ -121,6 +122,7 @@ def generate_validator_testcases(valid):
                 ('a/b/c', Path.cwd() / 'a' / 'b' / 'c'),
                 ('/a/b/c/', Path('/', 'a', 'b', 'c')),
                 ('~/', Path.home()),
+                (Path.home(), Path.home()),
             ),
             'fail': (
                 (None, ValueError),
@@ -142,6 +144,49 @@ def generate_validator_testcases(valid):
                 (False, ValueError),
                 ([], ValueError),
             ),
+        },
+        {
+            'validator':
+            validate_rootpath,
+            'success': (
+                # Test a single path
+                ({
+                    'default': '/a'
+                }, {
+                    'default': [Path('/a')]
+                }),
+                ({
+                    'default': Path('/a')
+                }, {
+                    'default': [Path('/a')]
+                }),
+                # Test a list of paths
+                ({
+                    'CMIP6': ['/a', '/b']
+                }, {
+                    'CMIP6': [Path('/a'), Path('/b')]
+                }),
+                ({
+                    'CMIP6': [Path('/a'), Path('/b')]
+                }, {
+                    'CMIP6': [Path('/a'), Path('/b')]
+                }),
+                # Test a dict of paths
+                (
+                    {
+                        'CMIP6': {
+                            '/a': 'DKRZ',
+                            '/b': 'ESGF',
+                        },
+                    },
+                    {
+                        'CMIP6': {
+                            Path('/a'): 'DKRZ',
+                            Path('/b'): 'ESGF',
+                        },
+                    },
+                )),
+            'fail': (),
         },
         {
             'validator': validate_positive,
@@ -287,3 +332,6 @@ def test_validate_config_developer(tmp_path):
 
     path = validate_config_developer(cfg_dev_file)
     assert path == cfg_dev_file
+
+    # Restore original config-developer file
+    validate_config_developer(None)

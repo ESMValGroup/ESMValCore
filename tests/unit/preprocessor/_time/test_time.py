@@ -1899,7 +1899,7 @@ class TestResampleHours(tests.Test):
         return cube
 
     def test_resample_1_to_6(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 48, 1)
         times = np.arange(0, 48, 1)
         cube = self._create_cube(data, times)
@@ -1909,7 +1909,7 @@ class TestResampleHours(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_resample_3_to_6(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 48, 3)
         times = np.arange(0, 48, 3)
         cube = self._create_cube(data, times)
@@ -1919,7 +1919,7 @@ class TestResampleHours(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_resample_1_to_3(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 48, 1)
         times = np.arange(0, 48, 1)
         cube = self._create_cube(data, times)
@@ -1929,7 +1929,7 @@ class TestResampleHours(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_resample_1_to_3_with_offset2(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 48, 1)
         times = np.arange(0, 48, 1)
         cube = self._create_cube(data, times)
@@ -1939,7 +1939,7 @@ class TestResampleHours(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_resample_invalid(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 48, 1)
         times = np.arange(0, 48, 1)
         cube = self._create_cube(data, times)
@@ -1948,7 +1948,7 @@ class TestResampleHours(tests.Test):
             resample_hours(cube, 5)
 
     def test_resample_invalid_offset(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 48, 1)
         times = np.arange(0, 48, 1)
         cube = self._create_cube(data, times)
@@ -1957,7 +1957,7 @@ class TestResampleHours(tests.Test):
             resample_hours(cube, interval=3, offset=6)
 
     def test_resample_shorter_interval(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 48, 12)
         times = np.arange(0, 48, 12)
         cube = self._create_cube(data, times)
@@ -1966,7 +1966,7 @@ class TestResampleHours(tests.Test):
             resample_hours(cube, interval=3)
 
     def test_resample_same_interval(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 48, 12)
         times = np.arange(0, 48, 12)
         cube = self._create_cube(data, times)
@@ -1976,13 +1976,44 @@ class TestResampleHours(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_resample_nodata(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 4, 1)
         times = np.arange(0, 4, 1)
         cube = self._create_cube(data, times)
 
         with self.assertRaises(ValueError):
             resample_hours(cube, offset=5, interval=6)
+
+    def test_resample_interpolate_linear(self):
+        """Test ``resample_hours``."""
+        data = np.array([1, 2])
+        times = np.array([6, 18])
+        cube = self._create_cube(data, times)
+
+        result = resample_hours(cube, interval=12, interpolate='linear')
+        assert_array_equal(result.data, [0.5, 1.5])
+        assert_array_equal(result.coord('time').points, [0, 12])
+
+    def test_resample_interpolate_nearest(self):
+        """Test ``resample_hours``."""
+        data = np.array([1, 2])
+        times = np.array([6, 18])
+        cube = self._create_cube(data, times)
+
+        result = resample_hours(
+            cube, interval=12, offset=1, interpolate='nearest'
+        )
+        assert_array_equal(result.data, [1, 2])
+        assert_array_equal(result.coord('time').points, [1, 13])
+
+    def test_resample_invalid_interpolation(self):
+        """Test ``resample_hours``."""
+        data = np.arange(0, 4, 1)
+        times = np.arange(0, 4, 1)
+        cube = self._create_cube(data, times)
+
+        with self.assertRaises(ValueError):
+            resample_hours(cube, interval=1, interpolate='invalid')
 
 
 class TestResampleTime(tests.Test):
