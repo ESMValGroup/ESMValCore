@@ -21,6 +21,10 @@ commands:
               circleci step halt
             fi
   test_and_report:
+    parameters:
+      args:
+        type: string
+        default: ""
     steps:
       - run:
           name: Run tests
@@ -29,7 +33,7 @@ commands:
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
             flake8 -j 4
-            pytest -n 4 --junitxml=test-reports/report.xml
+            pytest -n 4 --junitxml=test-reports/report.xml << parameters.args >>
             esmvaltool version
       - store_test_results:
           path: test-reports/report.xml
@@ -117,7 +121,8 @@ jobs:
             mkdir /logs
             conda activate esmvaltool
             pip install .[test] > /logs/install.txt 2>&1
-      - test_and_report
+      - test_and_report:
+          args: --cov
       - save_cache:
           key: test-{{ .Branch }}-{{ checksum "cache_key.txt" }}
           paths:
