@@ -148,19 +148,15 @@ ERA5 (in GRIB format available on DKRZ's Levante)
 ERA5 data in monthly, daily, and hourly resolution is `available on Levante
 <https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/index.html#era-data>`__
 in its native GRIB format.
-To read this data with ESMValCore, use the following settings in your
-:ref:`user configuration file`:
+To read these data with ESMValCore, use the root path ``/pool/data/ERA5`` with
+DRS ``DKRZ-ERA5-GRIB`` in your :ref:`user configuration file`, for example:
 
 .. code-block:: yaml
 
   rootpath:
     ...
-    native6: /pool/data/ERA5
-    ...
-
-  drs:
-    ...
-    native6: DKRZ-ERA5-GRIB
+    native6:
+      /pool/data/ERA5: DKRZ-ERA5-GRIB
     ...
 
 The `naming conventions
@@ -191,26 +187,19 @@ Thus, example dataset entries could look like this:
 
 The native ERA5 output in GRIB format is stored on a `reduced Gaussian grid
 <https://confluence.ecmwf.int/display/CKB/ERA5:+data+documentation#ERA5:datadocumentation-SpatialgridSpatialGrid>`__.
-By default, ESMValCore linearly interpolates the data to a regular 0.25° x
-0.25° grid as `recommended by the ECMWF
-<https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference#heading-Interpolation>`__.
-If you want to use a different target resolution or completely disable this
-feature, you can specify the optional facet ``regrid`` in the recipe.
-``regrid`` takes the following keyword arguments: ``target_grid``,
-``lat_offset`` (optional; default: ``True``), and ``lon_offset`` (optional;
-default: ``True``).
-See :func:`esmvalcore.preprocessor.regrid` for details on these keywords.
-Example:
+To regrid the data to a regular 0.25°x0.25° grid as `recommended by the ECMWF
+<https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference#heading-Interpolation>`__,
+you can use the following preprocessor:
 
 .. code-block:: yaml
 
-  datasets:
-    - {project: native6, dataset: ERA5, timerange: '2000/2001',
-       short_name: tas, mip: Amon, regrid: {target_grid: 1x1}}
-    - {project: native6, dataset: ERA5, timerange: '2000/2001',
-       short_name: tas, mip: Amon, regrid: {target_grid: 1x1, lat_offset: false}}
-    - {project: native6, dataset: ERA5, timerange: '2000/2001',
-       short_name: tas, mip: Amon, regrid: false}  # do NOT interpolate
+  preprocessors:
+    regrid_era5:  # this is an arbitrary name
+      regrid:
+        target_grid: 0.25x0.25
+        scheme: linear
+
+See :ref:`Horizontal regridding` for details.
 
 - Supported variables: ``albsn``, ``cl``, ``cli``, ``clt``, ``clw``, ``hur``,
   ``hus``, ``o3``, ``prw``, ``ps``, ``psl``, ``rainmxrat27``, ``sftlf``,
