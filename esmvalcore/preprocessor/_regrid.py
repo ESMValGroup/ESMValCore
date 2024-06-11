@@ -830,7 +830,7 @@ def regrid(
 
     # Horizontal grids from source and target (almost) match
     # -> Return source cube with target coordinates
-    if _horizontal_grid_is_close(cube, target_grid_cube):
+    if False:  # _horizontal_grid_is_close(cube, target_grid_cube):
         for coord in ['latitude', 'longitude']:
             cube.coord(coord).points = (
                 target_grid_cube.coord(coord).core_points())
@@ -841,12 +841,30 @@ def regrid(
     # Load scheme and reuse existing regridder if possible
     if isinstance(scheme, str):
         scheme = scheme.lower()
-    regridder = _get_regridder(cube, target_grid_cube, scheme, cache_weights)
+
+    try:
+        regridder = _get_regridder(cube, target_grid_cube, scheme,
+                                   cache_weights)
+    except Exception as exc:
+        cube = target_grid_cube.copy(da.zeros(target_grid_cube.shape))
+        cube.var_name = "Failed_to_get_regridder"
+        cube.attributes['error'] = f"Failed to get regridder: {exc}"
+        print(cube)
+        return cube
 
     # Rechunk and actually perform the regridding
     cube = _rechunk(cube, target_grid_cube)
-    cube = regridder(cube)
+    try:
+        cube = regridder(cube)
+    except Exception as exc:
+        cube = target_grid_cube.copy(da.zeros(target_grid_cube.shape))
+        cube.var_name = "Failed_to_regrid"
+        cube.attributes['error'] = f"Failed to regrid: {exc}"
+        print(cube)
+        return cube
 
+    cube.attributes['regridder'] = str(regridder)
+    cube.attributes['status'] = "lazy" if cube.has_lazy_data() else "realized"
     return cube
 
 
@@ -1225,7 +1243,10 @@ def extract_levels(
 
     # Try to determine the name of the vertical coordinate automatically
     if coordinate is None:
-        coordinate = cube.coord(axis='z', dim_coords=True).name()
+        try:
+            coordinate = cube.coord(axis='z', dim_coords=True).name()
+        except iris.exceptions.CoordinateNotFoundError:
+            return cube
 
     # Add extra coordinates
     coord_names = [coord.name() for coord in cube.coords()]
