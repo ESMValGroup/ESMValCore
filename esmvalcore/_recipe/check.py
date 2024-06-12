@@ -1,10 +1,11 @@
 """Module with functions to check a recipe."""
 from __future__ import annotations
 
+import inspect
 import logging
 import os
 import subprocess
-from inspect import getfullargspec
+from functools import partial
 from pprint import pformat
 from shutil import which
 from typing import Any, Iterable
@@ -395,45 +396,92 @@ def differing_timeranges(timeranges, required_vars):
             "Set `timerange` to a common value.")
 
 
-def bias_type(settings: dict) -> None:
-    """Check that bias_type for bias preprocessor is valid."""
-    if 'bias' not in settings:
+def _check_literal(
+    settings: dict,
+    *,
+    step: str,
+    option: str,
+    allowed_values: tuple[str],
+) -> None:
+    """Check that an option for a preprocessor has a valid value."""
+    if step not in settings:
         return
-    valid_options = ('absolute', 'relative')
-    user_bias_type = settings['bias'].get('bias_type', 'absolute')
-    if user_bias_type not in valid_options:
+    user_value = settings[step].get(option, allowed_values[0])
+    if user_value not in allowed_values:
         raise RecipeError(
-            f"Expected one of {valid_options} for `bias_type`, got "
-            f"'{user_bias_type}'"
+            f"Expected one of {allowed_values} for option `{option}` of "
+            f"preprocessor `{step}`, got '{user_value}'"
         )
 
 
-def reference_for_bias_preproc(products):
-    """Check that exactly one reference dataset for bias preproc is given."""
-    step = 'bias'
+bias_type = partial(
+    _check_literal,
+    step='bias',
+    option='bias_type',
+    allowed_values=('absolute', 'relative'),
+)
+
+
+metric_type = partial(
+    _check_literal,
+    step='distance_metric',
+    option='metric',
+    allowed_values=(
+        'rmse',
+        'weighted_rmse',
+        'pearsonr',
+        'weighted_pearsonr',
+        'emd',
+        'weighted_emd',
+    ),
+)
+
+
+resample_hours = partial(
+    _check_literal,
+    step='resample_hours',
+    option='interpolate',
+    allowed_values=(None, 'nearest', 'linear'),
+)
+
+
+def _check_ref_attributes(products: set, *, step: str, attr_name: str) -> None:
+    """Check that exactly one reference dataset is given."""
     products = {p for p in products if step in p.settings}
     if not products:
         return
 
-    # Check that exactly one dataset contains the facet ``reference_for_bias:
-    # true``
+    # Check that exactly one dataset contains the specified facet
     reference_products = []
     for product in products:
-        if product.attributes.get('reference_for_bias', False):
+        if product.attributes.get(attr_name, False):
             reference_products.append(product)
     if len(reference_products) != 1:
         products_str = [p.filename for p in products]
         if not reference_products:
             ref_products_str = ". "
         else:
-            ref_products_str = [p.filename for p in reference_products]
-            ref_products_str = f":\n{pformat(ref_products_str)}.\n"
+            ref_products_str = (
+                f":\n{pformat([p.filename for p in reference_products])}.\n"
+            )
         raise RecipeError(
-            f"Expected exactly 1 dataset with 'reference_for_bias: true' in "
+            f"Expected exactly 1 dataset with '{attr_name}: true' in "
             f"products\n{pformat(products_str)},\nfound "
             f"{len(reference_products):d}{ref_products_str}Please also "
             f"ensure that the reference dataset is not excluded with the "
             f"'exclude' option")
+
+
+reference_for_bias_preproc = partial(
+    _check_ref_attributes, step='bias', attr_name='reference_for_bias'
+)
+
+
+reference_for_distance_metric_preproc = partial(
+    _check_ref_attributes,
+    step='distance_metric',
+    attr_name='reference_for_metric',
+)
 
 
 def statistics_preprocessors(settings: dict) -> None:
@@ -470,7 +518,13 @@ def _check_regular_stat(step, step_settings):
         return
 
     # Ignore other preprocessor arguments, e.g., 'hours' for hourly_statistics
-    other_args = getfullargspec(preproc_func).args[1:]
+    other_args = [
+        n for (n, p) in inspect.signature(preproc_func).parameters.items() if
+        p.kind in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+        )
+    ][1:]
     operator_kwargs = {
         k: v for (k, v) in step_settings.items() if k not in other_args
     }

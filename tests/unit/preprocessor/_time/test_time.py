@@ -15,6 +15,8 @@ import iris.fileformats
 import numpy as np
 import pytest
 from cf_units import Unit
+from cftime import DatetimeNoLeap
+from iris.common.metadata import DimCoordMetadata
 from iris.cube import Cube
 from numpy.testing import (
     assert_array_almost_equal,
@@ -23,7 +25,6 @@ from numpy.testing import (
 )
 
 import tests
-from esmvalcore.iris_helpers import date2num
 from esmvalcore.preprocessor._time import (
     annual_statistics,
     anomalies,
@@ -1148,344 +1149,231 @@ class TestDailyStatistics(tests.Test):
         assert_array_equal(result.data, expected)
 
 
-class TestRegridTimeYearly(tests.Test):
-    """Tests for regrid_time with monthly frequency."""
-    def setUp(self):
-        """Prepare tests."""
-        self.cube_1 = _create_sample_cube()
-        self.cube_2 = _create_sample_cube()
-        self.cube_2.data = self.cube_2.data * 2.
-        self.cube_2.remove_coord('time')
-        self.cube_1.remove_coord('time')
-        self.cube_1.add_dim_coord(
-            iris.coords.DimCoord(
-                np.arange(11., 8770., 365.),
-                standard_name='time',
-                units=Unit('days since 1950-01-01 00:00:00',
-                           calendar='gregorian'),
-            ),
-            0,
+@pytest.fixture
+def cube_1d_time():
+    """Simple 1D cube with time coordinate of length one."""
+    units = Unit('days since 2000-01-01', calendar='standard')
+    time_coord = iris.coords.DimCoord(
+        units.date2num(datetime(2024, 1, 26, 14, 57, 28)),
+        bounds=[
+            units.date2num(datetime(2024, 1, 26, 13, 57, 28)),
+            units.date2num(datetime(2024, 1, 26, 15, 57, 28)),
+        ],
+        standard_name='time',
+        attributes={'test': 1},
+        units=units,
+    )
+    cube = Cube([1], var_name='tas', dim_coords_and_dims=[(time_coord, 0)])
+    return cube
+
+
+@pytest.mark.parametrize(
+    'frequency,calendar,new_date,new_bounds',
+    [
+        ('dec', None, (2024, 1, 1), [(2019, 1, 1), (2029, 1, 1)]),
+        ('dec', '365_day', (2024, 1, 1), [(2019, 1, 1), (2029, 1, 1)]),
+        ('yr', None, (2024, 7, 1), [(2024, 1, 1), (2025, 1, 1)]),
+        ('yr', '365_day', (2024, 7, 1), [(2024, 1, 1), (2025, 1, 1)]),
+        ('yrPt', None, (2024, 7, 1), [(2024, 1, 1), (2025, 1, 1)]),
+        ('yrPt', '365_day', (2024, 7, 1), [(2024, 1, 1), (2025, 1, 1)]),
+        ('mon', None, (2024, 1, 15), [(2024, 1, 1), (2024, 2, 1)]),
+        ('mon', '365_day', (2024, 1, 15), [(2024, 1, 1), (2024, 2, 1)]),
+        ('monC', None, (2024, 1, 15), [(2024, 1, 1), (2024, 2, 1)]),
+        ('monC', '365_day', (2024, 1, 15), [(2024, 1, 1), (2024, 2, 1)]),
+        ('monPt', None, (2024, 1, 15), [(2024, 1, 1), (2024, 2, 1)]),
+        ('monPt', '365_day', (2024, 1, 15), [(2024, 1, 1), (2024, 2, 1)]),
+        ('day', None, (2024, 1, 26, 12), [(2024, 1, 26), (2024, 1, 27)]),
+        ('24hr', None, (2024, 1, 26, 12), [(2024, 1, 26), (2024, 1, 27)]),
+        ('12hr', None, (2024, 1, 26, 18), [(2024, 1, 26, 12), (2024, 1, 27)]),
+        (
+            '8hr',
+            None,
+            (2024, 1, 26, 12),
+            [(2024, 1, 26, 8), (2024, 1, 26, 16)],
+        ),
+        (
+            '6hr',
+            None,
+            (2024, 1, 26, 15),
+            [(2024, 1, 26, 12), (2024, 1, 26, 18)],
+        ),
+        (
+            '6hrPt',
+            None,
+            (2024, 1, 26, 15),
+            [(2024, 1, 26, 12), (2024, 1, 26, 18)],
+        ),
+        (
+            '6hrCM',
+            None,
+            (2024, 1, 26, 15),
+            [(2024, 1, 26, 12), (2024, 1, 26, 18)],
+        ),
+        (
+            '4hr',
+            None,
+            (2024, 1, 26, 14),
+            [(2024, 1, 26, 12), (2024, 1, 26, 16)],
+        ),
+        (
+            '3hr',
+            None,
+            (2024, 1, 26, 13, 30),
+            [(2024, 1, 26, 12), (2024, 1, 26, 15)],
+        ),
+        (
+            '3hrPt',
+            None,
+            (2024, 1, 26, 13, 30),
+            [(2024, 1, 26, 12), (2024, 1, 26, 15)],
+        ),
+        (
+            '3hrCM',
+            None,
+            (2024, 1, 26, 13, 30),
+            [(2024, 1, 26, 12), (2024, 1, 26, 15)],
+        ),
+        (
+            '2hr',
+            None,
+            (2024, 1, 26, 15),
+            [(2024, 1, 26, 14), (2024, 1, 26, 16)],
+        ),
+        (
+            '1hr',
+            None,
+            (2024, 1, 26, 14, 30),
+            [(2024, 1, 26, 14), (2024, 1, 26, 15)],
+        ),
+        (
+            '1hrPt',
+            None,
+            (2024, 1, 26, 14, 30),
+            [(2024, 1, 26, 14), (2024, 1, 26, 15)],
+        ),
+        (
+            '1hrCM',
+            None,
+            (2024, 1, 26, 14, 30),
+            [(2024, 1, 26, 14), (2024, 1, 26, 15)],
+        ),
+        (
+            'hr',
+            None,
+            (2024, 1, 26, 14, 30),
+            [(2024, 1, 26, 14), (2024, 1, 26, 15)],
+        ),
+    ]
+)
+def test_regrid_time(cube_1d_time, frequency, calendar, new_date, new_bounds):
+    """Test ``regrid_time``."""
+    cube = cube_1d_time.copy()
+
+    new_cube = regrid_time(cube, frequency, calendar=calendar)
+
+    assert cube == cube_1d_time
+    assert new_cube.data == cube.data
+    assert new_cube.metadata == cube.metadata
+
+    time = new_cube.coord('time')
+    if calendar is None:
+        assert time.metadata == cube.coord('time').metadata
+    else:
+        assert time.metadata == DimCoordMetadata(
+            'time',
+            'time',
+            'time',
+            Unit('days since 1850-01-01 00:00:00', calendar=calendar),
+            {},
+            None,
+            False,
+            False,
         )
-        self.cube_2.add_dim_coord(
-            iris.coords.DimCoord(
-                np.arange(91., 8851., 365.),
-                standard_name='time',
-                units=Unit('days since 1950-01-01 00:00:00',
-                           calendar='gregorian'),
-            ),
-            0,
-        )
-        add_auxiliary_coordinate([self.cube_1, self.cube_2])
 
-    def test_regrid_time_year(self):
-        """Test changes to cubes."""
-        # test yearly
-        newcube_1 = regrid_time(self.cube_1, frequency='yr')
-        newcube_2 = regrid_time(self.cube_2, frequency='yr')
-        # no changes to core data
-        assert_array_equal(newcube_1.data, self.cube_1.data)
-        assert_array_equal(newcube_2.data, self.cube_2.data)
-        # no changes to number of coords and aux_coords
-        assert len(newcube_1.coords()) == len(self.cube_1.coords())
-        assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
-        # test difference; also diff is zero
-        expected = self.cube_1.data
-        diff_cube = newcube_2 - newcube_1
-        assert_array_equal(diff_cube.data, expected)
-        # test bounds are set at [01-01-YEAR 00:00, 01-01-NEXT_YEAR 00:00]
-        timeunit_1 = newcube_1.coord('time').units
-        for i, time in enumerate(newcube_1.coord('time').points):
-            year_1 = timeunit_1.num2date(time).year
-            expected_minbound = date2num(datetime(year_1, 1, 1),
-                                         timeunit_1)
-            expected_maxbound = date2num(datetime(year_1 + 1, 1, 1),
-                                         timeunit_1)
-            assert_array_equal(
-                newcube_1.coord('time').bounds[i],
-                np.array([expected_minbound, expected_maxbound]))
+    assert time.points.dtype == np.float64
+    assert time.bounds.dtype == np.float64
+    date = time.units.num2date(time.points)
+    date_bounds = time.units.num2date(time.bounds)
+    if calendar is None:
+        dt_mod = datetime
+    else:
+        dt_mod = DatetimeNoLeap
+    np.testing.assert_array_equal(date, np.array(dt_mod(*new_date)))
+    np.testing.assert_array_equal(
+        date_bounds,
+        np.array([[dt_mod(*new_bounds[0]), dt_mod(*new_bounds[1])]]),
+    )
+
+    assert not new_cube.coords(dim_coords=False)
 
 
-class TestRegridTimeMonthly(tests.Test):
-    """Tests for regrid_time with monthly frequency."""
-    def setUp(self):
-        """Prepare tests."""
-        self.cube_1 = _create_sample_cube()
-        self.cube_2 = _create_sample_cube()
-        self.cube_2.data = self.cube_2.data * 2.
-        self.cube_2.remove_coord('time')
-        self.cube_2.add_dim_coord(
-            iris.coords.DimCoord(
-                np.arange(14., 719., 30.),
-                standard_name='time',
-                units=Unit('days since 1950-01-01 00:00:00',
-                           calendar='gregorian'),
-            ),
-            0,
-        )
-        add_auxiliary_coordinate([self.cube_1, self.cube_2])
+def test_regrid_time_aux_coords(cube_1d_time):
+    """Test ``regrid_time``."""
+    iris.coord_categorisation.add_day_of_month(cube_1d_time, 'time')
+    iris.coord_categorisation.add_day_of_year(cube_1d_time, 'time')
+    iris.coord_categorisation.add_hour(cube_1d_time, 'time')
+    iris.coord_categorisation.add_month(cube_1d_time, 'time')
+    iris.coord_categorisation.add_month_fullname(cube_1d_time, 'time')
+    iris.coord_categorisation.add_month_number(cube_1d_time, 'time')
+    iris.coord_categorisation.add_season(cube_1d_time, 'time')
+    iris.coord_categorisation.add_season_number(cube_1d_time, 'time')
+    iris.coord_categorisation.add_season_year(cube_1d_time, 'time')
+    iris.coord_categorisation.add_weekday(cube_1d_time, 'time')
+    iris.coord_categorisation.add_weekday_fullname(cube_1d_time, 'time')
+    iris.coord_categorisation.add_weekday_number(cube_1d_time, 'time')
+    iris.coord_categorisation.add_year(cube_1d_time, 'time')
+    cube = cube_1d_time.copy()
 
-    def test_regrid_time_mon(self):
-        """Test changes to cubes."""
-        # test monthly
-        newcube_1 = regrid_time(self.cube_1, frequency='mon')
-        newcube_2 = regrid_time(self.cube_2, frequency='mon')
-        # no changes to core data
-        assert_array_equal(newcube_1.data, self.cube_1.data)
-        assert_array_equal(newcube_2.data, self.cube_2.data)
-        # no changes to number of coords and aux_coords
-        assert len(newcube_1.coords()) == len(self.cube_1.coords())
-        assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
-        # test difference; also diff is zero
-        expected = self.cube_1.data
-        diff_cube = newcube_2 - newcube_1
-        assert_array_equal(diff_cube.data, expected)
-        # test bounds are set at
-        # [01-MONTH-YEAR 00:00, 01-NEXT_MONTH-YEAR 00:00]
-        timeunit_1 = newcube_1.coord('time').units
-        for i, time in enumerate(newcube_1.coord('time').points):
-            month_1 = timeunit_1.num2date(time).month
-            year_1 = timeunit_1.num2date(time).year
-            next_month = month_1 + 1
-            next_year = year_1
-            if month_1 == 12:
-                next_month = 1
-                next_year += 1
-            expected_minbound = date2num(datetime(year_1, month_1, 1),
-                                         timeunit_1)
-            expected_maxbound = date2num(datetime(next_year, next_month, 1),
-                                         timeunit_1)
-            assert_array_equal(
-                newcube_1.coord('time').bounds[i],
-                np.array([expected_minbound, expected_maxbound]))
+    new_cube = regrid_time(cube, 'yr')
 
-    def test_regrid_time_different_calendar_bounds(self):
-        """Test bounds in different calendars."""
-        cube_360 = _create_sample_cube(calendar='360_day')
-        # Same cubes but differing time units
-        newcube_360 = regrid_time(cube_360, frequency='mon')
-        newcube_gregorian = regrid_time(self.cube_1, frequency='mon')
-        bounds_360 = newcube_360.coord('time').bounds
-        bounds_gregorian = newcube_gregorian.coord('time').bounds
-        # test value of the bounds is not the same
-        assert (bounds_360 != bounds_gregorian).any()
-        # assert length of the 360_day bounds interval is 30 days
-        assert (bounds_360[:, 1] - bounds_360[:, 0] == 30).all()
+    assert cube == cube_1d_time
+    assert new_cube.data == cube.data
+    assert new_cube.metadata == cube.metadata
+
+    np.testing.assert_array_equal(new_cube.coord('day_of_month').points, [1])
+    np.testing.assert_array_equal(new_cube.coord('day_of_year').points, [183])
+    np.testing.assert_array_equal(new_cube.coord('hour').points, [0])
+    np.testing.assert_array_equal(new_cube.coord('month').points, ['Jul'])
+    np.testing.assert_array_equal(
+        new_cube.coord('month_fullname').points, ['July']
+    )
+    np.testing.assert_array_equal(new_cube.coord('month_number').points, [7])
+    np.testing.assert_array_equal(new_cube.coord('season').points, ['jja'])
+    np.testing.assert_array_equal(new_cube.coord('season_number').points, [2])
+    np.testing.assert_array_equal(new_cube.coord('season_year').points, [2024])
+    np.testing.assert_array_equal(new_cube.coord('weekday').points, ['Mon'])
+    np.testing.assert_array_equal(
+        new_cube.coord('weekday_fullname').points, ['Monday']
+    )
+    np.testing.assert_array_equal(new_cube.coord('weekday_number').points, [0])
+    np.testing.assert_array_equal(new_cube.coord('year').points, [2024])
 
 
-class TestRegridTimeDaily(tests.Test):
-    """Tests for regrid_time with daily frequency."""
-    def setUp(self):
-        """Prepare tests."""
-        self.cube_1 = _create_sample_cube()
-        self.cube_2 = _create_sample_cube()
-        self.cube_2.data = self.cube_2.data * 2.
-        self.cube_1.remove_coord('time')
-        self.cube_2.remove_coord('time')
-        self.cube_1.add_dim_coord(
-            iris.coords.DimCoord(
-                np.arange(14. * 24. + 6., 38. * 24. + 6., 24.),
-                standard_name='time',
-                units=Unit('hours since 1950-01-01 00:00:00',
-                           calendar='gregorian'),
-            ),
-            0,
-        )
-        self.cube_2.add_dim_coord(
-            iris.coords.DimCoord(
-                np.arange(14. * 24. + 3., 38. * 24. + 3., 24.),
-                standard_name='time',
-                units=Unit('hours since 1950-01-01 00:00:00',
-                           calendar='gregorian'),
-            ),
-            0,
-        )
-        add_auxiliary_coordinate([self.cube_1, self.cube_2])
-
-    def test_regrid_time_day(self):
-        """Test changes to cubes."""
-        # test daily
-        newcube_1 = regrid_time(self.cube_1, frequency='day')
-        newcube_2 = regrid_time(self.cube_2, frequency='day')
-        # no changes to core data
-        self.assert_array_equal(newcube_1.data, self.cube_1.data)
-        self.assert_array_equal(newcube_2.data, self.cube_2.data)
-        # no changes to number of coords and aux_coords
-        assert len(newcube_1.coords()) == len(self.cube_1.coords())
-        assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
-        # test difference; also diff is zero
-        expected = self.cube_1.data
-        diff_cube = newcube_2 - newcube_1
-        self.assert_array_equal(diff_cube.data, expected)
-        # test bounds are set with a dt = 12/24 days
-        for i, time in enumerate(newcube_1.coord('time').points):
-            expected_minbound = time - 12 / 24
-            expected_maxbound = time + 12 / 24
-            assert_array_equal(
-                newcube_1.coord('time').bounds[i],
-                np.array([expected_minbound, expected_maxbound]))
+def test_regrid_time_invalid_freq(cube_1d_time):
+    """Test ``regrid_time``."""
+    msg = "Frequency 'invalid' is not supported"
+    with pytest.raises(NotImplementedError, match=msg):
+        regrid_time(cube_1d_time, 'invalid')
 
 
-class TestRegridTime6Hourly(tests.Test):
-    """Tests for regrid_time with 6-hourly frequency."""
-    def setUp(self):
-        """Prepare tests."""
-        self.cube_1 = _create_sample_cube()
-        self.cube_2 = _create_sample_cube()
-        self.cube_2.data = self.cube_2.data * 2.
-        self.cube_1.remove_coord('time')
-        self.cube_2.remove_coord('time')
-        self.cube_1.add_dim_coord(
-            iris.coords.DimCoord(
-                np.arange(10. * 6. + 5., 34. * 6. + 5., 6.),
-                standard_name='time',
-                units=Unit('hours since 1950-01-01 00:00:00',
-                           calendar='360_day'),
-            ),
-            0,
-        )
-        self.cube_2.add_dim_coord(
-            iris.coords.DimCoord(
-                np.arange(10. * 6. + 2., 34. * 6. + 2., 6.),
-                standard_name='time',
-                units=Unit('hours since 1950-01-01 00:00:00',
-                           calendar='360_day'),
-            ),
-            0,
-        )
-        add_auxiliary_coordinate([self.cube_1, self.cube_2])
-
-    def test_regrid_time_6hour(self):
-        """Test changes to cubes."""
-        # test 6-hourly
-        newcube_1 = regrid_time(self.cube_1, frequency='6hr')
-        newcube_2 = regrid_time(self.cube_2, frequency='6hr')
-        # no changes to core data
-        self.assert_array_equal(newcube_1.data, self.cube_1.data)
-        self.assert_array_equal(newcube_2.data, self.cube_2.data)
-        # no changes to number of coords and aux_coords
-        assert len(newcube_1.coords()) == len(self.cube_1.coords())
-        assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
-        # test difference; also diff is zero
-        expected = self.cube_1.data
-        diff_cube = newcube_2 - newcube_1
-        self.assert_array_equal(diff_cube.data, expected)
-        # test bounds are set with a dt = 3/24 days
-        for i, time in enumerate(newcube_1.coord('time').points):
-            expected_minbound = time - 3 / 24
-            expected_maxbound = time + 3 / 24
-            assert_array_equal(
-                newcube_1.coord('time').bounds[i],
-                np.array([expected_minbound, expected_maxbound]))
+@pytest.mark.parametrize('freq', ['day', '6hr', '3hrPt', '1hrCM', 'hr'])
+def test_regrid_time_invalid_freq_for_calendar(cube_1d_time, freq):
+    """Test ``regrid_time``."""
+    msg = f"Setting a fixed calendar is not supported for frequency '{freq}'"
+    with pytest.raises(NotImplementedError, match=msg):
+        regrid_time(cube_1d_time, freq, calendar='365_day')
 
 
-class TestRegridTime3Hourly(tests.Test):
-    """Tests for regrid_time with 3-hourly frequency."""
-    def setUp(self):
-        """Prepare tests."""
-        self.cube_1 = _create_sample_cube()
-        self.cube_2 = _create_sample_cube()
-        self.cube_2.data = self.cube_2.data * 2.
-        self.cube_1.remove_coord('time')
-        self.cube_2.remove_coord('time')
-        self.cube_1.add_dim_coord(
-            iris.coords.DimCoord(
-                np.arange(17. * 180. + 40., 41. * 180. + 40., 180.),
-                standard_name='time',
-                units=Unit('minutes since 1950-01-01 00:00:00',
-                           calendar='gregorian'),
-            ),
-            0,
-        )
-        self.cube_2.add_dim_coord(
-            iris.coords.DimCoord(
-                np.arange(17. * 180. + 150., 41. * 180. + 150., 180.),
-                standard_name='time',
-                units=Unit('minutes since 1950-01-01 00:00:00',
-                           calendar='gregorian'),
-            ),
-            0,
-        )
-        add_auxiliary_coordinate([self.cube_1, self.cube_2])
-
-    def test_regrid_time_3hour(self):
-        """Test changes to cubes."""
-        # test 3-hourly
-        newcube_1 = regrid_time(self.cube_1, frequency='3hr')
-        newcube_2 = regrid_time(self.cube_2, frequency='3hr')
-        # no changes to core data
-        self.assert_array_equal(newcube_1.data, self.cube_1.data)
-        self.assert_array_equal(newcube_2.data, self.cube_2.data)
-        # no changes to number of coords and aux_coords
-        assert len(newcube_1.coords()) == len(self.cube_1.coords())
-        assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
-        # test difference; also diff is zero
-        expected = self.cube_1.data
-        diff_cube = newcube_2 - newcube_1
-        self.assert_array_equal(diff_cube.data, expected)
-        # test bounds are set with a dt = 1.5/24 days
-        for i, time in enumerate(newcube_1.coord('time').points):
-            expected_minbound = time - 1.5 / 24
-            expected_maxbound = time + 1.5 / 24
-            assert_array_equal(
-                newcube_1.coord('time').bounds[i],
-                np.array([expected_minbound, expected_maxbound]))
-
-
-class TestRegridTime1Hourly(tests.Test):
-    """Tests for regrid_time with hourly frequency."""
-    def setUp(self):
-        """Prepare tests."""
-        self.cube_1 = _create_sample_cube()
-        self.cube_2 = _create_sample_cube()
-        self.cube_2.data = self.cube_2.data * 2.
-        self.cube_1.remove_coord('time')
-        self.cube_2.remove_coord('time')
-        self.cube_1.add_dim_coord(
-            iris.coords.DimCoord(
-                np.arange(14. * 60. + 6., 38. * 60. + 6., 60.),
-                standard_name='time',
-                units=Unit('minutes since 1950-01-01 00:00:00',
-                           calendar='360_day'),
-            ),
-            0,
-        )
-        self.cube_2.add_dim_coord(
-            iris.coords.DimCoord(
-                np.arange(14. * 60. + 34., 38. * 60. + 34., 60.),
-                standard_name='time',
-                units=Unit('minutes since 1950-01-01 00:00:00',
-                           calendar='360_day'),
-            ),
-            0,
-        )
-        add_auxiliary_coordinate([self.cube_1, self.cube_2])
-
-    def test_regrid_time_hour(self):
-        """Test changes to cubes."""
-        # test hourly
-        newcube_1 = regrid_time(self.cube_1, frequency='1hr')
-        newcube_2 = regrid_time(self.cube_2, frequency='1hr')
-        # no changes to core data
-        self.assert_array_equal(newcube_1.data, self.cube_1.data)
-        self.assert_array_equal(newcube_2.data, self.cube_2.data)
-        # no changes to number of coords and aux_coords
-        assert len(newcube_1.coords()) == len(self.cube_1.coords())
-        assert len(newcube_1.aux_coords) == len(self.cube_1.aux_coords)
-        # test difference; also diff is zero
-        expected = self.cube_1.data
-        diff_cube = newcube_2 - newcube_1
-        self.assert_array_equal(diff_cube.data, expected)
-        # test bounds are set with a dt = 0.5/24 days
-        for i, time in enumerate(newcube_1.coord('time').points):
-            expected_minbound = time - 0.5 / 24
-            expected_maxbound = time + 0.5 / 24
-            assert_array_equal(
-                newcube_1.coord('time').bounds[i],
-                np.array([expected_minbound, expected_maxbound]))
+@pytest.mark.parametrize('freq', ['5hr', '7hrPt', '9hrCM', '10hr', '21hrPt'])
+def test_regrid_time_hour_no_divisor_of_24(cube_1d_time, freq):
+    """Test ``regrid_time``."""
+    msg = f"For `n`-hourly data, `n` must be a divisor of 24, got '{freq}'"
+    with pytest.raises(NotImplementedError, match=msg):
+        regrid_time(cube_1d_time, freq)
 
 
 class TestTimeseriesFilter(tests.Test):
-    """Tests for regrid_time with hourly frequency."""
+    """Tests for timeseries filter."""
     def setUp(self):
         """Prepare tests."""
         self.cube = _create_sample_cube()
@@ -1889,10 +1777,11 @@ def test_get_time_weights():
 def test_get_time_weights_lazy():
     """Test ``get_time_weights`` for complex cube with lazy data."""
     cube = _make_cube()
-    cube.data = cube.lazy_data()
+    cube.data = cube.lazy_data().rechunk((1, 1, 1, 3))
     weights = get_time_weights(cube)
     assert isinstance(weights, da.Array)
     assert weights.shape == (2, )
+    assert weights.chunks == ((1, 1), )
     np.testing.assert_allclose(weights, [15.0, 30.0])
 
 
@@ -2010,7 +1899,7 @@ class TestResampleHours(tests.Test):
         return cube
 
     def test_resample_1_to_6(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 48, 1)
         times = np.arange(0, 48, 1)
         cube = self._create_cube(data, times)
@@ -2020,7 +1909,7 @@ class TestResampleHours(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_resample_3_to_6(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 48, 3)
         times = np.arange(0, 48, 3)
         cube = self._create_cube(data, times)
@@ -2030,7 +1919,7 @@ class TestResampleHours(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_resample_1_to_3(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 48, 1)
         times = np.arange(0, 48, 1)
         cube = self._create_cube(data, times)
@@ -2040,7 +1929,7 @@ class TestResampleHours(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_resample_1_to_3_with_offset2(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 48, 1)
         times = np.arange(0, 48, 1)
         cube = self._create_cube(data, times)
@@ -2050,7 +1939,7 @@ class TestResampleHours(tests.Test):
         assert_array_equal(result.data, expected)
 
     def test_resample_invalid(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 48, 1)
         times = np.arange(0, 48, 1)
         cube = self._create_cube(data, times)
@@ -2059,7 +1948,7 @@ class TestResampleHours(tests.Test):
             resample_hours(cube, 5)
 
     def test_resample_invalid_offset(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 48, 1)
         times = np.arange(0, 48, 1)
         cube = self._create_cube(data, times)
@@ -2068,7 +1957,7 @@ class TestResampleHours(tests.Test):
             resample_hours(cube, interval=3, offset=6)
 
     def test_resample_shorter_interval(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 48, 12)
         times = np.arange(0, 48, 12)
         cube = self._create_cube(data, times)
@@ -2077,22 +1966,54 @@ class TestResampleHours(tests.Test):
             resample_hours(cube, interval=3)
 
     def test_resample_same_interval(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 48, 12)
         times = np.arange(0, 48, 12)
         cube = self._create_cube(data, times)
 
-        with self.assertRaises(ValueError):
-            resample_hours(cube, interval=12)
+        result = resample_hours(cube, interval=12)
+        expected = np.arange(0, 48, 12)
+        assert_array_equal(result.data, expected)
 
     def test_resample_nodata(self):
-        """Test average of a 1D field."""
+        """Test ``resample_hours``."""
         data = np.arange(0, 4, 1)
         times = np.arange(0, 4, 1)
         cube = self._create_cube(data, times)
 
         with self.assertRaises(ValueError):
             resample_hours(cube, offset=5, interval=6)
+
+    def test_resample_interpolate_linear(self):
+        """Test ``resample_hours``."""
+        data = np.array([1, 2])
+        times = np.array([6, 18])
+        cube = self._create_cube(data, times)
+
+        result = resample_hours(cube, interval=12, interpolate='linear')
+        assert_array_equal(result.data, [0.5, 1.5])
+        assert_array_equal(result.coord('time').points, [0, 12])
+
+    def test_resample_interpolate_nearest(self):
+        """Test ``resample_hours``."""
+        data = np.array([1, 2])
+        times = np.array([6, 18])
+        cube = self._create_cube(data, times)
+
+        result = resample_hours(
+            cube, interval=12, offset=1, interpolate='nearest'
+        )
+        assert_array_equal(result.data, [1, 2])
+        assert_array_equal(result.coord('time').points, [1, 13])
+
+    def test_resample_invalid_interpolation(self):
+        """Test ``resample_hours``."""
+        data = np.arange(0, 4, 1)
+        times = np.arange(0, 4, 1)
+        cube = self._create_cube(data, times)
+
+        with self.assertRaises(ValueError):
+            resample_hours(cube, interval=1, interpolate='invalid')
 
 
 class TestResampleTime(tests.Test):
