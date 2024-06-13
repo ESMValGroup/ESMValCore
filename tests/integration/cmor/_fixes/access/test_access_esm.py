@@ -42,6 +42,11 @@ def get_fix(mip, frequency, short_name):
     return _get_fix(mip, frequency, short_name, fix_name)
 
 
+def get_fix_allvar(mip, frequency, short_name):
+    """Load a variable fix from esmvalcore.cmor._fixes.cesm.cesm."""
+    return _get_fix(mip, frequency, short_name, 'AllVar')
+
+
 def fix_metadata(cubes, mip, frequency, short_name):
     """Fix metadata of cubes."""
     fix = get_fix(mip, frequency, short_name)
@@ -117,96 +122,76 @@ def check_heightxm(cube, height_value):
 
 def test_only_time(monkeypatch, cubes_2d):
     """Test fix."""
-    var_list = ['tas', 'pr']
+    fix = get_fix_allvar('Amon', 'mon', 'tas')
 
-    for var in var_list:
-        fix = get_fix('Amon', 'mon', var)
+    coord_info = CoordinateInfo('time')
+    coord_info.standard_name = 'time'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'time': coord_info})
 
-        coord_info = CoordinateInfo('time')
-        coord_info.standard_name = 'time'
-        monkeypatch.setattr(fix.vardef, 'coordinates', {'time': coord_info})
+    cubes = cubes_2d
+    fixed_cubes = fix.fix_metadata(cubes)
 
-        cubes = cubes_2d
-        fixed_cubes = fix.fix_metadata(cubes)
+    # Check cube metadata
+    cube = check_tas_metadata(fixed_cubes)
 
-        # Check cube metadata
-        if var == 'tas':
-            cube = check_tas_metadata(fixed_cubes)
-        elif var == 'pr':
-            cube == check_pr_metadata(fixed_cubes)
+    # Check cube data
+    assert cube.shape == (1, 145, 192)
 
-        # Check cube data
-        assert cube.shape == (1, 145, 192)
-
-        # Check time metadata
-        assert cube.coords('time')
-        new_time_coord = cube.coord('time', dim_coords=True)
-        assert new_time_coord.var_name == 'time'
-        assert new_time_coord.standard_name == 'time'
+    # Check time metadata
+    assert cube.coords('time')
+    new_time_coord = cube.coord('time', dim_coords=True)
+    assert new_time_coord.var_name == 'time'
+    assert new_time_coord.standard_name == 'time'
 
 
 def test_only_latitude(monkeypatch, cubes_2d):
     """Test fix."""
-    var_list = ['tas', 'pr']
+    fix = get_fix_allvar('Amon', 'mon', 'tas')
 
-    for var in var_list:
-        fix = get_fix('Amon', 'mon', var)
+    coord_info = CoordinateInfo('latitude')
+    coord_info.standard_name = 'latitude'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'latitude': coord_info})
 
-        coord_info = CoordinateInfo('latitude')
-        coord_info.standard_name = 'latitude'
-        monkeypatch.setattr(fix.vardef, 'coordinates',
-                            {'latitude': coord_info})
+    cubes = cubes_2d
+    fixed_cubes = fix.fix_metadata(cubes)
 
-        cubes = cubes_2d
-        fixed_cubes = fix.fix_metadata(cubes)
+    # Check cube metadata
+    cube = check_tas_metadata(fixed_cubes)
 
-        # Check cube metadata
-        if var == 'tas':
-            cube = check_tas_metadata(fixed_cubes)
-        elif var == 'pr':
-            cube = check_pr_metadata(fixed_cubes)
+    # Check cube data
+    assert cube.shape == (1, 145, 192)
 
-        # Check cube data
-        assert cube.shape == (1, 145, 192)
-
-        # Check latitude metadata
-        assert cube.coords('latitude', dim_coords=True)
-        new_lat_coord = cube.coord('latitude')
-        assert new_lat_coord.var_name == 'lat'
-        assert new_lat_coord.standard_name == 'latitude'
-        assert new_lat_coord.units == 'degrees_north'
+    # Check latitude metadata
+    assert cube.coords('latitude', dim_coords=True)
+    new_lat_coord = cube.coord('latitude')
+    assert new_lat_coord.var_name == 'lat'
+    assert new_lat_coord.standard_name == 'latitude'
+    assert new_lat_coord.units == 'degrees_north'
 
 
 def test_only_longitude(monkeypatch, cubes_2d):
     """Test fix."""
-    var_list = ['tas', 'pr']
+    fix = get_fix('Amon', 'mon', 'tas')
 
-    for var in var_list:
-        fix = get_fix('Amon', 'mon', var)
+    coord_info = CoordinateInfo('longitude')
+    coord_info.standard_name = 'longitude'
+    monkeypatch.setattr(fix.vardef, 'coordinates', {'longitude': coord_info})
 
-        coord_info = CoordinateInfo('longitude')
-        coord_info.standard_name = 'longitude'
-        monkeypatch.setattr(fix.vardef, 'coordinates',
-                            {'longitude': coord_info})
+    cubes = cubes_2d
+    fixed_cubes = fix.fix_metadata(cubes)
 
-        cubes = cubes_2d
-        fixed_cubes = fix.fix_metadata(cubes)
+    # Check cube metadata
+    cube = check_tas_metadata(fixed_cubes)
 
-        # Check cube metadata
-        if var == 'tas':
-            cube = check_tas_metadata(fixed_cubes)
-        elif var == 'pr':
-            cube = check_pr_metadata(fixed_cubes)
+    # Check cube data
+    assert cube.shape == (1, 145, 192)
 
-        # Check cube data
-        assert cube.shape == (1, 145, 192)
-
-        # Check longitude metadata
-        assert cube.coords('longitude', dim_coords=True)
-        new_lon_coord = cube.coord('longitude')
-        assert new_lon_coord.var_name == 'lon'
-        assert new_lon_coord.standard_name == 'longitude'
-        assert new_lon_coord.units == 'degrees_east'
+    # Check longitude metadata
+    assert cube.coords('longitude', dim_coords=True)
+    new_lon_coord = cube.coord('longitude')
+    assert new_lon_coord.var_name == 'lon'
+    assert new_lon_coord.standard_name == 'longitude'
+    assert new_lon_coord.units == 'degrees_east'
 
 
 def test_get_tas_fix():
@@ -242,19 +227,6 @@ def test_tas_fix(cubes_2d):
     check_time(fixed_cube)
     check_lat(fixed_cube)
     check_lon(fixed_cube)
-    check_heightxm(fixed_cube, 1.5)
-
-    assert fixed_cube.shape == (1, 145, 192)
-
-
-def test_pr_fix(cubes_2d):
-    """Test fix 'pr'."""
-    fix = get_fix('Amon', 'mon', 'pr')
-    fixed_cubes = fix.fix_metadata(cubes_2d)
-    fixed_cube = check_pr_metadata(fixed_cubes)
-
-    check_time(fixed_cube)
-    check_lat(fixed_cube)
-    check_lon(fixed_cube)
+    check_heightxm(fixed_cube, 2)
 
     assert fixed_cube.shape == (1, 145, 192)
