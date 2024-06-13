@@ -199,9 +199,9 @@ ACCESS:
   cmor_strict: false
   input_dir:
     default:
-      - '{institute}/{dataset_name}/{exp}/{modeling_realm}/netCDF'
+      - '{institute}/{sub_dataset}/{exp}/{modeling_realm}/netCDF'
   input_file:
-    default: '{dataset}.{special_attr}-*.nc'
-  output_file: '{dataset}.{special_attr}'
+    default: '{sub_dataset}.{special_attr}-*.nc'
+  output_file: '{sub_dataset}.{special_attr}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'

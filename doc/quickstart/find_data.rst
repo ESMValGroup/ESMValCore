@@ -586,10 +586,10 @@ To read ACCESS-ESM native data, users need to add the directory file structure t
     cmor_strict: false
     input_dir:
       default:
-        - '{institute}/{dataset_name}/{exp}/{modeling_realm}/netCDF'
+        - '{institute}/{sub_dataset}/{exp}/{modeling_realm}/netCDF'
     input_file:
-      default: '{dataset}.{special_attr}-*.nc'
-    output_file: '{dataset}.{special_attr}'
+      default: '{sub_dataset}.{special_attr}-*.nc'
+    output_file: '{sub_dataset}.{special_attr}'
     cmor_type: 'CMIP6'
     cmor_default_table_prefix: 'CMIP6_'
 
@@ -607,12 +607,12 @@ Thus, example dataset entries could look like this:
 .. code-block:: yaml
 
   dataset:
-    - {project: ACCESS, institute: ACCESS-ESM1-5, mip: Amon, dataset:ACCESS_ESM, dataset_name: HI-CN-05, 
+    - {project: ACCESS, institute: ACCESS-ESM1-5, mip: Amon, dataset:ACCESS-ESM, sub_dataset: HI-CN-05, 
       exp: history, modeling_realm: atm, special_attr: pa, start_year: 1986, end_year: 1986}
 
 
-`dataset` and `dataset_name` are not redundant, `dataset` is for ESMValCore to search for CMORizer,
-`dataset_name` is to search for data.
+`dataset` and `sub_dataset` are not redundant, `dataset` is for ESMValCore to search for CMORizer,
+`sub_dataset` is to search for data.
 
 
 .. _data-retrieval:
