@@ -25,8 +25,8 @@ class AllVars(NativeDatasetFix):
 
     def fix_height_value(self, cube):
         """Fix height value to make it comparable to other dataset."""
-        if cube.coords('height').points[0] != 2:
-            cube.coords('height').points = [2]
+        if cube.coord('height').points[0] != 2:
+            cube.coord('height').points = [2]
 
     def fix_metadata(self, cubes):
         """Fix metadata.
