@@ -39,7 +39,7 @@ class AllVars(NativeDatasetFix):
         """
         cube = self.get_cube(cubes)
 
-        # Fix scalar coordinates (you don't have this at the moment, but this might be helpful as well)
+        # Fix scalar coordinates
         self.fix_scalar_coords(cube)
 
         # Fix metadata of variable
