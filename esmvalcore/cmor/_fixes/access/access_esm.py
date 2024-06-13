@@ -16,16 +16,17 @@ logger = logging.getLogger(__name__)
 
 class AllVars(NativeDatasetFix):
     """Fixes for all variables."""
-    
+
     def fix_coord_system(self, cube):
         """Delete coord_system to make CubeList able to merge."""
         for dim in cube.dim_coords:
             if dim.coord_system is not None:
                 cube.coord(dim.standard_name).coord_system = None
+
     def fix_height_value(self, cube):
-        """Fix height value to make it comparable to other dataset"""
-        if cube.coords('height').points!=2:
-            cube.coords('height').points=2
+        """Fix height value to make it comparable to other dataset."""
+        if cube.coords('height').points[0] != 2:
+            cube.coords('height').points = [2]
 
     def fix_metadata(self, cubes):
         """Fix metadata.
@@ -52,6 +53,7 @@ class AllVars(NativeDatasetFix):
 
         if 'height_0' in [var.var_name for var in cube.coords()]:
             self.fix_height_metadata(cube)
+            self.fix_height_value(cube)
 
         # Fix coord system
         self.fix_coord_system(cube)
