@@ -1,0 +1,22 @@
+# Extra facets for native CESM model output
+
+# Notes:
+# - All facets can also be specified in the recipes. The values given here are
+#   only defaults.
+# - The facets ``gcomp``, ``scomp``, ``string``, ``tdir``, and ``tperiod`` have
+#   to be specified in the recipe if they are not given here and default DRS is
+#   used.
+
+# A complete list of supported keys is given in the documentation (see
+# ESMValCore/doc/quickstart/find_data.rst).
+---
+
+ACCESS-ESM:
+
+  '*':
+   
+    tas:
+      raw_name: fld_s03i236
+      
+    pr:
+      raw_name: fld_s05i216
