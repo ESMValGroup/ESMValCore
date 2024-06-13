@@ -598,9 +598,6 @@ To read ACCESS-ESM native data, users need to add the directory file structure t
   We only provide one default `input_dir` since this is how ACCESS-ESM native data was 
   stored on NCI. Users can modify this path to match their local file structure.
 
-  Default `input_file` will automatically load all the native ACCESS-ESM data(1850-2014).
-  If you only need to evaluate a shorter period. Users can add a more specific time range
-  (`{dataset}.{special_attr}-YYYYMM*.nc` e.g.) to avoid the cost of loading unnecessary data.
 
 Thus, example dataset entries could look like this:
 
@@ -612,8 +609,28 @@ Thus, example dataset entries could look like this:
 
 
 `dataset` and `sub_dataset` are not redundant, `dataset` is for ESMValCore to search for CMORizer,
-`sub_dataset` is to search for data.
+which is always `ACCESS_ESM`, `sub_dataset` is dataset under root `ACCESS-ESM1-5`.
 
+`special_attr` is a special attribute in the filename `ACCESS-ESM` raw data, it's related to frquency
+of raw data.
+
+`modeling_realm` is a realm attribute, it include `atm`,`ice` and `oce`.
+
+Similar to any other fix, the ACCESS-ESM fix allows the use of :ref:`extra
+facets<extra_facets>`.
+By default, the file :download:`emac-mappings.yml
+</../esmvalcore/config/extra_facets/access-mappings.yml>` is used for that
+purpose.
+For some variables, extra facets are necessary; otherwise ESMValCore cannot
+read them properly.
+Supported keys for extra facets are:
+
+==================== ====================================== =================================
+Key                  Description                            Default value if not specified
+==================== ====================================== =================================
+``raw_name``         Variable name of the variable in the   CMOR variable name of the
+                     raw input file                         corresponding variable
+==================== ====================================== =================================
 
 .. _data-retrieval:
 
