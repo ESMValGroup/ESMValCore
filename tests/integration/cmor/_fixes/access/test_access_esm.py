@@ -44,7 +44,7 @@ def get_fix(mip, frequency, short_name):
 
 def get_fix_allvar(mip, frequency, short_name):
     """Load a variable fix from esmvalcore.cmor._fixes.cesm.cesm."""
-    return _get_fix(mip, frequency, short_name, 'AllVar')
+    return _get_fix(mip, frequency, short_name, 'AllVars')
 
 
 def fix_metadata(cubes, mip, frequency, short_name):
@@ -171,7 +171,7 @@ def test_only_latitude(monkeypatch, cubes_2d):
 
 def test_only_longitude(monkeypatch, cubes_2d):
     """Test fix."""
-    fix = get_fix('Amon', 'mon', 'tas')
+    fix = get_fix_allvar('Amon', 'mon', 'tas')
 
     coord_info = CoordinateInfo('longitude')
     coord_info.standard_name = 'longitude'
@@ -198,29 +198,17 @@ def test_get_tas_fix():
     """Test getting of fix 'tas'."""
     fix = Fix.get_fixes('ACCESS', 'ACCESS_ESM', 'Amon', 'tas')
     assert fix == [
-        esmvalcore.cmor._fixes.access.access_esm.Tas(vardef={},
-                                                     extra_facets={},
-                                                     session={},
-                                                     frequency=''),
-        GenericFix(None),
-    ]
-
-
-def test_get_pr_fix():
-    """Test getting of fix 'pr'."""
-    fix = Fix.get_fixes('ACCESS', 'ACCESS_ESM', 'Amon', 'pr')
-    assert fix == [
-        esmvalcore.cmor._fixes.access.access_esm.Pr(vardef={},
-                                                    extra_facets={},
-                                                    session={},
-                                                    frequency=''),
+        esmvalcore.cmor._fixes.access.access_esm.AllVars(vardef={},
+                                                         extra_facets={},
+                                                         session={},
+                                                         frequency=''),
         GenericFix(None),
     ]
 
 
 def test_tas_fix(cubes_2d):
     """Test fix 'tas'."""
-    fix = get_fix('Amon', 'mon', 'tas')
+    fix = get_fix_allvar('Amon', 'mon', 'tas')
     fixed_cubes = fix.fix_metadata(cubes_2d)
     fixed_cube = check_tas_metadata(fixed_cubes)
 
