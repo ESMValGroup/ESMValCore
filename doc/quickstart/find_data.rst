@@ -614,7 +614,7 @@ which is always `ACCESS_ESM`, `sub_dataset` is dataset under root `ACCESS-ESM1-5
 `special_attr` is a special attribute in the filename `ACCESS-ESM` raw data, it's related to frquency
 of raw data.
 
-`modeling_realm` is a realm attribute, it include `atm`,`ice` and `oce`.
+`modeling_realm` is a realm attribute, it include `atm`, `ice` and `oce`.
 
 Similar to any other fix, the ACCESS-ESM fix allows the use of :ref:`extra
 facets<extra_facets>`.
