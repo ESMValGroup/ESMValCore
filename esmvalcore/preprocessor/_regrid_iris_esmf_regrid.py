@@ -1,7 +1,4 @@
-"""XESMF regridding.
-
-To use this, install xesmf and ncdata, e.g. ``mamba install xesmf ncdata``.
-"""
+"""Iris-esmf-regrid based regridding scheme."""
 from __future__ import annotations
 
 from typing import Any, Literal
@@ -180,7 +177,7 @@ class IrisESMFRegrid:
     ) -> (ESMFAreaWeightedRegridder
           | ESMFBilinearRegridder
           | ESMFNearestRegridder):
-        """Create xESMF regridding function.
+        """Create an iris-esmf-regrid based regridding function.
 
         Parameters
         ----------
