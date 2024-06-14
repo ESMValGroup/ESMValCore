@@ -577,8 +577,7 @@ model output.
   This is the first version of ACCESS-ESM CMORizer for ESMValCore Currently, 
   only two variables (`tas`, and `pr`) are fully supported.
 
-To read ACCESS-ESM native data, users need to add the directory file structure to 
-`config_developer.yml`.
+This is an example of the directory file structure in `config_developer.yml`.
 
 .. code-block:: yaml
 
@@ -630,6 +629,8 @@ Key                  Description                            Default value if not
 ==================== ====================================== =================================
 ``raw_name``         Variable name of the variable in the   CMOR variable name of the
                      raw input file                         corresponding variable
+``modeling_realm``   Realm attribute include `atm`, `ice`   Defaule value of this variable 
+                     and `oce`      
 ==================== ====================================== =================================
 
 .. _data-retrieval:
