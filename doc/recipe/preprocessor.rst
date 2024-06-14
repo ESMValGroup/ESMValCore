@@ -997,7 +997,7 @@ with the remaining entries of the ``scheme`` dictionary passed as keyword
 arguments.
 
 One package that aims to capitalize on the :ref:`support for unstructured grids
-introduced in Iris 3.2 <iris:ugrid>` is :doc:`iris-esmf-regrid:index`.
+introduced in Iris 3.2 <iris:ugrid>` is :doc:`esmf_regrid:index`.
 It aims to provide lazy regridding for structured regular and irregular grids,
 as well as unstructured grids.
 An example of its usage in a preprocessor is:
@@ -1018,7 +1018,7 @@ arguments is also supported. The call function for such schemes must be defined 
 The `regrid` module will automatically pass the source and grid cubes as inputs
 of the scheme. An example of this usage is
 the :func:`~esmf_regrid.schemes.regrid_rectilinear_to_rectilinear`
-scheme available in :doc:`iris-esmf-regrid:index`:
+scheme available in :doc:`esmf_regrid:index`:
 
 .. code-block:: yaml
 
