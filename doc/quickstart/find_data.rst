@@ -629,7 +629,7 @@ Key                  Description                            Default value if not
 ==================== ====================================== =================================
 ``raw_name``         Variable name of the variable in the   CMOR variable name of the
                      raw input file                         corresponding variable
-``modeling_realm``   Realm attribute include `atm`, `ice`   Defaule value of this variable 
+``modeling_realm``   Realm attribute include `atm`, `ice`   Defaule realm of this variable 
                      and `oce`      
 ==================== ====================================== =================================
 
