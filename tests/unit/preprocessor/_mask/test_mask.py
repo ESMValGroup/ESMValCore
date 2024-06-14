@@ -13,7 +13,8 @@ from esmvalcore.preprocessor._mask import (_apply_fx_mask,
                                            mask_above_threshold,
                                            mask_below_threshold,
                                            mask_glaciated, mask_inside_range,
-                                           mask_outside_range)
+                                           mask_outside_range,
+                                           mask_generalized)
 
 
 class Test(tests.Test):
@@ -128,6 +129,18 @@ class Test(tests.Test):
         result = mask_outside_range(self.arr, 0.5, 2.5)
         expected = np.ma.array(self.data2, mask=[[True, False], [False, True]])
         self.assert_array_equal(result.data, expected)
+
+    def test_mask_generalized_above_threshold(self):
+        """Test mask generalized."""
+        cube = self.time_cube
+        mask_cube = self.time_cube
+        mask_operation = {"above_threshold": True, "threshold": 2.0}
+        result = mask_generalized(cube, mask_cube, mask_operation)
+        self.assert_array_equal(result.shape, (24,))
+        self.assert_array_equal(result.data, cube.data)
+        mask = np.ones((24), bool)
+        mask[0:2] = False
+        self.assert_array_equal(result.data.mask, mask)
 
 
 if __name__ == '__main__':

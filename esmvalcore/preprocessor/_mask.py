@@ -719,3 +719,49 @@ def _get_fillvalues_mask(
     mask = array_module.ma.filled(mask, True)
 
     return mask
+
+
+def mask_generalized(cube, mask_cube, mask_operation):
+    """Mask out either landsea (combined) or ice.
+
+    Function that masks out data in a given cube, based on a
+    user-defined operation and a secondary cube (used as mask generator).
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        data cube to be masked.
+
+    mask_cube: iris.cube.Cube
+        data cube to be used as mask.
+
+    mask_operation: str
+        conditional operation that generates a mask on cube.
+
+    Returns
+    -------
+    iris.cube.Cube
+        Returns masked iris cube after applying mask_operation via mask_cube.
+
+    Raises
+    ------
+    ValueError
+        Error raised if landsea-ice mask not found as an ancillary variable.
+    """
+    if not isinstance(mask_operation, dict):
+        raise ValueError(f"A valid masking operation dictionary is "
+                         f"needed, got mask_operation {mask_operation}")
+
+    # use case 1: mask mask_cube above a certain threshold
+    # then get its mask and add it to the input cube's one (if any)
+    if "above_threshold" in mask_operation:
+        if "threshold" not in mask_operation:
+            raise KeyError('A valid "threshold" parameter must be specified '
+                           'for above_threshold mask_operation')
+        threshold = mask_operation["threshold"]
+        masked_above_th = mask_above_threshold(mask_cube, threshold)
+
+    cubes = iris.cube.CubeList([cube, masked_above_th])
+    cube = _multimodel_mask_cubes(cubes, cube.shape)[0]
+
+    return cube
