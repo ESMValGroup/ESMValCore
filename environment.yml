@@ -22,6 +22,7 @@ dependencies:
   - importlib_metadata  # required for Python < 3.10
   - iris >=3.9.0
   - iris-esmf-regrid >=0.10.0  # github.com/SciTools-incubator/iris-esmf-regrid/pull/342
+  - iris-grib
   - isodate
   - jinja2
   - libnetcdf !=4.9.1  # to avoid hdf5 warnings
