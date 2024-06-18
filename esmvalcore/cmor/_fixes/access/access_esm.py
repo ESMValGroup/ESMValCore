@@ -65,6 +65,10 @@ class AllVars(NativeDatasetFix):
         # Fix metadata of variable
         self.fix_var_metadata(cube)
 
+        # Fix metadata coordinates  
+        self.fix_lon_metadata(cube)
+        self.fix_lat_metadata(cube)
+
         # Fix coordinate 'height'
         if 'height_0' in [var.var_name for var in cube.coords()]:
             self.fix_height_metadata(cube)
