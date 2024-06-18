@@ -18,7 +18,7 @@ comment:
 !----------------------------------
 dimensions:        time
 type:              real
-valid_min:         
-valid_max:         
+valid_min:         0
+valid_max:         10
 !----------------------------------
 !

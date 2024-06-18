@@ -18,7 +18,7 @@ comment:
 !----------------------------------
 dimensions:        time latitude longitude
 type:              real
-valid_min:         
-valid_max:         
+valid_min:         190
+valid_max:         350
 !----------------------------------
 !
