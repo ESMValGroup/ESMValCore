@@ -15,3 +15,56 @@ ACCESS_ESM:
     pr:
       raw_name: fld_s05i216
       modeling_realm: atm
+    
+    ps:
+      raw_name: fld_s00i409
+      modeling_realm: atm
+    
+    clt:
+      raw_name: fld_s02i204
+      modeling_realm: atm
+    
+    psl:
+      raw_name: fld_s16i222
+      modeling_realm: atm
+
+    hus:
+      raw_name: fld_s30i205
+      modeling_realm: atm
+    
+    zg:
+      raw_name: fld_s30i207
+      modeling_realm: atm
+
+    va:
+      raw_name: fld_s30i202
+      modeling_realm: atm
+    
+    ua:
+      raw_name: fld_s30i201
+      modeling_realm: atm
+    
+    ta:
+      raw_name: fld_s30i204
+      modeling_realm: atm
+    
+    rlus:
+      raw_name: 
+        - fld_s02i207 
+        - fld_s02i201 
+        - fld_s03i332 
+        - fld_s02i205
+      modeling_realm: atm
+      calculate: var[0]-var[1]+var[2]-var[3]
+    
+    rlds:
+      raw_name: fld_s02i207
+      modeling_realm: atm
+
+    rsus:
+      raw_name: 
+        - fld_s01i235
+        - fld_s01i201 
+      modeling_realm: atm
+      calculate: var[0]-var[1]
+    

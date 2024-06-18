@@ -27,6 +27,15 @@ class AllVars(NativeDatasetFix):
         """Fix height value to make it comparable to other dataset."""
         if cube.coord('height').points[0] != 2:
             cube.coord('height').points = [2]
+    
+    def get_cube_from_multivar(self, cubes):
+        """Get cube before calculate from multiple variables """
+        rawname_list=self.extra_facets.get('raw_name', self.vardef.short_name)
+        calculate=self.extra_facets.get('calculate', self.vardef.short_name)
+        var=[]
+        for rawname in rawname_list:
+            var.append(self.get_cube(cubes,rawname))
+        return eval(calculate)
 
     def fix_metadata(self, cubes):
         """Fix metadata.
@@ -43,7 +52,12 @@ class AllVars(NativeDatasetFix):
         -------
         iris.cube.CubeList
         """
-        cube = self.get_cube(cubes)
+        if isinstance(self.extra_facets.get('raw_name',
+                                            self.vardef.short_name),
+                                            list):
+            cube = self.get_cube_from_multivar(cubes)
+        else:
+            cube = self.get_cube(cubes)
 
         # Fix scalar coordinates
         self.fix_scalar_coords(cube)
@@ -51,9 +65,13 @@ class AllVars(NativeDatasetFix):
         # Fix metadata of variable
         self.fix_var_metadata(cube)
 
+        # Fix coordinate 'height'
         if 'height_0' in [var.var_name for var in cube.coords()]:
             self.fix_height_metadata(cube)
             self.fix_height_value(cube)
+        # Fix coordinate 'pressure'
+        if 'pressure' in [var.var_name for var in cube.coords()]:
+            self.fix_plev_metadata(cube, coord='pressure')
 
         # Fix coord system
         self.fix_coord_system(cube)
