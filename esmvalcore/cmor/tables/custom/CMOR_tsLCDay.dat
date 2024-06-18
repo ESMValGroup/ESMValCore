@@ -17,8 +17,8 @@ comment:
 ! Additional variable information:
 !----------------------------------
 dimensions:        time latitude longitude
-type:              real
-valid_min:         
-valid_max:         
+type:              float
+valid_min:         0
+valid_max:         255
 !----------------------------------
 !
