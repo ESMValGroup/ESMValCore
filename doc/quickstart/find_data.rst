@@ -588,7 +588,7 @@ This is an example of the directory file structure in `config_developer.yml`.
         - '{institute}/{sub_dataset}/{exp}/{modeling_realm}/netCDF'
     input_file:
       default: '{sub_dataset}.{special_attr}-*.nc'
-    output_file: '{sub_dataset}.{special_attr}'
+    output_file: '{institute}_{sub_dataset}_{special_attr}_{short_name}'
     cmor_type: 'CMIP6'
     cmor_default_table_prefix: 'CMIP6_'
 
