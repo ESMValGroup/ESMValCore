@@ -48,7 +48,7 @@ REQUIREMENTS = {
         'netCDF4',
         'numpy!=1.24.3',
         'packaging',
-        'pandas!=2.2.0,!=2.2.1,!=2.2.2',  # GH #2305 #2349 etc
+        'pandas',  # !=2.2.0,!=2.2.1,!=2.2.2',  # GH #2305 #2349 etc
         'pillow',
         'prov',
         'psutil',
