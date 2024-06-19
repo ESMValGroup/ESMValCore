@@ -661,6 +661,7 @@ def test_distance_metric_fully_masked_data(
     assert out_cube.dtype == np.float64
 
     expected_data = np.ma.masked_all(())
+    print("out/in/metric", out_cube.data, expected_data, metric)
     assert_allclose(out_cube.data, expected_data)
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
