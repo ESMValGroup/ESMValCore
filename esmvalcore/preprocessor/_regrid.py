@@ -827,6 +827,12 @@ def regrid(
         lat_offset=lat_offset,
         lon_offset=lon_offset,
     )
+    # Artificially insert some masked area for testing
+    # target_grid_cube.data = np.ma.masked_array(
+    #     target_grid_cube.data,
+    #     mask=np.zeros_like(target_grid_cube.data, dtype=bool),
+    # )
+    # target_grid_cube.data.mask[:100, :100] = 1
 
     # Horizontal grids from source and target (almost) match
     # -> Return source cube with target coordinates
@@ -846,22 +852,24 @@ def regrid(
         regridder = _get_regridder(cube, target_grid_cube, scheme,
                                    cache_weights)
     except Exception as exc:
-        cube = target_grid_cube.copy(da.zeros(target_grid_cube.shape))
-        cube.var_name = "Failed_to_get_regridder"
-        cube.attributes['error'] = f"Failed to get regridder: {exc}"
+        result = target_grid_cube.copy(da.zeros(target_grid_cube.shape))
+        result.var_name = "Failed_to_get_regridder"
+        result.attributes['error'] = f"Failed to get regridder: {exc}"
+        print(exc)
         print(cube)
-        return cube
+        return result
 
     # Rechunk and actually perform the regridding
     cube = _rechunk(cube, target_grid_cube)
     try:
         cube = regridder(cube)
     except Exception as exc:
-        cube = target_grid_cube.copy(da.zeros(target_grid_cube.shape))
-        cube.var_name = "Failed_to_regrid"
-        cube.attributes['error'] = f"Failed to regrid: {exc}"
+        result = target_grid_cube.copy(da.zeros(target_grid_cube.shape))
+        result.var_name = "Failed_to_regrid"
+        result.attributes['error'] = f"Failed to regrid: {exc}"
+        print(exc)
         print(cube)
-        return cube
+        return result
 
     cube.attributes['regridder'] = str(regridder)
     cube.attributes['status'] = "lazy" if cube.has_lazy_data() else "realized"
