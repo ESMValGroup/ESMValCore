@@ -243,7 +243,10 @@ def get_grid(esmpy_lat, esmpy_lon,
         num_peri_dims = 1
     else:
         num_peri_dims = 0
-    grid = esmpy.Grid(np.array(esmpy_lat.shape),
+
+    # previous to numpy 2.0, a np.array(esmpy_lat.shape) was used
+    # numpy>=2.0 throws ValueError: matrix transpose with ndim<2 is undefined
+    grid = esmpy.Grid(np.vstack(esmpy_lat.shape),
                       num_peri_dims=num_peri_dims,
                       staggerloc=[esmpy.StaggerLoc.CENTER])
     grid.get_coords(ESMF_LON)[...] = esmpy_lon
