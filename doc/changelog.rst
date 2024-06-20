@@ -89,7 +89,6 @@ Fixes for datasets
 Installation
 ~~~~~~~~~~~~
 
--  Updated iris pin to ``iris>=3.6.1`` (:pull:`2286`) by :user:`schlunma`
 -  Pin pandas yet again avoid new ``2.2.1`` as well (:pull:`2353`) by :user:`valeriupredoi`
 -  Update Iris pin to avoid using versions with memory issues (:pull:`2408`) by :user:`chrisbillowsMO`
 -  Pin esmpy <8.6.0 (:pull:`2402`) by :user:`valeriupredoi`
