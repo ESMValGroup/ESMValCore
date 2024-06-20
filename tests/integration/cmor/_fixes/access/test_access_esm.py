@@ -123,16 +123,6 @@ def check_heightxm(cube, height_value):
     np.testing.assert_allclose(height.points, [height_value])
     assert height.bounds is None
 
-# def check_plev(cube):
-#     """Check scalar pressure coordinate of cube."""
-#     assert cube.coords('height')
-#     height = cube.coord('height')
-#     assert height.var_name == 'height'
-#     assert height.standard_name == 'height'
-#     assert height.units == 'm'
-#     assert height.attributes == {'positive': 'up'}
-#     np.testing.assert_allclose(height.points, [height_value])
-#     assert height.bounds is None
 
 def assert_plev_metadata(self, cube):
     """Assert plev metadata is correct."""
@@ -241,7 +231,8 @@ def test_tas_fix(cubes_2d):
 
     assert fixed_cube.shape == (1, 145, 192)
 
-def test_hus_fix(cubes_2d):
+
+def test_hus_fix():
     """Test fix 'hus'."""
     time_coord = DimCoord(
         [15, 45],
