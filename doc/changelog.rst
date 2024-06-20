@@ -19,7 +19,7 @@ Backwards incompatible changes
 TODO: add examples of how to deal with these changes
 
 -  Allow contiguous representation of extracted regions (:pull:`2230`) by :user:`rebeccaherman1`
--  Use `iris.FUTURE.save_split_attrs = True` to remove iris warning (:pull:`2398`) by :user:`schlunma`
+-  Use ``iris.FUTURE.save_split_attrs = True`` to remove iris warning (:pull:`2398`) by :user:`schlunma`
 
 Deprecations
 ~~~~~~~~~~~~
@@ -34,7 +34,7 @@ Bug fixes
 -  Do not overwrite facets from recipe with CMOR table facets for derived variables (:pull:`2255`) by :user:`bouweandela`
 -  Fix error message in variable definition check (:pull:`2313`) by :user:`enekomartinmartinez`
 -  Unify dtype handling of preprocessors (:pull:`2393`) by :user:`schlunma`
--  Fix bug in `_rechunk_aux_factory_dependencies` (:pull:`2428`) by :user:`ehogan`
+-  Fix bug in ``_rechunk_aux_factory_dependencies`` (:pull:`2428`) by :user:`ehogan`
 -  Avoid loading entire files into memory when downloading from ESGF (:pull:`2434`) by :user:`bouweandela`
 -  Preserve cube attribute global vs local when concatenating (:pull:`2449`) by :user:`bouweandela`
 
