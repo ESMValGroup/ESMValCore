@@ -575,7 +575,8 @@ model output.
 .. warning::
 
   This is the first version of ACCESS-ESM CMORizer for ESMValCore Currently, 
-  only two variables (`tas`, and `pr`) are fully supported.
+  Supported variables: ``pr``, ``ps``, ``psl``, ``rlds``, ``tas``, ``ta``, ``va``,
+  ``ua``, ``zg``, ``hus``, ``clt``, ``rsus``, ``rlus``.
 
 This is an example of the directory file structure in `config_developer.yml`.
 
