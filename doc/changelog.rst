@@ -19,6 +19,7 @@ Backwards incompatible changes
 TODO: add examples of how to deal with these changes
 
 -  Allow contiguous representation of extracted regions (:pull:`2230`) by :user:`rebeccaherman1`
+-  Use `iris.FUTURE.save_split_attrs = True` to remove iris warning (:pull:`2398`) by :user:`schlunma`
 
 Deprecations
 ~~~~~~~~~~~~
@@ -33,6 +34,9 @@ Bug fixes
 -  Do not overwrite facets from recipe with CMOR table facets for derived variables (:pull:`2255`) by :user:`bouweandela`
 -  Fix error message in variable definition check (:pull:`2313`) by :user:`enekomartinmartinez`
 -  Unify dtype handling of preprocessors (:pull:`2393`) by :user:`schlunma`
+-  Fix bug in `_rechunk_aux_factory_dependencies` (:pull:`2428`) by :user:`ehogan`
+-  Avoid loading entire files into memory when downloading from ESGF (:pull:`2434`) by :user:`bouweandela`
+-  Preserve cube attribute global vs local when concatenating (:pull:`2449`) by :user:`bouweandela`
 
 CMOR standard
 ~~~~~~~~~~~~~
@@ -55,6 +59,7 @@ Computational performance improvements
 -  Cache regridding weights if possible (:pull:`2344`) by :user:`schlunma`
 -  Implement lazy area weights (:pull:`2354`) by :user:`schlunma`
 -  Avoid large chunks in :func:`esmvalcore.preprocessor.climate_statistics` preprocessor function with `period='full'` (:pull:`2404`) by :user:`bouweandela`
+-  Load data only once for ESMPy regridders (:pull:`2418`) by :user:`bouweandela`
 
 Documentation
 ~~~~~~~~~~~~~
@@ -88,6 +93,8 @@ Installation
 -  Pin pandas yet again avoid new ``2.2.1`` as well (:pull:`2353`) by :user:`valeriupredoi`
 -  Update Iris pin to avoid using versions with memory issues (:pull:`2408`) by :user:`chrisbillowsMO`
 -  Pin esmpy <8.6.0 (:pull:`2402`) by :user:`valeriupredoi`
+-  Pin numpy<2.0.0 to avoid pulling 2.0.0rcX (:pull:`2415`) by :user:`valeriupredoi`
+-  Add support for Python=3.12 (:pull:`2228`) by :user:`valeriupredoi`
 
 Preprocessor
 ~~~~~~~~~~~~
@@ -132,11 +139,12 @@ Improvements
 -  Handle warnings about invalid units for iris>=3.8 (:pull:`2378`) by :user:`schlunma`
 -  Added note on how to access ``index.html`` on remote server (:pull:`2276`) by :user:`schlunma`
 -  Remove custom fix for concatenation of aux factories now that bug in iris is solved (:pull:`2392`) by :user:`schlunma`
--  Use ``iris.FUTURE.save_split_attrs = True`` to remove iris warning (:pull:`2398`) by :user:`schlunma`
 -  Ignored iris warnings about global attributes (:pull:`2400`) by :user:`schlunma`
+-  Increase the version number for 2.11.0 release (:pull:`2410`) by :user:`chrisbillowsMO`
+-  Add draft release notes for v2.11.0rc1 (:pull:`2414`) by :user:`chrisbillowsMO`
+-  Add native6, OBS6 and RAWOBS rootpaths to metoffice config-user.yml template, and remove temporary dir (:pull:`2432`) by :user:`alistairsellar`
 
 .. _changelog-v2-10-0:
-
 
 v2.10.0
 -------
