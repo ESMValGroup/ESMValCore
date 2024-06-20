@@ -1,5 +1,6 @@
 """Tests for the ACCESS-ESM on-the-fly CMORizer."""
 
+import dask.array as da
 import iris
 import numpy as np
 import pytest
@@ -10,6 +11,9 @@ from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
+from iris.coords import DimCoord
+from iris.cube import Cube, CubeList
+from cf_units import Unit
 
 
 @pytest.fixture
@@ -66,11 +70,11 @@ def check_tas_metadata(cubes):
     return cube
 
 
-def check_pr_metadata(cubes):
-    """Check tas metadata."""
+def check_hus_metadata(cubes):
+    """Check hus metadata."""
     assert len(cubes) == 1
     cube = cubes[0]
-    assert cube.var_name == 'pr'
+    assert cube.var_name == 'hus'
     assert cube.standard_name == 'precipitation_flux'
     assert cube.long_name == 'Precipitation'
     assert cube.units == 'kg m-2 s-1'
@@ -118,6 +122,24 @@ def check_heightxm(cube, height_value):
     assert height.attributes == {'positive': 'up'}
     np.testing.assert_allclose(height.points, [height_value])
     assert height.bounds is None
+
+# def check_plev(cube):
+#     """Check scalar pressure coordinate of cube."""
+#     assert cube.coords('height')
+#     height = cube.coord('height')
+#     assert height.var_name == 'height'
+#     assert height.standard_name == 'height'
+#     assert height.units == 'm'
+#     assert height.attributes == {'positive': 'up'}
+#     np.testing.assert_allclose(height.points, [height_value])
+#     assert height.bounds is None
+
+def assert_plev_metadata(self, cube):
+    """Assert plev metadata is correct."""
+    assert cube.coord('air_pressure').standard_name == 'air_pressure'
+    assert cube.coord('air_pressure').var_name == 'plev'
+    assert cube.coord('air_pressure').units == 'Pa'
+    assert cube.coord('air_pressure').attributes == {}
 
 
 def test_only_time(monkeypatch, cubes_2d):
@@ -216,5 +238,60 @@ def test_tas_fix(cubes_2d):
     check_lat(fixed_cube)
     check_lon(fixed_cube)
     check_heightxm(fixed_cube, 2)
+
+    assert fixed_cube.shape == (1, 145, 192)
+
+def test_hus_fix(cubes_2d):
+    """Test fix 'hus'."""
+    time_coord = DimCoord(
+        [15, 45],
+        standard_name='time',
+        var_name='time',
+        units=Unit('days since 1851-01-01', calendar='noleap'),
+        attributes={'test': 1, 'time_origin': 'will_be_removed'},
+    )
+    plev_coord_rev = DimCoord(
+        [250, 500, 850],
+        standard_name='air_pressure',
+        var_name='plev',
+        units='hPa',
+    )
+    lat_coord_rev = DimCoord(
+        [10, -10],
+        standard_name='latitude',
+        var_name='lat',
+        units='degrees',
+    )
+    lon_coord = DimCoord(
+        [-180, 0],
+        standard_name='longitude',
+        var_name='lon',
+        units='degrees',
+    )
+    coord_spec_4d = [
+        (time_coord, 0),
+        (plev_coord_rev, 1),
+        (lat_coord_rev, 2),
+        (lon_coord, 3),
+    ]
+    cube_4d = Cube(
+        da.arange(2 * 3 * 2 * 2, dtype=np.float32).reshape(2, 3, 2, 2),
+        standard_name='air_pressure',
+        long_name='Air Pressure',
+        var_name='hus',
+        units='celsius',
+        dim_coords_and_dims=coord_spec_4d,
+        attributes={},
+    )
+    cubes_4d = CubeList([cube_4d])
+
+    fix = get_fix_allvar('Amon', 'mon', 'hus')
+    fixed_cubes = fix.fix_metadata(cubes_4d)
+    fixed_cube = check_tas_metadata(fixed_cubes)
+
+    check_time(fixed_cube)
+    check_lat(fixed_cube)
+    check_lon(fixed_cube)
+    assert_plev_metadata(fixed_cube)
 
     assert fixed_cube.shape == (1, 145, 192)
