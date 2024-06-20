@@ -140,8 +140,6 @@ Improvements
 -  Added note on how to access ``index.html`` on remote server (:pull:`2276`) by :user:`schlunma`
 -  Remove custom fix for concatenation of aux factories now that bug in iris is solved (:pull:`2392`) by :user:`schlunma`
 -  Ignored iris warnings about global attributes (:pull:`2400`) by :user:`schlunma`
--  Increase the version number for 2.11.0 release (:pull:`2410`) by :user:`chrisbillowsMO`
--  Add draft release notes for v2.11.0rc1 (:pull:`2414`) by :user:`chrisbillowsMO`
 -  Add native6, OBS6 and RAWOBS rootpaths to metoffice config-user.yml template, and remove temporary dir (:pull:`2432`) by :user:`alistairsellar`
 
 .. _changelog-v2-10-0:
