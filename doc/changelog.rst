@@ -9,7 +9,18 @@ v2.11.0
 -------
 Highlights
 
-TODO: add highlights
+- Performance improvements have been made to many preprocessors:
+
+  - Preprocessors :func:`esmvalcore.preprocessor.mask_landsea`,
+    :func:`esmvalcore.preprocessor.mask_landseaice`,
+    :func:`esmvalcore.preprocessor.mask_glaciated`,
+    :func:`esmvalcore.preprocessor.extract_levels` are now lazy
+
+- Several new preprocessors have been added:
+
+  - :func:`esmvalcore.preprocessor.local_solar_time`
+  - :func:`esmvalcore.preprocessor.distance_metrics`
+  - :func:`esmvalcore.preprocessor.histogram`
 
 This release includes
 
