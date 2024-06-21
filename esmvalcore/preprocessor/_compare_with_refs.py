@@ -453,8 +453,10 @@ def _calculate_rmse(
     npx = get_array_module(squared_error)
 
     # need masked sqrt for numpy >=2.0
-    # and dask.array.reductions.safe_sqrt for Dask
+    # and consequently dask.array.reductions.safe_sqrt for Dask
     # otherwise results will be computed ignoring masks
+    # see https://github.com/numpy/numpy/issues/25635
+    # and https://docs.dask.org/en/stable/_modules/dask/array/reductions.html
     if npx.__name__ == "dask.array":
         da_squared_error = npx.ma.average(squared_error,
                                           axis=axis,
