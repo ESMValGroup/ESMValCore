@@ -451,7 +451,19 @@ def _calculate_rmse(
     weights = get_weights(cube, coords) if weighted else None
     squared_error = (cube.core_data() - reference.core_data())**2
     npx = get_array_module(squared_error)
-    rmse = npx.sqrt(npx.ma.average(squared_error, axis=axis, weights=weights))
+
+    # need masked sqrt for numpy >=2.0
+    # and dask.array.reductions.safe_sqrt for Dask
+    # otherwise results will be computed ignoring masks
+    if npx.__name__ == "dask.array":
+        da_squared_error = npx.ma.average(squared_error,
+                                          axis=axis,
+                                          weights=weights)
+        rmse = npx.reductions.safe_sqrt(da_squared_error)
+    else:
+        rmse = npx.ma.sqrt(
+            npx.ma.average(squared_error, axis=axis, weights=weights)
+        )
 
     # Metadata
     metadata = CubeMetadata(
