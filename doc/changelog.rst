@@ -38,6 +38,15 @@ TODO: add examples of how to deal with these changes
 -  Allow contiguous representation of extracted regions (:pull:`2230`) by :user:`rebeccaherman1`
 -  Use ``iris.FUTURE.save_split_attrs = True`` to remove iris warning (:pull:`2398`) by :user:`schlunma`
 
+   - Since `v3.8.0`_, Iris explicitly distinguishes between local and global
+     netCDF attributes. ESMValCore adopted this behavior with v2.11.0. With
+     this change, attributes are written as local attributes by default, unless
+     they already existed as global attributes or belong to a special list of
+     global attributes (in which case attributes are written as global
+     attributes). See :class:`iris.cube.CubeAttrsDict` for details.
+
+.. _v3.8.0: https://scitools-iris.readthedocs.io/en/stable/whatsnew/3.8.html#v3-8-29-feb-2024
+
 Deprecations
 ~~~~~~~~~~~~
 
