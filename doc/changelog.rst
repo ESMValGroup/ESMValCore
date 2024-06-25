@@ -24,9 +24,9 @@ Highlights
 
 - NEW TREND: First time release manager shout-outs!
 
-This is the first ESMValTool release managed by the Met Office! We want to
-shout this out - and for all future first time release managers to shout-out -
-to celebrate the growing, thriving ESMValTool community.
+  - This is the first ESMValTool release managed by the Met Office! We want to
+    shout this out - and for all future first time release managers to
+    shout-out - to celebrate the growing, thriving ESMValTool community.
 
 This release includes
 
