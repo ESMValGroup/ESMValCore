@@ -24,6 +24,7 @@ def test_fix_metadata_hur():
     assert len(fixed_cubes) == 1
     fixed_cube = fixed_cubes[0]
     assert fixed_cube.units == '%'
+    assert fixed_cube.attributes == {}
     assert fixed_cube.has_lazy_data()
     expected_data = np.ma.masked_invalid([np.nan, 20.0, 120.0, np.nan])
     np.testing.assert_allclose(fixed_cube.data.mask, expected_data.mask)
