@@ -51,6 +51,18 @@ Deprecations
 ~~~~~~~~~~~~
 
 -  Refactor regridding (:pull:`2231`) by :user:`schlunma`
+
+   - This PR deprecated two regridding schemes, which will be removed with
+     ESMValCore v2.13.0:
+
+     - ``unstructured_nearest``: Please use the scheme ``nearest`` instead.
+       This is an exact replacement for data on unstructured grids. ESMValCore
+       is now able to determine the most suitable regridding scheme based on
+       the input data.
+     - ``linear_extrapolate``: Please use a generic scheme with
+       ``reference: iris.analysis:Linear`` and
+       ``extrapolation_mode: extrapolate`` instead.
+
 -  Allow deprecated regridding scheme ``linear_extrapolate`` in recipe checks (:pull:`2324`) by :user:`schlunma`
 -  Allow deprecated regridding scheme ``unstructured_nearest`` in recipe checks (:pull:`2336`) by :user:`schlunma`
 
