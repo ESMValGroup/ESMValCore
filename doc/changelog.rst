@@ -34,6 +34,14 @@ Backwards incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -  Allow contiguous representation of extracted regions (:pull:`2230`) by :user:`rebeccaherman1`
+
+   - The preprocessor function :func:`esmvalcore.preprocessor.extract_region`
+     no longer automatically maps the extracted :class:`iris.cube.Cube` to the
+     0-360 degrees longitude domain. If you need this behaviour, use
+     ``cube.intersection(longitude=(0., 360.))`` in your Python code after
+     extracting the region. There is no possibility to restore the previous
+     behaviour from a recipe.
+
 -  Use ``iris.FUTURE.save_split_attrs = True`` to remove iris warning (:pull:`2398`) by :user:`schlunma`
 
    - Since `v3.8.0`_, Iris explicitly distinguishes between local and global
