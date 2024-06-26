@@ -33,8 +33,6 @@ This release includes
 Backwards incompatible changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO: add examples of how to deal with these changes
-
 -  Allow contiguous representation of extracted regions (:pull:`2230`) by :user:`rebeccaherman1`
 -  Use ``iris.FUTURE.save_split_attrs = True`` to remove iris warning (:pull:`2398`) by :user:`schlunma`
 
