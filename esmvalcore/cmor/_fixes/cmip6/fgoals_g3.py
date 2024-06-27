@@ -28,7 +28,8 @@ class Tos(OceanFixGrid):
         Example files:
         v20191030/siconc_SImon_FGOALS-g3_piControl_r1i1p1f1_gn_070001-079912.nc
         v20191030/siconc_SImon_FGOALS-g3_piControl_r1i1p1f1_gn_080001-089912.nc
-        v20200706/siconc_SImon_FGOALS-g3_ssp534-over_r1i1p1f1_gn_201501-210012.nc
+        v20200706/siconc_SImon_FGOALS-g3_ssp534-over_r1i1p1f1_gn_201501-210012
+        .nc
 
         Parameters
         ----------
