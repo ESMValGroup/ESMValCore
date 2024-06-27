@@ -32,22 +32,23 @@ REQUIREMENTS = {
         'dask[array,distributed]',
         'dask-jobqueue',
         'esgf-pyclient>=0.3.1',
-        'esmf-regrid',
-        'esmpy!=8.1.0',
+        'esmf-regrid>=0.10.0',  # iris-esmf-regrid #342
+        'esmpy!=8.1.0',  # not on PyPI
         'filelock',
         'fiona',
         'fire',
         'geopy',
         'humanfriendly',
         "importlib_metadata;python_version<'3.10'",
+        'iris-grib',
         'isodate',
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
         'nested-lookup',
         'netCDF4',
-        'numpy!=1.24.3',
+        'numpy!=1.24.3,<2.0.0',  # avoid pulling 2.0.0rc1
         'packaging',
-        'pandas!=2.2.0',  # github.com/ESMValGroup/ESMValCore/pull/2305
+        'pandas!=2.2.0,!=2.2.1,!=2.2.2',  # GH #2305 #2349 etc
         'pillow',
         'prov',
         'psutil',
@@ -56,16 +57,14 @@ REQUIREMENTS = {
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        # See the following issue for info on the iris pin below:
-        # https://github.com/ESMValGroup/ESMValTool/issues/3239#issuecomment-1613298587
-        'scitools-iris>=3.6.1',
+        'scitools-iris>=3.9.0',
         'shapely>=2.0.0',
         'stratify>=0.3',
         'yamale',
     ],
     # Test dependencies
     'test': [
-        'flake8',
+        'flake8>=7.0.0',  # not to pick up E231
         'pytest>=3.9,!=6.0.0rc1,!=6.0.0',
         'pytest-cov>=2.10.1',
         'pytest-env',
@@ -94,8 +93,10 @@ REQUIREMENTS = {
         'codespell',
         'docformatter',
         'isort',
+        'flake8>=7',
         'pre-commit',
-        'prospector[with_pyroma]>=1.9.0',
+        'pylint',
+        'pydocstyle',
         'vprof',
         'yamllint',
         'yapf',

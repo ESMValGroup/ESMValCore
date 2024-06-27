@@ -10,17 +10,19 @@ import datetime
 import logging
 import warnings
 from functools import partial
-from typing import Iterable, Optional
+from typing import Iterable, Literal, Optional
 from warnings import filterwarnings
 
 import dask.array as da
 import dask.config
 import iris
+import iris.analysis
 import iris.coord_categorisation
 import iris.util
 import isodate
 import numpy as np
 from cf_units import Unit
+from cftime import datetime as cf_datetime
 from iris.coords import AuxCoord, Coord, DimCoord
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
@@ -32,6 +34,8 @@ from esmvalcore.cmor.fixes import get_next_month, get_time_bounds
 from esmvalcore.iris_helpers import date2num, rechunk_cube
 from esmvalcore.preprocessor._shared import (
     get_iris_aggregator,
+    get_time_weights,
+    preserve_float_dtype,
     update_weights_kwargs,
 )
 
@@ -382,40 +386,6 @@ def extract_month(cube: Cube, month: int) -> Cube:
     return result
 
 
-def get_time_weights(cube: Cube) -> np.ndarray | da.core.Array:
-    """Compute the weighting of the time axis.
-
-    Parameters
-    ----------
-    cube:
-        Input cube.
-
-    Returns
-    -------
-    np.ndarray or da.Array
-        Array of time weights for averaging. Returns a
-        :class:`dask.array.Array` if the input cube has lazy data; a
-        :class:`numpy.ndarray` otherwise.
-
-    """
-    time = cube.coord('time')
-    coord_dims = cube.coord_dims('time')
-
-    # Multidimensional time coordinates are not supported: In this case,
-    # weights cannot be simply calculated as difference between the bounds
-    if len(coord_dims) > 1:
-        raise ValueError(
-            f"Weighted statistical operations are not supported for "
-            f"{len(coord_dims):d}D time coordinates, expected 0D or 1D"
-        )
-
-    # Extract 1D time weights (= lengths of time intervals)
-    time_weights = time.lazy_bounds()[:, 1] - time.lazy_bounds()[:, 0]
-    if not cube.has_lazy_data():
-        time_weights = time_weights.compute()
-    return time_weights
-
-
 def _aggregate_time_fx(result_cube, source_cube):
     time_dim = set(source_cube.coord_dims(source_cube.coord('time')))
     if source_cube.cell_measures():
@@ -446,6 +416,7 @@ def _aggregate_time_fx(result_cube, source_cube):
                                                    ancillary_dims)
 
 
+@preserve_float_dtype
 def hourly_statistics(
     cube: Cube,
     hours: int,
@@ -501,6 +472,7 @@ def hourly_statistics(
     return result
 
 
+@preserve_float_dtype
 def daily_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -541,6 +513,7 @@ def daily_statistics(
     return result
 
 
+@preserve_float_dtype
 def monthly_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -579,6 +552,7 @@ def monthly_statistics(
     return result
 
 
+@preserve_float_dtype
 def seasonal_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -673,6 +647,7 @@ def seasonal_statistics(
     return result
 
 
+@preserve_float_dtype
 def annual_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -714,6 +689,7 @@ def annual_statistics(
     return result
 
 
+@preserve_float_dtype
 def decadal_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -762,6 +738,7 @@ def decadal_statistics(
     return result
 
 
+@preserve_float_dtype
 def climate_statistics(
     cube: Cube,
     operator: str = 'mean',
@@ -804,7 +781,6 @@ def climate_statistics(
     iris.cube.Cube
         Climate statistics cube.
     """
-    original_dtype = cube.dtype
     period = period.lower()
 
     # Use Cube.collapsed when full period is requested
@@ -846,14 +822,6 @@ def climate_statistics(
                 clim_cube.slices_over(clim_coord.name())).merge_cube()
         cube.remove_coord(clim_coord)
 
-    # Make sure that original dtype is preserved
-    new_dtype = clim_cube.dtype
-    if original_dtype != new_dtype:
-        logger.debug(
-            "climate_statistics changed dtype from "
-            "%s to %s, changing back", original_dtype, new_dtype)
-        clim_cube.data = clim_cube.core_data().astype(original_dtype)
-
     return clim_cube
 
 
@@ -867,6 +835,7 @@ def _add_time_weights_coord(cube):
     cube.add_aux_coord(time_weights_coord, cube.coord_dims('time'))
 
 
+@preserve_float_dtype
 def anomalies(
     cube: Cube,
     period: str,
@@ -994,82 +963,176 @@ def _get_period_coord(cube, period, seasons):
     raise ValueError(f"Period '{period}' not supported")
 
 
-def regrid_time(cube: Cube, frequency: str) -> Cube:
-    """Align time axis for cubes so they can be subtracted.
+def regrid_time(
+    cube: Cube,
+    frequency: str,
+    calendar: Optional[str] = None,
+    units: str = 'days since 1850-01-01 00:00:00',
+) -> Cube:
+    """Align time coordinate for cubes.
 
-    Operations on time units, time points and auxiliary
-    coordinates so that any cube from cubes can be subtracted from any
-    other cube from cubes. Currently this function supports
-    yearly (frequency=yr), monthly (frequency=mon),
-    daily (frequency=day), 6-hourly (frequency=6hr),
-    3-hourly (frequency=3hr) and hourly (frequency=1hr) data time frequencies.
+    Sets datetimes to common values:
+
+    * Decadal data (e.g., ``frequency='dec'``): 1 January 00:00:00 for the
+      given year. Example: 1 January 2005 00:00:00 for given year 2005 (decade
+      2000-2010).
+    * Yearly data (e.g., ``frequency='yr'``): 1 July 00:00:00 for each year.
+      Example: 1 July 1993 00:00:00 for the year 1993.
+    * Monthly data (e.g., ``frequency='mon'``): 15th day 00:00:00 for each
+      month. Example: 15 October 1993 00:00:00 for the month October 1993.
+    * Daily data (e.g., ``frequency='day'``): 12:00:00 for each day. Example:
+      14 March 1996 12:00:00 for the day 14 March 1996.
+    * `n`-hourly data where `n` is a divisor of 24
+      (e.g., ``frequency='3hr'``): center of each time interval. Example:
+      03:00:00 for interval 00:00:00-06:00:00 (6-hourly data), 16:30:00 for
+      interval 15:00:00-18:00:00 (3-hourly data), or 09:30:00 for interval
+      09:00:00-10:00:00 (hourly data).
+
+    The corresponding time bounds will be set according to the rules described
+    in :func:`esmvalcore.cmor.fixes.get_time_bounds`. The data type of the new
+    time coordinate will be set to `float64` (CMOR default for coordinates).
+    Potential auxiliary time coordinates (e.g., `day_of_year`) are also changed
+    if present.
+
+    This function does not alter the data in any way.
+
+    Note
+    ----
+    By default, this will not change the calendar of the input time coordinate.
+    For decadal, yearly, and monthly data, it is possible to change the
+    calendar using the `calendar` argument. Be aware that changing the calendar
+    might introduce (small) errors to your data, especially for extensive
+    quantities (those that depend on the period length).
 
     Parameters
     ----------
     cube:
-        Input cube.
+        Input cube. This input cube will not be modified.
     frequency:
-        Data frequency: `mon`, `day`, `1hr`, `3hr` or `6hr`.
+        Data frequency. Allowed are
+
+        * Decadal data (`frequency` must include `dec`, e.g., `dec`)
+        * Yearly data (`frequency` must include `yr`, e.g., `yrPt`)
+        * Monthly data (`frequency` must include `mon`, e.g., `monC`)
+        * Daily data (`frequency` must include `day`, e.g., `day`)
+        * `n`-hourly data, where `n` must be a divisor of 24 (`frequency` must
+          include `nhr`, e.g., `6hrPt`)
+    calendar:
+        If given, transform the calendar to the one specified (examples:
+        `standard`, `365_day`, etc.). This only works for decadal, yearly and
+        monthly data, and will raise an error for other frequencies. If not
+        set, the calendar will not be changed.
+    units:
+        Reference time units used if the calendar of the data is changed.
+        Ignored if `calendar` is not set.
 
     Returns
     -------
     iris.cube.Cube
-        Cube with converted time axis and units.
+        Cube with converted time coordinate.
+
+    Raises
+    ------
+    NotImplementedError
+        An invalid `frequency` is given or `calendar` is set for a
+        non-supported frequency.
 
     """
-    # standardize time points
+    # Do not overwrite input cube
+    cube = cube.copy()
     coord = cube.coord('time')
-    time_c = coord.units.num2date(coord.points)
-    if frequency == 'yr':
-        time_cells = [datetime.datetime(t.year, 7, 1, 0, 0, 0) for t in time_c]
-    elif frequency == 'mon':
-        time_cells = [
-            datetime.datetime(t.year, t.month, 15, 0, 0, 0) for t in time_c
-        ]
-    elif frequency == 'day':
-        time_cells = [
-            datetime.datetime(t.year, t.month, t.day, 0, 0, 0) for t in time_c
-        ]
-    elif frequency == '1hr':
-        time_cells = [
-            datetime.datetime(t.year, t.month, t.day, t.hour, 0, 0)
-            for t in time_c
-        ]
-    elif frequency == '3hr':
-        time_cells = [
-            datetime.datetime(
-                t.year, t.month, t.day, t.hour - t.hour % 3, 0, 0)
-            for t in time_c
-        ]
-    elif frequency == '6hr':
-        time_cells = [
-            datetime.datetime(
-                t.year, t.month, t.day, t.hour - t.hour % 6, 0, 0)
-            for t in time_c
-        ]
 
-    coord = cube.coord('time')
-    cube.coord('time').points = date2num(time_cells, coord.units, coord.dtype)
+    # Raise an error if calendar is used for a non-supported frequency
+    if calendar is not None and ('day' in frequency or 'hr' in frequency):
+        raise NotImplementedError(
+            f"Setting a fixed calendar is not supported for frequency "
+            f"'{frequency}'"
+        )
 
-    # uniformize bounds
-    cube.coord('time').bounds = None
-    cube.coord('time').bounds = get_time_bounds(cube.coord('time'), frequency)
+    # Setup new time coordinate
+    new_dates = _get_new_dates(frequency, coord)
+    if calendar is not None:
+        new_coord = DimCoord(
+            coord.points,
+            standard_name='time',
+            long_name='time',
+            var_name='time',
+            units=Unit(units, calendar=calendar),
+        )
+    else:
+        new_coord = coord
+    new_coord.points = date2num(new_dates, new_coord.units, np.float64)
+    new_coord.bounds = get_time_bounds(new_coord, frequency)
 
-    # remove aux coords that will differ
-    reset_aux = ['day_of_month', 'day_of_year']
-    for auxcoord in cube.aux_coords:
-        if auxcoord.long_name in reset_aux:
-            cube.remove_coord(auxcoord)
+    # Replace old time coordinate with new one
+    time_dims = cube.coord_dims(coord)
+    cube.remove_coord(coord)
+    cube.add_dim_coord(new_coord, time_dims)
 
-    # re-add the converted aux coords
-    iris.coord_categorisation.add_day_of_month(cube,
-                                               cube.coord('time'),
-                                               name='day_of_month')
-    iris.coord_categorisation.add_day_of_year(cube,
-                                              cube.coord('time'),
-                                              name='day_of_year')
+    # Adapt auxiliary time coordinates if necessary
+    aux_coord_names = [
+        'day_of_month',
+        'day_of_year',
+        'hour',
+        'month',
+        'month_fullname',
+        'month_number',
+        'season',
+        'season_number',
+        'season_year',
+        'weekday',
+        'weekday_fullname',
+        'weekday_number',
+        'year',
+    ]
+    for coord_name in aux_coord_names:
+        if cube.coords(coord_name):
+            cube.remove_coord(coord_name)
+            getattr(iris.coord_categorisation, f'add_{coord_name}')(
+                cube, new_coord
+            )
 
     return cube
+
+
+def _get_new_dates(frequency: str, coord: Coord) -> list[datetime.datetime]:
+    """Get transformed dates."""
+    dates = coord.units.num2date(coord.points)
+
+    if 'dec' in frequency:
+        dates = [datetime.datetime(d.year, 1, 1, 0, 0, 0) for d in dates]
+    elif 'yr' in frequency:
+        dates = [datetime.datetime(d.year, 7, 1, 0, 0, 0) for d in dates]
+    elif 'mon' in frequency:
+        dates = [
+            datetime.datetime(d.year, d.month, 15, 0, 0, 0) for d in dates
+        ]
+    elif 'day' in frequency:
+        dates = [
+            datetime.datetime(d.year, d.month, d.day, 12, 0, 0) for d in dates
+        ]
+    elif 'hr' in frequency:
+        (n_hours_str, _, _) = frequency.partition('hr')
+        if not n_hours_str:
+            n_hours = 1
+        else:
+            n_hours = int(n_hours_str)
+        if 24 % n_hours:
+            raise NotImplementedError(
+                f"For `n`-hourly data, `n` must be a divisor of 24, got "
+                f"'{frequency}'"
+            )
+        half_interval = datetime.timedelta(hours=n_hours / 2.0)
+        dates = [
+            datetime.datetime(
+                d.year, d.month, d.day, d.hour - d.hour % n_hours, 0, 0
+            ) + half_interval
+            for d in dates
+        ]
+    else:
+        raise NotImplementedError(f"Frequency '{frequency}' is not supported")
+
+    return dates
 
 
 def low_pass_weights(window, cutoff):
@@ -1104,6 +1167,7 @@ def low_pass_weights(window, cutoff):
     return weights[1:-1]
 
 
+@preserve_float_dtype
 def timeseries_filter(
     cube: Cube,
     window: int,
@@ -1187,21 +1251,23 @@ def timeseries_filter(
     return cube
 
 
-def resample_hours(cube: Cube, interval: int, offset: int = 0) -> Cube:
-    """Convert x-hourly data to y-hourly by eliminating extra timesteps.
+def resample_hours(
+    cube: Cube,
+    interval: int,
+    offset: int = 0,
+    interpolate: Optional[Literal['nearest', 'linear']] = None,
+) -> Cube:
+    """Convert x-hourly data to y-hourly data.
 
-    Convert x-hourly data to y-hourly (y > x) by eliminating the extra
-    timesteps. This is intended to be used only with instantaneous values.
+    This is intended to be used with instantaneous data.
 
-    For example:
-
-    - resample_hours(cube, interval=6): Six-hourly intervals at 0:00, 6:00,
+    Examples
+    --------
+    - ``resample_hours(cube, interval=6)``: Six-hourly intervals at 0:00, 6:00,
       12:00, 18:00.
-
-    - resample_hours(cube, interval=6, offset=3): Six-hourly intervals at
+    - ``resample_hours(cube, interval=6, offset=3)``: Six-hourly intervals at
       3:00, 9:00, 15:00, 21:00.
-
-    - resample_hours(cube, interval=12, offset=6): Twelve-hourly intervals
+    - ``resample_hours(cube, interval=12, offset=6)``: Twelve-hourly intervals
       at 6:00, 18:00.
 
     Parameters
@@ -1209,9 +1275,14 @@ def resample_hours(cube: Cube, interval: int, offset: int = 0) -> Cube:
     cube:
         Input cube.
     interval:
-        The period (hours) of the desired data.
-    offset: optional
-        The firs hour (hours) of the desired data.
+        The period (hours) of the desired output data.
+    offset:
+        The first hour of the desired output data.
+    interpolate:
+        If `interpolate` is ``None`` (default), convert x-hourly data to
+        y-hourly (y > x) by eliminating extra time steps. If `interpolate` is
+        'nearest' or 'linear', use nearest-neighbor or bilinear interpolation
+        to convert general x-hourly data to general y-hourly data.
 
     Returns
     -------
@@ -1221,7 +1292,9 @@ def resample_hours(cube: Cube, interval: int, offset: int = 0) -> Cube:
     Raises
     ------
     ValueError:
-        The specified frequency is not a divisor of 24.
+        `interval` is not a divisor of 24; invalid `interpolate` given; or
+        input data does not contain any target hour (if `interpolate` is
+        ``None``).
 
     """
     allowed_intervals = (1, 2, 3, 4, 6, 12)
@@ -1233,18 +1306,41 @@ def resample_hours(cube: Cube, interval: int, offset: int = 0) -> Cube:
                          f'the interval ({interval})')
     time = cube.coord('time')
     cube_period = time.cell(1).point - time.cell(0).point
-    if cube_period.total_seconds() / 3600 >= interval:
+    if cube_period.total_seconds() / 3600 > interval:
         raise ValueError(f"Data period ({cube_period}) should be lower than "
                          f"the interval ({interval})")
-    hours = [PartialDateTime(hour=h) for h in range(0 + offset, 24, interval)]
     dates = time.units.num2date(time.points)
-    select = np.zeros(len(dates), dtype=bool)
-    for hour in hours:
-        select |= dates == hour
-    cube = _select_timeslice(cube, select)
-    if cube is None:
-        raise ValueError(
-            f"Time coordinate {dates} does not contain {hours} for {cube}")
+
+    # Interpolate input time to requested hours if desired
+    if interpolate:
+        if interpolate == 'nearest':
+            interpolation_scheme = iris.analysis.Nearest()
+        elif interpolate == 'linear':
+            interpolation_scheme = iris.analysis.Linear()
+        else:
+            raise ValueError(
+                f"Expected `None`, 'nearest' or 'linear' for `interpolate`, "
+                f"got '{interpolate}'"
+            )
+        new_dates = sorted([
+            cf_datetime(y, m, d, h, calendar=time.units.calendar)
+            for h in range(0 + offset, 24, interval)
+            for (y, m, d) in {(d.year, d.month, d.day) for d in dates}
+        ])
+        cube = cube.interpolate([('time', new_dates)], interpolation_scheme)
+    else:
+        hours = [
+            PartialDateTime(hour=h) for h in range(0 + offset, 24, interval)
+        ]
+        dates = time.units.num2date(time.points)
+        select = np.zeros(len(dates), dtype=bool)
+        for hour in hours:
+            select |= dates == hour
+        cube = _select_timeslice(cube, select)
+        if cube is None:
+            raise ValueError(
+                f"Time coordinate {dates} does not contain {hours} for {cube}"
+            )
 
     return cube
 
@@ -1436,9 +1532,9 @@ def _get_time_index_and_mask(
 
 def _transform_to_lst_eager(
     data: np.ndarray,
-    *,
     time_index: np.ndarray,
     mask: np.ndarray,
+    *,
     time_dim: int,
     lon_dim: int,
     **__,
@@ -1479,9 +1575,9 @@ def _transform_to_lst_eager(
 
 def _transform_to_lst_lazy(
     data: da.core.Array,
-    *,
     time_index: np.ndarray,
     mask: np.ndarray,
+    *,
     time_dim: int,
     lon_dim: int,
     output_dtypes: DTypeLike,
@@ -1505,28 +1601,25 @@ def _transform_to_lst_lazy(
     `mask` is 2D with shape (time, lon) that will be applied to the final data.
 
     """
-    _transform_chunk_to_lst = partial(
+    new_data = da.apply_gufunc(
         _transform_to_lst_eager,
-        time_index=time_index,
-        mask=mask,
+        '(t,x),(t,x),(t,x)->(t,x)',
+        data,
+        time_index,
+        mask,
+        axes=[(time_dim, lon_dim), (0, 1), (0, 1), (time_dim, lon_dim)],
+        output_dtypes=output_dtypes,
         time_dim=-2,  # this is ensured by da.apply_gufunc
         lon_dim=-1,  # this is ensured by da.apply_gufunc
-    )
-    new_data = da.apply_gufunc(
-        _transform_chunk_to_lst,
-        '(t,y)->(t,y)',
-        data,
-        axes=[(time_dim, lon_dim), (time_dim, lon_dim)],
-        output_dtypes=output_dtypes,
     )
     return new_data
 
 
 def _transform_arr_to_lst(
     data: np.ndarray | da.core.Array,
-    *,
     time_index: np.ndarray,
     mask: np.ndarray,
+    *,
     time_dim: int,
     lon_dim: int,
     output_dtypes: DTypeLike,
@@ -1545,8 +1638,8 @@ def _transform_arr_to_lst(
         func = _transform_to_lst_lazy  # type: ignore
     new_data = func(
         data,  # type: ignore
-        time_index=time_index,
-        mask=mask,
+        time_index,
+        mask,
         time_dim=time_dim,
         lon_dim=lon_dim,
         output_dtypes=output_dtypes,
@@ -1571,13 +1664,10 @@ def _transform_cube_to_lst(cube: Cube) -> Cube:
 
     # Transform cube data
     (time_index, mask) = _get_time_index_and_mask(time_coord, lon_coord)
-    _transform_arr = partial(
-        _transform_arr_to_lst,
-        time_index=time_index,
-        mask=mask,
-    )
-    cube.data = _transform_arr(
+    cube.data = _transform_arr_to_lst(
         cube.core_data(),
+        time_index,
+        mask,
         time_dim=time_dim,
         lon_dim=lon_dim,
         output_dtypes=cube.dtype,
@@ -1589,15 +1679,19 @@ def _transform_cube_to_lst(cube: Cube) -> Cube:
         if time_dim in dims and lon_dim in dims:
             time_dim_ = dims.index(time_dim)
             lon_dim_ = dims.index(lon_dim)
-            coord.points = _transform_arr(
+            coord.points = _transform_arr_to_lst(
                 coord.core_points(),
+                time_index,
+                mask,
                 time_dim=time_dim_,
                 lon_dim=lon_dim_,
                 output_dtypes=coord.dtype,
             )
             if coord.has_bounds():
-                coord.bounds = _transform_arr(
+                coord.bounds = _transform_arr_to_lst(
                     coord.core_bounds(),
+                    time_index,
+                    mask,
                     time_dim=time_dim_,
                     lon_dim=lon_dim_,
                     output_dtypes=coord.bounds_dtype,
@@ -1609,8 +1703,10 @@ def _transform_cube_to_lst(cube: Cube) -> Cube:
         if time_dim in dims and lon_dim in dims:
             time_dim_ = dims.index(time_dim)
             lon_dim_ = dims.index(lon_dim)
-            cell_measure.data = _transform_arr(
+            cell_measure.data = _transform_arr_to_lst(
                 cell_measure.core_data(),
+                time_index,
+                mask,
                 time_dim=time_dim_,
                 lon_dim=lon_dim_,
                 output_dtypes=cell_measure.dtype,
@@ -1622,8 +1718,10 @@ def _transform_cube_to_lst(cube: Cube) -> Cube:
         if time_dim in dims and lon_dim in dims:
             time_dim_ = dims.index(time_dim)
             lon_dim_ = dims.index(lon_dim)
-            anc_var.data = _transform_arr(
+            anc_var.data = _transform_arr_to_lst(
                 anc_var.core_data(),
+                time_index,
+                mask,
                 time_dim=time_dim_,
                 lon_dim=lon_dim_,
                 output_dtypes=anc_var.dtype,
@@ -1656,6 +1754,7 @@ def _check_cube_coords(cube):
         )
 
 
+@preserve_float_dtype
 def local_solar_time(cube: Cube) -> Cube:
     """Convert UTC time coordinate to local solar time (LST).
 
