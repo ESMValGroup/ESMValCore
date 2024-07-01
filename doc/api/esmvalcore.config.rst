@@ -71,9 +71,8 @@ type of your input if possible:
 
 By default, the configuration is loaded from YAML files in the user's home
 directory at ``~/.config/esmvaltool``.
-If set, the directory specified with the ``ESMVALTOOL_CONFIG_DIR`` environment
-variable will also be read (taking precedence over files in
-``~/.config/esmvaltool``).
+If set, this can be overwritten with the ``ESMVALTOOL_CONFIG_DIR`` environment
+variable.
 Defaults for options that are not specified explicitly are listed :ref:`here
 <config_options>`.
 To reload the current configuration object according to these rules, use:
@@ -81,6 +80,12 @@ To reload the current configuration object according to these rules, use:
 .. code-block:: python
 
     >>> CFG.reload()
+
+To restore the default settings shipped with ESMValCore, use:
+
+.. code-block:: python
+
+    >>> CFG.restore_defaults()
 
 
 Session

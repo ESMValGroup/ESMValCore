@@ -50,17 +50,17 @@ Example:
 
 These files can live in any of the following locations:
 
-1. If set, the directory specified with the ``ESMVALTOOL_CONFIG_DIR``
-   environment variable.
+1. The directory specified via the ``--config_dir`` command line argument (if
+   this points to an invalid directory, an error will be raised).
 
-2. The user configuration directory (by default ``~/.config/esmvaltool``, but
-   this can be changed with the ``--config_dir`` command line argument).
+2. The user configuration directory: by default ``~/.config/esmvaltool``, but
+   this can be changed with the ``ESMVALTOOL_CONFIG_DIR`` environment variable
+   (if this points to an invalid directory, this is silently ignored).
 
 ESMValCore searches for all YAML files within each of these directories and
 merges them together using :func:`dask.config.collect`.
 Preference follows the order in the list above (i.e., the directory specified
-via the environment variable is preferred over the user configuration
-directory).
+via command line argument is preferred over the user configuration directory).
 Within a directory, files are sorted alphabetically, and later files (e.g.,
 ``z.yml``) will take precedence over earlier files (e.g., ``a.yml``).
 
@@ -107,9 +107,9 @@ For example:
   >>> CFG['output_dir']
   PosixPath('/home/user/esmvaltool_output')
 
-This will also consider YAML configuration files in the directory given by
-``ESMVALTOOL_CONFIG_DIR`` (if set; higher priority) and in
-``~/.config/esmvaltool`` (lower priority).
+This will also consider YAML configuration files in the user configuration
+directory (by default ``~/.config/esmvaltool``, but this can be changed with
+the ``ESMVALTOOL_CONFIG_DIR`` environment variable).
 
 More information about this can be found :ref:`here <api_configuration>`.
 
