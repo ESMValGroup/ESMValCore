@@ -32,15 +32,25 @@ DEFAULT_CONFIG_DIR = (
     Path(esmvalcore.__file__).parent / 'config' / 'config_defaults'
 )
 
-# User configuration directory
-if 'ESMVALTOOL_CONFIG_DIR' in os.environ:
-    USER_CONFIG_DIR = (
-        Path(os.environ['ESMVALTOOL_CONFIG_DIR']).expanduser().absolute()
-    )
-    USER_CONFIG_SOURCE = 'ESMVALTOOL_CONFIG_DIR environment variable'
-else:
-    USER_CONFIG_DIR = Path.home() / '.config' / 'esmvaltool'
-    USER_CONFIG_SOURCE = 'default user configuration directory'
+
+def _get_user_config_dir() -> Path:
+    """Get user configuration directory."""
+    if 'ESMVALTOOL_CONFIG_DIR' in os.environ:
+        return (
+            Path(os.environ['ESMVALTOOL_CONFIG_DIR']).expanduser().absolute()
+        )
+    return Path.home() / '.config' / 'esmvaltool'
+
+
+def _get_user_config_source() -> str:
+    """Get source of user configuration directory."""
+    if 'ESMVALTOOL_CONFIG_DIR' in os.environ:
+        return 'ESMVALTOOL_CONFIG_DIR environment variable'
+    return 'default user configuration directory'
+
+
+USER_CONFIG_DIR = _get_user_config_dir()
+USER_CONFIG_SOURCE = _get_user_config_source()
 
 
 class Config(ValidatedConfig):
@@ -520,7 +530,7 @@ class Session(ValidatedConfig):
         return self.session_dir / self._relative_fixed_file_dir
 
 
-def get_global_config() -> Config:
+def _get_global_config() -> Config:
     """Get global configuration object."""
     with warnings.catch_warnings():
         warnings.filterwarnings(
@@ -535,4 +545,4 @@ def get_global_config() -> Config:
 
 
 # Initialize configuration objects
-CFG = get_global_config()
+CFG = _get_global_config()

@@ -513,8 +513,9 @@ class ESMValTool():
         recipe = Path(os.path.expandvars(recipe)).expanduser().absolute()
         return recipe
 
-    def _log_header(self, log_files, cli_config_dir):
-        from . import __version__
+    @staticmethod
+    def _get_config_info(cli_config_dir):
+        """Get information about config files for logging."""
         from .config import CFG
         from .config._config_object import (
             DEFAULT_CONFIG_DIR,
@@ -541,6 +542,11 @@ class ESMValTool():
                 if not path.is_dir():
                     config_dirs[source] = f"{path} [NOT AN EXISTING DIRECTORY]"
 
+        return "\n".join(f'{v} ({k})' for (k, v) in config_dirs.items())
+
+    def _log_header(self, log_files, cli_config_dir):
+        from . import __version__
+
         logger.info(HEADER)
         logger.info('Package versions')
         logger.info('----------------')
@@ -550,7 +556,7 @@ class ESMValTool():
         logger.info('----------------')
         logger.info(
             "Reading configuration files from:\n%s",
-            "\n".join(f'{v} ({k})' for (k, v) in config_dirs.items())
+            self._get_config_info(cli_config_dir),
         )
         logger.info("Writing program log files to:\n%s", "\n".join(log_files))
 
