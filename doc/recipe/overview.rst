@@ -3,7 +3,7 @@
 Overview
 ********
 
-The recipe is the main control fail of ESMValTool.
+The recipe is the main control file of ESMValTool.
 It is the only required argument for the  ``esmvaltool`` command line program.
 Recipes contain the data and data analysis information and instructions needed
 to run the diagnostic(s), as well as specific diagnostic-related instructions.
