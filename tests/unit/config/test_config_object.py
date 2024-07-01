@@ -413,19 +413,19 @@ TEST_GET_USER_CONFIG = [
         True,
     ),
     (
-        {'_ESMVALTOOL_USER_CONFIG_DIR_': '/config/env'},
+        {'_ESMVALTOOL_CLI_CONFIG_DIR_': '/config/env'},
         ('esmvaltool', 'run', '--config-dir=/config/cli'),
         (
-            '_ESMVALTOOL_USER_CONFIG_DIR_ environment variable',
+            '_ESMVALTOOL_CLI_CONFIG_DIR_ environment variable',
             Path('/config/env'),
         ),
         True,
     ),
     (
-        {'_ESMVALTOOL_USER_CONFIG_DIR_': '/config/env'},
+        {'_ESMVALTOOL_CLI_CONFIG_DIR_': '/config/env'},
         ('python',),
         (
-            '_ESMVALTOOL_USER_CONFIG_DIR_ environment variable',
+            '_ESMVALTOOL_CLI_CONFIG_DIR_ environment variable',
             Path('/config/env'),
         ),
         True,
@@ -438,7 +438,7 @@ TEST_GET_USER_CONFIG = [
 )
 def test_get_user_config(env, cli_args, output, env_var_set, monkeypatch):
     """Test `_get_user_config`."""
-    monkeypatch.delenv('_ESMVALTOOL_USER_CONFIG_DIR_', raising=False)
+    monkeypatch.delenv('_ESMVALTOOL_CLI_CONFIG_DIR_', raising=False)
 
     for (key, val) in env.items():
         monkeypatch.setenv(key, val)
@@ -446,15 +446,15 @@ def test_get_user_config(env, cli_args, output, env_var_set, monkeypatch):
     with arguments(*cli_args):
         config = esmvalcore.config._config_object._get_user_config()
         if env_var_set:
-            assert os.environ['_ESMVALTOOL_USER_CONFIG_DIR_'] == str(output[1])
+            assert os.environ['_ESMVALTOOL_CLI_CONFIG_DIR_'] == str(output[1])
         else:
-            assert '_ESMVALTOOL_USER_CONFIG_DIR_' not in os.environ
+            assert '_ESMVALTOOL_CLI_CONFIG_DIR_' not in os.environ
     assert config == output
 
 
 def test_get_config_dirs_env(tmp_path, monkeypatch):
     """Test `_get_config_dirs`."""
-    monkeypatch.delenv('_ESMVALTOOL_USER_CONFIG_DIR_', raising=False)
+    monkeypatch.delenv('_ESMVALTOOL_CLI_CONFIG_DIR_', raising=False)
     monkeypatch.setenv('ESMVALTOOL_CONFIG_DIR', str(tmp_path))
 
     config_dirs = esmvalcore.config._config_object.get_config_dirs()
@@ -471,7 +471,7 @@ def test_get_config_dirs_env(tmp_path, monkeypatch):
 
 def test_get_config_dirs_internal_env(tmp_path, monkeypatch):
     """Test `_get_config_dirs`."""
-    monkeypatch.setenv('_ESMVALTOOL_USER_CONFIG_DIR_', str(tmp_path))
+    monkeypatch.setenv('_ESMVALTOOL_CLI_CONFIG_DIR_', str(tmp_path))
     monkeypatch.setenv('ESMVALTOOL_CONFIG_DIR', str(tmp_path))
 
     config_dirs = esmvalcore.config._config_object.get_config_dirs()
@@ -479,7 +479,7 @@ def test_get_config_dirs_internal_env(tmp_path, monkeypatch):
     expected = {
         'defaults':
         Path(esmvalcore.__file__).parent / 'config' / 'config_defaults',
-        '_ESMVALTOOL_USER_CONFIG_DIR_ environment variable': tmp_path,
+        '_ESMVALTOOL_CLI_CONFIG_DIR_ environment variable': tmp_path,
         'ESMVALTOOL_CONFIG_DIR environment variable': tmp_path,
     }
     assert config_dirs == expected
@@ -487,7 +487,7 @@ def test_get_config_dirs_internal_env(tmp_path, monkeypatch):
 
 def test_get_config_dirs_ignore_internal_env(tmp_path, monkeypatch):
     """Test `_get_config_dirs`."""
-    monkeypatch.setenv('_ESMVALTOOL_USER_CONFIG_DIR_', str(tmp_path))
+    monkeypatch.setenv('_ESMVALTOOL_CLI_CONFIG_DIR_', str(tmp_path))
     monkeypatch.delenv('ESMVALTOOL_CONFIG_DIR', raising=False)
 
     config_dirs = esmvalcore.config._config_object.get_config_dirs(
@@ -505,7 +505,7 @@ def test_get_config_dirs_ignore_internal_env(tmp_path, monkeypatch):
 
 def test_get_config_dirs_cli_arg(tmp_path, monkeypatch):
     """Test `_get_config_dirs`."""
-    monkeypatch.delenv('_ESMVALTOOL_USER_CONFIG_DIR_', raising=False)
+    monkeypatch.delenv('_ESMVALTOOL_CLI_CONFIG_DIR_', raising=False)
     monkeypatch.delenv('ESMVALTOOL_CONFIG_DIR', raising=False)
 
     with arguments('esmvaltool', 'run', f'--config_dir={tmp_path}'):
@@ -521,7 +521,7 @@ def test_get_config_dirs_cli_arg(tmp_path, monkeypatch):
 
 def test_get_config_dirs_invalid_env(monkeypatch):
     """Test `_get_config_dirs`."""
-    monkeypatch.delenv('_ESMVALTOOL_USER_CONFIG_DIR_', raising=False)
+    monkeypatch.delenv('_ESMVALTOOL_CLI_CONFIG_DIR_', raising=False)
     monkeypatch.setenv('ESMVALTOOL_CONFIG_DIR', '/not/a/dir')
 
     with pytest.raises(NotADirectoryError):
@@ -530,7 +530,7 @@ def test_get_config_dirs_invalid_env(monkeypatch):
 
 def test_get_config_dirs_invalid_cli_arg(monkeypatch):
     """Test `_get_config_dirs`."""
-    monkeypatch.delenv('_ESMVALTOOL_USER_CONFIG_DIR_', raising=False)
+    monkeypatch.delenv('_ESMVALTOOL_CLI_CONFIG_DIR_', raising=False)
     monkeypatch.delenv('ESMVALTOOL_CONFIG_DIR', raising=False)
 
     with pytest.raises(NotADirectoryError):

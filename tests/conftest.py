@@ -4,21 +4,14 @@ from pathlib import Path
 
 import pytest
 
-import esmvalcore
-import esmvalcore.config._config_object
 from esmvalcore.config import CFG
 
 
 @pytest.fixture
 def cfg_default(mocker):
     """Configuration object with defaults."""
-    path = Path(esmvalcore.__file__).parent / 'config' / 'config_defaults'
-    mocker.patch.object(
-        esmvalcore.config._config_object,
-        'get_config_dirs',
-        return_value={'defaults': path},
-    )
-    cfg = esmvalcore.config._config_object.get_global_config()
+    cfg = deepcopy(CFG)
+    cfg.restore_default()
     return cfg
 
 

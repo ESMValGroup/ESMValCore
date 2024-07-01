@@ -5,14 +5,11 @@
     Global ESMValCore configuration object of type
     :class:`esmvalcore.config.Config`.
 
-    By default, this will be loaded from YAML files in
-    ``~/.config/esmvaltool``, similar to the way `Dask handles configuration
-    <https://docs.dask.org/en/stable/configuration.html>`__. If used within the
-    ``esmvaltool`` program, the directory given by ``--config_dir`` will be
-    read instead.
-
-    In addition, the environment variable ``ESMVALTOOL_CONFIG_DIR`` is
-    considered (with higher priority than the directories mentioned above).
+    By default, this will be loaded from YAML files in the user configuration
+    directory (by default ``~/.config/esmvaltool``, but this can be changed
+    with the ``ESMVALTOOL_CONFIG_DIR`` environment variable) similar to the way
+    `Dask handles configuration
+    <https://docs.dask.org/en/stable/configuration.html>`__.
 
 """
 

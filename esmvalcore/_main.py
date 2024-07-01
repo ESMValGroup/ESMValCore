@@ -194,12 +194,9 @@ class Config():
             `~/.config/esmvaltool/`.
 
         """
-        in_file = (
-            Path(__file__).parent /
-            'config' /
-            'config_defaults' /
-            'config-user.yml'
-        )
+        from .config._config_object import DEFAULT_CONFIG_DIR
+
+        in_file = DEFAULT_CONFIG_DIR / 'config-user.yml'
         if path is None:
             out_file = (
                 Path.home() / '.config' / 'esmvaltool' / 'config-user.yml'
@@ -377,13 +374,12 @@ class ESMValTool():
         https://docs.esmvaltool.org/projects/ESMValCore/en/latest/quickstart/configure.html#configuration-options
 
         """
-        # The command line argument --config_dir is already parsed while
-        # loading the module esmvalcore.config (see
-        # esmvalcore.config._config_object._get_user_config_dir_from_cli) ->
-        # remove it here
-        kwargs.pop('config_dir', None)
-
         from .config import CFG
+        from .exceptions import InvalidConfigParameter
+
+        cli_config_dir = kwargs.pop('config_dir', None)
+        if cli_config_dir is not None:
+            cli_config_dir = Path(cli_config_dir).expanduser().absolute()
 
         # TODO: remove in v2.14.0
         # At this point, --config_file is already parsed if a valid file has
@@ -392,7 +388,25 @@ class ESMValTool():
         # has been raised if the file does not exist. Thus, reload the file
         # here with `load_from_file` to make sure a proper error is raised.
         if 'config_file' in kwargs:
+            cli_config_dir = kwargs['config_file']
             CFG.load_from_file(kwargs['config_file'])
+
+        # New in v2.12.0: read additional configuration directory given by CLI
+        # argument
+        if CFG.get('config_file') is None:
+            if cli_config_dir is not None:
+                try:
+                    CFG.update_from_paths([cli_config_dir])
+                except NotADirectoryError as exc:
+                    raise NotADirectoryError(
+                        f"Invalid --config_dir given: {exc}"
+                    ) from exc
+                except InvalidConfigParameter as exc:
+                    raise InvalidConfigParameter(
+                        f"Failed to parse configuration directory "
+                        f"{cli_config_dir} (command line argument): "
+                        f"{str(exc)}"
+                    ) from exc
 
         recipe = self._get_recipe(recipe)
 
@@ -400,10 +414,12 @@ class ESMValTool():
         session.update(kwargs)
         session['resume_from'] = parse_resume(session['resume_from'], recipe)
 
-        self._run(recipe, session)
+        self._run(recipe, session, cli_config_dir)
 
         # Print warnings about deprecated configuration options again:
         CFG.reload()
+        if cli_config_dir is not None and CFG.get('config_file') is None:
+            CFG.update_from_paths([cli_config_dir])
 
     @staticmethod
     def _create_session_dir(session):
@@ -424,7 +440,12 @@ class ESMValTool():
             f"Output directory '{session.session_dir}' already exists and"
             " unable to find alternative, aborting to prevent data loss.")
 
-    def _run(self, recipe: Path, session) -> None:
+    def _run(
+        self,
+        recipe: Path,
+        session,
+        cli_config_dir: Optional[Path],
+    ) -> None:
         """Run `recipe` using `session`."""
         self._create_session_dir(session)
         session.run_dir.mkdir()
@@ -433,7 +454,7 @@ class ESMValTool():
         from .config._logging import configure_logging
         log_files = configure_logging(output_dir=session.run_dir,
                                       console_log_level=session['log_level'])
-        self._log_header(log_files)
+        self._log_header(log_files, cli_config_dir)
 
         if session['search_esgf'] != 'never':
             from .esgf._logon import logon
@@ -492,10 +513,34 @@ class ESMValTool():
         recipe = Path(os.path.expandvars(recipe)).expanduser().absolute()
         return recipe
 
-    def _log_header(self, log_files):
+    def _log_header(self, log_files, cli_config_dir):
         from . import __version__
-        from .config._config_object import get_config_dirs
-        config_dirs = get_config_dirs(ignore_internal_env=True)
+        from .config import CFG
+        from .config._config_object import (
+            DEFAULT_CONFIG_DIR,
+            USER_CONFIG_DIR,
+            USER_CONFIG_SOURCE,
+        )
+
+        # TODO: remove in v2.14.0
+        if CFG.get('config_file') is not None:
+            config_dirs = {
+                'defaults': DEFAULT_CONFIG_DIR,
+                'single configuration file [deprecated]': CFG['config_file'],
+            }
+
+        # New in v2.12.0
+        else:
+            config_dirs = {
+                'defaults': DEFAULT_CONFIG_DIR,
+                USER_CONFIG_SOURCE: USER_CONFIG_DIR,
+            }
+            if cli_config_dir is not None:
+                config_dirs['command line argument'] = cli_config_dir
+            for (source, path) in config_dirs.items():
+                if not path.is_dir():
+                    config_dirs[source] = f"{path} [NOT AN EXISTING DIRECTORY]"
+
         logger.info(HEADER)
         logger.info('Package versions')
         logger.info('----------------')
