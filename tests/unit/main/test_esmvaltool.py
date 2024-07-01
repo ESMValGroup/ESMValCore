@@ -8,6 +8,7 @@ import pytest
 import esmvalcore._main
 import esmvalcore._task
 import esmvalcore.config
+import esmvalcore.config._config_object
 import esmvalcore.config._logging
 import esmvalcore.esgf
 from esmvalcore import __version__
@@ -72,7 +73,9 @@ def test_run_command_line_config(mocker, cfg, argument, value):
 
     cfg.start_session.assert_called_once_with(Path(recipe_file).stem)
     program._get_recipe.assert_called_with(recipe_file)
-    program._run.assert_called_with(program._get_recipe.return_value, session)
+    program._run.assert_called_with(
+        program._get_recipe.return_value, session, Path('/path/to/config/')
+    )
 
     assert session[argument] == value
 
@@ -114,7 +117,7 @@ def test_run(mocker, session, search_esgf):
         create_autospec=True,
     )
 
-    ESMValTool()._run(recipe, session=session)
+    ESMValTool()._run(recipe, session=session, cli_config_dir=None)
 
     # Check that the correct functions have been called
     esmvalcore.config._logging.configure_logging.assert_called_once_with(
@@ -179,12 +182,13 @@ def test_do_not_clean_preproc_dir(session):
 
 
 @mock.patch('esmvalcore._main.entry_points')
-def test_header(mock_entry_points, mocker, caplog):
-    path = Path(esmvalcore.__file__).parent / 'config' / 'config_defaults'
-    mocker.patch.object(
-        esmvalcore.config._config_object,
-        'get_config_dirs',
-        return_value={'defaults': path},
+def test_header(mock_entry_points, monkeypatch, tmp_path, caplog):
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(
+        esmvalcore.config._config_object, 'USER_CONFIG_DIR', tmp_path
+    )
+    monkeypatch.setattr(
+        esmvalcore.config._config_object, 'USER_CONFIG_SOURCE', 'SOURCE'
     )
     entry_point = mock.Mock()
     entry_point.dist.name = 'MyEntry'
@@ -193,7 +197,7 @@ def test_header(mock_entry_points, mocker, caplog):
     mock_entry_points.return_value = [entry_point]
     with caplog.at_level(logging.INFO):
         ESMValTool()._log_header(
-            ['path_to_log_file1', 'path_to_log_file2'],
+            ['path_to_log_file1', 'path_to_log_file2'], None,
         )
 
     assert len(caplog.messages) == 8
@@ -206,6 +210,7 @@ def test_header(mock_entry_points, mocker, caplog):
     assert caplog.messages[6] == (
         f'Reading configuration files from:\n'
         f'{Path(esmvalcore.__file__).parent}/config/config_defaults (defaults)'
+        f'\n{tmp_path} (SOURCE)'
     )
     assert caplog.messages[7] == (
         'Writing program log files to:\n'

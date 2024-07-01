@@ -11,7 +11,7 @@ from esmvalcore.config import CFG
 def cfg_default(mocker):
     """Configuration object with defaults."""
     cfg = deepcopy(CFG)
-    cfg.restore_default()
+    cfg.restore_defaults()
     return cfg
 
 
