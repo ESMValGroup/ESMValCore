@@ -59,6 +59,8 @@ These files can live in any of the following locations:
 
 ESMValCore searches for all YAML files within each of these directories and
 merges them together using :func:`dask.config.collect`.
+This properly considers nested objects; see :func:`dask.config.update` for
+details.
 Preference follows the order in the list above (i.e., the directory specified
 via command line argument is preferred over the user configuration directory).
 Within a directory, files are sorted alphabetically, and later files (e.g.,

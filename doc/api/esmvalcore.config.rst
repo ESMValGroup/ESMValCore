@@ -81,11 +81,12 @@ To reload the current configuration object according to these rules, use:
 
     >>> CFG.reload()
 
-To restore the default settings shipped with ESMValCore, use:
+To load the configuration object from custom directories, use:
 
 .. code-block:: python
 
-    >>> CFG.restore_defaults()
+    >>> dirs = ['my/default/config', 'my/custom/config']
+    >>> CFG.load_from_dirs(dirs)
 
 
 Session
