@@ -348,18 +348,22 @@ class Config(ValidatedConfig):
 
         self.check_missing()
 
-    def reload(self):
+    def reload(self) -> None:
         """Reload the configuration object.
 
         This will read all YAML files in the user configuration directory (by
         default ``~/.config/esmvaltool``, but this can be changed with the
         ``ESMVALTOOL_CONFIG_DIR`` environment variable) and merges them
         together using :func:`dask.config.collect`. Nested objects are properly
-        considered; see :func:`dask.config.update` for details. If the user
-        configuration directory does not exist, this will be silently ignored.
+        considered; see :func:`dask.config.update` for details.
 
         Options that are not explicitly specified via YAML files are set to the
         :ref:`default values <config_options>`.
+
+        Note
+        ----
+        If the user configuration directory does not exist, this will be
+        silently ignored.
 
         Raises
         ------
@@ -394,7 +398,7 @@ class Config(ValidatedConfig):
                 f"({USER_CONFIG_SOURCE}): {str(exc)}"
             ) from exc
 
-    def start_session(self, name: str):
+    def start_session(self, name: str) -> Session:
         """Start a new session from this configuration object.
 
         Parameters
