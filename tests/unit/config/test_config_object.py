@@ -1,6 +1,7 @@
 import os
 from collections.abc import MutableMapping
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 
@@ -12,6 +13,10 @@ from esmvalcore.exceptions import (
     InvalidConfigParameter,
 )
 from tests.integration.test_main import arguments
+
+DEFAULT_CONFIG_DIR = (
+    Path(esmvalcore.__file__).parent / 'config' / 'config_defaults'
+)
 
 
 def test_config_class():
@@ -65,12 +70,7 @@ def test_config_init():
 
 # TODO: remove in v2.14.0
 def test_load_from_file(monkeypatch):
-    default_config_file = (
-        Path(esmvalcore.__file__).parent /
-        'config' /
-        'config_defaults' /
-        'config-user.yml'
-    )
+    default_config_file = DEFAULT_CONFIG_DIR / 'config-user.yml'
     config = Config()
     assert not config
     with pytest.warns(ESMValCoreDeprecationWarning):
@@ -384,3 +384,120 @@ def test_get_global_config_deprecated(mocker, tmp_path):
         cfg = esmvalcore.config._config_object._get_global_config()
 
     assert cfg['output_dir'] == Path('/new/output/dir')
+
+
+@pytest.mark.parametrize(
+    'dirs,output_file_type,rootpath',
+    [
+        ([], 'png', {'default': '~/climate_data'}),
+        (['/this/path/does/not/exist'], 'png', {'default': '~/climate_data'}),
+        (['{tmp_path}/config1'], '1', {'default': '1', '1': '1'}),
+        (
+            ['{tmp_path}/config1', '/this/path/does/not/exist'],
+            '1',
+            {'default': '1', '1': '1'},
+        ),
+        (
+            ['{tmp_path}/config1', '{tmp_path}/config2'],
+            '2b',
+            {'default': '2b', '1': '1', '2': '2b'},
+        ),
+        (
+            ['{tmp_path}/config2', '{tmp_path}/config1'],
+            '1',
+            {'default': '1', '1': '1', '2': '2b'},
+        ),
+    ],
+)
+def test_load_from_dirs_always_default(
+    dirs, output_file_type, rootpath, tmp_path
+):
+    """Test `Config.load_from_dirs`."""
+    config1 = tmp_path / 'config1' / '1.yml'
+    config2a = tmp_path / 'config2' / '2a.yml'
+    config2b = tmp_path / 'config2' / '2b.yml'
+    config1.parent.mkdir(parents=True, exist_ok=True)
+    config2a.parent.mkdir(parents=True, exist_ok=True)
+    config1.write_text(dedent(
+        """
+        output_file_type: '1'
+        rootpath:
+          default: '1'
+          '1': '1'
+        """
+    ))
+    config2a.write_text(dedent(
+        """
+        output_file_type: '2a'
+        rootpath:
+          default: '2a'
+          '2': '2a'
+        """
+    ))
+    config2b.write_text(dedent(
+        """
+        output_file_type: '2b'
+        rootpath:
+          default: '2b'
+          '2': '2b'
+        """
+    ))
+
+    config_dirs = []
+    for dir_ in dirs:
+        config_dirs.append(dir_.format(tmp_path=str(tmp_path)))
+    for (name, path) in rootpath.items():
+        path = Path(path).expanduser().absolute()
+        rootpath[name] = [path]
+
+    cfg = Config()
+    assert not cfg
+
+    cfg.load_from_dirs(config_dirs)
+
+    assert cfg['output_file_type'] == output_file_type
+    assert cfg['rootpath'] == rootpath
+
+
+@pytest.mark.parametrize(
+    'cli_config_dir,output',
+    [
+        (None, [DEFAULT_CONFIG_DIR, '~/.config/esmvaltool']),
+        (Path('/c'), [DEFAULT_CONFIG_DIR, '~/.config/esmvaltool', '/c']),
+    ],
+)
+def test_get_all_config_dirs(cli_config_dir, output, monkeypatch):
+    """Test `_get_all_config_dirs`."""
+    monkeypatch.delenv('ESMVALTOOL_CONFIG_DIR', raising=False)
+    excepted = []
+    for out in output:
+        excepted.append(Path(out).expanduser().absolute())
+
+    config_dirs = esmvalcore.config._config_object._get_all_config_dirs(
+        cli_config_dir
+    )
+
+    assert config_dirs == excepted
+
+
+@pytest.mark.parametrize(
+    'cli_config_dir,output',
+    [
+        (None, ['defaults', 'default user configuration directory']),
+        (
+            Path('/c'),
+            [
+                'defaults',
+                'default user configuration directory',
+                'command line argument',
+            ],
+        ),
+    ],
+)
+def test_get_all_config_sources(cli_config_dir, output, monkeypatch):
+    """Test `_get_all_config_sources`."""
+    monkeypatch.delenv('ESMVALTOOL_CONFIG_DIR', raising=False)
+    config_srcs = esmvalcore.config._config_object._get_all_config_sources(
+        cli_config_dir
+    )
+    assert config_srcs == output

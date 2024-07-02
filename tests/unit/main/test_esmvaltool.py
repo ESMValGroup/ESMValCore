@@ -13,7 +13,7 @@ import esmvalcore.config._logging
 import esmvalcore.esgf
 from esmvalcore import __version__
 from esmvalcore._main import HEADER, ESMValTool
-from esmvalcore.exceptions import RecipeError
+from esmvalcore.exceptions import InvalidConfigParameter, RecipeError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ def session(cfg):
     ('diagnostics', 'diagnostic_name/group_name'),
     ('check_level', 'strict'),
 ])
-def test_run_command_line_config(mocker, cfg, argument, value):
+def test_run_command_line_config(mocker, cfg, argument, value, tmp_path):
     """Check that the configuration is updated from the command line."""
     mocker.patch.object(
         esmvalcore.config,
@@ -64,7 +64,8 @@ def test_run_command_line_config(mocker, cfg, argument, value):
 
     program = ESMValTool()
     recipe_file = '/path/to/recipe_test.yml'
-    config_dir = '/path/to/config/'
+    config_dir = tmp_path / 'config'
+    config_dir.mkdir(parents=True, exist_ok=True)
 
     mocker.patch.object(program, '_get_recipe', return_value=Path(recipe_file))
     mocker.patch.object(program, '_run')
@@ -74,7 +75,7 @@ def test_run_command_line_config(mocker, cfg, argument, value):
     cfg.start_session.assert_called_once_with(Path(recipe_file).stem)
     program._get_recipe.assert_called_with(recipe_file)
     program._run.assert_called_with(
-        program._get_recipe.return_value, session, Path('/path/to/config/')
+        program._get_recipe.return_value, session, config_dir
     )
 
     assert session[argument] == value
@@ -159,6 +160,36 @@ def test_run_session_dir_exists_alternative_fails(mocker, session):
         program._create_session_dir(session)
 
 
+def test_run_missing_config_dir(tmp_path):
+    """Test `ESMValTool.run`."""
+    config_dir = tmp_path / 'path' / 'does' / 'not' / 'exist'
+    program = ESMValTool()
+
+    msg = (
+        f"Invalid --config_dir given: {config_dir} is not an existing "
+        f"directory"
+    )
+    with pytest.raises(NotADirectoryError, match=msg):
+        program.run('/recipe_dir/recipe_test.yml', config_dir=config_dir)
+
+
+def test_run_invalid_config_dir(monkeypatch, tmp_path):
+    """Test `ESMValTool.run`."""
+    monkeypatch.delitem(
+        esmvalcore.config.CFG._mapping, 'config_file', raising=False
+    )
+    config_path = tmp_path / 'config.yml'
+    config_path.write_text('invalid: option')
+    program = ESMValTool()
+
+    msg = (
+        rf"Failed to parse configuration directory {tmp_path} \(command line "
+        rf"argument\): `invalid` is not a valid config parameter."
+    )
+    with pytest.raises(InvalidConfigParameter, match=msg):
+        program.run('/recipe_dir/recipe_test.yml', config_dir=tmp_path)
+
+
 def test_clean_preproc_dir(session):
     session.preproc_dir.mkdir(parents=True)
     session._fixed_file_dir.mkdir(parents=True)
@@ -195,9 +226,11 @@ def test_header(mock_entry_points, monkeypatch, tmp_path, caplog):
     entry_point.dist.version = 'v42.42.42'
     entry_point.name = 'Entry name'
     mock_entry_points.return_value = [entry_point]
+    cli_config_dir = tmp_path / 'this' / 'does' / 'not' / 'exist'
+
     with caplog.at_level(logging.INFO):
         ESMValTool()._log_header(
-            ['path_to_log_file1', 'path_to_log_file2'], None,
+            ['path_to_log_file1', 'path_to_log_file2'], cli_config_dir,
         )
 
     assert len(caplog.messages) == 8
@@ -211,6 +244,8 @@ def test_header(mock_entry_points, monkeypatch, tmp_path, caplog):
         f'Reading configuration files from:\n'
         f'{Path(esmvalcore.__file__).parent}/config/config_defaults (defaults)'
         f'\n{tmp_path} (SOURCE)'
+        f'\n{cli_config_dir} [NOT AN EXISTING DIRECTORY] (command line '
+        f'argument)'
     )
     assert caplog.messages[7] == (
         'Writing program log files to:\n'
