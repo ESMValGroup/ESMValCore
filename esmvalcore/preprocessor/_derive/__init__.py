@@ -7,7 +7,7 @@ from pathlib import Path
 
 import iris
 
-from .._units import convert_units
+from esmvalcore.preprocessor._units import convert_units
 
 logger = logging.getLogger(__name__)
 
