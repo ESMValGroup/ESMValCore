@@ -15,8 +15,8 @@ from unittest.mock import patch
 import pytest
 from fire.core import FireExit
 
+import esmvalcore.config._config
 from esmvalcore._main import Config, ESMValTool, Recipes, run
-from esmvalcore.config import CFG
 from esmvalcore.exceptions import RecipeError
 
 
@@ -66,6 +66,9 @@ def test_run():
 
 def test_empty_run(tmp_path, monkeypatch):
     """Test real run with no diags."""
+    monkeypatch.delitem(  # TODO: remove in v2.14.0
+        esmvalcore.config.CFG._mapping, 'config_file', raising=False
+    )
     recipe_file = tmp_path / "recipe.yml"
     content = dedent("""
         documentation:
@@ -81,13 +84,14 @@ def test_empty_run(tmp_path, monkeypatch):
         diagnostics: null
     """)
     recipe_file.write_text(content)
-    Config.get_config_user(path=tmp_path)
     log_dir = f'{tmp_path}/esmvaltool_output'
-
-    monkeypatch.setitem(CFG, 'output_dir', log_dir)
+    config_dir = tmp_path / 'config'
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_file = config_dir / 'config.yml'
+    config_file.write_text(f'output_dir: {log_dir}')
 
     with pytest.raises(RecipeError) as exc:
-        ESMValTool().run(recipe_file)
+        ESMValTool().run(recipe_file, config_dir=config_dir)
     assert str(exc.value) == 'The given recipe does not have any diagnostic.'
     log_file = os.path.join(log_dir,
                             os.listdir(log_dir)[0], 'run', 'main_log.txt')
