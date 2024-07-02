@@ -375,11 +375,17 @@ class ESMValTool():
 
         """
         from .config import CFG
+        from .config._config_object import _get_all_config_dirs
         from .exceptions import InvalidConfigParameter
 
         cli_config_dir = kwargs.pop('config_dir', None)
         if cli_config_dir is not None:
             cli_config_dir = Path(cli_config_dir).expanduser().absolute()
+            if not cli_config_dir.is_dir():
+                raise NotADirectoryError(
+                    f"Invalid --config_dir given: {cli_config_dir} is not an "
+                    f"existing directory"
+                )
 
         # TODO: remove in v2.14.0
         # At this point, --config_file is already parsed if a valid file has
@@ -393,20 +399,21 @@ class ESMValTool():
 
         # New in v2.12.0: read additional configuration directory given by CLI
         # argument
-        if CFG.get('config_file') is None:
-            if cli_config_dir is not None:
-                try:
-                    CFG.update_from_paths([cli_config_dir])
-                except NotADirectoryError as exc:
-                    raise NotADirectoryError(
-                        f"Invalid --config_dir given: {exc}"
-                    ) from exc
-                except InvalidConfigParameter as exc:
-                    raise InvalidConfigParameter(
-                        f"Failed to parse configuration directory "
-                        f"{cli_config_dir} (command line argument): "
-                        f"{str(exc)}"
-                    ) from exc
+        if CFG.get('config_file') is None:  # remove in v2.14.0
+            config_dirs = _get_all_config_dirs(cli_config_dir)
+            try:
+                CFG.load_from_dirs(config_dirs)
+
+            # Potential errors must come from --config_dir (i.e.,
+            # cli_config_dir) since other sources have already been read (and
+            # validated) when importing the module with `from .config import
+            # CFG`
+            except InvalidConfigParameter as exc:
+                raise InvalidConfigParameter(
+                    f"Failed to parse configuration directory "
+                    f"{cli_config_dir} (command line argument): "
+                    f"{str(exc)}"
+                ) from exc
 
         recipe = self._get_recipe(recipe)
 
@@ -416,10 +423,15 @@ class ESMValTool():
 
         self._run(recipe, session, cli_config_dir)
 
-        # Print warnings about deprecated configuration options again:
-        CFG.reload()
-        if cli_config_dir is not None and CFG.get('config_file') is None:
-            CFG.update_from_paths([cli_config_dir])
+        # Print warnings about deprecated configuration options again
+        # TODO: remove in v2.14.0
+        if CFG.get('config_file') is not None:
+            CFG.reload()
+
+        # New in v2.12.0
+        else:
+            config_dirs = _get_all_config_dirs(cli_config_dir)  # remove v2.14
+            CFG.load_from_dirs(config_dirs)
 
     @staticmethod
     def _create_session_dir(session):
@@ -519,30 +531,30 @@ class ESMValTool():
         from .config import CFG
         from .config._config_object import (
             DEFAULT_CONFIG_DIR,
-            USER_CONFIG_DIR,
-            USER_CONFIG_SOURCE,
+            _get_all_config_dirs,
+            _get_all_config_sources,
         )
 
         # TODO: remove in v2.14.0
         if CFG.get('config_file') is not None:
-            config_dirs = {
-                'defaults': DEFAULT_CONFIG_DIR,
-                'single configuration file [deprecated]': CFG['config_file'],
-            }
+            config_info = [
+                (DEFAULT_CONFIG_DIR, 'defaults'),
+                (CFG['config_file'], 'single configuration file [deprecated]'),
+            ]
 
         # New in v2.12.0
         else:
-            config_dirs = {
-                'defaults': DEFAULT_CONFIG_DIR,
-                USER_CONFIG_SOURCE: USER_CONFIG_DIR,
-            }
-            if cli_config_dir is not None:
-                config_dirs['command line argument'] = cli_config_dir
-            for (source, path) in config_dirs.items():
+            config_dirs = []
+            for path in _get_all_config_dirs(cli_config_dir):
                 if not path.is_dir():
-                    config_dirs[source] = f"{path} [NOT AN EXISTING DIRECTORY]"
+                    config_dirs.append(f"{path} [NOT AN EXISTING DIRECTORY]")
+                else:
+                    config_dirs.append(str(path))
+            config_info = list(zip(
+                config_dirs, _get_all_config_sources(cli_config_dir),
+            ))
 
-        return "\n".join(f'{v} ({k})' for (k, v) in config_dirs.items())
+        return "\n".join(f'{i[0]} ({i[1]})' for i in config_info)
 
     def _log_header(self, log_files, cli_config_dir):
         from . import __version__

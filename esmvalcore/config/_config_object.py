@@ -49,7 +49,10 @@ def _get_user_config_source() -> str:
     return 'default user configuration directory'
 
 
+# User configuration directory
 USER_CONFIG_DIR = _get_user_config_dir()
+
+# Source of user configuration directory
 USER_CONFIG_SOURCE = _get_user_config_source()
 
 
@@ -286,8 +289,7 @@ class Config(ValidatedConfig):
         .. deprecated:: 2.12.0
             This method has been deprecated in ESMValCore version 2.14.0 and is
             scheduled for removal in version 2.14.0. Please use
-            `CFG.restore_defaults()` followed by `CFG.update_from_paths()`
-            instead.
+            `CFG.load_from_dirs()` instead.
 
         Parameters
         ----------
@@ -298,20 +300,63 @@ class Config(ValidatedConfig):
         msg = (
             "The method `CFG.load_from_file()` has been deprecated in "
             "ESMValCore version 2.12.0 and is scheduled for removal in "
-            "version 2.14.0. Please use `CFG.restore_defaults()` followed by "
-            "`CFG.update_from_paths() instead."
+            "version 2.14.0. Please use `CFG.load_from_dirs()` instead."
         )
         warnings.warn(msg, ESMValCoreDeprecationWarning)
         self.clear()
         self.update(Config._load_user_config(filename))
 
+    def load_from_dirs(self, dirs: Iterable[str | Path]) -> None:
+        """Load configuration object from directories.
+
+        This searches for all YAML files within the given directories and
+        merges them together using :func:`dask.config.collect`. Nested objects
+        are properly considered; see :func:`dask.config.update` for details.
+        Values in the latter directories are preferred to those in the former.
+
+        Options that are not explicitly specified via YAML files are set to the
+        :ref:`default values <config_options>`.
+
+        Note
+        ----
+        Just like :func:`dask.config.collect`, this silently ignores
+        non-existing directories.
+
+        Parameters
+        ----------
+        dirs:
+            A list of directories to search for YAML configuration files.
+
+        Raises
+        ------
+        esmvalcore.exceptions.InvalidConfigParameter
+            Invalid configuration option given.
+
+        """
+        dirs_str: list[str] = []
+
+        # Always consider default options; these have the lowest priority
+        dirs_str.append(str(DEFAULT_CONFIG_DIR))
+
+        for config_dir in dirs:
+            config_dir = Path(config_dir).expanduser().absolute()
+            dirs_str.append(str(config_dir))
+
+        new_config_dict = dask.config.collect(paths=dirs_str, env={})
+        self.clear()
+        self.update(new_config_dict)
+
+        self.check_missing()
+
     def reload(self):
         """Reload the configuration object.
 
-        This will read YAML files in the user configuration directory (by
+        This will read all YAML files in the user configuration directory (by
         default ``~/.config/esmvaltool``, but this can be changed with the
-        ``ESMVALTOOL_CONFIG_DIR`` environment variable). If the directory does
-        not exist, this will be silently ignored.
+        ``ESMVALTOOL_CONFIG_DIR`` environment variable) and merges them
+        together using :func:`dask.config.collect`. Nested objects are properly
+        considered; see :func:`dask.config.update` for details. If the user
+        configuration directory does not exist, this will be silently ignored.
 
         Options that are not explicitly specified via YAML files are set to the
         :ref:`default values <config_options>`.
@@ -341,19 +386,13 @@ class Config(ValidatedConfig):
             return
 
         # New since v2.12.0
-        self.restore_defaults()
         try:
-            self.update_from_paths([USER_CONFIG_DIR], raise_if_not_dirs=False)
+            self.load_from_dirs([USER_CONFIG_DIR])
         except InvalidConfigParameter as exc:
             raise InvalidConfigParameter(
                 f"Failed to parse configuration directory {USER_CONFIG_DIR} "
                 f"({USER_CONFIG_SOURCE}): {str(exc)}"
             ) from exc
-
-    def restore_defaults(self):
-        """Restore default configuration options."""
-        self.clear()
-        self.update_from_paths([DEFAULT_CONFIG_DIR])
 
     def start_session(self, name: str):
         """Start a new session from this configuration object.
@@ -376,44 +415,6 @@ class Config(ValidatedConfig):
             )
             session = Session(config=self.copy(), name=name)
         return session
-
-    def update_from_paths(
-        self,
-        paths: Iterable[str | Path],
-        raise_if_not_dirs: bool = True,
-    ) -> None:
-        """Update configuration object from paths.
-
-        Parameters
-        ----------
-        paths:
-            A list of paths (directories) to search for YAML configuration
-            files.
-        raise_if_not_dirs:
-            Raise exception if one or more paths are not existing directories.
-
-        Raises
-        ------
-        esmvalcore.exceptions.InvalidConfigParameter
-            Invalid configuration option given.
-        NotADirectoryError
-            At least one of the given paths is not an existing directory and
-            `raise_if_not_dirs` is ``True``.
-
-        """
-        paths_str: list[str] = []
-        for path in paths:
-            path = Path(path).expanduser().absolute()
-            if raise_if_not_dirs and not path.is_dir():
-                raise NotADirectoryError(
-                    f"{path} is not an existing directory"
-                )
-            paths_str.append(str(path))
-
-        new_config_dict = dask.config.collect(paths=paths_str, env={})
-        self.update(new_config_dict)
-
-        self.check_missing()
 
 
 class Session(ValidatedConfig):
@@ -528,6 +529,28 @@ class Session(ValidatedConfig):
     def _fixed_file_dir(self):
         """Return fixed file directory."""
         return self.session_dir / self._relative_fixed_file_dir
+
+
+def _get_all_config_dirs(cli_config_dir: Optional[Path]) -> list[Path]:
+    """Get all configuration directories."""
+    config_dirs: list[Path] = [
+        DEFAULT_CONFIG_DIR,
+        USER_CONFIG_DIR,
+    ]
+    if cli_config_dir is not None:
+        config_dirs.append(cli_config_dir)
+    return config_dirs
+
+
+def _get_all_config_sources(cli_config_dir: Optional[Path]) -> list[str]:
+    """Get all sources of configuration directories."""
+    config_sources: list[str] = [
+        'defaults',
+        USER_CONFIG_SOURCE,
+    ]
+    if cli_config_dir is not None:
+        config_sources.append('command line argument')
+    return config_sources
 
 
 def _get_global_config() -> Config:
