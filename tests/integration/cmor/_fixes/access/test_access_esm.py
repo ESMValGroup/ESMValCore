@@ -330,12 +330,10 @@ def test_rsus_fix():
         dim_coords_and_dims=coord_spec_3d,
         attributes={},
     )
-    cubes_3d=CubeList([cube_3d_1,cube_3d_2])
+    cubes_3d = CubeList([cube_3d_1, cube_3d_2])
 
-    cube_result=cubes_3d[0]-cubes_3d[1]
+    cube_result = cubes_3d[0] - cubes_3d[1]
 
     fix = get_fix_allvar('Amon', 'mon', 'rsus')
     fixed_cubes = fix.fix_metadata(cubes_3d)
-    np.testing.assert_allclose(fixed_cubes[0].points,cube_result.points)
-    
-
+    np.testing.assert_allclose(fixed_cubes[0].points, cube_result.points)
