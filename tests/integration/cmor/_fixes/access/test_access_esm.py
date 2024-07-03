@@ -248,7 +248,7 @@ def test_hus_fix():
         [250, 500, 850],
         standard_name='air_pressure',
         var_name='plev',
-        units='hPa',
+        units='Pa',
     )
     lat_coord_rev = DimCoord(
         [10, -10],
