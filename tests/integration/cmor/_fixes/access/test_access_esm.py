@@ -285,7 +285,7 @@ def test_hus_fix():
     fixed_cube = fixed_cubes[0]
     assert_plev_metadata(fixed_cube)
 
-    assert fixed_cube.shape == (1, 145, 192)
+    assert fixed_cube.shape == (2, 3, 3, 2)
 
 
 def test_rsus_fix():
