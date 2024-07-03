@@ -15,7 +15,7 @@ def _get_first_unmasked_data(array, axis):
     indices = da.meshgrid(
         *[da.arange(array.shape[i]) for i in range(array.ndim) if i != axis],
         indexing='ij')
-    # numpy>=2.0 indices becomes a tuple
+
     indices = list(indices)
     indices.insert(axis, indices_first_positive)
     first_unmasked_data = np.array(array)[tuple(indices)]
