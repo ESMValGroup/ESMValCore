@@ -4,6 +4,9 @@ import dask.array as da
 import iris
 import numpy as np
 import pytest
+from cf_units import Unit
+from iris.coords import DimCoord
+from iris.cube import Cube, CubeList
 
 import esmvalcore.cmor._fixes.access.access_esm
 from esmvalcore.cmor._fixes.fix import GenericFix
@@ -11,9 +14,6 @@ from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
-from iris.coords import DimCoord
-from iris.cube import Cube, CubeList
-from cf_units import Unit
 
 
 @pytest.fixture
@@ -239,7 +239,10 @@ def test_hus_fix():
         standard_name='time',
         var_name='time',
         units=Unit('days since 1851-01-01', calendar='noleap'),
-        attributes={'test': 1, 'time_origin': 'will_be_removed'},
+        attributes={
+            'test': 1,
+            'time_origin': 'will_be_removed'
+        },
     )
     plev_coord_rev = DimCoord(
         [250, 500, 850],
@@ -291,7 +294,10 @@ def test_rsus_fix():
         standard_name='time',
         var_name='time',
         units=Unit('days since 1851-01-01', calendar='noleap'),
-        attributes={'test': 1, 'time_origin': 'will_be_removed'},
+        attributes={
+            'test': 1,
+            'time_origin': 'will_be_removed'
+        },
     )
     lat_coord = DimCoord(
         [0, 10],
