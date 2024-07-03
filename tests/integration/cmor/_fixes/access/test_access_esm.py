@@ -124,7 +124,7 @@ def check_heightxm(cube, height_value):
     assert height.bounds is None
 
 
-def assert_plev_metadata(self, cube):
+def assert_plev_metadata(cube):
     """Assert plev metadata is correct."""
     assert cube.coord('air_pressure').standard_name == 'air_pressure'
     assert cube.coord('air_pressure').var_name == 'plev'
