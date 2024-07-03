@@ -342,4 +342,4 @@ def test_rsus_fix():
 
     fix = get_fix_allvar('Amon', 'mon', 'rsus')
     fixed_cubes = fix.fix_metadata(cubes_3d)
-    np.testing.assert_allclose(fixed_cubes[0].points, cube_result.points)
+    np.testing.assert_allclose(fixed_cubes[0].data, cube_result.data)
