@@ -322,7 +322,7 @@ def test_rsus_fix():
         # long_name='Air Pressure',
         var_name='fld_s01i235',
         # short_name='fld_s01i235',
-        units='celsius',
+        units='W m-2',
         dim_coords_and_dims=coord_spec_3d,
         attributes={},
     )
@@ -332,7 +332,7 @@ def test_rsus_fix():
         # long_name='Air Pressure',
         var_name='fld_s01i201',
         # short_name='fld_s01i201',
-        units='celsius',
+        units='W m-2',
         dim_coords_and_dims=coord_spec_3d,
         attributes={},
     )
