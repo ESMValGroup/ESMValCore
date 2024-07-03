@@ -574,7 +574,7 @@ model output.
 
 .. warning::
 
-  This is the first version of ACCESS-ESM CMORizer for ESMValCore Currently, 
+  This is the first version of ACCESS-ESM CMORizer for ESMValCore. Currently, 
   Supported variables: ``pr``, ``ps``, ``psl``, ``rlds``, ``tas``, ``ta``, ``va``,
   ``ua``, ``zg``, ``hus``, ``clt``, ``rsus``, ``rlus``.
 
