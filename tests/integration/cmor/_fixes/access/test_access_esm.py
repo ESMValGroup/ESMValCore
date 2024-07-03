@@ -274,7 +274,7 @@ def test_hus_fix():
         long_name='Specific Humidity',
         var_name='fld_s30i205',
         # short_name='fld_s30i205',
-        units='celsius',
+        units='1',
         dim_coords_and_dims=coord_spec_4d,
         attributes={},
     )
