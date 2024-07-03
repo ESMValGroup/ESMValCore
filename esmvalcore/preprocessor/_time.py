@@ -1559,8 +1559,6 @@ def _transform_to_lst_eager(
     """
     # Apart from the time index, all other dimensions will stay the same; this
     # is ensured with np.ogrid
-    # NOTE: in numpy 2.0 np.ogrid returns ndarray or tuple of ndarrays
-    # so item assignment can only be done after converting to a list
     idx = list(np.ogrid[tuple(slice(0, d) for d in data.shape)])
     time_index = broadcast_to_shape(
         time_index, data.shape, (time_dim, lon_dim)
