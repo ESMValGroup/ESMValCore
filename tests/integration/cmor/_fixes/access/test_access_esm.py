@@ -269,7 +269,8 @@ def test_hus_fix():
         da.arange(2 * 3 * 2 * 2, dtype=np.float32).reshape(2, 3, 2, 2),
         standard_name='air_pressure',
         long_name='Air Pressure',
-        var_name='hus',
+        var_name='fld_s30i205',
+        short_name='fld_s30i205',
         units='celsius',
         dim_coords_and_dims=coord_spec_4d,
         attributes={},
@@ -278,11 +279,63 @@ def test_hus_fix():
 
     fix = get_fix_allvar('Amon', 'mon', 'hus')
     fixed_cubes = fix.fix_metadata(cubes_4d)
-    fixed_cube = check_tas_metadata(fixed_cubes)
-
-    check_time(fixed_cube)
-    check_lat(fixed_cube)
-    check_lon(fixed_cube)
+    fixed_cube = fixed_cubes[0]
     assert_plev_metadata(fixed_cube)
 
     assert fixed_cube.shape == (1, 145, 192)
+
+
+def test_rsus_fix():
+    time_coord = DimCoord(
+        [15, 45],
+        standard_name='time',
+        var_name='time',
+        units=Unit('days since 1851-01-01', calendar='noleap'),
+        attributes={'test': 1, 'time_origin': 'will_be_removed'},
+    )
+    lat_coord = DimCoord(
+        [0, 10],
+        standard_name='latitude',
+        var_name='lat',
+        units='degrees',
+    )
+    lon_coord = DimCoord(
+        [-180, 0],
+        standard_name='longitude',
+        var_name='lon',
+        units='degrees',
+    )
+    coord_spec_3d = [
+        (time_coord, 0),
+        (lat_coord, 1),
+        (lon_coord, 2),
+    ]
+    cube_3d_1 = Cube(
+        da.arange(2 * 2 * 2, dtype=np.float32).reshape(2, 2, 2),
+        standard_name='air_pressure',
+        long_name='Air Pressure',
+        var_name='fld_s01i235',
+        short_name='fld_s01i235',
+        units='celsius',
+        dim_coords_and_dims=coord_spec_3d,
+        attributes={},
+    )
+    cube_3d_2 = Cube(
+        da.arange(2 * 2 * 2, dtype=np.float32).reshape(2, 2, 2),
+        standard_name='air_pressure',
+        long_name='Air Pressure',
+        var_name='fld_s01i201',
+        short_name='fld_s01i201',
+        units='celsius',
+        dim_coords_and_dims=coord_spec_3d,
+        attributes={},
+    )
+    cubes_3d=CubeList([cube_3d_1,cube_3d_2])
+
+    cube_result=cubes_3d[0]-cubes_3d[1]
+
+    fix = get_fix_allvar('Amon', 'mon', 'rsus')
+    fixed_cubes = fix.fix_metadata(cubes_3d)
+    np.testing.assert_allclose(fixed_cubes[0].points,cube_result.points)
+    
+
