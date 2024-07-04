@@ -586,7 +586,7 @@ The default naming conventions for input directories and files for ACCESS output
 .. hint::
 
   We only provide one default `input_dir` since this is how ACCESS-ESM native data was 
-  stored on NCI. Users can modify this path to match their local file structure.
+  stored on NCI. Users can modify this path in the :ref:`config-developer` to match their local file structure.
 
 
 Thus, example dataset entries could look like this:
