@@ -598,9 +598,6 @@ Thus, example dataset entries could look like this:
       exp: history, modeling_realm: atm, special_attr: pa, start_year: 1986, end_year: 1986}
 
 
-`special_attr` is a special attribute in the filename `ACCESS-ESM` raw data, it's related to frquency
-of raw data.
-
 Similar to any other fix, the ACCESS-ESM fix allows the use of :ref:`extra
 facets<extra_facets>`.
 By default, the file :download:`access-mappings.yml
@@ -620,10 +617,10 @@ Key                  Description                            Default value if not
                                                             recipe if default DRS is used)
 ```special_attr``    A special attribute in the filename    No default
                      `ACCESS-ESM` raw data, it's related to 
-                     frquency of raw data.
-``sub_dataset``      Part of the dataset root, need to      No default
-                     specify if you want to use the 
-                     cmoriser                                                                       
+                     frquency of raw data
+``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default
+                     root, need to specify if you want to
+                     use the cmoriser                                                                       
 ==================== ====================================== =================================
 
 .. _data-retrieval:
