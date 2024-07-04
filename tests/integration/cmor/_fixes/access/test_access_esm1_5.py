@@ -399,7 +399,7 @@ def test_rlus_fix():
 
     cubes_3d = CubeList([cube_3d_1, cube_3d_2, cube_3d_3, cube_3d_4])
 
-    cube_result = cubes_3d[0] - cubes_3d[1] + cubes_3d[2] + cubes_3d[3]
+    cube_result = cubes_3d[0] - cubes_3d[1] + cubes_3d[2] - cubes_3d[3]
 
     fix = get_fix_allvar('Amon', 'mon', 'rlus')
     fixed_cubes = fix.fix_metadata(cubes_3d)
