@@ -598,9 +598,6 @@ Thus, example dataset entries could look like this:
       exp: history, modeling_realm: atm, special_attr: pa, start_year: 1986, end_year: 1986}
 
 
-`dataset` and `sub_dataset` are not redundant, `dataset` is for ESMValCore to search for CMORizer,
-which is always `ACCESS_ESM`, `sub_dataset` is dataset under root `ACCESS-ESM1-5`.
-
 `special_attr` is a special attribute in the filename `ACCESS-ESM` raw data, it's related to frquency
 of raw data.
 
