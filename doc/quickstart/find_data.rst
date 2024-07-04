@@ -601,8 +601,6 @@ Thus, example dataset entries could look like this:
 `special_attr` is a special attribute in the filename `ACCESS-ESM` raw data, it's related to frquency
 of raw data.
 
-`modeling_realm` is a realm attribute, it include `atm`, `ice` and `oce`.
-
 Similar to any other fix, the ACCESS-ESM fix allows the use of :ref:`extra
 facets<extra_facets>`.
 By default, the file :download:`access-mappings.yml
@@ -620,6 +618,12 @@ Key                  Description                            Default value if not
 ``modeling_realm``   Realm attribute include `atm`, `ice`   No default (needs to be 
                      and `oce`                              specified in extra facets or
                                                             recipe if default DRS is used)
+```special_attr``    A special attribute in the filename    No default
+                     `ACCESS-ESM` raw data, it's related to 
+                     frquency of raw data.
+``sub_dataset``      Part of the dataset root, need to      No default
+                     specify if you want to use the 
+                     cmoriser                                                                       
 ==================== ====================================== =================================
 
 .. _data-retrieval:
