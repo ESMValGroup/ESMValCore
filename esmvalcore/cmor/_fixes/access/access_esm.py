@@ -59,7 +59,7 @@ class AllVars(NativeDatasetFix):
         if isinstance(
                 self.extra_facets.get('raw_name', self.vardef.short_name),
                 list):
-            cube = self.get_cube_from_multivar(cubes)
+            cube = self.calculate_data_from_multivar(cubes)
         else:
             cube = self.get_cube(cubes)
 
