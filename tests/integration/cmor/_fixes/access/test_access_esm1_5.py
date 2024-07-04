@@ -15,6 +15,34 @@ from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
 
+time_coord = DimCoord(
+    [15, 45],
+    standard_name='time',
+    var_name='time',
+    units=Unit('days since 1851-01-01', calendar='noleap'),
+    attributes={
+        'test': 1,
+        'time_origin': 'will_be_removed'
+    },
+)
+lat_coord = DimCoord(
+    [0, 10],
+    standard_name='latitude',
+    var_name='lat',
+    units='degrees',
+)
+lon_coord = DimCoord(
+    [-180, 0],
+    standard_name='longitude',
+    var_name='lon',
+    units='degrees',
+)
+coord_spec_3d = [
+    (time_coord, 0),
+    (lat_coord, 1),
+    (lon_coord, 2),
+]
+
 
 @pytest.fixture
 def cubes_2d(test_data_path):
@@ -287,6 +315,7 @@ def test_hus_fix():
 
 
 def test_rsus_fix():
+    """Test fix 'rsus'."""
     time_coord = DimCoord(
         [15, 45],
         standard_name='time',
@@ -331,6 +360,46 @@ def test_rsus_fix():
     cubes_3d = CubeList([cube_3d_1, cube_3d_2])
 
     cube_result = cubes_3d[0] - cubes_3d[1]
+
+    fix = get_fix_allvar('Amon', 'mon', 'rsus')
+    fixed_cubes = fix.fix_metadata(cubes_3d)
+    np.testing.assert_allclose(fixed_cubes[0].data, cube_result.data)
+
+
+def test_rlus_fix():
+    """Test fix 'rlus'."""
+    cube_3d_1 = Cube(
+        da.arange(2 * 2 * 2, dtype=np.float32).reshape(2, 2, 2),
+        var_name='fld_s02i207',
+        units='W m-2',
+        dim_coords_and_dims=coord_spec_3d,
+        attributes={},
+    )
+    cube_3d_2 = Cube(
+        da.arange(2 * 2 * 2, dtype=np.float32).reshape(2, 2, 2),
+        var_name='fld_s02i201',
+        units='W m-2',
+        dim_coords_and_dims=coord_spec_3d,
+        attributes={},
+    )
+    cube_3d_3 = Cube(
+        da.arange(2 * 2 * 2, dtype=np.float32).reshape(2, 2, 2),
+        var_name='fld_s03i332',
+        units='W m-2',
+        dim_coords_and_dims=coord_spec_3d,
+        attributes={},
+    )
+    cube_3d_4 = Cube(
+        da.arange(2 * 2 * 2, dtype=np.float32).reshape(2, 2, 2),
+        var_name='fld_s02i205',
+        units='W m-2',
+        dim_coords_and_dims=coord_spec_3d,
+        attributes={},
+    )
+
+    cubes_3d = CubeList([cube_3d_1, cube_3d_2, cube_3d_3, cube_3d_4])
+
+    cube_result = cubes_3d[0] - cubes_3d[1] + cubes_3d[2] + cubes_3d[3]
 
     fix = get_fix_allvar('Amon', 'mon', 'rsus')
     fixed_cubes = fix.fix_metadata(cubes_3d)
