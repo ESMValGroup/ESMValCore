@@ -273,7 +273,6 @@ def test_hus_fix():
         standard_name='specific_humidity',
         long_name='Specific Humidity',
         var_name='fld_s30i205',
-        # short_name='fld_s30i205',
         units='1',
         dim_coords_and_dims=coord_spec_4d,
         attributes={},
@@ -318,20 +317,14 @@ def test_rsus_fix():
     ]
     cube_3d_1 = Cube(
         da.arange(2 * 2 * 2, dtype=np.float32).reshape(2, 2, 2),
-        # standard_name='fld_s01i235',
-        # long_name='Air Pressure',
         var_name='fld_s01i235',
-        # short_name='fld_s01i235',r
         units='W m-2',
         dim_coords_and_dims=coord_spec_3d,
         attributes={},
     )
     cube_3d_2 = Cube(
         da.arange(2 * 2 * 2, dtype=np.float32).reshape(2, 2, 2),
-        # standard_name='fld_s01i201',
-        # long_name='Air Pressure',
         var_name='fld_s01i201',
-        # short_name='fld_s01i201',
         units='W m-2',
         dim_coords_and_dims=coord_spec_3d,
         attributes={},
