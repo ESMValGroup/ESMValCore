@@ -6,7 +6,6 @@ This is the first version of ACCESS-ESM CMORizer in for ESMValCore
 Currently, only two variables (`tas`,`pr`) is fully supported.
 """
 import logging
-import ast
 
 from iris.cube import CubeList
 
