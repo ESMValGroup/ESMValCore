@@ -15,7 +15,7 @@ from esmvalcore.cmor.table import CoordinateInfo, get_var_info
 from esmvalcore.config._config import get_extra_facets
 from esmvalcore.dataset import Dataset
 
-å
+
 @pytest.fixture
 def cubes_2d(test_data_path):
     """2D sample cubes."""
