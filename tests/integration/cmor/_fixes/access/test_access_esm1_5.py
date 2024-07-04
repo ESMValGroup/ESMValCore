@@ -35,7 +35,7 @@ def _get_fix(mip, frequency, short_name, fix_name):
     extra_facets['frequency'] = frequency
     extra_facets['exp'] = 'amip'
     vardef = get_var_info(project='ACCESS', mip=mip, short_name=short_name)
-    cls = getattr(esmvalcore.cmor._fixes.access.access_esm, fix_name)
+    cls = getattr(esmvalcore.cmor._fixes.access.access_esm1_5, fix_name)
     fix = cls(vardef, extra_facets=extra_facets, session={}, frequency='')
     return fix
 
