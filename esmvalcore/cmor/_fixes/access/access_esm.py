@@ -1,10 +1,4 @@
-"""On-the-fly CMORizer for ACCESS-ESM.
-
-Note
-----
-This is the first version of ACCESS-ESM CMORizer in for ESMValCore
-Currently, only two variables (`tas`,`pr`) is fully supported.
-"""
+"""On-the-fly CMORizer for ACCESS-ESM."""
 import logging
 
 from iris.cube import CubeList
