@@ -129,7 +129,7 @@ def assert_plev_metadata(cube):
     assert cube.coord('air_pressure').standard_name == 'air_pressure'
     assert cube.coord('air_pressure').var_name == 'plev'
     assert cube.coord('air_pressure').units == 'Pa'
-    assert cube.coord('air_pressure').attributes == {}
+    assert cube.coord('air_pressure').attributes == {'positive': 'down'}
 
 
 def test_only_time(monkeypatch, cubes_2d):
