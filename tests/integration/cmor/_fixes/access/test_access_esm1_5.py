@@ -246,7 +246,6 @@ def test_hus_fix():
     )
     plev_coord_rev = DimCoord(
         [250, 500, 850],
-        standard_name='air_pressure',
         var_name='pressure',
         units='Pa',
     )
