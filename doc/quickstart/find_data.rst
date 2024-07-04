@@ -605,7 +605,7 @@ of raw data.
 
 Similar to any other fix, the ACCESS-ESM fix allows the use of :ref:`extra
 facets<extra_facets>`.
-By default, the file :download:`emac-mappings.yml
+By default, the file :download:`access-mappings.yml
 </../esmvalcore/config/extra_facets/access-mappings.yml>` is used for that
 purpose.
 For some variables, extra facets are necessary; otherwise ESMValCore cannot
