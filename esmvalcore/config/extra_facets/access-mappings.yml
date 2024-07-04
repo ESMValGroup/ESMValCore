@@ -55,7 +55,6 @@ ACCESS_ESM:
         - fld_s03i332 
         - fld_s02i205
       modeling_realm: atm
-      calculate: var[0]-var[1]+var[2]-var[3]
     
     rlds:
       raw_name: fld_s02i207
@@ -66,5 +65,4 @@ ACCESS_ESM:
         - fld_s01i235
         - fld_s01i201 
       modeling_realm: atm
-      calculate: var[0]-var[1]
     
