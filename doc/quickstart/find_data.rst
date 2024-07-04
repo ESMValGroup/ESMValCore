@@ -578,20 +578,10 @@ model output.
   Supported variables: ``pr``, ``ps``, ``psl``, ``rlds``, ``tas``, ``ta``, ``va``,
   ``ua``, ``zg``, ``hus``, ``clt``, ``rsus``, ``rlus``.
 
-This is an example of the directory file structure in `config_developer.yml`.
+The default naming conventions for input directories and files for ACCESS output are
 
-.. code-block:: yaml
-
-  ACCESS:
-    cmor_strict: false
-    input_dir:
-      default:
-        - '{institute}/{sub_dataset}/{exp}/{modeling_realm}/netCDF'
-    input_file:
-      default: '{sub_dataset}.{special_attr}-*.nc'
-    output_file: '{institute}_{sub_dataset}_{special_attr}_{short_name}'
-    cmor_type: 'CMIP6'
-    cmor_default_table_prefix: 'CMIP6_'
+* input directories: ``{institute}/{sub_dataset}/{exp}/{modeling_realm}/netCDF``
+* input files: ``{sub_dataset}.{special_attr}-*.nc``
 
 .. hint::
 
