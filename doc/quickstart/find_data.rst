@@ -617,8 +617,9 @@ Key                  Description                            Default value if not
 ==================== ====================================== =================================
 ``raw_name``         Variable name of the variable in the   CMOR variable name of the
                      raw input file                         corresponding variable
-``modeling_realm``   Realm attribute include `atm`, `ice`   Default realm of this variable 
-                     and `oce`      
+``modeling_realm``   Realm attribute include `atm`, `ice`   No default (needs to be 
+                     and `oce`                              specified in extra facets or
+                                                            recipe if default DRS is used)
 ==================== ====================================== =================================
 
 .. _data-retrieval:
