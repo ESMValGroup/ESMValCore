@@ -63,7 +63,8 @@ class AllVars(NativeDatasetFix):
         # Fix coordinate 'height'
         if 'height_0' in [var.var_name for var in cube.coords()]:
             self.fix_height_metadata(cube)
-            self.fix_height_value(cube)
+            if self.vardef.short_name == 'tas':
+                self.fix_height_value(cube)
         # Fix coordinate 'pressure'
         if 'pressure' in [var.var_name for var in cube.coords()]:
             self.fix_plev_metadata(cube, coord='pressure')
