@@ -594,7 +594,7 @@ Thus, example dataset entries could look like this:
 .. code-block:: yaml
 
   dataset:
-    - {project: ACCESS, mip: Amon, dataset:ACCESS_ESM1-5, sub_dataset: HI-CN-05, 
+    - {project: ACCESS, mip: Amon, dataset:ACCESS_ESM1_5, sub_dataset: HI-CN-05, 
       exp: history, modeling_realm: atm, special_attr: pa, start_year: 1986, end_year: 1986}
 
 
