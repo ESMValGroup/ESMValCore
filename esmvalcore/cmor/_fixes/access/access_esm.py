@@ -38,8 +38,6 @@ class AllVars(NativeDatasetFix):
     def fix_metadata(self, cubes):
         """Fix metadata.
 
-        Fix name of coordinate(height), long name and variable name of
-        variable(tas).
 
         Parameters
         ----------
