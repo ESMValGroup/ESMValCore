@@ -211,9 +211,9 @@ def test_get_tas_fix():
     fix = Fix.get_fixes('ACCESS', 'ACCESS_ESM', 'Amon', 'tas')
     assert fix == [
         esmvalcore.cmor._fixes.access.access_esm1_5.AllVars(vardef={},
-                                                         extra_facets={},
-                                                         session={},
-                                                         frequency=''),
+                                                            extra_facets={},
+                                                            session={},
+                                                            frequency=''),
         GenericFix(None),
     ]
 
