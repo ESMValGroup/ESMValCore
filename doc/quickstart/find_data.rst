@@ -187,19 +187,21 @@ Thus, example dataset entries could look like this:
 
 The native ERA5 output in GRIB format is stored on a `reduced Gaussian grid
 <https://confluence.ecmwf.int/display/CKB/ERA5:+data+documentation#ERA5:datadocumentation-SpatialgridSpatialGrid>`__.
-To regrid the data to a regular 0.25°x0.25° grid as `recommended by the ECMWF
-<https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference#heading-Interpolation>`__,
-you can use the following preprocessor:
+By default, these data is regridded to a regular 0.25°x0.25° grid as
+`recommended by the ECMWF
+<https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference#heading-Interpolation>`__
+using bilinear interpolation.
+
+To disable this, you can use the facet ``regrid: false`` in the recipe:
 
 .. code-block:: yaml
 
-  preprocessors:
-    regrid_era5:  # this is an arbitrary name
-      regrid:
-        target_grid: 0.25x0.25
-        scheme: linear
+  datasets:
+    - {project: native6, dataset: ERA5, timerange: '2000/2001',
+       short_name: tas, mip: Amon, regrid: false}
 
-See :ref:`Horizontal regridding` for details.
+It is recommended to disable the default regridding if regridding is setup in
+the :ref:`preprocessor <Horizontal regridding>`.
 
 - Supported variables: ``albsn``, ``cl``, ``cli``, ``clt``, ``clw``, ``hur``,
   ``hus``, ``o3``, ``prw``, ``ps``, ``psl``, ``rainmxrat27``, ``sftlf``,

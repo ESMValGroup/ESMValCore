@@ -14,6 +14,7 @@ ERA5:
   '*':
     '*':
       family: E5
+      regrid: true
       type: an
       typeid: '00'
       version: ''  # necessary to get a nice output file name
