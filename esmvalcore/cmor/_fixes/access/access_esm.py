@@ -21,7 +21,7 @@ class AllVars(NativeDatasetFix):
         """Delete coord_system to make CubeList able to merge."""
         for dim in cube.dim_coords:
             if dim.coord_system is not None:
-                cube.coord(dim.standard_name).coord_system = None
+                dim.coord_system = None
 
     def fix_height_value(self, cube):
         """Fix height value to make it comparable to other dataset."""
