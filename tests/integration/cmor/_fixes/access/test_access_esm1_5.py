@@ -401,6 +401,6 @@ def test_rlus_fix():
 
     cube_result = cubes_3d[0] - cubes_3d[1] + cubes_3d[2] + cubes_3d[3]
 
-    fix = get_fix_allvar('Amon', 'mon', 'rsus')
+    fix = get_fix_allvar('Amon', 'mon', 'rlus')
     fixed_cubes = fix.fix_metadata(cubes_3d)
     np.testing.assert_allclose(fixed_cubes[0].data, cube_result.data)
