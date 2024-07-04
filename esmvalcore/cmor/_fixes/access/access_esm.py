@@ -6,6 +6,7 @@ This is the first version of ACCESS-ESM CMORizer in for ESMValCore
 Currently, only two variables (`tas`,`pr`) is fully supported.
 """
 import logging
+import ast
 
 from iris.cube import CubeList
 
@@ -28,15 +29,18 @@ class AllVars(NativeDatasetFix):
         if cube.coord('height').points[0] != 2:
             cube.coord('height').points = [2]
 
-    def get_cube_from_multivar(self, cubes):
+    def calculate_data_from_multivar(self, cubes):
         """Get cube before calculate from multiple variables."""
         rawname_list = self.extra_facets.get('raw_name',
                                              self.vardef.short_name)
-        calculate = self.extra_facets.get('calculate', self.vardef.short_name)
         var = []
         for rawname in rawname_list:
             var.append(self.get_cube(cubes, rawname))
-        return eval(calculate)
+        if self.vardef.short_name == 'rsus':
+            cube = var[0] - var[1]
+        if self.vardef.short_name == 'rlus':
+            cube = var[0] - var[1] + var[2] - var[3]
+        return cube
 
     def fix_metadata(self, cubes):
         """Fix metadata.
@@ -60,13 +64,9 @@ class AllVars(NativeDatasetFix):
         else:
             cube = self.get_cube(cubes)
 
-        # Fix scalar coordinates
+        # Fix coordinates
         self.fix_scalar_coords(cube)
-
-        # Fix metadata of variable
         self.fix_var_metadata(cube)
-
-        # Fix metadata coordinates
         self.fix_lon_metadata(cube)
         self.fix_lat_metadata(cube)
 
