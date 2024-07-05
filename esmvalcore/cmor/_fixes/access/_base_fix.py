@@ -1,3 +1,5 @@
+"""Fix base classes for ACCESS-ESM on-the-fly CMORizer."""
+
 import logging
 
 from iris.cube import CubeList
@@ -32,16 +34,9 @@ class AccessFix(NativeDatasetFix):
         return CubeList(data_list)
 
     def fix_rlus_data(self, cubes):
+        """Fix rlus data."""
         return cubes[0] - cubes[1] + cubes[2] - cubes[3]
 
     def fix_rsus_data(self, cubes):
+        """Fix rsus data."""
         return cubes[0] - cubes[1]
-
-    def fix_prc_data(self, cubes):
-        return cubes[0] + cubes[1]
-
-    def fix_prw_data(self, cubes):
-        return cubes[0] - (cubes[1] + cubes[2] + cubes[3])
-
-    def fic_rtmt_data(self, cubes):
-        return cubes[0] - cubes[1] - cubes[2]
