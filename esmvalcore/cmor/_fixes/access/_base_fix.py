@@ -6,6 +6,7 @@ from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
 
 logger = logging.getLogger(__name__)
 
+
 class AccessFix(NativeDatasetFix):
     """Fixes functions."""
 
@@ -22,25 +23,25 @@ class AccessFix(NativeDatasetFix):
 
     def get_cubes_from_multivar(self, cubes):
         """Get cube before calculate from multiple variables."""
-        rawname_list = self.extra_facets.get('raw_name',
+        name_list = self.extra_facets.get('raw_name',
                                              self.vardef.short_name)
-        # calculate = self.extra_facets.get('calculate', self.vardef.short_name)
+
         data_list = []
-        for rawname in rawname_list:
-            data_list.append(self.get_cube(cubes, rawname))
+        for name in name_list:
+            data_list.append(self.get_cube(cubes, name))
         return CubeList(data_list)
-    
+
     def fix_rlus_data(self, cubes):
         return cubes[0] - cubes[1] + cubes[2] - cubes[3]
-    
+
     def fix_rsus_data(self, cubes):
         return cubes[0] - cubes[1]
-    
+
     def fix_prc_data(self, cubes):
         return cubes[0] + cubes[1]
-    
+
     def fix_prw_data(self, cubes):
         return cubes[0] - (cubes[1] + cubes[2] + cubes[3])
-    
+
     def fic_rtmt_data(self, cubes):
         return cubes[0] - cubes[1] - cubes[2]
