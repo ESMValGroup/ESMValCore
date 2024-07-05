@@ -25,7 +25,7 @@ class AllVars(NativeDatasetFix):
         -------
         iris.cube.CubeList
         """
-        if len(cubes == 1):
+        if len(cubes) == 1:
             cube = cubes[0]
         else:
             cube = self.get_cube(cubes)
