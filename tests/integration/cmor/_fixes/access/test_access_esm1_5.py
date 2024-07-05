@@ -52,7 +52,7 @@ def cubes_2d(test_data_path):
 
 
 def _get_fix(mip, frequency, short_name, fix_name):
-    """Load a fix from :mod:`esmvalcore.cmor._fixes.cesm.cesm2`."""
+    """Load a fix from :mod:`esmvalcore.cmor._fixes.access.access_esm1_5`."""
     dataset = Dataset(
         project='ACCESS',
         dataset='ACCESS_ESM',
@@ -69,13 +69,13 @@ def _get_fix(mip, frequency, short_name, fix_name):
 
 
 def get_fix(mip, frequency, short_name):
-    """Load a variable fix from esmvalcore.cmor._fixes.cesm.cesm."""
+    """Load a variable fix from esmvalcore.cmor._fixes.access.access_esm1_5."""
     fix_name = short_name[0].upper() + short_name[1:]
     return _get_fix(mip, frequency, short_name, fix_name)
 
 
 def get_fix_allvar(mip, frequency, short_name):
-    """Load a variable fix from esmvalcore.cmor._fixes.cesm.cesm."""
+    """Load a AllVar fix from esmvalcore.cmor._fixes.access.access_esm1_5."""
     return _get_fix(mip, frequency, short_name, 'AllVars')
 
 
@@ -238,17 +238,21 @@ def test_get_tas_fix():
     """Test getting of fix 'tas'."""
     fix = Fix.get_fixes('ACCESS', 'ACCESS_ESM1_5', 'Amon', 'tas')
     assert fix == [
-        esmvalcore.cmor._fixes.access.access_esm1_5.AllVars(vardef={},
+        esmvalcore.cmor._fixes.access.access_esm1_5.Tas(vardef={},
                                                             extra_facets={},
                                                             session={},
                                                             frequency=''),
+        esmvalcore.cmor._fixes.access.access_esm1_5.AllVars(vardef={},
+                                                            extra_facets={},
+                                                            session={},
+                                                            frequency=''),                                                    
         GenericFix(None),
     ]
 
 
 def test_tas_fix(cubes_2d):
     """Test fix 'tas'."""
-    fix = get_fix_allvar('Amon', 'mon', 'tas')
+    fix = get_fix('Amon', 'mon', 'tas')
     fixed_cubes = fix.fix_metadata(cubes_2d)
     fixed_cube = check_tas_metadata(fixed_cubes)
 
@@ -306,7 +310,7 @@ def test_hus_fix():
     )
     cubes_4d = CubeList([cube_4d])
 
-    fix = get_fix_allvar('Amon', 'mon', 'hus')
+    fix = get_fix('Amon', 'mon', 'hus')
     fixed_cubes = fix.fix_metadata(cubes_4d)
     fixed_cube = fixed_cubes[0]
     assert_plev_metadata(fixed_cube)
@@ -361,7 +365,7 @@ def test_rsus_fix():
 
     cube_result = cubes_3d[0] - cubes_3d[1]
 
-    fix = get_fix_allvar('Amon', 'mon', 'rsus')
+    fix = get_fix('Amon', 'mon', 'rsus')
     fixed_cubes = fix.fix_metadata(cubes_3d)
     np.testing.assert_allclose(fixed_cubes[0].data, cube_result.data)
 
@@ -401,6 +405,6 @@ def test_rlus_fix():
 
     cube_result = cubes_3d[0] - cubes_3d[1] + cubes_3d[2] - cubes_3d[3]
 
-    fix = get_fix_allvar('Amon', 'mon', 'rlus')
+    fix = get_fix('Amon', 'mon', 'rlus')
     fixed_cubes = fix.fix_metadata(cubes_3d)
     np.testing.assert_allclose(fixed_cubes[0].data, cube_result.data)
