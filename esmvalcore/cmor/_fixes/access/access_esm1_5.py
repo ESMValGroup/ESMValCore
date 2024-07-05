@@ -3,8 +3,6 @@ import logging
 
 from iris.cube import CubeList
 
-from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
-
 from ._base_fix import AccessFix
 
 logger = logging.getLogger(__name__)
