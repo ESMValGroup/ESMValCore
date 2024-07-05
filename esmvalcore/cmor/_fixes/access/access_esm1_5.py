@@ -10,7 +10,7 @@ from ._base_fix import AccessFix
 logger = logging.getLogger(__name__)
 
 
-class AllVars(NativeDatasetFix):
+class AllVars(AccessFix):
     """Fixes for all variables."""
 
     def fix_metadata(self, cubes):
@@ -39,7 +39,6 @@ class AllVars(NativeDatasetFix):
         # Fix coordinate 'height'
         if 'height_0' in [var.var_name for var in cube.coords()]:
             self.fix_height_metadata(cube)
-            self.fix_height_value(cube)
         # Fix coordinate 'pressure'
         if 'pressure' in [var.var_name for var in cube.coords()]:
             self.fix_plev_metadata(cube, coord='pressure')
