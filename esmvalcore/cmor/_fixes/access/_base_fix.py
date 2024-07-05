@@ -1,5 +1,4 @@
 import logging
-import ast
 
 from iris.cube import CubeList
 
@@ -9,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 class AccessFix(NativeDatasetFix):
     """Fixes functions."""
+
     def fix_coord_system(self, cube):
         """Delete coord_system to make CubeList able to merge."""
         for dim in cube.dim_coords:
@@ -31,16 +31,16 @@ class AccessFix(NativeDatasetFix):
         return CubeList(data_list)
     
     def fix_rlus_data(self, cubes):
-        return cubes[0]-cubes[1]+cubes[2]-cubes[3]
+        return cubes[0] - cubes[1] + cubes[2] - cubes[3]
     
     def fix_rsus_data(self, cubes):
-        return cubes[0]-cubes[1]
+        return cubes[0] - cubes[1]
     
     def fix_prc_data(self, cubes):
-        return cubes[0]+cubes[1]
+        return cubes[0] + cubes[1]
     
     def fix_prw_data(self, cubes):
-        return cubes[0]-(cubes[1]+cubes[2]+cubes[3])
+        return cubes[0] - (cubes[1] + cubes[2] + cubes[3])
     
     def fic_rtmt_data(self, cubes):
-        return cubes[0]-cubes[1]-cubes[2]
+        return cubes[0] - cubes[1] - cubes[2]

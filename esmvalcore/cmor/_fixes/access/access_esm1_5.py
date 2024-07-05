@@ -65,11 +65,12 @@ class Rlus(AccessFix):
         -------
         iris.cube.CubeList
         """
-        cubes=self.get_cubes_from_multivar(cubes)
+        cubes = self.get_cubes_from_multivar(cubes)
 
-        cube=self.fix_rlus_data(cubes)
+        cube = self.fix_rlus_data(cubes)
 
         return CubeList([cube])
+
 
 class Rsus(AccessFix):
     """Fixes for Rsus."""
@@ -86,11 +87,12 @@ class Rsus(AccessFix):
         -------
         iris.cube.CubeList
         """
-        cubes=self.get_cubes_from_multivar(cubes)
+        cubes = self.get_cubes_from_multivar(cubes)
 
-        cube=self.fix_rsus_data(cubes)
+        cube = self.fix_rsus_data(cubes)
 
         return CubeList([cube])
+
 
 class Tas(AccessFix):
     """Fixes for Rsus."""
