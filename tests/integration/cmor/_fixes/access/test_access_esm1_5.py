@@ -252,8 +252,10 @@ def test_get_tas_fix():
 
 def test_tas_fix(cubes_2d):
     """Test fix 'tas'."""
-    fix = get_fix('Amon', 'mon', 'tas')
-    fixed_cubes = fix.fix_metadata(cubes_2d)
+    fix_tas = get_fix('Amon', 'mon', 'tas')
+    fix_allvar =  get_fix_allvar('Amon', 'mon', 'tas')
+    fixed_cubes = fix_tas.fix_metadata(cubes_2d)
+    fixed_cubes = fix_allvar.fix_metadata(fixed_cubes)
     fixed_cube = check_tas_metadata(fixed_cubes)
 
     check_time(fixed_cube)
@@ -310,7 +312,7 @@ def test_hus_fix():
     )
     cubes_4d = CubeList([cube_4d])
 
-    fix = get_fix('Amon', 'mon', 'hus')
+    fix = get_fix_allvar('Amon', 'mon', 'hus')
     fixed_cubes = fix.fix_metadata(cubes_4d)
     fixed_cube = fixed_cubes[0]
     assert_plev_metadata(fixed_cube)
