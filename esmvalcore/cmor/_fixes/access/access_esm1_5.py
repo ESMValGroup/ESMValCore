@@ -50,6 +50,10 @@ class AllVars(AccessFix):
 class Rlus(AccessFix):
     """Fixes for Rlus."""
 
+    def fix_rlus_data(self, cubes):
+        """Fix rlus data."""
+        return cubes[0] - cubes[1] + cubes[2] - cubes[3]
+
     def fix_metadata(self, cubes):
         """Fix metadata.
 
@@ -71,6 +75,10 @@ class Rlus(AccessFix):
 
 class Rsus(AccessFix):
     """Fixes for Rsus."""
+
+    def fix_rsus_data(self, cubes):
+        """Fix rsus data."""
+        return cubes[0] - cubes[1]
 
     def fix_metadata(self, cubes):
         """Fix metadata.

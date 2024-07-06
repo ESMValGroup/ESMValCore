@@ -32,11 +32,3 @@ class AccessFix(NativeDatasetFix):
         for name in name_list:
             data_list.append(self.get_cube(cubes, name))
         return CubeList(data_list)
-
-    def fix_rlus_data(self, cubes):
-        """Fix rlus data."""
-        return cubes[0] - cubes[1] + cubes[2] - cubes[3]
-
-    def fix_rsus_data(self, cubes):
-        """Fix rsus data."""
-        return cubes[0] - cubes[1]
