@@ -194,3 +194,13 @@ CESM:
   output_file: '{project}_{dataset}_{case}_{gcomp}_{scomp}_{type}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
+
+ORAS5:
+  cmor_strict: false
+  input_dir:
+    default: '/'
+  input_file:
+    default: '*{raw_name}*{version}*.nc'
+  output_file: '{project}_{dataset}_{version}_{mip}_{short_name}'
+  cmor_type: 'CMIP6'
+  cmor_default_table_prefix: 'CMIP6_'
