@@ -120,3 +120,8 @@ class Tas(AccessFix):
         self.fix_height_value(cube)
 
         return CubeList([cube])
+    
+    def fix_height_value(self, cube):
+        """Fix height value to make it comparable to other dataset."""
+        if cube.coord('height').points[0] != 2:
+            cube.coord('height').points = [2]

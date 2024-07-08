@@ -18,11 +18,6 @@ class AccessFix(NativeDatasetFix):
             if dim.coord_system is not None:
                 cube.coord(dim.standard_name).coord_system = None
 
-    def fix_height_value(self, cube):
-        """Fix height value to make it comparable to other dataset."""
-        if cube.coord('height').points[0] != 2:
-            cube.coord('height').points = [2]
-
     def get_cubes_from_multivar(self, cubes):
         """Get cube before calculate from multiple variables."""
         name_list = self.extra_facets.get('raw_name',
