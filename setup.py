@@ -39,7 +39,6 @@ REQUIREMENTS = {
         'fire',
         'geopy',
         'humanfriendly',
-        "importlib_metadata;python_version<'3.10'",
         'isodate>=0.7.0',  # incompatible with very old 0.6.1
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
@@ -217,9 +216,9 @@ setup(
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Atmospheric Science',
         'Topic :: Scientific/Engineering :: GIS',
