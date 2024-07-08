@@ -169,8 +169,8 @@ are
 
 All of these facets have reasonable defaults preconfigured in the corresponding
 :ref:`extra facets<extra_facets>` file, which is available here:
-:download:`native6-mappings.yml
-</../esmvalcore/config/extra_facets/native6-mappings.yml>`.
+:download:`native6-era5.yml
+</../esmvalcore/config/extra_facets/native6-era5.yml>`.
 If necessary, these facets can be overwritten in the recipe.
 
 Thus, example dataset entries could look like this:
