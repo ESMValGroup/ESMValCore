@@ -209,6 +209,11 @@ authors:
     family-names: Cammarano
     given-names: Diego
 
+    affiliation: "ACCESS-NRI, Australia"
+    family-names: Yousong
+    given-names: Zeng
+    orcid: "https://orcid.org/0000-0002-8385-5367"
+
 cff-version: 1.2.0
 date-released: 2024-07-03
 doi: "10.5281/zenodo.3387139"
