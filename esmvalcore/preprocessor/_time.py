@@ -57,6 +57,56 @@ for _coord in (
         category=UserWarning,
         module='iris',
     )
+    
+##########################################################################
+# start of custom code ###################################################
+
+def get_starttime_from_partialtime( cube, year=None, month=None, day=None ):
+    time_coord = cube.coord('time')
+    firsttime = time_coord.units.num2date( time_coord.points[0] )
+
+    if year is None:  year = firsttime.year
+    if month is None: month = firsttime.month
+    if day is None: day = firsttime.day
+
+    return dict( start_year=year, start_month=month, start_day=day )
+
+def get_endtime_from_partialtime( cube, year=None, month=None, day=None ):
+    time_coord = cube.coord('time')
+    lasttime = time_coord.units.num2date( time_coord.points[-1] )
+
+    if year is None:  year = lasttime.year
+    if month is None: month = lasttime.month
+    if day is None: day = lasttime.day
+
+    return dict( end_year=year, end_month=month, end_day=day )
+
+def extract_fullseason(cube: Cube, season: str) -> Cube:
+    """Copy of extract_season, which first calls extract_time if
+    the season spans over a year
+
+    """
+    season = season.upper()
+
+    allmonths = 'JFMAMJJASOND' * 2
+    if season not in allmonths:
+        raise ValueError(f"Unable to extract Season {season} "
+                         f"combination of months not possible.")
+    sstart = allmonths.index(season)
+    send = sstart + len(season)
+
+    if send>12: # need to first extract time
+        start_month = sstart+1
+        start_time = get_starttime_from_partialtime( cube, month=start_month )
+        end_month = send-12+1
+        end_time = get_endtime_from_partialtime( cube, month=end_month )
+        cube = extract_time( cube, **start_time, **end_time )
+
+    return extract_season( cube, season=season )
+
+# end of custom code ###################################################
+##########################################################################
+
 
 
 def extract_time(

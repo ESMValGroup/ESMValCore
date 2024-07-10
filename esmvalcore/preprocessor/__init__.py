@@ -44,6 +44,7 @@ from ._mask import (
     mask_landseaice,
     mask_multimodel,
     mask_outside_range,
+    mask_invalid, unmask, # CUSTOM
 )
 from ._multimodel import ensemble_statistics, multi_model_statistics
 from ._other import clip, histogram
@@ -77,6 +78,7 @@ from ._time import (
     resample_time,
     seasonal_statistics,
     timeseries_filter,
+    extract_fullseason, # CUSTOM    
 )
 from ._trend import linear_trend, linear_trend_stderr
 from ._units import accumulate_coordinate, convert_units
@@ -89,6 +91,14 @@ from ._volume import (
     volume_statistics,
 )
 from ._weighting import weighting_landsea_fraction
+
+# CUSTOM FILE
+from ._setval import (
+    set_above_threshold, # CUSTOM
+    set_below_threshold, # CUSTOM
+    set_inside_range, # CUSTOM
+    set_outside_range, # CUSTOM
+)
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +124,7 @@ __all__ = [
     # Time extraction (as defined in the preprocessor section)
     'extract_time',
     'extract_season',
+    'extract_fullseason', # CUSTOM
     'extract_month',
     'resample_hours',
     'resample_time',
@@ -121,6 +132,7 @@ __all__ = [
     'extract_levels',
     # Weighting
     'weighting_landsea_fraction',
+    'mask_invalid', 'unmask', # CUSTOM
     # Mask landsea (fx or Natural Earth)
     'mask_landsea',
     # Natural Earth only
@@ -184,6 +196,12 @@ __all__ = [
     # Comparison with reference datasets
     'bias',
     'distance_metric',
+    # Setting constant value based on threshold
+    'set_above_threshold', # CUSTOM
+    'set_below_threshold', # CUSTOM
+    'set_inside_range', # CUSTOM
+    'set_outside_range', # CUSTOM
+    # ALL CUSTOM FUNCTIONS SHOULD APPEAR ABOVE
     # Remove supplementary variables from cube
     'remove_supplementary_variables',
     # Save to file
@@ -203,6 +221,7 @@ TIME_PREPROCESSORS = [
     'climate_statistics',
     'anomalies',
     'regrid_time',
+    'extract_fullseason', # CUSTOM
 ]
 
 DEFAULT_ORDER = tuple(__all__)

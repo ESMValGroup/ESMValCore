@@ -21,6 +21,52 @@ from ._supplementary_vars import register_supplementaries
 
 logger = logging.getLogger(__name__)
 
+##########################################################################
+# start of custom code ###################################################
+
+def mask_invalid(cube, **extras):
+    """
+    CUSTOM FUNCTION 
+    Cathy Reader, modified by Kristi Webb
+    2024/01/05 
+
+    Mask null values in the cube 
+    """
+
+    # Mask an array where invalid values occur (NaNs or infs).
+    cube.data = np.ma.masked_invalid(cube.data.data)  
+
+    return cube
+
+def unmask(cube, **extras):
+    """
+    CUSTOM FUNCTION
+    Cathy Reader, modified by Kristi Webb
+    2024/01/05 
+
+    Removes masking and sets masked points to zero
+
+    Takes a value 'threshold' and sets anything that is below
+    it in the cube data to val. Values equal to the threshold are not changed.
+
+    Parameters
+    ----------
+    cube: iris.cube.Cube
+        iris cube to be unmasked
+
+    Returns
+    -------
+    iris.cube.Cube
+        unmasked cube.
+
+    """
+    cube.data.data[cube.data.mask]=0.
+    cube.data = cube.data.data
+    return cube
+
+# end of custom code ###################################################
+##########################################################################
+
 
 def _get_fx_mask(fx_data, fx_option, mask_type):
     """Build a percentage-thresholded mask from an fx file."""
