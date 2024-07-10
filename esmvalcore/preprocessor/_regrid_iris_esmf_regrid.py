@@ -81,8 +81,8 @@ class IrisESMFRegrid:
         self,
         method: Literal['bilinear', 'conservative', 'nearest'],
         mdtol: float | None = None,
-        use_src_mask: bool | np.ndarray | None = None,
-        use_tgt_mask: bool | np.ndarray | None = None,
+        use_src_mask: bool | np.ndarray = True,
+        use_tgt_mask: bool | np.ndarray = True,
         src_resolution: int | None = None,
         tgt_resolution: int | None = None,
         tgt_location: Literal['face', 'node'] | None = None,
@@ -91,13 +91,6 @@ class IrisESMFRegrid:
             raise ValueError(
                 "`method` should be one of 'bilinear', 'conservative', or "
                 "'nearest'")
-
-        # use_src_mask should be set to True for grids with discontinuties, but
-        # it produces wrong results with the esmf_regrid.ESMFNearest regridder.
-        if use_src_mask is None:
-            use_src_mask = False if method == 'nearest' else True
-        if use_tgt_mask is None:
-            use_tgt_mask = False if method == 'nearest' else True
 
         self.kwargs: dict[str, Any] = {
             'method': method,

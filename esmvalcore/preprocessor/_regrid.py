@@ -39,10 +39,8 @@ from esmvalcore.preprocessor._supplementary_vars import (
     add_cell_measure,
 )
 from esmvalcore.preprocessor.regrid_schemes import (
-    ESMPyAreaWeighted,
-    ESMPyLinear,
-    ESMPyNearest,
     GenericFuncScheme,
+    IrisESMFRegrid,
     UnstructuredLinear,
     UnstructuredNearest,
 )
@@ -91,9 +89,9 @@ HORIZONTAL_SCHEMES_REGULAR = {
 # curvilinear grids; i.e., grids that can be described with 2D latitude and 2D
 # longitude coordinates with common dimensions)
 HORIZONTAL_SCHEMES_IRREGULAR = {
-    'area_weighted': ESMPyAreaWeighted(),
-    'linear': ESMPyLinear(),
-    'nearest': ESMPyNearest(),
+    'area_weighted': IrisESMFRegrid(method='conservative'),
+    'linear': IrisESMFRegrid(method='bilinear'),
+    'nearest': IrisESMFRegrid(method='nearest'),
 }
 
 # Supported horizontal regridding schemes for unstructured grids (i.e., grids,
