@@ -486,6 +486,17 @@ def write_metadata(products, write_ncl=False):
                 del product.attributes['original_short_name']
             metadata[product.filename] = product.attributes
 
+            ######################### start of custom code
+            cube_attrs = []
+            for c in product.cubes:
+                cube_attrs_ = {}
+                for ckey,cattr in c.attributes.items():
+                    if type(cattr) is str: cube_attrs_[ckey] = cattr
+                cube_attrs.append( cube_attrs_ )
+            product.attributes['cube_attributes'] = cube_attrs
+            ######################### end of custom code
+
+
         output_filename = os.path.join(output_dir, 'metadata.yml')
         output_files.append(output_filename)
         with open(output_filename, 'w', encoding='utf-8') as file:
