@@ -5,8 +5,8 @@ from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import (
     add_aux_coords_from_cubes,
+    fix_ocean_depth_coord,
     get_bounds_cube,
-    fix_ocean_depth_coord
 )
 
 
@@ -24,7 +24,6 @@ class Cl(ClFixHybridPressureCoord):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube = self.get_cube_from_list(cubes)
 
@@ -40,7 +39,7 @@ class Cl(ClFixHybridPressureCoord):
         # Fix vertical coordinate bounds
         for coord_name in ('ap', 'b'):
             bounds_cube = get_bounds_cube(cubes, coord_name)
-            bounds = bounds_cube.data.reshape(-1, 2)
+            bounds = bounds_cube.core_data().reshape(-1, 2)
             new_bounds_cube = iris.cube.Cube(bounds,
                                              **bounds_cube.metadata._asdict())
             cubes.remove(bounds_cube)
@@ -91,7 +90,6 @@ class Omon(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             if cube.coords(axis='Z'):

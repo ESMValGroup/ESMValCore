@@ -7,6 +7,8 @@ from pathlib import Path
 
 import iris
 
+from esmvalcore.preprocessor._units import convert_units
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,7 +20,6 @@ def _get_all_derived_variables():
     dict
         All derived variables with `short_name` (keys) and the associated
         python classes (values).
-
     """
     derivers = {}
     for path in Path(__file__).parent.glob('[a-z]*.py'):
@@ -50,7 +51,6 @@ def get_required(short_name, project):
     -------
     list
         List of dictionaries (including at least the key `short_name`).
-
     """
     if short_name.lower() not in ALL_DERIVED_VARIABLES:
         raise NotImplementedError(
@@ -82,7 +82,6 @@ def derive(cubes, short_name, long_name, units, standard_name=None):
     -------
     iris.cube.Cube
         The new derived variable.
-
     """
     if short_name == cubes[0].var_name:
         return cubes[0]
@@ -116,11 +115,13 @@ def derive(cubes, short_name, long_name, units, standard_name=None):
             "'%s', automatically setting them to '%s'. This might lead to "
             "incorrect data", short_name, cube.units, units)
         cube.units = units
-    elif cube.units.is_convertible(units):
-        cube.convert_units(units)
     else:
-        raise ValueError(
-            f"Units '{cube.units}' after executing derivation script of "
-            f"'{short_name}' cannot be converted to target units '{units}'")
+        try:
+            convert_units(cube, units)
+        except ValueError as exc:
+            raise ValueError(
+                f"Units '{cube.units}' after executing derivation script of "
+                f"'{short_name}' cannot be converted to target units '{units}'"
+            ) from exc
 
     return cube

@@ -477,13 +477,22 @@ class TestCustomInfo(unittest.TestCase):
         self.assertEqual(var.units, 'K')
 
     def test_get_variable_ch4s(self):
-        """Get tas variable."""
+        """Get ch4s variable."""
         CustomInfo()
         var = self.variables_info.get_variable('Amon', 'ch4s')
         self.assertEqual(var.short_name, 'ch4s')
         self.assertEqual(var.long_name,
                          'Atmosphere CH4 surface')
         self.assertEqual(var.units, '1e-09')
+
+    def test_get_variable_tosStderr(self):
+        """Get tosStderr variable."""
+        CustomInfo()
+        var = self.variables_info.get_variable('Omon', 'tosStderr')
+        self.assertEqual(var.short_name, 'tosStderr')
+        self.assertEqual(var.long_name,
+                         'Sea Surface Temperature Error')
+        self.assertEqual(var.units, 'K')
 
 
 @pytest.mark.parametrize(

@@ -22,7 +22,7 @@ and install ESMValCore into it with a single command:
 
 .. code-block:: bash
 
-    conda create --name esmvalcore -c conda-forge esmvalcore 'python=3.10'
+    conda create --name esmvalcore -c conda-forge esmvalcore
 
 Don't forget to activate the newly created environment after the installation:
 

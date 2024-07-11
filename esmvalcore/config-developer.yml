@@ -194,3 +194,14 @@ CESM:
   output_file: '{project}_{dataset}_{case}_{gcomp}_{scomp}_{type}_{mip}_{short_name}'
   cmor_type: 'CMIP6'
   cmor_default_table_prefix: 'CMIP6_'
+
+ACCESS:
+  cmor_strict: false
+  input_dir:
+    default:
+      - '{dataset}/{sub_dataset}/{exp}/{modeling_realm}/netCDF'
+  input_file:
+    default: '{sub_dataset}.{special_attr}-*.nc'
+  output_file: '{project}_{dataset}_{mip}_{exp}_{institute}_{sub_dataset}_{special_attr}_{short_name}'
+  cmor_type: 'CMIP6'
+  cmor_default_table_prefix: 'CMIP6_'
