@@ -48,8 +48,15 @@ commands:
   test_installation_from_source:
     parameters:
       extra:
+        description: pip "extra"s to install
         type: string
+        default: "test"
       flags:
+        description: pip install flags
+        type: string
+        default: ""
+      upstream_packages:
+        description: List of packages that will be installed with pip.
         type: string
         default: ""
     steps:
@@ -80,6 +87,9 @@ commands:
             mamba env create >> /logs/conda.txt 2>&1
             conda activate esmvaltool
             pip install << parameters.flags >> ".[<<parameters.extra>>]"> /logs/install.txt 2>&1
+            if [[ "<< parameters.upstream_packages >>" ]]; then
+                pip install << parameters.upstream_packages >> > /logs/install.txt 2>&1
+            fi
       - run:
           name: Log versions
           command: |
@@ -141,8 +151,7 @@ jobs:
       - image: condaforge/mambaforge
     resource_class: large
     steps:
-      - test_installation_from_source:
-          extra: test
+      - test_installation_from_source
 
   test_installation_from_source_develop_mode:
     # Test development installation
@@ -153,6 +162,16 @@ jobs:
       - test_installation_from_source:
           extra: develop
           flags: "--editable"
+
+  test_with_upstream_developments:
+    # Test with development versions of upstream packages
+    docker:
+      - image: condaforge/mambaforge
+    resource_class: large
+    steps:
+      - test_installation_from_source:
+          upstream_packages: |
+            git+https://github.com/scitools/iris
 
   test_installation_from_conda:
     # Test conda package installation
@@ -206,8 +225,9 @@ workflows:
   commit:
     jobs:
       - run_tests
-      - test_installation_from_source_test_mode
       - test_installation_from_source_develop_mode
+      - test_installation_from_source_test_mode
+      - test_with_upstream_developments
 
   nightly:
     triggers:
@@ -218,8 +238,9 @@ workflows:
               only:
                 - main
     jobs:
-      - run_tests
-      - test_installation_from_source_test_mode
       - build_documentation
-      - test_installation_from_source_develop_mode
+      - run_tests
       - test_installation_from_conda
+      - test_installation_from_source_develop_mode
+      - test_installation_from_source_test_mode
+      - test_with_upstream_developments
