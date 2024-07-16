@@ -170,15 +170,17 @@ jobs:
     resource_class: large
     steps:
       - test_installation_from_source:
-          upstream_packages: |
+          upstream_packages: >-
             git+https://github.com/esgf/esgf-pyclient
             git+https://github.com/euro-cordex/py-cordex
-            git+https://github.com/scitools/cf-units
-            git+https://github.com/scitools/iris
-            git+https://github.com/scitools/iris-grib
-            git+https://github.com/scitools/nc-time-axis
-            git+https://github.com/scitools-incubator/iris-esmf-regrid
-            git+https://github.com/scitools-incubator/python-stratify
+            git+https://github.com/SciTools/cartopy
+            git+https://github.com/SciTools/cf-units
+            git+https://github.com/SciTools/iris
+            git+https://github.com/SciTools/iris-grib
+            git+https://github.com/SciTools/nc-time-axis
+            git+https://github.com/SciTools-incubator/iris-esmf-regrid
+            git+https://github.com/SciTools-incubator/python-stratify
+            git+https://github.com/Toblerity/Fiona
 
   test_installation_from_conda:
     # Test conda package installation
