@@ -21,6 +21,19 @@ METHODS = {
 }
 
 
+def _get_horizontal_dims(cube: iris.cube.Cube) -> tuple[int, ...]:
+
+    def _get_dims_along_axis(cube, axis):
+        try:
+            coord = cube.coord(axis=axis, dim_coords=True)
+        except iris.exceptions.CoordinateNotFoundError:
+            coord = cube.coord(axis=axis)
+        return cube.coord_dims(coord)
+
+    dims = {d for axis in ["x", "y"] for d in _get_dims_along_axis(cube, axis)}
+    return tuple(sorted(dims))
+
+
 class IrisESMFRegrid:
     """Iris-esmf-regrid based regridding scheme.
 
@@ -131,17 +144,7 @@ class IrisESMFRegrid:
         This function assumes that the mask is constant in dimensions
         that are not horizontal or vertical.
         """
-
-        def _get_coord(cube, axis):
-            try:
-                coord = cube.coord(axis=axis, dim_coords=True)
-            except iris.exceptions.CoordinateNotFoundError:
-                coord = cube.coord(axis=axis)
-            return coord
-
-        src_x, src_y = (_get_coord(cube, "x"), _get_coord(cube, "y"))
-        horizontal_dims = tuple(
-            set(cube.coord_dims(src_x) + cube.coord_dims(src_y)))
+        horizontal_dims = _get_horizontal_dims(cube)
         try:
             vertical_coord = cube.coord(axis="z", dim_coords=True)
         except iris.exceptions.CoordinateNotFoundError:
