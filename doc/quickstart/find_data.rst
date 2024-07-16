@@ -564,6 +564,64 @@ explained in :ref:`extra_facets`, and which content is :download:`available here
 </../esmvalcore/config/extra_facets/ipslcm-mappings.yml>`. These multi-variable
 files must also undergo some data selection.
 
+.. _read_access-esm:
+
+ACCESS-ESM
+^^^^^^^^^^
+
+ESMValTool can read native `ACCESS-ESM <https://research.csiro.au/access/about/esm1-5/>`__
+model output.
+
+.. warning::
+
+  This is the first version of ACCESS-ESM CMORizer for ESMValCore. Currently, 
+  Supported variables: ``pr``, ``ps``, ``psl``, ``rlds``, ``tas``, ``ta``, ``va``,
+  ``ua``, ``zg``, ``hus``, ``clt``, ``rsus``, ``rlus``.
+
+The default naming conventions for input directories and files for ACCESS output are
+
+* input directories: ``{institute}/{sub_dataset}/{exp}/{modeling_realm}/netCDF``
+* input files: ``{sub_dataset}.{special_attr}-*.nc``
+
+.. hint::
+
+  We only provide one default `input_dir` since this is how ACCESS-ESM native data was 
+  stored on NCI. Users can modify this path in the :ref:`config-developer` to match their local file structure.
+
+
+Thus, example dataset entries could look like this:
+
+.. code-block:: yaml
+
+  dataset:
+    - {project: ACCESS, mip: Amon, dataset:ACCESS_ESM1_5, sub_dataset: HI-CN-05, 
+      exp: history, modeling_realm: atm, special_attr: pa, start_year: 1986, end_year: 1986}
+
+
+Similar to any other fix, the ACCESS-ESM fix allows the use of :ref:`extra
+facets<extra_facets>`.
+By default, the file :download:`access-mappings.yml
+</../esmvalcore/config/extra_facets/access-mappings.yml>` is used for that
+purpose.
+For some variables, extra facets are necessary; otherwise ESMValCore cannot
+read them properly.
+Supported keys for extra facets are:
+
+==================== ====================================== =================================
+Key                  Description                            Default value if not specified
+==================== ====================================== =================================
+``raw_name``         Variable name of the variable in the   CMOR variable name of the
+                     raw input file                         corresponding variable
+``modeling_realm``   Realm attribute include `atm`, `ice`   No default (needs to be 
+                     and `oce`                              specified in extra facets or
+                                                            recipe if default DRS is used)
+```special_attr``    A special attribute in the filename    No default
+                     `ACCESS-ESM` raw data, it's related to 
+                     frquency of raw data
+``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default
+                     root, need to specify if you want to
+                     use the cmoriser                                                                       
+==================== ====================================== =================================
 
 .. _data-retrieval:
 
