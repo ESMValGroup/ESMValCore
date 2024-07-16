@@ -2,8 +2,8 @@
 version: 2.1
 
 orbs:
-  coverage-reporter: codacy/coverage-reporter@13.16.5
-  codecov: codecov/codecov@3.2.5
+  coverage-reporter: codacy/coverage-reporter@14.0.0
+  codecov: codecov/codecov@4.1.0
 
 commands:
   check_changes:
@@ -81,6 +81,7 @@ commands:
               - r-yaml
               - ncl
             " >> environment.yml
+            # Installation of development version of packages requires compilers
             if [[ "<< parameters.upstream_packages >>" ]]; then
                 echo "  - compilers" >> environment.yml
             fi
@@ -89,10 +90,7 @@ commands:
             mkdir /logs
             mamba env create |& tee /logs/conda.txt
             conda activate esmvaltool
-            pip install << parameters.flags >> ".[<<parameters.extra>>]" |& tee /logs/install.txt
-            if [[ "<< parameters.upstream_packages >>" ]]; then
-                pip install << parameters.upstream_packages >> |& tee /logs/install.txt
-            fi
+            pip install << parameters.flags >> ".[<<parameters.extra>>]" << parameters.upstream_packages >> |& tee /logs/install.txt
       - run:
           name: Log versions
           command: |
@@ -129,7 +127,7 @@ jobs:
             . /opt/conda/etc/profile.d/conda.sh
             mkdir /logs
             conda activate esmvaltool
-            pip install .[test] > /logs/install.txt 2>&1
+            pip install .[test] |& tee -a /logs/install.txt
       - test_and_report
       - save_cache:
           key: test-{{ .Branch }}-{{ checksum "cache_key.txt" }}
@@ -198,14 +196,13 @@ jobs:
             set -x
             # Install prerequisites
             mkdir /logs
-            # conda update -y conda > /logs/conda.txt 2>&1
             # Create and activate conda environment
             mamba create -y --name esmvaltool 'python=3.11'
             set +x; conda activate esmvaltool; set -x
             # Install
             mamba install -y esmvalcore
             # Log versions
-            conda env export > /logs/environment.yml
+            conda env export | tee /logs/environment.yml
             # Test installation
             esmvaltool version
 
@@ -225,9 +222,9 @@ jobs:
             conda activate esmvaltool
             pip install .[doc]
             # Log versions
-            dpkg -l > /logs/versions.txt
-            conda env export > /logs/environment.yml
-            pip freeze > /logs/requirements.txt
+            dpkg -l | tee /logs/versions.txt
+            conda env export | tee /logs/environment.yml
+            pip freeze | tee /logs/requirements.txt
             # Test building documentation
             MPLBACKEND=Agg sphinx-build -W doc doc/build
       - store_artifacts:
@@ -236,7 +233,9 @@ jobs:
 workflows:
   commit:
     jobs:
+      - build_documentation
       - run_tests
+      - test_installation_from_conda
       - test_installation_from_source_develop_mode
       - test_installation_from_source_test_mode
       - test_with_upstream_developments
