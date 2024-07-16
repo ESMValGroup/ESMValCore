@@ -9,8 +9,7 @@ from esmvalcore.iris_helpers import date2num
 
 from ...table import CMOR_TABLES
 from ..fix import Fix
-from ..shared import add_scalar_height_coord, add_scalar_pressure_coord
-from ...table import CMOR_TABLES
+from ..shared import add_scalar_height_coord
 
 logger = logging.getLogger(__name__)
 
@@ -345,16 +344,6 @@ class Zg(Fix):
         return cubes
 
 
-class Zg500(Fix):
-    """Fixes for Geopotential."""
-
-    def fix_metadata(self, cubes):
-        """Fix metadata."""
-        for cube in cubes:
-            divide_by_gravity(cube)
-        return cubes
-
-
 class AllVars(Fix):
     """Fixes for all variables."""
 
@@ -374,14 +363,6 @@ class AllVars(Fix):
             add_scalar_height_coord(cube, 2.)
         if 'height10m' in self.vardef.dimensions:
             add_scalar_height_coord(cube, 10.)
-        if 'p500'in self.vardef.dimensions:
-            add_scalar_pressure_coord(cube, 500.)
-        if 'p700'in self.vardef.dimensions:
-            add_scalar_pressure_coord(cube, 700.)
-        if 'p850'in self.vardef.dimensions:
-            add_scalar_pressure_coord(cube, 850.)
-        if 'p1000'in self.vardef.dimensions:
-            add_scalar_pressure_coord(cube, 1000.)
 
         for coord_def in self.vardef.coordinates.values():
             axis = coord_def.axis

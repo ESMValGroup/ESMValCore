@@ -216,22 +216,6 @@ def add_scalar_lambda550nm_coord(cube):
     return cube
 
 
-def add_scalar_pressure_coord(cube, pressure=500.):
-    """Add scalar coordinate 'height' with value of `pressure`hPa."""
-    logger.debug("Adding pressure coordinate (%shPa)", pressure)
-    pressure_coord = iris.coords.AuxCoord(pressure,
-                                        var_name='height',
-                                        standard_name='height',
-                                        long_name='height',
-                                        units=Unit('hPa'),
-                                        attributes={'positive': 'up'})
-    try:
-        cube.coord('pressure')
-    except iris.exceptions.CoordinateNotFoundError:
-        cube.add_aux_coord(pressure_coord, ())
-    return cube
-
-
 def add_scalar_typeland_coord(cube, value='default'):
     """Add scalar coordinate 'typeland' with value of `value`."""
     logger.debug("Adding typeland coordinate (%s)", value)

@@ -10,7 +10,7 @@ standard_name:     lagrangian_tendency_of_air_pressure
 units:             Pa s-1
 cell_methods:      time: mean
 cell_measures:     area: areacella
-long_name:         omega (=dp/dt)
+long_name:         Omega (=dp/dt) at 700hPa
 comment:           at 700 hPa level; commonly referred to as ""omega"", this represents the vertical component of velocity in pressure coordinates (positive down)
 !----------------------------------
 ! Additional variable information:

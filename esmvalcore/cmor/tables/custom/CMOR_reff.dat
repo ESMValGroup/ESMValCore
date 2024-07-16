@@ -10,7 +10,7 @@ standard_name:
 units:             um
 cell_methods:      time: mean
 cell_measures:     area: areacella
-long_name:         Cloud effective radius
+long_name:         Cloud Effective Radius
 !----------------------------------
 ! Additional variable information:
 !----------------------------------
