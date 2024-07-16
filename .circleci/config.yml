@@ -81,23 +81,26 @@ commands:
               - r-yaml
               - ncl
             " >> environment.yml
+            if [[ "<< parameters.upstream_packages >>" ]]; then
+                echo "  - compilers" >> environment.yml
+            fi
             # Install
             . /opt/conda/etc/profile.d/conda.sh
             mkdir /logs
-            mamba env create >> /logs/conda.txt 2>&1
+            mamba env create |& tee /logs/conda.txt
             conda activate esmvaltool
-            pip install << parameters.flags >> ".[<<parameters.extra>>]"> /logs/install.txt 2>&1
+            pip install << parameters.flags >> ".[<<parameters.extra>>]" |& tee /logs/install.txt
             if [[ "<< parameters.upstream_packages >>" ]]; then
-                pip install << parameters.upstream_packages >> > /logs/install.txt 2>&1
+                pip install << parameters.upstream_packages >> |& tee /logs/install.txt
             fi
       - run:
           name: Log versions
           command: |
             . /opt/conda/etc/profile.d/conda.sh
             conda activate esmvaltool
-            dpkg -l > /logs/versions.txt
-            conda env export > /logs/environment.yml
-            pip freeze > /logs/requirements.txt
+            dpkg -l | tee /logs/versions.txt
+            conda env export | tee /logs/environment.yml
+            pip freeze | tee /logs/requirements.txt
       - test_and_report
       - save_cache:
           key: install-<< parameters.extra >>-{{ .Branch }}-{{ checksum "cache_key.txt" }}
