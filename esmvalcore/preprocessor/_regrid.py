@@ -43,6 +43,7 @@ from esmvalcore.preprocessor._supplementary_vars import (
 )
 from esmvalcore.preprocessor.regrid_schemes import (
     GenericFuncScheme,
+    ESMPyNearest,
     IrisESMFRegrid,
     UnstructuredLinear,
     UnstructuredNearest,
@@ -94,7 +95,7 @@ HORIZONTAL_SCHEMES_REGULAR = {
 HORIZONTAL_SCHEMES_IRREGULAR = {
     'area_weighted': IrisESMFRegrid(method='conservative'),
     'linear': IrisESMFRegrid(method='bilinear'),
-    'nearest': IrisESMFRegrid(method='nearest'),
+    'nearest': ESMPyNearest(),
 }
 
 # Supported horizontal regridding schemes for unstructured grids (i.e., grids,
