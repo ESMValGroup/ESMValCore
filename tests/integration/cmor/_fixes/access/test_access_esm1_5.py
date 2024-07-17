@@ -162,7 +162,7 @@ def assert_plev_metadata(cube):
 
 def test_only_time(monkeypatch, cubes_2d):
     """Test fix."""
-    fix = get_fix_allvar('Amon', 'mon', 'tas')
+    fix = get_fix('Amon', 'mon', 'tas')
 
     coord_info = CoordinateInfo('time')
     coord_info.standard_name = 'time'
@@ -186,7 +186,7 @@ def test_only_time(monkeypatch, cubes_2d):
 
 def test_only_latitude(monkeypatch, cubes_2d):
     """Test fix."""
-    fix = get_fix_allvar('Amon', 'mon', 'tas')
+    fix = get_fix('Amon', 'mon', 'tas')
 
     coord_info = CoordinateInfo('latitude')
     coord_info.standard_name = 'latitude'
@@ -211,7 +211,7 @@ def test_only_latitude(monkeypatch, cubes_2d):
 
 def test_only_longitude(monkeypatch, cubes_2d):
     """Test fix."""
-    fix = get_fix_allvar('Amon', 'mon', 'tas')
+    fix = get_fix('Amon', 'mon', 'tas')
 
     coord_info = CoordinateInfo('longitude')
     coord_info.standard_name = 'longitude'
