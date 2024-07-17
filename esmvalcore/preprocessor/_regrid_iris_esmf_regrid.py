@@ -22,7 +22,7 @@ METHODS = {
 
 
 def _get_horizontal_dims(cube: iris.cube.Cube) -> tuple[int, ...]:
-
+    """Get a tuple with the horizontal dimensions of a cube."""
     def _get_dims_along_axis(cube, axis):
         try:
             coord = cube.coord(axis=axis, dim_coords=True)
@@ -35,7 +35,7 @@ def _get_horizontal_dims(cube: iris.cube.Cube) -> tuple[int, ...]:
 
 
 class IrisESMFRegrid:
-    """Iris-esmf-regrid based regridding scheme.
+    """:doc:`esmf_regrid:index` based regridding scheme.
 
     Supports lazy regridding.
 
@@ -47,7 +47,7 @@ class IrisESMFRegrid:
         :attr:`~esmpy.api.constants.RegridMethod.CONSERVE`,
         :attr:`~esmpy.api.constants.RegridMethod.BILINEAR` or
         :attr:`~esmpy.api.constants.RegridMethod.NEAREST_STOD` used to
-        calculate weights.
+        calculate regridding weights.
     mdtol:
         Tolerance of missing data. The value returned in each element of
         the returned array will be masked if the fraction of masked data
@@ -92,7 +92,7 @@ class IrisESMFRegrid:
 
     def __init__(
         self,
-        method: Literal['bilinear', 'conservative', 'nearest'],
+        method: Literal["bilinear", "conservative", "nearest"],
         mdtol: float | None = None,
         use_src_mask: bool | np.ndarray = True,
         use_tgt_mask: bool | np.ndarray = True,
@@ -113,19 +113,19 @@ class IrisESMFRegrid:
         }
         if method == 'nearest':
             if mdtol is not None:
-                raise ValueError(
+                raise TypeError(
                     "`mdol` can only be specified when `method='bilinear'` "
-                    "or `method='bilinear'`")
+                    "or `method='conservative'`")
         else:
             self.kwargs['mdtol'] = mdtol
         if method == 'conservative':
             self.kwargs['src_resolution'] = src_resolution
             self.kwargs['tgt_resolution'] = tgt_resolution
         elif src_resolution is not None:
-            raise ValueError("`src_resolution` can only be specified when "
+            raise TypeError("`src_resolution` can only be specified when "
                              "`method='conservative'`")
         elif tgt_resolution is not None:
-            raise ValueError("`tgt_resolution` can only be specified when "
+            raise TypeError("`tgt_resolution` can only be specified when "
                              "`method='conservative'`")
 
     def __repr__(self) -> str:
@@ -135,7 +135,7 @@ class IrisESMFRegrid:
         return f'{self.__class__.__name__}({kwargs_str})'
 
     @staticmethod
-    def _get_mask(cube):
+    def _get_mask(cube: iris.cube.Cube) -> np.ndarray:
         """Read the mask from the cube data.
 
         If the cube has a vertical dimension, the mask will consist of
@@ -173,7 +173,7 @@ class IrisESMFRegrid:
     ) -> (ESMFAreaWeightedRegridder
           | ESMFBilinearRegridder
           | ESMFNearestRegridder):
-        """Create an iris-esmf-regrid based regridding function.
+        """Create an :doc:`esmf_regrid:index` based regridding function.
 
         Parameters
         ----------
