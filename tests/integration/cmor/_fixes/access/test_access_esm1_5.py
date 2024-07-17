@@ -253,9 +253,7 @@ def test_get_tas_fix():
 def test_tas_fix(cubes_2d):
     """Test fix 'tas'."""
     fix_tas = get_fix('Amon', 'mon', 'tas')
-    fix_allvar = get_fix_allvar('Amon', 'mon', 'tas')
     fixed_cubes = fix_tas.fix_metadata(cubes_2d)
-    fixed_cubes = fix_allvar.fix_metadata(fixed_cubes)
     fixed_cube = check_tas_metadata(fixed_cubes)
 
     check_time(fixed_cube)
