@@ -208,6 +208,11 @@ authors:
     affiliation: "DLR, Germany"
     family-names: Cammarano
     given-names: Diego
+  - 
+    affiliation: "ACCESS-NRI, Australia"
+    family-names: Yousong
+    given-names: Zeng
+    orcid: "https://orcid.org/0000-0002-8385-5367"
 
     affiliation: "ACCESS-NRI, Australia"
     family-names: Yousong
@@ -215,11 +220,11 @@ authors:
     orcid: "https://orcid.org/0000-0002-8385-5367"
 
 cff-version: 1.2.0
-date-released: 2024-05-08
+date-released: 2024-07-03
 doi: "10.5281/zenodo.3387139"
 license: "Apache-2.0"
 message: "If you use this software, please cite it using these metadata."
 repository-code: "https://github.com/ESMValGroup/ESMValCore/"
 title: ESMValCore
-version: "v2.11.0rc1"
+version: "v2.11.0"
 ...

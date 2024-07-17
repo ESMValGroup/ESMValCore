@@ -2,6 +2,7 @@
 import datetime
 from copy import deepcopy
 from itertools import permutations
+from pprint import pformat
 from unittest import mock
 
 import dask.array as da
@@ -141,8 +142,10 @@ def test_date2num_scalar(date, dtype, expected, units):
     assert num.dtype == dtype
 
 
-def assert_attribues_equal(attrs_1: dict, attrs_2: dict) -> None:
+def assert_attributes_equal(attrs_1: dict, attrs_2: dict) -> None:
     """Check attributes using :func:`numpy.testing.assert_array_equal`."""
+    print(pformat(dict(attrs_1)))
+    print(pformat(dict(attrs_2)))
     assert len(attrs_1) == len(attrs_2)
     for (attr, val) in attrs_1.items():
         assert attr in attrs_2
@@ -210,7 +213,7 @@ def test_merge_cube_attributes(cubes):
     merge_cube_attributes(cubes)
     assert len(cubes) == 3
     for cube in cubes:
-        assert_attribues_equal(cube.attributes, expected_attributes)
+        assert_attributes_equal(cube.attributes, expected_attributes)
 
 
 def test_merge_cube_attributes_0_cubes():
@@ -224,7 +227,20 @@ def test_merge_cube_attributes_1_cube():
     expected_attributes = deepcopy(cubes[0].attributes)
     merge_cube_attributes(cubes)
     assert len(cubes) == 1
-    assert_attribues_equal(cubes[0].attributes, expected_attributes)
+    assert_attributes_equal(cubes[0].attributes, expected_attributes)
+
+
+def test_merge_cube_attributes_global_local():
+    cube1 = CUBES[0].copy()
+    cube2 = CUBES[1].copy()
+    cube1.attributes.globals['attr1'] = 1
+    cube1.attributes.globals['attr2'] = 1
+    cube1.attributes.globals['attr3'] = 1
+    cube2.attributes.locals['attr1'] = 1
+    merge_cube_attributes([cube1, cube2])
+    for cube in [cube1, cube2]:
+        for attr in ['attr1', 'attr2', 'attr3']:
+            assert attr in cube.attributes.globals
 
 
 @pytest.fixture

@@ -27,10 +27,12 @@ def patched_derive(mocker):
     mocker.patch.object(_derive, 'logger', autospec=True)
 
 
-def mock_all_derived_variables(returned_units):
+def mock_all_derived_variables(returned_units, fail_unit_conversion=False):
     """Mock the :obj:`dict` containing all derived variables accordingly."""
     cube = mock.create_autospec(Cube, instance=True)
     cube.units = returned_units
+    if fail_unit_conversion:
+        cube.convert_units.side_effect = [ValueError]
     calculate_function = mock.Mock(return_value=cube)
     derived_var = mock.Mock(name='DerivedVariable')
     derived_var.return_value.calculate = calculate_function
@@ -127,7 +129,7 @@ def test_check_units_convertible(mock_cubes):
 @pytest.mark.usefixtures("patched_derive")
 def test_check_units_fail(mock_cubes):
     """Test units after derivation if derivation scripts returns None."""
-    mock_all_derived_variables(Unit('kg'))
+    mock_all_derived_variables(Unit('kg'), fail_unit_conversion=True)
     with pytest.raises(ValueError) as err:
         derive(mock_cubes, SHORT_NAME, mock.sentinel.long_name, 'm',
                standard_name=mock.sentinel.standard_name)
