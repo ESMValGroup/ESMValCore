@@ -23,6 +23,7 @@ METHODS = {
 
 def _get_horizontal_dims(cube: iris.cube.Cube) -> tuple[int, ...]:
     """Get a tuple with the horizontal dimensions of a cube."""
+
     def _get_dims_along_axis(cube, axis):
         try:
             coord = cube.coord(axis=axis, dim_coords=True)
@@ -123,10 +124,10 @@ class IrisESMFRegrid:
             self.kwargs['tgt_resolution'] = tgt_resolution
         elif src_resolution is not None:
             raise TypeError("`src_resolution` can only be specified when "
-                             "`method='conservative'`")
+                            "`method='conservative'`")
         elif tgt_resolution is not None:
             raise TypeError("`tgt_resolution` can only be specified when "
-                             "`method='conservative'`")
+                            "`method='conservative'`")
 
     def __repr__(self) -> str:
         """Return string representation of class."""
