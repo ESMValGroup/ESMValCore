@@ -55,7 +55,7 @@ def _get_fix(mip, frequency, short_name, fix_name):
     """Load a fix from :mod:`esmvalcore.cmor._fixes.access.access_esm1_5`."""
     dataset = Dataset(
         project='ACCESS',
-        dataset='ACCESS_ESM1_5',
+        dataset='ACCESS-ESM1-5',
         mip=mip,
         short_name=short_name,
     )
