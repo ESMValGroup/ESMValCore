@@ -253,7 +253,9 @@ class TestConcatenate(unittest.TestCase):
         np.testing.assert_array_equal(
             concatenated.coord('time').points, np.array([1., 2., 5., 7.,
                                                          100.]))
+
     def test_concatenate_by_experiment_first(self):
+        """Test that data from experiments does not get mixed."""
         historical_1 = Cube(
             np.zeros(2),
             dim_coords_and_dims=([
