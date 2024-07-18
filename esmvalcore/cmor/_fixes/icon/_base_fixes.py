@@ -19,7 +19,7 @@ from iris.cube import Cube, CubeList
 from iris.experimental.ugrid import Connectivity, Mesh
 
 from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
-from esmvalcore.local import _get_rootpath, _replace_tags, _select_drs
+from esmvalcore.local import _get_data_sources
 
 logger = logging.getLogger(__name__)
 
@@ -297,12 +297,12 @@ class IconFix(NativeDatasetFix):
 
     def _get_grid_from_rootpath(self, grid_name: str) -> CubeList | None:
         """Try to get grid from the ICON rootpath."""
-        rootpaths = _get_rootpath('ICON')
-        dirname_template = _select_drs('input_dir', 'ICON')
-        dirname_globs = _replace_tags(dirname_template, self.extra_facets)
-        possible_grid_paths = [
-            r / d / grid_name for r in rootpaths for d in dirname_globs
-        ]
+        glob_patterns: list[Path] = []
+        for data_source in _get_data_sources('ICON'):
+            glob_patterns.extend(
+                data_source.get_glob_patterns(**self.extra_facets)
+            )
+        possible_grid_paths = [d.parent / grid_name for d in glob_patterns]
         for grid_path in possible_grid_paths:
             if grid_path.is_file():
                 logger.debug("Using ICON grid file '%s'", grid_path)
@@ -487,7 +487,13 @@ class IconFix(NativeDatasetFix):
                 message="Ignoring netCDF variable .* invalid units .*",
                 category=UserWarning,
                 module='iris',
-            )
+            )  # iris < 3.8
+            warnings.filterwarnings(
+                'ignore',
+                message="Ignoring invalid units .* on netCDF variable .*",
+                category=UserWarning,
+                module='iris',
+            )  # iris >= 3.8
             warnings.filterwarnings(
                 'ignore',
                 message="Failed to create 'height' dimension coordinate: The "

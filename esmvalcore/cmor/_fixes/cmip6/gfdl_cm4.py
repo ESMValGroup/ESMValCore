@@ -1,11 +1,15 @@
 """Fixes for GFDL-CM4 model."""
 import iris
 
-from ..common import ClFixHybridPressureCoord, SiconcFixScalarCoord
+from ..common import (
+    ClFixHybridPressureCoord,
+    OceanFixGrid,
+    SiconcFixScalarCoord,
+)
 from ..fix import Fix
 from ..shared import add_aux_coords_from_cubes, add_scalar_height_coord
-from .gfdl_esm4 import Omon as BaseOmon
 from .gfdl_esm4 import Fgco2 as BaseFgco2
+from .gfdl_esm4 import Omon as BaseOmon
 
 
 class Cl(ClFixHybridPressureCoord):
@@ -76,10 +80,6 @@ class Tasmax(Tas):
     """Fixes for tasmax."""
 
 
-class SfcWind(Tas):
-    """Fixes for sfcWind."""
-
-
 class Hurs(Tas):
     """Fixes for hurs."""
 
@@ -108,6 +108,16 @@ class Uas(Fix):
 
 class Vas(Uas):
     """Fixes for vas."""
+
+
+class SfcWind(Uas):
+    """Fixes for sfcWind."""
+
+
+Tos = OceanFixGrid
+
+
+Sos = OceanFixGrid
 
 
 Omon = BaseOmon

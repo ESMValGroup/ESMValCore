@@ -28,7 +28,8 @@ class Test(tests.Test):
         data = np.arange(np.prod(self.shape),
                          dtype=self.dtype).reshape(self.shape)
         self.cube = _make_cube(data, dtype=self.dtype)
-        self.created_cube = mock.sentinel.created_cube
+        self.created_cube = mock.Mock(var_name='created_cube')
+        self.created_cube.astype.return_value = mock.sentinel.astype_result
         self.mock_create_cube = self.patch(
             'esmvalcore.preprocessor._regrid._create_cube',
             return_value=self.created_cube)
@@ -282,7 +283,7 @@ class Test(tests.Test):
         with mock.patch('stratify.interpolate',
                         return_value=new_data) as mocker:
             result = extract_levels(cube, levels, scheme)
-            self.assertEqual(result, self.created_cube)
+            self.assertEqual(result, mock.sentinel.astype_result)
             args, kwargs = mocker.call_args
             # Check the stratify.interpolate args ...
             self.assertEqual(len(args), 3)
