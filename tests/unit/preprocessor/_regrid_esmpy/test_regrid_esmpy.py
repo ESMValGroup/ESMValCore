@@ -1,5 +1,4 @@
 """Unit tests for the esmvalcore.preprocessor._regrid_esmpy module."""
-import sys
 from unittest import mock
 
 import cf_units
@@ -381,9 +380,6 @@ class TestHelpers(tests.Test):
         self.assert_array_equal(esmpy_lon_corners,
                                 self.expected_esmpy_lon_corners)
 
-    @pytest.mark.skipif(sys.version_info.major == 3
-                        and sys.version_info.minor == 9,
-                        reason="bug in mock.py for Python 3.9.0 and 3.9.1")
     def test_get_grid_circular(self):
         """Test building of ESMF grid from iris cube circular longitude."""
         expected_get_coords_calls = [
@@ -405,9 +401,6 @@ class TestHelpers(tests.Test):
             mg.add_item.assert_called_once_with(mock.sentinel.gi_mask,
                                                 mock.sentinel.sl_center)
 
-    @pytest.mark.skipif(sys.version_info.major == 3
-                        and sys.version_info.minor == 9,
-                        reason="bug in mock.py for Python 3.9.0 and 3.9.1")
     def test_get_grid_non_circular(self):
         """Test building of ESMF grid from iris cube non circular longitude."""
         expected_get_coords_calls = [
@@ -465,9 +458,6 @@ class TestHelpers(tests.Test):
 
     @mock.patch('esmvalcore.preprocessor._regrid_esmpy.esmpy.Grid', MockGrid)
     @mock.patch('esmvalcore.preprocessor._regrid_esmpy.esmpy.Field')
-    @pytest.mark.skipif(sys.version_info.major == 3
-                        and sys.version_info.minor == 9,
-                        reason="bug in mock.py for Python 3.9.0 and 3.9.1")
     def test_cube_to_empty_field(self, mock_field):
         """Test building of empty field from iris cube."""
         field = cube_to_empty_field(self.cube)
