@@ -310,8 +310,9 @@ def _sort_cubes_by_time(cubes):
 def _concatenate_cubes_by_experiment(
     cubes: list[iris.cube.Cube],
 ) -> list[iris.cube.Cube]:
-    """Sort list of cubes by experiments and do a concatenation first
-    This ensures overlapping (branching) experiments are handled correctly
+    """Concatenate cubes by experiment.
+
+    This ensures overlapping (branching) experiments are handled correctly.
     """
     # get the possible facet names in CMIP3, 5, 6 for exp
     # currently these are 'experiment', 'experiment_id'
@@ -356,7 +357,6 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     ValueError
         Concatenation was not possible.
     """
-
     if not cubes:
         return cubes
     if len(cubes) == 1:
