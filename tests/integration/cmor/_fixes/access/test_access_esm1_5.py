@@ -55,7 +55,7 @@ def _get_fix(mip, frequency, short_name, fix_name):
     """Load a fix from :mod:`esmvalcore.cmor._fixes.access.access_esm1_5`."""
     dataset = Dataset(
         project='ACCESS',
-        dataset='ACCESS_ESM',
+        dataset='ACCESS_ESM1_5',
         mip=mip,
         short_name=short_name,
     )
@@ -162,7 +162,7 @@ def assert_plev_metadata(cube):
 
 def test_only_time(monkeypatch, cubes_2d):
     """Test fix."""
-    fix = get_fix_allvar('Amon', 'mon', 'tas')
+    fix = get_fix_allvar('Amon', 'mon', 'pr')
 
     coord_info = CoordinateInfo('time')
     coord_info.standard_name = 'time'
@@ -186,7 +186,7 @@ def test_only_time(monkeypatch, cubes_2d):
 
 def test_only_latitude(monkeypatch, cubes_2d):
     """Test fix."""
-    fix = get_fix_allvar('Amon', 'mon', 'tas')
+    fix = get_fix_allvar('Amon', 'mon', 'pr')
 
     coord_info = CoordinateInfo('latitude')
     coord_info.standard_name = 'latitude'
@@ -211,7 +211,7 @@ def test_only_latitude(monkeypatch, cubes_2d):
 
 def test_only_longitude(monkeypatch, cubes_2d):
     """Test fix."""
-    fix = get_fix_allvar('Amon', 'mon', 'tas')
+    fix = get_fix_allvar('Amon', 'mon', 'pr')
 
     coord_info = CoordinateInfo('longitude')
     coord_info.standard_name = 'longitude'
