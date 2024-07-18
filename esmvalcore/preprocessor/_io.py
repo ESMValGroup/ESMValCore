@@ -349,8 +349,9 @@ def _sort_cubes_by_time(cubes):
     return cubes
 
 
-def _sort_cubes_by_experiment(cubes: list[iris.cube.Cube])\
-        -> list[iris.cube.Cube]:
+def _concatenate_cubes_by_experiment(
+    cubes: list[iris.cube.Cube],
+) -> list[iris.cube.Cube]:
     """Sort list of cubes by experiments and do a concatenation first
     This ensures overlapping (branching) experiments are handled correctly
     """
@@ -360,34 +361,19 @@ def _sort_cubes_by_experiment(cubes: list[iris.cube.Cube])\
         project["exp"] for project in FACETS.values() if "exp" in project
     }
 
-    # check whether either one is available in all cubes
-    if any(
-        all((exp_facet_name in cube.attributes) for cube in cubes)
-        for exp_facet_name in exp_facet_names
-    ):
-        # get the actual name for this case
-        exp_facet_name = [
-            exp_facet_name
-            for exp_facet_name in exp_facet_names
-            if (exp_facet_name in cubes[0].attributes)
-        ][0]
+    def get_exp(cube: iris.cube.Cube) -> str:
+        for key in exp_facet_names:
+            if key in cube.attributes:
+                return cube.attributes[key]
+        return ""
 
-        # unique experiment_ids
-        experiment_ids = {cube.attributes[exp_facet_name] for cube in cubes}
-
+    experiments = {get_exp(cube) for cube in cubes}
+    if len(experiments) > 1:
         # first do experiment-wise concatenation, then time-based
-        if len(experiment_ids) > 1 and len(cubes) > len(experiment_ids):
-            cubes = [
-                concatenate(cubes=exp_cubes)
-                for exp_cubes in [
-                    [
-                        cube
-                        for cube in cubes
-                        if cube.attributes[exp_facet_name] == experiment_id
-                    ]
-                    for experiment_id in experiment_ids
-                ]
-            ]
+        cubes = [
+            concatenate([cube for cube in cubes if get_exp(cube) == exp])
+            for exp in experiments
+        ]
 
     return cubes
 
@@ -418,7 +404,7 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     if len(cubes) == 1:
         return cubes[0]
 
-    cubes = _sort_cubes_by_experiment(cubes)
+    cubes = _concatenate_cubes_by_experiment(cubes)
 
     merge_cube_attributes(cubes)
     cubes = _sort_cubes_by_time(cubes)
