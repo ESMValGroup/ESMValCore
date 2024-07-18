@@ -98,11 +98,11 @@ def check_tas_metadata(cubes):
     return cube
 
 
-def check_hus_metadata(cubes):
-    """Check hus metadata."""
+def check_pr_metadata(cubes):
+    """Check pr metadata."""
     assert len(cubes) == 1
     cube = cubes[0]
-    assert cube.var_name == 'hus'
+    assert cube.var_name == 'pr'
     assert cube.standard_name == 'precipitation_flux'
     assert cube.long_name == 'Precipitation'
     assert cube.units == 'kg m-2 s-1'
@@ -172,7 +172,7 @@ def test_only_time(monkeypatch, cubes_2d):
     fixed_cubes = fix.fix_metadata(cubes)
 
     # Check cube metadata
-    cube = check_tas_metadata(fixed_cubes)
+    cube = check_pr_metadata(fixed_cubes)
 
     # Check cube data
     assert cube.shape == (1, 145, 192)
@@ -196,7 +196,7 @@ def test_only_latitude(monkeypatch, cubes_2d):
     fixed_cubes = fix.fix_metadata(cubes)
 
     # Check cube metadata
-    cube = check_tas_metadata(fixed_cubes)
+    cube = check_pr_metadata(fixed_cubes)
 
     # Check cube data
     assert cube.shape == (1, 145, 192)
@@ -221,7 +221,7 @@ def test_only_longitude(monkeypatch, cubes_2d):
     fixed_cubes = fix.fix_metadata(cubes)
 
     # Check cube metadata
-    cube = check_tas_metadata(fixed_cubes)
+    cube = check_pr_metadata(fixed_cubes)
 
     # Check cube data
     assert cube.shape == (1, 145, 192)
