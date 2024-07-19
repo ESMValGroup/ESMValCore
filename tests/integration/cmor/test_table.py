@@ -527,7 +527,7 @@ class TestCustomInfo(unittest.TestCase):
         var = self.variables_info.get_variable('day', 'wap700')
         self.assertEqual(var.short_name, 'wap700')
         self.assertEqual(var.long_name,
-                         'Omega (=dp/dt) at 700hPa'
+                         'Omega (=dp/dt) at 700hPa')
         self.assertEqual(var.units, 'Pa s-1')
 
 
