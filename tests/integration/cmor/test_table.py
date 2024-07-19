@@ -518,7 +518,7 @@ class TestCustomInfo(unittest.TestCase):
         var = self.variables_info.get_variable('day', 'ta1000')
         self.assertEqual(var.short_name, 'ta1000')
         self.assertEqual(var.long_name,
-                         'Air Temperaturea at 1000hPa')
+                         'Air Temperature at 1000hPa')
         self.assertEqual(var.units, 'K')
 
     def test_get_variable_wap700(self):
