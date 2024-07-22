@@ -48,8 +48,8 @@ These files can live in any of the following locations:
    this points to an invalid directory, an error will be raised).
 
 2. The user configuration directory: by default ``~/.config/esmvaltool``, but
-   this can be changed with the ``ESMVALTOOL_CONFIG_DIR`` environment variable
-   (if this points to an invalid directory, this is silently ignored).
+   this can be changed with the ``ESMVALTOOL_CONFIG_DIR`` environment variable.
+   If ``~/.config/esmvaltool`` does not exist, this will be silently ignored.
 
 ESMValCore searches for all YAML files within each of these directories and
 merges them together using :func:`dask.config.collect`.

@@ -36,9 +36,16 @@ DEFAULT_CONFIG_DIR = (
 def _get_user_config_dir() -> Path:
     """Get user configuration directory."""
     if 'ESMVALTOOL_CONFIG_DIR' in os.environ:
-        return (
+        user_config_dir = (
             Path(os.environ['ESMVALTOOL_CONFIG_DIR']).expanduser().absolute()
         )
+        if not user_config_dir.is_dir():
+            raise NotADirectoryError(
+                f"Invalid configuration directory specified via "
+                f"ESMVALTOOL_CONFIG_DIR environment variable: "
+                f"{user_config_dir} is not an existing directory"
+            )
+        return user_config_dir
     return Path.home() / '.config' / 'esmvaltool'
 
 

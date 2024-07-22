@@ -370,6 +370,19 @@ def test_get_user_config_dir_and_source_no_env(tmp_path, monkeypatch):
     assert config_src == 'default user configuration directory'
 
 
+def test_get_user_config_dir_with_env_fail(tmp_path, monkeypatch):
+    """Test `_get_user_config_dir` and `_get_user_config_source`."""
+    empty_path = tmp_path / 'this' / 'does' / 'not' / 'exist'
+    monkeypatch.setenv('ESMVALTOOL_CONFIG_DIR', str(empty_path))
+
+    msg = (
+        "Invalid configuration directory specified via ESMVALTOOL_CONFIG_DIR "
+        "environment variable:"
+    )
+    with pytest.raises(NotADirectoryError, match=msg):
+        esmvalcore.config._config_object._get_user_config_dir()
+
+
 # TODO: remove in v2.14.0
 def test_get_global_config_deprecated(mocker, tmp_path):
     """Test ``_get_global_config``."""
