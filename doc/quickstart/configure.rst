@@ -7,15 +7,15 @@ Configuration
 Overview
 ========
 
-In v2.12.0, a large overhaul process of ESMValTool/Core's configuration
+In v2.12.0, a redesign process of ESMValTool/Core's configuration
 started.
 Its main aim is to simplify the configuration by moving from many different
 configuration files for individual components to one configuration object that
 consists of a single nested dictionary (similar to `Dask's configuration
 <https://docs.dask.org/en/stable/configuration.html>`__).
-This change will not be implemented in one massive pull request but rather in a
+This change will not be implemented in one large pull request but rather in a
 step-by-step procedure.
-Thus, the configuration might appear inconsistent until this overhaul is
+Thus, the configuration might appear inconsistent until this redesign is
 finished.
 A detailed plan for this new configuration is outlined in :issue:`2371`.
 
@@ -44,8 +44,7 @@ See :ref:`config_options` for an overview of all allowed options.
 
 These files can live in any of the following locations:
 
-1. The directory specified via the ``--config_dir`` command line argument (if
-   this points to an invalid directory, an error will be raised).
+1. The directory specified via the ``--config_dir`` command line argument.
 
 2. The user configuration directory: by default ``~/.config/esmvaltool``, but
    this can be changed with the ``ESMVALTOOL_CONFIG_DIR`` environment variable.
