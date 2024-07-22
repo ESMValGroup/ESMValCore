@@ -37,7 +37,8 @@ YAML files
 ----------
 
 :ref:`Configuration options <config_options>` can be specified via YAML files.
-An file could look like this (for example, located
+
+A file could look like this (for example, located at
 ``~/.config/esmvaltool/config.yml``):
 
 .. code-block:: yaml
