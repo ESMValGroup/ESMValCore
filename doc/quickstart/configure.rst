@@ -7,17 +7,21 @@ Configuration
 Overview
 ========
 
-In v2.12.0, a redesign process of ESMValTool/Core's configuration
-started.
-Its main aim is to simplify the configuration by moving from many different
-configuration files for individual components to one configuration object that
-consists of a single nested dictionary (similar to `Dask's configuration
-<https://docs.dask.org/en/stable/configuration.html>`__).
-This change will not be implemented in one large pull request but rather in a
-step-by-step procedure.
-Thus, the configuration might appear inconsistent until this redesign is
-finished.
-A detailed plan for this new configuration is outlined in :issue:`2371`.
+Similar to `Dask <https://docs.dask.org/en/stable/configuration.html>`__,
+ESMValCore provides one single configuration object that consists of a single
+nested dictionary for its configuration.
+
+.. note::
+
+  In v2.12.0, a redesign process of ESMValTool/Core's configuration started.
+  Its main aim is to simplify the configuration by moving from many different
+  configuration files for individual components to one configuration object
+  that consists of a single nested dictionary (similar to `Dask's configuration
+  <https://docs.dask.org/en/stable/configuration.html>`__).  This change will
+  not be implemented in one large pull request but rather in a step-by-step
+  procedure.  Thus, the configuration might appear inconsistent until this
+  redesign is finished.  A detailed plan for this new configuration is outlined
+  in :issue:`2371`.
 
 
 .. _config_for_cli:
