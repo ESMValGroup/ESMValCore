@@ -29,7 +29,7 @@ URL = ('https://docs.esmvaltool.org/projects/'
 
 # Configuration directory in which defaults are stored
 DEFAULT_CONFIG_DIR = (
-    Path(esmvalcore.__file__).parent / 'config' / 'config_defaults'
+    Path(esmvalcore.__file__).parent / 'config' / 'configurations' / 'defaults'
 )
 
 

@@ -567,7 +567,7 @@ model output.
 
 .. warning::
 
-  This is the first version of ACCESS-ESM CMORizer for ESMValCore. Currently, 
+  This is the first version of ACCESS-ESM CMORizer for ESMValCore. Currently,
   Supported variables: ``pr``, ``ps``, ``psl``, ``rlds``, ``tas``, ``ta``, ``va``,
   ``ua``, ``zg``, ``hus``, ``clt``, ``rsus``, ``rlus``.
 
@@ -578,7 +578,7 @@ The default naming conventions for input directories and files for ACCESS output
 
 .. hint::
 
-  We only provide one default `input_dir` since this is how ACCESS-ESM native data was 
+  We only provide one default `input_dir` since this is how ACCESS-ESM native data was
   stored on NCI. Users can modify this path in the :ref:`config-developer` to match their local file structure.
 
 
@@ -587,7 +587,7 @@ Thus, example dataset entries could look like this:
 .. code-block:: yaml
 
   dataset:
-    - {project: ACCESS, mip: Amon, dataset:ACCESS_ESM1_5, sub_dataset: HI-CN-05, 
+    - {project: ACCESS, mip: Amon, dataset:ACCESS_ESM1_5, sub_dataset: HI-CN-05,
       exp: history, modeling_realm: atm, special_attr: pa, start_year: 1986, end_year: 1986}
 
 
@@ -605,15 +605,15 @@ Key                  Description                            Default value if not
 ==================== ====================================== =================================
 ``raw_name``         Variable name of the variable in the   CMOR variable name of the
                      raw input file                         corresponding variable
-``modeling_realm``   Realm attribute include `atm`, `ice`   No default (needs to be 
+``modeling_realm``   Realm attribute include `atm`, `ice`   No default (needs to be
                      and `oce`                              specified in extra facets or
                                                             recipe if default DRS is used)
 ```special_attr``    A special attribute in the filename    No default
-                     `ACCESS-ESM` raw data, it's related to 
-                     frquency of raw data
+                     `ACCESS-ESM` raw data, it's related to
+                     frequency of raw data
 ``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default
                      root, need to specify if you want to
-                     use the cmoriser                                                                       
+                     use the cmoriser
 ==================== ====================================== =================================
 
 .. _data-retrieval:

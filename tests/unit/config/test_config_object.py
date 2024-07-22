@@ -7,16 +7,13 @@ import pytest
 
 import esmvalcore
 import esmvalcore.config._config_object
+from esmvalcore.config._config_object import DEFAULT_CONFIG_DIR
 from esmvalcore.config import Config, Session
 from esmvalcore.exceptions import (
     ESMValCoreDeprecationWarning,
     InvalidConfigParameter,
 )
 from tests.integration.test_main import arguments
-
-DEFAULT_CONFIG_DIR = (
-    Path(esmvalcore.__file__).parent / 'config' / 'config_defaults'
-)
 
 
 def test_config_class():

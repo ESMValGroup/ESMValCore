@@ -242,10 +242,10 @@ def test_header(mock_entry_points, monkeypatch, tmp_path, caplog):
     assert caplog.messages[5] == '----------------'
     assert caplog.messages[6] == (
         f'Reading configuration files from:\n'
-        f'{Path(esmvalcore.__file__).parent}/config/config_defaults (defaults)'
-        f'\n{tmp_path} (SOURCE)'
-        f'\n{cli_config_dir} [NOT AN EXISTING DIRECTORY] (command line '
-        f'argument)'
+        f'{Path(esmvalcore.__file__).parent}/config/configurations/defaults '
+        f'(defaults)\n'
+        f'{tmp_path} (SOURCE)\n'
+        f'{cli_config_dir} [NOT AN EXISTING DIRECTORY] (command line argument)'
     )
     assert caplog.messages[7] == (
         'Writing program log files to:\n'
