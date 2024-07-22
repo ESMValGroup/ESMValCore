@@ -36,15 +36,15 @@ options can be specified via YAML files and command line arguments.
 YAML files
 ----------
 
-Example file located at ``~/.config/esmvaltool/config.yml``:
+:ref:`Configuration options <config_options>` can be specified via YAML files.
+An file could look like this (for example, located
+``~/.config/esmvaltool/config.yml``):
 
 .. code-block:: yaml
 
   output_dir: ~/esmvaltool_output
   search_esgf: when_missing
   download_dir: ~/downloaded_data
-
-See :ref:`config_options` for an overview of all allowed options.
 
 These files can live in any of the following locations:
 
@@ -76,8 +76,8 @@ If the option ``--path`` is omitted, the file will be copied to
 Command line arguments
 ----------------------
 
-All configuration options can also be given as command line arguments to the
-``esmvaltool`` executable.
+All :ref:`configuration options <config_options>` can also be given as command
+line arguments to the ``esmvaltool`` executable.
 
 Example:
 
