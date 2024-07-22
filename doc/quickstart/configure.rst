@@ -32,21 +32,15 @@ options can be specified via YAML files and command line arguments.
 YAML files
 ----------
 
-Example:
+Example file located at ``~/.config/esmvaltool/config.yml``:
 
 .. code-block:: yaml
 
   output_dir: ~/esmvaltool_output
   search_esgf: when_missing
   download_dir: ~/downloaded_data
-  max_parallel_tasks: 8
-  rootpath:
-    default: ~/data
-    CMIP6: ~/cmip6_data
-    OBS: ~/obs_data
-  drs:
-    CMIP6: ESGF
-    OBS: default
+
+See :ref:`config_options` for an overview of all allowed options.
 
 These files can live in any of the following locations:
 
