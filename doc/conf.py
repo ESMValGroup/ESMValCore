@@ -81,6 +81,11 @@ autodoc_default_options = {
 # Show type hints in function signature AND docstring
 autodoc_typehints = 'both'
 
+# See https://github.com/sphinx-doc/sphinx/issues/12589
+suppress_warnings = [
+    'autosummary.import_cycle',
+]
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

@@ -55,7 +55,7 @@ def _get_fix(mip, frequency, short_name, fix_name):
     """Load a fix from :mod:`esmvalcore.cmor._fixes.access.access_esm1_5`."""
     dataset = Dataset(
         project='ACCESS',
-        dataset='ACCESS_ESM',
+        dataset='ACCESS-ESM1-5',
         mip=mip,
         short_name=short_name,
     )
@@ -98,11 +98,11 @@ def check_tas_metadata(cubes):
     return cube
 
 
-def check_hus_metadata(cubes):
-    """Check hus metadata."""
+def check_pr_metadata(cubes):
+    """Check pr metadata."""
     assert len(cubes) == 1
     cube = cubes[0]
-    assert cube.var_name == 'hus'
+    assert cube.var_name == 'pr'
     assert cube.standard_name == 'precipitation_flux'
     assert cube.long_name == 'Precipitation'
     assert cube.units == 'kg m-2 s-1'
@@ -162,7 +162,7 @@ def assert_plev_metadata(cube):
 
 def test_only_time(monkeypatch, cubes_2d):
     """Test fix."""
-    fix = get_fix_allvar('Amon', 'mon', 'tas')
+    fix = get_fix_allvar('Amon', 'mon', 'pr')
 
     coord_info = CoordinateInfo('time')
     coord_info.standard_name = 'time'
@@ -172,7 +172,7 @@ def test_only_time(monkeypatch, cubes_2d):
     fixed_cubes = fix.fix_metadata(cubes)
 
     # Check cube metadata
-    cube = check_tas_metadata(fixed_cubes)
+    cube = check_pr_metadata(fixed_cubes)
 
     # Check cube data
     assert cube.shape == (1, 145, 192)
@@ -186,7 +186,7 @@ def test_only_time(monkeypatch, cubes_2d):
 
 def test_only_latitude(monkeypatch, cubes_2d):
     """Test fix."""
-    fix = get_fix_allvar('Amon', 'mon', 'tas')
+    fix = get_fix_allvar('Amon', 'mon', 'pr')
 
     coord_info = CoordinateInfo('latitude')
     coord_info.standard_name = 'latitude'
@@ -196,7 +196,7 @@ def test_only_latitude(monkeypatch, cubes_2d):
     fixed_cubes = fix.fix_metadata(cubes)
 
     # Check cube metadata
-    cube = check_tas_metadata(fixed_cubes)
+    cube = check_pr_metadata(fixed_cubes)
 
     # Check cube data
     assert cube.shape == (1, 145, 192)
@@ -211,7 +211,7 @@ def test_only_latitude(monkeypatch, cubes_2d):
 
 def test_only_longitude(monkeypatch, cubes_2d):
     """Test fix."""
-    fix = get_fix_allvar('Amon', 'mon', 'tas')
+    fix = get_fix_allvar('Amon', 'mon', 'pr')
 
     coord_info = CoordinateInfo('longitude')
     coord_info.standard_name = 'longitude'
@@ -221,7 +221,7 @@ def test_only_longitude(monkeypatch, cubes_2d):
     fixed_cubes = fix.fix_metadata(cubes)
 
     # Check cube metadata
-    cube = check_tas_metadata(fixed_cubes)
+    cube = check_pr_metadata(fixed_cubes)
 
     # Check cube data
     assert cube.shape == (1, 145, 192)

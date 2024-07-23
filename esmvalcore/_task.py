@@ -422,7 +422,7 @@ class DiagnosticTask(BaseTask):
             settings_copy.pop(sett, None)
 
         filename = run_dir / 'settings.yml'
-        filename.write_text(yaml.safe_dump(settings_copy))
+        filename.write_text(yaml.safe_dump(settings_copy, sort_keys=False))
 
         # If running an NCL script:
         if Path(self.script).suffix.lower() == '.ncl':
