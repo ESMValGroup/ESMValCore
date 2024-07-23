@@ -202,7 +202,6 @@ ACCESS:
   input_dir:
     default:
       - '{dataset}/{sub_dataset}/{exp}/{modeling_realm}/netCDF'
-      - '{dataset}/{sub_dataset}/{exp}/{modeling_realm}/'
   input_file:
     default:
       - '{sub_dataset}.{freq_attribute}-*.nc'
