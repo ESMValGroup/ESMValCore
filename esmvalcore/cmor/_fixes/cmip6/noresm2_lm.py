@@ -22,7 +22,6 @@ class AllVars(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             coord_names = [cor.standard_name for cor in cube.coords()]
@@ -43,9 +42,7 @@ class AllVars(Fix):
 
 Cl = ClFixHybridPressureCoord
 
-
 Cli = ClFixHybridPressureCoord
-
 
 Clw = ClFixHybridPressureCoord
 
@@ -68,12 +65,11 @@ class Siconc(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             latitude = cube.coord('latitude')
-            latitude.bounds = np.round(latitude.bounds, 4)
+            latitude.bounds = np.round(latitude.core_bounds(), 4)
             longitude = cube.coord('longitude')
-            longitude.bounds = np.round(longitude.bounds, 4)
+            longitude.bounds = np.round(longitude.core_bounds(), 4)
 
         return cubes

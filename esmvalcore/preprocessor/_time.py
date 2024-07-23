@@ -10,17 +10,19 @@ import datetime
 import logging
 import warnings
 from functools import partial
-from typing import Iterable, Optional
+from typing import Iterable, Literal, Optional
 from warnings import filterwarnings
 
 import dask.array as da
 import dask.config
 import iris
+import iris.analysis
 import iris.coord_categorisation
 import iris.util
 import isodate
 import numpy as np
 from cf_units import Unit
+from cftime import datetime as cf_datetime
 from iris.coords import AuxCoord, Coord, DimCoord
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
@@ -1262,21 +1264,23 @@ def timeseries_filter(
     return cube
 
 
-def resample_hours(cube: Cube, interval: int, offset: int = 0) -> Cube:
-    """Convert x-hourly data to y-hourly by eliminating extra timesteps.
+def resample_hours(
+    cube: Cube,
+    interval: int,
+    offset: int = 0,
+    interpolate: Optional[Literal['nearest', 'linear']] = None,
+) -> Cube:
+    """Convert x-hourly data to y-hourly data.
 
-    Convert x-hourly data to y-hourly (y > x) by eliminating the extra
-    timesteps. This is intended to be used only with instantaneous values.
+    This is intended to be used with instantaneous data.
 
-    For example:
-
-    - resample_hours(cube, interval=6): Six-hourly intervals at 0:00, 6:00,
+    Examples
+    --------
+    - ``resample_hours(cube, interval=6)``: Six-hourly intervals at 0:00, 6:00,
       12:00, 18:00.
-
-    - resample_hours(cube, interval=6, offset=3): Six-hourly intervals at
+    - ``resample_hours(cube, interval=6, offset=3)``: Six-hourly intervals at
       3:00, 9:00, 15:00, 21:00.
-
-    - resample_hours(cube, interval=12, offset=6): Twelve-hourly intervals
+    - ``resample_hours(cube, interval=12, offset=6)``: Twelve-hourly intervals
       at 6:00, 18:00.
 
     Parameters
@@ -1284,9 +1288,14 @@ def resample_hours(cube: Cube, interval: int, offset: int = 0) -> Cube:
     cube:
         Input cube.
     interval:
-        The period (hours) of the desired data.
-    offset: optional
-        The firs hour (hours) of the desired data.
+        The period (hours) of the desired output data.
+    offset:
+        The first hour of the desired output data.
+    interpolate:
+        If `interpolate` is ``None`` (default), convert x-hourly data to
+        y-hourly (y > x) by eliminating extra time steps. If `interpolate` is
+        'nearest' or 'linear', use nearest-neighbor or bilinear interpolation
+        to convert general x-hourly data to general y-hourly data.
 
     Returns
     -------
@@ -1296,7 +1305,9 @@ def resample_hours(cube: Cube, interval: int, offset: int = 0) -> Cube:
     Raises
     ------
     ValueError:
-        The specified frequency is not a divisor of 24.
+        `interval` is not a divisor of 24; invalid `interpolate` given; or
+        input data does not contain any target hour (if `interpolate` is
+        ``None``).
 
     """
     allowed_intervals = (1, 2, 3, 4, 6, 12)
@@ -1311,15 +1322,38 @@ def resample_hours(cube: Cube, interval: int, offset: int = 0) -> Cube:
     if cube_period.total_seconds() / 3600 > interval:
         raise ValueError(f"Data period ({cube_period}) should be lower than "
                          f"the interval ({interval})")
-    hours = [PartialDateTime(hour=h) for h in range(0 + offset, 24, interval)]
     dates = time.units.num2date(time.points)
-    select = np.zeros(len(dates), dtype=bool)
-    for hour in hours:
-        select |= dates == hour
-    cube = _select_timeslice(cube, select)
-    if cube is None:
-        raise ValueError(
-            f"Time coordinate {dates} does not contain {hours} for {cube}")
+
+    # Interpolate input time to requested hours if desired
+    if interpolate:
+        if interpolate == 'nearest':
+            interpolation_scheme = iris.analysis.Nearest()
+        elif interpolate == 'linear':
+            interpolation_scheme = iris.analysis.Linear()
+        else:
+            raise ValueError(
+                f"Expected `None`, 'nearest' or 'linear' for `interpolate`, "
+                f"got '{interpolate}'"
+            )
+        new_dates = sorted([
+            cf_datetime(y, m, d, h, calendar=time.units.calendar)
+            for h in range(0 + offset, 24, interval)
+            for (y, m, d) in {(d.year, d.month, d.day) for d in dates}
+        ])
+        cube = cube.interpolate([('time', new_dates)], interpolation_scheme)
+    else:
+        hours = [
+            PartialDateTime(hour=h) for h in range(0 + offset, 24, interval)
+        ]
+        dates = time.units.num2date(time.points)
+        select = np.zeros(len(dates), dtype=bool)
+        for hour in hours:
+            select |= dates == hour
+        cube = _select_timeslice(cube, select)
+        if cube is None:
+            raise ValueError(
+                f"Time coordinate {dates} does not contain {hours} for {cube}"
+            )
 
     return cube
 
