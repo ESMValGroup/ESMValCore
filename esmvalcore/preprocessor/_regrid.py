@@ -42,8 +42,8 @@ from esmvalcore.preprocessor._supplementary_vars import (
     add_cell_measure,
 )
 from esmvalcore.preprocessor.regrid_schemes import (
-    GenericFuncScheme,
     ESMPyNearest,
+    GenericFuncScheme,
     IrisESMFRegrid,
     UnstructuredLinear,
     UnstructuredNearest,
@@ -96,6 +96,14 @@ HORIZONTAL_SCHEMES_IRREGULAR = {
     'area_weighted': IrisESMFRegrid(method='conservative'),
     'linear': IrisESMFRegrid(method='bilinear'),
     'nearest': ESMPyNearest(),
+}
+
+# Supported horizontal regridding schemes for meshes
+# https://scitools-iris.readthedocs.io/en/stable/further_topics/ugrid/index.html
+HORIZONTAL_SCHEMES_MESH = {
+    'area_weighted': IrisESMFRegrid(method='conservative'),
+    'linear': IrisESMFRegrid(method='bilinear'),
+    'nearest': IrisESMFRegrid(method='nearest'),
 }
 
 # Supported horizontal regridding schemes for unstructured grids (i.e., grids,
@@ -550,6 +558,21 @@ def _attempt_irregular_regridding(
     return True
 
 
+def _attempt_mesh_regridding(
+    src_cube: Cube,
+    tgt_cube: Cube,
+    scheme: str,
+) -> bool:
+    """Check if mesh regridding with ESMF should be used."""
+    if src_cube.mesh is None and tgt_cube.mesh is None:
+        return False
+    if scheme not in HORIZONTAL_SCHEMES_MESH:
+        raise ValueError(
+            f"Regridding scheme '{scheme}' does not support mesh data, "
+            f"expected one of {list(HORIZONTAL_SCHEMES_MESH)}")
+    return True
+
+
 def _attempt_unstructured_regridding(cube: Cube, scheme: str) -> bool:
     """Check if unstructured regridding should be used."""
     if not has_unstructured_grid(cube):
@@ -600,6 +623,8 @@ def _load_scheme(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
     # type of input data
     elif _attempt_irregular_regridding(src_cube, tgt_cube, scheme):
         loaded_scheme = HORIZONTAL_SCHEMES_IRREGULAR[scheme]
+    elif _attempt_mesh_regridding(src_cube, tgt_cube, scheme):
+        loaded_scheme = HORIZONTAL_SCHEMES_MESH[scheme]
     elif _attempt_unstructured_regridding(src_cube, scheme):
         loaded_scheme = HORIZONTAL_SCHEMES_UNSTRUCTURED[scheme]
     else:

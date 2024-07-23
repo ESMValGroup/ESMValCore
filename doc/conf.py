@@ -444,7 +444,7 @@ intersphinx_mapping = {
     (f'https://docs.esmvaltool.org/projects/ESMValCore/en/{rtd_version}/',
      None),
     'esmvaltool': (f'https://docs.esmvaltool.org/en/{rtd_version}/', None),
-    "esmpy": ("https://earthsystemmodeling.org/esmpy_doc/release/latest/html/",
+    'esmpy': ('https://earthsystemmodeling.org/esmpy_doc/release/latest/html/',
               None),
     'dask': ('https://docs.dask.org/en/stable/', None),
     'distributed': ('https://distributed.dask.org/en/stable/', None),

@@ -267,7 +267,7 @@ def make_test_cube_rectilinear(shape):
     return cube
 
 
-def make_test_cube_unstructured(shape):
+def make_test_cube_irregular(shape):
     data = da.empty(shape, dtype=np.float32)
     cube = iris.cube.Cube(data)
     if len(shape) > 2:
@@ -298,7 +298,7 @@ def make_test_cube_unstructured(shape):
     return cube
 
 
-def make_test_cube_irregular(shape):
+def make_test_cube_unstructured(shape):
     data = da.empty(shape, dtype=np.float32)
     cube = iris.cube.Cube(data)
     if len(shape) > 1:
@@ -333,10 +333,10 @@ def make_test_cube_irregular(shape):
     'grids',
     [
         ('rectilinear', 'rectilinear'),
-        ('rectilinear', 'unstructured'),
-        ('unstructured', 'rectilinear'),
-        ('unstructured', 'unstructured'),
+        ('rectilinear', 'irregular'),
         ('irregular', 'rectilinear'),
+        ('irregular', 'irregular'),
+        ('unstructured', 'rectilinear'),
     ],
 )
 def test_rechunk_on_increased_grid(grids):
@@ -344,7 +344,7 @@ def test_rechunk_on_increased_grid(grids):
     with dask.config.set({'array.chunk-size': '128 M'}):
         src_grid, tgt_grid = grids
         src_dims = (246, 91, 180)
-        if src_grid == 'irregular':
+        if src_grid == 'unstructured':
             src_dims = src_dims[:-2] + (np.prod(src_dims[-2:]), )
         tgt_grid_dims = (2, 361, 720)
         src_cube = globals()[f"make_test_cube_{src_grid}"](src_dims)
@@ -352,7 +352,7 @@ def test_rechunk_on_increased_grid(grids):
         result = _rechunk(src_cube, tgt_grid)
 
         expected = ((123, 123), (91, ), (180, ))
-        if src_grid == 'irregular':
+        if src_grid == 'unstructured':
             expected = expected[:-2] + (np.prod(expected[-2:]), )
         assert result.core_data().chunks == expected
 
