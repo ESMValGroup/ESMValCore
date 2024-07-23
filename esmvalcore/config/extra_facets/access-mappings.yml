@@ -4,7 +4,7 @@
 # ESMValCore/doc/quickstart/find_data.rst).
 ---
 
-ACCESS_ESM:
+ACCESS-ESM1-5:
 
   '*':
    
