@@ -59,10 +59,10 @@ for _coord in (
 
 def extract_time(
     cube: Cube,
-    start_year: int,
+    start_year: int | None,
     start_month: int,
     start_day: int,
-    end_year: int,
+    end_year: int | None,
     end_month: int,
     end_day: int,
 ) -> Cube:
@@ -77,13 +77,15 @@ def extract_time(
     cube:
         Input cube.
     start_year:
-        Start year.
+        Start year. If None, the date ranges are selected in each year. 
+        If start_year is None, end_year has to be None too.
     start_month:
         Start month.
     start_day:
         Start day.
     end_year:
-        End year.
+        End year. If None, the date ranges are selected in each year. 
+        If end_year is None, start_year has to be None too.
     end_month:
         End month.
     end_day:
@@ -100,10 +102,21 @@ def extract_time(
         Time ranges are outside the cube time limits.
 
     """
-    t_1 = PartialDateTime(year=int(start_year),
+
+    if start_year is not None:
+        start_year = int(start_year)
+    if end_year is not None:
+        end_year = int(end_year)
+    if (isinstance(start_year, int) ^ isinstance(end_year, int)):
+        raise ValueError("If start_year or end_year is None, both "
+                         "start_year and end_year have to be None."
+                         f"Currently, start_year is {start_year} "
+                         f"and end_year is {end_year}.")
+
+    t_1 = PartialDateTime(year=start_year,
                           month=int(start_month),
                           day=int(start_day))
-    t_2 = PartialDateTime(year=int(end_year),
+    t_2 = PartialDateTime(year=end_year,
                           month=int(end_month),
                           day=int(end_day))
 
