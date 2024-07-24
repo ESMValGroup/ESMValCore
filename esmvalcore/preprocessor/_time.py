@@ -64,7 +64,7 @@ def extract_time(
     start_year: int | None,
     start_month: int,
     start_day: int,
-    end_year: int | None,
+    end_year: int | None ,
     end_month: int,
     end_day: int,
 ) -> Cube:
@@ -111,7 +111,7 @@ def extract_time(
         end_year = int(end_year)
     if (isinstance(start_year, int) ^ isinstance(end_year, int)):
         raise ValueError("If start_year or end_year is None, both "
-                         "start_year and end_year have to be None."
+                         "start_year and end_year have to be None. "
                          f"Currently, start_year is {start_year} "
                          f"and end_year is {end_year}.")
 
@@ -227,7 +227,7 @@ def _extract_datetime(
         if isinstance(end_datetime.day, int) and end_datetime.day > 30:
             end_datetime.day = 30
 
-    if not cube.coord_dims(time_coord):
+    if (not cube.coord_dims(time_coord)) | (start_datetime.year == None):
         constraint = iris.Constraint(
             time=lambda t: start_datetime <= t.point < end_datetime)
         cube_slice = cube.extract(constraint)
