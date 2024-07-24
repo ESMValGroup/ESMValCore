@@ -178,7 +178,6 @@ class TestTimeSlice(tests.Test):
             extract_time(cube, None, 1, 1, 1950, 2, 1)
 
 
-
 class TestClipTimerange(tests.Test):
     """Tests for clip_timerange."""
     def setUp(self):
