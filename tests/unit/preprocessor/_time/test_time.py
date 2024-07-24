@@ -170,11 +170,11 @@ class TestTimeSlice(tests.Test):
         cube = _create_sample_cube()[0]
         sliced = extract_time(cube, 1950, 1, 1, 1950, 12, 31)
         assert cube == sliced
-    
+
     def test_extract_time_none_year(self):
         """Test extract_time when one of the years is None."""
         cube = self.cube.coord('time').guess_bounds()
-        with assert_raises(ValueError): 
+        with assert_raises(ValueError):
             extract_time(cube, None, 1, 1, 1950, 2, 1)
 
 
