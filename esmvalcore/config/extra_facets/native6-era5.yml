@@ -21,7 +21,7 @@ ERA5:
       regrid: true
       type: an
       typeid: '00'
-      version: ''  # necessary to get a nice output file name
+      version: v1
 
     # Variable-specific settings
     albsn:
