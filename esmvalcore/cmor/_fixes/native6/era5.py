@@ -9,7 +9,7 @@ from esmvalcore.iris_helpers import date2num
 
 from ...table import CMOR_TABLES
 from ..fix import Fix
-from ..shared import add_scalar_height_coord
+from ..shared import add_scalar_height_coord, add_scalar_typesi_coord
 
 logger = logging.getLogger(__name__)
 
@@ -343,6 +343,15 @@ class Zg(Fix):
             divide_by_gravity(cube)
         return cubes
 
+class Siconc(Fix):
+    """Fixes for sea_ice_cover."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+
+        for cube in cubes:
+            add_scalar_typesi_coord(cube, value='sea_ice')
+        return cubes
 
 class AllVars(Fix):
     """Fixes for all variables."""
@@ -373,7 +382,13 @@ class AllVars(Fix):
             if axis == "" and coord_def.name == "alevel":
                 axis = "Z"
                 coord_def = CMOR_TABLES['CMIP6'].coords['plev19']
-            coord = cube.coord(axis=axis)
+
+            # check for valid axis
+            if axis in ['X','Y','Z','T']:
+                coord = cube.coord(axis=axis)                
+            else:
+                coord = cube.coord(standard_name=coord_def.standard_name)
+
             if axis == 'T':
                 coord.convert_units('days since 1850-1-1 00:00:00.0')
             if axis == 'Z':
@@ -381,7 +396,11 @@ class AllVars(Fix):
             coord.standard_name = coord_def.standard_name
             coord.var_name = coord_def.out_name
             coord.long_name = coord_def.long_name
-            coord.points = coord.core_points().astype('float64')
+            try:
+                coord.points = coord.core_points().astype('float64')
+            except ValueError:
+                pass
+
             if (not coord.has_bounds() and len(coord.core_points()) > 1
                     and coord_def.must_have_bounds == "yes"):
                 coord.guess_bounds()
@@ -410,7 +429,10 @@ class AllVars(Fix):
 
     def _fix_units(self, cube):
         """Fix units."""
-        cube.convert_units(self.vardef.units)
+        
+        if cube.units == "unknown": cube.units = self.vardef.units
+        else: cube.convert_units(self.vardef.units)
+
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
