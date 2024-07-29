@@ -350,6 +350,10 @@ class Siconc(Fix):
         """Fix metadata."""
 
         for cube in cubes:
+
+            cube.units = '%'
+            cube.data *= 100.
+
             add_scalar_typesi_coord(cube, value='sea_ice')
         return cubes
 
