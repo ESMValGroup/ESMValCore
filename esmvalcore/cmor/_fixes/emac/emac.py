@@ -211,6 +211,30 @@ class Clwvi(EmacFix):
         return CubeList([cube])
 
 
+class Prodlnox(EmacFix):
+    """Fixes for ``prodlnox``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        cube = ((
+            self.get_cube(cubes, var_name=['NOxcg_cav', 'NOxcg_ave',
+                                           'NOxcg']).collapsed(
+                                               ['longitude', 'latitude'],
+                                               iris.analysis.SUM, weights=None) +
+            self.get_cube(cubes, var_name=['NOxic_cav', 'NOxic_ave',
+                                           'NOxic']).collapsed(
+                                               ['longitude', 'latitude'],
+                                               iris.analysis.SUM, weights=None)
+            ) /
+                self.get_cube(cubes, var_name=['dt'])
+        ) * 365 * 24 * 3600 / 1e9
+
+        cube.var_name = self.vardef.short_name
+        cube.units = 'Tg a-1'
+
+        return CubeList([cube])
+
+
 Evspsbl = NegateData
 
 
