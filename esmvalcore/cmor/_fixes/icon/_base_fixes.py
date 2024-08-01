@@ -91,7 +91,7 @@ class IconFix(NativeDatasetFix):
         if not np.allclose(
                 face_lat.bounds,
                 node_lat.points[conn_node_inds],
-                **close_kwargs,
+                **close_kwargs,  # type: ignore
         ):
             logger.warning(
                 "Latitude bounds of the face coordinate ('clat_vertices' in "
@@ -108,7 +108,7 @@ class IconFix(NativeDatasetFix):
         # differ by 360°, which is also okay.
         face_lon_bounds_to_check = face_lon.bounds % 360
         node_lon_conn_to_check = node_lon.points[conn_node_inds] % 360
-        idx_notclose = ~np.isclose(
+        idx_notclose = ~np.isclose(  # type: ignore
             face_lon_bounds_to_check,
             node_lon_conn_to_check,
             **close_kwargs,
