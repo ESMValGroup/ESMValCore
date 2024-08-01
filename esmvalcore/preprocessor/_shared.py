@@ -10,7 +10,7 @@ import re
 import warnings
 from collections import defaultdict
 from collections.abc import Callable, Iterable
-from functools import partial, wraps
+from functools import wraps
 from typing import Any, Literal, Optional
 
 import dask.array as da
@@ -19,6 +19,7 @@ import numpy as np
 from iris.coords import CellMeasure, Coord, DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
+from iris.util import broadcast_to_shape
 
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import has_regular_grid
@@ -316,46 +317,6 @@ def get_array_module(*args):
         if isinstance(arg, da.Array):
             return da
     return np
-
-
-def broadcast_to_shape(array, shape, dim_map, chunks=None):
-    """Copy of `iris.util.broadcast_to_shape` that allows specifying chunks."""
-    if isinstance(array, da.Array):
-        if chunks is not None:
-            chunks = list(chunks)
-            for src_idx, tgt_idx in enumerate(dim_map):
-                # Only use the specified chunks along new dimensions or on
-                # dimensions that have size 1 in the source array.
-                if array.shape[src_idx] != 1:
-                    chunks[tgt_idx] = array.chunks[src_idx]
-        broadcast = partial(da.broadcast_to, shape=shape, chunks=chunks)
-    else:
-        broadcast = partial(np.broadcast_to, shape=shape)
-
-    n_orig_dims = len(array.shape)
-    n_new_dims = len(shape) - n_orig_dims
-    array = array.reshape(array.shape + (1,) * n_new_dims)
-
-    # Get dims in required order.
-    array = np.moveaxis(array, range(n_orig_dims), dim_map)
-    new_array = broadcast(array)
-
-    if np.ma.isMA(array):
-        # broadcast_to strips masks so we need to handle them explicitly.
-        mask = np.ma.getmask(array)
-        if mask is np.ma.nomask:
-            new_mask = np.ma.nomask
-        else:
-            new_mask = broadcast(mask)
-        new_array = np.ma.array(new_array, mask=new_mask)
-
-    elif _is_lazy_masked_data(array):
-        # broadcast_to strips masks so we need to handle them explicitly.
-        mask = da.ma.getmaskarray(array)
-        new_mask = broadcast(mask)
-        new_array = da.ma.masked_array(new_array, new_mask)
-
-    return new_array
 
 
 def _is_lazy_masked_data(array):

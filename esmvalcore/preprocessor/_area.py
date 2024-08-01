@@ -19,9 +19,9 @@ from dask import array as da
 from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
+from iris.util import broadcast_to_shape
 
 from esmvalcore.iris_helpers import has_regular_grid
-from esmvalcore.preprocessor._regrid import broadcast_to_shape
 from esmvalcore.preprocessor._shared import (
     get_iris_aggregator,
     get_normalized_cube,
