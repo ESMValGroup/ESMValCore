@@ -513,19 +513,56 @@ def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
     return outfile
 
 
+# def _path2facets(path: Path, drs: str) -> dict[str, str]:
+    # """Extract facets from a path using a DRS like '{facet1}/{facet2}'."""
+    # keys = []
+    # for key in re.findall(r'{(.*?)}[^-]', f'{drs} '):
+    #     key = key.split('.')[0]  # Remove trailing .lower and .upper
+    #     keys.append(key)
+    #     print('---', key)
+    # start, end = -len(keys) - 1, -1
+    # values = path.parts[start:end]
+    # facets = {
+    #     key: values[idx]
+    #     for idx, key in enumerate(keys) if "{" not in key
+    # }
+
+    # print('> drs', drs)
+    # print('> path.parts', path.parts)
+    # print('> path.parts[start:end]', path.parts[start:end])
+    # print('> keys', keys)
+    # print('> facets', facets)
+
+    # if len(facets) != len(keys):
+    #     # Extract hyphen separated facet: {facet1}-{facet2},
+    #     # where facet1 is already known.
+    #     for idx, key in enumerate(keys):
+    #         if key not in facets:
+    #             facet1, facet2 = key.split("}-{")
+    #             facets[facet2] = values[idx].replace(f'{facets[facet1]}-', '')
+
 def _path2facets(path: Path, drs: str) -> dict[str, str]:
     """Extract facets from a path using a DRS like '{facet1}/{facet2}'."""
+
     keys = []
     for key in re.findall(r'{(.*?)}[^-]', f'{drs} '):
         key = key.split('.')[0]  # Remove trailing .lower and .upper
         keys.append(key)
-    start, end = -len(keys) - 1, -1
-    values = path.parts[start:end]
-    facets = {
-        key: values[idx]
-        for idx, key in enumerate(keys) if "{" not in key
-    }
 
+    key_indices = {}
+    for key in keys:
+        for i,part in enumerate( drs.split('/')[::-1] ): 
+            if '{{{}}}'.format(key) == part:
+                key_indices[key] = -(i+1)
+
+    dirpath = path.parents[0]
+
+    facets = {}
+    for key in key_indices:
+        index = key_indices[key]
+        if '{' not in dirpath.parts[index]: # deal with multi-key parts below
+            facets[key] = dirpath.parts[index] 
+     
     if len(facets) != len(keys):
         # Extract hyphen separated facet: {facet1}-{facet2},
         # where facet1 is already known.
