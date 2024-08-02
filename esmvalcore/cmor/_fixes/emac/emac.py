@@ -227,10 +227,10 @@ class Prodlnox(EmacFix):
                                                ['longitude', 'latitude'],
                                                iris.analysis.SUM,
                                                weights=None)) /
-                self.get_cube(cubes, var_name=['dt'])) * 365 * 24 * 3600 / 1e9
-
+                self.get_cube(cubes, var_name=['dt'])
+        )
+        cube.convert_units('Tg yr-1')
         cube.var_name = self.vardef.short_name
-        cube.units = 'Tg a-1'
 
         return CubeList([cube])
 

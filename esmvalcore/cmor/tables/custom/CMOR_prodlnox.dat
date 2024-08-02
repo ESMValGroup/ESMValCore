@@ -7,7 +7,7 @@ modeling_realm:    atmos
 ! Variable attributes:
 !----------------------------------
 standard_name:
-units:             Tg a-1
+units:             Tg yr-1
 long_name:         Tendency of atmosphere mass content of NOx from lightning
 comment:           Production NOX (NO+NO2) by lightning globally integrated
 !----------------------------------
