@@ -229,7 +229,7 @@ class Prodlnox(EmacFix):
                                                weights=None)) /
                 self.get_cube(cubes, var_name=['dt'])
         )
-        cube.convert_units('Tg yr-1')
+        cube.units = 'kg s-1'
         cube.var_name = self.vardef.short_name
 
         return CubeList([cube])
