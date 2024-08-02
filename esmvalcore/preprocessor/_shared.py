@@ -466,9 +466,11 @@ def _compute_area_weights(cube):
             category=UserWarning,
             module='iris.analysis.cartography',
         )
-        weights = iris.analysis.cartography.area_weights(
-            cube, compute=not cube.has_lazy_data()
-        )
+        if cube.has_lazy_data():
+            kwargs = {'compute': False, 'chunks': cube.lazy_data().chunks}
+        else:
+            kwargs = {'compute': True}
+        weights = iris.analysis.cartography.area_weights(cube, **kwargs)
         for warning in caught_warnings:
             logger.debug(
                 "%s while computing area weights of the following cube:\n%s",
