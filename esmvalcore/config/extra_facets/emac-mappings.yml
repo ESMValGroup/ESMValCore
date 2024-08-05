@@ -255,13 +255,13 @@ EMAC:
       raw_name: [qm1_p19_cav, qm1_p19_ave]
       channel: Amon
     o3:
-      raw_name: [O3, O3_ave]
+      raw_name: [O3_ave, O3]
       channel: Amon
     ta:  # defined on plev19
       raw_name: [tm1_p19_cav, tm1_p19_ave]
       channel: Amon
     tro3:
-      raw_name: [O3, O3_ave]
+      raw_name: [O3_ave, O3]
       channel: Amon
     ua:  # defined on plev19
       raw_name: [um1_p19_cav, um1_p19_ave]
