@@ -6,7 +6,6 @@ bounds; selecting geographical regions; constructing area averages; etc.
 from __future__ import annotations
 
 import logging
-import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Literal, Optional
 
@@ -16,17 +15,15 @@ import numpy as np
 import shapely
 import shapely.ops
 from dask import array as da
-from iris.coords import AuxCoord, CellMeasure
+from iris.coords import AuxCoord
 from iris.cube import Cube, CubeList
-from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
+from iris.exceptions import CoordinateNotFoundError
 
-from esmvalcore.iris_helpers import has_regular_grid
-from esmvalcore.preprocessor._regrid import broadcast_to_shape
 from esmvalcore.preprocessor._shared import (
     get_iris_aggregator,
     get_normalized_cube,
-    guess_bounds,
     preserve_float_dtype,
+    try_adding_calculated_cell_area,
     update_weights_kwargs,
 )
 from esmvalcore.preprocessor._supplementary_vars import (
@@ -291,112 +288,6 @@ def meridional_statistics(
     return result
 
 
-def compute_area_weights(cube):
-    """Compute area weights."""
-    with warnings.catch_warnings(record=True) as caught_warnings:
-        warnings.filterwarnings(
-            'always',
-            message="Using DEFAULT_SPHERICAL_EARTH_RADIUS.",
-            category=UserWarning,
-            module='iris.analysis.cartography',
-        )
-        # TODO: replace the following line with
-        # weights = iris.analysis.cartography.area_weights(
-        #     cube, compute=not cube.has_lazy_data()
-        # )
-        # once https://github.com/SciTools/iris/pull/5658 is available
-        weights = _get_area_weights(cube)
-
-        for warning in caught_warnings:
-            logger.debug(
-                "%s while computing area weights of the following cube:\n%s",
-                warning.message, cube)
-    return weights
-
-
-def _get_area_weights(cube: Cube) -> np.ndarray | da.Array:
-    """Get area weights.
-
-    For non-lazy data, simply use the according iris function. For lazy data,
-    calculate area weights for a single lat-lon slice and broadcast it to the
-    correct shape.
-
-    Note
-    ----
-    This is a temporary workaround to get lazy area weights. Can be removed
-    once https://github.com/SciTools/iris/pull/5658 is available.
-
-    """
-    if not cube.has_lazy_data():
-        return iris.analysis.cartography.area_weights(cube)
-
-    lat_lon_dims = sorted(
-        tuple(set(cube.coord_dims('latitude') + cube.coord_dims('longitude')))
-    )
-    lat_lon_slice = next(cube.slices(['latitude', 'longitude'], ordered=False))
-    weights_2d = iris.analysis.cartography.area_weights(lat_lon_slice)
-    weights = broadcast_to_shape(
-        da.array(weights_2d),
-        cube.shape,
-        lat_lon_dims,
-        chunks=cube.lazy_data().chunks,
-    )
-    return weights
-
-
-def _try_adding_calculated_cell_area(cube: Cube) -> None:
-    """Try to add calculated cell measure 'cell_area' to cube (in-place)."""
-    if cube.cell_measures('cell_area'):
-        return
-
-    logger.debug(
-        "Found no cell measure 'cell_area' in cube %s. Check availability of "
-        "supplementary variables",
-        cube.summary(shorten=True),
-    )
-    logger.debug("Attempting to calculate grid cell area")
-
-    rotated_pole_grid = all([
-        cube.coord('latitude').core_points().ndim == 2,
-        cube.coord('longitude').core_points().ndim == 2,
-        cube.coords('grid_latitude'),
-        cube.coords('grid_longitude'),
-    ])
-
-    # For regular grids, calculate grid cell areas with iris function
-    if has_regular_grid(cube):
-        cube = guess_bounds(cube, ['latitude', 'longitude'])
-        logger.debug("Calculating grid cell areas for regular grid")
-        cell_areas = compute_area_weights(cube)
-
-    # For rotated pole grids, use grid_latitude and grid_longitude to calculate
-    # grid cell areas
-    elif rotated_pole_grid:
-        cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
-        cube_tmp = cube.copy()
-        cube_tmp.remove_coord('latitude')
-        cube_tmp.coord('grid_latitude').rename('latitude')
-        cube_tmp.remove_coord('longitude')
-        cube_tmp.coord('grid_longitude').rename('longitude')
-        logger.debug("Calculating grid cell areas for rotated pole grid")
-        cell_areas = compute_area_weights(cube_tmp)
-
-    # For all other cases, grid cell areas cannot be calculated
-    else:
-        logger.error(
-            "Supplementary variables are needed to calculate grid cell "
-            "areas for irregular or unstructured grid of cube %s",
-            cube.summary(shorten=True),
-        )
-        raise CoordinateMultiDimError(cube.coord('latitude'))
-
-    # Add new cell measure
-    cell_measure = CellMeasure(
-        cell_areas, standard_name='cell_area', units='m2', measure='area',
-    )
-    cube.add_cell_measure(cell_measure, np.arange(cube.ndim))
-
-
 @register_supplementaries(
     variables=['areacella', 'areacello'],
     required='prefer_at_least_one',
@@ -454,7 +345,7 @@ def area_statistics(
     # Get aggregator and correct kwargs (incl. weights)
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     agg_kwargs = update_weights_kwargs(
-        agg, agg_kwargs, 'cell_area', cube, _try_adding_calculated_cell_area
+        agg, agg_kwargs, 'cell_area', cube, try_adding_calculated_cell_area
     )
 
     result = cube.collapsed(['latitude', 'longitude'], agg, **agg_kwargs)

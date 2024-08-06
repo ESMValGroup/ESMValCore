@@ -383,9 +383,9 @@ def check_mesh(mesh):
     assert mesh.topology_dimension == 2
 
     # Check face coordinates
-    assert len(mesh.coords(include_faces=True)) == 2
+    assert len(mesh.coords(location='face')) == 2
 
-    mesh_face_lat = mesh.coord(include_faces=True, axis='y')
+    mesh_face_lat = mesh.coord(location='face', axis='y')
     assert mesh_face_lat.var_name == 'lat'
     assert mesh_face_lat.standard_name == 'latitude'
     assert mesh_face_lat.long_name == 'latitude'
@@ -411,7 +411,7 @@ def check_mesh(mesh):
         rtol=1e-5
     )
 
-    mesh_face_lon = mesh.coord(include_faces=True, axis='x')
+    mesh_face_lon = mesh.coord(location='face', axis='x')
     assert mesh_face_lon.var_name == 'lon'
     assert mesh_face_lon.standard_name == 'longitude'
     assert mesh_face_lon.long_name == 'longitude'
@@ -438,9 +438,9 @@ def check_mesh(mesh):
     )
 
     # Check node coordinates
-    assert len(mesh.coords(include_nodes=True)) == 2
+    assert len(mesh.coords(location='node')) == 2
 
-    mesh_node_lat = mesh.coord(include_nodes=True, axis='y')
+    mesh_node_lat = mesh.coord(location='node', axis='y')
     assert mesh_node_lat.var_name == 'nlat'
     assert mesh_node_lat.standard_name == 'latitude'
     assert mesh_node_lat.long_name == 'node latitude'
@@ -453,7 +453,7 @@ def check_mesh(mesh):
     )
     assert mesh_node_lat.bounds is None
 
-    mesh_node_lon = mesh.coord(include_nodes=True, axis='x')
+    mesh_node_lon = mesh.coord(location='node', axis='x')
     assert mesh_node_lon.var_name == 'nlon'
     assert mesh_node_lon.standard_name == 'longitude'
     assert mesh_node_lon.long_name == 'node longitude'

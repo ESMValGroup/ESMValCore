@@ -16,7 +16,7 @@ import numpy as np
 import requests
 from iris import NameConstraint
 from iris.cube import Cube, CubeList
-from iris.experimental.ugrid import Connectivity, Mesh
+from iris.mesh import Connectivity, MeshXY
 
 from esmvalcore.cmor._fixes.native_datasets import NativeDatasetFix
 from esmvalcore.local import _get_data_sources
@@ -38,24 +38,24 @@ class IconFix(NativeDatasetFix):
         self._horizontal_grids = {}
         self._meshes = {}
 
-    def _create_mesh(self, cube):
+    def _create_mesh(self, cube: Cube) -> MeshXY:
         """Create mesh from horizontal grid file.
 
         Note
         ----
-        This functions creates a new :class:`iris.experimental.ugrid.Mesh` from
-        the ``clat`` (already present in the cube), ``clon`` (already present
-        in the cube), ``vertex_index``, ``vertex_of_cell``, ``vlat``, and
-        ``vlon`` variables of the horizontal grid file.
+        This functions creates a new :class:`iris.mesh.MeshXY` from the
+        ``clat`` (already present in the cube), ``clon`` (already present in
+        the cube), ``vertex_index``, ``vertex_of_cell``, ``vlat``, and ``vlon``
+        variables of the horizontal grid file.
 
-        We do not use :func:`iris.experimental.ugrid.Mesh.from_coords` with the
-        existing latitude and longitude coordinates here because this would
-        produce lots of duplicated entries for the node coordinates. The reason
-        for this is that the node coordinates are constructed from the bounds;
-        since each node is contained 6 times in the bounds array (each node is
-        shared by 6 neighboring cells) the number of nodes is 6 times higher
-        with :func:`iris.experimental.ugrid.Mesh.from_coords` compared to using
-        the information already present in the horizontal grid file.
+        We do not use :func:`iris.mesh.MeshXY.from_coords` with the existing
+        latitude and longitude coordinates here because this would produce lots
+        of duplicated entries for the node coordinates. The reason for this is
+        that the node coordinates are constructed from the bounds; since each
+        node is contained 6 times in the bounds array (each node is shared by 6
+        neighboring cells) the number of nodes is 6 times higher with
+        :func:`iris.mesh.MeshXY.from_coords` compared to using the information
+        already present in the horizontal grid file.
 
         """
         horizontal_grid = self.get_horizontal_grid(cube)
@@ -91,7 +91,7 @@ class IconFix(NativeDatasetFix):
         if not np.allclose(
                 face_lat.bounds,
                 node_lat.points[conn_node_inds],
-                **close_kwargs,
+                **close_kwargs,  # type: ignore
         ):
             logger.warning(
                 "Latitude bounds of the face coordinate ('clat_vertices' in "
@@ -108,7 +108,7 @@ class IconFix(NativeDatasetFix):
         # differ by 360°, which is also okay.
         face_lon_bounds_to_check = face_lon.bounds % 360
         node_lon_conn_to_check = node_lon.points[conn_node_inds] % 360
-        idx_notclose = ~np.isclose(
+        idx_notclose = ~np.isclose(  # type: ignore
             face_lon_bounds_to_check,
             node_lon_conn_to_check,
             **close_kwargs,
@@ -131,7 +131,7 @@ class IconFix(NativeDatasetFix):
             start_index=start_index,
             location_axis=0,
         )
-        mesh = Mesh(
+        mesh = MeshXY(
             topology_dimension=2,
             node_coords_and_axes=[(node_lat, 'y'), (node_lon, 'x')],
             connectivities=[connectivity],
@@ -429,8 +429,8 @@ class IconFix(NativeDatasetFix):
 
         Returns
         -------
-        iris.experimental.ugrid.Mesh
-            Mesh.
+        iris.mesh.MeshXY
+            Mesh of the cube.
 
         Raises
         ------

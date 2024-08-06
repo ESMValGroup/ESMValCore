@@ -3,6 +3,7 @@ name: esmvaltool
 channels:
   - conda-forge
   - nodefaults
+  - conda-forge/label/rc_iris  # REMOVE BEFORE MERGING THIS PR!
 
 dependencies:
   - cartopy
@@ -18,7 +19,7 @@ dependencies:
   - fire
   - geopy
   - humanfriendly
-  - iris >=3.9.0
+  - iris >=3.10.0rc0
   - iris-esmf-regrid >=0.10.0  # github.com/SciTools-incubator/iris-esmf-regrid/pull/342
   - iris-grib
   - isodate
