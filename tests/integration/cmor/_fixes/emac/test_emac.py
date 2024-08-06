@@ -539,7 +539,7 @@ def test_var_not_available_fix():
     """Test fix."""
     fix = get_allvars_fix('Amon', 'ta')
     cubes = CubeList([Cube(0.0)])
-    msg = (r"No variable of \['tm1_p19_cav', 'tm1_p19_ave'\] necessary for "
+    msg = (r"No variable of \['tm1_cav', 'tm1_ave', 'tm1'\] necessary for "
            r"the extraction/derivation the CMOR variable 'ta' is available in "
            r"the input file.")
     with pytest.raises(ValueError, match=msg):
@@ -578,7 +578,7 @@ def test_only_time(monkeypatch):
                           units='days since 1850-01-01')
     cubes = CubeList([
         Cube([1, 1],
-             var_name='tm1_p19_ave',
+             var_name='tm1_cav',
              units='K',
              dim_coords_and_dims=[(time_coord, 0)]),
     ])
@@ -623,7 +623,7 @@ def test_only_plev(monkeypatch):
                           units='hPa')
     cubes = CubeList([
         Cube([1, 1],
-             var_name='tm1_p19_ave',
+             var_name='tm1_ave',
              units='K',
              dim_coords_and_dims=[(plev_coord, 0)]),
     ])
@@ -668,7 +668,7 @@ def test_only_latitude(monkeypatch):
                          units='degrees')
     cubes = CubeList([
         Cube([1, 1],
-             var_name='tm1_p19_ave',
+             var_name='tm1',
              units='K',
              dim_coords_and_dims=[(lat_coord, 0)]),
     ])
@@ -713,7 +713,7 @@ def test_only_longitude(monkeypatch):
                          units='degrees')
     cubes = CubeList([
         Cube([1, 1],
-             var_name='tm1_p19_ave',
+             var_name='tm1',
              units='K',
              dim_coords_and_dims=[(lon_coord, 0)]),
     ])
@@ -2469,7 +2469,7 @@ def test_get_hur_fix():
 
 def test_hur_fix(cubes_3d):
     """Test fix."""
-    cubes_3d[0].var_name = 'rhum_p19_cav'
+    cubes_3d[0].var_name = 'rhum_cav'
     cubes_3d[0].units = '1'
     fix = get_allvars_fix('Amon', 'hur')
     fixed_cubes = fix.fix_metadata(cubes_3d)
@@ -2496,7 +2496,7 @@ def test_get_hus_fix():
 
 def test_hus_fix(cubes_3d):
     """Test fix."""
-    cubes_3d[0].var_name = 'qm1_p19_cav'
+    cubes_3d[0].var_name = 'qm1_cav'
     cubes_3d[0].units = '1'
     fix = get_allvars_fix('Amon', 'hus')
     fixed_cubes = fix.fix_metadata(cubes_3d)
@@ -2523,7 +2523,7 @@ def test_get_ta_fix():
 
 def test_ta_fix(cubes_3d):
     """Test fix."""
-    cubes_3d[0].var_name = 'tm1_p19_cav'
+    cubes_3d[0].var_name = 'tm1_cav'
     cubes_3d[0].units = 'K'
     fix = get_allvars_fix('Amon', 'ta')
     fixed_cubes = fix.fix_metadata(cubes_3d)
@@ -2550,7 +2550,7 @@ def test_get_ua_fix():
 
 def test_ua_fix(cubes_3d):
     """Test fix."""
-    cubes_3d[0].var_name = 'um1_p19_cav'
+    cubes_3d[0].var_name = 'um1_cav'
     cubes_3d[0].units = 'm s-1'
     fix = get_allvars_fix('Amon', 'ua')
     fixed_cubes = fix.fix_metadata(cubes_3d)
@@ -2577,7 +2577,7 @@ def test_get_va_fix():
 
 def test_va_fix(cubes_3d):
     """Test fix."""
-    cubes_3d[0].var_name = 'vm1_p19_cav'
+    cubes_3d[0].var_name = 'vm1_cav'
     cubes_3d[0].units = 'm s-1'
     fix = get_allvars_fix('Amon', 'va')
     fixed_cubes = fix.fix_metadata(cubes_3d)
@@ -2604,7 +2604,7 @@ def test_get_zg_fix():
 
 def test_zg_fix(cubes_3d):
     """Test fix."""
-    cubes_3d[0].var_name = 'geopot_p19_cav'
+    cubes_3d[0].var_name = 'geopot_cav'
     cubes_3d[0].units = 'm2 s-2'
     fix = get_fix('Amon', 'zg')
     fixed_cubes = fix.fix_metadata(cubes_3d)
