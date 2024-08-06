@@ -16,8 +16,9 @@
 #   ("raw_name: tm1_p39_cav".)
 # - Asterisks ("*") in the comments in list below refer to either "cav" or
 #   "ave". "cav" is prioritized.
-# - The channels given here are generalization and may not always be applicable
-#   In that case choose the channels with the appropriate variable per recipe.
+# - The channels given here are generalization and may not always be
+#   applicable. In that case choose the channels with the appropriate variable
+#   per recipe.
 #
 
 # A complete list of supported keys is given in the documentation (see
