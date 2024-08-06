@@ -74,6 +74,8 @@ EMAC:
     prc:
       raw_name: [aprc_cav, aprc_ave, aprc]
       channel: Amon
+    prodlnox: # derived from NOxcg_*, NOxic_*
+      channel: Amon
     prl:  # non-CMOR variable
       raw_name: [aprl_cav, aprl_ave, aprl]
       channel: Amon

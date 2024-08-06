@@ -22,6 +22,7 @@ from esmvalcore.cmor._fixes.emac.emac import (
     MP_SS_tot,
     Od550aer,
     Pr,
+    Prodlnox,
     Rlds,
     Rlus,
     Rlut,
@@ -926,6 +927,36 @@ def test_clwvi_fix(cubes_2d):
                                   'condensed_water')
     assert cube.long_name == 'Condensed Water Path'
     assert cube.units == 'kg m-2'
+    assert 'positive' not in cube.attributes
+
+    np.testing.assert_allclose(cube.data, [[[2.0]]])
+
+
+def test_get_prodlnox_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes('EMAC', 'EMAC', 'Amon', 'prodlnox')
+    assert fix == [Prodlnox(None), AllVars(None), GenericFix(None)]
+
+
+def test_prodlnox_fix(cubes_2d):
+    """Test fix."""
+    cubes_2d[0].var_name = 'NOxcg_cav'
+    cubes_2d[1].var_name = 'NOxic_cav'
+    cubes_2d[2].var_name = 'dt'
+    cubes_2d[0].units = 'kg'
+    cubes_2d[1].units = 'kg'
+    cubes_2d[2].units = 's'
+
+    fixed_cubes = fix_metadata(cubes_2d, 'Amon', 'prodlnox')
+
+    assert len(fixed_cubes) == 1
+    cube = fixed_cubes[0]
+    assert cube.var_name == 'prodlnox'
+    assert cube.standard_name is None
+    assert cube.long_name == (
+        'Tendency of atmosphere mass content of NOx from lightning'
+    )
+    assert cube.units == 'kg s-1'
     assert 'positive' not in cube.attributes
 
     np.testing.assert_allclose(cube.data, [[[2.0]]])
