@@ -101,7 +101,7 @@ Please keep the following considerations in mind when programming:
   code.
 - If you find yourself copy-pasting a piece of code and making minor changes
   to every copy, instead put the repeated bit of code in a function that you can
-  re-use, and provide the changed bits as function arguments.
+  reuse, and provide the changed bits as function arguments.
 - Be careful when changing existing unit tests to make your new feature work.
   You might be breaking existing features if you have to change existing tests.
 
@@ -577,7 +577,7 @@ users.
 
 When making changes, e.g. to the :ref:`recipe format <recipe_overview>`, the
 :ref:`diagnostic script interface <interfaces>`, the public
-:ref:`Python API <api>`, or the :ref:`configuration file format <config>`,
+:ref:`Python API <api>`, or the :ref:`configuration format <config>`,
 keep in mind that this may affect many users.
 To keep the tool user friendly, try to avoid making changes that are not
 backward compatible, i.e. changes that require users to change their existing
@@ -743,15 +743,15 @@ Perform the steps listed below with two persons, to reduce the risk of error.
    `PyPI <https://pypi.org/project/ESMValCore/>`__, and
    `readthedocs <https://readthedocs.org/dashboard/esmvalcore/users/>`__.
 
-The release of ESMValCore is tied to the release of ESMValTool. 
+The release of ESMValCore is tied to the release of ESMValTool.
 The detailed steps can be found in the ESMValTool
 :ref:`documentation <esmvaltool:release_steps>`.
-To start the procedure, ESMValCore gets released as a 
+To start the procedure, ESMValCore gets released as a
 release candidate to test the recipes in ESMValTool. If bugs are found
-during the testing phase of the release candidate, make as many release 
-candidates for ESMValCore as needed in order to fix them. 
+during the testing phase of the release candidate, make as many release
+candidates for ESMValCore as needed in order to fix them.
 
-To make a new release of the package, be it a release candidate or the final release, 
+To make a new release of the package, be it a release candidate or the final release,
 follow these steps:
 
 1. Check that all tests and builds work
@@ -795,13 +795,13 @@ Use the script
 to create create a draft of the release notes.
 This script uses the titles and labels of merged pull requests since the
 previous release.
-Open a discussion to allow members of the development team to nominate pull 
-requests as highlights. Add the most voted pull requests as highlights at the 
-beginning of changelog. After the highlights section, list any backward 
-incompatible changes that the release may include. The 
+Open a discussion to allow members of the development team to nominate pull
+requests as highlights. Add the most voted pull requests as highlights at the
+beginning of changelog. After the highlights section, list any backward
+incompatible changes that the release may include. The
 :ref:`backward compatibility policy<esmvaltool:backward-compatibility-policy>`.
-lists the information that should be provided by the developer of any backward 
-incompatible change. Make sure to also list any deprecations that the release 
+lists the information that should be provided by the developer of any backward
+incompatible change. Make sure to also list any deprecations that the release
 may include, as well as a brief description on how to upgrade a deprecated feature.
 Review the results, and if anything needs changing, change it on GitHub and
 re-run the script until the changelog looks acceptable.

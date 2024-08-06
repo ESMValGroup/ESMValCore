@@ -440,8 +440,9 @@ def _get_data_sources(project: str) -> list[DataSource]:
             nonexistent = tuple(p for p in paths if not os.path.exists(p))
             if nonexistent and (key, nonexistent) not in _ROOTPATH_WARNED:
                 logger.warning(
-                    "'%s' rootpaths '%s' set in config-user.yml do not exist",
-                    key, ', '.join(str(p) for p in nonexistent))
+                    "Configured '%s' rootpaths '%s' do not exist",
+                    key, ', '.join(str(p) for p in nonexistent)
+                )
                 _ROOTPATH_WARNED.add((key, nonexistent))
             if isinstance(paths, list):
                 structure = CFG['drs'].get(project, 'default')
@@ -458,7 +459,7 @@ def _get_data_sources(project: str) -> list[DataSource]:
 
     raise KeyError(
         f"No '{project}' or 'default' path specified under 'rootpath' in "
-        "the user configuration.")
+        "the configuration.")
 
 
 def _get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:

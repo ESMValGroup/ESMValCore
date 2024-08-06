@@ -102,7 +102,7 @@ def test_read_config_file(monkeypatch, tmp_path):
 def test_read_v25_config_file(monkeypatch, tmp_path):
     """Test function read_config_file for v2.5 and earlier.
 
-    For v2.5 and earlier, the config-file contained a single `url`
+    For v2.5 and earlier, the ESGF config file contained a single `url`
     instead of a list of `urls` to specify the ESGF index node.
     """
     cfg_file = tmp_path / 'esgf-pyclient.yml'

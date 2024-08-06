@@ -485,7 +485,7 @@ class TestCustomInfo(unittest.TestCase):
                          'Atmosphere CH4 surface')
         self.assertEqual(var.units, '1e-09')
 
-    def test_get_variable_tosStderr(self):
+    def test_get_variable_tosstderr(self):
         """Get tosStderr variable."""
         CustomInfo()
         var = self.variables_info.get_variable('Omon', 'tosStderr')
