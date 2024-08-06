@@ -227,10 +227,10 @@ EMAC:
     clw:
       raw_name: [xlm1_cav, xlm1_ave, xlm1]
       channel: Amon
-    hur:  # defined on plev19
+    hur:
       raw_name: [rhum_cav, rhum_ave, rhum]
       channel: Amon
-    hus:  # defined on plev19
+    hus:
       raw_name: [qm1_cav, qm1_ave, qm1]
       channel: Amon
     o3:
