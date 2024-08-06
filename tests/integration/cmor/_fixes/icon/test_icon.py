@@ -1607,6 +1607,9 @@ def test_invalid_time_units(cubes_2d):
 # Test fix with (sub-)hourly data
 
 
+# remove xfail when https://github.com/pandas-dev/pandas/issues/57002
+# gets fixed; pinning pandas not a viable solution due deps issues
+@pytest.mark.xfail(reason='Bug in pandas needs be fixed.')
 def test_hourly_data(cubes_2d):
     """Test fix."""
     fix = get_allvars_fix('Amon', 'tas')

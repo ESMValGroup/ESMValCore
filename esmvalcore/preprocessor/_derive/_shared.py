@@ -153,7 +153,7 @@ def _create_pressure_array(cube, ps_cube, top_limit):
     ps_4d_array = iris.util.broadcast_to_shape(ps_cube.data, shape, [0, 2, 3])
 
     # Set pressure levels below the surface pressure to NaN
-    pressure_4d = np.where((ps_4d_array - p_4d_array) < 0, np.NaN, p_4d_array)
+    pressure_4d = np.where((ps_4d_array - p_4d_array) < 0, np.nan, p_4d_array)
 
     # Make top_limit last pressure level
     top_limit_array = np.full(ps_cube.shape, top_limit, dtype=np.float32)

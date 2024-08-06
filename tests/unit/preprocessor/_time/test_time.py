@@ -920,9 +920,12 @@ class TestSeasonalStatistics(tests.Test):
             name='clim_season',
             seasons=['JFMAMJ', 'JASOND'],
         )
+
+        # numpy>=2.0 these need to be explicitly cast to numpy strings
+        two_seasons = [np.str_('JASOND'), np.str_('JFMAMJ')]
         msg = (
             "Seasons ('DJF', 'MAM', 'JJA', 'SON') do not match prior season "
-            "extraction ['JASOND', 'JFMAMJ']."
+            f"extraction {two_seasons}."
         )
         with pytest.raises(ValueError, match=re.escape(msg)):
             seasonal_statistics(cube, 'mean')
