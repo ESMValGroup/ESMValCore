@@ -31,5 +31,6 @@ class DerivedVariable(DerivedVariableBase):
 
         lwcre_cube = rlutcs_cube - rlut_cube
         lwcre_cube.units = rlut_cube.units
+        lwcre_cube.attributes['positive'] = 'down'
 
         return lwcre_cube
