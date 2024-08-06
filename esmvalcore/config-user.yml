@@ -204,7 +204,9 @@ drs:
 #    /work/bd0854/DATA/ESMValTool2/OBS: default
 #    /work/bd0854/DATA/ESMValTool2/download: ESGF
 #  ana4mips: /work/bd0854/DATA/ESMValTool2/OBS
-#  native6: /work/bd0854/DATA/ESMValTool2/RAWOBS
+#  native6:
+#    /work/bd0854/DATA/ESMValTool2/RAWOBS: default
+#    /pool/data/ERA5: DKRZ-ERA5-GRIB
 #  RAWOBS: /work/bd0854/DATA/ESMValTool2/RAWOBS
 #drs:
 #  ana4mips: default
