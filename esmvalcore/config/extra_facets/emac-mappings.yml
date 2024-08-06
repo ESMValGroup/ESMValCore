@@ -84,7 +84,7 @@ EMAC:
       raw_name: [qvi_cav, qvi_ave, qvi]
       channel: Amon
     ps:
-      raw_name: [aps, aps_cav, aps_ave, aps]
+      raw_name: [aps_cav, aps_ave, aps]
       channel: Amon
     psl:
       raw_name: [slp_cav, slp_ave, slp]
