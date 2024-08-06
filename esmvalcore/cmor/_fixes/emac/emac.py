@@ -220,9 +220,9 @@ class Prodlnox(EmacFix):
             cubes, var_name=['NOxcg_cav', 'NOxcg_ave', 'NOxcg']
         )
         noxic_cube = self.get_cube(
-            cubes, var_name=['NOxcg_cav', 'NOxcg_ave', 'NOxcg']
+            cubes, var_name=['NOxic_cav', 'NOxic_ave', 'NOxic']
         )
-        dt_cube = self.get_cube(cubes, var_name=['dt'])
+        dt_cube = self.get_cube(cubes, var_name='dt')
 
         cube = ((
             noxcg_cube.collapsed(
