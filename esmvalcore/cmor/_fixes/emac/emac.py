@@ -216,18 +216,22 @@ class Prodlnox(EmacFix):
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
+        noxcg_cube = self.get_cube(
+            cubes, var_name=['NOxcg_cav', 'NOxcg_ave', 'NOxcg']
+        )
+        noxic_cube = self.get_cube(
+            cubes, var_name=['NOxcg_cav', 'NOxcg_ave', 'NOxcg']
+        )
+        dt_cube = self.get_cube(cubes, var_name=['dt'])
+
         cube = ((
-            self.get_cube(cubes, var_name=['NOxcg_cav', 'NOxcg_ave',
-                                           'NOxcg']).collapsed(
-                                               ['longitude', 'latitude'],
-                                               iris.analysis.SUM,
-                                               weights=None) +
-            self.get_cube(cubes, var_name=['NOxic_cav', 'NOxic_ave',
-                                           'NOxic']).collapsed(
-                                               ['longitude', 'latitude'],
-                                               iris.analysis.SUM,
-                                               weights=None)) /
-                self.get_cube(cubes, var_name=['dt'])
+            noxcg_cube.collapsed(
+                ['longitude', 'latitude'], iris.analysis.SUM, weights=None
+            ) +
+            noxic_cube.collapsed(
+                ['longitude', 'latitude'], iris.analysis.SUM, weights=None
+            )) /
+            dt_cube
         )
         cube.units = 'kg s-1'
         cube.var_name = self.vardef.short_name
