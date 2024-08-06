@@ -438,20 +438,21 @@ numfig = True
 
 # Configuration for intersphinx
 intersphinx_mapping = {
-    'cf_units': ('https://cf-units.readthedocs.io/en/latest/', None),
+    'cf_units': ('https://cf-units.readthedocs.io/en/stable/', None),
     'cftime': ('https://unidata.github.io/cftime/', None),
     'esmvalcore':
     (f'https://docs.esmvaltool.org/projects/ESMValCore/en/{rtd_version}/',
      None),
     'esmvaltool': (f'https://docs.esmvaltool.org/en/{rtd_version}/', None),
+    'esmpy': ('https://earthsystemmodeling.org/esmpy_doc/release/latest/html/',
+              None),
     'dask': ('https://docs.dask.org/en/stable/', None),
     'distributed': ('https://distributed.dask.org/en/stable/', None),
-    'iris': ('https://scitools-iris.readthedocs.io/en/latest/', None),
-    'iris-esmf-regrid': ('https://iris-esmf-regrid.readthedocs.io/en/latest',
-                         None),
+    'iris': ('https://scitools-iris.readthedocs.io/en/stable/', None),
+    'esmf_regrid': ('https://iris-esmf-regrid.readthedocs.io/en/stable/', None),
     'matplotlib': ('https://matplotlib.org/stable/', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
-    'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/latest/', None),
+    'pyesgf': ('https://esgf-pyclient.readthedocs.io/en/stable/', None),
     'python': ('https://docs.python.org/3/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/', None),
 }

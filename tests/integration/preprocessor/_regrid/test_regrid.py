@@ -145,12 +145,15 @@ class Test:
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
         assert_array_equal(result.data, expected)
 
+    @pytest.mark.parametrize('scheme', [{
+        'reference':
+        'esmf_regrid.schemes:regrid_rectilinear_to_rectilinear',
+    }, {
+        'reference': 'esmvalcore.preprocessor.regrid_schemes:IrisESMFRegrid',
+        'method': 'bilinear',
+    }])
     @pytest.mark.parametrize('cache_weights', [True, False])
-    def test_regrid__esmf_rectilinear(self, cache_weights):
-        scheme_name = 'esmf_regrid.schemes:regrid_rectilinear_to_rectilinear'
-        scheme = {
-            'reference': scheme_name
-        }
+    def test_regrid__esmf_rectilinear(self, scheme, cache_weights):
         result = regrid(
             self.cube,
             self.grid_for_linear,
@@ -309,8 +312,15 @@ class Test:
         expected = np.array([1.499886, 5.499886, 9.499886])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
 
+    @pytest.mark.parametrize('scheme', [{
+        'reference':
+        'esmf_regrid.schemes:ESMFAreaWeighted'
+    }, {
+        'reference': 'esmvalcore.preprocessor.regrid_schemes:IrisESMFRegrid',
+        'method': 'conservative',
+    }])
     @pytest.mark.parametrize('cache_weights', [True, False])
-    def test_regrid__esmf_area_weighted(self, cache_weights):
+    def test_regrid__esmf_area_weighted(self, scheme, cache_weights):
         data = np.empty((1, 1))
         lons = iris.coords.DimCoord([1.6],
                                     standard_name='longitude',
@@ -324,9 +334,6 @@ class Test:
                                     coord_system=self.cs)
         coords_spec = [(lats, 0), (lons, 1)]
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
-        scheme = {
-            'reference': 'esmf_regrid.schemes:ESMFAreaWeighted'
-        }
         result = regrid(self.cube, grid, scheme, cache_weights=cache_weights)
         expected = np.array([[[1.499886]], [[5.499886]], [[9.499886]]])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
