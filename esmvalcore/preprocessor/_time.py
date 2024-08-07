@@ -79,15 +79,23 @@ def extract_time(
     cube:
         Input cube.
     start_year:
-        Start year. If None, the date ranges are selected in each year.
-        If start_year is None, end_year has to be None too.
+        Start year. If None, the date ranges (start_month-start_day to
+        end_month-end_day) are selected in each year. For example,
+        ranges Feb 3 - Apr 6 in each year are selected if
+        start_year: None, start_month: 2, start_day: 3,
+        end_year: None, end_month: 4, end_day: 6. If start_year is
+        None, end_year has to be None too.
     start_month:
         Start month.
     start_day:
         Start day.
     end_year:
-        End year. If None, the date ranges are selected in each year.
-        If end_year is None, start_year has to be None too.
+        End year. If None, the date ranges (start_month-start_day to
+        end_month-end_day) are selected in each year. For example,
+        ranges Feb 3 - Apr 6 in each year are selected if
+        start_year: None, start_month: 2, start_day: 3,
+        end_year: None, end_month: 4, end_day: 6. If end_year is None,
+        start_year has to be None too.
     end_month:
         End month.
     end_day:
@@ -107,7 +115,7 @@ def extract_time(
         start_year = int(start_year)
     if end_year is not None:
         end_year = int(end_year)
-    if isinstance(start_year, int) ^ isinstance(end_year, int):
+    if (not start_year) ^ (not end_year):
         raise ValueError("If start_year or end_year is None, both "
                          "start_year and end_year have to be None. "
                          f"Currently, start_year is {start_year} "
@@ -225,7 +233,7 @@ def _extract_datetime(
         if isinstance(end_datetime.day, int) and end_datetime.day > 30:
             end_datetime.day = 30
 
-    if (not cube.coord_dims(time_coord)) | (start_datetime.year is None):
+    if (not cube.coord_dims(time_coord)) or (start_datetime.year is None):
         constraint = iris.Constraint(
             time=lambda t: start_datetime <= t.point < end_datetime)
         cube_slice = cube.extract(constraint)
