@@ -148,6 +148,12 @@ class TestTimeSlice(tests.Test):
         sliced = extract_time(cube, 1950, 2, 30, 1950, 3, 1)
         assert_array_equal(np.array([59]), sliced.coord('time').points)
 
+    def test_extract_time_none_years(self):
+        """Test extract slice if both end and start year are None."""
+        sliced = extract_time(self.cube, None, 2, 5, None, 4, 17)
+        assert_array_equal(np.array([45., 75., 105., 405., 435., 465.]),
+                           sliced.coord('time').points)
+
     def test_extract_time_no_slice(self):
         """Test fail of extract_time."""
         self.cube.coord('time').guess_bounds()
@@ -171,11 +177,23 @@ class TestTimeSlice(tests.Test):
         sliced = extract_time(cube, 1950, 1, 1, 1950, 12, 31)
         assert cube == sliced
 
-    def test_extract_time_none_year(self):
-        """Test extract_time when one of the years is None."""
+    def test_extract_time_start_none_year(self):
+        """Test extract_time when only start_year is None."""
         cube = self.cube.coord('time').guess_bounds()
-        with assert_raises(ValueError):
+        msg = ('If start_year or end_year is None, both start_year and '
+               'end_year have to be None. Currently, start_year is None and '
+               'end_year is 1950.')
+        with pytest.raises(ValueError, match=msg):
             extract_time(cube, None, 1, 1, 1950, 2, 1)
+
+    def test_extract_time_end_none_year(self):
+        """Test extract_time when only end_year is None."""
+        cube = self.cube.coord('time').guess_bounds()
+        msg = ('If start_year or end_year is None, both start_year and '
+               'end_year have to be None. Currently, start_year is 1950 and '
+               'end_year is None.')
+        with pytest.raises(ValueError, match=msg):
+            extract_time(cube, 1950, 1, 1, None, 2, 1)
 
 
 class TestClipTimerange(tests.Test):
