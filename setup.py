@@ -43,6 +43,7 @@ REQUIREMENTS = {
         'isodate',
         'jinja2',
         'nc-time-axis',  # needed by iris.plot
+        'ncdata',
         'nested-lookup',
         'netCDF4',
         'numpy!=1.24.3,<2.0.0',  # avoid pulling 2.0.0rc1
