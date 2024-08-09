@@ -1,0 +1,21 @@
+SOURCE: CMIP5
+!============
+variable_entry:    txx
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             K
+cell_methods:      time: mean
+cell_measures:     area: areacella
+long_name:         Annual/monthly maximum value of daily maximum temperature
+comment:           ETCCDI (Extreme climate change index) annual/monthly maximum value of daily maximum temperature
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+type:              real
+!----------------------------------
+!
