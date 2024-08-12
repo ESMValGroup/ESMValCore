@@ -29,7 +29,7 @@ REQUIREMENTS = {
     'install': [
         'cartopy',
         'cf-units',
-        'dask[array,distributed]',
+        'dask[array,distributed]!=2024.8.0',  # ESMValCore/issues/2503
         'dask-jobqueue',
         'esgf-pyclient>=0.3.1',
         'esmf-regrid>=0.10.0',  # iris-esmf-regrid #342
