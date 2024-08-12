@@ -4,8 +4,9 @@ from pathlib import Path
 import pytest
 import yaml
 
+import esmvalcore
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.config import CFG, _config
+from esmvalcore.config import CFG, _config, _config_validators
 from esmvalcore.config._config import (
     _deep_update,
     _load_extra_facets,
@@ -193,6 +194,7 @@ def test_load_default_config(monkeypatch, default_config):
         'preproc_dir',
         'run_dir',
         'work_dir',
+        'config_dir',
     }
     # Check that only allowed keys are in it
     assert set(default_cfg) == set(cfg)
@@ -210,6 +212,7 @@ def test_load_default_config(monkeypatch, default_config):
     for path in ('preproc', 'work', 'run'):
         assert getattr(cfg, path + '_dir') == cfg.session_dir / path
     assert cfg.plot_dir == cfg.session_dir / 'plots'
+    assert cfg.config_dir == Path(esmvalcore.__file__).parent
 
     # Check that projects were configured
     assert project_cfg
@@ -245,6 +248,9 @@ def test_project_obs4mips_case_correction(tmp_path, monkeypatch, mocker):
     assert 'obs4mips' not in _config.CFG
     assert _config.CFG['obs4MIPs'] == project_cfg
 
+    # Restore config-developer file
+    _config_validators.validate_config_developer(None)
+
 
 def test_load_config_developer_custom(tmp_path, monkeypatch, mocker):
     monkeypatch.setattr(_config, 'CFG', {})
@@ -257,6 +263,9 @@ def test_load_config_developer_custom(tmp_path, monkeypatch, mocker):
     _config.load_config_developer(cfg_file)
 
     assert 'custom' in _config.CFG
+
+    # Restore config-developer file
+    _config_validators.validate_config_developer(None)
 
 
 @pytest.mark.parametrize(

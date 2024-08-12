@@ -459,7 +459,7 @@ def test_single_download(mocker, tmp_path, checksum):
     # We checked for a valid response
     response.raise_for_status.assert_called_once()
     # And requested a reasonable chunk size
-    response.iter_content.assert_called_with(chunk_size=None)
+    response.iter_content.assert_called_with(chunk_size=2**20)
 
 
 def test_download_skip_existing(tmp_path, caplog):

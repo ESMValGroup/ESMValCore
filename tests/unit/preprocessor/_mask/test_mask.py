@@ -5,6 +5,7 @@ import unittest
 import numpy as np
 
 import iris
+import iris.fileformats
 import tests
 from cf_units import Unit
 from esmvalcore.preprocessor._mask import (_apply_fx_mask,
@@ -49,6 +50,7 @@ class Test(tests.Test):
         dummy_fx_mask = np.ma.array((True, False, True))
         app_mask = _apply_fx_mask(dummy_fx_mask,
                                   self.time_cube.data[0:3].astype('float64'))
+        app_mask = app_mask.compute()
         fixed_mask = np.ma.array(self.time_cube.data[0:3].astype('float64'),
                                  mask=dummy_fx_mask)
         self.assert_array_equal(fixed_mask, app_mask)
@@ -59,6 +61,7 @@ class Test(tests.Test):
         masked_data = np.ma.array(self.time_cube.data[0:3].astype('float64'),
                                   mask=np.ma.array((False, True, False)))
         app_mask = _apply_fx_mask(dummy_fx_mask, masked_data)
+        app_mask = app_mask.compute()
         fixed_mask = np.ma.array(self.time_cube.data[0:3].astype('float64'),
                                  mask=dummy_fx_mask)
         self.assert_array_equal(fixed_mask, app_mask)

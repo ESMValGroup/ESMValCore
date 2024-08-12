@@ -1,5 +1,4 @@
 """Unit tests for the esmvalcore.preprocessor._regrid_esmpy module."""
-import sys
 from unittest import mock
 
 import cf_units
@@ -10,6 +9,9 @@ from iris.exceptions import CoordinateNotFoundError
 
 import tests
 from esmvalcore.preprocessor._regrid_esmpy import (
+    ESMPyAreaWeighted,
+    ESMPyLinear,
+    ESMPyNearest,
     build_regridder,
     build_regridder_2d,
     coords_iris_to_esmpy,
@@ -19,7 +21,6 @@ from esmvalcore.preprocessor._regrid_esmpy import (
     get_grid_representants,
     get_representant,
     is_lon_circular,
-    regrid,
 )
 
 
@@ -379,9 +380,6 @@ class TestHelpers(tests.Test):
         self.assert_array_equal(esmpy_lon_corners,
                                 self.expected_esmpy_lon_corners)
 
-    @pytest.mark.skipif(sys.version_info.major == 3
-                        and sys.version_info.minor == 9,
-                        reason="bug in mock.py for Python 3.9.0 and 3.9.1")
     def test_get_grid_circular(self):
         """Test building of ESMF grid from iris cube circular longitude."""
         expected_get_coords_calls = [
@@ -403,9 +401,6 @@ class TestHelpers(tests.Test):
             mg.add_item.assert_called_once_with(mock.sentinel.gi_mask,
                                                 mock.sentinel.sl_center)
 
-    @pytest.mark.skipif(sys.version_info.major == 3
-                        and sys.version_info.minor == 9,
-                        reason="bug in mock.py for Python 3.9.0 and 3.9.1")
     def test_get_grid_non_circular(self):
         """Test building of ESMF grid from iris cube non circular longitude."""
         expected_get_coords_calls = [
@@ -463,9 +458,6 @@ class TestHelpers(tests.Test):
 
     @mock.patch('esmvalcore.preprocessor._regrid_esmpy.esmpy.Grid', MockGrid)
     @mock.patch('esmvalcore.preprocessor._regrid_esmpy.esmpy.Field')
-    @pytest.mark.skipif(sys.version_info.major == 3
-                        and sys.version_info.minor == 9,
-                        reason="bug in mock.py for Python 3.9.0 and 3.9.1")
     def test_cube_to_empty_field(self, mock_field):
         """Test building of empty field from iris cube."""
         field = cube_to_empty_field(self.cube)
@@ -664,13 +656,87 @@ class TestHelpers(tests.Test):
     @mock.patch('esmvalcore.preprocessor._regrid_esmpy.build_regridder')
     @mock.patch('esmvalcore.preprocessor._regrid_esmpy.get_grid_representants',
                 mock.Mock(side_effect=identity))
-    def test_regrid(self, mock_build_regridder, mock_map_slices):
+    def test_regrid_nearest(self, mock_build_regridder, mock_map_slices):
         """Test full regrid method."""
         mock_build_regridder.return_value = mock.sentinel.regridder
         mock_map_slices.return_value = mock.sentinel.regridded
-        regrid(self.cube_3d, self.cube)
-        mock_build_regridder.assert_called_once_with(self.cube_3d, self.cube,
-                                                     'linear')
+        regridder = ESMPyNearest().regridder(self.cube_3d, self.cube)
+        regridder(self.cube_3d)
+        mock_build_regridder.assert_called_once_with(
+            self.cube_3d, self.cube, 'nearest', mask_threshold=0.99
+        )
         mock_map_slices.assert_called_once_with(self.cube_3d,
                                                 mock.sentinel.regridder,
                                                 self.cube_3d, self.cube)
+
+    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.map_slices')
+    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.build_regridder')
+    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.get_grid_representants',
+                mock.Mock(side_effect=identity))
+    def test_regrid_linear(self, mock_build_regridder, mock_map_slices):
+        """Test full regrid method."""
+        mock_build_regridder.return_value = mock.sentinel.regridder
+        mock_map_slices.return_value = mock.sentinel.regridded
+        regridder = ESMPyLinear().regridder(self.cube_3d, self.cube)
+        regridder(self.cube_3d)
+        mock_build_regridder.assert_called_once_with(
+            self.cube_3d, self.cube, 'linear', mask_threshold=0.99
+        )
+        mock_map_slices.assert_called_once_with(self.cube_3d,
+                                                mock.sentinel.regridder,
+                                                self.cube_3d, self.cube)
+
+    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.map_slices')
+    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.build_regridder')
+    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.get_grid_representants',
+                mock.Mock(side_effect=identity))
+    def test_regrid_area_weighted(self, mock_build_regridder, mock_map_slices):
+        """Test full regrid method."""
+        mock_build_regridder.return_value = mock.sentinel.regridder
+        mock_map_slices.return_value = mock.sentinel.regridded
+        regridder = ESMPyAreaWeighted().regridder(self.cube_3d, self.cube)
+        regridder(self.cube_3d)
+        mock_build_regridder.assert_called_once_with(
+            self.cube_3d, self.cube, 'area_weighted', mask_threshold=0.99
+        )
+        mock_map_slices.assert_called_once_with(self.cube_3d,
+                                                mock.sentinel.regridder,
+                                                self.cube_3d, self.cube)
+
+    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.map_slices')
+    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.build_regridder')
+    @mock.patch('esmvalcore.preprocessor._regrid_esmpy.get_grid_representants',
+                mock.Mock(side_effect=identity))
+    def test_data_realized_once(self, mock_build_regridder, mock_map_slices):
+        """Test that the regridder realizes the data only once."""
+        src_cube = mock.MagicMock()
+        src_data = mock.PropertyMock()
+        type(src_cube).data = src_data
+        tgt_cube1 = mock.MagicMock()
+        tgt_data1 = mock.PropertyMock()
+        type(tgt_cube1).data = tgt_data1
+        # Check that constructing the regridder realizes the source and
+        # target data.
+        regridder = ESMPyAreaWeighted().regridder(src_cube, tgt_cube1)
+        src_data.assert_called_with()
+        tgt_data1.assert_called_with()
+        tgt_cube2 = mock.MagicMock()
+        tgt_data2 = mock.PropertyMock()
+        # Check that calling the regridder with another cube also realizes
+        # target data.
+        type(tgt_cube2).data = tgt_data2
+        regridder(tgt_cube2)
+        tgt_data2.assert_called_with()
+
+
+@pytest.mark.parametrize(
+    'scheme,output',
+    [
+        (ESMPyAreaWeighted(), 'ESMPyAreaWeighted(mask_threshold=0.99)'),
+        (ESMPyLinear(), 'ESMPyLinear(mask_threshold=0.99)'),
+        (ESMPyNearest(), 'ESMPyNearest(mask_threshold=0.99)'),
+    ]
+)
+def test_scheme_repr(scheme, output):
+    """Test ``_ESMPyScheme.__repr__``."""
+    assert scheme.__repr__() == output

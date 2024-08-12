@@ -26,7 +26,7 @@ User configuration file
 
 
 The ``config-user.yml`` configuration file contains all the global level
-information needed by ESMValTool. It can be reused as many times the user needs
+information needed by ESMValCore. It can be reused as many times the user needs
 to before changing any of the options stored in it. This file is essentially
 the gateway between the user and the machine-specific instructions to
 ``esmvaltool``. By default, esmvaltool looks for it in the home directory,
@@ -189,7 +189,7 @@ and memory usage.
 A detailed explanation of the data finding-related sections of the
 ``config-user.yml`` (``rootpath`` and ``drs``) is presented in the
 :ref:`data-retrieval` section. This section relates directly to the data
-finding capabilities  of ESMValTool and are very important to be understood by
+finding capabilities of ESMValCore and are very important to be understood by
 the user.
 
 .. note::
@@ -201,8 +201,8 @@ the user.
 
 .. _config-dask:
 
-Dask distributed configuration
-==============================
+Dask configuration
+==================
 
 The :ref:`preprocessor functions <preprocessor_functions>` and many of the
 :ref:`Python diagnostics in ESMValTool <esmvaltool:recipes>` make use of the
@@ -224,7 +224,10 @@ Therefore it is recommended that you take a moment to configure the
 A Dask scheduler and the 'workers' running the actual computations, are
 collectively called a 'Dask cluster'.
 
-In ESMValCore, the Dask cluster can configured by creating a file called
+Dask distributed configuration
+------------------------------
+
+In ESMValCore, the Dask Distributed cluster can configured by creating a file called
 ``~/.esmvaltool/dask.yml``, where ``~`` is short for your home directory.
 In this file, under the ``client`` keyword, the arguments to
 :obj:`distributed.Client` can be provided.
@@ -242,9 +245,8 @@ Extensive documentation on setting up Dask Clusters is available
 .. note::
 
   If not all preprocessor functions support lazy data, computational
-  performance may be best with the default scheduler.
-  See `issue #674 <https://github.com/ESMValGroup/ESMValCore/issues/674>`_ for
-  progress on making all preprocessor functions lazy.
+  performance may be best with the :ref:`default scheduler <config-dask-default-scheduler>`.
+  See :issue:`674` for progress on making all preprocessor functions lazy.
 
 **Example configurations**
 
@@ -355,6 +357,61 @@ Therefore, it may be beneficial to use fewer threads per worker if the
 computation is very simple and the runtime is determined by the
 speed with which the data can be read from and/or written to disk.
 
+.. _config-dask-default-scheduler:
+
+Dask default scheduler configuration
+------------------------------------
+
+The Dask default scheduler can be a good choice for recipes using a small
+amount of data or when running a recipe where not all preprocessor functions
+are lazy yet (see :issue:`674` for the current status). To use the the Dask
+default scheduler, comment out or remove all content of ``~/.esmvaltool/dask.yml``.
+
+To avoid running out of memory, it is important to set the number of workers
+(threads) used by Dask to run its computations to a reasonable number. By
+default the number of CPU cores in the machine will be used, but this may be
+too many on shared machines or laptops with a large number of CPU cores
+compared to the amount of memory they have available.
+
+Typically, Dask requires about 2GB of RAM per worker, but this may be more
+depending on the computation.
+
+To set the number of workers used by the Dask default scheduler, create a file
+called ``~/.config/dask/dask.yml`` and add the following
+content:
+
+.. code:: yaml
+
+  scheduler: threads
+  num_workers: 4  # this example sets the number of workers to 4
+
+
+Note that the file name is arbitrary, only the directory it is in matters, as
+explained in more detail
+`here <https://docs.dask.org/en/stable/configuration.html#specify-configuration>`__.
+See the `Dask documentation <https://docs.dask.org/en/latest/scheduling.html#configuration>`__
+for more information.
+
+Configuring Dask for debugging
+------------------------------
+
+For debugging purposes, it can be useful to disable all parallelism, as this
+will often result in more clear error messages. This can be achieved by
+settings ``max_parallel_tasks: 1`` in config-user.yml,
+commenting out or removing all content of ``~/.esmvaltool/dask.yml``, and
+creating a file called ``~/.config/dask/dask.yml`` with the following
+content:
+
+.. code:: yaml
+
+  scheduler: synchronous
+
+Note that the file name is arbitrary, only the directory it is in matters, as
+explained in more detail
+`here <https://docs.dask.org/en/stable/configuration.html#specify-configuration>`__.
+See the `Dask documentation <https://docs.dask.org/en/latest/scheduling.html#single-thread>`__
+for more information.
+
 .. _config-esgf:
 
 ESGF configuration
@@ -383,8 +440,8 @@ corresponding command line arguments ``--search_esgf=when_missing`` or
    tool by pressing the ``Ctrl`` and ``C`` keys on your keyboard simultaneously
    several times, edit the recipe so it contains fewer datasets and try again.
 
-For downloading some files (e.g. those produced by the CORDEX project),
-you need to log in to be able to download the data.
+For downloading some files, you may need to log in to be able to download the
+data.
 
 See the
 `ESGF user guide <https://esgf.github.io/esgf-user-support/user_guide.html>`_
@@ -684,7 +741,8 @@ related to CMOR table settings available:
   extended with variables from the :ref:`custom_cmor_tables` (by default loaded
   from the ``esmvalcore/cmor/tables/custom`` directory) and it is possible to
   use variables with a ``mip`` which is different from the MIP table in which
-  they are defined.
+  they are defined. Note that this option is always enabled for
+  :ref:`derived <Variable derivation>` variables.
 * ``cmor_path``: path to the CMOR table.
   Relative paths are with respect to `esmvalcore/cmor/tables`_.
   Defaults to the value provided in ``cmor_type`` written in lower case.
@@ -699,11 +757,18 @@ Custom CMOR tables
 
 As mentioned in the previous section, the CMOR tables of projects that use
 ``cmor_strict: false`` will be extended with custom CMOR tables.
-By default, these are loaded from `esmvalcore/cmor/tables/custom
+For derived variables (the ones with ``derive: true`` in the recipe), the
+custom CMOR tables will always be considered.
+By default, these custom tables are loaded from `esmvalcore/cmor/tables/custom
 <https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom>`_.
 However, by using the special project ``custom`` in the
 ``config-developer.yml`` file with the option ``cmor_path``, a custom location
-for these custom CMOR tables can be specified:
+for these custom CMOR tables can be specified.
+In this case, the default custom tables are extended with those entries from
+the custom location (in case of duplication, the custom location tables take
+precedence).
+
+Example:
 
 .. code-block:: yaml
 
@@ -743,11 +808,10 @@ Example for the file ``CMOR_asr.dat``:
    !----------------------------------
    !
 
-It is also possible to use a special coordinates file ``CMOR_coordinates.dat``.
-If this is not present in the custom directory, the one from the default
-directory (`esmvalcore/cmor/tables/custom/CMOR_coordinates.dat
-<https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom/CMOR_coordinates.dat>`_)
-is used.
+It is also possible to use a special coordinates file ``CMOR_coordinates.dat``,
+which will extend the entries from the default one
+(`esmvalcore/cmor/tables/custom/CMOR_coordinates.dat
+<https://github.com/ESMValGroup/ESMValCore/tree/main/esmvalcore/cmor/tables/custom/CMOR_coordinates.dat>`_).
 
 
 .. _filterwarnings_config-developer:
@@ -881,7 +945,7 @@ addition of more details per project, dataset, mip table, and variable name.
 
 More precisely, one can provide this information in an extra yaml file, named
 `{project}-something.yml`, where `{project}` corresponds to the project as used
-by ESMValTool in :ref:`Datasets` and "something" is arbitrary.
+by ESMValCore in :ref:`Datasets` and "something" is arbitrary.
 
 Format of the extra facets files
 --------------------------------
@@ -934,7 +998,7 @@ variable of any CMIP5 dataset that does not have a ``product`` key yet:
 Location of the extra facets files
 ----------------------------------
 Extra facets files can be placed in several different places. When we use them
-to support a particular use-case within the ESMValTool project, they will be
+to support a particular use-case within the ESMValCore project, they will be
 provided in the sub-folder `extra_facets` inside the package
 :mod:`esmvalcore.config`. If they are used from the user side, they can be either
 placed in `~/.esmvaltool/extra_facets` or in any other directory of the users

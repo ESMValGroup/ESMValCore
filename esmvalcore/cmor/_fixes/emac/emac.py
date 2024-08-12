@@ -174,7 +174,7 @@ class AllVars(EmacFix):
         for coord in (ap_coord, b_coord, ps_coord):
             coord.points = coord.core_points().astype(
                 float, casting='same_kind')
-            if coord.bounds is not None:
+            if coord.has_bounds():
                 coord.bounds = coord.core_bounds().astype(
                     float, casting='same_kind')
 
@@ -208,6 +208,34 @@ class Clwvi(EmacFix):
                                            'xivi'])
         )
         cube.var_name = self.vardef.short_name
+        return CubeList([cube])
+
+
+class Prodlnox(EmacFix):
+    """Fixes for ``prodlnox``."""
+
+    def fix_metadata(self, cubes):
+        """Fix metadata."""
+        noxcg_cube = self.get_cube(
+            cubes, var_name=['NOxcg_cav', 'NOxcg_ave', 'NOxcg']
+        )
+        noxic_cube = self.get_cube(
+            cubes, var_name=['NOxic_cav', 'NOxic_ave', 'NOxic']
+        )
+        dt_cube = self.get_cube(cubes, var_name='dt')
+
+        cube = ((
+            noxcg_cube.collapsed(
+                ['longitude', 'latitude'], iris.analysis.SUM, weights=None
+            ) +
+            noxic_cube.collapsed(
+                ['longitude', 'latitude'], iris.analysis.SUM, weights=None
+            )) /
+            dt_cube
+        )
+        cube.units = 'kg s-1'
+        cube.var_name = self.vardef.short_name
+
         return CubeList([cube])
 
 

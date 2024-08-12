@@ -1,5 +1,6 @@
 """Tests for the fixes of CIESM."""
 import iris.cube
+import numpy as np
 import pytest
 
 from esmvalcore.cmor._fixes.cmip6.ciesm import Cl
@@ -38,8 +39,17 @@ def test_cl_fix_data(cl_cube):
     assert out_cube.data == [100.0]
 
 
+def test_clt_fix():
+    """Test `Clt.fix_data`."""
+    cube = iris.cube.Cube(0.5)
+    fix = Fix.get_fixes('CMIP6', 'CIESM', 'Amon', 'clt')[0]
+    out_cube = fix.fix_data(cube)
+    np.testing.assert_allclose(out_cube.data, 50.0)
+    assert out_cube.units == '%'
+
+
 def test_pr_fix():
-    """Test `Pr.fix_metadata`."""
+    """Test `Pr.fix_data`."""
     cube = iris.cube.Cube(
         [2.82e-08],
         var_name='pr',
