@@ -66,7 +66,7 @@ class DerivedVariable(DerivedVariableBase):
 
         # (1) Mask O3 mole fraction using the given threshold
         o3_cube.convert_units('1e-9')
-        mask = (o3_cube.lazy_data() < STRATOSPHERIC_O3_THRESHOLD)
+        mask = o3_cube.lazy_data() < STRATOSPHERIC_O3_THRESHOLD
         mask |= da.ma.getmaskarray(o3_cube.lazy_data())
         o3_cube.data = da.ma.masked_array(o3_cube.lazy_data(), mask=mask)
 
