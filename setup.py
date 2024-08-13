@@ -29,7 +29,7 @@ REQUIREMENTS = {
     'install': [
         'cartopy',
         'cf-units',
-        'dask[array,distributed]',
+        'dask[array,distributed]!=2024.8.0',  # ESMValCore/issues/2503
         'dask-jobqueue',
         'esgf-pyclient>=0.3.1',
         'esmf-regrid>=0.10.0',  # iris-esmf-regrid #342
@@ -39,7 +39,6 @@ REQUIREMENTS = {
         'fire',
         'geopy',
         'humanfriendly',
-        "importlib_metadata;python_version<'3.10'",
         'iris-grib',
         'isodate',
         'jinja2',
@@ -218,9 +217,9 @@ setup(
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Atmospheric Science',
         'Topic :: Scientific/Engineering :: GIS',

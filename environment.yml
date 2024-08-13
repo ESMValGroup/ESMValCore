@@ -8,7 +8,7 @@ dependencies:
   - cartopy
   - cf-units
   - cftime
-  - dask
+  - dask !=2024.8.0  # github.com/ESMValGroup/ESMValCore/issues/2503
   - dask-jobqueue
   - distributed
   - esgf-pyclient >=0.3.1
@@ -18,7 +18,6 @@ dependencies:
   - fire
   - geopy
   - humanfriendly
-  - importlib_metadata  # required for Python < 3.10
   - iris >=3.9.0
   - iris-esmf-regrid >=0.10.0  # github.com/SciTools-incubator/iris-esmf-regrid/pull/342
   - iris-grib
@@ -37,7 +36,7 @@ dependencies:
   - psutil
   - py-cordex
   - pybtex
-  - python >=3.9
+  - python >=3.10
   - python-stratify >=0.3
   - pyyaml
   - requests
