@@ -17,6 +17,8 @@ def get_coord_spec(include_plev=True):
     lon_coord = iris.coords.DimCoord([0.0, 1.0], var_name='longitude',
                                      standard_name='longitude',
                                      units='degrees')
+    lat_coord.guess_bounds()
+    lon_coord.guess_bounds()
     if include_plev:
         plev_coord = iris.coords.DimCoord([100000.0, 90000.0, 50000.0],
                                           var_name='plev',

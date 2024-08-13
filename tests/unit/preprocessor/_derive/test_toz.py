@@ -12,12 +12,14 @@ from .test_co2s import get_coord_spec, get_ps_cube
 def get_masked_o3_cube():
     """Get masked ``o3`` cube."""
     coord_spec = get_coord_spec()
-    o3_data = da.ma.masked_less([[[[0.0, -1.0],
-                                   [-1.0, -1.0]],
-                                  [[1.0, 2.0],
-                                   [3.0, -1.0]],
-                                  [[2.0, 2.0],
-                                   [2.0, 2.0]]]], 0.0)
+    o3_data = da.ma.masked_less(
+        [[
+            [[0.0, -1.0], [-1.0, -1.0]],
+            [[1.0, 2.0], [3.0, -1.0]],
+            [[2.0, 2.0], [2.0, 2.0]],
+        ]],
+        0.0,
+    )
     o3_cube = iris.cube.Cube(
         o3_data,
         var_name='o3',
@@ -85,12 +87,13 @@ def masked_cubes_hybrid_plevs():
 def unmasked_cubes():
     """Unmasked O3 cube."""
     coord_spec = get_coord_spec()
-    o3_data = da.array([[[[2.0, 1.0],
-                          [0.8, 1.0]],
-                         [[1.5, 0.8],
-                          [2.0, 3.0]],
-                         [[4.0, 1.0],
-                          [3.0, 2.0]]]])
+    o3_data = da.array(
+        [[
+            [[2.0, 1.0], [0.8, 1.0]],
+            [[1.5, 0.8], [2.0, 3.0]],
+            [[4.0, 1.0], [3.0, 2.0]],
+        ]],
+    )
     o3_cube = iris.cube.Cube(
         o3_data,
         var_name='o3',
@@ -105,52 +108,68 @@ def unmasked_cubes():
 def test_toz_calculate_masked_cubes(masked_cubes):
     """Test function ``calculate`` with masked cube."""
     derived_var = toz.DerivedVariable()
+
     out_cube = derived_var.calculate(masked_cubes)
+
+    assert out_cube.units == 'm'
     assert not np.ma.is_masked(out_cube.data)
-    np.testing.assert_allclose(out_cube.data,
-                               [[[1.2988646378902597, 0.7871906896304607],
-                                 [1.6924599827054907, 0.9446288275565529]]])
-    assert out_cube.units == 'DU'
+    np.testing.assert_allclose(
+        out_cube.data,
+        [[
+            [1.2988646378902597e-5, 0.7871906896304607e-5],
+            [1.6924599827054907e-5, 0.9446288275565529e-5],
+        ]],
+    )
 
 
 def test_toz_calculate_masked_cubes_no_lon(masked_cubes_no_lon):
     """Test function ``calculate`` with zonal mean masked cube."""
     derived_var = toz.DerivedVariable()
+
     out_cube = derived_var.calculate(masked_cubes_no_lon)
+
+    assert out_cube.units == 'm'
     assert not np.ma.is_masked(out_cube.data)
-    np.testing.assert_allclose(out_cube.data,
-                               [[[1.3972634740940675],
-                                 [1.6924599827054907]]])
-    assert out_cube.units == 'DU'
+    np.testing.assert_allclose(
+        out_cube.data, [[[1.3972634740940675e-5], [1.6924599827054907e-5]]],
+    )
 
 
 def test_toz_calculate_masked_cubes_hybrid_plevs(masked_cubes_hybrid_plevs):
     """Test function ``calculate`` with zonal mean masked cube."""
     derived_var = toz.DerivedVariable()
+
     out_cube = derived_var.calculate(masked_cubes_hybrid_plevs)
-    print(out_cube.data)
+
+    assert out_cube.units == 'm'
     assert not np.ma.is_masked(out_cube.data)
-    np.testing.assert_allclose(out_cube.data,
-                               [[[0.33701601399804104, 0.3739155775744688],
-                                 [0.440334792012039, 0.19679767240761517]]])
-    assert out_cube.units == 'DU'
+    np.testing.assert_allclose(
+        out_cube.data,
+        [[
+            [0.33701601399804104e-5, 0.3739155775744688e-5],
+            [0.440334792012039e-5, 0.19679767240761517e-5],
+        ]],
+    )
 
 
 def test_toz_calculate_unmasked_cubes(unmasked_cubes):
     """Test function ``calculate`` with unmasked cube."""
     derived_var = toz.DerivedVariable()
+
     out_cube = derived_var.calculate(unmasked_cubes)
+
+    assert out_cube.units == 'm'
     assert not np.ma.is_masked(out_cube.data)
-    np.testing.assert_allclose(out_cube.data,
-                               [[[2.65676858, 0.39359534],
-                                 [2.04669579, 0.94462883]]])
-    assert out_cube.units == 'DU'
+    np.testing.assert_allclose(
+        out_cube.data,
+        [[[2.65676858e-5, 0.39359534e-5], [2.04669579e-5, 0.94462883e-5]]],
+    )
 
 
 @pytest.mark.parametrize('project,out', [
     ('CMIP5', [{'short_name': 'tro3'}, {'short_name': 'ps'}]),
     ('TEST', [{'short_name': 'tro3'}, {'short_name': 'ps'}]),
-    ('CMIP6', [{'short_name': 'o3'}, {'short_name': 'ps'}]),
+    ('CMIP6', [{'short_name': 'o3'}, {'short_name': 'ps', 'mip': 'Amon'}]),
 ])
 def test_toz_required(project, out):
     """Test function ``required``."""
