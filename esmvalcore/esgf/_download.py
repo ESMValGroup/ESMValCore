@@ -22,7 +22,6 @@ from humanfriendly import format_size, format_timespan
 from esmvalcore.typing import Facets
 
 from ..local import LocalFile
-from ._logon import get_credentials
 from .facets import DATASET_MAP, FACETS
 
 logger = logging.getLogger(__name__)
@@ -460,10 +459,7 @@ class ESGFFile:
 
         logger.debug("Downloading %s to %s", url, tmp_file)
         start_time = datetime.datetime.now()
-        response = requests.get(url,
-                                stream=True,
-                                timeout=TIMEOUT,
-                                cert=get_credentials())
+        response = requests.get(url, stream=True, timeout=TIMEOUT)
         response.raise_for_status()
         with tmp_file.open("wb") as file:
             # Specify chunk_size to avoid
