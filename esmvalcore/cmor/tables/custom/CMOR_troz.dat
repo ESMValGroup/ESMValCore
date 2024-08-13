@@ -5,7 +5,7 @@ modeling_realm:    atmos
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
-standard_name:
+standard_name:     equivalent_thickness_at_stp_of_atmosphere_ozone_content
 units:             m
 cell_methods:      time: mean
 cell_measures:     area: areacella
