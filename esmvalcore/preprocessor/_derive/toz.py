@@ -155,8 +155,7 @@ class DerivedVariable(DerivedVariableBase):
         toz_cube = toz_cube / MW_O3 * AVOGADRO_CONST
         toz_cube.units = toz_cube.units / MW_O3_UNIT * AVOGADRO_CONST_UNIT
         toz_cube.convert_units(DOBSON_UNIT)
-        toz_cube.data = toz_cube.core_data() / 100.0
-        toz_cube.units = 'mm'
-        toz_cube.convert_units('m')
+        toz_cube.data = toz_cube.core_data() * 1e-5
+        toz_cube.units = 'm'
 
         return toz_cube

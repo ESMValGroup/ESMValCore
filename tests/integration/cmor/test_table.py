@@ -137,7 +137,7 @@ class TestCMIP6Info(unittest.TestCase):
         self.assertEqual(var.frequency, 'mon')
 
     def test_omon_toz_succes_if_strict(self):
-        """Get troz does not fail with Omon if not strict."""
+        """Get toz does not fail with Omon if not strict."""
         self.variables_info.strict = False
         var = self.variables_info.get_variable('Omon', 'toz')
         self.assertEqual(var.short_name, 'toz')
@@ -296,7 +296,7 @@ class TestCMIP5Info(unittest.TestCase):
         self.assertEqual(var.frequency, 'mon')
 
     def test_omon_toz_succes_if_strict(self):
-        """Get troz does not fail with Omon if not strict."""
+        """Get toz does not fail with Omon if not strict."""
         self.variables_info.strict = False
         var = self.variables_info.get_variable('Omon', 'toz')
         self.assertEqual(var.short_name, 'toz')
@@ -365,7 +365,7 @@ class TestCMIP3Info(unittest.TestCase):
         self.assertEqual(var.frequency, '')
 
     def test_omon_toz_succes_if_strict(self):
-        """Get troz does not fail with Omon if not strict."""
+        """Get toz does not fail with Omon if not strict."""
         self.variables_info.strict = False
         var = self.variables_info.get_variable('O1', 'toz')
         self.assertEqual(var.short_name, 'toz')
@@ -485,7 +485,7 @@ class TestCustomInfo(unittest.TestCase):
                          'Atmosphere CH4 surface')
         self.assertEqual(var.units, '1e-09')
 
-    def test_get_variable_tosStderr(self):
+    def test_get_variable_tosstderr(self):
         """Get tosStderr variable."""
         CustomInfo()
         var = self.variables_info.get_variable('Omon', 'tosStderr')

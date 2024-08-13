@@ -31,8 +31,8 @@ class DerivedVariable(DerivedVariableBase):
 
         Note
         ----
-        In this context, the stratosphere is defined as the region in which the
-        O3 mole fraction is at least as high as the given threshold
+        Here, the stratosphere is defined as the region in which the O3 mole
+        fraction is at least as high as the given threshold
         (``STRATOSPHERIC_O3_THRESHOLD``).
 
         In the calculation of ``toz``, the surface air pressure (``ps``) is
