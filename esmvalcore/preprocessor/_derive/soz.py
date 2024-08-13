@@ -53,7 +53,8 @@ class DerivedVariable(DerivedVariableBase):
 
         """
         o3_cube = cubes.extract_cube(
-            iris.Constraint(name='mole_fraction_of_ozone_in_air'))
+            iris.Constraint(name='mole_fraction_of_ozone_in_air')
+        )
 
         # If o3 is given on hybrid pressure levels (e.g., from Table AERmon),
         # interpolate it to regular pressure levels

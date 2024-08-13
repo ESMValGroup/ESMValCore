@@ -5,7 +5,7 @@ import pytest
 
 import esmvalcore.preprocessor._derive.troz as troz
 
-from .test_toz import get_ps_cube, get_masked_o3_cube
+from .test_toz import get_masked_o3_cube, get_ps_cube
 
 
 def get_o3_cube():

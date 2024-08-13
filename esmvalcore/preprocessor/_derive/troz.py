@@ -1,20 +1,56 @@
 """Derivation of variable ``troz``."""
 
+import dask.array as da
+import iris
+
+from ._baseclass import DerivedVariableBase
+from .soz import STRATOSPHERIC_O3_THRESHOLD
 from .toz import DerivedVariable as Toz
-from .soz import DerivedVariable as Soz
+from .toz import ensure_correct_lon, interpolate_hybrid_plevs
 
 
-class DerivedVariable(Toz):
+class DerivedVariable(DerivedVariableBase):
     """Derivation of variable ``troz``."""
+
+    @staticmethod
+    def required(project):
+        """Declare the variables needed for derivation."""
+        return Toz.required(project)
 
     @staticmethod
     def calculate(cubes):
         """Compute tropospheric column ozone.
 
-        This is calculated as the difference between total column ozone (`toz`)
-        and stratopheric column ozone (`soz`).
+        Note
+        ----
+        Here, the troposphere is defined as the region in which the O3 mole
+        fraction is smaller than the given threshold
+        (``STRATOSPHERIC_O3_THRESHOLD``).
 
         """
-        toz_cube = Toz.calculate(cubes)
-        soz_cube = Soz.calculate(cubes)
-        return toz_cube - soz_cube
+        o3_cube = cubes.extract_cube(
+            iris.Constraint(name='mole_fraction_of_ozone_in_air')
+        )
+        ps_cube = cubes.extract_cube(
+            iris.Constraint(name='surface_air_pressure')
+        )
+
+        # If o3 is given on hybrid pressure levels (e.g., from Table AERmon),
+        # interpolate it to regular pressure levels
+        if len(o3_cube.coord_dims('air_pressure')) > 1:
+            o3_cube = interpolate_hybrid_plevs(o3_cube)
+
+        # To support zonal mean o3 (e.g., from Table AERmonZ), add longitude
+        # coordinate if necessary
+        (o3_cube, _) = ensure_correct_lon(o3_cube)
+
+        # Mask O3 mole fraction using the given threshold
+        o3_cube.convert_units('1e-9')
+        mask = o3_cube.lazy_data() >= STRATOSPHERIC_O3_THRESHOLD
+        mask |= da.ma.getmaskarray(o3_cube.lazy_data())
+        o3_cube.data = da.ma.masked_array(o3_cube.lazy_data(), mask=mask)
+
+        # Use derivation function of toz to calculate troz using the masked o3
+        # cube and the ps cube
+        cubes = iris.cube.CubeList([o3_cube, ps_cube])
+        return Toz.calculate(cubes)
