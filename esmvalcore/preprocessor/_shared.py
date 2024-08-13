@@ -319,12 +319,6 @@ def get_array_module(*args):
     return np
 
 
-def _is_lazy_masked_data(array):
-    """Similar to `iris._lazy_data.is_lazy_masked_data`."""
-    return isinstance(array, da.Array) and isinstance(
-        da.utils.meta_from_array(array), np.ma.MaskedArray)
-
-
 def get_weights(
     cube: Cube,
     coords: Iterable[Coord] | Iterable[str],
