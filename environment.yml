@@ -3,7 +3,6 @@ name: esmvaltool
 channels:
   - conda-forge
   - nodefaults
-  - conda-forge/label/rc_iris  # REMOVE BEFORE MERGING THIS PR!
 
 dependencies:
   - cartopy
