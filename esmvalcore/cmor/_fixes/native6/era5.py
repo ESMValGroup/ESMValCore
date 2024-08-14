@@ -23,9 +23,8 @@ def get_frequency(cube):
 
     time.convert_units('days since 1850-1-1 00:00:00.0')
 
-    if (len(time.points) == 1 and
-        cube.long_name == 'Geopotential'):
-      return 'fx'
+    if (len(time.points) == 1 and cube.long_name == 'Geopotential'):
+        return 'fx'
 
     if len(time.points) > 1:
         interval = time.points[1] - time.points[0]
