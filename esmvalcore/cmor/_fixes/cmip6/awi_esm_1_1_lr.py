@@ -21,9 +21,9 @@ class AllVars(Fix):
         bad_value = 'days since 0000-01-01 00:00:00'
         for cube in cubes:
             try:
-                if cube.attributes[parent_units] == bad_value:
+                if parent_units in cube.attributes and cube.attributes[parent_units] == bad_value:
                     cube.attributes[parent_units] = 'days since 0001-01-01 ' \
                         + '00:00:00'
-            except (AttributeError, KeyError):
+            except AttributeError:
                 pass
         return cubes
