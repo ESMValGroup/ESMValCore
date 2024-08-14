@@ -32,9 +32,9 @@ def get_frequency(cube):
         if interval - 1 / 24 < 1e-4:
             return 'hourly'
     else:
-        logger.warning(f"Unable to infer frequency of cube 
-                       with length 1 time dimension: {cube},
-                       assuming 'monthly' frequency")
+        logger.warning("Unable to infer frequency of cube "
+                       f"with length 1 time dimension: {cube},"
+                       "assuming 'monthly' frequency")
 
     return 'monthly'
 
