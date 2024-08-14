@@ -20,13 +20,13 @@ def get_frequency(cube):
         time = cube.coord(axis='T')
     except iris.exceptions.CoordinateNotFoundError:
         return 'fx'
-    
+
     time.convert_units('days since 1850-1-1 00:00:00.0')
-    
+
     if (len(time.points) == 1 and
-        cube.long_name == 'Geopotential'):
+          cube.long_name == 'Geopotential'):
         return 'fx'
-    
+
     if len(time.points) > 1:
         interval = time.points[1] - time.points[0]
         if interval - 1 / 24 < 1e-4:
