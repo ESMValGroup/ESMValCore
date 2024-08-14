@@ -2,6 +2,8 @@
 import iris
 import numpy as np
 import pytest
+from iris.coords import AuxCoord, DimCoord
+from iris.util import broadcast_to_shape
 
 import esmvalcore.preprocessor._derive.troz as troz
 
@@ -40,6 +42,32 @@ def cubes_no_lon():
     return iris.cube.CubeList([o3_cube, ps_cube])
 
 
+@pytest.fixture
+def cubes_hybrid_plevs():
+    """Input cubes with hybrid pressure levels for derivation of ``troz``."""
+    o3_cube = get_o3_cube()
+    plev_coord = o3_cube.coord('air_pressure')
+    hybrid_plev_coord = AuxCoord(
+        broadcast_to_shape(
+            plev_coord.points, o3_cube.shape, o3_cube.coord_dims(plev_coord)
+        ),
+    )
+    hybrid_plev_coord.metadata = plev_coord.metadata
+    alt_coord = DimCoord(
+        [0.0, 1000.0, 3000.0],
+        standard_name='altitude',
+        attributes={'positive': 'up'},
+    )
+    o3_cube.remove_coord(plev_coord)
+    o3_cube.add_aux_coord(hybrid_plev_coord, (0, 1, 2, 3))
+    o3_cube.add_dim_coord(alt_coord, 1)
+
+    ps_cube = get_ps_cube()
+    ps_cube.data = [[[101300.0, 101300.0], [101300.0, 101300.0]]]
+
+    return iris.cube.CubeList([o3_cube, ps_cube])
+
+
 def test_troz_calculate(cubes):
     """Test function ``calculate``."""
     derived_var = troz.DerivedVariable()
@@ -65,10 +93,25 @@ def test_troz_calculate_no_lon(cubes_no_lon):
     assert out_cube.units == 'm'
     assert out_cube.shape == (1, 2, 1)
     assert not np.ma.is_masked(out_cube.data)
-    print(out_cube.data)
     np.testing.assert_allclose(
         out_cube.data, [[[15.743813792609216e-5], [20.663755602799588e-5]]]
     )
+
+
+def test_troz_calculate_hybrid_plevs(cubes_hybrid_plevs):
+    """Test function ``calculate`` for cubes with hybrid pressure levels."""
+    derived_var = troz.DerivedVariable()
+
+    out_cube = derived_var.calculate(cubes_hybrid_plevs)
+
+    assert out_cube.units == 'm'
+    assert out_cube.shape == (1, 2, 2)
+    assert not np.ma.is_masked(out_cube.data)
+    expected_data = [[
+            [31.581106479612044e-5, 27.640725083830575e-5],
+            [18.198372761713192e-5, 20.071886603033692e-5],
+    ]]
+    np.testing.assert_allclose(out_cube.data, expected_data)
 
 
 @pytest.mark.parametrize('project,out', [
