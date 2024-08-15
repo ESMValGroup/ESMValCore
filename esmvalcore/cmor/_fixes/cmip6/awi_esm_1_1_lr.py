@@ -23,8 +23,8 @@ class AllVars(Fix):
             try:
                 if parent_units in cube.attributes and \
                     cube.attributes[parent_units] == bad_value:
-                        cube.attributes[parent_units] = \
-                            'days since 0001-01-01 00:00:00'
+                    cube.attributes[parent_units] = \
+                        'days since 0001-01-01 00:00:00'
             except AttributeError:
                 pass
         return cubes
