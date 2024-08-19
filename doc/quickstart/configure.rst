@@ -440,71 +440,6 @@ corresponding command line arguments ``--search_esgf=when_missing`` or
    tool by pressing the ``Ctrl`` and ``C`` keys on your keyboard simultaneously
    several times, edit the recipe so it contains fewer datasets and try again.
 
-For downloading some files, you may need to log in to be able to download the
-data.
-
-See the
-`ESGF user guide <https://esgf.github.io/esgf-user-support/user_guide.html>`_
-for instructions on how to create an ESGF OpenID account if you do not have
-one yet.
-Note that the OpenID account consists of 3 components instead of the usual
-two, in addition a username and password you also need the hostname of the
-provider of the ID; for example
-`esgf-data.dkrz.de <https://esgf-data.dkrz.de/user/add/?next=http://esgf-data.dkrz.de/projects/esgf-dkrz/>`_.
-Even though the account is issued by a particular host, the same OpenID
-account can be used to download data from all hosts in the ESGF.
-
-Next, configure your system so the ``esmvaltool`` can use your credentials.
-This can be done using the keyring_ package or they can be stored in a
-:ref:`configuration file <config_esgf_pyclient>`.
-
-.. _keyring:
-
-Storing credentials in keyring
-------------------------------
-First install the keyring package. Note that this requires a supported
-backend that may not be available on compute clusters, see the
-`keyring documentation <https://pypi.org/project/keyring>`__ for more
-information.
-
-.. code-block:: bash
-
-    pip install keyring
-
-Next, set your username and password by running the commands:
-
-.. code-block:: bash
-
-    keyring set ESGF hostname
-    keyring set ESGF username
-    keyring set ESGF password
-
-for example, if you created an account on the host `esgf-data.dkrz.de`_ with username
-'cookiemonster' and password 'Welcome01', run the command
-
-.. code-block:: bash
-
-    keyring set ESGF hostname
-
-this will display the text
-
-.. code-block:: bash
-
-    Password for 'hostname' in 'ESGF':
-
-type ``esgf-data.dkrz.de`` (the characters will not be shown) and press ``Enter``.
-Repeat the same procedure with ``keyring set ESGF username``, type ``cookiemonster``
-and press ``Enter`` and ``keyring set ESGF password``, type ``Welcome01`` and
-press ``Enter``.
-
-To check that you entered your credentials correctly, run:
-
-.. code-block:: bash
-
-    keyring get ESGF hostname
-    keyring get ESGF username
-    keyring get ESGF password
-
 .. _config_esgf_pyclient:
 
 Configuration file
@@ -513,49 +448,6 @@ An optional configuration file can be created for configuring how the tool uses
 `esgf-pyclient <https://esgf-pyclient.readthedocs.io>`_
 to find and download data.
 The name of this file is ``~/.esmvaltool/esgf-pyclient.yml``.
-
-Logon
-`````
-In the ``logon`` section you can provide arguments that will be passed on to
-:py:meth:`pyesgf.logon.LogonManager.logon`.
-For example, you can store the hostname, username, and password or your OpenID
-account in the file like this:
-
-.. code-block:: yaml
-
-    logon:
-      hostname: "your-hostname"
-      username: "your-username"
-      password: "your-password"
-
-for example
-
-.. code-block:: yaml
-
-    logon:
-      hostname: "esgf-data.dkrz.de"
-      username: "cookiemonster"
-      password: "Welcome01"
-
-if you created an account on the host `esgf-data.dkrz.de`_ with username
-'cookiemonster' and password 'Welcome01'.
-Alternatively, you can configure an interactive log in:
-
-.. code-block:: yaml
-
-    logon:
-      interactive: true
-
-Note that storing your password in plain text in the configuration
-file is less secure.
-On shared systems, make sure the permissions of the file are set so
-only you and administrators can read it, i.e.
-
-.. code-block:: bash
-
-    ls -l ~/.esmvaltool/esgf-pyclient.yml
-
-shows permissions ``-rw-------``.
 
 Search
 ``````

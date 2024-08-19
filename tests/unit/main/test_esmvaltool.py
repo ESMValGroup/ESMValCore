@@ -105,11 +105,6 @@ def test_run(mocker, session, search_esgf):
         create_autospec=True,
     )
     mocker.patch.object(
-        esmvalcore.esgf._logon,
-        'logon',
-        create_autospec=True,
-    )
-    mocker.patch.object(
         esmvalcore._main,
         'process_recipe',
         create_autospec=True,
@@ -122,11 +117,6 @@ def test_run(mocker, session, search_esgf):
         output_dir=session.run_dir,
         console_log_level=session['log_level'],
     )
-
-    if search_esgf == 'never':
-        esmvalcore.esgf._logon.logon.assert_not_called()
-    else:
-        esmvalcore.esgf._logon.logon.assert_called_once()
 
     esmvalcore._task.resource_usage_logger.assert_called_once_with(
         pid=os.getpid(),
