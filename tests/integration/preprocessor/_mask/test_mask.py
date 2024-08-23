@@ -4,6 +4,7 @@ Integration tests for the :func:`esmvalcore.preprocessor._mask` module.
 """
 from pathlib import Path
 
+import dask.array as da
 import iris
 import iris.fileformats
 import numpy as np
@@ -64,13 +65,18 @@ class Test:
         self.mock_data = np.ma.empty((4, 3, 3))
         self.mock_data[:] = 10.
 
-    def test_components_fx_var(self):
+    @pytest.mark.parametrize('lazy', [True, False])
+    def test_components_fx_var(self, lazy):
         """Test compatibility of ancillary variables."""
+        if lazy:
+            cube_data = da.array(self.new_cube_data)
+        else:
+            cube_data = self.new_cube_data
+
         self.fx_mask.var_name = 'sftlf'
         self.fx_mask.standard_name = 'land_area_fraction'
         new_cube_land = iris.cube.Cube(
-            self.new_cube_data,
-            dim_coords_and_dims=self.cube_coords_spec
+            cube_data, dim_coords_and_dims=self.cube_coords_spec
         )
         new_cube_land = add_supplementary_variables(
             new_cube_land,
@@ -81,12 +87,12 @@ class Test:
             'land',
         )
         assert isinstance(result_land, iris.cube.Cube)
+        assert result_land.has_lazy_data() is lazy
 
         self.fx_mask.var_name = 'sftgif'
         self.fx_mask.standard_name = 'land_ice_area_fraction'
         new_cube_ice = iris.cube.Cube(
-            self.new_cube_data,
-            dim_coords_and_dims=self.cube_coords_spec
+            cube_data, dim_coords_and_dims=self.cube_coords_spec
         )
         new_cube_ice = add_supplementary_variables(
             new_cube_ice,
@@ -97,22 +103,27 @@ class Test:
             'ice',
         )
         assert isinstance(result_ice, iris.cube.Cube)
+        assert result_ice.has_lazy_data() is lazy
 
-    def test_mask_landsea(self):
+    @pytest.mark.parametrize('lazy', [True, False])
+    def test_mask_landsea(self, lazy):
         """Test mask_landsea func."""
+        if lazy:
+            cube_data = da.array(self.new_cube_data)
+        else:
+            cube_data = self.new_cube_data
+
         self.fx_mask.var_name = 'sftlf'
         self.fx_mask.standard_name = 'land_area_fraction'
         new_cube_land = iris.cube.Cube(
-            self.new_cube_data,
-            dim_coords_and_dims=self.cube_coords_spec
+            cube_data, dim_coords_and_dims=self.cube_coords_spec
         )
         new_cube_land = add_supplementary_variables(
             new_cube_land,
             [self.fx_mask],
         )
         new_cube_sea = iris.cube.Cube(
-            self.new_cube_data,
-            dim_coords_and_dims=self.cube_coords_spec
+            cube_data, dim_coords_and_dims=self.cube_coords_spec
         )
         new_cube_sea = add_supplementary_variables(
             new_cube_sea,
@@ -128,6 +139,8 @@ class Test:
             new_cube_sea,
             'sea',
         )
+        assert result_land.has_lazy_data() is lazy
+        assert result_sea.has_lazy_data() is lazy
         expected = np.ma.empty((2, 3, 3))
         expected.data[:] = 200.
         expected.mask = np.ones((2, 3, 3), bool)
@@ -143,17 +156,17 @@ class Test:
 
         # mask with shp files
         new_cube_land = iris.cube.Cube(
-            self.new_cube_data,
-            dim_coords_and_dims=self.cube_coords_spec
+            cube_data, dim_coords_and_dims=self.cube_coords_spec
         )
         new_cube_sea = iris.cube.Cube(
-            self.new_cube_data,
-            dim_coords_and_dims=self.cube_coords_spec
+            cube_data, dim_coords_and_dims=self.cube_coords_spec
         )
         result_land = mask_landsea(new_cube_land, 'land')
         result_sea = mask_landsea(new_cube_sea, 'sea')
 
         # bear in mind all points are in the ocean
+        assert result_land.has_lazy_data() is lazy
+        assert result_sea.has_lazy_data() is lazy
         np.ma.set_fill_value(result_land.data, 1e+20)
         np.ma.set_fill_value(result_sea.data, 1e+20)
         expected.mask = np.zeros((3, 3), bool)
@@ -161,19 +174,25 @@ class Test:
         expected.mask = np.ones((3, 3), bool)
         assert_array_equal(result_sea.data, expected)
 
-    def test_mask_landseaice(self):
+    @pytest.mark.parametrize('lazy', [True, False])
+    def test_mask_landseaice(self, lazy):
         """Test mask_landseaice func."""
+        if lazy:
+            cube_data = da.array(self.new_cube_data)
+        else:
+            cube_data = self.new_cube_data
+
         self.fx_mask.var_name = 'sftgif'
         self.fx_mask.standard_name = 'land_ice_area_fraction'
         new_cube_ice = iris.cube.Cube(
-            self.new_cube_data,
-            dim_coords_and_dims=self.cube_coords_spec
+            cube_data, dim_coords_and_dims=self.cube_coords_spec
         )
         new_cube_ice = add_supplementary_variables(
             new_cube_ice,
             [self.fx_mask],
         )
         result_ice = mask_landseaice(new_cube_ice, 'ice')
+        assert result_ice.has_lazy_data() is lazy
         expected = np.ma.empty((2, 3, 3))
         expected.data[:] = 200.
         expected.mask = np.ones((2, 3, 3), bool)
