@@ -14,9 +14,9 @@ import iris
 import numpy as np
 from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube
+from iris.util import broadcast_to_shape
 
 from ._shared import (
-    broadcast_to_shape,
     get_iris_aggregator,
     get_normalized_cube,
     preserve_float_dtype,
