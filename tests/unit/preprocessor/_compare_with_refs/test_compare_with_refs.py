@@ -364,6 +364,7 @@ AREA_WEIGHTS = CellMeasure(
 )
 
 
+@pytest.mark.parametrize('lazy_weights', [True, False])
 @pytest.mark.parametrize(
     'metric,data,ref_data,long_name,var_name,units', TEST_DISTANCE_METRICS
 )
@@ -376,9 +377,14 @@ def test_distance_metric(
     long_name,
     var_name,
     units,
+    lazy_weights,
 ):
     """Test `distance_metric`."""
-    regular_cubes[0].add_cell_measure(AREA_WEIGHTS, (1, 2))
+    regular_cubes[0].add_cell_measure(AREA_WEIGHTS.copy(), (1, 2))
+    if lazy_weights:
+        regular_cubes[0].cell_measure('cell_area').data = (
+            regular_cubes[0].cell_measure('cell_area').lazy_data()
+        )
     ref_product = PreprocessorFile(
         ref_cubes, 'REF', {'reference_for_metric': True}
     )
@@ -390,6 +396,10 @@ def test_distance_metric(
 
     out_products = distance_metric(products, metric)
 
+    assert (
+        regular_cubes[0].cell_measure('cell_area').has_lazy_data() is
+        lazy_weights
+    )
     assert isinstance(out_products, set)
     out_dict = products_set_to_dict(out_products)
     assert len(out_dict) == 3
@@ -407,6 +417,7 @@ def test_distance_metric(
     out_cube = product_a.cubes[0]
     assert out_cube.shape == ()
     assert out_cube.dtype == np.float32
+    assert not out_cube.has_lazy_data()
     assert_allclose(out_cube.data, np.array(data, dtype=np.float32))
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
@@ -425,6 +436,7 @@ def test_distance_metric(
     out_cube = product_b.cubes[0]
     assert out_cube.shape == ()
     assert out_cube.dtype == np.float32
+    assert not out_cube.has_lazy_data()
     assert_allclose(out_cube.data, np.array(data, dtype=np.float32))
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
@@ -445,6 +457,7 @@ def test_distance_metric(
     out_cube = product_ref.cubes[0]
     assert out_cube.shape == ()
     assert out_cube.dtype == np.float32
+    assert not out_cube.has_lazy_data()
     assert_allclose(out_cube.data, ref_data)
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
@@ -531,22 +544,40 @@ def test_distance_metric_lazy(
     assert product_a.mock_ancestors == {ref_product}
 
 
+@pytest.mark.parametrize('lazy_weights', [True, False])
 @pytest.mark.parametrize(
     'metric,data,_,long_name,var_name,units', TEST_DISTANCE_METRICS
 )
 def test_distance_metric_cubes(
-    regular_cubes, ref_cubes, metric, data, _, long_name, var_name, units
+    regular_cubes,
+    ref_cubes,
+    metric,
+    data,
+    _,
+    long_name,
+    var_name,
+    units,
+    lazy_weights,
 ):
     """Test `distance_metric` with cubes."""
-    regular_cubes[0].add_cell_measure(AREA_WEIGHTS, (1, 2))
+    regular_cubes[0].add_cell_measure(AREA_WEIGHTS.copy(), (1, 2))
+    if lazy_weights:
+        regular_cubes[0].cell_measure('cell_area').data = (
+            regular_cubes[0].cell_measure('cell_area').lazy_data()
+        )
     out_cubes = distance_metric(regular_cubes, metric, reference=ref_cubes[0])
 
+    assert (
+        regular_cubes[0].cell_measure('cell_area').has_lazy_data() is
+        lazy_weights
+    )
     assert isinstance(out_cubes, CubeList)
     assert len(out_cubes) == 1
     out_cube = out_cubes[0]
 
     assert out_cube.shape == ()
     assert out_cube.dtype == np.float32
+    assert not out_cube.has_lazy_data()
     assert_allclose(out_cube.data, np.array(data, dtype=np.float32))
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
@@ -557,12 +588,22 @@ def test_distance_metric_cubes(
     )
 
 
+@pytest.mark.parametrize('lazy_weights', [True, False])
 @pytest.mark.parametrize('lazy', [True, False])
 @pytest.mark.parametrize(
     'metric,data,_,long_name,var_name,units', TEST_DISTANCE_METRICS
 )
 def test_distance_metric_masked_data(
-    regular_cubes, ref_cubes, metric, data, _, long_name, var_name, units, lazy
+    regular_cubes,
+    ref_cubes,
+    metric,
+    data,
+    _,
+    long_name,
+    var_name,
+    units,
+    lazy,
+    lazy_weights,
 ):
     """Test `distance_metric` with masked data."""
     # Test cube
@@ -585,7 +626,11 @@ def test_distance_metric_masked_data(
         np.ma.masked_invalid(cube_data), dim_coords_and_dims=coord_specs
     )
     cube.metadata = regular_cubes[0].metadata
-    cube.add_cell_measure(AREA_WEIGHTS, (1, 2))
+    cube.add_cell_measure(AREA_WEIGHTS.copy(), (1, 2))
+    if lazy_weights:
+        cube.cell_measure('cell_area').data = (
+            cube.cell_measure('cell_area').lazy_data()
+        )
 
     # Ref cube
     ref_cube = cube.copy()
@@ -604,6 +649,7 @@ def test_distance_metric_masked_data(
 
     out_cubes = distance_metric([cube], metric, reference=ref_cube)
 
+    assert cube.cell_measure('cell_area').has_lazy_data() is lazy_weights
     assert isinstance(out_cubes, CubeList)
     assert len(out_cubes) == 1
     out_cube = out_cubes[0]
@@ -630,17 +676,31 @@ def test_distance_metric_masked_data(
     )
 
 
+@pytest.mark.parametrize('lazy_weights', [True, False])
 @pytest.mark.parametrize('lazy', [True, False])
 @pytest.mark.parametrize(
     'metric,_,__,long_name,var_name,units', TEST_DISTANCE_METRICS
 )
 def test_distance_metric_fully_masked_data(
-    regular_cubes, ref_cubes, metric, _, __, long_name, var_name, units, lazy
+    regular_cubes,
+    ref_cubes,
+    metric,
+    _,
+    __,
+    long_name,
+    var_name,
+    units,
+    lazy,
+    lazy_weights,
 ):
     """Test `distance_metric` with fully_masked data."""
     cube = regular_cubes[0]
     cube.data = np.ma.masked_invalid(np.full(cube.shape, np.nan))
-    cube.add_cell_measure(AREA_WEIGHTS, (1, 2))
+    cube.add_cell_measure(AREA_WEIGHTS.copy(), (1, 2))
+    if lazy_weights:
+        cube.cell_measure('cell_area').data = (
+            cube.cell_measure('cell_area').lazy_data()
+        )
     ref_cube = ref_cubes[0]
 
     if lazy:
@@ -649,6 +709,7 @@ def test_distance_metric_fully_masked_data(
 
     out_cubes = distance_metric([cube], metric, reference=ref_cube)
 
+    assert cube.cell_measure('cell_area').has_lazy_data() is lazy_weights
     assert isinstance(out_cubes, CubeList)
     assert len(out_cubes) == 1
     out_cube = out_cubes[0]
