@@ -333,6 +333,7 @@ def get_weights(
             npx.array(get_time_weights(cube)),
             cube.shape,
             cube.coord_dims('time'),
+            chunks=cube.lazy_data().chunks if cube.has_lazy_data() else None,
         )
 
     # Latitude weights: cell areas
@@ -354,6 +355,7 @@ def get_weights(
             cube.cell_measure('cell_area').core_data(),
             cube.shape,
             cube.cell_measure_dims('cell_area'),
+            chunks=cube.lazy_data().chunks if cube.has_lazy_data() else None,
         )
 
     return weights

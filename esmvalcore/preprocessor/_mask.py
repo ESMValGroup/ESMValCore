@@ -319,7 +319,7 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
         mask,
         cube.shape,
         cube.coord_dims('latitude') + cube.coord_dims('longitude'),
-        chunks=cube.lazy_data().chunks,
+        chunks=cube.lazy_data().chunks if cube.has_lazy_data() else None,
     )
 
     old_mask = da.ma.getmaskarray(cube.core_data())

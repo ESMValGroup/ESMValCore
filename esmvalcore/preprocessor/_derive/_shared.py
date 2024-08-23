@@ -86,7 +86,12 @@ def column_average(cube, hus_cube, zg_cube, ps_cube):
     # Note: the formula for g given in Buchwitz & Reuter contains a typo and
     # should read: g_0**2 - 2*f*zg (i.e. minus instead of +)
     fair_cor = 3.0825958e-6
-    g_4d_array = iris.util.broadcast_to_shape(g_0**2, zg_cube.shape, [2])
+    g_4d_array = iris.util.broadcast_to_shape(
+        g_0**2,
+        zg_cube.shape,
+        [2],
+        chunks=zg_cube.lazy_data().chunks if zg_cube.has_lazy_data() else None,
+    )
     g_4d_array = np.sqrt(g_4d_array.data - 2.0 * fair_cor * zg_cube.data)
 
     # Number of dry air particles (air molecules excluding water vapor) within
@@ -146,11 +151,21 @@ def _create_pressure_array(cube, ps_cube, top_limit):
     """
     # Create 4D array filled with pressure level values
     p_levels = cube.coord('air_pressure').points.astype(np.float32)
-    p_4d_array = iris.util.broadcast_to_shape(p_levels, cube.shape, [1])
+    p_4d_array = iris.util.broadcast_to_shape(
+        p_levels,
+        cube.shape,
+        [1],
+        chunks=cube.lazy_data().chunks if cube.has_lazy_data() else None,
+    )
 
     # Create 4d array filled with surface pressure values
     shape = cube.shape
-    ps_4d_array = iris.util.broadcast_to_shape(ps_cube.data, shape, [0, 2, 3])
+    ps_4d_array = iris.util.broadcast_to_shape(
+        ps_cube.data,
+        shape,
+        [0, 2, 3],
+        chunks=ps_cube.lazy_data().chunks if ps_cube.has_lazy_data() else None,
+    )
 
     # Set pressure levels below the surface pressure to NaN
     pressure_4d = np.where((ps_4d_array - p_4d_array) < 0, np.NaN, p_4d_array)
