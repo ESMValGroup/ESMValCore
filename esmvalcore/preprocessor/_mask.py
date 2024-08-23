@@ -17,6 +17,8 @@ import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
 from iris.util import rolling_window
 
+from esmvalcore.preprocessor._shared import get_array_module
+
 from ._supplementary_vars import register_supplementaries
 
 logger = logging.getLogger(__name__)
@@ -24,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def _get_fx_mask(fx_data, fx_option, mask_type):
     """Build a percentage-thresholded mask from an fx file."""
-    inmask = da.zeros_like(fx_data, bool)
+    inmask = np.zeros_like(fx_data, bool)  # respects dask through dispatch
     if mask_type == 'sftlf':
         if fx_option == 'land':
             # Mask land out
@@ -52,12 +54,10 @@ def _get_fx_mask(fx_data, fx_option, mask_type):
 
 def _apply_fx_mask(fx_mask, var_data):
     """Apply the fx data extracted mask on the actual processed data."""
-    # Apply mask across
-    old_mask = da.ma.getmaskarray(var_data)
+    npx = get_array_module(var_data)
+    old_mask = npx.ma.getmaskarray(var_data)
     mask = old_mask | fx_mask
-    var_data = da.ma.masked_array(var_data, mask=mask)
-    # maybe fill_value=1e+20
-
+    var_data = npx.ma.masked_array(var_data, mask=mask)
     return var_data
 
 
@@ -123,9 +123,13 @@ def mask_landsea(cube, mask_out):
                          'found in cube. Check fx_file availability.')
 
     if fx_cube:
-        fx_cube_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
-        landsea_mask = _get_fx_mask(fx_cube_data, mask_out,
-                                    fx_cube.var_name)
+        fx_cube_data = fx_cube.lazy_data()
+        if not cube.has_lazy_data():
+            fx_cube_data = fx_cube_data.compute()
+        fx_cube_data = np.broadcast_to(fx_cube_data, cube.shape)  # dispatch
+        landsea_mask = _get_fx_mask(
+            fx_cube_data, mask_out, fx_cube.var_name
+        )
         cube.data = _apply_fx_mask(landsea_mask, cube.core_data())
         logger.debug("Applying land-sea mask: %s", fx_cube.var_name)
     else:
@@ -185,7 +189,10 @@ def mask_landseaice(cube, mask_out):
         logger.debug('Ancillary variable land ice area fraction '
                      'not found in cube. Check fx_file availability.')
     if fx_cube:
-        fx_cube_data = da.broadcast_to(fx_cube.core_data(), cube.shape)
+        fx_cube_data = fx_cube.lazy_data()
+        if not cube.has_lazy_data():
+            fx_cube_data = fx_cube_data.compute()
+        fx_cube_data = np.broadcast_to(fx_cube_data, cube.shape)  # dispatch
         landice_mask = _get_fx_mask(fx_cube_data, mask_out, fx_cube.var_name)
         cube.data = _apply_fx_mask(landice_mask, cube.core_data())
         logger.debug("Applying landsea-ice mask: sftgif")
@@ -326,9 +333,10 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
         chunks=chunks,
     )
 
-    old_mask = da.ma.getmaskarray(cube.core_data())
+    npx = get_array_module(cube.core_data())
+    old_mask = npx.ma.getmaskarray(cube.core_data())
     mask = old_mask | mask
-    cube.data = da.ma.masked_array(cube.core_data(), mask=mask)
+    cube.data = npx.ma.masked_array(cube.core_data(), mask=mask)
 
     return cube
 
