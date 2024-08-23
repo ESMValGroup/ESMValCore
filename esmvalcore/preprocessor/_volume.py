@@ -152,9 +152,7 @@ def calculate_volume(cube: Cube) -> da.core.Array:
             f'Cannot compute volume using the Z-axis. {err}') from err
 
     # Calculate Z-direction thickness
-    thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
-    if cube.has_lazy_data():
-        thickness = da.array(thickness)
+    thickness = depth.lazy_bounds()[..., 1] - depth.lazy_bounds()[..., 0]
 
     # Get or calculate the horizontal areas of the cube
     has_cell_measure = bool(cube.cell_measures('cell_area'))
@@ -164,16 +162,26 @@ def calculate_volume(cube: Cube) -> da.core.Array:
 
     # Ensure cell area is in square meters as the units
     area.convert_units('m2')
+    area_array = area.lazy_data()
 
     # Make sure input cube has not been modified
     if not has_cell_measure:
         cube.remove_cell_measure('cell_area')
 
-    chunks = cube.core_data().chunks if cube.has_lazy_data() else None
+    # Use lazy data if possible
+    if cube.has_lazy_data():
+        chunks = cube.lazy_data().chunks
+    else:
+        area_array = area_array.compute()
+        thickness = thickness.compute()
+        chunks = None
+
     area_arr = broadcast_to_shape(
-        area.core_data(), cube.shape, area_dim, chunks=chunks)
+        area_array, cube.shape, area_dim, chunks=chunks
+    )
     thickness_arr = broadcast_to_shape(
-        thickness, cube.shape, z_dim, chunks=chunks)
+        thickness, cube.shape, z_dim, chunks=chunks
+    )
     grid_volume = area_arr * thickness_arr
 
     return grid_volume

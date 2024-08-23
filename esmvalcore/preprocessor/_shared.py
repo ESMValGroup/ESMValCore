@@ -351,11 +351,17 @@ def get_weights(
                 f"variable)"
             )
         try_adding_calculated_cell_area(cube)
+        weights = cube.cell_measure('cell_area').lazy_data()
+        if cube.has_lazy_data():
+            chunks = cube.lazy_data().chunks
+        else:
+            weights = weights.compute()
+            chunks = None
         weights *= broadcast_to_shape(
-            cube.cell_measure('cell_area').core_data(),
+            weights,
             cube.shape,
             cube.cell_measure_dims('cell_area'),
-            chunks=cube.lazy_data().chunks if cube.has_lazy_data() else None,
+            chunks=chunks,
         )
 
     return weights

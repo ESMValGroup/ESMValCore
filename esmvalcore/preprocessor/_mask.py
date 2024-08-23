@@ -314,12 +314,16 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
         else:
             mask |= shp_vect.contains(region, x_p_180, y_p_90)
 
-    mask = da.array(mask)
+    if cube.has_lazy_data():
+        mask = da.array(mask)
+        chunks = cube.lazy_data().chunks
+    else:
+        chunks = None
     mask = iris.util.broadcast_to_shape(
         mask,
         cube.shape,
         cube.coord_dims('latitude') + cube.coord_dims('longitude'),
-        chunks=cube.lazy_data().chunks if cube.has_lazy_data() else None,
+        chunks=chunks,
     )
 
     old_mask = da.ma.getmaskarray(cube.core_data())

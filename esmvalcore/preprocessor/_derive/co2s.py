@@ -59,28 +59,15 @@ class DerivedVariable(DerivedVariableBase):
                 co2_cube.core_data(), axis=z_axis)
             dim_map = [dim for dim in range(co2_cube.ndim) if dim != z_axis]
             first_unmasked_data = iris.util.broadcast_to_shape(
-                first_unmasked_data,
-                co2_cube.shape,
-                dim_map,
-                chunks=(
-                    co2_cube.lazy_data().chunks if
-                    co2_cube.has_lazy_data() else None,
-                ),
-            )
+                first_unmasked_data, co2_cube.shape, dim_map)
             co2_cube.data = da.where(mask, first_unmasked_data,
                                      co2_cube.core_data())
 
         # Interpolation (not supported for dask arrays)
         air_pressure_coord = co2_cube.coord('air_pressure')
         original_levels = iris.util.broadcast_to_shape(
-            air_pressure_coord.points,
-            co2_cube.shape,
-            co2_cube.coord_dims(air_pressure_coord),
-            chunks=(
-                    co2_cube.lazy_data().chunks if
-                    co2_cube.has_lazy_data() else None,
-                ),
-        )
+            air_pressure_coord.points, co2_cube.shape,
+            co2_cube.coord_dims(air_pressure_coord))
         target_levels = np.expand_dims(ps_cube.data, axis=z_axis)
         co2s_data = stratify.interpolate(
             target_levels,
