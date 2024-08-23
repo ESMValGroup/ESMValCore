@@ -21,6 +21,7 @@ import stratify
 from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest
 from iris.cube import Cube
+from iris.util import broadcast_to_shape
 
 from esmvalcore.cmor._fixes.shared import (
     add_altitude_from_plev,
@@ -30,7 +31,6 @@ from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import has_irregular_grid, has_unstructured_grid
 from esmvalcore.preprocessor._shared import (
-    broadcast_to_shape,
     get_array_module,
     preserve_float_dtype,
 )
