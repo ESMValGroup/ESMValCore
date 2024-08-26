@@ -169,6 +169,27 @@ class Test:
         assert_array_equal(result_sea.data, expected)
 
     @pytest.mark.parametrize('lazy', [True, False])
+    def test_mask_landsea_transposed(self, lazy):
+        """Test mask_landsea func."""
+        if lazy:
+            cube_data = da.array(self.new_cube_data)
+        else:
+            cube_data = self.new_cube_data
+        new_cube_land = iris.cube.Cube(
+            cube_data, dim_coords_and_dims=self.cube_coords_spec
+        )
+        new_cube_land.transpose([2, 1, 0])
+
+        result_land = mask_landsea(new_cube_land, 'land')
+
+        # bear in mind all points are in the ocean
+        assert result_land.has_lazy_data() is lazy
+        expected = np.ma.array(
+            np.full((3, 3, 2), 200.0), mask=np.zeros((3, 3, 2), bool)
+        )
+        assert_array_equal(result_land.data, expected)
+
+    @pytest.mark.parametrize('lazy', [True, False])
     def test_mask_landseaice(self, lazy):
         """Test mask_landseaice func."""
         if lazy:
