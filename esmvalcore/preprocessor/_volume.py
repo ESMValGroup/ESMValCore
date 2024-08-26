@@ -162,7 +162,9 @@ def calculate_volume(cube: Cube) -> da.core.Array:
 
     # Ensure cell area is in square meters as the units
     area.convert_units('m2')
-    area_array = area.lazy_data()
+    area_array = area.core_data()
+    if cube.has_lazy_data():
+        area_array = da.array(area_array)
 
     # Make sure input cube has not been modified
     if not has_cell_measure:
