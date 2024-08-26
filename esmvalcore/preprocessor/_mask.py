@@ -64,10 +64,7 @@ def _apply_mask(
 ) -> np.ndarray | da.Array:
     """Apply a mask on the actual processed data."""
     npx = get_array_module(new_mask, var_data)
-    old_mask = npx.ma.getmaskarray(var_data)
-    mask = old_mask | new_mask
-    var_data = npx.ma.masked_array(var_data, mask=mask)
-    return var_data
+    return npx.ma.masked_where(new_mask, var_data)
 
 
 @register_supplementaries(
