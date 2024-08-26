@@ -329,7 +329,7 @@ def get_weights(
 
     # Time weights: lengths of time interval
     if 'time' in coords:
-        weights *= broadcast_to_shape(
+        weights = weights * broadcast_to_shape(
             npx.array(get_time_weights(cube)),
             cube.shape,
             cube.coord_dims('time'),
@@ -351,13 +351,13 @@ def get_weights(
                 f"variable)"
             )
         try_adding_calculated_cell_area(cube)
-        area_weights = cube.cell_measure('cell_area').lazy_data()
+        area_weights = cube.cell_measure('cell_area').core_data()
         if cube.has_lazy_data():
+            area_weights = da.array(area_weights)
             chunks = cube.lazy_data().chunks
         else:
-            area_weights = area_weights.compute()
             chunks = None
-        weights *= broadcast_to_shape(
+        weights = weights * broadcast_to_shape(
             area_weights,
             cube.shape,
             cube.cell_measure_dims('cell_area'),
