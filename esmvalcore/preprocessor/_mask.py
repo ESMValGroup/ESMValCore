@@ -172,7 +172,7 @@ def mask_landseaice(cube: Cube, mask_out: Literal['landsea', 'ice']) -> Cube:
         :class:`iris.coords.AncillaryVariable` with standard name
         ``'land_ice_area_fraction'``.
     mask_out: str
-        Either `landsea` to mask out land and oceans or `ice` to mask out ice.
+        Either ``"landsea"`` to mask out land and oceans or ``"ice"`` to mask out ice.
 
     Returns
     -------
