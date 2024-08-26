@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Literal
+from collections.abc import Iterable
+from typing import Literal, Optional
 
 import cartopy.io.shapereader as shpreader
 import dask.array as da
 import iris
+import iris.util
 import numpy as np
 import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
@@ -59,12 +61,21 @@ def _get_fx_mask(
 
 
 def _apply_mask(
-    new_mask: np.ndarray | da.Array,
-    var_data: np.ndarray | da.Array,
+    mask: np.ndarray | da.Array,
+    array: np.ndarray | da.Array,
+    dim_map: Optional[Iterable[int]] = None,
 ) -> np.ndarray | da.Array:
-    """Apply a mask on the actual processed data."""
-    npx = get_array_module(new_mask, var_data)
-    return npx.ma.masked_where(new_mask, var_data)
+    """Apply a (broadcasted) mask on an array."""
+    npx = get_array_module(mask, array)
+    if dim_map is not None:
+        if isinstance(array, da.Array):
+            chunks = array.chunks
+        else:
+            chunks = None
+        mask = iris.util.broadcast_to_shape(
+            mask, array.shape, dim_map, chunks=chunks
+        )
+    return npx.ma.masked_where(mask, array)
 
 
 @register_supplementaries(
@@ -92,7 +103,7 @@ def mask_landsea(cube: Cube, mask_out: Literal['land', 'sea']) -> Cube:
         ancillary variable is not available, the mask will be calculated from
         Natural Earth shapefiles.
     mask_out:
-        Either `land` to mask out land mass or `sea` to mask out seas.
+        Either ``'land'`` to mask out land mass or ``'sea'`` to mask out seas.
 
     Returns
     -------
@@ -117,23 +128,28 @@ def mask_landsea(cube: Cube, mask_out: Literal['land', 'sea']) -> Cube:
     }
 
     # preserve importance order: try stflf first then sftof
-    fx_cube = None
+    ancillary_var = None
     try:
-        fx_cube = cube.ancillary_variable('land_area_fraction')
+        ancillary_var = cube.ancillary_variable('land_area_fraction')
     except iris.exceptions.AncillaryVariableNotFoundError:
         try:
-            fx_cube = cube.ancillary_variable('sea_area_fraction')
+            ancillary_var = cube.ancillary_variable('sea_area_fraction')
         except iris.exceptions.AncillaryVariableNotFoundError:
             logger.debug(
                 "Ancillary variables land/sea area fraction not found in "
                 "cube. Check fx_file availability."
             )
 
-    if fx_cube:
-        fx_cube_data = np.broadcast_to(fx_cube.core_data(), cube.shape)
-        landsea_mask = _get_fx_mask(fx_cube_data, mask_out, fx_cube.var_name)
-        cube.data = _apply_mask(landsea_mask, cube.core_data())
-        logger.debug("Applying land-sea mask: %s", fx_cube.var_name)
+    if ancillary_var:
+        landsea_mask = _get_fx_mask(
+            ancillary_var.core_data(), mask_out, ancillary_var.var_name
+        )
+        cube.data = _apply_mask(
+            landsea_mask,
+            cube.core_data(),
+            cube.ancillary_variable_dims(ancillary_var),
+        )
+        logger.debug("Applying land-sea mask: %s", ancillary_var.var_name)
     else:
         if cube.coord('longitude').points.ndim < 2:
             cube = _mask_with_shp(cube, shapefiles[mask_out], [0])
@@ -169,7 +185,7 @@ def mask_landseaice(cube: Cube, mask_out: Literal['landsea', 'ice']) -> Cube:
         :class:`iris.coords.AncillaryVariable` with standard name
         ``'land_ice_area_fraction'``.
     mask_out: str
-        Either ``"landsea"`` to mask out land and oceans or ``"ice"`` to mask
+        Either ``'landsea'`` to mask out land and oceans or ``'ice'`` to mask
         out ice.
 
     Returns
@@ -183,18 +199,23 @@ def mask_landseaice(cube: Cube, mask_out: Literal['landsea', 'ice']) -> Cube:
         Error raised if landsea-ice mask not found as an ancillary variable.
     """
     # sftgif is the only one so far but users can set others
-    fx_cube = None
+    ancillary_var = None
     try:
-        fx_cube = cube.ancillary_variable('land_ice_area_fraction')
+        ancillary_var = cube.ancillary_variable('land_ice_area_fraction')
     except iris.exceptions.AncillaryVariableNotFoundError:
         logger.debug(
             "Ancillary variable land ice area fraction not found in cube. "
             "Check fx_file availability."
         )
-    if fx_cube:
-        fx_cube_data = np.broadcast_to(fx_cube.core_data(), cube.shape)
-        landice_mask = _get_fx_mask(fx_cube_data, mask_out, fx_cube.var_name)
-        cube.data = _apply_mask(landice_mask, cube.core_data())
+    if ancillary_var:
+        landseaice_mask = _get_fx_mask(
+            ancillary_var.core_data(), mask_out, ancillary_var.var_name
+        )
+        cube.data = _apply_mask(
+            landseaice_mask,
+            cube.core_data(),
+            cube.ancillary_variable_dims(ancillary_var),
+        )
         logger.debug("Applying landsea-ice mask: sftgif")
     else:
         raise ValueError("Landsea-ice mask could not be found. Stopping.")
@@ -322,17 +343,12 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
 
     if cube.has_lazy_data():
         mask = da.array(mask)
-        chunks = cube.lazy_data().chunks
-    else:
-        chunks = None
-    mask = iris.util.broadcast_to_shape(
-        mask,
-        cube.shape,
-        cube.coord_dims('latitude') + cube.coord_dims('longitude'),
-        chunks=chunks,
-    )
 
-    cube.data = _apply_mask(mask, cube.core_data())
+    cube.data = _apply_mask(
+        mask,
+        cube.core_data(),
+        cube.coord_dims('latitude') + cube.coord_dims('longitude'),
+    )
 
     return cube
 
