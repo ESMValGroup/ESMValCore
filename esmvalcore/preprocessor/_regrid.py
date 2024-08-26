@@ -30,7 +30,7 @@ from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import has_irregular_grid, has_unstructured_grid
 from esmvalcore.preprocessor._regrid_iris_esmf_regrid import (
-    _get_horizontal_dims,
+    _get_dims_along_axes,
 )
 from esmvalcore.preprocessor._shared import (
     broadcast_to_shape,
@@ -42,7 +42,6 @@ from esmvalcore.preprocessor._supplementary_vars import (
     add_cell_measure,
 )
 from esmvalcore.preprocessor.regrid_schemes import (
-    ESMPyNearest,
     GenericFuncScheme,
     IrisESMFRegrid,
     UnstructuredLinear,
@@ -95,7 +94,7 @@ HORIZONTAL_SCHEMES_REGULAR = {
 HORIZONTAL_SCHEMES_IRREGULAR = {
     'area_weighted': IrisESMFRegrid(method='conservative'),
     'linear': IrisESMFRegrid(method='bilinear'),
-    'nearest': ESMPyNearest(),
+    'nearest': IrisESMFRegrid(method='nearest'),
 }
 
 # Supported horizontal regridding schemes for meshes
@@ -896,12 +895,12 @@ def _rechunk(cube: Cube, target_grid: Cube) -> Cube:
         return cube
 
     # Extract grid dimension information from source cube
-    src_grid_indices = _get_horizontal_dims(cube)
+    src_grid_indices = _get_dims_along_axes(cube, ["X", "Y"])
     src_grid_shape = tuple(cube.shape[i] for i in src_grid_indices)
     src_grid_ndims = len(src_grid_indices)
 
     # Extract grid dimension information from target cube.
-    tgt_grid_indices = _get_horizontal_dims(target_grid)
+    tgt_grid_indices = _get_dims_along_axes(target_grid, ["X", "Y"])
     tgt_grid_shape = tuple(target_grid.shape[i] for i in tgt_grid_indices)
     tgt_grid_ndims = len(tgt_grid_indices)
 

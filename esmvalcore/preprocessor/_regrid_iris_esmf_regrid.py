@@ -1,6 +1,7 @@
 """Iris-esmf-regrid based regridding scheme."""
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import Any, Literal
 
 import dask
@@ -21,17 +22,23 @@ METHODS = {
 }
 
 
-def _get_horizontal_dims(cube: iris.cube.Cube) -> tuple[int, ...]:
-    """Get a tuple with the horizontal dimensions of a cube."""
+def _get_dims_along_axes(
+    cube: iris.cube.Cube,
+    axes: Iterable[Literal["T", "Z", "Y", "X"]],
+) -> tuple[int, ...]:
+    """Get a tuple with the dimensions along one or more axis."""
 
     def _get_dims_along_axis(cube, axis):
         try:
             coord = cube.coord(axis=axis, dim_coords=True)
         except iris.exceptions.CoordinateNotFoundError:
-            coord = cube.coord(axis=axis)
+            try:
+                coord = cube.coord(axis=axis)
+            except iris.exceptions.CoordinateNotFoundError:            
+                return tuple()
         return cube.coord_dims(coord)
 
-    dims = {d for axis in ["x", "y"] for d in _get_dims_along_axis(cube, axis)}
+    dims = {d for axis in axes for d in _get_dims_along_axis(cube, axis)}
     return tuple(sorted(dims))
 
 
@@ -58,7 +65,7 @@ class IrisESMFRegrid:
         given, this will default to 1 for conservative regridding and 0
         otherwise. Only available for methods 'bilinear' and 'conservative'.
     use_src_mask:
-        If True, derive a mask from (first time step) of the source cube,
+        If True, derive a mask from the source cube data,
         which will tell :mod:`esmpy` which points to ignore. If an array is
         provided, that will be used.
         If set to :obj:`None`, it will be set to :obj:`True` for methods
@@ -69,6 +76,16 @@ class IrisESMFRegrid:
         provided, that will be used.
         If set to :obj:`None`, it will be set to :obj:`True` for methods
         `bilinear' and 'conservative' and to :obj:`False` for method 'nearest'.
+    collapse_src_mask_along:
+        When deriving the mask from the source cube data, collapse the mask
+        along the dimensions idenfied by these axes. Only points that are
+        masked at all time (``'T'``), vertical (``'Z'``), or both time and
+        vertical points will be considered masked.
+    collapse_tgt_mask_along:
+        When deriving the mask from the target cube data, collapse the mask
+        along the dimensions idenfied by these axes. Only points that are
+        masked at all time (``'T'``), vertical (``'Z'``), or both time and
+        vertical points will be considered masked.
     src_resolution:
         If present, represents the amount of latitude slices per source cell
         given to ESMF for calculation. If resolution is set, the source cube
@@ -95,8 +112,10 @@ class IrisESMFRegrid:
         self,
         method: Literal["bilinear", "conservative", "nearest"],
         mdtol: float | None = None,
-        use_src_mask: bool | np.ndarray = True,
-        use_tgt_mask: bool | np.ndarray = True,
+        use_src_mask: None | bool | np.ndarray = None,
+        use_tgt_mask: None | bool | np.ndarray = None,
+        collapse_src_mask_along: Iterable[Literal['T', 'Z']] = ('Z', ),
+        collapse_tgt_mask_along: Iterable[Literal['T', 'Z']] = ('Z', ),
         src_resolution: int | None = None,
         tgt_resolution: int | None = None,
         tgt_location: Literal['face', 'node'] | None = None,
@@ -106,10 +125,17 @@ class IrisESMFRegrid:
                 "`method` should be one of 'bilinear', 'conservative', or "
                 "'nearest'")
 
+        if use_src_mask is None:
+            use_src_mask = False if method == "nearest" else True
+        if use_tgt_mask is None:
+            use_tgt_mask = False if method == "nearest" else True
+
         self.kwargs: dict[str, Any] = {
             'method': method,
             'use_src_mask': use_src_mask,
             'use_tgt_mask': use_tgt_mask,
+            'collapse_src_mask_along': collapse_src_mask_along,
+            'collapse_tgt_mask_along': collapse_tgt_mask_along,
             'tgt_location': tgt_location,
         }
         if method == 'nearest':
@@ -136,36 +162,27 @@ class IrisESMFRegrid:
         return f'{self.__class__.__name__}({kwargs_str})'
 
     @staticmethod
-    def _get_mask(cube: iris.cube.Cube) -> np.ndarray:
+    def _get_mask(
+        cube: iris.cube.Cube,
+        collapse_mask_along: Iterable[Literal['T', 'Z']] = ('Z', ),
+    ) -> np.ndarray:
         """Read the mask from the cube data.
 
-        If the cube has a vertical dimension, the mask will consist of
-        those points which are masked in all vertical levels.
-
         This function assumes that the mask is constant in dimensions
-        that are not horizontal or vertical.
+        that are not horizontal or specified in `collapse_mask_along`.
         """
-        horizontal_dims = _get_horizontal_dims(cube)
-        try:
-            vertical_coord = cube.coord(axis="z", dim_coords=True)
-        except iris.exceptions.CoordinateNotFoundError:
-            vertical_coord = None
+        horizontal_dims = _get_dims_along_axes(cube, ["X", "Y"])
+        other_dims = _get_dims_along_axes(cube, collapse_mask_along)
 
-        data = cube.core_data()
-        if vertical_coord is None:
-            slices = tuple(
-                slice(None) if i in horizontal_dims else 0
-                for i in range(cube.ndim))
-            mask = da.ma.getmaskarray(data[slices])
-        else:
-            vertical_dim = cube.coord_dims(vertical_coord)[0]
-            slices = tuple(
-                slice(None) if i in horizontal_dims + (vertical_dim, ) else 0
-                for i in range(cube.ndim))
-            mask = da.ma.getmaskarray(data[slices])
-            mask_vertical_dim = sum(i < vertical_dim for i in horizontal_dims)
-            mask = mask.all(axis=mask_vertical_dim)
-        return mask
+        slices = tuple(
+            slice(None) if i in horizontal_dims + other_dims else 0
+            for i in range(cube.ndim)
+        )
+        subcube = cube[slices]
+        subcube_other_dims = _get_dims_along_axes(subcube, collapse_mask_along)
+
+        mask = da.ma.getmaskarray(subcube.core_data())
+        return mask.all(axis=subcube_other_dims)
 
     def regridder(
         self,
@@ -193,11 +210,13 @@ class IrisESMFRegrid:
         kwargs = self.kwargs.copy()
         regridder_cls = METHODS[kwargs.pop('method')]
         src_mask = kwargs.pop('use_src_mask')
+        collapse_mask_along = kwargs.pop('collapse_src_mask_along')
         if src_mask is True:
-            src_mask = self._get_mask(src_cube)
+            src_mask = self._get_mask(src_cube, collapse_mask_along)
         tgt_mask = kwargs.pop('use_tgt_mask')
+        collapse_mask_along = kwargs.pop('collapse_tgt_mask_along')
         if tgt_mask is True:
-            tgt_mask = self._get_mask(tgt_cube)
+            tgt_mask = self._get_mask(tgt_cube, collapse_mask_along)
         src_mask, tgt_mask = dask.compute(src_mask, tgt_mask)
         return regridder_cls(
             src_cube,
