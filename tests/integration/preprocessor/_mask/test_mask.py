@@ -170,25 +170,48 @@ class Test:
         assert_array_equal(result_sea.data, expected)
 
     @pytest.mark.parametrize('lazy', [True, False])
-    def test_mask_landsea_transposed(self, lazy):
+    def test_mask_landsea_transposed_fx(self, lazy):
         """Test mask_landsea func."""
         if lazy:
             cube_data = da.array(self.new_cube_data)
         else:
             cube_data = self.new_cube_data
-        new_cube_land = iris.cube.Cube(
+        cube = iris.cube.Cube(
             cube_data, dim_coords_and_dims=self.cube_coords_spec
         )
-        new_cube_land.transpose([2, 1, 0])
+        self.fx_mask.var_name = 'sftlf'
+        self.fx_mask.standard_name = 'land_area_fraction'
+        cube = add_supplementary_variables(cube, [self.fx_mask])
+        cube.transpose([2, 1, 0])
 
-        result_land = mask_landsea(new_cube_land, 'land')
+        result = mask_landsea(cube, 'land')
 
-        # bear in mind all points are in the ocean
-        assert result_land.has_lazy_data() is lazy
+        assert result.has_lazy_data() is lazy
+        expected = np.ma.array(
+            np.full((3, 3, 2), 200.0), mask=np.ones((3, 3, 2), bool)
+        )
+        expected.mask[2, 1, :] = False
+        assert_array_equal(result.data, expected)
+
+    @pytest.mark.parametrize('lazy', [True, False])
+    def test_mask_landsea_transposed_shp(self, lazy):
+        """Test mask_landsea func."""
+        if lazy:
+            cube_data = da.array(self.new_cube_data)
+        else:
+            cube_data = self.new_cube_data
+        cube = iris.cube.Cube(
+            cube_data, dim_coords_and_dims=self.cube_coords_spec
+        )
+        cube.transpose([2, 1, 0])
+
+        result = mask_landsea(cube, 'land')
+
+        assert result.has_lazy_data() is lazy
         expected = np.ma.array(
             np.full((3, 3, 2), 200.0), mask=np.zeros((3, 3, 2), bool)
         )
-        assert_array_equal(result_land.data, expected)
+        assert_array_equal(result.data, expected)
 
     def test_mask_landsea_multidim_fail(self):
         """Test mask_landsea func."""
@@ -210,7 +233,7 @@ class Test:
     def test_mask_landseaice(self, lazy):
         """Test mask_landseaice func."""
         if lazy:
-            cube_data = da.array(self.new_cube_data)
+            cube_data = da.array(self.new_cube_data).rechunk((1, 3, 3))
         else:
             cube_data = self.new_cube_data
 
@@ -225,6 +248,8 @@ class Test:
         )
         result_ice = mask_landseaice(new_cube_ice, 'ice')
         assert result_ice.has_lazy_data() is lazy
+        if lazy:
+            assert result_ice.lazy_data().chunksize == (1, 3, 3)
         expected = np.ma.empty((2, 3, 3))
         expected.data[:] = 200.
         expected.mask = np.ones((2, 3, 3), bool)
