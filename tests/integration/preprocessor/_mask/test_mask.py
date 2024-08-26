@@ -9,6 +9,7 @@ import iris
 import iris.fileformats
 import numpy as np
 import pytest
+from iris.coords import AuxCoord
 
 from esmvalcore.preprocessor import (
     PreprocessorFile,
@@ -189,6 +190,22 @@ class Test:
         )
         assert_array_equal(result_land.data, expected)
 
+    def test_mask_landsea_multidim_fail(self):
+        """Test mask_landsea func."""
+        lon_coord = AuxCoord(np.ones((3, 3)), standard_name='longitude')
+        cube = iris.cube.Cube(
+            self.new_cube_data,
+            dim_coords_and_dims=[(self.zcoord, 0), (self.lats, 1)],
+            aux_coords_and_dims=[(lon_coord, (1, 2))],
+        )
+
+        msg = (
+            "Use of shapefiles with irregular grids not yet implemented, "
+            "land-sea mask not applied."
+        )
+        with pytest.raises(ValueError, match=msg):
+            mask_landsea(cube, 'land')
+
     @pytest.mark.parametrize('lazy', [True, False])
     def test_mask_landseaice(self, lazy):
         """Test mask_landseaice func."""
@@ -215,6 +232,19 @@ class Test:
         np.ma.set_fill_value(result_ice.data, 1e+20)
         np.ma.set_fill_value(expected, 1e+20)
         assert_array_equal(result_ice.data, expected)
+
+    def test_mask_landseaice_multidim_fail(self):
+        """Test mask_landseaice func."""
+        lon_coord = AuxCoord(np.ones((3, 3)), standard_name='longitude')
+        cube = iris.cube.Cube(
+            self.new_cube_data,
+            dim_coords_and_dims=[(self.zcoord, 0), (self.lats, 1)],
+            aux_coords_and_dims=[(lon_coord, (1, 2))],
+        )
+
+        msg = "Landsea-ice mask could not be found. Stopping."
+        with pytest.raises(ValueError, match=msg):
+            mask_landseaice(cube, 'ice')
 
     @pytest.mark.parametrize('lazy', [True, False])
     def test_mask_fillvalues(self, mocker, lazy):
