@@ -65,45 +65,39 @@ class Test:
         self.mock_data = np.ma.empty((4, 3, 3))
         self.mock_data[:] = 10.
 
+    @pytest.mark.parametrize('lazy_fx', [True, False])
     @pytest.mark.parametrize('lazy', [True, False])
-    def test_components_fx_var(self, lazy):
+    def test_components_fx_var(self, lazy, lazy_fx):
         """Test compatibility of ancillary variables."""
         if lazy:
             cube_data = da.array(self.new_cube_data)
         else:
             cube_data = self.new_cube_data
+        fx_cube = self.fx_mask.copy()
+        if lazy_fx:
+            fx_cube.data = fx_cube.lazy_data()
 
-        self.fx_mask.var_name = 'sftlf'
-        self.fx_mask.standard_name = 'land_area_fraction'
+        # mask_landsea
+        fx_cube.var_name = 'sftlf'
+        fx_cube.standard_name = 'land_area_fraction'
         new_cube_land = iris.cube.Cube(
             cube_data, dim_coords_and_dims=self.cube_coords_spec
         )
-        new_cube_land = add_supplementary_variables(
-            new_cube_land,
-            [self.fx_mask],
-        )
-        result_land = mask_landsea(
-            new_cube_land,
-            'land',
-        )
+        new_cube_land = add_supplementary_variables(new_cube_land, [fx_cube])
+        result_land = mask_landsea(new_cube_land, 'land')
         assert isinstance(result_land, iris.cube.Cube)
-        assert result_land.has_lazy_data() is lazy
+        assert result_land.has_lazy_data() is (lazy or lazy_fx)
 
-        self.fx_mask.var_name = 'sftgif'
-        self.fx_mask.standard_name = 'land_ice_area_fraction'
+        # mask_landseaice
+        fx_cube.var_name = 'sftgif'
+        fx_cube.standard_name = 'land_ice_area_fraction'
         new_cube_ice = iris.cube.Cube(
             cube_data, dim_coords_and_dims=self.cube_coords_spec
         )
-        new_cube_ice = add_supplementary_variables(
-            new_cube_ice,
-            [self.fx_mask],
-        )
-        result_ice = mask_landseaice(
-            new_cube_ice,
-            'ice',
-        )
+        new_cube_ice = add_supplementary_variables(new_cube_ice, [fx_cube])
+        result_ice = mask_landseaice(new_cube_ice, 'ice')
         assert isinstance(result_ice, iris.cube.Cube)
-        assert result_ice.has_lazy_data() is lazy
+        assert result_ice.has_lazy_data() is (lazy or lazy_fx)
 
     @pytest.mark.parametrize('lazy', [True, False])
     def test_mask_landsea(self, lazy):

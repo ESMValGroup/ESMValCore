@@ -63,7 +63,7 @@ def _apply_mask(
     var_data: np.ndarray | da.Array,
 ) -> np.ndarray | da.Array:
     """Apply a mask on the actual processed data."""
-    npx = get_array_module(var_data)
+    npx = get_array_module(new_mask, var_data)
     old_mask = npx.ma.getmaskarray(var_data)
     mask = old_mask | new_mask
     var_data = npx.ma.masked_array(var_data, mask=mask)
@@ -127,32 +127,28 @@ def mask_landsea(cube: Cube, mask_out: Literal['land', 'sea']) -> Cube:
         try:
             fx_cube = cube.ancillary_variable('sea_area_fraction')
         except iris.exceptions.AncillaryVariableNotFoundError:
-            logger.debug('Ancillary variables land/sea area fraction not '
-                         'found in cube. Check fx_file availability.')
+            logger.debug(
+                "Ancillary variables land/sea area fraction not found in "
+                "cube. Check fx_file availability."
+            )
 
     if fx_cube:
-        fx_cube_data = fx_cube.lazy_data()
-        if not cube.has_lazy_data():
-            fx_cube_data = fx_cube_data.compute()
-        fx_cube_data = np.broadcast_to(fx_cube_data, cube.shape)  # dispatch
-        landsea_mask = _get_fx_mask(
-            fx_cube_data, mask_out, fx_cube.var_name
-        )
+        fx_cube_data = np.broadcast_to(fx_cube.core_data(), cube.shape)
+        landsea_mask = _get_fx_mask(fx_cube_data, mask_out, fx_cube.var_name)
         cube.data = _apply_mask(landsea_mask, cube.core_data())
         logger.debug("Applying land-sea mask: %s", fx_cube.var_name)
     else:
         if cube.coord('longitude').points.ndim < 2:
-            cube = _mask_with_shp(cube, shapefiles[mask_out], [
-                0,
-            ])
+            cube = _mask_with_shp(cube, shapefiles[mask_out], [0])
             logger.debug(
                 "Applying land-sea mask from Natural Earth shapefile: \n%s",
                 shapefiles[mask_out],
             )
         else:
-            msg = ("Use of shapefiles with irregular grids not yet "
-                   "implemented, land-sea mask not applied.")
-            raise ValueError(msg)
+            raise ValueError(
+                "Use of shapefiles with irregular grids not yet implemented, "
+                "land-sea mask not applied."
+            )
 
     return cube
 
@@ -193,19 +189,17 @@ def mask_landseaice(cube: Cube, mask_out: Literal['landsea', 'ice']) -> Cube:
     try:
         fx_cube = cube.ancillary_variable('land_ice_area_fraction')
     except iris.exceptions.AncillaryVariableNotFoundError:
-        logger.debug('Ancillary variable land ice area fraction '
-                     'not found in cube. Check fx_file availability.')
+        logger.debug(
+            "Ancillary variable land ice area fraction not found in cube. "
+            "Check fx_file availability."
+        )
     if fx_cube:
-        fx_cube_data = fx_cube.lazy_data()
-        if not cube.has_lazy_data():
-            fx_cube_data = fx_cube_data.compute()
-        fx_cube_data = np.broadcast_to(fx_cube_data, cube.shape)  # dispatch
+        fx_cube_data = np.broadcast_to(fx_cube.core_data(), cube.shape)
         landice_mask = _get_fx_mask(fx_cube_data, mask_out, fx_cube.var_name)
         cube.data = _apply_mask(landice_mask, cube.core_data())
         logger.debug("Applying landsea-ice mask: sftgif")
     else:
-        msg = "Landsea-ice mask could not be found. Stopping. "
-        raise ValueError(msg)
+        raise ValueError("Landsea-ice mask could not be found. Stopping.")
 
     return cube
 
@@ -340,12 +334,7 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
         chunks=chunks,
     )
 
-    cube
-
-    npx = get_array_module(cube.core_data())
-    old_mask = npx.ma.getmaskarray(cube.core_data())
-    mask = old_mask | mask
-    cube.data = npx.ma.masked_array(cube.core_data(), mask=mask)
+    cube.data = _apply_mask(mask, cube.core_data())
 
     return cube
 
