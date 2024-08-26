@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import Literal
 
 import cartopy.io.shapereader as shpreader
 import dask.array as da
@@ -15,6 +16,7 @@ import iris
 import numpy as np
 import shapely.vectorized as shp_vect
 from iris.analysis import Aggregator
+from iris.cube import Cube
 from iris.util import rolling_window
 
 from esmvalcore.preprocessor._shared import get_array_module
@@ -24,7 +26,11 @@ from ._supplementary_vars import register_supplementaries
 logger = logging.getLogger(__name__)
 
 
-def _get_fx_mask(fx_data, fx_option, mask_type):
+def _get_fx_mask(
+    fx_data: np.ndarray | da.Array,
+    fx_option: Literal['land', 'sea', 'landsea', 'ice'],
+    mask_type: Literal['sftlf', 'sftof', 'sftgif'],
+) -> np.ndarray | da.Array:
     """Build a percentage-thresholded mask from an fx file."""
     inmask = np.zeros_like(fx_data, bool)  # respects dask through dispatch
     if mask_type == 'sftlf':
@@ -52,11 +58,14 @@ def _get_fx_mask(fx_data, fx_option, mask_type):
     return inmask
 
 
-def _apply_fx_mask(fx_mask, var_data):
-    """Apply the fx data extracted mask on the actual processed data."""
+def _apply_mask(
+    new_mask: np.ndarray | da.Array,
+    var_data: np.ndarray | da.Array,
+) -> np.ndarray | da.Array:
+    """Apply a mask on the actual processed data."""
     npx = get_array_module(var_data)
     old_mask = npx.ma.getmaskarray(var_data)
-    mask = old_mask | fx_mask
+    mask = old_mask | new_mask
     var_data = npx.ma.masked_array(var_data, mask=mask)
     return var_data
 
@@ -65,7 +74,7 @@ def _apply_fx_mask(fx_mask, var_data):
     variables=['sftlf', 'sftof'],
     required='prefer_at_least_one',
 )
-def mask_landsea(cube, mask_out):
+def mask_landsea(cube: Cube, mask_out: Literal['land', 'sea']) -> Cube:
     """Mask out either land mass or sea (oceans, seas and lakes).
 
     It uses dedicated ancillary variables (sftlf or sftof) or,
@@ -78,16 +87,15 @@ def mask_landsea(cube, mask_out):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        data cube to be masked. If the cube has an
+    cube:
+        Data cube to be masked. If the cube has an
         :class:`iris.coords.AncillaryVariable` with standard name
         ``'land_area_fraction'`` or ``'sea_area_fraction'`` that will be used.
         If both are present, only the 'land_area_fraction' will be used. If the
         ancillary variable is not available, the mask will be calculated from
         Natural Earth shapefiles.
-
-    mask_out: str
-        either "land" to mask out land mass or "sea" to mask out seas.
+    mask_out:
+        Either `land` to mask out land mass or `sea` to mask out seas.
 
     Returns
     -------
@@ -130,7 +138,7 @@ def mask_landsea(cube, mask_out):
         landsea_mask = _get_fx_mask(
             fx_cube_data, mask_out, fx_cube.var_name
         )
-        cube.data = _apply_fx_mask(landsea_mask, cube.core_data())
+        cube.data = _apply_mask(landsea_mask, cube.core_data())
         logger.debug("Applying land-sea mask: %s", fx_cube.var_name)
     else:
         if cube.coord('longitude').points.ndim < 2:
@@ -153,7 +161,7 @@ def mask_landsea(cube, mask_out):
     variables=['sftgif'],
     required='require_at_least_one',
 )
-def mask_landseaice(cube, mask_out):
+def mask_landseaice(cube: Cube, mask_out: Literal['landsea', 'ice']) -> Cube:
     """Mask out either landsea (combined) or ice.
 
     Function that masks out either landsea (land and seas) or ice (Antarctica,
@@ -163,13 +171,12 @@ def mask_landseaice(cube, mask_out):
 
     Parameters
     ----------
-    cube: iris.cube.Cube
-        data cube to be masked. It should have an
+    cube:
+        Data cube to be masked. It should have an
         :class:`iris.coords.AncillaryVariable` with standard name
         ``'land_ice_area_fraction'``.
-
     mask_out: str
-        either "landsea" to mask out landsea or "ice" to mask out ice.
+        Either `landsea` to mask out land and oceans or `ice` to mask out ice.
 
     Returns
     -------
@@ -194,7 +201,7 @@ def mask_landseaice(cube, mask_out):
             fx_cube_data = fx_cube_data.compute()
         fx_cube_data = np.broadcast_to(fx_cube_data, cube.shape)  # dispatch
         landice_mask = _get_fx_mask(fx_cube_data, mask_out, fx_cube.var_name)
-        cube.data = _apply_fx_mask(landice_mask, cube.core_data())
+        cube.data = _apply_mask(landice_mask, cube.core_data())
         logger.debug("Applying landsea-ice mask: sftgif")
     else:
         msg = "Landsea-ice mask could not be found. Stopping. "
@@ -332,6 +339,8 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
         cube.coord_dims('latitude') + cube.coord_dims('longitude'),
         chunks=chunks,
     )
+
+    cube
 
     npx = get_array_module(cube.core_data())
     old_mask = npx.ma.getmaskarray(cube.core_data())
