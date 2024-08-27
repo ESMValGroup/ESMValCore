@@ -21,6 +21,7 @@ import stratify
 from geopy.geocoders import Nominatim
 from iris.analysis import AreaWeighted, Linear, Nearest
 from iris.cube import Cube
+from iris.util import broadcast_to_shape
 
 from esmvalcore.cmor._fixes.shared import (
     add_altitude_from_plev,
@@ -33,7 +34,6 @@ from esmvalcore.preprocessor._regrid_iris_esmf_regrid import (
     _get_dims_along_axes,
 )
 from esmvalcore.preprocessor._shared import (
-    broadcast_to_shape,
     get_array_module,
     preserve_float_dtype,
 )
