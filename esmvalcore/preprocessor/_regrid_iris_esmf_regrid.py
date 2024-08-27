@@ -34,7 +34,7 @@ def _get_dims_along_axes(
         except iris.exceptions.CoordinateNotFoundError:
             try:
                 coord = cube.coord(axis=axis)
-            except iris.exceptions.CoordinateNotFoundError:            
+            except iris.exceptions.CoordinateNotFoundError:
                 return tuple()
         return cube.coord_dims(coord)
 
