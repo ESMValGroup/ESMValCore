@@ -9,7 +9,7 @@ import dask.array as da
 import iris.cube
 import iris.exceptions
 import numpy as np
-from esmf_regrid import (
+from esmf_regrid.schemes import (
     ESMFAreaWeightedRegridder,
     ESMFBilinearRegridder,
     ESMFNearestRegridder,
@@ -69,23 +69,25 @@ class IrisESMFRegrid:
         which will tell :mod:`esmpy` which points to ignore. If an array is
         provided, that will be used.
         If set to :obj:`None`, it will be set to :obj:`True` for methods
-        'bilinear' and `conservative' and to :obj:`False` for method 'nearest'.
+        ``'bilinear'`` and ``'conservative'`` and to :obj:`False` for method
+        ``'nearest'``.
     use_tgt_mask:
         If True, derive a mask from (first time step) of the target cube,
         which will tell :mod:`esmpy` which points to ignore. If an array is
         provided, that will be used.
         If set to :obj:`None`, it will be set to :obj:`True` for methods
-        `bilinear' and 'conservative' and to :obj:`False` for method 'nearest'.
-    collapse_src_mask_along:
+        ``'bilinear'`` and ``'conservative'`` and to :obj:`False` for method
+        ``'nearest'``.
+    collapse_src_mask_along_axes:
         When deriving the mask from the source cube data, collapse the mask
         along the dimensions idenfied by these axes. Only points that are
-        masked at all time (``'T'``), vertical (``'Z'``), or both time and
-        vertical points will be considered masked.
-    collapse_tgt_mask_along:
+        masked at all time (``'T'``), vertical levels (``'Z'``), or both time
+        and vertical levels (``'TZ'``) will be considered masked.
+    collapse_tgt_mask_along_axes:
         When deriving the mask from the target cube data, collapse the mask
         along the dimensions idenfied by these axes. Only points that are
-        masked at all time (``'T'``), vertical (``'Z'``), or both time and
-        vertical points will be considered masked.
+        masked at all time (``'T'``), vertical levels (``'Z'``), or both time
+        and vertical levels (``'TZ'``) will be considered masked.
     src_resolution:
         If present, represents the amount of latitude slices per source cell
         given to ESMF for calculation. If resolution is set, the source cube
@@ -114,8 +116,8 @@ class IrisESMFRegrid:
         mdtol: float | None = None,
         use_src_mask: None | bool | np.ndarray = None,
         use_tgt_mask: None | bool | np.ndarray = None,
-        collapse_src_mask_along: Iterable[Literal['T', 'Z']] = ('Z', ),
-        collapse_tgt_mask_along: Iterable[Literal['T', 'Z']] = ('Z', ),
+        collapse_src_mask_along_axes: Iterable[Literal['T', 'Z']] = ('Z', ),
+        collapse_tgt_mask_along_axes: Iterable[Literal['T', 'Z']] = ('Z', ),
         src_resolution: int | None = None,
         tgt_resolution: int | None = None,
         tgt_location: Literal['face', 'node'] | None = None,
@@ -126,16 +128,16 @@ class IrisESMFRegrid:
                 "'nearest'")
 
         if use_src_mask is None:
-            use_src_mask = False if method == "nearest" else True
+            use_src_mask = method != "nearest"
         if use_tgt_mask is None:
-            use_tgt_mask = False if method == "nearest" else True
+            use_tgt_mask = method != "nearest"
 
         self.kwargs: dict[str, Any] = {
             'method': method,
             'use_src_mask': use_src_mask,
             'use_tgt_mask': use_tgt_mask,
-            'collapse_src_mask_along': collapse_src_mask_along,
-            'collapse_tgt_mask_along': collapse_tgt_mask_along,
+            'collapse_src_mask_along_axes': collapse_src_mask_along_axes,
+            'collapse_tgt_mask_along_axes': collapse_tgt_mask_along_axes,
             'tgt_location': tgt_location,
         }
         if method == 'nearest':
@@ -202,19 +204,19 @@ class IrisESMFRegrid:
 
         Returns
         -------
-        :obj:`esmf_regrid.ESMFAreaWeightedRegridder` or
-        :obj:`esmf_regrid.ESMFBilinearRegridder` or
-        :obj:`esmf_regrid.ESMFNearestRegridder`:
-            iris-esmf-regrid regridding function.
+        :obj:`esmf_regrid.schemes.ESMFAreaWeightedRegridder` or
+        :obj:`esmf_regrid.schemes.ESMFBilinearRegridder` or
+        :obj:`esmf_regrid.schemes.ESMFNearestRegridder`:
+            An :doc:`esmf_regrid:index` regridder.
         """
         kwargs = self.kwargs.copy()
         regridder_cls = METHODS[kwargs.pop('method')]
         src_mask = kwargs.pop('use_src_mask')
-        collapse_mask_along = kwargs.pop('collapse_src_mask_along')
+        collapse_mask_along = kwargs.pop('collapse_src_mask_along_axes')
         if src_mask is True:
             src_mask = self._get_mask(src_cube, collapse_mask_along)
         tgt_mask = kwargs.pop('use_tgt_mask')
-        collapse_mask_along = kwargs.pop('collapse_tgt_mask_along')
+        collapse_mask_along = kwargs.pop('collapse_tgt_mask_along_axes')
         if tgt_mask is True:
             tgt_mask = self._get_mask(tgt_cube, collapse_mask_along)
         src_mask, tgt_mask = dask.compute(src_mask, tgt_mask)

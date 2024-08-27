@@ -13,8 +13,9 @@ class TestIrisESMFRegrid:
         scheme = IrisESMFRegrid(method='bilinear')
         expected = (
             "IrisESMFRegrid(method='bilinear', use_src_mask=True, "
-            "use_tgt_mask=True, collapse_src_mask_along=('Z',), "
-            "collapse_tgt_mask_along=('Z',), tgt_location=None, mdtol=None)"
+            "use_tgt_mask=True, collapse_src_mask_along_axes=('Z',), "
+            "collapse_tgt_mask_along_axes=('Z',), tgt_location=None, "
+            "mdtol=None)"
         )
         assert repr(scheme) == expected
 

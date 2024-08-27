@@ -898,7 +898,7 @@ This is explained in :ref:`generic regridding schemes`.
 Grid types
 ~~~~~~~~~~
 
-In ESMValCore, we distinguish between three grid types (note that these might
+In ESMValCore, we distinguish between various grid types (note that these might
 differ from other definitions):
 
 * **Regular grid**: A rectilinear grid with 1D latitude and 1D longitude
@@ -907,6 +907,7 @@ differ from other definitions):
   longitude coordinates with common dimensions.
 * **Unstructured grid**: A grid with 1D latitude and 1D longitude coordinates
   with common dimensions (i.e., a simple list of points).
+* **Mesh**: A mesh as supported by Iris and described in :ref:`iris:ugrid`.
 
 .. _default regridding schemes:
 
@@ -916,7 +917,7 @@ Default regridding schemes
 * ``linear``: Bilinear regridding.
   For source data on a regular grid, uses :obj:`~iris.analysis.Linear` with
   `extrapolation_mode='mask'`.
-  For source and/or target data on an irregular grid, uses
+  For source and/or target data on an irregular grid or mesh, uses
   :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` with
   `method='bilinear'`.
   For source data on an unstructured grid, uses
@@ -924,13 +925,14 @@ Default regridding schemes
 * ``nearest``: Nearest-neighbor regridding.
   For source data on a regular grid, uses :obj:`~iris.analysis.Nearest` with
   `extrapolation_mode='mask'`.
-  For source data on an irregular grid, uses
-  :class:`~esmvalcore.preprocessor.regrid_schemes.ESMPyNearest`.
+  For source data on an irregular grid or mesh, uses
+  :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` with
+  `method='nearest'`.
   For source data on an unstructured grid, uses
   :class:`~esmvalcore.preprocessor.regrid_schemes.UnstructuredNearest`.
 * ``area_weighted``: First-order conservative (area-weighted) regridding.
   For source data on a regular grid, uses :obj:`~iris.analysis.AreaWeighted`.
-  For source and/or target data on an irregular grid, uses
+  For source and/or target data on an irregular grid or mesh, uses
   :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` with
   `method='conservative'`.
   Source data on an unstructured grid is not supported.
@@ -1000,10 +1002,10 @@ module, the second refers to the scheme, i.e. some callable that will be called
 with the remaining entries of the ``scheme`` dictionary passed as keyword
 arguments.
 
-One package that aims to capitalize on the :ref:`support for unstructured grids
+One package that aims to capitalize on the :ref:`support for meshes
 introduced in Iris 3.2 <iris:ugrid>` is :doc:`esmf_regrid:index`.
 It aims to provide lazy regridding for structured regular and irregular grids,
-as well as unstructured grids. It is recommended to use these schemes through
+as well as meshes. It is recommended to use these schemes through
 the :obj:`esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` scheme though,
 as that provides more efficient handling of masks.
 
@@ -1019,6 +1021,8 @@ An example of its usage in a preprocessor is:
             reference: esmvalcore.preprocessor.regrid_schemes:IrisESMFRegrid
             method: conservative
             mdtol: 0.7
+            use_src_mask: true
+            collapse_src_mask_along: ZT
 
 Additionally, the use of generic schemes that take source and target grid cubes as
 arguments is also supported. The call function for such schemes must be defined as
