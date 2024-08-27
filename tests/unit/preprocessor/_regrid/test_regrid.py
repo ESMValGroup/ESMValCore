@@ -112,7 +112,10 @@ def test_invalid_target_grid(scheme, cube_10x10, mocker):
 
 def test_invalid_scheme(cube_10x10, cube_30x30):
     """Test `regrid.`"""
-    msg = "Got invalid regridding scheme string 'wibble'"
+    msg = (
+        "Regridding scheme 'wibble' not available for regular data, "
+        "expected one of: area_weighted, linear, nearest"
+    )
     with pytest.raises(ValueError, match=msg):
         regrid(cube_10x10, cube_30x30, 'wibble')
 

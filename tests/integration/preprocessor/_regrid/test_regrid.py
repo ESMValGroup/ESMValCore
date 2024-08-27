@@ -381,7 +381,8 @@ class Test:
     def test_invalid_scheme_for_unstructured_grid(self, cache_weights):
         """Test invalid scheme for unstructured cube."""
         msg = (
-            "Regridding scheme 'invalid' does not support unstructured data, "
+            "Regridding scheme 'invalid' not available for unstructured data, "
+            "expected one of: linear, nearest"
         )
         with pytest.raises(ValueError, match=msg):
             regrid(
@@ -395,7 +396,8 @@ class Test:
     def test_invalid_scheme_for_irregular_grid(self, cache_weights):
         """Test invalid scheme for irregular cube."""
         msg = (
-            "Regridding scheme 'invalid' does not support irregular data, "
+            "Regridding scheme 'invalid' not available for irregular data, "
+            "expected one of: area_weighted, linear, nearest"
         )
         with pytest.raises(ValueError, match=msg):
             regrid(

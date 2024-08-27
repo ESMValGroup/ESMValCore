@@ -542,47 +542,6 @@ def _get_target_grid_cube(
     return target_grid_cube
 
 
-def _attempt_irregular_regridding(
-    src_cube: Cube,
-    tgt_cube: Cube,
-    scheme: str,
-) -> bool:
-    """Check if irregular regridding with ESMF should be used."""
-    if not (has_irregular_grid(src_cube) or has_irregular_grid(tgt_cube)):
-        return False
-    if scheme not in HORIZONTAL_SCHEMES_IRREGULAR:
-        raise ValueError(
-            f"Regridding scheme '{scheme}' does not support irregular data, "
-            f"expected one of {list(HORIZONTAL_SCHEMES_IRREGULAR)}")
-    return True
-
-
-def _attempt_mesh_regridding(
-    src_cube: Cube,
-    tgt_cube: Cube,
-    scheme: str,
-) -> bool:
-    """Check if mesh regridding with ESMF should be used."""
-    if src_cube.mesh is None and tgt_cube.mesh is None:
-        return False
-    if scheme not in HORIZONTAL_SCHEMES_MESH:
-        raise ValueError(
-            f"Regridding scheme '{scheme}' does not support mesh data, "
-            f"expected one of {list(HORIZONTAL_SCHEMES_MESH)}")
-    return True
-
-
-def _attempt_unstructured_regridding(cube: Cube, scheme: str) -> bool:
-    """Check if unstructured regridding should be used."""
-    if not has_unstructured_grid(cube):
-        return False
-    if scheme not in HORIZONTAL_SCHEMES_UNSTRUCTURED:
-        raise ValueError(
-            f"Regridding scheme '{scheme}' does not support unstructured "
-            f"data, expected one of {list(HORIZONTAL_SCHEMES_UNSTRUCTURED)}")
-    return True
-
-
 def _load_scheme(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
     """Return scheme that can be used in :meth:`iris.cube.Cube.regrid`."""
     loaded_scheme: Any = None
@@ -614,25 +573,27 @@ def _load_scheme(src_cube: Cube, tgt_cube: Cube, scheme: str | dict):
         logger.debug("Loaded regridding scheme %s", loaded_scheme)
         return loaded_scheme
 
-    # Scheme is a dict -> assume this describes a generic regridding scheme
     if isinstance(scheme, dict):
+        # Scheme is a dict -> assume this describes a generic regridding scheme
         loaded_scheme = _load_generic_scheme(scheme)
-
-    # Scheme is a str -> load appropriate regridding scheme depending on the
-    # type of input data
-    elif _attempt_irregular_regridding(src_cube, tgt_cube, scheme):
-        loaded_scheme = HORIZONTAL_SCHEMES_IRREGULAR[scheme]
-    elif _attempt_mesh_regridding(src_cube, tgt_cube, scheme):
-        loaded_scheme = HORIZONTAL_SCHEMES_MESH[scheme]
-    elif _attempt_unstructured_regridding(src_cube, scheme):
-        loaded_scheme = HORIZONTAL_SCHEMES_UNSTRUCTURED[scheme]
     else:
-        loaded_scheme = HORIZONTAL_SCHEMES_REGULAR.get(scheme)
+        # Scheme is a str -> load appropriate regridding scheme depending on
+        # the type of input data
+        if has_irregular_grid(src_cube) or has_irregular_grid(tgt_cube):
+            grid_type = 'irregular'
+        elif src_cube.mesh is not None or tgt_cube.mesh is not None:
+            grid_type = 'mesh'
+        elif has_unstructured_grid(src_cube):
+            grid_type = 'unstructured'
+        else:
+            grid_type = 'regular'
 
-    if loaded_scheme is None:
-        raise ValueError(
-            f"Got invalid regridding scheme string '{scheme}', expected one "
-            f"of {list(HORIZONTAL_SCHEMES_REGULAR)}")
+        schemes = globals()[f"HORIZONTAL_SCHEMES_{grid_type.upper()}"]
+        if scheme not in schemes:
+            raise ValueError(
+                f"Regridding scheme '{scheme}' not available for {grid_type} "
+                f"data, expected one of: {', '.join(schemes)}")
+        loaded_scheme = schemes[scheme]
 
     logger.debug("Loaded regridding scheme %s", loaded_scheme)
 
