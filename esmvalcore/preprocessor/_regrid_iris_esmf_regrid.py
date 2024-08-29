@@ -70,22 +70,27 @@ class IrisESMFRegrid:
         provided, that will be used.
         If set to :obj:`None`, it will be set to :obj:`True` for methods
         ``'bilinear'`` and ``'conservative'`` and to :obj:`False` for method
-        ``'nearest'``.
+        ``'nearest'``. This default may be changed to :obj:`True` for all
+        schemes once `SciTools-incubator/iris-esmf-regrid#368
+        <https://github.com/SciTools-incubator/iris-esmf-regrid/issues/368>`_
+        has been resolved.
     use_tgt_mask:
         If True, derive a mask from (first time step) of the target cube,
         which will tell :mod:`esmpy` which points to ignore. If an array is
         provided, that will be used.
         If set to :obj:`None`, it will be set to :obj:`True` for methods
         ``'bilinear'`` and ``'conservative'`` and to :obj:`False` for method
-        ``'nearest'``.
+        ``'nearest'``. This default may be changed to :obj:`True` for all
+        schemes once `SciTools-incubator/iris-esmf-regrid#368`_ has been
+        resolved.
     collapse_src_mask_along_axes:
         When deriving the mask from the source cube data, collapse the mask
-        along the dimensions idenfied by these axes. Only points that are
+        along the dimensions identified by these axes. Only points that are
         masked at all time (``'T'``), vertical levels (``'Z'``), or both time
         and vertical levels (``'TZ'``) will be considered masked.
     collapse_tgt_mask_along_axes:
         When deriving the mask from the target cube data, collapse the mask
-        along the dimensions idenfied by these axes. Only points that are
+        along the dimensions identified by these axes. Only points that are
         masked at all time (``'T'``), vertical levels (``'Z'``), or both time
         and vertical levels (``'TZ'``) will be considered masked.
     src_resolution:
@@ -178,8 +183,7 @@ class IrisESMFRegrid:
 
         slices = tuple(
             slice(None) if i in horizontal_dims + other_dims else 0
-            for i in range(cube.ndim)
-        )
+            for i in range(cube.ndim))
         subcube = cube[slices]
         subcube_other_dims = _get_dims_along_axes(subcube, collapse_mask_along)
 
