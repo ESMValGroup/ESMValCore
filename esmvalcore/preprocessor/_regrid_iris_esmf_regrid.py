@@ -14,7 +14,10 @@ from esmf_regrid.schemes import (
     ESMFBilinearRegridder,
     ESMFNearestRegridder,
 )
-from esmvalcore.preprocessor._shared import get_dims_along_axes
+from esmvalcore.preprocessor._shared import (
+    get_dims_along_axes,
+    get_dims_along_coords,
+)
 
 METHODS = {
     'conservative': ESMFAreaWeightedRegridder,
@@ -64,16 +67,24 @@ class IrisESMFRegrid:
         ``'nearest'``. This default may be changed to :obj:`True` for all
         schemes once `SciTools-incubator/iris-esmf-regrid#368`_ has been
         resolved.
-    collapse_src_mask_along_axes:
+    collapse_src_mask_along:
         When deriving the mask from the source cube data, collapse the mask
-        along the dimensions identified by these axes. Only points that are
-        masked at all time (``'T'``), vertical levels (``'Z'``), or both time
-        and vertical levels (``'TZ'``) will be considered masked.
-    collapse_tgt_mask_along_axes:
+        along the dimensions identified by these axes or coordinates. Only
+        points that are masked at all time (``'T'``), vertical levels
+        (``'Z'``), or both time and vertical levels (``'TZ'``) will be
+        considered masked. Instead of the axes ``'T'`` and ``'Z'``,
+        coordinate names can also be provided. For any cube dimensions not
+        specified here, the first slice along the coordinate will be used to
+        determine the mask.
+    collapse_tgt_mask_along:
         When deriving the mask from the target cube data, collapse the mask
-        along the dimensions identified by these axes. Only points that are
-        masked at all time (``'T'``), vertical levels (``'Z'``), or both time
-        and vertical levels (``'TZ'``) will be considered masked.
+        along the dimensions identified by these axes or coordinates. Only
+        points that are masked at all time (``'T'``), vertical levels
+        (``'Z'``), or both time and vertical levels (``'TZ'``) will be
+        considered masked. Instead of the axes ``'T'`` and ``'Z'``,
+        coordinate names can also be provided. For any cube dimensions not
+        specified here, the first slice along the coordinate will be used to
+        determine the mask.
     src_resolution:
         If present, represents the amount of latitude slices per source cell
         given to ESMF for calculation. If resolution is set, the source cube
@@ -102,8 +113,8 @@ class IrisESMFRegrid:
         mdtol: float | None = None,
         use_src_mask: None | bool | np.ndarray = None,
         use_tgt_mask: None | bool | np.ndarray = None,
-        collapse_src_mask_along_axes: Iterable[Literal['T', 'Z']] = ('Z', ),
-        collapse_tgt_mask_along_axes: Iterable[Literal['T', 'Z']] = ('Z', ),
+        collapse_src_mask_along: Iterable[str] = ('Z', ),
+        collapse_tgt_mask_along: Iterable[str] = ('Z', ),
         src_resolution: int | None = None,
         tgt_resolution: int | None = None,
         tgt_location: Literal['face', 'node'] | None = None,
@@ -122,8 +133,8 @@ class IrisESMFRegrid:
             'method': method,
             'use_src_mask': use_src_mask,
             'use_tgt_mask': use_tgt_mask,
-            'collapse_src_mask_along_axes': collapse_src_mask_along_axes,
-            'collapse_tgt_mask_along_axes': collapse_tgt_mask_along_axes,
+            'collapse_src_mask_along': collapse_src_mask_along,
+            'collapse_tgt_mask_along': collapse_tgt_mask_along,
             'tgt_location': tgt_location,
         }
         if method == 'nearest':
@@ -152,7 +163,7 @@ class IrisESMFRegrid:
     @staticmethod
     def _get_mask(
         cube: iris.cube.Cube,
-        collapse_mask_along: Iterable[Literal['T', 'Z']] = ('Z', ),
+        collapse_mask_along: Iterable[str],
     ) -> np.ndarray:
         """Read the mask from the cube data.
 
@@ -160,13 +171,19 @@ class IrisESMFRegrid:
         that are not horizontal or specified in `collapse_mask_along`.
         """
         horizontal_dims = get_dims_along_axes(cube, ["X", "Y"])
-        other_dims = get_dims_along_axes(cube, collapse_mask_along)
+        axes = tuple(elem for elem in collapse_mask_along
+                     if isinstance(elem, str) and elem.upper() in ("T", "Z"))
+        other_dims = (
+            get_dims_along_axes(cube, axes) +  # type: ignore[arg-type]
+            get_dims_along_coords(cube, collapse_mask_along))
 
         slices = tuple(
             slice(None) if i in horizontal_dims + other_dims else 0
             for i in range(cube.ndim))
         subcube = cube[slices]
-        subcube_other_dims = get_dims_along_axes(subcube, collapse_mask_along)
+        subcube_other_dims = (
+            get_dims_along_axes(subcube, axes) +  # type: ignore[arg-type]
+            get_dims_along_coords(subcube, collapse_mask_along))
 
         mask = da.ma.getmaskarray(subcube.core_data())
         return mask.all(axis=subcube_other_dims)
@@ -197,11 +214,11 @@ class IrisESMFRegrid:
         kwargs = self.kwargs.copy()
         regridder_cls = METHODS[kwargs.pop('method')]
         src_mask = kwargs.pop('use_src_mask')
-        collapse_mask_along = kwargs.pop('collapse_src_mask_along_axes')
+        collapse_mask_along = kwargs.pop('collapse_src_mask_along')
         if src_mask is True:
             src_mask = self._get_mask(src_cube, collapse_mask_along)
         tgt_mask = kwargs.pop('use_tgt_mask')
-        collapse_mask_along = kwargs.pop('collapse_tgt_mask_along_axes')
+        collapse_mask_along = kwargs.pop('collapse_tgt_mask_along')
         if tgt_mask is True:
             tgt_mask = self._get_mask(tgt_cube, collapse_mask_along)
         src_mask, tgt_mask = dask.compute(src_mask, tgt_mask)

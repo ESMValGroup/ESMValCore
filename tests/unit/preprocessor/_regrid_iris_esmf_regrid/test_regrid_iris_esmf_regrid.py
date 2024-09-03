@@ -11,12 +11,10 @@ class TestIrisESMFRegrid:
 
     def test_repr(self):
         scheme = IrisESMFRegrid(method='bilinear')
-        expected = (
-            "IrisESMFRegrid(method='bilinear', use_src_mask=True, "
-            "use_tgt_mask=True, collapse_src_mask_along_axes=('Z',), "
-            "collapse_tgt_mask_along_axes=('Z',), tgt_location=None, "
-            "mdtol=None)"
-        )
+        expected = ("IrisESMFRegrid(method='bilinear', use_src_mask=True, "
+                    "use_tgt_mask=True, collapse_src_mask_along=('Z',), "
+                    "collapse_tgt_mask_along=('Z',), tgt_location=None, "
+                    "mdtol=None)")
         assert repr(scheme) == expected
 
     def test_invalid_method_raises(self):
@@ -65,7 +63,7 @@ class TestIrisESMFRegrid:
                 ],
             ),
         )
-        mask = IrisESMFRegrid._get_mask(cube)
+        mask = IrisESMFRegrid._get_mask(cube, ("Z", ))
         np.testing.assert_array_equal(mask, cube.data.mask)
 
     def test_get_mask_3d(self):
@@ -97,7 +95,7 @@ class TestIrisESMFRegrid:
                 ],
             ),
         )
-        mask = IrisESMFRegrid._get_mask(cube)
+        mask = IrisESMFRegrid._get_mask(cube, ("Z", ))
         np.testing.assert_array_equal(mask, np.array([[1, 0]], dtype=bool))
 
     def test_get_mask_3d_odd_dim_order(self):
@@ -129,7 +127,7 @@ class TestIrisESMFRegrid:
                 ],
             ),
         )
-        mask = IrisESMFRegrid._get_mask(cube)
+        mask = IrisESMFRegrid._get_mask(cube, ["air_pressure"])
         np.testing.assert_array_equal(mask, np.array([[1, 0]], dtype=bool))
 
     @pytest.mark.parametrize("scheme", [
