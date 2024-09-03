@@ -402,7 +402,7 @@ work correctly and specifically by Iris to interpret the grid as a
 :ref:`mesh <iris:ugrid>`.
 An example is the horizontal regridding of native ICON data to a regular grid.
 While the :ref:`built-in regridding schemes <built-in regridding schemes>`
-`linear` and `nearest`  can handle unstructured grids not in UGRID format,
+`linear` and `nearest`  can handle unstructured grids (i.e., not UGRID-compliant) and meshes (i.e., UGRID-compliant),
 the `area_weighted` scheme requires the input data in UGRID format.
 This automatic UGRIDization is enabled by default, but can be switched off with
 the facet ``ugrid: false`` in the recipe or the extra facets (see below).

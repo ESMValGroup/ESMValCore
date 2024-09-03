@@ -925,7 +925,7 @@ Default regridding schemes
 * ``nearest``: Nearest-neighbor regridding.
   For source data on a regular grid, uses :obj:`~iris.analysis.Nearest` with
   `extrapolation_mode='mask'`.
-  For source data on an irregular grid or mesh, uses
+  For source and/or target data on an irregular grid or mesh, uses
   :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` with
   `method='nearest'`.
   For source data on an unstructured grid, uses
