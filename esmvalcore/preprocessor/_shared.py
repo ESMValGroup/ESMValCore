@@ -498,3 +498,23 @@ def get_all_coord_dims(
         all_coord_dims.extend(cube.coord_dims(coord))
     sorted_all_coord_dims = sorted(list(set(all_coord_dims)))
     return tuple(sorted_all_coord_dims)
+
+
+def get_dims_along_axes(
+    cube: iris.cube.Cube,
+    axes: Iterable[Literal["T", "Z", "Y", "X"]],
+) -> tuple[int, ...]:
+    """Get a tuple with the dimensions along one or more axis."""
+
+    def _get_dims_along_axis(cube, axis):
+        try:
+            coord = cube.coord(axis=axis, dim_coords=True)
+        except iris.exceptions.CoordinateNotFoundError:
+            try:
+                coord = cube.coord(axis=axis)
+            except iris.exceptions.CoordinateNotFoundError:
+                return tuple()
+        return cube.coord_dims(coord)
+
+    dims = {d for axis in axes for d in _get_dims_along_axis(cube, axis)}
+    return tuple(sorted(dims))

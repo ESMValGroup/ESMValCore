@@ -14,32 +14,13 @@ from esmf_regrid.schemes import (
     ESMFBilinearRegridder,
     ESMFNearestRegridder,
 )
+from esmvalcore.preprocessor._shared import get_dims_along_axes
 
 METHODS = {
     'conservative': ESMFAreaWeightedRegridder,
     'bilinear': ESMFBilinearRegridder,
     'nearest': ESMFNearestRegridder,
 }
-
-
-def _get_dims_along_axes(
-    cube: iris.cube.Cube,
-    axes: Iterable[Literal["T", "Z", "Y", "X"]],
-) -> tuple[int, ...]:
-    """Get a tuple with the dimensions along one or more axis."""
-
-    def _get_dims_along_axis(cube, axis):
-        try:
-            coord = cube.coord(axis=axis, dim_coords=True)
-        except iris.exceptions.CoordinateNotFoundError:
-            try:
-                coord = cube.coord(axis=axis)
-            except iris.exceptions.CoordinateNotFoundError:
-                return tuple()
-        return cube.coord_dims(coord)
-
-    dims = {d for axis in axes for d in _get_dims_along_axis(cube, axis)}
-    return tuple(sorted(dims))
 
 
 class IrisESMFRegrid:
@@ -178,14 +159,14 @@ class IrisESMFRegrid:
         This function assumes that the mask is constant in dimensions
         that are not horizontal or specified in `collapse_mask_along`.
         """
-        horizontal_dims = _get_dims_along_axes(cube, ["X", "Y"])
-        other_dims = _get_dims_along_axes(cube, collapse_mask_along)
+        horizontal_dims = get_dims_along_axes(cube, ["X", "Y"])
+        other_dims = get_dims_along_axes(cube, collapse_mask_along)
 
         slices = tuple(
             slice(None) if i in horizontal_dims + other_dims else 0
             for i in range(cube.ndim))
         subcube = cube[slices]
-        subcube_other_dims = _get_dims_along_axes(subcube, collapse_mask_along)
+        subcube_other_dims = get_dims_along_axes(subcube, collapse_mask_along)
 
         mask = da.ma.getmaskarray(subcube.core_data())
         return mask.all(axis=subcube_other_dims)
