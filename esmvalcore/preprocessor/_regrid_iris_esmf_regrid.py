@@ -59,7 +59,7 @@ class IrisESMFRegrid:
         <https://github.com/SciTools-incubator/iris-esmf-regrid/issues/368>`_
         has been resolved.
     use_tgt_mask:
-        If True, derive a mask from (first time step) of the target cube,
+        If True, derive a mask from of the target cube,
         which will tell :mod:`esmpy` which points to ignore. If an array is
         provided, that will be used.
         If set to :obj:`None`, it will be set to :obj:`True` for methods
