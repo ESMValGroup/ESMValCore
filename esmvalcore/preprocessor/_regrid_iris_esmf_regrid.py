@@ -14,6 +14,7 @@ from esmf_regrid.schemes import (
     ESMFBilinearRegridder,
     ESMFNearestRegridder,
 )
+
 from esmvalcore.preprocessor._shared import (
     get_dims_along_axes,
     get_dims_along_coords,
@@ -98,8 +99,10 @@ class IrisESMFRegrid:
         plus or minus 360 degrees to make the bounds strictly increasing).
         Only available for method 'conservative'.
     tgt_location:
-        Either "face" or "node". Describes the location for data on the mesh
-        if the target is not a :class:`~iris.cube.Cube`.
+        Only used if the target grid is an :class:`iris.mesh.MeshXY`. Describes
+        the location for data on the mesh. Either ``'face'`` or ``'node'`` for
+        bilinear or nearest neighbour regridding, can only be ``'face'`` for
+        first order conservative regridding.
 
     Attributes
     ----------
@@ -191,7 +194,7 @@ class IrisESMFRegrid:
     def regridder(
         self,
         src_cube: iris.cube.Cube,
-        tgt_cube: iris.cube.Cube,
+        tgt_cube: iris.cube.Cube | iris.mesh.MeshXY,
     ) -> (ESMFAreaWeightedRegridder
           | ESMFBilinearRegridder
           | ESMFNearestRegridder):
