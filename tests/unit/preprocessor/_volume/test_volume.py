@@ -402,6 +402,7 @@ class Test(tests.Test):
         """Test to extract the top two layers and compute the weighted average
         of a cube."""
         grid_volume = calculate_volume(self.grid_4d)
+        assert isinstance(grid_volume, np.ndarray)
         measure = iris.coords.CellMeasure(grid_volume,
                                           standard_name='ocean_volume',
                                           units='m3',
