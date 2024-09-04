@@ -9,9 +9,12 @@ except ImportError as exc:
         import ESMF as esmpy  # noqa: N811
     except ImportError:
         raise exc
+import warnings
 import iris
 import numpy as np
 from iris.cube import Cube
+
+from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 
 from ._mapping import get_empty_data, map_slices, ref_to_dims_index
 
@@ -44,6 +47,12 @@ class ESMPyRegridder:
     """General ESMPy regridder.
 
     Does not support lazy regridding nor weights caching.
+
+    .. deprecated:: 2.12.0
+        This regridder has been deprecated and is scheduled for removal in
+        version 2.14.0. Please use
+        :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` to
+        create an :doc:`esmf_regrid:index` regridder instead.
 
     Parameters
     ----------
@@ -122,6 +131,15 @@ class _ESMPyScheme:
 
     def __init__(self, mask_threshold: float = 0.99):
         """Initialize class instance."""
+        msg = (
+            "The `esmvalcore.preprocessor.regrid_schemes."
+            f"{self.__class__.__name__}' regridding scheme has been "
+            "deprecated in ESMValCore version 2.12.0 and is scheduled for "
+            "removal in version 2.14.0. Please use "
+            "`esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid` "
+            "instead."
+        )
+        warnings.warn(msg, ESMValCoreDeprecationWarning)
         self.mask_threshold = mask_threshold
 
     def __repr__(self) -> str:
@@ -161,6 +179,12 @@ class ESMPyAreaWeighted(_ESMPyScheme):
 
     Does not support lazy regridding.
 
+    .. deprecated:: 2.12.0
+        This scheme has been deprecated and is scheduled for removal in version
+        2.14.0. Please use
+        :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid`
+        instead.
+
     """
 
     _METHOD = 'area_weighted'
@@ -173,6 +197,12 @@ class ESMPyLinear(_ESMPyScheme):
 
     Does not support lazy regridding.
 
+    .. deprecated:: 2.12.0
+        This scheme has been deprecated and is scheduled for removal in version
+        2.14.0. Please use
+        :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid`
+        instead.
+
     """
 
     _METHOD = 'linear'
@@ -184,6 +214,12 @@ class ESMPyNearest(_ESMPyScheme):
     This class can be used in :meth:`iris.cube.Cube.regrid`.
 
     Does not support lazy regridding.
+
+    .. deprecated:: 2.12.0
+        This scheme has been deprecated and is scheduled for removal in version
+        2.14.0. Please use
+        :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid`
+        instead.
 
     """
 

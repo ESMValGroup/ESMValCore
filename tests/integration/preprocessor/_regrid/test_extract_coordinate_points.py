@@ -19,7 +19,7 @@ class Test(tests.Test):
         """Prepare tests."""
         shape = (3, 4, 4)
         data = np.arange(np.prod(shape)).reshape(shape)
-        self.cube = _make_cube(data, dtype=np.float64, rotated=True)
+        self.cube = _make_cube(data, dtype=np.float64, grid='rotated')
         self.cs = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
 
     def test_extract_point__single_linear(self):
