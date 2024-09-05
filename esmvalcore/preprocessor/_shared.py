@@ -10,7 +10,7 @@ import re
 import warnings
 from collections import defaultdict
 from collections.abc import Callable, Iterable
-from functools import partial, wraps
+from functools import wraps
 from typing import Any, Literal, Optional
 
 import dask.array as da
@@ -19,6 +19,7 @@ import numpy as np
 from iris.coords import CellMeasure, Coord, DimCoord
 from iris.cube import Cube
 from iris.exceptions import CoordinateMultiDimError, CoordinateNotFoundError
+from iris.util import broadcast_to_shape
 
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import has_regular_grid
@@ -318,52 +319,6 @@ def get_array_module(*args):
     return np
 
 
-def broadcast_to_shape(array, shape, dim_map, chunks=None):
-    """Copy of `iris.util.broadcast_to_shape` that allows specifying chunks."""
-    if isinstance(array, da.Array):
-        if chunks is not None:
-            chunks = list(chunks)
-            for src_idx, tgt_idx in enumerate(dim_map):
-                # Only use the specified chunks along new dimensions or on
-                # dimensions that have size 1 in the source array.
-                if array.shape[src_idx] != 1:
-                    chunks[tgt_idx] = array.chunks[src_idx]
-        broadcast = partial(da.broadcast_to, shape=shape, chunks=chunks)
-    else:
-        broadcast = partial(np.broadcast_to, shape=shape)
-
-    n_orig_dims = len(array.shape)
-    n_new_dims = len(shape) - n_orig_dims
-    array = array.reshape(array.shape + (1,) * n_new_dims)
-
-    # Get dims in required order.
-    array = np.moveaxis(array, range(n_orig_dims), dim_map)
-    new_array = broadcast(array)
-
-    if np.ma.isMA(array):
-        # broadcast_to strips masks so we need to handle them explicitly.
-        mask = np.ma.getmask(array)
-        if mask is np.ma.nomask:
-            new_mask = np.ma.nomask
-        else:
-            new_mask = broadcast(mask)
-        new_array = np.ma.array(new_array, mask=new_mask)
-
-    elif _is_lazy_masked_data(array):
-        # broadcast_to strips masks so we need to handle them explicitly.
-        mask = da.ma.getmaskarray(array)
-        new_mask = broadcast(mask)
-        new_array = da.ma.masked_array(new_array, new_mask)
-
-    return new_array
-
-
-def _is_lazy_masked_data(array):
-    """Similar to `iris._lazy_data.is_lazy_masked_data`."""
-    return isinstance(array, da.Array) and isinstance(
-        da.utils.meta_from_array(array), np.ma.MaskedArray)
-
-
 def get_weights(
     cube: Cube,
     coords: Iterable[Coord] | Iterable[str],
@@ -374,10 +329,11 @@ def get_weights(
 
     # Time weights: lengths of time interval
     if 'time' in coords:
-        weights *= broadcast_to_shape(
+        weights = weights * broadcast_to_shape(
             npx.array(get_time_weights(cube)),
             cube.shape,
             cube.coord_dims('time'),
+            chunks=cube.lazy_data().chunks if cube.has_lazy_data() else None,
         )
 
     # Latitude weights: cell areas
@@ -395,10 +351,17 @@ def get_weights(
                 f"variable)"
             )
         try_adding_calculated_cell_area(cube)
-        weights *= broadcast_to_shape(
-            cube.cell_measure('cell_area').core_data(),
+        area_weights = cube.cell_measure('cell_area').core_data()
+        if cube.has_lazy_data():
+            area_weights = da.array(area_weights)
+            chunks = cube.lazy_data().chunks
+        else:
+            chunks = None
+        weights = weights * broadcast_to_shape(
+            area_weights,
             cube.shape,
             cube.cell_measure_dims('cell_area'),
+            chunks=chunks,
         )
 
     return weights
@@ -505,47 +468,15 @@ def _compute_area_weights(cube):
             category=UserWarning,
             module='iris.analysis.cartography',
         )
-        # TODO: replace the following line with
-        # weights = iris.analysis.cartography.area_weights(
-        #     cube, compute=not cube.has_lazy_data()
-        # )
-        # once https://github.com/SciTools/iris/pull/5658 is available
-        weights = _get_area_weights(cube)
-
+        if cube.has_lazy_data():
+            kwargs = {'compute': False, 'chunks': cube.lazy_data().chunks}
+        else:
+            kwargs = {'compute': True}
+        weights = iris.analysis.cartography.area_weights(cube, **kwargs)
         for warning in caught_warnings:
             logger.debug(
                 "%s while computing area weights of the following cube:\n%s",
                 warning.message, cube)
-    return weights
-
-
-def _get_area_weights(cube: Cube) -> np.ndarray | da.Array:
-    """Get area weights.
-
-    For non-lazy data, simply use the according iris function. For lazy data,
-    calculate area weights for a single lat-lon slice and broadcast it to the
-    correct shape.
-
-    Note
-    ----
-    This is a temporary workaround to get lazy area weights. Can be removed
-    once https://github.com/SciTools/iris/pull/5658 is available.
-
-    """
-    if not cube.has_lazy_data():
-        return iris.analysis.cartography.area_weights(cube)
-
-    lat_lon_dims = sorted(
-        tuple(set(cube.coord_dims('latitude') + cube.coord_dims('longitude')))
-    )
-    lat_lon_slice = next(cube.slices(['latitude', 'longitude'], ordered=False))
-    weights_2d = iris.analysis.cartography.area_weights(lat_lon_slice)
-    weights = broadcast_to_shape(
-        da.array(weights_2d),
-        cube.shape,
-        lat_lon_dims,
-        chunks=cube.lazy_data().chunks,
-    )
     return weights
 
 
@@ -575,3 +506,33 @@ def get_all_coord_dims(
         all_coord_dims.extend(cube.coord_dims(coord))
     sorted_all_coord_dims = sorted(list(set(all_coord_dims)))
     return tuple(sorted_all_coord_dims)
+
+
+def _get_dims_along(cube, *args, **kwargs):
+    """Get a tuple with the cube dimensions matching *args and **kwargs."""
+    try:
+        coord = cube.coord(*args, **kwargs, dim_coords=True)
+    except iris.exceptions.CoordinateNotFoundError:
+        try:
+            coord = cube.coord(*args, **kwargs)
+        except iris.exceptions.CoordinateNotFoundError:
+            return tuple()
+    return cube.coord_dims(coord)
+
+
+def get_dims_along_axes(
+    cube: iris.cube.Cube,
+    axes: Iterable[Literal["T", "Z", "Y", "X"]],
+) -> tuple[int, ...]:
+    """Get a tuple with the dimensions along one or more axis."""
+    dims = {d for axis in axes for d in _get_dims_along(cube, axis=axis)}
+    return tuple(sorted(dims))
+
+
+def get_dims_along_coords(
+    cube: iris.cube.Cube,
+    coords: Iterable[str],
+) -> tuple[int, ...]:
+    """Get a tuple with the dimensions along one or more coordinates."""
+    dims = {d for coord in coords for d in _get_dims_along(cube, coord)}
+    return tuple(sorted(dims))

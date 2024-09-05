@@ -14,9 +14,9 @@ import iris
 import numpy as np
 from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube
+from iris.util import broadcast_to_shape
 
 from ._shared import (
-    broadcast_to_shape,
     get_iris_aggregator,
     get_normalized_cube,
     preserve_float_dtype,
@@ -161,9 +161,10 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     try_adding_calculated_cell_area(cube)
     area = cube.cell_measure('cell_area').copy()
     area_dim = cube.cell_measure_dims(area)
-
-    # Ensure cell area is in square meters as the units
     area.convert_units('m2')
+    area_array = area.core_data()
+    if cube.has_lazy_data():
+        area_array = da.array(area_array)
 
     # Make sure input cube has not been modified
     if not has_cell_measure:
@@ -171,9 +172,11 @@ def calculate_volume(cube: Cube) -> da.core.Array:
 
     chunks = cube.core_data().chunks if cube.has_lazy_data() else None
     area_arr = broadcast_to_shape(
-        area.core_data(), cube.shape, area_dim, chunks=chunks)
+        area_array, cube.shape, area_dim, chunks=chunks
+    )
     thickness_arr = broadcast_to_shape(
-        thickness, cube.shape, z_dim, chunks=chunks)
+        thickness, cube.shape, z_dim, chunks=chunks
+    )
     grid_volume = area_arr * thickness_arr
 
     return grid_volume
