@@ -12,6 +12,7 @@ from itertools import groupby
 from pathlib import Path
 from typing import Any, Iterator, Sequence, Union
 
+import dask
 from iris.cube import Cube
 
 from esmvalcore import esgf, local
@@ -77,6 +78,10 @@ def _ismatch(facet_value: FacetValue, pattern: FacetValue) -> bool:
     """Check if a facet value matches a glob pattern."""
     return (isinstance(pattern, str) and isinstance(facet_value, str)
             and fnmatchcase(facet_value, pattern))
+
+
+def _first(elems):
+    return elems[0]
 
 
 class Dataset:
@@ -664,8 +669,18 @@ class Dataset:
     def files(self, value):
         self._files = value
 
-    def load(self) -> Cube:
+    def load(self, compute=True) -> Cube:
         """Load dataset.
+
+        Parameters
+        ----------
+        compute:
+            If :obj:`True`, return the cube immediately. If :obj:`False`,
+            return a :class:`~dask.delayed.Delayed` object that can be used
+            to load the cube by calling its
+            :func:`~dask.delayed.Delayed.compute` method. Multiple datasets
+            can be loaded in parallel by passing a list of such delayeds
+            to :func:`dask.compute`.
 
         Raises
         ------
@@ -689,7 +704,7 @@ class Dataset:
             supplementary_cubes.append(supplementary_cube)
 
         output_file = _get_output_file(self.facets, self.session.preproc_dir)
-        cubes = preprocess(
+        cubes = dask.delayed(preprocess)(
             [cube],
             'add_supplementary_variables',
             input_files=input_files,
@@ -698,7 +713,10 @@ class Dataset:
             supplementary_cubes=supplementary_cubes,
         )
 
-        return cubes[0]
+        cube = dask.delayed(_first)(cubes)
+        if compute:
+            return cube.compute()
+        return cube
 
     def _load(self) -> Cube:
         """Load self.files into an iris cube and return it."""
@@ -763,21 +781,61 @@ class Dataset:
             'short_name': self.facets['short_name'],
         }
 
-        result = [
+        input_files = [
             file.local_file(self.session['download_dir']) if isinstance(
                 file, esgf.ESGFFile) else file for file in self.files
         ]
-        for step, kwargs in settings.items():
-            result = preprocess(
+
+        debug = self.session['save_intermediary_cubes']
+
+        result = []
+        for input_file in input_files:
+            files = dask.delayed(preprocess)(
+                [input_file],
+                'fix_file',
+                input_files=[input_file],
+                output_file=output_file,
+                debug=debug,
+                **settings['fix_file'],
+            )
+            cubes = dask.delayed(preprocess)(
+                files,
+                'load',
+                input_files=[input_file],
+                output_file=output_file,
+                debug=debug,
+                **settings['load'],
+            )
+            cubes = dask.delayed(preprocess)(
+                cubes,
+                'fix_metadata',
+                input_files=[input_file],
+                output_file=output_file,
+                debug=debug,
+                **settings['fix_metadata'],
+            )
+            cube = dask.delayed(_first)(cubes)
+            result.append(cube)
+
+        result = dask.delayed(preprocess)(
+            result,
+            'concatenate',
+            input_files=input_files,
+            output_file=output_file,
+            debug=debug,
+            **settings['concatenate'],
+        )
+        for step, kwargs in dict(tuple(settings.items())[4:]).items():
+            result = dask.delayed(preprocess)(
                 result,
                 step,
-                input_files=self.files,
+                input_files=input_files,
                 output_file=output_file,
-                debug=self.session['save_intermediary_cubes'],
+                debug=debug,
                 **kwargs,
             )
 
-        cube = result[0]
+        cube = dask.delayed(_first)(result)
         return cube
 
     def from_ranges(self) -> list['Dataset']:
