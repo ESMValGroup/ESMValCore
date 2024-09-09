@@ -3,6 +3,7 @@ from pathlib import Path
 import iris.coords
 import iris.cube
 import pytest
+from dask.delayed import Delayed
 
 from esmvalcore.config import CFG
 from esmvalcore.dataset import Dataset
@@ -34,7 +35,8 @@ def example_data(tmp_path, monkeypatch):
     monkeypatch.setitem(CFG, 'output_dir', tmp_path / 'output_dir')
 
 
-def test_load(example_data):
+@pytest.mark.parametrize('lazy', [True, False])
+def test_load(example_data, lazy):
     tas = Dataset(
         short_name='tas',
         mip='Amon',
@@ -51,7 +53,11 @@ def test_load(example_data):
     tas.find_files()
     print(tas.files)
 
-    cube = tas.load()
-
+    if lazy:
+        result = tas.load(compute=False)
+        assert isinstance(result, Delayed)
+        cube = result.compute()
+    else:
+        cube = tas.load()
     assert isinstance(cube, iris.cube.Cube)
     assert cube.cell_measures()
