@@ -845,7 +845,7 @@ about this since we can point the user to the specific functionality
 `here <https://scitools-iris.readthedocs.io/en/latest/userguide/loading_iris_cubes.html>`_ but we will underline
 that the initial loading is done by adhering to the CF Conventions that `iris` operates by as well (see
 `CF Conventions Document <http://cfconventions.org/cf-conventions/cf-conventions.html>`_ and the search
-page for CF `standard names <http://cfconventions.org/standard-names.html>`_).
+page for CF `standard names <https://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`_).
 
 Data concatenation from multiple sources
 ========================================
