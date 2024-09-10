@@ -31,10 +31,9 @@ from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import has_irregular_grid, has_unstructured_grid
 from esmvalcore.preprocessor._shared import (
-    get_dims_along_axes,
-)
-from esmvalcore.preprocessor._shared import (
+    _rechunk_aux_factory_dependencies,
     get_array_module,
+    get_dims_along_axes,
     preserve_float_dtype,
 )
 from esmvalcore.preprocessor._supplementary_vars import (
@@ -1125,36 +1124,6 @@ def parse_vertical_scheme(scheme):
         extrap_scheme = 'nearest'
 
     return scheme, extrap_scheme
-
-
-def _rechunk_aux_factory_dependencies(
-    cube: iris.cube.Cube,
-    coord_name: str,
-) -> iris.cube.Cube:
-    """Rechunk coordinate aux factory dependencies.
-
-    This ensures that the resulting coordinate has reasonably sized
-    chunks that are aligned with the cube data for optimal computational
-    performance.
-    """
-    # Workaround for https://github.com/SciTools/iris/issues/5457
-    try:
-        factory = cube.aux_factory(coord_name)
-    except iris.exceptions.CoordinateNotFoundError:
-        return cube
-
-    cube = cube.copy()
-    cube_chunks = cube.lazy_data().chunks
-    for coord in factory.dependencies.values():
-        coord_dims = cube.coord_dims(coord)
-        if coord_dims:
-            coord = coord.copy()
-            chunks = tuple(cube_chunks[i] for i in coord_dims)
-            coord.points = coord.lazy_points().rechunk(chunks)
-            if coord.has_bounds():
-                coord.bounds = coord.lazy_bounds().rechunk(chunks + (None, ))
-            cube.replace_coord(coord)
-    return cube
 
 
 @preserve_float_dtype

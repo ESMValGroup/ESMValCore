@@ -7,6 +7,7 @@ import iris.analysis
 import numpy as np
 import pytest
 from cf_units import Unit
+from iris.aux_factory import HybridPressureFactory
 from iris.coords import AuxCoord
 from iris.cube import Cube
 
@@ -15,6 +16,7 @@ from esmvalcore.preprocessor import PreprocessorFile
 from esmvalcore.preprocessor._shared import (
     _compute_area_weights,
     _group_products,
+    _rechunk_aux_factory_dependencies,
     aggregator_accept_weights,
     apply_mask,
     get_array_module,
@@ -393,3 +395,55 @@ def test_apply_mask(mask, array, dim_map, expected):
     if isinstance(expected, da.Array):
         assert result.chunks == expected.chunks
     assert_array_equal(result, expected)
+
+
+def test_rechunk_aux_factory_dependencies():
+
+    delta = iris.coords.AuxCoord(
+        points=np.array([0.0, 1.0, 2.0], dtype=np.float64),
+        bounds=np.array([[-0.5, 0.5], [0.5, 1.5], [1.5, 2.5]],
+                        dtype=np.float64),
+        long_name="level_pressure",
+        units="Pa",
+    )
+    sigma = iris.coords.AuxCoord(
+        np.array([1.0, 0.9, 0.8], dtype=np.float64),
+        long_name="sigma",
+        units="1",
+    )
+    surface_air_pressure = iris.coords.AuxCoord(
+        np.arange(4).astype(np.float64).reshape(2, 2),
+        long_name="surface_air_pressure",
+        units="Pa",
+    )
+    factory = HybridPressureFactory(
+        delta=delta,
+        sigma=sigma,
+        surface_air_pressure=surface_air_pressure,
+    )
+
+    cube = iris.cube.Cube(
+        da.asarray(
+            np.arange(3 * 2 * 2).astype(np.float32).reshape(3, 2, 2),
+            chunks=(1, 2, 2),
+        ), )
+    cube.add_aux_coord(delta, 0)
+    cube.add_aux_coord(sigma, 0)
+    cube.add_aux_coord(surface_air_pressure, [1, 2])
+    cube.add_aux_factory(factory)
+
+    result = _rechunk_aux_factory_dependencies(cube, 'air_pressure')
+
+    # Check that the 'air_pressure' coordinate of the resulting cube has been
+    # rechunked:
+    assert (
+        (1, 1, 1),
+        (2, ),
+        (2, ),
+    ) == result.coord('air_pressure').core_points().chunks
+    # Check that the original cube has not been modified:
+    assert (
+        (3, ),
+        (2, ),
+        (2, ),
+    ) == cube.coord('air_pressure').core_points().chunks
