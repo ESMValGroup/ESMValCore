@@ -16,11 +16,13 @@ from esmvalcore.preprocessor._shared import (
     _compute_area_weights,
     _group_products,
     aggregator_accept_weights,
+    apply_mask,
     get_array_module,
     get_iris_aggregator,
     preserve_float_dtype,
     try_adding_calculated_cell_area,
 )
+from tests import assert_array_equal
 
 
 @pytest.mark.parametrize('operator', ['gmean', 'GmEaN', 'GMEAN'])
@@ -347,3 +349,47 @@ def test_try_adding_calculated_cell_area():
     try_adding_calculated_cell_area(cube)
 
     assert cube.cell_measures('cell_area')
+
+
+@pytest.mark.parametrize(
+    ['mask', 'array', 'dim_map', 'expected'],
+    [
+        (
+            np.arange(2),
+            da.arange(2),
+            (0, ),
+            da.ma.masked_array(np.arange(2), np.arange(2)),
+        ),
+        (
+            da.arange(2),
+            np.arange(2),
+            (0, ),
+            da.ma.masked_array(np.arange(2), np.arange(2)),
+        ),
+        (
+            np.ma.masked_array(np.arange(2), mask=[1, 0]),
+            da.arange(2),
+            (0, ),
+            da.ma.masked_array(np.ones(2), np.arange(2)),
+        ),
+        (
+            np.ones((2, 5)),
+            da.zeros((2, 3, 5), chunks=(1, 2, 3)),
+            (0, 2),
+            da.ma.masked_array(
+                da.zeros((2, 3, 5), da.ones(2, 3, 5), chunks=(1, 2, 3))),
+        ),
+        (
+            np.arange(2),
+            np.ones((3, 2)),
+            (1, ),
+            np.ma.masked_array(np.ones((3, 2)), mask=[[0, 1], [0, 1], [0, 1]]),
+        ),
+    ],
+)
+def test_apply_mask(mask, array, dim_map, expected):
+    result = apply_mask(mask, array, dim_map)
+    assert isinstance(result, type(expected))
+    if isinstance(expected, da.Array):
+        assert result.chunks == expected.chunks
+    assert_array_equal(result, expected)

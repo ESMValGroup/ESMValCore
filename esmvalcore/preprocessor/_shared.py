@@ -536,3 +536,52 @@ def get_dims_along_coords(
     """Get a tuple with the dimensions along one or more coordinates."""
     dims = {d for coord in coords for d in _get_dims_along(cube, coord)}
     return tuple(sorted(dims))
+
+
+def apply_mask(
+    mask: np.ndarray | da.Array,
+    array: np.ndarray | da.Array,
+    dim_map: Iterable[int],
+) -> np.ma.MaskedArray | da.Array:
+    """Apply a (broadcasted) mask on an array.
+
+    Parameters
+    ----------
+    mask:
+        The mask to apply to array.
+    array:
+        The array to mask out.
+    dim_map : :class:`list`, :class:`tuple` etc
+        A mapping of the dimensions of *mask* to their corresponding
+        dimension in *array*. *dim_map* must be the same length as the
+        number of dimensions in *mask*. Each element of *dim_map*
+        corresponds to a dimension of *mask* and its value provides
+        the index in *array* which the dimension of *mask* corresponds
+        to, so the first element of *dim_map* gives the index of *array*
+        that corresponds to the first dimension of *mask* etc.
+
+    Returns
+    -------
+    np.ma.MaskedArray or da.Array:
+        A copy of the input array with the mask applied.
+
+    """
+    if isinstance(array, da.Array):
+        array_chunks = array.chunks
+        # If the mask is not a Dask array yet, we make it into a Dask array
+        # before broadcasting to avoid inserting a large array into the Dask
+        # graph.
+        mask_chunks = tuple(array_chunks[i] for i in dim_map)
+        mask = da.asarray(mask, chunks=mask_chunks)
+    else:
+        array_chunks = None
+
+    mask = iris.util.broadcast_to_shape(
+        mask,
+        array.shape,
+        dim_map=dim_map,
+        chunks=array_chunks
+    )
+
+    array_module = get_array_module(mask, array)
+    return array_module.ma.masked_where(mask, array)

@@ -8,8 +8,7 @@ from __future__ import annotations
 
 import logging
 import os
-from collections.abc import Iterable
-from typing import Literal, Optional
+from typing import Literal
 
 import cartopy.io.shapereader as shpreader
 import dask.array as da
@@ -21,7 +20,7 @@ from iris.analysis import Aggregator
 from iris.cube import Cube
 from iris.util import rolling_window
 
-from esmvalcore.preprocessor._shared import get_array_module
+from esmvalcore.preprocessor._shared import apply_mask
 
 from ._supplementary_vars import register_supplementaries
 
@@ -58,24 +57,6 @@ def _get_fx_mask(
             inmask[fx_data <= 50.] = True
 
     return inmask
-
-
-def _apply_mask(
-    mask: np.ndarray | da.Array,
-    array: np.ndarray | da.Array,
-    dim_map: Optional[Iterable[int]] = None,
-) -> np.ndarray | da.Array:
-    """Apply a (broadcasted) mask on an array."""
-    npx = get_array_module(mask, array)
-    if dim_map is not None:
-        if isinstance(array, da.Array):
-            chunks = array.chunks
-        else:
-            chunks = None
-        mask = iris.util.broadcast_to_shape(
-            mask, array.shape, dim_map, chunks=chunks
-        )
-    return npx.ma.masked_where(mask, array)
 
 
 @register_supplementaries(
@@ -144,7 +125,7 @@ def mask_landsea(cube: Cube, mask_out: Literal['land', 'sea']) -> Cube:
         landsea_mask = _get_fx_mask(
             ancillary_var.core_data(), mask_out, ancillary_var.var_name
         )
-        cube.data = _apply_mask(
+        cube.data = apply_mask(
             landsea_mask,
             cube.core_data(),
             cube.ancillary_variable_dims(ancillary_var),
@@ -211,7 +192,7 @@ def mask_landseaice(cube: Cube, mask_out: Literal['landsea', 'ice']) -> Cube:
         landseaice_mask = _get_fx_mask(
             ancillary_var.core_data(), mask_out, ancillary_var.var_name
         )
-        cube.data = _apply_mask(
+        cube.data = apply_mask(
             landseaice_mask,
             cube.core_data(),
             cube.ancillary_variable_dims(ancillary_var),
@@ -341,10 +322,7 @@ def _mask_with_shp(cube, shapefilename, region_indices=None):
         else:
             mask |= shp_vect.contains(region, x_p_180, y_p_90)
 
-    if cube.has_lazy_data():
-        mask = da.array(mask)
-
-    cube.data = _apply_mask(
+    cube.data = apply_mask(
         mask,
         cube.core_data(),
         cube.coord_dims('latitude') + cube.coord_dims('longitude'),

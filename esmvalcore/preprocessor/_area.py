@@ -20,6 +20,8 @@ from iris.cube import Cube, CubeList
 from iris.exceptions import CoordinateNotFoundError
 
 from esmvalcore.preprocessor._shared import (
+    apply_mask,
+    get_dims_along_axes,
     get_iris_aggregator,
     get_normalized_cube,
     preserve_float_dtype,
@@ -184,8 +186,8 @@ def _extract_irregular_region(cube, start_longitude, end_longitude,
     cube = cube[..., i_slice, j_slice]
     selection = selection[i_slice, j_slice]
     # Mask remaining coordinates outside region
-    mask = da.broadcast_to(~selection, cube.shape)
-    cube.data = da.ma.masked_where(mask, cube.core_data())
+    horizontal_dims = get_dims_along_axes(cube, ["X", "Y"])
+    cube.data = apply_mask(~selection, cube.core_data(), horizontal_dims)
     return cube
 
 
@@ -847,8 +849,8 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
         _cube.add_aux_coord(
             AuxCoord(id_, units='no_unit', long_name='shape_id')
         )
-        mask = da.broadcast_to(mask, _cube.shape)
-        _cube.data = da.ma.masked_where(~mask, _cube.core_data())
+        horizontal_dims = get_dims_along_axes(cube, axes=["X", "Y"])
+        _cube.data = apply_mask(~mask, _cube.core_data(), horizontal_dims)
         cubelist.append(_cube)
     result = fix_coordinate_ordering(cubelist.merge_cube())
     if cube.cell_measures():
@@ -859,8 +861,21 @@ def _mask_cube(cube: Cube, masks: dict[str, np.ndarray]) -> Cube:
             # (time, shape_id, depth, lat, lon)
             if measure.ndim > 3 and result.ndim > 4:
                 data = measure.core_data()
-                data = da.expand_dims(data, axis=(1,))
-                data = da.broadcast_to(data, result.shape)
+                dim_map = get_dims_along_axes(result, ["T", "Z", "Y", "X"])
+                if cube.has_lazy_data():
+                    chunks = cube.lazy_data().chunks
+                    data = da.asarray(
+                        data,
+                        chunks=tuple(chunks[i] for i in dim_map),
+                    )
+                else:
+                    chunks = None
+                data = iris.util.broadcast_to_shape(
+                    data,
+                    result.shape,
+                    dim_map=dim_map,
+                    chunks=chunks,
+                )
                 measure = iris.coords.CellMeasure(
                     data,
                     standard_name=measure.standard_name,
