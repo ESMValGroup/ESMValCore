@@ -110,6 +110,7 @@ def _get_default_settings_for_chl(save_filename):
         'save': {
             'compress': False,
             'filename': save_filename,
+            'compute': False,
         }
     }
     return defaults
@@ -682,6 +683,7 @@ def test_default_fx_preprocessor(tmp_path, patched_datafinder, session):
         'save': {
             'compress': False,
             'filename': product.filename,
+            'compute': False,
         }
     }
     assert product.settings == defaults

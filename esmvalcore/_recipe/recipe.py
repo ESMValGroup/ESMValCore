@@ -213,7 +213,10 @@ def _get_default_settings(dataset):
     settings['remove_supplementary_variables'] = {}
 
     # Configure saving cubes to file
-    settings['save'] = {'compress': session['compress_netcdf']}
+    settings['save'] = {
+        'compress': session['compress_netcdf'],
+        'compute': False,
+    }
     if facets['short_name'] != facets['original_short_name']:
         settings['save']['alias'] = facets['short_name']
 

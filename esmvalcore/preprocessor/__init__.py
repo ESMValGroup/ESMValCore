@@ -8,6 +8,9 @@ from pathlib import Path
 from pprint import pformat
 from typing import Any, Iterable
 
+import dask
+import distributed
+from dask.delayed import Delayed
 from iris.cube import Cube
 
 from .._provenance import TrackedFile
@@ -401,6 +404,9 @@ def preprocess(
             result.append(_run_preproc_function(function, item, settings,
                                                 input_files=input_files))
 
+    if step == 'save':
+        return result
+
     items = []
     for item in result:
         if isinstance(item, (PreprocessorFile, Cube, str, Path)):
@@ -506,20 +512,24 @@ class PreprocessorFile(TrackedFile):
     def cubes(self, value):
         self._cubes = value
 
-    def save(self):
+    def save(self) -> list[Delayed] | None:
         """Save cubes to disk."""
-        preprocess(self._cubes,
-                   'save',
-                   input_files=self._input_files,
-                   **self.settings['save'])
+        return preprocess(
+            self._cubes,
+            'save',
+            input_files=self._input_files,
+            **self.settings['save'],
+        )
 
-    def close(self):
+    def close(self) -> list[Delayed] | None:
         """Close the file."""
+        result = None
         if self._cubes is not None:
             self._update_attributes()
-            self.save()
+            result = self.save()
             self._cubes = None
             self.save_provenance()
+        return result
 
     def _update_attributes(self):
         """Update product attributes from cube metadata."""
@@ -600,6 +610,24 @@ def _apply_multimodel(products, step, debug):
     return products
 
 
+def _compute_with_progress(delayeds: Iterable[Delayed]) -> None:
+    """Compute delayeds while displaying a progress bar."""
+    try:
+        distributed.get_client()
+    except ValueError:
+        use_distributed = False
+    else:
+        use_distributed = True
+
+    if use_distributed:
+        futures = dask.persist(delayeds)
+        distributed.progress(futures, notebook=False)
+        dask.compute(futures)
+    else:
+        with dask.diagnostics.ProgressBar():
+            dask.compute(delayeds)
+
+
 class PreprocessingTask(BaseTask):
     """Task for running the preprocessor."""
 
@@ -670,6 +698,7 @@ class PreprocessingTask(BaseTask):
         blocks = get_step_blocks(steps, self.order)
 
         saved = set()
+        delayeds = []
         for block in blocks:
             logger.debug("Running block %s", block)
             if block[0] in MULTI_MODEL_FUNCTIONS:
@@ -684,14 +713,17 @@ class PreprocessingTask(BaseTask):
                             product.apply(step, self.debug)
                     if block == blocks[-1]:
                         product.cubes  # pylint: disable=pointless-statement
-                        product.close()
+                        delayed = product.close()
+                        delayeds.append(delayed)
                         saved.add(product.filename)
 
         for product in self.products:
             if product.filename not in saved:
                 product.cubes  # pylint: disable=pointless-statement
-                product.close()
+                delayed = product.close()
+                delayeds.append(delayed)
 
+        _compute_with_progress(delayeds)
         metadata_files = write_metadata(self.products,
                                         self.write_ncl_interface)
         return metadata_files

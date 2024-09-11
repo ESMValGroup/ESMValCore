@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import logging
 import os
+from collections.abc import Sequence
 from itertools import groupby
 from pathlib import Path
 from typing import NamedTuple, Optional
@@ -16,6 +17,7 @@ import iris.exceptions
 import numpy as np
 import yaml
 from cf_units import suppress_errors
+from dask.delayed import Delayed
 from iris.cube import CubeList
 
 from esmvalcore.cmor.check import CheckLevels
@@ -345,23 +347,25 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     return result
 
 
-def save(cubes,
-         filename,
-         optimize_access='',
-         compress=False,
-         alias='',
-         **kwargs):
+def save(
+    cubes: Sequence[iris.cube.Cube],
+    filename: Path | str,
+    optimize_access: str = '',
+    compress: bool = False,
+    alias: str = '',
+    **kwargs,
+) -> Delayed | None:
     """Save iris cubes to file.
 
     Parameters
     ----------
-    cubes: iterable of iris.cube.Cube
+    cubes:
         Data cubes to be saved
 
-    filename: str
+    filename:
         Name of target file
 
-    optimize_access: str
+    optimize_access:
         Set internal NetCDF chunking to favour a reading scheme
 
         Values can be map or timeseries, which improve performance when
@@ -370,16 +374,20 @@ def save(cubes,
         case the better performance will be avhieved by loading all the values
         in that coordinate at a time
 
-    compress: bool, optional
+    compress:
         Use NetCDF internal compression.
 
-    alias: str, optional
+    alias:
         Var name to use when saving instead of the one in the cube.
+
+    **kwargs:
+        See :meth:`iris.fileformats.netcdf.saver.save` for additional
+        keyword arguments.
 
     Returns
     -------
-    str
-        filename
+    :class:`dask.delayed.Delayed` or :obj:`None`
+        A delayed object that can be used to save the data in the cube.
 
     Raises
     ------
@@ -402,7 +410,7 @@ def save(cubes,
         logger.debug(
             "Not saving cubes %s to %s to avoid data loss. "
             "The cube is probably unchanged.", cubes, filename)
-        return filename
+        return None
 
     for cube in cubes:
         logger.debug("Saving cube:\n%s\nwith %s data to %s", cube,
@@ -415,11 +423,11 @@ def save(cubes,
         elif optimize_access == 'timeseries':
             dims = set(cube.coord_dims('time'))
         else:
-            dims = tuple()
-            for coord_dims in (cube.coord_dims(dimension)
-                               for dimension in optimize_access.split(' ')):
-                dims += coord_dims
-            dims = set(dims)
+            dims = {
+                dim
+                for coord_name in optimize_access.split(' ')
+                for dim in cube.coord_dims(coord_name)
+            }
 
         kwargs['chunksizes'] = tuple(
             length if index in dims else 1
@@ -444,9 +452,9 @@ def save(cubes,
             category=UserWarning,
             module='iris',
         )
-        iris.save(cubes, **kwargs)
+        result = iris.save(cubes, **kwargs)
 
-    return filename
+    return result
 
 
 def _get_debug_filename(filename, step):
