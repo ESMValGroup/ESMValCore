@@ -9,6 +9,7 @@ from pprint import pformat
 from typing import Any, Iterable
 
 import dask
+import dask.diagnostics
 import distributed
 from dask.delayed import Delayed
 from iris.cube import Cube
