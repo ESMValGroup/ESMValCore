@@ -329,10 +329,11 @@ def get_weights(
 
     # Time weights: lengths of time interval
     if 'time' in coords:
-        weights *= broadcast_to_shape(
+        weights = weights * broadcast_to_shape(
             npx.array(get_time_weights(cube)),
             cube.shape,
             cube.coord_dims('time'),
+            chunks=cube.lazy_data().chunks if cube.has_lazy_data() else None,
         )
 
     # Latitude weights: cell areas
@@ -350,10 +351,17 @@ def get_weights(
                 f"variable)"
             )
         try_adding_calculated_cell_area(cube)
-        weights *= broadcast_to_shape(
-            cube.cell_measure('cell_area').core_data(),
+        area_weights = cube.cell_measure('cell_area').core_data()
+        if cube.has_lazy_data():
+            area_weights = da.array(area_weights)
+            chunks = cube.lazy_data().chunks
+        else:
+            chunks = None
+        weights = weights * broadcast_to_shape(
+            area_weights,
             cube.shape,
             cube.cell_measure_dims('cell_area'),
+            chunks=chunks,
         )
 
     return weights
@@ -498,3 +506,33 @@ def get_all_coord_dims(
         all_coord_dims.extend(cube.coord_dims(coord))
     sorted_all_coord_dims = sorted(list(set(all_coord_dims)))
     return tuple(sorted_all_coord_dims)
+
+
+def _get_dims_along(cube, *args, **kwargs):
+    """Get a tuple with the cube dimensions matching *args and **kwargs."""
+    try:
+        coord = cube.coord(*args, **kwargs, dim_coords=True)
+    except iris.exceptions.CoordinateNotFoundError:
+        try:
+            coord = cube.coord(*args, **kwargs)
+        except iris.exceptions.CoordinateNotFoundError:
+            return tuple()
+    return cube.coord_dims(coord)
+
+
+def get_dims_along_axes(
+    cube: iris.cube.Cube,
+    axes: Iterable[Literal["T", "Z", "Y", "X"]],
+) -> tuple[int, ...]:
+    """Get a tuple with the dimensions along one or more axis."""
+    dims = {d for axis in axes for d in _get_dims_along(cube, axis=axis)}
+    return tuple(sorted(dims))
+
+
+def get_dims_along_coords(
+    cube: iris.cube.Cube,
+    coords: Iterable[str],
+) -> tuple[int, ...]:
+    """Get a tuple with the dimensions along one or more coordinates."""
+    dims = {d for coord in coords for d in _get_dims_along(cube, coord)}
+    return tuple(sorted(dims))

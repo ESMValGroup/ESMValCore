@@ -19,7 +19,7 @@ dependencies:
   - geopy
   - humanfriendly
   - iris >=3.10.0
-  - iris-esmf-regrid >=0.10.0  # github.com/SciTools-incubator/iris-esmf-regrid/pull/342
+  - iris-esmf-regrid >=0.11.0
   - iris-grib
   - isodate
   - jinja2
