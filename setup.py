@@ -90,15 +90,12 @@ REQUIREMENTS = {
     # Use pip install -e .[develop] to install in development mode
     'develop': [
         'codespell',
-        'docformatter',
-        'isort',
         'flake8>=7',
         'pre-commit',
         'pylint',
         'pydocstyle',
         'vprof',
         'yamllint',
-        'yapf',
     ],
 }
 

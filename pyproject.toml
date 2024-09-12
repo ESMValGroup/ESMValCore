@@ -24,3 +24,11 @@ disable = [
     "file-ignored",      # Disable messages about disabling checks
     "locally-disabled",  # Disable messages about disabling checks
 ]
+[tool.ruff]
+line-length = 79
+[tool.ruff.lint]
+select = [
+    "I"  # isort
+]
+[tool.ruff.lint.isort]
+known-first-party = ["esmvalcore"]
