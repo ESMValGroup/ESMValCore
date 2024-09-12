@@ -65,14 +65,11 @@ dependencies:
   - types-PyYAML
   # Python packages needed for installing in development mode
   - codespell
-  - docformatter
-  - isort
   - pre-commit
   - pylint
   - flake8 >= 7
   - pydocstyle
   # Not on conda forge - vprof
   - yamllint
-  - yapf
   - pip:
     - ESMValTool_sample_data
