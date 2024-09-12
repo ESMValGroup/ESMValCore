@@ -724,6 +724,7 @@ class PreprocessingTask(BaseTask):
                 delayed = product.close()
                 delayeds.append(delayed)
 
+        logger.info("Computing and saving data for task %s", self.name)
         _compute_with_progress(delayeds)
         metadata_files = write_metadata(self.products,
                                         self.write_ncl_interface)
