@@ -1,4 +1,5 @@
 """Provides testing capabilities for :mod:`esmvaltool` package."""
+
 import unittest
 from unittest import mock
 
@@ -16,6 +17,7 @@ def assert_array_equal(a, b):
 
 class Test(unittest.TestCase):
     """Provides esmvaltool specific testing functionality."""
+
     def _remove_testcase_patches(self):
         """
         Helper method to remove per-testcase patches installed by
@@ -53,7 +55,7 @@ class Test(unittest.TestCase):
         # Create the per-testcases control variable if it does not exist.
         # NOTE: this mimics a setUp method, but continues to work when a
         # subclass defines its own setUp.
-        if not hasattr(self, 'testcase_patches'):
+        if not hasattr(self, "testcase_patches"):
             self.testcase_patches = {}
 
         # When installing the first patch, schedule remove-all at cleanup.

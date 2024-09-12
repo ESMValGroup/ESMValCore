@@ -1,4 +1,5 @@
 """Provenance module."""
+
 import copy
 import logging
 import os
@@ -13,7 +14,7 @@ from ._version import __version__
 
 logger = logging.getLogger(__name__)
 
-ESMVALTOOL_URI_PREFIX = 'https://www.esmvaltool.org/'
+ESMVALTOOL_URI_PREFIX = "https://www.esmvaltool.org/"
 
 
 def create_namespace(provenance, namespace):
@@ -24,11 +25,12 @@ def create_namespace(provenance, namespace):
 def get_esmvaltool_provenance():
     """Create an esmvaltool run activity."""
     provenance = ProvDocument()
-    namespace = 'software'
+    namespace = "software"
     create_namespace(provenance, namespace)
     attributes = {}  # TODO: add dependencies with versions here
-    activity = provenance.activity(namespace + ':esmvaltool==' + __version__,
-                                   other_attributes=attributes)
+    activity = provenance.activity(
+        namespace + ":esmvaltool==" + __version__, other_attributes=attributes
+    )
 
     return activity
 
@@ -38,27 +40,27 @@ ESMVALTOOL_PROVENANCE = get_esmvaltool_provenance()
 
 def attribute_to_authors(entity, authors):
     """Attribute entity to authors."""
-    namespace = 'author'
+    namespace = "author"
     create_namespace(entity.bundle, namespace)
 
     for author in authors:
         if isinstance(author, str):
             # This happens if the config-references.yml file is not available
-            author = {'name': author}
+            author = {"name": author}
         agent = entity.bundle.agent(
-            namespace + ':' + author['name'],
-            {'attribute:' + k: author[k]
-             for k in author if k != 'name'})
+            namespace + ":" + author["name"],
+            {"attribute:" + k: author[k] for k in author if k != "name"},
+        )
         entity.wasAttributedTo(agent)
 
 
 def attribute_to_projects(entity, projects):
     """Attribute entity to projects."""
-    namespace = 'project'
+    namespace = "project"
     create_namespace(entity.bundle, namespace)
 
     for project in projects:
-        agent = entity.bundle.agent(namespace + ':' + project)
+        agent = entity.bundle.agent(namespace + ":" + project)
         entity.wasAttributedTo(agent)
 
 
@@ -66,17 +68,19 @@ def get_recipe_provenance(documentation, filename):
     """Create a provenance entity describing a recipe."""
     provenance = ProvDocument()
 
-    for namespace in ('recipe', 'attribute'):
+    for namespace in ("recipe", "attribute"):
         create_namespace(provenance, namespace)
 
     entity = provenance.entity(
-        'recipe:{}'.format(filename), {
-            'attribute:description': documentation.get('description', ''),
-            'attribute:references': str(documentation.get('references', [])),
-        })
+        "recipe:{}".format(filename),
+        {
+            "attribute:description": documentation.get("description", ""),
+            "attribute:references": str(documentation.get("references", [])),
+        },
+    )
 
-    attribute_to_authors(entity, documentation.get('authors', []))
-    attribute_to_projects(entity, documentation.get('projects', []))
+    attribute_to_authors(entity, documentation.get("authors", []))
+    attribute_to_projects(entity, documentation.get("projects", []))
 
     return entity
 
@@ -84,9 +88,9 @@ def get_recipe_provenance(documentation, filename):
 def get_task_provenance(task, recipe_entity):
     """Create a provenance activity describing a task."""
     provenance = ProvDocument()
-    create_namespace(provenance, 'task')
+    create_namespace(provenance, "task")
 
-    activity = provenance.activity('task:' + task.name)
+    activity = provenance.activity("task:" + task.name)
 
     trigger = recipe_entity
     provenance.update(recipe_entity.bundle)
@@ -103,11 +107,9 @@ def get_task_provenance(task, recipe_entity):
 class TrackedFile:
     """File with provenance tracking."""
 
-    def __init__(self,
-                 filename,
-                 attributes=None,
-                 ancestors=None,
-                 prov_filename=None):
+    def __init__(
+        self, filename, attributes=None, ancestors=None, prov_filename=None
+    ):
         """Create an instance of a file with provenance tracking.
 
         Arguments
@@ -146,11 +148,11 @@ class TrackedFile:
 
     def __eq__(self, other):
         """Check if `other` equals `self`."""
-        return hasattr(other, 'filename') and self.filename == other.filename
+        return hasattr(other, "filename") and self.filename == other.filename
 
     def __lt__(self, other):
         """Check if `other` should be sorted before `self`."""
-        return hasattr(other, 'filename') and self.filename < other.filename
+        return hasattr(other, "filename") and self.filename < other.filename
 
     def __hash__(self):
         """Return a unique hash for the file."""
@@ -174,7 +176,7 @@ class TrackedFile:
     @property
     def provenance_file(self):
         """Filename of provenance."""
-        return os.path.splitext(self.filename)[0] + '_provenance.xml'
+        return os.path.splitext(self.filename)[0] + "_provenance.xml"
 
     def initialize_provenance(self, activity):
         """Initialize the provenance document.
@@ -185,7 +187,8 @@ class TrackedFile:
         """
         if self.provenance is not None:
             raise ValueError(
-                "Provenance of {} already initialized".format(self))
+                "Provenance of {} already initialized".format(self)
+            )
         self.provenance = ProvDocument()
         self._initialize_namespaces()
         self._initialize_activity(activity)
@@ -194,7 +197,7 @@ class TrackedFile:
 
     def _initialize_namespaces(self):
         """Initialize the namespaces."""
-        for namespace in ('file', 'attribute', 'preprocessor', 'task'):
+        for namespace in ("file", "attribute", "preprocessor", "task"):
             create_namespace(self.provenance, namespace)
 
     def _initialize_activity(self, activity):
@@ -206,20 +209,21 @@ class TrackedFile:
         """Initialize the entity representing the file."""
         if self.attributes is None:
             self.attributes = {}
-            with Dataset(self.filename, 'r') as dataset:
+            with Dataset(self.filename, "r") as dataset:
                 for attr in dataset.ncattrs():
                     self.attributes[attr] = dataset.getncattr(attr)
 
         attributes = {
-            'attribute:' + str(k).replace(' ', '_'): str(v)
+            "attribute:" + str(k).replace(" ", "_"): str(v)
             for k, v in self.attributes.items()
-            if k not in ('authors', 'projects')
+            if k not in ("authors", "projects")
         }
-        self.entity = self.provenance.entity(f'file:{self.filename}',
-                                             attributes)
+        self.entity = self.provenance.entity(
+            f"file:{self.filename}", attributes
+        )
 
-        attribute_to_authors(self.entity, self.attributes.get('authors', []))
-        attribute_to_projects(self.entity, self.attributes.get('projects', []))
+        attribute_to_authors(self.entity, self.attributes.get("authors", []))
+        attribute_to_projects(self.entity, self.attributes.get("projects", []))
 
     def _initialize_ancestors(self, activity):
         """Register ancestor files for provenance tracking."""
@@ -245,15 +249,15 @@ class TrackedFile:
 
     def _select_for_include(self):
         attributes = {
-            'software': "Created with ESMValTool v{}".format(__version__),
+            "software": "Created with ESMValTool v{}".format(__version__),
         }
-        if 'caption' in self.attributes:
-            attributes['caption'] = self.attributes['caption']
+        if "caption" in self.attributes:
+            attributes["caption"] = self.attributes["caption"]
         return attributes
 
     @staticmethod
     def _include_provenance_nc(filename, attributes):
-        with Dataset(filename, 'a') as dataset:
+        with Dataset(filename, "a") as dataset:
             for key, value in attributes.items():
                 setattr(dataset, key, value)
 
@@ -261,8 +265,8 @@ class TrackedFile:
     def _include_provenance_png(filename, attributes):
         pnginfo = PngInfo()
         exif_tags = {
-            'caption': 'ImageDescription',
-            'software': 'Software',
+            "caption": "ImageDescription",
+            "software": "Software",
         }
         for key, value in attributes.items():
             pnginfo.add_text(exif_tags.get(key, key), value, zip=True)
@@ -274,8 +278,8 @@ class TrackedFile:
         attributes = self._select_for_include()
 
         # Attach provenance to supported file types
-        ext = os.path.splitext(self.filename)[1].lstrip('.').lower()
-        write = getattr(self, '_include_provenance_' + ext, None)
+        ext = os.path.splitext(self.filename)[1].lstrip(".").lower()
+        write = getattr(self, "_include_provenance_" + ext, None)
         if write:
             write(self.filename, attributes)
 
@@ -286,17 +290,18 @@ class TrackedFile:
             namespaces=self.provenance.namespaces,
         )
         self._include_provenance()
-        with open(self.provenance_file, 'wb') as file:
+        with open(self.provenance_file, "wb") as file:
             # Create file with correct permissions before saving.
-            self.provenance.serialize(file, format='xml')
+            self.provenance.serialize(file, format="xml")
         self.activity = None
         self.entity = None
         self.provenance = None
 
     def restore_provenance(self):
         """Import provenance information from a previously saved file."""
-        self.provenance = ProvDocument.deserialize(self.provenance_file,
-                                                   format='xml')
+        self.provenance = ProvDocument.deserialize(
+            self.provenance_file, format="xml"
+        )
         entity_uri = f"{ESMVALTOOL_URI_PREFIX}file{self.prov_filename}"
         self.entity = self.provenance.get_record(entity_uri)[0]
         # Find the associated activity
