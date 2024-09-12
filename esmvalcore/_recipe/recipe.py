@@ -372,6 +372,8 @@ def _get_downstream_settings(step, order, products):
         if key in remaining_steps:
             if all(p.settings.get(key, object()) == value for p in products):
                 settings[key] = value
+    # Set the compute argument to the save step.
+    settings['save'] = {'compute': some_product.settings['save']['compute']}
     return settings
 
 
