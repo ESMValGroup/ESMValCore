@@ -13,7 +13,7 @@ from iris.cube import Cube
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.preprocessor import PreprocessorFile
 from esmvalcore.preprocessor._shared import (
-    _get_area_weights,
+    _compute_area_weights,
     _group_products,
     aggregator_accept_weights,
     get_array_module,
@@ -295,12 +295,12 @@ def _create_sample_full_cube():
 
 
 @pytest.mark.parametrize('lazy', [True, False])
-def test_get_area_weights(lazy):
-    """Test _get_area_weights."""
+def test_compute_area_weights(lazy):
+    """Test _compute_area_weights."""
     cube = _create_sample_full_cube()
     if lazy:
-        cube.data = cube.lazy_data()
-    weights = _get_area_weights(cube)
+        cube.data = cube.lazy_data().rechunk((2, 180, 360))
+    weights = _compute_area_weights(cube)
     if lazy:
         assert isinstance(weights, da.Array)
         assert weights.chunks == cube.lazy_data().chunks
