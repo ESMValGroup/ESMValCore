@@ -5,6 +5,10 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools_scm]
 version_scheme = "release-branch-semver"
 
+[tool.codespell]
+skip = "*.ipynb,esmvalcore/config/extra_facets/ipslcm-mappings.yml"
+ignore-words-list = "vas,hist"
+
 [tool.pylint.main]
 jobs = 1  # Running more than one job in parallel crashes prospector.
 ignore-paths = [
@@ -28,7 +32,13 @@ disable = [
 line-length = 79
 [tool.ruff.lint]
 select = [
-    "I"  # isort
+    "E",  # pycodestyle
+    "F",  # pyflakes
+    "I",  # isort
+    "W",  # pycodestyle
+]
+ignore = [
+    "E501",  # Disable line-too-long as this is taken care of by the formatter.
 ]
 [tool.ruff.lint.isort]
 known-first-party = ["esmvalcore"]

@@ -493,8 +493,9 @@ def _report_unexpanded_globs(
         timerange = expanded_ds.facets.get('timerange')
         patterns = expanded_ds._file_globs
         msg = (
-            f"{msg}\nNo files found matching:\n" +
-            "\n".join(str(p) for p in patterns) + (  # type:ignore
+            f"{msg}\nNo files found matching:\n"
+            + "\n".join(str(p) for p in patterns)  # type: ignore[union-attr]
+            + (  # type:ignore
                 f"\nwithin the requested timerange {timerange}."
                 if timerange else ""
             )
