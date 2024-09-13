@@ -63,20 +63,14 @@ REQUIREMENTS = {
     ],
     # Test dependencies
     "test": [
-        "flake8>=7.0.0",  # not to pick up E231
         "pytest>=3.9,!=6.0.0rc1,!=6.0.0",
         "pytest-cov>=2.10.1",
         "pytest-env",
         "pytest-html!=2.1.0",
         "pytest-metadata>=1.5.1",
-        "pytest-mypy>=0.10.3",  # gh issue/2314
         "pytest-mock",
         "pytest-xdist",
         "ESMValTool_sample_data==0.0.3",
-        # MyPy library stubs
-        "mypy>=0.990",
-        "types-requests",
-        "types-PyYAML",
     ],
     # Documentation dependencies
     "doc": [
@@ -89,13 +83,10 @@ REQUIREMENTS = {
     # Development dependencies
     # Use pip install -e .[develop] to install in development mode
     "develop": [
-        "codespell",
-        "flake8>=7",
         "pre-commit",
         "pylint",
         "pydocstyle",
         "vprof",
-        "yamllint",
     ],
 }
 

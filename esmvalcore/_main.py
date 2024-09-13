@@ -25,7 +25,7 @@ CORE DEVELOPMENT TEAM AND CONTACTS:
 
 For further help, please read the documentation at
 http://docs.esmvaltool.org. Have fun!
-"""  # noqa: line-too-long pylint: disable=line-too-long
+"""  # pylint: disable=line-too-long
 
 # pylint: disable=import-outside-toplevel
 import logging
