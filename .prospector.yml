@@ -12,8 +12,9 @@ member-warnings: false
 pyroma:
   run: true
 
-pep8:
+pycodestyle:
   full: true
+  disable: ['E203', 'E501', 'W503']  # conflict with ruff formatter
 
 mypy:
   run: true
