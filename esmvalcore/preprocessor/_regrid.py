@@ -316,7 +316,7 @@ def _spec_to_latlonvals(
     """
     if step_latitude == 0:
         raise ValueError(
-            "Latitude step cannot be 0, " f"got step_latitude={step_latitude}."
+            f"Latitude step cannot be 0, got step_latitude={step_latitude}."
         )
 
     if step_longitude == 0:

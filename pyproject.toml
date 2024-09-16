@@ -26,16 +26,18 @@ max-line-length = 79
 disable = [
     "import-error",      # Needed because Codacy does not install dependencies
     "file-ignored",      # Disable messages about disabling checks
+    "line-too-long",     # Disable line-too-long as this is taken care of by the formatter.
     "locally-disabled",  # Disable messages about disabling checks
 ]
 [tool.ruff]
 line-length = 79
 [tool.ruff.lint]
 select = [
-    "E",  # pycodestyle
-    "F",  # pyflakes
-    "I",  # isort
-    "W",  # pycodestyle
+    "E",       # pycodestyle
+    "F",       # pyflakes
+    "I",       # isort
+    "ISC001",  # pycodestyle
+    "W",       # pycodestyle
 ]
 ignore = [
     "E501",  # Disable line-too-long as this is taken care of by the formatter.

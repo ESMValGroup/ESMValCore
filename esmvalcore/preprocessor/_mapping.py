@@ -59,7 +59,7 @@ def ref_to_dims_index_as_index(cube, ref):
         dim = int(ref)
     except (ValueError, TypeError):
         raise ValueError(
-            "{} Incompatible type {} for " "slicing".format(ref, type(ref))
+            "{} Incompatible type {} for slicing".format(ref, type(ref))
         )
     if dim < 0 or dim > cube.ndim:
         msg = (

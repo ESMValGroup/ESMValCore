@@ -776,7 +776,7 @@ class TestCMORCheck(unittest.TestCase):
         """Test fail for wrong parent time units."""
         self.cube.coord("time").units = "days since 1860-1-1 00:00:00"
         self.cube.attributes["parent_time_units"] = (
-            "days since " "1860-1-1-00-00-00"
+            "days since 1860-1-1-00-00-00"
         )
         self.cube.attributes["branch_time_in_parent"] = 0.0
         self.cube.attributes["branch_time_in_child"] = 0.0

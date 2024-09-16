@@ -126,9 +126,7 @@ def _era5_time(frequency):
         standard_name="time",
         long_name="time",
         var_name="time",
-        units=Unit(
-            "hours since 1900-01-01" "00:00:00.0", calendar="gregorian"
-        ),
+        units=Unit("hours since 1900-01-0100:00:00.0", calendar="gregorian"),
     )
 
 

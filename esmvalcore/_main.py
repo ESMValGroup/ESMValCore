@@ -25,7 +25,7 @@ CORE DEVELOPMENT TEAM AND CONTACTS:
 
 For further help, please read the documentation at
 http://docs.esmvaltool.org. Have fun!
-"""  # pylint: disable=line-too-long
+"""
 
 # pylint: disable=import-outside-toplevel
 import logging
@@ -267,11 +267,12 @@ class Recipes:
 
         from .config._diagnostics import DIAGNOSTICS
         from .config._logging import configure_logging
+        from .exceptions import RecipeError
 
         configure_logging(console_log_level="info")
         installed_recipe = DIAGNOSTICS.recipes / recipe
         if not installed_recipe.exists():
-            ValueError(
+            raise RecipeError(
                 f"Recipe {recipe} not found. To list all available recipes, "
                 'execute "esmvaltool list"'
             )
@@ -292,11 +293,12 @@ class Recipes:
         """
         from .config._diagnostics import DIAGNOSTICS
         from .config._logging import configure_logging
+        from .exceptions import RecipeError
 
         configure_logging(console_log_level="info")
         installed_recipe = DIAGNOSTICS.recipes / recipe
         if not installed_recipe.exists():
-            ValueError(
+            raise RecipeError(
                 f"Recipe {recipe} not found. To list all available recipes, "
                 'execute "esmvaltool list"'
             )
@@ -549,8 +551,6 @@ class ESMValTool:
 
 def run():
     """Run the `esmvaltool` program, logging any exceptions."""
-    import sys
-
     from .exceptions import RecipeError
 
     # Workaround to avoid using more for the output

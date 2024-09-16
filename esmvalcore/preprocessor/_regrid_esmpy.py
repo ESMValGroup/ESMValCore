@@ -320,7 +320,7 @@ def is_lon_circular(lon):
         circular = np.all(abs(seam) % 360.0 < 1.0e-3)
     else:
         raise ValueError(
-            "longitude is neither DimCoord nor AuxCoord. " "Giving up."
+            "longitude is neither DimCoord nor AuxCoord. Giving up."
         )
     return circular
 

@@ -629,7 +629,5 @@ def test_download_noop(caplog):
     caplog.set_level("DEBUG")
     esmvalcore.esgf.download([], dest_folder="/does/not/exist")
 
-    msg = (
-        "All required data is available locally," " not downloading anything."
-    )
+    msg = "All required data is available locally, not downloading anything."
     assert msg in caplog.text
