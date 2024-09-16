@@ -345,8 +345,10 @@ def _get_datasets_for_variable(
 ) -> list[Dataset]:
     """Read the datasets from a variable definition in the recipe."""
     logger.debug(
-        "Populating list of datasets for variable %s in "
-        "diagnostic %s", variable_group, diagnostic_name)
+        "Populating list of datasets for variable %s in diagnostic %s",
+        variable_group,
+        diagnostic_name,
+    )
 
     datasets = []
     idx = 0
