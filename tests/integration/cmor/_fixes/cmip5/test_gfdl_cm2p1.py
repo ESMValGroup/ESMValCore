@@ -40,7 +40,7 @@ class TestSftof(unittest.TestCase):
         self.fix = Sftof(None)
 
     def test_get(self):
-        """Test fix get."""
+        """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'fx', 'sftof'),
             [Sftof(None), AllVars(None), GenericFix(None)])
@@ -62,7 +62,7 @@ class TestAreacello(unittest.TestCase):
         self.fix = Areacello(self.vardef)
 
     def test_get(self):
-        """Test fix get."""
+        """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'Amon', 'areacello'),
             [Areacello(self.vardef),
@@ -106,7 +106,7 @@ class TestSit(unittest.TestCase):
         self.fix = Sit(self.var_info_mock)
 
     def test_get(self):
-        """Test fix get."""
+        """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-CM2P1', 'OImon', 'sit'),
             [Sit(self.var_info_mock), AllVars(None), GenericFix(None)])

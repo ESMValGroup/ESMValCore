@@ -43,8 +43,9 @@ def create_test_file(filename, tracking_id=None):
 def _get_files(root_path, facets, tracking_id):
     """Return dummy files.
 
-    Wildcards are only supported for `dataset` and `institute`; in this
-    case return files for the two "models" AAA and BBB.
+    Wildcards are only supported for `dataset` and `institute`; in this case
+    return files for the two "models" AAA and BBB.
+
     """
     if facets['dataset'] == '*':
         all_facets = [
@@ -140,6 +141,7 @@ def patched_failing_datafinder(tmp_path, monkeypatch):
     - Variable rsutcs for model AAA
 
     Otherwise, return files just like `patched_datafinder`.
+
     """
 
     def tracking_ids(i=0):

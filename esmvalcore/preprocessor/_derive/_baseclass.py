@@ -30,6 +30,7 @@ class DerivedVariableBase:
         -------
         list of dict
             List of variable metadata.
+
         """
 
     @staticmethod
@@ -57,4 +58,5 @@ class DerivedVariableBase:
         NotImplementedError
             If the desired variable derivation is not implemented, i.e. if this
             method is called from this base class and not a child class.
+
         """

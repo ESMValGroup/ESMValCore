@@ -38,6 +38,7 @@ class AllVars(Fix):
         Returns
         -------
         iris.cube.Cube
+
         """
         coords_to_change = {
             'latitude': 'lat',
@@ -99,6 +100,7 @@ class Omon(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         for cube in cubes:
             if cube.coords(axis='Z'):
@@ -122,6 +124,7 @@ class Tas(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 2.0)
@@ -142,6 +145,7 @@ class Uas(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 10.0)

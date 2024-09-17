@@ -8,10 +8,11 @@ import numpy as np
 
 
 def _is_single_item(testee):
-    """Check if testee is a single item.
+    """
+    Check if testee is a single item.
 
-    Return whether this is a single item, rather than an iterable. We
-    count string types as 'single', also.
+    Return whether this is a single item, rather than an iterable.
+    We count string types as 'single', also.
     """
     return (isinstance(testee, str)
             or not isinstance(testee, collections.abc.Iterable))
@@ -63,7 +64,8 @@ def ref_to_dims_index_as_index(cube, ref):
 
 
 def ref_to_dims_index(cube, ref_to_slice):
-    """Map a list of :class:`iris.coords.DimCoord` to a tuple of indices.
+    """
+    Map a list of :class:`iris.coords.DimCoord` to a tuple of indices.
 
     This method finds the indices of the dimensions in a cube that collectively
     correspond to the given list of :class:`iris.coords.DimCoord`.
@@ -98,7 +100,8 @@ def ref_to_dims_index(cube, ref_to_slice):
 
 
 def get_associated_coords(cube, dimensions):
-    """Return all coords containing any of the given dimensions.
+    """
+    Return all coords containing any of the given dimensions.
 
     Return all coords, dimensional and auxiliary, that contain any of
     the given dimensions.
@@ -122,10 +125,11 @@ def get_associated_coords(cube, dimensions):
 
 
 def get_empty_data(shape, dtype=np.float32):
-    """Create an empty data object of the given shape.
+    """
+    Create an empty data object of the given shape.
 
-    Creates an empty data object of the given shape, potentially of the
-    lazy kind from biggus or dask, depending on the used iris version.
+    Creates an empty data object of the given shape, potentially of the lazy
+    kind from biggus or dask, depending on the used iris version.
     """
     data = np.empty(shape, dtype=dtype)
     mask = np.empty(shape, dtype=bool)
@@ -133,10 +137,11 @@ def get_empty_data(shape, dtype=np.float32):
 
 
 def get_slice_spec(cube, ref_to_slice):
-    """Turn a slice reference into a specification for the slice.
+    """
+    Turn a slice reference into a specification for the slice.
 
-    Turns a slice reference into a specification comprised of the shape
-    as well as the relevant dimensional and auxiliary coordinates.
+    Turns a slice reference into a specification comprised of the shape as well
+    as the relevant dimensional and auxiliary coordinates.
     """
     slice_dims = ref_to_dims_index(cube, ref_to_slice)
     slice_shape = tuple(cube.shape[d] for d in slice_dims)
@@ -145,7 +150,8 @@ def get_slice_spec(cube, ref_to_slice):
 
 
 def index_iterator(dims_to_slice, shape):
-    """Return iterator for subsets of multidimensional objects.
+    """
+    Return iterator for subsets of multidimensional objects.
 
     An iterator over a multidimensional object, giving both source and
     destination indices.
@@ -175,7 +181,8 @@ def get_slice_coords(cube):
 
 
 def map_slices(src, func, src_rep, dst_rep):
-    """Map slices of a cube, replacing them with different slices.
+    """
+    Map slices of a cube, replacing them with different slices.
 
     This method is similar to the standard cube collapsed and aggregated_by
     methods, however, where they completely remove the mapped dimensions, this

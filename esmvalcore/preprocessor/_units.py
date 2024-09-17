@@ -112,6 +112,7 @@ def convert_units(cube, units):
     -------
     iris.cube.Cube
         converted cube.
+
     """
     try:
         cube.convert_units(units)

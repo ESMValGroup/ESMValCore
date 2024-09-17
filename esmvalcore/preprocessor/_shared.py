@@ -1,4 +1,5 @@
-"""Shared functions for preprocessor.
+"""
+Shared functions for preprocessor.
 
 Utility functions that can be used for multiple preprocessor steps
 """
@@ -67,6 +68,7 @@ def get_iris_aggregator(
         An invalid `operator` is specified, i.e., it is not found in
         :mod:`iris.analysis` or the returned object is not an
         :class:`iris.analysis.Aggregator`.
+
     """
     cap_operator = operator.upper()
     aggregator_kwargs = dict(operator_kwargs)
@@ -136,6 +138,7 @@ def aggregator_accept_weights(aggregator: iris.analysis.Aggregator) -> bool:
     -------
     bool
         ``True`` if aggregator support weights, ``False`` otherwise.
+
     """
     weighted_aggregators_cls = (
         iris.analysis.WeightedAggregator,
@@ -176,6 +179,7 @@ def update_weights_kwargs(
     -------
     dict
         Updated keyword arguments.
+
     """
     kwargs = dict(kwargs)
     if aggregator_accept_weights(aggregator) and kwargs.get('weights', True):
@@ -214,6 +218,7 @@ def get_normalized_cube(
     -------
     Cube
         Input cube normalized with statistics cube.
+
     """
     if normalize == 'subtract':
         normalized_cube = cube - statistics_cube
@@ -245,10 +250,11 @@ def get_normalized_cube(
 def preserve_float_dtype(func: Callable) -> Callable:
     """Preserve object's float dtype (all other dtypes are allowed to change).
 
-    This can be used as a decorator for preprocessor functions to ensure
-    that floating dtypes are preserved. For example, input of type
-    float32 will always give output of type float32, but input of type
-    int will be allowed to give output with any type.
+    This can be used as a decorator for preprocessor functions to ensure that
+    floating dtypes are preserved. For example, input of type float32 will
+    always give output of type float32, but input of type int will be allowed
+    to give output with any type.
+
     """
 
     @wraps(func)
@@ -375,6 +381,7 @@ def get_time_weights(cube: Cube) -> np.ndarray | da.core.Array:
         Array of time weights for averaging. Returns a
         :class:`dask.array.Array` if the input cube has lazy data; a
         :class:`numpy.ndarray` otherwise.
+
     """
     time = cube.coord('time')
     coord_dims = cube.coord_dims('time')

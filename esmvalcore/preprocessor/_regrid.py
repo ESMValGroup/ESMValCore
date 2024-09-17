@@ -31,8 +31,10 @@ from esmvalcore.cmor.table import CMOR_TABLES
 from esmvalcore.exceptions import ESMValCoreDeprecationWarning
 from esmvalcore.iris_helpers import has_irregular_grid, has_unstructured_grid
 from esmvalcore.preprocessor._shared import (
-    get_array_module,
     get_dims_along_axes,
+)
+from esmvalcore.preprocessor._shared import (
+    get_array_module,
     preserve_float_dtype,
 )
 from esmvalcore.preprocessor._supplementary_vars import (

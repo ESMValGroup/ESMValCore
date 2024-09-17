@@ -204,6 +204,7 @@ def test_multimodel_regression_month(timeseries_cubes_month, span):
     """Test statistic fail due to differing input coordinates (pressure).
 
     See https://github.com/ESMValGroup/ESMValCore/issues/956.
+
     """
     cubes = timeseries_cubes_month
     name = 'timeseries_monthly'
@@ -293,6 +294,7 @@ def test_multimodel_merge_error(timeseries_cubes_month, span):
     """Test statistic with slightly different vertical coordinates.
 
     See https://github.com/ESMValGroup/ESMValCore/issues/956.
+
     """
     cubes = timeseries_cubes_month
     msg = (
@@ -320,6 +322,7 @@ def test_multimodel_no_time_dimension(timeseries_cubes_month, span):
     first value) since the original coordinate differs slightly across cubes
     and leads to merge errors. See also
     https://github.com/ESMValGroup/ESMValCore/issues/956.
+
     """
     cubes = [cube[0, 0] for cube in timeseries_cubes_month]
 
@@ -347,6 +350,7 @@ def test_multimodel_0d_1d_time_no_ignore_scalars(timeseries_cubes_month, span):
     first value) since the original coordinate differs slightly across cubes
     and leads to merge errors. See also
     https://github.com/ESMValGroup/ESMValCore/issues/956.
+
     """
     cubes = [cube[:, 0] for cube in timeseries_cubes_month]  # remove Z-dim
     cubes[1] = cubes[1][0]  # use 0D time dim for one cube
@@ -365,6 +369,7 @@ def test_multimodel_0d_1d_time_ignore_scalars(timeseries_cubes_month, span):
     first value) since the original coordinate differs slightly across cubes
     and leads to merge errors. See also
     https://github.com/ESMValGroup/ESMValCore/issues/956.
+
     """
     cubes = [cube[:, 0] for cube in timeseries_cubes_month]  # remove Z-dim
     cubes[1] = cubes[1][0]  # use 0D time dim for one cube
@@ -389,6 +394,7 @@ def test_multimodel_only_some_time_dimensions(timeseries_cubes_month, span):
     first value) since the original coordinate differs slightly across cubes
     and leads to merge errors. See also
     https://github.com/ESMValGroup/ESMValCore/issues/956.
+
     """
     cubes = [cube[:, 0] for cube in timeseries_cubes_month]  # remove Z-dim
 
@@ -414,6 +420,7 @@ def test_multimodel_diff_scalar_time_fail(timeseries_cubes_month, span):
     first value) since the original coordinate differs slightly across cubes
     and leads to merge errors. See also
     https://github.com/ESMValGroup/ESMValCore/issues/956.
+
     """
     cubes = [cube[0, 0] for cube in timeseries_cubes_month]
 
@@ -435,6 +442,7 @@ def test_multimodel_diff_scalar_time_ignore(timeseries_cubes_month, span):
     first value) since the original coordinate differs slightly across cubes
     and leads to merge errors. See also
     https://github.com/ESMValGroup/ESMValCore/issues/956.
+
     """
     cubes = [cube[0, 0] for cube in timeseries_cubes_month]
 
@@ -457,6 +465,7 @@ def test_multimodel_ignore_scalar_coords(timeseries_cubes_month, span):
     first value) since the original coordinate differs slightly across cubes
     and leads to merge errors. See also
     https://github.com/ESMValGroup/ESMValCore/issues/956.
+
     """
     cubes = [cube[0, 0] for cube in timeseries_cubes_month]
     for (idx, cube) in enumerate(cubes):
@@ -482,6 +491,7 @@ def test_multimodel_do_not_ignore_scalar_coords(timeseries_cubes_month, span):
     first value) since the original coordinate differs slightly across cubes
     and leads to merge errors. See also
     https://github.com/ESMValGroup/ESMValCore/issues/956.
+
     """
     cubes = [cube[0, 0] for cube in timeseries_cubes_month]
     for (idx, cube) in enumerate(cubes):

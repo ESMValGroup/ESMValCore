@@ -1,4 +1,5 @@
-"""Test _mask.py.
+"""
+Test _mask.py
 
 Integration tests for the esmvalcore.preprocessor._mask module
 """

@@ -18,6 +18,7 @@ class Co2(Fix):
         Returns
         -------
         iris.cube.Cube
+
         """
         metadata = cube.metadata
         cube *= 1.e-6
@@ -39,6 +40,7 @@ class Gpp(Fix):
         Returns
         -------
         iris.cube.Cube
+
         """
         cube.data = da.ma.masked_equal(cube.core_data(), 0.0)
         return cube

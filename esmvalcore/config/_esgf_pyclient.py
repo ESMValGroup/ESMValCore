@@ -1,4 +1,4 @@
-"""Esgf-pyclient configuration.
+"""esgf-pyclient configuration.
 
 The configuration is read from the file ~/.esmvaltool/esgf-pyclient.yml.
 """

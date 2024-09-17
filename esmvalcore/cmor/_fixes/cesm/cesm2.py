@@ -12,6 +12,7 @@ To add support for more variables, expand the extra facets file
 (esmvalcore/_config/extra_facets/cesm-mappings.yml) and/or add classes to this
 file for variables that need more complex fixes (see
 esmvalcore/cmor/_fixes/emac/emac.py for examples).
+
 """
 
 import logging
@@ -63,6 +64,7 @@ class AllVars(NativeDatasetFix):
         Example of monthly time coordinate after this fix (Jan. & Feb. 2000):
             Points: ``[2000-01-15, 2000-02-14]``
             Bounds: ``[[2000-01-01, 2000-02-01], [2000-02-01, 2000-03-01]]``
+
         """
         # Only modify time points if data contains a time dimension, is monthly
         # data, and does not describe point measurements.

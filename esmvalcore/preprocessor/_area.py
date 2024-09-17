@@ -70,6 +70,7 @@ def extract_region(
     -------
     iris.cube.Cube
         Smaller cube.
+
     """
     # first examine if any cell_measures are present
     cell_measures = cube.cell_measures()
@@ -225,6 +226,7 @@ def zonal_statistics(
     ValueError
         Error raised if computation on irregular grids is attempted.
         Zonal statistics not yet implemented for irregular grids.
+
     """
     if cube.coord('longitude').points.ndim >= 2:
         raise ValueError(
@@ -273,6 +275,7 @@ def meridional_statistics(
     ValueError
         Error raised if computation on irregular grids is attempted.
         Zonal statistics not yet implemented for irregular grids.
+
     """
     if cube.coord('latitude').points.ndim >= 2:
         raise ValueError(
@@ -335,6 +338,7 @@ def area_statistics(
     iris.exceptions.CoordinateMultiDimError
         Cube has irregular or unstructured grid but supplementary variable
         `cell_area` is not available.
+
     """
     has_cell_measure = bool(cube.cell_measures('cell_area'))
 
@@ -379,6 +383,7 @@ def extract_named_regions(cube: Cube, regions: str | Iterable[str]) -> Cube:
         regions is not list or tuple or set.
     ValueError
         region not included in cube.
+
     """
     # Make sure regions is a list of strings
     if isinstance(regions, str):
@@ -594,6 +599,7 @@ def _get_bounds(
     -------
     lat_min, lon_min, lat_max, lon_max
         Coordinates deliminating bounding box for shape ids.
+
     """
     all_bounds = np.vstack(
         [fiona.bounds(geom) for geom in geometries.values()]
@@ -648,6 +654,7 @@ def fix_coordinate_ordering(cube: Cube) -> Cube:
     -------
     iris.cube.Cube
         Cube with dimensions transposed to standard order
+
     """
     try:
         time_dim = cube.coord_dims('time')
@@ -771,6 +778,7 @@ def extract_shape(
     See Also
     --------
     extract_region: Extract a region from a cube.
+
     """
     shapefile = _update_shapefile_path(shapefile)
     with fiona.open(shapefile) as geometries:

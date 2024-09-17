@@ -5,6 +5,7 @@ from dask import array as da
 from ..fix import Fix
 from .cesm1_cam5 import Cl as BaseCl
 
+
 Cl = BaseCl
 
 
@@ -23,6 +24,7 @@ class Gpp(Fix):
         Returns
         -------
         iris.cube.Cube
+
         """
         data = da.ma.masked_equal(cube.core_data(), 1.0e33)
         return cube.copy(data)

@@ -2,6 +2,7 @@
 
 authors:
     - weig_ka
+
 """
 from cf_units import Unit
 from iris import Constraint
@@ -33,11 +34,12 @@ class DerivedVariable(DerivedVariableBase):
 
     @staticmethod
     def calculate(cubes):
-        """Compute `rsnstcs`.
+        """
+        Compute `rsnstcs`.
 
-        Compute Heating from Shortwave Absorption assuming clear sky
-        normalized by the incoming shortwave flux at the top of the
-        atmosphere.
+        Compute Heating from Shortwave Absorption
+        assuming clear sky normalized by
+        the incoming shortwave flux at the top of the atmosphere.
         """
         rsdscs_cube = cubes.extract_cube(
             Constraint(name='surface_downwelling_shortwave_flux_in_air_' +

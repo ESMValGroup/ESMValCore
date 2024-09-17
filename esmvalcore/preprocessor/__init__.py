@@ -206,7 +206,9 @@ TIME_PREPROCESSORS = [
 ]
 
 DEFAULT_ORDER = tuple(__all__)
-"""By default, preprocessor functions are applied in this order."""
+"""
+By default, preprocessor functions are applied in this order.
+"""
 
 # The order of initial and final steps cannot be configured
 INITIAL_STEPS = DEFAULT_ORDER[:DEFAULT_ORDER.index(

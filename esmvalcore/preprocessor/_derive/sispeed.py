@@ -1,10 +1,10 @@
 """Derivation of variable `sispeed`."""
 
 import logging
-
 from iris import Constraint
 
 from .._regrid import regrid
+
 from ._baseclass import DerivedVariableBase
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,8 @@ class DerivedVariable(DerivedVariableBase):
 
     @staticmethod
     def calculate(cubes):
-        """Compute sispeed module from velocity components siu and siv.
+        """
+        Compute sispeed module from velocity components siu and siv.
 
         Arguments
         ---------
@@ -33,6 +34,7 @@ class DerivedVariable(DerivedVariableBase):
         Returns
         -------
             Cube containing sea ice speed.
+
         """
         siu = cubes.extract_cube(Constraint(name='sea_ice_x_velocity'))
         siv = cubes.extract_cube(Constraint(name='sea_ice_y_velocity'))

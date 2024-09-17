@@ -52,6 +52,7 @@ def _get_alternative_generic_lev_coord(
     ------
     ValueError
         No valid alternative generic level coordinate present in cube.
+
     """
     alternatives_for_coord = _ALTERNATIVE_GENERIC_LEV_COORDS.get(
         coord_name, {}
@@ -92,6 +93,7 @@ def _get_generic_lev_coord_names(
         Tuple of `standard_name`, `out_name`, and `name` of the generic level
         coordinate present in the cube. Values are ``None`` if generic level
         coordinate has not been found in cube.
+
     """
     standard_name = None
     out_name = None
@@ -150,6 +152,7 @@ def _get_new_generic_level_coord(
     -------
     CoordinateInfo
         New generic level coordinate.
+
     """
     new_coord = generic_level_coord.generic_lev_coords[new_coord_name]
     new_coord.generic_level = True

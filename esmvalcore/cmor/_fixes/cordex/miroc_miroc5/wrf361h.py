@@ -1,6 +1,5 @@
 """Fixes for rcm WRF361H driven by MIROC-MIROC5."""
 import iris
-
 from esmvalcore.cmor.fix import Fix
 
 
@@ -21,6 +20,7 @@ class Tas(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         fixed_cubes = iris.cube.CubeList()
         for cube in cubes:

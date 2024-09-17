@@ -8,7 +8,8 @@ logger = logging.getLogger(__name__)
 
 
 def detrend(cube, dimension='time', method='linear'):
-    """Detrend data along a given dimension.
+    """
+    Detrend data along a given dimension.
 
     Parameters
     ----------

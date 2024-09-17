@@ -6,11 +6,8 @@ import iris
 import numpy as np
 
 import tests
-from esmvalcore.preprocessor._mapping import (
-    get_empty_data,
-    map_slices,
-    ref_to_dims_index,
-)
+from esmvalcore.preprocessor._mapping import (get_empty_data, map_slices,
+                                              ref_to_dims_index)
 
 
 class TestHelpers(tests.Test):

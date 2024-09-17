@@ -4,11 +4,8 @@ import textwrap
 from prov.model import ProvDocument
 
 import esmvalcore
-from esmvalcore._citation import (
-    CMIP6_URL_STEM,
-    ESMVALTOOL_PAPER,
-    _write_citation_files,
-)
+from esmvalcore._citation import (CMIP6_URL_STEM, ESMVALTOOL_PAPER,
+                                  _write_citation_files)
 from esmvalcore._provenance import ESMVALTOOL_URI_PREFIX
 
 

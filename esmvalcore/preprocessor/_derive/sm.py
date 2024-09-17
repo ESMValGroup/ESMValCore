@@ -25,6 +25,7 @@ class DerivedVariable(DerivedVariableBase):
         Convert moisture content of soil layer (kg/m2) into volumetric soil
         moisture (m3/m3), assuming density of water 998.2 kg/m2 (at temperature
         20 deg C).
+
         """
         mrsos_cube = cubes.extract_cube(NameConstraint(var_name='mrsos'))
 

@@ -6,7 +6,6 @@ import iris
 from iris import Constraint
 
 from esmvalcore.exceptions import RecipeError
-
 from ._baseclass import DerivedVariableBase
 
 logger = logging.getLogger(__name__)

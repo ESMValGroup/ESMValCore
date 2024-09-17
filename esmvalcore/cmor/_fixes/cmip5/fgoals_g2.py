@@ -23,6 +23,7 @@ class AllVars(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         for cube in cubes:
             try:
