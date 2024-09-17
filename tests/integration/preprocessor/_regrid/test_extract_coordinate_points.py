@@ -1,8 +1,5 @@
-"""
-Integration tests for the :func:`esmvalcore.preprocessor.regrid.regrid`
-function.
-
-"""
+"""Integration tests for the :func:`esmvalcore.preprocessor.regrid.regrid`
+function."""
 
 import unittest
 
@@ -23,7 +20,7 @@ class Test(tests.Test):
         self.cs = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
 
     def test_extract_point__single_linear(self):
-        """Test linear interpolation when extracting a single point"""
+        """Test linear interpolation when extracting a single point."""
         point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': 2.1, 'grid_longitude': 2.1},
@@ -66,7 +63,7 @@ class Test(tests.Test):
         self.assert_array_equal(point.data, masked)
 
     def test_extract_point__single_nearest(self):
-        """Test nearest match when extracting a single point"""
+        """Test nearest match when extracting a single point."""
 
         point = extract_coordinate_points(
             self.cube,
@@ -99,7 +96,7 @@ class Test(tests.Test):
         self.assert_array_equal(point.data, masked)
 
     def test_extract_point__multiple_linear(self):
-        """Test linear interpolation for an array of one coordinate"""
+        """Test linear interpolation for an array of one coordinate."""
 
         # Test points on the grid edges, on a grid point, halfway and
         # one in between.
@@ -151,7 +148,7 @@ class Test(tests.Test):
         self.assert_array_equal(point.data, masked)
 
     def test_extract_point__multiple_nearest(self):
-        """Test nearest match for an array of one coordinate"""
+        """Test nearest match for an array of one coordinate."""
 
         point = extract_coordinate_points(
             self.cube,
@@ -192,8 +189,8 @@ class Test(tests.Test):
         self.assert_array_equal(point.data, masked)
 
     def test_extract_point__multiple_both_linear(self):
-        """Test for both latitude and longitude arrays, with
-        linear interpolation"""
+        """Test for both latitude and longitude arrays, with linear
+        interpolation."""
         point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': [0, 1.1, 1.5, 1.51, 4, 5],
@@ -223,7 +220,7 @@ class Test(tests.Test):
         np.testing.assert_allclose(point.data, result)
 
     def test_extract_point__multiple_both_nearest(self):
-        """Test for both latitude and longitude arrays, with nearest match"""
+        """Test for both latitude and longitude arrays, with nearest match."""
         point = extract_coordinate_points(
             self.cube,
             {'grid_latitude': [0, 1.1, 1.5, 1.51, 4, 5],

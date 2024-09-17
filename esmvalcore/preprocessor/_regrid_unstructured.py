@@ -26,10 +26,10 @@ logger = logging.getLogger(__name__)
 class UnstructuredNearest(IrisUnstructuredNearest):
     """Unstructured nearest-neighbor regridding scheme.
 
-    This class is a wrapper around :class:`iris.analysis.UnstructuredNearest`
-    that removes any additional X or Y coordinates prior to regridding if
-    necessary. It can be used in :meth:`iris.cube.Cube.regrid`.
-
+    This class is a wrapper around
+    :class:`iris.analysis.UnstructuredNearest` that removes any
+    additional X or Y coordinates prior to regridding if necessary. It
+    can be used in :meth:`iris.cube.Cube.regrid`.
     """
 
     def regridder(
@@ -50,7 +50,6 @@ class UnstructuredNearest(IrisUnstructuredNearest):
         -------
         UnstructuredNearestNeigbourRegridder
             Regridder instance.
-
         """
         # Unstructured nearest-neighbor regridding requires exactly one X and
         # one Y coordinate (latitude and longitude). Remove any X or Y
@@ -79,7 +78,6 @@ class UnstructuredLinearRegridder:
         Cube defining the source grid.
     tgt_cube:
         Cube defining the target grid.
-
     """
 
     def __init__(self, src_cube: Cube, tgt_cube: Cube) -> None:
@@ -127,7 +125,6 @@ class UnstructuredLinearRegridder:
         The output arrays will be numpy arrays here (instead of dask) since
         resulting arrays are only 2D and will be computed anyway later during
         regridding.
-
         """
         # Make sure that source and target grid have identical units
         src_lat = src_lat.copy()
@@ -191,7 +188,6 @@ class UnstructuredLinearRegridder:
         -------
         Cube
             Regridded cube.
-
         """
         if not has_unstructured_grid(cube):
             raise ValueError(
@@ -320,7 +316,6 @@ class UnstructuredLinearRegridder:
         Before the interpolation, the input is extended by the data on the
         convex hull to consider the periodic boundary conditions of a sphere
         (this has also been done for the weights calculation).
-
         """
         data = self._add_convex_hull_twice(data, self._convex_hull_idx)
         interp_data = np.einsum(
@@ -347,7 +342,6 @@ class UnstructuredLinearRegridder:
         Output shapes (M: number of target grid points)
         - weights: (M, 3)
         - indices: (M, 3)
-
         """
         tri = Delaunay(src_points)
         simplex = tri.find_simplex(tgt_points)
@@ -373,7 +367,6 @@ class UnstructuredLinear:
     This will drop all cell measures, ancillary variables and aux factories,
     and any auxiliary coordinate that spans the dimension of the unstrucutred
     grid.
-
     """
 
     def __repr__(self) -> str:
@@ -398,6 +391,5 @@ class UnstructuredLinear:
         -------
         UnstructuredLinearRegridder
             Regridder instance.
-
         """
         return UnstructuredLinearRegridder(src_cube, tgt_cube)

@@ -49,8 +49,9 @@ class ValidatedConfig(MutableMapping):
     _warn_if_missing: tuple[tuple[str, str], ...] = ()
     """Handle missing options.
 
-    Each sub-tuple in the tuple consists of an option for which a warning is
-    emitted and a string with more information for the user on that option.
+    Each sub-tuple in the tuple consists of an option for which a
+    warning is emitted and a string with more information for the user
+    on that option.
     """
 
     # validate values on the way in

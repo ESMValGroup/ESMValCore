@@ -21,7 +21,6 @@ class Hur(Fix):
         -------
         iris.cube.CubeList
             Fixed cubes.
-
         """
         for cube in cubes:
             # Put information from valid_range into mask and remove the

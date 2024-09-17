@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 CMORTable = Union['CMIP3Info', 'CMIP5Info', 'CMIP6Info', 'CustomInfo']
 
 CMOR_TABLES: dict[str, CMORTable] = {}
-"""dict of str, obj: CMOR info objects."""
+"""Dict of str, obj: CMOR info objects."""
 
 _CMOR_KEYS = (
     'standard_name',
@@ -102,7 +102,6 @@ def get_var_info(
     ------
     KeyError
         No CMOR tables available for `project`.
-
     """
     if project not in CMOR_TABLES:
         raise KeyError(
@@ -282,7 +281,6 @@ class InfoBase():
         VariableInfo | None
             `VariableInfo` object for the requested variable if found, ``None``
             otherwise.
-
         """
         alt_names_list = self._get_alt_names_list(short_name)
 
@@ -613,28 +611,28 @@ class VariableInfo(JsonInfo):
         super(VariableInfo, self).__init__()
         self.table_type = table_type
         self.modeling_realm = []
-        """Modeling realm"""
+        """Modeling realm."""
         self.short_name = short_name
-        """Short name"""
+        """Short name."""
         self.standard_name = ''
-        """Standard name"""
+        """Standard name."""
         self.long_name = ''
-        """Long name"""
+        """Long name."""
         self.units = ''
-        """Data units"""
+        """Data units."""
         self.valid_min = ''
-        """Minimum admitted value"""
+        """Minimum admitted value."""
         self.valid_max = ''
-        """Maximum admitted value"""
+        """Maximum admitted value."""
         self.frequency = ''
-        """Data frequency"""
+        """Data frequency."""
         self.positive = ''
-        """Increasing direction"""
+        """Increasing direction."""
 
         self.dimensions = []
-        """List of dimensions"""
+        """List of dimensions."""
         self.coordinates = {}
-        """Coordinates
+        """Coordinates.
 
         This is a dict with the names of the dimensions as keys and
         CoordinateInfo objects as values.
@@ -703,7 +701,6 @@ class VariableInfo(JsonInfo):
         bool
             `True` if there is at least one coordinate with the given
             `standard_name`, `False` if not.
-
         """
         for coord in self.coordinates.values():
             if coord.standard_name == standard_name:
@@ -728,35 +725,34 @@ class CoordinateInfo(JsonInfo):
         self.generic_lev_coords = {}
 
         self.axis = ""
-        """Axis"""
+        """Axis."""
         self.value = ""
-        """Coordinate value"""
+        """Coordinate value."""
         self.standard_name = ""
-        """Standard name"""
+        """Standard name."""
         self.long_name = ""
-        """Long name"""
+        """Long name."""
         self.out_name = ""
-        """
-        Out name
+        """Out name.
 
         This is the name of the variable in the file
         """
         self.var_name = ""
-        """Short name"""
+        """Short name."""
         self.units = ""
-        """Units"""
+        """Units."""
         self.stored_direction = ""
-        """Direction in which the coordinate increases"""
+        """Direction in which the coordinate increases."""
         self.requested = []
-        """Values requested"""
+        """Values requested."""
         self.valid_min = ""
-        """Minimum allowed value"""
+        """Minimum allowed value."""
         self.valid_max = ""
-        """Maximum allowed value"""
+        """Maximum allowed value."""
         self.must_have_bounds = ""
-        """Whether bounds are required on this dimension"""
+        """Whether bounds are required on this dimension."""
         self.generic_lev_name = ""
-        """Generic level name"""
+        """Generic level name."""
 
     def read_json(self, json_data):
         """Read coordinate information from json.
@@ -992,7 +988,6 @@ class CustomInfo(CMIP5Info):
         Full path to the table or name for the table if it is present in
         ESMValTool repository. If ``None``, use default tables from
         `esmvalcore/cmor/tables/custom`.
-
     """
 
     def __init__(self, cmor_tables_path: Optional[str | Path] = None) -> None:
@@ -1067,7 +1062,6 @@ class CustomInfo(CMIP5Info):
         VariableInfo | None
             `VariableInfo` object for the requested variable if found, returns
             None if not.
-
         """
         return self.tables['custom'].get(short_name, None)
 

@@ -1,8 +1,8 @@
-"""
-Temporary test.
+"""Temporary test.
 
 Remove this test and test file after iris fixes this
-https://github.com/SciTools/iris/issues/5413 .
+https://github.com/SciTools/iris/issues/5413
+.
 """
 import iris
 import numpy as np

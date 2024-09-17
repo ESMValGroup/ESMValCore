@@ -1,8 +1,8 @@
 """Tests for `esmvalcore.preprocessor._regrid_iris_esmf_regrid`."""
+import esmf_regrid
 import iris.cube
 import numpy as np
 import pytest
-import esmf_regrid
 
 from esmvalcore.preprocessor.regrid_schemes import IrisESMFRegrid
 

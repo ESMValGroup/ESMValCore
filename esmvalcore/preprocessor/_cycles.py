@@ -41,7 +41,6 @@ def amplitude(cube, coords):
     iris.exceptions.CoordinateNotFoundError
         A coordinate is not found in ``cube`` and cannot be added via
         :mod:`iris.coord_categorisation`.
-
     """
     if isinstance(coords, str):
         coords = [coords]

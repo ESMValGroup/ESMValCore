@@ -15,8 +15,8 @@ class Tos(Fix):
     """Fixes for tos."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
+        """Fix latitude_bounds and longitude_bounds data type and round to 4
+        d.p.
 
         Parameters
         ----------

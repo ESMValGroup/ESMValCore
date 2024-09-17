@@ -1,6 +1,6 @@
 """Tests for the fixes of MIROC-MIROC5."""
-import pytest
 import iris
+import pytest
 
 from esmvalcore.cmor._fixes.cordex.miroc_miroc5 import wrf361h
 from esmvalcore.cmor.fix import Fix

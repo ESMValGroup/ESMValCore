@@ -39,7 +39,6 @@ def add_leading_dim_to_cube(cube, dim_coord):
     ------
     CoordinateMultiDimError
         ``dim_coord`` is not 1D.
-
     """
     # Only 1D dim_coords are supported
     if dim_coord.ndim > 1:
@@ -134,7 +133,6 @@ def merge_cube_attributes(
         Input cubes whose attributes will be modified in-place.
     delimiter:
         Delimiter that is used to concatenate non-identical attributes.
-
     """
     if len(cubes) <= 1:
         return
@@ -254,7 +252,6 @@ def rechunk_cube(
     -------
     Cube
         Rechunked cube. This will always be a copy of the input cube.
-
     """
     cube = cube.copy()  # do not modify input cube
 
@@ -289,7 +286,6 @@ def has_regular_grid(cube: Cube) -> bool:
     -------
     bool
         ``True`` if input cube has a regular grid, else ``False``.
-
     """
     try:
         lat = cube.coord('latitude')
@@ -318,7 +314,6 @@ def has_irregular_grid(cube: Cube) -> bool:
     -------
     bool
         ``True`` if input cube has an irregular grid, else ``False``.
-
     """
     try:
         lat = cube.coord('latitude')
@@ -345,7 +340,6 @@ def has_unstructured_grid(cube: Cube) -> bool:
     -------
     bool
         ``True`` if input cube has an unstructured grid, else ``False``.
-
     """
     try:
         lat = cube.coord('latitude')

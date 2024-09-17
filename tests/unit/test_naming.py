@@ -1,20 +1,19 @@
-"""Checks to ensure that files follow the naming convention"""
+"""Checks to ensure that files follow the naming convention."""
 
 import os
 import unittest
 
 
 class TestNaming(unittest.TestCase):
-    """Test naming of files and folders"""
+    """Test naming of files and folders."""
 
     def setUp(self):
-        """Prepare tests"""
+        """Prepare tests."""
         folder = os.path.join(__file__, '..', '..', '..')
         self.esmvaltool_folder = os.path.abspath(folder)
 
     def test_windows_reserved_names(self):
-        """
-        Check that no file or folder uses a Windows reserved name
+        """Check that no file or folder uses a Windows reserved name.
 
         Files can not differ from a reserved name by the extension only
         """
@@ -37,8 +36,7 @@ class TestNaming(unittest.TestCase):
                 reserved_names.isdisjoint(without_extensions), error_msg)
 
     def test_avoid_casing_collisions(self):
-        """
-        Check that there are no names differing only in the capitalization
+        """Check that there are no names differing only in the capitalization.
 
         This includes folders differing from files
         """
@@ -52,8 +50,8 @@ class TestNaming(unittest.TestCase):
                 'capitalization'.format(dirpath))
 
     def test_no_namelist(self):
-        """
-        Check that there are no namelist references in file and folder names
+        """Check that there are no namelist references in file and folder
+        names.
 
         This will help us to avoid bad merges with stale branches
         """

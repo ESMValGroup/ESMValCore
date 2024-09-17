@@ -100,7 +100,6 @@ class AllVars(IconFix):
             Invalid ``coord_name`` is given; input cube does not contain a
             single unnamed dimension that can be used to add the new
             coordinate.
-
         """
         # The following dict maps from desired coordinate name in output file
         # (dict keys) to coordinate name in grid file (dict values)

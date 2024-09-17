@@ -1,4 +1,3 @@
-
 """Fixes for GFDL ESM2G."""
 
 import iris
@@ -29,7 +28,6 @@ class AllVars(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         _get_and_remove(cubes, 'Start time for average period')
         _get_and_remove(cubes, 'End time for average period')
@@ -38,11 +36,10 @@ class AllVars(Fix):
 
 
 class Areacello(Fix):
-    """Fixes for areacello"""
+    """Fixes for areacello."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix metadata.
+        """Fix metadata.
 
         Fixes wrong units.
 
@@ -53,7 +50,6 @@ class Areacello(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube = self.get_cube_from_list(cubes)
         cube.units = 'm2'
@@ -75,7 +71,6 @@ class Co2(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 1e6
@@ -98,7 +93,6 @@ class FgCo2(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         _get_and_remove(cubes, 'Latitude of tracer (h) points')
         _get_and_remove(cubes, 'Longitude of tracer (h) points')
@@ -109,8 +103,7 @@ class Usi(Fix):
     """Fixes for usi."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix metadata.
+        """Fix metadata.
 
         Fixes bad standard_name
 
@@ -130,8 +123,7 @@ class Vsi(Fix):
     """Fixes for vsi."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix metadata.
+        """Fix metadata.
 
         Fixes bad standard_name
 

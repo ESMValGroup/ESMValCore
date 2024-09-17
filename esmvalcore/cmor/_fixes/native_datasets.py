@@ -29,7 +29,6 @@ class NativeDatasetFix(Fix):
         cube: iris.cube.Cube
             Input cube for which missing scalar coordinates will be added
             (in-place).
-
         """
         if 'height2m' in self.vardef.dimensions:
             add_scalar_height_coord(cube, 2.0)
@@ -47,7 +46,6 @@ class NativeDatasetFix(Fix):
         ----------
         cube: iris.cube.Cube
             Input cube whose metadata is changed in-place.
-
         """
         # Fix names
         if self.vardef.standard_name == '':
@@ -103,7 +101,6 @@ class NativeDatasetFix(Fix):
         ------
         ValueError
             Desired variable is not available in the input cubes.
-
         """
         if var_name is None:
             var_name = self.extra_facets.get('raw_name',
@@ -127,7 +124,6 @@ class NativeDatasetFix(Fix):
         guess_bounds: bool, optional (default: True)
             If ``True``, try to guess bounds. If ``False``, do not try to guess
             bounds.
-
         """
         if not self.vardef.has_coord_with_standard_name('time'):
             return
@@ -148,7 +144,6 @@ class NativeDatasetFix(Fix):
         guess_bounds: bool, optional (default: True)
             If ``True``, try to guess bounds. If ``False``, do not try to guess
             bounds.
-
         """
         if not self.vardef.has_coord_with_standard_name('latitude'):
             return
@@ -169,7 +164,6 @@ class NativeDatasetFix(Fix):
         guess_bounds: bool, optional (default: True)
             If ``True``, try to guess bounds. If ``False``, do not try to guess
             bounds.
-
         """
         if not self.vardef.has_coord_with_standard_name('longitude'):
             return
@@ -198,7 +192,6 @@ class NativeDatasetFix(Fix):
         iris.coords.AuxCoord or iris.coords.DimCoord
             Coordinate with bounds. The coordinate is altered in-place; it is
             just returned out of convenience for easy access.
-
         """
         if isinstance(coord, str):
             coord = cube.coord(coord)
@@ -226,7 +219,6 @@ class NativeDatasetFix(Fix):
         iris.coords.AuxCoord or iris.coords.DimCoord
             Fixed time coordinate. The coordinate is altered in-place; it is
             just returned out of convenience for easy access.
-
         """
         if coord is None:
             coord = cube.coord('time')
@@ -254,7 +246,6 @@ class NativeDatasetFix(Fix):
         iris.coords.AuxCoord or iris.coords.DimCoord
             Fixed altitude coordinate. The coordinate is altered in-place; it
             is just returned out of convenience for easy access.
-
         """
         if coord is None:
             coord = cube.coord('altitude')
@@ -284,7 +275,6 @@ class NativeDatasetFix(Fix):
         iris.coords.AuxCoord or iris.coords.DimCoord
             Fixed height coordinate. The coordinate is altered in-place; it is
             just returned out of convenience for easy access.
-
         """
         if coord is None:
             coord = cube.coord('height')
@@ -314,7 +304,6 @@ class NativeDatasetFix(Fix):
         iris.coords.AuxCoord or iris.coords.DimCoord
             Fixed air_pressure coordinate. The coordinate is altered in-place;
             it is just returned out of convenience for easy access.
-
         """
         if coord is None:
             coord = cube.coord('air_pressure')
@@ -344,7 +333,6 @@ class NativeDatasetFix(Fix):
         iris.coords.AuxCoord or iris.coords.DimCoord
             Fixed latitude coordinate. The coordinate is altered in-place; it
             is just returned out of convenience for easy access.
-
         """
         if coord is None:
             coord = cube.coord('latitude')
@@ -373,7 +361,6 @@ class NativeDatasetFix(Fix):
         iris.coords.AuxCoord or iris.coords.DimCoord
             Fixed longitude coordinate. The coordinate is altered in-place; it
             is just returned out of convenience for easy access.
-
         """
         if coord is None:
             coord = cube.coord('longitude')

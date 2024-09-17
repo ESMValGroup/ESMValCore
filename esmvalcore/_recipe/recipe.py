@@ -399,12 +399,14 @@ def _update_multiproduct(input_products, order, preproc_dir, step):
     """Return new products that are aggregated over multiple datasets.
 
     These new products will replace the original products at runtime.
-    Therefore, they need to have all the settings for the remaining steps.
+    Therefore, they need to have all the settings for the remaining
+    steps.
 
-    The functions in _multimodel.py take output_products as function arguments.
-    These are the output_products created here. But since those functions are
-    called from the input products, the products that are created here need to
-    be added to their ancestors products' settings ().
+    The functions in _multimodel.py take output_products as function
+    arguments. These are the output_products created here. But since
+    those functions are called from the input products, the products
+    that are created here need to be added to their ancestors products'
+    settings ().
     """
     products = {p for p in input_products if step in p.settings}
     if not products:

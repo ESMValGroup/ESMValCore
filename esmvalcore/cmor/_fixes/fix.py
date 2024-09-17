@@ -61,7 +61,6 @@ class Fix:
         frequency:
             Expected frequency of the variable. If not given, use the one from
             the CMOR table entry of the variable.
-
         """
         self.vardef = vardef
         if extra_facets is None:
@@ -99,7 +98,6 @@ class Fix:
             Path to the corrected file. It can be different from the original
             filepath if a fix has been applied, but if not it should be the
             original filepath.
-
         """
         return filepath
 
@@ -119,7 +117,6 @@ class Fix:
         -------
         Iterable[iris.cube.Cube]
             Fixed cubes. They can be different instances.
-
         """
         return cubes
 
@@ -147,7 +144,6 @@ class Fix:
         -------
         iris.cube.Cube
             Variable's cube.
-
         """
         if short_name is None:
             short_name = self.vardef.short_name
@@ -170,7 +166,6 @@ class Fix:
         -------
         iris.cube.Cube
             Fixed cube. It can be a difference instance.
-
         """
         return cube
 
@@ -231,7 +226,6 @@ class Fix:
         -------
         list[Fix]
             Fixes to apply for the given data.
-
         """
         vardef = get_var_info(project, mip, short_name)
 
@@ -313,7 +307,6 @@ class Fix:
         -------
         Path
             Path to the fixed file.
-
         """
         output_dir = Path(output_dir)
         if add_unique_suffix:
@@ -341,7 +334,6 @@ class GenericFix(Fix):
         -------
         CubeList
             Fixed cubes.
-
         """
         # Make sure the this fix also works when no extra_facets are given
         if 'project' in self.extra_facets and 'dataset' in self.extra_facets:
@@ -384,7 +376,6 @@ class GenericFix(Fix):
         -------
         Cube
             Fixed cube.
-
         """
         return cube
 
@@ -758,7 +749,10 @@ class GenericFix(Fix):
         cmor_coord: CoordinateInfo,
         cube_coord: Coord,
     ) -> tuple[Cube, Coord]:
-        """Fix coordinate direction (increasing vs. decreasing)."""
+        """Fix coordinate direction (increasing vs.
+
+        decreasing).
+        """
         # Skip fix for a variety of reasons
         if cube_coord.ndim > 1:
             return (cube, cube_coord)

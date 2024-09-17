@@ -1,4 +1,3 @@
-
 """Fixes for SSMI model."""
 from ..fix import Fix
 

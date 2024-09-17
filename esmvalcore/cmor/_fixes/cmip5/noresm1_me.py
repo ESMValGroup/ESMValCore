@@ -20,7 +20,6 @@ class Pr(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         return round_coordinates(cubes, 12, coord_names=['latitude'])
 
@@ -42,6 +41,5 @@ class Tas(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         return round_coordinates(cubes, 12)
