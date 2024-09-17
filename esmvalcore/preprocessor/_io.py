@@ -401,11 +401,11 @@ def save(cubes,
             and all(cube.has_lazy_data() for cube in cubes)):
         logger.debug(
             "Not saving cubes %s to %s to avoid data loss. "
-            "The cube is probably unchanged.", cubes, filename)
+            "The cube is probably unchanged.", str(cubes), filename)
         return filename
 
     for cube in cubes:
-        logger.debug("Saving cube:\n%s\nwith %s data to %s", cube,
+        logger.debug("Saving cube:\n%s\nwith %s data to %s", str(cube),
                      "lazy" if cube.has_lazy_data() else "realized", filename)
     if optimize_access:
         cube = cubes[0]
