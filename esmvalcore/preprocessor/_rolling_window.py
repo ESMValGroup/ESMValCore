@@ -39,6 +39,7 @@ def rolling_window_statistics(
     -------
     iris.cube.Cube
         Rolling-window statistics cube.
+
     """
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     cube = cube.rolling_window(coordinate, agg, window_length, *agg_kwargs)

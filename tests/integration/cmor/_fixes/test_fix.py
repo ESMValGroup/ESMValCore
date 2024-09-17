@@ -10,7 +10,9 @@ from esmvalcore.cmor._fixes.cmip5.bnu_esm import Ch4
 from esmvalcore.cmor._fixes.cmip5.canesm2 import FgCo2
 from esmvalcore.cmor._fixes.cmip5.cesm1_bgc import Gpp
 from esmvalcore.cmor._fixes.cmip6.cesm2 import Omon, Tos
-from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.aladin63 import Tas
+from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5.aladin63 import (
+    Tas,
+)
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import AllVars
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix

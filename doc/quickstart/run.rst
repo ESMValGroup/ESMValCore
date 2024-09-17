@@ -79,7 +79,7 @@ This feature is available for projects that are hosted on the ESGF, i.e.
 CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
 
 To control the strictness of the CMOR checker and the checks during concatenation
-on auxiliary coordinates, supplementary variables, and derived coordinates,
+on auxiliary coordinates, supplementary variables, and derived coordinates, 
 use the flag ``--check_level``:
 
 .. code:: bash

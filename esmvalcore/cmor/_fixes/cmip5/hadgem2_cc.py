@@ -2,6 +2,7 @@
 from ..fix import Fix
 from .hadgem2_es import AllVars as BaseAllVars
 
+
 AllVars = BaseAllVars
 
 
@@ -9,7 +10,8 @@ class O2(Fix):
     """Fixes for o2."""
 
     def fix_metadata(self, cubes):
-        """Fix standard and long names.
+        """
+        Fix standard and long names.
 
         Parameters
         ----------
@@ -18,6 +20,7 @@ class O2(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         std = 'mole_concentration_of_dissolved_molecular_oxygen_in_sea_water'
         long_name = 'Dissolved Oxygen Concentration'

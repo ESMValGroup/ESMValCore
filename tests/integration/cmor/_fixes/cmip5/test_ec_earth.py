@@ -26,7 +26,7 @@ class TestSic(unittest.TestCase):
         self.fix = Sic(None)
 
     def test_get(self):
-        """Test fix get."""
+        """Test fix get"""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'EC-EARTH', 'Amon', 'sic'),
                              [Sic(None), GenericFix(None)])
 
@@ -45,7 +45,7 @@ class TestSftlf(unittest.TestCase):
         self.fix = Sftlf(None)
 
     def test_get(self):
-        """Test fix get."""
+        """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'EC-EARTH', 'Amon', 'sftlf'),
             [Sftlf(None), GenericFix(None)])
@@ -90,7 +90,7 @@ class TestTas(unittest.TestCase):
         self.fix = Tas(None)
 
     def test_get(self):
-        """Test fix get."""
+        """Test fix get"""
         self.assertListEqual(Fix.get_fixes('CMIP5', 'EC-EARTH', 'Amon', 'tas'),
                              [Tas(None), GenericFix(None)])
 
@@ -147,7 +147,7 @@ class TestAreacello(unittest.TestCase):
         self.fix = Areacello(None)
 
     def test_get(self):
-        """Test fix get."""
+        """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'EC-EARTH', 'Omon', 'areacello'),
             [Areacello(None), GenericFix(None)],
@@ -209,7 +209,7 @@ class TestPr(unittest.TestCase):
         self.fix = Pr(None)
 
     def test_get(self):
-        """Test fix get."""
+        """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'EC-EARTH', 'Amon', 'pr'),
             [Pr(None), GenericFix(None)],

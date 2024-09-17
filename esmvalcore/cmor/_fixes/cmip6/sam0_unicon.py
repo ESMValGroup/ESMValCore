@@ -2,6 +2,7 @@
 from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 
+
 Cl = ClFixHybridPressureCoord
 
 
@@ -27,6 +28,7 @@ class Nbp(Fix):
         Returns
         -------
         iris.cube.Cube
+
         """
         metadata = cube.metadata
         cube *= -1

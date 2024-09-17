@@ -1,6 +1,7 @@
 """Derivation of variable `ctotal`."""
 
 import iris
+
 from iris import Constraint
 
 from ._baseclass import DerivedVariableBase

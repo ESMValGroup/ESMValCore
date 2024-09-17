@@ -19,8 +19,8 @@ class AllVars(Fix):
     def fix_file(self, filepath, output_dir, add_unique_suffix=False):
         """Select IPSLCM variable in filepath.
 
-        This is done only if input file is a multi-variable one. This is
-        diagnosed by searching in the input filepathame for the
+        This is done only if input file is a multi-variable one. This
+        is diagnosed by searching in the input filepathame for the
         extra_facet value for key 'group'.
 
         In such cases, it is worth to use an external tool for
@@ -28,8 +28,8 @@ class AllVars(Fix):
         up to, and including, V3.0.2), and CDO can be used, depending on
         extra_facets key `use_cdo`
 
-        However, we take care of ESMValTool policy re. dependencies
-        licence
+        However, we take care of ESMValTool policy re. dependencies licence
+
         """
         if "_" + self.extra_facets.get(
                 "group", "non-sense") + ".nc" not in str(filepath):
@@ -61,8 +61,8 @@ class AllVars(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata for any IPSLCM variable + filter out other variables.
 
-        Fix the name of the time coordinate, which is called
-        time_counter in the original file.
+        Fix the name of the time coordinate, which is called time_counter
+        in the original file.
 
         Remove standard_name 'time' in auxiliary time coordinates
         """

@@ -30,6 +30,7 @@ class Config(ValidatedConfig):
 
     Do not instantiate this class directly, but use
     :obj:`esmvalcore.config.CFG` instead.
+
     """
     _DEFAULT_USER_CONFIG_DIR = Path.home() / '.esmvaltool'
 
@@ -160,6 +161,7 @@ class Config(ValidatedConfig):
         _ESMVALTOOL_USER_CONFIG_FILE_ at the end of this method to make sure
         that subsequent calls of this method (also in suprocesses) use the
         correct user configuration file.
+
         """
         # (1) Try to get user configuration file from `filename` argument
         config_user = filename
@@ -208,6 +210,7 @@ class Config(ValidatedConfig):
         ----
         This only works if the script name is `esmvaltool`. Does not check if
         file exists.
+
         """
         if Path(sys.argv[0]).name != 'esmvaltool':
             return None

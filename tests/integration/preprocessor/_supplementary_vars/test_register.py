@@ -28,7 +28,7 @@ def test_register(monkeypatch):
 
 
 def test_register_invalid_fails():
-    """Test that registering an invalid requirement fails."""
+    """test that registering an invalid requirement fails."""
     with pytest.raises(NotImplementedError):
 
         @_supplementary_vars.register_supplementaries(

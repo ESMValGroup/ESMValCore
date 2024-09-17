@@ -4,8 +4,7 @@ import pytest
 
 from esmvalcore.cmor._fixes.cordex.cnrm_cerfacs_cnrm_cm5 import (
     aladin63,
-    wrf381p,
-)
+    wrf381p,)
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
 

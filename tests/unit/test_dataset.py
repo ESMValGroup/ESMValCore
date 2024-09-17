@@ -890,8 +890,7 @@ def test_from_files_with_globs(monkeypatch, session):
 def test_from_files_with_globs_and_missing_facets(monkeypatch, session):
     """Test `from_files` with wildcards and files with missing facets.
 
-    Tests a combination of files with complete facets and missing
-    facets.
+    Tests a combination of files with complete facets and missing facets.
     """
     rootpath = Path('/path/to/data')
     file1 = esmvalcore.local.LocalFile(
@@ -974,8 +973,8 @@ def test_from_files_with_globs_and_missing_facets(monkeypatch, session):
 def test_from_files_with_globs_and_automatic_missing(monkeypatch, session):
     """Test `from_files`.
 
-    Test with wildcards and files with missing facets that can be
-    automatically added.
+    Test with wildcards and files with missing facets that can be automatically
+    added.
     """
     rootpath = Path('/path/to/data')
     file = esmvalcore.local.LocalFile(

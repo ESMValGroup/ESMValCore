@@ -10,7 +10,6 @@ except ImportError as exc:
     except ImportError:
         raise exc
 import warnings
-
 import iris
 import numpy as np
 from iris.cube import Cube
@@ -66,6 +65,7 @@ class ESMPyRegridder:
         `nearest`.
     mask_threshold:
         Threshold used to regrid mask of input cube.
+
     """
 
     def __init__(
@@ -96,6 +96,7 @@ class ESMPyRegridder:
         -------
         Cube
             Regridded cube.
+
         """
         # These regridders are not lazy, so load source data once.
         cube.data  # pylint: disable=pointless-statement
@@ -123,6 +124,7 @@ class _ESMPyScheme:
     ----------
     mask_threshold:
         Threshold used to regrid mask of source cube.
+
     """
 
     _METHOD = ''
@@ -160,6 +162,7 @@ class _ESMPyScheme:
         -------
         ESMPyRegridder
             Regridder instance.
+
         """
         return ESMPyRegridder(
             src_cube,
@@ -181,6 +184,7 @@ class ESMPyAreaWeighted(_ESMPyScheme):
         2.14.0. Please use
         :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid`
         instead.
+
     """
 
     _METHOD = 'area_weighted'
@@ -198,6 +202,7 @@ class ESMPyLinear(_ESMPyScheme):
         2.14.0. Please use
         :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid`
         instead.
+
     """
 
     _METHOD = 'linear'
@@ -215,6 +220,7 @@ class ESMPyNearest(_ESMPyScheme):
         2.14.0. Please use
         :class:`~esmvalcore.preprocessor.regrid_schemes.IrisESMFRegrid`
         instead.
+
     """
 
     _METHOD = 'nearest'
@@ -444,7 +450,8 @@ def get_grid_representant(cube, horizontal_only=False):
 
 
 def get_grid_representants(src, dst):
-    """Construct cubes representing the source and destination grid.
+    """
+    Construct cubes representing the source and destination grid.
 
     This method constructs two new cubes that representant the grids,
     i.e. the spatial dimensions of the given cubes.

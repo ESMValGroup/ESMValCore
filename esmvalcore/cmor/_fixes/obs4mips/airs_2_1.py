@@ -8,7 +8,8 @@ class AllVars(Fix):
     """Common fixes to all vars."""
 
     def fix_metadata(self, cubes):
-        """Fix metadata.
+        """
+        Fix metadata.
 
         Change unit of coordinate plev from hPa to Pa.
 
@@ -21,6 +22,7 @@ class AllVars(Fix):
         -------
         iris.cube.CubeList
             Fixed cubes.
+
         """
         for cube in cubes:
             try:

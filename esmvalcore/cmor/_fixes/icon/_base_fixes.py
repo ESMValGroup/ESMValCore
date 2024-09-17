@@ -56,6 +56,7 @@ class IconFix(NativeDatasetFix):
         neighboring cells) the number of nodes is 6 times higher with
         :func:`iris.mesh.MeshXY.from_coords` compared to using the information
         already present in the horizontal grid file.
+
         """
         horizontal_grid = self.get_horizontal_grid(cube)
 
@@ -154,10 +155,11 @@ class IconFix(NativeDatasetFix):
     def _get_node_coords(self, horizontal_grid):
         """Get node coordinates from horizontal grid.
 
-        Extract node coordinates from dummy variable 'dual_area' in
-        horizontal grid file (in ICON jargon called 'vertex latitude'
-        and 'vertex longitude'), remove their bounds (not accepted by
-        UGRID), and adapt metadata.
+        Extract node coordinates from dummy variable 'dual_area' in horizontal
+        grid file (in ICON jargon called 'vertex latitude' and 'vertex
+        longitude'), remove their bounds (not accepted by UGRID), and adapt
+        metadata.
+
         """
         dual_area_cube = horizontal_grid.extract_cube(
             NameConstraint(var_name='dual_area'))
@@ -234,6 +236,7 @@ class IconFix(NativeDatasetFix):
         ------
         InputFilesNotFound
             A specified file does not exist.
+
         """
         facets_to_consider = [
             'zg_file',
@@ -318,6 +321,7 @@ class IconFix(NativeDatasetFix):
         In order to make this function thread-safe, the downloaded grid file is
         first saved to a temporary location, then copied to the actual location
         later.
+
         """
         grid_path = self.CACHE_DIR / grid_name
 
@@ -398,6 +402,7 @@ class IconFix(NativeDatasetFix):
             Input cube does not contain the necessary attribute `grid_file_uri`
             that specifies the download location of the ICON horizontal grid
             file.
+
         """
         if self.extra_facets.get('horizontal_grid') is not None:
             grid = self._get_grid_from_facet()
@@ -436,6 +441,7 @@ class IconFix(NativeDatasetFix):
             Input cube does not contain the necessary attribute `grid_file_uri`
             that specifies the download location of the ICON horizontal grid
             file.
+
         """
         # If specified by the user, use `horizontal_grid` facet to determine
         # grid name; otherwise, use the `grid_file_uri` attribute of the cube
@@ -466,6 +472,7 @@ class IconFix(NativeDatasetFix):
         Note
         ----
         UGRID expects this to be a int32.
+
         """
         vertex_index = horizontal_grid.extract_cube(
             NameConstraint(var_name='vertex_index'))

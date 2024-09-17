@@ -18,7 +18,7 @@ class TestTro3(unittest.TestCase):
         self.fix = Tro3(None)
 
     def test_get(self):
-        """Test fix get."""
+        """Test fix get"""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'MIROC-ESM-CHEM', 'Amon', 'tro3'),
             [Tro3(None), GenericFix(None)])

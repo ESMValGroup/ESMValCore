@@ -1,7 +1,8 @@
+
 """Fixes for GFDL ESM2M."""
 
-from ..cmip5.gfdl_esm2g import AllVars as BaseAllVars
 from ..fix import Fix
+from ..cmip5.gfdl_esm2g import AllVars as BaseAllVars
 
 
 class AllVars(BaseAllVars):
@@ -9,10 +10,11 @@ class AllVars(BaseAllVars):
 
 
 class Areacello(Fix):
-    """Fixes for areacello."""
+    """Fixes for areacello"""
 
     def fix_metadata(self, cubes):
-        """Fix metadata.
+        """
+        Fix metadata.
 
         Fixes wrong units.
 
@@ -23,6 +25,7 @@ class Areacello(Fix):
         Returns
         -------
         iris.cube.Cube
+
         """
         cube = self.get_cube_from_list(cubes)
         cube.units = 'm2'
@@ -33,7 +36,8 @@ class Sftof(Fix):
     """Fixes for sftof."""
 
     def fix_data(self, cube):
-        """Fix data.
+        """
+        Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -44,6 +48,7 @@ class Sftof(Fix):
         Returns
         -------
         iris.cube.Cube
+
         """
         metadata = cube.metadata
         cube *= 100
@@ -55,7 +60,8 @@ class Co2(Fix):
     """Fixes for co2."""
 
     def fix_data(self, cube):
-        """Fix data.
+        """
+        Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -66,6 +72,7 @@ class Co2(Fix):
         Returns
         -------
         iris.cube.Cube
+
         """
         metadata = cube.metadata
         cube *= 1e6
@@ -77,7 +84,8 @@ class Tos(Fix):
     """Fixes for tos."""
 
     def fix_metadata(self, cubes):
-        """Fix metadata.
+        """
+        Fix metadata.
 
         Fixes wrong standard_name.
 
@@ -88,6 +96,7 @@ class Tos(Fix):
         Returns
         -------
         iris.cube.Cube
+
         """
         cube = self.get_cube_from_list(cubes)
         cube.standard_name = 'sea_surface_temperature'

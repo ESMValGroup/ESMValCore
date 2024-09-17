@@ -1,7 +1,7 @@
-"""Parse and display test memory.
+"""
+Parse and display test memory.
 
-Uses pytest-monitor plugin from
-https://github.com/CFMTech/pytest-monitor
+Uses pytest-monitor plugin from https://github.com/CFMTech/pytest-monitor
 Lots of other metrics can be read from the file via sqlite parsing.,
 currently just MEM_USAGE (RES memory, in MB).
 """

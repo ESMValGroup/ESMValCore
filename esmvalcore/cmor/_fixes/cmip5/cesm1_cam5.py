@@ -7,7 +7,8 @@ class Cl(Fix):
     """Fixes for cl."""
 
     def fix_data(self, cube):
-        """Fix data.
+        """
+        Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -19,6 +20,7 @@ class Cl(Fix):
         Returns
         -------
         iris.cube.Cube
+
         """
         metadata = cube.metadata
         cube *= 100

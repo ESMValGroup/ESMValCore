@@ -164,6 +164,7 @@ class CMORCheck():
             If errors are found. If fail_on_error attribute is set to True,
             raises as soon as an error is detected. If set to False, it perform
             all checks and then raises.
+
         """
         if logger is not None:
             self._logger = logger
@@ -212,6 +213,7 @@ class CMORCheck():
             If errors are found. If fail_on_error attribute is set to True,
             raises as soon as an error is detected. If set to False, it perform
             all checks and then raises.
+
         """
         if logger is not None:
             self._logger = logger
@@ -914,6 +916,7 @@ def cmor_check_metadata(
     -------
     iris.cube.Cube
         Checked cube.
+
     """
     checker = _get_cmor_checker(
         cmor_table,
@@ -956,6 +959,7 @@ def cmor_check_data(
     -------
     iris.cube.Cube
         Checked cube.
+
     """
     checker = _get_cmor_checker(
         cmor_table,
@@ -1001,6 +1005,7 @@ def cmor_check(
     -------
     iris.cube.Cube
         Checked cube.
+
     """
     cube = cmor_check_metadata(
         cube,

@@ -9,7 +9,8 @@ class AllVars(Fix):
     """Fixes for thetao."""
 
     def fix_metadata(self, cubes):
-        """Fix cell_area coordinate.
+        """
+        Fix cell_area coordinate.
 
         Parameters
         ----------
@@ -19,6 +20,7 @@ class AllVars(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
         if cube.coords('latitude'):
@@ -66,6 +68,7 @@ class Omon(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         for cube in cubes:
             if cube.coords(axis='Z'):

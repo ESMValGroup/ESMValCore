@@ -102,6 +102,7 @@ def bias(
         true`` if ``reference=None``; ``reference=None`` and the input products
         are given as iterable of :class:`~iris.cube.Cube` objects;
         ``bias_type`` is not one of ``'absolute'`` or ``'relative'``.
+
     """
     ref_product = None
     all_cubes_given = all(isinstance(p, Cube) for p in products)
@@ -318,6 +319,7 @@ def distance_metric(
         `longitude` is not found in cube if a weighted metric shall be
         calculated, `latitude` is in `coords`, and no `cell_area` is given
         as :ref:`supplementary_variables`.
+
     """
     reference_product = None
     all_cubes_given = all(isinstance(p, Cube) for p in products)

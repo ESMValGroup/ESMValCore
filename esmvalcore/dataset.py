@@ -188,8 +188,7 @@ class Dataset:
     def _get_available_datasets(self) -> Iterator[Dataset]:
         """Yield datasets based on the available files.
 
-        This function requires that self.facets['mip'] is not a glob
-        pattern.
+        This function requires that self.facets['mip'] is not a glob pattern.
         """
         dataset_template = self.copy()
         dataset_template.supplementaries = []

@@ -443,6 +443,7 @@ def get_next_month(month: int, year: int) -> tuple[int, int]:
     -------
     tuple[int, int]
         Next month and next year.
+
     """
     if month != 12:
         return month + 1, year
@@ -475,6 +476,7 @@ def get_time_bounds(time: Coord, freq: str) -> np.ndarray:
     ------
     NotImplementedError
         Non-supported frequency is given.
+
     """
     bounds = []
     dates = time.units.num2date(time.points)

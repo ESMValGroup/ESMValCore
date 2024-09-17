@@ -61,6 +61,7 @@ class Cl(Fix):
         -------
         str
             Path to the fixed file.
+
         """
         new_path = self._fix_formula_terms(
             filepath, output_dir, add_unique_suffix=add_unique_suffix
@@ -116,6 +117,7 @@ class Fgco2(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_depth_coord(cube)
@@ -126,8 +128,8 @@ class Prw(Fix):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
-        """Fix latitude_bounds and longitude_bounds data type and round to 4
-        d.p.
+        """
+        Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
 
         Parameters
         ----------
@@ -137,6 +139,7 @@ class Prw(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         for cube in cubes:
             for coord_name in ['latitude', 'longitude']:
@@ -153,7 +156,8 @@ class Tas(Prw):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
-        """Add height (2m) coordinate.
+        """
+        Add height (2m) coordinate.
 
         Fix also done for prw.
         Fix latitude_bounds and longitude_bounds data type and round to 4 d.p.
@@ -166,6 +170,7 @@ class Tas(Prw):
         Returns
         -------
         iris.cube.CubeList
+
         """
         super().fix_metadata(cubes)
         # Specific code for tas
@@ -189,6 +194,7 @@ class Sftlf(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_typeland_coord(cube)
@@ -209,6 +215,7 @@ class Sftof(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_typesea_coord(cube)
@@ -222,7 +229,8 @@ class Tos(Fix):
     """Fixes for tos."""
 
     def fix_metadata(self, cubes):
-        """Round times to 1 d.p. for monthly means.
+        """
+        Round times to 1 d.p. for monthly means.
 
         Required to get hist-GHG and ssp245-GHG Omon tos to concatenate.
 
@@ -234,6 +242,7 @@ class Tos(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         cube = self.get_cube_from_list(cubes)
 
@@ -258,6 +267,7 @@ class Omon(Fix):
         Returns
         -------
         iris.cube.CubeList
+
         """
         for cube in cubes:
             if cube.coords(axis='Z'):

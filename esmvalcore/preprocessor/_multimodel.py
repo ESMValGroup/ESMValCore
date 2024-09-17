@@ -1,11 +1,11 @@
 """Statistics across cubes.
 
-This module contains functions to compute statistics across multiple
-cubes or products.
+This module contains functions to compute statistics across multiple cubes or
+products.
 
-Wrapper functions separate esmvalcore internals, operating on products,
-from generalized functions that operate on iris cubes. These wrappers
-support grouped execution by passing a groupby keyword.
+Wrapper functions separate esmvalcore internals, operating on products, from
+generalized functions that operate on iris cubes. These wrappers support
+grouped execution by passing a groupby keyword.
 """
 from __future__ import annotations
 
@@ -53,16 +53,16 @@ def _get_consistent_time_unit(cubes):
 def _unify_time_coordinates(cubes):
     """Make sure all cubes' share the same time coordinate.
 
-    This function extracts the date information from the cube and
-    reconstructs the time coordinate, resetting the actual dates to the
-    15th of the month or 1st of July for yearly data (consistent with
-    `regrid_time`), so that there are no mismatches in the time arrays.
+    This function extracts the date information from the cube and reconstructs
+    the time coordinate, resetting the actual dates to the 15th of the month or
+    1st of July for yearly data (consistent with `regrid_time`), so that there
+    are no mismatches in the time arrays.
 
     If cubes have different time units, it will reset the calendar to a
     the "standard" calendar with unit "days since 1850-01-01".
 
-    Might not work for (sub)daily data, because different calendars may
-    have different number of days in the year.
+    Might not work for (sub)daily data, because different calendars may have
+    different number of days in the year.
     """
     t_unit = _get_consistent_time_unit(cubes)
 
@@ -245,6 +245,7 @@ def _get_equal_coord_names_metadata(cubes, equal_coords_metadata):
     Note
     ----
     Ignore coordinates whose names are not unique.
+
     """
     equal_names_metadata = {}
     for coord in cubes[0].coords():
@@ -360,6 +361,7 @@ def _equalise_var_metadata(cubes):
 
     If cubes have the same ``name()`` and ``units``, assign identical
     `standard_names`, `long_names`, and `var_names`.
+
     """
     attrs = ['standard_name', 'long_name', 'var_name']
     equal_names_metadata = {}
@@ -439,6 +441,7 @@ def _compute_slices(cubes):
     Note
     ----
     For scalar cubes, simply return ``None``.
+
     """
     # Scalar cubes
     if cubes[0].shape == ():

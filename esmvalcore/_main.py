@@ -206,8 +206,8 @@ class Config():
 class Recipes():
     """List, show and retrieve installed recipes.
 
-    This group contains utilities to explore and manage the recipes
-    available in your installation of ESMValTool.
+    This group contains utilities to explore and manage the recipes available
+    in your installation of ESMValTool.
 
     Documentation for recipes included with ESMValTool is available at
     https://docs.esmvaltool.org/en/latest/recipes/index.html.
@@ -294,8 +294,7 @@ class ESMValTool():
     multiple models, either against predecessor versions or against
     observations.
 
-    Documentation is available at
-    https://docs.esmvaltool.org.
+    Documentation is available at https://docs.esmvaltool.org.
 
     To report issues or ask for improvements, please visit
     https://github.com/ESMValGroup/ESMValTool.

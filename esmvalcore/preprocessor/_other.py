@@ -133,6 +133,7 @@ def histogram(
         `longitude` is not found in cube if `weights=True`, `latitude` is in
         `coords`, and no `cell_area` is given as
         :ref:`supplementary_variables`.
+
     """
     # Check arguments
     if isinstance(bins, str):
@@ -247,9 +248,10 @@ def _calculate_histogram_lazy(
 ) -> da.Array:
     """Calculate histogram over data along axes (lazy version).
 
-    This will return an array of shape `(x1, x2, ..., n_bins)` where
-    `xi` are the dimensions of `data` not appearing in `axes` and
-    `n_bins` is the number of bins.
+    This will return an array of shape `(x1, x2, ..., n_bins)` where `xi` are
+    the dimensions of `data` not appearing in `axes` and `n_bins` is the number
+    of bins.
+
     """
     n_axes = len(along_axes)
 
@@ -313,9 +315,10 @@ def _calculate_histogram_eager(
 ) -> np.ndarray:
     """Calculate histogram over data along axes (eager version).
 
-    This will return an array of shape `(x1, x2, ..., n_bins)` where
-    `xi` are the dimensions of `data` not appearing in `axes` and
-    `n_bins` is the number of bins.
+    This will return an array of shape `(x1, x2, ..., n_bins)` where `xi` are
+    the dimensions of `data` not appearing in `axes` and `n_bins` is the number
+    of bins.
+
     """
     # Create array with shape (x1, x2, ..., y) where `y` is the product of all
     # dimensions in `axes` and the `xi` are the remaining dimensions
