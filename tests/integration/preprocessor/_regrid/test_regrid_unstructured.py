@@ -1,4 +1,4 @@
-""" Integration tests for unstructured regridding."""
+"""Integration tests for unstructured regridding."""
 
 import numpy as np
 import pytest

@@ -69,7 +69,7 @@ def test_tas(cubes_in, cubes_out):
 
 
 def test_get():
-    """Test fix get"""
+    """Test fix get."""
     assert Fix.get_fixes('CMIP5', 'NORESM1-ME', 'Amon', 'tas') == [
         Tas(None), GenericFix(None)
     ]

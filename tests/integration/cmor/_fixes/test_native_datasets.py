@@ -89,7 +89,6 @@ def fix():
     We use `tas` as a dummy variable here, but will use monkeypatching to
     customize the variable information of the fix in the tests below. This will
     allow us to test all common cases.
-
     """
     vardef = get_var_info('CMIP6', 'Amon', 'tas')
     extra_facets = {}

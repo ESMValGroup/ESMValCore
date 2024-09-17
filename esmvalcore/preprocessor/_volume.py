@@ -66,7 +66,6 @@ def extract_volume(
     -------
     iris.cube.Cube
         z-coord extracted cube.
-
     """
     if z_min > z_max:
         # minimum is below maximum, so switch them around
@@ -124,7 +123,6 @@ def calculate_volume(cube: Cube) -> da.core.Array:
     -------
     dask.array.core.Array
         Grid volumes.
-
     """
     # Load depth field and figure out which dim is which
     depth = cube.coord(axis='z')
@@ -254,7 +252,6 @@ def volume_statistics(
     -------
     iris.cube.Cube
         Collapsed cube.
-
     """
     has_cell_measure = bool(cube.cell_measures('ocean_volume'))
 
@@ -339,7 +336,6 @@ def axis_statistics(
     -------
     iris.cube.Cube
         Collapsed cube.
-
     """
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
 
@@ -426,7 +422,6 @@ def depth_integration(cube: Cube) -> Cube:
     -------
     iris.cube.Cube
         Collapsed cube.
-
     """
     result = axis_statistics(cube, axis='z', operator='sum')
     result.rename('Depth_integrated_' + str(cube.name()))
@@ -480,7 +475,6 @@ def extract_transect(
     ValueError
         Latitude and longitude are both floats or lists; not allowed to slice
         on both axes at the same time.
-
     """
     # ###
     coord_dim2 = False
@@ -571,7 +565,6 @@ def extract_trajectory(
     ------
     ValueError
         Latitude and longitude have different dimensions.
-
     """
     from iris.analysis.trajectory import interpolate
 

@@ -1,4 +1,3 @@
-
 """Fixes for CCSM4 model."""
 from iris.cube import CubeList
 
@@ -9,8 +8,7 @@ class Prw(Fix):
     """Fixes for prw."""
 
     def fix_metadata(self, cubes):
-        """
-        Fix metadata.
+        """Fix metadata.
 
         Remove error and number of observations cubes
 
@@ -21,7 +19,6 @@ class Prw(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube = self.get_cube_from_list(cubes)
         return CubeList([cube])

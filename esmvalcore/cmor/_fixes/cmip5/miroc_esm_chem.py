@@ -1,4 +1,3 @@
-
 """Fixes for MIROC ESM CHEM model."""
 from ..fix import Fix
 
@@ -7,8 +6,7 @@ class Tro3(Fix):
     """Fixes for tro3."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -19,7 +17,6 @@ class Tro3(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 1000

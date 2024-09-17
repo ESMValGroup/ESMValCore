@@ -72,7 +72,6 @@ def fix_file(
     -------
     str or pathlib.Path
         Path to the fixed file.
-
     """
     # Update extra_facets with variable information given as regular arguments
     # to this function
@@ -148,7 +147,6 @@ def fix_metadata(
     -------
     iris.cube.CubeList
         Fixed cubes.
-
     """
     # Deprecate CMOR checks (remove in v2.12)
     if check_level != CheckLevels.DEFAULT:
@@ -269,7 +267,6 @@ def fix_data(
     -------
     iris.cube.Cube
         Fixed cube.
-
     """
     # Deprecate CMOR checks (remove in v2.12)
     if check_level != CheckLevels.DEFAULT:

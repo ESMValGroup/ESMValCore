@@ -5,7 +5,6 @@ from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 from ..shared import round_coordinates
 
-
 Cl = ClFixHybridPressureCoord
 
 
@@ -13,8 +12,7 @@ class Sftof(Fix):
     """Fixes for sftof."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -26,7 +24,6 @@ class Sftof(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 100
@@ -38,8 +35,7 @@ class Snw(Fix):
     """Fixes for snw."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -51,7 +47,6 @@ class Snw(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 100
@@ -96,8 +91,7 @@ class Msftmyz(Fix):
     """Fixes for msftmyz."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes mask
 
@@ -109,7 +103,6 @@ class Msftmyz(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube.data = da.ma.masked_equal(cube.core_data(), 0.)
         return cube
@@ -133,7 +126,6 @@ class Tas(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         return round_coordinates(cubes)
 
@@ -146,8 +138,7 @@ class Tos(Fix):
     """Fixes for tos."""
 
     def fix_data(self, cube):
-        """
-        Fix tos data.
+        """Fix tos data.
 
         Fixes mask
 
@@ -159,7 +150,6 @@ class Tos(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube.data = da.ma.masked_equal(cube.core_data(), 0.)
         return cube

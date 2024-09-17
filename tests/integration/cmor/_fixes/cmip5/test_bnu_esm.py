@@ -27,7 +27,7 @@ class TestCl(unittest.TestCase):
         self.fix = Cl(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         fix = Fix.get_fixes('CMIP5', 'BNU-ESM', 'Amon', 'cl')
         assert fix == [Cl(None), GenericFix(None)]
 

@@ -435,9 +435,8 @@ class Test(tests.Test):
         self.assertFalse(result.cell_measures('ocean_volume'))
 
     def test_volume_nolevbounds(self):
-        """Test to take the volume weighted average of a cube with no bounds
-        in the z axis.
-        """
+        """Test to take the volume weighted average of a cube with no bounds in
+        the z axis."""
 
         self.assertFalse(self.grid_4d_znobounds.coord(axis='z').has_bounds())
         result = volume_statistics(self.grid_4d_znobounds, 'mean')
@@ -449,7 +448,7 @@ class Test(tests.Test):
         self.assertFalse(result.cell_measures('ocean_volume'))
 
     def test_calculate_volume_lazy(self):
-        """Test that calculate_volume returns a lazy volume
+        """Test that calculate_volume returns a lazy volume.
 
         The volume chunks should match those of the input cube for
         computational efficiency.
@@ -600,7 +599,7 @@ class Test(tests.Test):
         self.assertEqual(result.units, 'kg m-3')
 
     def test_volume_statistics_invalid_bounds(self):
-        """Test z-axis bounds is not 2 in last dimension"""
+        """Test z-axis bounds is not 2 in last dimension."""
 
         with self.assertRaises(ValueError) as err:
             volume_statistics(self.grid_invalid_z_bounds, 'mean')
@@ -611,7 +610,7 @@ class Test(tests.Test):
         )
 
     def test_volume_statistics_invalid_units(self):
-        """Test z-axis units cannot be converted to m"""
+        """Test z-axis units cannot be converted to m."""
 
         with self.assertRaises(ValueError) as err:
             volume_statistics(self.grid_4d_sigma_space, 'mean')

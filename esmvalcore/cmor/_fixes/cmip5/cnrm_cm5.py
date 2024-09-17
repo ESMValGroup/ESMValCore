@@ -1,4 +1,3 @@
-
 """Fixes for CNRM-CM5 model."""
 from ..fix import Fix
 
@@ -7,8 +6,7 @@ class Msftmyz(Fix):
     """Fixes for msftmyz."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -19,7 +17,6 @@ class Msftmyz(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 1e6

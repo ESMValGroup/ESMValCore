@@ -4,11 +4,10 @@ import unittest
 
 import iris
 import iris.coords
-from iris.cube import Cube
 import numpy as np
 import pytest
 from cf_units import Unit
-
+from iris.cube import Cube
 from numpy.testing import assert_array_almost_equal
 
 from esmvalcore.preprocessor._detrend import detrend

@@ -5,7 +5,6 @@ from .cnrm_cm6_1 import Cli as BaseCli
 from .cnrm_cm6_1 import Clw as BaseClw
 from .cnrm_cm6_1 import Omon as BaseOmon
 
-
 Cl = BaseCl
 
 

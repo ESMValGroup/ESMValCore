@@ -23,7 +23,7 @@ class TestSftof(unittest.TestCase):
         self.fix = Sftof(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-ESM2M', 'fx', 'sftof'),
             [Sftof(None), AllVars(None), GenericFix(None)])
@@ -43,7 +43,7 @@ class TestCo2(unittest.TestCase):
         self.fix = Co2(None)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-ESM2M', 'Amon', 'co2'),
             [Co2(None), AllVars(None), GenericFix(None)])
@@ -64,7 +64,7 @@ class TestAreacello(unittest.TestCase):
         self.fix = Areacello(self.vardef)
 
     def test_get(self):
-        """Test fix get"""
+        """Test fix get."""
         self.assertListEqual(
             Fix.get_fixes('CMIP5', 'GFDL-ESM2M', 'fx', 'areacello'),
             [Areacello(self.vardef),

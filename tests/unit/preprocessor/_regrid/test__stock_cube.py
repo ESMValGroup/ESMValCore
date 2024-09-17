@@ -1,8 +1,5 @@
-"""
-Unit tests for the :func:`esmvalcore.preprocessor.regrid._stock_cube`
-function.
-
-"""
+"""Unit tests for the :func:`esmvalcore.preprocessor.regrid._stock_cube`
+function."""
 
 import unittest
 from unittest import mock

@@ -26,7 +26,6 @@ class Cl(ClFixHybridPressureCoord):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         coords_to_add = {
@@ -51,8 +50,7 @@ class Tas(Fix):
     """Fixes for tas."""
 
     def fix_metadata(self, cubes):
-        """
-        Add height (2m) coordinate.
+        """Add height (2m) coordinate.
 
         Parameters
         ----------
@@ -62,7 +60,6 @@ class Tas(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         try:
@@ -88,8 +85,7 @@ class Uas(Fix):
     """Fixes for uas."""
 
     def fix_metadata(self, cubes):
-        """
-        Add height (10m) coordinate.
+        """Add height (10m) coordinate.
 
         Parameters
         ----------
@@ -99,7 +95,6 @@ class Uas(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         cube = self.get_cube_from_list(cubes)
         add_scalar_height_coord(cube, 10.0)

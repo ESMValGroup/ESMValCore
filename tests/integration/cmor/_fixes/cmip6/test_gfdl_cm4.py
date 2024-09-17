@@ -2,6 +2,7 @@
 import iris
 import numpy as np
 import pytest
+from cf_units import Unit
 
 from esmvalcore.cmor._fixes.cmip6.gfdl_cm4 import (
     Cl,
@@ -15,11 +16,10 @@ from esmvalcore.cmor._fixes.cmip6.gfdl_cm4 import (
     Tos,
     Uas,
 )
-from esmvalcore.cmor._fixes.common import SiconcFixScalarCoord, OceanFixGrid
+from esmvalcore.cmor._fixes.common import OceanFixGrid, SiconcFixScalarCoord
 from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 from esmvalcore.cmor.table import get_var_info
-from cf_units import Unit
 
 
 def test_get_cl_fix():

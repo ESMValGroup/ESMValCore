@@ -41,8 +41,7 @@ def create_regular_cube():
 
 
 def test_iris_save_with_lazy_coordinate(tmp_path):
-    """
-    Test saving a cube with fully lazy coords and data.
+    """Test saving a cube with fully lazy coords and data.
 
     Motivated by https://github.com/SciTools/iris/issues/4599
     """
@@ -56,8 +55,7 @@ def test_iris_save_with_lazy_coordinate(tmp_path):
 
 
 def test_iris_save_with_regular_coordinate(tmp_path):
-    """
-    Test saving a cube with numpy array coords and data.
+    """Test saving a cube with numpy array coords and data.
 
     Motivated by https://github.com/SciTools/iris/issues/4599
     """

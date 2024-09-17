@@ -19,7 +19,6 @@ class AllVars(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             lats = cube.coords('latitude')
@@ -50,7 +49,6 @@ class O2(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         std = 'mole_concentration_of_dissolved_molecular_oxygen_in_sea_water'
         long_name = 'Dissolved Oxygen Concentration'

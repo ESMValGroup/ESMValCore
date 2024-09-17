@@ -16,7 +16,6 @@ class Cl(ClFixHybridPressureCoord):
         Returns
         -------
         iris.cube.Cube
-
         """
         cube = self.get_cube_from_list(cubes)
         ps_coord = cube.coord(var_name='ps')

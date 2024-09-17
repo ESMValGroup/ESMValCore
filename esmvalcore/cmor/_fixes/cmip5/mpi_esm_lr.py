@@ -2,7 +2,6 @@
 from ..common import ClFixHybridPressureCoord
 from ..fix import Fix
 
-
 Cl = ClFixHybridPressureCoord
 
 
@@ -10,8 +9,7 @@ class Pctisccp(Fix):
     """Fixes for pctisccp."""
 
     def fix_data(self, cube):
-        """
-        Fix data.
+        """Fix data.
 
         Fixes discrepancy between declared units and real units
 
@@ -23,7 +21,6 @@ class Pctisccp(Fix):
         Returns
         -------
         iris.cube.Cube
-
         """
         metadata = cube.metadata
         cube *= 100

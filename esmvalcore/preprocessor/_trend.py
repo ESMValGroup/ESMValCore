@@ -96,7 +96,6 @@ def linear_trend(cube, coordinate='time'):
     iris.exceptions.CoordinateNotFoundError
         The dimensional coordinate with the name ``coordinate`` is not found in
         ``cube``.
-
     """
     coord = cube.coord(coordinate, dim_coords=True)
 
@@ -151,7 +150,6 @@ def linear_trend_stderr(cube, coordinate='time'):
     iris.exceptions.CoordinateNotFoundError
         The dimensional coordinate with the name ``coordinate`` is not found in
         ``cube``.
-
     """
     coord = cube.coord(coordinate, dim_coords=True)
 

@@ -16,7 +16,6 @@ class Pr(Fix):
         Returns
         -------
         iris.cube.CubeList
-
         """
         for cube in cubes:
             cube.coord('latitude').attributes = {}
