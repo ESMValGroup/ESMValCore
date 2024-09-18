@@ -14,6 +14,8 @@ pyroma:
 
 pep8:
   full: true
+  # ignore rules that conflict with ruff formatter
+  disable: ['E203', 'E501', 'W503']
 
 mypy:
   run: true
