@@ -1,51 +1,18 @@
 """esgf-pyclient configuration.
 
 The configuration is read from the file ~/.esmvaltool/esgf-pyclient.yml.
-
-There are four sections in the configuration file:
-
-logon: contains keyword arguments to :func:`pyesgf.logon.LogonManager.logon`
-search_connection: contains keyword arguments to
-    :class:`pyesgf.search.connection.SearchConnection`
 """
-import importlib
 import logging
 import os
 import stat
 from functools import lru_cache
 from pathlib import Path
-from types import ModuleType
-from typing import Optional
 
 import yaml
-
-keyring: Optional[ModuleType] = None
-try:
-    keyring = importlib.import_module('keyring')
-except ModuleNotFoundError:
-    pass
 
 logger = logging.getLogger(__name__)
 
 CONFIG_FILE = Path.home() / '.esmvaltool' / 'esgf-pyclient.yml'
-
-
-def get_keyring_credentials():
-    """Load credentials from keyring."""
-    logon = {}
-    if keyring is None:
-        return logon
-
-    for key in ['hostname', 'username', 'password']:
-        try:
-            value = keyring.get_password('ESGF', key)
-        except keyring.errors.NoKeyringError:
-            # No keyring backend is available
-            return logon
-        if value is not None:
-            logon[key] = value
-
-    return logon
 
 
 def read_config_file():
@@ -78,12 +45,6 @@ def load_esgf_pyclient_config():
     """Load the esgf-pyclient configuration."""
     cfg = {
         # Arguments to
-        # https://esgf-pyclient.readthedocs.io/en/latest/api.html#pyesgf.logon.LogonManager.logon
-        'logon': {
-            'interactive': False,
-            'bootstrap': True,
-        },
-        # Arguments to
         # https://esgf-pyclient.readthedocs.io/en/latest/api.html#pyesgf.search.connection.SearchConnection
         'search_connection': {
             # List of available index nodes: https://esgf.llnl.gov/nodes.html
@@ -105,11 +66,8 @@ def load_esgf_pyclient_config():
         },
     }
 
-    keyring_cfg = get_keyring_credentials()
-    cfg['logon'].update(keyring_cfg)
-
     file_cfg = read_config_file()
-    for section in ['logon', 'search_connection']:
+    for section in ['search_connection']:
         cfg[section].update(file_cfg.get(section, {}))
 
     if 'cache' in cfg['search_connection']:

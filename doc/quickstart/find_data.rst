@@ -398,32 +398,17 @@ ESMValCore can automatically make native ICON data `UGRID
 loading the data.
 The UGRID conventions provide a standardized format to store data on
 unstructured grids, which is required by many software packages or tools to
-work correctly.
+work correctly and specifically by Iris to interpret the grid as a
+:ref:`mesh <iris:ugrid>`.
 An example is the horizontal regridding of native ICON data to a regular grid.
-While the built-in :ref:`nearest scheme <built-in regridding
-schemes>` can handle unstructured grids not in UGRID format, using more complex
-regridding algorithms (for example provided by the
-:doc:`iris-esmf-regrid:index` package through :ref:`generic regridding
-schemes`) requires the input data in UGRID format.
-The following code snippet provides a preprocessor that regrids native ICON
-data to a 1°x1° grid using `ESMF's first-order conservative regridding
-algorithm <https://earthsystemmodeling.org/regrid/#regridding-methods>`__:
-
-.. code-block:: yaml
-
-   preprocessors:
-     regrid_icon:
-       regrid:
-         target_grid: 1x1
-         scheme:
-           reference: esmf_regrid.schemes:ESMFAreaWeighted
-
+While the :ref:`built-in regridding schemes <default regridding schemes>`
+`linear` and `nearest`  can handle unstructured grids (i.e., not UGRID-compliant) and meshes (i.e., UGRID-compliant),
+the `area_weighted` scheme requires the input data in UGRID format.
 This automatic UGRIDization is enabled by default, but can be switched off with
 the facet ``ugrid: false`` in the recipe or the extra facets (see below).
-This is useful for diagnostics that do not support input data in UGRID format
-(yet) like the :ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>` or
-if you want to use the built-in :ref:`nearest scheme <built-in
-regridding schemes>` regridding scheme.
+This is useful for diagnostics that act on the native ICON grid and do not
+support input data in UGRID format (yet), like the
+:ref:`Psyplot diagnostic <esmvaltool:recipes_psyplot_diag>`.
 
 For 3D ICON variables, ESMValCore tries to add the pressure level information
 (from the variables `pfull` and `phalf`) and/or altitude information (from the
@@ -574,7 +559,7 @@ model output.
 
 .. warning::
 
-  This is the first version of ACCESS-ESM CMORizer for ESMValCore. Currently, 
+  This is the first version of ACCESS-ESM CMORizer for ESMValCore. Currently,
   Supported variables: ``pr``, ``ps``, ``psl``, ``rlds``, ``tas``, ``ta``, ``va``,
   ``ua``, ``zg``, ``hus``, ``clt``, ``rsus``, ``rlus``.
 
@@ -585,7 +570,7 @@ The default naming conventions for input directories and files for ACCESS output
 
 .. hint::
 
-  We only provide one default `input_dir` since this is how ACCESS-ESM native data was 
+  We only provide one default `input_dir` since this is how ACCESS-ESM native data was
   stored on NCI. Users can modify this path in the :ref:`config-developer` to match their local file structure.
 
 
@@ -594,7 +579,7 @@ Thus, example dataset entries could look like this:
 .. code-block:: yaml
 
   dataset:
-    - {project: ACCESS, mip: Amon, dataset:ACCESS_ESM1_5, sub_dataset: HI-CN-05, 
+    - {project: ACCESS, mip: Amon, dataset:ACCESS_ESM1_5, sub_dataset: HI-CN-05,
       exp: history, modeling_realm: atm, special_attr: pa, start_year: 1986, end_year: 1986}
 
 
@@ -612,15 +597,15 @@ Key                  Description                            Default value if not
 ==================== ====================================== =================================
 ``raw_name``         Variable name of the variable in the   CMOR variable name of the
                      raw input file                         corresponding variable
-``modeling_realm``   Realm attribute include `atm`, `ice`   No default (needs to be 
+``modeling_realm``   Realm attribute include `atm`, `ice`   No default (needs to be
                      and `oce`                              specified in extra facets or
                                                             recipe if default DRS is used)
 ```special_attr``    A special attribute in the filename    No default
-                     `ACCESS-ESM` raw data, it's related to 
+                     `ACCESS-ESM` raw data, it's related to
                      frquency of raw data
 ``sub_dataset``      Part of the ACCESS-ESM raw dataset     No default
                      root, need to specify if you want to
-                     use the cmoriser                                                                       
+                     use the cmoriser
 ==================== ====================================== =================================
 
 .. _data-retrieval:
@@ -860,7 +845,7 @@ about this since we can point the user to the specific functionality
 `here <https://scitools-iris.readthedocs.io/en/latest/userguide/loading_iris_cubes.html>`_ but we will underline
 that the initial loading is done by adhering to the CF Conventions that `iris` operates by as well (see
 `CF Conventions Document <http://cfconventions.org/cf-conventions/cf-conventions.html>`_ and the search
-page for CF `standard names <http://cfconventions.org/standard-names.html>`_).
+page for CF `standard names <https://cfconventions.org/Data/cf-standard-names/current/build/cf-standard-name-table.html>`_).
 
 Data concatenation from multiple sources
 ========================================

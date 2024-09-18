@@ -399,12 +399,6 @@ def test_single_download(mocker, tmp_path, checksum):
     hosts_file = tmp_path / '.esmvaltool' / 'cache' / 'esgf-hosts.yml'
     mocker.patch.object(_download, 'HOSTS_FILE', hosts_file)
 
-    credentials = '/path/to/creds.pem'
-    mocker.patch.object(_download,
-                        'get_credentials',
-                        autospec=True,
-                        return_value=credentials)
-
     response = mocker.create_autospec(requests.Response,
                                       spec_set=True,
                                       instance=True)
@@ -455,7 +449,7 @@ def test_single_download(mocker, tmp_path, checksum):
     # File was downloaded only once
     get.assert_called_once()
     # From the correct URL
-    get.assert_called_with(url, stream=True, timeout=300, cert=credentials)
+    get.assert_called_with(url, stream=True, timeout=300)
     # We checked for a valid response
     response.raise_for_status.assert_called_once()
     # And requested a reasonable chunk size
