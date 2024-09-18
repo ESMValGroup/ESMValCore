@@ -71,6 +71,10 @@ jobs:
         run: |
           esmvaltool --help
           esmvaltool version
+      - name: Run linters
+        run: |
+          pre-commit install
+          pre-commit run -a
       - name: Run pytests
         run: pytest -n 2 -m "not installation"
       # Automated PR
