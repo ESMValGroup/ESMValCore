@@ -195,6 +195,8 @@ To install from source for development, follow these instructions.
    e.g. ``pip install --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]``
 -  Test that your installation was successful by running
    ``esmvaltool -h``.
+-  Install the :ref:`esmvaltool:pre-commit` hooks by running:
+   ``pre-commit install``.
 
 Pre-installed versions on HPC clusters / other servers
 ------------------------------------------------------
