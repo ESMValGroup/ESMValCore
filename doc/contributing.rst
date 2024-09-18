@@ -244,7 +244,7 @@ to automatically format the code and to check for certain bugs and
 correct.
 Note that `type hints`_ are completely optional, but if you do choose to add
 them, they should be correct.
-Both `ruff`_ and `mypy` are automatically run by pre-commit.
+Both `ruff`_ and `mypy`_ are automatically run by pre-commit.
 
 When you make a pull request, adherence to the Python development best practices
 is checked in two ways:
