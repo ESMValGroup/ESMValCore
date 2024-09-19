@@ -320,27 +320,32 @@ class TestConcatenate(unittest.TestCase):
         """Test that data from experiments does not get mixed."""
         historical_1 = Cube(
             np.zeros(2),
-            dim_coords_and_dims=([
-                DimCoord(np.arange(2),
-                         var_name='time',
-                         standard_name='time',
-                         units='days since 1950-01-01'), 0
-            ], ),
-            attributes={'experiment_id': 'historical'},
+            dim_coords_and_dims=(
+                [
+                    DimCoord(
+                        np.arange(2),
+                        var_name="time",
+                        standard_name="time",
+                        units="days since 1950-01-01",
+                    ),
+                    0,
+                ],
+            ),
+            attributes={"experiment_id": "historical"},
         )
         historical_2 = historical_1.copy()
-        historical_2.coord('time').points = np.arange(2, 4)
+        historical_2.coord("time").points = np.arange(2, 4)
         historical_3 = historical_1.copy()
-        historical_3.coord('time').points = np.arange(4, 6)
+        historical_3.coord("time").points = np.arange(4, 6)
         ssp585_1 = historical_1.copy(np.ones(2))
-        ssp585_1.coord('time').points = np.arange(3, 5)
-        ssp585_1.attributes['experiment_id'] = 'ssp585'
+        ssp585_1.coord("time").points = np.arange(3, 5)
+        ssp585_1.attributes["experiment_id"] = "ssp585"
         ssp585_2 = ssp585_1.copy()
-        ssp585_2.coord('time').points = np.arange(5, 7)
+        ssp585_2.coord("time").points = np.arange(5, 7)
         result = _io.concatenate(
             [historical_1, historical_2, historical_3, ssp585_1, ssp585_2]
         )
-        assert_array_equal(result.coord('time').points, np.arange(7))
+        assert_array_equal(result.coord("time").points, np.arange(7))
         assert_array_equal(result.data, np.array([0, 0, 0, 1, 1, 1, 1]))
 
     def test_concatenate_differing_attributes(self):

@@ -20,8 +20,8 @@ from cf_units import suppress_errors
 from iris.cube import CubeList
 
 from esmvalcore.cmor.check import CheckLevels
-from esmvalcore.iris_helpers import merge_cube_attributes
 from esmvalcore.esgf.facets import FACETS
+from esmvalcore.iris_helpers import merge_cube_attributes
 
 from .._task import write_ncl_settings
 
