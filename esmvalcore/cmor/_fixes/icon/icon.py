@@ -510,7 +510,9 @@ class AllVars(IconFix):
         # until they fix https://github.com/pandas-dev/pandas/issues/57002
         # we plug in a peasant's workaround
         def round_mins(dp):
-            return (dp.replace(second=0) + timedelta(minutes=dp.second // 30))
+            dp = dp.replace(second=0) + timedelta(minutes=dp.second // 30)
+            dp = dp.replace(microsecond=0)
+            return dp
         new_datetimes = [round_mins(dp) for dp in new_datetimes]
         new_dt_points = date2num(np.array(new_datetimes), new_t_units)
 
