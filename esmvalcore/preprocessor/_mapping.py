@@ -221,7 +221,10 @@ def map_slices(src, func, src_rep, dst_rep):
     dim_coords = src_keep_spec[1] + dst_rep.coords(dim_coords=True)
     dim_coords_and_dims = [(c, i) for i, c in enumerate(dim_coords)]
     aux_coords_and_dims = [(c, src.coord_dims(c)) for c in src_keep_spec[2]]
-    aux_coords_and_dims += [(c, src.coord_dims(c)) for c in dst_rep.aux_coords]
+    try:
+        aux_coords_and_dims += [(c, src.coord_dims(c)) for c in dst_rep.aux_coords]
+    except:
+        pass
     dst = iris.cube.Cube(
         data=get_empty_data(res_shape, dtype=src.dtype),
         standard_name=src.standard_name,

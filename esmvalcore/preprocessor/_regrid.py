@@ -864,8 +864,11 @@ def _rechunk(cube: Cube, target_grid: Cube) -> Cube:
         # Only rechunk lazy multidimensional data
         return cube
 
-    lon_coord = target_grid.coord(axis='X')
-    lat_coord = target_grid.coord(axis='Y')
+    # lon_coord = target_grid.coord(axis='X')
+    # lat_coord = target_grid.coord(axis='Y')
+    from iris.analysis.cartography import _get_lon_lat_coords ######## CUSTOM
+    lon_coord, lat_coord = _get_lon_lat_coords( target_grid )
+
     if lon_coord.ndim != 1 or lat_coord.ndim != 1:
         # This function only supports 1D lat/lon coordinates.
         return cube
