@@ -170,8 +170,8 @@ def _create_pressure_array(cube, ps_cube, top_limit):
 def _get_pressure_level_widths(array, air_pressure_axis=1):
     """Compute pressure level widths.
 
-    For a 4D array with pressure level columns, return a 4D array with
-    pressure level widths.
+    For array with pressure level columns, return array with pressure
+    level widths.
 
     """
     array = np.copy(array)
