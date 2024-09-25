@@ -15,6 +15,9 @@ pyroma:
 pep8:
   full: true
   # ignore rules that conflict with ruff formatter
+  # E203: https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#slices
+  # E501: https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+  # W503: https://pycodestyle.pycqa.org/en/latest/intro.html#error-codes
   disable: ['E203', 'E501', 'W503']
 
 mypy:
