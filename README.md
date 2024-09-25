@@ -10,7 +10,7 @@
 [![Anaconda-Server Badge](https://img.shields.io/conda/vn/conda-forge/ESMValCore?color=blue&label=conda-forge&logo=conda-forge&logoColor=white)](https://anaconda.org/conda-forge/esmvalcore)
 [![Github Actions Test](https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml/badge.svg)](https://github.com/ESMValGroup/ESMValCore/actions/workflows/run-tests.yml)
 
-![esmvaltoollogo](https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/doc/figures/ESMValTool-logo-2.png)
+![esmvaltoollogo](https://raw.githubusercontent.com/ESMValGroup/ESMValCore/main/doc/figures/ESMValTool-logo-2-glow.png)
 
 ESMValCore: core functionalities for the ESMValTool, a community diagnostic
 and performance metrics tool for routine evaluation of Earth System Models
