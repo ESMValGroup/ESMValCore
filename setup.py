@@ -47,7 +47,7 @@ REQUIREMENTS = {
         "netCDF4",
         "numpy!=1.24.3,<2.0.0",  # avoid pulling 2.0.0rc1
         "packaging",
-        "pandas!=2.2",  # https://github.com/pandas-dev/pandas/issues/57002
+        "pandas!=2.2.*",  # https://github.com/pandas-dev/pandas/issues/57002
         "pillow",
         "prov",
         "psutil",
