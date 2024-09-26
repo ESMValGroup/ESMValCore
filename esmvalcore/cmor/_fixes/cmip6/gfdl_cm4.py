@@ -1,4 +1,5 @@
 """Fixes for GFDL-CM4 model."""
+
 import iris
 
 from ..common import (
@@ -30,9 +31,9 @@ class Cl(ClFixHybridPressureCoord):
         """
         cube = self.get_cube_from_list(cubes)
         coords_to_add = {
-            'ap': 1,
-            'b': 1,
-            'ps': (0, 2, 3),
+            "ap": 1,
+            "b": 1,
+            "ps": (0, 2, 3),
         }
         add_aux_coords_from_cubes(cube, cubes, coords_to_add)
         return super().fix_metadata(cubes)
@@ -66,7 +67,7 @@ class Tas(Fix):
         """
         cube = self.get_cube_from_list(cubes)
         try:
-            cube.coord('height').attributes.pop('description')
+            cube.coord("height").attributes.pop("description")
         except iris.exceptions.CoordinateNotFoundError:
             add_scalar_height_coord(cube, 2.0)
         return cubes

@@ -12,12 +12,8 @@ class DerivedVariable(DerivedVariableBase):
     def required(project):
         """Declare the variables needed for derivation."""
         required = [
-            {
-                'short_name': 'rsdt'
-            },
-            {
-                'short_name': 'rsut'
-            },
+            {"short_name": "rsdt"},
+            {"short_name": "rsut"},
         ]
         return required
 
@@ -25,12 +21,14 @@ class DerivedVariable(DerivedVariableBase):
     def calculate(cubes):
         """Compute toa net downward shortwave radiation."""
         rsdt_cube = cubes.extract_cube(
-            Constraint(name='toa_incoming_shortwave_flux'))
+            Constraint(name="toa_incoming_shortwave_flux")
+        )
         rsut_cube = cubes.extract_cube(
-            Constraint(name='toa_outgoing_shortwave_flux'))
+            Constraint(name="toa_outgoing_shortwave_flux")
+        )
 
         rsnt_cube = rsdt_cube - rsut_cube
         rsnt_cube.units = rsdt_cube.units
-        rsnt_cube.attributes['positive'] = 'down'
+        rsnt_cube.attributes["positive"] = "down"
 
         return rsnt_cube
