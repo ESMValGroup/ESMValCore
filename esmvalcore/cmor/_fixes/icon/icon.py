@@ -503,17 +503,6 @@ class AllVars(IconFix):
                 category=FutureWarning,
             )
             new_datetimes = np.array(rounded_datetimes.dt.to_pydatetime())
-
-        # Pandas round doesn't work (at all!) anymore
-        # so we have been pinning pandas
-        # see eg https://github.com/ESMValGroup/ESMValCore/pull/2394
-        # until they fix https://github.com/pandas-dev/pandas/issues/57002
-        # we plug in a peasant's workaround
-        def round_mins(dp):
-            dp = dp.replace(second=0) + timedelta(minutes=dp.second // 30)
-            dp = dp.replace(microsecond=0)
-            return dp
-        new_datetimes = [round_mins(dp) for dp in new_datetimes]
         new_dt_points = date2num(np.array(new_datetimes), new_t_units)
 
         # Modify time coordinate in place
