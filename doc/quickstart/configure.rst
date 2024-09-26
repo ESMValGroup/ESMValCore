@@ -36,7 +36,8 @@ options can be specified via YAML files and command line arguments.
 YAML files
 ----------
 
-:ref:`Configuration options <config_options>` can be specified via YAML files.
+:ref:`Configuration options <config_options>` can be specified via YAML files
+(i.e., ``*.yaml`` and ``*.yml``).
 
 A file could look like this (for example, located at
 ``~/.config/esmvaltool/config.yml``):
@@ -63,6 +64,13 @@ Preference follows the order in the list above (i.e., the directory specified
 via command line argument is preferred over the user configuration directory).
 Within a directory, files are sorted alphabetically, and later files (e.g.,
 ``z.yml``) will take precedence over earlier files (e.g., ``a.yml``).
+
+.. warning::
+
+  ESMValCore will read **all** YAML files in these configuration directories.
+  Thus, other YAML files in this directory which are not valid configuration
+  files (like the old ``config-developer.yml`` files) will lead to errors.
+  Make sure to move these files to a different directory.
 
 To get a copy of the default configuration file, you can run
 
