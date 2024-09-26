@@ -303,7 +303,7 @@ def check_preprocessor_settings(settings):
             signature.bind(None, **settings[step])
         except TypeError:
             logger.error(
-                "Wrong preprocessor function arguments in " "function '%s'",
+                "Wrong preprocessor function arguments in function '%s'",
                 step,
             )
             raise
@@ -354,7 +354,7 @@ def _run_preproc_function(function, items, kwargs, input_files=None):
         file_msg = ""
     else:
         file_msg = (
-            f"\nloaded from original input file(s)\n" f"{pformat(input_files)}"
+            f"\nloaded from original input file(s)\n{pformat(input_files)}"
         )
     logger.debug(
         "Running preprocessor function '%s' on the data\n%s%s\nwith function "
