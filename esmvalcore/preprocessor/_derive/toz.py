@@ -6,6 +6,8 @@ import cf_units
 import iris
 from scipy import constants
 
+from esmvalcore.cmor.table import CMOR_TABLES
+
 from .._regrid import extract_levels, regrid
 from ._baseclass import DerivedVariableBase
 from ._shared import pressure_level_widths
@@ -59,27 +61,7 @@ def ensure_correct_lon(o3_cube, ps_cube=None):
 def interpolate_hybrid_plevs(cube):
     """Interpolate hybrid pressure levels."""
     # Use CMIP6's plev19 target levels (in Pa)
-    target_levels = [
-        100000.0,
-        92500.0,
-        85000.0,
-        70000.0,
-        60000.0,
-        50000.0,
-        40000.0,
-        30000.0,
-        25000.0,
-        20000.0,
-        15000.0,
-        10000.0,
-        7000.0,
-        5000.0,
-        3000.0,
-        2000.0,
-        1000.0,
-        500.0,
-        100.0,
-    ]
+    target_levels = CMOR_TABLES['CMIP6'].coords['plev19'].requested
     cube.coord('air_pressure').convert_units('Pa')
     cube = extract_levels(cube, target_levels, 'linear',
                           coordinate='air_pressure')
