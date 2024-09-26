@@ -3,6 +3,7 @@ Shared functions for preprocessor.
 
 Utility functions that can be used for multiple preprocessor steps
 """
+
 from __future__ import annotations
 
 import logging
@@ -74,7 +75,7 @@ def get_iris_aggregator(
     aggregator_kwargs = dict(operator_kwargs)
 
     # Deprecations
-    if cap_operator == 'STD':
+    if cap_operator == "STD":
         msg = (
             f"The operator '{operator}' for computing the standard deviation "
             f"has been deprecated in ESMValCore version 2.10.0 and is "
@@ -82,8 +83,8 @@ def get_iris_aggregator(
             f"instead. This is an exact replacement."
         )
         warnings.warn(msg, ESMValCoreDeprecationWarning)
-        operator = 'std_dev'
-        cap_operator = 'STD_DEV'
+        operator = "std_dev"
+        cap_operator = "STD_DEV"
     elif re.match(r"^(P\d{1,2})(\.\d*)?$", cap_operator):
         msg = (
             f"Specifying percentile operators with the syntax 'pXX.YY' (here: "
@@ -94,9 +95,9 @@ def get_iris_aggregator(
             f"This is an exact replacement."
         )
         warnings.warn(msg, ESMValCoreDeprecationWarning)
-        aggregator_kwargs['percent'] = float(operator[1:])
-        operator = 'percentile'
-        cap_operator = 'PERCENTILE'
+        aggregator_kwargs["percent"] = float(operator[1:])
+        operator = "percentile"
+        cap_operator = "PERCENTILE"
 
     # Check if valid aggregator is found
     if not hasattr(iris.analysis, cap_operator):
@@ -104,20 +105,20 @@ def get_iris_aggregator(
             f"Aggregator '{operator}' not found in iris.analysis module"
         )
     aggregator = getattr(iris.analysis, cap_operator)
-    if not hasattr(aggregator, 'aggregate'):
+    if not hasattr(aggregator, "aggregate"):
         raise ValueError(
             f"Aggregator {aggregator} found by '{operator}' is not a valid "
             f"iris.analysis.Aggregator"
         )
 
     # Use dummy cube to check if aggregator_kwargs are valid
-    x_coord = DimCoord([1.0], bounds=[0.0, 2.0], var_name='x')
+    x_coord = DimCoord([1.0], bounds=[0.0, 2.0], var_name="x")
     cube = Cube([0.0], dim_coords_and_dims=[(x_coord, 0)])
     test_kwargs = update_weights_kwargs(
         aggregator, aggregator_kwargs, np.array([1.0])
     )
     try:
-        cube.collapsed('x', aggregator, **test_kwargs)
+        cube.collapsed("x", aggregator, **test_kwargs)
     except (ValueError, TypeError) as exc:
         raise ValueError(
             f"Invalid kwargs for operator '{operator}': {str(exc)}"
@@ -182,19 +183,19 @@ def update_weights_kwargs(
 
     """
     kwargs = dict(kwargs)
-    if aggregator_accept_weights(aggregator) and kwargs.get('weights', True):
-        kwargs['weights'] = weights
+    if aggregator_accept_weights(aggregator) and kwargs.get("weights", True):
+        kwargs["weights"] = weights
         if cube is not None and callback is not None:
             callback(cube, **callback_kwargs)
     else:
-        kwargs.pop('weights', None)
+        kwargs.pop("weights", None)
     return kwargs
 
 
 def get_normalized_cube(
     cube: Cube,
     statistics_cube: Cube,
-    normalize: Literal['subtract', 'divide'],
+    normalize: Literal["subtract", "divide"],
 ) -> Cube:
     """Get cube normalized with statistics cube.
 
@@ -220,10 +221,10 @@ def get_normalized_cube(
         Input cube normalized with statistics cube.
 
     """
-    if normalize == 'subtract':
+    if normalize == "subtract":
         normalized_cube = cube - statistics_cube
 
-    elif normalize == 'divide':
+    elif normalize == "divide":
         normalized_cube = cube / statistics_cube
 
         # Iris sometimes masks zero-divisions, sometimes not
@@ -299,6 +300,7 @@ def _groupby(iterable, keyfunc):
 
 def _group_products(products, by_key):
     """Group products by the given list of attributes."""
+
     def grouper(product):
         return product.group(by_key)
 
@@ -328,20 +330,19 @@ def get_weights(
     weights = npx.ones_like(cube.core_data())
 
     # Time weights: lengths of time interval
-    if 'time' in coords:
+    if "time" in coords:
         weights = weights * broadcast_to_shape(
             npx.array(get_time_weights(cube)),
             cube.shape,
-            cube.coord_dims('time'),
+            cube.coord_dims("time"),
             chunks=cube.lazy_data().chunks if cube.has_lazy_data() else None,
         )
 
     # Latitude weights: cell areas
-    if 'latitude' in coords:
+    if "latitude" in coords:
         cube = cube.copy()  # avoid overwriting input cube
-        if (
-                not cube.cell_measures('cell_area') and
-                not cube.coords('longitude')
+        if not cube.cell_measures("cell_area") and not cube.coords(
+            "longitude"
         ):
             raise CoordinateNotFoundError(
                 f"Cube {cube.summary(shorten=True)} needs a `longitude` "
@@ -351,7 +352,7 @@ def get_weights(
                 f"variable)"
             )
         try_adding_calculated_cell_area(cube)
-        area_weights = cube.cell_measure('cell_area').core_data()
+        area_weights = cube.cell_measure("cell_area").core_data()
         if cube.has_lazy_data():
             area_weights = da.array(area_weights)
             chunks = cube.lazy_data().chunks
@@ -360,7 +361,7 @@ def get_weights(
         weights = weights * broadcast_to_shape(
             area_weights,
             cube.shape,
-            cube.cell_measure_dims('cell_area'),
+            cube.cell_measure_dims("cell_area"),
             chunks=chunks,
         )
 
@@ -383,8 +384,8 @@ def get_time_weights(cube: Cube) -> np.ndarray | da.core.Array:
         :class:`numpy.ndarray` otherwise.
 
     """
-    time = cube.coord('time')
-    coord_dims = cube.coord_dims('time')
+    time = cube.coord("time")
+    coord_dims = cube.coord_dims("time")
 
     # Multidimensional time coordinates are not supported: In this case,
     # weights cannot be simply calculated as difference between the bounds
@@ -408,7 +409,7 @@ def get_time_weights(cube: Cube) -> np.ndarray | da.core.Array:
 
 def try_adding_calculated_cell_area(cube: Cube) -> None:
     """Try to add calculated cell measure 'cell_area' to cube (in-place)."""
-    if cube.cell_measures('cell_area'):
+    if cube.cell_measures("cell_area"):
         return
 
     logger.debug(
@@ -418,28 +419,30 @@ def try_adding_calculated_cell_area(cube: Cube) -> None:
     )
     logger.debug("Attempting to calculate grid cell area")
 
-    rotated_pole_grid = all([
-        cube.coord('latitude').core_points().ndim == 2,
-        cube.coord('longitude').core_points().ndim == 2,
-        cube.coords('grid_latitude'),
-        cube.coords('grid_longitude'),
-    ])
+    rotated_pole_grid = all(
+        [
+            cube.coord("latitude").core_points().ndim == 2,
+            cube.coord("longitude").core_points().ndim == 2,
+            cube.coords("grid_latitude"),
+            cube.coords("grid_longitude"),
+        ]
+    )
 
     # For regular grids, calculate grid cell areas with iris function
     if has_regular_grid(cube):
-        cube = guess_bounds(cube, ['latitude', 'longitude'])
+        cube = guess_bounds(cube, ["latitude", "longitude"])
         logger.debug("Calculating grid cell areas for regular grid")
         cell_areas = _compute_area_weights(cube)
 
     # For rotated pole grids, use grid_latitude and grid_longitude to calculate
     # grid cell areas
     elif rotated_pole_grid:
-        cube = guess_bounds(cube, ['grid_latitude', 'grid_longitude'])
+        cube = guess_bounds(cube, ["grid_latitude", "grid_longitude"])
         cube_tmp = cube.copy()
-        cube_tmp.remove_coord('latitude')
-        cube_tmp.coord('grid_latitude').rename('latitude')
-        cube_tmp.remove_coord('longitude')
-        cube_tmp.coord('grid_longitude').rename('longitude')
+        cube_tmp.remove_coord("latitude")
+        cube_tmp.coord("grid_latitude").rename("latitude")
+        cube_tmp.remove_coord("longitude")
+        cube_tmp.coord("grid_longitude").rename("longitude")
         logger.debug("Calculating grid cell areas for rotated pole grid")
         cell_areas = _compute_area_weights(cube_tmp)
 
@@ -450,11 +453,14 @@ def try_adding_calculated_cell_area(cube: Cube) -> None:
             "areas for irregular or unstructured grid of cube %s",
             cube.summary(shorten=True),
         )
-        raise CoordinateMultiDimError(cube.coord('latitude'))
+        raise CoordinateMultiDimError(cube.coord("latitude"))
 
     # Add new cell measure
     cell_measure = CellMeasure(
-        cell_areas, standard_name='cell_area', units='m2', measure='area',
+        cell_areas,
+        standard_name="cell_area",
+        units="m2",
+        measure="area",
     )
     cube.add_cell_measure(cell_measure, np.arange(cube.ndim))
 
@@ -463,20 +469,22 @@ def _compute_area_weights(cube):
     """Compute area weights."""
     with warnings.catch_warnings(record=True) as caught_warnings:
         warnings.filterwarnings(
-            'always',
+            "always",
             message="Using DEFAULT_SPHERICAL_EARTH_RADIUS.",
             category=UserWarning,
-            module='iris.analysis.cartography',
+            module="iris.analysis.cartography",
         )
         if cube.has_lazy_data():
-            kwargs = {'compute': False, 'chunks': cube.lazy_data().chunks}
+            kwargs = {"compute": False, "chunks": cube.lazy_data().chunks}
         else:
-            kwargs = {'compute': True}
+            kwargs = {"compute": True}
         weights = iris.analysis.cartography.area_weights(cube, **kwargs)
         for warning in caught_warnings:
             logger.debug(
                 "%s while computing area weights of the following cube:\n%s",
-                warning.message, cube)
+                warning.message,
+                cube,
+            )
     return weights
 
 
@@ -577,10 +585,7 @@ def apply_mask(
         array_chunks = None
 
     mask = iris.util.broadcast_to_shape(
-        mask,
-        array.shape,
-        dim_map=dim_map,
-        chunks=array_chunks
+        mask, array.shape, dim_map=dim_map, chunks=array_chunks
     )
 
     array_module = get_array_module(mask, array)
@@ -616,7 +621,8 @@ def _rechunk_aux_factory_dependencies(
                 chunks = tuple(cube_chunks[i] for i in coord_dims)
                 coord.points = coord.lazy_points().rechunk(chunks)
                 if coord.has_bounds():
-                    coord.bounds = coord.lazy_bounds().rechunk(chunks +
-                                                               (None, ))
+                    coord.bounds = coord.lazy_bounds().rechunk(
+                        chunks + (None,)
+                    )
                 cube.replace_coord(coord)
     return cube
