@@ -657,46 +657,42 @@ class Test(tests.Test):
 
         with self.assertRaises(ValueError) as err:
             volume_statistics(self.grid_invalid_z_bounds, "mean")
-        self.assertIn(
+        assert (
             "Z axis bounds shape found (3, 2, 2, 4). Bounds should be "
-            "2 in the last dimension to compute the thickness.",
-            str(err.exception),
-        )
+            "2 in the last dimension to compute the thickness."
+        ) in str(err.exception)
 
     def test_volume_statistics_invalid_units(self):
         """Test z-axis units cannot be converted to m"""
 
         with self.assertRaises(ValueError) as err:
             volume_statistics(self.grid_4d_sigma_space, "mean")
-        self.assertIn(
+        assert (
             "Cannot compute volume using the Z-axis. "
-            "Unable to convert from 'Unit('kg m-3')' to 'Unit('m')'.",
-            str(err.exception),
-        )
+            "Unable to convert from 'Unit('kg m-3')' to 'Unit('m')'."
+        ) in str(err.exception)
 
     def test_volume_statistics_z_axis_time_error(self):
         # Fails because depth z-axis coord depends on time dimensions
         # which would aggregate also along that dimension
         with self.assertRaises(ValueError) as err:
             volume_statistics(self.grid_4d_z, "mean")
-        self.assertIn(
+        assert (
             "X and Y axis coordinates depend on (2, 3) dimensions, "
             "while X, Y, and Z axis depends on (0, 1, 2, 3) dimensions. "
             "This may indicate Z axis depending on other dimension than "
-            "space that could provoke invalid aggregation...",
-            str(err.exception),
-        )
+            "space that could provoke invalid aggregation..."
+        ) in str(err.exception)
 
         grid_3d_no_x = self.grid_4d_z[..., 0]
         with self.assertRaises(ValueError) as err:
             volume_statistics(grid_3d_no_x, "mean")
-        self.assertIn(
+        assert (
             "X and Y axis coordinates depend on (2,) dimensions, "
             "while X, Y, and Z axis depends on (0, 1, 2) dimensions. "
             "This may indicate Z axis depending on other dimension than "
-            "space that could provoke invalid aggregation...",
-            str(err.exception),
-        )
+            "space that could provoke invalid aggregation..."
+        ) in str(err.exception)
 
     def test_volume_statistics_missing_axis(self):
         # x axis is missing
@@ -711,9 +707,7 @@ class Test(tests.Test):
         grid_no_z = self.grid_4d[:, 0]
         with self.assertRaises(ValueError) as err:
             volume_statistics(grid_no_z, "mean")
-        self.assertIn(
-            "Cannot compute volume with scalar Z-axis", str(err.exception)
-        )
+        assert "Cannot compute volume with scalar Z-axis" in str(err.exception)
 
     def test_volume_statistics_2d_depth(self):
         # Create new 2D depth coord

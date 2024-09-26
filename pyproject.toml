@@ -7,7 +7,7 @@ version_scheme = "release-branch-semver"
 
 [tool.codespell]
 skip = "*.ipynb,esmvalcore/config/extra_facets/ipslcm-mappings.yml"
-ignore-words-list = "vas,hist"
+ignore-words-list = "vas,hist,oce"
 
 [tool.pylint.main]
 jobs = 1  # Running more than one job in parallel crashes prospector.
