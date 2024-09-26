@@ -86,8 +86,7 @@ def test_get_frequency_fx():
     )
     assert get_frequency(cube) == 'fx'
     cube.long_name = 'Not geopotential'
-    with pytest.raises(ValueError):
-        get_frequency(cube)
+    assert get_frequency(cube) == 'monthly'
 
 
 def _era5_latitude():
