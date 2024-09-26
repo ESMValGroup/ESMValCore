@@ -1,4 +1,5 @@
 """Fixes for CESM2 model."""
+
 import ncdata.dataset_like
 import ncdata.iris
 import ncdata.netcdf4
@@ -46,9 +47,10 @@ class Cl(Fix):
         """
         ncdataset = ncdata.netcdf4.from_nc4(filepath)
         dataset = ncdata.dataset_like.Nc4DatasetLike(ncdataset)
-        dataset.variables['lev'].formula_terms = 'p0: p0 a: a b: b ps: ps'
-        dataset.variables['lev'].standard_name = (
-            'atmosphere_hybrid_sigma_pressure_coordinate')
+        dataset.variables["lev"].formula_terms = "p0: p0 a: a b: b ps: ps"
+        dataset.variables[
+            "lev"
+        ].standard_name = "atmosphere_hybrid_sigma_pressure_coordinate"
         cubes = ncdata.iris.to_iris(ncdataset)
         return cubes
 
@@ -68,14 +70,14 @@ class Cl(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
-        lev_coord = cube.coord(var_name='lev')
-        a_coord = cube.coord(var_name='a')
+        lev_coord = cube.coord(var_name="lev")
+        a_coord = cube.coord(var_name="a")
         a_coord.bounds = a_coord.core_bounds()[::-1, :]
-        b_coord = cube.coord(var_name='b')
+        b_coord = cube.coord(var_name="b")
         b_coord.bounds = b_coord.core_bounds()[::-1, :]
         lev_coord.points = a_coord.core_points() + b_coord.core_points()
         lev_coord.bounds = a_coord.core_bounds() + b_coord.core_bounds()
-        lev_coord.units = '1'
+        lev_coord.units = "1"
         return cubes
 
 
@@ -120,12 +122,13 @@ class Prw(Fix):
         iris.cube.CubeList
         """
         for cube in cubes:
-            for coord_name in ['latitude', 'longitude']:
+            for coord_name in ["latitude", "longitude"]:
                 coord = cube.coord(coord_name)
                 if not coord.has_bounds():
                     coord.guess_bounds()
-                coord.bounds = np.round(coord.core_bounds().astype(np.float64),
-                                        4)
+                coord.bounds = np.round(
+                    coord.core_bounds().astype(np.float64), 4
+                )
 
         return cubes
 
@@ -219,9 +222,10 @@ class Tos(Fix):
         cube = self.get_cube_from_list(cubes)
 
         for cube in cubes:
-            if cube.attributes['mipTable'] == 'Omon':
-                cube.coord('time').points = \
-                    np.round(cube.coord('time').points, 1)
+            if cube.attributes["mipTable"] == "Omon":
+                cube.coord("time").points = np.round(
+                    cube.coord("time").points, 1
+                )
         return cubes
 
 
@@ -241,13 +245,13 @@ class Omon(Fix):
         iris.cube.CubeList
         """
         for cube in cubes:
-            if cube.coords(axis='Z'):
-                z_coord = cube.coord(axis='Z')
+            if cube.coords(axis="Z"):
+                z_coord = cube.coord(axis="Z")
 
                 # Only points need to be fixed, not bounds
-                if z_coord.units == 'cm':
+                if z_coord.units == "cm":
                     z_coord.points = z_coord.core_points() / 100.0
-                    z_coord.units = 'm'
+                    z_coord.units = "m"
 
                 # Fix depth metadata
                 if z_coord.standard_name is None:
