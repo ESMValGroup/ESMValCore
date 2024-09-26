@@ -19,10 +19,10 @@ class DerivedVariable(DerivedVariableBase):
     @staticmethod
     def required(project):
         """Declare the variables needed for derivation."""
-        if project == 'CMIP6':
-            required = [{'short_name': 'o3'}]
+        if project == "CMIP6":
+            required = [{"short_name": "o3"}]
         else:
-            required = [{'short_name': 'tro3'}]
+            required = [{"short_name": "tro3"}]
         return required
 
     @staticmethod
@@ -53,21 +53,21 @@ class DerivedVariable(DerivedVariableBase):
 
         """
         o3_cube = cubes.extract_cube(
-            iris.Constraint(name='mole_fraction_of_ozone_in_air')
+            iris.Constraint(name="mole_fraction_of_ozone_in_air")
         )
 
         # If o3 is given on hybrid pressure levels (e.g., from Table AERmon),
         # interpolate it to regular pressure levels
-        if len(o3_cube.coord_dims('air_pressure')) > 1:
+        if len(o3_cube.coord_dims("air_pressure")) > 1:
             o3_cube = interpolate_hybrid_plevs(o3_cube)
 
         # To support zonal mean o3 (e.g., from Table AERmonZ), add longitude
         # coordinate if necessary
-        if not o3_cube.coords('longitude'):
+        if not o3_cube.coords("longitude"):
             o3_cube = add_longitude_coord(o3_cube)
 
         # (1) Mask O3 mole fraction using the given threshold
-        o3_cube.convert_units('1e-9')
+        o3_cube.convert_units("1e-9")
         mask = o3_cube.lazy_data() < STRATOSPHERIC_O3_THRESHOLD
         mask |= da.ma.getmaskarray(o3_cube.lazy_data())
         o3_cube.data = da.ma.masked_array(o3_cube.lazy_data(), mask=mask)
@@ -77,9 +77,11 @@ class DerivedVariable(DerivedVariableBase):
         # the lowest pressure level is far away from the stratosphere).
 
         # Get dummy ps cube with correct dimensions
-        ps_dims = (o3_cube.coord_dims('time') +
-                   o3_cube.coord_dims('latitude') +
-                   o3_cube.coord_dims('longitude'))
+        ps_dims = (
+            o3_cube.coord_dims("time")
+            + o3_cube.coord_dims("latitude")
+            + o3_cube.coord_dims("longitude")
+        )
         idx_to_extract_ps = [0] * o3_cube.ndim
         for ps_dim in ps_dims:
             idx_to_extract_ps[ps_dim] = slice(None)
@@ -87,16 +89,16 @@ class DerivedVariable(DerivedVariableBase):
 
         # Set ps data using lowest pressure level available and add correct
         # metadata
-        lowest_plev = o3_cube.coord('air_pressure').points.max()
+        lowest_plev = o3_cube.coord("air_pressure").points.max()
         ps_data = da.broadcast_to(lowest_plev, ps_cube.shape)
         ps_cube.data = ps_data
-        ps_cube.var_name = 'ps'
-        ps_cube.standard_name = 'surface_air_pressure'
-        ps_cube.long_name = 'Surface Air Pressure'
-        ps_cube.units = o3_cube.coord('air_pressure').units
+        ps_cube.var_name = "ps"
+        ps_cube.standard_name = "surface_air_pressure"
+        ps_cube.long_name = "Surface Air Pressure"
+        ps_cube.units = o3_cube.coord("air_pressure").units
 
         # Cut lowest pressure level from o3_cube
-        z_dim = o3_cube.coord_dims('air_pressure')[0]
+        z_dim = o3_cube.coord_dims("air_pressure")[0]
         idx_to_cut_lowest_plev = [slice(None)] * o3_cube.ndim
         idx_to_cut_lowest_plev[z_dim] = slice(1, None)
         o3_cube = o3_cube[tuple(idx_to_cut_lowest_plev)]
