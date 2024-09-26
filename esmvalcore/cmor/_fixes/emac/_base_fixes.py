@@ -17,8 +17,9 @@ class EmacFix(NativeDatasetFix):
         """Extract single cube."""
         # If no var_name given, use the CMOR short_name
         if var_name is None:
-            var_name = self.extra_facets.get('raw_name',
-                                             self.vardef.short_name)
+            var_name = self.extra_facets.get(
+                "raw_name", self.vardef.short_name
+            )
 
         # Convert to list if only a single var_name is given
         if isinstance(var_name, str):
@@ -38,11 +39,8 @@ class EmacFix(NativeDatasetFix):
         raise ValueError(
             f"No variable of {var_names} necessary for the extraction/"
             f"derivation the CMOR variable '{self.vardef.short_name}' is "
-            f"available in the input file. Hint: in case you tried to extract "
-            f"a 3D variable defined on pressure levels, it might be necessary "
-            f"to define the EMAC variable name in the recipe (e.g., "
-            f"'raw_name: tm1_p39_cav') if the default number of pressure "
-            f"levels is not available in the input file."
+            f"available in the input file. Please specify a valid `raw_name` "
+            f"in the recipe or extra facets file."
         )
 
 

@@ -1,4 +1,5 @@
 """Unstructured grid regridding."""
+
 from __future__ import annotations
 
 import logging
@@ -55,7 +56,7 @@ class UnstructuredNearest(IrisUnstructuredNearest):
         # Unstructured nearest-neighbor regridding requires exactly one X and
         # one Y coordinate (latitude and longitude). Remove any X or Y
         # dimensional coordinates if necessary.
-        for axis in ['x', 'y']:
+        for axis in ["x", "y"]:
             if src_cube.coords(axis=axis, dim_coords=True):
                 coord = src_cube.coord(axis=axis, dim_coords=True)
                 src_cube.remove_coord(coord)
@@ -94,19 +95,19 @@ class UnstructuredLinearRegridder:
                 f"Target cube {tgt_cube.summary(shorten=True)} does not have "
                 f"regular grid"
             )
-        src_lat = src_cube.coord('latitude').copy()
-        src_lon = src_cube.coord('longitude').copy()
-        tgt_lat = tgt_cube.coord('latitude').copy()
-        tgt_lon = tgt_cube.coord('longitude').copy()
+        src_lat = src_cube.coord("latitude").copy()
+        src_lon = src_cube.coord("longitude").copy()
+        tgt_lat = tgt_cube.coord("latitude").copy()
+        tgt_lon = tgt_cube.coord("longitude").copy()
         self.src_coords = [src_lat, src_lon]
         self.tgt_coords = [tgt_lat, tgt_lon]
         self.tgt_n_lat = tgt_lat.core_points().size
         self.tgt_n_lon = tgt_lon.core_points().size
 
         # Calculate regridding weights and indices
-        (self._weights, self._indices,
-         self._convex_hull_idx) = self._get_weights_and_idx(
-            src_lat, src_lon, tgt_lat, tgt_lon)
+        (self._weights, self._indices, self._convex_hull_idx) = (
+            self._get_weights_and_idx(src_lat, src_lon, tgt_lat, tgt_lon)
+        )
 
     def _get_weights_and_idx(
         self,
@@ -134,10 +135,10 @@ class UnstructuredLinearRegridder:
         src_lon = src_lon.copy()
         tgt_lat = tgt_lat.copy()
         tgt_lon = tgt_lon.copy()
-        src_lat.convert_units('degrees')
-        src_lon.convert_units('degrees')
-        tgt_lat.convert_units('degrees')
-        tgt_lon.convert_units('degrees')
+        src_lat.convert_units("degrees")
+        src_lon.convert_units("degrees")
+        tgt_lat.convert_units("degrees")
+        tgt_lon.convert_units("degrees")
 
         # Bring points into correct format
         # src_points: (N, 2) where N is the number of source grid points
@@ -146,11 +147,11 @@ class UnstructuredLinearRegridder:
             np.stack((src_lat.core_points(), src_lon.core_points()), axis=-1),
             np.stack(
                 tuple(
-                    tgt_coord.ravel() for tgt_coord in
-                    np.meshgrid(
+                    tgt_coord.ravel()
+                    for tgt_coord in np.meshgrid(
                         tgt_lat.core_points(),
                         tgt_lon.core_points(),
-                        indexing='ij',
+                        indexing="ij",
                     )
                 ),
                 axis=-1,
@@ -169,7 +170,7 @@ class UnstructuredLinearRegridder:
         src_points_with_convex_hull = self._add_convex_hull_twice(
             src_points, hull.vertices
         )
-        src_points_with_convex_hull[-2 * n_hull:-n_hull, 1] -= 360
+        src_points_with_convex_hull[-2 * n_hull : -n_hull, 1] -= 360
         src_points_with_convex_hull[-n_hull:, 1] += 360
 
         # Actual weights calculation
@@ -198,7 +199,7 @@ class UnstructuredLinearRegridder:
                 f"Cube {cube.summary(shorten=True)} does not have "
                 f"unstructured grid"
             )
-        coords = [cube.coord('latitude'), cube.coord('longitude')]
+        coords = [cube.coord("latitude"), cube.coord("longitude")]
         if coords != self.src_coords:
             raise ValueError(
                 f"The given cube {cube.summary(shorten=True)} is not defined "
@@ -211,14 +212,15 @@ class UnstructuredLinearRegridder:
         # (excluding the unstructured grid dimension) plus the (x, y) target
         # grid dimensions. All dimensions to the right of the unstructured grid
         # dimension need to be shifted to the right by 1.
-        udim = cube.coord_dims('latitude')[0]
+        udim = cube.coord_dims("latitude")[0]
         dim_coords_and_dims = [
-            (c, cube.coord_dims(c)[0]) for c in cube.coords(dim_coords=True) if
-            udim not in cube.coord_dims(c)
+            (c, cube.coord_dims(c)[0])
+            for c in cube.coords(dim_coords=True)
+            if udim not in cube.coord_dims(c)
         ]
         dim_coords_and_dims = [
-            (c, d) if d < udim else (c, d + 1) for (c, d) in
-            dim_coords_and_dims
+            (c, d) if d < udim else (c, d + 1)
+            for (c, d) in dim_coords_and_dims
         ]
         dim_coords_and_dims.append((self.tgt_coords[0], udim))
         dim_coords_and_dims.append((self.tgt_coords[1], udim + 1))
@@ -227,11 +229,12 @@ class UnstructuredLinearRegridder:
         # grid dimension (also make sure to shift all dimensions to the right
         # of the unstructured grid to the right by 1)
         old_aux_coords_and_dims = [
-            (c, cube.coord_dims(c)) for c in cube.coords(dim_coords=False) if
-            udim not in cube.coord_dims(c)
+            (c, cube.coord_dims(c))
+            for c in cube.coords(dim_coords=False)
+            if udim not in cube.coord_dims(c)
         ]
         aux_coords_and_dims = []
-        for (aux_coord, dims) in old_aux_coords_and_dims:
+        for aux_coord, dims in old_aux_coords_and_dims:
             dims = tuple(d if d < udim else d + 1 for d in dims)
             aux_coords_and_dims.append((aux_coord, dims))
 
@@ -248,10 +251,10 @@ class UnstructuredLinearRegridder:
 
     def _get_regridded_data(self, cube: Cube) -> np.ndarray | da.Array:
         """Get regridded data."""
-        udim = cube.coord_dims('latitude')[0]
+        udim = cube.coord_dims("latitude")[0]
 
         # Cube must not be chunked along latitude and longitude dimension
-        rechunk_cube(cube, ['latitude', 'longitude'])
+        rechunk_cube(cube, ["latitude", "longitude"])
 
         # Make sure that masked arrays are filled with nan's so they are
         # handled properly
@@ -273,7 +276,7 @@ class UnstructuredLinearRegridder:
     def _regrid_eager(self, data: np.ndarray, axis: int) -> np.ndarray:
         """Eager regridding."""
         v_interpolate = np.vectorize(
-            self._interpolate, signature='(i)->(lat,lon)'
+            self._interpolate, signature="(i)->(lat,lon)"
         )
 
         # Make sure that interpolation dimension is rightmost dimension and
@@ -294,12 +297,12 @@ class UnstructuredLinearRegridder:
         """Lazy regridding."""
         regridded_arr = da.apply_gufunc(
             self._interpolate,
-            '(i)->(lat,lon)',
+            "(i)->(lat,lon)",
             data,
             axes=[(axis,), (axis, axis + 1)],
             vectorize=True,
             output_dtypes=dtype,
-            output_sizes={'lat': self.tgt_n_lat, 'lon': self.tgt_n_lon},
+            output_sizes={"lat": self.tgt_n_lat, "lon": self.tgt_n_lon},
         )
         return regridded_arr
 
@@ -324,7 +327,7 @@ class UnstructuredLinearRegridder:
         """
         data = self._add_convex_hull_twice(data, self._convex_hull_idx)
         interp_data = np.einsum(
-            'nj,nj->n', np.take(data, self._indices), self._weights
+            "nj,nj->n", np.take(data, self._indices), self._weights
         )
         interp_data = interp_data.reshape(self.tgt_n_lat, self.tgt_n_lon)
         return interp_data
@@ -354,7 +357,7 @@ class UnstructuredLinearRegridder:
         indices = np.take(tri.simplices, simplex, axis=0)
         transform = np.take(tri.transform, simplex, axis=0)
         delta = tgt_points - transform[:, 2]
-        bary = np.einsum('njk,nk->nj', transform[:, :2, :], delta)
+        bary = np.einsum("njk,nk->nj", transform[:, :2, :], delta)
         weights = np.hstack((bary, 1 - bary.sum(axis=1, keepdims=True)))
         extra_idx = simplex == -1
         weights[extra_idx, :] = np.nan  # missing values
@@ -378,7 +381,7 @@ class UnstructuredLinear:
 
     def __repr__(self) -> str:
         """Return string representation of class."""
-        return 'UnstructuredLinear()'
+        return "UnstructuredLinear()"
 
     def regridder(
         self,
