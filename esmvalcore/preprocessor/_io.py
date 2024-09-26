@@ -20,6 +20,7 @@ from cf_units import suppress_errors
 from iris.cube import CubeList
 
 from esmvalcore.cmor.check import CheckLevels
+from esmvalcore.esgf.facets import FACETS
 from esmvalcore.iris_helpers import merge_cube_attributes
 from esmvalcore.preprocessor._shared import _rechunk_aux_factory_dependencies
 
@@ -331,6 +332,36 @@ def _sort_cubes_by_time(cubes):
     return cubes
 
 
+def _concatenate_cubes_by_experiment(
+    cubes: list[iris.cube.Cube],
+) -> list[iris.cube.Cube]:
+    """Concatenate cubes by experiment.
+
+    This ensures overlapping (branching) experiments are handled correctly.
+    """
+    # get the possible facet names in CMIP3, 5, 6 for exp
+    # currently these are 'experiment', 'experiment_id'
+    exp_facet_names = {
+        project["exp"] for project in FACETS.values() if "exp" in project
+    }
+
+    def get_exp(cube: iris.cube.Cube) -> str:
+        for key in exp_facet_names:
+            if key in cube.attributes:
+                return cube.attributes[key]
+        return ""
+
+    experiments = {get_exp(cube) for cube in cubes}
+    if len(experiments) > 1:
+        # first do experiment-wise concatenation, then time-based
+        cubes = [
+            concatenate([cube for cube in cubes if get_exp(cube) == exp])
+            for exp in experiments
+        ]
+
+    return cubes
+
+
 def concatenate(cubes, check_level=CheckLevels.DEFAULT):
     """Concatenate all cubes after fixing metadata.
 
@@ -355,6 +386,8 @@ def concatenate(cubes, check_level=CheckLevels.DEFAULT):
         return cubes
     if len(cubes) == 1:
         return cubes[0]
+
+    cubes = _concatenate_cubes_by_experiment(cubes)
 
     merge_cube_attributes(cubes)
     cubes = _sort_cubes_by_time(cubes)

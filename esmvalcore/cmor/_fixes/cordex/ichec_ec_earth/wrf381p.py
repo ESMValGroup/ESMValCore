@@ -1,4 +1,5 @@
 """Fixes for rcm WRF381P driven by ICHEC-EC-EARTH."""
+
 from esmvalcore.cmor._fixes.shared import add_scalar_height_coord
 from esmvalcore.cmor.fix import Fix
 

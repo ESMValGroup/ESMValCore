@@ -1,4 +1,5 @@
 """Fixes for FIO-ESM-2-0 model."""
+
 import logging
 
 import numpy as np
@@ -27,14 +28,14 @@ class Omon(Fix):
         -------
         iris.cube.CubeList
         """
-        round_coordinates(cubes,
-                          decimals=6,
-                          coord_names=["longitude", "latitude"])
+        round_coordinates(
+            cubes, decimals=6, coord_names=["longitude", "latitude"]
+        )
         logger.warning(
             "Using 'area_weighted' regridder scheme in Omon variables "
             "for dataset %s causes discontinuities in the longitude "
             "coordinate.",
-            self.extra_facets['dataset'],
+            self.extra_facets["dataset"],
         )
         return cubes
 
@@ -90,6 +91,6 @@ class Clt(Fix):
         iris.cube.Cube
         """
         if cube.core_data().max() <= 1.0:
-            cube.units = '1'
-            cube.convert_units('%')
+            cube.units = "1"
+            cube.convert_units("%")
         return cube
