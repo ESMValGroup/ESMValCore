@@ -3,6 +3,7 @@
 Allows for selecting data subsets using certain volume bounds; selecting
 depth or height regions; constructing volumetric averages;
 """
+
 from __future__ import annotations
 
 import logging
@@ -14,9 +15,9 @@ import iris
 import numpy as np
 from iris.coords import AuxCoord, CellMeasure
 from iris.cube import Cube
+from iris.util import broadcast_to_shape
 
 from ._shared import (
-    broadcast_to_shape,
     get_iris_aggregator,
     get_normalized_cube,
     preserve_float_dtype,
@@ -32,7 +33,7 @@ def extract_volume(
     cube: Cube,
     z_min: float,
     z_max: float,
-    interval_bounds: str = 'open',
+    interval_bounds: str = "open",
     nearest_value: bool = False,
 ) -> Cube:
     """Subset a cube based on a range of values in the z-coordinate.
@@ -76,7 +77,7 @@ def extract_volume(
         zmax = float(z_max)
         zmin = float(z_min)
 
-    z_coord = cube.coord(axis='Z')
+    z_coord = cube.coord(axis="Z")
 
     if nearest_value:
         min_index = np.argmin(np.abs(z_coord.core_points() - zmin))
@@ -84,18 +85,19 @@ def extract_volume(
         zmin = z_coord.core_points()[min_index]
         zmax = z_coord.core_points()[max_index]
 
-    if interval_bounds == 'open':
+    if interval_bounds == "open":
         coord_values = {z_coord: lambda cell: zmin < cell.point < zmax}
-    elif interval_bounds == 'closed':
+    elif interval_bounds == "closed":
         coord_values = {z_coord: lambda cell: zmin <= cell.point <= zmax}
-    elif interval_bounds == 'left_closed':
+    elif interval_bounds == "left_closed":
         coord_values = {z_coord: lambda cell: zmin <= cell.point < zmax}
-    elif interval_bounds == 'right_closed':
+    elif interval_bounds == "right_closed":
         coord_values = {z_coord: lambda cell: zmin < cell.point <= zmax}
     else:
         raise ValueError(
             'Depth extraction bounds can be set to "open", "closed", '
-            f'"left_closed", or "right_closed". Got "{interval_bounds}".')
+            f'"left_closed", or "right_closed". Got "{interval_bounds}".'
+        )
 
     z_constraint = iris.Constraint(coord_values=coord_values)
 
@@ -127,7 +129,7 @@ def calculate_volume(cube: Cube) -> da.core.Array:
 
     """
     # Load depth field and figure out which dim is which
-    depth = cube.coord(axis='z')
+    depth = cube.coord(axis="z")
     z_dim = cube.coord_dims(depth)
     depth = depth.copy()
 
@@ -142,14 +144,16 @@ def calculate_volume(cube: Cube) -> da.core.Array:
         raise ValueError(
             f"Z axis bounds shape found {depth.core_bounds().shape}. "
             "Bounds should be 2 in the last dimension to compute the "
-            "thickness.")
+            "thickness."
+        )
 
     # Convert units to get the thickness in meters
     try:
-        depth.convert_units('m')
+        depth.convert_units("m")
     except ValueError as err:
         raise ValueError(
-            f'Cannot compute volume using the Z-axis. {err}') from err
+            f"Cannot compute volume using the Z-axis. {err}"
+        ) from err
 
     # Calculate Z-direction thickness
     thickness = depth.core_bounds()[..., 1] - depth.core_bounds()[..., 0]
@@ -157,23 +161,26 @@ def calculate_volume(cube: Cube) -> da.core.Array:
         thickness = da.array(thickness)
 
     # Get or calculate the horizontal areas of the cube
-    has_cell_measure = bool(cube.cell_measures('cell_area'))
+    has_cell_measure = bool(cube.cell_measures("cell_area"))
     try_adding_calculated_cell_area(cube)
-    area = cube.cell_measure('cell_area').copy()
+    area = cube.cell_measure("cell_area").copy()
     area_dim = cube.cell_measure_dims(area)
-
-    # Ensure cell area is in square meters as the units
-    area.convert_units('m2')
+    area.convert_units("m2")
+    area_array = area.core_data()
+    if cube.has_lazy_data():
+        area_array = da.array(area_array)
 
     # Make sure input cube has not been modified
     if not has_cell_measure:
-        cube.remove_cell_measure('cell_area')
+        cube.remove_cell_measure("cell_area")
 
     chunks = cube.core_data().chunks if cube.has_lazy_data() else None
     area_arr = broadcast_to_shape(
-        area.core_data(), cube.shape, area_dim, chunks=chunks)
+        area_array, cube.shape, area_dim, chunks=chunks
+    )
     thickness_arr = broadcast_to_shape(
-        thickness, cube.shape, z_dim, chunks=chunks)
+        thickness, cube.shape, z_dim, chunks=chunks
+    )
     grid_volume = area_arr * thickness_arr
 
     return grid_volume
@@ -181,7 +188,7 @@ def calculate_volume(cube: Cube) -> da.core.Array:
 
 def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
     """Try to add calculated cell measure 'ocean_volume' to cube (in-place)."""
-    if cube.cell_measures('ocean_volume'):
+    if cube.cell_measures("ocean_volume"):
         return
 
     logger.debug(
@@ -195,22 +202,22 @@ def _try_adding_calculated_ocean_volume(cube: Cube) -> None:
 
     cell_measure = CellMeasure(
         grid_volume,
-        standard_name='ocean_volume',
-        units='m3',
-        measure='volume',
+        standard_name="ocean_volume",
+        units="m3",
+        measure="volume",
     )
     cube.add_cell_measure(cell_measure, np.arange(cube.ndim))
 
 
 @register_supplementaries(
-    variables=['volcello', 'areacello'],
-    required='prefer_at_least_one',
+    variables=["volcello", "areacello"],
+    required="prefer_at_least_one",
 )
 @preserve_float_dtype
 def volume_statistics(
     cube: Cube,
     operator: str,
-    normalize: Optional[Literal['subtract', 'divide']] = None,
+    normalize: Optional[Literal["subtract", "divide"]] = None,
     **operator_kwargs,
 ) -> Cube:
     """Apply a statistical operation over a volume.
@@ -253,16 +260,16 @@ def volume_statistics(
         Collapsed cube.
 
     """
-    has_cell_measure = bool(cube.cell_measures('ocean_volume'))
+    has_cell_measure = bool(cube.cell_measures("ocean_volume"))
 
     # TODO: Test sigma coordinates.
     # TODO: Add other operations.
-    if operator != 'mean':
+    if operator != "mean":
         raise ValueError(f"Volume operator {operator} not recognised.")
     # get z, y, x coords
-    z_axis = cube.coord(axis='Z')
-    y_axis = cube.coord(axis='Y')
-    x_axis = cube.coord(axis='X')
+    z_axis = cube.coord(axis="Z")
+    y_axis = cube.coord(axis="Y")
+    x_axis = cube.coord(axis="X")
 
     # assert z axis only uses 1 dimension more than x, y axis
     xy_dims = tuple({*cube.coord_dims(y_axis), *cube.coord_dims(x_axis)})
@@ -272,13 +279,14 @@ def volume_statistics(
             f"X and Y axis coordinates depend on {xy_dims} dimensions, "
             f"while X, Y, and Z axis depends on {xyz_dims} dimensions. "
             "This may indicate Z axis depending on other dimension than "
-            "space that could provoke invalid aggregation...")
+            "space that could provoke invalid aggregation..."
+        )
 
     (agg, agg_kwargs) = get_iris_aggregator(operator, **operator_kwargs)
     agg_kwargs = update_weights_kwargs(
         agg,
         agg_kwargs,
-        'ocean_volume',
+        "ocean_volume",
         cube,
         _try_adding_calculated_ocean_volume,
     )
@@ -288,8 +296,8 @@ def volume_statistics(
         result = get_normalized_cube(cube, result, normalize)
 
     # Make sure input cube has not been modified
-    if not has_cell_measure and cube.cell_measures('ocean_volume'):
-        cube.remove_cell_measure('ocean_volume')
+    if not has_cell_measure and cube.cell_measures("ocean_volume"):
+        cube.remove_cell_measure("ocean_volume")
 
     return result
 
@@ -299,7 +307,7 @@ def axis_statistics(
     cube: Cube,
     axis: str,
     operator: str,
-    normalize: Optional[Literal['subtract', 'divide']] = None,
+    normalize: Optional[Literal["subtract", "divide"]] = None,
     **operator_kwargs,
 ) -> Cube:
     """Perform statistics along a given axis.
@@ -362,7 +370,7 @@ def axis_statistics(
     agg_kwargs = update_weights_kwargs(
         agg,
         agg_kwargs,
-        '_axis_statistics_weights_',
+        "_axis_statistics_weights_",
         cube,
         _add_axis_stats_weights_coord,
         coord=coord,
@@ -371,13 +379,13 @@ def axis_statistics(
 
     with warnings.catch_warnings():
         warnings.filterwarnings(
-            'ignore',
+            "ignore",
             message=(
                 "Cannot check if coordinate is contiguous: Invalid "
                 "operation for '_axis_statistics_weights_'"
             ),
             category=UserWarning,
-            module='iris',
+            module="iris",
         )
         result = cube.collapsed(coord, agg, **agg_kwargs)
 
@@ -385,10 +393,10 @@ def axis_statistics(
         result = get_normalized_cube(cube, result, normalize)
 
     # Make sure input and output cubes do not have auxiliary coordinate
-    if cube.coords('_axis_statistics_weights_'):
-        cube.remove_coord('_axis_statistics_weights_')
-    if result.coords('_axis_statistics_weights_'):
-        result.remove_coord('_axis_statistics_weights_')
+    if cube.coords("_axis_statistics_weights_"):
+        cube.remove_coord("_axis_statistics_weights_")
+    if result.coords("_axis_statistics_weights_"):
+        result.remove_coord("_axis_statistics_weights_")
 
     return result
 
@@ -400,7 +408,7 @@ def _add_axis_stats_weights_coord(cube, coord, coord_dims):
         weights = weights.compute()
     weights_coord = AuxCoord(
         weights,
-        long_name='_axis_statistics_weights_',
+        long_name="_axis_statistics_weights_",
         units=coord.units,
     )
     cube.add_aux_coord(weights_coord, coord_dims)
@@ -425,8 +433,8 @@ def depth_integration(cube: Cube) -> Cube:
         Collapsed cube.
 
     """
-    result = axis_statistics(cube, axis='z', operator='sum')
-    result.rename('Depth_integrated_' + str(cube.name()))
+    result = axis_statistics(cube, axis="z", operator="sum")
+    result.rename("Depth_integrated_" + str(cube.name()))
     return result
 
 
@@ -482,24 +490,28 @@ def extract_transect(
     # ###
     coord_dim2 = False
     second_coord_range: None | list = None
-    lats = cube.coord('latitude')
-    lons = cube.coord('longitude')
+    lats = cube.coord("latitude")
+    lons = cube.coord("longitude")
 
     if lats.ndim == 2:
         raise ValueError(
-            'extract_transect: Not implemented for irregular arrays!' +
-            '\nTry regridding the data first.')
+            "extract_transect: Not implemented for irregular arrays!"
+            + "\nTry regridding the data first."
+        )
 
     if isinstance(latitude, float) and isinstance(longitude, float):
         raise ValueError(
-            "extract_transect: Can't slice along lat and lon at the same time")
+            "extract_transect: Can't slice along lat and lon at the same time"
+        )
 
     if isinstance(latitude, list) and isinstance(longitude, list):
         raise ValueError(
-            "extract_transect: Can't reduce lat and lon at the same time")
+            "extract_transect: Can't reduce lat and lon at the same time"
+        )
 
-    for dim_name, dim_cut, coord in zip(['latitude', 'longitude'],
-                                        [latitude, longitude], [lats, lons]):
+    for dim_name, dim_cut, coord in zip(
+        ["latitude", "longitude"], [latitude, longitude], [lats, lons]
+    ):
         # ####
         # Look for the first coordinate.
         if isinstance(dim_cut, float):
@@ -512,7 +524,7 @@ def extract_transect(
             coord_dim2 = cube.coord_dims(dim_name)[0]
             second_coord_range = [
                 coord.nearest_neighbour_index(dim_cut[0]),
-                coord.nearest_neighbour_index(dim_cut[1])
+                coord.nearest_neighbour_index(dim_cut[1]),
             ]
     # ####
     # Extracting the line of constant longitude/latitude
@@ -520,8 +532,9 @@ def extract_transect(
     slices[coord_dim] = coord_index
 
     if second_coord_range is not None:
-        slices[coord_dim2] = slice(second_coord_range[0],
-                                   second_coord_range[1])
+        slices[coord_dim2] = slice(
+            second_coord_range[0], second_coord_range[1]
+        )
     return cube[tuple(slices)]
 
 
@@ -574,7 +587,8 @@ def extract_trajectory(
 
     if len(latitudes) != len(longitudes):
         raise ValueError(
-            'Longitude & Latitude coordinates have different lengths')
+            "Longitude & Latitude coordinates have different lengths"
+        )
 
     if len(latitudes) == len(longitudes) == 2:
         minlat, maxlat = np.min(latitudes), np.max(latitudes)
@@ -583,6 +597,6 @@ def extract_trajectory(
         longitudes = np.linspace(minlon, maxlon, num=number_points)
         latitudes = np.linspace(minlat, maxlat, num=number_points)
 
-    points = [('latitude', latitudes), ('longitude', longitudes)]
+    points = [("latitude", latitudes), ("longitude", longitudes)]
     interpolated_cube = interpolate(cube, points)  # Very slow!
     return interpolated_cube

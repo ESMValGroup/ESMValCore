@@ -24,12 +24,12 @@ def register_supplementaries(variables, required):
         preferred that at least one variable is available, but not strictly
         necessary.
     """
-    valid = ('require_at_least_one', 'prefer_at_least_one')
+    valid = ("require_at_least_one", "prefer_at_least_one")
     if required not in valid:
         raise NotImplementedError(f"`required` should be one of {valid}")
     supplementaries = {
-        'variables': variables,
-        'required': required,
+        "variables": variables,
+        "required": required,
     }
 
     def wrapper(func):
@@ -61,9 +61,11 @@ def add_cell_measure(cube, cell_measure_cube, measure):
     ValueError
         If measure name is not 'area' or 'volume'.
     """
-    if measure not in ['area', 'volume']:
-        raise ValueError(f"measure name must be 'area' or 'volume', "
-                         f"got {measure} instead")
+    if measure not in ["area", "volume"]:
+        raise ValueError(
+            f"measure name must be 'area' or 'volume', "
+            f"got {measure} instead"
+        )
     measure = iris.coords.CellMeasure(
         cell_measure_cube.core_data(),
         standard_name=cell_measure_cube.standard_name,
@@ -74,8 +76,11 @@ def add_cell_measure(cube, cell_measure_cube, measure):
     )
     start_dim = cube.ndim - len(measure.shape)
     cube.add_cell_measure(measure, range(start_dim, cube.ndim))
-    logger.debug('Added %s as cell measure in cube of %s.',
-                 cell_measure_cube.var_name, cube.var_name)
+    logger.debug(
+        "Added %s as cell measure in cube of %s.",
+        cell_measure_cube.var_name,
+        cube.var_name,
+    )
 
 
 def add_ancillary_variable(cube, ancillary_cube):
@@ -98,11 +103,15 @@ def add_ancillary_variable(cube, ancillary_cube):
         standard_name=ancillary_cube.standard_name,
         units=ancillary_cube.units,
         var_name=ancillary_cube.var_name,
-        attributes=ancillary_cube.attributes)
+        attributes=ancillary_cube.attributes,
+    )
     start_dim = cube.ndim - len(ancillary_var.shape)
     cube.add_ancillary_variable(ancillary_var, range(start_dim, cube.ndim))
-    logger.debug('Added %s as ancillary variable in cube of %s.',
-                 ancillary_cube.var_name, cube.var_name)
+    logger.debug(
+        "Added %s as ancillary variable in cube of %s.",
+        ancillary_cube.var_name,
+        cube.var_name,
+    )
 
 
 def add_supplementary_variables(
@@ -124,9 +133,9 @@ def add_supplementary_variables(
         Cube with added ancillary variables and/or cell measures.
     """
     measure_names = {
-        'areacella': 'area',
-        'areacello': 'area',
-        'volcello': 'volume'
+        "areacella": "area",
+        "areacello": "area",
+        "volcello": "volume",
     }
     for supplementary_cube in supplementary_cubes:
         if supplementary_cube.var_name in measure_names:

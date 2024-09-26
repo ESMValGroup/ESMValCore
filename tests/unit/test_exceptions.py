@@ -5,10 +5,10 @@ import pytest
 from esmvalcore.exceptions import SuppressedError
 
 
-@pytest.mark.parametrize('exception', [SuppressedError, ValueError])
+@pytest.mark.parametrize("exception", [SuppressedError, ValueError])
 def test_suppressedhook(capsys, exception):
     try:
-        raise exception('error')
+        raise exception("error")
     except exception:
         args = sys.exc_info()
     sys.excepthook(*args)

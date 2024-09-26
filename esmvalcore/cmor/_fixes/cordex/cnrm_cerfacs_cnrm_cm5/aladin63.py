@@ -1,4 +1,5 @@
 """Fixes for rcm ALADIN63 driven by CNRM-CERFACS-CNRM-CM5."""
+
 import numpy as np
 
 from esmvalcore.cmor._fixes.cordex.cordex_fixes import TimeLongName as BaseFix
@@ -23,9 +24,9 @@ class Tas(Fix):
         """
         for cube in cubes:
             add_scalar_height_coord(cube)
-            if cube.coord('height').points != 2.:
-                cube.coord('height').points = np.ma.array([2.0])
-            cube.coord('time').long_name = 'time'
+            if cube.coord("height").points != 2.0:
+                cube.coord("height").points = np.ma.array([2.0])
+            cube.coord("time").long_name = "time"
 
         return cubes
 

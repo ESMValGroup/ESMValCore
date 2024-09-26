@@ -2,6 +2,7 @@
 
 Allows for unit conversions.
 """
+
 from __future__ import annotations
 
 import logging
@@ -21,12 +22,12 @@ logger = logging.getLogger(__name__)
 # mm s-1 for precipitation
 SPECIAL_CASES = [
     [
-        ('precipitation_flux', 'kg m-2 s-1'),
-        ('lwe_precipitation_rate', 'mm s-1'),
+        ("precipitation_flux", "kg m-2 s-1"),
+        ("lwe_precipitation_rate", "mm s-1"),
     ],
     [
-        ('equivalent_thickness_at_stp_of_atmosphere_ozone_content', 'm'),
-        ('equivalent_thickness_at_stp_of_atmosphere_ozone_content', '1e5 DU'),
+        ("equivalent_thickness_at_stp_of_atmosphere_ozone_content", "m"),
+        ("equivalent_thickness_at_stp_of_atmosphere_ozone_content", "1e5 DU"),
     ],
 ]
 
@@ -34,7 +35,7 @@ SPECIAL_CASES = [
 def _try_special_conversions(cube, units):
     """Try special conversion."""
     for special_case in SPECIAL_CASES:
-        for (std_name, special_units) in special_case:
+        for std_name, special_units in special_case:
             # Special unit conversion only works if all of the following
             # criteria are met:
             # - the cube's standard_name is one of the supported
@@ -45,9 +46,10 @@ def _try_special_conversions(cube, units):
             #   one of the other standard_names in that special case
 
             # Step 1: find suitable source name and units
-            if (cube.standard_name == std_name and
-                    cube.units.is_convertible(special_units)):
-                for (target_std_name, target_units) in special_case:
+            if cube.standard_name == std_name and cube.units.is_convertible(
+                special_units
+            ):
+                for target_std_name, target_units in special_case:
                     if target_units == special_units:
                         continue
 
@@ -125,7 +127,7 @@ def convert_units(cube, units):
 
 def accumulate_coordinate(
     cube: iris.cube.Cube,
-    coordinate: str | iris.coords.DimCoord | iris.coords.AuxCoord
+    coordinate: str | iris.coords.DimCoord | iris.coords.AuxCoord,
 ) -> iris.cube.Cube:
     """Weight data using the bounds from a given coordinate.
 
@@ -157,12 +159,14 @@ def accumulate_coordinate(
         coord = cube.coord(coordinate)
     except iris.exceptions.CoordinateNotFoundError as err:
         raise ValueError(
-            "Requested coordinate %s not found in cube %s",
-            coordinate, cube.summary(shorten=True)) from err
+            f"Requested coordinate {coordinate} not found in cube "
+            f"{cube.summary(shorten=True)}",
+        ) from err
 
     if coord.ndim > 1:
         raise NotImplementedError(
-            f'Multidimensional coordinate {coord} not supported.')
+            f"Multidimensional coordinate {coord} not supported."
+        )
 
     array_module = da if coord.has_lazy_bounds() else np
     factor = iris.coords.AuxCoord(
@@ -172,7 +176,7 @@ def accumulate_coordinate(
         units=coord.units,
     )
     result = cube * factor
-    unit = result.units.format().split(' ')[-1]
+    unit = result.units.format().split(" ")[-1]
     result.convert_units(unit)
     result.long_name = f"{cube.long_name} * {factor.long_name}"
     return result

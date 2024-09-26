@@ -204,6 +204,11 @@
         {
             "affiliation": "DLR, Germany",
             "name": "Cammarano, Diego"
+        },
+        {
+            "affiliation": "ACCESS-NRI, Australia",
+            "name": "Yousong, Zeng",
+            "orcid": "0000-0002-8385-5367"
         }
     ],
     "description": "ESMValCore: A community tool for pre-processing data from Earth system models in CMIP and running analysis scripts.",
