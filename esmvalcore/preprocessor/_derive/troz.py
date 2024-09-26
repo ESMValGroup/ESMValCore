@@ -6,7 +6,7 @@ import iris
 from ._baseclass import DerivedVariableBase
 from .soz import STRATOSPHERIC_O3_THRESHOLD
 from .toz import DerivedVariable as Toz
-from .toz import ensure_correct_lon, interpolate_hybrid_plevs
+from .toz import add_longitude_coord, interpolate_hybrid_plevs
 
 
 class DerivedVariable(DerivedVariableBase):
@@ -41,8 +41,13 @@ class DerivedVariable(DerivedVariableBase):
             o3_cube = interpolate_hybrid_plevs(o3_cube)
 
         # To support zonal mean o3 (e.g., from Table AERmonZ), add longitude
-        # coordinate if necessary
-        (o3_cube, _) = ensure_correct_lon(o3_cube)
+        # coordinate and collapsed ps cube if necessary to ensure that they
+        # have correct shapes
+        if not o3_cube.coords('longitude'):
+            o3_cube = add_longitude_coord(o3_cube)
+            ps_cube = ps_cube.collapsed('longitude', iris.analysis.MEAN)
+            ps_cube.remove_coord('longitude')
+            ps_cube = add_longitude_coord(ps_cube)
 
         # Mask O3 mole fraction using the given threshold
         o3_cube.convert_units('1e-9')

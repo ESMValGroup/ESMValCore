@@ -5,7 +5,7 @@ import iris
 
 from ._baseclass import DerivedVariableBase
 from .toz import DerivedVariable as Toz
-from .toz import ensure_correct_lon, interpolate_hybrid_plevs
+from .toz import add_longitude_coord, interpolate_hybrid_plevs
 
 # O3 mole fraction threshold (in ppb) that is used for the definition of the
 # stratosphere (stratosphere = region where O3 mole fraction is at least as
@@ -63,7 +63,8 @@ class DerivedVariable(DerivedVariableBase):
 
         # To support zonal mean o3 (e.g., from Table AERmonZ), add longitude
         # coordinate if necessary
-        (o3_cube, _) = ensure_correct_lon(o3_cube)
+        if not o3_cube.coords('longitude'):
+            o3_cube = add_longitude_coord(o3_cube)
 
         # (1) Mask O3 mole fraction using the given threshold
         o3_cube.convert_units('1e-9')

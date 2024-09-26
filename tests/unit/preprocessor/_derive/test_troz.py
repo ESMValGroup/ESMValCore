@@ -93,8 +93,9 @@ def test_troz_calculate_no_lon(cubes_no_lon):
     assert out_cube.units == 'm'
     assert out_cube.shape == (1, 2, 1)
     assert not np.ma.is_masked(out_cube.data)
+    print(out_cube.data)
     np.testing.assert_allclose(
-        out_cube.data, [[[15.743813792609216e-5], [20.663755602799588e-5]]]
+        out_cube.data, [[[18.71939459941235e-5], [24.87916174577070e-5]]]
     )
 
 

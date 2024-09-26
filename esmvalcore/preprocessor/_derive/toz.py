@@ -24,38 +24,23 @@ MW_O3_UNIT = cf_units.Unit('g mol^-1')
 DOBSON_UNIT = cf_units.Unit('2.69e20 m^-2')
 
 
-def ensure_correct_lon(o3_cube, ps_cube=None):
-    """Ensure that ``o3`` cube contains ``longitude`` and adapt ``ps`` cube."""
-    if o3_cube.coords('longitude'):
-        return (o3_cube, ps_cube)
-
-    # Get zonal mean ps if necessary
-    if ps_cube is not None:
-        ps_cube = ps_cube.collapsed('longitude', iris.analysis.MEAN)
-        ps_cube.remove_coord('longitude')
-
-    # Add longitude dimension to o3 (and ps if necessary) with length 1
-    cubes = (o3_cube, ps_cube)
-    new_cubes = []
+def add_longitude_coord(cube, ps_cube=None):
+    """Add dimensional ``longitude`` coordinate of length 1 to cube."""
     lon_coord = iris.coords.DimCoord([180.0], bounds=[[0.0, 360.0]],
                                      var_name='lon',
                                      standard_name='longitude',
                                      long_name='longitude',
                                      units='degrees_east')
-    for cube in cubes:
-        if cube is None:
-            new_cubes.append(None)
-            continue
-        new_dim_coords = [(c, cube.coord_dims(c)) for c in cube.dim_coords]
-        new_dim_coords.append((lon_coord, cube.ndim))
-        new_aux_coords = [(c, cube.coord_dims(c)) for c in cube.aux_coords]
-        new_cube = iris.cube.Cube(cube.core_data()[..., None],
-                                  dim_coords_and_dims=new_dim_coords,
-                                  aux_coords_and_dims=new_aux_coords)
-        new_cube.metadata = cube.metadata
-        new_cubes.append(new_cube)
-
-    return tuple(new_cubes)
+    new_dim_coords = [(c, cube.coord_dims(c)) for c in cube.dim_coords]
+    new_dim_coords.append((lon_coord, cube.ndim))
+    new_aux_coords = [(c, cube.coord_dims(c)) for c in cube.aux_coords]
+    new_cube = iris.cube.Cube(
+        cube.core_data()[..., None],
+        dim_coords_and_dims=new_dim_coords,
+        aux_coords_and_dims=new_aux_coords,
+    )
+    new_cube.metadata = cube.metadata
+    return new_cube
 
 
 def interpolate_hybrid_plevs(cube):
@@ -111,8 +96,13 @@ class DerivedVariable(DerivedVariableBase):
             o3_cube = interpolate_hybrid_plevs(o3_cube)
 
         # To support zonal mean o3 (e.g., from Table AERmonZ), add longitude
-        # coordinate if necessary and ensure that ps has correct shape
-        (o3_cube, ps_cube) = ensure_correct_lon(o3_cube, ps_cube=ps_cube)
+        # coordinate and collapsed ps cube if necessary to ensure that they
+        # have correct shapes
+        if not o3_cube.coords('longitude'):
+            o3_cube = add_longitude_coord(o3_cube)
+            ps_cube = ps_cube.collapsed('longitude', iris.analysis.MEAN)
+            ps_cube.remove_coord('longitude')
+            ps_cube = add_longitude_coord(ps_cube)
 
         # If the horizontal dimensions of ps and o3 differ, regrid ps
         # Note: regrid() checks if the regridding is really necessary before
