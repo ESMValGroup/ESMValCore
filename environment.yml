@@ -30,7 +30,7 @@ dependencies:
   - netcdf4
   - numpy !=1.24.3,<2.0.0  # avoid pulling 2.0.0rcX
   - packaging
-  - pandas !=2.2.0,!=2.2.1,!=2.2.2  # github.com/ESMValGroup/ESMValCore/pull/2305 and #2349
+  - pandas
   - pillow
   - pip !=21.3
   - prov
