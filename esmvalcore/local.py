@@ -102,8 +102,7 @@ def _get_start_end_date(
         stem = Path(file).stem
 
     start_date = end_date = None
-
-    # Build regex
+    #
     time_pattern = (
         r"(?P<hour>[0-2][0-9]"
         r"(?P<minute>[0-5][0-9]"
@@ -111,20 +110,14 @@ def _get_start_end_date(
     )
     date_pattern = (
         r"(?P<year>[0-9]{4})"
-        r"(?P<month>-?[01][0-9]"
-        r"(?P<day>-?[0-3][0-9]"
+        r"(?P<month>[01][0-9]"
+        r"(?P<day>[0-3][0-9]"
         rf"(T?{time_pattern})?)?)?"
     )
     datetime_pattern = rf"(?P<datetime>{date_pattern})"
+    #
     end_datetime_pattern = datetime_pattern.replace(">", "_end>")
-
-    # Dates can either be delimited by '-', '_', or '_cat_' (the latter for
-    # CMIP3)
-    date_range_pattern = (
-        datetime_pattern + r"[-_](?:cat_)?" + end_datetime_pattern
-    )
-
-    # Find dates using the regex
+    date_range_pattern = datetime_pattern + r"[-_]" + end_datetime_pattern
     start_date, end_date = _get_from_pattern(
         datetime_pattern, date_range_pattern, stem, "datetime"
     )
@@ -155,13 +148,9 @@ def _get_start_end_date(
 
     if start_date is None or end_date is None:
         raise ValueError(
-            f"File {file} datetimes do not match a recognized pattern and "
-            f"time coordinate can not be read from the file"
+            f"File {filename} dates do not match a recognized "
+            "pattern and time can not be read from the file"
         )
-
-    # Remove potential '-' characters from datetimes
-    start_date = start_date.replace("-", "")
-    end_date = end_date.replace("-", "")
 
     return start_date, end_date
 
@@ -210,8 +199,8 @@ def _dates_to_timerange(start_date, end_date):
     return f"{start_date}/{end_date}"
 
 
-def _replace_years_with_timerange(variable):
-    """Set `timerange` tag from tags `start_year` and `end_year`."""
+def _get_timerange_from_years(variable):
+    """Build `timerange` tag from tags `start_year` and `end_year`."""
     start_year = variable.get("start_year")
     end_year = variable.get("end_year")
     if start_year and end_year:
@@ -222,6 +211,63 @@ def _replace_years_with_timerange(variable):
         variable["timerange"] = _dates_to_timerange(end_year, end_year)
     variable.pop("start_year", None)
     variable.pop("end_year", None)
+
+
+def _get_start_end_year(filename):
+    """Get the start and end year from a file name.
+
+    Examples of allowed dates : 1980, 198001, 19801231,
+    1980123123, 19801231T23, 19801231T2359, 19801231T235959,
+    19801231T235959Z (ISO 8601).
+
+    Dates must be surrounded by - or _ or string start or string end
+    (after removing filename suffix).
+
+    Look first for two dates separated by - or _, then for one single
+    date, and if they are multiple, for one date at start or end.
+    """
+    stem = Path(filename).stem
+    start_year = end_year = None
+    #
+    time_pattern = (
+        r"(?P<hour>[0-2][0-9]"
+        r"(?P<minute>[0-5][0-9]"
+        r"(?P<second>[0-5][0-9])?)?Z?)"
+    )
+    date_pattern = (
+        r"(?P<year>[0-9]{4})"
+        r"(?P<month>[01][0-9]"
+        r"(?P<day>[0-3][0-9]"
+        rf"(T?{time_pattern})?)?)?"
+    )
+    #
+    end_date_pattern = date_pattern.replace(">", "_end>")
+    date_range_pattern = date_pattern + r"[-_]" + end_date_pattern
+    start_year, end_year = _get_from_pattern(
+        date_pattern, date_range_pattern, stem, "year"
+    )
+    # As final resort, try to get the dates from the file contents
+    if (start_year is None or end_year is None) and Path(filename).exists():
+        logger.debug("Must load file %s for daterange ", filename)
+        cubes = iris.load(filename)
+
+        for cube in cubes:
+            logger.debug(cube)
+            try:
+                time = cube.coord("time")
+            except iris.exceptions.CoordinateNotFoundError:
+                continue
+            start_year = time.cell(0).point.year
+            end_year = time.cell(-1).point.year
+            break
+
+    if start_year is None or end_year is None:
+        raise ValueError(
+            f"File {filename} dates do not match a recognized "
+            "pattern and time can not be read from the file"
+        )
+
+    return int(start_year), int(end_year)
 
 
 def _parse_period(timerange):
@@ -408,11 +454,9 @@ def _select_drs(input_type: str, project: str, structure: str) -> list[str]:
     if isinstance(input_path_patterns, str):
         return [input_path_patterns]
 
-    if structure in input_path_patterns:
-        value = input_path_patterns[structure]
-        if isinstance(value, str):
-            value = [value]
-        return value
+    structure = CFG["drs"].get(project, "default")
+    if structure in input_path:
+        return input_path[structure]
 
     raise KeyError(
         "drs {} for {} project not specified in config-developer file".format(
@@ -421,52 +465,17 @@ def _select_drs(input_type: str, project: str, structure: str) -> list[str]:
     )
 
 
-@dataclass(order=True, frozen=True)
-class DataSource:
-    """Class for storing a data source and finding the associated files."""
-
-    rootpath: Path
-    dirname_template: str
-    filename_template: str
-
-    def get_glob_patterns(self, **facets) -> list[Path]:
-        """Compose the globs that will be used to look for files."""
-        dirname_globs = _replace_tags(self.dirname_template, facets)
-        filename_globs = _replace_tags(self.filename_template, facets)
-        return sorted(
-            self.rootpath / d / f
-            for d in dirname_globs
-            for f in filename_globs
-        )
-
-    def find_files(self, **facets) -> list[LocalFile]:
-        """Find files."""
-        globs = self.get_glob_patterns(**facets)
-        logger.debug("Looking for files matching %s", globs)
-
-        files = []
-        for glob_ in globs:
-            for filename in glob(str(glob_)):
-                file = LocalFile(filename)
-                file.facets.update(_path2facets(file, self.dirname_template))
-                files.append(file)
-        files.sort()  # sorting makes it easier to see what was found
-
-        if "timerange" in facets:
-            files = _select_files(files, facets["timerange"])
-        return files
-
-
 _ROOTPATH_WARNED = set()
 
 
-def _get_data_sources(project: str) -> list[DataSource]:
-    """Get a list of data sources."""
-    rootpaths = CFG["rootpath"]
+def _get_rootpath(project):
+    """Select the rootpath."""
+    rootpath = CFG["rootpath"]
     for key in (project, "default"):
-        if key in rootpaths:
-            paths = rootpaths[key]
-            nonexistent = tuple(p for p in paths if not os.path.exists(p))
+        if key in rootpath:
+            nonexistent = tuple(
+                p for p in rootpath[key] if not os.path.exists(p)
+            )
             if nonexistent and (key, nonexistent) not in _ROOTPATH_WARNED:
                 logger.warning(
                     "'%s' rootpaths '%s' set in config-user.yml do not exist",
@@ -474,24 +483,47 @@ def _get_data_sources(project: str) -> list[DataSource]:
                     ", ".join(str(p) for p in nonexistent),
                 )
                 _ROOTPATH_WARNED.add((key, nonexistent))
-            if isinstance(paths, list):
-                structure = CFG["drs"].get(project, "default")
-                paths = {p: structure for p in paths}
-            sources: list[DataSource] = []
-            for path, structure in paths.items():
-                dir_templates = _select_drs("input_dir", project, structure)
-                file_templates = _select_drs("input_file", project, structure)
-                sources.extend(
-                    DataSource(path, d, f)
-                    for d in dir_templates
-                    for f in file_templates
-                )
-            return sources
+            return rootpath[key]
+    raise KeyError("default rootpath must be specified in config-user file")
 
-    raise KeyError(
-        f"No '{project}' or 'default' path specified under 'rootpath' in "
-        "the user configuration."
+
+def _get_globs(variable):
+    """Compose the globs that will be used to look for files."""
+    project = variable["project"]
+
+    rootpaths = _get_rootpath(project)
+
+    dirname_template = _select_drs("input_dir", project)
+    dirname_globs = _replace_tags(dirname_template, variable)
+
+    filename_template = _select_drs("input_file", project)
+    filename_globs = _replace_tags(filename_template, variable)
+
+    globs = sorted(
+        r / d / f
+        for r in rootpaths
+        for d in dirname_globs
+        for f in filename_globs
     )
+    return globs
+
+
+def _get_input_filelist(variable):
+    """Return the full path to input files."""
+    variable = dict(variable)
+    if "original_short_name" in variable:
+        variable["short_name"] = variable["original_short_name"]
+
+    globs = _get_globs(variable)
+    logger.debug("Looking for files matching %s", globs)
+
+    files = list(Path(file) for glob_ in globs for file in glob(str(glob_)))
+    files.sort()  # sorting makes it easier to see what was found
+
+    if "timerange" in variable:
+        files = _select_files(files, variable["timerange"])
+
+    return files, globs
 
 
 def _get_output_file(variable: dict[str, Any], preproc_dir: Path) -> Path:
@@ -551,25 +583,59 @@ def _get_multiproduct_filename(attributes: dict, preproc_dir: Path) -> Path:
     return outfile
 
 
-def _path2facets(path: Path, drs: str) -> dict[str, str]:
+def _path2facets(
+    path: Path,
+    dirname_template: str,
+    filename_template: str,
+) -> dict[str, str]:
     """Extract facets from a path using a DRS like '{facet1}/{facet2}'."""
-    keys = []
-    for key in re.findall(r"{(.*?)}[^-]", f"{drs} "):
-        key = key.split(".")[0]  # Remove trailing .lower and .upper
-        keys.append(key)
-    start, end = -len(keys) - 1, -1
-    values = path.parts[start:end]
-    facets = {
-        key: values[idx] for idx, key in enumerate(keys) if "{" not in key
-    }
+    n_subdirs = len(dirname_template.split("/"))
+    subdirs = "/".join(path.parts[-1 - n_subdirs : -1])
+    facets = _str2facets(subdirs, dirname_template)
+    facets.update(_str2facets(path.stem, filename_template))
+    return facets
 
-    if len(facets) != len(keys):
-        # Extract hyphen separated facet: {facet1}-{facet2},
-        # where facet1 is already known.
-        for idx, key in enumerate(keys):
-            if key not in facets:
-                facet1, facet2 = key.split("}-{")
-                facets[facet2] = values[idx].replace(f"{facets[facet1]}-", "")
+
+def _str2facets(path: str, template: str) -> dict[str, str]:
+    """Extract facets from a path using a template like '{facet1}/{facet2}'."""
+    # Split the template into separators and facet names
+    template_list = re.split(r"{(.*?)}", template)
+    separators = template_list[::2]
+    keys = template_list[1::2]
+
+    # Ignore any facets followed by and after a wildcard separator.
+    for end, sep in enumerate(separators):
+        if "*" in sep or "[" in sep:
+            separators = separators[:end]
+            keys = keys[:end]
+            break
+
+    # Ignore any facets followed by and after an empty separator, unless
+    # it is the first or last sepator.
+    for end, sep in enumerate(separators[1:-1], 1):
+        if sep == "":
+            separators = separators[:end]
+            keys = keys[:end]
+            break
+
+    facets: dict[str, str] = {}
+    if not keys:
+        return facets
+
+    skip = len(separators[0])
+    for sep, key in zip(separators[1:], keys):
+        path = path[skip:]
+        if sep == "":
+            # This happens when the final separator is empty
+            value = path
+        else:
+            value = path.split(sep, 1)[0]
+        skip = len(value) + len(sep)
+        if key.endswith(".lower") or key.endswith(".upper"):
+            # Ignore facets with .lower and .upper because there is no way to
+            # retrieve the correct case.
+            continue
+        facets[key] = value
 
     return facets
 
@@ -678,19 +744,27 @@ def find_files(
     -------
     list[LocalFile]
         The files that were found.
-    """
-    facets = dict(facets)
-    if "original_short_name" in facets:
-        facets["short_name"] = facets["original_short_name"]
+    """  # pylint: disable=line-too-long
+    filenames, globs = _get_input_filelist(facets)
+    dirname_template = _select_drs("input_dir", facets["project"])
+    filename_template = _select_drs("input_file", facets["project"])
+    # Support for a list of templates will be added in
+    # https://github.com/ESMValGroup/ESMValCore/pull/1894
+    if isinstance(dirname_template, list):
+        dirname_template = ""
+    if isinstance(filename_template, list):
+        filename_template = ""
 
     files = []
     filter_latest = False
-    data_sources = _get_data_sources(facets["project"])  # type: ignore
-    for data_source in data_sources:
-        for file in data_source.find_files(**facets):
-            if file.facets.get("version") == "latest":
-                filter_latest = True
-            files.append(file)
+    for filename in filenames:
+        file = LocalFile(filename)
+        file.facets.update(
+            _path2facets(file, dirname_template, filename_template)
+        )
+        if file.facets.get("version") == "latest":
+            filter_latest = True
+        files.append(file)
 
     if filter_latest:
         files = _filter_versions_called_latest(files)
