@@ -1,4 +1,5 @@
 """On-the-fly CMORizer for ACCESS-ESM."""
+
 import logging
 
 from iris.cube import CubeList
@@ -35,11 +36,11 @@ class AllVars(AccessFix):
         self.fix_lat_metadata(cube)
 
         # Fix coordinate 'height'
-        if 'height_0' in [var.var_name for var in cube.coords()]:
+        if "height_0" in [var.var_name for var in cube.coords()]:
             self.fix_height_metadata(cube)
         # Fix coordinate 'pressure'
-        if 'pressure' in [var.var_name for var in cube.coords()]:
-            self.fix_plev_metadata(cube, coord='pressure')
+        if "pressure" in [var.var_name for var in cube.coords()]:
+            self.fix_plev_metadata(cube, coord="pressure")
 
         # Fix coord system
         self.fix_coord_system(cube)
@@ -123,5 +124,5 @@ class Tas(AccessFix):
 
     def fix_height_value(self, cube):
         """Fix height value to make it comparable to other dataset."""
-        if cube.coord('height').points[0] != 2:
-            cube.coord('height').points = [2]
+        if cube.coord("height").points[0] != 2:
+            cube.coord("height").points = [2]

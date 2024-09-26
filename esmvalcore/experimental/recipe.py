@@ -19,7 +19,7 @@ from .recipe_output import RecipeOutput
 logger = logging.getLogger(__file__)
 
 
-class Recipe():
+class Recipe:
     """API wrapper for the esmvalcore Recipe object.
 
     This class can be used to inspect and run the recipe.
@@ -33,7 +33,7 @@ class Recipe():
     def __init__(self, path: os.PathLike):
         self.path = Path(path)
         if not self.path.exists():
-            raise FileNotFoundError(f'Cannot find recipe: `{path}`.')
+            raise FileNotFoundError(f"Cannot find recipe: `{path}`.")
 
         self._engine: Optional[RecipeEngine] = None
         self._data: Optional[Dict] = None
@@ -42,7 +42,7 @@ class Recipe():
 
     def __repr__(self) -> str:
         """Return canonical string representation."""
-        return f'{self.__class__.__name__}({self.name!r})'
+        return f"{self.__class__.__name__}({self.name!r})"
 
     def __str__(self) -> str:
         """Return string representation."""
@@ -70,7 +70,7 @@ class Recipe():
     def data(self) -> dict:
         """Return dictionary representation of the recipe."""
         if self._data is None:
-            with open(self.path, 'r', encoding='utf-8') as yaml_file:
+            with open(self.path, "r", encoding="utf-8") as yaml_file:
                 self._data = yaml.safe_load(yaml_file)
         return self._data
 
@@ -94,9 +94,9 @@ class Recipe():
         """
         logger.info(pprint.pformat(session))
 
-        return RecipeEngine(raw_recipe=self.data,
-                            session=session,
-                            recipe_file=self.path)
+        return RecipeEngine(
+            raw_recipe=self.data, session=session, recipe_file=self.path
+        )
 
     def run(
         self,
@@ -130,7 +130,7 @@ class Recipe():
         self.last_session = session
 
         if task:
-            session['diagnostics'] = task
+            session["diagnostics"] = task
 
         with log_to_dir(session.run_dir):
             _dask.check_distributed_config()
@@ -154,10 +154,10 @@ class Recipe():
             grouped by diagnostic task.
         """
         if self._engine is None:
-            raise AttributeError('Run the recipe first using `.run()`.')
+            raise AttributeError("Run the recipe first using `.run()`.")
 
         output = self._engine.get_output()
-        task_output = output['task_output']
+        task_output = output["task_output"]
 
         return RecipeOutput(
             task_output=task_output,

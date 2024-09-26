@@ -1,4 +1,5 @@
 """Fixes for NorESM1-ME model."""
+
 from ..fix import Fix
 from ..shared import round_coordinates
 
@@ -22,7 +23,7 @@ class Pr(Fix):
         iris.cube.CubeList
 
         """
-        return round_coordinates(cubes, 12, coord_names=['latitude'])
+        return round_coordinates(cubes, 12, coord_names=["latitude"])
 
 
 class Tas(Fix):
