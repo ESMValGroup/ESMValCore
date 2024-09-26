@@ -26,7 +26,7 @@ class AllVars(Fix):
     def fix_metadata(self, cubes):
         """Fix metadata.
 
-        Remove unnecessary spaces in metadat and rename ``var_name`` of
+        Remove unnecessary spaces in metadata and rename ``var_name`` of
         latitude and longitude and fix longitude boundary description may be
         wrong (lons=[0, ..., 356.25]; on_bnds=[[-1.875, 1.875], ..., [354.375,
         360]]).
