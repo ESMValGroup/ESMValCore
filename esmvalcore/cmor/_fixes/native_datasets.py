@@ -31,14 +31,14 @@ class NativeDatasetFix(Fix):
             (in-place).
 
         """
-        if 'height2m' in self.vardef.dimensions:
+        if "height2m" in self.vardef.dimensions:
             add_scalar_height_coord(cube, 2.0)
-        if 'height10m' in self.vardef.dimensions:
+        if "height10m" in self.vardef.dimensions:
             add_scalar_height_coord(cube, 10.0)
-        if 'lambda550nm' in self.vardef.dimensions:
+        if "lambda550nm" in self.vardef.dimensions:
             add_scalar_lambda550nm_coord(cube)
-        if 'typesi' in self.vardef.dimensions:
-            add_scalar_typesi_coord(cube, 'sea_ice')
+        if "typesi" in self.vardef.dimensions:
+            add_scalar_typesi_coord(cube, "sea_ice")
 
     def fix_var_metadata(self, cube):
         """Fix variable metadata of cube (in-place).
@@ -50,7 +50,7 @@ class NativeDatasetFix(Fix):
 
         """
         # Fix names
-        if self.vardef.standard_name == '':
+        if self.vardef.standard_name == "":
             cube.standard_name = None
         else:
             cube.standard_name = self.vardef.standard_name
@@ -59,28 +59,29 @@ class NativeDatasetFix(Fix):
 
         # Fix units
         # (1) raw_units set in recipe or extra_facets
-        if 'raw_units' in self.extra_facets:
-            cube.units = self.extra_facets['raw_units']
-            cube.attributes.pop('invalid_units', None)
+        if "raw_units" in self.extra_facets:
+            cube.units = self.extra_facets["raw_units"]
+            cube.attributes.pop("invalid_units", None)
 
         # (2) Try to handle other invalid units in the input files
-        if 'invalid_units' in cube.attributes:
-            invalid_units = cube.attributes.pop('invalid_units')
+        if "invalid_units" in cube.attributes:
+            invalid_units = cube.attributes.pop("invalid_units")
             new_units = self.INVALID_UNITS.get(
                 invalid_units,
-                invalid_units.replace('**', '^'),
+                invalid_units.replace("**", "^"),
             )
             try:
                 cube.units = new_units
             except ValueError as exc:
                 raise ValueError(
                     f"Failed to fix invalid units '{invalid_units}' for "
-                    f"variable '{self.vardef.short_name}'") from exc
+                    f"variable '{self.vardef.short_name}'"
+                ) from exc
         cube.convert_units(self.vardef.units)
 
         # Fix attributes
-        if self.vardef.positive != '':
-            cube.attributes['positive'] = self.vardef.positive
+        if self.vardef.positive != "":
+            cube.attributes["positive"] = self.vardef.positive
 
     def get_cube(self, cubes, var_name=None):
         """Extract single cube from :class:`iris.cube.CubeList`.
@@ -106,12 +107,14 @@ class NativeDatasetFix(Fix):
 
         """
         if var_name is None:
-            var_name = self.extra_facets.get('raw_name',
-                                             self.vardef.short_name)
+            var_name = self.extra_facets.get(
+                "raw_name", self.vardef.short_name
+            )
         if not cubes.extract(NameConstraint(var_name=var_name)):
             raise ValueError(
                 f"Variable '{var_name}' used to extract "
-                f"'{self.vardef.short_name}' is not available in input file")
+                f"'{self.vardef.short_name}' is not available in input file"
+            )
         return cubes.extract_cube(NameConstraint(var_name=var_name))
 
     def fix_regular_time(self, cube, coord=None, guess_bounds=True):
@@ -129,7 +132,7 @@ class NativeDatasetFix(Fix):
             bounds.
 
         """
-        if not self.vardef.has_coord_with_standard_name('time'):
+        if not self.vardef.has_coord_with_standard_name("time"):
             return
         coord = self.fix_time_metadata(cube, coord)
         if guess_bounds:
@@ -150,7 +153,7 @@ class NativeDatasetFix(Fix):
             bounds.
 
         """
-        if not self.vardef.has_coord_with_standard_name('latitude'):
+        if not self.vardef.has_coord_with_standard_name("latitude"):
             return
         coord = self.fix_lat_metadata(cube, coord)
         if guess_bounds:
@@ -171,7 +174,7 @@ class NativeDatasetFix(Fix):
             bounds.
 
         """
-        if not self.vardef.has_coord_with_standard_name('longitude'):
+        if not self.vardef.has_coord_with_standard_name("longitude"):
             return
         coord = self.fix_lon_metadata(cube, coord)
         if guess_bounds:
@@ -229,12 +232,12 @@ class NativeDatasetFix(Fix):
 
         """
         if coord is None:
-            coord = cube.coord('time')
+            coord = cube.coord("time")
         elif isinstance(coord, str):
             coord = cube.coord(coord)
-        coord.var_name = 'time'
-        coord.standard_name = 'time'
-        coord.long_name = 'time'
+        coord.var_name = "time"
+        coord.standard_name = "time"
+        coord.long_name = "time"
         return coord
 
     @staticmethod
@@ -257,14 +260,14 @@ class NativeDatasetFix(Fix):
 
         """
         if coord is None:
-            coord = cube.coord('altitude')
+            coord = cube.coord("altitude")
         elif isinstance(coord, str):
             coord = cube.coord(coord)
-        coord.var_name = 'alt16'
-        coord.standard_name = 'altitude'
-        coord.long_name = 'altitude'
-        coord.convert_units('m')
-        coord.attributes['positive'] = 'up'
+        coord.var_name = "alt16"
+        coord.standard_name = "altitude"
+        coord.long_name = "altitude"
+        coord.convert_units("m")
+        coord.attributes["positive"] = "up"
         return coord
 
     @staticmethod
@@ -287,14 +290,14 @@ class NativeDatasetFix(Fix):
 
         """
         if coord is None:
-            coord = cube.coord('height')
+            coord = cube.coord("height")
         elif isinstance(coord, str):
             coord = cube.coord(coord)
-        coord.var_name = 'height'
-        coord.standard_name = 'height'
-        coord.long_name = 'height'
-        coord.convert_units('m')
-        coord.attributes['positive'] = 'up'
+        coord.var_name = "height"
+        coord.standard_name = "height"
+        coord.long_name = "height"
+        coord.convert_units("m")
+        coord.attributes["positive"] = "up"
         return coord
 
     @staticmethod
@@ -317,14 +320,14 @@ class NativeDatasetFix(Fix):
 
         """
         if coord is None:
-            coord = cube.coord('air_pressure')
+            coord = cube.coord("air_pressure")
         elif isinstance(coord, str):
             coord = cube.coord(coord)
-        coord.var_name = 'plev'
-        coord.standard_name = 'air_pressure'
-        coord.long_name = 'pressure'
-        coord.convert_units('Pa')
-        coord.attributes['positive'] = 'down'
+        coord.var_name = "plev"
+        coord.standard_name = "air_pressure"
+        coord.long_name = "pressure"
+        coord.convert_units("Pa")
+        coord.attributes["positive"] = "down"
         return coord
 
     @staticmethod
@@ -347,13 +350,13 @@ class NativeDatasetFix(Fix):
 
         """
         if coord is None:
-            coord = cube.coord('latitude')
+            coord = cube.coord("latitude")
         elif isinstance(coord, str):
             coord = cube.coord(coord)
-        coord.var_name = 'lat'
-        coord.standard_name = 'latitude'
-        coord.long_name = 'latitude'
-        coord.convert_units('degrees_north')
+        coord.var_name = "lat"
+        coord.standard_name = "latitude"
+        coord.long_name = "latitude"
+        coord.convert_units("degrees_north")
         return coord
 
     @staticmethod
@@ -376,11 +379,11 @@ class NativeDatasetFix(Fix):
 
         """
         if coord is None:
-            coord = cube.coord('longitude')
+            coord = cube.coord("longitude")
         elif isinstance(coord, str):
             coord = cube.coord(coord)
-        coord.var_name = 'lon'
-        coord.standard_name = 'longitude'
-        coord.long_name = 'longitude'
-        coord.convert_units('degrees_east')
+        coord.var_name = "lon"
+        coord.standard_name = "longitude"
+        coord.long_name = "longitude"
+        coord.convert_units("degrees_east")
         return coord
