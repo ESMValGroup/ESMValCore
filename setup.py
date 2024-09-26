@@ -29,10 +29,10 @@ REQUIREMENTS = {
     'install': [
         'cartopy',
         'cf-units',
-        'dask[array,distributed]',
+        'dask[array,distributed]!=2024.8.0',  # ESMValCore/issues/2503
         'dask-jobqueue',
         'esgf-pyclient>=0.3.1',
-        'esmf-regrid>=0.10.0',  # iris-esmf-regrid #342
+        'esmf-regrid>=0.11.0',
         'esmpy!=8.1.0',  # not on PyPI
         'filelock',
         'fiona',
@@ -56,7 +56,7 @@ REQUIREMENTS = {
         'pyyaml',
         'requests',
         'scipy>=1.6',
-        'scitools-iris>=3.9.0',
+        'scitools-iris>=3.10.0',
         'shapely>=2.0.0',
         'stratify>=0.3',
         'yamale',

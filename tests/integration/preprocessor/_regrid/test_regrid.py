@@ -27,7 +27,6 @@ class Test:
         self.cs = iris.coord_systems.GeogCS(iris.fileformats.pp.EARTH_RADIUS)
 
         # Setup grid for linear regridding
-        data = np.empty((1, 1))
         lons = iris.coords.DimCoord([1.5],
                                     standard_name='longitude',
                                     bounds=[[1, 2]],
@@ -39,11 +38,15 @@ class Test:
                                     units='degrees_north',
                                     coord_system=self.cs)
         coords_spec = [(lats, 0), (lons, 1)]
-        grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
-        self.grid_for_linear = grid
+        self.grid_for_linear = iris.cube.Cube(
+            np.empty((1, 1)),
+            dim_coords_and_dims=coords_spec,
+        )
+
+        # Setup mesh cube
+        self.mesh_cube = _make_cube(data, grid='mesh')
 
         # Setup unstructured cube and grid
-        data = np.zeros((1, 1))
         lons = iris.coords.DimCoord([1.6],
                                     standard_name='longitude',
                                     bounds=[[1, 2]],
@@ -56,7 +59,7 @@ class Test:
                                     coord_system=self.cs)
         coords_spec = [(lats, 0), (lons, 1)]
         self.tgt_grid_for_unstructured = iris.cube.Cube(
-            data, dim_coords_and_dims=coords_spec)
+            np.zeros((1, 1)), dim_coords_and_dims=coords_spec)
 
         lons = self.cube.coord('longitude')
         lats = self.cube.coord('latitude')
@@ -85,7 +88,7 @@ class Test:
         )
 
         unstructured_data = np.ma.masked_less(
-            self.cube.data.reshape(3, 4).astype(np.float32), 3.5
+            self.cube.data.reshape(3, -1).astype(np.float32), 3.5
         )
 
         self.unstructured_grid_cube = iris.cube.Cube(
@@ -145,18 +148,26 @@ class Test:
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
         assert_array_equal(result.data, expected)
 
+    @pytest.mark.parametrize('scheme', [{
+        'reference':
+        'esmf_regrid.schemes:regrid_rectilinear_to_rectilinear',
+    }, {
+        'reference': 'esmvalcore.preprocessor.regrid_schemes:IrisESMFRegrid',
+        'method': 'bilinear',
+    }])
     @pytest.mark.parametrize('cache_weights', [True, False])
-    def test_regrid__esmf_rectilinear(self, cache_weights):
-        scheme_name = 'esmf_regrid.schemes:regrid_rectilinear_to_rectilinear'
-        scheme = {
-            'reference': scheme_name
-        }
+    def test_regrid__esmf_rectilinear(self, scheme, cache_weights):
         result = regrid(
             self.cube,
             self.grid_for_linear,
             scheme,
             cache_weights=cache_weights,
         )
+        expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
+        np.testing.assert_array_almost_equal(result.data, expected, decimal=1)
+
+    def test_regrid__esmf_mesh_to_regular(self):
+        result = regrid(self.mesh_cube, self.grid_for_linear, 'linear')
         expected = np.array([[[1.5]], [[5.5]], [[9.5]]])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=1)
 
@@ -309,8 +320,15 @@ class Test:
         expected = np.array([1.499886, 5.499886, 9.499886])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
 
+    @pytest.mark.parametrize('scheme', [{
+        'reference':
+        'esmf_regrid.schemes:ESMFAreaWeighted'
+    }, {
+        'reference': 'esmvalcore.preprocessor.regrid_schemes:IrisESMFRegrid',
+        'method': 'conservative',
+    }])
     @pytest.mark.parametrize('cache_weights', [True, False])
-    def test_regrid__esmf_area_weighted(self, cache_weights):
+    def test_regrid__esmf_area_weighted(self, scheme, cache_weights):
         data = np.empty((1, 1))
         lons = iris.coords.DimCoord([1.6],
                                     standard_name='longitude',
@@ -324,9 +342,6 @@ class Test:
                                     coord_system=self.cs)
         coords_spec = [(lats, 0), (lons, 1)]
         grid = iris.cube.Cube(data, dim_coords_and_dims=coords_spec)
-        scheme = {
-            'reference': 'esmf_regrid.schemes:ESMFAreaWeighted'
-        }
         result = regrid(self.cube, grid, scheme, cache_weights=cache_weights)
         expected = np.array([[[1.499886]], [[5.499886]], [[9.499886]]])
         np.testing.assert_array_almost_equal(result.data, expected, decimal=6)
@@ -374,7 +389,8 @@ class Test:
     def test_invalid_scheme_for_unstructured_grid(self, cache_weights):
         """Test invalid scheme for unstructured cube."""
         msg = (
-            "Regridding scheme 'invalid' does not support unstructured data, "
+            "Regridding scheme 'invalid' not available for unstructured data, "
+            "expected one of: linear, nearest"
         )
         with pytest.raises(ValueError, match=msg):
             regrid(
@@ -388,7 +404,8 @@ class Test:
     def test_invalid_scheme_for_irregular_grid(self, cache_weights):
         """Test invalid scheme for irregular cube."""
         msg = (
-            "Regridding scheme 'invalid' does not support irregular data, "
+            "Regridding scheme 'invalid' not available for irregular data, "
+            "expected one of: area_weighted, linear, nearest"
         )
         with pytest.raises(ValueError, match=msg):
             regrid(

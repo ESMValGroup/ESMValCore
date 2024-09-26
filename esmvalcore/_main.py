@@ -468,10 +468,6 @@ class ESMValTool():
                                       console_log_level=session['log_level'])
         self._log_header(log_files, cli_config_dir)
 
-        if session['search_esgf'] != 'never':
-            from .esgf._logon import logon
-            logon()
-
         # configure resource logger and run program
         from ._task import resource_usage_logger
         resource_log = session.run_dir / 'resource_usage.txt'
