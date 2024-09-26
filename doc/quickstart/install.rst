@@ -195,13 +195,15 @@ To install from source for development, follow these instructions.
    e.g. ``pip install --trusted-host=pypi.python.org --trusted-host=pypi.org --trusted-host=files.pythonhosted.org -e .[develop]``
 -  Test that your installation was successful by running
    ``esmvaltool -h``.
+-  Install the :ref:`esmvaltool:pre-commit` hooks by running:
+   ``pre-commit install``.
 
 Pre-installed versions on HPC clusters / other servers
 ------------------------------------------------------
 
 
 If you would like to use pre-installed versions on HPC clusters (currently CEDA-JASMIN and DKRZ-Levante),
-and other servers (currently Met Office Linux estate), please have a look at 
+and other servers (currently Met Office Linux estate), please have a look at
 :ref:`these instructions <esmvaltool:install_on_hpc>`.
 
 

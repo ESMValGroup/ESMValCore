@@ -79,7 +79,7 @@ This feature is available for projects that are hosted on the ESGF, i.e.
 CMIP3, CMIP5, CMIP6, CORDEX, and obs4MIPs.
 
 To control the strictness of the CMOR checker and the checks during concatenation
-on auxiliary coordinates, supplementary variables, and derived coordinates, 
+on auxiliary coordinates, supplementary variables, and derived coordinates,
 use the flag ``--check_level``:
 
 .. code:: bash
@@ -93,14 +93,14 @@ Possible values are:
   - `default`: fail if there are any errors.
   - `strict`: fail if there are any warnings.
 
-To re-use pre-processed files from a previous run of the same recipe, you can
+To reuse pre-processed files from a previous run of the same recipe, you can
 use
 
 .. code:: bash
 
     esmvaltool run recipe_example.yml --resume_from ~/esmvaltool_output/recipe_python_20210930_123907
 
-Multiple directories can be specified for re-use, make sure to quote them:
+Multiple directories can be specified for reuse, make sure to quote them:
 
 .. code:: bash
 

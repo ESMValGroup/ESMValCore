@@ -90,7 +90,7 @@ suppress_warnings = [
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = {'.rst': 'restructuredtext'}
 
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
@@ -170,8 +170,13 @@ html_theme = 'pydata_sphinx_theme'
 # Short synopsis of said issue: as of now, left/right keys take one
 # to the previous/next page instead of scrolling horizontally; this
 # should be fixed upstream, then we can set again navigation with keys True
-html_theme_options = {"navigation_with_keys": False}
-
+html_theme_options = {
+    "navigation_with_keys": False,
+    "logo": {
+        "image_light": "figures/ESMValTool-logo-2.png",
+        "image_dark": "figures/ESMValTool-logo-2-dark.png",
+    },
+}
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
 
@@ -194,7 +199,7 @@ html_logo = 'figures/ESMValTool-logo-2.png'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path: list = []
+html_static_path: list = ["figures/ESMValTool-logo-2-dark.png"]
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
