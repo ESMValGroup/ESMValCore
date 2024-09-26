@@ -1,5 +1,5 @@
-
 """Fixes for MRI-ESM1 model."""
+
 from dask import array as da
 
 from ..fix import Fix
@@ -23,5 +23,5 @@ class Msftmyz(Fix):
         iris.cube.Cube
 
         """
-        cube.data = da.ma.masked_equal(cube.core_data(), 0.)
+        cube.data = da.ma.masked_equal(cube.core_data(), 0.0)
         return cube

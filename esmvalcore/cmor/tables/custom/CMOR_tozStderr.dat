@@ -1,4 +1,4 @@
-SOURCE: CCMI1
+SOURCE: CMIP6
 !============
 variable_entry:    tozStderr
 !============
@@ -6,12 +6,12 @@ modeling_realm:    atmos
 !----------------------------------
 ! Variable attributes:
 !----------------------------------
-standard_name:
-units:             DU
+standard_name:     equivalent_thickness_at_stp_of_atmosphere_ozone_content
+units:             m
 cell_methods:      time: mean
 cell_measures:     area: areacella
 long_name:         Total Ozone Column Error
-comment:           total ozone column in DU
+comment:           Total ozone column error calculated at 0 degrees C and 1 bar, such that 1m = 1e5 DU.
 !----------------------------------
 ! Additional variable information:
 !----------------------------------

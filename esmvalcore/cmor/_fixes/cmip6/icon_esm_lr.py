@@ -21,12 +21,12 @@ class AllVars(Fix):
 
         """
         varnames_to_change = {
-            'latitude': 'lat',
-            'longitude': 'lon',
+            "latitude": "lat",
+            "longitude": "lon",
         }
 
         for cube in cubes:
-            for (std_name, var_name) in varnames_to_change.items():
+            for std_name, var_name in varnames_to_change.items():
                 if cube.coords(std_name):
                     cube.coord(std_name).var_name = var_name
 

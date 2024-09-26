@@ -13,18 +13,20 @@ logger = logging.getLogger(__name__)
 
 def cloud_area_fraction(cubes, tau_constraint, plev_constraint):
     """Calculate cloud area fraction for different parameters."""
-    clisccp_cube = cubes.extract_cube(NameConstraint(var_name='clisccp'))
+    clisccp_cube = cubes.extract_cube(NameConstraint(var_name="clisccp"))
     new_cube = clisccp_cube
     new_cube = new_cube.extract(tau_constraint & plev_constraint)
     coord_names = [
-        coord.standard_name for coord in new_cube.coords()
+        coord.standard_name
+        for coord in new_cube.coords()
         if len(coord.points) > 1
     ]
-    if 'atmosphere_optical_thickness_due_to_cloud' in coord_names:
+    if "atmosphere_optical_thickness_due_to_cloud" in coord_names:
         new_cube = new_cube.collapsed(
-            'atmosphere_optical_thickness_due_to_cloud', iris.analysis.SUM)
-    if 'air_pressure' in coord_names:
-        new_cube = new_cube.collapsed('air_pressure', iris.analysis.SUM)
+            "atmosphere_optical_thickness_due_to_cloud", iris.analysis.SUM
+        )
+    if "air_pressure" in coord_names:
+        new_cube = new_cube.collapsed("air_pressure", iris.analysis.SUM)
 
     return new_cube
 
@@ -64,22 +66,25 @@ def column_average(cube, hus_cube, zg_cube, ps_cube):
 
     """
     # Convert units of data
-    hus_cube.convert_units('1')
-    zg_cube.convert_units('m')
-    ps_cube.convert_units('Pa')
+    hus_cube.convert_units("1")
+    zg_cube.convert_units("m")
+    ps_cube.convert_units("Pa")
 
     # Level thickness (note: Buchwitz & Reuter use hPa but we use Pa; in fact,
     # this does not matter as units cancel out when calculating column-average
     p_layer_widths = pressure_level_widths(cube, ps_cube, top_limit=0.0)
 
     # Latitudes (1-dim array)
-    lat = cube.coord('latitude').points
+    lat = cube.coord("latitude").points
 
     # Gravitational acceleration g_0 on the geoid approximated by the
     # international gravity formula depending only on the latitude
     g_0 = np.array(lat)
-    g_0 = 9.780327 * (1.0 + 0.0053024 * (np.sin(lat / 180.0 * np.pi))**2 -
-                      0.0000058 * (np.sin(2.0 * lat / 180.0 * np.pi))**2)
+    g_0 = 9.780327 * (
+        1.0
+        + 0.0053024 * (np.sin(lat / 180.0 * np.pi)) ** 2
+        - 0.0000058 * (np.sin(2.0 * lat / 180.0 * np.pi)) ** 2
+    )
 
     # Approximation of the gravitational acceleration including the
     # free air correction
@@ -92,17 +97,22 @@ def column_average(cube, hus_cube, zg_cube, ps_cube):
     # Number of dry air particles (air molecules excluding water vapor) within
     # each layer
     mw_air = 28.9644e-3
-    n_dry = ((hus_cube * -1.0 + 1.0) * constants.value('Avogadro constant') *
-             p_layer_widths.data / (mw_air * g_4d_array))
+    n_dry = (
+        (hus_cube * -1.0 + 1.0)
+        * constants.value("Avogadro constant")
+        * p_layer_widths.data
+        / (mw_air * g_4d_array)
+    )
 
     # Number of gas molecules per layer
     cube.data = cube.core_data() * n_dry.core_data()
 
     # Column-average
-    cube = cube.collapsed('air_pressure', iris.analysis.SUM)
+    cube = cube.collapsed("air_pressure", iris.analysis.SUM)
     cube.data = (
-        cube.core_data() /
-        n_dry.collapsed('air_pressure', iris.analysis.SUM).core_data())
+        cube.core_data()
+        / n_dry.collapsed("air_pressure", iris.analysis.SUM).core_data()
+    )
     return cube
 
 
@@ -130,7 +140,7 @@ def pressure_level_widths(cube, ps_cube, top_limit=0.0):
 
     data = _get_pressure_level_widths(pressure_array)
     p_level_widths_cube = cube.copy(data=data)
-    p_level_widths_cube.rename('pressure level widths')
+    p_level_widths_cube.rename("pressure level widths")
     p_level_widths_cube.units = ps_cube.units
 
     return p_level_widths_cube
@@ -145,7 +155,7 @@ def _create_pressure_array(cube, ps_cube, top_limit):
 
     """
     # Create 4D array filled with pressure level values
-    p_levels = cube.coord('air_pressure').points.astype(np.float32)
+    p_levels = cube.coord("air_pressure").points.astype(np.float32)
     p_4d_array = iris.util.broadcast_to_shape(p_levels, cube.shape, [1])
 
     # Create 4d array filled with surface pressure values
@@ -170,15 +180,15 @@ def _create_pressure_array(cube, ps_cube, top_limit):
 def _get_pressure_level_widths(array, air_pressure_axis=1):
     """Compute pressure level widths.
 
-    For a 1D array with pressure level columns, return a 1D array with
-    pressure level widths.
+    For array with pressure level columns, return array with pressure
+    level widths.
 
     """
     array = np.copy(array)
     if np.any(np.diff(array, axis=air_pressure_axis) > 0.0):
         raise ValueError("Pressure level value increased with height")
 
-    # Calculate centers
+    # Calculate array of centers between two neighboring pressure levels
     indices = [slice(None)] * array.ndim
     array_shifted = np.roll(array, -1, axis=air_pressure_axis)
     index_0 = deepcopy(indices)
@@ -198,9 +208,11 @@ def _get_pressure_level_widths(array, air_pressure_axis=1):
     dim_map = np.arange(array_centers.ndim)
     dim_map = np.delete(dim_map, air_pressure_axis)
     array_centers_surface = iris.util.broadcast_to_shape(
-        array_centers[tuple(index_0)], array_centers.shape, dim_map)
-    array_centers = np.where(np.isnan(array_centers), array_centers_surface,
-                             array_centers)
+        array_centers[tuple(index_0)], array_centers.shape, dim_map
+    )
+    array_centers = np.where(
+        np.isnan(array_centers), array_centers_surface, array_centers
+    )
 
     # Calculate level widths
     p_level_widths = -np.diff(array_centers, axis=air_pressure_axis)

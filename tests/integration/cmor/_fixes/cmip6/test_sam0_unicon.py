@@ -1,17 +1,18 @@
 """Test fixes for SAM0-UNICON."""
+
 import iris
 import numpy as np
 import pytest
 
 from esmvalcore.cmor._fixes.cmip6.sam0_unicon import Cl, Cli, Clw, Nbp
 from esmvalcore.cmor._fixes.common import ClFixHybridPressureCoord
-from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix, GenericFix
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'SAM0-UNICON', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    fix = Fix.get_fixes("CMIP6", "SAM0-UNICON", "Amon", "cl")
+    assert fix == [Cl(None), GenericFix(None)]
 
 
 def test_cl_fix():
@@ -21,8 +22,8 @@ def test_cl_fix():
 
 def test_get_cli_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'SAM0-UNICON', 'Amon', 'cli')
-    assert fix == [Cli(None)]
+    fix = Fix.get_fixes("CMIP6", "SAM0-UNICON", "Amon", "cli")
+    assert fix == [Cli(None), GenericFix(None)]
 
 
 def test_cli_fix():
@@ -32,8 +33,8 @@ def test_cli_fix():
 
 def test_get_clw_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'SAM0-UNICON', 'Amon', 'clw')
-    assert fix == [Clw(None)]
+    fix = Fix.get_fixes("CMIP6", "SAM0-UNICON", "Amon", "clw")
+    assert fix == [Clw(None), GenericFix(None)]
 
 
 def test_clw_fix():
@@ -43,8 +44,8 @@ def test_clw_fix():
 
 def test_get_nbp_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'SAM0-UNICON', 'Lmon', 'nbp')
-    assert fix == [Nbp(None)]
+    fix = Fix.get_fixes("CMIP6", "SAM0-UNICON", "Lmon", "nbp")
+    assert fix == [Nbp(None), GenericFix(None)]
 
 
 @pytest.fixture
@@ -52,10 +53,10 @@ def nbp_cube():
     """``nbp`` cube."""
     cube = iris.cube.Cube(
         [1.0],
-        var_name='nbp',
-        standard_name='surface_net_downward_mass_flux_of_carbon_dioxide'
-        '_expressed_as_carbon_due_to_all_land_processes',
-        units='kg m-2 s-1',
+        var_name="nbp",
+        standard_name="surface_net_downward_mass_flux_of_carbon_dioxide"
+        "_expressed_as_carbon_due_to_all_land_processes",
+        units="kg m-2 s-1",
     )
     return cube
 

@@ -46,7 +46,7 @@ variable:
 # TODO: add preprocessor item
 
 diagnostic:
-  scripts: any(null(), map(include('script')))
+  scripts: any(null(), map(include('script')), required=False)
   additional_datasets: list(include('dataset'), required=False)
   title: str(required=False)
   description: str(required=False)
@@ -55,4 +55,4 @@ diagnostic:
   variables: map(include('variable'), null(), required=False)
 
 script:
-  script: str()
+  script: str(required=False)

@@ -1,4 +1,5 @@
 """Tests for CESM1-BGC fixes."""
+
 import unittest
 
 import numpy as np
@@ -6,13 +7,14 @@ from iris.cube import Cube
 
 from esmvalcore.cmor._fixes.cmip5.cesm1_bgc import Cl, Gpp, Nbp
 from esmvalcore.cmor._fixes.cmip5.cesm1_cam5 import Cl as BaseCl
+from esmvalcore.cmor._fixes.fix import GenericFix
 from esmvalcore.cmor.fix import Fix
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP5', 'CESM1-BGC', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    fix = Fix.get_fixes("CMIP5", "CESM1-BGC", "Amon", "cl")
+    assert fix == [Cl(None), GenericFix(None)]
 
 
 def test_cl_fix():
@@ -31,7 +33,9 @@ class TestGpp(unittest.TestCase):
     def test_get(self):
         """Test fix get."""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'CESM1-BGC', 'Amon', 'gpp'), [Gpp(None)])
+            Fix.get_fixes("CMIP5", "CESM1-BGC", "Amon", "gpp"),
+            [Gpp(None), GenericFix(None)],
+        )
 
     def test_fix_data(self):
         """Test fix to set missing values correctly."""
@@ -54,4 +58,6 @@ class TestNbp(TestGpp):
     def test_get(self):
         """Test fix get."""
         self.assertListEqual(
-            Fix.get_fixes('CMIP5', 'CESM1-BGC', 'Amon', 'nbp'), [Nbp(None)])
+            Fix.get_fixes("CMIP5", "CESM1-BGC", "Amon", "nbp"),
+            [Nbp(None), GenericFix(None)],
+        )

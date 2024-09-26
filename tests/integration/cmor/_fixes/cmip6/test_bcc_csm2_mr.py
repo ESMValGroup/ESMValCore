@@ -1,5 +1,7 @@
 """Test fixes for BCC-CSM2-MR."""
+
 from esmvalcore.cmor._fixes.cmip6.bcc_csm2_mr import (
+    Areacello,
     Cl,
     Cli,
     Clw,
@@ -11,13 +13,24 @@ from esmvalcore.cmor._fixes.common import (
     ClFixHybridPressureCoord,
     OceanFixGrid,
 )
-from esmvalcore.cmor._fixes.fix import Fix
+from esmvalcore.cmor._fixes.fix import Fix, GenericFix
+
+
+def test_get_areacello_fix():
+    """Test getting of fix."""
+    fix = Fix.get_fixes("CMIP6", "BCC-CSM2-MR", "Amon", "areacello")
+    assert fix == [Areacello(None), GenericFix(None)]
+
+
+def test_areacello_fix():
+    """Test fix for ``areacello``."""
+    assert Areacello is OceanFixGrid
 
 
 def test_get_cl_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'BCC-CSM2-MR', 'Amon', 'cl')
-    assert fix == [Cl(None)]
+    fix = Fix.get_fixes("CMIP6", "BCC-CSM2-MR", "Amon", "cl")
+    assert fix == [Cl(None), GenericFix(None)]
 
 
 def test_cl_fix():
@@ -27,8 +40,8 @@ def test_cl_fix():
 
 def test_get_cli_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'BCC-CSM2-MR', 'Amon', 'cli')
-    assert fix == [Cli(None)]
+    fix = Fix.get_fixes("CMIP6", "BCC-CSM2-MR", "Amon", "cli")
+    assert fix == [Cli(None), GenericFix(None)]
 
 
 def test_cli_fix():
@@ -38,8 +51,8 @@ def test_cli_fix():
 
 def test_get_clw_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'BCC-CSM2-MR', 'Amon', 'clw')
-    assert fix == [Clw(None)]
+    fix = Fix.get_fixes("CMIP6", "BCC-CSM2-MR", "Amon", "clw")
+    assert fix == [Clw(None), GenericFix(None)]
 
 
 def test_clw_fix():
@@ -49,8 +62,8 @@ def test_clw_fix():
 
 def test_get_tos_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'BCC-CSM2-MR', 'Omon', 'tos')
-    assert fix == [Tos(None)]
+    fix = Fix.get_fixes("CMIP6", "BCC-CSM2-MR", "Omon", "tos")
+    assert fix == [Tos(None), GenericFix(None)]
 
 
 def test_tos_fix():
@@ -60,8 +73,8 @@ def test_tos_fix():
 
 def test_get_siconc_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'BCC-CSM2-MR', 'SImon', 'siconc')
-    assert fix == [Siconc(None)]
+    fix = Fix.get_fixes("CMIP6", "BCC-CSM2-MR", "SImon", "siconc")
+    assert fix == [Siconc(None), GenericFix(None)]
 
 
 def test_siconc_fix():
@@ -71,8 +84,8 @@ def test_siconc_fix():
 
 def test_get_sos_fix():
     """Test getting of fix."""
-    fix = Fix.get_fixes('CMIP6', 'BCC-CSM2-MR', 'Omon', 'sos')
-    assert fix == [Sos(None)]
+    fix = Fix.get_fixes("CMIP6", "BCC-CSM2-MR", "Omon", "sos")
+    assert fix == [Sos(None), GenericFix(None)]
 
 
 def test_sos_fix():

@@ -1,4 +1,5 @@
 """Exceptions that may be raised by ESMValCore."""
+
 import sys
 
 
@@ -18,7 +19,7 @@ def _suppressed_hook(error, message, traceback):
     """https://stackoverflow.com/a/27674608."""
     if issubclass(error, SuppressedError):
         # Print only the message and hide the traceback
-        print(f'{error.__name__}: {message}', file=sys.stderr)
+        print(f"{error.__name__}: {message}", file=sys.stderr)
     else:
         # Print full traceback
         sys.__excepthook__(error, message, traceback)
@@ -39,13 +40,9 @@ class RecipeError(Error):
     """Recipe contains an error."""
 
     def __init__(self, msg):
-        super().__init__(self)
+        super().__init__(msg)
         self.message = msg
         self.failed_tasks = []
-
-    def __str__(self):
-        """Return message string."""
-        return self.message
 
 
 class InputFilesNotFound(RecipeError):

@@ -1,12 +1,20 @@
 """Fixes for MPI-ESM1-2-XR model."""
 
-from .mpi_esm1_2_hr import Tas as BaseTas
-from .mpi_esm1_2_hr import Ta as BaseFix
 from .mpi_esm1_2_hr import SfcWind as BaseSfcWind
+from .mpi_esm1_2_hr import Ta as BaseFix
+from .mpi_esm1_2_hr import Tas as BaseTas
 
 
 class Tas(BaseTas):
     """Fixes for tas."""
+
+
+class Tasmax(BaseTas):
+    """Fixes for tasmax."""
+
+
+class Tasmin(BaseTas):
+    """Fixes for tasmin."""
 
 
 class Ta(BaseFix):
@@ -27,3 +35,15 @@ class Ua(BaseFix):
 
 class SfcWind(BaseSfcWind):
     """Fixes for sfcWind."""
+
+
+class SfcWindmax(BaseSfcWind):
+    """Fixes for sfcWindmax."""
+
+
+class Uas(BaseSfcWind):
+    """Fixes for uas."""
+
+
+class Vas(BaseSfcWind):
+    """Fixes for vas."""

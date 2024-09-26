@@ -1,4 +1,5 @@
 """Fixes for KIOST-ESM model."""
+
 from dask import array as da
 
 from ..common import SiconcFixScalarCoord
@@ -33,6 +34,14 @@ class Hurs(Tas):
 
 class Huss(Tas):
     """Fixes for huss."""
+
+
+class Tasmin(Tas):
+    """Fixes for tasmin."""
+
+
+class Tasmax(Tas):
+    """Fixes for tasmax."""
 
 
 class SfcWind(Fix):

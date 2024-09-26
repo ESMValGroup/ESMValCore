@@ -1,4 +1,3 @@
-
 """Fixes for GFDL ESM2G."""
 
 import iris
@@ -31,9 +30,9 @@ class AllVars(Fix):
         iris.cube.CubeList
 
         """
-        _get_and_remove(cubes, 'Start time for average period')
-        _get_and_remove(cubes, 'End time for average period')
-        _get_and_remove(cubes, 'Length of average period')
+        _get_and_remove(cubes, "Start time for average period")
+        _get_and_remove(cubes, "End time for average period")
+        _get_and_remove(cubes, "Length of average period")
         return cubes
 
 
@@ -56,7 +55,7 @@ class Areacello(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
-        cube.units = 'm2'
+        cube.units = "m2"
         return cubes
 
 
@@ -100,8 +99,8 @@ class FgCo2(Fix):
         iris.cube.CubeList
 
         """
-        _get_and_remove(cubes, 'Latitude of tracer (h) points')
-        _get_and_remove(cubes, 'Longitude of tracer (h) points')
+        _get_and_remove(cubes, "Latitude of tracer (h) points")
+        _get_and_remove(cubes, "Longitude of tracer (h) points")
         return cubes
 
 
@@ -122,7 +121,7 @@ class Usi(Fix):
         iris.cube.CubeList
         """
         cube = self.get_cube_from_list(cubes)
-        cube.standard_name = 'sea_ice_x_velocity'
+        cube.standard_name = "sea_ice_x_velocity"
         return cubes
 
 
@@ -143,5 +142,5 @@ class Vsi(Fix):
         iris.cube.CubeList
         """
         cube = self.get_cube_from_list(cubes)
-        cube.standard_name = 'sea_ice_y_velocity'
+        cube.standard_name = "sea_ice_y_velocity"
         return cubes

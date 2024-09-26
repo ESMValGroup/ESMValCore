@@ -1,0 +1,22 @@
+SOURCE: CMIP5
+!============
+variable_entry:    ch4s
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:     mole_fraction_of_methane_in_air
+units:             1e-09
+cell_methods:      area: time: mean
+cell_measures:     area: areacella
+long_name:         Atmosphere CH4 surface
+comment:           As ch4, but only at the surface
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude time
+out_name:          ch4s
+type:              real
+!----------------------------------
+!

@@ -1,4 +1,5 @@
 """Operations related to cycles (annual cycle, diurnal cycle, etc.)."""
+
 import logging
 
 import iris
@@ -50,17 +51,22 @@ def amplitude(cube, coords):
     for coord_name in coords:
         if cube.coords(coord_name):
             continue
-        logger.debug("Trying to add coordinate '%s' to cube via iris."
-                     "coord_categorisation", coord_name)
-        if hasattr(iris.coord_categorisation, f'add_{coord_name}'):
-            getattr(iris.coord_categorisation, f'add_{coord_name}')(cube,
-                                                                    'time')
+        logger.debug(
+            "Trying to add coordinate '%s' to cube via iris."
+            "coord_categorisation",
+            coord_name,
+        )
+        if hasattr(iris.coord_categorisation, f"add_{coord_name}"):
+            getattr(iris.coord_categorisation, f"add_{coord_name}")(
+                cube, "time"
+            )
             logger.debug("Added temporal coordinate '%s'", coord_name)
         else:
             raise iris.exceptions.CoordinateNotFoundError(
                 f"Coordinate '{coord_name}' is not a coordinate of cube "
                 f"{cube.summary(shorten=True)} and cannot be added via "
-                f"iris.coord_categorisation")
+                f"iris.coord_categorisation"
+            )
 
     # Calculate amplitude
     max_cube = cube.aggregated_by(coords, iris.analysis.MAX)

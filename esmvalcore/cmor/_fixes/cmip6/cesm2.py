@@ -1,4 +1,5 @@
 """Fixes for CESM2 model."""
+
 from shutil import copyfile
 
 import numpy as np
@@ -18,18 +19,26 @@ from ..shared import (
 class Cl(Fix):
     """Fixes for ``cl``."""
 
-    def _fix_formula_terms(self, filepath, output_dir):
+    def _fix_formula_terms(
+        self,
+        filepath,
+        output_dir,
+        add_unique_suffix=False,
+    ):
         """Fix ``formula_terms`` attribute."""
-        new_path = self.get_fixed_filepath(output_dir, filepath)
+        new_path = self.get_fixed_filepath(
+            output_dir, filepath, add_unique_suffix=add_unique_suffix
+        )
         copyfile(filepath, new_path)
-        dataset = Dataset(new_path, mode='a')
-        dataset.variables['lev'].formula_terms = 'p0: p0 a: a b: b ps: ps'
-        dataset.variables['lev'].standard_name = (
-            'atmosphere_hybrid_sigma_pressure_coordinate')
+        dataset = Dataset(new_path, mode="a")
+        dataset.variables["lev"].formula_terms = "p0: p0 a: a b: b ps: ps"
+        dataset.variables[
+            "lev"
+        ].standard_name = "atmosphere_hybrid_sigma_pressure_coordinate"
         dataset.close()
         return new_path
 
-    def fix_file(self, filepath, output_dir):
+    def fix_file(self, filepath, output_dir, add_unique_suffix=False):
         """Fix hybrid pressure coordinate.
 
         Adds missing ``formula_terms`` attribute to file.
@@ -45,8 +54,10 @@ class Cl(Fix):
         ----------
         filepath : str
             Path to the original file.
-        output_dir : str
-            Path of the directory where the fixed file is saved to.
+        output_dir: Path
+            Output directory for fixed files.
+        add_unique_suffix: bool, optional (default: False)
+            Adds a unique suffix to `output_dir` for thread safety.
 
         Returns
         -------
@@ -54,10 +65,12 @@ class Cl(Fix):
             Path to the fixed file.
 
         """
-        new_path = self._fix_formula_terms(filepath, output_dir)
-        dataset = Dataset(new_path, mode='a')
-        dataset.variables['a_bnds'][:] = dataset.variables['a_bnds'][::-1, :]
-        dataset.variables['b_bnds'][:] = dataset.variables['b_bnds'][::-1, :]
+        new_path = self._fix_formula_terms(
+            filepath, output_dir, add_unique_suffix=add_unique_suffix
+        )
+        dataset = Dataset(new_path, mode="a")
+        dataset.variables["a_bnds"][:] = dataset.variables["a_bnds"][::-1, :]
+        dataset.variables["b_bnds"][:] = dataset.variables["b_bnds"][::-1, :]
         dataset.close()
         return new_path
 
@@ -77,12 +90,12 @@ class Cl(Fix):
 
         """
         cube = self.get_cube_from_list(cubes)
-        lev_coord = cube.coord(var_name='lev')
-        a_coord = cube.coord(var_name='a')
-        b_coord = cube.coord(var_name='b')
+        lev_coord = cube.coord(var_name="lev")
+        a_coord = cube.coord(var_name="a")
+        b_coord = cube.coord(var_name="b")
         lev_coord.points = a_coord.core_points() + b_coord.core_points()
         lev_coord.bounds = a_coord.core_bounds() + b_coord.core_bounds()
-        lev_coord.units = '1'
+        lev_coord.units = "1"
         return cubes
 
 
@@ -131,16 +144,13 @@ class Prw(Fix):
 
         """
         for cube in cubes:
-            latitude = cube.coord('latitude')
-            if latitude.bounds is None:
-                latitude.guess_bounds()
-            latitude.bounds = latitude.bounds.astype(np.float64)
-            latitude.bounds = np.round(latitude.bounds, 4)
-            longitude = cube.coord('longitude')
-            if longitude.bounds is None:
-                longitude.guess_bounds()
-            longitude.bounds = longitude.bounds.astype(np.float64)
-            longitude.bounds = np.round(longitude.bounds, 4)
+            for coord_name in ["latitude", "longitude"]:
+                coord = cube.coord(coord_name)
+                if not coord.has_bounds():
+                    coord.guess_bounds()
+                coord.bounds = np.round(
+                    coord.core_bounds().astype(np.float64), 4
+                )
 
         return cubes
 
@@ -240,9 +250,10 @@ class Tos(Fix):
         cube = self.get_cube_from_list(cubes)
 
         for cube in cubes:
-            if cube.attributes['mipTable'] == 'Omon':
-                cube.coord('time').points = \
-                    np.round(cube.coord('time').points, 1)
+            if cube.attributes["mipTable"] == "Omon":
+                cube.coord("time").points = np.round(
+                    cube.coord("time").points, 1
+                )
         return cubes
 
 
@@ -263,13 +274,13 @@ class Omon(Fix):
 
         """
         for cube in cubes:
-            if cube.coords(axis='Z'):
-                z_coord = cube.coord(axis='Z')
+            if cube.coords(axis="Z"):
+                z_coord = cube.coord(axis="Z")
 
                 # Only points need to be fixed, not bounds
-                if z_coord.units == 'cm':
+                if z_coord.units == "cm":
                     z_coord.points = z_coord.core_points() / 100.0
-                    z_coord.units = 'm'
+                    z_coord.units = "m"
 
                 # Fix depth metadata
                 if z_coord.standard_name is None:

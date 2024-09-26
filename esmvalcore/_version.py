@@ -1,4 +1,5 @@
 """Define the ESMValCore version."""
+
 from importlib.metadata import PackageNotFoundError, version
 
 try:
@@ -6,4 +7,5 @@ try:
 except PackageNotFoundError as exc:
     raise PackageNotFoundError(
         "ESMValCore package not found, please run `pip install -e .` before "
-        "importing the package.") from exc
+        "importing the package."
+    ) from exc

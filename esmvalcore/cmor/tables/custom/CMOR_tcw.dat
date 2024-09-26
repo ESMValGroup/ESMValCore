@@ -1,0 +1,21 @@
+SOURCE: custom
+!============
+variable_entry:    tcw
+!============
+modeling_realm:    atmos
+!----------------------------------
+! Variable attributes:
+!----------------------------------
+standard_name:
+units:             kg kg-1
+cell_methods:      time: mean
+cell_measures:     area: areacella
+long_name:         Mass Fraction of Cloud Total Water (liquid + ice)
+!----------------------------------
+! Additional variable information:
+!----------------------------------
+dimensions:        longitude latitude plevs time
+out_name:          tcw
+type:              real
+!----------------------------------
+!

@@ -1,11 +1,14 @@
 """Fixes for EC-Earth3-Veg model."""
-import numpy as np
+
 import cf_units
+import numpy as np
+
 from ..fix import Fix
 
 
 class Siconca(Fix):
     """Fixes for siconca."""
+
     def fix_data(self, cube):
         """Fix data.
 
@@ -20,21 +23,34 @@ class Siconca(Fix):
         -------
         iris.cube.Cube
         """
-        cube.data = cube.core_data() * 100.
+        cube.data = cube.core_data() * 100.0
         return cube
 
 
-class Siconc(Fix):
-    """Fixes for siconc variable."""
+class CalendarFix(Fix):
+    """Use the same calendar for all files.
+
+    The original files contain a mix of `gregorian` for the historical
+    experiment and `proleptic_gregorian` for the ssp experiments.
+    """
 
     def fix_metadata(self, cubes):
         """Fix metadata."""
         for cube in cubes:
-            if cube.coords('time'):
-                time_coord = cube.coord('time')
-                time_coord.units = cf_units.Unit(time_coord.units.origin,
-                                                 'proleptic_gregorian')
+            if cube.coords("time"):
+                time_coord = cube.coord("time")
+                time_coord.units = cf_units.Unit(
+                    time_coord.units.origin, "proleptic_gregorian"
+                )
         return cubes
+
+
+class Siconc(CalendarFix):
+    """Fixes for siconc variable."""
+
+
+class Tos(CalendarFix):
+    """Fixes for tos."""
 
 
 class Tas(Fix):
@@ -57,8 +73,8 @@ class Tas(Fix):
         cube = self.get_cube_from_list(cubes)
 
         for cube in cubes:
-            latitude = cube.coord('latitude')
-            latitude.points = np.round(latitude.points, 8)
-            latitude.bounds = np.round(latitude.bounds, 8)
+            latitude = cube.coord("latitude")
+            latitude.points = np.round(latitude.core_points(), 8)
+            latitude.bounds = np.round(latitude.core_bounds(), 8)
 
         return cubes

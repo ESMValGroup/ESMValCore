@@ -22,15 +22,21 @@
 'CanAM4':
   '*':
     '*':
-      institute: ['CCCma']
+      institute:
+        - 'CCCma'  # name used in dataset_id/directory tree
+        - 'CCCMA'  # name used on ESGF
 'CanCM4':
   '*':
     '*':
-      institute: ['CCCma']
+      institute:
+        - 'CCCma'  # name used in dataset_id/directory tree
+        - 'CCCMA'  # name used on ESGF
 'CanESM2':
   '*':
     '*':
-      institute: ['CCCma']
+      institute:
+        - 'CCCma'  # name used in dataset_id/directory tree
+        - 'CCCMA'  # name used on ESGF
 'CCSM4':
   '*':
     '*':
@@ -86,7 +92,7 @@
 'CSIRO-Mk3L-1-2':
   '*':
     '*':
-      institute: ['CSIRO-QCCCE']
+      institute: ['UNSW']
 'EC-EARTH':
   '*':
     '*':
