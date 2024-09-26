@@ -704,7 +704,7 @@ class Dataset:
     def files(self, value):
         self._files = value
 
-    def load(self, compute=True) -> Cube | Delayed:
+    def load(self, compute: bool = True) -> Cube | Delayed:
         """Load dataset.
 
         Parameters
