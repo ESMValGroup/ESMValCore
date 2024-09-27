@@ -1014,7 +1014,7 @@ class TestSeasonalStatistics(tests.Test):
         )
 
         # numpy>=2.0 these need to be explicitly cast to numpy strings
-        two_seasons = [np.str_('JASOND'), np.str_('JFMAMJ')]
+        two_seasons = [np.str_("JASOND"), np.str_("JFMAMJ")]
         msg = (
             "Seasons ('DJF', 'MAM', 'JJA', 'SON') do not match prior season "
             f"extraction {two_seasons}."

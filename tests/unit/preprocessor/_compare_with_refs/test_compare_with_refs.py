@@ -474,9 +474,9 @@ def test_distance_metric(
     assert out_cube.dtype == np.float32
     assert not out_cube.has_lazy_data()
     # an rtol=1e-6 is needed for numpy >=2.0
-    assert_allclose(out_cube.data,
-                    np.array(ref_data, dtype=np.float32),
-                    rtol=1e-6)
+    assert_allclose(
+        out_cube.data, np.array(ref_data, dtype=np.float32), rtol=1e-6
+    )
     assert out_cube.var_name == var_name
     assert out_cube.long_name == long_name
     assert out_cube.standard_name is None
